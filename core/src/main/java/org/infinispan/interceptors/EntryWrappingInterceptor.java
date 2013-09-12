@@ -308,9 +308,7 @@ public class EntryWrappingInterceptor extends CommandInterceptor {
                   if ( isSync && currentTopologyId != commandTopologyId && commandTopologyId != -1) {
                      if (trace) log.tracef("Cache topology changed while the command was executing: expected %d, got %d",
                            commandTopologyId, currentTopologyId);
-                     if (command instanceof WriteCommand) {
-                        writeCommand.setIgnorePreviousValue(true);
-                     }
+                     writeCommand.setIgnorePreviousValue(true);
                      throw new OutdatedTopologyException("Cache topology changed while the command was executing: expected " +
                            commandTopologyId + ", got " + currentTopologyId);
                   }

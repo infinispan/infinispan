@@ -64,6 +64,13 @@ public class PutKeyValueCommand extends AbstractDataWriteCommand implements Meta
 
    @Override
    public Object perform(InvocationContext ctx) throws Throwable {
+      if (ctx.isInTxScope() && !ctx.isOriginLocal() && !ignorePreviousValue) {
+         //ignore previous return value in tx mode is false when the command did not succeed during execution
+         //in this case, we should ignore the command
+         //the return value did not matter in remote context
+         successful = false;
+         return null;
+      }
       MVCCEntry e = (MVCCEntry) ctx.lookupEntry(key);
       if (e == null && hasFlag(Flag.PUT_FOR_EXTERNAL_READ)) {
          successful = false;

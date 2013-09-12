@@ -56,9 +56,17 @@ public class ReplaceCommand extends AbstractDataWriteCommand implements Metadata
 
    @Override
    public Object perform(InvocationContext ctx) throws Throwable {
+      final boolean local = ctx.isOriginLocal();
+      if (ctx.isInTxScope() && !local && !ignorePreviousValue) {
+         //ignore previous return value in tx mode is false when the command did not succeed during execution
+         //in this case, we should ignore the command
+         //the return value did not matter in remote context
+         successful = false;
+         return null;
+      }
       MVCCEntry e = (MVCCEntry) ctx.lookupEntry(key);
       if (e != null) {
-         if (ctx.isOriginLocal()) {
+         if (local) {
             //ISPN-514
             if (e.isNull() || e.getValue() == null || e.isRemoved()) {
                return returnValue(null, false, ctx);
