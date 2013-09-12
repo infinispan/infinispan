@@ -16,13 +16,13 @@ import java.util.Set;
  * @author Mircea Markus
  * @since 6.0
  */
-public class MarshalledEntryImpl implements MarshalledEntry {
+public class MarshalledEntryImpl<K,V> implements MarshalledEntry<K,V> {
 
    private ByteBuffer keyBytes;
    private ByteBuffer valueBytes;
    private ByteBuffer metadataBytes;
-   private transient Object key;
-   private transient Object value;
+   private transient K key;
+   private transient V value;
    private transient InternalMetadata metadata;
    private final transient StreamingMarshaller marshaller;
 
@@ -33,14 +33,14 @@ public class MarshalledEntryImpl implements MarshalledEntry {
       this.marshaller = marshaller;
    }
 
-   public MarshalledEntryImpl(Object key, ByteBuffer valueBytes, ByteBuffer metadataBytes, StreamingMarshaller marshaller) {
+   public MarshalledEntryImpl(K key, ByteBuffer valueBytes, ByteBuffer metadataBytes, StreamingMarshaller marshaller) {
       this.key = key;
       this.valueBytes = valueBytes;
       this.metadataBytes = metadataBytes;
       this.marshaller = marshaller;
    }
 
-   public MarshalledEntryImpl(Object key, Object value, InternalMetadata im, StreamingMarshaller sm) {
+   public MarshalledEntryImpl(K key, V value, InternalMetadata im, StreamingMarshaller sm) {
       this.key = key;
       this.value = value;
       this.metadata = im;
@@ -48,7 +48,7 @@ public class MarshalledEntryImpl implements MarshalledEntry {
    }
 
    @Override
-   public Object getKey() {
+   public K getKey() {
       if (key == null) {
          key = unmarshall(keyBytes);
       }
@@ -56,7 +56,7 @@ public class MarshalledEntryImpl implements MarshalledEntry {
    }
 
    @Override
-   public Object getValue() {
+   public V getValue() {
       if (value == null) {
          value = unmarshall(valueBytes);
       }
@@ -69,7 +69,7 @@ public class MarshalledEntryImpl implements MarshalledEntry {
          if (metadataBytes == null)
             return null;
          else
-            metadata = (InternalMetadata) unmarshall(metadataBytes);
+            metadata = unmarshall(metadataBytes);
       }
       return metadata;
    }
@@ -108,9 +108,10 @@ public class MarshalledEntryImpl implements MarshalledEntry {
       }
    }
 
-   private Object unmarshall(ByteBuffer buf) {
+   @SuppressWarnings(value = "unchecked")
+   private <T> T unmarshall(ByteBuffer buf) {
       try {
-         return marshaller.objectFromByteBuffer(buf.getBuf(), buf.getOffset(), buf.getLength());
+         return (T) marshaller.objectFromByteBuffer(buf.getBuf(), buf.getOffset(), buf.getLength());
       } catch (Exception e) {
          throw new CacheLoaderException(e);
       }
