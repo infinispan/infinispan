@@ -53,6 +53,13 @@ public class RemoveCommand extends AbstractDataWriteCommand {
 
    @Override
    public Object perform(InvocationContext ctx) throws Throwable {
+      if (skipCommand(ctx)) {
+         //ignore previous return value in tx mode is false when the command did not succeed during execution
+         //in this case, we should ignore the command
+         //the return value did not matter in remote context
+         successful = false;
+         return null;
+      }
       CacheEntry e = ctx.lookupEntry(key);
       if (e == null || e.isNull() || e.isRemoved()) {
          nonExistent = true;
@@ -81,6 +88,10 @@ public class RemoveCommand extends AbstractDataWriteCommand {
       }
 
       return performRemove(e, ctx);
+   }
+
+   protected boolean skipCommand(InvocationContext ctx) {
+      return ctx.isInTxScope() && !ctx.isOriginLocal() && !ignorePreviousValue;
    }
 
    protected void notify(InvocationContext ctx, Object value, boolean isPre) {

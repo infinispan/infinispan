@@ -61,6 +61,11 @@ public class InvalidateCommand extends RemoveCommand {
       return null;
    }
 
+   @Override
+   protected boolean skipCommand(InvocationContext ctx) {
+      return false;
+   }
+
    protected void invalidate(InvocationContext ctx, Object keyToInvalidate) throws Throwable {
       key = keyToInvalidate; // so that the superclass can see it
       super.perform(ctx);
