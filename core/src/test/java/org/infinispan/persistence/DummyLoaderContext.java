@@ -1,6 +1,7 @@
 package org.infinispan.persistence;
 
 import org.infinispan.Cache;
+import org.infinispan.commons.io.ByteBufferFactory;
 import org.infinispan.commons.marshall.StreamingMarshaller;
 import org.infinispan.configuration.cache.StoreConfiguration;
 import org.infinispan.persistence.spi.InitializationContext;
@@ -42,5 +43,10 @@ public class DummyLoaderContext implements InitializationContext {
    @Override
    public TimeService getTimeService() {
       return cache.getAdvancedCache().getComponentRegistry().getTimeService();
+   }
+
+   @Override
+   public ByteBufferFactory getByteBufferFactory() {
+      return cache.getAdvancedCache().getComponentRegistry().getComponent(ByteBufferFactory.class);
    }
 }

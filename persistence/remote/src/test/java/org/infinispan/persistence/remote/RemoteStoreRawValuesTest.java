@@ -2,6 +2,7 @@ package org.infinispan.persistence.remote;
 
 import org.infinispan.client.hotrod.TestHelper;
 import org.infinispan.client.hotrod.test.HotRodClientTestingUtil;
+import org.infinispan.commons.io.ByteBufferFactoryImpl;
 import org.infinispan.commons.marshall.StreamingMarshaller;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.container.InternalEntryFactoryImpl;
@@ -59,7 +60,8 @@ public class RemoteStoreRawValuesTest extends BaseStoreTest {
                      .port(hrServer.getPort());
 
       RemoteStore remoteStore = new RemoteStore();
-      remoteStore.init(new InitializationContextImpl(storeConfigurationBuilder.create(), getCache(), getMarshaller(), new DefaultTimeService()));
+      remoteStore.init(new InitializationContextImpl(storeConfigurationBuilder.create(), getCache(), getMarshaller(),
+                                                     new DefaultTimeService(), new ByteBufferFactoryImpl()));
       remoteStore.setInternalCacheEntryFactory(new InternalEntryFactoryImpl());
       remoteStore.start();
 

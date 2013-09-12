@@ -75,7 +75,7 @@ public class RemoteStore implements AdvancedLoadWriteStore {
       if (configuration.marshaller() != null) {
          marshaller = Util.getInstance(configuration.marshaller(), ctx.getCache().getCacheConfiguration().classLoader());
       } else if (configuration.hotRodWrapping()) {
-         marshaller = new HotRodEntryMarshaller();
+         marshaller = new HotRodEntryMarshaller(ctx.getByteBufferFactory());
       } else if (configuration.rawValues()) {
          marshaller = new GenericJBossMarshaller();
       } else {

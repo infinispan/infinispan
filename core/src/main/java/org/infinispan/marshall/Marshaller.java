@@ -1,7 +1,7 @@
 package org.infinispan.marshall;
 
 import net.jcip.annotations.ThreadSafe;
-import org.infinispan.io.ByteBuffer;
+import org.infinispan.io.ByteBufferImpl;
 
 import java.io.IOException;
 
@@ -70,16 +70,16 @@ public interface Marshaller {
    Object objectFromByteBuffer(byte[] buf, int offset, int length) throws IOException, ClassNotFoundException;
 
    /**
-    * A method that returns an instance of {@link org.infinispan.io.ByteBuffer}, which allows direct access to the byte
+    * A method that returns an instance of {@link org.infinispan.io.ByteBufferImpl}, which allows direct access to the byte
     * array with minimal array copying
     *
     * @param o object to marshall
-    * @return a ByteBuffer
+    * @return a ByteBufferImpl
     * @throws IOException if marshalling cannot complete due to some I/O error
     * @throws InterruptedException if the marshalling process was interrupted. Clients should take this as a sign that
     * the marshaller is no longer available, maybe due to shutdown, and so no more marshalling should be attempted.
     */
-   ByteBuffer objectToBuffer(Object o) throws IOException, InterruptedException;
+   ByteBufferImpl objectToBuffer(Object o) throws IOException, InterruptedException;
 
    /**
     * A method that checks whether the given object is marshallable as per the rules of this marshaller.

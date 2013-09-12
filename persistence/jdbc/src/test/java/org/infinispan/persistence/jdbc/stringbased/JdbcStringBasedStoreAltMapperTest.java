@@ -1,5 +1,6 @@
 package org.infinispan.persistence.jdbc.stringbased;
 
+import org.infinispan.commons.io.ByteBufferFactoryImpl;
 import org.infinispan.commons.marshall.StreamingMarshaller;
 import org.infinispan.commons.util.ReflectionUtil;
 import org.infinispan.container.entries.InternalCacheEntry;
@@ -51,7 +52,8 @@ public class JdbcStringBasedStoreAltMapperTest {
       UnitTestDatabaseManager.buildTableManipulation(storeBuilder.table(), false);
       UnitTestDatabaseManager.configureUniqueConnectionFactory(storeBuilder);
       cacheStore = new JdbcStringBasedStore();
-      cacheStore.init(new InitializationContextImpl(storeBuilder.create(), mockCache(getClass().getName()), getMarshaller(), new DefaultTimeService()));
+      cacheStore.init(new InitializationContextImpl(storeBuilder.create(), mockCache(getClass().getName()), getMarshaller(),
+                                                    new DefaultTimeService(), new ByteBufferFactoryImpl()));
       cacheStore.start();
       tableManipulation = (TableManipulation) ReflectionUtil.getValue(cacheStore, "tableManipulation");
    }

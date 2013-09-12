@@ -5,6 +5,8 @@ import org.infinispan.batch.BatchContainer;
 import org.infinispan.commands.CommandsFactory;
 import org.infinispan.commands.CommandsFactoryImpl;
 import org.infinispan.commons.CacheConfigurationException;
+import org.infinispan.commons.io.ByteBufferFactory;
+import org.infinispan.commons.io.ByteBufferFactoryImpl;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.context.InvocationContextContainer;
 import org.infinispan.context.NonTransactionalInvocationContextContainer;
@@ -53,7 +55,7 @@ import static org.infinispan.commons.util.Util.getInstance;
                               TransactionCoordinator.class, RecoveryAdminOperations.class, StateTransferLock.class,
                               ClusteringDependentLogic.class, LockContainer.class,
                               L1Manager.class, TransactionFactory.class, BackupSender.class,
-                              TotalOrderManager.class})
+                              TotalOrderManager.class, ByteBufferFactory.class})
 public class EmptyConstructorNamedCacheFactory extends AbstractNamedCacheComponentFactory implements AutoInstantiableFactory {
 
    @Override
@@ -113,6 +115,8 @@ public class EmptyConstructorNamedCacheFactory extends AbstractNamedCacheCompone
             return (T) new BackupSenderImpl(globalConfiguration.sites().localSite());
          } else if (componentType.equals(TotalOrderManager.class)) {
             return (T) new TotalOrderManager();
+         } else if (componentType.equals(ByteBufferFactory.class)) {
+            return (T) new ByteBufferFactoryImpl();
          }
       }
 

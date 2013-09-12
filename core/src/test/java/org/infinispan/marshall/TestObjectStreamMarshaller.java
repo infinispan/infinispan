@@ -1,23 +1,14 @@
 package org.infinispan.marshall;
 
-import java.io.ByteArrayInputStream;
-import java.io.Externalizable;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.ObjectInput;
-import java.io.ObjectInputStream;
-import java.io.ObjectOutput;
-import java.io.ObjectOutputStream;
-import java.io.OutputStream;
-import java.io.Serializable;
-
+import com.thoughtworks.xstream.XStream;
 import org.infinispan.commons.io.ByteBuffer;
+import org.infinispan.commons.io.ByteBufferImpl;
 import org.infinispan.commons.io.ExposedByteArrayOutputStream;
 import org.infinispan.commons.marshall.AbstractMarshaller;
 import org.infinispan.commons.marshall.StreamingMarshaller;
 import org.infinispan.commons.util.Util;
 
-import com.thoughtworks.xstream.XStream;
+import java.io.*;
 
 /**
  * A dummy marshaller impl that uses object streams converted via XStream as current JBoss Marshalling implementation
@@ -89,7 +80,7 @@ public class TestObjectStreamMarshaller extends AbstractMarshaller implements St
       oos.close();
       baos.close();
       byte[] b = baos.toByteArray();
-      return new ByteBuffer(b, 0, b.length);
+      return new ByteBufferImpl(b, 0, b.length);
    }
 
    @Override

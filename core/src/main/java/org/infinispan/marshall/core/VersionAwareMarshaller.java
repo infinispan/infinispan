@@ -1,10 +1,11 @@
 package org.infinispan.marshall.core;
 
 import org.infinispan.Cache;
+import org.infinispan.commons.io.ByteBuffer;
+import org.infinispan.commons.io.ByteBufferImpl;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.global.GlobalConfiguration;
 import org.infinispan.context.InvocationContextContainer;
-import org.infinispan.commons.io.ByteBuffer;
 import org.infinispan.commons.io.ExposedByteArrayOutputStream;
 import org.infinispan.commons.marshall.AbstractMarshaller;
 import org.infinispan.commons.marshall.NotSerializableException;
@@ -83,7 +84,7 @@ public class VersionAwareMarshaller extends AbstractMarshaller implements Stream
       } finally {
          finishObjectOutput(out);
       }
-      return new ByteBuffer(baos.getRawBuffer(), 0, baos.size());
+      return new ByteBufferImpl(baos.getRawBuffer(), 0, baos.size());
    }
 
    @Override

@@ -1,6 +1,7 @@
 package org.infinispan.persistence.jdbc.binary;
 
 import org.infinispan.Cache;
+import org.infinispan.commons.io.ByteBufferFactoryImpl;
 import org.infinispan.commons.marshall.StreamingMarshaller;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.persistence.BaseStoreTest;
@@ -83,7 +84,7 @@ public class JdbcBinaryStoreTest extends BaseStoreTest {
       storeBuilder.table().createOnStart(false);
 
       JdbcBinaryStore jdbcBucketCacheStore = new JdbcBinaryStore();
-      jdbcBucketCacheStore.init(new InitializationContextImpl(storeBuilder.create(), getCache(), getMarshaller(), new DefaultTimeService()));
+      jdbcBucketCacheStore.init(new InitializationContextImpl(storeBuilder.create(), getCache(), getMarshaller(), new DefaultTimeService(), new ByteBufferFactoryImpl()));
       jdbcBucketCacheStore.start();
       assert jdbcBucketCacheStore.getConnectionFactory() == null;
 

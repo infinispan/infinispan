@@ -11,6 +11,7 @@ import org.apache.avro.io.Encoder;
 import org.apache.avro.util.Utf8;
 import org.infinispan.commons.CacheException;
 import org.infinispan.commons.io.ByteBuffer;
+import org.infinispan.commons.io.ByteBufferImpl;
 import org.infinispan.commons.io.ExposedByteArrayOutputStream;
 import org.infinispan.commons.marshall.AbstractMarshaller;
 
@@ -105,7 +106,7 @@ public class ApacheAvroMarshaller extends AbstractMarshaller {
       ExposedByteArrayOutputStream baos = new ExposedByteArrayOutputStream(estimatedSize);
       Encoder encoder = new BinaryEncoder(baos);
       objectToBuffer(o, encoder);
-      return new ByteBuffer(baos.getRawBuffer(), 0, baos.size());
+      return new ByteBufferImpl(baos.getRawBuffer(), 0, baos.size());
    }
 
    private void objectToBuffer(Object o, Encoder encoder) throws IOException {

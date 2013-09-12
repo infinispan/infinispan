@@ -2,7 +2,7 @@ package org.infinispan.marshall;
 
 import java.io.IOException;
 import org.infinispan.commons.marshall.Marshaller;
-import org.infinispan.io.ByteBuffer;
+import org.infinispan.io.ByteBufferImpl;
 
 /**
  * LegacyMarshallerAdapter.
@@ -25,7 +25,7 @@ public class LegacyMarshallerAdapter implements Marshaller {
    }
 
    @Override
-   public ByteBuffer objectToBuffer(Object o) throws IOException, InterruptedException {
+   public ByteBufferImpl objectToBuffer(Object o) throws IOException, InterruptedException {
       return delegate.objectToBuffer(o);
    }
 

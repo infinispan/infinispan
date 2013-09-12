@@ -1,6 +1,7 @@
 package org.infinispan.client.hotrod.marshall;
 
 import org.infinispan.commons.io.ByteBuffer;
+import org.infinispan.commons.io.ByteBufferImpl;
 import org.infinispan.commons.marshall.AbstractMarshaller;
 import org.infinispan.protostream.ProtobufUtil;
 import org.infinispan.protostream.SerializationContext;
@@ -36,6 +37,6 @@ public class ProtoStreamMarshaller extends AbstractMarshaller {
    @Override
    protected ByteBuffer objectToBuffer(Object o, int estimatedSize) throws IOException, InterruptedException {
       byte[] bytes = ProtobufUtil.toWrappedByteArray(serializationContext, o);
-      return new ByteBuffer(bytes, 0, bytes.length);
+      return new ByteBufferImpl(bytes, 0, bytes.length);
    }
 }
