@@ -17,7 +17,7 @@ public class JdbcMixedStoreParallelIterationTest extends ParallelIterationTest {
 
    @Override
    protected int numThreads() {
-      return KnownComponentNames.getDefaultThreads(KnownComponentNames.PERSISTENCE_EXECUTOR) + 1 /** caller's thread */;
+      return 1;
    }
 
    @Override

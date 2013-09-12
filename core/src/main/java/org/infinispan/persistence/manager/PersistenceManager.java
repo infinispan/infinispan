@@ -2,12 +2,11 @@ package org.infinispan.persistence.manager;
 
 import java.util.Collection;
 import java.util.Set;
-import java.util.concurrent.Executor;
 
 import org.infinispan.lifecycle.Lifecycle;
 import org.infinispan.persistence.spi.AdvancedCacheLoader;
-import org.infinispan.persistence.spi.MarshalledEntry;
-import org.infinispan.persistence.MarshalledEntryImpl;
+import org.infinispan.marshall.core.MarshalledEntry;
+import org.infinispan.marshall.core.MarshalledEntryImpl;
 
 /**
  * Defines the logic for interacting with the chain of external storage.
@@ -50,7 +49,7 @@ public interface PersistenceManager extends Lifecycle {
 
    MarshalledEntry loadFromAllStores(Object key);
 
-   void writeToAllStores(MarshalledEntryImpl marshalledEntry, boolean skipSharedStores);
+   void writeToAllStores(MarshalledEntry marshalledEntry, boolean skipSharedStores);
 
    /**
     * Returns the store one configured with fetch persistent state, or null if none exist.

@@ -51,7 +51,6 @@ import org.infinispan.factories.annotations.Start;
 import org.infinispan.factories.annotations.Stop;
 import org.infinispan.factories.scopes.Scope;
 import org.infinispan.factories.scopes.Scopes;
-import org.infinispan.persistence.MarshalledEntryImpl;
 import org.infinispan.marshall.exts.ArrayListExternalizer;
 import org.infinispan.marshall.exts.CacheRpcCommandExternalizer;
 import org.infinispan.marshall.exts.LinkedListExternalizer;

@@ -2,9 +2,9 @@ package org.infinispan.jcache;
 
 import org.infinispan.jcache.logging.Log;
 import org.infinispan.persistence.CacheLoaderException;
-import org.infinispan.persistence.MarshalledEntryImpl;
+import org.infinispan.marshall.core.MarshalledEntryImpl;
 import org.infinispan.persistence.spi.InitializationContext;
-import org.infinispan.persistence.spi.MarshalledEntry;
+import org.infinispan.marshall.core.MarshalledEntry;
 import org.infinispan.util.logging.LogFactory;
 
 import javax.cache.Cache.Entry;
@@ -37,7 +37,7 @@ public class JCacheLoaderAdapter<K, V> implements org.infinispan.persistence.spi
    public MarshalledEntry load(Object key) throws CacheLoaderException {
       Entry<K, V> e = delegate.load((K) key);
       // TODO or whatever type of entry is more appropriate?
-      return e == null ? null : new MarshalledEntryImpl(e.getValue(), e.getValue(), null, ctx.getMarshaller());
+      return e == null ? null : ctx.getMarshalledEntryFactory().newMarshalledEntry(e.getValue(), e.getValue(), null);
    }
 
    @Override

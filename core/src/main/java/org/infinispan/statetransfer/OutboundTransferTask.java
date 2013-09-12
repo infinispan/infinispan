@@ -11,7 +11,7 @@ import org.infinispan.distribution.ch.ConsistentHash;
 import org.infinispan.persistence.CollectionKeyFilter;
 import org.infinispan.persistence.manager.PersistenceManager;
 import org.infinispan.persistence.spi.AdvancedCacheLoader;
-import org.infinispan.persistence.spi.MarshalledEntry;
+import org.infinispan.marshall.core.MarshalledEntry;
 import org.infinispan.remoting.rpc.ResponseMode;
 import org.infinispan.remoting.rpc.RpcManager;
 import org.infinispan.remoting.rpc.RpcOptions;

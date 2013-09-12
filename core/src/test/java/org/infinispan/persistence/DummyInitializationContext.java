@@ -4,6 +4,7 @@ import org.infinispan.Cache;
 import org.infinispan.commons.io.ByteBufferFactory;
 import org.infinispan.commons.marshall.StreamingMarshaller;
 import org.infinispan.configuration.cache.StoreConfiguration;
+import org.infinispan.marshall.core.MarshalledEntryFactory;
 import org.infinispan.persistence.spi.InitializationContext;
 import org.infinispan.util.TimeService;
 
@@ -11,18 +12,24 @@ import org.infinispan.util.TimeService;
  * @author Mircea Markus
  * @since 6.0
  */
-public class DummyLoaderContext implements InitializationContext {
+public class DummyInitializationContext implements InitializationContext {
    StoreConfiguration clc;
    Cache cache;
    StreamingMarshaller marshaller;
 
-   public DummyLoaderContext() {
+   ByteBufferFactory byteBufferFactory;
+   MarshalledEntryFactory marshalledEntryFactory;
+
+   public DummyInitializationContext() {
    }
 
-   public DummyLoaderContext(StoreConfiguration clc, Cache cache, StreamingMarshaller marshaller) {
+   public DummyInitializationContext(StoreConfiguration clc, Cache cache, StreamingMarshaller marshaller,
+                                     ByteBufferFactory byteBufferFactory, MarshalledEntryFactory marshalledEntryFactory) {
       this.clc = clc;
       this.cache = cache;
       this.marshaller = marshaller;
+      this.byteBufferFactory = byteBufferFactory;
+      this.marshalledEntryFactory = marshalledEntryFactory;
    }
 
    @Override
@@ -47,6 +54,11 @@ public class DummyLoaderContext implements InitializationContext {
 
    @Override
    public ByteBufferFactory getByteBufferFactory() {
-      return cache.getAdvancedCache().getComponentRegistry().getComponent(ByteBufferFactory.class);
+      return byteBufferFactory;
+   }
+
+   @Override
+   public MarshalledEntryFactory getMarshalledEntryFactory() {
+      return marshalledEntryFactory;
    }
 }

@@ -5,7 +5,7 @@ import org.infinispan.commons.equivalence.Equivalence;
 import org.infinispan.commons.util.CollectionFactory;
 import org.infinispan.persistence.PersistenceUtil;
 import org.infinispan.persistence.spi.AdvancedCacheLoader;
-import org.infinispan.persistence.spi.MarshalledEntry;
+import org.infinispan.marshall.core.MarshalledEntry;
 import org.infinispan.util.TimeService;
 
 import java.util.HashMap;

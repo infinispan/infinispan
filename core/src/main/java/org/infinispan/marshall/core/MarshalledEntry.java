@@ -1,4 +1,4 @@
-package org.infinispan.persistence.spi;
+package org.infinispan.marshall.core;
 
 import org.infinispan.commons.io.ByteBuffer;
 import org.infinispan.metadata.InternalMetadata;

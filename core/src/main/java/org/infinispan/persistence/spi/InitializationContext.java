@@ -5,6 +5,7 @@ import org.infinispan.Cache;
 import org.infinispan.commons.io.ByteBufferFactory;
 import org.infinispan.commons.marshall.StreamingMarshaller;
 import org.infinispan.configuration.cache.StoreConfiguration;
+import org.infinispan.marshall.core.MarshalledEntryFactory;
 import org.infinispan.util.TimeService;
 
 /**
@@ -24,5 +25,13 @@ public interface InitializationContext {
 
    TimeService getTimeService();
 
+   /**
+    * To be used for building {@link org.infinispan.commons.io.ByteBuffer} objects.
+    */
    ByteBufferFactory getByteBufferFactory();
+
+   /**
+    * To be used for building {@link org.infinispan.marshall.core.MarshalledEntry} objects.
+    */
+   MarshalledEntryFactory getMarshalledEntryFactory();
 }

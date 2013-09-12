@@ -4,20 +4,22 @@ import org.infinispan.Cache;
 import org.infinispan.commons.CacheException;
 import org.infinispan.commons.configuration.BuiltBy;
 import org.infinispan.commons.configuration.ConfigurationFor;
+import org.infinispan.commons.io.ByteBufferFactoryImpl;
 import org.infinispan.configuration.cache.AsyncStoreConfiguration;
 import org.infinispan.configuration.cache.PersistenceConfigurationBuilder;
 import org.infinispan.configuration.cache.SingletonStoreConfiguration;
 import org.infinispan.container.entries.InternalCacheEntry;
+import org.infinispan.marshall.core.MarshalledEntryFactoryImpl;
 import org.infinispan.persistence.BaseStoreTest;
-import org.infinispan.persistence.MarshalledEntryImpl;
+import org.infinispan.marshall.core.MarshalledEntryImpl;
+import org.infinispan.persistence.DummyInitializationContext;
 import org.infinispan.persistence.async.AdvancedAsyncCacheLoader;
 import org.infinispan.persistence.async.AdvancedAsyncCacheWriter;
-import org.infinispan.persistence.DummyLoaderContext;
 import org.infinispan.persistence.dummy.DummyInMemoryStore;
 import org.infinispan.persistence.dummy.DummyInMemoryStoreConfiguration;
 import org.infinispan.persistence.dummy.DummyInMemoryStoreConfigurationBuilder;
 import org.infinispan.persistence.spi.CacheWriter;
-import org.infinispan.persistence.spi.MarshalledEntry;
+import org.infinispan.marshall.core.MarshalledEntry;
 import org.infinispan.marshall.TestObjectStreamMarshaller;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.infinispan.test.fwk.TestInternalCacheEntryFactory;
@@ -64,7 +66,8 @@ public class AsyncStoreTest extends AbstractInfinispanTest {
             .threadPoolSize(10);
       DummyInMemoryStore underlying = new DummyInMemoryStore();
       writer = new AdvancedAsyncCacheWriter(underlying);
-      DummyLoaderContext ctx = new DummyLoaderContext(dummyCfg.create(), getCache(), new TestObjectStreamMarshaller());
+      TestObjectStreamMarshaller ma = new TestObjectStreamMarshaller();
+      DummyInitializationContext ctx = new DummyInitializationContext(dummyCfg.create(), getCache(), ma, new ByteBufferFactoryImpl(), new MarshalledEntryFactoryImpl(ma));
       writer.init(ctx);
       writer.start();
       loader = new AdvancedAsyncCacheLoader(underlying, writer.getState());
@@ -162,7 +165,9 @@ public class AsyncStoreTest extends AbstractInfinispanTest {
                .getDefaultCacheConfiguration(false)
                .persistence().addStore(DummyInMemoryStoreConfigurationBuilder.class)
                   .storeName(m.getName());
-         DummyLoaderContext ctx = new DummyLoaderContext(dummyCfg.create(), getCache(), marshaller());
+         DummyInitializationContext ctx = new DummyInitializationContext(dummyCfg.create(), getCache(), marshaller(),
+                                                                         new ByteBufferFactoryImpl(),
+                                                                         new MarshalledEntryFactoryImpl(marshaller()));
          writer.init(ctx);
          writer.start();
          underlying.init(ctx);
@@ -382,7 +387,8 @@ public class AsyncStoreTest extends AbstractInfinispanTest {
             .modificationQueueSize(10);
 
       writer = new AdvancedAsyncCacheWriter(underlying);
-      writer.init(new DummyLoaderContext(lcscsBuilder.create(), getCache(), null));
+      writer.init(new DummyInitializationContext(lcscsBuilder.create(), getCache(), null, new ByteBufferFactoryImpl(),
+                                                 new MarshalledEntryFactoryImpl(null)));
       writer.start();
       try {
          final CountDownLatch done = new CountDownLatch(1);

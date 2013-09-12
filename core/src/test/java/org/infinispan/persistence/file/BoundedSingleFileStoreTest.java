@@ -1,13 +1,15 @@
 package org.infinispan.persistence.file;
 
 import org.infinispan.Cache;
+import org.infinispan.commons.io.ByteBufferFactoryImpl;
 import org.infinispan.commons.marshall.StreamingMarshaller;
 import org.infinispan.configuration.cache.SingleFileStoreConfiguration;
 import org.infinispan.configuration.cache.SingleFileStoreConfigurationBuilder;
+import org.infinispan.marshall.core.MarshalledEntryFactoryImpl;
 import org.infinispan.persistence.BaseStoreTest;
 import org.infinispan.persistence.CacheLoaderException;
-import org.infinispan.persistence.DummyLoaderContext;
-import org.infinispan.persistence.MarshalledEntryImpl;
+import org.infinispan.persistence.DummyInitializationContext;
+import org.infinispan.marshall.core.MarshalledEntryImpl;
 import org.infinispan.marshall.TestObjectStreamMarshaller;
 import org.infinispan.test.AbstractInfinispanTest;
 import org.infinispan.test.TestingUtil;
@@ -54,7 +56,9 @@ public class BoundedSingleFileStoreTest extends AbstractInfinispanTest {
                   .location(this.tmpDirectory)
                   .maxEntries(1)
                   .create();
-      store.init(new DummyLoaderContext(fileStoreConfiguration, getCache(), getMarshaller()));
+      store.init(new DummyInitializationContext(fileStoreConfiguration, getCache(), getMarshaller(),
+                                                new ByteBufferFactoryImpl(),
+                                                new MarshalledEntryFactoryImpl(getMarshaller())));
       store.start();
    }
 

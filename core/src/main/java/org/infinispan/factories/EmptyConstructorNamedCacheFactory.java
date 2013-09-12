@@ -21,6 +21,8 @@ import org.infinispan.eviction.PassivationManager;
 import org.infinispan.eviction.PassivationManagerImpl;
 import org.infinispan.factories.annotations.DefaultFactoryFor;
 import org.infinispan.interceptors.locking.ClusteringDependentLogic;
+import org.infinispan.marshall.core.MarshalledEntryFactory;
+import org.infinispan.marshall.core.MarshalledEntryFactoryImpl;
 import org.infinispan.persistence.manager.PersistenceManager;
 import org.infinispan.persistence.manager.PersistenceManagerImpl;
 import org.infinispan.notifications.cachelistener.CacheNotifier;
@@ -55,7 +57,7 @@ import static org.infinispan.commons.util.Util.getInstance;
                               TransactionCoordinator.class, RecoveryAdminOperations.class, StateTransferLock.class,
                               ClusteringDependentLogic.class, LockContainer.class,
                               L1Manager.class, TransactionFactory.class, BackupSender.class,
-                              TotalOrderManager.class, ByteBufferFactory.class})
+                              TotalOrderManager.class, ByteBufferFactory.class, MarshalledEntryFactory.class})
 public class EmptyConstructorNamedCacheFactory extends AbstractNamedCacheComponentFactory implements AutoInstantiableFactory {
 
    @Override
@@ -117,6 +119,8 @@ public class EmptyConstructorNamedCacheFactory extends AbstractNamedCacheCompone
             return (T) new TotalOrderManager();
          } else if (componentType.equals(ByteBufferFactory.class)) {
             return (T) new ByteBufferFactoryImpl();
+         }else if (componentType.equals(MarshalledEntryFactory.class)) {
+            return (T) new MarshalledEntryFactoryImpl();
          }
       }
 

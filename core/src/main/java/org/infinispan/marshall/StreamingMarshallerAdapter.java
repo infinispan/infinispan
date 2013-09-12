@@ -1,5 +1,7 @@
 package org.infinispan.marshall;
 
+import org.infinispan.commons.io.ByteBuffer;
+
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.ObjectInput;
@@ -62,7 +64,7 @@ public class StreamingMarshallerAdapter implements StreamingMarshaller {
 
    @Override
    public org.infinispan.io.ByteBufferImpl objectToBuffer(Object o) throws IOException, InterruptedException {
-      ByteBufferImpl bb = delegate.objectToBuffer(o);
+      ByteBuffer bb = delegate.objectToBuffer(o);
       return new org.infinispan.io.ByteBufferImpl(bb.getBuf(), bb.getOffset(), bb.getLength());
    }
 

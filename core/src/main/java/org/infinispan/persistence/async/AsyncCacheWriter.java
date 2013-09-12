@@ -12,7 +12,7 @@ import org.infinispan.persistence.modifications.Store;
 import org.infinispan.commons.util.CollectionFactory;
 import org.infinispan.persistence.spi.CacheWriter;
 import org.infinispan.persistence.spi.InitializationContext;
-import org.infinispan.persistence.spi.MarshalledEntry;
+import org.infinispan.marshall.core.MarshalledEntry;
 import org.infinispan.persistence.support.DelegatingCacheWriter;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;

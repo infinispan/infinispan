@@ -1,7 +1,7 @@
 package org.infinispan.jcache;
 
 import org.infinispan.persistence.spi.InitializationContext;
-import org.infinispan.persistence.spi.MarshalledEntry;
+import org.infinispan.marshall.core.MarshalledEntry;
 
 import javax.cache.integration.CacheWriter;
 

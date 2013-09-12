@@ -1,9 +1,10 @@
 package org.infinispan.persistence.jdbc.stringbased;
 
 import org.infinispan.commons.io.ByteBuffer;
-import org.infinispan.commons.io.ByteBufferImpl;
+import org.infinispan.marshall.core.MarshalledEntry;
 import org.infinispan.persistence.CacheLoaderException;
 import org.infinispan.persistence.PersistenceUtil;
+import org.infinispan.persistence.TaskContextImpl;
 import org.infinispan.persistence.jdbc.JdbcUtil;
 import org.infinispan.persistence.jdbc.TableManipulation;
 import org.infinispan.persistence.jdbc.configuration.JdbcStringBasedStoreConfiguration;
@@ -15,9 +16,6 @@ import org.infinispan.persistence.keymappers.TwoWayKey2StringMapper;
 import org.infinispan.persistence.keymappers.UnsupportedKeyTypeException;
 import org.infinispan.persistence.spi.AdvancedLoadWriteStore;
 import org.infinispan.persistence.spi.InitializationContext;
-import org.infinispan.persistence.spi.MarshalledEntry;
-import org.infinispan.persistence.MarshalledEntryImpl;
-import org.infinispan.persistence.TaskContextImpl;
 import org.infinispan.util.KeyValuePair;
 import org.infinispan.util.logging.LogFactory;
 
@@ -194,7 +192,7 @@ public class JdbcStringBasedStore implements AdvancedLoadWriteStore {
          if (rs.next()) {
             InputStream inputStream = rs.getBinaryStream(2);
             KeyValuePair<ByteBuffer, ByteBuffer> icv = JdbcUtil.unmarshall(ctx.getMarshaller(), inputStream);
-            storedValue = new MarshalledEntryImpl(key, icv.getKey(), icv.getValue(), ctx.getMarshaller());
+            storedValue = ctx.getMarshalledEntryFactory().newMarshalledEntry(key, icv.getKey(), icv.getValue());
          }
       } catch (SQLException e) {
          log.sqlFailureReadingKey(key, lockingKey, e);
@@ -327,9 +325,9 @@ public class JdbcStringBasedStore implements AdvancedLoadWriteStore {
                   MarshalledEntry entry;
                   if (fetchValue || fetchMetadata) {
                      KeyValuePair<ByteBuffer, ByteBuffer> kvp = JdbcUtil.unmarshall(ctx.getMarshaller(), inputStream);
-                     entry = new MarshalledEntryImpl(key, kvp.getKey(), kvp.getValue(), ctx.getMarshaller());
+                     entry = ctx.getMarshalledEntryFactory().newMarshalledEntry(key, kvp.getKey(), kvp.getValue());
                   } else {
-                     entry = new MarshalledEntryImpl(key, (Object)null, null, ctx.getMarshaller());
+                     entry = ctx.getMarshalledEntryFactory().newMarshalledEntry(key, (Object)null, null);
                   }
                   task.processEntry(entry, taskContext);
                }

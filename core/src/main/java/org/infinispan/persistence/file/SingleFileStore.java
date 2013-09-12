@@ -27,8 +27,8 @@ import org.infinispan.persistence.CacheLoaderException;
 import org.infinispan.persistence.PersistenceUtil;
 import org.infinispan.persistence.spi.AdvancedLoadWriteStore;
 import org.infinispan.persistence.spi.InitializationContext;
-import org.infinispan.persistence.spi.MarshalledEntry;
-import org.infinispan.persistence.MarshalledEntryImpl;
+import org.infinispan.marshall.core.MarshalledEntry;
+import org.infinispan.marshall.core.MarshalledEntryImpl;
 import org.infinispan.persistence.TaskContextImpl;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
@@ -408,7 +408,7 @@ public class SingleFileStore implements AdvancedLoadWriteStore {
          if (loadMetadata && fe.metadataLen > 0)
             metadataBb = factory.newByteBuffer(data, fe.keyLen + fe.dataLen, fe.metadataLen);
       }
-      return new MarshalledEntryImpl(keyBb, valueBb, metadataBb, ctx.getMarshaller());
+      return ctx.getMarshalledEntryFactory().newMarshalledEntry(keyBb, valueBb, metadataBb);
    }
 
    @Override

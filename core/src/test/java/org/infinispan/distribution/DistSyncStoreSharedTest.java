@@ -9,7 +9,7 @@ import org.infinispan.persistence.CacheLoaderException;
 import org.infinispan.persistence.dummy.DummyInMemoryStore;
 import org.infinispan.persistence.spi.CacheLoader;
 import org.infinispan.persistence.spi.CacheWriter;
-import org.infinispan.persistence.MarshalledEntryImpl;
+import org.infinispan.marshall.core.MarshalledEntryImpl;
 import org.infinispan.test.TestingUtil;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.Test;
