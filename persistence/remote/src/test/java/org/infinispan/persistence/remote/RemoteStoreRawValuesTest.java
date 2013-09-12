@@ -7,10 +7,11 @@ import org.infinispan.commons.marshall.StreamingMarshaller;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.container.InternalEntryFactoryImpl;
 import org.infinispan.eviction.EvictionStrategy;
+import org.infinispan.marshall.core.MarshalledEntryFactoryImpl;
 import org.infinispan.persistence.BaseStoreTest;
 import org.infinispan.persistence.CacheLoaderException;
 import org.infinispan.persistence.InitializationContextImpl;
-import org.infinispan.persistence.MarshalledEntryImpl;
+import org.infinispan.marshall.core.MarshalledEntryImpl;
 import org.infinispan.persistence.remote.configuration.RemoteStoreConfigurationBuilder;
 import org.infinispan.persistence.spi.AdvancedLoadWriteStore;
 import org.infinispan.manager.EmbeddedCacheManager;
@@ -61,7 +62,8 @@ public class RemoteStoreRawValuesTest extends BaseStoreTest {
 
       RemoteStore remoteStore = new RemoteStore();
       remoteStore.init(new InitializationContextImpl(storeConfigurationBuilder.create(), getCache(), getMarshaller(),
-                                                     new DefaultTimeService(), new ByteBufferFactoryImpl()));
+                                                     new DefaultTimeService(), new ByteBufferFactoryImpl(),
+                                                     new MarshalledEntryFactoryImpl(getMarshaller())));
       remoteStore.setInternalCacheEntryFactory(new InternalEntryFactoryImpl());
       remoteStore.start();
 

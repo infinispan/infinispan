@@ -1,16 +1,15 @@
 package org.infinispan.lucene.cachestore;
 
 import org.apache.lucene.store.FSDirectory;
+import org.infinispan.lucene.IndexScopedKey;
+import org.infinispan.lucene.cachestore.configuration.LuceneStoreConfiguration;
+import org.infinispan.lucene.logging.Log;
+import org.infinispan.marshall.core.MarshalledEntry;
 import org.infinispan.persistence.CacheLoaderException;
-import org.infinispan.persistence.MarshalledEntryImpl;
 import org.infinispan.persistence.PersistenceUtil;
 import org.infinispan.persistence.TaskContextImpl;
 import org.infinispan.persistence.spi.AdvancedCacheLoader;
 import org.infinispan.persistence.spi.InitializationContext;
-import org.infinispan.persistence.spi.MarshalledEntry;
-import org.infinispan.lucene.IndexScopedKey;
-import org.infinispan.lucene.cachestore.configuration.LuceneStoreConfiguration;
-import org.infinispan.lucene.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
 import java.io.File;
@@ -62,7 +61,7 @@ public class LuceneCacheLoader implements AdvancedCacheLoader {
          DirectoryLoaderAdaptor directoryAdaptor = getDirectory(indexKey);
          Object value = directoryAdaptor.load(indexKey);
          if (value != null) {
-            return new MarshalledEntryImpl(key, value, null, ctx.getMarshaller());
+            return ctx.getMarshalledEntryFactory().newMarshalledEntry(key, value, null);
          }
          else {
             return null;

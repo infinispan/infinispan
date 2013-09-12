@@ -19,6 +19,7 @@ import org.infinispan.factories.annotations.Start;
 import org.infinispan.factories.annotations.Stop;
 import org.infinispan.interceptors.CacheLoaderInterceptor;
 import org.infinispan.interceptors.CacheWriterInterceptor;
+import org.infinispan.marshall.core.MarshalledEntryFactory;
 import org.infinispan.persistence.CacheLoaderException;
 import org.infinispan.persistence.InitializationContextImpl;
 import org.infinispan.persistence.async.AdvancedAsyncCacheLoader;
@@ -30,11 +31,11 @@ import org.infinispan.persistence.spi.AdvancedCacheLoader;
 import org.infinispan.persistence.spi.AdvancedCacheWriter;
 import org.infinispan.persistence.spi.CacheLoader;
 import org.infinispan.persistence.spi.CacheWriter;
-import org.infinispan.persistence.spi.MarshalledEntry;
+import org.infinispan.marshall.core.MarshalledEntry;
 import org.infinispan.persistence.support.AdvancedSingletonCacheWriter;
 import org.infinispan.persistence.support.DelegatingCacheLoader;
 import org.infinispan.persistence.support.DelegatingCacheWriter;
-import org.infinispan.persistence.MarshalledEntryImpl;
+import org.infinispan.marshall.core.MarshalledEntryImpl;
 import org.infinispan.persistence.support.SingletonCacheWriter;
 import org.infinispan.metadata.InternalMetadataImpl;
 import org.infinispan.metadata.Metadata;
@@ -83,12 +84,13 @@ public class PersistenceManagerImpl implements PersistenceManager {
    volatile boolean enabled;
    private ExecutorService persistenceExecutor;
    private ByteBufferFactory byteBufferFactory;
+   private MarshalledEntryFactory marshalledEntryFactory;
 
    @Inject
    public void inject(AdvancedCache<Object, Object> cache, @ComponentName(CACHE_MARSHALLER) StreamingMarshaller marshaller,
                       Configuration configuration, InvocationContextContainer icc, TransactionManager transactionManager,
                       TimeService timeService, @ComponentName(PERSISTENCE_EXECUTOR) ExecutorService persistenceExecutor,
-                      ByteBufferFactory byteBufferFactory) {
+                      ByteBufferFactory byteBufferFactory, MarshalledEntryFactory marshalledEntryFactory) {
       this.cache = cache;
       this.m = marshaller;
       this.configuration = configuration;
@@ -97,6 +99,7 @@ public class PersistenceManagerImpl implements PersistenceManager {
       this.timeService = timeService;
       this.persistenceExecutor = persistenceExecutor;
       this.byteBufferFactory = byteBufferFactory;
+      this.marshalledEntryFactory = marshalledEntryFactory;
    }
 
    @Override
@@ -414,7 +417,7 @@ public class PersistenceManagerImpl implements PersistenceManager {
    }
 
    @Override
-   public void writeToAllStores(MarshalledEntryImpl marshalledEntry, boolean skipSharedStores) {
+   public void writeToAllStores(MarshalledEntry marshalledEntry, boolean skipSharedStores) {
       storesMutex.readLock().lock();
       try {
          for (CacheWriter w : writers) {
@@ -493,7 +496,8 @@ public class PersistenceManagerImpl implements PersistenceManager {
             }
          }
 
-         InitializationContextImpl ctx = new InitializationContextImpl(cfg, cache, m, timeService, byteBufferFactory);
+         InitializationContextImpl ctx = new InitializationContextImpl(cfg, cache, m, timeService, byteBufferFactory,
+                                                                       marshalledEntryFactory);
          if (loader != null) {
             loader.init(ctx);
             loaders.add(loader);

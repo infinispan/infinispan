@@ -1,13 +1,15 @@
 package org.infinispan.stress;
 
+import org.infinispan.commons.io.ByteBufferFactoryImpl;
 import org.infinispan.commons.marshall.StreamingMarshaller;
 import org.infinispan.container.InternalEntryFactory;
 import org.infinispan.container.InternalEntryFactoryImpl;
 import org.infinispan.container.entries.InternalCacheEntry;
+import org.infinispan.marshall.core.MarshalledEntryFactoryImpl;
+import org.infinispan.persistence.DummyInitializationContext;
 import org.infinispan.persistence.async.AdvancedAsyncCacheLoader;
 import org.infinispan.persistence.async.AdvancedAsyncCacheWriter;
 import org.infinispan.persistence.CacheLoaderException;
-import org.infinispan.persistence.DummyLoaderContext;
 import org.infinispan.persistence.PersistenceUtil;
 import org.infinispan.persistence.dummy.DummyInMemoryStore;
 import org.infinispan.persistence.dummy.DummyInMemoryStoreConfiguration;
@@ -15,7 +17,7 @@ import org.infinispan.persistence.dummy.DummyInMemoryStoreConfigurationBuilder;
 import org.infinispan.persistence.spi.AdvancedCacheLoader;
 import org.infinispan.persistence.spi.AdvancedCacheWriter;
 import org.infinispan.persistence.spi.CacheLoader;
-import org.infinispan.persistence.spi.MarshalledEntry;
+import org.infinispan.marshall.core.MarshalledEntry;
 import org.infinispan.persistence.support.DelegatingCacheLoader;
 import org.infinispan.marshall.TestObjectStreamMarshaller;
 import org.infinispan.metadata.EmbeddedMetadata;
@@ -96,7 +98,7 @@ public class AsyncStoreStressTest {
    private AdvancedAsyncCacheWriter createAsyncStore() throws CacheLoaderException {
       DummyInMemoryStore backendStore = createBackendStore("async2");
       AdvancedAsyncCacheWriter store = new AdvancedAsyncCacheWriter(backendStore);
-      store.init(new DummyLoaderContext() {
+      store.init(new DummyInitializationContext() {
          @Override
          public StreamingMarshaller getMarshaller() {
             return marshaller();
@@ -118,7 +120,8 @@ public class AsyncStoreStressTest {
                .addStore(DummyInMemoryStoreConfigurationBuilder.class)
                   .storeName(storeName)
                   .create();
-      store.init(new DummyLoaderContext(dummyConfiguration, null, marshaller()));
+      store.init(new DummyInitializationContext(dummyConfiguration, null, marshaller(), new ByteBufferFactoryImpl(),
+                                                new MarshalledEntryFactoryImpl(marshaller())));
       store.start();
       return store;
    }

@@ -7,14 +7,14 @@ import org.infinispan.commons.marshall.StreamingMarshaller;
 import org.infinispan.commons.util.InfinispanCollections;
 import org.infinispan.commons.util.Util;
 import org.infinispan.commons.util.concurrent.jdk8backported.EquivalentConcurrentHashMapV8;
-import org.infinispan.persistence.MarshalledEntryImpl;
+import org.infinispan.marshall.core.MarshalledEntryImpl;
 import org.infinispan.persistence.TaskContextImpl;
 import org.infinispan.metadata.InternalMetadata;
 import org.infinispan.persistence.spi.AdvancedCacheLoader;
 import org.infinispan.persistence.spi.AdvancedCacheWriter;
 import org.infinispan.persistence.spi.AdvancedLoadWriteStore;
 import org.infinispan.persistence.spi.InitializationContext;
-import org.infinispan.persistence.spi.MarshalledEntry;
+import org.infinispan.marshall.core.MarshalledEntry;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.util.KeyValuePair;
 import org.infinispan.util.logging.Log;
@@ -296,7 +296,7 @@ public class DummyInMemoryStore implements AdvancedLoadWriteStore {
          if (b == null)
             return null;
          KeyValuePair<Object, InternalMetadata> keyValuePair = (KeyValuePair<Object, InternalMetadata>) marshaller.objectFromByteBuffer(b);
-         return new MarshalledEntryImpl(key, keyValuePair.getKey(), keyValuePair.getValue(), ctx.getMarshaller());
+         return ctx.getMarshalledEntryFactory().newMarshalledEntry(key, keyValuePair.getKey(), keyValuePair.getValue());
       } catch (IOException e) {
          throw new CacheException(e);
       } catch (ClassNotFoundException e) {

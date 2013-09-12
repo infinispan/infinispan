@@ -1,12 +1,11 @@
-package org.infinispan.persistence;
+package org.infinispan.marshall.core;
 
 import org.infinispan.commons.io.ByteBuffer;
 import org.infinispan.commons.marshall.AbstractExternalizer;
 import org.infinispan.commons.marshall.StreamingMarshaller;
 import org.infinispan.commons.util.Util;
-import org.infinispan.persistence.spi.MarshalledEntry;
-import org.infinispan.marshall.core.Ids;
 import org.infinispan.metadata.InternalMetadata;
+import org.infinispan.persistence.CacheLoaderException;
 
 import java.io.IOException;
 import java.io.ObjectInput;

@@ -1,6 +1,7 @@
 package org.infinispan.persistence.spi;
 
 import net.jcip.annotations.ThreadSafe;
+import org.infinispan.marshall.core.MarshalledEntry;
 
 import java.util.concurrent.Executor;
 
@@ -16,7 +17,7 @@ public interface AdvancedCacheLoader<K, V> extends CacheLoader<K, V> {
 
    /**
     * Iterates in parallel over the entries in the storage using the threads from the <b>executor</b> pool. For each
-    * entry the {@link CacheLoaderTask#processEntry(MarshalledEntry, TaskContext)} is invoked. Before passing an entry
+    * entry the {@link CacheLoaderTask#processEntry(org.infinispan.marshall.core.MarshalledEntry, TaskContext)} is invoked. Before passing an entry
     * to the callback task, the entry should be validated against the <b>filter</b>. The method should only return once
     * the iteration is complete.
     *
@@ -45,7 +46,7 @@ public interface AdvancedCacheLoader<K, V> extends CacheLoader<K, V> {
    interface CacheLoaderTask<K, V> {
 
       /**
-       * @param marshalledEntry an iterated entry. Note that {@link org.infinispan.persistence.spi.MarshalledEntry#getValue()}
+       * @param marshalledEntry an iterated entry. Note that {@link org.infinispan.marshall.core.MarshalledEntry#getValue()}
        *                        might be null if the fetchValue parameter passed to {@link AdvancedCacheLoader#process(KeyFilter,
        *                        org.infinispan.persistence.spi.AdvancedCacheLoader.CacheLoaderTask,
        *                        java.util.concurrent.Executor, boolean, boolean)} is false.

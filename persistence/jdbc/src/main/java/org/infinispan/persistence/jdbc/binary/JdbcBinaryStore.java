@@ -14,7 +14,7 @@ import org.infinispan.persistence.jdbc.connectionfactory.ManagedConnectionFactor
 import org.infinispan.persistence.jdbc.logging.Log;
 import org.infinispan.persistence.spi.AdvancedLoadWriteStore;
 import org.infinispan.persistence.spi.InitializationContext;
-import org.infinispan.persistence.spi.MarshalledEntry;
+import org.infinispan.marshall.core.MarshalledEntry;
 import org.infinispan.persistence.support.Bucket;
 import org.infinispan.metadata.InternalMetadata;
 import org.infinispan.util.concurrent.locks.StripedLock;

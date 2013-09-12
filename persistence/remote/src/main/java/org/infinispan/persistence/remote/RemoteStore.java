@@ -14,7 +14,6 @@ import org.infinispan.commons.util.Util;
 import org.infinispan.container.InternalEntryFactory;
 import org.infinispan.container.versioning.NumericVersion;
 import org.infinispan.persistence.CacheLoaderException;
-import org.infinispan.persistence.MarshalledEntryImpl;
 import org.infinispan.persistence.TaskContextImpl;
 import org.infinispan.persistence.remote.configuration.ConnectionPoolConfiguration;
 import org.infinispan.persistence.remote.configuration.RemoteStoreConfiguration;
@@ -23,7 +22,7 @@ import org.infinispan.persistence.remote.logging.Log;
 import org.infinispan.persistence.remote.wrapper.HotRodEntryMarshaller;
 import org.infinispan.persistence.spi.AdvancedLoadWriteStore;
 import org.infinispan.persistence.spi.InitializationContext;
-import org.infinispan.persistence.spi.MarshalledEntry;
+import org.infinispan.marshall.core.MarshalledEntry;
 import org.infinispan.metadata.EmbeddedMetadata;
 import org.infinispan.metadata.InternalMetadata;
 import org.infinispan.metadata.InternalMetadataImpl;
@@ -109,9 +108,8 @@ public class RemoteStore implements AdvancedLoadWriteStore {
                   .maxIdle(value.getMaxIdle(), TimeUnit.SECONDS).build();
             long created = value.getCreated();
             long lastUsed = value.getLastUsed();
-            return new MarshalledEntryImpl(key, value.getValue(),
-                                    new InternalMetadataImpl(metadata, created, lastUsed),
-                                    ctx.getMarshaller());
+            return ctx.getMarshalledEntryFactory().newMarshalledEntry(key, value.getValue(),
+                                    new InternalMetadataImpl(metadata, created, lastUsed));
          } else {
             return null;
          }

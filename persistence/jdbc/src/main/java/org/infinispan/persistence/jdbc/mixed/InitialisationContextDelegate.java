@@ -4,6 +4,7 @@ import org.infinispan.Cache;
 import org.infinispan.commons.io.ByteBufferFactory;
 import org.infinispan.commons.marshall.StreamingMarshaller;
 import org.infinispan.configuration.cache.StoreConfiguration;
+import org.infinispan.marshall.core.MarshalledEntryFactory;
 import org.infinispan.persistence.spi.InitializationContext;
 import org.infinispan.util.TimeService;
 
@@ -19,12 +20,10 @@ public class InitialisationContextDelegate implements InitializationContext {
 
    private final StoreConfiguration storeConfiguration;
 
-   private final ByteBufferFactory byteBufferFactory;
 
-   public InitialisationContextDelegate(InitializationContext actual, StoreConfiguration storeConfiguration, ByteBufferFactory bbf) {
+   public InitialisationContextDelegate(InitializationContext actual, StoreConfiguration storeConfiguration) {
       this.actual = actual;
       this.storeConfiguration = storeConfiguration;
-      this.byteBufferFactory = bbf;
    }
 
    @Override
@@ -49,6 +48,11 @@ public class InitialisationContextDelegate implements InitializationContext {
 
    @Override
    public ByteBufferFactory getByteBufferFactory() {
-      return byteBufferFactory;
+      return actual.getByteBufferFactory();
+   }
+
+   @Override
+   public MarshalledEntryFactory getMarshalledEntryFactory() {
+      return actual.getMarshalledEntryFactory();
    }
 }

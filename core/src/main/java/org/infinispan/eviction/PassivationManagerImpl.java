@@ -11,9 +11,11 @@ import org.infinispan.factories.annotations.ComponentName;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.annotations.Start;
 import org.infinispan.factories.annotations.Stop;
+import org.infinispan.marshall.core.MarshalledEntry;
+import org.infinispan.marshall.core.MarshalledEntryFactory;
 import org.infinispan.persistence.CacheLoaderException;
 import org.infinispan.persistence.manager.PersistenceManager;
-import org.infinispan.persistence.MarshalledEntryImpl;
+import org.infinispan.marshall.core.MarshalledEntryImpl;
 import org.infinispan.notifications.cachelistener.CacheNotifier;
 import org.infinispan.util.TimeService;
 import org.infinispan.util.logging.Log;
@@ -38,17 +40,17 @@ public class PassivationManagerImpl implements PassivationManager {
    private DataContainer container;
    private TimeService timeService;
    private static final boolean trace = log.isTraceEnabled();
-   private StreamingMarshaller marshaller;
+   private MarshalledEntryFactory marshalledEntryFactory;
 
    @Inject
    public void inject(PersistenceManager persistenceManager, CacheNotifier notifier, Configuration cfg, DataContainer container,
-                      TimeService timeService, @ComponentName(CACHE_MARSHALLER) StreamingMarshaller marshaller) {
+                      TimeService timeService, MarshalledEntryFactory marshalledEntryFactory) {
       this.persistenceManager = persistenceManager;
       this.notifier = notifier;
       this.cfg = cfg;
       this.container = container;
       this.timeService = timeService;
-      this.marshaller = marshaller;
+      this.marshalledEntryFactory = marshalledEntryFactory;
    }
 
    @Start(priority = 12)
@@ -73,8 +75,8 @@ public class PassivationManagerImpl implements PassivationManager {
                ImmutableContext.INSTANCE, null);
          if (trace) log.tracef("Passivating entry %s", key);
          try {
-            MarshalledEntryImpl marshalledEntry = new MarshalledEntryImpl(entry.getKey(), entry.getValue(),
-                                                                          internalMetadata(entry), marshaller);
+            MarshalledEntry marshalledEntry = marshalledEntryFactory.newMarshalledEntry(entry.getKey(), entry.getValue(),
+                                                                                        internalMetadata(entry));
             persistenceManager.writeToAllStores(marshalledEntry, false);
             if (statsEnabled) passivations.getAndIncrement();
          } catch (CacheException e) {
@@ -93,8 +95,8 @@ public class PassivationManagerImpl implements PassivationManager {
          log.passivatingAllEntries();
          for (InternalCacheEntry e : container) {
             if (trace) log.tracef("Passivating %s", e.getKey());
-            persistenceManager.writeToAllStores(new MarshalledEntryImpl(e.getKey(), e.getValue(),
-                                                                        internalMetadata(e), marshaller), false);
+            persistenceManager.writeToAllStores(marshalledEntryFactory.newMarshalledEntry(e.getKey(), e.getValue(),
+                                                                        internalMetadata(e)), false);
          }
          log.passivatedEntries(container.size(),
                                Util.prettyPrintTime(timeService.timeDuration(start, TimeUnit.MILLISECONDS)));

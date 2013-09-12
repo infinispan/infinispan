@@ -3,6 +3,7 @@ package org.infinispan.persistence.jdbc.stringbased;
 import org.infinispan.Cache;
 import org.infinispan.commons.io.ByteBufferFactoryImpl;
 import org.infinispan.configuration.cache.StoreConfiguration;
+import org.infinispan.marshall.core.MarshalledEntryFactoryImpl;
 import org.infinispan.persistence.CacheLoaderException;
 import org.infinispan.persistence.InitializationContextImpl;
 import org.infinispan.persistence.jdbc.ManagedConnectionFactoryTest;
@@ -37,7 +38,8 @@ public class StringStoreWithManagedConnectionTest extends ManagedConnectionFacto
 
       JdbcStringBasedStore stringBasedCacheStore = new JdbcStringBasedStore();
       stringBasedCacheStore.init(new InitializationContextImpl(storeBuilder.create(), getCache(), getMarshaller(),
-                                                               new DefaultTimeService(), new ByteBufferFactoryImpl()));
+                                                               new DefaultTimeService(), new ByteBufferFactoryImpl(),
+                                                               new MarshalledEntryFactoryImpl(getMarshaller())));
       stringBasedCacheStore.start();
       return stringBasedCacheStore;
    }

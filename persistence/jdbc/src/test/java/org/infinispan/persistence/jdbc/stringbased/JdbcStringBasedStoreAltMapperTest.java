@@ -4,9 +4,10 @@ import org.infinispan.commons.io.ByteBufferFactoryImpl;
 import org.infinispan.commons.marshall.StreamingMarshaller;
 import org.infinispan.commons.util.ReflectionUtil;
 import org.infinispan.container.entries.InternalCacheEntry;
+import org.infinispan.marshall.core.MarshalledEntryFactoryImpl;
 import org.infinispan.persistence.CacheLoaderException;
 import org.infinispan.persistence.InitializationContextImpl;
-import org.infinispan.persistence.MarshalledEntryImpl;
+import org.infinispan.marshall.core.MarshalledEntryImpl;
 import org.infinispan.persistence.jdbc.TableManipulation;
 import org.infinispan.persistence.jdbc.TableName;
 import org.infinispan.persistence.jdbc.configuration.JdbcStringBasedStoreConfigurationBuilder;
@@ -53,7 +54,7 @@ public class JdbcStringBasedStoreAltMapperTest {
       UnitTestDatabaseManager.configureUniqueConnectionFactory(storeBuilder);
       cacheStore = new JdbcStringBasedStore();
       cacheStore.init(new InitializationContextImpl(storeBuilder.create(), mockCache(getClass().getName()), getMarshaller(),
-                                                    new DefaultTimeService(), new ByteBufferFactoryImpl()));
+                                                    new DefaultTimeService(), new ByteBufferFactoryImpl(), new MarshalledEntryFactoryImpl(getMarshaller())));
       cacheStore.start();
       tableManipulation = (TableManipulation) ReflectionUtil.getValue(cacheStore, "tableManipulation");
    }

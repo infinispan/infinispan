@@ -1,9 +1,11 @@
 package org.infinispan.persistence.file;
 
+import org.infinispan.commons.io.ByteBufferFactoryImpl;
 import org.infinispan.configuration.cache.SingleFileStoreConfiguration;
 import org.infinispan.configuration.cache.SingleFileStoreConfigurationBuilder;
+import org.infinispan.marshall.core.MarshalledEntryFactoryImpl;
 import org.infinispan.persistence.BaseStoreTest;
-import org.infinispan.persistence.DummyLoaderContext;
+import org.infinispan.persistence.DummyInitializationContext;
 import org.infinispan.persistence.spi.AdvancedLoadWriteStore;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
@@ -45,7 +47,8 @@ public class SingleFileStoreTest extends BaseStoreTest {
                .addStore(SingleFileStoreConfigurationBuilder.class)
                   .location(this.tmpDirectory)
                   .create();
-      store.init(new DummyLoaderContext(fileStoreConfiguration, getCache(), getMarshaller()));
+      store.init(new DummyInitializationContext(fileStoreConfiguration, getCache(), getMarshaller(), new ByteBufferFactoryImpl(),
+                                                new MarshalledEntryFactoryImpl(getMarshaller())));
       store.start();
       return store;
    }

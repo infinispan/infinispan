@@ -4,10 +4,11 @@ import org.infinispan.Cache;
 import org.infinispan.commons.io.ByteBufferFactoryImpl;
 import org.infinispan.commons.marshall.StreamingMarshaller;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
+import org.infinispan.marshall.core.MarshalledEntryFactoryImpl;
 import org.infinispan.persistence.BaseStoreTest;
 import org.infinispan.persistence.CacheLoaderException;
 import org.infinispan.persistence.InitializationContextImpl;
-import org.infinispan.persistence.MarshalledEntryImpl;
+import org.infinispan.marshall.core.MarshalledEntryImpl;
 import org.infinispan.persistence.jdbc.TableManipulation;
 import org.infinispan.persistence.jdbc.configuration.JdbcBinaryStoreConfigurationBuilder;
 import org.infinispan.persistence.jdbc.connectionfactory.ConnectionFactory;
@@ -84,7 +85,9 @@ public class JdbcBinaryStoreTest extends BaseStoreTest {
       storeBuilder.table().createOnStart(false);
 
       JdbcBinaryStore jdbcBucketCacheStore = new JdbcBinaryStore();
-      jdbcBucketCacheStore.init(new InitializationContextImpl(storeBuilder.create(), getCache(), getMarshaller(), new DefaultTimeService(), new ByteBufferFactoryImpl()));
+      jdbcBucketCacheStore.init(new InitializationContextImpl(storeBuilder.create(), getCache(), getMarshaller(),
+                                                              new DefaultTimeService(), new ByteBufferFactoryImpl(),
+                                                              new MarshalledEntryFactoryImpl(getMarshaller())));
       jdbcBucketCacheStore.start();
       assert jdbcBucketCacheStore.getConnectionFactory() == null;
 

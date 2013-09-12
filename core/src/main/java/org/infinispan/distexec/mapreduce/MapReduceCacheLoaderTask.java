@@ -1,7 +1,7 @@
 package org.infinispan.distexec.mapreduce;
 
 import org.infinispan.persistence.spi.AdvancedCacheLoader;
-import org.infinispan.persistence.spi.MarshalledEntry;
+import org.infinispan.marshall.core.MarshalledEntry;
 import org.infinispan.marshall.core.MarshalledValue;
 
 /**
