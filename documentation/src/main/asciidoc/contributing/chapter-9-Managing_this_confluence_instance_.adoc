@@ -1,8 +1,0 @@
-[[sid-68355157_ContributingtoInfinispan-Managingthisconfluenceinstance.]]
-
-==  Managing this confluence instance.
-
- On a minor release we clone this space to a versioned name (e.g. ISPN51), leaving the ISPN space available for development in HEAD. To do this, visit _Browse_ -&gt; _Space Admin_ and choose _Permissions_ and make sure you have _Space Admin_ and _Space Export_ permissions. Then, visit _Copy Space_ , and fill in the name (e.g. Infinispan 5.1) and key (e.g. ISPN51). Make sure all the boxes are checked, and click Save. 
-
- Finally, you'll need to update the name of the ISPN space to reflect the minor version of the development in HEAD (e.g. Infinispan 5.2). You can do this in _Space Details_ . 
-
