@@ -9,7 +9,7 @@ import org.infinispan.commons.configuration.Builder;
  * @author Tristan Tarrant
  * @since 5.2
  */
-public class ConnectionPoolConfigurationBuilder extends AbstractRemoteStoreConfigurationChildBuilder<RemoteCacheStoreConfigurationBuilder> implements
+public class ConnectionPoolConfigurationBuilder extends AbstractRemoteStoreConfigurationChildBuilder<RemoteStoreConfigurationBuilder> implements
       Builder<ConnectionPoolConfiguration> {
    private ExhaustedAction exhaustedAction = ExhaustedAction.WAIT;
    private int maxActive = -1;
@@ -20,7 +20,7 @@ public class ConnectionPoolConfigurationBuilder extends AbstractRemoteStoreConfi
    private long minEvictableIdleTime = 1800000;
    private boolean testWhileIdle = true;
 
-   ConnectionPoolConfigurationBuilder(RemoteCacheStoreConfigurationBuilder builder) {
+   ConnectionPoolConfigurationBuilder(RemoteStoreConfigurationBuilder builder) {
       super(builder);
    }
 

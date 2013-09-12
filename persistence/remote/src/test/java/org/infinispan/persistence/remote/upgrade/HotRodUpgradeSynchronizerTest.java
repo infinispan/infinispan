@@ -7,7 +7,7 @@ import org.infinispan.client.hotrod.TestHelper;
 import org.infinispan.client.hotrod.test.HotRodClientTestingUtil;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.context.Flag;
-import org.infinispan.persistence.remote.configuration.RemoteCacheStoreConfigurationBuilder;
+import org.infinispan.persistence.remote.configuration.RemoteStoreConfigurationBuilder;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.server.hotrod.HotRodServer;
 import org.infinispan.test.AbstractInfinispanTest;
@@ -45,7 +45,7 @@ public class HotRodUpgradeSynchronizerTest extends AbstractInfinispanTest {
       sourceServer = TestHelper.startHotRodServer(sourceContainer);
 
       ConfigurationBuilder targetConfigurationBuilder = TestCacheManagerFactory.getDefaultCacheConfiguration(false);
-      targetConfigurationBuilder.persistence().addStore(RemoteCacheStoreConfigurationBuilder.class).hotRodWrapping(true).addServer().host("localhost").port(sourceServer.getPort());
+      targetConfigurationBuilder.persistence().addStore(RemoteStoreConfigurationBuilder.class).hotRodWrapping(true).addServer().host("localhost").port(sourceServer.getPort());
 
       targetContainer = TestCacheManagerFactory
             .createCacheManager(hotRodCacheConfiguration(targetConfigurationBuilder));

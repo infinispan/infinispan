@@ -8,10 +8,10 @@ import org.infinispan.configuration.cache.AsyncStoreConfiguration;
 import org.infinispan.configuration.cache.PersistenceConfigurationBuilder;
 import org.infinispan.configuration.cache.SingletonStoreConfiguration;
 import org.infinispan.container.entries.InternalCacheEntry;
+import org.infinispan.persistence.BaseStoreTest;
 import org.infinispan.persistence.MarshalledEntryImpl;
 import org.infinispan.persistence.async.AdvancedAsyncCacheLoader;
 import org.infinispan.persistence.async.AdvancedAsyncCacheWriter;
-import org.infinispan.persistence.BaseCacheStoreTest;
 import org.infinispan.persistence.DummyLoaderContext;
 import org.infinispan.persistence.dummy.DummyInMemoryStore;
 import org.infinispan.persistence.dummy.DummyInMemoryStoreConfiguration;
@@ -495,6 +495,6 @@ public class AsyncStoreTest extends AbstractInfinispanTest {
    }
 
    private Cache getCache() {
-      return BaseCacheStoreTest.mockCache(getClass().getName());
+      return BaseStoreTest.mockCache(getClass().getName());
    }
 }

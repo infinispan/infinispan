@@ -1,6 +1,6 @@
 package org.infinispan.persistence.jdbc.stringbased;
 
-import org.infinispan.persistence.BaseCacheStoreTest;
+import org.infinispan.persistence.BaseStoreTest;
 import org.infinispan.persistence.CacheLoaderException;
 import org.infinispan.persistence.InitializationContextImpl;
 import org.infinispan.persistence.jdbc.TableManipulation;
@@ -22,7 +22,7 @@ import static org.mockito.Mockito.reset;
  * @author Mircea.Markus@jboss.com
  */
 @Test(groups = "functional", testName = "persistence.jdbc.stringbased.JdbcStringBasedStoreTest")
-public class JdbcStringBasedStoreTest extends BaseCacheStoreTest {
+public class JdbcStringBasedStoreTest extends BaseStoreTest {
 
    @Override
    protected AdvancedLoadWriteStore createStore() throws Exception {

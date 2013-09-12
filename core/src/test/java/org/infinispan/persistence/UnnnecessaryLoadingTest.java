@@ -51,7 +51,7 @@ public class UnnnecessaryLoadingTest extends SingleCacheManagerTest {
       cfg
          .invocationBatching().enable()
          .persistence()
-            .addStore(CountingCacheStoreConfigurationBuilder.class)
+            .addStore(CountingStoreConfigurationBuilder.class)
          .persistence()
             .addStore(DummyInMemoryStoreConfigurationBuilder.class);
       return TestCacheManagerFactory.createCacheManager(cfg);
@@ -230,28 +230,28 @@ public class UnnnecessaryLoadingTest extends SingleCacheManagerTest {
       }
    }
 
-   @BuiltBy(CountingCacheStoreConfigurationBuilder.class)
+   @BuiltBy(CountingStoreConfigurationBuilder.class)
    @ConfigurationFor(CountingStore.class)
-   public static class CountingCacheStoreConfiguration extends AbstractStoreConfiguration {
+   public static class CountingStoreConfiguration extends AbstractStoreConfiguration {
 
-      public CountingCacheStoreConfiguration(boolean purgeOnStartup, boolean fetchPersistentState, boolean ignoreModifications, AsyncStoreConfiguration async, SingletonStoreConfiguration singletonStore, boolean preload, boolean shared, Properties properties) {
+      public CountingStoreConfiguration(boolean purgeOnStartup, boolean fetchPersistentState, boolean ignoreModifications, AsyncStoreConfiguration async, SingletonStoreConfiguration singletonStore, boolean preload, boolean shared, Properties properties) {
          super(purgeOnStartup, fetchPersistentState, ignoreModifications, async, singletonStore, preload, shared, properties);
       }
    }
 
-   public static class CountingCacheStoreConfigurationBuilder extends AbstractStoreConfigurationBuilder<CountingCacheStoreConfiguration, CountingCacheStoreConfigurationBuilder> {
+   public static class CountingStoreConfigurationBuilder extends AbstractStoreConfigurationBuilder<CountingStoreConfiguration, CountingStoreConfigurationBuilder> {
 
-      public CountingCacheStoreConfigurationBuilder(PersistenceConfigurationBuilder builder) {
+      public CountingStoreConfigurationBuilder(PersistenceConfigurationBuilder builder) {
          super(builder);
       }
 
       @Override
-      public CountingCacheStoreConfiguration create() {
-         return new CountingCacheStoreConfiguration(purgeOnStartup, fetchPersistentState, ignoreModifications, async.create(), singletonStore.create(), preload, shared, properties);
+      public CountingStoreConfiguration create() {
+         return new CountingStoreConfiguration(purgeOnStartup, fetchPersistentState, ignoreModifications, async.create(), singletonStore.create(), preload, shared, properties);
       }
 
       @Override
-      public Builder<?> read(CountingCacheStoreConfiguration template) {
+      public Builder<?> read(CountingStoreConfiguration template) {
          // AbstractStore-specific configuration
          fetchPersistentState = template.fetchPersistentState();
          ignoreModifications = template.ignoreModifications();
@@ -263,7 +263,7 @@ public class UnnnecessaryLoadingTest extends SingleCacheManagerTest {
       }
 
       @Override
-      public CountingCacheStoreConfigurationBuilder self() {
+      public CountingStoreConfigurationBuilder self() {
          return this;
       }
 

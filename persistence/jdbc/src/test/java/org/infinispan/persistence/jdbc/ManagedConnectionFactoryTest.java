@@ -1,6 +1,6 @@
 package org.infinispan.persistence.jdbc;
 
-import org.infinispan.persistence.BaseCacheStoreTest;
+import org.infinispan.persistence.BaseStoreTest;
 import org.infinispan.persistence.CacheLoaderException;
 import org.infinispan.persistence.jdbc.configuration.JdbcStringBasedStoreConfigurationBuilder;
 import org.infinispan.persistence.jdbc.connectionfactory.SimpleConnectionFactory;
@@ -24,7 +24,7 @@ import java.util.logging.Logger;
  * @author Mircea.Markus@jboss.com
  */
 @Test(groups = "functional", testName = "persistence.jdbc.ManagedConnectionFactoryTest")
-public abstract class ManagedConnectionFactoryTest extends BaseCacheStoreTest {
+public abstract class ManagedConnectionFactoryTest extends BaseStoreTest {
 
    private DummyDataSource ds;
 

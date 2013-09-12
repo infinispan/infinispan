@@ -38,7 +38,7 @@ public class FlagsEnabledTest extends MultipleCacheManagersTest {
       builder
             .locking().writeSkewCheck(true).isolationLevel(IsolationLevel.REPEATABLE_READ)
             .versioning().enable().scheme(VersioningScheme.SIMPLE)
-            .persistence().addStore(UnnnecessaryLoadingTest.CountingCacheStoreConfigurationBuilder.class)
+            .persistence().addStore(UnnnecessaryLoadingTest.CountingStoreConfigurationBuilder.class)
             .persistence().addStore(DummyInMemoryStoreConfigurationBuilder.class)
             .transaction().syncCommitPhase(true);
       createClusteredCaches(2, "replication", builder);

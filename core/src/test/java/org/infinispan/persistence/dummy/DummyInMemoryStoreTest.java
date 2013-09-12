@@ -1,16 +1,14 @@
 package org.infinispan.persistence.dummy;
 
-import org.infinispan.persistence.BaseCacheStoreTest;
-import org.infinispan.persistence.BaseCacheStoreTest;
+import org.infinispan.persistence.BaseStoreTest;
 import org.infinispan.persistence.CacheLoaderException;
-import org.infinispan.persistence.DummyLoaderContext;
 import org.infinispan.persistence.DummyLoaderContext;
 import org.infinispan.persistence.spi.AdvancedLoadWriteStore;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.testng.annotations.Test;
 
 @Test(groups = "unit", testName = "persistence.dummy.DummyInMemoryStoreTest")
-public class DummyInMemoryStoreTest extends BaseCacheStoreTest {
+public class DummyInMemoryStoreTest extends BaseStoreTest {
 
    @Override
    protected AdvancedLoadWriteStore createStore() throws CacheLoaderException {

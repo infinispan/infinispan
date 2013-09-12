@@ -4,7 +4,7 @@ import org.infinispan.client.hotrod.TestHelper;
 import org.infinispan.client.hotrod.test.HotRodClientTestingUtil;
 import org.infinispan.commons.marshall.StreamingMarshaller;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
-import org.infinispan.configuration.global.GlobalConfigurationBuilder;
+import org.infinispan.container.InternalEntryFactoryImpl;
 import org.infinispan.eviction.EvictionStrategy;
 import org.infinispan.persistence.BaseStoreTest;
 import org.infinispan.persistence.CacheLoaderException;
@@ -23,12 +23,14 @@ import org.testng.annotations.Test;
 import static org.infinispan.server.hotrod.test.HotRodTestingUtil.hotRodCacheConfiguration;
 import static org.infinispan.test.TestingUtil.internalMetadata;
 
+
 /**
  * @author Mircea.Markus@jboss.com
- * @since 4.1
+ * @author Tristan Tarrant
+ * @since 5.2
  */
-@Test(testName = "persistence.remote.RemoteStoreTest", groups = "functional")
-public class RemoteStoreTest extends BaseStoreTest {
+@Test(testName = "persistence.remote.RemoteStoreRawValuesTest", groups = "functional")
+public class RemoteStoreRawValuesTest extends BaseStoreTest {
 
    private static final String REMOTE_CACHE = "remote-cache";
    private EmbeddedCacheManager localCacheManager;
@@ -40,11 +42,8 @@ public class RemoteStoreTest extends BaseStoreTest {
       cb.eviction().maxEntries(100).strategy(EvictionStrategy.UNORDERED)
             .expiration().wakeUpInterval(10L);
 
-      GlobalConfigurationBuilder globalConfig = new GlobalConfigurationBuilder().nonClusteredDefault();
-      globalConfig.globalJmxStatistics().allowDuplicateDomains(true);
+      localCacheManager = TestCacheManagerFactory.createCacheManager(hotRodCacheConfiguration(cb));
 
-      localCacheManager = TestCacheManagerFactory.createCacheManager(
-            globalConfig, hotRodCacheConfiguration(cb));
       localCacheManager.getCache(REMOTE_CACHE);
       hrServer = TestHelper.startHotRodServer(localCacheManager);
 
@@ -52,15 +51,18 @@ public class RemoteStoreTest extends BaseStoreTest {
             .getDefaultCacheConfiguration(false)
             .persistence()
                .addStore(RemoteStoreConfigurationBuilder.class)
-               .remoteCacheName(REMOTE_CACHE);
+                  .rawValues(true)
+                  .remoteCacheName(REMOTE_CACHE);
       storeConfigurationBuilder
-               .addServer()
-                  .host(hrServer.getHost())
-                  .port(hrServer.getPort());
+                  .addServer()
+                     .host(hrServer.getHost())
+                     .port(hrServer.getPort());
 
       RemoteStore remoteStore = new RemoteStore();
-      remoteStore.init(new InitializationContextImpl(storeConfigurationBuilder.create(), getCache(),getMarshaller(), new DefaultTimeService()));
+      remoteStore.init(new InitializationContextImpl(storeConfigurationBuilder.create(), getCache(), getMarshaller(), new DefaultTimeService()));
+      remoteStore.setInternalCacheEntryFactory(new InternalEntryFactoryImpl());
       remoteStore.start();
+
       return remoteStore;
    }
 
@@ -96,6 +98,10 @@ public class RemoteStoreTest extends BaseStoreTest {
    }
 
    @Override
+   public void testLoadAll() throws CacheLoaderException {
+   }
+
+   @Override
    public void testReplaceExpiredEntry() throws Exception {
       cl.write(new MarshalledEntryImpl("k1", "v1", internalMetadata(100l, null), getMarshaller()));
       // Hot Rod does not support milliseconds, so 100ms is rounded to the nearest second,
@@ -106,11 +112,5 @@ public class RemoteStoreTest extends BaseStoreTest {
       cl.write(new MarshalledEntryImpl("k1", "v2", internalMetadata(100l, null), getMarshaller()));
       assert cl.load("k1").getValue().equals("v2") || TestingUtil.moreThanDurationElapsed(start, 100);
    }
-
-   @Override
-   public void testStoreAndRemove() throws CacheLoaderException {
-      super.testStoreAndRemove();    // TODO: Customise this generated block
-   }
 }
-
 
