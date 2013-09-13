@@ -1,6 +1,3 @@
-[[sid-68355130_GettingStartedGuide-UsingInfinispaninJBossAS7]]
-
 ==  Using Infinispan in JBoss AS 7
-
-TODO
+*TODO*
 

@@ -1,263 +1,148 @@
-[[sid-68355130_GettingStartedGuide-UsingInfinispanasanembeddedcacheinJavaSE]]
-
 ==  Using Infinispan as an embedded cache in Java SE
-
 Running Infinispan in embedded mode is very easy. First, we'll set up a project, and then we'll run Infinispan, and start adding data.
 
-
-[TIP]
 .embedded-cache quickstart
-==== 
- All the code discussed in this tutorial is available in the link:$$https://github.com/infinispan/infinispan-quickstart/tree/master/embedded-cache$$[embedded-cache quickstart] . 
-
-
-==== 
-
-
-[[sid-68355130_GettingStartedGuide-CreatinganewInfinispanproject]]
-
+TIP: All the code discussed in this tutorial is available in the link:$$https://github.com/infinispan/infinispan-quickstart/tree/master/embedded-cache$$[embedded-cache quickstart].
 
 === Creating a new Infinispan project
+The only thing you need to set up Infinispan is add it's dependencies to your project.
 
-The only thing you need to set up Infinispan is add it's dependencies to your project. If you are using Maven (or another build system like Gradle or Ivy which can use Maven dependencies), then this is easy. Just add:
+==== Maven users
+If you are using Maven (or another build system like Gradle or Ivy which can use Maven dependencies), then this is easy. Just add:
 
-.pom.xml snippet
-
-==== 
-----
-
-053.       <dependency>
-054.          <groupId>org.infinispan</groupId>
-055.          <artifactId>infinispan-core</artifactId>
-056.          <version>${infinispan.version}</version>
-057.       </dependency>
+[source,xml]
+.pom.xml
 
 ----
 
-==== 
- to your &lt;dependencies&gt; section of the POM. You'll need to substitute ${infinispan.version } for the version of Infinispan you wish to use. 
+<dependency>
+	<groupId>org.infinispan</groupId>
+	<artifactId>infinispan-core</artifactId>
+	<version>${infinispan.version}</version>
+</dependency>
 
+----
 
-[TIP]
+to the `<dependencies>` section of the POM.
+You'll need to substitute `${infinispan.version}` for the version of Infinispan you wish to use. 
+
 .Which version of Infinispan should I use?
-==== 
- We recommend using the latest final version of Infinispan. All releases are displayed on the link:$$http://jboss.org/infinispan/downloads$$[downloads page] . 
+TIP: We recommend using the latest stable version of Infinispan. All releases are displayed on the link:$$http://www.infinispan.org/download$$[downloads page]. 
 
+Alternatively, you can link:$$https://raw.github.com/infinispan/infinispan-quickstart/master/embedded-cache/pom.xml$$[use the POM] from the quickstart that accompanies this tutorial. 
 
-==== 
-
-
-You'll also need to enable the JBoss Maven repository. We recommend adding a profile:
-
-.pom.xml snippet
-
-==== 
-----
-
-076.       <profile>
-077.          <id>jboss-public-repository</id>
-078.          <activation>
-079.             <property>
-080.                <name>jboss-public-repository</name>
-081.                <value>!false</value>
-082.             </property>
-083.          </activation>
-084.          <repositories>
-085.             <repository>
-086.                <id>jboss-public-repository-group</id>
-087.                <name>JBoss Public Maven Repository Group</name>
-088.                <url>http://repository.jboss.org/nexus/content/groups/public</url>
-089.                <releases>
-090.                   <enabled>true</enabled>
-091.                   <updatePolicy>never</updatePolicy>
-092.                </releases>
-093.                <snapshots>
-094.                   <enabled>true</enabled>
-095.                   <updatePolicy>never</updatePolicy>
-096.                </snapshots>
-097.             </repository>
-098.          </repositories>
-099.          <pluginRepositories>
-100.             <pluginRepository>
-101.                <id>jboss-public-repository-group</id>
-102.                <name>JBoss Public Maven Repository Group</name>
-103.                <url>http://repository.jboss.org/nexus/content/groups/public</url>
-104.                <releases>
-105.                   <enabled>true</enabled>
-106.                   <updatePolicy>never</updatePolicy>
-107.                </releases>
-108.                <snapshots>
-109.                   <enabled>false</enabled>
-110.                   <updatePolicy>never</updatePolicy>
-111.                </snapshots>
-112.             </pluginRepository>
-113.          </pluginRepositories>
-114.       </profile>
-
-----
-
-==== 
- Alternatively, you can link:$$https://raw.github.com/infinispan/infinispan-quickstart/master/embedded-cache/pom.xml$$[use the POM] from the quickstart that accompanies this tutorial. 
-
- If you are using Ant, or another build system which doesn't provide declarative dependency management, then the Infinispan distribution zip contains a lib/ directory. Add the contents of this to the build classpath. 
-
-[[sid-68355130_GettingStartedGuide-RunningInfinispanonasinglenode]]
-
+==== Ant users
+If you are using Ant, or another build system which doesn't provide declarative dependency management, then the Infinispan distribution zip contains a lib/ directory. Add the contents of this to the build classpath. 
 
 === Running Infinispan on a single node
+In order to run Infinispan, we're going to create a `main()` method in the `Quickstart` class.
+Infinispan comes configured to run out of the box; once you have set up your dependencies, all you need to do to start using Infinispan is to create a new cache manager and get a handle on the default cache. 
 
- In order to run Infinispan, we're going to create a main method in the Quickstart class. Infinispan comes configured to run out of the box; once you have set up your dependencies, all you need to do to start using Infinispan is to create a new cache manager and get a handle on the default cache. 
-
+[source,java]
 .Quickstart.java
 
-==== 
+----
+public class Quickstart {	
+
+   public static void main(String args[]) throws Exception {
+      Cache<Object, Object> c = new DefaultCacheManager().getCache();
+   }
+
+}
 ----
 
-28. public class Quickstart {
-29. 
-30.    public static void main(String args[]) throws Exception {
-31.       Cache<Object, Object> c = new DefaultCacheManager().getCache();
-32.    }
+We now need a way to run the main method!
+If you are using Maven, the best approach is to copy all the project dependencies to a directory, and at the same time compile the java classes from our project:
 
-----
-
-==== 
-We now need a way to run the main method! If you are using Maven, the best approach is to copy all the project dependencies to a directory, and at the same time compile the java classes from our project:
-
-
-----
-
-$> mvn clean compile dependency:copy-dependencies -DstripVersion
-
-----
+ $ mvn clean compile dependency:copy-dependencies -DstripVersion
 
 Having done that, we can run the main method:
 
-
-----
-
-$> java -cp target/classes/:target/dependency/* Quickstart
-
-----
+ $ java -cp target/classes/:target/dependency/* Quickstart
 
 You should see Infinispan start up, and the version in use logged to the console.
 
 Congratulations, you now have Infinispan running as a local cache!
 
-[[sid-68355130_GettingStartedGuide-Usethedefaultcache]]
-
 
 === Use the default cache
-
 Infinispan exposes a Map-like, JSR-107-esque interface for accessing and mutating the data stored in the cache. For example:
 
+[source,java]
 .DefaultCacheQuickstart.java
-
-==== 
+----
+// Add a entry
+cache.put("key", "value");
+// Validate the entry is now in the cache
+assertEqual(1, cache.size());
+assertTrue(cache.containsKey("key"));
+// Remove the entry from the cache
+Object v = cache.remove("key");
+// Validate the entry is no longer in the cache
+assertEqual("value", v);
 ----
 
-37.       
-38.       // Add a entry
-39.       cache.put("key", "value");
-40.       // Validate the entry is now in the cache
-41.       assertEqual(1, cache.size());
-42.       assertTrue(cache.containsKey("key"));
-43.       // Remove the entry from the cache
-44.       Object v = cache.remove("key");
-45.       // Validate the entry is no longer in the cache
-46.       assertEqual("value", v);
-
-----
-
-==== 
 Infinispan offers a thread-safe data-structure:
 
+[source,java]
 .DefaultCacheQuickstart.java
-
-==== 
+----
+// Add an entry with the key "key"
+cache.put("key", "value");
+// And replace it if missing
+cache.putIfAbsent("key", "newValue");
+// Validate that the new value was not added
 ----
 
-48. 
-49.       // Add an entry with the key "key"
-50.       cache.put("key", "value");
-51.       // And replace it if missing
-52.       cache.putIfAbsent("key", "newValue");
-53.       // Validate that the new value was not added
-
-----
-
-==== 
 By default entries are immortal but you can override this on a per-key basis and provide lifespans.
 
+[source,java]
 .DefaultCacheQuickstart.java
-
-==== 
 ----
-
-58. 
-59.       //By default entries are immortal but we can override this on a per-key basis and provide lifespans.
-60.       cache.put("key", "value", 5, SECONDS);
-61.       assertTrue(cache.containsKey("key"));
-62.       Thread.sleep(10000);
-
+//By default entries are immortal but we can override this on a per-key basis and provide lifespans.
+cache.put("key", "value", 5, SECONDS);
+assertTrue(cache.containsKey("key"));
+Thread.sleep(10000);
 ----
-
-==== 
-[[sid-68355130_GettingStartedGuide-Useacustomcache]]
-
 
 === Use a custom cache
-
 Each cache in Infinispan can offer a different set of features (for example transaction support, different replication modes or support for eviction), and you may want to use different caches for different classes of data in your application. To get a custom cache, you need to register it with the manager first:
 
+[source,java]
 .CustomCacheQuickstart.java
-
-==== 
+----
+public static void main(String args[]) throws Exception {
+   EmbeddedCacheManager manager = new DefaultCacheManager();
+   manager.defineConfiguration("custom-cache", new ConfigurationBuilder()
+             .eviction().strategy(LIRS).maxEntries(10)
+             .build());
+   Cache<Object, Object> c = manager.getCache("custom-cache");
+}
 ----
 
-33. 
-34.    public static void main(String args[]) throws Exception {
-35.       EmbeddedCacheManager manager = new DefaultCacheManager();
-36.       manager.defineConfiguration("custom-cache", new ConfigurationBuilder()
-37.             .eviction().strategy(LIRS).maxEntries(10)
-38.             .build());
-39.       Cache<Object, Object> c = manager.getCache("custom-cache");
-
-----
-
-==== 
 The example above uses Infinispan's fluent configuration, which offers the ability to configure your cache programmatically. However, should you prefer to use XML, then you may. We can create an identical cache to the one created with a programmatic configuration:
 
+[source,xml]
 .infinispan.xml
+----
+<infinispan
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="urn:infinispan:config:5.1 http://www.infinispan.org/schemas/infinispan-config-5.1.xsd"
+	xmlns="urn:infinispan:config:5.1">
 
-==== 
+	<namedCache name="xml-configured-cache">
+		<eviction strategy="LIRS" maxEntries="10" />
+	</namedCache>
+
+</infinispan>
 ----
 
-24. <infinispan
-25.       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-26.       xsi:schemaLocation="urn:infinispan:config:5.1 http://www.infinispan.org/schemas/infinispan-config-5.1.xsd"
-27.       xmlns="urn:infinispan:config:5.1">
-28. 
-29.    <namedCache name="xml-configured-cache">
-30.       <eviction strategy="LIRS" maxEntries="10" />
-31.    </namedCache>
-32. 
-33. </infinispan>
-
-----
-
-==== 
 We then need to load the configuration file, and use the programmatically defined cache:
 
+[source,java]
 .XmlConfiguredCacheQuickstart.java
-
-==== 
 ----
-
-29. 
-30.    public static void main(String args[]) throws Exception {
-31. 	   Cache<Object, Object> c = new DefaultCacheManager("infinispan.xml").getCache("xml-configured-cache");
-
+public static void main(String args[]) throws Exception {
+	Cache<Object, Object> c = new DefaultCacheManager("infinispan.xml").getCache("xml-configured-cache");
+}
 ----
-
-==== 
