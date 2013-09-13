@@ -1,6 +1,2 @@
-[[sid-68355130_GettingStartedGuide-UsingInfinispaninservletcontainers%28suchasTomcatorJetty%29andotherapplicationservers%28suchasGlassFish%29]]
-
 ==  Using Infinispan in servlet containers (such as Tomcat or Jetty) and other application servers (such as GlassFish)
-
-TODO
-
+*TODO*

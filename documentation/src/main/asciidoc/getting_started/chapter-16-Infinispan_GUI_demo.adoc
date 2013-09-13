@@ -1,80 +1,42 @@
-[[sid-68355134]]
+== Infinispan GUI demo
+This document walks you through using the Infinispan GUI demo that ships with Infinispan, and assumes that you have link:$$http://www.infinispan.org/download$$[downloaded] the latest version of Infinispan and unzipped the archive. 
+I will refer to the Infinispan directory created by unzipping the archive as `${INFINISPAN_HOME}`.
 
-==  Infinispan GUI demo
-
- This document walks you through using the Infinispan GUI demo that ships with Infinispan, and assumes that you have link:$$http://www.infinispan.org/downloads$$[downloaded] the latest version of Infinispan and unzipped the archive.  I will refer to the Infinispan directory created by unzipping the archive as ${INFINISPAN_HOME}. 
-
-
-----
 NOTE: You will need either the -bin.zip or -all.zip version for this demo.
-----
-
-[[sid-68355134_InfinispanGUIdemo-Step1%3AStartthedemoGUI]]
-
 
 === Step 1: Start the demo GUI
+Open up a console and type:
 
+ $ cd ${INFINISPAN_HOME}
+ $ bin/runGuiDemo.sh
 
-----
-$ cd ${INFINISPAN_HOME}
-$ bin/runGuiDemo.sh
+An equivalent `runGuiDemo.bat` file is also provided for Windows users.
 
-----
-
-An equivalent runGuiDemo.bat file is also provided for Windows users.
-
- 
 .TODO InformalFigure image title empty
 image::[]
 
- 
-
- _Step 2: Start the cache_ 
-
- Start the cache in the GUI that starts up, using the _Start Cache_ button. 
-
+=== Step 2: Start the cache
+Start the cache in the GUI that starts up, using the _Start Cache_ button. 
  
 .TODO InformalFigure image title empty
 image::[]
-
  
-
-[[sid-68355134_InfinispanGUIdemo-Step3%3AManipulatedata]]
-
-
 === Step 3: Manipulate data
-
- In the _Manipulate Data_ tab, add entries, generate random data, etc. 
-
+In the _Manipulate Data_ tab, add entries, generate random data, etc. 
  
 .TODO InformalFigure image title empty
 image::[]
-
- 
-
-[[sid-68355134_InfinispanGUIdemo-Step4%3AStartmorecacheinstances]]
-
 
 === Step 4: Start more cache instances
+Repeat steps 1 and 2 to launch and start up more caches.
+Watch cluster formation in the _Cluster View_ tab. 
 
- Repeat steps 1 and 2 to launch and start up more caches.  Watch cluster formation in the _Cluster View_ tab. 
-
- 
 .TODO InformalFigure image title empty
 image::[]
-
- 
-
-[[sid-68355134_InfinispanGUIdemo-Step5%3AManipulatemoredata]]
-
 
 === Step 5: Manipulate more data
-
-Add and remove data on any of the nodes, and watch state being distributed.  Shut nodes down as well to witness data durability.
-
+Add and remove data on any of the nodes, and watch state being distributed.
+Shut nodes down as well to witness data durability.
  
 .TODO InformalFigure image title empty
 image::[]
-
- 
-

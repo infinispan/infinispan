@@ -1,4 +1,2 @@
-[[sid-68355130_GettingStartedGuide-MonitoringInfinispan]]
-
 ==  Monitoring Infinispan
-
+* TODO *
