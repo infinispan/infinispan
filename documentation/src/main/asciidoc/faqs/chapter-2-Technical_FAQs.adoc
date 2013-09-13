@@ -1,6 +1,0 @@
-[[sid-68354929_FrequentlyAskedQuestions-TechnicalFAQs]]
-
-==  Technical FAQs
-
-These are questions pertaining to the Infinispan code.  Typically, most of these questions would only be relevant to specific versions of Infinispan.
-
