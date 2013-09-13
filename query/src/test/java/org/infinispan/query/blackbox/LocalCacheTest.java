@@ -595,7 +595,8 @@ public class LocalCacheTest extends SingleCacheManagerTest {
       assert found.size() == 1;
       assert found.get(0).equals(anotherGrassEater);
    }
-   
+
+   @Override
    protected EmbeddedCacheManager createCacheManager() throws Exception {
       ConfigurationBuilder cfg = getDefaultStandaloneCacheConfig(true);
       cfg
