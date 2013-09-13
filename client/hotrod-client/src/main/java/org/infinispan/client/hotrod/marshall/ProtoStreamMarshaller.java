@@ -1,42 +1,33 @@
 package org.infinispan.client.hotrod.marshall;
 
-import org.infinispan.commons.io.ByteBuffer;
-import org.infinispan.commons.io.ByteBufferImpl;
-import org.infinispan.commons.marshall.AbstractMarshaller;
+import org.infinispan.client.hotrod.RemoteCacheManager;
+import org.infinispan.client.hotrod.exceptions.HotRodClientException;
+import org.infinispan.commons.marshall.Marshaller;
 import org.infinispan.protostream.ProtobufUtil;
 import org.infinispan.protostream.SerializationContext;
-
-import java.io.IOException;
+import org.infinispan.query.remote.client.BaseProtoStreamMarshaller;
 
 /**
  * @author anistor@redhat.com
  * @since 6.0
  */
-public class ProtoStreamMarshaller extends AbstractMarshaller {
+public class ProtoStreamMarshaller extends BaseProtoStreamMarshaller {
 
-   //todo [anistor] this static field is temporary. we need a way to register the protobuf message marshallers when we configure hotrod client
-   private static final SerializationContext serializationContext = ProtobufUtil.newSerializationContext();
-
-   public static SerializationContext getSerializationContext() {
-      return serializationContext;
-   }
+   private final SerializationContext serializationContext = ProtobufUtil.newSerializationContext();
 
    public ProtoStreamMarshaller() {
    }
 
    @Override
-   public Object objectFromByteBuffer(byte[] buf, int offset, int length) throws IOException, ClassNotFoundException {
-      return ProtobufUtil.fromWrappedByteArray(serializationContext, buf, offset, length);
+   public SerializationContext getSerializationContext() {
+      return serializationContext;
    }
 
-   @Override
-   public boolean isMarshallable(Object o) {
-      return serializationContext.canMarshall(o.getClass());
-   }
-
-   @Override
-   protected ByteBuffer objectToBuffer(Object o, int estimatedSize) throws IOException, InterruptedException {
-      byte[] bytes = ProtobufUtil.toWrappedByteArray(serializationContext, o);
-      return new ByteBufferImpl(bytes, 0, bytes.length);
+   public static SerializationContext getSerializationContext(RemoteCacheManager remoteCacheManager) {
+      Marshaller marshaller = remoteCacheManager.getMarshaller();
+      if (marshaller instanceof ProtoStreamMarshaller) {
+         return ((ProtoStreamMarshaller) marshaller).getSerializationContext();
+      }
+      throw new HotRodClientException("The cache manager must be configured with a ProtoStreamMarshaller");
    }
 }

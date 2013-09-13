@@ -13,11 +13,6 @@ import java.util.ArrayList;
 public class QueryResponseMarshaller implements MessageMarshaller<QueryResponse> {
 
    @Override
-   public String getFullName() {
-      return "org.infinispan.client.hotrod.impl.query.QueryResponse";
-   }
-
-   @Override
    public QueryResponse readFrom(ProtoStreamReader reader) throws IOException {
       QueryResponse queryResponse = new QueryResponse();
       queryResponse.setNumResults(reader.readInt("numResults"));
@@ -31,5 +26,15 @@ public class QueryResponseMarshaller implements MessageMarshaller<QueryResponse>
       writer.writeInt("numResults", queryResponse.getNumResults());
       writer.writeInt("projectionSize", queryResponse.getProjectionSize());
       writer.writeCollection("results", queryResponse.getResults(), WrappedMessage.class);
+   }
+
+   @Override
+   public Class<? extends QueryResponse> getJavaClass() {
+      return QueryResponse.class;
+   }
+
+   @Override
+   public String getTypeName() {
+      return "org.infinispan.client.hotrod.impl.query.QueryResponse";
    }
 }

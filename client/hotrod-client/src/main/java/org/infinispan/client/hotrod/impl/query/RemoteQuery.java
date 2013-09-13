@@ -3,8 +3,8 @@ package org.infinispan.client.hotrod.impl.query;
 import org.infinispan.client.hotrod.exceptions.HotRodClientException;
 import org.infinispan.client.hotrod.impl.RemoteCacheImpl;
 import org.infinispan.client.hotrod.impl.operations.QueryOperation;
-import org.infinispan.client.hotrod.marshall.ProtoStreamMarshaller;
 import org.infinispan.protostream.ProtobufUtil;
+import org.infinispan.protostream.SerializationContext;
 import org.infinispan.protostream.WrappedMessage;
 import org.infinispan.query.dsl.Query;
 import org.infinispan.query.dsl.impl.SortCriteria;
@@ -22,6 +22,7 @@ import java.util.List;
 public final class RemoteQuery implements Query {
 
    private final RemoteCacheImpl cache;
+   private final SerializationContext serializationContext;
 
    private final String jpqlString;
    private final List<SortCriteria> sortCriteria;
@@ -31,8 +32,10 @@ public final class RemoteQuery implements Query {
    private List results = null;
    private int numResults;
 
-   public RemoteQuery(RemoteCacheImpl cache, String jpqlString, List<SortCriteria> sortCriteria, long startOffset, int maxResults) {
+   public RemoteQuery(RemoteCacheImpl cache, SerializationContext serializationContext,
+                      String jpqlString, List<SortCriteria> sortCriteria, long startOffset, int maxResults) {
       this.cache = cache;
+      this.serializationContext = serializationContext;
       this.jpqlString = jpqlString;
       this.sortCriteria = sortCriteria;
       this.startOffset = startOffset;
@@ -87,10 +90,11 @@ public final class RemoteQuery implements Query {
          }
       } else {
          results = new ArrayList<Object>(response.getResults().size());
+         SerializationContext serCtx = getSerializationContext();
          for (WrappedMessage r : response.getResults()) {
             try {
                byte[] bytes = (byte[]) r.getValue();
-               Object o = ProtobufUtil.fromWrappedByteArray(ProtoStreamMarshaller.getSerializationContext(), bytes);
+               Object o = ProtobufUtil.fromWrappedByteArray(serCtx, bytes);
                results.add(o);
             } catch (IOException e) {
                throw new HotRodClientException(e);
@@ -105,5 +109,9 @@ public final class RemoteQuery implements Query {
    public int getResultSize() {
       list();
       return numResults;
+   }
+
+   public SerializationContext getSerializationContext() {
+      return serializationContext;
    }
 }

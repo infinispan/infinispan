@@ -4,6 +4,12 @@ import java.util.Map;
 import java.util.Properties;
 import java.util.TreeMap;
 
+import org.hibernate.search.Environment;
+import org.hibernate.search.annotations.Analyze;
+import org.hibernate.search.annotations.Norms;
+import org.hibernate.search.annotations.Store;
+import org.hibernate.search.bridge.FieldBridge;
+import org.hibernate.search.cfg.SearchMapping;
 import org.hibernate.search.cfg.spi.SearchConfiguration;
 import org.hibernate.search.jmx.StatisticsInfo;
 import org.hibernate.search.spi.SearchFactoryBuilder;
@@ -58,7 +64,7 @@ public class LifecycleManager extends AbstractModuleLifecycle {
 
    private static final Object REMOVED_REGISTRY_COMPONENT = new Object();
 
-   private MBeanServer mbeanServer;
+   private MBeanServer mbeanServer;     //todo [anistor] these should not be global! they are per cache manager
 
    private ComponentMetadataRepo metadataRepo;
 
@@ -213,12 +219,42 @@ public class LifecycleManager extends AbstractModuleLifecycle {
       if (searchFactory==null) {
          GlobalComponentRegistry globalComponentRegistry = cr.getGlobalComponentRegistry();
          EmbeddedCacheManager uninitializedCacheManager = globalComponentRegistry.getComponent(EmbeddedCacheManager.class);
+         indexingProperties = addMappingsForRemoteQuery(indexingProperties, cr);
          // Set up the search factory for Hibernate Search first.
          SearchConfiguration config = new SearchableCacheConfiguration(new Class[0], indexingProperties, uninitializedCacheManager, cr);
          searchFactory = new SearchFactoryBuilder().configuration(config).buildSearchFactory();
          cr.registerComponent(searchFactory, SearchFactoryIntegrator.class);
       }
       return searchFactory;
+   }
+
+   //todo [anistor] this method belongs to remote-query, but currently it is not possible to move it there because the SearchFactory programmatic mappings cannot be modified after instantiation
+   private Properties addMappingsForRemoteQuery(Properties indexingProperties, ComponentRegistry cr) {
+      Class<?> fbClass;
+      try {
+         // proceed only if remote-query is in class path
+         fbClass = Class.forName("org.infinispan.query.remote.indexing.ProtobufValueWrapperFieldBridge");
+      } catch (ClassNotFoundException e) {
+         return indexingProperties;
+      }
+
+      try {
+         SearchMapping mapping = (SearchMapping) indexingProperties.get(Environment.MODEL_MAPPING);
+         if (mapping == null) {
+            mapping = new SearchMapping();
+            Properties amendedProperties = new Properties();
+            amendedProperties.putAll(indexingProperties);
+            amendedProperties.put(Environment.MODEL_MAPPING, mapping);
+            indexingProperties = amendedProperties;
+         }
+         Cache cache = cr.getComponent(Cache.class);
+         FieldBridge fb = (FieldBridge) fbClass.getConstructor(Cache.class).newInstance(cache);
+         mapping.entity(Class.forName("org.infinispan.query.remote.indexing.ProtobufValueWrapper"))
+               .indexed().classBridgeInstance(fb).norms(Norms.NO).analyze(Analyze.YES).store(Store.YES);
+      } catch (Exception e) {
+         throw new CacheException("Failed to configure indexing for remote query", e);
+      }
+      return indexingProperties;
    }
 
    @Override

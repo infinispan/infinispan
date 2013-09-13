@@ -12,7 +12,7 @@ import org.hibernate.hql.lucene.internal.ast.HSearchPropertyTypeDescriptor;
 import org.hibernate.hql.lucene.internal.ast.HSearchTypeDescriptor;
 import org.hibernate.hql.lucene.internal.logging.Log;
 import org.hibernate.hql.lucene.internal.logging.LoggerFactory;
-import org.infinispan.query.remote.SerializationContextHolder;
+import org.infinispan.protostream.SerializationContext;
 
 import java.util.Collections;
 import java.util.HashMap;
@@ -54,7 +54,10 @@ class IspnLuceneQueryResolverDelegate implements QueryResolverDelegate {
 
    private Descriptors.Descriptor targetType;
 
-   public IspnLuceneQueryResolverDelegate() {
+   private final SerializationContext serializationContext;
+
+   public IspnLuceneQueryResolverDelegate(SerializationContext serializationContext) {
+      this.serializationContext = serializationContext;
    }
 
    Descriptors.Descriptor getTargetType() {
@@ -72,8 +75,8 @@ class IspnLuceneQueryResolverDelegate implements QueryResolverDelegate {
 					"Alias reuse currently not supported: alias " + alias.getText()
 					+ " already assigned to type " + put );
 		}
-      Descriptors.Descriptor targetedType = SerializationContextHolder.getSerializationContext().getMessageDescriptor(entityName.getText());
-		if ( targetType != null ) {
+      Descriptors.Descriptor targetedType = serializationContext.getMessageDescriptor(entityName.getText());
+      if ( targetType != null ) {
 			throw new IllegalStateException( "Can't target multiple types: " + targetType + " already selected before " + targetedType );
 		}
 		targetType = targetedType;
@@ -120,7 +123,7 @@ class IspnLuceneQueryResolverDelegate implements QueryResolverDelegate {
 			throw log.getUnknownAliasException( root.getText() );
 		}
 
-      Descriptors.Descriptor descriptor = SerializationContextHolder.getSerializationContext().getMessageDescriptor(entityNameForAlias);
+      Descriptors.Descriptor descriptor = serializationContext.getMessageDescriptor(entityNameForAlias);
 
 		return new PathedPropertyReference(
 				root.getText(),

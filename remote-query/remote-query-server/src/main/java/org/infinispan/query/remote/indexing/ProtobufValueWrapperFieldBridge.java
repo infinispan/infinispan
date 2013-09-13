@@ -4,11 +4,12 @@ import com.google.protobuf.Descriptors;
 import org.apache.lucene.document.Document;
 import org.hibernate.search.bridge.FieldBridge;
 import org.hibernate.search.bridge.LuceneOptions;
+import org.infinispan.Cache;
 import org.infinispan.commons.CacheException;
 import org.infinispan.protostream.ProtobufParser;
 import org.infinispan.protostream.SerializationContext;
 import org.infinispan.protostream.WrappedMessage;
-import org.infinispan.query.remote.SerializationContextHolder;
+import org.infinispan.query.remote.ProtobufMetadataManager;
 
 import java.io.IOException;
 
@@ -17,6 +18,12 @@ import java.io.IOException;
  * @since 6.0
  */
 public final class ProtobufValueWrapperFieldBridge implements FieldBridge {
+
+   private final Cache cache;
+
+   public ProtobufValueWrapperFieldBridge(Cache cache) {
+      this.cache = cache;
+   }
 
    @Override
    public void set(String name, Object value, Document document, LuceneOptions luceneOptions) {
@@ -29,8 +36,7 @@ public final class ProtobufValueWrapperFieldBridge implements FieldBridge {
    }
 
    private void decodeAndIndex(byte[] bytes, Document document, LuceneOptions luceneOptions) {
-      //todo [anistor] the SerializationContext should somehow be injected here rather than getting it from a static holder
-      SerializationContext serCtx = SerializationContextHolder.getSerializationContext();
+      SerializationContext serCtx = ProtobufMetadataManager.getSerializationContext(cache.getCacheManager());
       Descriptors.Descriptor wrapperDescriptor = serCtx.getMessageDescriptor(WrappedMessage.PROTOBUF_TYPE_NAME);
       try {
          new ProtobufParser().parse(new WrappedMessageTagHandler(document, luceneOptions, serCtx), wrapperDescriptor, bytes);

@@ -14,6 +14,11 @@ import org.infinispan.query.dsl.QueryFactory;
  */
 public interface SearchManager {
 
+   /**
+    * Obtains the factory for DSL-based queries.
+    *
+    * @return a factory capable of building queries for the cache this SearchManager belongs to
+    */
    QueryFactory getQueryFactory();
 
    /**

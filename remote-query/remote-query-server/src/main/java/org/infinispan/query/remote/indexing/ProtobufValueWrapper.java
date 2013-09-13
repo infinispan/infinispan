@@ -1,10 +1,5 @@
 package org.infinispan.query.remote.indexing;
 
-import org.hibernate.search.annotations.Analyze;
-import org.hibernate.search.annotations.ClassBridge;
-import org.hibernate.search.annotations.Indexed;
-import org.hibernate.search.annotations.Norms;
-import org.hibernate.search.annotations.Store;
 import org.infinispan.commons.io.UnsignedNumeric;
 import org.infinispan.commons.marshall.AbstractExternalizer;
 import org.infinispan.query.remote.ExternalizerIds;
@@ -17,18 +12,18 @@ import java.util.Collections;
 import java.util.Set;
 
 /**
- * This is used to wrap binary values encoded with Protocol Buffers. It provides a FieldBridge to allow indexing of the
- * binary payload.
+ * This is used to wrap binary values encoded with Protocol Buffers. ProtobufValueWrapperFieldBridge is used as a
+ * class bridge to allow indexing of the binary payload.
  *
  * @author anistor@redhat.com
  * @since 6.0
  */
-@Indexed
-@ClassBridge(norms = Norms.NO, store = Store.YES, analyze = Analyze.YES, impl = ProtobufValueWrapperFieldBridge.class)
 public final class ProtobufValueWrapper {
 
    // The protobuf encoded payload
    private final byte[] binary;
+
+   private int hashCode = 0;
 
    public ProtobufValueWrapper(byte[] binary) {
       this.binary = binary;
@@ -49,7 +44,10 @@ public final class ProtobufValueWrapper {
 
    @Override
    public int hashCode() {
-      return Arrays.hashCode(binary); //todo [anistor] compute this only once
+      if (hashCode == 0) {
+         hashCode = Arrays.hashCode(binary);
+      }
+      return hashCode;
    }
 
    @Override

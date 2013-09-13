@@ -45,13 +45,13 @@ class EmbeddedLuceneQuery implements LuceneQuery {
             cacheQuery = cacheQuery.sort(sort);
          }
          if (parsingResult.getProjections() != null && !parsingResult.getProjections().isEmpty()) {
-            cacheQuery.projection(parsingResult.getProjections().toArray(new String[parsingResult.getProjections().size()]));
+            cacheQuery = cacheQuery.projection(parsingResult.getProjections().toArray(new String[parsingResult.getProjections().size()]));
          }
          if (startOffset > 0) {
-            cacheQuery.firstResult((int) startOffset);
+            cacheQuery = cacheQuery.firstResult((int) startOffset);
          }
          if (maxResults > 0) {
-            cacheQuery.maxResults(maxResults);
+            cacheQuery = cacheQuery.maxResults(maxResults);
          }
       }
       return cacheQuery;

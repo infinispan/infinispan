@@ -12,11 +12,6 @@ import java.util.ArrayList;
 public class QueryRequestMarshaller implements MessageMarshaller<QueryRequest> {
 
    @Override
-   public String getFullName() {
-      return "org.infinispan.client.hotrod.impl.query.QueryRequest";
-   }
-
-   @Override
    public QueryRequest readFrom(ProtoStreamReader reader) throws IOException {
       QueryRequest queryRequest = new QueryRequest();
       queryRequest.setJpqlString(reader.readString("jpqlString"));
@@ -32,5 +27,15 @@ public class QueryRequestMarshaller implements MessageMarshaller<QueryRequest> {
       writer.writeCollection("sortCriteria", remoteQuery.getSortCriteria(), QueryRequest.SortCriteria.class);
       writer.writeLong("startOffset", remoteQuery.getStartOffset());
       writer.writeInt("maxResults", remoteQuery.getMaxResults());
+   }
+
+   @Override
+   public Class<? extends QueryRequest> getJavaClass() {
+      return QueryRequest.class;
+   }
+
+   @Override
+   public String getTypeName() {
+      return "org.infinispan.client.hotrod.impl.query.QueryRequest";
    }
 }
