@@ -11,6 +11,7 @@ import org.infinispan.protostream.sampledomain.User;
 import org.infinispan.protostream.sampledomain.marshallers.MarshallerRegistration;
 import org.infinispan.server.hotrod.HotRodServer;
 import org.infinispan.test.SingleCacheManagerTest;
+import org.infinispan.test.fwk.CleanupAfterMethod;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.testng.annotations.AfterTest;
 import org.testng.annotations.Test;
@@ -29,6 +30,7 @@ import static org.junit.Assert.*;
  * @since 6.0
  */
 @Test(testName = "client.hotrod.marshall.ProtoStreamMarshallerTest", groups = "functional")
+@CleanupAfterMethod
 public class ProtoStreamMarshallerTest extends SingleCacheManagerTest {
 
    private HotRodServer hotRodServer;
@@ -37,9 +39,6 @@ public class ProtoStreamMarshallerTest extends SingleCacheManagerTest {
 
    @Override
    protected EmbeddedCacheManager createCacheManager() throws Exception {
-      //initialize client-side serialization context
-      MarshallerRegistration.registerMarshallers(ProtoStreamMarshaller.getSerializationContext());
-
       cacheManager = TestCacheManagerFactory.createCacheManager(hotRodCacheConfiguration());
       cache = cacheManager.getCache();
 
@@ -51,6 +50,10 @@ public class ProtoStreamMarshallerTest extends SingleCacheManagerTest {
       remoteCacheManager = new RemoteCacheManager(clientBuilder.build());
 
       remoteCache = remoteCacheManager.getCache();
+
+      //initialize client-side serialization context
+      MarshallerRegistration.registerMarshallers(ProtoStreamMarshaller.getSerializationContext(remoteCacheManager));
+
       return cacheManager;
    }
 
@@ -60,7 +63,6 @@ public class ProtoStreamMarshallerTest extends SingleCacheManagerTest {
       killServers(hotRodServer);
    }
 
-   @Test
    public void testPutAndGet() throws Exception {
       User user = createUser();
       remoteCache.put(1, user);
@@ -71,13 +73,13 @@ public class ProtoStreamMarshallerTest extends SingleCacheManagerTest {
       Object localObject = cache.get(key);
       assertNotNull(localObject);
       assertTrue(localObject instanceof byte[]);
-      Object unmarshalledObject = ProtobufUtil.fromWrappedByteArray(ProtoStreamMarshaller.getSerializationContext(), (byte[]) localObject);
+      Object unmarshalledObject = ProtobufUtil.fromWrappedByteArray(ProtoStreamMarshaller.getSerializationContext(remoteCacheManager), (byte[]) localObject);
       assertTrue(unmarshalledObject instanceof User);
       assertUser((User) unmarshalledObject);
 
       // get the object through the remote cache interface and check it's the same object we put
-      User fromCache = remoteCache.get(1);
-      assertUser(fromCache);
+      User fromRemoteCache = remoteCache.get(1);
+      assertUser(fromRemoteCache);
    }
 
    private User createUser() {

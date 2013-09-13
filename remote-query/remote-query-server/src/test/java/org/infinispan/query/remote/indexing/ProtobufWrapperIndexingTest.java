@@ -7,14 +7,12 @@ import org.hibernate.search.query.engine.spi.EntityInfo;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.protostream.ProtobufUtil;
-import org.infinispan.protostream.SerializationContext;
 import org.infinispan.protostream.sampledomain.Address;
 import org.infinispan.protostream.sampledomain.User;
 import org.infinispan.protostream.sampledomain.marshallers.MarshallerRegistration;
 import org.infinispan.query.Search;
 import org.infinispan.query.SearchManager;
-import org.infinispan.query.remote.SerializationContextHolder;
-import org.infinispan.query.remote.indexing.ProtobufValueWrapper;
+import org.infinispan.query.remote.ProtobufMetadataManager;
 import org.infinispan.test.SingleCacheManagerTest;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.infinispan.transaction.TransactionMode;
@@ -35,22 +33,19 @@ import static org.junit.Assert.assertNotNull;
 @Test(groups = "functional", testName = "query.remote.protostream.ProtobufWrapperIndexingTest")
 public class ProtobufWrapperIndexingTest extends SingleCacheManagerTest {
 
-   private SerializationContext serCtx;
-
    protected EmbeddedCacheManager createCacheManager() throws Exception {
-      serCtx = SerializationContextHolder.getSerializationContext();
-      MarshallerRegistration.registerMarshallers(serCtx);
-
       ConfigurationBuilder cfg = getDefaultStandaloneCacheConfig(true);
-      cfg
-            .transaction()
+      cfg.transaction()
             .transactionMode(TransactionMode.TRANSACTIONAL)
             .indexing()
             .enable()
             .indexLocalOnly(false)
             .addProperty("default.directory_provider", "ram")
             .addProperty("lucene_version", "LUCENE_CURRENT");
-      return TestCacheManagerFactory.createCacheManager(cfg);
+
+      EmbeddedCacheManager cacheManager = TestCacheManagerFactory.createCacheManager(cfg);
+      MarshallerRegistration.registerMarshallers(ProtobufMetadataManager.getSerializationContext(cacheManager));
+      return cacheManager;
    }
 
    public void testIndexingWithWrapper() throws Exception {
@@ -110,6 +105,6 @@ public class ProtobufWrapperIndexingTest extends SingleCacheManagerTest {
       address.setPostCode("1234");
       user.setAddresses(Collections.singletonList(address));
 
-      return ProtobufUtil.toWrappedByteArray(serCtx, user);
+      return ProtobufUtil.toWrappedByteArray(ProtobufMetadataManager.getSerializationContext(cacheManager), user);
    }
 }

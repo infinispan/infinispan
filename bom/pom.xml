@@ -54,7 +54,7 @@
 
    <properties>
       <!-- Versions for dependencies -->
-      <version.protostream>1.0.0.Alpha5</version.protostream>
+      <version.protostream>1.0.0.Alpha6</version.protostream>
       <version.aesh>0.33.1</version.aesh>
       <version.antlr>3.4</version.antlr>
       <version.gnu.getopt>1.0.13</version.gnu.getopt>

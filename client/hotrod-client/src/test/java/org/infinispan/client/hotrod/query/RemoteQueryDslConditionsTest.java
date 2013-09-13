@@ -17,10 +17,11 @@ import org.infinispan.query.dsl.FilterConditionEndContext;
 import org.infinispan.query.dsl.Query;
 import org.infinispan.query.dsl.QueryFactory;
 import org.infinispan.query.dsl.SortOrder;
-import org.infinispan.query.remote.SerializationContextHolder;
+import org.infinispan.query.remote.ProtobufMetadataManager;
 import org.infinispan.query.remote.indexing.ProtobufValueWrapper;
 import org.infinispan.server.hotrod.HotRodServer;
 import org.infinispan.test.SingleCacheManagerTest;
+import org.infinispan.test.fwk.CleanupAfterMethod;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.testng.annotations.AfterTest;
 import org.testng.annotations.BeforeMethod;
@@ -48,6 +49,7 @@ import static org.junit.Assert.*;
  * @since 6.0
  */
 @Test(groups = "functional", testName = "client.hotrod.query.RemoteQueryDslConditionsTest")
+@CleanupAfterMethod
 public class RemoteQueryDslConditionsTest extends SingleCacheManagerTest {
 
    protected final DateFormat DATE_FORMAT = new SimpleDateFormat("yyyy-MM-dd");
@@ -58,15 +60,8 @@ public class RemoteQueryDslConditionsTest extends SingleCacheManagerTest {
 
    @Override
    protected EmbeddedCacheManager createCacheManager() throws Exception {
-      //todo [anistor] initializing the server-side context in this way is a hack. normally this should use the protobuf metadata registry
-      MarshallerRegistration.registerMarshallers(SerializationContextHolder.getSerializationContext());
-
-      //initialize client-side serialization context
-      MarshallerRegistration.registerMarshallers(ProtoStreamMarshaller.getSerializationContext());
-
       ConfigurationBuilder builder = hotRodCacheConfiguration();
-      builder.transaction()
-            .indexing().enable()
+      builder.indexing().enable()
             .indexLocalOnly(false)
             .addProperty("default.directory_provider", "ram")
             .addProperty("lucene_version", "LUCENE_CURRENT");
@@ -80,8 +75,14 @@ public class RemoteQueryDslConditionsTest extends SingleCacheManagerTest {
       clientBuilder.addServer().host("127.0.0.1").port(hotRodServer.getPort());
       clientBuilder.marshaller(new ProtoStreamMarshaller());
       remoteCacheManager = new RemoteCacheManager(clientBuilder.build());
-
       remoteCache = remoteCacheManager.getCache();
+
+      //initialize server-side serialization context
+      cacheManager.getGlobalComponentRegistry().getComponent(ProtobufMetadataManager.class).registerProtofile("/bank.protobin");
+
+      //initialize client-side serialization context
+      MarshallerRegistration.registerMarshallers(ProtoStreamMarshaller.getSerializationContext(remoteCacheManager));
+
       return cacheManager;
    }
 

@@ -11,17 +11,24 @@ import org.infinispan.configuration.cache.InterceptorConfigurationBuilder;
 import org.infinispan.configuration.global.GlobalConfiguration;
 import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.factories.GlobalComponentRegistry;
+import org.infinispan.factories.components.ComponentMetadataRepo;
+import org.infinispan.factories.components.ManageableComponentMetadata;
 import org.infinispan.interceptors.BatchingInterceptor;
 import org.infinispan.interceptors.InterceptorChain;
 import org.infinispan.interceptors.InvocationContextInterceptor;
+import org.infinispan.jmx.JmxUtil;
+import org.infinispan.jmx.ResourceDMBean;
 import org.infinispan.lifecycle.AbstractModuleLifecycle;
-import org.infinispan.protostream.SerializationContext;
+import org.infinispan.manager.DefaultCacheManager;
+import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.query.remote.client.MarshallerRegistration;
 import org.infinispan.query.remote.indexing.ProtobufValueWrapper;
 import org.infinispan.query.remote.indexing.RemoteValueWrapperInterceptor;
 import org.infinispan.query.remote.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
+import javax.management.MBeanServer;
+import javax.management.ObjectName;
 import java.io.IOException;
 import java.util.Map;
 
@@ -33,36 +40,69 @@ public class LifecycleManager extends AbstractModuleLifecycle {
 
    private static final Log log = LogFactory.getLog(LifecycleManager.class, Log.class);
 
-   private boolean isSerializationContextInitialized = false;
-
-   private void initSerializationContext() {
-      if (!isSerializationContextInitialized) {
-         isSerializationContextInitialized = true;
-         try {
-            SerializationContext serCtx = SerializationContextHolder.getSerializationContext();
-            MarshallerRegistration.registerMarshallers(serCtx);
-         } catch (IOException e) {
-            throw new CacheException("Failed to initialise serialization context", e);
-         } catch (Descriptors.DescriptorValidationException e) {
-            throw new CacheException("Failed to initialise serialization context", e);
-         }
+   private void initProtobufMetadataManager(DefaultCacheManager cacheManager, GlobalComponentRegistry gcr) {
+      ProtobufMetadataManager protobufMetadataManager = new ProtobufMetadataManager(cacheManager);
+      try {
+         MarshallerRegistration.registerMarshallers(protobufMetadataManager.getSerializationContext());
+      } catch (IOException e) {
+         throw new CacheException("Failed to initialise serialization context", e);
+      } catch (Descriptors.DescriptorValidationException e) {
+         throw new CacheException("Failed to initialise serialization context", e);
       }
+      gcr.registerComponent(protobufMetadataManager, ProtobufMetadataManager.class);
+
+      registerProtobufMetadataManagerMBean(protobufMetadataManager, gcr, cacheManager.getName());
    }
 
    @Override
    public void cacheManagerStarting(GlobalComponentRegistry gcr, GlobalConfiguration globalCfg) {
-      initSerializationContext();
+      EmbeddedCacheManager cacheManager = gcr.getComponent(EmbeddedCacheManager.class);
+      initProtobufMetadataManager((DefaultCacheManager) cacheManager, gcr);
 
       Map<Integer, AdvancedExternalizer<?>> externalizerMap = globalCfg.serialization().advancedExternalizers();
       externalizerMap.put(ExternalizerIds.PROTOBUF_VALUE_WRAPPER, new ProtobufValueWrapper.Externalizer());
    }
 
+   private void registerProtobufMetadataManagerMBean(ProtobufMetadataManager protobufMetadataManager, GlobalComponentRegistry gcr, String cacheManagerName) {
+      GlobalConfiguration globalCfg = gcr.getGlobalConfiguration();
+      MBeanServer mBeanServer = JmxUtil.lookupMBeanServer(globalCfg);
+
+      String groupName = "type=RemoteQuery,name=" + ObjectName.quote(cacheManagerName);
+      String jmxDomain = JmxUtil.buildJmxDomain(globalCfg, mBeanServer, groupName);
+      ComponentMetadataRepo metadataRepo = gcr.getComponentMetadataRepo();
+      ManageableComponentMetadata metadata = metadataRepo.findComponentMetadata(ProtobufMetadataManager.class)
+            .toManageableComponentMetadata();
+      try {
+         ResourceDMBean mBean = new ResourceDMBean(protobufMetadataManager, metadata);
+         ObjectName objName = new ObjectName(jmxDomain + ":" + groupName + ",component=" + metadata.getJmxObjectName());
+         protobufMetadataManager.setObjectName(objName);
+         JmxUtil.registerMBean(mBean, objName, mBeanServer);
+      } catch (Exception e) {
+         throw new CacheException("Unable to register ProtobufMetadataManager MBean", e);
+      }
+   }
+
+   @Override
+   public void cacheManagerStopping(GlobalComponentRegistry gcr) {
+      unregisterProtobufMetadataManagerMBean(gcr);
+   }
+
+   private void unregisterProtobufMetadataManagerMBean(GlobalComponentRegistry gcr) {
+      try {
+         ObjectName objName = gcr.getComponent(ProtobufMetadataManager.class).getObjectName();
+         MBeanServer mBeanServer = JmxUtil.lookupMBeanServer(gcr.getGlobalConfiguration());
+         JmxUtil.unregisterMBean(objName, mBeanServer);
+      } catch (Exception e) {
+         throw new CacheException("Unable to unregister ProtobufMetadataManager MBean", e);
+      }
+   }
+
    /**
-    * Registers the remote indexing interceptor in the cache before it gets started
+    * Registers the remote value wrapper interceptor in the cache before it gets started.
     */
    @Override
    public void cacheStarting(ComponentRegistry cr, Configuration cfg, String cacheName) {
-      if (cfg.indexing().enabled()) {
+      if (cfg.indexing().enabled() && !cfg.compatibility().enabled()) {
          log.infof("Registering RemoteValueWrapperInterceptor for cache %s", cacheName);
          createRemoteIndexingInterceptor(cr, cfg);
       }
@@ -99,19 +139,19 @@ public class LifecycleManager extends AbstractModuleLifecycle {
    @Override
    public void cacheStarted(ComponentRegistry cr, String cacheName) {
       Configuration configuration = cr.getComponent(Configuration.class);
-      boolean indexingEnabled = configuration.indexing().enabled();
-      if (!indexingEnabled) {
-         if (verifyChainContainsRemoteIndexingInterceptor(cr)) {
+      boolean removeValueWrappingEnabled = configuration.indexing().enabled() && !configuration.compatibility().enabled();
+      if (!removeValueWrappingEnabled) {
+         if (verifyChainContainsRemoteValueWrapperInterceptor(cr)) {
             throw new IllegalStateException("It was NOT expected to find the RemoteValueWrapperInterceptor registered in the InterceptorChain as indexing was disabled, but it was found");
          }
          return;
       }
-      if (!verifyChainContainsRemoteIndexingInterceptor(cr)) {
+      if (!verifyChainContainsRemoteValueWrapperInterceptor(cr)) {
          throw new IllegalStateException("It was expected to find the RemoteValueWrapperInterceptor registered in the InterceptorChain but it wasn't found");
       }
    }
 
-   private boolean verifyChainContainsRemoteIndexingInterceptor(ComponentRegistry cr) {
+   private boolean verifyChainContainsRemoteValueWrapperInterceptor(ComponentRegistry cr) {
       InterceptorChain interceptorChain = cr.getComponent(InterceptorChain.class);
       return interceptorChain.containsInterceptorType(RemoteValueWrapperInterceptor.class, true);
    }

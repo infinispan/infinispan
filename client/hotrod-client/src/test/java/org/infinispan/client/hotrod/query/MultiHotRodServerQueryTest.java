@@ -1,18 +1,19 @@
 package org.infinispan.client.hotrod.query;
 
 import org.infinispan.client.hotrod.RemoteCache;
+import org.infinispan.client.hotrod.RemoteCacheManager;
 import org.infinispan.client.hotrod.Search;
 import org.infinispan.client.hotrod.marshall.ProtoStreamMarshaller;
 import org.infinispan.client.hotrod.test.MultiHotRodServersTest;
-import org.infinispan.commons.equivalence.AnyEquivalence;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
+import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.protostream.sampledomain.Address;
 import org.infinispan.protostream.sampledomain.User;
 import org.infinispan.protostream.sampledomain.marshallers.MarshallerRegistration;
 import org.infinispan.query.dsl.Query;
 import org.infinispan.query.dsl.QueryFactory;
-import org.infinispan.query.remote.SerializationContextHolder;
+import org.infinispan.query.remote.ProtobufMetadataManager;
 import org.testng.annotations.Test;
 
 import java.util.Collections;
@@ -31,20 +32,23 @@ public class MultiHotRodServerQueryTest extends MultiHotRodServersTest {
 
    @Override
    protected void createCacheManagers() throws Throwable {
-      //todo [anistor] initializing the server-side context in this way is a hack. normally this should use the protobuf metadata registry
-      MarshallerRegistration.registerMarshallers(SerializationContextHolder.getSerializationContext());
-
-      //initialize client-side serialization context
-      MarshallerRegistration.registerMarshallers(ProtoStreamMarshaller.getSerializationContext());
-
       ConfigurationBuilder builder = hotRodCacheConfiguration(getDefaultClusteredCacheConfig(CacheMode.REPL_SYNC, false));
-      builder.transaction()
-            .indexing().enable()
-            .indexLocalOnly(false)
-            .addProperty("default.directory_provider", "ram")   //todo test with  "infinispan" provider too
+      builder.indexing().enable()
+            .indexLocalOnly(true)
+            .addProperty("default.directory_provider", "infinispan")
             .addProperty("lucene_version", "LUCENE_CURRENT");
 
       createHotRodServers(2, builder);
+
+      //initialize server-side serialization context
+      for (EmbeddedCacheManager cm : cacheManagers) {
+         cm.getGlobalComponentRegistry().getComponent(ProtobufMetadataManager.class).registerProtofile("/bank.protobin");
+      }
+
+      //initialize client-side serialization context
+      for (RemoteCacheManager rcm : clients) {
+         MarshallerRegistration.registerMarshallers(ProtoStreamMarshaller.getSerializationContext(rcm));
+      }
    }
 
    @Override
@@ -136,7 +140,7 @@ public class MultiHotRodServerQueryTest extends MultiHotRodServersTest {
 
    private User createUser2() {
       User user = new User();
-      user.setId(1);
+      user.setId(2);
       user.setName("Adrian");
       user.setSurname("Nistor");
       user.setGender(User.Gender.MALE);

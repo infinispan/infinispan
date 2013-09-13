@@ -9,14 +9,14 @@ import org.infinispan.query.dsl.impl.JPAQueryGenerator;
  */
 class RemoteJPAQueryGenerator extends JPAQueryGenerator {
 
-   private final SerializationContext serCtx;
+   private final SerializationContext serializationContext;
 
-   public RemoteJPAQueryGenerator(SerializationContext serCtx) {
-      this.serCtx = serCtx;
+   public RemoteJPAQueryGenerator(SerializationContext serializationContext) {
+      this.serializationContext = serializationContext;
    }
 
    @Override
    protected String getIndexedEntityName(Class<?> rootType) {
-      return serCtx.getMarshaller(rootType).getFullName();
+      return serializationContext.getMarshaller(rootType).getTypeName();
    }
 }

@@ -12,6 +12,7 @@ import org.hibernate.hql.lucene.LuceneQueryParsingResult;
 import org.hibernate.hql.lucene.internal.LuceneQueryRendererDelegate;
 import org.hibernate.hql.lucene.internal.builder.LucenePropertyHelper;
 import org.hibernate.search.spi.SearchFactoryIntegrator;
+import org.infinispan.protostream.SerializationContext;
 
 import java.util.Arrays;
 import java.util.Iterator;
@@ -33,8 +34,8 @@ public class IspnLuceneProcessingChain implements AstProcessingChain<IspnLuceneQ
    private final LuceneQueryRendererDelegate rendererDelegate;
    private final IspnLuceneQueryResolverDelegate queryResolverDelegate;
 
-   public IspnLuceneProcessingChain(SearchFactoryIntegrator searchFactory, EntityNamesResolver entityNames, Map<String, Object> namedParameters) {
-      queryResolverDelegate = new IspnLuceneQueryResolverDelegate();
+   public IspnLuceneProcessingChain(SerializationContext serializationContext, SearchFactoryIntegrator searchFactory, EntityNamesResolver entityNames, Map<String, Object> namedParameters) {
+      queryResolverDelegate = new IspnLuceneQueryResolverDelegate(serializationContext);
       resolverProcessor = new QueryResolverProcessor(queryResolverDelegate);
 
       LucenePropertyHelper propertyHelper = new LucenePropertyHelper(searchFactory) {

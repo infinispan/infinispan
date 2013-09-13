@@ -11,11 +11,6 @@ import java.io.IOException;
 public class SortCriteriaMarshaller implements MessageMarshaller<QueryRequest.SortCriteria> {
 
    @Override
-   public String getFullName() {
-      return "org.infinispan.client.hotrod.impl.query.QueryRequest.SortCriteria";
-   }
-
-   @Override
    public QueryRequest.SortCriteria readFrom(MessageMarshaller.ProtoStreamReader reader) throws IOException {
       QueryRequest.SortCriteria sortCriteria = new QueryRequest.SortCriteria();
       sortCriteria.setAttributePath(reader.readString("attributePath"));
@@ -27,5 +22,15 @@ public class SortCriteriaMarshaller implements MessageMarshaller<QueryRequest.So
    public void writeTo(MessageMarshaller.ProtoStreamWriter writer, QueryRequest.SortCriteria sortCriteria) throws IOException {
       writer.writeString("attributePath", sortCriteria.getAttributePath());
       writer.writeBoolean("isAscending", sortCriteria.isAscending());
+   }
+
+   @Override
+   public Class<? extends QueryRequest.SortCriteria> getJavaClass() {
+      return QueryRequest.SortCriteria.class;
+   }
+
+   @Override
+   public String getTypeName() {
+      return "org.infinispan.client.hotrod.impl.query.QueryRequest.SortCriteria";
    }
 }

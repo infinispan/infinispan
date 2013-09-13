@@ -6,7 +6,6 @@ import org.infinispan.client.hotrod.impl.protocol.HeaderParams;
 import org.infinispan.client.hotrod.impl.query.RemoteQuery;
 import org.infinispan.client.hotrod.impl.transport.Transport;
 import org.infinispan.client.hotrod.impl.transport.TransportFactory;
-import org.infinispan.client.hotrod.marshall.ProtoStreamMarshaller;
 import org.infinispan.commons.CacheException;
 import org.infinispan.protostream.ProtobufUtil;
 import org.infinispan.protostream.SerializationContext;
@@ -56,7 +55,7 @@ public class QueryOperation extends RetryOnFailureOperation<QueryResponse> {
          }
          queryRequest.setSortCriteria(scl);
       }
-      SerializationContext serCtx = ProtoStreamMarshaller.getSerializationContext();
+      SerializationContext serCtx = remoteQuery.getSerializationContext();
       byte[] requestBytes;
       try {
          requestBytes = ProtobufUtil.toByteArray(serCtx, queryRequest);

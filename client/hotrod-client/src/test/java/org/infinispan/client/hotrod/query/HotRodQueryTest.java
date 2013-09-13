@@ -5,14 +5,17 @@ import org.infinispan.client.hotrod.RemoteCacheManager;
 import org.infinispan.client.hotrod.Search;
 import org.infinispan.client.hotrod.TestHelper;
 import org.infinispan.client.hotrod.marshall.ProtoStreamMarshaller;
+import org.infinispan.commons.equivalence.ByteArrayEquivalence;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
+import org.infinispan.configuration.global.GlobalConfigurationBuilder;
+import org.infinispan.jmx.PerThreadMBeanServerLookup;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.protostream.sampledomain.Address;
 import org.infinispan.protostream.sampledomain.User;
 import org.infinispan.protostream.sampledomain.marshallers.MarshallerRegistration;
 import org.infinispan.query.dsl.Query;
 import org.infinispan.query.dsl.QueryFactory;
-import org.infinispan.query.remote.SerializationContextHolder;
+import org.infinispan.query.remote.ProtobufMetadataManager;
 import org.infinispan.server.hotrod.HotRodServer;
 import org.infinispan.test.SingleCacheManagerTest;
 import org.infinispan.test.fwk.CleanupAfterMethod;
@@ -20,12 +23,16 @@ import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.testng.annotations.AfterTest;
 import org.testng.annotations.Test;
 
+import javax.management.MBeanServer;
+import javax.management.ObjectName;
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
 import java.util.Collections;
 import java.util.List;
 
 import static org.infinispan.client.hotrod.test.HotRodClientTestingUtil.killRemoteCacheManager;
 import static org.infinispan.client.hotrod.test.HotRodClientTestingUtil.killServers;
-import static org.infinispan.server.hotrod.test.HotRodTestingUtil.hotRodCacheConfiguration;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 
@@ -37,6 +44,8 @@ import static org.junit.Assert.assertNotNull;
 @CleanupAfterMethod
 public class HotRodQueryTest extends SingleCacheManagerTest {
 
+   public static final String JMX_DOMAIN = ProtobufMetadataManager.class.getSimpleName();
+
    public static final String TEST_CACHE_NAME = "userCache";
 
    private HotRodServer hotRodServer;
@@ -45,20 +54,23 @@ public class HotRodQueryTest extends SingleCacheManagerTest {
 
    @Override
    protected EmbeddedCacheManager createCacheManager() throws Exception {
-      //todo [anistor] initializing the server-side context in this way is a hack. normally this should use the protobuf metadata registry
-      MarshallerRegistration.registerMarshallers(SerializationContextHolder.getSerializationContext());
+      GlobalConfigurationBuilder gcb = new GlobalConfigurationBuilder().nonClusteredDefault();
+      gcb.globalJmxStatistics()
+            .enable()
+            .allowDuplicateDomains(true)
+            .jmxDomain(JMX_DOMAIN)
+            .mBeanServerLookup(new PerThreadMBeanServerLookup());
 
-      //initialize client-side serialization context
-      MarshallerRegistration.registerMarshallers(ProtoStreamMarshaller.getSerializationContext());
-
-      ConfigurationBuilder builder = hotRodCacheConfiguration();
-      builder.transaction()
+      ConfigurationBuilder builder = new ConfigurationBuilder();
+      builder.dataContainer()
+            .keyEquivalence(ByteArrayEquivalence.INSTANCE)
+            .valueEquivalence(ByteArrayEquivalence.INSTANCE)
             .indexing().enable()
             .indexLocalOnly(false)
             .addProperty("default.directory_provider", getLuceneDirectoryProvider())
             .addProperty("lucene_version", "LUCENE_CURRENT");
 
-      cacheManager = TestCacheManagerFactory.createCacheManager();
+      cacheManager = TestCacheManagerFactory.createCacheManager(gcb, builder, true);
       cacheManager.defineConfiguration(TEST_CACHE_NAME, builder.build());
       cache = cacheManager.getCache(TEST_CACHE_NAME);
 
@@ -70,7 +82,34 @@ public class HotRodQueryTest extends SingleCacheManagerTest {
       remoteCacheManager = new RemoteCacheManager(clientBuilder.build());
 
       remoteCache = remoteCacheManager.getCache(TEST_CACHE_NAME);
+
+      ObjectName objName = new ObjectName(JMX_DOMAIN + ":type=RemoteQuery,name="
+                                                + ObjectName.quote("DefaultCacheManager")
+                                                + ",component=" + ProtobufMetadataManager.OBJECT_NAME);
+
+      byte[] descriptor = readClasspathResource("/bank.protobin");
+      MBeanServer mBeanServer = PerThreadMBeanServerLookup.getThreadMBeanServer();
+      mBeanServer.invoke(objName, "registerProtofile", new Object[]{descriptor}, new String[]{byte[].class.getName()});
+
+      //initialize client-side serialization context
+      MarshallerRegistration.registerMarshallers(ProtoStreamMarshaller.getSerializationContext(remoteCacheManager));
+
       return cacheManager;
+   }
+
+   private byte[] readClasspathResource(String c) throws IOException {
+      InputStream is = getClass().getResourceAsStream(c);
+      try {
+         ByteArrayOutputStream os = new ByteArrayOutputStream();
+         byte[] buf = new byte[1024];
+         int len;
+         while ((len = is.read(buf)) != -1) {
+            os.write(buf, 0, len);
+         }
+         return os.toByteArray();
+      } finally {
+         is.close();
+      }
    }
 
    protected String getLuceneDirectoryProvider() {
