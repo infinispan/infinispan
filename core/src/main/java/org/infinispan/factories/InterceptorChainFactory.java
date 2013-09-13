@@ -3,6 +3,7 @@ package org.infinispan.factories;
 
 import org.infinispan.commons.CacheConfigurationException;
 import org.infinispan.commons.CacheException;
+import org.infinispan.commons.marshall.Marshaller;
 import org.infinispan.configuration.cache.*;
 import org.infinispan.factories.annotations.DefaultFactoryFor;
 import org.infinispan.interceptors.*;
@@ -88,8 +89,12 @@ public class InterceptorChainFactory extends AbstractNamedCacheComponentFactory 
 
       CompatibilityModeConfiguration compatibility = configuration.compatibility();
       if (compatibility.enabled()) {
+         Marshaller compatibilityMarshaller = compatibility.marshaller();
+         if (compatibilityMarshaller != null) {
+            componentRegistry.wireDependencies(compatibilityMarshaller);
+         }
          interceptorChain.appendInterceptor(createInterceptor(
-               new TypeConverterInterceptor(compatibility.marshaller()), TypeConverterInterceptor.class), false);
+               new TypeConverterInterceptor(compatibilityMarshaller), TypeConverterInterceptor.class), false);
       }
 
       // add marshallable check interceptor for situations where we want to figure out before marshalling

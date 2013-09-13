@@ -34,8 +34,8 @@ public class MultiHotRodServerQueryTest extends MultiHotRodServersTest {
    protected void createCacheManagers() throws Throwable {
       ConfigurationBuilder builder = hotRodCacheConfiguration(getDefaultClusteredCacheConfig(CacheMode.REPL_SYNC, false));
       builder.indexing().enable()
-            .indexLocalOnly(true)
-            .addProperty("default.directory_provider", "infinispan")
+            .indexLocalOnly(false)
+            .addProperty("default.directory_provider", "ram")
             .addProperty("lucene_version", "LUCENE_CURRENT");
 
       createHotRodServers(2, builder);

@@ -64,13 +64,12 @@ public class HotRodQueryTest extends SingleCacheManagerTest {
       ConfigurationBuilder builder = new ConfigurationBuilder();
       builder.dataContainer()
             .keyEquivalence(ByteArrayEquivalence.INSTANCE)
-            .valueEquivalence(ByteArrayEquivalence.INSTANCE)
             .indexing().enable()
             .indexLocalOnly(false)
             .addProperty("default.directory_provider", getLuceneDirectoryProvider())
             .addProperty("lucene_version", "LUCENE_CURRENT");
 
-      cacheManager = TestCacheManagerFactory.createCacheManager(gcb, builder, true);
+      cacheManager = TestCacheManagerFactory.createCacheManager(gcb, new ConfigurationBuilder(), true);
       cacheManager.defineConfiguration(TEST_CACHE_NAME, builder.build());
       cache = cacheManager.getCache(TEST_CACHE_NAME);
 
@@ -87,6 +86,7 @@ public class HotRodQueryTest extends SingleCacheManagerTest {
                                                 + ObjectName.quote("DefaultCacheManager")
                                                 + ",component=" + ProtobufMetadataManager.OBJECT_NAME);
 
+      //initialize server-side serialization context via JMX
       byte[] descriptor = readClasspathResource("/bank.protobin");
       MBeanServer mBeanServer = PerThreadMBeanServerLookup.getThreadMBeanServer();
       mBeanServer.invoke(objName, "registerProtofile", new Object[]{descriptor}, new String[]{byte[].class.getName()});

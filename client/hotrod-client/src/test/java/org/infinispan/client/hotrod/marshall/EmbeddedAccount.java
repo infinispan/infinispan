@@ -4,32 +4,59 @@ import org.hibernate.search.annotations.Analyze;
 import org.hibernate.search.annotations.Field;
 import org.hibernate.search.annotations.Indexed;
 import org.hibernate.search.annotations.Store;
-import org.infinispan.protostream.sampledomain.Account;
 
 import java.util.Date;
 
 /**
+ * A class similar to {@code org.infinispan.protostream.sampledomain.Account}, that maps to the same protobuf type,
+ * {@code sample_bank_account.Account}.
+ *
  * @author anistor@redhat.com
  * @since 6.0
  */
 @Indexed
-public class EmbeddedAccount extends Account {
+public class EmbeddedAccount {
 
    @Field(store = Store.YES, analyze = Analyze.NO)
-   @Override
+   private int id;
+
+   @Field(store = Store.YES, analyze = Analyze.NO)
+   private String description;
+
+   @Field(store = Store.YES, analyze = Analyze.NO)
+   private Date creationDate;
+
    public int getId() {
-      return super.getId();
+      return id;
    }
 
-   @Field(store = Store.YES, analyze = Analyze.NO)
-   @Override
+   public void setId(int id) {
+      this.id = id;
+   }
+
    public String getDescription() {
-      return super.getDescription();
+      return description;
    }
 
-   @Field(store = Store.YES, analyze = Analyze.NO)
-   @Override
+   public void setDescription(String description) {
+      this.description = description;
+   }
+
    public Date getCreationDate() {
-      return super.getCreationDate();
+      return creationDate;
+   }
+
+   public void setCreationDate(Date creationDate) {
+      this.creationDate = creationDate;
+   }
+
+   @Override
+   public String toString() {
+      return "EmbeddedAccount{" +
+            "id=" + id +
+            ", description='" + description + '\'' +
+            ", creationDate='" + creationDate + '\'' +
+            "}";
+
    }
 }

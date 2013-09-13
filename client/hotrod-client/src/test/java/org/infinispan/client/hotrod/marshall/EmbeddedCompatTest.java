@@ -7,7 +7,6 @@ import org.infinispan.client.hotrod.TestHelper;
 import org.infinispan.client.hotrod.configuration.ConfigurationBuilder;
 import org.infinispan.commons.equivalence.AnyEquivalence;
 import org.infinispan.manager.EmbeddedCacheManager;
-import org.infinispan.protostream.SerializationContext;
 import org.infinispan.protostream.sampledomain.Account;
 import org.infinispan.protostream.sampledomain.marshallers.MarshallerRegistration;
 import org.infinispan.query.CacheQuery;
@@ -47,14 +46,14 @@ public class EmbeddedCompatTest extends SingleCacheManagerTest {
    @Override
    protected EmbeddedCacheManager createCacheManager() throws Exception {
       org.infinispan.configuration.cache.ConfigurationBuilder builder = hotRodCacheConfiguration();
-      CompatibilityProtoStreamMarshaller compatModeMarshaller = new CompatibilityProtoStreamMarshaller();
-      builder.compatibility().enable().marshaller(compatModeMarshaller);
-      builder.indexing().enable();
+      builder.compatibility().enable().marshaller(new CompatibilityProtoStreamMarshaller());
+      builder.indexing().enable()
+            .addProperty("default.directory_provider", "ram")
+            .addProperty("lucene_version", "LUCENE_CURRENT");
+
       builder.dataContainer().keyEquivalence(AnyEquivalence.getInstance());  // TODO [anistor] hacks!
       cacheManager = TestCacheManagerFactory.createCacheManager(builder);
       cache = cacheManager.getCache();
-
-      compatModeMarshaller.setCacheManager(cacheManager); //todo [anistor] this works only in programmatic config mode, but not in xml config!
 
       hotRodServer = TestHelper.startHotRodServer(cacheManager);
 
@@ -66,13 +65,12 @@ public class EmbeddedCompatTest extends SingleCacheManagerTest {
       remoteCache = remoteCacheManager.getCache();
 
       //initialize client-side serialization context
-      SerializationContext clientSerCtx = ProtoStreamMarshaller.getSerializationContext(remoteCacheManager);
-      MarshallerRegistration.registerMarshallers(clientSerCtx);
-      clientSerCtx.registerMarshaller(EmbeddedAccount.class, new EmbeddedAccountMarshaller());
+      MarshallerRegistration.registerMarshallers(ProtoStreamMarshaller.getSerializationContext(remoteCacheManager));
 
       //initialize server-side serialization context
-      MarshallerRegistration.registerMarshallers(ProtobufMetadataManager.getSerializationContext(cacheManager));
-      ProtobufMetadataManager.getSerializationContext(cacheManager).registerMarshaller(EmbeddedAccount.class, new EmbeddedAccountMarshaller());
+      ProtobufMetadataManager protobufMetadataManager = cacheManager.getGlobalComponentRegistry().getComponent(ProtobufMetadataManager.class);
+      protobufMetadataManager.registerProtofile("/bank.protobin");
+      protobufMetadataManager.registerMarshaller(EmbeddedAccount.class, new EmbeddedAccountMarshaller());
 
       return cacheManager;
    }
@@ -93,7 +91,7 @@ public class EmbeddedCompatTest extends SingleCacheManagerTest {
       Object localObject = cache.get(key);
       assertNotNull(localObject);
       assertTrue(localObject instanceof EmbeddedAccount);
-      assertAccount((EmbeddedAccount) localObject);
+      assertEmbeddedAccount((EmbeddedAccount) localObject);
 
       // get the object through the remote cache interface and check it's the same object we put
       Account fromRemoteCache = remoteCache.get(1);
@@ -106,14 +104,14 @@ public class EmbeddedCompatTest extends SingleCacheManagerTest {
 
       // get account back from remote cache via query and check its attributes
       QueryFactory qf = Search.getQueryFactory(remoteCache);
-      Query query = qf.from(EmbeddedAccount.class)
+      Query query = qf.from(Account.class)
             .having("description").like("%test%").toBuilder()
             .build();
       List<Account> list = query.list();
 
       assertNotNull(list);
       assertEquals(1, list.size());
-      assertEquals(EmbeddedAccount.class, list.get(0).getClass());
+      assertEquals(Account.class, list.get(0).getClass());
       assertAccount(list.get(0));
    }
 
@@ -131,19 +129,26 @@ public class EmbeddedCompatTest extends SingleCacheManagerTest {
       assertNotNull(list);
       assertEquals(1, list.size());
       assertEquals(EmbeddedAccount.class, list.get(0).getClass());
-      assertAccount((Account) list.get(0));
+      assertEmbeddedAccount((EmbeddedAccount) list.get(0));
    }
 
    private Account createAccount() {
       Account account = new Account();
       account.setId(1);
       account.setDescription("test description");
-      account.setCreationDate(new Date());
+      account.setCreationDate(new Date(42));
       return account;
    }
 
    private void assertAccount(Account account) {
       assertEquals(1, account.getId());
       assertEquals("test description", account.getDescription());
+      assertEquals(42, account.getCreationDate().getTime());
+   }
+
+   private void assertEmbeddedAccount(EmbeddedAccount account) {
+      assertEquals(1, account.getId());
+      assertEquals("test description", account.getDescription());
+      assertEquals(42, account.getCreationDate().getTime());
    }
 }

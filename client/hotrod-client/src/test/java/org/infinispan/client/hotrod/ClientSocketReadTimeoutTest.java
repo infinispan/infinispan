@@ -10,7 +10,6 @@ import org.infinispan.test.SingleCacheManagerTest;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
-import org.testng.annotations.AfterClass;
 import org.testng.annotations.Test;
 
 import java.lang.reflect.Method;

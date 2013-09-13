@@ -15,6 +15,7 @@ import org.infinispan.notifications.cachelistener.annotation.CacheEntryCreated;
 import org.infinispan.notifications.cachelistener.annotation.CacheEntryModified;
 import org.infinispan.notifications.cachelistener.event.CacheEntryCreatedEvent;
 import org.infinispan.notifications.cachelistener.event.CacheEntryModifiedEvent;
+import org.infinispan.protostream.BaseMarshaller;
 import org.infinispan.protostream.ProtobufUtil;
 import org.infinispan.protostream.SerializationContext;
 import org.infinispan.transaction.TransactionMode;
@@ -88,6 +89,10 @@ public class ProtobufMetadataManager {
       return configurationBuilder.build();
    }
 
+   public <T> void registerMarshaller(Class<? extends T> clazz, BaseMarshaller<T> marshaller) {
+      serCtx.registerMarshaller(clazz, marshaller);
+   }
+
    @ManagedOperation(description = "Registers a Protobuf definition file", displayName = "Register Protofile")
    public void registerProtofile(byte[] descriptorFile) throws IOException, Descriptors.DescriptorValidationException {
       getMetadataCache().put(UUID.randomUUID().toString(), descriptorFile);
@@ -119,7 +124,7 @@ public class ProtobufMetadataManager {
       }
    }
 
-   public SerializationContext getSerializationContext() {
+   SerializationContext getSerializationContext() {
       return serCtx;
    }
 
