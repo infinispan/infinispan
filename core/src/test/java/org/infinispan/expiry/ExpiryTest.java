@@ -1,6 +1,7 @@
 package org.infinispan.expiry;
 
 import org.infinispan.Cache;
+import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.container.DataContainer;
 import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.manager.CacheContainer;
@@ -127,7 +128,7 @@ public class ExpiryTest extends AbstractInfinispanTest {
       final long lifespan = EXPIRATION_TIMEOUT;
       assert cache.putIfAbsent("k", "v", lifespan, MILLISECONDS) == null;
       long partial = lifespan / 10;
-       // Sleep some time within the lifespan boundaries
+      // Sleep some time within the lifespan boundaries
       Thread.sleep(lifespan - partial);
       assert "v".equals(cache.get("k")) || moreThanDurationElapsed(startTime, lifespan);
       // Sleep some time that guarantees that it'll be over the lifespan
@@ -241,8 +242,23 @@ public class ExpiryTest extends AbstractInfinispanTest {
       }
    }
 
+   public void testEntrySetAfterExpiryWithStore(Method m) throws Exception {
+      CacheContainer cc = createCacheContainerWithStore();
+      try {
+         doTestEntrySetAfterExpiryInPut(m, cc);
+      } finally {
+         cc.stop();
+      }
+   }
+
    private CacheContainer createTransactionalCacheContainer() {
       return TestCacheManagerFactory.createCacheManager(TestCacheManagerFactory.getDefaultCacheConfiguration(true));
+   }
+
+   private CacheContainer createCacheContainerWithStore() {
+      ConfigurationBuilder b = new ConfigurationBuilder();
+      b.persistence().addSingleFileStore();
+      return TestCacheManagerFactory.createCacheManager(b);
    }
 
    private void doTestEntrySetAfterExpiryInPut(Method m, CacheContainer cc) throws Exception {
