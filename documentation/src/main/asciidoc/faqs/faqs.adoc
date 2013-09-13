@@ -7,7 +7,7 @@ Manik Surtani, Mircea Markus, Galder Zamarreño, Pete Muir, and others from the 
 Welcome to Infinispan's Frequently Asked Questions document.
 We hope you find the answers to your queries here, however if you don't,
 we encourage you to connect with the Infinispan community and ask
-any questions you may have on the link:http://www.infinispan.org/forums.html[Infinispan User Forums].
+any questions you may have on the link:http://www.infinispan.org/community[Infinispan User Forums].
 
 == Project questions
 
@@ -66,7 +66,7 @@ Infinispan 5 adds the ability to pass a Runnable around the grid.
 This allows you to push complex processing towards the server where data is local, and pull back results using a Future.
 This map/reduce style paradigm is common in applications where a large amount of data is needed to compute relatively small results. 
 
-Also see link:http://www.infinispan.org/learn.html[this page] on the Infinispan website.
+Also see link:http://www.infinispan.org/about[this page] on the Infinispan website.
 
 === What would I use Infinispan for?
 Most people use Infinispan for one of two reasons. Firstly, as a distributed cache.
