@@ -7,6 +7,7 @@ import org.infinispan.api.BasicCacheContainer;
 import org.infinispan.client.hotrod.RemoteCache;
 import org.infinispan.client.hotrod.RemoteCacheManager;
 import org.infinispan.client.hotrod.configuration.ConfigurationBuilder;
+import org.infinispan.commons.equivalence.Equivalence;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.marshall.LegacyMarshallerAdapter;
@@ -58,6 +59,8 @@ public class CompatibilityCacheFactory<K, V> {
    private int restPort;
    private final int defaultNumOwners = 2;
    private int numOwners = defaultNumOwners;
+   private Equivalence keyEquivalence = null;
+   private Equivalence valueEquivalence = null;
 
    CompatibilityCacheFactory(CacheMode cacheMode) {
       this.cacheName = "";
@@ -79,6 +82,16 @@ public class CompatibilityCacheFactory<K, V> {
    CompatibilityCacheFactory(String cacheName, Marshaller marshaller, CacheMode cacheMode, int numOwners) {
       this(cacheName, marshaller, cacheMode);
       this.numOwners = numOwners;
+   }
+
+   CompatibilityCacheFactory<K, V> keyEquivalence(Equivalence equivalence) {
+      this.keyEquivalence = equivalence;
+      return this;
+   }
+
+   CompatibilityCacheFactory<K, V> valueEquivalence(Equivalence equivalence) {
+      this.valueEquivalence = equivalence;
+      return this;
    }
 
    @Deprecated
@@ -124,6 +137,14 @@ public class CompatibilityCacheFactory<K, V> {
 
       if (cacheMode.isDistributed() && numOwners != defaultNumOwners) {
          builder.clustering().hash().numOwners(numOwners);
+      }
+
+      if (keyEquivalence != null) {
+         builder.dataContainer().keyEquivalence(keyEquivalence);
+      }
+
+      if (valueEquivalence != null) {
+         builder.dataContainer().valueEquivalence(valueEquivalence);
       }
 
       cacheManager = cacheMode.isClustered()
