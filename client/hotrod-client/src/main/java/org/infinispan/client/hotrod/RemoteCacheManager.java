@@ -24,7 +24,6 @@ import org.infinispan.client.hotrod.impl.transport.TransportFactory;
 import org.infinispan.client.hotrod.logging.Log;
 import org.infinispan.client.hotrod.logging.LogFactory;
 import org.infinispan.client.hotrod.marshall.ProtoStreamMarshaller;
-import org.infinispan.commons.CacheException;
 import org.infinispan.commons.api.BasicCacheContainer;
 import org.infinispan.commons.executors.ExecutorFactory;
 import org.infinispan.commons.marshall.Marshaller;
@@ -32,8 +31,6 @@ import org.infinispan.commons.util.FileLookupFactory;
 import org.infinispan.commons.util.SysPropertyActions;
 import org.infinispan.commons.util.TypedProperties;
 import org.infinispan.commons.util.Util;
-import org.infinispan.protostream.SerializationContext;
-import org.infinispan.query.remote.client.MarshallerRegistration;
 
 /**
  * Factory for {@link org.infinispan.client.hotrod.RemoteCache}s. <p/> <p> <b>Lifecycle:</b> </p> In order to be able to
@@ -575,26 +572,10 @@ public class RemoteCacheManager implements BasicCacheContainer {
          }
       }
 
-      initRemoteQuery();
-
       // Print version to help figure client version run
       log.version(RemoteCacheManager.class.getPackage().getImplementationVersion());
 
       started = true;
-   }
-
-   private void initRemoteQuery() {
-      SerializationContext serCtx = getSerializationContext();
-      try {
-         MarshallerRegistration.registerMarshallers(serCtx);
-      } catch (Exception e) {
-         //todo [anistor] need better exception handling
-         throw new CacheException("Failed to initialise serialization context", e);
-      }
-   }
-
-   public SerializationContext getSerializationContext() {
-      return ProtoStreamMarshaller.getSerializationContext();
    }
 
    @Override

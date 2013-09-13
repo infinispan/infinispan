@@ -29,6 +29,9 @@ public abstract class BaseQueryBuilder<T extends Query> implements QueryBuilder<
    protected int maxResults = -1;
 
    public BaseQueryBuilder(Class rootType) {
+      if (rootType == null) {
+         throw new IllegalArgumentException("rootType cannot be null");
+      }
       this.rootType = rootType;
    }
 

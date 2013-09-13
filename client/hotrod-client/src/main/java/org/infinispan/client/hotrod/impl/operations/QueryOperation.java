@@ -6,8 +6,10 @@ import org.infinispan.client.hotrod.impl.protocol.HeaderParams;
 import org.infinispan.client.hotrod.impl.query.RemoteQuery;
 import org.infinispan.client.hotrod.impl.transport.Transport;
 import org.infinispan.client.hotrod.impl.transport.TransportFactory;
+import org.infinispan.client.hotrod.marshall.ProtoStreamMarshaller;
 import org.infinispan.commons.CacheException;
 import org.infinispan.protostream.ProtobufUtil;
+import org.infinispan.protostream.SerializationContext;
 import org.infinispan.query.dsl.SortOrder;
 import org.infinispan.query.dsl.impl.SortCriteria;
 import org.infinispan.query.remote.client.QueryRequest;
@@ -54,9 +56,10 @@ public class QueryOperation extends RetryOnFailureOperation<QueryResponse> {
          }
          queryRequest.setSortCriteria(scl);
       }
+      SerializationContext serCtx = ProtoStreamMarshaller.getSerializationContext();
       byte[] requestBytes;
       try {
-         requestBytes = ProtobufUtil.toByteArray(remoteQuery.getCache().getRemoteCacheManager().getSerializationContext(), queryRequest);
+         requestBytes = ProtobufUtil.toByteArray(serCtx, queryRequest);
       } catch (IOException e) {
          throw new CacheException(e);  //todo [anistor] need better exception handling
       }
@@ -66,7 +69,7 @@ public class QueryOperation extends RetryOnFailureOperation<QueryResponse> {
       readHeaderAndValidate(transport, params);
       byte[] responseBytes = transport.readArray();
       try {
-         QueryResponse queryResponse = ProtobufUtil.fromByteArray(remoteQuery.getCache().getRemoteCacheManager().getSerializationContext(), responseBytes, QueryResponse.class);
+         QueryResponse queryResponse = ProtobufUtil.fromByteArray(serCtx, responseBytes, QueryResponse.class);
          return queryResponse;
       } catch (IOException e) {
          throw new CacheException(e);  //todo [anistor] need better exception handling
