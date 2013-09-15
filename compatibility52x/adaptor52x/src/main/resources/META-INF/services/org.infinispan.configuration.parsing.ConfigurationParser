@@ -1,0 +1,2 @@
+org.infinispan.compatibility.parsing.Parser52
+org.infinispan.compatibility.parsing.JdbcCacheStoreConfigurationParser52

@@ -6,7 +6,7 @@ import java.util.List;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
-enum ParsedCacheMode {
+public enum ParsedCacheMode {
 
    LOCAL("l", "local"),
    
@@ -27,7 +27,7 @@ enum ParsedCacheMode {
       }
    }
    
-   boolean matches(String candidate) {
+   public boolean matches(String candidate) {
       String c = candidate.toUpperCase();
       for (String synonym : synonyms) {
          if (c.equals(synonym))

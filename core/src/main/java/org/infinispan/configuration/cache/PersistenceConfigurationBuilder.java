@@ -129,6 +129,10 @@ public class PersistenceConfigurationBuilder extends AbstractConfigurationChildB
       return this;
    }
 
+   public List<StoreConfigurationBuilder<?, ?>> stores() {
+      return stores;
+   }
+
    @Override
    public String toString() {
       return "PersistenceConfigurationBuilder{" +
