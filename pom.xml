@@ -62,6 +62,9 @@
       <module>integrationtests/as-integration</module>
       <module>integrationtests/compatibility-mode-it</module>
       <module>jcache</module>
+      <module>compatibility52x</module>
+      <module>compatibility52x/adaptor52x</module>
+      <module>compatibility52x/custom52x-store</module>
    </modules>
 
    <profiles>

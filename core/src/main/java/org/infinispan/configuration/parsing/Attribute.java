@@ -129,7 +129,7 @@ public enum Attribute {
     TRANSACTION_PROTOCOL("transactionProtocol"),
     KEY_EQUIVALENCE("keyEquivalence"),
     VALUE_EQUIVALENCE("valueEquivalence"),
-    TYPE_CONVERTER("typeConverter");
+    TYPE_CONVERTER("typeConverter"), PURGE_SYNCHRONOUSLY("purgeSynchronously"), PURGER_THREADS("purgerThreads");
 
     private final String name;
 
