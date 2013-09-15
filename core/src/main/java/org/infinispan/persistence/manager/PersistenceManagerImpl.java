@@ -193,6 +193,10 @@ public class PersistenceManagerImpl implements PersistenceManager {
 
       for (CacheLoader l : loaders) {
          if (configMap.get(l).preload()) {
+            if (!(l instanceof AdvancedCacheLoader)) {
+               throw new CacheLoaderException("Cannot preload from cache loader '" + l.getClass().getName()
+                                                    + "' as it doesn't implement '" + AdvancedCacheLoader.class.getName() + "'");
+            }
             preloadCl = (AdvancedCacheLoader) l;
             break;
          }
