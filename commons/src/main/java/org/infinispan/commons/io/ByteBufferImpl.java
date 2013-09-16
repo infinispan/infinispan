@@ -24,6 +24,11 @@ public class ByteBufferImpl implements ByteBuffer {
    private final int length;
 
    public ByteBufferImpl(byte[] buf, int offset, int length) {
+      if (buf == null)
+         throw new IllegalArgumentException("Null buff not allowed!");
+      if (buf.length < offset + length)
+         throw new IllegalArgumentException("Incorrect arguments: buff.length"
+                                                  + buf.length + ", offset=" + offset +", length="+ length);
       this.buf = buf;
       this.offset = offset;
       this.length = length;
@@ -69,12 +74,26 @@ public class ByteBufferImpl implements ByteBuffer {
 
       ByteBufferImpl that = (ByteBufferImpl) o;
 
-      return Arrays.equals(copy().getBuf(), that.copy().getBuf());
+      if (length != that.length)
+         return false;
+
+      for (int i = 0; i < length; i++)
+         if (buf[offset + i] != that.buf[that.offset + i])
+            return false;
+
+      return true;
    }
 
    @Override
    public int hashCode() {
-      return Arrays.hashCode(copy().getBuf());
+      if (buf == null)
+         return 0;
+
+      int result = 1;
+      for (int i = 0; i < length; i++) {
+         result = 31 * result + buf[offset + i];
+      }
+      return result;
    }
 
    /**
@@ -87,11 +106,6 @@ public class ByteBufferImpl implements ByteBuffer {
 
    public java.nio.ByteBuffer toJDKByteBuffer() {
       return java.nio.ByteBuffer.wrap(buf, offset, length);
-   }
-
-   @Override
-   public void copy(byte[] result, int offset) {
-      System.arraycopy(buf, offset, result, offset, length);
    }
 
    public static class Externalizer extends AbstractExternalizer<ByteBufferImpl> {
@@ -108,7 +122,7 @@ public class ByteBufferImpl implements ByteBuffer {
       public ByteBufferImpl readObject(ObjectInput input) throws IOException, ClassNotFoundException {
          int length = UnsignedNumeric.readUnsignedInt(input);
          byte[] data = new byte[length];
-         input.read(data, 0, length);
+         input.readFully(data, 0, length);
          return new ByteBufferImpl(data, 0, length);
       }
 

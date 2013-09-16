@@ -16,9 +16,7 @@ public interface ByteBuffer {
 
    int getLength();
 
-   ByteBufferImpl copy();
+   ByteBuffer copy();
 
    InputStream getStream();
-
-   void copy(byte[] result, int offset);
 }

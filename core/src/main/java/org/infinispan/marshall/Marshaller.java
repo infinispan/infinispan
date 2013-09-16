@@ -1,7 +1,7 @@
 package org.infinispan.marshall;
 
 import net.jcip.annotations.ThreadSafe;
-import org.infinispan.io.ByteBufferImpl;
+import org.infinispan.commons.io.ByteBuffer;
 
 import java.io.IOException;
 
@@ -79,7 +79,7 @@ public interface Marshaller {
     * @throws InterruptedException if the marshalling process was interrupted. Clients should take this as a sign that
     * the marshaller is no longer available, maybe due to shutdown, and so no more marshalling should be attempted.
     */
-   ByteBufferImpl objectToBuffer(Object o) throws IOException, InterruptedException;
+   ByteBuffer objectToBuffer(Object o) throws IOException, InterruptedException;
 
    /**
     * A method that checks whether the given object is marshallable as per the rules of this marshaller.

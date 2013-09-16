@@ -110,7 +110,7 @@ public class PersistenceConfigurationBuilder extends AbstractConfigurationChildB
 
    @Override
    public PersistenceConfiguration create() {
-      List<StoreConfiguration> stores = new LinkedList<StoreConfiguration>();
+      List<StoreConfiguration> stores = new ArrayList<StoreConfiguration>(this.stores.size());
       for (StoreConfigurationBuilder<?, ?> loader : this.stores)
          stores.add(loader.create());
       return new PersistenceConfiguration(passivation, stores);

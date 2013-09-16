@@ -19,8 +19,8 @@
 
       <persistenceExecutor factory="org.infinispan.executors.DefaultExecutorFactory">
       	<properties>
-         <property name="maxThreads" value="${test.property.asyncListenerMaxThreads:5}"/>
-         <property name="threadNamePrefix" value="AsyncListenerThread"/>
+         <property name="maxThreads" value="${test.property.persistenceMaxThreads:5}"/>
+         <property name="threadNamePrefix" value="PersistenceThread"/>
          </properties>
       </persistenceExecutor>
 

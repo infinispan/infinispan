@@ -40,9 +40,9 @@ import static org.testng.Assert.assertEquals;
  * @author Sanne Grinovero
  * @version 4.1
  */
-@Test(testName = "persistence.UnnnecessaryLoadingTest", groups = "functional", singleThreaded = true)
+@Test(testName = "persistence.UnnecessaryLoadingTest", groups = "functional", singleThreaded = true)
 @CleanupAfterMethod
-public class UnnnecessaryLoadingTest extends SingleCacheManagerTest {
+public class UnnecessaryLoadingTest extends SingleCacheManagerTest {
    AdvancedLoadWriteStore store;
    private PersistenceManagerImpl persistenceManager;
 
