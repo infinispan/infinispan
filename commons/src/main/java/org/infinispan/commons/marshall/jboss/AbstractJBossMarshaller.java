@@ -99,11 +99,6 @@ public abstract class AbstractJBossMarshaller extends AbstractMarshaller impleme
    }
 
    @Override
-   final public ObjectOutput startObjectOutput(final OutputStream os, final boolean isReentrant) throws IOException {
-      return startObjectOutput(os, isReentrant, RIVER_INTERNAL_BUFFER);
-   }
-
-   @Override
    final public void finishObjectOutput(final ObjectOutput oo) {
       try {
          if (trace) log.trace("Stop marshaller");

@@ -48,11 +48,6 @@ public class StreamingMarshallerAdapter implements StreamingMarshaller {
    }
 
    @Override
-   public ObjectOutput startObjectOutput(OutputStream os, boolean isReentrant) throws IOException {
-      return delegate.startObjectOutput(os, isReentrant);
-   }
-
-   @Override
    public void finishObjectOutput(ObjectOutput oo) {
       delegate.finishObjectOutput(oo);
    }

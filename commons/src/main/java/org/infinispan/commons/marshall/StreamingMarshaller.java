@@ -52,12 +52,6 @@ public interface StreamingMarshaller extends Marshaller {
    ObjectOutput startObjectOutput(OutputStream os, boolean isReentrant, final int estimatedSize) throws IOException;
 
    /**
-    * Use {@link #startObjectOutput(OutputStream, boolean, int)} instead
-    */
-   @Deprecated
-   ObjectOutput startObjectOutput(OutputStream os, boolean isReentrant) throws IOException;
-
-   /**
     * Finish using the given ObjectOutput. After opening a ObjectOutput and calling objectToObjectStream() multiple
     * times, use this method to flush the data and close if necessary
     *
