@@ -15,8 +15,6 @@ import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.context.Flag;
 import org.infinispan.metadata.EmbeddedMetadata;
 import org.infinispan.metadata.Metadata;
-import org.infinispan.notifications.ClassLoaderAwareFilteringListenable;
-import org.infinispan.notifications.ClassLoaderAwareListenable;
 import org.infinispan.notifications.KeyFilter;
 import org.infinispan.util.concurrent.NotifyingFuture;
 
