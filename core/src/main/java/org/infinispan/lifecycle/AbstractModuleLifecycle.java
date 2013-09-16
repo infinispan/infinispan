@@ -21,12 +21,6 @@ public class AbstractModuleLifecycle implements ModuleLifecycle {
    }
 
    @Override
-   @Deprecated
-   public void cacheManagerStarting(GlobalComponentRegistry gcr, org.infinispan.config.GlobalConfiguration globalConfiguration) {
-      // a no-op
-   }
-
-   @Override
    public void cacheManagerStarted(GlobalComponentRegistry gcr) {
       // a no-op
    }
@@ -43,12 +37,6 @@ public class AbstractModuleLifecycle implements ModuleLifecycle {
 
    @Override
    public void cacheStarting(ComponentRegistry cr, Configuration configuration, String cacheName) {
-      // a no-op
-   }
-
-   @Override
-   @Deprecated
-   public void cacheStarting(ComponentRegistry cr, org.infinispan.config.Configuration configuration, String cacheName) {
       // a no-op
    }
 

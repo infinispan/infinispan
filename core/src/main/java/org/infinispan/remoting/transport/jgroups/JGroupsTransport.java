@@ -2,7 +2,7 @@ package org.infinispan.remoting.transport.jgroups;
 
 import org.infinispan.commands.ReplicableCommand;
 import org.infinispan.commands.remote.ClusteredGetCommand;
-import org.infinispan.config.parsing.XmlConfigHelper;
+import org.infinispan.configuration.parsing.XmlConfigHelper;
 import org.infinispan.configuration.global.TransportConfiguration;
 import org.infinispan.factories.GlobalComponentRegistry;
 import org.infinispan.factories.annotations.ComponentName;
@@ -77,7 +77,7 @@ import static org.infinispan.factories.KnownComponentNames.GLOBAL_MARSHALLER;
  * {@link org.infinispan.remoting.transport.jgroups.JGroupsChannelLookup} instance</li>
  * </ul>
  * These are normally passed in as Properties in
- * {@link org.infinispan.config.GlobalConfiguration#setTransportProperties(java.util.Properties)} or
+ * {@link org.infinispan.configuration.global.TransportConfigurationBuilder#withProperties(java.util.Properties)} or
  * in the Infinispan XML configuration file.
  *
  * @author Manik Surtani

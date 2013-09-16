@@ -1,4 +1,4 @@
-package org.infinispan.config.parsing;
+package org.infinispan.configuration.parsing;
 
 import org.infinispan.commons.util.BeanUtils;
 import org.infinispan.commons.util.StringPropertyReplacer;

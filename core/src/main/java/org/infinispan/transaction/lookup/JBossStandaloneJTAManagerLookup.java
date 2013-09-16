@@ -20,14 +20,6 @@ public class JBossStandaloneJTAManagerLookup implements TransactionManagerLookup
    private Method manager, user;
    private static final Log log = LogFactory.getLog(JBossStandaloneJTAManagerLookup.class);
 
-   /**
-    * @deprecated Use {@link #init(org.infinispan.configuration.cache.Configuration)} instead.
-    */
-   @Deprecated
-   public void init(org.infinispan.config.Configuration configuration) {
-      init(configuration.getClassLoader());
-   }
-
    @Inject
    public void init(Configuration configuration) {
       init(configuration.classLoader());
