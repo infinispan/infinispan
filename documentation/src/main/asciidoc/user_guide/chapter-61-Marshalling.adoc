@@ -80,7 +80,7 @@ builder.storeAsBinary().enable().defensive(true);
 ----
 
 === Advanced Configuration
-Internally, Infinispan uses an implementation of link:$$http://infinispan.sourceforge.net/4.0/apidocs/org/infinispan/marshall/Marshaller.html$$[this Marshaller interface] in order to marshall/unmarshall Java objects so that they're sent other nodes in the grid, or so that they're stored in a cache store, or even so to transform them into byte arrays for lazy deserialization. 
+Internally, Infinispan uses an implementation of link:$$http://docs.jboss.org/infinispan/4.0/apidocs/org/infinispan/marshall/Marshaller.html$$[this Marshaller interface] in order to marshall/unmarshall Java objects so that they're sent other nodes in the grid, or so that they're stored in a cache store, or even so to transform them into byte arrays for lazy deserialization. 
 
 By default, Infinispan uses the link:$$http://docs.jboss.org/infinispan/5.3/apidocs/org/infinispan/marshall/VersionAwareMarshaller.html$$[VersionAwareMarshaller] which, as the name suggests, adds a version short to the start of any stream when writing, enabling similar VersionAwareMarshaller instances to read the version short and know which specific marshaller implementation to delegate the call to. Using a VersionAwareMarshaller helps achieve wire protocol compatibility between minor releases but still affords us the flexibility to tweak and improve the wire protocol between minor or micro releases. Optionally, Infinispan users to optionally provide their own marshaller, for example: 
 
