@@ -2,7 +2,6 @@ package org.infinispan.client.hotrod;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.net.URL;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
@@ -66,7 +65,7 @@ import org.infinispan.query.remote.client.MarshallerRegistration;
  * <li><tt>infinispan.client.hotrod.tcp_no_delay</tt>, default = true.  Affects TCP NODELAY on the TCP stack.</li>
  * <li><tt>infinispan.client.hotrod.ping_on_startup</tt>, default = true.  If true, a ping request is sent to a back end server in order to fetch cluster's topology.</li>
  * <li><tt>infinispan.client.hotrod.transport_factory</tt>, default = org.infinispan.client.hotrod.impl.transport.tcp.TcpTransportFactory - controls which transport to use.  Currently only the TcpTransport is supported.</li>
- * <li><tt>infinispan.client.hotrod.marshaller</tt>, default = org.infinispan.marshall.jboss.GenericJBossMarshaller.  Allows you to specify a custom {@link org.infinispan.marshall.Marshaller} implementation to serialize and deserialize user objects. For portable serialization payloads, you should configure the marshaller to be {@link org.infinispan.client.hotrod.marshall.ApacheAvroMarshaller}</li>
+ * <li><tt>infinispan.client.hotrod.marshaller</tt>, default = org.infinispan.marshall.jboss.GenericJBossMarshaller.  Allows you to specify a custom {@link org.infinispan.commons.marshall.Marshaller} implementation to serialize and deserialize user objects. For portable serialization payloads, you should configure the marshaller to be {@link org.infinispan.client.hotrod.marshall.ApacheAvroMarshaller}</li>
  * <li><tt>infinispan.client.hotrod.async_executor_factory</tt>, default = org.infinispan.client.hotrod.impl.async.DefaultAsyncExecutorFactory.  Allows you to specify a custom asynchroous executor for async calls.</li>
  * <li><tt>infinispan.client.hotrod.default_executor_factory.pool_size</tt>, default = 10.  If the default executor is used, this configures the number of threads to initialize the executor with.</li>
  * <li><tt>infinispan.client.hotrod.default_executor_factory.queue_size</tt>, default = 100000.  If the default executor is used, this configures the queue size to initialize the executor with.</li>
@@ -178,89 +177,6 @@ public class RemoteCacheManager implements BasicCacheContainer {
    }
 
    /**
-    * Builds a remote cache manager that relies on the provided {@link Marshaller} for marshalling
-    * keys and values to be send over to the remote Infinispan cluster.
-    *
-    * @param marshaller marshaller implementation to be used
-    * @param props      other properties
-    * @param start      whether or not to start the manager on return from the constructor.
-    */
-   @Deprecated
-   public RemoteCacheManager(Marshaller marshaller, Properties props, boolean start) {
-      this(new ConfigurationBuilder().classLoader(Thread.currentThread().getContextClassLoader()).withProperties(props).marshaller(marshaller.getClass()).build(), start);
-   }
-
-   /**
-    * Builds a remote cache manager that relies on the provided {@link Marshaller} for marshalling
-    * keys and values to be send over to the remote Infinispan cluster.
-    *
-    * @param marshaller marshaller implementation to be used
-    * @param props      other properties
-    * @param start      whether or not to start the manager on return from the constructor.
-    */
-   @Deprecated
-   public RemoteCacheManager(Marshaller marshaller, Properties props, boolean start, ClassLoader classLoader, ExecutorFactory asyncExecutorFactory) {
-      this(new ConfigurationBuilder().classLoader(classLoader).withProperties(props).marshaller(marshaller).asyncExecutorFactory().factory(asyncExecutorFactory).build(), start);
-   }
-
-   /**
-    * Same as {@link #RemoteCacheManager(Marshaller, java.util.Properties, boolean)} with start = true.
-    */
-   @Deprecated
-   public RemoteCacheManager(Marshaller marshaller, Properties props) {
-      this(marshaller, props, true);
-   }
-
-   /**
-    * Same as {@link #RemoteCacheManager(Marshaller, java.util.Properties, boolean)} with start = true.
-    */
-   @Deprecated
-   public RemoteCacheManager(Marshaller marshaller, Properties props, ExecutorFactory asyncExecutorFactory) {
-      this(new ConfigurationBuilder().withProperties(props).marshaller(marshaller).asyncExecutorFactory().factory(asyncExecutorFactory).build());
-   }
-
-   /**
-    * Same as {@link #RemoteCacheManager(Marshaller, java.util.Properties, boolean)} with start = true.
-    */
-   @Deprecated
-   public RemoteCacheManager(Marshaller marshaller, Properties props, ClassLoader classLoader) {
-      this(new ConfigurationBuilder().classLoader(classLoader).marshaller(marshaller).withProperties(props).build());
-   }
-
-   /**
-    * Build a cache manager based on supplied properties.
-    */
-   @Deprecated
-   public RemoteCacheManager(Properties props, boolean start) {
-      this(new ConfigurationBuilder().withProperties(props).build(), start);
-   }
-
-   /**
-    * Build a cache manager based on supplied properties.
-    */
-   @Deprecated
-   public RemoteCacheManager(Properties props, boolean start, ClassLoader classLoader, ExecutorFactory asyncExecutorFactory) {
-      this(new ConfigurationBuilder().classLoader(classLoader).asyncExecutorFactory().factory(asyncExecutorFactory).withProperties(props).build(), start);
-   }
-
-   /**
-    * Same as {@link #RemoteCacheManager(java.util.Properties, boolean)}, and it also starts the cache (start==true).
-    */
-   @Deprecated
-   public RemoteCacheManager(Properties props) {
-      this(new ConfigurationBuilder().withProperties(props).build());
-   }
-
-   /**
-    * Same as {@link #RemoteCacheManager(java.util.Properties, boolean)}, and it also starts the cache (start==true).
-    */
-   @Deprecated
-   public RemoteCacheManager(Properties props, ClassLoader classLoader) {
-      this(new ConfigurationBuilder().classLoader(classLoader).withProperties(props).build());
-   }
-
-
-   /**
     * Retrieves the configuration currently in use. The configuration object is immutable. If you wish to change configuration,
     * you should use the following pattern:
     *
@@ -348,7 +264,7 @@ public class RemoteCacheManager implements BasicCacheContainer {
    }
 
    /**
-    * Same as {@link #RemoteCacheManager(java.util.Properties)}, but it will try to lookup the config properties in the
+    * Build a remote cache manager looking up the config properties in the
     * classpath, in a file named <tt>hotrod-client.properties</tt>. If no properties can be found in the classpath, the
     * server tries to connect to "127.0.0.1:11222" in start.
     *
@@ -378,137 +294,6 @@ public class RemoteCacheManager implements BasicCacheContainer {
     */
    public RemoteCacheManager() {
       this(true);
-   }
-
-   /**
-    * Creates a remote cache manager aware of the Hot Rod server listening at host:port.
-    *
-    * @param start whether or not to start the RemoteCacheManager.
-    */
-   @Deprecated
-   public RemoteCacheManager(String host, int port, boolean start) {
-	   this(host, port, start, Thread.currentThread().getContextClassLoader());
-   }
-
-   /**
-    * Creates a remote cache manager aware of the Hot Rod server listening at host:port.
-    *
-    * @param start whether or not to start the RemoteCacheManager.
-    */
-   @Deprecated
-   public RemoteCacheManager(String host, int port, boolean start, ClassLoader classLoader) {
-      this(new ConfigurationBuilder().classLoader(classLoader).addServer().host(host).port(port).build(), start);
-   }
-
-   /**
-    * Same as {@link #RemoteCacheManager(String, int, boolean)} with start=true.
-    */
-   @Deprecated
-   public RemoteCacheManager(String host, int port) {
-	   this(host, port, Thread.currentThread().getContextClassLoader());
-   }
-
-   /**
-    * Same as {@link #RemoteCacheManager(String, int, boolean)} with start=true.
-    */
-   @Deprecated
-   public RemoteCacheManager(String host, int port, ClassLoader classLoader) {
-      this(host, port, true, classLoader);
-   }
-
-   /**
-    * The given string should have the following structure: "host1:port2;host:port2...". Every host:port defines a
-    * server.
-    */
-   @Deprecated
-   public RemoteCacheManager(String servers, boolean start) {
-	   this(servers, start, Thread.currentThread().getContextClassLoader());
-   }
-
-   /**
-    * The given string should have the following structure: "host1:port2;host:port2...". Every host:port defines a
-    * server.
-    */
-   @Deprecated
-   public RemoteCacheManager(String servers, boolean start, ClassLoader classLoader) {
-      this(new ConfigurationBuilder().classLoader(classLoader).addServers(servers).build(), start);
-   }
-
-   /**
-    * Same as {@link #RemoteCacheManager(String, boolean)}, with start=true.
-    */
-   @Deprecated
-   public RemoteCacheManager(String servers) {
-	   this(servers, Thread.currentThread().getContextClassLoader());
-   }
-
-   /**
-    * Same as {@link #RemoteCacheManager(String, boolean)}, with start=true.
-    */
-   @Deprecated
-   public RemoteCacheManager(String servers, ClassLoader classLoader) {
-      this(servers, true, classLoader);
-   }
-
-   /**
-    * Same as {@link #RemoteCacheManager(java.util.Properties)}, but it will try to lookup the config properties in
-    * supplied URL.
-    *
-    * @param start whether or not to start the RemoteCacheManager
-    * @throws HotRodClientException if properties could not be loaded
-    */
-   @Deprecated
-   public RemoteCacheManager(URL config, boolean start) {
-	   this(config, start, Thread.currentThread().getContextClassLoader());
-   }
-
-   /**
-    * Same as {@link #RemoteCacheManager(java.util.Properties)}, but it will try to lookup the config properties in
-    * supplied URL.
-    *
-    * @param start whether or not to start the RemoteCacheManager
-    * @throws HotRodClientException if properties could not be loaded
-    */
-   @Deprecated
-   public RemoteCacheManager(URL config, boolean start, ClassLoader classLoader) {
-
-      InputStream stream = null;
-      try {
-         stream = config.openStream();
-         Properties properties = loadFromStream(stream);
-         configuration = new ConfigurationBuilder().classLoader(classLoader).withProperties(properties).build();
-      } catch (IOException e) {
-         throw new HotRodClientException("Could not read URL:" + config, e);
-      } finally {
-         try {
-            if (stream != null)
-               stream.close();
-         } catch (IOException e) {
-            // ignore
-         }
-      }
-      if (start)
-         start();
-   }
-
-   /**
-    * Same as {@link #RemoteCacheManager(java.net.URL)} and it also starts the cache (start==true).
-    *
-    * @param config
-    */
-   @Deprecated
-   public RemoteCacheManager(URL config) {
-	   this(config, Thread.currentThread().getContextClassLoader());
-   }
-
-   /**
-    * Same as {@link #RemoteCacheManager(java.net.URL)} and it also starts the cache (start==true).
-    *
-    * @param config
-    */
-   @Deprecated
-   public RemoteCacheManager(URL config, ClassLoader classLoader) {
-      this(config, true, classLoader);
    }
 
    /**
