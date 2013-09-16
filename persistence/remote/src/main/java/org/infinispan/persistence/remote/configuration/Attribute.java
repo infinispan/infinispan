@@ -15,7 +15,6 @@ public enum Attribute {
 
    BALANCING_STRATEGY("balancingStrategy"),
    CONNECT_TIMEOUT("connectTimeout"),
-   ENTRY_WRAPPER("entryWrapper"),
    EXHAUSTED_ACTION("exhaustedAction"),
    FACTORY("factory"),
    FORCE_RETURN_VALUES("forceReturnValues"),

@@ -9,7 +9,6 @@ import org.infinispan.configuration.cache.AbstractStoreConfiguration;
 import org.infinispan.configuration.cache.AsyncStoreConfiguration;
 import org.infinispan.configuration.cache.SingletonStoreConfiguration;
 import org.infinispan.persistence.remote.RemoteStore;
-import org.infinispan.persistence.remote.wrapper.EntryWrapper;
 
 @BuiltBy(RemoteStoreConfigurationBuilder.class)
 @ConfigurationFor(RemoteStore.class)
@@ -19,7 +18,6 @@ public class RemoteStoreConfiguration extends AbstractStoreConfiguration {
    private final String balancingStrategy;
    private final ConnectionPoolConfiguration connectionPool;
    private final long connectionTimeout;
-   private final EntryWrapper<?, ?> entryWrapper;
    private final boolean forceReturnValues;
    private final boolean hotRodWrapping;
    private final int keySizeEstimate;
@@ -38,7 +36,7 @@ public class RemoteStoreConfiguration extends AbstractStoreConfiguration {
                                    AsyncStoreConfiguration async, SingletonStoreConfiguration singletonStore,
                                    boolean preload, boolean shared, Properties properties,
                                    ExecutorFactoryConfiguration asyncExecutorFactory, String balancingStrategy,
-                                   ConnectionPoolConfiguration connectionPool, long connectionTimeout, EntryWrapper<?, ?> entryWrapper,
+                                   ConnectionPoolConfiguration connectionPool, long connectionTimeout,
                                    boolean forceReturnValues, boolean hotRodWrapping, int keySizeEstimate,
                                    String marshaller, boolean pingOnStartup, String protocolVersion,
                                    boolean rawValues, String remoteCacheName,
@@ -49,7 +47,6 @@ public class RemoteStoreConfiguration extends AbstractStoreConfiguration {
       this.balancingStrategy = balancingStrategy;
       this.connectionPool = connectionPool;
       this.connectionTimeout = connectionTimeout;
-      this.entryWrapper = entryWrapper;
       this.forceReturnValues = forceReturnValues;
       this.hotRodWrapping = hotRodWrapping;
       this.keySizeEstimate = keySizeEstimate;
@@ -79,10 +76,6 @@ public class RemoteStoreConfiguration extends AbstractStoreConfiguration {
 
    public long connectionTimeout() {
       return connectionTimeout;
-   }
-
-   public EntryWrapper<?, ?> entryWrapper() {
-      return entryWrapper;
    }
 
    public boolean forceReturnValues() {

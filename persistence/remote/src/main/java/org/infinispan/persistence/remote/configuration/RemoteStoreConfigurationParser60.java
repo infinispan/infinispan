@@ -11,7 +11,6 @@ import org.infinispan.configuration.parsing.Namespaces;
 import org.infinispan.configuration.parsing.ParseUtils;
 import org.infinispan.configuration.parsing.Parser60;
 import org.infinispan.configuration.parsing.XMLExtendedStreamReader;
-import org.infinispan.persistence.remote.wrapper.EntryWrapper;
 
 import javax.xml.stream.XMLStreamConstants;
 import javax.xml.stream.XMLStreamException;
@@ -206,10 +205,6 @@ public class RemoteStoreConfigurationParser60 implements ConfigurationParser {
          }
          case CONNECT_TIMEOUT: {
             builder.connectionTimeout(Long.parseLong(value));
-            break;
-         }
-         case ENTRY_WRAPPER: {
-            builder.entryWrapper(Util.<EntryWrapper<?,?>>getInstance(value, classLoader));
             break;
          }
          case FORCE_RETURN_VALUES: {
