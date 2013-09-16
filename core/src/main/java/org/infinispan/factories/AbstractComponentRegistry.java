@@ -3,8 +3,8 @@ package org.infinispan.factories;
 import org.infinispan.commons.CacheException;
 import org.infinispan.commons.util.ReflectionUtil;
 import org.infinispan.commons.util.Util;
-import org.infinispan.config.Configuration;
 import org.infinispan.commons.CacheConfigurationException;
+import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.factories.annotations.DefaultFactoryFor;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.annotations.SurvivesRestarts;
@@ -109,7 +109,7 @@ public abstract class AbstractComponentRegistry implements Lifecycle, Cloneable 
     * as Commands.
     *
     * @param target object to wire
-    * @throws ConfigurationException if there is a problem wiring the instance
+    * @throws CacheConfigurationException if there is a problem wiring the instance
     */
    public void wireDependencies(Object target) throws CacheConfigurationException {
       try {
@@ -247,7 +247,7 @@ public abstract class AbstractComponentRegistry implements Lifecycle, Cloneable 
     *
     * @param componentClass type of component to be retrieved.  Should not be null.
     * @return a fully wired component instance, or null if one cannot be found or constructed.
-    * @throws ConfigurationException if there is a problem with constructing or wiring the instance.
+    * @throws CacheConfigurationException if there is a problem with constructing or wiring the instance.
     */
    protected synchronized <T> T getOrCreateComponent(Class<T> componentClass) {
       return getOrCreateComponent(componentClass, componentClass.getName(), true);
@@ -686,7 +686,7 @@ public abstract class AbstractComponentRegistry implements Lifecycle, Cloneable 
     * Asserts whether invocations are allowed on the cache or not.  Returns <tt>true</tt> if invocations are to be
     * allowed, <tt>false</tt> otherwise.  If the origin of the call is remote and the cache status is {@link
     * org.infinispan.lifecycle.ComponentStatus#INITIALIZING}, this method will block for up to {@link
-    * Configuration#getStateRetrievalTimeout()} millis, checking for a valid state.
+    * org.infinispan.configuration.cache.StateTransferConfiguration#timeout()} millis, checking for a valid state.
     *
     * @param originLocal true if the call originates locally (i.e., from the {@link org.infinispan.CacheImpl} or false
     *                    if it originates remotely, i.e., from the {@link org.infinispan.remoting.InboundInvocationHandler}.
@@ -718,7 +718,7 @@ public abstract class AbstractComponentRegistry implements Lifecycle, Cloneable 
 
    /**
     * Blocks until the current cache instance is in its {@link org.infinispan.lifecycle.ComponentStatus#RUNNING started}
-    * phase. Blocks for up to {@link Configuration#getStateRetrievalTimeout()} milliseconds, throwing an
+    * phase. Blocks for up to {@link org.infinispan.configuration.cache.StateTransferConfiguration#timeout()} milliseconds, throwing an
     * IllegalStateException if the cache doesn't reach this state even after this maximum wait time.
     *
     * @throws InterruptedException  if interrupted while waiting
@@ -727,7 +727,7 @@ public abstract class AbstractComponentRegistry implements Lifecycle, Cloneable 
    private void blockUntilCacheStarts() throws InterruptedException, IllegalStateException {
       int pollFrequencyMS = 20;
       TimeService timeService = getTimeService();
-      final long startupWaitTime = getConfiguration().getStateRetrievalTimeout();
+      final long startupWaitTime = getConfiguration().clustering().stateTransfer().timeout();
       final long giveUpTime = timeService.expectedEndTime(startupWaitTime, TimeUnit.MILLISECONDS);
 
       while (!timeService.isTimeExpired(giveUpTime)) {
@@ -737,7 +737,7 @@ public abstract class AbstractComponentRegistry implements Lifecycle, Cloneable 
 
       // check if we have started.
       if (!state.allowInvocations())
-         throw new IllegalStateException("Cache not in STARTED state, even after waiting " + getConfiguration().getStateRetrievalTimeout() + " millis.");
+         throw new IllegalStateException("Cache not in STARTED state, even after waiting " + startupWaitTime + " millis.");
    }
 
    /**

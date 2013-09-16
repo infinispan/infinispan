@@ -2,7 +2,6 @@ package org.infinispan.persistence;
 
 import org.infinispan.commands.read.GetKeyValueCommand;
 import org.infinispan.commands.write.EvictCommand;
-import org.infinispan.config.CloneableConfigurationComponent;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.container.DataContainer;
 import org.infinispan.context.InvocationContext;
@@ -104,7 +103,7 @@ public class ConcurrentLoadAndEvictTest extends SingleCacheManagerTest {
       e.shutdownNow();
    }
 
-   public static class SlowDownInterceptor extends CommandInterceptor implements CloneableConfigurationComponent{
+   public static class SlowDownInterceptor extends CommandInterceptor implements Cloneable{
 
       private static final long serialVersionUID = 8790944676490291484L;
 

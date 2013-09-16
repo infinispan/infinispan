@@ -1,6 +1,5 @@
 package org.infinispan.notifications.cachelistener.annotation;
 
-import org.infinispan.config.Configuration;
 import org.infinispan.distribution.DistributionManager;
 import org.infinispan.distribution.ch.ConsistentHash;
 import org.infinispan.notifications.IncorrectListenerException;

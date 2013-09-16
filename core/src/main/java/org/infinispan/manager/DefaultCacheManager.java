@@ -11,10 +11,8 @@ import org.infinispan.commons.util.InfinispanCollections;
 import org.infinispan.commons.CacheConfigurationException;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
-import org.infinispan.configuration.cache.LegacyConfigurationAdaptor;
 import org.infinispan.configuration.global.GlobalConfiguration;
 import org.infinispan.configuration.global.GlobalConfigurationBuilder;
-import org.infinispan.configuration.global.LegacyGlobalConfigurationAdaptor;
 import org.infinispan.configuration.parsing.ConfigurationBuilderHolder;
 import org.infinispan.configuration.parsing.ParserRegistry;
 import org.infinispan.factories.ComponentRegistry;
@@ -128,18 +126,6 @@ public class DefaultCacheManager implements EmbeddedCacheManager, CacheManager {
    }
 
    /**
-    * Constructs and starts a new instance of the CacheManager, using the default configuration passed in. Uses defaults
-    * for a {@link GlobalConfiguration}.  See {@link GlobalConfiguration} for details of these defaults.
-    *
-    * @param defaultConfiguration configuration to use as a template for all caches created
-    * @deprecated Use {@link #DefaultCacheManager(org.infinispan.configuration.cache.Configuration)} instead
-    */
-   @Deprecated
-   public DefaultCacheManager(org.infinispan.config.Configuration defaultConfiguration) {
-      this(null, defaultConfiguration, true);
-   }
-
-   /**
     * Constructs and starts a new instance of the CacheManager, using the default configuration passed in.  See {@link org.infinispan.configuration.cache.Configuration Configuration}
     * and {@link org.infinispan.configuration.global.GlobalConfiguration GlobalConfiguration} for details of these defaults.
     *
@@ -147,20 +133,6 @@ public class DefaultCacheManager implements EmbeddedCacheManager, CacheManager {
     */
    public DefaultCacheManager(org.infinispan.configuration.cache.Configuration defaultConfiguration) {
       this(null, defaultConfiguration, true);
-   }
-
-   /**
-    * Constructs a new instance of the CacheManager, using the default configuration passed in. Uses defaults for a
-    * {@link org.infinispan.config.GlobalConfiguration}.  See {@link GlobalConfiguration} for details of these
-    * defaults.
-    *
-    * @param defaultConfiguration configuration file to use as a template for all caches created
-    * @param start                if true, the cache manager is started
-    * @deprecated Use {@link #DefaultCacheManager(org.infinispan.configuration.cache.Configuration, boolean)} instead
-    */
-   @Deprecated
-   public DefaultCacheManager(org.infinispan.config.Configuration defaultConfiguration, boolean start) {
-      this(null, defaultConfiguration, start);
    }
 
    /**
@@ -176,18 +148,6 @@ public class DefaultCacheManager implements EmbeddedCacheManager, CacheManager {
 
    /**
     * Constructs and starts a new instance of the CacheManager, using the global configuration passed in, and system
-    * defaults for the default named cache configuration.  See {@link Configuration} for details of these defaults.
-    *
-    * @param globalConfiguration GlobalConfiguration to use for all caches created
-    * @deprecated Use {@link #DefaultCacheManager(org.infinispan.configuration.global.GlobalConfiguration)} instead
-    */
-   @Deprecated
-   public DefaultCacheManager(org.infinispan.config.GlobalConfiguration globalConfiguration) {
-      this(globalConfiguration, null, true);
-   }
-
-   /**
-    * Constructs and starts a new instance of the CacheManager, using the global configuration passed in, and system
     * defaults for the default named cache configuration.  See {@link org.infinispan.configuration.cache.Configuration Configuration}
     * for details of these defaults.
     *
@@ -195,19 +155,6 @@ public class DefaultCacheManager implements EmbeddedCacheManager, CacheManager {
     */
    public DefaultCacheManager(GlobalConfiguration globalConfiguration) {
       this(globalConfiguration, null, true);
-   }
-
-   /**
-    * Constructs a new instance of the CacheManager, using the global configuration passed in, and system defaults for
-    * the default named cache configuration.  See {@link Configuration} for details of these defaults.
-    *
-    * @param globalConfiguration GlobalConfiguration to use for all caches created
-    * @param start               if true, the cache manager is started.
-    * @deprecated Use {@link #DefaultCacheManager(org.infinispan.configuration.global.GlobalConfiguration, boolean)} instead
-    */
-   @Deprecated
-   public DefaultCacheManager(org.infinispan.config.GlobalConfiguration globalConfiguration, boolean start) {
-      this(globalConfiguration, null, start);
    }
 
    /**
@@ -228,37 +175,9 @@ public class DefaultCacheManager implements EmbeddedCacheManager, CacheManager {
     *
     * @param globalConfiguration  global configuration to use. If null, a default instance is created.
     * @param defaultConfiguration default configuration to use. If null, a default instance is created.
-    * Use {@link #DefaultCacheManager(org.infinispan.configuration.global.GlobalConfiguration, org.infinispan.configuration.cache.Configuration)} instead
-    */
-   @Deprecated
-   public DefaultCacheManager(org.infinispan.config.GlobalConfiguration globalConfiguration, org.infinispan.config.Configuration defaultConfiguration) {
-      this(globalConfiguration, defaultConfiguration, true);
-   }
-
-   /**
-    * Constructs and starts a new instance of the CacheManager, using the global and default configurations passed in.
-    * If either of these are null, system defaults are used.
-    *
-    * @param globalConfiguration  global configuration to use. If null, a default instance is created.
-    * @param defaultConfiguration default configuration to use. If null, a default instance is created.
     */
    public DefaultCacheManager(GlobalConfiguration globalConfiguration, Configuration defaultConfiguration) {
       this(globalConfiguration, defaultConfiguration, true);
-   }
-
-   /**
-    * Constructs a new instance of the CacheManager, using the global and default configurations passed in. If either of
-    * these are null, system defaults are used.
-    *
-    * @param globalConfiguration  global configuration to use. If null, a default instance is created.
-    * @param defaultConfiguration default configuration to use. If null, a default instance is created.
-    * @param start                if true, the cache manager is started
-    * @deprecated Use {@link #DefaultCacheManager(org.infinispan.configuration.global.GlobalConfiguration, org.infinispan.configuration.cache.Configuration, boolean)} instead
-    */
-   @Deprecated
-   public DefaultCacheManager(org.infinispan.config.GlobalConfiguration globalConfiguration, org.infinispan.config.Configuration defaultConfiguration,
-                              boolean start) {
-      this(LegacyGlobalConfigurationAdaptor.adapt(globalConfiguration), LegacyConfigurationAdaptor.adapt(defaultConfiguration), start);
    }
 
    /**
@@ -397,53 +316,6 @@ public class DefaultCacheManager implements EmbeddedCacheManager, CacheManager {
    @Override
    public Configuration defineConfiguration(String cacheName, Configuration configuration) {
       return defineConfiguration(cacheName, configuration, defaultConfiguration, true);
-   }
-
-   /**
-    * {@inheritDoc}
-    */
-   @Override
-   @Deprecated
-   public org.infinispan.config.Configuration defineConfiguration(String cacheName, org.infinispan.config.Configuration configurationOverride) {
-      return defineConfiguration(cacheName, configurationOverride, LegacyConfigurationAdaptor.adapt(defaultConfiguration), true);
-   }
-
-   /**
-    * {@inheritDoc}
-    */
-   @Override
-   @Deprecated
-   public org.infinispan.config.Configuration defineConfiguration(String cacheName, String templateName, org.infinispan.config.Configuration configurationOverride) {
-      if (templateName != null) {
-         Configuration c = configurationOverrides.get(templateName);
-         if (c != null)
-            return defineConfiguration(cacheName, configurationOverride, LegacyConfigurationAdaptor.adapt(c), false);
-         return defineConfiguration(cacheName, configurationOverride);
-      }
-      return defineConfiguration(cacheName, configurationOverride);
-   }
-
-   @Deprecated
-   private org.infinispan.config.Configuration defineConfiguration(String cacheName, org.infinispan.config.Configuration configOverride,
-         org.infinispan.config.Configuration defaultConfigIfNotPresent, boolean checkExisting) {
-      assertIsNotTerminated();
-      if (cacheName == null || configOverride == null)
-         throw new NullPointerException("Null arguments not allowed");
-      if (cacheName.equals(DEFAULT_CACHE_NAME))
-         throw new IllegalArgumentException("Cache name cannot be used as it is a reserved, internal name");
-      if (checkExisting) {
-         org.infinispan.config.Configuration existing =
-               LegacyConfigurationAdaptor.adapt(configurationOverrides.get(cacheName));
-         if (existing != null) {
-            existing.applyOverrides(configOverride);
-            configurationOverrides.put(cacheName, LegacyConfigurationAdaptor.adapt(existing));
-            return existing.clone();
-         }
-      }
-      org.infinispan.config.Configuration configuration = defaultConfigIfNotPresent.clone();
-      configuration.applyOverrides(configOverride.clone());
-      configurationOverrides.put(cacheName, LegacyConfigurationAdaptor.adapt(configuration));
-      return configuration;
    }
 
    public Configuration defineConfiguration(String cacheName, String templateName, Configuration configurationOverride) {
@@ -760,18 +632,8 @@ public class DefaultCacheManager implements EmbeddedCacheManager, CacheManager {
    }
 
    @Override
-   public org.infinispan.config.GlobalConfiguration getGlobalConfiguration() {
-      return LegacyGlobalConfigurationAdaptor.adapt(globalConfiguration);
-   }
-
-   @Override
    public GlobalConfiguration getCacheManagerConfiguration() {
       return globalConfiguration;
-   }
-
-   @Override
-   public org.infinispan.config.Configuration getDefaultConfiguration() {
-      return LegacyConfigurationAdaptor.adapt(defaultConfiguration);
    }
 
    @Override

@@ -36,12 +36,6 @@ public interface ModuleLifecycle {
 
     void cacheManagerStarting(GlobalComponentRegistry gcr, GlobalConfiguration globalConfiguration);
 
-    /**
-    * Use {@link #cacheManagerStarting(org.infinispan.factories.GlobalComponentRegistry, org.infinispan.configuration.global.GlobalConfiguration)} instead
-    */
-    @Deprecated
-    void cacheManagerStarting(GlobalComponentRegistry gcr, org.infinispan.config.GlobalConfiguration globalConfiguration);
-
     void cacheManagerStarted(GlobalComponentRegistry gcr);
 
     void cacheManagerStopping(GlobalComponentRegistry gcr);
@@ -49,12 +43,6 @@ public interface ModuleLifecycle {
     void cacheManagerStopped(GlobalComponentRegistry gcr);
 
     void cacheStarting(ComponentRegistry cr, Configuration configuration, String cacheName);
-
-    /**
-     * Use {@link #cacheStarting(org.infinispan.factories.ComponentRegistry, org.infinispan.configuration.cache.Configuration, String)} instead
-     */
-    @Deprecated
-    void cacheStarting(ComponentRegistry cr, org.infinispan.config.Configuration configuration, String cacheName);
 
     void cacheStarted(ComponentRegistry cr, String cacheName);
 

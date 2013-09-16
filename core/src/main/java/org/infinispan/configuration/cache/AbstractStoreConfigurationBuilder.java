@@ -1,6 +1,6 @@
 package org.infinispan.configuration.cache;
 
-import org.infinispan.config.parsing.XmlConfigHelper;
+import org.infinispan.configuration.parsing.XmlConfigHelper;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
