@@ -19,7 +19,11 @@ import org.infinispan.factories.annotations.Start;
 import org.infinispan.factories.annotations.Stop;
 import org.infinispan.interceptors.CacheLoaderInterceptor;
 import org.infinispan.interceptors.CacheWriterInterceptor;
+import org.infinispan.marshall.core.MarshalledEntry;
 import org.infinispan.marshall.core.MarshalledEntryFactory;
+import org.infinispan.metadata.InternalMetadataImpl;
+import org.infinispan.metadata.Metadata;
+import org.infinispan.notifications.cachelistener.CacheNotifier;
 import org.infinispan.persistence.CacheLoaderException;
 import org.infinispan.persistence.InitializationContextImpl;
 import org.infinispan.persistence.async.AdvancedAsyncCacheLoader;
@@ -31,15 +35,10 @@ import org.infinispan.persistence.spi.AdvancedCacheLoader;
 import org.infinispan.persistence.spi.AdvancedCacheWriter;
 import org.infinispan.persistence.spi.CacheLoader;
 import org.infinispan.persistence.spi.CacheWriter;
-import org.infinispan.marshall.core.MarshalledEntry;
 import org.infinispan.persistence.support.AdvancedSingletonCacheWriter;
 import org.infinispan.persistence.support.DelegatingCacheLoader;
 import org.infinispan.persistence.support.DelegatingCacheWriter;
-import org.infinispan.marshall.core.MarshalledEntryImpl;
 import org.infinispan.persistence.support.SingletonCacheWriter;
-import org.infinispan.metadata.InternalMetadataImpl;
-import org.infinispan.metadata.Metadata;
-import org.infinispan.notifications.cachelistener.CacheNotifier;
 import org.infinispan.util.TimeService;
 import org.infinispan.util.concurrent.WithinThreadExecutor;
 import org.infinispan.util.logging.Log;
@@ -48,6 +47,7 @@ import org.infinispan.util.logging.LogFactory;
 import javax.transaction.Transaction;
 import javax.transaction.TransactionManager;
 import java.util.*;
+import java.util.concurrent.Executor;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -82,7 +82,7 @@ public class PersistenceManagerImpl implements PersistenceManager {
     * making it volatile as it might change after @Start, so it needs the visibility.
     */
    volatile boolean enabled;
-   private ExecutorService persistenceExecutor;
+   private Executor persistenceExecutor;
    private ByteBufferFactory byteBufferFactory;
    private MarshalledEntryFactory marshalledEntryFactory;
 
@@ -567,7 +567,7 @@ public class PersistenceManagerImpl implements PersistenceManager {
       return ne;
    }
 
-   public ExecutorService getPersistenceExecutor() {
+   public Executor getPersistenceExecutor() {
       return persistenceExecutor;
    }
 

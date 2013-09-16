@@ -1,5 +1,6 @@
 package org.infinispan.marshall;
 
+import org.infinispan.commons.io.ByteBuffer;
 import org.infinispan.commons.marshall.MarshallableTypeHints;
 import org.infinispan.io.ByteBufferImpl;
 import org.infinispan.io.ExposedByteArrayOutputStream;
@@ -34,15 +35,15 @@ public abstract class AbstractMarshaller implements Marshaller {
     * @return a ByteBufferImpl
     * @throws Exception
     */
-   protected abstract ByteBufferImpl objectToBuffer(Object o, int estimatedSize) throws IOException, InterruptedException;
+   protected abstract ByteBuffer objectToBuffer(Object o, int estimatedSize) throws IOException, InterruptedException;
 
    @Override
-   public ByteBufferImpl objectToBuffer(Object obj) throws IOException, InterruptedException {
+   public ByteBuffer objectToBuffer(Object obj) throws IOException, InterruptedException {
       if (obj != null) {
          org.infinispan.commons.marshall.BufferSizePredictor sizePredictor = marshallableTypeHints
                .getBufferSizePredictor(obj.getClass());
          int estimatedSize = sizePredictor.nextSize(obj);
-         ByteBufferImpl byteBuffer = objectToBuffer(obj, estimatedSize);
+         ByteBuffer byteBuffer = objectToBuffer(obj, estimatedSize);
          int length = byteBuffer.getLength();
          // If the prediction is way off, then trim it
          if (estimatedSize > (length * 4)) {
@@ -71,11 +72,11 @@ public abstract class AbstractMarshaller implements Marshaller {
 
    @Override
    public byte[] objectToByteBuffer(Object obj, int estimatedSize) throws IOException, InterruptedException {
-      ByteBufferImpl b = objectToBuffer(obj, estimatedSize);
+      ByteBuffer b = objectToBuffer(obj, estimatedSize);
       return trimBuffer(b);
    }
 
-   private byte[] trimBuffer(ByteBufferImpl b) {
+   private byte[] trimBuffer(ByteBuffer b) {
       byte[] bytes = new byte[b.getLength()];
       System.arraycopy(b.getBuf(), b.getOffset(), bytes, 0, b.getLength());
       return bytes;

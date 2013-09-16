@@ -4,22 +4,22 @@ import org.infinispan.commons.marshall.StreamingMarshaller;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.manager.EmbeddedCacheManager;
+import org.infinispan.marshall.core.MarshalledEntry;
 import org.infinispan.marshall.core.MarshalledEntryImpl;
-import org.infinispan.persistence.dummy.DummyInMemoryStoreConfigurationBuilder;
 import org.infinispan.persistence.manager.PersistenceManager;
 import org.infinispan.persistence.manager.PersistenceManagerImpl;
 import org.infinispan.persistence.spi.AdvancedCacheLoader;
 import org.infinispan.persistence.spi.AdvancedLoadWriteStore;
-import org.infinispan.marshall.core.MarshalledEntry;
 import org.infinispan.test.SingleCacheManagerTest;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
+import org.infinispan.util.concurrent.ConcurrentHashSet;
 import org.infinispan.util.concurrent.WithinThreadExecutor;
 import org.testng.annotations.Test;
 
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
-import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executor;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import static org.testng.Assert.*;
@@ -29,10 +29,10 @@ import static org.testng.Assert.*;
  * @since 6.0
  */
 @Test (groups = "functional", testName = "persistence.ParallelIterationTest")
-public class ParallelIterationTest extends SingleCacheManagerTest {
+public abstract class ParallelIterationTest extends SingleCacheManagerTest {
 
    protected AdvancedLoadWriteStore store;
-   protected ExecutorService persistenceExecutor;
+   protected Executor persistenceExecutor;
    protected StreamingMarshaller sm;
    protected boolean multipleThreads = true;
    private int numEntries;
@@ -50,9 +50,9 @@ public class ParallelIterationTest extends SingleCacheManagerTest {
       return manager;
    }
 
-   protected void configurePersistence(ConfigurationBuilder cb) {
-      cb.persistence().addStore(DummyInMemoryStoreConfigurationBuilder.class);
-   }
+   protected abstract void configurePersistence(ConfigurationBuilder cb);
+
+   protected abstract int numThreads();
 
    public void testParallelIteration() {
       runIterationTest(numThreads(), persistenceExecutor);
@@ -90,17 +90,17 @@ public class ParallelIterationTest extends SingleCacheManagerTest {
       assertTrue(entries.size() >= 100);
    }
 
-   private void runIterationTest(int numThreads, ExecutorService persistenceExecutor1) {
+   private void runIterationTest(int numThreads, Executor persistenceExecutor1) {
       int numEntries = insertData();
       final ConcurrentMap entries = new ConcurrentHashMap();
-      final ConcurrentMap threads = new ConcurrentHashMap();
+      final ConcurrentHashSet threads = new ConcurrentHashSet();
       final AtomicBoolean sameKeyMultipleTimes = new AtomicBoolean();
 
       store.process(null, new AdvancedCacheLoader.CacheLoaderTask() {
          @Override
          public void processEntry(MarshalledEntry marshalledEntry, AdvancedCacheLoader.TaskContext taskContext) throws InterruptedException {
             Object existing = entries.put(marshalledEntry.getKey(), marshalledEntry.getValue());
-            threads.put(Thread.currentThread(), Thread.currentThread());
+            threads.add(Thread.currentThread());
             if (existing != null) {
                log.warnf("Already a value present for key %s: %s", marshalledEntry.getKey(), existing);
                sameKeyMultipleTimes.set(true);
@@ -125,9 +125,5 @@ public class ParallelIterationTest extends SingleCacheManagerTest {
          store.write(me);
       }
       return numEntries;
-   }
-
-   protected int numThreads() {
-      return 1;
    }
 }

@@ -6,9 +6,9 @@ import java.io.ObjectInput;
 import java.io.ObjectOutput;
 import java.io.OutputStream;
 
+import org.infinispan.commons.io.ByteBuffer;
 import org.infinispan.commons.marshall.BufferSizePredictor;
 import org.infinispan.commons.marshall.StreamingMarshaller;
-import org.infinispan.io.ByteBufferImpl;
 
 /**
  * LegacyStreamingMarshallerAdapter.
@@ -65,7 +65,7 @@ public class LegacyStreamingMarshallerAdapter implements StreamingMarshaller {
    }
 
    @Override
-   public ByteBufferImpl objectToBuffer(Object o) throws IOException, InterruptedException {
+   public ByteBuffer objectToBuffer(Object o) throws IOException, InterruptedException {
       return delegate.objectToBuffer(o);
    }
 

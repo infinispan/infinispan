@@ -63,7 +63,7 @@ public class StreamingMarshallerAdapter implements StreamingMarshaller {
    }
 
    @Override
-   public org.infinispan.io.ByteBufferImpl objectToBuffer(Object o) throws IOException, InterruptedException {
+   public ByteBuffer objectToBuffer(Object o) throws IOException, InterruptedException {
       ByteBuffer bb = delegate.objectToBuffer(o);
       return new org.infinispan.io.ByteBufferImpl(bb.getBuf(), bb.getOffset(), bb.getLength());
    }

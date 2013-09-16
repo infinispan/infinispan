@@ -22,6 +22,7 @@ public class StringPropertyReplacementTest extends SingleCacheManagerTest {
    @Override
    protected EmbeddedCacheManager createCacheManager() throws Exception {
       System.setProperty("test.property.asyncListenerMaxThreads","2");
+      System.setProperty("test.property.persistenceMaxThreads","2");
       System.setProperty("test.property.IsolationLevel","READ_COMMITTED");
       System.setProperty("test.property.writeSkewCheck","true");
       System.setProperty("test.property.SyncCommitPhase","true");

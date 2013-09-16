@@ -14,7 +14,7 @@ import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.cache.VersioningScheme;
 import org.infinispan.context.Flag;
-import org.infinispan.persistence.UnnnecessaryLoadingTest;
+import org.infinispan.persistence.UnnecessaryLoadingTest;
 import org.infinispan.persistence.dummy.DummyInMemoryStoreConfigurationBuilder;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.TestingUtil;
@@ -38,14 +38,14 @@ public class FlagsEnabledTest extends MultipleCacheManagersTest {
       builder
             .locking().writeSkewCheck(true).isolationLevel(IsolationLevel.REPEATABLE_READ)
             .versioning().enable().scheme(VersioningScheme.SIMPLE)
-            .persistence().addStore(UnnnecessaryLoadingTest.CountingStoreConfigurationBuilder.class)
+            .persistence().addStore(UnnecessaryLoadingTest.CountingStoreConfigurationBuilder.class)
             .persistence().addStore(DummyInMemoryStoreConfigurationBuilder.class)
             .transaction().syncCommitPhase(true);
       createClusteredCaches(2, "replication", builder);
    }
 
-   UnnnecessaryLoadingTest.CountingStore getCacheStore(Cache cache) {
-      return (UnnnecessaryLoadingTest.CountingStore) TestingUtil.getFirstLoader(cache);
+   UnnecessaryLoadingTest.CountingStore getCacheStore(Cache cache) {
+      return (UnnecessaryLoadingTest.CountingStore) TestingUtil.getFirstLoader(cache);
    }
 
    public void testWithFlagsSemantics() {
