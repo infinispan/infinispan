@@ -4,7 +4,6 @@ import org.infinispan.AdvancedCache;
 import org.infinispan.Cache;
 import org.infinispan.commons.util.InfinispanCollections;
 import org.infinispan.context.Flag;
-import org.infinispan.context.FlagContainer;
 
 import java.util.Map;
 
@@ -65,24 +64,6 @@ public class AtomicMapLookup {
     */
    public static <MK, K, V> AtomicMap<K, V> getAtomicMap(Cache<MK, ?> cache, MK key, boolean createIfAbsent) {
       return (AtomicMap<K, V>) getMap(cache, key, createIfAbsent, false);
-   }
-
-   /**
-    * Retrieves an atomic map from a given cache, stored under a given key.
-    *
-    * @param cache          underlying cache
-    * @param key            key under which the atomic map exists
-    * @param flagContainer  a container to pass in per-invocation flags to the underlying cache.  May be null if no
-    *                       flags are used.
-    * @param <MK>           key param of the cache
-    * @param <K>            key param of the AtomicMap
-    * @param <V>            value param of the AtomicMap
-    * @return an AtomicMap, or null if one did not exist.
-    * @deprecated use {@link #getAtomicMap(org.infinispan.Cache, Object)}
-    */
-   @Deprecated
-   public static <MK, K, V> AtomicMap<K, V> getAtomicMap(Cache<MK, ?> cache, MK key, FlagContainer flagContainer) {
-      return getAtomicMap(cache, key);
    }
 
    /**
