@@ -10,7 +10,6 @@ import org.infinispan.client.hotrod.impl.transport.tcp.RoundRobinBalancingStrate
 import org.infinispan.configuration.cache.AbstractStoreConfigurationBuilder;
 import org.infinispan.configuration.cache.PersistenceConfigurationBuilder;
 import org.infinispan.persistence.remote.logging.Log;
-import org.infinispan.persistence.remote.wrapper.EntryWrapper;
 import org.infinispan.commons.marshall.Marshaller;
 import org.infinispan.util.logging.LogFactory;
 
@@ -28,7 +27,6 @@ public class RemoteStoreConfigurationBuilder extends
    private String balancingStrategy = RoundRobinBalancingStrategy.class.getName();
    private final ConnectionPoolConfigurationBuilder connectionPool;
    private long connectionTimeout = ConfigurationProperties.DEFAULT_CONNECT_TIMEOUT;
-   private EntryWrapper<?, ?> entryWrapper;
    private boolean forceReturnValues;
    private boolean hotRodWrapping;
    private int keySizeEstimate = ConfigurationProperties.DEFAULT_KEY_SIZE;
@@ -73,12 +71,6 @@ public class RemoteStoreConfigurationBuilder extends
    @Override
    public RemoteStoreConfigurationBuilder connectionTimeout(long connectionTimeout) {
       this.connectionTimeout = connectionTimeout;
-      return this;
-   }
-
-   @Override
-   public RemoteStoreConfigurationBuilder entryWrapper(EntryWrapper<?, ?> entryWrapper) {
-      this.entryWrapper = entryWrapper;
       return this;
    }
 
@@ -183,7 +175,7 @@ public class RemoteStoreConfigurationBuilder extends
       return new RemoteStoreConfiguration(purgeOnStartup, fetchPersistentState, ignoreModifications, async.create(),
                                                singletonStore.create(), preload, shared, properties, asyncExecutorFactory.create(),
                                                balancingStrategy, connectionPool.create(), connectionTimeout,
-                                               entryWrapper, forceReturnValues, hotRodWrapping, keySizeEstimate,
+                                               forceReturnValues, hotRodWrapping, keySizeEstimate,
                                                marshaller, pingOnStartup, protocolVersion, rawValues, remoteCacheName,
                                                remoteServers, socketTimeout, tcpNoDelay, transportFactory,
                                                valueSizeEstimate);
@@ -195,7 +187,6 @@ public class RemoteStoreConfigurationBuilder extends
       this.balancingStrategy = template.balancingStrategy();
       this.connectionPool.read(template.connectionPool());
       this.connectionTimeout = template.connectionTimeout();
-      this.entryWrapper = template.entryWrapper();
       this.forceReturnValues = template.forceReturnValues();
       this.hotRodWrapping = template.hotRodWrapping();
       this.keySizeEstimate = template.keySizeEstimate();
@@ -230,10 +221,8 @@ public class RemoteStoreConfigurationBuilder extends
          server.validate();
       }
 
-      if (hotRodWrapping) {
-         if (marshaller != null || entryWrapper != null) {
+      if (hotRodWrapping && marshaller != null) {
             throw log.cannotEnableHotRodWrapping();
-         }
       }
    }
 }

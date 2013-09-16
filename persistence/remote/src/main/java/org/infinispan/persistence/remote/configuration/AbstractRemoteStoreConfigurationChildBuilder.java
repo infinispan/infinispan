@@ -3,7 +3,6 @@ package org.infinispan.persistence.remote.configuration;
 import org.infinispan.client.hotrod.impl.transport.TransportFactory;
 import org.infinispan.commons.marshall.Marshaller;
 import org.infinispan.configuration.cache.AbstractStoreConfigurationChildBuilder;
-import org.infinispan.persistence.remote.wrapper.EntryWrapper;
 
 /**
  * AbstractRemoteStoreConfigurationChildBuilder.
@@ -42,11 +41,6 @@ public abstract class AbstractRemoteStoreConfigurationChildBuilder<S> extends Ab
    @Override
    public RemoteStoreConfigurationBuilder connectionTimeout(long connectionTimeout) {
       return builder.connectionTimeout(connectionTimeout);
-   }
-
-   @Override
-   public RemoteStoreConfigurationBuilder entryWrapper(EntryWrapper<?, ?> entryWrapper) {
-      return builder.entryWrapper(entryWrapper);
    }
 
    @Override
