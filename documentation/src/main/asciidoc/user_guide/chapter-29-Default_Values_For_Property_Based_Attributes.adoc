@@ -1,50 +1,18 @@
-[[sid-68355069]]
-
 ==  Default Values For Property Based Attributes
+The aim of this article is to complement the link:$$http://docs.jboss.org/infinispan/5.1/configdocs$$[configuration reference] documentation with information on default values that could not be automatically generated. Please find below the name of the XML elements and their corresponding property default values: 
 
- The aim of this article is to complement the link:$$http://docs.jboss.org/infinispan/5.1/configdocs$$[configuration reference] documentation with information on default values that could not be automatically generated. Please find below the name of the XML elements and their corresponding property default values: 
-
-[[sid-68355069_DefaultValuesForPropertyBasedAttributes-asyncListenerExecutor]]
-
-
-=== asyncListenerExecutor
-
-
+.asyncListenerExecutor
 * maxThreads = 1
-
-
 * threadNamePrefix = "notification-thread"
 
-[[sid-68355069_DefaultValuesForPropertyBasedAttributes-asyncTransportExecutor]]
-
-
-=== asyncTransportExecutor
-
-
+.asyncTransportExecutor
 * maxThreads = 25
-
-
 * threadNamePrefix = "transport-thread"
 
-[[sid-68355069_DefaultValuesForPropertyBasedAttributes-evictionScheduledExecutor]]
-
-
-=== evictionScheduledExecutor
-
-
+.evictionScheduledExecutor
 * maxThreads = 1 (cannot be changed)
-
-
 * threadNamePrefix = "eviction-thread"
 
-[[sid-68355069_DefaultValuesForPropertyBasedAttributes-replicationQueueScheduledExecutor]]
-
-
-=== replicationQueueScheduledExecutor
-
-
+.replicationQueueScheduledExecutor
 * maxThreads = 1 (cannot be changed)
-
-
 * threadNamePrefix = "replicationQueue-thread"
-

@@ -4,7 +4,7 @@ Manik Surtani, Mircea Markus, Galder Zamarreño, Pete Muir, and others from the 
 
 Infinispan's documentation is organized as several individual 'books'.  Each
 one can be read independently, however they do reference one another,
-particularly the link:user_guide.html[User Guide].
+particularly the link:user_guide/user_guide.html[User Guide].
 
 We hope you find this useful.  Any and all feedback should be directed to the
 Infinispan link:http://www.infinispan.org/community[user forums].

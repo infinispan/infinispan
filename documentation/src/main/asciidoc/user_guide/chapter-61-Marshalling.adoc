@@ -1,61 +1,34 @@
-[[sid-68355106]]
-
 ==  Marshalling
-
-[[sid-68355106_Marshalling-Introduction]]
-
-
-=== Introduction
-
-Marshalling is the process of converting Java POJOs into something that can be written in a format that can be transfered over the wire. Unmarshalling is the reverse process whereby data read from a wire format is transformed back into Java POJOs. Infinispan uses marshalling/unmarshalling in order to:
+Marshalling is the process of converting Java POJOs into something that can be written in a format that can be transferred over the wire.
+Unmarshalling is the reverse process whereby data read from a wire format is transformed back into Java POJOs. Infinispan uses marshalling/unmarshalling in order to:
 
 
 * Transform data so that it can be send over to other Infinispan nodes in a cluster.
-
-
 * Transform data so that it can be stored in underlying cache stores.
-
-
 * Store data in Infinispan in a wire format to provide lazy deserialization capabilities.
 
-[[sid-68355106_Marshalling-TheRoleOfJBossMarshalling]]
-
-
 === The Role Of JBoss Marshalling
-
-Since performance is a very important factor in this process, Infinispan uses JBoss Marshalling framework instead of standard Java Serialization in order to marshall/unmarshall Java POJOs. Amongst other things, this framework enables Infinispan to provide highly efficient ways to marshall internal Infinispan Java POJOs that are constantly used. Apart from providing more efficient ways to marshall Java POJOs, including internal Java classes, JBoss Marshalling uses highly performant java.io.ObjectOutput and java.io.ObjectInput implementations compared to standard java.io.ObjectOutputStream and java.io.ObjectInputStream.
-
-[[sid-68355106_Marshalling-SupportForNonSerializableObjects]]
-
+Since performance is a very important factor in this process, Infinispan uses JBoss Marshalling framework instead of standard Java Serialization in order to marshall/unmarshall Java POJOs. Amongst other things, this framework enables Infinispan to provide highly efficient ways to marshall internal Infinispan Java POJOs that are constantly used. Apart from providing more efficient ways to marshall Java POJOs, including internal Java classes, JBoss Marshalling uses highly performant `java.io.ObjectOutput` and `java.io.ObjectInput` implementations compared to standard `java.io.ObjectOutputStream` and `java.io.ObjectInputStream`.
 
 === Support For Non-Serializable Objects
-
 From a users perspective, a very common concern is whether Infinispan supports storing non-Serializable objects. In 4.0, an Infinispan cache instance can only store non-Serializable key or value objects if, and only if:
 
-
 *  cache is configured to be a local cache _and..._ 
-
-
 *  cache is not configured with lazy serialization _and..._ 
-
-
 * cache is not configured with any write-behind cache store
 
- If either of these options is true, key/value pairs in the cache will need to be marshalled and currently they require to either to extend java.io.Serializable or java.io.Externalizable. However, since Infinispan 5.0, marshalling non-Serializable key/value objects is supported as long as users can to provide meaningful Externalizer implementations for these non-Seralizable objects, see this link:$$https://docs.jboss.org/author/pages/viewpage.action?pageId=3737151$$[article] to find out more. 
+If either of these options is true, key/value pairs in the cache will need to be marshalled and currently they require to either to extend `java.io.Serializable` or `java.io.Externalizable`.
+However, since Infinispan 5.0, marshalling non-Serializable key/value objects is supported as long as users can to provide meaningful Externalizer implementations for these non-Seralizable objects.
+See this link:$$https://docs.jboss.org/author/pages/viewpage.action?pageId=3737151$$[article] to find out more. 
 
- If you're unable to retrofit Serializable or Externalizable into the classes whose instances are stored in Infinispan, you could alternatively use something like link:$$http://xstream.codehaus.org/$$[XStream] to convert your Non-Serializable objects into an String that can be stored into Infinispan. You can find an example on how to use XStream link:$$http://anonsvn.jboss.org/repos/infinispan/trunk/core/src/test/java/org/infinispan/marshall/TestObjectStreamMarshaller.java$$[here] . The one caveat about using XStream is that it slows down the process of storing key/value objects due to the XML transformation that it needs to do. 
-
-[[sid-68355106_Marshalling-StoreAsBinary]]
-
+If you're unable to retrofit Serializable or Externalizable into the classes whose instances are stored in Infinispan, you could alternatively use something like link:$$http://xstream.codehaus.org/$$[XStream] to convert your Non-Serializable objects into an String that can be stored into Infinispan. You can find an example on how to use XStream link:$$http://anonsvn.jboss.org/repos/infinispan/trunk/core/src/test/java/org/infinispan/marshall/TestObjectStreamMarshaller.java$$[here] . The one caveat about using XStream is that it slows down the process of storing key/value objects due to the XML transformation that it needs to do. 
 
 ==== Store As Binary
-
 Store as binary enables data to be stored in its serialized form. This can be useful to achieve lazy deserialization, which is the mechanism by which Infinispan by which serialization and deserialization of objects is deferred till the point in time in which they are used and needed. This typically means that any deserialization happens using the thread context class loader of the invocation that requires deserialization, and is an effective mechanism to provide classloader isolation. By default lazy deserialization is disabled but if you want to enable it, you can do it like this:
-
 
 * Via XML at the Cache level, either under &lt;namedCache&gt; or &lt;default&gt; elements:
 
-
+[source,xml]
 ----
 <storeAsBinary enabled="true"/>
 ----
@@ -63,39 +36,35 @@ Store as binary enables data to be stored in its serialized form. This can be us
 
 * Programmatically:
 
-
+[source,java]
 ----
 ConfigurationBuilder builder = ...
 builder.storeAsBinary().enable();
 
 ----
 
-[[sid-68355106_Marshalling-EqualityConsiderations]]
-
-
 ===== Equality Considerations
 
- When using lazy deserialization/storing as binary, keys and values are wrapped as link:$$http://docs.jboss.org/infinispan/5.3/apidocs/org/infinispan/marshall/MarshalledValue$$[MarshalledValue] s.  It is this wrapper class that transparently takes care of serialization and deserialization on demand, and internally may have a reference to the object itself being wrapped, or the serialized, byte array representation of this object. 
+When using lazy deserialization/storing as binary, keys and values are wrapped as link:$$http://docs.jboss.org/infinispan/5.3/apidocs/org/infinispan/marshall/MarshalledValue$$[MarshalledValue]s.
+It is this wrapper class that transparently takes care of serialization and deserialization on demand, and internally may have a reference to the object itself being wrapped, or the serialized, byte array representation of this object. 
 
- This has a particular effect on the behavior of equality. The equals() method of this class will either compare binary representations (byte arrays) or delegate to the wrapped object instance's equals() method, depending on whether both instances being compared are in serialized or deserialized form at the time of comparison.  If one of the instances being compared is in one form and the other in another form, then one instance is either serialized or deserialized.  The preference will be to compare object representations, unless the cache is link:$$http://docs.jboss.org/infinispan/5.3/apidocs/org/infinispan/Cache.html#compact()$$[compacted] , in which case byte array comparison is favored. 
+This has a particular effect on the behavior of equality.
+The equals() method of this class will either compare binary representations (byte arrays) or delegate to the wrapped object instance's equals() method, depending on whether both instances being compared are in serialized or deserialized form at the time of comparison.
+If one of the instances being compared is in one form and the other in another form, then one instance is either serialized or deserialized.
+The preference will be to compare object representations, unless the cache is link:$$http://docs.jboss.org/infinispan/5.3/apidocs/org/infinispan/Cache.html#compact()$$[compacted], in which case byte array comparison is favored. 
 
 This will affect the way keys stored in the cache will work, when {{storeAsBinary]} is used, since comparisons happen on the key which will be wrapped by a MarshalledValue. Implementers of equals() methods on their keys need to be aware of the behavior of equality comparison, when a key is wrapped as a MarshalledValue, as detailed above.
 
-[[sid-68355106_Marshalling-Storebyvalueviadefensivecopying]]
-
-
 ===== Store-by-value via defensive copying
-
- Starting with Infinispan 5.3.0.Final, storeAsBinary configuration offers the possibility to enable defensive copying, which allows for store-by-value like behaviour. 
+From Infinispan 5.3, `storeAsBinary` configuration offers the possibility to enable defensive copying, which allows for store-by-value like behaviour. 
 
 When defensive copying is disabled (default), Infinispan keeps object references around and stores them in a binary format lazily. So clients can still modify entries via original object references, and marshalling only happens when entries are to be replicated/distributed, or stored in a cache store. Since client references are valid, clients can make changes to entries in the cache using those references, but these modifications are only local and you still need to call one of the cache's put/replace... methods in order for changes to replicate. This is essentially store-by-reference. This is the default mode for performance reasons.
 
 When defensive copies are enabled, Infinispan marshalls objects the moment they're stored, hence changes made to object references are not stored in the cache, not even for local caches. This provides store-by-value like behaviour. Enabling defensive copying can be achieved:
 
-
 *  Via XML at the Cache level, either under &lt;namedCache&gt; or &lt;default&gt; elements: 
 
-
+[source,xml]
 ----
 <storeAsBinary enabled="true" defensive="true"/>
 ----
@@ -103,26 +72,22 @@ When defensive copies are enabled, Infinispan marshalls objects the moment they'
 
 * Programmatically:
 
-
+[source,java]
 ----
 ConfigurationBuilder builder = ...
 builder.storeAsBinary().enable().defensive(true);
 
 ----
 
-[[sid-68355106_Marshalling-AdvancedConfiguration]]
-
-
 === Advanced Configuration
+Internally, Infinispan uses an implementation of link:$$http://infinispan.sourceforge.net/4.0/apidocs/org/infinispan/marshall/Marshaller.html$$[this Marshaller interface] in order to marshall/unmarshall Java objects so that they're sent other nodes in the grid, or so that they're stored in a cache store, or even so to transform them into byte arrays for lazy deserialization. 
 
- Internally, Infinispan uses an implementation of link:$$http://infinispan.sourceforge.net/4.0/apidocs/org/infinispan/marshall/Marshaller.html$$[this Marshaller interface] in order to marshall/unmarshall Java objects so that they're sent other nodes in the grid, or so that they're stored in a cache store, or even so to transform them into byte arrays for lazy deserialization. 
-
- By default, Infinispan uses the link:$$http://docs.jboss.org/infinispan/5.3/apidocs/org/infinispan/marshall/VersionAwareMarshaller.html$$[VersionAwareMarshaller] which, as the name suggests, adds a version short to the start of any stream when writing, enabling similar VersionAwareMarshaller instances to read the version short and know which specific marshaller implementation to delegate the call to. Using a VersionAwareMarshaller helps achieve wire protocol compatibility between minor releases but still affords us the flexibility to tweak and improve the wire protocol between minor or micro releases. Optionally, Infinispan users to optionally provide their own marshaller, for example: 
+By default, Infinispan uses the link:$$http://docs.jboss.org/infinispan/5.3/apidocs/org/infinispan/marshall/VersionAwareMarshaller.html$$[VersionAwareMarshaller] which, as the name suggests, adds a version short to the start of any stream when writing, enabling similar VersionAwareMarshaller instances to read the version short and know which specific marshaller implementation to delegate the call to. Using a VersionAwareMarshaller helps achieve wire protocol compatibility between minor releases but still affords us the flexibility to tweak and improve the wire protocol between minor or micro releases. Optionally, Infinispan users to optionally provide their own marshaller, for example: 
 
 
 *  Via XML at the CacheManager level, under &lt;global&gt; element: 
 
-
+[source,xml]
 ----
 <serialization marshallerClass="com.acme.MyMarshaller"/>
 ----
@@ -130,23 +95,19 @@ builder.storeAsBinary().enable().defensive(true);
 
 * Programatically:
 
-
+[source,java]
 ----
 GlobalConfigurationBuilder builder = ...
 builder.serialization().marshaller(myMarshaller); // needs an instance of the marshaller
 
 ----
 
-[[sid-68355106_Marshalling-Troubleshooting]]
-
-
 ==== Troubleshooting
-
 Sometimes it might happen that the Infinispan marshalling layer, and in particular JBoss Marshalling, might have issues marshalling/unmarshalling some user object. In Infinispan 4.0, marshalling exceptions will contain further information on the objects that were being marshalled. Example:
 
 
 ----
-<code class="jive-code jive-java">java.io.NotSerializableException: java.lang.Object
+java.io.NotSerializableException: java.lang.Object
 at org.jboss.marshalling.river.RiverMarshaller.doWriteObject(RiverMarshaller.java:857)
 at org.jboss.marshalling.AbstractMarshaller.writeObject(AbstractMarshaller.java:407)
 at org.infinispan.marshall.exts.ReplicableCommandExternalizer.writeObject(ReplicableCommandExternalizer.java:54)
@@ -161,7 +122,6 @@ Caused by: an exception which occurred:
 in object java.lang.Object@b40ec4
 in object org.infinispan.commands.write.PutKeyValueCommand@df661da7
 ... Removed 22 stack frames
-</code>
 ----
 
 The way the "in object" messages are read is the same in which stacktraces are read. The highest "in object" being the most inner one and the lowest "in object" message being the most outer one. So, the above example indicates that a java.lang.Object instance contained in an instance of org.infinispan.commands.write.PutKeyValueCommand could not be serialized because java.lang.Object@b40ec4 is not serializable.
@@ -170,21 +130,20 @@ This is not all though! If you enable DEBUG or TRACE logging levels, marshalling
 
 
 ----
-<code class="jive-code jive-java">java.io.NotSerializableException: java.lang.Object
+java.io.NotSerializableException: java.lang.Object
 ...
 Caused by: an exception which occurred:
 in object java.lang.Object@b40ec4
 -> toString = java.lang.Object@b40ec4
 in object org.infinispan.commands.write.PutKeyValueCommand@df661da7
 -> toString = PutKeyValueCommand{key=k, value=java.lang.Object@b40ec4, putIfAbsent=false, lifespanMillis=0, maxIdleTimeMillis=0}
-</code>
 ----
 
 With regards to unmarshalling exceptions, showing such level of information it's a lot more complicated but where possible. Infinispan will provide class type information. For example:
 
 
 ----
-<code class="jive-code jive-java">java.io.IOException: Injected failue!
+java.io.IOException: Injected failure!
 at org.infinispan.marshall.VersionAwareMarshallerTest$1.readExternal(VersionAwareMarshallerTest.java:426)
 at org.jboss.marshalling.river.RiverUnmarshaller.doReadNewObject(RiverUnmarshaller.java:1172)
 at org.jboss.marshalling.river.RiverUnmarshaller.doReadObject(RiverUnmarshaller.java:273)
@@ -196,14 +155,13 @@ at org.infinispan.marshall.VersionAwareMarshaller.objectFromByteBuffer(VersionAw
 at org.infinispan.marshall.VersionAwareMarshallerTest.testErrorUnmarshalling(VersionAwareMarshallerTest.java:431)
 Caused by: an exception which occurred:
 in object of type org.infinispan.marshall.VersionAwareMarshallerTest$1
-</code>
 ----
 
 In this example, an IOException was thrown when trying to unmarshall a instance of the inner class org.infinispan.marshall.VersionAwareMarshallerTest$1. In similar fashion to marshalling exceptions, when DEBUG or TRACE logging levels are enabled, classloader information of the class type is provided. For example:
 
 
 ----
-<code class="jive-code jive-java">java.io.IOException: Injected failue!
+java.io.IOException: Injected failure!
 ...
 Caused by: an exception which occurred:
 in object of type org.infinispan.marshall.VersionAwareMarshallerTest$1

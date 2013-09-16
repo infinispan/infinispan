@@ -1,55 +1,30 @@
-[[sid-68355108]]
-
 ==  CDI Support
-
-[[sid-68355108_CDISupport-Introduction]]
-
-
-=== Introduction
-
- Infinispan includes integration with CDI in the infinispan-cdi module. Configuration and injection of the Inifispan's Cache API is provided, and it is planned to bridge Cache listeners to the CDI event system. The module also provide partial support of the JCache (JSR-107) caching annotations - for further details see link:$$https://docs.google.com/document/d/1YZ-lrH6nW871Vd9Z34Og_EqbX_kxxJi55UrSn4yL2Ak/edit?hl=en&amp;pli=1#heading=h.jdfazu3s6oly$$[Chapter 8] of the JCACHE specification. 
-
-[[sid-68355108_CDISupport-MavenDependencies]]
-
+Infinispan includes integration with link:http://docs.oracle.com/javaee/6/tutorial/doc/giwhb.html[Contexts and Dependency Injection (better known as CDI)]
+via Infinispan's `infinispan-cdi` module.
+Configuration and injection of Infinispan's Cache interface is provided, and it is planned to bridge Cache listeners to the CDI event system as well.
+The module also provide partial support of the JCache (JSR-107) caching annotations - for further details see link:$$https://docs.google.com/document/d/1YZ-lrH6nW871Vd9Z34Og_EqbX_kxxJi55UrSn4yL2Ak/edit?hl=en&amp;pli=1#heading=h.jdfazu3s6oly$$[Chapter 8] of the JCACHE specification.
 
 === Maven Dependencies
+To include CDI support for Infinispan in your project:
 
- All you need is org.infinispan:infinispan-cdi 
-
-
+.pom.xml
+[source,xml]
 ----
-
 <dependency>
     <groupId>org.infinispan</groupId>
     <artifactId>infinispan-cdi</artifactId>
     <version>${infinispan.version}</version>
 </dependency>
-
 ----
 
-
-[TIP]
 .Which version of Infinispan should I use?
-==== 
- We recommend using the latest final version of the infinispan-cdi module. This module is available since Infinispan version 5.0.0.CR8 . 
-
-
-==== 
-
-
-[[sid-68355108_CDISupport-Embeddedcacheintegration]]
-
+TIP: We recommend using the latest final version of the infinispan-cdi module.
 
 === Embedded cache integration
-
-[[sid-68355108_CDISupport-Injectanembeddedcache]]
-
-
 ==== Inject an embedded cache
-
 By default you can inject the default Infinispan cache. Let's look at the following example:
 
-
+[source,java]
 ----
 
 ...
@@ -71,19 +46,10 @@ public class GreetingService {
 
 ----
 
- If you want to use a specific cache you just have to provide your own cache configuration and cache qualifier. For example, if you want to use a custom cache for the GreetingService you should write your own qualifier (here GreetingCache ) and define its configuration: 
+If you want to use a specific cache rather than the default one, you just have to provide your own cache configuration and cache qualifier.
+For example, if you want to use a custom cache for the GreetingService you should write your own qualifier (such as GreetingCache) and define its configuration: 
 
-
-[NOTE]
-.The new configuration system is used since 5.1.0.CR2
-==== 
- As you probably know Infinispan 5.1.0 comes with a new way to configure your cache programmatically and a bit more (more information are available link:$$http://infinispan.blogspot.com/2012/01/configuration-changes-in-infinispan.html$$[here] ). Now to configure a cache you must use this new configuration system. 
-
-
-==== 
-
-
-
+[source,java]
 ----
 
 ...
@@ -98,7 +64,7 @@ public @interface GreetingCache {
 
 ----
 
-
+[source,java]
 ----
 
 ...
@@ -129,26 +95,12 @@ public class Config {
 
 ----
 
- To use this cache in the GreetingService add the @GeetingCache qualifier on your cache injection point. Simple! 
-
-[[sid-68355108_CDISupport-Overridethedefaultembeddedcachemanagerandconfiguration]]
-
+To use this cache in the GreetingService add the @GeetingCache qualifier on your cache injection point. Simple! 
 
 ==== Override the default embedded cache manager and configuration
+You can override the default cache configuration used by the default embedded cache manager. For that, you just have to create one Configuration producer with the @Default qualifier as illustrated in the following snippet: 
 
-
-[NOTE]
-.Since 5.1.0.CR1 @OverrideDefault is deprecated
-==== 
-To migrate your code remove this annotation from your producers as detailed in the following section.
-
-
-==== 
-
-
- You can override the default cache configuration used by the default embedded cache manager. For that, you just have to create one Configuration producer with the @Default qualifier as illustrated in the following snippet: 
-
-
+[source,java]
 ----
 
 public class Config {
@@ -165,9 +117,10 @@ public class Config {
 
 ----
 
- It's also possible to override the default embedded cache manager used. The new default cache manager produced must have the @Default qualifier and the scope @ApplicationScoped . 
+It's also possible to override the default embedded cache manager used.
+The new default cache manager produced must have the @Default qualifier and the scope @ApplicationScoped . 
 
-
+[source,java]
 ----
 
 ...
@@ -187,14 +140,11 @@ public class Config {
 
 ----
 
-[[sid-68355108_CDISupport-Configurethetransportforclustereduse]]
-
-
 ==== Configure the transport for clustered use
+To use Infinispan in a clustered mode you have to configure the transport with the GlobalConfiguration.
+To achieve that override the default cache manager as explained in the previous section. Look at the following snippet: 
 
- To use Infinispan in a clustered mode you have to configure the transport with the GlobalConfiguration . To achieve that override the default cache manager as explained in the previous section. Look at the following snippet: 
-
-
+[source,java]
 ----
 
 ...
@@ -211,19 +161,12 @@ public EmbeddedCacheManager defaultClusteredCacheManager() {
 
 ----
 
-[[sid-68355108_CDISupport-Remotecacheintegration]]
-
-
 === Remote cache integration
 
-[[sid-68355108_CDISupport-Injectaremotecache]]
-
-
 ==== Inject a remote cache
+With the CDI integration it's also possible to use a remote cache. For example you can inject the default RemoteCache as illustrated in the following snippet: 
 
- With the CDI integration it's also possible to use a remote cache. For example you can inject the default RemoteCache as illustrated in the following snippet: 
-
-
+[source,java]
 ----
 
 public class GreetingService {
@@ -242,9 +185,9 @@ public class GreetingService {
 
 ----
 
- If you want to use another cache, for example the greeting-cache, add the @Remote qualifier on the cache injection point which contains the cache name. 
+If you want to use another cache, for example the greeting-cache, add the @Remote qualifier on the cache injection point which contains the cache name. 
 
-
+[source,java]
 ----
 
 public class GreetingService {
@@ -256,9 +199,10 @@ public class GreetingService {
 
 ----
 
- Adding the @Remote cache qualifier on each injection point might be error prone. That's why the remote cache integration provides another way to achieve the same goal. For that you have to create your own qualifier annotated with @Remote : 
+Adding the @Remote cache qualifier on each injection point might be error prone.
+That's why the remote cache integration provides another way to achieve the same goal. For that you have to create your own qualifier annotated with @Remote : 
 
-
+[source,java]
 ----
 
 @Remote("greeting-cache")
@@ -271,16 +215,12 @@ public @interface RemoteGreetingCache {
 
 ----
 
- To use this cache in the GreetingService add the qualifier @RemoteGreetingCache qualifier on your cache injection. 
-
-[[sid-68355108_CDISupport-Overridethedefaultremotecachemanager]]
-
+To use this cache in the GreetingService add the qualifier @RemoteGreetingCache qualifier on your cache injection. 
 
 ==== Override the default remote cache manager
-
 Like the embedded cache integration, the remote cache integration comes with a default remote cache manager producer. This default remote cache manager can be overridden as illustrated in the following snippet:
 
-
+[source,java]
 ----
 
 public class Config {
@@ -293,14 +233,10 @@ public class Config {
 
 ----
 
-[[sid-68355108_CDISupport-Useacustomremote%2Fembeddedcachemanagerforoneormorecache]]
-
-
 === Use a custom remote/embedded cache manager for one or more cache
-
 It's possible to use a custom cache manager for one or more cache. You just need to annotate the cache manager producer with the cache qualifiers. Look at the following example:
 
-
+[source,java]
 ----
 
 public class Config {
@@ -324,28 +260,21 @@ public class Config {
 
 ----
 
- With the above code the GreetingCache or the RemoteGreetingCache will be associated with the produced cache manager. 
+With the above code the GreetingCache or the RemoteGreetingCache will be associated with the produced cache manager. 
 
-
-[NOTE]
 .Producer method scope
-==== 
- To work properly the producers must have the scope @ApplicationScoped . Otherwise each injection of cache will be associated to a new instance of cache manager. 
-
-
-==== 
-
-
-[[sid-68355108_CDISupport-UseaJBossAS7configuredcache]]
-
+NOTE: To work properly the producers must have the scope @ApplicationScoped . Otherwise each injection of cache will be associated to a new instance of cache manager. 
 
 === Use a JBoss AS 7 configured cache
+With JBoss AS 7, you can setup an Infinispan cache manager in the server configuration file.
+This allows you to externalize your Infinispan configuration and also to lookup the cache manager from JNDI, normally with the @Resource annotation. 
 
- With JBoss AS 7, you can setup an Infinispan cache manager in the server configuration file. This allows you to externalize your Infinispan configuration and also to lookup the cache manager from JNDI, normally with the @Resource annotation. 
+As we mentioned earlier, you can override the default cache manager used by the Infinispan CDI extension.
+To use a JBoss AS 7 configured cache, you need to use the cache manager defined in JBoss AS 7.
+You only need to annotate the default cache manager producer with @Resource.
+The following example shows how use an embedded cache manager configured in JBoss AS 7.
 
-As we mentioned earlier, you can override the default cache manager used by the Infinispan CDI extension. To use a JBoss AS 7 configured cache, you need to use the cache manager defined in JBoss AS 7. You only need to annotate the default cache manager producer with @Resource. The following example shows how use an embedded cache manager configured in JBoss AS 7.
-
-
+[source,java]
 ----
 
 ...
@@ -360,38 +289,25 @@ public class Config {
 
 ----
 
-[[sid-68355108_CDISupport-UseJCachecachingannotations]]
-
-
 === Use JCache caching annotations
 
- The infinispan-cdi module provides a partial support of JCache caching annotations. These annotations provide a simple way to handle common use cases. The following caching annotations are defined in this specification: 
+TIP: There is now a separate module for JSR 107 (JCACHE) integration, including API.  See link:https://docs.jboss.org/author/display/ISPN/Using+Infinispan+as+a+JCache+provider[this chapter] for details.
 
+The infinispan-cdi module provides a partial support of JCache caching annotations.
+These annotations provide a simple way to handle common use cases.
+The following caching annotations are defined in this specification: 
 
 *  @CacheResult caches the result of a method call 
-
-
 *  @CachePut caches a method parameter 
-
-
 *  @CacheRemoveEntry removes an entry from a cache 
-
-
 *  @CacheRemoveAll removes all entries from a cache 
 
-
-[NOTE]
 .Annotations target type
-==== 
-These annotations must only be used on methods.
+WARNING: These annotations must only be used on methods.
 
+To use these annotations the following interceptors must be declared in your application beans.xml . 
 
-==== 
-
-
- To use these annotations the following interceptors must be declared in your application beans.xml . 
-
-
+[source,xml]
 ----
 
 <beans xmlns="http://java.sun.com/xml/ns/javaee"
@@ -407,9 +323,9 @@ These annotations must only be used on methods.
 
 ----
 
- The following snippet of code illustrates the use of @CacheResult annotation. As you can see it simplifies the caching of the Greetingservice#greet method results. 
+The following snippet of code illustrates the use of @CacheResult annotation. As you can see it simplifies the caching of the Greetingservice#greet method results. 
 
-
+[source,java]
 ----
 
 import javax.cache.interceptor.CacheResult;
@@ -423,22 +339,14 @@ public class GreetingService {
 
 ----
 
- The first version of the GreetingService and the above version have exactly the same behavior. The only difference is the cache used. By default it's the fully qualified name of the annotated method with its parameter types (e.g. org.infinispan.example.GreetingService.greet(java.lang.String) ). 
+The first version of the GreetingService and the above version have exactly the same behavior. The only difference is the cache used. By default it's the fully qualified name of the annotated method with its parameter types (e.g. org.infinispan.example.GreetingService.greet(java.lang.String) ). 
 
-
-[TIP]
 .Can I use a different cache?
-==== 
- To use another cache specify its name with the cacheName attribute of the cache annotation. For example: 
+To use another cache specify its name with the cacheName attribute of the cache annotation. For example: 
 
-
+[source,java]
 ----
 
 @CacheResult(cacheName = "greeting-cache")
 
 ----
-
-
-==== 
-
-

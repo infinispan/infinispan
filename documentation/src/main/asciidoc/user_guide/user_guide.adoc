@@ -1,70 +1,86 @@
-:toc:
+= Infinispan User Guide
+Manik Surtani, Mircea Markus, Galder Zamarreño, Pete Muir, and others from the Infinispan community
+:toc2: right
+:icons: font
+:toc-placement: preamble
 
-include::chapter-1-New_in_Infinispan_4_1_0.adoc[]
-include::chapter-2-New_in_Infinispan_4_2_0.adoc[]
-include::chapter-3-New_in_Infinispan_5_0_0.adoc[]
-include::chapter-4-Integration_with_other_frameworks.adoc[]
-include::chapter-5-Querying_Infinispan.adoc[]
-include::chapter-6-Configuring_cache_programmatically.adoc[]
-include::chapter-7-Grid_File_System.adoc[]
+Welcome to the official Infinispan user guide.
+This comprehensive document will guide you through every last detail of Infinispan, 
+however can be a poor starting point if you are new to Infinispan.
+
+TIP: For newbies, starting with the link:../getting_started/getting_started.html[Getting Started Guide]
+or one of the link:http://www.infinispan.org/documentation[Quickstarts] is probably a better bet.
+
+The link:../faqs/faqs.html[Frequently Asked Questions] and link:../glossary/glossary.html[Glossary]
+are also useful documents to have alongside this user guide.
+
+// For some reason the chapter numbering got messed up when exporting from Confluence... 
+
+// The top-level chapter on config.  This will include other sub-chapters.
+include::chapter-46-Configuring_cache.adoc[]
+include::chapter-53-Using_the_Cache_API.adoc[]
+include::chapter-43-Eviction.adoc[]
+include::chapter-23-CacheLoaders.adoc[]
+include::chapter-26-Infinispan_transactions.adoc[]
+include::chapter-19-Locking_and_Concurrency.adoc[]
+include::chapter-32-Clustering_modes.adoc[]
+include::chapter-54-Local_mode_cache.adoc[]
+include::chapter-61-Marshalling.adoc[]
+include::chapter-60-CDI_Support.adoc[]
+include::chapter-15-Management_Tooling.adoc[]
+include::chapter-59-Infinispan_REST_Server.adoc[]
+include::chapter-13-Infinispan_as_a_Directory_for_Lucene.adoc[]
+include::chapter-30-Running_Infinispan_on_Amazon_Web_Services.adoc[]
+include::chapter-6-Querying_Infinispan.adoc[]
+include::chapter-50-Infinispan_Custom_Interceptors.adoc[]
+include::chapter-29-Default_Values_For_Property_Based_Attributes.adoc[]
+include::chapter-55-Infinispan_Command_line_Console.adoc[]
+include::chapter-74-Infinispan_for_HTTP_session_clustering_and_caching.adoc[]
+include::chapter-5-Integration_with_other_frameworks.adoc[]
+
+
+<!-- include::chapter-7-Grid_File_System.adoc[]
 include::chapter-8-Infinispan_WebSocket_Server.adoc[]
 include::chapter-9-Using_Infinispan_Memcached_Server.adoc[]
-include::chapter-10-Asynchronous_API.adoc[]
-include::chapter-11-Tree_API_Module.adoc[]
-include::chapter-12-Infinispan_as_a_Directory_for_Lucene.adoc[]
 include::chapter-13-Infinispan_Server_Modules.adoc[]
-include::chapter-14-Management_Tooling.adoc[]
-include::chapter-15-Asynchronous_Options.adoc[]
-include::chapter-16-Infinispan_as_Hibernate_2nd_Level_Cache_in_JBoss_AS_5_x.adoc[]
-include::chapter-17-Clustered_Configuration_QuickStart.adoc[]
-include::chapter-18-Locking_and_Concurrency.adoc[]
-include::chapter-19-Configuring_Cache_declaratively.adoc[]
-include::chapter-20-Configuration_Migration_Tools.adoc[]
+
+
+
+
+
+
 include::chapter-21-Consistent_Concurrent_Updates_With_Hot_Rod_Versioned_Operations.adoc[]
-include::chapter-22-CacheLoaders.adoc[]
+
 include::chapter-23-Portable_Serialization_For_Hot_Rod_With_Apache_Avro.adoc[]
-include::chapter-24-The_Grouping_API.adoc[]
-include::chapter-25-Infinispan_transactions.adoc[]
+
 include::chapter-26-Load_Testing_Infinispan_Server_Modules.adoc[]
-include::chapter-27-Using_Infinispan_as_JPA_Hibernate_Second_Level_Cache_Provider.adoc[]
-include::chapter-28-Default_Values_For_Property_Based_Attributes.adoc[]
-include::chapter-29-Running_Infinispan_on_Amazon_Web_Services.adoc[]
-include::chapter-30-Eviction_Examples.adoc[]
-include::chapter-31-Clustering_modes.adoc[]
-include::chapter-32-Using_Infinispan_as_a_Spring_Cache_provider.adoc[]
+
+
 include::chapter-33-Distributed_Data_Stream_Processing_Framework_In_Infinispan.adoc[]
-include::chapter-34-Per_Invocation_Flags.adoc[]
-include::chapter-35-Key_affinity_service.adoc[]
-include::chapter-36-Transaction_recovery.adoc[]
-include::chapter-37-Implementing_standalone_JPA_JTA_Hibernate_application_outside_J2EE_server_using_Infinispan_2nd_level_cache.adoc[]
 include::chapter-38-Infinispan_Maven_Archetypes.adoc[]
-include::chapter-39-Accessing_data_in_Infinispan_via_RESTful_interface.adoc[]
 include::chapter-40-Infinispan_Distributed_Execution_Framework.adoc[]
-include::chapter-41-Listeners_and_Notifications.adoc[]
-include::chapter-42-Eviction.adoc[]
+
 include::chapter-43-ServerHinting.adoc[]
 include::chapter-44-Java_Hot_Rod_client.adoc[]
-include::chapter-45-Configuring_cache.adoc[]
-include::chapter-46-Write_Through_And_Write_Behind_Caching.adoc[]
+
 include::chapter-47-Using_Hot_Rod_Server.adoc[]
 include::chapter-48-Cassandra_CacheStore.adoc[]
-include::chapter-49-Infinispan_Custom_Interceptors.adoc[]
+
 include::chapter-50-Talking_To_Infinispan_Memcached_Servers_From_Non_Java_Clients.adoc[]
 include::chapter-51-Plugging_Infinispan_With_User_Defined_Externalizers.adoc[]
-include::chapter-52-Using_the_Cache_API.adoc[]
-include::chapter-53-Local_mode_cache.adoc[]
-include::chapter-54-Infinispan_Command_line_Console.adoc[]
+
+
+
 include::chapter-55-Server_Command_Line_Options.adoc[]
 include::chapter-56-Interacting_With_Hot_Rod_Server_From_Within_Same_JVM.adoc[]
 include::chapter-57-Multiple_Tiers_of_Caches.adoc[]
-include::chapter-58-Infinispan_REST_Server.adoc[]
-include::chapter-59-CDI_Support.adoc[]
+
+
 include::chapter-60-Hot_Rod_Protocol_Version_1.adoc[]
-include::chapter-61-Marshalling.adoc[]
-include::chapter-62-Batching.adoc[]
+
 include::chapter-63-Infinispan_with_Groovy.adoc[]
 include::chapter-64-Infinispan_with_Scala.adoc[]
 
 
 
-
+ -->

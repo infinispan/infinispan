@@ -129,7 +129,7 @@ JGroups is configured via an XML file; the file to use can be specified via the 
 [source,java]
 ----
 GlobalConfigurationBuilder.defaultClusteredBuilder()
-   .transport().addProperty("configurationFile", "jgroups.xml")
+   .transport().defaultTransport().addProperty("configurationFile", "jgroups.xml")
    .build()
 ----
 
@@ -163,7 +163,7 @@ The cache should be configured to work in replication mode (either synchronous o
 private static EmbeddedCacheManager createCacheManagerProgramatically() {
    return new DefaultCacheManager(
       GlobalConfigurationBuilder.defaultClusteredBuilder()
-         .transport().addProperty("configurationFile", "jgroups.xml")
+         .transport().defaultTransport().addProperty("configurationFile", "jgroups.xml")
          .build(),
       new ConfigurationBuilder()
          .clustering().cacheMode(CacheMode.REPL_SYNC)
