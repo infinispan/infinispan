@@ -1,8 +1,7 @@
 = Glossary
 Manik Surtani, Mircea Markus, Galder Zamarreño, Pete Muir, and others from the Infinispan community
-:toc2: right
+:toc2:
 :icons: font
-:toc-placement: preamble
 
 TIP: This glossary aims to clarify some of the terms frequently encountered in
 Infinispan's link:user_guide.html[User Guide],

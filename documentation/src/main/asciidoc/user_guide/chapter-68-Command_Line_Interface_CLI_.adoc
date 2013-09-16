@@ -1,14 +1,11 @@
-[[sid-68355122]]
-
 ==  Command-Line Interface (CLI)
-
 Infinispan offers a simple Command-Line Interface (CLI) with which it is possible to interact with the data within the caches and with most of the internal components (e.g. transactions, cross-site backups, rolling upgrades).
 
- The CLI is built out of two elements: a server-side module and the  client command tool. The server-side module (infinispan-cli-server-$VERSION.jar) provides  the actual interpreter for the commands and needs to be included alongside your application. If you are using the _startServer.[sh.bat]_ script it is included by default. 
+The CLI is built out of two elements: a server-side module and the  client command tool. The server-side module (infinispan-cli-server-$VERSION.jar) provides  the actual interpreter for the commands and needs to be included alongside your application. If you are using the _startServer.[sh.bat]_ script it is included by default. 
 
 Currently the server (and the  client) use the JMX protocol to communicate, but in a future release we  plan to support other communication protocols (in particular our own  HotRod).
 
- The CLI offers both an interactive and a batch mode. To invoke the client, just run the provided _bin/ispn-cli.[sh|bat]_ script. The following is a list of command-line switches which affect how the CLI can be started: 
+The CLI offers both an interactive and a batch mode. To invoke the client, just run the provided _bin/ispn-cli.[sh|bat]_ script. The following is a list of command-line switches which affect how the CLI can be started: 
 
 
 ----
@@ -35,7 +32,7 @@ The connection to the application can also be initiated from within the CLI usin
 [jmx://localhost:12000/MyCacheManager/>
 ----
 
- The CLI prompt will show the active connection information, including the currently selected CacheManager. Initially no cache is selected so, before performing any cache operations, one must be selected. For this the _cache_ command is used. The CLI supports tab-completion for all commands and options and for most parameters where it makes sense to do so. Therefore typing _cache_ and pressing TAB will show a list of active caches: 
+The CLI prompt will show the active connection information, including the currently selected CacheManager. Initially no cache is selected so, before performing any cache operations, one must be selected. For this the _cache_ command is used. The CLI supports tab-completion for all commands and options and for most parameters where it makes sense to do so. Therefore typing _cache_ and pressing TAB will show a list of active caches: 
 
 
 ----
@@ -54,29 +51,11 @@ abort       clear       create      end         help �
 begin       commit      disconnect  evict       info        quit        rollback    stats     
 ----
 
- The CLI is based on link:$$https://github.com/aeshell/aesh$$[Æsh] and therefore offers many keyboard shortcuts to navigate and search the history of commands, to manipulate the cursor at the prompt, including both Emacs and VI modes of operation. 
-
-[[sid-68355122_Command-LineInterface%28CLI%29-Commands]]
-
+The CLI is based on link:$$https://github.com/aeshell/aesh$$[Æsh] and therefore offers many keyboard shortcuts to navigate and search the history of commands, to manipulate the cursor at the prompt, including both Emacs and VI modes of operation. 
 
 === Commands
-
-[[sid-68355122_Command-LineInterface%28CLI%29-]]
-
-
-==== 
-
-
-----
-
-----
-
-[[sid-68355122_Command-LineInterface%28CLI%29-abort]]
-
-
 ==== abort
-
- The _abort_ command is used to abort a running batch initiated by the _start_ command 
+The _abort_ command is used to abort a running batch initiated by the _start_ command 
 
 
 ----
@@ -87,12 +66,8 @@ begin       commit      disconnect  evict       info     
 null
 ----
 
-[[sid-68355122_Command-LineInterface%28CLI%29-begin]]
-
-
 ==== begin
-
- The _begin_ command starts a transaction. In order for this command to work, the cache(s) on which the subsequent operations are invoked must have transactions enabled. 
+The _begin_ command starts a transaction. In order for this command to work, the cache(s) on which the subsequent operations are invoked must have transactions enabled. 
 
 
 ----
@@ -102,12 +77,8 @@ null
 [jmx://localhost:12000/MyCacheManager/namedCache]> commit
 ----
 
-[[sid-68355122_Command-LineInterface%28CLI%29-cache]]
-
-
 ==== cache
-
- The _cache_ command selects the cache to use as default for all subsequent operations. If it is invoked without parameters it shows the currently selected cache. 
+The _cache_ command selects the cache to use as default for all subsequent operations. If it is invoked without parameters it shows the currently selected cache. 
 
 
 ----
@@ -117,12 +88,8 @@ ___defaultcache
 [jmx://localhost:12000/MyCacheManager/___defaultcache]>
 ----
 
-[[sid-68355122_Command-LineInterface%28CLI%29-clear]]
-
-
 ==== clear
-
- The _clear_ command clears a cache from all content. 
+The _clear_ command clears a cache from all content. 
 
 
 ----
@@ -132,12 +99,8 @@ ___defaultcache
 null
 ----
 
-[[sid-68355122_Command-LineInterface%28CLI%29-commit]]
-
-
 ==== commit
-
- The _commit_ command commits an ongoing transaction 
+The _commit_ command commits an ongoing transaction 
 
 
 ----
@@ -147,12 +110,8 @@ null
 [jmx://localhost:12000/MyCacheManager/namedCache]> commit
 ----
 
-[[sid-68355122_Command-LineInterface%28CLI%29-container]]
-
-
 ==== container
-
- The _container_ command selects the default container (cache manager). Invoked without parameters it lists all available containers 
+The _container_ command selects the default container (cache manager). Invoked without parameters it lists all available containers 
 
 
 ----
@@ -162,12 +121,8 @@ MyCacheManager OtherCacheManager
 [jmx://localhost:12000/OtherCacheManager/]>
 ----
 
-[[sid-68355122_Command-LineInterface%28CLI%29-create]]
-
-
 ==== create
-
- The _create_ command creates a new cache based on the configuration of an existing cache definition 
+The _create_ command creates a new cache based on the configuration of an existing cache definition 
 
 
 ----
@@ -176,12 +131,8 @@ MyCacheManager OtherCacheManager
 [jmx://localhost:12000/MyCacheManager/newCache]>
 ----
 
-[[sid-68355122_Command-LineInterface%28CLI%29-disconnect]]
-
-
 ==== disconnect
-
- The _disconnect_ command disconnects the currently active connection allowing the CLI to connect to another instance. 
+The _disconnect_ command disconnects the currently active connection allowing the CLI to connect to another instance. 
 
 
 ----
@@ -189,12 +140,8 @@ MyCacheManager OtherCacheManager
 [disconnected//]
 ----
 
-[[sid-68355122_Command-LineInterface%28CLI%29-encoding]]
-
-
 ==== encoding
-
- The _encoding_ command is used to set a default codec to use when reading/writing entries from/to a cache. When invoked without arguments it shows the currently selected codec. This command is useful since currently remote protocols such as HotRod and Memcached wrap keys and values in specialized structures. 
+The _encoding_ command is used to set a default codec to use when reading/writing entries from/to a cache. When invoked without arguments it shows the currently selected codec. This command is useful since currently remote protocols such as HotRod and Memcached wrap keys and values in specialized structures. 
 
 
 ----
@@ -208,12 +155,8 @@ rest
 [jmx://localhost:12000/MyCacheManager/namedCache]> encoding hotrod
 ----
 
-[[sid-68355122_Command-LineInterface%28CLI%29-end]]
-
-
 ==== end
-
- The _end_ command is used to successfully end a running batch initiated by the _start_ command 
+The _end_ command is used to successfully end a running batch initiated by the _start_ command 
 
 
 ----
@@ -224,12 +167,8 @@ rest
 a
 ----
 
-[[sid-68355122_Command-LineInterface%28CLI%29-evict]]
-
-
 ==== evict
-
- The _evict_ command is used to evict from the cache the entry associated with a specific key. 
+The _evict_ command is used to evict from the cache the entry associated with a specific key. 
 
 
 ----
@@ -237,12 +176,8 @@ a
 [jmx://localhost:12000/MyCacheManager/namedCache]> evict a
 ----
 
-[[sid-68355122_Command-LineInterface%28CLI%29-get]]
-
-
 ==== get
-
- The _get_ command is used to show the value associated to a specified key. For primitive types and Strings, the _get_ command will simply print the default representation. For other objects, a JSON representation of the object will be printed. 
+The _get_ command is used to show the value associated to a specified key. For primitive types and Strings, the _get_ command will simply print the default representation. For other objects, a JSON representation of the object will be printed. 
 
 
 ----
@@ -251,12 +186,8 @@ a
 a
 ----
 
-[[sid-68355122_Command-LineInterface%28CLI%29-info]]
-
-
 ==== info
-
- The _info_ command is used to show the configuration of the currently selected cache or container. 
+The _info_ command is used to show the configuration of the currently selected cache or container. 
 
 
 ----
@@ -264,12 +195,8 @@ a
 GlobalConfiguration{asyncListenerExecutor=ExecutorFactoryConfiguration{factory=org.infinispan.executors.DefaultExecutorFactory@98add58}, asyncTransportExecutor=ExecutorFactoryConfiguration{factory=org.infinispan.executors.DefaultExecutorFactory@7bc9c14c}, evictionScheduledExecutor=ScheduledExecutorFactoryConfiguration{factory=org.infinispan.executors.DefaultScheduledExecutorFactory@7ab1a411}, replicationQueueScheduledExecutor=ScheduledExecutorFactoryConfiguration{factory=org.infinispan.executors.DefaultScheduledExecutorFactory@248a9705}, globalJmxStatistics=GlobalJmxStatisticsConfiguration{allowDuplicateDomains=true, enabled=true, jmxDomain='jboss.infinispan', mBeanServerLookup=org.jboss.as.clustering.infinispan.MBeanServerProvider@6c0dc01, cacheManagerName='local', properties={}}, transport=TransportConfiguration{clusterName='ISPN', machineId='null', rackId='null', siteId='null', strictPeerToPeer=false, distributedSyncTimeout=240000, transport=null, nodeName='null', properties={}}, serialization=SerializationConfiguration{advancedExternalizers={1100=org.infinispan.server.core.CacheValue$Externalizer@5fabc91d, 1101=org.infinispan.server.memcached.MemcachedValue$Externalizer@720bffd, 1104=org.infinispan.server.hotrod.ServerAddress$Externalizer@771c7eb2}, marshaller=org.infinispan.marshall.VersionAwareMarshaller@6fc21535, version=52, classResolver=org.jboss.marshalling.ModularClassResolver@2efe83e5}, shutdown=ShutdownConfiguration{hookBehavior=DONT_REGISTER}, modules={}, site=SiteConfiguration{localSite='null'}}
 ----
 
-[[sid-68355122_Command-LineInterface%28CLI%29-locate]]
-
-
 ==== locate
-
- The _locate_ command shows the physical location of a specified entry in a distributed cluster. 
+The _locate_ command shows the physical location of a specified entry in a distributed cluster. 
 
 
 ----
@@ -277,12 +204,8 @@ GlobalConfiguration{asyncListenerExecutor=ExecutorFactoryConfiguration{factory=o
 [host/node1,host/node2]
 ----
 
-[[sid-68355122_Command-LineInterface%28CLI%29-put]]
-
-
 ==== put
-
- The _put_ command inserts an entry in the cache. If the cache previously contained a mapping for the key, the old value is replaced by the specified value. The user can control the type of data that the CLI will use to store the key and value. See the link:$$https://docs.jboss.org/author/pages/viewpage.action?pageId=61505925_Command-LineInterface%28CLI%29-DataTypes$$[Data Types] paragraph. 
+The _put_ command inserts an entry in the cache. If the cache previously contained a mapping for the key, the old value is replaced by the specified value. The user can control the type of data that the CLI will use to store the key and value. See the link:$$https://docs.jboss.org/author/pages/viewpage.action?pageId=61505925_Command-LineInterface%28CLI%29-DataTypes$$[Data Types] paragraph. 
 
 
 ----
@@ -301,12 +224,8 @@ The put command can optionally specify a lifespan and a maximum idle time.
 [jmx://localhost:12000/MyCacheManager/namedCache]> put a a expires 10m maxidle 1m
 ----
 
-[[sid-68355122_Command-LineInterface%28CLI%29-replace]]
-
-
 ==== replace
-
- The _replace_ command replaces an existing entry in the cache. If an old value is specified, then the replacement happens only if the value in the cache coincides. 
+The _replace_ command replaces an existing entry in the cache. If an old value is specified, then the replacement happens only if the value in the cache coincides. 
 
 
 ----
@@ -322,12 +241,8 @@ c
 c
 ----
 
-[[sid-68355122_Command-LineInterface%28CLI%29-rollback]]
-
-
 ==== rollback
-
- The _rollback_ command rolls back an ongoing transaction 
+The _rollback_ command rolls back an ongoing transaction 
 
 
 ----
@@ -337,13 +252,8 @@ c
 [jmx://localhost:12000/MyCacheManager/namedCache]> rollback
 ----
 
-[[sid-68355122_Command-LineInterface%28CLI%29-site]]
-
-
 ==== site
-
- The _site_ command performs operations related to the administration of cross-site replication. It can be used to obtain information related to the status of a site and to change the status (online/offline) 
-
+The _site_ command performs operations related to the administration of cross-site replication. It can be used to obtain information related to the status of a site and to change the status (online/offline) 
 
 ----
 [jmx://localhost:12000/MyCacheManager/namedCache]> site --status NYC
@@ -355,12 +265,8 @@ offline
 [jmx://localhost:12000/MyCacheManager/namedCache]> site --online NYC
 ----
 
-[[sid-68355122_Command-LineInterface%28CLI%29-start]]
-
-
 ==== start
-
- The _start_ command initiates a batch of operations. 
+The _start_ command initiates a batch of operations. 
 
 
 ----
@@ -370,12 +276,8 @@ offline
 [jmx://localhost:12000/MyCacheManager/namedCache]> end
 ----
 
-[[sid-68355122_Command-LineInterface%28CLI%29-stats]]
-
-
 ==== stats
-
- The _stats_ command displays statistics about a cache 
+The _stats_ command displays statistics about a cache 
 
 
 ----
@@ -403,12 +305,8 @@ LockManager: {
 }
 ----
 
-[[sid-68355122_Command-LineInterface%28CLI%29-upgrade]]
-
-
 ==== upgrade
-
- The _ugrade_ command performs operations used during the rolling upgrade procedure. For a detailed description of this procedure please see link:$$https://docs.jboss.org/author/pages/viewpage.action?pageId=60227604$$[Rolling upgrades] 
+The _ugrade_ command performs operations used during the rolling upgrade procedure. For a detailed description of this procedure please see link:$$https://docs.jboss.org/author/pages/viewpage.action?pageId=60227604$$[Rolling upgrades] 
 
 
 ----
@@ -416,12 +314,8 @@ LockManager: {
 [jmx://localhost:12000/MyCacheManager/namedCache]> upgrade --disconnectsource=hotrod --all
 ----
 
-[[sid-68355122_Command-LineInterface%28CLI%29-version]]
-
-
 ==== version
-
- The _version_ command displays version information about both the CLI client and the server 
+The _version_ command displays version information about both the CLI client and the server 
 
 
 ----
@@ -430,13 +324,7 @@ Client Version 5.2.1.Final
 Server Version 5.2.1.Final
 ----
 
-[[sid-68355122_Command-LineInterface%28CLI%29-DataTypes]]
-
-
 === Data Types
-
-[[sid-68355122_Command-LineInterface%28CLI%29-DataTypesx]]
-
 
 The CLI understands the following types:
 
@@ -453,13 +341,13 @@ The CLI understands the following types:
 * double
 
 
-* a double precision number is identified by a floating point number(with optional exponent part) and an optional 'd' suffix, e.g.3.14
+** a double precision number is identified by a floating point number(with optional exponent part) and an optional 'd' suffix, e.g.3.14
 
 
 * float
 
 
-* a single precision number is identified by a floating point number(with optional exponent part) and an 'f' suffix, e.g. 10.3f
+** a single precision number is identified by a floating point number(with optional exponent part) and an 'f' suffix, e.g. 10.3f
 
 
 *  boolean a boolean is represented either by the keywords true and false 
@@ -470,13 +358,6 @@ The CLI understands the following types:
 
 *  JSON serialized Java classes can be represented using JSON notation, e.g. {"package.MyClass":{"i":5,"x":null,"b":true}}. Please note that the specified class must be available to the CacheManager's class loader. 
 
-[[sid-68355122_Command-LineInterface%28CLI%29-TimeValues]]
-
-
 === Time Values
-
-[[sid-68355122_Command-LineInterface%28CLI%29-TimeValuesx]]
-
-
 A time value is an integer number followed by time unit suffix: days (d), hours (h), minutes (m), seconds (s), milliseconds (ms).
 

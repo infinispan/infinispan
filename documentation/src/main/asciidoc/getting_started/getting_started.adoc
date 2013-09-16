@@ -1,8 +1,10 @@
 = Getting Started with Infinispan
 Manik Surtani, Mircea Markus, Galder Zamarreño, Pete Muir, and others from the Infinispan community
-:toc2: right
+:toc2:
 :icons: font
-:toc-placement: preamble
+:toclevels: 2
+:numbered:
+
 
 This is a guide to getting started with Infinispan.
 It is meant to be read alongside the more complete link:../user_guide/user_guide.html[User Guide],
@@ -20,3 +22,5 @@ include::chapter-9-Using_Infinispan_in_JBoss_AS_7.adoc[]
 include::chapter-10-Using_Infinispan_in_servlet_containers_such_as_Tomcat_or_Jetty_and_other_application_servers_such_as_GlassFish_.adoc[]
 include::chapter-11-Monitoring_Infinispan.adoc[]
 include::chapter-16-Infinispan_GUI_demo.adoc[]
+include::example_with_groovy.adoc[]
+include::example_with_scala.adoc[]

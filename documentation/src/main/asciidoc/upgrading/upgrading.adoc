@@ -1,8 +1,9 @@
 = Upgrading Infinispan
 Manik Surtani, Mircea Markus, Galder Zamarreño, Pete Muir, and others from the Infinispan community
-:toc2: right
+:toc2:
 :icons: font
-:toc-placement: preamble
+:toclevels: 1
+:numbered:
 
 This guide walks you through the process of upgrading Infinispan.
 

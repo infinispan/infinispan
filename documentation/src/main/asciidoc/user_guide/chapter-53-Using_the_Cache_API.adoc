@@ -138,7 +138,7 @@ public class MyAsyncListener { .... }
 ----
 
 ===== Asynchronous thread pool
-To tune the thread pool used to dispatch such asynchronous notifications, use the link:$$http://docs.jboss.org/infinispan/4.0/apidocs/config.html#ce_global_asyncListenerExecutor$$[&lt;asyncListenerExecutor /&gt;] XML element in your configuration file. 
+To tune the thread pool used to dispatch such asynchronous notifications, use the link:$$http://docs.jboss.org/infinispan/4.0/apidocs/config.html#ce_global_asyncListenerExecutor$$[`<asyncListenerExecutor />`] XML element in your configuration file. 
 
 ==== Listeners on RemoteCacheManager
 At the moment there is no support for registering listeners for the link:$$http://docs.jboss.org/infinispan/4.1/apidocs/org/infinispan/client/hotrod/RemoteCacheManager.html$$[RemoteCacheManager] . Whenever calling one of the add/remove/getListener methods on the link:$$http://docs.jboss.org/infinispan/4.1/apidocs/org/infinispan/client/hotrod/RemoteCacheManager.html$$[RemoteCacheManager] an UnsupportedOperationException will be thrown. There are plans to support remote listeners in future versions; in order to be notified when this feature will be added you can watch/vote for link:$$https://issues.jboss.org/browse/ISPN-374$$[ISPN-374] . 

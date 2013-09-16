@@ -1,13 +1,7 @@
-[[sid-68355121]]
-
 ==  Rolling upgrades
-
- This process is used for  installations making use of Infinispan as a remote grid, via Hot Rod.   This assumes an upgrade of the Infinispan grid, and _not_ the client application. 
+This process is used for  installations making use of Infinispan as a remote grid, via Hot Rod.   This assumes an upgrade of the Infinispan grid, and _not_ the client application. 
 
 In  the following description we will refer to the Source and Target  clusters, where the Source cluster is the old cluster which is currently  in use and the Target cluster is the new cluster to which the data will  be migrated to.
-
-[[sid-68355121_Rollingupgrades-Steps]]
-
 
 === Steps
 

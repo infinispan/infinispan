@@ -1,20 +1,8 @@
-[[sid-68355111]]
-
-==  Infinispan with Scala
-
-[[sid-68355111_InfinispanwithScala-Introduction]]
-
-
-=== Introduction
-
- This article shows how to use Infinispan with link:$$http://www.scala-lang.org/$$[Scala language] . It uses the same commands and configurations used in the link:$$https://docs.jboss.org/author/pages/viewpage.action?pageId=3736106$$[Groovy edition of interactive tutorial] . For more details about the scenarios and steps please visit about page since here will will only focus on Scala compatibility. 
-
-[[sid-68355111_InfinispanwithScala-Environment]]
-
+==  Example with Scala
+This article shows how to use Infinispan with link:$$http://www.scala-lang.org/$$[Scala language] . It uses the same commands and configurations used in the link:$$https://docs.jboss.org/author/pages/viewpage.action?pageId=3736106$$[Groovy edition of interactive tutorial] . For more details about the scenarios and steps please visit about page since here will will only focus on Scala compatibility. 
 
 === Environment
-
- Preparing the environment is almost similar to one described here, but with a minor difference that unlike Groovy which uses _$$~/.groovy/lib$$_ folder to extend initial classpath, we will use classic _CLASSPATH_ environment variable with Scala. Another issue is that with the recent edition of Infinispan core jar file is in the root folder of $INIFINISPAN_HOME, hence here a sample bash script to prepare CLASSPATH for our demo: 
+Preparing the environment is almost similar to one described here, but with a minor difference that unlike Groovy which uses _$$~/.groovy/lib$$_ folder to extend initial classpath, we will use classic _CLASSPATH_ environment variable with Scala. Another issue is that with the recent edition of Infinispan core jar file is in the root folder of $INIFINISPAN_HOME, hence here a sample bash script to prepare CLASSPATH for our demo: 
 
 
 ----
@@ -24,13 +12,9 @@ export CLASSPATH=$CLASSPATH:$INFINISPAN_HOME/infinispan-core.jar
 export CLASSPATH=$CLASSPATH:[Path to folder containing sample-configurations.xml file]
 ----
 
- Download*sample-configurations.xml*  file from link:$$https://docs.jboss.org/author/download/attachments/3737125/sample-configurations.xml?version=1&amp;modificationDate=1308852872000$$[here] . 
-
-[[sid-68355111_InfinispanwithScala-TestingSetup]]
-
+Download `sample-configurations.xml`  file from link:$$https://docs.jboss.org/author/download/attachments/3737125/sample-configurations.xml?version=1&amp;modificationDate=1308852872000$$[here] . 
 
 === Testing Setup
-
 The following code shows how to start an Scala console that will allow commands to be entered interactively. To verify that the Infinispan classes have been imported correctly, an import for all Infinispan classes will be attempted and then a request will be made to print the version of Infinispan:
 
 
@@ -48,9 +32,6 @@ scala> println(Version.version)
 
 
 ----
-
-[[sid-68355111_InfinispanwithScala-LoadingtheConfigurationfile]]
-
 
 === Loading the Configuration file
 
@@ -124,9 +105,6 @@ scala> localCache.isEmpty()
 res7: Boolean = true
 ----
 
-[[sid-68355111_InfinispanwithScala-BasiccacheoperationswithTTL]]
-
-
 === Basic cache operations with TTL
 
 When a cache entry is stored, a maximum lifespan for the entry can be provided. So, when that time is exceeded, the entry will dissapear from the cache:
@@ -152,9 +130,6 @@ scala> localCache.size()
 res12: Int = 1
 ----
 
-[[sid-68355111_InfinispanwithScala-Cacherestarts]]
-
-
 === Cache restarts
 
 When caches are local and not configured with a persistent store, restarting them means that the data is gone. To avoid this issue you can either configure caches to be clustered so that if one cache dissapears, the data is not completely gone, or configure the cache with a persistent cache store. The latter option will be explained later on.
@@ -171,9 +146,6 @@ scala> localCache.start()
 scala> localCache.size()
 res16: Int = 0
 ----
-
-[[sid-68355111_InfinispanwithScala-Transactionalcacheoperations]]
-
 
 === Transactional cache operations
 
@@ -227,9 +199,6 @@ res11: String = value1
 
 Note how this example shows a very interesting characteristic of the Scala console. Every operation's return value is stored in a temporary variable which can be referenced at a later stage, even if the user forgets to assign the result of a operation when the code was executed.
 
-[[sid-68355111_InfinispanwithScala-PersistentstoredbackedCacheoperations]]
-
-
 === Persistent stored backed Cache operations
 
 When a cache is backed by a persistent store, restarting the cache does not lead to data being lost. Upon restart, the cache can retrieve in lazy or prefetched fashion cache entries stored in the backend persistent store:
@@ -264,9 +233,6 @@ res29: String = storedValue
 
 ----
 
-[[sid-68355111_InfinispanwithScala-Operatingagainstasizeboundedcache]]
-
-
 === Operating against a size bounded cache
 
 Infinispan caches can be configured with a max number of entries, so if this is exceeded certain cache entries are evicted from in-memory cache. Which cache entries get evicted is dependant on the eviction algorithm chosen. In this particular example, FIFO algorithm has been configured, so when a cache entry needs to be evicted, those stored first will go first:
@@ -297,9 +263,6 @@ res35: String = value2
 scala> evictionCache.get("key1")
 res36: String = null
 ----
-
-[[sid-68355111_InfinispanwithScala-Sizeboundedcacheswithpersistentstore]]
-
 
 === Size bounded caches with persistent store
 

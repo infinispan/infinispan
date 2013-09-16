@@ -1,26 +1,11 @@
-[[sid-68355124]]
-
-==  Using Infinispan as a JCache provider
-
- Starting with version 5.3, Infinispan provides an implementation of JCache API ( link:$$http://www.jcp.org/en/jsr/detail?id=107$$[JSR-107] ). JCache specifies a standard Java API for caching temporary Java objects in memory. Caching java objects can help get around bottlenecks arising from using data that is expensive to retrieve (i.e. DB or web service), or data that is hard to calculate. Caching these type of objects in memory can help speed up application performance by retrieving the data directly from memory instead of doing an expensive roundtrip or recalculation. This document specifies how to use JCache with Infinispan's implementation of the specification, and explains key aspects of the API. 
-
-
-[IMPORTANT]
-==== 
-At the time of writing, Infinispan 5.3.0.Alpha1 implements version 0.6 of the JCache specification.
-
-
-==== 
-
-
-[[sid-68355124_UsingInfinispanasaJCacheprovider-Dependencies]]
-
+==  Using Infinispan as a JSR107 (JCache) provider
+Starting with version 5.3, Infinispan provides an implementation of JCache API ( link:$$http://www.jcp.org/en/jsr/detail?id=107$$[JSR-107] ). JCache specifies a standard Java API for caching temporary Java objects in memory. Caching java objects can help get around bottlenecks arising from using data that is expensive to retrieve (i.e. DB or web service), or data that is hard to calculate. Caching these type of objects in memory can help speed up application performance by retrieving the data directly from memory instead of doing an expensive roundtrip or recalculation. This document specifies how to use JCache with Infinispan's implementation of the specification, and explains key aspects of the API. 
 
 === Dependencies
-
 In order to start using Infinispan JCache implementation, a single dependency needs to be added to the Maven pom.xml file:
 
-
+.pom.xml
+[source,xml]
 ----
 <dependency>
    <groupId>org.infinispan</groupId>
@@ -30,14 +15,10 @@ In order to start using Infinispan JCache implementation, a single dependency ne
 </dependency>
 ----
 
-[[sid-68355124_UsingInfinispanasaJCacheprovider-Createalocalcache]]
-
-
 === Create a local cache
-
 Creating a local cache, using default configuration options as defined by the JCache API specification, is as simple as doing the following:
 
-
+[source,java]
 ----
 import javax.cache.Cache;
 import javax.cache.CacheManager;
@@ -51,29 +32,21 @@ Cache<String, String> cache = cacheManager.configureCache("namedCache", new Simp
 ----
 
 
-[WARNING]
-==== 
- By default, the JCache API specifies that data should be stored as storeByValue , so that object state mutations outside of operations to the cache, won't have an impact in the objects stored in the cache. Infinispan has so far implemented this using serialization/marshalling to make copies to store in the cache, and that way adhere to the spec. Hence, if using default JCache configuration with Infinispan, data stored must be marshallable. Instructions on how to make data stored in Infinispan marshallable can be found link:$$https://docs.jboss.org/author/pages/viewpage.action?pageId=3737151$$[here] . 
-
-
-==== 
+WARNING: By default, the JCache API specifies that data should be stored as storeByValue , so that object state mutations outside of operations to the cache, won't have an impact in the objects stored in the cache. Infinispan has so far implemented this using serialization/marshalling to make copies to store in the cache, and that way adhere to the spec. Hence, if using default JCache configuration with Infinispan, data stored must be marshallable. Instructions on how to make data stored in Infinispan marshallable can be found link:$$https://docs.jboss.org/author/pages/viewpage.action?pageId=3737151$$[here] . 
 
 
 Alternatively, JCache can be configured to store data by reference (just like Infinispan or JDK Collections work). To do that, simply call:
 
-
+[source,java]
 ----
 Cache<String, String> cache = cacheManager.configureCache("namedCache", new SimpleConfiguration<String, String>().setStoreByValue(false));
 ----
 
-[[sid-68355124_UsingInfinispanasaJCacheprovider-Storeandretrievedata]]
-
 
 === Store and retrieve data
+Even though JCache API does not extend neither java.util.Map not java.util.concurrent.ConcurrentMap , it providers a key/value API to store and retrieve data: 
 
- Even though JCache API does not extend neither java.util.Map not java.util.concurrent.ConcurrentMap , it providers a key/value API to store and retrieve data: 
-
-
+[source,java]
 ----
 import javax.cache.Cache;
 import javax.cache.CacheManager;
@@ -86,65 +59,51 @@ cache.put("hello", "world"); // Notice that javax.cache.Cache.put(K) returns voi
 String value = cache.get("hello"); // Returns "world"
 ----
 
- Contrary to standard java.util.Map , javax.cache.Cache comes with two basic put methods called put and getAndPut . The former returns void whereas the latter returns the previous value associated with the key. So, the equivalent of java.util.Map.put(K) in JCache is javax.cache.Cache.getAndPut(K) . 
+Contrary to standard java.util.Map , javax.cache.Cache comes with two basic put methods called put and getAndPut . The former returns void whereas the latter returns the previous value associated with the key. So, the equivalent of java.util.Map.put(K) in JCache is javax.cache.Cache.getAndPut(K) . 
 
 
-[TIP]
-==== 
- Even though JCache API only convers standalone caching, it can be plugged with a persistence store, and has been designed with clustering or distribution in mind. The reason why javax.cache.Cache offers two put methods is because standard java.util.Map put call forces implementors to calculate the previous value. When a persistent store is in use, or the cache is distributed, returning the previous value could be an expensive operation, and often users call standard java.util.Map.put(K) without using the return value. Hence, JCache users need to think about whether the return value is relevant to them, in which case they need to call javax.cache.Cache.getAndPut(K) , otherwise they can call javax.cache.Cache.put(K) which avoids returning the potentially expensive operation of returning the previous value. 
-
-
-==== 
-
-
-[[sid-68355124_UsingInfinispanasaJCacheprovider-Comparing%7B%7Bjava.util.concurrent.ConcurrentMap%7D%7Dand%7B%7Bjavax.cache.Cache%7D%7DAPIs]]
+TIP: Even though JCache API only covers standalone caching, it can be plugged with a persistence store, and has been designed with clustering or distribution in mind. The reason why javax.cache.Cache offers two put methods is because standard java.util.Map put call forces implementors to calculate the previous value. When a persistent store is in use, or the cache is distributed, returning the previous value could be an expensive operation, and often users call standard java.util.Map.put(K) without using the return value. Hence, JCache users need to think about whether the return value is relevant to them, in which case they need to call javax.cache.Cache.getAndPut(K) , otherwise they can call javax.cache.Cache.put(K) which avoids returning the potentially expensive operation of returning the previous value. 
 
 
 === Comparing java.util.concurrent.ConcurrentMap and javax.cache.Cache APIs
-
- Here's a brief comparison of the data manipulation APIs provided by java.util.concurrent.ConcurrentMap and javax.cache.Cache APIs. 
-
-[options="header"]
-|===============
-|Operation| java.util.concurrent.ConcurrentMap&lt;K, V&gt; | javax.cache.Cache&lt;K, V&gt; 
-|store and no return| | void put(K key) 
-|store and return previous value| V put(K key) | V getAndPut(K key) 
-|store if not present| V putIfAbsent(K key, V value) | boolean putIfAbsent(K key, V value) 
-|retrieve| V get(Object key) | V get(K key) 
-|delete if present| V remove(Object key) | boolean remove(K key) 
-|delete and return previous value| V remove(Object key) | V getAndRemove(K key) 
-|delete conditional| boolean remove(Object key, Object value) | boolean remove(K key, V oldValue) 
-|replace if present| V replace(K key, V value) | boolean replace(K key, V value) 
-|replace and return previous value| V replace(K key, V value) | V getAndReplace(K key, V value) 
-|replace conditional| boolean replace(K key, V oldValue, V newValue) | boolean replace(K key, V oldValue, V newValue) 
-
-|===============
-
-
- Comparing the two APIs, it's obvious to see that where possible JCache avoids returning the previous value to avoid operations doing expensive network or IO operations. This is an overriding principle in the design of JCache API. In fact, there's a set of operations that are present in java.util.concurrent.ConcurrentMap , but are not present in the javax.cache.Cache because they could be expensive to compute in a distributed cache. The only exception is iterating over the contents of the cache: 
+Here's a brief comparison of the data manipulation APIs provided by java.util.concurrent.ConcurrentMap and javax.cache.Cache APIs. 
 
 [options="header"]
 |===============
-|Operation| java.util.concurrent.ConcurrentMap&lt;K, V&gt; | javax.cache.Cache&lt;K, V&gt; 
-|calculate size of cache| int size() | 
-|return all keys in the cache| Set&lt;K&gt; keySet() | 
-|return all values in the cache| Collection&lt;V&gt; values() | 
-|return all entries in the cache| Set&lt;Map.Entry&lt;K, V&gt;&gt; entrySet() | 
-|iterate over the cache| use iterator() method on keySet, values or entrySet | Iterator&lt;Cache.Entry&lt;K, V&gt;&gt; iterator() 
+|Operation| `java.util.concurrent.ConcurrentMap<K, V>` | `javax.cache.Cache<K, V>`
+|store and no return| | `void put(K key)` 
+|store and return previous value| `V put(K key)` | `V getAndPut(K key)`
+|store if not present| `V putIfAbsent(K key, V value)` | `boolean putIfAbsent(K key, V value)` 
+|retrieve| `V get(Object key)` | `V get(K key)` 
+|delete if present| `V remove(Object key)` | `boolean remove(K key)`
+|delete and return previous value| `V remove(Object key)` | `V getAndRemove(K key)` 
+|delete conditional| `boolean remove(Object key, Object value)` | `boolean remove(K key, V oldValue)` 
+|replace if present| `V replace(K key, V value)` | `boolean replace(K key, V value)` 
+|replace and return previous value| `V replace(K key, V value)` | `V getAndReplace(K key, V value)`
+|replace conditional| `boolean replace(K key, V oldValue, V newValue)` | `boolean replace(K key, V oldValue, V newValue)` 
 
 |===============
 
+Comparing the two APIs, it's obvious to see that where possible JCache avoids returning the previous value to avoid operations doing expensive network or IO operations. This is an overriding principle in the design of JCache API. In fact, there's a set of operations that are present in java.util.concurrent.ConcurrentMap , but are not present in the javax.cache.Cache because they could be expensive to compute in a distributed cache. The only exception is iterating over the contents of the cache: 
 
-[[sid-68355124_UsingInfinispanasaJCacheprovider-ClusteringJCacheinstances]]
+[options="header"]
+|===============
+|Operation| `java.util.concurrent.ConcurrentMap<K, V>` | `javax.cache.Cache<K, V>`
+|calculate size of cache| `int size()` | 
+|return all keys in the cache| `Set<K> keySet()` | 
+|return all values in the cache| `Collection<V> values()` | 
+|return all entries in the cache| `Set<Map.Entry<K, V>> entrySet()` | 
+|iterate over the cache| use `iterator()` method on keySet, values or entrySet | `Iterator<Cache.Entry<K, V>> iterator()` 
+
+|===============
 
 
 === Clustering JCache instances
-
 Infinispan JCache implementation goes beyond the specification in order to provide the possibility to cluster caches using the standard API. Given a Infinispan configuration file configured to replicate caches like this:
 
-
+.infinispan.xml
+[source,xml]
 ----
-<?xml version="1.0" encoding="UTF-8"?>
 <infinispan xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
             xmlns="urn:infinispan:config:5.3"
             xsi:schemaLocation="urn:infinispan:config:5.3 http://www.infinispan.org/schemas/infinispan-config-5.3.xsd">
@@ -166,7 +125,7 @@ Infinispan JCache implementation goes beyond the specification in order to provi
 
 You can create a cluster of caches using this code:
 
-
+[source,java]
 ----
 import javax.cache.Cache;
 import javax.cache.CacheManager;
@@ -193,55 +152,4 @@ public static class TestClassLoader extends ClassLoader {
   }
 }
 ----
-
-
-[IMPORTANT]
-==== 
- If using custom objects, make sure they are serializable/marshallable as per the instructions link:$$https://docs.jboss.org/author/pages/viewpage.action?pageId=3737151$$[here] . 
-
-
-==== 
-
-
-[[sid-68355124_UsingInfinispanasaJCacheprovider-Expirecacheddata]]
-
-
-=== Expire cached data
-
- TODO 
-
-[[sid-68355124_UsingInfinispanasaJCacheprovider-Annotations]]
-
-
-=== Annotations
-
- TODO 
-
-[[sid-68355124_UsingInfinispanasaJCacheprovider-Transactions]]
-
-
-=== Transactions
-
- TODO 
-
-[[sid-68355124_UsingInfinispanasaJCacheprovider-Atomiccompoundoperationsoncacheentrywithouttransactions]]
-
-
-=== Atomic compound operations on cache entry without transactions
-
- TODO - invokeEntryProcessor 
-
-[[sid-68355124_UsingInfinispanasaJCacheprovider-Usingcachelisteners]]
-
-
-=== Using cache listeners
-
- TODO 
-
-[[sid-68355124_UsingInfinispanasaJCacheprovider-Quickstarts]]
-
-
-=== Quickstarts
-
- TODO 
 

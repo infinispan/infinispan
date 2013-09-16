@@ -1,8 +1,8 @@
-==  Infinispan REST Server
+===  Infinispan REST Server
 This server provides easy to use link:$$http://en.wikipedia.org/wiki/Representational_State_Transfer$$[RESTful] HTTP access to the Infinispan data grid, build on JAX_RS.
 This application is delivered (currently) as a link:http://en.wikipedia.org/wiki/WAR_file_format_(Sun)[WAR file], which you can deploy to a servlet container (as many instances as you need). 
 
-=== Configuration
+==== Configuration
 Out of the box, Infinispan will create and use a new LOCAL mode cache. To set a custom configuration:
 
 .  Unzip the REST WAR file (or use an link:$$http://community.jboss.org/docs/DOC-9719$$[exploded] deployment) 
@@ -10,7 +10,6 @@ Out of the box, Infinispan will create and use a new LOCAL mode cache. To set a 
 .  Place this file in infinispan-server-rest.war/WEB-INF/classes 
 
 Alternatively, you could:
-
 
 .  Unzip the REST WAR file (or use an link:$$http://community.jboss.org/docs/DOC-9719$$[exploded] deployment) 
 .  Create an Infinispan link:$$https://docs.jboss.org/author/pages/viewpage.action?pageId=3737143$$[configuration XML file] , call it whatever you want and place it wherever you want 
@@ -25,17 +24,17 @@ WARNING: Creation of new named caches on the fly is not supported.
 
 As a result, if you don't use a custom configuration file, you'll only be able to interact with the default cache. To interact with more caches, use a configuration file with the desired named caches.
 
-=== REST API
+==== REST API
 HTTP PUT and POST methods are used to place data in the cache, with URLs to address the cache name and key(s) - the data being the body of the request (the data can be anything you like). It is important that a Content-Type header is set. Other headers are used to control the cache settings and behaviour (detailed in that link). 
 
-==== Putting data in
-===== `PUT /{cacheName}/{cacheKey}`
+===== Putting data in
+====== `PUT /{cacheName}/{cacheKey}`
 A PUT request of the above URL form will place the payload (body) in the given cache, with the given key (the named cache must exist on the server). For example link:$$http://someserver/hr/payRoll/3$$[] (in which case "hr" is the cache name, and "payRoll/3" is the key). Any existing data will be replaced, and Time-To-Live and Last-Modified values etc will updated (if applicable). 
 
-===== `POST /{cacheName}/{cacheKey}`
+====== `POST /{cacheName}/{cacheKey}`
 Exactly the same as PUT, only if a value in a cache/key already exists, it will return a Http CONFLICT status (and the content will not be updated). 
 
-===== Headers
+====== Headers
 
 *  Content-Type : MANDATORY (use link:$$http://www.iana.org/assignments/media-types/$$[media/mime-types] for example: "application/json").  If you set the Content-Type to `application/x-java-serialized-object`, then it will be stored as a Java object 
 
@@ -50,10 +49,10 @@ Exactly the same as PUT, only if a value in a cache/key already exists, it will 
 *  If _only_ `maxIdleTimeSeconds` is 0, it uses the `timeToLiveSeconds` value passed as parameter (or -1 if not present), and default `maxIdle` configured in XML/programmatically 
 *  If _only_ `timeToLiveSeconds` is 0, it uses 0 as `timeToLiveSeconds` meaning that it will expire immediately, and `maxIdle` is set whatever came as parameter (or -1 if not present) 
 
-==== Getting data back out
+===== Getting data back out
 HTTP GET and HEAD are used to retrieve data from entries. 
 
-===== `GET /{cacheName}/{cacheKey}`
+====== `GET /{cacheName}/{cacheKey}`
 This will return the data found in the given cacheName, under the given key - as the body of the response. A Content-Type header will be supplied which matches what the data was inserted as (other then if it is a Java object, see below). Browsers can use the cache directly of course (eg as a CDN). An link:$$http://en.wikipedia.org/wiki/HTTP_ETag$$[ETag] will be returned unique for each entry, as will the Last-Modified and Expires headers field indicating the state of the data at the given URL. ETags allow browsers (and other clients) to ask for data only in the case where it has changed (to save on bandwidth) - this is standard HTTP and is honoured by Infinispan. 
 
 Since Infinispan 5.3 it is possible to obtain additional information by appending the "extended" parameter on the query string, as follows:
@@ -67,13 +66,13 @@ This will return the following custom headers:
 * Cluster-Node-Name: the JGroups node name of the server that has handled the request
 * Cluster-Physical-Address: the physical JGroups address of the server that has handled the request.
 
-===== `HEAD /{cacheName}/{cacheKey}`
+====== `HEAD /{cacheName}/{cacheKey}`
 The same as GET, only no content is returned (only the header fields). You will receive the same content that you stored. E.g., if you stored a String, this is what you get back. If you stored some XML or JSON, this is what you will receive. If you stored a binary (base 64 encoded) blob, perhaps a serialized; Java; object - you will need to; deserialize this yourself.
 
 Similarly to the GET method, the HEAD method also supports returning extended information via headers. See above.
 
-==== Listing keys
-===== `GET /{cacheName}`
+===== Listing keys
+====== `GET /{cacheName}`
 
 This will return a list of keys present in the given cacheName as the body of the response. The format of the response can be controlled via the Accept header as follows:
 
@@ -86,23 +85,23 @@ If the cache identified by cacheName is distributed, only the keys owned by the 
 
  GET /cacheName?global
 
-==== Removing data
+===== Removing data
 Data can be removed at the cache key/element level, or via a whole cache name using the HTTP delete method.
 
-===== `DELETE /{cacheName}/{cacheKey}`
+====== `DELETE /{cacheName}/{cacheKey}`
 
 Removes the given key name from the cache.
 
-===== `DELETE /{cacheName}`
+====== `DELETE /{cacheName}`
 Removes ALL the entries in the given cache name (i.e., everything from that path down). If the operation is successful, it returns 200 code.
 
 .Make it quicker!
 TIP: Set the header performAsync to true to return immediately and let the removal happen in the background.
 
-=== Client side code
+==== Client side code
 Part of the point of a RESTful service is that you don't need to have tightly coupled client libraries/bindings. All you need is a HTTP client library. For Java, Apache HTTP Commons Client works just fine (and is used in the integration tests), or you can use java.net API.
 
-==== Ruby example
+===== Ruby example
 
 [source,ruby]
 ----
@@ -141,7 +140,7 @@ http.put('/infinispan/rest/Users/data/0', data.to_json, {"Content-Type" => "appl
 
 ----
 
-==== Python example
+===== Python example
 
 [source,python]
 ----
@@ -169,7 +168,7 @@ print response.read()
 
 ----
 
-==== Java example
+===== Java example
 
 
 [source,java]

@@ -1,45 +1,29 @@
-[[sid-68355034]]
+===  Infinispan WebSocket Server
+The Infinispan WebSocket Server can be used to expose an Infinispan Cache instance over a link:$$http://dev.w3.org/html5/websockets/$$[WebSocket Interface] via a very simple Javascript "Cache" API.  The WebSocket Interface was introduced as part of the HTML 5 specification.  It defines a full-duplex communication channel to the browser, operating over a single socket (unlike Comet or Ajax) and is exposed to the browser via a Javascript interface. 
 
-==  Infinispan WebSocket Server
+WARNING: This is a highly experimental module.
 
- The Infinispan WebSocket Server can be used to expose an Infinispan Cache instance over a link:$$http://dev.w3.org/html5/websockets/$$[WebSocket Interface] via a very simple Javascript "Cache" API.  The WebSocket Interface was introduced as part of the HTML 5 specification.  It defines a full-duplex communication channel to the browser, operating over a single socket (unlike Comet or Ajax) and is exposed to the browser via a Javascript interface. 
+==== Starting The Server
+The Infinispan WebSocket server is included in Infinispan distributions, in both the -bin.zip and -all.zip archives.  To start the server, use the bin/startServer.sh (or bin\startServer.bat) command-line scripts, using the -r websocket switch. 
 
-[[sid-68355034_InfinispanWebSocketServer-StartingTheServer]]
+ $ bin/startServer.sh -r websocket
 
+For more help on available switches, check out the link:$$https://docs.jboss.org/author/pages/viewpage.action?pageId=3737161$$[server command line options article] . 
 
-=== Starting The Server
+==== Javascript API
+Writing a web page that uses the Infinispan Cache API is trivial.  The page simply needs to include a `<script />` declaration for the infinispan-ws.js Javascript source file.  This script is served up by WebSocket Server. 
 
- The Infinispan WebSocket server is included in Infinispan distributions from _4.1.0.BETA1_ onwards, in both the -bin.zip and -all.zip archives.  To start the server, use the bin/startServer.sh (or bin\startServer.bat) command-line scripts, using the -r websocket switch. 
+So, for loading infinispan-ws.js from a WebSocket Server instance running on _www.acme.com:8181_ (default port): 
 
-
-----
-$ bin/startServer.sh -r websocket
-----
-
- For more help on available switches, check out the link:$$https://docs.jboss.org/author/pages/viewpage.action?pageId=3737161$$[server command line options article] . 
-
-[[sid-68355034_InfinispanWebSocketServer-JavascriptAPI]]
-
-
-=== Javascript API
-
- Writing a web page that uses the Infinispan Cache API is trivial.  The page simply needs to include a &lt;script&gt; declaration for the infinispan-ws.js Javascript source file.  This script is served up by WebSocket Server. 
-
- So, for loading infinispan-ws.js from a WebSocket Server instance running on _www.acme.com:8181_ (default port): 
-
-
+[source,xml]
 ----
 <script type="text/javascript" src="<a href="http://www.acme.com:61999/infinispan-ws.js" target="_blank">http://www.acme.com:8181/infinispan-ws.js</a>" />
 ----
 
-[[sid-68355034_InfinispanWebSocketServer-CreatingaClientSideCacheObjectInstance]]
+===== Creating a Client-Side Cache Object Instance
+The client-side interface to a server-side Infinispan cache is the Cache Javascript object.  It can be constructed as follows: 
 
-
-==== Creating a Client-Side Cache Object Instance
-
- The client-side interface to a server-side Infinispan cache is the Cache Javascript object.  It can be constructed as follows: 
-
-
+[source,javascript]
 ----
 <script type="text/javascript">
     var cache = new Cache();
@@ -48,28 +32,25 @@ $ bin/startServer.sh -r websocket
 </script>
 ----
 
- By default, the Cache instance will interface to the default Infinispan Cache associated with the WebSocket Server from which the infinispan-ws.js Javascript source file was loaded.  So, in the above case, the Cache object instance will connect to the WebSocket Server running on _www.acme.com:8181_ (i.e. _ws://www.acme.com:8181_ ). 
+By default, the Cache instance will interface to the default Infinispan Cache associated with the WebSocket Server from which the infinispan-ws.js Javascript source file was loaded.  So, in the above case, the Cache object instance will connect to the WebSocket Server running on _www.acme.com:8181_ (i.e. _ws://www.acme.com:8181_ ). 
 
 The Infinispan Cache name and WebSocket Server address can be specified in the {{Cache}  object constructor as follows:
 
-
+[source,javascript]
 ----
 var cache = new Cache("omCache", "ws://ws.acmews.com:8181");
 // etc...
 ----
 
-[[sid-68355034_InfinispanWebSocketServer-CacheOperations]]
+===== Cache Operations
 
+A number of cache operations can be performed via the Cache object instance such as _get_ , _put_ , _remove_ , _notify_ and _unnotify_ . 
 
-==== Cache Operations
+The get and notify operations require a callback function to be registered with the Cache object instance.  This callback function receives all add/update/remove notifications on any cache entries for which the notify function was invoked.  It also asynchronously receives the result of a single invocation of the get function i.e. get can be thought of as "notify once, immediately". 
 
- A number of cache operations can be performed via the Cache object instance such as _get_ , _put_ , _remove_ , _notify_ and _unnotify_ . 
+The callback function is registered with the Cache object instance via the registerCallback function.  The function should have 2 parameters - key and value , relating to the cache key and value. 
 
- The get and notify operations require a callback function to be registered with the Cache object instance.  This callback function receives all add/update/remove notifications on any cache entries for which the notify function was invoked.  It also asynchronously receives the result of a single invocation of the get function i.e. get can be thought of as "notify once, immediately". 
-
- The callback function is registered with the Cache object instance via the registerCallback function.  The function should have 2 parameters - key and value , relating to the cache key and value. 
-
-
+[source,javascript]
 ----
 var cache = new Cache();
 
@@ -87,9 +68,9 @@ function cacheCallback(key, value) {
 
 ----
 
- Getting and updating data in the cache is done by simply calling the get , put and remove functions on the Cache object instance.  These operations could be triggered by user interaction with a web form e.g. 
+Getting and updating data in the cache is done by simply calling the get , put and remove functions on the Cache object instance.  These operations could be triggered by user interaction with a web form e.g. 
 
-
+[source,html]
 ----
 <form onsubmit="return false;">
 
@@ -106,38 +87,19 @@ function cacheCallback(key, value) {
 
 ----
 
-[[sid-68355034_InfinispanWebSocketServer-Samplecode]]
+==== Sample code
+Infinispan's source tree contains a sample HTML document that makes use of the WebSocket server.  Browse through the source of this HTML document link:$$http://fisheye.jboss.org/browse/Infinispan/trunk/server/websocket/src/main/distribution/sample-websocket-client.html$$[here] . 
 
+==== Browser Support
+At the time of writing, Google Chrome was the only browser with native WebSocket support.  However, the link:$$http://jwebsocket.org/$$[jWebSocket] project provides a client side Javascript library that adds WebSocket support to any Flash enabled browser. 
 
-=== Sample code
+==== Screencast
+See the following link:$$http://www.screencast.com/t/ZGEzNDJlY$$[demo of the Infinispan WebSocket Server] in action. 
 
- Infinispan's source tree contains a sample HTML document that makes use of the WebSocket server.  Browse through the source of this HTML document link:$$http://fisheye.jboss.org/browse/Infinispan/trunk/server/websocket/src/main/distribution/sample-websocket-client.html$$[here] . 
-
-[[sid-68355034_InfinispanWebSocketServer-BrowserSupport]]
-
-
-=== Browser Support
-
- At the time of writing, Google Chrome was the only browser with native WebSocket support.  However, the link:$$http://jwebsocket.org/$$[jWebSocket] project provides a client side Javascript library that adds WebSocket support to any Flash enabled browser. 
-
-[[sid-68355034_InfinispanWebSocketServer-Screencast]]
-
-
-=== Screencast
-
- See the following link:$$http://www.screencast.com/t/ZGEzNDJlY$$[demo of the Infinispan WebSocket Server] in action. 
-
-[[sid-68355034_InfinispanWebSocketServer-Status]]
-
-
-=== Status
+==== Status
 
 Prototype/Alpha.
 
-[[sid-68355034_InfinispanWebSocketServer-Source]]
-
-
-=== Source
-
- link:$$https://github.com/infinispan/infinispan/tree/master/server/websocket$$[Browse Infinispan's Git repository] . 
+==== Source
+link:$$https://github.com/infinispan/infinispan/tree/master/server/websocket$$[Browse Infinispan's Git repository] . 
 

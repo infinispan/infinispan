@@ -133,7 +133,7 @@ The _org.hibernate.search.annotations.ProvidedId_ annotation lets you apply adva
 
 === Configuration
 ==== Configuration via XML
-To enable indexing via XML, you need to add the &lt;indexing ... /&gt; element to your cache configuration, and optionally pass additional properties to the embedded Hibernate Search engine: 
+To enable indexing via XML, you need to add the `<indexing />` element to your cache configuration, and optionally pass additional properties to the embedded Hibernate Search engine: 
 
 [source,xml]
 ----
@@ -202,7 +202,7 @@ Assert.assertEquals(cq.getResultSize(), 1);
 ----
 
 === Cache modes and managing indexes
-Index management is currently controlled by the _Configuration.setIndexLocalOnly()_ setter, or the &lt;indexing indexLocalOnly="true" /&gt; XML element. If you set this to true, only modifications made locally on each node are considered in indexing. Otherwise, remote changes are considered too. 
+Index management is currently controlled by the _Configuration.setIndexLocalOnly()_ setter, or the `<indexing indexLocalOnly="true" />` XML element. If you set this to true, only modifications made locally on each node are considered in indexing. Otherwise, remote changes are considered too. 
 
 Regarding actually configuring a Lucene directory, refer to the link:$$http://docs.jboss.org/hibernate/stable/search/reference/en-US/html_single/#search-configuration$$[Hibernate Search documentation] on how to pass in the appropriate Lucene configuration via the Properties object passed to QueryHelper. 
 

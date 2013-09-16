@@ -1,5 +1,3 @@
-:toc:
-
 ==  Integration with other frameworks
 Infinispan can be integrated with a number of other frameworks, as detailed below.
 
@@ -1228,3 +1226,54 @@ and you may rest assured that no stray books be left in your application once yo
 ==== Conclusion
 Hopefully you enjoyed our quick tour of Infinispan's support for Spring's cache abstraction and saw how easy it is for all your caching woes to be taken care of by Infinispan. More information may be found in Spring's link:$$http://static.springsource.org/spring/docs/3.1.0.M1/spring-framework-reference/html/cache.html$$[reference documentation] and link:$$http://static.springsource.org/spring/docs/3.1.0.M1/javadoc-api/index.html?org/springframework/cache/package-summary.html$$[jvadocs]. Also see link:$$http://blog.springsource.com/2011/02/23/spring-3-1-m1-caching/$$[this link] - a very nice posting on the official Spring blog for a somewhat more comprehensive introduction to Spring's cache abstraction.
 
+===  Infinispan modules for JBoss AS 7.x
+Since Infinispan 5.2, the distribution includes a set of modules for JBoss AS 7.x. By installing these modules, it is possible to deploy user applications without packaging the Infinispan JARs within the deployments (WARs, EARs, etc), thus minimizing their size. In order not to conflict with the Infinispan modules which are already present within an AS installation, the modules provided by the Infinispan distribution are located within their own slot identified by the _major.minor_ versions (e.g. slot="5.2"). 
+
+In order to tell the AS deployer that we want to use the Infinispan APIs within our application, we need to add explicit dependencies to the deployment's MANIFEST:
+
+.MANIFEST.MF
+[source:json]
+----
+
+Manifest-Version: 1.0
+Dependencies: org.infinispan:5.2 services
+
+----
+
+If you are using Maven to generate your artifacts, mark the Infinispan dependencies as _provided_ and configure your artifact archiver to generate the appropriate MANIFEST.MF file: 
+
+.pom.xml
+[source,xml]
+----
+
+<dependencies>
+  <dependency>
+    <groupId>org.infinispan</groupId>
+    <artifactId>infinispan-core</artifactId>
+    <version>5.2.0.Final</version>
+    <scope>provided</scope>
+  </dependency>
+  <dependency>
+    <groupId>org.infinispan</groupId>
+    <artifactId>infinispan-cachestore-jdbc</artifactId>
+    <version>5.2.0.Final</version>
+    <scope>provided</scope>
+  </dependency>
+</dependencies>
+<build>
+  <plugins>
+     <plugin>
+       <groupId>org.apache.maven.plugins</groupId>
+       <artifactId>maven-war-plugin</artifactId>
+       <configuration>
+         <archive>
+           <manifestEntries>
+             <Dependencies>org.infinispan:5.2 services, org.infinispan.cachestore.jdbc:5.2 services</Dependencies>
+           </manifestEntries>
+         </archive>
+      </configuration>
+    </plugin>
+  </plugins>
+</build>
+
+----

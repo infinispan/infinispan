@@ -239,7 +239,7 @@ Based on the type of keys to be persisted, there are three JDBC cache loaders:
 It is generally preferable to use link:$$http://infinispan.sourceforge.net/4.0/apidocs/org/infinispan/loaders/jdbc/stringbased/JdbcStringBasedCacheStore.html$$[JdbcStringBasedCacheStore] when you are in control of the key types, as it offers better throughput under heavy load. One scenario in which it is not possible to use it though, is when you can't write an link:$$http://infinispan.sourceforge.net/4.0/apidocs/$$[Key2StringMapper] to map the keys to to string objects (e.g. when you don't have control over the types of the keys, for whatever reason). Then you should use either link:$$http://infinispan.sourceforge.net/4.0/apidocs/org/infinispan/loaders/jdbc/binary/JdbcBinaryCacheStore.html$$[JdbcBinaryCacheStore] or link:$$http://infinispan.sourceforge.net/4.0/apidocs/org/infinispan/loaders/jdbc/mixed/JdbcMixedCacheStore.html$$[JdbcMixedCacheStore] . The later is preferred to the former when the majority of the keys are handled by link:$$http://infinispan.sourceforge.net/4.0/apidocs/org/infinispan/loaders/jdbc/stringbased/JdbcStringBasedCacheStore.html$$[JdbcStringBasedCacheStore] , but you still have some keys you cannot convert through link:$$http://infinispan.sourceforge.net/4.0/apidocs/$$[Key2StringMapper] . 
 
 ==== Connection management (pooling)
-In order to obtain a connection to the database all the JDBC cache loaders rely on an link:$$http://infinispan.sourceforge.net/4.0/apidocs/org/infinispan/loaders/jdbc/connectionfactory/ConnectionFactory.html$$[ConnectionFactory] implementation. The connection factory is specified programmatically using one of the connectionPool(), dataSource() or simpleConnection() methods on the JdbcBinaryCacheStoreConfigurationBuilder class or declaratively using one of the &lt;connectionPool /&gt;, &lt;dataSource /&gt; or &lt;simpleConnection /&gt; elements. Infinispan ships with three ConnectionFactory implementations: 
+In order to obtain a connection to the database all the JDBC cache loaders rely on an link:$$http://infinispan.sourceforge.net/4.0/apidocs/org/infinispan/loaders/jdbc/connectionfactory/ConnectionFactory.html$$[ConnectionFactory] implementation. The connection factory is specified programmatically using one of the connectionPool(), dataSource() or simpleConnection() methods on the JdbcBinaryCacheStoreConfigurationBuilder class or declaratively using one of the `<connectionPool />`, `<dataSource />` or `<simpleConnection />` elements. Infinispan ships with three ConnectionFactory implementations: 
 
 
 *  link:$$http://infinispan.sourceforge.net/4.0/apidocs/org/infinispan/loaders/jdbc/connectionfactory/PooledConnectionFactory.html$$[PooledConnectionFactory] is a factory based on link:$$http://sourceforge.net/projects/c3p0/$$[C3P0] . Refer to link:$$http://infinispan.sourceforge.net/4.0/apidocs/org/infinispan/loaders/jdbc/connectionfactory/PooledConnectionFactory.html$$[javadoc] for details on configuring it. 
@@ -491,9 +491,87 @@ b.loaders().addStore(RemoteCacheStoreConfigurationBuilder.class)
 In this sample configuration, the remote cache store is configured to use the remote cache named "mycache" on servers "one" and "two". It also configures connection pooling and provides a custom transport executor. Additionally the cache store is asynchronous.
 
 
-=== Cassandra cache loader
-The CassandraCacheStore was introduced in Infinispan 4.2. Read the link:$$https://docs.jboss.org/author/pages/viewpage.action?pageId=3737148$$[specific page] for details on implementation and configuration. 
+=== Cassandra CacheStore
+Infinispan's CassandraCacheStore leverages link:$$http://cassandra.apache.org/$$[Apache Cassandra's] distributed database architecture to provide a virtually unlimited, horizontally scalable persistent store for Infinispan's caches. 
 
+==== Configuration
+In order to use this CacheStore you need to create an appropriate keyspace on your Cassandra database.
+The following storage-conf.xml excerpt shows the declaration of the keyspace:
+
+.storage-conf.xml
+[source,xml]
+----
+<Keyspace Name="Infinispan">
+      <ColumnFamily CompareWith="BytesType" Name="InfinispanEntries" KeysCached="10%" />
+      <ColumnFamily CompareWith="LongType" Name="InfinispanExpiration" KeysCached="10%" ColumnType="Super" CompareSubcolumnsWith="BytesType"/>
+      <ColumnFamily CompareWith="BytesType" Name="InfinispanEntries" KeysCached="0" />
+      <ColumnFamily CompareWith="LongType" Name="InfinispanExpiration" KeysCached="0" ColumnType="Super" CompareSubcolumnsWith="BytesType"/>
+      <ReplicaPlacementStrategy>org.apache.cassandra.locator.RackUnawareStrategy</ReplicaPlacementStrategy>
+      <ReplicationFactor>2</ReplicationFactor>
+      <EndPointSnitch>org.apache.cassandra.locator.EndPointSnitch</EndPointSnitch>
+</Keyspace>
+----
+
+The important bits are the CompareWith, ColumnType and CompareSubColumnsWith declarations. Everything else can be changed at will. You can also have more than one Keyspace to accommodate for multiple caches. Also bear in mind that the current version of the CassandraCacheStore only supports the OrderPreservingPartitioner. You then need to add an appropriate cache declaration to your infinispan.xml (or whichever file you use to configure Infinispan): 
+
+.infinispan.xml
+[source,xml]
+----
+<namedCache name="cassandraCache">
+        <loaders passivation="false" shared="true" preload="false">
+                <loader
+                        class="org.infinispan.loaders.cassandra.CassandraCacheStore"
+                        fetchPersistentState="true" ignoreModifications="false"
+                        purgeOnStartup="false">
+                        <properties>
+                                <property name="host" value="localhost" />
+                                <property name="keySpace" value="Infinispan" />
+                                <property name="entryColumnFamily" value="InfinispanEntries" />
+                                <property name="expirationColumnFamily" value="InfinispanExpiration" />
+                                <property name="sharedKeyspace" value="false" />
+                                <property name="readConsistencyLevel" value="ONE" />
+                                <property name="writeConsistencyLevel" value="ONE" />
+                                <property name="configurationPropertiesFile" value="cassandrapool.properties" />         
+                                <property name="keyMapper" value="org.infinispan.loaders.keymappers.DefaultTwoWayKey2StringMapper" />
+                        </properties>
+                </loader>
+        </loaders>
+</namedCache>
+----
+
+It is important the the shared property on the loader element is set to true because all the Infinispan nodes will share the same Cassandra cluster. Since the Cassandra client library doesn't provide connection pooling, a separate project has been created at link:$$http://github.com/tristantarrant/cassandra-connection-pool$$[] . Configuration of the connection pool can be done by creating an appropriate properties file and specifying its name in the configuration ( _configurationPropertiesFile_ ). The following is an example file: 
+
+
+----
+socketTimeout = 5000
+initialSize = 10
+maxActive = 100
+maxIdle = 20
+minIdle = 10
+maxWait = 30000testOnBorrow = false
+testOnReturn = false
+testWhileIdle = false
+timeBetweenEvictionRunsMillis = 5000removeAbandoned = false
+removeAbandonedTimeout = 60
+logAbandoned = false
+
+----
+
+Here is a description of the various properties which can be configured:
+
+
+|===============
+|host|a hostname (or a comma-separated list of hostnames)
+|port|the thrift port (usually 9160)
+|keySpace|the keyspace to use (defaults to Infinispan)
+|entryColumnFamily|the column family where entry values will be stored. Make sure you configure your keyspace accordingly (defaults to InfinispanEntries)
+|expirationColumnFamily|the column family where element expiration information is stored. Make sure your  (defaults to InfinispanExpiration)
+|sharedKeyspace|whether multiple caches are to be stored in a single keyspace. In this case the cache name is prefixed to the key entries (defaults to false).
+|readConsistencyLevel| The consistency level to use when reading from Cassandra. Possible values are ONE, QUORUM, DCQUORUM, ALL. For an explanation of these refer to the link:$$http://wiki.apache.org/cassandra/API$$[Cassandra API documentation.] (defaults to ONE) 
+|writeConsistencyLevel| The consistency level to use when writing to Cassandra. Possible values are ZERO, ANY, ONE, QUORUM, DCQUORUM, ALL. For an explanation of these refer to the link:$$http://wiki.apache.org/cassandra/API$$[Cassandra API documentation.] (defaults to ONE) 
+|keyMapper|A class which implements Infinispan's TwoWayKey2StringMapper interface for mapping cache keys to Cassandra row keys (defaults to org.infinispan.loaders.keymappers.DefaultTwoWayKey2StringMapper)
+
+|===============
 
 === Cluster cache loader
 The ClusterCacheLoader is a cache loader implementation that retrieves data from other cluster members.

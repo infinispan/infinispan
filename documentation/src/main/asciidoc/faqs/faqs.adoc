@@ -1,8 +1,10 @@
 = Frequently Asked Questions
 Manik Surtani, Mircea Markus, Galder Zamarreño, Pete Muir, and others from the Infinispan community
-:toc2: right
+:toc2:
 :icons: font
-:toc-placement: preamble
+:toclevels: 1
+:numbered:
+
 
 Welcome to Infinispan's Frequently Asked Questions document.
 We hope you find the answers to your queries here, however if you don't,

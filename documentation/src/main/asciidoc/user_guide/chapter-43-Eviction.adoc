@@ -6,7 +6,7 @@ TIP:  Passivation is also a popular option when using eviction, so that only a s
 IMPORTANT: that eviction occurs on a _local_ basis, and is not cluster-wide.  Each node runs an eviction thread to analyse the contents of its in-memory container and decide what to evict. Eviction does not take into account the amount of free memory in the JVM as threshold to  starts evicting entries. You have to set maxEntries attribute of the eviction element to be greater than zero in order for eviction to be turned on. If maxEntries is too large you can run out of memory. maxEntries attribute will probably take some tuning in each use case. 
 
 === Enabling Eviction
-Eviction is configured by adding the link:$$http://docs.jboss.org/infinispan/5.2/configdocs/urn_infinispan_config_5.2/complexType/configuration.eviction.html$$[&lt;eviction /&gt;] element to your `<default />` or `<namedCache />` configuration sections or using link:$$http://docs.jboss.org/infinispan/5.2/apidocs/org/infinispan/configuration/cache/EvictionConfigurationBuilder.html$$[EvictionConfigurationBuilder] API programmatic approach.
+Eviction is configured by adding the link:$$http://docs.jboss.org/infinispan/5.2/configdocs/urn_infinispan_config_5.2/complexType/configuration.eviction.html$$[`<eviction />`] element to your `<default />` or `<namedCache />` configuration sections or using link:$$http://docs.jboss.org/infinispan/5.2/apidocs/org/infinispan/configuration/cache/EvictionConfigurationBuilder.html$$[EvictionConfigurationBuilder] API programmatic approach.
 
 All cache entry are evicted by piggybacking on user threads that are hitting the cache.
 Periodic pruning of expired cache entries from cache is done on a dedicated thread which is turned on by enabling reaper in expiration configuration element/API.
@@ -35,16 +35,16 @@ In case there is an eviction element, this table describes behaviour of eviction
 [options="header"]
 |===============
 |Supplied maxEntries|Supplied strategy|Example|Eviction behaviour
-|-|-| &lt;eviction /&gt; |no eviction
-|&gt; 0|-| &lt;eviction maxEntries="100" /&gt; |the strategy defaults to LIRS and eviction takes place
-|&gt; 0|NONE| &lt;eviction maxEntries="100" strategy="NONE" /&gt; | _the strategy defaults to LIRS and eviction takes place_ 
-|&gt; 0| != NONE | &lt;eviction maxEntries="100" strategy="LRU" /&gt; |eviction takes place with defined strategy
-|0|-| &lt;eviction maxEntries="0" /&gt; | no eviction 
-|0| NONE | &lt;eviction maxEntries="0" strategy="NONE" /&gt; | no eviction 
-|0| != NONE | &lt;eviction maxEntries="0" strategy="LRU" /&gt; | ConfigurationException 
-|&lt; 0|-| &lt;eviction maxEntries="-1" /&gt; | no eviction 
-|&lt; 0| NONE | &lt;eviction maxEntries="-1" strategy="NONE" /&gt; | no eviction 
-|&lt; 0| != NONE | &lt;eviction maxEntries="-1" strategy="LRU" /&gt; |ConfigurationException
+|-|-| `<eviction />` |no eviction
+|&gt; 0|-| `<eviction maxEntries="100" />` |the strategy defaults to LIRS and eviction takes place
+|&gt; 0|NONE| `<eviction maxEntries="100" strategy="NONE" />` | the strategy defaults to LIRS and eviction takes place
+|&gt; 0| != NONE | `<eviction maxEntries="100" strategy="LRU" />` |eviction takes place with defined strategy
+|0|-| `<eviction maxEntries="0" />` | no eviction 
+|0| NONE | `<eviction maxEntries="0" strategy="NONE" />` | no eviction 
+|0| != NONE | `<eviction maxEntries="0" strategy="LRU" />` | ConfigurationException 
+|&lt; 0|-| `<eviction maxEntries="-1" />` | no eviction 
+|&lt; 0| NONE | `<eviction maxEntries="-1" strategy="NONE" />` | no eviction 
+|&lt; 0| != NONE | `<eviction maxEntries="-1" strategy="LRU" />` |ConfigurationException
 
 |===============
 

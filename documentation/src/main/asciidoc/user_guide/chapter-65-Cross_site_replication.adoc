@@ -1,15 +1,9 @@
-[[sid-68355118]]
-
-==  Cross site replication
-
- Cross site (x-site) replication allows backing up the data from one cluster to other clusters, potentially situated in different geographical location. The cross-site replication is built on top of JGroups' link:$$http://www.jgroups.org/manual-3.x/html/user-advanced.html#Relay2Advanced$$[RELAY2 protocol] . link:$$https://community.jboss.org/wiki/DesignForCrossSiteReplication$$[This document] describes the technical design of cross site replication in more detail. 
-
-[[sid-68355118_Crosssitereplication-Sampledeployment]]
-
+== Cross site replication
+Cross site (x-site) replication allows backing up the data from one cluster to other clusters, potentially situated in different geographical location. The cross-site replication is built on top of JGroups' link:$$http://www.jgroups.org/manual-3.x/html/user-advanced.html#Relay2Advanced$$[RELAY2 protocol] . link:$$https://community.jboss.org/wiki/DesignForCrossSiteReplication$$[This document] describes the technical design of cross site replication in more detail. 
 
 === Sample deployment
+The diagram below depicts a possible setup of replicated sites, followed by a description of individual elements present in the deployment. Options are then explained at large in future paragraphs. Comments on the diagram above: 
 
- The diagram below depicts a possible setup of replicated sites, followed by a description of individual elements present in the deployment. Options are then explained at large in future paragraphs. Comments on the diagram above: 
 .TODO InformalFigure image title empty
 image::[]
 
@@ -38,7 +32,6 @@ image::[]
 
 The cross-site replication configuration spreads over the following files:
 
-
 .  the backup policy for each individual cache is defined in infinispan's .xml configuration file ( link:$$https://docs.jboss.org/author/download/attachments/68355118/infinispan.xml?version=1&amp;modificationDate=1362652288000$$[infinispan.xml] in attachment) 
 
 
@@ -52,7 +45,8 @@ The cross-site replication configuration spreads over the following files:
 
 The local site is defined in the the global configuration section. The local is the site where the node using this configuration file resides (in the example above local site is "LON").
 
-
+.infinispan.xml
+[source,xml]
 ----
 
 <global>
@@ -65,7 +59,7 @@ The local site is defined in the the global configuration section. The local is 
 
 The same setup can be achieved programatically:
 
-
+[source,java]
 ----
 
 GlobalConfigurationBuilder lonGc = GlobalConfigurationBuilder.defaultClusteredBuilder();
@@ -73,9 +67,10 @@ lonGc.site().localSite("LON");
 
 ----
 
- The names of the site (case sensitive) should match the name of a site as defined within JGroups' RELAY2 protocol configuration file. Besides the global configuration, each cache specifies its backup policy in the "site" element: 
+The names of the site (case sensitive) should match the name of a site as defined within JGroups' RELAY2 protocol configuration file. Besides the global configuration, each cache specifies its backup policy in the "site" element: 
 
-
+.infinispan.xml
+[source,xml]
 ----
 
 <namedCache name="users">
@@ -90,35 +85,22 @@ lonGc.site().localSite("LON");
 
 ----
 
- The "users" cache backups its data to the "NYC" and "SFO" sites. Even though the "LON" appears as a backup site, it has the "enabled" attribute set to _false_ so it will be ignored . For each site backup, the following configuration attributes can be specified: 
+The "users" cache backups its data to the "NYC" and "SFO" sites. Even though the "LON" appears as a backup site, it has the "enabled" attribute set to _false_ so it will be ignored . For each site backup, the following configuration attributes can be specified: 
 
 
 * strategy - the strategy used for backing up data, either "SYNC" or "ASYNC". Defaults to "ASYNC"
-
-
 * backupFailurePolicy - Decides what the system would do in case of failure during backup. Possible values are:
-
-
-* IGNORE - allow the local operation/transaction to succeed
-
-
-* WARN - same as IGNORE but also logs an warning message. Default.
-
-
-* FAIL - only in effect if "strategy" is "SYNC" - fails local cluster operation/transaction by throwing an exception to the user
-
-
-* CUSTOM - user provided, see "failurePolicyClass" below
-
+** IGNORE - allow the local operation/transaction to succeed
+** WARN - same as IGNORE but also logs an warning message. Default.
+** FAIL - only in effect if "strategy" is "SYNC" - fails local cluster operation/transaction by throwing an exception to the user
+** CUSTOM - user provided, see "failurePolicyClass" below
 
 * failurePolicyClass - If the 'backupFailurePolicy' is set to 'CUSTOM' then this attribute is required and should contain the fully qualified name of a class implementing org.infinispan.xsite.CustomFailurePolicy
-
-
 * timeout - The timeout(milliseconds) to be used when backing up data remotely. Defaults to 10000 (10 seconds)
 
 The same setup can be achieved programatically:
 
-
+[source,java]
 ----
 
 ConfigurationBuilder lon = new ConfigurationBuilder();
@@ -138,7 +120,8 @@ lon.sites().addBackup()
 
 The "users" cache above doesn't know on which cache on the remote sites its data is being replicated. By default the remote site writes the backup data to a cache having the same name as the originator, i.e. "users". This behaviour can be overridden with an "backupFor" element. For example the following configuration in SFO makes the "usersLONBackup" cache act as the backup cache for the "users" cache defined above in the LON site:
 
-
+.infinispan.xml
+[source,xml]
 ----
 
 <infinispan>
@@ -153,7 +136,7 @@ The "users" cache above doesn't know on which cache on the remote sites its data
 
 The same setup can be achieved programatically:
 
-
+[source,java]
 ----
 
 ConfigurationBuilder cb = new ConfigurationBuilder();
@@ -161,14 +144,12 @@ cb.sites().backupFor().remoteCache("users").remoteSite("LON");
 
 ----
 
-[[sid-68355118_Crosssitereplication-Localcluster%27sjgroups.xmlconfiguration]]
-
-
 ==== Local cluster's jgroups .xml configuration
 
 This is the configuration file for the local (intra-site) infinispan cluster. It is referred from the infinispan configuration file, see "configurationFile" below:
 
-
+.infinispan.xml
+[source,xml]
 ----
 
 <infinispan>
@@ -185,50 +166,26 @@ This is the configuration file for the local (intra-site) infinispan cluster. It
 
 ----
 
- In order to allow inter-site calls, the RELAY2 protocol needs to be added to the protocol stack defined in the jgroups configuration (see attached link:$$https://docs.jboss.org/author/download/attachments/68355118/jgroups.xml?version=1&amp;modificationDate=1348082252000$$[jgroups.xml] for an example). 
-
-[[sid-68355118_Crosssitereplication-RELAY2configurationfile]]
-
+In order to allow inter-site calls, the RELAY2 protocol needs to be added to the protocol stack defined in the jgroups configuration (see attached link:$$https://docs.jboss.org/author/download/attachments/68355118/jgroups.xml?version=1&amp;modificationDate=1348082252000$$[jgroups.xml] for an example). 
 
 ==== RELAY2 configuration file
 
- The RELAY2 configuration file is linked from the jgroups.xml (see attached link:$$https://docs.jboss.org/author/download/attachments/68355118/relay2.xml?version=1&amp;modificationDate=1348082291000$$[relay2.xml] ). It defines the sites seen by this cluster and also the jgroups configuration file that is used by RELAY2 in order to communicate with the remote sites. 
-
-[[sid-68355118_Crosssitereplication-Datareplication]]
-
+The RELAY2 configuration file is linked from the jgroups.xml (see attached link:$$https://docs.jboss.org/author/download/attachments/68355118/relay2.xml?version=1&amp;modificationDate=1348082291000$$[relay2.xml] ). It defines the sites seen by this cluster and also the jgroups configuration file that is used by RELAY2 in order to communicate with the remote sites. 
 
 === Data replication
-
 For both transactional and non-transactional caches, the backup calls are performed in parallel with local cluster calls, e.g. if we write data to node N1 in LON then replication to the local nodes N2 and N3 and remote backup sites SFO and NYC happen in parallel.
 
-[[sid-68355118_Crosssitereplication-Nontransactionalcaches]]
-
-
 ==== Non transactional caches
-
 In the case of non-transactional caches the replication happens during each operation. Given that data is sent in parallel to backups and local caches, it is possible for the operations to succeed locally and fail remotely, or the other way, causing inconsistencies
 
-[[sid-68355118_Crosssitereplication-Transactionalcaches]]
-
-
 ==== Transactional caches
-
- For synchronous transactional caches, Infinispan internally uses a two phase commit protocol: lock acquisition during the 1st phase (prepare) and apply changes during the 2nd phase (commit). For asynchronous caches the two phases are merged, the "apply changes" message being sent asynchronously to the owners of data. This 2PC protocol maps to 2PC received from the JTA transaction manager. For transactional caches, both optimistic and pessimistic, the backup to remote sites happens during the prepare and commit phase only. 
-
-[[sid-68355118_Crosssitereplication-Synchronouslocalclusterwithasyncbackup]]
-
+For synchronous transactional caches, Infinispan internally uses a two phase commit protocol: lock acquisition during the 1st phase (prepare) and apply changes during the 2nd phase (commit). For asynchronous caches the two phases are merged, the "apply changes" message being sent asynchronously to the owners of data. This 2PC protocol maps to 2PC received from the JTA transaction manager. For transactional caches, both optimistic and pessimistic, the backup to remote sites happens during the prepare and commit phase only. 
 
 ===== Synchronous local cluster with async backup
-
 In this scenario the backup call happens during local commit phase(2nd phase). That means that if the local prepare fails, no remote data is being sent to the remote backup.
 
-[[sid-68355118_Crosssitereplication-Synchronouslocalclusterwithsyncbackup]]
-
-
 ===== Synchronous local cluster with sync backup
-
 In this case there are two backup calls:
-
 
 * during prepare a message is sent across containing all the modifications that happened within this transaction
 
@@ -249,29 +206,17 @@ In this case there are two backup calls:
 
 Both the local and the backup call(if the "backupFailurePolicy" is set to "FAIL") can veto transaction's prepare outcome
 
-[[sid-68355118_Crosssitereplication-Asynchronouslocalcluster]]
-
-
 ===== Asynchronous local cluster
-
-
-* In the case of asynchronous local clusters, the backup data is sent during the commit phase. If the backup call fails and the "backupFailurePolicy" is set to "FAIL" then the user is notified through an exception.
-
-[[sid-68355118_Crosssitereplication-Takingasiteoffline]]
-
+In the case of asynchronous local clusters, the backup data is sent during the commit phase. If the backup call fails and the "backupFailurePolicy" is set to "FAIL" then the user is notified through an exception.
 
 === Taking a site offline
-
 If backing up to a site fails for a certain number of times during an time interval, then it is possible to automatically mark that site as offline. When a site is marked as offline the local site won't try to backup data to it anymore. In order to be taken online a system administrator intervention being required.
 
-[[sid-68355118_Crosssitereplication-Configuration]]
-
-
 ==== Configuration
-
 The taking offline of a site can be configured as follows:
 
-
+.infinispan.xml
+[source,xml]
 ----
 
 <namedCache name="bestEffortBackup">
@@ -288,11 +233,11 @@ The taking offline of a site can be configured as follows:
 
 ----
 
- The _takeOfline_ element under the _backup_ configures the taking offline of a site: * _afterFailure_ - the number of failed backup operations after which this site should be taken offline. Defaults to 0 (never). A negative value would mean that the site will be taken offline after _minTimeToWait_ * _minTimeToWait_ - the number of milliseconds in which a site is not marked offline even if it is unreachable for 'afterFailures' number of times. If smaller or equal to 0, then only _afterFailures_ is considered. 
+The _takeOfline_ element under the _backup_ configures the taking offline of a site: * _afterFailure_ - the number of failed backup operations after which this site should be taken offline. Defaults to 0 (never). A negative value would mean that the site will be taken offline after _minTimeToWait_ * _minTimeToWait_ - the number of milliseconds in which a site is not marked offline even if it is unreachable for 'afterFailures' number of times. If smaller or equal to 0, then only _afterFailures_ is considered. 
 
 The equivalent programmatic configuration is:
 
-
+[source,java]
 ----
 
 lon.sites().addBackup()
@@ -305,17 +250,9 @@ lon.sites().addBackup()
 
 ----
 
-[[sid-68355118_Crosssitereplication-Takingasitebackonline]]
-
-
 ==== Taking a site back online
-
- In order to bring a site back online after being taken offline, one can use the JMX console and invoke the "bringSiteOnline(siteName)" operation on the _XSiteAdmin_ managed bean. At the moment this method would need to be invoked on all the nodes within the site(further releases will overcome this limitation). 
-
-[[sid-68355118_Crosssitereplication-Reference]]
-
+In order to bring a site back online after being taken offline, one can use the JMX console and invoke the "bringSiteOnline(siteName)" operation on the _XSiteAdmin_ managed bean. At the moment this method would need to be invoked on all the nodes within the site(further releases will overcome this limitation). 
 
 === Reference
-
- link:$$https://community.jboss.org/wiki/DesignForCrossSiteReplication$$[This document] (Sept 2012) describes the technical design of cross site replication in more detail. 
+link:$$https://community.jboss.org/wiki/DesignForCrossSiteReplication$$[This document] (Sept 2012) describes the technical design of cross site replication in more detail. 
 

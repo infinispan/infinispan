@@ -105,6 +105,42 @@ L1 caching is not free though. Enabling it comes at a cost, and this cost is tha
 TIP: Looking for Buddy Replication?  Buddy Replication - from JBoss Cache - does not exist in Infinispan.  See this blog article which discusses the reasons why Buddy Replication was not implemented in Infinispan, and how the same effects can be achieved using Infinispan - 
 <a href="http://infinispan.blogspot.com/2009/08/distribution-instead-of-buddy.html">http://infinispan.blogspot.com/2009/08/distribution-instead-of-buddy.html</a>
 
+==== Server Hinting
+The motivations behind this feature is to ensure when using distribution, backups are not picked to reside on the same physical server, rack or data centre. For obvious reasons it doesn't work with total replication.
+
+===== Configuration
+The hints are configured at transport level: 
+
+.infinispan.xml
+[source,xml]
+----
+ <transport     clusterName = "MyCluster"
+     machineId = "LinuxServer01"
+     rackId = "Rack01"
+     siteId = "US-WestCoast" />
+
+----
+
+Following topology hints can be specified:
+
+* machineId - this is probably the most useful, to disambiguate between multiple JVM instances on the same node, or even multiple virtual hosts on the same physical host.
+* rackId - in larger clusters with nodes occupying more than a single rack, this setting would help prevent backups being stored on the same rack.
+* siteId - to differentiate between nodes in different data centres replicating to each other.    All of the above are optional, and if not provided, the distribution algorithms provide no guarantees that backups will not be stored in instances on the same host/rack/site.
+
+===== Algorithm
+This is an advanced topic, useful e.g. if you need to change distribution behaviour.
+
+The consistent hash beyond this implementation is wheel based. Conceptually this works as follows: each node is placed on a wheel ordered by the hash code of its address. When an entry is added its owners are chosen using this algorithm:
+
+
+* key's hash code is calculated
+* the first node on the wheel with a value grater than key's hash code is the first owner
+* for subsequent nodes, walk clockwise and pick nodes that have a different site id
+* if not enough nodes found repeat walk again and pick nodes that have different site id and rack id
+* if not enough nodes found repeat walk again and pick nodes that have different site id, rack id and machine id
+* Ultimately cycle back to the first node selected, don't discard any nodes, regardless of machine id/rack
+
+
 ====  Key affinity service
 The key affinity service solves the following problem: for a distributed Infinispan cluster one wants to make sure that a value is placed in a certain node. Based on a supplied cluster link:$$http://docs.jboss.org/infinispan/4.1/apidocs/org/infinispan/remoting/transport/Address.html$$[address] identifying the node, the service returns a key that will be hashed to that particular node. 
 
@@ -168,10 +204,10 @@ With asynchronous modes, speed is more important than consistency and this is pa
 In order to choose the asynchronous configuration that best suits your application, it's important to understand the following configuration settings:
 
 ==== Asynchronous Communications
-Whenever you add link:$$http://docs.jboss.org/infinispan/5.1/configdocs/urn_infinispan_config_5.1/complexType/configuration.clustering.async.html$$[&lt;async&gt;] element within &lt;clustering&gt;, you're telling the underlying JGroups layer in Infinispan to use asynchronous communication. What this means is that JGroups will send any replication/distribution/invalidation request to the wire but will not wait for a reply from the receiver. 
+Whenever you add link:$$http://docs.jboss.org/infinispan/5.1/configdocs/urn_infinispan_config_5.1/complexType/configuration.clustering.async.html$$[`<async />`] element within `<clustering />`, you're telling the underlying JGroups layer in Infinispan to use asynchronous communication. What this means is that JGroups will send any replication/distribution/invalidation request to the wire but will not wait for a reply from the receiver. 
 
 ==== Asynchronous Marshalling
-This is a configurable boolean property of link:$$http://docs.jboss.org/infinispan/5.1/configdocs/urn_infinispan_config_5.1/complexType/configuration.clustering.async.html$$[&lt;async&gt;] element that indicates whether the actual call from Infinispan to the JGroups layer is done on a separate thread or not. When set to true, once Infinispan has figured out that a request needs to be sent to another node, it submits it to the async transport executor so that it can talk to the underlying JGroups layer. 
+This is a configurable boolean property of link:$$http://docs.jboss.org/infinispan/5.1/configdocs/urn_infinispan_config_5.1/complexType/configuration.clustering.async.html$$[`<async />`] element that indicates whether the actual call from Infinispan to the JGroups layer is done on a separate thread or not. When set to true, once Infinispan has figured out that a request needs to be sent to another node, it submits it to the async transport executor so that it can talk to the underlying JGroups layer. 
 
 With asynchronous marshalling, Infinispan requests can return back to the client quicker compared to when async marshalling is set to false. The downside though is that client requests can be reordered before they have reached the JGroups layer. In other words, JGroups provides ordering guarantees even for async messages but with async marshalling turned on, requests can reach the JGroups in a different order in which they're called. This can effectively lead to data consistency issues in applications making multiple modifications on the same key/value pair. For example, with async marshalling turned on:
 
@@ -193,7 +229,7 @@ cache.put("car", "bmw");
 
 ----
 
-The end result is clearly different which is often not desirable. So, if your application makes multiple modifications on the same key, you should either: turned off asynchronous marshalling, or set link:$$http://docs.jboss.org/infinispan/4.1/apidocs/config.html#ce_global_asyncTransportExecutor$$[&lt;asyncTransportExecutor&gt;] element's maxThreads to 1. The first modification only applies to a particular named cache, whereas the second option affects all named caches in configuration file that are configured with async marshalling. It's worth noting though that having this type of executor configured with a single thread would defeat its purpose adding unnecessary contention point. It'd be better to simply switch off async marshalling. 
+The end result is clearly different which is often not desirable. So, if your application makes multiple modifications on the same key, you should either: turned off asynchronous marshalling, or set link:$$http://docs.jboss.org/infinispan/4.1/apidocs/config.html#ce_global_asyncTransportExecutor$$[`<asyncTransportExecutor />`] element's maxThreads to 1. The first modification only applies to a particular named cache, whereas the second option affects all named caches in configuration file that are configured with async marshalling. It's worth noting though that having this type of executor configured with a single thread would defeat its purpose adding unnecessary contention point. It'd be better to simply switch off async marshalling. 
 
 On the contrary, if your application only ever makes one modification per key/value pair and there's no happens-before relationship between them, then async marshalling is a very valid optimization that can increase performance of your application without data consistency risks.
 

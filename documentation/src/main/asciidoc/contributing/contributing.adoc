@@ -1,8 +1,9 @@
 = Contributing to Infinispan
 Manik Surtani, Mircea Markus, Galder Zamarreño, Pete Muir, and others from the Infinispan community
-:toc2: right
+:toc2:
 :icons: font
-:toc-placement: preamble
+:toclevels: 2
+:numbered:
 
 Feel like contributing to Infinispan?  This guide will help you set up your
 environment, walk you through best practices, and help you debug, improve
