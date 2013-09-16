@@ -172,11 +172,6 @@ public class AbstractDelegatingAdvancedCache<K, V> extends AbstractDelegatingCac
    }
 
    @Override
-   public CacheEntry getCacheEntry(Object key, EnumSet<Flag> explicitFlags, ClassLoader explicitClassLoader) {
-      return cache.getCacheEntry(key, explicitFlags, explicitClassLoader);
-   }
-
-   @Override
    public CacheEntry getCacheEntry(K key) {
       return cache.getCacheEntry(key);
    }

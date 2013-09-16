@@ -19,7 +19,6 @@ import org.infinispan.util.concurrent.locks.LockManager;
 import javax.transaction.TransactionManager;
 import javax.transaction.xa.XAResource;
 import java.util.Collection;
-import java.util.EnumSet;
 import java.util.List;
 
 /**
@@ -274,12 +273,6 @@ public interface AdvancedCache<K, V> extends Cache<K, V> {
     * with a particular {@link ClassLoader}.
     */
    AdvancedCache<K, V> with(ClassLoader classLoader);
-
-   /**
-    * @deprecated Use {@link #getCacheEntry(Object)}
-    */
-   @Deprecated
-   CacheEntry getCacheEntry(Object key, EnumSet<Flag> explicitFlags, ClassLoader explicitClassLoader);
 
    /**
     * An overloaded form of {@link #put(K, V)}, which takes in an instance of
