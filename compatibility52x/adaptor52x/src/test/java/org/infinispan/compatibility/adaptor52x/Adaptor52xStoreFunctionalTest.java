@@ -32,7 +32,7 @@ public class Adaptor52xStoreFunctionalTest extends BaseCacheStoreFunctionalTest 
    }
 
    @AfterClass
-   void removeDir() {
+   public void removeDir() {
       TestingUtil.recursiveFileRemove(DIR);
    }
 
