@@ -20,7 +20,6 @@ import java.util.LinkedList;
 import java.util.Set;
 
 import static java.lang.String.format;
-import static org.infinispan.context.Flag.FORCE_SYNCHRONOUS;
 
 /**
  * Subclass of File to iterate through directories and files in a grid
@@ -189,26 +188,14 @@ public class GridFile extends File {
 
    @Override
    public boolean delete() {
-      return delete(false); // asynchronous delete by default
-   }
-
-   /**
-    *
-    * @deprecated create GridFilesystem instance with additional FORCE_SYNCHRONOUS flag, if operations should be executed synchronously
-    */
-   @Deprecated
-   public boolean delete(boolean synchronous) {
       if (!exists())
          return false;
 
       if (isDirectory() && hasChildren())
          return false;
 
-      fs.remove(getAbsolutePath(), synchronous);    // removes all the chunks belonging to the file
-      if (synchronous)
-         metadataCache.withFlags(FORCE_SYNCHRONOUS).remove(getAbsolutePath()); // removes the metadata information
-      else
-         metadataCache.remove(getAbsolutePath()); // removes the metadata information
+      fs.remove(getAbsolutePath());    // removes all the chunks belonging to the file
+      metadataCache.remove(getAbsolutePath()); // removes the metadata information
       return true;
    }
 
