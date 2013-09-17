@@ -127,6 +127,35 @@ TIP: Only include snippets you want to use to demonstrate an idea.
 If you want to share a reusable block of code or a configuration file, consider storing it in GitHub
 as a link:https://gist.github.com/[gist] and linking to it.
 
+==== Versioning
+If you are writing about a feature that has existed from Infinispan 5.0 onwards, there is 
+no need to specify a version that the feature existed from.
+However, if you are writing about a new feature, use a `TIP` callout to specify the version
+it applies to.
+Also, only specify a MINOR version rather than a detailed version.
+
+.A bad version statement
+[Quote]
+====
+_This section talks about a new API in Infinispan, called a WidgetMeister.  The WidgetMeister has the power to rule all widgets in your cluster, and is included in Infinispan from version 6.2.3.Beta2 onwards._
+====
+
+Why is this bad?  A number of reasons.
+
+* It mixes feature detail (what the WidgetMeister does) with versioning (when it was released)
+* It points to a beta version!!
+
+How _should_ this be written?
+
+.A good version statement
+[Quote]
+====
+This section talks about a new API in Infinispan, called a WidgetMeister.  The WidgetMeister has the power to rule all widgets in your cluster.
+
+
+TIP: The WidgetMeister API is new in Infinispan 6.2.x.
+====
+
 === Voice and grammar guide
 By using a consistent voice throughout the documentation, the Infinispan documentation appears more professional
 The aim is to make it feel to the user like the documentation was written by a single person.
@@ -153,7 +182,7 @@ So, are there any tricks to reformulate a sentence so the first person is not us
 * Use the definite article when discussing a specific instance or the indefinite article when describing a generalization of something; generally you omit the article when using a name for a project or product.
 
 
-.An example of articles
+.Articles used correctly
 [Quote]
 ====
 _Infinispan uses **a** logging framework to communicate messages to the user, **the** logging framework used by Infinispan is JBoss Logging_. 
@@ -168,7 +197,7 @@ This is not a formal or complete description, but is a good rule of thumb.
 
 * Keep the tense the same. It's very easy to slip between the present, past and future tenses, but this produces text that is feels "unnatural" to the reader. 
 
-.An example of bad tenses
+.Bad tenses
 [Quote]
 ====
 Data is collected from Infinispan every hour. Upon analysis the data showed that Infinispan is 2 million times faster than it's nearest competitor.
@@ -179,13 +208,32 @@ This is clearly not actually the order in which the events happened!
 
 Of course, if you are actually describing the progression of time, then changing tenses is fine.
 
-.An example of tenses used correctly
+.Tenses used correctly
 [Quote]
 ====
 In the last section you _were_ shown how to configure Infinispan using XML, and in the next section you _will be_ shown how to configure Infinispan programmatically. 
 ====
 
 * If you are telling the user about a procedure they can follow, do be explicit about this, and enumerate the steps clearly
+
+==== Colloquialisms
+Please stay away from colloquialisms at all cost.
+This impacts the professionalism and readability of the documentation.
+The examples below probably need no explanation.
+
+.Bad colloquialisms
+[Quote]
+====
+_You should use the WidgetMeister API for this sort of problem, coz it's the fastest way and its pretty cool._
+====
+[Quote]
+====
+_You've then gotta install the downloaded archive._
+====
+[Quote]
+====
+_If the dload fails, contact the SA who runs the svr._
+====
 
 === Glossary and FAQs
 When writing a glossary or FAQ entry, you should follow the existing entries as a template. 
