@@ -10,7 +10,7 @@ import org.infinispan.query.dsl.impl.BaseQueryFactory;
  * @author anistor@redhat.com
  * @since 6.0
  */
-public class EmbeddedLuceneQueryFactory extends BaseQueryFactory<LuceneQuery> {
+public final class EmbeddedLuceneQueryFactory extends BaseQueryFactory<LuceneQuery> {
 
    private final SearchManager searchManager;
 

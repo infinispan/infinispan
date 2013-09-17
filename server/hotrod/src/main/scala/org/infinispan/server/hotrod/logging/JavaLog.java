@@ -1,7 +1,6 @@
 package org.infinispan.server.hotrod.logging;
 
 import org.infinispan.commons.CacheConfigurationException;
-import org.infinispan.commons.equivalence.Equivalence;
 import org.infinispan.util.concurrent.IsolationLevel;
 import org.jboss.logging.Cause;
 import org.jboss.logging.LogMessage;
@@ -35,13 +34,7 @@ public interface JavaLog extends org.infinispan.util.logging.Log {
    @Message(value = "A topology cache named '%s' has already been defined", id = 6003)
    CacheConfigurationException invalidTopologyCache(String topologyCacheName);
 
-   @Message(value = "Key equivalence must be able to compare arrays based on contents. Provided key equivalence instance '%s' is not possible to do so", id = 6004)
-   CacheConfigurationException invalidKeyEquivalence(Equivalence keyEq);
-
-   @Message(value = "Value equivalence must be able to compare arrays based on contents. Provided value equivalence instance '%s' is not possible to do so", id = 6005)
-   CacheConfigurationException invalidValueEquivalence(Equivalence keyEq);
-
-   @Message(value = "Isolation level must be READ_COMMITTED or lower: '%s'", id = 6006)
+   @Message(value = "Isolation level must be READ_COMMITTED or lower: '%s'", id = 6004)
    CacheConfigurationException invalidIsolationLevel(IsolationLevel isolationLevel);
 
 }

@@ -9,7 +9,10 @@ import org.infinispan.query.dsl.QueryFactory;
  * @author anistor@redhat.com
  * @since 6.0
  */
-public class Search {
+public final class Search {
+
+   private Search() {
+   }
 
    public static QueryFactory getQueryFactory(RemoteCache cache) {
       if (cache == null) {
