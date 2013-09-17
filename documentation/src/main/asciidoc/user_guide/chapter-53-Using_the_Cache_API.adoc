@@ -3,10 +3,7 @@
 === The Cache interface
 Infinispan exposes a simple, link:$$http://jcp.org/en/jsr/detail?id=107$$[JSR-107] compliant link:$$http://docs.jboss.org/infinispan/4.0/apidocs/org/infinispan/Cache.html$$[Cache] interface. 
 
- .TODO InformalFigure image title empty
-image::[]
-
- The Cache interface exposes simple methods for adding, retrieving and removing entries, including atomic mechanisms exposed by the JDK's ConcurrentMap interface.  Based on the cache mode used, invoking these methods will trigger a number of things to happen, potentially even including replicating an entry to a remote node or looking up an entry from a remote node, or potentially a cache store.
+The Cache interface exposes simple methods for adding, retrieving and removing entries, including atomic mechanisms exposed by the JDK's ConcurrentMap interface.  Based on the cache mode used, invoking these methods will trigger a number of things to happen, potentially even including replicating an entry to a remote node or looking up an entry from a remote node, or potentially a cache store.
 
 NOTE: For simple usage, using the Cache API should be no different from using the JDK Map API, and hence migrating from simple in-memory caches based on a Map to Infinispan's Cache should be trivial.
 
@@ -21,7 +18,7 @@ Further to simply storing entries, Infinispan's cache API allows you to attach m
 In addition to _lifespan_ , Infinispan also supports _maxIdle_ as an additional metric with which to determine expiration.  Any combination of lifespans or maxIdles can be used. 
 
 ==== Example of Using Expiry and Mortal Data
-See link:$$https://docs.jboss.org/author/pages/viewpage.action?pageId=3737114$$[this page] for an example of using mortal data with Infinispan 
+See <<_eviction_examples, these examples>> of using mortal data with Infinispan. 
 
 ==== putForExternalRead operation
 Infinispan's link:$$http://docs.jboss.org/infinispan/5.1/apidocs/org/infinispan/Cache.html$$[Cache] class contains a different 'put' operation called link:$$http://docs.jboss.org/infinispan/5.1/apidocs/org/infinispan/Cache.html#putForExternalRead(K, V)$$[putForExternalRead] . This operation is particularly useful when Infinispan is used as a temporary cache for data that is persisted elsewhere.  Under heavy read scenarios, contention in the cache should not delay the real transactions at hand, since caching should just be an optimization and not something that gets in the way. 
@@ -85,7 +82,7 @@ advancedCache.withFlags(Flag.CACHE_MODE_LOCAL, Flag.SKIP_LOCKING)
 
 The AdvancedCache interface also offers advanced developers a mechanism with which to attach custom interceptors.  Custom interceptors allow developers to alter the behavior of the cache API methods, and the AdvancedCache interface allows developers to attach these interceptors programmatically, at run-time.  See the AdvancedCache Javadocs for more details.
 
-For more information on writing custom interceptors, see link:$$https://docs.jboss.org/author/pages/viewpage.action?pageId=3737149$$[/javascript:;] 
+For more information on writing custom interceptors, see <<_custom_interceptors_chapter, this chapter>>.
 
 ===  Listeners and Notifications
 
@@ -406,7 +403,7 @@ For your application to use the tree API, you need to import infinispan-tree.jar
 ----
 
 ==== Creating a Tree Cache
-The first step to use the tree API is to actually create a tree cache. To do so, you need to link:$$https://docs.jboss.org/author/pages/viewpage.action?pageId=3737143$$[create an Infinispan Cache as you'd normally do] , and using the link:$$http://docs.jboss.org/infinispan/5.0/apidocs/org/infinispan/tree/TreeCacheFactory.html$$[TreeCacheFactory] , create an instance of link:$$http://docs.jboss.org/infinispan/5.0/apidocs/org/infinispan/tree/TreeCache.html$$[TreeCache] . A very important note to remember here is that the Cache instance passed to the factory must be configured with link:$$https://docs.jboss.org/author/pages/viewpage.action?pageId=3737131$$[invocation batching] . For example: 
+The first step to use the tree API is to actually create a tree cache. To do so, you need to <<_configuring_cache, create an Infinispan Cache as you'd normally do, and using the link:$$http://docs.jboss.org/infinispan/5.0/apidocs/org/infinispan/tree/TreeCacheFactory.html$$[TreeCacheFactory] , create an instance of link:$$http://docs.jboss.org/infinispan/5.0/apidocs/org/infinispan/tree/TreeCache.html$$[TreeCache] . A very important note to remember here is that the Cache instance passed to the factory must be configured with <<_batching, invocation batching>>. For example: 
 
 [source,java]
 ----

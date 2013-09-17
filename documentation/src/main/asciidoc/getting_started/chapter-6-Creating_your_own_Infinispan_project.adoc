@@ -73,8 +73,7 @@ The profiles available in the generated sample project are:
 ===== Contributing tests back to Infinispan
 If you have written a functional, unit or stress test for Infinispan and want to contribute this back to Infinispan, your best bet is to link:$$https://github.com/infinispan/infinispan$$[fork the Infinispan sources on GitHub] .  The test you would have prototyped and tested in an isolated project created using this archetype can be simply dropped in to Infinispan's test suite.  Make your changes, add your test, prove that it fails even on Infinispan's upstream source tree and issue a link:$$http://help.github.com/pull-requests/$$[pull request] . 
 
-TIP: New to working with Infinispan and GitHub?  Want to know how best to work with the repositories and contribute code?  Read link:$$https://docs.jboss.org/author/pages/viewpage.action?pageId=68355224$$[Infinispan and GitHub] 
-
+TIP: New to working with Infinispan and GitHub?  Want to know how best to work with the repositories and contribute code?  Read link:../contributing/contributing.html#_source_control[Infinispan and GitHub] 
 
 ==== Versions
 The archetypes generate poms with dependencies to specific versions of Infinispan.  You should edit these generated poms by hand to point to other versions of Infinispan that you are interested in.

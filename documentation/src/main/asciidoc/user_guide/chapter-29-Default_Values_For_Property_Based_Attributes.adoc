@@ -16,3 +16,4 @@ The aim of this article is to complement the link:$$http://docs.jboss.org/infini
 .replicationQueueScheduledExecutor
 * maxThreads = 1 (cannot be changed)
 * threadNamePrefix = "replicationQueue-thread"
+

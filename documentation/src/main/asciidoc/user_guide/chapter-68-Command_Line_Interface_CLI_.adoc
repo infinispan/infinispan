@@ -1,9 +1,10 @@
+[[_CLI_chapter]]
 ==  Command-Line Interface (CLI)
 Infinispan offers a simple Command-Line Interface (CLI) with which it is possible to interact with the data within the caches and with most of the internal components (e.g. transactions, cross-site backups, rolling upgrades).
 
-The CLI is built out of two elements: a server-side module and the  client command tool. The server-side module (infinispan-cli-server-$VERSION.jar) provides  the actual interpreter for the commands and needs to be included alongside your application. If you are using the _startServer.[sh.bat]_ script it is included by default. 
+The CLI is built out of two elements: a server-side module and the  client command tool. The server-side module (`infinispan-cli-server-$VERSION.jar`) provides  the actual interpreter for the commands and needs to be included alongside your application. If you are using the `startServer.[sh|bat]` script it is included by default. 
 
-Currently the server (and the  client) use the JMX protocol to communicate, but in a future release we  plan to support other communication protocols (in particular our own  HotRod).
+Currently the server (and the  client) use the JMX protocol to communicate, but in a future release we  plan to support other communication protocols (in particular our own Hot Rod).
 
 The CLI offers both an interactive and a batch mode. To invoke the client, just run the provided _bin/ispn-cli.[sh|bat]_ script. The following is a list of command-line switches which affect how the CLI can be started: 
 
@@ -19,7 +20,7 @@ The CLI offers both an interactive and a batch mode. To invoke the client, just 
 -v, --version           shows version information
 ----
 
- * JMX over RMI is the traditional way in which JMX clients connect to MBeanServers. Please refer to the link:$$http://docs.oracle.com/javase/6/docs/technotes/guides/management/agent.html$$[JDK Monitoring and Management] documentation for details on how to configure the process to be monitored 
+* JMX over RMI is the traditional way in which JMX clients connect to MBeanServers. Please refer to the link:$$http://docs.oracle.com/javase/6/docs/technotes/guides/management/agent.html$$[JDK Monitoring and Management] documentation for details on how to configure the process to be monitored 
 
 
 * JMX over JBoss Remoting is the protocol of choice when your Infinispan application is running within JBoss AS7 or EAP6.
@@ -205,7 +206,7 @@ The _locate_ command shows the physical location of a specified entry in a distr
 ----
 
 ==== put
-The _put_ command inserts an entry in the cache. If the cache previously contained a mapping for the key, the old value is replaced by the specified value. The user can control the type of data that the CLI will use to store the key and value. See the link:$$https://docs.jboss.org/author/pages/viewpage.action?pageId=61505925_Command-LineInterface%28CLI%29-DataTypes$$[Data Types] paragraph. 
+The _put_ command inserts an entry in the cache. If the cache previously contained a mapping for the key, the old value is replaced by the specified value. The user can control the type of data that the CLI will use to store the key and value. See the <<_data_types, Data Types>> section.
 
 
 ----
@@ -306,7 +307,7 @@ LockManager: {
 ----
 
 ==== upgrade
-The _ugrade_ command performs operations used during the rolling upgrade procedure. For a detailed description of this procedure please see link:$$https://docs.jboss.org/author/pages/viewpage.action?pageId=60227604$$[Rolling upgrades] 
+The _upgrade_ command performs operations used during the rolling upgrade procedure. For a detailed description of this procedure please see <<_rolling_upgrades,Rolling Upgrades>>
 
 
 ----

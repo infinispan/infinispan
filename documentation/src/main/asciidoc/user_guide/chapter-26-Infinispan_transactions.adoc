@@ -206,8 +206,7 @@ Batching is often a lot lighter and cheaper than a full-blown transaction.
 
 TIP: Generally speaking, one should use batching API whenever the only participant in the transaction is an Infinispan cluster. On the other hand, JTA transactions (involving TransactionManager) should be used whenever the transactions involves multiple systems. E.g. considering the "Hello world!" of transactions: transferring money from one bank account to the other. If both accounts are stored within Infinispan, then batching can be used. If one account is in a database and the other is Infinispan, then distributed transactions are required.
 
-
-=== Configuring batching
+==== Configuring batching
 To use batching, you need to enable invocation batching in your cache configuration, either on the Configuration object:
 
 [source,java]
@@ -341,7 +340,7 @@ A normal recovery flow is:
 
 * *STEP 1*: The system administrator connects to an Infinispan server through JMX, and lists the in doubt transactions.  The image below demonstrates JConsole connecting to an Infinispan node that has an in doubt transaction.
 
-image::[]
+image::../images/showInDoubtTx.png[]
 
 The status of each in-doubt transaction is displayed(in this example " _PREPARED_ "). There might be multiple elements in the status field, e.g. "PREPARED" and "COMMITTED" in the case the transaction committed on certain nodes but not on all of them.   
 
@@ -349,7 +348,7 @@ The status of each in-doubt transaction is displayed(in this example " _PREPARED
 
 * *STEP 3*: The system administrator forces the transaction's commit/rollback through the corresponding jmx operation, based on the internal id.  The image below is obtained by forcing the commit of the transaction based on its internal id.
 
-image::[]
+image::../images/forceCommit.png[]
 
 TIP: All JMX operations described above can be executed on any node, regardless of where the transaction originated. 
 

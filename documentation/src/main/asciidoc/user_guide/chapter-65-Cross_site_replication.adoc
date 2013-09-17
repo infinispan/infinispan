@@ -4,10 +4,7 @@ Cross site (x-site) replication allows backing up the data from one cluster to o
 === Sample deployment
 The diagram below depicts a possible setup of replicated sites, followed by a description of individual elements present in the deployment. Options are then explained at large in future paragraphs. Comments on the diagram above: 
 
-.TODO InformalFigure image title empty
-image::[]
-
- 
+image::../images/xdc.png[]
 
 
 * there are 3 sites: LON, NYC and SFO.
@@ -32,16 +29,16 @@ image::[]
 
 The cross-site replication configuration spreads over the following files:
 
-.  the backup policy for each individual cache is defined in infinispan's .xml configuration file ( link:$$https://docs.jboss.org/author/download/attachments/68355118/infinispan.xml?version=1&amp;modificationDate=1362652288000$$[infinispan.xml] in attachment) 
+.  the backup policy for each individual cache is defined in infinispan's .xml configuration file (link:https://gist.github.com/maniksurtani/cdd5420af764c907e342[infinispan.xml]) 
 
 
-.  cluster's jgroups xml configuration file: link:$$http://www.jgroups.org/manual-3.x/html/user-advanced.html#Relay2Advanced$$[RELAY2] protocol needs to be added to the JGroups protocol stack ( link:$$https://docs.jboss.org/author/download/attachments/68355118/jgroups.xml?version=1&amp;modificationDate=1348082252000$$[jgroups.xml] ) 
+.  cluster's JGroups xml configuration file: link:$$http://www.jgroups.org/manual-3.x/html/user-advanced.html#Relay2Advanced$$[RELAY2] protocol needs to be added to the JGroups protocol stack (link:https://gist.github.com/maniksurtani/409fe5ece5fe4bcf679f[jgroups.xml]) 
 
 
-.  RELAY2 configuration file: RELAY2 has an own configuration file ( link:$$https://docs.jboss.org/author/download/attachments/68355118/relay2.xml?version=1&amp;modificationDate=1348082291000$$[relay2.xml] ) 
+.  RELAY2 configuration file: RELAY2 has an own configuration file ( link:https://gist.github.com/maniksurtani/8c7238dae7921d2c883e[relay2.xml] ) 
 
 
-.  the jgroups channel that is used by RELAY2 has its own configuration file ( link:$$https://docs.jboss.org/author/download/attachments/68355118/jgroups-relay2.xml?version=1&amp;modificationDate=1348082201000$$[jgroups-relay2.xml] ) Infinispan XML configuration file 
+.  the JGroups channel that is used by RELAY2 has its own configuration file (link:https://gist.github.com/maniksurtani/cbc1a297a367b1176feb[jgroups-relay2.xml]) Infinispan XML configuration file 
 
 The local site is defined in the the global configuration section. The local is the site where the node using this configuration file resides (in the example above local site is "LON").
 
@@ -166,11 +163,11 @@ This is the configuration file for the local (intra-site) infinispan cluster. It
 
 ----
 
-In order to allow inter-site calls, the RELAY2 protocol needs to be added to the protocol stack defined in the jgroups configuration (see attached link:$$https://docs.jboss.org/author/download/attachments/68355118/jgroups.xml?version=1&amp;modificationDate=1348082252000$$[jgroups.xml] for an example). 
+In order to allow inter-site calls, the RELAY2 protocol needs to be added to the protocol stack defined in the jgroups configuration (see attached $$https://gist.github.com/maniksurtani/409fe5ece5fe4bcf679f[jgroups.xml] for an example). 
 
 ==== RELAY2 configuration file
 
-The RELAY2 configuration file is linked from the jgroups.xml (see attached link:$$https://docs.jboss.org/author/download/attachments/68355118/relay2.xml?version=1&amp;modificationDate=1348082291000$$[relay2.xml] ). It defines the sites seen by this cluster and also the jgroups configuration file that is used by RELAY2 in order to communicate with the remote sites. 
+The RELAY2 configuration file is linked from the jgroups.xml (see attached link:https://gist.github.com/maniksurtani/8c7238dae7921d2c883e[relay2.xml]). It defines the sites seen by this cluster and also the JGroups configuration file that is used by RELAY2 in order to communicate with the remote sites. 
 
 === Data replication
 For both transactional and non-transactional caches, the backup calls are performed in parallel with local cluster calls, e.g. if we write data to node N1 in LON then replication to the local nodes N2 and N3 and remote backup sites SFO and NYC happen in parallel.

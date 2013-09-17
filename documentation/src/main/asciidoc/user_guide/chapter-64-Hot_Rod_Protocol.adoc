@@ -1,10 +1,7 @@
-:toc: 
-:toclevels: 5
-
-===  Hot Rod Protocol
+====  Hot Rod Protocol
 This article provides detailed information about the custom TCP client/server Hot Rod protocol.
 
-==== Hot Rod Protocol 1.0
+===== Hot Rod Protocol 1.0
 
 .Infinispan versions
 TIP: This version of the protocol is implemented since Infinispan 4.1.0.Final
@@ -17,7 +14,7 @@ All key and values are sent and stored as byte arrays. Hot Rod makes no assumpti
 *  vLong : Refers to unsigned variable length long values similar to vInt but applied to longer values. They're between 1 and 9 bytes long. 
 *  String : Strings are always represented using UTF-8 encoding. 
 
-===== Request Header
+====== Request Header
 
 The header for a request is composed of:
 
@@ -115,7 +112,7 @@ The header for a request is composed of:
 |===============
 
 
- Exceptional error status responses, those that start with 0x8 ..., are followed by the length of the error message (as a vInt ) and error message itself as String. 
+Exceptional error status responses, those that start with 0x8 ..., are followed by the length of the error message (as a vInt ) and error message itself as String. 
 
 
 *  _Topology Change Marker_ : This is a marker byte that indicates whether the response is prepended with topology change information. When no topology change follows, the content of this byte is 0. If a topology change follows, its contents are 1. 
@@ -177,8 +174,8 @@ It's important to note that since hash headers rely on the consistent hash algor
 
 *  _Hashcode_ : 32 bit integer representing the hashcode of a cluster member that a Hot Rod client can use indentify in which cluster member a key is located having applied the CSA to it. 
 
-===== Operations
-====== Get/Remove/ContainsKey/GetWithVersion
+====== Operations
+======= Get/Remove/ContainsKey/GetWithVersion
 
 
 * Common request format:
@@ -238,7 +235,7 @@ It's important to note that since hash headers rely on the consistent hash algor
 
 *  _Entry Version_ : Unique value of an existing entry's modification. The protocol does not mandate that entry_version values are sequential. They just need to be unique per update at the key level. 
 
-====== BulkGet
+======= BulkGet
 
 
 * Request format:
@@ -266,7 +263,7 @@ It's important to note that since hash headers rely on the consistent hash algor
 
 *  _More_ : One byte representing whether more entries need to be read from the stream. So, when it's set to 1, it means that an entry followes, whereas when it's set to 0, it's the end of stream and no more entries are left to read. For more information on BulkGet look link:$$http://community.jboss.org/docs/DOC-15592$$[here] 
 
-===== Put/PutIfAbsent/Replace
+====== Put/PutIfAbsent/Replace
 
 
 * Common request format:
@@ -310,7 +307,7 @@ It's important to note that since hash headers rely on the consistent hash algor
 
 *  Put/PutIfAbsent/Replace response: If ForceReturnPreviousValue has been passed, these responses will contain previous value (and corresponding value length) for that key. If the key does not exist or previous was null, value length would be 0. Otherwise, if no ForceReturnPreviousValue was sent, the response would be empty. 
 
-====== ReplaceIfUnmodified
+======= ReplaceIfUnmodified
 
 
 * Request format:
@@ -340,7 +337,7 @@ It's important to note that since hash headers rely on the consistent hash algor
 
 *  Response: If ForceReturnPreviousValue has been passed, this responses will contain previous value (and corresponding value length) for that key. If the key does not exist or previous was null, value length would be 0. Otherwise, if no ForceReturnPreviousValue was sent, the response would be empty. 
 
-====== RemoveIfUnmodified
+======= RemoveIfUnmodified
 
 
 * Request format:
@@ -367,7 +364,7 @@ It's important to note that since hash headers rely on the consistent hash algor
 
 *  Response: If ForceReturnPreviousValue has been passed, this responses will contain previous value (and corresponding value length) for that key. If the key does not exist or previous was null, value length would be 0. Otherwise, if no ForceReturnPreviousValue was sent, the response would be empty. 
 
-====== Clear
+======= Clear
 
 
 * Request format:
@@ -457,10 +454,10 @@ Response header contains error op code response and corresponding error status n
 
 *  _Error message_ : Error message. In the case of 0x84 , this error field contains the latest version supported by the hot rod server. Length is defined by total body length. 
 
-===== Multi-Get Operations
+====== Multi-Get Operations
 A multi-get operation is a form of get operation that instead of requesting a single key, requests a set of keys. The Hot Rod protocol does not include such operation but remote Hot Rod clients could easily implement this type of operations by either parallelizing/pipelining individual get requests. Another possibility would be for remote clients to use async or non-blocking get requests. For example, if a client wants N keys, it could send send N async get requests and then wait for all the replies. Finally, multi-get is not to be confused with bulk-get operations. In bulk-gets, either all or a number of keys are retrieved, but the client does not know which keys to retrieve, whereas in multi-get, the client defines which keys to retrieve.
 
-===== Example - Put request
+====== Example - Put request
 
 
 * Coded request
@@ -518,16 +515,15 @@ A multi-get operation is a form of get operation that instead of requesting a si
 
 |===============
 
-
-==== Hot Rod Protocol 1.1
+===== Hot Rod Protocol 1.1
 
 .Infinispan versions
 TIP: This version of the protocol is implemented since Infinispan 5.1.0.FINAL
 
-===== Request Header
+====== Request Header
 The `version` field in the header is updated to 11.
 
-===== Hash-Distribution-Aware Client Topology Change Header
+====== Hash-Distribution-Aware Client Topology Change Header
 
 .Updated for 1.1
 IMPORTANT: This section has been modified to be more efficient when talking to distributed caches with virtual nodes enabled.
@@ -543,19 +539,13 @@ This is what hash-distribution-aware clients receive as response header when a t
 
 |===============
 
-
-
-*  _Number key owners_ : Globally configured number of copies for each Infinispan distributed key. If the cache is not configured with distribution, this field will return 0 . 
-
+*  _Number key owners_ : Globally configured number of copies for each Infinispan distributed key. If the cache is not configured with distribution, this field will return 0. 
 
 *  _Hash function version_ : Hash function version, pointing to a specific hash function in use. See <<sid-68355116,Hot Rod hash functions>> for details. If cache is not configured with distribution, this field will contain 0 . 
 
-
 *  _Hash space size_ : Modulus used by Infinispan for for all module arithmetic related to hash code generation. Clients will likely require this information in order to apply the correct hash calculation to the keys. If cache is not configured with distribution, this field will contain 0 . 
 
-
 *  _Num servers in topology_ : Represents the number of servers in the Hot Rod cluster which represents the number of host:port pairings to be read in the header. 
-
 
 *  _Number virtual nodes_ : Field added in version 1.1 of the protocol that represents the number of configured virtual nodes. If no virtual nodes are configured or the cache is not configured with distribution, this field will contain 0 . 
 
@@ -590,15 +580,15 @@ public static int virtualNodeHashCode(int nodeBaseHashCode, int id, Hash hashFct
 }
 ----
 
-==== Hot Rod Protocol 1.2
+===== Hot Rod Protocol 1.2
 
 .Infinispan versions
 TIP: This version of the protocol is implemented since Infinispan 5.2.0.Final. Since Infinispan 5.3.0, HotRod supports encryption via SSL. However, since this only affects the transport, the version number of the protocol has not been incremented.
 
-===== Request Header
+====== Request Header
 The `version` field in the header is updated to 12.
 
-====  Hot Rod Hash Functions
+==== Hot Rod Hash Functions
 Infinispan makes use of a consistent hash function to place nodes on a hash wheel, and to place keys of entries on the same wheel to determine where entries live.
 
 In Infinispan 4.2 and earlier, the hash space was hardcoded to 10240, but since 5.0, the hash space is link:$$http://download.oracle.com/javase/6/docs/api/java/lang/Integer.html#MAX_VALUE$$[Integer.MAX_INT] . Please note that since Hot Rod clients should not assume a particular hash space by default, everytime a hash-topology change is detected, this value is sent back to the client via the Hot Rod protocol. 

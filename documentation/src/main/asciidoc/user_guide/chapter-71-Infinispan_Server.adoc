@@ -12,10 +12,10 @@ The server distribution also provides a set of example configuration files in th
 
  bin/standalone.sh -c configuration_file_name.xml 
 
-For more information regarding the parameters supported by the startup scripts, refer to the JBoss AS 7.2 documentation on link:$$https://docs.jboss.org/author/pages/viewpage.action?pageId=53117092$$[Command line parameters] , bearing in mind that Infinispan Server does not currently support managed servers, also known as domain mode. 
+For more information regarding the parameters supported by the startup scripts, refer to the JBoss AS 7.2 documentation on link:$$https://docs.jboss.org/author/pages/viewpage.action?pageId=53117092$$[Command line parameters], bearing in mind that Infinispan Server does not currently support managed servers, also known as domain mode. 
 
 === CLI
-The link:$$https://docs.jboss.org/author/pages/viewpage.action?pageId=61505925$$[Infinispan CLI] can be used to connect to the server. You need to use the remoting protocol and connect to port 9999. By default the CLI will use the special silent SASL authenticator, which won't require a username/password: 
+<<_CLI_chapter, Infinispan CLI>> can be used to connect to the server. You need to use the remoting protocol and connect to port 9999. By default the CLI will use the special silent SASL authenticator, which won't require a username/password: 
 
 
 ----
@@ -299,7 +299,7 @@ The connector will create a supporting topology cache with default settings. If 
 
 ----
 
-The HotRod connector can be further tuned with additional settings such as concurrency and buffering. See the protocol connector settings paragraph for additional details
+The Hot Rod connector can be further tuned with additional settings such as concurrency and buffering. See the protocol connector settings paragraph for additional details
 
 Furthermore the HotRod connector can be secured using SSL. First you need to declare an SSL server identity within a security realm in the management section of the configuration file. The SSL server identity should specify the path to a keystore and its secret. Refer to the AS7.2 link:$$https://docs.jboss.org/author/pages/viewpage.action?pageId=53117128$$[documentation] on this. Next add the `<security />` element to the HotRod connector as follows: 
 

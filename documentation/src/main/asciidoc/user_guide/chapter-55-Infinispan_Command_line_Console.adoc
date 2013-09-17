@@ -5,7 +5,7 @@ NOTE: Documentation for ispncon version 0.8.1
 
 === What is ispncon ?
 Ispncon (Infinispan Command-Line Console) is a simple command-line interface to infinispan cache written in python.
-It accesses the cache in client/server fashion, whereby infinispan link:$$https://docs.jboss.org/author/pages/viewpage.action?pageId=3737048$$[server modules] ( link:$$https://docs.jboss.org/author/pages/viewpage.action?pageId=3737146$$[Hot Rod] , link:$$https://docs.jboss.org/author/pages/viewpage.action?pageId=3737037$$[Memcached] , link:$$http://community.jboss.org/docs/DOC-14095$$[REST] ) have to be properly configured. Once you have a running instance of infinispan with one of the server modules, you can issue simple cache requests via command line, like: 
+It accesses the cache in client/server fashion, requiring one of the Infinispan <<_server_modules, server modules>> to have to be properly configured. Once you have a running instance of Infinispan with one of the server modules, you can issue simple cache requests via command line, like: 
 
  $ ispncon put keyA "Sample value under keyA"
  $ ispncon get keyA

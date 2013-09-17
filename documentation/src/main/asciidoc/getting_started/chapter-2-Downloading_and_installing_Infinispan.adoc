@@ -3,7 +3,7 @@
 To run the Infinispan, you'll need
 
 * A Java 6.0 JDK
-* Maven 3, if you wish to use the quickstart examples or create a new project using the Infinispan link:$$https://docs.jboss.org/author/pages/viewpage.action?pageId=3737129$$[archetype] 
+* Maven 3, if you wish to use the quickstart examples or create a new project using the Infinispan link:../getting_started/getting_started.html#_maven_archetypes[archetype] 
 * the Infinispan distribution zip, if you wish to use Infinispan in server mode, or want to use the jars in an ant project
 * the Infinispan Quickstart zip, if you want to follow along with the projects discussed in the guide
 
@@ -23,7 +23,7 @@ You can check which version of Maven you have installed (if any) by running mvn 
 TIP: You can also deploy the examples using your favorite IDE. We provide instructions for using Eclipse only.
 
 === Infinispan
-Finally, download Infinispan from the Infinispan link:http://www.infinispan.org/downloads[downloads] page.
+Finally, download Infinispan from the Infinispan link:http://www.infinispan.org/download[downloads] page.
 
 ==== Getting Infinispan from Maven
 *TODO*

@@ -11,7 +11,7 @@ $ ./bin/startServer.sh -r memcached
 When the script is called without any further parameters, the started Infinispan Memcached server binds to _port 11211 on localhost_ (127.0.0.1) and uses a local (unclustered) Infinispan cache instance configured with default values underneath. 
 
 ==== Command Line Options
-You can optionally pass a set of parameters to the Infinispan Memcached server that allow you to configure different parts of the server. You can find detailed information in the link:$$https://docs.jboss.org/author/pages/viewpage.action?pageId=3737161$$[server command line options article] . 
+You can optionally pass a set of parameters to the Infinispan Memcached server that allow you to configure different parts of the server.
 
 Please note that, since the Memcached protocol does not allow specifying a cache to use, the mapping between Infinispan Memcached server instances and Infinispan Cache instances is 1 to 1. Therefore, when passing an Infinispan configuration file to the Infinispan Memcache server, either define a named cache with name "memcachedCache" or modify the default cache configuration.
 

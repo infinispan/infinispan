@@ -55,7 +55,7 @@ If the issue pertains to a bug in the current release, then the Final version sh
 For example, a bug found in 4.1.0.Alpha2 (but not in 4.1.0.Alpha1) should be marked as fixed in 4.1.0.Alpha3, but not in 4.1.0.Final.
 For example, see link:$$https://issues.jboss.org/browse/ISPN-416$$[ISPN-416]. 
 
-=== Source control
+=== Version control
 Infinispan uses link:$$http://git-scm.com$$[git], hosted on link:$$http://github.com$$[GitHub], for version control.
 You can find the upstream git repository at link:$$https://github.com/infinispan$$[]. To clone the repository: 
 
@@ -76,24 +76,32 @@ This is tested on Eclipse, IntelliJ IDEA and Netbeans.
 ===== Eclipse 
 Before we import the project, we need to clone the project as described above.
 
-. Install the m2eclipse plugin if you have not already installed it. This is bundled with Eclipse from version "Indigo" 3.7. 
-For older versions follow instructions on link:$$http://eclipse.org/m2e/$$[] . 
-. Import the Infinispan maven project. Select File -> Import in your eclipse workbench. Select the Existing Maven Project importer. 
-  .TODO InformalFigure image title empty
-  image::[]
-. Select the root directory of your Infinispan checkout. 
-  .TODO InformalFigure image title empty
-  image::[]
-. Select Infinispan modules that you want to import.
-. Finally, from Infinispan 5.0 onwards, annotation processing is used to allow log messages to be internationalized.
-This processing can be done directly from Eclipse as part of compilation but it requires some set up:
-.  Open the properties for infinispan-core and locate Annotation Processing 
-.  Tick Enable project specific settings 
-.  Enter `target/generated-sources/annotations` as the `Generated source` directory 
-   .TODO InformalFigure image title empty
-   image::[]
-. Code Formatting. From the menu Window -> Preferences -> Java -> Code Style -> Formatter. Import link:$$https://raw.github.com/infinispan/infinispan/master/ide-settings/eclipse/formatter.xml$$[formatter.xml]
-. Code templates. From the menu Window -> Preferences -> Java -> Code Style -> Code Templates. Import link:$$https://raw.github.com/infinispan/infinispan/master/ide-settings/eclipse/codetemplates.xml$$[codetemplates.xml] 
+$$1.$$ Install the m2eclipse plugin if you have not already installed it. This is bundled with Eclipse from version "Indigo" 3.7. 
+For older versions follow instructions on link:$$http://eclipse.org/m2e/$$[].
+
+$$2.$$ Import the Infinispan maven project. Select File -> Import in your eclipse workbench. Select the Existing Maven Project importer. 
+
+image::../images/import_maven1.png[]
+
+$$3.$$ Select the root directory of your Infinispan checkout. 
+
+image::../images/import_maven2.png[]
+
+$$4.$$ Select Infinispan modules that you want to import.
+
+$$5.$$ Finally, from Infinispan 5.0 onwards, annotation processing is used to allow log messages to be internationalized.  This processing can be done directly from Eclipse as part of compilation but it requires some set up:
+
+$$5.1.$$  Open the properties for infinispan-core and locate Annotation Processing 
+
+$$5.2.$$  Tick Enable project specific settings 
+
+$$5.3.$$  Enter `target/generated-sources/annotations` as the `Generated source` directory 
+
+image::../images/ann_proc_eclipse.png[]
+
+$$6.$$ Code Formatting. From the menu Window -> Preferences -> Java -> Code Style -> Formatter. Import link:$$https://raw.github.com/infinispan/infinispan/master/ide-settings/eclipse/formatter.xml$$[formatter.xml]
+
+$$7.$$ Code templates. From the menu Window -> Preferences -> Java -> Code Style -> Code Templates. Import link:$$https://raw.github.com/infinispan/infinispan/master/ide-settings/eclipse/codetemplates.xml$$[codetemplates.xml] 
 
 Some modules use Scala, if you plan contributing to one of these modules it's worth installing the link:$$http://www.scala-lang.org/node/94$$[Scala tools] . 
 
@@ -101,8 +109,8 @@ Some modules use Scala, if you plan contributing to one of these modules it's wo
 ====== Importing
 
 When you start link:http://www.jetbrains.com/idea/[IntelliJ IDEA], you will be greeted by a screen as shown below: 
-.TODO Gliffy image title empty
-image::[]
+
+image::../images/idea-12-import.jpg[]
 
 If you have already obtained a copy of the Infinispan sources via Github (see _'Source Control'_), then follow: _Import Project -> /directory/to/downloaded/sources_ .
 IntelliJ will automatically make use of Maven to import the project since it will detect a `pom.xml` file in the base directory.
@@ -110,8 +118,7 @@ IntelliJ will automatically make use of Maven to import the project since it wil
 If you have not obtained the sources already, you can use the Git integration in IntelliJ IDEA 12. Click on _Check out from Version Control -> Github_.
 After entering your Github credentials, you will then be prompted to enter the git repository URL along with the location that you want to check out the source code to. 
 
-.TODO InformalFigure image title empty
-image::[]
+image::../images/idea-12-git.png[]
 
 ====== Compiler settings
 
@@ -122,8 +129,7 @@ This processing can be done directly from IntelliJ as part of compilation but it
 . Add an annotation processor with "Processor FQN Name" as `org.jboss.logging.LoggingToolsProcessor` 
 . In "Processed Modules", add all modules except the root and the parent modules. 
 
-.TODO Gliffy image title empty
-image::[]
+image::../images/idea-12-annotations.png[]
 
 TIP: There can sometimes be issues with the generated logging classes on rebuild (particularly when you switch Git branches).
 If these issues do crop up then simply run `mvn clean install -DskipTests` on the command line to clear them out. 
@@ -134,20 +140,18 @@ TIP: If you are running a multi-core environment (e.g. quad-core or above) then 
 You will need to download the Scala plugin for IntelliJ as well. This can be done in _Project Settings -> Plugins -> Browse Repositories_.
 Then run a search for 'Scala'. JetBrains themselves are the vendor for this plugin and more information on it can be found link:$$http://confluence.jetbrains.net/display/SCA/Scala+Plugin+for+IntelliJ+IDEA$$[here] . 
 
-.TODO InformalFigure image title empty
-image::[]
+image::../images/idea-12-scala.png[]
 
 You will then have to configure the Scala plugin to use the Scala compiler for Scala files and the Java compiler for Java files. You can do this by going into _Settings -> Compiler -> Scala Compiler_ . Be sure to add the Scala compiler bundle as shown in the screenshot below. 
 
-.TODO InformalFigure image title empty
-image::[]
+image::../images/idea-12-scala2.png[]
 
 ====== Code Style
 Download the code style JAR file from link:https://github.com/infinispan/infinispan/blob/master/ide-settings/intellij/IntelliJ_IDEA_Code_Style.jar?raw=true[here] and import this into IntelliJ IDEA.
 
-=== Building Infinispan
+=== Builds
 Infinispan uses link:$$http://maven.apache.org/$$[Maven] for builds. Make sure you have Maven 3 installed, and properly configured.
-For more information, read link:$$https://docs.jboss.org/author/pages/viewpage.action?pageId=4784481$$[the Maven chapter]. 
+For more information, read <<_building_infinispan,the Maven chapter>>. 
 
 ==== Continuous Integration
 Infinispan uses link:$$http://www.jetbrains.com/teamcity$$[TeamCity] for continuous integration.
@@ -178,7 +182,7 @@ It is recommended that you use a spellchecker plugin for your IDE.
 
 ==== Check-in comments
 
-Please ensure any commit comments use link:$$https://docs.jboss.org/author/pages/viewpage.action?pageId=68355224_InfinispanandGitHub-Comments$$[this format] if related to a task or issue in JIRA.
+Please ensure any commit comments use <<_comments, this format>> if related to a task or issue in JIRA.
 This helps JIRA pick out these checkins and display them on the issue, making it very useful for back/forward porting fixes.
 If your comment does not follow this format, your commit may not be merged into upstream. 
 

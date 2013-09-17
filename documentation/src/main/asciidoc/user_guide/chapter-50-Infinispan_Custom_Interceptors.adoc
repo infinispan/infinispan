@@ -1,4 +1,5 @@
-==  Infinispan Custom Interceptors
+[[_custom_interceptors_chapter]]
+== Custom Interceptors
 It is possible to add custom interceptors to Infinispan, both declaratively and programatically. Custom interceptors are an way of extending Infinispan by being able to influence or respond to any modifications to cache. Example of such modifications are: elements are added/removed/updated or transactions are committed. For a detailed list refer to link:$$http://docs.jboss.org/infinispan/4.0/apidocs/org/infinispan/interceptors/base/CommandInterceptor.html$$[CommandInterceptor] API. 
 
 === Adding custom interceptors declaratively

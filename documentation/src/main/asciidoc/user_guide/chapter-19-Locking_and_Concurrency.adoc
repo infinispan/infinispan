@@ -42,7 +42,7 @@ Lock striping entails the use of a fixed-size, shared collection of locks for th
 
 The alternative is to disable lock striping - which would mean a _new_ lock is created per entry.  This approach _may_ give you greater concurrent throughput, but it will be at the cost of additional memory usage, garbage collection churn, etc. 
 
-.Default lock stripping settings
+.Default lock striping settings
 IMPORTANT: From Infinispan 5.0, lock striping is disabled by default, due to potential deadlocks that can happen if locks for different keys end up in the same lock stripe. Previously, in Infinispan 4.x lock striping used to be enabled by default.
 
 The size of the shared lock collection used by lock striping can be tuned using the `concurrencyLevel` attribute of the link:$$http://docs.jboss.org/infinispan/5.1/configdocs/urn_infinispan_config_5.1/complexType/configuration.locking.html$$[`<locking />`] configuration element. 
@@ -98,23 +98,19 @@ Having this enabled would make the number of remote locks acquired to be always 
 Following diagrams are intended to explain better this option.
 All diagrams represent an cluster having 5 nodes, with `numOwners` set to 2.
 
-
-image::[]
+image::../images/numOwners.png[]
 
 Above diagram shows the situation where eagerLockSingleNode=false (default configuration). On each lock request, numOwners remote calls are performed (in our example 2).
 
-
-image::[]
+image::../images/oneOwner.png[]
 
 Above diagram shows how lock on the same key are acquired when eagerLockSingleNode=true. The number of remote calls being performed is always 1, disregarding numOwners values (it can actually be 0, as we'll see later on).
 
 In this scenario, if the lock owner fails (Node_C) then the transaction that holds the lock, which originated on Node_A is marked for rollback.
 
-Combining eagerLockSingleNode with the link:$$https://docs.jboss.org/author/pages/viewpage.action?pageId=3737123$$[KeyAffinityService] can bring some interesting advantages. The next diagram shows this: 
+Combining eagerLockSingleNode with the <<_key_affinity_service, KeyAffinityService>> can bring some interesting advantages. The next diagram shows this: 
 
- 
-.TODO InformalFigure image title empty
-image::[]
+image::../images/key_affinity.png[]
 
 By using a KeyAffinityService one can generate keys that would always map to the local node. If eagerLockSingleNode=true, then the remote lock acquisition happens locally: this way one can benefit from eager locking semantics and having the same performance as non eager locking. The optimisation is affected by cluster topology changes, so keys might get relocated. But for clusters where topology changes are rather rare this can bring  a lot of value. 
 

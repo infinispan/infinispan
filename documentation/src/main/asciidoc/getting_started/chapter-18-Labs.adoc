@@ -848,7 +848,7 @@ Topics discussed include:
 ----
 
 
-*  Run mvn clean package 
+*  Run `mvn clean package`
 
 
 *  Deploy the app using deploy lab1/target/lab1.war --server-groups=main-server-group 
@@ -857,15 +857,10 @@ Topics discussed include:
 *  Explain we are using the JBoss AS 7 built in example data source for H2 - configuration found in domain.xml . 
 
 
-* Vist a node or two to setup some caches and data
+* Visit a node or two to setup some caches and data
 
 
-*  Explain we are using the h2console.war. Needed a couple of changes to make it run, documentation coming soon 
-.TODO Gliffy image title empty
-image::[]
-
- 
-
+*  Explain we are using the `h2console.war`. Needed a couple of changes to make it run, documentation coming soon 
 
 *  Deploy it using deploy h2console.war --server-groups=main-server-group - each node in the cluster owns some data, each h2 database will back that up 
 

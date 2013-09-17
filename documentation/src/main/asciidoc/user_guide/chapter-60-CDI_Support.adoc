@@ -291,7 +291,7 @@ public class Config {
 
 === Use JCache caching annotations
 
-TIP: There is now a separate module for JSR 107 (JCACHE) integration, including API.  See link:https://docs.jboss.org/author/display/ISPN/Using+Infinispan+as+a+JCache+provider[this chapter] for details.
+TIP: There is now a separate module for JSR 107 (JCACHE) integration, including API.  See <<_using_infinispan_as_a_jsr107_jcache_provider, this chapter>> for details.
 
 The infinispan-cdi module provides a partial support of JCache caching annotations.
 These annotations provide a simple way to handle common use cases.

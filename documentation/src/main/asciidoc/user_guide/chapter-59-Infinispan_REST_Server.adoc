@@ -6,17 +6,16 @@ This application is delivered (currently) as a link:http://en.wikipedia.org/wiki
 Out of the box, Infinispan will create and use a new LOCAL mode cache. To set a custom configuration:
 
 .  Unzip the REST WAR file (or use an link:$$http://community.jboss.org/docs/DOC-9719$$[exploded] deployment) 
-.  Create an Infinispan link:$$https://docs.jboss.org/author/pages/viewpage.action?pageId=3737143$$[configuration XML file] and name this infinispan.xml 
+.  Create an Infinispan configuration XML file and name this `infinispan.xml`
 .  Place this file in infinispan-server-rest.war/WEB-INF/classes 
 
 Alternatively, you could:
 
 .  Unzip the REST WAR file (or use an link:$$http://community.jboss.org/docs/DOC-9719$$[exploded] deployment) 
-.  Create an Infinispan link:$$https://docs.jboss.org/author/pages/viewpage.action?pageId=3737143$$[configuration XML file] , call it whatever you want and place it wherever you want 
-.  Edit infinispan-server-rest.war/WEB-INF/web.xml and look for the infinispan.config init-param. Change the value of this init-param to the full path to your Infinispan configuration. 
+.  Create an Infinispan configuration XML file, call it whatever you want and place it wherever you want 
+.  Edit `infinispan-server-rest.war/WEB-INF/web.xml` and look for the `infinispan.config` init-param. Change the value of this init-param to the full path to your Infinispan configuration. 
 
-.TODO InformalFigure image title empty
-image::[]
+image:../images/WebXmlInfinispanConfig.png[]
 
 Please note that the REST server only allows interaction with either the default cache (named `___defaultcache`) or one of the named caches in the configuration file. This is because the REST server starts the default and pre-defined caches on startup in order to provide consistent behavior. 
 
@@ -29,7 +28,7 @@ HTTP PUT and POST methods are used to place data in the cache, with URLs to addr
 
 ===== Putting data in
 ====== `PUT /{cacheName}/{cacheKey}`
-A PUT request of the above URL form will place the payload (body) in the given cache, with the given key (the named cache must exist on the server). For example link:$$http://someserver/hr/payRoll/3$$[] (in which case "hr" is the cache name, and "payRoll/3" is the key). Any existing data will be replaced, and Time-To-Live and Last-Modified values etc will updated (if applicable). 
+A PUT request of the above URL form will place the payload (body) in the given cache, with the given key (the named cache must exist on the server). For example `http://someserver/hr/payRoll/3` (in which case `hr` is the cache name, and `payRoll/3` is the key). Any existing data will be replaced, and Time-To-Live and Last-Modified values etc will updated (if applicable). 
 
 ====== `POST /{cacheName}/{cacheKey}`
 Exactly the same as PUT, only if a value in a cache/key already exists, it will return a Http CONFLICT status (and the content will not be updated). 

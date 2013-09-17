@@ -1,5 +1,5 @@
 ==  Example with Scala
-This article shows how to use Infinispan with link:$$http://www.scala-lang.org/$$[Scala language] . It uses the same commands and configurations used in the link:$$https://docs.jboss.org/author/pages/viewpage.action?pageId=3736106$$[Groovy edition of interactive tutorial] . For more details about the scenarios and steps please visit about page since here will will only focus on Scala compatibility. 
+This article shows how to use Infinispan with link:$$http://www.scala-lang.org/$$[Scala language] . It uses the same commands and configurations used in the <<_example_with_groovy, Example with Groovy>>. For more details about the scenarios and steps please visit about page since here will will only focus on Scala compatibility. 
 
 === Environment
 Preparing the environment is almost similar to one described here, but with a minor difference that unlike Groovy which uses _$$~/.groovy/lib$$_ folder to extend initial classpath, we will use classic _CLASSPATH_ environment variable with Scala. Another issue is that with the recent edition of Infinispan core jar file is in the root folder of $INIFINISPAN_HOME, hence here a sample bash script to prepare CLASSPATH for our demo: 
@@ -12,7 +12,65 @@ export CLASSPATH=$CLASSPATH:$INFINISPAN_HOME/infinispan-core.jar
 export CLASSPATH=$CLASSPATH:[Path to folder containing sample-configurations.xml file]
 ----
 
-Download `sample-configurations.xml`  file from link:$$https://docs.jboss.org/author/download/attachments/3737125/sample-configurations.xml?version=1&amp;modificationDate=1308852872000$$[here] . 
+.sample-configurations.xml
+[source,xml]
+----
+<?xml version="1.0" encoding="UTF-8"?>
+
+<infinispan xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns="urn:infinispan:config:4.0">
+
+   <!-- *************************** -->
+   <!-- System-wide global settings -->
+   <!-- *************************** -->
+
+	<global>
+   		<shutdown hookBehavior="DEFAULT"/>
+	</global>
+
+   <!-- ************************************** -->
+   <!-- Individually configured "named" caches -->
+   <!-- ************************************** -->
+
+	<namedCache name="Local"/>
+	
+   	<namedCache name="LocalTX">
+		<transaction transactionManagerLookupClass="org.infinispan.transaction.lookup.DummyTransactionManagerLookup"/>
+	</namedCache>
+	
+	<namedCache name="CacheStore">
+		<loaders passivation="false" shared="false" preload="true">
+		   <loader class="org.infinispan.loaders.file.FileCacheStore" fetchPersistentState="true"
+		           ignoreModifications="false" purgeOnStartup="false">
+		      <properties>
+		         <property name="location" value="/tmp"/>
+		      </properties>
+		   </loader>
+		</loaders>
+   	</namedCache>
+
+   <namedCache name="Eviction">
+      <eviction wakeUpInterval="500" maxEntries="2" strategy="FIFO"/>
+   </namedCache>
+   <namedCache name="CacheStoreEviction">
+		<loaders passivation="false" shared="false" preload="true">
+		   <loader class="org.infinispan.loaders.file.FileCacheStore" fetchPersistentState="true"
+		           ignoreModifications="false" purgeOnStartup="false">
+		      <properties>
+		         <property name="location" value="/tmp"/>
+		      </properties>
+		   </loader>
+		</loaders>
+      <eviction wakeUpInterval="500" maxEntries="2" strategy="FIFO"/>
+   </namedCache>
+   <namedCache name="ReplicatedTX">
+  	  <clustering mode="replication">
+         <sync replTimeout="20000"/>
+         <stateRetrieval timeout="20000" fetchInMemoryState="true"/>
+      </clustering>
+   </namedCache>
+</infinispan>
+----
+
 
 === Testing Setup
 The following code shows how to start an Scala console that will allow commands to be entered interactively. To verify that the Infinispan classes have been imported correctly, an import for all Infinispan classes will be attempted and then a request will be made to print the version of Infinispan:

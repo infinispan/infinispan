@@ -129,7 +129,7 @@ efficient payloads and stream caching. This provides much better performance
 than standard Java serialization. 
 
 .More resources
-* link:https://docs.jboss.org/author/display/ISPN/Plugging+Infinispan+With+User+Defined+Externalizers[Plug your own Externalizer implementation] into Infinispan 
+* link:../user_guide/user_guide.html#_plugging_infinispan_with_user_defined_externalizers[Plug your own Externalizer implementation] into Infinispan 
 
 === Hot Rod
 _Hot Rod_ is the name of Infinispan's custom TCP client/server protocol which
@@ -147,10 +147,9 @@ sending the cluster topology to clients, and the clients using the same
 consistent hash as the servers.
 
 .More resources
-* Information about the link:$$https://docs.jboss.org/author/pages/viewpage.action?pageId=5931578$$[first version]
-of the protocol 
-* link:$$https://docs.jboss.org/author/pages/viewpage.action?pageId=3737146$$[Starting a Hot Rod server] 
-* link:$$https://docs.jboss.org/author/pages/viewpage.action?pageId=3737142$$[Hot Rod client libraries] 
+* Information about link:../user_guide/user_guide.html#_hot_rod_protocol[the protocol]
+* link:../user_guide/user_guide.html#_using_hot_rod_server[Starting a Hot Rod server] 
+* link:http://www.infinispan.org/hotrod-clients/[Hot Rod client libraries] 
 
 === In-memory data grid
 An in-memory data grid (IMDG) is a special type of data grid. In an IMDG, each
@@ -205,7 +204,7 @@ clustering capabilities, it can offer data failover capabilities not present
 in original Memcached systems.
 
 .More resources
-* link:https://docs.jboss.org/author/display/ISPN/Memcached+Server[Infinispan's Memcached Server]
+* link:../user_guide/user_guide.html#_using_infinispan_memcached_server[Infinispan's Memcached Server]
 * link:http://memcached.org[The memcached website]
 
 === Multiversion Concurrency Control (MVCC)
@@ -321,9 +320,7 @@ Infinispan's ReST server offers a ReSTful API based on these HTTP methods, and
  allow data to be stored, retrieved and deleted.
 
 .More resources
-* link:https://docs.jboss.org/author/display/ISPN/Infinispan+REST+Server[Starting an Infinispan REST server]
-* link:https://docs.jboss.org/author/display/ISPN/Accessing+data+in+Infinispan+via+RESTful+interface[The RESTful API]
-* link:https://docs.jboss.org/author/display/ISPN/Infinispan+Server+Modules[Differences between the REST server and other servers]
+* link:../user_guide/user_guide.html#_infinispan_rest_server[The Infinispan REST Server]
 
 === Split brain
 A colloquial term for a _network partition_.  See _network partition_ for more details. 
@@ -344,7 +341,7 @@ that updates to the cache store are not performed in the client thread.
 An alternative cache store update mode is _write-through_. 
 
 .More resources
-* link:$$https://docs.jboss.org/author/pages/viewpage.action?pageId=3737144$$[Infinispan User guide] 
+* link:../user_guide/user_guide.html#_write_through_and_write_behind_caching[Infinispan User guide] 
 
 === Write skew
 In a write skew anomaly, two transactions (T1 and T2) concurrently read an
@@ -368,7 +365,7 @@ means that updates to the cache store are done in the client thread.
 An alternative mode in which cache stores can be updated is _write-behind_. 
 
 .More resources
-* link:$$https://docs.jboss.org/author/pages/viewpage.action?pageId=3737144$$[Infinispan User guide] 
+* link:../user_guide/user_guide.html#_write_through_and_write_behind_caching[Infinispan User guide] 
 
 === XA resource
 An XA resource is a participant in an XA transaction (also known as a

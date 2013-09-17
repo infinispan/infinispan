@@ -163,7 +163,7 @@ GlobalConfiguration globalConfig = new GlobalConfigurationBuilder()
 
 ----
 
-Further options at the link:$$https://docs.jboss.org/author/pages/viewpage.action?pageId=3737050$$[global JMX statistics level] allows you for example to configure the cache manager name which comes handy when you have multiple cache managers running on the same system, or how to locate the JMX MBean Server: 
+Further options at the global JMX statistics level allows you to configure the cache manager name which comes handy when you have multiple cache managers running on the same system, or how to locate the JMX MBean Server: 
 
 [source,java]
 ----
@@ -187,7 +187,7 @@ GlobalConfiguration globalConfig = new GlobalConfigurationBuilder()
 
 ----
 
-You can not only configure global, cache manager level, options, but you can also configure cache level options such as the link:$$https://docs.jboss.org/author/pages/viewpage.action?pageId=3737115$$[cluster mode] : 
+You can not only configure global, cache manager level, options, but you can also configure cache level options such as the <<_cluster_mode, cluster mode>>: 
 
 [source,java]
 ----
@@ -201,7 +201,7 @@ Configuration config = new ConfigurationBuilder()
 
 ----
 
-Or you can configure link:$$https://docs.jboss.org/author/pages/viewpage.action?pageId=3737139$$[eviction/expiration settings] to: 
+Or you can configure <<_eviction, eviction and expiration settings>>: 
 
 [source,java]
 ----
@@ -214,7 +214,7 @@ Configuration config = new ConfigurationBuilder()
 
 ----
 
-An application might also want to interact with an Infinispan cache within the boundaries of JTA and to do that you need to configure the link:$$https://docs.jboss.org/author/pages/viewpage.action?pageId=3737108$$[transaction layer] and optionally tweak the link:$$https://docs.jboss.org/author/pages/viewpage.action?pageId=3737096$$[locking settings] . When interacting with transactional caches, you might want to link:$$https://docs.jboss.org/author/pages/viewpage.action?pageId=3737124$$[enable recovery] to deal with transactions that finished with an heuristic outcome and if you do that, you will often want to enable JMX management and statistics gathering too: 
+An application might also want to interact with an Infinispan cache within the boundaries of JTA and to do that you need to configure the transaction layer and optionally tweak the locking settings. When interacting with transactional caches, you might want to enable recovery to deal with transactions that finished with an heuristic outcome and if you do that, you will often want to enable JMX management and statistics gathering too: 
 
 [source,java]
 ----
@@ -242,7 +242,7 @@ Configuration config = new ConfigurationBuilder()
 
 ==== Advanced programmatic configuration
 
-The fluent configuration can also be used to configure more advanced or exotic options, such as link:$$https://docs.jboss.org/author/pages/viewpage.action?pageId=3737151$$[advanced externalizers] : 
+The fluent configuration can also be used to configure more advanced or exotic options, such as advanced externalizers: 
 
 [source,java]
 ----
@@ -254,7 +254,7 @@ GlobalConfiguration globalConfig = new GlobalConfigurationBuilder()
 
 ----
 
-Or, add link:$$https://docs.jboss.org/author/pages/viewpage.action?pageId=3737149$$[custom interceptors] : 
+Or, add custom interceptors: 
 
 [source,java]
 ----

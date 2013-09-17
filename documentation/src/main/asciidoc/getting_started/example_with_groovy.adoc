@@ -1,5 +1,5 @@
 ==  Example with Groovy
-The idea by this tutorial is to give an introduction in the use of the link:$$http://docs.jboss.org/infinispan/4.0/apidocs/$$[Infinispan API] and its configuration file. As trying to do it in a more interactive fashion, the tutorial makes use of the link:$$http://groovy.codehaus.org/$$[Groovy] dynamic language that will allow to interact with the API by using a console. So your first task should be to create the necessary environment to execute this tutorial, you can find the instructions link:$$https://docs.jboss.org/author/pages/viewpage.action?pageId=3737125$$[here] . 
+The idea by this tutorial is to give an introduction in the use of the link:$$http://docs.jboss.org/infinispan/4.0/apidocs/$$[Infinispan API] and its configuration file. As trying to do it in a more interactive fashion, the tutorial makes use of the link:$$http://groovy.codehaus.org/$$[Groovy] dynamic language that will allow to interact with the API by using a console.
 
 The tutorial will start by showing the basic usage of the link:$$http://docs.jboss.org/infinispan/4.0/apidocs/$$[Infinispan API] and a use of a simple cache configuration, then it will walk through different configuration scenarios and use cases. By the end of the tutorial you should have a clear understanding of the use the Infinispan API and some of the various configuration options. 
 
@@ -14,8 +14,6 @@ The scenarios and use cases shown are:
 * Cache with REPL_SYNC &amp; transaction management configuration.
 
 All the sample configurations are in the sample-configurations.xml file attached to this tutorial, check the link:$$http://docs.jboss.org/infinispan/4.0/apidocs/$$[environment configuration] to know how to make use of this configuration file. Lets get started: 
-
-NOTE: This document is part of the link:$$https://docs.jboss.org/author/pages/viewpage.action?pageId=3736106$$[Infinispan Interactive Tutorial] 
 
 === Introduction
 
