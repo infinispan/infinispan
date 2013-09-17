@@ -3,7 +3,6 @@ package org.infinispan.atomic;
 import net.jcip.annotations.NotThreadSafe;
 import org.infinispan.AdvancedCache;
 import org.infinispan.Cache;
-import org.infinispan.context.FlagContainer;
 import org.infinispan.commons.marshall.AbstractExternalizer;
 import org.infinispan.commons.util.FastCopyHashMap;
 import org.infinispan.commons.util.Util;
