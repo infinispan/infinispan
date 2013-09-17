@@ -225,7 +225,7 @@ public class GridFileTest extends SingleCacheManagerTest {
       writeToFile("delete.txt", "delete me", 100);
 
       GridFile file = (GridFile) fs.getFile("delete.txt");
-      boolean deleted = file.delete(true);
+      boolean deleted = file.delete();
       assertTrue(deleted);
       assertFalse(file.exists());
       assertEquals(numberOfChunksInCache(), 0);

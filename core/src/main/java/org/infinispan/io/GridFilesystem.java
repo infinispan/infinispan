@@ -1,9 +1,7 @@
 package org.infinispan.io;
 
-import org.infinispan.AdvancedCache;
 import org.infinispan.Cache;
 import org.infinispan.commons.util.Util;
-import org.infinispan.context.Flag;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
@@ -12,9 +10,6 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
-
-import static org.infinispan.context.Flag.FORCE_ASYNCHRONOUS;
-import static org.infinispan.context.Flag.FORCE_SYNCHRONOUS;
 
 /**
  * Entry point for GridFile and GridInputStream / GridOutputStream
@@ -238,22 +233,18 @@ public class GridFilesystem {
    }
 
    /**
-    * Removes the file denoted by absolutePath. This operation can either be executed synchronously or asynchronously.
+    * Removes the file denoted by absolutePath.
     * @param absolutePath the absolute path of the file to remove
-    * @param synchronous if true, the method will return only after the file has actually been removed;
-    *                    if false, the method will return immediately and the file will be removed asynchronously.
     */
-   void remove(String absolutePath, boolean synchronous) {
+   void remove(String absolutePath) {
       if (absolutePath == null)
          return;
       GridFile.Metadata md = metadata.get(absolutePath);
       if (md == null)
          return;
 
-      Flag flag = synchronous ? FORCE_SYNCHRONOUS : FORCE_ASYNCHRONOUS;
-      AdvancedCache<String,byte[]> advancedCache = data.getAdvancedCache().withFlags(flag);
       int numChunks = md.getLength() / md.getChunkSize() + 1;
       for (int i = 0; i < numChunks; i++)
-         advancedCache.remove(FileChunkMapper.getChunkKey(absolutePath, i));
+         data.remove(FileChunkMapper.getChunkKey(absolutePath, i));
    }
 }
