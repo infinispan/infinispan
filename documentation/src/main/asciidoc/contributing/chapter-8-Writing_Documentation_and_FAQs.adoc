@@ -1,11 +1,4 @@
-[[sid-68355157_ContributingtoInfinispan-WritingDocumentationandFAQs]]
-
-==  Writing Documentation and FAQs
-
-[[sid-68355157_ContributingtoInfinispan-Introduction]]
-
-
-=== Introduction
+== Writing Documentation and FAQs
 
 Infinispan uses this Confluence instance to store documentation and FAQs. The documentation is organised into:
 
