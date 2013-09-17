@@ -570,7 +570,7 @@ public class Parser52 implements ConfigurationParser {
 
    private void parseClusterLoader(XMLExtendedStreamReader reader, ConfigurationBuilderHolder holder) throws XMLStreamException {
       ConfigurationBuilder builder = holder.getCurrentConfigurationBuilder();
-      ClusterStoreConfigurationBuilder cclb = builder.persistence().addClusterStore();
+      ClusterLoaderConfigurationBuilder cclb = builder.persistence().addClusterLoader();
       for (int i = 0; i < reader.getAttributeCount(); i++) {
          ParseUtils.requireNoNamespaceAttribute(reader, i);
          String value = replaceProperties(reader.getAttributeValue(i));
@@ -650,7 +650,7 @@ public class Parser52 implements ConfigurationParser {
     * This method is public static so that it can be reused by custom cache store/loader configuration parsers
     */
    public static void parseCommonLoaderAttributes(XMLExtendedStreamReader reader, int i,
-                                                  ClusterStoreConfigurationBuilder builder) throws XMLStreamException {
+                                                  ClusterLoaderConfigurationBuilder builder) throws XMLStreamException {
       throw ParseUtils.unexpectedAttribute(reader, i);
    }
 
@@ -738,7 +738,7 @@ public class Parser52 implements ConfigurationParser {
                scb.ignoreModifications(ignoreModifications);
             parseStoreChildren(reader, scb, builder.persistence());
          } else if (loader instanceof ClusterLoader) {
-            ClusterStoreConfigurationBuilder cclb = builder.persistence().addClusterStore();
+            ClusterLoaderConfigurationBuilder cclb = builder.persistence().addClusterLoader();
             parseLoaderChildren(reader, cclb);
          } else if (loader instanceof CacheLoader) {
             Adaptor52xStoreConfigurationBuilder scb = builder.persistence().addStore(Adaptor52xStoreConfigurationBuilder.class);
@@ -810,7 +810,7 @@ public class Parser52 implements ConfigurationParser {
                scb.ignoreModifications(ignoreModifications);
             parseStoreChildren(reader, scb, builder.persistence());
          } else if (loader instanceof ClusterLoader) {
-            ClusterStoreConfigurationBuilder cclb = builder.persistence().addClusterStore();
+            ClusterLoaderConfigurationBuilder cclb = builder.persistence().addClusterLoader();
             parseLoaderChildren(reader, cclb);
          } else if (loader instanceof CacheLoader) {
             Adaptor52xStoreConfigurationBuilder scb = builder.persistence().addStore(Adaptor52xStoreConfigurationBuilder.class);

@@ -3,26 +3,24 @@
          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
    <parent>
-      <artifactId>compatibility52x</artifactId>
+      <artifactId>compatibility52x-parent</artifactId>
       <groupId>org.infinispan</groupId>
       <version>6.0.0-SNAPSHOT</version>
    </parent>
    <modelVersion>4.0.0</modelVersion>
 
-   <artifactId>adaptor52x</artifactId>
+   <artifactId>infinispan-adaptor52x</artifactId>
 
    <dependencies>
       <dependency>
          <groupId>org.infinispan</groupId>
          <artifactId>infinispan-custom52x-store</artifactId>
          <scope>test</scope>
-         <version>6.0.0-SNAPSHOT</version>
       </dependency>
 
       <dependency>
          <groupId>${project.groupId}</groupId>
          <artifactId>infinispan-core</artifactId>
-         <version>6.0.0-SNAPSHOT</version>
       </dependency>
 
       <dependency>
@@ -30,13 +28,11 @@
          <artifactId>infinispan-core</artifactId>
          <type>test-jar</type>
          <scope>test</scope>
-         <version>6.0.0-SNAPSHOT</version>
       </dependency>
 
       <dependency>
          <groupId>${project.groupId}</groupId>
          <artifactId>infinispan-cachestore-jdbc</artifactId>
-         <version>6.0.0-SNAPSHOT</version>
       </dependency>
 
       <dependency>
