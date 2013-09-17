@@ -1,0 +1,20 @@
+== API, Commons and Core
+In order to provide proper separation between public APIs, common utilities and the actual implementation of Infinispan,
+these are split into 3 Maven modules: `infinispan-api`, `infinispan-commons` and `infinispan-core`.
+This separation also makes sure that modules, such as the remote clients, don't have to depend on infinispan-core and its transitive dependencies. 
+The following paragraphs describe the role of each of these modules and give indication as to what goes where.
+
+=== API
+The `infinispan-api` module should only contain the public interfaces which can be used in any context (local, remote, etc).
+Any additions and/or modifications to this module _must_ be discussed and approved by the core team beforehand.
+Ideally it should not contain any concrete classes: rare exceptions may be made for small, self-contained classes which need to be referenced from the API interfaces and for which the introduction of an interface would be deemed cumbersome.
+
+=== Commons
+The `infinispan-commons` module contains utility classes which can be reused across other modules.
+Classes in infinispan-commons should be self-contained and not pull in any dependencies (apart from the existing `jboss-logging` and `infinispan-api`).
+They should also make no reference to configuration aspects specific to a particular environment.
+
+=== Core
+The `infinispan-core` module contains the actual implementation used for local/embedded mode.
+When adding new functionality to the APIs, it is generally safe to start by putting them in `infinispan-core` and promoting them to `infinispan-api` only when it is deemed mature enough to do so and it makes sense across the various use-cases.
+

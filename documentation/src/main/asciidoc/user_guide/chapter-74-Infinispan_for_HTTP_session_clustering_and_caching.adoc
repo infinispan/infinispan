@@ -1,0 +1,21 @@
+== Infinispan for HTTP session clustering and caching
+One popular use case for data grids is to cache and cluster HTTP sessions in servlet containers.
+This provides servlet containers and Java EE application servers with the following features:
+
+* Fast access to HTTP sessions, as they're cached in memory
+* Distribution of HTTP sessions across a cluster.  Allows for failover and high availability between servlet container or app server nodes.
+
+=== JBoss AS and WildFly
+link:$$http://www.jboss.org/jbossas$$[JBoss AS] and link:$$http://www.wildfly.org$$[WildFly] already use Infinispan for HTTP session caching and clustering. 
+
+=== Jetty
+link:$$http://www.eclipse.org/jetty$$[Jetty] can be set up to use Infinispan for HTTP session management, using link:$$https://code.google.com/p/infinispan-http-session-manager/wiki/Home$$[this adapter] . 
+
+=== Other application servers and servlet containers
+Creating plugins for other servlet containers and app servers should be easy enough, following the pattern used by JBossAS/WildFly/Jetty above.  Please see the open tasks below, contributions accepted!
+
+*  link:$$https://issues.jboss.org/browse/ISPN-462$$[ISPN-462 HTTP and EJB session management for WebSphere] 
+*  link:$$https://issues.jboss.org/browse/ISPN-463$$[ISPN-463 HTTP and EJB session management for WebLogic] 
+*  link:$$https://issues.jboss.org/browse/ISPN-464$$[ISPN-464 HTTP and EJB session management for Glassfish] 
+*  link:$$https://issues.jboss.org/browse/ISPN-465$$[ISPN-465 HTTP session management for Tomcat] 
+

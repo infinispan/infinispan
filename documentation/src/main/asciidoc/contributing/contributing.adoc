@@ -1,0 +1,19 @@
+= Contributing to Infinispan
+Manik Surtani, Mircea Markus, Galder Zamarreño, Pete Muir, and others from the Infinispan community
+:toc2:
+:icons: font
+:toclevels: 2
+:numbered:
+
+Feel like contributing to Infinispan?  This guide will help you set up your
+environment, walk you through best practices, and help you debug, improve
+and add features to Infinispan.
+
+include::chapter-1-The_Basics.adoc[]
+include::chapter-2-Source_Control.adoc[]
+include::chapter-3-Building_Infinispan.adoc[]
+include::chapter-4-API_Commons_and_Core.adoc[]
+include::chapter-5-Running_and_Writing_Tests.adoc[]
+include::chapter-6-Helping_Others_Out.adoc[]
+include::chapter-7-Adding_Configuration.adoc[]
+include::chapter-8-Writing_Documentation_and_FAQs.adoc[]

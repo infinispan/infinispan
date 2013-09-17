@@ -1,0 +1,244 @@
+== Writing Documentation and FAQs
+Infinispan makes use of link:http://www.methods.co.nz/asciidoc/[AsciiDoc] as a 
+lightweight markup language to write all documentation.
+AsciiDoc is quick and easy to write, easy to learn, and there are a number of
+ways to render AsciiDoc, including HTML5, PDF and DocBook.
+
+.AsciiDoc resources
+* link:http://www.methods.co.nz/asciidoc/[AsciiDoc website]
+* link:http://asciidoctor.org/docs/asciidoc-syntax-quick-reference/[Quick Syntax Reference]
+
+=== Practicalities
+==== Style guide
+link:http://asciidoctor.org/[AsciiDoctor] has some excellent resources on authoring
+documentation effectively, including:
+
+* link:http://asciidoctor.org/docs/asciidoc-writers-guide/[Writers' Guide]
+* link:http://asciidoctor.org/docs/asciidoc-recommended-practices/[Style Guide]
+
+==== Editing
+You will want to install the entire AsciiDoctor toolchain on your computer.
+
+* link:http://asciidoctor.org/docs/install-toolchain/#installing-or-updating-asciidoctor[Installing AsciiDoctor]
+** link:http://asciidoctor.org/docs/install-asciidoctor-macosx/[On a Mac]
+* link:http://asciidoctor.org/docs/install-toolchain/#text-editors-and-syntax-highlighting[Text editors]
+
+==== Linefeed
+A soft limit of 80 characters is recommended.
+At the end of each sentence, go to the next line.
+Consider going to the next line for each new clause,
+in particular if the sentence would go beyond 80 characters.
+But do not obsess: if a multi-clause sentence is below 80 characters,
+don't split it to limit the _verticality_ of the document.
+For long links, tend to go to the next line.
+
+The 80 characters limit is used because GitHub diffs are around 90 chars long.
+
+For more information, read
+http://emmanuelbernard.com/blog/2013/08/08/one-line-per-idea/[this blog post]
+
+==== End of file
+If you intend your file to be included in another file (aggregated),
+such as the technique used in the User Guide, then you *must* end
+the file with two blank lines.  
+
+WARNING: Failure to do so _will_ mess up formatting and layout.
+
+==== Diagrams
+As far as possible, use OmniGraffle for diagrams.
+Please store diagram sources if possible as well, XML files in `src/main/omnigraffle`.
+Export the omnigraffle files as `png` with a dot per inch of 72. This will create
+a file of the right size for the web.
+
+Binary images should be stored under `documentation/src/main/asciidoc/${your_document}/images`
+
+==== Live editing
+Naturally, while editing the docs, you don't want to have to build the entire docs to see your changes.
+A good way to do this is to set up _live previews_ as described
+link:http://asciidoctor.org/docs/editing-asciidoc-with-live-preview/[here].
+
+=== Who can contribute documentation?
+Anyone.  Just fork Infinispan on GitHub, and edit away in the `documents` directory.
+Then submit a _pull request_, just as you would do with any code contributions.
+See the <<_source_control, Source Control>> chapter for more information on this process.
+
+=== Layout
+
+==== What goes where?
+Official documentation - a User Guide, Getting Started Guide, FAQs, guides to contributing, extending 
+and upgrading Infinispan - live in Infinispan's source code repository on GitHub.
+
+Additional documentation - such as for cache stores, Hot Rod clients and modules that live outside
+of Infinispan's core repository - live alongside the code in their respective repositories
+following a similar structure.
+
+In addition, Infinispan maintains a wiki for design documents and the like, on link:community.jboss.org/en/infinispan[this site].
+
+NOTE: Infinispan no longer uses link:https://docs.jboss.org/author/display/ISPN/Home[Confluence] for online documentation.
+
+==== Headers, Page Structure and the Table of Contents
+Each _book_ has its own structure.  Longer books such as the User Guide and the Getting Started Guide may have a 
+table of contents, while shorter books like the guide to extending or upgrading Infinispan may skip this.
+
+===== Table of Contents
+Tables of contents should use the `:toc2:` AsciiDoctor directive at the start of the page.
+
+Each book may choose how many levels deep the TOC should go to, by using the `:toclevels: N` directive, where `1 <= N <= 5`.
+
+===== Headers
+Each book should have a title, along with a section for authors, TOC information, etc.  
+For example, copied from the User Guide:
+
+ = Infinispan User Guide
+ Manik Surtani, Mircea Markus, Galder Zamarreño, Pete Muir, and others from the Infinispan community
+ :toc2:
+ :icons: font
+ :toclevels: 3
+ :numbered:
+
+===== Chapters
+Each chapter thereafter - whether written directly into the book or included via the `include::` directive - 
+should then begin with `==`.  For example, from this very document:
+
+ == Writing Documentation and FAQs
+ Infinispan makes use of link:http://www.methods.co.nz/asciidoc/[AsciiDoc] as a 
+ lightweight markup language to write all documentation.
+
+
+==== Images and other media
+If you are describing the use of a GUI, or showing results of some operation, images embedded in the page
+can bring the documentation to life for the reader. Images can be included via the `image::[]` directive.
+
+See <<_diagrams, this section>> for details on where to store your images.
+
+
+==== Code samples
+link:http://coderay.rubychan.de/[CodeRay] is used for image highlighting.
+Visit the CodeRay site for a list of supported languages.
+Highlighting code is as simple as:
+
+ [source,java]
+ .MyClass.java
+ ----
+ // some Java code
+ ----
+
+TIP: Only include snippets you want to use to demonstrate an idea.
+If you want to share a reusable block of code or a configuration file, consider storing it in GitHub
+as a link:https://gist.github.com/[gist] and linking to it.
+
+==== Versioning
+If you are writing about a feature that has existed from Infinispan 5.0 onwards, there is 
+no need to specify a version that the feature existed from.
+However, if you are writing about a new feature, use a `TIP` callout to specify the version
+it applies to.
+Also, only specify a MINOR version rather than a detailed version.
+
+.A bad version statement
+[Quote]
+====
+_This section talks about a new API in Infinispan, called a WidgetMeister.  The WidgetMeister has the power to rule all widgets in your cluster, and is included in Infinispan from version 6.2.3.Beta2 onwards._
+====
+
+Why is this bad?  A number of reasons.
+
+* It mixes feature detail (what the WidgetMeister does) with versioning (when it was released)
+* It points to a beta version!!
+
+How _should_ this be written?
+
+.A good version statement
+[Quote]
+====
+This section talks about a new API in Infinispan, called a WidgetMeister.  The WidgetMeister has the power to rule all widgets in your cluster.
+
+
+TIP: The WidgetMeister API is new in Infinispan 6.2.x.
+====
+
+=== Voice and grammar guide
+By using a consistent voice throughout the documentation, the Infinispan documentation appears more professional
+The aim is to make it feel to the user like the documentation was written by a single person.
+This can only be completely achieved by regular editing, however in order to make the workload of the editor
+lighter, following these rules will produce a pretty consistent voice.
+
+
+* Never use abbreviations. On the other hand, contractions are fine.
+* Always use the project name "Infinispan". Never abbreviate it, for example, to "ISPN"
+* Always write in the second or third person, never the first (plural or singular forms). Use the second person to emphasize you are giving instructions to the user.
+
+TIP: Naturally, most people write in the first person, and, typically find it the easiest form to write, however without a lot of care it can produce the most "unprofessional" text. Conversely, writing in the third person is trickier, but will produce text that feels well written almost without fail. The first person can be used for emphasis but in general it is recommended to avoid it unless you feel confident!
+
+Writing entirely in the third person can produce quite "dry" text, so it is recommended that you use the second person when you are giving instructions to the user. This could be when you are walking through a sequence of steps they should perform, or could be when you are stating that they _must_ do something in order for them to succeed. 
+
+So, are there any tricks to reformulate a sentence so the first person is not used?
+
+* Use the passive voice. "I recommend" can become "It is recommended". However, extensive use of the can produce boring, dry and indefinite text, so don't do this too much!
+* Change the subject. For example you can change "Here we discuss" to "This section discusses"
+* Use a "chatty" style. Although the use of the first person is avoided, the documentation shouldn't be too dry. Use the second person as needed. Short sentences and good use of punctuation help too!
+* If you define a list, keep the ordering of the list the same whenever you express the list. For example, if you say "In this section you will learn about interceptors, commands and factories" do not go on to say "First, let's discuss factories". This will subconsciously confuse the user
+* You should only capitalize proper nouns only. For example "data grid" is lower case (it's a concept), whilst "Infinispan" is capitalized (it's a project/product name)
+* You should always use American spelling. *Enable a spell checker!*
+* Use the definite article when discussing a specific instance or the indefinite article when describing a generalization of something; generally you omit the article when using a name for a project or product.
+
+
+.Articles used correctly
+[Quote]
+====
+_Infinispan uses **a** logging framework to communicate messages to the user, **the** logging framework used by Infinispan is JBoss Logging_. 
+====
+
+Let's dig into this. 
+. The sentence states that "Infinispan uses logging", and the indefinite article is used - we are not stating which of many possibilities is used.
+. The sentence goes on to discuss the logging framework Infinispan uses, and here the definite article is used, as the specific framework in use is discussed.
+. The sentence is concluded by stating that the logging framework used is called "JBoss Logging", and as this is a product name, no article is used.
+
+This is not a formal or complete description, but is a good rule of thumb.
+
+* Keep the tense the same. It's very easy to slip between the present, past and future tenses, but this produces text that is feels "unnatural" to the reader. 
+
+.Bad tenses
+[Quote]
+====
+Data is collected from Infinispan every hour. Upon analysis the data showed that Infinispan is 2 million times faster than it's nearest competitor.
+====
+
+You may not have noticed, but the phrase starts using the present tense ( _is_ ) and slips into the past tense ( _showed_ ).
+This is clearly not actually the order in which the events happened! 
+
+Of course, if you are actually describing the progression of time, then changing tenses is fine.
+
+.Tenses used correctly
+[Quote]
+====
+In the last section you _were_ shown how to configure Infinispan using XML, and in the next section you _will be_ shown how to configure Infinispan programmatically. 
+====
+
+* If you are telling the user about a procedure they can follow, do be explicit about this, and enumerate the steps clearly
+
+==== Colloquialisms
+Please stay away from colloquialisms at all cost.
+This impacts the professionalism and readability of the documentation.
+The examples below probably need no explanation.
+
+.Bad colloquialisms
+[Quote]
+====
+_You should use the WidgetMeister API for this sort of problem, coz it's the fastest way and its pretty cool._
+====
+[Quote]
+====
+_You've then gotta install the downloaded archive._
+====
+[Quote]
+====
+_If the dload fails, contact the SA who runs the svr._
+====
+
+=== Glossary and FAQs
+When writing a glossary or FAQ entry, you should follow the existing entries as a template. 
+
+* If the entry is commonly referred to using an acronym, then the title should consistent of the fully expanded name, with the acronym in brackets. You can then use the acronym always within the main text body.
+* If you want to refer to other glossary articles using links in the text body, then just link them with no alternative text
+* If you want to make external links (e.g. wikipedia, user guide), then add a bulleted list with title "More resources", and list them there. This clearly indicates to users when they are moving outside of our definitions
+

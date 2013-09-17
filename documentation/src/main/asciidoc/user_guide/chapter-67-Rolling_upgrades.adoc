@@ -1,0 +1,55 @@
+==  Rolling upgrades
+This process is used for  installations making use of Infinispan as a remote grid, via Hot Rod.   This assumes an upgrade of the Infinispan grid, and _not_ the client application. 
+
+In  the following description we will refer to the Source and Target  clusters, where the Source cluster is the old cluster which is currently  in use and the Target cluster is the new cluster to which the data will  be migrated to.
+
+=== Steps
+
+
+.  Start a new cluster ( _Target Cluster_ ) with the new version of Infinispan, using either different network settings or JGroups cluster name so that the old cluster ( _Source Cluster_ ) and the new one don't overlap. 
+
+
+.  For each cache to be migrated, the _Target Cluster_ is configured with a RemoteCacheStore with the following settings: 
+
+
+.  _servers_ should point to the _Source Cluster_ 
+
+
+.  _remoteCacheName_ must coincide with the name of the cache on the _Source Cluster_ 
+
+
+.  _hotRodWrapping_ must be enabled ( _true_ ) 
+
+
+.  Configure clients to point to the _Target Cluster_ instead of the _Source Cluster_ , and one by one, restart each client node.  Gradually, all requests will be handled by the _Target Cluster_ rather than the _Source Cluster_ . The _Target Cluster_ will lazily load data from the _Source Cluster_ on demand via the RemoteCacheStore. 
+
+
+.  Once all connections have switched to using the _Target Cluster_ the keyset on the _Source Cluster_ must be dumped. This can be achieved either via a JMX operation or via the CLI: 
+
+
+.  JMX: invoke the _recordKnownGlobalKeyset_ operation on the _RollingUpgradeManager_ MBean on the _Source Cluster_ for all of the caches that need to be migrated 
+
+
+.  CLI: invoke the _upgrade --dumpkeys_ command on the _Source Cluster_ for all of the caches that need to be migrated (additionally the _--all_ switch can be used to dump all caches in the cluster) 
+
+
+.  At this point the _Target Cluster_ needs to fetch all remaining data from the _Source Cluster_ : 
+
+
+.  JMX: invoke the _synchronizeData_ operation specifying the "hotrod" parameter on the _RollingUpgradeManager_ MBean on the _Target Cluster_ for all of the caches that need to be migrated 
+
+
+.  CLI: invoke the _upgrade --synchronize=hotrod_ command on the _Target Cluster_ for all of the caches that need to be migrated (additionally the _--all_ switch can be used to synchronize all caches in the cluster) 
+
+
+.  Once the above operation is complete, the _RemoteCacheStore_ on the _Target Cluster_ must be disabled as follows: 
+
+
+.  JMX: invoke the _disconnectSource_ operation specifying the "hotrod" parameter on the _RollingUpgradeManager_ MBean on the _Target Cluster_ for all of the caches that have been migrated 
+
+
+.  CLI: invoke the _upgrade --disconnectsource=hotrod_ command on the _Target Cluster_ for all of the caches that have been migrated (additionally the _--all_ switch can be used to disconnect all caches in the cluster) 
+
+
+.  The _Source Cluster_ can be decomissioned now. 
+
