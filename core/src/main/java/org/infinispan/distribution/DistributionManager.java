@@ -22,18 +22,6 @@ import java.util.Set;
 public interface DistributionManager {
 
    /**
-    * Checks whether a key is mapped to the local node.
-    * <p />
-    * <b>Do not use!</b> This API is buggy in that it doesn't take into account changing ownerships and can introduce
-    * race conditions if results are relied upon.  Please use {@link #getLocality(Object)} instead.
-    * @param key key to test
-    * @return true if local, false otherwise.
-    * @deprecated
-    */
-   @Deprecated
-   boolean isLocal(Object key);  //todo [anistor] this has to take an additional parameter that specifies if the lookup is for read or write
-
-   /**
     * Returns the data locality characteristics of a given key.
     * @param key key to test
     * @return a DataLocality that allows you to test whether a key is mapped to the local node or not, and the degree of

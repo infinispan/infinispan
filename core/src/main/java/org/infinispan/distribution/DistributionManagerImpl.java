@@ -58,12 +58,6 @@ public class DistributionManagerImpl implements DistributionManager {
    }
 
    @Override
-   @Deprecated
-   public boolean isLocal(Object key) {
-      return getLocality(key).isLocal();
-   }
-
-   @Override
    public DataLocality getLocality(Object key) {
       boolean transferInProgress = stateTransferManager.isStateTransferInProgressForKey(key);
       CacheTopology topology = stateTransferManager.getCacheTopology();
