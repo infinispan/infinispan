@@ -189,12 +189,4 @@ public class DeadlockDetectingLockManager extends LockManagerImpl {
             localTxStopped.incrementAndGet();
       }
    }
-
-
-   @ManagedAttribute(description = "Number of locally originated transactions that were interrupted as a deadlock situation was detected", displayName = "Number of interrupted local transactions", measurementType = MeasurementType.TRENDSUP)
-   @Deprecated
-   public static long getLocallyInterruptedTransactions() {
-      return -1;
-   }
-
 }
