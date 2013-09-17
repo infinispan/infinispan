@@ -1,0 +1,276 @@
+==  Storing objects (e.g. arrays) with custom Equivalence functions
+=== The Problem of Caching Arrays
+There are times when users want to store data into Infinispan caches whose default equals() and/or hashCode() implementations produce undesirable results. One of those data types are arrays. When users want to store arrays into Infinispan caches, the big majority of users want equals() function to be calculated based on the contents of the arrays as opposed to comparing the object reference, so if we take byte arrays are example, users would like to call up the static java.util.Arrays.equals(byte[], byte[]) method instead of Object.equals() . The same thing happens with hashCode() . The default implementation of Object.hashCode() for arrays suffers from the same issue, because the result is not produced based on the contents of the array, but rather based on the object reference to the array. 
+
+=== Old workaround: Wrapper Classes
+Until Infinispan 5.2, the way to get around these issues was by wrapping arrays, or any other object whose equals()/hashCode() implementations are not best suited for being stored in Infinispan caches, around another object which would override Object.equals() and Object.hashCode() to do the correct calculations. This is where classes such as link:$$https://github.com/infinispan/infinispan/blob/master/core/src/main/java/org/infinispan/util/ByteArrayKey.java$$[ByteArrayKey] originate: 
+
+[source,java]
+----
+
+public final class ByteArrayKey implements Serializable {
+
+   private final byte[] data;
+   private final int hashCode;
+
+   public ByteArrayKey(byte[] data) {
+      this.data = data;
+      this.hashCode = 41 + Arrays.hashCode(data);
+   }
+
+   public byte[] getData() {
+      return data;
+   }
+
+   @Override
+   public boolean equals(Object obj) {
+      if (this == obj) return true;
+      if (obj == null || ByteArrayKey.class != obj.getClass()) return false;
+      ByteArrayKey key = (ByteArrayKey) obj;
+      return Arrays.equals(key.data, this.data);
+   }
+
+   @Override
+   public int hashCode() {
+      return hashCode;
+   }
+
+   @Override
+   public String toString() {
+      return new StringBuilder().append("ByteArrayKey").append("{")
+         .append("data=").append(Util.printArray(data, true))
+         .append("}").toString();
+   }
+
+}
+
+----
+
+The problem with these classes is that they result in extra memory consumption due to the extra objects required to support data types such as arrays and really, these classes just a workaround for the lack of ability to provide a way to pass in a function that specifies how two byte arrays are are compared, or how to calculate the hash code of a given array.
+
+=== New solution: Plugging Equivalence functions
+Starting with Infinispan 5.3, Infinispan users can provide these functions for both keys and values implementing the new link:$$https://github.com/infinispan/infinispan/blob/master/core/src/main/java/org/infinispan/util/Equivalence.java$$[`Equivalence<T>`] interface: 
+
+[source,java]
+----
+
+public interface Equivalence<T> extends Serializable {
+
+   /**
+    * Returns a hash code value for the object passed.
+    *
+    * As an example, implementors can provide an alternative implementation
+    * for the hash code calculation for arrays. So, instead of relying on
+    * {@link Object#hashCode()}, call {@link java.util.Arrays.hashCode()}.
+    *
+    * @param obj instance to calculate hash code for
+    * @return a hash code value for the object passed as parameter
+    */
+   int hashCode(Object obj);
+
+   /**
+    * Indicates whether the objects passed are "equal to" each other.
+    *
+    * As an example, implementors can provide an alternative implementation
+    * for the equals for arrays. So, instead of relying on
+    * {@link Object#equals(Object)}}, call {@link java.util.Arrays.equals())}.
+    *
+    * @param obj to be compared with second parameter
+    * @param otherObj to be compared with first parameter
+    * @return <code>true</code> if both objects are the same;
+    *         <code>false</code> otherwise
+    */
+   boolean equals(T obj, Object otherObj);
+
+   /**
+    * Returns a string representation of the given object.
+    *
+    * @param obj whose string representation is to be returned
+    * @return a string representation of the passed object
+    */
+   String toString(Object obj);
+
+   /**
+    * Returns whether the given object is comparable. In other words, if
+    * given an instance of the object, a sensible comparison can be computed
+    * using {@link #compare(Object, Object)} method.
+    *
+    * @param obj instance to check if it's comparable
+    * @return <code>true</code> if the object is comparable;
+    *         <code>false</code> otherwise
+    */
+   boolean isComparable(Object obj); // For future support for objects that are not comparable, i.e. arrays
+
+   /**
+    * Compares the two given objects for order. Returns a negative integer,
+    * zero, or a positive integer as the first object is less than, equal to,
+    * or greater than the second object.
+    *
+    * @param obj first object to be compared
+    * @param otherObj second object to be compared
+    * @return a negative integer, zero, or a positive integer as the
+    *         first object is less than, equal to, or greater than the
+    *         second object
+    */
+   int compare(Object obj, Object otherObj); // For future support for objects that are not comparable, i.e. arrays
+
+}
+
+----
+
+Implementations of these function can be pretty flexible. On one side, they could focus on a single, particular type, such as ByteArrayEquivalence below which expects nothing else other than byte arrays, such as in the case of Hot Rod based Infinispan remote caches: 
+
+[source,java]
+----
+
+package com.acme;
+
+public class ByteArrayEquivalence implements Equivalence<byte[]> {
+
+   public static final Equivalence<byte[]> INSTANCE = new ByteArrayEquivalence();
+
+   @Override
+   public int hashCode(Object obj) {
+      return 41 + Arrays.hashCode((byte[]) obj);
+   }
+
+   @Override
+   public boolean equals(byte[] obj, Object otherObj) {
+      if (obj == otherObj) return true;
+      if (obj == null) return false;
+      if (otherObj == null || byte[].class != otherObj.getClass()) return false;
+      byte[] otherByteArray = (byte[]) otherObj;
+      return Arrays.equals(obj, otherByteArray);
+   }
+
+   @Override
+   public String toString(Object obj) {
+      return Arrays.toString((byte[]) obj);
+   }
+
+   @Override
+   public boolean isComparable(Object obj) {
+      return false;
+   }
+
+   @Override
+   public int compare(Object obj, Object otherObj) {
+      return 0; // irrelevant
+   }
+
+}
+
+----
+
+Or you could have implementations that support multiple different types, in case you store varied information, for example link:$$https://github.com/infinispan/infinispan-server/blob/master/infinispan/src/main/java/org/jboss/as/clustering/infinispan/equivalence/AnyServerEquivalence.java$$[AnyServerEquivalence] which supports both arrays and normal objects: 
+
+[source,java]
+----
+
+public class AnyServerEquivalence implements Equivalence<Object> {
+
+    private static boolean isByteArray(Object obj) {
+        return byte[].class == obj.getClass();
+    }
+
+    @Override
+    public int hashCode(Object obj) {
+        if (isByteArray(obj)) {
+            return 41 + Arrays.hashCode((byte[]) obj);
+        } else {
+            return obj.hashCode();
+        }
+    }
+
+    @Override
+    public boolean equals(Object obj, Object otherObj) {
+        if (obj == otherObj)
+            return true;
+        if (obj == null || otherObj == null)
+            return false;
+        if (isByteArray(obj) && isByteArray(otherObj))
+            return Arrays.equals((byte[]) obj, (byte[]) otherObj);
+        return obj.equals(otherObj);
+    }
+
+    @Override
+    public String toString(Object obj) {
+        if (isByteArray(obj))
+            return Arrays.toString((byte[]) obj);
+        else
+            return obj.toString();
+    }
+
+    @Override
+    public boolean isComparable(Object obj) {
+        return obj instanceof Comparable;
+    }
+
+    @Override
+    @SuppressWarnings("unchecked")
+    public int compare(Object obj, Object otherObj) {
+       return ((Comparable<Object>) obj).compareTo(otherObj);
+    }
+
+}
+
+----
+
+==== Configuring Equivalence functions
+
+===== Using XML
+The way to configure Infinispan with these Equivalence implementations is by adding them to the `<dataContainer />` XML element. For example, if we wanted to have byte array based keys, but the values would be normal objects, we'd define: 
+
+[source,xml]
+----
+
+<dataContainer keyEquivalence="com.acme.ByteArrayEquivalence" />
+
+----
+
+If you were trying to store both byte arrays as keys and values, you'd configure valueEquivalence attribute in `<dataContainer />` XML element: 
+
+[source,xml]
+----
+
+<dataContainer keyEquivalence="com.acme.ByteArrayEquivalence" valueEquivalence="com.acme.ByteArrayEquivalence" />
+
+----
+
+If no key or value equivalence is configured, they default to link:$$https://github.com/infinispan/infinispan/blob/master/core/src/main/java/org/infinispan/util/AnyEquivalence.java$$[org.infinispan.util.AnyEquivalence], which behaves like any standard java object, delegating the equals/hashCode() calls to the objects themselves.
+
+===== Using Programmatic Configuration
+Key and/or value equivalence could also have been configured programmatically, for example:
+
+[source,java]
+----
+
+EmbeddedCacheManager cacheManager = ...;
+ConfigurationBuilder builder = new ConfigurationBuilder();
+builder.dataContainer()
+   .keyEquivalence(com.acme.ByteArrayEquivalence.INSTANCE)
+   .valueEquivalence(com.acme.ByteArrayEquivalence.INSTANCE);
+cacheManager.defineConfiguration("myCache", builder.build());
+
+----
+
+==== Byte array storage example
+Assuming you've configured both keyEquivalence (via XML, or programmatically) to be com.acme.ByteArrayEquivalence , you should now be able to write code like this and get the assertion to succeed. If keyEquivalence has not been configured correctly, this test will fail: 
+
+[source,java]
+----
+
+Cache<byte[], byte[]> cache = ...
+byte[] key = {1, 2, 3};
+byte[] value = {4, 5, 6};
+cache.put(key, value);
+
+byte[] expectedValue = {4, 5, 6};
+byte[] lookupKey = {1, 2, 3};
+assert Arrays.equals(expectedValue, cache.get(lookupKey));
+
+----
+
+==== Other methods in Equivalence interface
+Finally, Equivalence defines some extra methods, such as toString(Object obj) , isComparable(Object obj) and compare(Object obj, Object otherObj) , which again can be used to provide different implementations to the ones provided for the JDK. For example, the toString() method can be used to provide a different String representation of the object, which is again useful for arrays since the default JDK implementation does not print the array contents. The comparable functions are not yet used by Infinispan but they've been defined in order to help with potential future support of tree-based storage in inner data structures. 
+

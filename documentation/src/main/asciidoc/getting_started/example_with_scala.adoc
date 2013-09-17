@@ -1,0 +1,356 @@
+==  Example with Scala
+This article shows how to use Infinispan with link:$$http://www.scala-lang.org/$$[Scala language] . It uses the same commands and configurations used in the <<_example_with_groovy, Example with Groovy>>. For more details about the scenarios and steps please visit about page since here will will only focus on Scala compatibility. 
+
+=== Environment
+Preparing the environment is almost similar to one described here, but with a minor difference that unlike Groovy which uses _$$~/.groovy/lib$$_ folder to extend initial classpath, we will use classic _CLASSPATH_ environment variable with Scala. Another issue is that with the recent edition of Infinispan core jar file is in the root folder of $INIFINISPAN_HOME, hence here a sample bash script to prepare CLASSPATH for our demo: 
+
+
+----
+export INFINISPAN_HOME=~/build/infinispan/infinispan-4.2.1.CR1
+for j in $INFINISPAN_HOME/lib/*.jar; do CLASSPATH=$CLASSPATH:$j; done
+export CLASSPATH=$CLASSPATH:$INFINISPAN_HOME/infinispan-core.jar
+export CLASSPATH=$CLASSPATH:[Path to folder containing sample-configurations.xml file]
+----
+
+.sample-configurations.xml
+[source,xml]
+----
+<?xml version="1.0" encoding="UTF-8"?>
+
+<infinispan xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns="urn:infinispan:config:4.0">
+
+   <!-- *************************** -->
+   <!-- System-wide global settings -->
+   <!-- *************************** -->
+
+	<global>
+   		<shutdown hookBehavior="DEFAULT"/>
+	</global>
+
+   <!-- ************************************** -->
+   <!-- Individually configured "named" caches -->
+   <!-- ************************************** -->
+
+	<namedCache name="Local"/>
+	
+   	<namedCache name="LocalTX">
+		<transaction transactionManagerLookupClass="org.infinispan.transaction.lookup.DummyTransactionManagerLookup"/>
+	</namedCache>
+	
+	<namedCache name="CacheStore">
+		<loaders passivation="false" shared="false" preload="true">
+		   <loader class="org.infinispan.loaders.file.FileCacheStore" fetchPersistentState="true"
+		           ignoreModifications="false" purgeOnStartup="false">
+		      <properties>
+		         <property name="location" value="/tmp"/>
+		      </properties>
+		   </loader>
+		</loaders>
+   	</namedCache>
+
+   <namedCache name="Eviction">
+      <eviction wakeUpInterval="500" maxEntries="2" strategy="FIFO"/>
+   </namedCache>
+   <namedCache name="CacheStoreEviction">
+		<loaders passivation="false" shared="false" preload="true">
+		   <loader class="org.infinispan.loaders.file.FileCacheStore" fetchPersistentState="true"
+		           ignoreModifications="false" purgeOnStartup="false">
+		      <properties>
+		         <property name="location" value="/tmp"/>
+		      </properties>
+		   </loader>
+		</loaders>
+      <eviction wakeUpInterval="500" maxEntries="2" strategy="FIFO"/>
+   </namedCache>
+   <namedCache name="ReplicatedTX">
+  	  <clustering mode="replication">
+         <sync replTimeout="20000"/>
+         <stateRetrieval timeout="20000" fetchInMemoryState="true"/>
+      </clustering>
+   </namedCache>
+</infinispan>
+----
+
+
+=== Testing Setup
+The following code shows how to start an Scala console that will allow commands to be entered interactively. To verify that the Infinispan classes have been imported correctly, an import for all Infinispan classes will be attempted and then a request will be made to print the version of Infinispan:
+
+
+----
+[z@dnb:~/Go/demos/interactive-infinispan-scala]% ./scala
+Welcome to Scala version 2.8.1.final (Java HotSpot(TM) 64-Bit Server VM, Java 1.6.0_22).
+Type in expressions to have them evaluated.
+Type :help for more information.
+
+scala> import org.infinispan._
+import org.infinispan._
+
+scala> println(Version.version)
+4.2.1.CR1
+
+
+----
+
+=== Loading the Configuration file
+
+In this next example, a new cache manager will be created using the configuration file downloaded earlier:
+
+
+----
+scala> import org.infinispan.manager._                                   
+import org.infinispan.manager._
+
+scala> val manager = new DefaultCacheManager("sample-configurations.xml")
+manager: org.infinispan.manager.DefaultCacheManager = org.infinispan.manager.DefaultCacheManager@38b58e73@Address:null
+
+----
+
+Retrieving cache instances from cache manager
+
+In this example, the default cache is retrieved expecting keys and values to be of String type:
+
+
+----
+scala> val defaultCache = manager.getCache[String, String]()
+defaultCache: org.infinispan.Cache[String,String] = Cache '___defaultcache'@1326840752
+
+----
+
+In this next example, a named cache is retrieved, again with keys and values expected to be String:
+
+
+----
+scala> val namedCache = manager.getCache[String, String]("NameOfCache")
+namedCache: org.infinispan.Cache[String,String] = Cache 'NameOfCache'@394890130
+----
+
+[[sid-68355111_InfinispanwithScala-Basiccacheoperations]]
+
+
+=== Basic cache operations
+
+In this section, several basic operations will be executed against the cache that show how it can be populated with data, how data can be retrieved and size can be checked, and finally how after removing the data entered, the cache is empty:
+
+
+----
+scala> val localCache = manager.getCache[String, String]("Local")
+localCache: org.infinispan.Cache[String,String] = Cache 'Local'@420875876
+
+scala> localCache.size()
+res0: Int = 0
+
+scala> localCache.put("aKey", "aValue")
+res1: String = null
+// This null was returned by put() indicating that 
+// the key was not associated with any previous value.
+
+scala> localCache.size()
+res2: Int = 1
+
+scala> localCache.containsKey("aKey")
+res3: Boolean = true
+
+scala> localCache.get("aKey")
+res4: String = aValue
+
+scala> localCache.size()
+res5: Int = 1
+
+scala> localCache.remove("aKey")
+res6: String = aValue
+
+scala> localCache.isEmpty()
+res7: Boolean = true
+----
+
+=== Basic cache operations with TTL
+
+When a cache entry is stored, a maximum lifespan for the entry can be provided. So, when that time is exceeded, the entry will dissapear from the cache:
+
+
+----
+scala> localCache.put("bKey", "bValue")
+res8: String = null
+
+scala> import java.util.concurrent.TimeUnit
+import java.util.concurrent.TimeUnit
+
+scala> localCache.put("timedKey", "timedValue", 1000, TimeUnit.MILLISECONDS)
+res9: String = null
+
+scala> localCache.size()
+res10: Int = 2
+
+scala> localCache.get("timedKey")
+res11: String = null
+
+scala> localCache.size()
+res12: Int = 1
+----
+
+=== Cache restarts
+
+When caches are local and not configured with a persistent store, restarting them means that the data is gone. To avoid this issue you can either configure caches to be clustered so that if one cache dissapears, the data is not completely gone, or configure the cache with a persistent cache store. The latter option will be explained later on.
+
+
+----
+scala> localCache.size()
+res13: Int = 1
+
+scala> localCache.stop()
+
+scala> localCache.start()
+
+scala> localCache.size()
+res16: Int = 0
+----
+
+=== Transactional cache operations
+
+Infinispan caches can be operated within a transaction, in such way that operations can be grouped in order to be executed atomically. The key thing to understand about transactions is that within the transactions changes are visible, but to other non-transactional operations, or other transactions, these are not visible until the transaction is committed. The following example shows how within a transaction an entry can be stored but outside the transaction, this modification is not yet visible, and that once the transaction is committed, the modification is visible to all:
+
+
+----
+scala> import javax.transaction.TransactionManager
+import javax.transaction.TransactionManager
+
+scala> val localTxCache = manager.getCache[String, String]("LocalTX")
+localTxCache: org.infinispan.Cache[String,String] = Cache 'LocalTX'@955386212
+
+scala> val tm = localTxCache.getAdvancedCache().getTransactionManager()
+tm: javax.transaction.TransactionManager = org.infinispan.transaction.tm.DummyTransactionManager@81ee8c1
+
+scala> tm.begin()
+
+scala> localTxCache.put("key1", "value1")
+res1: String = null
+
+scala> localTxCache.size()
+res2: Int = 1
+
+scala> tm.suspend()
+res3: javax.transaction.Transaction = DummyTransaction{xid=DummyXid{id=1}, status=0}
+
+scala> localTxCache.size()
+res4: Int = 0
+
+scala> localTxCache.get("key1")
+res5: String = null
+
+scala> tm.resume(res3)
+
+scala> localTxCache.size()
+res7: Int = 1
+
+scala> localTxCache.get("key1")
+res8: String = value1
+
+scala> tm.commit()
+
+scala> localTxCache.size()
+res10: Int = 1
+
+scala> localTxCache.get("key1")
+res11: String = value1
+
+----
+
+Note how this example shows a very interesting characteristic of the Scala console. Every operation's return value is stored in a temporary variable which can be referenced at a later stage, even if the user forgets to assign the result of a operation when the code was executed.
+
+=== Persistent stored backed Cache operations
+
+When a cache is backed by a persistent store, restarting the cache does not lead to data being lost. Upon restart, the cache can retrieve in lazy or prefetched fashion cache entries stored in the backend persistent store:
+
+
+----
+scala> val cacheWithStore = manager.getCache[String, String]("CacheStore")
+cacheWithStore: org.infinispan.Cache[String,String] = Cache 'CacheStore'@2054925789
+
+scala> cacheWithStore.put("storedKey", "storedValue")
+res21: String = null
+
+scala> localCache.put("storedKey", "storedValue")
+res22: String = null
+
+scala> cacheWithStore.stop()
+
+scala> localCache.stop()
+
+scala> cacheWithStore.start()
+
+scala> localCache.start()
+
+scala> localCache.get("storedKey")
+res27: String = null
+
+scala> cacheWithStore.size()
+res28: Int = 1
+
+scala> cacheWithStore.get("storedKey")
+res29: String = storedValue
+
+----
+
+=== Operating against a size bounded cache
+
+Infinispan caches can be configured with a max number of entries, so if this is exceeded certain cache entries are evicted from in-memory cache. Which cache entries get evicted is dependant on the eviction algorithm chosen. In this particular example, FIFO algorithm has been configured, so when a cache entry needs to be evicted, those stored first will go first:
+
+
+----
+scala> val evictionCache = manager.getCache[String, String]("Eviction")
+evictionCache: org.infinispan.Cache[String,String] = Cache 'Eviction'@882725548
+
+scala> evictionCache.put("key1", "value1")
+res30: String = null
+
+scala> evictionCache.put("key2", "value2")
+res31: String = null
+
+scala> evictionCache.put("key3", "value3")
+res32: String = null
+
+scala> evictionCache.size()
+res33: Int = 2
+
+scala> evictionCache.get("key3")
+res34: String = value3
+
+scala> evictionCache.get("key2")
+res35: String = value2
+
+scala> evictionCache.get("key1")
+res36: String = null
+----
+
+=== Size bounded caches with persistent store
+
+When caches configured with eviction are configured with a persistent store as well, when the cache exceeds certain size, apart from removing the corresponding cache entries from memory, these entries are stored in the persistent store. So, if they're requested by cache operations, these are retrieved from the cache store:
+
+
+----
+scala> val cacheStoreEvictionCache = manager.getCache[String, String]("CacheStoreEviction")
+cacheStoreEvictionCache: org.infinispan.Cache[String,String] = Cache 'CacheStoreEviction'@367917752
+
+scala> cacheStoreEvictionCache.put("cs1", "value1")
+res37: String = null
+
+scala> cacheStoreEvictionCache.put("cs2", "value2")
+res38: String = null
+
+scala> cacheStoreEvictionCache.put("cs3", "value3")
+res39: String = null
+
+scala> cacheStoreEvictionCache.size()
+res40: Int = 2
+
+scala> cacheStoreEvictionCache.get("cs3")
+res41: String = value3
+
+scala> cacheStoreEvictionCache.get("cs2")
+res42: String = value2
+
+scala> cacheStoreEvictionCache.get("cs1")
+res43: String = value1
+
+----
+

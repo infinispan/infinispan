@@ -1,0 +1,947 @@
+[[sid-68355154]]
+
+==  Labs
+
+[[sid-68355155]]
+
+
+=== Lab - Getting Started with Infinispan
+
+[[sid-68355155_Lab-GettingStartedwithInfinispan-Introduction]]
+
+
+==== Introduction
+
+ This lab was developed for Devoxx 2011, by Pete Muir, Mircea Markus and Sanne Grinovero. It is designed to last around 1h 45m, and has an accompanying introduction and conclusion. Full slide deck is link:$$https://docs.jboss.org/author/download/attachments/12484897/Real_world_deep_dive_into_Infinispan.ppt$$[attached] . 
+
+The lab has been updated by Galder Zamarreño for Infinispan 5.1 and has been featured in the Neuchatel JBUG and JUDCon India 2012
+
+[[sid-68355155_Lab-GettingStartedwithInfinispan-Setup]]
+
+
+==== Setup
+
+[[sid-68355155_Lab-GettingStartedwithInfinispan-Gettingsetuptorunthelab]]
+
+
+===== Getting setup to run the lab
+
+ _presented by Pete_ _5 minutes_ 
+
+
+* Using Infinispan 5.1.0.FINAL
+
+
+* Download the lab zip from [...]
+
+
+* Unzip the lab to your disk to a location of your choice
+
+
+* If you are a git user, you can clone the repository:
+
+
+----
+
+git clone git://github.com/infinispan/infinispan-labs.git
+
+----
+
+
+* each stage of this lab has a checkpoint which is a branch, you can check out the code for each Checkpoint using. Checkpoints are mentioned in these instructions:
+
+
+----
+
+git checkout -b checkpointX checkpointX
+
+----
+
+
+*  Download JBoss AS 7.1.0.CR1b from link:$$http://jboss.org/jbossas/downloads$$[] 
+
+
+* Unzip JBoss AS to your disk to a location of your choice
+
+[[sid-68355155_Lab-GettingStartedwithInfinispan-Introductionx]]
+
+
+==== Introduction
+
+[[sid-68355155_Lab-GettingStartedwithInfinispan-Usecases%2CkeyfeaturesandbenefitsofInfinispan]]
+
+
+===== Use cases, key features and benefits of Infinispan
+
+ _slides, presented by Pete_ _20 minutes_ 
+
+[[sid-68355155_Lab-GettingStartedwithInfinispan-Sampleproject]]
+
+
+==== Sample project
+
+[[sid-68355155_Lab-GettingStartedwithInfinispan-Explanationofsampleprojectarchitecture]]
+
+
+===== Explanation of sample project architecture
+
+ _presented by Pete_ _5 minutes_ 
+
+
+* The lab is a simple ticket allocation and booking system
+
+
+*  lab1 contains a project skeleton with the relevant dependencies available. It is a war, that can be deployed on JBoss AS 7. It also use CDI to wire together the app, and JSF for the view layer. JMS is used to provide messaging and EJB to provide a listener for messages we send via JMS. 
+
+
+*  In another console, start JBoss AS - $JBOSS_HOME/bin/standalone.sh 
+
+
+*  Deploy the project to JBoss AS 7 using mvn clean package jboss-as:deploy 
+
+
+*  visit link:$$http://localhost:8080/lab1$$[] 
+
+
+* All cache operations hidden by service layer to allow us to swap out caching impls
+
+
+* Starts with a HashMap and builds on that
+
+
+* Import the project into your IDE, we use Eclipse with m2eclipse installed.
+
+
+* Show project
+
+ _Checkpoint 1_ 
+
+[[sid-68355155_Lab-GettingStartedwithInfinispan-InterludeCachinginJavaEE]]
+
+
+==== Interlude - Caching in Java EE
+
+[[sid-68355155_Lab-GettingStartedwithInfinispan-JSR107%28JCACHE%29andJSR347%28DatagridsforJava%29]]
+
+
+===== 107 (JCACHE) and JSR-347 (Datagrids for Java)
+
+ _presented by Pete_ _5 minutes_ 
+
+Topics covered include:
+
+
+* TODO
+
+[[sid-68355155_Lab-GettingStartedwithInfinispan-JGroups%26Networks]]
+
+
+==== JGroups &amp; Networks
+
+ _presented by Sanne_ _10 minutes_ 
+
+[[sid-68355155_Lab-GettingStartedwithInfinispan-Makesureyournodescanseeeachother]]
+
+
+===== Make sure your nodes can see each other
+
+
+*  In LAB_HOME/nic_test there is the the test-network script. Run it. 
+
+
+* If all goes well, you'll get two windows in which you can draw up on your screen. Draw on one, see it in both.
+
+[[sid-68355155_Lab-GettingStartedwithInfinispan-HowdoesJGroupswork%3FWhydoyouneedit%3F]]
+
+
+===== How does JGroups work? Why do you need it?
+
+Topics covered include:
+
+
+* what is JGroups? library for reliable multicasting ...
+
+
+* main features: fragmentation, retransmission, flow control, reordering, group membership (notifications)
+
+
+* LAN/WAN based: multicast or TCP for transport
+
+[[sid-68355155_Lab-GettingStartedwithInfinispan-InfinispanasalocalcacheandJMX]]
+
+
+==== Infinispan as a local cache and JMX
+
+ _presented by Sanne_ _10 minutes_ 
+
+[[sid-68355155_Lab-GettingStartedwithInfinispan-AddingInfinispantothedemo]]
+
+
+===== Adding Infinispan to the demo
+
+ _Use Case: Take advantage of the features of Infinispan_ 
+
+
+*  Uncomment the Infinispan dependencies in pom.xml 
+
+
+*  Copy in Resources.java and TicketAllocationCache.java and explain what they are doing; you will find them in LAB_HOME/lab1/src/samples/java 
+
+
+* Explain about configuring caches programmatically with qualifier
+
+
+*  Copy SimpleTicketService to InfinispanTicketService 
+
+
+*  Make SimpleTicketService an alternative 
+
+
+----
+
+private final List<TicketAllocation> tickets = new ArrayList<TicketAllocation>();
+----
+
+with
+
+
+----
+
+@Inject @TicketAllocationCache
+private Cache<String, TicketAllocation> tickets;
+
+----
+
+ to inject the Infinispan cache. Change the allocateTicket method to: 
+
+
+----
+
+TicketAllocation allocation = new TicketAllocation(allocatedTo, event);
+tickets.put(allocation.getId(), allocation);
+
+----
+
+ and change the getAllocatedTickets() method to 
+
+
+----
+
+return new ArrayList<TicketAllocation>(tickets.values());
+
+----
+
+ and change the getTicketAllocation(String id) method to: 
+
+
+----
+
+return tickets.get(id);
+
+----
+
+ Implement getNodeId() properly: 
+
+
+----
+
+if (tickets.getConfiguration().getCacheMode() != CacheMode.LOCAL)
+   return tickets.getAdvancedCache().getCacheManager().getAddress().toString();
+else
+   return "local cache";
+
+----
+
+ Implement getOwners() properly: 
+
+
+----
+
+if (tickets.getConfiguration().getCacheMode() != CacheMode.LOCAL) {
+   return asCommaSeparatedList(tickets.getAdvancedCache().getDistributionManager().locate(key));
+} else {
+   return "local";
+}
+
+----
+
+[[sid-68355155_Lab-GettingStartedwithInfinispan-ShowInfinispaninusewithbasicmonitoring]]
+
+
+===== Show Infinispan in use with basic monitoring
+
+ _Use Case: Can see how our cache is performing_ 
+
+
+*  Enable JMX - add .jmxStatistics().enable() to the fluent configuration in Resources . 
+
+
+* Redeploy, and use the app
+
+
+* We can see the cache starting in the console
+
+
+*  Run jconsole or jvisualvm , and select the "jboss-modules" process 
+
+
+*  Open up the Infinispan statistics (via MBeans tab in jvisualvm - you might need to install the MBeans plugin first) 
+
+
+* Allocate a ticket, show the stores change
+
+ _Checkpoint 2_ 
+
+[[sid-68355155_Lab-GettingStartedwithInfinispan-Expiration%26Eviction]]
+
+
+==== Expiration &amp; Eviction
+
+ _presented by Mircea_ _10 minutes_ 
+
+[[sid-68355155_Lab-GettingStartedwithInfinispan-InterludeWhatisexpiration%3FWhatiseviction%3F]]
+
+
+===== Interlude - What is expiration? What is eviction?
+
+Topics covered include:
+
+
+* API
+
+
+* Configuration
+
+
+* Use cases
+
+
+* Available eviction mechanisms
+
+[[sid-68355155_Lab-GettingStartedwithInfinispan-Demo]]
+
+
+===== Demo
+
+
+* Use Case: Have ticket allocations freed up after a period of time*
+
+
+*  Add expiration to allocateTicket() , so you end up with 
+
+
+----
+
+tickets.put(allocation.getId(), allocation, 10, TimeUnit.SECONDS);
+
+----
+
+
+* Run the demo, and you can see that entries disappear after 10s
+
+ _Checkpoint 3_ 
+
+[[sid-68355155_Lab-GettingStartedwithInfinispan-6.Listeners]]
+
+
+==== 6. Listeners
+
+ _presented by Mircea_ _10 minutes_ 
+
+ _Use case: Prevent known ticket touts from using the system_ 
+
+
+* First, copy in the AbuseListener in
+
+
+* Now, we need to register it
+
+Add
+
+
+----
+
+@Inject
+public void registerAbuseListener(@New AbuseListener abuseListener) {
+   tickets.addListener(abuseListener);
+}
+
+----
+
+ to the InfinispanTicketService . 
+
+
+*  this code simply creates a new abuse listener (injected by CDI with a logger!) and registers it with Infinispan. It will do it automatically when the InfinispanTicketService is created 
+
+ _Increase expiration to 3 minutes, otherwise the demo will get tiresome!_ 
+
+ _Checkpoint 4_ 
+
+[[sid-68355155_Lab-GettingStartedwithInfinispan-Interlude.WhatcanyoulistentoinInfinispan%3F]]
+
+
+===== Interlude. What can you listen to in Infinispan?
+
+[[sid-68355155_Lab-GettingStartedwithInfinispan-TransactionswithInfinispan]]
+
+
+==== Transactions with Infinispan
+
+ _presented by Mircea_ _15 minutes_ 
+
+[[sid-68355155_Lab-GettingStartedwithInfinispan-Transactionsinaction]]
+
+
+===== Transactions in action
+
+ _Use Case: When ticket is booked, need to atomically take payment and book ticket, and rollback if any errors_ 
+
+
+* The webapp collects all the data from the user to process the booking, and then sends the booking to the backend using JMS.
+
+
+* JBoss comes with a "test" queue, we'll abuse that so we don't have to configure messaging (not what we are here to talk about).
+
+
+* Go to the pom.xml and uncomment JMS dependency
+
+
+*  Copy the PaymentProcessor into .services 
+
+
+*  Inject JMS into InfinispanTicketService 
+
+
+----
+
+@Resource(mappedName="/ConnectionFactory")
+private ConnectionFactory cf;
+
+@Resource(mappedName = "queue/test")
+private Queue queue;
+
+----
+
+
+*  Implement the bookTicket method 
+
+
+----
+
+try {
+       Connection connection = cf.createConnection();
+       Session session = connection.createSession(false, Session.AUTO_ACKNOWLEDGE);
+       MessageProducer publisher = session.createProducer(queue);
+       connection.start();
+       TextMessage message = session.createTextMessage("Book ticket for " + id);
+       publisher.send(message);
+       connection.close();
+       session.close();
+    } catch (JMSException e) {
+       throw new RuntimeException(e);
+    }
+
+----
+
+This code is in bookTicket.txt in the samples
+
+
+* Run the example, show it in action.
+
+ _Checkpoint 5a_ 
+
+ _Use case: Introduce XA transactions_ 
+
+
+* Add to the configuration (Resources.configureCache):
+
+
+----
+
+.transaction().transactionMode(TransactionMode.TRANSACTIONAL)
+.transaction().transactionManagerLookup(new GenericTransactionManagerLookup())
+
+----
+
+
+* Replace the injection of the Connection Factory with
+
+
+----
+
+@Resource(mappedName="/JmsXA")
+private XAConnectionFactory cf;
+
+@Resource(mappedName = "java:jboss/TransactionManager")
+private TransactionManager tm;
+
+----
+
+ finally, upgrade the bookTicket method: 
+
+
+----
+
+try {
+   XAConnection connection = null;
+   try {
+      connection = cf.createXAConnection();
+      connection.start();
+
+      XASession xaSession = connection.createXASession();
+
+      Session session = xaSession.getSession();
+      MessageProducer publisher = session.createProducer(queue);
+
+      TextMessage message = session.createTextMessage("Book ticket for " + id);
+
+      tm.begin();
+
+      tm.getTransaction().enlistResource(xaSession.getXAResource());
+
+      //following two ops need to be atomic (XA)
+      tickets.remove(id);
+      publisher.send(message);
+
+      tm.commit();
+   } finally {
+      if (connection != null) connection.close();
+   }
+} catch (Throwable e) {
+   // ignore - don't do this at home :)
+   e.printStackTrace();
+}
+
+----
+
+
+*  _Interlude - Transactions deep dive_ 
+
+Topics discussed include
+
+
+* Transaction types
+
+
+* Locking
+
+
+* Deadlock detection
+
+[[sid-68355155_Lab-GettingStartedwithInfinispan-Break]]
+
+
+==== Break
+
+ _15 minutes_ 
+
+[[sid-68355155_Lab-GettingStartedwithInfinispan-Distribution]]
+
+
+==== Distribution
+
+ _presented by Sanne_ _15 minutes_ 
+
+ _Use case: we have so many tickets being allocated we've run out of heap on one machine, so add some more!_ 
+
+
+* During the break we added support for distribution. Take you through the changes now
+
+
+*  Enable distribution mode in Resources 
+
+
+----
+
+.clustering()
+         .mode(CacheMode.DIST_SYNC)
+         .l1().disable()
+
+----
+
+
+* Make JGroups use the loopback interface to avoid network problems! Add
+
+
+----
+
+@Produces @ApplicationScoped
+public EmbeddedCacheManager configureCacheManager() {
+   return new DefaultCacheManager(
+      GlobalConfigurationBuilder.defaultClusteredBuilder()
+         .transport()
+            .addProperty("configurationFile", "jgroups.xml")
+         .build());
+}
+
+----
+
+
+*  Add jgroups.xml from src/sample to src/main/resources (directory needs creating) 
+
+
+*  Explain that this JGroups file is exactly as normal for UDP, except that the jgroups.bind_addr is set to the loopback interface 
+
+[[sid-68355155_Lab-GettingStartedwithInfinispan-InterludeJBossAS7]]
+
+
+==== Interlude - JBoss AS 7
+
+Topics discussed include:
+
+
+* Introduce AS7
+
+
+* Cover domain mode vs standalone
+
+
+* Domain mode a great way to stand up a cluster of nodes!
+
+
+* Explain management options (CLI, web, maven plugin, XML, filesystem)
+
+
+* Talk about Infinispan as managed service in AS7 vs embedded - we could have used either, but to get started quickly it's easy to embed!
+
+
+*  Show 5 servers configured in $JBOSS_HOME/domain/configuration/host.xml - explain about port bindings. If you are following along, add only these servers 
+
+.$JBOSS_HOME/domain/configuration/host.xml
+
+==== 
+----
+
+<servers>
+    <server name="server-one" group="main-server-group">
+        <!-- server-one inherits the default socket-group declared in the server-group -->
+    </server>
+
+    <server name="server-two" group="main-server-group" auto-start="true">
+        <!-- server-two avoids port conflicts by incrementing the ports in
+             the default socket-group declared in the server-group -->
+        <socket-binding-group ref="standard-sockets" port-offset="100"/>
+    </server>
+
+    <server name="server-three" group="main-server-group" auto-start="true">
+        <!-- server-two avoids port conflicts by incrementing the ports in
+             the default socket-group declared in the server-group -->
+        <socket-binding-group ref="standard-sockets" port-offset="200"/>
+    </server>
+
+    <server name="server-four" group="main-server-group" auto-start="true">
+        <!-- server-two avoids port conflicts by incrementing the ports in
+             the default socket-group declared in the server-group -->
+        <socket-binding-group ref="standard-sockets" port-offset="300"/>
+    </server>
+
+    <server name="server-five" group="rest-server-group" auto-start="true">
+        <!-- server-two avoids port conflicts by incrementing the ports in
+             the default socket-group declared in the server-group -->
+        <socket-binding-group ref="standard-sockets" port-offset="1000"/>
+    </server>
+</servers>
+
+----
+
+==== 
+
+* Now, define the server groups. We'll also add server group for the REST interface which we'll see in a minute:
+
+.$JBOSS_HOME/domain/configuration/domain.xml
+
+==== 
+----
+
+<server-groups>
+    <server-group name="main-server-group" profile="default">
+        <jvm name="default">
+            <heap size="64m" max-size="512m"/>
+            <permgen size="128m"/>
+        </jvm>
+        <socket-binding-group ref="standard-sockets"/>
+    </server-group>
+    <server-group name="rest-server-group" profile="default">
+        <jvm name="default">
+            <heap size="64m" max-size="512m"/>
+            <permgen size="128m"/>
+        </jvm>
+        <socket-binding-group ref="standard-sockets"/>
+    </server-group>
+</server-groups>
+
+----
+
+==== 
+
+* Note that nodes don't get much memory by default, we need to increase it
+
+[[sid-68355155_Lab-GettingStartedwithInfinispan-Showthecacherunningindistributedmode]]
+
+
+===== Show the cache running in distributed mode
+
+
+*  Start up 4 JBoss AS 7 nodes with domain.sh . Why? See the link:$$https://docs.jboss.org/author/display/AS7/Getting+Started+Guide#GettingStartedGuide-JBossApplicationServer7Configurations$$[JBoss 7 Getting Started guide] 
+
+
+*  Build latest using mvn package and in another terminal change into the project and bring up JBoss AS CLI $JBOSS_HOME/bin/jboss-admin.sh --connect 
+
+
+*  Deploy app from console using deploy target/lab1.war --server-groups=main-server-group 
+
+
+* App now deployed to each node
+
+
+* bring up all 4 nodes in a web browser (port offset 100)
+
+
+* show each node starting in the console log
+
+
+* the contents list now just shows whats locally in the cache
+
+
+* explain that as each node comes up, the entries are rehashed to distribute the contents, so we see entries disappear from a node
+
+
+* show that we can still find any entry, it's just not local any more
+
+
+* show that we can put an entry, and then find it in one of the caches in Infinispan (10 mins)
+
+[[sid-68355155_Lab-GettingStartedwithInfinispan-InterludeWhatmodescanInfinispanrunin%3FWhenwouldyouwanttousethem%3F]]
+
+
+===== Interlude - What modes can Infinispan run in? When would you want to use them?
+
+Topics discussed include:
+
+
+* What are the different modes?
+
+
+* When would you use the modes?
+
+
+* How does distribution work?
+
+
+* Explain CH, benefits and problems
+
+
+* Talk about vnodes to even distribution
+
+[[sid-68355155_Lab-GettingStartedwithInfinispan-L1cache]]
+
+
+==== L1 cache
+
+ _presented by Sanne_ _5 minutes_ 
+
+
+* Explain benefits (TODO)
+
+
+*  Start up 4 JBoss AS 7 nodes with $JBOSS_HOME/bin/domain.sh 
+
+
+*  Build latest using mvn package and in another terminal change into the project and bring up JBoss AS CLI jboss-admin.sh --connect 
+
+
+*  Deploy app from console using deploy target/lab1.war --server-groups=main-server-group 
+
+
+* App now deployed to each node
+
+
+* bring up all 4 nodes in a web browser (port offset 100)
+
+
+* Just like before, except that nodes 1 &amp; 2 are still showing all entries locally (they kept them in their cache)
+
+
+* Find a node that doesn't have all entries, and query for an entry that isn't on that node. Then hit refresh. Show that this time it's now local (L1 cache)
+
+
+* Show the same for putting a new entry - keep adding until you get one that isn't owned by the current node - show that it is in the local node still.
+
+ _Checkpoint 6_ 
+
+[[sid-68355155_Lab-GettingStartedwithInfinispan-ClientServerModes]]
+
+
+==== Client Server Modes
+
+ _presented by Mircea_ _10 minutes_ 
+
+
+* We have a server group set up in JBoss AS 7 that contains a single server. We'll use this for the rest server - no need to have one on each node!
+
+
+* Enter jboss admin console and connect to the local server: $JBOSS_HOME/bin/jboss-admin.sh. The type "connect".
+
+
+*  Deploy infinispan-server-rest.war from the lab to JBoss AS 7 using the JBoss AS 7 CLI deploy &lt;path/to/&gt;infinispan-server-rest.war --server-groups=rest-server-group 
+
+
+* REST server actually joins the Infinispan cluster as a node, and it needs to know which caches to use, so we added this to the war, and we also needed to add the domain class* * * Visit a couple of the UIs to seed data and start caches
+
+
+*  check that connection REST is correctly deployed: link:$$http://localhost:8080/infinispan-server-rest/$$[] 
+
+
+*  Use a rest client to GET link:$$http://localhost:9080/infinispan-server-rest/rest/ticketAllocationCache/manik-Best%20of%20Abba$$[] 
+
+[[sid-68355155_Lab-GettingStartedwithInfinispan-InterludewhatclientservermodesdoesInfinispanoffer%3F]]
+
+
+===== Interlude - what client-server modes does Infinispan offer?
+
+Topics discussed include:
+
+
+* various server endpoints
+
+
+* benefits of Hot Rod
+
+[[sid-68355155_Lab-GettingStartedwithInfinispan-CacheStores]]
+
+
+==== CacheStores
+
+ _presented by Mircea_ _10 minutes_ 
+
+ _Use case: Persist your data to disk in case of node restart_ 
+
+
+*  paste the JDBC cache config method from src/sample/java/jdbc.txt 
+
+
+* Walk through the JDBC cache store set up code
+
+
+* Add this to the configuration:
+
+
+----
+
+.loaders()
+   .shared(true)
+   .addCacheLoader()
+      .cacheLoader(new JdbcStringBasedCacheStore())
+      .addProperty("connectionFactoryClass", "org.infinispan.loaders.jdbc.connectionfactory.ManagedConnectionFactory")
+      .addProperty("datasourceJndiLocation", "java:jboss/datasources/ExampleDS")
+      .addProperty("idColumnType", "VARCHAR(255)")
+      .addProperty("idColumnName", "ID_COLUMN")
+      .addProperty("dataColumnType", "BINARY")
+      .addProperty("dataColumnName", "DATA_COLUMN")
+      .addProperty("timestampColumnName", "TIMESTAMP_COLUMN")
+      .addProperty("timestampColumnType", "BIGINT")
+      .addProperty("stringsTableNamePrefix", "persistentStore")
+      .addProperty("userName", "sa")
+      .addProperty("password", "sa")
+      .async().threadPoolSize(10)
+
+----
+
+
+*  Run `mvn clean package`
+
+
+*  Deploy the app using deploy lab1/target/lab1.war --server-groups=main-server-group 
+
+
+*  Explain we are using the JBoss AS 7 built in example data source for H2 - configuration found in domain.xml . 
+
+
+* Visit a node or two to setup some caches and data
+
+
+*  Explain we are using the `h2console.war`. Needed a couple of changes to make it run, documentation coming soon 
+
+*  Deploy it using deploy h2console.war --server-groups=main-server-group - each node in the cluster owns some data, each h2 database will back that up 
+
+
+*  Visit link:$$http://localhost:9080/h2console/$$[] 
+
+
+*  Log in sa with password sa 
+
+
+*  execute select * from persistentstore_ticketallocationcache 
+
+ _Checkpoint 7_ 
+
+[[sid-68355155_Lab-GettingStartedwithInfinispan-InterludeWhatCacheStoresareavailable%3FInwhatscenarioscantheybeused%3F]]
+
+
+===== Interlude - What Cache Stores are available? In what scenarios can they be used?
+
+Topics discussed include:
+
+
+* Modes of cache store usage
+
+
+* CacheStores available as built in
+
+[[sid-68355155_Lab-GettingStartedwithInfinispan-Bonustopics]]
+
+
+==== Bonus topics
+
+[[sid-68355155_Lab-GettingStartedwithInfinispan-QueryingInfinispan]]
+
+
+===== Querying Infinispan
+
+ _presented by Sanne_ _8 minutes_ 
+
+Topics discussed include:
+
+
+* TODO
+
+[[sid-68355155_Lab-GettingStartedwithInfinispan-HibernateOGM]]
+
+
+===== Hibernate OGM
+
+ _presented by Sanne_ _2 minutes_ 
+
+Topics discussed include:
+
+
+* TODO
+
+[[sid-68355155_Lab-GettingStartedwithInfinispan-MapReduce]]
+
+
+===== Reduce
+
+ _presented by Pete_ _5 minutes_ 
+
+Topics discussed include:
+
+
+* TODO
+
+[[sid-68355155_Lab-GettingStartedwithInfinispan-Benchmarkingdatagirds%5CRadargun]]
+
+
+===== Benchmarking data girds - Radargun
+
+Introducing project Radargun
+
+ _presented by Mircea_ _5 minutes_ 
+
+[[sid-68355155_Lab-GettingStartedwithInfinispan-Conclusion]]
+
+
+==== Conclusion
+
+ _presented by Pete_ _10 minutes_ 
+

@@ -1,0 +1,42 @@
+= Extending Infinispan
+Manik Surtani, Mircea Markus, Galder Zamarreño, Pete Muir, and others from the Infinispan community
+:icons: font
+
+This guide is intended for anyone extending or customizing Infinispan.
+
+== Custom Commands
+Infinispan makes use of a link:$$http://en.wikipedia.org/wiki/Command_pattern$$[command/visitor pattern] to implement the various top-level methods you see on the public-facing API.
+This is explained in further detail in the link:$$http://community.jboss.org/wiki/ArchitecturalOverview$$[Architectural Overview] on the Infinispan public wiki.
+However, these commands - and their corresponding visitors - are hard-coded as a part of Infinispan's core module, making it impossible for module authors to extend and enhance Infinispan to create new arbitrary commands and visitors. 
+
+However, since Infinispan 5.0, this capability has now been added.  As a module author (such as link:$$https://github.com/infinispan/infinispan/tree/master/tree$$[infinispan-tree], link:$$https://github.com/infinispan/infinispan/tree/master/query$$[infinispan-query], etc.) you can now define your own commands.
+
+From Infinispan 5.1 onwards, you do so by: 
+
+. Create a `META-INF/services/org.infinispan.commands.module.ModuleCommandExtensions` file and ensure this is packaged in your jar. 
+. Implementing           link:$$https://github.com/infinispan/infinispan/blob/master/core/src/main/java/org/infinispan/commands/module/ModuleCommandFactory.java$$[`ModuleCommandFactory`],     link:$$https://github.com/infinispan/infinispan/blob/master/core/src/main/java/org/infinispan/commands/module/ModuleCommandInitializer.java$$[`ModuleCommandInitializer`] and  link:$$https://github.com/infinispan/infinispan/blob/master/core/src/main/java/org/infinispan/commands/module/ModuleCommandExtensions.java$$[`ModuleCommandExtensions`]
+. Specifing the fully-qualified class name of the  link:$$https://github.com/infinispan/infinispan/blob/master/core/src/main/java/org/infinispan/commands/module/ModuleCommandExtensions.java$$[`ModuleCommandExtensions`]
+implementation in `META-INF/services/org.infinispan.commands.module.ModuleCommandExtensions`. 
+. Implement your custom commands and visitors for these commands
+
+ 
+=== An Example
+Here is an example of an `META-INF/services/org.infinispan.commands.module.ModuleCommandExtensions` file, configured accordingly: 
+
+.org.infinispan.commands.module.ModuleCommandExtensions
+----
+org.infinispan.query.QueryModuleCommandExtensions
+----
+
+For a full, working example of a sample module that makes use of custom commands and visitors, check out link:$$https://github.com/infinispan/infinispan-sample-module$$[Infinispan Sample Module] . 
+
+=== Preassigned Custom Command Id Ranges
+This is the list of `Command` identifiers that are used by Infinispan based modules or frameworks.
+Infinispan users should avoid using ids within these ranges. (RANGES to be finalised yet!)
+Being this a single byte, ranges can't be too large. 
+
+|===============
+|Infinispan Query:|100 - 119
+|Hibernate Search:|120 - 139
+|===============
+
