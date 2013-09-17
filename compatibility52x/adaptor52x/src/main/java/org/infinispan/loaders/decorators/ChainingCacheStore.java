@@ -2,7 +2,6 @@ package org.infinispan.loaders.decorators;
 
 import net.jcip.annotations.GuardedBy;
 import org.infinispan.Cache;
-import org.infinispan.configuration.cache.LegacyConfigurationAdaptor;
 import org.infinispan.configuration.cache.CacheLoaderConfiguration;
 import org.infinispan.configuration.cache.CacheStoreConfiguration;
 import org.infinispan.container.entries.InternalCacheEntry;

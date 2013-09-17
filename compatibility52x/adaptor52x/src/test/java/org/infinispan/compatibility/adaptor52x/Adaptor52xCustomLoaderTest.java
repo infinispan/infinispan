@@ -8,7 +8,7 @@ import org.infinispan.compatibility.loaders.Custom52xCacheStoreConfig;
 import org.infinispan.container.DataContainer;
 import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.manager.DefaultCacheManager;
-import org.infinispan.persistence.BaseCacheStoreTest;
+import org.infinispan.persistence.BaseStoreTest;
 import org.infinispan.persistence.CacheLoaderException;
 import org.infinispan.persistence.spi.AdvancedLoadWriteStore;
 import org.infinispan.test.TestingUtil;
@@ -24,7 +24,7 @@ import static org.testng.Assert.assertEquals;
  * @since 6.0
  */
 @Test (groups = "functional", testName = "compatibility.adaptor52x.Adaptor52xCustomLoaderTest")
-public class Adaptor52xCustomLoaderTest extends BaseCacheStoreTest {
+public class Adaptor52xCustomLoaderTest extends BaseStoreTest {
 
    public static final String DIR = "__tmp_to_del___";
    private Cache<Object,Object> cache;

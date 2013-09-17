@@ -1,6 +1,6 @@
 package org.infinispan.compatibility.adaptor52x;
 
-import org.infinispan.configuration.cache.ClusterStoreConfiguration;
+import org.infinispan.configuration.cache.ClusterLoaderConfiguration;
 import org.infinispan.configuration.cache.StoreConfiguration;
 import org.infinispan.manager.DefaultCacheManager;
 import org.infinispan.manager.EmbeddedCacheManager;
@@ -28,8 +28,8 @@ public class ClusterLoaderTest extends SingleCacheManagerTest {
       List<StoreConfiguration> stores = cacheManager.getCache("customLoaderCache").getCacheConfiguration().persistence().stores();
       assertEquals(stores.size(), 1);
       StoreConfiguration storeConfiguration = stores.get(0);
-      assertTrue(storeConfiguration instanceof ClusterStoreConfiguration);
-      ClusterStoreConfiguration csc = (ClusterStoreConfiguration) storeConfiguration;
+      assertTrue(storeConfiguration instanceof ClusterLoaderConfiguration);
+      ClusterLoaderConfiguration csc = (ClusterLoaderConfiguration) storeConfiguration;
       assertEquals(csc.remoteCallTimeout(), 1222);
    }
 }

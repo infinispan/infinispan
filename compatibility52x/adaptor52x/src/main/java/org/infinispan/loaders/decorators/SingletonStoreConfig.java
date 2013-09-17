@@ -132,6 +132,5 @@ public class SingletonStoreConfig extends AbstractDecoratorConfigurationBean {
 
    @Override
    public void accept(ConfigurationBeanVisitor v) {
-//      v.visitSingletonStoreConfig(this);
    }
 }

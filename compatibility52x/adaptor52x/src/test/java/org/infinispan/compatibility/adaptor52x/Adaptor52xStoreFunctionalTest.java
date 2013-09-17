@@ -2,7 +2,7 @@ package org.infinispan.compatibility.adaptor52x;
 
 import org.infinispan.compatibility.loaders.Custom52xCacheStore;
 import org.infinispan.configuration.cache.PersistenceConfigurationBuilder;
-import org.infinispan.persistence.BaseCacheStoreFunctionalTest;
+import org.infinispan.persistence.BaseStoreFunctionalTest;
 import org.infinispan.persistence.CacheLoaderException;
 import org.infinispan.test.TestingUtil;
 import org.junit.AfterClass;
@@ -16,7 +16,7 @@ import java.util.Properties;
  * @since 6.0
  */
 @Test (groups = "functional", testName = "compatibility.adaptor52x.Adaptor52xStoreFunctionalTest")
-public class Adaptor52xStoreFunctionalTest extends BaseCacheStoreFunctionalTest {
+public class Adaptor52xStoreFunctionalTest extends BaseStoreFunctionalTest {
 
    public static final String DIR =  "__Adaptor52xStoreFunctionalTest__";
 

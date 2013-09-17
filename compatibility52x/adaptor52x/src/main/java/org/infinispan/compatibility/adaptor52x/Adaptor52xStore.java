@@ -1,9 +1,6 @@
 package org.infinispan.compatibility.adaptor52x;
 
-import org.infinispan.config.Configuration;
 import org.infinispan.config.parsing.XmlConfigHelper;
-import org.infinispan.configuration.cache.StoreConfiguration;
-import org.infinispan.container.EntryFactory;
 import org.infinispan.container.InternalEntryFactory;
 import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.loaders.CacheLoader;
@@ -12,13 +9,13 @@ import org.infinispan.loaders.CacheLoaderException;
 import org.infinispan.loaders.CacheLoaderMetadata;
 import org.infinispan.loaders.CacheStore;
 import org.infinispan.marshall.StreamingMarshallerAdapter;
+import org.infinispan.marshall.core.MarshalledEntry;
+import org.infinispan.marshall.core.MarshalledEntryImpl;
 import org.infinispan.metadata.InternalMetadataImpl;
-import org.infinispan.persistence.MarshalledEntryImpl;
 import org.infinispan.persistence.PersistenceUtil;
 import org.infinispan.persistence.TaskContextImpl;
 import org.infinispan.persistence.spi.AdvancedLoadWriteStore;
 import org.infinispan.persistence.spi.InitializationContext;
-import org.infinispan.persistence.spi.MarshalledEntry;
 import org.infinispan.util.Util;
 
 import java.util.HashSet;
@@ -143,22 +140,24 @@ public class Adaptor52xStore implements AdvancedLoadWriteStore {
 
    @Override
    public void clear() {
-      if (loader instanceof CacheStore)
+      if (loader instanceof CacheStore) {
          try {
             ((CacheStore) loader).clear();
          } catch (CacheLoaderException e) {
             throw newCacheLoaderException(e);
          }
+      }
    }
 
    @Override
    public void purge(Executor threadPool, PurgeListener listener) {
-      if (loader instanceof CacheStore)
+      if (loader instanceof CacheStore) {
          try {
             ((CacheStore) loader).purgeExpired();
          } catch (CacheLoaderException e) {
             throw newCacheLoaderException(e);
          }
+      }
    }
 
    @Override
