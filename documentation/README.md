@@ -9,7 +9,7 @@ which also uses AsciiDoc for documentation as well as
 the website.
 
 ## Authoring documents
-Read the _Contributing To Infinispan Guide's_ section on [Writng Documenation](http://www.infinispan.org/docs/5.3.x/contributing/contributing.html#_writing_documentation_and_faqs) for more details.
+Read the _Contributing To Infinispan Guide's_ section on [Writing Documentation](http://www.infinispan.org/docs/5.3.x/contributing/contributing.html#_writing_documentation_and_faqs) for more details.
 
 ### Editing
 You will want to install the entire AsciiDoctor toolchain on your computer.
@@ -23,11 +23,13 @@ not work.
 
 *TIP:* Don't bother with it.
 
+### Publishing
 There are scripts in the 
 [Infinispan Website](https://github.com/infinispan/infinispan.github.io) repository
 which are capable of grabbing docs from here and building/integrating the docs as a
 part of the Infinispan.org website.
-This is the preferred method of rendering the documentation.
+
+*NOTE:* This is the preferred method of rendering the documentation.
 
 ### Live editing
 Naturally, while editing the docs, you don't want to have to build the entire website to see your changes.
