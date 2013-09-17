@@ -35,7 +35,6 @@ import org.infinispan.jmx.annotations.MBean;
 import org.infinispan.jmx.annotations.ManagedAttribute;
 import org.infinispan.jmx.annotations.ManagedOperation;
 import org.infinispan.jmx.annotations.MeasurementType;
-import org.infinispan.jmx.annotations.Parameter;
 import org.infinispan.remoting.rpc.RpcManager;
 import org.infinispan.transaction.LocalTransaction;
 import org.infinispan.transaction.RemoteTransaction;
@@ -88,7 +87,7 @@ public class TxInterceptor extends CommandInterceptor {
       this.txCoordinator = txCoordinator;
       this.rpcManager = rpcManager;
       this.recoveryManager = recoveryManager;
-      setStatisticsEnabled(cacheConfiguration.jmxStatistics().enabled());
+      this.statisticsEnabled = cacheConfiguration.jmxStatistics().enabled();
       this.isTotalOrder = c.transaction().transactionProtocol().isTotalOrder();
       useOnePhaseForAutoCommitTx = cacheConfiguration.transaction().use1PcForAutoCommitTransactions();
       this.useWriteSkew = c.locking().isolationLevel() == IsolationLevel.REPEATABLE_READ && c.versioning().enabled() &&
@@ -290,16 +289,6 @@ public class TxInterceptor extends CommandInterceptor {
       prepares.set(0);
       commits.set(0);
       rollbacks.set(0);
-   }
-
-   /**
-    * @deprecated Use the statisticsEnabled attribute instead.
-    */
-   @ManagedOperation(
-         displayName = "Enable/disable statistics. Deprecated, use the statisticsEnabled attribute instead."
-   )
-   public void setStatisticsEnabled(@Parameter(name = "enabled", description = "Whether statistics should be enabled or disabled (true/false)") boolean enabled) {
-      this.statisticsEnabled = enabled;
    }
 
    @ManagedAttribute(
