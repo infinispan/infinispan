@@ -340,7 +340,7 @@ A normal recovery flow is:
 
 * *STEP 1*: The system administrator connects to an Infinispan server through JMX, and lists the in doubt transactions.  The image below demonstrates JConsole connecting to an Infinispan node that has an in doubt transaction.
 
-image::../images/showInDoubtTx.png[]
+image::images/showInDoubtTx.png[]
 
 The status of each in-doubt transaction is displayed(in this example " _PREPARED_ "). There might be multiple elements in the status field, e.g. "PREPARED" and "COMMITTED" in the case the transaction committed on certain nodes but not on all of them.   
 
@@ -348,7 +348,7 @@ The status of each in-doubt transaction is displayed(in this example " _PREPARED
 
 * *STEP 3*: The system administrator forces the transaction's commit/rollback through the corresponding jmx operation, based on the internal id.  The image below is obtained by forcing the commit of the transaction based on its internal id.
 
-image::../images/forceCommit.png[]
+image::images/forceCommit.png[]
 
 TIP: All JMX operations described above can be executed on any node, regardless of where the transaction originated. 
 

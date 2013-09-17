@@ -12,7 +12,7 @@ But why would one use a local cache rather than a map? Caches offer a lot of fea
 Replication is a simple clustered mode where cache instances automatically discover neighboring instances on other JVMs on the same local network, and form a cluster. Entries added to any of these cache instances will be replicated to all other cache instances in the cluster, and can be retrieved locally from any instance. This clustered mode provides a quick and easy way to share state across a cluster, however replication practically only performs well in small clusters (under 10 servers), due to the number of replication messages that need to happen - as the cluster size increases. Infinispan can be configured to use UDP multicast which mitigates this problem to some degree.
 
 .Replication mode
-image::../images/Figure1_6.png[]
+image::images/Figure1_6.png[]
 
 Replication can be synchronous or asynchronous. Use of either one of the options is application dependent. Synchronous replication blocks the caller (e.g. on a put() ) until the modifications have been replicated successfully to all nodes in a cluster. Asynchronous replication performs replication in the background (the put() returns immediately). Infinispan offers a replication queue, where modifications are replicated periodically (i.e. interval-based), or when the queue size exceeds a number of elements, or a combination thereof. A replication queue can therefore offer much higher performance as the actual replication is performed by a background thread.
 
@@ -22,7 +22,7 @@ Asynchronous replication is faster (no caller blocking), because synchronous rep
 Invalidation is a clustered mode that does not actually share any data at all, but simply aims to remove data that may be stale from remote caches. This cache mode only makes sense if you have another, permanent store for your data such as a database and are only using Infinispan as an optimization in a read-heavy system, to prevent hitting the database every time you need some state. If a cache is configured for invalidation rather than replication, every time data is changed in a cache other caches in the cluster receive a message informing them that their data is now stale and should be evicted from memory.
 
 .Invalidation mode
-image::../images/Figure2_5.png[]
+image::images/Figure2_5.png[]
 
 Invalidation, when used with a shared cache loader would cause remote caches to refer to the shared cache loader to retrieve modified data. The benefit of this is twofold: network traffic is minimized as invalidation messages are very small compared to replicating updated data, and also that other caches in the cluster look up modified data in a lazy manner, only when needed.
 
@@ -41,7 +41,7 @@ Since GETs are sent to all data owners in parallel and the first returning resul
 Note that this is _only_ if the transport is _asynchronous_.  If using a _synchronous_ transport this behavior is not exhibited. 
  
 .Distribution mode
-image::../images/Figure3_3.png[]
+image::images/Figure3_3.png[]
 
 ==== Virtual Nodes - Improving the distribution of data
 Infinispan does not attempt to evenly split the hash space between nodes – by not trying to split it evenly, it means that if a node joins or leaves the grid, there is no need to adjust the ownership of every node, just the neighbours of the joiner/leaver. This has a positive impact on network traffic. However this can mean that some nodes take on substantially larger portions of the hash space than others. This, combined with potential irregularities in the hash functions of keys, can mean the distribution of entries across the grid becomes poor. In order to address the irregularities in the hash of keys, Infinispan uses an advanced hashing function (Murmur Hash 3) by default, as well as using a bit spreader. In order to address the irregularities in the node distribution, Infinispan uses virtual nodes.
@@ -60,10 +60,10 @@ Often it's easier to understand the topology changes that virtual nodes introduc
 
  
 .Topology Without Virtual Nodes
-image::../images/without_vnodes.jpg[WithoutVNodes, 300, 300]
+image::images/without_vnodes.jpg[WithoutVNodes, 300, 300]
  
 .Topology With Virtual Nodes
-image::../images/vnodes.jpg[VNodes, 300, 300]
+image::images/vnodes.jpg[VNodes, 300, 300]
 
 To use virtual nodes, simply set the number of virtual nodes higher than 1. For example
 
@@ -97,7 +97,7 @@ new ConfigurationBuilder()
 To prevent repeated remote calls when doing multiple GETs, L1 caching can be enabled. L1 caching places remotely received values in a near cache for a short period of time (configurable) so repeated lookups would not result in remote calls. In the above diagram, if L1 was enabled, a subsequent GET for the same key on Server3 would not result in any remote calls.
 
 .L1 caching
-image::../images/Figure4_4.png[]
+image::images/Figure4_4.png[]
 
 L1 caching is not free though. Enabling it comes at a cost, and this cost is that every time a key is updated, an invalidation message needs to be multicast to ensure nodes with the entry in L1 invalidates the entry. L1 caching causes the requesting node to cache the retrieved entry locally and listen for changes to the key on the wire. L1-cached entries are given an internal expiry to control memory usage. Enabling L1 will improve performance for repeated reads of non-local keys, but will increase memory consumption to some degree. It offers a nice tradeoff between the "read-mostly" performance of an invalidated data grid with the scalability of a distributed one. Is L1 caching right for you? The correct approach is to benchmark your application with and without L1 enabled and see what works best for your access pattern.
 

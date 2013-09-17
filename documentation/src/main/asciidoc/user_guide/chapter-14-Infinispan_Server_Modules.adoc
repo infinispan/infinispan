@@ -5,7 +5,7 @@ where Infinispan and the client code that accessed it lived within the same JVM.
 When Infinispan is accessed in this way, it is considered to be accessed in an embedded fashion,
 as shown in the screenshot below
 
-image::../images/server_modules_1.png[]
+image::images/server_modules_1.png[]
 
 === Why Client-Server?
 However, there are situations when accessing Infinispan in a client-server mode might make more sense than accessing it via p2p.
@@ -13,19 +13,19 @@ For example, when trying to access Infinispan from a non-JVM environment.
 Since Infinispan is written in Java, if someone had a $$C++$$ application that wanted to access it, it couldn't just do it in a p2p way.
 On the other hand, client-server would be perfectly suited here assuming that a language neutral protocol was used and the corresponding client and server implementations were available. 
  
-image::../images/server_modules_2.png[]
+image::images/server_modules_2.png[]
 
 In other situations, Infinispan users want to have an elastic application tier where you start/stop business processing servers very regularly. Now, if users deployed Infinispan configured with distribution or state transfer, startup time could be greatly influenced by the shuffling around of data that happens in these situations. So in the following diagram, assuming Infinispan was deployed in p2p mode, the app in the second server could not access Infinispan until state transfer had completed. 
 
-image::../images/server_modules_3.png[]
+image::images/server_modules_3.png[]
 
 This effectively means that bringing up new application-tier servers is impacted by things like state transfer because applications cannot access Infinispan until these processes have finished and if the state being shifted around is large, this could take some time. This is undesirable in an elastic environment where you want quick application-tier server turnaround and predictable startup times. Problems like this can be solved by accessing Infinispan in a client-server mode because starting a new application-tier server is just a matter of starting a lightweight client that can connect to the backing data grid server. No need for rehashing or state transfer to occur and as a result server startup times can be more predictable which is very important for modern cloud-based deployments where elasticity in your application tier is important.
 
-image::../images/AchievingElasticity.png[]
+image::images/AchievingElasticity.png[]
 
 Other times, it's common to find multiple applications needing access to data storage. In this cases, you could in theory deploy an Infinispan instance per each of those applications but this could be wasteful and difficult to maintain. Thing about databases here, you don't deploy a database alongside each of your applications, do you? So, alternatively you could deploy Infinispan in client-server mode keeping a pool of Infinispan data grid nodes acting as a shared storage tier for your applications. 
 
-image::../images/server_modules_4.png[]
+image::images/server_modules_4.png[]
 
 Deploying Infinispan in this way also allows you to manage each tier independently, for example, you can upgrade you application or app server without bringing down your Infinispan data grid nodes.
 

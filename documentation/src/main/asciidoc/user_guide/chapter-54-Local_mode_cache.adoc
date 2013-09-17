@@ -31,9 +31,9 @@ Thanks to RadarGun, we have the ability to measure cache performance in standalo
 * Test run on a single node, with 25 concurrent threads, using randomly generated Strings as keys and values and a 1kb payload for each entry, with a 80/20 read/write ratio.
 * Performance measured in transactions per second (higher = better).
 
-image::../images/local_gets_all_included.png[] 
+image::images/local_gets_all_included.png[] 
 
-image::../images/local_puts_all_included.png[] 
+image::images/local_puts_all_included.png[] 
 
 In summary, what we have here is that when run in local mode, Infinispan is a high-performance standalone caching engine which offers a rich set of features while still being trivially simple to configure and use. 
 

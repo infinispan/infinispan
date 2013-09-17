@@ -4,7 +4,7 @@ Cross site (x-site) replication allows backing up the data from one cluster to o
 === Sample deployment
 The diagram below depicts a possible setup of replicated sites, followed by a description of individual elements present in the deployment. Options are then explained at large in future paragraphs. Comments on the diagram above: 
 
-image::../images/xdc.png[]
+image::images/xdc.png[]
 
 
 * there are 3 sites: LON, NYC and SFO.

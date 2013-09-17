@@ -216,14 +216,14 @@ Alternately, if you use some form of shared storage for indexes (see _Sharing th
 
 The diagram below shows a replicated deployment, in which each node has a local index.
 
-image::../images/QueryingInfinispan-REPLonly.png[]
+image::images/QueryingInfinispan-REPLonly.png[]
 
 ==== DISTRIBUTION
 For these 2 cache modes, you _need_ to use a shared index and set _indexLocalOnly_ to true. 
 
 The diagram below shows a deployment with a shared index. Note that while not mandatory, a shared index can be used for replicated (vs. distributed) caches as well.
 
-image::../images/QueryingInfinispan-DISTINVALandREPL.png[]
+image::images/QueryingInfinispan-DISTINVALandREPL.png[]
 
 ==== INVALIDATION
 Indexing or searching of elements under INVALIDATION mode is not supported.
