@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+
+    <modelVersion>4.0.0</modelVersion>
+
+    <parent>
+       <groupId>org.infinispan</groupId>
+       <artifactId>infinispan-parent</artifactId>
+       <version>6.0.0-SNAPSHOT</version>
+       <relativePath>../parent/pom.xml</relativePath>
+    </parent>
+
+    <groupId>org.infinispan</groupId>
+    <artifactId>infinispan-docs</artifactId>
+
+    <name>Infinispan Documentation</name>
+    <description>The Infinispan Documentation</description>
+
+    <properties>
+        <infinispan.version>6.0.x</infinispan.version>
+        <!-- Skip artifact deployment -->
+        <maven.deploy.skip>true</maven.deploy.skip>
+		<skipTests>true</skipTests>
+    </properties>
+
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>org.asciidoctor</groupId>
+                <artifactId>asciidoctor-maven-plugin</artifactId>
+                <version>0.1.3.1</version> 
+                <executions>
+                    <execution>
+                        <id>create-html</id>
+                        <phase>process-resources</phase>
+                        <goals>
+                            <goal>process-asciidoc</goal>
+                        </goals>
+                    </execution>
+                </executions>
+                <configuration>
+                    <toc>true</toc>
+                    <backend>html5</backend>
+                    <doctype>book</doctype>
+                    <goalPrefix>asciidoctor</goalPrefix>
+                    <sourceHighlighter>coderay</sourceHighlighter>
+                    <attributes>
+                        <idprefix></idprefix>
+                        <sectanchors>true</sectanchors>
+                        <toclevels>3</toclevels>
+                        <numbered>true</numbered>
+                        <icons>font</icons>
+                        <docinfo>true</docinfo>
+                        <experimental>true</experimental>
+                        <infinispan-version>${infinispan.version}</infinispan-version>
+                    </attributes>
+                </configuration>
+            </plugin>
+        </plugins>
+    </build>
+</project>

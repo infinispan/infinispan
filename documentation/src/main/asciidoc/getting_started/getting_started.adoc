@@ -1,0 +1,26 @@
+= Getting Started with Infinispan
+Manik Surtani, Mircea Markus, Galder Zamarreño, Pete Muir, and others from the Infinispan community
+:toc2:
+:icons: font
+:toclevels: 2
+:numbered:
+
+
+This is a guide to getting started with Infinispan.
+It is meant to be read alongside the more complete link:../user_guide/user_guide.html[User Guide],
+and as a supplement to the link:http://www.infinispan.org/documentation[Quickstarts] that have been made available.
+
+include::chapter-1-Introduction.adoc[]
+include::chapter-2-Downloading_and_installing_Infinispan.adoc[]
+include::chapter-3-Infinispan_in_action_GUIDemo.adoc[]
+include::chapter-4-Using_Infinispan_as_an_embedded_cache_in_Java_SE.adoc[]
+include::chapter-5-Using_Infinispan_as_an_embedded_data_grid_in_Java_SE.adoc[]
+include::chapter-6-Creating_your_own_Infinispan_project.adoc[]
+include::chapter-7-Using_Infinispan_as_a_second_level_cache_for_Hibernate.adoc[]
+include::chapter-8-Accessing_an_Infinispan_data_grid_remotely.adoc[]
+include::chapter-9-Using_Infinispan_in_JBoss_AS_7.adoc[]
+include::chapter-10-Using_Infinispan_in_servlet_containers_such_as_Tomcat_or_Jetty_and_other_application_servers_such_as_GlassFish_.adoc[]
+include::chapter-11-Monitoring_Infinispan.adoc[]
+include::chapter-16-Infinispan_GUI_demo.adoc[]
+include::example_with_groovy.adoc[]
+include::example_with_scala.adoc[]

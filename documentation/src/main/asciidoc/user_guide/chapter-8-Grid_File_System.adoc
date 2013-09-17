@@ -1,0 +1,71 @@
+==  Grid File System
+Infinispan's GridFileSystem is a new, experimental API that exposes an Infinispan-backed data grid as a file system.
+
+WARNING: This is an _experimental_ API.  Use at your own risk.
+
+Specifically, the API works as an extension to the JDK's link:$$http://java.sun.com/javase/6/docs/api/java/io/File.html$$[File] , link:$$http://java.sun.com/javase/6/docs/api/java/io/InputStream.html$$[InputStream] and link:$$http://java.sun.com/javase/6/docs/api/java/io/OutputStream.html$$[OutputStream] classes: specifically, link:$$http://docs.jboss.org/infinispan/4.1/apidocs/org/infinispan/io/GridFile.html$$[GridFile], link:$$http://docs.jboss.org/infinispan/4.1/apidocs/org/infinispan/io/GridInputStream.html$$[GridInputStream] and link:$$http://docs.jboss.org/infinispan/4.1/apidocs/org/infinispan/io/GridOutputStream.html$$[GridOutputStream].
+A helper class, link:$$http://docs.jboss.org/infinispan/4.1/apidocs/org/infinispan/io/GridFilesystem.html$$[GridFilesystem], is also included. 
+
+Essentially, the link:$$http://docs.jboss.org/infinispan/4.1/apidocs/org/infinispan/io/GridFilesystem.html$$[GridFilesystem] is backed by 2 Infinispan caches - one for metadata (typically replicated) and one for the actual data (typically distributed).
+The former is replicated so that each node has metadata information locally and would not need to make RPC calls to list files, etc.
+The latter is distributed since this is where the bulk of storage space is used up, and a scalable mechanism is needed here.
+Files themselves are chunked and each chunk is stored as a cache entry, as a byte array. 
+
+Here is a quick code snippet demonstrating usage:
+
+[source,java]
+----
+
+Cache<String,byte[]> data = cacheManager.getCache("distributed");
+Cache<String,GridFile.Metadata> metadata = cacheManager.getCache("replicated");
+GridFilesystem fs = new GridFilesystem(data, metadata);
+
+// Create directories
+File file=fs.getFile("/tmp/testfile/stuff");
+fs.mkdirs(); // creates directories /tmp/testfile/stuff
+
+// List all files and directories under "/usr/local"
+file=fs.getFile("/usr/local");
+File[] files=file.listFiles();
+
+// Create a new file
+file=fs.getFile("/tmp/testfile/stuff/README.txt");
+file.createNewFile();
+
+----
+
+Copying stuff to the grid file system:
+
+[source,java]
+----
+InputStream in=new FileInputStream("/tmp/my-movies/dvd-image.iso");
+OutputStream out=fs.getOutput("/grid-movies/dvd-image.iso");
+byte[] buffer=new byte[20000];
+int len;
+while((len=in.read(buffer, 0, buffer.length)) != -1) out.write(buffer, 0, len);
+in.close();
+out.close();
+
+----
+
+Reading stuff from the grid:
+
+[source,java]
+----
+InputStream in=in.getInput("/grid-movies/dvd-image.iso");
+OutputStream out=new FileOutputStream("/tmp/my-movies/dvd-image.iso");
+byte[] buffer=new byte[200000];
+int len;
+while((len=in.read(buffer, 0, buffer.length)) != -1) out.write(buffer, 0, len);
+in.close();
+out.close();
+
+----
+
+=== WebDAV demo
+
+Infinispan ships with a demo link:$$http://en.wikipedia.org/wiki/WebDAV$$[WebDAV] application that makes use of the grid file system APIs.
+This demo app is packaged as a link:$$http://en.wikipedia.org/wiki/WAR_(Sun_file_format)$$[WAR] file which can be deployed in a servlet container, such as JBoss AS or Tomcat, and exposes the grid as a file system over WebDAV.
+This could then be mounted as a remote drive on your operating system. 
+
+

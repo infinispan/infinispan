@@ -1,0 +1,62 @@
+==  Running Infinispan on Amazon Web Services
+Infinispan can be used on the Amazon Web Service (AWS) platform and similar cloud based environment in several ways. As Infinispan uses JGroups as the underlying communication technology, the majority of the configuration work is done JGroups. The default auto discovery won't work on EC2 as multicast is not allowed, but JGroups provides several other discovery protocols so we only have to choose one.
+
+=== TCPPing, GossipRouter, S3_PING
+The TCPPing approach contains a static list of the IP address of each member of the cluster in the JGroups configuration file.
+While this works it doesn't really help when cluster nodes are dynamically added to the cluster.
+
+.Sample TCPPing configuration
+[source,xml]
+----
+<config>
+      <TCP bind_port="7800" />
+      <TCPPING timeout="3000"
+           initial_hosts="${jgroups.tcpping.initial_hosts:localhost[7800],localhost[7801]}"
+           port_range="1"
+           num_initial_members="3"/>
+...
+...
+</config>
+----
+
+See link:$$http://community.jboss.org/wiki/JGroupsTCPPING$$[] for more information about TCPPing. 
+
+=== GossipRouter
+Another approach is to have a central server (Gossip, which each node will be configured to contact. This central server will tell each node in the cluster about each other node. 
+
+The address (ip:port) that the Gossip router is listening on can be injected into the JGroups configuration used by Infinispan. To do this pass the gossip routers address as a system property to the JVM e.g. `-DGossipRouterAddress="10.10.2.4[12001]"` and reference this property in the JGroups configuration that Infinispan is using e.g.
+
+.Sample TCPGOSSIP configuration
+[source,xml]
+----
+
+<config>
+    <TCP bind_port="7800" />
+    <TCPGOSSIP timeout="3000" initial_hosts="${GossipRouterAddress}" num_initial_members="3" />
+...
+...
+</config>
+
+----
+
+More on Gossip Router @ link:$$http://community.jboss.org/docs/DOC-10890$$[http://www.jboss.org/community/wiki/JGroupsGossipRouter] 
+
+=== S3_PING
+Finally you can configure your JGroups instances to use a shared storage to exchange the details of the cluster nodes. S3_PING was added to JGroups in 2.6.12 and 2.8, and allows the Amazon S3 to be used as the shared storage. It is experimental at the moment but offers another method of clustering without a central server. Be sure that you have signed up for Amazon S3 as well as EC2 to use this method.
+
+.Sample S3PING configuration
+[source,xml]
+----
+<config>
+    <TCP bind_port="7800" />
+    <S3_PING
+            secret_access_key="replace this with you secret access key"
+            access_key="replace this with your access key"
+            location="replace this with your S3 bucket location" />
+</config>
+
+----
+
+=== JDBC_PING
+A similar approach to S3_PING, but using a JDBC connection to a shared database. On EC2 that is quite easy using Amazon RDS. See the link:$$http://community.jboss.org/wiki/JDBCPING$$[JDBC_PING Wiki page] for details. 
+

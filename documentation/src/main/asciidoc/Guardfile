@@ -1,0 +1,19 @@
+require 'asciidoctor'
+require 'erb'
+    
+adoc_attribs = {"sectanchors" => true, "toclevels" => 3, "numbered" => true, "icons" => "font", "docinfo" => true, "experimental" => true, "source-highlighter" => "coderay", "stylesdir" => "./styles"}
+sub_adoc_attribs = {"sectanchors" => true, "toclevels" => 3, "numbered" => true, "icons" => "font", "docinfo" => true, "experimental" => true, "source-highlighter" => "coderay", "stylesdir" => "../styles"}
+
+guard 'shell' do
+  watch(/^.*\.adoc$/) {|m|
+    Asciidoctor.render_file(m[0], {:in_place => true, :header_footer => true, :attributes => adoc_attribs })
+  }
+  
+  watch(/^([a-zA-Z_]*)\/.*\.adoc$/) {|m|
+    Asciidoctor.render_file(m[0], {:in_place => true, :header_footer => true, :attributes => sub_adoc_attribs })
+  }
+end
+
+guard 'livereload' do
+  watch(%r{^.+\.(css|js|html)$})
+end

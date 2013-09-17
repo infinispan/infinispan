@@ -1,0 +1,226 @@
+==  Building Infinispan
+Infinispan uses link:$$http://maven.apache.org/$$[Maven] as a build system. 
+
+=== Requirements
+* Java 6.0 or above
+* Maven 3 or above
+
+WARNING: Make sure you follow the steps outlined in link:$$http://community.jboss.org/docs/15169$$[Maven Getting Started - Users] to set up your JBoss repository correctly.
+This step is _crucial_ to ensure your Maven setup can locate JBoss artifacts!
+If you also want to test the EAP integration modules you should also add the appropriate link:$$http://maven.repository.redhat.com/$$[Enterprise Red Hat Maven Repository.] 
+
+=== Maven
+The following is an example `settings.xml` to get you started:
+
+[source,xml]
+.settings.xml
+----
+<settings xmlns="http://maven.apache.org/SETTINGS/1.0.0"
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xsi:schemaLocation="http://maven.apache.org/SETTINGS/1.0.0
+                      http://maven.apache.org/xsd/settings-1.0.0.xsd" >
+  <localRepository/>
+  <interactiveMode/>
+  <usePluginRegistry/>
+  <offline/>
+  <proxies/>
+  <profiles>
+    <profile>
+      <id>jboss-public-repository</id>
+      <repositories>
+        <repository>
+          <id>jboss-public-repository-group</id>
+          <name>JBoss Public Maven Repository Group</name>
+          <url> https://repository.jboss.org/nexus/content/groups/public-jboss/ </url>
+          <layout>default</layout>
+          <releases>
+            <enabled>true</enabled>
+            <updatePolicy>never</updatePolicy>
+          </releases>
+          <snapshots>
+            <enabled>true</enabled>
+            <updatePolicy>never</updatePolicy>
+          </snapshots>
+        </repository>
+      </repositories>
+      <pluginRepositories>
+        <pluginRepository>
+          <id>jboss-public-repository-group</id>
+          <name>JBoss Public Maven Repository Group</name>
+          <url> https://repository.jboss.org/nexus/content/groups/public-jboss/ </url>
+          <layout>default</layout>
+          <releases>
+            <enabled>true</enabled>
+            <updatePolicy>never</updatePolicy>
+          </releases>
+          <snapshots>
+            <enabled>true</enabled>
+            <updatePolicy>never</updatePolicy>
+          </snapshots>
+        </pluginRepository>
+      </pluginRepositories>
+    </profile>
+
+    <!-- Include early access of application server and other products -->
+    <profile>
+      <id>redhat-earlyaccess-repository</id>
+        <repositories>
+          <repository>
+            <id>redhat-earlyaccess-repository-group</id>
+            <name>Red Hat early access repository</name>
+            <url> http://maven.repository.redhat.com/earlyaccess/all/ </url>
+            <layout>default</layout>
+            <releases>
+              <enabled>true</enabled>
+              <updatePolicy>never</updatePolicy>
+            </releases>
+            <snapshots>
+              <enabled>true</enabled>
+              <updatePolicy>never</updatePolicy>
+            </snapshots>
+          </repository>
+        </repositories>
+     </profile>
+  </profiles>
+  <activeProfiles>
+    <activeProfile>jboss-public-repository</activeProfile>
+    <activeProfile>redhat-earlyaccess-repository</activeProfile>
+  </activeProfiles>
+</settings>
+----
+
+==== Quick command reference
+
+TIP: Maven places it's output in `target/` 
+[cols="2,1", options="header", width="80%"]
+|===============
+|Command|Meaning
+| `mvn clean` |Cleans out any old builds and binaries
+| `mvn compile` |Compiles java source code
+| `mvn test` |Runs the TestNG unit test suite on the compiled code. Will also compile the tests. See the testing section below for more information on running different test groups. The default test group run is the "unit" group.
+| `mvn package` | Packages the module as a JAR file, the resulting JAR file will be in target/ 
+| `mvn package -DskipTests` |Creates a JAR file without running tests
+| `mvn package -DskipTests -P minimal-distribution` |Creates a reduced version of the distribution with all modules,scripts...etc but no javadoc or source code. This is very handy to quickly build the distribution in order to run some tests.
+| `mvn install -DskipTests` |Installs the artifacts in your local repo for use by other projects/modules, including inter-module dependencies within the same project.
+| `mvn install -P distribution` | In addition to install, will also use Maven's assembly plugin to build ZIP files for distribution (in target/distribution ). Contents of various distribution are controlled by the files in src/main/resources/assemblies . 
+| `mvn deploy` |Builds and deploy the project to the JBoss snapshots repository.
+| `mvn -Pgenerate-schema-doc install -DskipTests -pl core` |Builds the configuration reference HTML file, often followed up with `firefox core/target/xsd_doc`
+| `mvn install -P-extras` |Avoids the extras profile disables the enforce plugin, generation of source jars and OSGI bundleconstruction, hence making builds run faster. Clearly, this option should not be used when making a release or publishing a snapshot.
+|===============
+
+NOTE: For non-snapshot releases (e.g., alphas, betas, release candidates and final releases) you should use the `bin/release.py` script. 
+
+==== Publishing releases to Maven
+
+To be able to publish releases to Maven, you need to have the following in your `settings.xml` file: 
+
+[source,xml]
+.settings.xml
+----
+
+<settings>
+  ...
+  <servers>
+    ...
+    <server>
+      <id>jboss-snapshots-repository</id>
+      <username>your JBoss.org username</username>
+      <password>your JBoss.org password</password>
+
+    </server>
+    <server>
+      <id>jboss-releases-repository</id>
+      <username>your JBoss.org username</username>
+      <password>your JBoss.org password</password>
+
+    </server>
+    ...
+  </servers>
+  ...
+</settings>
+
+----
+===== Publishing snapshots
+Simply running
+
+ $ mvn clean deploy -DskipTests
+
+in the Infinispan root directory will deploy a snapshot.
+
+===== Publishing releases
+Use the `bin/release.py` script.
+
+==== The Maven Archetypes
+Infinispan currently has 2 separate Maven link:$$http://maven.apache.org/guides/introduction/introduction-to-archetypes.html$$[archetypes] you can use to create a skeleton project and get started using Infinispan.
+This is an easy way to get started using Infinispan as the archetype generates sample code, a sample Maven pom.xml with necessary dependencies, etc. 
+
+You don't need to have any experience with or knowledge of Maven's Archetypes to use this!  Just follow the simple steps below.
+
+===== Starting a new project
+Use the `newproject-archetype` project.  The simple command below will get you started, and
+
+ $ mvn archetype:generate \
+    -DarchetypeGroupId=org.infinispan.archetypes \
+    -DarchetypeArtifactId=newproject-archetype \
+    -DarchetypeVersion=1.0.5 \
+    -DarchetypeRepository=http://repository.jboss.org/nexus/content/groups/public
+
+You will be prompted for a few things, including the artifactId , groupId and version of your new project.
+And that's it - you're ready to go! 
+
+====== Exploring your new project
+The skeleton project ships with a sample application class for interacting with Infinispan.
+You can open this new project in your IDE - most good IDEs such as IntelliJ and Eclipse allow you to import Maven projects, see link:$$http://www.jetbrains.com/idea/webhelp/importing-maven-project.html$$[this guide] and link:$$http://m2eclipse.sonatype.org/$$[this guide].
+Once you open your project in your IDE, you should examine the generated classes and read through the comments. 
+
+====== On the command line...
+Try running
+
+ $ mvn install -Prun
+
+in your newly generated project. This runs the `main()` method in the generated application class.
+
+===== Writing a test case for Infinispan
+This archetype is useful if you wish to contribute a test to the Infinispan project and helps you get set up to use Infinispan's testing harness and related tools.
+Use
+
+ $ mvn archetype:generate \
+    -DarchetypeGroupId=org.infinispan.archetypes \
+    -DarchetypeArtifactId=testcase-archetype \
+    -DarchetypeVersion=1.0.5 \
+    -DarchetypeRepository=http://repository.jboss.org/nexus/content/groups/public
+
+As above, this will prompt you for project details and again as above, you should open this project in your IDE.
+Once you have done so, you will see some sample tests written for Infinispan making use of Infinispan's test harness and testing tools along with extensive comments and links for further reading.
+
+====== On the command line...
+Try running
+
+ $ mvn test
+
+in your newly generated project to run your tests.
+The generated project has a few different profiles you can use as well, using Maven's -P flag. For example: 
+
+ $ mvn test -Pudp
+
+====== Available profiles
+The profiles available in the generated sample project are:
+
+* udp: use UDP for network communications rather than TCP
+* tcp: use TCP for network communications rather than UDP
+* jbosstm: Use the embedded link:$$http://www.jboss.org/jbosstm$$[JBoss Transaction Manager] rather than Infinispan's dummy test transaction manager 
+
+===== Contributing tests back to Infinispan
+If you have written a functional, unit or stress test for Infinispan and want to contribute this back to Infinispan, your best bet is to link:$$https://github.com/infinispan/infinispan$$[fork the Infinispan sources on GitHub].
+The test you would have prototyped and tested in an isolated project created using this archetype can be simply dropped in to Infinispan's test suite.
+Make your changes, add your test, prove that it fails even on Infinispan's upstream source tree and issue a link:$$http://help.github.com/pull-requests/$$[pull request] . 
+
+===== Versions
+The archetypes generate poms with dependencies to specific versions of Infinispan.
+You should edit these generated poms by hand to point to other versions of Infinispan that you are interested in.
+
+===== Source Code
+
+The source code used to generate these archetypes are link:$$https://github.com/infinispan/infinispan-archetypes$$[on GitHub].
+If you wish to enhance and contribute back to the project, fork away! 
+
