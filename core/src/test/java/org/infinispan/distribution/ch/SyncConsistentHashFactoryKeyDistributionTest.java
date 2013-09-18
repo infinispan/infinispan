@@ -57,7 +57,7 @@ public class SyncConsistentHashFactoryKeyDistributionTest extends AbstractInfini
    private DefaultConsistentHash createConsistentHash(int numSegments, int numOwners, int numNodes) {
       MurmurHash3 hash = new MurmurHash3();
       SyncConsistentHashFactory chf = new SyncConsistentHashFactory();
-      DefaultConsistentHash ch = chf.create(hash, numOwners, numSegments, createAddresses(numNodes));
+      DefaultConsistentHash ch = chf.create(hash, numOwners, numSegments, createAddresses(numNodes), null);
       return ch;
    }
 

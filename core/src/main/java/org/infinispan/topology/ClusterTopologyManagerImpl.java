@@ -1,16 +1,6 @@
 package org.infinispan.topology;
 
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.concurrent.Callable;
-import java.util.concurrent.ConcurrentMap;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Future;
-import java.util.concurrent.TimeUnit;
-
 import org.infinispan.commands.ReplicableCommand;
 import org.infinispan.commons.CacheException;
 import org.infinispan.commons.util.CollectionFactory;
@@ -35,6 +25,16 @@ import org.infinispan.remoting.transport.Address;
 import org.infinispan.remoting.transport.Transport;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
+
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.concurrent.Callable;
+import java.util.concurrent.ConcurrentMap;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
 
 import static org.infinispan.factories.KnownComponentNames.ASYNC_TRANSPORT_EXECUTOR;
 
@@ -131,13 +131,14 @@ public class ClusterTopologyManagerImpl implements ClusterTopologyManager {
       boolean hadEmptyConsistentHashes;
       synchronized (cacheStatus) {
          hadEmptyConsistentHashes = cacheStatus.getCacheTopology().getMembers().isEmpty();
-         cacheStatus.addMember(joiner);
+         cacheStatus.addMember(joiner, joinInfo.getCapacityFactor());
          if (hadEmptyConsistentHashes) {
             // This node was the first to join. We need to install the initial CH
             int newTopologyId = cacheStatus.getCacheTopology().getTopologyId() + 1;
             List<Address> initialMembers = cacheStatus.getMembers();
             ConsistentHash initialCH = joinInfo.getConsistentHashFactory().create(
-                  joinInfo.getHashFunction(), joinInfo.getNumOwners(), joinInfo.getNumSegments(), initialMembers);
+                  joinInfo.getHashFunction(), joinInfo.getNumOwners(), joinInfo.getNumSegments(),
+                  initialMembers, cacheStatus.getCapacityFactors());
             CacheTopology initialTopology = new CacheTopology(newTopologyId, initialCH, null);
             cacheStatus.updateCacheTopology(initialTopology);
             // Don't need to broadcast the initial CH, just return the cache topology to the joiner
@@ -296,7 +297,7 @@ public class ClusterTopologyManagerImpl implements ClusterTopologyManager {
             return;
          }
          if (currentCHUnion != null) {
-            currentCHUnion = chFactory.updateMembers(currentCHUnion, members);
+            currentCHUnion = chFactory.updateMembers(currentCHUnion, members, cacheStatus.getCapacityFactors());
          }
 
          // Make sure the topology id is higher than any topology id we had before in the cluster
@@ -361,7 +362,7 @@ public class ClusterTopologyManagerImpl implements ClusterTopologyManager {
 
          ConsistentHashFactory chFactory = cacheStatus.getJoinInfo().getConsistentHashFactory();
          // This update will only add the joiners to the CH, we have already checked that we don't have leavers
-         ConsistentHash updatedMembersCH = chFactory.updateMembers(currentCH, newMembers);
+         ConsistentHash updatedMembersCH = chFactory.updateMembers(currentCH, newMembers, cacheStatus.getCapacityFactors());
          ConsistentHash balancedCH = chFactory.rebalance(updatedMembersCH);
          if (balancedCH.equals(currentCH)) {
             log.tracef("The balanced CH is the same as the current CH, not rebalancing");
@@ -429,19 +430,23 @@ public class ClusterTopologyManagerImpl implements ClusterTopologyManager {
             // but didn't get a response back yet
             if (cacheTopology != null) {
                topologyList.add(cacheTopology);
-            }
 
-            // Add all the members of the topology that have sent responses first
-            // If we only added the sender, we could end up with a different member order
-            for (Address member : cacheTopology.getMembers()) {
-               if (statusResponses.containsKey(member)) {
-                  cacheStatusMap.get(cacheName).addMember(member);
+               // Add all the members of the topology that have sent responses first
+               // If we only added the sender, we could end up with a different member order
+               for (Address member : cacheTopology.getMembers()) {
+                  if (statusResponses.containsKey(member)) {
+                     // Search through all the responses to get the correct capacity factor
+                     Map<String, Object[]> memberStatus = (Map<String, Object[]>) statusResponses.get(member);
+                     CacheJoinInfo memberJoinInfo = (CacheJoinInfo) memberStatus.get(cacheName)[0];
+                     float capacityFactor = memberJoinInfo.getCapacityFactor();
+                     cacheStatusMap.get(cacheName).addMember(member, capacityFactor);
+                  }
                }
             }
 
             // This node may have joined, and still not be in the current or pending CH
             // because the old coordinator didn't manage to start the rebalance before shutting down
-            cacheStatusMap.get(cacheName).addMember(sender);
+            cacheStatusMap.get(cacheName).addMember(sender, joinInfo.getCapacityFactor());
          }
       }
       return clusterCacheMap;
@@ -499,11 +504,11 @@ public class ClusterTopologyManagerImpl implements ClusterTopologyManager {
             log.tracef("Initial topology installed for cache %s: %s", cacheName, newTopology);
             return false;
          }
-         ConsistentHash newCurrentCH = consistentHashFactory.updateMembers(currentCH, newCurrentMembers);
+         ConsistentHash newCurrentCH = consistentHashFactory.updateMembers(currentCH, newCurrentMembers, cacheStatus.getCapacityFactors());
          ConsistentHash newPendingCH = null;
          if (pendingCH != null) {
             List<Address> newPendingMembers = cacheStatus.pruneInvalidMembers(pendingCH.getMembers());
-            newPendingCH = consistentHashFactory.updateMembers(pendingCH, newPendingMembers);
+            newPendingCH = consistentHashFactory.updateMembers(pendingCH, newPendingMembers, cacheStatus.getCapacityFactors());
          }
          CacheTopology newTopology = new CacheTopology(topologyId + 1, newCurrentCH, newPendingCH);
          cacheStatus.updateCacheTopology(newTopology);

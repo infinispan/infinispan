@@ -39,7 +39,7 @@ public class TopologyAwareSyncConsistentHashFactoryTest extends TopologyAwareCon
       log.tracef("Ownership stats: " + stats);
       int maxPrimarySegments = numSegments / currentMembers.size() + 1;
       for (Address node : currentMembers) {
-         int maxSegments = stats.computeMaxSegments(numSegments, numOwners, node);
+         int maxSegments = stats.computeExpectedSegments(numSegments, numOwners, node);
          log.tracef("Primary segments ratio: %f, total segments ratio: %f",
                stats.getPrimaryOwned(node) / maxPrimarySegments, stats.getOwned(node) / maxSegments);
          assertTrue(maxPrimarySegments * 0.4 <= stats.getPrimaryOwned(node));

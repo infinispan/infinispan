@@ -200,11 +200,11 @@
       </clustering>
    </namedCache>
 
-   <namedCache name="dist_with_vnodes">
+   <namedCache name="dist_with_capacity_factors">
       <clustering mode="distribution">
          <stateTransfer timeout="120000" />
          <sync/>
-         <hash numOwners="3" numSegments="1000"/>
+         <hash numOwners="3" numSegments="1000" capacityFactor="0"/>
          <l1 enabled="true" lifespan="600000"/>
       </clustering>
    </namedCache>

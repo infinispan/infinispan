@@ -9,6 +9,8 @@ import org.infinispan.commons.hash.Hash;
 import org.infinispan.commons.marshall.AbstractExternalizer;
 import org.infinispan.marshall.core.Ids;
 import org.infinispan.remoting.transport.Address;
+import org.infinispan.util.logging.Log;
+import org.infinispan.util.logging.LogFactory;
 
 /**
  * Default implementation of {@link ConsistentHashFactory}.
@@ -22,17 +24,37 @@ import org.infinispan.remoting.transport.Address;
  */
 public class DefaultConsistentHashFactory implements ConsistentHashFactory<DefaultConsistentHash> {
 
-   @Override
-   public DefaultConsistentHash create(Hash hashFunction, int numOwners, int numSegments, List<Address> members) {
+   private static final Log log = LogFactory.getLog(DefaultConsistentHashFactory.class);
+   private static final boolean trace = log.isTraceEnabled();
+
+   public DefaultConsistentHash create(Hash hashFunction, int numOwners, int numSegments,
+                                       List<Address> members, Map<Address, Float> capacityFactors) {
+      if (members.size() == 0)
+         throw new IllegalArgumentException("Can't construct a consistent hash without any members");
       if (numOwners <= 0)
          throw new IllegalArgumentException("The number of owners should be greater than 0");
+      checkCapacityFactors(members, capacityFactors);
 
       // Use the CH rebalance algorithm to get an even spread
       // Round robin doesn't work properly because a segment's owner must be unique,
-      Builder builder = new Builder(hashFunction, numOwners, numSegments, members);
+      Builder builder = new Builder(hashFunction, numOwners, numSegments, members, capacityFactors);
       rebalanceBuilder(builder);
 
       return builder.build();
+   }
+
+   private void checkCapacityFactors(List<Address> members, Map<Address, Float> capacityFactors) {
+      if (capacityFactors != null) {
+         float totalCapacity = 0;
+         for (Address node : members) {
+            Float capacityFactor = capacityFactors.get(node);
+            if (capacityFactor == null || capacityFactor < 0)
+               throw new IllegalArgumentException("Invalid capacity factor for node " + node);
+            totalCapacity += capacityFactor;
+         }
+         if (totalCapacity == 0)
+            throw new IllegalArgumentException("There must be at least one node with a non-zero capacity factor");
+      }
    }
 
    /**
@@ -44,12 +66,19 @@ public class DefaultConsistentHashFactory implements ConsistentHashFactory<Defau
     * @return
     */
    @Override
-   public DefaultConsistentHash updateMembers(DefaultConsistentHash baseCH, List<Address> actualMembers) {
-      if (actualMembers.equals(baseCH.getMembers()))
+   public DefaultConsistentHash updateMembers(DefaultConsistentHash baseCH, List<Address> actualMembers,
+                                              Map<Address, Float> actualCapacityFactors) {
+      if (actualMembers.size() == 0)
+         throw new IllegalArgumentException("Can't construct a consistent hash without any members");
+      checkCapacityFactors(actualMembers, actualCapacityFactors);
+
+      boolean sameCapacityFactors = actualCapacityFactors == null ? baseCH.getCapacityFactors() == null :
+            actualCapacityFactors.equals(baseCH.getCapacityFactors());
+      if (actualMembers.equals(baseCH.getMembers()) && sameCapacityFactors)
          return baseCH;
 
       // The builder constructor automatically removes leavers
-      Builder builder = new Builder(baseCH, actualMembers);
+      Builder builder = new Builder(baseCH, actualMembers, actualCapacityFactors);
 
       // If there are segments with 0 owners, fix them
       // Try to assign the same owners for those segments as a future rebalance call would.
@@ -68,7 +97,6 @@ public class DefaultConsistentHashFactory implements ConsistentHashFactory<Defau
 
    @Override
    public DefaultConsistentHash rebalance(DefaultConsistentHash baseCH) {
-
       // This method assign new owners to the segments so that
       // * num_owners(s) == numOwners, for each segment s
       // * floor(numSegments/numNodes) <= num_segments_primary_owned(n) for each node n
@@ -96,54 +124,66 @@ public class DefaultConsistentHashFactory implements ConsistentHashFactory<Defau
    protected void rebalanceBuilder(Builder builder) {
       addPrimaryOwners(builder);
       addBackupOwners(builder);
-      // balancePrimaryOwners(builder);
    }
 
    protected void addPrimaryOwners(Builder builder) {
-      int minPrimarySegments = builder.getNumSegments() / builder.getNumNodes();
+      addFirstOwner(builder);
 
       // 1. Try to replace primary owners with too many segments with the backups in those segments.
-      swapPrimaryOwnersWithBackups(builder, minPrimarySegments + 1);
-      swapPrimaryOwnersWithBackups(builder, minPrimarySegments);
-      swapPrimaryOwnersWithBackups(builder, minPrimarySegments + 1);
+      swapPrimaryOwnersWithBackups(builder);
 
-      // 2. If existing backup owners weren't enough, try to add new backup owners and then to the swap.
-      // 2.1. In the first phase, try to keep the number of owners below actualNumOwners
+      // 2. For segments that don't have enough owners, try to add a new owner as the primary owner.
       int actualNumOwners = builder.getActualNumOwners();
-      doAddPrimaryOwners(builder, minPrimarySegments + 1, actualNumOwners);
-      doAddPrimaryOwners(builder, minPrimarySegments, actualNumOwners);
-      doAddPrimaryOwners(builder, minPrimarySegments + 1, actualNumOwners);
+      replacePrimaryOwners(builder, actualNumOwners);
 
-      // 2.2. In the second phase, allow numOwners + 1 owners for each segment.
+      // 3. If some primary owners still have too many segments, allow adding an extra owner as the primary owner.
       // Since a segment only has 1 primary owner, this will be enough to give us a "proper" primary owner
       // for each segment.
-      doAddPrimaryOwners(builder, minPrimarySegments + 1, actualNumOwners + 1);
-      doAddPrimaryOwners(builder, minPrimarySegments, actualNumOwners + 1);
-      doAddPrimaryOwners(builder, minPrimarySegments + 1, actualNumOwners + 1);
+      replacePrimaryOwners(builder, actualNumOwners + 1);
    }
 
-   protected void doAddPrimaryOwners(Builder builder, int maxSegments, int maxOwners) {
-      // If a segment has primaryOwned(primaryOwner(segment)) > maxSegments,
-      // and owners(segment) < maxOwners, add a new primary owner from the members list.
-      // The new primary owner must primary-own < minSegments segments.
-      for (int segment = builder.getNumSegments() - 1; segment >= 0; segment--) {
-         if (builder.getOwners(segment).size() >= maxOwners)
+   private void addFirstOwner(Builder builder) {
+      for (int segment = 0; segment < builder.getNumSegments(); segment++) {
+         if (builder.getOwners(segment).size() > 0)
             continue;
 
-         // Must be able to deal with segments that don't have any owners
-         // Either when creating a new CH or when all the owners of a segment left
-         boolean zeroOwners = builder.getOwners(segment).isEmpty();
-         if (!zeroOwners && builder.getPrimaryOwned(builder.getPrimaryOwner(segment)) <= maxSegments)
-            continue;
-
-         Address newPrimary = findNewPrimaryOwner(builder, builder.getMembers(), maxSegments);
+         Address newPrimary = findNewPrimaryOwner(builder, builder.getMembers(), null);
          if (newPrimary != null) {
-            builder.replacePrimaryOwner(segment, newPrimary);
+            builder.addPrimaryOwner(segment, newPrimary);
          }
       }
    }
 
-   protected void swapPrimaryOwnersWithBackups(Builder builder, int maxSegments) {
+   protected void replacePrimaryOwners(Builder builder, int maxOwners) {
+      // Find the node with the worst primary-owned-segments-to-capacity ratio W.
+      // Iterate over all the segments primary-owned by W, and if possible replace it with another node.
+      // After replacing, check that W is still the worst node. If not, repeat with the new worst node.
+      // Keep track of the segments where we already replaced the primary owner, so we don't do it twice. ???
+      boolean primaryOwnerReplaced = true;
+      while (primaryOwnerReplaced) {
+         Address worstNode = findWorstPrimaryOwner(builder, builder.getMembers());
+         primaryOwnerReplaced = false;
+
+         for (int segment = builder.getNumSegments() - 1; segment >= 0; segment--) {
+            if (builder.getOwners(segment).size() >= maxOwners)
+               continue;
+
+            // Only replace if the worst node is the primary owner
+            if (!builder.getPrimaryOwner(segment).equals(worstNode))
+               continue;
+
+            Address newPrimary = findNewPrimaryOwner(builder, builder.getMembers(), worstNode);
+            if (newPrimary != null && !builder.getOwners(segment).contains(newPrimary)) {
+               builder.addPrimaryOwner(segment, newPrimary);
+               primaryOwnerReplaced = true;
+
+               worstNode = findWorstPrimaryOwner(builder, builder.getMembers());
+            }
+         }
+      }
+   }
+
+   protected void swapPrimaryOwnersWithBackups(Builder builder) {
       // If a segment has primaryOwned(primaryOwner(segment)) > maxPrimarySegments,
       // try to swap the primary owner with one of the backup owners.
       // The new primary owner must primary-own < minPrimarySegments segments.
@@ -152,148 +192,182 @@ public class DefaultConsistentHashFactory implements ConsistentHashFactory<Defau
          if (builder.getOwners(segment).isEmpty())
             continue;
 
-         if (builder.getPrimaryOwned(builder.getPrimaryOwner(segment)) > maxSegments) {
-            Address newPrimary = findNewPrimaryOwner(builder, builder.getBackupOwners(segment), maxSegments);
-            if (newPrimary != null) {
-               // actually replaces the primary owner
-               builder.replacePrimaryOwner(segment, newPrimary);
-            }
+         Address primaryOwner = builder.getPrimaryOwner(segment);
+         Address newPrimary = findNewPrimaryOwner(builder, builder.getBackupOwners(segment), primaryOwner);
+         if (newPrimary != null) {
+            // actually replaces the primary owner
+            builder.replacePrimaryOwnerWithBackup(segment, newPrimary);
          }
       }
    }
 
    protected void addBackupOwners(Builder builder) {
-      int minSegments = builder.getActualNumOwners() * builder.getNumSegments() / builder.getNumNodes();
-
       // 1. Remove extra owners (could be leftovers from addPrimaryOwners).
-      removeExtraBackupOwners(builder, minSegments);
+      removeExtraBackupOwners(builder);
 
       // 2. If owners(segment) < numOwners, add new owners.
-      // In the first phase, the new owners must own < minSegments segments.
-      // It may not be possible to fill all the segments with numOwners owners this way,
-      // so we repeat this in a loop, each iteration with a higher limit of owned segments
-      boolean insufficientOwners = true;
-      int maxSegments = minSegments;
-      while(insufficientOwners) {
-         insufficientOwners = doAddBackupOwners(builder, maxSegments);
-         maxSegments++;
-      }
+      // We always add the member that is not an owner already and has the best owned-segments-to-capacity ratio.
+      doAddBackupOwners(builder);
 
       // 3. Now owners(segment) == numOwners for every segment because of steps 1 and 2.
-      // 3.1. If there is an owner with owned(owner) > minSegments, find another node
-      // with owned(node) < minSegments and replace that owner with it.
-      // Do it iteratively in order to spread the new owners as much as possible.
-      for (maxSegments = builder.getNumSegments() - 1; maxSegments >= minSegments; maxSegments--) {
-         replaceBackupOwners(builder, maxSegments);
-      }
-
-      // 3.2. Same as step 3.1, but allow replacing nodes that have owned(node) > minSegments + 1segments
-      // with nodes that already have owned(node) = minSegments.
-      // Necessary when numOwners*numSegments doesn't divide evenly with numNodes,
-      // because all nodes could own minSegments segments and yet one node could own
-      // minSegments + (numOwners*numSegments % numNodes) segments.
-      replaceBackupOwners(builder, minSegments + 1);
-
-      // At this point each node should have minSegments <= owned(node) <= minSegments + 1
+      // For each owner, if there exists a non-owner with a better owned-segments-to-capacity-ratio, replace it.
+      replaceBackupOwners(builder);
    }
 
-   protected void removeExtraBackupOwners(Builder builder, int minSegments) {
-      boolean tooManyOwners = true;
-      int maxSegments = minSegments + 1;
-      while(tooManyOwners) {
-         tooManyOwners = doRemoveExtraBackupOwners(builder, maxSegments);
-         maxSegments--;
-      }
-   }
+   protected void removeExtraBackupOwners(Builder builder) {
+      // Find the node with the worst segments-to-capacity ratio, and replace it in one of the owner lists
+      // Repeat with the next-worst node, and so on.
+      List<Address> untestedNodes = new ArrayList<Address>(builder.getMembers());
+      while (!untestedNodes.isEmpty()) {
+         boolean ownerRemoved = false;
+         Address worstNode = findWorstBackupOwner(builder, untestedNodes);
 
-   protected boolean doRemoveExtraBackupOwners(Builder builder, int maxSegments) {
-      boolean tooManyOwners = false;
-      for (int segment = 0; segment < builder.getNumSegments(); segment++) {
-         List<Address> owners = builder.getOwners(segment);
-         for (int ownerIdx = owners.size() - 1; ownerIdx >= 1; ownerIdx--) {
+         // Iterate in reverse order so the CH looks more stable in the logs as we add nodes
+         for (int segment = builder.getNumSegments() - 1; segment >= 0; segment--) {
+            List<Address> owners = builder.getOwners(segment);
             if (owners.size() <= builder.getActualNumOwners())
-               break;
+               continue;
 
-            Address owner = owners.get(ownerIdx);
-            if (builder.getOwned(owner) > maxSegments) {
-               // Owner has too many segments. Remove it.
-               builder.removeOwner(segment, owner);
+            int ownerIdx = owners.indexOf(worstNode);
+            // Don't remove the primary
+            if (ownerIdx > 0) {
+               builder.removeOwner(segment, worstNode);
+               ownerRemoved = true;
+               // The worst node might have changed.
+               untestedNodes = new ArrayList<Address>(builder.getMembers());
+               worstNode = findWorstBackupOwner(builder, untestedNodes);
             }
          }
-         tooManyOwners |= builder.getOwners(segment).size() > builder.getActualNumOwners();
+         if (!ownerRemoved) {
+            untestedNodes.remove(worstNode);
+         }
       }
-      return tooManyOwners;
    }
 
-   protected boolean doAddBackupOwners(Builder builder, int maxSegments) {
-      boolean insufficientOwners = false;
+   /**
+    * @return The worst backup owner, or {@code null} if the remaining nodes own 0 segments.
+    */
+   private Address findWorstPrimaryOwner(Builder builder, List<Address> nodes) {
+      Address worst = null;
+      float maxSegmentsPerCapacity = -1;
+      for (Address owner : nodes) {
+         float capacityFactor = builder.getCapacityFactor(owner);
+         if (builder.getPrimaryOwned(owner) - 1 >= capacityFactor * maxSegmentsPerCapacity) {
+            worst = owner;
+            maxSegmentsPerCapacity = capacityFactor != 0 ? (builder.getPrimaryOwned(owner) - 1) / capacityFactor : 0;
+         }
+      }
+      return worst;
+   }
+
+   /**
+    * @return The worst backup owner, or {@code null} if the remaining nodes own 0 segments.
+    */
+   private Address findWorstBackupOwner(Builder builder, List<Address> nodes) {
+      Address worst = null;
+      float maxSegmentsPerCapacity = -1;
+      for (Address owner : nodes) {
+         float capacityFactor = builder.getCapacityFactor(owner);
+         if (worst == null || builder.getOwned(owner) - 1 >= capacityFactor * maxSegmentsPerCapacity) {
+            worst = owner;
+            maxSegmentsPerCapacity = capacityFactor != 0 ? (builder.getOwned(owner) - 1) / capacityFactor : 0;
+         }
+      }
+      return worst;
+   }
+
+   protected void doAddBackupOwners(Builder builder) {
       for (int segment = 0; segment < builder.getNumSegments(); segment++) {
          List<Address> owners = builder.getOwners(segment);
 
          while (owners.size() < builder.getActualNumOwners()) {
-            Address newOwner = findNewBackupOwner(builder, owners, maxSegments);
-            // If we haven't found an owner, we'll only find it with an increased maxSegments
-            if (newOwner == null) {
-               insufficientOwners = true;
-               break;
-            }
-
+            Address newOwner = findNewBackupOwner(builder, owners, null);
             builder.addOwner(segment, newOwner);
          }
       }
-      return insufficientOwners;
    }
 
-   protected void replaceBackupOwners(Builder builder, int maxSegments) {
-      // Iterate over the owners in the outer loop so that we minimize the number of owner changes
-      // for the same segment.
-      for (int ownerIdx = builder.getActualNumOwners() - 1; ownerIdx >= 0; ownerIdx--) {
+   protected void replaceBackupOwners(Builder builder) {
+      // Find the node with the worst segments-to-capacity ratio, and replace it in one of the owner lists.
+      // If it's not possible to replace any owner with the worst node, remove the worst from the untested nodes
+      // list and try with the new worst, repeating as necessary. After replacing one owner,
+      // go back to the original untested nodes list.
+      List<Address> untestedNodes = new ArrayList<Address>(builder.getMembers());
+      while (!untestedNodes.isEmpty()) {
+         Address worstNode = findWorstBackupOwner(builder, untestedNodes);
+         boolean backupOwnerReplaced = false;
+
          // Iterate in reverse order so the CH looks more stable in the logs as we add nodes
          for (int segment = builder.getNumSegments() - 1; segment >= 0; segment--) {
             List<Address> owners = builder.getOwners(segment);
-            Address owner = owners.get(ownerIdx);
-            if (builder.getOwned(owner) > maxSegments) {
-               // This owner has too many segments. Find another node to replace it with.
-               Address replacement = findNewBackupOwner(builder, owners, maxSegments);
-               if (replacement != null) {
-                  builder.removeOwner(segment, owner);
-                  builder.addOwner(segment, replacement);
-               }
+            int ownerIdx = owners.indexOf(worstNode);
+            // Don't replace the primary
+            if (ownerIdx <= 0)
+               continue;
+
+            // Surely there is a better node to replace this owner with...
+            Address replacement = findNewBackupOwner(builder, owners, worstNode);
+            if (replacement != null) {
+               //log.tracef("Segment %3d: replacing owner %s with %s", segment, worstNode, replacement);
+               builder.removeOwner(segment, worstNode);
+               builder.addOwner(segment, replacement);
+               backupOwnerReplaced = true;
+               // The worst node might have changed.
+               untestedNodes = new ArrayList<Address>(builder.getMembers());
+               worstNode = findWorstBackupOwner(builder, untestedNodes);
             }
+         }
+
+         if (!backupOwnerReplaced) {
+            untestedNodes.remove(worstNode);
          }
       }
    }
 
    /**
-    * @return The member with the least owned segments that is also not in the excludes list.
+    * @return The member with the worst owned segments/capacity ratio that is also not in the excludes list.
     */
-   protected Address findNewBackupOwner(Builder builder, Collection<Address> excludes, int maxSegments) {
-      // find the member with the least owned segments
+   protected Address findNewBackupOwner(Builder builder, Collection<Address> excludes, Address owner) {
+      // We want the owned/capacity ratio of the actual owner after removing the current segment to be bigger
+      // than the owned/capacity ratio of the new owner after adding the current segment, so that a future pass
+      // won't try to switch them back.
       Address best = null;
-      int foundOwned = maxSegments;
+      float initialCapacityFactor = owner != null ? builder.getCapacityFactor(owner) : 0;
+      float bestSegmentsPerCapacity = initialCapacityFactor != 0 ? (builder.getOwned(owner) - 1 ) / initialCapacityFactor :
+            Float.MAX_VALUE;
       for (Address candidate : builder.getMembers()) {
-         if (builder.getOwned(candidate) >= foundOwned)
-            continue;
-
          if (excludes == null || !excludes.contains(candidate)) {
-            best = candidate;
-            foundOwned = builder.getOwned(candidate);
+            int owned = builder.getOwned(candidate);
+            float capacityFactor = builder.getCapacityFactor(candidate);
+            if ((owned + 1) <= capacityFactor * bestSegmentsPerCapacity) {
+               best = candidate;
+               bestSegmentsPerCapacity = (owned + 1) / capacityFactor;
+            }
          }
       }
+
       return best;
    }
 
    /**
-    * @return The candidate with the least primary-owned segments that is also not in the excludes list.
+    * @return The candidate with the worst primary-owned segments/capacity ratio that is also not in the excludes list.
     */
-   protected Address findNewPrimaryOwner(Builder builder, Collection<Address> candidates, int maxSegments) {
-      // find the member with the least owned segments
+   protected Address findNewPrimaryOwner(Builder builder, Collection<Address> candidates,
+                                         Address primaryOwner) {
+      float initialCapacityFactor = primaryOwner != null ? builder.getCapacityFactor(primaryOwner) : 0;
+
+      // We want the owned/capacity ratio of the actual primary owner after removing the current segment to be bigger
+      // than the owned/capacity ratio of the new primary owner after adding the current segment, so that a future pass
+      // won't try to switch them back.
       Address best = null;
-      int foundOwned = maxSegments;
+      float bestSegmentsPerCapacity = initialCapacityFactor != 0 ? (builder.getPrimaryOwned(primaryOwner) - 1) /
+            initialCapacityFactor : Float.MAX_VALUE;
       for (Address candidate : candidates) {
-         if (builder.getPrimaryOwned(candidate) < foundOwned) {
+         int primaryOwned = builder.getPrimaryOwned(candidate);
+         float capacityFactor = builder.getCapacityFactor(candidate);
+         if ((primaryOwned + 1) <= capacityFactor * bestSegmentsPerCapacity) {
             best = candidate;
-            foundOwned = builder.getPrimaryOwned(candidate);
+            bestSegmentsPerCapacity = (primaryOwned + 1) / capacityFactor;
          }
       }
       return best;
@@ -307,12 +381,17 @@ public class DefaultConsistentHashFactory implements ConsistentHashFactory<Defau
       private final List<Address>[] segmentOwners;
       private final OwnershipStatistics stats;
       private final List<Address> members;
+      private final Map<Address, Float> capacityFactors;
+      // For debugging
+      private int modCount = 0;
 
-      public Builder(Hash hashFunction, int numOwners, int numSegments, List<Address> members) {
+      public Builder(Hash hashFunction, int numOwners, int numSegments, List<Address> members,
+                     Map<Address, Float> capacityFactors) {
          this.hashFunction = hashFunction;
          this.initialNumOwners = numOwners;
-         this.actualNumOwners = Math.min(numOwners, members.size());
+         this.actualNumOwners = computeActualNumOwners(numOwners, members, capacityFactors);
          this.members = members;
+         this.capacityFactors = capacityFactors;
          this.segmentOwners = new List[numSegments];
          for (int segment = 0; segment < numSegments; segment++) {
             segmentOwners[segment] = new ArrayList<Address>(actualNumOwners);
@@ -320,7 +399,8 @@ public class DefaultConsistentHashFactory implements ConsistentHashFactory<Defau
          this.stats = new OwnershipStatistics(members);
       }
 
-      public Builder(DefaultConsistentHash baseCH, List<Address> actualMembers) {
+      public Builder(DefaultConsistentHash baseCH, List<Address> actualMembers,
+                     Map<Address, Float> actualCapacityFactors) {
          int numSegments = baseCH.getNumSegments();
          Set<Address> actualMembersSet = new HashSet<Address>(actualMembers);
          List[] owners = new List[numSegments];
@@ -330,14 +410,15 @@ public class DefaultConsistentHashFactory implements ConsistentHashFactory<Defau
          }
          this.hashFunction = baseCH.getHashFunction();
          this.initialNumOwners = baseCH.getNumOwners();
-         this.actualNumOwners = Math.min(initialNumOwners, actualMembers.size());
+         this.actualNumOwners = computeActualNumOwners(initialNumOwners, actualMembers, actualCapacityFactors);
          this.members = actualMembers;
+         this.capacityFactors = actualCapacityFactors;
          this.segmentOwners = owners;
          this.stats = new OwnershipStatistics(baseCH, actualMembers);
       }
 
       public Builder(DefaultConsistentHash baseCH) {
-         this(baseCH, baseCH.getMembers());
+         this(baseCH, baseCH.getMembers(), baseCH.getCapacityFactors());
       }
 
       public Builder(Builder other) {
@@ -350,6 +431,7 @@ public class DefaultConsistentHashFactory implements ConsistentHashFactory<Defau
          this.initialNumOwners = other.initialNumOwners;
          this.actualNumOwners = other.actualNumOwners;
          this.members = other.members;
+         this.capacityFactors = other.capacityFactors;
          this.segmentOwners = owners;
          this.stats = new OwnershipStatistics(other.stats);
       }
@@ -383,6 +465,7 @@ public class DefaultConsistentHashFactory implements ConsistentHashFactory<Defau
       }
 
       public boolean addOwner(int segment, Address owner) {
+         modCount++;
          List<Address> thisSegmentOwners = segmentOwners[segment];
          if (thisSegmentOwners.contains(owner))
             return false;
@@ -405,6 +488,7 @@ public class DefaultConsistentHashFactory implements ConsistentHashFactory<Defau
       }
 
       public boolean removeOwner(int segment, Address owner) {
+         modCount++;
          List<Address> segmentOwners = this.segmentOwners[segment];
          if (segmentOwners.get(0).equals(owner)) {
             stats.decPrimaryOwned(owner);
@@ -416,35 +500,43 @@ public class DefaultConsistentHashFactory implements ConsistentHashFactory<Defau
          return modified;
       }
 
-      public void replacePrimaryOwner(int segment, Address newPrimaryOwner) {
+      public void addPrimaryOwner(int segment, Address newPrimaryOwner) {
+         modCount++;
          List<Address> segmentOwners = this.segmentOwners[segment];
          int ownerIndex = segmentOwners.indexOf(newPrimaryOwner);
-         if (ownerIndex == 0) {
-            throw new IllegalStateException("Can't replace a primary owner with itself");
+         if (ownerIndex >= 0) {
+            throw new IllegalArgumentException("The new primary owner must not be a backup already");
          }
 
-         if (segmentOwners.isEmpty()) {
-            segmentOwners.add(newPrimaryOwner);
-            stats.incOwned(newPrimaryOwner);
-            stats.incPrimaryOwned(newPrimaryOwner);
-            return;
-         }
-
-         Address oldPrimaryOwner = segmentOwners.get(0);
-         if (ownerIndex == -1) {
-            stats.incOwned(newPrimaryOwner);
-         } else {
-            // The new primary owner was already a backup owner, first remove it from the list
-            segmentOwners.remove(ownerIndex);
+         if (!segmentOwners.isEmpty()) {
+            Address oldPrimaryOwner = segmentOwners.get(0);
+            stats.decPrimaryOwned(oldPrimaryOwner);
          }
 
          segmentOwners.add(0, newPrimaryOwner);
+         stats.incOwned(newPrimaryOwner);
+         stats.incPrimaryOwned(newPrimaryOwner);
+      }
+
+      public void replacePrimaryOwnerWithBackup(int segment, Address newPrimaryOwner) {
+         modCount++;
+         List<Address> segmentOwners = this.segmentOwners[segment];
+         int ownerIndex = segmentOwners.indexOf(newPrimaryOwner);
+         if (ownerIndex <= 0) {
+            throw new IllegalArgumentException("The new primary owner must already be a backup owner");
+         }
+
+         Address oldPrimaryOwner = segmentOwners.get(0);
          stats.decPrimaryOwned(oldPrimaryOwner);
+
+         segmentOwners.remove(ownerIndex);
+         segmentOwners.add(0, newPrimaryOwner);
          stats.incPrimaryOwned(newPrimaryOwner);
       }
 
       public DefaultConsistentHash build() {
-         return new DefaultConsistentHash(hashFunction, initialNumOwners, segmentOwners.length, members, segmentOwners);
+         return new DefaultConsistentHash(hashFunction, initialNumOwners, segmentOwners.length, members, capacityFactors,
+               segmentOwners);
       }
 
       private int getPrimaryOwned(Address node) {
@@ -453,6 +545,48 @@ public class DefaultConsistentHashFactory implements ConsistentHashFactory<Defau
 
       public int getOwned(Address node) {
          return stats.getOwned(node);
+      }
+
+      public Map<Address, Float> getCapacityFactors() {
+         return capacityFactors;
+      }
+
+      public float getCapacityFactor(Address node) {
+         return capacityFactors != null ? capacityFactors.get(node) : 1;
+      }
+
+      public float getTotalCapacity() {
+         if (capacityFactors == null)
+            return getNumNodes();
+
+         float totalCapacity = 0;
+         for (Address node : members) {
+            totalCapacity += capacityFactors.get(node);
+         }
+         return totalCapacity;
+      }
+
+      public float getPrimaryOwnedPerCapacity(Address node) {
+         float capacityFactor = getCapacityFactor(node);
+         return capacityFactor != 0 ? getPrimaryOwned(node) / capacityFactor : Float.MAX_VALUE;
+      }
+
+      public float getOwnedPerCapacity(Address node) {
+         float capacityFactor = getCapacityFactor(node);
+         return capacityFactor != 0 ? getOwned(node) / capacityFactor : Float.MAX_VALUE;
+      }
+
+      public int computeActualNumOwners(int numOwners, List<Address> members, Map<Address, Float> capacityFactors) {
+         int nodesWithLoad = members.size();
+         if (capacityFactors != null) {
+            nodesWithLoad = 0;
+            for (Address node : members) {
+               if (capacityFactors.get(node) != 0) {
+                  nodesWithLoad++;
+               }
+            }
+         }
+         return Math.min(numOwners, nodesWithLoad);
       }
    }
 

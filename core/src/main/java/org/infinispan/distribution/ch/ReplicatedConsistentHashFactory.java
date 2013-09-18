@@ -11,6 +11,7 @@ import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 import java.util.Queue;
 import java.util.Set;
 
@@ -23,15 +24,9 @@ import java.util.Set;
  */
 public class ReplicatedConsistentHashFactory implements ConsistentHashFactory<ReplicatedConsistentHash> {
 
-   /**
-    * @param hashFunction The hash function to use on top of the keys' own {@code hashCode()} implementation.
-    * @param numOwners    this implementation ignores this parameter.
-    * @param numSegments  number of hash-space segments.
-    * @param members      the list of cache members.
-    * @see ConsistentHashFactory#create(org.infinispan.commons.hash.Hash, int, int, java.util.List)
-    */
    @Override
-   public ReplicatedConsistentHash create(Hash hashFunction, int numOwners, int numSegments, List<Address> members) {
+   public ReplicatedConsistentHash create(Hash hashFunction, int numOwners, int numSegments, List<Address> members,
+                                          Map<Address, Float> capacityFactors) {
       int[] primaryOwners = new int[numSegments];
       for (int i = 0; i < numSegments; i++) {
          primaryOwners[i] = i % members.size();
@@ -40,7 +35,8 @@ public class ReplicatedConsistentHashFactory implements ConsistentHashFactory<Re
    }
 
    @Override
-   public ReplicatedConsistentHash updateMembers(ReplicatedConsistentHash baseCH, List<Address> newMembers) {
+   public ReplicatedConsistentHash updateMembers(ReplicatedConsistentHash baseCH, List<Address> newMembers,
+                                                 Map<Address, Float> actualCapacityFactors) {
       if (newMembers.equals(baseCH.getMembers()))
          return baseCH;
 

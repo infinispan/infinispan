@@ -35,22 +35,22 @@ public class ReplicatedConsistentHashFactoryTest {
       List<Address> c = Arrays.asList(C);
 
       for (int segments : testSegments) {
-         ReplicatedConsistentHash ch = factory.create(new MurmurHash3(), 0, segments, a);
+         ReplicatedConsistentHash ch = factory.create(new MurmurHash3(), 0, segments, a, null);
          checkDistribution(ch);
 
-         ch = factory.updateMembers(ch, ab);
+         ch = factory.updateMembers(ch, ab, null);
          checkDistribution(ch);
 
-         ch = factory.updateMembers(ch, abc);
+         ch = factory.updateMembers(ch, abc, null);
          checkDistribution(ch);
 
-         ch = factory.updateMembers(ch, abcd);
+         ch = factory.updateMembers(ch, abcd, null);
          checkDistribution(ch);
 
-         ch = factory.updateMembers(ch, bcd);
+         ch = factory.updateMembers(ch, bcd, null);
          checkDistribution(ch);
 
-         ch = factory.updateMembers(ch, c);
+         ch = factory.updateMembers(ch, c, null);
          checkDistribution(ch);
       }
    }

@@ -15,15 +15,18 @@ public class HashConfiguration {
    private final Hash hash;
    private final int numOwners;
    private final int numSegments;
+   private final float capacityFactor;
    private final GroupsConfiguration groupsConfiguration;
    private final StateTransferConfiguration stateTransferConfiguration;
 
    HashConfiguration(ConsistentHashFactory consistentHashFactory, Hash hash, int numOwners, int numSegments,
-                     GroupsConfiguration groupsConfiguration, StateTransferConfiguration stateTransferConfiguration) {
+                     float capacityFactor, GroupsConfiguration groupsConfiguration,
+                     StateTransferConfiguration stateTransferConfiguration) {
       this.consistentHashFactory = consistentHashFactory;
       this.hash = hash;
       this.numOwners = numOwners;
       this.numSegments = numSegments;
+      this.capacityFactor = capacityFactor;
       this.groupsConfiguration = groupsConfiguration;
       this.stateTransferConfiguration = stateTransferConfiguration;
    }
@@ -109,6 +112,15 @@ public class HashConfiguration {
    }
 
    /**
+    * Controls the proportion of entries that will reside on the local node, compared to the other nodes in the
+    * cluster. This is just a suggestion, there is no guarantee that a node with a capacity factor of {@code 2} will
+    * have twice as many entries as a node with a capacity factor of {@code 1}.
+    */
+   public float capacityFactor() {
+      return capacityFactor;
+   }
+
+   /**
     * Configuration for various grouper definitions. See the user guide for more information.
     */
    public GroupsConfiguration groups() {
@@ -158,5 +170,4 @@ public class HashConfiguration {
       result = 31 * result + (stateTransferConfiguration != null ? stateTransferConfiguration.hashCode() : 0);
       return result;
    }
-
 }

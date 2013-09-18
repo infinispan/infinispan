@@ -140,8 +140,8 @@ public class StateProviderTest {
 
       // create CHes
       DefaultConsistentHashFactory chf = new DefaultConsistentHashFactory();
-      DefaultConsistentHash ch1 = chf.create(new MurmurHash3(), 2, numSegments, members1);
-      DefaultConsistentHash ch2 = chf.updateMembers(ch1, members2);
+      DefaultConsistentHash ch1 = chf.create(new MurmurHash3(), 2, numSegments, members1, null);
+      DefaultConsistentHash ch2 = chf.updateMembers(ch1, members2, null);
 
       // create dependencies
       when(mockExecutorService.submit(any(Runnable.class))).thenAnswer(new Answer<Future<?>>() {
@@ -228,8 +228,9 @@ public class StateProviderTest {
 
       // create CHes
       DefaultConsistentHashFactory chf = new DefaultConsistentHashFactory();
-      DefaultConsistentHash ch1 = chf.create(new MurmurHash3(), 2, numSegments, members1);
-      DefaultConsistentHash ch2 = chf.updateMembers(ch1, members2);   //todo [anistor] it seems that address 6 is not used for un-owned segments
+      DefaultConsistentHash ch1 = chf.create(new MurmurHash3(), 2, numSegments, members1, null);
+      //todo [anistor] it seems that address 6 is not used for un-owned segments
+      DefaultConsistentHash ch2 = chf.updateMembers(ch1, members2, null);
 
       when(commandsFactory.buildStateResponseCommand(any(Address.class), anyInt(), any(Collection.class))).thenAnswer(new Answer<StateResponseCommand>() {
          @Override

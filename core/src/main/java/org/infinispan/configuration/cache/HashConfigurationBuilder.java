@@ -23,6 +23,7 @@ public class HashConfigurationBuilder extends AbstractClusteringConfigurationChi
    // With the default consistent hash factory, this default gives us an even spread for clusters
    // up to 6 members and the difference between nodes stays under 20% up to 12 members.
    private int numSegments = 60;
+   private float capacityFactor = 1;
 
    private final GroupsConfigurationBuilder groupsConfigurationBuilder;
 
@@ -149,6 +150,18 @@ public class HashConfigurationBuilder extends AbstractClusteringConfigurationChi
       return this;
    }
 
+   /**
+    * Controls the proportion of entries that will reside on the local node, compared to the other nodes in the
+    * cluster. This is just a suggestion, there is no guarantee that a node with a capacity factor of {@code 2} will
+    * have twice as many entries as a node with a capacity factor of {@code 1}.
+    * @param capacityFactor the capacity factor for the local node. Must be positive.
+    */
+   public HashConfigurationBuilder capacityFactor(float capacityFactor) {
+      if (capacityFactor < 0) throw new IllegalArgumentException("capacityFactor must be positive");
+      this.capacityFactor = capacityFactor;
+      return this;
+   }
+
    public GroupsConfigurationBuilder groups() {
       return groupsConfigurationBuilder;
    }
@@ -161,7 +174,7 @@ public class HashConfigurationBuilder extends AbstractClusteringConfigurationChi
    @Override
    public HashConfiguration create() {
       // TODO stateTransfer().create() will create a duplicate StateTransferConfiguration instance. That's ok as long as none of the stateTransfer settings are modifiable at runtime.
-      return new HashConfiguration(consistentHashFactory, hash, numOwners, numSegments,
+      return new HashConfiguration(consistentHashFactory, hash, numOwners, numSegments, capacityFactor,
             groupsConfigurationBuilder.create(), stateTransfer().create());
    }
 

@@ -2,7 +2,9 @@ package org.infinispan.topology;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import org.infinispan.commons.util.Immutables;
 import org.infinispan.commons.util.InfinispanCollections;
@@ -25,6 +27,8 @@ public class ClusterCacheStatus {
    private final CacheJoinInfo joinInfo;
    // Cache members, some of which may not have received state yet
    private volatile List<Address> members;
+   // Capacity factors for all the members
+   private volatile Map<Address, Float> capacityFactors;
    // Cache members that have not yet received state. Always included in the members list.
    private volatile List<Address> joiners;
    // Cache topology. Its consistent hashes contain only members that did receive/are receiving state
@@ -39,6 +43,7 @@ public class ClusterCacheStatus {
 
       this.cacheTopology = new CacheTopology(-1, null, null);
       this.members = InfinispanCollections.emptyList();
+      this.capacityFactors = InfinispanCollections.emptyMap();
       this.joiners = InfinispanCollections.emptyList();
       if (trace) log.tracef("Cache %s initialized, join info is %s", cacheName, joinInfo);
    }
@@ -71,25 +76,29 @@ public class ClusterCacheStatus {
       return joinInfo.isDistributed();
    }
 
-   public void setMembers(List<Address> newMembers) {
-      synchronized (this) {
-         members = Immutables.immutableListCopy(newMembers);
-
-         ConsistentHash currentCH = cacheTopology.getCurrentCH();
-         if (currentCH != null) {
-            joiners = immutableRemoveAll(members, currentCH.getMembers());
-         } else {
-            joiners = members;
-         }
-         if (trace) log.tracef("Cache %s members list updated, members = %s, joiners = %s", cacheName,
-               members, joiners);
-      }
+   public Map<Address, Float> getCapacityFactors() {
+      return capacityFactors;
    }
 
+//   public void setMembers(List<Address> newMembers) {
+//      synchronized (this) {
+//         members = Immutables.immutableListCopy(newMembers);
+//
+//         ConsistentHash currentCH = cacheTopology.getCurrentCH();
+//         if (currentCH != null) {
+//            joiners = immutableRemoveAll(members, currentCH.getMembers());
+//         } else {
+//            joiners = members;
+//         }
+//         if (trace) log.tracef("Cache %s members list updated, members = %s, joiners = %s", cacheName,
+//               members, joiners);
+//      }
+//   }
+//
    /**
     * @return {@code true} if the joiner was not already a member, {@code false} otherwise
     */
-   public boolean addMember(Address joiner) {
+   public boolean addMember(Address joiner, float capacityFactor) {
       synchronized (this) {
          if (members.contains(joiner)) {
             if (trace) log.tracef("Trying to add node %s to cache %s, but it is already a member: " +
@@ -97,6 +106,9 @@ public class ClusterCacheStatus {
             return false;
          }
 
+         HashMap<Address, Float> newCapacityFactors = new HashMap<Address, Float>(capacityFactors);
+         newCapacityFactors.put(joiner, joinInfo.getCapacityFactor());
+         capacityFactors = Immutables.immutableMapWrap(newCapacityFactors);
          members = immutableAdd(members, joiner);
          joiners = immutableAdd(joiners, joiner);
          if (trace) log.tracef("Added joiner %s to cache %s: members = %s, joiners = %s", joiner, cacheName,
@@ -117,6 +129,9 @@ public class ClusterCacheStatus {
          }
 
          members = immutableRemove(members, leaver);
+         HashMap<Address, Float> newCapacityFactors = new HashMap<Address, Float>(capacityFactors);
+         newCapacityFactors.remove(leaver);
+         capacityFactors = Immutables.immutableMapWrap(newCapacityFactors);
          joiners = immutableRemove(joiners, leaver);
          if (trace) log.tracef("Removed node %s from cache %s: members = %s, joiners = %s", leaver,
                cacheName, members, joiners);

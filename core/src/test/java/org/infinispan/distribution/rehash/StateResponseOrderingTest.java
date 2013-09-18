@@ -1,10 +1,12 @@
 package org.infinispan.distribution.rehash;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
+import org.infinispan.AdvancedCache;
 import org.infinispan.commands.remote.CacheRpcCommand;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
@@ -37,6 +39,7 @@ import static java.util.concurrent.TimeUnit.SECONDS;
 import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.*;
 import static org.testng.Assert.assertTrue;
+import static org.testng.AssertJUnit.assertSame;
 
 /**
  * Start two rebalance operations by stopping two members of a cluster in sequence.
@@ -101,19 +104,28 @@ public class StateResponseOrderingTest extends MultipleCacheManagersTest {
    }
 
    public void testStateResponseWhileRestartingBrokenTransfers() throws Throwable {
-      MagicKey k1 = new MagicKey("k1", cache(1), cache(2), cache(3));
+      Address primary = address(1);
+      MagicKey k1 = new MagicKey("k1", cache(1));
       cache(0).put(k1, "v1");
+      Address backup1 = advancedCache(0).getDistributionManager().locate(k1).get(1);
+      Address backup2 = advancedCache(0).getDistributionManager().locate(k1).get(2);
+      List<Address> nonOwners = new ArrayList<Address>(advancedCache(0).getRpcManager().getMembers());
+      nonOwners.removeAll(Arrays.asList(primary, backup1, backup2));
+      Address nonOwner = nonOwners.get(0);
+      log.debugf("Starting test with key %s, primary owner %s, backup owners %s and %s, non-owner %s", k1, primary,
+            backup1, backup2, nonOwner);
 
-      final StateTransferManager stm = cache(0).getAdvancedCache().getComponentRegistry().getStateTransferManager();
+      AdvancedCache nonOwnerCache = manager(nonOwner).getCache().getAdvancedCache();
+      final StateTransferManager stm = nonOwnerCache.getComponentRegistry().getStateTransferManager();
       final int initialTopologyId = stm.getCacheTopology().getTopologyId();
 
       final CheckPoint checkPoint = new CheckPoint();
-      replaceInvocationHandler(checkPoint, manager(0), StateResponseCommand.class);
-      replaceInvocationHandler(checkPoint, manager(1), StateRequestCommand.class);
-      replaceInvocationHandler(checkPoint, manager(2), StateRequestCommand.class);
+      replaceInvocationHandler(checkPoint, manager(nonOwner), nonOwner);
+      replaceInvocationHandler(checkPoint, manager(primary), nonOwner);
+      replaceInvocationHandler(checkPoint, manager(backup1), nonOwner);
 
-      log.debugf("Killing node %s", address(3));
-      cache(3).stop();
+      log.debugf("Killing node %s", backup2);
+      manager(backup2).getCache().stop();
 
       eventually(new Condition() {
          @Override
@@ -123,58 +135,58 @@ public class StateResponseOrderingTest extends MultipleCacheManagersTest {
          }
       });
 
-      // Allow cache 0 to request transactions from caches 1 and 2 (in any order)
-      checkPoint.trigger("OUT_GET_TRANSACTIONS_" + address(1));
-      checkPoint.trigger("OUT_GET_TRANSACTIONS_" + address(2));
-      checkPoint.awaitStrict("IN_GET_TRANSACTIONS_" + address(1), 10, SECONDS);
-      checkPoint.awaitStrict("IN_GET_TRANSACTIONS_" + address(2), 10, SECONDS);
+      // Allow the non-owner cache to request transactions from the owners (in any order)
+      checkPoint.trigger("OUT_GET_TRANSACTIONS_" + primary);
+      checkPoint.trigger("OUT_GET_TRANSACTIONS_" + backup1);
+      checkPoint.awaitStrict("IN_GET_TRANSACTIONS_" + primary, 10, SECONDS);
+      checkPoint.awaitStrict("IN_GET_TRANSACTIONS_" + backup1, 10, SECONDS);
 
       // See which cache receives the START_STATE_TRANSFER command first. We'll kill the other.
-      String event = checkPoint.peek(5, TimeUnit.SECONDS, "IN_START_STATE_TRANSFER_" + address(1),
-            "IN_START_STATE_TRANSFER_" + address(2));
-      int liveNode = event.endsWith(address(1).toString()) ? 1 : 2;
-      int nodeToKill = liveNode == 1 ? 2 : 1;
-      List<Address> keyOwners = cache(0).getAdvancedCache().getDistributionManager().locate(k1);
-      log.debugf("Killing node %s. Key %s is located on %s", address(nodeToKill), k1, keyOwners);
-      log.debugf("Data on node %s: %s", address(1), cache(1).keySet());
-      log.debugf("Data on node %s: %s", address(2), cache(2).keySet());
+      String event = checkPoint.peek(5, TimeUnit.SECONDS, "IN_START_STATE_TRANSFER_" + primary,
+            "IN_START_STATE_TRANSFER_" + backup1);
+      Address liveNode = event.endsWith(primary.toString()) ? primary : backup1;
+      Address nodeToKill = liveNode == primary ? backup1 : primary;
+      List<Address> keyOwners = nonOwnerCache.getDistributionManager().locate(k1);
+      log.debugf("Killing node %s. Key %s is located on %s", nodeToKill, k1, keyOwners);
+      log.debugf("Data on node %s: %s", primary, manager(primary).getCache().keySet());
+      log.debugf("Data on node %s: %s", backup1, manager(backup1).getCache().keySet());
 
       // Now that we know which node to kill, allow the START_STATE_TRANSFER command to proceed.
-      // The corresponding StateResponseCommand will be blocked on cache 0
-      checkPoint.await("IN_START_STATE_TRANSFER_" + address(liveNode), 1, SECONDS);
-      checkPoint.trigger("OUT_START_STATE_TRANSFER_" + address(liveNode));
+      // The corresponding StateResponseCommand will be blocked on the non-owner
+      checkPoint.await("IN_START_STATE_TRANSFER_" + liveNode, 1, SECONDS);
+      checkPoint.trigger("OUT_START_STATE_TRANSFER_" + liveNode);
 
       // Kill cache cacheToStop to force a topology update.
       // The topology update will remove the transfers from cache(nodeToKill).
-      cache(nodeToKill).stop();
+      manager(nodeToKill).getCache().stop();
 
       // Now allow cache 0 to process the state from cache(liveNode)
-      checkPoint.awaitStrict("IN_RESPONSE_" + address(liveNode), 10, SECONDS);
-      checkPoint.trigger("OUT_RESPONSE_" + address(liveNode));
+      checkPoint.awaitStrict("IN_RESPONSE_" + liveNode, 10, SECONDS);
+      checkPoint.trigger("OUT_RESPONSE_" + liveNode);
 
       log.debugf("Received segments?");
       Thread.sleep(1000);
 
       // Wait for cache 0 to request the transactions for the failed segments from cache 1
-      checkPoint.awaitStrict("IN_GET_TRANSACTIONS_" + address(liveNode), 10, SECONDS);
-      checkPoint.trigger("OUT_GET_TRANSACTIONS_" + address(liveNode));
+      checkPoint.awaitStrict("IN_GET_TRANSACTIONS_" + liveNode, 10, SECONDS);
+      checkPoint.trigger("OUT_GET_TRANSACTIONS_" + liveNode);
 
       // ISPN-3120: Now cache 0 should think it finished receiving state. Allow all the commands to proceed.
-      checkPoint.awaitStrict("IN_START_STATE_TRANSFER_" + address(liveNode), 10, SECONDS);
-      checkPoint.trigger("OUT_START_STATE_TRANSFER_" + address(liveNode));
+      checkPoint.awaitStrict("IN_START_STATE_TRANSFER_" + liveNode, 10, SECONDS);
+      checkPoint.trigger("OUT_START_STATE_TRANSFER_" + liveNode);
 
-      checkPoint.awaitStrict("IN_RESPONSE_" + address(liveNode), 10, SECONDS);
-      checkPoint.trigger("OUT_RESPONSE_" + address(liveNode));
+      checkPoint.awaitStrict("IN_RESPONSE_" + liveNode, 10, SECONDS);
+      checkPoint.trigger("OUT_RESPONSE_" + liveNode);
 
-      TestingUtil.waitForRehashToComplete(cache(0), cache(liveNode));
+      TestingUtil.waitForRehashToComplete(nonOwnerCache, manager(liveNode).getCache());
 
       log.debugf("Final checkpoint status: %s", checkPoint);
-      DataContainer dataContainer = TestingUtil.extractComponent(cache(0), DataContainer.class);
+      DataContainer dataContainer = TestingUtil.extractComponent(nonOwnerCache, DataContainer.class);
       assertTrue(dataContainer.containsKey(k1));
    }
 
    private void replaceInvocationHandler(final CheckPoint checkPoint, final EmbeddedCacheManager manager,
-                                         Class<? extends CacheRpcCommand> commandClass)
+                                         final Address nonOwner)
          throws Throwable {
       final InboundInvocationHandler handler = TestingUtil.extractGlobalComponent(manager,
             InboundInvocationHandler.class);
@@ -186,19 +198,20 @@ public class StateResponseOrderingTest extends MultipleCacheManagersTest {
                   Address source = (Address) invocation.getArguments()[1];
                   Response response = (Response) invocation.getArguments()[2];
                   boolean preserveOrder = (Boolean) invocation.getArguments()[3];
-                  if (command instanceof StateRequestCommand && source.equals(address(0))) {
+                  if (command instanceof StateRequestCommand && source.equals(nonOwner)) {
                      StateRequestCommand stateRequestCommand = (StateRequestCommand) command;
                      checkPoint.trigger("IN_" + stateRequestCommand.getType() + '_' + manager.getAddress());
                      checkPoint.awaitStrict("OUT_" + stateRequestCommand.getType() + '_' + manager.getAddress(), 5,
                            SECONDS);
-                  } else if (command instanceof StateResponseCommand && manager.getAddress().equals(address(0))) {
+                  } else if (command instanceof StateResponseCommand && manager.getAddress().equals(nonOwner)) {
                      checkPoint.trigger("IN_RESPONSE_" + source);
                      checkPoint.awaitStrict("OUT_RESPONSE_" + source, 5, SECONDS);
                   }
                   handler.handle(command, source, response, preserveOrder);
                   return null;
                }
-            }).when(mockHandler).handle(any(commandClass), any(Address.class), any(Response.class), anyBoolean());
+            }).when(mockHandler).handle(any(CacheRpcCommand.class), any(Address.class), any(Response.class),
+            anyBoolean());
       TestingUtil.replaceComponent(manager, InboundInvocationHandler.class, mockHandler, true);
       Transport transport = TestingUtil.extractGlobalComponent(manager, Transport.class);
       CommandAwareRpcDispatcher dispatcher = (CommandAwareRpcDispatcher) TestingUtil.extractField(transport, "dispatcher");

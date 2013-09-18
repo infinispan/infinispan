@@ -24,12 +24,11 @@ public class TopologyAwareConsistentHashFactory extends DefaultConsistentHashFac
 
    @Override
    protected void addBackupOwners(Builder builder) {
-      TopologyInfo topologyInfo = new TopologyInfo(builder.getMembers());
-      int minSegments = builder.getActualNumOwners() * builder.getNumSegments() / builder.getNumNodes();
+      TopologyInfo topologyInfo = new TopologyInfo(builder.getMembers(), builder.getCapacityFactors());
 
       // 1. Remove extra owners (could be leftovers from addPrimaryOwners).
       // Don't worry about location information yet.
-      removeExtraBackupOwners(builder, minSegments);
+      removeExtraBackupOwners(builder);
 
       // 2. If owners(segment) < numOwners, add new owners.
       // Unlike the parent class, we allow many more segments for one node just in order to get
@@ -67,13 +66,16 @@ public class TopologyAwareConsistentHashFactory extends DefaultConsistentHashFac
             continue;
 
          int maxDistinctLocations = topologyInfo.getDistinctLocationsCount(level, builder.getActualNumOwners());
-         int distinctLocations = new TopologyInfo(owners).getDistinctLocationsCount(level, builder.getActualNumOwners());
+         TopologyInfo ownersInfo = new TopologyInfo(owners, builder.getCapacityFactors());
+         int distinctLocations = ownersInfo.getDistinctLocationsCount(level, builder.getActualNumOwners());
          if (distinctLocations == maxDistinctLocations)
             continue;
 
+         float totalCapacity = topologyInfo.computeTotalCapacity(builder.getMembers(), builder.getCapacityFactors());
          for (Address candidate : builder.getMembers()) {
-            int maxSegments = topologyInfo.computeMaxSegments(builder.getNumSegments(),
-                  builder.getActualNumOwners(), candidate) + extraSegments;
+            int nodeExtraSegments = (int) (extraSegments * builder.getCapacityFactor(candidate) / totalCapacity);
+            int maxSegments = topologyInfo.computeExpectedSegments(builder.getNumSegments(),
+                  builder.getActualNumOwners(), candidate) + nodeExtraSegments;
             if (builder.getOwned(candidate) < maxSegments) {
                if (!owners.contains(candidate) && !locationIsDuplicate(owners, candidate, level)) {
                   builder.addOwner(segment, candidate);
@@ -107,18 +109,21 @@ public class TopologyAwareConsistentHashFactory extends DefaultConsistentHashFac
       for (int segment = 0; segment < builder.getNumSegments(); segment++) {
          List<Address> owners = builder.getOwners(segment);
          int maxDistinctLocations = topologyInfo.getDistinctLocationsCount(level, builder.getActualNumOwners());
-         int distinctLocations = new TopologyInfo(owners).getDistinctLocationsCount(level, builder.getActualNumOwners());
+         TopologyInfo ownersInfo = new TopologyInfo(owners, builder.getCapacityFactors());
+         int distinctLocations = ownersInfo.getDistinctLocationsCount(level, builder.getActualNumOwners());
          if (distinctLocations == maxDistinctLocations)
             continue;
 
+         float totalCapacity = topologyInfo.computeTotalCapacity(builder.getMembers(), builder.getCapacityFactors());
          for (int i = owners.size() - 1; i >= 1; i--) {
             Address owner = owners.get(i);
             if (locationIsDuplicate(owners, owner, level)) {
                // Got a duplicate site/rack/machine, we might have an alternative for it.
                for (Address candidate : builder.getMembers()) {
-                  int maxSegments = topologyInfo.computeMaxSegments(builder.getNumSegments(),
+                  int expectedSegments = topologyInfo.computeExpectedSegments(builder.getNumSegments(),
                         builder.getActualNumOwners(), candidate);
-                  if (builder.getOwned(candidate) < maxSegments + extraSegments) {
+                  int nodeExtraSegments = (int) (extraSegments * builder.getCapacityFactor(candidate) / totalCapacity);
+                  if (builder.getOwned(candidate) < expectedSegments + nodeExtraSegments) {
                      if (!owners.contains(candidate) && !locationIsDuplicate(owners, candidate, level)) {
                         builder.addOwner(segment, candidate);
                         builder.removeOwner(segment, owner);
@@ -161,12 +166,12 @@ public class TopologyAwareConsistentHashFactory extends DefaultConsistentHashFac
          for (int segment = 0; segment < builder.getNumSegments(); segment++) {
             List<Address> owners = builder.getOwners(segment);
             Address owner = owners.get(ownerIdx);
-            int maxSegments = topologyInfo.computeMaxSegments(builder.getNumSegments(),
+            int maxSegments = topologyInfo.computeExpectedSegments(builder.getNumSegments(),
                   builder.getActualNumOwners(), owner) + maxSegmentsDiff;
             if (builder.getOwned(owner) > maxSegments) {
                // Owner has too many segments. Find another node to replace it with.
                for (Address candidate : builder.getMembers()) {
-                  int minSegments = topologyInfo.computeMaxSegments(builder.getNumSegments(),
+                  int minSegments = topologyInfo.computeExpectedSegments(builder.getNumSegments(),
                         builder.getActualNumOwners(), candidate) + minSegmentsDiff;
                   if (builder.getOwned(candidate) < minSegments) {
                      if (!owners.contains(candidate) && maintainsDiversity(owners, candidate, owner)) {

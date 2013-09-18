@@ -18,6 +18,7 @@ import org.infinispan.marshall.core.Ids;
  * @since 5.2
  */
 public class CacheJoinInfo {
+   // Global configuration
    private final ConsistentHashFactory consistentHashFactory;
    private final Hash hashFunction;
    private final int numSegments;
@@ -26,8 +27,11 @@ public class CacheJoinInfo {
    private final boolean totalOrder;
    private final boolean distributed;
 
+   // Per-node configuration
+   private final float capacityFactor;
+
    public CacheJoinInfo(ConsistentHashFactory consistentHashFactory, Hash hashFunction, int numSegments,
-                        int numOwners, long timeout, boolean totalOrder, boolean distributed) {
+                        int numOwners, long timeout, boolean totalOrder, boolean distributed, float capacityFactor) {
       this.consistentHashFactory = consistentHashFactory;
       this.hashFunction = hashFunction;
       this.numSegments = numSegments;
@@ -35,6 +39,7 @@ public class CacheJoinInfo {
       this.timeout = timeout;
       this.totalOrder = totalOrder;
       this.distributed = distributed;
+      this.capacityFactor = capacityFactor;
    }
 
    public ConsistentHashFactory getConsistentHashFactory() {
@@ -65,6 +70,10 @@ public class CacheJoinInfo {
       return distributed;
    }
 
+   public float getCapacityFactor() {
+      return capacityFactor;
+   }
+
    @Override
    public String toString() {
       return "CacheJoinInfo{" +
@@ -88,6 +97,7 @@ public class CacheJoinInfo {
          output.writeLong(cacheJoinInfo.timeout);
          output.writeBoolean(cacheJoinInfo.totalOrder);
          output.writeBoolean(cacheJoinInfo.distributed);
+         output.writeFloat(cacheJoinInfo.capacityFactor);
       }
 
       @Override
@@ -99,7 +109,9 @@ public class CacheJoinInfo {
          long timeout = unmarshaller.readLong();
          boolean totalOrder = unmarshaller.readBoolean();
          boolean distributed = unmarshaller.readBoolean();
-         return new CacheJoinInfo(consistentHashFactory, hashFunction, numSegments, numOwners, timeout, totalOrder, distributed);
+         float capacityFactor = unmarshaller.readFloat();
+         return new CacheJoinInfo(consistentHashFactory, hashFunction, numSegments, numOwners, timeout,
+               totalOrder, distributed, capacityFactor);
       }
 
       @Override
