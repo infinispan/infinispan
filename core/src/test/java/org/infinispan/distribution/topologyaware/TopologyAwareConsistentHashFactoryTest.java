@@ -15,8 +15,10 @@ import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -36,6 +38,7 @@ public class TopologyAwareConsistentHashFactoryTest extends AbstractInfinispanTe
 
    private TestTopologyAwareAddress[] testAddresses;
    private List<Address> chMembers;
+   private Map<Address, Float> capacityFactors;
    private ConsistentHashFactory<DefaultConsistentHash> chf;
    protected DefaultConsistentHash ch;
 
@@ -43,6 +46,7 @@ public class TopologyAwareConsistentHashFactoryTest extends AbstractInfinispanTe
    public void setUp() {
       chf = createConsistentHashFactory();
       chMembers = new ArrayList<Address>(CLUSTER_SIZE);
+      capacityFactors = null;
       testAddresses = new TestTopologyAwareAddress[CLUSTER_SIZE];
       for (int i = 0; i < 10; i++) {
          testAddresses[i] = new TestTopologyAwareAddress(i * 100);
@@ -288,35 +292,75 @@ public class TopologyAwareConsistentHashFactoryTest extends AbstractInfinispanTe
       assertAllLocationsWithRebalance(2);
    }
 
-   private void assertAllLocationsWithRebalance(int numOwners) {
-      ch = chf.create(new MurmurHash3(), numOwners, numSegments, chMembers);
-      assertAllLocations(numOwners, chMembers);
-      assertDistribution(numOwners, chMembers);
+   public void testLoadFactors() {
+      capacityFactors = new HashMap<Address, Float>();
+      capacityFactors.put(testAddresses[0], 2.0f);
+      capacityFactors.put(testAddresses[1], 0.0f);
+      capacityFactors.put(testAddresses[2], 1.0f);
+      capacityFactors.put(testAddresses[3], 2.0f);
+      capacityFactors.put(testAddresses[4], 0.0f);
+      capacityFactors.put(testAddresses[5], 1.0f);
+      capacityFactors.put(testAddresses[6], 2.0f);
+      capacityFactors.put(testAddresses[7], 0.0f);
+      capacityFactors.put(testAddresses[8], 1.0f);
 
-      ch = chf.create(new MurmurHash3(), numOwners, numSegments, chMembers.subList(0, 1));
+      // {s0: {r0: {m0, m1, m2}, r1: {m3, m4, m5}, r1: {m6, m7, m8}}}
+      addNode(testAddresses[0], "m0", "r0", "s0");
+      addNode(testAddresses[1], "m1", "r0", "s0");
+      addNode(testAddresses[2], "m2", "r0", "s0");
+      addNode(testAddresses[3], "m3", "r1", "s0");
+      addNode(testAddresses[4], "m4", "r1", "s0");
+      addNode(testAddresses[5], "m5", "r1", "s0");
+      addNode(testAddresses[6], "m6", "r2", "s0");
+      addNode(testAddresses[7], "m7", "r2", "s0");
+      addNode(testAddresses[8], "m8", "r2", "s0");
+      assertAllLocationsWithRebalance(1);
+      assertAllLocationsWithRebalance(2);
+      assertAllLocationsWithRebalance(3);
+   }
+
+   private void assertAllLocationsWithRebalance(int numOwners) {
+      ch = chf.create(new MurmurHash3(), numOwners, numSegments, chMembers, capacityFactors);
+
+      List<Address> membersWithLoad = computeNodesWithLoad(chMembers);
+      assertAllLocations(numOwners, membersWithLoad);
+      assertDistribution(numOwners, membersWithLoad);
+
+      ch = chf.create(new MurmurHash3(), numOwners, numSegments, chMembers.subList(0, 1), capacityFactors);
       assertAllLocations(numOwners, chMembers.subList(0, 1));
 
       for (int i = 2; i <= chMembers.size(); i++) {
          List<Address> currentMembers = chMembers.subList(0, i);
          log.debugf("Created CH with numOwners %d, members %s", numOwners, currentMembers);
-         ch = chf.updateMembers(ch, currentMembers);
+         ch = chf.updateMembers(ch, currentMembers, capacityFactors);
          ch = chf.rebalance(ch);
 
-         assertAllLocations(numOwners, currentMembers);
-         assertDistribution(numOwners, currentMembers);
+         membersWithLoad = computeNodesWithLoad(currentMembers);
+         assertAllLocations(numOwners, membersWithLoad);
       }
+   }
+
+   private List<Address> computeNodesWithLoad(List<Address> nodes) {
+      List<Address> membersWithLoad = new ArrayList<Address>(nodes.size());
+      for (Address a : nodes) {
+         if (capacityFactors == null || capacityFactors.get(a) > 0.0) {
+            membersWithLoad.add(a);
+         }
+      }
+      return membersWithLoad;
    }
 
    protected void assertDistribution(int numOwners, List<Address> currentMembers) {
       TopologyAwareOwnershipStatistics stats = new TopologyAwareOwnershipStatistics(ch);
       log.tracef("Ownership stats: %s", stats);
-      int maxPrimarySegments = numSegments / currentMembers.size() + 1;
       for (Address node : currentMembers) {
-         int maxSegments = stats.computeMaxSegments(numSegments, numOwners, node);
-         assertTrue(maxPrimarySegments - 1 <= stats.getPrimaryOwned(node), "Too few primary segments for node " + node);
-         assertTrue(stats.getPrimaryOwned(node) <= maxPrimarySegments, "Too many primary segments for node " + node);
-         assertTrue(maxSegments * 0.7 <= stats.getOwned(node), "Too few segments for node " + node);
-         assertTrue(stats.getOwned(node) <= maxSegments * 1.2, "Too many segments for node " + node);
+         int expectedPrimarySegments = stats.computeExpectedSegments(numSegments, 1, node);
+         int expectedOwnedSegments = stats.computeExpectedSegments(numSegments, numOwners, node);
+         assertTrue(expectedPrimarySegments - 1 <= stats.getPrimaryOwned(node), "Too few primary segments for node " + node);
+         assertTrue(stats.getPrimaryOwned(node) <= expectedPrimarySegments + 1, "Too many primary segments for node "
+               + node);
+         assertTrue(expectedOwnedSegments * 0.7 <= stats.getOwned(node), "Too few segments for node " + node);
+         assertTrue(stats.getOwned(node) <= expectedOwnedSegments * 1.25, "Too many segments for node " + node);
       }
    }
 
@@ -379,7 +423,7 @@ public class TopologyAwareConsistentHashFactoryTest extends AbstractInfinispanTe
          log.debugf("Removing node %s" + addr);
          List<Address> addressCopy = new ArrayList<Address>(chMembers);
          addressCopy.remove(addr);
-         DefaultConsistentHash newCH = chf.updateMembers(ch, addressCopy);
+         DefaultConsistentHash newCH = chf.updateMembers(ch, addressCopy, null);
          newCH = chf.rebalance(newCH);
 
          // Allow a small number of segment moves, even though this is a leave, because the CH factory
@@ -449,7 +493,7 @@ public class TopologyAwareConsistentHashFactoryTest extends AbstractInfinispanTe
    }
 
    protected void updateConsistentHash(int numOwners) {
-      ch = chf.create(new MurmurHash3(), numOwners, numSegments, chMembers);
+      ch = chf.create(new MurmurHash3(), numOwners, numSegments, chMembers, null);
       log.debugf("Created CH with numOwners %d, members %s", numOwners, chMembers);
    }
 }
@@ -462,7 +506,7 @@ class TopologyAwareOwnershipStatistics {
 
    public TopologyAwareOwnershipStatistics(DefaultConsistentHash ch) {
       this.ch = ch;
-      topologyInfo = new TopologyInfo(ch.getMembers());
+      topologyInfo = new TopologyInfo(ch.getMembers(), ch.getCapacityFactors());
       stats = new OwnershipStatistics(ch, ch.getMembers());
    }
 
@@ -522,8 +566,8 @@ class TopologyAwareOwnershipStatistics {
       return stats.getPrimaryOwned(node);
    }
 
-   public int computeMaxSegments(int numSegments, int numOwners, Address node) {
-      return topologyInfo.computeMaxSegments(numSegments, numOwners, node);
+   public int computeExpectedSegments(int numSegments, int numOwners, Address node) {
+      return topologyInfo.computeExpectedSegments(numSegments, numOwners, node);
    }
 
    @Override
@@ -540,7 +584,8 @@ class TopologyAwareOwnershipStatistics {
                      getMachineOwned(site, rack, machine)));
                for (Address node : topologyInfo.getMachineNodes(site, rack, machine)) {
                   sb.append(String.format("        %s: %d/%d (%d)\n", node, stats.getPrimaryOwned(node),
-                        stats.getOwned(node), topologyInfo.computeMaxSegments(ch.getNumSegments(), ch.getNumOwners(), node)));
+                        stats.getOwned(node), topologyInfo.computeExpectedSegments(ch.getNumSegments(),
+                        ch.getNumOwners(), node)));
                }
             }
          }

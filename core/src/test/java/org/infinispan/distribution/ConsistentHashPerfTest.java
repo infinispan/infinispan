@@ -33,7 +33,8 @@ public class ConsistentHashPerfTest extends AbstractInfinispanTest {
    private ConsistentHash createNewConsistentHash(List<Address> servers) {
       try {
          // TODO Revisit after we have replaced the CH with the CHFactory in the configuration
-         return new DefaultConsistentHashFactory().create(new org.infinispan.commons.hash.MurmurHash3(), 2, 10, servers);
+         return new DefaultConsistentHashFactory().create(new org.infinispan.commons.hash.MurmurHash3(), 2, 10,
+               servers, null);
       } catch (RuntimeException re) {
          throw re;
       } catch (Exception e) {

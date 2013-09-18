@@ -1248,6 +1248,9 @@ public class Parser60 implements ConfigurationParser {
             case NUM_SEGMENTS:
                builder.clustering().hash().numSegments(Integer.parseInt(value));
                break;
+            case CAPACITY_FACTOR:
+               builder.clustering().hash().capacityFactor(Float.parseFloat(value));
+               break;
             default:
                throw ParseUtils.unexpectedAttribute(reader, i);
          }

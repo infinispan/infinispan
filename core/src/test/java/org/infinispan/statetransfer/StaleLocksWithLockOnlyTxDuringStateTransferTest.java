@@ -27,6 +27,7 @@ import org.infinispan.commands.tx.PrepareCommand;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.distribution.BlockingInterceptor;
+import org.infinispan.distribution.MagicKey;
 import org.infinispan.interceptors.distribution.TxDistributionInterceptor;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.remoting.transport.Address;
@@ -49,9 +50,7 @@ import java.util.concurrent.Future;
 import javax.transaction.TransactionManager;
 
 import static java.util.concurrent.TimeUnit.SECONDS;
-import static org.mockito.Matchers.any;
-import static org.mockito.Matchers.anyInt;
-import static org.mockito.Matchers.eq;
+import static org.mockito.Matchers.*;
 import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.spy;
 
@@ -102,7 +101,7 @@ public class StaleLocksWithLockOnlyTxDuringStateTransferTest extends MultipleCac
             checkpoint.awaitStrict("allow_get_transactions_" + topologyId + "_from_" + source, 10, SECONDS);
             return invocation.callRealMethod();
          }
-      }).when(spyProvider).getTransactionsForSegments(any(Address.class), anyInt(), any(Set.class));
+      }).when(spyProvider).getTransactionsForSegments(any(Address.class), anyInt(), anySetOf(Integer.class));
       doAnswer(new Answer<Object>() {
          @Override
          public Object answer(InvocationOnMock invocation) throws Throwable {
@@ -130,8 +129,9 @@ public class StaleLocksWithLockOnlyTxDuringStateTransferTest extends MultipleCac
       Future<Object> future = fork(new Callable<Object>() {
          @Override
          public Object call() throws Exception {
+            MagicKey key = new MagicKey("testkey", cache0);
             tm0.begin();
-            cache0.lock("testkey");
+            cache0.lock(key);
             tm0.commit();
             return null;
          }

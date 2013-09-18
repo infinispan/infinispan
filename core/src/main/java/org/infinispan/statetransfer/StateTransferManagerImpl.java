@@ -91,7 +91,8 @@ public class StateTransferManagerImpl implements StateTransferManager {
             configuration.clustering().hash().numOwners(),
             configuration.clustering().stateTransfer().timeout(),
             configuration.transaction().transactionProtocol().isTotalOrder(),
-            configuration.clustering().cacheMode().isDistributed());
+            configuration.clustering().cacheMode().isDistributed(),
+            configuration.clustering().hash().capacityFactor());
 
       CacheTopology initialTopology = localTopologyManager.join(cacheName, joinInfo, new CacheTopologyHandler() {
          @Override

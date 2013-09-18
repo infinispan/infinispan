@@ -112,8 +112,8 @@ public class StateConsumerTest extends AbstractInfinispanTest {
 
       // create CHes
       DefaultConsistentHashFactory chf = new DefaultConsistentHashFactory();
-      DefaultConsistentHash ch1 = chf.create(new MurmurHash3(), 2, 40, members1);
-      final DefaultConsistentHash ch2 = chf.updateMembers(ch1, members2);
+      DefaultConsistentHash ch1 = chf.create(new MurmurHash3(), 2, 40, members1, null);
+      final DefaultConsistentHash ch2 = chf.updateMembers(ch1, members2, null);
       DefaultConsistentHash ch3 = chf.rebalance(ch2);
 
       log.debug(ch1);

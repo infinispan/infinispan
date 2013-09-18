@@ -1,9 +1,10 @@
 package org.infinispan.distribution.ch;
 
-import java.util.List;
-
 import org.infinispan.commons.hash.Hash;
 import org.infinispan.remoting.transport.Address;
+
+import java.util.List;
+import java.util.Map;
 
 /**
  * Factory for {@link ConsistentHash} instances.
@@ -24,8 +25,12 @@ public interface ConsistentHashFactory<CH extends ConsistentHash> {
     * @param numSegments Number of hash-space segments. The implementation may round up the number
     *                    of segments for performance, or may ignore the parameter altogether.
     * @param members A list of addresses representing the new cache members.
+    * @param capacityFactors The capacity factor of each member. Determines the relative capacity of each node compared
+    *                        to the others. The implementation may ignore this parameter.
+    *                        If {@code null}, all the members are assumed to have a capacity factor of 1.
     */
-   CH create(Hash hashFunction, int numOwners, int numSegments, List<Address> members);
+   CH create(Hash hashFunction, int numOwners, int numSegments, List<Address> members,
+             Map<Address, Float> capacityFactors);
 
    /**
     * Create a new consistent hash instance, based on an existing instance, but with a new list of members.
@@ -36,10 +41,13 @@ public interface ConsistentHashFactory<CH extends ConsistentHash> {
     *
     * @param baseCH An existing consistent hash instance, should not be {@code null}
     * @param newMembers A list of addresses representing the new cache members.
+    * @param capacityFactors The capacity factor of each member. Determines the relative capacity of each node compared
+    *                        to the others. The implementation may ignore this parameter.
+    *                        If {@code null}, all the members are assumed to have a capacity factor of 1.
     * @return A new {@link ConsistentHash} instance, or {@code baseCH} if the existing instance
     *         does not need any changes.
     */
-   CH updateMembers(CH baseCH, List<Address> newMembers);
+   CH updateMembers(CH baseCH, List<Address> newMembers, Map<Address, Float> capacityFactors);
 
    /**
     * Create a new consistent hash instance, based on an existing instance, but "balanced" according to

@@ -986,6 +986,15 @@
                     </xs:documentation>
                   </xs:annotation>
                 </xs:attribute>
+                <xs:attribute name="capacityFactor" type="xs:float" default="1">
+                  <xs:annotation>
+                    <xs:documentation>
+                      Controls the proportion of entries that will reside on the local node, compared to the other nodes
+                      in the cluster. This is just a suggestion, there is no guarantee that a node with a capacity
+                      factor of 2 will have twice as many entries as a node with a capacity factor of 1.
+                    </xs:documentation>
+                  </xs:annotation>
+                </xs:attribute>
               </xs:complexType>
             </xs:element>
           </xs:all>
