@@ -61,6 +61,31 @@ public interface EmbeddedCacheManager extends CacheContainer, Listenable {
    Configuration defineConfiguration(String cacheName, Configuration configurationOverride);
 
    /**
+    * Defines a named cache's configuration using the following algorithm:
+    * <p/>
+    * Regardless of whether the cache name has been defined or not, this method creates a clone of the configuration of
+    * the cache whose name matches the given template cache name, then applies a clone of the configuration overrides
+    * passed in and finally returns this configuration instance.
+    * <p/>
+    * The other way to define named cache's configuration is declaratively, in the XML file passed in to the cache
+    * manager. This method enables you to override certain properties that have previously been defined via XML.
+    * <p/>
+    * Passing a brand new Configuration instance as configuration override without having called any of its setters will
+    * effectively return the named cache's configuration since no overrides where passed to it.
+    * <p/>
+    * If templateName is null or there isn't any named cache with that name, this methods works exactly like {@link
+    * #defineConfiguration(String, Configuration)} in the sense that the base configuration used is the default cache
+    * configuration.
+    *
+    * @param cacheName             name of cache whose configuration is being defined
+    * @param templateCacheName     name of cache to which to which apply overrides if cache name has not been previously
+    *                              defined
+    * @param configurationOverride configuration overrides to use
+    * @return a cloned configuration instance
+    */
+   Configuration defineConfiguration(String cacheName, String templateCacheName, Configuration configurationOverride);
+
+   /**
     * @return the name of the cluster.  Null if running in local mode.
     */
    String getClusterName();

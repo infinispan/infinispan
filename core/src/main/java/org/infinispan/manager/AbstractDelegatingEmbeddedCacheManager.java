@@ -1,6 +1,7 @@
 package org.infinispan.manager;
 
 import org.infinispan.Cache;
+import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.factories.GlobalComponentRegistry;
 import org.infinispan.lifecycle.ComponentStatus;
 import org.infinispan.remoting.transport.Address;
@@ -32,6 +33,11 @@ public class AbstractDelegatingEmbeddedCacheManager implements EmbeddedCacheMana
    public org.infinispan.configuration.cache.Configuration defineConfiguration(String cacheName,
          org.infinispan.configuration.cache.Configuration configuration) {
       return cm.defineConfiguration(cacheName, configuration);
+   }
+
+   @Override
+   public Configuration defineConfiguration(String cacheName, String templateCacheName, Configuration configurationOverride) {
+      return cm.defineConfiguration(cacheName, templateCacheName, configurationOverride);
    }
 
    @Override
