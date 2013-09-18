@@ -238,11 +238,30 @@ public class ComponentMetadata implements Serializable {
       
       public String getParameterName(int subscript) {
          String name = parameterNames == null ? null : parameterNames.get(subscript);
+         //ISPN-3457 Issue Solution
+         //Using of the parameterNamesKeyExist method (if the key is not part of the map, assign a null value to the name variable)
+         if(!parameterNamesKeyExist(subscript)){name = null;}
+	 //End ISPN-3457 Issue Solution
          return name == null ? parameters[subscript] : name;
       }
+      
+      //ISPN-3457 Issue Solution - method used to review if the key is part of the keys of the parameterNames map
+      private boolean parameterNamesKeyExist(int key){
+    	  if(parameterNames!=null && !parameterNames.isEmpty()){
+	    	  for(int k : parameterNames.keySet()){
+	    		  if(k == key){
+	    			  return true;
+	    		  }
+	    	  }
+    	  }
+    	  return false;
+      }
+      //End ISPN-3457 Issue Solution
 
       public boolean isParameterNameSet(int subscript) {
-         return parameterNames != null && parameterNames.containsKey(subscript);
+        //ISPN-3457 Issue Solution - using of the parameterNamesKeyExist method
+	return parameterNames != null && parameterNamesKeyExist(subscript);
+	//End ISPN-3457 Issue Solution
       }
       
       void addParameterName(int subscript, String name) {
