@@ -1,0 +1,369 @@
+===  Using Hot Rod Server
+The Infinispan distribution contains a server module that implements Infinispan's custom binary protocol called Hot Rod. The protocol was designed to enable faster client/server interactions compared to other existing text based protocols and to allow clients to make more intelligent decisions with regards to load balancing, failover and even data location operations. 
+
+==== Starting an Infinispan Hot Rod server
+The simplest way to start up  Hot Rod  server is to simply unzip the all distribution and either run the startServer.bat or startServer.sh script passing 'hotrod' as the protocol to run. For example:
+
+ $ ./bin/startServer.sh -r hotrod
+
+When the script is called without any further parameters, the started Hot Rod server bounds to port 11222 (Infinispan 4.2.0.BETA1 or earlier listened on port 11311 by default) on localhost (127.0.0.1). If no further parameters is given at startup, this means that any cache instance queried will be based on the default cache instance which will be a local (unclustered) Infinispan cache instance configured with default values. Please visit the link:$$http://docs.jboss.org/infinispan/4.1/apidocs/config.html$$[Configuration Reference Guide] for more information on these values. If you want to use non-default values, please check the next section on command line options. 
+
+===== Command Line Options
+You can optionally pass a set of parameters to the Hot Rod server that allow you to configure different parts of the server. 
+
+So, following the discussion earlier on configuring a Hot Rod server with a custom Infinispan configuration, you'd use -c parameter to pass the corresponding file. Hot Rod clients could then send requests to specific cache instances whose name match one of the names in the custom configuration file.
+
+===== Predefining Hot Rod Caches
+In order to provide a more consistent experience when interacting with Hot Rod servers and avoid issues related to lazily started cache instances, on startup, Hot Rod server starts all defined caches in the Infinispan configuration file including the default cache. If no configuration file was provided, only the default cache will be started. Any request to an undefined cache will be rejected by the server.
+
+So, as user, this means that any caches you interact with must be defined in the Infinispan configuration file by providing a namedCache XML element entry for each of them. Besides, as explained the 'Cache Name' section of the Hot Rod protocol, you can also interact with the default cache by passing an empty cache name. 
+
+include::chapter-64-Hot_Rod_Protocol.adoc[]
+
+====  Java Hot Rod client
+Hot Rod is a binary, language neutral protocol. This article explains how a Java client can interact with a server via the Hot Rod protocol. A reference implementation of the protocol written in Java can be found in all Infinispan distributions, and this article focuses on the capabilities of this java client.
+
+TIP: Looking for more clients?  Visit link:http://infinispan.org/hotrod-clients[this website] for clients written in a variety of different languages.
+
+===== Basic API
+Below is a sample code snippet on how the client API can be used to store or retrieve information from a Hot Rod server using the Java Hot Rod client. It assumes that a Hot Rod server has been started bound to the default location (localhost:11222) 
+
+[source,java]
+----
+//API entry point, by default it connects to localhost:11222
+CacheContainer cacheContainer = new RemoteCacheManager();
+
+//obtain a handle to the remote default cache
+Cache<String, String> cache = cacheContainer.getCache();
+
+//now add something to the cache and make sure it is there
+cache.put("car", "ferrari");
+assert cache.get("car").equals("ferrari");
+
+//remove the data
+cache.remove("car");
+assert !cache.containsKey("car") : "Value must have been removed!";
+
+----
+
+The client API maps the local API: link:$$http://docs.jboss.org/infinispan/4.1/apidocs/org/infinispan/client/hotrod/RemoteCacheManager.html$$[RemoteCacheManager] corresponds to link:$$http://docs.jboss.org/infinispan/4.0/apidocs/org/infinispan/manager/DefaultCacheManager.html$$[DefaultCacheManager] (both implement link:$$http://docs.jboss.org/infinispan/4.1/apidocs/org/infinispan/manager/CacheContainer.html$$[CacheContainer] ). This common API facilitates an easy migration from local calls to remote calls through Hot Rod: all one needs to do is switch between link:$$http://docs.jboss.org/infinispan/4.0/apidocs/org/infinispan/manager/DefaultCacheManager.html$$[DefaultCacheManager] and link:$$http://docs.jboss.org/infinispan/4.1/apidocs/org/infinispan/client/hotrod/RemoteCacheManager.html$$[RemoteCacheManager] - which is further simplified by the common link:$$http://docs.jboss.org/infinispan/4.1/apidocs/org/infinispan/manager/CacheContainer.html$$[CacheContainer] interface that both inherit. 
+
+Starting from Infinispan 5.2, all keys can be retrieved from the remote cache (whether it's local, replicated, or distributed) by using keySet() method. If the remote cache is a distributed cache, the server will start a map/reduce job to retrieve all keys from clustered nodes, and return all keys to the client.  Please use this method with care if there are large number of keys.
+
+[source,java]
+----
+Set keys = remoteCache.keySet();
+
+----
+
+===== Versioned API
+A RemoteCacheManager provides instances of link:$$http://docs.jboss.org/infinispan/4.1/apidocs/org/infinispan/client/hotrod/RemoteCache.html$$[RemoteCache] interface that represents a handle to the named or default cache on the remote cluster. API wise, it extends the link:$$http://docs.jboss.org/infinispan/4.0/apidocs/org/infinispan/Cache.html$$[Cache] interface to which it also adds some new methods, including the so called versioned API. Please find below some examples of this API <<sid-68355052, but to understand the motivation behind it, make sure you read this section>>. 
+
+The code snippet bellow depicts the usage of these versioned methods: 
+
+[source,java]
+----
+// To use the versioned API, remote classes are specifically needed
+RemoteCacheManager remoteCacheManager = new RemoteCacheManager();
+RemoteCache<String, String> cache = remoteCacheManager.getCache();
+
+remoteCache.put("car", "ferrari");
+RemoteCache.VersionedValue valueBinary = remoteCache.getVersioned("car");
+
+// removal only takes place only if the version has not been changed
+// in between. (a new version is associated with 'car' key on each change)
+assert remoteCache.remove("car", valueBinary.getVersion());
+assert !cache.containsKey("car");
+
+----
+
+In a similar way, for replace:
+
+[source,java]
+----
+remoteCache.put("car", "ferrari");
+RemoteCache.VersionedValue valueBinary = remoteCache.getVersioned("car");
+assert remoteCache.replace("car", "lamborghini", valueBinary.getVersion());
+
+----
+
+For more details on versioned operations refer to link:$$http://docs.jboss.org/infinispan/5.2/apidocs/org/infinispan/client/hotrod/RemoteCache.html$$[RemoteCache] 's javadoc. 
+
+===== Async API
+This cool feature is "borrowed" from the Infinispan core and it is largely discussed <<_asynchronous_api, here>>
+
+===== Unsupported methods
+Some of the link:$$http://docs.jboss.org/infinispan/4.0/apidocs/org/infinispan/Cache.html$$[Cache] methods are not being supported by the link:$$http://docs.jboss.org/infinispan/4.1/apidocs/org/infinispan/client/hotrod/RemoteCache.html$$[RemoteCache] . Calling one of these methods results in an link:$$http://download.oracle.com/javase/6/docs/api/java/lang/UnsupportedOperationException.html$$[UnsupportedOperationException] being thrown. Most of these methods do not make sense on the remote cache (e.g. listener management operations), or correspond to methods that are not supported by local cache as well (e.g. containsValue). Another set of unsupported operations are some of the atomic operations inherited from link:$$http://java.sun.com/j2se/1.5.0/docs/api/java/util/concurrent/ConcurrentMap.html$$[ConcurrentMap] : 
+
+[source,java]
+----
+boolean remove(Object key, Object value);
+boolean replace(Object key, Object value);
+boolean replace(Object key, Object oldValue, Object value);
+
+----
+
+link:$$http://docs.jboss.org/infinispan/4.1/apidocs/org/infinispan/client/hotrod/RemoteCache.html$$[RemoteCache] offers alternative versioned methods for these atomic operations, that are also network friendly, by not sending the whole value object over the network, but a version identifier. See the section on versioned API. 
+
+Each one of these unsupported operation is documented in the link:$$http://docs.jboss.org/infinispan/4.1/apidocs/org/infinispan/client/hotrod/RemoteCache.html$$[RemoteCache] javadoc. 
+
+==== Return values
+There is a set of methods that alter an cached entry and return the previous existing value, e.g.: 
+
+[source,java]
+----
+V remove(Object key);
+V put(K key, V value);
+----
+
+By default on RemoteCache, these operations return null even if such a previous value exists. This approach reduces the amount of data sent over the network. However, if these return values are needed they can be enforced on an per invocation basis using flags: 
+
+[source,java]
+----
+cache.put("aKey", "initialValue");
+assert null == cache.put("aKey", "aValue");
+assert "aValue".equals(cache.withFlags(Flag.FORCE_RETURN_VALUE).put("aKey",
+   "newValue"));
+
+----
+
+This default behavior can can be changed through force-return-value=true configuration parameter (see configuration section bellow).
+
+==== Intelligence
+HotRod defines three level of intelligence for the clients:
+
+. basic client, interested in neither cluster nor hash information
+. topology-aware client, interested in cluster information
+. hash-distribution-aware client, that is interested in both cluster and hash information
+
+The java client supports all 3 levels of intelligence. It is transparently notified whenever a new server is added/removed from the HotRod cluster. At startup it only needs to know the address of one HotRod server (ip:host). On connection to the server the cluster topology is piggybacked to the client, and all further requests are being dispatched to all available servers. Any further topology change is also piggybacked.
+
+===== Distribution-aware client
+Another aspect of the 3rd level of intelligence is the fact that it is hash-distribution-aware. This means that, for each operation, the client chooses the most appropriate remote server to go to: the data owner. As an example, for a put(k,v) operation, the client calculates k's hash value and knows exactly on which server the data resides on. Then it picks up a tcp connection to that particular server and dispatches the operation to it. This means less burden on the server side which would otherwise need to lookup the value based on the key's hash. It also results in a quicker response from the server, as an additional network roundtrip is skipped. This hash-distribution-aware aspect is only relevant to the distributed HotRod clusters and makes no difference for replicated server deployments.
+
+==== Request Balancing
+Request balancing is only relevant when the server side is configured with replicated infinispan cluster (on distributed clusters the hash-distribution-aware client logic is used, as discussed in the previos paragraph). Because the client is topology-aware, it knows the list of available servers at all the time. Request balancing has to do with how the client dispatches requests to the available servers.
+
+The default strategy is round-robin: requests are being dispatched to all existing servers in a circular manner. E.g. given a cluster of servers {s1, s2, s3} here is how request will be dispatched: 
+
+[source,java]
+----
+CacheContainer cacheContainer = new RemoteCacheManager();
+Cache<String, String> cache = cacheContainer.getCache();
+
+cache.put("key1", "aValue"); //this goes to s1
+cache.put("key2", "aValue"); //this goes to s2
+String value = cache.get("key1"); //this goes to s3
+
+cache.remove("key2"); //this is dispatched to s1 again, and so on...
+
+----
+
+Custom types of balancing policies can defined by implementing the link:$$http://docs.jboss.org/infinispan/4.1/apidocs/org/infinispan/client/hotrod/impl/transport/tcp/RequestBalancingStrategy.html$$[RequestBalancingStrategy] and by specifying it through the infinispan.client.hotrod.request-balancing-strategy configuration property. Please refer to configuration section for more details on this. 
+
+===== Persistent connections
+In order to avoid creating a TCP connection on each request (which is a costly operation), the client keeps a pool of persistent connections to all the available servers and it reuses these connections whenever it is possible. The validity of the connections is checked using an async thread that iterates over the connections in the pool and sends a HotRod ping command to the server. By using this connection validation process the client is being proactive: there's a hight chance for broken connections to be found while being idle in the pool and no on actual request from the application.
+
+The number of connections per server, total number of connections, how long should a connection be kept idle in the pool before being closed - all these (and more) can be configured. Please refer to the javadoc of link:$$http://docs.jboss.org/infinispan/4.1/apidocs/org/infinispan/client/hotrod/RemoteCacheManager.html$$[RemoteCacheManager] for a list of all possible configuration elements. 
+
+===== Marshalling data
+The Hot Rod client allows one to plug in a custom marshaller for transforming user objects into byte arrays and the other way around. This transformation is needed because of Hot Rod's binary nature - it doesn't know about objects.
+
+The marshaller can be plugged through the "marshaller" configuration element (see Configuration section): the value should be the fully qualified name of a class implementing the link:$$http://docs.jboss.org/infinispan/4.1/apidocs/org/infinispan/marshall/Marshaller.html$$[Marshaller] interface. This is a optional parameter, if not specified it defaults to the link:$$http://docs.jboss.org/infinispan/4.1/apidocs/org/infinispan/marshall/jboss/GenericJBossMarshaller.html$$[GenericJBossMarshaller] - a highly optimized implementation based on the link:$$http://www.jboss.org/jbossmarshalling$$[JBoss Marshalling] library. 
+
+Since version 5.0, there's a new marshaller available to Java Hot Rod clients based on Apache Avro which generates portable payloads. You can find more information about it <<sid-68355061,here>> 
+
+===== Statistics
+Various server usage statistics can be obtained through the link:$$http://docs.jboss.org/infinispan/4.1/apidocs/org/infinispan/client/hotrod/RemoteCache.html$$[RemoteCache] .stats() method. This returns an link:$$http://docs.jboss.org/infinispan/4.1/apidocs/org/infinispan/client/hotrod/ServerStatistics.html$$[ServerStatistics] object - please refer to javadoc for details on the available statistics. 
+
+===== Configuration
+All the configurations are passed to the RemoteCacheManager's constructor as key-value pairs, through an instance of link:$$http://download.oracle.com/javase/6/docs/api/java/util/Properties.html$$[java.util.Properties] or reference to a .properties file. Please refer to the javadoc of RemoteCacheManager for a exhaustive list of the possible configuration elements. 
+
+===== Multi-Get Operations
+The Java Hot Rod client does not provide multi-get functionality out of the box but clients can build it themselves with the given APIs. 
+
+===== More info
+It is highly recommended to read the following Javadocs (this is pretty much all the public API of the client):
+
+*  link:$$http://docs.jboss.org/infinispan/5.2/apidocs/org/infinispan/client/hotrod/RemoteCacheManager.html$$[RemoteCacheManager] 
+*  link:$$http://docs.jboss.org/infinispan/5.2/apidocs/org/infinispan/client/hotrod/RemoteCache.html$$[RemoteCache] 
+
+[[sid-68355052]]
+
+====  Consistent Concurrent Updates With Hot Rod Versioned Operations
+Data structures, such as Infinispan link:$$http://docs.jboss.org/infinispan/4.1/apidocs/org/infinispan/Cache.html$$[Cache] , that are accessed and modified concurrently can suffer from data consistency issues unless there're mechanisms to guarantee data correctness. Infinispan Cache, since it implements link:$$http://download.oracle.com/docs/cd/E17409_01/javase/6/docs/api/java/util/concurrent/ConcurrentMap.html?is-external=true$$[ConcurrentMap] , provides operations such as link:$$http://download.oracle.com/docs/cd/E17409_01/javase/6/docs/api/java/util/concurrent/ConcurrentMap.html#replace(K, V, V)$$[conditional replace] , link:$$http://download.oracle.com/docs/cd/E17409_01/javase/6/docs/api/java/util/concurrent/ConcurrentMap.html#putIfAbsent(K, V)$$[putIfAbsent] , and link:$$http://download.oracle.com/docs/cd/E17409_01/javase/6/docs/api/java/util/concurrent/ConcurrentMap.html#remove(java.lang.Object, java.lang.Object)$$[conditional remove] to its clients in order to guarantee data correctness. It even allows clients to operate against cache instances within JTA transactions, hence providing the necessary data consistency guarantees. 
+
+However, when it comes to link:$$http://community.jboss.org/wiki/HotRodProtocol$$[Hot Rod protocol] backed servers, clients do not yet have the ability to start remote transactions but they can call instead versioned operations to mimic the conditional methods provided by the embedded Infinispan cache instance API.  Let's look at a real example to understand how it works. 
+
+===== Data Consistency Problem
+Imagine you have two ATMs that connect using Hot Rod to a bank where an account's balance is stored.  Two closely followed operations to retrieve the latest balance could return 500 CHF (swiss francs) as shown below:
+ 
+image::images/server_modules_6.png[]
+
+Next a customer connects to the first ATM and requests 400 CHF to be retrieved.  Based on the last value read, the ATM could calculate what the new balance is, which is 100 CHF, and request a put with this new value. Let's imagine now that around the same time another customer connects to the ATM and requests 200 CHF to be retrieved.  Let's assume that the ATM thinks it has the latest balance and based on its calculations it sets the new balance to 300 CHF:
+ 
+image::images/server_modules_7.png[]
+
+Obviously, this would be wrong.  Two concurrent updates have resulted in an incorrect account balance.  The second update should not have been allowed since the balance the second ATM had was incorrect. Even if the ATM would have retrieved the balance before calculating the new balance, someone could have updated between the new balance being retrieved and the update. Before finding out how to solve this issue in a client-server scenario with Hot Rod, let's look at how this is solved when Infinispan clients run in peer-to-peer mode where clients and Infinispan live within the same JVM.
+
+====== Embedded-mode Solution
+
+If the ATM and the Infinispan instance storing the bank account lived in the same JVM, the ATM could use the link:$$http://download.oracle.com/docs/cd/E17409_01/javase/6/docs/api/java/util/concurrent/ConcurrentMap.html#replace(K, V, V)$$[conditional replace API] referred at the beginning of this article.  So, it could send the previous known value to verify whether it has changed since it was last read.  By doing so, the first operation could double check that the balance is still 500 CHF when it was to update to 100 CHF.  Now, when the second operation comes, the current balance would not be 500 CHF any more and hence the conditional replace call would fail, hence avoiding data consistency issues: 
+ 
+image::images/server_modules_8.png[]
+
+====== Client-Server Solution
+In theory, Hot Rod could use the same p2p solution but sending the previous value would be not practical.  In this example, the previous value is just an integer but the value could be a lot bigger and hence forcing clients to send it to the server would be rather wasteful.  Instead, Hot Rod offers versioned operations to deal with this situation.
+
+Basically, together with each key/value pair, Hot Rod stores a version number which uniquely identifies each modification. So, using an operation called link:$$http://community.jboss.org/wiki/HotRodProtocol#getWithVersion_response$$[getVersioned or getWithVersion] , clients can retrieve not only the value associated with a key, but also the current version. So, if we look at the previous example once again, the ATMs could call getVersioned and get the balance's version: 
+ 
+image::images/server_modules_9.png[]
+
+When the ATMs wanted to modify the balance, instead of just calling put, they could call link:$$http://community.jboss.org/wiki/HotRodProtocol#removeIfUnmodified_request$$[replaceIfUnmodified] operation passing the latest version number of which the clients are aware of.  The operation will only succeed if the version passed matches the version in the server.  So, the first modification by the ATM would be allowed since the client passes 1 as version and the server side version for the balance is also 1.  On the other hand, the second ATM would not be able to make the modification because after the first ATMs modification the version would have been incremented to 2, and now the passed version (1) and the server side version (2) would not match: 
+ 
+image::images/server_modules_10.png[]
+
+[[sid-68355104]]
+
+====  Interacting With Hot Rod Server From Within Same JVM
+Normally, a Hot Rod server is accessed via a Hot Rod protocol client such as the Java Hot Rod client. However, there might be situations where not only do you want to access the Hot Rod server remotely, you might also want to access it locally from within the same JVM that the Hot Rod server is running. For example, you might have an Infinispan cache pushing changes <<_remote_cache_loader, via the RemoteCacheStore to a Hot Rod server>>, and if the cache goes down, you might want to access the data directly from the Hot Rod server itself. 
+
+In this situations, we have to remember that the Hot Rod protocol specifies that keys and values are stored as byte arrays. This means that if the client code, using an existing Hot Rod client, stored Strings or Integers, or any other complex serializable or externalizable object, you won't be able to retrieve these objects straight from the cache that the Hot Rod server uses. 
+
+To actually get the fully constructed objects that you're after, you're gonna need to take the byte arrays stored within the Hot Rod server and unmarshall them into something that you can use. In the future, this is something that might be done for you, as suggested in link:$$https://jira.jboss.org/browse/ISPN-706$$[ISPN-706] (superseded by link:$$https://issues.jboss.org/browse/ISPN-2281$$[ISPN-2281] ), but for the time being, clients wanting to access Hot Rod server data will have to do it themselves. 
+
+Two different use cases need to be differentiated at this stage and to explain how to transform the Hot Rod server data into something usable, we'll assume that the clients are java clients:
+
+===== Data Stored Directly Via A Hot Rod Client
+The most common case is for a client to use a Hot Rod client library directly to store data in the Hot Rod server. In this case, assuming that the client used the existing Java Hot Rod client, the default marshaller used to marshall objects into byte arrays is the link:$$http://docs.jboss.org/infinispan/4.1/apidocs/org/infinispan/marshall/jboss/GenericJBossMarshaller.html$$[GenericJBossMarshaller] . So, if a user wants to read data from the Hot Rod server directly, it would need to execute something along the lines of: 
+
+[source,java]
+----
+import org.infinispan.marshall.jboss.GenericJBossMarshaller;
+import org.infinispan.util.ByteArrayKey;
+import org.infinispan.server.core.CacheValue;
+...
+
+// Create a new instance of the marshaller:
+GenericJBossMarshaller marshaller = new GenericJBossMarshaller();
+Object key = ...
+
+// Take the cache key and convert into a byte array,
+// and wrap it with an instance of ByteArrayKey
+ByteArrayKey bytesKey = new ByteArrayKey(marshaller.objectToByteBuffer(key));
+
+// Internally, Hot Rod stores values wrapped in a CacheValue, so retrieve it
+CacheValue cacheValue = (CacheValue) cache.get(bytesKey);
+
+// Take the data part which is byte array and unmarshall it to retrieve the value
+Object value = marshaller.objectFromByteBuffer(cacheValue.data());
+
+----
+
+If you want to store data directly in the HotRod server, you'd have to execute something like this:
+
+[source,java]
+----
+import org.infinispan.marshall.jboss.GenericJBossMarshaller;
+import org.infinispan.util.ByteArrayKey;
+import org.infinispan.server.core.CacheValue;
+...
+
+// Create a new instance of the marshaller:
+GenericJBossMarshaller marshaller = new GenericJBossMarshaller();
+Object key = ...
+Object value = ...
+
+// Take the cache key and convert into a byte array,
+// and wrap it with an instance of ByteArrayKey
+ByteArrayKey bytesKey = new ByteArrayKey(marshaller.objectToByteBuffer(key));
+
+// Internally, Hot Rod stores values wrapped in a CacheValue, so create instance
+// Remember that you need to give it a version number, so either:
+// 1. Increment previous value's version
+// 2. Or generate a new version number that minimises potential clash
+//    with a concurrent update to the same key in the cluster
+CacheValue cacheValue = new CacheValue(marshaller.objectToByteBuffer(value), 1)
+
+// Finally, store it in the cache
+cache.put(bytesKey, cacheValue);
+
+----
+
+===== Data Stored Via Remote Cache Store
+Other times, Hot Rod server might be storing data coming from a link:$$https://docs.jboss.org/author/pages/viewpage.action?pageId=3737163$$[RemoteCacheStore] , rather than user code. In this case, there're a couple of differences to the code above. First of all, the marshaller is slightly different. Instead, the RemoteCacheStore uses the link:$$http://docs.jboss.org/infinispan/4.1/apidocs/org/infinispan/marshall/VersionAwareMarshaller.html$$[VersionAwareMarshaller] which all it does is add Infinispan version information to the byte array generated. The second difference is that RemoteCacheStore stores internal cache entry classes, which apart from the value part, they contain other extra information. So, any code trying to read these directly from the Hot Rod server would need to take in account. For example, to read data from such Hot Rod server: 
+
+[source,java]
+----
+import org.infinispan.marshall.VersionAwareMarshaller;
+import org.infinispan.util.ByteArrayKey;
+import org.infinispan.server.core.CacheValue;
+import org.infinispan.container.entries.CacheEntry;
+...
+
+// Create a new instance of the marshaller
+VersionAwareMarshaller marshaller = new VersionAwareMarshaller();
+Object key = ...
+
+// Take the cache key and convert into a byte array,
+// and wrap it with an instance of ByteArrayKey
+ByteArrayKey bytesKey = new ByteArrayKey(marshaller.objectToByteBuffer(key));
+
+// Internally, Hot Rod stores values wrapped in a CacheValue, so retrieve it
+CacheValue cacheValue = (CacheValue) cache.get(bytesKey);
+
+// However, in this case the data part of CacheValue does not contain directly
+// the value Instead, it contains an instance of CacheEntry, so we need to
+// unmarshall that and then get the actual value
+CacheEntry cacheEntry = (CacheEntry)
+   marshaller.objectFromByteBuffer(cacheValue.data());
+Object value = cacheEntry.getValue();
+
+----
+
+And to actually write data back into the Hot Rod server directly:
+
+[source,java]
+----
+import org.infinispan.marshall.VersionAwareMarshaller;
+import org.infinispan.util.ByteArrayKey;
+import org.infinispan.server.core.CacheValue;
+import org.infinispan.container.entries.CacheEntry;
+import org.infinispan.container.entries.InternalEntryFactory;
+...
+
+// Create a new instance of the marshaller:
+VersionAwareMarshaller marshaller = new VersionAwareMarshaller();
+Object key = ...
+Object value = ...
+
+// Take the cache key and convert into a byte array
+ByteArrayKey bytesKey = new ByteArrayKey(marshaller.objectToByteBuffer(key));
+
+// With the value to store, a new CacheEntry instance needs to be created:
+CacheEntry cacheEntry = InternalEntryFactory.create(bytesKey, value, ...)
+
+// Internally, Hot Rod stores values wrapped in a CacheValue, so create instance
+// Remember that you need to give it a version number, so either:
+// 1. Increment previous value's version
+// 2. Or generate a new version number that minimises potential clash
+//    with a concurrent update to the same key in the cluster
+CacheValue cacheValue = new CacheValue(
+   marshaller.objectToByteBuffer(cacheEntry), 1)
+
+// Finally, store it in the cache
+cache.put(bytesKey, cacheValue);
+
+----
+
+===== Multiple Tiers of Caches
+A combination of the Hot Rod protocol and link:$$http://community.jboss.org/docs/DOC-14893?uniqueTitle=false#Remote_cache_loader$$[RemoteCacheLoader] opened the way for a set of new architectures in Infinispan, where layers of caches can exists and interact. This article takes a look at such an layered architecture. 
+
+====== Sample architecture/near caching
+
+image::images/client_server.png[]
+
+The diagram above shows an Infinispan server cluster running 3 hotrod servers. This cluster is accessed remotely, through HotRod, by another infinispan cluster:  client cluster (upper part of the image). All the nodes in the server cluster are configured to run HotRod servers, so requests from remote loader are being balanced between them. The client cluster is configured with invalidation as cluster mode and a RemoteCacheLoader to access data stored in the server cluster. Application data is held on the server cluster which runs in DIST mode for scalability. 
+
+In this deployment the client code, running in same address space with the client cluster,  holds all its data in the server cluster. Client cluster acts as an _near-cache_ for frequently accessed entries. 
+

@@ -1,0 +1,459 @@
+==  Example with Groovy
+The idea by this tutorial is to give an introduction in the use of the link:$$http://docs.jboss.org/infinispan/4.0/apidocs/$$[Infinispan API] and its configuration file. As trying to do it in a more interactive fashion, the tutorial makes use of the link:$$http://groovy.codehaus.org/$$[Groovy] dynamic language that will allow to interact with the API by using a console.
+
+The tutorial will start by showing the basic usage of the link:$$http://docs.jboss.org/infinispan/4.0/apidocs/$$[Infinispan API] and a use of a simple cache configuration, then it will walk through different configuration scenarios and use cases. By the end of the tutorial you should have a clear understanding of the use the Infinispan API and some of the various configuration options. 
+
+The scenarios and use cases shown are:
+
+
+* Basic cache configuration
+* Cache with transaction management configuration
+* Cache with a cache store configuration
+* Cache with eviction configuration
+* Cache with eviction and cache store configuration
+* Cache with REPL_SYNC &amp; transaction management configuration.
+
+All the sample configurations are in the sample-configurations.xml file attached to this tutorial, check the link:$$http://docs.jboss.org/infinispan/4.0/apidocs/$$[environment configuration] to know how to make use of this configuration file. Lets get started: 
+
+=== Introduction
+
+The Infinispan tutorial makes use of Groovy to get a more interactive experience when starting to learn about how to use the Infinispan API. So you will need to install a few prerequisites before getting started:
+
+
+*  The Groovy Platform, link:$$http://dist.groovy.codehaus.org/distributions/groovy-binary-1.6.3.zip$$[I used Groovy 1.6.3] 
+* Java and Infinispan
+
+Download those and extract/install where you feel appropriate, depending on your operating system and personal preferences you will either have installers or compressed distributions. You can read more about read installing Java and Infinispan in link:$$https://docs.jboss.org/author/pages/viewpage.action?pageId=3737054$$[Installing Infinispan for the tutorials] . 
+
+==== Installing Groovy
+You can use the installer or compressed file to install the Groovy Platform, I used the compressed file and decompressed at C:\Program Files\groovy\groovy-1.6.3. Once you have installed the Groovy Platform you should set some environment variables:
+
+----
+GROOVY_HOME=C:\Program Files\groovy\groovy-1.6.3
+----
+
+and add to the PATH environment variable: 
+
+----
+PATH=%PATH%;%GROOVY_HOME%\bin
+----
+
+test that everything is correct by executing in a Command Shell/Terminal the commands shown: 
+
+----
+$> groovy -v
+Groovy Version: 1.6.3 JVM: 1.6.0_14
+----
+
+If you get a similar result as shown, everything went well.
+
+==== Installing Infinispan
+Now you should add the Infinispan libraries to the Groovy Platform so you will able to access the API from the Groovy console. Add the infinispan-core.jar and its dependencies to the $USER_HOME/.groovy/lib directory, the jar is located in $INFINISPAN_HOME/modules/core and the dependencies at $INIFINISPAN_HOME/modules/core/lib.
+
+For example, on Windows, you need to copy it to: 
+
+----
+C:\Documents and Settings\Alejandro Montenegro\.groovy\lib
+
+----
+
+or on Linux: 
+
+----
+/home/amontenegro/.groovy/lib
+
+----
+
+and $INFINISPAN_HOME is where you decompressed the Infinispan distribution.
+
+To test the installation, download the attached file infinispantest.groovy and in a Command Shell/Terminal execute
+
+----
+$> groovy infinispantest
+4.0.0.ALPHA5
+----
+
+==== Setting the classpath
+The last thing to do is to add to the CLASSPATH environment variable the sample configuration file, this file contains definitions of cache's that will be used in the tutorial. I created the directory $USER_HOME/.groovy/cp and added it to the classpath
+
+For example, on Windows: 
+
+----
+CLASSPATH=%CLASSPATH%;C:\Documents and Settings\Alejandro Montenegro\.groovy\cp
+
+----
+
+or, on Linux: 
+
+----
+CLASSPATH=$CLASSPATH:/home/amontenegro/.groovy/cp
+
+----
+
+finally add the sample-configurations.xml and infinispan-config-4.0.xsd files(attached) to the directory.
+
+=== Loading the configuration file
+
+The link:$$http://docs.jboss.org/infinispan/4.0/apidocs/org/infinispan/manager/CacheManager.html$$[cache manager] is the responsible to manage all the link:$$http://docs.jboss.org/infinispan/4.0/apidocs/org/infinispan/Cache.html$$[cache's] , so you have to start by indicating where to get the cache definitions to the link:$$http://docs.jboss.org/infinispan/4.0/apidocs/org/infinispan/manager/CacheManager.html$$[cache manager] , remember that the cache definitions are in the sample-configurations.xml file. If no cache definitions are indicated, the link:$$http://docs.jboss.org/infinispan/4.0/apidocs/org/infinispan/manager/CacheManager.html$$[cache manager] will use a default cache. 
+
+Start by open a groovy console by typing groovy.sh in a command shell or terminal. You should now have something similar to: 
+
+====
+Groovy Shell (1.6.3, JVM: 1.6.0_14)
+Type 'help' or '\h' for help.
+-------------------------------------------------------
+groovy:000>
+====
+
+It's time to start typing some commands, first start by importing the necessary libraries 
+
+
+====
+groovy:000> import org.infinispan.*
+=== > [import org.infinispan.*]
+groovy:000> import org.infinispan.manager.*
+=== > [import org.infinispan.*, import org.infinispan.manager.*]
+
+====
+
+And now, create a cache manager indicating the file with the cache definitions.
+
+----
+groovy:000> manager = new DefaultCacheManager("sample-configurations.xml")
+=== > org.infinispan.manager.DefaultCacheManager@19cc1b@Address:null
+----
+
+the cache manager has now the knowledge of all the named caches defined in the configuration file and also has a no named cache that's used by default. You can now access any of the cache's by interacting with the cache manager as shown.
+
+----
+groovy:000> defaultCache = manager.getCache()
+=== > Cache 'org.infinispan.manager.DefaultCacheManager.DEFAULT_CACHE_NAME'@7359733
+//TO GET A NAMED CACHE
+groovy:000> cache = manager.getCache("NameOfCache")
+
+----
+
+=== Basic cache configuration
+The basic configuration, is the simplest configuration that you can have, its make use of default settings for the properties of the cache configuration, the only thing you have to set is the name of the cache. 
+
+[source,xml]
+----
+<namedCache name="Local"/>
+
+----
+
+That's all you have to add to the configuration file to have a simple named cache, now its time to interact with the cache by using the Infinispan API. Lets start by getting the named cache and put some objects inside it. 
+
+
+----
+//START BY GETTING A REFERENCE TO THE NAMED CACHE
+groovy:000> localCache = manager.getCache("Local")
+=== > Cache 'Local'@19521418
+//THE INITIAL SIZE IS 0
+groovy:000> localCache.size()
+=== > 0
+//NOW PUT AN OBJECT INSIDE THE CACHE
+groovy:000> localCache.put("aKey", "aValue")
+=== > null
+//NOW THE SIZE IS 1
+groovy:000> localCache.size()
+=== > 1
+//CHECK IF IT HAS OUR OBJECT
+groovy:000> localCache.containsKey("aKey")
+=== > true
+//BY OBTAINING AN OBJECT DOESN'T MEAN TO REMOVE
+groovy:000> localCache.get("aKey")
+=== > aValue
+groovy:000> localCache.size()
+=== > 1
+//TO REMOVE ASK IT EXPLICITLY
+groovy:000> localCache.remove("aKey")
+=== > aValue
+groovy:000> localCache.isEmpty()
+=== > true
+
+----
+
+So you have seen the basic of the Infinispan API, adding, getting and removing from the cache, there is more, but don't forget that you are working with a cache that are an extension of java.util.ConcurrentHasMap and the rest of the API is as simple as the one shown above, many of the cool things in Infinispan are totally transparent (that's actually the coolest thing about Infinispan) and depends only on the configuration of your cache.
+
+If you check the Infinispan JavaDoc you will see that the Cache#put() method has been overridden several times. 
+
+----
+//YOU WILL NEED TO IMPORT ANOTHER LIBRARY
+groovy:000> import java.util.concurrent.TimeUnit
+=== > [import org.infinispan.*, import org.infinispan.manager.*, import java.util.concurrent.TimeUnit]
+//NOTHING NEW HERE JUST PUTTING A NEW OBJECT
+groovy:000> localCache.put("bKey", "bValue")
+=== > null
+//WOW! WHATS HAPPEN HERE? PUTTED A NEW OBJECT BUT IT WILL TIMEOUT AFTER A SECOND
+groovy:000> localCache.put("timedKey", "timedValue", 1000, TimeUnit.MILLISECONDS)
+=== > null
+//LETS CHECK THE SIZE
+groovy:000> localCache.size()
+=== > 2
+//NOW TRY TO GET THE OBJECT, OOPS ITS GONE! (IF NOT, IT'S BECAUSE YOU ARE A SUPERTYPER, CALL GUINNESS!))
+groovy:000> localCache.get("timedKey")
+=== > null
+//LETS CHECK THE SIZE AGAIN, AS EXPECTED THE SIZE DECREASED BY 1
+groovy:000> localCache.size()
+=== > 1
+
+----
+
+The Infinispan API also allows you to manage the life cycle of the cache, you can stop and start a cache but by default you will loose the content of the cache except if you configure a cache store, more about that later in the tutorial. lets check what happens when you restart the cache 
+
+----
+groovy:000> localCache.size()
+=== > 1
+//RESTARTING CACHE
+groovy:000> localCache.stop()
+=== > null
+groovy:000> localCache.start()
+=== > null
+//DAMN! LOST THE CONTENT OF THE CACHE
+groovy:000> localCache.size()
+=== > 0
+----
+
+Thats all related to the use of the Infinispan API, now lets check some different behaviors depending on the configuration of the cache.
+
+=== Cache with transaction management
+
+You are able to specify the cache to use a transaction manager, and even explicitly control the transactions. Start by configuring the cache to use a specific TransactionManagerLookup class. Infinispan implements a couple TransactionManagerLookup classes.
+
+
+*  link:$$http://docs.jboss.org/infinispan/4.0/apidocs/org/infinispan/transaction/lookup/DummyTransactionManagerLookup.html$$[org.infinispan.transaction.lookup.DummyTransactionManagerLookup] 
+
+
+*  link:$$http://docs.jboss.org/infinispan/4.0/apidocs/org/infinispan/transaction/lookup/GenericTransactionManagerLookup.html$$[org.infinispan.transaction.lookup.GenericTransactionManagerLookup] 
+
+
+*  link:$$http://docs.jboss.org/infinispan/4.0/apidocs/org/infinispan/transaction/lookup/JBossStandaloneJTAManagerLookup.html$$[org.infinispan.transaction.lookup.JBossStandaloneJTAManagerLookup] 
+
+
+*  link:$$http://docs.jboss.org/infinispan/4.0/apidocs/org/infinispan/transaction/lookup/JBossTransactionManagerLookup.html$$[org.infinispan.transaction.lookup.JBossTransactionManagerLookup] 
+
+Each use different methods to lookup the transaction manager, depending on the environment you are running Infinispan you should figure out which one to use. Check the JavaDoc for more details.
+
+For the tutorial its enough to use: 
+
+[source,xml]
+----
+<namedCache name="LocalTX">
+    <transaction transactionManagerLookupClass="org.infinispan.transaction.lookup.DummyTransactionManagerLookup"/>
+</namedCache>
+
+----
+
+Lets check how to interact with the Transaction Manager and to have the control over a transaction 
+
+
+----
+groovy:000> import javax.transaction.TransactionManager
+=== > [import org.infinispan.*, import org.infinispan.manager.*, import java.util.concurrent.TimeUnit, import javax.transaction.TransactionManager]
+//GET A REFERENCE TO THE CACHE WITH TRANSACTION MANAGER
+groovy:000> localTxCache = manager.getCache("LocalTX")
+=== > Cache 'LocalTX'@16075230
+groovy:000> cr = localTxCache.getComponentRegistry()
+=== > org.infinispan.factories.ComponentRegistry@87e9bf
+//GET A REFERENCE TO THE TRANSACTION MANAGER
+groovy:000> tm = cr.getComponent(TransactionManager.class)
+=== > org.infinispan.transaction.tm.DummyTransactionManager@b5d05b
+//STARTING A NEW TRANSACTION
+groovy:000> tm.begin()
+=== > null
+//PUTTING SOME OBJECTS INSIDE THE CACHE
+groovy:000> localTxCache.put("key1", "value1")
+=== > null
+//MMM SIZE DOESN'T INCREMENT
+groovy:000> localTxCache.size()
+=== > 1
+//LETS TRY AGAIN
+groovy:000> localTxCache.put("key2", "value2")
+=== > null
+//MMM NOTHING..
+groovy:000> localTxCache.size()
+=== > 2
+//OH! HAS TO DO THE COMMIT
+groovy:000> tm.commit()
+=== > null
+//AND THE SIZE IS AS EXPECTED.. HAPPY!
+groovy:000> localTxCache.size()
+=== > 2
+
+----
+
+As shown in the example, the transaction is controlled explicitly and the changes in the cache wont be reflected until you make the commit.
+
+=== Cache with a cache store
+
+Infinispan allows you to configure a persistent store that can be used to persist the content of the cache, so if the cache is restarted the cache will be able to keep the content. It can also be used if you want to limit the size of the cache, then the cache will start putting the objects in the store to keep the size limit, more on that when looking at the eviction configuration.
+
+Infinispan provides several cache store implementations:
+
+
+* FileCacheStore
+
+
+* JdbcBinaryCacheStore
+
+
+* JdbcMixedCacheStore
+
+
+* JdbcStringBasedCacheStore
+
+
+* JdbmCacheStore
+
+
+* S3CacheStore
+
+
+* BdbjeCacheStore
+
+ The tutorial uses the FileCacheStore, that saves the objects in files in a configured directory, in this case the /tmp directory. If the directory is not set it defaults to Infinispan-FileCacheStore in the current working directory. 
+
+[source,xml]
+----
+<namedCache name="CacheStore">
+     <loaders passivation="false" shared="false" preload="true">
+          <loader class="org.infinispan.loaders.file.FileCacheStore" fetchPersistentState="true"
+               ignoreModifications="false" purgeOnStartup="false">
+            <properties>
+                 <property name="location" value="/tmp"/>
+               </properties>
+          </loader>
+     </loaders>
+</namedCache>
+----
+
+Now you have a cache with persistent store, lets try it to see how it works
+
+
+----
+//GETTING THE NEW CACHE
+groovy:000> cacheCS = manager.getCache("CacheStore")
+=== > Cache 'CacheStore'@23240342
+//LETS PUT AN OBJECT INSIDE THE CACHE
+groovy:000> cacheCS.put("storedKey", "storedValue")
+=== > null
+//LETS PUT THE SAME OBJECT IN OUR BASIC CACHE
+groovy:000> localCache.put("storedKey", "storedValue")
+=== > storedValue
+//RESTART BOTH CACHES
+groovy:000> cacheCS.stop()
+=== > null
+groovy:000> localCache.stop()
+=== > null
+groovy:000> cacheCS.start()
+=== > null
+groovy:000> localCache.start()
+=== > null
+//LETS TRY GET THE OBJECT FROM THE RESTARTED BASIC CACHE.. NO LUCK
+groovy:000> localCache.get("storedKey")
+=== > null
+//INTERESTING CACHE SIZE IS NOT CERO
+groovy:000> cacheCS.size()
+=== > 1
+//WOW! JUST RESTARTED THE CACHE AND THE OBKECT KEEPS STAYING THERE!
+groovy:000> cacheCS.get("storedKey")
+=== > storedValue
+
+----
+
+=== Cache with eviction
+
+The eviction allow to define policy for removing objects from the cache when it reach its limit, as the true is that the caches doesn't has unlimited size because of many reasons.  So the fact is that you normally will set a maximum number of objects in the cache and when that number is reached then the cache has to decide what to do when a new object is added. That's the whole story about eviction, to define the policy of removing object when the cache is full and want to keep putting objects. You have three eviction strategies:
+
+
+* NONE
+* LRU
+* LIRS
+
+Let check the configuration of the cache: 
+
+[source,xml]
+----
+<namedCache name="Eviction">
+   <eviction wakeUpInterval="500" maxEntries="2" strategy="LRU"/>
+</namedCache>
+----
+
+The strategy has been set to LRU, so the least recently used objects will be removed first and the maximum number of objects are only 2, so it will be easy to show how it works 
+
+----
+//GETTING THE NEW CACHE
+groovy:000> evictionCache = manager.getCache("Eviction")
+=== > Cache 'Eviction'@5132526
+//PUT SOME OBJECTS
+groovy:000> evictionCache.put("key1", "value1")
+=== > null
+groovy:000> evictionCache.put("key2", "value2")
+=== > null
+groovy:000> evictionCache.put("key3", "value3")
+=== > null
+//HEY! JUST LOST AN OBJECT IN MY CACHE.. RIGHT, THE SIZE IS ONLY TWO
+groovy:000> evictionCache.size()
+=== > 2
+//LETS CHECK WHAT OBJECT WAS REMOVED
+groovy:000> evictionCache.get("key3")
+=== > value3
+groovy:000> evictionCache.get("key2")
+=== > value2
+//COOL! THE OLDEST WAS REMOVED
+groovy:000> evictionCache.get("key1")
+=== > null
+
+----
+
+Now you are sure that your cache wont consume all your memory and hang your system, but its an expensive price you have to pay for it, you are loosing objects in your cache. The good news is that you can mix cache store with the eviction policy and avoid loosing objects.
+
+=== Cache with eviction and cache store
+
+Ok, the cache has a limited size but you don't want to loose your objects in the cache. Infinispan is aware of these issues, so it makes it very simple for you combing the cache store with the eviction policy. When the cache is full it will persist an object and remove it from the cache, but if you want to recover an object that has been persisted the the cache transparently will bring it to you from the cache store.
+
+The configuration is simple, just combine eviction and cache store configuration 
+
+[source,xml]
+----
+<namedCache name="CacheStoreEviction">
+     <loaders passivation="false" shared="false" preload="true">
+          <loader class="org.infinispan.loaders.file.FileCacheStore" fetchPersistentState="true"
+            ignoreModifications="false" purgeOnStartup="false">
+               <properties>
+                    <property name="location" value="/tmp"/>
+               </properties>
+          </loader>
+     </loaders>
+     <eviction wakeUpInterval="500" maxEntries="2" strategy="FIFO"/>
+</namedCache>
+----
+
+Nothing new in the configuration, lets check how it works
+
+
+----
+//GETTING THE CACHE
+groovy:000> cacheStoreEvictionCache = manager.getCache("CacheStoreEviction")
+=== > Cache 'CacheStoreEviction'@6208201
+//PUTTING SOME OBJECTS
+groovy:000> cacheStoreEvictionCache.put("cs1", "value1")
+=== > value1
+groovy:000> cacheStoreEvictionCache.put("cs2", "value2")
+=== > value2
+groovy:000> cacheStoreEvictionCache.put("cs3", "value3")
+=== > value3
+///MMM SIZE IS ONLY TWO, LETS CHECK WHAT HAPPENED
+groovy:000> cacheStoreEvictionCache.size()
+=== > 2
+groovy:000> cacheStoreEvictionCache.get("cs3")
+=== > value3
+groovy:000> cacheStoreEvictionCache.get("cs2")
+=== > value2
+//WOW! EVEN IF THE CACHE SIZE IS 2, I RECOVERED THE THREE OBJECTS.. COOL!!
+groovy:000> cacheStoreEvictionCache.get("cs1")
+=== > value1
+
+----
+

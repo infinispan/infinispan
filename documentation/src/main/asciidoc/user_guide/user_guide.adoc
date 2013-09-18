@@ -1,0 +1,51 @@
+= Infinispan User Guide
+Manik Surtani, Mircea Markus, Galder Zamarreño, Pete Muir, and others from the Infinispan community
+:toc2:
+:icons: font
+:toclevels: 3
+:numbered:
+
+Welcome to the official Infinispan user guide.
+This comprehensive document will guide you through every last detail of Infinispan, 
+however can be a poor starting point if you are new to Infinispan.
+
+TIP: For newbies, starting with the link:../getting_started/getting_started.html[Getting Started Guide]
+or one of the link:http://www.infinispan.org/documentation[Quickstarts] is probably a better bet.
+
+The link:../faqs/faqs.html[Frequently Asked Questions] and link:../glossary/glossary.html[Glossary]
+are also useful documents to have alongside this user guide.
+
+// For some reason the chapter numbering got messed up when exporting from Confluence... 
+
+// The top-level chapter on config.  This will include other sub-chapters.
+include::chapter-46-Configuring_cache.adoc[]
+include::chapter-53-Using_the_Cache_API.adoc[]
+include::chapter-43-Eviction.adoc[]
+include::chapter-23-Cache_Loaders_and_Stores.adoc[]
+include::chapter-26-Infinispan_transactions.adoc[]
+include::chapter-19-Locking_and_Concurrency.adoc[]
+include::chapter-32-Clustering_modes.adoc[]
+include::chapter-54-Local_mode_cache.adoc[]
+include::chapter-61-Marshalling.adoc[]
+include::chapter-14-Infinispan_Server_Modules.adoc[]
+include::chapter-6-Querying_Infinispan.adoc[]
+include::chapter-13-Infinispan_as_a_storage_for_Lucene_indexes.adoc[]
+include::chapter-66-Map_Reduce_framework.adoc[]
+include::chapter-41-Infinispan_Distributed_Execution_Framework.adoc[]
+include::chapter-15-Management_Tooling.adoc[]
+include::chapter-60-CDI_Support.adoc[]
+include::chapter-50-Infinispan_Custom_Interceptors.adoc[]
+include::chapter-30-Running_Infinispan_on_Amazon_Web_Services.adoc[]
+include::chapter-29-Default_Values_For_Property_Based_Attributes.adoc[]
+include::chapter-68-Command_Line_Interface_CLI_.adoc[]
+include::chapter-74-Infinispan_for_HTTP_session_clustering_and_caching.adoc[]
+include::chapter-5-Integration_with_other_frameworks.adoc[]
+include::chapter-8-Grid_File_System.adoc[]
+include::chapter-65-Cross_site_replication.adoc[]
+include::chapter-67-Rolling_upgrades.adoc[]
+include::chapter-55-Infinispan_Command_line_Console.adoc[]
+include::chapter-70-Using_Infinispan_as_a_JCache_provider.adoc[]
+include::chapter-69-Total_Order_based_commit_protocol.adoc[]
+include::chapter-72-Storing_objects_e_g_arrays_with_custom_Equivalence_functions.adoc[]
+include::chapter-73-Interoperability_between_Embedded_and_Remote_Server_Endpoints.adoc[]
+

@@ -1,0 +1,26 @@
+= Infinispan Documentation
+Manik Surtani, Mircea Markus, Galder Zamarreño, Pete Muir, and others from the Infinispan community
+:icons: font
+
+Infinispan's documentation is organized as several individual 'books'.  Each
+one can be read independently, however they do reference one another,
+particularly the link:user_guide/user_guide.html[User Guide].
+
+We hope you find this useful.  Any and all feedback should be directed to the
+Infinispan link:http://www.infinispan.org/community[user forums].
+
+TIP: This is written specifically for *Infinispan 6.0.x*.  While
+the majority of it will apply to other versions as well, it is best that you
+reference the version of documentation that corresponds to your version of
+Infinispan.
+
+.Books
+ * A link:getting_started/getting_started.html[Getting Started Guide]
+ * A link:user_guide/user_guide.html[User Guide]
+ * A link:infinispan_server_guide/infinispan_server_guide.html[Server Guide] if you are running the JBoss AS-based server components
+ * An link:upgrading/upgrading.html[Upgrading Guide]
+ * A pretty useful link:glossary/glossary.html[Glossary]
+ * A set of link:faqs/faqs.html[Frequently Asked Questions]
+ * A guide to link:extending/extending.html[extending] Infinispan
+ * A guide to link:contributing/contributing.html[contributing] to Infinispan
+ * ... and finally some link:videos/videos.html[videos].

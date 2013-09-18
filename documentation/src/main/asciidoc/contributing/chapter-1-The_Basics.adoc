@@ -1,0 +1,257 @@
+==  The Basics
+In this chapter we quickly walk through the basics on contributing; future chapters go into more depth.
+
+=== Prequisites
+|=============
+| Java 6  | Infinispan is baselined on Java 6, and is built and tested using Sun Java 6.0, OpenJDK and IBM's JDK.
+| Maven 3 | The Infinispan build uses Maven, and we recommend using Maven 3.
+| Git     | The Infinispan source code is stored in Git.
+|=============
+
+=== Issue Management
+
+Infinispan uses JIRA for issue management, hosted on link:$$http://issues.jboss.org/browse/ISPN$$[issues.jboss.org].
+You can log in using your jboss.org username and password. 
+
+==== Reporting Issues
+If you need to create a new issue then follow these steps.
+
+. Choose between
+  * _Feature Request_ if you want to request an enhancement or new feature for Infinispan 
+  * _Bug_ if you have discovered an issue 
+  * _Task_ if you wish to request a documentation, sample or process (e.g. build system) enhancement or issue 
+. Then enter a _Summary_ , describing briefly the problem - please try to be descriptive! 
+. You should *not* set _Priority_. 
+. Now, enter the version you are reporting an issue against in the _Affects Version_ field, and leave the _Fix Version_ field blank. 
+. In the _Environment_ text area, provide as much detail as possible about your environment (e.g. Java runtime and version, operating system, any network topology which is relevant). 
+. In the _Description_ field enter a detailed description of your problem or request. 
+. If the issue has been discussed on the forums or the mailing list, enter a reference in the _Forum Reference_ field 
+. Finally, hit _Create_ 
+
+==== Versioning Guidelines
+
+[WARNING]
+==== 
+ Only Infinispan contributors should set the _Fix Version_ field. 
+==== 
+
+When setting the _Fix Version_ field for bugs and issues in JIRA, the following guidelines apply: 
+Version numbers are defined as `${major}.${minor}.${micro}.${modifier}`.  For example, `4.1.0.Beta1` would be:
+
+|===============
+|major|4
+|minor|1
+|micro|0
+|modifier|Beta1
+|===============
+
+If the issue relates to a _Task_ or _Feature Request_, please ensure that the `.Final` version is included in the _Fixed In_ field.
+For example, a new feature should contain `4.1.0.Beta1`, `4.1.0.Final` if it is new for 4.1.0 and was first made public in beta1.
+For example, see link:$$https://issues.jboss.org/browse/ISPN-299$$[ISPN-299] . 
+
+If the issue relates to a bug which affected a previous Final version, then the _Fixed In_ field should also contain the Final version which contains the fix, in addition to any Alpha, Beta or CR release.
+For example, see link:$$https://issues.jboss.org/browse/ISPN-546$$[ISPN-546].
+If the issue pertains to a bug in the current release, then the Final version should not be in the _Fixed In_ field.
+For example, a bug found in 4.1.0.Alpha2 (but not in 4.1.0.Alpha1) should be marked as fixed in 4.1.0.Alpha3, but not in 4.1.0.Final.
+For example, see link:$$https://issues.jboss.org/browse/ISPN-416$$[ISPN-416]. 
+
+=== Version control
+Infinispan uses link:$$http://git-scm.com$$[git], hosted on link:$$http://github.com$$[GitHub], for version control.
+You can find the upstream git repository at link:$$https://github.com/infinispan$$[]. To clone the repository: 
+
+----
+$ git clone git@github.com:infinispan/infinispan.git
+----
+
+or to clone your fork:
+
+----
+$ git clone git@github.com:YOUR_GITHB_USERNAME/infinispan.git
+----
+
+==== Setting up your IDE
+Maven supports generating IDE configuration files for easy setup of a project.
+This is tested on Eclipse, IntelliJ IDEA and Netbeans.
+
+===== Eclipse 
+Before we import the project, we need to clone the project as described above.
+
+$$1.$$ Install the m2eclipse plugin if you have not already installed it. This is bundled with Eclipse from version "Indigo" 3.7. 
+For older versions follow instructions on link:$$http://eclipse.org/m2e/$$[].
+
+$$2.$$ Import the Infinispan maven project. Select File -> Import in your eclipse workbench. Select the Existing Maven Project importer. 
+
+image::images/import_maven1.png[]
+
+$$3.$$ Select the root directory of your Infinispan checkout. 
+
+image::images/import_maven2.png[]
+
+$$4.$$ Select Infinispan modules that you want to import.
+
+$$5.$$ Finally, from Infinispan 5.0 onwards, annotation processing is used to allow log messages to be internationalized.  This processing can be done directly from Eclipse as part of compilation but it requires some set up:
+
+$$5.1.$$  Open the properties for infinispan-core and locate Annotation Processing 
+
+$$5.2.$$  Tick Enable project specific settings 
+
+$$5.3.$$  Enter `target/generated-sources/annotations` as the `Generated source` directory 
+
+image::images/ann_proc_eclipse.png[]
+
+$$6.$$ Code Formatting. From the menu Window -> Preferences -> Java -> Code Style -> Formatter. Import link:$$https://raw.github.com/infinispan/infinispan/master/ide-settings/eclipse/formatter.xml$$[formatter.xml]
+
+$$7.$$ Code templates. From the menu Window -> Preferences -> Java -> Code Style -> Code Templates. Import link:$$https://raw.github.com/infinispan/infinispan/master/ide-settings/eclipse/codetemplates.xml$$[codetemplates.xml] 
+
+Some modules use Scala, if you plan contributing to one of these modules it's worth installing the link:$$http://www.scala-lang.org/node/94$$[Scala tools] . 
+
+===== IntelliJ IDEA
+====== Importing
+
+When you start link:http://www.jetbrains.com/idea/[IntelliJ IDEA], you will be greeted by a screen as shown below: 
+
+image::images/idea-12-import.jpg[]
+
+If you have already obtained a copy of the Infinispan sources via Github (see _'Source Control'_), then follow: _Import Project -> /directory/to/downloaded/sources_ .
+IntelliJ will automatically make use of Maven to import the project since it will detect a `pom.xml` file in the base directory.
+
+If you have not obtained the sources already, you can use the Git integration in IntelliJ IDEA 12. Click on _Check out from Version Control -> Github_.
+After entering your Github credentials, you will then be prompted to enter the git repository URL along with the location that you want to check out the source code to. 
+
+image::images/idea-12-git.png[]
+
+====== Compiler settings
+
+From Infinispan 5.0 onwards, annotation processing is used to allow log messages to be internationalized.
+This processing can be done directly from IntelliJ as part of compilation but it requires some set up:
+
+. Go to Preferences -> Compiler -> Annotation Processor" and click on _Enable annotation processing_ 
+. Add an annotation processor with "Processor FQN Name" as `org.jboss.logging.LoggingToolsProcessor` 
+. In "Processed Modules", add all modules except the root and the parent modules. 
+
+image::images/idea-12-annotations.png[]
+
+TIP: There can sometimes be issues with the generated logging classes on rebuild (particularly when you switch Git branches).
+If these issues do crop up then simply run `mvn clean install -DskipTests` on the command line to clear them out. 
+
+TIP: If you are running a multi-core environment (e.g. quad-core or above) then you can follow the instructions on making use of parallelized compilation in IntelliJ 12. Information on how to do this can be found link:$$http://blogs.jetbrains.com/idea/2012/12/intellij-idea-12-compiler-twice-as-fast/$$[here] . 
+
+====== Scala Plugin
+You will need to download the Scala plugin for IntelliJ as well. This can be done in _Project Settings -> Plugins -> Browse Repositories_.
+Then run a search for 'Scala'. JetBrains themselves are the vendor for this plugin and more information on it can be found link:$$http://confluence.jetbrains.net/display/SCA/Scala+Plugin+for+IntelliJ+IDEA$$[here] . 
+
+image::images/idea-12-scala.png[]
+
+You will then have to configure the Scala plugin to use the Scala compiler for Scala files and the Java compiler for Java files. You can do this by going into _Settings -> Compiler -> Scala Compiler_ . Be sure to add the Scala compiler bundle as shown in the screenshot below. 
+
+image::images/idea-12-scala2.png[]
+
+====== Code Style
+Download the code style JAR file from link:https://github.com/infinispan/infinispan/blob/master/ide-settings/intellij/IntelliJ_IDEA_Code_Style.jar?raw=true[here] and import this into IntelliJ IDEA.
+
+=== Builds
+Infinispan uses link:$$http://maven.apache.org/$$[Maven] for builds. Make sure you have Maven 3 installed, and properly configured.
+For more information, read <<_building_infinispan,the Maven chapter>>. 
+
+==== Continuous Integration
+Infinispan uses link:$$http://www.jetbrains.com/teamcity$$[TeamCity] for continuous integration.
+TeamCity polls GitHub for updates and runs whenever updates are available.
+You can check the status of the latest builds link:$$http://ci.infinispan.org/overview.html$$[here] . 
+
+=== Testing
+Infinispan uses link:http://testng.org/doc/index.html[TestNG] for unit and functional tests, and all Infinispan tests are run in parallel.
+For more information see the chapter on the test suite; this chapter gives advice on writing tests which can safely execute in parallel. 
+
+=== Communicating with other Infinispan contributors
+Infinispan contributors use a mix of technologies to communicate.  
+Visit link:http://infinispan.github.io/forums.html[this page] to learn more.
+
+=== Style Requirements
+Infinispan uses the link:$$http://en.wikipedia.org/wiki/Indent_style#K.26R_style$$[K&amp;R code style] for all Java source files, with two exceptions: 
+
+. use 3 spaces instead of a tab character for indentations.
+. braces start on the same line for class, interface and method declarations as well as code blocks.
+
+In addition, sure all link:$$http://en.wikipedia.org/wiki/Newline$$[new line characters] used must be LF (UNIX style line feeds). Most good IDEs allow you to set this, regardless of operating system used. 
+
+All patches or code committed must adhere to this style. Code style settings which can be imported into IntelliJ IDEA and Eclipse are committed in the project sources, in link:$$https://github.com/infinispan/infinispan/blob/master/ide-settings/$$[ide-settings] . 
+
+==== Spelling
+Ensure correct spelling in code, comments, Javadocs, etc. (use _American English_ spelling).
+It is recommended that you use a spellchecker plugin for your IDE. 
+
+==== Check-in comments
+
+Please ensure any commit comments use <<_comments, this format>> if related to a task or issue in JIRA.
+This helps JIRA pick out these checkins and display them on the issue, making it very useful for back/forward porting fixes.
+If your comment does not follow this format, your commit may not be merged into upstream. 
+
+=== Logging
+Infinispan follows the JBoss logging standards, which can be found link:$$https://community.jboss.org/wiki/LoggingStandards$$[here] . 
+
+From Infinispan 5.0 onwards, Infinispan uses JBoss Logging to abstract over the logging backend.
+Infinispan supports localization of log message for categories of INFO or above as explained in link:$$http://community.jboss.org/docs/16738$$[the JBoss Logging guidelines] .
+As a developer, this means that for each INFO, WARN, ERROR and FATAL message your code emits, you need to modify the Log class in your module and add an explicit method for it with the right annotations.
+
+For example: 
+
+[source,java]
+----
+
+@LogMessage(level = INFO)
+@Message(value = "An informative message: %s - %s", id = 600)
+void fiveTransactionsHaveCompleted(String param1, String param2);
+
+----
+
+
+And then, instead of calling `log.info(...)`, you call the method, for example `log.fiveTransactionsHaveCompleted(param1, param2)`.
+If what you're trying to log is an error or similar message and you want an exception to be logged as cause, simply use `@Cause` annotation: 
+
+
+[source,java]
+----
+
+@LogMessage(level = ERROR)
+@Message(value = "An error message: %s", id = 600)
+void anErrorMessage(String param1, @Cause IllegalStateException e);
+
+----
+
+
+The last thing to figure out is which id to give to the message. Each module that logs something in production code that could be internationalized has been given an id range, and so the messages should use an available id in the range for the module where the log call resides. Here are the id range assignments per module:
+
+[options="header"]
+|===============
+|Module name|Id range
+|core|1 - 1000
+|tree|2001 - 3000
+|bdbje cache store|2001 - 3000
+|cassandra cache store|3001 - 4000
+|hotrod client|4001 - 5000
+|server core|5001 - 6000
+|server hotrod|6001 - 7000
+|cloud cache store|7001 - 8000
+|jdbc cache store|8001 - 9000
+|jdbm cache store|9001 - 10000
+|remote cache store|10001 - 11000
+|server memcached|11001 - 12000
+|server rest|12001 - 13000
+|server websocket|13001 - 14000
+|query|14001 - 15000
+|lucene directory|15001 - 16000
+|rhq plugin|16001 - 17000
+|cdi integration|17001 - 18000
+| hbase cache store | 18001 - 19000 
+| cli interpreter | 19001 - 20000 
+| cli client | 20001 - 21000 
+|mongodb cache store|21001 - 22000
+|jpa cache store|22001 - 23000
+|leveldb cache store|23001 - 24000
+|couchbase cache store|24001 - 25000
+|===============
+
+NOTE: When editing the above table, remember to update the README-i18n.txt file in the project sources!
+
+NOTE: You will need to enable annotation processing in order to be able to compile Infinispan and have the logger implementation generated.
+

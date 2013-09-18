@@ -1,0 +1,1276 @@
+==  Integration with other frameworks
+Infinispan can be integrated with a number of other frameworks, as detailed below.
+
+===  Using Infinispan as JPA-Hibernate Second Level Cache Provider
+Following some of the principles set out by Brian Stansberry in link:$$http://community.jboss.org/docs/14247$$[Using JBoss Cache 3 as a Hibernate 3.5 Second Level Cache] and taking in account improvements introduced by Infinispan, an Infinispan JPA/Hibernate second level cache provider has been developed. This wiki explains how to configure JPA/Hibernate to use the Infinispan and for those keen on lower level details, the key design decisions made and differences with previous JBoss Cache based cache providers. 
+
+If you're unfamiliar with JPA/Hibernate Second Level Caching, I'd suggest you to read Chapter 2.1 in link:$$http://www.jboss.org/jbossclustering/docs/hibernate-jbosscache-guide-3.pdf$$[this guide] which explains the different types of data that can be cached. 
+
+.On Caching
+NOTE: Query result caching, or entity caching, _may or may not improve_ application performance. Be sure to benchmark your application with and without caching. 
+
+==== Configuration
+
+$$1.$$ First of all, to enable JPA/Hibernate second level cache with query result caching enabled, add either of the following:
+
+[source,xml]
+----
+<!-- If using JPA, add to your persistence.xml -->
+<property name="hibernate.cache.use_second_level_cache" value="true" />
+<property name="hibernate.cache.use_query_cache" value="true" />
+
+----
+
+[source,xml]
+----
+<!-- If using Hibernate, add to your hibernate.cfg.xml -->
+<property name="hibernate.cache.use_second_level_cache">true</property>
+<property name="hibernate.cache.use_query_cache">true</property>
+
+----
+
+$$2.$$ Now, configure the Infinispan cache region factory using one of the two options below:
+
+* If the Infinispan CacheManager instance happens to be bound to JNDI select JndiInfinispanRegionFactory as the cacheregion factory and add the cache manager's JNDI name:
+
+[source,xml]
+----
+<!-- If using JPA, add to your persistence.xml -->
+<property name="hibernate.cache.region.factory_class" value="org.hibernate.cache.infinispan.JndiInfinispanRegionFactory" />
+<property name="hibernate.cache.infinispan.cachemanager" value="java:CacheManager" />
+
+----
+
+[source,xml]
+----
+<!-- If using Hibernate, add to your hibernate.cfg.xml -->
+<property name="hibernate.cache.region.factory_class">org.hibernate.cache.infinispan.JndiInfinispanRegionFactory</property>
+<property name="hibernate.cache.infinispan.cachemanager">java:CacheManager/entity</property>
+
+----
+
+.JBoss Application Server
+NOTE: JBoss Application Server 6 and 7 deploy a shared Infinispan cache manager that can be used by all services, so when trying to configure applications with Infinispan second level cache, you should use the JNDI name for the cache manager responsible for the second level cache. By default, this is "java:CacheManager/entity". In any other application server, you can deploy your own cache manager and bind the CacheManager to JNDI, but in this cases it's generally preferred that the following method is used. 
+
+* If running JPA/Hibernate and Infinispan standalone or within third party Application Server, select the _InfinispanRegionFactory_ as the cache region factory: 
+
+[source,xml]
+----
+<!-- If using JPA, add to your persistence.xml -->
+<property name="hibernate.cache.region.factory_class" value="org.hibernate.cache.infinispan.InfinispanRegionFactory"/>
+
+----
+
+[source,xml]
+----
+<!-- If using Hibernate, add to your hibernate.cfg.xml -->
+<property name="hibernate.cache.region.factory_class">org.hibernate.cache.infinispan.InfinispanRegionFactory</property>
+
+----
+
+This is all the configuration you need to have JPA/Hibernate use Infinispan as cache provider with the default settings. You will still need to define which entities and queries need to be cached as defined in the Hibernate reference documentation, but that configuration aspect is not peculiar to Infinispan. This default configuration should suit the majority of use cases but sometimes, further configuration is required and to help with such situations, please check the following section where more advanced settings are discussed. 
+
+==== Default Configuration Explained
+The aim of this section is to explain the default settings for each of the different global data type (entity, collection, query and timestamps) caches, why these were chosen and what are the available alternatives.
+
+===== Defaults for Entity/Collection Caching
+
+*  For all entities and collections, whenever an new _entity or collection is read from database_ and needs to be cached, _it's only cached locally_ in order to reduce intra-cluster traffic. This option cannot be changed. 
+
+*  All _entities and collections are configured to use a synchronous invalidation_ as clustering mode. This means that when an entity is updated, the updated cache will send a message to the other members of the cluster telling them that the entity has been modified. Upon receipt of this message, the other nodes will remove this data from their local cache, if it was stored there. This option can be changed to use replication by configuring entities or collections to use "replicated-entity" cache but it's generally not a recommended choice. 
+
+*  All _entities and collections have initial state transfer disabled_ since there's no need for it. It's not recommended that this is enabled. 
+
+*  _$$entities and collections are configured to use READ_COMMITTED$$_ as cache isolation level. It would only make sure to configure REPEATABLE_READ if the application evicts/clears entities from the Hibernate Session and then expects to repeatably re-read them in the same transaction. Otherwise, the Session's internal cache provides repeatable-read semantics. If you really need to use REPEATABLE_READ, you can simply configure entities or collections to use "entity-repeatable" cache. 
+
+* Entities and collections are configured with the following eviction settings. You can change these settings on a per entity or collection basis or per individual entity or collection type. More information in the "Advanced Configuration" section below.
+ - Eviction wake up interval is 5 seconds. 
+ - Max number of entries are 10,000 
+ - Max idle time before expiration is 100 seconds
+
+*  _entites and collections are configured with lazy deserialization_ which helps deserialization when entities or collections are stored in isolated deployments. If you're sure you'll never deploy your entities or collections in classloader isolated deployment archives, you can disable this setting. 
+
+===== Defaults for Query Caching
+*  The query cache is configured so that _queries are only cached locally_ . Alternatively, you can configure query caching to use replication by selecting the "replicated-query" as query cache name. However, replication for query cache only makes sense if, and only if, all of this conditions are true: 
+ - Performing the query is quite expensive.
+ - The same query is very likely to be repeatedly executed on different cluster nodes.
+ - The query is unlikely to be invalidated out of the cache (Note: Hibernate must aggressively invalidate query results from the cache any time any instance of one of the entity types targeted by the query. All such query results are invalidated, even if the change made to the specific entity instance would not have affected the query result)
+
+*  _query cache_ uses the _same cache isolation levels and eviction/expiration settings as for entities/collections_ . 
+
+*  _query cache has initial state transfer disabled_ . It is not recommended that this is enabled. 
+
+===== Defaults for Timestamps Cache
+*  The _timestamps cache is configured with asynchronous replication_ as clustering mode. Local or invalidated cluster modes are not allowed, since all cluster nodes must store all timestamps. As a result, _no eviction/expiration is allowed for timestamp caches either_ . 
+
+* The _timestamps cache is configured with a cluster cache loader (in Hibernate 3.6.0 or earlier it had state transfer enabled)_ so that joining nodes can retrieve all timestamps. You shouldn't attempt to disable the cluster cache loader for the timestamps cache. 
+
+==== JTA Transactions Configuration
+It is highly recommended that Hibernate is configured with JTA transactions so that both Hibernate and Infinispan cooperate within the same transaction and the interaction works as expected.
+
+Otherwise, if Hibernate is configured for example with JDBC transactions, Hibernate will create a Transaction instance via java.sql.Connection and Infinispan will create a transaction via whatever TransactionManager returned by hibernate.transaction.manager_lookup_class. If hibernate.transaction.manager_lookup_class has not been populated, it will default on the dummy transaction manager. So, any work on the 2nd level cache will be done under a different transaction to the one used to commit the stuff to the database via Hibernate. In other words, your operations on the database and the 2LC are not treated as a single unit. Risks here include failures to update the 2LC leaving it with stale data while the database committed data correctly. It has also been observed that under some circumstances where JTA was not used, commit/rollbacks are not propagated to Infinispan.
+
+To sum up, if you configure Hibernate with Infinispan, apply the following changes to your configuration file:
+
+$$1.$$ Unless your application uses JPA, you need to select the correct Hibernate transaction factory via the property _$$hibernate.transaction.factory_class$$_ : 
+
+* If you're running within an application server, it's recommended that you use:
+
+[source,xml]
+----
+<!-- If using JPA, add to your persistence.xml -->
+<property name="hibernate.transaction.factory_class" value="org.hibernate.transaction.CMTTransactionFactory"/>
+
+----
+
+[source,xml]
+----
+<!-- If using Hibernate, add to your hibernate.cfg.xml -->
+<property name="hibernate.transaction.factory_class">org.hibernate.transaction.CMTTransactionFactory</property>
+
+----
+
+* If you're running in a standalone environment and you wanna enable JTA transaction factory, use:
+
+[source,xml]
+----
+<!-- If using JPA, add to your persistence.xml -->
+<property name="hibernate.transaction.factory_class" value="org.hibernate.transaction.JTATransactionFactory"/>
+
+----
+
+[source,xml]
+----
+<!-- If using Hibernate, add to your hibernate.cfg.xml -->
+<property name="hibernate.transaction.factory_class">org.hibernate.transaction.JTATransactionFactory</property>
+
+----
+
+The reason why JPA does not require a transaction factory class to be set up is because the entity manager already sets it to a variant of CMTTransactionFactory.
+
+$$2.$$ Select the correct Hibernate transaction manager lookup:
+
+*  If you're running within an application server, select the appropriate lookup class according to link:$$http://docs.jboss.org/hibernate/core/3.3/reference/en/html/session-configuration.html#configuration-optional-transactionstrategy$$["JTA Transaction Managers" table] . 
+
+For example if you were running with the JBoss Application Server you would set:
+
+[source,xml]
+----
+ <!-- If using JPA, add to your persistence.xml -->
+<property name="hibernate.transaction.manager_lookup_class" 
+   value="org.hibernate.transaction.JBossTransactionManagerLookup"/>
+----
+
+[source,xml]
+----
+<!-- If using Hibernate, add to your hibernate.cfg.xml -->
+<property name="hibernate.transaction.manager_lookup_class">
+   org.hibernate.transaction.JBossTransactionManagerLookup
+</property>
+----
+
+*  If you are running standalone and you want to add a JTA transaction manager lookup, things get a bit more complicated. Due to a current limitation, Hibernate does not support injecting a JTA TransactionManager or JTA UserTransaction that are not bound to JNDI. In other words, if you want to use JTA, Hibernate expects your TransactionManager to be bound to JNDI and it also expects that UserTransaction instances are retrieved from JNDI. This means that in an standalone environment, you need to add some code that binds your TransactionManager and UserTransaction to JNDI. With this in mind and with the help of one of our community contributors, we've created an example that does just that: link:$$http://anonsvn.jboss.org/repos/hibernate/core/trunk/cache-infinispan/src/test/java/org/hibernate/test/cache/infinispan/tm/JBossStandaloneJtaExampleTest.java$$[JBoss Standalone JTA Example] . Once you have the code in place, it's just a matter of selecting the correct Hibernate transaction manager lookup class, based on the JNDI names given. If you take _JBossStandaloneJtaExample_ as an example, you simply have to add: 
+
+[source,xml]
+----
+ <!-- If using JPA, add to your persistence.xml -->
+<property name="hibernate.transaction.manager_lookup_class" 
+   value="org.hibernate.transaction.JBossTransactionManagerLookup"/>
+----
+
+[source,xml]
+----
+<!-- If using Hibernate, add to your hibernate.cfg.xml -->
+<property name="hibernate.transaction.manager_lookup_class">
+   org.hibernate.transaction.JBossTransactionManagerLookup
+</property>
+----
+
+As you probably have noted through this section, there wasn't a single mention of the need to configure link:$$http://docs.jboss.org/infinispan/4.0/apidocs/config.html#ce_default_transaction$$[Infinispan's transaction manager lookup] and there's a good reason for that. Basically, the code within Infinispan cache provider takes the transaction manager that has been configured at the Hibernate level and uses that. Otherwise, if no Hibernate transaction manager lookup class has been defined, Infinispan uses a default dummy transaction manager. 
+
+Since Hibernate 4.0, the way Infinispan hooks into the transaction manager can be configured. By default, since 4.0, Infinispan interacts with the transaction manager as an JTA synchronization, resulting <<_transactions, in a faster interaction with the 2LC thanks to some key optimisations that the transaction manager can apply>>. However if desired, users can configure Infinispan to act as an XA resource (just like it did in 3.6 and earlier) by disabling the use of the synchronization. For example: 
+
+[source,xml]
+----
+<!-- If using JPA, add to your persistence.xml: -->
+<property name="hibernate.cache.infinispan.use_synchronization"  value="false"/>
+----
+
+[source,xml]
+----
+<!-- If using Hibernate, add to your hibernate.cfg.xml: -->
+<property name="hibernate.cache.infinispan.use_synchronization">
+   false
+</property>
+----
+
+==== Advanced Configuration
+Infinispan has the capability of exposing statistics via JMX and since Hibernate 3.5.0.Beta4, you can enable such statistics from the Hibernate/JPA configuration file. By default, Infinispan statistics are turned off but when these are disabled via the following method, statistics for the Infinispan Cache Manager and all the managed caches (entity, collection, etc) are enabled:
+
+[source,xml]
+----
+<!-- If using JPA, add to your persistence.xml -->
+<property name="hibernate.cache.infinispan.statistics" value="true"/>
+----
+
+[source,xml]
+----
+<!-- If using Hibernate, add to your hibernate.cfg.xml: -->
+<property name="hibernate.cache.infinispan.statistics">true</property>
+----
+
+The Infinispan cache provider jar file contains an Infinispan configuration file, which is the one used by default when configuring the Infinispan standalone cache region factory. This file contains default cache configurations for all Hibernate data types that should suit the majority of use cases. However, if you want to use a different configuration file, you can configure it via the following property:
+
+[source,xml]
+----
+<!-- If using JPA, add to your persistence.xml -->
+<property name="hibernate.cache.infinispan.cfg" 
+   value="/home/infinispan/cacheprovider-configs.xml"/>
+----
+
+[source,xml]
+----
+<!-- If using Hibernate, add to your hibernate.cfg.xml: -->
+<property name="hibernate.cache.infinispan.cfg">
+   /home/infinispan/cacheprovider-configs.xml
+</property>
+----
+
+For each Hibernate cache data types, Infinispan cache region factory has defined a default cache name to look up in either the default, or the user defined, Infinispan cache configuration file. These default values can be found in the link:$$http://docs.jboss.org/hibernate/core/4.0/javadocs/constant-values.html#org.hibernate.cache.infinispan.InfinispanRegionFactory.INFINISPAN_CONFIG_RESOURCE_PROP$$[Infinispan cache provider javadoc] . You can change these cache names using the following properties: 
+
+[source,xml]
+----
+<!-- If using JPA, add to your persistence.xml: -->
+<property name="hibernate.cache.infinispan.entity.cfg" 
+   value="custom-entity"/>
+<property name="hibernate.cache.infinispan.collection.cfg" 
+   value="custom-collection"/>
+<property name="hibernate.cache.infinispan.query.cfg" 
+   value="custom-collection"/>
+<property name="hibernate.cache.infinispan.timestamp.cfg" 
+   value="custom-timestamp"/>
+----
+
+[source,xml]
+----
+<!-- If using Hibernate, add to your hibernate.cfg.xml -->
+<property name="hibernate.cache.infinispan.entity.cfg">
+   custom-entity
+</property>
+<property name="hibernate.cache.infinispan.collection.cfg">
+   custom-collection
+</property>
+<property name="hibernate.cache.infinispan.query.cfg">
+   custom-collection
+</property>
+<property name="hibernate.cache.infinispan.timestamp.cfg">
+   custom-timestamp
+</property>
+----
+
+One of the key improvements brought in by Infinispan is the fact that cache instances are more lightweight than they used to be in JBoss Cache. This has enabled a radical change in the way entity/collection type cache management works. With the Infinispan cache provider, each entity/collection type gets each own cache instance, whereas in old JBoss Cache based cache providers, all entity/collection types would be sharing the same cache instance. As a result of this, locking issues related to updating different entity/collection types concurrently are avoided completely.
+
+This also has an important bearing on the meaning of hibernate.cache.infinispan.entity.cfg and hibernate.cache.infinispan.collection.cfg properties. These properties define the template cache name that should be used for all entity/collection data types. So, with the above hibernate.cache.infinispan.entity.cfg configuration, when a region needs to be created for entity com.acme.Person, the cache instance to be assigned to this entity will be based on a "custom-entity" named cache.
+
+On top of that, this finer grained cache definition enables users to define cache settings on a per entity/collection basis. For example:
+
+[source,xml]
+----
+<!-- If using JPA, add to your persistence.xml -->
+<property name="hibernate.cache.infinispan.com.acme.Person.cfg" 
+   value="person-entity"/>
+<property name="hibernate.cache.infinispan.com.acme.Person.addresses.cfg" 
+   value="addresses-collection"/>
+----
+
+[source,xml]
+----
+<!-- If using Hibernate, add to your hibernate.cfg.xml -->
+<property name="hibernate.cache.infinispan.com.acme.Person.cfg">
+   person-entity
+</property>
+<property name="hibernate.cache.infinispan.com.acme.Person.addresses.cfg">
+   addresses-collection
+</property>
+----
+
+Here, we're configuring the Infinispan cache provider so that for com.acme.Person entity type, the cache instance assigned will be based on a "person-entity" named cache, and for com.acme.Person.addresses collection type, the cache instance assigned will be based on a "addresses-collection" named cache. If either of these two named caches did not exist in the Infinispan cache configuration file, the cache provider would create a cache instance for com.acme.Person entity and com.acme.Person.addresses collection based on the default cache in the configuration file.
+
+Furthermore, thanks to the excellent feedback from the Infinispan community and in particular, Brian Stansberry, we've decided to allow users to define the most commonly tweaked Infinispan cache parameters via hibernate.cfg.xml or persistence.xml, for example eviction/expiration settings. So, with the Infinispan cache provider, you can configure eviction/expiration this way:
+
+[source,xml]
+----
+<!-- If using JPA, add to your persistence.xml -->
+<property name="hibernate.cache.infinispan.entity.eviction.strategy" 
+   value= "LRU"/>
+<property name="hibernate.cache.infinispan.entity.eviction.wake_up_interval" 
+   value= "2000"/>
+<property name="hibernate.cache.infinispan.entity.eviction.max_entries" 
+   value= "5000"/>
+<property name="hibernate.cache.infinispan.entity.expiration.lifespan" 
+   value= "60000"/>
+<property name="hibernate.cache.infinispan.entity.expiration.max_idle" 
+   value= "30000"/>
+----
+
+[source,xml]
+----
+<!-- If using Hibernate, add to your hibernate.cfg.xml -->
+<property name="hibernate.cache.infinispan.entity.eviction.strategy">
+   LRU
+</property>
+<property name="hibernate.cache.infinispan.entity.eviction.wake_up_interval">
+   2000
+</property>
+<property name="hibernate.cache.infinispan.entity.eviction.max_entries">
+   5000
+</property>
+<property name="hibernate.cache.infinispan.entity.expiration.lifespan">
+   60000
+</property>
+<property name="hibernate.cache.infinispan.entity.expiration.max_idle">
+   30000
+</property>
+----
+
+With the above configuration, you're overriding whatever eviction/expiration settings were defined for the default entity cache name in the Infinispan cache configuration used, regardless of whether it's the default one or user defined. More specifically, we're defining the following:
+
+
+* All entities to use LRU eviction strategy
+
+
+* The eviction thread to wake up every 2000 milliseconds
+
+
+* The maximum number of entities for each entity type to be 5000 entries
+
+
+* The lifespan of each entity instance to be 600000 milliseconds
+
+
+* The maximum idle time for each entity instance to be 30000
+
+You can also override eviction/expiration settings on a per entity/collection type basis in such way that the overriden settings only afftect that particular entity (i.e. com.acme.Person) or collection type (i.e. com.acme.Person.addresses). For example:
+
+[source,xml]
+----
+<!-- If using JPA, add to your persistence.xml -->
+<property name="hibernate.cache.infinispan.com.acme.Person.eviction.strategy" 
+   value= "FIFO"/>
+<property name="hibernate.cache.infinispan.com.acme.Person.eviction.wake_up_interval" 
+   value= "2500"/>
+<property name="hibernate.cache.infinispan.com.acme.Person.eviction.max_entries" 
+   value= "5500"/>
+<property name="hibernate.cache.infinispan.com.acme.Person.expiration.lifespan" 
+   value= "65000"/>
+<property name="hibernate.cache.infinispan.com.acme.Person.expiration.max_idle" 
+   value= "35000"/>
+----
+
+[source,xml]
+----
+<!-- If using Hibernate, add to your hibernate.cfg.xml -->
+<property name="hibernate.cache.infinispan.com.acme.Person.eviction.strategy">
+   FIFO
+</property>
+<property name="hibernate.cache.infinispan.com.acme.Person.eviction.wake_up_interval">
+   2500
+</property>
+<property name="hibernate.cache.infinispan.com.acme.Person.eviction.max_entries">
+   5500
+</property>
+<property name="hibernate.cache.infinispan.com.acme.Person.expiration.lifespan">
+   65000
+</property>
+<property name="hibernate.cache.infinispan.com.acme.Person.expiration.max_idle">
+   35000
+</property>
+----
+
+The aim of these configuration capabilities is to reduce the number of files needed to modify in order to define the most commonly tweaked parameters. So, by enabling eviction/expiration configuration on a per generic Hibernate data type or particular entity/collection type via hibernate.cfg.xml or persistence.xml, users don't have to touch to Infinispan's cache configuration file any more. We believe users will like this approach and so, if you there are any other Infinispan parameters that you often tweak and these cannot be configured via hibernate.cfg.xml or persistence.xml, please let the Infinispan team know by sending an email to infinispan-dev@lists.jboss.org . 
+
+Please note that query/timestamp caches work the same way they did with JBoss Cache based cache providers. In other words, there's a query cache instance and timestamp cache instance shared by all. It's worth noting that eviction/expiration settings are allowed for query cache but not for timestamp cache. So configuring an eviction strategy other than NONE for timestamp cache would result in a failure to start up.
+
+Finally, from Hibernate 3.5.4 and 3.6 onwards, queries with specific cache region names are stored under matching cache instances. This means that you can now set query cache region specific settings. For example, assuming you had a query like this:
+
+[source,java]
+----
+Query query = session.createQuery(
+  "select account.branch from Account as account where account.holder = ?");
+query.setCacheable(true);
+query.setCacheRegion("AccountRegion");
+
+----
+
+The query would be stored under "AccountRegion" cache instance and users could control settings in similar fashion to what was done with entities and collections. So, for example, you could define specific eviction settings for this particular query region doing something like this:
+
+[source,xml]
+----
+<!-- If using JPA, add to your persistence.xml -->
+<property name="hibernate.cache.infinispan.AccountRegion.eviction.strategy" 
+   value= "FIFO"/>
+<property name="hibernate.cache.infinispan.AccountRegion.eviction.wake_up_interval" 
+   value= "10000"/>
+----
+
+[source,xml]
+----
+<!-- If using Hibernate, add to your hibernate.cfg.xml -->
+<property name="hibernate.cache.infinispan.AccountRegion.eviction.strategy">
+   FIFO
+</property>
+<property name="hibernate.cache.infinispan.AccountRegion.eviction.wake_up_interval">
+   10000
+</property>
+----
+
+==== Integration with JBoss Application Server
+In JBoss Application Server 7, Infinispan is the default second level cache provider and you can find details about its configuration link:$$https://docs.jboss.org/author/pages/viewpage.action?pageId=8094254$$[the AS7 JPA reference guide] . 
+
+Infinispan based Hibernate 2LC was developed as part of Hibernate 3.5 release and so it currently only works within AS 6 or higher. Hibernate 3.5 is not designed to work with AS/EAP 5.x or lower. To be able to run Infinispan based Hibernate 2LC in a lower AS version such as 5.1, the Infinispan 2LC module would require porting to Hibernate 3.3.
+
+TIP: Looking to integrate Infinispan with Hibernate in JBoss AS/EAP 5.x?  <<_infinispan_as_hibernate_2nd_level_cache_in_jboss_as_5_x, Read this section>>!
+
+==== Using Infinispan as remote Second Level Cache?
+Lately, several questions ( link:$$http://community.jboss.org/message/575814#575814$$[here] and link:$$http://community.jboss.org/message/585841#585841$$[here] ) have appeared in the Infinispan user forums asking whether it'd be possible to have an Infinispan second level cache that instead of living in the same JVM as the Hibernate code, it resides in a remote server, i.e. an Infinispan Hot Rod server. It's important to understand that trying to set up second level cache in this way is generally not a good idea for the following reasons: 
+
+
+* The purpose of a JPA/Hibernate second level cache is to store entities/collections recently retrieved from database or to maintain results of recent queries. So, part of the aim of the second level cache is to have data accessible locally rather than having to go to the database to retrieve it everytime this is needed. Hence, if you decide to set the second level cache to be remote as well, you're losing one of the key advantages of the second level cache: the fact that the cache is local to the code that requires it.
+
+
+* Setting a remote second level cache can have a negative impact in the overall performance of your application because it means that cache misses require accessing a remote location to verify whether a particular entity/collection/query is cached. With a local second level cache however, these misses are resolved locally and so they are much faster to execute than with a remote second level cache.
+
+There are however some edge cases where it might make sense to have a remote second level cache, for example:
+
+
+* You are having memory issues in the JVM where JPA/Hibernate code and the second level cache is running. Off loading the second level cache to remote Hot Rod servers could be an interesting way to separate systems and allow you find the culprit of the memory issues more easily.
+
+
+* Your application layer cannot be clustered but you still want to run multiple application layer nodes. In this case, you can't have multiple local second level cache instances running because they won't be able to invalidate each other for example when data in the second level cache is updated. In this case, having a remote second level cache could be a way out to make sure your second level cache is always in a consistent state, will all nodes in the application layer pointing to it.
+
+
+* Rather than having the second level cache in a remote server, you want to simply keep the cache in a separate VM still within the same machine. In this case you would still have the additional overhead of talking across to another JVM, but it wouldn't have the latency of across a network. The benefit of doing this is that:
+
+
+* Size the cache separate from the application, since the cache and the application server have very different memory profiles. One has lots of short lived objects, and the other could have lots of long lived objects.
+
+
+*  To pin the cache and the application server onto different CPU cores (using _numactl_ ), and even pin them to different physically memory based on the NUMA nodes. 
+
+===  Implementing standalone JPA JTA Hibernate application outside J2EE server using Infinispan 2nd level cache
+
+IMPORTANT: From Hibernate 4.0.1 onwards, Infinispan now interacts as a synchronization rather than as an XA resource with the transaction manager when used as second-level cache, so there's no longer need to apply any of the changes suggested below!
+
+Infinispans predecessor link:$$http://www.jboss.org/file-access/default/members/jbossclustering/freezone/docs/hibernate-caching/3.3/en-US/html/introduction-requirements.html$$[JBoss Cache] requires integration with JTA when used as 2L-cache for a Hibernate application.  At the moment of writing this article (Hibernate 3.5.0.Beta3) also Infinispan requires integration with JTA.  Hibernate integrated with JTA is already largely used in EJB applications servers, but most users using Hibernate with Java SE outside any EJB container, still use the plain JDBC approach instead to use JTA. 
+
+According Hibernate documentation it should also possible to integrate JTA in a standalone application outside any EJB container, but I did hardly find any documentation how to do that in detail. (probably the reason is, that probably 95% of people is using hibernate within a EJB app. server or using SPRING).  This article should give you some example how to realize a standalone Hibernate app. outside of a EJB container with JTA integration (and using Infinispan 2nd level cache).
+
+As first thing you have to choose which implementation of TransactionManager to take.  This article comes with examples for following OpenSource TransactionManagers:
+
+
+. JBoss
+
+
+. JOTM
+
+
+. Bitronix
+
+
+. Atomikos
+
+.Datasource/Transaction interaction
+NOTE: A very important aspect is not forgetting to couple the datasource with your transaction manager. In other words, the corresponding XAResource must be onto the transaction manager, otherwise only DML-statements but no commits/rollbacks are propagated to your database.
+
+
+==== JBoss Transactions
+The example with JBoss Transactions Transaction Manager was the most complex to implement, as JBoss's TransactionManager and UserTransaction objects are not declared serializable whilst it's JNDI-server isn't able to bind non serializable objects out of the box. Special use of NonSerializableFactory is needed, requiring some additional custom code:
+
+[source,java]
+----
+import hello.A;  // a persistent class
+import java.io.Serializable;
+import java.sql.Connection;
+import java.sql.SQLException;
+import java.util.Properties;
+
+import javax.naming.Context;
+import javax.naming.InitialContext;
+import javax.naming.Name;
+import javax.naming.NameNotFoundException;
+import javax.naming.Reference;
+import javax.naming.StringRefAddr;
+import javax.persistence.EntityManager;
+import javax.persistence.Persistence;
+import javax.transaction.TransactionManager;
+import javax.transaction.UserTransaction;
+
+import org.enhydra.jdbc.standard.StandardXADataSource;
+import org.hibernate.Session;
+import org.hibernate.SessionFactory;
+import org.hibernate.ejb.HibernateEntityManagerFactory;
+import org.hibernate.transaction.JBossTransactionManagerLookup;
+import org.infinispan.transaction.lookup.JBossStandaloneJTAManagerLookup;
+import org.jboss.util.naming.NonSerializableFactory;
+import org.jnp.interfaces.NamingContext;
+import org.jnp.server.Main;
+import org.jnp.server.NamingServer;
+
+public class JTAStandaloneExampleJBossTM  {
+    
+    static JBossStandaloneJTAManagerLookup _ml =  new JBossStandaloneJTAManagerLookup();
+    
+
+    public static void main(String[] args) {
+        try {
+            // Create an in-memory jndi
+            NamingServer namingServer = new NamingServer();
+            NamingContext.setLocal(namingServer);
+            Main namingMain = new Main();
+            namingMain.setInstallGlobalService(true);
+            namingMain.setPort(-1);
+            namingMain.start();
+            
+            Properties props = new Properties();
+            props.put(Context.INITIAL_CONTEXT_FACTORY, "org.jnp.interfaces.NamingContextFactory");
+            props.put("java.naming.factory.url.pkgs", "org.jboss.naming:org.jnp.interfaces");
+           
+            InitialContext ictx = new InitialContext( props );
+  
+            
+            // as JBossTransactionManagerLookup extends JNDITransactionManagerLookup we must also register the TransactionManager
+            bind("java:/TransactionManager", _ml.getTransactionManager(), _ml.getTransactionManager().getClass(), ictx);
+            
+            // also the UserTransaction must be registered on jndi: org.hibernate.transaction.JTATransactionFactory#getUserTransaction() requires this
+            bind(new JBossTransactionManagerLookup().getUserTransactionName(),_ml.getUserTransaction(),_ml.getUserTransaction().getClass(), ictx);
+            
+            ExtendedXADataSource xads = new ExtendedXADataSource();  
+            xads.setDriverName("org.hsqldb.jdbcDriver");
+            xads.setDriverName("com.p6spy.engine.spy.P6SpyDriver"); // comment this line if you don't want p6spy-logging
+            xads.setUrl("jdbc:hsqldb:hsql://localhost");    
+            //xads.setTransactionManager(_ml.getTransactionManager()); useless here as this information is not serialized
+                                                                   
+            ictx.bind("java:/MyDatasource", xads);          
+
+            final HibernateEntityManagerFactory emf =  (HibernateEntityManagerFactory) Persistence.createEntityManagerFactory("helloworld");          
+       
+            UserTransaction userTransaction = _ml.getUserTransaction();
+            userTransaction.setTransactionTimeout(300000);
+            //SessionFactory sf = (SessionFactory) ictx.lookup("java:/hibernate/MySessionFactory"); // if hibernate.session_factory_name set
+            final SessionFactory sf = emf.getSessionFactory(); 
+
+            userTransaction.begin();
+            EntityManager em = emf.createEntityManager();
+            
+            // do here your persistent work
+            A a = new A();
+            a.name= "firstvalue";
+            em.persist(a);
+            em.flush();     // do manually flush here as apparently FLUSH_BEFORE_COMPLETION seems not work, bug ?
+
+            System.out.println("\nCreated and flushed instance a with id : " + a.oid + "  a.name set to:" + a.name);
+
+            System.out.println("Calling userTransaction.commit() (Please check if the commit is effectively executed!)");
+            userTransaction.commit();
+           
+            
+            ictx.close();
+            namingMain.stop();
+            emf.close();
+                
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        System.exit(0);
+    }
+    
+   public static class ExtendedXADataSource extends StandardXADataSource { // XAPOOL
+        
+        @Override
+        public Connection getConnection() throws SQLException {
+            
+            if (getTransactionManager() == null) { // although already set before, it results null again after retrieving the datasource by jndi  
+                TransactionManager tm;  // this is because the TransactionManager information is not serialized.
+                try {
+                    tm = _ml.getTransactionManager();
+                } catch (Exception e) {
+                    throw new SQLException(e);
+                }
+                setTransactionManager(tm);  //  resets the TransactionManager on the datasource retrieved by jndi, 
+                                            //  this makes the datasource JTA-aware
+            }
+            
+            // According to Enhydra documentation, here we must return the connection of our XAConnection
+            // see http://cvs.forge.objectweb.org/cgi-bin/viewcvs.cgi/xapool/xapool/examples/xapooldatasource/DatabaseHelper.java?sortby=rev
+            return super.getXAConnection().getConnection();
+        }
+    }
+    
+    /**
+     * Helper method that binds the a non serializable object to the JNDI tree.
+     * 
+     * @param jndiName Name under which the object must be bound
+     * @param who Object to bind in JNDI
+     * @param classType Class type under which should appear the bound object
+     * @param ctx Naming context under which we bind the object
+     * @throws Exception Thrown if a naming exception occurs during binding
+     */
+    private static void bind(String jndiName, Object who, Class classType, Context ctx) throws Exception {
+       // Ah ! This service isn't serializable, so we use a helper class
+       NonSerializableFactory.bind(jndiName, who);
+       Name n = ctx.getNameParser("").parse(jndiName);
+       while (n.size() > 1) {
+          String ctxName = n.get(0);
+          try {
+             ctx = (Context) ctx.lookup(ctxName);
+          } catch (NameNotFoundException e) {
+             System.out.println("Creating subcontext:" + ctxName);
+             ctx = ctx.createSubcontext(ctxName);
+          }
+          n = n.getSuffix(1);
+       }
+
+       // The helper class NonSerializableFactory uses address type nns, we go on to
+       // use the helper class to bind the service object in JNDI
+       StringRefAddr addr = new StringRefAddr("nns", jndiName);
+       Reference ref = new Reference(classType.getName(), addr, NonSerializableFactory.class.getName(), null);
+       ctx.rebind(n.get(0), ref);
+    }
+    
+    private static void unbind(String jndiName, Context ctx) throws Exception {
+       NonSerializableFactory.unbind(jndiName);
+       ctx.unbind(jndiName);
+    }
+
+}
+ 
+----
+
+The content of the corresponding complete persistence.xml:
+
+[source,xml]
+----
+<persistence xmlns="http://java.sun.com/xml/ns/persistence" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"   xsi:schemaLocation="http://java.sun.com/xml/ns/persistence http://java.sun.com/xml/ns/persistence/persistence_1_0.xsd"  version="1.0">
+   <persistence-unit name="helloworld" transaction-type="JTA">
+      <jta-data-source>java:/MyDatasource</jta-data-source>
+      <properties>
+       <property name="hibernate.hbm2ddl.auto" value = "create"/> 
+       <property name="hibernate.archive.autodetection" value="class, hbm"/>
+           <property name="hibernate.dialect" value="org.hibernate.dialect.HSQLDialect"/>
+
+           <property name="hibernate.jndi.class" value="org.jnp.interfaces.NamingContextFactory"/> 
+           <property name="hibernate.transaction.manager_lookup_class" value="org.hibernate.transaction.JBossTransactionManagerLookup"/> 
+
+        <property name="current_session_context_class" value="jta"/>
+           <!-- <property name="hibernate.session_factory_name" value="java:/hibernate/MySessionFactory"/> optional --> 
+           <property name="hibernate.transaction.factory_class" value="org.hibernate.transaction.JTATransactionFactory"/>
+           <property name="hibernate.connection.release_mode" value="auto"/> 
+           <!-- setting above is important using XA-DataSource on SQLServer, 
+                otherwise SQLServerException: The function START: has failed. No transaction cookie was returned.-->
+
+         <property name="hibernate.cache.use_second_level_cache" value="true"/>
+            <property name="hibernate.cache.use_query_cache" value="true"/>
+     
+         <property name="hibernate.cache.region.factory_class"   value="org.hibernate.cache.infinispan.InfinispanRegionFactory"/>
+         
+      </properties>
+   </persistence-unit>
+</persistence>
+
+----
+
+==== JOTM
+
+The example with JOTM is more simple, but apparently it's JNDI implementation is not useable without wasting any rmi port. So it is not completely 'standalone' as the JNDI service is exposed outside your virtual machine.
+
+[source,java]
+----
+ 
+import hello.A; // a persistent class
+
+import java.sql.Connection;
+import java.sql.SQLException;
+import java.util.Properties;
+
+import javax.naming.Context;
+import javax.naming.InitialContext;
+import javax.persistence.EntityManager;
+import javax.persistence.EntityManagerFactory;
+import javax.persistence.Persistence;
+import javax.transaction.TransactionManager;
+import javax.transaction.UserTransaction;
+
+import org.enhydra.jdbc.standard.StandardXADataSource;
+import org.hibernate.transaction.JOTMTransactionManagerLookup;
+import org.objectweb.jotm.Jotm;
+import org.objectweb.transaction.jta.TMService;
+
+
+public class JTAExampleJOTM {
+    
+ static JOTMTransactionManagerLookup _ml =  new JOTMTransactionManagerLookup();
+ 
+ public static class ExtendedXADataSource extends StandardXADataSource { // XAPOOL   
+        @Override
+        public Connection getConnection() throws SQLException {
+            if (getTransactionManager() == null) { // although already set before, it results null again after retrieving the datasource by jndi  
+                TransactionManager tm;  // this is because the TransactionManager information is not serialized.
+                try {
+                    tm = _ml.getTransactionManager(null);
+                } catch (Exception e) {
+                    throw new SQLException(e);
+                }
+                setTransactionManager(tm);  //  resets the TransactionManager on the datasource retrieved by jndi, 
+                                            //  this makes the datasource JTA-aware
+            }
+            
+            // According to Enhydra documantation, here we must return the connection of our XAConnection
+            // see http://cvs.forge.objectweb.org/cgi-bin/viewcvs.cgi/xapool/xapool/examples/xapooldatasource/DatabaseHelper.java?sortby=rev
+            return super.getXAConnection().getConnection();
+        }
+    }
+
+    
+    public static void main( String[] args )
+    {
+        try
+        {
+            java.rmi.registry.LocateRegistry.createRegistry(1099); // also possible to lauch by command line rmiregistry
+            System.out.println("RMI registry ready.");
+
+            
+           // following properties can be left out if specifying thes values in a file jndi.properties located into classpath
+            Properties props = new Properties();
+            props.put(Context.INITIAL_CONTEXT_FACTORY, "org.ow2.carol.jndi.spi.MultiOrbInitialContextFactory");
+           InitialContext jndiCtx = new InitialContext(props);
+           
+       
+        // XAPOOL
+           ExtendedXADataSource xads = new ExtendedXADataSource();  
+           xads.setDriverName("org.hsqldb.jdbcDriver");
+           xads.setDriverName("com.p6spy.engine.spy.P6SpyDriver");
+           xads.setUrl("jdbc:hsqldb:hsql://localhost");
+          
+           jndiCtx.bind("java:/MyDatasource", xads);
+         
+ 
+           
+           /* startup JOTM */
+           TMService jotm = new Jotm(true, false);
+           jotm.getUserTransaction().setTransactionTimeout(36000); // secs, important JOTM default is only 60 secs ! 
+           
+           
+           /* and get a UserTransaction */
+           UserTransaction userTransaction = jotm.getUserTransaction();
+           
+
+           jndiCtx.bind("java:comp/UserTransaction", jotm.getUserTransaction()); // this is needed by hibernates JTATransactionFactory
+
+           /* get the Hibernate SessionFactory */
+           EntityManagerFactory emf =    Persistence.createEntityManagerFactory("helloworld");
+           //SessionFactory sf = (SessionFactory) jndiCtx.lookup("java:/hibernate/MySessionFactory");
+           
+           // begin a new Transaction
+           userTransaction.begin();
+           EntityManager em = emf.createEntityManager();
+          
+           A a = new A();
+           a.name= "firstvalue";
+           em.persist(a);
+           em.flush();     // do manually flush here as apparently FLUSH_BEFORE_COMPLETION seems not work, bug ?
+
+           System.out.println("Calling userTransaction.commit() (Please check if the commit is effectively executed!)");
+           userTransaction.commit();
+           
+           
+           // stop the transaction manager
+           jotm.stop();
+           jndiCtx.close();
+           emf.close();
+           
+          
+        }
+        catch( Exception e )
+        {
+           e.printStackTrace();
+        }
+        System.exit(0);
+     }
+
+}
+
+----
+
+Adjust following 2 properties in your persistence.xml:
+
+.persistence.xml
+[source,xml]
+----
+
+<property name="hibernate.jndi.class" value="org.ow2.carol.jndi.spi.MultiOrbInitialContextFactory"/> 
+<property name="hibernate.transaction.manager_lookup_class" value="org.hibernate.transaction.JOTMTransactionManagerLookup"/>
+
+----
+
+For using the JTA Hibernate application as servlet in tomcat please read  link:$$http://jotm.objectweb.org/current/jotm/doc/howto-tomcat-jotm.html$$[] and also link:$$https://forum.hibernate.org/viewtopic.php?f=1&amp;t=1003866$$[] 
+
+==== Bitronix
+The Transaction Manager comes bundled with a fake in memory jndi-implementation which is ideal for standalone purpose. To integrate with Infinispan I did need a ad-hoc pre-alpha improvement (see attached link:$$https://docs.jboss.org/author/download/attachments/68355081/btm-ispn.jar?version=1&amp;modificationDate=1308852871000$$[btm-ispn.jar] by courtesy of  Mr. Ludivic Orban). BitronixTM offers the so-called Last Resource Commit optimization (aka Last Resource Gambit or Last Agent optimization) and it allows a single non-XA database to participate in a XA transaction by cleverly ordering the resources. "Last Resource Commit" is not part of the XA spec as it doesn't cover the transaction-recovery aspect, so if your database does not support XA (or if you don't wish to have the Xa-driver performance overhead against the plain jdbc) then the "Last Resource Commit" feature should be ideal for the combination 1 single database plus infinispan. 
+
+[source,java]
+----
+
+import hello.A; // a persistent class
+
+import java.util.Properties;
+
+import javax.naming.Context;
+import javax.naming.InitialContext;
+import javax.persistence.EntityManager;
+import javax.persistence.Persistence;
+import javax.transaction.UserTransaction;
+
+import org.hibernate.cache.infinispan.InfinispanRegionFactory;
+import org.hibernate.ejb.HibernateEntityManagerFactory;
+import org.hibernate.impl.SessionFactoryImpl;
+import org.infinispan.manager.CacheManager;
+
+import bitronix.tm.resource.ResourceRegistrar;
+import bitronix.tm.resource.infinispan.InfinispanCacheManager;
+import bitronix.tm.resource.jdbc.PoolingDataSource;
+
+
+
+public class JTAExampleBTM  {
+    public static void main(String[] args) {
+        try { 
+             Properties props = new Properties();
+             props.put(Context.INITIAL_CONTEXT_FACTORY, "bitronix.tm.jndi.BitronixInitialContextFactory");
+             // Attention: BitronixInitialContextFactory is'nt a real jndi implementation: you can't do explicit bindings
+             // It is ideal for hiberante standalone usage, as it automatically 'binds' the needed things: datasource + usertransaction
+            
+             System.out.println("create initial context");
+             InitialContext ictx = new InitialContext(props);
+            
+             PoolingDataSource myDataSource = new PoolingDataSource();
+             myDataSource.setClassName("bitronix.tm.resource.jdbc.lrc.LrcXADataSource");
+             
+             myDataSource.setMaxPoolSize(5);
+             myDataSource.setAllowLocalTransactions(true);
+             
+             myDataSource.getDriverProperties().setProperty("driverClassName", "com.p6spy.engine.spy.P6SpyDriver");
+             myDataSource.getDriverProperties().setProperty("url", "jdbc:hsqldb:hsql://localhost");
+             myDataSource.getDriverProperties().setProperty("user", "sa");
+             myDataSource.getDriverProperties().setProperty("password", "");
+             myDataSource.setUniqueName("java:/MyDatasource");
+             myDataSource.setAutomaticEnlistingEnabled(true); // important to keep it to true (default), otherwise commits/rollbacks are not propagated
+             myDataSource.init(); // does also register the datasource on the Fake-JNDI with Unique Name
+             
+             org.hibernate.transaction.BTMTransactionManagerLookup lokhiberante = new org.hibernate.transaction.BTMTransactionManagerLookup();
+
+             HibernateEntityManagerFactory emf =  (HibernateEntityManagerFactory)  Persistence.createEntityManagerFactory("helloworld");
+             SessionFactoryImpl sfi = (SessionFactoryImpl) emf.getSessionFactory();
+             InfinispanRegionFactory infinispanregionfactory = (InfinispanRegionFactory) sfi.getSettings().getRegionFactory();
+             CacheManager manager = infinispanregionfactory.getCacheManager();
+             
+             // register Inifinispan as a BTM resource
+             InfinispanCacheManager icm = new InfinispanCacheManager();
+             icm.setUniqueName("infinispan");
+             ResourceRegistrar.register(icm); 
+             icm.setManager(manager);
+
+            final UserTransaction userTransaction = (UserTransaction) ictx.lookup(lokhiberante.getUserTransactionName());
+
+            // begin a new Transaction
+            userTransaction.begin();
+            EntityManager em = emf.createEntityManager();
+           
+            A a = new A();
+            a.name= "firstvalue";
+            em.persist(a);
+            em.flush();     // do manually flush here as apparently FLUSH_BEFORE_COMPLETION seems not work, bug ?
+
+            System.out.println("Calling userTransaction.commit() (Please check if the commit is effectively executed!)");
+            userTransaction.commit();
+           
+            emf.close();
+
+        } catch (Exception e) {
+            e.printStackTrace();
+            System.exit(1);
+        }
+         System.exit(0);
+   
+    }
+}
+
+----
+
+Adjust following 2 properties in your corresponding persistence.xml:
+
+.persistence.xml
+[source,xml]
+----
+
+<property name="hibernate.jndi.class" value="bitronix.tm.jndi.BitronixInitialContextFactory"/> 
+<property name="hibernate.transaction.manager_lookup_class" value="org.hibernate.transaction.BTMTransactionManagerLookup"/> 
+
+----
+
+==== Atomikos
+Last but not least, the Atomikos Transaction manager. It is currently the unique Transaction manager I've found with a online-documentation on link:$$http://www.atomikos.com/Documentation/HibernateIntegration#Without_Spring$$[how to integrate with Hiberante] link:$$http://www.atomikos.com/Documentation/HibernateIntegration#Without_Spring$$[without Spring, outside any J2EE container.] . It seems to be the unique supporting XaDataSource together with Pooling, so it doesn't matter that It does not come  with it's own JNDI implementation (we will use the one of JBoss in following example). 
+
+[source,java]
+----
+ 
+import hello.A; // a persistent class
+
+import java.io.Serializable;
+import java.sql.Connection;
+import java.sql.SQLException;
+import java.util.Properties;
+
+import javax.naming.Context;
+import javax.naming.InitialContext;
+import javax.naming.Name;
+import javax.naming.NameNotFoundException;
+import javax.naming.Reference;
+import javax.naming.StringRefAddr;
+import javax.persistence.EntityManager;
+import javax.persistence.Persistence;
+import javax.transaction.TransactionManager;
+import javax.transaction.UserTransaction;
+
+import org.hibernate.Session;
+import org.hibernate.SessionFactory;
+import org.hibernate.ejb.HibernateEntityManagerFactory;
+import org.hibernate.impl.SessionFactoryImpl;
+
+import org.jboss.util.naming.NonSerializableFactory;
+import org.jnp.interfaces.NamingContext;
+import org.jnp.server.Main;
+import org.jnp.server.NamingServer;
+
+import com.atomikos.icatch.jta.hibernate3.TransactionManagerLookup;
+import com.atomikos.jdbc.AtomikosDataSourceBean;
+import com.atomikos.jdbc.SimpleDataSourceBean;
+
+public class JTAStandaloneExampleAtomikos  {
+    
+    public static void main(String[] args) {
+        try {
+            // Create an in-memory jndi
+            NamingServer namingServer = new NamingServer();
+            NamingContext.setLocal(namingServer);
+            Main namingMain = new Main();
+            namingMain.setInstallGlobalService(true);
+            namingMain.setPort(-1);
+            namingMain.start();
+            
+            Properties props = new Properties();
+            props.put(Context.INITIAL_CONTEXT_FACTORY, "org.jnp.interfaces.NamingContextFactory");
+            props.put("java.naming.factory.url.pkgs", "org.jboss.naming:org.jnp.interfaces");
+           
+            InitialContext ictx = new InitialContext( props );
+  
+            AtomikosDataSourceBean ds = new AtomikosDataSourceBean();
+            ds.setUniqueResourceName("sqlserver_ds");
+            ds.setXaDataSourceClassName("com.microsoft.sqlserver.jdbc.SQLServerXADataSource");
+            Properties p = new Properties();
+            p.setProperty ( "user" , "sa" );
+            p.setProperty ( "password" , "" );
+            p.setProperty ( "serverName" , "myserver" );
+            ds.setXaProperties ( p );
+            ds.setPoolSize(5);
+            bind("java:/MyDatasource", ds, ds.getClass(), ictx);
+            
+            TransactionManagerLookup _ml = new TransactionManagerLookup();
+            UserTransaction userTransaction = new com.atomikos.icatch.jta.UserTransactionImp();
+            
+            bind("java:/TransactionManager", _ml.getTransactionManager(null), _ml.getTransactionManager(null).getClass(), ictx);
+            bind("java:comp/UserTransaction", userTransaction, userTransaction.getClass(), ictx);
+
+            HibernateEntityManagerFactory emf =  (HibernateEntityManagerFactory) Persistence.createEntityManagerFactory("helloworld");          
+
+            // begin a new Transaction
+            userTransaction.begin();
+            EntityManager em = emf.createEntityManager();
+           
+            A a = new A();
+            a.name= "firstvalue";
+            em.persist(a);
+            em.flush();     // do manually flush here as apparently FLUSH_BEFORE_COMPLETION seems not work, bug ?
+
+            System.out.println("Calling userTransaction.commit() (Please check if the commit is effectively executed!)");
+            userTransaction.commit();
+           
+            emf.close();
+            
+        } catch (Exception e) {
+            e.printStackTrace();
+            System.exit(1);
+        }
+         System.exit(0);
+    }
+    
+    /**
+     * Helper method that binds the a non serializable object to the JNDI tree.
+     * 
+     * @param jndiName Name under which the object must be bound
+     * @param who Object to bind in JNDI
+     * @param classType Class type under which should appear the bound object
+     * @param ctx Naming context under which we bind the object
+     * @throws Exception Thrown if a naming exception occurs during binding
+     */
+    private static void bind(String jndiName, Object who, Class<?> classType, Context ctx) throws Exception {
+       // Ah ! This service isn't serializable, so we use a helper class
+       NonSerializableFactory.bind(jndiName, who);
+       Name n = ctx.getNameParser("").parse(jndiName);
+       while (n.size() > 1) {
+          String ctxName = n.get(0);
+          try {
+             ctx = (Context) ctx.lookup(ctxName);
+          } catch (NameNotFoundException e) {
+             System.out.println("Creating subcontext:" + ctxName);
+             ctx = ctx.createSubcontext(ctxName);
+          }
+          n = n.getSuffix(1);
+       }
+
+       // The helper class NonSerializableFactory uses address type nns, we go on to
+       // use the helper class to bind the service object in JNDI
+       StringRefAddr addr = new StringRefAddr("nns", jndiName);
+       Reference ref = new Reference(classType.getName(), addr, NonSerializableFactory.class.getName(), null);
+       ctx.rebind(n.get(0), ref);
+    }
+    
+    private static void unbind(String jndiName, Context ctx) throws Exception {
+       NonSerializableFactory.unbind(jndiName);
+       ctx.unbind(jndiName);
+    }
+
+}
+
+
+----
+
+Adjust follwing 2 properties in your corresponding persistence.xml:
+
+.persistence.xml
+[source,xml]
+----
+<property name="hibernate.jndi.class" value="org.jnp.interfaces.NamingContextFactory"/>   
+<property name="hibernate.transaction.manager_lookup_class" value="com.atomikos.icatch.jta.hibernate3.TransactionManagerLookup"/>
+
+----
+
+And create a file named jta.properties in your classpath with following content:
+
+.jta.properties
+----
+
+com.atomikos.icatch.service=com.atomikos.icatch.standalone.UserTransactionServiceFactory
+com.atomikos.icatch.automatic_resource_registration=false
+com.atomikos.icatch.console_log_level=WARN
+com.atomikos.icatch.force_shutdown_on_vm_exit=true
+com.atomikos.icatch.enable_logging=false
+----
+
+
+===  Infinispan as Hibernate 2nd-Level Cache in JBoss AS 5.x
+A JBoss AS 5.x application can be configured to use Infinispan 4.x as the Hibernate 2nd-level cache, replacing JBoss Cache.
+
+$$1.$$ Add the attached jar files to the ear lib directory. These include the core 4.1.0.GA Infinispan jar (infinispan-core.jar), the Hibernate/Infinispan integration jar back-ported from Hibernate 3.5 (hibernate-infinispan-3.3.2.GA_CP03.jar), the JGroups jar required by Infinispan 4.1.0 (jgroups-2.10.0.GA.jar), and other required 3rd party jars (river-1.2.3.GA.jar, marshalling-api-1.2.3.GA.jar)
+
+$$2.$$ Isolate the classloading to be ear-scoped by adding `META-INF/jboss-classloading.xml`
+
+.META-INF/jboss-classloading.xml
+[source,xml]
+----
+<classloading xmlns="urn:jboss:classloading:1.0" domain="simple-scoped" parent-first="false" />
+----
+
+$$3.$$ Configure persistence.xml to use Infinispan instead of JBoss Cache:
+
+.persistence.xml
+[source,xml]
+----
+<?xml version="1.0" encoding="UTF-8"?>
+<persistence xmlns="http://java.sun.com/xml/ns/persistence"
+   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+   xsi:schemaLocation="http://java.sun.com/xml/ns/persistence http://java.sun.com/xml/ns/persistence/persistence_1_0.xsd"
+   version="1.0">
+<persistence-unit name="jpa-test">
+    <jta-data-source>java:/PostgresDS</jta-data-source>
+        <properties>
+            <property name="hibernate.dialect" value="org.hibernate.dialect.HSQLDialect" />
+
+            <property name="hibernate.session_factory_name" value="SessionFactories/infinispan" />
+
+            <property name="hibernate.cache.use_query_cache" value="true" />
+            <property name="hibernate.cache.use_second_level_cache" value="true" />
+            <property name="hibernate.generate_statistics" value="true" />
+            <property name="hibernate.cache.use_structured_entries" value="true" />
+
+            <property name="hibernate.cache.region_prefix" value="infinispan" />
+
+            <property name="hibernate.show_sql" value="true" />
+
+            <property name="hibernate.hbm2ddl.auto" value="validate" />
+            
+            <!-- Infinispan second level cache configuration -->
+            <property name="hibernate.cache.region.factory_class" value="org.hibernate.cache.infinispan.InfinispanRegionFactory" />
+        </properties>
+    </persistence-unit>
+</persistence>
+
+----
+
+===  Using Infinispan as a Spring Cache provider
+Starting with version 3.1, the link:http://spring.io/[Spring Framework] offers a link:http://blog.springsource.com/2011/02/23/spring-3-1-m1-caching[cache abstraction], enabling users to declaratively add caching support to applications via two simple annotations, `@Cacheable` and `@CacheEvict`.
+While out of the box Spring 3.1's caching support is backed by link:http://ehcache.org[EHCache] it has been designed to easily support different cache providers.
+To that end Spring 3.1 defines a simple and straightforward SPI other caching solutions may implement.
+Infinispan's very own spring module does - amongst other things - exactly this and therefore users invested in Spring's programming model may easily have all their caching needs fulfilled through Infinispan.
+
+Here's how.
+
+NOTE: The following is based on a small but fully functional example that is part of Spring Infinispan's test suite. For further details you are encouraged to look at `org.infinispan.spring.provider.sample.CachingBookDaoContextTest` and its ilk.
+
+==== Activating Spring Cache support
+You activate Spring's cache support via putting
+
+[source,xml]
+----
+<beans xmlns="<a href="http://www.springframework.org/schema/beans">http://www.springframework.org/schema/beans</a>" 
+            xmlns:xsi="<a href="http://www.w3.org/2001/XMLSchema-instance">http://www.w3.org/2001/XMLSchema-instance</a>"
+            xmlns:cache="<a href="http://www.springframework.org/schema/cache">http://www.springframework.org/schema/cache</a>"
+            xsi:schemaLocation="
+                <a href="http://www.springframework.org/schema/beans">http://www.springframework.org/schema/beans</a> 
+                <a href="http://www.springframework.org/schema/beans/spring-beans.xsd">http://www.springframework.org/schema/beans/spring-beans.xsd</a>
+                <a href="http://www.springframework.org/schema/cache">http://www.springframework.org/schema/cache</a> 
+                <a href="http://www.springframework.org/schema/cache/spring-cache.xsd">http://www.springframework.org/schema/cache/spring-cache.xsd</a>">
+
+  <cache:annotation-driven />
+
+</beans>
+
+----
+
+somewhere in your application context. This will tell Spring to be on the lookout for `@Cacheable` and `@CacheEvict` within your application code.
+Now, assuming you've already got Infinispan and its dependencies on your classpath, all that's left to do is installing `infinispan-spring` and `spring`.
+For Maven users this translates into
+
+.pom.xml
+[source,xml]
+----
+
+     <dependency>
+         <groupId>org.springframework</groupId>
+         <artifactId>spring-context</artifactId>
+         <version>3.1.0.M1</version>
+         <scope>compile</scope>
+      </dependency>
+      <dependency>
+         <groupId>org.infinispan</groupId>
+         <artifactId>infinispan-spring</artifactId>
+         <version>${infinispan.version}</version>
+         <scope>compile</scope>
+      </dependency>
+ 
+----
+
+==== Telling Spring to use Infinispan as its caching provider
+Spring 3.1's cache provider SPI comprises two interfaces, `org.springframework.cache.CacheManager` and `org.springframework.cache.Cache` where a `CacheManager` serves as a factory for named `Cache` instances.
+By default Spring will look at runtime for a `CacheManager` implementation having the bean name "cacheManager" in an application's application context. So by putting
+
+[source,xml]
+----
+
+<!-- Infinispan cache manager -->
+<bean id="cacheManager" 
+          class="org.infinispan.spring.provider.SpringEmbeddedCacheManagerFactoryBean"
+          p:configurationFileLocation="classpath:/org/infinispan/spring/provider/sample/books-infinispan-config.xml" />
+
+----
+
+somewhere in your application context you tell Spring to henceforth use Infinispan as its caching provider.
+
+==== Adding caching to your application code
+As outlined above enabling caching in your application code is as simple as adding `@Cacheable` and `@CacheEvict` to select methods. Suppose you've got a DAO for, say, books and you want book instances to be cached once they've been loaded from the underlying database using `BookDao#findBook(Integer bookId)`. To that end you annotate `findBook(Integer bookId)` with `@Cacheable`, as in
+
+[source,java]
+----
+
+@Transactional
+@Cacheable(value = "books", key = "#bookId")
+Book findBook(Integer bookId) {...}
+
+----
+
+This will tell Spring to cache Book instances returned from calls to `findBook(Integer bookId)` in a named cache "books", using the parameter's "bookId" value as a cache key. Here, "#bookId" is an expression in the link:$$http://static.springsource.org/spring/docs/current/spring-framework-reference/html/expressions.html$$[Spring Expression Language] that evaluates to the `bookId` argument. If you don't specify the `key` attribute Spring will generate a hash from the supplied method arguments - in this case only `bookId` - and use that as a cache key. Essentially, you relinquish control over what cache key to use to Spring. Which may or may not be fine depending on your application's needs.Though the notion of actually deleting a book will undoubtedly seem alien and outright abhorrent to any sane reader there might come the time when your application needs to do just that. For whatever reason. In this case you will want for such a book to be removed not only from the underlying database but from the cache, too. So you annotate `deleteBook(Integer bookId)` with `@CacheEvict` as in 
+
+[source,java]
+----
+
+@Transactional
+@CacheEvict(value = "books", key = "#bookId")
+void deleteBook(Integer bookId) {...}
+
+----
+
+and you may rest assured that no stray books be left in your application once you decide to remove them.
+
+==== Conclusion
+Hopefully you enjoyed our quick tour of Infinispan's support for Spring's cache abstraction and saw how easy it is for all your caching woes to be taken care of by Infinispan. More information may be found in Spring's link:$$http://static.springsource.org/spring/docs/3.1.0.M1/spring-framework-reference/html/cache.html$$[reference documentation] and link:$$http://static.springsource.org/spring/docs/3.1.0.M1/javadoc-api/index.html?org/springframework/cache/package-summary.html$$[jvadocs]. Also see link:$$http://blog.springsource.com/2011/02/23/spring-3-1-m1-caching/$$[this link] - a very nice posting on the official Spring blog for a somewhat more comprehensive introduction to Spring's cache abstraction.
+
+===  Infinispan modules for JBoss AS 7.x
+Since Infinispan 5.2, the distribution includes a set of modules for JBoss AS 7.x. By installing these modules, it is possible to deploy user applications without packaging the Infinispan JARs within the deployments (WARs, EARs, etc), thus minimizing their size. In order not to conflict with the Infinispan modules which are already present within an AS installation, the modules provided by the Infinispan distribution are located within their own slot identified by the _major.minor_ versions (e.g. slot="5.2"). 
+
+In order to tell the AS deployer that we want to use the Infinispan APIs within our application, we need to add explicit dependencies to the deployment's MANIFEST:
+
+.MANIFEST.MF
+[source,JSON]
+----
+
+Manifest-Version: 1.0
+Dependencies: org.infinispan:5.2 services
+
+----
+
+If you are using Maven to generate your artifacts, mark the Infinispan dependencies as _provided_ and configure your artifact archiver to generate the appropriate MANIFEST.MF file: 
+
+.pom.xml
+[source,xml]
+----
+
+<dependencies>
+  <dependency>
+    <groupId>org.infinispan</groupId>
+    <artifactId>infinispan-core</artifactId>
+    <version>5.2.0.Final</version>
+    <scope>provided</scope>
+  </dependency>
+  <dependency>
+    <groupId>org.infinispan</groupId>
+    <artifactId>infinispan-cachestore-jdbc</artifactId>
+    <version>5.2.0.Final</version>
+    <scope>provided</scope>
+  </dependency>
+</dependencies>
+<build>
+  <plugins>
+     <plugin>
+       <groupId>org.apache.maven.plugins</groupId>
+       <artifactId>maven-war-plugin</artifactId>
+       <configuration>
+         <archive>
+           <manifestEntries>
+             <Dependencies>org.infinispan:5.2 services, org.infinispan.cachestore.jdbc:5.2 services</Dependencies>
+           </manifestEntries>
+         </archive>
+      </configuration>
+    </plugin>
+  </plugins>
+</build>
+
+----
