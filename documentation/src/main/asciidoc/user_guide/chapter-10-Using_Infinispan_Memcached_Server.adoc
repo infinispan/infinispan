@@ -1,0 +1,111 @@
+===  Using Infinispan Memcached Server
+The Infinispan distribution contains a server module that implements the link:$$http://github.com/memcached/memcached/blob/master/doc/protocol.txt$$[Memcached text protocol] . This allows Memcached clients to talk to one or several Infinispan backed Memcached servers. These servers could either be working standalone just like Memcached does where each server acts independently and does not communicate with the rest, or they could be clustered where servers replicate or distribute their contents to other Infinispan backed Memcached servers, thus providing clients with failover capabilities. 
+
+==== Starting an Infinispan Memcached server
+The simplest way to start up an Infinispan memcached server is to simply unzip the all distribution and either run the startServer.bat or startServer.sh script passing memcached as the protocol to run. For example: 
+
+----
+$ ./bin/startServer.sh -r memcached
+----
+
+When the script is called without any further parameters, the started Infinispan Memcached server binds to _port 11211 on localhost_ (127.0.0.1) and uses a local (unclustered) Infinispan cache instance configured with default values underneath. 
+
+==== Command Line Options
+You can optionally pass a set of parameters to the Infinispan Memcached server that allow you to configure different parts of the server.
+
+Please note that, since the Memcached protocol does not allow specifying a cache to use, the mapping between Infinispan Memcached server instances and Infinispan Cache instances is 1 to 1. Therefore, when passing an Infinispan configuration file to the Infinispan Memcache server, either define a named cache with name "memcachedCache" or modify the default cache configuration.
+
+==== Enabling Statistics
+The memcached module makes use of the JMX statistics in the cache configuration. For example: 
+
+[source,xml]
+----
+<default>
+   ...
+   <jmxStatistics enabled="true"/>
+   ...
+</default>
+
+----
+
+Infinispan Memcached server has jmx statistics enabled by default.
+
+==== Command Clarifications
+===== Flush All
+Even in a clustered environment, flush_all command leads to the clearing of the Infinispan Memcached server where the call lands. There's no attempt to propagate this flush to other nodes in the cluster. This is done so that flush_all with delay use case can be reproduced with the Infinispan Memcached server. The aim of passing a delay to flush_all is so that different Memcached servers in a full can be flushed at different times, and hence avoid overloading the database with requests as a result of all Memcached servers being empty. For more info, check the link:$$http://github.com/memcached/memcached/blob/master/doc/protocol.txt$$[Memcached text protocol section on flush_all] . 
+
+==== Unsupported Features
+This section explains those parts of the memcached text protocol that for one reason or the other, are not currently supported by the Infinispan based memcached implementation.
+
+===== Individual Stats
+Due to difference in nature between the original memcached implementation which is C/$$C++$$ based and the Infinispan implementation which is Java based, there're some general purpose stats that are not supported. For these unsupported stats, Infinispan memcached server always returns 0.
+
+.Unsupported statistics
+*  pid 
+*  pointer_size 
+*  rusage_user 
+*  rusage_system 
+*  bytes 
+*  curr_connections 
+*  total_connections 
+*  connection_structures 
+*  auth_cmds 
+*  auth_errors 
+*  limit_maxbytes 
+*  threads 
+*  conn_yields 
+*  reclaimed 
+
+===== Statistic Settings
+The settings statistics section of the text protocol has not been implemented due to its volatility.
+
+===== Settings with Arguments Parameter
+Since the arguments that can be send to the Memcached server are not documented, Infinispan Memcached server does not support passing any arguments to stats command. If any parameters are passed, the Infinispan Memcached server will respond with a CLIENT_ERROR . 
+
+===== Delete Hold Time Parameter
+Memcached does no longer honor the optional hold time parameter to delete command and so the Infinispan based memcached server does not implement such feature either.
+
+===== Verbosity Command
+Verbosity command is not supported since Infinispan logging cannot be simplified to defining the logging level alone.
+
+====  Talking To Infinispan Memcached Servers From Non-Java Clients
+This section shows how to talk to Infinispan memcached server via non-java client, such as a python script.
+
+===== Multi Clustered Server Tutorial
+The example showcases the distribution capabilities of Infinispan memcached severs that are not available in the original memcached implementation.
+
+* Start first Infinispan memcached server giving to it a port number and an Infinispan configuration supporting distribution.
+This configuration is the same one used for the GUI demo:
+ 
+ $ ./bin/startServer.sh -r memcached -c etc/config-samples/gui-demo-cache-config.xml -p 12211
+
+* Start a second Infinispan memcached server passing to it a different port number:
+
+$ ./bin/startServer.sh -r memcached -c etc/config-samples/gui-demo-cache-config.xml -p 13211
+
+*  Execute link:$$http://anonsvn.jboss.org/repos/infinispan/branches/4.1.x/server/memcached/src/test/resources/test_memcached_read.py$$[test_memcached_write.py] script which basically executes several write operations against the Infinispan memcached server bound to port 12211. If the script is executed successfully, you should see an output similar to this: 
+
+ Connecting to 127.0.0.1:12211
+ Testing set ['Simple_Key': Simple value] ... OK
+ Testing set ['Expiring_Key' : 999 : 3] ... OK
+ Testing increment 3 times ['Incr_Key' : starting at 1 ]
+ Initialise at 1 ... OK
+ Increment by one ... OK
+ Increment again ... OK
+ Increment yet again ... OK
+ Testing decrement 1 time ['Decr_Key' : starting at 4 ]
+ Initialise at 4 ... OK
+ Decrement by one ... OK
+ Testing decrement 2 times in one call ['Multi_Decr_Key' : 3 ]
+ Initialise at 3 ... OK
+ Decrement by 2 ... OK
+
+*  Execute link:$$http://anonsvn.jboss.org/repos/infinispan/branches/4.1.x/server/memcached/src/test/resources/test_memcached_read.py$$[test_memcached_read.py] script which connects to server bound to 127.0.0.1:13211 and verifies that it can read the data that was written by the writer script to the first server. If the script is executed successfully, you should see an output similar to this: 
+
+ Connecting to 127.0.0.1:13211
+ Testing get ['Simple_Key'] should return Simple value ... OK
+ Testing get ['Expiring_Key'] should return nothing... OK
+ Testing get ['Incr_Key'] should return 4 ... OK
+ Testing get ['Decr_Key'] should return 3 ... OK
+ Testing get ['Multi_Decr_Key'] should return 1 ... OK
+

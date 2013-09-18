@@ -1,0 +1,37 @@
+==  Downloading and installing Infinispan
+
+To run the Infinispan, you'll need
+
+* A Java 6.0 JDK
+* Maven 3, if you wish to use the quickstart examples or create a new project using the Infinispan link:../getting_started/getting_started.html#_maven_archetypes[archetype] 
+* the Infinispan distribution zip, if you wish to use Infinispan in server mode, or want to use the jars in an ant project
+* the Infinispan Quickstart zip, if you want to follow along with the projects discussed in the guide
+
+TIP: If you already have any of these pieces of software, there is no need to install them again!
+
+=== JDK
+Choose your Java runtime, and follow their installation instructions. For example, you could choose one of:
+
+*  link:$$http://openjdk.java.net/install/$$[OpenJDK] 
+*  link:$$http://www.oracle.com/technetwork/java/javase/index-137561.html$$[Oracle Java SE] 
+*  link:$$http://download.oracle.com/docs/cd/E15289_01/doc.40/e15065/toc.htm$$[Oracle JRockit] 
+
+=== Maven
+Follow the official Maven installation guide if you don't already have Maven 3 installed.
+You can check which version of Maven you have installed (if any) by running mvn --version . If you see a version newer than 3.0.0, you are ready to go. 
+
+TIP: You can also deploy the examples using your favorite IDE. We provide instructions for using Eclipse only.
+
+=== Infinispan
+Finally, download Infinispan from the Infinispan link:http://www.infinispan.org/download[downloads] page.
+
+==== Getting Infinispan from Maven
+*TODO*
+
+=== Download the quickstarts
+The quickstarts are in GitHub, in link:https://github.com/infinispan/infinispan-quickstart[].
+
+Clone this repository using:
+
+ $ git clone https://github.com/infinispan/infinispan-quickstart
+

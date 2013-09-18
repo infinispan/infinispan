@@ -1,0 +1,51 @@
+[[_custom_interceptors_chapter]]
+== Custom Interceptors
+It is possible to add custom interceptors to Infinispan, both declaratively and programatically. Custom interceptors are an way of extending Infinispan by being able to influence or respond to any modifications to cache. Example of such modifications are: elements are added/removed/updated or transactions are committed. For a detailed list refer to link:$$http://docs.jboss.org/infinispan/4.0/apidocs/org/infinispan/interceptors/base/CommandInterceptor.html$$[CommandInterceptor] API. 
+
+=== Adding custom interceptors declaratively
+Custom interceptors can be added on a per named cache basis. This is because each named cache have it's own interceptor stack. Following xml snippet depicts the ways in which an custom interceptor can be added. 
+
+[source,xml]
+----
+   <namedCache name="cacheWithCustomInterceptors">
+      <!--
+      Define custom interceptors.  All custom interceptors need to extend org.jboss.cache.interceptors.base.CommandInterceptor
+      -->
+      <customInterceptors>
+         <interceptor position="FIRST" class="com.mycompany.CustomInterceptor1">
+            <properties>
+               <property name="attributeOne" value="value1" />
+               <property name="attributeTwo" value="value2" />
+            </properties>
+         </interceptor>
+         <interceptor position="LAST" class="com.mycompany.CustomInterceptor2"/>
+         <interceptor index="3" class="com.mycompany.CustomInterceptor1"/>
+         <interceptor before="org.infinispanpan.interceptors.CallInterceptor" class="com.mycompany.CustomInterceptor2"/>
+         <interceptor after="org.infinispanpan.interceptors.CallInterceptor" class="com.mycompany.CustomInterceptor1"/>
+      </customInterceptors>
+   </namedCache>
+
+
+----
+
+=== Adding custom interceptors programatically
+In order to do that one needs to obtain a reference to the link:$$http://docs.jboss.org/infinispan/4.0/apidocs/org/infinispan/AdvancedCache.html$$[AdvancedCache] . This can be done ass follows: 
+
+[source,java]
+----
+CacheManager cm = getCacheManager();//magic
+Cache aCache = cm.getCache("aName");
+AdvancedCache advCache = aCache.getAdvancedCache();
+
+----
+
+Then one of the _addInterceptor()_ methods should be used to add the actual interceptor. For further documentation refer to link:$$http://docs.jboss.org/infinispan/4.0/apidocs/org/infinispan/AdvancedCache.html$$[AdvancedCache] javadoc. 
+
+=== Custom interceptor design
+When writing a custom interceptor, you need to abide by the following rules.
+
+*  Custom interceptors must extend link:$$http://docs.jboss.org/infinispan/5.1/apidocs/org/infinispan/interceptors/base/BaseCustomInterceptor.html$$[BaseCustomInterceptor] 
+
+* Custom interceptors must declare a public, empty constructor to enable construction.
+
+* Custom interceptors will have setters for any property defined through property tags used in the XML configuration.

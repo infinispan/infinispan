@@ -1,0 +1,376 @@
+==  Infinispan Command-line Console
+Infinispan ships with a command-line console which can be used to interact with a running grid.
+
+NOTE: Documentation for ispncon version 0.8.1
+
+=== What is ispncon ?
+Ispncon (Infinispan Command-Line Console) is a simple command-line interface to infinispan cache written in python.
+It accesses the cache in client/server fashion, requiring one of the Infinispan <<_server_modules, server modules>> to have to be properly configured. Once you have a running instance of Infinispan with one of the server modules, you can issue simple cache requests via command line, like: 
+
+ $ ispncon put keyA "Sample value under keyA"
+ $ ispncon get keyA
+ $ ispncon delete keyA
+
+Furthermore it creates an abstraction above the specifics of the client/server protocol you use to access the cache. The basic commands look the same whether you use Hot Rod, memcached or REST. The client/protocol specifics are handled via protocol-specific configuration options or command arguments.
+
+Your shell scripts should look basically the same for all the client modes, if you don't use any protocol specific features.
+
+Behind the scenes the console tool uses existing python clients to handle the communication with particular server modules. The implementations are listed in the following table:
+
+[options="header"]
+|===============
+| _Client_ | _Client implementation_ | _Web_ 
+|Hot Rod|python-client for hotrod| link:$$https://github.com/infinispan/python-client$$[] 
+|Memcached|python-memcached| link:$$https://launchpad.net/python-memcached$$[] 
+|REST|httplib (standard module for python)| link:$$http://docs.python.org/library/httplib.html$$[] 
+|===============
+
+
+The source code and issue reporting for ispncon can be found here: link:$$https://github.com/infinispan/ispncon$$[] 
+
+=== Installation
+
+Ispncon requires
+
+* python 2.6
+* python modules: python-devel, setuptools, infinispan, python-memcached
+
+Installation steps: 
+
+ $ git clone https://github.com/infinispan/ispncon.git
+ $ cd ispncon/src
+ $ sudo python setup.py install
+
+Make this part of your `.bashrc` or whatever so you have ispncon command on path
+
+.$$.bashrc$$
+[source]
+----
+export ISPNCON_HOME=/path/to/ispncon
+export PATH=$ISPNCON_HOME/bin:$PATH
+
+----
+
+=== Basic usage
+
+.Format
+----
+ispncon [options] <operation> [operation_options] <op_arguments>
+
+----
+
+.Options
+[options="header"]
+|===============
+| _Option_ | _Meaning_ 
+|-c --client| Client to use, possible values: memcached, rest, hotrod (default) Configuration key: ispncon.client_type 
+|-h --host &lt;host&gt;| Host/ip address to connect to. Default: localhost. Configuration key: ispncon.host 
+|-p --port &lt;port&gt;| Port to connect to. Default: 11222 (hotrod default port) Configuration key: ispncon.port 
+|-C --cache-name &lt;name&gt;| Named cache to use. Default: use default cache (no value) Configuration key: ispncon.cache 
+|-v --version|Print ispncon version and exit
+|-e --exit-on-error|If true and operation fails, then fail with an exit code. If false just  print ERROR message and continue. This mostly makes sense for batch  files.
+|-P --config "&lt;key&gt; &lt;value&gt;"|override configuration option &lt;key&gt; with value &lt;value&gt;.  NOTE: the quotes are necessary, because getopt parser needs to get these  as one string.
+
+|===============
+
+The possible Operations are _put, get, delete, clear, exists, help, config, include_ and each one is described in the sections _Cache operations_ and _Other commands_ . 
+
+=== Configuration
+On start-up ispncon reads the file ~/.ispncon to configure some of the default values to use, so that the user doesn't have to enter the options like host, port, client type and cache name everytime he types a cache command.
+
+The format of the config file is like this:
+
+.~/.ispncon
+----
+[ispncon]
+host = localhost
+port = 8080
+client_type = rest
+cache =
+exit_on_error = False
+default_codec = None
+[rest]
+server_url = /infinispan-server-rest/rest
+content_type = text/plain
+[hotrod]
+use_river_string_keys = True
+
+----
+
+The config parameters in the section _ispncon_ are described in the_Basic usage_  section. The rest is described here: 
+
+[options="header"]
+|===============
+| _Config key_ | _Meaning_ 
+|rest.server_url| location of the REST server service, in the above example the HTTP requests would be sent to link:$$http://localhost:8080/infinispan-server-rest/rest$$[] 
+|rest.content_type|default MIME content type for entries stored via REST interface
+|default_codec| Default codec to use to encode/decode values. Possible values: None, RiverString, RiverByteArray see section Interoperability with java clients for further info 
+| hotrod.use_river_string_keys | If set to True, hotrod client will encode keys with RiverString codec - this is necessary to be able to access the same data as via Java HotRod Client using the same string keys. see section Interoperability with java clients for further info 
+|===============
+
+
+=== Cache operations
+==== put
+Put data under a specified key.
+
+.Format
+----
+put [options] <key> <value>
+
+----
+
+.Options
+[options="header"]
+|===============
+| _Option_ | _Meaning_ 
+|-i --input-filename &lt;filename&gt;|Don't specify the value, instead put the contents of the specified file.
+|-v --version &lt;version&gt;| Put only if version equals version given. Version format differs between protocols: HotRod: 64-bit integer version number Memcached: 64-bit integer unique version id REST: ETag string Not yet implemented for REST client in infinispan, watch link:$$https://issues.jboss.org/browse/ISPN-1084$$[ISPN-1084] for more info. 
+| -l --lifespan &lt;seconds&gt; |Specifies lifespan of the entry. Integer, number of seconds.
+| -I --max-idle &lt;seconds&gt; |Specifies max idle time for the entry. Integer, number of seconds.
+|-a --put-if-absent|Return CONFLICT if value already exists and don't put anything in that case
+| -e --encode &lt;codec&gt; | Encode value using the specified codec 
+
+|===============
+
+.Return values
+[options="header"]
+|===============
+| _Exit code_ | _Output_ | _Result description_ 
+|0|STORED|Entry was stored sucessfully
+|1|ERROR &lt;msg&gt;|General error occurred
+|2|NOT_FOUND|-v option was used and entry doesn't exist
+|3|CONFLICT|-a option was used and the entry already exists, or -v was used and versions don't match
+
+|===============
+
+NOTE: memcached client won't distinguish between states NOT_FOUND, CONFLICT and ERROR and always will return ERROR if operation wasn't successful. this is a limitation of python-memcached client.
+
+===== Issues
+
+See 
+link:$$https://bugs.launchpad.net/python-memcached/+bug/684689$$[684689] and  
+link:$$https://bugs.launchpad.net/python-memcached/+bug/684690$$[684690] 
+for discussion.
+
+In later ispncon versions python-memcached client might get replaced by a customized version.
+
+==== get
+
+Get the data stored under the specified key.
+
+.Format
+----
+get [options] <key>
+
+----
+
+.Options
+[options="header"]
+|===============
+| _Option_ | _Meaning_ 
+|-o --output-filename &lt;filename&gt;|Stores the output of the get operation into the file specified.
+|-v --version| Get version along with the data. Version format differs between protocols: HotRod: 64-bit integer version number Memcached: 64-bit integer unique version id REST: ETag string 
+| -d --decode &lt;codec&gt; | Decode the value using the specified codec. 
+|===============
+
+.Return values
+[options="header"]
+|===============
+| _Exit code_ | _Output_ | _Result description_ 
+|0| In case no filename was specified: &lt;data, possibly multi-line&gt; (NOTE: the data might contain binary content, that is not suitable for reading in terminal) In case a filename was specified, nothing is printed on standard output. In case -v was specified, the output is prepended with one line: VERSION &lt;version&gt; |Entry was found and is returned.
+| 1 |ERROR &lt;msg&gt;|General error occurred
+| 2 |NOT_FOUND|Requested entry wasn't found in the cache
+|===============
+
+==== delete
+Delete the entry with the specified key.
+
+.Format
+----
+delete [options] <key>
+
+----
+
+.Options
+[options="header"]
+|===============
+| _Option_ | _Meaning_ 
+|-v --version &lt;version&gt;| Deletes only if the specified version matches the version in the cache NOTE: versioned delete is not supported with memcached client. attempt to delete with -v flag will end in ERROR message. with REST client the situation is different, the protocol allows this, but it's not yet implemented in infinispan, watch link:$$https://issues.jboss.org/browse/ISPN-1084$$[ISPN-1084] for more info 
+|===============
+
+.Return values
+[options="header"]
+|===============
+| _Exit code_ | _Output_ | _Result description_ 
+| 0 |DELETED|Entry was successfully deleted
+| 1 |ERROR &lt;msg&gt;|General error occurred
+| 2 |NOT_FOUND|Entry wasn't found in the cache.
+| 3 |CONFLICT|Option -v was used and versions don't match
+|===============
+
+
+==== clear
+Clear the cache
+
+.Format
+----
+clear
+
+----
+
+.Return values
+[options="header"]
+|===============
+| _Exit code_ | _Output_ | _Result description_ 
+| 0 |DELETED|Cache was sucessfully cleared
+| 1 |ERROR &lt;msg&gt;|General error occurred
+|===============
+
+
+==== exists
+Verify if the entry exists in the cache
+
+.Format
+----
+exists <key>
+
+----
+
+.Options
+[options="header"]
+|===============
+| _Exit code_ | _Output_ | _Result description_ 
+| 0 |EXISTS|Entry with the given key exists
+| 1 |ERROR &lt;msg&gt;|General error occurred
+| 2 |NOT_FOUND|Entry with the given key wasn't found in the cache
+|===============
+
+
+NOTE: memcached protocol doesn't support querying for existence of an entry in the cache so exists operation is implemented (inefficiently) by get opeartion, that gets the whole entry with all the data from the server.
+
+==== version
+Get version of the entry. Version format differs between protocols:
+
+* HotRod: 64-bit integer version number
+* Memcached: 64-bit integer unique version id
+* REST: ETag string
+
+NOTE: The purpose of this command is to facilitate the parsing of the version string. HotRod and Memcached client don't support efficient implementation of this operation. They transfer the whole entry from the server to determine the version, so if applicable you are encouraged to use "get -v" command to obtain version together with the data.
+
+REST client implements this operation efficiently by executing HEAD method.
+
+.Format
+----
+version <key>
+
+----
+
+.Return values
+[options="header"]
+|===============
+| _Exit code_ | _Output_ | _Result description_ 
+| 0 |&lt;version&gt;|If the entry exists.
+| 1 |ERROR &lt;msg&gt;|General error occurred
+| 2 |NOT_FOUND|Requested entry wasn't found in the cache
+|===============
+
+
+=== Other commands
+
+==== help
+
+Print help about an operation
+
+.Format
+----
+help <operation>
+
+----
+
+NOTE: if no operation is supplied, prints list of supported operations
+
+==== config
+Change internal state/config of the client. This operation has only client-side effect.
+
+.Format
+----
+config                - to print current config
+config save           - to save config to ~/.ispncon
+config <key> <value>  - to change config for currently running session
+
+----
+
+===== Configuration values
+
+see section Configuration for the meaning of different configuration options. Currently supported keys are:
+
+
+* cache
+* host
+* port
+* client_type
+* exit_on_error
+* rest.server_url
+* rest.content_type
+
+These values directly correspond to the keys in the ~/.ispncon config file. The format of the key is 
+
+----
+<section>.<config_key>
+
+----
+
+If no section is given, "ispncon" is implied.
+
+.Return values
+[options="header"]
+|===============
+| _Exit code_ | _Output_ | _Result description_ 
+| 0 |STORED|If configuration/client state was updated successfully.
+| 0 |multi-line output with config values|If config command with no parameters was entered.
+| 1 |ERROR &lt;msg&gt;|General error occurred
+|===============
+
+
+==== include
+Process cache commands from the specified batch file. The commands will be processed line by line.
+
+.Format
+----
+include <filename>
+
+----
+
+.Return values
+[options="header"]
+|===============
+| _Exit code_ | _Output_ | _Result description_ 
+|exit code of the last command in the file.|The output depends on the commands present in the input file|depends on the commands in the batch file
+
+|===============
+
+NOTE: The name of this command and it's behaviour is going to change in the next version.
+
+=== Interoperability with java clients
+==== Over REST
+When exchanging data via REST interface, the values are interpreted by any client as sequence of bytes. The meaning is given to this byte-sequence by using MIME type specified via "Content-Type" HTTP header. No special interoperability measures are needed here.
+
+==== Over Hot Rod
+If we want to read in ispncon the entries that were put with Hot Rod Java client, we need to use a special option `hotrod.use_river_string_keys = True`.
+This will cause the string keys to be encoded the same way the Java client does it. 
+
+Using `hotrod.use_river_string_keys = True` we're able to access the data that has been written by the java client, but we still see the raw binary values.
+To be able to see a value that has been put by Hot Rod java client in a readable form and vice versa - to be able to see in Hot Rod Java client what we've put via ispncon we need to use a _codec_ . Currently there are two types of codecs: _RiverString_ and _RiverByteArray_ 
+
+* _RiverString_ - will decode a value that has been put as java.lang.String and vice versa - a value encoded with this codec will be returned as java.lang.String on the java side 
+* _RiverByteArray_ - analogous to RiverString but works with byte[] (java byte array) 
+
+Codecs can be used either by specifying a _$$default_codec$$_ option in the ~/.ispncon config file (in section ispncon) or by specifying a codec on each put resp get using _-e (--encode)_ resp _-d (--decode) options_ . 
+
+==== SpyMemcached Java Client
+Tested with link:$$http://code.google.com/p/spymemcached/$$[spymemcached] 2.7. 
+
+Values stored by ispncon is interpreted as an UTF-8 string, meaning if we store data using ispncon, it will be interpreted by the Java client as a String by calling `new java.lang.String(bytes, "UTF-8")`.
+
+This also works in reverse: values stored in Java as `java.lang.String` will be returned as UTF-8 bytes in ispncon
+
