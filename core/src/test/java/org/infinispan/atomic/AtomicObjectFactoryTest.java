@@ -14,6 +14,11 @@ import org.testng.annotations.Test;
 import java.util.*;
 import java.util.concurrent.*;
 
+
+/**
+ * @author Pierre Sutra
+ * @since 6.0
+ */
 @Test(groups = "functional", testName = "distexec.AtomicObjectFactoryTest")
 public class AtomicObjectFactoryTest extends MultipleCacheManagersTest {
 
@@ -30,18 +35,18 @@ public class AtomicObjectFactoryTest extends MultipleCacheManagersTest {
         AtomicObjectFactory factory = new AtomicObjectFactory(cache);
 
         // 1 - Basic Usage
-        Set<String> set = (Set)factory.getOrCreateInstanceOf(HashSet.class, "set");
+        Set<String> set = (Set)factory.getInstanceOf(HashSet.class, "set");
         set.add("smthing");
         assert set.contains("smthing");
         assert set.size()==1;
 
         // 2 - Persistence
         factory.disposeInstanceOf(HashSet.class, "set", true);
-        set = (Set<String>)factory.getOrCreateInstanceOf(HashSet.class, "set",false,null,false);
+        set = (Set<String>)factory.getInstanceOf(HashSet.class, "set", false, null, false);
         assert set.contains("smthing");
 
         // 3 - Optimistic execution
-        ArrayList<String> list = (ArrayList<String>)factory.getOrCreateInstanceOf(ArrayList.class, "list",true);
+        ArrayList<String> list = (ArrayList<String>)factory.getInstanceOf(ArrayList.class, "list", true);
         assert !list.contains("foo");
         assert !cache.containsKey("list");
 
@@ -53,7 +58,7 @@ public class AtomicObjectFactoryTest extends MultipleCacheManagersTest {
         Cache cache = cacheManager.getCache();
         AtomicObjectFactory factory = new AtomicObjectFactory(cache);
 
-        Map map = (Map) factory.getOrCreateInstanceOf(HashMap.class, "set",true);
+        Map map = (Map) factory.getInstanceOf(HashMap.class, "set", true);
 
         for(int i=0; i<NCALLS*10;i++){
             map.containsKey("1");
@@ -81,7 +86,7 @@ public class AtomicObjectFactoryTest extends MultipleCacheManagersTest {
             caches.add(cache);
             factory = new AtomicObjectFactory(cache);
             factories.add(factory);
-            set = (HashSet) factory.getOrCreateInstanceOf(HashSet.class, "set");
+            set = (HashSet) factory.getInstanceOf(HashSet.class, "set");
             sets.add(set);
         }
 
@@ -116,13 +121,13 @@ public class AtomicObjectFactoryTest extends MultipleCacheManagersTest {
 
         cache1 = manager1.getCache();
         factory1 = new AtomicObjectFactory(cache1);
-        set1 = (HashSet) factory1.getOrCreateInstanceOf(HashSet.class, "set");
+        set1 = (HashSet) factory1.getInstanceOf(HashSet.class, "set");
         set1.add("smthing");
 
 
         cache2 = manager2.getCache();
         factory2 = new AtomicObjectFactory(cache2);
-        set2 = (HashSet) factory2.getOrCreateInstanceOf(HashSet.class, "set",true,null,false);
+        set2 = (HashSet) factory2.getInstanceOf(HashSet.class, "set", true, null, false);
         assert set2.contains("smthing");
 
     }
