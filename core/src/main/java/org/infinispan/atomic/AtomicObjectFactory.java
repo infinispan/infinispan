@@ -2,7 +2,6 @@ package org.infinispan.atomic;
 
 import org.infinispan.Cache;
 import org.infinispan.InvalidCacheUsageException;
-import org.infinispan.commons.marshall.NotSerializableException;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
@@ -11,13 +10,11 @@ import java.io.Serializable;
 import java.lang.reflect.Method;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
+
 
 /**
- * TODO: It should be considered if we use the cache, or we create a new one.
- *
  * @author Pierre Sutra
- *
+ * @since 6.0
  */
 public class AtomicObjectFactory {
 
@@ -36,12 +33,12 @@ public class AtomicObjectFactory {
      *
      * Return an AtomicObjectFactory.
      *
-     * @param c a cache; it must be synchronous.and transactional (with autoCommit set to true (default value).
+     * @param c a cache,  it must be synchronous.and transactional (with autoCommit set to true, its default value).
      */
 	public AtomicObjectFactory(Cache<Object, Object> c) throws InvalidCacheUsageException{
         if( ! c.getCacheConfiguration().clustering().cacheMode().isSynchronous()
             || c.getAdvancedCache().getTransactionManager() == null )
-            throw new InvalidCacheUsageException("The cache must be synchronous.and transactional.");
+            throw new InvalidCacheUsageException("The cache must be synchronous and transactional.");
 		cache = c;
         registeredContainers= new HashMap<Object,AtomicObjectContainer>();
         log = LogFactory.getLog(this.getClass());
@@ -50,25 +47,27 @@ public class AtomicObjectFactory {
 
     /**
      *
-     * Returns a fresh atomic object of class <i>clazz</i>.
-     * The class of this object must be initially serializable, as well as all the parameters of its methods, and it must be deterministic.
+     * Returns an atomic object of class <i>clazz</i>.
+     * The class of this object must be initially serializable, as well as all the parameters of its methods.
+     * Furthermore the class must be deterministic.
      *
      * @param clazz a class object
      * @param key to use in order to store the object.
      * @return an object of the class <i>clazz</i>
      * @throws InvalidCacheUsageException
      */
- 	public synchronized Object getOrCreateInstanceOf(Class<?> clazz, Object key)
+ 	public synchronized <T> T getInstanceOf(Class<T> clazz, Object key)
             throws InvalidCacheUsageException{
-        return getOrCreateInstanceOf(clazz, key, false);
+        return getInstanceOf(clazz, key, false);
 	}
     /**
      *
-     * Returns a fresh object of class <i>clazz</i>.
-     * The class of this object must be initially serializable, as well as all the parameters of its methods, and it must be deterministic.
+     * Returns an object of class <i>clazz</i>.
+     * The class of this object must be initially serializable, as well as all the parameters of its methods.
+     * Furthermore the class must be deterministic.
      *
      * The object is atomic if <i>withReadOptimization</i> equals false; otherwise it is sequentially consistent..
-     * In more details, if <i>withReadOptimization</i>  is set, the call is executed locally on a copy of the object, and in case
+     * In more details, if <i>withReadOptimization</i>  is set, every call to the object is first executed locally on a copy of the object, and in case
      * the call does not modify the state of the object, the value returned is the result of this tentative execution.
      *
      * @param clazz a class object
@@ -77,21 +76,22 @@ public class AtomicObjectFactory {
      * @return an object of the class <i>clazz</i>
      * @throws InvalidCacheUsageException
      */
-    public synchronized Object getOrCreateInstanceOf(Class clazz, Object key, boolean withReadOptimization)
+    public synchronized <T> T getInstanceOf(Class<T> clazz, Object key, boolean withReadOptimization)
             throws InvalidCacheUsageException{
-        return getOrCreateInstanceOf(clazz,key,withReadOptimization,null,true);
+        return getInstanceOf(clazz, key, withReadOptimization, null, true);
     }
 
     /**
      *
      * Returns an object of class <i>clazz</i>.
-     * The class of this object must be initially serializable, as well as all the parameters of its methods, and it must be deterministic.
+     * The class of this object must be initially serializable, as well as all the parameters of its methods.
+     * Furthermore the class must be deterministic.
      *
      * The object is atomic if <i>withReadOptimization</i> equals false; otherwise it is sequentially consistent..
-     * In more details, if <i>withReadOptimization</i>  is set, the call is executed locally on a copy of the object, and in case
+     * In more details, if <i>withReadOptimization</i>  is set, every call to the object is executed locally on a copy of the object, and in case
      * the call does not modify the state of the object, the value returned is the result of this tentative execution.
-     *
-     * If the method <i>equalsMethod</i> isnot null, it overrides the default <i>clazz.equals()</i>
+     * If the method <i>equalsMethod</i>  is not null, it overrides the default <i>clazz.equals()</i> when testing that the state of the object and
+     * its copy are identical.
      *
      * @param clazz a class object
      * @param key the key to use in order to store the object.
@@ -101,11 +101,11 @@ public class AtomicObjectFactory {
      * @return an object of the class <i>clazz</i>
      * @throws InvalidCacheUsageException
      */
-    public synchronized Object getOrCreateInstanceOf(Class clazz, Object key, boolean withReadOptimization, Method equalsMethod, boolean forceNew)
+    public synchronized <T> T getInstanceOf(Class<T> clazz, Object key, boolean withReadOptimization, Method equalsMethod, boolean forceNew)
             throws InvalidCacheUsageException{
 
         if( !(clazz instanceof Serializable)){
-            throw  new NotSerializableException("The object must be serializable.");
+            throw new InvalidCacheUsageException("The object must be serializable.");
         }
 
         try{
@@ -113,11 +113,10 @@ public class AtomicObjectFactory {
                 registeredContainers.put(key,new AtomicObjectContainer(cache, clazz, key, withReadOptimization, equalsMethod, forceNew));
             }
         } catch (Exception e){
-            e.printStackTrace();
             throw new InvalidCacheUsageException(e.getCause());
         }
 
-        return registeredContainers.get(key).getProxy();
+        return (T) registeredContainers.get(key).getProxy();
 
     }
 
@@ -143,7 +142,6 @@ public class AtomicObjectFactory {
         try{
             container.dispose(keepPersistent);
         }catch (Exception e){
-            e.printStackTrace();
             throw new InvalidCacheUsageException(e.getCause());
         }
 
@@ -152,7 +150,7 @@ public class AtomicObjectFactory {
     }
 
     /**
-     * @return a hash of the order in which the calls on each object were executed.
+     * @return a hash value of the order in which the calls on all the atomic objects built by this factory were executed.
      */
     @Override
     public int hashCode(){

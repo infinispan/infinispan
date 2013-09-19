@@ -6,10 +6,8 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
 /**
-* // TODO: Document this
-*
-* @author otrack
-* @since 4.0
+* @author Pierre Sutra
+* @since 6.0
 */
 class AtomicObjectCallFuture implements Future<Object> {
     private Object ret;
