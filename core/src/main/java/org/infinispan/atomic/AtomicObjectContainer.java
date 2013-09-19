@@ -20,9 +20,9 @@ import java.util.*;
 import java.util.concurrent.*;
 
 /**
- * TODO check that method matching in doCall is unique (this should be the case accordingly to the way Java handles polymorphism).
- *
   * @author Pierre Sutra
+ *  @since 6.0
+ *
  */
 @Listener
 public class AtomicObjectContainer {
@@ -38,7 +38,7 @@ public class AtomicObjectContainer {
         }
     };
     private static Log log = LogFactory.getLog(AtomicObjectContainer.class);
-    private static final int N_RETRIEVE_HELPERS= 1; // TODO not fault tolerant
+    private static final int N_RETRIEVE_HELPERS= 2;
     private static final int CALL_TTIMEOUT_TIME = 3000;
     private static final int RETRIEVE_TTIMEOUT_TIME = 30000;
     private static ExecutorService service = Executors.newCachedThreadPool();
@@ -53,7 +53,7 @@ public class AtomicObjectContainer {
     private Object proxy;
 
     private Boolean withReadOptimization;
-    private Set<String> readOptimizationFailed;
+    private Set<String> readOptimizationFailedMethods;
     private Method equalsMethod;
 
     private Object key;
@@ -74,7 +74,7 @@ public class AtomicObjectContainer {
         clazz = cl;
         key = k;
 
-        readOptimizationFailed = new HashSet<String>();
+        readOptimizationFailedMethods = new HashSet<String>();
         withReadOptimization = readOptimization;
 
         equalsMethod = m;
@@ -89,13 +89,13 @@ public class AtomicObjectContainer {
                 GenericJBossMarshaller marshaller = new GenericJBossMarshaller();
 
                 synchronized(withReadOptimization){
-                    if (withReadOptimization && !readOptimizationFailed.contains(m.getName())) {
+                    if (withReadOptimization && !readOptimizationFailedMethods.contains(m.getName())) {
                         Object copy = marshaller.objectFromByteBuffer(marshaller.objectToByteBuffer(object));
                         Object ret = doCall(copy,m.getName(),args);
                         if( equalsMethod == null ? copy.equals(object) : equalsMethod.invoke(copy, object).equals(Boolean.TRUE) )
                             return ret;
                         else
-                            readOptimizationFailed.add(m.getName());
+                            readOptimizationFailedMethods.add(m.getName());
                     }
                 }
 
@@ -129,7 +129,7 @@ public class AtomicObjectContainer {
         // Register
         cache.addListener(this);
 
-        // Build object
+        // Build the object
         initObject(forceNew);
 
     }
