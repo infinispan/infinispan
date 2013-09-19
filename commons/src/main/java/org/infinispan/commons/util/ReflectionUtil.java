@@ -320,11 +320,10 @@ public class ReflectionUtil {
       return getAnnotation(clazz, annotation) != null;
    }
 
-   public static Class<?>[] toClassArray(String[] typeList) throws ClassNotFoundException {
+   public static Class<?>[] toClassArray(String[] typeList, ClassLoader classLoader) throws ClassNotFoundException {
       if (typeList == null) return EMPTY_CLASS_ARRAY;
       Class<?>[] retval = new Class[typeList.length];
       int i = 0;
-      ClassLoader classLoader = ReflectionUtil.class.getClassLoader();
       for (String s : typeList) retval[i++] = getClassForName(s, classLoader);
       return retval;
    }

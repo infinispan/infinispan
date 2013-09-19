@@ -130,18 +130,6 @@ public class ResourceDMBean implements DynamicMBean {
       return m;
    }
 
-   private static Class<?>[] getParameterArray(String[] types) throws ClassNotFoundException {
-      if (types == null) return null;
-      if (types.length == 0) return EMPTY_CLASS_ARRAY;
-      Class<?>[] params = PARAM_TYPE_CACHE.get(types);
-      if (params == null) {
-         params = ReflectionUtil.toClassArray(types);
-         if (params == null) params = EMPTY_CLASS_ARRAY;
-         PARAM_TYPE_CACHE.put(types, params);
-      }
-      return params;
-   }
-
    private InvokableMBeanAttributeInfo toJmxInfo(JmxAttributeMetadata attributeMetadata) throws NoSuchFieldException {
       if (!attributeMetadata.isUseSetter()) {
          Field field = findField(objectClass, attributeMetadata.getName());

@@ -56,6 +56,11 @@
       </dependency>
 
       <dependency>
+         <groupId>org.javassist</groupId>
+         <artifactId>javassist</artifactId>
+      </dependency>
+
+      <dependency>
          <groupId>org.jboss.naming</groupId>
          <artifactId>jnp-client</artifactId>
          <scope>test</scope>
@@ -85,11 +90,6 @@
          <scope>test</scope>
       </dependency>
 
-      <dependency>
-         <groupId>org.javassist</groupId>
-         <artifactId>javassist</artifactId>
-         <scope>test</scope>
-      </dependency>
    </dependencies>
 
    <build>
@@ -139,6 +139,19 @@
             </plugin>
          </plugins>
       </pluginManagement>
+      <plugins>
+         <plugin>
+            <groupId>org.apache.felix</groupId>
+            <artifactId>maven-bundle-plugin</artifactId>
+            <configuration>
+               <instructions>
+                  <Export-Package>
+                     !${project.groupId}.commons.*,${project.groupId}.*;version=${project.version};-split-package:=error
+                  </Export-Package>
+               </instructions>
+            </configuration>
+         </plugin>
+      </plugins>
    </build>
 
 </project>

@@ -122,11 +122,8 @@
       <version.javax.cache>0.7</version.javax.cache>
       <version.javax.persistence>1.0</version.javax.persistence>
       <version.javax.servlet>2.5</version.javax.servlet>
-      <version.jboss.marshalling>1.3.15.GA</version.jboss.marshalling>
       <version.jboss.as>7.2.0.Alpha1-redhat-4</version.jboss.as>
       <version.jbossjta>4.17.4.Final</version.jbossjta>
-      <version.osgi>4.3.0</version.osgi>
-      <version.jboss.logging>3.1.1.GA</version.jboss.logging>
       <version.jboss.logging.processor>1.0.3.Final</version.jboss.logging.processor>
       <version.jboss.logmanager>1.3.1.Final</version.jboss.logmanager>
       <version.jboss.spec>1.0.0.Final</version.jboss.spec>
@@ -134,11 +131,8 @@
       <version.jclouds>1.4.1</version.jclouds>
       <version.jetty>6.1.25</version.jetty>
       <version.jgoodies.forms>1.0.5</version.jgoodies.forms>
-      <version.jgroups>3.3.1.Final</version.jgroups>
       <version.jsap>2.1</version.jsap>
-      <version.json>20090211</version.json>
       <version.jstl>1.2</version.jstl>
-      <version.jta>1.0.0.Final</version.jta>
       <version.junit>4.10</version.junit>
       <version.leveldb>0.5</version.leveldb>
       <version.leveldbjni>1.7</version.leveldbjni>
@@ -150,11 +144,8 @@
       <version.mockito>1.9.5</version.mockito>
       <version.mongodb.driver>2.10.1</version.mongodb.driver>
       <version.mysql.driver>5.1.19</version.mysql.driver>
-      <version.netty>3.6.5.Final</version.netty>
       <version.org.jboss.naming>5.0.6.CR1</version.org.jboss.naming>
       <version.resteasy>2.3.2.Final</version.resteasy>
-      <version.rhq>4.2.0</version.rhq>
-      <version.scala>2.10.0</version.scala>
       <version.shrinkwrapResolver>2.0.0-alpha-6</version.shrinkwrapResolver>
       <version.slf4j>1.6.4</version.slf4j>
       <version.solder>3.1.0.Final</version.solder>
@@ -615,31 +606,11 @@
             <scope>import</scope>
          </dependency>
          <dependency>
-            <groupId>org.jboss.spec.javax.transaction</groupId>
-            <artifactId>jboss-transaction-api_1.1_spec</artifactId>
-            <version>${version.jta}</version>
-         </dependency>
-         <dependency>
             <groupId>org.jboss.spec</groupId>
             <artifactId>jboss-javaee-6.0</artifactId>
             <version>${version.jboss.spec}</version>
             <type>pom</type>
             <scope>test</scope>
-         </dependency>
-         <dependency>
-            <groupId>org.jboss.logging</groupId>
-            <artifactId>jboss-logging</artifactId>
-            <version>${version.jboss.logging}</version>
-         </dependency>
-         <dependency>
-            <groupId>org.jboss.marshalling</groupId>
-            <artifactId>jboss-marshalling</artifactId>
-            <version>${version.jboss.marshalling}</version>
-         </dependency>
-         <dependency>
-            <groupId>org.jboss.marshalling</groupId>
-            <artifactId>jboss-marshalling-river</artifactId>
-            <version>${version.jboss.marshalling}</version>
          </dependency>
          <dependency>
             <groupId>org.jboss.naming</groupId>
@@ -662,11 +633,6 @@
                   <groupId>org.jboss.logging</groupId>
                </exclusion>
             </exclusions>
-         </dependency>
-         <dependency>
-            <groupId>io.netty</groupId>
-            <artifactId>netty</artifactId>
-            <version>${version.netty}</version>
          </dependency>
          <dependency>
             <groupId>org.jboss.logmanager</groupId>
@@ -717,21 +683,6 @@
             <version>${version.jclouds}</version>
          </dependency>
          <dependency>
-            <groupId>org.jgroups</groupId>
-            <artifactId>jgroups</artifactId>
-            <version>${version.jgroups}</version>
-         </dependency>
-         <dependency>
-             <groupId>org.jboss.aesh</groupId>
-             <artifactId>aesh</artifactId>
-             <version>${version.aesh}</version>
-         </dependency>
-         <dependency>
-            <groupId>org.json</groupId>
-            <artifactId>json</artifactId>
-            <version>${version.json}</version>
-         </dependency>
-         <dependency>
             <groupId>org.milyn</groupId>
             <artifactId>milyn-smooks-javabean</artifactId>
             <version>${version.milyn.smooks}</version>
@@ -745,37 +696,6 @@
             <groupId>org.mortbay.jetty</groupId>
             <artifactId>jetty-embedded</artifactId>
             <version>${version.jetty}</version>
-         </dependency>
-         <dependency>
-            <groupId>org.osgi</groupId>
-            <artifactId>org.osgi.core</artifactId>
-            <version>${version.osgi}</version>
-         </dependency>
-         <dependency>
-            <groupId>org.rhq</groupId>
-            <artifactId>rhq-core-domain</artifactId>
-            <version>${version.rhq}</version>
-         </dependency>
-         <dependency>
-            <groupId>org.rhq</groupId>
-            <artifactId>rhq-core-plugin-api</artifactId>
-            <version>${version.rhq}</version>
-            <exclusions>
-               <exclusion>
-                  <groupId>com.sun.xml.bind</groupId>
-                  <artifactId>jaxb-impl</artifactId>
-               </exclusion>
-            </exclusions>
-         </dependency>
-         <dependency>
-            <groupId>org.rhq</groupId>
-            <artifactId>rhq-jmx-plugin</artifactId>
-            <version>${version.rhq}</version>
-         </dependency>
-         <dependency>
-            <groupId>org.scala-lang</groupId>
-            <artifactId>scala-library</artifactId>
-            <version>${version.scala}</version>
          </dependency>
          <dependency>
             <groupId>org.slf4j</groupId>

@@ -3,9 +3,9 @@ package org.infinispan.loaders.remote.wrapper;
 import java.io.IOException;
 import java.util.Arrays;
 
-import org.infinispan.io.ByteBuffer;
-import org.infinispan.marshall.BufferSizePredictor;
-import org.infinispan.marshall.Marshaller;
+import org.infinispan.commons.io.ByteBuffer;
+import org.infinispan.commons.marshall.BufferSizePredictor;
+import org.infinispan.commons.marshall.Marshaller;
 
 /**
  * HotRodEntryMarshaller.
