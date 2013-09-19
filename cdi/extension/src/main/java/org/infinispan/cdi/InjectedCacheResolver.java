@@ -3,6 +3,7 @@ package org.infinispan.cdi;
 import org.infinispan.configuration.global.GlobalConfiguration;
 import org.infinispan.jcache.JCacheManager;
 import org.infinispan.manager.EmbeddedCacheManager;
+import org.infinispan.cdi.InfinispanExtension.InstalledCacheManager;
 
 import javax.cache.Cache;
 import javax.cache.Caching;
@@ -10,10 +11,8 @@ import javax.cache.annotation.CacheInvocationContext;
 import javax.cache.annotation.CacheResolver;
 import javax.enterprise.context.ApplicationScoped;
 import javax.enterprise.inject.Alternative;
-import javax.enterprise.inject.Any;
-import javax.enterprise.inject.Default;
 import javax.enterprise.inject.Instance;
-import javax.enterprise.util.AnnotationLiteral;
+import javax.enterprise.inject.spi.BeanManager;
 import javax.inject.Inject;
 import java.lang.annotation.Annotation;
 import java.net.URI;
@@ -37,7 +36,6 @@ import static org.infinispan.cdi.util.Contracts.assertNotNull;
 @Alternative
 public class InjectedCacheResolver implements CacheResolver {
 
-   private Instance<EmbeddedCacheManager> cacheManagers;
    private EmbeddedCacheManager defaultCacheManager;
 
    private Map<EmbeddedCacheManager, JCacheManager> jcacheManagers =
@@ -45,13 +43,17 @@ public class InjectedCacheResolver implements CacheResolver {
    private JCacheManager defaultJCacheManager;
 
    @Inject
-   public InjectedCacheResolver(@Any Instance<EmbeddedCacheManager> cacheManagers) {
-      this.cacheManagers = cacheManagers;
-      for (EmbeddedCacheManager cacheManager : cacheManagers)
-         jcacheManagers.put(cacheManager, toJCacheManager(cacheManager));
+   public InjectedCacheResolver(InfinispanExtension extension, BeanManager beanManager) {
+      Set<InstalledCacheManager> installedCacheManagers = extension.getInstalledEmbeddedCacheManagers(beanManager);
+      for (InstalledCacheManager installedCacheManager : installedCacheManagers) {
+         JCacheManager jcacheManager = toJCacheManager(installedCacheManager.cacheManager);
+         if (installedCacheManager.isDefault) {
+            this.defaultCacheManager = installedCacheManager.cacheManager;
+            this.defaultJCacheManager = jcacheManager;
+         }
 
-      this.defaultCacheManager = cacheManagers.select(new AnnotationLiteral<Default>() {}).get();
-      this.defaultJCacheManager = jcacheManagers.get(defaultCacheManager);
+         this.jcacheManagers.put(installedCacheManager.cacheManager, jcacheManager);
+      }
    }
 
    private JCacheManager toJCacheManager(EmbeddedCacheManager cacheManager) {
@@ -77,7 +79,7 @@ public class InjectedCacheResolver implements CacheResolver {
 
       // Iterate on all cache managers because the cache used by the
       // interceptor could use a specific cache manager.
-      for (EmbeddedCacheManager cm : cacheManagers) {
+      for (EmbeddedCacheManager cm : jcacheManagers.keySet()) {
          Set<String> cacheNames = cm.getCacheNames();
          for (String name : cacheNames) {
             if (name.equals(cacheName)) {
