@@ -6,6 +6,7 @@ import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.infinispan.transaction.TransactionMode;
 import org.testng.annotations.Test;
 
+//todo This does not seem to actually test compatibility if no data is put via the remote client. I think EmbeddedCompatTest already tests this. need to check if other Compat test have this issue
 /**
  * Verify query DSL in compatibility mode.
  *
@@ -19,10 +20,8 @@ public class CompatModeQueryDslConditionsTest extends QueryDslConditionsTest {
    protected EmbeddedCacheManager createCacheManager() throws Exception {
       ConfigurationBuilder cfg = getDefaultStandaloneCacheConfig(true);
       cfg.compatibility().enable()
-            .transaction()
-            .transactionMode(TransactionMode.TRANSACTIONAL)
+            .transaction().transactionMode(TransactionMode.TRANSACTIONAL)
             .indexing().enable()
-            .indexLocalOnly(false)
             .addProperty("default.directory_provider", "ram")
             .addProperty("lucene_version", "LUCENE_CURRENT");
       return TestCacheManagerFactory.createCacheManager(cfg);

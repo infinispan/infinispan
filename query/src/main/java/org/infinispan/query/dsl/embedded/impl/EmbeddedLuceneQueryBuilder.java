@@ -45,7 +45,8 @@ class EmbeddedLuceneQueryBuilder extends BaseQueryBuilder<LuceneQuery> {
          log.tracef("JPQL string : %s", jpqlString);
       }
 
-      LuceneProcessingChain processingChain = new LuceneProcessingChain((SearchFactoryIntegrator) searchManager.getSearchFactory(), entityNamesResolver, null);
+      SearchFactoryIntegrator searchFactory = (SearchFactoryIntegrator) searchManager.getSearchFactory();
+      LuceneProcessingChain processingChain = new LuceneProcessingChain.Builder(searchFactory, entityNamesResolver).buildProcessingChainForClassBasedEntities();
       QueryParser queryParser = new QueryParser();
       LuceneQueryParsingResult parsingResult = queryParser.parseQuery(jpqlString, processingChain);
 

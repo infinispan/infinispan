@@ -62,7 +62,6 @@ public class RemoteQueryDslConditionsTest extends SingleCacheManagerTest {
    protected EmbeddedCacheManager createCacheManager() throws Exception {
       ConfigurationBuilder builder = hotRodCacheConfiguration();
       builder.indexing().enable()
-            .indexLocalOnly(false)
             .addProperty("default.directory_provider", "ram")
             .addProperty("lucene_version", "LUCENE_CURRENT");
 
@@ -100,6 +99,7 @@ public class RemoteQueryDslConditionsTest extends SingleCacheManagerTest {
       user1.setName("John");
       user1.setSurname("Doe");
       user1.setGender(User.Gender.MALE);
+      user1.setAge(22);
       user1.setAccountIds(Arrays.asList(1, 2));
 
       Address address1 = new Address();
@@ -991,7 +991,6 @@ public class RemoteQueryDslConditionsTest extends SingleCacheManagerTest {
       assertTrue(Arrays.asList(1, 2).contains(list.get(1).getId()));
    }
 
-   @Test(enabled = false, description = "Wildcard search case sensitivity is broken in remote case")  //todo [anistor] fix disabled test
    public void testSampleDomainQuery16() throws Exception {
       for (int i = 0; i < 50; i++) {
          Transaction transaction = new Transaction();
@@ -1071,7 +1070,18 @@ public class RemoteQueryDslConditionsTest extends SingleCacheManagerTest {
       assertNull(list.get(2)[1]);
    }
 
-   @Test(enabled = false, description = "Queries on embedded properties do not always work in remote case")  //todo [anistor] fix disabled test
+   @Test(enabled = false, description = "Nulls not correctly indexed for numeric properties")  //todo [anistor] fix disabled test
+   public void testNullOnIntegerField() throws Exception {
+      QueryFactory qf = Search.getQueryFactory(remoteCache);
+
+      Query q = qf.from(User.class)
+            .having("age").isNull()
+            .toBuilder().build();
+
+      List<User> list = q.list();
+      assertEquals(2, list.size());
+   }
+
    public void testSampleDomainQuery19() throws Exception {
       QueryFactory qf = Search.getQueryFactory(remoteCache);
 

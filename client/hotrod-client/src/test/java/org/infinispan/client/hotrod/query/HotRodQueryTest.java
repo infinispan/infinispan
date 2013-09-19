@@ -65,7 +65,6 @@ public class HotRodQueryTest extends SingleCacheManagerTest {
       builder.dataContainer()
             .keyEquivalence(ByteArrayEquivalence.INSTANCE)
             .indexing().enable()
-            .indexLocalOnly(false)
             .addProperty("default.directory_provider", getLuceneDirectoryProvider())
             .addProperty("lucene_version", "LUCENE_CURRENT");
 
@@ -97,8 +96,8 @@ public class HotRodQueryTest extends SingleCacheManagerTest {
       return cacheManager;
    }
 
-   private byte[] readClasspathResource(String c) throws IOException {
-      InputStream is = getClass().getResourceAsStream(c);
+   private byte[] readClasspathResource(String classPathResource) throws IOException {
+      InputStream is = getClass().getResourceAsStream(classPathResource);
       try {
          ByteArrayOutputStream os = new ByteArrayOutputStream();
          byte[] buf = new byte[1024];

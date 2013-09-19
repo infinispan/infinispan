@@ -27,6 +27,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.util.UUID;
 
+//todo [anistor] use ClusterRegistry instead of reinventing it
 /**
  * @author anistor@redhat.com
  * @since 6.0

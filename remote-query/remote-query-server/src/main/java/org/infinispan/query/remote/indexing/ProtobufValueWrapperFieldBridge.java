@@ -21,6 +21,17 @@ public final class ProtobufValueWrapperFieldBridge implements FieldBridge {
 
    private final Cache cache;
 
+   /**
+    * This is lazily initialised in {@code decodeAndIndex} method. This does not need to be volatile nor do we need to
+    * synchronize before accessing it. It may happen to initialize it multiple times but that is not harmful.
+    */
+   private SerializationContext serializationContext = null;
+
+   /**
+    * Lazily initialized in {@code decodeAndIndex} method, similarly to {@code serializationContext} field.
+    */
+   private Descriptors.Descriptor wrapperDescriptor = null;
+
    public ProtobufValueWrapperFieldBridge(Cache cache) {
       this.cache = cache;
    }
@@ -36,10 +47,15 @@ public final class ProtobufValueWrapperFieldBridge implements FieldBridge {
    }
 
    private void decodeAndIndex(byte[] bytes, Document document, LuceneOptions luceneOptions) {
-      SerializationContext serCtx = ProtobufMetadataManager.getSerializationContext(cache.getCacheManager());
-      Descriptors.Descriptor wrapperDescriptor = serCtx.getMessageDescriptor(WrappedMessage.PROTOBUF_TYPE_NAME);
+      if (serializationContext == null) {
+         serializationContext = ProtobufMetadataManager.getSerializationContext(cache.getCacheManager());
+      }
+      if (wrapperDescriptor == null) {
+         wrapperDescriptor = serializationContext.getMessageDescriptor(WrappedMessage.PROTOBUF_TYPE_NAME);
+      }
+
       try {
-         new ProtobufParser().parse(new WrappedMessageTagHandler(document, luceneOptions, serCtx), wrapperDescriptor, bytes);
+         new ProtobufParser().parse(new WrappedMessageTagHandler(document, luceneOptions, serializationContext), wrapperDescriptor, bytes);
       } catch (IOException e) {
          throw new CacheException(e);
       }
