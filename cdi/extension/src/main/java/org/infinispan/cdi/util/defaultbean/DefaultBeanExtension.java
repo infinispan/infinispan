@@ -397,6 +397,7 @@ public class DefaultBeanExtension implements Extension {
                 Bean<?> db = DefaultManagedBean.of(defaultManagedBeans.get(qual), beanInfo.getType(), types, qualifiers, manager);
                 log.debug("Installing default managed bean " + db);
                 event.addBean(db);
+                fireBeanInstalledEvent(db, manager);
             } else if (defaultProducerMethods.containsKey(qual)) {
                 Synthetic declaringDefaultBean = this.producerToDeclaringDefaultBean.get(qual).getSyntheticQualifier();
                 Set<Annotation> declaringBeanQualifiers;
@@ -411,6 +412,7 @@ public class DefaultBeanExtension implements Extension {
                 Bean<?> db = createDefaultProducerMethod(defaultProducerMethods.get(qual), qual, beanInfo, types, qualifiers, declaringBeanQualifiers, info, manager);
                 log.debug("Installing default producer bean " + db);
                 event.addBean(db);
+                fireBeanInstalledEvent(db, manager);
             } else if (defaultProducerFields.containsKey(qual)) {
                 Synthetic declaringDefaultBean = this.producerToDeclaringDefaultBean.get(qual).getSyntheticQualifier();
                 Set<Annotation> declaringBeanQualifiers;
@@ -424,11 +426,16 @@ public class DefaultBeanExtension implements Extension {
                 Bean<?> db = DefaultProducerField.of(defaultProducerFields.get(qual), beanInfo.getType(), types, qualifiers, declaringBeanQualifiers, producerAnnotatedFields.get(qual), manager);
                 log.debug("Installing default producer bean " + db);
                 event.addBean(db);
+                fireBeanInstalledEvent(db, manager);
             }
         }
         for (Throwable e : deploymentProblems) {
             event.addDefinitionError(e);
         }
+    }
+    
+    private <X> void fireBeanInstalledEvent(Bean<?> bean,  BeanManager beanManager) {
+        beanManager.fireEvent(new DefaultBeanHolder(bean), InstalledLiteral.INSTANCE);
     }
 
     void afterDeploymentValidation(@Observes AfterDeploymentValidation event) {

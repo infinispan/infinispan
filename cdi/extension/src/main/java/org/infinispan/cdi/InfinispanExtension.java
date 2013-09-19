@@ -22,6 +22,7 @@ import javax.enterprise.inject.spi.BeanManager;
 import javax.enterprise.inject.spi.Extension;
 import javax.enterprise.inject.spi.InjectionPoint;
 import javax.enterprise.inject.spi.InjectionTarget;
+import javax.enterprise.inject.spi.ProcessBean;
 import javax.enterprise.inject.spi.ProcessInjectionTarget;
 import javax.enterprise.inject.spi.ProcessProducer;
 import javax.enterprise.inject.spi.Producer;
@@ -31,12 +32,15 @@ import javax.enterprise.util.TypeLiteral;
 import org.infinispan.AdvancedCache;
 import org.infinispan.Cache;
 import org.infinispan.cdi.event.cachemanager.CacheManagerEventBridge;
-import org.infinispan.cdi.util.AnyLiteral;
 import org.infinispan.cdi.util.BeanBuilder;
 import org.infinispan.cdi.util.Beans;
 import org.infinispan.cdi.util.ContextualLifecycle;
 import org.infinispan.cdi.util.ContextualReference;
+import org.infinispan.cdi.util.DefaultLiteral;
 import org.infinispan.cdi.util.Reflections;
+import org.infinispan.cdi.util.defaultbean.DefaultBean;
+import org.infinispan.cdi.util.defaultbean.DefaultBeanHolder;
+import org.infinispan.cdi.util.defaultbean.Installed;
 import org.infinispan.cdi.util.logging.Log;
 import org.infinispan.client.hotrod.RemoteCache;
 import org.infinispan.configuration.cache.Configuration;
@@ -59,6 +63,8 @@ public class InfinispanExtension implements Extension {
 
    private volatile boolean registered = false;
    private final Object registerLock = new Object();
+   
+   private Set<Set<Annotation>> installedEmbeddedCacheManagers = new HashSet<Set<Annotation>>();
 
    public InfinispanExtension() {
       this.configurations = new HashSet<InfinispanExtension.ConfigurationHolder>();
@@ -181,14 +187,35 @@ public class InfinispanExtension implements Extension {
                }).create());
    }
    
+   public void observeDefaultEmbeddedCacheManagerInstalled(@Observes @Installed DefaultBeanHolder bean) {
+       if (bean.getBean().getTypes().contains(EmbeddedCacheManager.class)) {
+           installedEmbeddedCacheManagers.add(bean.getBean().getQualifiers());
+       }
+   }
    
+   public Set<InstalledCacheManager> getInstalledEmbeddedCacheManagers(BeanManager beanManager) {
+       Set<InstalledCacheManager> installedCacheManagers = new HashSet<InstalledCacheManager>();
+       for (Set<Annotation> qualifiers : installedEmbeddedCacheManagers) {
+           Bean<?> b = beanManager.resolve(beanManager.getBeans(EmbeddedCacheManager.class, qualifiers.toArray(Reflections.EMPTY_ANNOTATION_ARRAY)));
+           EmbeddedCacheManager cm = (EmbeddedCacheManager) beanManager.getReference(b, EmbeddedCacheManager.class, beanManager.createCreationalContext(b));
+           installedCacheManagers.add(new InstalledCacheManager(cm, qualifiers.contains(DefaultLiteral.INSTANCE)));
+       }
+       return installedCacheManagers;
+   }
+   
+   public void observeEmbeddedCacheManagerBean(@Observes ProcessBean<?> processBean) {
+       if (processBean.getBean().getTypes().contains(EmbeddedCacheManager.class) && !processBean.getAnnotated().isAnnotationPresent(DefaultBean.class)) {
+           // Install any non-default EmbeddedCacheManager producers. We handle default ones separately, to ensure we only pick them up if installed
+           installedEmbeddedCacheManagers.add(processBean.getBean().getQualifiers());
+       }
+   }
 
    public void registerCacheConfigurations(CacheManagerEventBridge eventBridge, Instance<EmbeddedCacheManager> cacheManagers, BeanManager beanManager) {
       if (!registered) {
          synchronized (registerLock) {
             if (!registered) {
                final CreationalContext<Configuration> ctx = beanManager.createCreationalContext(null);
-               final EmbeddedCacheManager defaultCacheManager = cacheManagers.select(new AnnotationLiteral<Default>() {}).get();
+               final EmbeddedCacheManager defaultCacheManager = cacheManagers.select(DefaultLiteral.INSTANCE).get();
 
                for (ConfigurationHolder oneConfigurationHolder : configurations) {
                   final String cacheName = oneConfigurationHolder.getName();
@@ -219,6 +246,7 @@ public class InfinispanExtension implements Extension {
             }
          }
       }
+
    }
 
    static class ConfigurationHolder {
@@ -242,6 +270,16 @@ public class InfinispanExtension implements Extension {
 
       public Set<Annotation> getQualifiers() {
          return qualifiers;
+      }
+   }
+
+   static class InstalledCacheManager {
+      final EmbeddedCacheManager cacheManager;
+      final boolean isDefault;
+
+      InstalledCacheManager(EmbeddedCacheManager cacheManager, boolean aDefault) {
+         this.cacheManager = cacheManager;
+         isDefault = aDefault;
       }
    }
 }
