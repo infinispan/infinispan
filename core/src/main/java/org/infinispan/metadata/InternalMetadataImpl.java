@@ -22,6 +22,11 @@ public class InternalMetadataImpl implements InternalMetadata {
    private final long created;
    private final long lastUsed;
 
+   public InternalMetadataImpl() {
+      //required by the AZUL VM in order to run the tests
+      this(null,-1,-1);
+   }
+
    public InternalMetadataImpl(InternalCacheEntry ice) {
       this(ice.getMetadata(), ice.getCreated(), ice.getLastUsed());
    }
