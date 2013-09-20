@@ -36,15 +36,14 @@ import org.infinispan.metadata.Metadata;
 import org.infinispan.metadata.Metadatas;
 import org.infinispan.notifications.cachelistener.CacheNotifier;
 import org.infinispan.util.TimeService;
+import org.infinispan.util.concurrent.ConcurrentHashSet;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.HashSet;
-import java.util.List;
 import java.util.Set;
+import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.atomic.AtomicLong;
 
 @MBean(objectName = "CacheLoader", description = "Component that handles loading entries from a CacheStore into memory.")
@@ -165,7 +164,10 @@ public class CacheLoaderInterceptor extends JmxStatsCommandInterceptor {
    public Object visitKeySetCommand(InvocationContext ctx, KeySetCommand command) throws Throwable {
       Object keys = super.visitKeySetCommand(ctx, command);
       if (enabled && !shouldSkipCacheLoader(command)) {
-         final Set<Object> union = new HashSet<Object>((Set<Object>)keys);
+         Set<Object> keysSet = (Set<Object>) keys;
+         final ConcurrentHashSet<Object> union = new ConcurrentHashSet<Object>();
+         for (Object k : keysSet)
+            union.add(k);
          persistenceManager.processOnAllStores(new CollectionKeyFilter(union), new AdvancedCacheLoader.CacheLoaderTask() {
             @Override
             public void processEntry(MarshalledEntry marshalledEntry, AdvancedCacheLoader.TaskContext taskContext) throws InterruptedException {
@@ -181,18 +183,18 @@ public class CacheLoaderInterceptor extends JmxStatsCommandInterceptor {
    public Object visitEntrySetCommand(InvocationContext ctx, EntrySetCommand command) throws Throwable {
       Object entrySet = super.visitEntrySetCommand(ctx, command);
       if (enabled && !shouldSkipCacheLoader(command)) {
-         final Set<InternalCacheEntry> union = new HashSet<InternalCacheEntry>();
-         final Set<Object> processedKeys = new HashSet<Object>();
+         final ConcurrentHashSet<InternalCacheEntry> union = new ConcurrentHashSet<InternalCacheEntry>();
+         final ConcurrentHashSet<Object> processedKeys = new ConcurrentHashSet<Object>();
          for (InternalCacheEntry ice : (Set<InternalCacheEntry>)entrySet)
             processedKeys.add(ice.getKey());
          persistenceManager.processOnAllStores(new CollectionKeyFilter(processedKeys), new AdvancedCacheLoader.CacheLoaderTask() {
             @Override
             public void processEntry(MarshalledEntry marshalledEntry, AdvancedCacheLoader.TaskContext taskContext) throws InterruptedException {
-               processedKeys.add(marshalledEntry.getKey());
                union.add(iceFactory.create(marshalledEntry.getKey(), marshalledEntry.getValue(), marshalledEntry.getMetadata()));
             }
          }, true, true);
-         union.addAll((Set<InternalCacheEntry>)entrySet);
+         for (InternalCacheEntry ice : (Set<InternalCacheEntry>) entrySet)
+            union.add(ice);
          return Collections.unmodifiableSet(union);
       }
       return entrySet;
@@ -202,19 +204,16 @@ public class CacheLoaderInterceptor extends JmxStatsCommandInterceptor {
    public Object visitValuesCommand(InvocationContext ctx, ValuesCommand command) throws Throwable {
       Object values = super.visitValuesCommand(ctx, command);
       if (enabled && !shouldSkipCacheLoader(command)) {
-
-         final Set<Object> processedKeys = new HashSet<Object>();
-         final List<Object> result = new ArrayList<Object>();
-         persistenceManager.processOnAllStores(new CollectionKeyFilter(processedKeys), new AdvancedCacheLoader.CacheLoaderTask() {
+         final ConcurrentLinkedQueue<Object> result = new ConcurrentLinkedQueue<Object>();
+         persistenceManager.processOnAllStores(null, new AdvancedCacheLoader.CacheLoaderTask() {
             @Override
             public void processEntry(MarshalledEntry marshalledEntry, AdvancedCacheLoader.TaskContext taskContext) throws InterruptedException {
-               processedKeys.add(marshalledEntry.getKey());
                result.add(marshalledEntry.getValue());
             }
          }, true, false);
 
          result.addAll((Collection<Object>)values);
-         return Collections.unmodifiableList(result);
+         return result;
       }
       return values;
    }
