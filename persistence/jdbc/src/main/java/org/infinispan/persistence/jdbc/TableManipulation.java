@@ -225,7 +225,7 @@ public class TableManipulation implements Cloneable {
 
    public String getCountRowsSql() {
       if (countRowsSql == null) {
-         countRowsSql = "SELECT COUNT (*) FROM " + getTableName();
+         countRowsSql = "SELECT COUNT(*) FROM " + getTableName();
       }
       return countRowsSql;
    }
