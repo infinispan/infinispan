@@ -308,7 +308,7 @@ public class AsyncStore extends AbstractDelegatingStore {
       super.start();
 
       int poolSize = asyncStoreConfig.getThreadPoolSize();
-      executor = new ThreadPoolExecutor(0, poolSize, 120L, TimeUnit.SECONDS, new LinkedBlockingQueue<Runnable>(),
+      executor = new ThreadPoolExecutor(poolSize, poolSize, 0L, TimeUnit.SECONDS, new LinkedBlockingQueue<Runnable>(),
             new ThreadFactory() {
                @Override
                public Thread newThread(Runnable r) {

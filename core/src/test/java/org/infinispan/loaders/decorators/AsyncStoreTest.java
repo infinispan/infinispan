@@ -58,6 +58,7 @@ import java.util.concurrent.CyclicBarrier;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.concurrent.locks.ReentrantLock;
 
 import static org.infinispan.test.TestingUtil.k;
@@ -173,6 +174,40 @@ public class AsyncStoreTest extends AbstractInfinispanTest {
          store = null;
       }
    }
+   
+   @Test(timeOut=10000)
+   public void testThreadSafetyWritingDiffValuesOnDifferentThread(Method m) throws Exception {
+	      try {
+	         final CountDownLatch latch = new CountDownLatch(2);
+	         final AtomicReference<Thread> fir = new AtomicReference<Thread>();
+	         DummyInMemoryCacheStore underlying = new DummyInMemoryCacheStore() {
+	        	 
+	        	 @Override
+	        	public void store(InternalCacheEntry ed) {
+	        		 if (fir.getAndSet(Thread.currentThread()) != Thread.currentThread()) {
+	        			 latch.countDown();
+	        		 }
+	        	}
+	        	 
+	         };
+	         AsyncStoreConfig asyncConfig = new AsyncStoreConfig().threadPoolSize(10);
+	         store = new AsyncStore(underlying, asyncConfig);
+	         DummyInMemoryCacheStore.Cfg dummyCfg = new DummyInMemoryCacheStore.Cfg();
+	         dummyCfg.storeName(m.getName());
+	         store.init(dummyCfg, getCache(), null);
+	         store.start();
+
+	         store.store(TestInternalCacheEntryFactory.create("k1", "v1"));
+	         store.store(TestInternalCacheEntryFactory.create("k2", "v2"));
+	         latch.await();
+
+	      } finally {
+	         store.delegate.clear();
+	         store.stop();
+	         store = null;
+	      }
+	   }
+
 
    public void testTransactionalModificationsHappenInDiffThread(Method m) throws Exception {
       final int waitTimeout = 10;
