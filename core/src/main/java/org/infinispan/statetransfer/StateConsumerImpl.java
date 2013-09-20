@@ -819,8 +819,8 @@ public class StateConsumerImpl implements StateConsumer {
       // To compensate for this, we delete all L1 entries in segments that changed ownership during
       // this topology update. We can't actually differentiate between L1 entries and regular entries,
       // so we delete all entries that don't belong to this node in the current OR previous topology.
-      final Set<Object> keysToL1 = new HashSet<Object>();
-      final Set<Object> keysToRemove = new HashSet<Object>();
+      final ConcurrentHashSet<Object> keysToL1 = new ConcurrentHashSet<Object>();
+      final ConcurrentHashSet<Object> keysToRemove = new ConcurrentHashSet<Object>();
 
       // gather all keys from data container that belong to the segments that are being removed/moved to L1
       for (InternalCacheEntry ice : dataContainer) {
