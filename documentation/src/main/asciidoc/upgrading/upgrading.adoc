@@ -7,6 +7,52 @@ Manik Surtani, Mircea Markus, Galder Zamarreño, Pete Muir, and others from the 
 
 This guide walks you through the process of upgrading Infinispan.
 
+== Upgrading from 5.3 to 6.0
+=== Declarative configuration
+In order to use all of the latest features, make sure you change the namespace declaration at the top of your XML configuration files as follows:
+
+[source,xml]
+----
+<infinispan xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="urn:infinispan:config:6.0 http://www.infinispan.org/schemas/infinispan-config-6.0.xsd" xmlns="urn:infinispan:config:6.0">
+   ...
+</infinispan>
+----
+
+=== Deprecated API removal
+
+* Class `org.infinispan.persistence.remote.wrapperEntryWrapper`.
+
+* Method `ObjectOutput startObjectOutput(OutputStream os, boolean isReentrant)` from class
+`org.infinispan.commons.marshall.StreamingMarshaller`.
+
+* Method `CacheEntry getCacheEntry(Object key, EnumSet<Flag> explicitFlags, ClassLoader explicitClassLoader)` from class
+`org.infinispan.AdvancedCache`.
+Please use instead: `AdvanceCache.withFlags(Flag... flags).with(ClassLoader classLoader).getCacheEntry(K key)`.
+
+* Method `AtomicMap<K, V> getAtomicMap(Cache<MK, ?> cache, MK key, FlagContainer flagContainer)` from class
+`org.infinispan.atomic.AtomicMapLookup`.
+Please use instead `AtomicMapLookup.getAtomicMap(cache.getAdvancedCache().withFlags(Flag... flags), MK key)`.
+
+* Package `org.infinispan.config` (and all methods involving the old configuration classes).
+All methods removed has an overloaded method which receives the new configuration classes as parameters.
+Please refer to <<_configuration>> for more information about the new configuration classes.
+
+NOTE: This only affects the programmatic configuration.
+
+* Class `org.infinispan.context.FlagContainer`.
+
+* Method `boolean isLocal(Object key)` from class `org.infinispan.distribution.DistributionManager`.
+Please use instead `DistributionManager.getLocality(Object key)`.
+
+* JMX operation `void setStatisticsEnabled(boolean enabled)` from class `org.infinispan.interceptors.TxInterceptor`
+Please use instead the `statisticsEnabled` attribute.
+
+* Method `boolean delete(boolean synchronous)` from class `org.infinispan.io.GridFile`.
+Please use instead `GridFile.delete()`.
+
+* JMX attribute `long getLocallyInterruptedTransactions()` from class
+`org.infinispan.util.concurrent.locks.DeadlockDetectingLockManager`.
+
 ==  Upgrading from 5.2 to 5.3
 === Declarative configuration
 In order to use all of the latest features, make sure you change the namespace declaration at the top of your XML configuration files as follows:
