@@ -8,6 +8,7 @@ import org.infinispan.test.SingleCacheManagerTest;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.CleanupAfterMethod;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
+import org.infinispan.transaction.LockingMode;
 import org.infinispan.transaction.TransactionTable;
 import org.infinispan.transaction.xa.LocalXaTransaction;
 import org.testng.annotations.Test;
@@ -25,8 +26,13 @@ public class ReadOnlyTxTest extends SingleCacheManagerTest {
    @Override
    protected EmbeddedCacheManager createCacheManager() throws Exception {
       ConfigurationBuilder configuration = getDefaultClusteredCacheConfig(CacheMode.LOCAL, true);
-      configuration.transaction().useSynchronization(false);
+      configuration.transaction().lockingMode(LockingMode.PESSIMISTIC);
+      configure(configuration);
       return TestCacheManagerFactory.createCacheManager(configuration);
+   }
+
+   protected void configure(ConfigurationBuilder builder) {
+      builder.transaction().useSynchronization(false);
    }
 
    public void testSimpleReadOnlTx() throws Exception {
@@ -40,20 +46,26 @@ public class ReadOnlyTxTest extends SingleCacheManagerTest {
    public void testNotROWhenHasWrites() throws Exception {
       tm().begin();
       cache.put("k", "v");
-      assert !TestingUtil.extractLockManager(cache).isLocked("k");
+      assert TestingUtil.extractLockManager(cache).isLocked("k");
       Transaction transaction = tm().suspend();
       LocalXaTransaction localTransaction = (LocalXaTransaction) txTable().getLocalTransaction(transaction);
       assert localTransaction != null && !localTransaction.isReadOnly();
    }
 
-   public void testNotROWhenHasOnlyLocks() throws Exception {
+   public void testROWhenHasOnlyLocksAndReleasedProperly() throws Exception {
       cache.put("k", "v");
       tm().begin();
       cache.getAdvancedCache().withFlags(Flag.FORCE_WRITE_LOCK).get("k");
-      assert !TestingUtil.extractLockManager(cache).isLocked("k");
+      assert TestingUtil.extractLockManager(cache).isLocked("k");
       Transaction transaction = tm().suspend();
       LocalXaTransaction localTransaction = (LocalXaTransaction) txTable().getLocalTransaction(transaction);
-      assert localTransaction != null && !localTransaction.isReadOnly();
+      assert localTransaction != null && localTransaction.isReadOnly();
+
+      tm().resume(transaction);
+
+      tm().commit();
+
+      assert !TestingUtil.extractLockManager(cache).isLocked("k");
    }
 
 
