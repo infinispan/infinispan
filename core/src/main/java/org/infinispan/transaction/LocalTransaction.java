@@ -121,7 +121,7 @@ public abstract class LocalTransaction extends AbstractCacheTransaction {
    }
 
    public boolean isReadOnly() {
-      return (modifications == null || modifications.isEmpty()) && (lookedUpEntries == null || lookedUpEntries.isEmpty());
+      return modifications == null || modifications.isEmpty();
    }
 
    public abstract boolean isEnlisted();
