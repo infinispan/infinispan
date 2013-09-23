@@ -1,5 +1,7 @@
 package org.infinispan.interceptors.distribution;
 
+import org.infinispan.commands.tx.CommitCommand;
+import org.infinispan.commands.tx.PrepareCommand;
 import org.infinispan.commands.write.DataWriteCommand;
 import org.infinispan.commands.write.PutKeyValueCommand;
 import org.infinispan.commands.write.PutMapCommand;
@@ -9,6 +11,7 @@ import org.infinispan.commands.write.WriteCommand;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.context.Flag;
 import org.infinispan.context.InvocationContext;
+import org.infinispan.context.impl.TxInvocationContext;
 import org.infinispan.distribution.L1Manager;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.annotations.Start;
@@ -109,29 +112,28 @@ public class L1LastChanceInterceptor extends BaseRpcInterceptor {
       return nonTransactional && !command.hasFlag(Flag.CACHE_MODE_LOCAL);
    }
 
-   // TODO: commented out until after we can add changes for ISPN-1540 to make tx inline with nontx
-//   @Override
-//   public Object visitPrepareCommand(TxInvocationContext ctx, PrepareCommand command) throws Throwable {
-//      Object retVal = invokeNextInterceptor(ctx, command);
-//      if (command.isOnePhaseCommit()) {
-//         handleLastChanceL1InvalidationOnCommit(ctx);
-//      }
-//      return retVal;
-//   }
-//
-//   @Override
-//   public Object visitCommitCommand(TxInvocationContext ctx, CommitCommand command) throws Throwable {
-//      Object retVal = invokeNextInterceptor(ctx, command);
-//      handleLastChanceL1InvalidationOnCommit(ctx);
-//      return retVal;
-//   }
-//
-//   private void handleLastChanceL1InvalidationOnCommit(TxInvocationContext ctx) {
-//      if (shouldInvokeRemoteTxCommand(ctx)) {
-//         if (trace) {
-//            log.tracef("Sending additional invalidation for requestors if necessary.");
-//         }
-//         l1Manager.flushCache(ctx.getLockedKeys(), ctx.getOrigin(), true);
-//      }
-//   }
+   @Override
+   public Object visitPrepareCommand(TxInvocationContext ctx, PrepareCommand command) throws Throwable {
+      Object retVal = invokeNextInterceptor(ctx, command);
+      if (command.isOnePhaseCommit()) {
+         handleLastChanceL1InvalidationOnCommit(ctx);
+      }
+      return retVal;
+   }
+
+   @Override
+   public Object visitCommitCommand(TxInvocationContext ctx, CommitCommand command) throws Throwable {
+      Object retVal = invokeNextInterceptor(ctx, command);
+      handleLastChanceL1InvalidationOnCommit(ctx);
+      return retVal;
+   }
+
+   private void handleLastChanceL1InvalidationOnCommit(TxInvocationContext ctx) {
+      if (shouldInvokeRemoteTxCommand(ctx)) {
+         if (trace) {
+            log.tracef("Sending additional invalidation for requestors if necessary.");
+         }
+         l1Manager.flushCache(ctx.getLockedKeys(), ctx.getOrigin(), true);
+      }
+   }
 }

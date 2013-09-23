@@ -61,8 +61,11 @@ public class PessimisticLockingInterceptor extends AbstractTxLockingInterceptor 
    @Override
    public final Object visitGetKeyValueCommand(InvocationContext ctx, GetKeyValueCommand command) throws Throwable {
       try {
-         if (command.hasFlag(Flag.FORCE_WRITE_LOCK)) {
+         if (command.hasFlag(Flag.FORCE_WRITE_LOCK) && ctx.isInTxScope()) {
             boolean skipLocking = hasSkipLocking(command);
+            if (!skipLocking) {
+               acquireRemoteIfNeeded(ctx, command, cdl.localNodeIsPrimaryOwner(command.getKey()));
+            }
             long lockTimeout = getLockAcquisitionTimeout(command, skipLocking);
             lockKeyAndCheckOwnership(ctx, command.getKey(), lockTimeout, skipLocking);
          }

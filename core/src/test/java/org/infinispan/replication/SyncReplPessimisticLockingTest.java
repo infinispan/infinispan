@@ -186,12 +186,12 @@ public class SyncReplPessimisticLockingTest extends MultipleCacheManagersTest {
       assert !lockManager(0, "testcache").isLocked("k");
    }
 
-   @Test(enabled = false, description = "This test should work when ISPN-3266 is fixed")
+   @Test
    public void testRemoteLocksReleasedWhenReadTransactionCommitted() throws Exception {
       testRemoteLocksReleased(false, true);
    }
 
-   @Test(enabled = false, description = "This test should work when ISPN-3266 is fixed")
+   @Test
    public void testRemoteLocksReleasedWhenReadTransactionRolledBack() throws Exception {
       testRemoteLocksReleased(false, false);
    }
