@@ -169,6 +169,12 @@ public abstract class BaseDistFunctionalTest<K, V> extends MultipleCacheManagers
       return DistributionTestHelper.safeType(o);
    }
 
+   protected boolean isInL1(Cache<?, ?> cache, Object key) {
+      DataContainer dc = cache.getAdvancedCache().getDataContainer();
+      InternalCacheEntry ice = dc.get(key);
+      return ice != null && !(ice instanceof ImmortalCacheEntry);
+   }
+
    protected void assertIsInL1(Cache<?, ?> cache, Object key) {
       DistributionTestHelper.assertIsInL1(cache, key);
    }

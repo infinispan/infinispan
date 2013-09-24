@@ -131,7 +131,7 @@ public class DistSyncL1PessimisticFuncTest extends BaseDistFunctionalTest {
             }
          });
 
-         // Get should not be able to complete
+         // Put should not be able to complete
          try {
             futurePut.get(1, TimeUnit.SECONDS);
             fail("Get command should have blocked waiting");
@@ -142,6 +142,14 @@ public class DistSyncL1PessimisticFuncTest extends BaseDistFunctionalTest {
          ownerManger.commit();
 
          assertEquals(value, futurePut.get(1, TimeUnit.SECONDS));
+
+         eventually(new Condition() {
+            @Override
+            public boolean isSatisfied() throws Exception {
+               // Value should be removed from L1 eventually
+               return !isInL1(nonOwner, key);
+            }
+         });
 
          assertIsNotInL1(nonOwner, key);
       } finally {
