@@ -224,7 +224,7 @@ public class SyncReplPessimisticLockingTest extends MultipleCacheManagersTest {
          assertTrue(localTx.isReadOnly());
       }
 
-      Collection<RemoteTransaction> remoteTxs = TestingUtil.getTransactionTable(cache(0, "testcache")).getRemoteTransactions();
+      final Collection<RemoteTransaction> remoteTxs = TestingUtil.getTransactionTable(cache(0, "testcache")).getRemoteTransactions();
       assertEquals(1, remoteTxs.size());
       RemoteTransaction remoteTx = remoteTxs.iterator().next();
       assertTrue(remoteTx.getLockedKeys().contains(key));
@@ -232,13 +232,16 @@ public class SyncReplPessimisticLockingTest extends MultipleCacheManagersTest {
 
       if (commit) {
          tm(1, "testcache").commit();
-         // Hack since commit releases locks async
-         Thread.sleep(100);
       } else {
          tm(1, "testcache").rollback();
       }
 
-      assertEquals(0, TestingUtil.getTransactionTable(cache(0, "testcache")).getRemoteTxCount());
+      eventually(new Condition() {
+         @Override
+         public boolean isSatisfied() throws Exception {
+            return remoteTxs.isEmpty();
+         }
+      });
       assertFalse(TestingUtil.extractLockManager(cache(0, "testcache")).isLocked(key));
    }
 }
