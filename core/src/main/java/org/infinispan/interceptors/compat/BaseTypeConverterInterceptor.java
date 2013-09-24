@@ -55,8 +55,10 @@ public abstract class BaseTypeConverterInterceptor extends CommandInterceptor {
       Object key = command.getKey();
       TypeConverter<Object, Object, Object, Object> converter =
             determineTypeConverter(command.getFlags());
-      command.setKey(converter.boxKey(key));
-      command.setValue(converter.boxValue(command.getValue()));
+      if (ctx.isOriginLocal()) {
+         command.setKey(converter.boxKey(key));
+         command.setValue(converter.boxValue(command.getValue()));
+      }
       Object ret = invokeNextInterceptor(ctx, command);
       return converter.unboxValue(ret);
    }
@@ -66,7 +68,9 @@ public abstract class BaseTypeConverterInterceptor extends CommandInterceptor {
       Object key = command.getKey();
       TypeConverter<Object, Object, Object, Object> converter =
             determineTypeConverter(command.getFlags());
-      command.setKey(converter.boxKey(key));
+      if (ctx.isOriginLocal()) {
+         command.setKey(converter.boxKey(key));
+      }
       Object ret = invokeNextInterceptor(ctx, command);
       if (ret != null) {
          if (command.isReturnEntry()) {
@@ -95,10 +99,12 @@ public abstract class BaseTypeConverterInterceptor extends CommandInterceptor {
       Object key = command.getKey();
       TypeConverter<Object, Object, Object, Object> converter =
             determineTypeConverter(command.getFlags());
-      command.setKey(converter.boxKey(key));
       Object oldValue = command.getOldValue();
-      command.setOldValue(converter.boxValue(oldValue));
-      command.setNewValue(converter.boxValue(command.getNewValue()));
+      if (ctx.isOriginLocal()) {
+         command.setKey(converter.boxKey(key));
+         command.setOldValue(converter.boxValue(oldValue));
+         command.setNewValue(converter.boxValue(command.getNewValue()));
+      }
       addVersionIfNeeded(command);
       Object ret = invokeNextInterceptor(ctx, command);
 
@@ -126,9 +132,11 @@ public abstract class BaseTypeConverterInterceptor extends CommandInterceptor {
       Object key = command.getKey();
       TypeConverter<Object, Object, Object, Object> converter =
             determineTypeConverter(command.getFlags());
-      command.setKey(converter.boxKey(key));
       Object conditionalValue = command.getValue();
-      command.setValue(converter.boxValue(conditionalValue));
+      if (ctx.isOriginLocal()) {
+         command.setKey(converter.boxKey(key));
+         command.setValue(converter.boxValue(conditionalValue));
+      }
       Object ret = invokeNextInterceptor(ctx, command);
 
       // Return of conditional remove is not the value type, but boolean, so
@@ -137,7 +145,7 @@ public abstract class BaseTypeConverterInterceptor extends CommandInterceptor {
       if (conditionalValue != null && ret instanceof Boolean)
          return ret;
 
-      return converter.unboxValue(ret);
+      return ctx.isOriginLocal() ? converter.unboxValue(ret) : ret;
    }
 
    @Override
