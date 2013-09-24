@@ -125,6 +125,12 @@ public class JdbcMixedStoreConfigurationBuilder extends AbstractJdbcStoreConfigu
 
    @Override
    public JdbcMixedStoreConfiguration create() {
+      if (databaseType != null) {
+         if (stringTable.databaseType == null)
+            stringTable.databaseType(databaseType);
+         if (binaryTable.databaseType == null)
+            binaryTable.databaseType(databaseType);
+      }
       return new JdbcMixedStoreConfiguration(purgeOnStartup, fetchPersistentState, ignoreModifications, async.create(),
                                              singletonStore.create(), preload, shared, properties, connectionFactory.create(), manageConnectionFactory,
                                              batchSize, fetchSize, databaseType, binaryTable.create(), stringTable.create(), key2StringMapper, lockConcurrencyLevel, lockAcquisitionTimeout);

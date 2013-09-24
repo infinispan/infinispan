@@ -21,7 +21,7 @@ public abstract class TableManipulationConfigurationBuilder<B extends AbstractJd
    private boolean createOnStart = true;
    private boolean dropOnExit = false;
    private String cacheName;
-   private DatabaseType databaseType;
+   DatabaseType databaseType;
    private String idColumnName;
    private String idColumnType;
    private String dataColumnName;
