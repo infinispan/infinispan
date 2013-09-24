@@ -2,6 +2,10 @@ package org.infinispan.persistence.jdbc.mixed;
 
 import junit.framework.Assert;
 import org.infinispan.commons.CacheConfigurationException;
+import org.infinispan.configuration.cache.CacheMode;
+import org.infinispan.configuration.cache.Configuration;
+import org.infinispan.configuration.cache.ConfigurationBuilder;
+import org.infinispan.persistence.jdbc.DatabaseType;
 import org.infinispan.persistence.jdbc.configuration.JdbcMixedStoreConfiguration;
 import org.infinispan.persistence.jdbc.configuration.JdbcMixedStoreConfigurationBuilder;
 import org.infinispan.persistence.keymappers.DefaultTwoWayKey2StringMapper;
@@ -93,5 +97,34 @@ public class JdbcMixedStoreConfigurationTest {
                .lockConcurrencyLevel(13);
       config = storeBuilder2.create();
       Assert.assertEquals(13, config.lockConcurrencyLevel());
+   }
+
+   public void testDatabaseConfiguration() {
+      ConfigurationBuilder bld = new ConfigurationBuilder();
+      bld.clustering().cacheMode(CacheMode.LOCAL)
+            .persistence()
+            .addStore(JdbcMixedStoreConfigurationBuilder.class).fetchPersistentState(false).purgeOnStartup(false)
+            .databaseType(DatabaseType.MYSQL)
+            .stringTable()
+            .dropOnExit(false)
+            .createOnStart(true)
+            .tableNamePrefix("ISPN6Alpha2_STRING")
+            .idColumnName("ID").idColumnType("VARCHAR(255)")
+            .dataColumnName("DATA").dataColumnType("VARBINARY(1000)")
+            .timestampColumnName("TIMESTAMP").timestampColumnType("BIGINT")
+            .binaryTable()
+            .dropOnExit(false)
+            .createOnStart(true)
+            .tableNamePrefix("ISPN6Alpha2_BINARY")
+            .idColumnName("ID").idColumnType("VARCHAR(255)")
+            .dataColumnName("DATA").dataColumnType("VARBINARY(1000)")
+            .timestampColumnName("TIMESTAMP").timestampColumnType("BIGINT")
+            .dataSource()
+            .jndiUrl("java:jboss/datasources/ExampleDS");
+      Configuration build = bld.build();
+      JdbcMixedStoreConfiguration sc = (JdbcMixedStoreConfiguration) build.persistence().stores().get(0);
+      Assert.assertEquals(sc.databaseType(), DatabaseType.MYSQL);
+      Assert.assertEquals(sc.binaryTable().databaseType(), DatabaseType.MYSQL);
+      Assert.assertEquals(sc.stringTable().databaseType(), DatabaseType.MYSQL);
    }
 }
