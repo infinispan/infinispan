@@ -9,19 +9,17 @@ public class TransportConfiguration {
    private final String machineId;
    private final String rackId;
    private final String siteId;
-   private final boolean strictPeerToPeer;
    private final long distributedSyncTimeout;
    private final Transport transport;
    private final String nodeName;
    private TypedProperties properties;
    
-   TransportConfiguration(String clusterName, String machineId, String rackId, String siteId, boolean strictPeerToPeer,
-         long distributedSyncTimeout, Transport transport, String nodeName, TypedProperties properties) {
+   TransportConfiguration(String clusterName, String machineId, String rackId, String siteId,
+                          long distributedSyncTimeout, Transport transport, String nodeName, TypedProperties properties) {
       this.clusterName = clusterName;
       this.machineId = machineId;
       this.rackId = rackId;
       this.siteId = siteId;
-      this.strictPeerToPeer = strictPeerToPeer;
       this.distributedSyncTimeout = distributedSyncTimeout;
       this.transport = transport;
       this.nodeName = nodeName;
@@ -56,8 +54,12 @@ public class TransportConfiguration {
       return nodeName;
    }
 
+   /**
+    * @deprecated Since 6.0, strictPeerToPeer is ignored and asymmetric clusters are always allowed.
+    */
+   @Deprecated
    public boolean strictPeerToPeer() {
-      return strictPeerToPeer;
+      return false;
    }
    
    public TypedProperties properties() {
@@ -75,7 +77,6 @@ public class TransportConfiguration {
             ", machineId='" + machineId + '\'' +
             ", rackId='" + rackId + '\'' +
             ", siteId='" + siteId + '\'' +
-            ", strictPeerToPeer=" + strictPeerToPeer +
             ", distributedSyncTimeout=" + distributedSyncTimeout +
             ", transport=" + transport +
             ", nodeName='" + nodeName + '\'' +

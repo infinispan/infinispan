@@ -934,5 +934,9 @@ public interface Log extends BasicLogger {
 
    @Message(value = "Invalid Cache Loader class: %s", id = 253)
    CacheConfigurationException invalidCacheLoaderClass(String name);
+
+   @LogMessage(level = WARN)
+   @Message(value = "The transport element's 'strictPeerToPeer' attribute is no longer in use.", id = 254)
+   void strictPeerToPeerDeprecated();
 }
 

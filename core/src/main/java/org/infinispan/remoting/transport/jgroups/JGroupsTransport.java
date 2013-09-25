@@ -338,9 +338,6 @@ public class JGroupsTransport extends AbstractTransport implements MembershipLis
                log.errorInstantiatingJGroupsChannelLookup(channelLookupClassName, e);
                throw new CacheException(e);
             }
-            if (configuration.transport().strictPeerToPeer() && !startChannel) {
-               log.warnStrictPeerToPeerWithInjectedChannel();
-            }
          }
 
          if (channel == null && props.containsKey(CONFIGURATION_FILE)) {

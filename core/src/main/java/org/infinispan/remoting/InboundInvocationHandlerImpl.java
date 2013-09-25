@@ -10,7 +10,6 @@ import org.infinispan.commands.tx.totalorder.TotalOrderPrepareCommand;
 import org.infinispan.commands.tx.totalorder.TotalOrderRollbackCommand;
 import org.infinispan.commands.tx.totalorder.TotalOrderVersionedCommitCommand;
 import org.infinispan.commons.CacheException;
-import org.infinispan.configuration.global.GlobalConfiguration;
 import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.factories.GlobalComponentRegistry;
 import org.infinispan.factories.KnownComponentNames;
@@ -47,7 +46,6 @@ public class InboundInvocationHandlerImpl implements InboundInvocationHandler {
    private GlobalComponentRegistry gcr;
    private static final Log log = LogFactory.getLog(InboundInvocationHandlerImpl.class);
    private static final boolean trace = log.isTraceEnabled();
-   private GlobalConfiguration globalConfiguration;
    private Transport transport;
    private CancellationService cancelService;
    private ExecutorService remoteCommandsExecutor;
@@ -57,10 +55,9 @@ public class InboundInvocationHandlerImpl implements InboundInvocationHandler {
    public void inject(GlobalComponentRegistry gcr, Transport transport,
                       @ComponentName(KnownComponentNames.REMOTE_COMMAND_EXECUTOR) ExecutorService remoteCommandsExecutor,
                       @ComponentName(KnownComponentNames.TOTAL_ORDER_EXECUTOR) BlockingTaskAwareExecutorService totalOrderExecutorService,
-                      GlobalConfiguration globalConfiguration, CancellationService cancelService) {
+                      CancellationService cancelService) {
       this.gcr = gcr;
       this.transport = transport;
-      this.globalConfiguration = globalConfiguration;
       this.cancelService = cancelService;
       this.remoteCommandsExecutor = remoteCommandsExecutor;
       this.totalOrderExecutorService = totalOrderExecutorService;
@@ -74,11 +71,7 @@ public class InboundInvocationHandlerImpl implements InboundInvocationHandler {
       ComponentRegistry cr = gcr.getNamedComponentRegistry(cacheName);
 
       if (cr == null) {
-         if (!globalConfiguration.transport().strictPeerToPeer()) {
-            if (trace) log.tracef("Strict peer to peer off, so silently ignoring that %s cache is not defined", cacheName);
-         } else {
-            log.namedCacheDoesNotExist(cacheName);
-         }
+         if (trace) log.tracef("Silently ignoring that %s cache is not defined", cacheName);
          reply(response, CacheNotFoundResponse.INSTANCE);
          return;
       }
