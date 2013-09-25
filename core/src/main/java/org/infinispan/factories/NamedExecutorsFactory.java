@@ -31,7 +31,7 @@ public class NamedExecutorsFactory extends NamedComponentFactory implements Auto
    private ExecutorService notificationExecutor;
    private ExecutorService asyncTransportExecutor;
    private ExecutorService persistenceExecutor;
-   private ExecutorService remoteCommandsExecutor;
+   private BlockingTaskAwareExecutorService remoteCommandsExecutor;
    private ScheduledExecutorService evictionExecutor;
    private ScheduledExecutorService asyncReplicationExecutor;
    private BlockingTaskAwareExecutorService totalOrderExecutor;
@@ -93,7 +93,7 @@ public class NamedExecutorsFactory extends NamedComponentFactory implements Auto
          } else if (componentName.equals(REMOTE_COMMAND_EXECUTOR)) {
             synchronized (this) {
                if (remoteCommandsExecutor == null) {
-                  remoteCommandsExecutor = buildAndConfigureExecutorService(
+                  remoteCommandsExecutor = buildAndConfigureBlockingTaskAwareExecutorService(
                         globalConfiguration.remoteCommandsExecutor().factory(),
                         globalConfiguration.remoteCommandsExecutor().properties(), componentName, nodeName);
                }

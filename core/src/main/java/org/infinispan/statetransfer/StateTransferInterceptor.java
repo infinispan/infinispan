@@ -24,6 +24,7 @@ import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
 import java.util.Set;
+import java.util.concurrent.TimeUnit;
 
 //todo [anistor] command forwarding breaks the rule that we have only one originator for a command. this opens now the possibility to have two threads processing incoming remote commands for the same TX
 /**
@@ -58,6 +59,7 @@ public class StateTransferInterceptor extends CommandInterceptor {
    private CommandsFactory commandFactory;
 
    private boolean useVersioning;
+   private long transactionDataTimeout;
 
    private final AffectedKeysVisitor affectedKeysVisitor = new AffectedKeysVisitor();
 
@@ -75,6 +77,7 @@ public class StateTransferInterceptor extends CommandInterceptor {
 
       useVersioning = configuration.transaction().transactionMode().isTransactional() && configuration.locking().writeSkewCheck() &&
             configuration.transaction().lockingMode() == LockingMode.OPTIMISTIC && configuration.versioning().enabled();
+      transactionDataTimeout = configuration.clustering().sync().replTimeout();
    }
 
    @Override
@@ -193,7 +196,7 @@ public class StateTransferInterceptor extends CommandInterceptor {
          return invokeNextInterceptor(ctx, command);
       }
 
-      updateTopologyIdAndWaitForTransactionData(command);
+      updateTopologyId(command);
 
       // Only catch OutdatedTopologyExceptions on the originator
       if (!ctx.isOriginLocal()) {
@@ -218,6 +221,7 @@ public class StateTransferInterceptor extends CommandInterceptor {
          // Without this, we could retry the command too fast and we could get the OutdatedTopologyException again.
          int newTopologyId = Math.max(stateTransferManager.getCacheTopology().getTopologyId(), commandTopologyId + 1);
          command.setTopologyId(newTopologyId);
+         stateTransferLock.waitForTransactionData(newTopologyId, transactionDataTimeout, TimeUnit.MILLISECONDS);
          localResult = handleNonTxWriteCommand(ctx, command);
       }
 
@@ -243,7 +247,7 @@ public class StateTransferInterceptor extends CommandInterceptor {
       if (isLocalOnly(ctx, command)) {
          return invokeNextInterceptor(ctx, command);
       }
-      updateTopologyIdAndWaitForTransactionData((TopologyAffectedCommand) command);
+      updateTopologyId((TopologyAffectedCommand) command);
 
       // TODO we may need to skip local invocation for read/write/tx commands if the command is too old and none of its keys are local
       Object localResult = invokeNextInterceptor(ctx, command);
@@ -261,7 +265,7 @@ public class StateTransferInterceptor extends CommandInterceptor {
       return localResult;
    }
 
-   private void updateTopologyIdAndWaitForTransactionData(TopologyAffectedCommand command) throws InterruptedException {
+   private void updateTopologyId(TopologyAffectedCommand command) throws InterruptedException {
       // set the topology id if it was not set before (ie. this is local command)
       // TODO Make tx commands extend FlagAffectedCommand so we can use CACHE_MODE_LOCAL in TransactionTable.cleanupStaleTransactions
       if (command.getTopologyId() == -1) {
@@ -270,10 +274,6 @@ public class StateTransferInterceptor extends CommandInterceptor {
             command.setTopologyId(cacheTopology.getTopologyId());
          }
       }
-
-      // remote/forwarded command
-      int cmdTopologyId = command.getTopologyId();
-      stateTransferLock.waitForTransactionData(cmdTopologyId);
    }
 
    private boolean isLocalOnly(InvocationContext ctx, VisitableCommand command) {

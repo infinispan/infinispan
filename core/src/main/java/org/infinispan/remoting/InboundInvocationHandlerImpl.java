@@ -3,7 +3,11 @@ package org.infinispan.remoting;
 import org.infinispan.commands.CancellableCommand;
 import org.infinispan.commands.CancellationService;
 import org.infinispan.commands.CommandsFactory;
+import org.infinispan.commands.ReplicableCommand;
+import org.infinispan.commands.TopologyAffectedCommand;
 import org.infinispan.commands.remote.CacheRpcCommand;
+import org.infinispan.commands.remote.MultipleRpcCommand;
+import org.infinispan.commands.remote.SingleRpcCommand;
 import org.infinispan.commands.tx.PrepareCommand;
 import org.infinispan.commands.tx.totalorder.TotalOrderCommitCommand;
 import org.infinispan.commands.tx.totalorder.TotalOrderPrepareCommand;
@@ -19,6 +23,7 @@ import org.infinispan.factories.scopes.Scope;
 import org.infinispan.factories.scopes.Scopes;
 import org.infinispan.interceptors.totalorder.RetryPrepareException;
 import org.infinispan.remoting.responses.CacheNotFoundResponse;
+import org.infinispan.statetransfer.StateTransferLock;
 import org.infinispan.statetransfer.StateTransferManager;
 import org.infinispan.remoting.responses.ExceptionResponse;
 import org.infinispan.remoting.responses.Response;
@@ -33,7 +38,7 @@ import org.infinispan.util.concurrent.BlockingTaskAwareExecutorService;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
-import java.util.concurrent.ExecutorService;
+import java.util.concurrent.TimeUnit;
 
 /**
  * Sets the cache interceptor chain on an RPCCommand before calling it to perform
@@ -48,12 +53,12 @@ public class InboundInvocationHandlerImpl implements InboundInvocationHandler {
    private static final boolean trace = log.isTraceEnabled();
    private Transport transport;
    private CancellationService cancelService;
-   private ExecutorService remoteCommandsExecutor;
+   private BlockingTaskAwareExecutorService remoteCommandsExecutor;
    private BlockingTaskAwareExecutorService totalOrderExecutorService;
 
    @Inject
    public void inject(GlobalComponentRegistry gcr, Transport transport,
-                      @ComponentName(KnownComponentNames.REMOTE_COMMAND_EXECUTOR) ExecutorService remoteCommandsExecutor,
+                      @ComponentName(KnownComponentNames.REMOTE_COMMAND_EXECUTOR) BlockingTaskAwareExecutorService remoteCommandsExecutor,
                       @ComponentName(KnownComponentNames.TOTAL_ORDER_EXECUTOR) BlockingTaskAwareExecutorService totalOrderExecutorService,
                       CancellationService cancelService) {
       this.gcr = gcr;
@@ -85,7 +90,7 @@ public class InboundInvocationHandlerImpl implements InboundInvocationHandler {
          if (trace) log.tracef("Calling perform() on %s", cmd);
          ResponseGenerator respGen = cr.getResponseGenerator();
          if(cmd instanceof CancellableCommand){
-            cancelService.register(Thread.currentThread(), ((CancellableCommand)cmd).getUUID());
+            cancelService.register(Thread.currentThread(), ((CancellableCommand) cmd).getUUID());
          }
          Object retval = cmd.perform(null);
          Response response = respGen.getResponse(cmd, retval);
@@ -152,35 +157,67 @@ public class InboundInvocationHandlerImpl implements InboundInvocationHandler {
                afterResponseSent(cmd, resp);
             }
          });
-         return;
-      } else if (!preserveOrder && cmd.canBlock()) {
-         remoteCommandsExecutor.execute(new Runnable() {
-            @Override
-            public void run() {
-               Response resp;
-               try {
-                  resp = handleInternal(cmd, cr);
-               } catch (Throwable throwable) {
-                  log.exceptionHandlingCommand(cmd, throwable);
-                  resp = new ExceptionResponse(new CacheException("Problems invoking command.", throwable));
-               }
-               reply(response, resp);
-               afterResponseSent(cmd, resp);
-            }
-         });
-         return;
-      }
-      Response resp = handleInternal(cmd, cr);
+      } else {
+         final StateTransferLock stateTransferLock = cr.getStateTransferLock();
+         final int commandTopologyId = extractCommandTopologyId(cmd);
 
-      // A null response is valid and OK ...
-      if (trace && resp != null && !resp.isValid()) {
-         // invalid response
-         log.tracef("Unable to execute command, got invalid response %s", resp);
+         if (!preserveOrder && cmd.canBlock()) {
+            remoteCommandsExecutor.execute(new BlockingRunnable() {
+               @Override
+               public boolean isReady() {
+                  return stateTransferLock.transactionDataReceived(commandTopologyId);
+               }
+
+               @Override
+               public void run() {
+                  Response resp;
+                  try {
+                     resp = handleInternal(cmd, cr);
+                  } catch (Throwable throwable) {
+                     log.exceptionHandlingCommand(cmd, throwable);
+                     resp = new ExceptionResponse(new CacheException("Problems invoking command.", throwable));
+                  }
+                  reply(response, resp);
+                  afterResponseSent(cmd, resp);
+               }
+            });
+         } else {
+            // Non-OOB commands. We still have to wait for transaction data, but we should "never" time out
+            // In non-transactional caches, this just waits for the topology to be installed
+            stateTransferLock.waitForTransactionData(commandTopologyId, 1, TimeUnit.DAYS);
+
+            Response resp = handleInternal(cmd, cr);
+
+            // A null response is valid and OK ...
+            if (trace && resp != null && !resp.isValid()) {
+               // invalid response
+               log.tracef("Unable to execute command, got invalid response %s", resp);
+            }
+            reply(response, resp);
+            afterResponseSent(cmd, resp);
+         }
       }
-      reply(response, resp);
-      afterResponseSent(cmd, resp);
    }
-   
+
+   private int extractCommandTopologyId(CacheRpcCommand cmd) {
+      int commandTopologyId = -1;
+      if (cmd instanceof SingleRpcCommand) {
+         ReplicableCommand innerCmd = ((SingleRpcCommand) cmd).getCommand();
+         if (innerCmd instanceof TopologyAffectedCommand) {
+            commandTopologyId = ((TopologyAffectedCommand) innerCmd).getTopologyId();
+         }
+      } else if (cmd instanceof MultipleRpcCommand) {
+         for (ReplicableCommand innerCmd : ((MultipleRpcCommand) cmd).getCommands()) {
+            if (innerCmd instanceof TopologyAffectedCommand) {
+               commandTopologyId = Math.max(((TopologyAffectedCommand) innerCmd).getTopologyId(), commandTopologyId);
+            }
+         }
+      } else if (cmd instanceof TopologyAffectedCommand) {
+         commandTopologyId = ((TopologyAffectedCommand) cmd).getTopologyId();
+      }
+      return commandTopologyId;
+   }
+
    private void reply(org.jgroups.blocks.Response response, Object retVal) {
       if (response != null) {
          response.send(retVal, false);
