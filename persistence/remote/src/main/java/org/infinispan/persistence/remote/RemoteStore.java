@@ -131,7 +131,10 @@ public class RemoteStore implements AdvancedLoadWriteStore {
             break;
          if (filter == null || filter.shouldLoadKey(key)) {
             try {
-               task.processEntry(load(key), taskContext);
+               MarshalledEntry marshalledEntry = load(key);
+               if (marshalledEntry != null) {
+                  task.processEntry(marshalledEntry, taskContext);
+               }
             } catch (InterruptedException e) {
                Thread.currentThread().interrupt();
                return;

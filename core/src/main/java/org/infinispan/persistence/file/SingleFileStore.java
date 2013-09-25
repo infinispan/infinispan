@@ -28,7 +28,6 @@ import org.infinispan.persistence.PersistenceUtil;
 import org.infinispan.persistence.spi.AdvancedLoadWriteStore;
 import org.infinispan.persistence.spi.InitializationContext;
 import org.infinispan.marshall.core.MarshalledEntry;
-import org.infinispan.marshall.core.MarshalledEntryImpl;
 import org.infinispan.persistence.TaskContextImpl;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
@@ -437,7 +436,9 @@ public class SingleFileStore implements AdvancedLoadWriteStore {
             @Override
             public Void call() throws Exception {
                final MarshalledEntry marshalledEntry = _load(key, fetchValue, fetchMetadata);
-               task.processEntry(marshalledEntry, taskContext);
+               if (marshalledEntry != null) {
+                  task.processEntry(marshalledEntry, taskContext);
+               }
                return null;
             }
          });

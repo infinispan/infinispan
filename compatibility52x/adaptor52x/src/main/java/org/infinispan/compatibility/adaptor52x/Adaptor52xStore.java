@@ -121,10 +121,11 @@ public class Adaptor52xStore implements AdvancedLoadWriteStore {
             for (Object key : batch) {
                if (taskContext.isStopped())
                   break;
-               if (!loadEntry && !loadMetadata) {
-                  cacheLoaderTask.processEntry(new MarshalledEntryImpl(key, (Object) null, null, ctx.getMarshaller()), taskContext);
-               } else {
-                  cacheLoaderTask.processEntry(load(key), taskContext);
+               MarshalledEntry marshalledEntry = !loadEntry && !loadMetadata ?
+                     new MarshalledEntryImpl(key, (Object) null, null, ctx.getMarshaller()) :
+                     load(key);
+               if (marshalledEntry != null) {
+                  cacheLoaderTask.processEntry(marshalledEntry, taskContext);
                }
             }
             return null;
