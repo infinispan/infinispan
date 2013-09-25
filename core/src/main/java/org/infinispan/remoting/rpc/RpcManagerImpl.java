@@ -19,9 +19,6 @@ import org.infinispan.jmx.annotations.ManagedOperation;
 import org.infinispan.jmx.annotations.MeasurementType;
 import org.infinispan.jmx.annotations.Parameter;
 import org.infinispan.jmx.annotations.Units;
-import org.infinispan.manager.NamedCacheNotFoundException;
-import org.infinispan.remoting.RemoteException;
-import org.infinispan.remoting.responses.CacheNotFoundResponse;
 import org.infinispan.statetransfer.StateTransferManager;
 import org.infinispan.remoting.ReplicationQueue;
 import org.infinispan.remoting.RpcException;
@@ -71,7 +68,6 @@ public class RpcManagerImpl implements RpcManager {
 
    private boolean statisticsEnabled = false; // by default, don't gather statistics.
    private Configuration configuration;
-   private GlobalConfiguration globalConfiguration;
    private ReplicationQueue replicationQueue;
    private ExecutorService asyncExecutor;
    private CommandsFactory cf;
@@ -82,7 +78,6 @@ public class RpcManagerImpl implements RpcManager {
 
    @Inject
    public void injectDependencies(Transport t, Cache cache, Configuration cfg,
-                                  GlobalConfiguration globalConfiguration,
                                   ReplicationQueue replicationQueue, CommandsFactory cf,
                                   @ComponentName(ASYNC_TRANSPORT_EXECUTOR) ExecutorService e,
                                   LocalTopologyManager localTopologyManager,
@@ -90,7 +85,6 @@ public class RpcManagerImpl implements RpcManager {
       this.t = t;
       this.cacheName = cache.getName();
       this.configuration = cfg;
-      this.globalConfiguration = globalConfiguration;
       this.replicationQueue = replicationQueue;
       this.asyncExecutor = e;
       this.cf = cf;
@@ -191,7 +185,6 @@ public class RpcManagerImpl implements RpcManager {
          }
          Map<Address, Response> rsps = invokeRemotely(recipients, rpc, responseMode, timeout, usePriorityQueue);
          if (trace) log.tracef("Response(s) to %s is %s", rpc, rsps);
-         if (sync) checkResponses(rsps);
          return rsps;
       }
    }
@@ -290,9 +283,6 @@ public class RpcManagerImpl implements RpcManager {
                                                           configuration.clustering().cacheMode().isDistributed());
          if (statisticsEnabled) replicationCount.incrementAndGet();
          if (trace) log.tracef("Response(s) to %s is %s", rpc, result);
-         if (options.responseMode().isSynchronous()) {
-            checkResponses(result);
-         }
          return result;
       } catch (CacheException e) {
          log.trace("replication exception: ", e);
@@ -346,23 +336,6 @@ public class RpcManagerImpl implements RpcManager {
 
    private ResponseMode getResponseMode(boolean sync) {
       return sync ? ResponseMode.SYNCHRONOUS : ResponseMode.getAsyncResponseMode(configuration);
-   }
-
-   /**
-    * Checks whether any of the responses are exceptions. If yes, re-throws them (as exceptions or runtime exceptions).
-    */
-   private void checkResponses(Map<Address, Response> rsps) {
-      if (rsps != null) {
-         for (Map.Entry<Address, Response> rsp : rsps.entrySet()) {
-            if (rsp.getValue() instanceof CacheNotFoundResponse) {
-               if (globalConfiguration.transport().strictPeerToPeer()) {
-                  String message = String.format("Cache %s has not been started on node %s", cacheName,
-                        rsp.getKey());
-                  throw new RemoteException(message, new NamedCacheNotFoundException(cacheName, message));
-               }
-            }
-         }
-      }
    }
 
    // -------------------------------------------- JMX information -----------------------------------------------
