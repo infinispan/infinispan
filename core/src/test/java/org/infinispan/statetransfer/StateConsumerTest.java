@@ -35,6 +35,7 @@ import org.infinispan.transaction.LocalTransaction;
 import org.infinispan.transaction.RemoteTransaction;
 import org.infinispan.transaction.TransactionTable;
 import org.infinispan.transaction.totalorder.TotalOrderManager;
+import org.infinispan.util.concurrent.BlockingTaskAwareExecutorService;
 import org.infinispan.util.concurrent.IsolationLevel;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
@@ -146,6 +147,7 @@ public class StateConsumerTest extends AbstractInfinispanTest {
       InterceptorChain interceptorChain = mock(InterceptorChain.class);
       InvocationContextContainer icc = mock(InvocationContextContainer.class);
       TotalOrderManager totalOrderManager = mock(TotalOrderManager.class);
+      BlockingTaskAwareExecutorService remoteCommandsExecutor = mock(BlockingTaskAwareExecutorService.class);
 
       when(commandsFactory.buildStateRequestCommand(any(StateRequestCommand.Type.class), any(Address.class), anyInt(), any(Set.class))).thenAnswer(new Answer<StateRequestCommand>() {
          @Override
@@ -192,7 +194,8 @@ public class StateConsumerTest extends AbstractInfinispanTest {
       // create state provider
       final StateConsumerImpl stateConsumer = new StateConsumerImpl();
       stateConsumer.init(cache, pooledExecutorService, stateTransferManager, interceptorChain, icc, configuration, rpcManager, null,
-            commandsFactory, persistenceManager, dataContainer, transactionTable, stateTransferLock, cacheNotifier, totalOrderManager);
+            commandsFactory, persistenceManager, dataContainer, transactionTable, stateTransferLock, cacheNotifier,
+            totalOrderManager, remoteCommandsExecutor);
       stateConsumer.start();
 
       final List<InternalCacheEntry> cacheEntries = new ArrayList<InternalCacheEntry>();

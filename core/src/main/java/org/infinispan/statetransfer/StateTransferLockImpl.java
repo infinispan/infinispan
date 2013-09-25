@@ -1,9 +1,14 @@
 package org.infinispan.statetransfer;
 
+import org.infinispan.util.concurrent.TimeoutException;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.locks.Condition;
+import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReadWriteLock;
+import java.util.concurrent.locks.ReentrantLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 /**
@@ -20,11 +25,14 @@ public class StateTransferLockImpl implements StateTransferLock {
    private final ReadWriteLock ownershipLock = new ReentrantReadWriteLock();
 
    private volatile int topologyId;
-   private final Object topologyLock = new Object();
+   private final Lock topologyLock = new ReentrantLock();
+   private final Condition topologyCondition = topologyLock.newCondition();
 
    private volatile int transactionDataTopologyId;
-   private final Object transactionDataLock = new Object();
+   private final Lock transactionDataLock = new ReentrantLock();
+   private final Condition transactionDataCondition = transactionDataLock.newCondition();
 
+   @SuppressWarnings("LockAcquiredButNotSafelyReleased")
    @Override
    public void acquireExclusiveTopologyLock() {
       ownershipLock.writeLock().lock();
@@ -35,6 +43,7 @@ public class StateTransferLockImpl implements StateTransferLock {
       ownershipLock.writeLock().unlock();
    }
 
+   @SuppressWarnings("LockAcquiredButNotSafelyReleased")
    @Override
    public void acquireSharedTopologyLock() {
       ownershipLock.readLock().lock();
@@ -55,13 +64,17 @@ public class StateTransferLockImpl implements StateTransferLock {
          log.tracef("Signalling transaction data received for topology %d", topologyId);
       }
       transactionDataTopologyId = topologyId;
-      synchronized (transactionDataLock) {
-         transactionDataLock.notifyAll();
+      transactionDataLock.lock();
+      try {
+         transactionDataCondition.signalAll();
+      } finally {
+         transactionDataLock.unlock();
       }
    }
 
    @Override
-   public void waitForTransactionData(int expectedTopologyId) throws InterruptedException {
+   public void waitForTransactionData(int expectedTopologyId, long timeout,
+                                      TimeUnit unit) throws InterruptedException {
       if (trace) {
          log.tracef("Waiting for transaction data for topology %d, current topology is %d", expectedTopologyId,
                transactionDataTopologyId);
@@ -70,17 +83,29 @@ public class StateTransferLockImpl implements StateTransferLock {
       if (transactionDataTopologyId >= expectedTopologyId)
          return;
 
-      synchronized (transactionDataLock) {
-         // Do the comparison inside the synchronized lock
-         // otherwise the setter might be able to call notifyAll before we wait()
-         while (transactionDataTopologyId < expectedTopologyId) {
-            transactionDataLock.wait();
+      transactionDataLock.lock();
+      try {
+         long timeoutNanos = unit.toNanos(timeout);
+         while (transactionDataTopologyId < expectedTopologyId && timeoutNanos > 0) {
+            timeoutNanos = transactionDataCondition.awaitNanos(timeoutNanos);
          }
+         if (timeoutNanos <= 0) {
+            throw new TimeoutException("Timed out waiting for topology " + expectedTopologyId);
+         }
+      } finally {
+         transactionDataLock.unlock();
       }
       if (trace) {
          log.tracef("Received transaction data for topology %d, expected topology was %d", transactionDataTopologyId,
                expectedTopologyId);
       }
+   }
+
+   @Override
+   public boolean transactionDataReceived(int expectedTopologyId) {
+      if (trace) log.tracef("Checking if transaction data was received for topology %s, current topology is %s",
+            expectedTopologyId, transactionDataTopologyId);
+      return transactionDataTopologyId >= expectedTopologyId;
    }
 
    @Override
@@ -93,25 +118,34 @@ public class StateTransferLockImpl implements StateTransferLock {
          log.tracef("Signalling topology %d is installed", topologyId);
       }
       this.topologyId = topologyId;
-      synchronized (topologyLock) {
-         topologyLock.notifyAll();
+
+      topologyLock.lock();
+      try {
+         topologyCondition.signalAll();
+      } finally {
+         topologyLock.unlock();
       }
    }
 
    @Override
-   public void waitForTopology(int expectedTopologyId) throws InterruptedException {
+   public void waitForTopology(int expectedTopologyId, long timeout, TimeUnit unit) throws InterruptedException {
       if (topologyId >= expectedTopologyId)
          return;
 
       if (trace) {
          log.tracef("Waiting for topology %d to be installed, current topology is %d", expectedTopologyId, topologyId);
       }
-      synchronized (topologyLock) {
-         // Do the comparison inside the synchronized lock
-         // otherwise the setter might be able to call notifyAll before we wait()
-         while (topologyId < expectedTopologyId) {
-            topologyLock.wait();
+      topologyLock.lock();
+      try {
+         long timeoutNanos = unit.toNanos(timeout);
+         while (topologyId < expectedTopologyId && timeoutNanos > 0) {
+            timeoutNanos = topologyCondition.awaitNanos(timeoutNanos);
          }
+         if (timeoutNanos <= 0) {
+            throw new TimeoutException("Timed out waiting for topology " + expectedTopologyId);
+         }
+      } finally {
+         topologyLock.unlock();
       }
       if (trace) {
          log.tracef("Topology %d is now installed, expected topology was %d", topologyId, expectedTopologyId);

@@ -14,6 +14,7 @@ import org.infinispan.context.InvocationContext;
 import org.infinispan.context.InvocationContextContainer;
 import org.infinispan.context.impl.TxInvocationContext;
 import org.infinispan.distribution.ch.ConsistentHash;
+import org.infinispan.factories.KnownComponentNames;
 import org.infinispan.factories.annotations.ComponentName;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.annotations.Start;
@@ -38,6 +39,7 @@ import org.infinispan.transaction.totalorder.TotalOrderManager;
 import org.infinispan.transaction.xa.CacheTransaction;
 import org.infinispan.transaction.xa.GlobalTransaction;
 import org.infinispan.util.ReadOnlyDataContainerBackedKeySet;
+import org.infinispan.util.concurrent.BlockingTaskAwareExecutorService;
 import org.infinispan.util.concurrent.ConcurrentHashSet;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
@@ -89,6 +91,7 @@ public class StateConsumerImpl implements StateConsumer {
    private StateTransferLock stateTransferLock;
    private CacheNotifier cacheNotifier;
    private TotalOrderManager totalOrderManager;
+   private BlockingTaskAwareExecutorService remoteCommandsExecutor;
    private long timeout;
    private boolean isFetchEnabled;
    private boolean isTransactional;
@@ -200,7 +203,8 @@ public class StateConsumerImpl implements StateConsumer {
                     TransactionTable transactionTable,
                     StateTransferLock stateTransferLock,
                     CacheNotifier cacheNotifier,
-                    TotalOrderManager totalOrderManager) {
+                    TotalOrderManager totalOrderManager,
+                    @ComponentName(KnownComponentNames.REMOTE_COMMAND_EXECUTOR) BlockingTaskAwareExecutorService remoteCommandsExecutor) {
       this.cacheName = cache.getName();
       this.executorService = executorService;
       this.stateTransferManager = stateTransferManager;
@@ -216,6 +220,7 @@ public class StateConsumerImpl implements StateConsumer {
       this.stateTransferLock = stateTransferLock;
       this.cacheNotifier = cacheNotifier;
       this.totalOrderManager = totalOrderManager;
+      this.remoteCommandsExecutor = remoteCommandsExecutor;
 
       isInvalidationMode = configuration.clustering().cacheMode().isInvalidation();
 
@@ -391,6 +396,7 @@ public class StateConsumerImpl implements StateConsumer {
          }
       } finally {
          stateTransferLock.notifyTransactionDataReceived(cacheTopology.getTopologyId());
+         remoteCommandsExecutor.checkForReadyTasks();
 
          // Only set the flag here, after all the transfers have been added to the transfersBySource map
          if (rebalanceInProgress.get()) {
