@@ -7,7 +7,6 @@ import org.infinispan.commands.tx.RollbackCommand;
 import org.infinispan.commands.write.WriteCommand;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.cache.Configurations;
-import org.infinispan.context.Flag;
 import org.infinispan.context.InvocationContextContainer;
 import org.infinispan.context.impl.LocalTxInvocationContext;
 import org.infinispan.factories.annotations.Inject;
@@ -121,7 +120,7 @@ public class TransactionCoordinator {
          if (localTransaction.isReadOnly()) {
             if (trace) log.tracef("Readonly transaction: %s", localTransaction.getGlobalTransaction());
             // force a cleanup to release any objects held.  Some TMs don't call commit if it is a READ ONLY tx.  See ISPN-845
-            commit(localTransaction, false);
+            commitInternal(localTransaction);
             return XA_RDONLY;
          } else {
             txTable.localTransactionPrepared(localTransaction);
@@ -157,16 +156,10 @@ public class TransactionCoordinator {
             handleCommitFailure(e, localTransaction, true);
          }
          return true;
-      } else {
-         CommitCommand commitCommand = commandCreator.createCommitCommand(localTransaction.getGlobalTransaction());
-         try {
-            invoker.invoke(ctx, commitCommand);
-            txTable.removeLocalTransaction(localTransaction);
-         } catch (Throwable e) {
-            handleCommitFailure(e, localTransaction, false);
-         }
-         return false;
+      } else if (!localTransaction.isReadOnly()) {
+         commitInternal(localTransaction);
       }
+      return false;
    }
 
    public void rollback(LocalTransaction localTransaction) throws XAException {
@@ -209,6 +202,18 @@ public class TransactionCoordinator {
          txTable.failureCompletingTransaction(localTransaction.getTransaction());
       }
       throw new XAException(XAException.XA_HEURRB); //this is a heuristic rollback
+   }
+
+   private void commitInternal(LocalTransaction localTransaction) throws XAException {
+      LocalTxInvocationContext ctx = icc.createTxInvocationContext();
+      ctx.setLocalTransaction(localTransaction);
+      CommitCommand commitCommand = commandCreator.createCommitCommand(localTransaction.getGlobalTransaction());
+      try {
+         invoker.invoke(ctx, commitCommand);
+         txTable.removeLocalTransaction(localTransaction);
+      } catch (Throwable e) {
+         handleCommitFailure(e, localTransaction, false);
+      }
    }
 
    private void rollbackInternal(LocalTransaction localTransaction) throws Throwable {
