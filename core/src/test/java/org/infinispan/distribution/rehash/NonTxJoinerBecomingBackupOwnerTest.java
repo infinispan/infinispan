@@ -1,11 +1,15 @@
 package org.infinispan.distribution.rehash;
 
 import org.infinispan.AdvancedCache;
+import org.infinispan.commands.VisitableCommand;
 import org.infinispan.commands.read.GetKeyValueCommand;
 import org.infinispan.commands.write.PutKeyValueCommand;
+import org.infinispan.commands.write.RemoveCommand;
+import org.infinispan.commands.write.ReplaceCommand;
 import org.infinispan.commons.api.BasicCacheContainer;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
+import org.infinispan.context.Flag;
 import org.infinispan.distribution.BlockingInterceptor;
 import org.infinispan.distribution.MagicKey;
 import org.infinispan.interceptors.distribution.NonTxDistributionInterceptor;
@@ -47,6 +51,43 @@ import static org.testng.AssertJUnit.assertNull;
 public class NonTxJoinerBecomingBackupOwnerTest extends MultipleCacheManagersTest {
 
    private static final String CACHE_NAME = BasicCacheContainer.DEFAULT_CACHE_NAME;
+   private static enum Operation {
+      PUT(PutKeyValueCommand.class, "v1", null, null),
+      PUT_IF_ABSENT(PutKeyValueCommand.class, "v1", null, null),
+      REPLACE(ReplaceCommand.class, "v1", "v0", "v0"),
+      REPLACE_EXACT(ReplaceCommand.class, "v1", "v0", true),
+      REMOVE(RemoveCommand.class, null, "v0", "v0"),
+      REMOVE_EXACT(RemoveCommand.class, null, "v0", true);
+
+      private final Class<? extends VisitableCommand> commandClass;
+      private final Object value;
+      private final Object previousValue;
+      private final Object returnValue;
+
+      Operation(Class<? extends VisitableCommand> commandClass, Object value, Object previousValue, 
+                Object returnValue) {
+         this.commandClass = commandClass;
+         this.value = value;
+         this.previousValue = previousValue;
+         this.returnValue = returnValue;
+      }
+
+      private Class<? extends VisitableCommand> getCommandClass() {
+         return commandClass;
+      }
+
+      private Object getValue() {
+         return value;
+      }
+
+      private Object getPreviousValue() {
+         return previousValue;
+      }
+
+      private Object getReturnValue() {
+         return returnValue;
+      }
+   }
 
    @Override
    protected void createCacheManagers() throws Throwable {
@@ -65,14 +106,30 @@ public class NonTxJoinerBecomingBackupOwnerTest extends MultipleCacheManagersTes
    }
 
    public void testBackupOwnerJoiningDuringPut() throws Exception {
-      doTest(false);
+      doTest(Operation.PUT);
    }
 
    public void testBackupOwnerJoiningDuringPutIfAbsent() throws Exception {
-      doTest(true);
+      doTest(Operation.PUT_IF_ABSENT);
    }
 
-   private void doTest(final boolean conditional) throws Exception {
+   public void testBackupOwnerJoiningDuringReplace() throws Exception {
+      doTest(Operation.REPLACE);
+   }
+
+   public void testBackupOwnerJoiningDuringReplaceWithPreviousValue() throws Exception {
+      doTest(Operation.REPLACE_EXACT);
+   }
+
+   public void testBackupOwnerJoiningDuringRemove() throws Exception {
+      doTest(Operation.REMOVE);
+   }
+
+   public void testBackupOwnerJoiningDuringRemoveWithPreviousValue() throws Exception {
+      doTest(Operation.REMOVE_EXACT);
+   }
+
+   private void doTest(final Operation op) throws Exception {
       CheckPoint checkPoint = new CheckPoint();
       LocalTopologyManager ltm0 = TestingUtil.extractGlobalComponent(manager(0), LocalTopologyManager.class);
       int preJoinTopologyId = ltm0.getCacheTopology(CACHE_NAME).getTopologyId();
@@ -116,24 +173,45 @@ public class NonTxJoinerBecomingBackupOwnerTest extends MultipleCacheManagersTes
       // Every PutKeyValueCommand will be blocked before returning on cache1
       CyclicBarrier afterCache1Barrier = new CyclicBarrier(2);
       BlockingInterceptor blockingInterceptor1 = new BlockingInterceptor(afterCache1Barrier,
-            PutKeyValueCommand.class, false);
+            op.getCommandClass(), false);
       cache1.addInterceptorBefore(blockingInterceptor1, StateTransferInterceptor.class);
 
       // Every PutKeyValueCommand will be blocked before reaching the distribution interceptor on cache2
       CyclicBarrier beforeCache2Barrier = new CyclicBarrier(2);
       BlockingInterceptor blockingInterceptor2 = new BlockingInterceptor(beforeCache2Barrier,
-            PutKeyValueCommand.class, true);
+            op.getCommandClass(), true);
       cache2.addInterceptorBefore(blockingInterceptor2, NonTxDistributionInterceptor.class);
 
 
       final MagicKey key = getKeyForCache2();
 
+      // Prepare for replace: put a previous value in cache0 and cache1
+      if (op.getPreviousValue() != null) {
+         cache0.withFlags(Flag.CACHE_MODE_LOCAL).put(key, op.getPreviousValue());
+         cache1.withFlags(Flag.CACHE_MODE_LOCAL).put(key, op.getPreviousValue());
+      }
+
       // Put from cache0 with cache0 as primary owner, cache2 will become a backup owner for the retry
-      // The put command will be blocked on
+      // The put command will be blocked on cache1 and cache2.
       Future<Object> future = fork(new Callable<Object>() {
          @Override
          public Object call() throws Exception {
-            return conditional ? cache0.putIfAbsent(key, "v") : cache0.put(key, "v");
+            switch (op) {
+               case PUT:
+                  return cache0.put(key, op.getValue());
+               case PUT_IF_ABSENT:
+                  return cache0.putIfAbsent(key, op.getValue());
+               case REPLACE:
+                  return cache0.replace(key, op.getValue());
+               case REPLACE_EXACT:
+                  return cache0.replace(key, op.getPreviousValue(), op.getValue());
+               case REMOVE:
+                  return cache0.remove(key);
+               case REMOVE_EXACT:
+                  return cache0.remove(key, op.getPreviousValue());
+               default:
+                  throw new IllegalArgumentException("Unsupported operation: " + op);
+            }
          }
       });
 
@@ -147,8 +225,8 @@ public class NonTxJoinerBecomingBackupOwnerTest extends MultipleCacheManagersTes
 
       // Check that the put command didn't fail
       Object result = future.get(10, TimeUnit.SECONDS);
-      assertNull(result);
-      log.tracef("Put operation is done");
+      assertEquals(op.getReturnValue(), result);
+      log.tracef("%s operation is done", op);
 
       // Stop blocking get commands on cache0
 //      beforeCache0Barrier.await(10, TimeUnit.SECONDS);
@@ -165,9 +243,9 @@ public class NonTxJoinerBecomingBackupOwnerTest extends MultipleCacheManagersTes
       TestingUtil.waitForRehashToComplete(cache0, cache1, cache2);
 
       // Check the value on all the nodes
-      assertEquals("v", cache0.get(key));
-      assertEquals("v", cache1.get(key));
-      assertEquals("v", cache2.get(key));
+      assertEquals(op.getValue(), cache0.get(key));
+      assertEquals(op.getValue(), cache1.get(key));
+      assertEquals(op.getValue(), cache2.get(key));
 
    }
 

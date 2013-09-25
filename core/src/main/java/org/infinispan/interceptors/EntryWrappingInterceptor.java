@@ -213,7 +213,13 @@ public class EntryWrappingInterceptor extends CommandInterceptor {
 
    private void wrapEntryForReplaceIfNeeded(InvocationContext ctx, ReplaceCommand command) throws InterruptedException {
       if (shouldWrap(command.getKey(), ctx, command)) {
-         entryFactory.wrapEntryForReplace(ctx, command);
+         if (command.isIgnorePreviousValue()) {
+            //wrap it for put, as the previous value might not be present by now (e.g. might have been deleted)
+            // but we still need to apply the new value.
+            entryFactory.wrapEntryForPut(ctx, command.getKey(), null, false, command, false);
+         } else  {
+            entryFactory.wrapEntryForReplace(ctx, command);
+         }
       }
    }
 
