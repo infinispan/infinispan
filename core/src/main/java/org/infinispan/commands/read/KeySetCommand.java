@@ -38,7 +38,7 @@ public class KeySetCommand extends AbstractLocalCommand implements VisitableComm
    @Override
    public Set<Object> perform(InvocationContext ctx) throws Throwable {
       Set<Object> objects = container.keySet();
-      if (noTxModifications(ctx)) {
+      if (ctx.getLookedUpEntries().isEmpty()) {
          return new ExpiredFilteredKeySet(objects, container);
       }
 
@@ -74,10 +74,12 @@ public class KeySetCommand extends AbstractLocalCommand implements VisitableComm
          }
          // Update according to keys added or removed in tx
          for (CacheEntry e: lookedUpEntries.values()) {
-            if (e.isCreated()) {
+            if (container.containsKey(e.getKey())) {
+               if (e.isRemoved()) {
+                  size --;
+               }
+            } else if (!e.isRemoved()) {
                size ++;
-            } else if (e.isRemoved()) {
-               size --;
             }
          }
          return Math.max(size, 0);
@@ -86,10 +88,8 @@ public class KeySetCommand extends AbstractLocalCommand implements VisitableComm
       @Override
       public boolean contains(Object o) {
          CacheEntry e = lookedUpEntries.get(o);
-         if (e == null || e.isRemoved()) {
-            return false;
-         } else if (e.isChanged() || e.isCreated()) {
-            return true;
+         if (e != null) {
+            return !e.isRemoved();
          }
          return keySet.contains(o);
       }
@@ -145,7 +145,7 @@ public class KeySetCommand extends AbstractLocalCommand implements VisitableComm
                boolean found = false;
                while (it1.hasNext()) {
                   CacheEntry e = it1.next();
-                  if (e.isCreated()) {
+                  if (!e.isRemoved()) {
                      next = e.getKey();
                      found = true;
                      break;
@@ -161,8 +161,7 @@ public class KeySetCommand extends AbstractLocalCommand implements VisitableComm
                boolean found = false;
                while (it2.hasNext()) {
                   Object k = it2.next();
-                  CacheEntry e = lookedUpEntries.get(k);
-                  if (e == null || !e.isRemoved()) {
+                  if (!lookedUpEntries.containsKey(k)) {
                      next = k;
                      found = true;
                      break;

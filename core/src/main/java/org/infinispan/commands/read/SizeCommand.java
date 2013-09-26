@@ -32,16 +32,18 @@ public class SizeCommand extends AbstractLocalCommand implements VisitableComman
 
    @Override
    public Integer perform(InvocationContext ctx) throws Throwable {
-      if (noTxModifications(ctx)) {
+      if (ctx.getLookedUpEntries().isEmpty()) {
          return container.size();
       }
 
       int size = container.size();
       for (CacheEntry e: ctx.getLookedUpEntries().values()) {
-         if (e.isCreated()) {
+         if (container.containsKey(e.getKey())) {
+            if (e.isRemoved()) {
+               size --;
+            }
+         } else if (!e.isRemoved()) {
             size ++;
-         } else  if (e.isRemoved()) {
-            size --;
          }
       }
 

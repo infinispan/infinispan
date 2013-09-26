@@ -13,6 +13,7 @@ import static org.infinispan.util.CoreImmutables.immutableInternalCacheEntry;
 
 import java.util.AbstractSet;
 import java.util.Collection;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.NoSuchElementException;
@@ -51,7 +52,7 @@ public class EntrySetCommand extends AbstractLocalCommand implements VisitableCo
    public static Set<InternalCacheEntry> createFilteredEntrySet(
          Set<InternalCacheEntry> entries, InvocationContext ctx,
          TimeService timeService, InternalEntryFactory entryFactory) {
-      if (noTxModifications(ctx)) {
+      if (ctx.getLookedUpEntries().isEmpty()) {
          return new ExpiredFilteredEntrySet(entries, timeService);
       }
 
@@ -82,22 +83,29 @@ public class EntrySetCommand extends AbstractLocalCommand implements VisitableCo
       @Override
       public int size() {
          long currentTimeMillis = 0;
-         int size = entrySet.size();
+         Set<Object> validKeys = new HashSet<Object>();
          // First, removed any expired ones
          for (InternalCacheEntry e: entrySet) {
             if (e.canExpire()) {
                if (currentTimeMillis == 0)
                   currentTimeMillis = timeService.wallClockTime();
-               if (e.isExpired(currentTimeMillis))
-                  size--;
+               if (!e.isExpired(currentTimeMillis))
+                  validKeys.add(e.getKey());
+            }
+            else {
+               validKeys.add(e.getKey());
             }
          }
+
+         int size = validKeys.size();
          // Update according to entries added or removed in tx
          for (CacheEntry e: lookedUpEntries.values()) {
-            if (e.isCreated()) {
+            if (validKeys.contains(e.getKey())) {
+               if (e.isRemoved()) {
+                  size --;
+               }
+            } else if (!e.isRemoved()) {
                size ++;
-            } else if (e.isRemoved()) {
-               size --;
             }
          }
          return Math.max(size, 0);
@@ -112,11 +120,8 @@ public class EntrySetCommand extends AbstractLocalCommand implements VisitableCo
          @SuppressWarnings("rawtypes")
          Map.Entry e = (Map.Entry) o;
          CacheEntry ce = lookedUpEntries.get(e.getKey());
-         if (ce == null || ce.isRemoved()) {
-            return false;
-         }
-         if (ce.isChanged() || ce.isCreated()) {
-            return ce.getValue().equals(e.getValue());
+         if (ce != null) {
+            return !ce.isRemoved();
          }
 
          return entrySet.contains(o);
@@ -173,7 +178,7 @@ public class EntrySetCommand extends AbstractLocalCommand implements VisitableCo
                boolean found = false;
                while (it1.hasNext()) {
                   CacheEntry e = it1.next();
-                  if (e.isCreated()) {
+                  if (!e.isRemoved()) {
                      next = immutableInternalCacheEntry(entryFactory.create(e.getKey(), e.getValue(), e.getMetadata()));
                      found = true;
                      break;
@@ -190,14 +195,8 @@ public class EntrySetCommand extends AbstractLocalCommand implements VisitableCo
                while (it2.hasNext()) {
                   InternalCacheEntry ice = it2.next();
                   Object key = ice.getKey();
-                  CacheEntry e = lookedUpEntries.get(key);
-                  if (e == null) {
+                  if (!lookedUpEntries.containsKey(key)) {
                      next = ice;
-                     found = true;
-                     break;
-                  }
-                  if (e.isChanged()) {
-                     next = immutableInternalCacheEntry(entryFactory.create(key, e.getValue(), e.getMetadata()));
                      found = true;
                      break;
                   }
