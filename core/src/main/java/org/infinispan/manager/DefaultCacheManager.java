@@ -280,7 +280,7 @@ public class DefaultCacheManager implements EmbeddedCacheManager, CacheManager {
    @Deprecated
    public DefaultCacheManager(org.infinispan.config.GlobalConfiguration globalConfiguration, org.infinispan.config.Configuration defaultConfiguration,
                               boolean start) {
-      this(LegacyGlobalConfigurationAdaptor.adapt(globalConfiguration), LegacyConfigurationAdaptor.adapt(defaultConfiguration), start);
+      this(LegacyGlobalConfigurationAdaptor.adapt(globalConfiguration), LegacyConfigurationAdaptor.adapt(defaultConfiguration, globalConfiguration.getClassLoader()), start);
    }
 
    /**
@@ -459,13 +459,13 @@ public class DefaultCacheManager implements EmbeddedCacheManager, CacheManager {
                LegacyConfigurationAdaptor.adapt(configurationOverrides.get(cacheName));
          if (existing != null) {
             existing.applyOverrides(configOverride);
-            configurationOverrides.put(cacheName, LegacyConfigurationAdaptor.adapt(existing));
+            configurationOverrides.put(cacheName, LegacyConfigurationAdaptor.adapt(existing, globalConfiguration.classLoader()));
             return existing.clone();
          }
       }
       org.infinispan.config.Configuration configuration = defaultConfigIfNotPresent.clone();
       configuration.applyOverrides(configOverride.clone());
-      configurationOverrides.put(cacheName, LegacyConfigurationAdaptor.adapt(configuration));
+      configurationOverrides.put(cacheName, LegacyConfigurationAdaptor.adapt(configuration, globalConfiguration.classLoader()));
       return configuration;
    }
 
