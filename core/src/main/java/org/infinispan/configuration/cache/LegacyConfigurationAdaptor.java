@@ -282,11 +282,16 @@ public class LegacyConfigurationAdaptor {
       }
    }
 
-   public static org.infinispan.configuration.cache.Configuration adapt(org.infinispan.config.Configuration legacy) {
+   public static org.infinispan.configuration.cache.Configuration adapt(Configuration legacy) {
+      return adapt(legacy, null);
+   }
+
+   public static org.infinispan.configuration.cache.Configuration adapt(Configuration legacy, ClassLoader globalClassLoader) {
 
       // Handle the case that null is passed in
       if (legacy == null)
          return null;
+      final ClassLoader classLoader = globalClassLoader == null ? legacy.getClassLoader() : globalClassLoader;
 
       ConfigurationBuilder builder = new ConfigurationBuilder();
 
@@ -305,7 +310,7 @@ public class LegacyConfigurationAdaptor {
 
          builder.clustering()
             .async()
-               .replQueue(Util.<ReplicationQueue>getInstance(legacy.getReplQueueClass(), legacy.getClassLoader()))
+               .replQueue(Util.<ReplicationQueue>getInstance(legacy.getReplQueueClass(), classLoader))
                .replQueueInterval(legacy.getReplQueueInterval())
                .replQueueMaxElements(legacy.getReplQueueMaxElements())
                .useReplQueue(legacy.isUseReplQueue());
@@ -315,7 +320,7 @@ public class LegacyConfigurationAdaptor {
          // We don't support custom consistent hash via hash.consistentHash any more, so this code is no longer called
          builder.clustering()
             .hash()
-               .consistentHash(Util.<ConsistentHash>getInstance(legacy.getConsistentHashClass(), legacy.getClassLoader()));
+               .consistentHash(Util.<ConsistentHash>getInstance(legacy.getConsistentHashClass(), classLoader));
       }
 
       // Order is important here. First check whether state transfer itself
@@ -378,9 +383,9 @@ public class LegacyConfigurationAdaptor {
          InterceptorConfigurationBuilder interceptorConfigurationBuilder = builder.clustering().customInterceptors().addInterceptor();
          interceptorConfigurationBuilder.interceptor(interceptor.getInterceptor());
          if (interceptor.getAfter() != null && !interceptor.getAfter().isEmpty())
-            interceptorConfigurationBuilder.after(Util.<CommandInterceptor>loadClass(interceptor.getAfter(), legacy.getClassLoader()));
+            interceptorConfigurationBuilder.after(Util.<CommandInterceptor>loadClass(interceptor.getAfter(), classLoader));
          else if (interceptor.getBefore() != null && !interceptor.getBefore().isEmpty())
-            interceptorConfigurationBuilder.before(Util.<CommandInterceptor>loadClass(interceptor.getBefore(), legacy.getClassLoader()));
+            interceptorConfigurationBuilder.before(Util.<CommandInterceptor>loadClass(interceptor.getBefore(), classLoader));
          else if (!interceptor.getPositionAsString().equals(Position.OTHER_THAN_FIRST_OR_LAST.toString()))
             interceptorConfigurationBuilder.position(Position.valueOf(interceptor.getPositionAsString()));
          else
@@ -432,7 +437,7 @@ public class LegacyConfigurationAdaptor {
          .shared(legacy.isCacheLoaderShared());
 
       for (CacheLoaderConfig clc : legacy.getCacheLoaders()) {
-         adapt(legacy.getClassLoader(), builder, clc);
+         adapt(classLoader, builder, clc);
       }
 
       builder.locking()
