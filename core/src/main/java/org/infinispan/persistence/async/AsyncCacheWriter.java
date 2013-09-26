@@ -129,7 +129,7 @@ public class AsyncCacheWriter extends DelegatingCacheWriter {
       try {
          coordinator.join(shutdownTimeout);
          if (coordinator.isAlive())
-            log.error("Async store executor did not stop properly");
+            log.errorAsyncStoreNotStopped();
       } catch (InterruptedException e) {
          log.interruptedWaitingAsyncStorePush(e);
          Thread.currentThread().interrupt();

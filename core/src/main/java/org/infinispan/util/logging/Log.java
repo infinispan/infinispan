@@ -938,5 +938,37 @@ public interface Log extends BasicLogger {
    @LogMessage(level = WARN)
    @Message(value = "The transport element's 'strictPeerToPeer' attribute is no longer in use.", id = 254)
    void strictPeerToPeerDeprecated();
+
+   @LogMessage(level = ERROR)
+   @Message(value = "Error while processing prepare", id = 255)
+   void errorProcessingPrepare(@Cause Throwable e);
+
+   @LogMessage(level = ERROR)
+   @Message(value = "Configurator SAXParse error", id = 256)
+   void configuratorSAXParseError(@Cause Exception e);
+
+   @LogMessage(level = ERROR)
+   @Message(value = "Configurator SAX error", id = 257)
+   void configuratorSAXError(@Cause Exception e);
+
+   @LogMessage(level = ERROR)
+   @Message(value = "Configurator general error", id = 258)
+   void configuratorError(@Cause Exception e);
+
+   @LogMessage(level = ERROR)
+   @Message(value = "Async store executor did not stop properly", id = 259)
+   void errorAsyncStoreNotStopped();
+
+   @LogMessage(level = ERROR)
+   @Message(value = "Exception executing command", id = 260)
+   void exceptionExecutingInboundCommand(@Cause Exception e);
+
+   @LogMessage(level = ERROR)
+   @Message(value = "Failed to execute outbound transfer", id = 261)
+   void failedOutBoundTransferExecution(@Cause Throwable e);
+
+   @LogMessage(level = ERROR)
+   @Message(value = "Failed to enlist TransactionXaAdapter to transaction", id = 262)
+   void failedToEnlistTransactionXaAdapter(@Cause Throwable e);
 }
 
