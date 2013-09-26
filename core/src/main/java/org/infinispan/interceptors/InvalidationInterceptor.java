@@ -161,7 +161,7 @@ public class InvalidationInterceptor extends BaseRpcInterceptor {
             try {
                invalidateAcrossCluster(defaultSynchronous, filterVisitor.result.toArray(), ctx);
             } catch (Throwable t) {
-               log.warn("Unable to broadcast evicts as a part of the prepare phase.  Rolling back.", t);
+               log.unableToRoolbackEvitionsDuringPrepare(t);
                if (t instanceof RuntimeException)
                   throw (RuntimeException) t;
                else

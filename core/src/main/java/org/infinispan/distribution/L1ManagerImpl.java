@@ -94,7 +94,7 @@ public class L1ManagerImpl implements L1Manager, RemoteValueRetrievedListener {
          }, configuration.clustering().l1().cleanupTaskFrequency(),
                configuration.clustering().l1().cleanupTaskFrequency(), TimeUnit.MILLISECONDS);
       } else {
-         log.warn("Not using an L1 invalidation reaper thread. This could lead to memory leaks as the requestors map may grow indefinitely!");
+         log.warnL1NotHavingReaperThread();
       }
       syncRpcOptions = rpcManager.getRpcOptionsBuilder(ResponseMode.SYNCHRONOUS, false).build();
       syncIgnoreLeaversRpcOptions = rpcManager.getRpcOptionsBuilder(ResponseMode.SYNCHRONOUS_IGNORE_LEAVERS, false)
