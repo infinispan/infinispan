@@ -59,7 +59,7 @@ public class InterceptorChainFactory extends AbstractNamedCacheComponentFactory 
       try {
          componentRegistry.registerComponent(chainedInterceptor, clazz);
       } catch (RuntimeException e) {
-         log.warn("Problems creating interceptor " + clazz);
+         log.unableToCreateInterceptor(clazz, e);
          throw e;
       }
    }
