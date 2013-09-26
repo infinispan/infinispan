@@ -257,37 +257,45 @@ public class PessimisticLockingInterceptor extends AbstractTxLockingInterceptor 
    }
 
    private void acquireRemoteIfNeeded(InvocationContext ctx, Set<Object> keys, FlagAffectedCommand command) throws Throwable {
+      final TxInvocationContext txContext = (TxInvocationContext) ctx;
+      boolean issueRemote = false;
       if (ctx.isOriginLocal() && !command.hasFlag(Flag.CACHE_MODE_LOCAL)) {
-         final TxInvocationContext txContext = (TxInvocationContext) ctx;
          LocalTransaction localTransaction = (LocalTransaction) txContext.getCacheTransaction();
          if (localTransaction.getAffectedKeys().containsAll(keys)) {
             log.tracef("We already have lock for keys %s, skip remote lock acquisition", keys);
             return;
          } else {
-            LockControlCommand lcc = cf.buildLockControlCommand(keys,
-                  command.getFlags(), txContext.getGlobalTransaction());
-            invokeNextInterceptor(ctx, lcc);
+            issueRemote = true;
          }
+      }      
+      // ISPN-3559: Make sure to add the affected keys before issuing the remote LCC command.
+      txContext.addAllAffectedKeys(keys);
+      if(issueRemote) {
+         LockControlCommand lcc = cf.buildLockControlCommand(keys, command.getFlags(), txContext.getGlobalTransaction());
+         invokeNextInterceptor(ctx, lcc);
       }
-      ((TxInvocationContext) ctx).addAllAffectedKeys(keys);
    }
 
    private void acquireRemoteIfNeeded(InvocationContext ctx, AbstractDataCommand command, boolean localNodeIsLockOwner) throws Throwable {
       Object key = command.getKey();
-      if (!localNodeIsLockOwner && ctx.isOriginLocal() && !command.hasFlag(Flag.CACHE_MODE_LOCAL)) {
-         final TxInvocationContext txContext = (TxInvocationContext) ctx;
+      final TxInvocationContext txContext = (TxInvocationContext) ctx;
+      boolean issueRemote = false;
+      if (!localNodeIsLockOwner && ctx.isOriginLocal() && !command.hasFlag(Flag.CACHE_MODE_LOCAL)) {         
          LocalTransaction localTransaction = (LocalTransaction) txContext.getCacheTransaction();
          final boolean alreadyLocked = localTransaction.getAffectedKeys().contains(key);
          if (alreadyLocked) {
             log.tracef("We already have lock for key %s, skip remote lock acquisition", key);
             return;
          } else {
-            LockControlCommand lcc = cf.buildLockControlCommand(
-                  key, command.getFlags(), txContext.getGlobalTransaction());
-            invokeNextInterceptor(ctx, lcc);
+            issueRemote = true;
          }
+      }      
+      // ISPN-3559: Make sure to add the affected keys before issuing the remote LCC command.
+      txContext.addAffectedKey(key);
+      if(issueRemote) {
+         LockControlCommand lcc = cf.buildLockControlCommand( key, command.getFlags(), txContext.getGlobalTransaction());
+         invokeNextInterceptor(ctx, lcc);         
       }
-      ((TxInvocationContext) ctx).addAffectedKey(key);
    }
 
    private void releaseLocksOnFailureBeforePrepare(InvocationContext ctx) {
