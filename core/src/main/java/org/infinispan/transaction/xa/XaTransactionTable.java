@@ -86,7 +86,7 @@ public class XaTransactionTable extends TransactionTable {
                   log.debug("Caught exception attempting to clean up " + xid, xae);
                }
             }
-            log.error("Failed to enlist TransactionXaAdapter to transaction", e);
+            log.failedToEnlistTransactionXaAdapter(e);
             throw new CacheException(e);
          }
       }
