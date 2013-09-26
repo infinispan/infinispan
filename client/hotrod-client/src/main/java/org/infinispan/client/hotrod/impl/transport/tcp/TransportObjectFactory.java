@@ -57,11 +57,14 @@ public class TransportObjectFactory
     */
    @Override
    public boolean validateObject(SocketAddress address, TcpTransport transport) {
-      if (log.isTraceEnabled()) {
-         log.tracef("About to validate(ping) connection to server %s. TcpTransport is %s",
-               address, transport);
+      try {
+         boolean valid = ping(transport, topologyId) == PingOperation.PingResult.SUCCESS;
+         log.tracef("Is connection %s valid? %s", transport, valid);
+         return valid;
+      } catch (Throwable e) {
+         log.tracef(e, "Error validating the connection %s. Marking it as invalid.", transport);
+         return false;
       }
-      return ping(transport, topologyId) == PingOperation.PingResult.SUCCESS;
    }
 
    @Override
