@@ -130,7 +130,7 @@ public class TransactionCoordinator {
          if (shuttingDown)
             log.trace("Exception while preparing back, probably because we're shutting down.");
          else
-            log.error("Error while processing prepare", e);
+            log.errorProcessingPrepare(e);
 
          //rollback transaction before throwing the exception as there's no guarantee the TM calls XAResource.rollback
          //after prepare failed.
