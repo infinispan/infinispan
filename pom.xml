@@ -38,6 +38,7 @@
       <module>persistence/cli</module>
       <module>persistence/leveldb</module>
       <module>persistence/rest</module>
+      <module>persistence/soft-index</module>
       <module>server</module>
       <module>server/core</module>
       <module>server/memcached</module>
