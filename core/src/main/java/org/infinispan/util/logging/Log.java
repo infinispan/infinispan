@@ -938,5 +938,77 @@ public interface Log extends BasicLogger {
    @LogMessage(level = WARN)
    @Message(value = "The transport element's 'strictPeerToPeer' attribute is no longer in use.", id = 254)
    void strictPeerToPeerDeprecated();
+
+   @LogMessage(level = ERROR)
+   @Message(value = "Error while processing prepare", id = 255)
+   void errorProcessingPrepare(@Cause Throwable e);
+
+   @LogMessage(level = ERROR)
+   @Message(value = "Configurator SAXParse error", id = 256)
+   void configuratorSAXParseError(@Cause Exception e);
+
+   @LogMessage(level = ERROR)
+   @Message(value = "Configurator SAX error", id = 257)
+   void configuratorSAXError(@Cause Exception e);
+
+   @LogMessage(level = ERROR)
+   @Message(value = "Configurator general error", id = 258)
+   void configuratorError(@Cause Exception e);
+
+   @LogMessage(level = ERROR)
+   @Message(value = "Async store executor did not stop properly", id = 259)
+   void errorAsyncStoreNotStopped();
+
+   @LogMessage(level = ERROR)
+   @Message(value = "Exception executing command", id = 260)
+   void exceptionExecutingInboundCommand(@Cause Exception e);
+
+   @LogMessage(level = ERROR)
+   @Message(value = "Failed to execute outbound transfer", id = 261)
+   void failedOutBoundTransferExecution(@Cause Throwable e);
+
+   @LogMessage(level = ERROR)
+   @Message(value = "Failed to enlist TransactionXaAdapter to transaction", id = 262)
+   void failedToEnlistTransactionXaAdapter(@Cause Throwable e);
+
+   @LogMessage(level = WARN)
+   @Message(value = "FIFO strategy is deprecated, LRU will be used instead", id = 263)
+   void warnFifoStrategyIsDeprecated();
+
+   @LogMessage(level = WARN)
+   @Message(value = "Not using an L1 invalidation reaper thread. This could lead to memory leaks as the requestors map may grow indefinitely!", id = 264)
+   void warnL1NotHavingReaperThread();
+
+   @LogMessage(level = WARN)
+   @Message(value = "Unable to reset GlobalComponentRegistry after a failed restart!", id = 265)
+   void unableToRestGlobalCoponentRegistryAfterRestart(@Cause Exception e);
+
+   @LogMessage(level = WARN)
+   @Message(value = "Unable to reset GlobalComponentRegistry after a failed restart due to an exception of type %s with message %s. Use DEBUG level logging for full exception details.", id = 266)
+   void unableToRestGlobalCoponentRegistryAfterRestart(String type, String message, @Cause Exception e);
+
+   @LogMessage(level = WARN)
+   @Message(value = "Problems creating interceptor %s", id = 267)
+   void unableToCreateInterceptor(Class type, @Cause Exception e);
+
+   @LogMessage(level = WARN)
+   @Message(value = "Unable to broadcast evicts as a part of the prepare phase. Rolling back.", id = 268)
+   void unableToRoolbackEvitionsDuringPrepare(@Cause Throwable e);
+
+   @LogMessage(level = WARN)
+   @Message(value = "Cache used for Grid metadata should be synchronous.", id = 269)
+   void warnCacheMetadateForGrodFSRequiresSync();
+
+   @LogMessage(level = WARN)
+   @Message(value = "Could not commit local tx %s", id = 270)
+   void warnCouldNotCommitLocalTX(Object transactionDescription, @Cause Exception e);
+
+   @LogMessage(level = WARN)
+   @Message(value = "Could not rollback local tx %s", id = 271)
+   void warnCouldNotRollbackLocalTX(Object transactionDescription, @Cause Exception e);
+
+   @LogMessage(level = WARN)
+   @Message(value = "Exception removing recovery information", id = 272)
+   void warnExceptionRemovingRecovery(@Cause Exception e);
 }
 

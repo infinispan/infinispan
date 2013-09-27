@@ -352,13 +352,13 @@ public class XmlConfigHelper {
          return root;
       }
       catch (SAXParseException err) {
-         log.error("Configurator SAXParse error", err);
+         log.configuratorSAXParseError(err);
       }
       catch (SAXException e) {
-         log.error("Configurator SAX error", e);
+         log.configuratorSAXError(e);
       }
       catch (Exception pce) {
-         log.error("Configurator general error", pce);
+         log.configuratorError(pce);
       }
       return null;
    }

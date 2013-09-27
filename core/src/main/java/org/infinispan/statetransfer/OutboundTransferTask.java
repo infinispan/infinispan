@@ -175,7 +175,7 @@ public class OutboundTransferTask implements Runnable {
       } catch (Throwable t) {
          // ignore eventual exceptions caused by cancellation (have InterruptedException as the root cause)
          if (!runnableFuture.isCancelled()) {
-            log.error("Failed to execute outbound transfer", t);
+            log.failedOutBoundTransferExecution(t);
          }
       }
       if (trace) {

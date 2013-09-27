@@ -150,7 +150,7 @@ public class TransactionXaAdapter extends AbstractEnlistmentAdapter implements X
             if (trace) log.trace("Recovery not enabled");
          }
       } catch (Exception e) {
-         log.warn("Exception removing recovery information: ", e);
+         log.warnExceptionRemovingRecovery(e);
          throw new XAException(XAException.XAER_RMERR);
       }
    }
