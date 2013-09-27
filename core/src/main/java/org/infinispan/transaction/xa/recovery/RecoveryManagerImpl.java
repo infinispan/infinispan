@@ -289,14 +289,14 @@ public class RecoveryManagerImpl implements RecoveryManager {
             txCoordinator.prepare(localTx, true);
             txCoordinator.commit(localTx, false);
          } catch (XAException e) {
-            log.warnCouldNotCommitLocalTX(localTx, e);
+            log.warnCouldNotCommitLocalTx(localTx, e);
             return "Could not commit transaction " + xid + " : " + e.getMessage();
          }
       } else {
          try {
             txCoordinator.rollback(localTx);
          } catch (XAException e) {
-            log.warnCouldNotRollbackLocalTX(localTx, e);
+            log.warnCouldNotRollbackLocalTx(localTx, e);
             return "Could not commit transaction " + xid + " : " + e.getMessage();
          }
       }

@@ -234,9 +234,9 @@ public class GlobalComponentRegistry extends AbstractComponentRegistry {
             rewire();
          } catch (Exception e) {
             if (log.isDebugEnabled())
-               log.unableToRestGlobalCoponentRegistryAfterRestart(e);
+               log.unableToResetGlobalComponentRegistryAfterRestart(e);
             else
-               log.unableToRestGlobalCoponentRegistryAfterRestart(e.getClass().getSimpleName(), e.getMessage(), e);
+               log.unableToResetGlobalComponentRegistryAfterRestart(e.getClass().getSimpleName(), e.getMessage(), e);
          }
          throw new EmbeddedCacheManagerStartupException(rte);
       }

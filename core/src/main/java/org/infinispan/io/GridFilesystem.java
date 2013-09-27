@@ -35,7 +35,7 @@ public class GridFilesystem {
    public GridFilesystem(Cache<String, byte[]> data, Cache<String, GridFile.Metadata> metadata, int defaultChunkSize) {
       if(metadata.getCacheConfiguration().clustering().cacheMode().isClustered() &&
             !metadata.getCacheConfiguration().clustering().cacheMode().isSynchronous()){
-         log.warnCacheMetadateForGrodFSRequiresSync();
+         log.warnGridFSMetadataCacheRequiresSync();
       }
       this.data = data;
       this.metadata = metadata;
