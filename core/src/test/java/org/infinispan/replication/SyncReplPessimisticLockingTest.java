@@ -207,7 +207,7 @@ public class SyncReplPessimisticLockingTest extends MultipleCacheManagersTest {
    }
 
    private void testRemoteLocksReleased(boolean write, boolean commit) throws Exception {
-      MagicKey key = new MagicKey(cache(0, "testcache"));
+      final MagicKey key = new MagicKey(cache(0, "testcache"));
       tm(1, "testcache").begin();
       if (write) {
          cache(1, "testcache").put(key, "somevalue");
@@ -242,6 +242,11 @@ public class SyncReplPessimisticLockingTest extends MultipleCacheManagersTest {
             return remoteTxs.isEmpty();
          }
       });
-      assertFalse(TestingUtil.extractLockManager(cache(0, "testcache")).isLocked(key));
+      eventually(new Condition() {
+         @Override
+         public boolean isSatisfied() throws Exception {
+            return !TestingUtil.extractLockManager(cache(0, "testcache")).isLocked(key);
+         }
+      });
    }
 }
