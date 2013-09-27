@@ -1,6 +1,7 @@
 package org.infinispan.client.hotrod.query;
 
 import org.hibernate.search.engine.spi.SearchFactoryImplementor;
+import org.hibernate.search.indexes.spi.IndexManager;
 import org.infinispan.client.hotrod.RemoteCache;
 import org.infinispan.client.hotrod.RemoteCacheManager;
 import org.infinispan.client.hotrod.Search;
@@ -51,19 +52,17 @@ import static org.junit.Assert.*;
 @Test(groups = "functional", testName = "client.hotrod.query.RemoteQueryDslConditionsTest")
 @CleanupAfterMethod
 public class RemoteQueryDslConditionsTest extends SingleCacheManagerTest {
+   protected String tmpDirPropertyName = "java.io.tmpdir";
 
    protected final DateFormat DATE_FORMAT = new SimpleDateFormat("yyyy-MM-dd");
 
-   private HotRodServer hotRodServer;
-   private RemoteCacheManager remoteCacheManager;
-   private RemoteCache<String, Object> remoteCache;
+   protected HotRodServer hotRodServer;
+   protected RemoteCacheManager remoteCacheManager;
+   protected RemoteCache<String, Object> remoteCache;
 
    @Override
    protected EmbeddedCacheManager createCacheManager() throws Exception {
-      ConfigurationBuilder builder = hotRodCacheConfiguration();
-      builder.indexing().enable()
-            .addProperty("default.directory_provider", "ram")
-            .addProperty("lucene_version", "LUCENE_CURRENT");
+      ConfigurationBuilder builder = getConfigurationBuilder();
 
       cacheManager = TestCacheManagerFactory.createCacheManager(builder);
       cache = cacheManager.getCache();
@@ -83,6 +82,19 @@ public class RemoteQueryDslConditionsTest extends SingleCacheManagerTest {
       MarshallerRegistration.registerMarshallers(ProtoStreamMarshaller.getSerializationContext(remoteCacheManager));
 
       return cacheManager;
+   }
+
+   protected ConfigurationBuilder getConfigurationBuilder() {
+      ConfigurationBuilder builder = hotRodCacheConfiguration();
+      builder.indexing().enable()
+            .addProperty("default.directory_provider", getDirectoryProvider())
+            .addProperty("lucene_version", "LUCENE_CURRENT");
+
+      return builder;
+   }
+
+   public String getDirectoryProvider() {
+      return "ram";
    }
 
    @AfterTest
@@ -207,7 +219,12 @@ public class RemoteQueryDslConditionsTest extends SingleCacheManagerTest {
       remoteCache.put("transaction_" + transaction5.getId(), transaction5);
 
       SearchFactoryImplementor searchFactory = (SearchFactoryImplementor) org.infinispan.query.Search.getSearchManager(cache).getSearchFactory();
-      assertNotNull(searchFactory.getIndexManagerHolder().getIndexManager(ProtobufValueWrapper.class.getName()));
+      Collection<IndexManager> indexManagers = searchFactory.getIndexManagerHolder().getIndexManagers();
+
+      for(IndexManager manager : indexManagers) {
+         assertNotNull(manager);
+         assertTrue(manager.getIndexName().contains(ProtobufValueWrapper.class.getName()));
+      }
    }
 
    public void testEq1() throws Exception {
@@ -874,15 +891,19 @@ public class RemoteQueryDslConditionsTest extends SingleCacheManagerTest {
 
       // all the transactions that happened in January 2013
       Query q = qf.from(Transaction.class)
+            .orderBy("date", SortOrder.ASC)
             .having("date").between(DATE_FORMAT.parse("2013-01-01").getTime(), DATE_FORMAT.parse("2013-01-31").getTime())
             .toBuilder().build();
 
       List<Transaction> list = q.list();
       assertEquals(4, list.size());
-      assertTrue(list.get(0).getDate() < DATE_FORMAT.parse("2013-01-31").getTime());
-      assertTrue(list.get(0).getDate() > DATE_FORMAT.parse("2013-01-01").getTime());
-      assertTrue(list.get(1).getDate() < DATE_FORMAT.parse("2013-01-31").getTime());
+
+      assertTrue(list.get(0).getDate() == DATE_FORMAT.parse("2013-01-01").getTime());
       assertTrue(list.get(1).getDate() > DATE_FORMAT.parse("2013-01-01").getTime());
+      assertTrue(list.get(1).getDate() < DATE_FORMAT.parse("2013-01-31").getTime());
+      assertTrue(list.get(2).getDate() < DATE_FORMAT.parse("2013-01-31").getTime());
+      assertTrue(list.get(2).getDate() > DATE_FORMAT.parse("2013-01-01").getTime());
+      assertTrue(list.get(3).getDate() == DATE_FORMAT.parse("2013-01-31").getTime());
    }
 
    public void testSampleDomainQuery9() throws Exception {
@@ -1013,6 +1034,8 @@ public class RemoteQueryDslConditionsTest extends SingleCacheManagerTest {
             .toBuilder().build();
 
       List<Transaction> list = q.list();
+      assertEquals(10, q.getResultSize());
+
       assertEquals(10, list.size());
       for (int i = 0; i < 10; i++) {
          assertEquals("Expensive shoes " + (20 + i), list.get(i).getDescription());
