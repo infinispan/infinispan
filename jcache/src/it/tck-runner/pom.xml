@@ -1,13 +1,11 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<project xmlns="http://maven.apache.org/POM/4.0.0"
-         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+<?xml version='1.0' encoding='UTF-8'?>
+<project xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd" xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
    <modelVersion>4.0.0</modelVersion>
 
    <parent>
       <groupId>org.infinispan</groupId>
       <artifactId>infinispan-parent</artifactId>
-      <version>6.0.0-SNAPSHOT</version>
+      <version>6.0.0.Beta2</version>
       <relativePath>../../../../parent/pom.xml</relativePath>
    </parent>
 
@@ -32,10 +30,7 @@
          <scope>test</scope>
       </dependency>
 
-      <!--
-         Order is important here! hamcrest-library needs to be defined before cache-tests:
-         http://stackoverflow.com/questions/7869711/getting-nosuchmethoderror-org-hamcrest-matcher-describemismatch-when-running
-      -->
+      
       <dependency>
          <groupId>org.hamcrest</groupId>
          <artifactId>hamcrest-library</artifactId>
@@ -75,7 +70,7 @@
             <groupId>org.apache.maven.plugins</groupId>
             <artifactId>maven-dependency-plugin</artifactId>
             <executions>
-               <!--Required because JUnit will not detect tests simply included in a dep-->
+               
                <execution>
                   <id>copy-cache-tests</id>
                   <goals>
@@ -150,10 +145,9 @@
 
    <profiles>
 
-      <!--To run all tests do not specify any profile-->
+      
 
-      <!-- Profile for running basic tests.
-           Use mvn -P test-basic-cache clean install -->
+      
       <profile>
          <id>test-basic-cache</id>
          <build>
@@ -174,8 +168,7 @@
          </build>
       </profile>
 
-      <!-- Profile for running optional tests.
-           Use mvn -P test-optional-cache clean install -->
+      
       <profile>
          <id>test-optional-cache</id>
          <build>
