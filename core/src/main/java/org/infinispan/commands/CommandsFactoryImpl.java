@@ -162,7 +162,7 @@ public class CommandsFactoryImpl implements CommandsFactory {
 
    @Override
    public RemoveCommand buildRemoveCommand(Object key, Object value, Set<Flag> flags) {
-      return new RemoveCommand(key, value, notifier, flags);
+      return new RemoveCommand(key, value, notifier, flags, configuration.dataContainer().valueEquivalence());
    }
 
    @Override
@@ -287,7 +287,7 @@ public class CommandsFactoryImpl implements CommandsFactory {
             ((PutMapCommand) c).init(notifier);
             break;
          case RemoveCommand.COMMAND_ID:
-            ((RemoveCommand) c).init(notifier);
+            ((RemoveCommand) c).init(notifier, configuration);
             break;
          case MultipleRpcCommand.COMMAND_ID:
             MultipleRpcCommand rc = (MultipleRpcCommand) c;
@@ -306,7 +306,7 @@ public class CommandsFactoryImpl implements CommandsFactory {
             break;
          case InvalidateCommand.COMMAND_ID:
             InvalidateCommand ic = (InvalidateCommand) c;
-            ic.init(notifier);
+            ic.init(notifier, configuration);
             break;
          case InvalidateL1Command.COMMAND_ID:
             InvalidateL1Command ilc = (InvalidateL1Command) c;

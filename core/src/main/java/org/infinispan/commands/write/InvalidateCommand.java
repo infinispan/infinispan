@@ -30,13 +30,15 @@ public class InvalidateCommand extends RemoveCommand {
    }
 
    public InvalidateCommand(CacheNotifier notifier, Set<Flag> flags, Object... keys) {
-      super(null, null, notifier, flags);
+      //valueEquivalence can be null because this command never compares values.
+      super(null, null, notifier, flags, null);
       this.keys = keys;
       this.notifier = notifier;
    }
 
    public InvalidateCommand(CacheNotifier notifier, Set<Flag> flags, Collection<Object> keys) {
-      super(null, null, notifier, flags);
+      //valueEquivalence can be null because this command never compares values.
+      super(null, null, notifier, flags, null);
       if (keys == null || keys.isEmpty())
          this.keys = Util.EMPTY_OBJECT_ARRAY;
       else
