@@ -37,7 +37,7 @@ public class InfinispanStoreJdbcIT {
 
    private static Asset manifest() {
       String manifest = Descriptors.create(ManifestDescriptor.class)
-            .attribute("Dependencies", "org.infinispan:" + Version.MAJOR_MINOR + " services, org.infinispan.cachestore.jdbc:" + Version.MAJOR_MINOR + " services").exportAsString();
+            .attribute("Dependencies", "org.infinispan:" + Version.MAJOR_MINOR + " services, org.infinispan.persistence.jdbc:" + Version.MAJOR_MINOR + " services").exportAsString();
       return new StringAsset(manifest);
    }
 
