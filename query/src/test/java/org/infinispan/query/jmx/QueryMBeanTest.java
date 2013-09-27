@@ -142,6 +142,8 @@ public class QueryMBeanTest extends SingleCacheManagerTest {
          ConfigurationBuilder defaultCacheConfig2 = new ConfigurationBuilder();
          defaultCacheConfig2
                .indexing().enable()
+               .addProperty("default.directory_provider", "ram")
+               .addProperty("lucene_version", "LUCENE_CURRENT")
                .jmxStatistics().enable();
 
          cm2 = TestCacheManagerFactory.createClusteredCacheManagerEnforceJmxDomain("cm2", JMX_DOMAIN, true, true, defaultCacheConfig2, new PerThreadMBeanServerLookup());
