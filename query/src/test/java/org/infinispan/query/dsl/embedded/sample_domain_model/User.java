@@ -36,9 +36,9 @@ public class User {
    @Field(store = Store.YES, analyze = Analyze.NO, indexNullAs = Field.DEFAULT_NULL_TOKEN)
    private String surname;
 
-   @Field(store = Store.YES, analyze = Analyze.NO)
+   @Field(store = Store.YES, analyze = Analyze.NO, indexNullAs = Field.DEFAULT_NULL_TOKEN)
    @NumericField
-   private int age;  // yes, not the birth date :)
+   private Integer age;  // yes, not the birth date :)
 
    @Field(store = Store.YES, analyze = Analyze.NO)
    private Gender gender;
@@ -78,11 +78,11 @@ public class User {
       this.surname = surname;
    }
 
-   public int getAge() {
+   public Integer getAge() {
       return age;
    }
 
-   public void setAge(int age) {
+   public void setAge(Integer age) {
       this.age = age;
    }
 

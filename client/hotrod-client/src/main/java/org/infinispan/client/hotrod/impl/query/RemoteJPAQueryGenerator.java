@@ -1,5 +1,6 @@
 package org.infinispan.client.hotrod.impl.query;
 
+import org.infinispan.protostream.EnumMarshaller;
 import org.infinispan.protostream.SerializationContext;
 import org.infinispan.query.dsl.impl.JPAQueryGenerator;
 
@@ -16,7 +17,18 @@ class RemoteJPAQueryGenerator extends JPAQueryGenerator {
    }
 
    @Override
-   protected String getIndexedEntityName(Class<?> rootType) {
+   protected String renderEntityName(Class<?> rootType) {
       return serializationContext.getMarshaller(rootType).getTypeName();
+   }
+
+   @Override
+   protected <E extends Enum<E>> String renderEnum(E argument) {
+      EnumMarshaller<E> encoder = (EnumMarshaller<E>) serializationContext.getMarshaller(argument.getClass());
+      return String.valueOf(encoder.encode(argument));
+   }
+
+   @Override
+   protected String renderBoolean(boolean argument) {
+      return argument ? "1" : "0";
    }
 }

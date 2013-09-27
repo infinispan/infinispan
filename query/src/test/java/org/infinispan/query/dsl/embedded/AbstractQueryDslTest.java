@@ -29,7 +29,6 @@ public class AbstractQueryDslTest extends SingleCacheManagerTest {
       cfg.transaction()
             .transactionMode(TransactionMode.TRANSACTIONAL)
             .indexing().enable()
-            .indexLocalOnly(false)
             .addProperty("default.directory_provider", "ram")
             .addProperty("lucene_version", "LUCENE_CURRENT");
       return TestCacheManagerFactory.createCacheManager(cfg);

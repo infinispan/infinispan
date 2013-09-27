@@ -40,6 +40,7 @@ public class QueryDslConditionsTest extends AbstractQueryDslTest {
       user1.setName("John");
       user1.setSurname("Doe");
       user1.setGender(User.Gender.MALE);
+      user1.setAge(22);
       user1.setAccountIds(new HashSet<Integer>(Arrays.asList(1, 2)));
 
       Address address1 = new Address();
@@ -1014,6 +1015,18 @@ public class QueryDslConditionsTest extends AbstractQueryDslTest {
       assertEquals(2, list.size());
       assertEquals("Birthday present", list.get(0).getDescription());
       assertEquals("Feb. rent payment", list.get(1).getDescription());
+   }
+
+   @Test(enabled = false, description = "Nulls not correctly indexed for numeric properties")  //todo [anistor] fix disabled test
+   public void testNullOnIntegerField() throws Exception {
+      QueryFactory qf = Search.getSearchManager(cache).getQueryFactory();
+
+      Query q = qf.from(User.class)
+            .having("age").isNull()
+            .toBuilder().build();
+
+      List<User> list = q.list();
+      assertEquals(2, list.size());
    }
 
    public void testSampleDomainQuery19() throws Exception {

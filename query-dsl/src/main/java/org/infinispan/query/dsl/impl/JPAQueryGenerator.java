@@ -44,7 +44,7 @@ public class JPAQueryGenerator implements Visitor<String> {
          sb.append(' ');
       }
 
-      sb.append("FROM ").append(getIndexedEntityName(baseQueryBuilder.getRootType())).append(' ').append(alias);
+      sb.append("FROM ").append(renderEntityName(baseQueryBuilder.getRootType())).append(' ').append(alias);
 
       if (baseQueryBuilder.getFilterCondition() != null) {
          BaseCondition baseCondition = baseQueryBuilder.getFilterCondition().getRoot();
@@ -71,8 +71,16 @@ public class JPAQueryGenerator implements Visitor<String> {
       return sb.toString();
    }
 
-   protected String getIndexedEntityName(Class<?> rootType) {
+   protected String renderEntityName(Class<?> rootType) {
       return rootType.getName();
+   }
+
+   protected <E extends Enum<E>> String renderEnum(E argument) {
+      return '\'' + argument.name() + '\'';
+   }
+
+   protected String renderBoolean(boolean argument) {
+      return argument ? "true" : "false";
    }
 
    @Override
@@ -262,13 +270,18 @@ public class JPAQueryGenerator implements Visitor<String> {
          return;
       }
 
-      if (argument instanceof Number || argument instanceof Boolean) {
+      if (argument instanceof Number) {
          sb.append(argument);
          return;
       }
 
+      if (argument instanceof Boolean) {
+         sb.append(renderBoolean((Boolean) argument));
+         return;
+      }
+
       if (argument instanceof Enum) {
-         sb.append('\'').append(((Enum) argument).name()).append('\'');
+         sb.append(renderEnum((Enum) argument));
          return;
       }
 

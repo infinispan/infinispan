@@ -7,7 +7,6 @@ import org.infinispan.commons.CacheException;
 import org.infinispan.protostream.ProtobufParser;
 import org.infinispan.protostream.SerializationContext;
 import org.infinispan.protostream.TagHandler;
-import org.infinispan.query.remote.QueryFacadeImpl;
 
 import java.io.IOException;
 
@@ -41,6 +40,9 @@ class WrappedMessageTagHandler implements TagHandler {
    private final SerializationContext serCtx;
 
    private Descriptors.Descriptor messageDescriptor;
+   private byte[] bytes;
+   private Object numericValue;
+   private String stringValue;
 
    public WrappedMessageTagHandler(Document document, LuceneOptions luceneOptions, SerializationContext serCtx) {
       this.document = document;
@@ -55,6 +57,16 @@ class WrappedMessageTagHandler implements TagHandler {
    @Override
    public void onTag(int fieldNumber, String fieldName, Descriptors.FieldDescriptor.Type type, Descriptors.FieldDescriptor.JavaType javaType, Object value) {
       switch (fieldNumber) {
+         case wrappedEnum:
+            numericValue = value;
+            break;
+         case wrappedBool:
+            numericValue = Boolean.TRUE.equals(value) ? IndexingTagHandler.TRUE_INT : IndexingTagHandler.FALSE_INT;
+            break;
+         case wrappedBytes:
+         case wrappedString:
+            stringValue = (String) value;
+            break;
          case wrappedDouble:
          case wrappedFloat:
          case wrappedInt64:
@@ -62,33 +74,21 @@ class WrappedMessageTagHandler implements TagHandler {
          case wrappedInt32:
          case wrappedFixed64:
          case wrappedFixed32:
-         case wrappedBool:
-         case wrappedString:
-         case wrappedBytes:
          case wrappedUInt32:
          case wrappedSFixed32:
          case wrappedSFixed64:
          case wrappedSInt32:
          case wrappedSInt64:
-         case wrappedEnum:    // todo [anistor] handle Enums by indexing the name of the value rather than the numeric value
-            //todo [anistor] how do we index a scalar value?
-            luceneOptions.addFieldToDocument("theValue", String.valueOf(value), document);
+            numericValue = value;
             break;
          case wrappedDescriptorFullName:
             messageDescriptor = serCtx.getMessageDescriptor((String) value);
             break;
-         //todo [anistor] tag ordering could be wrong ...
          case wrappedMessageBytes:
-            byte[] bytes = (byte[]) value;
-            try {
-               luceneOptions.addFieldToDocument(QueryFacadeImpl.TYPE_FIELD_NAME, messageDescriptor.getFullName(), document);
-               new ProtobufParser().parse(new IndexingTagHandler(messageDescriptor, document, luceneOptions), messageDescriptor, bytes);
-            } catch (IOException e) {
-               throw new CacheException(e);
-            }
+            bytes = (byte[]) value;
             break;
          default:
-            throw new IllegalStateException();
+            throw new IllegalStateException("Unexpected field : " + fieldNumber);
       }
    }
 
@@ -104,5 +104,20 @@ class WrappedMessageTagHandler implements TagHandler {
 
    @Override
    public void onEnd() {
+      if (bytes != null) {
+         if (messageDescriptor == null) {
+            throw new IllegalStateException("Descriptor name is missing");
+         }
+         try {
+            new ProtobufParser().parse(new IndexingTagHandler(messageDescriptor, document), messageDescriptor, bytes);
+         } catch (IOException e) {
+            throw new CacheException(e);
+         }
+      } else if (numericValue != null) {
+         //todo [anistor] how do we index a scalar value?
+         luceneOptions.addNumericFieldToDocument("theValue", numericValue, document);
+      } else if (stringValue != null) {
+         luceneOptions.addFieldToDocument("theValue", stringValue, document);
+      }
    }
 }
