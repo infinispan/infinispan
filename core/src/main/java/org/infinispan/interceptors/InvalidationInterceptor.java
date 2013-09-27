@@ -161,7 +161,7 @@ public class InvalidationInterceptor extends BaseRpcInterceptor {
             try {
                invalidateAcrossCluster(defaultSynchronous, filterVisitor.result.toArray(), ctx);
             } catch (Throwable t) {
-               log.unableToRoolbackEvitionsDuringPrepare(t);
+               log.unableToRollbackEvictionsDuringPrepare(t);
                if (t instanceof RuntimeException)
                   throw (RuntimeException) t;
                else
