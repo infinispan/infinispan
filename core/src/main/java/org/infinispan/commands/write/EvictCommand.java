@@ -19,7 +19,7 @@ public class EvictCommand extends RemoveCommand implements LocalCommand {
    private static final Log log = LogFactory.getLog(EvictCommand.class);
 
    public EvictCommand(Object key, CacheNotifier notifier, Set<Flag> flags) {
-      super(key, null, notifier, flags);
+      super(key, null, notifier, flags, null);
    }
 
    @Override

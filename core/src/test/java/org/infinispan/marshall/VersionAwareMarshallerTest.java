@@ -224,7 +224,7 @@ public class VersionAwareMarshallerTest extends AbstractInfinispanTest {
             new EmbeddedMetadata.Builder().build(), Collections.<Flag>emptySet());
       marshallAndAssertEquality(c5);
 
-      RemoveCommand c6 = new RemoveCommand("key", null, null, Collections.<Flag>emptySet());
+      RemoveCommand c6 = new RemoveCommand("key", null, null, Collections.<Flag>emptySet(), AnyEquivalence.getInstance());
       marshallAndAssertEquality(c6);
 
       // EvictCommand does not have an empty constructor, so doesn't look to be one that is marshallable.
