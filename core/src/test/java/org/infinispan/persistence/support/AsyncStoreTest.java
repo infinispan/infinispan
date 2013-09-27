@@ -48,7 +48,7 @@ import static org.infinispan.test.TestingUtil.marshalledEntry;
 import static org.infinispan.test.TestingUtil.v;
 import static org.testng.Assert.fail;
 
-@Test(groups = "unit", testName = "persistence.decorators.AsyncStoreTest", sequential=true)
+@Test(groups = "unit", testName = "persistence.support.AsyncStoreTest", sequential=true)
 public class AsyncStoreTest extends AbstractInfinispanTest {
    private static final Log log = LogFactory.getLog(AsyncStoreTest.class);
    private AdvancedAsyncCacheWriter writer;
@@ -84,7 +84,7 @@ public class AsyncStoreTest extends AbstractInfinispanTest {
       if (loader != null) loader.stop();
    }
 
-   @Test(timeOut=10000)
+   @Test(timeOut=30000)
    public void testPutRemove() throws Exception {
       TestCacheManagerFactory.backgroundTestStarted(this);
       createStore();
@@ -96,7 +96,7 @@ public class AsyncStoreTest extends AbstractInfinispanTest {
       doTestRemove(number, key);
    }
 
-   @Test(timeOut=10000)
+   @Test(timeOut=30000)
    public void testPutClearPut() throws Exception {
       TestCacheManagerFactory.backgroundTestStarted(this);
       createStore();
@@ -111,7 +111,7 @@ public class AsyncStoreTest extends AbstractInfinispanTest {
       doTestRemove(number, key);
    }
 
-   @Test(timeOut=10000)
+   @Test(timeOut=30000)
    public void testMultiplePutsOnSameKey() throws Exception {
       TestCacheManagerFactory.backgroundTestStarted(this);
       createStore();
@@ -123,7 +123,7 @@ public class AsyncStoreTest extends AbstractInfinispanTest {
       doTestSameKeyRemove(key);
    }
 
-   @Test(timeOut=10000)
+   @Test(timeOut=30000)
    public void testRestrictionOnAddingToAsyncQueue() throws Exception {
       TestCacheManagerFactory.backgroundTestStarted(this);
       createStore();
