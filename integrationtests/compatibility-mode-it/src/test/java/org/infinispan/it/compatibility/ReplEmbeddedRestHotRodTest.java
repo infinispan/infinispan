@@ -8,6 +8,7 @@ import org.apache.commons.httpclient.methods.GetMethod;
 import org.apache.commons.httpclient.methods.PutMethod;
 import org.infinispan.client.hotrod.Flag;
 import org.infinispan.client.hotrod.RemoteCache;
+import org.infinispan.client.hotrod.VersionedValue;
 import org.infinispan.configuration.cache.CacheMode;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
@@ -16,6 +17,7 @@ import org.testng.annotations.Test;
 import javax.servlet.http.HttpServletResponse;
 
 import static org.testng.AssertJUnit.assertEquals;
+import static org.testng.AssertJUnit.assertTrue;
 import static org.testng.internal.junit.ArrayAsserts.assertArrayEquals;
 
 /**
@@ -28,13 +30,13 @@ import static org.testng.internal.junit.ArrayAsserts.assertArrayEquals;
 @Test(groups = "functional", testName = "it.compatibility.ReplEmbeddedHotRodTest")
 public class ReplEmbeddedRestHotRodTest {
 
-   CompatibilityCacheFactory<String, Object> cacheFactory1;
-   CompatibilityCacheFactory<String, Object> cacheFactory2;
+   CompatibilityCacheFactory<Object, Object> cacheFactory1;
+   CompatibilityCacheFactory<Object, Object> cacheFactory2;
 
    @BeforeClass
    protected void setup() throws Exception {
-      cacheFactory1 = new CompatibilityCacheFactory<String, Object>(CacheMode.REPL_SYNC).setup();
-      cacheFactory2 = new CompatibilityCacheFactory<String, Object>(CacheMode.REPL_SYNC)
+      cacheFactory1 = new CompatibilityCacheFactory<Object, Object>(CacheMode.REPL_SYNC).setup();
+      cacheFactory2 = new CompatibilityCacheFactory<Object, Object>(CacheMode.REPL_SYNC)
             .setup(cacheFactory1.getHotRodPort(), 100);
    }
 
@@ -84,7 +86,7 @@ public class ReplEmbeddedRestHotRodTest {
       final String key = "3";
 
       // 1. Put with Hot Rod
-      RemoteCache<String, Object> remote = cacheFactory1.getHotRodCache();
+      RemoteCache<Object, Object> remote = cacheFactory1.getHotRodCache();
       assertEquals(null, remote.withFlags(Flag.FORCE_RETURN_VALUE).put(key, "v1"));
 
       // 2. Get with Embedded
@@ -96,5 +98,4 @@ public class ReplEmbeddedRestHotRodTest {
       assertEquals(HttpServletResponse.SC_OK, get.getStatusCode());
       assertEquals("v1", get.getResponseBodyAsString());
    }
-
 }

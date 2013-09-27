@@ -1,6 +1,8 @@
 package org.infinispan.commands.write;
 
 import org.infinispan.commands.Visitor;
+import org.infinispan.commons.equivalence.Equivalence;
+import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.container.entries.MVCCEntry;
 import org.infinispan.context.Flag;
@@ -25,6 +27,7 @@ public class RemoveCommand extends AbstractDataWriteCommand {
    boolean successful = true;
    boolean nonExistent = false;
    private boolean ignorePreviousValue;
+   private Equivalence valueEquivalence;
 
    /**
     * When not null, value indicates that the entry should only be removed if the key is mapped to this value. By the
@@ -33,14 +36,16 @@ public class RemoveCommand extends AbstractDataWriteCommand {
     */
    protected transient Object value;
 
-   public RemoveCommand(Object key, Object value, CacheNotifier notifier, Set<Flag> flags) {
+   public RemoveCommand(Object key, Object value, CacheNotifier notifier, Set<Flag> flags, Equivalence valueEquivalence) {
       super(key, flags);
       this.value = value;
       this.notifier = notifier;
+      this.valueEquivalence = valueEquivalence;
    }
 
-   public void init(CacheNotifier notifier) {
+   public void init(CacheNotifier notifier, Configuration configuration) {
       this.notifier = notifier;
+      this.valueEquivalence = configuration.dataContainer().valueEquivalence();
    }
 
    public RemoveCommand() {
@@ -78,7 +83,7 @@ public class RemoveCommand extends AbstractDataWriteCommand {
 
       if (!(e instanceof MVCCEntry)) ctx.putLookedUpEntry(key, null);
 
-      if (!ignorePreviousValue && value != null && e.getValue() != null && !e.getValue().equals(value)) {
+      if (!ignorePreviousValue && value != null && e.getValue() != null && !isValueEquals(e.getValue(), value)) {
          successful = false;
          return false;
       }
@@ -216,5 +221,13 @@ public class RemoveCommand extends AbstractDataWriteCommand {
       } else {
          return value == null ? value : true;
       }
+   }
+
+   @SuppressWarnings("unchecked")
+   private boolean isValueEquals(Object oldValue, Object newValue) {
+      if (valueEquivalence != null) {
+         return valueEquivalence.equals(oldValue, newValue);
+      }
+      return oldValue.equals(newValue);
    }
 }
