@@ -194,7 +194,7 @@ public class EquivalentHashMap<K, V> extends AbstractMap<K, V> {
       }
 
       modCount++;
-      table[index] = new Node<K, V>(key, hash, value);
+      table[index] = createNode(key, value, hash);
       if (++size >= threshold)
          resize(length);
 
@@ -594,12 +594,12 @@ public class EquivalentHashMap<K, V> extends AbstractMap<K, V> {
       return index;
    }
 
-   private static final class Node<K, V> {
+   protected static class Node<K, V> {
       final K key;
       final int hash;
       final V value;
 
-      Node(K key, int hash, V value) {
+      protected Node(K key, int hash, V value) {
          this.key = key;
          this.hash = hash;
          this.value = value;

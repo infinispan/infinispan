@@ -49,7 +49,6 @@ public class EquivalentLinkedHashMap<K, V> extends EquivalentHashMap<K, V> {
    <T> T createNode(K key, V value, int hash) {
       LinkedNode<K, V> linkedNode = new LinkedNode<K, V>(key, hash, value);
       linkedNode.addBefore(header);
-      size++;
       return (T) linkedNode;
    }
 
@@ -72,17 +71,13 @@ public class EquivalentLinkedHashMap<K, V> extends EquivalentHashMap<K, V> {
       header.after = header;
    }
 
-   private static final class LinkedNode<K, V> {
-      final K key;
-      final int hash;
-      final V value;
+   private static final class LinkedNode<K, V> extends Node<K,V> {
+
       LinkedNode<K, V> before;
       LinkedNode<K, V> after;
 
-      LinkedNode(K key, int hash, V value) {
-         this.key = key;
-         this.hash = hash;
-         this.value = value;
+      private LinkedNode(K key, int hash, V value) {
+         super(key, hash, value);
       }
 
       private V remove() {
