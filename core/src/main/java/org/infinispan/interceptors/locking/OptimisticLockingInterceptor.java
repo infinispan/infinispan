@@ -251,9 +251,9 @@ public class OptimisticLockingInterceptor extends AbstractTxLockingInterceptor {
       }
 
       private void lockAndRecord(TxInvocationContext txC, boolean skipLocking, long lockTimeout, Object key) throws InterruptedException {
-         lockAndRegisterBackupLock(txC, key, lockTimeout, skipLocking);
-         performWriteSkewCheck(txC, key);
          txC.addAffectedKey(key);
+         lockAndRegisterBackupLock(txC, key, lockTimeout, skipLocking);
+         performWriteSkewCheck(txC, key);         
       }
 
       @Override
@@ -264,9 +264,9 @@ public class OptimisticLockingInterceptor extends AbstractTxLockingInterceptor {
             boolean skipLocking = hasSkipLocking(command);
             long lockTimeout = getLockAcquisitionTimeout(command, skipLocking);
             for (Object key : compositeKeys) {
-               performWriteSkewCheck(txC, key);
-               lockAndRegisterBackupLock(txC, key, lockTimeout, skipLocking);
                txC.addAffectedKey(key);
+               performWriteSkewCheck(txC, key);
+               lockAndRegisterBackupLock(txC, key, lockTimeout, skipLocking);               
             }
          }
          return null;
@@ -323,10 +323,10 @@ public class OptimisticLockingInterceptor extends AbstractTxLockingInterceptor {
 
    private void acquireAllLocks(TxInvocationContext ctx, Object[] orderedKeys) throws InterruptedException {
       long lockTimeout = cacheConfiguration.locking().lockAcquisitionTimeout();
-      for (Object key: orderedKeys) {
-         lockAndRegisterBackupLock(ctx, key, lockTimeout, false);
-         performLocalWriteSkewCheck(ctx, key);
+      for (Object key: orderedKeys) { 
          ctx.addAffectedKey(key);
+         lockAndRegisterBackupLock(ctx, key, lockTimeout, false);
+         performLocalWriteSkewCheck(ctx, key);         
       }
    }
 
