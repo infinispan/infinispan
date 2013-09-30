@@ -1,6 +1,7 @@
 package org.infinispan.lucene.cachestore;
 
 import org.apache.lucene.store.FSDirectory;
+import org.infinispan.executors.ExecutorAllCompletionService;
 import org.infinispan.lucene.IndexScopedKey;
 import org.infinispan.lucene.cachestore.configuration.LuceneStoreConfiguration;
 import org.infinispan.lucene.logging.Log;
@@ -19,7 +20,6 @@ import java.util.Map.Entry;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Executor;
-import java.util.concurrent.ExecutorCompletionService;
 
 /**
  * A CacheLoader meant to load Lucene index(es) from filesystem based Lucene index(es).
@@ -89,29 +89,35 @@ public class LuceneCacheLoader implements AdvancedCacheLoader {
    @Override
    public void process(final KeyFilter filter, final CacheLoaderTask task, Executor executor, boolean fetchValue, boolean fetchMetadata) {
       scanForUnknownDirectories();
-      ExecutorCompletionService ecs = new ExecutorCompletionService(executor);
+      ExecutorAllCompletionService eacs = new ExecutorAllCompletionService(executor);
 
       final TaskContextImpl taskContext = new TaskContextImpl();
-      int count = 0;
       for (final DirectoryLoaderAdaptor dir : openDirectories.values()) {
-         ecs.submit(new Callable<Void>() {
+         eacs.submit(new Callable<Void>() {
             @Override
             public Void call() throws Exception {
-               final HashSet<MarshalledEntry> allInternalEntries = new HashSet<MarshalledEntry>();
-               dir.loadAllEntries(allInternalEntries, Integer.MAX_VALUE, ctx.getMarshaller());
-               for (MarshalledEntry me : allInternalEntries) {
-                  if (taskContext.isStopped())
-                     break;
-                  if (filter == null || filter.shouldLoadKey(me.getKey())) {
-                     task.processEntry(me, taskContext);
+               try {
+                  final HashSet<MarshalledEntry> allInternalEntries = new HashSet<MarshalledEntry>();
+                  dir.loadAllEntries(allInternalEntries, Integer.MAX_VALUE, ctx.getMarshaller());
+                  for (MarshalledEntry me : allInternalEntries) {
+                     if (taskContext.isStopped())
+                        break;
+                     if (filter == null || filter.shouldLoadKey(me.getKey())) {
+                        task.processEntry(me, taskContext);
+                     }
                   }
+                  return null;
+               } catch (Exception e) {
+                  log.errorExecutingParallelStoreTask(e);
+                  throw e;
                }
-               return null;
             }
          });
-         count++;
       }
-      PersistenceUtil.waitForAllTasksToComplete(ecs, count);
+      eacs.waitUntilAllCompleted();
+      if (eacs.isExceptionThrown()) {
+         throw new CacheLoaderException("Execution exception!");
+      }
    }
 
    @Override

@@ -3,6 +3,9 @@ package org.infinispan.persistence.jdbc.binary;
 import org.infinispan.commons.equivalence.Equivalence;
 import org.infinispan.commons.io.ByteBuffer;
 import org.infinispan.commons.marshall.StreamingMarshaller;
+import org.infinispan.executors.ExecutorAllCompletionService;
+import org.infinispan.marshall.core.MarshalledEntry;
+import org.infinispan.metadata.InternalMetadata;
 import org.infinispan.persistence.CacheLoaderException;
 import org.infinispan.persistence.PersistenceUtil;
 import org.infinispan.persistence.TaskContextImpl;
@@ -14,9 +17,7 @@ import org.infinispan.persistence.jdbc.connectionfactory.ManagedConnectionFactor
 import org.infinispan.persistence.jdbc.logging.Log;
 import org.infinispan.persistence.spi.AdvancedLoadWriteStore;
 import org.infinispan.persistence.spi.InitializationContext;
-import org.infinispan.marshall.core.MarshalledEntry;
 import org.infinispan.persistence.support.Bucket;
-import org.infinispan.metadata.InternalMetadata;
 import org.infinispan.util.concurrent.locks.StripedLock;
 import org.infinispan.util.logging.LogFactory;
 
@@ -33,7 +34,6 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.Callable;
 import java.util.concurrent.Executor;
-import java.util.concurrent.ExecutorCompletionService;
 
 /**
  * {@link org.infinispan.persistence.spi.AdvancedLoadWriteStore} implementation that will store all the buckets as rows
@@ -180,9 +180,8 @@ public class JdbcBinaryStore implements AdvancedLoadWriteStore {
          ps.setLong(1, ctx.getTimeService().wallClockTime());
          rs = ps.executeQuery();
          rs.setFetchSize(tableManipulation.getFetchSize());
-         ExecutorCompletionService<Void> ecs = new ExecutorCompletionService<Void>(executor);
+         ExecutorAllCompletionService ecs = new ExecutorAllCompletionService(executor);
          final TaskContextImpl taskContext = new TaskContextImpl();
-         int taskCount = 0;
          //we can do better here: ATM we load the entries in the caller's thread and process them in parallel
          // we can do the loading (expensive operation) in parallel as well.
          while (rs.next()) {
@@ -191,17 +190,24 @@ public class JdbcBinaryStore implements AdvancedLoadWriteStore {
             ecs.submit(new Callable<Void>() {
                @Override
                public Void call() throws Exception {
-                  for (MarshalledEntry me : bucket.getStoredEntries(filter, ctx.getTimeService()).values()) {
-                     if (!taskContext.isStopped()) {
-                        task.processEntry(me, taskContext);
+                  try {
+                     for (MarshalledEntry me : bucket.getStoredEntries(filter, ctx.getTimeService()).values()) {
+                        if (!taskContext.isStopped()) {
+                           task.processEntry(me, taskContext);
+                        }
                      }
+                     return null;
+                  } catch (Exception e) {
+                     log.errorExecutingParallelStoreTask(e);
+                     throw e;
                   }
-                  return null;
                }
             });
-            taskCount++;
          }
-         PersistenceUtil.waitForAllTasksToComplete(ecs, taskCount);
+         ecs.waitUntilAllCompleted();
+         if (ecs.isExceptionThrown()) {
+            throw new CacheLoaderException("Execution exception!");
+         }
       } catch (SQLException e) {
          log.sqlFailureFetchingAllStoredEntries(e);
          throw new CacheLoaderException("SQL error while fetching all StoredEntries", e);
@@ -245,7 +251,7 @@ public class JdbcBinaryStore implements AdvancedLoadWriteStore {
       ResultSet rs = null;
       Set<Bucket> expiredBuckets = new HashSet<Bucket>();
       final int batchSize = 100;
-      ExecutorCompletionService<Void> ecs = new ExecutorCompletionService<Void>(threadPool);
+      ExecutorAllCompletionService eacs = new ExecutorAllCompletionService(threadPool);
       Set<Bucket> emptyBuckets = new HashSet<Bucket>(batchSize);
       int taskCount = 0;
       try {
@@ -267,7 +273,7 @@ public class JdbcBinaryStore implements AdvancedLoadWriteStore {
                   bucket.setBucketId(bucketId);
                   expiredBuckets.add(bucket);
                   if (expiredBuckets.size() == batchSize) {
-                     ecs.submit(new BucketPurger(expiredBuckets, task, ctx.getMarshaller(), conn, emptyBuckets));
+                     eacs.submit(new BucketPurger(expiredBuckets, task, ctx.getMarshaller(), conn, emptyBuckets));
                      taskCount++;
                      expiredBuckets = new HashSet<Bucket>(batchSize);
                   }
@@ -279,7 +285,7 @@ public class JdbcBinaryStore implements AdvancedLoadWriteStore {
             }
 
             if (!expiredBuckets.isEmpty())
-               ecs.submit(new BucketPurger(expiredBuckets, task, ctx.getMarshaller(), conn, emptyBuckets));
+               eacs.submit(new BucketPurger(expiredBuckets, task, ctx.getMarshaller(), conn, emptyBuckets));
 
          } catch (Exception ex) {
             // if something happens make sure buckets locks are being release
@@ -292,9 +298,8 @@ public class JdbcBinaryStore implements AdvancedLoadWriteStore {
          }
 
 
-         try {
-            PersistenceUtil.waitForAllTasksToComplete(ecs, taskCount);
-         } catch (CacheLoaderException e) {
+         eacs.waitUntilAllCompleted();
+         if (eacs.isExceptionThrown()) {
             releaseLocks(emptyBuckets);
          }
 
