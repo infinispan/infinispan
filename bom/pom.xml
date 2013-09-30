@@ -289,11 +289,6 @@
          </dependency>
          <dependency>
             <groupId>org.hibernate</groupId>
-            <artifactId>hibernate-search-analyzers</artifactId>
-            <version>${version.hibernate.search}</version>
-         </dependency>
-         <dependency>
-            <groupId>org.hibernate</groupId>
             <artifactId>hibernate-search-infinispan</artifactId>
             <version>${version.hibernate.search}</version>
          </dependency>
