@@ -46,7 +46,7 @@ import static org.testng.AssertJUnit.assertNull;
  *
  * @author Dan Berindei
  */
-@Test(groups = "functional", testName = "distribution.rehash.NonTxPrimaryOwnerLeavingTest")
+@Test(groups = "functional", testName = "distribution.rehash.NonTxJoinerBecomingBackupOwnerTest")
 @CleanupAfterMethod
 public class NonTxJoinerBecomingBackupOwnerTest extends MultipleCacheManagersTest {
 
@@ -86,6 +86,25 @@ public class NonTxJoinerBecomingBackupOwnerTest extends MultipleCacheManagersTes
 
       private Object getReturnValue() {
          return returnValue;
+      }
+
+      private Object perform(AdvancedCache<Object, Object> cache0, MagicKey key) {
+         switch (this) {
+            case PUT:
+               return cache0.put(key, getValue());
+            case PUT_IF_ABSENT:
+               return cache0.putIfAbsent(key, getValue());
+            case REPLACE:
+               return cache0.replace(key, getValue());
+            case REPLACE_EXACT:
+               return cache0.replace(key, getPreviousValue(), getValue());
+            case REMOVE:
+               return cache0.remove(key);
+            case REMOVE_EXACT:
+               return cache0.remove(key, getPreviousValue());
+            default:
+               throw new IllegalArgumentException("Unsupported operation: " + this);
+         }
       }
    }
 
@@ -196,22 +215,7 @@ public class NonTxJoinerBecomingBackupOwnerTest extends MultipleCacheManagersTes
       Future<Object> future = fork(new Callable<Object>() {
          @Override
          public Object call() throws Exception {
-            switch (op) {
-               case PUT:
-                  return cache0.put(key, op.getValue());
-               case PUT_IF_ABSENT:
-                  return cache0.putIfAbsent(key, op.getValue());
-               case REPLACE:
-                  return cache0.replace(key, op.getValue());
-               case REPLACE_EXACT:
-                  return cache0.replace(key, op.getPreviousValue(), op.getValue());
-               case REMOVE:
-                  return cache0.remove(key);
-               case REMOVE_EXACT:
-                  return cache0.remove(key, op.getPreviousValue());
-               default:
-                  throw new IllegalArgumentException("Unsupported operation: " + op);
-            }
+            return op.perform(cache0, key);
          }
       });
 

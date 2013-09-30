@@ -198,11 +198,21 @@ public class EntryWrappingInterceptor extends CommandInterceptor {
 
    @Override
    public final Object visitRemoveCommand(InvocationContext ctx, RemoveCommand command) throws Throwable {
-      if (shouldWrap(command.getKey(), ctx, command)) {
-         entryFactory.wrapEntryForRemove(ctx, command.getKey(),
-                                         command.hasFlag(Flag.IGNORE_RETURN_VALUES) && !command.isConditional());
-      }
+      wrapEntryForRemoveIfNeeded(ctx, command);
       return setSkipRemoteGetsAndInvokeNextForDataCommand(ctx, command, null);
+   }
+
+   private void wrapEntryForRemoveIfNeeded(InvocationContext ctx, RemoveCommand command) throws InterruptedException {
+      if (shouldWrap(command.getKey(), ctx, command)) {
+         if (command.isIgnorePreviousValue()) {
+            //wrap it for put, as the previous value might not be present by now (e.g. might have been deleted)
+            // but we still need to apply the new value.
+            entryFactory.wrapEntryForPut(ctx, command.getKey(), null, false, command, false);
+         } else {
+            entryFactory.wrapEntryForRemove(ctx, command.getKey(),
+                  command.hasFlag(Flag.IGNORE_RETURN_VALUES) && !command.isConditional());
+         }
+      }
    }
 
    @Override
@@ -438,7 +448,13 @@ public class EntryWrappingInterceptor extends CommandInterceptor {
       @Override
       public Object visitRemoveCommand(InvocationContext ctx, RemoveCommand command) throws Throwable {
          if (cdl.localNodeIsOwner(command.getKey())) {
-            entryFactory.wrapEntryForRemove(ctx, command.getKey(), false);
+            if (command.isIgnorePreviousValue()) {
+               //wrap it for put, as the previous value might not be present by now (e.g. might have been deleted)
+               // but we still need to apply the new value.
+               entryFactory.wrapEntryForPut(ctx, command.getKey(), null, false, command, false);
+            } else  {
+               entryFactory.wrapEntryForRemove(ctx, command.getKey(), false);
+            }
             invokeNextInterceptor(ctx, command);
          }
          return null;
