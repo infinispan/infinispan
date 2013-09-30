@@ -7,16 +7,10 @@ import org.testng.annotations.Test;
  *
  * @author Anna Manukyan
  */
-@Test(groups = "functional", testName = "query.api.TransactionalInfinispanDirectoryNonIndexedValuesTest", enabled = false,
-      description = "Enable when the ISPN-2815 is fixed.")
+@Test(groups = "functional", testName = "query.api.TransactionalInfinispanDirectoryNonIndexedValuesTest")
 public class TransactionalInfinispanDirectoryNonIndexedValuesTest extends InfinispanDirectoryNonIndexedValuesTest {
 
    protected boolean isTransactional() {
       return true;
-   }
-
-   @Test(enabled = false, description = "Enable when the ISPN-2815 is fixed.")
-   public void testReplaceSimpleSearchable() {
-
    }
 }
