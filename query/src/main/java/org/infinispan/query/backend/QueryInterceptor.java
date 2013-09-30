@@ -10,6 +10,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
+import javax.transaction.Transaction;
 import javax.transaction.TransactionManager;
 import javax.transaction.TransactionSynchronizationRegistry;
 
@@ -213,7 +214,12 @@ public class QueryInterceptor extends CommandInterceptor {
       }
       if (locked) {
          Class[] array = toAdd.toArray(new Class[toAdd.size()]);
-         searchFactory.addClasses(array);
+         final Transaction transaction = suspend();
+         try {
+            searchFactory.addClasses(array);
+         } finally {
+            resume(transaction);
+         }
          for (Class<?> type : toAdd) {
             knownClasses.put(type, isIndexed(type));
          }
@@ -443,8 +449,31 @@ public class QueryInterceptor extends CommandInterceptor {
       }
    }
 
-   private final TransactionContext makeTransactionalEventContext() {
+   private TransactionContext makeTransactionalEventContext() {
       return new TransactionalEventTransactionContext(transactionManager, transactionSynchronizationRegistry);
+   }
+
+   private Transaction suspend()  {
+      if (transactionManager == null) {
+         return null;
+      }
+      try {
+         return transactionManager.suspend();
+      } catch (Exception e) {
+         //ignored
+      }
+      return null;
+   }
+
+   private void resume(Transaction transaction) {
+      if (transaction == null || transactionManager == null) {
+         return;
+      }
+      try {
+         transactionManager.resume(transaction);
+      } catch (Exception e) {
+         //ignored;
+      }
    }
 
 }
