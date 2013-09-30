@@ -2,10 +2,10 @@ package org.infinispan.util.logging;
 
 import org.infinispan.commands.ReplicableCommand;
 import org.infinispan.commands.tx.PrepareCommand;
+import org.infinispan.commons.CacheConfigurationException;
 import org.infinispan.commons.CacheException;
 import org.infinispan.commons.marshall.AdvancedExternalizer;
 import org.infinispan.commons.util.TypedProperties;
-import org.infinispan.commons.CacheConfigurationException;
 import org.infinispan.lifecycle.ComponentStatus;
 import org.infinispan.persistence.CacheLoaderException;
 import org.infinispan.persistence.support.SingletonCacheWriter;
@@ -32,7 +32,6 @@ import javax.transaction.Synchronization;
 import javax.transaction.TransactionManager;
 import javax.transaction.xa.XAException;
 import javax.xml.namespace.QName;
-
 import java.io.File;
 import java.io.IOException;
 import java.lang.reflect.Method;
@@ -43,7 +42,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.ExecutionException;
 
 import static org.jboss.logging.Logger.Level.*;
 
@@ -930,7 +928,7 @@ public interface Log extends BasicLogger {
 
    @LogMessage(level = ERROR)
    @Message(value = "Error executing parallel store task", id = 252)
-   void errorExecutingParallelStoreTask(@Cause ExecutionException e);
+   void errorExecutingParallelStoreTask(@Cause Throwable cause);
 
    @Message(value = "Invalid Cache Loader class: %s", id = 253)
    CacheConfigurationException invalidCacheLoaderClass(String name);

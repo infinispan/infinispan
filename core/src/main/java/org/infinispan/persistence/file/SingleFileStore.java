@@ -1,5 +1,21 @@
 package org.infinispan.persistence.file;
 
+import org.infinispan.commons.equivalence.AnyEquivalence;
+import org.infinispan.commons.equivalence.Equivalence;
+import org.infinispan.commons.equivalence.EquivalentLinkedHashMap;
+import org.infinispan.commons.io.ByteBufferFactory;
+import org.infinispan.commons.util.CollectionFactory;
+import org.infinispan.configuration.cache.SingleFileStoreConfiguration;
+import org.infinispan.executors.ExecutorAllCompletionService;
+import org.infinispan.marshall.core.MarshalledEntry;
+import org.infinispan.persistence.CacheLoaderException;
+import org.infinispan.persistence.PersistenceUtil;
+import org.infinispan.persistence.TaskContextImpl;
+import org.infinispan.persistence.spi.AdvancedLoadWriteStore;
+import org.infinispan.persistence.spi.InitializationContext;
+import org.infinispan.util.logging.Log;
+import org.infinispan.util.logging.LogFactory;
+
 import java.io.File;
 import java.io.IOException;
 import java.io.RandomAccessFile;
@@ -15,22 +31,6 @@ import java.util.SortedSet;
 import java.util.TreeSet;
 import java.util.concurrent.Callable;
 import java.util.concurrent.Executor;
-import java.util.concurrent.ExecutorCompletionService;
-
-import org.infinispan.commons.equivalence.AnyEquivalence;
-import org.infinispan.commons.equivalence.Equivalence;
-import org.infinispan.commons.equivalence.EquivalentLinkedHashMap;
-import org.infinispan.commons.io.ByteBufferFactory;
-import org.infinispan.commons.util.CollectionFactory;
-import org.infinispan.configuration.cache.SingleFileStoreConfiguration;
-import org.infinispan.persistence.CacheLoaderException;
-import org.infinispan.persistence.PersistenceUtil;
-import org.infinispan.persistence.spi.AdvancedLoadWriteStore;
-import org.infinispan.persistence.spi.InitializationContext;
-import org.infinispan.marshall.core.MarshalledEntry;
-import org.infinispan.persistence.TaskContextImpl;
-import org.infinispan.util.logging.Log;
-import org.infinispan.util.logging.LogFactory;
 
 /**
  * A filesystem-based implementation of a {@link org.infinispan.persistence.spi.CacheLoader}. This file store
@@ -422,28 +422,34 @@ public class SingleFileStore implements AdvancedLoadWriteStore {
          }
       }
 
-      ExecutorCompletionService<Void> ecs = new ExecutorCompletionService<Void>(executor);
+      ExecutorAllCompletionService eacs = new ExecutorAllCompletionService(executor);
 
       final TaskContextImpl taskContext = new TaskContextImpl();
       int taskCount = 0;
-      for (Object k : keysToLoad) {
+      for (final Object key : keysToLoad) {
          if (taskContext.isStopped())
             break;
 
-         taskCount++;
-         final Object key = k;
-         ecs.submit(new Callable<Void>() {
+         eacs.submit(new Callable<Void>() {
             @Override
             public Void call() throws Exception {
-               final MarshalledEntry marshalledEntry = _load(key, fetchValue, fetchMetadata);
-               if (marshalledEntry != null) {
-                  task.processEntry(marshalledEntry, taskContext);
+               try {
+                  final MarshalledEntry marshalledEntry = _load(key, fetchValue, fetchMetadata);
+                  if (marshalledEntry != null) {
+                     task.processEntry(marshalledEntry, taskContext);
+                  }
+                  return null;
+               } catch (Exception e) {
+                  log.errorExecutingParallelStoreTask(e);
+                  throw e;
                }
-               return null;
             }
          });
       }
-      PersistenceUtil.waitForAllTasksToComplete(ecs, taskCount);
+      eacs.waitUntilAllCompleted();
+      if (eacs.isExceptionThrown()) {
+         throw new CacheLoaderException("Execution exception!");
+      }
    }
 
    @Override

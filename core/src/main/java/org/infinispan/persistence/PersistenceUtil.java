@@ -3,10 +3,10 @@ package org.infinispan.persistence;
 import org.infinispan.container.InternalEntryFactory;
 import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.container.entries.InternalCacheValue;
-import org.infinispan.persistence.spi.AdvancedCacheLoader;
 import org.infinispan.marshall.core.MarshalledEntry;
 import org.infinispan.metadata.InternalMetadata;
 import org.infinispan.metadata.InternalMetadataImpl;
+import org.infinispan.persistence.spi.AdvancedCacheLoader;
 import org.infinispan.util.concurrent.WithinThreadExecutor;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
@@ -14,8 +14,6 @@ import org.infinispan.util.logging.LogFactory;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.ExecutorCompletionService;
 import java.util.concurrent.atomic.AtomicInteger;
 
 /**
@@ -65,29 +63,6 @@ public class PersistenceUtil {
          }
       }, new WithinThreadExecutor(), true, true);
       return set;
-   }
-
-   /**
-    * @throws CacheLoaderException if there's been an execution exception
-    */
-   public static void waitForAllTasksToComplete(ExecutorCompletionService<Void> ecs, int taskCount) {
-      boolean interrupted = false;
-      boolean executionExceptions = false;
-      for (int i = 0; i < taskCount; i++) {
-         try {
-            ecs.take().get();
-         } catch (InterruptedException e) {
-            interrupted = true;
-         } catch (ExecutionException e) {
-            executionExceptions = true;
-            log.errorExecutingParallelStoreTask(e);
-         }
-      }
-      if (interrupted) {
-         Thread.currentThread().interrupt();
-      }
-      if (executionExceptions)
-         throw new CacheLoaderException("Execution exception!");
    }
 
    public static long getExpiryTime(InternalMetadata internalMetadata) {

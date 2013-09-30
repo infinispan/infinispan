@@ -3,7 +3,6 @@ package org.infinispan.persistence.jdbc.stringbased;
 import org.infinispan.commons.io.ByteBuffer;
 import org.infinispan.marshall.core.MarshalledEntry;
 import org.infinispan.persistence.CacheLoaderException;
-import org.infinispan.persistence.PersistenceUtil;
 import org.infinispan.persistence.TaskContextImpl;
 import org.infinispan.persistence.jdbc.JdbcUtil;
 import org.infinispan.persistence.jdbc.TableManipulation;
@@ -25,8 +24,10 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.concurrent.Callable;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Executor;
 import java.util.concurrent.ExecutorCompletionService;
+import java.util.concurrent.Future;
 
 import static org.infinispan.persistence.PersistenceUtil.getExpiryTime;
 
@@ -259,7 +260,7 @@ public class JdbcStringBasedStore implements AdvancedLoadWriteStore {
    public void purge(Executor executor, PurgeListener task) {
       //todo we should make the notification to the purge listener here
       ExecutorCompletionService<Void> ecs = new ExecutorCompletionService<Void>(executor);
-      ecs.submit(new Callable<Void>() {
+      Future<Void> future = ecs.submit(new Callable<Void>() {
          @Override
          public Void call() throws Exception {
             Connection conn = null;
@@ -283,7 +284,14 @@ public class JdbcStringBasedStore implements AdvancedLoadWriteStore {
             return null;
          }
       });
-      PersistenceUtil.waitForAllTasksToComplete(ecs, 1);
+      try {
+         future.get();
+      } catch (InterruptedException e) {
+         Thread.currentThread().interrupt();
+      } catch (ExecutionException e) {
+         log.errorExecutingParallelStoreTask(e);
+         throw new CacheLoaderException(e);
+      }
    }
 
    @Override
@@ -297,7 +305,7 @@ public class JdbcStringBasedStore implements AdvancedLoadWriteStore {
    public void process(final KeyFilter filter, final CacheLoaderTask task, Executor executor, final boolean fetchValue, final boolean fetchMetadata) {
 
       ExecutorCompletionService<Void> ecs = new ExecutorCompletionService<Void>(executor);
-      ecs.submit(new Callable<Void>() {
+      Future<Void> future = ecs.submit(new Callable<Void>() {
          @Override
          public Void call() throws Exception {
             Connection conn = null;
@@ -342,7 +350,14 @@ public class JdbcStringBasedStore implements AdvancedLoadWriteStore {
             }
          }
       });
-      PersistenceUtil.waitForAllTasksToComplete(ecs, 1);
+      try {
+         future.get();
+      } catch (InterruptedException e) {
+         Thread.currentThread().interrupt();
+      } catch (ExecutionException e) {
+         log.errorExecutingParallelStoreTask(e);
+         throw new CacheLoaderException(e);
+      }
    }
 
    @Override

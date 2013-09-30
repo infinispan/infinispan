@@ -3,6 +3,7 @@ package org.infinispan.compatibility.adaptor52x;
 import org.infinispan.config.parsing.XmlConfigHelper;
 import org.infinispan.container.InternalEntryFactory;
 import org.infinispan.container.entries.InternalCacheEntry;
+import org.infinispan.executors.ExecutorAllCompletionService;
 import org.infinispan.loaders.CacheLoader;
 import org.infinispan.loaders.CacheLoaderConfig;
 import org.infinispan.loaders.CacheLoaderException;
@@ -21,8 +22,8 @@ import org.infinispan.util.Util;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.concurrent.Callable;
+import java.util.concurrent.CompletionService;
 import java.util.concurrent.Executor;
-import java.util.concurrent.ExecutorCompletionService;
 
 /**
  * @author Mircea Markus
@@ -88,8 +89,7 @@ public class Adaptor52xStore implements AdvancedLoadWriteStore {
          Set<Object> keys = loader.loadAllKeys(null);
 
          int batchSize = 1000;
-         ExecutorCompletionService ecs = new ExecutorCompletionService(executor);
-         int tasks = 0;
+         ExecutorAllCompletionService eacs = new ExecutorAllCompletionService(executor);
          final TaskContext taskContext = new TaskContextImpl();
          Set<Object> entries = new HashSet<Object>(batchSize);
          for (Object key : keys) {
@@ -98,21 +98,22 @@ public class Adaptor52xStore implements AdvancedLoadWriteStore {
             if (entries.size() == batchSize) {
                final Set<Object> batch = entries;
                entries = new HashSet<Object>(batchSize);
-               submitProcessTask(cacheLoaderTask, ecs, taskContext, batch, fetchValue, fetchMetadata);
-               tasks++;
+               submitProcessTask(cacheLoaderTask, eacs, taskContext, batch, fetchValue, fetchMetadata);
             }
          }
          if (!entries.isEmpty()) {
-            submitProcessTask(cacheLoaderTask, ecs, taskContext, entries, fetchValue, fetchMetadata);
-            tasks++;
+            submitProcessTask(cacheLoaderTask, eacs, taskContext, entries, fetchValue, fetchMetadata);
          }
-         PersistenceUtil.waitForAllTasksToComplete(ecs, tasks);
+         eacs.waitUntilAllCompleted();
+         if (eacs.isExceptionThrown()) {
+            throw newCacheLoaderException(null);
+         }
       } catch (CacheLoaderException e) {
          throw newCacheLoaderException(e);
       }
    }
 
-   private void submitProcessTask(final CacheLoaderTask cacheLoaderTask, ExecutorCompletionService ecs,
+   private void submitProcessTask(final CacheLoaderTask cacheLoaderTask, CompletionService<Void> ecs,
                                   final TaskContext taskContext, final Set<Object> batch, final boolean loadEntry,
                                   final boolean loadMetadata) {
       ecs.submit(new Callable<Void>() {
