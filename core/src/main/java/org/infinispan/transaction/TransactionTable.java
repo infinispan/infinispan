@@ -86,6 +86,7 @@ public class TransactionTable {
    private volatile int currentTopologyId = CACHE_STOPPED_TOPOLOGY_ID;
    private String cacheName;
    private TimeService timeService;
+   private boolean totalOrder;
 
    @Inject
    public void initialize(RpcManager rpcManager, Configuration configuration,
@@ -121,28 +122,30 @@ public class TransactionTable {
          notifier.addListener(this);
          clustered = true;
       }
-      
-      // Periodically run a task to cleanup the transaction table from completed transactions.
-      ThreadFactory tf = new ThreadFactory() {
-         @Override
-         public Thread newThread(Runnable r) {
-            String address = rpcManager != null ? rpcManager.getTransport().getAddress().toString() : "local";
-            Thread th = new Thread(r, "TxCleanupService," + cacheName + "," + address);
-            th.setDaemon(true);
-            return th;
-         }
-      };
 
-      executorService = Executors.newSingleThreadScheduledExecutor(tf);
+      totalOrder = configuration.transaction().transactionProtocol().isTotalOrder();
+      if (!totalOrder) {
+         // Periodically run a task to cleanup the transaction table from completed transactions.
+         ThreadFactory tf = new ThreadFactory() {
+            @Override
+            public Thread newThread(Runnable r) {
+               String address = rpcManager != null ? rpcManager.getTransport().getAddress().toString() : "local";
+               Thread th = new Thread(r, "TxCleanupService," + cacheName + "," + address);
+               th.setDaemon(true);
+               return th;
+            }
+         };
 
-      long interval = configuration.transaction().reaperWakeUpInterval();
-      executorService.scheduleAtFixedRate(new Runnable() {
-         @Override
-         public void run() {
-            cleanupCompletedTransactions();
-         }
-      }, interval, interval, TimeUnit.MILLISECONDS);
+         executorService = Executors.newSingleThreadScheduledExecutor(tf);
 
+         long interval = configuration.transaction().reaperWakeUpInterval();
+         executorService.scheduleAtFixedRate(new Runnable() {
+            @Override
+            public void run() {
+               cleanupCompletedTransactions();
+            }
+         }, interval, interval, TimeUnit.MILLISECONDS);
+      }
    }
 
    @Stop
@@ -514,6 +517,9 @@ public class TransactionTable {
     * Once marked as completed (because of commit or rollback) any further prepare received on that transaction are discarded.
     */
    public void markTransactionCompleted(GlobalTransaction globalTx) {
+      if (totalOrder) {
+         return;
+      }
       completedTransactions.put(globalTx, timeService.time());
    }
 
@@ -521,7 +527,7 @@ public class TransactionTable {
     * @see #markTransactionCompleted(org.infinispan.transaction.xa.GlobalTransaction)
     */
    public boolean isTransactionCompleted(GlobalTransaction gtx) {
-      return completedTransactions.containsKey(gtx);
+      return !totalOrder && completedTransactions.containsKey(gtx);
    }
 
    public void cleanupCompletedTransactions() {
