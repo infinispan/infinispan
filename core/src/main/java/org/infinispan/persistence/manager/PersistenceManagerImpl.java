@@ -44,6 +44,8 @@ import org.infinispan.util.concurrent.WithinThreadExecutor;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
+import javax.transaction.Status;
+import javax.transaction.SystemException;
 import javax.transaction.Transaction;
 import javax.transaction.TransactionManager;
 import java.util.*;
@@ -213,12 +215,12 @@ public class PersistenceManagerImpl implements PersistenceManager {
       preloadCl.process(null, new AdvancedCacheLoader.CacheLoaderTask() {
          @Override
          public void processEntry(MarshalledEntry me, AdvancedCacheLoader.TaskContext taskContext) throws InterruptedException {
-            if (loadedEntries.get() >= maxEntries) {
+            if (loadedEntries.getAndIncrement() >= maxEntries) {
                taskContext.stop();
                return;
             }
             Metadata metadata = me.getMetadata() != null ? ((InternalMetadataImpl)me.getMetadata()).getActual() : null; //the downcast will go away with ISPN-3460
-            flaggedCache.put(me.getKey(), me.getValue(), metadata);
+            preloadKey(flaggedCache, me.getKey(), me.getValue(), metadata);
          }
       }, new WithinThreadExecutor(), true, true);
 
@@ -569,6 +571,71 @@ public class PersistenceManagerImpl implements PersistenceManager {
       int ne = Integer.MAX_VALUE;
       if (configuration.eviction().strategy().isEnabled()) ne = configuration.eviction().maxEntries();
       return ne;
+   }
+
+   private void preloadKey(AdvancedCache<Object, Object> cache, Object key, Object value, Metadata metadata) {
+      final Transaction transaction = suspendIfNeeded();
+      boolean success = false;
+      try {
+         try {
+            beginIfNeeded();
+            cache.put(key, value, metadata);
+            success = true;
+         } catch (Exception e) {
+            throw new CacheLoaderException("Unable to preload!", e);
+         } finally {
+            commitIfNeeded(success);
+         }
+      } finally {
+         //commitIfNeeded can throw an exception, so we need a try { } finally { }
+         resumeIfNeeded(transaction);
+      }
+   }
+
+   private void resumeIfNeeded(Transaction transaction) {
+      if (configuration.transaction().transactionMode().isTransactional() && transactionManager != null &&
+            transaction != null) {
+         try {
+            transactionManager.resume(transaction);
+         } catch (Exception e) {
+            throw new CacheLoaderException(e);
+         }
+      }
+   }
+
+   private Transaction suspendIfNeeded() {
+      if (configuration.transaction().transactionMode().isTransactional() && transactionManager != null) {
+         try {
+            return transactionManager.suspend();
+         } catch (Exception e) {
+            throw new CacheLoaderException(e);
+         }
+      }
+      return null;
+   }
+
+   private void beginIfNeeded() {
+      if (configuration.transaction().transactionMode().isTransactional() && transactionManager != null) {
+         try {
+            transactionManager.begin();
+         } catch (Exception e) {
+            throw new CacheLoaderException(e);
+         }
+      }
+   }
+
+   private void commitIfNeeded(boolean success) {
+      if (configuration.transaction().transactionMode().isTransactional() && transactionManager != null) {
+         try {
+            if (success) {
+               transactionManager.commit();
+            } else {
+               transactionManager.rollback();
+            }
+         } catch (Exception e) {
+            throw new CacheLoaderException(e);
+         }
+      }
    }
 
    public Executor getPersistenceExecutor() {

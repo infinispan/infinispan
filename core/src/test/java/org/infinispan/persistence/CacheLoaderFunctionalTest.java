@@ -3,9 +3,11 @@ package org.infinispan.persistence;
 import org.infinispan.AdvancedCache;
 import org.infinispan.Cache;
 import org.infinispan.commons.marshall.StreamingMarshaller;
+import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.container.DataContainer;
 import org.infinispan.container.entries.InternalCacheEntry;
+import org.infinispan.eviction.EvictionStrategy;
 import org.infinispan.marshall.core.MarshalledEntryImpl;
 import org.infinispan.persistence.dummy.DummyInMemoryStoreConfigurationBuilder;
 import org.infinispan.persistence.spi.AdvancedCacheLoader;
@@ -37,6 +39,7 @@ import static org.infinispan.api.mvcc.LockAssert.assertNoLocks;
 import static org.infinispan.test.TestingUtil.k;
 import static org.infinispan.test.TestingUtil.v;
 import static org.testng.AssertJUnit.assertEquals;
+import static org.testng.AssertJUnit.assertTrue;
 
 /**
  * Tests the interceptor chain and surrounding logic
@@ -276,48 +279,35 @@ public class CacheLoaderFunctionalTest extends AbstractInfinispanTest {
       assertNoLocks(cache);
    }
 
-   public void testPreloading() throws CacheLoaderException {
+   public void testPreloading() throws Exception {
       ConfigurationBuilder preloadingCfg = new ConfigurationBuilder();
       preloadingCfg.read(cfg.build());
       preloadingCfg.persistence().clearStores().addStore(DummyInMemoryStoreConfigurationBuilder.class).preload(true).storeName("preloadingCache");
-      cm.defineConfiguration("preloadingCache", preloadingCfg.build());
-      Cache<String, String> preloadingCache = cm.getCache("preloadingCache");
-      AdvancedCacheLoader preloadingCacheLoader = (AdvancedCacheLoader) TestingUtil.getCacheLoader(preloadingCache);
+      doPreloadingTest(preloadingCfg.build(), "preloadingCache");
+   }
 
-      assert preloadingCache.getCacheConfiguration().persistence().preload();
+   public void testPreloadingWithoutAutoCommit() throws Exception {
+      ConfigurationBuilder preloadingCfg = new ConfigurationBuilder();
+      preloadingCfg.read(cfg.build());
+      preloadingCfg.persistence().clearStores().addStore(DummyInMemoryStoreConfigurationBuilder.class).preload(true).storeName("preloadingCache_2");
+      preloadingCfg.transaction().autoCommit(false);
+      doPreloadingTest(preloadingCfg.build(), "preloadingCache_2");
+   }
 
-      assertNotInCacheAndStore(preloadingCache, preloadingCacheLoader, "k1", "k2", "k3", "k4");
+   public void testPreloadingWithEvictionAndOneMaxEntry() throws Exception {
+      ConfigurationBuilder preloadingCfg = new ConfigurationBuilder();
+      preloadingCfg.read(cfg.build());
+      preloadingCfg.persistence().clearStores().addStore(DummyInMemoryStoreConfigurationBuilder.class).preload(true).storeName("preloadingCache_3");
+      preloadingCfg.eviction().strategy(EvictionStrategy.LIRS).maxEntries(1);
+      doPreloadingTestWithEviction(preloadingCfg.build(), "preloadingCache_3");
+   }
 
-      preloadingCache.put("k1", "v1");
-      preloadingCache.put("k2", "v2", lifespan, MILLISECONDS);
-      preloadingCache.put("k3", "v3");
-      preloadingCache.put("k4", "v4", lifespan, MILLISECONDS);
-
-      for (int i = 1; i < 5; i++) {
-         if (i % 2 == 1)
-            assertInCacheAndStore(preloadingCache, preloadingCacheLoader, "k" + i, "v" + i);
-         else
-            assertInCacheAndStore(preloadingCache, preloadingCacheLoader, "k" + i, "v" + i, lifespan);
-      }
-
-      DataContainer c = preloadingCache.getAdvancedCache().getDataContainer();
-      assert c.size() == 4;
-      preloadingCache.stop();
-      assert c.size() == 0;
-
-      preloadingCache.start();
-      // The old store's marshaller is not working any more
-      preloadingCacheLoader = (AdvancedCacheLoader) TestingUtil.getCacheLoader(preloadingCache);
-      assert preloadingCache.getCacheConfiguration().persistence().preload();
-      c = preloadingCache.getAdvancedCache().getDataContainer();
-      assert c.size() == 4;
-
-      for (int i = 1; i < 5; i++) {
-         if (i % 2 == 1)
-            assertInCacheAndStore(preloadingCache, preloadingCacheLoader, "k" + i, "v" + i);
-         else
-            assertInCacheAndStore(preloadingCache, preloadingCacheLoader, "k" + i, "v" + i, lifespan);
-      }
+   public void testPreloadingWithEviction() throws Exception {
+      ConfigurationBuilder preloadingCfg = new ConfigurationBuilder();
+      preloadingCfg.read(cfg.build());
+      preloadingCfg.persistence().clearStores().addStore(DummyInMemoryStoreConfigurationBuilder.class).preload(true).storeName("preloadingCache_4");
+      preloadingCfg.eviction().strategy(EvictionStrategy.LIRS).maxEntries(3);
+      doPreloadingTestWithEviction(preloadingCfg.build(), "preloadingCache_4");
    }
 
    public void testPurgeOnStartup() throws CacheLoaderException {
@@ -489,6 +479,124 @@ public class CacheLoaderFunctionalTest extends AbstractInfinispanTest {
       cache.put(key, value);
       tm.commit();
       assert value.equals(cache.get(key));
+   }
+
+   protected void doPreloadingTest(Configuration preloadingCfg, String cacheName) throws Exception {
+      assertTrue("Preload not enabled for preload test", preloadingCfg.persistence().preload());
+      cm.defineConfiguration(cacheName, preloadingCfg);
+      Cache<String, String> preloadingCache = cm.getCache(cacheName);
+      AdvancedCacheLoader preloadingCacheLoader = (AdvancedCacheLoader) TestingUtil.getCacheLoader(preloadingCache);
+
+      assert preloadingCache.getCacheConfiguration().persistence().preload();
+
+      assertNotInCacheAndStore(preloadingCache, preloadingCacheLoader, "k1", "k2", "k3", "k4");
+
+      preloadingCache.getAdvancedCache().getTransactionManager().begin();
+      preloadingCache.put("k1", "v1");
+      preloadingCache.put("k2", "v2", lifespan, MILLISECONDS);
+      preloadingCache.put("k3", "v3");
+      preloadingCache.put("k4", "v4", lifespan, MILLISECONDS);
+      preloadingCache.getAdvancedCache().getTransactionManager().commit();
+
+      for (int i = 1; i < 5; i++) {
+         if (i % 2 == 1)
+            assertInCacheAndStore(preloadingCache, preloadingCacheLoader, "k" + i, "v" + i);
+         else
+            assertInCacheAndStore(preloadingCache, preloadingCacheLoader, "k" + i, "v" + i, lifespan);
+      }
+
+      DataContainer c = preloadingCache.getAdvancedCache().getDataContainer();
+      assert c.size() == 4;
+      preloadingCache.stop();
+      assert c.size() == 0;
+
+      preloadingCache.start();
+      // The old store's marshaller is not working any more
+      preloadingCacheLoader = (AdvancedCacheLoader) TestingUtil.getCacheLoader(preloadingCache);
+      assert preloadingCache.getCacheConfiguration().persistence().preload();
+      c = preloadingCache.getAdvancedCache().getDataContainer();
+      assert c.size() == 4;
+
+      for (int i = 1; i < 5; i++) {
+         if (i % 2 == 1)
+            assertInCacheAndStore(preloadingCache, preloadingCacheLoader, "k" + i, "v" + i);
+         else
+            assertInCacheAndStore(preloadingCache, preloadingCacheLoader, "k" + i, "v" + i, lifespan);
+      }
+   }
+
+   protected void doPreloadingTestWithEviction(Configuration preloadingCfg, String cacheName) throws Exception {
+      assertTrue("Preload not enabled for preload with eviction test", preloadingCfg.persistence().preload());
+      assertTrue("Eviction not enabled for preload with eviction test", preloadingCfg.eviction().strategy().isEnabled());
+
+      cm.defineConfiguration(cacheName, preloadingCfg);
+
+      final Cache<String, String> preloadingCache = cm.getCache(cacheName);
+      final int expectedEntriesInContainer = Math.min(4, preloadingCfg.eviction().maxEntries());
+      AdvancedCacheLoader preloadingCacheLoader = (AdvancedCacheLoader) TestingUtil.getCacheLoader(preloadingCache);
+
+      assertTrue("Preload not enabled in cache configuration",
+                 preloadingCache.getCacheConfiguration().persistence().preload());
+      assertNotInCacheAndStore(preloadingCache, preloadingCacheLoader, "k1", "k2", "k3", "k4");
+
+      preloadingCache.getAdvancedCache().getTransactionManager().begin();
+      preloadingCache.put("k1", "v1");
+      preloadingCache.put("k2", "v2", lifespan, MILLISECONDS);
+      preloadingCache.put("k3", "v3");
+      preloadingCache.put("k4", "v4", lifespan, MILLISECONDS);
+      preloadingCache.getAdvancedCache().getTransactionManager().commit();
+
+      DataContainer c = preloadingCache.getAdvancedCache().getDataContainer();
+      assertEquals("Wrong number of entries in data container", expectedEntriesInContainer, c.size());
+
+      for (int i = 1; i < 5; i++) {
+         final Object key = "k" + i;
+         final Object value = "v" + i;
+         final long lifespan = i % 2 == 1 ? -1 : this.lifespan;
+         boolean found = false;
+         InternalCacheEntry se = preloadingCache.getAdvancedCache().getDataContainer().get(key);
+         MarshalledEntry load = preloadingCacheLoader.load(key);
+         if (se != null) {
+            testStoredEntry(se.getValue(), value, se.getLifespan(), lifespan, "Cache", key);
+            found = true;
+         }
+         if (load != null) {
+            testStoredEntry(load.getValue(), value, load.getMetadata().lifespan(), lifespan, "Store", key);
+            found = true;
+         }
+         assertTrue("Key not found.", found);
+      }
+
+      preloadingCache.stop();
+      assertEquals("DataContainer still has entries after stop", 0, c.size());
+
+      preloadingCache.start();
+      // The old store's marshaller is not working any more
+      preloadingCacheLoader = (AdvancedCacheLoader) TestingUtil.getCacheLoader(preloadingCache);
+
+      assertTrue("Preload not enabled in cache configuration",
+                 preloadingCache.getCacheConfiguration().persistence().preload());
+
+      c = preloadingCache.getAdvancedCache().getDataContainer();
+      assertEquals("Wrong number of entries in data container", expectedEntriesInContainer, c.size());
+
+      for (int i = 1; i < 5; i++) {
+         final Object key = "k" + i;
+         final Object value = "v" + i;
+         final long lifespan = i % 2 == 1 ? -1 : this.lifespan;
+         boolean found = false;
+         InternalCacheEntry se = preloadingCache.getAdvancedCache().getDataContainer().get(key);
+         MarshalledEntry load = preloadingCacheLoader.load(key);
+         if (se != null) {
+            testStoredEntry(se.getValue(), value, se.getLifespan(), lifespan, "Cache", key);
+            found = true;
+         }
+         if (load != null) {
+            testStoredEntry(load.getValue(), value, load.getMetadata().lifespan(), lifespan, "Store", key);
+            found = true;
+         }
+         assertTrue("Key not found.", found);
+      }
    }
 
 }
