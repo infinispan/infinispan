@@ -11,7 +11,7 @@
    </interceptors>
 
    <alternatives>
-      <class>org.infinispan.cdi.InjectedCacheResolver</class>
+      <class>org.infinispan.jcache.annotation.InjectedCacheResolver</class>
    </alternatives>
 
 </beans>
