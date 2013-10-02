@@ -1,7 +1,5 @@
 package org.infinispan.atomic;
 
-import java.util.HashSet;
-import java.util.concurrent.Callable;
 import javax.transaction.HeuristicMixedException;
 import javax.transaction.HeuristicRollbackException;
 import javax.transaction.NotSupportedException;
@@ -10,14 +8,16 @@ import javax.transaction.SystemException;
 import javax.transaction.Transaction;
 import javax.transaction.TransactionManager;
 
+import org.infinispan.Cache;
+import org.infinispan.commons.CacheConfigurationException;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.test.SingleCacheManagerTest;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.infinispan.transaction.LockingMode;
+import org.infinispan.transaction.TransactionMode;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
-import org.testng.Assert;
 import org.testng.annotations.Test;
 
 @Test(groups = "functional", testName = "atomic.AtomicMapFunctionalTest")
@@ -35,6 +35,100 @@ public class AtomicMapFunctionalTest extends SingleCacheManagerTest {
       builder.invocationBatching().enable();
       builder.transaction().lockingMode(LockingMode.OPTIMISTIC);
       return builder;
+   }
+
+   public void testAtomicMapWithoutTransactionManagerLookupSet() {
+      ConfigurationBuilder builder = buildConfiguration();
+      builder.transaction().transactionMode(TransactionMode.TRANSACTIONAL).transactionManagerLookup(null);
+      cacheManager.defineConfiguration("ahm_without_tmlookup", builder.build());
+      Cache<String, String> ahmCache = cacheManager.getCache("ahm_without_tmlookup");
+
+      AtomicMap<String, String> map = AtomicMapLookup.getAtomicMap(ahmCache, "key");
+      assert map.isEmpty();
+      map.put("a", "b");
+      assert map.get("a").equals("b");
+
+      // now re-retrieve the map and make sure we see the diffs
+      assert AtomicMapLookup.getAtomicMap(ahmCache, "key").get("a").equals("b");
+   }
+
+   public void testAtomicMapWithoutBatchSet() {
+      ConfigurationBuilder builder = buildConfiguration();
+      builder.invocationBatching().disable();
+      cacheManager.defineConfiguration("ahm_without_batch", builder.build());
+      Cache<String, String> ahmCache = cacheManager.getCache("ahm_without_batch");
+
+      AtomicMap<String, String> map = AtomicMapLookup.getAtomicMap(ahmCache, "key");
+      assert map.isEmpty();
+      map.put("a", "b");
+      assert map.get("a").equals("b");
+
+      // now re-retrieve the map and make sure we see the diffs
+      assert AtomicMapLookup.getAtomicMap(ahmCache, "key").get("a").equals("b");
+   }
+
+   @Test(expectedExceptions = IllegalStateException.class)
+   public void testAtomicMapNonTransactionWithoutBatchSet() {
+      ConfigurationBuilder builder = buildConfiguration();
+      builder.invocationBatching().disable();
+      builder.transaction().transactionMode(TransactionMode.NON_TRANSACTIONAL);
+      cacheManager.defineConfiguration("ahm_no_tx_without_batch", builder.build());
+      Cache<String, String> ahmCache = cacheManager.getCache("ahm_no_tx_without_batch");
+
+      AtomicMap<String, String> map = AtomicMapLookup.getAtomicMap(ahmCache, "key");
+      assert map.isEmpty();
+      map.put("a", "b");
+      assert map.get("a").equals("b");
+
+      // now re-retrieve the map and make sure we see the diffs
+      assert AtomicMapLookup.getAtomicMap(ahmCache, "key").get("a").equals("b");
+   }
+
+   public void testFineGrainedAtomicMapWithoutTransactionManagerLookupSet() {
+      ConfigurationBuilder builder = buildConfiguration();
+      builder.transaction().transactionMode(TransactionMode.TRANSACTIONAL).transactionManagerLookup(null);
+      cacheManager.defineConfiguration("fgahm_without_tmlookup", builder.build());
+      Cache<String, String> fgahmCache = cacheManager.getCache("fgahm_without_tmlookup");
+
+      FineGrainedAtomicMap<String, String> map = AtomicMapLookup.getFineGrainedAtomicMap(fgahmCache, "key");
+      assert map.isEmpty();
+      map.put("a", "b");
+      assert map.get("a").equals("b");
+
+      // now re-retrieve the map and make sure we see the diffs
+      assert AtomicMapLookup.getFineGrainedAtomicMap(fgahmCache, "key").get("a").equals("b");
+   }
+
+   public void testFineGrainedAtomicMapWithoutBatchSet() {
+      ConfigurationBuilder builder = buildConfiguration();
+      builder.invocationBatching().disable();
+      cacheManager.defineConfiguration("fgahm_without_batch", builder.build());
+      Cache<String, String> fgahmCache = cacheManager.getCache("fgahm_without_batch");
+
+      FineGrainedAtomicMap<String, String> map = AtomicMapLookup.getFineGrainedAtomicMap(fgahmCache, "key");
+      assert map.isEmpty();
+      map.put("a", "b");
+      assert map.get("a").equals("b");
+
+      // now re-retrieve the map and make sure we see the diffs
+      assert AtomicMapLookup.getFineGrainedAtomicMap(fgahmCache, "key").get("a").equals("b");
+   }
+
+   @Test(expectedExceptions = IllegalStateException.class)
+   public void testFineGrainedAtomicMapNonTransactionWithoutBatchSet() {
+      ConfigurationBuilder builder = buildConfiguration();
+      builder.invocationBatching().disable();
+      builder.transaction().transactionMode(TransactionMode.NON_TRANSACTIONAL);
+      cacheManager.defineConfiguration("fgahm_no_tx_without_batch", builder.build());
+      Cache<String, String> fgahmCache = cacheManager.getCache("fgahm_no_tx_without_batch");
+
+      FineGrainedAtomicMap<String, String> map = AtomicMapLookup.getFineGrainedAtomicMap(fgahmCache, "key");
+      assert map.isEmpty();
+      map.put("a", "b");
+      assert map.get("a").equals("b");
+
+      // now re-retrieve the map and make sure we see the diffs
+      assert AtomicMapLookup.getFineGrainedAtomicMap(fgahmCache, "key").get("a").equals("b");
    }
 
    public void testChangesOnAtomicMap() {
