@@ -2,6 +2,7 @@ package org.infinispan.cdi;
 
 import org.infinispan.cdi.util.defaultbean.DefaultBean;
 import org.infinispan.client.hotrod.RemoteCacheManager;
+import org.infinispan.manager.EmbeddedCacheManager;
 
 import javax.enterprise.context.ApplicationScoped;
 import javax.enterprise.inject.Disposes;
