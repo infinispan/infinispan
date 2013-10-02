@@ -3,11 +3,13 @@ package org.infinispan.atomic;
 import org.infinispan.AdvancedCache;
 import org.infinispan.batch.AutoBatchSupport;
 import org.infinispan.commons.util.InfinispanCollections;
+import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.context.Flag;
 import org.infinispan.marshall.core.MarshalledValue;
 import org.infinispan.transaction.LocalTransaction;
 import org.infinispan.transaction.LockingMode;
+import org.infinispan.transaction.TransactionMode;
 import org.infinispan.transaction.TransactionTable;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
@@ -49,6 +51,10 @@ public class AtomicHashMapProxy<K, V> extends AutoBatchSupport implements Atomic
    protected TransactionManager transactionManager;
 
    AtomicHashMapProxy(AdvancedCache<?, ?> cache, Object deltaMapKey) {
+      Configuration configuration = cache.getCacheConfiguration();
+      if (configuration.transaction().transactionMode() == TransactionMode.NON_TRANSACTIONAL) {
+         throw new IllegalStateException("AtomicMap needs a transactional cache.");
+      }
       this.cache = (AdvancedCache<Object, AtomicMap<K, V>>) cache;
       Flag[] writeFlags = new Flag[]{Flag.DELTA_WRITE};
       this.cacheForWriting = this.cache.withFlags(writeFlags);
