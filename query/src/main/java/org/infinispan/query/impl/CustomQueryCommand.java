@@ -1,4 +1,5 @@
-package org.infinispan.query;
+package org.infinispan.query.impl;
+
 
 /**
  * Custom commands from the Query module should implement this interface

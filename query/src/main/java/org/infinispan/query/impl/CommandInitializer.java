@@ -1,4 +1,4 @@
-package org.infinispan.query;
+package org.infinispan.query.impl;
 
 import org.hibernate.search.SearchFactory;
 import org.hibernate.search.engine.spi.SearchFactoryImplementor;
@@ -6,8 +6,9 @@ import org.infinispan.Cache;
 import org.infinispan.commands.ReplicableCommand;
 import org.infinispan.commands.module.ModuleCommandInitializer;
 import org.infinispan.manager.EmbeddedCacheManager;
+import org.infinispan.query.Search;
+import org.infinispan.query.SearchManager;
 import org.infinispan.query.backend.QueryInterceptor;
-import org.infinispan.query.impl.ComponentRegistryUtils;
 
 /**
  * Initializes query module remote commands

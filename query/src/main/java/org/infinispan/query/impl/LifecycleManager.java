@@ -36,7 +36,6 @@ import org.infinispan.jmx.JmxUtil;
 import org.infinispan.jmx.ResourceDMBean;
 import org.infinispan.lifecycle.AbstractModuleLifecycle;
 import org.infinispan.manager.EmbeddedCacheManager;
-import org.infinispan.query.CommandInitializer;
 import org.infinispan.query.MassIndexer;
 import org.infinispan.query.backend.LocalQueryInterceptor;
 import org.infinispan.query.backend.QueryInterceptor;

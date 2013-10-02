@@ -5,10 +5,10 @@ import org.infinispan.Cache;
 import org.infinispan.commands.ReplicableCommand;
 import org.infinispan.commands.remote.BaseRpcCommand;
 import org.infinispan.context.InvocationContext;
-import org.infinispan.query.CommandInitializer;
-import org.infinispan.query.CustomQueryCommand;
-import org.infinispan.query.ModuleCommandIds;
 import org.infinispan.query.clustered.commandworkers.ClusteredQueryCommandWorker;
+import org.infinispan.query.impl.CommandInitializer;
+import org.infinispan.query.impl.CustomQueryCommand;
+import org.infinispan.query.impl.ModuleCommandIds;
 
 import java.util.UUID;
 

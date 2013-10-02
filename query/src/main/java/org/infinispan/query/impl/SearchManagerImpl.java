@@ -1,4 +1,4 @@
-package org.infinispan.query;
+package org.infinispan.query.impl;
 
 import java.util.concurrent.ExecutorService;
 
@@ -9,12 +9,14 @@ import org.hibernate.search.query.dsl.EntityContext;
 import org.hibernate.search.query.engine.spi.TimeoutExceptionFactory;
 import org.hibernate.search.spi.SearchFactoryIntegrator;
 import org.infinispan.AdvancedCache;
+import org.infinispan.query.CacheQuery;
+import org.infinispan.query.MassIndexer;
+import org.infinispan.query.SearchManager;
+import org.infinispan.query.Transformer;
 import org.infinispan.query.backend.QueryInterceptor;
 import org.infinispan.query.clustered.ClusteredCacheQueryImpl;
 import org.infinispan.query.dsl.QueryFactory;
 import org.infinispan.query.dsl.embedded.impl.EmbeddedLuceneQueryFactory;
-import org.infinispan.query.impl.CacheQueryImpl;
-import org.infinispan.query.impl.ComponentRegistryUtils;
 import org.infinispan.query.impl.massindex.MapReduceMassIndexer;
 
 /**
@@ -25,14 +27,14 @@ import org.infinispan.query.impl.massindex.MapReduceMassIndexer;
  * @author Marko Luksa
  * @since 4.0
  */
-class SearchManagerImpl implements SearchManager {
+public class SearchManagerImpl implements SearchManager {
 
    private final AdvancedCache<?, ?> cache;
    private final SearchFactoryIntegrator searchFactory;
    private final QueryInterceptor queryInterceptor;
    private TimeoutExceptionFactory timeoutExceptionFactory;
 
-   SearchManagerImpl(AdvancedCache<?, ?> cache) {
+   public SearchManagerImpl(AdvancedCache<?, ?> cache) {
       if (cache == null) {
          throw new IllegalArgumentException("cache parameter shall not be null");
       }

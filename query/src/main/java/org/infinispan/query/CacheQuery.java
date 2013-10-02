@@ -5,6 +5,7 @@ import org.apache.lucene.search.Filter;
 import org.apache.lucene.search.Sort;
 import org.hibernate.search.FullTextFilter;
 import org.hibernate.search.query.engine.spi.FacetManager;
+import org.infinispan.query.impl.SearchManagerImpl;
 
 import java.util.Iterator;
 import java.util.List;

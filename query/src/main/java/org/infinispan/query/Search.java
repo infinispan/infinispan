@@ -1,6 +1,7 @@
 package org.infinispan.query;
 
 import org.infinispan.Cache;
+import org.infinispan.query.impl.SearchManagerImpl;
 
 /**
  * Helper class to get a SearchManager out of an indexing enabled cache.

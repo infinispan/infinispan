@@ -5,6 +5,8 @@ import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 
+import org.infinispan.query.impl.DefaultTransformer;
+
 /**
  * If you annotate your object with this, it can be used as a valid key for Infinispan to index.
  *

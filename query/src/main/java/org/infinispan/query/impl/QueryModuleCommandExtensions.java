@@ -1,4 +1,4 @@
-package org.infinispan.query;
+package org.infinispan.query.impl;
 
 import org.infinispan.commands.module.ExtendedModuleCommandFactory;
 import org.infinispan.commands.module.ModuleCommandInitializer;

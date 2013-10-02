@@ -1,4 +1,4 @@
-package org.infinispan.query;
+package org.infinispan.query.impl;
 
 import java.util.HashMap;
 import java.util.Map;

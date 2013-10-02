@@ -2,10 +2,10 @@ package org.infinispan.query.backend;
 
 import org.infinispan.AdvancedCache;
 import org.infinispan.commons.CacheException;
-import org.infinispan.query.DefaultTransformer;
 import org.infinispan.query.Transformable;
 import org.infinispan.query.Transformer;
 import org.infinispan.query.impl.ComponentRegistryUtils;
+import org.infinispan.query.impl.DefaultTransformer;
 import org.infinispan.query.logging.Log;
 import org.infinispan.commons.util.Base64;
 import org.infinispan.commons.util.Util;

@@ -1,4 +1,4 @@
-package org.infinispan.query;
+package org.infinispan.query.impl;
 
 /**
  * The Query module is using custom RPC commands; to make sure the used command ids

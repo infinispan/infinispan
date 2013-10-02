@@ -1,8 +1,9 @@
-package org.infinispan.query;
+package org.infinispan.query.impl;
 
 import java.io.Serializable;
 
 import org.infinispan.commons.util.Base64;
+import org.infinispan.query.Transformer;
 
 /**
  * Warning, slow as a dog, uses serialization to get a byte representation of a class.  Implement your own!
