@@ -1,5 +1,6 @@
 package org.infinispan.tx.locking;
 
+import org.infinispan.context.Flag;
 import org.infinispan.test.SingleCacheManagerTest;
 import org.infinispan.transaction.tm.DummyTransaction;
 import org.infinispan.transaction.tm.DummyTransactionManager;
@@ -11,6 +12,8 @@ import java.util.Collections;
 import java.util.Map;
 
 import static org.testng.Assert.assertNull;
+import static org.testng.Assert.assertTrue;
+import static org.testng.AssertJUnit.assertEquals;
 
 /**
  * @author Mircea Markus
@@ -94,5 +97,82 @@ public abstract class AbstractLocalTest extends SingleCacheManagerTest {
       Xid xid;DummyTransaction dummyTransaction = (DummyTransaction) tm().getTransaction();
       xid = dummyTransaction.getXid();
       return xid;
+   }
+
+   public void testSizeAfterLocalClear() throws Exception {
+      cache.put(1, "v1");
+      tm().begin();
+      try {
+         cache.getAdvancedCache().withFlags(Flag.CACHE_MODE_LOCAL).clear();
+         assertEquals(0, cache.size());
+      } finally {
+         tm().commit();
+      }
+   }
+
+   public void testEntrySetIsEmptyAfterLocalClear() throws Exception {
+      cache.put(1, "v1");
+      tm().begin();
+      try {
+         cache.getAdvancedCache().withFlags(Flag.CACHE_MODE_LOCAL).clear();
+         assertTrue(cache.entrySet().isEmpty());
+      } finally {
+         tm().commit();
+      }
+   }
+
+   public void testEntrySetSizeAfterLocalClear() throws Exception {
+      cache.put(1, "v1");
+      tm().begin();
+      try {
+         cache.getAdvancedCache().withFlags(Flag.CACHE_MODE_LOCAL).clear();
+         assertEquals(0, cache.entrySet().size());
+      } finally {
+         tm().commit();
+      }
+   }
+
+   public void testKeySetIsEmptyAfterLocalClear() throws Exception {
+      cache.put(1, "v1");
+      tm().begin();
+      try {
+         cache.getAdvancedCache().withFlags(Flag.CACHE_MODE_LOCAL).clear();
+         assertTrue(cache.keySet().isEmpty());
+      } finally {
+         tm().commit();
+      }
+   }
+
+   public void testKeySetSizeAfterLocalClear() throws Exception {
+      cache.put(1, "v1");
+      tm().begin();
+      try {
+         cache.getAdvancedCache().withFlags(Flag.CACHE_MODE_LOCAL).clear();
+         assertEquals(0, cache.keySet().size());
+      } finally {
+         tm().commit();
+      }
+   }
+
+   public void testValuesIsEmptyAfterLocalClear() throws Exception {
+      cache.put(1, "v1");
+      tm().begin();
+      try {
+         cache.getAdvancedCache().withFlags(Flag.CACHE_MODE_LOCAL).clear();
+         assertTrue(cache.values().isEmpty());
+      } finally {
+         tm().commit();
+      }
+   }
+
+   public void testValuesSizeAfterLocalClear() throws Exception {
+      cache.put(1, "v1");
+      tm().begin();
+      try {
+         cache.getAdvancedCache().withFlags(Flag.CACHE_MODE_LOCAL).clear();
+         assertEquals(0, cache.values().size());
+      } finally {
+         tm().commit();
+      }
    }
 }
