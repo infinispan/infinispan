@@ -36,7 +36,7 @@ public class OnlyPrimaryOwnerTest {
    public void setUp() {
       n = new CacheNotifierImpl();
       mockCache = mock(Cache.class);
-      n.injectDependencies(mockCache, cdl);
+      n.injectDependencies(mockCache, cdl, null);
       cl = new PrimaryOwnerCacheListener();
       n.start();
       n.addListener(cl);

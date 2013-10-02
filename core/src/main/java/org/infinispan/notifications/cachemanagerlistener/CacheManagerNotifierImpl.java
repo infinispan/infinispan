@@ -17,6 +17,7 @@ import org.infinispan.remoting.transport.Address;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
+import javax.transaction.Transaction;
 import java.lang.annotation.Annotation;
 import java.util.HashMap;
 import java.util.List;
@@ -122,5 +123,15 @@ public class CacheManagerNotifierImpl extends AbstractListenerImpl implements Ca
    @Override
    protected Map<Class<? extends Annotation>, Class<?>> getAllowedMethodAnnotations() {
       return allowedListeners;
+   }
+
+   @Override
+   protected final Transaction suspendIfNeeded() {
+      return null; //no-op
+   }
+
+   @Override
+   protected final void resumeIfNeeded(Transaction transaction) {
+      //no-op
    }
 }

@@ -32,7 +32,7 @@ public class KeyFilterTest extends AbstractInfinispanTest {
 
       n = new CacheNotifierImpl();
       mockCache = mock(Cache.class);
-      n.injectDependencies(mockCache, new ClusteringDependentLogic.LocalLogic());
+      n.injectDependencies(mockCache, new ClusteringDependentLogic.LocalLogic(), null);
       cl = new CacheListener();
       n.start();
       n.addListener(cl, kf);

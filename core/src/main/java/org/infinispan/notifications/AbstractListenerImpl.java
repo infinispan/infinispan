@@ -7,11 +7,11 @@ import org.infinispan.factories.annotations.ComponentName;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.annotations.Start;
 import org.infinispan.factories.annotations.Stop;
-import org.infinispan.interceptors.locking.ClusteringDependentLogic;
 import org.infinispan.notifications.cachelistener.event.EventImpl;
 import org.infinispan.util.concurrent.WithinThreadExecutor;
 import org.infinispan.util.logging.Log;
 
+import javax.transaction.Transaction;
 import java.lang.annotation.Annotation;
 import java.lang.ref.WeakReference;
 import java.lang.reflect.InvocationTargetException;
@@ -19,7 +19,6 @@ import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.security.AccessController;
 import java.security.PrivilegedAction;
-import java.util.BitSet;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -162,6 +161,10 @@ public abstract class AbstractListenerImpl {
          throw new IncorrectListenerException("Methods annotated with " + annotationName + " should have a return type of void.");
    }
 
+   protected abstract Transaction suspendIfNeeded();
+
+   protected abstract void resumeIfNeeded(Transaction transaction);
+
    /**
     * Class that encapsulates a valid invocation for a given registered listener - containing a reference to the method
     * to be invoked as well as the target object.
@@ -198,6 +201,7 @@ public abstract class AbstractListenerImpl {
                @Override
                public void run() {
                   ClassLoader contextClassLoader = null;
+                  Transaction transaction = suspendIfNeeded();
                   if (classLoader != null && classLoader.get() != null) {
                      contextClassLoader = setContextClassLoader(classLoader.get());
                   }
@@ -220,6 +224,7 @@ public abstract class AbstractListenerImpl {
                      if (classLoader != null && classLoader.get() != null) {
                         setContextClassLoader(contextClassLoader);
                      }
+                     resumeIfNeeded(transaction);
                   }
                }
             };
