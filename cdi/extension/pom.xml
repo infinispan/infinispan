@@ -45,6 +45,7 @@
       <dependency>
          <groupId>org.infinispan</groupId>
          <artifactId>infinispan-client-hotrod</artifactId>
+         <optional>true</optional>
       </dependency>
 
       <!-- Logging dependency -->
@@ -75,6 +76,7 @@
          <groupId>${project.groupId}</groupId>
          <artifactId>infinispan-server-core</artifactId>
          <type>test-jar</type>
+         <scope>test</scope>
       </dependency>
       <dependency>
          <groupId>${project.groupId}</groupId>
