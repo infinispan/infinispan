@@ -14,6 +14,7 @@ import org.infinispan.query.ResultIterator;
 import org.infinispan.query.Search;
 import org.infinispan.query.SearchManager;
 import org.infinispan.query.backend.QueryInterceptor;
+import org.infinispan.query.spi.SearchManagerImplementor;
 import org.infinispan.query.test.CustomKey3;
 import org.infinispan.query.test.CustomKey3Transformer;
 import org.infinispan.query.test.Person;
@@ -23,6 +24,7 @@ import org.testng.AssertJUnit;
 import org.testng.annotations.Test;
 
 import javax.transaction.TransactionManager;
+
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -325,8 +327,8 @@ public class ClusteredCacheTest extends MultipleCacheManagersTest {
       Cache cache1 = caches().get(0);
       Cache cache2 = caches().get(1);
 
-      SearchManager manager = Search.getSearchManager(cache1);
-      SearchManager manager1 = Search.getSearchManager(cache2);
+      SearchManagerImplementor manager = (SearchManagerImplementor) Search.getSearchManager(cache1);
+      SearchManagerImplementor manager1 = (SearchManagerImplementor) Search.getSearchManager(cache2);
       manager.registerKeyTransformer(CustomKey3.class, CustomKey3Transformer.class);
       manager1.registerKeyTransformer(CustomKey3.class, CustomKey3Transformer.class);
 
