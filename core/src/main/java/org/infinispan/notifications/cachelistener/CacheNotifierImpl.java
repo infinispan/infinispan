@@ -21,6 +21,10 @@ import org.infinispan.transaction.xa.GlobalTransaction;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
+import javax.transaction.InvalidTransactionException;
+import javax.transaction.SystemException;
+import javax.transaction.Transaction;
+import javax.transaction.TransactionManager;
 import java.lang.annotation.Annotation;
 import java.util.Collection;
 import java.util.Collections;
@@ -84,6 +88,7 @@ public final class CacheNotifierImpl extends AbstractListenerImpl implements Cac
 
    private Cache<Object, Object> cache;
    private ClusteringDependentLogic clusteringDependentLogic;
+   private TransactionManager transactionManager;
 
    public CacheNotifierImpl() {
 
@@ -106,9 +111,11 @@ public final class CacheNotifierImpl extends AbstractListenerImpl implements Cac
    }
 
    @Inject
-   void injectDependencies(Cache<Object, Object> cache, ClusteringDependentLogic clusteringDependentLogic) {
+   void injectDependencies(Cache<Object, Object> cache, ClusteringDependentLogic clusteringDependentLogic,
+                           TransactionManager transactionManager) {
       this.cache = cache;
       this.clusteringDependentLogic = clusteringDependentLogic;
+      this.transactionManager = transactionManager;
    }
 
    @Override
@@ -119,6 +126,30 @@ public final class CacheNotifierImpl extends AbstractListenerImpl implements Cac
    @Override
    protected Map<Class<? extends Annotation>, Class<?>> getAllowedMethodAnnotations() {
       return allowedListeners;
+   }
+
+   @Override
+   protected final Transaction suspendIfNeeded() {
+      try {
+         return transactionManager == null ? null : transactionManager.suspend();
+      } catch (SystemException e) {
+         //ignored
+         return null;
+      }
+   }
+
+   @Override
+   protected final void resumeIfNeeded(Transaction transaction) {
+      if (transaction == null || transactionManager == null) {
+         return;
+      }
+      try {
+         transactionManager.resume(transaction);
+      } catch (InvalidTransactionException e) {
+         //ignored
+      } catch (SystemException e) {
+         //ignored
+      }
    }
 
    @Override
