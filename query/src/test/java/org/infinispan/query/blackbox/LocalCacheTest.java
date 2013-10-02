@@ -6,6 +6,7 @@ import java.util.Map;
 import java.util.Set;
 
 import junit.framework.Assert;
+
 import org.apache.lucene.index.Term;
 import org.apache.lucene.queryParser.ParseException;
 import org.apache.lucene.queryParser.QueryParser;
@@ -30,6 +31,7 @@ import org.infinispan.query.FetchOptions;
 import org.infinispan.query.ResultIterator;
 import org.infinispan.query.Search;
 import org.infinispan.query.SearchManager;
+import org.infinispan.query.spi.SearchManagerImplementor;
 import org.infinispan.query.test.AnotherGrassEater;
 import org.infinispan.query.test.CustomKey3;
 import org.infinispan.query.test.CustomKey3Transformer;
@@ -38,6 +40,7 @@ import org.infinispan.test.SingleCacheManagerTest;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.testng.AssertJUnit;
 import org.testng.annotations.Test;
+
 import java.util.NoSuchElementException;
 
 import static java.util.Arrays.asList;
@@ -453,7 +456,7 @@ public class LocalCacheTest extends SingleCacheManagerTest {
    }
 
    public void testSearchKeyTransformer() throws ParseException {
-      SearchManager manager = Search.getSearchManager(cache);
+      SearchManagerImplementor manager = (SearchManagerImplementor) Search.getSearchManager(cache);
       manager.registerKeyTransformer(CustomKey3.class, CustomKey3Transformer.class);
 
       loadTestingDataWithCustomKey();

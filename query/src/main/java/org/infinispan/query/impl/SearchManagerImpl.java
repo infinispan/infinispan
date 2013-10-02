@@ -18,6 +18,7 @@ import org.infinispan.query.clustered.ClusteredCacheQueryImpl;
 import org.infinispan.query.dsl.QueryFactory;
 import org.infinispan.query.dsl.embedded.impl.EmbeddedLuceneQueryFactory;
 import org.infinispan.query.impl.massindex.MapReduceMassIndexer;
+import org.infinispan.query.spi.SearchManagerImplementor;
 
 /**
  * Class that is used to build {@link org.infinispan.query.CacheQuery}
@@ -27,7 +28,7 @@ import org.infinispan.query.impl.massindex.MapReduceMassIndexer;
  * @author Marko Luksa
  * @since 4.0
  */
-public class SearchManagerImpl implements SearchManager {
+public class SearchManagerImpl implements SearchManagerImplementor {
 
    private final AdvancedCache<?, ?> cache;
    private final SearchFactoryIntegrator searchFactory;

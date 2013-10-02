@@ -9,6 +9,7 @@ import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.query.CacheQuery;
 import org.infinispan.query.Search;
 import org.infinispan.query.SearchManager;
+import org.infinispan.query.spi.SearchManagerImplementor;
 import org.infinispan.test.SingleCacheManagerTest;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.testng.annotations.Test;
@@ -37,7 +38,7 @@ public class TimeoutTest extends SingleCacheManagerTest {
 
    @Test
    public void timeoutExceptionIsThrownAndIsProducedByMyFactory() throws Exception {
-      SearchManager searchManager = Search.getSearchManager( cache );
+      SearchManagerImplementor searchManager = (SearchManagerImplementor) Search.getSearchManager( cache );
       searchManager.setTimeoutExceptionFactory( new MyTimeoutExceptionFactory() );
       Query query = searchManager.buildQueryBuilderForClass( Foo.class ).get()
             .keyword().onField( "bar" ).matching( "1" )
