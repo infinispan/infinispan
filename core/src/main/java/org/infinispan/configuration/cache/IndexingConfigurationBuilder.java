@@ -3,6 +3,7 @@ package org.infinispan.configuration.cache;
 import java.util.Map;
 import java.util.Properties;
 
+import org.infinispan.commons.CacheConfigurationException;
 import org.infinispan.commons.configuration.Builder;
 import org.infinispan.commons.util.TypedProperties;
 import org.infinispan.commons.util.Util;
@@ -137,6 +138,9 @@ public class IndexingConfigurationBuilder extends AbstractConfigurationChildBuil
             Util.loadClassStrict("org.infinispan.query.Search", getBuilder().classLoader());
          } catch (ClassNotFoundException e) {
             log.warnf("Indexing can only be enabled if infinispan-query.jar is available on your classpath, and this jar has not been detected. Intended behavior may not be exhibited.");
+         }
+         if (clustering().cacheMode().isInvalidation()) {
+            throw new CacheConfigurationException("Indexing can not be enabled on caches in Invalidation mode");
          }
       }
    }
