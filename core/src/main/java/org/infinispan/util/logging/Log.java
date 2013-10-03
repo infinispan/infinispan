@@ -1019,5 +1019,8 @@ public interface Log extends BasicLogger {
    @LogMessage(level = ERROR)
    @Message(value = "Persistence enabled without any CacheWriteInterceptor in InterceptorChain!", id = 275)
    void persistenceWithoutCacheWriteInterceptor();
-}
 
+   @Message(value = "Indexing can only be enabled if infinispan-query.jar is available on your classpath, and this jar has not been detected.", id = 274)
+   CacheConfigurationException invalidConfigurationIndexingWithoutModule();
+   
+}
