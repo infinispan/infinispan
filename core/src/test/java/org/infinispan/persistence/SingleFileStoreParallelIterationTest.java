@@ -4,11 +4,13 @@ import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.cache.SingleFileStoreConfigurationBuilder;
 import org.infinispan.factories.KnownComponentNames;
 import org.infinispan.test.TestingUtil;
+import org.testng.annotations.Test;
 
 /**
  * @author Mircea Markus
  * @since 6.0
  */
+@Test(groups = "functional", testName = "persistence.SingleFileStoreParallelIterationTest")
 public class SingleFileStoreParallelIterationTest extends ParallelIterationTest {
 
    protected String location;

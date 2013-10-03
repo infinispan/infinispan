@@ -29,6 +29,7 @@ import static org.mockito.Mockito.*;
  * @author wburns
  * @since 6.0
  */
+@Test(groups = "unit", testName = "interceptors.distribution.L1WriteSynchronizerTest")
 public class L1WriteSynchronizerTest extends AbstractInfinispanTest {
    private L1WriteSynchronizer sync;
    private DataContainer dc;
