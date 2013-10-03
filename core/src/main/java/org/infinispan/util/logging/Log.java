@@ -1010,5 +1010,9 @@ public interface Log extends BasicLogger {
    @LogMessage(level = WARN)
    @Message(value = "Exception removing recovery information", id = 272)
    void warnExceptionRemovingRecovery(@Cause Exception e);
+
+   @Message(value = "Indexing can not be enabled on caches in Invalidation mode", id = 273)
+   CacheConfigurationException invalidConfigurationIndexingWithInvalidation();
+
 }
 
