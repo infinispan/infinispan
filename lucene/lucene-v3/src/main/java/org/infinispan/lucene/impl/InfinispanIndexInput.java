@@ -40,7 +40,7 @@ abstract class InfinispanIndexInput extends IndexInput {
 
    public InfinispanIndexInput(final IndexInputContext ctx) {
       super(ctx.fileKey.getFileName());
-      this.chunksCache = (Cache<ChunkCacheKey, Object>) ctx.chunksCache;
+      this.chunksCache = ctx.chunksCache;
       this.fileKey = ctx.fileKey;
       this.chunkSize = ctx.fileMetadata.getBufferSize();
       this.fileLength = ctx.fileMetadata.getSize();

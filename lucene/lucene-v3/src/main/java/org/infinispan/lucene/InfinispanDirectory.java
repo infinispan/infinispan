@@ -61,8 +61,8 @@ import org.infinispan.util.logging.LogFactory;
 public class InfinispanDirectory extends Directory {
    
    /**
-    * Used as default chunk size, can be overriden at construction time.
-    * Each Lucene index segment is splitted into parts with default size defined here
+    * Used as default chunk size, can be overridden at construction time.
+    * Each Lucene index segment is split into parts with default size defined here
     */
    public final static int DEFAULT_BUFFER_SIZE = 16 * 1024;
 
@@ -144,8 +144,7 @@ public class InfinispanDirectory extends Directory {
    public String[] list() {
       ensureOpen();
       Set<String> filesList = fileOps.getFileList();
-      String[] array = filesList.toArray(new String[0]);
-      return array;
+      return filesList.toArray(new String[filesList.size()]);
    }
 
    /**
@@ -179,10 +178,7 @@ public class InfinispanDirectory extends Directory {
    public void touchFile(String fileName) {
       ensureOpen();
       FileMetadata file = fileOps.getFileMetadata(fileName);
-      if (file == null) {
-         return;
-      }
-      else {
+      if (file != null) {
          FileCacheKey key = new FileCacheKey(indexName, fileName);
          file.touch();
          metadataCache.put(key, file);
@@ -209,7 +205,7 @@ public class InfinispanDirectory extends Directory {
       ensureOpen();
 
       final FileCacheKey fromKey = new FileCacheKey(indexName, from);
-      final FileMetadata metadata = (FileMetadata) metadataCache.get(fromKey);
+      final FileMetadata metadata = metadataCache.get(fromKey);
       final int bufferSize = metadata.getBufferSize();
       // preparation: copy all chunks to new keys
       int i = -1;
@@ -267,7 +263,7 @@ public class InfinispanDirectory extends Directory {
    @Override
    public IndexInput openInput(String name) throws IOException {
       final FileCacheKey fileKey = new FileCacheKey(indexName, name);
-      FileMetadata fileMetadata = (FileMetadata) metadataCache.get(fileKey);
+      FileMetadata fileMetadata = metadataCache.get(fileKey);
       if (fileMetadata == null) {
          throw new FileNotFoundException("Error loading metadata for index file: " + fileKey);
       }

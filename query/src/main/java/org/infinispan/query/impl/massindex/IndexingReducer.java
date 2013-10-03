@@ -9,7 +9,6 @@ import org.infinispan.Cache;
 import org.infinispan.distexec.mapreduce.Reducer;
 import org.infinispan.query.backend.QueryInterceptor;
 import org.infinispan.query.impl.ComponentRegistryUtils;
-import org.infinispan.util.TimeService;
 
 /**
  * This Reduce doesn't really index the entries but forwards them to the

@@ -52,8 +52,7 @@ final class DirectoryImplementor {
 
     String[] list() {
        final Set<String> filesList = fileOps.getFileList();
-       final String[] array = filesList.toArray(new String[0]);
-       return array;
+       return filesList.toArray(new String[filesList.size()]);
     }
 
     boolean fileExists(final String name) {
@@ -78,10 +77,7 @@ final class DirectoryImplementor {
      */
     void touchFile(final String fileName) {
        final FileMetadata file = fileOps.getFileMetadata(fileName);
-       if (file == null) {
-          return;
-       }
-       else {
+       if (file != null) {
           final FileCacheKey key = new FileCacheKey(indexName, fileName);
           file.touch();
           metadataCache.put(key, file);
@@ -98,7 +94,7 @@ final class DirectoryImplementor {
 
     void renameFile(final String from, final String to) {
        final FileCacheKey fromKey = new FileCacheKey(indexName, from);
-       final FileMetadata metadata = (FileMetadata) metadataCache.get(fromKey);
+       final FileMetadata metadata = metadataCache.get(fromKey);
        final int bufferSize = metadata.getBufferSize();
        // preparation: copy all chunks to new keys
        int i = -1;
@@ -143,7 +139,7 @@ final class DirectoryImplementor {
 
     IndexInputContext openInput(final String name) throws IOException {
        final FileCacheKey fileKey = new FileCacheKey(indexName, name);
-       final FileMetadata fileMetadata = (FileMetadata) metadataCache.get(fileKey);
+       final FileMetadata fileMetadata = metadataCache.get(fileKey);
        if (fileMetadata == null) {
           throw new FileNotFoundException("Error loading metadata for index file: " + fileKey);
        }

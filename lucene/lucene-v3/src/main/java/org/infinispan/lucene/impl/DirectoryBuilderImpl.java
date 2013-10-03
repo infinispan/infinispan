@@ -15,7 +15,7 @@ public class DirectoryBuilderImpl implements BuildContext {
    private static final Log log = LogFactory.getLog(DirectoryBuilderImpl.class, Log.class);
 
    /**
-    * Used as default chunk size: each Lucene index segment is splitted into smaller parts having a default size in bytes as
+    * Used as default chunk size: each Lucene index segment is split into smaller parts having a default size in bytes as
     * defined here
     */
    public final static int DEFAULT_BUFFER_SIZE = 16 * 1024;

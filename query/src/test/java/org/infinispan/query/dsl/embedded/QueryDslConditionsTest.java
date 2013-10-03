@@ -82,7 +82,6 @@ public class QueryDslConditionsTest extends AbstractQueryDslTest {
 
       Account account3 = new Account();
       account3.setId(3);
-      account3.setDescription("Spider Man's bank account");
       account3.setCreationDate(DATE_FORMAT.parse("2013-01-20"));
 
       Transaction transaction0 = new Transaction();
@@ -785,24 +784,6 @@ public class QueryDslConditionsTest extends AbstractQueryDslTest {
       assertEquals("John", list.get(2)[0]);
    }
 
-   public void testProjectionOnOptionalField() throws Exception {
-      QueryFactory qf = Search.getSearchManager(cache).getQueryFactory();
-
-      Query q = qf.from(User.class)
-            .setProjection("id", "addresses.postCode")
-            .orderBy("id", SortOrder.ASC)
-            .build();
-
-      List<Object[]> list = q.list();
-      assertEquals(3, list.size());
-      assertEquals(1, list.get(0)[0]);
-      assertEquals("X1234", list.get(0)[1]);
-      assertEquals(2, list.get(1)[0]);
-      assertEquals("Y12", list.get(1)[1]);
-      assertEquals(3, list.get(2)[0]);
-      assertNull(list.get(2)[1]);
-   }
-
    public void testSampleDomainQuery6() throws Exception {
       QueryFactory qf = Search.getSearchManager(cache).getQueryFactory();
 
@@ -1015,6 +996,24 @@ public class QueryDslConditionsTest extends AbstractQueryDslTest {
       assertEquals(2, list.size());
       assertEquals("Birthday present", list.get(0).getDescription());
       assertEquals("Feb. rent payment", list.get(1).getDescription());
+   }
+
+   public void testProjectionOnOptionalField() throws Exception {
+      QueryFactory qf = Search.getSearchManager(cache).getQueryFactory();
+
+      Query q = qf.from(User.class)
+            .setProjection("id", "addresses.postCode")
+            .orderBy("id", SortOrder.ASC)
+            .build();
+
+      List<Object[]> list = q.list();
+      assertEquals(3, list.size());
+      assertEquals(1, list.get(0)[0]);
+      assertEquals("X1234", list.get(0)[1]);
+      assertEquals(2, list.get(1)[0]);
+      assertEquals("Y12", list.get(1)[1]);
+      assertEquals(3, list.get(2)[0]);
+      assertNull(list.get(2)[1]);
    }
 
    @Test(enabled = false, description = "Nulls not correctly indexed for numeric properties")  //todo [anistor] fix disabled test

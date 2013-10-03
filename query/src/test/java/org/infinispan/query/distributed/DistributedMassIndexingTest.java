@@ -3,11 +3,10 @@ package org.infinispan.query.distributed;
 import java.util.ArrayList;
 import java.util.List;
 
-import junit.framework.Assert;
-
 import org.apache.lucene.search.Query;
 import org.hibernate.search.query.dsl.QueryBuilder;
 import org.infinispan.Cache;
+import org.infinispan.commons.api.BasicCacheContainer;
 import org.infinispan.context.Flag;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.query.CacheQuery;
@@ -16,6 +15,7 @@ import org.infinispan.query.SearchManager;
 import org.infinispan.query.queries.faceting.Car;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
+import org.junit.Assert;
 import org.testng.annotations.Test;
 
 /**
@@ -26,8 +26,9 @@ public class DistributedMassIndexingTest extends MultipleCacheManagersTest {
 
    protected static final int NUM_NODES = 4;
    protected List<Cache> caches = new ArrayList<Cache>(NUM_NODES);
+
    protected static final String[] neededCacheNames = new String[] {
-      org.infinispan.api.BasicCacheContainer.DEFAULT_CACHE_NAME,
+      BasicCacheContainer.DEFAULT_CACHE_NAME,
       "LuceneIndexesMetadata",
       "LuceneIndexesData",
       "LuceneIndexesLocking",
@@ -35,9 +36,8 @@ public class DistributedMassIndexingTest extends MultipleCacheManagersTest {
 
    @Override
    protected void createCacheManagers() throws Throwable {
-      EmbeddedCacheManager cacheManager = null;
       for (int i = 0; i < NUM_NODES; i++) {
-         cacheManager = TestCacheManagerFactory.fromXml("dynamic-indexing-distribution.xml");
+         EmbeddedCacheManager cacheManager = TestCacheManagerFactory.fromXml("dynamic-indexing-distribution.xml");
          registerCacheManager(cacheManager);
          Cache cache = cacheManager.getCache();
          caches.add(cache);
