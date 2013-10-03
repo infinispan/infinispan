@@ -7,6 +7,7 @@ import org.infinispan.commands.read.MapCombineCommand;
 import org.infinispan.commands.read.ReduceCommand;
 import org.infinispan.commons.CacheException;
 import org.infinispan.commons.util.CollectionFactory;
+import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.context.Flag;
 import org.infinispan.distexec.mapreduce.spi.MapReduceTaskLifecycleService;
 import org.infinispan.distribution.DistributionManager;
@@ -26,6 +27,7 @@ import org.infinispan.util.logging.LogFactory;
 
 import java.io.Serializable;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -59,6 +61,7 @@ public class MapReduceManagerImpl implements MapReduceManager {
    private PersistenceManager persistenceManager;
    private ExecutorService executorService;
    private TimeService timeService;
+   private int chunkSize;
 
    MapReduceManagerImpl() {
    }
@@ -66,12 +69,13 @@ public class MapReduceManagerImpl implements MapReduceManager {
    @Inject
    public void init(EmbeddedCacheManager cacheManager, PersistenceManager persistenceManager,
             @ComponentName(ASYNC_TRANSPORT_EXECUTOR) ExecutorService asyncTransportExecutor,
-            ClusteringDependentLogic cdl, TimeService timeService) {
+            ClusteringDependentLogic cdl, TimeService timeService, Configuration configuration) {
       this.cacheManager = cacheManager;
       this.persistenceManager = persistenceManager;
       this.cdl = cdl;
       this.executorService = asyncTransportExecutor;
       this.timeService = timeService;
+      this.chunkSize = configuration.clustering().stateTransfer().chunkSize();
    }
 
    @Override
@@ -223,21 +227,20 @@ public class MapReduceManagerImpl implements MapReduceManager {
          Cache<?, ?> cache = cacheManager.getCache(mcc.getCacheName());
          log.tracef("For m/r task %s invoking combiner %s at %s",  taskId, mcc, cdl.getAddress());
          MapReduceTaskLifecycleService taskLifecycleService = MapReduceTaskLifecycleService.getInstance();
-         Map<KOut, VOut> combinedMap = new ConcurrentHashMap<KOut, VOut>();
+         Map<KOut, List<VOut>> combinedMap = new ConcurrentHashMap<KOut, List<VOut>>();
          long start = log.isTraceEnabled() ? timeService.time() : 0;
          try {
             taskLifecycleService.onPreExecute(combiner, cache);
             Map<KOut, List<VOut>> collectedValues = collector.collectedValues();
             for (Entry<KOut, List<VOut>> e : collectedValues.entrySet()) {
-               List<VOut> list = e.getValue();
-               VOut combined;
-               if (list.size() > 1) {
-                  combined = combiner.reduce(e.getKey(), list.iterator());
-                  combinedMap.put(e.getKey(), combined);
+               List<VOut> mapped = e.getValue();
+               List<VOut> combined;
+               if (mapped.size() == 1) {
+                  combined = mapped;
                } else {
-                  combined = list.get(0);
-                  combinedMap.put(e.getKey(), combined);
+                  combined = Arrays.asList(combiner.reduce(e.getKey(), mapped.iterator()));
                }
+               combinedMap.put(e.getKey(), combined);
                log.tracef("For m/r task %s combined %s to %s at %s" , taskId, e.getKey(), combined, cdl.getAddress());
             }
          } finally {
@@ -247,73 +250,49 @@ public class MapReduceManagerImpl implements MapReduceManager {
             }
             taskLifecycleService.onPostExecute(combiner);
          }
-         Map<Address, List<KOut>> keysToNodes = mapKeysToNodes(dm, taskId, combinedMap.keySet(),
-                  emitCompositeIntermediateKeys);
-
-         start = log.isTraceEnabled() ? timeService.time() : 0;
-         try {
-            for (Entry<Address, List<KOut>> entry : keysToNodes.entrySet()) {
-               List<KOut> keysHashedToAddress = entry.getValue();
-               try {
-                  log.tracef("For m/r task %s migrating intermediate keys %s to %s",  taskId, keysHashedToAddress, entry.getKey());
-                  for (KOut key : keysHashedToAddress) {
-                     VOut value = combinedMap.get(key);
-                     DeltaAwareList<VOut> delta = new DeltaAwareList<VOut>(value);
-                     if (emitCompositeIntermediateKeys) {
-                        tmpCache.put(new IntermediateCompositeKey<KOut>(taskId, key), delta);
-                     } else {
-                        tmpCache.put(key, delta);
-                     }
-                     mapPhaseKeys.add(key);
-                  }
-               } catch (Exception e) {
-                  throw new CacheException("Could not move intermediate keys/values for M/R task " + taskId, e);
-               }
-            }
-         } finally {
-            if (log.isTraceEnabled()) {
-               log.tracef("Migrating keys for task %s took %s milliseconds (Migrated %s keys)",
-                          mcc.getTaskId(),
-                          timeService.timeDuration(start, TimeUnit.MILLISECONDS),
-                          mapPhaseKeys.size());
-            }
-         }
+         migrateIntermediateKeys(mcc, taskId, emitCompositeIntermediateKeys, mapPhaseKeys, tmpCache, dm, combinedMap);
       } else {
          // Combiner not specified so lets insert each key/uncombined-List pair into tmp cache
 
          Map<KOut, List<VOut>> collectedValues = collector.collectedValues();
-         Map<Address, List<KOut>> keysToNodes = mapKeysToNodes(dm, taskId, collectedValues.keySet(),
-                  emitCompositeIntermediateKeys);
+         migrateIntermediateKeys(mcc, taskId, emitCompositeIntermediateKeys, mapPhaseKeys, tmpCache, dm, collectedValues);
+      }
+      return mapPhaseKeys;
+   }
 
-         long start = log.isTraceEnabled() ? timeService.time() : 0;
-         try {
-            for (Entry<Address, List<KOut>> entry : keysToNodes.entrySet()) {
-               List<KOut> keysHashedToAddress = entry.getValue();
-               try {
-                  log.tracef("For m/r task %s migrating intermediate keys %s to %s", taskId, keysHashedToAddress, entry.getKey());
-                  for (KOut key : keysHashedToAddress) {
-                     List<VOut> value = collectedValues.get(key);
-                     DeltaAwareList<VOut> delta = new DeltaAwareList<VOut>(value);
+   private <KIn, VIn, KOut, VOut> void migrateIntermediateKeys(MapCombineCommand<KIn, VIn, KOut, VOut> mcc, String taskId, boolean emitCompositeIntermediateKeys, Set<KOut> mapPhaseKeys, Cache<Object, DeltaAwareList<VOut>> tmpCache, DistributionManager dm, Map<KOut, List<VOut>> collectedValues) {
+      Map<Address, List<KOut>> keysToNodes = mapKeysToNodes(dm, taskId, collectedValues.keySet(),
+            emitCompositeIntermediateKeys);
+
+      long start = log.isTraceEnabled() ? timeService.time() : 0;
+      try {
+         for (Entry<Address, List<KOut>> entry : keysToNodes.entrySet()) {
+            List<KOut> keysHashedToAddress = entry.getValue();
+            try {
+               log.tracef("For m/r task %s migrating intermediate keys %s to %s", taskId, keysHashedToAddress, entry.getKey());
+               for (KOut key : keysHashedToAddress) {
+                  List<VOut> values = collectedValues.get(key);
+                  for (int i = 0; i < values.size(); i += chunkSize) {
+                     List<VOut> chunk = values.subList(i, Math.min(values.size(), i + chunkSize));
+                     DeltaAwareList<VOut> delta = new DeltaAwareList<VOut>(chunk);
                      if (emitCompositeIntermediateKeys) {
                         tmpCache.put(new IntermediateCompositeKey<KOut>(taskId, key), delta);
                      } else {
                         tmpCache.put(key, delta);
                      }
-                     mapPhaseKeys.add(key);
                   }
-               } catch (Exception e) {
-                  throw new CacheException("Could not move intermediate keys/values for M/R task " + taskId, e);
+                  mapPhaseKeys.add(key);
                }
-            }
-         } finally {
-            if (log.isTraceEnabled()) {
-               log.tracef("Migrating keys for task %s took %s milliseconds (Migrated %s keys)", mcc.getTaskId(),
-                          timeService.timeDuration(start, TimeUnit.MILLISECONDS),
-                          mapPhaseKeys.size());
+            } catch (Exception e) {
+               throw new CacheException("Could not move intermediate keys/values for M/R task " + taskId, e);
             }
          }
+      } finally {
+         if (log.isTraceEnabled()) {
+            log.tracef("Migrating keys for task %s took %s milliseconds (Migrated %s keys)",
+                  mcc.getTaskId(), timeService.timeDuration(start, TimeUnit.MILLISECONDS), mapPhaseKeys.size());
+         }
       }
-      return mapPhaseKeys;
    }
 
    private <KIn, VIn, KOut, VOut> Map<KOut, List<VOut>> combineForLocalReduction(

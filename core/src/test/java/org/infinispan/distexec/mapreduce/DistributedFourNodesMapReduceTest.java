@@ -19,6 +19,7 @@ public class DistributedFourNodesMapReduceTest extends BaseWordCountMapReduceTes
    @Override
    protected void createCacheManagers() throws Throwable {
       ConfigurationBuilder builder = getDefaultClusteredCacheConfig(getCacheMode(), true);
+      builder.clustering().stateTransfer().chunkSize(2);
       createClusteredCaches(4, cacheName(), builder);
    }
    
