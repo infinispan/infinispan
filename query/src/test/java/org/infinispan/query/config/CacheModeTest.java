@@ -1,5 +1,6 @@
 package org.infinispan.query.config;
 
+import org.infinispan.commons.CacheConfigurationException;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.interceptors.base.CommandInterceptor;
 import org.infinispan.manager.CacheContainer;
@@ -20,6 +21,8 @@ public class CacheModeTest extends AbstractInfinispanTest {
       doTest(CacheMode.REPL_SYNC);
    }
 
+   @Test(expectedExceptions = CacheConfigurationException.class,
+         expectedExceptionsMessageRegExp = "Indexing can not be enabled on caches in Invalidation mode")
    public void testInvalidated() {
       doTest(CacheMode.INVALIDATION_SYNC);
    }
