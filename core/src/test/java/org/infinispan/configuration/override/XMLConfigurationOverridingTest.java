@@ -234,20 +234,18 @@ public class XMLConfigurationOverridingTest extends AbstractInfinispanTest imple
             Configuration cnf = cm.getCacheConfiguration(simpleCacheName);
             Assert.assertFalse(cnf.indexing().enabled());
 
-            Configuration conf = new ConfigurationBuilder().indexing().enable().indexLocalOnly(false)
+            Configuration conf = new ConfigurationBuilder().indexing().indexLocalOnly(false)
                   .addProperty("default.directory_provider", "infinispan").build();
 
             cm.defineConfiguration(simpleCacheName, conf);
 
             cnf = cm.getCacheConfiguration(simpleCacheName);
-            Assert.assertTrue(cnf.indexing().enabled());
+            Assert.assertFalse(cnf.indexing().enabled());
             Assert.assertFalse(cnf.indexing().indexLocalOnly());
             Assert.assertEquals("infinispan", cnf.indexing().properties().getProperty("default.directory_provider"));
             Assert.assertFalse(cm.getCacheNames().contains("LuceneIndexesMetadata"));
 
-            for (int i = 0; i < 10; i++) {
-               cm.getCache(simpleCacheName + 1).put("key" + i, new NonIndexedClass("value" + i));
-            }
+            cm.getCache(simpleCacheName).put("key0", new NonIndexedClass("value0"));
 
             Assert.assertFalse(cm.getCacheNames().contains("LuceneIndexesMetadata"));
          }

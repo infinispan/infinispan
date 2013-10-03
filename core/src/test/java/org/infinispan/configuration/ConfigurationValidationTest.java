@@ -81,6 +81,20 @@ public class ConfigurationValidationTest extends AbstractInfinispanTest {
       }
    }
 
+   @Test(expectedExceptions = CacheConfigurationException.class, expectedExceptionsMessageRegExp =
+         "ISPN(\\d)*: Indexing can only be enabled if infinispan-query.jar is available on your classpath, and this jar has not been detected.")
+   public void testIndexingRequiresOptionalModule() {
+      EmbeddedCacheManager ecm = null;
+      try {
+         ConfigurationBuilder c = new ConfigurationBuilder();
+         c.indexing().enable();
+         ecm = TestCacheManagerFactory.createClusteredCacheManager(c);
+         ecm.getCache();
+      } finally {
+         TestingUtil.killCacheManagers(ecm);
+      }
+   }
+
    private EmbeddedCacheManager createCacheManager() throws Exception {
       ConfigurationBuilder config = new ConfigurationBuilder();
       config.clustering().cacheMode(CacheMode.REPL_ASYNC);

@@ -1014,5 +1014,8 @@ public interface Log extends BasicLogger {
    @Message(value = "Indexing can not be enabled on caches in Invalidation mode", id = 273)
    CacheConfigurationException invalidConfigurationIndexingWithInvalidation();
 
+   @Message(value = "Indexing can only be enabled if infinispan-query.jar is available on your classpath, and this jar has not been detected.", id = 274)
+   CacheConfigurationException invalidConfigurationIndexingWithoutModule();
+
 }
 
