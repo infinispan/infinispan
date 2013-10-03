@@ -8,7 +8,7 @@ import org.testng.annotations.Test;
  * @author Pedro Ruivo
  * @since 6.0
  */
-@Test(groups = "functional", testName = "api.DistributedOptimisticRepeatableReadIsolationTest")
+@Test(groups = "functional", testName = "api.DistributedPessimisticRepeatableReadIsolationTest")
 public class DistributedPessimisticRepeatableReadIsolationTest extends AbstractRepeatableReadIsolationTest {
 
    public DistributedPessimisticRepeatableReadIsolationTest() {

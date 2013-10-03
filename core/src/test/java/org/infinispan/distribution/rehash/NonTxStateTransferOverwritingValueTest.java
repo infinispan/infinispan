@@ -46,12 +46,16 @@ import static org.testng.AssertJUnit.assertNotNull;
  * See https://issues.jboss.org/browse/ISPN-3443
  *
  * @author Dan Berindei
+ * @since 6.0
  */
 @Test(groups = "functional", testName = "distribution.rehash.NonTxStateTransferOverwritingValueTest")
-@CleanupAfterMethod
 public class NonTxStateTransferOverwritingValueTest extends MultipleCacheManagersTest {
 
    private static final String CACHE_NAME = BasicCacheContainer.DEFAULT_CACHE_NAME;
+
+   {
+      cleanup = CleanupPhase.AFTER_METHOD;
+   }
 
    private static enum Operation {
       PUT(PutKeyValueCommand.class, "v1", null, null),
