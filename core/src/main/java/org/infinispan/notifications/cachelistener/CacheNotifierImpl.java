@@ -8,12 +8,9 @@ import org.infinispan.context.Flag;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.context.impl.TxInvocationContext;
 import org.infinispan.distribution.ch.ConsistentHash;
-import org.infinispan.factories.KnownComponentNames;
-import org.infinispan.factories.annotations.ComponentName;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.interceptors.locking.ClusteringDependentLogic;
 import org.infinispan.notifications.AbstractListenerImpl;
-import org.infinispan.notifications.ClassLoaderAwareListenable;
 import org.infinispan.notifications.KeyFilter;
 import org.infinispan.notifications.cachelistener.annotation.*;
 import org.infinispan.notifications.cachelistener.event.*;
@@ -22,6 +19,7 @@ import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
 import javax.transaction.InvalidTransactionException;
+import javax.transaction.Status;
 import javax.transaction.SystemException;
 import javax.transaction.Transaction;
 import javax.transaction.TransactionManager;
@@ -32,7 +30,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CopyOnWriteArrayList;
-import java.util.concurrent.ExecutorService;
 
 import static org.infinispan.commons.util.InfinispanCollections.transformCollectionToMap;
 import static org.infinispan.notifications.cachelistener.event.Event.Type.*;
@@ -130,10 +127,31 @@ public final class CacheNotifierImpl extends AbstractListenerImpl implements Cac
 
    @Override
    protected final Transaction suspendIfNeeded() {
+      if (transactionManager == null) {
+         return null;
+      }
+
       try {
-         return transactionManager == null ? null : transactionManager.suspend();
-      } catch (SystemException e) {
-         //ignored
+         switch (transactionManager.getStatus()) {
+            case Status.STATUS_ACTIVE:
+            case Status.STATUS_NO_TRANSACTION:
+               return null;
+            case Status.STATUS_MARKED_ROLLBACK:
+            case Status.STATUS_PREPARED:
+            case Status.STATUS_COMMITTED:
+            case Status.STATUS_ROLLEDBACK:
+            case Status.STATUS_UNKNOWN:
+            case Status.STATUS_PREPARING:
+            case Status.STATUS_COMMITTING:
+            case Status.STATUS_ROLLING_BACK:
+            default:
+               //suspend in default and in unknown status to be safer
+               return transactionManager.suspend();
+         }
+      } catch (Exception e) {
+         if (log.isTraceEnabled()) {
+            log.trace("An error occurred while trying to suspend a transaction.", e);
+         }
          return null;
       }
    }
@@ -145,10 +163,10 @@ public final class CacheNotifierImpl extends AbstractListenerImpl implements Cac
       }
       try {
          transactionManager.resume(transaction);
-      } catch (InvalidTransactionException e) {
-         //ignored
-      } catch (SystemException e) {
-         //ignored
+      } catch (Exception e) {
+         if (log.isTraceEnabled()) {
+            log.tracef(e, "An error occurred while trying to resume a suspended transaction. tx=%s", transaction);
+         }
       }
    }
 
