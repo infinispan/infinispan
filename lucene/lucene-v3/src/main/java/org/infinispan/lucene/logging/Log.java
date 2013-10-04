@@ -75,4 +75,7 @@ public interface Log extends org.infinispan.util.logging.Log {
    @Message(value = "Lucene Directory for index '%s' can not use Cache '%s': expiration idle time enabled on the Cache configuration!", id = 15015)
    IllegalArgumentException luceneStorageHavingIdleTimeSet(String indexName, String cacheName);
 
+   @Message(value = "'%s' must not be null", id = 15016)
+   IllegalArgumentException requiredParameterWasPassedNull(String objectname);
+
 }
