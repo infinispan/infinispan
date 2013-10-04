@@ -69,4 +69,10 @@ public interface Log extends org.infinispan.util.logging.Log {
    @Message(value = "Lucene Directory detected Apache Lucene v. '%d' - this will affect which APIs are going to be provided", id = 15013)
    void detectedLuceneVersion(int version);
 
+   @Message(value = "Lucene Directory for index '%s' can not use Cache '%s': maximum lifespan enabled on the Cache configuration!", id = 15014)
+   IllegalArgumentException luceneStorageHavingLifespanSet(String indexName, String cacheName);
+
+   @Message(value = "Lucene Directory for index '%s' can not use Cache '%s': expiration idle time enabled on the Cache configuration!", id = 15015)
+   IllegalArgumentException luceneStorageHavingIdleTimeSet(String indexName, String cacheName);
+
 }
