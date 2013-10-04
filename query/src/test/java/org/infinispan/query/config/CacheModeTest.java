@@ -22,7 +22,7 @@ public class CacheModeTest extends AbstractInfinispanTest {
    }
 
    @Test(expectedExceptions = CacheConfigurationException.class,
-         expectedExceptionsMessageRegExp = "Indexing can not be enabled on caches in Invalidation mode")
+         expectedExceptionsMessageRegExp = "ISPN(\\d)*: Indexing can not be enabled on caches in Invalidation mode")
    public void testInvalidated() {
       doTest(CacheMode.INVALIDATION_SYNC);
    }
