@@ -68,7 +68,7 @@ class HotRodServer extends AbstractProtocolServer("HotRod") with Log {
    }
 
    private def loadQueryFacades(): Seq[QueryFacade] =
-      ServiceLoader.load(classOf[QueryFacade]).toSeq
+      ServiceLoader.load(classOf[QueryFacade], getClass().getClassLoader()).toSeq
 
    override def startTransport() {
       // Start predefined caches

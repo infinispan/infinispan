@@ -46,6 +46,8 @@ import org.infinispan.query.logging.Log;
 import org.infinispan.transaction.LockingMode;
 import org.infinispan.util.logging.LogFactory;
 
+import org.infinispan.commons.util.Util;
+
 import javax.management.MBeanServer;
 import javax.management.ObjectName;
 
@@ -82,7 +84,7 @@ public class LifecycleManager extends AbstractModuleLifecycle {
    public void cacheStarting(ComponentRegistry cr, Configuration cfg, String cacheName) {
       if (cfg.indexing().enabled()) {
          log.registeringQueryInterceptor();
-         SearchFactoryIntegrator searchFactory = getSearchFactory(cfg.indexing().properties(), cr);
+         SearchFactoryIntegrator searchFactory = getSearchFactory(cfg.indexing().properties(), cr, cfg.classLoader());
          createQueryInterceptorIfNeeded(cr, cfg, searchFactory);
       }
    }
@@ -160,7 +162,7 @@ public class LifecycleManager extends AbstractModuleLifecycle {
          ComponentRegistry cr, String cacheName) {
       Configuration cfg = cache.getCacheConfiguration();
       SearchFactoryIntegrator sf = getSearchFactory(
-            cfg.indexing().properties(), cr);
+            cfg.indexing().properties(), cr, null);
 
       // Resolve MBean server instance
       GlobalConfiguration globalCfg =
@@ -208,7 +210,7 @@ public class LifecycleManager extends AbstractModuleLifecycle {
       return interceptorChain.containsInterceptorType(QueryInterceptor.class, true);
    }
 
-   private SearchFactoryIntegrator getSearchFactory(Properties indexingProperties, ComponentRegistry cr) {
+   private SearchFactoryIntegrator getSearchFactory(Properties indexingProperties, ComponentRegistry cr, ClassLoader cl) {
       Object component = cr.getComponent(SearchFactoryIntegrator.class);
       SearchFactoryIntegrator searchFactory = null;
       if (component instanceof SearchFactoryIntegrator) { //could be the placeholder Object REMOVED_REGISTRY_COMPONENT
@@ -218,7 +220,7 @@ public class LifecycleManager extends AbstractModuleLifecycle {
       if (searchFactory==null) {
          GlobalComponentRegistry globalComponentRegistry = cr.getGlobalComponentRegistry();
          EmbeddedCacheManager uninitializedCacheManager = globalComponentRegistry.getComponent(EmbeddedCacheManager.class);
-         indexingProperties = addMappingsForRemoteQuery(indexingProperties, cr);
+         indexingProperties = addMappingsForRemoteQuery(indexingProperties, cr, cl);
          // Set up the search factory for Hibernate Search first.
          SearchConfiguration config = new SearchableCacheConfiguration(new Class[0], indexingProperties, uninitializedCacheManager, cr);
          searchFactory = new SearchFactoryBuilder().configuration(config).buildSearchFactory();
@@ -228,11 +230,11 @@ public class LifecycleManager extends AbstractModuleLifecycle {
    }
 
    //todo [anistor] this method belongs to remote-query, but currently it is not possible to move it there because the SearchFactory programmatic mappings cannot be modified after instantiation
-   private Properties addMappingsForRemoteQuery(Properties indexingProperties, ComponentRegistry cr) {
+   private Properties addMappingsForRemoteQuery(Properties indexingProperties, ComponentRegistry cr, ClassLoader cl) {
       Class<?> fbClass;
       try {
          // proceed only if remote-query is in class path
-         fbClass = Class.forName("org.infinispan.query.remote.indexing.ProtobufValueWrapperFieldBridge");
+         fbClass = Util.loadClassStrict("org.infinispan.query.remote.indexing.ProtobufValueWrapperFieldBridge", cl);
       } catch (ClassNotFoundException e) {
          return indexingProperties;
       }
@@ -248,7 +250,7 @@ public class LifecycleManager extends AbstractModuleLifecycle {
          }
          Cache cache = cr.getComponent(Cache.class);
          FieldBridge fb = (FieldBridge) fbClass.getConstructor(Cache.class).newInstance(cache);
-         mapping.entity(Class.forName("org.infinispan.query.remote.indexing.ProtobufValueWrapper"))
+         mapping.entity(Util.loadClassStrict("org.infinispan.query.remote.indexing.ProtobufValueWrapper", cl))
                .indexed().classBridgeInstance(fb).norms(Norms.NO).analyze(Analyze.YES).store(Store.YES);
       } catch (Exception e) {
          throw new CacheException("Failed to configure indexing for remote query", e);
