@@ -38,14 +38,10 @@ public class DirectoryBuilderImpl implements BuildContext {
    private LockFactory lockFactory = null;
 
    public DirectoryBuilderImpl(Cache<?, ?> metadataCache, Cache<?, ?> chunksCache, Cache<?, ?> distLocksCache, String indexName) {
-      checkNotNull(metadataCache, "metadataCache");
-      checkNotNull(chunksCache, "chunksCache");
-      checkNotNull(distLocksCache, "distLocksCache");
-      checkNotNull(indexName, "indexName");
-      this.metadataCache = metadataCache;
-      this.chunksCache = chunksCache;
-      this.distLocksCache = distLocksCache;
-      this.indexName = indexName;
+      this.metadataCache = checkNotNull(metadataCache, "metadataCache");
+      this.chunksCache = checkNotNull(chunksCache, "chunksCache");
+      this.distLocksCache = checkNotNull(distLocksCache, "distLocksCache");
+      this.indexName =  checkNotNull(indexName, "indexName");
    }
 
    @Override
@@ -102,9 +98,10 @@ public class DirectoryBuilderImpl implements BuildContext {
       return new DistributedSegmentReadLocker((Cache<Object, Integer>) distLocksCache, chunksCache, metadataCache, indexName);
    }
 
-   private static void checkNotNull(Object v, String objectname) {
+   private static <T> T checkNotNull(final T v,final String objectname) {
       if (v == null)
          throw new IllegalArgumentException(objectname + " must not be null");
+      return v;
    }
 
    private static LockFactory makeDefaultLockFactory(Cache<?, ?> cache, String indexName) {
