@@ -100,7 +100,7 @@ public class DirectoryBuilderImpl implements BuildContext {
 
    private static <T> T checkNotNull(final T v,final String objectname) {
       if (v == null)
-         throw new IllegalArgumentException(objectname + " must not be null");
+         throw log.requiredParameterWasPassedNull(objectname);
       return v;
    }
 
