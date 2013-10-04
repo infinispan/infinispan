@@ -40,7 +40,7 @@ public class ConfigurationValidationTest extends AbstractInfinispanTest {
       }
    }
 
-   @Test (expectedExceptions = CacheConfigurationException.class)
+   @Test(expectedExceptions = CacheConfigurationException.class)
    public void testDistAndReplQueue() {
       EmbeddedCacheManager ecm = null;
       try {
@@ -53,12 +53,41 @@ public class ConfigurationValidationTest extends AbstractInfinispanTest {
       }
    }
 
-   @Test (expectedExceptions = CacheConfigurationException.class)
+   @Test(expectedExceptions = CacheConfigurationException.class)
    public void testEvictionOnButWithoutMaxEntries() {
       EmbeddedCacheManager ecm = null;
       try {
          ConfigurationBuilder c = new ConfigurationBuilder();
          c.eviction().strategy(EvictionStrategy.LRU);
+         ecm = TestCacheManagerFactory.createClusteredCacheManager(c);
+         ecm.getCache();
+      } finally {
+         TestingUtil.killCacheManagers(ecm);
+      }
+   }
+
+   @Test(expectedExceptions = CacheConfigurationException.class,
+         expectedExceptionsMessageRegExp = "Indexing can not be enabled on caches in Invalidation mode")
+   public void testIndexingOnInvalidationCache() {
+      EmbeddedCacheManager ecm = null;
+      try {
+         ConfigurationBuilder c = new ConfigurationBuilder();
+         c.clustering().cacheMode(CacheMode.INVALIDATION_SYNC);
+         c.indexing().enable();
+         ecm = TestCacheManagerFactory.createClusteredCacheManager(c);
+         ecm.getCache();
+      } finally {
+         TestingUtil.killCacheManagers(ecm);
+      }
+   }
+
+   @Test(expectedExceptions = CacheConfigurationException.class, expectedExceptionsMessageRegExp =
+         "Indexing can only be enabled if infinispan-query.jar is available on your classpath, and this jar has not been detected.")
+   public void testIndexingRequiresOptionalModule() {
+      EmbeddedCacheManager ecm = null;
+      try {
+         ConfigurationBuilder c = new ConfigurationBuilder();
+         c.indexing().enable();
          ecm = TestCacheManagerFactory.createClusteredCacheManager(c);
          ecm.getCache();
       } finally {

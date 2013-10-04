@@ -4,7 +4,6 @@ import org.apache.log4j.AppenderSkeleton;
 import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
 import org.apache.log4j.spi.LoggingEvent;
-import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
@@ -69,17 +68,6 @@ public class SampleConfigFilesCorrectnessTest {
          } finally {
             TestingUtil.killCacheManagers(dcm);
          }
-      }
-   }
-
-   public void testWarningForMissingQuery() {
-      EmbeddedCacheManager embeddedCacheManager = TestCacheManagerFactory.createCacheManager(CacheMode.LOCAL, true);
-      try {
-         embeddedCacheManager.getCache();
-         assert appender.isFoundUnknownWarning();
-         assert appender.unknownWarning().contains("infinispan-query.jar");
-      } finally {
-         TestingUtil.killCacheManagers(embeddedCacheManager);
       }
    }
 
