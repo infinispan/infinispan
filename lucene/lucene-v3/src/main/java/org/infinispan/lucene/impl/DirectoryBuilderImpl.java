@@ -38,9 +38,9 @@ public class DirectoryBuilderImpl implements BuildContext {
    private LockFactory lockFactory = null;
 
    public DirectoryBuilderImpl(Cache<?, ?> metadataCache, Cache<?, ?> chunksCache, Cache<?, ?> distLocksCache, String indexName) {
-      this.metadataCache = checkNotNull(metadataCache, "metadataCache");
-      this.chunksCache = checkNotNull(chunksCache, "chunksCache");
-      this.distLocksCache = checkNotNull(distLocksCache, "distLocksCache");
+      this.metadataCache = checkNoExpiryConfigured(checkNotNull(metadataCache, "metadataCache"), indexName);
+      this.chunksCache = checkNoExpiryConfigured(checkNotNull(chunksCache, "chunksCache"), indexName);
+      this.distLocksCache = checkNoExpiryConfigured(checkNotNull(distLocksCache, "distLocksCache"), indexName);
       this.indexName =  checkNotNull(indexName, "indexName");
    }
 
@@ -102,6 +102,16 @@ public class DirectoryBuilderImpl implements BuildContext {
       if (v == null)
          throw new IllegalArgumentException(objectname + " must not be null");
       return v;
+   }
+
+   private static Cache<?, ?> checkNoExpiryConfigured(final Cache<?, ?> cache, String indexName) {
+      if ( cache != null && cache.getCacheConfiguration().expiration().maxIdle() != -1) {
+         throw log.luceneStorageHavingIdleTimeSet( indexName, cache.getName() );
+      }
+      if ( cache != null && cache.getCacheConfiguration().expiration().lifespan() != -1) {
+         throw log.luceneStorageHavingLifespanSet( indexName, cache.getName() );
+      }
+      return cache;
    }
 
    private static LockFactory makeDefaultLockFactory(Cache<?, ?> cache, String indexName) {
