@@ -14,7 +14,7 @@ import org.testng.annotations.Test;
 public class MassIndexingTest extends DistributedMassIndexingTest {
 
    public void testReindexing() throws Exception {
-      for(int i = 0; i < 2000; i++) {
+      for(int i = 0; i < 200; i++) {
          caches.get(i % 2).getAdvancedCache().withFlags(Flag.SKIP_INDEXING).put(key("F" + i + "NUM"),
                                                                                 new Car((i % 2 == 0 ? "megane" : "bmw"), "blue", 300 + i));
       }
@@ -33,7 +33,7 @@ public class MassIndexingTest extends DistributedMassIndexingTest {
       //re-sync datacontainer with indexes:
       rebuildIndexes();
 
-      verifyFindsCar(1000, "megane");
+      verifyFindsCar(100, "megane");
       verifyFindsCar(0, "test1");
       verifyFindsCar(0, "test2");
    }
