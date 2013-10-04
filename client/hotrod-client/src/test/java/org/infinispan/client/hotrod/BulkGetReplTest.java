@@ -11,7 +11,7 @@ import org.testng.annotations.Test;
  * @author <a href="mailto:rtsang@redhat.com">Ray Tsang</a>
  * @since 5.2
  */
-@Test(testName = "client.hotrod.BulkGetKeysReplTest", groups = "functional")
+@Test(testName = "client.hotrod.BulkGetReplTest", groups = "functional")
 public class BulkGetReplTest extends BaseBulkGetTest {
 	@Override
 	protected int numberOfHotRodServers() {
