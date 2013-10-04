@@ -8,7 +8,7 @@
          port_range="30"
          recv_buf_size="20m"
          send_buf_size="640k"
-         max_bundle_size="64k"
+         max_bundle_size="31k"
          use_send_queues="true"
          enable_diagnostics="false"
          bundler_type="new"
@@ -76,9 +76,9 @@
    <pbcast.GMS print_local_addr="false" join_timeout="3000" view_bundling="true"/>
    <tom.TOA/> <!-- the Total Order Anycast is only needed for total order transactions (in distributed mode)-->
 
-   <UFC max_credits="500k" min_threshold="0.20"/>
-   <MFC max_credits="500k" min_threshold="0.20"/>
-   <FRAG2 frag_size="60000"/>
+   <UFC max_credits="1m" min_threshold="0.40"/>
+   <MFC max_credits="1m" min_threshold="0.40"/>
+   <FRAG2 frag_size="30k"/>
    <RSVP timeout="60000" resend_interval="500" ack_on_delivery="false" />
 
    <relay.RELAY2 site="__site_name__" config="configs/xsite/relay-config.xml" relay_multicasts="false" async_relay_creation="false"/>
