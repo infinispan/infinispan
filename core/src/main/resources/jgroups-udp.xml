@@ -10,7 +10,7 @@
          mcast_recv_buf_size="25m"
          mcast_send_buf_size="640k"
          loopback="true"
-         max_bundle_size="64k"
+         max_bundle_size="31k"
          ip_ttl="${jgroups.udp.ip_ttl:2}"
          enable_diagnostics="false"
          bundler_type="new"
@@ -32,14 +32,22 @@
          oob_thread_pool.queue_enabled="false"
          oob_thread_pool.queue_max_size="100"
          oob_thread_pool.rejection_policy="Discard"
+
+         internal_thread_pool.enabled="true"
+         internal_thread_pool.min_threads="1"
+         internal_thread_pool.max_threads="10"
+         internal_thread_pool.keep_alive_time="60000"
+         internal_thread_pool.queue_enabled="true"
+         internal_thread_pool.queue_max_size="100"
+         internal_thread_pool.rejection_policy="Discard"
          />
 
    <PING timeout="3000" num_initial_members="3"/>
    <MERGE2 max_interval="30000" min_interval="10000"/>
 
    <FD_SOCK/>
-   <FD_ALL timeout="15000"/>
-   <VERIFY_SUSPECT timeout="5000"/>
+   <FD_ALL timeout="15000" interval="3000"/>
+   <VERIFY_SUSPECT timeout="1500"/>
 
    <pbcast.NAKACK2
                     xmit_interval="1000"
@@ -59,8 +67,8 @@
    <pbcast.GMS print_local_addr="false" join_timeout="3000" view_bundling="true"/>
    <tom.TOA/> <!-- the TOA is only needed for total order transactions-->
 
-   <UFC max_credits="500k" min_threshold="0.20"/>
-   <MFC max_credits="500k" min_threshold="0.20"/>
-   <FRAG2 frag_size="8000"  />
+   <UFC max_credits="1m" min_threshold="0.40"/>
+   <MFC max_credits="1m" min_threshold="0.40"/>
+   <FRAG2 frag_size="30k"  />
    <RSVP timeout="60000" resend_interval="500" ack_on_delivery="false" />
 </config>
