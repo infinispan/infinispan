@@ -42,8 +42,8 @@ final class DirectoryImplementor {
     public DirectoryImplementor(Cache<?, ?> metadataCache, Cache<?, ?> chunksCache, String indexName, int chunkSize, SegmentReadLocker readLocker) {
         if (chunkSize <= 0)
            throw new IllegalArgumentException("chunkSize must be a positive integer");
-        this.metadataCache = (AdvancedCache<FileCacheKey, FileMetadata>) metadataCache.getAdvancedCache();
-        this.chunksCache = (AdvancedCache<ChunkCacheKey, Object>) chunksCache.getAdvancedCache();
+        this.metadataCache = (AdvancedCache<FileCacheKey, FileMetadata>) metadataCache.getAdvancedCache().withFlags(Flag.SKIP_INDEXING);
+        this.chunksCache = (AdvancedCache<ChunkCacheKey, Object>) chunksCache.getAdvancedCache().withFlags(Flag.SKIP_INDEXING);
         this.indexName = indexName;
         this.chunkSize = chunkSize;
         this.fileOps = new FileListOperations(this.metadataCache, indexName);

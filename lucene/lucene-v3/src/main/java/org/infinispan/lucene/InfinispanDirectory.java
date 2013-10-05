@@ -97,8 +97,8 @@ public class InfinispanDirectory extends Directory {
       checkNotNull(readLocker, "SegmentReadLocker");
       if (chunkSize <= 0)
          throw new IllegalArgumentException("chunkSize must be a positive integer");
-      this.metadataCache = (AdvancedCache<FileCacheKey, FileMetadata>) metadataCache.getAdvancedCache();
-      this.chunksCache = (AdvancedCache<ChunkCacheKey, Object>) chunksCache.getAdvancedCache();
+      this.metadataCache = (AdvancedCache<FileCacheKey, FileMetadata>) metadataCache.getAdvancedCache().withFlags(Flag.SKIP_INDEXING);
+      this.chunksCache = (AdvancedCache<ChunkCacheKey, Object>) chunksCache.getAdvancedCache().withFlags(Flag.SKIP_INDEXING);
       this.indexName = indexName;
       this.lockFactory = lf;
       this.lockFactory.setLockPrefix(this.getLockID());
