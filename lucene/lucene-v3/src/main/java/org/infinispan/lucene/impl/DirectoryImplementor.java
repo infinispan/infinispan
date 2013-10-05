@@ -51,8 +51,13 @@ final class DirectoryImplementor {
      }
 
     String[] list() {
-       final Set<String> filesList = fileOps.getFileList();
-       return filesList.toArray(new String[filesList.size()]);
+       final Set<String> files = fileOps.getFileList();
+       //Careful! if you think you can optimize this array allocation, think again.
+       //The _files_ are a concurrent structure, its size could vary in parallel:
+       //the array population and dimensioning need to be performed atomically
+       //to avoid trailing null elements in the returned array.
+       final String[] array = files.toArray(new String[0]);
+       return array;
     }
 
     boolean fileExists(final String name) {
