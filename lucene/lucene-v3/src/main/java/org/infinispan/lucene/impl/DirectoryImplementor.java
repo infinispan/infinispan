@@ -52,7 +52,8 @@ final class DirectoryImplementor {
 
     String[] list() {
        final Set<String> filesList = fileOps.getFileList();
-       return filesList.toArray(new String[filesList.size()]);
+       final String[] array = filesList.toArray(new String[0]);
+       return array;
     }
 
     boolean fileExists(final String name) {
