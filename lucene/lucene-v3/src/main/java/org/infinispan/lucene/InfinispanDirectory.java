@@ -97,8 +97,8 @@ public class InfinispanDirectory extends Directory {
       checkNotNull(readLocker, "SegmentReadLocker");
       if (chunkSize <= 0)
          throw new IllegalArgumentException("chunkSize must be a positive integer");
-      this.metadataCache = (AdvancedCache<FileCacheKey, FileMetadata>) metadataCache.getAdvancedCache();
-      this.chunksCache = (AdvancedCache<ChunkCacheKey, Object>) chunksCache.getAdvancedCache();
+      this.metadataCache = (AdvancedCache<FileCacheKey, FileMetadata>) metadataCache.getAdvancedCache().withFlags(Flag.SKIP_INDEXING);
+      this.chunksCache = (AdvancedCache<ChunkCacheKey, Object>) chunksCache.getAdvancedCache().withFlags(Flag.SKIP_INDEXING);
       this.indexName = indexName;
       this.lockFactory = lf;
       this.lockFactory.setLockPrefix(this.getLockID());
@@ -143,8 +143,13 @@ public class InfinispanDirectory extends Directory {
     */
    public String[] list() {
       ensureOpen();
-      Set<String> filesList = fileOps.getFileList();
-      return filesList.toArray(new String[filesList.size()]);
+      Set<String> files = fileOps.getFileList();
+      //Careful! if you think you can optimize this array allocation, think again.
+      //The _files_ are a concurrent structure, its size could vary in parallel:
+      //the array population and dimensioning need to be performed atomically
+      //to avoid trailing null elements in the returned array.
+      String[] array = files.toArray(new String[0]);
+      return array;
    }
 
    /**

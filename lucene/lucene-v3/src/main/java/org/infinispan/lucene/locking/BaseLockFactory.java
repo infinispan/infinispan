@@ -3,6 +3,7 @@ package org.infinispan.lucene.locking;
 import org.apache.lucene.index.IndexWriter;
 import org.apache.lucene.store.LockFactory;
 import org.infinispan.Cache;
+import org.infinispan.context.Flag;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
@@ -25,9 +26,9 @@ public class BaseLockFactory extends LockFactory {
    private final BaseLuceneLock defLock;
 
    public BaseLockFactory(Cache<?, ?> cache, String indexName) {
-      this.cache = cache;
+      this.cache = cache.getAdvancedCache().withFlags(Flag.SKIP_INDEXING);
       this.indexName = indexName;
-      defLock = new BaseLuceneLock(cache, indexName, DEF_LOCK_NAME);
+      defLock = new BaseLuceneLock(this.cache, indexName, DEF_LOCK_NAME);
    }
 
    /**

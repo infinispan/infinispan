@@ -22,7 +22,6 @@ import org.infinispan.util.logging.LogFactory;
  * @see org.apache.lucene.store.Directory
  * @see org.apache.lucene.store.IndexInput
  */
-@SuppressWarnings("unchecked")
 public final class InfinispanIndexOutput extends IndexOutput {
 
    private static final Log log = LogFactory.getLog(InfinispanIndexOutput.class);
@@ -47,10 +46,10 @@ public final class InfinispanIndexOutput extends IndexOutput {
    private long filePosition = 0;
    private int currentChunkNumber = 0;
 
-   public InfinispanIndexOutput(final AdvancedCache<?, ?> metadataCache, final AdvancedCache<?, ?> chunksCache, final FileCacheKey fileKey, final int bufferSize, final FileListOperations fileList) {
-      this.metadataCache = (AdvancedCache<FileCacheKey, FileMetadata>) metadataCache;
-      this.chunksCache = (Cache<ChunkCacheKey, Object>) chunksCache;
-      this.chunksCacheForStorage = (Cache<ChunkCacheKey, Object>) chunksCache.withFlags(Flag.IGNORE_RETURN_VALUES, Flag.SKIP_INDEXING);
+   public InfinispanIndexOutput(final AdvancedCache<FileCacheKey, FileMetadata> metadataCache, final AdvancedCache<ChunkCacheKey, Object> chunksCache, final FileCacheKey fileKey, final int bufferSize, final FileListOperations fileList) {
+      this.metadataCache = metadataCache;
+      this.chunksCache = chunksCache;
+      this.chunksCacheForStorage = chunksCache.withFlags(Flag.IGNORE_RETURN_VALUES);
       this.fileKey = fileKey;
       this.bufferSize = bufferSize;
       this.fileOps = fileList;
@@ -186,7 +185,7 @@ public final class InfinispanIndexOutput extends IndexOutput {
       firstChunkBuffer = null;
       // override existing file header with updated accesstime
       file.touch();
-      metadataCache.withFlags(Flag.IGNORE_RETURN_VALUES, Flag.SKIP_INDEXING).put(fileKey, file);
+      metadataCache.withFlags(Flag.IGNORE_RETURN_VALUES).put(fileKey, file);
       fileOps.addFileName(this.fileKey.getFileName());
       if (trace) {
          log.tracef("Closed IndexOutput for %s", fileKey);
@@ -224,10 +223,10 @@ public final class InfinispanIndexOutput extends IndexOutput {
    public long length() {
       return file.getSize();
    }
-   
+
    private boolean isWritingOnLastChunk() {
       final int lastChunkNumber = file.getNumberOfChunks() - 1;
       return currentChunkNumber >= lastChunkNumber;
    }
-   
+
 }

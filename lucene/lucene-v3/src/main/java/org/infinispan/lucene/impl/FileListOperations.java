@@ -30,9 +30,8 @@ public final class FileListOperations {
    private final AdvancedCache<FileListCacheKey, Set<String>> cacheNoRetrieve;
 
    public FileListOperations(AdvancedCache<?, ?> cache, String indexName){
-      this.cache = (AdvancedCache<FileListCacheKey, Object>) cache.withFlags(Flag.SKIP_INDEXING);
-      this.cacheNoRetrieve = (AdvancedCache<FileListCacheKey, Set<String>>)
-            cache.withFlags(Flag.IGNORE_RETURN_VALUES, Flag.SKIP_INDEXING);
+      this.cache = (AdvancedCache<FileListCacheKey, Object>) cache;
+      this.cacheNoRetrieve = (AdvancedCache<FileListCacheKey, Set<String>>) cache.withFlags(Flag.IGNORE_RETURN_VALUES);
       this.indexName = indexName;
       this.fileListCacheKey = new FileListCacheKey(indexName);
    }

@@ -42,8 +42,8 @@ final class DirectoryImplementor {
     public DirectoryImplementor(Cache<?, ?> metadataCache, Cache<?, ?> chunksCache, String indexName, int chunkSize, SegmentReadLocker readLocker) {
         if (chunkSize <= 0)
            throw new IllegalArgumentException("chunkSize must be a positive integer");
-        this.metadataCache = (AdvancedCache<FileCacheKey, FileMetadata>) metadataCache.getAdvancedCache();
-        this.chunksCache = (AdvancedCache<ChunkCacheKey, Object>) chunksCache.getAdvancedCache();
+        this.metadataCache = (AdvancedCache<FileCacheKey, FileMetadata>) metadataCache.getAdvancedCache().withFlags(Flag.SKIP_INDEXING);
+        this.chunksCache = (AdvancedCache<ChunkCacheKey, Object>) chunksCache.getAdvancedCache().withFlags(Flag.SKIP_INDEXING);
         this.indexName = indexName;
         this.chunkSize = chunkSize;
         this.fileOps = new FileListOperations(this.metadataCache, indexName);
@@ -51,8 +51,13 @@ final class DirectoryImplementor {
      }
 
     String[] list() {
-       final Set<String> filesList = fileOps.getFileList();
-       return filesList.toArray(new String[filesList.size()]);
+       final Set<String> files = fileOps.getFileList();
+       //Careful! if you think you can optimize this array allocation, think again.
+       //The _files_ are a concurrent structure, its size could vary in parallel:
+       //the array population and dimensioning need to be performed atomically
+       //to avoid trailing null elements in the returned array.
+       final String[] array = files.toArray(new String[0]);
+       return array;
     }
 
     boolean fileExists(final String name) {
