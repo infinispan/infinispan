@@ -3,10 +3,8 @@ package org.infinispan.configuration.cache;
 import java.util.Map;
 import java.util.Properties;
 
-import org.infinispan.commons.CacheConfigurationException;
 import org.infinispan.commons.configuration.Builder;
 import org.infinispan.commons.util.TypedProperties;
-import org.infinispan.commons.util.Util;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
@@ -139,7 +137,12 @@ public class IndexingConfigurationBuilder extends AbstractConfigurationChildBuil
          }
          // Check that the query module is on the classpath.
          try {
-            Util.loadClassStrict("org.infinispan.query.Search", getBuilder().classLoader());
+            String clazz = "org.infinispan.query.Search";
+            ClassLoader classLoader = getBuilder().classLoader();
+            if (classLoader == null)
+               Class.forName(clazz);
+            else
+               classLoader.loadClass(clazz);
          } catch (ClassNotFoundException e) {
             throw log.invalidConfigurationIndexingWithoutModule();
          }
