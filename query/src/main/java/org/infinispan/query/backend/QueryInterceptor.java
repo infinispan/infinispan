@@ -19,6 +19,7 @@ import org.hibernate.search.backend.spi.Work;
 import org.hibernate.search.backend.spi.WorkType;
 import org.hibernate.search.backend.spi.Worker;
 import org.hibernate.search.engine.spi.EntityIndexBinding;
+import org.hibernate.search.engine.spi.SearchFactoryImplementor;
 import org.hibernate.search.spi.SearchFactoryIntegrator;
 import org.infinispan.commands.FlagAffectedCommand;
 import org.infinispan.commands.tx.PrepareCommand;
@@ -58,6 +59,7 @@ import org.infinispan.util.logging.LogFactory;
  */
 public class QueryInterceptor extends CommandInterceptor {
 
+   private final boolean isManualIndexing;
    private final SearchFactoryIntegrator searchFactory;
    private final ConcurrentMap<Class<?>,Boolean> knownClasses = CollectionFactory.makeConcurrentMap();
    private final Lock mutating = new ReentrantLock();
@@ -78,6 +80,7 @@ public class QueryInterceptor extends CommandInterceptor {
 
    public QueryInterceptor(SearchFactoryIntegrator searchFactory) {
       this.searchFactory = searchFactory;
+      isManualIndexing = ((SearchFactoryImplementor)searchFactory).getIndexingStrategy().equals("manual");
    }
 
    @Inject
@@ -94,7 +97,7 @@ public class QueryInterceptor extends CommandInterceptor {
    }
 
    protected boolean shouldModifyIndexes(FlagAffectedCommand command, InvocationContext ctx) {
-      return !command.hasFlag(Flag.SKIP_INDEXING);
+      return !isManualIndexing && !command.hasFlag(Flag.SKIP_INDEXING);
    }
 
    /**
