@@ -7,7 +7,7 @@ import org.testng.annotations.Test;
 
 @Test(groups = "functional", testName = "api.mvcc.PutForExternalReadReplOptimisticTest")
 @CleanupAfterMethod
-public class PutForExternalReadReplOptimisticTest extends PutForExternalReadTest {
+public class PutForExternalReadReplOptimisticTest extends PutForExternalReadTxBaseTest {
 
    protected ConfigurationBuilder createCacheConfigBuilder() {
       ConfigurationBuilder c = getDefaultClusteredCacheConfig(CacheMode.REPL_SYNC, true);

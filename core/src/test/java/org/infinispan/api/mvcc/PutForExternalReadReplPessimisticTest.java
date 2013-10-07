@@ -8,7 +8,7 @@ import org.testng.annotations.Test;
 
 @Test(groups = "functional", testName = "api.mvcc.PutForExternalReadReplPessimisticTest")
 @CleanupAfterMethod
-public class PutForExternalReadReplPessimisticTest extends PutForExternalReadTest {
+public class PutForExternalReadReplPessimisticTest extends PutForExternalReadTxBaseTest {
 
    @Override
    protected ConfigurationBuilder createCacheConfigBuilder() {
