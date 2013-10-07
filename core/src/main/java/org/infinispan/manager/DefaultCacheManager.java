@@ -50,6 +50,7 @@ import java.util.Set;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicReference;
 
 /**
  * A <tt>CacheManager</tt> is the primary mechanism for retrieving a {@link Cache} instance, and is often used as a
@@ -412,13 +413,20 @@ public class DefaultCacheManager implements EmbeddedCacheManager, CacheManager {
    @Override
    public EmbeddedCacheManager startCaches(final String... cacheNames) {
       List<Thread> threads = new ArrayList<Thread>(cacheNames.length);
+      final AtomicReference<RuntimeException> exception = new AtomicReference<RuntimeException>(null);
       for (final String cacheName : cacheNames) {
 
          String threadName = "CacheStartThread," + globalConfiguration.transport().nodeName() + "," + cacheName;
          Thread thread = new Thread(threadName) {
             @Override
             public void run() {
-               createCache(cacheName);
+               try {
+                  createCache(cacheName);
+               } catch (RuntimeException e) {
+                  exception.set(e);
+               } catch (Throwable t) {
+                  exception.set(new RuntimeException(t));
+               }
             }
          };
          thread.start();
@@ -426,10 +434,14 @@ public class DefaultCacheManager implements EmbeddedCacheManager, CacheManager {
       }
       try {
          for (Thread thread : threads) {
-            thread.join(defaultConfiguration.locking().lockAcquisitionTimeout());
+            thread.join();
          }
       } catch (InterruptedException e) {
          throw new CacheException("Interrupted while waiting for the caches to start");
+      }
+
+      if (exception.get() != null) {
+         throw exception.get();
       }
 
       return this;

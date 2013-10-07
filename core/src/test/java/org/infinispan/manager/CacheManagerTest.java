@@ -1,12 +1,15 @@
 package org.infinispan.manager;
 
 import org.infinispan.Cache;
+import org.infinispan.commons.CacheException;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
+import org.infinispan.configuration.cache.InterceptorConfiguration;
 import org.infinispan.configuration.global.GlobalConfigurationBuilder;
 import org.infinispan.container.DataContainer;
 import org.infinispan.eviction.EvictionStrategy;
+import org.infinispan.interceptors.base.BaseCustomInterceptor;
 import org.infinispan.lifecycle.ComponentStatus;
 import org.infinispan.persistence.dummy.DummyInMemoryStore;
 import org.infinispan.persistence.dummy.DummyInMemoryStoreConfigurationBuilder;
@@ -283,6 +286,31 @@ public class CacheManagerTest extends AbstractInfinispanTest {
          assert 0 == data.size();
       } finally {
          manager.stop();
+      }
+   }
+
+   @Test(expectedExceptions = CacheException.class)
+   public void testStartCachesFailed() {
+      EmbeddedCacheManager cacheManager = null;
+      try {
+         cacheManager = createCacheManager();
+         cacheManager.defineConfiguration("correct-cache-1", cacheManager.getDefaultCacheConfiguration());
+         cacheManager.defineConfiguration("correct-cache-2", cacheManager.getDefaultCacheConfiguration());
+         cacheManager.defineConfiguration("correct-cache-3", cacheManager.getDefaultCacheConfiguration());
+         ConfigurationBuilder incorrectBuilder = new ConfigurationBuilder();
+         incorrectBuilder.customInterceptors().addInterceptor().position(InterceptorConfiguration.Position.FIRST)
+               .interceptor(new BaseCustomInterceptor() {
+                  @Override
+                  protected void start() {
+                     throw new IllegalStateException();
+                  }
+               });
+         cacheManager.defineConfiguration("incorrect", incorrectBuilder.build());
+         cacheManager.startCaches("correct-cache-1", "correct-cache-2", "correct-cache-3", "incorrect");
+      } finally {
+         if (cacheManager != null) {
+            killCacheManagers(cacheManager);
+         }
       }
    }
 
