@@ -3,6 +3,7 @@ package org.infinispan.lucene.impl;
 import org.apache.lucene.store.Directory;
 import org.apache.lucene.store.LockFactory;
 import org.infinispan.Cache;
+import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.lucene.directory.BuildContext;
 import org.infinispan.lucene.locking.BaseLockFactory;
 import org.infinispan.lucene.logging.Log;
@@ -38,9 +39,9 @@ public class DirectoryBuilderImpl implements BuildContext {
    private LockFactory lockFactory = null;
 
    public DirectoryBuilderImpl(Cache<?, ?> metadataCache, Cache<?, ?> chunksCache, Cache<?, ?> distLocksCache, String indexName) {
-      this.metadataCache = checkNoExpiryConfigured(checkNotNull(metadataCache, "metadataCache"), indexName);
-      this.chunksCache = checkNoExpiryConfigured(checkNotNull(chunksCache, "chunksCache"), indexName);
-      this.distLocksCache = checkNoExpiryConfigured(checkNotNull(distLocksCache, "distLocksCache"), indexName);
+      this.metadataCache = checkValidConfiguration(checkNotNull(metadataCache, "metadataCache"), indexName);
+      this.chunksCache = checkValidConfiguration(checkNotNull(chunksCache, "chunksCache"), indexName);
+      this.distLocksCache = checkValidConfiguration(checkNotNull(distLocksCache, "distLocksCache"), indexName);
       this.indexName =  checkNotNull(indexName, "indexName");
    }
 
@@ -104,12 +105,19 @@ public class DirectoryBuilderImpl implements BuildContext {
       return v;
    }
 
-   private static Cache<?, ?> checkNoExpiryConfigured(final Cache<?, ?> cache, String indexName) {
-      if ( cache != null && cache.getCacheConfiguration().expiration().maxIdle() != -1) {
+   private static Cache<?, ?> checkValidConfiguration(final Cache<?, ?> cache, String indexName) {
+      if (cache == null) {
+         return null;
+      }
+      Configuration configuration = cache.getCacheConfiguration();
+      if (configuration.expiration().maxIdle() != -1) {
          throw log.luceneStorageHavingIdleTimeSet( indexName, cache.getName() );
       }
-      if ( cache != null && cache.getCacheConfiguration().expiration().lifespan() != -1) {
+      if (configuration.expiration().lifespan() != -1) {
          throw log.luceneStorageHavingLifespanSet( indexName, cache.getName() );
+      }
+      if (configuration.storeAsBinary().enabled()) {
+         throw log.luceneStorageAsBinaryEnabled(indexName, cache.getName());
       }
       return cache;
    }

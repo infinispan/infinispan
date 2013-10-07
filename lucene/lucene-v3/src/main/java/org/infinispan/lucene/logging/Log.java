@@ -78,4 +78,6 @@ public interface Log extends org.infinispan.util.logging.Log {
    @Message(value = "'%s' must not be null", id = 15016)
    IllegalArgumentException requiredParameterWasPassedNull(String objectname);
 
+   @Message(value = "Lucene Directory for index '%s' can not use Cache '%s': store as binary enabled on the Cache configuration!", id = 15017)
+   IllegalArgumentException luceneStorageAsBinaryEnabled(String indexName, String cacheName);
 }
