@@ -4,9 +4,9 @@ import java.util.concurrent.Callable;
 import java.util.concurrent.CompletionService;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Executor;
+import java.util.concurrent.ExecutorCompletionService;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicLong;
 
 /**
@@ -15,73 +15,44 @@ import java.util.concurrent.atomic.AtomicLong;
  * @author Radim Vansa &lt;rvansa@redhat.com&gt;
  */
 public class ExecutorAllCompletionService implements CompletionService<Void> {
-   private Executor executor;
-   private boolean interrupted = false;
+   private ExecutorCompletionService executorService;
    private boolean exceptionThrown = false;
    private AtomicLong scheduled = new AtomicLong();
    private AtomicLong completed = new AtomicLong();
 
    public ExecutorAllCompletionService(Executor executor) {
-      this.executor = executor;
+      this.executorService = new ExecutorCompletionService(executor);
    }
 
    @Override
    public Future<Void> submit(final Callable<Void> task) {
-      final FutureImpl future = new FutureImpl();
       scheduled.incrementAndGet();
-      executor.execute(new Runnable() {
-         @Override
-         public void run() {
-            try {
-               task.call();
-            } catch (Exception e) {
-               exceptionThrown = true;
-               future.exception = e;
-            } finally {
-               synchronized (future) {
-                  future.completed = true;
-                  future.notifyAll();
-               }
-               long count = completed.incrementAndGet();
-               if (count == scheduled.get()) {
-                  synchronized (ExecutorAllCompletionService.this) {
-                     ExecutorAllCompletionService.this.notifyAll();
-                  }
-               }
-            }
-         }
-      });
+      Future<Void> future = executorService.submit(task);
+      pollUntilEmpty();
       return future;
    }
 
    @Override
    public Future<Void> submit(final Runnable task, Void result) {
-      if (result != null) throw new IllegalArgumentException();
-      final FutureImpl future = new FutureImpl();
       scheduled.incrementAndGet();
-      executor.execute(new Runnable() {
-         @Override
-         public void run() {
-            try {
-               task.run();
-            } catch (Throwable e) {
-               exceptionThrown = true;
-               future.exception = e;
-            } finally {
-               synchronized (future) {
-                  future.completed = true;
-                  future.notifyAll();
-               }
-               long count = completed.incrementAndGet();
-               if (count == scheduled.get()) {
-                  synchronized (ExecutorAllCompletionService.this) {
-                     ExecutorAllCompletionService.this.notifyAll();
-                  }
-               }
-            }
-         }
-      });
+      Future<Void> future = executorService.submit(task, result);
+      pollUntilEmpty();
       return future;
+   }
+
+   private void pollUntilEmpty() {
+      Future<Void> completedFuture;
+      while ((completedFuture = executorService.poll()) != null) {
+         try {
+            completedFuture.get();
+         } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+         } catch (ExecutionException e) {
+            exceptionThrown = true;
+         } finally {
+            completed.incrementAndGet();
+         }
+      }
    }
 
    /**
@@ -93,13 +64,14 @@ public class ExecutorAllCompletionService implements CompletionService<Void> {
 
    public void waitUntilAllCompleted() {
       while (completed.get() < scheduled.get()) {
-         synchronized (this) {
-            try {
-               wait(100);
-            } catch (InterruptedException e) {
-               Thread.currentThread().interrupt();
-               return;
-            }
+         // Here is a race - if we poll the last scheduled entry entry elsewhere, we may wait
+         // another 100 ms until we realize that everything has already completed.
+         // Nevertheless, that's not so bad.
+         try {
+            poll(100, TimeUnit.MILLISECONDS);
+         } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            return;
          }
       }
    }
@@ -110,58 +82,26 @@ public class ExecutorAllCompletionService implements CompletionService<Void> {
 
    @Override
    public Future<Void> take() throws InterruptedException {
-      throw new UnsupportedOperationException();
+      Future<Void> future = executorService.take();
+      completed.incrementAndGet();
+      return future;
    }
 
    @Override
    public Future<Void> poll() {
-      throw new UnsupportedOperationException();
+      Future<Void> future = executorService.poll();
+      if (future != null) {
+         completed.incrementAndGet();
+      }
+      return future;
    }
 
    @Override
    public Future<Void> poll(long timeout, TimeUnit unit) throws InterruptedException {
-      throw new UnsupportedOperationException();
-   }
-
-   private class FutureImpl implements Future<Void> {
-      volatile boolean completed = false;
-      Throwable exception = null;
-
-      @Override
-      public boolean cancel(boolean mayInterruptIfRunning) {
-         throw new UnsupportedOperationException();
+      Future<Void> future = executorService.poll(timeout, unit);
+      if (future != null) {
+         completed.incrementAndGet();
       }
-
-      @Override
-      public boolean isCancelled() {
-         return false;
-      }
-
-      @Override
-      public boolean isDone() {
-         return completed;
-      }
-
-      @Override
-      public Void get() throws InterruptedException, ExecutionException {
-         synchronized (this) {
-            while (!completed) wait();
-            if (exception != null) {
-               throw new ExecutionException(exception);
-            }
-         }
-         return null;
-      }
-
-      @Override
-      public Void get(long timeout, TimeUnit unit) throws InterruptedException, ExecutionException, TimeoutException {
-         synchronized (this) {
-            while (!completed) wait(unit.toMillis(timeout));
-            if (exception != null) {
-               throw new ExecutionException(exception);
-            }
-         }
-         return null;
-      }
+      return future;
    }
 }
