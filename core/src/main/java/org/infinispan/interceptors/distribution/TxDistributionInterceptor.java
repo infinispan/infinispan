@@ -66,8 +66,9 @@ public class TxDistributionInterceptor extends BaseDistributionInterceptor {
       try {
          return handleTxWriteCommand(ctx, command, new SingleKeyRecipientGenerator(command.getKey()), false);
       } finally {
-         boolean ignorePreviousValues = ignorePreviousValueOnBackup(command, ctx);
-         command.setIgnorePreviousValue(ignorePreviousValues);
+         if (ignorePreviousValueOnBackup(command, ctx)) {
+            command.setIgnorePreviousValue(true);
+         }
       }
    }
 
@@ -76,8 +77,9 @@ public class TxDistributionInterceptor extends BaseDistributionInterceptor {
       try {
          return handleTxWriteCommand(ctx, command, new SingleKeyRecipientGenerator(command.getKey()), false);
       } finally {
-         boolean ignorePreviousValues = ignorePreviousValueOnBackup(command, ctx);
-         command.setIgnorePreviousValue(ignorePreviousValues);
+         if (ignorePreviousValueOnBackup(command, ctx)) {
+            command.setIgnorePreviousValue(true);
+         }
       }
    }
 
