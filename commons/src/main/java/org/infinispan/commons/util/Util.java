@@ -8,7 +8,10 @@ import org.infinispan.commons.logging.Log;
 import org.infinispan.commons.logging.LogFactory;
 
 import javax.naming.Context;
+import java.io.ByteArrayOutputStream;
 import java.io.Closeable;
+import java.io.IOException;
+import java.io.InputStream;
 import java.io.ObjectOutput;
 import java.io.OutputStream;
 import java.lang.management.LockInfo;
@@ -298,6 +301,27 @@ public final class Util {
       toPrint = toPrint / 60;
 
       return nf.format(toPrint) + " hours";
+   }
+
+   /**
+    * Reads the given InputStream fully, closes the stream and returns the result as a byte array.
+    *
+    * @param is the stream to read
+    * @return the read bytes
+    * @throws java.io.IOException in case of stream read errors
+    */
+   public static byte[] readStream(InputStream is) throws IOException {
+      try {
+         ByteArrayOutputStream os = new ByteArrayOutputStream();
+         byte[] buf = new byte[1024];
+         int len;
+         while ((len = is.read(buf)) != -1) {
+            os.write(buf, 0, len);
+         }
+         return os.toByteArray();
+      } finally {
+         is.close();
+      }
    }
 
    public static void close(Closeable cl) {

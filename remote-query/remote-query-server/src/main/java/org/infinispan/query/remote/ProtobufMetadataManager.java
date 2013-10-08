@@ -1,6 +1,7 @@
 package org.infinispan.query.remote;
 
 import com.google.protobuf.Descriptors;
+import org.infinispan.commons.util.Util;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.annotations.Stop;
 import org.infinispan.factories.scopes.Scope;
@@ -22,7 +23,6 @@ import org.infinispan.util.logging.LogFactory;
 
 import javax.management.ObjectName;
 import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.UUID;
@@ -110,7 +110,7 @@ public class ProtobufMetadataManager {
    }
 
    public void registerProtofile(InputStream descriptorFile) throws IOException, Descriptors.DescriptorValidationException {
-      registerProtofile(readStream(descriptorFile));
+      registerProtofile(Util.readStream(descriptorFile));
    }
 
    public void registerProtofile(String classpathResource) throws IOException, Descriptors.DescriptorValidationException {
@@ -119,24 +119,6 @@ public class ProtobufMetadataManager {
          throw new IllegalArgumentException("Missing resource: " + classpathResource);
       }
       registerProtofile(is);
-   }
-
-   private byte[] readStream(InputStream is) throws IOException {
-      try {
-         ByteArrayOutputStream os = new ByteArrayOutputStream();
-         byte[] buf = new byte[1024];
-         int len;
-         while ((len = is.read(buf)) != -1) {
-            os.write(buf, 0, len);
-         }
-         return os.toByteArray();
-      } finally {
-         is.close();
-      }
-   }
-
-   SerializationContext getSerializationContext() {
-      return serCtx;
    }
 
    public static SerializationContext getSerializationContext(EmbeddedCacheManager cacheManager) {
