@@ -1,10 +1,8 @@
 package org.infinispan.query.remote;
 
 import com.google.protobuf.Descriptors;
-import org.infinispan.Cache;
-import org.infinispan.configuration.cache.CacheMode;
-import org.infinispan.configuration.cache.Configuration;
-import org.infinispan.configuration.cache.ConfigurationBuilder;
+import org.infinispan.factories.annotations.Inject;
+import org.infinispan.factories.annotations.Stop;
 import org.infinispan.factories.scopes.Scope;
 import org.infinispan.factories.scopes.Scopes;
 import org.infinispan.jmx.annotations.MBean;
@@ -16,9 +14,11 @@ import org.infinispan.notifications.cachelistener.annotation.CacheEntryModified;
 import org.infinispan.notifications.cachelistener.event.CacheEntryCreatedEvent;
 import org.infinispan.notifications.cachelistener.event.CacheEntryModifiedEvent;
 import org.infinispan.protostream.BaseMarshaller;
-import org.infinispan.protostream.ProtobufUtil;
 import org.infinispan.protostream.SerializationContext;
-import org.infinispan.transaction.TransactionMode;
+import org.infinispan.query.remote.logging.Log;
+import org.infinispan.registry.ClusterRegistry;
+import org.infinispan.registry.ScopedKey;
+import org.infinispan.util.logging.LogFactory;
 
 import javax.management.ObjectName;
 import java.io.ByteArrayInputStream;
@@ -27,8 +27,10 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.util.UUID;
 
-//todo [anistor] use ClusterRegistry instead of reinventing it
 /**
+ * A clustered repository of protobuf descriptors. All protobuf types and their marshallers must be registered with this
+ * repository before being used.
+ *
  * @author anistor@redhat.com
  * @since 6.0
  */
@@ -37,20 +39,55 @@ import java.util.UUID;
        description = "Component that acts as a manager and container for Protocol Buffers metadata descriptors in the scope of a CacheManger.")
 public class ProtobufMetadataManager {
 
+   private static final Log log = LogFactory.getLog(ProtobufMetadataManager.class, Log.class);
+
    public static final String OBJECT_NAME = "ProtobufMetadataManager";
 
-   private static final String METADATA_CACHE_NAME = "__ProtobufMetadataManager__";
+   private static final String REGISTRY_SCOPE = ProtobufMetadataManager.class.getName();
 
    private ObjectName objectName;
 
-   private final EmbeddedCacheManager cacheManager;
+   private ClusterRegistry<String, String, byte[]> clusterRegistry;
 
-   private Cache<String, byte[]> metadataCache;
+   private volatile ProtobufMetadataRegistryListener registryListener;
 
-   private final SerializationContext serCtx = ProtobufUtil.newSerializationContext();
+   private final SerializationContext serCtx;
 
-   public ProtobufMetadataManager(EmbeddedCacheManager cacheManager) {
-      this.cacheManager = cacheManager;
+   public ProtobufMetadataManager(SerializationContext serCtx) {
+      this.serCtx = serCtx;
+   }
+
+   private void ensureInit() {
+      if (registryListener == null) {
+         synchronized (this) {
+            if (registryListener == null) {
+               registryListener = new ProtobufMetadataRegistryListener();
+               clusterRegistry.addListener(REGISTRY_SCOPE, registryListener);
+
+               for (String uuid : clusterRegistry.keys(REGISTRY_SCOPE)) {
+                  byte[] descriptorFile = clusterRegistry.get(REGISTRY_SCOPE, uuid);
+                  try {
+                     serCtx.registerProtofile(new ByteArrayInputStream(descriptorFile));
+                  } catch (Exception e) {
+                     log.error(e);
+                  }
+               }
+            }
+         }
+      }
+   }
+
+   @Inject
+   protected void injectDependencies(ClusterRegistry<String, String, byte[]> clusterRegistry) {
+      this.clusterRegistry = clusterRegistry;
+   }
+
+   @Stop
+   protected void stop() {
+      if (registryListener != null) {
+         clusterRegistry.removeListener(registryListener);
+         registryListener = null;
+      }
    }
 
    public ObjectName getObjectName() {
@@ -61,42 +98,15 @@ public class ProtobufMetadataManager {
       this.objectName = objectName;
    }
 
-   private Cache<String, byte[]> getMetadataCache() {
-      if (metadataCache == null) {
-         synchronized (this) {
-            if (metadataCache == null) {
-               cacheManager.defineConfiguration(METADATA_CACHE_NAME, getMetadataCacheConfig());
-               metadataCache = cacheManager.getCache(METADATA_CACHE_NAME);
-               metadataCache.addListener(new MetadataCacheListener());
-            }
-         }
-      }
-      return metadataCache;
-   }
-
-   private Configuration getMetadataCacheConfig() {
-      ConfigurationBuilder configurationBuilder = new ConfigurationBuilder();
-
-      //allow the registry to work for local caches as well as isClustered caches
-      boolean isClustered = cacheManager.getGlobalComponentRegistry().getGlobalConfiguration().isClustered();
-      configurationBuilder.clustering().cacheMode(isClustered ? CacheMode.REPL_SYNC : CacheMode.LOCAL);
-
-      //use a transactional cache for high consistency as writes are expected to be rare in this cache
-      configurationBuilder.transaction().transactionMode(TransactionMode.TRANSACTIONAL);
-
-      //fetch the state (redundant as state transfer this is enabled by default, keep it here to document the intention)
-      configurationBuilder.clustering().stateTransfer().fetchInMemoryState(true);
-
-      return configurationBuilder.build();
-   }
-
    public <T> void registerMarshaller(Class<? extends T> clazz, BaseMarshaller<T> marshaller) {
+      ensureInit();
       serCtx.registerMarshaller(clazz, marshaller);
    }
 
    @ManagedOperation(description = "Registers a Protobuf definition file", displayName = "Register Protofile")
-   public void registerProtofile(byte[] descriptorFile) throws IOException, Descriptors.DescriptorValidationException {
-      getMetadataCache().put(UUID.randomUUID().toString(), descriptorFile);
+   public void registerProtofile(byte[] descriptorFile) {
+      ensureInit();
+      clusterRegistry.put(REGISTRY_SCOPE, UUID.randomUUID().toString(), descriptorFile);
    }
 
    public void registerProtofile(InputStream descriptorFile) throws IOException, Descriptors.DescriptorValidationException {
@@ -137,28 +147,32 @@ public class ProtobufMetadataManager {
       if (metadataManager == null) {
          throw new IllegalStateException("ProtobufMetadataManager not initialised yet!");
       }
-      return metadataManager.getSerializationContext();
+      metadataManager.ensureInit();
+      return metadataManager.serCtx;
    }
 
    @Listener
-   public class MetadataCacheListener {
+   public class ProtobufMetadataRegistryListener {
+
+      ProtobufMetadataRegistryListener() {
+      }
 
       @CacheEntryCreated
-      public void created(CacheEntryCreatedEvent<String, byte[]> e) throws IOException, Descriptors.DescriptorValidationException {
+      public void created(CacheEntryCreatedEvent<ScopedKey<String, String>, byte[]> e) throws IOException, Descriptors.DescriptorValidationException {
          if (!e.isPre()) {
             registerProtofile(e.getValue());
          }
       }
 
       @CacheEntryModified
-      public void modified(CacheEntryModifiedEvent<String, byte[]> e) throws IOException, Descriptors.DescriptorValidationException {
+      public void modified(CacheEntryModifiedEvent<ScopedKey<String, String>, byte[]> e) throws IOException, Descriptors.DescriptorValidationException {
          if (!e.isPre()) {
             registerProtofile(e.getValue());
          }
       }
 
       private void registerProtofile(byte[] descriptorFile) throws IOException, Descriptors.DescriptorValidationException {
-         getSerializationContext().registerProtofile(new ByteArrayInputStream(descriptorFile));
+         serCtx.registerProtofile(new ByteArrayInputStream(descriptorFile));
       }
    }
 }
