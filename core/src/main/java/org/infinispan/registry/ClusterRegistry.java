@@ -2,6 +2,7 @@ package org.infinispan.registry;
 
 import org.infinispan.factories.scopes.Scope;
 import org.infinispan.factories.scopes.Scopes;
+import org.infinispan.notifications.KeyFilter;
 
 import java.util.Set;
 
@@ -40,9 +41,34 @@ public interface ClusterRegistry<S, K, V> {
 
    V get(S scope, K key);
 
+   boolean containsKey(S scope, K key);
+
    Set<K> keys(S scope);
 
    void clear(S scope);
 
    void clearAll();
+
+   /**
+    * Adds a listener that is notified of changes to keys in a given scope.
+    *
+    * @param scope the scope to watch
+    * @param listener a properly annotated listener instance
+    */
+   void addListener(S scope, Object listener);
+
+   /**
+    * Adds a listener that is notified of changes to keys in a given scope and which match a given {@code KeyFilter}.
+    *
+    * @param scope the scope to watch
+    * @param listener a properly annotated listener instance
+    */
+   void addListener(S scope, KeyFilter keyFilter, Object listener);
+
+   /**
+    * Detaches a listener instance.
+    *
+    * @param listener the listener to detach
+    */
+   void removeListener(Object listener);
 }
