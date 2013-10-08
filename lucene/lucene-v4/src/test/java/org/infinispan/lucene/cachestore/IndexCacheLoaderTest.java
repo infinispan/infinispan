@@ -86,6 +86,7 @@ public class IndexCacheLoaderTest {
       builder
             .persistence()
             .addStore(LuceneStoreConfigurationBuilder.class)
+            .preload(true)
             .autoChunkSize(1024)
             .location(rootDir.getAbsolutePath());
       return TestCacheManagerFactory.createCacheManager(builder);

@@ -43,6 +43,7 @@ public class DirectoryBuilderImpl implements BuildContext {
       this.chunksCache = checkValidConfiguration(checkNotNull(chunksCache, "chunksCache"), indexName);
       this.distLocksCache = checkValidConfiguration(checkNotNull(distLocksCache, "distLocksCache"), indexName);
       this.indexName =  checkNotNull(indexName, "indexName");
+      validateMetadataCache(metadataCache, indexName);
    }
 
    @Override
@@ -126,6 +127,16 @@ public class DirectoryBuilderImpl implements BuildContext {
       checkNotNull(cache, "cache");
       checkNotNull(indexName, "indexName");
       return new BaseLockFactory(cache, indexName);
+   }
+
+   private static void validateMetadataCache(Cache<?, ?> cache, String indexName) {
+      Configuration configuration = cache.getCacheConfiguration();
+      if (configuration.eviction().strategy().isEnabled()) {
+         throw log.evictionNotAllowedInMetadataCache(indexName, cache.getName());
+      }
+      if (configuration.persistence().usingStores() && !configuration.persistence().preload()) {
+         throw log.preloadNeededIfPersistenceIsEnabledForMetadataCache(indexName, cache.getName());
+      }
    }
 
 }

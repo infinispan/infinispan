@@ -64,7 +64,7 @@ public class DatabaseStoredIndexTest extends SingleCacheManagerTest {
       ConfigurationBuilder cb = TestCacheManagerFactory.getDefaultCacheConfiguration(false);
       cb.persistence()
             .addStore(JdbcStringBasedStoreConfigurationBuilder.class)
-            .preload(false)
+            .preload(true)
             .key2StringMapper(LuceneKey2StringMapper.class)
             .table()
                .idColumnName("ID_COLUMN")
@@ -104,7 +104,6 @@ public class DatabaseStoredIndexTest extends SingleCacheManagerTest {
    @Test(dependsOnMethods="testIndexUsage")
    public void indexWasStored() throws IOException {
       cache = cacheManager.getCache();
-      AssertJUnit.assertEquals(0, cache.getAdvancedCache().getDataContainer().size());
       boolean failed = false;
       for (Object key : cacheCopy.keySet()) {
          if (key instanceof FileReadLockKey) {
