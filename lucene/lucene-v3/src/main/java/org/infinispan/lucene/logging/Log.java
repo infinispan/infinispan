@@ -80,4 +80,10 @@ public interface Log extends org.infinispan.util.logging.Log {
 
    @Message(value = "Lucene Directory for index '%s' can not use Cache '%s': store as binary enabled on the Cache configuration!", id = 15017)
    IllegalArgumentException luceneStorageAsBinaryEnabled(String indexName, String cacheName);
+
+   @Message(value = "Lucene Directory for index '%s' can not use Metadata Cache '%s': eviction enabled on the Cache configuration!", id = 15018)
+   IllegalArgumentException evictionNotAllowedInMetadataCache(String indexName, String cacheName);
+
+   @Message(value = "Lucene Directory for index '%s' can not use Metadata Cache '%s': persistence enabled without preload on the Cache configuration!", id = 15019)
+   IllegalArgumentException preloadNeededIfPersistenceIsEnabledForMetadataCache(String indexName, String cacheName);
 }

@@ -50,8 +50,6 @@ public class NotStoreAsBinaryValidationTest extends AbstractInfinispanTest {
    private void failIfStoreAsBinaryEnabled(ConfigurationBuilder configuration) {
       EmbeddedCacheManager cacheManager = null;
       try {
-         ConfigurationBuilder cfg = CacheTestSupport.createLocalCacheConfiguration();
-         cfg.storeAsBinary().enable();
          cacheManager = TestCacheManagerFactory.createCacheManager(configuration);
          Cache cache = cacheManager.getCache(CACHE_NAME);
 
