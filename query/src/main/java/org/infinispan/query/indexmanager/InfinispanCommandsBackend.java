@@ -5,7 +5,6 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Properties;
-import java.util.Set;
 import java.util.concurrent.locks.Lock;
 
 import org.hibernate.search.backend.IndexingMonitor;
@@ -78,19 +77,8 @@ public class InfinispanCommandsBackend implements BackendQueueProcessor {
       //Use Search's custom Avro based serializer as it includes support for back/future compatibility
       byte[] serializedModel = indexManager.getSerializer().toSerializedModel(workList);
       command.setSerializedWorkList(serializedModel);
-      command.setKnownIndexedTypes(extractTypesUnique(workList));
       command.setIndexName(this.indexName);
       sendCommand(command, workList);
-   }
-
-   private Set<Class> extractTypesUnique(List<LuceneWork> workList) {
-      for (LuceneWork work : workList) {
-         Class<?> entityClass = work.getEntityClass();
-         if (entityClass != null) {
-            knownTypes.add(work.getEntityClass());
-         }
-      }
-      return knownTypes;
    }
 
    private void sendCommand(ReplicableCommand command, List<LuceneWork> workList) {

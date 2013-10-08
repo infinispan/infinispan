@@ -87,8 +87,7 @@ public class QueryFacadeImpl implements QueryFacade {
             public Class<?> getClassFromName(String entityName) {
                MessageMarshaller messageMarshaller = (MessageMarshaller) serCtx.getMarshaller(entityName);
                Class clazz = messageMarshaller.getJavaClass();
-               Boolean isIndexed = queryInterceptor.getKnownClasses().get(clazz);
-               return isIndexed != null && isIndexed ? clazz : null;
+               return queryInterceptor.isIndexed(clazz) ? clazz : null;
             }
          };
 
