@@ -10,6 +10,7 @@ import org.infinispan.commands.write.ReplaceCommand;
 import org.infinispan.commons.util.Immutables;
 import org.infinispan.compat.TypeConverter;
 import org.infinispan.container.InternalEntryFactory;
+import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.container.versioning.VersionGenerator;
 import org.infinispan.context.Flag;
@@ -74,7 +75,7 @@ public abstract class BaseTypeConverterInterceptor extends CommandInterceptor {
       Object ret = invokeNextInterceptor(ctx, command);
       if (ret != null) {
          if (command.isReturnEntry()) {
-            InternalCacheEntry entry = (InternalCacheEntry) ret;
+            CacheEntry entry = (CacheEntry) ret;
             Object returnValue = entry.getValue();
             if (command.getRemotelyFetchedValue() == null) {
                returnValue = converter.unboxValue(entry.getValue());
@@ -150,11 +151,11 @@ public abstract class BaseTypeConverterInterceptor extends CommandInterceptor {
 
    @Override
    public Object visitEntrySetCommand(InvocationContext ctx, EntrySetCommand command) throws Throwable {
-      Set<InternalCacheEntry> set = (Set<InternalCacheEntry>) super.visitEntrySetCommand(ctx, command);
+      Set<CacheEntry> set = (Set<CacheEntry>) super.visitEntrySetCommand(ctx, command);
       TypeConverter<Object, Object, Object, Object> converter =
             determineTypeConverter(command.getFlags());
       Set<InternalCacheEntry> backingSet = new HashSet<InternalCacheEntry>(set.size());
-      for (InternalCacheEntry entry : set) {
+      for (CacheEntry entry : set) {
          Object key = converter.unboxKey(entry.getKey());
          Object value = converter.unboxValue(entry.getValue());
          InternalCacheEntry newEntry = entryFactory.create(
