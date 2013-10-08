@@ -2,18 +2,21 @@ package org.infinispan.query.indexmanager;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Set;
 
 import org.hibernate.search.SearchException;
 import org.hibernate.search.backend.LuceneWork;
 import org.hibernate.search.engine.spi.SearchFactoryImplementor;
 import org.hibernate.search.indexes.spi.IndexManager;
+import org.infinispan.Cache;
 import org.infinispan.commands.ReplicableCommand;
 import org.infinispan.commands.remote.BaseRpcCommand;
 import org.infinispan.context.InvocationContext;
+import org.infinispan.query.Search;
+import org.infinispan.query.SearchManager;
 import org.infinispan.query.backend.KeyTransformationHandler;
 import org.infinispan.query.backend.QueryInterceptor;
 import org.infinispan.query.impl.CommandInitializer;
+import org.infinispan.query.impl.ComponentRegistryUtils;
 import org.infinispan.query.impl.CustomQueryCommand;
 import org.infinispan.query.impl.ModuleCommandIds;
 
@@ -35,23 +38,15 @@ public class IndexUpdateCommand extends BaseRpcCommand implements ReplicableComm
 
    private QueryInterceptor queryInterceptor;
 
-   /**
-    * Currently we need to ship this set as not all types
-    * might be known to the master node.
-    * TODO ISPN-2143
-    */
-   private Set<Class> knownIndexedTypes;
-
    public IndexUpdateCommand(String cacheName) {
       super(cacheName);
    }
 
    @Override
    public Object perform(InvocationContext ctx) throws Throwable {
-      queryInterceptor.enableClasses(knownIndexedTypes);
       IndexManager indexManager = searchFactory.getIndexManagerHolder().getIndexManager(indexName);
       if (indexManager == null) {
-         throw new SearchException("Unknown index referenced");
+         throw new SearchException("Unknown index referenced : " + indexName);
       }
       List<LuceneWork> luceneWorks = indexManager.getSerializer().toLuceneWorks(this.serializedModel);
       List<LuceneWork> workToApply = transformKeysToStrings(luceneWorks);//idInString field is not serialized, we need to extract it from the key object
@@ -78,14 +73,13 @@ public class IndexUpdateCommand extends BaseRpcCommand implements ReplicableComm
 
    @Override
    public Object[] getParameters() {
-      return new Object[]{ indexName, serializedModel, knownIndexedTypes };
+      return new Object[]{ indexName, serializedModel };
    }
 
    @Override
    public void setParameters(int commandId, Object[] parameters) {
       this.indexName = (String) parameters[0];
       this.serializedModel = (byte[]) parameters[1];
-      this.knownIndexedTypes = (Set<Class>) parameters[2];
    }
 
    @Override
@@ -103,8 +97,10 @@ public class IndexUpdateCommand extends BaseRpcCommand implements ReplicableComm
     */
    @Override
    public void fetchExecutionContext(CommandInitializer ci) {
-      this.searchFactory = ci.getSearchFactory();
-      this.queryInterceptor = ci.getQueryInterceptor();
+      Cache cache = ci.getCacheManager().getCache(cacheName);
+      SearchManager searchManager = Search.getSearchManager(cache);
+      searchFactory = (SearchFactoryImplementor) searchManager.getSearchFactory();
+      queryInterceptor = ComponentRegistryUtils.getQueryInterceptor(cache);
    }
 
    public void setSerializedWorkList(byte[] serializedModel) {
@@ -114,9 +110,4 @@ public class IndexUpdateCommand extends BaseRpcCommand implements ReplicableComm
    public void setIndexName(String indexName) {
       this.indexName = indexName;
    }
-
-   public void setKnownIndexedTypes(Set<Class> knownIndexedTypes) {
-      this.knownIndexedTypes = knownIndexedTypes;
-   }
-
 }
