@@ -66,6 +66,16 @@ public class LuceneStoreConfigurationBuilder extends
    public Builder<?> read(LuceneStoreConfiguration template) {
       this.autoChunkSize = template.autoChunkSize();
       this.location = template.location();
+
+      // AbstractStore-specific configuration
+      this.fetchPersistentState = template.fetchPersistentState();
+      this.ignoreModifications = template.ignoreModifications();
+      this.properties = template.properties();
+      this.purgeOnStartup = template.purgeOnStartup();
+      this.async.read(template.async());
+      this.singletonStore.read(template.singletonStore());
+      this.preload = template.preload();
+
       return this;
    }
 
