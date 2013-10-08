@@ -6,6 +6,7 @@ import org.infinispan.client.hotrod.Search;
 import org.infinispan.client.hotrod.TestHelper;
 import org.infinispan.client.hotrod.marshall.ProtoStreamMarshaller;
 import org.infinispan.commons.equivalence.ByteArrayEquivalence;
+import org.infinispan.commons.util.Util;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.global.GlobalConfigurationBuilder;
 import org.infinispan.jmx.PerThreadMBeanServerLookup;
@@ -25,7 +26,6 @@ import org.testng.annotations.Test;
 
 import javax.management.MBeanServer;
 import javax.management.ObjectName;
-import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.Collections;
@@ -98,17 +98,7 @@ public class HotRodQueryTest extends SingleCacheManagerTest {
 
    private byte[] readClasspathResource(String classPathResource) throws IOException {
       InputStream is = getClass().getResourceAsStream(classPathResource);
-      try {
-         ByteArrayOutputStream os = new ByteArrayOutputStream();
-         byte[] buf = new byte[1024];
-         int len;
-         while ((len = is.read(buf)) != -1) {
-            os.write(buf, 0, len);
-         }
-         return os.toByteArray();
-      } finally {
-         is.close();
-      }
+      return Util.readStream(is);
    }
 
    protected String getLuceneDirectoryProvider() {
