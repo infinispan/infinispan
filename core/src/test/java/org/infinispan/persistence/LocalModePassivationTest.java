@@ -53,6 +53,10 @@ public class LocalModePassivationTest extends SingleCacheManagerTest {
       this.passivationEnabled = passivationEnabled;
    }
 
+   protected void configureConfiguration(ConfigurationBuilder cb) {
+
+   }
+
    @Override
    protected EmbeddedCacheManager createCacheManager() throws Exception {
       cacheStoreDir = new File(TestingUtil.tmpDirectory(this));
@@ -71,6 +75,8 @@ public class LocalModePassivationTest extends SingleCacheManagerTest {
             .ignoreModifications(false)
             .preload(false)
             .purgeOnStartup(false);
+
+      configureConfiguration(builder);
 
       return TestCacheManagerFactory.createCacheManager(builder);
    }
@@ -230,6 +236,37 @@ public class LocalModePassivationTest extends SingleCacheManagerTest {
       Collection<Object> dcValues = dc.values();
       for (Object dcValue : dcValues) {
          assertTrue("Value: " + dcValue + " was not found!", values.contains(dcValue));
+      }
+   }
+
+   public void testStoreAndLoadWithGetEntry() {
+      final int numKeys = 300;
+      for (int i = 0; i < numKeys; i++) {
+         cache().put(i, i);
+      }
+
+      int keysInDataContainer = cache().getAdvancedCache().getDataContainer().keySet().size();
+
+      assertTrue(keysInDataContainer != numKeys); // some keys got evicted
+
+      AdvancedLoadWriteStore store = (AdvancedLoadWriteStore) TestingUtil.getCacheLoader(cache());
+      int keysInCacheStore = PersistenceUtil.count(store, null);
+
+      if (passivationEnabled) {
+         assertEquals(numKeys, keysInDataContainer + keysInCacheStore);
+      } else {
+         assertEquals(numKeys, keysInCacheStore);
+      }
+
+      // check if keys survive restart
+      cache().stop();
+      cache().start();
+
+      store = (AdvancedLoadWriteStore) TestingUtil.getCacheLoader(cache());
+      assertEquals(numKeys, PersistenceUtil.count(store, null));
+
+      for (int i = 0; i < numKeys; i++) {
+         assertEquals(i, cache.getAdvancedCache().getCacheEntry(i).getValue());
       }
    }
 }
