@@ -6,6 +6,7 @@ import org.infinispan.commands.write.InvalidateCommand;
 import org.infinispan.commands.write.PutKeyValueCommand;
 import org.infinispan.commons.CacheException;
 import org.infinispan.commons.util.InfinispanCollections;
+import org.infinispan.commons.util.concurrent.jdk8backported.EquivalentConcurrentHashMapV8;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.container.DataContainer;
 import org.infinispan.container.entries.InternalCacheEntry;
@@ -55,6 +56,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.BlockingDeque;
+import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.LinkedBlockingDeque;
 import java.util.concurrent.TimeUnit;
@@ -75,6 +77,7 @@ public class StateConsumerImpl implements StateConsumer {
 
    private static final Log log = LogFactory.getLog(StateConsumerImpl.class);
    private static final boolean trace = log.isTraceEnabled();
+   private static final Object UPDATED_KEY_MARKER = new Object();
 
    private ExecutorService executorService;
    private StateTransferManager stateTransferManager;
@@ -105,7 +108,7 @@ public class StateConsumerImpl implements StateConsumer {
     * state transfer is not allowed to update anything. This can be null if there is not state transfer in progress at
     * the moment of there is one but a ClearCommand was encountered.
     */
-   private volatile Set<Object> updatedKeys;
+   private volatile EquivalentConcurrentHashMapV8<Object, Object> updatedKeys;
 
    /**
     * Indicates if there is a rebalance in progress. It is set to true when onTopologyUpdate with isRebalance==true is called.
@@ -166,11 +169,11 @@ public class StateConsumerImpl implements StateConsumer {
    @Override
    public void addUpdatedKey(Object key) {
       // grab a copy of the reference to prevent issues if another thread calls stopApplyingState() between null check and actual usage
-      final Set<Object> localUpdatedKeys = updatedKeys;
+      final EquivalentConcurrentHashMapV8<Object, Object> localUpdatedKeys = updatedKeys;
       if (localUpdatedKeys != null) {
          if (cacheTopology.getWriteConsistentHash().isKeyLocalToNode(rpcManager.getAddress(), key)) {
             if (trace) log.tracef("Key %s modified by a regular tx, state transfer will ignore it", key);
-            localUpdatedKeys.add(key);
+            localUpdatedKeys.put(key, UPDATED_KEY_MARKER);
          }
       }
    }
@@ -184,8 +187,25 @@ public class StateConsumerImpl implements StateConsumer {
    @Override
    public boolean isKeyUpdated(Object key) {
       // grab a copy of the reference to prevent issues if another thread calls stopApplyingState() between null check and actual usage
-      final Set<Object> localUpdatedKeys = updatedKeys;
+      final EquivalentConcurrentHashMapV8<Object, Object> localUpdatedKeys = updatedKeys;
       return localUpdatedKeys == null || localUpdatedKeys.contains(key);
+   }
+
+   @Override
+   public boolean executeIfKeyIsNotUpdated(Object key, final Runnable callback) {
+      // grab a copy of the reference to prevent issues if another thread calls stopApplyingState() between null check and actual usage
+      final EquivalentConcurrentHashMapV8<Object, Object> localUpdatedKeys = updatedKeys;
+      if (localUpdatedKeys != null) {
+         Object value = localUpdatedKeys.computeIfAbsent(key, new EquivalentConcurrentHashMapV8.Fun<Object, Object>() {
+            @Override
+            public Object apply(Object o) {
+               callback.run();
+               return null;
+            }
+         });
+         return value == null;
+      }
+      return false;
    }
 
    @Inject
@@ -320,7 +340,9 @@ public class StateConsumerImpl implements StateConsumer {
       this.cacheTopology = cacheTopology;
       if (isRebalance) {
          if (trace) log.tracef("Start keeping track of keys for rebalance");
-         updatedKeys = new ConcurrentHashSet<Object>();
+         updatedKeys = new EquivalentConcurrentHashMapV8<Object, Object>(
+               configuration.dataContainer().keyEquivalence(),
+               configuration.dataContainer().valueEquivalence());
       }
       stateTransferLock.releaseExclusiveTopologyLock();
       stateTransferLock.notifyTopologyInstalled(cacheTopology.getTopologyId());

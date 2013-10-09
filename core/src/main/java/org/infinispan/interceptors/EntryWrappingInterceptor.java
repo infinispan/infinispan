@@ -494,8 +494,8 @@ public class EntryWrappingInterceptor extends CommandInterceptor {
       }
    }
 
-   private boolean commitEntryIfNeeded(InvocationContext ctx, FlagAffectedCommand command,
-         Object key, CacheEntry entry, boolean isPutForStateTransfer, Metadata metadata) {
+   private boolean commitEntryIfNeeded(final InvocationContext ctx, final FlagAffectedCommand command,
+         Object key, final CacheEntry entry, boolean isPutForStateTransfer, final Metadata metadata) {
       if (entry == null) {
          if (key != null && !isPutForStateTransfer && stateConsumer != null) {
             // this key is not yet stored locally
@@ -504,20 +504,29 @@ public class EntryWrappingInterceptor extends CommandInterceptor {
          return false;
       }
 
-      if (isPutForStateTransfer && stateConsumer.isKeyUpdated(key)) {
-         // This is a state transfer put command on a key that was already modified by other user commands. We need to back off.
-         log.tracef("State transfer will not write key/value %s/%s because it was already updated by somebody else", key, entry.getValue());
-         entry.rollback();
-         return false;
+      if (isPutForStateTransfer && (entry.isChanged() || entry.isLoaded())) {
+         boolean updated = stateConsumer.executeIfKeyIsNotUpdated(key, new Runnable() {
+            @Override
+            public void run() {
+               log.tracef("About to commit entry %s", entry);
+               commitContextEntry(entry, ctx, command, metadata);
+            }
+         });
+         if (!updated) {
+            // This is a state transfer put command on a key that was already modified by other user commands. We need to back off.
+            log.tracef("State transfer will not write key/value %s/%s because it was already updated by somebody else", key, entry.getValue());
+            entry.rollback();
+         }
+         return updated;
       }
 
       if (entry.isChanged() || entry.isLoaded()) {
-         log.tracef("About to commit entry %s", entry);
-         commitContextEntry(entry, ctx, command, metadata);
-
-         if (!isPutForStateTransfer && stateConsumer != null) {
+         if (stateConsumer != null) {
             stateConsumer.addUpdatedKey(key);
          }
+
+         log.tracef("About to commit entry %s", entry);
+         commitContextEntry(entry, ctx, command, metadata);
 
          return true;
       }
