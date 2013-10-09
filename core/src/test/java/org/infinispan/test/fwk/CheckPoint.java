@@ -80,7 +80,7 @@ public class CheckPoint {
    }
 
    public String peek(long timeout, TimeUnit unit, String... expectedEvents) throws InterruptedException {
-      log.tracef("Waiting for any one of event %s * %d", Arrays.toString(expectedEvents));
+      log.tracef("Waiting for any one of events %s", Arrays.toString(expectedEvents));
       String found = null;
       lock.lock();
       try {
