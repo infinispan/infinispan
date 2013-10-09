@@ -147,7 +147,8 @@ public class EntryFactoryImpl implements EntryFactory {
    }
 
    @Override
-   public final MVCCEntry wrapEntryForPut(InvocationContext ctx, Object key, InternalCacheEntry icEntry,
+   //removed final modifier to allow mock this method
+   public MVCCEntry wrapEntryForPut(InvocationContext ctx, Object key, InternalCacheEntry icEntry,
          boolean undeleteIfNeeded, FlagAffectedCommand cmd, boolean skipRead) throws InterruptedException {
       CacheEntry cacheEntry = getFromContext(ctx, key);
       MVCCEntry mvccEntry;
