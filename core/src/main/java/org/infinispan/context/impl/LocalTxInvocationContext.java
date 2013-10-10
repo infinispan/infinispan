@@ -123,6 +123,17 @@ public class LocalTxInvocationContext extends AbstractTxInvocationContext {
    }
 
    @Override
+   public void skipTransactionCompleteCheck(boolean skip) {
+      //no-op
+   }
+
+   @Override
+   public boolean skipTransactionCompleteCheck() {
+      //no-op. the check is only performed in remote transactions
+      return true;
+   }
+
+   @Override
    public Set<Object> getLockedKeys() {
       return localTransaction == null ?
             InfinispanCollections.emptySet() : localTransaction.getLockedKeys();

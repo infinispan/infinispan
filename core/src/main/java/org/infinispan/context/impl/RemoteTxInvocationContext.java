@@ -118,6 +118,16 @@ public class RemoteTxInvocationContext extends AbstractTxInvocationContext {
    }
 
    @Override
+   public void skipTransactionCompleteCheck(boolean skip) {
+      remoteTransaction.skipTransactionCompleteCheck(skip);
+   }
+
+   @Override
+   public boolean skipTransactionCompleteCheck() {
+      return remoteTransaction.skipTransactionCompleteCheck();
+   }
+
+   @Override
    public Set<Object> getLockedKeys() {
       return remoteTransaction.getLockedKeys();
    }

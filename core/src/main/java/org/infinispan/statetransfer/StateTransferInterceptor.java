@@ -98,6 +98,7 @@ public class StateTransferInterceptor extends CommandInterceptor {
          // the transaction on local node to ensure its locks are acquired and lookedUpEntries is properly populated.
          RemoteTransaction remoteTx = (RemoteTransaction) ctx.getCacheTransaction();
          if (remoteTx.isMissingLookedUpEntries()) {
+            ctx.skipTransactionCompleteCheck(true);
             remoteTx.setMissingLookedUpEntries(false);
 
             PrepareCommand prepareCommand;
