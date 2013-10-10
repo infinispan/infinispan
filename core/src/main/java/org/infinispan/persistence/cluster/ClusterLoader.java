@@ -12,7 +12,6 @@ import org.infinispan.persistence.CacheLoaderException;
 import org.infinispan.persistence.spi.CacheLoader;
 import org.infinispan.persistence.spi.InitializationContext;
 import org.infinispan.marshall.core.MarshalledEntry;
-import org.infinispan.marshall.core.MarshalledEntryImpl;
 import org.infinispan.remoting.responses.ClusteredGetResponseValidityFilter;
 import org.infinispan.remoting.responses.Response;
 import org.infinispan.remoting.responses.SuccessfulResponse;
@@ -78,7 +77,8 @@ public class ClusterLoader implements CacheLoader {
 
       if (response.isSuccessful() && response instanceof SuccessfulResponse) {
          InternalCacheValue value = (InternalCacheValue) ((SuccessfulResponse) response).getResponseValue();
-         return ctx.getMarshalledEntryFactory().newMarshalledEntry(key, value.getValue(), null);
+         return value == null ? null :
+               ctx.getMarshalledEntryFactory().newMarshalledEntry(key, value.getValue(), null);
       }
 
       log.unknownResponsesFromRemoteCache(responses);
