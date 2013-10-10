@@ -113,15 +113,22 @@ public class TxInterceptor extends CommandInterceptor {
       try {
          return invokeNextInterceptor(ctx, command);
       } finally {
-         if (!ctx.skipTransactionCompleteCheck()) {
+         if (!ctx.isOriginLocal() && !ctx.skipTransactionCompleteCheck()) {
             //It is possible to receive a prepare or lock control command from a node that crashed. If that's the case rollback
             //the transaction forcefully in order to cleanup resources.
-            boolean originatorMissing = !ctx.isOriginLocal() && !rpcManager.getTransport().getMembers().contains(command.getOrigin());
-            boolean alreadyCompleted = !ctx.isOriginLocal() && txTable.isTransactionCompleted(command.getGlobalTransaction());
-            log.tracef("invokeNextInterceptorAndVerifyTransaction :: originatorMissing=%s, alreadyCompleted=%s", originatorMissing, alreadyCompleted);
+            boolean originatorMissing = !rpcManager.getTransport().getMembers().contains(command.getOrigin());
+            boolean alreadyCompleted = txTable.isTransactionCompleted(command.getGlobalTransaction());
+            if (log.isTraceEnabled()) {
+               log.tracef("invokeNextInterceptorAndVerifyTransaction :: originatorMissing=%s, alreadyCompleted=%s",
+                          originatorMissing, alreadyCompleted);
+            }
+
             if (alreadyCompleted || originatorMissing) {
-               log.tracef("Rolling back remote transaction %s because either already completed(%s) or originator no longer in the cluster(%s).",
-                          command.getGlobalTransaction(), alreadyCompleted, originatorMissing);
+               if (log.isTraceEnabled()) {
+                  log.tracef("Rolling back remote transaction %s because either already completed(%s) or originator no " +
+                                   "longer in the cluster(%s).",
+                             command.getGlobalTransaction(), alreadyCompleted, originatorMissing);
+               }
                RollbackCommand rollback = new RollbackCommand(command.getCacheName(), command.getGlobalTransaction());
                try {
                   invokeNextInterceptor(ctx, rollback);
