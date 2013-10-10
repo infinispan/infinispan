@@ -27,10 +27,10 @@ public class ClusterCacheLoaderTest extends MultipleCacheManagersTest {
       EmbeddedCacheManager cacheManager2 = TestCacheManagerFactory.createClusteredCacheManager();
       registerCacheManager(cacheManager1, cacheManager2);
 
-      ConfigurationBuilder config1 = getDefaultClusteredCacheConfig(CacheMode.INVALIDATION_SYNC, false);
+      ConfigurationBuilder config1 = getDefaultClusteredCacheConfig(cacheMode(), false);
       config1.persistence().addClusterLoader();
 
-      ConfigurationBuilder config2 = getDefaultClusteredCacheConfig(CacheMode.INVALIDATION_SYNC, false);
+      ConfigurationBuilder config2 = getDefaultClusteredCacheConfig(cacheMode(), false);
       config2.persistence().addClusterLoader();
       config2.persistence().addStore(DummyInMemoryStoreConfigurationBuilder.class);
 
@@ -59,5 +59,9 @@ public class ClusterCacheLoaderTest extends MultipleCacheManagersTest {
       writer.write(new MarshalledEntryImpl("key", "value", null, cache2.getAdvancedCache().getComponentRegistry().getCacheMarshaller()));
       assert ((CacheLoader)writer).load("key").getValue().equals("value");
       assert cache1.get("key").equals("value");
+   }
+
+   protected CacheMode cacheMode() {
+      return CacheMode.INVALIDATION_SYNC;
    }
 }
