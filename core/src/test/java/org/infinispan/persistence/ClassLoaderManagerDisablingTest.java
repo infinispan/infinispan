@@ -19,7 +19,8 @@ import org.testng.annotations.Test;
 
 import java.util.List;
 
-import static org.testng.AssertJUnit.*;
+import static org.testng.AssertJUnit.assertEquals;
+import static org.testng.AssertJUnit.assertTrue;
 
 /**
  * ClassLoaderManagerDisablingTest.
@@ -27,40 +28,25 @@ import static org.testng.AssertJUnit.*;
  * @author Tristan Tarrant
  * @since 5.2
  */
-@Test(groups="functional", testName = "persistence.ClassLoaderManagerDisablingTest")
+@Test(groups = "functional", testName = "persistence.ClassLoaderManagerDisablingTest")
 public class ClassLoaderManagerDisablingTest extends AbstractInfinispanTest {
 
    public void testStoreDisabling() {
       ConfigurationBuilder builder = TestCacheManagerFactory.getDefaultCacheConfiguration(false);
       builder.persistence().addStore(DummyInMemoryStoreConfigurationBuilder.class);
-      EmbeddedCacheManager cm = TestCacheManagerFactory.createCacheManager(builder);
-      try {
-         checkAndDisableStore(cm);
-      } finally {
-         TestingUtil.killCacheManagers(cm);
-      }
+      disableWithConfiguration(builder);
    }
 
    public void testAsyncStoreDisabling() {
       ConfigurationBuilder builder = TestCacheManagerFactory.getDefaultCacheConfiguration(false);
       builder.persistence().addStore(DummyInMemoryStoreConfigurationBuilder.class).async().enable();
-      EmbeddedCacheManager cm = TestCacheManagerFactory.createCacheManager(builder);
-      try {
-         checkAndDisableStore(cm);
-      } finally {
-         TestingUtil.killCacheManagers(cm);
-      }
+      disableWithConfiguration(builder);
    }
 
    public void testSingletonStoreDisabling() {
       ConfigurationBuilder builder = TestCacheManagerFactory.getDefaultCacheConfiguration(false);
       builder.persistence().addStore(DummyInMemoryStoreConfigurationBuilder.class).singleton().enable();
-      EmbeddedCacheManager cm = TestCacheManagerFactory.createCacheManager(builder);
-      try {
-         checkAndDisableStore(cm);
-      } finally {
-         TestingUtil.killCacheManagers(cm);
-      }
+      disableWithConfiguration(builder);
    }
 
    public void testChainingStoreDisabling() {
