@@ -1014,5 +1014,12 @@ public interface Log extends BasicLogger {
    @Message(value = "Indexing can not be enabled on caches in Invalidation mode", id = 273)
    CacheConfigurationException invalidConfigurationIndexingWithInvalidation();
 
+   @LogMessage(level = ERROR)
+   @Message(value = "Persistence enabled without any CacheLoaderInterceptor in InterceptorChain!", id = 274)
+   void persistenceWithoutCacheLoaderInterceptor();
+
+   @LogMessage(level = ERROR)
+   @Message(value = "Persistence enabled without any CacheWriteInterceptor in InterceptorChain!", id = 275)
+   void persistenceWithoutCacheWriteInterceptor();
 }
 

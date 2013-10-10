@@ -19,6 +19,8 @@ import org.infinispan.factories.annotations.Start;
 import org.infinispan.factories.annotations.Stop;
 import org.infinispan.interceptors.CacheLoaderInterceptor;
 import org.infinispan.interceptors.CacheWriterInterceptor;
+import org.infinispan.interceptors.InterceptorChain;
+import org.infinispan.interceptors.base.CommandInterceptor;
 import org.infinispan.marshall.core.MarshalledEntry;
 import org.infinispan.marshall.core.MarshalledEntryFactory;
 import org.infinispan.metadata.InternalMetadataImpl;
@@ -249,13 +251,26 @@ public class PersistenceManagerImpl implements PersistenceManager {
          }
 
          if (loaders.isEmpty() && writers.isEmpty()) {
-            ComponentRegistry cr = cache.getComponentRegistry();
-            CacheLoaderInterceptor cli = cr.getComponent(CacheLoaderInterceptor.class);
-            CacheWriterInterceptor csi = cr.getComponent(CacheWriterInterceptor.class);
-            cli.disableInterceptor();
-            csi.disableInterceptor();
-            cache.removeInterceptor(cli.getClass());
-            cache.removeInterceptor(csi.getClass());
+            InterceptorChain chain = cache.getComponentRegistry().getComponent(InterceptorChain.class);
+            List<CommandInterceptor> loaderInterceptors = chain.getInterceptorsWhichExtend(CacheLoaderInterceptor.class);
+            if (loaderInterceptors.isEmpty()) {
+               log.persistenceWithoutCacheLoaderInterceptor();
+            } else {
+               for (CommandInterceptor interceptor : loaderInterceptors) {
+                  ((CacheLoaderInterceptor) interceptor).disableInterceptor();
+               }
+            }
+            List<CommandInterceptor> writerInterceptors = chain.getInterceptorsWhichExtend(CacheWriterInterceptor.class);
+            if (writerInterceptors.isEmpty()) {
+               log.persistenceWithoutCacheWriteInterceptor();
+            } else {
+               for (CommandInterceptor interceptor : writerInterceptors) {
+                  ((CacheWriterInterceptor) interceptor).disableInterceptor();
+               }
+            }
+
+            removeInterceptors(loaderInterceptors);
+            removeInterceptors(writerInterceptors);
             enabled = false;
          }
       }
@@ -644,5 +659,14 @@ public class PersistenceManagerImpl implements PersistenceManager {
 
    public StreamingMarshaller getMarshaller() {
       return m;
+   }
+
+   private void removeInterceptors(Collection<CommandInterceptor> interceptors) {
+      if (interceptors.isEmpty()) {
+         return;
+      }
+      for (CommandInterceptor interceptor : interceptors) {
+         cache.removeInterceptor(interceptor.getClass());
+      }
    }
 }
