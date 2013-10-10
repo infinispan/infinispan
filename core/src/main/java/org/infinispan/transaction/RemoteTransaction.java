@@ -34,6 +34,11 @@ public class RemoteTransaction extends AbstractCacheTransaction implements Clone
     */
    private volatile boolean missingLookedUpEntries = false;
 
+   /**
+    * If true, the check transaction completed in TxInterceptor is skipped for this transaction.
+    */
+   private volatile boolean skipTransactionCompletedCheck;
+
    private volatile TotalOrderRemoteTransactionState transactionState;
    private final Object transactionStateLock = new Object();
 
@@ -116,6 +121,14 @@ public class RemoteTransaction extends AbstractCacheTransaction implements Clone
 
    public boolean isMissingLookedUpEntries() {
       return missingLookedUpEntries;
+   }
+
+   public void skipTransactionCompleteCheck(boolean skip) {
+      skipTransactionCompletedCheck = skip;
+   }
+
+   public boolean skipTransactionCompleteCheck() {
+      return skipTransactionCompletedCheck;
    }
 
    private void checkIfRolledBack() {
