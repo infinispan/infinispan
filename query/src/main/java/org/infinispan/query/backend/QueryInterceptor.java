@@ -3,6 +3,7 @@ package org.infinispan.query.backend;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentMap;
@@ -132,9 +133,9 @@ public class QueryInterceptor extends CommandInterceptor {
 
    @Override
    public Object visitPutMapCommand(InvocationContext ctx, PutMapCommand command) throws Throwable {
-      Object mapPut = invokeNextInterceptor(ctx, command);
-      processPutMapCommand(command, ctx, null);
-      return mapPut;
+      Map<Object, Object> previousValues = (Map<Object, Object>) invokeNextInterceptor(ctx, command);
+      processPutMapCommand(command, ctx, previousValues, null);
+      return previousValues;
    }
 
    @Override
@@ -307,7 +308,7 @@ public class QueryInterceptor extends CommandInterceptor {
             stateBeforePrepare[i] = internalCacheEntry != null ? internalCacheEntry.getValue() : null;
          }
          else if (writeCommand instanceof PutMapCommand) {
-            //think about this: ISPN-2478
+            stateBeforePrepare[i] = getPreviousValues(((PutMapCommand) writeCommand).getMap().keySet());
          }
          else if (writeCommand instanceof RemoveCommand) {
             InternalCacheEntry internalCacheEntry = dataContainer.get(((RemoveCommand) writeCommand).getKey());
@@ -329,8 +330,7 @@ public class QueryInterceptor extends CommandInterceptor {
                processPutKeyValueCommand((PutKeyValueCommand) writeCommand, ctx, stateBeforePrepare[i], transactionContext);
             }
             else if (writeCommand instanceof PutMapCommand) {
-               //FIXME ISPN-2478
-               processPutMapCommand((PutMapCommand) writeCommand, ctx, transactionContext);
+               processPutMapCommand((PutMapCommand) writeCommand, ctx, (Map<Object, Object>) stateBeforePrepare[i], transactionContext);
             }
             else if (writeCommand instanceof RemoveCommand) {
                processRemoveCommand((RemoveCommand) writeCommand, ctx, stateBeforePrepare[i], transactionContext);
@@ -344,6 +344,16 @@ public class QueryInterceptor extends CommandInterceptor {
          }
       }
       return toReturn;
+   }
+
+   private Map<Object, Object> getPreviousValues(Set<Object> keySet) {
+      HashMap<Object, Object> previousValues = new HashMap<Object, Object>();
+      for (Object key : keySet) {
+         InternalCacheEntry internalCacheEntry = dataContainer.get(key);
+         Object previousValue = internalCacheEntry != null ? internalCacheEntry.getValue() : null;
+         previousValues.put(key, previousValue);
+      }
+      return previousValues;
    }
 
    /**
@@ -397,17 +407,24 @@ public class QueryInterceptor extends CommandInterceptor {
     *
     * @param command the visited PutMapCommand
     * @param ctx the InvocationContext of the PutMapCommand
+    * @param previousValues a map with the previous values, before processing the given PutMapCommand
     * @param transactionContext
     */
-   private void processPutMapCommand(final PutMapCommand command, final InvocationContext ctx, TransactionContext transactionContext) {
+   private void processPutMapCommand(final PutMapCommand command, final InvocationContext ctx, final Map<Object, Object> previousValues, TransactionContext transactionContext) {
       if (shouldModifyIndexes(command, ctx)) {
          Map<Object, Object> dataMap = command.getMap();
          // Loop through all the keys and put those key-value pairings into lucene.
          for (Map.Entry<Object, Object> entry : dataMap.entrySet()) {
+            final Object key = extractValue(entry.getKey());
             final Object value = extractValue(entry.getValue());
+            final Object previousValue = previousValues.get(key);
+            if (updateKnownTypesIfNeeded(previousValue)) {
+               transactionContext = transactionContext == null ? makeTransactionalEventContext() : transactionContext;
+               removeFromIndexes(previousValue, key, transactionContext);
+            }
             if (updateKnownTypesIfNeeded(value)) {
                transactionContext = transactionContext == null ? makeTransactionalEventContext() : transactionContext;
-               updateIndexes(value, extractValue(entry.getKey()), transactionContext);
+               updateIndexes(value, key, transactionContext);
             }
          }
       }

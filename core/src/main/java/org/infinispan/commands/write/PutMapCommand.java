@@ -10,6 +10,7 @@ import org.infinispan.context.InvocationContext;
 import org.infinispan.lifecycle.ComponentStatus;
 import org.infinispan.notifications.cachelistener.CacheNotifier;
 
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -52,18 +53,20 @@ public class PutMapCommand extends AbstractFlagAffectedCommand implements WriteC
 
    @Override
    public Object perform(InvocationContext ctx) throws Throwable {
+      Map<Object, Object> previousValues = new HashMap<Object, Object>();
       for (Entry<Object, Object> e : map.entrySet()) {
          Object key = e.getKey();
          MVCCEntry me = lookupMvccEntry(ctx, key);
          if (me != null) {
             Object value = me.getValue();
+            previousValues.put(key, value);
             notifier.notifyCacheEntryModified(
                   key, value, value == null, true, ctx, this);
             me.setValue(e.getValue());
             me.setChanged(true);
          }
       }
-      return null;
+      return previousValues;
    }
 
    public Map<Object, Object> getMap() {
