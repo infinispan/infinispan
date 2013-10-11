@@ -24,7 +24,6 @@ public class ReplaceTest extends SingleCacheManagerTest {
       return TestCacheManagerFactory.createCacheManager(cfg);
    }
 
-   @Test
    public void testReplaceSimple() {
       //for comparison we use a non-indexing cache here:
       EmbeddedCacheManager simpleCacheManager = TestCacheManagerFactory.createCacheManager(getDefaultStandaloneCacheConfig(true));
@@ -41,7 +40,6 @@ public class ReplaceTest extends SingleCacheManagerTest {
       }
    }
 
-   @Test
    public void testReplaceSimpleSearchable() {
       TestEntity se1 = new TestEntity("name1", "surname1", 10, "note");
       TestEntity se2 = new TestEntity("name2", "surname2", 10, "note"); // same id
@@ -50,7 +48,6 @@ public class ReplaceTest extends SingleCacheManagerTest {
       assertEquals(se1, se1ret);
    }
 
-   @Test
    public void testReplaceSimpleSearchableConditional() {
       TestEntity se1 = new TestEntity("name1", "surname1", 10, "note");
       TestEntity se2 = new TestEntity("name2", "surname2", 10, "note"); // same id

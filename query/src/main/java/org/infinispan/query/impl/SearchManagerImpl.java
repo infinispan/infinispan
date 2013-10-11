@@ -11,7 +11,6 @@ import org.hibernate.search.spi.SearchFactoryIntegrator;
 import org.infinispan.AdvancedCache;
 import org.infinispan.query.CacheQuery;
 import org.infinispan.query.MassIndexer;
-import org.infinispan.query.SearchManager;
 import org.infinispan.query.Transformer;
 import org.infinispan.query.backend.QueryInterceptor;
 import org.infinispan.query.clustered.ClusteredCacheQueryImpl;

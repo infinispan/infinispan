@@ -1,9 +1,5 @@
 package org.infinispan.commands;
 
-import java.util.Set;
-
-import org.infinispan.context.Flag;
-
 /**
  * Commands affected by Flags should carry them over to the remote nodes.
  * 

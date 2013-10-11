@@ -1,7 +1,6 @@
 package org.infinispan.test;
 
 import static java.io.File.separator;
-import static org.infinispan.persistence.PersistenceUtil.internalMetadata;
 import static org.testng.AssertJUnit.assertFalse;
 
 import java.io.File;
