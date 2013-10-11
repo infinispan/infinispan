@@ -86,25 +86,29 @@ public class ComponentMetadata implements Serializable {
          int j=0;
          for (Method m : injectMethods) {
             
-            List<String> params = new LinkedList<String>();
             InjectMetadata injectMetadata = new InjectMetadata(m.getName());
             
             Class<?>[] parameterTypes = m.getParameterTypes();
+
+            // Need to use arrays instead of Map due to JDK bug see ISPN-3611
+            String[] params = new String[parameterTypes.length];
+            String[] paramNames = new String[parameterTypes.length];
 
             // Add this to our dependencies map
             Annotation[][] annotations = m.getParameterAnnotations();
             for (int i=0; i<parameterTypes.length; i++) {
                String componentName = findComponentName(annotations, i);
                String parameterType = parameterTypes[i].getName();
-               params.add(parameterType);
+               params[i] = parameterType;
                if (componentName == null) {
                   dependencies.put(parameterType, parameterType);
                } else {
-                  injectMetadata.addParameterName(i, componentName);
+                  paramNames[i] = componentName;
                   dependencies.put(componentName, parameterType);
                }
             }
-            injectMetadata.parameters = params.toArray(new String[params.size()]);
+            injectMetadata.parameters = params;
+            injectMetadata.parameterNames = paramNames;
             this.injectMetadata[j++] = injectMetadata;
          }
       }
@@ -222,7 +226,7 @@ public class ComponentMetadata implements Serializable {
       transient Method method;
       String[] parameters;
       transient Class<?>[] parameterClasses;
-      Map<Integer, String> parameterNames; 
+      String[] parameterNames;
 
       private InjectMetadata(String methodName) {
          this.methodName = methodName;
@@ -237,19 +241,14 @@ public class ComponentMetadata implements Serializable {
       }
       
       public String getParameterName(int subscript) {
-         String name = parameterNames == null ? null : parameterNames.get(subscript);
+         String name = parameterNames == null ? null : parameterNames[subscript];
          return name == null ? parameters[subscript] : name;
       }
 
       public boolean isParameterNameSet(int subscript) {
-         return parameterNames != null && parameterNames.containsKey(subscript);
+         return parameterNames != null && parameterNames[subscript] != null;
       }
       
-      void addParameterName(int subscript, String name) {
-         if (parameterNames == null) parameterNames = new HashMap<Integer, String>(1);
-         parameterNames.put(subscript, name);
-      }
-
       public synchronized Method getMethod() {
          return method;
       }
