@@ -3,7 +3,6 @@ package org.infinispan.query;
 import org.apache.lucene.search.Query;
 import org.hibernate.search.SearchFactory;
 import org.hibernate.search.query.dsl.EntityContext;
-import org.hibernate.search.query.engine.spi.TimeoutExceptionFactory;
 import org.infinispan.query.dsl.QueryFactory;
 
 /**
