@@ -1,14 +1,12 @@
 package org.infinispan.query.impl;
 
+import java.util.Iterator;
 import java.util.Map;
 import java.util.Properties;
+import java.util.ServiceLoader;
 import java.util.TreeMap;
 
 import org.hibernate.search.Environment;
-import org.hibernate.search.annotations.Analyze;
-import org.hibernate.search.annotations.Norms;
-import org.hibernate.search.annotations.Store;
-import org.hibernate.search.bridge.FieldBridge;
 import org.hibernate.search.cfg.SearchMapping;
 import org.hibernate.search.cfg.spi.SearchConfiguration;
 import org.hibernate.search.jmx.StatisticsInfo;
@@ -43,10 +41,9 @@ import org.infinispan.query.backend.SearchableCacheConfiguration;
 import org.infinispan.query.clustered.QueryBox;
 import org.infinispan.query.impl.massindex.MapReduceMassIndexer;
 import org.infinispan.query.logging.Log;
+import org.infinispan.query.spi.ProgrammaticSearchMappingProvider;
 import org.infinispan.transaction.LockingMode;
 import org.infinispan.util.logging.LogFactory;
-
-import org.infinispan.commons.util.Util;
 
 import javax.management.MBeanServer;
 import javax.management.ObjectName;
@@ -84,7 +81,7 @@ public class LifecycleManager extends AbstractModuleLifecycle {
    public void cacheStarting(ComponentRegistry cr, Configuration cfg, String cacheName) {
       if (cfg.indexing().enabled()) {
          log.registeringQueryInterceptor();
-         SearchFactoryIntegrator searchFactory = getSearchFactory(cfg.indexing().properties(), cr, cfg.classLoader());
+         SearchFactoryIntegrator searchFactory = getSearchFactory(cfg.indexing().properties(), cr);
          createQueryInterceptorIfNeeded(cr, cfg, searchFactory);
       }
    }
@@ -162,7 +159,7 @@ public class LifecycleManager extends AbstractModuleLifecycle {
          ComponentRegistry cr, String cacheName) {
       Configuration cfg = cache.getCacheConfiguration();
       SearchFactoryIntegrator sf = getSearchFactory(
-            cfg.indexing().properties(), cr, null);
+            cfg.indexing().properties(), cr);
 
       // Resolve MBean server instance
       GlobalConfiguration globalCfg =
@@ -210,7 +207,7 @@ public class LifecycleManager extends AbstractModuleLifecycle {
       return interceptorChain.containsInterceptorType(QueryInterceptor.class, true);
    }
 
-   private SearchFactoryIntegrator getSearchFactory(Properties indexingProperties, ComponentRegistry cr, ClassLoader cl) {
+   private SearchFactoryIntegrator getSearchFactory(Properties indexingProperties, ComponentRegistry cr) {
       Object component = cr.getComponent(SearchFactoryIntegrator.class);
       SearchFactoryIntegrator searchFactory = null;
       if (component instanceof SearchFactoryIntegrator) { //could be the placeholder Object REMOVED_REGISTRY_COMPONENT
@@ -220,7 +217,7 @@ public class LifecycleManager extends AbstractModuleLifecycle {
       if (searchFactory==null) {
          GlobalComponentRegistry globalComponentRegistry = cr.getGlobalComponentRegistry();
          EmbeddedCacheManager uninitializedCacheManager = globalComponentRegistry.getComponent(EmbeddedCacheManager.class);
-         indexingProperties = addMappingsForRemoteQuery(indexingProperties, cr, cl);
+         indexingProperties = addProgrammaticMappings(indexingProperties, cr);
          // Set up the search factory for Hibernate Search first.
          SearchConfiguration config = new SearchableCacheConfiguration(new Class[0], indexingProperties, uninitializedCacheManager, cr);
          searchFactory = new SearchFactoryBuilder().configuration(config).buildSearchFactory();
@@ -229,17 +226,9 @@ public class LifecycleManager extends AbstractModuleLifecycle {
       return searchFactory;
    }
 
-   //todo [anistor] this method belongs to remote-query, but currently it is not possible to move it there because the SearchFactory programmatic mappings cannot be modified after instantiation
-   private Properties addMappingsForRemoteQuery(Properties indexingProperties, ComponentRegistry cr, ClassLoader cl) {
-      Class<?> fbClass;
-      try {
-         // proceed only if remote-query is in class path
-         fbClass = Util.loadClassStrict("org.infinispan.query.remote.indexing.ProtobufValueWrapperFieldBridge", cl);
-      } catch (ClassNotFoundException e) {
-         return indexingProperties;
-      }
-
-      try {
+   private Properties addProgrammaticMappings(Properties indexingProperties, ComponentRegistry cr) {
+      Iterator<ProgrammaticSearchMappingProvider> providers = ServiceLoader.load(ProgrammaticSearchMappingProvider.class).iterator();
+      if (providers.hasNext()) {
          SearchMapping mapping = (SearchMapping) indexingProperties.get(Environment.MODEL_MAPPING);
          if (mapping == null) {
             mapping = new SearchMapping();
@@ -249,11 +238,11 @@ public class LifecycleManager extends AbstractModuleLifecycle {
             indexingProperties = amendedProperties;
          }
          Cache cache = cr.getComponent(Cache.class);
-         FieldBridge fb = (FieldBridge) fbClass.getConstructor(Cache.class).newInstance(cache);
-         mapping.entity(Util.loadClassStrict("org.infinispan.query.remote.indexing.ProtobufValueWrapper", cl))
-               .indexed().classBridgeInstance(fb).norms(Norms.NO).analyze(Analyze.YES).store(Store.YES);
-      } catch (Exception e) {
-         throw new CacheException("Failed to configure indexing for remote query", e);
+
+         while (providers.hasNext()) {
+            ProgrammaticSearchMappingProvider provider = providers.next();
+            provider.defineMappings(cache, mapping);
+         }
       }
       return indexingProperties;
    }
