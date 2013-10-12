@@ -1,6 +1,8 @@
 package org.infinispan.distribution;
 
+import org.apache.log4j.Logger;
 import org.infinispan.Cache;
+import org.infinispan.commands.read.GetKeyValueCommand;
 import org.infinispan.commands.write.PutKeyValueCommand;
 import org.infinispan.commands.write.ReplaceCommand;
 import org.infinispan.interceptors.base.CommandInterceptor;
@@ -9,6 +11,7 @@ import org.infinispan.interceptors.distribution.NonTxDistributionInterceptor;
 import org.infinispan.remoting.rpc.RpcManager;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.tx.dld.ControlledRpcManager;
+import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 
 import java.util.concurrent.BrokenBarrierException;
@@ -20,6 +23,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.assertNull;
 
 @Test(groups = "functional", testName = "distribution.DistSyncL1FuncTest")
@@ -238,6 +242,82 @@ public class DistSyncL1FuncTest extends BaseDistSyncL1Test {
          assertIsNotInL1(nonOwnerCache, key);
       } finally {
          TestingUtil.replaceComponent(nonOwnerCache, RpcManager.class, rm, true);
+      }
+   }
+
+   @Test
+   public void testNonOwnerRetrievesValueFromBackupOwnerWhileWrite() throws Exception {
+      final Cache<Object, String>[] owners = getOwners(key, 2);
+
+      final Cache<Object, String> ownerCache = owners[0];
+      final Cache<Object, String> backupOwnerCache = owners[1];
+      final Cache<Object, String> nonOwnerCache = getFirstNonOwner(key);
+
+      ownerCache.put(key, firstValue);
+
+      assertEquals(firstValue, nonOwnerCache.get(key));
+
+      assertIsInL1(nonOwnerCache, key);
+
+      // Add a barrier to block the owner from receiving the get command from the non owner
+      CyclicBarrier ownerGetBarrier = new CyclicBarrier(2);
+      addBlockingInterceptor(ownerCache, ownerGetBarrier, GetKeyValueCommand.class, L1NonTxInterceptor.class, false);
+
+      // Add a barrier to block the backup owner from committing the write to memory
+      CyclicBarrier backupOwnerWriteBarrier = new CyclicBarrier(2);
+      addBlockingInterceptor(backupOwnerCache, backupOwnerWriteBarrier, PutKeyValueCommand.class, L1NonTxInterceptor.class, true);
+
+      try {
+         Future<String> future = fork(new Callable<String>() {
+            @Override
+            public String call() throws Exception {
+
+               return ownerCache.put(key, secondValue);
+            }
+         });
+
+         // Wait until the put is trying to replicate
+         backupOwnerWriteBarrier.await(5, TimeUnit.SECONDS);
+
+         // Wait until the L1 is cleared out from the owners L1 invalidation
+         eventually(new Condition() {
+
+            @Override
+            public boolean isSatisfied() throws Exception {
+               return !isInL1(nonOwnerCache, key);
+            }
+         }, 5000, 250);
+
+         // This should come back from the backup owner, since the primary owner is blocked
+         assertEquals(firstValue, nonOwnerCache.get(key));
+
+         assertIsInL1(nonOwnerCache, key);
+
+         // Now let the backup owner put complete and send response
+         backupOwnerWriteBarrier.await(5, TimeUnit.SECONDS);
+
+         // Wait for the put to complete
+         future.get(5, TimeUnit.SECONDS);
+
+         // The Last chance interceptor is async so wait to make sure it was invalidated
+         eventually(new Condition() {
+            @Override
+            public boolean isSatisfied() throws Exception {
+               return !isInL1(nonOwnerCache, key);
+            }
+         }, 5000, 250);
+         // The L1 value shouldn't be present
+         assertIsNotInL1(nonOwnerCache, key);
+
+         // Now finally let the get from the non owner to the primary owner go, which at this point will finally
+         // register the requestor
+         ownerGetBarrier.await(5, TimeUnit.SECONDS);
+         ownerGetBarrier.await(5, TimeUnit.SECONDS);
+
+         // The L1 value shouldn't be present
+         assertIsNotInL1(nonOwnerCache, key);
+      } finally {
+         removeAllBlockingInterceptorsFromCache(ownerCache);
       }
    }
 }
