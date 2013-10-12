@@ -1,5 +1,6 @@
 package org.infinispan.distribution;
 
+import org.apache.log4j.Logger;
 import org.infinispan.Cache;
 import org.infinispan.commands.VisitableCommand;
 import org.infinispan.commands.read.GetKeyValueCommand;
@@ -36,8 +37,17 @@ public abstract class BaseDistSyncL1Test extends BaseDistFunctionalTest<Object, 
    }
 
    protected void addBlockingInterceptorBeforeTx(Cache<?, ?> cache, final CyclicBarrier barrier,
-                                                 Class<? extends VisitableCommand> commandClass, boolean blockAfterCommand) {
-      cache.getAdvancedCache().addInterceptorBefore(new BlockingInterceptor(barrier, commandClass, blockAfterCommand), getDistributionInterceptorClass());
+                                                 Class<? extends VisitableCommand> commandClass,
+                                                 boolean blockAfterCommand) {
+      addBlockingInterceptor(cache, barrier, commandClass, getDistributionInterceptorClass(), blockAfterCommand);
+   }
+
+   protected void addBlockingInterceptor(Cache<?, ?> cache, final CyclicBarrier barrier,
+                                         Class<? extends VisitableCommand> commandClass,
+                                         Class<? extends CommandInterceptor> interceptorPosition,
+                                         boolean blockAfterCommand) {
+      cache.getAdvancedCache().addInterceptorBefore(new BlockingInterceptor(barrier, commandClass, blockAfterCommand),
+                                                    interceptorPosition);
    }
 
    protected abstract Class<? extends CommandInterceptor> getDistributionInterceptorClass();
@@ -188,9 +198,17 @@ public abstract class BaseDistSyncL1Test extends BaseDistFunctionalTest<Object, 
 
          // The value shouldn't be in the L1 still
          assertIsNotInL1(nonOwnerCache, key);
-         // The nonOwnerCache should retrieve new value as it isn't in L1
-         assertEquals(secondValue, nonOwnerCache.get(key));
-         assertIsInL1(nonOwnerCache, key);
+
+         // It is possible that the async L1LastChance will blow away this get, so we have to make sure to check
+         // it eventually
+         eventually(new Condition() {
+            @Override
+            public boolean isSatisfied() throws Exception {
+               // The nonOwnerCache should retrieve new value as it isn't in L1
+               assertEquals(secondValue, nonOwnerCache.get(key));
+               return isInL1(nonOwnerCache, key);
+            }
+         });
       }
       finally {
          removeAllBlockingInterceptorsFromCache(nonOwnerCache);

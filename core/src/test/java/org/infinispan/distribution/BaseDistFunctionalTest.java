@@ -207,7 +207,13 @@ public abstract class BaseDistFunctionalTest<K, V> extends MultipleCacheManagers
       Cache<K, V>[] owners = new Cache[expectedNumberOwners];
       int i = 0;
       for (Cache<K, V> c : caches) {
-         if (isOwner(c, key)) owners[i++] = c;
+         if (isFirstOwner(c, key)) {
+            owners[i++] = c;
+            break;
+         }
+      }
+      for (Cache<K, V> c : caches) {
+         if (isOwner(c, key) && !isFirstOwner(c, key)) owners[i++] = c;
       }
       for (Cache<?, ?> c : owners) assert c != null : "Have not found enough owners for key [" + key + "]";
       return owners;
