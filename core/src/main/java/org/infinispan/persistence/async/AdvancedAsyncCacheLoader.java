@@ -90,7 +90,7 @@ public class AdvancedAsyncCacheLoader extends AsyncCacheLoader implements Advanc
 
       eacs.waitUntilAllCompleted();
       if (eacs.isExceptionThrown()) {
-         throw new CacheLoaderException("Execution exception!");
+         throw new CacheLoaderException("Execution exception!", eacs.getFirstException());
       }
    }
 

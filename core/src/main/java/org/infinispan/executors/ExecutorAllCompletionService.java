@@ -8,6 +8,7 @@ import java.util.concurrent.ExecutorCompletionService;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
+import java.util.concurrent.atomic.AtomicReference;
 
 /**
  * Exectues given tasks in provided executor.
@@ -16,7 +17,7 @@ import java.util.concurrent.atomic.AtomicLong;
  */
 public class ExecutorAllCompletionService implements CompletionService<Void> {
    private ExecutorCompletionService executorService;
-   private boolean exceptionThrown = false;
+   private AtomicReference<ExecutionException> firstException = new AtomicReference<ExecutionException>();
    private AtomicLong scheduled = new AtomicLong();
    private AtomicLong completed = new AtomicLong();
 
@@ -48,7 +49,9 @@ public class ExecutorAllCompletionService implements CompletionService<Void> {
          } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
          } catch (ExecutionException e) {
-            exceptionThrown = true;
+            if (firstException.get() == null) {
+               firstException.compareAndSet(null, e);
+            }
          } finally {
             completed.incrementAndGet();
          }
@@ -64,20 +67,31 @@ public class ExecutorAllCompletionService implements CompletionService<Void> {
 
    public void waitUntilAllCompleted() {
       while (completed.get() < scheduled.get()) {
-         // Here is a race - if we poll the last scheduled entry entry elsewhere, we may wait
+         // Here is a race - if we poll the last scheduled entry elsewhere, we may wait
          // another 100 ms until we realize that everything has already completed.
          // Nevertheless, that's not so bad.
          try {
-            poll(100, TimeUnit.MILLISECONDS);
+            Future<Void> future = poll(100, TimeUnit.MILLISECONDS);
+            if (future != null) {
+               future.get();
+            }
          } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
             return;
+         } catch (ExecutionException e) {
+            if (firstException.get() == null) {
+               firstException.compareAndSet(null, e);
+            }
          }
       }
    }
 
    public boolean isExceptionThrown() {
-      return exceptionThrown;
+      return firstException.get() != null;
+   }
+
+   public ExecutionException getFirstException() {
+      return firstException.get();
    }
 
    @Override
