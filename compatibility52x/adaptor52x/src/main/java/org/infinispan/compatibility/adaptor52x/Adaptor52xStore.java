@@ -106,7 +106,7 @@ public class Adaptor52xStore implements AdvancedLoadWriteStore {
          }
          eacs.waitUntilAllCompleted();
          if (eacs.isExceptionThrown()) {
-            throw newCacheLoaderException(null);
+            throw newCacheLoaderException(eacs.getFirstException());
          }
       } catch (CacheLoaderException e) {
          throw newCacheLoaderException(e);
@@ -200,8 +200,8 @@ public class Adaptor52xStore implements AdvancedLoadWriteStore {
       return false;
    }
 
-   private org.infinispan.persistence.CacheLoaderException newCacheLoaderException(CacheLoaderException e) {
-      return new org.infinispan.persistence.CacheLoaderException(e);
+   private org.infinispan.persistence.CacheLoaderException newCacheLoaderException(Throwable cause) {
+      return new org.infinispan.persistence.CacheLoaderException(cause);
    }
 
    public CacheLoader getLoader() {

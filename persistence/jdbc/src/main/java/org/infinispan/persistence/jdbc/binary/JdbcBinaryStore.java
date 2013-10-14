@@ -206,7 +206,7 @@ public class JdbcBinaryStore implements AdvancedLoadWriteStore {
          }
          ecs.waitUntilAllCompleted();
          if (ecs.isExceptionThrown()) {
-            throw new CacheLoaderException("Execution exception!");
+            throw new CacheLoaderException("Execution exception!", ecs.getFirstException());
          }
       } catch (SQLException e) {
          log.sqlFailureFetchingAllStoredEntries(e);
