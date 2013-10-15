@@ -1020,7 +1020,14 @@ public interface Log extends BasicLogger {
    @Message(value = "Persistence enabled without any CacheWriteInterceptor in InterceptorChain!", id = 275)
    void persistenceWithoutCacheWriteInterceptor();
 
-   @Message(value = "Indexing can only be enabled if infinispan-query.jar is available on your classpath, and this jar has not been detected.", id = 276)
+   @Message(value = "Could not find migration data in cache %s", id = 276)
+   CacheException missingMigrationData(String name);
+
+   @LogMessage(level = WARN)
+   @Message(value = "Could not migrate key %s", id = 277)
+   void keyMigrationFailed(String key, @Cause Throwable cause);
+
+   @Message(value = "Indexing can only be enabled if infinispan-query.jar is available on your classpath, and this jar has not been detected.", id = 278)
    CacheConfigurationException invalidConfigurationIndexingWithoutModule();
    
 }

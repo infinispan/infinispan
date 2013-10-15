@@ -36,10 +36,4 @@ public interface Log extends org.infinispan.util.logging.Log {
    @Message(value = "The RemoteCacheStore for cache %s should be configured with hotRodWrapping enabled", id = 10007)
    CacheException remoteStoreNoHotRodWrapping(String cacheName);
 
-   @Message(value = "Could not find migration data in cache %s", id = 10008)
-   CacheException missingMigrationData(String name);
-
-   @LogMessage(level = WARN)
-   @Message(value = "Could not migrate key %s", id = 10009)
-   void keyMigrationFailed(String key, @Cause Throwable cause);
 }

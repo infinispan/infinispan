@@ -25,7 +25,7 @@ public class Ping extends AbstractServerCommand {
    @Override
    public void execute(Context context, ProcessedCommand commandLine) {
       CommandBuffer commandBuffer = new CommandBufferImpl();
-      commandBuffer.addCommand(getName(), nesting());
+      commandBuffer.addCommand(commandLine, nesting());
       context.getConnection().execute(context, commandBuffer);
    }
 }

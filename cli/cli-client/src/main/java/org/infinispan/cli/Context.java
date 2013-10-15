@@ -1,7 +1,10 @@
 package org.infinispan.cli;
 
+import org.infinispan.cli.commands.ProcessedCommand;
 import org.infinispan.cli.connection.Connection;
 import org.infinispan.cli.io.IOAdapter;
+
+import java.util.List;
 
 /**
  *
@@ -32,6 +35,8 @@ public interface Context {
    void error(String s);
 
    void error(Throwable t);
+
+   void result(List<ProcessedCommand> commands, String result, boolean isError);
 
    void refreshProperties();
 

@@ -2,6 +2,7 @@ package org.infinispan.cli.connection.jmx;
 
 import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
@@ -24,6 +25,7 @@ import javax.management.remote.JMXServiceURL;
 
 import org.infinispan.cli.CommandBuffer;
 import org.infinispan.cli.Context;
+import org.infinispan.cli.commands.ProcessedCommand;
 import org.infinispan.cli.connection.Connection;
 
 public class JMXConnection implements Connection {
@@ -46,7 +48,7 @@ public class JMXConnection implements Connection {
    }
 
    @Override
-   public void connect(Context context, String credentials) throws Exception {
+   public void connect(String credentials) throws Exception {
       JMXServiceURL url = new JMXServiceURL(serviceUrl.getJMXServiceURL());
       jmxConnector = JMXConnectorFactory.connect(url, serviceUrl.getConnectionEnvironment(credentials));
       mbsc = jmxConnector.getMBeanServerConnection();
@@ -156,28 +158,30 @@ public class JMXConnection implements Connection {
    @Override
    public void execute(Context context, CommandBuffer commandBuffer) {
       ObjectInstance manager = cacheManagers.get(activeCacheManager);
+      // Shallow copy of the commands to avoid being cleared when the buffer is reset
+      List<ProcessedCommand> bufferedCommands = new ArrayList<ProcessedCommand>(commandBuffer.getBufferedCommands());
       try {
          String sessionId = getSession(manager);
          Map<String, String> response = (Map<String, String>) mbsc.invoke(manager.getObjectName(), "execute", new String[] { sessionId, commandBuffer.toString() },
                new String[] { String.class.getName(), String.class.getName() });
          if (response.containsKey("OUTPUT")) {
-            context.println(response.get("OUTPUT"));
+            context.result(bufferedCommands, response.get("OUTPUT"), false);
          }
          if (response.containsKey("ERROR")) {
-            context.error(response.get("ERROR"));
+            context.result(bufferedCommands, response.get("ERROR"), true);
          }
          if (response.containsKey("CACHE")) {
             activeCache = response.get("CACHE");
          }
       } catch (InstanceNotFoundException e) {
-         context.error(e);
+         context.result(bufferedCommands, e.toString(), true);
       } catch (MBeanException e) {
          Exception te = e.getTargetException();
-         context.error(te.getCause() != null ? te.getCause() : te);
+         context.result(bufferedCommands, te.getCause() != null ? te.getCause().toString() : te.toString(), true);
       } catch (ReflectionException e) {
-         context.error(e);
+         context.result(bufferedCommands, e.toString(), true);
       } catch (IOException e) {
-         context.error(e);
+         context.result(bufferedCommands, e.toString(), true);
       }
    }
 

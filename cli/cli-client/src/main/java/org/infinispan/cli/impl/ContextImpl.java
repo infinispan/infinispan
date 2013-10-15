@@ -2,10 +2,12 @@ package org.infinispan.cli.impl;
 
 import java.io.IOException;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import org.infinispan.cli.CommandBuffer;
 import org.infinispan.cli.CommandRegistry;
 import org.infinispan.cli.Context;
+import org.infinispan.cli.commands.ProcessedCommand;
 import org.infinispan.cli.connection.Connection;
 import org.infinispan.cli.io.IOAdapter;
 
@@ -87,6 +89,14 @@ public class ContextImpl implements Context {
    public void error(Throwable t) {
       try {
          outputAdapter.error(t.getMessage()!=null?t.getMessage():t.getClass().getName());
+      } catch (IOException e) {
+      }
+   }
+
+   @Override
+   public void result(List<ProcessedCommand> commands, String result, boolean isError) {
+      try {
+         outputAdapter.result(commands, result, isError);
       } catch (IOException e) {
       }
    }
