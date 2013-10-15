@@ -1,8 +1,11 @@
 package org.infinispan.cli.io;
 
+import org.infinispan.cli.commands.ProcessedCommand;
+
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.util.List;
 
 public class StreamIOAdapter implements IOAdapter {
 
@@ -19,6 +22,14 @@ public class StreamIOAdapter implements IOAdapter {
    @Override
    public void error(String s) throws IOException {
       System.err.println(s);
+   }
+
+   @Override
+   public void result(List<ProcessedCommand> commands, String result, boolean isError) throws IOException {
+      if (isError)
+         error(result);
+      else
+         println(result);
    }
 
    @Override

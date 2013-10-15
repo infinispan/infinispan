@@ -71,7 +71,7 @@ public class ShellImpl implements Shell {
                   exitWithError("Cannot read password non-interactively");
                }
             }
-            connection.connect(context, password);
+            connection.connect(password);
             context.setConnection(connection);
             break;
          case 'f':

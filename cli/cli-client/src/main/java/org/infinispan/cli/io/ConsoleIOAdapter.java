@@ -1,8 +1,10 @@
 package org.infinispan.cli.io;
 
 import java.io.IOException;
+import java.util.List;
 
 import org.fusesource.jansi.Ansi;
+import org.infinispan.cli.commands.ProcessedCommand;
 import org.jboss.aesh.console.Console;
 import org.jboss.aesh.console.Prompt;
 
@@ -39,6 +41,14 @@ public class ConsoleIOAdapter implements IOAdapter {
       Ansi ansi = new Ansi();
       ansi.fg(Ansi.Color.RED);
       println(ansi.render(s).reset().toString());
+   }
+
+   @Override
+   public void result(List<ProcessedCommand> commands, String result, boolean isError) throws IOException {
+      if (isError)
+         error(result);
+      else
+         println(result);
    }
 
    @Override

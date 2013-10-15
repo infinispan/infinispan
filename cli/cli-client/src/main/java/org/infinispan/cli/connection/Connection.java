@@ -8,7 +8,7 @@ import org.infinispan.cli.Context;
 
 public interface Connection extends Closeable {
 
-   void connect(Context context, String credentials) throws Exception;
+   void connect(String credentials) throws Exception;
 
    boolean needsCredentials();
 

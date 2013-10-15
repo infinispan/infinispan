@@ -36,6 +36,7 @@
       <module>persistence</module>
       <module>persistence/jdbc</module>
       <module>persistence/remote</module>
+      <module>persistence/cli</module>
       <module>server</module>
       <module>server/core</module>
       <module>server/memcached</module>
@@ -66,6 +67,7 @@
       <module>compatibility52x</module>
       <module>compatibility52x/adaptor52x</module>
       <module>compatibility52x/custom52x-store</module>
+      <module>compatibility52x/cli-migrator52x</module>
    </modules>
 
    <profiles>

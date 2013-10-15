@@ -8,6 +8,7 @@ import org.infinispan.cli.commands.Argument;
 import org.infinispan.cli.commands.ProcessedCommand;
 import org.infinispan.cli.connection.Connection;
 import org.infinispan.cli.connection.ConnectionFactory;
+import org.infinispan.commons.util.InfinispanCollections;
 
 public class Connect extends AbstractCommand {
 
@@ -35,7 +36,7 @@ public class Connect extends AbstractCommand {
          if (connection.needsCredentials()) {
             password = new String(context.getOutputAdapter().secureReadln("Password: "));
          }
-         connection.connect(context, password);
+         connection.connect(password);
          context.setConnection(connection);
       } catch (Exception e) {
          context.error(e);
