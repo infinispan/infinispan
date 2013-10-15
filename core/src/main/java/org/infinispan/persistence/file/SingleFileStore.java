@@ -97,10 +97,10 @@ public class SingleFileStore implements AdvancedLoadWriteStore {
 
          File f = new File(location + File.separator + ctx.getCache().getName() + ".dat");
          if (!f.exists()) {
-             File dir = f.getParentFile();
-             if (!dir.exists() && !dir.mkdirs()) {
-                 throw log.directoryCannotBeCreated(dir.getAbsolutePath());
-             }
+            File dir = f.getParentFile();
+            if (!dir.mkdirs() && !dir.exists()) {
+               throw log.directoryCannotBeCreated(dir.getAbsolutePath());
+            }
          }
          file = new RandomAccessFile(f, "rw").getChannel();
 
