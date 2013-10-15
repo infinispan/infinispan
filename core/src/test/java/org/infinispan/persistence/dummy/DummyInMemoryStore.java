@@ -43,6 +43,7 @@ public class DummyInMemoryStore implements AdvancedLoadWriteStore {
    Map<Object, byte[]> store;
    // When a store is 'shared', multiple nodes could be trying to update it concurrently.
    ConcurrentMap<String, AtomicInteger> stats;
+   public AtomicInteger initCount = new AtomicInteger();
 
    Cache cache;
 
@@ -58,6 +59,7 @@ public class DummyInMemoryStore implements AdvancedLoadWriteStore {
       this.cache = ctx.getCache();
       this.marshaller = ctx.getMarshaller();
       this.storeName = configuration.storeName();
+      this.initCount.incrementAndGet();
    }
 
    public DummyInMemoryStore(String storeName) {

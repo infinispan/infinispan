@@ -520,12 +520,14 @@ public class PersistenceManagerImpl implements PersistenceManager {
          InitializationContextImpl ctx = new InitializationContextImpl(cfg, cache, m, timeService, byteBufferFactory,
                                                                        marshalledEntryFactory);
          if (loader != null) {
-            loader.init(ctx);
+            if (loader instanceof DelegatingCacheLoader)
+               loader.init(ctx);
             loaders.add(loader);
             configMap.put(loader, cfg);
          }
          if (writer != null) {
-            writer.init(ctx);
+            if (writer instanceof DelegatingCacheWriter)
+               writer.init(ctx);
             writers.add(writer);
             configMap.put(writer, cfg);
          }
