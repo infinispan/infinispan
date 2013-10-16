@@ -562,7 +562,7 @@ public class StateConsumerImpl implements StateConsumer {
       log.debugf("Finished applying state for segment %d of cache %s", segmentId, cacheName);
    }
 
-   private void applyTransactions(Address sender, Collection<TransactionInfo> transactions) {
+   private void applyTransactions(Address sender, Collection<TransactionInfo> transactions, int topologyId) {
       log.debugf("Applying %d transactions for cache %s transferred from node %s", transactions.size(), cacheName, sender);
       if (isTransactional) {
          for (TransactionInfo transactionInfo : transactions) {
@@ -575,7 +575,8 @@ public class StateConsumerImpl implements StateConsumer {
                tx = transactionTable.getRemoteTransaction(gtx);
                if (tx == null) {
                   tx = transactionTable.getOrCreateRemoteTransaction(gtx, transactionInfo.getModifications());
-                  ((RemoteTransaction) tx).setMissingLookedUpEntries(true);
+                  // Force this node to replay the given transaction data by making it think it is 1 behind
+                  ((RemoteTransaction) tx).setLookedUpEntriesTopology(topologyId - 1);
                }
             }
             for (Object key : transactionInfo.getLockedKeys()) {
@@ -689,9 +690,10 @@ public class StateConsumerImpl implements StateConsumer {
          for (Map.Entry<Address, Set<Integer>> e : sources.entrySet()) {
             Address source = e.getKey();
             Set<Integer> segmentsFromSource = e.getValue();
-            List<TransactionInfo> transactions = getTransactions(source, segmentsFromSource, cacheTopology.getTopologyId());
+            int topologyId = cacheTopology.getTopologyId();
+            List<TransactionInfo> transactions = getTransactions(source, segmentsFromSource, topologyId);
             if (transactions != null) {
-               applyTransactions(source, transactions);
+               applyTransactions(source, transactions, topologyId);
             } else {
                // if requesting the transactions failed we need to retry from another source
                failedSegments.addAll(segmentsFromSource);
@@ -748,6 +750,9 @@ public class StateConsumerImpl implements StateConsumer {
 
    private void startTransferThread(final Set<Address> excludedSources) {
       synchronized (this) {
+         if (trace) {
+            log.tracef("Starting transfer thread: %b", !isTransferThreadRunning);
+         }
          if (isTransferThreadRunning) {
             return;
          }
@@ -791,7 +796,9 @@ public class StateConsumerImpl implements StateConsumer {
                      break;
                   }
 
-                  log.tracef("Retrying %d failed tasks", failedTasks.size());
+                  if (trace) {
+                     log.tracef("Retrying %d failed tasks", failedTasks.size());
+                  }
 
                   // look for other sources for the failed segments and replace all failed tasks with new tasks to be retried
                   // remove+add needs to be atomic
@@ -817,6 +824,9 @@ public class StateConsumerImpl implements StateConsumer {
                }
             } finally {
                synchronized (StateConsumerImpl.this) {
+                  if (trace) {
+                     log.tracef("Stopping state transfer thread");
+                  }
                   isTransferThreadRunning = false;
                }
             }

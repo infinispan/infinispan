@@ -27,12 +27,14 @@ public class RemoteTransaction extends AbstractCacheTransaction implements Clone
    private static final Log log = LogFactory.getLog(RemoteTransaction.class);
 
    /**
-    * This flag can only be true for transactions received via state transfer. During state transfer we do not migrate
-    * lookedUpEntries to save bandwidth. If missingLookedUpEntries is true at the time a CommitCommand is received this
-    * indicates the preceding PrepareCommand was received by previous owner before state transfer but not by the
-    * current owner which now has to re-execute prepare to populate lookedUpEntries (and acquire the locks).
+    * This int should be set to the highest topology id for transactions received via state transfer. During state
+    * transfer we do not migrate lookedUpEntries to save bandwidth. If lookedUpEntriesTopology is less than the
+    * topology of the CommitCommand that is received this indicates the preceding PrepareCommand was received by
+    * previous owner before state transfer or the data has now changed owners and the current owner
+    * now has to re-execute prepare to populate lookedUpEntries (and acquire the locks).
     */
-   private volatile boolean missingLookedUpEntries = false;
+   // Default value of MAX_VALUE basically means it hasn't yet received what topology id this is for the entries
+   private volatile int lookedUpEntriesTopology = Integer.MAX_VALUE;
 
    /**
     * If true, the check transaction completed in TxInterceptor is skipped for this transaction.
@@ -108,19 +110,19 @@ public class RemoteTransaction extends AbstractCacheTransaction implements Clone
             ", lookedUpEntries=" + lookedUpEntries +
             ", lockedKeys=" + lockedKeys +
             ", backupKeyLocks=" + backupKeyLocks +
-            ", missingLookedUpEntries=" + missingLookedUpEntries +
+            ", lookedUpEntriesTopology=" + lookedUpEntriesTopology +
             ", isMarkedForRollback=" + isMarkedForRollback()+
             ", tx=" + tx +
             ", state=" + transactionState +
             '}';
    }
 
-   public void setMissingLookedUpEntries(boolean missingLookedUpEntries) {
-      this.missingLookedUpEntries = missingLookedUpEntries;
+   public void setLookedUpEntriesTopology(int lookedUpEntriesTopology) {
+      this.lookedUpEntriesTopology = lookedUpEntriesTopology;
    }
 
-   public boolean isMissingLookedUpEntries() {
-      return missingLookedUpEntries;
+   public int lookedUpEntriesTopology() {
+      return lookedUpEntriesTopology;
    }
 
    public void skipTransactionCompleteCheck(boolean skip) {
