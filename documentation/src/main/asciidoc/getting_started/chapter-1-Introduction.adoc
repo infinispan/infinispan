@@ -25,3 +25,4 @@ Infinispan offers two access patterns, both of which are available in any runtim
 *  As a _Remote_ server accessed by a client (REST, memcached or Hot Rod wire protocols are supported) 
 
 This guide will introduce to each of the runtime options, access patterns and modes of operations by walking you through simple applications for each.
+
