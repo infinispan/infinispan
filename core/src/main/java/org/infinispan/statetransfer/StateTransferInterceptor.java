@@ -83,7 +83,7 @@ public class StateTransferInterceptor extends CommandInterceptor {
    @Override
    public Object visitPrepareCommand(TxInvocationContext ctx, PrepareCommand command) throws Throwable {
       if (ctx.getCacheTransaction() instanceof RemoteTransaction) {
-         ((RemoteTransaction) ctx.getCacheTransaction()).setMissingLookedUpEntries(false);
+         ((RemoteTransaction) ctx.getCacheTransaction()).setLookedUpEntriesTopology(command.getTopologyId());
       }
 
       return handleTxCommand(ctx, command);
@@ -97,9 +97,13 @@ public class StateTransferInterceptor extends CommandInterceptor {
          // was not received by local node because it was executed on the previous key owners. We need to re-prepare
          // the transaction on local node to ensure its locks are acquired and lookedUpEntries is properly populated.
          RemoteTransaction remoteTx = (RemoteTransaction) ctx.getCacheTransaction();
-         if (remoteTx.isMissingLookedUpEntries()) {
+         if (trace) {
+            log.tracef("Remote tx topology id %d and command topology is %d", remoteTx.lookedUpEntriesTopology(),
+                       command.getTopologyId());
+         }
+         if (remoteTx.lookedUpEntriesTopology() < command.getTopologyId()) {
             ctx.skipTransactionCompleteCheck(true);
-            remoteTx.setMissingLookedUpEntries(false);
+            remoteTx.setLookedUpEntriesTopology(command.getTopologyId());
 
             PrepareCommand prepareCommand;
             if (useVersioning) {

@@ -38,7 +38,7 @@ public class TotalOrderStateTransferInterceptor extends CommandInterceptor {
    private Object remotePrepare(TxInvocationContext ctx, PrepareCommand command) throws Throwable {
       CacheTopology cacheTopology = stateTransferManager.getCacheTopology();
       final int topologyId = cacheTopology.getTopologyId();
-      ((RemoteTransaction) ctx.getCacheTransaction()).setMissingLookedUpEntries(false);
+      ((RemoteTransaction) ctx.getCacheTransaction()).setLookedUpEntriesTopology(command.getTopologyId());
 
       if (log.isTraceEnabled()) {
          log.tracef("Remote transaction received %s. Tx topology id is %s and current topology is is %s",

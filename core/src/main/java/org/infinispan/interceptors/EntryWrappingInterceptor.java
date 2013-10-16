@@ -152,7 +152,7 @@ public class EntryWrappingInterceptor extends CommandInterceptor {
          //otherwise it may be not removed
         entryFactory.wrapEntryForRemove(ctx, key, false, true);
         if (trace)
-           log.tracef("Entry to be removed: %s", ctx.getLookedUpEntries());
+           log.tracef("Entry to be removed: %s", toStr(key));
       }
       return setSkipRemoteGetsAndInvokeNextForDataCommand(ctx, command, null);
    }

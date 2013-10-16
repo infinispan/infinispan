@@ -42,8 +42,6 @@ import static org.testng.AssertJUnit.assertEquals;
 @Test(groups = "functional", testName = "distribution.rehash.NonTxStateTransferOverwritingValueTest")
 public class NonTxStateTransferOverwritingValueTest extends MultipleCacheManagersTest {
 
-   private static final String CACHE_NAME = BasicCacheContainer.DEFAULT_CACHE_NAME;
-
    {
       cleanup = CleanupPhase.AFTER_METHOD;
    }
