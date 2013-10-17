@@ -59,6 +59,7 @@ public class EntryWrappingInterceptor extends CommandInterceptor {
    protected final EntryWrappingVisitor entryWrappingVisitor = new EntryWrappingVisitor();
    private CommandsFactory commandFactory;
    private boolean isUsingLockDelegation;
+   private boolean isInvalidation;
    private StateConsumer stateConsumer;       // optional
    private StateTransferLock stateTransferLock;
 
@@ -85,6 +86,7 @@ public class EntryWrappingInterceptor extends CommandInterceptor {
    public void start() {
       isUsingLockDelegation = !cacheConfiguration.transaction().transactionMode().isTransactional()
             && cacheConfiguration.clustering().cacheMode().isDistributed();
+      isInvalidation = cacheConfiguration.clustering().cacheMode().isInvalidation();
    }
 
    @Override
@@ -174,7 +176,14 @@ public class EntryWrappingInterceptor extends CommandInterceptor {
       boolean result;
       boolean isTransactional = cacheConfiguration.transaction().transactionMode().isTransactional();
       boolean isPutForExternalRead = command.hasFlag(Flag.PUT_FOR_EXTERNAL_READ);
-      if (isTransactional && !isPutForExternalRead) {
+
+      // Invalidated caches should always wrap entries in order to local
+      // changes from nodes that are not lock owners for these entries.
+      // Switching ClusteringDependentLogic to handle this, i.e.
+      // localNodeIsPrimaryOwner to always return true, would have had negative
+      // impact on locking since locks would be always be acquired locally
+      // and that would lead to deadlocks.
+      if (isInvalidation || (isTransactional && !isPutForExternalRead)) {
          result = true;
       } else {
          if (isUsingLockDelegation || isTransactional) {
