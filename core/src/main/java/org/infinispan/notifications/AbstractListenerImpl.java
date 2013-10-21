@@ -16,7 +16,6 @@ import java.lang.annotation.Annotation;
 import java.lang.ref.WeakReference;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
-import java.lang.reflect.Modifier;
 import java.security.AccessController;
 import java.security.PrivilegedAction;
 import java.util.Collections;
@@ -124,6 +123,7 @@ public abstract class AbstractListenerImpl {
             Class<?> value = annotationEntry.getValue();
             if (m.isAnnotationPresent(key)) {
                testListenerMethodValidity(m, value, key.getName());
+               m.setAccessible(true);
                addListenerInvocation(key, new ListenerInvocation(listener, m, l.sync(), l.primaryOnly(), filter, classLoader));
                foundMethods = true;
             }
@@ -149,8 +149,6 @@ public abstract class AbstractListenerImpl {
       Listener l = ReflectionUtil.getAnnotation(listenerClass, Listener.class);
       if (l == null)
          throw new IncorrectListenerException(String.format("Cache listener class %s must be annotated with org.infinispan.notifications.annotation.Listener", listenerClass.getName()));
-      if (!Modifier.isPublic(listenerClass.getModifiers()))
-         throw new IncorrectListenerException(String.format("Cache listener class %s must be public!", listenerClass.getName()));
       return l;
    }
 
