@@ -128,10 +128,7 @@ public class QueryInterceptor extends CommandInterceptor {
    }
 
    @Listener
-   public class KnownClassesRegistryListener {
-
-      KnownClassesRegistryListener() {
-      }
+   class KnownClassesRegistryListener {
 
       @CacheEntryCreated
       public void created(CacheEntryCreatedEvent<ScopedKey<String, Class>, Boolean> e) {

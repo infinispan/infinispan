@@ -165,7 +165,7 @@ public class ClusterRegistryFunctionalTest extends MultipleCacheManagersTest {
    }
 
    @Listener
-   public static class TestRegistryListener {
+   static class TestRegistryListener {
 
       public final Map<ScopedKey<String, String>, Integer> updates = new HashMap<ScopedKey<String, String>, Integer>();
 

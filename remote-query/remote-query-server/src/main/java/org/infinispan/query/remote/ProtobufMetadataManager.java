@@ -134,10 +134,7 @@ public class ProtobufMetadataManager {
    }
 
    @Listener
-   public class ProtobufMetadataRegistryListener {
-
-      ProtobufMetadataRegistryListener() {
-      }
+   class ProtobufMetadataRegistryListener {
 
       @CacheEntryCreated
       public void created(CacheEntryCreatedEvent<ScopedKey<String, String>, byte[]> e) throws IOException, Descriptors.DescriptorValidationException {
