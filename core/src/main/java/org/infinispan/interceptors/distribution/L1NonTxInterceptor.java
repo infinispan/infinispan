@@ -1,10 +1,12 @@
 package org.infinispan.interceptors.distribution;
 
+import org.infinispan.commands.CommandsFactory;
 import org.infinispan.commands.DataCommand;
 import org.infinispan.commands.FlagAffectedCommand;
 import org.infinispan.commands.LocalFlagAffectedCommand;
 import org.infinispan.commands.read.GetKeyValueCommand;
 import org.infinispan.commands.write.DataWriteCommand;
+import org.infinispan.commands.write.InvalidateCommand;
 import org.infinispan.commands.write.InvalidateL1Command;
 import org.infinispan.commands.write.PutKeyValueCommand;
 import org.infinispan.commands.write.PutMapCommand;
@@ -47,6 +49,7 @@ public class L1NonTxInterceptor extends BaseRpcInterceptor {
    protected L1Manager l1Manager;
    protected ClusteringDependentLogic cdl;
    protected EntryFactory entryFactory;
+   protected CommandsFactory commandsFactory;
    protected DataContainer dataContainer;
    protected Configuration config;
    protected StateTransferLock stateTransferLock;
@@ -57,13 +60,15 @@ public class L1NonTxInterceptor extends BaseRpcInterceptor {
 
    @Inject
    public void init(L1Manager l1Manager, ClusteringDependentLogic cdl, EntryFactory entryFactory,
-                    DataContainer dataContainer, Configuration config, StateTransferLock stateTransferLock) {
+                    DataContainer dataContainer, Configuration config, StateTransferLock stateTransferLock,
+                    CommandsFactory commandsFactory) {
       this.l1Manager = l1Manager;
       this.cdl = cdl;
       this.entryFactory = entryFactory;
       this.dataContainer = dataContainer;
       this.config = config;
       this.stateTransferLock = stateTransferLock;
+      this.commandsFactory = commandsFactory;
    }
 
    @Start
@@ -239,7 +244,7 @@ public class L1NonTxInterceptor extends BaseRpcInterceptor {
       return returnValue;
    }
 
-   private void removeFromLocalL1(InvocationContext ctx, DataWriteCommand command) throws InterruptedException {
+   private void removeFromLocalL1(InvocationContext ctx, DataWriteCommand command) throws Throwable {
       if (ctx.isOriginLocal() && !cdl.localNodeIsOwner(command.getKey())) {
          removeFromL1(ctx, command.getKey());
       } else if (trace) {
@@ -247,13 +252,16 @@ public class L1NonTxInterceptor extends BaseRpcInterceptor {
       }
    }
 
-   private void removeFromL1(InvocationContext ctx, Object key) throws InterruptedException {
+   private void removeFromL1(InvocationContext ctx, Object key) throws Throwable {
       if (trace) {
          log.tracef("Removing entry from L1 for key %s", key);
       }
       abortL1UpdateOrWait(key);
       ctx.removeLookedUpEntry(key);
       entryFactory.wrapEntryForRemove(ctx, key, true);
+
+      InvalidateCommand command = commandsFactory.buildInvalidateFromL1Command(false, null, Collections.singleton(key));
+      invokeNextInterceptor(ctx, command);
    }
 
    private void processInvalidationResult(InvocationContext ctx, FlagAffectedCommand command, Future<Object> l1InvalidationFuture) throws InterruptedException, ExecutionException {

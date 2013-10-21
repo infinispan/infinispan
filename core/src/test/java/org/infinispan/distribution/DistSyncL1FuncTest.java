@@ -93,7 +93,6 @@ public class DistSyncL1FuncTest extends BaseDistSyncL1Test {
       }
    }
 
-   @Test
    public void testNoEntryInL1PutWithConcurrentInvalidation() throws InterruptedException, ExecutionException, TimeoutException, BrokenBarrierException {
       final Cache<Object, String> nonOwnerCache = getFirstNonOwner(key);
       final Cache<Object, String> ownerCache = getFirstOwner(key);
@@ -104,7 +103,6 @@ public class DistSyncL1FuncTest extends BaseDistSyncL1Test {
       assertL1PutWithConcurrentUpdate(nonOwnerCache, ownerCache, false, key, firstValue, "intermediate-put", secondValue);
    }
 
-   @Test
    public void testEntryInL1PutWithConcurrentInvalidation() throws InterruptedException, ExecutionException, TimeoutException, BrokenBarrierException {
       final Cache<Object, String> nonOwnerCache = getFirstNonOwner(key);
       final Cache<Object, String> ownerCache = getFirstOwner(key);
@@ -118,7 +116,6 @@ public class DistSyncL1FuncTest extends BaseDistSyncL1Test {
       assertL1PutWithConcurrentUpdate(nonOwnerCache, ownerCache, false, key, firstValue, "intermediate-put", secondValue);
    }
 
-   @Test
    public void testNoEntryInL1PutWithConcurrentPut() throws InterruptedException, ExecutionException, TimeoutException, BrokenBarrierException {
       final Cache<Object, String> nonOwnerCache = getFirstNonOwner(key);
       final Cache<Object, String> ownerCache = getFirstOwner(key);
@@ -129,7 +126,6 @@ public class DistSyncL1FuncTest extends BaseDistSyncL1Test {
       assertL1PutWithConcurrentUpdate(nonOwnerCache, nonOwnerCache, false, key, firstValue, "intermediate-put", secondValue);
    }
 
-   @Test
    public void testEntryInL1PutWithConcurrentPut() throws InterruptedException, ExecutionException, TimeoutException, BrokenBarrierException {
       final Cache<Object, String> nonOwnerCache = getFirstNonOwner(key);
       final Cache<Object, String> ownerCache = getFirstOwner(key);
@@ -143,7 +139,6 @@ public class DistSyncL1FuncTest extends BaseDistSyncL1Test {
       assertL1PutWithConcurrentUpdate(nonOwnerCache, nonOwnerCache, false, key, firstValue, "intermediate-put", secondValue);
    }
 
-   @Test
    public void testNoEntryInL1ReplaceWithConcurrentInvalidation() throws InterruptedException, ExecutionException, TimeoutException, BrokenBarrierException {
       final Cache<Object, String> nonOwnerCache = getFirstNonOwner(key);
       final Cache<Object, String> ownerCache = getFirstOwner(key);
@@ -154,7 +149,6 @@ public class DistSyncL1FuncTest extends BaseDistSyncL1Test {
       assertL1PutWithConcurrentUpdate(nonOwnerCache, ownerCache, true, key, firstValue, "intermediate-put", secondValue);
    }
 
-   @Test
    public void testEntryInL1ReplaceWithConcurrentInvalidation() throws InterruptedException, ExecutionException, TimeoutException, BrokenBarrierException {
       final Cache<Object, String> nonOwnerCache = getFirstNonOwner(key);
       final Cache<Object, String> ownerCache = getFirstOwner(key);
@@ -168,7 +162,6 @@ public class DistSyncL1FuncTest extends BaseDistSyncL1Test {
       assertL1PutWithConcurrentUpdate(nonOwnerCache, ownerCache, true, key, firstValue, "intermediate-put", secondValue);
    }
 
-   @Test
    public void testNoEntryInL1ReplaceWithConcurrentPut() throws InterruptedException, ExecutionException, TimeoutException, BrokenBarrierException {
       final Cache<Object, String> nonOwnerCache = getFirstNonOwner(key);
       final Cache<Object, String> ownerCache = getFirstOwner(key);
@@ -179,7 +172,6 @@ public class DistSyncL1FuncTest extends BaseDistSyncL1Test {
       assertL1PutWithConcurrentUpdate(nonOwnerCache, nonOwnerCache, true, key, firstValue, "intermediate-put", secondValue);
    }
 
-   @Test
    public void testEntryInL1ReplaceWithConcurrentPut() throws InterruptedException, ExecutionException, TimeoutException, BrokenBarrierException {
       final Cache<Object, String> nonOwnerCache = getFirstNonOwner(key);
       final Cache<Object, String> ownerCache = getFirstOwner(key);
@@ -193,7 +185,6 @@ public class DistSyncL1FuncTest extends BaseDistSyncL1Test {
       assertL1PutWithConcurrentUpdate(nonOwnerCache, nonOwnerCache, true, key, firstValue, "intermediate-put", secondValue);
    }
 
-   @Test
    public void testNoEntryInL1GetWithConcurrentReplace() throws InterruptedException, ExecutionException, TimeoutException, BrokenBarrierException {
       final Cache<Object, String> nonOwnerCache = getFirstNonOwner(key);
       final Cache<Object, String> ownerCache = getFirstOwner(key);
@@ -207,7 +198,6 @@ public class DistSyncL1FuncTest extends BaseDistSyncL1Test {
       assertL1PutWithConcurrentUpdate(nonOwnerCache, nonOwnerCache, true, key, firstValue, "intermediate-put", secondValue);
    }
 
-   @Test
    public void testNoEntryInL1PutReplacedNullValueConcurrently() throws InterruptedException, ExecutionException, TimeoutException {
       final Cache<Object, String> nonOwnerCache = getFirstNonOwner(key);
       final Cache<Object, String> ownerCache = getFirstOwner(key);
@@ -245,7 +235,6 @@ public class DistSyncL1FuncTest extends BaseDistSyncL1Test {
       }
    }
 
-   @Test
    public void testNonOwnerRetrievesValueFromBackupOwnerWhileWrite() throws Exception {
       final Cache<Object, String>[] owners = getOwners(key, 2);
 
@@ -318,6 +307,71 @@ public class DistSyncL1FuncTest extends BaseDistSyncL1Test {
          assertIsNotInL1(nonOwnerCache, key);
       } finally {
          removeAllBlockingInterceptorsFromCache(ownerCache);
+         removeAllBlockingInterceptorsFromCache(backupOwnerCache);
+      }
+   }
+
+   /**
+    * See ISPN-3617
+    */
+   public void testNonOwnerRemovesValueFromL1ProperlyOnWrite() throws InterruptedException, TimeoutException,
+                                                                      BrokenBarrierException, ExecutionException {
+
+      final Cache<Object, String>[] owners = getOwners(key, 2);
+
+      final Cache<Object, String> ownerCache = owners[0];
+      final Cache<Object, String> backupOwnerCache = owners[1];
+      final Cache<Object, String> nonOwnerCache = getFirstNonOwner(key);
+
+      ownerCache.put(key, firstValue);
+
+      assertEquals(firstValue, nonOwnerCache.get(key));
+
+      assertIsInL1(nonOwnerCache, key);
+
+      // Add a barrier to block the owner from actually updating it's own local value
+      CyclicBarrier ownerPutBarrier = new CyclicBarrier(2);
+      addBlockingInterceptor(ownerCache, ownerPutBarrier, PutKeyValueCommand.class, L1NonTxInterceptor.class, true);
+
+      // Add a barrier to block the get from being retrieved on the backup owner
+      CyclicBarrier backupGetBarrier = new CyclicBarrier(2);
+      addBlockingInterceptor(backupOwnerCache, backupGetBarrier, GetKeyValueCommand.class, L1NonTxInterceptor.class,
+                             false);
+
+      try {
+         Future<String> future = fork(new Callable<String>() {
+
+            @Override
+            public String call() throws Exception {
+               return nonOwnerCache.put(key, secondValue);
+            }
+         });
+
+         // Wait until owner has already replicated to backup owner, but hasn't updated local value
+         ownerPutBarrier.await(10, TimeUnit.SECONDS);
+
+         assertEquals(firstValue, ownerCache.getAdvancedCache().getDataContainer().get(key).getValue());
+         assertEquals(secondValue, backupOwnerCache.getAdvancedCache().getDataContainer().get(key).getValue());
+
+         assertEquals(firstValue, nonOwnerCache.get(key));
+
+         assertIsInL1(nonOwnerCache, key);
+
+         // Just let the backup get return now
+         backupGetBarrier.await(10, TimeUnit.SECONDS);
+         backupGetBarrier.await(10, TimeUnit.SECONDS);
+
+         // Finally let the put complete
+         ownerPutBarrier.await(10, TimeUnit.SECONDS);
+
+         assertEquals(firstValue, future.get(10, TimeUnit.SECONDS));
+
+         assertIsNotInL1(nonOwnerCache, key);
+
+         assertEquals(secondValue, ownerCache.getAdvancedCache().getDataContainer().get(key).getValue());
+      } finally {
+         removeAllBlockingInterceptorsFromCache(ownerCache);
+         removeAllBlockingInterceptorsFromCache(backupOwnerCache);
       }
    }
 }
