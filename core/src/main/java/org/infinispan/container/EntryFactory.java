@@ -50,7 +50,7 @@ public interface EntryFactory {
     * @param skipRead if {@code true}, if the key is not read during the remove operation. Only used with Repeatable
     *                 Read + Write Skew + Versioning + Cluster.
     */
-   MVCCEntry wrapEntryForRemove(InvocationContext ctx, Object key, boolean skipRead) throws InterruptedException;
+   MVCCEntry wrapEntryForRemove(InvocationContext ctx, Object key, boolean skipRead, boolean forInvalidation) throws InterruptedException;
    
    /**
     * Used for wrapping Delta entry to be applied to DeltaAware object stored in cache. The wrapped

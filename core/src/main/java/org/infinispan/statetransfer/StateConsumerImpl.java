@@ -100,6 +100,7 @@ public class StateConsumerImpl implements StateConsumer {
    private boolean isTransactional;
    private boolean isInvalidationMode;
    private boolean isTotalOrder;
+   private volatile KeyInvalidationListener keyInvalidationListener; //for test purpose only!
 
    private volatile CacheTopology cacheTopology;
 
@@ -618,6 +619,10 @@ public class StateConsumerImpl implements StateConsumer {
       return cacheTopology;
    }
 
+   public void setKeyInvalidationListener(KeyInvalidationListener keyInvalidationListener) {
+      this.keyInvalidationListener = keyInvalidationListener;
+   }
+
    private void addTransfers(Set<Integer> segments) {
       log.debugf("Adding inbound state transfer for segments %s of cache %s", segments, cacheName);
 
@@ -837,6 +842,9 @@ public class StateConsumerImpl implements StateConsumer {
    }
 
    private void invalidateSegments(final Set<Integer> newSegments, final Set<Integer> segmentsToL1) {
+      if (keyInvalidationListener != null) {
+         keyInvalidationListener.beforeInvalidation(newSegments, segmentsToL1);
+      }
       // The actual owners keep track of the nodes that hold a key in L1 ("requestors") and
       // they invalidate the key on every requestor after a change.
       // But this information is only present on the owners where the ClusteredGetKeyValueCommand
@@ -1002,5 +1010,9 @@ public class StateConsumerImpl implements StateConsumer {
       removeTransfer(inboundTransfer);
 
       notifyEndOfRebalanceIfNeeded(cacheTopology.getTopologyId());
+   }
+
+   public interface KeyInvalidationListener {
+      void beforeInvalidation(Set<Integer> newSegments, Set<Integer> segmentsToL1);
    }
 }

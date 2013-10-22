@@ -309,14 +309,8 @@ public class TxDistributionInterceptor extends BaseDistributionInterceptor {
       }
    }
 
-   private boolean isNotInL1(Object key) {
-      return !dataContainer.containsKey(key);
-   }
-
    private InternalCacheEntry remoteGet(InvocationContext ctx, Object key, boolean isWrite, FlagAffectedCommand command) throws Throwable {
-      boolean isKeyLocalToNode = dm.getReadConsistentHash().isKeyLocalToNode(rpcManager.getAddress(), key);
-
-      if (ctx.isOriginLocal() && !isKeyLocalToNode && isNotInL1(key) || dm.isAffectedByRehash(key) && !dataContainer.containsKey(key)) {
+      if (ctx.isOriginLocal() && !isValueAvailableLocally(dm.getReadConsistentHash(), key) || dm.isAffectedByRehash(key) && !dataContainer.containsKey(key)) {
          if (trace) log.tracef("Doing a remote get for key %s", key);
 
          boolean acquireRemoteLock = false;

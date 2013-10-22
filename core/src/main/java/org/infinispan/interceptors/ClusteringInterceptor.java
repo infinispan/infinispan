@@ -33,6 +33,7 @@ public abstract class ClusteringInterceptor extends BaseRpcInterceptor {
    protected DataContainer dataContainer;
    protected StateTransferManager stateTransferManager;
    protected boolean needReliableReturnValues;
+   protected boolean isL1Enabled;
 
    @Inject
    public void injectDependencies(CommandsFactory cf, EntryFactory entryFactory,
@@ -48,6 +49,7 @@ public abstract class ClusteringInterceptor extends BaseRpcInterceptor {
    @Start
    public void configure() {
       needReliableReturnValues = !cacheConfiguration.unsafe().unreliableReturnValues();
+      isL1Enabled = cacheConfiguration.clustering().l1().enabled();
    }
 
    protected boolean isNeedReliableReturnValues(FlagAffectedCommand command) {
@@ -66,12 +68,17 @@ public abstract class ClusteringInterceptor extends BaseRpcInterceptor {
       if (entry == null || entry.isNull()) {
          Object key = command.getKey();
          ConsistentHash ch = stateTransferManager.getCacheTopology().getReadConsistentHash();
-         shouldFetchFromRemote = ctx.isOriginLocal() && !ch.isKeyLocalToNode(rpcManager.getAddress(), key) && !dataContainer.containsKey(key);
+         shouldFetchFromRemote = ctx.isOriginLocal() && !isValueAvailableLocally(ch, key);
          if (!shouldFetchFromRemote && getLog().isTraceEnabled()) {
             getLog().tracef("Not doing a remote get for key %s since entry is mapped to current node (%s) or is in L1. Owners are %s", toStr(key), rpcManager.getAddress(), ch.locateOwners(key));
          }
       }
       return shouldFetchFromRemote;
+   }
+
+   protected boolean isValueAvailableLocally(ConsistentHash consistentHash, Object key) {
+      final boolean isLocal = consistentHash.isKeyLocalToNode(rpcManager.getAddress(), key);
+      return isLocal || (isL1Enabled && dataContainer.containsKey(key));
    }
 
    /**
