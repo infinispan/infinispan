@@ -48,7 +48,7 @@ public class NonTxDistributionInterceptor extends BaseDistributionInterceptor {
                InternalCacheEntry remoteEntry = remoteGetCacheEntry(ctx, key, command);
                returnValue = computeGetReturn(remoteEntry, command);
             }
-            if (returnValue == null) {
+            if (returnValue == null && isValueAvailableLocally(dm.getReadConsistentHash(), key)) {
                InternalCacheEntry localEntry = localGetCacheEntry(ctx, key, false, command);
                returnValue = computeGetReturn(localEntry, command);
             }

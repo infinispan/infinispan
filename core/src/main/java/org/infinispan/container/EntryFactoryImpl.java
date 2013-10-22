@@ -1,6 +1,7 @@
 package org.infinispan.container;
 
 import org.infinispan.configuration.cache.VersioningScheme;
+import org.infinispan.distribution.DistributionManager;
 import org.infinispan.metadata.Metadata;
 import org.infinispan.atomic.Delta;
 import org.infinispan.atomic.DeltaAware;
@@ -38,14 +39,18 @@ public class EntryFactoryImpl implements EntryFactory {
    protected boolean useRepeatableRead;
    private DataContainer container;
    protected boolean clusterModeWriteSkewCheck;
+   private boolean isL1Enabled; //cache the value
    private Configuration configuration;
    private CacheNotifier notifier;
+   private DistributionManager distributionManager;//is null for non-clustered caches
 
    @Inject
-   public void injectDependencies(DataContainer dataContainer, Configuration configuration, CacheNotifier notifier) {
+   public void injectDependencies(DataContainer dataContainer, Configuration configuration, CacheNotifier notifier,
+                                  DistributionManager distributionManager) {
       this.container = dataContainer;
       this.configuration = configuration;
       this.notifier = notifier;
+      this.distributionManager = distributionManager;
    }
 
    @Start (priority = 8)
@@ -54,13 +59,14 @@ public class EntryFactoryImpl implements EntryFactory {
       clusterModeWriteSkewCheck = useRepeatableRead && configuration.locking().writeSkewCheck() &&
             configuration.clustering().cacheMode().isClustered() && configuration.versioning().scheme() == VersioningScheme.SIMPLE &&
             configuration.versioning().enabled();
+      isL1Enabled = configuration.clustering().l1().enabled();
    }
 
    @Override
    public final CacheEntry wrapEntryForReading(InvocationContext ctx, Object key) throws InterruptedException {
       CacheEntry cacheEntry = getFromContext(ctx, key);
       if (cacheEntry == null) {
-         cacheEntry = getFromContainer(key);
+         cacheEntry = getFromContainer(key, false);
 
          // do not bother wrapping though if this is not in a tx.  repeatable read etc are all meaningless unless there is a tx.
          if (useRepeatableRead) {
@@ -118,7 +124,7 @@ public class EntryFactoryImpl implements EntryFactory {
    }
 
    @Override
-   public final  MVCCEntry wrapEntryForRemove(InvocationContext ctx, Object key, boolean skipRead) throws InterruptedException {
+   public final  MVCCEntry wrapEntryForRemove(InvocationContext ctx, Object key, boolean skipRead, boolean forInvalidation) throws InterruptedException {
       CacheEntry cacheEntry = getFromContext(ctx, key);
       MVCCEntry mvccEntry = null;
       if (cacheEntry != null) {
@@ -129,7 +135,7 @@ public class EntryFactoryImpl implements EntryFactory {
             mvccEntry = wrapMvccEntryForRemove(ctx, key, cacheEntry, true);
          }
       } else {
-         InternalCacheEntry ice = getFromContainer(key);
+         InternalCacheEntry ice = getFromContainer(key, forInvalidation);
          if (ice != null || clusterModeWriteSkewCheck) {
             mvccEntry = wrapInternalCacheEntryForPut(ctx, key, ice, null, skipRead);
          }
@@ -181,7 +187,7 @@ public class EntryFactoryImpl implements EntryFactory {
          }
          mvccEntry.undelete(undeleteIfNeeded);
       } else {
-         InternalCacheEntry ice = (icEntry == null ? getFromContainer(key) : icEntry);
+         InternalCacheEntry ice = (icEntry == null ? getFromContainer(key, false) : icEntry);
          // A putForExternalRead is putIfAbsent, so if key present, do nothing
          if (ice != null && cmd.hasFlag(Flag.PUT_FOR_EXTERNAL_READ)) {
             // make sure we record this! Null value since this is a forced lock on the key
@@ -210,7 +216,7 @@ public class EntryFactoryImpl implements EntryFactory {
       if (cacheEntry != null) {        
          deltaAwareEntry = wrapEntryForDelta(ctx, deltaKey, cacheEntry);
       } else {                     
-         InternalCacheEntry ice = getFromContainer(deltaKey);
+         InternalCacheEntry ice = getFromContainer(deltaKey, false);
          if (ice != null){
             deltaAwareEntry = newDeltaAwareCacheEntry(ctx, deltaKey, (DeltaAware)ice.getValue());
          }
@@ -251,9 +257,10 @@ public class EntryFactoryImpl implements EntryFactory {
       return cacheEntry;
    }
 
-   private InternalCacheEntry getFromContainer(Object key) {
-      final InternalCacheEntry ice = container.get(key);
-      if (trace) log.tracef("Retrieved from container %s", ice);
+   private InternalCacheEntry getFromContainer(Object key, boolean forceFetch) {
+      final boolean isLocal = distributionManager == null || distributionManager.getLocality(key).isLocal();
+      final InternalCacheEntry ice = isL1Enabled || isLocal || forceFetch ? container.get(key) : null;
+      if (trace) log.tracef("Retrieved from container %s (isL1Enabled=%s, isLocal=%s)", ice, isL1Enabled, isLocal);
       return ice;
    }
 
@@ -300,7 +307,7 @@ public class EntryFactoryImpl implements EntryFactory {
          //already wrapped. set skip read to true to avoid replace the current version.
          mvccEntry = wrapMvccEntryForPut(ctx, key, cacheEntry, providedMetadata, true);
       } else {
-         InternalCacheEntry ice = getFromContainer(key);
+         InternalCacheEntry ice = getFromContainer(key, false);
          if (ice != null || clusterModeWriteSkewCheck) {
             mvccEntry = wrapInternalCacheEntryForPut(ctx, key, ice, providedMetadata, skipRead);
          }

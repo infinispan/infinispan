@@ -130,7 +130,9 @@ public class EntryWrappingInterceptor extends CommandInterceptor {
    public final Object visitInvalidateCommand(InvocationContext ctx, InvalidateCommand command) throws Throwable {
       if (command.getKeys() != null) {
          for (Object key : command.getKeys()) {
-            entryFactory.wrapEntryForRemove(ctx, key, false);
+            //for the invalidate command, we need to try to fetch the key from the data container
+            //otherwise it may be not removed
+            entryFactory.wrapEntryForRemove(ctx, key, false, true);
          }
       }
       return setSkipRemoteGetsAndInvokeNextForDataCommand(ctx, command, null);
@@ -146,7 +148,9 @@ public class EntryWrappingInterceptor extends CommandInterceptor {
    @Override
    public Object visitInvalidateL1Command(InvocationContext ctx, InvalidateL1Command command) throws Throwable {
       for (Object key : command.getKeys()) {
-        entryFactory.wrapEntryForRemove(ctx, key, false);
+         //for the invalidate command, we need to try to fetch the key from the data container
+         //otherwise it may be not removed
+        entryFactory.wrapEntryForRemove(ctx, key, false, true);
         if (trace)
            log.tracef("Entry to be removed: %s", ctx.getLookedUpEntries());
       }
@@ -219,7 +223,7 @@ public class EntryWrappingInterceptor extends CommandInterceptor {
             entryFactory.wrapEntryForPut(ctx, command.getKey(), null, false, command, false);
          } else {
             entryFactory.wrapEntryForRemove(ctx, command.getKey(),
-                  command.hasFlag(Flag.IGNORE_RETURN_VALUES) && !command.isConditional());
+                  command.hasFlag(Flag.IGNORE_RETURN_VALUES) && !command.isConditional(), false);
          }
       }
    }
@@ -446,7 +450,7 @@ public class EntryWrappingInterceptor extends CommandInterceptor {
          if (command.getKeys() != null) {
             for (Object key : command.getKeys()) {
                if (cdl.localNodeIsOwner(key)) {
-                  entryFactory.wrapEntryForRemove(ctx, key, false);
+                  entryFactory.wrapEntryForRemove(ctx, key, false, false);
                   invokeNextInterceptor(ctx, command);
                }
             }
@@ -462,7 +466,7 @@ public class EntryWrappingInterceptor extends CommandInterceptor {
                // but we still need to apply the new value.
                entryFactory.wrapEntryForPut(ctx, command.getKey(), null, false, command, false);
             } else  {
-               entryFactory.wrapEntryForRemove(ctx, command.getKey(), false);
+               entryFactory.wrapEntryForRemove(ctx, command.getKey(), false, false);
             }
             invokeNextInterceptor(ctx, command);
          }
