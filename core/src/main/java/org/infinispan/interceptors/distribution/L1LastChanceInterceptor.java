@@ -129,11 +129,15 @@ public class L1LastChanceInterceptor extends BaseRpcInterceptor {
    }
 
    private void handleLastChanceL1InvalidationOnCommit(TxInvocationContext ctx) {
-      if (shouldInvokeRemoteTxCommand(ctx)) {
+      if (shouldFlushL1(ctx)) {
          if (trace) {
             log.tracef("Sending additional invalidation for requestors if necessary.");
          }
-         l1Manager.flushCache(ctx.getLockedKeys(), ctx.getOrigin(), true);
+         l1Manager.flushCache(ctx.getAffectedKeys(), ctx.getOrigin(), true);
       }
+   }
+
+   private boolean shouldFlushL1(TxInvocationContext ctx) {
+      return !ctx.getAffectedKeys().isEmpty();
    }
 }

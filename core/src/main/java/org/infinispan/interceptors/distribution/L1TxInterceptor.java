@@ -68,14 +68,11 @@ public class L1TxInterceptor extends L1NonTxInterceptor {
    }
 
    private boolean shouldFlushL1(TxInvocationContext ctx) {
-      return shouldInvokeRemoteTxCommand(ctx) ||
-      // We fall into this situation if we are a remote node, happen to be the primary data owner and have locked keys.
-      // it is still our responsibility to invalidate L1 caches in the cluster.
-      !ctx.isOriginLocal() && !ctx.getLockedKeys().isEmpty();
+      return !ctx.getAffectedKeys().isEmpty();
    }
 
-   private Future<?> flushL1Caches(InvocationContext ctx) {
-      return l1Manager.flushCacheWithSimpleFuture(ctx.getLockedKeys(), null, ctx.getOrigin(), true);
+   private Future<?> flushL1Caches(TxInvocationContext ctx) {
+      return l1Manager.flushCacheWithSimpleFuture(ctx.getAffectedKeys(), null, ctx.getOrigin(), true);
    }
 
    private void blockOnL1FutureIfNeeded(Future<?> f) {
