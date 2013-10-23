@@ -47,6 +47,7 @@
 
                 <!-- Enabled fastest writer: NRT backend -->
                 <property name="default.indexmanager" value="near-real-time" />
+                <property name="default.indexBase" value="${java.io.tmpdir}/tunedConfDir" />
 
                 <!-- Default is to write on FSDirectory; to write in a dedicated cache uncomment: -->
                 <!-- Write indexes in Infinispan
