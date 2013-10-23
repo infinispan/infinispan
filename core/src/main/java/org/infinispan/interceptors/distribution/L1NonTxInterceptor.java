@@ -56,6 +56,29 @@ public class L1NonTxInterceptor extends BaseRpcInterceptor {
 
    private long l1Lifespan;
 
+   /**
+    *  This map holds all the current write synchronizers registered for a given key.  This map is only added to when an
+    * operation is invoked that would cause a remote get to occur (which is controlled by whether or not the
+    * {@link L1NonTxInterceptor#skipL1Lookup(org.infinispan.commands.LocalFlagAffectedCommand, Object)} method returns
+    * true.  This map <b>MUST</b> have the value inserted removed in a finally block after the remote get is done to
+    * prevent reference leaks.
+    * <p>
+    * Having a value in this map allows for other concurrent operations that require a remote get to not have to
+    * actually perform a remote get as the first thread is doing this.  So in this case any subsequent operations
+    * wanting the remote value can just call the
+    * {@link org.infinispan.interceptors.distribution.L1WriteSynchronizer#get()} method or one of it's overridden
+    * methods.  Note the way to tell if another thread is performing the remote get is to use the
+    * {@link ConcurrentMap#putIfAbsent(Object, Object)} method and check if the return value is null or not.
+    * <p>
+    * Having a value in this map allows for a concurrent write or L1 invalidation to try to stop the synchronizer from
+    * updating the L1 value by invoking it's
+    * {@link org.infinispan.interceptors.distribution.L1WriteSynchronizer#trySkipL1Update()} method.  If this method
+    * returns false, then the write or L1 invalidation <b>MUST</b> wait for the synchronizer to complete before
+    * continuing to ensure it is able to remove the newly cached L1 value as it is now invalid.  This waiting should be
+    * done by calling {@link org.infinispan.interceptors.distribution.L1WriteSynchronizer#get()} method or one of it's
+    * overridden methods.  Failure to wait for the update to occur could cause a L1 data inconsistency as the
+    * invalidation may not invalidate the new value.
+    */
    private final ConcurrentMap<Object, L1WriteSynchronizer> concurrentWrites = CollectionFactory.makeConcurrentMap();
 
    @Inject
@@ -103,21 +126,26 @@ public class L1NonTxInterceptor extends BaseRpcInterceptor {
       return returnValue;
    }
 
-    protected Object performL1Lookup(InvocationContext ctx, boolean runInterceptorOnConflict, Object key,
+   protected Object performL1Lookup(InvocationContext ctx, boolean runInterceptorOnConflict, Object key,
                                      DataCommand command) throws Throwable {
       // Most times the putIfAbsent will be successful, so not doing a get first
       L1WriteSynchronizer l1WriteSync = new L1WriteSynchronizer(dataContainer, l1Lifespan, stateTransferLock,
                                                                 cdl);
       L1WriteSynchronizer presentSync = concurrentWrites.putIfAbsent(key, l1WriteSync);
+
+      // If the sync was null that means we are the first to register for the given key.  If not that means there is
+      // a concurrent request that also wants to do a remote get for the key.  If there was another thread requesting
+      // the key we should wait until they get the value instead of doing another remote get.
       if (presentSync == null) {
          try {
+            // Note this is the same synchronizer we just created that is registered with the L1Manager
             l1Manager.registerL1WriteSynchronizer(key, l1WriteSync);
             Object returnValue;
             try {
                returnValue = invokeNextInterceptor(ctx, command);
             }
             finally {
-               l1Manager.unregisterL1WriteSynchronizer(key);
+               l1Manager.unregisterL1WriteSynchronizer(key, l1WriteSync);
             }
             return returnValue;
          }
@@ -134,7 +162,9 @@ public class L1NonTxInterceptor extends BaseRpcInterceptor {
          }
          try {
             Object returnValue = presentSync.get();
-            // Basically write commands could have different values
+            // Write commands could have different values so we always want to run them after we know the remote
+            // value is retrieved.  Gets however only need the return value so we don't need to run the additional
+            // interceptors
             if (runInterceptorOnConflict) {
                returnValue = invokeNextInterceptor(ctx, command);
             }
@@ -213,7 +243,6 @@ public class L1NonTxInterceptor extends BaseRpcInterceptor {
             }
             // We have to wait for the pending L1 update to complete before we can properly invalidate.  Any additional
             // gets that come in after this invalidation we ignore for now.
-            // TODO: Additional gets should be fixed with ISPN-2965
             boolean success;
             try {
                sync.get();

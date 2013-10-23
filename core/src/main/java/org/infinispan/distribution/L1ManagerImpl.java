@@ -274,14 +274,17 @@ public class L1ManagerImpl implements L1Manager, RemoteValueRetrievedListener {
 
    @Override
    public void registerL1WriteSynchronizer(Object key, L1WriteSynchronizer sync) {
-      if (synchronizers.putIfAbsent(key, sync) != null) {
-         throw new IllegalStateException("There is already a L1WriteSynchronizer associated with key: " + key);
+      if (synchronizers.put(key, sync) != null) {
+         if (trace) {
+            log.tracef("Replaced existing L1 write synchronizer for key %s as there was a concurrent L1 attempt to " +
+                             "update", key);
+         }
       }
    }
 
    @Override
-   public void unregisterL1WriteSynchronizer(Object key) {
-      synchronizers.remove(key);
+   public void unregisterL1WriteSynchronizer(Object key, L1WriteSynchronizer sync) {
+      synchronizers.remove(key, sync);
    }
 
    @Override

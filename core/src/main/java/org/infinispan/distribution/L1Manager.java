@@ -32,16 +32,17 @@ public interface L1Manager {
    /**
     * Registers the given write synchronizer to be notified whenever a remote value is looked up for the given key.
     * If the synchronizer is no longer needed to be signaled, the user should unregister it using
-    * {#unregisterL1WriteSynchronizer}
-    * @param key The key that is desired to trigger the synchronizer
-    * @param sync The synchronizer to update
-    * @throws IllegalStateException This is thrown if there is already a synchronizer associated with the L1 Manager.
+    * {@link L1Manager#unregisterL1WriteSynchronizer(Object, org.infinispan.interceptors.distribution.L1WriteSynchronizer)}
+    * @param key The key that that when looked up will trigger the synchronizer
+    * @param sync The synchronizer to run the update when the key is looked up
     */
    void registerL1WriteSynchronizer(Object key, L1WriteSynchronizer sync);
 
    /**
-    * Unregister the given write synchronizer if present.
-    * @param key The key to unregister the given synchronizer if present.
+    * Unregister the given write synchronizer if present.  Note the synchronizer is only unregistered if it matches
+    * using instance equality (==) due to possibly concurrent usage of write synchronizers
+    * @param key The key to unregister the given synchronizer for.
+    * @param sync The synchronizer to be removed if it is still present.
     */
-   void unregisterL1WriteSynchronizer(Object key);
+   void unregisterL1WriteSynchronizer(Object key, L1WriteSynchronizer sync);
 }

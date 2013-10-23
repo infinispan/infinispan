@@ -9,6 +9,7 @@ import org.infinispan.interceptors.base.CommandInterceptor;
 import org.testng.annotations.Test;
 
 import java.util.concurrent.BrokenBarrierException;
+import java.util.concurrent.Callable;
 import java.util.concurrent.CyclicBarrier;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
@@ -211,6 +212,57 @@ public abstract class BaseDistSyncL1Test extends BaseDistFunctionalTest<Object, 
          });
       }
       finally {
+         removeAllBlockingInterceptorsFromCache(nonOwnerCache);
+      }
+   }
+
+   /**
+    * See ISPN-3657
+    */
+   @Test
+   public void testGetAfterWriteAlreadyInvalidatedCurrentGet() throws InterruptedException, TimeoutException,
+                                                                      BrokenBarrierException, ExecutionException {
+      final Cache<Object, String> nonOwnerCache = getFirstNonOwner(key);
+      final Cache<Object, String> ownerCache = getFirstOwner(key);
+
+      ownerCache.put(key, firstValue);
+
+      CyclicBarrier nonOwnerGetBarrier = new CyclicBarrier(2);
+      // We want to block after it retrieves the value from remote owner so the L1 value will be invalidated
+      addBlockingInterceptor(nonOwnerCache, nonOwnerGetBarrier, GetKeyValueCommand.class,
+                             getDistributionInterceptorClass(), true);
+
+      try {
+
+         Future<String> future = fork(new Callable<String>() {
+            @Override
+            public String call() throws Exception {
+               return nonOwnerCache.get(key);
+            }
+         });
+
+         // Wait for the get to register L1 before it has sent remote
+         nonOwnerGetBarrier.await(10, TimeUnit.SECONDS);
+
+         // Now force the L1 sync to be blown away by an update
+         ownerCache.put(key, secondValue);
+
+         assertEquals(secondValue, nonOwnerCache.get(key));
+
+         // It should be in L1 now with the second value
+         assertIsInL1(nonOwnerCache, key);
+         assertEquals(secondValue, nonOwnerCache.getAdvancedCache().getDataContainer().get(key).getValue());
+
+         // Now let the original get complete
+         nonOwnerGetBarrier.await(10, TimeUnit.SECONDS);
+
+         assertEquals(firstValue, future.get(10, TimeUnit.SECONDS));
+
+         // It should STILL be in L1 now with the second value
+         assertIsInL1(nonOwnerCache, key);
+         assertEquals(secondValue, nonOwnerCache.getAdvancedCache().getDataContainer().get(key).getValue());
+
+      } finally {
          removeAllBlockingInterceptorsFromCache(nonOwnerCache);
       }
    }
