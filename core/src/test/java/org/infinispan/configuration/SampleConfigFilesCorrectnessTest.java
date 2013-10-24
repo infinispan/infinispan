@@ -5,7 +5,10 @@ import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
 import org.apache.log4j.spi.LoggingEvent;
 import org.infinispan.configuration.cache.CacheMode;
+import org.infinispan.configuration.global.GlobalConfigurationBuilder;
+import org.infinispan.manager.DefaultCacheManager;
 import org.infinispan.manager.EmbeddedCacheManager;
+import org.infinispan.remoting.transport.jgroups.JGroupsTransport;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.infinispan.util.logging.Log;
@@ -17,6 +20,8 @@ import org.testng.annotations.Test;
 import java.io.File;
 import java.io.FilenameFilter;
 import java.util.Arrays;
+
+import static org.testng.AssertJUnit.assertTrue;
 
 /**
  * Tests the correctness of the supplied configuration files.
@@ -80,6 +85,23 @@ public class SampleConfigFilesCorrectnessTest {
          assert appender.unknownWarning().contains("infinispan-query.jar");
       } finally {
          TestingUtil.killCacheManagers(embeddedCacheManager);
+      }
+   }
+
+   public void testOldBundlerWarning() {
+      GlobalConfigurationBuilder builder = new GlobalConfigurationBuilder();
+      builder.transport().defaultTransport().addProperty(JGroupsTransport.CONFIGURATION_FILE, "stacks/old_bundler_udp.xml");
+      EmbeddedCacheManager embeddedCacheManager = null;
+      try {
+         embeddedCacheManager = new DefaultCacheManager(builder.build());
+         embeddedCacheManager.getCache();
+         assertTrue(appender.isFoundUnknownWarning());
+         assertTrue(appender.unknownWarning().endsWith("Infinispan performance is negatively affected when \"old\" " +
+                                                             "JGroups bundler is used"));
+      } finally {
+         if (embeddedCacheManager != null) {
+            TestingUtil.killCacheManagers(embeddedCacheManager);
+         }
       }
    }
 
