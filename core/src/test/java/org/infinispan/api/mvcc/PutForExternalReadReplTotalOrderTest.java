@@ -10,17 +10,12 @@ import org.testng.annotations.Test;
 @CleanupAfterMethod
 public class PutForExternalReadReplTotalOrderTest extends PutForExternalReadTest {
 
+   @Override
    protected ConfigurationBuilder createCacheConfigBuilder() {
       ConfigurationBuilder c = getDefaultClusteredCacheConfig(CacheMode.REPL_SYNC, true);
       c.clustering().hash().numSegments(4);
       c.transaction().transactionProtocol(TransactionProtocol.TOTAL_ORDER)
             .recovery().disable();
       return c;
-   }
-
-   @Override
-   @Test(enabled = false, description = "Exception suppression doesn't work with TO, see ISPN-3300")
-   public void testExceptionSuppression() throws Exception {
-      super.testExceptionSuppression();
    }
 }

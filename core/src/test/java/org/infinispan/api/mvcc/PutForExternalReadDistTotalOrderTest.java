@@ -18,10 +18,4 @@ public class PutForExternalReadDistTotalOrderTest extends PutForExternalReadTest
             .recovery().disable();
       return c;
    }
-
-   @Override
-   @Test(enabled = false, description = "Exception suppression doesn't work with TO, see ISPN-3300")
-   public void testExceptionSuppression() throws Exception {
-      super.testExceptionSuppression();
-   }
 }
