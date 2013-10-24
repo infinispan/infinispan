@@ -24,10 +24,13 @@ import javax.transaction.TransactionManager;
 import org.infinispan.Cache;
 import org.infinispan.commands.remote.CacheRpcCommand;
 import org.infinispan.commands.write.PutKeyValueCommand;
+import org.infinispan.commands.write.RemoveCommand;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.distribution.MagicKey;
+import org.infinispan.interceptors.CallInterceptor;
 import org.infinispan.interceptors.base.BaseCustomInterceptor;
+import org.infinispan.interceptors.base.CommandInterceptor;
 import org.infinispan.remoting.rpc.ResponseFilter;
 import org.infinispan.remoting.rpc.ResponseMode;
 import org.infinispan.remoting.rpc.RpcManager;
@@ -172,14 +175,17 @@ public abstract class PutForExternalReadTest extends MultipleCacheManagersTest {
       Cache<String, String> cache1 = cache(0, CACHE_NAME);
       Cache<String, String> cache2 = cache(1, CACHE_NAME);
 
-      Transport originalTransport = TestingUtil.extractComponent(cache1, Transport.class);
-      Transport mockTransport = spy(originalTransport);
-      doThrow(new RuntimeException("Barf!")).when(mockTransport).invokeRemotely((List<Address>)anyObject(),
-            (CacheRpcCommand) anyObject(), (ResponseMode) anyObject(), anyLong(), anyBoolean(), (ResponseFilter) anyObject(),
-            anyBoolean(), anyBoolean());
+      cache1.getAdvancedCache().addInterceptorBefore(new CommandInterceptor() {
+         @Override
+         public Object visitPutKeyValueCommand(InvocationContext ctx, PutKeyValueCommand command) throws Throwable {
+            throw new RuntimeException("Barf!");
+         }
 
-      RpcManagerImpl rpcManager = (RpcManagerImpl) TestingUtil.extractComponent(cache1, RpcManager.class);
-      rpcManager.setTransport(mockTransport);
+         @Override
+         public Object visitRemoveCommand(InvocationContext ctx, RemoveCommand command) throws Throwable {
+            throw new RuntimeException("Barf!");
+         }
+      }, CallInterceptor.class);
 
       try {
          cache1.put(key, value);
