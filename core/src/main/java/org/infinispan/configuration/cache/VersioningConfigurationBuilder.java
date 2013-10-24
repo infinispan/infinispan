@@ -4,8 +4,8 @@ import org.infinispan.commons.configuration.Builder;
 
 public class VersioningConfigurationBuilder extends AbstractConfigurationChildBuilder implements Builder<VersioningConfiguration> {
 
-   boolean enabled = false;
-   VersioningScheme scheme = VersioningScheme.NONE;
+   Boolean enabled;
+   VersioningScheme scheme;
 
    protected VersioningConfigurationBuilder(ConfigurationBuilder builder) {
       super(builder);
@@ -37,6 +37,13 @@ public class VersioningConfigurationBuilder extends AbstractConfigurationChildBu
 
    @Override
    public VersioningConfiguration create() {
+      if (scheme == null)
+         scheme = Configurations.isStrictOptimisticTransaction(getBuilder())
+               ? VersioningScheme.SIMPLE : VersioningScheme.NONE;
+
+      if (enabled == null)
+         enabled = Configurations.isStrictOptimisticTransaction(getBuilder());
+
       return new VersioningConfiguration(enabled, scheme);
    }
 

@@ -108,9 +108,10 @@ public class TestCacheManagerFactory {
    }
 
    private static void amendJTA(ConfigurationBuilder builder) {
-      org.infinispan.configuration.cache.Configuration c = builder.build();
-      if (c.transaction().transactionMode().equals(TransactionMode.TRANSACTIONAL) && c.transaction().transactionManagerLookup() == null) {
-         builder.transaction().transactionManagerLookup((TransactionManagerLookup) Util.getInstance(TransactionSetup.getManagerLookup(), TestCacheManagerFactory.class.getClassLoader()));
+      if (TransactionMode.TRANSACTIONAL.equals(builder.transaction().transactionMode())
+            && builder.transaction().transactionManagerLookup() == null) {
+         builder.transaction().transactionManagerLookup((TransactionManagerLookup)
+               Util.getInstance(TransactionSetup.getManagerLookup(), TestCacheManagerFactory.class.getClassLoader()));
       }
    }
 

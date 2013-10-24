@@ -11,7 +11,10 @@ import org.testng.annotations.Test;
 public class CacheAPIMVCCTest extends CacheAPITest {
    @Override
    protected IsolationLevel getIsolationLevel() {
-      return IsolationLevel.READ_COMMITTED;
+      // A transactional cache, which by default is optimistic, must not use
+      // read committed, otherwise conditional operations fail when executed
+      // concurrently.
+      return IsolationLevel.REPEATABLE_READ;
    }
 
    @Override

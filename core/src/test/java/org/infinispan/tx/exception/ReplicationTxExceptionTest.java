@@ -2,6 +2,7 @@ package org.infinispan.tx.exception;
 
 import org.infinispan.Cache;
 import org.infinispan.commands.tx.PrepareCommand;
+import org.infinispan.commands.tx.VersionedPrepareCommand;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.remoting.rpc.RpcManager;
@@ -35,7 +36,7 @@ public class ReplicationTxExceptionTest extends MultipleCacheManagersTest {
    }
 
    public void testReplicationFailure() throws Exception {
-      controlledRpcManager.failFor(PrepareCommand.class);
+      controlledRpcManager.failFor(VersionedPrepareCommand.class);
       try {
          TransactionManager tm = cache(0).getAdvancedCache().getTransactionManager();
          tm.begin();

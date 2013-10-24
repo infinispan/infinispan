@@ -53,8 +53,9 @@ public class IncrementalVersionableEntryFactoryImpl extends EntryFactoryImpl {
          }
       } else {
          value = null;
-         metadata = providedMetadata == null ? new EmbeddedMetadata.Builder().version(versionGenerator.nonExistingVersion()).build()
-               : providedMetadata;
+         metadata = providedMetadata == null
+               ? new EmbeddedMetadata.Builder().version(versionGenerator.nonExistingVersion()).build()
+               : Metadatas.applyVersion(versionGenerator.nonExistingVersion(), providedMetadata);
          if (context.isOriginLocal() && context.isInTxScope()) {
             ((TxInvocationContext) context).getCacheTransaction().addVersionRead(key, skipRead ? null : versionGenerator.nonExistingVersion());
          }

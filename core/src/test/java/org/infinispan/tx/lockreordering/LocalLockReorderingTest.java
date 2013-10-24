@@ -27,6 +27,7 @@ public class LocalLockReorderingTest extends SingleCacheManagerTest {
    protected EmbeddedCacheManager createCacheManager() throws Exception {
       final ConfigurationBuilder c = getDefaultStandaloneCacheConfig(true);
       c.transaction().cacheStopTimeout(1);
+      c.locking().writeSkewCheck(false);
       keys = generateKeys();
       return TestCacheManagerFactory.createCacheManager(c);
    }

@@ -10,6 +10,7 @@ import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.test.SingleCacheManagerTest;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
+import org.infinispan.util.concurrent.IsolationLevel;
 import org.testng.annotations.Test;
 
 import javax.transaction.TransactionManager;
@@ -31,6 +32,9 @@ public class AtomicHashMapPassivationTest extends SingleCacheManagerTest {
    protected EmbeddedCacheManager createCacheManager() throws Exception {
       ConfigurationBuilder c = getDefaultStandaloneCacheConfig(true);
       c
+         .locking()
+            .isolationLevel(IsolationLevel.READ_COMMITTED)
+            .writeSkewCheck(false)
          .invocationBatching().enable()
          .persistence()
             .passivation(true)

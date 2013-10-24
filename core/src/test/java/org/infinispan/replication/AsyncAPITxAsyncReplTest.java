@@ -1,6 +1,8 @@
 package org.infinispan.replication;
 
 import org.infinispan.commands.write.WriteCommand;
+import org.infinispan.configuration.cache.CacheMode;
+import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.test.ReplListener;
 import org.testng.annotations.Test;
 
@@ -15,6 +17,10 @@ public class AsyncAPITxAsyncReplTest extends AsyncAPITxSyncReplTest {
       super.createCacheManagers();
       rl = new ReplListener(cache(1), true);
       rlNoTx = new ReplListener(cache(1, "noTx"), true);
+   }
+
+   protected ConfigurationBuilder getConfig() {
+      return getDefaultClusteredCacheConfig(CacheMode.REPL_ASYNC, true);
    }
 
    @Override

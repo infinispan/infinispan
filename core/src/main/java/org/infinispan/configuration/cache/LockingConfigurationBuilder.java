@@ -20,10 +20,10 @@ public class LockingConfigurationBuilder extends AbstractConfigurationChildBuild
    private static final Log log = LogFactory.getLog(LockingConfigurationBuilder.class);
 
    private int concurrencyLevel = 32;
-   private IsolationLevel isolationLevel = IsolationLevel.READ_COMMITTED;
+   private IsolationLevel isolationLevel;
    private long lockAcquisitionTimeout = TimeUnit.SECONDS.toMillis(10);
    private boolean useLockStriping = false;
-   private boolean writeSkewCheck = false;
+   private Boolean writeSkewCheck;
 
    protected LockingConfigurationBuilder(ConfigurationBuilder builder) {
       super(builder);
@@ -99,12 +99,13 @@ public class LockingConfigurationBuilder extends AbstractConfigurationChildBuild
 
    @Override
    public void validate() {
-      if (writeSkewCheck) {
+      if (writeSkewCheck != null && writeSkewCheck) {
          if (isolationLevel != IsolationLevel.REPEATABLE_READ)
             throw new CacheConfigurationException("Write-skew checking only allowed with REPEATABLE_READ isolation level for cache");
          if (transaction().lockingMode != LockingMode.OPTIMISTIC)
             throw new CacheConfigurationException("Write-skew checking only allowed with OPTIMISTIC transactions");
-         if (!versioning().enabled || versioning().scheme != VersioningScheme.SIMPLE)
+         if ((versioning().enabled == null || ! versioning().enabled)
+               || (versioning().scheme == null || versioning().scheme != VersioningScheme.SIMPLE))
             throw new CacheConfigurationException(
                   "Write-skew checking requires versioning to be enabled and versioning scheme 'SIMPLE' to be configured");
          if (clustering().cacheMode() != CacheMode.DIST_SYNC && clustering().cacheMode() != CacheMode.REPL_SYNC
@@ -112,8 +113,12 @@ public class LockingConfigurationBuilder extends AbstractConfigurationChildBuild
             throw new CacheConfigurationException("Write-skew checking is only supported in REPL_SYNC, DIST_SYNC and LOCAL modes.  "
                   + clustering().cacheMode() + " cannot be used with write-skew checking");
       }
+   }
 
-      if (getBuilder().clustering().cacheMode().isClustered() && isolationLevel == IsolationLevel.NONE)
+   @Override
+   public LockingConfiguration create() {
+      CacheMode cacheMode = getBuilder().clustering().cacheMode();
+      if (cacheMode.isClustered() && isolationLevel == IsolationLevel.NONE)
          isolationLevel = IsolationLevel.READ_COMMITTED;
 
       if (isolationLevel == IsolationLevel.READ_UNCOMMITTED)
@@ -121,10 +126,17 @@ public class LockingConfigurationBuilder extends AbstractConfigurationChildBuild
 
       if (isolationLevel == IsolationLevel.SERIALIZABLE)
          isolationLevel = IsolationLevel.REPEATABLE_READ;
-   }
 
-   @Override
-   public LockingConfiguration create() {
+      if (writeSkewCheck == null)
+         writeSkewCheck = Configurations.isStrictOptimisticTransaction(getBuilder());
+
+      if (isolationLevel == null)
+         isolationLevel = Configurations.isStrictOptimisticTransaction(getBuilder())
+               ? IsolationLevel.REPEATABLE_READ
+               : IsolationLevel.READ_COMMITTED;
+      else if (isolationLevel == IsolationLevel.READ_COMMITTED)
+         writeSkewCheck = false;
+
       return new LockingConfiguration(concurrencyLevel, isolationLevel, lockAcquisitionTimeout, useLockStriping, writeSkewCheck);
    }
 

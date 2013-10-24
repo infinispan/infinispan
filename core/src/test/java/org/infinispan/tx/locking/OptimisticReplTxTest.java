@@ -1,5 +1,9 @@
 package org.infinispan.tx.locking;
 
+import javax.transaction.HeuristicMixedException;
+import javax.transaction.HeuristicRollbackException;
+import javax.transaction.RollbackException;
+import javax.transaction.SystemException;
 import javax.transaction.Transaction;
 
 import org.infinispan.configuration.cache.CacheMode;
@@ -10,6 +14,7 @@ import org.testng.annotations.Test;
 
 import static org.testng.Assert.assertFalse;
 import static org.testng.Assert.assertTrue;
+import static org.testng.Assert.fail;
 
 /**
  * @author Mircea Markus
@@ -39,9 +44,28 @@ public class OptimisticReplTxTest extends AbstractClusteredTxTest {
       assert cache(1).get(k).equals("v2");
 
       tm(0).resume(tx1);
-      tm(0).commit();
-      assert cache(0).get(k).equals("v1");
-      assert cache(1).get(k).equals("v1");
+      try {
+         tm(0).commit();
+         fail("Should have rolledback with write skew failure");
+      } catch (RollbackException e) {
+         // Write skew fails
+         assert cache(0).get(k).equals("v2");
+         assert cache(1).get(k).equals("v2");
+      }
+   }
+
+   @Override
+   public void testReplace() throws Exception {
+      tm(0).begin();
+      cache(0).replace(k, "v1");
+      assertLocking();
+
+      // if the key doesn't exist, replace is a no-op, so it shouldn't acquire locks
+      cache(0).put(k, "v1");
+
+      tm(0).begin();
+      cache(0).replace(k, "v2");
+      assertLocking();
    }
 
    @Override

@@ -4,6 +4,7 @@ import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.transaction.LockingMode;
 import org.infinispan.transaction.TransactionMode;
+import org.infinispan.util.concurrent.IsolationLevel;
 import org.testng.annotations.Test;
 
 /**
@@ -20,6 +21,7 @@ public class OptimisticStateTransferOverwritingValueTest extends NonTxStateTrans
       ConfigurationBuilder c = new ConfigurationBuilder();
       c.clustering().cacheMode(CacheMode.DIST_SYNC);
       c.transaction().transactionMode(TransactionMode.TRANSACTIONAL).lockingMode(LockingMode.OPTIMISTIC);
+      c.locking().writeSkewCheck(false).isolationLevel(IsolationLevel.READ_COMMITTED);
       return c;
    }
 }

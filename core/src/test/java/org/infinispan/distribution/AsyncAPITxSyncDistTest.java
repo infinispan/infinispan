@@ -15,7 +15,7 @@ public class AsyncAPITxSyncDistTest extends AsyncAPITxSyncReplTest {
 
    @Override
    protected ConfigurationBuilder getConfig() {
-      return getDefaultClusteredCacheConfig(sync() ? CacheMode.DIST_SYNC : CacheMode.DIST_ASYNC, true);
+      return getDefaultClusteredCacheConfig(CacheMode.DIST_SYNC, true);
    }
 
    @Override
