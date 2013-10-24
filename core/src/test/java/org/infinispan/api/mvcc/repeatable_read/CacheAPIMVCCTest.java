@@ -1,4 +1,4 @@
-package org.infinispan.api.lru.read_committed;
+package org.infinispan.api.mvcc.repeatable_read;
 
 import org.infinispan.api.CacheAPITest;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
@@ -7,11 +7,14 @@ import org.infinispan.test.TestingUtil;
 import org.infinispan.util.concurrent.IsolationLevel;
 import org.testng.annotations.Test;
 
-@Test(groups = "functional", testName = "api.lru.read_committed.CacheAPIMVCCTest")
+@Test(groups = "functional", testName = "api.mvcc.repeatable_read.CacheAPIMVCCTest")
 public class CacheAPIMVCCTest extends CacheAPITest {
    @Override
    protected IsolationLevel getIsolationLevel() {
-      return IsolationLevel.READ_COMMITTED;
+      // A transactional cache, which by default is optimistic, must not use
+      // read committed, otherwise conditional operations fail when executed
+      // concurrently.
+      return IsolationLevel.REPEATABLE_READ;
    }
 
    @Override

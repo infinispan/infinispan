@@ -33,7 +33,7 @@ public class ConcurrentCacheManagerTest extends AbstractCacheTest {
    protected void setup() throws Exception {
       EmbeddedCacheManager manager = TestCacheManagerFactory.createCacheManager();
       for (int i = 0; i < NUM_CACHES; i++) {
-         manager.defineConfiguration("cache" + i, TestCacheManagerFactory.getDefaultCacheConfiguration(true).build());
+         manager.defineConfiguration("cache" + i, TestCacheManagerFactory.getDefaultCacheConfiguration(false).build());
       }
       cacheManager = manager;
    }

@@ -23,6 +23,7 @@ import org.infinispan.test.AbstractInfinispanTest;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.infinispan.transaction.TransactionMode;
+import org.infinispan.util.concurrent.IsolationLevel;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 import org.testng.annotations.AfterMethod;
@@ -65,10 +66,11 @@ public class CacheLoaderFunctionalTest extends AbstractInfinispanTest {
    @BeforeMethod
    public void setUp() {
       cfg = new ConfigurationBuilder();
+      cfg.transaction().transactionMode(TransactionMode.TRANSACTIONAL)
+            .locking().writeSkewCheck(false).isolationLevel(IsolationLevel.READ_COMMITTED);
       cfg.persistence()
             .addStore(DummyInMemoryStoreConfigurationBuilder.class)
-               .storeName(this.getClass().getName()) // in order to use the same store
-            .transaction().transactionMode(TransactionMode.TRANSACTIONAL);
+               .storeName(this.getClass().getName()); // in order to use the same store
       cm = TestCacheManagerFactory.createCacheManager(cfg);
       cache = cm.getCache();
       store = (AdvancedLoadWriteStore) TestingUtil.getFirstLoader(cache);

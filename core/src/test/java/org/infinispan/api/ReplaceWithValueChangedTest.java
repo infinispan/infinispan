@@ -1,7 +1,9 @@
 package org.infinispan.api;
 
 import org.infinispan.configuration.cache.CacheMode;
+import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.test.MultipleCacheManagersTest;
+import org.infinispan.util.concurrent.IsolationLevel;
 import org.testng.annotations.Test;
 
 import javax.transaction.Transaction;
@@ -21,7 +23,12 @@ public class ReplaceWithValueChangedTest extends MultipleCacheManagersTest {
 
    @Override
    protected void createCacheManagers() throws Throwable {
-      createClusteredCaches(2, getDefaultClusteredCacheConfig(CacheMode.DIST_SYNC, true));
+      ConfigurationBuilder builder = getDefaultClusteredCacheConfig(CacheMode.DIST_SYNC, true);
+      // Explicit options are now required (default is RR and WriteSkew for OL transactions)
+      builder.locking()
+            .isolationLevel(IsolationLevel.READ_COMMITTED)
+            .writeSkewCheck(false);
+      createClusteredCaches(2, builder);
    }
 
    public void testReplace1() throws Throwable {

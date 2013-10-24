@@ -47,6 +47,7 @@ public class LockCleanupStateTransferTest extends MultipleCacheManagersTest {
       dcc.transaction().transactionManagerLookup(new DummyTransactionManagerLookup());
       dcc.clustering().hash().numOwners(1);
       dcc.clustering().stateTransfer().fetchInMemoryState(true);
+      dcc.locking().writeSkewCheck(false);
       createCluster(dcc, 2);
       waitForClusterToForm();
    }

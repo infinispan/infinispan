@@ -51,6 +51,7 @@ public abstract class BaseInvalidationTest extends MultipleCacheManagersTest {
 
       c = getDefaultClusteredCacheConfig(isSync ? CacheMode.INVALIDATION_SYNC : CacheMode.INVALIDATION_ASYNC, true);
       c.clustering().stateTransfer().timeout(10000).locking().lockAcquisitionTimeout(500);
+
       defineConfigurationOnAllManagers("invalidationTx", c);
 
       waitForClusterToForm("invalidationTx");

@@ -12,6 +12,7 @@ import javax.transaction.TransactionManager;
 public class RepeatableReadLockTest extends LockTestBase {
    public RepeatableReadLockTest() {
       repeatableRead = true;
+      writeSkew = false;
    }
 
    public void testRepeatableReadWithRemove() throws Exception {

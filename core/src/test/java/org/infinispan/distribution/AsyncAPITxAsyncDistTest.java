@@ -1,6 +1,8 @@
 package org.infinispan.distribution;
 
 import org.infinispan.commands.write.WriteCommand;
+import org.infinispan.configuration.cache.CacheMode;
+import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.test.ReplListener;
 import org.testng.annotations.Test;
 
@@ -20,8 +22,8 @@ public class AsyncAPITxAsyncDistTest extends AsyncAPITxSyncDistTest {
    }
 
    @Override
-   protected boolean sync() {
-      return false;
+   protected ConfigurationBuilder getConfig() {
+      return getDefaultClusteredCacheConfig(CacheMode.DIST_ASYNC, true);
    }
 
    @Override

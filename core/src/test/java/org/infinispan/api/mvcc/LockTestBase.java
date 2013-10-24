@@ -2,6 +2,7 @@ package org.infinispan.api.mvcc;
 
 import org.infinispan.Cache;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
+import org.infinispan.configuration.cache.VersioningScheme;
 import org.infinispan.context.InvocationContextContainer;
 import org.infinispan.manager.CacheContainer;
 import org.infinispan.test.AbstractInfinispanTest;
@@ -29,6 +30,7 @@ import java.util.Collections;
 public abstract class LockTestBase extends AbstractInfinispanTest {
    private Log log = LogFactory.getLog(LockTestBase.class);
    protected boolean repeatableRead = true;
+   protected boolean writeSkew = true;
    protected boolean lockParentForChildInsertRemove = false;
    private CacheContainer cm;
 
@@ -50,9 +52,16 @@ public abstract class LockTestBase extends AbstractInfinispanTest {
       defaultCfg
          .locking()
             .isolationLevel(repeatableRead ? IsolationLevel.REPEATABLE_READ : IsolationLevel.READ_COMMITTED)
+            .writeSkewCheck(writeSkew)
             .lockAcquisitionTimeout(200)
             .transaction()
                .transactionManagerLookup(new DummyTransactionManagerLookup());
+
+      if (writeSkew)
+         defaultCfg
+            .locking().writeSkewCheck(writeSkew)
+            .versioning().enable().scheme(VersioningScheme.SIMPLE);
+
       cm = TestCacheManagerFactory.createCacheManager(defaultCfg);
       tl.cache = cm.getCache();
       tl.lockManager = TestingUtil.extractComponentRegistry(tl.cache).getComponent(LockManager.class);

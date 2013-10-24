@@ -23,7 +23,8 @@ public class StaleLocksOnPrepareFailureTest extends MultipleCacheManagersTest {
    @Override
    protected void createCacheManagers() throws Throwable {
       ConfigurationBuilder cfg = getDefaultClusteredCacheConfig(CacheMode.DIST_SYNC, true);
-      cfg.clustering().hash().numOwners(NUM_CACHES).locking().lockAcquisitionTimeout(100);
+      cfg.clustering().hash().numOwners(NUM_CACHES)
+            .locking().lockAcquisitionTimeout(100).writeSkewCheck(false);
       for (int i = 0; i < NUM_CACHES; i++) {
          EmbeddedCacheManager cm = TestCacheManagerFactory.createClusteredCacheManager(cfg);
          registerCacheManager(cm);

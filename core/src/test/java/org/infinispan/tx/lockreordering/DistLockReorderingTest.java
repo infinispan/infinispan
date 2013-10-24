@@ -26,7 +26,7 @@ public class DistLockReorderingTest extends MultipleCacheManagersTest {
    protected void createCacheManagers() throws Throwable {
       ConfigurationBuilder c = getDefaultClusteredCacheConfig(cacheMode, true);
       c.transaction().cacheStopTimeout(1)
-            .locking().lockAcquisitionTimeout(30000L);//timeouts are possible otherwise
+            .locking().lockAcquisitionTimeout(30000L).writeSkewCheck(false);//timeouts are possible otherwise
       createCluster(c, 2);
       waitForClusterToForm();
       buildKeys();

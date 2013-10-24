@@ -60,8 +60,8 @@ public class WriteSkewTest extends AbstractInfinispanTest {
             .transactionMode(TransactionMode.TRANSACTIONAL)
          .locking()
             .lockAcquisitionTimeout(3000)
-            .isolationLevel(IsolationLevel.REPEATABLE_READ);
-      // The default cache is NOT write skew enabled.
+            .isolationLevel(IsolationLevel.REPEATABLE_READ)
+            .writeSkewCheck(false);
       cacheManager = TestCacheManagerFactory.createCacheManager(configurationBuilder);
       configurationBuilder.locking().writeSkewCheck(true).versioning().enable().scheme(VersioningScheme.SIMPLE);
       cacheManager.defineConfiguration("writeSkew", configurationBuilder.build());

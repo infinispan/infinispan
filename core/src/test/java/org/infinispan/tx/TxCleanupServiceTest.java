@@ -41,6 +41,7 @@ public class TxCleanupServiceTest extends MultipleCacheManagersTest {
       dcc = getDefaultClusteredCacheConfig(CacheMode.DIST_SYNC, true);
       dcc.transaction().transactionManagerLookup(new DummyTransactionManagerLookup());
       dcc.clustering().hash().numOwners(1).stateTransfer().fetchInMemoryState(true);
+      dcc.locking().writeSkewCheck(false);
       createCluster(dcc, 2);
       waitForClusterToForm();
    }

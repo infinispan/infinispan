@@ -11,6 +11,7 @@ import org.infinispan.persistence.spi.PersistenceException;
 import org.infinispan.test.AbstractInfinispanTest;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
+import org.infinispan.util.concurrent.IsolationLevel;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.AfterTest;
 import org.testng.annotations.BeforeTest;
@@ -42,6 +43,7 @@ public class PassivationFunctionalTest extends AbstractInfinispanTest {
    public void setUp() {
       cfg = TestCacheManagerFactory.getDefaultCacheConfiguration(true);
       cfg
+         .locking().writeSkewCheck(false).isolationLevel(IsolationLevel.READ_COMMITTED)
          .persistence()
             .passivation(true)
                .addStore(DummyInMemoryStoreConfigurationBuilder.class);
