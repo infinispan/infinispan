@@ -247,7 +247,7 @@ public class DefaultCacheManager implements EmbeddedCacheManager, CacheManager {
     * @throws java.io.IOException if there is a problem reading the configuration stream
     */
    public DefaultCacheManager(InputStream configurationStream, boolean start) throws IOException {
-      this(new ParserRegistry(Thread.currentThread().getContextClassLoader()).parse(configurationStream), start);
+      this(new ParserRegistry().parse(configurationStream), start);
    }
 
    /**
@@ -293,7 +293,7 @@ public class DefaultCacheManager implements EmbeddedCacheManager, CacheManager {
    @Deprecated
    public DefaultCacheManager(String globalConfigurationFile, String defaultConfigurationFile, String namedCacheFile,
                               boolean start) throws IOException {
-      ParserRegistry parserRegistry = new ParserRegistry(Thread.currentThread().getContextClassLoader());
+      ParserRegistry parserRegistry = new ParserRegistry();
 
       ConfigurationBuilderHolder globalConfigurationBuilderHolder = parserRegistry.parseFile(globalConfigurationFile);
       ConfigurationBuilderHolder defaultConfigurationBuilderHolder = parserRegistry.parseFile(defaultConfigurationFile);

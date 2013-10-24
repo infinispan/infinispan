@@ -9,6 +9,7 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.lang.ref.WeakReference;
+import java.util.Collection;
 import java.util.ServiceLoader;
 import java.util.concurrent.ConcurrentMap;
 
@@ -21,6 +22,7 @@ import org.infinispan.commons.CacheConfigurationException;
 import org.infinispan.commons.util.CollectionFactory;
 import org.infinispan.commons.util.FileLookup;
 import org.infinispan.commons.util.FileLookupFactory;
+import org.infinispan.commons.util.ServiceFinder;
 import org.infinispan.commons.util.Util;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
@@ -40,29 +42,38 @@ public class ParserRegistry implements NamespaceMappingParser {
    private static final Log log = LogFactory.getLog(ParserRegistry.class);
    private final WeakReference<ClassLoader> cl;
    private final ConcurrentMap<QName, ConfigurationParser> parserMappings;
+   
+   public ParserRegistry() {
+      this(Thread.currentThread().getContextClassLoader());
+   }
 
    public ParserRegistry(ClassLoader classLoader) {
       this.parserMappings = CollectionFactory.makeConcurrentMap();
       this.cl = new WeakReference<ClassLoader>(classLoader);
-      ServiceLoader<ConfigurationParser> parsers = ServiceLoader.load(ConfigurationParser.class, cl.get());
-      for (ConfigurationParser parser : parsers) {
-         Namespaces namespacesAnnotation = parser.getClass().getAnnotation(Namespaces.class);
-         Namespace[] namespaces;
-         if (namespacesAnnotation != null) {
-            namespaces = namespacesAnnotation.value();
-         } else {
-            Namespace namespaceAnnotation = parser.getClass().getAnnotation(Namespace.class);
-            if (namespaceAnnotation != null) {
-               namespaces = new Namespace[] { namespaceAnnotation };
+      Collection<Class<ConfigurationParser>> parsers = ServiceFinder.load(ConfigurationParser.class, cl.get(), ParserRegistry.class.getClassLoader());
+      for (Class<ConfigurationParser> parserClass : parsers) {
+         try {
+            ConfigurationParser parser = parserClass.newInstance();
+            Namespaces namespacesAnnotation = parserClass.getAnnotation(Namespaces.class);
+            Namespace[] namespaces;
+            if (namespacesAnnotation != null) {
+               namespaces = namespacesAnnotation.value();
             } else {
-               throw log.parserDoesNotDeclareNamespaces(parser.getClass().getName());
+               Namespace namespaceAnnotation = parserClass.getAnnotation(Namespace.class);
+               if (namespaceAnnotation != null) {
+                  namespaces = new Namespace[] { namespaceAnnotation };
+               } else {
+                  throw log.parserDoesNotDeclareNamespaces(parserClass.getName());
+               }
             }
-         }
-         for (Namespace ns : namespaces) {
-            QName qName = new QName(ns.uri(), ns.root());
-            if (parserMappings.putIfAbsent(qName, parser) != null) {
-               throw log.parserRootElementAlreadyRegistered(qName);
+            for (Namespace ns : namespaces) {
+               QName qName = new QName(ns.uri(), ns.root());
+               if (parserMappings.putIfAbsent(qName, parser) != null) {
+                  throw log.parserRootElementAlreadyRegistered(qName);
+               }
             }
+         } catch (Exception e) {
+            // 
          }
       }
    }
