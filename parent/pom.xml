@@ -1515,11 +1515,6 @@
             <activeByDefault>false</activeByDefault>
          </activation>
 
-         <properties>
-            <infinispan.test.parallel.threads>1</infinispan.test.parallel.threads>
-            <infinispan.test.jgroups.protocol>tcp</infinispan.test.jgroups.protocol>
-         </properties>
-
          <build>
             <plugins>
                <plugin>
@@ -1623,8 +1618,8 @@
                         <goals>
                            <goal>run</goal>
                         </goals>
-                        <configuration>
-                           <target combine.self="override">
+                        <configuration combine.self="override">
+                           <target>
                               <!-- Execute an ant task within maven -->
                               <taskdef name="report" classname="org.jacoco.ant.ReportTask">
                                  <classpath path="${basedir}/target/jacoco-jars/org.jacoco.ant.jar" />
