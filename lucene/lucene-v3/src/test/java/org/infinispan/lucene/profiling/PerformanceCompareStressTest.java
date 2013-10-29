@@ -2,6 +2,8 @@ package org.infinispan.lucene.profiling;
 
 import java.io.File;
 import java.io.IOException;
+import java.lang.reflect.Method;
+import java.util.Properties;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
@@ -54,16 +56,18 @@ public class PerformanceCompareStressTest {
 
    private static final String indexName = "tempIndexName";
 
-   private static final long DURATION_MS = 2 * 60 * 1000;
+   private long durationMs = 2 * 60 * 1000;
 
    private Cache cache;
 
    private EmbeddedCacheManager cacheFactory;
+   private Properties results = null;
+   private String currentMethod = null;
 
    @Test
    public void profileTestRAMDirectory() throws InterruptedException, IOException {
       RAMDirectory dir = new RAMDirectory();
-      stressTestDirectory(dir, "RAMDirectory");
+      stressTestDirectoryInternal(dir, "RAMDirectory");
    }
 
    @Test
@@ -72,14 +76,14 @@ public class PerformanceCompareStressTest {
       boolean directoriesCreated = indexDir.mkdirs();
       assert directoriesCreated : "couldn't create directory for FSDirectory test";
       FSDirectory dir = FSDirectory.open(indexDir);
-      stressTestDirectory(dir, "FSDirectory");
+      stressTestDirectoryInternal(dir, "FSDirectory");
    }
    
    @Test
    public void profileTestInfinispanDirectoryWithNetworkDelayZero() throws InterruptedException, IOException {
       // TestingUtil.setDelayForCache(cache, 0, 0);
       Directory dir = DirectoryBuilder.newDirectoryInstance(cache, cache, cache, indexName).chunkSize(CHUNK_SIZE).create();
-      stressTestDirectory(dir, "InfinispanClustered-delayedIO:0");
+      stressTestDirectoryInternal(dir, "InfinispanClustered-delayedIO:0");
       verifyDirectoryState();
    }
 
@@ -87,7 +91,7 @@ public class PerformanceCompareStressTest {
    public void profileTestInfinispanDirectoryWithNetworkDelay4() throws Exception {
       TestingUtil.setDelayForCache(cache, 4, 4);
       Directory dir = DirectoryBuilder.newDirectoryInstance(cache, cache, cache, indexName).chunkSize(CHUNK_SIZE).create();
-      stressTestDirectory(dir, "InfinispanClustered-delayedIO:4");
+      stressTestDirectoryInternal(dir, "InfinispanClustered-delayedIO:4");
       verifyDirectoryState();
    }
 
@@ -95,7 +99,7 @@ public class PerformanceCompareStressTest {
    public void profileTestInfinispanDirectoryWithHighNetworkDelay40() throws Exception {
       TestingUtil.setDelayForCache(cache, 40, 40);
       Directory dir = DirectoryBuilder.newDirectoryInstance(cache, cache, cache, indexName).chunkSize(CHUNK_SIZE).create();
-      stressTestDirectory(dir, "InfinispanClustered-delayedIO:40");
+      stressTestDirectoryInternal(dir, "InfinispanClustered-delayedIO:40");
       verifyDirectoryState();
    }
 
@@ -105,7 +109,7 @@ public class PerformanceCompareStressTest {
       try {
          cache = cacheContainer.getCache();
          Directory dir = DirectoryBuilder.newDirectoryInstance(cache, cache, cache, indexName).chunkSize(CHUNK_SIZE).create();
-         stressTestDirectory(dir, "InfinispanLocal");
+         stressTestDirectoryInternal(dir, "InfinispanLocal");
          verifyDirectoryState();
       } finally {
          cacheContainer.stop();
@@ -114,6 +118,15 @@ public class PerformanceCompareStressTest {
 
    @Test(enabled=false)//to prevent invocations from some versions of TestNG
    public static void stressTestDirectory(Directory dir, String testLabel) throws InterruptedException, IOException {
+      stressTestDirectory(dir, testLabel, 120000l, null, null);
+   }
+
+   private void stressTestDirectoryInternal(Directory dir, String testLabel) throws InterruptedException, IOException {
+      stressTestDirectory(dir, testLabel, durationMs, results, currentMethod);
+   }
+
+   @Test(enabled=false)//to prevent invocations from some versions of TestNG
+   private static void stressTestDirectory(Directory dir, String testLabel, long durationMs, Properties results, String currentMethod) throws InterruptedException, IOException {
       SharedState state = new SharedState(DICTIONARY_SIZE);
       CacheTestSupport.initializeDirectory(dir);
       ExecutorService e = Executors.newFixedThreadPool(READER_THREADS + WRITER_THREADS);
@@ -125,14 +138,19 @@ public class PerformanceCompareStressTest {
       }
       e.shutdown();
       state.startWaitingThreads();
-      Thread.sleep(DURATION_MS);
+      Thread.sleep(durationMs);
       long searchesCount = state.incrementIndexSearchesCount(0);
       long writerTaskCount = state.incrementIndexWriterTaskCount(0);
       state.quit();
       boolean terminatedCorrectly = e.awaitTermination(20, TimeUnit.SECONDS);
       AssertJUnit.assertTrue(terminatedCorrectly);
-      System.out.println("Test " + testLabel + " run in " + DURATION_MS + "ms:\n\tSearches: " + searchesCount + "\n\t" + "Writes: "
+      System.out.println("Test " + testLabel + " run in " + durationMs + "ms:\n\tSearches: " + searchesCount + "\n\t" + "Writes: "
                + writerTaskCount);
+      if (results != null) {
+         results.setProperty(currentMethod + ".label", testLabel);
+         results.setProperty(currentMethod + ".searches", Long.toString(searchesCount));
+         results.setProperty(currentMethod + ".writes", Long.toString(writerTaskCount));
+      }
    }
 
    @BeforeMethod
@@ -162,35 +180,31 @@ public class PerformanceCompareStressTest {
     * Suggested test switches:
     * -Xmx2G -Xms2G -XX:MaxPermSize=128M -XX:+HeapDumpOnOutOfMemoryError -Xss512k -XX:HeapDumpPath=/tmp/java_heap -Djava.net.preferIPv4Stack=true -Djgroups.bind_addr=127.0.0.1 -Xbatch -server -XX:+UseCompressedOops -XX:+UseLargePages -XX:LargePageSizeInBytes=2m -XX:+AlwaysPreTouch
     */
-   public static void main(String[] args) throws InterruptedException, IOException {
+   public static void main(String[] args) throws Exception {
+      String[] testMethods = System.getProperty("lucene.profiling.tests",
+            "profileTestRAMDirectory,profileTestFSDirectory,profileInfinispanLocalDirectory,profileTestInfinispanDirectoryWithNetworkDelayZero").split(",");
       PerformanceCompareStressTest test = new PerformanceCompareStressTest();
-      test.beforeTest();
-      try {
-         test.profileTestRAMDirectory();
+      test.durationMs = new Long(System.getProperty("lucene.profiling.duration", "120000"));
+      String outputFile = System.getProperty("lucene.profiling.output");
+      test.results = outputFile == null ? null : new Properties();
+      for (String testMethod : testMethods) {
+         try {
+            test.currentMethod = testMethod;
+            Method m = PerformanceCompareStressTest.class.getMethod(testMethod);
+            test.beforeTest();
+            try {
+               m.invoke(test);
+            } finally {
+               test.afterTest();
+            }
+         } catch (NoSuchMethodException e) {
+            System.out.println("Couldn't find method " + testMethod);
+            System.exit(1);
+         }
       }
-      finally {
-         test.afterTest();
-      }
-      test.beforeTest();
-      try {
-         test.profileTestFSDirectory();
-      }
-      finally {
-         test.afterTest();
-      }
-      test.beforeTest();
-      try {
-         test.profileInfinispanLocalDirectory();
-      }
-      finally {
-         test.afterTest();
-      }
-      test.beforeTest();
-      try {
-         test.profileTestInfinispanDirectoryWithNetworkDelayZero();
-      }
-      finally {
-         test.afterTest();
+      if (test.results != null && !test.results.isEmpty()) {
+         System.out.println("Writing results to " + outputFile + " ...");
+         TestingUtil.outputPropertiesToXML(outputFile, test.results);
       }
    }
 
