@@ -1,0 +1,104 @@
+== Security
+
+Security within Infinispan is implemented at several layers:
+
+* within the core library, to provide coarse and fine-grained access control to CacheManagers, Caches and data and to provide encryption of data
+* over remote protocols, to obtain credentials from remote clients and to secure the transport using encryption
+* between nodes in a cluster, so that only authorized nodes can join and to secure the transport using encryption
+
+In order to maximize compatibility and integration, Infinispan uses widespread security standards where possible and appropriate, such as X.509 certificates, SSL/TLS encryption and Kerberos.
+Also, to avoid pulling in any external dependencies and to increase the ease of integration with third party libraries and containers, the implementation makes use of any facilities provided by the 
+standard Java security libraries (JAAS, JSSE, JCA, JCE, SASL, etc).
+For this reason, the Infinispan core library only provides interfaces and a set of basic implementations.
+
+== Embedded Security
+Applications interact with Infinispan using its API within the same JVM. The two main components which are exposed by the Infinispan API are CacheManagers and Caches. If an application wants to interact with a secured CacheManager and Cache, it should provide an identity which Infinispan’s security layer will validate against a set of required roles and permissions. If the identity provided by the user application has sufficient permissions, then access will be granted, otherwise an exception indicating a security violation will be thrown. The identity is represented by the javax.security.auth.Subject class which is a wrapper around multiple Principals, e.g. a user and all the groups it belongs to. Since the Principal name is dependent on the owning system (e.g. a Distinguished Name in LDAP), Infinispan needs to be able to map Principal names to roles. Roles, in turn, represent one or more permissions. The following diagram shows the relationship between the various elements:
+
+.Roles/Permissions mapping 
+image::images/SecurityRolesPermissions.png[Roles/Permissions mapping]
+ 
+=== Embedded Permissions
+
+Access to a cache manager or a cache is controlled by using a list of required permissions. Permissions are concerned with the type of action that is performed on one of the above entities and not with the type of data being manipulated. Some of these permissions can be narrowed to specifically named entities, where applicable (e.g. a named cache). Depending on the type of entity, there are different types of permission available:
+
+==== Cache Manager permissions
+* CONFIGURATION (defineConfiguration): whether a new cache configuration can be defined
+* LISTEN (addListener): whether listeners can be registered against a cache manager
+* LIFECYCLE (stop): whether the cache manager can be stopped
+* ALL: a convenience permission which includes all of the above
+
+==== Cache permissions
+* READ (get, contains): whether entries can be retrieved from the cache
+* WRITE (put, putIfAbsent, replace, remove, evict): whether data can be written/replaced/removed/evicted from the cache
+* EXEC (distexec, mapreduce): whether code execution can be run against the cache
+* LISTEN (addListener): whether listeners can be registered against a cache
+* BULK (keySet, values, entrySet): whether bulk retrieve operations can be executed
+* LIFECYCLE (start, stop): whether a cache can be started / stopped
+* ALL: a convenience permission which includes all of the above
+
+Some permissions might need to be combined with others in order to be useful, e.g. EXEC with READ and/or WRITE.
+
+=== Embedded API
+When a DefaultCacheManager has been constructed with security enabled using either the programmatic or declarative configuration, it returns a SecureCache which will check the security context before invoking any operations on the underlying caches. A SecureCache also makes sure that applications cannot retrieve lower-level insecure objects (such as DataContainer).
+In Java, executing code with a specific identity usually means wrapping the code to be executed within a PrivilegedAction:
+
+Subject.doAs(subject, new PrivilegedExceptionAction<Void>() {
+public Void run() throws Exception {
+    cache.put(“key”, “value”);
+}
+});
+
+=== Embedded Configuration
+There are two levels of configuration: global and per-cache. The global configuration defines the set of roles/permissions mappings while each cache can decide whether to enable authorization checks and the required roles.
+
+==== Programmatic
+[source,java]
+----
+  GlobalConfigurationBuilder global = new GlobalConfigurationBuilder();
+  global
+     .security()
+        .roles()
+           .principalRoleMapper(new IdentityRoleMapper())
+           .role("admin")
+              .permission(CachePermission.ALL)
+           .role("supervisor")
+              .permission(CachePermission.EXEC)
+              .permission(CachePermission.READ)
+              .permission(CachePermission.WRITE)
+           .role("reader")
+              .permission(CachePermission.READ);
+  ConfigurationBuilder config = new ConfigurationBuilder();
+  config
+     .security()
+        .enable()
+        .authorization()
+           .role("admin")
+           .role("supervisor")
+           .role("reader");
+----
+
+==== Declarative
+[source,xml]
+----
+<infinispan>
+   <global>
+      <security>
+         <roles mapper="my.package.MyRoleMapper">
+            <role name="admin" permissions="ALL" />
+            <role name="reader" permission="READ" />
+            <role name="writer" permission="WRITE" />
+            <role name="supervisor" permission="READ WRITE EXEC BULK"/>
+         </roles>
+      </security>
+   </global>
+
+   <default>
+   </default>
+
+   <namedCache name="secured">
+      <security enabled="true">
+         <authorization roles="admin reader writer supervisor" />
+      </security>
+   </namedCache>
+</infinispan>
+----

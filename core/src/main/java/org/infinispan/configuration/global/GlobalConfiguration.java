@@ -46,6 +46,7 @@ public class GlobalConfiguration {
    private final ScheduledExecutorFactoryConfiguration replicationQueueScheduledExecutor;
    private final GlobalJmxStatisticsConfiguration globalJmxStatistics;
    private final TransportConfiguration transport;
+   private final GlobalSecurityConfiguration security;
    private final SerializationConfiguration serialization;
    private final ShutdownConfiguration shutdown;
    private final Map<Class<?>, ?> modules;
@@ -56,7 +57,7 @@ public class GlobalConfiguration {
          ExecutorFactoryConfiguration asyncTransportExecutor, ExecutorFactoryConfiguration remoteCommandsExecutor,
          ScheduledExecutorFactoryConfiguration evictionScheduledExecutor,
          ScheduledExecutorFactoryConfiguration replicationQueueScheduledExecutor, GlobalJmxStatisticsConfiguration globalJmxStatistics,
-         TransportConfiguration transport, SerializationConfiguration serialization, ShutdownConfiguration shutdown,
+         TransportConfiguration transport, GlobalSecurityConfiguration security, SerializationConfiguration serialization, ShutdownConfiguration shutdown,
          List<?> modules, SiteConfiguration site,ClassLoader cl, ExecutorFactoryConfiguration totalOrderExecutor, ExecutorFactoryConfiguration persistenceExecutor) {
       this.asyncListenerExecutor = asyncListenerExecutor;
       this.persistenceExecutor = persistenceExecutor;
@@ -66,6 +67,7 @@ public class GlobalConfiguration {
       this.replicationQueueScheduledExecutor = replicationQueueScheduledExecutor;
       this.globalJmxStatistics = globalJmxStatistics;
       this.transport = transport;
+      this.security = security;
       this.serialization = serialization;
       this.shutdown = shutdown;
       Map<Class<?>, Object> moduleMap = new HashMap<Class<?>, Object>();
@@ -110,6 +112,10 @@ public class GlobalConfiguration {
       return transport;
    }
 
+   public GlobalSecurityConfiguration security() {
+      return security;
+   }
+
    public SerializationConfiguration serialization() {
       return serialization;
    }
@@ -137,7 +143,7 @@ public class GlobalConfiguration {
    public SiteConfiguration sites() {
       return site;
    }
-   
+
    @Override
    public String toString() {
       return "GlobalConfiguration{" +
@@ -148,6 +154,7 @@ public class GlobalConfiguration {
             ", replicationQueueScheduledExecutor=" + replicationQueueScheduledExecutor +
             ", globalJmxStatistics=" + globalJmxStatistics +
             ", transport=" + transport +
+            ", security=" + security +
             ", serialization=" + serialization +
             ", shutdown=" + shutdown +
             ", modules=" + modules +

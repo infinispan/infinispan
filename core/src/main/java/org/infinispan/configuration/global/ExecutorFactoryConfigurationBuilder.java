@@ -59,8 +59,7 @@ public class ExecutorFactoryConfigurationBuilder extends AbstractGlobalConfigura
    }
 
    @Override
-   public
-   void validate() {
+   public void validate() {
       // No-op, no validation required
    }
 

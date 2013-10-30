@@ -39,6 +39,7 @@ import org.infinispan.remoting.responses.SuccessfulResponse;
 import org.infinispan.remoting.rpc.RpcManager;
 import org.infinispan.remoting.rpc.RpcOptionsBuilder;
 import org.infinispan.remoting.transport.Address;
+import org.infinispan.security.AuthorizationPermission;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
@@ -196,7 +197,7 @@ public class MapReduceTask<KIn, VIn, KOut, VOut> {
    public MapReduceTask(Cache<KIn, VIn> masterCacheNode, boolean distributeReducePhase, boolean useIntermediateSharedCache) {
       if (masterCacheNode == null)
          throw new IllegalArgumentException("Can not use null cache for MapReduceTask");
-
+      ensureAccessPermissions(masterCacheNode.getAdvancedCache());
       ensureProperCacheState(masterCacheNode.getAdvancedCache());
       this.cache = masterCacheNode.getAdvancedCache();
       this.keys = new LinkedList<KIn>();
@@ -310,6 +311,7 @@ public class MapReduceTask<KIn, VIn, KOut, VOut> {
     * @return a Map where each key is an output key and value is reduced value for that output key
     */
    public Map<KOut, VOut> execute() throws CacheException {
+      ensureAccessPermissions(cache);
       if (mapper == null)
          throw new NullPointerException("A valid reference of Mapper is not set " + mapper);
 
@@ -386,14 +388,14 @@ public class MapReduceTask<KIn, VIn, KOut, VOut> {
          }
       });
       future.get();
-      rpc.invokeRemotely(cache.getRpcManager().getMembers(), ccc, rpcOptionsBuilder.build());      
+      rpc.invokeRemotely(cache.getRpcManager().getMembers(), ccc, rpcOptionsBuilder.build());
       Map<Address, Response> map = rpc.invokeRemotely(cache.getRpcManager().getMembers(), ccc, rpcOptionsBuilder.build());
       for (Entry<Address, Response> e : map.entrySet()) {
          if (!e.getValue().isSuccessful()) {
             throw new IllegalStateException("Could not initialize tmp cache " + tmpCacheName + " at " + e.getKey()
                   + " for  " + this);
          }
-      }            
+      }
    }
 
    protected Set<KOut> executeMapPhase(boolean useCompositeKeys) throws InterruptedException,
@@ -725,6 +727,12 @@ public class MapReduceTask<KIn, VIn, KOut, VOut> {
 
    protected Reducer<KOut, VOut> clone(Reducer<KOut, VOut> reducer){
       return Util.cloneWithMarshaller(marshaller, reducer);
+   }
+
+   private void ensureAccessPermissions(AdvancedCache<?, ?> cache) {
+      if (cache.getCacheConfiguration().security().enabled()) {
+         cache.getAuthorizationManager().checkPermission(AuthorizationPermission.EXEC);
+      }
    }
 
    private void ensureProperCacheState(AdvancedCache<KIn, VIn> cache) throws NullPointerException,

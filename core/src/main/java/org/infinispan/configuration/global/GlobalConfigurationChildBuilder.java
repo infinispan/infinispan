@@ -12,12 +12,14 @@ public interface GlobalConfigurationChildBuilder {
    ExecutorFactoryConfigurationBuilder persistenceExecutor();
 
    ExecutorFactoryConfigurationBuilder asyncTransportExecutor();
-   
+
    ExecutorFactoryConfigurationBuilder remoteCommandsExecutor();
-   
+
    ScheduledExecutorFactoryConfigurationBuilder evictionScheduledExecutor();
 
    ScheduledExecutorFactoryConfigurationBuilder replicationQueueScheduledExecutor();
+
+   GlobalSecurityConfigurationBuilder security();
 
    ShutdownConfigurationBuilder shutdown();
 

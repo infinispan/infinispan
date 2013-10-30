@@ -25,6 +25,7 @@ public class Configuration {
    private final VersioningConfiguration versioningConfiguration;
    private final UnsafeConfiguration unsafeConfiguration;
    private final Map<Class<?>, ?> moduleConfiguration;
+   private final SecurityConfiguration securityConfiguration;
    private final SitesConfiguration sitesConfiguration;
    private final CompatibilityModeConfiguration compatibilityConfiguration;
 
@@ -35,9 +36,12 @@ public class Configuration {
                  IndexingConfiguration indexingConfiguration, InvocationBatchingConfiguration invocationBatchingConfiguration,
                  JMXStatisticsConfiguration jmxStatisticsConfiguration,
                  PersistenceConfiguration persistenceConfiguration,
-                 LockingConfiguration lockingConfiguration, StoreAsBinaryConfiguration storeAsBinaryConfiguration,
+                 LockingConfiguration lockingConfiguration,
+                 SecurityConfiguration securityConfiguration,
+                 StoreAsBinaryConfiguration storeAsBinaryConfiguration,
                  TransactionConfiguration transactionConfiguration, UnsafeConfiguration unsafeConfiguration,
-                 VersioningConfiguration versioningConfiguration, SitesConfiguration sitesConfiguration,
+                 VersioningConfiguration versioningConfiguration,
+                 SitesConfiguration sitesConfiguration,
                  CompatibilityModeConfiguration compatibilityConfiguration,
                  List<?> modules, ClassLoader cl) {
       this.clusteringConfiguration = clusteringConfiguration;
@@ -55,6 +59,7 @@ public class Configuration {
       this.transactionConfiguration = transactionConfiguration;
       this.unsafeConfiguration = unsafeConfiguration;
       this.versioningConfiguration = versioningConfiguration;
+      this.securityConfiguration = securityConfiguration;
       this.sitesConfiguration = sitesConfiguration;
       this.compatibilityConfiguration = compatibilityConfiguration;
       Map<Class<?>, Object> modulesMap = new HashMap<Class<?>, Object>();
@@ -138,6 +143,10 @@ public class Configuration {
       return unsafeConfiguration;
    }
 
+   public SecurityConfiguration security() {
+      return securityConfiguration;
+   }
+
    public SitesConfiguration sites() {
       return sitesConfiguration;
    }
@@ -166,6 +175,7 @@ public class Configuration {
             ", persistence=" + persistenceConfiguration +
             ", locking=" + lockingConfiguration +
             ", modules=" + moduleConfiguration +
+            ", security=" + securityConfiguration +
             ", storeAsBinary=" + storeAsBinaryConfiguration +
             ", transaction=" + transactionConfiguration +
             ", versioning=" + versioningConfiguration +
@@ -176,75 +186,141 @@ public class Configuration {
    }
 
    @Override
-   public boolean equals(Object o) {
-      if (this == o) return true;
-      if (o == null || getClass() != o.getClass()) return false;
-
-      Configuration that = (Configuration) o;
-
-      if (classLoader != null && classLoader.get() != null && that.classLoader != null ? !classLoader.get().equals(that.classLoader.get()) : that.classLoader != null && that.classLoader.get() != null)
-         return false;
-      if (clusteringConfiguration != null ? !clusteringConfiguration.equals(that.clusteringConfiguration) : that.clusteringConfiguration != null)
-         return false;
-      if (customInterceptorsConfiguration != null ? !customInterceptorsConfiguration.equals(that.customInterceptorsConfiguration) : that.customInterceptorsConfiguration != null)
-         return false;
-      if (dataContainerConfiguration != null ? !dataContainerConfiguration.equals(that.dataContainerConfiguration) : that.dataContainerConfiguration != null)
-         return false;
-      if (deadlockDetectionConfiguration != null ? !deadlockDetectionConfiguration.equals(that.deadlockDetectionConfiguration) : that.deadlockDetectionConfiguration != null)
-         return false;
-      if (evictionConfiguration != null ? !evictionConfiguration.equals(that.evictionConfiguration) : that.evictionConfiguration != null)
-         return false;
-      if (expirationConfiguration != null ? !expirationConfiguration.equals(that.expirationConfiguration) : that.expirationConfiguration != null)
-         return false;
-      if (indexingConfiguration != null ? !indexingConfiguration.equals(that.indexingConfiguration) : that.indexingConfiguration != null)
-         return false;
-      if (invocationBatchingConfiguration != null ? !invocationBatchingConfiguration.equals(that.invocationBatchingConfiguration) : that.invocationBatchingConfiguration != null)
-         return false;
-      if (jmxStatisticsConfiguration != null ? !jmxStatisticsConfiguration.equals(that.jmxStatisticsConfiguration) : that.jmxStatisticsConfiguration != null)
-         return false;
-      if (persistenceConfiguration != null ? !persistenceConfiguration.equals(that.persistenceConfiguration) : that.persistenceConfiguration != null)
-         return false;
-      if (lockingConfiguration != null ? !lockingConfiguration.equals(that.lockingConfiguration) : that.lockingConfiguration != null)
-         return false;
-      if (moduleConfiguration != null ? !moduleConfiguration.equals(that.moduleConfiguration) : that.moduleConfiguration !=null)
-         return false;
-      if (storeAsBinaryConfiguration != null ? !storeAsBinaryConfiguration.equals(that.storeAsBinaryConfiguration) : that.storeAsBinaryConfiguration != null)
-         return false;
-      if (transactionConfiguration != null ? !transactionConfiguration.equals(that.transactionConfiguration) : that.transactionConfiguration != null)
-         return false;
-      if (unsafeConfiguration != null ? !unsafeConfiguration.equals(that.unsafeConfiguration) : that.unsafeConfiguration != null)
-         return false;
-      if (sitesConfiguration != null ? !sitesConfiguration.equals(that.sitesConfiguration) : that.sitesConfiguration != null)
-         return false;
-      if (versioningConfiguration != null ? !versioningConfiguration.equals(that.versioningConfiguration) : that.versioningConfiguration != null)
-         return false;
-      if (compatibilityConfiguration != null ? !compatibilityConfiguration.equals(that.compatibilityConfiguration) : that.compatibilityConfiguration != null)
-         return false;
-
-      return true;
+   public int hashCode() {
+      final int prime = 31;
+      int result = 1;
+      result = prime * result + ((classLoader == null) ? 0 : classLoader.hashCode());
+      result = prime * result + ((clusteringConfiguration == null) ? 0 : clusteringConfiguration.hashCode());
+      result = prime * result + ((compatibilityConfiguration == null) ? 0 : compatibilityConfiguration.hashCode());
+      result = prime * result
+            + ((customInterceptorsConfiguration == null) ? 0 : customInterceptorsConfiguration.hashCode());
+      result = prime * result + ((dataContainerConfiguration == null) ? 0 : dataContainerConfiguration.hashCode());
+      result = prime * result
+            + ((deadlockDetectionConfiguration == null) ? 0 : deadlockDetectionConfiguration.hashCode());
+      result = prime * result + ((evictionConfiguration == null) ? 0 : evictionConfiguration.hashCode());
+      result = prime * result + ((expirationConfiguration == null) ? 0 : expirationConfiguration.hashCode());
+      result = prime * result + ((indexingConfiguration == null) ? 0 : indexingConfiguration.hashCode());
+      result = prime * result
+            + ((invocationBatchingConfiguration == null) ? 0 : invocationBatchingConfiguration.hashCode());
+      result = prime * result + ((jmxStatisticsConfiguration == null) ? 0 : jmxStatisticsConfiguration.hashCode());
+      result = prime * result + ((lockingConfiguration == null) ? 0 : lockingConfiguration.hashCode());
+      result = prime * result + ((moduleConfiguration == null) ? 0 : moduleConfiguration.hashCode());
+      result = prime * result + ((persistenceConfiguration == null) ? 0 : persistenceConfiguration.hashCode());
+      result = prime * result + ((securityConfiguration == null) ? 0 : securityConfiguration.hashCode());
+      result = prime * result + ((sitesConfiguration == null) ? 0 : sitesConfiguration.hashCode());
+      result = prime * result + ((storeAsBinaryConfiguration == null) ? 0 : storeAsBinaryConfiguration.hashCode());
+      result = prime * result + ((transactionConfiguration == null) ? 0 : transactionConfiguration.hashCode());
+      result = prime * result + ((unsafeConfiguration == null) ? 0 : unsafeConfiguration.hashCode());
+      result = prime * result + ((versioningConfiguration == null) ? 0 : versioningConfiguration.hashCode());
+      return result;
    }
 
    @Override
-   public int hashCode() {
-      int result = classLoader != null && classLoader.get() != null ? classLoader.get().hashCode() : 0;
-      result = 31 * result + (clusteringConfiguration != null ? clusteringConfiguration.hashCode() : 0);
-      result = 31 * result + (customInterceptorsConfiguration != null ? customInterceptorsConfiguration.hashCode() : 0);
-      result = 31 * result + (dataContainerConfiguration != null ? dataContainerConfiguration.hashCode() : 0);
-      result = 31 * result + (deadlockDetectionConfiguration != null ? deadlockDetectionConfiguration.hashCode() : 0);
-      result = 31 * result + (evictionConfiguration != null ? evictionConfiguration.hashCode() : 0);
-      result = 31 * result + (expirationConfiguration != null ? expirationConfiguration.hashCode() : 0);
-      result = 31 * result + (indexingConfiguration != null ? indexingConfiguration.hashCode() : 0);
-      result = 31 * result + (invocationBatchingConfiguration != null ? invocationBatchingConfiguration.hashCode() : 0);
-      result = 31 * result + (jmxStatisticsConfiguration != null ? jmxStatisticsConfiguration.hashCode() : 0);
-      result = 31 * result + (persistenceConfiguration != null ? persistenceConfiguration.hashCode() : 0);
-      result = 31 * result + (lockingConfiguration != null ? lockingConfiguration.hashCode() : 0);
-      result = 31 * result + (moduleConfiguration != null ? moduleConfiguration.hashCode() : 0);
-      result = 31 * result + (storeAsBinaryConfiguration != null ? storeAsBinaryConfiguration.hashCode() : 0);
-      result = 31 * result + (transactionConfiguration != null ? transactionConfiguration.hashCode() : 0);
-      result = 31 * result + (versioningConfiguration != null ? versioningConfiguration.hashCode() : 0);
-      result = 31 * result + (unsafeConfiguration != null ? unsafeConfiguration.hashCode() : 0);
-      result = 31 * result + (sitesConfiguration != null ? sitesConfiguration.hashCode() : 0);
-      result = 31 * result + (compatibilityConfiguration != null ? compatibilityConfiguration.hashCode() : 0);
-      return result;
+   public boolean equals(Object obj) {
+      if (this == obj)
+         return true;
+      if (obj == null)
+         return false;
+      if (getClass() != obj.getClass())
+         return false;
+      Configuration other = (Configuration) obj;
+      if (clusteringConfiguration == null) {
+         if (other.clusteringConfiguration != null)
+            return false;
+      } else if (!clusteringConfiguration.equals(other.clusteringConfiguration))
+         return false;
+      if (compatibilityConfiguration == null) {
+         if (other.compatibilityConfiguration != null)
+            return false;
+      } else if (!compatibilityConfiguration.equals(other.compatibilityConfiguration))
+         return false;
+      if (customInterceptorsConfiguration == null) {
+         if (other.customInterceptorsConfiguration != null)
+            return false;
+      } else if (!customInterceptorsConfiguration.equals(other.customInterceptorsConfiguration))
+         return false;
+      if (dataContainerConfiguration == null) {
+         if (other.dataContainerConfiguration != null)
+            return false;
+      } else if (!dataContainerConfiguration.equals(other.dataContainerConfiguration))
+         return false;
+      if (deadlockDetectionConfiguration == null) {
+         if (other.deadlockDetectionConfiguration != null)
+            return false;
+      } else if (!deadlockDetectionConfiguration.equals(other.deadlockDetectionConfiguration))
+         return false;
+      if (evictionConfiguration == null) {
+         if (other.evictionConfiguration != null)
+            return false;
+      } else if (!evictionConfiguration.equals(other.evictionConfiguration))
+         return false;
+      if (expirationConfiguration == null) {
+         if (other.expirationConfiguration != null)
+            return false;
+      } else if (!expirationConfiguration.equals(other.expirationConfiguration))
+         return false;
+      if (indexingConfiguration == null) {
+         if (other.indexingConfiguration != null)
+            return false;
+      } else if (!indexingConfiguration.equals(other.indexingConfiguration))
+         return false;
+      if (invocationBatchingConfiguration == null) {
+         if (other.invocationBatchingConfiguration != null)
+            return false;
+      } else if (!invocationBatchingConfiguration.equals(other.invocationBatchingConfiguration))
+         return false;
+      if (jmxStatisticsConfiguration == null) {
+         if (other.jmxStatisticsConfiguration != null)
+            return false;
+      } else if (!jmxStatisticsConfiguration.equals(other.jmxStatisticsConfiguration))
+         return false;
+      if (lockingConfiguration == null) {
+         if (other.lockingConfiguration != null)
+            return false;
+      } else if (!lockingConfiguration.equals(other.lockingConfiguration))
+         return false;
+      if (moduleConfiguration == null) {
+         if (other.moduleConfiguration != null)
+            return false;
+      } else if (!moduleConfiguration.equals(other.moduleConfiguration))
+         return false;
+      if (persistenceConfiguration == null) {
+         if (other.persistenceConfiguration != null)
+            return false;
+      } else if (!persistenceConfiguration.equals(other.persistenceConfiguration))
+         return false;
+      if (securityConfiguration == null) {
+         if (other.securityConfiguration != null)
+            return false;
+      } else if (!securityConfiguration.equals(other.securityConfiguration))
+         return false;
+      if (sitesConfiguration == null) {
+         if (other.sitesConfiguration != null)
+            return false;
+      } else if (!sitesConfiguration.equals(other.sitesConfiguration))
+         return false;
+      if (storeAsBinaryConfiguration == null) {
+         if (other.storeAsBinaryConfiguration != null)
+            return false;
+      } else if (!storeAsBinaryConfiguration.equals(other.storeAsBinaryConfiguration))
+         return false;
+      if (transactionConfiguration == null) {
+         if (other.transactionConfiguration != null)
+            return false;
+      } else if (!transactionConfiguration.equals(other.transactionConfiguration))
+         return false;
+      if (unsafeConfiguration == null) {
+         if (other.unsafeConfiguration != null)
+            return false;
+      } else if (!unsafeConfiguration.equals(other.unsafeConfiguration))
+         return false;
+      if (versioningConfiguration == null) {
+         if (other.versioningConfiguration != null)
+            return false;
+      } else if (!versioningConfiguration.equals(other.versioningConfiguration))
+         return false;
+      return true;
    }
+
+
 }
