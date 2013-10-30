@@ -4,17 +4,25 @@ import static java.io.File.separator;
 import static org.testng.AssertJUnit.assertFalse;
 
 import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.OutputStream;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Collections;
+import java.util.Enumeration;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Properties;
 import java.util.Random;
 import java.util.Set;
+import java.util.TreeSet;
 import java.util.concurrent.Callable;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.LockSupport;
@@ -1318,5 +1326,31 @@ public class TestingUtil {
 
    public static MarshalledEntry marshalledEntry(InternalCacheValue icv, StreamingMarshaller marshaller) {
       return marshalledEntry(icv, marshaller);
+   }
+
+   public static void outputPropertiesToXML(String outputFile, Properties properties) throws IOException {
+      Properties sorted = new Properties() {
+         @Override
+         public Set<Object> keySet() {
+            return Collections.unmodifiableSet(new TreeSet<Object>(super.keySet()));
+         }
+
+         @Override
+         public synchronized Enumeration<Object> keys() {
+            return Collections.enumeration(new TreeSet<Object>(super.keySet()));
+         }
+
+         @Override
+         public Set<String> stringPropertyNames() {
+            return Collections.unmodifiableSet(new TreeSet<String>(super.stringPropertyNames()));
+         }
+      };
+      sorted.putAll(properties);
+      OutputStream stream = new FileOutputStream(outputFile);
+      try {
+         sorted.storeToXML(stream, null);
+      } finally {
+         stream.close();
+      }
    }
 }
