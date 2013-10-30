@@ -36,9 +36,11 @@ import org.infinispan.util.concurrent.WithinThreadExecutor;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
+import javax.security.auth.Subject;
 import javax.transaction.Status;
 import javax.transaction.Transaction;
 import javax.transaction.TransactionManager;
+
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Method;
 import java.util.Collection;
@@ -152,6 +154,7 @@ public final class CacheNotifierImpl extends AbstractListenerImpl implements Clu
       this.config = config;
    }
 
+   @Override
    public void start() {
       super.start();
       this.distExecutorService = new DefaultExecutorService(cache, new WithinThreadExecutor());
@@ -628,11 +631,11 @@ public final class CacheNotifierImpl extends AbstractListenerImpl implements Clu
 
    @Override
    protected ListenerInvocation createListenerInvocation(Object listener, Method m, Listener l, KeyValueFilter filter,
-                                                         Converter converter, ClassLoader classLoader, UUID generatedId) {
+                                                         Converter converter, ClassLoader classLoader, UUID generatedId, Subject subject) {
       // If we are dealing with clustered events that forces the cluster listener to only use primary only else we would
       // have duplicate events
       return new ListenerInvocation(listener, m, l.sync(), l.clustered() ? true : l.primaryOnly(), l.clustered(),
-                                    filter, converter, classLoader, generatedId);
+                                    filter, converter, classLoader, generatedId, subject);
    }
 
    @Override

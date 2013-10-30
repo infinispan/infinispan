@@ -59,6 +59,11 @@ abstract class AbstractGlobalConfigurationBuilder implements GlobalConfiguration
    }
 
    @Override
+   public GlobalSecurityConfigurationBuilder security() {
+      return globalConfig.security();
+   }
+
+   @Override
    public ShutdownConfigurationBuilder shutdown() {
       return globalConfig.shutdown();
    }

@@ -64,6 +64,11 @@ abstract class AbstractConfigurationChildBuilder implements ConfigurationChildBu
    }
 
    @Override
+   public SecurityConfigurationBuilder security() {
+      return builder.security();
+   }
+
+   @Override
    public StoreAsBinaryConfigurationBuilder storeAsBinary() {
       return builder.storeAsBinary();
    }

@@ -34,6 +34,7 @@ import javax.transaction.Synchronization;
 import javax.transaction.TransactionManager;
 import javax.transaction.xa.XAException;
 import javax.xml.namespace.QName;
+
 import java.io.File;
 import java.io.IOException;
 import java.lang.reflect.Method;
@@ -1058,4 +1059,10 @@ public interface Log extends BasicLogger {
    @LogMessage(level = WARN)
    @Message(value = "Issue when retrieving cluster listeners from %s", id = 286)
    void exceptionDuringClusterListenerRetrieval(Address address, @Cause Throwable cause);
+
+   @Message(value = "Unauthorized access: subject '%s' lacks '%s' permission", id = 287)
+   SecurityException unauthorizedAccess(String subject, String permission);
+
+   @Message(value = "A principal-to-role mapper has not been specified", id = 288)
+   CacheConfigurationException invalidPrincipalRoleMapper();
 }

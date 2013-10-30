@@ -12,12 +12,14 @@ import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.interceptors.base.CommandInterceptor;
 import org.infinispan.metadata.Metadata;
 import org.infinispan.remoting.rpc.RpcManager;
+import org.infinispan.security.AuthorizationManager;
 import org.infinispan.stats.Stats;
 import org.infinispan.util.concurrent.NotifyingFuture;
 import org.infinispan.util.concurrent.locks.LockManager;
 
 import javax.transaction.TransactionManager;
 import javax.transaction.xa.XAResource;
+
 import java.util.Collection;
 import java.util.List;
 
@@ -26,6 +28,7 @@ import java.util.List;
  *
  * @author Manik Surtani
  * @author Galder Zamarreño
+ * @author Tristan Tarrant
  * @since 4.0
  */
 public interface AdvancedCache<K, V> extends Cache<K, V> {
@@ -124,6 +127,13 @@ public interface AdvancedCache<K, V> extends Cache<K, V> {
     * @return a DistributionManager, or null.
     */
    DistributionManager getDistributionManager();
+
+   /**
+    * Retrieves the {@link AuthorizationManager} if the cache has security enabled. Otherwise returns null
+    *
+    * @return an AuthorizationManager or null
+    */
+   AuthorizationManager getAuthorizationManager();
 
    /**
     * Locks a given key or keys eagerly across cache nodes in a cluster.
@@ -371,5 +381,4 @@ public interface AdvancedCache<K, V> extends Cache<K, V> {
     * @since 5.3
     */
    CacheEntry getCacheEntry(K key);
-
 }

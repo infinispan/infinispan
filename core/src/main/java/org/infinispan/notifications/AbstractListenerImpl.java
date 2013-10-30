@@ -2,30 +2,26 @@ package org.infinispan.notifications;
 
 import org.infinispan.commons.CacheException;
 import org.infinispan.commons.util.ReflectionUtil;
-import org.infinispan.distexec.DistributedExecutorService;
 import org.infinispan.factories.KnownComponentNames;
 import org.infinispan.factories.annotations.ComponentName;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.annotations.Start;
 import org.infinispan.factories.annotations.Stop;
-import org.infinispan.notifications.cachelistener.annotation.CacheEntryCreated;
-import org.infinispan.notifications.cachelistener.annotation.CacheEntryModified;
-import org.infinispan.notifications.cachelistener.annotation.CacheEntryRemoved;
-import org.infinispan.notifications.cachelistener.cluster.ClusterListenerReplicateCallable;
-import org.infinispan.notifications.cachelistener.event.CacheEntryCreatedEvent;
-import org.infinispan.notifications.cachelistener.event.CacheEntryModifiedEvent;
-import org.infinispan.notifications.cachelistener.event.CacheEntryRemovedEvent;
 import org.infinispan.notifications.cachelistener.event.EventImpl;
 import org.infinispan.util.concurrent.WithinThreadExecutor;
 import org.infinispan.util.logging.Log;
 
+import javax.security.auth.Subject;
 import javax.transaction.Transaction;
+
 import java.lang.annotation.Annotation;
 import java.lang.ref.WeakReference;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.security.AccessController;
 import java.security.PrivilegedAction;
+import java.security.PrivilegedActionException;
+import java.security.PrivilegedExceptionAction;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -135,7 +131,7 @@ public abstract class AbstractListenerImpl {
             if (m.isAnnotationPresent(key)) {
                testListenerMethodValidity(m, value, key.getName());
                m.setAccessible(true);
-               addListenerInvocation(key, createListenerInvocation(listener, m, l, filter, converter, classLoader, generatedId));
+               addListenerInvocation(key, createListenerInvocation(listener, m, l, filter, converter, classLoader, generatedId, Subject.getSubject(AccessController.getContext())));
                foundMethods = true;
                // If the annotation is also a cluster listener available event we need to replicate listener
                if (l.clustered()) {
@@ -153,9 +149,9 @@ public abstract class AbstractListenerImpl {
    }
 
    protected ListenerInvocation createListenerInvocation(Object listener, Method m, Listener l, KeyValueFilter filter,
-                                                         Converter converter, ClassLoader classLoader, UUID generatedId) {
+                                                         Converter converter, ClassLoader classLoader, UUID generatedId, Subject subject) {
       return new ListenerInvocation(listener, m, l.sync(), l.primaryOnly(), l.clustered(), filter, converter,
-                                    classLoader, generatedId);
+                                    classLoader, generatedId, subject);
    }
 
    protected void addedListener(Object listener, UUID generatedId, boolean hasClusteredMethods, KeyValueFilter filter,
@@ -206,9 +202,10 @@ public abstract class AbstractListenerImpl {
       public final KeyValueFilter filter;
       public final Converter converter;
       public final UUID generatedId;
+      public final Subject subject;
 
       public ListenerInvocation(Object target, Method method, boolean sync, boolean onlyPrimary, boolean clustered,
-                                KeyValueFilter filter, Converter converter, ClassLoader classLoader, UUID generatedId) {
+                                KeyValueFilter filter, Converter converter, ClassLoader classLoader, UUID generatedId, Subject subject) {
          this.target = target;
          this.method = method;
          this.sync = sync;
@@ -218,6 +215,7 @@ public abstract class AbstractListenerImpl {
          this.converter = converter;
          this.classLoader = new WeakReference<ClassLoader>(classLoader);
          this.generatedId = generatedId;
+         this.subject = subject;
       }
 
       public void invoke(final Object event) {
@@ -251,7 +249,28 @@ public abstract class AbstractListenerImpl {
                                                                     "being used!");
                         }
                      }
-                     method.invoke(target, event);
+                     if (subject != null) {
+                        try {
+                           Subject.doAs(subject, new PrivilegedExceptionAction<Void>() {
+                              @Override
+                              public Void run() throws Exception {
+                                 method.invoke(target, event);
+                                 return null;
+                              }
+                           });
+                        } catch (PrivilegedActionException e) {
+                           Throwable cause = e.getCause();
+                           if (cause instanceof InvocationTargetException) {
+                              throw (InvocationTargetException)cause;
+                           } else if (cause instanceof IllegalAccessException) {
+                              throw (IllegalAccessException)cause;
+                           } else {
+                              throw new InvocationTargetException(cause);
+                           }
+                        }
+                     } else {
+                        method.invoke(target, event);
+                     }
                   } catch (InvocationTargetException exception) {
                      Throwable cause = getRealException(exception);
                      if (sync) {

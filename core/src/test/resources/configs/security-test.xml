@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<infinispan
+      xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+      xsi:schemaLocation="urn:infinispan:config:7.0 http://www.infinispan.org/schemas/infinispan-config-7.0.xsd"
+      xmlns="urn:infinispan:config:7.0">
+
+   <global>
+      <transport clusterName="foo" />
+      <security>
+         <authorization mapper="org.infinispan.security.impl.IdentityRoleMapper" enabled="true">
+            <role name="admin" permissions="ALL" />
+            <role name="reader" permissions="READ" />
+            <role name="writer" permissions="WRITE" />
+            <role name="supervisor" permissions="READ WRITE EXEC BULK"/>
+         </authorization>
+      </security>
+   </global>
+
+   <default>
+   </default>
+
+   <namedCache name="secured">
+      <security enabled="true">
+         <authorization roles="admin reader writer" />
+      </security>
+   </namedCache>
+
+</infinispan>

@@ -28,6 +28,7 @@ import org.infinispan.util.concurrent.NotifyingFuture;
  *
  * @author Manik Surtani
  * @author Sanne Grinovero
+ * @author Tristan Tarrant
  * @see AdvancedCache#with(ClassLoader)
  * @see AdvancedCache#withFlags(org.infinispan.context.Flag...)
  * @since 5.1
@@ -73,7 +74,7 @@ public class DecoratedCache<K, V> extends AbstractDelegatingAdvancedCache<K, V> 
 
    @Override
    public AdvancedCache<K, V> with(final ClassLoader classLoader) {
-      if (classLoader == null) throw new IllegalArgumentException("ClassLoader passed in cannot be null!");
+      if (classLoader == null) throw new IllegalArgumentException("ClassLoader cannot be null!");
       return new DecoratedCache<K, V>(this.cacheImplementation, classLoader, flags);
    }
 

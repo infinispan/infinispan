@@ -24,6 +24,7 @@ public class GlobalConfigurationBuilder implements GlobalConfigurationChildBuild
    private final ExecutorFactoryConfigurationBuilder totalOrderExecutor;
    private final ScheduledExecutorFactoryConfigurationBuilder evictionScheduledExecutor;
    private final ScheduledExecutorFactoryConfigurationBuilder replicationQueueScheduledExecutor;
+   private final GlobalSecurityConfigurationBuilder security;
    private final ShutdownConfigurationBuilder shutdown;
    private final List<Builder<?>> modules = new ArrayList<Builder<?>>();
    private final SiteConfigurationBuilder site;
@@ -39,6 +40,7 @@ public class GlobalConfigurationBuilder implements GlobalConfigurationChildBuild
       this.remoteCommandsExecutor = new ExecutorFactoryConfigurationBuilder(this);
       this.evictionScheduledExecutor = new ScheduledExecutorFactoryConfigurationBuilder(this);
       this.replicationQueueScheduledExecutor = new ScheduledExecutorFactoryConfigurationBuilder(this);
+      this.security = new GlobalSecurityConfigurationBuilder(this);
       this.shutdown = new ShutdownConfigurationBuilder(this);
       this.site = new SiteConfigurationBuilder(this);
       //set a new executor by default, that allows to set the core number of threads and the keep alive time
@@ -131,6 +133,11 @@ public class GlobalConfigurationBuilder implements GlobalConfigurationChildBuild
    }
 
    @Override
+   public GlobalSecurityConfigurationBuilder security() {
+      return security;
+   }
+
+   @Override
    public ShutdownConfigurationBuilder shutdown() {
       return shutdown;
    }
@@ -190,6 +197,7 @@ public class GlobalConfigurationBuilder implements GlobalConfigurationChildBuild
             replicationQueueScheduledExecutor.create(),
             globalJmxStatistics.create(),
             transport.create(),
+            security.create(),
             serialization.create(),
             shutdown.create(),
             modulesConfig,
@@ -216,6 +224,7 @@ public class GlobalConfigurationBuilder implements GlobalConfigurationChildBuild
       evictionScheduledExecutor.read(template.evictionScheduledExecutor());
       globalJmxStatistics.read(template.globalJmxStatistics());
       replicationQueueScheduledExecutor.read(template.replicationQueueScheduledExecutor());
+      security.read(template.security());
       serialization.read(template.serialization());
       shutdown.read(template.shutdown());
       transport.read(template.transport());
@@ -237,72 +246,12 @@ public class GlobalConfigurationBuilder implements GlobalConfigurationChildBuild
 
    @Override
    public String toString() {
-      return "GlobalConfigurationBuilder{" +
-            "asyncListenerExecutor=" + asyncListenerExecutor +
-            "persistenceExecutor=" + persistenceExecutor +
-            ", cl=" + cl +
-            ", transport=" + transport +
-            ", globalJmxStatistics=" + globalJmxStatistics +
-            ", serialization=" + serialization +
-            ", asyncTransportExecutor=" + asyncTransportExecutor +
-            ", remoteCommandsExecutor=" + remoteCommandsExecutor +
-            ", evictionScheduledExecutor=" + evictionScheduledExecutor +
-            ", replicationQueueScheduledExecutor=" + replicationQueueScheduledExecutor +
-            ", shutdown=" + shutdown +
-            ", site=" + site +
-            ", totalOrderExecutor=" + totalOrderExecutor +
-            '}';
+      return "GlobalConfigurationBuilder [cl=" + cl + ", transport=" + transport + ", globalJmxStatistics="
+            + globalJmxStatistics + ", serialization=" + serialization + ", asyncTransportExecutor="
+            + asyncTransportExecutor + ", asyncListenerExecutor=" + asyncListenerExecutor + ", persistenceExecutor="
+            + persistenceExecutor + ", remoteCommandsExecutor=" + remoteCommandsExecutor + ", totalOrderExecutor="
+            + totalOrderExecutor + ", evictionScheduledExecutor=" + evictionScheduledExecutor
+            + ", replicationQueueScheduledExecutor=" + replicationQueueScheduledExecutor + ", security=" + security
+            + ", shutdown=" + shutdown + ", modules=" + modules + ", site=" + site + "]";
    }
-
-   @Override
-   public boolean equals(Object o) {
-      if (this == o) return true;
-      if (o == null || getClass() != o.getClass()) return false;
-
-      GlobalConfigurationBuilder that = (GlobalConfigurationBuilder) o;
-
-      if (asyncListenerExecutor != null ? !asyncListenerExecutor.equals(that.asyncListenerExecutor) : that.asyncListenerExecutor != null)
-         return false;
-      if (persistenceExecutor != null ? !persistenceExecutor.equals(that.persistenceExecutor) : that.persistenceExecutor!= null)
-         return false;
-      if (asyncTransportExecutor != null ? !asyncTransportExecutor.equals(that.asyncTransportExecutor) : that.asyncTransportExecutor != null)
-         return false;
-      if (remoteCommandsExecutor != null ? !remoteCommandsExecutor.equals(that.remoteCommandsExecutor) : that.remoteCommandsExecutor != null)
-         return false;
-      if (cl != null ? !cl.equals(that.cl) : that.cl != null) return false;
-      if (evictionScheduledExecutor != null ? !evictionScheduledExecutor.equals(that.evictionScheduledExecutor) : that.evictionScheduledExecutor != null)
-         return false;
-      if (globalJmxStatistics != null ? !globalJmxStatistics.equals(that.globalJmxStatistics) : that.globalJmxStatistics != null)
-         return false;
-      if (replicationQueueScheduledExecutor != null ? !replicationQueueScheduledExecutor.equals(that.replicationQueueScheduledExecutor) : that.replicationQueueScheduledExecutor != null)
-         return false;
-      if (serialization != null ? !serialization.equals(that.serialization) : that.serialization != null)
-         return false;
-      if (shutdown != null ? !shutdown.equals(that.shutdown) : that.shutdown != null)
-         return false;
-      if (site != null ? !site.equals(that.site) : that.site != null)
-         return false;
-      if (transport != null ? !transport.equals(that.transport) : that.transport != null)
-         return false;
-
-      return !(totalOrderExecutor != null ? !totalOrderExecutor.equals(that.totalOrderExecutor()) : that.totalOrderExecutor != null);
-   }
-
-   @Override
-   public int hashCode() {
-      int result = cl != null ? cl.hashCode() : 0;
-      result = 31 * result + (transport != null ? transport.hashCode() : 0);
-      result = 31 * result + (globalJmxStatistics != null ? globalJmxStatistics.hashCode() : 0);
-      result = 31 * result + (serialization != null ? serialization.hashCode() : 0);
-      result = 31 * result + (asyncTransportExecutor != null ? asyncTransportExecutor.hashCode() : 0);
-      result = 31 * result + (asyncListenerExecutor != null ? asyncListenerExecutor.hashCode() : 0);
-      result = 31 * result + (remoteCommandsExecutor != null ? remoteCommandsExecutor.hashCode() : 0);
-      result = 31 * result + (evictionScheduledExecutor != null ? evictionScheduledExecutor.hashCode() : 0);
-      result = 31 * result + (replicationQueueScheduledExecutor != null ? replicationQueueScheduledExecutor.hashCode() : 0);
-      result = 31 * result + (shutdown != null ? shutdown.hashCode() : 0);
-      result = 31 * result + (site != null ? site.hashCode() : 0);
-      result = 31 * result + (totalOrderExecutor != null ? totalOrderExecutor().hashCode() : 0);
-      return result;
-   }
-
 }
