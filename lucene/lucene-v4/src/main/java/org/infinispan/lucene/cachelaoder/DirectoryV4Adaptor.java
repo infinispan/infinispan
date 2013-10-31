@@ -1,10 +1,11 @@
-package org.infinispan.lucene.cachestore;
+package org.infinispan.lucene.cachelaoder;
 
 import java.io.IOException;
 
 import org.apache.lucene.store.Directory;
 import org.apache.lucene.store.IOContext;
 import org.apache.lucene.store.IndexInput;
+import org.infinispan.lucene.cacheloader.InternalDirectoryContract;
 
 /**
  * @author Sanne Grinovero

@@ -1,4 +1,4 @@
-package org.infinispan.lucene.cachestore;
+package org.infinispan.lucene.cacheloader;
 
 import org.apache.lucene.store.Directory;
 import org.infinispan.lucene.impl.LuceneVersionDetector;
