@@ -1,18 +1,17 @@
-package org.infinispan.lucene.cachestore.configuration;
+package org.infinispan.lucene.cacheloader.configuration;
 
 import org.infinispan.commons.configuration.Builder;
-import org.infinispan.commons.util.TypedProperties;
 import org.infinispan.configuration.cache.AbstractStoreConfigurationBuilder;
 import org.infinispan.configuration.cache.PersistenceConfigurationBuilder;
 
 /**
- * {@link org.infinispan.configuration.cache.ConfigurationBuilder} bean for the {@link LuceneStoreConfiguration}
+ * {@link org.infinispan.configuration.cache.ConfigurationBuilder} bean for the {@link LuceneLoaderConfiguration}
  *
  * @author navssurtani
  * @since 6.0.0
  */
-public class LuceneStoreConfigurationBuilder extends
-                                             AbstractStoreConfigurationBuilder<LuceneStoreConfiguration, LuceneStoreConfigurationBuilder> {
+public class LuceneLoaderConfigurationBuilder extends
+                                             AbstractStoreConfigurationBuilder<LuceneLoaderConfiguration, LuceneLoaderConfigurationBuilder> {
 
 
    /** Auto-split huge files in blocks, with a base value of 32MB **/
@@ -21,7 +20,7 @@ public class LuceneStoreConfigurationBuilder extends
    /** Path of the root directory containing all indexes **/
    private String location = "Infinispan-IndexStore";
 
-   public LuceneStoreConfigurationBuilder(PersistenceConfigurationBuilder builder) {
+   public LuceneLoaderConfigurationBuilder(PersistenceConfigurationBuilder builder) {
       super(builder);
    }
 
@@ -33,7 +32,7 @@ public class LuceneStoreConfigurationBuilder extends
     * @param autoChunkSize
     * @return this for method chaining
     */
-   public LuceneStoreConfigurationBuilder autoChunkSize(int autoChunkSize) {
+   public LuceneLoaderConfigurationBuilder autoChunkSize(int autoChunkSize) {
       this.autoChunkSize = autoChunkSize;
       return this;
    }
@@ -46,7 +45,7 @@ public class LuceneStoreConfigurationBuilder extends
     * @param location path to the root directory of all indexes
     * @return this for method chaining
     */
-   public LuceneStoreConfigurationBuilder location(String location) {
+   public LuceneLoaderConfigurationBuilder location(String location) {
       this.location = location;
       return this;
    }
@@ -57,13 +56,13 @@ public class LuceneStoreConfigurationBuilder extends
    }
 
    @Override
-   public LuceneStoreConfiguration create() {
-      return new LuceneStoreConfiguration(purgeOnStartup, fetchPersistentState, ignoreModifications, async.create(),
+   public LuceneLoaderConfiguration create() {
+      return new LuceneLoaderConfiguration(purgeOnStartup, fetchPersistentState, ignoreModifications, async.create(),
                                           singleton().create(), preload, shared, properties, this.autoChunkSize, this.location);
    }
 
    @Override
-   public Builder<?> read(LuceneStoreConfiguration template) {
+   public Builder<?> read(LuceneLoaderConfiguration template) {
       this.autoChunkSize = template.autoChunkSize();
       this.location = template.location();
 
@@ -80,13 +79,13 @@ public class LuceneStoreConfigurationBuilder extends
    }
 
    @Override
-   public LuceneStoreConfigurationBuilder self() {
+   public LuceneLoaderConfigurationBuilder self() {
       return this;
    }
 
    @Override
    public String toString() {
-      return "LuceneStoreConfigurationBuilder{" + "autoChunkSize=" + autoChunkSize + ", " +
+      return "LuceneLoaderConfigurationBuilder{" + "autoChunkSize=" + autoChunkSize + ", " +
             "location=" + location + "}";
    }
 }

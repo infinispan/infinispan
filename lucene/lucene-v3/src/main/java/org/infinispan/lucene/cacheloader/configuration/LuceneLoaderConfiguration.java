@@ -1,33 +1,32 @@
-package org.infinispan.lucene.cachestore.configuration;
+package org.infinispan.lucene.cacheloader.configuration;
 
 import org.infinispan.commons.configuration.BuiltBy;
 import org.infinispan.commons.configuration.ConfigurationFor;
-import org.infinispan.commons.util.TypedProperties;
 import org.infinispan.configuration.cache.AbstractStoreConfiguration;
 import org.infinispan.configuration.cache.AsyncStoreConfiguration;
 import org.infinispan.configuration.cache.SingletonStoreConfiguration;
-import org.infinispan.lucene.cachestore.LuceneCacheLoader;
+import org.infinispan.lucene.cacheloader.LuceneCacheLoader;
 
 import java.util.Properties;
 
 /**
- * Configuration bean for the {@link LuceneCacheLoader}.
+ * Configuration bean for the {@link org.infinispan.lucene.cacheloader.LuceneCacheLoader}.
  *
  * @author navssurtani
  * @since 6.0.0
  */
-@BuiltBy(LuceneStoreConfigurationBuilder.class)
+@BuiltBy(LuceneLoaderConfigurationBuilder.class)
 @ConfigurationFor(LuceneCacheLoader.class)
-public class LuceneStoreConfiguration extends AbstractStoreConfiguration {
+public class LuceneLoaderConfiguration extends AbstractStoreConfiguration {
 
    private final int autoChunkSize;
 
    private final String location;
 
 
-   public LuceneStoreConfiguration(boolean purgeOnStartup, boolean fetchPersistentState, boolean ignoreModifications,
-                                   AsyncStoreConfiguration async, SingletonStoreConfiguration singletonStore, boolean preload,
-                                   boolean shared, Properties properties, int autoChunkSize, String location) {
+   public LuceneLoaderConfiguration(boolean purgeOnStartup, boolean fetchPersistentState, boolean ignoreModifications,
+                                    AsyncStoreConfiguration async, SingletonStoreConfiguration singletonStore, boolean preload,
+                                    boolean shared, Properties properties, int autoChunkSize, String location) {
       super(purgeOnStartup, fetchPersistentState, ignoreModifications, async, singletonStore, preload, shared, properties);
       this.autoChunkSize = autoChunkSize;
       this.location = location;

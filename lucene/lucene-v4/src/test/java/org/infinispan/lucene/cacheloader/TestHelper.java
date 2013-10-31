@@ -1,4 +1,4 @@
-package org.infinispan.lucene.cachestore;
+package org.infinispan.lucene.cacheloader;
 
 import org.apache.lucene.document.Document;
 import org.apache.lucene.document.Field;

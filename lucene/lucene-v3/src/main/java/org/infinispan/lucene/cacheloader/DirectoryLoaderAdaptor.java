@@ -1,4 +1,4 @@
-package org.infinispan.lucene.cachestore;
+package org.infinispan.lucene.cacheloader;
 
 import java.io.FileNotFoundException;
 import java.io.IOException;

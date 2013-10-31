@@ -1,4 +1,4 @@
-package org.infinispan.lucene.cachestore;
+package org.infinispan.lucene.cacheloader;
 
 import java.io.File;
 import java.io.IOException;
@@ -19,7 +19,7 @@ import org.infinispan.lucene.ChunkCacheKey;
 import org.infinispan.lucene.FileCacheKey;
 import org.infinispan.lucene.FileListCacheKey;
 import org.infinispan.lucene.FileReadLockKey;
-import org.infinispan.lucene.cachestore.configuration.LuceneStoreConfigurationBuilder;
+import org.infinispan.lucene.cacheloader.configuration.LuceneLoaderConfigurationBuilder;
 import org.infinispan.lucene.directory.DirectoryBuilder;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.test.SingleCacheManagerTest;
@@ -61,7 +61,7 @@ public class CacheLoaderAPITest extends SingleCacheManagerTest {
       luceneDirectory.close();
       ConfigurationBuilder builder = new ConfigurationBuilder();
       builder.persistence()
-            .addStore(LuceneStoreConfigurationBuilder.class)
+            .addStore(LuceneLoaderConfigurationBuilder.class)
                .preload(true)
                .autoChunkSize(110)
                .location(rootDir.getAbsolutePath());

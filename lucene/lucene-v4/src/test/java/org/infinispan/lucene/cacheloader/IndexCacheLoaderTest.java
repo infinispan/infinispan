@@ -1,4 +1,4 @@
-package org.infinispan.lucene.cachestore;
+package org.infinispan.lucene.cacheloader;
 
 import java.io.File;
 import java.io.IOException;
@@ -6,7 +6,7 @@ import java.io.IOException;
 import org.apache.lucene.store.Directory;
 import org.infinispan.Cache;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
-import org.infinispan.lucene.cachestore.configuration.LuceneStoreConfigurationBuilder;
+import org.infinispan.lucene.cacheloader.configuration.LuceneLoaderConfigurationBuilder;
 import org.infinispan.lucene.directory.DirectoryBuilder;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.test.CacheManagerCallable;
@@ -17,7 +17,7 @@ import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
 /**
- * Verify we can write to a FSDirectory, and when using it via the {@link LuceneCacheLoader}
+ * Verify we can write to a FSDirectory, and when using it via the {@link org.infinispan.lucene.cacheloader.LuceneCacheLoader}
  * we can find the same contents as by searching it directly.
  * This implicitly verifies configuration settings passed it, as it won't work if the CacheLoader
  * is unable to find the specific index path.
@@ -63,9 +63,9 @@ public class IndexCacheLoaderTest {
       verifyDirectory(rootDir, "index-B", 20 * SCALE, false);
    }
 
-   private void verifyDirectory (final File rootDir, final String indexName, final int termsAdded, final boolean inverted)
-         throws IOException {
+   private void verifyDirectory (final File rootDir, final String indexName, final int termsAdded, final boolean inverted) {
       final EmbeddedCacheManager cacheManager = initializeInfinispan(rootDir);
+
       TestingUtil.withCacheManager(new CacheManagerCallable(cacheManager) {
          public void call() {
             Cache<Object, Object> cache = cacheManager.getCache();
@@ -73,21 +73,22 @@ public class IndexCacheLoaderTest {
 
             try {
                TestHelper.verifyOnDirectory(directory, termsAdded, inverted);
-            } catch (IOException e) {
-               throw new RuntimeException(e);
+            } catch(Exception ex) {
+               throw new RuntimeException(ex);
             }
          }
       });
+
    }
 
    protected EmbeddedCacheManager initializeInfinispan(File rootDir) {
       ConfigurationBuilder builder = new ConfigurationBuilder();
       builder
-         .persistence()
-            .addStore(LuceneStoreConfigurationBuilder.class)
-               .autoChunkSize(1024)
-               .preload(true)
-               .location(rootDir.getAbsolutePath());
+            .persistence()
+            .addStore(LuceneLoaderConfigurationBuilder.class)
+            .preload(true)
+            .autoChunkSize(1024)
+            .location(rootDir.getAbsolutePath());
       return TestCacheManagerFactory.createCacheManager(builder);
    }
 }
