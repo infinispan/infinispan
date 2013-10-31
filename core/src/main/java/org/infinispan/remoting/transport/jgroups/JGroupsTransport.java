@@ -38,6 +38,7 @@ import org.jgroups.View;
 import org.jgroups.blocks.RequestOptions;
 import org.jgroups.blocks.RspFilter;
 import org.jgroups.jmx.JmxConfigurator;
+import org.jgroups.protocols.TP;
 import org.jgroups.protocols.relay.SiteMaster;
 import org.jgroups.protocols.tom.TOA;
 import org.jgroups.stack.AddressGenerator;
@@ -50,6 +51,7 @@ import javax.management.MBeanServer;
 import javax.management.ObjectName;
 
 import java.io.FileNotFoundException;
+import java.lang.reflect.Field;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -183,8 +185,26 @@ public class JGroupsTransport extends AbstractTransport implements MembershipLis
 
       initChannelAndRPCDispatcher();
       startJGroupsChannelIfNeeded();
+      checkBunlderType();
 
       waitForChannelToConnect();
+   }
+
+   private void checkBunlderType() {
+      if (channel == null) {
+         return;
+      }
+      try {
+         TP transport = channel.getProtocolStack().getTransport();
+         Field field = TP.class.getDeclaredField("bundler_type");
+         field.setAccessible(true);
+         String bundlerType = (String) field.get(transport);
+         if (bundlerType.startsWith("old")) {
+            log.performanceDegradationWithOldJGroupsBundler();
+         }
+      } catch (Throwable throwable) {
+         log.debug("Unable to check bundler");
+      }
    }
 
    protected void startJGroupsChannelIfNeeded() {

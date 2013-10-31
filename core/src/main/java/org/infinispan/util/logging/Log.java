@@ -1019,5 +1019,9 @@ public interface Log extends BasicLogger {
    @LogMessage(level = ERROR)
    @Message(value = "Persistence enabled without any CacheWriteInterceptor in InterceptorChain!", id = 275)
    void persistenceWithoutCacheWriteInterceptor();
+
+   @LogMessage(level = WARN)
+   @Message(value = "Infinispan performance is negatively affected when \"old\" JGroups bundler is used", id = 276)
+   void performanceDegradationWithOldJGroupsBundler();
 }
 
