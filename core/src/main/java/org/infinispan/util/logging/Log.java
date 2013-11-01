@@ -4,6 +4,7 @@ import org.infinispan.commands.ReplicableCommand;
 import org.infinispan.commands.tx.PrepareCommand;
 import org.infinispan.commons.CacheConfigurationException;
 import org.infinispan.commons.CacheException;
+import org.infinispan.commons.CacheListenerException;
 import org.infinispan.commons.marshall.AdvancedExternalizer;
 import org.infinispan.commons.util.TypedProperties;
 import org.infinispan.lifecycle.ComponentStatus;
@@ -1032,4 +1033,8 @@ public interface Log extends BasicLogger {
 
    @Message(value = "Failed to read stored entries from file. Error in file %s at offset %d", id = 279)
    PersistenceException errorReadingFileStore(String path, long offset);
+
+   @Message(value = "Caught exception [%s] while invoking method [%s] on listener instance: %s", id = 280)
+   CacheListenerException exceptionInvokingListener(String name, Method m, Object target, @Cause Throwable cause);
+
 }

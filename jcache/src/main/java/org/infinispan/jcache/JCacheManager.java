@@ -11,11 +11,7 @@ import java.util.Set;
 import javax.cache.*;
 import javax.cache.configuration.Configuration;
 import javax.cache.configuration.MutableConfiguration;
-import javax.cache.configuration.OptionalFeature;
 import javax.cache.spi.CachingProvider;
-import javax.cache.transaction.IsolationLevel;
-import javax.cache.transaction.Mode;
-import javax.transaction.UserTransaction;
 
 import org.infinispan.AdvancedCache;
 import org.infinispan.commons.util.InfinispanCollections;
@@ -152,9 +148,8 @@ public class JCacheManager implements CacheManager {
       return null;
    }
 
-   @SuppressWarnings("unchecked")
    @Override
-   public <K, V> Cache<K, V> configureCache(String cacheName, Configuration<K, V> configuration) {
+   public <K, V> Cache<K, V> createCache(String cacheName, Configuration<K, V> configuration) {
       checkNotClosed();
 
       // spec required
@@ -164,18 +159,6 @@ public class JCacheManager implements CacheManager {
       // spec required
       if (configuration == null)
          throw log.parameterMustNotBeNull("configuration");
-
-      if ((!configuration.isStoreByValue()) && configuration.isTransactionsEnabled())
-         throw log.storeByReferenceAndTransactionsNotAllowed();
-
-      IsolationLevel isolationLevel = configuration.getTransactionIsolationLevel();
-      Mode txMode = configuration.getTransactionMode();
-      boolean noIsolationWithTx = isolationLevel == IsolationLevel.NONE && txMode != Mode.NONE;
-      boolean isolationWithNoTx = isolationLevel != IsolationLevel.NONE && txMode == Mode.NONE;
-
-      // spec required
-      if (noIsolationWithTx || isolationWithNoTx)
-         throw log.incompatibleIsolationLevelAndTransactionMode(isolationLevel, txMode);
 
       synchronized (caches) {
          JCache<?, ?> cache = caches.get(cacheName);
@@ -195,11 +178,11 @@ public class JCacheManager implements CacheManager {
          }
          else {
             // re-register attempt with different configuration
-            if (!cache.getConfiguration().equals(configuration))
+            if (cache.getConfiguration().equals(configuration))
                throw log.cacheAlreadyRegistered(cacheName, cache.getConfiguration(), configuration);
          }
 
-         return (Cache<K, V>) cache;
+         return unchecked(cache);
       }
    }
 
@@ -212,7 +195,7 @@ public class JCacheManager implements CacheManager {
          throw new NullPointerException("valueType can not be null");
 
       synchronized (caches) {
-         Cache<K, V> cache = (Cache<K, V>) caches.get(cacheName);
+         Cache<K, V> cache = unchecked(caches.get(cacheName));
          if (cache != null) {
             Configuration<?, ?> configuration = cache.getConfiguration();
 
@@ -243,7 +226,7 @@ public class JCacheManager implements CacheManager {
             cache = new JCache<K, V>(ispnCache, this, new MutableConfiguration<K, V>());
             caches.put(cacheName, cache);
          }
-         return (Cache<K, V>) cache;
+         return unchecked(cache);
       }
    }
 
@@ -251,12 +234,12 @@ public class JCacheManager implements CacheManager {
    public <K, V> Cache<K, V> getCache(String cacheName) {
       checkNotClosed();
       synchronized (caches) {
-         Cache<K, V> cache = (Cache<K, V>) caches.get(cacheName);
+         Cache<K, V> cache = unchecked(caches.get(cacheName));
          if (cache != null) {
             Configuration<K, V> configuration = cache.getConfiguration();
             Class<K> keyType = configuration.getKeyType();
             Class<V> valueType = configuration.getValueType();
-            if (keyType == null && valueType == null)
+            if (Object.class.equals(keyType) && Object.class.equals(valueType))
                return cache;
 
             throw log.unsafeTypedCacheRequest(cacheName, keyType, valueType);
@@ -291,18 +274,6 @@ public class JCacheManager implements CacheManager {
          RIMBeanServerRegistrationUtility.unregisterCacheObject(cache, STATISTICS);
          RIMBeanServerRegistrationUtility.unregisterCacheObject(cache, CONFIGURATION);
       }
-   }
-
-   @Override
-   public UserTransaction getUserTransaction() {
-      // TODO: Independent of cache configuration? TCK mandates it...
-      return new JCacheUserTransaction(
-            cm.getCache().getAdvancedCache().getTransactionManager());
-   }
-
-   @Override
-   public boolean isSupported(OptionalFeature optionalFeature) {
-      return provider.isSupported(optionalFeature);
    }
 
    @Override
@@ -369,6 +340,11 @@ public class JCacheManager implements CacheManager {
    private void checkNotClosed() {
       if (isClosed())
          throw new IllegalStateException("Cache manager is in " + cm.getStatus() + " status");
+   }
+
+   @SuppressWarnings("unchecked")
+   private <K, V> Cache<K, V> unchecked(Cache<?, ?> cache) {
+      return (Cache<K, V>) cache;
    }
 
 }

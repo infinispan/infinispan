@@ -25,12 +25,20 @@ public class JCacheWriterAdapter<K, V> implements org.infinispan.persistence.spi
 
    @Override
    public void write(MarshalledEntry entry) {
-      delegate.write(new JCacheEntry(entry.getKey(), entry.getValue()));
+      try {
+         delegate.write(new JCacheEntry(entry.getKey(), entry.getValue()));
+      } catch (Exception e) {
+         throw Exceptions.launderCacheWriterException(e);
+      }
    }
 
    @Override
    public boolean delete(Object key) {
-      delegate.delete(key);
+      try {
+         delegate.delete(key);
+      } catch (Exception e) {
+         throw Exceptions.launderCacheWriterException(e);
+      }
       return false;
    }
 
@@ -41,4 +49,5 @@ public class JCacheWriterAdapter<K, V> implements org.infinispan.persistence.spi
    @Override
    public void stop() {
    }
+
 }

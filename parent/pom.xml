@@ -109,7 +109,8 @@
       <version.hibernate.hql.parser>1.0.0.Alpha5</version.hibernate.hql.parser>
       <version.hibernate.javax.persistence>1.0.1.Final</version.hibernate.javax.persistence>
       <version.jackson>1.9.2</version.jackson>
-      <version.javax.cache>0.8</version.javax.cache>
+      <version.javax.cache>1.0.0-PFD</version.javax.cache>
+      <version.javax.cache.cache-tests>0.11</version.javax.cache.cache-tests>
       <version.javax.persistence>1.0</version.javax.persistence>
       <version.javax.servlet>2.5</version.javax.servlet>
       <version.jboss.as>7.2.0.Alpha1-redhat-4</version.jboss.as>
@@ -371,12 +372,12 @@
          <dependency>
             <groupId>javax.cache</groupId>
             <artifactId>cache-tests</artifactId>
-            <version>${version.javax.cache}</version>
+            <version>${version.javax.cache.cache-tests}</version>
          </dependency>
          <dependency>
             <groupId>javax.cache</groupId>
             <artifactId>cache-tests</artifactId>
-            <version>${version.javax.cache}</version>
+            <version>${version.javax.cache.cache-tests}</version>
             <classifier>tests</classifier>
          </dependency>
          <dependency>

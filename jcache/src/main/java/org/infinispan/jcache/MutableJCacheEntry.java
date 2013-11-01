@@ -3,18 +3,18 @@ package org.infinispan.jcache;
 import org.infinispan.AdvancedCache;
 import org.infinispan.commons.util.ReflectionUtil;
 
-import javax.cache.Cache;
+import javax.cache.processor.MutableEntry;
 
 /**
- * Infinispan implementation of {@link Cache.MutableEntry} designed to
- * be passed as parameter to {@link Cache.EntryProcessor#process(javax.cache.Cache.MutableEntry, Object...)}.
+ * Infinispan implementation of {@link MutableEntry} designed to
+ * be passed as parameter to {@link javax.cache.processor.EntryProcessor#process(javax.cache.processor.MutableEntry, Object...)}.
  *
  * @param <K> the type of key maintained by this cache entry
  * @param <V> the type of value maintained by this cache entry
  * @author Galder Zamarreño
  * @since 5.3
  */
-public final class MutableJCacheEntry<K, V> implements Cache.MutableEntry<K, V> {
+public final class MutableJCacheEntry<K, V> implements MutableEntry<K, V> {
 
    private final AdvancedCache<K, V> cache;
 
@@ -24,19 +24,20 @@ public final class MutableJCacheEntry<K, V> implements Cache.MutableEntry<K, V> 
 
    private V value; // mutable
 
-   private boolean removed;
+   private Operation operation;
 
    public MutableJCacheEntry(AdvancedCache<K, V> cache, K key, V value) {
       this.cache = cache;
       this.key = key;
       this.oldValue = value;
+      this.operation = Operation.NONE;
    }
 
    @Override
    public boolean exists() {
       if (value != null)
          return true;
-      else if (!removed)
+      else if (!operation.isRemoved())
          return cache.containsKey(key);
 
       return false;
@@ -44,14 +45,14 @@ public final class MutableJCacheEntry<K, V> implements Cache.MutableEntry<K, V> 
 
    @Override
    public void remove() {
-      removed = true;
+      operation = value != null ? Operation.NONE : Operation.REMOVE;
       value = null;
    }
 
    @Override
    public void setValue(V value) {
       this.value = value;
-      removed = false;
+      operation = Operation.UPDATE;
    }
 
    @Override
@@ -64,15 +65,15 @@ public final class MutableJCacheEntry<K, V> implements Cache.MutableEntry<K, V> 
       if (value != null)
          return value;
 
-      if (!removed) {
-         // No new value has been set, so going to return old value. TCK
-         // listener tests expect a visit event to be fired, but we don't
-         // wanna change the semantics of perceived exclusive access. So,
-         // call cache.get to fire the event, and return oldValue set at
-         // the start in order to comply with expectations that getValue()
-         // should not see newer values in cache.
-         cache.get(key);
-         return oldValue;
+      if (!operation.isRemoved()) {
+
+         if (oldValue != null) {
+            operation = Operation.ACCESS;
+            return oldValue;
+         } else {
+            // If not updated or removed, and old entry is null, do a read-through
+            return cache.get(key);
+         }
       }
 
       return null;
@@ -87,8 +88,16 @@ public final class MutableJCacheEntry<K, V> implements Cache.MutableEntry<K, V> 
       return value;
    }
 
-   boolean isRemoved() {
-      return removed;
+   Operation getOperation() {
+      return operation;
+   }
+
+   public enum Operation {
+      NONE, ACCESS, REMOVE, UPDATE;
+
+      boolean isRemoved() {
+         return this == REMOVE;
+      }
    }
 
 }

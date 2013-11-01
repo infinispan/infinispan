@@ -1,5 +1,6 @@
 package org.infinispan.jcache;
 
+import org.infinispan.AdvancedCache;
 import org.infinispan.commons.util.CollectionFactory;
 import org.infinispan.jcache.logging.Log;
 import org.infinispan.util.logging.LogFactory;
@@ -17,6 +18,7 @@ import javax.cache.event.CacheEntryUpdatedListener;
 import javax.cache.event.EventType;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.CopyOnWriteArrayList;
 
@@ -53,11 +55,27 @@ public class JCacheNotifier<K, V> {
    private final ConcurrentMap<CacheEntryListener<? super K, ? super V>, CacheEntryListenerConfiguration<K, V>> listenerCfgs =
          CollectionFactory.makeConcurrentMap();
 
-   public void addListener(CacheEntryListenerConfiguration<K, V> reg) {
+   private JCacheListenerAdapter<K,V> listenerAdapter;
+
+   public void addListener(CacheEntryListenerConfiguration<K, V> reg,
+         Cache<K, V> jcache, JCacheNotifier<K, V> notifier, AdvancedCache<K, V> cache) {
+      boolean addListenerAdapter = listenerCfgs.isEmpty();
       addListener(reg, false);
+
+      if (addListenerAdapter) {
+         listenerAdapter = new JCacheListenerAdapter<K, V>(jcache, notifier);
+         cache.addListener(listenerAdapter);
+      }
    }
 
-   @SuppressWarnings("unchecked")
+   public void removeListener(CacheEntryListenerConfiguration<K, V> reg,
+         AdvancedCache<K, V> cache) {
+      removeListener(reg);
+
+      if (listenerCfgs.isEmpty())
+         cache.removeListener(listenerAdapter);
+   }
+
    public void notifyEntryCreated(Cache<K, V> cache, K key, V value) {
       if (!createdListeners.isEmpty()) {
          List<CacheEntryEvent<? extends K, ? extends V>> events =
@@ -67,7 +85,6 @@ public class JCacheNotifier<K, V> {
       }
    }
 
-   @SuppressWarnings("unchecked")
    public void notifyEntryUpdated(Cache<K, V> cache, K key, V value) {
       if (!updatedListeners.isEmpty()) {
          List<CacheEntryEvent<? extends K, ? extends V>> events =
@@ -77,7 +94,6 @@ public class JCacheNotifier<K, V> {
       }
    }
 
-   @SuppressWarnings("unchecked")
    public void notifyEntryRemoved(Cache<K, V> cache, K key, V value) {
       if (!removedListeners.isEmpty()) {
          List<CacheEntryEvent<? extends K, ? extends V>> events =
@@ -88,7 +104,6 @@ public class JCacheNotifier<K, V> {
       }
    }
 
-   @SuppressWarnings("unchecked")
    public void notifyEntryExpired(Cache<K, V> cache, K key, V value) {
       if (!expiredListeners.isEmpty()) {
          List<CacheEntryEvent<? extends K, ? extends V>> events =
@@ -152,6 +167,28 @@ public class JCacheNotifier<K, V> {
 
       return false;
    }
+
+   @SuppressWarnings("unchecked")
+   private void removeListener(CacheEntryListenerConfiguration<K, V> listenerCfg) {
+      for (Map.Entry<CacheEntryListener<? super K, ? super V>, CacheEntryListenerConfiguration<K, V>> entry : listenerCfgs.entrySet()) {
+         CacheEntryListenerConfiguration<K, V> cfg = entry.getValue();
+         if (cfg.equals(listenerCfg)) {
+            CacheEntryListener<? super K, ? super V> listener = entry.getKey();
+            if (listener instanceof CacheEntryCreatedListener)
+               createdListeners.remove(listener);
+
+            if (listener instanceof CacheEntryUpdatedListener)
+               updatedListeners.remove(listener);
+
+            if (listener instanceof CacheEntryRemovedListener)
+               removedListeners.remove(listener);
+
+            if (listener instanceof CacheEntryExpiredListener)
+               expiredListeners.remove(listener);
+         }
+      }
+   }
+
 
    private List<CacheEntryEvent<? extends K, ? extends V>> createEvent(
          Cache<K, V> cache, K key, V value, EventType eventType) {

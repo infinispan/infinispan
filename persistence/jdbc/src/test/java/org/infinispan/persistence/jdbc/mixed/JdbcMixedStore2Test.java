@@ -34,7 +34,7 @@ public class JdbcMixedStore2Test extends BaseStoreTest {
       cacheManager = TestCacheManagerFactory.createCacheManager(cc);
       cache = cacheManager.getCache();
 
-      JdbcMixedStore jdbcMixed = (JdbcMixedStore) TestingUtil.getFirstWriter(cache);
+      JdbcMixedStore jdbcMixed = TestingUtil.getFirstWriter(cache);
 
       csc = jdbcMixed.getConfiguration();
       return jdbcMixed;

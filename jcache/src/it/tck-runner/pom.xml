@@ -98,7 +98,7 @@
                         <artifactItem>
                            <groupId>javax.cache</groupId>
                            <artifactId>app-domain</artifactId>
-                           <version>${version.javax.cache}</version>
+                           <version>${version.javax.cache.cache-tests}</version>
                            <outputDirectory>${domain-lib-dir}</outputDirectory>
                            <destFileName>${domain-jar}</destFileName>
                         </artifactItem>

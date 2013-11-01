@@ -2,8 +2,6 @@ package org.infinispan.jcache;
 
 import javax.cache.Cache;
 import javax.cache.management.CacheMXBean;
-import javax.cache.transaction.IsolationLevel;
-import javax.cache.transaction.Mode;
 
 /**
  * Class to help implementers
@@ -26,16 +24,6 @@ public class RIDelegatingCacheMXBean<K, V> implements CacheMXBean {
    }
 
    @Override
-   public IsolationLevel getTransactionIsolationLevel() {
-      return cache.getConfiguration().getTransactionIsolationLevel();
-   }
-
-   @Override
-   public Mode getTransactionMode() {
-      return cache.getConfiguration().getTransactionMode();
-   }
-
-   @Override
    public boolean isManagementEnabled() {
       return cache.getConfiguration().isManagementEnabled();
    }
@@ -53,11 +41,6 @@ public class RIDelegatingCacheMXBean<K, V> implements CacheMXBean {
    @Override
    public boolean isStoreByValue() {
       return cache.getConfiguration().isStoreByValue();
-   }
-
-   @Override
-   public boolean isTransactionsEnabled() {
-      return cache.getConfiguration().isTransactionsEnabled();
    }
 
    @Override

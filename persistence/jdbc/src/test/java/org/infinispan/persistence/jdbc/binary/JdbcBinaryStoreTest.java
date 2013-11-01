@@ -55,7 +55,7 @@ public class JdbcBinaryStoreTest extends BaseStoreTest {
 
       cache = cacheManager.getCache();
 
-      JdbcBinaryStore jdbcBinaryCacheStore = (JdbcBinaryStore) TestingUtil.getFirstWriter(cache);
+      JdbcBinaryStore jdbcBinaryCacheStore = TestingUtil.getFirstWriter(cache);
       assert jdbcBinaryCacheStore.getConnectionFactory() != null;
       csc = jdbcBinaryCacheStore.getConfiguration();
       return jdbcBinaryCacheStore;

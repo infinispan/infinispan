@@ -1,7 +1,7 @@
 package org.infinispan.nearcache.cdi;
 
 import javax.cache.annotation.CachePut;
-import javax.cache.annotation.CacheRemoveEntry;
+import javax.cache.annotation.CacheRemove;
 import javax.cache.annotation.CacheResult;
 import javax.cache.annotation.CacheValue;
 
@@ -23,7 +23,7 @@ public class AddressDao {
       return null; // No other source for addresses
    }
 
-   @CacheRemoveEntry(cacheName="address-cache")
+   @CacheRemove(cacheName="address-cache")
    public String removeAddress(String personName) {
       return String.format("%s no longer living there", personName);
    }

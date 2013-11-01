@@ -1,7 +1,11 @@
 package org.infinispan.jcache.util;
 
+import org.infinispan.jcache.JCacheManager;
+import org.infinispan.manager.EmbeddedCacheManager;
+
 import javax.cache.Caching;
 import javax.cache.spi.CachingProvider;
+import java.net.URI;
 
 /**
  * Testing utilities for JCache tests.
@@ -30,6 +34,10 @@ public class JCacheTestingUtil {
       } finally {
          p.close();
       }
+   }
+
+   public static JCacheManager createJCacheManager(EmbeddedCacheManager cm, Object creator) {
+      return new JCacheManager(URI.create(creator.getClass().getName()), cm, null);
    }
 
    private static class TestClassLoader extends ClassLoader {

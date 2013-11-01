@@ -7,6 +7,7 @@ import org.infinispan.commons.equivalence.EquivalentHashSet;
 import org.infinispan.commons.equivalence.EquivalentLinkedHashMap;
 import org.infinispan.commons.util.concurrent.jdk8backported.EquivalentConcurrentHashMapV8;
 
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
@@ -204,6 +205,17 @@ public class CollectionFactory {
          return new EquivalentHashSet<T>(initialCapacity, entryEq);
       else
          return new HashSet<T>(initialCapacity);
+   }
+
+   /**
+    * Create a Set backed by the specified array.
+    *
+    * @param entries the array by which the list will be backed
+    * @param <T> type of elements
+    * @return a set view of the specified array
+    */
+   public static <T> Set<T> makeSet(T... entries) {
+      return new HashSet<T>(Arrays.asList(entries));
    }
 
    private static <K, V> boolean requiresEquivalent(

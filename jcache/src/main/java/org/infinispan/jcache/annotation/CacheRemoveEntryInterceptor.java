@@ -6,7 +6,7 @@ import org.infinispan.util.logging.LogFactory;
 import javax.cache.Cache;
 import javax.cache.annotation.CacheKeyGenerator;
 import javax.cache.annotation.CacheKeyInvocationContext;
-import javax.cache.annotation.CacheRemoveEntry;
+import javax.cache.annotation.CacheRemove;
 import javax.cache.annotation.CacheResolver;
 import javax.cache.annotation.GeneratedCacheKey;
 import javax.inject.Inject;
@@ -16,7 +16,7 @@ import javax.interceptor.InvocationContext;
 import java.io.Serializable;
 
 /**
- * <p>{@link javax.cache.annotation.CacheRemoveEntry} interceptor implementation.This interceptor uses the following algorithm describes in
+ * <p>{@link javax.cache.annotation.CacheRemove} interceptor implementation.This interceptor uses the following algorithm describes in
  * JSR-107.</p>
  *
  * <p>The interceptor that intercepts method annotated with {@code @CacheRemoveEntry} must do the following, generate a
@@ -29,7 +29,7 @@ import java.io.Serializable;
  * @author Galder Zamarreño
  */
 @Interceptor
-@CacheRemoveEntry
+@CacheRemove
 public class CacheRemoveEntryInterceptor implements Serializable {
 
    private static final long serialVersionUID = -9079291622309963969L;
@@ -51,10 +51,10 @@ public class CacheRemoveEntryInterceptor implements Serializable {
          log.tracef("Interception of method named '%s'", invocationContext.getMethod().getName());
       }
 
-      final CacheKeyInvocationContext<CacheRemoveEntry> cacheKeyInvocationContext = contextFactory.getCacheKeyInvocationContext(invocationContext);
+      final CacheKeyInvocationContext<CacheRemove> cacheKeyInvocationContext = contextFactory.getCacheKeyInvocationContext(invocationContext);
       final CacheKeyGenerator cacheKeyGenerator = cacheKeyInvocationContext.unwrap(CacheKeyInvocationContextImpl.class).getCacheKeyGenerator();
       final Cache<GeneratedCacheKey, Object> cache = cacheResolver.resolveCache(cacheKeyInvocationContext);
-      final CacheRemoveEntry cacheRemoveEntry = cacheKeyInvocationContext.getCacheAnnotation();
+      final CacheRemove cacheRemoveEntry = cacheKeyInvocationContext.getCacheAnnotation();
       final GeneratedCacheKey cacheKey = cacheKeyGenerator.generateCacheKey(cacheKeyInvocationContext);
 
       if (!cacheRemoveEntry.afterInvocation()) {

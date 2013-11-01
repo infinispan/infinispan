@@ -28,25 +28,22 @@ public class JCacheExpiryTest {
       final MutableConfiguration<Integer, String>
             cfg = new MutableConfiguration<Integer, String>();
 
-      cfg.setExpiryPolicyFactory(new Factory<ExpiryPolicy<? super Integer, ? super String>>() {
+      cfg.setExpiryPolicyFactory(new Factory<ExpiryPolicy>() {
          @Override
-         public ExpiryPolicy<? super Integer, ? super String> create() {
-            return new ExpiryPolicy<Integer, String>() {
+         public ExpiryPolicy create() {
+            return new ExpiryPolicy() {
                @Override
-               public Duration getExpiryForCreatedEntry(
-                     Cache.Entry<? extends Integer, ? extends String> entry) {
+               public Duration getExpiryForCreation() {
                   return Duration.ETERNAL;
                }
 
                @Override
-               public Duration getExpiryForAccessedEntry(
-                     Cache.Entry<? extends Integer, ? extends String> entry) {
+               public Duration getExpiryForAccess() {
                   return null;
                }
 
                @Override
-               public Duration getExpiryForModifiedEntry(
-                     Cache.Entry<? extends Integer, ? extends String> entry) {
+               public Duration getExpiryForUpdate() {
                   return Duration.ZERO;
                }
             };
@@ -58,7 +55,7 @@ public class JCacheExpiryTest {
          @Override
          public void run(CachingProvider provider) {
             CacheManager cm = provider.getCacheManager();
-            Cache<Integer, String> cache = cm.configureCache(name, cfg);
+            Cache<Integer, String> cache = cm.createCache(name, cfg);
 
             cache.put(1, "v1");
             assertTrue(cache.containsKey(1));

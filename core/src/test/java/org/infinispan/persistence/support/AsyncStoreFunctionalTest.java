@@ -63,7 +63,7 @@ public class AsyncStoreFunctionalTest {
 
             Cache<Integer, String> cache = cm.getCache();
 
-            MockAsyncCacheWriter cacheStore = (MockAsyncCacheWriter) TestingUtil.getFirstWriter(cache);
+            MockAsyncCacheWriter cacheStore = TestingUtil.getFirstWriter(cache);
             CountDownLatch modApplyLatch = cacheStore.modApplyLatch;
             CountDownLatch lockedWaitLatch = cacheStore.lockedWaitLatch;
 
@@ -108,7 +108,7 @@ public class AsyncStoreFunctionalTest {
 
             Cache<Integer, String> cache = cm.getCache();
 
-            MockAsyncCacheWriter cacheStore = (MockAsyncCacheWriter) TestingUtil.getFirstWriter(cache);
+            MockAsyncCacheWriter cacheStore = TestingUtil.getFirstWriter(cache);
             CountDownLatch modApplyLatch = cacheStore.modApplyLatch;
             CountDownLatch lockedWaitLatch = cacheStore.lockedWaitLatch;
 
@@ -156,7 +156,7 @@ public class AsyncStoreFunctionalTest {
 
             Cache<Integer, String> cache = cm.getCache();
 
-            MockAsyncCacheWriter cacheStore = (MockAsyncCacheWriter) TestingUtil.getFirstWriter(cache);
+            MockAsyncCacheWriter cacheStore = TestingUtil.getFirstWriter(cache);
             CountDownLatch modApplyLatch = cacheStore.modApplyLatch;
             CountDownLatch lockedWaitLatch = cacheStore.lockedWaitLatch;
 

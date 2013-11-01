@@ -69,7 +69,7 @@ public class JdbcMixedStoreTest {
       cacheManager = TestCacheManagerFactory.createCacheManager(cc);
       cache = cacheManager.getCache();
 
-      cacheStore = (JdbcMixedStore) TestingUtil.getFirstWriter(cache);
+      cacheStore = TestingUtil.getFirstWriter(cache);
       stringsTm = (TableManipulation) ReflectionUtil.getValue(((JdbcMixedStore)cacheStore).getStringStore(), "tableManipulation");
       binaryTm = (TableManipulation) ReflectionUtil.getValue(((JdbcMixedStore)cacheStore).getBinaryStore(), "tableManipulation");
    }
