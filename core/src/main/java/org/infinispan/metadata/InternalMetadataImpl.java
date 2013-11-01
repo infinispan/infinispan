@@ -24,7 +24,7 @@ public class InternalMetadataImpl implements InternalMetadata {
 
    public InternalMetadataImpl() {
       //required by the AZUL VM in order to run the tests
-      this(null,-1,-1);
+      this(null, -1, -1);
    }
 
    public InternalMetadataImpl(InternalCacheEntry ice) {
@@ -32,7 +32,7 @@ public class InternalMetadataImpl implements InternalMetadata {
    }
 
    public InternalMetadataImpl(Metadata actual, long created, long lastUsed) {
-      this.actual = actual;
+      this.actual = extractMetadata(actual);
       this.created = created;
       this.lastUsed = lastUsed;
    }
@@ -88,10 +88,6 @@ public class InternalMetadataImpl implements InternalMetadata {
       return expiry > 0 && expiry <= now;
    }
 
-   public Metadata getActual() {
-      return actual;
-   }
-
    @Override
    public boolean equals(Object o) {
       if (this == o) return true;
@@ -123,6 +119,18 @@ public class InternalMetadataImpl implements InternalMetadata {
             '}';
    }
 
+   private static Metadata extractMetadata(Metadata metadata) {
+      Metadata toCheck = metadata;
+      while (toCheck != null) {
+         if (toCheck instanceof InternalMetadataImpl) {
+            toCheck = ((InternalMetadataImpl) toCheck).actual();
+         } else {
+            break;
+         }
+      }
+      return toCheck;
+   }
+
    public static class Externalizer extends AbstractExternalizer<InternalMetadataImpl> {
 
       private static final long serialVersionUID = -5291318076267612501L;
@@ -140,7 +148,7 @@ public class InternalMetadataImpl implements InternalMetadata {
       @Override
       public InternalMetadataImpl readObject(ObjectInput input) throws IOException, ClassNotFoundException {
          long created = input.readLong();
-         long lastUsed= input.readLong();
+         long lastUsed = input.readLong();
          Metadata actual = (Metadata) input.readObject();
          return new InternalMetadataImpl(actual, created, lastUsed);
       }

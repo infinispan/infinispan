@@ -218,7 +218,7 @@ public class PersistenceManagerImpl implements PersistenceManager {
                taskContext.stop();
                return;
             }
-            Metadata metadata = me.getMetadata() != null ? ((InternalMetadataImpl)me.getMetadata()).getActual() : null; //the downcast will go away with ISPN-3460
+            Metadata metadata = me.getMetadata() != null ? ((InternalMetadataImpl)me.getMetadata()).actual() : null; //the downcast will go away with ISPN-3460
             preloadKey(flaggedCache, me.getKey(), me.getValue(), metadata);
          }
       }, new WithinThreadExecutor(), true, true);
