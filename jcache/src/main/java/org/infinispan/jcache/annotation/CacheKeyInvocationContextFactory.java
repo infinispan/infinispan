@@ -10,7 +10,7 @@ import javax.cache.annotation.CacheKeyGenerator;
 import javax.cache.annotation.CacheKeyInvocationContext;
 import javax.cache.annotation.CachePut;
 import javax.cache.annotation.CacheRemoveAll;
-import javax.cache.annotation.CacheRemoveEntry;
+import javax.cache.annotation.CacheRemove;
 import javax.cache.annotation.CacheResult;
 import javax.cache.annotation.CacheValue;
 import javax.enterprise.context.ApplicationScoped;
@@ -87,8 +87,8 @@ public class CacheKeyInvocationContextFactory {
             aggregatedParameterMetaData = getAggregatedParameterMetaData(method, false);
             cacheAnnotation = cacheResultAnnotation;
 
-         } else if (method.isAnnotationPresent(CacheRemoveEntry.class)) {
-            final CacheRemoveEntry cacheRemoveEntryAnnotation = method.getAnnotation(CacheRemoveEntry.class);
+         } else if (method.isAnnotationPresent(CacheRemove.class)) {
+            final CacheRemove cacheRemoveEntryAnnotation = method.getAnnotation(CacheRemove.class);
             cacheKeyGenerator = getCacheKeyGenerator(beanManager, cacheRemoveEntryAnnotation.cacheKeyGenerator(), cacheDefaultsAnnotation);
             cacheName = getCacheName(method, cacheRemoveEntryAnnotation.cacheName(), cacheDefaultsAnnotation, false);
             aggregatedParameterMetaData = getAggregatedParameterMetaData(method, false);

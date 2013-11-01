@@ -24,7 +24,6 @@ import org.testng.annotations.Test;
 @CleanupAfterMethod
 public class IgnoreModificationsStoreTest extends SingleCacheManagerTest {
    AdvancedLoadWriteStore store;
-   private StreamingMarshaller marshaller;
 
    @Override
    protected EmbeddedCacheManager createCacheManager() throws Exception {
@@ -42,16 +41,11 @@ public class IgnoreModificationsStoreTest extends SingleCacheManagerTest {
    protected void setup() throws Exception {
       super.setup();
       store = (AdvancedLoadWriteStore) TestingUtil.getFirstLoader(cache);
-      marshaller = cache.getAdvancedCache().getComponentRegistry().getCacheMarshaller();
    }
 
    public void testReadOnlyCacheStore() throws PersistenceException {
-
-      PersistenceManager pm = cache.getAdvancedCache().getComponentRegistry().getComponent(PersistenceManager.class);
-      // ignore modifications
-      pm.writeToAllStores(new MarshalledEntryImpl("k1", "v1", null, marshaller), false);
-      pm.writeToAllStores(new MarshalledEntryImpl("k2", "v2", null, marshaller), false);
-
+      TestingUtil.writeToAllStores("k1", "v1", cache);
+      TestingUtil.writeToAllStores("k2", "v2", cache);
 
       assert !store.contains("k1") : "READ ONLY - Store should NOT contain k1 key.";
       assert !store.contains("k2") : "READ ONLY - Store should NOT contain k2 key.";
@@ -65,9 +59,9 @@ public class IgnoreModificationsStoreTest extends SingleCacheManagerTest {
       assert !store.contains("k1") : "READ ONLY - Store should NOT contain k1 key.";
       assert !store.contains("k2") : "READ ONLY - Store should NOT contain k2 key.";
 
-      assert !pm.deleteFromAllStores("k1", false) : "READ ONLY - Remove operation should return false (no op)";
-      assert !pm.deleteFromAllStores("k2", false) : "READ ONLY - Remove operation should return false (no op)";
-      assert !pm.deleteFromAllStores("k3", false) : "READ ONLY - Remove operation should return false (no op)";
+      assert !TestingUtil.deleteFromAllStores("k1", cache) : "READ ONLY - Remove operation should return false (no op)";
+      assert !TestingUtil.deleteFromAllStores("k2", cache) : "READ ONLY - Remove operation should return false (no op)";
+      assert !TestingUtil.deleteFromAllStores("k3", cache) : "READ ONLY - Remove operation should return false (no op)";
 
       assert "v1".equals(cache.get("k1"));
       assert "v2".equals(cache.get("k2"));

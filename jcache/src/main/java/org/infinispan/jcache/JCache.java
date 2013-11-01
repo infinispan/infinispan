@@ -7,9 +7,12 @@ import java.util.List;
 import java.util.Map;
 import java.util.NoSuchElementException;
 import java.util.Set;
+import java.util.concurrent.BrokenBarrierException;
 import java.util.concurrent.Callable;
+import java.util.concurrent.CyclicBarrier;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 
 import javax.cache.*;
 import javax.cache.configuration.CacheEntryListenerConfiguration;
@@ -23,10 +26,15 @@ import javax.cache.integration.CacheWriter;
 import javax.cache.integration.CompletionListener;
 import javax.cache.management.CacheMXBean;
 import javax.cache.management.CacheStatisticsMXBean;
+import javax.cache.processor.EntryProcessor;
+import javax.cache.processor.EntryProcessorException;
 import javax.management.MBeanServer;
 
 import org.infinispan.AdvancedCache;
+import org.infinispan.commons.CacheListenerException;
+import org.infinispan.commons.api.AsyncCache;
 import org.infinispan.commons.util.ReflectionUtil;
+import org.infinispan.commons.util.concurrent.FutureListener;
 import org.infinispan.context.Flag;
 import org.infinispan.interceptors.EntryWrappingInterceptor;
 import org.infinispan.jcache.interceptor.ExpirationTrackingInterceptor;
@@ -65,10 +73,12 @@ public final class JCache<K, V> implements Cache<K, V> {
    private final CacheStatisticsMXBean stats;
    private final CacheMXBean mxBean;
 
-   private final ExpiryPolicy<? super K, ? super V> expiryPolicy;
+   private final ExpiryPolicy expiryPolicy;
    private final LockContainer processorLocks = new ReentrantPerEntryLockContainer(32);
    private final long lockTimeout; // milliseconds
-   private CacheLoader<K, V> cacheLoader;
+   private final JCacheNotifier<K, V> notifier = new JCacheNotifier<K, V>();
+   private CacheLoader<K, V> jcacheLoader;
+   private CacheWriter<? super K, ? super V> jcacheWriter;
 
    public JCache(AdvancedCache<K, V> cache, JCacheManager cacheManager, Configuration<K, V> c) {
       this.cache = cache;
@@ -92,16 +102,9 @@ public final class JCache<K, V> implements Cache<K, V> {
       this.lockTimeout =  cache.getCacheConfiguration()
             .locking().lockAcquisitionTimeout();
 
-      JCacheNotifier<K, V> notifier = new JCacheNotifier<K, V>();
-      boolean hasListeners = false;
       for (CacheEntryListenerConfiguration<K, V> r
-            : c.getCacheEntryListenerConfigurations()) {
-         notifier.addListener(r);
-         hasListeners = true;
-      }
-
-      if (hasListeners)
-         cache.addListener(new JCacheListenerAdapter<K, V>(this, notifier));
+            : c.getCacheEntryListenerConfigurations())
+         notifier.addListener(r, this, notifier, cache);
 
       setCacheLoader(cache, c);
       setCacheWriter(cache, c);
@@ -120,11 +123,16 @@ public final class JCache<K, V> implements Cache<K, V> {
       if (cacheLoaderFactory != null) {
          PersistenceManagerImpl persistenceManager =
                (PersistenceManagerImpl) cache.getComponentRegistry().getComponent(PersistenceManager.class);
-         JCacheLoaderAdapter<K, V> ispnCacheLoader =
-               (JCacheLoaderAdapter<K, V>) persistenceManager.getAllLoaders().get(0);
-         cacheLoader = cacheLoaderFactory.create();
-         ispnCacheLoader.setCacheLoader(cacheLoader);
+         JCacheLoaderAdapter<K, V> adapter = getCacheLoaderAdapter(persistenceManager);
+         jcacheLoader = cacheLoaderFactory.create();
+         adapter.setCacheLoader(jcacheLoader);
+         adapter.setExpiryPolicy(expiryPolicy);
       }
+   }
+
+   @SuppressWarnings("unchecked")
+   private JCacheLoaderAdapter<K, V> getCacheLoaderAdapter(PersistenceManagerImpl persistenceManager) {
+      return (JCacheLoaderAdapter<K, V>) persistenceManager.getAllLoaders().get(0);
    }
 
    private void setCacheWriter(AdvancedCache<K, V> cache, Configuration<K, V> c) {
@@ -133,10 +141,15 @@ public final class JCache<K, V> implements Cache<K, V> {
       if (cacheWriterFactory != null) {
          PersistenceManagerImpl persistenceManager =
                (PersistenceManagerImpl) cache.getComponentRegistry().getComponent(PersistenceManager.class);
-         JCacheWriterAdapter<K, V> ispnCacheStore =
-               (JCacheWriterAdapter) persistenceManager.getAllWriters().get(0);
-         ispnCacheStore.setCacheWriter(cacheWriterFactory.create());
+         JCacheWriterAdapter<K, V> ispnCacheStore = getCacheWriterAdapter(persistenceManager);
+         jcacheWriter = cacheWriterFactory.create();
+         ispnCacheStore.setCacheWriter(jcacheWriter);
       }
+   }
+
+   @SuppressWarnings("unchecked")
+   private JCacheWriterAdapter<K, V> getCacheWriterAdapter(PersistenceManagerImpl persistenceManager) {
+      return (JCacheWriterAdapter<K, V>) persistenceManager.getAllWriters().get(0);
    }
 
    private void addExpirationTrackingInterceptor(AdvancedCache<K, V> cache, JCacheNotifier notifier) {
@@ -189,10 +202,9 @@ public final class JCache<K, V> implements Cache<K, V> {
    }
 
    private V doGet(K key) {
-      V value = cache.get(key);
+      V value = configuration.isReadThrough() ? cache.get(key) : skipCacheLoadCache.get(key);
       if (value != null)
-         updateTTLForAccessed(cache,
-               new JCacheEntry<K, V>(key, value));
+         updateTTLForAccessed(cache, key, value);
 
       return value;
    }
@@ -293,10 +305,10 @@ public final class JCache<K, V> implements Cache<K, V> {
    @Override
    public <T> T invoke(final K key, final EntryProcessor<K, V, T> entryProcessor, final Object... arguments) {
       checkNotClosed();
+
       // spec required null checks
       verifyKey(key);
-      if (entryProcessor == null)
-         throw new NullPointerException("Entry processor cannot be null");
+      verifyEntryProcessor(entryProcessor);
 
       // Using references for backup copies to provide perceived exclusive
       // read access, and only apply changes if original value was not
@@ -322,32 +334,66 @@ public final class JCache<K, V> implements Cache<K, V> {
                safeOldValue = safeCopy(oldValue);
             }
 
-            MutableJCacheEntry<K, V> mutable =
-                  new MutableJCacheEntry<K, V>(cache, key, safeOldValue);
-            T ret = entryProcessor.process(mutable, arguments);
+            MutableJCacheEntry<K, V> mutable = createMutableCacheEntry(safeOldValue, key);
+            T ret = processEntryProcessor(mutable, entryProcessor, arguments);
 
-            if (mutable.isRemoved()) {
-               cache.remove(key);
-            } else {
-               V newValue = mutable.getNewValue();
-               if (newValue != null) {
+            switch (mutable.getOperation()) {
+               case NONE:
+                  break;
+               case ACCESS:
+                  skipCacheLoadCache.get(key); // update hit stats
+                  updateTTLForAccessed(cache, key, oldValue);
+                  break;
+               case UPDATE:
+                  V newValue = mutable.getNewValue();
                   if (oldValue != null) {
                      // Only allow change to be applied if value has not
                      // changed since the start of the processing.
-                     cache.replace(key, oldValue, newValue);
+                     replace(cache, key, oldValue, newValue, true);
                   } else {
-                     cache.putIfAbsent(key, newValue);
+                     put(cache, skipCacheLoadCache, key, newValue, true);
                   }
-               }
+                  break;
+               case REMOVE:
+                  cache.remove(key);
+                  break;
             }
+
             return ret;
          }
       });
    }
 
+   private <T> T processEntryProcessor(MutableJCacheEntry<K, V> mutable,
+         EntryProcessor<K, V, T> entryProcessor, Object[] arguments) {
+      try {
+         return entryProcessor.process(mutable, arguments);
+      } catch (Exception e) {
+         throw Exceptions.launderEntryProcessorException(e);
+      }
+   }
+
+   private MutableJCacheEntry<K, V> createMutableCacheEntry(V safeOldValue, K key) {
+      return new MutableJCacheEntry<K, V>(
+            configuration.isReadThrough() ? cache : skipCacheLoadCache, key, safeOldValue);
+   }
+
    @Override
    public <T> Map<K, T> invokeAll(Set<? extends K> keys, EntryProcessor<K, V, T> entryProcessor, Object... arguments) {
-      return null;  // TODO: Customise this generated block
+      checkNotClosed();
+
+      // spec required null checks
+      verifyKeys(keys);
+      verifyEntryProcessor(entryProcessor);
+
+      Map<K, T> result = new HashMap<K, T>(keys.size());
+      for (K key : keys) {
+         T t = invoke(key, entryProcessor, arguments);
+         if (t != null)
+            result.put(key, t);
+      }
+
+      return result;
    }
 
    @SuppressWarnings("unchecked")
@@ -392,35 +438,28 @@ public final class JCache<K, V> implements Cache<K, V> {
    }
 
    @Override
-   public void loadAll(Set<? extends K> keys, boolean replaceExistingValues, CompletionListener listener) {
+   public void loadAll(Set<? extends K> keys, boolean replaceExistingValues, final CompletionListener listener) {
       checkNotClosed();
 
       if (keys == null)
          throw log.parameterMustNotBeNull("keys");
 
-      if (cacheLoader == null) return;
+      // Separate logic based on whether a JCache cache loader or an Infinispan
+      // cache loader might be plugged. TCK has some strict expectations when
+      // it comes to expiry policy usage when loaded entries are stored in the
+      // cache for the first time, or if they're overriding a value (forced by
+      // replaceExistingValues). These two cases cannot be discerned at the
+      // cache loader level. The only alternative way would be for a jcache
+      // loader interceptor to be created, but getting the interaction right
+      // with existing cache loader interceptor would not be trivial. Hence,
+      // we separate logic at this level.
 
-      // Filter null keys out
-      List<K> keysToLoad = new ArrayList<K>(keys);
-      for (K key : keys) {
-         if (key == null)
-            throw log.parameterMustNotBeNull("Key");
-      }
-
-      try {
-         Map<K, V> loaded = cacheLoader.loadAll(keysToLoad);
-         Iterator<Map.Entry<K, V>> it = loaded.entrySet().iterator();
-         while (it.hasNext()) {
-            Map.Entry<K, V> entry = it.next();
-            if (entry.getValue() == null)
-               it.remove();
-         }
-
-         cache.putAll(loaded);
-         listener.onCompletion();
-      } catch (Throwable t) {
-         setListenerException(listener, t);
-      }
+      if (jcacheLoader == null && jcacheWriter != null)
+         listener.onCompletion(); // A cache writer cannot load data
+      else if (jcacheLoader != null)
+         loadAllFromJCacheLoader(keys, replaceExistingValues, listener);
+      else
+         loadAllFromInfinispanCacheLoader(keys, replaceExistingValues, listener);
    }
 
    private void setListenerException(CompletionListener listener, Throwable t) {
@@ -509,7 +548,11 @@ public final class JCache<K, V> implements Cache<K, V> {
          });
       }
 
-      return cache.remove(key) != null;
+      try {
+         return cache.remove(key) != null;
+      } catch (CacheListenerException e) {
+         throw Exceptions.launderCacheListenerException(e);
+      }
    }
 
    @Override
@@ -519,12 +562,12 @@ public final class JCache<K, V> implements Cache<K, V> {
          return new WithProcessorLock<Boolean>().call(key, new Callable<Boolean>() {
             @Override
             public Boolean call() {
-               return cache.remove(key, oldValue);
+               return remove(cache, key, oldValue);
             }
          });
       }
 
-      return cache.remove(key, oldValue);
+      return remove(cache, key, oldValue);
    }
 
    @Override
@@ -559,8 +602,7 @@ public final class JCache<K, V> implements Cache<K, V> {
             throw new CacheException(
                   "Interrupted while waiting for remove to complete");
          } catch (Exception e) {
-            throw new CacheException(
-                  "Removing all entries from cache failed", e);
+            throw Exceptions.launderCacheWriterException(e);
          }
       }
    }
@@ -568,7 +610,6 @@ public final class JCache<K, V> implements Cache<K, V> {
    @Override
    public void removeAll(Set<? extends K> keys) {
       checkNotClosed();
-      // TODO remove but notify listeners
       verifyKeys(keys);
       for (K k : keys) {
          remove(k);
@@ -608,6 +649,18 @@ public final class JCache<K, V> implements Cache<K, V> {
    @Override
    public <T> T unwrap(Class<T> clazz) {
       return ReflectionUtil.unwrap(this, clazz);
+   }
+
+   @Override
+   public void registerCacheEntryListener(CacheEntryListenerConfiguration<K, V> listenerCfg) {
+      notifier.addListener(listenerCfg, this, notifier, cache);
+      addCacheEntryListenerConfiguration(listenerCfg);
+   }
+
+   @Override
+   public void deregisterCacheEntryListener(CacheEntryListenerConfiguration<K, V> listenerCfg) {
+      notifier.removeListener(listenerCfg, cache);
+      removeCacheEntryListenerConfiguration(listenerCfg);
    }
 
    void setManagementEnabled(boolean enabled) {
@@ -670,58 +723,69 @@ public final class JCache<K, V> implements Cache<K, V> {
                "Old value cannot be null");
    }
 
+   private <T> void verifyEntryProcessor(EntryProcessor<K, V, T> entryProcessor) {
+      if (entryProcessor == null)
+         throw new NullPointerException("Entry processor cannot be null");
+   }
+
    private V put(AdvancedCache<K, V> cache, AdvancedCache<K, V> createCheckCache,
          K key, V value, boolean isPutIfAbsent) {
-      boolean isCreated;
       // Use a separate cache reference to check whether entry is created or
       // not. A separate reference allows for listener notifications to be
       // skipped selectively.
-      isCreated = !createCheckCache.containsKey(key);
+      V prev = createCheckCache.get(key);
+      boolean isCreated = prev == null;
+
+      // If putIfAbsent and entry already present, skip early
+      if (!isCreated && isPutIfAbsent)
+         return prev;
 
       V ret;
-      Duration ttl;
-      Entry<K, V> entry = new JCacheEntry<K, V>(key, value);
-      if (isCreated) {
-         ttl = expiryPolicy.getExpiryForCreatedEntry(entry);
-      } else {
-         // TODO: Retrieve existing lifespan setting for entry from internal container?
-         ttl = expiryPolicy.getExpiryForModifiedEntry(entry);
-      }
+      Duration ttl = isCreated
+            ? Expiration.getExpiry(expiryPolicy, Expiration.Operation.CREATION)
+            : Expiration.getExpiry(expiryPolicy, Expiration.Operation.UPDATE);
 
-      if (ttl == null || ttl.isEternal()) {
-         ret = isPutIfAbsent
-               ? cache.putIfAbsent(key, value)
-               : cache.put(key, value);
-      } else if (ttl.equals(Duration.ZERO)) {
-         // TODO: Can this be avoided?
-         // Special case for ZERO because the Infinispan remove()
-         // implementation returns true if entry was expired in the removal
-         // (since it was previously stored). JSR-107 TCK expects that if
-         // ZERO is passed, the entry is not stored and removal returns false.
-         // So, if entry is created, do not store it in the cache.
-         // If the entry is modified, explicitly remove it.
-         if (!isCreated)
-            ret = cache.remove(key);
-         else
-            ret = null;
-      } else {
-         long duration = ttl.getDurationAmount();
-         TimeUnit timeUnit = ttl.getTimeUnit();
-         ret = isPutIfAbsent
-               ? cache.putIfAbsent(key, value, duration, timeUnit)
-               : cache.put(key, value, duration, timeUnit);
-      }
+      try {
+         if (ttl == null || ttl.isEternal()) {
+            ret = isPutIfAbsent
+                  ? cache.putIfAbsent(key, value)
+                  : cache.put(key, value);
+         } else if (ttl.equals(Duration.ZERO)) {
+            // TODO: Can this be avoided?
+            // Special case for ZERO because the Infinispan remove()
+            // implementation returns true if entry was expired in the removal
+            // (since it was previously stored). JSR-107 TCK expects that if
+            // ZERO is passed, the entry is not stored and removal returns false.
+            // So, if entry is created, do not store it in the cache.
+            // If the entry is modified, explicitly remove it.
+            if (!isCreated)
+               ret = cache.remove(key);
+            else
+               ret = null;
+         } else {
+            long duration = ttl.getDurationAmount();
+            TimeUnit timeUnit = ttl.getTimeUnit();
+            ret = isPutIfAbsent
+                  ? cache.putIfAbsent(key, value, duration, timeUnit)
+                  : cache.put(key, value, duration, timeUnit);
+         }
 
-      return ret;
+         return ret;
+      } catch (CacheListenerException e) {
+         throw Exceptions.launderCacheListenerException(e);
+      }
    }
 
    private boolean replace(AdvancedCache<K, V> cache,
          K key, V oldValue, V value, boolean isConditional) {
-      boolean exists = cache.containsKey(key);
-      if (exists) {
-         Entry<K, V> entry = new JCacheEntry<K, V>(key, value);
-         // TODO: Retrieve existing lifespan setting for entry from internal container?
-         Duration ttl = expiryPolicy.getExpiryForModifiedEntry(entry);
+      V current = cache.get(key);
+      if (current != null) {
+         if (isConditional && !current.equals(oldValue)) {
+            updateTTLForAccessed(cache, key, value);
+            return false;
+         }
+
+         Duration ttl = Expiration.getExpiry(expiryPolicy, Expiration.Operation.UPDATE);
 
          if (ttl == null || ttl.isEternal()) {
             return isConditional
@@ -752,9 +816,7 @@ public final class JCache<K, V> implements Cache<K, V> {
    private V replace(AdvancedCache<K, V> cache, K key, V value) {
       boolean exists = cache.containsKey(key);
       if (exists) {
-         Entry<K, V> entry = new JCacheEntry<K, V>(key, value);
-         // TODO: Retrieve existing lifespan setting for entry from internal container?
-         Duration ttl = expiryPolicy.getExpiryForModifiedEntry(entry);
+         Duration ttl = Expiration.getExpiry(expiryPolicy, Expiration.Operation.UPDATE);
 
          if (ttl == null || ttl.isEternal()) {
             return cache.replace(key, value);
@@ -773,23 +835,169 @@ public final class JCache<K, V> implements Cache<K, V> {
       return null;
    }
 
-   private void updateTTLForAccessed(AdvancedCache<K, V> cache, Entry<K, V> entry) {
-      // TODO: Retrieve existing maxIdle setting for entry from internal container?
-      Duration ttl = expiryPolicy.getExpiryForAccessedEntry(entry);
+   private void updateTTLForAccessed(AdvancedCache<K, V> cache, K key, V value) {
+      Duration ttl = Expiration.getExpiry(expiryPolicy, Expiration.Operation.ACCESS);
 
       if (ttl != null) {
          if (ttl.equals(Duration.ZERO)) {
             // TODO: Expiry of 0 does not seem to remove entry when next accessed.
             // Hence, explicitly removing the entry.
-            cache.remove(entry.getKey());
+            cache.remove(key);
          } else {
             // The expiration policy could potentially return different values
             // every time, so don't think we can rely on maxIdle.
             long durationAmount = ttl.getDurationAmount();
             TimeUnit timeUnit = ttl.getTimeUnit();
-            cache.put(entry.getKey(), entry.getValue(), durationAmount, timeUnit);
+            cache.put(key, value, durationAmount, timeUnit);
          }
       }
+   }
+
+   private void addCacheEntryListenerConfiguration(
+         CacheEntryListenerConfiguration<K, V> listenerCfg) {
+      if (listenerCfg == null) {
+         throw new NullPointerException("CacheEntryListenerConfiguration can't be null");
+      }
+
+      boolean alreadyExists = false;
+      for (CacheEntryListenerConfiguration<? super K, ? super V> c
+            : configuration.getCacheEntryListenerConfigurations()) {
+         if (c.equals(listenerCfg)) {
+            alreadyExists = true;
+         }
+      }
+
+      if (!alreadyExists) {
+         configuration.getCacheEntryListenerConfigurations().add(listenerCfg);
+      } else {
+         throw new IllegalArgumentException("A CacheEntryListenerConfiguration can " +
+               "be registered only once");
+      }
+   }
+
+   private void removeCacheEntryListenerConfiguration(CacheEntryListenerConfiguration<K, V> listenerCfg) {
+      configuration.getCacheEntryListenerConfigurations().remove(listenerCfg);
+   }
+
+   private void loadAllFromInfinispanCacheLoader(Set<? extends K> keys, boolean replaceExistingValues, final CompletionListener listener) {
+      final List<K> keysToLoad = filterLoadAllKeys(keys, replaceExistingValues, true);
+      if (keysToLoad.isEmpty()) {
+         listener.onCompletion();
+         return;
+      }
+
+      try {
+         // Using a cyclic barrier, initialised with the number of keys to load,
+         // in order to load all keys asynchronously and when the last one completes,
+         // callback to the CompletionListener (via a barrier action).
+         final CyclicBarrier barrier = new CyclicBarrier(keysToLoad.size(), new Runnable() {
+            @Override
+            public void run() {
+               if (log.isTraceEnabled())
+                  log.tracef("Keys %s loaded, notify listener on completion", keysToLoad);
+
+               listener.onCompletion();
+            }
+         });
+         FutureListener<V> futureListener = new FutureListener<V>() {
+            @Override
+            public void futureDone(Future<V> future) {
+               try {
+                  if (log.isTraceEnabled())
+                     log.tracef("Key loaded, wait for the rest of keys to load");
+
+                  barrier.await(30, TimeUnit.SECONDS);
+               } catch (InterruptedException e) {
+                  Thread.currentThread().interrupt();
+               } catch (BrokenBarrierException e) {
+                  setListenerException(listener, e);
+               } catch (TimeoutException e) {
+                  setListenerException(listener, e);
+               }
+            }
+         };
+         AsyncCache<K, V> asyncCache = cache;
+         for (K k : keysToLoad)
+            asyncCache.getAsync(k).attachListener(futureListener);
+
+      } catch (Throwable t) {
+         log.errorLoadingAll(keysToLoad, t);
+         setListenerException(listener, t);
+      }
+   }
+
+   private List<K> filterLoadAllKeys(Set<? extends K> keys, boolean replaceExistingValues, boolean cacheEvict) {
+      if (log.isTraceEnabled())
+         log.tracef("Before filtering, keys to load: %s", keys);
+
+      // Filter null keys out and keys to be overriden optionally
+      final List<K> keysToLoad = new ArrayList<K>();
+      for (K key : keys) {
+         if (key == null)
+            throw log.parameterMustNotBeNull("Key");
+
+         // Evict from memory if value needs to be replaced (instead of flag)
+         if (cacheEvict && replaceExistingValues && containsKey(key))
+            cache.evict(key);
+
+         if (replaceExistingValues || !containsKey(key))
+            keysToLoad.add(key);
+      }
+
+      if (log.isTraceEnabled())
+         log.tracef("After filtering, keys to load: %s", keysToLoad);
+
+      return keysToLoad;
+   }
+
+   private void loadAllFromJCacheLoader(Set<? extends K> keys, boolean replaceExistingValues, final CompletionListener listener) {
+      final List<K> keysToLoad = filterLoadAllKeys(keys, replaceExistingValues, false);
+      if (keysToLoad.isEmpty()) {
+         listener.onCompletion();
+         return;
+      }
+
+      try {
+         Map<K, V> loaded = loadAllKeys(keysToLoad);
+         Iterator<Map.Entry<K, V>> it = loaded.entrySet().iterator();
+         while (it.hasNext()) {
+            Map.Entry<K, V> entry = it.next();
+            if (entry.getValue() == null)
+               it.remove();
+         }
+
+         // Check and update only in-memory cache. Skip cache load in order to
+         // check only in-memory contents. For storing data, use a skip cache
+         // store cache in order to avoid storing data in the cache store that
+         // has just been loaded.
+         AdvancedCache<K, V> skipCacheStoreCache = ignoreReturnValuesCache.withFlags(Flag.SKIP_CACHE_STORE);
+         for (Map.Entry<K, V> entry : loaded.entrySet()) {
+            K loadedKey = entry.getKey();
+            V loadedValue = entry.getValue();
+            put(skipCacheStoreCache, skipCacheLoadCache, loadedKey, loadedValue, false);
+         }
+         listener.onCompletion();
+      } catch (Throwable t) {
+         setListenerException(listener, t);
+      }
+   }
+
+   private Map<K, V> loadAllKeys(List<K> keysToLoad) {
+      try {
+         return jcacheLoader.loadAll(keysToLoad);
+      } catch (Exception e) {
+         throw Exceptions.launderCacheLoaderException(e);
+      }
+   }
+
+   private boolean remove(AdvancedCache<K, V> cache, K key, V oldValue) {
+      V current = cache.get(key);
+      if (current != null && !current.equals(oldValue)) {
+         updateTTLForAccessed(cache, key, current);
+         return false;
+      }
+
+      return cache.remove(key, oldValue);
    }
 
    private class WithProcessorLock<V> {
@@ -801,13 +1009,16 @@ public final class JCache<K, V> implements Cache<K, V> {
             // restore interrupted status
             Thread.currentThread().interrupt();
             return null;
+         } catch (CacheListenerException e) {
+            throw Exceptions.launderCacheListenerException(e);
+         } catch (EntryProcessorException e) {
+            throw e;
          } catch (Throwable t) {
             throw new CacheException(t);
          } finally {
             releaseProcessorLock(key);
          }
       }
-
    }
 
    private class Itr implements Iterator<Cache.Entry<K, V>> {
@@ -847,7 +1058,7 @@ public final class JCache<K, V> implements Cache<K, V> {
          Entry<K, V> ret = next;
 
          // Force expiration if needed
-         updateTTLForAccessed(cache, next);
+         updateTTLForAccessed(cache, next.getKey(), next.getValue());
 
          current = next;
 

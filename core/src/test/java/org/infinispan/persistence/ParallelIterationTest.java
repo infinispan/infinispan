@@ -46,7 +46,7 @@ public abstract class ParallelIterationTest extends SingleCacheManagerTest {
       PersistenceManagerImpl pm = (PersistenceManagerImpl) componentRegistry.getComponent(PersistenceManager.class);
       persistenceExecutor = pm.getPersistenceExecutor();
       sm = pm.getMarshaller();
-      store = (AdvancedLoadWriteStore) TestingUtil.getFirstWriter(manager.getCache());
+      store = TestingUtil.getFirstWriter(manager.getCache());
       return manager;
    }
 

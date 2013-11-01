@@ -1,7 +1,6 @@
 package org.infinispan.jcache;
 
 import org.infinispan.configuration.cache.ConfigurationBuilder;
-import org.infinispan.transaction.TransactionMode;
 
 import javax.cache.configuration.Factory;
 import javax.cache.integration.CacheLoader;
@@ -26,43 +25,7 @@ public class ConfigurationAdapter<K, V> {
    public org.infinispan.configuration.cache.Configuration build() {
       ConfigurationBuilder cb = new ConfigurationBuilder();
       if (c.isStoreByValue())
-         cb.storeAsBinary().enable().defensive(true);
-
-      switch (c.getTransactionMode()) {
-         case NONE:
-            cb.transaction().transactionMode(TransactionMode.NON_TRANSACTIONAL);
-            break;
-         case LOCAL:
-            cb.transaction().transactionMode(TransactionMode.TRANSACTIONAL);
-            break;
-         case XA:
-            //TODO
-            break;
-         default:
-            break;
-      }
-      switch (c.getTransactionIsolationLevel()) {
-         case NONE:
-            cb.locking().isolationLevel(org.infinispan.util.concurrent.IsolationLevel.NONE);
-            break;
-         case READ_UNCOMMITTED:
-            cb.locking().isolationLevel(
-                     org.infinispan.util.concurrent.IsolationLevel.READ_UNCOMMITTED);
-            break;
-         case READ_COMMITTED:
-            cb.locking().isolationLevel(
-                     org.infinispan.util.concurrent.IsolationLevel.READ_COMMITTED);
-            break;
-         case REPEATABLE_READ:
-            cb.locking().isolationLevel(
-                     org.infinispan.util.concurrent.IsolationLevel.REPEATABLE_READ);
-            break;
-         case SERIALIZABLE:
-            cb.locking().isolationLevel(org.infinispan.util.concurrent.IsolationLevel.SERIALIZABLE);
-            break;
-         default:
-            break;
-      }
+         cb.storeAsBinary().enable();
 
       Factory<CacheLoader<K,V>> cacheLoaderFactory = c.getCacheLoaderFactory();
       if (cacheLoaderFactory != null) {

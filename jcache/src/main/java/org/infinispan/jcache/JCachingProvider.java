@@ -105,8 +105,6 @@ public class JCachingProvider implements CachingProvider {
    @Override
    public boolean isSupported(OptionalFeature optionalFeature) {
       switch (optionalFeature) {
-         case TRANSACTIONS:
-            return true;
          case STORE_BY_REFERENCE:
             return true;
          default:

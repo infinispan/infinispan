@@ -7,6 +7,8 @@ import javax.cache.Cache;
 import javax.cache.CacheException;
 import javax.cache.CacheManager;
 import javax.cache.configuration.MutableConfiguration;
+import javax.cache.processor.EntryProcessor;
+import javax.cache.processor.MutableEntry;
 import javax.cache.spi.CachingProvider;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
@@ -19,7 +21,7 @@ import static org.testng.AssertJUnit.fail;
 import static org.testng.AssertJUnit.assertTrue;
 
 /**
- * Add {@link Cache#invoke(Object, javax.cache.Cache.EntryProcessor, Object...)}
+ * Add {@link Cache#invoke(Object, javax.cache.processor.EntryProcessor, Object...)}
  * tests covering edge cases missing in the TCK.
  *
  * @author Galder Zamarreño
@@ -53,15 +55,15 @@ public class InvokeProcessorTest {
          @Override
          public void run(CachingProvider provider) {
             CacheManager cm = provider.getCacheManager();
-            Cache<String, List<Integer>> cache = cm.configureCache(name, jcacheCfg);
+            Cache<String, List<Integer>> cache = cm.createCache(name, jcacheCfg);
             List<Integer> list = new ArrayList<Integer>(Arrays.asList(1, 2, 3));
             final String query = "select * from x";
             cache.put(query, list);
             try {
                cache.invoke(query,
-                     new Cache.EntryProcessor<String, List<Integer>, Object>() {
+                     new EntryProcessor<String, List<Integer>, Object>() {
                         @Override
-                        public Object process(Cache.MutableEntry<String, List<Integer>> entry, Object... arguments) {
+                        public Object process(MutableEntry<String, List<Integer>> entry, Object... arguments) {
                            entry.getValue().add(4);
                            throw new UnexpectedException();
                         }
@@ -83,14 +85,14 @@ public class InvokeProcessorTest {
          @Override
          public void run(CachingProvider provider) {
             CacheManager cm = provider.getCacheManager();
-            Cache<String, List<Integer>> cache = cm.configureCache(name, jcacheCfg);
+            Cache<String, List<Integer>> cache = cm.createCache(name, jcacheCfg);
             List<Integer> list = new ArrayList<Integer>(Arrays.asList(1, 2, 3));
             final String query = "select * from x";
             cache.put(query, list);
             cache.invoke(query,
-                  new Cache.EntryProcessor<String, List<Integer>, Object>() {
+                  new EntryProcessor<String, List<Integer>, Object>() {
                      @Override
-                     public Object process(Cache.MutableEntry<String, List<Integer>> entry, Object... arguments) {
+                     public Object process(MutableEntry<String, List<Integer>> entry, Object... arguments) {
                         List<Integer> ids = entry.getValue();
                         ids.add(4);
                         entry.setValue(ids);

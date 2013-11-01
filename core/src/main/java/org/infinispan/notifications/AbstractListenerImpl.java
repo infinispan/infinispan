@@ -208,10 +208,8 @@ public abstract class AbstractListenerImpl {
                   } catch (InvocationTargetException exception) {
                      Throwable cause = getRealException(exception);
                      if (sync) {
-                        throw new CacheException(String.format(
-                              "Caught exception [%s] while invoking method [%s] on listener instance: %s"
-                              , cause.getClass().getName(), method, target
-                        ), cause);
+                        throw getLog().exceptionInvokingListener(
+                              cause.getClass().getName(), method, target, cause);
                      } else {
                         getLog().unableToInvokeListenerMethod(method, target, cause);
                      }
@@ -244,7 +242,7 @@ public abstract class AbstractListenerImpl {
    private Throwable getRealException(Throwable re) {
       if (re.getCause() == null) return re;
       Throwable cause = re.getCause();
-      if (cause instanceof CacheException || cause instanceof RuntimeException)
+      if (cause instanceof RuntimeException || cause instanceof Error)
          return getRealException(cause);
       else
          return re;

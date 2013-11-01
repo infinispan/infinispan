@@ -47,7 +47,7 @@ public class MixedStoreWithManagedConnectionTest extends ManagedConnectionFactor
       cacheManager = TestCacheManagerFactory.createCacheManager(cc);
       cache = cacheManager.getCache();
 
-      JdbcMixedStore jdbcMixed = (JdbcMixedStore) TestingUtil.getFirstWriter(cache);
+      JdbcMixedStore jdbcMixed = TestingUtil.getFirstWriter(cache);
 
       csc = jdbcMixed.getConfiguration();
       return jdbcMixed;

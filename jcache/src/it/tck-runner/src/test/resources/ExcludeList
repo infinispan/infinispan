@@ -5,9 +5,6 @@
 # This is a dummy test that fails if not in the exclude list.
 org.jsr107.tck.CachingTest#dummyTest
 
-# Disabled pending outcome of https://github.com/jsr107/jsr107tck/issues/30
-org.jsr107.tck.transaction.CacheManagerTransactionsTest#setIncorrectIsolationLevelForTransactionalCache
-
 # Disabled pending outcome of https://github.com/jsr107/jsr107tck/issues/19 and https://github.com/jsr107/jsr107tck/issues/12
 org.jsr107.tck.management.CacheStatisticsTest#testCacheStatistics
 

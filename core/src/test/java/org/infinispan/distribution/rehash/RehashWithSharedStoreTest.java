@@ -33,7 +33,7 @@ public class RehashWithSharedStoreTest extends BaseDistStoreTest {
    }
 
    private int getCacheStoreStats(Cache<?, ?> cache, String cacheStoreMethod) {
-      DummyInMemoryStore cs = (DummyInMemoryStore) TestingUtil.getFirstWriter(cache);
+      DummyInMemoryStore cs = TestingUtil.getFirstWriter(cache);
       return cs.stats().get(cacheStoreMethod);
    }
 

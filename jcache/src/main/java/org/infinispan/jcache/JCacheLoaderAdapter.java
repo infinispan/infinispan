@@ -6,7 +6,8 @@ import org.infinispan.persistence.spi.InitializationContext;
 import org.infinispan.marshall.core.MarshalledEntry;
 import org.infinispan.util.logging.LogFactory;
 
-import javax.cache.Cache.Entry;
+import javax.cache.expiry.Duration;
+import javax.cache.expiry.ExpiryPolicy;
 import javax.cache.integration.CacheLoader;
 
 public class JCacheLoaderAdapter<K, V> implements org.infinispan.persistence.spi.CacheLoader {
@@ -15,6 +16,7 @@ public class JCacheLoaderAdapter<K, V> implements org.infinispan.persistence.spi
 
    private CacheLoader<K, V> delegate;
    private InitializationContext ctx;
+   private ExpiryPolicy expiryPolicy;
 
    public JCacheLoaderAdapter() {
       // Empty constructor required so that it can be instantiated with
@@ -26,17 +28,41 @@ public class JCacheLoaderAdapter<K, V> implements org.infinispan.persistence.spi
       this.delegate = delegate;
    }
 
+   public void setExpiryPolicy(ExpiryPolicy expiryPolicy) {
+      this.expiryPolicy = expiryPolicy;
+   }
+
    @Override
    public void init(InitializationContext ctx) {
       this.ctx = ctx;
    }
 
-   @SuppressWarnings("unchecked")
    @Override
    public MarshalledEntry load(Object key) throws PersistenceException {
-      Entry<K, V> e = delegate.load((K) key);
-      // TODO or whatever type of entry is more appropriate?
-      return e == null ? null : ctx.getMarshalledEntryFactory().newMarshalledEntry(e.getValue(), e.getValue(), null);
+      V value = loadKey(key);
+
+      if (value != null) {
+         Duration expiry = Expiration.getExpiry(expiryPolicy, Expiration.Operation.CREATION);
+         long now = ctx.getTimeService().wallClockTime(); // ms
+         if (expiry.isEternal()) {
+            return ctx.getMarshalledEntryFactory().newMarshalledEntry(value, value, null);
+         } else {
+            JCacheInternalMetadata meta = new JCacheInternalMetadata(now,
+                  expiry.getTimeUnit().toMillis(expiry.getDurationAmount()));
+            return ctx.getMarshalledEntryFactory().newMarshalledEntry(value, value, meta);
+         }
+      }
+
+      return null;
+   }
+
+   @SuppressWarnings("unchecked")
+   private V loadKey(Object key) {
+      try {
+         return delegate.load((K) key);
+      } catch (Exception e) {
+         throw Exceptions.launderCacheLoaderException(e);
+      }
    }
 
    @Override
@@ -53,4 +79,5 @@ public class JCacheLoaderAdapter<K, V> implements org.infinispan.persistence.spi
    public boolean contains(Object key) {
       return load(key) != null;
    }
+
 }

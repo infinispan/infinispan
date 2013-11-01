@@ -7,9 +7,10 @@ import org.jboss.logging.MessageLogger;
 
 import javax.cache.CacheException;
 import javax.cache.configuration.Configuration;
-import javax.cache.transaction.IsolationLevel;
-import javax.cache.transaction.Mode;
 
+import java.util.List;
+
+import static org.jboss.logging.Logger.Level.ERROR;
 import static org.jboss.logging.Logger.Level.WARN;
 
 /**
@@ -61,11 +62,15 @@ public interface Log extends org.infinispan.util.logging.Log {
    @Message(value = "Can't use store-by-reference and transactions together", id = 21013)
    IllegalArgumentException storeByReferenceAndTransactionsNotAllowed();
 
-   @Message(value = "Incompatible IsolationLevel %s and tx mode %s", id = 21014)
-   IllegalArgumentException incompatibleIsolationLevelAndTransactionMode(IsolationLevel level, Mode txMode);
-
    @Message(value = "Cache %s already registered with configuration %s, and can not be registered again with a new given configuration %s", id = 21015)
    CacheException cacheAlreadyRegistered(String cacheName, Configuration cacheCfg, Configuration newCfg);
+
+   @Message(value = "Unknown expiry operation: %s", id = 21016)
+   IllegalStateException unknownExpiryOperation(String op);
+
+   @LogMessage(level = ERROR)
+   @Message(value = "Error loading %s keys from persistence store", id = 21017)
+   <K> void errorLoadingAll(List<K> keysToLoad, @Cause Throwable t);
 
    class LeakDescription extends Throwable {
 
