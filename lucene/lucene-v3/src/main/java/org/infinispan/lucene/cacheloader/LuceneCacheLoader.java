@@ -1,9 +1,9 @@
-package org.infinispan.lucene.cachestore;
+package org.infinispan.lucene.cacheloader;
 
 import org.apache.lucene.store.FSDirectory;
 import org.infinispan.executors.ExecutorAllCompletionService;
 import org.infinispan.lucene.IndexScopedKey;
-import org.infinispan.lucene.cachestore.configuration.LuceneStoreConfiguration;
+import org.infinispan.lucene.cacheloader.configuration.LuceneLoaderConfiguration;
 import org.infinispan.lucene.logging.Log;
 import org.infinispan.marshall.core.MarshalledEntry;
 import org.infinispan.persistence.CacheLoaderException;
@@ -42,7 +42,7 @@ public class LuceneCacheLoader implements AdvancedCacheLoader {
    private File rootDirectory;
    private int autoChunkSize;
 
-   private LuceneStoreConfiguration configuration;
+   private LuceneLoaderConfiguration configuration;
    private InitializationContext ctx;
 
 
