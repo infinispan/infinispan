@@ -2,7 +2,7 @@ package org.infinispan.query.statetransfer;
 
 import org.infinispan.Cache;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
-import org.infinispan.persistence.CacheLoaderException;
+import org.infinispan.persistence.spi.PersistenceException;
 import org.infinispan.persistence.dummy.DummyInMemoryStoreConfigurationBuilder;
 import org.infinispan.persistence.spi.CacheLoader;
 import org.infinispan.query.test.Person;
@@ -56,7 +56,7 @@ public class PersistentStateTransferQueryIndexTest extends BaseReIndexingTest {
       addNodeCheckingContentsAndQuery();
    }
 
-   private void checkCacheStoresContainPersons() throws CacheLoaderException {
+   private void checkCacheStoresContainPersons() throws PersistenceException {
       for (Cache<Object, Object> cache : caches()) {
          CacheLoader store = TestingUtil.getFirstLoader(cache);
          for (int i = 0; i < persons.length; i++)
@@ -64,7 +64,7 @@ public class PersistentStateTransferQueryIndexTest extends BaseReIndexingTest {
       }
    }
 
-   private void checkCacheStoresEmpty() throws CacheLoaderException {
+   private void checkCacheStoresEmpty() throws PersistenceException {
       for (Cache<Object, Object> cache : caches()) {
          CacheLoader store = TestingUtil.getFirstLoader(cache);
          for (Person person : persons) {

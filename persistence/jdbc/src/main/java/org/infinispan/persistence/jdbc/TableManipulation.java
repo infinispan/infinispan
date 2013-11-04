@@ -1,7 +1,7 @@
 package org.infinispan.persistence.jdbc;
 
 import org.infinispan.commons.CacheConfigurationException;
-import org.infinispan.persistence.CacheLoaderException;
+import org.infinispan.persistence.spi.PersistenceException;
 import org.infinispan.persistence.jdbc.configuration.TableManipulationConfiguration;
 import org.infinispan.persistence.jdbc.connectionfactory.ConnectionFactory;
 import org.infinispan.persistence.jdbc.logging.Log;
@@ -63,7 +63,7 @@ public class TableManipulation implements Cloneable {
    public TableManipulation() {
    }
 
-   public boolean tableExists(Connection connection, TableName tableName) throws CacheLoaderException {
+   public boolean tableExists(Connection connection, TableName tableName) throws PersistenceException {
       if(tableName == null){
          throw new NullPointerException("table name is mandatory");
       }
@@ -92,7 +92,7 @@ public class TableManipulation implements Cloneable {
       }
    }
 
-   public void createTable(Connection conn) throws CacheLoaderException {
+   public void createTable(Connection conn) throws PersistenceException {
       // removed CONSTRAINT clause as this causes problems with some databases, like Informix.
       assertMandatoryElementsPresent();
       String createTableDdl = "CREATE TABLE " + getTableName() + "(" + config.idColumnName() + " " + config.idColumnType()
@@ -105,30 +105,30 @@ public class TableManipulation implements Cloneable {
       executeUpdateSql(conn, createTableDdl);
    }
 
-   private void assertMandatoryElementsPresent() throws CacheLoaderException {
+   private void assertMandatoryElementsPresent() throws PersistenceException {
       assertNotNull(cacheName, "cacheName needed in order to create table");
    }
 
-   private void assertNotNull(String keyColumnType, String message) throws CacheLoaderException {
+   private void assertNotNull(String keyColumnType, String message) throws PersistenceException {
       if (keyColumnType == null || keyColumnType.trim().length() == 0) {
-         throw new CacheLoaderException(message);
+         throw new PersistenceException(message);
       }
    }
 
-   private void executeUpdateSql(Connection conn, String sql) throws CacheLoaderException {
+   private void executeUpdateSql(Connection conn, String sql) throws PersistenceException {
       Statement statement = null;
       try {
          statement = conn.createStatement();
          statement.executeUpdate(sql);
       } catch (SQLException e) {
          log.errorCreatingTable(sql, e);
-         throw new CacheLoaderException(e);
+         throw new PersistenceException(e);
       } finally {
          JdbcUtil.safeClose(statement);
       }
    }
 
-   public void dropTable(Connection conn) throws CacheLoaderException {
+   public void dropTable(Connection conn) throws PersistenceException {
       String dropTableDdl = "DROP TABLE " + getTableName();
       String clearTable = "DELETE FROM " + getTableName();
       executeUpdateSql(conn, clearTable);
@@ -138,7 +138,7 @@ public class TableManipulation implements Cloneable {
       executeUpdateSql(conn, dropTableDdl);
    }
 
-   public void start(ConnectionFactory connectionFactory) throws CacheLoaderException {
+   public void start(ConnectionFactory connectionFactory) throws PersistenceException {
       this.connectionFactory = connectionFactory;
       if (config.createOnStart()) {
          Connection conn = null;
@@ -153,7 +153,7 @@ public class TableManipulation implements Cloneable {
       }
    }
 
-   public void stop() throws CacheLoaderException {
+   public void stop() throws PersistenceException {
       if (config.dropOnExit()) {
          Connection conn = null;
          try {
@@ -299,7 +299,7 @@ public class TableManipulation implements Cloneable {
       return tableName;
    }
 
-   public boolean tableExists(Connection connection) throws CacheLoaderException {
+   public boolean tableExists(Connection connection) throws PersistenceException {
       return tableExists(connection, getTableName());
    }
 

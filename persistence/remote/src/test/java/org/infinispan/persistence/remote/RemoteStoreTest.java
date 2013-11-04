@@ -9,7 +9,7 @@ import org.infinispan.configuration.global.GlobalConfigurationBuilder;
 import org.infinispan.eviction.EvictionStrategy;
 import org.infinispan.marshall.core.MarshalledEntryFactoryImpl;
 import org.infinispan.persistence.BaseStoreTest;
-import org.infinispan.persistence.CacheLoaderException;
+import org.infinispan.persistence.spi.PersistenceException;
 import org.infinispan.persistence.InitializationContextImpl;
 import org.infinispan.marshall.core.MarshalledEntryImpl;
 import org.infinispan.persistence.remote.configuration.RemoteStoreConfigurationBuilder;
@@ -95,7 +95,7 @@ public class RemoteStoreTest extends BaseStoreTest {
    }
 
    @Override
-   protected void purgeExpired() throws CacheLoaderException {
+   protected void purgeExpired() throws PersistenceException {
       localCacheManager.getCache().getAdvancedCache().getEvictionManager().processEviction();
    }
 
@@ -112,7 +112,7 @@ public class RemoteStoreTest extends BaseStoreTest {
    }
 
    @Override
-   public void testStoreAndRemove() throws CacheLoaderException {
+   public void testStoreAndRemove() throws PersistenceException {
       super.testStoreAndRemove();    // TODO: Customise this generated block
    }
 }

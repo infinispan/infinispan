@@ -3,7 +3,7 @@ package org.infinispan.persistence.support;
 import org.infinispan.Cache;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
-import org.infinispan.persistence.CacheLoaderException;
+import org.infinispan.persistence.spi.PersistenceException;
 import org.infinispan.persistence.dummy.DummyInMemoryStoreConfigurationBuilder;
 import org.infinispan.persistence.spi.CacheLoader;
 import org.infinispan.marshall.core.MarshalledEntry;
@@ -83,7 +83,7 @@ public class SingletonStoreTest extends MultipleCacheManagersTest {
       return stores;
    }
 
-   private Object load(SingletonCacheWriter cs, Object key) throws CacheLoaderException {
+   private Object load(SingletonCacheWriter cs, Object key) throws PersistenceException {
       MarshalledEntry se = ((CacheLoader)cs).load(key);
       return se == null ? null : se.getValue();
    }

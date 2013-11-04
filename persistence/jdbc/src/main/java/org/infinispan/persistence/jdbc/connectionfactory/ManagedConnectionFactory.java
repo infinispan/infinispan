@@ -1,6 +1,6 @@
 package org.infinispan.persistence.jdbc.connectionfactory;
 
-import org.infinispan.persistence.CacheLoaderException;
+import org.infinispan.persistence.spi.PersistenceException;
 import org.infinispan.persistence.jdbc.configuration.ConnectionFactoryConfiguration;
 import org.infinispan.persistence.jdbc.configuration.ManagedConnectionFactoryConfiguration;
 import org.infinispan.persistence.jdbc.logging.Log;
@@ -31,7 +31,7 @@ public class ManagedConnectionFactory extends ConnectionFactory {
    private DataSource dataSource;
 
    @Override
-   public void start(ConnectionFactoryConfiguration factoryConfiguration, ClassLoader classLoader) throws CacheLoaderException {
+   public void start(ConnectionFactoryConfiguration factoryConfiguration, ClassLoader classLoader) throws PersistenceException {
       InitialContext ctx = null;
       String datasourceName;
       if (factoryConfiguration instanceof ManagedConnectionFactoryConfiguration) {
@@ -40,7 +40,7 @@ public class ManagedConnectionFactory extends ConnectionFactory {
          datasourceName = managedConfiguration.jndiUrl();
       }
       else {
-         throw new CacheLoaderException("FactoryConfiguration has to be an instance of " +
+         throw new PersistenceException("FactoryConfiguration has to be an instance of " +
                "ManagedConnectionFactoryConfiguration");
       }
       try {
@@ -51,13 +51,13 @@ public class ManagedConnectionFactory extends ConnectionFactory {
          }
          if (dataSource == null) {
             log.connectionInJndiNotFound(datasourceName);
-            throw new CacheLoaderException(String.format(
+            throw new PersistenceException(String.format(
                   "Could not find a connection in jndi under the name '%s'", datasourceName));
          }
       }
       catch (NamingException e) {
          log.namingExceptionLookingUpConnection(datasourceName, e);
-         throw new CacheLoaderException(e);
+         throw new PersistenceException(e);
       }
       finally {
          if (ctx != null) {
@@ -76,13 +76,13 @@ public class ManagedConnectionFactory extends ConnectionFactory {
    }
 
    @Override
-   public Connection getConnection() throws CacheLoaderException {
+   public Connection getConnection() throws PersistenceException {
       Connection connection;
       try {
          connection = dataSource.getConnection();
       } catch (SQLException e) {
          log.sqlFailureRetrievingConnection(e);
-         throw new CacheLoaderException("This might be related to https://jira.jboss.org/browse/ISPN-604", e);
+         throw new PersistenceException("This might be related to https://jira.jboss.org/browse/ISPN-604", e);
       }
       if (trace) {
          log.tracef("Connection checked out: %s", connection);

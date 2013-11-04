@@ -7,7 +7,7 @@ import org.infinispan.configuration.cache.SingleFileStoreConfiguration;
 import org.infinispan.configuration.cache.SingleFileStoreConfigurationBuilder;
 import org.infinispan.marshall.core.MarshalledEntryFactoryImpl;
 import org.infinispan.persistence.BaseStoreTest;
-import org.infinispan.persistence.CacheLoaderException;
+import org.infinispan.persistence.spi.PersistenceException;
 import org.infinispan.persistence.DummyInitializationContext;
 import org.infinispan.marshall.core.MarshalledEntryImpl;
 import org.infinispan.marshall.TestObjectStreamMarshaller;
@@ -63,7 +63,7 @@ public class BoundedSingleFileStoreTest extends AbstractInfinispanTest {
    }
 
    @AfterMethod
-   public void tearDown() throws CacheLoaderException {
+   public void tearDown() throws PersistenceException {
       try {
          if (store != null) {
             store.clear();

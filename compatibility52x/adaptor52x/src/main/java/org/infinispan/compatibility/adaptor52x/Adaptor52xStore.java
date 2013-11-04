@@ -13,6 +13,7 @@ import org.infinispan.marshall.StreamingMarshallerAdapter;
 import org.infinispan.marshall.core.MarshalledEntry;
 import org.infinispan.marshall.core.MarshalledEntryImpl;
 import org.infinispan.metadata.InternalMetadataImpl;
+import org.infinispan.persistence.spi.PersistenceException;
 import org.infinispan.persistence.PersistenceUtil;
 import org.infinispan.persistence.TaskContextImpl;
 import org.infinispan.persistence.spi.AdvancedLoadWriteStore;
@@ -200,8 +201,8 @@ public class Adaptor52xStore implements AdvancedLoadWriteStore {
       return false;
    }
 
-   private org.infinispan.persistence.CacheLoaderException newCacheLoaderException(Throwable cause) {
-      return new org.infinispan.persistence.CacheLoaderException(cause);
+   private PersistenceException newCacheLoaderException(Throwable cause) {
+      return new PersistenceException(cause);
    }
 
    public CacheLoader getLoader() {

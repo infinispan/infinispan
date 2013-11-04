@@ -1,7 +1,7 @@
 package org.infinispan.persistence.jdbc;
 
 import org.infinispan.persistence.BaseStoreTest;
-import org.infinispan.persistence.CacheLoaderException;
+import org.infinispan.persistence.spi.PersistenceException;
 import org.infinispan.persistence.jdbc.configuration.JdbcStringBasedStoreConfigurationBuilder;
 import org.infinispan.persistence.jdbc.connectionfactory.SimpleConnectionFactory;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
@@ -53,7 +53,7 @@ public abstract class ManagedConnectionFactoryTest extends BaseStoreTest {
 
       private SimpleConnectionFactory simpleFactory;
 
-      public void start() throws CacheLoaderException {
+      public void start() throws PersistenceException {
 
          JdbcStringBasedStoreConfigurationBuilder storeBuilder = TestCacheManagerFactory
                .getDefaultCacheConfiguration(false)
@@ -71,7 +71,7 @@ public abstract class ManagedConnectionFactoryTest extends BaseStoreTest {
       public Connection getConnection() throws SQLException {
          try {
             return simpleFactory.getConnection();
-         } catch (CacheLoaderException e) {
+         } catch (PersistenceException e) {
             throw new SQLException(e);
          }
       }

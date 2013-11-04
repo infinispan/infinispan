@@ -3,10 +3,9 @@ package org.infinispan.persistence;
 import org.infinispan.Cache;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.persistence.dummy.DummyInMemoryStoreConfigurationBuilder;
-import org.infinispan.persistence.CacheLoaderException;
-import org.infinispan.persistence.dummy.DummyInMemoryStoreConfigurationBuilder;
 import org.infinispan.persistence.spi.AdvancedLoadWriteStore;
 import org.infinispan.manager.CacheContainer;
+import org.infinispan.persistence.spi.PersistenceException;
 import org.infinispan.test.AbstractInfinispanTest;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
@@ -41,12 +40,12 @@ public class PassivatePersistentTest extends AbstractInfinispanTest {
    }
 
    @AfterMethod
-   public void tearDown() throws CacheLoaderException {
+   public void tearDown() throws PersistenceException {
       store.clear();
       TestingUtil.killCacheManagers(cm);
    }
 
-   public void testPersistence() throws CacheLoaderException {
+   public void testPersistence() throws PersistenceException {
       cache.put("k", "v");
       assert "v".equals(cache.get("k"));
       cache.evict("k");

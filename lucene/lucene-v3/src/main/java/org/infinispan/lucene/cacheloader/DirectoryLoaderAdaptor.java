@@ -8,7 +8,7 @@ import java.util.Set;
 
 import org.apache.lucene.store.IndexInput;
 import org.infinispan.commons.marshall.StreamingMarshaller;
-import org.infinispan.persistence.CacheLoaderException;
+import org.infinispan.persistence.spi.PersistenceException;
 import org.infinispan.marshall.core.MarshalledEntryImpl;
 import org.infinispan.marshall.core.MarshalledEntry;
 import org.infinispan.lucene.ChunkCacheKey;
@@ -58,7 +58,7 @@ final class DirectoryLoaderAdaptor {
     * 
     * @param entriesCollector loaded entries are collected in this set
     * @param maxEntries to limit amount of entries loaded
-    * @throws CacheLoaderException 
+    * @throws org.infinispan.persistence.spi.PersistenceException
     */
    protected void loadAllEntries(final HashSet<MarshalledEntry> entriesCollector, final int maxEntries, StreamingMarshaller marshaller) {
       int existingElements = entriesCollector.size();
@@ -82,9 +82,9 @@ final class DirectoryLoaderAdaptor {
     * @param keysCollector the set where to add loaded keys to
     * @param keysToExclude which keys should not be loaded. Warning: can be null! Means all keys are to be returned
     * @param maxElements
-    * @throws CacheLoaderException
+    * @throws org.infinispan.persistence.spi.PersistenceException
     */
-   private void loadSomeKeys(final HashSet<IndexScopedKey> keysCollector, final Set<IndexScopedKey> keysToExclude, final int maxElements) throws CacheLoaderException {
+   private void loadSomeKeys(final HashSet<IndexScopedKey> keysCollector, final Set<IndexScopedKey> keysToExclude, final int maxElements) throws PersistenceException {
       if (maxElements <= 0) {
          return;
       }
@@ -159,9 +159,9 @@ final class DirectoryLoaderAdaptor {
    /**
     * @param keysCollector the Set where to add loaded keys to
     * @param keysToExclude Could be null!
-    * @throws CacheLoaderException
+    * @throws org.infinispan.persistence.spi.PersistenceException
     */
-   protected void loadAllKeys(final HashSet<IndexScopedKey> keysCollector, final Set<IndexScopedKey> keysToExclude) throws CacheLoaderException {
+   protected void loadAllKeys(final HashSet<IndexScopedKey> keysCollector, final Set<IndexScopedKey> keysToExclude) throws PersistenceException {
       loadSomeKeys(keysCollector, keysToExclude, Integer.MAX_VALUE);
    }
 
@@ -181,7 +181,7 @@ final class DirectoryLoaderAdaptor {
    /**
     * Load the value for a specific key
     */
-   protected Object load(final IndexScopedKey key) throws CacheLoaderException {
+   protected Object load(final IndexScopedKey key) throws PersistenceException {
       try {
          return key.accept(loadVisitor);
       } catch (Exception e) {
@@ -193,7 +193,7 @@ final class DirectoryLoaderAdaptor {
     * @param key
     * @return true if the indexKey matches a loadable entry
     */
-   protected boolean containsKey(final IndexScopedKey key) throws CacheLoaderException {
+   protected boolean containsKey(final IndexScopedKey key) throws PersistenceException {
       try {
          final Boolean returnValue = key.accept(containsKeyVisitor);
          return returnValue.booleanValue();

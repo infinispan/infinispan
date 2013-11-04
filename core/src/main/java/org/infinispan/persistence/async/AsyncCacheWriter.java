@@ -5,7 +5,7 @@ import net.jcip.annotations.GuardedBy;
 import org.infinispan.Cache;
 import org.infinispan.configuration.cache.AsyncStoreConfiguration;
 import org.infinispan.configuration.cache.Configuration;
-import org.infinispan.persistence.CacheLoaderException;
+import org.infinispan.persistence.spi.PersistenceException;
 import org.infinispan.persistence.modifications.Modification;
 import org.infinispan.persistence.modifications.Remove;
 import org.infinispan.persistence.modifications.Store;
@@ -147,7 +147,7 @@ public class AsyncCacheWriter extends DelegatingCacheWriter {
       return true;
    }
 
-   protected void applyModificationsSync(List<Modification> mods) throws CacheLoaderException {
+   protected void applyModificationsSync(List<Modification> mods) throws PersistenceException {
       for (Modification m : mods) {
          switch (m.getType()) {
             case STORE:

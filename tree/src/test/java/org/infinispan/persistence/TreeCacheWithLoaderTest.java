@@ -3,9 +3,9 @@ package org.infinispan.persistence;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.cache.PersistenceConfigurationBuilder;
 import org.infinispan.persistence.dummy.DummyInMemoryStoreConfigurationBuilder;
-import org.infinispan.persistence.CacheLoaderException;
 import org.infinispan.persistence.spi.CacheLoader;
 import org.infinispan.manager.EmbeddedCacheManager;
+import org.infinispan.persistence.spi.PersistenceException;
 import org.infinispan.test.SingleCacheManagerTest;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
@@ -43,7 +43,7 @@ public class TreeCacheWithLoaderTest extends SingleCacheManagerTest {
       persistenceConfigurationBuilder.addStore(DummyInMemoryStoreConfigurationBuilder.class).storeName(getClass().getName());
    }
 
-   public void testPersistence() throws CacheLoaderException {
+   public void testPersistence() throws PersistenceException {
       cache.put("/a/b/c", "key", "value");
       assert "value".equals(cache.get("/a/b/c", "key"));
 
@@ -58,7 +58,7 @@ public class TreeCacheWithLoaderTest extends SingleCacheManagerTest {
       assert store.contains(new NodeKey(Fqn.fromString("/a/b/c"), STRUCTURE));
    }
 
-   public void testRootNodePersistence() throws CacheLoaderException {
+   public void testRootNodePersistence() throws PersistenceException {
       cache.put(ROOT, "key", "value");
       assert "value".equals(cache.get(ROOT, "key"));
       assert store.contains(new NodeKey(ROOT, DATA));
@@ -73,7 +73,7 @@ public class TreeCacheWithLoaderTest extends SingleCacheManagerTest {
       assert store.contains(new NodeKey(ROOT, STRUCTURE));
    }
 
-   public void testDuplicatePersistence() throws CacheLoaderException {
+   public void testDuplicatePersistence() throws PersistenceException {
       cache.put(Fqn.fromElements("a", "b"), "k", "v");
       assert "v".equals(cache.get(Fqn.fromElements("a", "b"), "k"));
       restartCache();
@@ -82,7 +82,7 @@ public class TreeCacheWithLoaderTest extends SingleCacheManagerTest {
    }
 
    @SuppressWarnings("unchecked")
-   private Map<String, String> nodeContentsInCacheStore(CacheLoader cs, Fqn fqn) throws CacheLoaderException {
+   private Map<String, String> nodeContentsInCacheStore(CacheLoader cs, Fqn fqn) throws PersistenceException {
       return (Map<String, String>) cs.load(new NodeKey(fqn, DATA)).getValue();
    }
 

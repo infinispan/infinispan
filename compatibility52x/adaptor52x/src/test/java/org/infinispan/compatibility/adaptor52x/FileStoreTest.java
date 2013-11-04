@@ -1,9 +1,7 @@
 package org.infinispan.compatibility.adaptor52x;
 
 import org.infinispan.configuration.cache.SingleFileStoreConfiguration;
-import org.infinispan.persistence.CacheLoaderException;
 import org.infinispan.persistence.file.SingleFileStore;
-import org.testng.annotations.AfterMethod;
 import org.testng.annotations.Test;
 
 import static org.testng.Assert.assertEquals;

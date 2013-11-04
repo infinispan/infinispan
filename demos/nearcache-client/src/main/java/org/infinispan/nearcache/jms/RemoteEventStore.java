@@ -1,6 +1,6 @@
 package org.infinispan.nearcache.jms;
 
-import org.infinispan.persistence.CacheLoaderException;
+import org.infinispan.persistence.spi.PersistenceException;
 import org.infinispan.persistence.remote.RemoteStore;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
@@ -29,7 +29,7 @@ public class RemoteEventStore extends RemoteStore {
    private Connection con;
 
    @Override
-   public void start() throws CacheLoaderException {
+   public void start() throws PersistenceException {
       try {
          Context context = getContext();
          try {
@@ -40,7 +40,7 @@ public class RemoteEventStore extends RemoteStore {
             context.close();
          }
       } catch (Exception e) {
-         throw new CacheLoaderException(
+         throw new PersistenceException(
                "Unable to subscribe for remote cache events", e);
       }
 
@@ -48,13 +48,13 @@ public class RemoteEventStore extends RemoteStore {
    }
 
    @Override
-   public void stop() throws CacheLoaderException {
+   public void stop() throws PersistenceException {
       super.stop();
       if (con != null) {
          try {
             con.close();
          } catch (JMSException e) {
-            throw new CacheLoaderException(
+            throw new PersistenceException(
                   "Unable to close remote cache event connection", e);
          }
       }

@@ -1,6 +1,6 @@
 package org.infinispan.persistence.jdbc.connectionfactory;
 
-import org.infinispan.persistence.CacheLoaderException;
+import org.infinispan.persistence.spi.PersistenceException;
 import org.infinispan.commons.util.Util;
 import org.infinispan.persistence.jdbc.configuration.ConnectionFactoryConfiguration;
 import org.infinispan.persistence.jdbc.configuration.SimpleConnectionFactoryConfiguration;
@@ -27,14 +27,14 @@ public class SimpleConnectionFactory extends ConnectionFactory {
    private volatile int connectionCount = 0;
 
    @Override
-   public void start(ConnectionFactoryConfiguration config, ClassLoader classLoader) throws CacheLoaderException {
+   public void start(ConnectionFactoryConfiguration config, ClassLoader classLoader) throws PersistenceException {
 
       SimpleConnectionFactoryConfiguration factoryConfiguration;
       if (config instanceof SimpleConnectionFactoryConfiguration) {
          factoryConfiguration = (SimpleConnectionFactoryConfiguration) config;
       }
       else {
-         throw new CacheLoaderException("ConnectionFactoryConfiguration has to be an instance of " +
+         throw new PersistenceException("ConnectionFactoryConfiguration has to be an instance of " +
                "SimpleConnectionFactoryConfiguration.");
       }
 
@@ -53,15 +53,15 @@ public class SimpleConnectionFactory extends ConnectionFactory {
    }
 
    @Override
-   public Connection getConnection() throws CacheLoaderException {
+   public Connection getConnection() throws PersistenceException {
       try {
          Connection connection = DriverManager.getConnection(connectionUrl, userName, password);
          if (connection == null)
-            throw new CacheLoaderException("Received null connection from the DriverManager!");
+            throw new PersistenceException("Received null connection from the DriverManager!");
          connectionCount++;
          return connection;
       } catch (SQLException e) {
-         throw new CacheLoaderException("Could not obtain a new connection", e);
+         throw new PersistenceException("Could not obtain a new connection", e);
       }
    }
 
@@ -77,7 +77,7 @@ public class SimpleConnectionFactory extends ConnectionFactory {
       }
    }
 
-   private void loadDriver(String driverClass, ClassLoader classLoader) throws CacheLoaderException {
+   private void loadDriver(String driverClass, ClassLoader classLoader) throws PersistenceException {
       if (log.isTraceEnabled()) log.tracef("Attempting to load driver %s", driverClass);
       Util.getInstance(driverClass, classLoader);
    }

@@ -4,7 +4,7 @@ import org.infinispan.Cache;
 import org.infinispan.commons.marshall.StreamingMarshaller;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.cache.StoreConfiguration;
-import org.infinispan.persistence.CacheLoaderException;
+import org.infinispan.persistence.spi.PersistenceException;
 import org.infinispan.persistence.jdbc.ManagedConnectionFactoryTest;
 import org.infinispan.persistence.jdbc.configuration.JdbcMixedStoreConfiguration;
 import org.infinispan.persistence.jdbc.configuration.JdbcMixedStoreConfigurationBuilder;
@@ -66,7 +66,7 @@ public class MixedStoreWithManagedConnectionTest extends ManagedConnectionFactor
 
    @AfterMethod
    @Override
-   public void tearDown() throws CacheLoaderException {
+   public void tearDown() throws PersistenceException {
       cache.clear();
       TestingUtil.killCacheManagers(cacheManager);
    }

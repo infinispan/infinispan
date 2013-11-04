@@ -7,7 +7,7 @@ import org.infinispan.commons.CacheException;
 import org.infinispan.commons.marshall.AdvancedExternalizer;
 import org.infinispan.commons.util.TypedProperties;
 import org.infinispan.lifecycle.ComponentStatus;
-import org.infinispan.persistence.CacheLoaderException;
+import org.infinispan.persistence.spi.PersistenceException;
 import org.infinispan.persistence.support.SingletonCacheWriter;
 import org.infinispan.remoting.RemoteException;
 import org.infinispan.remoting.responses.Response;
@@ -82,7 +82,7 @@ public interface Log extends BasicLogger {
 
    @LogMessage(level = WARN)
    @Message(value = "Unable to load %s from cache loader", id = 1)
-   void unableToLoadFromCacheLoader(Object key, @Cause CacheLoaderException cle);
+   void unableToLoadFromCacheLoader(Object key, @Cause PersistenceException cle);
 
    @LogMessage(level = WARN)
    @Message(value = "Field %s not found!!", id = 2)
@@ -266,7 +266,7 @@ public interface Log extends BasicLogger {
 
    @LogMessage(level = WARN)
    @Message(value = "Problems purging file %s", id = 60)
-   void problemsPurgingFile(File buckedFile, @Cause CacheLoaderException e);
+   void problemsPurgingFile(File buckedFile, @Cause PersistenceException e);
 
    @LogMessage(level = WARN)
    @Message(value = "Unable to acquire global lock to purge cache store", id = 61)
@@ -878,10 +878,10 @@ public interface Log extends BasicLogger {
    CacheConfigurationException parserDoesNotDeclareNamespaces(String name);
 
    @Message(value = "Purging expired entries failed", id = 236)
-   CacheLoaderException purgingExpiredEntriesFailed(@Cause Throwable cause);
+   PersistenceException purgingExpiredEntriesFailed(@Cause Throwable cause);
 
    @Message(value = "Waiting for expired entries to be purge timed out", id = 237)
-   CacheLoaderException timedOutWaitingForExpiredEntriesToBePurged(@Cause Throwable cause);
+   PersistenceException timedOutWaitingForExpiredEntriesToBePurged(@Cause Throwable cause);
 
    @Message(value = "Directory %s does not exist and cannot be created!", id = 238)
    CacheConfigurationException directoryCannotBeCreated(String path);

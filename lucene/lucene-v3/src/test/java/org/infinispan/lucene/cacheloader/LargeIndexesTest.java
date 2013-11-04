@@ -3,7 +3,7 @@ package org.infinispan.lucene.cacheloader;
 import java.io.IOException;
 
 import org.apache.lucene.store.IndexInput;
-import org.infinispan.persistence.CacheLoaderException;
+import org.infinispan.persistence.spi.PersistenceException;
 import org.infinispan.lucene.ChunkCacheKey;
 import org.infinispan.lucene.FileCacheKey;
 import org.infinispan.lucene.FileMetadata;
@@ -24,7 +24,7 @@ public class LargeIndexesTest {
    private static final long TEST_SIZE = ((long)Integer.MAX_VALUE) + 10;//something not fitting in int
    private static final int AUTO_BUFFER = 16;//ridiculously low
 
-   public void testAutoChunkingOnLargeFiles() throws CacheLoaderException {
+   public void testAutoChunkingOnLargeFiles() throws PersistenceException {
       FileCacheKey k = new FileCacheKey(INDEX_NAME, FILE_NAME);
       DirectoryLoaderAdaptor adaptor = new DirectoryLoaderAdaptor(new InternalDirectoryContractImpl(), INDEX_NAME, AUTO_BUFFER);
       Object loaded = adaptor.load(k);
@@ -35,7 +35,7 @@ public class LargeIndexesTest {
       AssertJUnit.assertEquals(AUTO_BUFFER, metadata.getBufferSize());
    }
 
-   public void testSmallChunkLoading() throws CacheLoaderException {
+   public void testSmallChunkLoading() throws PersistenceException {
       DirectoryLoaderAdaptor adaptor = new DirectoryLoaderAdaptor(new InternalDirectoryContractImpl(), INDEX_NAME, AUTO_BUFFER);
       Object loaded = adaptor.load(new ChunkCacheKey(INDEX_NAME, FILE_NAME, 0, AUTO_BUFFER));
       AssertJUnit.assertTrue(loaded instanceof byte[]);

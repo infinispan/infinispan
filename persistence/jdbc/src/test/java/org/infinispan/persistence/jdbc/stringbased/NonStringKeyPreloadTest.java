@@ -13,7 +13,7 @@ import org.infinispan.commons.configuration.Builder;
 import org.infinispan.commons.configuration.BuiltBy;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.eviction.EvictionStrategy;
-import org.infinispan.persistence.CacheLoaderException;
+import org.infinispan.persistence.spi.PersistenceException;
 import org.infinispan.persistence.jdbc.configuration.AbstractJdbcStoreConfigurationBuilder;
 import org.infinispan.persistence.jdbc.configuration.AbstractJdbcStoreConfigurationChildBuilder;
 import org.infinispan.persistence.jdbc.configuration.ConnectionFactoryConfiguration;
@@ -144,7 +144,7 @@ public class NonStringKeyPreloadTest extends AbstractInfinispanTest {
       static boolean started = false;
 
       @Override
-      public void start(ConnectionFactoryConfiguration config, ClassLoader classLoader) throws CacheLoaderException {
+      public void start(ConnectionFactoryConfiguration config, ClassLoader classLoader) throws PersistenceException {
          if (!started) {
             sharedFactory = new PooledConnectionFactory();
             sharedFactory.start(config, classLoader);
@@ -158,7 +158,7 @@ public class NonStringKeyPreloadTest extends AbstractInfinispanTest {
       }
 
       @Override
-      public Connection getConnection() throws CacheLoaderException {
+      public Connection getConnection() throws PersistenceException {
          return sharedFactory.getConnection();
       }
 

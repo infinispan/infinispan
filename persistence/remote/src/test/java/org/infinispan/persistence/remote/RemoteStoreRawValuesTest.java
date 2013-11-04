@@ -9,7 +9,7 @@ import org.infinispan.container.InternalEntryFactoryImpl;
 import org.infinispan.eviction.EvictionStrategy;
 import org.infinispan.marshall.core.MarshalledEntryFactoryImpl;
 import org.infinispan.persistence.BaseStoreTest;
-import org.infinispan.persistence.CacheLoaderException;
+import org.infinispan.persistence.spi.PersistenceException;
 import org.infinispan.persistence.InitializationContextImpl;
 import org.infinispan.marshall.core.MarshalledEntryImpl;
 import org.infinispan.persistence.remote.configuration.RemoteStoreConfigurationBuilder;
@@ -97,12 +97,12 @@ public class RemoteStoreRawValuesTest extends BaseStoreTest {
    }
 
    @Override
-   protected void purgeExpired() throws CacheLoaderException {
+   protected void purgeExpired() throws PersistenceException {
       localCacheManager.getCache().getAdvancedCache().getEvictionManager().processEviction();
    }
 
    @Override
-   public void testLoadAll() throws CacheLoaderException {
+   public void testLoadAll() throws PersistenceException {
    }
 
    @Override

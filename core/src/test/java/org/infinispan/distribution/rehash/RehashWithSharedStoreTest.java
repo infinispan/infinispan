@@ -3,7 +3,7 @@ package org.infinispan.distribution.rehash;
 import org.infinispan.Cache;
 import org.infinispan.distribution.BaseDistStoreTest;
 import org.infinispan.distribution.MagicKey;
-import org.infinispan.persistence.CacheLoaderException;
+import org.infinispan.persistence.spi.PersistenceException;
 import org.infinispan.persistence.dummy.DummyInMemoryStore;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.util.logging.Log;
@@ -37,7 +37,7 @@ public class RehashWithSharedStoreTest extends BaseDistStoreTest {
       return cs.stats().get(cacheStoreMethod);
    }
 
-   public void testRehashes() throws CacheLoaderException {
+   public void testRehashes() throws PersistenceException {
       MagicKey k = new MagicKey("k", c1);
 
       c1.put(k, "v");

@@ -12,7 +12,7 @@ import org.infinispan.container.DataContainer;
 import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.manager.CacheContainer;
 import org.infinispan.manager.EmbeddedCacheManager;
-import org.infinispan.persistence.CacheLoaderException;
+import org.infinispan.persistence.spi.PersistenceException;
 import org.infinispan.test.AbstractInfinispanTest;
 import org.infinispan.test.CacheManagerCallable;
 import org.infinispan.test.TestingUtil;
@@ -176,7 +176,7 @@ public abstract class BaseStoreFunctionalTest extends AbstractInfinispanTest {
       }
    }
 
-   public void testStoreByteArrays(final Method m) throws CacheLoaderException {
+   public void testStoreByteArrays(final Method m) throws PersistenceException {
       ConfigurationBuilder base = new ConfigurationBuilder();
       base.dataContainer().keyEquivalence(ByteArrayEquivalence.INSTANCE);
       withCacheManager(new CacheManagerCallable(getContainerWithCacheLoader(base.build())) {

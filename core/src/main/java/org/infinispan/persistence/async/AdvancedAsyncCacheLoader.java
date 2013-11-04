@@ -2,7 +2,7 @@ package org.infinispan.persistence.async;
 
 import org.infinispan.executors.ExecutorAllCompletionService;
 import org.infinispan.marshall.core.MarshalledEntry;
-import org.infinispan.persistence.CacheLoaderException;
+import org.infinispan.persistence.spi.PersistenceException;
 import org.infinispan.persistence.TaskContextImpl;
 import org.infinispan.persistence.modifications.Modification;
 import org.infinispan.persistence.modifications.Remove;
@@ -90,7 +90,7 @@ public class AdvancedAsyncCacheLoader extends AsyncCacheLoader implements Advanc
 
       eacs.waitUntilAllCompleted();
       if (eacs.isExceptionThrown()) {
-         throw new CacheLoaderException("Execution exception!", eacs.getFirstException());
+         throw new PersistenceException("Execution exception!", eacs.getFirstException());
       }
    }
 

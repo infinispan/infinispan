@@ -3,7 +3,7 @@ package org.infinispan.distribution;
 import org.infinispan.Cache;
 import org.infinispan.container.DataContainer;
 import org.infinispan.context.Flag;
-import org.infinispan.persistence.CacheLoaderException;
+import org.infinispan.persistence.spi.PersistenceException;
 import org.infinispan.persistence.spi.CacheLoader;
 import org.infinispan.persistence.spi.CacheWriter;
 import org.infinispan.marshall.core.MarshalledEntryImpl;
@@ -340,7 +340,7 @@ public class DistSyncStoreNotSharedTest extends BaseDistStoreTest<Object, String
       }
    }
 
-   public void testGetOnlyQueriesCacheOnOwners() throws CacheLoaderException {
+   public void testGetOnlyQueriesCacheOnOwners() throws PersistenceException {
       // Make a key that own'ers is c1 and c2
       final MagicKey k = new MagicKey("key1", c1, c2);
       final String v1 = "real-data";
@@ -366,7 +366,7 @@ public class DistSyncStoreNotSharedTest extends BaseDistStoreTest<Object, String
       return data;
    }
    
-   private void prepareClearTest() throws CacheLoaderException {
+   private void prepareClearTest() throws PersistenceException {
       for (Cache<Object, String> c : caches) assert c.isEmpty() : "Data container " + c + " should be empty, instead it contains keys " + c.keySet();
       for (int i = 0; i < 5; i++) {
          getOwners("k" + i)[0].put("k" + i, "value" + i);

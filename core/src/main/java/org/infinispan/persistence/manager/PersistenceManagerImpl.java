@@ -12,7 +12,6 @@ import org.infinispan.container.entries.ImmortalCacheEntry;
 import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.context.Flag;
 import org.infinispan.context.InvocationContextContainer;
-import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.factories.annotations.ComponentName;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.annotations.Start;
@@ -26,7 +25,7 @@ import org.infinispan.marshall.core.MarshalledEntryFactory;
 import org.infinispan.metadata.InternalMetadataImpl;
 import org.infinispan.metadata.Metadata;
 import org.infinispan.notifications.cachelistener.CacheNotifier;
-import org.infinispan.persistence.CacheLoaderException;
+import org.infinispan.persistence.spi.PersistenceException;
 import org.infinispan.persistence.InitializationContextImpl;
 import org.infinispan.persistence.async.AdvancedAsyncCacheLoader;
 import org.infinispan.persistence.async.AdvancedAsyncCacheWriter;
@@ -46,8 +45,6 @@ import org.infinispan.util.concurrent.WithinThreadExecutor;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
-import javax.transaction.Status;
-import javax.transaction.SystemException;
 import javax.transaction.Transaction;
 import javax.transaction.TransactionManager;
 import java.util.*;
@@ -133,7 +130,7 @@ public class PersistenceManagerImpl implements PersistenceManager {
 
                if (configMap.get(w).purgeOnStartup()) {
                   if (!(w instanceof AdvancedCacheWriter))
-                     throw new CacheLoaderException("'purgeOnStartup' can only be set on stores implementing " +
+                     throw new PersistenceException("'purgeOnStartup' can only be set on stores implementing " +
                                                           "" + AdvancedCacheWriter.class.getName());
                   ((AdvancedCacheWriter) w).clear();
                }
@@ -198,7 +195,7 @@ public class PersistenceManagerImpl implements PersistenceManager {
       for (CacheLoader l : loaders) {
          if (configMap.get(l).preload()) {
             if (!(l instanceof AdvancedCacheLoader)) {
-               throw new CacheLoaderException("Cannot preload from cache loader '" + l.getClass().getName()
+               throw new PersistenceException("Cannot preload from cache loader '" + l.getClass().getName()
                                                     + "' as it doesn't implement '" + AdvancedCacheLoader.class.getName() + "'");
             }
             preloadCl = (AdvancedCacheLoader) l;
@@ -599,7 +596,7 @@ public class PersistenceManagerImpl implements PersistenceManager {
             cache.put(key, value, metadata);
             success = true;
          } catch (Exception e) {
-            throw new CacheLoaderException("Unable to preload!", e);
+            throw new PersistenceException("Unable to preload!", e);
          } finally {
             commitIfNeeded(success);
          }
@@ -615,7 +612,7 @@ public class PersistenceManagerImpl implements PersistenceManager {
          try {
             transactionManager.resume(transaction);
          } catch (Exception e) {
-            throw new CacheLoaderException(e);
+            throw new PersistenceException(e);
          }
       }
    }
@@ -625,7 +622,7 @@ public class PersistenceManagerImpl implements PersistenceManager {
          try {
             return transactionManager.suspend();
          } catch (Exception e) {
-            throw new CacheLoaderException(e);
+            throw new PersistenceException(e);
          }
       }
       return null;
@@ -636,7 +633,7 @@ public class PersistenceManagerImpl implements PersistenceManager {
          try {
             transactionManager.begin();
          } catch (Exception e) {
-            throw new CacheLoaderException(e);
+            throw new PersistenceException(e);
          }
       }
    }
@@ -650,7 +647,7 @@ public class PersistenceManagerImpl implements PersistenceManager {
                transactionManager.rollback();
             }
          } catch (Exception e) {
-            throw new CacheLoaderException(e);
+            throw new PersistenceException(e);
          }
       }
    }

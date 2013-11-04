@@ -2,7 +2,7 @@ package org.infinispan.persistence.dummy;
 
 import org.infinispan.configuration.cache.PersistenceConfigurationBuilder;
 import org.infinispan.persistence.BaseStoreFunctionalTest;
-import org.infinispan.persistence.CacheLoaderException;
+import org.infinispan.persistence.spi.PersistenceException;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.Test;
 
@@ -26,7 +26,7 @@ public class DummyInMemoryStoreFunctionalTest extends BaseStoreFunctionalTest {
    }
 
    @Override
-   public void testStoreByteArrays(Method m) throws CacheLoaderException {
+   public void testStoreByteArrays(Method m) throws PersistenceException {
       super.testStoreByteArrays(m);    // TODO: Customise this generated block
    }
 }
