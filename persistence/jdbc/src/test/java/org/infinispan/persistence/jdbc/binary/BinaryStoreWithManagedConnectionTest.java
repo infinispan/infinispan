@@ -88,28 +88,4 @@ public class BinaryStoreWithManagedConnectionTest extends ManagedConnectionFacto
       return "java:/BinaryStoreWithManagedConnectionTest/DS";
    }
 
-   @Override
-   public void testLoadAll() throws PersistenceException {
-      super.testLoadAll();    // TODO: Customise this generated block
-   }
-
-   @Override
-   public void testLoadAndStoreImmortal() throws PersistenceException {
-      super.testLoadAndStoreImmortal();    // TODO: Customise this generated block
-   }
-
-   @Override
-   public void testLoadAndStoreWithIdle() throws Exception {
-      super.testLoadAndStoreWithIdle();    // TODO: Customise this generated block
-   }
-
-   @Override
-   public void testLoadAndStoreWithLifespanAndIdle() throws Exception {
-      super.testLoadAndStoreWithLifespanAndIdle();    // TODO: Customise this generated block
-   }
-
-   @Override
-   public void testStopStartDoesNotNukeValues() throws InterruptedException, PersistenceException {
-      super.testStopStartDoesNotNukeValues();    // TODO: Customise this generated block
-   }
 }

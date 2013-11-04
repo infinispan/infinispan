@@ -18,6 +18,7 @@ import org.infinispan.persistence.spi.InitializationContext;
 import org.infinispan.util.KeyValuePair;
 import org.infinispan.util.logging.LogFactory;
 
+import java.io.ByteArrayInputStream;
 import java.io.InputStream;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -384,7 +385,7 @@ public class JdbcStringBasedStore implements AdvancedLoadWriteStore {
 
    private void updateStatement(MarshalledEntry entry, String key, PreparedStatement ps) throws InterruptedException, SQLException {
       ByteBuffer byteBuffer = JdbcUtil.marshall(ctx.getMarshaller(), new KeyValuePair(entry.getValueBytes(), entry.getMetadataBytes()));
-      ps.setBinaryStream(1, byteBuffer.getStream(), byteBuffer.getLength());
+      ps.setBinaryStream(1, new ByteArrayInputStream(byteBuffer.getBuf(), byteBuffer.getOffset(), byteBuffer.getLength()), byteBuffer.getLength());
       ps.setLong(2, getExpiryTime(entry.getMetadata()));
       ps.setString(3, key);
    }

@@ -21,6 +21,7 @@ import org.infinispan.persistence.support.Bucket;
 import org.infinispan.util.concurrent.locks.StripedLock;
 import org.infinispan.util.logging.LogFactory;
 
+import java.io.ByteArrayInputStream;
 import java.io.InputStream;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -375,7 +376,7 @@ public class JdbcBinaryStore implements AdvancedLoadWriteStore {
                }
                if (!bucket.isEmpty()) {
                   ByteBuffer byteBuffer = JdbcUtil.marshall(marshaller, bucket);
-                  ps.setBinaryStream(1, byteBuffer.getStream(), byteBuffer.getLength());
+                  ps.setBinaryStream(1, new ByteArrayInputStream(byteBuffer.getBuf(), byteBuffer.getOffset(), byteBuffer.getLength()), byteBuffer.getLength());
                   ps.setLong(2, bucket.timestampOfFirstEntryToExpire());
                   ps.setString(3, bucket.getBucketIdAsString());
                   ps.addBatch();
@@ -404,7 +405,7 @@ public class JdbcBinaryStore implements AdvancedLoadWriteStore {
          }
          conn = connectionFactory.getConnection();
          ps = conn.prepareStatement(sql);
-         ps.setBinaryStream(1, byteBuffer.getStream(), byteBuffer.getLength());
+         ps.setBinaryStream(1, new ByteArrayInputStream(byteBuffer.getBuf(), byteBuffer.getOffset(), byteBuffer.getLength()), byteBuffer.getLength());
          ps.setLong(2, bucket.timestampOfFirstEntryToExpire());
          ps.setString(3, bucket.getBucketIdAsString());
          int insertedRows = ps.executeUpdate();
@@ -437,7 +438,7 @@ public class JdbcBinaryStore implements AdvancedLoadWriteStore {
          conn = connectionFactory.getConnection();
          ps = conn.prepareStatement(sql);
          ByteBuffer buffer = JdbcUtil.marshall(ctx.getMarshaller(), bucket.getStoredEntries());
-         ps.setBinaryStream(1, buffer.getStream(), buffer.getLength());
+         ps.setBinaryStream(1, new ByteArrayInputStream(buffer.getBuf(), buffer.getOffset(), buffer.getLength()), buffer.getLength());
          ps.setLong(2, bucket.timestampOfFirstEntryToExpire());
          ps.setString(3, bucket.getBucketIdAsString());
          int updatedRows = ps.executeUpdate();

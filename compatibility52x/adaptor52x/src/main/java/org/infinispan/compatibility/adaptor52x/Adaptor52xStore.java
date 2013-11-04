@@ -47,7 +47,7 @@ public class Adaptor52xStore implements AdvancedLoadWriteStore {
       try {
          loader.init(cacheLoaderConfig, ctx.getCache(), new StreamingMarshallerAdapter(ctx.getMarshaller()));
       } catch (CacheLoaderException e) {
-         throw newCacheLoaderException(e);
+         throw newPersistenceException(e);
       }
    }
 
@@ -56,7 +56,7 @@ public class Adaptor52xStore implements AdvancedLoadWriteStore {
       try {
          loader.start();
       } catch (CacheLoaderException e) {
-         throw newCacheLoaderException(e);
+         throw newPersistenceException(e);
       }
       entryFactory = ctx.getCache().getAdvancedCache().getComponentRegistry().getComponent(InternalEntryFactory.class);
    }
@@ -66,7 +66,7 @@ public class Adaptor52xStore implements AdvancedLoadWriteStore {
       try {
          loader.stop();
       } catch (CacheLoaderException e) {
-         throw newCacheLoaderException(e);
+         throw newPersistenceException(e);
       }
    }
 
@@ -107,10 +107,10 @@ public class Adaptor52xStore implements AdvancedLoadWriteStore {
          }
          eacs.waitUntilAllCompleted();
          if (eacs.isExceptionThrown()) {
-            throw newCacheLoaderException(eacs.getFirstException());
+            throw newPersistenceException(eacs.getFirstException());
          }
       } catch (CacheLoaderException e) {
-         throw newCacheLoaderException(e);
+         throw newPersistenceException(e);
       }
    }
 
@@ -147,7 +147,7 @@ public class Adaptor52xStore implements AdvancedLoadWriteStore {
          try {
             ((CacheStore) loader).clear();
          } catch (CacheLoaderException e) {
-            throw newCacheLoaderException(e);
+            throw newPersistenceException(e);
          }
       }
    }
@@ -158,7 +158,7 @@ public class Adaptor52xStore implements AdvancedLoadWriteStore {
          try {
             ((CacheStore) loader).purgeExpired();
          } catch (CacheLoaderException e) {
-            throw newCacheLoaderException(e);
+            throw newPersistenceException(e);
          }
       }
    }
@@ -171,7 +171,7 @@ public class Adaptor52xStore implements AdvancedLoadWriteStore {
             return null;
          return new MarshalledEntryImpl(key, load.getValue(), new InternalMetadataImpl(load), ctx.getMarshaller());
       } catch (CacheLoaderException e) {
-         throw newCacheLoaderException(e);
+         throw newPersistenceException(e);
       }
    }
 
@@ -186,7 +186,7 @@ public class Adaptor52xStore implements AdvancedLoadWriteStore {
          try {
             ((CacheStore) loader).store(entryFactory.create(entry.getKey(), entry.getValue(), entry.getMetadata()));
          } catch (CacheLoaderException e) {
-            throw newCacheLoaderException(e);
+            throw newPersistenceException(e);
          }
    }
 
@@ -196,12 +196,12 @@ public class Adaptor52xStore implements AdvancedLoadWriteStore {
          try {
             return ((CacheStore) loader).remove(key);
          } catch (CacheLoaderException e) {
-            throw newCacheLoaderException(e);
+            throw newPersistenceException(e);
          }
       return false;
    }
 
-   private PersistenceException newCacheLoaderException(Throwable cause) {
+   private PersistenceException newPersistenceException(Throwable cause) {
       return new PersistenceException(cause);
    }
 

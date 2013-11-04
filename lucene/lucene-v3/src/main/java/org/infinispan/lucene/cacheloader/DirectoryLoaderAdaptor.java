@@ -58,7 +58,7 @@ final class DirectoryLoaderAdaptor {
     * 
     * @param entriesCollector loaded entries are collected in this set
     * @param maxEntries to limit amount of entries loaded
-    * @throws org.infinispan.persistence.spi.PersistenceException
+    * @throws PersistenceException
     */
    protected void loadAllEntries(final HashSet<MarshalledEntry> entriesCollector, final int maxEntries, StreamingMarshaller marshaller) {
       int existingElements = entriesCollector.size();
@@ -82,7 +82,7 @@ final class DirectoryLoaderAdaptor {
     * @param keysCollector the set where to add loaded keys to
     * @param keysToExclude which keys should not be loaded. Warning: can be null! Means all keys are to be returned
     * @param maxElements
-    * @throws org.infinispan.persistence.spi.PersistenceException
+    * @throws PersistenceException
     */
    private void loadSomeKeys(final HashSet<IndexScopedKey> keysCollector, final Set<IndexScopedKey> keysToExclude, final int maxElements) throws PersistenceException {
       if (maxElements <= 0) {
