@@ -276,7 +276,7 @@ public class JdbcBinaryCacheStore extends BucketBasedCacheStore {
          }
          conn = connectionFactory.getConnection();
          ps = conn.prepareStatement(sql);
-         ps.setInt(1, keyHashCode);
+         ps.setString(1, keyHashCode.toString()); 
          rs = ps.executeQuery();
          if (!rs.next()) {
             return null;
