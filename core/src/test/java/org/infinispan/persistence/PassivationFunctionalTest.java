@@ -7,6 +7,7 @@ import org.infinispan.persistence.dummy.DummyInMemoryStoreConfigurationBuilder;
 import org.infinispan.persistence.spi.AdvancedLoadWriteStore;
 import org.infinispan.marshall.core.MarshalledEntry;
 import org.infinispan.manager.CacheContainer;
+import org.infinispan.persistence.spi.PersistenceException;
 import org.infinispan.test.AbstractInfinispanTest;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
@@ -57,26 +58,26 @@ public class PassivationFunctionalTest extends AbstractInfinispanTest {
    }
 
    @AfterMethod
-   public void afterMethod() throws CacheLoaderException {
+   public void afterMethod() throws PersistenceException {
       if (cache != null) cache.clear();
       if (store != null) store.clear();
    }
 
-   private void assertInCacheNotInStore(Object key, Object value) throws CacheLoaderException {
+   private void assertInCacheNotInStore(Object key, Object value) throws PersistenceException {
       assertInCacheNotInStore(key, value, -1);
    }
 
-   private void assertInCacheNotInStore(Object key, Object value, long lifespanMillis) throws CacheLoaderException {
+   private void assertInCacheNotInStore(Object key, Object value, long lifespanMillis) throws PersistenceException {
       InternalCacheValue se = cache.getAdvancedCache().getDataContainer().get(key).toInternalCacheValue();
       testStoredEntry(se, value, lifespanMillis, "Cache", key);
       assert !store.contains(key) : "Key " + key + " should not be in store!";
    }
 
-   private void assertInStoreNotInCache(Object key, Object value) throws CacheLoaderException {
+   private void assertInStoreNotInCache(Object key, Object value) throws PersistenceException {
       assertInStoreNotInCache(key, value, -1);
    }
 
-   private void assertInStoreNotInCache(Object key, Object value, long lifespanMillis) throws CacheLoaderException {
+   private void assertInStoreNotInCache(Object key, Object value, long lifespanMillis) throws PersistenceException {
       MarshalledEntry se = store.load(key);
       testStoredEntry(se, value, lifespanMillis, "Store", key);
       assert !cache.getAdvancedCache().getDataContainer().containsKey(key) : "Key " + key + " should not be in cache!";
@@ -96,14 +97,14 @@ public class PassivationFunctionalTest extends AbstractInfinispanTest {
       assert entry.getMetadata().lifespan() == expectedLifespan : src + " expected lifespan for key " + key + " to be " + expectedLifespan + " but was " + entry.getMetadata().lifespan() + ". Entry is " + entry;
    }
 
-   private void assertNotInCacheAndStore(Object... keys) throws CacheLoaderException {
+   private void assertNotInCacheAndStore(Object... keys) throws PersistenceException {
       for (Object key : keys) {
          assert !cache.getAdvancedCache().getDataContainer().containsKey(key) : "Cache should not contain key " + key;
          assert !store.contains(key) : "Store should not contain key " + key;
       }
    }
 
-   public void testPassivate() throws CacheLoaderException {
+   public void testPassivate() throws PersistenceException {
       assertNotInCacheAndStore("k1", "k2");
 
       cache.put("k1", "v1");
@@ -133,7 +134,7 @@ public class PassivationFunctionalTest extends AbstractInfinispanTest {
       assertInStoreNotInCache("k2", "v2", lifespan);
    }
 
-   public void testRemoveAndReplace() throws CacheLoaderException {
+   public void testRemoveAndReplace() throws PersistenceException {
       assertNotInCacheAndStore("k1", "k2");
 
       cache.put("k1", "v1");
@@ -232,7 +233,7 @@ public class PassivationFunctionalTest extends AbstractInfinispanTest {
       assertInStoreNotInCache("k2", "v2", lifespan);
    }
 
-   public void testPutMap() throws CacheLoaderException {
+   public void testPutMap() throws PersistenceException {
       assertNotInCacheAndStore("k1", "k2", "k3");
       cache.put("k1", "v1");
       cache.put("k2", "v2");

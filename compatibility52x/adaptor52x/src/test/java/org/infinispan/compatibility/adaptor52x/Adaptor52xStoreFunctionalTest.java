@@ -3,7 +3,7 @@ package org.infinispan.compatibility.adaptor52x;
 import org.infinispan.compatibility.loaders.Custom52xCacheStore;
 import org.infinispan.configuration.cache.PersistenceConfigurationBuilder;
 import org.infinispan.persistence.BaseStoreFunctionalTest;
-import org.infinispan.persistence.CacheLoaderException;
+import org.infinispan.persistence.spi.PersistenceException;
 import org.infinispan.test.TestingUtil;
 import org.junit.AfterClass;
 import org.testng.annotations.Test;
@@ -37,7 +37,7 @@ public class Adaptor52xStoreFunctionalTest extends BaseStoreFunctionalTest {
    }
 
    @Override
-   public void testStoreByteArrays(Method m) throws CacheLoaderException {
+   public void testStoreByteArrays(Method m) throws PersistenceException {
       //byte arrays are not supported in 5.2.x
    }
 

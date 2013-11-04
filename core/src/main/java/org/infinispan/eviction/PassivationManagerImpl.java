@@ -1,21 +1,18 @@
 package org.infinispan.eviction;
 
 import org.infinispan.commons.CacheException;
-import org.infinispan.commons.marshall.StreamingMarshaller;
 import org.infinispan.commons.util.Util;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.container.DataContainer;
 import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.context.impl.ImmutableContext;
-import org.infinispan.factories.annotations.ComponentName;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.annotations.Start;
 import org.infinispan.factories.annotations.Stop;
 import org.infinispan.marshall.core.MarshalledEntry;
 import org.infinispan.marshall.core.MarshalledEntryFactory;
-import org.infinispan.persistence.CacheLoaderException;
+import org.infinispan.persistence.spi.PersistenceException;
 import org.infinispan.persistence.manager.PersistenceManager;
-import org.infinispan.marshall.core.MarshalledEntryImpl;
 import org.infinispan.notifications.cachelistener.CacheNotifier;
 import org.infinispan.util.TimeService;
 import org.infinispan.util.logging.Log;
@@ -24,7 +21,6 @@ import org.infinispan.util.logging.LogFactory;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
 
-import static org.infinispan.factories.KnownComponentNames.CACHE_MARSHALLER;
 import static org.infinispan.persistence.PersistenceUtil.internalMetadata;
 
 public class PassivationManagerImpl implements PassivationManager {
@@ -89,7 +85,7 @@ public class PassivationManagerImpl implements PassivationManager {
 
    @Override
    @Stop(priority = 9)
-   public void passivateAll() throws CacheLoaderException {
+   public void passivateAll() throws PersistenceException {
       if (enabled) {
          long start = timeService.time();
          log.passivatingAllEntries();

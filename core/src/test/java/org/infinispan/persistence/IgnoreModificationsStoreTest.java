@@ -7,6 +7,7 @@ import org.infinispan.marshall.core.MarshalledEntryImpl;
 import org.infinispan.persistence.manager.PersistenceManager;
 import org.infinispan.persistence.spi.AdvancedLoadWriteStore;
 import org.infinispan.manager.EmbeddedCacheManager;
+import org.infinispan.persistence.spi.PersistenceException;
 import org.infinispan.test.SingleCacheManagerTest;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.CleanupAfterMethod;
@@ -44,7 +45,7 @@ public class IgnoreModificationsStoreTest extends SingleCacheManagerTest {
       marshaller = cache.getAdvancedCache().getComponentRegistry().getCacheMarshaller();
    }
 
-   public void testReadOnlyCacheStore() throws CacheLoaderException {
+   public void testReadOnlyCacheStore() throws PersistenceException {
 
       PersistenceManager pm = cache.getAdvancedCache().getComponentRegistry().getComponent(PersistenceManager.class);
       // ignore modifications

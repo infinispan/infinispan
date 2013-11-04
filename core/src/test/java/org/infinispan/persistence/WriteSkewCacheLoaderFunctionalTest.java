@@ -10,6 +10,7 @@ import org.infinispan.persistence.dummy.DummyInMemoryStoreConfigurationBuilder;
 import org.infinispan.persistence.spi.CacheLoader;
 import org.infinispan.marshall.core.MarshalledEntry;
 import org.infinispan.manager.EmbeddedCacheManager;
+import org.infinispan.persistence.spi.PersistenceException;
 import org.infinispan.test.SingleCacheManagerTest;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
@@ -55,11 +56,11 @@ public class WriteSkewCacheLoaderFunctionalTest extends SingleCacheManagerTest {
       return builder;
    }
 
-   private void assertInCacheAndStore(Cache cache, CacheLoader loader, Object key, Object value) throws CacheLoaderException {
+   private void assertInCacheAndStore(Cache cache, CacheLoader loader, Object key, Object value) throws PersistenceException {
       assertInCacheAndStore(cache, loader, key, value, -1);
    }
 
-   private void assertInCacheAndStore(Cache cache, CacheLoader store, Object key, Object value, long lifespanMillis) throws CacheLoaderException {
+   private void assertInCacheAndStore(Cache cache, CacheLoader store, Object key, Object value, long lifespanMillis) throws PersistenceException {
       InternalCacheValue icv = cache.getAdvancedCache().getDataContainer().get(key).toInternalCacheValue();
       assertStoredEntry(icv.getValue(), value, icv.getLifespan(), lifespanMillis, "Cache", key);
       assertNotNull("For :" + icv, icv.getMetadata().version());
@@ -74,7 +75,7 @@ public class WriteSkewCacheLoaderFunctionalTest extends SingleCacheManagerTest {
       assertEquals(src + " expected lifespan for key " + key + " to be " + expectedLifespan + " but was " + lifespanMillis, expectedLifespan, lifespanMillis);
    }
 
-   private <T> void assertNotInCacheAndStore(Cache cache, CacheLoader store, T... keys) throws CacheLoaderException {
+   private <T> void assertNotInCacheAndStore(Cache cache, CacheLoader store, T... keys) throws PersistenceException {
       for (Object key : keys) {
          assertFalse("Cache should not contain key " + key, cache.getAdvancedCache().getDataContainer().containsKey(key));
          assertFalse("Store should not contain key " + key, store.contains(key));

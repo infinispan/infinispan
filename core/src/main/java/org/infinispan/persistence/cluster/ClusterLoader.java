@@ -8,7 +8,7 @@ import org.infinispan.container.entries.InternalCacheValue;
 import org.infinispan.context.Flag;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.lifecycle.ComponentStatus;
-import org.infinispan.persistence.CacheLoaderException;
+import org.infinispan.persistence.spi.PersistenceException;
 import org.infinispan.persistence.spi.CacheLoader;
 import org.infinispan.persistence.spi.InitializationContext;
 import org.infinispan.marshall.core.MarshalledEntry;
@@ -52,7 +52,7 @@ public class ClusterLoader implements CacheLoader {
    }
 
    @Override
-   public MarshalledEntry load(Object key) throws CacheLoaderException {
+   public MarshalledEntry load(Object key) throws PersistenceException {
       if (!(isCacheReady() && isLocalCall())) return null;
 
       ClusteredGetCommand clusteredGetCommand = new ClusteredGetCommand(
@@ -67,7 +67,7 @@ public class ClusterLoader implements CacheLoader {
          // Remove duplicates before deciding if multiple responses were received
          Set<Response> setResponses = new HashSet<Response>(responses);
          if (setResponses.size() > 1)
-            throw new CacheLoaderException(String.format(
+            throw new PersistenceException(String.format(
                   "Responses contains more than 1 element and these elements are not equal, so can't decide which one to use: %s",
                   setResponses));
          response = setResponses.iterator().next();
@@ -82,7 +82,7 @@ public class ClusterLoader implements CacheLoader {
       }
 
       log.unknownResponsesFromRemoteCache(responses);
-      throw new CacheLoaderException("Unknown responses");
+      throw new PersistenceException("Unknown responses");
    }
 
 
@@ -101,7 +101,7 @@ public class ClusterLoader implements CacheLoader {
       //nothing to do here
    }
 
-   private Collection<Response> doRemoteCall(ClusteredGetCommand clusteredGetCommand) throws CacheLoaderException {
+   private Collection<Response> doRemoteCall(ClusteredGetCommand clusteredGetCommand) throws PersistenceException {
       Set<Address> members = new HashSet<Address>(rpcManager.getTransport().getMembers());
       Address self = rpcManager.getTransport().getAddress();
       ResponseFilter filter = new ClusteredGetResponseValidityFilter(members, self);
@@ -111,7 +111,7 @@ public class ClusterLoader implements CacheLoader {
          return rpcManager.invokeRemotely(null, clusteredGetCommand, options).values();
       } catch (Exception e) {
          log.errorDoingRemoteCall(e);
-         throw new CacheLoaderException(e);
+         throw new PersistenceException(e);
       }
    }
 

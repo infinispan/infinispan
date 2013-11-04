@@ -1,13 +1,13 @@
 package org.infinispan.persistence.keymappers;
 
-import org.infinispan.persistence.CacheLoaderException;
+import org.infinispan.persistence.spi.PersistenceException;
 
 /**
  * Exception thrown by certain cache stores when one tries to persist an entry with an unsupported key type.
  *
  * @author Mircea.Markus@jboss.com
  */
-public class UnsupportedKeyTypeException extends CacheLoaderException {
+public class UnsupportedKeyTypeException extends PersistenceException {
 
    /** The serialVersionUID */
    private static final long serialVersionUID = 1442739860198872706L;

@@ -4,8 +4,8 @@ import static org.testng.AssertJUnit.assertEquals;
 
 import org.infinispan.Cache;
 import org.infinispan.configuration.cache.StoreConfiguration;
+import org.infinispan.persistence.spi.PersistenceException;
 import org.infinispan.persistence.jdbc.mixed.JdbcMixedStore;
-import org.infinispan.persistence.CacheLoaderException;
 import org.infinispan.persistence.jdbc.binary.JdbcBinaryStore;
 import org.infinispan.persistence.jdbc.configuration.JdbcStringBasedStoreConfiguration;
 import org.infinispan.persistence.jdbc.stringbased.JdbcStringBasedStore;
@@ -143,7 +143,7 @@ public class TableNameUniquenessTest extends AbstractInfinispanTest {
       connection.close();
    }
 
-   private void assertNoOverlapingState(Cache first, Cache second, CacheLoader firstCs, CacheLoader secondCs) throws CacheLoaderException {
+   private void assertNoOverlapingState(Cache first, Cache second, CacheLoader firstCs, CacheLoader secondCs) throws PersistenceException {
       first.put("k", "v");
       assert firstCs.contains("k");
       assert !secondCs.contains("k");

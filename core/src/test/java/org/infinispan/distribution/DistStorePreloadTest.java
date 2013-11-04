@@ -2,7 +2,7 @@ package org.infinispan.distribution;
 
 import org.infinispan.Cache;
 import org.infinispan.container.DataContainer;
-import org.infinispan.persistence.CacheLoaderException;
+import org.infinispan.persistence.spi.PersistenceException;
 import org.infinispan.persistence.PersistenceUtil;
 import org.infinispan.persistence.dummy.DummyInMemoryStore;
 import org.infinispan.manager.EmbeddedCacheManager;
@@ -42,7 +42,7 @@ public class DistStorePreloadTest extends BaseDistStoreTest<Object, String> {
       }
    }
 
-   public void testPreloadOnStart() throws CacheLoaderException {
+   public void testPreloadOnStart() throws PersistenceException {
       for (int i = 0; i < NUM_KEYS; i++) {
          c1.put("k" + i, "v" + i);
       }

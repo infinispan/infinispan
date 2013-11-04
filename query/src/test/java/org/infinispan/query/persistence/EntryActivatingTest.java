@@ -11,7 +11,7 @@ import org.hibernate.search.spi.SearchFactoryIntegrator;
 import org.infinispan.Cache;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.container.entries.InternalCacheEntry;
-import org.infinispan.persistence.CacheLoaderException;
+import org.infinispan.persistence.spi.PersistenceException;
 import org.infinispan.persistence.dummy.DummyInMemoryStoreConfigurationBuilder;
 import org.infinispan.persistence.spi.AdvancedLoadWriteStore;
 import org.infinispan.manager.CacheContainer;
@@ -49,7 +49,7 @@ public class EntryActivatingTest extends AbstractInfinispanTest {
       TestingUtil.killCacheManagers(cm);
    }
 
-   public void testPersistence() throws CacheLoaderException, ParseException {
+   public void testPersistence() throws PersistenceException, ParseException {
       verifyFullTextHasMatches(0);
 
       Country italy = new Country();

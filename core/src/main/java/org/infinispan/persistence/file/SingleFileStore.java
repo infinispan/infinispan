@@ -8,7 +8,7 @@ import org.infinispan.commons.util.CollectionFactory;
 import org.infinispan.configuration.cache.SingleFileStoreConfiguration;
 import org.infinispan.executors.ExecutorAllCompletionService;
 import org.infinispan.marshall.core.MarshalledEntry;
-import org.infinispan.persistence.CacheLoaderException;
+import org.infinispan.persistence.spi.PersistenceException;
 import org.infinispan.persistence.PersistenceUtil;
 import org.infinispan.persistence.TaskContextImpl;
 import org.infinispan.persistence.spi.AdvancedLoadWriteStore;
@@ -115,7 +115,7 @@ public class SingleFileStore implements AdvancedLoadWriteStore {
          else
             clear(); // otherwise (unknown file format or no preload) just reset the file
       } catch (Exception e) {
-         throw new CacheLoaderException(e);
+         throw new PersistenceException(e);
       }
    }
 
@@ -146,7 +146,7 @@ public class SingleFileStore implements AdvancedLoadWriteStore {
             filePos = MAGIC.length;
          }
       } catch (Exception e) {
-         throw new CacheLoaderException(e);
+         throw new PersistenceException(e);
       }
    }
 
@@ -294,7 +294,7 @@ public class SingleFileStore implements AdvancedLoadWriteStore {
             free(fe);
          }
       } catch (Exception e) {
-         throw new CacheLoaderException(e);
+         throw new PersistenceException(e);
       }
    }
 
@@ -340,7 +340,7 @@ public class SingleFileStore implements AdvancedLoadWriteStore {
             }
          }
       } catch (Exception e) {
-         throw new CacheLoaderException(e);
+         throw new PersistenceException(e);
       }
    }
 
@@ -352,7 +352,7 @@ public class SingleFileStore implements AdvancedLoadWriteStore {
          free(fe);
          return fe != null;
       } catch (Exception e) {
-         throw new CacheLoaderException(e);
+         throw new PersistenceException(e);
       }
    }
 
@@ -392,7 +392,7 @@ public class SingleFileStore implements AdvancedLoadWriteStore {
          data = new byte[fe.keyLen + (loadValue ? fe.dataLen : 0) + (loadMetadata ? fe.metadataLen : 0)];
          file.read(ByteBuffer.wrap(data), fe.offset + KEY_POS);
       } catch (Exception e) {
-         throw new CacheLoaderException(e);
+         throw new PersistenceException(e);
       } finally {
          // no need to keep the lock for deserialization
          fe.unlock();
@@ -448,7 +448,7 @@ public class SingleFileStore implements AdvancedLoadWriteStore {
       }
       eacs.waitUntilAllCompleted();
       if (eacs.isExceptionThrown()) {
-         throw new CacheLoaderException("Execution exception!", eacs.getFirstException());
+         throw new PersistenceException("Execution exception!", eacs.getFirstException());
       }
    }
 
@@ -469,7 +469,7 @@ public class SingleFileStore implements AdvancedLoadWriteStore {
                      try {
                         free(fe);
                      } catch (Exception e) {
-                        throw new CacheLoaderException(e);
+                        throw new PersistenceException(e);
                      }
                      if (task != null) task.entryPurged(next.getKey());
                   }

@@ -9,7 +9,7 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
 
-import org.infinispan.persistence.CacheLoaderException;
+import org.infinispan.persistence.spi.PersistenceException;
 import org.infinispan.persistence.jdbc.configuration.ConnectionFactoryConfiguration;
 import org.infinispan.persistence.jdbc.configuration.JdbcStringBasedStoreConfigurationBuilder;
 import org.infinispan.persistence.jdbc.configuration.PooledConnectionFactoryConfiguration;
@@ -93,7 +93,7 @@ public class TableManipulationTest {
       TableManipulation other = tableManipulation.clone();
       try {
          other.createTable(mockConnection);
-      } catch (CacheLoaderException e) {
+      } catch (PersistenceException e) {
          assert false : "We do not expect a failure here";
       }
    }
@@ -105,12 +105,12 @@ public class TableManipulationTest {
    }
 
    @Test(dependsOnMethods = "testCreateTable")
-   public void testExists() throws CacheLoaderException {
+   public void testExists() throws PersistenceException {
       assert tableManipulation.tableExists(connection);
       assert !tableManipulation.tableExists(connection, new TableName("\"", "", "does_not_exist"));
    }
 
-   public void testExistsWithSchema() throws CacheLoaderException {
+   public void testExistsWithSchema() throws PersistenceException {
      // todo
    }
 

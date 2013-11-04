@@ -5,7 +5,7 @@ import org.infinispan.commons.marshall.AbstractExternalizer;
 import org.infinispan.commons.marshall.StreamingMarshaller;
 import org.infinispan.commons.util.Util;
 import org.infinispan.metadata.InternalMetadata;
-import org.infinispan.persistence.CacheLoaderException;
+import org.infinispan.persistence.spi.PersistenceException;
 
 import java.io.IOException;
 import java.io.ObjectInput;
@@ -104,7 +104,7 @@ public class MarshalledEntryImpl<K,V> implements MarshalledEntry<K,V> {
       try {
          return marshaller.objectToBuffer(obj);
       } catch (Exception e) {
-         throw new CacheLoaderException(e);
+         throw new PersistenceException(e);
       }
    }
 
@@ -113,7 +113,7 @@ public class MarshalledEntryImpl<K,V> implements MarshalledEntry<K,V> {
       try {
          return (T) marshaller.objectFromByteBuffer(buf.getBuf(), buf.getOffset(), buf.getLength());
       } catch (Exception e) {
-         throw new CacheLoaderException(e);
+         throw new PersistenceException(e);
       }
    }
 

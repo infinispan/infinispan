@@ -18,6 +18,7 @@ import org.infinispan.marshall.core.MarshalledEntry;
 import org.infinispan.context.Flag;
 import org.infinispan.lifecycle.ComponentStatus;
 import org.infinispan.manager.EmbeddedCacheManager;
+import org.infinispan.persistence.spi.PersistenceException;
 import org.infinispan.test.AbstractInfinispanTest;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
@@ -77,7 +78,7 @@ public class CacheLoaderFunctionalTest extends AbstractInfinispanTest {
    }
 
    @AfterMethod
-   public void tearDown() throws CacheLoaderException {
+   public void tearDown() throws PersistenceException {
       writer.clear();
       TestingUtil.killCacheManagers(cm);
       cache = null;
@@ -87,20 +88,20 @@ public class CacheLoaderFunctionalTest extends AbstractInfinispanTest {
       store = null;
    }
 
-   private void assertInCacheAndStore(Object key, Object value) throws CacheLoaderException {
+   private void assertInCacheAndStore(Object key, Object value) throws PersistenceException {
       assertInCacheAndStore(key, value, -1);
    }
 
-   private void assertInCacheAndStore(Object key, Object value, long lifespanMillis) throws CacheLoaderException {
+   private void assertInCacheAndStore(Object key, Object value, long lifespanMillis) throws PersistenceException {
       assertInCacheAndStore(cache, store, key, value, lifespanMillis);
    }
 
 
-   private void assertInCacheAndStore(Cache<?, ?> cache, CacheLoader store, Object key, Object value) throws CacheLoaderException {
+   private void assertInCacheAndStore(Cache<?, ?> cache, CacheLoader store, Object key, Object value) throws PersistenceException {
       assertInCacheAndStore(cache, store, key, value, -1);
    }
 
-   private void assertInCacheAndStore(Cache<?, ?> cache, CacheLoader loader, Object key, Object value, long lifespanMillis) throws CacheLoaderException {
+   private void assertInCacheAndStore(Cache<?, ?> cache, CacheLoader loader, Object key, Object value, long lifespanMillis) throws PersistenceException {
       InternalCacheEntry se = cache.getAdvancedCache().getDataContainer().get(key);
       testStoredEntry(se.getValue(), value, se.getLifespan(), lifespanMillis, "Cache", key);
       MarshalledEntry load = loader.load(key);
@@ -113,33 +114,33 @@ public class CacheLoaderFunctionalTest extends AbstractInfinispanTest {
       assert lifespan == expectedLifespan : src + " expected lifespan for key " + key + " to be " + expectedLifespan + " but was " + value;
    }
 
-   private void assertNotInCacheAndStore(Cache<?, ?> cache, CacheLoader store, Object... keys) throws CacheLoaderException {
+   private void assertNotInCacheAndStore(Cache<?, ?> cache, CacheLoader store, Object... keys) throws PersistenceException {
       for (Object key : keys) {
          assert !cache.getAdvancedCache().getDataContainer().containsKey(key) : "Cache should not contain key " + key;
          assert !store.contains(key) : "Store should not contain key " + key;
       }
    }
 
-   private void assertNotInCacheAndStore(Object... keys) throws CacheLoaderException {
+   private void assertNotInCacheAndStore(Object... keys) throws PersistenceException {
       assertNotInCacheAndStore(cache, store, keys);
    }
 
-   private void assertInStoreNotInCache(Object... keys) throws CacheLoaderException {
+   private void assertInStoreNotInCache(Object... keys) throws PersistenceException {
       assertInStoreNotInCache(cache, store, keys);
    }
 
-   private void assertInStoreNotInCache(Cache<?, ?> cache, CacheLoader store, Object... keys) throws CacheLoaderException {
+   private void assertInStoreNotInCache(Cache<?, ?> cache, CacheLoader store, Object... keys) throws PersistenceException {
       for (Object key : keys) {
          assert !cache.getAdvancedCache().getDataContainer().containsKey(key) : "Cache should not contain key " + key;
          assert store.contains(key) : "Store should contain key " + key;
       }
    }
 
-   private void assertInCacheAndNotInStore(Object... keys) throws CacheLoaderException {
+   private void assertInCacheAndNotInStore(Object... keys) throws PersistenceException {
       assertInCacheAndNotInStore(cache, store, keys);
    }
 
-   private void assertInCacheAndNotInStore(Cache<?, ?> cache, CacheLoader store, Object... keys) throws CacheLoaderException {
+   private void assertInCacheAndNotInStore(Cache<?, ?> cache, CacheLoader store, Object... keys) throws PersistenceException {
       for (Object key : keys) {
          assert cache.getAdvancedCache().getDataContainer().containsKey(key) : "Cache should not contain key " + key;
          assert !store.contains(key) : "Store should contain key " + key;
@@ -147,7 +148,7 @@ public class CacheLoaderFunctionalTest extends AbstractInfinispanTest {
    }
 
 
-   public void testStoreAndRetrieve() throws CacheLoaderException {
+   public void testStoreAndRetrieve() throws PersistenceException {
       assertNotInCacheAndStore("k1", "k2", "k3", "k4", "k5", "k6", "k7");
 
       cache.put("k1", "v1");
@@ -198,7 +199,7 @@ public class CacheLoaderFunctionalTest extends AbstractInfinispanTest {
       assertNotInCacheAndStore("k1", "k2", "k3", "k4", "k5", "k6", "k7");
    }
 
-   public void testReplaceMethods() throws CacheLoaderException {
+   public void testReplaceMethods() throws PersistenceException {
       assertNotInCacheAndStore("k1", "k2", "k3", "k4");
 
       cache.replace("k1", "v1-SHOULD-NOT-STORE");
@@ -247,7 +248,7 @@ public class CacheLoaderFunctionalTest extends AbstractInfinispanTest {
       assertNoLocks(cache);
    }
 
-   public void testLoading() throws CacheLoaderException {
+   public void testLoading() throws PersistenceException {
       assertNotInCacheAndStore("k1", "k2", "k3", "k4");
       for (int i = 1; i < 5; i++) writer.write(new MarshalledEntryImpl("k" + i, "v" + i, null, sm));
       for (int i = 1; i < 5; i++) assert cache.get("k" + i).equals("v" + i);
@@ -310,7 +311,7 @@ public class CacheLoaderFunctionalTest extends AbstractInfinispanTest {
       doPreloadingTestWithEviction(preloadingCfg.build(), "preloadingCache_4");
    }
 
-   public void testPurgeOnStartup() throws CacheLoaderException {
+   public void testPurgeOnStartup() throws PersistenceException {
       ConfigurationBuilder purgingCfg = new ConfigurationBuilder();
       purgingCfg.read(cfg.build());
       purgingCfg.persistence().clearStores().addStore(DummyInMemoryStoreConfigurationBuilder.class)
@@ -426,7 +427,7 @@ public class CacheLoaderFunctionalTest extends AbstractInfinispanTest {
       assertInCacheAndStore(k(m, 2), v(m, 1));
    }
 
-   public void testEvictAndRemove() throws CacheLoaderException {
+   public void testEvictAndRemove() throws PersistenceException {
       assertNotInCacheAndStore("k1", "k2");
       cache.put("k1", "v1");
       cache.put("k2", "v2", lifespan, MILLISECONDS);
@@ -438,7 +439,7 @@ public class CacheLoaderFunctionalTest extends AbstractInfinispanTest {
       assert "v2".equals(cache.remove("k2"));
    }
 
-   public void testLoadingToMemory() throws CacheLoaderException {
+   public void testLoadingToMemory() throws PersistenceException {
       assertNotInCacheAndStore("k1", "k2");
       store.write(new MarshalledEntryImpl("k1", "v1", null, sm));
       store.write(new MarshalledEntryImpl("k2", "v2", null, sm));

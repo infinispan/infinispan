@@ -3,7 +3,7 @@ package org.infinispan.persistence.jdbc.stringbased;
 import org.infinispan.commons.io.ByteBufferFactoryImpl;
 import org.infinispan.marshall.core.MarshalledEntryFactoryImpl;
 import org.infinispan.persistence.BaseStoreTest;
-import org.infinispan.persistence.CacheLoaderException;
+import org.infinispan.persistence.spi.PersistenceException;
 import org.infinispan.persistence.InitializationContextImpl;
 import org.infinispan.persistence.jdbc.TableManipulation;
 import org.infinispan.persistence.jdbc.configuration.JdbcStringBasedStoreConfigurationBuilder;
@@ -76,7 +76,7 @@ public class JdbcStringBasedStoreTest extends BaseStoreTest {
 
    @Override
    @Test(expectedExceptions = UnsupportedKeyTypeException.class)
-   public void testLoadAndStoreMarshalledValues() throws CacheLoaderException {
+   public void testLoadAndStoreMarshalledValues() throws PersistenceException {
       super.testLoadAndStoreMarshalledValues();
    }
 

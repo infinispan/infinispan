@@ -6,7 +6,7 @@ import org.infinispan.commons.marshall.StreamingMarshaller;
 import org.infinispan.executors.ExecutorAllCompletionService;
 import org.infinispan.marshall.core.MarshalledEntry;
 import org.infinispan.metadata.InternalMetadata;
-import org.infinispan.persistence.CacheLoaderException;
+import org.infinispan.persistence.spi.PersistenceException;
 import org.infinispan.persistence.PersistenceUtil;
 import org.infinispan.persistence.TaskContextImpl;
 import org.infinispan.persistence.jdbc.JdbcUtil;
@@ -102,7 +102,7 @@ public class JdbcBinaryStore implements AdvancedLoadWriteStore {
          log.debug("Exception while stopping", t);
       }
       if (cause != null) {
-         throw new CacheLoaderException("Exceptions occurred while stopping store", cause);
+         throw new PersistenceException("Exceptions occurred while stopping store", cause);
       }
    }
 
@@ -206,11 +206,11 @@ public class JdbcBinaryStore implements AdvancedLoadWriteStore {
          }
          ecs.waitUntilAllCompleted();
          if (ecs.isExceptionThrown()) {
-            throw new CacheLoaderException("Execution exception!", ecs.getFirstException());
+            throw new PersistenceException("Execution exception!", ecs.getFirstException());
          }
       } catch (SQLException e) {
          log.sqlFailureFetchingAllStoredEntries(e);
-         throw new CacheLoaderException("SQL error while fetching all StoredEntries", e);
+         throw new PersistenceException("SQL error while fetching all StoredEntries", e);
       } finally {
          JdbcUtil.safeClose(rs);
          JdbcUtil.safeClose(ps);
@@ -232,7 +232,7 @@ public class JdbcBinaryStore implements AdvancedLoadWriteStore {
          }
       } catch (SQLException ex) {
          log.failedClearingJdbcCacheStore(ex);
-         throw new CacheLoaderException("Failed clearing cache store", ex);
+         throw new PersistenceException("Failed clearing cache store", ex);
       } finally {
          JdbcUtil.safeClose(ps);
          connectionFactory.releaseConnection(conn);
@@ -291,7 +291,7 @@ public class JdbcBinaryStore implements AdvancedLoadWriteStore {
             // if something happens make sure buckets locks are being release
             releaseLocks(expiredBuckets);
             log.failedClearingJdbcCacheStore(ex);
-            throw new CacheLoaderException("Failed clearing JdbcBinaryStore", ex);
+            throw new PersistenceException("Failed clearing JdbcBinaryStore", ex);
          } finally {
             JdbcUtil.safeClose(ps);
             JdbcUtil.safeClose(rs);
@@ -335,7 +335,7 @@ public class JdbcBinaryStore implements AdvancedLoadWriteStore {
          } catch (Exception ex) {
             // if something happens make sure buckets locks are being release
             log.failedClearingJdbcCacheStore(ex);
-            throw new CacheLoaderException("Failed clearing JdbcBinaryStore", ex);
+            throw new PersistenceException("Failed clearing JdbcBinaryStore", ex);
          } finally {
             releaseLocks(emptyBuckets);
             JdbcUtil.safeClose(ps);
@@ -409,11 +409,11 @@ public class JdbcBinaryStore implements AdvancedLoadWriteStore {
          ps.setString(3, bucket.getBucketIdAsString());
          int insertedRows = ps.executeUpdate();
          if (insertedRows != 1) {
-            throw new CacheLoaderException("Unexpected insert result: '" + insertedRows + "'. Expected values is 1");
+            throw new PersistenceException("Unexpected insert result: '" + insertedRows + "'. Expected values is 1");
          }
       } catch (SQLException ex) {
          log.sqlFailureInsertingBucket(bucket, ex);
-         throw new CacheLoaderException(String.format(
+         throw new PersistenceException(String.format(
                "Sql failure while inserting bucket: %s", bucket), ex);
       } catch (InterruptedException ie) {
          if (log.isTraceEnabled()) {
@@ -442,11 +442,11 @@ public class JdbcBinaryStore implements AdvancedLoadWriteStore {
          ps.setString(3, bucket.getBucketIdAsString());
          int updatedRows = ps.executeUpdate();
          if (updatedRows != 1) {
-            throw new CacheLoaderException("Unexpected  update result: '" + updatedRows + "'. Expected values is 1");
+            throw new PersistenceException("Unexpected  update result: '" + updatedRows + "'. Expected values is 1");
          }
       } catch (SQLException e) {
          log.sqlFailureUpdatingBucket(bucket, e);
-         throw new CacheLoaderException(String.format(
+         throw new PersistenceException(String.format(
                "Sql failure while updating bucket: %s", bucket), e);
       } catch (InterruptedException ie) {
          if (log.isTraceEnabled()) {
@@ -482,7 +482,7 @@ public class JdbcBinaryStore implements AdvancedLoadWriteStore {
          return bucket;
       } catch (SQLException e) {
          log.sqlFailureLoadingKey(String.valueOf(bucketId), e);
-         throw new CacheLoaderException(String.format(
+         throw new PersistenceException(String.format(
                "Sql failure while loading key: %s", bucketId), e);
       } finally {
          JdbcUtil.safeClose(rs);
@@ -572,7 +572,7 @@ public class JdbcBinaryStore implements AdvancedLoadWriteStore {
       return configuration;
    }
 
-   private Bucket unmarshallBucket(InputStream stream) throws CacheLoaderException {
+   private Bucket unmarshallBucket(InputStream stream) throws PersistenceException {
       Map<Object, MarshalledEntry> entries = JdbcUtil.unmarshall(ctx.getMarshaller(), stream);
       return new Bucket(entries, keyEquivalence);
    }

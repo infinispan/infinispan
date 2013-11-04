@@ -13,6 +13,7 @@ import org.infinispan.marshall.core.MarshalledEntryFactoryImpl;
 import org.infinispan.persistence.BaseStoreTest;
 import org.infinispan.marshall.core.MarshalledEntryImpl;
 import org.infinispan.persistence.DummyInitializationContext;
+import org.infinispan.persistence.spi.PersistenceException;
 import org.infinispan.persistence.async.AdvancedAsyncCacheLoader;
 import org.infinispan.persistence.async.AdvancedAsyncCacheWriter;
 import org.infinispan.persistence.dummy.DummyInMemoryStore;
@@ -23,7 +24,6 @@ import org.infinispan.marshall.core.MarshalledEntry;
 import org.infinispan.marshall.TestObjectStreamMarshaller;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.infinispan.test.fwk.TestInternalCacheEntryFactory;
-import org.infinispan.persistence.CacheLoaderException;
 import org.infinispan.persistence.modifications.Modification;
 import org.infinispan.persistence.modifications.Remove;
 import org.infinispan.persistence.modifications.Store;
@@ -55,7 +55,7 @@ public class AsyncStoreTest extends AbstractInfinispanTest {
    private AdvancedAsyncCacheLoader loader;
    private TestObjectStreamMarshaller testObjectStreamMarshaller;
 
-   private void createStore() throws CacheLoaderException {
+   private void createStore() throws PersistenceException {
       DummyInMemoryStoreConfigurationBuilder dummyCfg = TestCacheManagerFactory.getDefaultCacheConfiguration(false)
             .persistence()
                .addStore(DummyInMemoryStoreConfigurationBuilder.class)
@@ -79,7 +79,7 @@ public class AsyncStoreTest extends AbstractInfinispanTest {
    }
 
    @AfterMethod
-   public void tearDown() throws CacheLoaderException {
+   public void tearDown() throws PersistenceException {
       if (writer != null) writer.stop();
       if (loader != null) loader.stop();
    }
@@ -269,7 +269,7 @@ public class AsyncStoreTest extends AbstractInfinispanTest {
       }
 
       @Override
-      protected void applyModificationsSync(List<Modification> mods) throws CacheLoaderException {
+      protected void applyModificationsSync(List<Modification> mods) throws PersistenceException {
          boolean keyFound = findModificationForKey(key, mods) != null;
          if (keyFound && block) {
             log("Wait for v1 latch" + mods);

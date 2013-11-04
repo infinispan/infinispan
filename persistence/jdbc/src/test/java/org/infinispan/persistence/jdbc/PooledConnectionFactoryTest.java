@@ -1,6 +1,6 @@
 package org.infinispan.persistence.jdbc;
 
-import org.infinispan.persistence.CacheLoaderException;
+import org.infinispan.persistence.spi.PersistenceException;
 import org.infinispan.persistence.jdbc.configuration.ConnectionFactoryConfiguration;
 import org.infinispan.persistence.jdbc.configuration.ConnectionFactoryConfigurationBuilder;
 import org.infinispan.persistence.jdbc.configuration.JdbcStringBasedStoreConfigurationBuilder;
@@ -66,7 +66,7 @@ public class PooledConnectionFactoryTest {
       assert factory.getPooledDataSource().getNumBusyConnections() == 0;
    }
 
-   @Test(expectedExceptions = CacheLoaderException.class)
+   @Test(expectedExceptions = PersistenceException.class)
    public void testNoDriverClassFound() throws Exception {
 
       JdbcStringBasedStoreConfigurationBuilder storeBuilder = TestCacheManagerFactory

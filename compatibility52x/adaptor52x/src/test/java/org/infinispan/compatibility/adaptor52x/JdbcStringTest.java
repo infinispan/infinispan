@@ -1,6 +1,6 @@
 package org.infinispan.compatibility.adaptor52x;
 
-import org.infinispan.persistence.CacheLoaderException;
+import org.infinispan.persistence.spi.PersistenceException;
 import org.testng.annotations.Test;
 
 /**
@@ -23,12 +23,12 @@ public class JdbcStringTest extends Adaptor52xCustomLoaderTest {
    }
 
    @Override
-   public void testLoadAndStoreMarshalledValues() throws CacheLoaderException {
+   public void testLoadAndStoreMarshalledValues() throws PersistenceException {
       //not applicable
    }
 
    @Override
-   public void testStopStartDoesNotNukeValues() throws InterruptedException, CacheLoaderException {
+   public void testStopStartDoesNotNukeValues() throws InterruptedException, PersistenceException {
       //not applicable
    }
 }

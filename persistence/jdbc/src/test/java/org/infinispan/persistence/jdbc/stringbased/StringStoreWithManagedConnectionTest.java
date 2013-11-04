@@ -4,7 +4,7 @@ import org.infinispan.Cache;
 import org.infinispan.commons.io.ByteBufferFactoryImpl;
 import org.infinispan.configuration.cache.StoreConfiguration;
 import org.infinispan.marshall.core.MarshalledEntryFactoryImpl;
-import org.infinispan.persistence.CacheLoaderException;
+import org.infinispan.persistence.spi.PersistenceException;
 import org.infinispan.persistence.InitializationContextImpl;
 import org.infinispan.persistence.jdbc.ManagedConnectionFactoryTest;
 import org.infinispan.persistence.jdbc.configuration.JdbcStringBasedStoreConfiguration;
@@ -71,7 +71,7 @@ public class StringStoreWithManagedConnectionTest extends ManagedConnectionFacto
 
    @Override
    @Test(expectedExceptions = UnsupportedKeyTypeException.class)
-   public void testLoadAndStoreMarshalledValues() throws CacheLoaderException {
+   public void testLoadAndStoreMarshalledValues() throws PersistenceException {
       super.testLoadAndStoreMarshalledValues();
    }
 

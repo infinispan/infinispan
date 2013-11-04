@@ -4,7 +4,7 @@ import org.infinispan.Cache;
 import org.infinispan.commons.marshall.StreamingMarshaller;
 import org.infinispan.commons.util.ReflectionUtil;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
-import org.infinispan.persistence.CacheLoaderException;
+import org.infinispan.persistence.spi.PersistenceException;
 import org.infinispan.marshall.core.MarshalledEntryImpl;
 import org.infinispan.persistence.jdbc.TableManipulation;
 import org.infinispan.persistence.jdbc.TableName;
@@ -49,7 +49,7 @@ public class JdbcMixedStoreTest {
 
 
    @BeforeMethod
-   public void createCacheStore() throws CacheLoaderException {
+   public void createCacheStore() throws PersistenceException {
 
       ConfigurationBuilder cc = TestCacheManagerFactory.getDefaultCacheConfiguration(false);
       JdbcMixedStoreConfigurationBuilder storeBuilder = cc
@@ -80,7 +80,7 @@ public class JdbcMixedStoreTest {
    }
 
    @AfterMethod
-   public void tearDown() throws CacheLoaderException {
+   public void tearDown() throws PersistenceException {
       cacheStore.clear();
       assertBinaryRowCount(0);
       assertStringsRowCount(0);

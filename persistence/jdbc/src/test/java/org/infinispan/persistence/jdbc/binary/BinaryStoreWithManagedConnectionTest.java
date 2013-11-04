@@ -4,7 +4,7 @@ import org.infinispan.Cache;
 import org.infinispan.commons.marshall.StreamingMarshaller;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.cache.StoreConfiguration;
-import org.infinispan.persistence.CacheLoaderException;
+import org.infinispan.persistence.spi.PersistenceException;
 import org.infinispan.persistence.jdbc.ManagedConnectionFactoryTest;
 import org.infinispan.persistence.jdbc.configuration.JdbcBinaryStoreConfiguration;
 import org.infinispan.persistence.jdbc.configuration.JdbcBinaryStoreConfigurationBuilder;
@@ -47,7 +47,7 @@ public class BinaryStoreWithManagedConnectionTest extends ManagedConnectionFacto
 
    @AfterMethod
    @Override
-   public void tearDown() throws CacheLoaderException {
+   public void tearDown() throws PersistenceException {
       super.tearDown();
       TestingUtil.killCacheManagers(cacheManager);
    }
@@ -89,12 +89,12 @@ public class BinaryStoreWithManagedConnectionTest extends ManagedConnectionFacto
    }
 
    @Override
-   public void testLoadAll() throws CacheLoaderException {
+   public void testLoadAll() throws PersistenceException {
       super.testLoadAll();    // TODO: Customise this generated block
    }
 
    @Override
-   public void testLoadAndStoreImmortal() throws CacheLoaderException {
+   public void testLoadAndStoreImmortal() throws PersistenceException {
       super.testLoadAndStoreImmortal();    // TODO: Customise this generated block
    }
 
@@ -109,7 +109,7 @@ public class BinaryStoreWithManagedConnectionTest extends ManagedConnectionFacto
    }
 
    @Override
-   public void testStopStartDoesNotNukeValues() throws InterruptedException, CacheLoaderException {
+   public void testStopStartDoesNotNukeValues() throws InterruptedException, PersistenceException {
       super.testStopStartDoesNotNukeValues();    // TODO: Customise this generated block
    }
 }

@@ -1,7 +1,7 @@
 package org.infinispan.persistence.jdbc.mixed;
 
 import org.infinispan.configuration.cache.ConfigurationBuilder;
-import org.infinispan.persistence.CacheLoaderException;
+import org.infinispan.persistence.spi.PersistenceException;
 import org.infinispan.persistence.jdbc.binary.JdbcBinaryStore;
 import org.infinispan.persistence.jdbc.configuration.ConnectionFactoryConfiguration;
 import org.infinispan.persistence.jdbc.configuration.JdbcBinaryStoreConfiguration;
@@ -95,7 +95,7 @@ public class JdbcMixedStore implements AdvancedLoadWriteStore {
          log.debug("Exception while stopping", t);
       }
       if (cause != null) {
-         throw new CacheLoaderException("Exceptions occurred while stopping store", cause);
+         throw new PersistenceException("Exceptions occurred while stopping store", cause);
       }
    }
 

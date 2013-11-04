@@ -7,9 +7,9 @@ import org.infinispan.container.InternalEntryFactoryImpl;
 import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.marshall.core.MarshalledEntryFactoryImpl;
 import org.infinispan.persistence.DummyInitializationContext;
+import org.infinispan.persistence.spi.PersistenceException;
 import org.infinispan.persistence.async.AdvancedAsyncCacheLoader;
 import org.infinispan.persistence.async.AdvancedAsyncCacheWriter;
-import org.infinispan.persistence.CacheLoaderException;
 import org.infinispan.persistence.PersistenceUtil;
 import org.infinispan.persistence.dummy.DummyInMemoryStore;
 import org.infinispan.persistence.dummy.DummyInMemoryStoreConfiguration;
@@ -85,7 +85,7 @@ public class AsyncStoreStressTest {
    // (Thread-200:) Expected state updated with key=key165168, value=60483
    private LockContainer locks = new ReentrantPerEntryLockContainer(32);
 
-   private Map<String, KeyValuePair<AdvancedAsyncCacheLoader, AdvancedAsyncCacheWriter>> createAsyncStores() throws CacheLoaderException {
+   private Map<String, KeyValuePair<AdvancedAsyncCacheLoader, AdvancedAsyncCacheWriter>> createAsyncStores() throws PersistenceException {
       Map<String, KeyValuePair<AdvancedAsyncCacheLoader, AdvancedAsyncCacheWriter>> stores = new TreeMap<String, KeyValuePair<AdvancedAsyncCacheLoader, AdvancedAsyncCacheWriter>>();
       AdvancedAsyncCacheWriter writer = createAsyncStore();
       AdvancedAsyncCacheLoader loader = new AdvancedAsyncCacheLoader((CacheLoader) writer.undelegate(), writer.getState());
@@ -95,7 +95,7 @@ public class AsyncStoreStressTest {
       return stores;
    }
 
-   private AdvancedAsyncCacheWriter createAsyncStore() throws CacheLoaderException {
+   private AdvancedAsyncCacheWriter createAsyncStore() throws PersistenceException {
       DummyInMemoryStore backendStore = createBackendStore("async2");
       AdvancedAsyncCacheWriter store = new AdvancedAsyncCacheWriter(backendStore);
       store.init(new DummyInitializationContext() {
@@ -112,7 +112,7 @@ public class AsyncStoreStressTest {
       return new TestObjectStreamMarshaller();
    }
 
-   private DummyInMemoryStore createBackendStore(String storeName) throws CacheLoaderException {
+   private DummyInMemoryStore createBackendStore(String storeName) throws PersistenceException {
       DummyInMemoryStore store = new DummyInMemoryStore();
       DummyInMemoryStoreConfiguration dummyConfiguration = TestCacheManagerFactory
             .getDefaultCacheConfiguration(false)
@@ -318,7 +318,7 @@ public class AsyncStoreStressTest {
          if (lock != null) {
             result = call.call().booleanValue();
          }
-      } catch (CacheLoaderException e) {
+      } catch (PersistenceException e) {
          e.printStackTrace();
          result = false;
       } catch (InterruptedException e) {
@@ -333,7 +333,7 @@ public class AsyncStoreStressTest {
       }
    }
 
-   private double computeStdDev(AdvancedCacheLoader store, int numKeys) throws CacheLoaderException {
+   private double computeStdDev(AdvancedCacheLoader store, int numKeys) throws PersistenceException {
       // The keys closest to the mean are suposed to be accessed more often
       // So we score each map by the standard deviation of the keys in the map
       // at the end of the test

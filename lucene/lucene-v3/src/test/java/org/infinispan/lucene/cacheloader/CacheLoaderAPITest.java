@@ -12,7 +12,7 @@ import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.container.InternalEntryFactory;
 import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.lucene.cacheloader.configuration.LuceneLoaderConfigurationBuilder;
-import org.infinispan.persistence.CacheLoaderException;
+import org.infinispan.persistence.spi.PersistenceException;
 import org.infinispan.persistence.CollectionKeyFilter;
 import org.infinispan.persistence.PersistenceUtil;
 import org.infinispan.persistence.spi.CacheLoader;
@@ -69,7 +69,7 @@ public class CacheLoaderAPITest extends SingleCacheManagerTest {
       return TestCacheManagerFactory.createCacheManager(builder);
    }
 
-   public void testFilteredKeyLoad() throws CacheLoaderException {
+   public void testFilteredKeyLoad() throws PersistenceException {
       CacheLoader loader = TestingUtil.getFirstLoader(cache);
       AssertJUnit.assertNotNull(loader);
       AssertJUnit.assertTrue(loader instanceof LuceneCacheLoader);
@@ -105,7 +105,7 @@ public class CacheLoaderAPITest extends SingleCacheManagerTest {
       }
    }
 
-   public void testContainsKeyWithNoExistentRootDir() throws IOException, CacheLoaderException {
+   public void testContainsKeyWithNoExistentRootDir() throws IOException, PersistenceException {
       Directory directory = DirectoryBuilder.newDirectoryInstance(cache, cache, cache, indexName).create();
 
       TestHelper.createIndex(rootDir, indexName, elementCount, true);
@@ -155,7 +155,7 @@ public class CacheLoaderAPITest extends SingleCacheManagerTest {
       }
    }
 
-   @Test(expectedExceptions = CacheLoaderException.class)
+   @Test(expectedExceptions = PersistenceException.class)
    public void testLoadKeyWithNonExistentFile() throws Exception {
       LuceneCacheLoader cacheLoader = (LuceneCacheLoader) TestingUtil.getFirstLoader(cacheManager.getCache());
       FileCacheKey key = new FileCacheKey(indexName, "testKey");
@@ -179,7 +179,7 @@ public class CacheLoaderAPITest extends SingleCacheManagerTest {
             System.out.println("The test should be run in case when the dir doesn't have root permissions.");
          }
       } catch(Exception ex) {
-         assert ex instanceof CacheLoaderException;
+         assert ex instanceof PersistenceException;
       } finally {
          innerDir.setReadable(true);
          innerDir.setWritable(true);

@@ -2,7 +2,7 @@ package org.infinispan.persistence.jdbc.connectionfactory;
 
 import com.mchange.v2.c3p0.ComboPooledDataSource;
 import com.mchange.v2.c3p0.DataSources;
-import org.infinispan.persistence.CacheLoaderException;
+import org.infinispan.persistence.spi.PersistenceException;
 import org.infinispan.persistence.jdbc.JdbcUtil;
 import org.infinispan.persistence.jdbc.configuration.ConnectionFactoryConfiguration;
 import org.infinispan.persistence.jdbc.configuration.PooledConnectionFactoryConfiguration;
@@ -31,14 +31,14 @@ public class PooledConnectionFactory extends ConnectionFactory {
    private ComboPooledDataSource pooledDataSource;
 
    @Override
-   public void start(ConnectionFactoryConfiguration config, ClassLoader classLoader) throws CacheLoaderException {
+   public void start(ConnectionFactoryConfiguration config, ClassLoader classLoader) throws PersistenceException {
       logFileOverride(classLoader);
       PooledConnectionFactoryConfiguration pooledConfiguration;
       if (config instanceof PooledConnectionFactoryConfiguration) {
          pooledConfiguration = (PooledConnectionFactoryConfiguration) config;
       }
       else {
-         throw new CacheLoaderException("ConnectionFactoryConfiguration passed in must be an instance of " +
+         throw new PersistenceException("ConnectionFactoryConfiguration passed in must be an instance of " +
                "PooledConnectionFactoryConfiguration");
       }
       pooledDataSource = new ComboPooledDataSource();
@@ -51,7 +51,7 @@ public class PooledConnectionFactory extends ConnectionFactory {
          pooledDataSource.setDriverClass(pooledConfiguration.driverClass()); //loads the jdbc driver
       } catch (Exception e) {
          log.errorInstantiatingJdbcDriver(pooledConfiguration.driverClass(), e);
-         throw new CacheLoaderException(String.format(
+         throw new PersistenceException(String.format(
                "Error while instatianting JDBC driver: '%s'", pooledConfiguration.driverClass()), e);
       }
       pooledDataSource.setJdbcUrl(pooledConfiguration.connectionUrl());
@@ -87,14 +87,14 @@ public class PooledConnectionFactory extends ConnectionFactory {
    }
 
    @Override
-   public Connection getConnection() throws CacheLoaderException {
+   public Connection getConnection() throws PersistenceException {
       try {
          logBefore(true);
          Connection connection = pooledDataSource.getConnection();
          logAfter(connection, true);
          return connection;
       } catch (SQLException e) {
-         throw new CacheLoaderException("Failed obtaining connection from PooledDataSource", e);
+         throw new PersistenceException("Failed obtaining connection from PooledDataSource", e);
       }
    }
 

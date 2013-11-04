@@ -13,7 +13,7 @@ import org.infinispan.commons.marshall.jboss.GenericJBossMarshaller;
 import org.infinispan.commons.util.Util;
 import org.infinispan.container.InternalEntryFactory;
 import org.infinispan.container.versioning.NumericVersion;
-import org.infinispan.persistence.CacheLoaderException;
+import org.infinispan.persistence.spi.PersistenceException;
 import org.infinispan.persistence.TaskContextImpl;
 import org.infinispan.persistence.remote.configuration.ConnectionPoolConfiguration;
 import org.infinispan.persistence.remote.configuration.RemoteStoreConfiguration;
@@ -69,7 +69,7 @@ public class RemoteStore implements AdvancedLoadWriteStore {
    }
 
    @Override
-   public void start() throws CacheLoaderException {
+   public void start() throws PersistenceException {
       final Marshaller marshaller;
       if (configuration.marshaller() != null) {
          marshaller = Util.getInstance(configuration.marshaller(), ctx.getCache().getCacheConfiguration().classLoader());
@@ -93,12 +93,12 @@ public class RemoteStore implements AdvancedLoadWriteStore {
    }
 
    @Override
-   public void stop() throws CacheLoaderException {
+   public void stop() throws PersistenceException {
       remoteCacheManager.stop();
    }
 
    @Override
-   public MarshalledEntry load(Object key) throws CacheLoaderException {
+   public MarshalledEntry load(Object key) throws PersistenceException {
       if (configuration.rawValues()) {
          MetadataValue<?> value = remoteCache.getWithMetadata(key);
          if (value != null) {
@@ -119,7 +119,7 @@ public class RemoteStore implements AdvancedLoadWriteStore {
    }
 
    @Override
-   public boolean contains(Object key) throws CacheLoaderException {
+   public boolean contains(Object key) throws PersistenceException {
       return remoteCache.containsKey(key);
    }
 
@@ -154,7 +154,7 @@ public class RemoteStore implements AdvancedLoadWriteStore {
    }
 
    @Override
-   public void write(MarshalledEntry entry) throws CacheLoaderException {
+   public void write(MarshalledEntry entry) throws PersistenceException {
       if (log.isTraceEnabled()) {
          log.tracef("Adding entry: %s", entry);
       }
@@ -165,12 +165,12 @@ public class RemoteStore implements AdvancedLoadWriteStore {
    }
 
    @Override
-   public void clear() throws CacheLoaderException {
+   public void clear() throws PersistenceException {
       remoteCache.clear();
    }
 
    @Override
-   public boolean delete(Object key) throws CacheLoaderException {
+   public boolean delete(Object key) throws PersistenceException {
       // Less than ideal, but RemoteCache, since it extends Cache, can only
       // know whether the operation succeeded based on whether the previous
       // value is null or not.

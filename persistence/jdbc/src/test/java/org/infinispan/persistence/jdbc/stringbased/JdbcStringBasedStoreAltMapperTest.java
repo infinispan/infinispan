@@ -5,7 +5,7 @@ import org.infinispan.commons.marshall.StreamingMarshaller;
 import org.infinispan.commons.util.ReflectionUtil;
 import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.marshall.core.MarshalledEntryFactoryImpl;
-import org.infinispan.persistence.CacheLoaderException;
+import org.infinispan.persistence.spi.PersistenceException;
 import org.infinispan.persistence.InitializationContextImpl;
 import org.infinispan.marshall.core.MarshalledEntryImpl;
 import org.infinispan.persistence.jdbc.TableManipulation;
@@ -43,7 +43,7 @@ public class JdbcStringBasedStoreAltMapperTest {
    private static final Person MANIK = new Person("Manik", "Surtani", 18);
 
    @BeforeTest
-   public void createCacheStore() throws CacheLoaderException {
+   public void createCacheStore() throws PersistenceException {
       JdbcStringBasedStoreConfigurationBuilder storeBuilder = TestCacheManagerFactory
             .getDefaultCacheConfiguration(false)
             .persistence()
@@ -66,7 +66,7 @@ public class JdbcStringBasedStoreAltMapperTest {
    }
 
    @AfterTest
-   public void destroyStore() throws CacheLoaderException {
+   public void destroyStore() throws PersistenceException {
       cacheStore.stop();
    }
 

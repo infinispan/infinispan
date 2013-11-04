@@ -16,6 +16,7 @@ import org.infinispan.persistence.spi.AdvancedLoadWriteStore;
 import org.infinispan.marshall.core.MarshalledEntry;
 import org.infinispan.marshall.TestObjectStreamMarshaller;
 import org.infinispan.marshall.core.MarshalledValue;
+import org.infinispan.persistence.spi.PersistenceException;
 import org.infinispan.test.AbstractInfinispanTest;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.TestInternalCacheEntryFactory;
@@ -72,7 +73,7 @@ public abstract class BaseStoreTest extends AbstractInfinispanTest {
    }
 
    @AfterMethod
-   public void tearDown() throws CacheLoaderException {
+   public void tearDown() throws PersistenceException {
       try {
          if (cl != null) {
             cl.clear();
@@ -90,7 +91,7 @@ public abstract class BaseStoreTest extends AbstractInfinispanTest {
       return new TestObjectStreamMarshaller(false);
    }
 
-   public void testLoadAndStoreImmortal() throws CacheLoaderException {
+   public void testLoadAndStoreImmortal() throws PersistenceException {
       assertFalse(cl.contains("k"));
       cl.write(new MarshalledEntryImpl("k", "v", null, getMarshaller()));
 
@@ -213,7 +214,7 @@ public abstract class BaseStoreTest extends AbstractInfinispanTest {
       assertIsEmpty();
    }
 
-   public void testStopStartDoesNotNukeValues() throws InterruptedException, CacheLoaderException {
+   public void testStopStartDoesNotNukeValues() throws InterruptedException, PersistenceException {
       assertFalse(cl.contains("k1"));
       assertFalse(cl.contains("k2"));
 
@@ -268,7 +269,7 @@ public abstract class BaseStoreTest extends AbstractInfinispanTest {
       assert expected.isEmpty();
    }
 
-   public void testStoreAndRemove() throws CacheLoaderException {
+   public void testStoreAndRemove() throws PersistenceException {
       cl.write(new MarshalledEntryImpl("k1","v1", null, getMarshaller()));
       cl.write(new MarshalledEntryImpl("k2","v2", null, getMarshaller()));
       cl.write(new MarshalledEntryImpl("k3","v3", null, getMarshaller()));
@@ -326,7 +327,7 @@ public abstract class BaseStoreTest extends AbstractInfinispanTest {
       assert cl.contains("k5");
    }
 
-   public void testLoadAll() throws CacheLoaderException {
+   public void testLoadAll() throws PersistenceException {
 
       cl.write(new MarshalledEntryImpl("k1","v1", null, getMarshaller()));
       cl.write(new MarshalledEntryImpl("k2","v2", null, getMarshaller()));
@@ -385,7 +386,7 @@ public abstract class BaseStoreTest extends AbstractInfinispanTest {
       assert null == cl.load("k1");
    }
 
-   public void testLoadAndStoreMarshalledValues() throws CacheLoaderException {
+   public void testLoadAndStoreMarshalledValues() throws PersistenceException {
       MarshalledValue key = new MarshalledValue(new Pojo().role("key"), getMarshaller());
       MarshalledValue key2 = new MarshalledValue(new Pojo().role("key2"), getMarshaller());
       MarshalledValue value = new MarshalledValue(new Pojo().role("value"), getMarshaller());

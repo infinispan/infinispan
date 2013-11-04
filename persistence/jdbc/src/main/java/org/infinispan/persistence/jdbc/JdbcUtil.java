@@ -1,7 +1,7 @@
 package org.infinispan.persistence.jdbc;
 
 import org.infinispan.commons.io.ByteBuffer;
-import org.infinispan.persistence.CacheLoaderException;
+import org.infinispan.persistence.spi.PersistenceException;
 import org.infinispan.commons.marshall.StreamingMarshaller;
 import org.infinispan.persistence.jdbc.logging.Log;
 import org.infinispan.util.logging.LogFactory;
@@ -52,25 +52,25 @@ public class JdbcUtil {
       }
    }
 
-   public static ByteBuffer marshall(StreamingMarshaller marshaller, Object obj) throws CacheLoaderException, InterruptedException {
+   public static ByteBuffer marshall(StreamingMarshaller marshaller, Object obj) throws PersistenceException, InterruptedException {
       try {
          return marshaller.objectToBuffer(obj);
       } catch (IOException e) {
          log.errorMarshallingObject(e, obj);
-         throw new CacheLoaderException("I/O failure while marshalling object: " + obj, e);
+         throw new PersistenceException("I/O failure while marshalling object: " + obj, e);
       }
    }
 
    @SuppressWarnings("unchecked")
-   public static <T> T unmarshall(StreamingMarshaller marshaller, InputStream inputStream) throws CacheLoaderException {
+   public static <T> T unmarshall(StreamingMarshaller marshaller, InputStream inputStream) throws PersistenceException {
       try {
          return (T) marshaller.objectFromInputStream(inputStream);
       } catch (IOException e) {
          log.ioErrorUnmarshalling(e);
-         throw new CacheLoaderException("I/O error while unmarshalling from stream", e);
+         throw new PersistenceException("I/O error while unmarshalling from stream", e);
       } catch (ClassNotFoundException e) {
          log.unexpectedClassNotFoundException(e);
-         throw new CacheLoaderException("*UNEXPECTED* ClassNotFoundException. This should not happen as Bucket class exists", e);
+         throw new PersistenceException("*UNEXPECTED* ClassNotFoundException. This should not happen as Bucket class exists", e);
       }
    }
 }

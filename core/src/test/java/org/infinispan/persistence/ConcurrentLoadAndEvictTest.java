@@ -11,6 +11,7 @@ import org.infinispan.persistence.dummy.DummyInMemoryStoreConfigurationBuilder;
 import org.infinispan.persistence.spi.CacheLoader;
 import org.infinispan.marshall.core.MarshalledEntry;
 import org.infinispan.manager.EmbeddedCacheManager;
+import org.infinispan.persistence.spi.PersistenceException;
 import org.infinispan.test.SingleCacheManagerTest;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
@@ -55,7 +56,7 @@ public class ConcurrentLoadAndEvictTest extends SingleCacheManagerTest {
       return TestCacheManagerFactory.createCacheManager(config);
    }
 
-   public void testEvictBeforeRead() throws CacheLoaderException, ExecutionException, InterruptedException {
+   public void testEvictBeforeRead() throws PersistenceException, ExecutionException, InterruptedException {
       cache = cacheManager.getCache();
       cache.put("a", "b");
       assert cache.get("a").equals("b");

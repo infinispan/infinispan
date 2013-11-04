@@ -1,6 +1,6 @@
 package org.infinispan.persistence.jdbc.stringbased;
 
-import org.infinispan.persistence.CacheLoaderException;
+import org.infinispan.persistence.spi.PersistenceException;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.commons.marshall.StreamingMarshaller;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
@@ -29,7 +29,7 @@ public class JdbcStringBasedStoreVamTest extends JdbcStringBasedStoreTest {
    }
 
    @AfterClass
-   public void tearDownClass() throws CacheLoaderException {
+   public void tearDownClass() throws PersistenceException {
       cm.stop();
    }
 

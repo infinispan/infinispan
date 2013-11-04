@@ -12,6 +12,7 @@ import org.infinispan.persistence.dummy.DummyInMemoryStoreConfigurationBuilder;
 import org.infinispan.persistence.spi.CacheLoader;
 import org.infinispan.marshall.core.MarshalledEntry;
 import org.infinispan.manager.EmbeddedCacheManager;
+import org.infinispan.persistence.spi.PersistenceException;
 import org.infinispan.test.SingleCacheManagerTest;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
@@ -109,7 +110,7 @@ public class PreloadWithAsyncStoreTest extends SingleCacheManagerTest {
       }
    }
 
-   private void assertInCacheAndStore(Cache cache, CacheLoader loader, Object key, Object value) throws CacheLoaderException {
+   private void assertInCacheAndStore(Cache cache, CacheLoader loader, Object key, Object value) throws PersistenceException {
       InternalCacheValue se = cache.getAdvancedCache().getDataContainer().get(key).toInternalCacheValue();
       assertStoredEntry(se.getValue(), value, "Cache", key);
       MarshalledEntry me = loader.load(key);
@@ -121,7 +122,7 @@ public class PreloadWithAsyncStoreTest extends SingleCacheManagerTest {
       assertEquals(src + " should contain value " + expectedValue + " under key " + key + " but was " + value, expectedValue, value);
    }
 
-   private <T> void assertNotInCacheAndStore(Cache cache, CacheLoader store, T... keys) throws CacheLoaderException {
+   private <T> void assertNotInCacheAndStore(Cache cache, CacheLoader store, T... keys) throws PersistenceException {
       for (Object key : keys) {
          assertFalse("Cache should not contain key " + key, cache.getAdvancedCache().getDataContainer().containsKey(key));
          assertFalse("Store should not contain key " + key, store.contains(key));

@@ -3,7 +3,7 @@ package org.infinispan.lucene.logging;
 import java.io.IOException;
 
 import org.infinispan.commons.CacheException;
-import org.infinispan.persistence.CacheLoaderException;
+import org.infinispan.persistence.spi.PersistenceException;
 import org.jboss.logging.Cause;
 import org.jboss.logging.LogMessage;
 import org.jboss.logging.Message;
@@ -48,7 +48,7 @@ public interface Log extends org.infinispan.util.logging.Log {
    CacheException unableToCreateDirectory(String fileRoot);
 
    @Message(value = "IOException happened in the CacheLoader", id = 15008)
-   CacheLoaderException exceptionInCacheLoader(@Cause Exception e);
+   PersistenceException exceptionInCacheLoader(@Cause Exception e);
 
    @LogMessage(level = WARN)
    @Message(value = "Unable to close FSDirectory", id = 15009)
@@ -56,7 +56,7 @@ public interface Log extends org.infinispan.util.logging.Log {
 
    @LogMessage(level = WARN)
    @Message(value = "Error happened while looking for FSDirectories in '%s'", id = 15010)
-   void couldNotWalkDirectory(String name, @Cause CacheLoaderException e);
+   void couldNotWalkDirectory(String name, @Cause PersistenceException e);
 
    @LogMessage(level = WARN)
    @Message(value = "The configured autoChunkSize is too small for segment file %s as it is %d bytes; auto-scaling chunk size to %d", id = 15011)

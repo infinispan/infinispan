@@ -1,8 +1,7 @@
 package org.infinispan.jcache;
 
 import org.infinispan.jcache.logging.Log;
-import org.infinispan.persistence.CacheLoaderException;
-import org.infinispan.marshall.core.MarshalledEntryImpl;
+import org.infinispan.persistence.spi.PersistenceException;
 import org.infinispan.persistence.spi.InitializationContext;
 import org.infinispan.marshall.core.MarshalledEntry;
 import org.infinispan.util.logging.LogFactory;
@@ -34,19 +33,19 @@ public class JCacheLoaderAdapter<K, V> implements org.infinispan.persistence.spi
 
    @SuppressWarnings("unchecked")
    @Override
-   public MarshalledEntry load(Object key) throws CacheLoaderException {
+   public MarshalledEntry load(Object key) throws PersistenceException {
       Entry<K, V> e = delegate.load((K) key);
       // TODO or whatever type of entry is more appropriate?
       return e == null ? null : ctx.getMarshalledEntryFactory().newMarshalledEntry(e.getValue(), e.getValue(), null);
    }
 
    @Override
-   public void start() throws CacheLoaderException {
+   public void start() throws PersistenceException {
       // No-op
    }
 
    @Override
-   public void stop() throws CacheLoaderException {
+   public void stop() throws PersistenceException {
       // No-op
    }
 

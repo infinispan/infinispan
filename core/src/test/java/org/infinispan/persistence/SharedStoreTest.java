@@ -7,6 +7,7 @@ import org.infinispan.context.Flag;
 import org.infinispan.persistence.dummy.DummyInMemoryStore;
 import org.infinispan.persistence.dummy.DummyInMemoryStoreConfigurationBuilder;
 import org.infinispan.persistence.spi.CacheLoader;
+import org.infinispan.persistence.spi.PersistenceException;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.CleanupAfterMethod;
@@ -33,7 +34,7 @@ public class SharedStoreTest extends MultipleCacheManagersTest {
       // don't create the caches here, we want them to join the cluster one by one
    }
 
-   public void testUnnecessaryWrites() throws CacheLoaderException {
+   public void testUnnecessaryWrites() throws PersistenceException {
       cache(0).put("key", "value");
 
       // the second and third cache are only started here
@@ -62,7 +63,7 @@ public class SharedStoreTest extends MultipleCacheManagersTest {
       }
    }
 
-   public void testSkipSharedCacheStoreFlagUsage() throws CacheLoaderException {
+   public void testSkipSharedCacheStoreFlagUsage() throws PersistenceException {
       cache(0).getAdvancedCache().withFlags(Flag.SKIP_SHARED_CACHE_STORE).put("key", "value");
       assert cache(0).get("key").equals("value");
 

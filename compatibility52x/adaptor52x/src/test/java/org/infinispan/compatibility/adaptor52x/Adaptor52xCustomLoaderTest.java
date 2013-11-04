@@ -9,7 +9,7 @@ import org.infinispan.container.DataContainer;
 import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.manager.DefaultCacheManager;
 import org.infinispan.persistence.BaseStoreTest;
-import org.infinispan.persistence.CacheLoaderException;
+import org.infinispan.persistence.spi.PersistenceException;
 import org.infinispan.persistence.spi.AdvancedLoadWriteStore;
 import org.infinispan.test.TestingUtil;
 import org.testng.annotations.AfterMethod;
@@ -49,7 +49,7 @@ public class Adaptor52xCustomLoaderTest extends BaseStoreTest {
 
    @AfterMethod
    @Override
-   public void tearDown() throws CacheLoaderException {
+   public void tearDown() throws PersistenceException {
       TestingUtil.killCacheManagers(dcm);
       TestingUtil.recursiveFileRemove(DIR);
    }

@@ -5,7 +5,7 @@ import org.infinispan.commands.write.ClearCommand;
 import org.infinispan.commands.write.PutKeyValueCommand;
 import org.infinispan.commands.write.RemoveCommand;
 import org.infinispan.commands.write.ReplaceCommand;
-import org.infinispan.persistence.CacheLoaderException;
+import org.infinispan.persistence.spi.PersistenceException;
 import org.infinispan.persistence.dummy.DummyInMemoryStore;
 import org.infinispan.persistence.spi.CacheLoader;
 import org.infinispan.persistence.spi.CacheWriter;
@@ -206,7 +206,7 @@ public class DistSyncStoreSharedTest extends BaseDistStoreTest<Object, String> {
       }
    }
 
-   public void testGetOnlyQueriesCacheOnOwners() throws CacheLoaderException {
+   public void testGetOnlyQueriesCacheOnOwners() throws PersistenceException {
       // Make a key that own'ers is c1 and c2
       final MagicKey k = new MagicKey("key1", c1, c2);
       final String v1 = "real-data";

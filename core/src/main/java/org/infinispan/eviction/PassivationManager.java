@@ -4,7 +4,7 @@ import net.jcip.annotations.ThreadSafe;
 import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.factories.scopes.Scope;
 import org.infinispan.factories.scopes.Scopes;
-import org.infinispan.persistence.CacheLoaderException;
+import org.infinispan.persistence.spi.PersistenceException;
 
 /**
  * A passivation manager
@@ -20,7 +20,7 @@ public interface PassivationManager {
 
    void passivate(InternalCacheEntry entry);
 
-   void passivateAll() throws CacheLoaderException;
+   void passivateAll() throws PersistenceException;
 
    long getPassivationCount();
 
