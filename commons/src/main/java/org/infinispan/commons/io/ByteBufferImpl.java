@@ -99,7 +99,6 @@ public class ByteBufferImpl implements ByteBuffer {
    /**
     * @return an input stream for the bytes in the buffer
     */
-   @Override
    public InputStream getStream() {
       return new ByteArrayInputStream(getBuf(), getOffset(), getLength());
    }

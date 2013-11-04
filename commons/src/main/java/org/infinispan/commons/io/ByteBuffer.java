@@ -31,9 +31,4 @@ public interface ByteBuffer {
     * Returns a new byte[] instance of size {@link #getLength()} that contains all the bytes owned by this buffer.
     */
    ByteBuffer copy();
-
-   /**
-    * Returns an input stream that can be used for reading the byte[] owned by this {@link ByteBuffer}.
-    */
-   InputStream getStream();
 }

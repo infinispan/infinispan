@@ -22,7 +22,7 @@ public class ContractAdaptorFactory {
          InternalDirectoryContract idc;
          try {
             idc = (InternalDirectoryContract) ContractAdaptorFactory.class.getClassLoader()
-               .loadClass("org.infinispan.lucene.cachestore.DirectoryV4Adaptor")
+               .loadClass("org.infinispan.lucene.cacheloader.DirectoryV4Adaptor")
                .getConstructor(ctorType)
                .newInstance(directory);
          } catch (Exception e) {
