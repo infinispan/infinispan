@@ -51,13 +51,13 @@ import static org.testng.AssertJUnit.assertTrue;
 public class ReplWriteSkewConsistencyTest extends MultipleCacheManagersTest {
 
    public void testValidationOnlyInPrimaryOwner() throws Exception {
-      final Object key = new MagicKey(cache(0), cache(1));
-      final DataContainer primaryOwnerDataContainer = TestingUtil.extractComponent(cache(0), DataContainer.class);
-      final DataContainer backupOwnerDataContainer = TestingUtil.extractComponent(cache(1), DataContainer.class);
-      final VersionGenerator versionGenerator = TestingUtil.extractComponent(cache(0), VersionGenerator.class);
+      final Object key = new MagicKey(cache(1), cache(0));
+      final DataContainer primaryOwnerDataContainer = TestingUtil.extractComponent(cache(1), DataContainer.class);
+      final DataContainer backupOwnerDataContainer = TestingUtil.extractComponent(cache(0), DataContainer.class);
+      final VersionGenerator versionGenerator = TestingUtil.extractComponent(cache(1), VersionGenerator.class);
 
-      injectReorderResponseRpcManager(cache(3), cache(1));
-      cache(0).put(key, 1);
+      injectReorderResponseRpcManager(cache(3), cache(0));
+      cache(1).put(key, 1);
       for (Cache cache : caches()) {
          assertEquals("Wrong initial value for cache " + address(cache), 1, cache.get(key));
       }
@@ -72,8 +72,8 @@ public class ReplWriteSkewConsistencyTest extends MultipleCacheManagersTest {
       //version2 is put by tx2
       final EntryVersion version2 = versionGenerator.increment((IncrementableEntryVersion) version1);
 
-      ControllerInboundInvocationHandler handler = injectControllerInboundInvocationHandler(cache(1));
-      BackupOwnerInterceptor backupOwnerInterceptor = injectBackupOwnerInterceptor(cache(1));
+      ControllerInboundInvocationHandler handler = injectControllerInboundInvocationHandler(cache(0));
+      BackupOwnerInterceptor backupOwnerInterceptor = injectBackupOwnerInterceptor(cache(0));
       backupOwnerInterceptor.blockCommit(true);
       handler.discardRemoteGet = true;
 
@@ -151,6 +151,7 @@ public class ReplWriteSkewConsistencyTest extends MultipleCacheManagersTest {
       builder.versioning()
             .enabled(true)
             .scheme(VersioningScheme.SIMPLE);
+      builder.clustering().hash().numSegments(60);
       amendConfiguration(builder);
       createClusteredCaches(4, builder);
    }
