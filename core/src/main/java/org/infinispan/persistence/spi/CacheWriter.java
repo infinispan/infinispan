@@ -11,11 +11,12 @@ import org.infinispan.marshall.core.MarshalledEntry;
  * @since 6.0
  */
 @ThreadSafe
-public interface CacheWriter<K,V> extends Lifecycle {
+public interface CacheWriter<K, V> extends Lifecycle {
 
    /**
     * Used to initialize a cache loader.  Typically invoked by the {@link org.infinispan.persistence.manager.PersistenceManager}
     * when setting up cache loaders.
+    *
     * @throws PersistenceException in case of an error, e.g. communicating with the external storage
     */
    void init(InitializationContext ctx);
@@ -23,10 +24,10 @@ public interface CacheWriter<K,V> extends Lifecycle {
    /**
     * Persists the entry to the storage.
     *
-    * @see MarshalledEntry
     * @throws PersistenceException in case of an error, e.g. communicating with the external storage
+    * @see MarshalledEntry
     */
-   void write(MarshalledEntry<K,V> entry);
+   void write(MarshalledEntry<K, V> entry);
 
    /**
     * @return true if the entry existed in the persistent store and it was deleted.

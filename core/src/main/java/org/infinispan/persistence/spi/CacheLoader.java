@@ -17,6 +17,8 @@ public interface CacheLoader<K, V> extends Lifecycle {
    /**
     * Used to initialize a cache loader.  Typically invoked by the {@link org.infinispan.persistence.manager.PersistenceManager}
     * when setting up cache loaders.
+    *
+    * @throws PersistenceException in case of an error, e.g. communicating with the external storage
     */
    void init(InitializationContext ctx);
 
@@ -25,12 +27,15 @@ public interface CacheLoader<K, V> extends Lifecycle {
     * org.infinispan.persistence.spi.InitializationContext#getMarshalledEntryFactory()} and {@link
     * InitializationContext#getByteBufferFactory()} should be used.
     *
-    * @return the entry, or null if the entry does not exist.
+    * @return the entry, or null if the entry does not exist
+    * @throws PersistenceException in case of an error, e.g. communicating with the external storage
     */
    MarshalledEntry<K, V> load(K key);
 
    /**
     * Returns true if the storage contains an entry associated with the given key.
+    *
+    * @throws PersistenceException in case of an error, e.g. communicating with the external storage
     */
    boolean contains(K key);
 }
