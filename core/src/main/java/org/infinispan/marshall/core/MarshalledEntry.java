@@ -15,8 +15,14 @@ import org.infinispan.metadata.InternalMetadata;
  */
 public interface MarshalledEntry<K, V> {
 
+   /**
+    * Returns the key in serialized format.
+    */
    ByteBuffer getKeyBytes();
 
+   /**
+    * Returns the value in serialize format.
+    */
    ByteBuffer getValueBytes();
 
    /**
@@ -24,8 +30,14 @@ public interface MarshalledEntry<K, V> {
     */
    ByteBuffer getMetadataBytes();
 
+   /**
+    * Returns the same key as {@link #getKeyBytes()}, but unmarshalled.
+    */
    K getKey();
 
+   /**
+    * Returns the same value as {@link #getKeyBytes()}, but unmarshalled.
+    */
    V getValue();
 
    /**

@@ -17,24 +17,31 @@ public interface AdvancedCacheLoader<K, V> extends CacheLoader<K, V> {
 
    /**
     * Iterates in parallel over the entries in the storage using the threads from the <b>executor</b> pool. For each
-    * entry the {@link CacheLoaderTask#processEntry(org.infinispan.marshall.core.MarshalledEntry, TaskContext)} is invoked. Before passing an entry
-    * to the callback task, the entry should be validated against the <b>filter</b>. The method should only return once
-    * the iteration is complete.
+    * entry the {@link CacheLoaderTask#processEntry(org.infinispan.marshall.core.MarshalledEntry, TaskContext)} is
+    * invoked. Before passing an entry to the callback task, the entry should be validated against the <b>filter</b>.
+    * Implementors should build an {@link TaskContext} instance (implementation) that is fed to the {@link
+    * CacheLoaderTask} on every invocation. The {@link CacheLoaderTask} might invoke {@link
+    * org.infinispan.persistence.spi.AdvancedCacheLoader.TaskContext#stop()} at any time, so implementors of this method
+    * should verify TaskContext's state for early termination of iteration. The method should only return once the
+    * iteration is complete or as soon as possible in the case TaskContext.stop() is invoked.
     *
     * @param filter        to validate which entries should be feed into the task. Might be null.
     * @param task          callback to be invoked in parallel for each stored entry that passes the filter check
-    * @param executor      a thread pool to be used for parallel iteration
+    * @param executor      an external thread pool to be used for parallel iteration
     * @param fetchValue    whether or not to fetch the value from the persistent store. E.g. if the iteration is
     *                      intended only over the key set, no point fetching the values from the persistent store as
     *                      well
     * @param fetchMetadata whether or not to fetch the metadata from the persistent store. E.g. if the iteration is
     *                      intended only ove the key set, then no pint fetching the metadata from the persistent store
     *                      as well
+    * @throws PersistenceException in case of an error, e.g. communicating with the external storage
     */
    void process(KeyFilter<K> filter, CacheLoaderTask<K, V> task, Executor executor, boolean fetchValue, boolean fetchMetadata);
 
    /**
     * Returns the number of elements in the store.
+    *
+    * @throws PersistenceException in case of an error, e.g. communicating with the external storage
     */
    int size();
 
@@ -56,11 +63,11 @@ public interface AdvancedCacheLoader<K, V> extends CacheLoader<K, V> {
       void processEntry(MarshalledEntry<K, V> marshalledEntry, TaskContext taskContext) throws InterruptedException;
    }
 
-  /**
-   * Used during the parallel iteration to filter-out the keys that the caller is not interested in. Implementors should be
-   * thread safe.
-   */
-  @ThreadSafe
+   /**
+    * Used during the parallel iteration to filter-out the keys that the caller is not interested in. Implementors
+    * should be thread safe.
+    */
+   @ThreadSafe
    interface KeyFilter<K> {
 
       public static final KeyFilter LOAD_ALL_FILTER = new KeyFilter() {
@@ -79,7 +86,15 @@ public interface AdvancedCacheLoader<K, V> extends CacheLoader<K, V> {
     */
    @ThreadSafe
    interface TaskContext {
+      /**
+       * Invoked from within the CacheLoaderTask, in order to signal the AdvancedCacheLoader implementation that
+       * iteration should be stopped early (before iteration is finished).
+       */
       void stop();
+
+      /**
+       * Verifies if the the TaskContext is marked as stopped.
+       */
       boolean isStopped();
    }
 }
