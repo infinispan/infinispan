@@ -32,7 +32,7 @@ public class RehashAfterJoinWithPreloadTest extends MultipleCacheManagersTest {
 
    private final String testCacheName = "testCache" + getClass().getSimpleName();
 
-   private final String fileCacheStoreTmpDir = TestingUtil.tmpDirectory(this);
+   private final String fileCacheStoreTmpDir = TestingUtil.tmpDirectory(this.getClass());
 
    @Override
    protected void createCacheManagers() {

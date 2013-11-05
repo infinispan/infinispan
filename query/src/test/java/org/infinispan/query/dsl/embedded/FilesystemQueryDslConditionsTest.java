@@ -18,7 +18,7 @@ import java.io.File;
 @CleanupAfterMethod
 public class FilesystemQueryDslConditionsTest extends QueryDslConditionsTest {
 
-   private final String indexDirectory = TestingUtil.tmpDirectory(this);
+   private final String indexDirectory = TestingUtil.tmpDirectory(this.getClass());
 
    @Override
    protected EmbeddedCacheManager createCacheManager() throws Exception {

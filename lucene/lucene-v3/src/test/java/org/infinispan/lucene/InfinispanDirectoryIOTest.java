@@ -38,7 +38,7 @@ public class InfinispanDirectoryIOTest {
    private static final String INDEXNAME = "index";
 
    private CacheContainer cacheManager;
-   private File indexDir = new File(new File("."), INDEXNAME);
+   private File indexDir = new File(TestingUtil.tmpDirectory(this.getClass()), INDEXNAME);
 
    @BeforeTest
    public void prepareCacheManager() {

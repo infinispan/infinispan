@@ -30,7 +30,7 @@ public class SingleFileStoreFunctionalTest extends BaseStoreFunctionalTest {
 
    @BeforeClass
    protected void setUpTempDir() {
-      tmpDirectory = TestingUtil.tmpDirectory(this);
+      tmpDirectory = TestingUtil.tmpDirectory(this.getClass());
    }
 
    @AfterClass

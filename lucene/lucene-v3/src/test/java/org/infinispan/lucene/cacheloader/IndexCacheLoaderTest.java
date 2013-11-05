@@ -29,10 +29,10 @@ import org.testng.annotations.Test;
 public class IndexCacheLoaderTest {
 
    private static final int SCALE = 600;
-   protected final String parentDir = ".";
+   protected final String parentDir = TestingUtil.tmpDirectory(this.getClass());
    protected File rootDir = null;
 
-   @BeforeMethod
+   @BeforeMethod(alwaysRun=true)
    public void setUp() {
       rootDir = TestHelper.createRootDir(parentDir, getIndexPathName());
    }
@@ -44,7 +44,7 @@ public class IndexCacheLoaderTest {
       return this.getClass().getSimpleName();
    }
 
-   @AfterMethod
+   @AfterMethod(alwaysRun=true)
    public void tearDown() {
       if(rootDir != null) {
          TestingUtil.recursiveFileRemove(rootDir);
@@ -67,6 +67,7 @@ public class IndexCacheLoaderTest {
          throws IOException {
       final EmbeddedCacheManager cacheManager = initializeInfinispan(rootDir);
       TestingUtil.withCacheManager(new CacheManagerCallable(cacheManager) {
+         @Override
          public void call() {
             Cache<Object, Object> cache = cacheManager.getCache();
             Directory directory = DirectoryBuilder.newDirectoryInstance(cache, cache, cache, indexName).create();

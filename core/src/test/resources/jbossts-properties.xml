@@ -35,8 +35,8 @@
     <!-- (default is YES) -->
     <entry key="CoordinatorEnvironmentBean.commitOnePhase">YES</entry>
 
-    <!-- default is under user.home - must be writeable!) -->
-    <entry key="ObjectStoreEnvironmentBean.objectStoreDir">PutObjectStoreDirHere</entry>
+    <!-- (must be writeable!) -->
+    <entry key="ObjectStoreEnvironmentBean.objectStoreDir">${build.directory,java.io.tmpdir:.}/infinispan-core-txstore</entry>
 
     <!-- (default is ON) -->
     <entry key="ObjectStoreEnvironmentBean.transactionSync">ON</entry>

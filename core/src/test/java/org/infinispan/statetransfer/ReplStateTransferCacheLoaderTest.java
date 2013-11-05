@@ -38,7 +38,7 @@ public class ReplStateTransferCacheLoaderTest extends MultipleCacheManagersTest 
 
    @Override
    protected void createCacheManagers() {
-      tmpDir = new File(TestingUtil.tmpDirectory(this));
+      tmpDir = new File(TestingUtil.tmpDirectory(this.getClass()));
       TestingUtil.recursiveFileRemove(tmpDir);
 
       // reproduce the MODE-1754 config as closely as possible

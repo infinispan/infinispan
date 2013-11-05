@@ -29,7 +29,7 @@ public class SingleFileStoreTest extends BaseStoreTest {
 
    @BeforeClass
    protected void setUpTempDir() {
-      tmpDirectory = TestingUtil.tmpDirectory(this);
+      tmpDirectory = TestingUtil.tmpDirectory(this.getClass());
    }
 
    @AfterClass

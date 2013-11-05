@@ -20,7 +20,7 @@ import java.io.File;
 @Test(groups = "functional", testName = "query.blackbox.ClusteredCacheFSDirectoryTest")
 public class ClusteredCacheFSDirectoryTest extends ClusteredCacheTest {
 
-   private String TMP_DIR;
+   private final String TMP_DIR = TestingUtil.tmpDirectory(this.getClass());
 
    @Override
    protected void createCacheManagers() throws Exception {
@@ -44,7 +44,6 @@ public class ClusteredCacheFSDirectoryTest extends ClusteredCacheTest {
 
    @BeforeMethod
    protected void setUpTempDir() {
-      TMP_DIR = TestingUtil.tmpDirectory(this);
       new File(TMP_DIR).mkdirs();
    }
 

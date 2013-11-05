@@ -4,7 +4,6 @@ import static java.io.File.separator;
 import static org.testng.AssertJUnit.assertFalse;
 
 import java.io.File;
-import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
@@ -1078,9 +1077,9 @@ public class TestingUtil {
     *
     * @return an absolute path
     */
-   public static String tmpDirectory(AbstractInfinispanTest test) {
+   public static String tmpDirectory(Class<?> test) {
       String prefix = System.getProperty("infinispan.test.tmpdir", System.getProperty("java.io.tmpdir"));
-      return prefix + separator + TEST_PATH + separator + test.getClass().getSimpleName();
+      return prefix + separator + TEST_PATH + separator + test.getSimpleName();
    }
 
    /**

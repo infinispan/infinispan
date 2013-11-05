@@ -44,7 +44,7 @@ public class SingleFileStoreStressTest extends SingleCacheManagerTest {
 
    @Override
    protected EmbeddedCacheManager createCacheManager() throws Exception {
-      location = TestingUtil.tmpDirectory(this);
+      location = TestingUtil.tmpDirectory(SingleFileStoreStressTest.class);
       ConfigurationBuilder builder = new ConfigurationBuilder();
       builder.persistence().addSingleFileStore().location(this.location);
       return TestCacheManagerFactory.createCacheManager(builder);
