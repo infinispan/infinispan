@@ -1,13 +1,19 @@
 package org.infinispan.marshall;
 
+import org.infinispan.Cache;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.test.SingleCacheManagerTest;
+import org.infinispan.test.data.Key;
 import org.infinispan.test.data.Person;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
+import org.infinispan.util.concurrent.ReclosableLatch;
 import org.testng.annotations.Test;
 
-import static org.testng.AssertJUnit.assertEquals;
+import java.net.URL;
+import java.net.URLClassLoader;
+
+import static org.testng.AssertJUnit.*;
 
 /**
  * Tests defensive copy logic.
@@ -45,6 +51,20 @@ public class DefensiveCopyTest extends SingleCacheManagerTest {
       assertEquals(person, cachedPerson);
       cachedPerson.setName("Mr Digweed");
       assertEquals(new Person("Mr Coe"), cache.get(k));
+   }
+
+   public void testDiffClassloaders() throws Exception {
+      URL core = ReclosableLatch.class.getProtectionDomain().getCodeSource().getLocation();
+      URL tests = getClass().getResource("/");
+      ClassLoader cl1 = new URLClassLoader(new URL[]{core, tests}, null);
+      ClassLoader cl2 = new URLClassLoader(new URL[]{core, tests}, null);
+      Object key1 = cl1.loadClass(Key.class.getName()).getConstructor(String.class, Boolean.TYPE).newInstance("key1", false);
+      Object key2 = cl2.loadClass(Key.class.getName()).getConstructor(String.class, Boolean.TYPE).newInstance("key1", false);
+      String value = "tralala";
+      cache.put(key1, value);
+      Object result = cache.get(key2);
+      assertNotNull(result);
+      assertEquals(value, result);
    }
 
 }
