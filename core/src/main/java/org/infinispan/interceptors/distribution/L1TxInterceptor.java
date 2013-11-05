@@ -47,7 +47,7 @@ public class L1TxInterceptor extends L1NonTxInterceptor {
    @Override
    public Object visitPrepareCommand(TxInvocationContext ctx, PrepareCommand command) throws Throwable {
       if (command.isOnePhaseCommit() && shouldFlushL1(ctx)) {
-         flushL1Caches(ctx); // if we are one-phase, don't block on this future.
+         blockOnL1FutureIfNeeded(flushL1Caches(ctx));
       }
 
       return invokeNextInterceptor(ctx, command);

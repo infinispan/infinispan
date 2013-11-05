@@ -1,6 +1,5 @@
 package org.infinispan.distribution;
 
-import org.apache.log4j.Logger;
 import org.infinispan.Cache;
 import org.infinispan.commands.read.GetKeyValueCommand;
 import org.infinispan.commands.write.PutKeyValueCommand;
@@ -11,7 +10,6 @@ import org.infinispan.interceptors.distribution.NonTxDistributionInterceptor;
 import org.infinispan.remoting.rpc.RpcManager;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.tx.dld.ControlledRpcManager;
-import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 
 import java.util.concurrent.BrokenBarrierException;
@@ -23,7 +21,6 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.assertNull;
 
 @Test(groups = "functional", testName = "distribution.DistSyncL1FuncTest")

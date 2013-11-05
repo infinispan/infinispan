@@ -17,6 +17,7 @@ import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.annotations.Start;
 import org.infinispan.interceptors.base.BaseRpcInterceptor;
 import org.infinispan.interceptors.locking.ClusteringDependentLogic;
+import org.infinispan.remoting.transport.jgroups.SuspectException;
 import org.infinispan.transaction.TransactionMode;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
@@ -24,6 +25,7 @@ import org.infinispan.util.logging.LogFactory;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
+import java.util.concurrent.Future;
 
 /**
  * L1 based interceptor that flushes the L1 cache at the end after a transaction/entry is committed to the data
@@ -116,7 +118,7 @@ public class L1LastChanceInterceptor extends BaseRpcInterceptor {
    public Object visitPrepareCommand(TxInvocationContext ctx, PrepareCommand command) throws Throwable {
       Object retVal = invokeNextInterceptor(ctx, command);
       if (command.isOnePhaseCommit()) {
-         handleLastChanceL1InvalidationOnCommit(ctx);
+         blockOnL1FutureIfNeeded(handleLastChanceL1InvalidationOnCommit(ctx));
       }
       return retVal;
    }
@@ -124,20 +126,34 @@ public class L1LastChanceInterceptor extends BaseRpcInterceptor {
    @Override
    public Object visitCommitCommand(TxInvocationContext ctx, CommitCommand command) throws Throwable {
       Object retVal = invokeNextInterceptor(ctx, command);
-      handleLastChanceL1InvalidationOnCommit(ctx);
+      blockOnL1FutureIfNeeded(handleLastChanceL1InvalidationOnCommit(ctx));
       return retVal;
    }
 
-   private void handleLastChanceL1InvalidationOnCommit(TxInvocationContext ctx) {
+   private Future<?> handleLastChanceL1InvalidationOnCommit(TxInvocationContext ctx) {
       if (shouldFlushL1(ctx)) {
          if (trace) {
             log.tracef("Sending additional invalidation for requestors if necessary.");
          }
-         l1Manager.flushCache(ctx.getAffectedKeys(), ctx.getOrigin(), true);
+         return l1Manager.flushCache(ctx.getAffectedKeys(), ctx.getOrigin(), true);
       }
+      return null;
    }
 
    private boolean shouldFlushL1(TxInvocationContext ctx) {
       return !ctx.getAffectedKeys().isEmpty();
+   }
+
+   private void blockOnL1FutureIfNeeded(Future<?> f) {
+      if (f != null && cacheConfiguration.transaction().syncCommitPhase()) {
+         try {
+            f.get();
+         } catch (Exception e) {
+            // Ignore SuspectExceptions - if the node has gone away then there is nothing to invalidate anyway.
+            if (!(e.getCause() instanceof SuspectException)) {
+               getLog().failedInvalidatingRemoteCache(e);
+            }
+         }
+      }
    }
 }

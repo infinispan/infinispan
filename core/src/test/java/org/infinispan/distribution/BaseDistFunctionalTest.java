@@ -48,6 +48,7 @@ public abstract class BaseDistFunctionalTest<K, V> extends MultipleCacheManagers
    protected boolean groupsEnabled = false;
    protected List<Grouper<?>> groupers;
    protected LockingMode lockingMode;
+   protected boolean onePhaseCommitOptimization = false;
 
    protected void createCacheManagers() throws Throwable {
       cacheName = "dist";
@@ -83,6 +84,9 @@ public abstract class BaseDistFunctionalTest<K, V> extends MultipleCacheManagers
       }
       if (tx) {
          configuration.invocationBatching().enable();
+         if (onePhaseCommitOptimization) {
+            configuration.transaction().use1PcForAutoCommitTransactions(true);
+         }
       }
       if (sync) configuration.clustering().sync().replTimeout(60, TimeUnit.SECONDS);
       configuration.locking().lockAcquisitionTimeout(lockTimeout, TimeUnit.SECONDS);
