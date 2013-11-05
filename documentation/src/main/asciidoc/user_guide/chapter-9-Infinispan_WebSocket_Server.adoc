@@ -34,7 +34,7 @@ The client-side interface to a server-side Infinispan cache is the Cache Javascr
 
 By default, the Cache instance will interface to the default Infinispan Cache associated with the WebSocket Server from which the infinispan-ws.js Javascript source file was loaded.  So, in the above case, the Cache object instance will connect to the WebSocket Server running on _www.acme.com:8181_ (i.e. _ws://www.acme.com:8181_ ). 
 
-The Infinispan Cache name and WebSocket Server address can be specified in the {{Cache}  object constructor as follows:
+The Infinispan Cache name and WebSocket Server address can be specified in the _Cache_  object constructor as follows:
 
 [source,javascript]
 ----
