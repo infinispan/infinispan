@@ -127,7 +127,7 @@ public class TestHelper {
     */
    public static File createRootDir(final String parentDir, final String rootDirectoryName) {
       File rootDir = new File(new File(parentDir).getAbsoluteFile(), rootDirectoryName);
-      boolean directoriesCreated = rootDir.mkdir();
+      boolean directoriesCreated = rootDir.mkdirs();
       assert directoriesCreated : "couldn't create directory for test";
 
       rootDir.deleteOnExit();

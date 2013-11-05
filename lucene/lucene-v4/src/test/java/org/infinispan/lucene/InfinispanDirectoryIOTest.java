@@ -32,14 +32,14 @@ import org.testng.annotations.Test;
  * @author Sanne Grinovero
  */
 @SuppressWarnings("unchecked")
-@Test(groups = "functional", testName = "lucene.InfinispanDirectoryIOTest", sequential = true)
+@Test(groups = "functional", testName = "lucene.InfinispanDirectoryIOTest", singleThreaded = true)
 public class InfinispanDirectoryIOTest {
-   
+
    /** The Test index name */
    private static final String INDEXNAME = "index";
 
    private CacheContainer cacheManager;
-   private File indexDir = new File(new File("."), INDEXNAME);
+   private File indexDir = new File(TestingUtil.tmpDirectory(this.getClass()), INDEXNAME);
 
    @BeforeTest
    public void prepareCacheManager() {
@@ -60,10 +60,10 @@ public class InfinispanDirectoryIOTest {
    @Test
    public void testWriteUsingSeekMethod() throws IOException {
       final int BUFFER_SIZE = 64;
-      
+
       Cache cache = cacheManager.getCache();
       Directory dir = DirectoryBuilder.newDirectoryInstance(cache, cache, cache, INDEXNAME).chunkSize(BUFFER_SIZE).create();
-      
+
       String fileName = "SomeText.txt";
       IndexOutput io = dir.createOutput(fileName, IOContext.DEFAULT);
       RepeatableLongByteSequence bytesGenerator = new RepeatableLongByteSequence();
@@ -74,7 +74,7 @@ public class InfinispanDirectoryIOTest {
       }
       io.flush();
       assert io.length() == REPEATABLE_BUFFER_SIZE;
-      
+
       //Text to write on file with repeatable text
       final String someText = "This is some text";
       final byte[] someTextAsBytes = someText.getBytes();
@@ -85,13 +85,13 @@ public class InfinispanDirectoryIOTest {
          io.seek(pointers[i]);
          io.writeBytes(someTextAsBytes, someTextAsBytes.length);
       }
-      
+
       io.close();
       bytesGenerator.reset();
       final long finalSize = REPEATABLE_BUFFER_SIZE + someTextAsBytes.length;
       assert io.length() == finalSize;
       assert io.length() == DirectoryIntegrityCheck.deepCountFileSize(new FileCacheKey(INDEXNAME,fileName), cache);
-      
+
       int indexPointer = 0;
       Arrays.sort(pointers);
       byte[] buffer = null;
@@ -101,22 +101,22 @@ public class InfinispanDirectoryIOTest {
          if (i % BUFFER_SIZE == 0) {
             buffer = (byte[]) cache.get(new ChunkCacheKey(INDEXNAME, fileName, ++chunkIndex, BUFFER_SIZE));
          }
-         
+
          byte predictableByte = bytesGenerator.nextByte();
          if (i < pointers[indexPointer]) {
             //Assert predictable text
             AssertJUnit.assertEquals(predictableByte, buffer[i % BUFFER_SIZE]);
          } else if (pointers[indexPointer] <= i && i < pointers[indexPointer] + someTextAsBytes.length) {
-            //Assert someText 
+            //Assert someText
             AssertJUnit.assertEquals(someTextAsBytes[i - pointers[indexPointer]], buffer[i % BUFFER_SIZE]);
          }
-         
+
          if (i == pointers[indexPointer] + someTextAsBytes.length) {
             //Change pointer
             indexPointer++;
          }
       }
-         
+
       dir.close();
       DirectoryIntegrityCheck.verifyDirectoryStructure(cache, INDEXNAME);
    }
@@ -144,7 +144,7 @@ public class InfinispanDirectoryIOTest {
       assert (LAST_CHUNK_WITH_LONELY_BYTE_FILE_SIZE % BUFFER_SIZE) == 1;
       verifyOnBuffer("LonelyByteInLastChunk.txt", LAST_CHUNK_WITH_LONELY_BYTE_FILE_SIZE, BUFFER_SIZE, cache, dir, 12);
       assertHasNChunks(5, cache, INDEXNAME, "LonelyByteInLastChunk.txt.bak", BUFFER_SIZE);
-      
+
       dir.close();
       DirectoryIntegrityCheck.verifyDirectoryStructure(cache, INDEXNAME);
    }
@@ -152,7 +152,7 @@ public class InfinispanDirectoryIOTest {
    /**
     * Helper for testReadWholeFile test:
     * creates a file and then verifies it's readability in specific corner cases.
-    * Then reuses the same parameters to verify the file rename capabilities. 
+    * Then reuses the same parameters to verify the file rename capabilities.
     */
    private void verifyOnBuffer(final String fileName, final int fileSize, final int bufferSize, Cache cache, Directory dir, final int readBuffer) throws IOException {
       createFileWithRepeatableContent(dir, fileName, fileSize);
@@ -167,7 +167,7 @@ public class InfinispanDirectoryIOTest {
       assert dir.fileExists(newFileName);
       assert dir.fileExists(fileName) == false;
    }
-   
+
    @Test
    public void testReadRandomSampleFile() throws IOException {
       final int BUFFER_SIZE = 64;
@@ -202,11 +202,11 @@ public class InfinispanDirectoryIOTest {
       dir.close();
       DirectoryIntegrityCheck.verifyDirectoryStructure(cache, INDEXNAME);
    }
-   
+
    /**
     * Used to verify that IndexInput.readBytes method reads correctly the whole file content comparing the
     * result with the expected sequence of bytes
-    * 
+    *
     * @param dir
     *           The Directory containing the file to verify
     * @param fileName
@@ -250,7 +250,7 @@ public class InfinispanDirectoryIOTest {
    /**
     * Used to verify that IndexInput.readByte method reads correctly the whole file content comparing the
     * result with the expected sequence of bytes
-    * 
+    *
     * @param dir
     *           The Directory containing the file to verify
     * @param fileName
@@ -287,7 +287,7 @@ public class InfinispanDirectoryIOTest {
    /**
     * It creates a file with fixed size using a RepeatableLongByteSequence object to generate a
     * repeatable content
-    * 
+    *
     * @param dir
     *           The Directory containing the file to create
     * @param fileName
@@ -305,7 +305,7 @@ public class InfinispanDirectoryIOTest {
       indexOutput.close();
    }
 
-   
+
    @Test(enabled = false)
    public void testReadChunks() throws Exception {
       final int BUFFER_SIZE = 64;
@@ -534,7 +534,7 @@ public class InfinispanDirectoryIOTest {
       dir.close();
       DirectoryIntegrityCheck.verifyDirectoryStructure(cache, INDEXNAME);
    }
-   
+
    @Test
    public void testChunkBordersOnInfinispan() throws IOException {
       Cache cache = cacheManager.getCache();
@@ -543,13 +543,13 @@ public class InfinispanDirectoryIOTest {
       testChunkBorders(dir, cache);
       cache.clear();
    }
-   
+
    @Test
    public void testChunkBordersOnRAMDirectory() throws IOException {
       RAMDirectory dir = new RAMDirectory();
       testChunkBorders(dir, null);
    }
-   
+
    /**
     * Useful to verify the Infinispan Directory has similar behaviour
     * to standard Lucene implementations regarding reads out of ranges.
@@ -557,39 +557,39 @@ public class InfinispanDirectoryIOTest {
    private void testChunkBorders(Directory dir, Cache cache) throws IOException {
       //numbers are chosen to be multiples of the chunksize set for the InfinispanDirectory
       //so that we test the borders of it.
-      
+
       testOn(dir, 0 ,0, cache);
       testOn(dir, 0 ,1, cache);
       testOn(dir, 1 ,1, cache);
       testOn(dir, 1 ,0, cache);
-      
+
       // all equal:
       testOn(dir, 13 ,13, cache);
-      
+
       // one less:
       testOn(dir, 12 ,13, cache);
       testOn(dir, 13 ,12, cache);
       testOn(dir, 12 ,12, cache);
-      
+
       // one higher
       testOn(dir, 13 ,14, cache);
       testOn(dir, 14 ,13, cache);
       testOn(dir, 14 ,14, cache);
-      
+
       // now repeat in multi-chunk scenario:
       // all equal:
       testOn(dir, 39 ,39, cache);
-      
+
       // one less:
       testOn(dir, 38 ,38, cache);
       testOn(dir, 38 ,39, cache);
       testOn(dir, 39 ,38, cache);
-      
+
       // one higher
       testOn(dir, 40 ,40, cache);
       testOn(dir, 40 ,39, cache);
       testOn(dir, 39 ,40, cache);
-      
+
       // quite bigger
       testOn(dir, 600, 600, cache);
    }
@@ -619,7 +619,7 @@ public class InfinispanDirectoryIOTest {
             AssertJUnit.fail("should not have thrown an IOException" + ioe.getMessage());
       }
    }
-   
+
    public void multipleFlushTest() throws IOException {
       final String filename = "longFile.writtenInMultipleFlushes";
       final int bufferSize = 300;

@@ -48,7 +48,7 @@ public class StateTransferFileCacheLoaderFunctionalTest extends MultipleCacheMan
 
    @BeforeTest
    protected void setUpTempDir() {
-      String basedir = TestingUtil.tmpDirectory(this);
+      String basedir = TestingUtil.tmpDirectory(this.getClass());
       tmpDirectory1 = basedir + "1";
       tmpDirectory2 = basedir + "2";
       tmpDirectory3 = basedir + "3";

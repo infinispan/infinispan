@@ -38,7 +38,7 @@ public class CacheLoaderAPITest extends SingleCacheManagerTest {
    private static final String rootDirectoryName = "CacheLoaderAPITest.indexesRootDirTmp";
    private static final String indexName = "index-A";
    private static final int elementCount = 10;
-   protected final String parentDir = ".";
+   protected final String parentDir = TestingUtil.tmpDirectory(this.getClass());
    private File rootDir;
 
    public CacheLoaderAPITest() {
@@ -48,7 +48,7 @@ public class CacheLoaderAPITest extends SingleCacheManagerTest {
    @Override
    protected EmbeddedCacheManager createCacheManager() throws Exception {
       rootDir = new File(new File(parentDir).getAbsoluteFile(), rootDirectoryName);
-      boolean rootDirCreated = rootDir.mkdir();
+      boolean rootDirCreated = rootDir.mkdirs();
 
       assert rootDirCreated : "couldn't created root directory!";
 

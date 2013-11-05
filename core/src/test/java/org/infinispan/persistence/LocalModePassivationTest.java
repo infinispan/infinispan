@@ -59,7 +59,7 @@ public class LocalModePassivationTest extends SingleCacheManagerTest {
 
    @Override
    protected EmbeddedCacheManager createCacheManager() throws Exception {
-      cacheStoreDir = new File(TestingUtil.tmpDirectory(this));
+      cacheStoreDir = new File(TestingUtil.tmpDirectory(this.getClass()));
       TestingUtil.recursiveFileRemove(cacheStoreDir);
 
       ConfigurationBuilder builder = getDefaultClusteredCacheConfig(CacheMode.LOCAL, true, true);

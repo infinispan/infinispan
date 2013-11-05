@@ -15,8 +15,9 @@ public class SingleFileStoreParallelIterationTest extends ParallelIterationTest 
 
    protected String location;
 
+   @Override
    protected void configurePersistence(ConfigurationBuilder cb) {
-      location = TestingUtil.tmpDirectory(this);
+      location = TestingUtil.tmpDirectory(this.getClass());
       cb.persistence().addStore(SingleFileStoreConfigurationBuilder.class).location(location);
    }
 

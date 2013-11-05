@@ -18,7 +18,7 @@ import java.io.File;
 @Test(groups = "functional", testName = "query.blackbox.LocalCacheFSDirectoryTest")
 public class LocalCacheFSDirectoryTest extends LocalCacheTest {
 
-   private final String indexDirectory = TestingUtil.tmpDirectory(this);
+   private final String indexDirectory = TestingUtil.tmpDirectory(this.getClass());
 
    @Override
    protected EmbeddedCacheManager createCacheManager() throws Exception {

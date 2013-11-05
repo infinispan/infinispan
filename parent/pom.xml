@@ -1282,6 +1282,7 @@
                   <java.net.preferIPv4Stack>true</java.net.preferIPv4Stack>
                   <infinispan.unsafe.allow_jdk8_chm>true</infinispan.unsafe.allow_jdk8_chm>
                   <log4j.configuration>${log4j.configuration}</log4j.configuration>
+                  <build.directory>${project.build.directory}</build.directory>
                </systemPropertyVariables>
                <trimStackTrace>false</trimStackTrace>
                <properties>

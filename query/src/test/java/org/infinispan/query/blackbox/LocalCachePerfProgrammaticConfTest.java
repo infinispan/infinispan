@@ -16,7 +16,7 @@ import java.io.File;
 @Test(groups = "functional", testName = "query.blackbox.LocalCachePerfProgrammaticConfTest")
 public class LocalCachePerfProgrammaticConfTest extends LocalCacheTest {
 
-   private final String indexDirectory = TestingUtil.tmpDirectory(this);
+   private final String indexDirectory = TestingUtil.tmpDirectory(this.getClass());
 
    @Override
    protected EmbeddedCacheManager createCacheManager() throws Exception {

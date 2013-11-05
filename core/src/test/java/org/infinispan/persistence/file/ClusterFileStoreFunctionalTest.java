@@ -28,7 +28,7 @@ import static org.testng.AssertJUnit.assertEquals;
 public class ClusterFileStoreFunctionalTest extends MultipleCacheManagersTest {
 
    // createCacheManager executes before any @BeforeClass defined in the class, so simply use standard tmp folder.
-   private final String tmpDirectory = TestingUtil.tmpDirectory(this);
+   private final String tmpDirectory = TestingUtil.tmpDirectory(this.getClass());
    private static final String CACHE_NAME = "clusteredFileCacheStore";
 
    private Cache<Object, ?> cache1, cache2;

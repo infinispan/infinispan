@@ -32,7 +32,7 @@ import static org.testng.Assert.assertEquals;
 /**
  * Tests persistent index state us in synch with the values stored in a CacheLoader
  * after a CacheManager is restarted.
- * 
+ *
  * @author Jan Slezak
  * @author Sanne Grinovero
  * @since 5.2
@@ -167,7 +167,7 @@ public class InconsistentIndexesAfterRestartTest extends AbstractInfinispanTest 
 
     @BeforeClass
     protected void setUpTempDir() {
-       TMP_DIR = TestingUtil.tmpDirectory(this);
+       TMP_DIR = TestingUtil.tmpDirectory(this.getClass());
        new File(TMP_DIR).mkdirs();
     }
 
