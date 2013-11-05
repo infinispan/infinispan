@@ -13,6 +13,7 @@ import org.infinispan.persistence.support.SingletonCacheWriter;
 import org.infinispan.remoting.RemoteException;
 import org.infinispan.remoting.responses.Response;
 import org.infinispan.remoting.transport.Address;
+import org.infinispan.remoting.transport.jgroups.SuspectException;
 import org.infinispan.transaction.LocalTransaction;
 import org.infinispan.transaction.xa.GlobalTransaction;
 import org.infinispan.transaction.xa.recovery.RecoveryAwareRemoteTransaction;
@@ -1036,5 +1037,8 @@ public interface Log extends BasicLogger {
 
    @Message(value = "Caught exception [%s] while invoking method [%s] on listener instance: %s", id = 280)
    CacheListenerException exceptionInvokingListener(String name, Method m, Object target, @Cause Throwable cause);
+
+   @Message(value = "%s reported that a third node was suspected, see cause for info on the node that was suspected", id = 281)
+   SuspectException thirdpartySuspected(Address sender, @Cause SuspectException e);
 
 }
