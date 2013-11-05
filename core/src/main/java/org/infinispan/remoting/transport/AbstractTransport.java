@@ -34,6 +34,9 @@ public abstract class AbstractTransport implements Transport {
          if (response instanceof ExceptionResponse) {
             ExceptionResponse exceptionResponse = (ExceptionResponse) response;
             Exception e = exceptionResponse.getException();
+            if (e instanceof SuspectException)
+               throw log.thirdPartySuspected(sender, (SuspectException) e);
+
             // if we have any application-level exceptions make sure we throw them!!
             throw log.remoteException(sender, e);
          }
