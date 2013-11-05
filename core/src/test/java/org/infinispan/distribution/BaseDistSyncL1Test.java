@@ -143,7 +143,7 @@ public abstract class BaseDistSyncL1Test extends BaseDistFunctionalTest<Object, 
       assertL1GetWithConcurrentUpdate(nonOwnerCache, nonOwnerCache, key, firstValue, secondValue);
    }
 
-   @Test()
+   @Test
    public void testNoEntryInL1MultipleConcurrentGetsWithInvalidation() throws TimeoutException, InterruptedException, ExecutionException, BrokenBarrierException {
       final Cache<Object, String> nonOwnerCache = getFirstNonOwner(key);
       final Cache<Object, String> ownerCache = getFirstOwner(key);

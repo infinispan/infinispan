@@ -1,8 +1,10 @@
 package org.infinispan.distribution;
 
 import org.infinispan.Cache;
+import org.infinispan.commands.VisitableCommand;
 import org.infinispan.commands.read.GetKeyValueCommand;
 import org.infinispan.commands.tx.CommitCommand;
+import org.infinispan.commands.write.InvalidateL1Command;
 import org.infinispan.commands.write.PutKeyValueCommand;
 import org.infinispan.commands.write.ReplaceCommand;
 import org.infinispan.container.entries.InternalCacheEntry;
@@ -10,6 +12,9 @@ import org.infinispan.interceptors.base.CommandInterceptor;
 import org.infinispan.interceptors.distribution.L1NonTxInterceptor;
 import org.infinispan.interceptors.distribution.L1TxInterceptor;
 import org.infinispan.interceptors.distribution.TxDistributionInterceptor;
+import org.infinispan.remoting.rpc.RpcManager;
+import org.infinispan.test.TestingUtil;
+import org.infinispan.tx.dld.ControlledRpcManager;
 import org.testng.annotations.Test;
 
 import javax.transaction.HeuristicMixedException;
@@ -44,6 +49,10 @@ public class DistSyncTxL1FuncTest extends BaseDistSyncL1Test {
    @Override
    protected Class<? extends CommandInterceptor> getL1InterceptorClass() {
       return L1TxInterceptor.class;
+   }
+
+   protected Class<? extends VisitableCommand> getCommitCommand() {
+      return CommitCommand.class;
    }
 
    @Override
@@ -221,17 +230,11 @@ public class DistSyncTxL1FuncTest extends BaseDistSyncL1Test {
       // Add a barrier to block the commit on the backup owner so it doesn't yet update the value.  Note this
       // will also block the primary owner since it is a sync call
       CyclicBarrier backupPutBarrier = new CyclicBarrier(2);
-      addBlockingInterceptor(backupOwnerCache, backupPutBarrier, CommitCommand.class, getL1InterceptorClass(),
+      addBlockingInterceptor(backupOwnerCache, backupPutBarrier, getCommitCommand(), getL1InterceptorClass(),
                              false);
 
       try {
-         Future<String> future = fork(new Callable<String>() {
-
-            @Override
-            public String call() throws Exception {
-               return ownerCache.put(key, secondValue);
-            }
-         });
+         Future<String> future = ownerCache.putAsync(key, secondValue);
 
          // Wait until owner has tried to replicate to backup owner
          backupPutBarrier.await(10, TimeUnit.SECONDS);
@@ -272,6 +275,72 @@ public class DistSyncTxL1FuncTest extends BaseDistSyncL1Test {
          });
 
          assertEquals(secondValue, ownerCache.getAdvancedCache().getDataContainer().get(key).getValue());
+      } finally {
+         removeAllBlockingInterceptorsFromCache(ownerCache);
+         removeAllBlockingInterceptorsFromCache(backupOwnerCache);
+      }
+   }
+
+   /**
+    * See ISPN-3518
+    */
+   public void testInvalidationSynchronous() throws Exception {
+      final Cache<Object, String>[] owners = getOwners(key, 2);
+
+      final Cache<Object, String> ownerCache = owners[0];
+      final Cache<Object, String> backupOwnerCache = owners[1];
+      final Cache<Object, String> nonOwnerCache = getFirstNonOwner(key);
+
+      ownerCache.put(key, firstValue);
+
+      assertEquals(firstValue, nonOwnerCache.get(key));
+
+      assertIsInL1(nonOwnerCache, key);
+
+      // We add controlled rpc manager so we can stop the L1 invalidations being sent by the owner and backup.  This
+      // way we can ensure these are synchronous
+      RpcManager rm = TestingUtil.extractComponent(ownerCache, RpcManager.class);
+      ControlledRpcManager crm = new ControlledRpcManager(rm);
+      crm.blockBefore(InvalidateL1Command.class);
+      TestingUtil.replaceComponent(ownerCache, RpcManager.class, crm, true);
+
+      // We have to do this on backup owner as well since both invalidate now
+      RpcManager rm2 = TestingUtil.extractComponent(backupOwnerCache, RpcManager.class);
+      ControlledRpcManager crm2 = new ControlledRpcManager(rm2);
+      // Make our node block and not return the get yet
+      crm.blockBefore(InvalidateL1Command.class);
+      TestingUtil.replaceComponent(backupOwnerCache, RpcManager.class, crm2, true);
+
+      try {
+         Future<String> future = fork(new Callable<String>() {
+
+            @Override
+            public String call() throws Exception {
+               return ownerCache.put(key, secondValue);
+            }
+         });
+
+         // wait until they all get there, but keep them blocked
+         crm.waitForCommandToBlock(10, TimeUnit.SECONDS);
+         crm2.waitForCommandToBlock(10, TimeUnit.SECONDS);
+
+         try {
+            future.get(1, TimeUnit.SECONDS);
+            fail("This should have timed out since, they cannot invalidate L1");
+         } catch (TimeoutException e) {
+            // We should get a timeout exception as the L1 invalidation commands are blocked and it should be sync
+            // so the invalidations are completed before the write completes
+         }
+
+         // Now we should let the L1 invalidations go through
+         crm.stopBlocking();
+         crm2.stopBlocking();
+
+         assertEquals(firstValue, future.get(10, TimeUnit.SECONDS));
+
+         assertIsNotInL1(nonOwnerCache, key);
+
+         assertEquals(secondValue, nonOwnerCache.get(key));
       } finally {
          removeAllBlockingInterceptorsFromCache(ownerCache);
          removeAllBlockingInterceptorsFromCache(backupOwnerCache);
