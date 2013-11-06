@@ -17,7 +17,6 @@ import org.infinispan.interceptors.base.BaseCustomInterceptor;
 import org.infinispan.remoting.InboundInvocationHandler;
 import org.infinispan.remoting.responses.Response;
 import org.infinispan.remoting.rpc.RpcManager;
-import org.infinispan.remoting.rpc.RpcOptions;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.remoting.transport.Transport;
 import org.infinispan.remoting.transport.jgroups.CommandAwareRpcDispatcher;
@@ -25,12 +24,11 @@ import org.infinispan.remoting.transport.jgroups.JGroupsTransport;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.CleanupAfterMethod;
-import org.infinispan.tx.dld.ControlledRpcManager;
+import org.infinispan.util.AbstractControlledRpcManager;
 import org.infinispan.util.concurrent.IsolationLevel;
 import org.testng.AssertJUnit;
 import org.testng.annotations.Test;
 
-import java.util.Collection;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.concurrent.Callable;
@@ -256,7 +254,7 @@ public class ReplWriteSkewConsistencyTest extends MultipleCacheManagersTest {
       }
    }
 
-   private class ReorderResponsesRpcManager extends ControlledRpcManager {
+   private class ReorderResponsesRpcManager extends AbstractControlledRpcManager {
 
       private final Address lastResponse;
 
@@ -266,8 +264,7 @@ public class ReplWriteSkewConsistencyTest extends MultipleCacheManagersTest {
       }
 
       @Override
-      public Map<Address, Response> invokeRemotely(Collection<Address> recipients, ReplicableCommand rpc, RpcOptions options) {
-         Map<Address, Response> responseMap = super.invokeRemotely(recipients, rpc, options);
+      protected Map<Address, Response> afterInvokeRemotely(ReplicableCommand command, Map<Address, Response> responseMap) {
          if (responseMap != null) {
             Map<Address, Response> newResponseMap = new LinkedHashMap<Address, Response>();
             boolean containsLastResponseAddress = false;
@@ -281,13 +278,12 @@ public class ReplWriteSkewConsistencyTest extends MultipleCacheManagersTest {
             if (containsLastResponseAddress) {
                newResponseMap.put(lastResponse, responseMap.get(lastResponse));
             }
-            log.debugf("Responses for command %s are %s", rpc, newResponseMap.values());
+            log.debugf("Responses for command %s are %s", command, newResponseMap.values());
             return newResponseMap;
          }
-         log.debugf("Responses for command %s are null", rpc);
+         log.debugf("Responses for command %s are null", command);
          return responseMap;
       }
-
    }
 
    private class ControllerInboundInvocationHandler implements InboundInvocationHandler {

@@ -206,22 +206,22 @@ public class PessimisticLockingInterceptor extends AbstractTxLockingInterceptor 
       if (!ctx.isInTxScope())
          throw new IllegalStateException("Locks should only be acquired within the scope of a transaction!");
 
-      //first go remotely - required by DLD. Only acquire remote lock if multiple keys or the single key doesn't map
-      // to the local node.
-      if (ctx.isOriginLocal()) {
-         final boolean isSingleKeyAndLocal = !command.multipleKeys() && cdl.localNodeIsPrimaryOwner(command.getSingleKey());
-         if (!isSingleKeyAndLocal || command.multipleKeys()) {
-            LocalTransaction localTx = (LocalTransaction) ctx.getCacheTransaction();
-            if (!localTx.getAffectedKeys().containsAll(command.getKeys())) {
-               invokeNextInterceptor(ctx, command);
-            } else {
-               log.tracef("Already own locks on keys: %s, skipping remote call", command.getKeys());
-            }
-         }
-         ctx.addAllAffectedKeys(command.getKeys());
-      }
-
       try {
+         //first go remotely - required by DLD. Only acquire remote lock if multiple keys or the single key doesn't map
+         // to the local node.
+         if (ctx.isOriginLocal()) {
+            final boolean isSingleKeyAndLocal = !command.multipleKeys() && cdl.localNodeIsPrimaryOwner(command.getSingleKey());
+            if (!isSingleKeyAndLocal || command.multipleKeys()) {
+               LocalTransaction localTx = (LocalTransaction) ctx.getCacheTransaction();
+               if (!localTx.getAffectedKeys().containsAll(command.getKeys())) {
+                  invokeNextInterceptor(ctx, command);
+               } else {
+                  log.tracef("Already own locks on keys: %s, skipping remote call", command.getKeys());
+               }
+            }
+            ctx.addAllAffectedKeys(command.getKeys());
+         }
+
          if (command.isUnlock()) {
             if (ctx.isOriginLocal())
                throw new AssertionError("There's no advancedCache.unlock so this must have originated remotely.");
