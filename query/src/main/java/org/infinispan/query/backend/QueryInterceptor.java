@@ -6,7 +6,6 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
-import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
@@ -22,6 +21,7 @@ import org.hibernate.search.backend.spi.Worker;
 import org.hibernate.search.engine.spi.EntityIndexBinding;
 import org.hibernate.search.engine.spi.SearchFactoryImplementor;
 import org.hibernate.search.spi.SearchFactoryIntegrator;
+import org.infinispan.Cache;
 import org.infinispan.commands.FlagAffectedCommand;
 import org.infinispan.commands.tx.PrepareCommand;
 import org.infinispan.commands.write.ClearCommand;
@@ -38,12 +38,20 @@ import org.infinispan.context.impl.TxInvocationContext;
 import org.infinispan.factories.KnownComponentNames;
 import org.infinispan.factories.annotations.ComponentName;
 import org.infinispan.factories.annotations.Inject;
+import org.infinispan.factories.annotations.Start;
+import org.infinispan.factories.annotations.Stop;
 import org.infinispan.interceptors.base.CommandInterceptor;
 import org.infinispan.marshall.core.MarshalledValue;
+import org.infinispan.notifications.Listener;
+import org.infinispan.notifications.cachelistener.annotation.CacheEntryCreated;
+import org.infinispan.notifications.cachelistener.annotation.CacheEntryModified;
+import org.infinispan.notifications.cachelistener.event.CacheEntryCreatedEvent;
+import org.infinispan.notifications.cachelistener.event.CacheEntryModifiedEvent;
 import org.infinispan.query.Transformer;
 import org.infinispan.query.impl.DefaultSearchWorkCreator;
 import org.infinispan.query.logging.Log;
-import org.infinispan.commons.util.CollectionFactory;
+import org.infinispan.registry.ClusterRegistry;
+import org.infinispan.registry.ScopedKey;
 import org.infinispan.util.logging.LogFactory;
 
 /**
@@ -56,13 +64,15 @@ import org.infinispan.util.logging.LogFactory;
  * @author Navin Surtani
  * @author Sanne Grinovero <sanne@hibernate.org> (C) 2011 Red Hat Inc.
  * @author Marko Luksa
+ * @author anistor@redhat.com
  * @since 4.0
  */
 public class QueryInterceptor extends CommandInterceptor {
 
    private final boolean isManualIndexing;
    private final SearchFactoryIntegrator searchFactory;
-   private final ConcurrentMap<Class<?>,Boolean> knownClasses = CollectionFactory.makeConcurrentMap();
+   private ClusterRegistry<String, Class<?>, Boolean> clusterRegistry;
+   private String knownClassesScope;
    private final Lock mutating = new ReentrantLock();
    private final KeyTransformationHandler keyTransformationHandler = new KeyTransformationHandler();
    private SearchWorkCreator<Object> searchWorkCreator = new DefaultSearchWorkCreator<Object>();
@@ -71,6 +81,8 @@ public class QueryInterceptor extends CommandInterceptor {
    protected TransactionManager transactionManager;
    protected TransactionSynchronizationRegistry transactionSynchronizationRegistry;
    protected ExecutorService asyncExecutor;
+
+   private KnownClassesRegistryListener registryListener = new KnownClassesRegistryListener();
 
    private static final Log log = LogFactory.getLog(QueryInterceptor.class, Log.class);
 
@@ -86,15 +98,51 @@ public class QueryInterceptor extends CommandInterceptor {
 
    @Inject
    @SuppressWarnings("unused")
-   public void injectDependencies(TransactionManager transactionManager,
+   protected void injectDependencies(TransactionManager transactionManager,
                                   TransactionSynchronizationRegistry transactionSynchronizationRegistry,
+                                  Cache cache,
+                                  ClusterRegistry<String, Class<?>, Boolean> clusterRegistry,
                                   DataContainer dataContainer,
                                   @ComponentName(KnownComponentNames.ASYNC_TRANSPORT_EXECUTOR) ExecutorService e) {
-      // Fields on superclass.
       this.transactionManager = transactionManager;
       this.transactionSynchronizationRegistry = transactionSynchronizationRegistry;
       this.asyncExecutor = e;
       this.dataContainer = dataContainer;
+      this.clusterRegistry = clusterRegistry;
+
+      knownClassesScope = "QueryKnownClasses#" + cache.getName();
+   }
+
+   @Start
+   protected void start() {
+      clusterRegistry.addListener(knownClassesScope, registryListener);
+
+      for (Class<?> c : clusterRegistry.keys(knownClassesScope)) {
+         enableClass(c);
+      }
+   }
+
+   @Stop
+   protected void stop() {
+      clusterRegistry.removeListener(registryListener);
+   }
+
+   @Listener
+   class KnownClassesRegistryListener {
+
+      @CacheEntryCreated
+      public void created(CacheEntryCreatedEvent<ScopedKey<String, Class>, Boolean> e) {
+         if (!e.isOriginLocal() && !e.isPre() && e.getValue()) {
+            enableClass(e.getKey().getKey());
+         }
+      }
+
+      @CacheEntryModified
+      public void modified(CacheEntryModifiedEvent<ScopedKey<String, Class>, Boolean> e) {
+         if (!e.isOriginLocal() && !e.isPre() && e.getValue()) {
+            enableClass(e.getKey().getKey());
+         }
+      }
    }
 
    protected boolean shouldModifyIndexes(FlagAffectedCommand command, InvocationContext ctx) {
@@ -155,7 +203,7 @@ public class QueryInterceptor extends CommandInterceptor {
 
    private void purgeAllIndexes(TransactionContext transactionContext) {
       transactionContext = transactionContext == null ? makeTransactionalEventContext() : transactionContext;
-      for (Class c : this.knownClasses.keySet()) {
+      for (Class c : clusterRegistry.keys(knownClassesScope)) {
          if (isIndexed(c)) {
             //noinspection unchecked
             performSearchWorks(searchWorkCreator.createPerEntityTypeWorks(c, WorkType.PURGE_ALL), transactionContext);
@@ -185,7 +233,7 @@ public class QueryInterceptor extends CommandInterceptor {
       }
    }
 
-   private boolean isIndexed(final Class<?> c) {
+   public boolean isIndexed(final Class<?> c) {
       final EntityIndexBinding indexBinding = this.searchFactory.getIndexBinding(c);
       return indexBinding != null;
    }
@@ -207,7 +255,7 @@ public class QueryInterceptor extends CommandInterceptor {
    private void enableClassesIncrementally(Class<?>[] classes, boolean locked) {
       ArrayList<Class<?>> toAdd = null;
       for (Class<?> type : classes) {
-         if (!knownClasses.containsKey(type)) {
+         if (!clusterRegistry.containsKey(knownClassesScope, type)) {
             if (toAdd==null)
                toAdd = new ArrayList<Class<?>>(classes.length);
             toAdd.add(type);
@@ -217,15 +265,14 @@ public class QueryInterceptor extends CommandInterceptor {
          return;
       }
       if (locked) {
-         Class[] array = toAdd.toArray(new Class[toAdd.size()]);
          final Transaction transaction = suspend();
          try {
-            searchFactory.addClasses(array);
+            searchFactory.addClasses(toAdd.toArray(new Class[toAdd.size()]));
          } finally {
             resume(transaction);
          }
          for (Class<?> type : toAdd) {
-            knownClasses.put(type, isIndexed(type));
+            clusterRegistry.put(knownClassesScope, type, isIndexed(type));
          }
       } else {
          mutating.lock();
@@ -237,14 +284,27 @@ public class QueryInterceptor extends CommandInterceptor {
       }
    }
 
-   public Map<Class<?>, Boolean> getKnownClasses() {
-      return knownClasses;
+   private void enableClass(Class<?> clazz) {
+      if (isIndexed(clazz)) {
+         return;
+      }
+      mutating.lock();
+      try {
+         final Transaction transaction = suspend();
+         try {
+            searchFactory.addClasses(new Class[]{clazz});
+         } finally {
+            resume(transaction);
+         }
+      } finally {
+         mutating.unlock();
+      }
    }
 
    public boolean updateKnownTypesIfNeeded(Object value) {
       if ( value != null ) {
          Class<?> potentialNewType = value.getClass();
-         if ( ! this.knownClasses.containsKey(potentialNewType) ) {
+         if (!clusterRegistry.containsKey(knownClassesScope, potentialNewType)) {
             mutating.lock();
             try {
                enableClassesIncrementally( new Class[]{potentialNewType}, true);
@@ -253,7 +313,7 @@ public class QueryInterceptor extends CommandInterceptor {
                mutating.unlock();
             }
          }
-         return this.knownClasses.get(potentialNewType);
+         return clusterRegistry.get(knownClassesScope, potentialNewType);
       }
       else {
          return false;

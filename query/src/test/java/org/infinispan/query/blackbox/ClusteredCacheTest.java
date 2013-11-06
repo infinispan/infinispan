@@ -502,7 +502,7 @@ public class ClusteredCacheTest extends MultipleCacheManagersTest {
       if (transactionsEnabled()) transactionManager.begin();
       cache1.put(customeKey1, person1);
       cache1.put(customeKey2, person2);
-      cache2.put(customeKey3, person3);
+      cache1.put(customeKey3, person3);
       if (transactionsEnabled()) transactionManager.commit();
 
       queryParser = createQueryParser("blurb");

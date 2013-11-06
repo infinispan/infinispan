@@ -54,8 +54,7 @@ public class SearchManagerImpl implements SearchManagerImplementor {
             } catch (ClassNotFoundException e) {
                return null;
             }
-            Boolean isIndexed = queryInterceptor.getKnownClasses().get(clazz);
-            return isIndexed != null && isIndexed ? clazz : null;
+            return queryInterceptor.isIndexed(clazz) ? clazz : null;
          }
       };
       return new EmbeddedLuceneQueryFactory(this, entityNamesResolver);

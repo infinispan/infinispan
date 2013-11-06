@@ -8,6 +8,7 @@ import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.global.GlobalConfiguration;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.manager.EmbeddedCacheManager;
+import org.infinispan.notifications.KeyFilter;
 import org.infinispan.transaction.TransactionMode;
 
 import java.util.HashSet;
@@ -27,7 +28,7 @@ public class ClusterRegistryImpl<S, K, V> implements ClusterRegistry<S, K, V> {
    public static final String GLOBAL_REGISTRY_CACHE_NAME = "__cluster_registry_cache__";
 
    private EmbeddedCacheManager cacheManager;
-   private Cache<ScopedKey<S,K>, V> clusterRegistryCache;
+   private volatile Cache<ScopedKey<S, K>, V> clusterRegistryCache;
 
    @Inject
    public void init(EmbeddedCacheManager cacheManager) {
@@ -36,28 +37,34 @@ public class ClusterRegistryImpl<S, K, V> implements ClusterRegistry<S, K, V> {
 
    @Override
    public V put(S scope, K key, V value) {
-      if (value == null) throw new IllegalArgumentException("Null value not allowed!");
+      if (value == null) throw new IllegalArgumentException("Null values are not allowed");
       startRegistryCache();
-      return clusterRegistryCache.put(new ScopedKey<S,K>(scope, key), value);
+      return clusterRegistryCache.put(new ScopedKey<S, K>(scope, key), value);
    }
 
    @Override
    public V remove(S scope, K key) {
       startRegistryCache();
-      return clusterRegistryCache.remove(new ScopedKey(scope, key));
+      return clusterRegistryCache.remove(new ScopedKey<S, K>(scope, key));
    }
 
    @Override
    public V get(S scope, K key) {
       startRegistryCache();
-      return clusterRegistryCache.get(new ScopedKey<S,K>(scope, key));
+      return clusterRegistryCache.get(new ScopedKey<S, K>(scope, key));
+   }
+
+   @Override
+   public boolean containsKey(S scope, K key) {
+      V v = get(scope, key);
+      return v != null;
    }
 
    @Override
    public Set<K> keys(S scope) {
       startRegistryCache();
-      Set result = new HashSet();
-      for (ScopedKey<S,K> key : clusterRegistryCache.keySet()) {
+      Set<K> result = new HashSet<K>();
+      for (ScopedKey<S, K> key : clusterRegistryCache.keySet()) {
          if (key.hasScope(scope)) {
             result.add(key.getKey());
          }
@@ -68,7 +75,7 @@ public class ClusterRegistryImpl<S, K, V> implements ClusterRegistry<S, K, V> {
    @Override
    public void clear(S scope) {
       startRegistryCache();
-      for (ScopedKey key : clusterRegistryCache.keySet()) {
+      for (ScopedKey<S, K> key : clusterRegistryCache.keySet()) {
          if (key.hasScope(scope)) {
             clusterRegistryCache.remove(key);
          }
@@ -79,6 +86,39 @@ public class ClusterRegistryImpl<S, K, V> implements ClusterRegistry<S, K, V> {
    public void clearAll() {
       startRegistryCache();
       clusterRegistryCache.clear();
+   }
+
+   @Override
+   public void addListener(final S scope, final Object listener) {
+      startRegistryCache();
+      clusterRegistryCache.addListener(listener, new KeyFilter() {
+         @Override
+         public boolean accept(Object key) {
+            // All keys are known to be of type ScopedKey
+            ScopedKey<S, K> scopedKey = (ScopedKey<S, K>) key;
+            return scopedKey.hasScope(scope);
+         }
+      });
+   }
+
+   @Override
+   public void addListener(final S scope, final KeyFilter keyFilter, final Object listener) {
+      startRegistryCache();
+      clusterRegistryCache.addListener(listener, new KeyFilter() {
+         @Override
+         public boolean accept(Object key) {
+            // All keys are known to be of type ScopedKey
+            ScopedKey<S, K> scopedKey = (ScopedKey<S, K>) key;
+            return scopedKey.hasScope(scope) && keyFilter.accept(scopedKey.getKey());
+         }
+      });
+   }
+
+   @Override
+   public void removeListener(Object listener) {
+      if (clusterRegistryCache != null) {
+         clusterRegistryCache.removeListener(listener);
+      }
    }
 
    /**

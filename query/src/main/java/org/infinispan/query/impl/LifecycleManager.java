@@ -145,7 +145,7 @@ public class LifecycleManager extends AbstractModuleLifecycle {
       Cache<?, ?> cache = cr.getComponent(Cache.class);
       CommandInitializer initializer = cr.getComponent(CommandInitializer.class);
       EmbeddedCacheManager cacheManager = cr.getGlobalComponentRegistry().getComponent(EmbeddedCacheManager.class);
-      initializer.setCache(cache, cacheManager);
+      initializer.setCacheManager(cacheManager);
 
       QueryBox queryBox = new QueryBox();
       queryBox.setCache(cache.getAdvancedCache());

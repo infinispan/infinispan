@@ -21,6 +21,8 @@ import org.infinispan.jmx.ResourceDMBean;
 import org.infinispan.lifecycle.AbstractModuleLifecycle;
 import org.infinispan.manager.DefaultCacheManager;
 import org.infinispan.manager.EmbeddedCacheManager;
+import org.infinispan.protostream.ProtobufUtil;
+import org.infinispan.protostream.SerializationContext;
 import org.infinispan.query.remote.client.MarshallerRegistration;
 import org.infinispan.query.remote.indexing.ProtobufValueWrapper;
 import org.infinispan.query.remote.indexing.RemoteValueWrapperInterceptor;
@@ -41,14 +43,16 @@ public class LifecycleManager extends AbstractModuleLifecycle {
    private static final Log log = LogFactory.getLog(LifecycleManager.class, Log.class);
 
    private void initProtobufMetadataManager(DefaultCacheManager cacheManager, GlobalComponentRegistry gcr) {
-      ProtobufMetadataManager protobufMetadataManager = new ProtobufMetadataManager(cacheManager);
+      SerializationContext serCtx = ProtobufUtil.newSerializationContext();
       try {
-         MarshallerRegistration.registerMarshallers(protobufMetadataManager.getSerializationContext());
+         MarshallerRegistration.registerMarshallers(serCtx);
       } catch (IOException e) {
          throw new CacheException("Failed to initialise serialization context", e);
       } catch (Descriptors.DescriptorValidationException e) {
          throw new CacheException("Failed to initialise serialization context", e);
       }
+
+      ProtobufMetadataManager protobufMetadataManager = new ProtobufMetadataManager(serCtx);
       gcr.registerComponent(protobufMetadataManager, ProtobufMetadataManager.class);
 
       registerProtobufMetadataManagerMBean(protobufMetadataManager, gcr, cacheManager.getName());
@@ -56,11 +60,14 @@ public class LifecycleManager extends AbstractModuleLifecycle {
 
    @Override
    public void cacheManagerStarting(GlobalComponentRegistry gcr, GlobalConfiguration globalCfg) {
-      EmbeddedCacheManager cacheManager = gcr.getComponent(EmbeddedCacheManager.class);
-      initProtobufMetadataManager((DefaultCacheManager) cacheManager, gcr);
-
       Map<Integer, AdvancedExternalizer<?>> externalizerMap = globalCfg.serialization().advancedExternalizers();
       externalizerMap.put(ExternalizerIds.PROTOBUF_VALUE_WRAPPER, new ProtobufValueWrapper.Externalizer());
+   }
+
+   @Override
+   public void cacheManagerStarted(GlobalComponentRegistry gcr) {
+      EmbeddedCacheManager cacheManager = gcr.getComponent(EmbeddedCacheManager.class);
+      initProtobufMetadataManager((DefaultCacheManager) cacheManager, gcr);
    }
 
    private void registerProtobufMetadataManagerMBean(ProtobufMetadataManager protobufMetadataManager, GlobalComponentRegistry gcr, String cacheManagerName) {
