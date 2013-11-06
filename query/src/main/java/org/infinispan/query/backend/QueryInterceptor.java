@@ -71,18 +71,19 @@ public class QueryInterceptor extends CommandInterceptor {
 
    private final boolean isManualIndexing;
    private final SearchFactoryIntegrator searchFactory;
-   private ClusterRegistry<String, Class<?>, Boolean> clusterRegistry;
-   private String knownClassesScope;
    private final Lock mutating = new ReentrantLock();
    private final KeyTransformationHandler keyTransformationHandler = new KeyTransformationHandler();
+   private final KnownClassesRegistryListener registryListener = new KnownClassesRegistryListener();
+
+   private ClusterRegistry<String, Class<?>, Boolean> clusterRegistry;
+   private String knownClassesScope;
+
    private SearchWorkCreator<Object> searchWorkCreator = new DefaultSearchWorkCreator<Object>();
 
    private DataContainer dataContainer;
    protected TransactionManager transactionManager;
    protected TransactionSynchronizationRegistry transactionSynchronizationRegistry;
    protected ExecutorService asyncExecutor;
-
-   private KnownClassesRegistryListener registryListener = new KnownClassesRegistryListener();
 
    private static final Log log = LogFactory.getLog(QueryInterceptor.class, Log.class);
 
