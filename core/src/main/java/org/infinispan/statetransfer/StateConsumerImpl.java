@@ -14,6 +14,7 @@ import org.infinispan.context.Flag;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.context.InvocationContextContainer;
 import org.infinispan.context.impl.TxInvocationContext;
+import org.infinispan.distribution.L1Manager;
 import org.infinispan.distribution.ch.ConsistentHash;
 import org.infinispan.factories.KnownComponentNames;
 import org.infinispan.factories.annotations.ComponentName;
@@ -95,11 +96,13 @@ public class StateConsumerImpl implements StateConsumer {
    private CacheNotifier cacheNotifier;
    private TotalOrderManager totalOrderManager;
    private BlockingTaskAwareExecutorService remoteCommandsExecutor;
+   private L1Manager l1Manager;
    private long timeout;
    private boolean isFetchEnabled;
    private boolean isTransactional;
    private boolean isInvalidationMode;
    private boolean isTotalOrder;
+   private boolean isL1OnRehash;
    private volatile KeyInvalidationListener keyInvalidationListener; //for test purpose only!
 
    private volatile CacheTopology cacheTopology;
@@ -225,7 +228,8 @@ public class StateConsumerImpl implements StateConsumer {
                     StateTransferLock stateTransferLock,
                     CacheNotifier cacheNotifier,
                     TotalOrderManager totalOrderManager,
-                    @ComponentName(KnownComponentNames.REMOTE_COMMAND_EXECUTOR) BlockingTaskAwareExecutorService remoteCommandsExecutor) {
+                    @ComponentName(KnownComponentNames.REMOTE_COMMAND_EXECUTOR) BlockingTaskAwareExecutorService remoteCommandsExecutor,
+                    L1Manager l1Manager) {
       this.cacheName = cache.getName();
       this.executorService = executorService;
       this.stateTransferManager = stateTransferManager;
@@ -242,11 +246,13 @@ public class StateConsumerImpl implements StateConsumer {
       this.cacheNotifier = cacheNotifier;
       this.totalOrderManager = totalOrderManager;
       this.remoteCommandsExecutor = remoteCommandsExecutor;
+      this.l1Manager = l1Manager;
 
       isInvalidationMode = configuration.clustering().cacheMode().isInvalidation();
 
       isTransactional = configuration.transaction().transactionMode().isTransactional();
       isTotalOrder = configuration.transaction().transactionProtocol().isTotalOrder();
+      isL1OnRehash = configuration.clustering().l1().onRehash();
 
       timeout = configuration.clustering().stateTransfer().timeout();
    }
@@ -384,7 +390,7 @@ public class StateConsumerImpl implements StateConsumer {
                   // any data for segments we no longer own should be removed from data container and cache store or moved to L1 if enabled
                   // If L1.onRehash is enabled, "removed" segments are actually moved to L1. The new (and old) owners
                   // will automatically add the nodes that no longer own a key to that key's requestors list.
-                  invalidateSegments(newSegments, removedSegments);
+                  invalidateSegments(newSegments, removedSegments, cacheTopology.getWriteConsistentHash(), previousReadCh);
                }
 
                // check if any of the existing transfers should be restarted from a different source because the initial source is no longer a member
@@ -841,7 +847,8 @@ public class StateConsumerImpl implements StateConsumer {
       }
    }
 
-   private void invalidateSegments(final Set<Integer> newSegments, final Set<Integer> segmentsToL1) {
+   private void invalidateSegments(final Set<Integer> newSegments, final Set<Integer> segmentsToL1,
+                                   ConsistentHash newCH, ConsistentHash prevCH) {
       if (keyInvalidationListener != null) {
          keyInvalidationListener.beforeInvalidation(newSegments, segmentsToL1);
       }
@@ -867,6 +874,23 @@ public class StateConsumerImpl implements StateConsumer {
          } else if (!newSegments.contains(keySegment)) {
             keysToRemove.add(key);
          }
+
+         // If l1 on rehash is enabled we need to add the requestors for the previous owner who is now not an owner if
+         // we are an owner
+         if (isL1OnRehash) {
+            List<Address> owners = newCH.locateOwnersForSegment(keySegment);
+            if (owners.contains(rpcManager.getAddress())) {
+               log.tracef("L1 on rehash is enabled - checking if previous owners for key %s need to be added to requestors",
+                          key);
+               for (Address address : prevCH.locateOwnersForSegment(keySegment)) {
+                  if (!owners.contains(address)) {
+                     log.tracef("Adding previous owner %s to L1 requestors for key %s as it is no longer an owner",
+                                address, key);
+                     l1Manager.addRequestor(key, address);
+                  }
+               }
+            }
+         }
       }
 
       // gather all keys from cache store that belong to the segments that are being removed/moved to L1
@@ -889,7 +913,7 @@ public class StateConsumerImpl implements StateConsumer {
          log.failedLoadingKeysFromCacheStore(e);
       }
 
-      if (configuration.clustering().l1().onRehash()) {
+      if (isL1OnRehash) {
          log.debugf("Moving to L1 state for segments %s of cache %s", segmentsToL1, cacheName);
       } else {
          log.debugf("Removing state for segments %s of cache %s", segmentsToL1, cacheName);

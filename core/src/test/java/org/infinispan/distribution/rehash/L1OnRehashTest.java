@@ -90,12 +90,9 @@ public class L1OnRehashTest extends BaseDistFunctionalTest<Object, String> {
 
       for (int i = 0; i < keys.size(); i++) {
          Object key = keys.get(i);
-         // TODO Change the 2nd parameter to false when https://issues.jboss.org/browse/ISPN-2475 is fixed
-         assertOwnershipAndNonOwnership(key, l1OnRehash);
-         // TODO Remove this check when https://issues.jboss.org/browse/ISPN-2475 is fixed
-         if (!l1OnRehash) {
-            assertOnAllCaches(key, "nv" + (i + 1));
-         }
+         // All the L1 values should be invalidated from the above puts
+         assertOwnershipAndNonOwnership(key, false);
+         assertOnAllCaches(key, "nv" + (i + 1));
       }
    }
 }
