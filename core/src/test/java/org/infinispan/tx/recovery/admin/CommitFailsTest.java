@@ -32,7 +32,8 @@ public class CommitFailsTest extends AbstractRecoveryTest {
    @Override
    protected void createCacheManagers() throws Throwable {
       ConfigurationBuilder configuration = defaultRecoveryConfig();
-      configuration.transaction().autoCommit(false);
+      configuration.transaction().autoCommit(false)
+            .locking().writeSkewCheck(false);
       createCluster(configuration, 3);
       waitForClusterToForm();
 

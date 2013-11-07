@@ -66,6 +66,7 @@ public class NonTxStateTransferOverwritingValue2Test extends MultipleCacheManage
       ConfigurationBuilder c = new ConfigurationBuilder();
       c.clustering().cacheMode(CacheMode.DIST_SYNC);
       c.transaction().transactionMode(TransactionMode.NON_TRANSACTIONAL);
+      c.locking().writeSkewCheck(false);
       return c;
    }
 

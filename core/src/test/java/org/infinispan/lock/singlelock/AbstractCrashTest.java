@@ -57,6 +57,10 @@ public abstract class AbstractCrashTest extends MultipleCacheManagersTest {
             .l1().disable()
             .hash().numOwners(3)
             .stateTransfer().fetchInMemoryState(false);
+
+      if (lockingMode == LockingMode.OPTIMISTIC)
+         c.locking().writeSkewCheck(false);
+
       return c;
    }
 

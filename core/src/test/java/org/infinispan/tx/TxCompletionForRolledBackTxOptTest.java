@@ -20,7 +20,9 @@ public class TxCompletionForRolledBackTxOptTest extends MultipleCacheManagersTes
    @Override
    protected void createCacheManagers() throws Throwable {
       ConfigurationBuilder dcc = getDefaultClusteredCacheConfig(CacheMode.DIST_SYNC, true);
-      dcc.clustering().hash().numOwners(1).transaction().lockingMode(LockingMode.OPTIMISTIC);
+      dcc.clustering().hash().numOwners(1)
+            .transaction().lockingMode(LockingMode.OPTIMISTIC)
+            .locking().writeSkewCheck(false);
       createCluster(dcc, 3);
       waitForClusterToForm();
       advancedCache(2).addInterceptor(new RollbackBeforePrepareTest.FailPrepareInterceptor(), 1);

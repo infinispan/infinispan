@@ -39,7 +39,7 @@ public class PrepareProcessedAfterOriginatorCrashTest extends MultipleCacheManag
    @Override
    protected void createCacheManagers() throws Throwable {
       ConfigurationBuilder dcc = getDefaultClusteredCacheConfig(CacheMode.DIST_SYNC, true);
-      dcc.clustering().hash().numOwners(1);
+      dcc.clustering().hash().numOwners(1).locking().writeSkewCheck(false);
       createClusteredCaches(2, dcc);
    }
 

@@ -82,7 +82,9 @@ public abstract class BaseDistFunctionalTest<K, V> extends MultipleCacheManagers
          configuration.locking().isolationLevel(IsolationLevel.REPEATABLE_READ);
       }
       if (tx) {
-         configuration.invocationBatching().enable();
+         configuration
+               .invocationBatching().enable()
+               .locking().writeSkewCheck(false);
       }
       if (sync) configuration.clustering().sync().replTimeout(60, TimeUnit.SECONDS);
       configuration.locking().lockAcquisitionTimeout(lockTimeout, TimeUnit.SECONDS);

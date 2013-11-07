@@ -1,6 +1,7 @@
 package org.infinispan.configuration.cache;
 
 import org.infinispan.transaction.LockingMode;
+import org.infinispan.transaction.TransactionMode;
 
 /**
  * Helper configuration methods.
@@ -35,6 +36,28 @@ public class Configurations {
       return cfg.locking().writeSkewCheck() &&
             cfg.transaction().lockingMode() == LockingMode.OPTIMISTIC &&
             cfg.versioning().enabled();
+   }
+
+   /**
+    * Strict optimistic transactions require repeteable read, write skew and
+    * simple versioning configuration in order for conditional cache
+    * operations to behave as expected. This method returns true if the
+    * configuration is strictly optimistic transactional.
+    *
+    * @param builder configuration to inspect to make strict optimistic
+    *                transaction decision.
+    * @return true if configuration is strictly optimistic transactional,
+    * false otherwise.
+    */
+   public static boolean isStrictOptimisticTransaction(ConfigurationBuilder builder) {
+      TransactionConfigurationBuilder transactionBuilder = builder.transaction();
+      TransactionMode txMode = transactionBuilder.transactionMode;
+      CacheMode cacheMode = builder.clustering().cacheMode();
+      return txMode != null
+            && txMode.isTransactional()
+            && transactionBuilder.lockingMode == LockingMode.OPTIMISTIC
+            && cacheMode.isSynchronous()
+            && !cacheMode.isInvalidation();
    }
 
 }

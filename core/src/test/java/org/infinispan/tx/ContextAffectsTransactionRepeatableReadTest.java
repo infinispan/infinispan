@@ -25,6 +25,6 @@ import static org.testng.AssertJUnit.assertEquals;
 public class ContextAffectsTransactionRepeatableReadTest extends ContextAffectsTransactionReadCommittedTest {
    @Override
    protected void configure(ConfigurationBuilder builder) {
-      builder.locking().isolationLevel(IsolationLevel.REPEATABLE_READ);
+      builder.locking().isolationLevel(IsolationLevel.REPEATABLE_READ).writeSkewCheck(false);
    }
 }

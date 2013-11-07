@@ -37,6 +37,7 @@ public class MainOwnerChangesLockTest extends MultipleCacheManagersTest {
       dccc.transaction().transactionManagerLookup(new DummyTransactionManagerLookup());
       dccc.clustering().hash().l1().disable().onRehash(false).locking().lockAcquisitionTimeout(1000l);
       dccc.clustering().stateTransfer().fetchInMemoryState(true);
+      dccc.locking().writeSkewCheck(false);
       createCluster(dccc, 2);
       waitForClusterToForm();
    }

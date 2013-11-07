@@ -4,6 +4,7 @@ import org.infinispan.commands.write.WriteCommand;
 import org.infinispan.commons.equivalence.Equivalence;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.container.versioning.NumericVersion;
+import org.infinispan.container.versioning.NumericVersionGenerator;
 import org.infinispan.container.versioning.VersionGenerator;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.annotations.Start;
@@ -35,7 +36,7 @@ public class TransactionFactory {
    private TxFactoryEnum txFactoryEnum;
 
    private Configuration configuration;
-   private VersionGenerator clusterIdGenerator;
+   private NumericVersionGenerator clusterIdGenerator;
    private boolean isClustered;
    private Equivalence<Object> keyEquivalence;
 
@@ -49,7 +50,7 @@ public class TransactionFactory {
          }
 
          @Override
-         public GlobalTransaction newGlobalTransaction(Address addr, boolean remote, VersionGenerator clusterIdGenerator, boolean clustered) {
+         public GlobalTransaction newGlobalTransaction(Address addr, boolean remote, NumericVersionGenerator clusterIdGenerator, boolean clustered) {
             RecoveryAwareDldGlobalTransaction dldGlobalTransaction = new RecoveryAwareDldGlobalTransaction(addr, remote);
             // TODO: Not ideal... but causes no issues so far. Could the internal id be an Object instead of a long?
             dldGlobalTransaction.setInternalId(((NumericVersion) clusterIdGenerator.generateNew()).getVersion());
@@ -80,7 +81,7 @@ public class TransactionFactory {
          }
 
          @Override
-         public GlobalTransaction newGlobalTransaction(Address addr, boolean remote, VersionGenerator clusterIdGenerator, boolean clustered) {
+         public GlobalTransaction newGlobalTransaction(Address addr, boolean remote, NumericVersionGenerator clusterIdGenerator, boolean clustered) {
             return addCoinToss(new DldGlobalTransaction(addr, remote));
          }
 
@@ -108,7 +109,7 @@ public class TransactionFactory {
          }
 
          @Override
-         public GlobalTransaction newGlobalTransaction(Address addr, boolean remote, VersionGenerator clusterIdGenerator, boolean clustered) {
+         public GlobalTransaction newGlobalTransaction(Address addr, boolean remote, NumericVersionGenerator clusterIdGenerator, boolean clustered) {
             return addCoinToss(new DldGlobalTransaction(addr, remote));
          }
 
@@ -134,9 +135,8 @@ public class TransactionFactory {
          }
 
          @Override
-         public GlobalTransaction newGlobalTransaction(Address addr, boolean remote, VersionGenerator clusterIdGenerator, boolean clustered) {
+         public GlobalTransaction newGlobalTransaction(Address addr, boolean remote, NumericVersionGenerator clusterIdGenerator, boolean clustered) {
             RecoveryAwareGlobalTransaction recoveryAwareGlobalTransaction = new RecoveryAwareGlobalTransaction(addr, remote);
-            // TODO: Not ideal... but causes no issues so far. Could the internal id be an Object instead of a long?
             recoveryAwareGlobalTransaction.setInternalId(((NumericVersion) clusterIdGenerator.generateNew()).getVersion());
             return recoveryAwareGlobalTransaction;
          }
@@ -164,7 +164,7 @@ public class TransactionFactory {
          }
 
          @Override
-         public GlobalTransaction newGlobalTransaction(Address addr, boolean remote, VersionGenerator clusterIdGenerator, boolean clustered) {
+         public GlobalTransaction newGlobalTransaction(Address addr, boolean remote, NumericVersionGenerator clusterIdGenerator, boolean clustered) {
             return new GlobalTransaction(addr, remote);
          }
 
@@ -191,7 +191,7 @@ public class TransactionFactory {
          }
 
          @Override
-         public GlobalTransaction newGlobalTransaction(Address addr, boolean remote, VersionGenerator clusterIdGenerator, boolean clustered) {
+         public GlobalTransaction newGlobalTransaction(Address addr, boolean remote, NumericVersionGenerator clusterIdGenerator, boolean clustered) {
             return new GlobalTransaction(addr, remote);
          }
 
@@ -214,7 +214,7 @@ public class TransactionFactory {
 
       public abstract LocalTransaction newLocalTransaction(Transaction tx, GlobalTransaction gtx, boolean implicitTransaction, int topologyId,
             Equivalence<Object> keyEquivalence);
-      public abstract GlobalTransaction newGlobalTransaction(Address addr, boolean remote, VersionGenerator clusterIdGenerator, boolean clustered);
+      public abstract GlobalTransaction newGlobalTransaction(Address addr, boolean remote, NumericVersionGenerator clusterIdGenerator, boolean clustered);
       public abstract GlobalTransaction newGlobalTransaction();
 
       protected long generateRandomId() {
@@ -258,9 +258,9 @@ public class TransactionFactory {
    }
 
    @Inject
-   public void init(Configuration configuration, VersionGenerator clusterIdGenerator) {
+   public void init(Configuration configuration) {
       this.configuration = configuration;
-      this.clusterIdGenerator = clusterIdGenerator;
+      this.clusterIdGenerator = new NumericVersionGenerator();
    }
 
    @Start

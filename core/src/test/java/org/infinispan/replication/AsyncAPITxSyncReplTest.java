@@ -30,11 +30,7 @@ public class AsyncAPITxSyncReplTest extends MultipleCacheManagersTest {
    }
 
    protected ConfigurationBuilder getConfig() {
-      return getDefaultClusteredCacheConfig(sync() ? CacheMode.REPL_SYNC : CacheMode.REPL_ASYNC, true);
-   }
-
-   protected boolean sync() {
-      return true;
+      return getDefaultClusteredCacheConfig(CacheMode.REPL_SYNC, true);
    }
 
    protected void asyncWait(boolean tx, Class<? extends WriteCommand>... cms) {
