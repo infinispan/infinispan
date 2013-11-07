@@ -84,8 +84,9 @@ public class EntryWrappingInterceptor extends CommandInterceptor {
 
    @Start
    public void start() {
-      isUsingLockDelegation = !cacheConfiguration.transaction().transactionMode().isTransactional()
-            && cacheConfiguration.clustering().cacheMode().isDistributed();
+      isUsingLockDelegation = !cacheConfiguration.transaction().transactionMode().isTransactional() &&
+            (cacheConfiguration.clustering().cacheMode().isDistributed() ||
+                   cacheConfiguration.clustering().cacheMode().isReplicated());
       isInvalidation = cacheConfiguration.clustering().cacheMode().isInvalidation();
    }
 
