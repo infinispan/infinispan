@@ -8,7 +8,6 @@ import org.infinispan.commands.write.PutMapCommand;
 import org.infinispan.commands.write.RemoveCommand;
 import org.infinispan.commands.write.ReplaceCommand;
 import org.infinispan.commands.write.WriteCommand;
-import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.container.DataContainer;
 import org.infinispan.context.Flag;
 import org.infinispan.context.InvocationContext;
@@ -27,6 +26,7 @@ import org.infinispan.util.logging.LogFactory;
 
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
+import org.infinispan.commons.util.concurrent.jdk8backported.LongAdder;
 import java.util.concurrent.atomic.AtomicLong;
 
 /**
@@ -37,18 +37,18 @@ import java.util.concurrent.atomic.AtomicLong;
  */
 @MBean(objectName = "Statistics", description = "General statistics such as timings, hit/miss ratio, etc.")
 public class CacheMgmtInterceptor extends JmxStatsCommandInterceptor {
-   private final AtomicLong hitTimes = new AtomicLong(0);
-   private final AtomicLong missTimes = new AtomicLong(0);
-   private final AtomicLong storeTimes = new AtomicLong(0);
-   private final AtomicLong removeTimes = new AtomicLong(0);
-   private final AtomicLong hits = new AtomicLong(0);
-   private final AtomicLong misses = new AtomicLong(0);
-   private final AtomicLong stores = new AtomicLong(0);
-   private final AtomicLong evictions = new AtomicLong(0);
+   private final LongAdder hitTimes = new LongAdder();
+   private final LongAdder missTimes = new LongAdder();
+   private final LongAdder storeTimes = new LongAdder();
+   private final LongAdder removeTimes = new LongAdder();
+   private final LongAdder hits = new LongAdder();
+   private final LongAdder misses = new LongAdder();
+   private final LongAdder stores = new LongAdder();
+   private final LongAdder evictions = new LongAdder();
    private final AtomicLong startNanoseconds = new AtomicLong(0);
    private final AtomicLong resetNanoseconds = new AtomicLong(0);
-   private final AtomicLong removeHits = new AtomicLong(0);
-   private final AtomicLong removeMisses = new AtomicLong(0);
+   private final LongAdder removeHits = new LongAdder();
+   private final LongAdder removeMisses = new LongAdder();
 
    private DataContainer dataContainer;
    private TimeService timeService;
@@ -77,7 +77,7 @@ public class CacheMgmtInterceptor extends JmxStatsCommandInterceptor {
    public Object visitEvictCommand(InvocationContext ctx, EvictCommand command) throws Throwable {
       Object returnValue = invokeNextInterceptor(ctx, command);
       if (getStatisticsEnabled(command))
-         evictions.incrementAndGet();
+         evictions.increment();
 
       return returnValue;
    }
@@ -95,11 +95,11 @@ public class CacheMgmtInterceptor extends JmxStatsCommandInterceptor {
          long intervalMilliseconds = timeService.timeDuration(start, TimeUnit.MILLISECONDS);
          if (ctx.isOriginLocal()) {
             if (retval == null) {
-               missTimes.getAndAdd(intervalMilliseconds);
-               misses.incrementAndGet();
+               missTimes.add(intervalMilliseconds);
+               misses.increment();
             } else {
-               hitTimes.getAndAdd(intervalMilliseconds);
-               hits.incrementAndGet();
+               hitTimes.add(intervalMilliseconds);
+               hits.increment();
             }
          }
       }
@@ -120,8 +120,8 @@ public class CacheMgmtInterceptor extends JmxStatsCommandInterceptor {
          final long intervalMilliseconds = timeService.timeDuration(start, TimeUnit.MILLISECONDS);
          final Map<Object, Object> data = command.getMap();
          if (data != null && ctx.isOriginLocal() && !data.isEmpty()) {
-            storeTimes.getAndAdd(intervalMilliseconds);
-            stores.getAndAdd(data.size());
+            storeTimes.add(intervalMilliseconds);
+            stores.add(data.size());
          }
       }
 
@@ -149,8 +149,8 @@ public class CacheMgmtInterceptor extends JmxStatsCommandInterceptor {
 
       if (statisticsEnabled && ctx.isOriginLocal() && command.isSuccessful()) {
          long intervalMilliseconds = timeService.timeDuration(start, TimeUnit.MILLISECONDS);
-         storeTimes.getAndAdd(intervalMilliseconds);
-         stores.incrementAndGet();
+         storeTimes.add(intervalMilliseconds);
+         stores.increment();
       }
 
       return retval;
@@ -167,11 +167,11 @@ public class CacheMgmtInterceptor extends JmxStatsCommandInterceptor {
 
       if (statisticsEnabled && ctx.isOriginLocal()) {
          if (retval == null) {
-            removeMisses.incrementAndGet();
+            removeMisses.increment();
          } else {
             long intervalMilliseconds = timeService.timeDuration(start, TimeUnit.MILLISECONDS);
-            removeTimes.getAndAdd(intervalMilliseconds);
-            removeHits.incrementAndGet();
+            removeTimes.add(intervalMilliseconds);
+            removeHits.increment();
          }
       }
 
@@ -184,7 +184,7 @@ public class CacheMgmtInterceptor extends JmxStatsCommandInterceptor {
          measurementType = MeasurementType.TRENDSUP,
          displayType = DisplayType.SUMMARY)
    public long getHits() {
-      return hits.get();
+      return hits.sum();
    }
 
    @ManagedAttribute(
@@ -194,7 +194,7 @@ public class CacheMgmtInterceptor extends JmxStatsCommandInterceptor {
          displayType = DisplayType.SUMMARY
    )
    public long getMisses() {
-      return misses.get();
+      return misses.sum();
    }
 
    @ManagedAttribute(
@@ -204,7 +204,7 @@ public class CacheMgmtInterceptor extends JmxStatsCommandInterceptor {
          displayType = DisplayType.SUMMARY
    )
    public long getRemoveHits() {
-      return removeHits.get();
+      return removeHits.sum();
    }
 
    @ManagedAttribute(
@@ -214,7 +214,7 @@ public class CacheMgmtInterceptor extends JmxStatsCommandInterceptor {
          displayType = DisplayType.SUMMARY
    )
    public long getRemoveMisses() {
-      return removeMisses.get();
+      return removeMisses.sum();
    }
 
    @ManagedAttribute(
@@ -224,7 +224,7 @@ public class CacheMgmtInterceptor extends JmxStatsCommandInterceptor {
          displayType = DisplayType.SUMMARY
    )
    public long getStores() {
-      return stores.get();
+      return stores.sum();
    }
 
    @ManagedAttribute(
@@ -234,7 +234,7 @@ public class CacheMgmtInterceptor extends JmxStatsCommandInterceptor {
          displayType = DisplayType.SUMMARY
    )
    public long getEvictions() {
-      return evictions.get();
+      return evictions.sum();
    }
 
    @ManagedAttribute(
@@ -245,8 +245,8 @@ public class CacheMgmtInterceptor extends JmxStatsCommandInterceptor {
    )
    @SuppressWarnings("unused")
    public double getHitRatio() {
-      long hitsL = hits.get();
-      double total = hitsL + misses.get();
+      long hitsL = hits.sum();
+      double total = hitsL + misses.sum();
       // The reason for <= is that equality checks
       // should be avoided for floating point numbers.
       if (total <= 0)
@@ -262,9 +262,9 @@ public class CacheMgmtInterceptor extends JmxStatsCommandInterceptor {
    )
    @SuppressWarnings("unused")
    public double getReadWriteRatio() {
-      if (stores.get() == 0)
+      if (stores.sum() == 0)
          return 0;
-      return (((double) (hits.get() + misses.get()) / (double) stores.get()));
+      return (((double) (hits.sum() + misses.sum()) / (double) stores.sum()));
    }
 
    @ManagedAttribute(
@@ -275,10 +275,10 @@ public class CacheMgmtInterceptor extends JmxStatsCommandInterceptor {
    )
    @SuppressWarnings("unused")
    public long getAverageReadTime() {
-      long total = hits.get() + misses.get();
+      long total = hits.sum() + misses.sum();
       if (total == 0)
          return 0;
-      return (hitTimes.get() + missTimes.get()) / total;
+      return (hitTimes.sum() + missTimes.sum()) / total;
    }
 
    @ManagedAttribute(
@@ -289,9 +289,9 @@ public class CacheMgmtInterceptor extends JmxStatsCommandInterceptor {
    )
    @SuppressWarnings("unused")
    public long getAverageWriteTime() {
-      if (stores.get() == 0)
+      if (stores.sum() == 0)
          return 0;
-      return (storeTimes.get()) / stores.get();
+      return (storeTimes.sum()) / stores.sum();
    }
 
    @ManagedAttribute(
@@ -305,7 +305,7 @@ public class CacheMgmtInterceptor extends JmxStatsCommandInterceptor {
       long removes = getRemoveHits();
       if (removes == 0)
          return 0;
-      return (removeTimes.get()) / removes;
+      return (removeTimes.sum()) / removes;
    }
 
    @ManagedAttribute(
@@ -345,15 +345,16 @@ public class CacheMgmtInterceptor extends JmxStatsCommandInterceptor {
          displayName = "Reset Statistics (Statistics)"
    )
    public void resetStatistics() {
-      hits.set(0);
-      misses.set(0);
-      stores.set(0);
-      evictions.set(0);
-      hitTimes.set(0);
-      missTimes.set(0);
-      storeTimes.set(0);
-      removeHits.set(0);
-      removeMisses.set(0);
+      hits.reset();
+      misses.reset();
+      stores.reset();
+      evictions.reset();
+      hitTimes.reset();
+      missTimes.reset();
+      storeTimes.reset();
+      removeHits.reset();
+      removeTimes.reset();
+      removeMisses.reset();
       resetNanoseconds.set(timeService.time());
    }
 
