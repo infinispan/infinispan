@@ -1,24 +1,20 @@
 package org.infinispan.statetransfer;
 
 import org.infinispan.Cache;
-import org.infinispan.commons.hash.Hash;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
-import org.infinispan.distribution.ch.ConsistentHashFactory;
-import org.infinispan.distribution.ch.DefaultConsistentHash;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.CleanupAfterMethod;
+import org.infinispan.util.SingleSegmentConsistentHashFactory;
 import org.testng.AssertJUnit;
 import org.testng.annotations.Test;
 
-import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.Callable;
 import java.util.concurrent.CountDownLatch;
@@ -52,7 +48,7 @@ public class TxReadAfterLosingOwnershipTest extends MultipleCacheManagersTest {
    protected final ConfigurationBuilder createConfigurationBuilder() {
       ConfigurationBuilder builder = getDefaultClusteredCacheConfig(CacheMode.DIST_SYNC, transactional());
       builder.clustering()
-            .hash().numOwners(2).consistentHashFactory(new SingleKeyConsistentHashFactory())
+            .hash().numOwners(2).consistentHashFactory(new SingleKeyConsistentHashFactory()).numSegments(1)
             .l1().enabled(l1())
             .stateTransfer().fetchInMemoryState(true);
       return builder;
@@ -138,40 +134,9 @@ public class TxReadAfterLosingOwnershipTest extends MultipleCacheManagersTest {
       }
    }
 
-   public static class SingleKeyConsistentHashFactory implements ConsistentHashFactory<DefaultConsistentHash>, Serializable {
+   public static class SingleKeyConsistentHashFactory extends SingleSegmentConsistentHashFactory {
 
-
-      @Override
-      public DefaultConsistentHash create(Hash hashFunction, int numOwners, int numSegments, List<Address> members,
-                                          Map<Address, Float> capacityFactors) {
-         return new DefaultConsistentHash(hashFunction, numOwners, 1, members, null,
-                                          new List[]{createOwnersCollection(members, numOwners)});
-      }
-
-      @Override
-      public DefaultConsistentHash updateMembers(DefaultConsistentHash baseCH, List<Address> newMembers,
-                                                 Map<Address, Float> capacityFactors) {
-         final int numOwners = baseCH.getNumOwners();
-         DefaultConsistentHash updated = new DefaultConsistentHash(baseCH.getHashFunction(), numOwners, 1, newMembers, null,
-                                                                   new List[]{createOwnersCollection(baseCH.getMembers(), numOwners)});
-         return baseCH.equals(updated) ? baseCH : updated;
-      }
-
-      @Override
-      public DefaultConsistentHash rebalance(DefaultConsistentHash baseCH) {
-         final List<Address> members = baseCH.getMembers();
-         final int numOwners = baseCH.getNumOwners();
-         DefaultConsistentHash rebalanced = new DefaultConsistentHash(baseCH.getHashFunction(), numOwners, 1, members, null,
-                                                                      new List[]{createOwnersCollection(members, numOwners)});
-         return baseCH.equals(rebalanced) ? baseCH : rebalanced;
-      }
-
-      @Override
-      public DefaultConsistentHash union(DefaultConsistentHash ch1, DefaultConsistentHash ch2) {
-         return ch1.union(ch2);
-      }
-
-      private static List<Address> createOwnersCollection(List<Address> members, int numberOfOwners) {
+      protected final List<Address> createOwnersCollection(List<Address> members, int numberOfOwners) {
          //the owners will be the first member and the last (numberOfOwners - 1)-th members
          List<Address> owners = new ArrayList<Address>(numberOfOwners);
          owners.add(members.get(0));
