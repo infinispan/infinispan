@@ -8,6 +8,7 @@ import org.infinispan.commands.write.RemoveCommand;
 import org.infinispan.commands.write.ReplaceCommand;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.cache.EvictionConfiguration;
+import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.eviction.ActivationManager;
 import org.infinispan.eviction.EvictionStrategy;
@@ -81,8 +82,14 @@ public class ActivationInterceptor extends CacheLoaderInterceptor {
 
    @Override
    public Object visitGetKeyValueCommand(InvocationContext ctx, GetKeyValueCommand command) throws Throwable {
+      CacheEntry e = ctx.lookupEntry(command.getKey());
+      // We only activate (remove) the store entry if we need to look it up
+      boolean shouldActivateWhenFound = e == null || e.isNull() || e.getValue() == null;
       Object retval = super.visitGetKeyValueCommand(ctx, command);
-      removeFromStoreIfNeeded(command.getKey());
+      // Oh also only activate if we found a value - this catches things such as Flag.SKIP_CACHE_STORE
+      if (retval != null && shouldActivateWhenFound) {
+         removeFromStoreIfNeeded(command.getKey());
+      }
       return retval;
    }
 
