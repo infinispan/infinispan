@@ -1,11 +1,7 @@
 package org.infinispan.interceptors;
 
 import org.infinispan.commands.FlagAffectedCommand;
-import org.infinispan.commands.read.GetKeyValueCommand;
-import org.infinispan.commands.write.PutKeyValueCommand;
 import org.infinispan.commands.write.PutMapCommand;
-import org.infinispan.commands.write.RemoveCommand;
-import org.infinispan.commands.write.ReplaceCommand;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.cache.EvictionConfiguration;
 import org.infinispan.container.entries.CacheEntry;
@@ -14,6 +10,7 @@ import org.infinispan.eviction.ActivationManager;
 import org.infinispan.eviction.EvictionStrategy;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.annotations.Start;
+import org.infinispan.interceptors.locking.ClusteringDependentLogic;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
@@ -26,6 +23,7 @@ public class ActivationInterceptor extends CacheLoaderInterceptor {
    private Configuration cfg;
    private boolean isManualEviction;
    private ActivationManager activationManager;
+   private ClusteringDependentLogic cdl;
 
    @Override
    protected Log getLog() {
@@ -33,9 +31,10 @@ public class ActivationInterceptor extends CacheLoaderInterceptor {
    }
 
    @Inject
-   public void inject(Configuration cfg, ActivationManager activationManager) {
+   public void inject(Configuration cfg, ActivationManager activationManager, ClusteringDependentLogic cdl) {
       this.cfg = cfg;
       this.activationManager = activationManager;
+      this.cdl = cdl;
    }
 
    @Start(priority = 15)
@@ -49,48 +48,33 @@ public class ActivationInterceptor extends CacheLoaderInterceptor {
    }
 
    @Override
-   public Object visitPutKeyValueCommand(InvocationContext ctx, PutKeyValueCommand command) throws Throwable {
-      Object retval = super.visitPutKeyValueCommand(ctx, command);
-      removeFromStoreIfNeeded(command.getKey());
-
-      return retval;
-   }
-
-   @Override
-   public Object visitRemoveCommand(InvocationContext ctx, RemoveCommand command) throws Throwable {
-      Object retval = super.visitRemoveCommand(ctx, command);
-      removeFromStoreIfNeeded(command.getKey());
-      return retval;
-   }
-
-   @Override
-   public Object visitReplaceCommand(InvocationContext ctx, ReplaceCommand command) throws Throwable {
-      Object retval = super.visitReplaceCommand(ctx, command);
-      removeFromStoreIfNeeded(command.getKey());
-      return retval;
-   }
-
-
-   @Override
    public Object visitPutMapCommand(InvocationContext ctx, PutMapCommand command) throws Throwable {
+      // Load the keys for our map into the data container that we are using removing them from the store.
+      // This way when we overwrite the values on commit they won't be in loader and if we rollback they won't be
+      // in the loader either but will be in data container at least
+      for (Object key : command.getAffectedKeys()) {
+         loadIfNeeded(ctx, key, false, command);
+      }
       Object retval = super.visitPutMapCommand(ctx, command);
-      removeFromStoreIfNeeded(command.getMap().keySet().toArray());
       return retval;
    }
 
-   // read commands
-
    @Override
-   public Object visitGetKeyValueCommand(InvocationContext ctx, GetKeyValueCommand command) throws Throwable {
-      CacheEntry e = ctx.lookupEntry(command.getKey());
-      // We only activate (remove) the store entry if we need to look it up
-      boolean shouldActivateWhenFound = e == null || e.isNull() || e.getValue() == null;
-      Object retval = super.visitGetKeyValueCommand(ctx, command);
-      // Oh also only activate if we found a value - this catches things such as Flag.SKIP_CACHE_STORE
-      if (retval != null && shouldActivateWhenFound) {
-         removeFromStoreIfNeeded(command.getKey());
+   protected Boolean loadIfNeeded(InvocationContext ctx, Object key, boolean isRetrieval, FlagAffectedCommand cmd) throws Throwable {
+      Boolean loaded = super.loadIfNeeded(ctx, key, isRetrieval, cmd);
+      if (loaded == Boolean.TRUE) {
+         if (enabled && isManualEviction) {
+            // check if value was loaded
+            CacheEntry e = ctx.lookupEntry(key);
+            // We have to commit this before we remove from the store so there isn't a gap where the entry isn't visible
+            // This should always be true given that loaded was true, but just sanity check
+            if (e != null && e.isLoaded()) {
+               cdl.commitEntry(e, null, cmd, ctx);
+               removeFromStoreIfNeeded(key);
+            }
+         }
       }
-      return retval;
+      return loaded;
    }
 
    @Override
