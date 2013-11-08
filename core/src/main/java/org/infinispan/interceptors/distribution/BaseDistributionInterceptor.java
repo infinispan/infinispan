@@ -23,8 +23,10 @@ import org.infinispan.remoting.responses.SuccessfulResponse;
 import org.infinispan.remoting.rpc.ResponseFilter;
 import org.infinispan.remoting.rpc.ResponseMode;
 import org.infinispan.remoting.rpc.RpcOptions;
+import org.infinispan.remoting.rpc.RpcOptionsBuilder;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.statetransfer.OutdatedTopologyException;
+import org.infinispan.topology.CacheTopology;
 import org.infinispan.transaction.xa.GlobalTransaction;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
@@ -53,6 +55,7 @@ public abstract class BaseDistributionInterceptor extends ClusteringInterceptor 
    protected RemoteValueRetrievedListener rvrl;
 
    private static final Log log = LogFactory.getLog(BaseDistributionInterceptor.class);
+   private static final boolean trace = log.isTraceEnabled();
 
    @Override
    protected Log getLog() {
@@ -73,24 +76,70 @@ public abstract class BaseDistributionInterceptor extends ClusteringInterceptor 
       ClusteredGetCommand get = cf.buildClusteredGetCommand(key, command.getFlags(), acquireRemoteLock, gtx);
       get.setWrite(isWrite);
 
-      List<Address> targets = new ArrayList<Address>(stateTransferManager.getCacheTopology().getReadConsistentHash().locateOwners(key));
-      // if any of the recipients has left the cluster since the command was issued, just don't wait for its response
-      targets.retainAll(rpcManager.getTransport().getMembers());
+
+      RpcOptionsBuilder rpcOptionsBuilder = rpcManager.getRpcOptionsBuilder(ResponseMode.WAIT_FOR_VALID_RESPONSE, false);
+      int lastTopologyId = -1;
+      InternalCacheEntry value = null;
+      while (value == null) {
+         final CacheTopology cacheTopology = stateTransferManager.getCacheTopology();
+         final int currentTopologyId = cacheTopology.getTopologyId();
+
+         if (trace) {
+            log.tracef("Perform remote get for key %s. topologyId=%s, currentTopologyId=%s",
+                       key, lastTopologyId, currentTopologyId);
+         }
+         List<Address> targets;
+         if (lastTopologyId < currentTopologyId) {
+            // Cache topology has changed or it is the first time.
+            lastTopologyId = currentTopologyId;
+            targets = new ArrayList<Address>(cacheTopology.getReadConsistentHash().locateOwners(key));
+         } else if (lastTopologyId == currentTopologyId) {
+            // Same topologyId, but the owners could have already installed the next topology
+            // Lets try with write consistent owners (the read owners in the next topology)
+            lastTopologyId = currentTopologyId + 1;
+            targets = new ArrayList<Address>(cacheTopology.getWriteConsistentHash().locateOwners(key));
+            // Remove already contacted nodes
+            targets.removeAll(cacheTopology.getReadConsistentHash().locateOwners(key));
+            if (targets.isEmpty()) {
+               if (trace) {
+                  log.tracef("No valid values found for key '%s' (topologyId=%s).", key, currentTopologyId);
+               }
+               break;
+            }
+         } else { // lastTopologyId > currentTopologyId
+            // We have not received a valid value from the write CH owners either, and the topology id hasn't changed
+            if (trace) {
+               log.tracef("No valid values found for key '%s' (topologyId=%s).", key, currentTopologyId);
+            }
+            break;
+         }
+
+         value = invokeClusterGetCommandRemotely(targets, rpcOptionsBuilder, get, key);
+         if (trace) {
+            log.tracef("Remote get of key '%s' (topologyId=%s) returns %s", key, currentTopologyId, value);
+         }
+      }
+      return value;
+   }
+
+   private InternalCacheEntry invokeClusterGetCommandRemotely(List<Address> targets, RpcOptionsBuilder rpcOptionsBuilder,
+                                                      ClusteredGetCommand get, Object key) {
       ResponseFilter filter = new ClusteredGetResponseValidityFilter(targets, rpcManager.getAddress());
-      RpcOptions options = rpcManager.getRpcOptionsBuilder(ResponseMode.WAIT_FOR_VALID_RESPONSE, false)
-            .responseFilter(filter).build();
+      RpcOptions options = rpcOptionsBuilder.responseFilter(filter).build();
       Map<Address, Response> responses = rpcManager.invokeRemotely(targets, get, options);
 
       if (!responses.isEmpty()) {
          for (Response r : responses.values()) {
             if (r instanceof SuccessfulResponse) {
-               
+
                // The response value might be null.
-               SuccessfulResponse response = (SuccessfulResponse)r;
-               if( response.getResponseValue() == null )
-                  return null;
-               
-               InternalCacheValue cacheValue = (InternalCacheValue) response.getResponseValue();
+               SuccessfulResponse response = (SuccessfulResponse) r;
+               Object responseValue = response.getResponseValue();
+               if (responseValue == null) {
+                  continue;
+               }
+
+               InternalCacheValue cacheValue = (InternalCacheValue) responseValue;
                InternalCacheEntry ice = cacheValue.toInternalCacheEntry(key);
                if (rvrl != null) {
                   rvrl.remoteValueFound(ice);
@@ -99,10 +148,6 @@ public abstract class BaseDistributionInterceptor extends ClusteringInterceptor 
             }
          }
       }
-
-      // TODO If everyone returned null, and the read CH has changed, retry the remote get.
-      // Otherwise our get command might be processed by the old owners after they have invalidated their data
-      // and we'd return a null even though the key exists on
       return null;
    }
 
