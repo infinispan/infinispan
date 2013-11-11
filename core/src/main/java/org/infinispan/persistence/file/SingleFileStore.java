@@ -243,11 +243,15 @@ public class SingleFileStore implements AdvancedLoadWriteStore {
    /**
     * Frees the space of the specified file entry (for reuse by allocate).
     */
-   private void free(FileEntry fe) throws IOException {
+   private void free(FileEntry fe) throws IOException, InterruptedException {
       if (fe != null) {
-         // invalidate entry on disk (by setting keyLen field to 0)
-         file.write(ByteBuffer.wrap(ZERO_INT), fe.offset + KEYLEN_POS);
-         freeList.add(fe);
+         synchronized (freeList) {
+            // Wait until there are no more readers
+            fe.waitUnlocked();
+            // invalidate entry on disk (by setting keyLen field to 0)
+            file.write(ByteBuffer.wrap(ZERO_INT), fe.offset + KEYLEN_POS);
+            freeList.add(fe);
+         }
       }
    }
 
@@ -373,23 +377,27 @@ public class SingleFileStore implements AdvancedLoadWriteStore {
 
          // if expired, remove the entry (within entries monitor)
          expired = fe.isExpired(System.currentTimeMillis());
-         if (expired)
+         if (expired) {
             entries.remove(key);
-
-         // lock entry for reading before releasing entries monitor
-         fe.lock();
+         } else {
+            // lock entry for reading before releasing entries monitor
+            fe.lock();
+         }
       }
 
-      final byte[] data;
-      try {
-         // if expired, free the file entry (after releasing entries monitor)
-         if (expired) {
+      // if expired, free the file entry (after releasing entries monitor)
+      if (expired) {
+         try {
             free(fe);
             return null;
+         } catch (Exception e) {
+            throw new CacheLoaderException(e);
          }
+      }
 
+      final byte[] data = new byte[fe.keyLen + (loadValue ? fe.dataLen : 0) + (loadMetadata ? fe.metadataLen : 0)];
+      try {
          // load serialized data from disk
-         data = new byte[fe.keyLen + (loadValue ? fe.dataLen : 0) + (loadMetadata ? fe.metadataLen : 0)];
          file.read(ByteBuffer.wrap(data), fe.offset + KEY_POS);
       } catch (Exception e) {
          throw new PersistenceException(e);
@@ -511,7 +519,7 @@ public class SingleFileStore implements AdvancedLoadWriteStore {
     * <li>{@link #metadataLen} bytes: serialized key</li>
     * </ul>
     */
-   private static class FileEntry implements Comparable<Object> {
+   private static class FileEntry implements Comparable<FileEntry> {
       /**
        * File offset of this block.
        */
@@ -545,45 +553,40 @@ public class SingleFileStore implements AdvancedLoadWriteStore {
       /**
        * Number of current readers.
        */
-      private transient int readers = 0;
+      private int readers = 0;
 
-      private FileEntry(long offset, int size) {
+      FileEntry(long offset, int size) {
          this.offset = offset;
          this.size = size;
       }
 
-      private synchronized boolean isLocked() {
+      synchronized boolean isLocked() {
          return readers > 0;
       }
 
-      private synchronized void lock() {
+      synchronized void lock() {
          readers++;
       }
 
-      private synchronized void unlock() {
+      synchronized void unlock() {
          readers--;
          if (readers == 0)
             notifyAll();
       }
 
-      private synchronized void waitUnlocked() {
+      synchronized void waitUnlocked() throws InterruptedException {
          while (readers > 0) {
-            try {
-               wait();
-            } catch (InterruptedException e) {
-               Thread.currentThread().interrupt();
-            }
+            wait();
          }
       }
 
-      private boolean isExpired(long now) {
+      boolean isExpired(long now) {
          return expiryTime > 0 && expiryTime < now;
       }
 
       /** {@inheritDoc} */
       @Override
-      public int compareTo(Object o) {
-         FileEntry fe = (FileEntry) o;
+      public int compareTo(FileEntry fe) {
          if (this == fe)
             return 0;
          int diff = size - fe.size;
