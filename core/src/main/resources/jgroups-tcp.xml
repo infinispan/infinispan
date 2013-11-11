@@ -11,7 +11,7 @@
         max_bundle_size="31k"
         use_send_queues="true"
         enable_diagnostics="false"
-        bundler_type="new"
+        bundler_type="old"
 
         thread_naming_pattern="pl"
 
