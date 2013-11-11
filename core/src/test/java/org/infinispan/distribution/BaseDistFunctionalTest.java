@@ -116,11 +116,11 @@ public abstract class BaseDistFunctionalTest<K, V> extends MultipleCacheManagers
    }
 
    protected Cache<K, V> getFirstNonOwner(Object key) {
-      return getNonOwners(key)[0];
+      return DistributionTestHelper.getFirstNonOwner(key, caches);
    }
    
    protected Cache<K, V> getFirstOwner(Object key) {
-      return getOwners(key)[0];
+      return DistributionTestHelper.getFirstOwner(key, caches);
    }
 
    protected Cache<K, V> getSecondNonOwner(String key) {
@@ -204,23 +204,15 @@ public abstract class BaseDistFunctionalTest<K, V> extends MultipleCacheManagers
    }
 
    protected Cache<K, V>[] getOwners(Object key) {
-      return getOwners(key, 2);
+      Cache<K, V>[] arr = new Cache[2];
+      DistributionTestHelper.getOwners(key, caches).toArray(arr);
+      return arr;
    }
 
    protected Cache<K, V>[] getOwners(Object key, int expectedNumberOwners) {
-      Cache<K, V>[] owners = new Cache[expectedNumberOwners];
-      int i = 0;
-      for (Cache<K, V> c : caches) {
-         if (isFirstOwner(c, key)) {
-            owners[i++] = c;
-            break;
-         }
-      }
-      for (Cache<K, V> c : caches) {
-         if (isOwner(c, key) && !isFirstOwner(c, key)) owners[i++] = c;
-      }
-      for (Cache<?, ?> c : owners) assert c != null : "Have not found enough owners for key [" + key + "]";
-      return owners;
+      Cache<K, V>[] arr = new Cache[expectedNumberOwners];
+      DistributionTestHelper.getOwners(key, caches).toArray(arr);
+      return arr;
    }
 
    protected Cache<K, V>[] getNonOwnersExcludingSelf(Object key, Address self) {
@@ -251,10 +243,7 @@ public abstract class BaseDistFunctionalTest<K, V> extends MultipleCacheManagers
 
    protected Cache<K, V>[] getNonOwners(Object key, int expectedNumberNonOwners) {
       Cache<K, V>[] nonOwners = new Cache[expectedNumberNonOwners];
-      int i = 0;
-      for (Cache<K, V> c : caches) {
-         if (!isOwner(c, key)) nonOwners[i++] = c;
-      }
+      DistributionTestHelper.getNonOwners(key, caches).toArray(nonOwners);
       return nonOwners;
    }
 
