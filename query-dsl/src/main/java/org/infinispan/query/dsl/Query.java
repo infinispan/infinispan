@@ -21,4 +21,6 @@ public interface Query {
     * @return total number of results.
     */
    int getResultSize();
+
+   //todo [anistor] also add long getStartOffset() ?
 }

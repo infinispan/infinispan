@@ -2,9 +2,10 @@
 The following articles provides detailed information about each version of
 the custom TCP client/server Hot Rod protocol.
 
-* link:#_hot_rod_protocol_1_0[Hot Rod Protocol 1.0]
-* link:#_hot_rod_protocol_1_1[Hot Rod Protocol 1.1]
-* link:#_hot_rod_protocol_1_2[Hot Rod Protocol 1.2]
+* link:$$#_hot_rod_protocol_1_0$$[Hot Rod Protocol 1.0]
+* link:$$#_hot_rod_protocol_1_1$$[Hot Rod Protocol 1.1]
+* link:$$#_hot_rod_protocol_1_2$$[Hot Rod Protocol 1.2]
+* link:$$#_hot_rod_protocol_1_3$$[Hot Rod Protocol 1.3]
 
 ===== Hot Rod Protocol 1.0
 
@@ -188,7 +189,7 @@ for hostnames, IPv4 and IPv6 addresses.
 String containing hostname or IP address of individual cluster member
 that Hot Rod client can use to access it.
 | m1: Port                                     | 2 bytes (Unsigned Short) |
-Port that Hot Rod clients can use to communicat with this cluster member.
+Port that Hot Rod clients can use to communicate with this cluster member.
 | m2: Host/IP length                           | vInt                     |
 | m2: Host/IP address                          | string                   |
 | m2: Port                                     | 2 bytes (Unsigned Short) |
@@ -940,6 +941,45 @@ link:$$http://community.jboss.org/docs/DOC-15592$$[here]
 |... etc||
 |==============================================================================
 
+===== Hot Rod Protocol 1.3
+
+.Infinispan versions
+TIP: This version of the protocol is implemented since Infinispan 6.0.0.Final.
+
+====== Request Header
+The `version` field in the header is updated to `13`.
+
+A new request operation code has been added:
+
+* +0x1F+ = query request
+
+====== Response Header
+
+A new response operation code has been added:
+
+* +0x20+ = query response
+
+====== Operations
+
+.Query
+
+Request format:
+
+[cols="3,^2,10",options="header"]
+|==============================================================================
+| Field Name          | Size       | Value
+
+| TODO                |            |
+|==============================================================================
+
+Response format:
+
+[cols="3,^2,10",options="header"]
+|==============================================================================
+| Field Name          | Size       | Value
+
+| TODO                |            |
+|==============================================================================
 
 ==== Hot Rod Hash Functions
 Infinispan makes use of a consistent hash function to place nodes on a hash
@@ -950,7 +990,7 @@ In Infinispan 4.2 and earlier, the hash space was hardcoded to 10240, but
 since 5.0, the hash space is
 link:$$http://download.oracle.com/javase/6/docs/api/java/lang/Integer.html#MAX_VALUE$$[Integer.MAX_INT] .
 Please note that since Hot Rod clients should not assume a particular hash
-space by default, everytime a hash-topology change is detected, this value is
+space by default, every time a hash-topology change is detected, this value is
 sent back to the client via the Hot Rod protocol.
 
 When interacting with Infinispan via the Hot Rod protocol, it is mandated
