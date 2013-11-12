@@ -89,6 +89,25 @@ public class GridInputStream extends InputStream {
       return bytesToSkip;
    }
 
+   int position() {
+      return index;
+   }
+
+   void position(long newPosition) throws IOException {
+      if (newPosition < 0) {
+         throw new IllegalArgumentException("newPosition may not be negative");
+      }
+      assertOpen();
+
+      int newPos = (int) newPosition;
+      int chunkNumberOfNewPosition = getChunkNumber(newPos);
+      if (getChunkNumber(index - 1) != chunkNumberOfNewPosition) {
+         currentBuffer = fileChunkMapper.fetchChunk(chunkNumberOfNewPosition);
+      }
+      index = newPos;
+      localIndex = ModularArithmetic.mod(newPos, chunkSize);
+   }
+
    @Override
    public int available() throws IOException {
       assertOpen();
@@ -123,6 +142,14 @@ public class GridInputStream extends InputStream {
    }
 
    private int getChunkNumber() {
-      return index / chunkSize;
+      return getChunkNumber(index);
+   }
+
+   private int getChunkNumber(int position) {
+      return position < 0 ? -1 : (position / chunkSize);
+   }
+
+   int getFileSize() {
+      return fSize;
    }
 }
