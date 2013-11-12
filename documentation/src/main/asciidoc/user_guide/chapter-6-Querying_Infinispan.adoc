@@ -1,8 +1,19 @@
 ==  Querying Infinispan
-Infinispan supports indexing of entries stored in the grid, and searching for entries using a querying API.
+Infinispan supports indexing and searching of Java objects stored in the grid using powerful search APIs
+which complement its main Map-like API. Historically, searching was first available in Infinispan via
+link:$$http://lucene.apache.org/$$[Apache Lucene]'s API but since version 6.0 Infinispan provides its own link:$$#_infinispan_s_query_dsl$$[query API]
+based on a simple and expressive internal DSL. Searching with the new API is available for both embedded and remote
+clients while the Lucene based API is only available to embedded clients. The remote querying capability is further
+described in the link:$$#_querying_via_the_java_hot_rod_client$$[Hot Rod client chapter].
 
 === The infinispan-query module
-This module adds querying capabilities to Infinispan. It uses link:$$http://hibernate.org/subprojects/search$$[Hibernate Search] and link:$$http://lucene.apache.org/$$[Apache Lucene] to index and search objects in the cache. It allows users to obtain objects within the cache without needing to know the keys to each object that they want to obtain, so you can search your objects basing on some of it's properties, for example to retrieve all red cars (exact metadata match), or all books about a specific topic (full text search and relevance scoring). 
+This module adds indexing and querying capabilities to Infinispan. It uses link:$$http://hibernate.org/subprojects/search$$[Hibernate Search]
+and link:$$http://lucene.apache.org/$$[Apache Lucene] to index and search objects in the cache. It allows users to
+obtain objects within the cache without needing to know the keys to each object that they want to obtain. You can search
+your objects based on some of it's properties. For example to retrieve all red cars (exact metadata match), or all books
+about a specific topic (full text search and relevance scoring).
+
+The queries can be expressed as Lucene queries, built directly using the Lucene Query API or built with the help of Hibernate Search Query DSL. Alternatively, you can also use Infinispan's own query DSL which most users might find easier to use than the one based on Lucene at the cost of not being able to access some of the powerful capabilities which are specific to the underlying Lucene implementation.
 
 ==== Configuration
 Indexing must be enabled in the configuration (as explained in <<sid-68355029,XML Configuration>> or <<sid-68355029,Programmatic configuration>> ). This will trigger automatic indexing of objects stored in the cache; there are several different ways to specify how these objects need to be indexed explained in the following paragraphs. To run queries you use the _SearchManager_ which exposes all necessary methods to get started. 
@@ -63,7 +74,7 @@ QueryBuilder queryBuilder = searchManager.buildQueryBuilderForClass(Book.class).
 
 // the queryBuilder has a nice fluent API which guides you through all options.
 // this has some knowledge about your object, for example which Analyzers
-// need to be applied, but the output is a failry standard Lucene Query.
+// need to be applied, but the output is a fairly standard Lucene Query.
 org.apache.lucene.search.Query luceneQuery = queryBuilder.phrase()
                   .onField("description")
                   .andField("title")
@@ -91,7 +102,7 @@ This barely scratches the surface of all what is possible to do: see the link:$$
 Using _@DocumentId_ to mark a field as identifier does not apply to Infinispan values; in Infinispan Query the identifier for all _@Indexed_ objects is the key used to store the value. You can still customize how the key is indexed using a combination of _@Transformable_ , _@ProvidedId_ , custom types and custom _FieldBridge_ implementations. 
 
 ==== Requirements for the Key: @Transformable and @ProvidedId
-The key for each value needs to be indexed as well, and the key instance must be transformed in a String. Infinispan includes some default transformation routines to encode common primitives, but to use a custom key you must provide an implementation of _org.infinispan.query.Transformer_ . 
+The key for each value needs to be indexed as well, and the key instance must be transformed in a _String_. Infinispan includes some default transformation routines to encode common primitives, but to use a custom key you must provide an implementation of _org.infinispan.query.Transformer_ .
 
 ===== Registering a Transformer via annotations
 You can annotate your key type with _org.infinispan.query.Transformable_ : 
@@ -249,4 +260,238 @@ searchManager.getMassIndexer().start();
 
 TIP: This is also available as a JMX operation.
 
-WARNING: There is currently one limitation: the MassIndexer is implemented using Map/Reduce, which in Infinispan 5.2 requires the underlying caches to use distribution. In other words, the MassIndexer isn't currently functional in LOCAL and REPL cache modes.
+=== Infinispan's Query DSL
+
+WARNING: This is a new API undergoing refinements and changes that might break compatibility in future releases.
+
+Starting with 6.0 Infinispan provides its own query DSL, independent of Lucene and Hibernate Search.
+Decoupling the query API from the underlying query and indexing mechanism makes it possible to introduce new alternative
+engines in the future, besides Lucene, and still being able to use the same uniform query API.
+This opens up the possibility of introducing a future index-less searching engine based on Map/Reduce that will be
+accessible exclusively via the new query API. The current implementation of indexing and searching is still based on
+Hibernate Search and Lucene so all indexing related aspects presented in this chapter still apply.
+
+The new API simplifies the writing of queries by not exposing the user to the low level details of constructing Lucene
+query objects and also has the advantage of being available to link:$$#_querying_via_the_java_hot_rod_client$$[remote Hot Rod clients].
+But before delving into further details, let's examine first a simple example of writing a query for the _Book_ entity
+from link:$$#_simple_example$$[previous example].
+
+===== Query example using Infinispan's query DSL
+[source,java]
+----
+import org.infinispan.query.dsl.*;
+
+// get the search manager from the cache, as in previous examples:
+SearchManager searchManager = org.infinispan.query.Search.getSearchManager(cache);
+
+// get the DSL query factory, to be used for constructing the Query object:
+QueryFactory qf = searchManager.getQueryFactory();
+
+// create a query for all the books that have a title which contains the word "engine":
+org.infinispan.query.dsl.Query query = qf.from(Book.class)
+      .having("title").like("%engine%")
+      .toBuilder().build();
+
+// get the results:
+List<Book> list = query.list();
+----
+The API is located in the _org.infinispan.query.dsl_ package. A query is created with the help of the _QueryFactory_
+instance which is obtained from the per-cache _SearchManager_. Each _QueryFactory_ instance is bound to the same _Cache_
+instance as the _SearchManager_, but it is otherwise a stateless and thread-safe object that can be used for creating
+multiple queries in parallel.
+
+Query creation starts with the invocation of the `from(Class entityType)` method which returns a _QueryBuilder_ object
+that is further responsible for creating queries targeted to the specified entity class from the given cache.
+
+NOTE: A query will always target a single entity type and is evaluated over the contents of a single cache. Running a
+query over multiple caches or creating queries that target several entity types (joins) is not supported.
+
+The _QueryBuilder_ accumulates search criteria and configuration specified through the invocation of its DSL methods and is
+ultimately used to build a _Query_ object by the invocation of the `QueryBuilder.build()` method that completes the
+construction. Being a stateful object, it cannot be used for constructing multiple queries at the same time
+(except for link:$$#_nested_conditions$$[nested queries]) but can be reused afterwards.
+
+NOTE: This _QueryBuilder_ is different from the one from Hibernate Search but has a somewhat similar purpose, hence the
+same name. We are considering renaming it in near future to prevent ambiguity.
+
+Executing the query and fetching the results is as simple as invoking the `list()` method of the _Query_ object. Once
+executed the _Query_ object is not reusable. If you need to re-execute it in order to obtain fresh results then a new
+instance must be obtained by calling `QueryBuilder.build()`.
+
+=== Filtering operators
+Constructing a query is a hierarchical process of composing multiple criteria and is best explained following this hierarchy.
+
+The simplest possible form of a query criteria is a restriction on the values of an entity attribute according to a
+filtering operator that accepts zero or more arguments. The entity attribute is specified by invoking the
+`having(String attributePath)` method of the query builder which returns an intermediate context object
+(link:$$http://docs.jboss.org/infinispan/6.0/apidocs/org/infinispan/query/dsl/FilterConditionEndContext.html$$[_FilterConditionEndContext_])
+that exposes all the available operators. Each of the methods defined by _FilterConditionEndContext_ is an operator that
+accepts an argument, except for `between` which has two arguments and `isNull` which has no arguments. The arguments are
+statically evaluated at the time the query is constructed, so if you're looking for a feature similar to SQL's
+correlated sub-queries, that is not currently available.
+
+[source,java]
+----
+// a single query criterion
+QueryBuilder qb = ...
+qb.having("title").eq("Infinispan Data Grid Platform");
+----
+
+It's important to note that query construction requires a multi-step chaining of method invocation that must be done in
+the proper sequence, must be properly completed exactly _once_ and must not be done twice, or it will result in an error.
+The following examples are invalid, and depending on each case they lead to criteria being ignored (in benign cases) or
+an exception being thrown (in more serious ones).
+
+[source,java]
+----
+// Incomplete construction. This query does not have any filter on "title" attribute yet,
+// although the author may have intended to add one.
+QueryBuilder qb1 = ...
+qb1.having("title");
+Query q1 = qb1.build(); // consequently, this query matches all Book instances regardless of title!
+
+// Duplicated completion. This results in an exception at run-time.
+// Maybe the author intended to connect two conditions with a boolean operator,
+// but this does NOT actually happen here.
+QueryBuilder qb2 = ...
+qb2.having("title").like("%Infinispan%");
+qb2.having("description").like("%clustering%");   // will throw java.lang.IllegalStateException: Sentence already started. Cannot use 'having(..)' again.
+Query q2 = qb2.build();
+----
+
+NOTE: All fields participating in the query need to be indexed by Hibernate Search for querying to work in embedded
+mode. We plan to add index-less searching with Map/Reduce in future versions
+(see link:$$https://issues.jboss.org/browse/ISPN-3717$$[ISPN-3717]).
+
+==== Filtering based on attributes of embedded entities
+
+The `having` method also accepts dot separated attribute paths for referring to _embedded entity_ attributes, so the following
+is a valid query:
+
+[source,java]
+----
+// match all books that have an author named "Manik"
+Query query = queryFactory.from(Book.class)
+      .having("author.name").eq("Manik")
+      .toBuilder().build();
+----
+
+Each part of the attribute path must refer to an existing indexed attribute in the corresponding entity or embedded
+entity class respectively. It's possible to have multiple levels of embedding.
+
+=== Boolean conditions
+Combining multiple attribute conditions with logical conjunction (`and`) and disjunction (`or`) operators in order to
+create more complex conditions is demonstrated in the following example. The well known operator precedence rule for
+boolean operators applies here, so the order of DSL method invocations during construction is irrelevant. Here `and`
+operator still has higher priority than `or` even though `or` was invoked first.
+
+[source,java]
+----
+// match all books that have the word "Infinispan" in their title
+// or have an author named "Manik" and their description contains the word "clustering"
+Query query = queryFactory.from(Book.class)
+  .having("title").like("%Infinispan%")
+  .or().having("author.name").eq("Manik")
+  .and().having("description").like("%clustering%")
+  .toBuilder().build();
+----
+
+Boolean negation is achieved with the `not` operator, which has highest precedence among logical operators and applies
+only to the next simple attribute condition.
+
+[source,java]
+----
+// match all books that do not have the word "Infinispan" in their title and are authored by "Manik"
+Query query = queryFactory.from(Book.class)
+  .not().having("title").like("%Infinispan%")
+  .and().having("author.name").eq("Manik")
+  .toBuilder().build();
+----
+
+=== Nested conditions
+Changing the precendece of logical operators is achieved with nested filter conditions. Logical operators can be used to
+connect two simple attribute conditions as presented before, but can also connect a simple attribute condition with the
+subsequent complex condition created with the same query factory.
+
+[source,java]
+----
+// match all books that have an author named "Manik" and their title contains
+// the word "Infinispan" or their description contains the word "clustering"
+Query query = queryFactory.from(Book.class)
+  .having("author.name").eq("Manik");
+  .and(queryFactory.having("title").like("%Infinispan%")
+          .or().having("description").like("%clustering%"))
+  .toBuilder().build();
+----
+
+=== Projections
+In some use cases returning the whole domain object is overkill if only a small subset of the attributes are actually
+used by the application, especially if the domain entity has embedded entities. The query language allows you to specify
+a subset of attributes (or attribute paths) to return - the projection. If projections are used then the `Query.list()`
+will not return the whole domain entity but will return a _List_ of _Object[]_, each slot in the array corresponding to
+a projected attribute.
+
+TODO document what needs to be configured for an attribute to be available for projection.
+
+[source,java]
+----
+// match all books that have the word "Infinispan" in their title or description
+// and return only their title and publication year
+Query query = queryFactory.from(Book.class)
+  .setProjection("title", "publicationYear")
+  .having("title").like("%Infinispan%")
+  .or().having("description").like("%Infinispan%"))
+  .toBuilder().build();
+----
+
+=== Sorting
+Ordering the results based on one or more attributes or attribute paths is done with the `QueryBuilder.orderBy(  )`
+method which accepts an attribute path and a sorting direction. If multiple sorting criteria are specified, then
+the order of invocation of `orderBy` method will dictate their precedence. But you have to think of the multiple sorting
+criteria as acting together on the tuple of specified attributes rather than in a sequence of individual sorting
+operations on each attribute.
+
+TODO document what needs to be configured for an attribute to be available for sorting.
+
+[source,java]
+----
+// match all books that have the word "Infinispan" in their title or description
+// and return them sorted by the publication year and title
+Query query = queryFactory.from(Book.class)
+  .orderBy("publicationYear", SortOrder.DESC)
+  .orderBy("title", SortOrder.ASC)
+  .having("title").like("%Infinispan%")
+  .or().having("description").like("%Infinispan%"))
+  .toBuilder().build();
+----
+
+=== Pagination
+
+You can limit the number of returned results by setting the _maxResults_ property of _QueryBuilder_. This can be used in
+conjunction with setting the _startOffset_ in order to achieve pagination of the result set.
+
+[source,java]
+----
+// match all books that have the word "clustering" in their title
+// sorted by publication year and title
+// and return 3'rd page of 10 results
+Query query = queryFactory.from(Book.class)
+  .orderBy("publicationYear", SortOrder.DESC)
+  .orderBy("title", SortOrder.ASC)
+  .setStartOffset(20)
+  .maxResults(10)
+  .having("title").like("%clustering%")
+  .toBuilder().build();
+----
+
+NOTE: Even if the results being fetched are limited to _maxResults_ you can still find the total number of matching
+results by calling `Query.getResultSize()`.
+
+TODO Does pagination make sense if no stable sort criteria is defined? Luckily when running on Lucene and no sort criteria is specified we still have the order of relevance, but this has to be defined for other search engines.
+
+=== Usage samples
+
+Probably the best way to explore using the new API is to look at our tests suite.
+link:$$https://github.com/infinispan/infinispan/blob/6.0.0.CR1/query/src/test/java/org/infinispan/query/dsl/embedded/QueryDslConditionsTest.java$$[QueryDslConditionsTest]
+is a fine example.
+
