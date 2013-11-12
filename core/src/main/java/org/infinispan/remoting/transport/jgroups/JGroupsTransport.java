@@ -34,9 +34,11 @@ import org.jgroups.Event;
 import org.jgroups.JChannel;
 import org.jgroups.MembershipListener;
 import org.jgroups.MergeView;
+import org.jgroups.UpHandler;
 import org.jgroups.View;
 import org.jgroups.blocks.RequestOptions;
 import org.jgroups.blocks.RspFilter;
+import org.jgroups.blocks.mux.Muxer;
 import org.jgroups.jmx.JmxConfigurator;
 import org.jgroups.protocols.relay.SiteMaster;
 import org.jgroups.protocols.tom.TOA;
@@ -94,7 +96,7 @@ public class JGroupsTransport extends AbstractTransport implements MembershipLis
    static final Log log = LogFactory.getLog(JGroupsTransport.class);
    static final boolean trace = log.isTraceEnabled();
 
-   protected boolean startChannel = true, stopChannel = true;
+   protected boolean connectChannel = true, disconnectChannel = true, closeChannel = true;
    private CommandAwareRpcDispatcher dispatcher;
    protected TypedProperties props;
    protected InboundInvocationHandler inboundInvocationHandler;
@@ -188,7 +190,7 @@ public class JGroupsTransport extends AbstractTransport implements MembershipLis
    }
 
    protected void startJGroupsChannelIfNeeded() {
-      if (startChannel) {
+      if (connectChannel) {
          String clusterName = configuration.transport().clusterName();
          try {
             channel.connect(clusterName);
@@ -212,7 +214,7 @@ public class JGroupsTransport extends AbstractTransport implements MembershipLis
          }
       }
       address = fromJGroupsAddress(channel.getAddress());
-      if (!startChannel) {
+      if (!connectChannel) {
          // the channel was already started externally, we need to initialize our member list
          viewAccepted(channel.getView());
       }
@@ -233,8 +235,8 @@ public class JGroupsTransport extends AbstractTransport implements MembershipLis
    @Override
    public void stop() {
       try {
-         if (stopChannel && channel != null && channel.isOpen()) {
-            log.disconnectAndCloseJGroups();
+         if (disconnectChannel && channel != null && channel.isConnected()) {
+            log.disconnectJGroups();
 
             // Unregistering before disconnecting/closing because
             // after that the cluster name is null
@@ -243,18 +245,31 @@ public class JGroupsTransport extends AbstractTransport implements MembershipLis
             }
 
             channel.disconnect();
+         }
+         if (closeChannel && channel != null && channel.isOpen()) {
             channel.close();
          }
       } catch (Exception toLog) {
          log.problemClosingChannel(toLog);
       }
 
-      channel = null;
       if (dispatcher != null) {
          log.stoppingRpcDispatcher();
          dispatcher.stop();
+         if (channel != null) {
+            // Remove reference to up_handler
+            UpHandler handler = channel.getUpHandler();
+            if (handler instanceof Muxer<?>) {
+               @SuppressWarnings("unchecked")
+               Muxer<UpHandler> mux = (Muxer<UpHandler>) handler;
+               mux.setDefaultHandler(null);
+            } else {
+               channel.setUpHandler(null);
+            }
+         }
       }
 
+      channel = null;
       members = InfinispanCollections.emptyList();
       coordinator = null;
       isCoordinator = false;
@@ -283,7 +298,7 @@ public class JGroupsTransport extends AbstractTransport implements MembershipLis
       // if we have a TopologyAwareConsistentHash, we need to set our own address generator in JGroups
       if (transportCfg.hasTopologyInfo()) {
          // We can do this only if the channel hasn't been started already
-         if (startChannel) {
+         if (connectChannel) {
             ((JChannel) channel).setAddressGenerator(new AddressGenerator() {
                @Override
                public org.jgroups.Address generateAddress() {
@@ -329,8 +344,9 @@ public class JGroupsTransport extends AbstractTransport implements MembershipLis
             try {
                JGroupsChannelLookup lookup = Util.getInstance(channelLookupClassName, configuration.classLoader());
                channel = lookup.getJGroupsChannel(props);
-               startChannel = lookup.shouldStartAndConnect();
-               stopChannel = lookup.shouldStopAndDisconnect();
+               connectChannel = lookup.shouldConnect();
+               disconnectChannel = lookup.shouldDisconnect();
+               closeChannel = lookup.shouldClose();
             } catch (ClassCastException e) {
                log.wrongTypeForJGroupsChannelLookup(channelLookupClassName, e);
                throw new CacheException(e);

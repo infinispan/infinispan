@@ -321,8 +321,8 @@ public interface Log extends BasicLogger {
    void localAndPhysicalAddress(Address address, List<Address> physicalAddresses);
 
    @LogMessage(level = INFO)
-   @Message(value = "Disconnecting and closing JGroups Channel", id = 80)
-   void disconnectAndCloseJGroups();
+   @Message(value = "Disconnecting JGroups Channel", id = 80)
+   void disconnectJGroups();
 
    @LogMessage(level = ERROR)
    @Message(value = "Problem closing channel; setting it to null", id = 81)

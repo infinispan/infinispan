@@ -72,12 +72,17 @@ public class ChannelLookupTest extends AbstractInfinispanTest {
       }
 
       @Override
-      public boolean shouldStartAndConnect() {
+      public boolean shouldConnect() {
          return false;
       }
 
       @Override
-      public boolean shouldStopAndDisconnect() {
+      public boolean shouldDisconnect() {
+         return false;
+      }
+
+      @Override
+      public boolean shouldClose() {
          return false;
       }
    }
