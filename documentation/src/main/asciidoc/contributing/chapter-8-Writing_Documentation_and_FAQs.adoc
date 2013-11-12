@@ -23,6 +23,17 @@ You will want to install the entire AsciiDoctor toolchain on your computer.
 ** link:http://asciidoctor.org/docs/install-asciidoctor-macosx/[On a Mac]
 * link:http://asciidoctor.org/docs/install-toolchain/#text-editors-and-syntax-highlighting[Text editors]
 
+In order to see the result of your editing, from the infinispan's root dir (embedded):
+[source,bash]
+----
+## compile the user guide and the index
+$ asciidoctor ./documentation/src/main/asciidoc/user_guide/user_guide.adoc
+$ asciidoctor ./documentation/src/main/asciidoc/index.adoc
+
+## open the documentation and make sure it renders correctly (this is OS-X specific)
+$ open /Applications/Google\ Chrome.app documentation/src/main/asciidoc/index.html
+----
+
 ==== Linefeed
 A soft limit of 80 characters is recommended.
 At the end of each sentence, go to the next line.
