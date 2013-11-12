@@ -201,6 +201,12 @@ public class GridFileTest extends SingleCacheManagerTest {
       assertEquals(text, "This text spans multiple chunks, because each chunk is only 20 bytes long.");
    }
 
+   public void testAppendToFileThatEndsWithFullChunk() throws Exception {
+      writeToFile("endsWithFullChunk.txt", "1234" + "5678", 4);  // chunkSize = 4; two chunks will be written; both chunks will be full
+      appendToFile("endsWithFullChunk.txt", "", 4);
+      assertEquals(getContents("endsWithFullChunk.txt"), "12345678");
+   }
+
    public void testAppend() throws Exception {
       writeToFile("append.txt", "Hello");
       appendToFile("append.txt", "World");

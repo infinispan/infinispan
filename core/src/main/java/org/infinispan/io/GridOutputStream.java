@@ -28,8 +28,8 @@ public class GridOutputStream extends OutputStream {
       this.file = file;
 
       index = append ? (int) file.length() : 0;
-      localIndex = ModularArithmetic.mod(index, chunkSize);
-      currentBuffer = append && !isLastChunkFull() ? fetchLastChunk() : createEmptyChunk();
+      localIndex = append && isLastChunkFull() ? chunkSize : ModularArithmetic.mod(index, chunkSize);
+      currentBuffer = append ? fetchLastChunk() : createEmptyChunk();
 
       numberOfChunksWhenOpened = getLastChunkNumber() + 1;
    }
