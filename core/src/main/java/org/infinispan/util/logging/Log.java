@@ -1029,5 +1029,7 @@ public interface Log extends BasicLogger {
 
    @Message(value = "Indexing can only be enabled if infinispan-query.jar is available on your classpath, and this jar has not been detected.", id = 278)
    CacheConfigurationException invalidConfigurationIndexingWithoutModule();
-   
+
+   @Message(value = "Failed to read stored entries from file. Error in file %s at offset %d", id = 279)
+   PersistenceException errorReadingFileStore(String path, long offset);
 }

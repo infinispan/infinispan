@@ -13,6 +13,7 @@ import org.infinispan.persistence.PersistenceUtil;
 import org.infinispan.persistence.TaskContextImpl;
 import org.infinispan.persistence.spi.AdvancedLoadWriteStore;
 import org.infinispan.persistence.spi.InitializationContext;
+import org.infinispan.util.KeyValuePair;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
@@ -21,16 +22,20 @@ import java.io.IOException;
 import java.io.RandomAccessFile;
 import java.nio.ByteBuffer;
 import java.nio.channels.FileChannel;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.SortedSet;
 import java.util.TreeSet;
 import java.util.concurrent.Callable;
 import java.util.concurrent.Executor;
+import java.util.concurrent.locks.ReadWriteLock;
+import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 /**
  * A filesystem-based implementation of a {@link org.infinispan.persistence.spi.CacheLoader}. This file store
@@ -61,12 +66,11 @@ import java.util.concurrent.Executor;
  * @since 6.0
  */
 public class SingleFileStore implements AdvancedLoadWriteStore {
-
-
    private static final Log log = LogFactory.getLog(SingleFileStore.class);
+   private static final boolean trace = log.isTraceEnabled();
 
-   private static final byte[] MAGIC = new byte[] { 'F', 'C', 'S', '1' };
-   private static final byte[] ZERO_INT = { 0, 0, 0, 0 };
+   private static final byte[] MAGIC = new byte[]{'F', 'C', 'S', '1'};
+   private static final byte[] ZERO_INT = {0, 0, 0, 0};
    private static final int KEYLEN_POS = 4;
    private static final int KEY_POS = 4 + 4 + 4 + 4 + 8;
 
@@ -74,35 +78,36 @@ public class SingleFileStore implements AdvancedLoadWriteStore {
 
    protected InitializationContext ctx;
 
-   private FileChannel file;
+   private FileChannel channel;
    private Map<Object, FileEntry> entries;
    private SortedSet<FileEntry> freeList;
    private long filePos = MAGIC.length;
+   private File file;
+   // Prevent clear() from truncating the file after a write() allocated the entry but before it wrote the data
+   private ReadWriteLock resizeLock = new ReentrantReadWriteLock();
 
-   /** {@inheritDoc} */
    @Override
    public void init(InitializationContext ctx) {
       this.ctx = ctx;
       this.configuration = ctx.getConfiguration();
    }
 
-   /** {@inheritDoc} */
    @Override
-   public void start()   {
+   public void start() {
       try {
          // open the data file
          String location = configuration.location();
          if (location == null || location.trim().length() == 0)
             location = "Infinispan-SingleFileStore";
 
-         File f = new File(location + File.separator + ctx.getCache().getName() + ".dat");
-         if (!f.exists()) {
-            File dir = f.getParentFile();
+         file = new File(location, ctx.getCache().getName() + ".dat");
+         if (!file.exists()) {
+            File dir = file.getParentFile();
             if (!dir.mkdirs() && !dir.exists()) {
                throw log.directoryCannotBeCreated(dir.getAbsolutePath());
             }
          }
-         file = new RandomAccessFile(f, "rw").getChannel();
+         channel = new RandomAccessFile(file, "rw").getChannel();
 
          // initialize data structures
          entries = newEntryMap();
@@ -110,7 +115,7 @@ public class SingleFileStore implements AdvancedLoadWriteStore {
 
          // check file format and read persistent state if enabled for the cache
          byte[] header = new byte[MAGIC.length];
-         if (file.read(ByteBuffer.wrap(header), 0) == MAGIC.length && Arrays.equals(MAGIC, header))
+         if (channel.read(ByteBuffer.wrap(header), 0) == MAGIC.length && Arrays.equals(MAGIC, header))
             rebuildIndex();
          else
             clear(); // otherwise (unknown file format or no preload) just reset the file
@@ -125,22 +130,23 @@ public class SingleFileStore implements AdvancedLoadWriteStore {
       Equivalence<Object> keyEq = ctx.getCache().getCacheConfiguration().dataContainer().keyEquivalence();
       if (configuration.maxEntries() > 0)
          entryMap = CollectionFactory.makeLinkedMap(16, 0.75f,
-                                                    EquivalentLinkedHashMap.IterationOrder.ACCESS_ORDER,
-                                                    keyEq, AnyEquivalence.<FileEntry>getInstance());
+               EquivalentLinkedHashMap.IterationOrder.ACCESS_ORDER,
+               keyEq, AnyEquivalence.<FileEntry>getInstance());
       else
          entryMap = CollectionFactory.makeMap(keyEq, AnyEquivalence.<FileEntry>getInstance());
 
       return Collections.synchronizedMap(entryMap);
    }
 
-   /** {@inheritDoc} */
    @Override
-   public void stop()   {
+   public void stop() {
       try {
-         if (file != null) {
+         if (channel != null) {
+            log.tracef("Stopping store %s, size = %d, file size = %d", ctx.getCache().getName(), entries.size(), channel.size());
+
             // reset state
-            file.close();
-            file = null;
+            channel.close();
+            channel = null;
             entries = null;
             freeList = null;
             filePos = MAGIC.length;
@@ -155,21 +161,27 @@ public class SingleFileStore implements AdvancedLoadWriteStore {
     */
    private void rebuildIndex() throws Exception {
       ByteBuffer buf = ByteBuffer.allocate(KEY_POS);
-      for (;;) {
+      for (; ; ) {
          // read FileEntry fields from file (size, keyLen etc.)
          buf.clear().limit(KEY_POS);
-         file.read(buf, filePos);
+         channel.read(buf, filePos);
          // return if end of file is reached
          if (buf.remaining() > 0)
             return;
          buf.flip();
 
          // initialize FileEntry from buffer
-         FileEntry fe = new FileEntry(filePos, buf.getInt());
-         fe.keyLen = buf.getInt();
-         fe.dataLen = buf.getInt();
-         fe.metadataLen = buf.getInt();
-         fe.expiryTime = buf.getLong();
+         int entrySize = buf.getInt();
+         int keyLen = buf.getInt();
+         int dataLen = buf.getInt();
+         int metadataLen = buf.getInt();
+         long expiryTime = buf.getLong();
+         FileEntry fe = new FileEntry(filePos, entrySize, keyLen, dataLen, metadataLen, expiryTime);
+
+         // sanity check
+         if (fe.size < KEY_POS + fe.keyLen + fe.dataLen + fe.metadataLen) {
+            throw log.errorReadingFileStore(file.getPath(), filePos);
+         }
 
          // update file pointer
          filePos += fe.size;
@@ -181,7 +193,7 @@ public class SingleFileStore implements AdvancedLoadWriteStore {
                buf = ByteBuffer.allocate(fe.keyLen);
 
             buf.clear().limit(fe.keyLen);
-            file.read(buf, fe.offset + KEY_POS);
+            channel.read(buf, fe.offset + KEY_POS);
 
             // deserialize key and add to entries map
             Object key = ctx.getMarshaller().objectFromByteBuffer(buf.array(), 0, fe.keyLen);
@@ -194,8 +206,6 @@ public class SingleFileStore implements AdvancedLoadWriteStore {
    }
 
    /**
-    * {@inheritDoc}
-    * <p/>
     * The base class implementation calls {@link #load(Object)} for this, we can do better because
     * we keep all keys in memory.
     */
@@ -214,7 +224,7 @@ public class SingleFileStore implements AdvancedLoadWriteStore {
       synchronized (freeList) {
          // lookup a free entry of sufficient size
          SortedSet<FileEntry> candidates = freeList.tailSet(new FileEntry(0, len));
-         for (Iterator<FileEntry> it = candidates.iterator(); it.hasNext();) {
+         for (Iterator<FileEntry> it = candidates.iterator(); it.hasNext(); ) {
             FileEntry free = it.next();
             // ignore entries that are still in use by concurrent readers
             if (free.isLocked())
@@ -236,23 +246,28 @@ public class SingleFileStore implements AdvancedLoadWriteStore {
          // no appropriate free section available, append at end of file
          FileEntry fe = new FileEntry(filePos, len);
          filePos += len;
+         log.tracef("New entry allocated, file size is %d", filePos);
          return fe;
       }
    }
 
    /**
     * Frees the space of the specified file entry (for reuse by allocate).
+    * <p/>
+    * Note: Caller must hold the {@code resizeLock} in shared mode.
     */
    private void free(FileEntry fe) throws IOException {
       if (fe != null) {
-         // invalidate entry on disk (by setting keyLen field to 0)
-         file.write(ByteBuffer.wrap(ZERO_INT), fe.offset + KEYLEN_POS);
+         // Invalidate entry on disk (by setting keyLen field to 0)
+         // No need to wait for readers to unlock here, the FileEntry instance is not modified,
+         // and allocate() won't return an entry as long as it has a reader.
+         channel.write(ByteBuffer.wrap(ZERO_INT), fe.offset + KEYLEN_POS);
+         if (trace) log.tracef("Deleted entry at %d", fe.offset);
          freeList.add(fe);
       }
    }
 
    @Override
-   /** {@inheritDoc} */
    public void write(MarshalledEntry marshalledEntry) {
       try {
          // serialize cache value
@@ -263,12 +278,12 @@ public class SingleFileStore implements AdvancedLoadWriteStore {
          // allocate file entry and store in cache file
          int metadataLength = metadata == null ? 0 : metadata.getLength();
          int len = KEY_POS + key.getLength() + data.getLength() + metadataLength;
-         FileEntry fe = allocate(len);
+         FileEntry fe = null;
+         resizeLock.readLock().lock();
          try {
-            fe.expiryTime = metadata != null ? marshalledEntry.getMetadata().expiryTime() : -1;
-            fe.keyLen = key.getLength();
-            fe.dataLen = data.getLength();
-            fe.metadataLen = metadataLength;
+            fe = allocate(len);
+            long expiryTime = metadata != null ? marshalledEntry.getMetadata().expiryTime() : -1;
+            fe = new FileEntry(fe, key.getLength(), data.getLength(), metadataLength, expiryTime);
 
             ByteBuffer buf = ByteBuffer.allocate(len);
             buf.putInt(fe.size);
@@ -281,7 +296,8 @@ public class SingleFileStore implements AdvancedLoadWriteStore {
             if (metadata != null)
                buf.put(metadata.getBuf(), metadata.getOffset(), metadata.getLength());
             buf.flip();
-            file.write(buf, fe.offset);
+            channel.write(buf, fe.offset);
+            if (trace) log.tracef("Wrote entry %s at %d", marshalledEntry.getKey(), fe.offset);
 
             // add the new entry to in-memory index
             fe = entries.put(marshalledEntry.getKey(), fe);
@@ -291,7 +307,11 @@ public class SingleFileStore implements AdvancedLoadWriteStore {
                fe = evict();
          } finally {
             // in case we replaced or evicted an entry, add to freeList
-            free(fe);
+            try {
+               free(fe);
+            } finally {
+               resizeLock.readLock().unlock();
+            }
          }
       } catch (Exception e) {
          throw new PersistenceException(e);
@@ -317,9 +337,9 @@ public class SingleFileStore implements AdvancedLoadWriteStore {
       return null;
    }
 
-   /** {@inheritDoc} */
    @Override
-   public void clear()   {
+   public void clear() {
+      resizeLock.writeLock().lock();
       try {
          synchronized (entries) {
             synchronized (freeList) {
@@ -334,29 +354,33 @@ public class SingleFileStore implements AdvancedLoadWriteStore {
                freeList.clear();
 
                // reset file
-               file.truncate(0);
-               file.write(ByteBuffer.wrap(MAGIC), 0);
+               if (trace) log.tracef("Truncating file, current size is %d", filePos);
+               channel.truncate(0);
+               channel.write(ByteBuffer.wrap(MAGIC), 0);
                filePos = MAGIC.length;
             }
          }
       } catch (Exception e) {
          throw new PersistenceException(e);
+      } finally {
+         resizeLock.writeLock().unlock();
       }
    }
 
-   /** {@inheritDoc} */
    @Override
-   public boolean delete(Object key)   {
+   public boolean delete(Object key) {
+      resizeLock.readLock().lock();
       try {
          FileEntry fe = entries.remove(key);
          free(fe);
          return fe != null;
       } catch (Exception e) {
          throw new PersistenceException(e);
+      } finally {
+         resizeLock.readLock().unlock();
       }
    }
 
-   /** {@inheritDoc} */
    @Override
    public MarshalledEntry load(Object key) {
       return _load(key, true, true);
@@ -365,39 +389,52 @@ public class SingleFileStore implements AdvancedLoadWriteStore {
    private MarshalledEntry _load(Object key, boolean loadValue, boolean loadMetadata) {
       final FileEntry fe;
       final boolean expired;
-      synchronized (entries) {
-         // lookup FileEntry of the key
-         fe = entries.get(key);
-         if (fe == null)
+      resizeLock.readLock().lock();
+      try {
+         synchronized (entries) {
+            // lookup FileEntry of the key
+            fe = entries.get(key);
+            if (fe == null)
+               return null;
+
+            expired = fe.isExpired(System.currentTimeMillis());
+            if (expired) {
+               // if expired, remove the entry (within entries monitor)
+               entries.remove(key);
+            } else {
+               // lock entry for reading before releasing entries monitor
+               fe.lock();
+            }
+         }
+
+         if (expired) {
+            // if expired, free the file entry (after releasing entries monitor)
+            try {
+               free(fe);
+            } catch (IOException e) {
+               throw new PersistenceException(e);
+            }
             return null;
-
-         // if expired, remove the entry (within entries monitor)
-         expired = fe.isExpired(System.currentTimeMillis());
-         if (expired)
-            entries.remove(key);
-
-         // lock entry for reading before releasing entries monitor
-         fe.lock();
+         }
+      } finally {
+         resizeLock.readLock().unlock();
       }
 
       final byte[] data;
       try {
-         // if expired, free the file entry (after releasing entries monitor)
-         if (expired) {
-            free(fe);
-            return null;
-         }
-
          // load serialized data from disk
          data = new byte[fe.keyLen + (loadValue ? fe.dataLen : 0) + (loadMetadata ? fe.metadataLen : 0)];
-         file.read(ByteBuffer.wrap(data), fe.offset + KEY_POS);
+         // The entry lock will prevent clear() from truncating the file at this point
+         channel.read(ByteBuffer.wrap(data), fe.offset + KEY_POS);
       } catch (Exception e) {
          throw new PersistenceException(e);
       } finally {
-         // no need to keep the lock for deserialization
+         // No need to keep the lock for deserialization.
+         // FileEntry is immutable, so its members can't be changed by another thread.
          fe.unlock();
       }
 
+      if (trace) log.tracef("Read entry %s at %d", key, fe.offset);
       ByteBufferFactory factory = ctx.getByteBufferFactory();
       org.infinispan.commons.io.ByteBuffer keyBb = factory.newByteBuffer(data, 0, fe.keyLen);
       org.infinispan.commons.io.ByteBuffer valueBb = null;
@@ -411,7 +448,6 @@ public class SingleFileStore implements AdvancedLoadWriteStore {
    }
 
    @Override
-   /** {@inheritDoc} */
    public void process(KeyFilter filter, final CacheLoaderTask task, Executor executor, final boolean fetchValue, final boolean fetchMetadata) {
       filter = PersistenceUtil.notNull(filter);
       Set<Object> keysToLoad = new HashSet<Object>(entries.size());
@@ -453,16 +489,28 @@ public class SingleFileStore implements AdvancedLoadWriteStore {
    }
 
    @Override
-   /** {@inheritDoc} */
    public void purge(Executor threadPool, final PurgeListener task) {
 
       threadPool.execute(new Runnable() {
          @Override
          public void run() {
             long now = System.currentTimeMillis();
+            List<KeyValuePair<Object, FileEntry>> entriesToPurge = new ArrayList<KeyValuePair<Object, FileEntry>>();
             synchronized (entries) {
                for (Iterator<Map.Entry<Object, FileEntry>> it = entries.entrySet().iterator(); it.hasNext(); ) {
                   Map.Entry<Object, FileEntry> next = it.next();
+                  FileEntry fe = next.getValue();
+                  if (fe.isExpired(now)) {
+                     it.remove();
+                     entriesToPurge.add(new KeyValuePair<Object, FileEntry>(next.getKey(), fe));
+                  }
+               }
+            }
+
+            resizeLock.readLock().lock();
+            try {
+               for (Iterator<KeyValuePair<Object, FileEntry>> it = entriesToPurge.iterator(); it.hasNext(); ) {
+                  KeyValuePair<Object, FileEntry> next = it.next();
                   FileEntry fe = next.getValue();
                   if (fe.isExpired(now)) {
                      it.remove();
@@ -474,6 +522,8 @@ public class SingleFileStore implements AdvancedLoadWriteStore {
                      if (task != null) task.entryPurged(next.getKey());
                   }
                }
+            } finally {
+               resizeLock.readLock().unlock();
             }
          }
       });
@@ -490,6 +540,10 @@ public class SingleFileStore implements AdvancedLoadWriteStore {
 
    SortedSet<FileEntry> getFreeList() {
       return freeList;
+   }
+
+   long getFileSize() {
+      return filePos;
    }
 
    public SingleFileStoreConfiguration getConfiguration() {
@@ -511,7 +565,7 @@ public class SingleFileStore implements AdvancedLoadWriteStore {
     * <li>{@link #metadataLen} bytes: serialized key</li>
     * </ul>
     */
-   private static class FileEntry implements Comparable<Object> {
+   private static class FileEntry implements Comparable<FileEntry> {
       /**
        * File offset of this block.
        */
@@ -525,48 +579,60 @@ public class SingleFileStore implements AdvancedLoadWriteStore {
       /**
        * Size of serialized key.
        */
-      private int keyLen;
+      private final int keyLen;
 
       /**
        * Size of serialized data.
        */
-      private int dataLen;
+      private final int dataLen;
 
       /**
        * Size of serialized metadata.
        */
-      private int metadataLen;
+      private final int metadataLen;
 
       /**
        * Time stamp when the entry will expire (i.e. will be collected by purge).
        */
-      private long expiryTime = -1;
+      private final long expiryTime;
 
       /**
        * Number of current readers.
        */
       private transient int readers = 0;
 
-      private FileEntry(long offset, int size) {
-         this.offset = offset;
-         this.size = size;
+      public FileEntry(long offset, int size) {
+         this(offset, size, 0, 0, 0, -1);
       }
 
-      private synchronized boolean isLocked() {
+      public FileEntry(long offset, int size, int keyLen, int dataLen, int metadataLen, long expiryTime) {
+         this.offset = offset;
+         this.size = size;
+         this.keyLen = keyLen;
+         this.dataLen = dataLen;
+         this.metadataLen = metadataLen;
+         this.expiryTime = expiryTime;
+      }
+
+      public FileEntry(FileEntry fe, int keyLen, int dataLen, int metadataLen, long expiryTime) {
+         this(fe.offset, fe.size, keyLen, dataLen, metadataLen, expiryTime);
+      }
+
+      public synchronized boolean isLocked() {
          return readers > 0;
       }
 
-      private synchronized void lock() {
+      public synchronized void lock() {
          readers++;
       }
 
-      private synchronized void unlock() {
+      public synchronized void unlock() {
          readers--;
          if (readers == 0)
             notifyAll();
       }
 
-      private synchronized void waitUnlocked() {
+      public synchronized void waitUnlocked() {
          while (readers > 0) {
             try {
                wait();
@@ -576,16 +642,12 @@ public class SingleFileStore implements AdvancedLoadWriteStore {
          }
       }
 
-      private boolean isExpired(long now) {
+      public boolean isExpired(long now) {
          return expiryTime > 0 && expiryTime < now;
       }
 
-      /** {@inheritDoc} */
       @Override
-      public int compareTo(Object o) {
-         FileEntry fe = (FileEntry) o;
-         if (this == fe)
-            return 0;
+      public int compareTo(FileEntry fe) {
          int diff = size - fe.size;
          return (diff != 0) ? diff : offset > fe.offset ? 1 : -1;
       }
