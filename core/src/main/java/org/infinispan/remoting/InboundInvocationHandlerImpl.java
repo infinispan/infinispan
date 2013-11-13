@@ -110,10 +110,7 @@ public class InboundInvocationHandlerImpl implements InboundInvocationHandler {
       StateTransferManager stm = cr.getStateTransferManager();
       // We must have completed the join before handling commands
       // (even if we didn't complete the initial state transfer)
-      if (!stm.isJoinComplete()) {
-         reply(response, null);
-         return;
-      } else if (cmd instanceof TotalOrderPrepareCommand && !stm.ownsData()) {
+      if (cmd instanceof TotalOrderPrepareCommand && !stm.ownsData()) {
          reply(response, null);
          return;
       }
