@@ -24,11 +24,11 @@ public class StateTransferLockImpl implements StateTransferLock {
 
    private final ReadWriteLock ownershipLock = new ReentrantReadWriteLock();
 
-   private volatile int topologyId;
+   private volatile int topologyId = -1;
    private final Lock topologyLock = new ReentrantLock();
    private final Condition topologyCondition = topologyLock.newCondition();
 
-   private volatile int transactionDataTopologyId;
+   private volatile int transactionDataTopologyId = -1;
    private final Lock transactionDataLock = new ReentrantLock();
    private final Condition transactionDataCondition = transactionDataLock.newCondition();
 

@@ -259,6 +259,7 @@ public abstract class BaseWordCountMapReduceTest extends MultipleCacheManagersTe
 
          @Override
          public Integer collate(final Map<String, Integer> reducedResults) {
+            log.tracef("Executing collator");
             int sum = 0;
             for (Entry<String, Integer> e : reducedResults.entrySet()) {
                sum += e.getValue();
