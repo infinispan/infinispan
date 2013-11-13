@@ -40,6 +40,13 @@ public class JBossMarshaller extends AbstractJBossMarshaller implements Streamin
    final Configuration cfg;
    final InvocationContextContainer icc;
 
+   public JBossMarshaller() {
+      this.cfg = null;
+      this.externalizerTable = null;
+      this.globalCfg = null;
+      this.icc = null;
+   }
+
    public JBossMarshaller(ExternalizerTable externalizerTable, Configuration cfg,
          InvocationContextContainer icc, GlobalConfiguration globalCfg) {
       this.externalizerTable = externalizerTable;
