@@ -147,8 +147,6 @@ public class CacheLoaderInterceptor extends JmxStatsCommandInterceptor {
    public Object visitSizeCommand(InvocationContext ctx, SizeCommand command) throws Throwable {
       int totalSize = 0;
       if (enabled && !shouldSkipCacheLoader(command)) {
-         // TODO: maybe we should add a size method to the loader so it can do additional optimizations?  It seems
-         // awfully expensive to resurrect all keys just to count how many there are.
          totalSize = persistenceManager.size();
       }
       // Passivation stores evicted entries so we want to add those or if the loader didn't have anything or was skipped
@@ -250,7 +248,7 @@ public class CacheLoaderInterceptor extends JmxStatsCommandInterceptor {
     *         queried for the value, so it was neither a hit or a miss.
     * @throws Throwable
     */
-   private Boolean loadIfNeeded(InvocationContext ctx, Object key, boolean isRetrieval, FlagAffectedCommand cmd) throws Throwable {
+   protected Boolean loadIfNeeded(InvocationContext ctx, Object key, boolean isRetrieval, FlagAffectedCommand cmd) throws Throwable {
       if (shouldSkipCacheLoader(cmd) || cmd.hasFlag(Flag.IGNORE_RETURN_VALUES) || !canLoad(key)) {
          return null; //skip operation
       }
