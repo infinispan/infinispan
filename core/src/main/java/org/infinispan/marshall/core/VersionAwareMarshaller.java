@@ -36,12 +36,13 @@ public class VersionAwareMarshaller extends AbstractMarshaller implements Stream
 
    private static final int VERSION_510 = 510;
 
-   private final JBossMarshaller defaultMarshaller;
+   private JBossMarshaller defaultMarshaller;
    private String cacheName;
 
-   public VersionAwareMarshaller() {
-      defaultMarshaller = new JBossMarshaller();
-   }
+   private ExternalizerTable extTable;
+   private GlobalConfiguration globalCfg;
+   private Configuration cfg;
+   private InvocationContextContainer icc;
 
    public void inject(Cache cache, Configuration cfg, InvocationContextContainer icc,
          ExternalizerTable extTable, GlobalConfiguration globalCfg) {
@@ -51,11 +52,15 @@ public class VersionAwareMarshaller extends AbstractMarshaller implements Stream
          this.cacheName = cache.getName();
       }
 
-      this.defaultMarshaller.inject(extTable, cfg, icc, globalCfg);
+      this.extTable = extTable;
+      this.globalCfg = globalCfg;
+      this.cfg = cfg;
+      this.icc = icc;
    }
 
    @Override
    public void start() {
+      defaultMarshaller = new JBossMarshaller(extTable, cfg, icc, globalCfg);
       defaultMarshaller.start();
    }
 

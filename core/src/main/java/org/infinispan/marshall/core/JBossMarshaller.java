@@ -34,20 +34,14 @@ import org.jboss.marshalling.Unmarshaller;
  */
 public class JBossMarshaller extends AbstractJBossMarshaller implements StreamingMarshaller {
 
-   ExternalizerTable externalizerTable;
+   final ExternalizerTable externalizerTable;
    ExternalizerTableProxy proxy;
-   GlobalConfiguration globalCfg;
-   Configuration cfg;
-   InvocationContextContainer icc;
+   final GlobalConfiguration globalCfg;
+   final Configuration cfg;
+   final InvocationContextContainer icc;
 
-   public JBossMarshaller() {
-      super();
-      baseCfg.setClassExternalizerFactory(new SerializeWithExtFactory());
-   }
-
-   public void inject(ExternalizerTable externalizerTable, Configuration cfg,
+   public JBossMarshaller(ExternalizerTable externalizerTable, Configuration cfg,
          InvocationContextContainer icc, GlobalConfiguration globalCfg) {
-      log.debug("Using JBoss Marshalling");
       this.externalizerTable = externalizerTable;
       this.globalCfg = globalCfg;
       this.cfg = cfg;
@@ -58,6 +52,7 @@ public class JBossMarshaller extends AbstractJBossMarshaller implements Streamin
    public void start() {
       super.start();
 
+      baseCfg.setClassExternalizerFactory(new SerializeWithExtFactory());
       baseCfg.setObjectTable(externalizerTable);
 
       proxy = new ExternalizerTableProxy(externalizerTable);
