@@ -2,7 +2,7 @@ package org.infinispan.query.jmx;
 
 import org.infinispan.Cache;
 import org.infinispan.commons.CacheException;
-import org.infinispan.api.BasicCacheContainer;
+import org.infinispan.commons.api.BasicCacheContainer;
 import org.infinispan.configuration.parsing.ConfigurationBuilderHolder;
 import org.infinispan.configuration.parsing.ParserRegistry;
 import org.infinispan.jmx.PerThreadMBeanServerLookup;
@@ -56,16 +56,18 @@ public class DistributedMassIndexingViaJmxTest extends DistributedMassIndexingTe
 
    @Override
    protected void rebuildIndexes() throws Exception {
+      String cacheManagerName = manager(0).getCacheManagerConfiguration().globalJmxStatistics().cacheManagerName();
       ObjectName massIndexerObjName = getMassIndexerObjectName(
-            BASE_JMX_DOMAIN + 0, BasicCacheContainer.DEFAULT_CACHE_NAME);
+            BASE_JMX_DOMAIN + 0, cacheManagerName, BasicCacheContainer.DEFAULT_CACHE_NAME);
       server.invoke(massIndexerObjName,
             "start", new Object[]{}, new String[]{});
    }
 
-   ObjectName getMassIndexerObjectName(String jmxDomain, String cacheName) {
+   private ObjectName getMassIndexerObjectName(String jmxDomain, String cacheManagerName, String cacheName) {
       try {
-         return new ObjectName(jmxDomain + ":type=Query,name="
-               + ObjectName.quote(cacheName) + ",component=MassIndexer");
+         return new ObjectName(jmxDomain + ":type=Query,manager=" + ObjectName.quote(cacheManagerName)
+                                     + ",cache=" + ObjectName.quote(cacheName)
+                                     + ",component=MassIndexer");
       } catch (MalformedObjectNameException e) {
          throw new CacheException("Malformed object name", e);
       }

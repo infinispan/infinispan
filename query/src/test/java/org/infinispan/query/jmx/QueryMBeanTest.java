@@ -12,6 +12,7 @@ import org.infinispan.query.Search;
 import org.infinispan.query.test.AnotherGrassEater;
 import org.infinispan.query.test.Person;
 import org.infinispan.test.SingleCacheManagerTest;
+import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.testng.annotations.Test;
 
@@ -125,6 +126,39 @@ public class QueryMBeanTest extends SingleCacheManagerTest {
       }
    }
 
+   /**
+    * Tests that shutting down a cache manager does not interfere with the query related MBeans belonging to a second
+    * one that is still alive and shares the same JMX domain (see issue ISPN-3531).
+    */
+   public void testJmxUnregistration() throws Exception {
+      cacheManager.getCache(CACHE_NAME); // Start the cache belonging to first cache manager
+      ObjectName queryStatsObjectName = getQueryStatsObjectName(JMX_DOMAIN, CACHE_NAME);
+      Set<ObjectName> matchingNames = server.queryNames(new ObjectName(JMX_DOMAIN + ":type=Query,component=Statistics,cache=" + ObjectName.quote(CACHE_NAME) + ",*"), null);
+      assertEquals(1, matchingNames.size());
+      assertTrue(matchingNames.contains(queryStatsObjectName));
+
+      EmbeddedCacheManager cm2 = null;
+      try {
+         ConfigurationBuilder defaultCacheConfig2 = new ConfigurationBuilder();
+         defaultCacheConfig2
+               .indexing().enable()
+               .jmxStatistics().enable();
+
+         cm2 = TestCacheManagerFactory.createClusteredCacheManagerEnforceJmxDomain("cm2", JMX_DOMAIN, true, true, defaultCacheConfig2, new PerThreadMBeanServerLookup());
+         cm2.getCache(CACHE_NAME); // Start the cache belonging to second cache manager
+
+         matchingNames = server.queryNames(new ObjectName(JMX_DOMAIN + ":type=Query,component=Statistics,cache=" + ObjectName.quote(CACHE_NAME) + ",*"), null);
+         assertEquals(2, matchingNames.size());
+         assertTrue(matchingNames.contains(queryStatsObjectName));
+      } finally {
+         TestingUtil.killCacheManagers(cm2);
+      }
+
+      matchingNames = server.queryNames(new ObjectName(JMX_DOMAIN + ":type=Query,component=Statistics,cache=" + ObjectName.quote(CACHE_NAME) + ",*"), null);
+      assertEquals(1, matchingNames.size());
+      assertTrue(matchingNames.contains(queryStatsObjectName));
+   }
+
    private void prepareTestingData() {
       Cache cache = cacheManager.getCache(CACHE_NAME);
       for(int i = 0; i < numberOfEntries; i++) {
@@ -141,10 +175,12 @@ public class QueryMBeanTest extends SingleCacheManagerTest {
       cache.put("key101", anotherGrassEater);
    }
 
-   ObjectName getQueryStatsObjectName(String jmxDomain, String cacheName) {
+   private ObjectName getQueryStatsObjectName(String jmxDomain, String cacheName) {
+      String cacheManagerName = cacheManager.getCacheManagerConfiguration().globalJmxStatistics().cacheManagerName();
       try {
-         return new ObjectName(jmxDomain + ":type=Query,name="
-               + ObjectName.quote(cacheName) + ",component=Statistics");
+         return new ObjectName(jmxDomain + ":type=Query,manager=" + ObjectName.quote(cacheManagerName)
+                                     + ",cache=" + ObjectName.quote(cacheName)
+                                     + ",component=Statistics");
       } catch (MalformedObjectNameException e) {
          throw new CacheException("Malformed object name", e);
       }
