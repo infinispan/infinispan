@@ -6,6 +6,7 @@ import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.cache.InterceptorConfiguration;
+import org.infinispan.configuration.global.GlobalConfiguration;
 import org.infinispan.configuration.global.GlobalConfigurationBuilder;
 import org.infinispan.container.DataContainer;
 import org.infinispan.eviction.EvictionStrategy;
@@ -25,6 +26,7 @@ import java.util.Set;
 
 import static org.infinispan.test.TestingUtil.*;
 import static org.infinispan.test.fwk.TestCacheManagerFactory.createCacheManager;
+import static org.testng.AssertJUnit.assertEquals;
 
 /**
  * @author Manik Surtani
@@ -312,6 +314,34 @@ public class CacheManagerTest extends AbstractInfinispanTest {
             killCacheManagers(cacheManager);
          }
       }
+   }
+
+   public void testCacheManagerRestartReusingConfigurations() {
+      withCacheManagers(new MultiCacheManagerCallable(
+            TestCacheManagerFactory.createCacheManager(CacheMode.REPL_SYNC, false),
+            TestCacheManagerFactory.createCacheManager(CacheMode.REPL_SYNC, false)) {
+         @Override
+         public void call() {
+            EmbeddedCacheManager cm1 = cms[0];
+            EmbeddedCacheManager cm2 = cms[1];
+            Cache<Object, Object> c1 = cm1.getCache();
+            cm2.getCache();
+
+            GlobalConfiguration globalCfg = cm1.getCacheManagerConfiguration();
+            Configuration cfg = c1.getCacheConfiguration();
+            cm1.stop();
+
+            withCacheManager(new CacheManagerCallable(
+                  new DefaultCacheManager(globalCfg, cfg)) {
+               @Override
+               public void call() {
+                  Cache<Object, Object> c = cm.getCache();
+                  c.put(1, "v1");
+                  assertEquals("v1", c.get(1));
+               }
+            });
+         }
+      });
    }
 
    public void testRemoveCacheClusteredLocalStores(Method m) throws Exception {
