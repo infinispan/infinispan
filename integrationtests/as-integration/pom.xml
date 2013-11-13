@@ -61,8 +61,8 @@
          <scope>test</scope>
       </dependency>
       <dependency>
-         <groupId>org.jboss.as</groupId>
-         <artifactId>jboss-as-arquillian-container-managed</artifactId>
+         <groupId>org.wildfly</groupId>
+         <artifactId>wildfly-arquillian-container-managed</artifactId>
          <scope>test</scope>
       </dependency>
    </dependencies>
@@ -117,9 +117,9 @@
                   <configuration>
                      <artifactItems>
                         <artifactItem>
-                           <groupId>org.jboss.as</groupId>
-                           <artifactId>jboss-as-dist</artifactId>
-                           <version>${version.jboss.as}</version>
+                           <groupId>org.wildfly</groupId>
+                           <artifactId>wildfly-dist</artifactId>
+                           <version>${version.wildfly}</version>
                            <type>zip</type>
                            <overWrite>false</overWrite>
                            <outputDirectory>${project.build.directory}</outputDirectory>
@@ -130,7 +130,7 @@
                            <version>${project.version}</version>
                            <type>zip</type>
                            <overWrite>false</overWrite>
-                           <outputDirectory>${project.build.directory}/jboss-eap-6.1/modules</outputDirectory>
+                           <outputDirectory>${project.build.directory}/wildfly-${version.wildfly}/modules</outputDirectory>
                         </artifactItem>
                      </artifactItems>
                   </configuration>
@@ -150,11 +150,11 @@
                      <goal>copy-resources</goal>
                   </goals>
                   <configuration>
-                     <outputDirectory>${project.build.directory}/jboss-eap-6.1</outputDirectory>
+                     <outputDirectory>${project.build.directory}/wildfly-${version.wildfly}</outputDirectory>
                      <overwrite>true</overwrite>
                      <resources>
                         <resource>
-                           <directory>${basedir}/src/as7config</directory>
+                           <directory>${basedir}/src/as-config</directory>
                         </resource>
                      </resources>
                   </configuration>
