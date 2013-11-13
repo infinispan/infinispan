@@ -60,9 +60,12 @@ public class JBossMarshaller extends AbstractJBossMarshaller implements Streamin
    Configuration cfg;
    InvocationContextContainer icc;
 
-   public void inject(ExternalizerTable externalizerTable, Configuration cfg,
+   public JBossMarshaller() {
+      // No-op constructor, mainly for testing
+   }
+
+   public JBossMarshaller(ExternalizerTable externalizerTable, Configuration cfg,
          InvocationContextContainer icc, GlobalConfiguration globalCfg) {
-      log.debug("Using JBoss Marshalling");
       this.externalizerTable = externalizerTable;
       this.globalCfg = globalCfg;
       this.cfg = cfg;
