@@ -1,4 +1,108 @@
 ==  Rolling upgrades
+Rolling upgrades is the process by which an Infinispan installation is
+upgraded without a service shutdown. In the case of Infinispan library/embedded mode, it refers to an
+installation to the nodes where Infinispan is running in library/embedded mode.
+For Infinispan servers, it refers to the server side components, not
+the client side. The upgrade could involve hardware change, or software
+change, such as upgrading the Infinispan version in use.
+
+Rolling upgrades can be done in Infinispan installations using Infinispan in
+embedded or library mode, or in server mode. Here are the instructions for
+each use case:
+
+=== Rolling upgrades for Infinispan library/embedded mode
+
+Rolling upgrades for Infinispan library/embedded mode are done taking
+advantage of the Command-Line Interface (CLI) that Infinispan provides
+in order to interact with a remote Infinispan cluster. When a new cluster is
+started, it will get the data from the existing cluster using the
+CLI, so the existing cluster must be ready to receive CLI requests. Please
+check the <<_CLI_chapter, Command-Line Interface (CLI) chapter>> for information on how to set
+up a cluster to receive CLI requests.
+
+NOTE: Rolling upgrades for Infinispan library/embedded mode are only supported
+for caches using standard JDK types as keys. Custom keys are not currently
+supported. Custom value types are supported, using JSON as the format to ship
+them between source and target cluster.
+
+==== Steps
+
+.  Start a new cluster ( _Target Cluster_ ) with the new version of
+Infinispan, using either different network settings or JGroups cluster name so
+that the old cluster ( _Source Cluster_ ) and the new one don't overlap.
+
+
+.  For each cache to be migrated, the _Target Cluster_ is configured with a
+Command-Line Interface cache loader which will retrieve data from the source
+cluster, with these settings:
+
+
+.  _connection_: JMX connection string to use to connect to _Source Cluster_.
+The connection string specifies how to connect to one of the source cluster
+members. Connection to one of the nodes is enough, there's no need to specify
+connection information for all nodes in the _Source Cluster_. The connection
+URL contains cache name information and this name must coincide with the name
+of the cache on the Source Cluster. The URL might change depending on the set
+up, check the Command-Line Interface chapter for more information. Here is a
+sample connection value: `jmx://1.1.1.1:4444/MyCacheManager/myCache`
+
+
+.  Configure clients to point to the _Target Cluster_ instead of the
+_Source Cluster_ , and one by one, restart each client node.  Gradually,
+all requests will be handled by the _Target Cluster_ rather than the
+_Source Cluster_ . The _Target Cluster_ will lazily load data from the
+_Source Cluster_ on demand via the Command-Line Interface cache loader.
+
+
+.  Once all connections have switched to using the _Target Cluster_ the
+keyset on the _Source Cluster_ must be dumped. This can be achieved either
+via a JMX operation or via the CLI:
+
+
+.  JMX: invoke the _recordKnownGlobalKeyset_ operation on the
+_RollingUpgradeManager_ MBean on the _Source Cluster_ for all of the caches
+that need to be migrated
+
+
+.  CLI: invoke the _upgrade --dumpkeys_ command on the _Source Cluster_ for
+all of the caches that need to be migrated (additionally the _--all_ switch
+can be used to dump all caches in the cluster)
+
+
+.  At this point the _Target Cluster_ needs to fetch all remaining data from
+the _Source Cluster_ :
+
+
+.  JMX: invoke the _synchronizeData_ operation specifying the "cli"
+parameter on the _RollingUpgradeManager_ MBean on the _Target Cluster_ for all
+of the caches that need to be migrated
+
+
+.  CLI: invoke the _upgrade --synchronize=cli_ command on the _Target Cluster_
+for all of the caches that need to be migrated (additionally the _--all_ switch
+can be used to synchronize all caches in the cluster)
+
+
+.  Once the above operation is complete, the _CLInterfaceLoader_ on the
+_Target Cluster_ must be disabled as follows:
+
+
+.  JMX: invoke the _disconnectSource_ operation specifying the "cli"
+parameter on the _RollingUpgradeManager_ MBean on the _Target Cluster_ for
+all of the caches that have been migrated
+
+
+.  CLI: invoke the _upgrade --disconnectsource=cli_ command on the _Target
+Cluster_ for all of the caches that have been migrated (additionally the
+_--all_ switch can be used to disconnect all caches in the cluster)
+
+
+.  The _Source Cluster_ can be decomissioned now.
+
+
+
+=== Rolling upgrades for Infinispan Servers
+
 This process is used for  installations making use of Infinispan as a remote grid, via Hot Rod.   This assumes an upgrade of the Infinispan grid, and _not_ the client application. 
 
 In  the following description we will refer to the Source and Target  clusters, where the Source cluster is the old cluster which is currently  in use and the Target cluster is the new cluster to which the data will  be migrated to.
