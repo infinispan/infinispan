@@ -133,7 +133,7 @@ public class RemoteQueryJmxTest extends SingleCacheManagerTest {
    public void testEmbeddedAttributeQuery() throws Exception {
       ObjectName name = getQueryStatsObjectName(JMX_DOMAIN, TEST_CACHE_NAME);
 
-      System.out.println(server.getAttribute(name, "StatisticsEnabled"));
+      log.tracef("StatisticsEnabled=%s", server.getAttribute(name, "StatisticsEnabled"));
 
       server.setAttribute(name, new Attribute("StatisticsEnabled", true));
 
@@ -177,9 +177,10 @@ public class RemoteQueryJmxTest extends SingleCacheManagerTest {
    }
 
    private ObjectName getQueryStatsObjectName(String jmxDomain, String cacheName) {
+      String cacheManagerName = cacheManager.getCacheManagerConfiguration().globalJmxStatistics().cacheManagerName();
       try {
-         return new ObjectName(jmxDomain + ":type=Query,name="
-                                     + ObjectName.quote(cacheName) + ",component=Statistics");
+         return new ObjectName(jmxDomain + ":type=Query,manager=" + ObjectName.quote(cacheManagerName)
+                                     + ",cache=" + ObjectName.quote(cacheName) + ",component=Statistics");
       } catch (MalformedObjectNameException e) {
          throw new CacheException("Malformed object name", e);
       }
