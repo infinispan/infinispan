@@ -98,9 +98,49 @@ public class EmbeddedCompatTest extends SingleCacheManagerTest {
       assertAccount(fromRemoteCache);
    }
 
+   public void testPutAndGetForEmbeddedEntry() throws Exception {
+      EmbeddedAccount account = new EmbeddedAccount();
+      account.setId(1);
+      account.setDescription("test description");
+      account.setCreationDate(new Date(42));
+      cache.put(1, account);
+
+      // try to get the object through the local cache interface and check it's the same object we put
+      assertEquals(1, remoteCache.keySet().size());
+      Object key = remoteCache.keySet().iterator().next();
+      Object remoteObject = remoteCache.get(key);
+      assertNotNull(remoteObject);
+      assertTrue(remoteObject instanceof Account);
+      assertAccount((Account) remoteObject);
+
+      // get the object through the embedded cache interface and check it's the same object we put
+      EmbeddedAccount fromEmbeddedCache = (EmbeddedAccount) cache.get(1);
+      assertEmbeddedAccount(fromEmbeddedCache);
+   }
+
    public void testRemoteQuery() throws Exception {
       Account account = createAccount();
       remoteCache.put(1, account);
+
+      // get account back from remote cache via query and check its attributes
+      QueryFactory qf = Search.getQueryFactory(remoteCache);
+      Query query = qf.from(Account.class)
+            .having("description").like("%test%").toBuilder()
+            .build();
+      List<Account> list = query.list();
+
+      assertNotNull(list);
+      assertEquals(1, list.size());
+      assertEquals(Account.class, list.get(0).getClass());
+      assertAccount(list.get(0));
+   }
+
+   public void testRemoteQueryForEmbeddedEntry() throws Exception {
+      EmbeddedAccount account = new EmbeddedAccount();
+      account.setId(1);
+      account.setDescription("test description");
+      account.setCreationDate(new Date(42));
+      cache.put(1, account);
 
       // get account back from remote cache via query and check its attributes
       QueryFactory qf = Search.getQueryFactory(remoteCache);

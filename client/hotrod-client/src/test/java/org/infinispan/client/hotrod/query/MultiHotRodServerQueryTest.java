@@ -29,6 +29,7 @@ import static org.junit.Assert.assertNotNull;
  */
 @Test(testName = "client.hotrod.query.MultiHotRodServerQueryTest", groups = "functional")
 public class MultiHotRodServerQueryTest extends MultiHotRodServersTest {
+   protected RemoteCache<Integer, User> remoteCache0, remoteCache1;
 
    @Override
    protected void createCacheManagers() throws Throwable {
@@ -48,6 +49,9 @@ public class MultiHotRodServerQueryTest extends MultiHotRodServersTest {
       for (RemoteCacheManager rcm : clients) {
          MarshallerRegistration.registerMarshallers(ProtoStreamMarshaller.getSerializationContext(rcm));
       }
+
+      remoteCache0 = client(0).getCache();
+      remoteCache1 = client(1).getCache();
    }
 
    @Override
@@ -57,14 +61,12 @@ public class MultiHotRodServerQueryTest extends MultiHotRodServersTest {
    }
 
    public void testAttributeQuery() throws Exception {
-      final RemoteCache<Integer, User> remoteCache0 = client(0).getCache();
-      final RemoteCache<Integer, User> remoteCache1 = client(1).getCache();
-
       remoteCache0.put(1, createUser1());
       remoteCache1.put(2, createUser2());
 
       // get user back from remote cache and check its attributes
       User fromCache = remoteCache0.get(1);
+      assertNotNull(fromCache);
       assertUser(fromCache);
 
       // get user back from remote cache via query and check its attributes
@@ -80,9 +82,6 @@ public class MultiHotRodServerQueryTest extends MultiHotRodServersTest {
    }
 
    public void testEmbeddedAttributeQuery() throws Exception {
-      final RemoteCache<Integer, User> remoteCache0 = client(0).getCache();
-      final RemoteCache<Integer, User> remoteCache1 = client(1).getCache();
-
       remoteCache0.put(1, createUser1());
       remoteCache1.put(2, createUser2());
 
@@ -99,9 +98,6 @@ public class MultiHotRodServerQueryTest extends MultiHotRodServersTest {
    }
 
    public void testProjections() throws Exception {
-      final RemoteCache<Integer, User> remoteCache0 = client(0).getCache();
-      final RemoteCache<Integer, User> remoteCache1 = client(1).getCache();
-
       remoteCache0.put(1, createUser1());
       remoteCache1.put(2, createUser2());
 
