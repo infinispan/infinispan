@@ -1,7 +1,6 @@
 package org.infinispan.context;
 
 import org.infinispan.commands.VisitableCommand;
-import org.infinispan.commons.equivalence.Equivalence;
 import org.infinispan.context.impl.LocalTxInvocationContext;
 import org.infinispan.context.impl.NonTxInvocationContext;
 import org.infinispan.context.impl.RemoteTxInvocationContext;

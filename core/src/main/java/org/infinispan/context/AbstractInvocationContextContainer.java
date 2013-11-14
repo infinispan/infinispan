@@ -5,9 +5,6 @@ import org.infinispan.commands.VisitableCommand;
 import org.infinispan.commons.equivalence.Equivalence;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.remoting.transport.Address;
-import org.infinispan.transaction.TransactionTable;
-
-import javax.transaction.TransactionManager;
 
 
 /**
