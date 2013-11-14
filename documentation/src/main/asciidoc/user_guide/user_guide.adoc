@@ -21,7 +21,7 @@ are also useful documents to have alongside this user guide.
 include::chapter-46-Configuring_cache.adoc[]
 include::chapter-53-Using_the_Cache_API.adoc[]
 include::chapter-43-Eviction.adoc[]
-include::chapter-23-Cache_Loaders_and_Stores.adoc[]
+include::chapter-23-Persistence.adoc[]
 include::chapter-26-Infinispan_transactions.adoc[]
 include::chapter-19-Locking_and_Concurrency.adoc[]
 include::chapter-32-Clustering_modes.adoc[]

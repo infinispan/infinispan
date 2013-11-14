@@ -1,3 +1,4 @@
+[[eviction_anchor]]
 ==  Eviction
 Infinispan supports eviction of entries, such that you do not run out of memory.  Eviction is typically used in conjunction with a cache store, so that entries are not permanently lost when evicted, since eviction only removes entries from memory and not from cache stores or the rest of the cluster.
 

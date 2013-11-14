@@ -70,7 +70,7 @@ All you need is _org.infinispan:infinispan-lucene-directory_ :
 ----
 
 === Using a CacheLoader
-Using a CacheLoader you can have the index content backed up to a permanent storage; you can use a shared store for all nodes or one per node, see <<sid-68355053>> for more details. 
+Using a CacheLoader you can have the index content backed up to a permanent storage; you can use a shared store for all nodes or one per node, see <<cache-passivation, cache passivation>> for more details.
 
 When using a CacheLoader to store a Lucene index, to get best write performance you would need to configure the CacheLoader with _async=true_ . 
 
