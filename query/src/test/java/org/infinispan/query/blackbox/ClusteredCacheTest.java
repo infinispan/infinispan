@@ -292,6 +292,12 @@ public class ClusteredCacheTest extends MultipleCacheManagersTest {
       person4.setBlurb("Also eats grass");
 
       cache2.putForExternalRead("newGoat", person4);
+      eventually(new Condition() {
+         @Override
+         public boolean isSatisfied() throws Exception {
+            return cache2.get("newGoat") != null;
+         }
+      });
       List found = searchManager.getQuery(allQuery, Person.class).list();
       AssertJUnit.assertEquals(4, found.size());
 
