@@ -10,6 +10,10 @@ import org.infinispan.commons.configuration.Self;
  */
 public interface ProtocolServerConfigurationChildBuilder<T extends ProtocolServerConfiguration, S extends ProtocolServerConfigurationChildBuilder<T,S>> extends Self<S> {
    /**
+    * Specifies the cache to use as a default cache for the protocol
+    */
+   S defaultCacheName(String defaultCacheName);
+   /**
     * Specifies a custom name for this server in order to easily distinguish it from other servers, e.g. via JMX. Defaults to the empty string.
     */
    S name(String name);
@@ -58,5 +62,4 @@ public interface ProtocolServerConfigurationChildBuilder<T extends ProtocolServe
     * Builds a configuration object
     */
    T build();
-
 }
