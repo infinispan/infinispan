@@ -209,12 +209,12 @@
                 </protocol>
                 <protocol type="pbcast.GMS"/>
                 <protocol type="UFC">
-                    <property name="max_credits">200k</property>
-                    <property name="min_threshold">0.20</property>
+                    <property name="max_credits">2m</property>
+                    <property name="min_threshold">0.40</property>
                 </protocol>
                 <protocol type="MFC">
-                    <property name="max_credits">200k</property>
-                    <property name="min_threshold">0.20</property>
+                    <property name="max_credits">2m</property>
+                    <property name="min_threshold">0.40</property>
                 </protocol>
                 <protocol type="FRAG2">
                     <property name="frag_size">8000</property>
@@ -264,12 +264,12 @@
                 </protocol>
                 <protocol type="pbcast.GMS"/>
                 <protocol type="UFC">
-                    <property name="max_credits">200k</property>
-                    <property name="min_threshold">0.20</property>
+                    <property name="max_credits">2m</property>
+                    <property name="min_threshold">0.40</property>
                 </protocol>
                 <protocol type="MFC">
-                    <property name="max_credits">200k</property>
-                    <property name="min_threshold">0.20</property>
+                    <property name="max_credits">2m</property>
+                    <property name="min_threshold">0.40</property>
                 </protocol>
                 <protocol type="FRAG2"/>
                 <protocol type="RSVP">
