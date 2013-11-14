@@ -18,6 +18,7 @@ import org.infinispan.persistence.remote.RemoteStore;
 import org.infinispan.persistence.remote.configuration.RemoteStoreConfiguration;
 import org.infinispan.persistence.remote.logging.Log;
 import org.infinispan.upgrade.TargetMigrator;
+import org.infinispan.util.ByteArrayKey;
 import org.infinispan.util.logging.LogFactory;
 
 public class HotRodTargetMigrator implements TargetMigrator {
@@ -56,16 +57,17 @@ public class HotRodTargetMigrator implements TargetMigrator {
             }
 
 
-            Set<byte[]> keys;
+            Set<Object> keys;
             try {
-               keys = (Set<byte[]>) marshaller.objectFromByteBuffer((byte[])storeCache.get(knownKeys));
+               keys = (Set<Object>) marshaller.objectFromByteBuffer((byte[])storeCache.get(knownKeys));
             } catch (Exception e) {
                throw new CacheException(e);
             }
 
             ExecutorService es = Executors.newFixedThreadPool(threads);
             final AtomicInteger count = new AtomicInteger(0);
-            for (final byte[] key : keys) {
+            for (Object okey : keys) {
+               final byte[] key = (okey instanceof ByteArrayKey) ? ((ByteArrayKey)okey).getData() : ((byte[])okey);
                es.submit(new Runnable() {
 
                   @Override
