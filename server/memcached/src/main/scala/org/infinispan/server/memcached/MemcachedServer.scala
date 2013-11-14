@@ -21,12 +21,12 @@ class MemcachedServer extends AbstractProtocolServer("Memcached") {
    private var memcachedCache: AdvancedCache[String, Array[Byte]] = _
 
    override def startInternal(configuration: MemcachedServerConfiguration, cacheManager: EmbeddedCacheManager) {
-      if (!cacheManager.cacheExists(configuration.cache)) {
+      if (!cacheManager.cacheExists(configuration.defaultCacheName)) {
          // Define the Memcached cache as clone of the default one
-         cacheManager.defineConfiguration(configuration.cache,
+         cacheManager.defineConfiguration(configuration.defaultCacheName,
             new ConfigurationBuilder().read(cacheManager.getDefaultCacheConfiguration).build())
       }
-      memcachedCache = cacheManager.getCache[String, Array[Byte]](configuration.cache).getAdvancedCache
+      memcachedCache = cacheManager.getCache[String, Array[Byte]](configuration.defaultCacheName).getAdvancedCache
       super.startInternal(configuration, cacheManager)
    }
 

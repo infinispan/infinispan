@@ -117,5 +117,5 @@ abstract class AbstractProtocolServer(protocolName: String) extends ProtocolServ
 
    def getPort: Int = configuration.port
 
-   def startDefaultCache = cacheManager.getCache[AnyRef, AnyRef]()
+   def startDefaultCache = cacheManager.getCache[AnyRef, AnyRef](configuration.defaultCacheName)
 }

@@ -1,5 +1,6 @@
 package org.infinispan.server.core.configuration;
 
+import org.infinispan.commons.api.BasicCacheContainer;
 import org.infinispan.commons.configuration.Builder;
 import org.infinispan.server.core.logging.JavaLog;
 import org.infinispan.util.logging.LogFactory;
@@ -7,6 +8,7 @@ import org.infinispan.util.logging.LogFactory;
 public abstract class ProtocolServerConfigurationBuilder<T extends ProtocolServerConfiguration, S extends ProtocolServerConfigurationChildBuilder<T, S>> implements
       ProtocolServerConfigurationChildBuilder<T, S>, Builder<T> {
    private static final JavaLog log = LogFactory.getLog(ProtocolServerConfigurationBuilder.class, JavaLog.class);
+   protected String defaultCacheName = BasicCacheContainer.DEFAULT_CACHE_NAME;
    protected String name = "";
    protected String host = "127.0.0.1";
    protected int port = -1;
@@ -20,6 +22,12 @@ public abstract class ProtocolServerConfigurationBuilder<T extends ProtocolServe
    protected ProtocolServerConfigurationBuilder(int port) {
       this.port = port;
       this.ssl = new SslConfigurationBuilder();
+   }
+
+   @Override
+   public S defaultCacheName(String defaultCacheName) {
+      this.defaultCacheName = defaultCacheName;
+      return this.self();
    }
 
    @Override
@@ -94,6 +102,7 @@ public abstract class ProtocolServerConfigurationBuilder<T extends ProtocolServe
 
    @Override
    public Builder<?> read(T template) {
+      this.defaultCacheName = template.defaultCacheName();
       this.name = template.name();
       this.host = template.host();
       this.port = template.port();

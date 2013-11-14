@@ -7,6 +7,7 @@ import org.infinispan.server.hotrod._
 import logging.Log
 import org.infinispan.manager.EmbeddedCacheManager
 import java.util.Arrays
+import org.infinispan.commons.api.BasicCacheContainer
 import org.infinispan.commons.util.Util
 import org.infinispan.commons.equivalence.ByteArrayEquivalence
 import org.testng.Assert._
@@ -42,6 +43,9 @@ object HotRodTestingUtil extends Log {
    def startHotRodServer(manager: EmbeddedCacheManager): HotRodServer =
       startHotRodServer(manager, UniquePortThreadLocal.get.intValue)
 
+   def startHotRodServer(manager: EmbeddedCacheManager, defaultCacheName: String): HotRodServer =
+      startHotRodServer(manager, UniquePortThreadLocal.get.intValue, 0, host, UniquePortThreadLocal.get.intValue, 0, defaultCacheName)
+
    def startHotRodServer(manager: EmbeddedCacheManager, proxyHost: String, proxyPort: Int): HotRodServer =
       startHotRodServer(manager, UniquePortThreadLocal.get.intValue, 0, proxyHost, proxyPort)
 
@@ -61,9 +65,9 @@ object HotRodTestingUtil extends Log {
       startHotRodServer(manager, port, 0, host, port, delay)
 
    def startHotRodServer(manager: EmbeddedCacheManager, port: Int, idleTimeout: Int,
-                         proxyHost: String, proxyPort: Int, delay: Long): HotRodServer = {
+                         proxyHost: String, proxyPort: Int, delay: Long, defaultCacheName: String = BasicCacheContainer.DEFAULT_CACHE_NAME): HotRodServer = {
       val builder = new HotRodServerConfigurationBuilder
-      builder.proxyHost(proxyHost).proxyPort(proxyPort).idleTimeout(idleTimeout)
+      builder.proxyHost(proxyHost).proxyPort(proxyPort).idleTimeout(idleTimeout).defaultCacheName(defaultCacheName)
       startHotRodServer(manager, port, delay, builder)
    }
 
@@ -301,6 +305,10 @@ object HotRodTestingUtil extends Log {
    def assertHotRodEquals(cm: EmbeddedCacheManager,
            key: Array[Byte], expectedValue: Array[Byte]): InternalCacheEntry =
       assertHotRodEquals(cm, cm.getCache[Array[Byte], Array[Byte]](), key, expectedValue)
+
+   def assertHotRodEquals(cm: EmbeddedCacheManager, cacheName: String,
+           key: Array[Byte], expectedValue: Array[Byte]): InternalCacheEntry =
+      assertHotRodEquals(cm, cm.getCache[Array[Byte], Array[Byte]](cacheName), key, expectedValue)
 
    def assertHotRodEquals(cm: EmbeddedCacheManager,
            key: String, expectedValue: String): InternalCacheEntry =

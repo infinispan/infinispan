@@ -78,7 +78,7 @@ class HotRodServer extends AbstractProtocolServer("HotRod") with Log {
    }
 
    override def startDefaultCache = {
-      val cache = cacheManager.getCache[AnyRef, AnyRef]()
+      val cache = cacheManager.getCache[AnyRef, AnyRef](configuration.defaultCacheName())
       validateCacheConfiguration(cache.getCacheConfiguration)
       cache
    }
@@ -158,7 +158,7 @@ class HotRodServer extends AbstractProtocolServer("HotRod") with Log {
 
       if (cache == null) {
          if (cacheName.isEmpty)
-            cache = cacheManager.getCache[Array[Byte], Array[Byte]]()
+            cache = cacheManager.getCache[Array[Byte], Array[Byte]](configuration.defaultCacheName)
                     .getAdvancedCache.withFlags(Flag.OPERATION_HOTROD)
          else
             cache = cacheManager.getCache[Array[Byte], Array[Byte]](cacheName)
