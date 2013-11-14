@@ -78,8 +78,8 @@
    <pbcast.GMS print_local_addr="false" join_timeout="3000" view_bundling="true"/>
    <tom.TOA/> <!-- the TOA is only needed for total order transactions-->
 
-   <UFC max_credits="1m" min_threshold="0.40"/>
-   <MFC max_credits="1m" min_threshold="0.40"/>
+   <UFC max_credits="2m" min_threshold="0.40"/>
+   <MFC max_credits="2m" min_threshold="0.40"/>
    <FRAG2 frag_size="30k"/>
    <RSVP timeout="60000" resend_interval="500" ack_on_delivery="false" />
 </config>
