@@ -13,8 +13,6 @@
    <packaging>bundle</packaging>
    <name>Infinispan remote CacheStore</name>
    <description>Infinispan remote CacheStore based on Hotrod protocol</description>
-   <properties>
-   </properties>
 
    <dependencies>
       <dependency>
@@ -30,6 +28,11 @@
       <dependency>
          <groupId>${project.groupId}</groupId>
          <artifactId>infinispan-core</artifactId>
+      </dependency>
+      <dependency>
+         <groupId>${project.groupId}</groupId>
+         <artifactId>infinispan-adaptor52x</artifactId>
+         <optional>true</optional>
       </dependency>
       <dependency>
          <groupId>${project.groupId}</groupId>
