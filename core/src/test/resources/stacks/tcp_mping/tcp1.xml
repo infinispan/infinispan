@@ -66,7 +66,7 @@
                   max_bytes="400000"/>
    <pbcast.GMS print_local_addr="false" join_timeout="7000" view_bundling="true"/>
    <tom.TOA/> <!-- the Total Order Anycast is only needed for total order transactions (in distributed mode)-->
-   <FC max_credits="2000000"
+   <FC max_credits="2m"
        min_threshold="0.10"/>
    <FRAG2 frag_size="60000"/>
 </config>
