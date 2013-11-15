@@ -18,7 +18,7 @@ public abstract class BaseRpcCommand implements CacheRpcCommand {
 
    @Override
    public String toString() {
-      return "BaseRpcCommand{" +
+      return getClass().getSimpleName() + "{" +
             "cacheName='" + cacheName + '\'' +
             '}';
    }

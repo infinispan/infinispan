@@ -190,21 +190,17 @@ public class StateProviderImpl implements StateProvider {
 
    private CacheTopology getCacheTopology(int requestTopologyId, Address destination, boolean isReqForTransactions) throws InterruptedException {
       CacheTopology cacheTopology = stateConsumer.getCacheTopology();
-      if (cacheTopology == null) {
-         // no commands are processed until the join is complete, so this cannot normally happen
-         throw new IllegalStateException("No cache topology received yet");
-      }
-
-      if (requestTopologyId < cacheTopology.getTopologyId()) {
+      int currentTopologyId = cacheTopology != null ? cacheTopology.getTopologyId() : -1;
+      if (requestTopologyId < currentTopologyId) {
          if (isReqForTransactions)
-            log.transactionsRequestedByNodeWithOlderTopology(destination, requestTopologyId, cacheTopology.getTopologyId());
+            log.transactionsRequestedByNodeWithOlderTopology(destination, requestTopologyId, currentTopologyId);
          else
-            log.segmentsRequestedByNodeWithOlderTopology(destination, requestTopologyId, cacheTopology.getTopologyId());
-      } else if (requestTopologyId > cacheTopology.getTopologyId()) {
+            log.segmentsRequestedByNodeWithOlderTopology(destination, requestTopologyId, currentTopologyId);
+      } else if (requestTopologyId > currentTopologyId) {
          if (trace) {
             log.tracef("%s were requested by node %s with topology %d, greater than the local " +
                   "topology (%d). Waiting for topology %d to be installed locally.", isReqForTransactions ? "Transactions" : "Segments", destination,
-                  requestTopologyId, cacheTopology.getTopologyId(), requestTopologyId);
+                  requestTopologyId, currentTopologyId, requestTopologyId);
          }
          stateTransferLock.waitForTopology(requestTopologyId, timeout, TimeUnit.MILLISECONDS);
          cacheTopology = stateConsumer.getCacheTopology();

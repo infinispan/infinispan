@@ -81,4 +81,11 @@ public class RemoveCacheCommand extends BaseRpcCommand {
    public boolean canBlock() {
       return true;
    }
+   @Override
+   public String toString() {
+      return "RemoveCacheCommand{" +
+            "cacheName='" + cacheName + '\'' +
+            '}';
+   }
+
 }
