@@ -63,7 +63,7 @@ public class SingleKeyNonTxInvocationContext extends AbstractInvocationContext {
 
    @Override
    public void addLockedKey(Object key) {
-      if (cacheEntry != null && !key.equals(this.key))
+      if (cacheEntry != null && !keyEquivalence.equals(key, this.key))
          throw illegalStateException();
       isLocked = true;
    }
@@ -102,7 +102,7 @@ public class SingleKeyNonTxInvocationContext extends AbstractInvocationContext {
 
    @Override
    public void removeLookedUpEntry(Object key) {
-      if (key.equals(this.key))
+      if (keyEquivalence.equals(key, this.key))
          clearLockedKeys();
    }
 
