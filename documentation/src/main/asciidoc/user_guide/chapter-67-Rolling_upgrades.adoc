@@ -1,3 +1,4 @@
+[[_Rolling_chapter]]
 ==  Rolling upgrades
 Rolling upgrades is the process by which an Infinispan installation is
 upgraded without a service shutdown. In the case of Infinispan library/embedded mode, it refers to an

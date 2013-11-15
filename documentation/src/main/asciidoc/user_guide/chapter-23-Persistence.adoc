@@ -20,6 +20,19 @@ This SPI was refactored in Infinispan 6. It brings the following improvements ov
 
 * Reduced Serialization. This translates in less CPU usage. The new API exposes the stored entries in serialized format. If an entry is fetched from persistent storage for the sole purpose of being sent remotely, we no longer need to deserialize it (when reading from the store) and serialize it back (when writing to the wire). Now we can write to the wire the serialized format as read from the storage directly.
 
+[[_Data_migration_section]]
+=== Data Migration
+
+The format in which data is persisted has changed in Infinispan 6.0, so this
+means that if you stored data using Infinispan 4.x or Infinispan 5.x,
+Infinispan 6.0 won't be able to read it. The best way to upgrade persisted
+data from Infinispan 4.x/5.x to Infinispan 6.0 is to use the mechanisms
+explained in the <<_Rolling_chapter,Rolling Upgrades section>>.
+In other words, by starting a rolling upgrade, data stored in Infinispan
+4.x/5.x can be migrated to a Infinispan 6.0 installation where persitence
+is configured with a different location for the data. The location
+configuration varies according to the specific details of each cache store.
+
 Following sections describe the SPI and also discuss the SPI implementations that Infinispan ships out of the box.
 
 === API
@@ -112,7 +125,7 @@ The configuration above is used for a generic store implementation. However the 
 ----
 <persistence passivation="false">
    <!-- note that class is missing and is induced by the fileStore element name -->
-   <fileStore
+   <singleFile
            shared="false" preload="true"
            fetchPersistentState="true"
            purgerThreads="3"
@@ -123,7 +136,7 @@ The configuration above is used for a generic store implementation. However the 
            enabled="true"
            flushLockTimeout="15000"
            threadPoolSize="5" />
-   </fileStore>
+   </singleFile>
 </loaders>
 
 ----
@@ -265,15 +278,75 @@ In this mode, Infinispan would periodically store changes to the underlying cach
 Since this strategy is oriented at cache stores with high latency or expensive operation cost, it makes sense to coalesce changes, so that if there are multiple operations queued on the same key, only the latest value is applied to cache store. With this strategy, the window of inconsistency between the contents of the cache and the cache store depends on the delay or periodicity configured. The higher the periodicity, the higher the chance of inconsistency.
 
 
-=== File system based cache loaders
-Infinispan ships with two filesystem-based cache loaders that utilize the file system as a data store.
-They all require a location attribute, which maps to a directory to be used as a persistent store. (e.g., `location="/tmp/myDataStore"`).
+=== Filesystem based cache stores
 
-*  `SingleFileStore` is a filesystem-based implementation. Usage on shared filesystems like NFS, Windows shares, etc. should be avoided as these do not implement proper file locking and can cause data corruption. File systems are inherently not transactional, so when attempting to use your cache in a transactional context, failures when writing to the file (which happens during the commit phase) cannot be recovered.
+Starting with Infinispan 6.0, a new file cache store has been created called
+single file cache store. The old pre-6.0 file cache store has been completely
+removed, and it's no longer configurable.
 
-TIP: The `SingleFileStore` is new in Infinispan 6.x and replaces the previous file store implementation offering better performance at the cost of some additional memory consumption(it keeps all the keys in memory at all times).
+NOTE: Check <<_Data_migration_section,Data Migration section>> for information
+on how to migrate old file based cache store data to the new single file
+cache store.
 
-For detailed description of all the parameters supported by the stores, please consult the link:$$http://docs.jboss.org/infinispan/6.0/apidocs/$$[javadoc].
+The new single file cache store keeps all data in a single file. The way it
+looks up data is by keeping an in-memory index of keys and the positions of
+their values in this file. This results in greater performance compared to old
+file cache store. There is one caveat though. Since the single file based
+cache store keeps keys in memory, it can lead to increased memory consumption,
+and hence it's not recommended for caches with big keys.
+
+A filesystem-based cache store is typically used when you want to have a
+cache with a cache store available locally which stores data that has
+overflowed from memory, having exceeded size and/or time restrictions.
+
+WARNING: Usage of filesystem-based cache stores on shared filesystems like NFS,
+Windows shares, etc. should be avoided as these do not implement proper
+file locking and can cause data corruption. File systems are inherently
+not transactional, so when attempting to use your cache in a transactional
+context, failures when writing to the file (which happens during the commit
+phase) cannot be recovered.
+
+These are the available configuration options for the single file cache store:
+
+* `location` where data will be stored. (e.g., `location="/tmp/myDataStore"`).
+By default, the location is `Infinispan-SingleFileStore`.
+
+* `maxEntries` specifies the maximum number of entries to keep in this file
+store. As mentioned before, in order to speed up lookups, the single file
+cache store keeps an index of keys and their corresponding position in the
+file. To avoid this index resulting in memory consumption problems, this
+cache store can bounded by a maximum number of entries that it stores. If
+this limit is exceeded, entries are removed permanently using the LRU
+algorithm both from  the in-memory index and the underlying file based
+cache store. So, setting a maximum limit only makes sense when Infinispan is
+used as a cache, whose contents can be recomputed or they can be retrieved
+from the authoritative data store. If this maximum limit is set when the
+Infinispan is used as an authoritative data store, it could lead to data
+loss, and hence it's not recommended for this use case. The default value is
+`-1` which means that the file store size is unlimited.
+
+[source,xml]
+----
+
+<loaders>
+   <singleFile location="/tmp/myDataStore" maxEntries="5000"/>
+</loaders>
+
+----
+
+[source,java]
+----
+
+ConfigurationBuilder b = new ConfigurationBuilder();
+b.loaders()
+    .addSingleFileStore()
+    .location("/tmp/myDataStore")
+    .maxEntries(5000);
+
+----
+
+For detailed description of all the parameters supported by the stores,
+please consult the link:$$http://docs.jboss.org/infinispan/6.0/apidocs/$$[javadoc].
 
 === JDBC based cache loaders
 Based on the type of keys to be persisted, there are three JDBC cache loaders:
@@ -565,6 +638,40 @@ b.loaders()
 For a list of ClusterCacheLoader configuration refer to the link:$$http://docs.jboss.org/infinispan/6.0/apidocs/org/infinispan/configuration/cache/ClusterLoaderConfiguration.html$$[javadoc] .
 
 NOTE: The ClusterCacheLoader does not support preloading(preload=true). It also won't provide state if fetchPersistentSate=true.
+
+=== Command-Line Interface cache loader
+The Command-Line Interface (CLI) cache loader is a cache loader implementation
+that retrieves data from another Infinispan node using the CLI. The node to
+which the CLI connects to could be a standalone node, or could be a node that
+it's part of a cluster. This cache loader is read-only, so it will only be
+used to retrieve data, and hence, won't be used when persisting data.
+
+The CLI cache loader is configured with a connection URL pointing to the
+Infinispan node to which connect to. Here is an example:
+
+NOTE: Details on the format of the URL and how to make sure a node can
+receive invocations via the CLI can be found in the
+<<_CLI_chapter,Command-Line Interface chapter>>.
+
+[source,xml]
+----
+
+<loaders>
+   <cliLoader connection="jmx://1.2.3.4:4444/MyCacheManager/myCache" />
+</loaders>
+
+----
+
+[source,java]
+----
+
+ConfigurationBuilder b = new ConfigurationBuilder();
+b.loaders()
+    .addStore(CLInterfaceLoaderConfigurationBuilder.class)
+    .connectionString("jmx://1.2.3.4:4444/MyCacheManager/myCache");
+
+----
+
 
 === More implementations
 Many more cache loader and cache store implementations exist.
