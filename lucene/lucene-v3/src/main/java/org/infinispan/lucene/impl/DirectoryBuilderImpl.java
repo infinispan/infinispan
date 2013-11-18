@@ -4,6 +4,7 @@ import org.apache.lucene.store.Directory;
 import org.apache.lucene.store.LockFactory;
 import org.infinispan.Cache;
 import org.infinispan.configuration.cache.Configuration;
+import org.infinispan.configuration.cache.Configurations;
 import org.infinispan.lucene.directory.BuildContext;
 import org.infinispan.lucene.locking.BaseLockFactory;
 import org.infinispan.lucene.logging.Log;
@@ -119,6 +120,9 @@ public class DirectoryBuilderImpl implements BuildContext {
       }
       if (configuration.storeAsBinary().enabled()) {
          throw log.luceneStorageAsBinaryEnabled(indexName, cache.getName());
+      }
+      if (!Configurations.noDataLossOnJoiner(configuration)) {
+         throw log.luceneStorageNoStateTransferEnabled(indexName, cache.getName());
       }
       return cache;
    }

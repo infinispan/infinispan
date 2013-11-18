@@ -86,4 +86,7 @@ public interface Log extends org.infinispan.util.logging.Log {
 
    @Message(value = "Lucene Directory for index '%s' can not use Metadata Cache '%s': persistence enabled without preload on the Cache configuration!", id = 15019)
    IllegalArgumentException preloadNeededIfPersistenceIsEnabledForMetadataCache(String indexName, String cacheName);
+
+   @Message(value = "Lucene Directory for index '%s' can not use Cache '%s': fetch in state is not enabled in Cache configuration!", id = 15020)
+   IllegalArgumentException luceneStorageNoStateTransferEnabled(String indexName, String cacheName);
 }

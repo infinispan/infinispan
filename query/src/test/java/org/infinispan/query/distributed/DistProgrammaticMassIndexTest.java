@@ -35,10 +35,12 @@ public class DistProgrammaticMassIndexTest extends DistributedMassIndexingTest {
             .addProperty("hibernate.search.default.directory_provider", "infinispan")
             .addProperty("hibernate.search.default.exclusive_index_use", "false")
             .addProperty("lucene_version", "LUCENE_36");
+      cacheCfg.clustering().stateTransfer().fetchInMemoryState(true);
       List<Cache<String, Car>> cacheList = createClusteredCaches(NUM_NODES, cacheCfg);
 
       for(int i = 0; i < NUM_NODES; i++) {
          ConfigurationBuilder cacheCfg1 = getDefaultClusteredCacheConfig(CacheMode.REPL_SYNC, false);
+         cacheCfg1.clustering().stateTransfer().fetchInMemoryState(true);
          cacheManagers.get(i).defineConfiguration(InfinispanIntegration.DEFAULT_INDEXESDATA_CACHENAME, cacheCfg1.build());
          cacheManagers.get(i).defineConfiguration( InfinispanIntegration.DEFAULT_LOCKING_CACHENAME, cacheCfg1.build());
       }

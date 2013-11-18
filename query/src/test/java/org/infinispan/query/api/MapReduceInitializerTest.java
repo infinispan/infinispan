@@ -33,6 +33,7 @@ public class MapReduceInitializerTest extends MultipleCacheManagersTest {
             .addProperty("default.indexmanager", "org.infinispan.query.indexmanager.InfinispanIndexManager")
             .addProperty("default.exclusive_index_use", "false")
             .addProperty("lucene_version", "LUCENE_36");
+      cacheCfg.clustering().stateTransfer().fetchInMemoryState(true);
 
       createClusteredCaches(2, cacheCfg);
    }
