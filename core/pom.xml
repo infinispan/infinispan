@@ -1,13 +1,11 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<project xmlns="http://maven.apache.org/POM/4.0.0"
-         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+<?xml version='1.0' encoding='UTF-8'?>
+<project xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd" xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
    <modelVersion>4.0.0</modelVersion>
 
    <parent>
       <groupId>org.infinispan</groupId>
       <artifactId>infinispan-parent</artifactId>
-      <version>6.0.0-SNAPSHOT</version>
+      <version>6.0.1-SNAPSHOT</version>
       <relativePath>../parent/pom.xml</relativePath>
    </parent>
 
@@ -31,10 +29,7 @@
          <artifactId>jgroups</artifactId>
       </dependency>
 
-      <!--
-         For the JTA 1.1 API; consuming projects can safely
-         exclude this and replace with any valid source of this API, such as a Java EE app server. 
-         -->
+      
       <dependency>
          <groupId>org.jboss.spec.javax.transaction</groupId>
          <artifactId>jboss-transaction-api_1.1_spec</artifactId>
@@ -96,7 +91,7 @@
       <pluginManagement>
          <plugins>
             <plugin>
-               <!-- This plugin's configuration is used in m2e only. -->
+               
                <groupId>org.eclipse.m2e</groupId>
                <artifactId>lifecycle-mapping</artifactId>
                <version>1.0.0</version>
@@ -113,7 +108,7 @@
                               </goals>
                            </pluginExecutionFilter>
                            <action>
-                              <ignore></ignore>
+                              <ignore />
                            </action>
                         </pluginExecution>
                         <pluginExecution>
@@ -130,7 +125,7 @@
                                 </goals>
                             </pluginExecutionFilter>
                             <action>
-                                <ignore></ignore>
+                                <ignore />
                             </action>
                         </pluginExecution>
                      </pluginExecutions>

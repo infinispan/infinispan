@@ -1,12 +1,10 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<project xmlns="http://maven.apache.org/POM/4.0.0"
-         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+<?xml version='1.0' encoding='UTF-8'?>
+<project xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd" xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
    <modelVersion>4.0.0</modelVersion>
    <parent>
       <groupId>org.infinispan</groupId>
       <artifactId>infinispan-parent</artifactId>
-      <version>6.0.0-SNAPSHOT</version>
+      <version>6.0.1-SNAPSHOT</version>
       <relativePath>../parent/pom.xml</relativePath>
    </parent>
 
@@ -15,8 +13,7 @@
    <name>Infinispan JCACHE (JSR-107) implementation</name>
    <description>JCACHE (JSR-107) implementation using Infinispan</description>
 
-   <!-- This module declares components that either has lifecycle (@Start or
-      @Stop) or uses @Inject to retrieve dependencies -->
+   
    <properties>
       <module.skipComponentMetaDataProcessing>false</module.skipComponentMetaDataProcessing>
    </properties>
@@ -86,7 +83,7 @@
             </configuration>
          </plugin>
 
-         <!-- Disable parallel execution of tests ARQ-127 -->
+         
          <plugin>
             <groupId>org.apache.maven.plugins</groupId>
             <artifactId>maven-surefire-plugin</artifactId>
@@ -96,8 +93,7 @@
             </configuration>
          </plugin>
 
-         <!-- Use invoker plugin to run TCK tests once Infinispan JSR-107
-              implementation has been built and installed in the repo -->
+         
          <plugin>
             <groupId>org.apache.maven.plugins</groupId>
             <artifactId>maven-invoker-plugin</artifactId>
@@ -115,11 +111,11 @@
                   <goal>package</goal>
                </goals>
                <properties>
-                  <!-- Skip tests parent's tests are skipped -->
+                  
                   <maven.test.skip.exec>${maven.test.skip.exec}</maven.test.skip.exec>
                   <skipTests>${skipTests}</skipTests>
-                  <!-- maven.surefire.debug>-Xdebug -Xrunjdwp:transport=dt_socket,server=y,suspend=y,address=5005 -Xnoagent -Djava.compiler=NONE</maven.surefire.debug -->
-                  <!-- If logging enabled by client, pass it on -->
+                  
+                  
                   <log4j.configuration>${log4j.configuration}</log4j.configuration>
                </properties>
             </configuration>

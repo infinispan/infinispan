@@ -1,12 +1,11 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-   xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+<?xml version='1.0' encoding='UTF-8'?>
+<project xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd" xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
    <modelVersion>4.0.0</modelVersion>
 
    <parent>
       <groupId>org.infinispan</groupId>
       <artifactId>infinispan-parent</artifactId>
-      <version>6.0.0-SNAPSHOT</version>
+      <version>6.0.1-SNAPSHOT</version>
       <relativePath>../../parent/pom.xml</relativePath>
    </parent>
 
@@ -25,9 +24,7 @@
          <type>test-jar</type>
          <scope>test</scope>
       </dependency>
-      <!-- Hack to make Eclipse happy when opening multiple modules at once:
-         the eclipse project related to infinispan-lucene-directory does not
-         contain the actual classes packaged in its jar -->
+      
       <dependency>
          <groupId>${project.groupId}</groupId>
          <artifactId>infinispan-lucene-v3</artifactId>
@@ -38,7 +35,7 @@
    <build>
       <plugins>
       
-         <!-- Creates executable scripts -->
+         
          <plugin>
             <groupId>org.codehaus.mojo</groupId>
             <artifactId>appassembler-maven-plugin</artifactId>
@@ -54,7 +51,7 @@
             </configuration>
          </plugin>
          
-         <!-- Testing Configuration -->
+         
          <plugin>
             <groupId>org.apache.maven.plugins</groupId>
             <artifactId>maven-surefire-plugin</artifactId>
