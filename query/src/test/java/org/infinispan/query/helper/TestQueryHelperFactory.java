@@ -73,6 +73,9 @@ public class TestQueryHelperFactory {
                .addProperty("default.directory_provider", "infinispan")
                .addProperty("hibernate.search.default.exclusive_index_use", "false")
                .addProperty("lucene_version", "LUCENE_36");
+         if (cacheMode.isClustered()) {
+            builder.clustering().stateTransfer().fetchInMemoryState(true);
+         }
       }
 
       for(int i = 0; i < numberOfNodes; i++) {

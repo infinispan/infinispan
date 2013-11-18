@@ -22,6 +22,7 @@ public class TopologyAwareDistMassIndexingTest extends DistributedMassIndexingTe
          Cache cacheObj = (Cache) cache;
          EmbeddedCacheManager cm1 = cacheObj.getCacheManager();
          ConfigurationBuilder cacheCfg1 = getDefaultClusteredCacheConfig(CacheMode.REPL_SYNC, false);
+         cacheCfg1.clustering().stateTransfer().fetchInMemoryState(true);
          cm1.defineConfiguration(InfinispanIntegration.DEFAULT_INDEXESDATA_CACHENAME, cacheCfg1.build());
          cm1.defineConfiguration(InfinispanIntegration.DEFAULT_LOCKING_CACHENAME, cacheCfg1.build());
 

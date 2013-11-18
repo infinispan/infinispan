@@ -26,12 +26,14 @@ public class ClusteredCacheWithInfinispanDirectoryTest extends ClusteredCacheTes
             .addProperty("default.indexmanager", "org.infinispan.query.indexmanager.InfinispanIndexManager")
             .addProperty("lucene_version", "LUCENE_36")
             .addProperty("default.exclusive_index_use", "false");
+      cacheCfg.clustering().stateTransfer().fetchInMemoryState(true);
       enhanceConfig(cacheCfg);
       List<Cache<String, Person>> caches = createClusteredCaches(2, cacheCfg);
       cache1 = caches.get(0);
       cache2 = caches.get(1);
 
       ConfigurationBuilder cacheCfg1 = getDefaultClusteredCacheConfig(CacheMode.REPL_SYNC, false);
+      cacheCfg1.clustering().stateTransfer().fetchInMemoryState(true);
       cacheManagers.get(0).defineConfiguration(InfinispanIntegration.DEFAULT_INDEXESDATA_CACHENAME, cacheCfg1.build());
       cacheManagers.get(0).defineConfiguration( InfinispanIntegration.DEFAULT_LOCKING_CACHENAME, cacheCfg1.build());
 
