@@ -1,16 +1,18 @@
 package org.infinispan.container.entries.metadata;
 
-import org.infinispan.container.entries.InternalCacheValue;
-import org.infinispan.metadata.Metadata;
-import org.infinispan.container.entries.ImmortalCacheEntry;
 import org.infinispan.commons.marshall.AbstractExternalizer;
 import org.infinispan.commons.util.Util;
+import org.infinispan.container.entries.ImmortalCacheEntry;
+import org.infinispan.container.entries.InternalCacheValue;
 import org.infinispan.marshall.core.Ids;
+import org.infinispan.metadata.Metadata;
 
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
 import java.util.Set;
+
+import static org.infinispan.commons.util.Util.toStr;
 
 /**
  * A form of {@link org.infinispan.container.entries.ImmortalCacheEntry} that
@@ -41,6 +43,12 @@ public class MetadataImmortalCacheEntry extends ImmortalCacheEntry implements Me
    @Override
    public InternalCacheValue toInternalCacheValue() {
       return new MetadataImmortalCacheValue(value, metadata);
+   }
+
+   @Override
+   public String toString() {
+      return String.format("MetadataImmortalCacheEntry{key=%s, value=%s, metadata=%s}",
+            toStr(key), toStr(value), metadata);
    }
 
    public static class Externalizer extends AbstractExternalizer<MetadataImmortalCacheEntry> {
