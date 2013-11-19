@@ -1,9 +1,9 @@
 package org.infinispan.container.entries;
 
-import org.infinispan.metadata.Metadata;
 import org.infinispan.atomic.AtomicHashMap;
 import org.infinispan.commons.util.Util;
 import org.infinispan.container.DataContainer;
+import org.infinispan.metadata.Metadata;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
@@ -140,8 +140,8 @@ public class ReadCommittedEntry implements MVCCEntry {
       // only do stuff if there are changes.
       if (isChanged() || isLoaded()) {
          if (trace)
-            log.tracef("Updating entry (key=%s removed=%s valid=%s changed=%s created=%s loaded=%s value=%s metadata=%s)",
-                  toStr(getKey()), isRemoved(), isValid(), isChanged(), isCreated(), isLoaded(), toStr(value), getMetadata());
+            log.tracef("Updating entry (key=%s removed=%s valid=%s changed=%s created=%s loaded=%s value=%s metadata=%s, providedMetadata=%s)",
+                  toStr(getKey()), isRemoved(), isValid(), isChanged(), isCreated(), isLoaded(), toStr(value), getMetadata(), providedMetadata);
 
          // Ugh!
          if (value instanceof AtomicHashMap) {

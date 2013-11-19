@@ -49,4 +49,13 @@ public class VersionedCommitCommand extends CommitCommand {
       globalTx = (GlobalTransaction) args[0];
       updatedVersions = (EntryVersionsMap) args[1];
    }
+
+   @Override
+   public String toString() {
+      return "VersionedCommitCommand{gtx=" + globalTx +
+            ", cacheName='" + cacheName + '\'' +
+            ", topologyId=" + getTopologyId() +
+            ", updatedVersions=" + updatedVersions +
+            '}';
+   }
 }
