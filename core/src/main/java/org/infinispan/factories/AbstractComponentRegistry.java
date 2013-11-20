@@ -541,7 +541,7 @@ public abstract class AbstractComponentRegistry implements Lifecycle, Cloneable 
    @Override
    public synchronized void stop() {
       if (!state.stopAllowed()) {
-         getLog().debugf("Ignoring call to stop() as current state is %s", this);
+         getLog().debugf("Ignoring call to stop() as current state is %s", state);
          return;
       }
 

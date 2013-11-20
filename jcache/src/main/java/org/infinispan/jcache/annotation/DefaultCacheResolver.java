@@ -19,7 +19,6 @@ import static org.infinispan.jcache.annotation.Contracts.assertNotNull;
  * @author Galder Zamarreño
  */
 @ApplicationScoped
-@SuppressWarnings("unused")
 public class DefaultCacheResolver implements CacheResolver {
 
    private CacheManager defaultCacheManager;

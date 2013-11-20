@@ -20,12 +20,28 @@
    <dependencies>
       <dependency>
          <groupId>org.infinispan</groupId>
+         <artifactId>infinispan-cdi</artifactId>
+         <scope>test</scope>
+      </dependency>
+      <dependency>
+         <groupId>org.infinispan</groupId>
          <artifactId>infinispan-core</artifactId>
          <scope>test</scope>
       </dependency>
       <dependency>
          <groupId>org.infinispan</groupId>
+         <artifactId>infinispan-core</artifactId>
+         <type>test-jar</type>
+         <scope>test</scope>
+      </dependency>
+      <dependency>
+         <groupId>org.infinispan</groupId>
          <artifactId>infinispan-cachestore-jdbc</artifactId>
+         <scope>test</scope>
+      </dependency>
+      <dependency>
+         <groupId>org.infinispan</groupId>
+         <artifactId>infinispan-jcache</artifactId>
          <scope>test</scope>
       </dependency>
       <dependency>
@@ -62,6 +78,16 @@
       <dependency>
          <groupId>org.wildfly</groupId>
          <artifactId>wildfly-arquillian-container-managed</artifactId>
+         <scope>test</scope>
+      </dependency>
+      <dependency>
+         <groupId>javax.enterprise</groupId>
+         <artifactId>cdi-api</artifactId>
+         <scope>test</scope>
+      </dependency>
+      <dependency>
+         <groupId>javax.cache</groupId>
+         <artifactId>cache-api</artifactId>
          <scope>test</scope>
       </dependency>
    </dependencies>
