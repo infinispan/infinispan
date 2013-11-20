@@ -49,6 +49,16 @@ public class JCacheManager implements CacheManager {
    private final StackTraceElement[] allocationStackTrace;
 
    /**
+    * Boolean flag tracking down whether the underlying Infinispan cache
+    * manager used by JCacheManager is unmanaged or managed. Unmanaged means
+    * that this JCacheManager instance controls the lifecycle of the
+    * Infinispan Cache Manager. When managed, it means that the cache manager
+    * is injected and hence JCacheManager is not the owner of the lifecycle
+    * of this cache manager.
+    */
+   private final boolean managedCacheManager;
+
+   /**
     * A flag indicating whether the cache manager is closed or not.
     * Cache manager's status does not fit well here because even if an
     * trying to stop a cache manager whose status is {@link ComponentStatus#INSTANTIATED}
@@ -95,6 +105,7 @@ public class JCacheManager implements CacheManager {
       registerPredefinedCaches();
 
       isClosed = false;
+      managedCacheManager = false;
    }
 
    public JCacheManager(URI uri, EmbeddedCacheManager cacheManager, CachingProvider provider) {
@@ -103,6 +114,7 @@ public class JCacheManager implements CacheManager {
       this.uri = uri;
       this.provider = provider;
       this.cm = cacheManager;
+      this.managedCacheManager = true;
       registerPredefinedCaches();
    }
 
@@ -324,7 +336,7 @@ public class JCacheManager implements CacheManager {
    @Override
    protected void finalize() throws Throwable {
       try {
-         if(!isClosed) {
+         if(!managedCacheManager && !isClosed) {
             // Create the leak description
             Throwable t = log.cacheManagerNotClosed();
             t.setStackTrace(allocationStackTrace);

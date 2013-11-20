@@ -11,7 +11,6 @@ import javax.cache.Caching;
 import javax.cache.annotation.CacheInvocationContext;
 import javax.cache.annotation.CacheResolver;
 import javax.enterprise.context.ApplicationScoped;
-import javax.enterprise.inject.Alternative;
 import javax.enterprise.inject.spi.BeanManager;
 import javax.inject.Inject;
 
@@ -32,7 +31,6 @@ import java.util.Set;
  * @since 5.3
  */
 @ApplicationScoped
-@Alternative
 public class InjectedCacheResolver implements CacheResolver {
 
    private EmbeddedCacheManager defaultCacheManager;
