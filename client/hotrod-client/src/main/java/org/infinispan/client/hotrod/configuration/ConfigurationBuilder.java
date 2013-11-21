@@ -4,6 +4,8 @@ import java.lang.ref.WeakReference;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Properties;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import org.infinispan.client.hotrod.RemoteCacheManager;
 import org.infinispan.client.hotrod.impl.ConfigurationProperties;
@@ -15,6 +17,8 @@ import org.infinispan.client.hotrod.impl.transport.TransportFactory;
 import org.infinispan.client.hotrod.impl.transport.tcp.RequestBalancingStrategy;
 import org.infinispan.client.hotrod.impl.transport.tcp.RoundRobinBalancingStrategy;
 import org.infinispan.client.hotrod.impl.transport.tcp.TcpTransportFactory;
+import org.infinispan.client.hotrod.logging.Log;
+import org.infinispan.client.hotrod.logging.LogFactory;
 import org.infinispan.commons.configuration.Builder;
 import org.infinispan.commons.marshall.Marshaller;
 import org.infinispan.commons.marshall.jboss.GenericJBossMarshaller;
@@ -28,6 +32,13 @@ import org.infinispan.commons.util.Util;
  * @since 5.3
  */
 public class ConfigurationBuilder implements ConfigurationChildBuilder, Builder<Configuration> {
+
+   private static final Log log = LogFactory.getLog(ConfigurationBuilder.class, Log.class);
+
+   // Match IPv4 (host:port) or IPv6 ([host]:port) addresses
+   private static final Pattern ADDRESS_PATTERN = Pattern
+         .compile("(\\[([0-9A-Fa-f:]+)\\]|([^:/?#]*))(?::(\\d*))?");
+
    private WeakReference<ClassLoader> classLoader;
    private final ExecutorFactoryConfigurationBuilder asyncExecutorFactory;
    private Class<? extends RequestBalancingStrategy> balancingStrategy = RoundRobinBalancingStrategy.class;
@@ -66,12 +77,20 @@ public class ConfigurationBuilder implements ConfigurationChildBuilder, Builder<
    @Override
    public ConfigurationBuilder addServers(String servers) {
       for (String server : servers.split(";")) {
-         String[] components = server.trim().split(":");
-         String host = components[0];
-         int port = ConfigurationProperties.DEFAULT_HOTROD_PORT;
-         if (components.length > 1)
-            port = Integer.parseInt(components[1]);
-         this.addServer().host(host).port(port);
+         Matcher matcher = ADDRESS_PATTERN.matcher(server);
+         if (matcher.matches()) {
+            String v6host = matcher.group(2);
+            String v4host = matcher.group(3);
+            String host = v6host != null ? v6host : v4host;
+            String portString = matcher.group(4);
+            int port = portString == null
+                  ? ConfigurationProperties.DEFAULT_HOTROD_PORT
+                  : Integer.parseInt(portString);
+            this.addServer().host(host).port(port);
+         } else {
+            throw log.parseErrorServerAddress(server);
+         }
+
       }
       return this;
    }

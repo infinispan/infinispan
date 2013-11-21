@@ -125,4 +125,7 @@ public interface Log extends BasicLogger {
 
    @Message(value = "Cannot configure custom KeyStore and/or TrustStore when specifying a SSLContext", id = 4027)
    CacheConfigurationException xorSSLContext();
+
+   @Message(value = "Unable to parse server IP address %s", id = 4028)
+   CacheConfigurationException parseErrorServerAddress(String server);
 }

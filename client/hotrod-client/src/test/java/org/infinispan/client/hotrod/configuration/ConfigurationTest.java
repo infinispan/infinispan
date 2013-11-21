@@ -1,15 +1,17 @@
-package org.infinispan.client.hotrod;
+package org.infinispan.client.hotrod.configuration;
 
 import static org.testng.AssertJUnit.assertEquals;
 import static org.testng.AssertJUnit.assertFalse;
 import static org.testng.AssertJUnit.assertTrue;
 
-import org.infinispan.client.hotrod.configuration.Configuration;
-import org.infinispan.client.hotrod.configuration.ConfigurationBuilder;
-import org.infinispan.client.hotrod.configuration.ExhaustedAction;
+import org.infinispan.client.hotrod.SomeAsyncExecutorFactory;
+import org.infinispan.client.hotrod.SomeCustomConsistentHashV1;
+import org.infinispan.client.hotrod.SomeRequestBalancingStrategy;
+import org.infinispan.client.hotrod.SomeTransportfactory;
+import org.infinispan.client.hotrod.impl.ConfigurationProperties;
 import org.testng.annotations.Test;
 
-@Test(testName = "client.hotrod.ConfigurationTest", groups = "functional" )
+@Test(testName = "client.hotrod.configuration.ConfigurationTest", groups = "functional" )
 public class ConfigurationTest {
 
    public void testConfiguration() {
@@ -53,6 +55,28 @@ public class ConfigurationTest {
       newBuilder.read(configuration);
       Configuration newConfiguration = newBuilder.build();
       validateConfiguration(newConfiguration);
+   }
+
+   public void testParseServerAddresses() {
+      ConfigurationBuilder builder = new ConfigurationBuilder();
+      builder.addServers("1.1.1.1:9999");
+      builder.addServers("2.2.2.2");
+      builder.addServers("[fe80::290:bff:fe1b:5762]:7777");
+      builder.addServers("[ff01::1]");
+      builder.addServers("localhost");
+      builder.addServers("localhost:8382");
+      Configuration cfg = builder.build();
+      assertServer("1.1.1.1", 9999, cfg.servers().get(0));
+      assertServer("2.2.2.2", ConfigurationProperties.DEFAULT_HOTROD_PORT, cfg.servers().get(1));
+      assertServer("fe80::290:bff:fe1b:5762", 7777, cfg.servers().get(2));
+      assertServer("ff01::1", ConfigurationProperties.DEFAULT_HOTROD_PORT, cfg.servers().get(3));
+      assertServer("localhost", ConfigurationProperties.DEFAULT_HOTROD_PORT, cfg.servers().get(4));
+      assertServer("localhost", 8382, cfg.servers().get(5));
+   }
+
+   private void assertServer(String host, int port, ServerConfiguration serverCfg) {
+      assertEquals(host, serverCfg.host());
+      assertEquals(port, serverCfg.port());
    }
 
    private void validateConfiguration(Configuration configuration) {
