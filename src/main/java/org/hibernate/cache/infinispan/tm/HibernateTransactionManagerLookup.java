@@ -25,9 +25,13 @@ package org.hibernate.cache.infinispan.tm;
 import java.util.Properties;
 =======
 
+<<<<<<< HEAD
 >>>>>>> HHH-8159 - Apply fixups indicated by analysis tools
 import javax.transaction.TransactionManager;
+=======
+>>>>>>> HHH-8741 - More checkstyle cleanups
 import java.util.Properties;
+import javax.transaction.TransactionManager;
 
 import org.hibernate.cfg.Settings;
 <<<<<<< HEAD
