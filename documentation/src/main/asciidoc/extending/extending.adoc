@@ -15,7 +15,7 @@ From Infinispan 5.1 onwards, you do so by:
 
 . Create a `META-INF/services/org.infinispan.commands.module.ModuleCommandExtensions` file and ensure this is packaged in your jar. 
 . Implementing           link:$$https://github.com/infinispan/infinispan/blob/master/core/src/main/java/org/infinispan/commands/module/ModuleCommandFactory.java$$[`ModuleCommandFactory`],     link:$$https://github.com/infinispan/infinispan/blob/master/core/src/main/java/org/infinispan/commands/module/ModuleCommandInitializer.java$$[`ModuleCommandInitializer`] and  link:$$https://github.com/infinispan/infinispan/blob/master/core/src/main/java/org/infinispan/commands/module/ModuleCommandExtensions.java$$[`ModuleCommandExtensions`]
-. Specifing the fully-qualified class name of the  link:$$https://github.com/infinispan/infinispan/blob/master/core/src/main/java/org/infinispan/commands/module/ModuleCommandExtensions.java$$[`ModuleCommandExtensions`]
+. Specifying the fully-qualified class name of the  link:$$https://github.com/infinispan/infinispan/blob/master/core/src/main/java/org/infinispan/commands/module/ModuleCommandExtensions.java$$[`ModuleCommandExtensions`]
 implementation in `META-INF/services/org.infinispan.commands.module.ModuleCommandExtensions`. 
 . Implement your custom commands and visitors for these commands
 

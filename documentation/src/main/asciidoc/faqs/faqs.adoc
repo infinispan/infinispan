@@ -16,7 +16,7 @@ any questions you may have on the link:http://www.infinispan.org/community[Infin
 === What is Infinispan?
 
 Infinispan is an open source data grid platform.
-It exposes a link:$$http://jcp.org/en/jsr/detail?id=107$$[JSR-107] compatible link:$$http://docs.jboss.org/infinispan/4.0/apidocs/org/infinispan/Cache.html$$[`Cache`] interface (which in turn extends `java.util.Map`) in which you can store objects.
+It exposes a link:$$http://jcp.org/en/jsr/detail?id=107$$[JSR-107] compatible link:$$http://docs.jboss.org/infinispan/6.0/apidocs/org/infinispan/Cache.html$$[`Cache`] interface (which in turn extends `java.util.Map`) in which you can store objects.
 While Infinispan can be run in local mode, its real value is in distributed mode where caches cluster together and expose a large memory heap.
 Distributed mode is more powerful than simple replication since each data entry is spread out only to a fixed number of replicas thus providing resilience to server failures as well as scalability since the work done to store each entry is constant in relation to a cluster size. 
 
@@ -123,12 +123,12 @@ Yes, you can combine one or more of these integrations in the same application:
 === General questions
 
 ==== What APIs does Infinispan offer?
-Infinispan's primary API - link:$$http://docs.jboss.org/infinispan/4.0/apidocs/org/infinispan/Cache.html$$[`org.infinispan.Cache`] - extends `java.util.concurrent.ConcurrentMap` and closely resembles `javax.cache.Cache` from link:$$http://jcp.org/en/jsr/detail?id=107$$[JSR 107].
+Infinispan's primary API - link:$$http://docs.jboss.org/infinispan/6.0/apidocs/org/infinispan/Cache.html$$[`org.infinispan.Cache`] - extends `java.util.concurrent.ConcurrentMap` and closely resembles `javax.cache.Cache` from link:$$http://jcp.org/en/jsr/detail?id=107$$[JSR 107].
 This is the most performant API to use, and should be used for all new projects. 
 
-link:$$http://docs.jboss.org/infinispan/4.0/apidocs/org/infinispan/tree/TreeCache.html$$[`org.infinispan.tree.TreeCache`] is a tree structured API that looks a lot like link:$$http://www.jbosscache.org$$[JBoss Cache's] API.  Note that the similarities end at the interface though, since internal implementation and representation of the tree is completely different, using a much more efficient flat structure. 
+link:$$http://docs.jboss.org/infinispan/6.0/apidocs/org/infinispan/tree/TreeCache.html$$[`org.infinispan.tree.TreeCache`] is a tree structured API that looks a lot like link:$$http://www.jbosscache.org$$[JBoss Cache's] API.  Note that the similarities end at the interface though, since internal implementation and representation of the tree is completely different, using a much more efficient flat structure.
 
-link:$$http://docs.jboss.org/infinispan/4.0/apidocs/org/infinispan/tree/TreeCache.html$$[TreeCache] should be considered as a compatibility API, if you are migrating from JBoss Cache and cannot invest the time in rewriting your application, or your application specifically relies on a tree structure. 
+link:$$http://docs.jboss.org/infinispan/6.0/apidocs/org/infinispan/tree/TreeCache.html$$[TreeCache] should be considered as a compatibility API, if you are migrating from JBoss Cache and cannot invest the time in rewriting your application, or your application specifically relies on a tree structure.
 
 ==== Which JVMs (JDKs) does Infinispan work with?
 Infinispan is developed and primarily tested against Sun's Java SE 6.
@@ -170,7 +170,7 @@ The effect of this is that the cache store will always contain a superset of wha
 You have probably set your data column type to `VARCHAR`, `CLOB` or something similar, but it should be `BLOB/VARBINARY`.
 Even though it's called `JdbcStringBasedCacheStore`, only the keys are required to be strings;
 the values can be anything, so they need to be stored in a binary column.
-See the link:$$http://docs.jboss.org/infinispan/5.0/apidocs/org/infinispan/loaders/jdbc/AbstractNonDelegatingJdbcCacheStoreConfig.html#setDataColumnType%28java.lang.String%29$$[setDataColumnType javadoc] for more details. 
+See the link:$$http://docs.jboss.org/infinispan/6.0/apidocs/org/infinispan/loaders/jdbc/AbstractNonDelegatingJdbcCacheStoreConfig.html#setDataColumnType%28java.lang.String%29$$[setDataColumnType javadoc] for more details.
 
 ==== Is there any way I can boost cache store's performance?
 If, for put operations, you don't need the previous values existing in the cache/store then the following optimisation can be made:
@@ -259,7 +259,7 @@ This means that the theoretical maxEntries might never be achieved, but it'll be
 For more information, see the link:../user_guide/user_guide.html[User Guide] chapter on Eviction. 
 
 ==== Expiration does not work, what is the problem?
-Multiple cache operations such as link:$$http://docs.jboss.org/infinispan/4.1/apidocs/org/infinispan/Cache.html#put(K, V, long, java.util.concurrent.TimeUnit)$$[`put()`] can take a lifespan as parameter which defines the time when the entry should be expired.
+Multiple cache operations such as link:$$http://docs.jboss.org/infinispan/6.0/apidocs/org/infinispan/Cache.html#put(K, V, long, java.util.concurrent.TimeUnit)$$[`put()`] can take a lifespan as parameter which defines the time when the entry should be expired.
 If you have no eviction configured and and you let this time expire, it can look as Infinispan has not removed the entry.
 For example, the JMX stats such as number of entries might not updated or the persistent store associated with Infinispan might still contain the entry.
 To understand what's happening, it's important to note that Infinispan has marked the entry as expired but has not actually removed it.
@@ -338,7 +338,7 @@ There are 3 main configuration settings (modes of usage) that affect the behavio
 | Config / Mode of usage | Description 
 | _API_ | Usage of link:../user_guide/user_guide.html#_asynchronous_api[Asynchronous API] , i.e. methods of the Cache interface like e.g. putAsync(key, val) 
 | _Marshalling_ | Allowing link:../user_guide/user_guide.html#_asynchronous_marshalling[Asynchronous Marshalling] , in cache configuration (via XML or programmatic configuration) 
-| _Replication_ | Configuring a clustered cache to replicate data asychronously. In Infinispan XML configuration this is done by using &lt;sync&gt; or &lt;async&gt; sub-elements under link:$$http://docs.jboss.org/infinispan/5.1/configdocs/urn_infinispan_config_5.1/complexType/configuration.clustering.html$$[&lt;clustering&gt;] element. 
+| _Replication_ | Configuring a clustered cache to replicate data asychronously. In Infinispan XML configuration this is done by using &lt;sync&gt; or &lt;async&gt; sub-elements under link:$$http://docs.jboss.org/infinispan/5.1/configdocs/urn_infinispan_config_5.1/complexType/configuration.clustering.html$$[&lt;clustering&gt;] element.
 |===============
 
 Switching to asynchronous mode in each of these areas causes loss of some consistency guarantees. The known problems are summarised here:
@@ -364,7 +364,7 @@ The key affinity (for keys generated with the link:../user_guide/user_guide.html
 No, it cannot. Use CacheEntryModifiedEvent.getValue() to retrieve the value of the entry that was modified. 
 
 ==== When annotating a method with CacheEntryCreated, how do I retrieve the value of the cache entry added?
-Cache listeners can be defined to listen for cache entry created events by annotation methods with link:$$http://docs.jboss.org/infinispan/5.1/apidocs/org/infinispan/notifications/cachelistener/annotation/CacheEntryCreated.html$$[@CacheEntryCreated] and having link:$$http://docs.jboss.org/infinispan/5.1/apidocs/org/infinispan/notifications/cachelistener/event/CacheEntryCreatedEvent.html$$[CacheEntryCreatedEvent] as method parameter. link:$$http://docs.jboss.org/infinispan/5.1/apidocs/org/infinispan/notifications/cachelistener/event/CacheEntryCreatedEvent.html$$[CacheEntryCreatedEvent] does not provide a method to retrieve the value that was created in the cache though. To retrieve this value, a method annotated with link:$$http://docs.jboss.org/infinispan/5.1/apidocs/org/infinispan/notifications/cachelistener/annotation/CacheEntryModified.html$$[@CacheEntryModified] needs to be added because every time a cache entry is created, cache entry modified event is also fired. 
+Cache listeners can be defined to listen for cache entry created events by annotation methods with link:$$http://docs.jboss.org/infinispan/6.0/apidocs/org/infinispan/notifications/cachelistener/annotation/CacheEntryCreated.html$$[@CacheEntryCreated] and having link:$$http://docs.jboss.org/infinispan/6.0/apidocs/org/infinispan/notifications/cachelistener/event/CacheEntryCreatedEvent.html$$[CacheEntryCreatedEvent] as method parameter. link:$$http://docs.jboss.org/infinispan/6.0/apidocs/org/infinispan/notifications/cachelistener/event/CacheEntryCreatedEvent.html$$[CacheEntryCreatedEvent] does not provide a method to retrieve the value that was created in the cache though. To retrieve this value, a method annotated with link:$$http://docs.jboss.org/infinispan/6.0/apidocs/org/infinispan/notifications/cachelistener/annotation/CacheEntryModified.html$$[@CacheEntryModified] needs to be added because every time a cache entry is created, cache entry modified event is also fired.
 
 === IaaS/Cloud Infrastructure questions
 ==== How do you make Infinispan send replication traffic over a specific network when you don't know the IP address?
@@ -389,7 +389,7 @@ By default Infinispan uses JBoss Logging 3.0 as logging framework. JBoss Logging
 . checking whether the JBoss Log Manager is configured (e.g. Infinispan is running in JBoss Application Server 7) and if it is, using it
 . otherwise, checking if link:$$http://logging.apache.org/log4j/1.2/index.html$$[Apache Log4j] is in the classpath (JBoss Logging checks if the classes org.apache.log4j.LogManager and org.apache.log4j.Hierarchy are available) and if it is, using it 
 . otherwise, checking if link:$$http://logback.qos.ch/$$[LogBack] in the classpath (JBoss Logging checks if the class ch.qos.logback.classic.Logger is available) and if it is, using it 
-.  finally, if none of the above are available, using link:$$http://java.sun.com/j2se/1.4.2/docs/guide/util/logging/overview.html$$[JDK logging] 
+. finally, if none of the above are available, using link:$$http://java.sun.com/j2se/1.4.2/docs/guide/util/logging/overview.html$$[JDK logging]
 
 You can use this link:$$https://github.com/infinispan/infinispan/blob/master/core/src/test/resources/log4j.xml$$[log4j.xml] as base for any Infinispan related logging, and you can pass it to your system via system parameter (e.g., `-Dlog4j.configuration=file:/path/to/log4j.xml`). 
 
@@ -450,7 +450,7 @@ Thread.currentThread().setContextClassLoader(this.getClass().getClassLoader());
 === Marshalling and Unmarshalling
 
 ==== Best practices implementing java.io.Externalizable
-If you decide to implement link:$$http://download.oracle.com/javase/6/docs/api/java/io/Externalizable.html$$[Externalizable] interface, please make sure that the link:$$http://download.oracle.com/javase/6/docs/api/java/io/Externalizable.html#readExternal(java.io.ObjectInput)$$[readExternal()] method is thread safe, otherwise you run the risk of potential getting corrupted data and link:$$http://download.oracle.com/javase/6/docs/api/java/lang/OutOfMemoryError.html$$[OutOfMemoryException] , as seen in link:$$http://community.jboss.org/message/609296#609296$$[this forum post] . 
+If you decide to implement link:$$http://docs.oracle.com/javase/6/docs/api/java/io/Externalizable.html$$[Externalizable] interface, please make sure that the link:$$http://docs.oracle.com/javase/6/docs/api/java/io/Externalizable.html#readExternal(java.io.ObjectInput)$$[readExternal()] method is thread safe, otherwise you run the risk of potential getting corrupted data and link:$$http://docs.oracle.com/javase/6/docs/api/java/lang/OutOfMemoryError.html$$[OutOfMemoryException] , as seen in link:$$http://community.jboss.org/message/609296#609296$$[this forum post] .
 
 ==== Does Infinispan support storing Non-Serializable objects?
 See the link:../user_guide/user_guide.html[User Guide's] chapter on marshalling for more information.
@@ -567,7 +567,7 @@ NOTE: You can read more about this issue in link:$$http://community.jboss.org/me
 
 === Tuning questions
 ==== When running Infinispan under load, I see RejectedExecutionException, how can I fix it?
-Internally Infinispan uses executors to do some processing asynchronously, so the first thing to do is to figure out which of these executors is causing issues. For example, if you see a stacktrace that looks like this, the problem is located in the link:$$http://docs.jboss.org/infinispan/4.1/apidocs/config.html#ce_global_asyncTransportExecutor$$[asyncTransportExecutor] : 
+Internally Infinispan uses executors to do some processing asynchronously, so the first thing to do is to figure out which of these executors is causing issues. For example, if you see a stacktrace that looks like this, the problem is located in the link:$$http://docs.jboss.org/infinispan/5.0/apidocs/config.html#ce_global_asyncTransportExecutor$$[asyncTransportExecutor] :
 
 
 ----
@@ -585,8 +585,8 @@ java.util.concurrent.RejectedExecutionException
 To solve this issue, you should try any of these options:
 
 
-*  Increase the maxThreads property in link:$$http://docs.jboss.org/infinispan/4.1/apidocs/config.html#ce_global_asyncTransportExecutor$$[asyncTransportExecutor] . At the time of writing, the default value for this particular executor is 25. 
-*  Define your own ExecutorFactory which creates an executor with a bigger queue. You can find more information about different queueing strategies in link:$$http://java.sun.com/javase/6/docs/api/java/util/concurrent/ThreadPoolExecutor.html$$[ThreadPoolExecutor javadoc] . 
+*  Increase the maxThreads property in link:$$http://docs.jboss.org/infinispan/5.0/apidocs/config.html#ce_global_asyncTransportExecutor$$[asyncTransportExecutor] . At the time of writing, the default value for this particular executor is 25.
+*  Define your own ExecutorFactory which creates an executor with a bigger queue. You can find more information about different queueing strategies in link:$$http://docs.oracle.com/javase/6/docs/api/java/util/concurrent/ThreadPoolExecutor.html$$[ThreadPoolExecutor javadoc] .
 *  Disable async marshalling (see the link:$$http://docs.jboss.org/infinispan/5.1/configdocs/urn_infinispan_config_5.1/complexType/configuration.clustering.async.html$$[&lt;async ... &gt;] element for details). This would mean that an executor is _not_ used when replicating, so you will never have a RejectedExecutionException . However this means each put() will take a little longer since marshalling will now happen on the critical path. The RPC is still async though as the thread won't wait for a response from the recipient (fire-and-forget). 
 
 === JNDI questions
@@ -621,7 +621,7 @@ This is a bug (see link:$$https://jira.jboss.org/browse/ISPN-669$$[ISPN-669] ) i
 * Or, make sure you create a namedCache for `___hotRodTopologyCache` with sync replication, state transfer, no expiration and no eviction. 
 
 ==== Is there a way to do a Bulk Get on a remote cache?
-There's no bulk get operation in Hot Rod, but the Java Hot Rod client has implemented via link:$$http://docs.jboss.org/infinispan/5.1/apidocs/org/infinispan/client/hotrod/RemoteCache.html$$[RemoteCache] the getAsync() operation, which returns a link:$$http://docs.jboss.org/infinispan/5.1/apidocs/org/infinispan/util/concurrent/NotifyingFuture.html$$[org.infinispan.util.concurrent.NotifyingFuture] (extends java.util.concurrent.Future). So, if you want to retrieve multiple keys in parallel, just call multiple times _getAsync()_ and when you need the values, just call _Future.get()_ , or attach a link:$$http://docs.jboss.org/infinispan/5.1/apidocs/org/infinispan/util/concurrent/FutureListener.html$$[ _FutureListener_ ] to the _NotifyingFuture_ to get notified when the value is ready. 
+There's no bulk get operation in Hot Rod, but the Java Hot Rod client has implemented via link:$$http://docs.jboss.org/infinispan/6.0/apidocs/org/infinispan/client/hotrod/RemoteCache.html$$[RemoteCache] the getAsync() operation, which returns a link:$$http://docs.jboss.org/infinispan/6.0/apidocs/org/infinispan/util/concurrent/NotifyingFuture.html$$[org.infinispan.util.concurrent.NotifyingFuture] (extends java.util.concurrent.Future). So, if you want to retrieve multiple keys in parallel, just call multiple times _getAsync()_ and when you need the values, just call _Future.get()_ , or attach a link:$$http://docs.jboss.org/infinispan/6.0/apidocs/org/infinispan/util/concurrent/FutureListener.html$$[ _FutureListener_ ] to the _NotifyingFuture_ to get notified when the value is ready.
 
 ==== What is the startServer.sh script used for? What is the startServer.bat script used for?
 These scripts are used for starting Infinispan server instances that can be talked to remotely using either our own link:../user_guide/user_guide.html#_using_hot_rod_server[Hot Rod protocol] or the link:../user_guide/user_guide.html#_using_infinispan_memcached_server[Memcached text protocol] . See link:../user_guide/user_guide.html#_infinispan_server_modules[Infinispan's server modules] for more information on the usage of these scripts. 
@@ -662,5 +662,5 @@ version=281483566645249}]
 === Clustering Transport questions
 
 ==== How do I retrieve the clustering physical address?
-You can retrieve the physical address via link:$$http://docs.jboss.org/infinispan/5.0/apidocs/org/infinispan/remoting/transport/Transport.html#getPhysicalAddresses$$[`AdvancedCache.getRpcManager().getTransport().getPhysicalAddresses()`] 
+You can retrieve the physical address via link:$$http://docs.jboss.org/infinispan/6.0/apidocs/org/infinispan/remoting/transport/Transport.html#getPhysicalAddresses$$[`AdvancedCache.getRpcManager().getTransport().getPhysicalAddresses()`]
 

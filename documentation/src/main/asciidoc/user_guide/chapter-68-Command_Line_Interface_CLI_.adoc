@@ -20,7 +20,7 @@ The CLI offers both an interactive and a batch mode. To invoke the client, just 
 -v, --version           shows version information
 ----
 
-* JMX over RMI is the traditional way in which JMX clients connect to MBeanServers. Please refer to the link:$$http://docs.oracle.com/javase/6/docs/technotes/guides/management/agent.html$$[JDK Monitoring and Management] documentation for details on how to configure the process to be monitored 
+* JMX over RMI is the traditional way in which JMX clients connect to MBeanServers. Please refer to the link:$$http://docs.oracle.com/javase/6/docs/technotes/guides/management/agent.html$$[JDK Monitoring and Management] documentation for details on how to configure the process to be monitored
 
 
 * JMX over JBoss Remoting is the protocol of choice when your Infinispan application is running within JBoss AS7 or EAP6.

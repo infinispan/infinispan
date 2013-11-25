@@ -186,7 +186,7 @@ For example if you were running with the JBoss Application Server you would set:
 </property>
 ----
 
-As you probably have noted through this section, there wasn't a single mention of the need to configure link:$$http://docs.jboss.org/infinispan/4.0/apidocs/config.html#ce_default_transaction$$[Infinispan's transaction manager lookup] and there's a good reason for that. Basically, the code within Infinispan cache provider takes the transaction manager that has been configured at the Hibernate level and uses that. Otherwise, if no Hibernate transaction manager lookup class has been defined, Infinispan uses a default dummy transaction manager. 
+As you probably have noted through this section, there wasn't a single mention of the need to configure link:$$http://docs.jboss.org/infinispan/5.0/apidocs/config.html#ce_default_transaction$$[Infinispan's transaction manager lookup] and there's a good reason for that. Basically, the code within Infinispan cache provider takes the transaction manager that has been configured at the Hibernate level and uses that. Otherwise, if no Hibernate transaction manager lookup class has been defined, Infinispan uses a default dummy transaction manager.
 
 Since Hibernate 4.0, the way Infinispan hooks into the transaction manager can be configured. By default, since 4.0, Infinispan interacts with the transaction manager as an JTA synchronization, resulting <<_transactions, in a faster interaction with the 2LC thanks to some key optimisations that the transaction manager can apply>>. However if desired, users can configure Infinispan to act as an XA resource (just like it did in 3.6 and earlier) by disabling the use of the synchronization. For example: 
 
