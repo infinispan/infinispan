@@ -1,7 +1,7 @@
 ==  Example with Groovy
-The idea by this tutorial is to give an introduction in the use of the link:$$http://docs.jboss.org/infinispan/4.0/apidocs/$$[Infinispan API] and its configuration file. As trying to do it in a more interactive fashion, the tutorial makes use of the link:$$http://groovy.codehaus.org/$$[Groovy] dynamic language that will allow to interact with the API by using a console.
+The idea by this tutorial is to give an introduction in the use of the link:$$http://docs.jboss.org/infinispan/6.0/apidocs/$$[Infinispan API] and its configuration file. As trying to do it in a more interactive fashion, the tutorial makes use of the link:$$http://groovy.codehaus.org/$$[Groovy] dynamic language that will allow to interact with the API by using a console.
 
-The tutorial will start by showing the basic usage of the link:$$http://docs.jboss.org/infinispan/4.0/apidocs/$$[Infinispan API] and a use of a simple cache configuration, then it will walk through different configuration scenarios and use cases. By the end of the tutorial you should have a clear understanding of the use the Infinispan API and some of the various configuration options. 
+The tutorial will start by showing the basic usage of the link:$$http://docs.jboss.org/infinispan/6.0/apidocs/$$[Infinispan API] and a use of a simple cache configuration, then it will walk through different configuration scenarios and use cases. By the end of the tutorial you should have a clear understanding of the use the Infinispan API and some of the various configuration options.
 
 The scenarios and use cases shown are:
 
@@ -13,7 +13,7 @@ The scenarios and use cases shown are:
 * Cache with eviction and cache store configuration
 * Cache with REPL_SYNC &amp; transaction management configuration.
 
-All the sample configurations are in the sample-configurations.xml file attached to this tutorial, check the link:$$http://docs.jboss.org/infinispan/4.0/apidocs/$$[environment configuration] to know how to make use of this configuration file. Lets get started: 
+All the sample configurations are in the sample-configurations.xml file attached to this tutorial, check the link:$$http://docs.jboss.org/infinispan/6.0/apidocs/$$[environment configuration] to know how to make use of this configuration file. Lets get started:
 
 === Introduction
 
@@ -94,7 +94,7 @@ finally add the sample-configurations.xml and infinispan-config-4.0.xsd files(at
 
 === Loading the configuration file
 
-The link:$$http://docs.jboss.org/infinispan/4.0/apidocs/org/infinispan/manager/CacheManager.html$$[cache manager] is the responsible to manage all the link:$$http://docs.jboss.org/infinispan/4.0/apidocs/org/infinispan/Cache.html$$[cache's] , so you have to start by indicating where to get the cache definitions to the link:$$http://docs.jboss.org/infinispan/4.0/apidocs/org/infinispan/manager/CacheManager.html$$[cache manager] , remember that the cache definitions are in the sample-configurations.xml file. If no cache definitions are indicated, the link:$$http://docs.jboss.org/infinispan/4.0/apidocs/org/infinispan/manager/CacheManager.html$$[cache manager] will use a default cache. 
+The link:$$http://docs.jboss.org/infinispan/6.0/apidocs/org/infinispan/manager/CacheManager.html$$[cache manager] is the responsible to manage all the link:$$http://docs.jboss.org/infinispan/6.0/apidocs/org/infinispan/Cache.html$$[cache's] , so you have to start by indicating where to get the cache definitions to the link:$$http://docs.jboss.org/infinispan/6.0/apidocs/org/infinispan/manager/CacheManager.html$$[cache manager] , remember that the cache definitions are in the sample-configurations.xml file. If no cache definitions are indicated, the link:$$http://docs.jboss.org/infinispan/6.0/apidocs/org/infinispan/manager/CacheManager.html$$[cache manager] will use a default cache.
 
 Start by open a groovy console by typing groovy.sh in a command shell or terminal. You should now have something similar to: 
 
@@ -222,16 +222,16 @@ Thats all related to the use of the Infinispan API, now lets check some differen
 You are able to specify the cache to use a transaction manager, and even explicitly control the transactions. Start by configuring the cache to use a specific TransactionManagerLookup class. Infinispan implements a couple TransactionManagerLookup classes.
 
 
-*  link:$$http://docs.jboss.org/infinispan/4.0/apidocs/org/infinispan/transaction/lookup/DummyTransactionManagerLookup.html$$[org.infinispan.transaction.lookup.DummyTransactionManagerLookup] 
+*  link:$$http://docs.jboss.org/infinispan/6.0/apidocs/org/infinispan/transaction/lookup/DummyTransactionManagerLookup.html$$[org.infinispan.transaction.lookup.DummyTransactionManagerLookup]
 
 
-*  link:$$http://docs.jboss.org/infinispan/4.0/apidocs/org/infinispan/transaction/lookup/GenericTransactionManagerLookup.html$$[org.infinispan.transaction.lookup.GenericTransactionManagerLookup] 
+*  link:$$http://docs.jboss.org/infinispan/6.0/apidocs/org/infinispan/transaction/lookup/GenericTransactionManagerLookup.html$$[org.infinispan.transaction.lookup.GenericTransactionManagerLookup]
 
 
-*  link:$$http://docs.jboss.org/infinispan/4.0/apidocs/org/infinispan/transaction/lookup/JBossStandaloneJTAManagerLookup.html$$[org.infinispan.transaction.lookup.JBossStandaloneJTAManagerLookup] 
+*  link:$$http://docs.jboss.org/infinispan/6.0/apidocs/org/infinispan/transaction/lookup/JBossStandaloneJTAManagerLookup.html$$[org.infinispan.transaction.lookup.JBossStandaloneJTAManagerLookup]
 
 
-*  link:$$http://docs.jboss.org/infinispan/4.0/apidocs/org/infinispan/transaction/lookup/JBossTransactionManagerLookup.html$$[org.infinispan.transaction.lookup.JBossTransactionManagerLookup] 
+*  link:$$http://docs.jboss.org/infinispan/6.0/apidocs/org/infinispan/transaction/lookup/JBossTransactionManagerLookup.html$$[org.infinispan.transaction.lookup.JBossTransactionManagerLookup]
 
 Each use different methods to lookup the transaction manager, depending on the environment you are running Infinispan you should figure out which one to use. Check the JavaDoc for more details.
 
