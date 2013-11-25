@@ -93,7 +93,7 @@ For more details on versioned operations refer to link:$$http://docs.jboss.org/i
 This cool feature is "borrowed" from the Infinispan core and it is largely discussed <<_asynchronous_api, here>>
 
 ===== Unsupported methods
-Some of the link:$$http://docs.jboss.org/infinispan/4.0/apidocs/org/infinispan/Cache.html$$[Cache] methods are not being supported by the link:$$http://docs.jboss.org/infinispan/4.1/apidocs/org/infinispan/client/hotrod/RemoteCache.html$$[RemoteCache] . Calling one of these methods results in an link:$$http://download.oracle.com/javase/6/docs/api/java/lang/UnsupportedOperationException.html$$[UnsupportedOperationException] being thrown. Most of these methods do not make sense on the remote cache (e.g. listener management operations), or correspond to methods that are not supported by local cache as well (e.g. containsValue). Another set of unsupported operations are some of the atomic operations inherited from link:$$http://java.sun.com/j2se/1.5.0/docs/api/java/util/concurrent/ConcurrentMap.html$$[ConcurrentMap] : 
+Some of the link:$$http://docs.jboss.org/infinispan/4.0/apidocs/org/infinispan/Cache.html$$[Cache] methods are not being supported by the link:$$http://docs.jboss.org/infinispan/4.1/apidocs/org/infinispan/client/hotrod/RemoteCache.html$$[RemoteCache] . Calling one of these methods results in a link:$$http://download.oracle.com/javase/6/docs/api/java/lang/UnsupportedOperationException.html$$[UnsupportedOperationException] being thrown. Most of these methods do not make sense on the remote cache (e.g. listener management operations), or correspond to methods that are not supported by local cache as well (e.g. containsValue). Another set of unsupported operations are some of the atomic operations inherited from link:$$http://java.sun.com/j2se/1.5.0/docs/api/java/util/concurrent/ConcurrentMap.html$$[ConcurrentMap] : 
 
 [source,java]
 ----
@@ -108,7 +108,7 @@ link:$$http://docs.jboss.org/infinispan/4.1/apidocs/org/infinispan/client/hotrod
 Each one of these unsupported operation is documented in the link:$$http://docs.jboss.org/infinispan/4.1/apidocs/org/infinispan/client/hotrod/RemoteCache.html$$[RemoteCache] javadoc. 
 
 ==== Return values
-There is a set of methods that alter an cached entry and return the previous existing value, e.g.: 
+There is a set of methods that alter a cached entry and return the previous existing value, e.g.: 
 
 [source,java]
 ----
@@ -116,7 +116,7 @@ V remove(Object key);
 V put(K key, V value);
 ----
 
-By default on RemoteCache, these operations return null even if such a previous value exists. This approach reduces the amount of data sent over the network. However, if these return values are needed they can be enforced on an per invocation basis using flags: 
+By default on RemoteCache, these operations return null even if such a previous value exists. This approach reduces the amount of data sent over the network. However, if these return values are needed they can be enforced on a per invocation basis using flags: 
 
 [source,java]
 ----
@@ -174,7 +174,7 @@ The marshaller can be plugged through the "marshaller" configuration element (se
 Since version 5.0, there's a new marshaller available to Java Hot Rod clients based on Apache Avro which generates portable payloads. You can find more information about it <<sid-68355061,here>> 
 
 ===== Statistics
-Various server usage statistics can be obtained through the link:$$http://docs.jboss.org/infinispan/4.1/apidocs/org/infinispan/client/hotrod/RemoteCache.html$$[RemoteCache] .stats() method. This returns an link:$$http://docs.jboss.org/infinispan/4.1/apidocs/org/infinispan/client/hotrod/ServerStatistics.html$$[ServerStatistics] object - please refer to javadoc for details on the available statistics. 
+Various server usage statistics can be obtained through the link:$$http://docs.jboss.org/infinispan/4.1/apidocs/org/infinispan/client/hotrod/RemoteCache.html$$[RemoteCache] .stats() method. This returns a link:$$http://docs.jboss.org/infinispan/4.1/apidocs/org/infinispan/client/hotrod/ServerStatistics.html$$[ServerStatistics] object - please refer to javadoc for details on the available statistics. 
 
 ===== Configuration
 All the configurations are passed to the RemoteCacheManager's constructor as key-value pairs, through an instance of link:$$http://download.oracle.com/javase/6/docs/api/java/util/Properties.html$$[java.util.Properties] or reference to a .properties file. Please refer to the javadoc of RemoteCacheManager for a exhaustive list of the possible configuration elements. 
@@ -357,7 +357,7 @@ cache.put(bytesKey, cacheValue);
 ----
 
 ===== Multiple Tiers of Caches
-A combination of the Hot Rod protocol and link:$$http://community.jboss.org/docs/DOC-14893?uniqueTitle=false#Remote_cache_loader$$[RemoteCacheLoader] opened the way for a set of new architectures in Infinispan, where layers of caches can exists and interact. This article takes a look at such an layered architecture. 
+A combination of the Hot Rod protocol and link:$$http://community.jboss.org/docs/DOC-14893?uniqueTitle=false#Remote_cache_loader$$[RemoteCacheLoader] opened the way for a set of new architectures in Infinispan, where layers of caches can exists and interact. This article takes a look at such a layered architecture. 
 
 ====== Sample architecture/near caching
 
