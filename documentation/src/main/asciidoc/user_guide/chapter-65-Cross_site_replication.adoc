@@ -1,3 +1,4 @@
+[[CrossSiteReplication]]
 == Cross site replication
 Cross site (x-site) replication allows backing up the data from one cluster to other clusters, potentially situated in different geographical location. The cross-site replication is built on top of JGroups' link:$$http://www.jgroups.org/manual-3.x/html/user-advanced.html#Relay2Advanced$$[RELAY2 protocol] . link:$$https://community.jboss.org/wiki/DesignForCrossSiteReplication$$[This document] describes the technical design of cross site replication in more detail. 
 
