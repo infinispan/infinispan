@@ -51,7 +51,7 @@ As better explained in the javadocs of _org.infinispan.lucene.InfinispanDirector
 Any Infinispan configuration should work fine as long as caches are not configured to remove entries after thresholds.
 
 === Demo
-There is a simple command-line demo of it's capabilities distributed with Infinispan under demos/lucene-directory; make sure you grab the _"Binaries, server and demos"_ package from link:$$http://www.jboss.org/infinispan/downloads$$[download page] , which contains all demos. 
+There is a simple command-line demo of its capabilities distributed with Infinispan under demos/lucene-directory; make sure you grab the _"Binaries, server and demos"_ package from link:$$http://www.jboss.org/infinispan/downloads$$[download page] , which contains all demos. 
 
 Start several instances, then try adding text in one instance and searching for it on the other. The configuration is not tuned at all, but should work out-of-the box without any changes. If your network interface has multicast enabled, it will cluster across the local network with other instances of the demo.
 

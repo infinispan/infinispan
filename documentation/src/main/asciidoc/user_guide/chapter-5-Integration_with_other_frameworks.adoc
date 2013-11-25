@@ -484,7 +484,7 @@ NOTE: A very important aspect is not forgetting to couple the datasource with yo
 
 
 ==== JBoss Transactions
-The example with JBoss Transactions Transaction Manager was the most complex to implement, as JBoss's TransactionManager and UserTransaction objects are not declared serializable whilst it's JNDI-server isn't able to bind non serializable objects out of the box. Special use of NonSerializableFactory is needed, requiring some additional custom code:
+The example with JBoss Transactions Transaction Manager was the most complex to implement, as JBoss's TransactionManager and UserTransaction objects are not declared serializable whilst its JNDI-server isn't able to bind non serializable objects out of the box. Special use of NonSerializableFactory is needed, requiring some additional custom code:
 
 [source,java]
 ----
@@ -681,7 +681,7 @@ The content of the corresponding complete persistence.xml:
 
 ==== JOTM
 
-The example with JOTM is more simple, but apparently it's JNDI implementation is not useable without wasting any rmi port. So it is not completely 'standalone' as the JNDI service is exposed outside your virtual machine.
+The example with JOTM is more simple, but apparently its JNDI implementation is not useable without wasting any rmi port. So it is not completely 'standalone' as the JNDI service is exposed outside your virtual machine.
 
 [source,java]
 ----
@@ -918,7 +918,7 @@ Adjust following 2 properties in your corresponding persistence.xml:
 ----
 
 ==== Atomikos
-Last but not least, the Atomikos Transaction manager. It is currently the unique Transaction manager I've found with a online-documentation on link:$$http://www.atomikos.com/Documentation/HibernateIntegration#Without_Spring$$[how to integrate with Hiberante] link:$$http://www.atomikos.com/Documentation/HibernateIntegration#Without_Spring$$[without Spring, outside any J2EE container.] . It seems to be the unique supporting XaDataSource together with Pooling, so it doesn't matter that It does not come  with it's own JNDI implementation (we will use the one of JBoss in following example). 
+Last but not least, the Atomikos Transaction manager. It is currently the unique Transaction manager I've found with a online-documentation on link:$$http://www.atomikos.com/Documentation/HibernateIntegration#Without_Spring$$[how to integrate with Hiberante] link:$$http://www.atomikos.com/Documentation/HibernateIntegration#Without_Spring$$[without Spring, outside any J2EE container.] . It seems to be the unique supporting XaDataSource together with Pooling, so it doesn't matter that It does not come  with its own JNDI implementation (we will use the one of JBoss in following example). 
 
 [source,java]
 ----

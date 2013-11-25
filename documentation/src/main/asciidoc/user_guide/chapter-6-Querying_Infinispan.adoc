@@ -10,7 +10,7 @@ described in the link:$$#_querying_via_the_java_hot_rod_client$$[Hot Rod client 
 This module adds indexing and querying capabilities to Infinispan. It uses link:$$http://hibernate.org/subprojects/search$$[Hibernate Search]
 and link:$$http://lucene.apache.org/$$[Apache Lucene] to index and search objects in the cache. It allows users to
 obtain objects within the cache without needing to know the keys to each object that they want to obtain. You can search
-your objects based on some of it's properties. For example to retrieve all red cars (exact metadata match), or all books
+your objects based on some of its properties. For example to retrieve all red cars (exact metadata match), or all books
 about a specific topic (full text search and relevance scoring).
 
 The queries can be expressed as Lucene queries, built directly using the Lucene Query API or built with the help of Hibernate Search Query DSL. Alternatively, you can also use Infinispan's own query DSL which most users might find easier to use than the one based on Lucene at the cost of not being able to access some of the powerful capabilities which are specific to the underlying Lucene implementation.
@@ -221,7 +221,7 @@ Regarding actually configuring a Lucene directory, refer to the link:$$http://do
 In local mode, you may use any Lucene Directory implementation. Also the option _indexLocalOnly_ isn't meaningful. 
 
 ==== REPLICATION
-In replication mode, each node can have it's own local copy of the index. So indexes can either be stored locally on each node (RAMDirectory, FSDirectory, etc) but you need to set _indexLocalOnly_ to _false_ , so that each node will apply needed updates it receives from other nodes in addition to the updates started locally. Any Directory implementation can be used, but you have to make sure that when a new node is started it receives an up to date copy of the index; typically rsync is well suited for this task, but being an external operation you might end up with a slightly out-of-sync index, especially if updates are very frequent. 
+In replication mode, each node can have its own local copy of the index. So indexes can either be stored locally on each node (RAMDirectory, FSDirectory, etc) but you need to set _indexLocalOnly_ to _false_ , so that each node will apply needed updates it receives from other nodes in addition to the updates started locally. Any Directory implementation can be used, but you have to make sure that when a new node is started it receives an up to date copy of the index; typically rsync is well suited for this task, but being an external operation you might end up with a slightly out-of-sync index, especially if updates are very frequent. 
 
 Alternately, if you use some form of shared storage for indexes (see _Sharing the Index_ ), you then have to set _indexLocalOnly_ to _true_ so that each node will apply only the changes originated locally; in this case there's no risk in having an out-of-sync index, but to avoid write contention on the index you should make sure that a single node is "in charge" of updating the index. Again, the Hibernate Search reference documentation describes means to use link:$$http://docs.jboss.org/hibernate/stable/search/reference/en-US/html_single/#jms-backend$$[a JMS queue] or link:$$http://docs.jboss.org/hibernate/stable/search/reference/en-US/html_single/#jgroups-backend$$[JGroups] to send indexing tasks to a master node. 
 
