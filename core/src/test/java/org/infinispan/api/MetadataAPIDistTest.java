@@ -14,7 +14,7 @@ import static org.infinispan.distribution.DistributionTestHelper.getFirstOwner;
 import static org.testng.AssertJUnit.assertNotNull;
 import static org.testng.internal.junit.ArrayAsserts.assertArrayEquals;
 
-@Test(groups = "functional", testName = "api.MetadataAPITest")
+@Test(groups = "functional", testName = "api.MetadataAPIDistTest")
 public class MetadataAPIDistTest extends MultipleCacheManagersTest {
 
    @Override
