@@ -107,7 +107,7 @@ public class ClusterCacheStatus {
          }
 
          HashMap<Address, Float> newCapacityFactors = new HashMap<Address, Float>(capacityFactors);
-         newCapacityFactors.put(joiner, joinInfo.getCapacityFactor());
+         newCapacityFactors.put(joiner, capacityFactor);
          capacityFactors = Immutables.immutableMapWrap(newCapacityFactors);
          members = immutableAdd(members, joiner);
          joiners = immutableAdd(joiners, joiner);
