@@ -11,6 +11,7 @@ import org.infinispan.commons.util.InfinispanCollections;
 import org.infinispan.commons.CacheConfigurationException;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
+import org.infinispan.configuration.format.PropertyFormatter;
 import org.infinispan.configuration.global.GlobalConfiguration;
 import org.infinispan.configuration.global.GlobalConfigurationBuilder;
 import org.infinispan.configuration.parsing.ConfigurationBuilderHolder;
@@ -46,6 +47,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Properties;
 import java.util.Set;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.CountDownLatch;
@@ -825,5 +827,13 @@ public class DefaultCacheManager implements EmbeddedCacheManager, CacheManager {
          }
          return (Cache<K, V>) cache;
       }
+   }
+
+   /**
+    * {@inheritDoc}
+    */
+   @ManagedAttribute(description = "Global configuration properties", displayName = "Global configuration properties", dataType = DataType.TRAIT, displayType = DisplayType.SUMMARY)
+   public Properties getGlobalConfigurationAsProperties() {
+      return new PropertyFormatter().format(globalConfiguration);
    }
 }
