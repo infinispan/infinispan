@@ -13,7 +13,7 @@ import org.testng.annotations.Test;
  * @author Dan Berindei
  * @since 6.0
  */
-@Test(groups = "functional", testName = "distribution.rehash.PessimisticStateTransferOverwritingValueTest")
+@Test(groups = "functional", testName = "distribution.rehash.OptimisticStateTransferOverwritingValueTest")
 public class OptimisticStateTransferOverwritingValueTest extends NonTxStateTransferOverwritingValueTest {
    @Override
    protected ConfigurationBuilder getConfigurationBuilder() {

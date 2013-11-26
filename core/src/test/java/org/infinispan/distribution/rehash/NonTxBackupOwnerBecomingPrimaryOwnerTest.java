@@ -43,7 +43,7 @@ import static org.testng.AssertJUnit.assertNull;
  *
  * @author Dan Berindei
  */
-@Test(groups = "functional", testName = "distribution.rehash.NonTxPrimaryOwnerLeavingTest")
+@Test(groups = "functional", testName = "distribution.rehash.NonTxBackupOwnerBecomingPrimaryOwnerTest")
 @CleanupAfterMethod
 public class NonTxBackupOwnerBecomingPrimaryOwnerTest extends MultipleCacheManagersTest {
 
