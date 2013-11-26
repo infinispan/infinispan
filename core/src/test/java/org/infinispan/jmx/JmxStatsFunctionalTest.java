@@ -14,6 +14,7 @@ import org.testng.annotations.Test;
 import javax.management.MBeanServer;
 import javax.management.ObjectName;
 import java.lang.reflect.Method;
+import java.util.Properties;
 
 import static org.infinispan.test.TestingUtil.getCacheManagerObjectName;
 import static org.infinispan.test.TestingUtil.getCacheObjectName;
@@ -284,6 +285,36 @@ public class JmxStatsFunctionalTest extends AbstractInfinispanTest {
       globalConfiguration.globalJmxStatistics().enable().mBeanServerLookup(new PerThreadMBeanServerLookup());
       cm = TestCacheManagerFactory.createCacheManager(globalConfiguration, new ConfigurationBuilder(), false);
       cm.stop();
+   }
+
+   public void testConfigurationProperties() throws Exception {
+      GlobalConfigurationBuilder globalConfiguration = GlobalConfigurationBuilder.defaultClusteredBuilder();
+      globalConfiguration.transport().siteId("TESTVALUE1");
+      globalConfiguration.transport().rackId("TESTVALUE2");
+      globalConfiguration.transport().machineId("TESTVALUE3");
+      globalConfiguration.globalJmxStatistics().enable().mBeanServerLookup(new PerThreadMBeanServerLookup());
+      cm = TestCacheManagerFactory.createClusteredCacheManager(globalConfiguration, new ConfigurationBuilder());
+      String jmxDomain = cm.getCacheManagerConfiguration().globalJmxStatistics().domain();
+
+      ConfigurationBuilder localCache = config();
+      localCache.storeAsBinary().enable();
+      cm.defineConfiguration("local_cache1", localCache.build());
+      localCache.storeAsBinary().disable();
+      cm.defineConfiguration("local_cache2", localCache.build());
+
+      cm.getCache("local_cache1");
+      cm.getCache("local_cache2");
+
+      MBeanServer mBeanServer = PerThreadMBeanServerLookup.getThreadMBeanServer();
+      Properties props1 = (Properties) mBeanServer.getAttribute(getCacheObjectName(jmxDomain, "local_cache1(local)", "Cache"), "configurationAsProperties");
+      Properties props2 = (Properties) mBeanServer.getAttribute(getCacheObjectName(jmxDomain, "local_cache2(local)", "Cache"), "configurationAsProperties");
+      Properties propsGlobal = (Properties) mBeanServer.getAttribute(getCacheManagerObjectName(jmxDomain), "globalConfigurationAsProperties");
+      assert "true".equals(props1.getProperty("storeAsBinary.enabled"));
+      assert "false".equals(props2.getProperty("storeAsBinary.enabled"));
+      System.out.println("propsGlobal="+propsGlobal);
+      assert "TESTVALUE1".equals(propsGlobal.getProperty("transport.siteId"));
+      assert "TESTVALUE2".equals(propsGlobal.getProperty("transport.rackId"));
+      assert "TESTVALUE3".equals(propsGlobal.getProperty("transport.machineId"));
    }
 
    private ConfigurationBuilder config() {
