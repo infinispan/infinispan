@@ -185,6 +185,7 @@ public class HashConfigurationBuilder extends AbstractClusteringConfigurationChi
       this.numOwners = template.numOwners();
       this.numSegments = template.numSegments();
       this.groupsConfigurationBuilder.read(template.groups());
+      this.capacityFactor = template.capacityFactor();
       return this;
    }
 
