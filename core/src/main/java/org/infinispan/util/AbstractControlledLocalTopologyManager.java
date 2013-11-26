@@ -1,15 +1,18 @@
 package org.infinispan.util;
 
+import org.infinispan.factories.annotations.Start;
+import org.infinispan.factories.annotations.Stop;
 import org.infinispan.topology.CacheJoinInfo;
 import org.infinispan.topology.CacheTopology;
 import org.infinispan.topology.CacheTopologyHandler;
 import org.infinispan.topology.LocalTopologyManager;
+import org.infinispan.topology.LocalTopologyManagerImpl;
 
 import java.util.Map;
 
 /**
  * Class to be extended to allow some control over the local topology manager when testing Infinispan.
- *
+ * <p/>
  * Note: create before/after method lazily when need.
  *
  * @author Pedro Ruivo
@@ -59,6 +62,22 @@ public abstract class AbstractControlledLocalTopologyManager implements LocalTop
    @Override
    public final CacheTopology getCacheTopology(String cacheName) {
       return delegate.getCacheTopology(cacheName);
+   }
+
+   // Arbitrary value, only need to start after JGroupsTransport
+   @Start(priority = 100)
+   public final void startDelegate() {
+      if (delegate instanceof LocalTopologyManagerImpl) {
+         ((LocalTopologyManagerImpl) delegate).start();
+      }
+   }
+
+   // Need to stop before the JGroupsTransport
+   @Stop(priority = 9)
+   public final void stopDelegate() {
+      if (delegate instanceof LocalTopologyManagerImpl) {
+         ((LocalTopologyManagerImpl) delegate).stop();
+      }
    }
 
    protected void beforeHandleConsistentHashUpdate(String cacheName, CacheTopology cacheTopology, int viewId) {

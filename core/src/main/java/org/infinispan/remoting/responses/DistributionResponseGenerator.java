@@ -29,7 +29,7 @@ public class DistributionResponseGenerator implements ResponseGenerator {
    public Response getResponse(CacheRpcCommand command, Object returnValue) {
       if (command.getCommandId() == ClusteredGetCommand.COMMAND_ID) {         
          ClusteredGetCommand clusteredGet = (ClusteredGetCommand) command;
-         if (distributionManager.isAffectedByRehash(clusteredGet.getKey()))
+         if (returnValue == null && distributionManager.isAffectedByRehash(clusteredGet.getKey()))
             return UnsureResponse.INSTANCE;
          return SuccessfulResponse.create(returnValue);
       } else if (command instanceof SingleRpcCommand) {
