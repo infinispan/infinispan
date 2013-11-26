@@ -65,12 +65,18 @@ public class LocalTopologyManagerImpl implements LocalTopologyManager {
    // Arbitrary value, only need to start after JGroupsTransport
    @Start(priority = 100)
    public void start() {
+      if (trace) {
+         log.tracef("Starting LocalCacheManager on %s", transport.getAddress());
+      }
       running = true;
    }
 
    // Need to stop before the JGroupsTransport
    @Stop(priority = 9)
    public void stop() {
+      if (trace) {
+         log.tracef("Stopping LocalCacheManager on %s", transport.getAddress());
+      }
       running = false;
    }
 

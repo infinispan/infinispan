@@ -100,7 +100,6 @@ public class ClusteredGetCommand extends BaseRpcCommand implements FlagAffectedC
    @Override
    public InternalCacheValue perform(InvocationContext context) throws Throwable {
       acquireLocksIfNeeded();
-      if (distributionManager != null && distributionManager.isAffectedByRehash(key)) return null;
       // make sure the get command doesn't perform a remote call
       // as our caller is already calling the ClusteredGetCommand on all the relevant nodes
       Set<Flag> commandFlags = EnumSet.of(Flag.SKIP_REMOTE_LOOKUP, Flag.CACHE_MODE_LOCAL);
