@@ -114,7 +114,7 @@ public class InvocationContextInterceptor extends CommandInterceptor {
                suppressExceptions = suppressExceptions || shuttingDown;
                if (suppressExceptions) {
                   if (shuttingDown)
-                     log.trace("Exception while executing code, but we're shutting down so failing silently.");
+                     log.trace("Exception while executing code, but we're shutting down so failing silently.", th);
                   else
                      log.trace("Exception while executing code, failing silently...", th);
                   return null;
