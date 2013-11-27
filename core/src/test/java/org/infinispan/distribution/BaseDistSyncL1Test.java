@@ -1,11 +1,13 @@
 package org.infinispan.distribution;
 
-import org.apache.log4j.Logger;
 import org.infinispan.Cache;
 import org.infinispan.commands.VisitableCommand;
 import org.infinispan.commands.read.GetKeyValueCommand;
 import org.infinispan.commands.write.InvalidateL1Command;
+import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.interceptors.base.CommandInterceptor;
+import org.infinispan.util.concurrent.IsolationLevel;
+import org.junit.Assert;
 import org.testng.annotations.Test;
 
 import java.util.concurrent.BrokenBarrierException;
@@ -31,6 +33,15 @@ public abstract class BaseDistSyncL1Test extends BaseDistFunctionalTest<Object, 
    protected static final String key = "key-to-the-cache";
    protected static final String firstValue = "first-put";
    protected static final String secondValue = "second-put";
+
+   protected IsolationLevel isolationLevel = IsolationLevel.READ_COMMITTED;
+
+   @Override
+   protected ConfigurationBuilder buildConfiguration() {
+      ConfigurationBuilder builder = super.buildConfiguration();
+      builder.locking().isolationLevel(isolationLevel);
+      return builder;
+   }
 
    protected void addBlockingInterceptorBeforeTx(Cache<?, ?> cache, final CyclicBarrier barrier,
                                                  Class<? extends VisitableCommand> commandClass) {
@@ -264,6 +275,62 @@ public abstract class BaseDistSyncL1Test extends BaseDistFunctionalTest<Object, 
 
       } finally {
          removeAllBlockingInterceptorsFromCache(nonOwnerCache);
+      }
+   }
+
+   /**
+    * See ISPN-3364
+    * @throws Throwable
+    */
+   @Test
+   public void testRemoteGetArrivesButWriteOccursBeforeRegistration() throws Throwable {
+      final Cache<Object, String>[] owners = getOwners(key, 2);
+
+      final Cache<Object, String> ownerCache = owners[0];
+      final Cache<Object, String> backupOwnerCache = owners[1];
+      final Cache<Object, String> nonOwnerCache = getFirstNonOwner(key);
+
+      ownerCache.put(key, firstValue);
+
+      assertIsNotInL1(nonOwnerCache, key);
+
+      // Add a barrier to block the owner/backupowner from going further after retrieving the value before coming back into the L1
+      // interceptor
+      CyclicBarrier getBarrier = new CyclicBarrier(3);
+      ownerCache.getAdvancedCache().addInterceptorAfter(new BlockingInterceptor(getBarrier, GetKeyValueCommand.class, true),
+                                                        getL1InterceptorClass());
+      backupOwnerCache.getAdvancedCache().addInterceptorAfter(new BlockingInterceptor(getBarrier, GetKeyValueCommand.class, true),
+                                                       getL1InterceptorClass());
+
+      try {
+         Future<String> future = nonOwnerCache.getAsync(key);
+
+         // Wait until get goes remote and retrieves value before going back into L1 interceptor
+         getBarrier.await(10, TimeUnit.SECONDS);
+
+         Assert.assertEquals(firstValue, ownerCache.put(key, secondValue));
+
+         // Let the get complete finally
+         getBarrier.await(10, TimeUnit.SECONDS);
+
+         final String expectedValue;
+         // This is a bit peculiar that depending on the isolation level that a different value is returned.  This is
+         // caused due to the fact that the get has retrieved the value from the data container already and placed it
+         // in it's context.  With read committed however the value in the context is the same value from the data
+         // container.  And thus when the value is updated the context can see the update since it is same reference.
+         // Repeatable read however makes a copy of the data and thus doesn't see the value.  That is why read committed
+         // returns the new value and repeatable read has the original value
+         if (isolationLevel == IsolationLevel.REPEATABLE_READ) {
+            expectedValue = firstValue;
+         } else {
+            expectedValue = secondValue;
+         }
+         Assert.assertEquals(expectedValue, future.get(10, TimeUnit.SECONDS));
+
+         assertIsNotInL1(nonOwnerCache, key);
+      } finally {
+         removeAllBlockingInterceptorsFromCache(ownerCache);
+         removeAllBlockingInterceptorsFromCache(backupOwnerCache);
       }
    }
 }

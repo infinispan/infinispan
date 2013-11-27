@@ -116,12 +116,12 @@ public class L1NonTxInterceptor extends BaseRpcInterceptor {
             returnValue = performL1Lookup(ctx, shouldAlwaysRunNextInterceptor, key, command);
          }
       } else {
-         returnValue = invokeNextInterceptor(ctx, command);
          // If this is a remote command, and we found a value in our cache
          // we store it so that we can later invalidate it
          if (registerL1) {
             l1Manager.addRequestor(command.getKey(), ctx.getOrigin());
          }
+         returnValue = invokeNextInterceptor(ctx, command);
       }
       return returnValue;
    }
