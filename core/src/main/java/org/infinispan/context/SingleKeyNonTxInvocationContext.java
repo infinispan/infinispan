@@ -99,22 +99,9 @@ public final class SingleKeyNonTxInvocationContext implements InvocationContext 
    }
 
    @Override
-   public void putLookedUpEntries(Map<Object, CacheEntry> lookedUpEntries) {
-      if (lookedUpEntries.size() > 1) throw illegalStateException();
-      Map.Entry<Object, CacheEntry> e = lookedUpEntries.entrySet().iterator().next();
-      this.key = e.getKey();
-      this.cacheEntry = e.getValue();
-   }
-
-   @Override
    public void removeLookedUpEntry(final Object key) {
       if (keyEquivalence.equals(key, this.key))
          clearLockedKeys();
-   }
-
-   @Override
-   public void clearLookedUpEntries() {
-      clearLockedKeys();
    }
 
    public Object getKey() {

@@ -83,16 +83,6 @@ public class RemoteTxInvocationContext extends AbstractTxInvocationContext {
    }
 
    @Override
-   public void clearLookedUpEntries() {
-      remoteTransaction.clearLookedUpEntries();
-   }
-
-   @Override
-   public void putLookedUpEntries(Map<Object, CacheEntry> lookedUpEntries) {
-      remoteTransaction.putLookedUpEntries(lookedUpEntries);
-   }
-
-   @Override
    public boolean equals(Object o) {
       if (this == o) return true;
       if (!(o instanceof RemoteTxInvocationContext)) return false;

@@ -52,16 +52,6 @@ public class NonTxInvocationContext extends AbstractInvocationContext {
    }
 
    @Override
-   public void putLookedUpEntries(Map<Object, CacheEntry> newLookedUpEntries) {
-      lookedUpEntries.putAll(newLookedUpEntries);
-   }
-
-   @Override
-   public void clearLookedUpEntries() {
-      lookedUpEntries.clear();
-   }
-
-   @Override
    @SuppressWarnings("unchecked")
    public Map<Object, CacheEntry> getLookedUpEntries() {
       return (Map<Object, CacheEntry>)

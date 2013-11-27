@@ -90,18 +90,8 @@ public class LocalTxInvocationContext extends AbstractTxInvocationContext {
    }
 
    @Override
-   public void putLookedUpEntries(Map<Object, CacheEntry> lookedUpEntries) {
-      localTransaction.putLookedUpEntries(lookedUpEntries);
-   }
-
-   @Override
    public void removeLookedUpEntry(Object key) {
       localTransaction.removeLookedUpEntry(key);
-   }
-
-   @Override
-   public void clearLookedUpEntries() {
-      localTransaction.clearLookedUpEntries();
    }
 
    @Override
