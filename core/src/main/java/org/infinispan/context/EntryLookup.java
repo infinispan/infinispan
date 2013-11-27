@@ -36,13 +36,6 @@ public interface EntryLookup {
     */
    void putLookedUpEntry(Object key, CacheEntry e);
 
-   void putLookedUpEntries(Map<Object, CacheEntry> lookedUpEntries);
-
    void removeLookedUpEntry(Object key);
-
-   /**
-    * Clears the collection of entries looked up
-    */
-   void clearLookedUpEntries();
 
 }
