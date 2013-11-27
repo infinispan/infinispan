@@ -1,6 +1,7 @@
 package org.infinispan.distribution.rehash;
 
 import org.infinispan.AdvancedCache;
+import org.infinispan.Cache;
 import org.infinispan.commands.VisitableCommand;
 import org.infinispan.commands.read.GetKeyValueCommand;
 import org.infinispan.commands.write.PutKeyValueCommand;
@@ -13,19 +14,14 @@ import org.infinispan.context.Flag;
 import org.infinispan.distribution.BlockingInterceptor;
 import org.infinispan.distribution.MagicKey;
 import org.infinispan.interceptors.distribution.NonTxDistributionInterceptor;
-import org.infinispan.manager.CacheContainer;
-import org.infinispan.manager.EmbeddedCacheManager;
+import org.infinispan.remoting.rpc.RpcManager;
+import org.infinispan.statetransfer.StateResponseCommand;
 import org.infinispan.statetransfer.StateTransferInterceptor;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.TestingUtil;
-import org.infinispan.test.fwk.CheckPoint;
 import org.infinispan.test.fwk.CleanupAfterMethod;
-import org.infinispan.topology.CacheTopology;
-import org.infinispan.topology.LocalTopologyManager;
 import org.infinispan.transaction.TransactionMode;
-import org.mockito.Mockito;
-import org.mockito.invocation.InvocationOnMock;
-import org.mockito.stubbing.Answer;
+import org.infinispan.tx.dld.ControlledRpcManager;
 import org.testng.annotations.Test;
 
 import java.util.concurrent.Callable;
@@ -33,16 +29,12 @@ import java.util.concurrent.CyclicBarrier;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 
-import static org.mockito.Matchers.any;
-import static org.mockito.Matchers.anyInt;
-import static org.mockito.Matchers.eq;
-import static org.mockito.Mockito.doAnswer;
 import static org.testng.AssertJUnit.assertEquals;
-import static org.testng.AssertJUnit.assertNull;
 
 /**
- * Tests data loss during state transfer when the originator of a put operation becomes the primary owner of the
- * modified key. See https://issues.jboss.org/browse/ISPN-3357
+ * Test that a joiner that became a backup owner for a key does not check the previous value when doing a conditional
+ * write. Also check that if executing a write command during state transfer, it doesn't perform a remote get to obtain
+ * the previous value from one of the readCH owners.
  *
  * @author Dan Berindei
  */
@@ -149,29 +141,20 @@ public class NonTxJoinerBecomingBackupOwnerTest extends MultipleCacheManagersTes
    }
 
    private void doTest(final Operation op) throws Exception {
-      CheckPoint checkPoint = new CheckPoint();
-      LocalTopologyManager ltm0 = TestingUtil.extractGlobalComponent(manager(0), LocalTopologyManager.class);
-      int preJoinTopologyId = ltm0.getCacheTopology(CACHE_NAME).getTopologyId();
-
       final AdvancedCache<Object, Object> cache0 = advancedCache(0);
-      addBlockingLocalTopologyManager(manager(0), checkPoint, preJoinTopologyId);
-
       final AdvancedCache<Object, Object> cache1 = advancedCache(1);
-      addBlockingLocalTopologyManager(manager(1), checkPoint, preJoinTopologyId);
+
+      // Install a ControlledRpcManager on cache1 so that we know when it finished sending the state
+      ControlledRpcManager blockingRpcManager1 = blockStateResponseCommand(cache1);
 
       // Add a new member, but don't start the cache yet
       ConfigurationBuilder c = getConfigurationBuilder();
       c.clustering().stateTransfer().awaitInitialTransfer(false);
       addClusterEnabledCacheManager(c);
-      addBlockingLocalTopologyManager(manager(2), checkPoint, preJoinTopologyId);
 
       // Start the cache and wait until it's a member in the write CH
       log.tracef("Starting the cache on the joiner");
       final AdvancedCache<Object,Object> cache2 = advancedCache(2);
-      int duringJoinTopologyId = preJoinTopologyId + 1;
-      checkPoint.trigger("allow_topology_" + duringJoinTopologyId + "_on_" + address(0));
-      checkPoint.trigger("allow_topology_" + duringJoinTopologyId + "_on_" + address(1));
-      checkPoint.trigger("allow_topology_" + duringJoinTopologyId + "_on_" + address(2));
 
       // Wait for the write CH to contain the joiner everywhere
       eventually(new Condition() {
@@ -201,6 +184,9 @@ public class NonTxJoinerBecomingBackupOwnerTest extends MultipleCacheManagersTes
             op.getCommandClass(), true);
       cache2.addInterceptorBefore(blockingInterceptor2, NonTxDistributionInterceptor.class);
 
+      // Wait for cache1 to send the StateResponseCommand to cache1, but keep it blocked
+      // We only block the StateResponseCommand on cache1, because that's the node cache2 will ask for the magic key
+      blockingRpcManager1.waitForCommandToBlock();
 
       final MagicKey key = getKeyForCache2();
 
@@ -237,11 +223,8 @@ public class NonTxJoinerBecomingBackupOwnerTest extends MultipleCacheManagersTes
 //      beforeCache0Barrier.await(10, TimeUnit.SECONDS);
       cache0.removeInterceptor(BlockingInterceptor.class);
 
-      // Allow the rebalance to end
-      int postJoinTopologyId = duringJoinTopologyId + 1;
-      checkPoint.trigger("allow_topology_" + postJoinTopologyId + "_on_" + address(0));
-      checkPoint.trigger("allow_topology_" + postJoinTopologyId + "_on_" + address(1));
-      checkPoint.trigger("allow_topology_" + postJoinTopologyId + "_on_" + address(2));
+      // Allow cache2 to receive the StateResponseCommand from cache1 and the cluster to finish state transfer
+      blockingRpcManager1.stopBlocking();
 
       // Wait for the topology to change everywhere
       TestingUtil.waitForRehashToComplete(cache0, cache1, cache2);
@@ -257,27 +240,11 @@ public class NonTxJoinerBecomingBackupOwnerTest extends MultipleCacheManagersTes
       return new MagicKey(cache(0), cache(1), cache(2));
    }
 
-   private void addBlockingLocalTopologyManager(final EmbeddedCacheManager manager, final CheckPoint checkPoint,
-                                                final int currentTopologyId)
-         throws InterruptedException {
-      LocalTopologyManager component = TestingUtil.extractGlobalComponent(manager, LocalTopologyManager.class);
-      LocalTopologyManager spyLtm = Mockito.spy(component);
-      doAnswer(new Answer() {
-         @Override
-         public Object answer(InvocationOnMock invocation) throws Throwable {
-            CacheTopology topology = (CacheTopology) invocation.getArguments()[1];
-            // Ignore the first topology update on the joiner, which is with the topology before the join
-            if (topology.getTopologyId() != currentTopologyId) {
-               checkPoint.trigger("pre_topology_" + topology.getTopologyId() + "_on_" + manager.getAddress());
-               checkPoint.await("allow_topology_" + topology.getTopologyId() + "_on_" + manager.getAddress(),
-                     10, TimeUnit.SECONDS);
-            }
-            Object result = invocation.callRealMethod();
-            checkPoint.trigger("post_topology_" + topology.getTopologyId() + "_on_" + manager.getAddress());
-            return result;
-         }
-      }).when(spyLtm).handleConsistentHashUpdate(eq(CacheContainer.DEFAULT_CACHE_NAME), any(CacheTopology.class),
-            anyInt());
-      TestingUtil.extractGlobalComponentRegistry(manager).registerComponent(spyLtm, LocalTopologyManager.class);
+   private ControlledRpcManager blockStateResponseCommand(final Cache cache) throws InterruptedException {
+      RpcManager rpcManager = TestingUtil.extractComponent(cache, RpcManager.class);
+      ControlledRpcManager controlledRpcManager = new ControlledRpcManager(rpcManager);
+      controlledRpcManager.blockBefore(StateResponseCommand.class);
+      TestingUtil.replaceComponent(cache, RpcManager.class, controlledRpcManager, true);
+      return controlledRpcManager;
    }
 }
