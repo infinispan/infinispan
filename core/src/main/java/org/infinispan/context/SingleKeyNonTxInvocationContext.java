@@ -21,7 +21,6 @@ public final class SingleKeyNonTxInvocationContext implements InvocationContext 
     * It is possible for the key to only be wrapped but not locked, e.g. when a get takes place.
     */
    private boolean isLocked;
-   private boolean useFutureReturnType;
    private final boolean isOriginLocal;
 
    private Object key;
@@ -129,16 +128,6 @@ public final class SingleKeyNonTxInvocationContext implements InvocationContext 
    @Override
    public Address getOrigin() {
       return origin;
-   }
-
-   @Override
-   public boolean isUseFutureReturnType() {
-      return useFutureReturnType;
-   }
-
-   @Override
-   public void setUseFutureReturnType(final boolean useFutureReturnType) {
-      this.useFutureReturnType = useFutureReturnType;
    }
 
    @Override

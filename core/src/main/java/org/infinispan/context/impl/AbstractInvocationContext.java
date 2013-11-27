@@ -14,7 +14,6 @@ import org.infinispan.remoting.transport.Address;
  */
 public abstract class AbstractInvocationContext implements InvocationContext {
 
-   private boolean useFutureReturnType = false;
    private boolean isOriginLocal = false;
    private Address origin;
    // Class loader associated with this invocation which supports AdvancedCache.with() functionality
@@ -41,16 +40,6 @@ public abstract class AbstractInvocationContext implements InvocationContext {
    @Override
    public boolean hasLockedKey(Object key) {
       return getLockedKeys().contains(key);
-   }
-
-   @Override
-   public final boolean isUseFutureReturnType() {
-      return useFutureReturnType;
-   }
-
-   @Override
-   public final void setUseFutureReturnType(final boolean useFutureReturnType) {
-      this.useFutureReturnType = useFutureReturnType;
    }
 
    @Override
