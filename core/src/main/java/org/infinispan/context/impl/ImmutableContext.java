@@ -79,16 +79,6 @@ public final class ImmutableContext implements InvocationContext {
    }
 
    @Override
-   public boolean isUseFutureReturnType() {
-      return false;
-   }
-
-   @Override
-   public void setUseFutureReturnType(boolean useFutureReturnType) {
-      throw newUnsupportedMethod();
-   }
-
-   @Override
    public Set<Object> getLockedKeys() {
       return InfinispanCollections.emptySet();
    }

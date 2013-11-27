@@ -37,24 +37,6 @@ public interface InvocationContext extends EntryLookup, Cloneable {
    Object getLockOwner();
 
    /**
-    * Indicates whether the call requires a {@link java.util.concurrent.Future}
-    * as return type.
-    *
-    * @return true if the call requires a {@link java.util.concurrent.Future}
-    *              as return type, false otherwise
-    */
-   boolean isUseFutureReturnType();
-
-   /**
-    * Sets whether the call requires a {@link java.util.concurrent.Future}
-    * as return type.
-    *
-    * @param useFutureReturnType boolean indicating whether a {@link java.util.concurrent.Future}
-    *                            will be needed.
-    */
-   void setUseFutureReturnType(boolean useFutureReturnType);
-
-   /**
     * Clones the invocation context.
     *
     * @return A cloned instance of this invocation context instance
