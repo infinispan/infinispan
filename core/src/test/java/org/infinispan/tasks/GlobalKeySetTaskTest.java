@@ -17,8 +17,19 @@ public class GlobalKeySetTaskTest extends BaseDistFunctionalTest<Object, String>
       INIT_CLUSTER_SIZE = 2;
    }
 
-   public void testGlobalKeySetTask() throws Exception {
+   public void testGlobalKeySetTaskLocal() throws Exception {
+      //using default non-clustered cache
       Cache<String,String> cache = cache(0);
+      performTest(cache);
+   }
+
+   public void testGlobalKeySetTaskDist() throws Exception {
+      //using set up distributed cache
+      Cache<String,String> cache = cache(0, cacheName);
+      performTest(cache);
+   }
+
+   private void performTest(Cache<String, String> cache) throws Exception {
       for (int i = 0; i < 1000; i++) {
          cache.put("k" + i, "v" + i);
       }
