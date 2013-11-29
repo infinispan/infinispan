@@ -55,7 +55,8 @@ class TransactionalSharedLuceneLock extends Lock {
          // we own the lock:
          startTransaction();
          return true;
-      } else {
+      }
+      else {
          if (log.isTraceEnabled()) {
             log.tracef("Lock: %s not aquired for index: %s, was taken already.", lockName, indexName);
          }
@@ -97,9 +98,11 @@ class TransactionalSharedLuceneLock extends Lock {
             tm.suspend();
          }
          locked = noCacheStoreCache.containsKey(keyOfLock);
-      } catch (Exception e) {
+      }
+      catch (Exception e) {
          log.errorSuspendingTransaction(e);
-      } finally {
+      }
+      finally {
          if (tx != null) {
             try {
                tm.resume(tx);
@@ -121,7 +124,8 @@ class TransactionalSharedLuceneLock extends Lock {
    private void startTransaction() throws IOException {
       try {
          tm.begin();
-      } catch (Exception e) {
+      }
+      catch (Exception e) {
          log.unableToStartTransaction(e);
          throw new IOException("SharedLuceneLock could not start a transaction after having acquired the lock", e);
       }
@@ -139,7 +143,8 @@ class TransactionalSharedLuceneLock extends Lock {
    private void commitTransactions() throws IOException {
       try {
          tm.commit();
-      } catch (Exception e) {
+      }
+      catch (Exception e) {
          log.unableToCommitTransaction(e);
          throw new IOException("SharedLuceneLock could not commit a transaction", e);
       }
@@ -160,9 +165,11 @@ class TransactionalSharedLuceneLock extends Lock {
             tm.suspend();
          }
          clearLock();
-      } catch (Exception e) {
+      }
+      catch (Exception e) {
          log.errorSuspendingTransaction(e);
-      } finally {
+      }
+      finally {
          if (tx != null) {
             try {
                tm.resume(tx);

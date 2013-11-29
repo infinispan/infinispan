@@ -45,9 +45,9 @@ import org.infinispan.util.logging.LogFactory;
  * </p>
  * <p><b>Combined store patterns</b> It's possible to combine different stores and passivation policies, so that each nodes shares the index changes
  * quickly to other nodes, offloads less frequently used data to a per-node local filesystem, and the cluster also coordinates to keeps a safe copy on a shared store.</p>
- * 
+ *
  * @deprecated This class will be removed. Use {@link org.infinispan.lucene.directory.DirectoryBuilder} to create Directory instead.
- * 
+ *
  * @since 4.0
  * @author Sanne Grinovero
  * @author Lukasz Moren
@@ -59,12 +59,12 @@ import org.infinispan.util.logging.LogFactory;
 @SuppressWarnings("unchecked")
 @Deprecated
 public class InfinispanDirectory extends Directory {
-   
+
    /**
     * Used as default chunk size, can be overridden at construction time.
     * Each Lucene index segment is split into parts with default size defined here
     */
-   public final static int DEFAULT_BUFFER_SIZE = 16 * 1024;
+   public static final int DEFAULT_BUFFER_SIZE = 16 * 1024;
 
    private static final Log log = LogFactory.getLog(InfinispanDirectory.class);
 
@@ -138,9 +138,7 @@ public class InfinispanDirectory extends Directory {
       this(cache, cache, cache, "", DEFAULT_BUFFER_SIZE);
    }
 
-   /**
-    * {@inheritDoc}
-    */
+   //Overrides in some Lucene versions
    public String[] list() {
       ensureOpen();
       Set<String> files = fileOps.getFileList();
@@ -203,9 +201,7 @@ public class InfinispanDirectory extends Directory {
       }
    }
 
-   /**
-    * {@inheritDoc}
-    */
+   //Overrides in some Lucene versions
    public void renameFile(String from, String to) {
       ensureOpen();
 
@@ -229,7 +225,7 @@ public class InfinispanDirectory extends Directory {
 
       metadataCache.put(new FileCacheKey(indexName, to), metadata);
       fileOps.removeAndAdd(from, to);
-      
+
       // now trigger deletion of old file chunks:
       readLocks.deleteOrReleaseReadLock(from);
       if (log.isTraceEnabled()) {
@@ -313,22 +309,22 @@ public class InfinispanDirectory extends Directory {
    public String getIndexName() {
        return indexName;
    }
-   
+
    private static LockFactory makeDefaultLockFactory(Cache<?, ?> cache, String indexName) {
       checkNotNull(cache, "cache");
       checkNotNull(indexName, "indexName");
       return new BaseLockFactory(cache, indexName);
    }
-   
+
    private static SegmentReadLocker makeDefaultSegmentReadLocker(Cache<?, ?> metadataCache, Cache<?, ?> chunksCache, Cache<?, ?> distLocksCache, String indexName) {
       checkNotNull(distLocksCache, "distLocksCache");
       checkNotNull(indexName, "indexName");
       return new DistributedSegmentReadLocker((Cache<Object, Integer>) distLocksCache, chunksCache, metadataCache, indexName);
    }
-   
+
    private static void checkNotNull(Object v, String objectname) {
       if (v == null)
          throw new IllegalArgumentException(objectname + " must not be null");
    }
-   
+
 }

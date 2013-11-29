@@ -105,6 +105,13 @@ public class DynamicTopologyStressTest extends MultipleCacheManagersTest {
       assert failed.get() == false;
    }
 
+   private void failed(Exception e) {
+      log.error(e);
+      if (! KEEP_GOING) {
+         failed.set(true);
+      }
+   }
+
    public class ConstantWritingThread implements Runnable {
 
       private final Directory masterDirectory;
@@ -128,7 +135,7 @@ public class DynamicTopologyStressTest extends MultipleCacheManagersTest {
                writer.commit();
                lastWrittenTermId = toWrite;
                if (VISUAL_PROGRESS_FEEDBACK) System.out.println("Written: " + doc);
-               Thread.sleep( 1000 / WRITES_PER_SECOND );
+               Thread.sleep(1000 / WRITES_PER_SECOND);
             } catch (IOException e) {
                failed(e);
                return;
@@ -148,13 +155,6 @@ public class DynamicTopologyStressTest extends MultipleCacheManagersTest {
          }
       }
 
-   }
-
-   private void failed(Exception e) {
-      log.error(e);
-      if (! KEEP_GOING) {
-         failed.set(true);
-      }
    }
 
    public class ConstantReadingThread implements Runnable {
@@ -182,7 +182,7 @@ public class DynamicTopologyStressTest extends MultipleCacheManagersTest {
                   log.error("String '" + termValue + "' should exist but was not found in index");
                }
                if (VISUAL_PROGRESS_FEEDBACK) System.out.print(".");
-               Thread.sleep( 1 );
+               Thread.sleep(1);
             } catch (IOException e) {
                failed(e);
                return;

@@ -16,13 +16,18 @@ public class LuceneVersionDetector {
 
    public static final int VERSION = detectVersion();
 
+   private LuceneVersionDetector() {
+      //Not to be instantiated
+   }
+
    private static int detectVersion() {
       Log log = LogFactory.getLog(LuceneVersionDetector.class, Log.class);
       int version = 3;
       try {
          Class.forName("org.apache.lucene.store.IOContext", true, LuceneVersionDetector.class.getClassLoader());
          version = 4;
-      } catch (ClassNotFoundException e) {
+      }
+      catch (ClassNotFoundException e) {
       }
       log.detectedLuceneVersion(version);
       return version;

@@ -11,11 +11,11 @@ import org.infinispan.lucene.ChunkCacheKey;
  * In this quite common case for some segment types we
  * don't need the readLock to span multiple chunks, the pointer to the buffer is safe enough.
  * This leads to an extreme simple implementation.
- * 
+ *
  * @author Sanne Grinovero
  * @since 4.0
  */
-final public class SingleChunkIndexInput extends IndexInput {
+public final class SingleChunkIndexInput extends IndexInput {
 
    private final byte[] buffer;
    private int bufferPosition;

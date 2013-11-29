@@ -11,7 +11,7 @@ import org.infinispan.util.logging.LogFactory;
  * Inter-IndexWriter Lucene index lock based on Infinispan.
  * This implementation is not bound to and does not need a TransactionManager,
  * is more suited for large batch work and index optimization.
- * 
+ *
  * @since 4.0
  * @author Sanne Grinovero
  * @see org.apache.lucene.store.Lock
@@ -70,11 +70,11 @@ class BaseLuceneLock extends Lock {
          log.tracef("Lock removed for index: %s", indexName);
       }
    }
-   
+
    @Override
    public boolean isLocked() {
       boolean locked = noCacheStoreCache.containsKey(keyOfLock);
       return locked;
    }
-   
+
 }

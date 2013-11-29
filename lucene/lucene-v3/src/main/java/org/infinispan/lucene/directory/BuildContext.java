@@ -21,7 +21,7 @@ public interface BuildContext {
 
    /**
     * Sets the chunkSize option for the Directory being created.
-    * 
+    *
     * @param bytes segments are fragmented in chunkSize bytes; larger values are more efficient for searching but less for
     *        distribution and network replication
     * @return the same building context to eventually create the Directory instance
@@ -31,7 +31,7 @@ public interface BuildContext {
    /**
     * Overrides the default SegmentReadLocker. In some cases you might be able to provide more efficient implementations than
     * the default one by controlling the IndexReader's lifecycle
-    * 
+    *
     * @see org.infinispan.lucene.readlocks
     * @param srl the new read locking strategy for fragmented segments
     * @return the same building context to eventually create the Directory instance
@@ -40,7 +40,7 @@ public interface BuildContext {
 
    /**
     * Overrides the IndexWriter LockFactory
-    * 
+    *
     * @see org.infinispan.lucene.locking
     * @param lf the LockFactory to be used by IndexWriters.
     * @return the same building context to eventually create the Directory instance

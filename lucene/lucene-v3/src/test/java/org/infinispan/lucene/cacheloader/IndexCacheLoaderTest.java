@@ -63,7 +63,7 @@ public class IndexCacheLoaderTest {
       verifyDirectory(rootDir, "index-B", 20 * SCALE, false);
    }
 
-   private void verifyDirectory (final File rootDir, final String indexName, final int termsAdded, final boolean inverted)
+   private void verifyDirectory(final File rootDir, final String indexName, final int termsAdded, final boolean inverted)
          throws IOException {
       final EmbeddedCacheManager cacheManager = initializeInfinispan(rootDir);
       TestingUtil.withCacheManager(new CacheManagerCallable(cacheManager) {

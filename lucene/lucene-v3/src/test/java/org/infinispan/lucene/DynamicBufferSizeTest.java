@@ -12,19 +12,20 @@ import org.infinispan.lucene.directory.DirectoryBuilder;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.test.SingleCacheManagerTest;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
+import org.junit.Assert;
 import org.testng.AssertJUnit;
 import org.testng.annotations.Test;
 
 /**
  * The chunk size might be changed after a segment has been created.
  * This test verifies an existing index is still readable.
- * 
+ *
  * @author Sanne Grinovero
  * @since 4.1
  */
 @Test(groups = "functional", testName = "lucene.DynamicBufferSizeTest")
 public class DynamicBufferSizeTest extends SingleCacheManagerTest {
-   
+
    @Override
    protected EmbeddedCacheManager createCacheManager() throws Exception {
       ConfigurationBuilder builder = TestCacheManagerFactory.getDefaultCacheConfiguration(true);
@@ -32,7 +33,7 @@ public class DynamicBufferSizeTest extends SingleCacheManagerTest {
             .invocationBatching().enable();
       return TestCacheManagerFactory.createCacheManager(builder);
    }
-   
+
    @Test
    public void roundingTest() {
       FileMetadata m = new FileMetadata(10);
@@ -51,7 +52,7 @@ public class DynamicBufferSizeTest extends SingleCacheManagerTest {
       m.setSize(31);
       AssertJUnit.assertEquals(4, m.getNumberOfChunks());
    }
-   
+
    @Test
    public void testReadingFromDifferentlySizedBuffers() throws IOException {
       cache = cacheManager.getCache();
@@ -75,7 +76,7 @@ public class DynamicBufferSizeTest extends SingleCacheManagerTest {
       data2.touch();
 
       assert !data1.equals(new FileCacheKey("testIndex", "testFile"));
-      assert !data1.equals(null);
+      Assert.assertNotNull(data1);
       assert data1.equals(data4);
       assert !data1.equals(data3);
 

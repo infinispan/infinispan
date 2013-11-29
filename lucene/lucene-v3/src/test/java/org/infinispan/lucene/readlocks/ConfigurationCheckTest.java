@@ -12,7 +12,7 @@ import org.testng.annotations.Test;
 /**
  * Verifies a DistributedSegmentReadLocker can be built only on certain types of caches,
  * for example it shouldn't be allowed to use eviction: see ISPN-680
- * 
+ *
  * @author Sanne Grinovero
  */
 @Test(groups = "functional", testName = "lucene.readlocks.ConfigurationCheckTest")

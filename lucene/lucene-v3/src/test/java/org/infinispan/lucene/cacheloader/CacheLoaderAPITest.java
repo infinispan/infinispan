@@ -69,7 +69,7 @@ public class CacheLoaderAPITest extends SingleCacheManagerTest {
       return TestCacheManagerFactory.createCacheManager(builder);
    }
 
-   public void testFilteredKeyLoad() throws PersistenceException {
+   public void testFilteredKeyLoad() {
       CacheLoader loader = TestingUtil.getFirstLoader(cache);
       AssertJUnit.assertNotNull(loader);
       AssertJUnit.assertTrue(loader instanceof LuceneCacheLoader);
@@ -105,7 +105,7 @@ public class CacheLoaderAPITest extends SingleCacheManagerTest {
       }
    }
 
-   public void testContainsKeyWithNoExistentRootDir() throws IOException, PersistenceException {
+   public void testContainsKeyWithNoExistentRootDir() throws IOException {
       Directory directory = DirectoryBuilder.newDirectoryInstance(cache, cache, cache, indexName).create();
 
       TestHelper.createIndex(rootDir, indexName, elementCount, true);
