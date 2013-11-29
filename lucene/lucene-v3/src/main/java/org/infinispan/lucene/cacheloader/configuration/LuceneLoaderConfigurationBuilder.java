@@ -15,7 +15,7 @@ public class LuceneLoaderConfigurationBuilder extends
 
 
    /** Auto-split huge files in blocks, with a base value of 32MB **/
-   private int autoChunkSize = Integer.MAX_VALUE/64;
+   private int autoChunkSize = Integer.MAX_VALUE / 64;
 
    /** Path of the root directory containing all indexes **/
    private String location = "Infinispan-IndexStore";

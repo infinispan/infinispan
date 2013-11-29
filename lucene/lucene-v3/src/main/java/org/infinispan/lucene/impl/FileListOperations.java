@@ -14,7 +14,7 @@ import org.infinispan.util.logging.LogFactory;
 /**
  * Collects operations on the existing fileList, stored as a Set<String> having key
  * of type FileListCacheKey(indexName).
- * 
+ *
  * @author Sanne Grinovero
  * @since 4.1
  */
@@ -37,7 +37,7 @@ public final class FileListOperations {
    }
 
    /**
-    * @return the current list of files being part of the index 
+    * @return the current list of files being part of the index
     */
    public Set<String> getFileList() {
       Set<String> fileList = (Set<String>) cache.get(fileListCacheKey);
@@ -66,7 +66,7 @@ public final class FileListOperations {
             log.trace("Updated file listing: removed " + fileName);
       }
    }
-   
+
    /**
     * Adds a new fileName in the list of files making up this index
     * @param fileName
@@ -80,7 +80,7 @@ public final class FileListOperations {
             log.trace("Updated file listing: added " + fileName);
       }
    }
-   
+
    /**
     * @param fileName
     * @return the FileMetadata associated with the fileName, or null if the file wasn't found.
@@ -92,7 +92,7 @@ public final class FileListOperations {
    }
 
    /**
-    * Optimized implementation to perform both a remove and an add 
+    * Optimized implementation to perform both a remove and an add
     * @param toRemove
     * @param toAdd
     */

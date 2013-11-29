@@ -1,6 +1,5 @@
 package org.infinispan.lucene.testutils;
 
-import org.infinispan.lucene.testutils.RepeatableLongByteSequence;
 import org.testng.annotations.Test;
 
 /**

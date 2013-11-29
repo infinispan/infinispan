@@ -10,7 +10,7 @@ import org.testng.annotations.Test;
 
 /**
  * Verifies that the Lucene Directory correctly refuses to use a
- * Cache for which expiry is activated. 
+ * Cache for which expiry is activated.
  *
  * @author Sanne Grinovero
  */

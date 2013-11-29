@@ -1,18 +1,16 @@
 package org.infinispan.lucene.testutils;
 
-import org.testng.annotations.Test;
-
 /**
  * RepeatableLongByteSequence is a testing utility to get a source of bytes.
  * Use nextByte() to produce them.
  * The generated sequence is similar to a random generated sequence, but will always generate
  * the same sequence and avoid immediate repetitions of bytes and
  * close repetitive patterns (they might occur in large scale).
- * 
+ *
  * After having written such a stream from one
  * instance, create a second instance to assert equality of contents (see test)
  * as the source is not random and will generate the same sequence.
- * 
+ *
  * @author Sanne Grinovero
  * @since 4.0
  */
@@ -31,7 +29,8 @@ public class RepeatableLongByteSequence {
             rising = false;
             currentMax++; // overflow might occur, not bad for our purposes.
          }
-      } else {
+      }
+      else {
          next = --lastUsedValue;
          if (next == currentMin) {
             rising = true;
@@ -49,7 +48,7 @@ public class RepeatableLongByteSequence {
          buffer[i] = nextByte();
       }
    }
-   
+
    public void reset() {
       lastUsedValue = -1;
       currentMax = (byte) 1;

@@ -32,7 +32,7 @@ import org.infinispan.lucene.readlocks.SegmentReadLocker;
  * </p>
  * <p><b>Combined store patterns</b> It's possible to combine different stores and passivation policies, so that each nodes shares the index changes
  * quickly to other nodes, offloads less frequently used data to a per-node local filesystem, and the cluster also coordinates to keeps a safe copy on a shared store.</p>
- * 
+ *
  * @since 4.0
  * @author Sanne Grinovero
  * @author Lukasz Moren
@@ -55,9 +55,7 @@ class DirectoryLuceneV3 extends Directory implements DirectoryExtensions {
       this.lockFactory.setLockPrefix(this.getLockID());
    }
 
-   /**
-    * {@inheritDoc}
-    */
+   //Overrides in some versions of Lucene
    public String[] list() {
       ensureOpen();
       return impl.list();

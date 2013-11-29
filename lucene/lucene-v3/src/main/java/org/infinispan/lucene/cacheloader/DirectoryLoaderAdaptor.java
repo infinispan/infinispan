@@ -8,7 +8,6 @@ import java.util.Set;
 
 import org.apache.lucene.store.IndexInput;
 import org.infinispan.commons.marshall.StreamingMarshaller;
-import org.infinispan.persistence.spi.PersistenceException;
 import org.infinispan.marshall.core.MarshalledEntryImpl;
 import org.infinispan.marshall.core.MarshalledEntry;
 import org.infinispan.lucene.ChunkCacheKey;
@@ -25,7 +24,7 @@ import org.infinispan.util.logging.LogFactory;
 /**
  * Contains the low-level logic to map the cache structure the the "native"
  * Lucene format for a single Directory instance.
- * 
+ *
  * @author Sanne Grinovero
  * @since 5.2
  */
@@ -41,7 +40,7 @@ final class DirectoryLoaderAdaptor {
 
    /**
     * Create a new DirectoryLoaderAdaptor.
-    * 
+    *
     * @param directory The {@link org.apache.lucene.store.Directory} to which delegate actual IO operations
     * @param indexName the index name
     * @param autoChunkSize index segments might be large; we'll split them in chunks of this amount of bytes
@@ -55,7 +54,7 @@ final class DirectoryLoaderAdaptor {
    /**
     * Loads all "entries" from the CacheLoader; considering this is actually a Lucene index,
     * that's going to transform segments in entries in a specific order, simplest entries first.
-    * 
+    *
     * @param entriesCollector loaded entries are collected in this set
     * @param maxEntries to limit amount of entries loaded
     * @throws PersistenceException
@@ -84,7 +83,7 @@ final class DirectoryLoaderAdaptor {
     * @param maxElements
     * @throws PersistenceException
     */
-   private void loadSomeKeys(final HashSet<IndexScopedKey> keysCollector, final Set<IndexScopedKey> keysToExclude, final int maxElements) throws PersistenceException {
+   private void loadSomeKeys(final HashSet<IndexScopedKey> keysCollector, final Set<IndexScopedKey> keysToExclude, final int maxElements) {
       if (maxElements <= 0) {
          return;
       }
@@ -121,7 +120,8 @@ final class DirectoryLoaderAdaptor {
                }
             }
          }
-      } catch (IOException e) {
+      }
+      catch (IOException e) {
          throw log.exceptionInCacheLoader(e);
       }
    }
@@ -161,7 +161,7 @@ final class DirectoryLoaderAdaptor {
     * @param keysToExclude Could be null!
     * @throws org.infinispan.persistence.spi.PersistenceException
     */
-   protected void loadAllKeys(final HashSet<IndexScopedKey> keysCollector, final Set<IndexScopedKey> keysToExclude) throws PersistenceException {
+   protected void loadAllKeys(final HashSet<IndexScopedKey> keysCollector, final Set<IndexScopedKey> keysToExclude) {
       loadSomeKeys(keysCollector, keysToExclude, Integer.MAX_VALUE);
    }
 
@@ -172,7 +172,8 @@ final class DirectoryLoaderAdaptor {
    protected void close() {
       try {
          directory.close();
-      } catch (IOException e) {
+      }
+      catch (IOException e) {
          //log but continue execution: we might want to try closing more instance
          log.errorOnFSDirectoryClose(e);
       }
@@ -181,10 +182,11 @@ final class DirectoryLoaderAdaptor {
    /**
     * Load the value for a specific key
     */
-   protected Object load(final IndexScopedKey key) throws PersistenceException {
+   protected Object load(final IndexScopedKey key) {
       try {
          return key.accept(loadVisitor);
-      } catch (Exception e) {
+      }
+      catch (Exception e) {
          throw log.exceptionInCacheLoader(e);
       }
    }
@@ -193,11 +195,12 @@ final class DirectoryLoaderAdaptor {
     * @param key
     * @return true if the indexKey matches a loadable entry
     */
-   protected boolean containsKey(final IndexScopedKey key) throws PersistenceException {
+   protected boolean containsKey(final IndexScopedKey key) {
       try {
          final Boolean returnValue = key.accept(containsKeyVisitor);
          return returnValue.booleanValue();
-      } catch (Exception e) {
+      }
+      catch (Exception e) {
          throw log.exceptionInCacheLoader(e);
       }
    }
@@ -266,7 +269,7 @@ final class DirectoryLoaderAdaptor {
          final long length = directory.fileLength(chunkCacheKey.getFileName());
          final int bufferSize = chunkCacheKey.getBufferSize();
          final int chunkId = chunkCacheKey.getChunkId();
-         return Boolean.valueOf( (chunkId * bufferSize) < (length + bufferSize) );
+         return Boolean.valueOf((chunkId * bufferSize) < (length + bufferSize));
       }
       catch (FileNotFoundException nfne) {
          //Ok, we might check for file existence first.. but it's reasonable to be

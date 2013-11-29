@@ -10,7 +10,7 @@ import org.infinispan.util.logging.LogFactory;
 /**
  * Default factory for locks obtained in <code>InfinispanDirectory</code>,
  * this factory produces instances of <code>BaseLuceneLock</code>.
- * 
+ *
  * @since 4.0
  * @author Sanne Grinovero
  * @see org.infinispan.lucene.locking.BaseLuceneLock
@@ -18,8 +18,8 @@ import org.infinispan.util.logging.LogFactory;
 @SuppressWarnings("unchecked")
 public class BaseLockFactory extends LockFactory {
 
-   private static final Log log = LogFactory.getLog(BaseLockFactory.class);
    static final String DEF_LOCK_NAME = IndexWriter.WRITE_LOCK_NAME;
+   private static final Log log = LogFactory.getLog(BaseLockFactory.class);
 
    private final Cache<?, ?> cache;
    private final String indexName;
@@ -68,5 +68,5 @@ public class BaseLockFactory extends LockFactory {
          log.tracef("Removed lock: %s for index %s", lockName, indexName);
       }
    }
-   
+
 }

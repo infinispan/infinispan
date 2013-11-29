@@ -13,6 +13,11 @@ public class ContractAdaptorFactory {
 
    private static final Log log = LogFactory.getLog(ContractAdaptorFactory.class, Log.class);
 
+   private ContractAdaptorFactory() {
+      //not to be created
+   }
+
+
    public static InternalDirectoryContract wrapNativeDirectory(Directory directory) {
       if (LuceneVersionDetector.VERSION == 3) {
          return new DirectoryV3Adaptor(directory);
@@ -25,7 +30,8 @@ public class ContractAdaptorFactory {
                .loadClass("org.infinispan.lucene.cacheloader.DirectoryV4Adaptor")
                .getConstructor(ctorType)
                .newInstance(directory);
-         } catch (Exception e) {
+         }
+         catch (Exception e) {
             throw log.failedToCreateLucene4Directory(e);
          }
          return idc;

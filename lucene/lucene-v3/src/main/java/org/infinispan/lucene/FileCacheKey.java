@@ -11,7 +11,7 @@ import org.infinispan.commons.util.Util;
 
 /**
  * Used as a key for file headers in a cache
- * 
+ *
  * @since 4.0
  * @author Lukasz Moren
  * @author Sanne Grinovero
@@ -20,7 +20,7 @@ public final class FileCacheKey implements Serializable, IndexScopedKey {
 
    /** The serialVersionUID */
    private static final long serialVersionUID = -228474937509042691L;
-   
+
    private final String indexName;
    private final String fileName;
    private final int hashCode;
@@ -35,7 +35,7 @@ public final class FileCacheKey implements Serializable, IndexScopedKey {
 
    /**
     * Get the indexName.
-    * 
+    *
     * @return the indexName.
     */
    public String getIndexName() {
@@ -49,7 +49,7 @@ public final class FileCacheKey implements Serializable, IndexScopedKey {
 
    /**
     * Get the fileName.
-    * 
+    *
     * @return the fileName.
     */
    public String getFileName() {
@@ -60,7 +60,7 @@ public final class FileCacheKey implements Serializable, IndexScopedKey {
    public int hashCode() {
       return hashCode;
    }
-   
+
    private int generatedHashCode() {
       final int prime = 31;
       int result = prime + fileName.hashCode();
@@ -80,7 +80,7 @@ public final class FileCacheKey implements Serializable, IndexScopedKey {
          return false;
       return indexName.equals(other.indexName);
    }
-   
+
    /**
     * Changing the encoding could break backwards compatibility
     * @see LuceneKey2StringMapper#getKeyMapping(String)
@@ -89,7 +89,7 @@ public final class FileCacheKey implements Serializable, IndexScopedKey {
    public String toString() {
       return fileName + "|M|"+ indexName;
    }
-   
+
    public static final class Externalizer extends AbstractExternalizer<FileCacheKey> {
 
       @Override

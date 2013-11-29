@@ -24,6 +24,11 @@ import java.io.IOException;
  * @author Anna Manukyan
  */
 public class TestHelper {
+
+   private TestHelper(){
+      //not to be instantiated
+   }
+
    /**
     * Verifies that entries exist/not exist in the index.
     *

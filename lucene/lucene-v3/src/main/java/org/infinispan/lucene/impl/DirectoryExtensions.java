@@ -3,7 +3,7 @@ package org.infinispan.lucene.impl;
 /**
  * Some additional methods we add to our Directory implementations,
  * mostly for reporting and testing reasons.
- * 
+ *
  * @author Sanne Grinovero <sanne@hibernate.org> (C) 2013 Red Hat Inc.
  */
 public interface DirectoryExtensions {

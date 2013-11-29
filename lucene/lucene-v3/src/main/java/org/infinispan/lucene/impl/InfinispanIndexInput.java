@@ -12,7 +12,7 @@ import org.infinispan.util.logging.LogFactory;
 
 /**
  * Responsible for reading from <code>InfinispanDirectory</code>
- * 
+ *
  * @since 4.0
  * @author Sanne Grinovero
  * @author Davide Di Somma
@@ -21,8 +21,11 @@ import org.infinispan.util.logging.LogFactory;
  */
 abstract class InfinispanIndexInput extends IndexInput {
 
+
    private static final Log log = LogFactory.getLog(InfinispanIndexInput.class);
    private static final boolean trace = log.isTraceEnabled();
+
+   protected boolean isClone;
 
    private final Cache<ChunkCacheKey, Object> chunksCache;
    private final FileCacheKey fileKey;
@@ -35,8 +38,6 @@ abstract class InfinispanIndexInput extends IndexInput {
    private byte[] buffer;
    private int bufferPosition;
    private int currentLoadedChunk = -1;
-
-   protected boolean isClone;
 
    public InfinispanIndexInput(final IndexInputContext ctx) {
       super(ctx.fileKey.getFileName());
@@ -59,7 +60,7 @@ abstract class InfinispanIndexInput extends IndexInput {
       }
       return buffer[bufferPosition++];
     }
-   
+
    @Override
    public final void readBytes(final byte[] b, int offset, int bytesToRead) throws IOException {
       if (buffer == null) {
@@ -105,7 +106,7 @@ abstract class InfinispanIndexInput extends IndexInput {
          setBufferToCurrentChunkIfPossible();
       }
    }
-   
+
    private void nextChunk() throws IOException {
       currentLoadedChunk++;
       setBufferToCurrentChunk();
@@ -119,7 +120,7 @@ abstract class InfinispanIndexInput extends IndexInput {
       }
       currentBufferSize = buffer.length;
    }
-   
+
    // Lucene might try seek(pos) using an illegal pos value
    // RAMDirectory teaches to position the cursor to the end of previous chunk in this case
    private void setBufferToCurrentChunkIfPossible() {

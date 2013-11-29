@@ -14,13 +14,13 @@ import org.infinispan.util.logging.LogFactory;
 
 public class DirectoryBuilderImpl implements BuildContext {
 
-   private static final Log log = LogFactory.getLog(DirectoryBuilderImpl.class, Log.class);
-
    /**
     * Used as default chunk size: each Lucene index segment is split into smaller parts having a default size in bytes as
     * defined here
     */
-   public final static int DEFAULT_BUFFER_SIZE = 16 * 1024;
+   public static final int DEFAULT_BUFFER_SIZE = 16 * 1024;
+
+   private static final Log log = LogFactory.getLog(DirectoryBuilderImpl.class, Log.class);
 
    /**
     * Mandatory parameters:
@@ -66,7 +66,8 @@ public class DirectoryBuilderImpl implements BuildContext {
                .loadClass("org.infinispan.lucene.impl.DirectoryLuceneV4")
                .getConstructor(ctorType)
                .newInstance(metadataCache, chunksCache, indexName, lockFactory, chunkSize, srl);
-         } catch (Exception e) {
+         }
+         catch (Exception e) {
             throw log.failedToCreateLucene4Directory(e);
          }
          return d;
@@ -113,10 +114,10 @@ public class DirectoryBuilderImpl implements BuildContext {
       }
       Configuration configuration = cache.getCacheConfiguration();
       if (configuration.expiration().maxIdle() != -1) {
-         throw log.luceneStorageHavingIdleTimeSet( indexName, cache.getName() );
+         throw log.luceneStorageHavingIdleTimeSet(indexName, cache.getName());
       }
       if (configuration.expiration().lifespan() != -1) {
-         throw log.luceneStorageHavingLifespanSet( indexName, cache.getName() );
+         throw log.luceneStorageHavingLifespanSet(indexName, cache.getName());
       }
       if (configuration.storeAsBinary().enabled()) {
          throw log.luceneStorageAsBinaryEnabled(indexName, cache.getName());

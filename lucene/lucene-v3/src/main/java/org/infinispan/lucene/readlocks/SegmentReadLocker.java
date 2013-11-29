@@ -12,7 +12,7 @@ package org.infinispan.lucene.readlocks;
  * for readlocks by setting a maximum segment size to equal the chunk size used by the InfinispanDirectory; readlocks
  * will be skipped automatically when not needed, so it's advisable to still configure an appropriate SegmentReadLocker
  * for the cases you might want to tune the chunk size.</p>
- * 
+ *
  * @author Sanne Grinovero
  * @since 4.1
  */
@@ -23,7 +23,7 @@ public interface SegmentReadLocker {
     * if no readLock was acquired it will mark the file to be deleted as soon
     * as all pending locks are releases.
     * If it's invoked on a file without pending locks the file is deleted.
-    * 
+    *
     * @param fileName of the file to release or delete
     * @see Directory#deleteFile(String)
     */
@@ -32,7 +32,7 @@ public interface SegmentReadLocker {
    /**
     * Acquires a readlock, in order to prevent other invocations to {@link #deleteOrReleaseReadLock(String)}
     * from deleting the file.
-    * 
+    *
     * @param filename
     * @return true if the lock was acquired, false if the implementation
     * detects the file does not exist, or that it's being deleted by some other thread.

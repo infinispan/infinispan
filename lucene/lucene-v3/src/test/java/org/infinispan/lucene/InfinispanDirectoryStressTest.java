@@ -29,10 +29,10 @@ import org.testng.annotations.Test;
 @SuppressWarnings("unchecked")
 public class InfinispanDirectoryStressTest {
 
-   private static final Log log = LogFactory.getLog(InfinispanDirectoryStressTest.class);
-
    public static final int THREADS_NUM = 50;
    public static final int TURNS_NUM = 300;
+
+   private static final Log log = LogFactory.getLog(InfinispanDirectoryStressTest.class);
 
    private AtomicInteger writeCount = new AtomicInteger(0);
 
@@ -147,13 +147,15 @@ public class InfinispanDirectoryStressTest {
 
                if (!isWritingThread) {
                   CacheTestSupport.doReadOperation(dir);
-               } else {
+               }
+               else {
                   writeCount.incrementAndGet();
                   CacheTestSupport.doWriteOperation(dir, document);
                }
             }
 
-         } catch (Exception ex) {
+         }
+         catch (Exception ex) {
             log.error("Error", ex);
             e = ex;
          }

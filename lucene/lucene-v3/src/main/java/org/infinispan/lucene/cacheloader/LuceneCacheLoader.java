@@ -6,11 +6,11 @@ import org.infinispan.lucene.IndexScopedKey;
 import org.infinispan.lucene.cacheloader.configuration.LuceneLoaderConfiguration;
 import org.infinispan.lucene.logging.Log;
 import org.infinispan.marshall.core.MarshalledEntry;
-import org.infinispan.persistence.spi.PersistenceException;
 import org.infinispan.persistence.PersistenceUtil;
 import org.infinispan.persistence.TaskContextImpl;
 import org.infinispan.persistence.spi.AdvancedCacheLoader;
 import org.infinispan.persistence.spi.InitializationContext;
+import org.infinispan.persistence.spi.PersistenceException;
 import org.infinispan.util.logging.LogFactory;
 
 import java.io.File;
@@ -55,7 +55,7 @@ public class LuceneCacheLoader implements AdvancedCacheLoader {
    }
 
    @Override
-   public MarshalledEntry load(final Object key) throws PersistenceException {
+   public MarshalledEntry load(final Object key) {
       if (key instanceof IndexScopedKey) {
          final IndexScopedKey indexKey = (IndexScopedKey)key;
          DirectoryLoaderAdaptor directoryAdaptor = getDirectory(indexKey);
@@ -74,7 +74,7 @@ public class LuceneCacheLoader implements AdvancedCacheLoader {
    }
 
    @Override
-   public boolean contains(final Object key) throws PersistenceException {
+   public boolean contains(final Object key) {
       if (key instanceof IndexScopedKey) {
          final IndexScopedKey indexKey = (IndexScopedKey)key;
          final DirectoryLoaderAdaptor directoryAdaptor = getDirectory(indexKey);
@@ -107,7 +107,8 @@ public class LuceneCacheLoader implements AdvancedCacheLoader {
                      }
                   }
                   return null;
-               } catch (Exception e) {
+               }
+               catch (Exception e) {
                   log.errorExecutingParallelStoreTask(e);
                   throw e;
                }
@@ -136,7 +137,8 @@ public class LuceneCacheLoader implements AdvancedCacheLoader {
             String name = maybeDirectory.getName();
             try {
                getDirectory(name);
-            } catch (PersistenceException e) {
+            }
+            catch (PersistenceException e) {
                log.couldNotWalkDirectory(name, e);
             }
          }
@@ -144,7 +146,7 @@ public class LuceneCacheLoader implements AdvancedCacheLoader {
    }
 
    @Override
-   public void start() throws PersistenceException {
+   public void start() {
       rootDirectory = new File(fileRoot);
       if (rootDirectory.exists()) {
          if (!rootDirectory.isDirectory() || ! rootDirectory.canRead()) {
@@ -161,14 +163,14 @@ public class LuceneCacheLoader implements AdvancedCacheLoader {
    }
 
    @Override
-   public void stop() throws PersistenceException {
+   public void stop() {
       for (Entry<String, DirectoryLoaderAdaptor> entry : openDirectories.entrySet()) {
          DirectoryLoaderAdaptor directory = entry.getValue();
          directory.close();
       }
    }
 
-   private DirectoryLoaderAdaptor getDirectory(final IndexScopedKey indexKey) throws PersistenceException {
+   private DirectoryLoaderAdaptor getDirectory(final IndexScopedKey indexKey) {
       final String indexName = indexKey.getIndexName();
       return getDirectory(indexName);
    }
@@ -176,7 +178,7 @@ public class LuceneCacheLoader implements AdvancedCacheLoader {
    /**
     * Looks up the Directory adapter if it's already known, or attempts to initialize indexes.
     */
-   private DirectoryLoaderAdaptor getDirectory(final String indexName) throws PersistenceException {
+   private DirectoryLoaderAdaptor getDirectory(final String indexName) {
       DirectoryLoaderAdaptor adapter = openDirectories.get(indexName);
       if (adapter == null) {
          synchronized (openDirectories) {
@@ -196,10 +198,11 @@ public class LuceneCacheLoader implements AdvancedCacheLoader {
    /**
     * Attempts to open a Lucene FSDirectory on the specified path
     */
-   private FSDirectory openLuceneDirectory(final File path) throws PersistenceException {
+   private FSDirectory openLuceneDirectory(final File path) {
       try {
          return FSDirectory.open(path);
-      } catch (IOException e) {
+      }
+      catch (IOException e) {
          throw log.exceptionInCacheLoader(e);
       }
    }

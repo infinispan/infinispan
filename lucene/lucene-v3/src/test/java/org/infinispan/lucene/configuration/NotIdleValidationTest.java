@@ -10,7 +10,7 @@ import org.testng.annotations.Test;
 
 /**
  * Verifies that the Lucene Directory correctly refuses to use a
- * Cache for which a maximum idle time is activated. 
+ * Cache for which a maximum idle time is activated.
  *
  * @author Sanne Grinovero
  */

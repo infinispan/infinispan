@@ -9,22 +9,22 @@ import org.infinispan.util.logging.LogFactory;
 /**
  * To configure a JdbcStringBasedCacheStoreConfig for the Lucene Directory, use this
  * Key2StringMapper implementation.
- * 
+ *
  * @see JdbcStringBasedCacheStoreConfig#setKey2StringMapperClass(String)
- * 
+ *
  * @author Sanne Grinovero
  * @since 4.1
  */
 @SuppressWarnings("unchecked")
-public class LuceneKey2StringMapper implements TwoWayKey2StringMapper {
-
-   private static final Log log = LogFactory.getLog(LuceneKey2StringMapper.class, Log.class);
+public final class LuceneKey2StringMapper implements TwoWayKey2StringMapper {
 
    /**
     * The pipe character was chosen as it's illegal to have a pipe in a filename, so we only have to
     * check for the indexnames.
     */
    static final Pattern singlePipePattern = Pattern.compile("\\|");
+
+   private static final Log log = LogFactory.getLog(LuceneKey2StringMapper.class, Log.class);
 
    @Override
    public boolean isSupportedType(Class<?> keyType) {
@@ -41,9 +41,9 @@ public class LuceneKey2StringMapper implements TwoWayKey2StringMapper {
 
    /**
     * This method has to perform the inverse transformation of the keys used in the Lucene
-    * Directory from String to object. So this implementation is strongly coupled to the 
+    * Directory from String to object. So this implementation is strongly coupled to the
     * toString method of each key type.
-    * 
+    *
     * @see ChunkCacheKey#toString()
     * @see FileCacheKey#toString()
     * @see FileListCacheKey#toString()
@@ -60,31 +60,36 @@ public class LuceneKey2StringMapper implements TwoWayKey2StringMapper {
       // FileReadLockKey : fileName + "|RL|"+ indexName;
       if (key.startsWith("*|")) {
          return new FileListCacheKey(key.substring(2));
-      } else {
+      }
+      else {
          String[] split = singlePipePattern.split(key);
          if (split.length != 3 && split.length != 4) {
             throw log.keyMappperUnexpectedStringFormat(key);
-         } else {
+         }
+         else {
             if ("M".equals(split[1])) {
                if (split.length != 3) {
                   throw log.keyMappperUnexpectedStringFormat(key);
                }
                return new FileCacheKey(split[2], split[0]);
-            } else if ("RL".equals(split[1])) {
+            }
+            else if ("RL".equals(split[1])) {
                if (split.length != 3) throw log.keyMappperUnexpectedStringFormat(key);
                return new FileReadLockKey(split[2], split[0]);
-            } else {
+            }
+            else {
                if (split.length != 4) throw log.keyMappperUnexpectedStringFormat(key);
                try {
                   int chunkId = Integer.parseInt(split[1]);
                   int bufferSize = Integer.parseInt(split[2]);
                   return new ChunkCacheKey(split[3], split[0], chunkId, bufferSize);
-               } catch (NumberFormatException nfe) {
+               }
+               catch (NumberFormatException nfe) {
                   throw log.keyMappperUnexpectedStringFormat(key);
                }
             }
          }
       }
    }
-   
+
 }

@@ -14,7 +14,7 @@ import org.infinispan.util.logging.LogFactory;
 
 /**
  * Responsible for writing to a <code>Directory</code>
- * 
+ *
  * @since 4.0
  * @author Sanne Grinovero
  * @author Lukasz Moren
@@ -36,7 +36,7 @@ public final class InfinispanIndexOutput extends IndexOutput {
    private final FileListOperations fileOps;
 
    private byte[] buffer;
-   
+
    /**
     * First bytes are rewritten at close - we can minimize locking needs by flushing the first chunk
     * only once (as final operation: so always keep a pointer to the first buffer)
@@ -60,7 +60,7 @@ public final class InfinispanIndexOutput extends IndexOutput {
          log.tracef("Opened new IndexOutput for file:%s in index: %s", fileKey.getFileName(), fileKey.getIndexName());
       }
    }
-   
+
    private byte[] getChunkById(FileCacheKey fileKey, int chunkNumber, int bufferSize) {
       if (file.getNumberOfChunks() <= chunkNumber) {
          return new byte[bufferSize];
@@ -146,7 +146,6 @@ public final class InfinispanIndexOutput extends IndexOutput {
             System.arraycopy(buffer, 0, bufferToFlush, 0, newBufferSize);
          }
       }
-      
       // add chunk to cache
       if ( ! writingOnLastChunk || this.positionInBuffer != 0) {
          // store the current chunk

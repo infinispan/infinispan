@@ -1,6 +1,5 @@
 package org.infinispan.lucene.directory;
 
-import org.apache.lucene.store.Directory;
 import org.infinispan.Cache;
 import org.infinispan.lucene.impl.DirectoryBuilderImpl;
 
@@ -16,7 +15,7 @@ public final class DirectoryBuilder {
 
     /**
      * Starting point to create a Directory instance.
-     * 
+     *
      * @param metadataCache contains the metadata of stored elements
      * @param chunksCache cache containing the bulk of the index; this is the larger part of data
      * @param distLocksCache cache to store locks; should be replicated and not using a persistent CacheStore
