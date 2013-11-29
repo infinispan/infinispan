@@ -22,7 +22,6 @@ public class JdbcStringBasedStoreVamAltMapperTest extends JdbcStringBasedStoreAl
    EmbeddedCacheManager cm;
    StreamingMarshaller marshaller;
 
-
    @BeforeTest
    @Override
    public void createCacheStore() throws PersistenceException {
@@ -36,11 +35,9 @@ public class JdbcStringBasedStoreVamAltMapperTest extends JdbcStringBasedStoreAl
    @Override
    public void destroyStore() throws PersistenceException {
       super.destroyStore();
-
       cm.stop();
    }
 
-   @Override
    protected StreamingMarshaller getMarshaller() {
       return marshaller;
    }

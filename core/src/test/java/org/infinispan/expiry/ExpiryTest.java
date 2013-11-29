@@ -243,11 +243,13 @@ public class ExpiryTest extends AbstractInfinispanTest {
    }
 
    public void testEntrySetAfterExpiryWithStore(Method m) throws Exception {
-      CacheContainer cc = createCacheContainerWithStore();
+      String location = TestingUtil.tmpDirectory(ExpiryTest.class);
+      CacheContainer cc = createCacheContainerWithStore(location);
       try {
          doTestEntrySetAfterExpiryInPut(m, cc);
       } finally {
          cc.stop();
+         TestingUtil.recursiveFileRemove(location);
       }
    }
 
@@ -255,9 +257,9 @@ public class ExpiryTest extends AbstractInfinispanTest {
       return TestCacheManagerFactory.createCacheManager(TestCacheManagerFactory.getDefaultCacheConfiguration(true));
    }
 
-   private CacheContainer createCacheContainerWithStore() {
+   private CacheContainer createCacheContainerWithStore(String location) {
       ConfigurationBuilder b = new ConfigurationBuilder();
-      b.persistence().addSingleFileStore();
+      b.persistence().addSingleFileStore().location(location);
       return TestCacheManagerFactory.createCacheManager(b);
    }
 

@@ -41,6 +41,7 @@ public class JdbcStringBasedStoreAltMapperTest {
    private TableManipulation tableManipulation;
    private static final Person MIRCEA = new Person("Mircea", "Markus", 28);
    private static final Person MANIK = new Person("Manik", "Surtani", 18);
+   private StreamingMarshaller marshaller;
 
    @BeforeTest
    public void createCacheStore() throws PersistenceException {
@@ -53,8 +54,9 @@ public class JdbcStringBasedStoreAltMapperTest {
       UnitTestDatabaseManager.buildTableManipulation(storeBuilder.table(), false);
       UnitTestDatabaseManager.configureUniqueConnectionFactory(storeBuilder);
       cacheStore = new JdbcStringBasedStore();
-      cacheStore.init(new InitializationContextImpl(storeBuilder.create(), mockCache(getClass().getName()), getMarshaller(),
-                                                    new DefaultTimeService(), new ByteBufferFactoryImpl(), new MarshalledEntryFactoryImpl(getMarshaller())));
+      marshaller = new TestObjectStreamMarshaller();
+      cacheStore.init(new InitializationContextImpl(storeBuilder.create(), mockCache(getClass().getName()), marshaller,
+                                                    new DefaultTimeService(), new ByteBufferFactoryImpl(), new MarshalledEntryFactoryImpl(marshaller)));
       cacheStore.start();
       tableManipulation = (TableManipulation) ReflectionUtil.getValue(cacheStore, "tableManipulation");
    }
@@ -68,6 +70,7 @@ public class JdbcStringBasedStoreAltMapperTest {
    @AfterTest
    public void destroyStore() throws PersistenceException {
       cacheStore.stop();
+      marshaller.stop();
    }
 
    /**
@@ -75,13 +78,13 @@ public class JdbcStringBasedStoreAltMapperTest {
     */
    public void persistUnsupportedObject() throws Exception {
       try {
-         cacheStore.write(new MarshalledEntryImpl("key", "value", null, getMarshaller()));
+         cacheStore.write(new MarshalledEntryImpl("key", "value", null, marshaller));
          assert false : "exception is expected as PersonKey2StringMapper does not support strings";
       } catch (UnsupportedKeyTypeException e) {
          assert true : "expected";
       }
       //just check that an person object will be persisted okay
-      cacheStore.write(new MarshalledEntryImpl(MIRCEA, "Cluj Napoca", null, getMarshaller()));
+      cacheStore.write(new MarshalledEntryImpl(MIRCEA, "Cluj Napoca", null, marshaller));
    }
 
 
@@ -89,7 +92,7 @@ public class JdbcStringBasedStoreAltMapperTest {
       assert rowCount() == 0;
       assert cacheStore.load(MIRCEA) == null : "should not be present in the store";
       String value = "adsdsadsa";
-      cacheStore.write(new MarshalledEntryImpl(MIRCEA, value, null, getMarshaller()));
+      cacheStore.write(new MarshalledEntryImpl(MIRCEA, value, null, marshaller));
       assert rowCount() == 1;
       assert cacheStore.load(MIRCEA).getValue().equals(value);
       assert !cacheStore.delete(MANIK);
@@ -102,8 +105,8 @@ public class JdbcStringBasedStoreAltMapperTest {
 
    public void testClear() throws Exception {
       assert rowCount() == 0;
-      cacheStore.write(new MarshalledEntryImpl(MIRCEA, "value", null, getMarshaller()));
-      cacheStore.write(new MarshalledEntryImpl(MANIK, "value", null, getMarshaller()));
+      cacheStore.write(new MarshalledEntryImpl(MIRCEA, "value", null, marshaller));
+      cacheStore.write(new MarshalledEntryImpl(MANIK, "value", null, marshaller));
       assert rowCount() == 2;
       cacheStore.clear();
       assert rowCount() == 0;
@@ -112,8 +115,8 @@ public class JdbcStringBasedStoreAltMapperTest {
    public void testPurgeExpired() throws Exception {
       InternalCacheEntry first = TestInternalCacheEntryFactory.create(MIRCEA, "val", 1000);
       InternalCacheEntry second = TestInternalCacheEntryFactory.create(MANIK, "val2");
-      cacheStore.write(marshalledEntry(first, getMarshaller()));
-      cacheStore.write(marshalledEntry(second, getMarshaller()));
+      cacheStore.write(marshalledEntry(first, marshaller));
+      cacheStore.write(marshalledEntry(second, marshaller));
       assertEquals(rowCount(), 2);
       Thread.sleep(1100);
 //      printTableContent();
@@ -131,9 +134,5 @@ public class JdbcStringBasedStoreAltMapperTest {
    private ConnectionFactory getConnection() {
       JdbcStringBasedStore store = (JdbcStringBasedStore) cacheStore;
       return store.getConnectionFactory();
-   }
-
-   protected StreamingMarshaller getMarshaller() {
-      return new TestObjectStreamMarshaller(false);
    }
 }

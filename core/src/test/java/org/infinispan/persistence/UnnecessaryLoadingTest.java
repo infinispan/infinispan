@@ -146,20 +146,25 @@ public class UnnecessaryLoadingTest extends SingleCacheManagerTest {
    public void testSkipCacheLoadFlagUsage() throws PersistenceException {
       CountingStore countingCS = getCountingCacheStore();
 
-      store.write(new MarshalledEntryImpl("home", "Vermezzo", null, new TestObjectStreamMarshaller()));
-      store.write(new MarshalledEntryImpl("home-second", "Newcastle Upon Tyne", null, new TestObjectStreamMarshaller()));
+      TestObjectStreamMarshaller sm = new TestObjectStreamMarshaller();
+      try {
+         store.write(new MarshalledEntryImpl("home", "Vermezzo", null, sm));
+         store.write(new MarshalledEntryImpl("home-second", "Newcastle Upon Tyne", null, sm));
 
-      assert countingCS.numLoads == 0;
-      //load using SKIP_CACHE_LOAD should not find the object in the store
-      assert cache.getAdvancedCache().withFlags(Flag.SKIP_CACHE_LOAD).get("home") == null;
-      assert countingCS.numLoads == 0;
+         assert countingCS.numLoads == 0;
+         //load using SKIP_CACHE_LOAD should not find the object in the store
+         assert cache.getAdvancedCache().withFlags(Flag.SKIP_CACHE_LOAD).get("home") == null;
+         assert countingCS.numLoads == 0;
 
-      assert cache.getAdvancedCache().withFlags(Flag.SKIP_CACHE_LOAD).put("home", "Newcastle") == null;
-      assert countingCS.numLoads == 0;
+         assert cache.getAdvancedCache().withFlags(Flag.SKIP_CACHE_LOAD).put("home", "Newcastle") == null;
+         assert countingCS.numLoads == 0;
 
-      final Object put = cache.getAdvancedCache().put("home-second", "Newcastle Upon Tyne, second");
-      assertEquals(put, "Newcastle Upon Tyne");
-      assert countingCS.numLoads == 1;
+         final Object put = cache.getAdvancedCache().put("home-second", "Newcastle Upon Tyne, second");
+         assertEquals(put, "Newcastle Upon Tyne");
+         assert countingCS.numLoads == 1;
+      } finally {
+         sm.stop();
+      }
    }
 
    private void reset(Cache<?, ?> cache, CountingStore countingCS) {
