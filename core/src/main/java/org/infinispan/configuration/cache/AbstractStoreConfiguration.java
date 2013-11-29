@@ -68,9 +68,7 @@ public class AbstractStoreConfiguration implements StoreConfiguration {
     * only one of them can have this property enabled. Persistent state transfer with a shared cache
     * store does not make sense, as the same persistent store that provides the data will just end
     * up receiving it. Therefore, if a shared cache store is used, the cache will not allow a
-    * persistent state transfer even if a cache store has this property set to true. Finally,
-    * setting it to true only makes sense if in a clustered environment, and only 'replication' and
-    * 'invalidation' cluster modes are supported.
+    * persistent state transfer even if a cache store has this property set to true.
     */
    @Override
    public boolean fetchPersistentState() {
