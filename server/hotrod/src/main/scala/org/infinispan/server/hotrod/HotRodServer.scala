@@ -7,7 +7,6 @@ import org.infinispan.server.core.{QueryFacade, AbstractProtocolServer}
 import org.infinispan.eviction.EvictionStrategy
 import org.infinispan.commons.util.CollectionFactory
 import org.infinispan.commons.equivalence.AnyEquivalence
-import org.infinispan.Cache
 import org.infinispan.remoting.transport.Address
 import org.infinispan.configuration.cache.{Configuration, CacheMode, ConfigurationBuilder}
 import org.infinispan.context.Flag
@@ -30,12 +29,16 @@ class HotRodServer extends AbstractProtocolServer("HotRod") with Log {
 
    type SuitableConfiguration = HotRodServerConfiguration
 
+   // Type aliases to reduce boilerplate definitions
+   type Bytes = Array[Byte]
+   type Cache = org.infinispan.Cache[Bytes, Bytes]
+   type AddressCache = org.infinispan.Cache[Address, ServerAddress]
+
    private var isClustered: Boolean = _
    private var clusterAddress: Address = _
    private var address: ServerAddress = _
-   private var addressCache: Cache[Address, ServerAddress] = _
-   private val knownCaches : java.util.Map[String, Cache[Array[Byte], Array[Byte]]] =
-         CollectionFactory.makeConcurrentMap(4, 0.9f, 16)
+   private var addressCache: AddressCache = _
+   private val knownCaches : java.util.Map[String, Cache] = CollectionFactory.makeConcurrentMap(4, 0.9f, 16)
    private var queryFacades: Seq[QueryFacade] = _
 
    def getAddress: ServerAddress = address
@@ -152,17 +155,21 @@ class HotRodServer extends AbstractProtocolServer("HotRod") with Log {
       cacheName != null && !cacheName.isEmpty && !(knownCaches containsKey cacheName)
    }
 
-   def getCacheInstance(cacheName: String, cacheManager: EmbeddedCacheManager, skipCacheCheck: Boolean): Cache[Array[Byte], Array[Byte]] = {
-      var cache: Cache[Array[Byte], Array[Byte]] = null
+   def getCacheInstance(cacheName: String, cacheManager: EmbeddedCacheManager, skipCacheCheck: Boolean): Cache = {
+      var cache: Cache = null
       if (!skipCacheCheck) cache = knownCaches.get(cacheName)
 
       if (cache == null) {
-         if (cacheName.isEmpty)
-            cache = cacheManager.getCache[Array[Byte], Array[Byte]](configuration.defaultCacheName)
-                    .getAdvancedCache.withFlags(Flag.OPERATION_HOTROD)
+         val validCacheName = if (cacheName.isEmpty) configuration.defaultCacheName else cacheName
+         val tmpCache = cacheManager.getCache[Bytes, Bytes](validCacheName)
+         val compatibility = tmpCache.getCacheConfiguration.compatibility().enabled()
+         val indexing = tmpCache.getCacheConfiguration.indexing().enabled()
+
+         // Use flag when compatibility is enabled, otherwise it's unnecessary
+         if (compatibility || indexing)
+            cache = tmpCache.getAdvancedCache.withFlags(Flag.OPERATION_HOTROD)
          else
-            cache = cacheManager.getCache[Array[Byte], Array[Byte]](cacheName)
-                    .getAdvancedCache.withFlags(Flag.OPERATION_HOTROD)
+            cache = tmpCache
 
          knownCaches.put(cacheName, cache)
          // make sure we register a Migrator for this cache!
@@ -172,7 +179,7 @@ class HotRodServer extends AbstractProtocolServer("HotRod") with Log {
       cache
    }
 
-   def tryRegisterMigrationManager(cacheName: String, cache: Cache[Array[Byte], Array[Byte]]) {
+   def tryRegisterMigrationManager(cacheName: String, cache: Cache) {
       val cr = cache.getAdvancedCache.getComponentRegistry
       val migrationManager = cr.getComponent(classOf[RollingUpgradeManager])
       if (migrationManager != null) migrationManager.addSourceMigrator(new HotRodSourceMigrator(cache))

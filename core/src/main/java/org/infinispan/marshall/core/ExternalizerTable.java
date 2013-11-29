@@ -51,9 +51,10 @@ import org.infinispan.factories.annotations.Start;
 import org.infinispan.factories.annotations.Stop;
 import org.infinispan.factories.scopes.Scope;
 import org.infinispan.factories.scopes.Scopes;
-import org.infinispan.marshall.exts.ArrayListExternalizer;
+import org.infinispan.marshall.exts.ArrayExternalizers;
+import org.infinispan.marshall.exts.EnumSetExternalizer;
+import org.infinispan.marshall.exts.ListExternalizer;
 import org.infinispan.marshall.exts.CacheRpcCommandExternalizer;
-import org.infinispan.marshall.exts.LinkedListExternalizer;
 import org.infinispan.marshall.exts.MapExternalizer;
 import org.infinispan.marshall.exts.ReplicableCommandExternalizer;
 import org.infinispan.marshall.exts.SetExternalizer;
@@ -95,8 +96,8 @@ import static org.infinispan.factories.KnownComponentNames.GLOBAL_MARSHALLER;
 
 /**
  * The externalizer table maintains information necessary to be able to map a particular type with the corresponding
- * {@link org.infinispan.marshall.AdvancedExternalizer} implementation that it marshall, and it also keeps information of which {@link org.infinispan.marshall.AdvancedExternalizer}
- * should be used to read data from a buffer given a particular {@link org.infinispan.marshall.AdvancedExternalizer} identifier.
+ * {@link org.infinispan.commons.marshall.AdvancedExternalizer} implementation that it marshall, and it also keeps information of which {@link org.infinispan.commons.marshall.AdvancedExternalizer}
+ * should be used to read data from a buffer given a particular {@link org.infinispan.commons.marshall.AdvancedExternalizer} identifier.
  *
  * These tables govern how either internal Infinispan classes, or user defined classes, are marshalled to a given
  * output, or how these are unmarshalled from a given input.
@@ -213,10 +214,11 @@ public class ExternalizerTable implements ObjectTable {
    }
 
    private void loadInternalMarshallables() {
-      addInternalExternalizer(new ArrayListExternalizer());
-      addInternalExternalizer(new LinkedListExternalizer());
+      addInternalExternalizer(new ListExternalizer());
       addInternalExternalizer(new MapExternalizer());
       addInternalExternalizer(new SetExternalizer());
+      addInternalExternalizer(new EnumSetExternalizer());
+      addInternalExternalizer(new ArrayExternalizers.ListArray());
       addInternalExternalizer(new SingletonListExternalizer());
 
       addInternalExternalizer(new GlobalTransaction.Externalizer());
