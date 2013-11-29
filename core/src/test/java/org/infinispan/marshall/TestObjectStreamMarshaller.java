@@ -1,107 +1,93 @@
 package org.infinispan.marshall;
 
-import com.thoughtworks.xstream.XStream;
 import org.infinispan.commons.io.ByteBuffer;
-import org.infinispan.commons.io.ByteBufferImpl;
-import org.infinispan.commons.io.ExposedByteArrayOutputStream;
 import org.infinispan.commons.marshall.AbstractMarshaller;
 import org.infinispan.commons.marshall.StreamingMarshaller;
-import org.infinispan.commons.util.Util;
+import org.infinispan.factories.annotations.Stop;
+import org.infinispan.manager.EmbeddedCacheManager;
+import org.infinispan.test.TestingUtil;
+import org.infinispan.test.fwk.TestCacheManagerFactory;
+import org.infinispan.util.logging.Log;
+import org.infinispan.util.logging.LogFactory;
 
-import java.io.*;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.ObjectInput;
+import java.io.ObjectOutput;
+import java.io.OutputStream;
 
 /**
- * A dummy marshaller impl that uses object streams converted via XStream as current JBoss Marshalling implementation
- * requires that the objects being serialized/deserialized implement Serializable or Externalizable.
+ * A dummy marshaller impl. Under the hood instantiates an {@link StreamingMarshaller}.
+ * N.B.: When an instance of this class is no longer needed please invoke TestObjectStreamMarshaller.stop on it.
  *
  * @author Manik Surtani
  */
 public class TestObjectStreamMarshaller extends AbstractMarshaller implements StreamingMarshaller {
-   XStream xs = new XStream();
-   boolean debugXml = false;
 
-   public TestObjectStreamMarshaller(boolean debugXml) {
-      this.debugXml = debugXml;
-   }
+   private static Log log = LogFactory.getLog(TestObjectStreamMarshaller.class);
+
+   private final StreamingMarshaller marshaller;
+
+   public final EmbeddedCacheManager cacheManager;
 
    public TestObjectStreamMarshaller() {
+      cacheManager = TestCacheManagerFactory.createCacheManager();
+      marshaller = cacheManager.getCache().getAdvancedCache().getComponentRegistry().getCacheMarshaller();
    }
 
    @Override
    public ObjectOutput startObjectOutput(OutputStream os, boolean isReentrant, int expectedByteSize) throws IOException {
-      return new ObjectOutputStream(os);
+      return marshaller.startObjectOutput(os, isReentrant, expectedByteSize);
    }
 
    @Override
    public void finishObjectOutput(ObjectOutput oo) {
-      Util.flushAndCloseOutput(oo);
+      marshaller.finishObjectOutput(oo);
    }
 
    @Override
    public void objectToObjectStream(Object obj, ObjectOutput out) throws IOException {
-      String xml = xs.toXML(obj);
-      debug("Writing: \n" + xml);
-      out.writeObject(xml);
+      marshaller.objectToObjectStream(obj, out);
    }
 
    @Override
-   public Object objectFromObjectStream(ObjectInput in) throws IOException, ClassNotFoundException {
-      String xml = (String) in.readObject();
-      debug("Reading: \n" + xml);
-      return xs.fromXML(xml);
+   public Object objectFromObjectStream(ObjectInput in) throws IOException, ClassNotFoundException, InterruptedException {
+      return marshaller.objectFromObjectStream(in);
    }
 
    @Override
    public ObjectInput startObjectInput(InputStream is, boolean isReentrant) throws IOException {
-      return new ObjectInputStream(is);
+      return marshaller.startObjectInput(is, isReentrant);
    }
 
    @Override
    public void finishObjectInput(ObjectInput oi) {
-      if (oi != null) {
-         try {
-            oi.close();
-         } catch (IOException e) {
-         }
-      }
+      marshaller.finishObjectInput(oi);
    }
 
    @Override
-   protected ByteBuffer objectToBuffer(Object o, int estimatedSize) throws IOException {
-      ExposedByteArrayOutputStream baos = new ExposedByteArrayOutputStream(estimatedSize);
-      ObjectOutputStream oos = new ObjectOutputStream(baos);
-      objectToObjectStream(o, oos);
-      oos.flush();
-      oos.close();
-      baos.close();
-      byte[] b = baos.toByteArray();
-      return new ByteBufferImpl(b, 0, b.length);
+   protected ByteBuffer objectToBuffer(Object o, int estimatedSize) throws IOException, InterruptedException {
+      return marshaller.objectToBuffer(o);
    }
 
    @Override
    public Object objectFromByteBuffer(byte[] buf, int offset, int length) throws IOException, ClassNotFoundException {
-      return objectFromObjectStream(new ObjectInputStream(new ByteArrayInputStream(buf, offset, length)));
+      return marshaller.objectFromByteBuffer(buf, offset, length);
    }
 
    @Override
-   public boolean isMarshallable(Object o) {
-      return (o instanceof Serializable || o instanceof Externalizable);
-   }
-
-   private void debug(String s) {
-      if (debugXml) {
-         System.out.println("TestObjectStreamMarshaller: " + s);
-      }
+   public boolean isMarshallable(Object o) throws Exception {
+      return marshaller.isMarshallable(o);
    }
 
    @Override
+   @Stop
    public void stop() {
-      //No-op
+      log.trace("TestObjectStreamMarshaller.stop()");
+      TestingUtil.killCacheManagers(cacheManager);
    }
 
    @Override
    public void start() {
-      //No-op
    }
-
 }

@@ -248,7 +248,8 @@ public class ConfigurationUnitTest {
 
    public void testConfigureMarshaller() {
       GlobalConfigurationBuilder gc = new GlobalConfigurationBuilder();
-      gc.serialization().marshaller(new TestObjectStreamMarshaller());
+      TestObjectStreamMarshaller marshaller = new TestObjectStreamMarshaller();
+      gc.serialization().marshaller(marshaller);
       withCacheManager(new CacheManagerCallable(
             createCacheManager(gc, new ConfigurationBuilder())) {
          @Override
@@ -256,5 +257,6 @@ public class ConfigurationUnitTest {
             cm.getCache();
          }
       });
+      marshaller.stop();
    }
 }

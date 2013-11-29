@@ -20,10 +20,6 @@ public class KeyValuePair<K,V> {
    private final K key;
    private final V value;
 
-   public KeyValuePair() {
-      this(null, null); //required by azul vm
-   }
-
    public KeyValuePair(K key, V value) {
       this.key = key;
       this.value = value;

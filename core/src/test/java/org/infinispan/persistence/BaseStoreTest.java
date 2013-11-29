@@ -50,6 +50,8 @@ import static org.testng.AssertJUnit.assertFalse;
 @Test(groups = "unit", testName = "persistence.BaseStoreTest")
 public abstract class BaseStoreTest extends AbstractInfinispanTest {
 
+   private TestObjectStreamMarshaller marshaller;
+
    protected abstract AdvancedLoadWriteStore createStore() throws Exception;
 
    protected AdvancedLoadWriteStore cl;
@@ -63,6 +65,7 @@ public abstract class BaseStoreTest extends AbstractInfinispanTest {
 
    @BeforeMethod
    public void setUp() throws Exception {
+      marshaller = new TestObjectStreamMarshaller();
       try {
          cl = createStore();
       } catch (Exception e) {
@@ -79,6 +82,7 @@ public abstract class BaseStoreTest extends AbstractInfinispanTest {
             cl.clear();
             cl.stop();
          }
+         marshaller.stop();
       } finally {
          cl = null;
       }
@@ -88,7 +92,7 @@ public abstract class BaseStoreTest extends AbstractInfinispanTest {
     * @return a mock marshaller for use with the cache store impls
     */
    protected StreamingMarshaller getMarshaller() {
-      return new TestObjectStreamMarshaller(false);
+      return marshaller;
    }
 
    public void testLoadAndStoreImmortal() throws PersistenceException {

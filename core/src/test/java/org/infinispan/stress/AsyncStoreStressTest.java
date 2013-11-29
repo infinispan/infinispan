@@ -27,6 +27,8 @@ import org.infinispan.util.concurrent.locks.containers.LockContainer;
 import org.infinispan.util.concurrent.locks.containers.ReentrantPerEntryLockContainer;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
+import org.testng.annotations.AfterTest;
+import org.testng.annotations.BeforeTest;
 import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
 
@@ -72,6 +74,17 @@ public class AsyncStoreStressTest {
    private List<String> keys = new ArrayList<String>();
    private InternalEntryFactory entryFactory = new InternalEntryFactoryImpl();
    private Map<Object, InternalCacheEntry> expectedState = new ConcurrentHashMap<Object, InternalCacheEntry>();
+   private TestObjectStreamMarshaller marshaller;
+
+   @BeforeTest
+   void startMarshaller() {
+      marshaller = new TestObjectStreamMarshaller();
+   }
+
+   @AfterTest
+   void stopMarshaller() {
+      marshaller.stop();
+   }
 
    // Lock container that mimics per-key locking produced by the cache.
    // This per-key lock holder provides guarantees that the final expected
@@ -101,15 +114,11 @@ public class AsyncStoreStressTest {
       store.init(new DummyInitializationContext() {
          @Override
          public StreamingMarshaller getMarshaller() {
-            return marshaller();
+            return marshaller;
          }
       });
       store.start();
       return store;
-   }
-
-   private TestObjectStreamMarshaller marshaller() {
-      return new TestObjectStreamMarshaller();
    }
 
    private DummyInMemoryStore createBackendStore(String storeName) throws PersistenceException {
@@ -120,8 +129,8 @@ public class AsyncStoreStressTest {
                .addStore(DummyInMemoryStoreConfigurationBuilder.class)
                   .storeName(storeName)
                   .create();
-      store.init(new DummyInitializationContext(dummyConfiguration, null, marshaller(), new ByteBufferFactoryImpl(),
-                                                new MarshalledEntryFactoryImpl(marshaller())));
+      store.init(new DummyInitializationContext(dummyConfiguration, null, marshaller, new ByteBufferFactoryImpl(),
+                                                new MarshalledEntryFactoryImpl(marshaller)));
       store.start();
       return store;
    }
@@ -276,7 +285,7 @@ public class AsyncStoreStressTest {
             boolean result = withStore(key, new Callable<Boolean>() {
                @Override
                public Boolean call() throws Exception {
-                  store.write(marshalledEntry(entry, marshaller()));
+                  store.write(marshalledEntry(entry, marshaller));
                   expectedState.put(key, entry);
                   if (trace)
                      log.tracef("Expected state updated with key=%s, value=%s", key, value);

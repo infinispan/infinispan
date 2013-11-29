@@ -409,12 +409,13 @@ public class TestCacheManagerFactory {
 
       public void checkManagersClosed(String testName) {
          for (Map.Entry<EmbeddedCacheManager, Throwable> cmEntry : cacheManagers.entrySet()) {
-            if (cmEntry.getKey().getStatus().allowInvocations()) {
+            EmbeddedCacheManager key = cmEntry.getKey();
+            if (key.getStatus().allowInvocations()) {
                String thName = Thread.currentThread().getName();
                String errorMessage = '\n' +
                      "!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!\n" +
                      "!!!!!! (" + thName + ") Exiting because " + testName + " has NOT shut down all the cache managers it has started !!!!!!!\n" +
-                     "!!!!!! (" + thName + ") See allocation stacktrace to find out where still-running cacheManager (" + cmEntry.getKey() + ") was created: !!!!!!!\n" +
+                     "!!!!!! (" + thName + ") See allocation stacktrace to find out where still-running cacheManager (" + key + ") was created: !!!!!!!\n" +
                      "!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!\n";
                Throwable allocationThrowable = cmEntry.getValue();
                log.errorf(allocationThrowable, errorMessage);
