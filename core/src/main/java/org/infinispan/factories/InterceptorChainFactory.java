@@ -276,7 +276,7 @@ public class InterceptorChainFactory extends AbstractNamedCacheComponentFactory 
          if (config.first())
             interceptorChain.addInterceptor(customInterceptor, 0);
          else if (config.last())
-            interceptorChain.appendInterceptor(customInterceptor, true);
+            interceptorChain.addInterceptorBefore(customInterceptor, CallInterceptor.class, true);
          else if (config.index() >= 0)
             interceptorChain.addInterceptor(customInterceptor, config.index());
          else if (config.after() != null) {
