@@ -6,6 +6,7 @@ import net.spy.memcached.MemcachedClient
 import org.testng.annotations.{AfterClass, Test}
 import org.infinispan.server.core.test.ServerTestingUtil
 import org.infinispan.manager.EmbeddedCacheManager
+import scala.collection.mutable
 
 /**
  * // TODO: Document this
@@ -14,9 +15,14 @@ import org.infinispan.manager.EmbeddedCacheManager
  */
 abstract class MemcachedMultiNodeTest extends MultipleCacheManagersTest {
 
-   private val cacheName = "MemcachedReplSync"
+   // Type alias to shorten definitions
+   type Cache = org.infinispan.Cache[String, Array[Byte]]
+
+   val cacheName = "MemcachedReplSync"
    var servers: List[MemcachedServer] = List()
    var clients: List[MemcachedClient] = List()
+   val cacheClient: mutable.Map[Cache, MemcachedClient] = mutable.Map[Cache, MemcachedClient]()
+
    val timeout: Int = 60
 
    @Test(enabled = false) // Disable explicitly to avoid TestNG thinking this is a test!!
@@ -28,7 +34,12 @@ abstract class MemcachedMultiNodeTest extends MultipleCacheManagersTest {
       waitForClusterToForm()
       servers = startMemcachedTextServer(cacheManagers.get(0), cacheName) :: servers
       servers = startMemcachedTextServer(cacheManagers.get(1), servers.head.getPort + 50, cacheName) :: servers
-      servers.foreach(s => clients = createMemcachedClient(60000, s.getPort) :: clients)
+      servers.foreach { s =>
+         val client = createMemcachedClient(60000, s.getPort)
+         clients = client :: clients
+         val cache = s.getCacheManager.getCache[String, Array[Byte]](cacheName)
+         cacheClient += (cache -> client)
+      }
    }
 
    protected def createCacheManager(index: Int): EmbeddedCacheManager

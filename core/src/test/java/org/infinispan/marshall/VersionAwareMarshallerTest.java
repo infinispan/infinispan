@@ -1,6 +1,7 @@
 package org.infinispan.marshall;
 
 import org.infinispan.Cache;
+import org.infinispan.commons.util.Util;
 import org.infinispan.metadata.EmbeddedMetadata;
 import org.infinispan.atomic.AtomicHashMap;
 import org.infinispan.commands.ReplicableCommand;
@@ -84,6 +85,7 @@ import static org.infinispan.test.TestingUtil.extractCacheMarshaller;
 import static org.infinispan.test.TestingUtil.k;
 import static org.testng.AssertJUnit.assertEquals;
 import static org.testng.AssertJUnit.assertTrue;
+import static org.testng.internal.junit.ArrayAsserts.assertArrayEquals;
 
 @Test(groups = "functional", testName = "marshall.VersionAwareMarshallerTest")
 public class VersionAwareMarshallerTest extends AbstractInfinispanTest {
@@ -531,6 +533,18 @@ public class VersionAwareMarshallerTest extends AbstractInfinispanTest {
       marshallAndAssertEquality(Arrays.asList(Flag.values()));
    }
 
+   public void testSingleFlagMarshalling() throws Exception {
+      marshallAndAssertEquality(Flag.FORCE_SYNCHRONOUS);
+   }
+
+   public void testEnumSetSingleElementMarshalling() throws Exception {
+      marshallAndAssertEquality(EnumSet.of(Flag.FORCE_SYNCHRONOUS));
+   }
+
+   public void testEnumSetMultiElementMarshalling() throws Exception {
+      marshallAndAssertEquality(EnumSet.of(Flag.FORCE_SYNCHRONOUS, Flag.FORCE_ASYNCHRONOUS));
+   }
+
    public void testIsMarshallableSerializableWithAnnotation() throws Exception {
       PojoWithSerializeWith pojo = new PojoWithSerializeWith(17, "k1");
       assertTrue(marshaller.isMarshallable(pojo));
@@ -541,10 +555,39 @@ public class VersionAwareMarshallerTest extends AbstractInfinispanTest {
       assertTrue(marshaller.isMarshallable(pojo));
    }
 
+   public void testListArray() throws Exception {
+      List<Integer>[] numbers = new List[]{Arrays.asList(1), Arrays.asList(2)};
+      marshallAndAssertArrayEquality(numbers);
+   }
+
+   public void testByteArray() throws Exception {
+      byte[] bytes = new byte[]{1, 2, 3};
+      marshallAndAssertByteArrayEquality(bytes);
+   }
+
    protected void marshallAndAssertEquality(Object writeObj) throws Exception {
       byte[] bytes = marshaller.objectToByteBuffer(writeObj);
+      log.debugf("Payload size for object=%s : %s", writeObj, bytes.length);
       Object readObj = marshaller.objectFromByteBuffer(bytes);
       assert readObj.equals(writeObj) : "Writen[" + writeObj + "] and read[" + readObj + "] objects should be the same";
+   }
+
+   protected void marshallAndAssertArrayEquality(Object[] writeObj) throws Exception {
+      byte[] bytes = marshaller.objectToByteBuffer(writeObj);
+      log.debugf("Payload size for object=%s : %s", Arrays.toString(writeObj), bytes.length);
+      Object[] readObj = (Object[]) marshaller.objectFromByteBuffer(bytes);
+      assertArrayEquals("Writen[" + Arrays.toString(writeObj) + "] and read["
+            + Arrays.toString(readObj) + "] objects should be the same",
+            readObj, writeObj);
+   }
+
+   protected void marshallAndAssertByteArrayEquality(byte[] writeObj) throws Exception {
+      byte[] bytes = marshaller.objectToByteBuffer(writeObj);
+      log.debugf("Payload size for byte[]=%s : %s", Util.toHexString(writeObj), bytes.length);
+      byte[] readObj = (byte[]) marshaller.objectFromByteBuffer(bytes);
+      assertArrayEquals("Writen[" + Util.toHexString(writeObj)+ "] and read["
+            + Util.toHexString(readObj)+ "] objects should be the same",
+            readObj, writeObj);
    }
 
    public static class Pojo implements Externalizable {

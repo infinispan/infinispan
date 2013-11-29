@@ -15,7 +15,7 @@ import org.infinispan.commons.equivalence.ByteArrayEquivalence
  * Tests replicated Infinispan Memcached servers.
  *
  * @author Galder Zamarreño
- * @since 4.1                               §
+ * @since 4.1
  */
 @Test(groups = Array("functional"), testName = "server.memcached.MemcachedReplicationTest")
 class MemcachedReplicationTest extends MemcachedMultiNodeTest {

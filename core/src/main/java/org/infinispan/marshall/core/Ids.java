@@ -114,4 +114,7 @@ public interface Ids extends org.infinispan.commons.marshall.Ids {
 
    /* 106 -120 reserved in org.infinispan.commons.marshall.Ids */
 
+   int ENUM_SET_ID = 121;
+   int LIST_ARRAY = 122;
+
 }

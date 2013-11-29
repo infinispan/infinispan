@@ -4,7 +4,7 @@ import logging.Log
 import org.infinispan.server.core.Operation._
 import org.infinispan.server.memcached.MemcachedOperation._
 import org.infinispan.context.Flag
-import java.util.concurrent.{TimeUnit, ScheduledExecutorService}
+import java.util.concurrent.ScheduledExecutorService
 import java.util.concurrent.TimeUnit.{MILLISECONDS => MILLIS}
 import java.nio.channels.ClosedChannelException
 import java.util.concurrent.atomic.AtomicLong
@@ -36,7 +36,10 @@ import org.infinispan.commons.CacheException
 class MemcachedDecoder(memcachedCache: AdvancedCache[String, Array[Byte]], scheduler: ScheduledExecutorService, transport: NettyTransport)
       extends AbstractProtocolDecoder[String, Array[Byte]](transport) {
 
-   cache = memcachedCache.getAdvancedCache.withFlags(Flag.OPERATION_MEMCACHED)
+   cache =
+      if (memcachedCache.getCacheConfiguration.compatibility().enabled())
+         memcachedCache.getAdvancedCache.withFlags(Flag.OPERATION_MEMCACHED)
+      else memcachedCache
 
    import RequestResolver._
 
