@@ -8,10 +8,13 @@ import org.infinispan.commons.CacheConfigurationException;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.cache.InterceptorConfiguration.Position;
 import org.infinispan.interceptors.base.CommandInterceptor;
+import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.test.AbstractInfinispanTest;
 import org.infinispan.test.CacheManagerCallable;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.testng.annotations.Test;
+
+import java.util.List;
 
 @Test(groups = "functional", testName = "interceptors.CustomInterceptorTest")
 public class CustomInterceptorTest extends AbstractInfinispanTest {
@@ -36,6 +39,33 @@ public class CustomInterceptorTest extends AbstractInfinispanTest {
       ConfigurationBuilder builder = new ConfigurationBuilder();
       builder.customInterceptors().addInterceptor().interceptor(new FooInterceptor());
       TestCacheManagerFactory.createCacheManager(builder);
+   }
+
+   public void testLastInterceptor() {
+      ConfigurationBuilder builder = new ConfigurationBuilder();
+      builder.customInterceptors().addInterceptor().position(Position.LAST).interceptor(new FooInterceptor());
+      final EmbeddedCacheManager cacheManager = TestCacheManagerFactory.createCacheManager();
+      cacheManager.defineConfiguration("interceptors", builder.build());
+      withCacheManager(new CacheManagerCallable(cacheManager) {
+         @Override
+         public void call() {
+            List<CommandInterceptor> interceptorChain = cacheManager.getCache("interceptors").getAdvancedCache().getInterceptorChain();
+            assertEquals(interceptorChain.get(interceptorChain.size() - 1).getClass(), FooInterceptor.class);
+         }
+      });
+   }
+
+   public void testLastInterceptorDefaultCache() {
+      ConfigurationBuilder builder = new ConfigurationBuilder();
+      builder.customInterceptors().addInterceptor().position(Position.LAST).interceptor(new FooInterceptor());
+      final EmbeddedCacheManager cacheManager = TestCacheManagerFactory.createCacheManager(builder);
+      withCacheManager(new CacheManagerCallable(cacheManager) {
+         @Override
+         public void call() {
+            List<CommandInterceptor> interceptorChain = cacheManager.getCache().getAdvancedCache().getInterceptorChain();
+            assertEquals(interceptorChain.get(interceptorChain.size() - 1).getClass(), FooInterceptor.class);
+         }
+      });
    }
 
 }
