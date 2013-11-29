@@ -18,7 +18,8 @@ public class InterceptorConfiguration extends AbstractTypedPropertiesConfigurati
        */
       FIRST,
       /**
-       * Specifies that the new interceptor is placed last in the chain.
+       * Specifies that the new interceptor is placed last in the chain. The new interceptor is added right before the
+       * last interceptor in the chain. The very last interceptor is owned by Infinispan and cannot be replaced.
        */
       LAST,
       /**

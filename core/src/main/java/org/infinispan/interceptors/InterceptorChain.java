@@ -229,11 +229,17 @@ public class InterceptorChain {
       }
    }
 
-   /**
-    * Adds a new interceptor in list after an interceptor of a given type.
-    *
-    * @return true if the interceptor was added; i.e. the afterInterceptor exists
-    */
+   public boolean addInterceptorBefore(CommandInterceptor toAdd, Class<? extends CommandInterceptor> beforeInterceptor, boolean isCustom) {
+      if (isCustom) validateCustomInterceptor(toAdd.getClass());
+      return addInterceptorBefore(toAdd, beforeInterceptor);
+   }
+
+
+      /**
+       * Adds a new interceptor in list after an interceptor of a given type.
+       *
+       * @return true if the interceptor was added; i.e. the afterInterceptor exists
+       */
    public boolean addInterceptorBefore(CommandInterceptor toAdd, Class<? extends CommandInterceptor> beforeInterceptor) {
       final ReentrantLock lock = this.lock;
       lock.lock();

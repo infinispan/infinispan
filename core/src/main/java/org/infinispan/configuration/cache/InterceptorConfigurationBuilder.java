@@ -30,7 +30,7 @@ public class InterceptorConfigurationBuilder extends AbstractCustomInterceptorsC
 
    /**
     * Dictates that the custom interceptor appears immediately <i>after</i> the specified interceptor. If the specified
-    * interceptor is not found in the interceptor chain, a {@link ConfigurationException} will be thrown when the
+    * interceptor is not found in the interceptor chain, a {@link CacheConfigurationException} will be thrown when the
     * cache starts.
     *
     * @param after the class of the interceptor to look for
@@ -42,7 +42,7 @@ public class InterceptorConfigurationBuilder extends AbstractCustomInterceptorsC
 
    /**
     * Dictates that the custom interceptor appears immediately <i>before</i> the specified interceptor. If the specified
-    * interceptor is not found in the interceptor chain, a {@link ConfigurationException} will be thrown when the
+    * interceptor is not found in the interceptor chain, a {@link CacheConfigurationException} will be thrown when the
     * cache starts.
     *
     * @param before the class of the interceptor to look for
@@ -63,7 +63,7 @@ public class InterceptorConfigurationBuilder extends AbstractCustomInterceptorsC
 
    /**
     * Specifies a position in the interceptor chain to place the new interceptor.  The index starts at 0 and goes up to
-    * the number of interceptors in a given configuration.  A {@link ConfigurationException} is thrown if the index is
+    * the number of interceptors in a given configuration.  An {@link IllegalArgumentException} is thrown if the index is
     * less than 0 or greater than the maximum number of interceptors in the chain.
     *
     * @param i positional index in the interceptor chain to place the new interceptor.
@@ -87,7 +87,6 @@ public class InterceptorConfigurationBuilder extends AbstractCustomInterceptorsC
    /**
     * Sets interceptor properties
     *
-    * @param properties
     * @return this InterceptorConfigurationBuilder
     */
    public InterceptorConfigurationBuilder withProperties(Properties properties) {
