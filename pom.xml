@@ -17,6 +17,7 @@
 
    <modules>
       <module>bom</module>
+      <module>checkstyle</module>
       <module>parent</module>
       <module>commons</module>
       <module>core</module>
@@ -291,3 +292,4 @@ pageTracker._trackPageview();
       </profile>
    </profiles>
 </project>
+
