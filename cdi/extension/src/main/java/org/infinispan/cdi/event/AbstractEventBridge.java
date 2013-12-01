@@ -8,7 +8,7 @@ import java.lang.annotation.Annotation;
 /**
  * @author Pete Muir
  */
-public class AbstractEventBridge<T> {
+public abstract class AbstractEventBridge<T> {
 
    @Inject
    private Event<T> baseEvent;

@@ -7,12 +7,14 @@ import org.apache.lucene.store.Directory;
 import org.apache.lucene.store.IOContext;
 import org.apache.lucene.store.IndexInput;
 import org.apache.lucene.store.IndexOutput;
+import org.apache.lucene.store.Lock;
 import org.apache.lucene.store.LockFactory;
 import org.infinispan.Cache;
 import org.infinispan.lucene.readlocks.SegmentReadLocker;
 
 /**
- * Directory implementation for Apache Lucene 4.0 and 4.1
+ * Directory implementation for Apache Lucene.
+ * Meant to be compatible with the versions from 4.0 to 4.6.
  *
  * @since 5.2
  * @author Sanne Grinovero
@@ -25,6 +27,8 @@ class DirectoryLuceneV4 extends Directory implements DirectoryExtensions {
 
    // indexName is used to be able to store multiple named indexes in the same caches
    private final String indexName;
+
+   private volatile LockFactory lockFactory;
 
    /**
     * @param metadataCache the cache to be used for all smaller metadata: prefer replication over distribution, avoid eviction
@@ -103,7 +107,7 @@ class DirectoryLuceneV4 extends Directory implements DirectoryExtensions {
     */
    @Override
    public void close() {
-      isOpen = false;
+      // Note the we don't really keep track of this anymore
    }
 
    @Override
@@ -133,6 +137,26 @@ class DirectoryLuceneV4 extends Directory implements DirectoryExtensions {
    @Override
    public void sync(Collection<String> names) throws IOException {
       //This implementation is always in sync with the storage, so NOOP is fine
+   }
+
+   //@Override New method since Lucene 4.6
+   public void clearLock(String lockName) throws IOException {
+      lockFactory.clearLock(lockName);
+   }
+
+   //@Override New method since Lucene 4.6
+   public LockFactory getLockFactory() {
+      return lockFactory;
+   }
+
+   //@Override New method since Lucene 4.6
+   public Lock makeLock(String lockName) {
+      return lockFactory.makeLock(lockName);
+   }
+
+   //@Override New method since Lucene 4.6
+   public void setLockFactory(LockFactory lockFactory) throws IOException {
+      this.lockFactory = lockFactory;
    }
 
 }

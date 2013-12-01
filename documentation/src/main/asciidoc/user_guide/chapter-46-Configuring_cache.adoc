@@ -12,7 +12,7 @@ Or you can use a certain static configuration defined in XML as a starting point
 There are two main configuration abstractions in Infinispan: `global` and `default` sections.
 
 .Global configuration
-Global cache configuration defines global settings shared among all cache instances created by a single link:$$http://docs.jboss.org/infinispan/4.0/apidocs/org/infinispan/manager/CacheManager.html$$[CacheManager].
+Global cache configuration defines global settings shared among all cache instances created by a single link:$$http://docs.jboss.org/infinispan/6.0/apidocs/org/infinispan/manager/CacheManager.html$$[CacheManager].
 Shared resources like thread pools, serialization/marshalling settings, transport and network settings, JMX domains are all part of global configuration. 
 
 .Default configuration
@@ -27,7 +27,7 @@ Whenever they are specified, named caches inherit settings from the default cach
 Named caches are retrieved via the `CacheManager.getCache(String name)` API.
 Therefore, note that the _name_ attribute of named cache is both mandatory and unique for every named cache specified. 
 
-Do not forget to refer to Infinispan configuration link:$$http://docs.jboss.org/infinispan/5.1/configdocs$$[reference] for more details. 
+Do not forget to refer to Infinispan configuration link:$$http://docs.jboss.org/infinispan/6.0/configdocs$$[reference] for more details.
 
 
 ===  Configuring Cache declaratively
@@ -129,7 +129,7 @@ Cache<String, String> cache = manager.getCache(newCacheName);
 
 ----
 
-Refer to link:$$http://docs.jboss.org/infinispan/4.0/apidocs/org/infinispan/manager/CacheManager.html$$[CacheManager] , link:$$http://docs.jboss.org/infinispan/5.1/apidocs/org/infinispan/configuration/cache/ConfigurationBuilder.html$$[ConfigurationBuilder] , link:$$http://docs.jboss.org/infinispan/5.1/apidocs/org/infinispan/configuration/cache/Configuration.html$$[Configuration] , and link:$$http://docs.jboss.org/infinispan/5.1/apidocs/org/infinispan/configuration/global/GlobalConfiguration.html$$[GlobalConfiguration] javadocs for more details. 
+Refer to link:$$http://docs.jboss.org/infinispan/6.0/apidocs/org/infinispan/manager/CacheManager.html$$[CacheManager] , link:$$http://docs.jboss.org/infinispan/6.0/apidocs/org/infinispan/configuration/cache/ConfigurationBuilder.html$$[ConfigurationBuilder] , link:$$http://docs.jboss.org/infinispan/6.0/apidocs/org/infinispan/configuration/cache/Configuration.html$$[Configuration] , and link:$$http://docs.jboss.org/infinispan/6.0/apidocs/org/infinispan/configuration/global/GlobalConfiguration.html$$[GlobalConfiguration] javadocs for more details.
 
 ==== ConfigurationBuilder Programmatic Configuration API
 However, users do not have to first read an XML based configuration and then modify it in runtime; they can start from scratch using only programmatic API.
@@ -152,7 +152,7 @@ GlobalConfiguration globalConfig = new GlobalConfigurationBuilder().transport()
 
 ----
 
-Sometimes you might also want to get link:$$http://docs.jboss.org/infinispan/5.0/apidocs/jmxComponents.html$$[global JMX statistics] and information about the transport, or the cache manager in general. 
+Sometimes you might also want to get link:$$http://docs.jboss.org/infinispan/6.0/apidocs/jmxComponents.html$$[global JMX statistics] and information about the transport, or the cache manager in general.
 To enable global JMX statistics simply do: 
 
 [source,java]
@@ -269,7 +269,7 @@ Configuration config = new ConfigurationBuilder()
 
 ----
 
-For information on the individual configuration options, please check the link:$$http://docs.jboss.org/infinispan/5.0/apidocs/config.html$$[configuration guide] . 
+For information on the individual configuration options, please check the link:$$http://docs.jboss.org/infinispan/5.0/apidocs/config.html$$[configuration guide] .
 
 ===  Configuration Migration Tools
 Infinispan has a number of scripts for importing configurations from other cache and data grid products.
@@ -468,3 +468,4 @@ for (Future<Void> future : list) {
 ==== Server Mode
 
 Hot Rod client does not support dynamically start/stop of cache.
+

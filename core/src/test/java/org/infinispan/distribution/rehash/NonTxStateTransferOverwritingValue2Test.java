@@ -35,7 +35,6 @@ import static org.mockito.Matchers.anyString;
 import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.spy;
 import static org.testng.AssertJUnit.assertEquals;
-import static org.testng.AssertJUnit.assertFalse;
 import static org.testng.AssertJUnit.assertTrue;
 
 /**
@@ -45,7 +44,7 @@ import static org.testng.AssertJUnit.assertTrue;
  * @author Dan Berindei
  * @since 6.0
  */
-@Test(groups = "functional", testName = "distribution.rehash.NonTxStateTransferOverwritingValueTest")
+@Test(groups = "functional", testName = "distribution.rehash.NonTxStateTransferOverwritingValue2Test")
 public class NonTxStateTransferOverwritingValue2Test extends MultipleCacheManagersTest {
 
    private static final String CACHE_NAME = BasicCacheContainer.DEFAULT_CACHE_NAME;
@@ -115,6 +114,9 @@ public class NonTxStateTransferOverwritingValue2Test extends MultipleCacheManage
       final CheckPoint checkPoint = new CheckPoint();
       ControlledRpcManager blockingRpcManager0 = blockStateResponseCommand(cache0);
 
+      // Block the rebalance confirmation on cache0 (to avoid the retrying of commands)
+      blockRebalanceConfirmation(manager(0), checkPoint);
+
       // Start the joiner
       log.tracef("Starting the cache on the joiner");
       ConfigurationBuilder c = getConfigurationBuilder();
@@ -140,10 +142,10 @@ public class NonTxStateTransferOverwritingValue2Test extends MultipleCacheManage
       // Allow the state to be applied on cache1 (writing the old value for our entry)
       blockingRpcManager0.stopBlocking();
 
-      // Wait for state transfer tx/operation to call commitEntry on cache1
+      // Wait for state transfer tx/operation to call commitEntry on cache1 and block
       checkPoint.awaitStrict("pre_commit_entry_" + key + "_from_" + null, 5, SECONDS);
 
-      // Put/Replace/Remove from cache0 with cache0 as primary owner, cache1 will become a backup owner for the retry
+      // Put/Replace/Remove from cache0 with cache0 as primary owner, cache1 as backup owner
       // The put command will be blocked on cache1 just before committing the entry.
       Future<Object> future = fork(new Callable<Object>() {
          @Override
@@ -152,15 +154,18 @@ public class NonTxStateTransferOverwritingValue2Test extends MultipleCacheManage
          }
       });
 
-      // Wait for the user tx/operation to call commitEntry on cache1
+      // Check that the user write is blocked by the state transfer write
       boolean blocked = checkPoint.peek(3, SECONDS, "pre_commit_entry_" + key + "_from_" + address(0)) == null;
       assertTrue(blocked);
 
-      // Allow the command to commit (though it will still be blocked)
-      checkPoint.trigger("resume_commit_entry_" + key + "_from_" + address(0));
-
       // Allow state transfer to commit
       checkPoint.trigger("resume_commit_entry_" + key + "_from_" + null);
+
+      // Check that the user operation can now commit the entry
+      checkPoint.awaitStrict("pre_commit_entry_" + key + "_from_" + address(0), 5, SECONDS);
+
+      // Allow the user put to commit
+      checkPoint.trigger("resume_commit_entry_" + key + "_from_" + address(0));
 
       // Wait for both state transfer and the command to commit
       checkPoint.awaitStrict("post_commit_entry_" + key + "_from_" + null, 10, SECONDS);
@@ -171,6 +176,10 @@ public class NonTxStateTransferOverwritingValue2Test extends MultipleCacheManage
       assertEquals(op.getReturnValue(), result);
       log.tracef("%s operation is done", op);
 
+      // Allow the rebalance confirmation to proceed and wait for the topology to change everywhere
+      int rebalanceTopologyId = preJoinTopologyId + 1;
+      checkPoint.trigger("resume_rebalance_confirmation_" + rebalanceTopologyId + "_from_" + address(0));
+      checkPoint.trigger("resume_rebalance_confirmation_" + rebalanceTopologyId + "_from_" + address(1));
       TestingUtil.waitForRehashToComplete(cache0, cache1);
 
       // Check the value on all the nodes
@@ -206,5 +215,24 @@ public class NonTxStateTransferOverwritingValue2Test extends MultipleCacheManage
       controlledRpcManager.blockBefore(StateResponseCommand.class);
       TestingUtil.replaceComponent(cache, RpcManager.class, controlledRpcManager, true);
       return controlledRpcManager;
+   }
+
+   private void blockRebalanceConfirmation(final EmbeddedCacheManager manager, final CheckPoint checkPoint)
+         throws Exception {
+      ClusterTopologyManager ctm = TestingUtil.extractGlobalComponent(manager, ClusterTopologyManager.class);
+      ClusterTopologyManager spyManager = spy(ctm);
+      TestingUtil.replaceComponent(manager, ClusterTopologyManager.class, spyManager, true);
+      doAnswer(new Answer<Object>() {
+         @Override
+         public Object answer(InvocationOnMock invocation) throws Throwable {
+            Object[] arguments = invocation.getArguments();
+            Address source = (Address) arguments[1];
+            int topologyId = (Integer) arguments[2];
+            checkPoint.trigger("pre_rebalance_confirmation_" + topologyId + "_from_" + source);
+            checkPoint.awaitStrict("resume_rebalance_confirmation_" + topologyId + "_from_" + source, 10, SECONDS);
+            return invocation.callRealMethod();
+         }
+      }).when(spyManager).handleRebalanceCompleted(anyString(), any(Address.class), anyInt(), any(Throwable.class),
+            anyInt());
    }
 }

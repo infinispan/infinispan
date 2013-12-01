@@ -155,8 +155,8 @@ public class DefaultDataContainer implements DataContainer {
          e.setValue(v);
          InternalCacheEntry original = e;
          e = entryFactory.update(e, metadata);
-         // we have the same instance. So we need to reincarnate.
-         if (original == e) {
+         // we have the same instance. So we need to reincarnate, if mortal.
+         if (isMortalEntry(e) && original == e) {
             e.reincarnate(timeService.wallClockTime());
          }
       } else {
@@ -168,6 +168,10 @@ public class DefaultDataContainer implements DataContainer {
          log.tracef("Store %s in container", e);
 
       entries.put(k, e);
+   }
+
+   private boolean isMortalEntry(InternalCacheEntry e) {
+      return e.getLifespan() > 0;
    }
 
    @Override

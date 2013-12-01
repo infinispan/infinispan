@@ -4,14 +4,10 @@
        xsi:schemaLocation="http://java.sun.com/xml/ns/javaee http://java.sun.com/xml/ns/javaee/beans_1_0.xsd">
 
    <interceptors>
-      <class>org.infinispan.jcache.annotation.CacheResultInterceptor</class>
-      <class>org.infinispan.jcache.annotation.CachePutInterceptor</class>
-      <class>org.infinispan.jcache.annotation.CacheRemoveEntryInterceptor</class>
-      <class>org.infinispan.jcache.annotation.CacheRemoveAllInterceptor</class>
+      <class>org.infinispan.jcache.annotation.InjectedCacheResultInterceptor</class>
+      <class>org.infinispan.jcache.annotation.InjectedCachePutInterceptor</class>
+      <class>org.infinispan.jcache.annotation.InjectedCacheRemoveEntryInterceptor</class>
+      <class>org.infinispan.jcache.annotation.InjectedCacheRemoveAllInterceptor</class>
    </interceptors>
-
-   <alternatives>
-      <class>org.infinispan.jcache.annotation.InjectedCacheResolver</class>
-   </alternatives>
 
 </beans>

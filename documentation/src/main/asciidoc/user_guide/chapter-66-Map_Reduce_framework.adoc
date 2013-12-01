@@ -73,7 +73,7 @@ Also, it is possible to know which is the current timeout value for the task:
 System.out.println("Map/Reduce task timeout is " + task.timeout(TimeUnit.MILLISECONDS) + " millseconds"); 
 ----
 
-For more information about this, please check the java doc in link:$$http://docs.jboss.org/infinispan/5.3/apidocs/org/infinispan/distexec/mapreduce/MapReduceTask.html$$[Map Reduce Task API Documentation] 
+For more information about this, please check the java doc in link:$$http://docs.jboss.org/infinispan/6.0/apidocs/org/infinispan/distexec/mapreduce/MapReduceTask.html$$[Map Reduce Task API Documentation]
 
 === Mapper and CDI
 
@@ -128,7 +128,7 @@ image::images/reducephase.png[]
 
 A result of each reduce is a map where each key is KOut and value is VOut. Each Infinispan execution node N returns one map with KOut/VOut result values. As all initiated reduce commands return to a calling node, MapReduceTask simply combines all resulting maps into map M and returns M as a result of MapReduceTask.
 
-Distributed reduce phase is turned on by using a MapReduceTask link:$$http://docs.jboss.org/infinispan/5.2/apidocs/org/infinispan/distexec/mapreduce/MapReduceTask.html#MapReduceTask(org.infinispan.Cache, boolean)$$[constructor] specifying cache to use as input data for the task and boolean parameter distributeReducePhase set to true. Map/Reduce API link:$$http://docs.jboss.org/infinispan/5.2/apidocs/org/infinispan/distexec/mapreduce/package-summary.html$$[javadoc] and demos are included in distribution.
+Distributed reduce phase is turned on by using a MapReduceTask link:$$http://docs.jboss.org/infinispan/6.0/apidocs/org/infinispan/distexec/mapreduce/MapReduceTask.html#MapReduceTask(org.infinispan.Cache, boolean)$$[constructor] specifying cache to use as input data for the task and boolean parameter distributeReducePhase set to true. Map/Reduce API link:$$http://docs.jboss.org/infinispan/6.0/apidocs/org/infinispan/distexec/mapreduce/package-summary.html$$[javadoc] and demos are included in distribution.
 
 === Examples
 Word count is a classic, if not overused, example of map/reduce paradigm. Assume we have a mapping of key --> sentence stored on Infinispan nodes. Key is a String, each sentence is also a String, and we have to count occurrence of all words in all sentences available. The implementation of such a distributed task could be defined as follows:

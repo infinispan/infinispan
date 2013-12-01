@@ -273,7 +273,7 @@ public class EntryWrappingInterceptor extends CommandInterceptor {
    }
 
    protected boolean isFromStateTransfer(FlagAffectedCommand command) {
-      return command.hasFlag(Flag.PUT_FOR_STATE_TRANSFER);
+      return stateConsumer != null && command.hasFlag(Flag.PUT_FOR_STATE_TRANSFER);
    }
 
    protected final void commitContextEntries(InvocationContext ctx, FlagAffectedCommand command, Metadata metadata) {

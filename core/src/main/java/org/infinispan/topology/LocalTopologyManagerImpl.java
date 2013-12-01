@@ -88,11 +88,15 @@ public class LocalTopologyManagerImpl implements LocalTopologyManager {
       long endTime = timeService.expectedEndTime(timeout, TimeUnit.MILLISECONDS);
       while (true) {
          try {
-            CacheTopology initialTopology = (CacheTopology) executeOnCoordinator(command, timeout);
-            // if the current coordinator is shutting down, it will return a null CacheTopology
-            if (initialTopology != null) {
-               handleConsistentHashUpdate(cacheName, initialTopology, viewId);
-               return initialTopology;
+            // Synchronize here to delay any rebalance until after we have received the initial cache topology.
+            // This ensures that the cache will have a topology at the end of startup (with awaitIntialTransfer disabled).
+            synchronized (cacheStatus) {
+               CacheTopology initialTopology = (CacheTopology) executeOnCoordinator(command, timeout);
+               // if the current coordinator is shutting down, it will return a null CacheTopology
+               if (initialTopology != null) {
+                  handleConsistentHashUpdate(cacheName, initialTopology, viewId);
+                  return initialTopology;
+               }
             }
          } catch (Exception e) {
             log.debugf(e, "Error sending join request for cache %s to coordinator", cacheName);
@@ -164,7 +168,7 @@ public class LocalTopologyManagerImpl implements LocalTopologyManager {
 
       synchronized (cacheStatus) {
          CacheTopology existingTopology = cacheStatus.getTopology();
-         if (existingTopology != null && cacheTopology.getTopologyId() < existingTopology.getTopologyId()){
+         if (existingTopology != null && cacheTopology.getTopologyId() < existingTopology.getTopologyId()) {
             log.tracef("Ignoring consistent hash update %s for cache %s, we have already received a newer topology %s",
                   cacheTopology.getTopologyId(), cacheName, existingTopology.getTopologyId());
             return;
