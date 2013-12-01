@@ -4,9 +4,7 @@ import java.io.IOException;
 import java.util.HashSet;
 import java.util.Set;
 
-import org.apache.lucene.index.CorruptIndexException;
 import org.apache.lucene.index.DirectoryReader;
-import org.apache.lucene.index.IndexReader;
 import org.apache.lucene.index.Term;
 import org.apache.lucene.search.IndexSearcher;
 import org.apache.lucene.search.Query;
@@ -19,7 +17,7 @@ import org.apache.lucene.store.Directory;
  * Good for performance comparisons and stress tests.
  * It needs a SharedState object to be shared with other readers and writers on the same directory to
  * be able to throw exceptions in case it's able to detect an illegal state.
- * 
+ *
  * @author Sanne Grinovero
  * @since 4.0
  */
@@ -50,7 +48,7 @@ public class LuceneReaderThread extends LuceneUserThread {
       state.incrementIndexSearchesCount(numElements);
    }
 
-   protected void refreshIndexReader() throws CorruptIndexException, IOException {
+   protected void refreshIndexReader() throws IOException {
       if (indexReader == null) {
          indexReader = DirectoryReader.open(directory);
       }
@@ -62,10 +60,9 @@ public class LuceneReaderThread extends LuceneUserThread {
             indexReader = after;
          }
       }
-      
       searcher = new IndexSearcher(indexReader);
    }
-   
+
    @Override
    protected void cleanup() throws IOException {
       if (indexReader != null)

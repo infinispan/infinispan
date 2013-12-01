@@ -7,7 +7,7 @@ import org.testng.annotations.Test;
 
 /**
  * TransactionalLockManagerFunctionalTest.
- * 
+ *
  * @author Sanne Grinovero
  * @since 4.0
  */

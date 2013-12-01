@@ -1,7 +1,5 @@
 package org.infinispan.lucene;
 
-import junit.framework.AssertionFailedError;
-
 import org.infinispan.commands.AbstractFlagAffectedCommand;
 import org.infinispan.commands.write.ApplyDeltaCommand;
 import org.infinispan.commands.write.ClearCommand;
@@ -17,7 +15,7 @@ import org.infinispan.interceptors.base.CommandInterceptor;
  * SkipIndexingGuaranteed is an interceptor to verify all write operations are using the org.infinispan.context.Flag.SKIP_INDEXING
  * Using SKIP_INDEXING is much lighter than having Infinispan Query need to use class reflection and attempt to reconfigure the Search engine
  * dynamically.
- * 
+ *
  * @author Sanne Grinovero <sanne@infinispan.org> (C) 2012 Red Hat Inc.
  * @since 5.2
  */
@@ -55,7 +53,7 @@ public class SkipIndexingGuaranteed extends CommandInterceptor {
 
    protected Object handleDefaultCheckingAssertion(InvocationContext ctx, AbstractFlagAffectedCommand command) throws Throwable {
       if (! command.hasFlag(Flag.SKIP_INDEXING)) {
-         throw new AssertionFailedError("A write operation was detected which is not using SKIP_INDEXING flag");
+         throw new AssertionError("A write operation was detected which is not using SKIP_INDEXING flag");
       }
       return super.invokeNextInterceptor(ctx, command);
    }

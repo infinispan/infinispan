@@ -42,7 +42,7 @@ public abstract class CacheTestSupport {
 
    protected static CacheContainer createTestCacheManager() {
       return TestCacheManagerFactory.createClusteredCacheManager(
-            createTestConfiguration( TransactionMode.NON_TRANSACTIONAL) );
+            createTestConfiguration(TransactionMode.NON_TRANSACTIONAL));
    }
 
    public static ConfigurationBuilder createTestConfiguration(TransactionMode transactionMode) {
@@ -142,7 +142,7 @@ public abstract class CacheTestSupport {
    }
 
    protected static void doReadOperation(Directory d) throws Exception {
-   	IndexReader indexReader = null;
+      IndexReader indexReader = null;
       IndexSearcher search = null;
       try {
          indexReader = IndexReader.open(d);
@@ -154,7 +154,7 @@ public abstract class CacheTestSupport {
          search.search(termQuery, null, 1);
       } finally {
          if (search != null) {
-         	indexReader.close();
+            indexReader.close();
          }
       }
    }
@@ -171,9 +171,9 @@ public abstract class CacheTestSupport {
 
    /**
     * Used in test to remove all documents containing some term
-    * 
+    *
     * @param dir The Directory containing the Index to verify
-    * @param string
+    * @param term
     */
    public static void removeByTerm(Directory dir, String term) throws IOException {
       IndexWriterConfig indexWriterConfig = new IndexWriterConfig(LuceneSettings.LUCENE_VERSION, LuceneSettings.analyzer);
@@ -185,7 +185,7 @@ public abstract class CacheTestSupport {
 
    /**
     * Used in test to verify an Index
-    * 
+    *
     * @param dir The Directory containing the Index to verify
     * @param term a single Term (after analysis) to be searched for
     * @param validDocumentIds The list of document identifiers which should contain the searched-for term
@@ -211,8 +211,8 @@ public abstract class CacheTestSupport {
    }
 
    /**
-    * Used in test to add a new Document to an Index; two fields are created: id and body 
-    * 
+    * Used in test to add a new Document to an Index; two fields are created: id and body
+    *
     * @param dir The Directory containing the Index to modify
     * @param id a sequential number to identify this document (id field)
     * @param text Some text to add to the body field

@@ -20,7 +20,7 @@ import org.testng.annotations.Test;
  * SimpleLuceneTest tests the basic functionality of the Lucene Directory
  * on Infinispan: what is inserted in one node should be able to be found in
  * a second node.
- * 
+ *
  * @author Sanne Grinovero
  * @since 4.0
  */
@@ -28,7 +28,7 @@ import org.testng.annotations.Test;
 public class SimpleLuceneTest extends MultipleCacheManagersTest {
 
    @Override
-   protected void createCacheManagers() throws Throwable {
+   protected void createCacheManagers() {
       startClusterNode();
       startClusterNode();
    }
@@ -43,8 +43,8 @@ public class SimpleLuceneTest extends MultipleCacheManagersTest {
    @Test
    public void testIndexWritingAndFinding() throws IOException {
       final String indexName = "indexName";
-      final Cache cache0 = cache(0, "lucene");
-      final Cache cache1 = cache(1, "lucene");
+      final Cache<?,?> cache0 = cache(0, "lucene");
+      final Cache<?,?> cache1 = cache(1, "lucene");
       Directory dirA = DirectoryBuilder.newDirectoryInstance(cache0, cache0, cache0, indexName).create();
       Directory dirB = DirectoryBuilder.newDirectoryInstance(cache1, cache1, cache1, indexName).create();
       writeTextToIndex(dirA, 0, "hi from node A");

@@ -8,42 +8,42 @@ import org.testng.annotations.Test;
 /**
  * Tests basic functionality of LuceneKey2StringMapper
  * @see LuceneKey2StringMapper
- * 
+ *
  * @author Sanne Grinovero
  * @since 4.1
  */
 @Test(groups = "functional", testName = "lucene.Key2StringMapperTest")
 public class Key2StringMapperTest {
-   
+
    final LuceneKey2StringMapper mapper = new LuceneKey2StringMapper();
-   
+
    @Test
    public void testRegex() {
       String[] split = LuceneKey2StringMapper.singlePipePattern.split("hello|world");
       AssertJUnit.assertTrue(Arrays.deepEquals(new String[]{"hello", "world"}, split));
    }
-   
+
    @Test
    public void loadChunkCacheKey() {
       AssertJUnit.assertEquals(new ChunkCacheKey("my addressbook", "sgments0.gen", 34, 16000000), mapper.getKeyMapping("sgments0.gen|34|16000000|my addressbook"));
    }
-   
+
    @Test
    public void loadFileCacheKey() {
       AssertJUnit.assertEquals(new FileCacheKey("poems and songs, 3000AC-2000DC", "filename.extension"), mapper.getKeyMapping("filename.extension|M|poems and songs, 3000AC-2000DC"));
    }
-   
+
    @Test
    public void loadFileListCacheKey() {
       AssertJUnit.assertEquals(new FileListCacheKey(""), mapper.getKeyMapping("*|"));
       AssertJUnit.assertEquals(new FileListCacheKey("the leaves of Amazonia"), mapper.getKeyMapping("*|the leaves of Amazonia"));
    }
-   
+
    @Test
    public void loadReadLockKey() {
       AssertJUnit.assertEquals(new FileReadLockKey("poems and songs, 3000AC-2000DC", "brushed steel lock"), mapper.getKeyMapping("brushed steel lock|RL|poems and songs, 3000AC-2000DC"));
    }
-   
+
    @Test(expectedExceptions=IllegalArgumentException.class)
    public void failureForIllegalKeys() {
       mapper.getKeyMapping("|*|the leaves of Amazonia");
@@ -108,8 +108,7 @@ public class Key2StringMapperTest {
 
    public void testReadLockEqualsWithNullOrNotEqualObj() {
       FileReadLockKey key = new FileReadLockKey("poems and songs, 3000AC-2000DC", "brushed steel lock");
-      assert !key.equals(null);
-
+      AssertJUnit.assertNotNull(key);
       AssertJUnit.assertFalse(new FileReadLockKey("poems and songs, 3000AC-2000DC", "brushed lock")
                      .equals(mapper.getKeyMapping("brushed steel lock|RL|poems and songs, 3000AC-2000DC")));
    }

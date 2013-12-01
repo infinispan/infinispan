@@ -121,7 +121,7 @@ public class InfinispanDirectoryIOTest {
       DirectoryIntegrityCheck.verifyDirectoryStructure(cache, INDEXNAME);
    }
 
-   @Test (enabled = false, description = "https://issues.jboss.org/browse/ISPN-2895")
+   @Test
    public void testReadWholeFile() throws IOException {
       final int BUFFER_SIZE = 64;
 
@@ -350,7 +350,7 @@ public class InfinispanDirectoryIOTest {
       Set<String> s = new HashSet<String>();
       s.add("Hello.txt");
       s.add("World.txt");
-      Set other = new HashSet(Arrays.asList(new String[0]));
+      Set other = new HashSet(Arrays.asList(dir.listAll()));
 
       // ok, file listing works.
       AssertJUnit.assertEquals(s, other);

@@ -30,33 +30,33 @@ public class LuceneCacheLoaderTest extends IndexCacheLoaderTest {
 
       try {
          file = new File(new File(parentDir).getAbsoluteFile(), "test.txt");
-      boolean created = file.createNewFile();
-      file.deleteOnExit();
+         boolean created = file.createNewFile();
+         file.deleteOnExit();
 
-      assert created;
+         assert created;
 
-      final EmbeddedCacheManager cacheManager = initializeInfinispan(file);
-      TestingUtil.withCacheManager(new CacheManagerCallable(cacheManager) {
-         @Override
-         public void call() {
-            Directory directory = null;
-            try {
-               Cache cache = cacheManager.getCache();
-               directory = DirectoryBuilder.newDirectoryInstance(cache, cache, cache, indexName).create();
-            } finally {
-               if(directory != null) {
-                  try {
-                     directory.close();
-                  } catch (IOException e) {
-                     e.printStackTrace();
+         final EmbeddedCacheManager cacheManager = initializeInfinispan(file);
+         TestingUtil.withCacheManager(new CacheManagerCallable(cacheManager) {
+            @Override
+            public void call() {
+               Directory directory = null;
+               try {
+                  Cache cache = cacheManager.getCache();
+                  directory = DirectoryBuilder.newDirectoryInstance(cache, cache, cache, indexName).create();
+               } finally {
+                  if(directory != null) {
+                     try {
+                        directory.close();
+                     } catch (IOException e) {
+                        e.printStackTrace();
+                     }
                   }
                }
             }
-         }
-      });
+         });
       } finally {
          if(file != null) TestingUtil.recursiveFileRemove(file);
-   }
+      }
    }
 
    public void testLuceneCacheLoaderWithNonReadableDir() throws IOException {

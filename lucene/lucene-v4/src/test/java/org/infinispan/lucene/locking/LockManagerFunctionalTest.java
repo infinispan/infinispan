@@ -15,15 +15,14 @@ import org.testng.annotations.Test;
 
 /**
  * LockManagerFunctionalTest.
- * 
+ *
  * @author Sanne Grinovero
  * @since 4.0
  */
-@SuppressWarnings("unchecked")
 @Test(groups = "functional", testName = "lucene.locking.LockManagerFunctionalTest", enabled = true)
 public class LockManagerFunctionalTest extends MultipleCacheManagersTest {
-   
-   protected void createCacheManagers() throws Throwable {
+
+   protected void createCacheManagers() {
       ConfigurationBuilder configurationBuilder = CacheTestSupport.createTestConfiguration(getTransactionsMode());
       createClusteredCaches(2, "lucene", configurationBuilder);
    }
@@ -41,7 +40,7 @@ public class LockManagerFunctionalTest extends MultipleCacheManagersTest {
       Lock luceneLockA = lockManagerA.makeLock(writeLockProvider);
       Lock luceneLockB = lockManagerB.makeLock(writeLockProvider);
       Lock anotherLock = isolatedLockManager.makeLock(writeLockProvider);
-      
+
       assert luceneLockA.obtain();
       assert luceneLockB.isLocked();
       assert ! anotherLock.isLocked();
@@ -59,7 +58,7 @@ public class LockManagerFunctionalTest extends MultipleCacheManagersTest {
       return new Object[][] {{IndexWriter.WRITE_LOCK_NAME}, {"SomeTestLockName"}};
    }
 
-   protected LockFactory makeLockFactory(Cache cache, String commonIndexName) {
+   protected LockFactory makeLockFactory(Cache<?,?> cache, String commonIndexName) {
       return new BaseLockFactory(cache, commonIndexName);
    }
 

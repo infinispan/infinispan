@@ -131,4 +131,5 @@ public class DatabaseStoredIndexTest extends SingleCacheManagerTest {
       assertTextIsFoundInIds(dir, "index", 1);
       dir.close();
    }
+
 }

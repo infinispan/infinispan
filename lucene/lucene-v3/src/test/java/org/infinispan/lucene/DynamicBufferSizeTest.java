@@ -12,7 +12,6 @@ import org.infinispan.lucene.directory.DirectoryBuilder;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.test.SingleCacheManagerTest;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
-import org.junit.Assert;
 import org.testng.AssertJUnit;
 import org.testng.annotations.Test;
 
@@ -76,7 +75,7 @@ public class DynamicBufferSizeTest extends SingleCacheManagerTest {
       data2.touch();
 
       assert !data1.equals(new FileCacheKey("testIndex", "testFile"));
-      Assert.assertNotNull(data1);
+      AssertJUnit.assertNotNull(data1);
       assert data1.equals(data4);
       assert !data1.equals(data3);
 
