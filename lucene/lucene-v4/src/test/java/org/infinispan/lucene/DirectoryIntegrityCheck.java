@@ -8,19 +8,23 @@ import org.testng.AssertJUnit;
 /**
  * DirectoryIntegrityCheck contains helpers to assert assumptions we make on the structure of an
  * index as stored in an Infinispan cache.
- * 
+ *
  * @author Sanne Grinovero
  * @since 4.1
  */
 @SuppressWarnings("unchecked")
 public class DirectoryIntegrityCheck {
 
+   private DirectoryIntegrityCheck() {
+      //not to be instantiated
+   }
+
    /**
     * Verifies that no garbage elements are left over in the cache and that for each type of object
     * the expected value is stored. Also asserts for proper size metadata comparing to actual bytes
     * used in chunks. It's assumed that only one index is stored in the inspected cache, and that
     * the index is not being used by IndexReaders or IndexWriters.
-    * 
+    *
     * @param cache
     *           The cache to inspect
     * @param indexName
@@ -69,17 +73,17 @@ public class DirectoryIntegrityCheck {
             fileListCacheKeyInstances++;
             AssertJUnit.assertEquals(1, fileListCacheKeyInstances);
          } else if (key instanceof FileReadLockKey) {
-            /*//FIXME testcase to be fixed after ISPN-616 
+            /*//FIXME testcase to be fixed after ISPN-616
             FileReadLockKey readLockKey = (FileReadLockKey) key;
-            AssertJUnit.assertEquals(readLockKey.getIndexName(), indexName);
+            Assert.assertEquals(readLockKey.getIndexName(), indexName);
             Object value = cache.get(readLockKey);
             // we verify that a ReadLock exists only for existing files
-            AssertJUnit.assertTrue(cache.get(new FileCacheKey(indexName, readLockKey.getFileName())) != null, key + " left over from deleted "
+            Assert.assertTrue(cache.get(new FileCacheKey(indexName, readLockKey.getFileName())) != null, key + " left over from deleted "
                      + readLockKey.getFileName());
-            AssertJUnit.assertTrue(cache.get(new ChunkCacheKey(indexName, readLockKey.getFileName(), 0)) != null);
-            AssertJUnit.assertTrue(fileList.contains(readLockKey.getFileName()), "readlock still exists but the file was deleted: "
+            Assert.assertTrue(cache.get(new ChunkCacheKey(indexName, readLockKey.getFileName(), 0)) != null);
+            Assert.assertTrue(fileList.contains(readLockKey.getFileName()), "readlock still exists but the file was deleted: "
                      + readLockKey);
-            AssertJUnit.assertTrue(value == null || value.equals(1));
+            Assert.assertTrue(value == null || value.equals(1));
             */
          } else {
             AssertJUnit.fail("an unexpected key was found in the cache having key type " + key.getClass() + " toString:" + key);
@@ -98,7 +102,7 @@ public class DirectoryIntegrityCheck {
 
    /**
     * For a given FileCacheKey return the total size of all chunks related to the file.
-    * 
+    *
     * @param fileCacheKey
     *           the key to the file to inspect
     * @param cache
@@ -115,7 +119,7 @@ public class DirectoryIntegrityCheck {
          ChunkCacheKey chunkKey = new ChunkCacheKey(indexName, fileName, i, bufferSize);
          byte[] buffer = (byte[]) cache.get(chunkKey);
          if (buffer == null) {
-            assert cache.containsKey(chunkKey)==false;
+            AssertJUnit.assertFalse(cache.containsKey(chunkKey));
             return accumulator;
          } else {
             assert buffer.length > 0; //check we don't store useless data
@@ -123,7 +127,7 @@ public class DirectoryIntegrityCheck {
          }
       }
    }
-   
+
    public static void assertFileNotExists(Cache cache, String indexName, String fileName, long maxWaitForCondition) throws InterruptedException {
       Set<String> fileList = (Set<String>) cache.get(new FileListCacheKey(indexName));
       AssertJUnit.assertNotNull(fileList);

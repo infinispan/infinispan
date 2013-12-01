@@ -2,7 +2,6 @@ package org.infinispan.lucene;
 
 import java.util.Arrays;
 
-import org.junit.Assert;
 import org.testng.AssertJUnit;
 import org.testng.annotations.Test;
 
@@ -109,7 +108,7 @@ public class Key2StringMapperTest {
 
    public void testReadLockEqualsWithNullOrNotEqualObj() {
       FileReadLockKey key = new FileReadLockKey("poems and songs, 3000AC-2000DC", "brushed steel lock");
-      Assert.assertNotNull(key);
+      AssertJUnit.assertNotNull(key);
       AssertJUnit.assertFalse(new FileReadLockKey("poems and songs, 3000AC-2000DC", "brushed lock")
                      .equals(mapper.getKeyMapping("brushed steel lock|RL|poems and songs, 3000AC-2000DC")));
    }

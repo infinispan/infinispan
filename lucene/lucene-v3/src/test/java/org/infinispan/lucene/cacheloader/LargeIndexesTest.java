@@ -89,6 +89,7 @@ public class LargeIndexesTest {
    }
 
    private static class IndexInputMock extends IndexInput {
+
       private boolean closed = false;
       private long position = 0;
 

@@ -11,6 +11,7 @@ import org.apache.lucene.store.FSDirectory;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.container.InternalEntryFactory;
 import org.infinispan.container.entries.InternalCacheEntry;
+import org.infinispan.lucene.cacheloader.configuration.LuceneLoaderConfigurationBuilder;
 import org.infinispan.persistence.spi.PersistenceException;
 import org.infinispan.persistence.CollectionKeyFilter;
 import org.infinispan.persistence.PersistenceUtil;
@@ -19,7 +20,6 @@ import org.infinispan.lucene.ChunkCacheKey;
 import org.infinispan.lucene.FileCacheKey;
 import org.infinispan.lucene.FileListCacheKey;
 import org.infinispan.lucene.FileReadLockKey;
-import org.infinispan.lucene.cacheloader.configuration.LuceneLoaderConfigurationBuilder;
 import org.infinispan.lucene.directory.DirectoryBuilder;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.test.SingleCacheManagerTest;
@@ -69,7 +69,7 @@ public class CacheLoaderAPITest extends SingleCacheManagerTest {
       return TestCacheManagerFactory.createCacheManager(builder);
    }
 
-   public void testFilteredKeyLoad() throws PersistenceException {
+   public void testFilteredKeyLoad() {
       CacheLoader loader = TestingUtil.getFirstLoader(cache);
       AssertJUnit.assertNotNull(loader);
       AssertJUnit.assertTrue(loader instanceof LuceneCacheLoader);
@@ -105,7 +105,7 @@ public class CacheLoaderAPITest extends SingleCacheManagerTest {
       }
    }
 
-   public void testContainsKeyWithNoExistentRootDir() throws IOException, PersistenceException {
+   public void testContainsKeyWithNoExistentRootDir() throws IOException {
       Directory directory = DirectoryBuilder.newDirectoryInstance(cache, cache, cache, indexName).create();
 
       TestHelper.createIndex(rootDir, indexName, elementCount, true);

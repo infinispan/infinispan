@@ -56,7 +56,8 @@ public class PerformanceCompareStressTest {
 
    private static final String indexName = "tempIndexName";
 
-   private long durationMs = 2 * 60 * 1000;
+   private static final long DEFAULT_DURATION_MS = 2 * 60 * 1000;
+   private long durationMs = DEFAULT_DURATION_MS;
 
    private Cache cache;
 
@@ -178,13 +179,16 @@ public class PerformanceCompareStressTest {
     * running this directly as TestNG enables assertions.
     *
     * Suggested test switches:
-    * -Xmx2G -Xms2G -XX:MaxPermSize=128M -XX:+HeapDumpOnOutOfMemoryError -Xss512k -XX:HeapDumpPath=/tmp/java_heap -Djava.net.preferIPv4Stack=true -Djgroups.bind_addr=127.0.0.1 -Xbatch -server -XX:+UseCompressedOops -XX:+UseLargePages -XX:LargePageSizeInBytes=2m -XX:+AlwaysPreTouch
+    * -Xmx4G -Xms4G -XX:MaxPermSize=128M -XX:+HeapDumpOnOutOfMemoryError -Xss512k -XX:HeapDumpPath=/tmp/java_heap -Djava.net.preferIPv4Stack=true -Djgroups.bind_addr=127.0.0.1 -XX:+UseLargePages -XX:LargePageSizeInBytes=2m
+    *
+    * With detailed GC logging:
+    * -Xmx4G -Xms4G -XX:MaxPermSize=32M -XX:+HeapDumpOnOutOfMemoryError -Xss256k -XX:HeapDumpPath=/tmp/java_heap -Djava.net.preferIPv4Stack=true -Djgroups.bind_addr=127.0.0.1 -XX:+UseLargePages -XX:LargePageSizeInBytes=2m -XX:+UseLargePages -XX:LargePageSizeInBytes=2m -Xloggc:gc-full.log -XX:+PrintGCDetails -XX:+PrintTenuringDistribution -XX:+PrintGCApplicationStoppedTime
     */
    public static void main(String[] args) throws Exception {
       String[] testMethods = System.getProperty("lucene.profiling.tests",
             "profileTestRAMDirectory,profileTestFSDirectory,profileInfinispanLocalDirectory,profileTestInfinispanDirectoryWithNetworkDelayZero").split(",");
       PerformanceCompareStressTest test = new PerformanceCompareStressTest();
-      test.durationMs = new Long(System.getProperty("lucene.profiling.duration", "120000"));
+      test.durationMs = new Long(System.getProperty("lucene.profiling.duration", String.valueOf(DEFAULT_DURATION_MS)));
       String outputFile = System.getProperty("lucene.profiling.output");
       test.results = outputFile == null ? null : new Properties();
       for (String testMethod : testMethods) {

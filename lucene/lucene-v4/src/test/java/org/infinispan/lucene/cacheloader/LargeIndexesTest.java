@@ -3,7 +3,6 @@ package org.infinispan.lucene.cacheloader;
 import java.io.IOException;
 
 import org.apache.lucene.store.IndexInput;
-import org.infinispan.persistence.spi.PersistenceException;
 import org.infinispan.lucene.ChunkCacheKey;
 import org.infinispan.lucene.FileCacheKey;
 import org.infinispan.lucene.FileMetadata;
@@ -12,7 +11,7 @@ import org.testng.annotations.Test;
 
 /**
  * Test for extra-large indexes, where an int isn't large enough to hold file sizes.
- * 
+ *
  * @author Sanne Grinovero
  * @since 5.2
  */
@@ -24,7 +23,7 @@ public class LargeIndexesTest {
    private static final long TEST_SIZE = ((long)Integer.MAX_VALUE) + 10;//something not fitting in int
    private static final int AUTO_BUFFER = 16;//ridiculously low
 
-   public void testAutoChunkingOnLargeFiles() throws PersistenceException {
+   public void testAutoChunkingOnLargeFiles() {
       FileCacheKey k = new FileCacheKey(INDEX_NAME, FILE_NAME);
       DirectoryLoaderAdaptor adaptor = new DirectoryLoaderAdaptor(new InternalDirectoryContractImpl(), INDEX_NAME, AUTO_BUFFER);
       Object loaded = adaptor.load(k);
@@ -35,7 +34,7 @@ public class LargeIndexesTest {
       AssertJUnit.assertEquals(AUTO_BUFFER, metadata.getBufferSize());
    }
 
-   public void testSmallChunkLoading() throws PersistenceException {
+   public void testSmallChunkLoading() {
       DirectoryLoaderAdaptor adaptor = new DirectoryLoaderAdaptor(new InternalDirectoryContractImpl(), INDEX_NAME, AUTO_BUFFER);
       Object loaded = adaptor.load(new ChunkCacheKey(INDEX_NAME, FILE_NAME, 0, AUTO_BUFFER));
       AssertJUnit.assertTrue(loaded instanceof byte[]);
@@ -91,12 +90,12 @@ public class LargeIndexesTest {
 
    private static class IndexInputMock extends IndexInput {
 
+      private boolean closed = false;
+      private long position = 0;
+
       protected IndexInputMock(String resourceDescription) {
          super(resourceDescription);
       }
-
-      private boolean closed = false;
-      private long position = 0;
 
       @Override
       public void close() throws IOException {

@@ -24,7 +24,7 @@ import org.testng.annotations.Test;
  * Verifies the Index can be spread across three different caches;
  * this is useful so that each cache can be configured independently
  * to better match the intended usage (like avoiding a CacheStore for volatile locking data).
- * 
+ *
  * @author Sanne Grinovero
  */
 @SuppressWarnings("unchecked")
@@ -33,7 +33,7 @@ public class DirectoryOnMultipleCachesTest {
 
    //timeout for test verifyIntendedLockCachesUsage()
    private static final long SLEEP = 60; //60 msecs
-   private static final int MAX_ITERATIONS = 1000; //max timeout: SLEEP * MAX_ITERATIONS msecs (-+ 60 seconds)
+   private static final int MAX_ITERATIONS = 1000; //max timeout: SLEEP * MAX_ITERATIONS msecs (+- 60 seconds)
 
    private CacheContainer cacheManager;
    private Cache metadataCache;
@@ -47,7 +47,7 @@ public class DirectoryOnMultipleCachesTest {
       chunkCache = cacheManager.getCache("chunks");
       lockCache = cacheManager.getCache("locks");
    }
-   
+
    @Test
    public void testRunningOnMultipleCaches() throws IOException {
       assert metadataCache != chunkCache;
@@ -63,7 +63,7 @@ public class DirectoryOnMultipleCachesTest {
       assertTextIsFoundInIds(dir, "hello", 0, 1);
       dir.close();
    }
-   
+
    @Test(dependsOnMethods="testRunningOnMultipleCaches")
    public void verifyIntendedChunkCachesUsage() {
       int chunks = 0;
@@ -75,7 +75,7 @@ public class DirectoryOnMultipleCachesTest {
       }
       assert chunks != 0;
    }
-   
+
    @Test(dependsOnMethods="testRunningOnMultipleCaches")
    public void verifyIntendedLockCachesUsage() {
       final List<Object> keysThatShouldBeRemoved = new ArrayList<Object>();
@@ -108,7 +108,7 @@ public class DirectoryOnMultipleCachesTest {
       AssertJUnit.assertTrue("The following keys " + keysThatShouldBeRemoved + " are supposed to be removed from lockCache",
                              keysThatShouldBeRemoved.isEmpty());
    }
-   
+
    @Test(dependsOnMethods="testRunningOnMultipleCaches")
    public void verifyIntendedMetadataCachesUsage() {
       int metadata = 0;
@@ -130,7 +130,7 @@ public class DirectoryOnMultipleCachesTest {
       AssertJUnit.assertEquals(1, filelists);
       assert metadata != 0;
    }
-   
+
    @AfterClass
    public void afterClass() {
       TestingUtil.killCacheManagers(cacheManager);

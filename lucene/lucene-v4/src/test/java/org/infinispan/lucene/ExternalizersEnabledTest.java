@@ -62,8 +62,9 @@ public class ExternalizersEnabledTest extends SingleCacheManagerTest {
 
       Writer objectWriter = externalizerTable.getObjectWriter(keySampleType);
 
-      AssertJUnit.assertEquals("Registered Externalizers should be wrapped by a ForeignExternalizerAdapter", objectWriter.getClass().toString(),
-                               "class org.infinispan.marshall.core.ExternalizerTable$ForeignExternalizerAdapter");
+      AssertJUnit.assertEquals("Registered Externalizers should be wrapped by a ForeignExternalizerAdapter",
+            objectWriter.getClass().toString(),
+            "class org.infinispan.marshall.core.ExternalizerTable$ForeignExternalizerAdapter");
 
       AssertJUnit.assertEquals("Type of delegate used by the adapter doesn't match expected: " + expectedExcternalizerClass.getClass(),
             "class " + objectWriter.toString(),

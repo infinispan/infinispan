@@ -63,9 +63,8 @@ public class IndexCacheLoaderTest {
       verifyDirectory(rootDir, "index-B", 20 * SCALE, false);
    }
 
-   private void verifyDirectory (final File rootDir, final String indexName, final int termsAdded, final boolean inverted) {
+   private void verifyDirectory(final File rootDir, final String indexName, final int termsAdded, final boolean inverted) {
       final EmbeddedCacheManager cacheManager = initializeInfinispan(rootDir);
-
       TestingUtil.withCacheManager(new CacheManagerCallable(cacheManager) {
          @Override
          public void call() {
@@ -74,22 +73,21 @@ public class IndexCacheLoaderTest {
 
             try {
                TestHelper.verifyOnDirectory(directory, termsAdded, inverted);
-            } catch(Exception ex) {
-               throw new RuntimeException(ex);
+            } catch (IOException e) {
+               throw new RuntimeException(e);
             }
          }
       });
-
    }
 
    protected EmbeddedCacheManager initializeInfinispan(File rootDir) {
       ConfigurationBuilder builder = new ConfigurationBuilder();
       builder
-            .persistence()
+         .persistence()
             .addStore(LuceneLoaderConfigurationBuilder.class)
-            .preload(true)
-            .autoChunkSize(1024)
-            .location(rootDir.getAbsolutePath());
+               .autoChunkSize(1024)
+               .preload(true)
+               .location(rootDir.getAbsolutePath());
       return TestCacheManagerFactory.createCacheManager(builder);
    }
 }

@@ -19,14 +19,13 @@ import org.testng.annotations.Test;
 /**
  * DistributedSegmentReadLockerTest represents a quick check on the functionality
  * of {@link org.infinispan.lucene.readlocks.DistributedSegmentReadLocker}
- * 
+ *
  * @author Sanne Grinovero
  * @since 4.1
  */
-@SuppressWarnings("unchecked")
 @Test(groups = "functional", testName = "lucene.readlocks.DistributedSegmentReadLockerTest")
 public class DistributedSegmentReadLockerTest extends MultipleCacheManagersTest {
-   
+
    /** The Index name */
    protected static final String INDEX_NAME = "indexName";
    /** The cache name */
@@ -46,7 +45,7 @@ public class DistributedSegmentReadLockerTest extends MultipleCacheManagersTest 
       ConfigurationBuilder configurationBuilder = CacheTestSupport.createTestConfiguration(TransactionMode.NON_TRANSACTIONAL);
       createClusteredCaches(2, CACHE_NAME, configurationBuilder);
    }
-   
+
    @BeforeMethod
    protected void prepare() throws IOException {
       cache0 = cache(0, CACHE_NAME);
@@ -55,7 +54,7 @@ public class DistributedSegmentReadLockerTest extends MultipleCacheManagersTest 
       dirB = createDirectory(cache1);
       CacheTestSupport.initializeDirectory(dirA);
    }
-   
+
    @Test
    public void testIndexWritingAndFinding() throws IOException, InterruptedException {
       verifyBoth(cache0,cache1);
@@ -90,7 +89,7 @@ public class DistributedSegmentReadLockerTest extends MultipleCacheManagersTest 
       DirectoryIntegrityCheck.assertFileExistsHavingRLCount(cache0, fileName, INDEX_NAME, expectedReadcount, CHUNK_SIZE, expectRegisteredInFat);
       DirectoryIntegrityCheck.assertFileExistsHavingRLCount(cache1, fileName, INDEX_NAME, expectedReadcount, CHUNK_SIZE, expectRegisteredInFat);
    }
-   
+
    Directory createDirectory(Cache cache) {
       return DirectoryBuilder.newDirectoryInstance(cache, cache, cache, INDEX_NAME)
              .chunkSize(CHUNK_SIZE)

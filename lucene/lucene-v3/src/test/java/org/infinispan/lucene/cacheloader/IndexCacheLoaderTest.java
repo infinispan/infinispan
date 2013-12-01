@@ -32,7 +32,7 @@ public class IndexCacheLoaderTest {
    protected final String parentDir = TestingUtil.tmpDirectory(this.getClass());
    protected File rootDir = null;
 
-   @BeforeMethod(alwaysRun=true)
+   @BeforeMethod
    public void setUp() {
       rootDir = TestHelper.createRootDir(parentDir, getIndexPathName());
    }
@@ -44,7 +44,7 @@ public class IndexCacheLoaderTest {
       return this.getClass().getSimpleName();
    }
 
-   @AfterMethod(alwaysRun=true)
+   @AfterMethod
    public void tearDown() {
       if(rootDir != null) {
          TestingUtil.recursiveFileRemove(rootDir);
@@ -63,8 +63,7 @@ public class IndexCacheLoaderTest {
       verifyDirectory(rootDir, "index-B", 20 * SCALE, false);
    }
 
-   private void verifyDirectory(final File rootDir, final String indexName, final int termsAdded, final boolean inverted)
-         throws IOException {
+   private void verifyDirectory(final File rootDir, final String indexName, final int termsAdded, final boolean inverted) {
       final EmbeddedCacheManager cacheManager = initializeInfinispan(rootDir);
       TestingUtil.withCacheManager(new CacheManagerCallable(cacheManager) {
          @Override

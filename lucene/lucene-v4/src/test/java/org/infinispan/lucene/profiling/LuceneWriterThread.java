@@ -17,12 +17,12 @@ import org.infinispan.lucene.testutils.LuceneSettings;
  * Good for performance comparisons and stress tests.
  * It needs a SharedState object to be shared with other readers and writers on the same directory to
  * be able to throw exceptions in case it's able to detect an illegal state.
- * 
+ *
  * @author Sanne Grinovero
  * @since 4.0
  */
 public class LuceneWriterThread extends LuceneUserThread {
-   
+
    LuceneWriterThread(Directory dir, SharedState state) {
       super(dir, state);
    }

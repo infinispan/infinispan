@@ -14,14 +14,14 @@ import org.testng.annotations.Test;
 /**
  * LocalLockMergingSegmentReadLockerTest represents a quick check on the functionality
  * of {@link org.infinispan.lucene.readlocks.LocalLockMergingSegmentReadLocker}
- * 
+ *
  * @author Sanne Grinovero
  * @since 4.1
  */
 @SuppressWarnings("unchecked")
 @Test(groups = "functional", testName = "lucene.readlocks.LocalLockMergingSegmentReadLockerTest")
 public class LocalLockMergingSegmentReadLockerTest extends DistributedSegmentReadLockerTest {
-   
+
    @Test @Override
    public void testIndexWritingAndFinding() throws IOException, InterruptedException {
       prepareEnvironment(false);
