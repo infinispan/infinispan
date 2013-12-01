@@ -77,6 +77,24 @@
             <property name="classes" value="java.lang.Boolean"/>
         </module>
 
+        <!--  Avoid some import statements -->
+        <module name="IllegalImport">
+            <!-- Should use TestNG -->
+            <property name="illegalPkgs" value="org.junit, junit"/>
+        </module>
+        <module name="org.infinispan.checkstyle.checks.regexp.IllegalImport">
+            <property name="illegalClassnames" value="org.jgroups.util.Util.assertTrue, org.jgroups.util.Util.assertFalse, org.jgroups.util.Util.assertNotNull" />
+            <property name="message" value="Stop using the Util class from JGroups for assertions which should use TestNG!" />
+        </module>
+        <module name="org.infinispan.checkstyle.checks.regexp.IllegalImport">
+            <property name="illegalClassnames" value="org.hibernate.annotations.common.util.StringHelper" />
+            <property name="message" value="Stop using the StringHelper from commons-annotations: use org.hibernate.search.util.StringHelper." />
+        </module>
+        <module name="org.infinispan.checkstyle.checks.regexp.IllegalImport">
+            <property name="illegalClassnames" value="org.hibernate.annotations.common.AssertionFailure" />
+            <property name="message" value="Stop using the AssertionFailure from commons-annotations." />
+        </module>
+
         <!-- Required to get SuppressionCommentFilter to work -->
         <module name="FileContentsHolder" />
 
