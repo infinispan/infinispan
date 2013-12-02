@@ -96,7 +96,7 @@ Implicit eager locking is enabled as follows:
 Infinispan allows for an `eagerLockSingleNode` configuration option. This only applies to distributed mode.
 Having this enabled would make the number of remote locks acquired to be always 1, regardless of the configured `numOwners`.
 Following diagrams are intended to explain better this option.
-All diagrams represent an cluster having 5 nodes, with `numOwners` set to 2.
+All diagrams represent a cluster having 5 nodes, with `numOwners` set to 2.
 
 image::images/numOwners.png[]
 
@@ -170,7 +170,7 @@ Unlike simple versioning, which is maintained per entry, a vector clock's node c
 
 ==== External versioning
 
-This scheme is used to encapsulate an external source of data versioning within Infinispan, such as when using Infinispan with Hibernate which in turn gets it's data version information directly from a database.
+This scheme is used to encapsulate an external source of data versioning within Infinispan, such as when using Infinispan with Hibernate which in turn gets its data version information directly from a database.
 
 In this scheme, a mechanism to pass in the version becomes necessary, and overloaded versions of put() and putForExternalRead() will be provided in AdvancedCache to take in an external data version.  This is then stored on the InvocationContext and applied to the entry at commit time. 
 
