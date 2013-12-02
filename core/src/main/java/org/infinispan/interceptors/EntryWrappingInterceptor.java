@@ -258,6 +258,7 @@ public class EntryWrappingInterceptor extends CommandInterceptor {
 
    @Override
    public Object visitEvictCommand(InvocationContext ctx, EvictCommand command) throws Throwable {
+      command.setFlags(Flag.SKIP_OWNERSHIP_CHECK, Flag.CACHE_MODE_LOCAL); //to force the wrapping
       return visitRemoveCommand(ctx, command);
    }
 

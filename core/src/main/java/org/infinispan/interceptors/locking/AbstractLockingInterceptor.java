@@ -2,10 +2,12 @@ package org.infinispan.interceptors.locking;
 
 import org.infinispan.commands.FlagAffectedCommand;
 import org.infinispan.commands.write.DataWriteCommand;
+import org.infinispan.commands.write.EvictCommand;
 import org.infinispan.commands.write.InvalidateCommand;
 import org.infinispan.commands.write.InvalidateL1Command;
 import org.infinispan.commands.write.PutKeyValueCommand;
 import org.infinispan.configuration.cache.CacheMode;
+import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.container.DataContainer;
 import org.infinispan.container.EntryFactory;
 import org.infinispan.context.InvocationContext;
@@ -29,13 +31,34 @@ public abstract class AbstractLockingInterceptor extends CommandInterceptor {
    protected DataContainer dataContainer;
    protected EntryFactory entryFactory;
    protected ClusteringDependentLogic cdl;
+   private boolean passivation;
 
    @Inject
-   public void setDependencies(LockManager lockManager, DataContainer dataContainer, EntryFactory entryFactory, ClusteringDependentLogic cdl) {
+   public void setDependencies(LockManager lockManager, DataContainer dataContainer, EntryFactory entryFactory,
+                               ClusteringDependentLogic cdl, Configuration configuration) {
       this.lockManager = lockManager;
       this.dataContainer = dataContainer;
       this.entryFactory = entryFactory;
       this.cdl = cdl;
+      this.passivation = configuration.persistence().passivation() && configuration.persistence().usingStores();
+   }
+
+   @Override
+   public final Object visitEvictCommand(InvocationContext ctx, EvictCommand command) throws Throwable {
+      if (!passivation) {
+         //if we don't have passivation then it is a simple remove from DataContainer. The CDL already locks the key in
+         //commit entries (EntryWrappingInterceptor)
+         return invokeNextInterceptor(ctx, command);
+      }
+      final Object key = command.getKey();
+      if (!cdl.lock(key, true)) {
+         return null; //no-op
+      }
+      try {
+         return invokeNextInterceptor(ctx, command);
+      } finally {
+         cdl.unlock(key);
+      }
    }
 
    @Override

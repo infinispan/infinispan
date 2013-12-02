@@ -3,11 +3,9 @@ package org.infinispan.interceptors.locking;
 import org.infinispan.InvalidCacheUsageException;
 import org.infinispan.commands.read.GetKeyValueCommand;
 import org.infinispan.commands.write.ClearCommand;
-import org.infinispan.commands.write.EvictCommand;
 import org.infinispan.commands.write.PutMapCommand;
 import org.infinispan.commands.write.RemoveCommand;
 import org.infinispan.commands.write.ReplaceCommand;
-import org.infinispan.context.Flag;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
@@ -104,13 +102,6 @@ public class NonTransactionalLockingInterceptor extends AbstractLockingIntercept
       finally {
          lockManager.unlockAll(ctx);
       }
-   }
-
-   @Override
-   public final Object visitEvictCommand(InvocationContext ctx, EvictCommand command) throws Throwable {
-      // ensure keys are properly locked for evict commands
-      command.setFlags(Flag.ZERO_LOCK_ACQUISITION_TIMEOUT);
-      return visitRemoveCommand(ctx, command);
    }
 
    private void assertNonTransactional(InvocationContext ctx) {

@@ -12,7 +12,6 @@ import org.infinispan.context.impl.NonTxInvocationContext;
 import org.infinispan.context.impl.TxInvocationContext;
 import org.infinispan.interceptors.locking.ClusteringDependentLogic;
 import org.infinispan.metadata.Metadata;
-import org.infinispan.notifications.KeyFilter;
 import org.infinispan.notifications.cachelistener.event.CacheEntryCreatedEvent;
 import org.infinispan.notifications.cachelistener.event.Event;
 import org.infinispan.remoting.transport.Address;
@@ -82,6 +81,16 @@ public class OnlyPrimaryOwnerTest {
 
       @Override
       public Address getAddress() {
+         throw new UnsupportedOperationException();
+      }
+
+      @Override
+      public boolean lock(Object key, boolean noWaitTime) {
+         throw new UnsupportedOperationException();
+      }
+
+      @Override
+      public void unlock(Object key) {
          throw new UnsupportedOperationException();
       }
    }

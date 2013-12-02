@@ -5,9 +5,7 @@ import org.infinispan.commands.read.GetKeyValueCommand;
 import org.infinispan.commands.tx.CommitCommand;
 import org.infinispan.commands.tx.PrepareCommand;
 import org.infinispan.commands.tx.RollbackCommand;
-import org.infinispan.commands.write.EvictCommand;
 import org.infinispan.configuration.cache.Configurations;
-import org.infinispan.context.Flag;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.context.impl.TxInvocationContext;
 import org.infinispan.factories.annotations.Inject;
@@ -52,19 +50,6 @@ public abstract class AbstractTxLockingInterceptor extends AbstractLockingInterc
       try {
          return invokeNextInterceptor(ctx, command);
       } finally {
-         lockManager.unlockAll(ctx);
-      }
-   }
-
-   @Override
-   public final Object visitEvictCommand(InvocationContext ctx, EvictCommand command) throws Throwable {
-      // ensure keys are properly locked for evict commands
-      command.setFlags(Flag.ZERO_LOCK_ACQUISITION_TIMEOUT, Flag.CACHE_MODE_LOCAL);
-      try {
-         lockKey(ctx, command.getKey(), 0, command.hasFlag(Flag.SKIP_LOCKING));
-         return invokeNextInterceptor(ctx, command);
-      } finally {
-         //evict doesn't get called within a tx scope, so we should apply the changes before returning
          lockManager.unlockAll(ctx);
       }
    }
