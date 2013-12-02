@@ -89,7 +89,7 @@ The "users" cache backups its data to the "NYC" and "SFO" sites. Even though the
 * strategy - the strategy used for backing up data, either "SYNC" or "ASYNC". Defaults to "ASYNC"
 * backupFailurePolicy - Decides what the system would do in case of failure during backup. Possible values are:
 ** IGNORE - allow the local operation/transaction to succeed
-** WARN - same as IGNORE but also logs an warning message. Default.
+** WARN - same as IGNORE but also logs a warning message. Default.
 ** FAIL - only in effect if "strategy" is "SYNC" - fails local cluster operation/transaction by throwing an exception to the user
 ** CUSTOM - user provided, see "failurePolicyClass" below
 
@@ -208,7 +208,7 @@ Both the local and the backup call(if the "backupFailurePolicy" is set to "FAIL"
 In the case of asynchronous local clusters, the backup data is sent during the commit phase. If the backup call fails and the "backupFailurePolicy" is set to "FAIL" then the user is notified through an exception.
 
 === Taking a site offline
-If backing up to a site fails for a certain number of times during an time interval, then it is possible to automatically mark that site as offline. When a site is marked as offline the local site won't try to backup data to it anymore. In order to be taken online a system administrator intervention being required.
+If backing up to a site fails for a certain number of times during a time interval, then it is possible to automatically mark that site as offline. When a site is marked as offline the local site won't try to backup data to it anymore. In order to be taken online a system administrator intervention being required.
 
 ==== Configuration
 The taking offline of a site can be configured as follows:

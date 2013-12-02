@@ -359,10 +359,10 @@ Based on the type of keys to be persisted, there are three JDBC cache loaders:
 
 ==== Which JDBC cache loader should I use?
 
-It is generally preferable to use link:$$http://docs.jboss.org/infinispan/6.0/apidocs/org/infinispan/loaders/jdbc/stringbased/JdbcStringBasedCacheStore.html$$[JdbcStringBasedCacheStore] when you are in control of the key types, as it offers better throughput under heavy load. One scenario in which it is not possible to use it though, is when you can't write an link:$$http://docs.jboss.org/infinispan/6.0/apidocs/org/infinispan/persistence/keymappers/Key2StringMapper.html$$[Key2StringMapper] to map the keys to to string objects (e.g. when you don't have control over the types of the keys, for whatever reason). Then you should use either link:$$http://docs.jboss.org/infinispan/6.0/apidocs/org/infinispan/persistence/jdbc/binary/JdbcBinaryStore.html$$[JdbcBinaryStore] or link:$$http://docs.jboss.org/infinispan/6.0/apidocs/org/infinispan/persistence/jdbc/mixed/JdbcMixedStore.html$$[JdbcMixedStore] . The later is preferred to the former when the majority of the keys are handled by link:$$http://docs.jboss.org/infinispan/6.0/apidocs/org/infinispan/persistence/jdbc/stringbased/JdbcStringBasedStore.html$$[JdbcStringBasedStore] , but you still have some keys you cannot convert through link:$$http://docs.jboss.org/infinispan/6.0/apidocs/org/infinispan/persistence/keymappers/DefaultTwoWayKey2StringMapper.html$$[DefaultTwoWayKey2StringMapper] .
+It is generally preferable to use link:$$http://docs.jboss.org/infinispan/6.0/apidocs/org/infinispan/loaders/jdbc/stringbased/JdbcStringBasedCacheStore.html$$[JdbcStringBasedCacheStore] when you are in control of the key types, as it offers better throughput under heavy load. One scenario in which it is not possible to use it though, is when you can't write a link:$$http://docs.jboss.org/infinispan/6.0/apidocs/org/infinispan/persistence/keymappers/Key2StringMapper.html$$[Key2StringMapper] to map the keys to to string objects (e.g. when you don't have control over the types of the keys, for whatever reason). Then you should use either link:$$http://docs.jboss.org/infinispan/6.0/apidocs/org/infinispan/persistence/jdbc/binary/JdbcBinaryStore.html$$[JdbcBinaryStore] or link:$$http://docs.jboss.org/infinispan/6.0/apidocs/org/infinispan/persistence/jdbc/mixed/JdbcMixedStore.html$$[JdbcMixedStore] . The later is preferred to the former when the majority of the keys are handled by link:$$http://docs.jboss.org/infinispan/6.0/apidocs/org/infinispan/persistence/jdbc/stringbased/JdbcStringBasedStore.html$$[JdbcStringBasedStore] , but you still have some keys you cannot convert through link:$$http://docs.jboss.org/infinispan/6.0/apidocs/org/infinispan/persistence/keymappers/DefaultTwoWayKey2StringMapper.html$$[DefaultTwoWayKey2StringMapper] .
 
 ==== Connection management (pooling)
-In order to obtain a connection to the database all the JDBC cache loaders rely on an link:$$http://docs.jboss.org/infinispan/6.0/apidocs/org/infinispan/loaders/jdbc/connectionfactory/ConnectionFactory.html$$[ConnectionFactory] implementation. The connection factory is specified programmatically using one of the connectionPool(), dataSource() or simpleConnection() methods on the JdbcBinaryCacheStoreConfigurationBuilder class or declaratively using one of the `<connectionPool />`, `<dataSource />` or `<simpleConnection />` elements. Infinispan ships with three ConnectionFactory implementations:
+In order to obtain a connection to the database all the JDBC cache loaders rely on a link:$$http://docs.jboss.org/infinispan/6.0/apidocs/org/infinispan/loaders/jdbc/connectionfactory/ConnectionFactory.html$$[ConnectionFactory] implementation. The connection factory is specified programmatically using one of the connectionPool(), dataSource() or simpleConnection() methods on the JdbcBinaryCacheStoreConfigurationBuilder class or declaratively using one of the `<connectionPool />`, `<dataSource />` or `<simpleConnection />` elements. Infinispan ships with three ConnectionFactory implementations:
 
 
 *  link:$$http://docs.jboss.org/infinispan/6.0/apidocs/org/infinispan/persistence/jdbc/connectionfactory/PooledConnectionFactory.html$$[PooledConnectionFactory] is a factory based on link:$$http://sourceforge.net/projects/c3p0/$$[C3P0] . Refer to link:$$http://docs.jboss.org/infinispan/6.0/apidocs/org/infinispan/persistence/jdbc/connectionfactory/PooledConnectionFactory.html$$[javadoc] for details on configuring it.
@@ -376,7 +376,7 @@ In order to obtain a connection to the database all the JDBC cache loaders rely 
 The `PooledConnectionFactory` is generally recommended for stand-alone deployments (i.e. not running within AS or servlet container). `ManagedConnectionFactory` can be used when running in a managed environment where a `DataSource` is present, so that connection pooling is performed within the `DataSource`.
 
 ==== Sample configurations
-Below is an sample configuration for the link:$$http://docs.jboss.org/infinispan/6.0/apidocs/org/infinispan/persistence/jdbc/binary/JdbcBinaryStore.html$$[JdbcBinaryStore] . For detailed description of all the parameters used refer to the link:$$http://docs.jboss.org/infinispan/6.0/apidocs/org/infinispan/persistence/jdbc/binary/JdbcBinaryStore.html$$[JdbcBinaryStore] .  Please note the use of multiple XML schemas, since each store has its own schema.
+Below is a sample configuration for the link:$$http://docs.jboss.org/infinispan/6.0/apidocs/org/infinispan/persistence/jdbc/binary/JdbcBinaryStore.html$$[JdbcBinaryStore] . For detailed description of all the parameters used refer to the link:$$http://docs.jboss.org/infinispan/6.0/apidocs/org/infinispan/persistence/jdbc/binary/JdbcBinaryStore.html$$[JdbcBinaryStore] .  Please note the use of multiple XML schemas, since each store has its own schema.
 
 [source,xml]
 ----
@@ -429,7 +429,7 @@ builder.persistence()
 
 ----
 
-Below is an sample configuration for the link:$$http://docs.jboss.org/infinispan/6.0/apidocs/org/infinispan/persistence/jdbc/stringbased/JdbcStringBasedStore.html$$[JdbcStringBasedStore] . For detailed description of all the parameters used refer to the link:$$http://docs.jboss.org/infinispan/6.0/apidocs/org/infinispan/persistence/jdbc/stringbased/JdbcStringBasedStore.html$$[JdbcStringBasedStore] .
+Below is a sample configuration for the link:$$http://docs.jboss.org/infinispan/6.0/apidocs/org/infinispan/persistence/jdbc/stringbased/JdbcStringBasedStore.html$$[JdbcStringBasedStore] . For detailed description of all the parameters used refer to the link:$$http://docs.jboss.org/infinispan/6.0/apidocs/org/infinispan/persistence/jdbc/stringbased/JdbcStringBasedStore.html$$[JdbcStringBasedStore] .
 
 [source,xml]
 ----
@@ -468,7 +468,7 @@ builder.persistence().addStore(JdbcStringBasedStoreConfigurationBuilder.class)
 
 ----
 
-Below is an sample configuration for the link:$$http://docs.jboss.org/infinispan/6.0/apidocs/org/infinispan/persistence/jdbc/mixed/JdbcMixedStore.html$$[JdbcMixedStore] . For detailed description of all the parameters used refer to the link:$$http://docs.jboss.org/infinispan/6.0/apidocs/org/infinispan/persistence/jdbc/mixed/JdbcMixedStore.html$$[JdbcMixedStore] .
+Below is a sample configuration for the link:$$http://docs.jboss.org/infinispan/6.0/apidocs/org/infinispan/persistence/jdbc/mixed/JdbcMixedStore.html$$[JdbcMixedStore] . For detailed description of all the parameters used refer to the link:$$http://docs.jboss.org/infinispan/6.0/apidocs/org/infinispan/persistence/jdbc/mixed/JdbcMixedStore.html$$[JdbcMixedStore] .
 
 [source,xml]
 ----
