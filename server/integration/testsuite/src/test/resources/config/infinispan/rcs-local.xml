@@ -1,0 +1,85 @@
+        <subsystem xmlns="urn:infinispan:server:core:6.0" >
+            <cache-container 
+                name="local"
+                default-cache="memcachedCache">
+                <local-cache
+                    name="memcachedCache"
+                    start="EAGER"
+                    batching="false"
+                    >
+                    <locking 
+                        isolation="READ_COMMITTED"
+                        acquire-timeout="20000" 
+                        concurrency-level="500" 
+                        striping="false" />
+                    <transaction mode="NONE" />
+                    <eviction 
+                        strategy="LRU" 
+                        max-entries="2"/>
+                    <remote-store 
+                        cache="default"
+                        socket-timeout="60000" 
+                        tcp-no-delay="true" 
+                        fetch-state="false" 
+                        passivation="true" 
+                        preload="true" 
+                        purge="false">
+                        <remote-server outbound-socket-binding="remote-store-hotrod-server" />
+                    </remote-store>                  
+                </local-cache>
+                
+                <local-cache
+                    name="hotrodCache"
+                    start="EAGER"
+                    batching="false"
+                    >
+                    <locking 
+                        isolation="READ_COMMITTED"
+                        acquire-timeout="20000" 
+                        concurrency-level="500" 
+                        striping="false" />
+                    <transaction mode="NONE" />
+                    <eviction 
+                        strategy="LRU" 
+                        max-entries="2"/>
+                    <remote-store 
+                        cache="default"
+                        socket-timeout="10"
+                        tcp-no-delay="true" 
+                        fetch-state="false" 
+                        passivation="true" 
+                        preload="false" 
+                        purge="false">
+                        <remote-server outbound-socket-binding="remote-store-hotrod-server" />
+                    </remote-store>                  
+                </local-cache>
+
+                <local-cache
+                        name="readOnlyCache"
+                        start="EAGER"
+                        batching="false"
+                        >
+                    <locking
+                            isolation="READ_COMMITTED"
+                            acquire-timeout="20000"
+                            concurrency-level="500"
+                            striping="false" />
+                    <transaction mode="NONE" />
+                    <eviction
+                            strategy="LRU"
+                            max-entries="2"/>
+                    <remote-store
+                            cache="default"
+                            read-only="true"
+                            socket-timeout="60000"
+                            tcp-no-delay="true"
+                            fetch-state="false"
+                            passivation="true"
+                            preload="true"
+                            purge="false">
+                        <remote-server outbound-socket-binding="remote-store-hotrod-server" />
+                    </remote-store>
+                </local-cache>
+
+            </cache-container>
+        </subsystem>

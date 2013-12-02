@@ -1,0 +1,9 @@
+                <protocol type="AUTH">
+                    <property name="auth_class">org.jgroups.auth.X509Token</property>
+                    <property name="keystore_type">JKS</property>
+                    <property name="keystore_path">${jboss.server.config.dir}/keystore_server.jks</property>
+                    <property name="cert_alias">memcached</property>
+                    <property name="auth_value">martin_gencur</property>
+                    <property name="keystore_password">secret</property>
+                    <property name="cipher_type">RSA</property>
+                </protocol>

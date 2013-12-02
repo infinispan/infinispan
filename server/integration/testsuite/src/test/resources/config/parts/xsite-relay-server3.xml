@@ -1,0 +1,4 @@
+<relay site="NYC">
+   <remote-site name="LON" stack="tcp" cluster="global"/>
+   <remote-site name="SFO" stack="tcp" cluster="global"/>
+</relay>

@@ -1,0 +1,285 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<!-- See src/resources/configuration/ReadMe.txt for how the configuration assembly works -->
+<config default-supplement="default">
+   <extension-module>org.jboss.as.clustering.infinispan</extension-module>
+   <subsystem xmlns="urn:infinispan:server:core:6.0" default-cache-container="@@default-cache-container@@">
+      <?CACHE-CONTAINERS?>
+   </subsystem>
+   <supplement name="ccl-clustered">
+      <replacement placeholder="@@default-cache-container@@" attributeValue="clustered" />
+      <replacement placeholder="CACHE-CONTAINERS">
+         <cache-container name="clustered" default-cache="default" >
+            <transport executor="infinispan-transport" lock-timeout="60000" />
+            <distributed-cache name="default" mode="SYNC" segments="20" owners="2" remote-timeout="30000" start="EAGER">
+               <locking isolation="READ_COMMITTED" acquire-timeout="30000" concurrency-level="1000" striping="false" />
+               <transaction mode="NONE" />
+               <state-transfer enabled="false" />
+               <cluster-loader remote-timeout="60000" />
+            </distributed-cache>
+
+            <distributed-cache name="memcachedCache" mode="SYNC" segments="20" owners="2" remote-timeout="30000" start="EAGER">
+               <locking isolation="READ_COMMITTED" acquire-timeout="30000" concurrency-level="1000" striping="false" />
+               <transaction mode="NONE" />
+               <state-transfer enabled="false" />
+               <cluster-loader remote-timeout="60000" />
+            </distributed-cache>
+
+            <distributed-cache name="namedCache" mode="SYNC" start="EAGER">
+               <expiration lifespan="2000" max-idle="1000" />
+               <state-transfer enabled="false" />
+               <cluster-loader remote-timeout="60000" />
+            </distributed-cache>
+         </cache-container>
+         <cache-container name="security">
+         </cache-container>
+      </replacement>
+   </supplement>
+   <supplement name="fcs-local">
+      <replacement placeholder="@@default-cache-container@@" attributeValue="local" />
+      <replacement placeholder="CACHE-CONTAINERS">
+         <cache-container name="local" default-cache="default">
+            <local-cache name="default" start="EAGER">
+               <locking isolation="NONE" acquire-timeout="30000" concurrency-level="1000" striping="false" />
+               <transaction mode="NONE" />
+               <eviction strategy="LRU" max-entries="1000" />
+               <file-store passivation="true" path="dc" purge="true" shared="false" />
+            </local-cache>
+            <local-cache name="memcachedCache" start="EAGER">
+               <locking isolation="NONE" acquire-timeout="30000" concurrency-level="1000" striping="false" />
+               <transaction mode="NONE" />
+               <file-store passivation="false" path="mc" purge="true" shared="false" />
+            </local-cache>
+            <local-cache name="namedCache" start="EAGER">
+               <expiration lifespan="2000" max-idle="1000" />
+               <file-store passivation="false" path="nc" purge="true" shared="false">
+                  <write-behind flush-lock-timeout="1" modification-queue-size="1024" shutdown-timeout="25000" thread-pool-size="1" />
+               </file-store>
+            </local-cache>
+         </cache-container>
+         <cache-container name="security">
+         </cache-container>
+      </replacement>
+   </supplement>
+   <supplement name="leveldb-cs-local">
+      <replacement placeholder="@@default-cache-container@@" attributeValue="local" />
+      <replacement placeholder="CACHE-CONTAINERS">
+         <cache-container name="local" default-cache="default">
+            <local-cache name="default" start="EAGER">
+               <locking isolation="NONE" acquire-timeout="30000" concurrency-level="1000" striping="false" />
+               <transaction mode="NONE" />
+               <eviction strategy="LRU" max-entries="1000" />
+               <leveldb-store passivation="true" path="level-dc" purge="true" shared="false" />
+            </local-cache>
+            <local-cache name="memcachedCache" start="EAGER">
+               <locking isolation="NONE" acquire-timeout="30000" concurrency-level="1000" striping="false" />
+               <transaction mode="NONE" />
+               <leveldb-store passivation="false" path="level-mc" purge="true" shared="false">
+                  <expiration path="leveldb-mc-expired"/>
+               </leveldb-store>
+            </local-cache>
+            <local-cache name="namedCache" start="EAGER">
+               <expiration lifespan="2000" max-idle="1000" />
+               <leveldb-store path="leveldb-nc" block-size="1024" cache-size="50000" clear-threshold="100000">
+                  <expiration path="leveldb-nc-expired" queue-size="2000"/>
+                  <compression type="SNAPPY"/>
+                  <implementation type="JAVA"/>
+               </leveldb-store>
+            </local-cache>
+         </cache-container>
+         <cache-container name="security">
+         </cache-container>
+      </replacement>
+   </supplement>
+   <supplement name="hotrod-rolling-upgrade">
+      <replacement placeholder="@@default-cache-container@@" attributeValue="local" />
+      <replacement placeholder="CACHE-CONTAINERS">
+         <cache-container name="local" default-cache="default">
+            <local-cache name="default" start="EAGER">
+               <locking isolation="NONE" acquire-timeout="30000" concurrency-level="1000" striping="false" />
+               <transaction mode="NONE" />
+               <remote-store cache="default" socket-timeout="60000" tcp-no-delay="true" shared="true" hotrod-wrapping="true" purge="false" passivation="false">
+                  <remote-server outbound-socket-binding="remote-store-hotrod-server" />
+               </remote-store>
+            </local-cache>
+         </cache-container>
+         <cache-container name="security">
+         </cache-container>
+      </replacement>
+   </supplement>
+   <supplement name="jdbc-clustered">
+      <replacement placeholder="@@default-cache-container@@" attributeValue="clustered" />
+      <replacement placeholder="CACHE-CONTAINERS">
+         <cache-container name="clustered" default-cache="default" >
+            <transport executor="infinispan-transport" lock-timeout="60000" />
+            <distributed-cache name="default" mode="SYNC" segments="20" owners="2" remote-timeout="30000" start="EAGER">
+               <locking isolation="READ_COMMITTED" acquire-timeout="30000" concurrency-level="1000" striping="false" />
+               <transaction mode="NONE" />
+               <eviction strategy="LRU" max-entries="1000" />
+               <mixed-keyed-jdbc-store datasource="java:jboss/datasources/JdbcDS" passivation="true" preload="true" purge="false">
+                  <!-- property name="databaseType">H2</property -->
+                  <binary-keyed-table prefix="ISPN_MIX_BKT">
+                     <id-column name="id" type="VARCHAR" />
+                     <data-column name="datum" type="BINARY" />
+                     <timestamp-column name="version" type="BIGINT" />
+                  </binary-keyed-table>
+                  <string-keyed-table prefix="ISPN_MIX_STR">
+                     <id-column name="id" type="VARCHAR" />
+                     <data-column name="datum" type="BINARY" />
+                     <timestamp-column name="version" type="BIGINT" />
+                  </string-keyed-table>
+               </mixed-keyed-jdbc-store>
+            </distributed-cache>
+
+            <distributed-cache name="memcachedCache" mode="SYNC" segments="20" owners="2" remote-timeout="30000" start="EAGER">
+               <locking isolation="READ_COMMITTED" acquire-timeout="30000" concurrency-level="1000" striping="false" />
+               <transaction mode="NONE" />
+               <eviction strategy="LRU" max-entries="1000" />
+               <string-keyed-jdbc-store datasource="java:jboss/datasources/JdbcDS" passivation="true" preload="false" purge="false" shared="false">
+                  <!-- property name="databaseType">H2</property -->
+                  <string-keyed-table prefix="ISPN_MC_SK">
+                     <id-column name="id" type="VARCHAR" />
+                     <data-column name="datum" type="BINARY" />
+                     <timestamp-column name="version" type="BIGINT" />
+                  </string-keyed-table>
+                  <write-behind flush-lock-timeout="1" modification-queue-size="1024" shutdown-timeout="25000" thread-pool-size="1" />
+               </string-keyed-jdbc-store>
+            </distributed-cache>
+
+            <distributed-cache name="namedCache" mode="SYNC" start="EAGER">
+               <expiration lifespan="2000" max-idle="1000" />
+               <binary-keyed-jdbc-store datasource="java:jboss/datasources/JdbcDS" passivation="false" preload="true" purge="false" shared="false">
+                  <!-- property name="databaseType">H2</property -->
+                  <binary-keyed-table prefix="ISPN_NC_BK">
+                     <id-column name="id" type="VARCHAR" />
+                     <data-column name="datum" type="BINARY" />
+                     <timestamp-column name="version" type="BIGINT" />
+                  </binary-keyed-table>
+               </binary-keyed-jdbc-store>
+            </distributed-cache>
+         </cache-container>
+         <cache-container name="security">
+         </cache-container>
+      </replacement>
+   </supplement>
+   <supplement name="rcs-local">
+      <replacement placeholder="@@default-cache-container@@" attributeValue="local" />
+      <replacement placeholder="CACHE-CONTAINERS">
+         <cache-container name="local" default-cache="default">
+            <local-cache name="default" start="EAGER">
+               <locking isolation="NONE" acquire-timeout="30000" concurrency-level="1000" striping="false" />
+               <transaction mode="NONE" />
+               <eviction strategy="LRU" max-entries="1000" />
+               <remote-store cache="default" socket-timeout="60000" tcp-no-delay="true" passivation="true">
+                  <remote-server outbound-socket-binding="remote-store-hotrod-server" />
+               </remote-store>
+            </local-cache>
+            <local-cache name="memcachedCache" start="EAGER">
+               <locking isolation="NONE" acquire-timeout="30000" concurrency-level="1000" striping="false" />
+               <transaction mode="NONE" />
+               <eviction strategy="LIRS" max-entries="1000" />
+               <remote-store cache="memcachedCache" socket-timeout="60000" tcp-no-delay="true" passivation="true">
+                  <remote-server outbound-socket-binding="remote-store-hotrod-server" />
+               </remote-store>
+            </local-cache>
+            <local-cache name="namedCache" start="EAGER">
+               <expiration lifespan="2000" max-idle="1000" />
+               <remote-store cache="namedCache" socket-timeout="60000" tcp-no-delay="true" passivation="false">
+                  <remote-server outbound-socket-binding="remote-store-hotrod-server" />
+               </remote-store>
+            </local-cache>
+         </cache-container>
+         <cache-container name="security">
+         </cache-container>
+      </replacement>
+   </supplement>
+   <supplement name="rest-auth">
+      <replacement placeholder="@@default-cache-container@@" attributeValue="local" />
+      <replacement placeholder="CACHE-CONTAINERS">
+         <cache-container name="local" default-cache="default">
+            <local-cache name="default" start="EAGER">
+               <locking isolation="NONE" acquire-timeout="30000" concurrency-level="1000" striping="false" />
+               <transaction mode="NONE" />
+               <eviction strategy="LRU" max-entries="1000" />
+            </local-cache>
+            <local-cache name="namedCache" start="EAGER">
+               <expiration lifespan="2000" max-idle="1000" />
+            </local-cache>
+         </cache-container>
+         <cache-container name="security">
+         </cache-container>
+      </replacement>
+   </supplement>
+   <supplement name="rest-rolling-upgrade">
+      <replacement placeholder="@@default-cache-container@@" attributeValue="local" />
+      <replacement placeholder="CACHE-CONTAINERS">
+         <cache-container name="local" default-cache="default">
+            <local-cache name="default" start="EAGER">
+               <locking isolation="NONE" acquire-timeout="30000" concurrency-level="1000" striping="false" />
+               <transaction mode="NONE" />
+               <rest-store path="/rest/default" shared="true" purge="false" passivation="false">
+                  <connection-pool connection-timeout="60000" socket-timeout="60000" tcp-no-delay="true" max-connections-per-host="4" max-total-connections="20" />
+                  <remote-server outbound-socket-binding="remote-store-rest-server" />
+               </rest-store>
+               <compatibility enabled="true" />
+            </local-cache>
+         </cache-container>
+         <cache-container name="security">
+         </cache-container>
+      </replacement>
+   </supplement>
+   <supplement name="xsite">
+      <replacement placeholder="@@default-cache-container@@" attributeValue="clustered" />
+      <replacement placeholder="CACHE-CONTAINERS">
+         <cache-container name="clustered" default-cache="default" >
+            <transport executor="infinispan-transport" lock-timeout="60000" cluster="LON" stack="udp"/>
+            <distributed-cache name="default" mode="SYNC" segments="20" owners="2" remote-timeout="30000" start="EAGER">
+               <locking isolation="READ_COMMITTED" acquire-timeout="30000" concurrency-level="1000" striping="false" />
+               <transaction mode="NONE" />
+               <backups>
+                  <backup site="NYC" strategy="SYNC" />
+                  <backup site="SFO" strategy="ASYNC" />
+               </backups>
+            </distributed-cache>
+
+            <distributed-cache name="memcachedCache" mode="SYNC" segments="20" owners="2" remote-timeout="30000" start="EAGER">
+               <locking isolation="READ_COMMITTED" acquire-timeout="30000" concurrency-level="1000" striping="false" />
+               <transaction mode="NONE" />
+               <backups>
+                  <backup site="NYC" strategy="SYNC" />
+                  <backup site="SFO" strategy="ASYNC" />
+               </backups>
+            </distributed-cache>
+
+            <distributed-cache name="namedCache" mode="SYNC" start="EAGER">
+               <expiration lifespan="2000" max-idle="1000" />
+               <backups>
+                  <backup site="NYC" strategy="SYNC" />
+                  <backup site="SFO" strategy="ASYNC" />
+               </backups>
+            </distributed-cache>
+         </cache-container>
+         <cache-container name="security">
+         </cache-container>
+      </replacement>
+   </supplement>
+   <supplement name="compatibility-mode">
+      <replacement placeholder="@@default-cache-container@@" attributeValue="local" />
+      <replacement placeholder="CACHE-CONTAINERS">
+         <cache-container name="local" default-cache="default">
+            <local-cache name="default" start="EAGER">
+               <locking isolation="NONE" acquire-timeout="30000" concurrency-level="1000" striping="false" />
+               <transaction mode="NONE" />
+               <compatibility enabled="true" />
+            </local-cache>
+         </cache-container>
+         <cache-container name="security">
+         </cache-container>
+      </replacement>
+   </supplement>
+   <outbound-socket-binding name="remote-store-hotrod-server">
+      <remote-destination host="remote-host" port="11222" />
+   </outbound-socket-binding>
+   <outbound-socket-binding name="remote-store-rest-server">
+      <remote-destination host="remote-host" port="8080" />
+   </outbound-socket-binding>
+</config>

@@ -1,0 +1,76 @@
+<!--
+  ~ /*
+  ~ * JBoss, Home of Professional Open Source.
+  ~ * Copyright 2013, Red Hat, Inc., and individual contributors
+  ~ * as indicated by the @author tags. See the copyright.txt file in the
+  ~ * distribution for a full listing of individual contributors.
+  ~ *
+  ~ * This is free software; you can redistribute it and/or modify it
+  ~ * under the terms of the GNU Lesser General Public License as
+  ~ * published by the Free Software Foundation; either version 2.1 of
+  ~ * the License, or (at your option) any later version.
+  ~ *
+  ~ * This software is distributed in the hope that it will be useful,
+  ~ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+  ~ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+  ~ * Lesser General Public License for more details.
+  ~ *
+  ~ * You should have received a copy of the GNU Lesser General Public
+  ~ * License along with this software; if not, write to the Free
+  ~ * Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
+  ~ * 02110-1301 USA, or see the FSF site: http://www.fsf.org.
+  ~ */
+  -->
+
+<subsystem xmlns="urn:jboss:domain:security:1.2">
+    <security-domains>
+        <security-domain name="other" cache-type="default">
+            <authentication>
+                <login-module code="UsersRoles" flag="${prop.flag:required}">
+                    <module-option name="env.option" value="${env.value:myvalue}"/>
+                </login-module>
+            </authentication>
+            <jsse keystore-password="${keystore-password:changeit}"
+                  keystore-type="${keystore-type:JKS}"
+                  keystore-url="${keystore-url:../standalone/configuration/keystores/clientcert.jks}"
+                  keystore-provider="${keystore-provider:com.misc.provider}"
+                  keystore-provider-argument="${keystore-provider-argument:true}"
+                  key-manager-factory-algorithm="${keystore-manager-factory-algorithm:xyz}"
+                  key-manager-factory-provider="${keystore-manager-factory-provider:xyz}"
+                  truststore-password="${truststore-password:rmi+ssl}"
+                  truststore-type="${truststore-type:JKS}"
+                  truststore-url="${truststore-url:../standalone/configuration/keystores/tomcat.keystore}"
+                  truststore-provider="${truststore-provider:com.misc.provider}"
+                  truststore-provider-argument="${truststore-provider-argument:true}"
+                  trust-manager-factory-algorithm="${truststore-manager-factory-algorithm:xyz}"
+                  trust-manager-factory-provider="${truststore-manager-factory-provider:xyz}"
+                  client-alias="${client-alias:client-alias}"
+                  server-alias="${server-alias:server-alias}"
+                  service-auth-token="${service-auth-token:service-auth-token}"
+                  client-auth="${client-auth:client-auth}"
+                  cipher-suites="${cipher-suites:cipher-suites}"
+                  protocols="${protocols:protocols}"
+                    />
+        </security-domain>
+        <security-domain name="other2" cache-type="default">
+            <authentication>
+                <login-module code="Remoting" flag="${prop.flag-optional:optional}">
+                    <module-option name="password-stacking" value="useFirstPass"/>
+                </login-module>
+                <login-module code="RealmDirect" flag="${prop.flag:required}">
+                    <module-option name="password-stacking" value="useFirstPass"/>
+                </login-module>
+            </authentication>
+        </security-domain>
+        <security-domain name="jboss-web-policy" cache-type="default">
+            <authorization>
+                <policy-module code="Delegating" flag="${prop.flag:required}"/>
+            </authorization>
+        </security-domain>
+        <security-domain name="jboss-ejb-policy" cache-type="default">
+            <authorization>
+                <policy-module code="Delegating" flag="${prop.flag:required}"/>
+            </authorization>
+        </security-domain>
+    </security-domains>
+</subsystem>

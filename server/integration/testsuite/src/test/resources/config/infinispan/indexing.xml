@@ -1,0 +1,22 @@
+        <subsystem xmlns="urn:infinispan:server:core:6.0" >
+            <cache-container 
+                name="local"
+                default-cache="testcache">
+                <local-cache
+                    name="testcache"
+                    start="EAGER"
+                    batching="false"
+                    module="org.infinispan.remote-query.server">
+                    <transaction mode="NONE" />
+                    <indexing index="ALL">
+                        <property name="default.directory_provider">ram</property>
+                        <property name="lucene_version">LUCENE_CURRENT</property>
+                    </indexing>
+                </local-cache>
+                <local-cache name="memcachedCache" start="EAGER">
+                    <locking isolation="NONE" acquire-timeout="30000" concurrency-level="1000" striping="false"/>
+                    <transaction mode="NONE"/>
+                </local-cache>
+            </cache-container>
+            <cache-container name="security"/>
+        </subsystem>

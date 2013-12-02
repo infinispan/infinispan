@@ -1,0 +1,44 @@
+<subsystem xmlns="urn:infinispan:server:core:6.0" >
+    <cache-container name="clustered" default-cache="default">
+        <transport stack="udp" executor="infinispan-transport" lock-timeout="240000"/>
+        <distributed-cache
+                name="default"
+                start="EAGER"
+                mode="SYNC"
+                segments="1"
+                owners="2"
+                batching="false"
+                l1-lifespan="0"
+                remote-timeout="30000">
+            <locking
+                    isolation="READ_COMMITTED"
+                    acquire-timeout="30000"
+                    concurrency-level="1000"
+                    striping="false"/>
+            <transaction mode="NONE"/>
+            <state-transfer
+                    enabled="true"
+                    timeout="600000"/>
+        </distributed-cache>
+        <distributed-cache
+                name="memcachedCache"
+                start="EAGER"
+                mode="SYNC"
+                segments="1"
+                owners="2"
+                batching="false"
+                l1-lifespan="0"
+                remote-timeout="30000">
+            <locking
+                    isolation="READ_COMMITTED"
+                    acquire-timeout="30000"
+                    concurrency-level="1000"
+                    striping="false"/>
+            <transaction mode="NONE"/>
+            <state-transfer
+                    enabled="true"
+                    timeout="600000"/>
+        </distributed-cache>
+    </cache-container>
+    <cache-container name="security"/>
+</subsystem>

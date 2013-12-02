@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- ~ Copyright 2011 Red Hat, Inc. and/or its affiliates. ~ ~ This is free 
+   software; you can redistribute it and/or modify it ~ under the terms of the 
+   GNU Lesser General Public License as ~ published by the Free Software Foundation; 
+   either version 2.1 of ~ the License, or (at your option) any later version. 
+   ~ ~ This software is distributed in the hope that it will be useful, ~ but 
+   WITHOUT ANY WARRANTY; without even the implied warranty of ~ MERCHANTABILITY 
+   or FITNESS FOR A PARTICULAR PURPOSE. See the GNU ~ Lesser General Public 
+   License for more details. ~ ~ You should have received a copy of the GNU 
+   Lesser General Public ~ License along with this library; if not, write to 
+   the Free Software ~ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, 
+   MA ~ 02110-1301 USA -->
+<module xmlns="urn:jboss:module:1.1" name="org.infinispan.server.endpoint">
+   <main-class name="org.jboss.as.server.Main" />
+
+   <resources>
+      <!-- Insert resources here -->
+   </resources>
+
+   <dependencies>
+      <module name="javax.api" />
+      <module name="javax.servlet.api" />
+      <module name="javax.xml.bind.api" />
+      <module name="org.apache.xerces" services="import" />
+      <module name="org.infinispan" />
+      <module name="org.infinispan.persistence.jdbc" />
+      <module name="org.infinispan.persistence.remote" />
+      <module name="org.infinispan.server" />
+      <module name="org.infinispan.server.hotrod" />
+      <module name="org.infinispan.server.memcached" />
+      <module name="org.infinispan.server.rest" />
+      <module name="org.infinispan.server.websocket" />
+      <module name="org.jboss.netty" />
+      <module name="org.jboss.staxmapper" />
+      <module name="org.jboss.as.clustering.infinispan" />
+      <module name="org.jboss.as.controller" />
+      <module name="org.jboss.as.domain-management"/>
+      <module name="org.jboss.as.naming" />
+      <module name="org.jboss.as.server" export="true" />
+      <module name="org.jboss.as.network" />
+      <module name="org.jboss.as.security" />
+      <module name="org.jboss.as.web" />
+      <module name="org.jboss.msc" />
+      <module name="org.jboss.logging" />
+      <module name="org.jboss.marshalling" />
+      <module name="org.jboss.marshalling.river" services="import" />
+      <module name="org.jboss.resteasy.resteasy-jaxrs" services="import" />
+      <module name="org.jgroups" />
+      <module name="org.picketbox" />
+      <module name="javax.security.jacc.api"/>
+   </dependencies>
+</module>

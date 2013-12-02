@@ -1,0 +1,166 @@
+  <!--
+  ~ JBoss, Home of Professional Open Source.
+  ~ Copyright 2012, Red Hat, Inc., and individual contributors
+  ~ as indicated by the @author tags. See the copyright.txt file in the
+  ~ distribution for a full listing of individual contributors.
+  ~
+  ~ This is free software; you can redistribute it and/or modify it
+  ~ under the terms of the GNU Lesser General Public License as
+  ~ published by the Free Software Foundation; either version 2.1 of
+  ~ the License, or (at your option) any later version.
+  ~
+  ~ This software is distributed in the hope that it will be useful,
+  ~ but WITHOUT ANY WARRANTY; without even the implied warranty of
+  ~ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+  ~ Lesser General Public License for more details.
+  ~
+  ~ You should have received a copy of the GNU Lesser General Public
+  ~ License along with this software; if not, write to the Free
+  ~ Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
+  ~ 02110-1301 USA, or see the FSF site: http://www.fsf.org.
+  -->
+
+<project name="module-repository" basedir="." default="all">
+
+    <target name="generate-configs" description="Generate standard standalone configurations">
+    	<!-- make output file directory -->
+    	<mkdir dir="${generated.configs.standalone}"/>
+      <mkdir dir="${generated.configs.domain}"/>
+      <mkdir dir="${generated.configs.examples}"/>
+    	<delete>
+         <fileset dir="${generated.configs.standalone}">
+            <include name="**/*"/>
+         </fileset>
+         <fileset dir="${generated.configs.domain}">
+            <include name="**/*"/>
+         </fileset>
+         <fileset dir="${generated.configs.examples}">
+            <include name="**/*"/>
+         </fileset>
+    	</delete>
+    	
+    	<!--  See src/resources/configuration/ReadMe.txt for how the configuration assembly works -->
+    	
+    	<!-- Core configs -->
+      <generate-server-config 
+           paramTemplateFile="configuration/standalone/template.xml" 
+           paramSubsystemsFile="configuration/standalone/subsystems.xml"
+           paramOutputFile="${generated.configs.standalone}/standalone.xml"/>
+      <generate-server-config 
+           paramTemplateFile="configuration/standalone/template.xml" 
+           paramSubsystemsFile="configuration/standalone/subsystems-clustered.xml"
+           paramOutputFile="${generated.configs.standalone}/clustered.xml"/>
+       
+       <!-- Example configs -->
+       <generate-server-config
+           paramTemplateFile="configuration/standalone/template.xml"
+           paramSubsystemsFile="configuration/examples/subsystems-ccl-clustered.xml"
+           paramOutputFile="${generated.configs.examples}/clustered-ccl.xml"/>
+       <generate-server-config
+             paramTemplateFile="configuration/standalone/template.xml"
+             paramSubsystemsFile="configuration/examples/subsystems-fcs-local.xml"
+             paramOutputFile="${generated.configs.examples}/standalone-fcs-local.xml"/>
+       <generate-server-config
+             paramTemplateFile="configuration/standalone/template.xml"
+             paramSubsystemsFile="configuration/examples/subsystems-leveldb-cs-local.xml"
+             paramOutputFile="${generated.configs.examples}/standalone-leveldb-cs-local.xml"/>
+       <generate-server-config
+           paramTemplateFile="configuration/standalone/template.xml" 
+           paramSubsystemsFile="configuration/examples/subsystems-jdbc-clustered.xml"
+           paramOutputFile="${generated.configs.examples}/clustered-jdbc.xml"/>
+       <generate-server-config 
+           paramTemplateFile="configuration/standalone/template.xml" 
+           paramSubsystemsFile="configuration/examples/subsystems-rcs-local.xml"
+           paramOutputFile="${generated.configs.examples}/standalone-rcs-local.xml"/>
+           <generate-server-config 
+           paramTemplateFile="configuration/standalone/template.xml" 
+           paramSubsystemsFile="configuration/examples/subsystems-hotrod-multiple.xml"
+           paramOutputFile="${generated.configs.examples}/standalone-hotrod-multiple.xml"/>
+       <generate-server-config 
+           paramTemplateFile="configuration/standalone/template.xml" 
+           paramSubsystemsFile="configuration/examples/subsystems-hotrod-rolling-upgrade.xml"
+           paramOutputFile="${generated.configs.examples}/standalone-hotrod-rolling-upgrade.xml"/>
+       <generate-server-config 
+           paramTemplateFile="configuration/examples/template-ssl.xml" 
+           paramSubsystemsFile="configuration/examples/subsystems-hotrod-ssl.xml"
+           paramOutputFile="${generated.configs.examples}/standalone-hotrod-ssl.xml"/>
+       <generate-server-config 
+           paramTemplateFile="configuration/standalone/template.xml" 
+           paramSubsystemsFile="configuration/examples/subsystems-storage-only.xml"
+           paramOutputFile="${generated.configs.examples}/clustered-storage-only.xml"/>
+       <generate-server-config 
+           paramTemplateFile="configuration/standalone/template.xml" 
+           paramSubsystemsFile="configuration/examples/subsystems-topology.xml"
+           paramOutputFile="${generated.configs.examples}/clustered-topology.xml"/>
+       <generate-server-config 
+           paramTemplateFile="configuration/standalone/template.xml" 
+           paramSubsystemsFile="configuration/examples/subsystems-two-nodes.xml"
+           paramOutputFile="${generated.configs.examples}/clustered-two-nodes.xml"/>
+       <generate-server-config 
+           paramTemplateFile="configuration/standalone/template.xml" 
+           paramSubsystemsFile="configuration/examples/subsystems-xsite.xml"
+           paramOutputFile="${generated.configs.examples}/clustered-xsite.xml"/>
+       <generate-server-config
+           paramTemplateFile="configuration/standalone/template.xml"
+           paramSubsystemsFile="configuration/examples/subsystems-compatibility-mode.xml"
+           paramOutputFile="${generated.configs.examples}/standalone-compatibility-mode.xml"/>
+       <generate-server-config 
+           paramTemplateFile="configuration/standalone/template.xml" 
+           paramSubsystemsFile="configuration/examples/subsystems-rest-rolling-upgrade.xml"
+           paramOutputFile="${generated.configs.examples}/standalone-rest-rolling-upgrade.xml"/>
+    </target>
+
+
+    <target name="all" depends="generate-configs"/>
+
+	<macrodef name="generate-server-config">
+      <attribute name="paramTemplateFile"/>
+      <attribute name="paramSubsystemsFile"/>
+      <attribute name="paramOutputFile"/> 
+
+    	<sequential>
+    		<generate-configuration 
+    			paramTemplateFile="@{paramTemplateFile}"
+    		   paramSubsystemsFile="@{paramSubsystemsFile}"
+    		   paramOutputFile="@{paramOutputFile}"
+    		   className="StandaloneMain"/>
+      </sequential>
+	 </macrodef>
+
+   <macrodef name="generate-domain-config">
+      <attribute name="paramTemplateFile"/>
+      <attribute name="paramSubsystemsFile"/>
+      <attribute name="paramOutputFile"/> 
+
+      <sequential>
+         <generate-configuration 
+            paramTemplateFile="@{paramTemplateFile}"
+            paramSubsystemsFile="@{paramSubsystemsFile}"
+            paramOutputFile="@{paramOutputFile}"
+            className="DomainMain"/>
+      </sequential>
+    </macrodef>
+
+	<macrodef name="generate-configuration">
+      <attribute name="paramTemplateFile"/>
+      <attribute name="paramSubsystemsFile"/>
+      <attribute name="paramOutputFile"/> 
+		<attribute name="className"/>
+
+      <sequential>
+         <echo>Merging standalone @{paramTemplateFile} and @{paramSubsystemsFile} into @{paramOutputFile}, using @{className}</echo>
+         
+         <java classname="org.jboss.as.config.assembly.@{className}">
+             <classpath>
+                    <path refid="maven.compile.classpath"/>
+             </classpath>
+            <!-- baseDir -->
+            
+            <arg value="${generated.configs.src.dir}"/>
+            <arg value="${generated.configs.src.dir}/@{paramTemplateFile}"/>
+            <arg value="${generated.configs.src.dir}/@{paramSubsystemsFile}"/>
+            <arg value="@{paramOutputFile}"/>
+         </java>
+      </sequential>
+	</macrodef>
+</project>

@@ -1,0 +1,39 @@
+        <subsystem xmlns="urn:infinispan:server:core:6.0" >
+            <cache-container 
+                name="local"
+                default-cache="testcache">
+                <local-cache
+                    name="testcache"
+                    start="EAGER"
+                    batching="false"
+                    >
+                    <transaction mode="NONE" />
+                    <leveldb-store path="leveldb" block-size="1024"
+                        cache-size="50000" clear-threshold="100000" passivation="false"
+                        purge="false" >
+                        <expiration path="leveldb-expired" queue-size="2000" />
+                        <compression type="${leveldb.compression}" />
+                        <implementation type="${leveldb.impl}" />
+                    </leveldb-store>
+                </local-cache>
+                <!-- to get a memcached module to work, there needs to be a named cache called "memcachedCache" -->
+                <local-cache
+                    name="memcachedCache"
+                    start="EAGER"
+                    batching="false"
+                    >
+                    <transaction mode="NONE" />
+                    <leveldb-store path="leveldb-mc" block-size="1024"
+                        cache-size="50000" clear-threshold="100000" passivation="false"
+                        purge="false" >
+                        <expiration path="leveldb-expired-mc" queue-size="2000" />
+                        <compression type="${leveldb.compression}" />
+                        <implementation type="${leveldb.impl}" />
+                    </leveldb-store>
+                </local-cache>
+                <local-cache
+                    name="namedCache"
+                    start="EAGER" />
+            </cache-container>
+            <cache-container name="security"/>
+        </subsystem>

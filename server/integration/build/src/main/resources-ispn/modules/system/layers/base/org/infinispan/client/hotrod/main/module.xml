@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<module xmlns="urn:jboss:module:1.1" name="org.infinispan.client.hotrod">
+    <properties>
+        <property name="jboss.api" value="private"/>
+    </properties>
+
+    <resources>
+        <!-- Insert resources here -->
+    </resources>
+
+    <dependencies>
+        <module name="javax.api"/>
+        <module name="org.apache.commons.pool"/>
+        <module name="org.infinispan"/>
+        <module name="org.infinispan.protostream"/>
+        <module name="org.infinispan.remote-query.client"/>
+        <module name="org.jboss.logging"/>
+    </dependencies>
+</module>
