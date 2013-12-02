@@ -6,6 +6,7 @@ import org.infinispan.manager.EmbeddedCacheManager
 import org.infinispan.server.memcached.configuration.MemcachedServerConfiguration
 import org.infinispan.AdvancedCache
 import org.infinispan.configuration.cache.ConfigurationBuilder
+import org.infinispan.server.memcached.logging.Log
 
 /**
  * Memcached server defining its decoder/encoder settings. In fact, Memcached does not use an encoder since there's
@@ -14,7 +15,7 @@ import org.infinispan.configuration.cache.ConfigurationBuilder
  * @author Galder Zamarreño
  * @since 4.1
  */
-class MemcachedServer extends AbstractProtocolServer("Memcached") {
+class MemcachedServer extends AbstractProtocolServer("Memcached") with Log {
    type SuitableConfiguration = MemcachedServerConfiguration
 
    protected lazy val scheduler = Executors.newScheduledThreadPool(1)
@@ -26,7 +27,11 @@ class MemcachedServer extends AbstractProtocolServer("Memcached") {
          cacheManager.defineConfiguration(configuration.defaultCacheName,
             new ConfigurationBuilder().read(cacheManager.getDefaultCacheConfiguration).build())
       }
+      val expConfig = cacheManager.getCacheConfiguration(configuration.defaultCacheName).expiration
+      if (expConfig.lifespan >= 0 || expConfig.maxIdle >= 0)
+        throw log.invalidExpiration(configuration.defaultCacheName)
       memcachedCache = cacheManager.getCache[String, Array[Byte]](configuration.defaultCacheName).getAdvancedCache
+
       super.startInternal(configuration, cacheManager)
    }
 

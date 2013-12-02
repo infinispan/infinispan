@@ -1,6 +1,8 @@
 package org.infinispan.server.memcached.logging;
 
-import org.jboss.logging.MessageLogger;
+import org.infinispan.commons.CacheConfigurationException;
+import org.jboss.logging.annotations.Message;
+import org.jboss.logging.annotations.MessageLogger;
 
 /**
  * Log abstraction for the Memcached server module. For this module, message ids
@@ -11,4 +13,6 @@ import org.jboss.logging.MessageLogger;
  */
 @MessageLogger(projectCode = "ISPN")
 public interface JavaLog extends org.infinispan.util.logging.Log {
+   @Message(value = "Cache '%s' has expiration enabled which violates the Memcached protocol", id = 11001)
+   CacheConfigurationException invalidExpiration(String cacheName);
 }
