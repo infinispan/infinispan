@@ -1,7 +1,5 @@
 package org.infinispan.util.concurrent.locks.containers;
 
-import org.infinispan.util.concurrent.locks.OwnableReentrantLock;
-import org.infinispan.util.concurrent.locks.VisibleOwnerReentrantLock;
 import org.infinispan.util.concurrent.locks.VisibleOwnerRefCountingReentrantLock;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;

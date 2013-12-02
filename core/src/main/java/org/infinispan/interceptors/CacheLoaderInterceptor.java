@@ -54,7 +54,7 @@ public class CacheLoaderInterceptor extends JmxStatsCommandInterceptor {
    protected PersistenceManager persistenceManager;
    protected CacheNotifier notifier;
    protected volatile boolean enabled = true;
-   private EntryFactory entryFactory;
+   protected EntryFactory entryFactory;
    private TimeService timeService;
    private InternalEntryFactory iceFactory;
 
