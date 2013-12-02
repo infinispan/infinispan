@@ -10,6 +10,6 @@ import org.infinispan.util.logging.LogFactory
  */
 trait Log extends org.infinispan.server.core.logging.Log {
 
-   private lazy val log: JavaLog = LogFactory.getLog(getClass, classOf[JavaLog])
+   private[memcached] lazy val log: JavaLog = LogFactory.getLog(getClass, classOf[JavaLog])
 
 }
