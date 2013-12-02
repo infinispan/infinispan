@@ -1,0 +1,24 @@
+# Infinispan Server #
+
+1) Check out the source code.
+2) Check versions/pom.xml for the versions of the external components you want to include (AS7, Infinispan).
+   Make sure you have the artifacts for those components available in your Maven repository (local or remote).
+
+3) Build Infinispan Server:
+
+    $ mvn clean package
+
+3) Run Infinispan Server:
+
+    $ cd build/target/infinispan-server-<version>
+    $ ./bin/standalone.sh
+
+    At this point you should be able to connect to:
+
+      127.0.0.1:11222 (Hot Rod server)
+      127.0.0.1:11211 (Memcached)
+      http://127.0.0.1:8080/ (REST server)
+
+HOW TO UPGRADE AS 7.x
+=====================
+JBoss AS 7.x is included in the build via a BOM, referenced in versions/pom.xml and the modules. 

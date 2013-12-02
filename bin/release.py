@@ -109,7 +109,7 @@ def patch(pom_file, version):
   tags.append(get_properties_version_tag(tree))
   
   for tag in tags:
-    if tag != None:
+    if tag != None and "-SNAPSHOT" in tag.text:
       if settings['verbose']:
         prettyprint("%s is %s.  Setting to %s" % (str(tag), tag.text, version), Levels.DEBUG)
       tag.text=version
@@ -201,10 +201,10 @@ def upload_artifacts(base_dir, version):
   prettyprint("Copying from %s to %s" % (dist_dir, version), Levels.INFO)
   for item in os.listdir(dist_dir):
     full_name = "%s/%s" % (dist_dir, item)
-    if item.strip().lower().endswith(".zip") and os.path.isfile(full_name):      
+    if item.strip().lower().endswith(".zip") and os.path.isfile(full_name):
       shutil.copy2(full_name, version)
   uploader.upload_rsync(version, "infinispan@filemgmt.jboss.org:/downloads_htdocs/infinispan")
-  shutil.rmtree(".tmp", ignore_errors = True)  
+  shutil.rmtree(".tmp", ignore_errors = True)
 
 def unzip_archive(version):
   os.chdir("./target/distribution")
@@ -349,6 +349,7 @@ def release():
       prettyprint("Step 7: Uploading Artifacts", Levels.INFO)
       do_task(upload_artifacts, [base_dir, version], async_processes)
       do_task(upload_artifacts, [base_dir + "/as-modules", version], async_processes)
+      do_task(upload_artifacts, [base_dir + "/server/integration", version], async_processes)
       prettyprint("Step 7: Complete", Levels.INFO)
 
       prettyprint("Step 8: Uploading to configuration XML schema", Levels.INFO)

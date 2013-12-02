@@ -1,0 +1,433 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<project xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd" xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+   <modelVersion>4.0.0</modelVersion>
+
+   <parent>
+      <groupId>org.jboss</groupId>
+      <artifactId>jboss-parent</artifactId>
+      <version>10</version>
+      <relativePath />
+   </parent>
+
+   <groupId>org.infinispan.server</groupId>
+   <artifactId>infinispan-server-versions</artifactId>
+   <version>6.0.1-SNAPSHOT</version>
+   <packaging>pom</packaging>
+
+   <name>Infinispan Server - BOM</name>
+   <description>Infinispan Server - BOM</description>
+
+   <properties>
+      
+      <product.version>${project.version}</product.version>
+      <product.name>infinispan-server</product.name>
+
+      
+      <version.ant-contrib>1.0b3</version.ant-contrib>
+      <version.com.github.relaxng.relaxngDatatype>2011.1</version.com.github.relaxng.relaxngDatatype>
+      <version.commons.logging>1.1.1</version.commons.logging>
+      <version.net.jcip.annotations>1.0</version.net.jcip.annotations>
+      <version.org.jboss.as>7.2.0.Final</version.org.jboss.as>
+      <version.org.jboss.jandex>1.0.3.Final</version.org.jboss.jandex>
+      <version.org.jboss.jbossts.jbossjts>4.16.2.Final</version.org.jboss.jbossts.jbossjts>
+      <version.junit>4.11</version.junit>
+      <version.org.infinispan>${project.version}</version.org.infinispan>
+      <version.org.infinispan.arquillian.container>1.1.0.Alpha1</version.org.infinispan.arquillian.container>
+      <version.org.iq80.leveldb>0.6</version.org.iq80.leveldb>
+      <version.org.slf4j>1.7.2</version.org.slf4j>
+      <version.org.xerial.snappy>1.0.5</version.org.xerial.snappy>
+      <version.xml.maven.plugin>1.0</version.xml.maven.plugin>
+      <version.org.infinispan.protostream>1.0.0.CR1</version.org.infinispan.protostream>
+      <version.http.client>4.3</version.http.client>
+      <version.org.picketbox>4.0.17.SP2</version.org.picketbox>
+      <relocations />
+
+   </properties>
+
+   <dependencyManagement>
+      <dependencies>
+         <dependency>
+            <groupId>org.infinispan</groupId>
+            <artifactId>infinispan-bom</artifactId>
+            <version>${project.version}</version>
+            <type>pom</type>
+            <scope>import</scope>
+         </dependency>
+
+         <dependency>
+            <groupId>com.github.relaxng</groupId>
+            <artifactId>relaxngDatatype</artifactId>
+            <version>${version.com.github.relaxng.relaxngDatatype}</version>
+         </dependency>
+
+         <dependency>
+            <groupId>org.jboss.marshalling</groupId>
+            <artifactId>jboss-marshalling-parent</artifactId>
+            <version>${version.org.jboss.marshalling.jboss-marshalling}</version>
+            <type>pom</type>
+         </dependency>
+
+         <dependency>
+            <groupId>${project.groupId}</groupId>
+            <artifactId>infinispan-server-jgroups</artifactId>
+            <version>${project.version}</version>
+         </dependency>
+
+         <dependency>
+            <groupId>${project.groupId}</groupId>
+            <artifactId>infinispan-server-infinispan</artifactId>
+            <version>${project.version}</version>
+         </dependency>
+
+         <dependency>
+            <groupId>${project.groupId}</groupId>
+            <artifactId>infinispan-server-security</artifactId>
+            <version>${project.version}</version>
+         </dependency>
+
+         <dependency>
+            <groupId>org.jboss.jbossts</groupId>
+            <artifactId>jbossjta</artifactId>
+            <version>${version.org.jboss.jbossts.jbossjts}</version>
+         </dependency>
+
+         <dependency>
+            <groupId>${project.groupId}</groupId>
+            <artifactId>infinispan-server-common</artifactId>
+            <version>${project.version}</version>
+         </dependency>
+
+         <dependency>
+            <groupId>${project.groupId}</groupId>
+            <artifactId>infinispan-server-endpoints</artifactId>
+            <version>${project.version}</version>
+         </dependency>
+
+         <dependency>
+            <groupId>commons-logging</groupId>
+            <artifactId>commons-logging</artifactId>
+            <version>${version.commons.logging}</version>
+         </dependency>
+
+         <dependency>
+            <groupId>net.jcip</groupId>
+            <artifactId>jcip-annotations</artifactId>
+            <version>${version.net.jcip.annotations}</version>
+         </dependency>
+
+         <dependency>
+            <groupId>org.jboss.as</groupId>
+            <artifactId>jboss-as-parent</artifactId>
+            <version>${version.org.jboss.as}</version>
+            <type>pom</type>
+            <scope>import</scope>
+         </dependency>
+
+         <dependency>
+            <groupId>org.jboss.as</groupId>
+            <artifactId>jboss-as-clustering-common</artifactId>
+            <version>${version.org.jboss.as}</version>
+            <scope>test</scope>
+            <classifier>tests</classifier>
+         </dependency>
+
+         <dependency>
+            <groupId>org.jboss.logmanager</groupId>
+            <artifactId>jboss-logmanager-log4j</artifactId>
+            <version>${version.org.jboss.logmanager.jboss-logmanager-log4j}</version>
+         </dependency>
+
+         <dependency>
+            <groupId>org.infinispan</groupId>
+            <artifactId>infinispan</artifactId>
+            <version>${version.org.infinispan}</version>
+            <classifier>javadoc</classifier>
+         </dependency>
+
+         <dependency>
+            <groupId>org.infinispan</groupId>
+            <artifactId>infinispan-parent</artifactId>
+            <version>${version.org.infinispan}</version>
+            <type>pom</type>
+         </dependency>
+
+         <dependency>
+            <groupId>org.infinispan</groupId>
+            <artifactId>infinispan-core</artifactId>
+            <version>${version.org.infinispan}</version>
+         </dependency>
+
+         <dependency>
+            <groupId>org.infinispan</groupId>
+            <artifactId>infinispan-adaptor52x</artifactId>
+            <version>${version.org.infinispan}</version>
+         </dependency>
+
+         <dependency>
+            <groupId>org.infinispan</groupId>
+            <artifactId>infinispan-cachestore-parent</artifactId>
+            <version>${version.org.infinispan}</version>
+            <type>pom</type>
+         </dependency>
+
+         <dependency>
+            <groupId>org.infinispan</groupId>
+            <artifactId>infinispan-cachestore-remote</artifactId>
+            <version>${version.org.infinispan}</version>
+         </dependency>
+
+         <dependency>
+            <groupId>org.infinispan</groupId>
+            <artifactId>infinispan-cachestore-rest</artifactId>
+            <version>${version.org.infinispan}</version>
+         </dependency>
+
+         <dependency>
+            <groupId>org.infinispan</groupId>
+            <artifactId>infinispan-cachestore-jdbc</artifactId>
+            <version>${version.org.infinispan}</version>
+         </dependency>
+
+         <dependency>
+            <groupId>org.infinispan</groupId>
+            <artifactId>infinispan-cachestore-leveldb</artifactId>
+            <version>${version.org.infinispan}</version>
+         </dependency>
+
+         <dependency>
+            <groupId>org.infinispan</groupId>
+            <artifactId>infinispan-client-hotrod</artifactId>
+            <version>${version.org.infinispan}</version>
+         </dependency>
+
+         <dependency>
+            <groupId>org.infinispan</groupId>
+            <artifactId>infinispan-client-hotrod</artifactId>
+            <classifier>javadoc</classifier>
+            <version>${version.org.infinispan}</version>
+         </dependency>
+
+         <dependency>
+            <groupId>org.infinispan</groupId>
+            <artifactId>infinispan-server-core</artifactId>
+            <version>${version.org.infinispan}</version>
+         </dependency>
+
+         <dependency>
+            <groupId>org.infinispan</groupId>
+            <artifactId>infinispan-server-hotrod</artifactId>
+            <version>${version.org.infinispan}</version>
+         </dependency>
+
+         <dependency>
+            <groupId>org.infinispan</groupId>
+            <artifactId>infinispan-server-memcached</artifactId>
+            <version>${version.org.infinispan}</version>
+         </dependency>
+
+         <dependency>
+            <groupId>org.infinispan</groupId>
+            <artifactId>infinispan-server-rest</artifactId>
+            <version>${version.org.infinispan}</version>
+            <classifier>classes</classifier>
+         </dependency>
+
+         <dependency>
+            <groupId>org.infinispan</groupId>
+            <artifactId>infinispan-server-websocket</artifactId>
+            <version>${version.org.infinispan}</version>
+         </dependency>
+
+         <dependency>
+            <groupId>org.infinispan</groupId>
+            <artifactId>infinispan-cli-server</artifactId>
+            <version>${version.org.infinispan}</version>
+         </dependency>
+
+         <dependency>
+            <groupId>org.infinispan</groupId>
+            <artifactId>infinispan-cli-client</artifactId>
+            <version>${version.org.infinispan}</version>
+         </dependency>
+
+         <dependency>
+            <groupId>org.sonatype.oss</groupId>
+            <artifactId>oss-parent</artifactId>
+            <version>${version.org.sonatype.oss.parent}</version>
+            <type>pom</type>
+         </dependency>
+
+         <dependency>
+            <groupId>junit</groupId>
+            <artifactId>junit</artifactId>
+            <version>${version.junit}</version>
+            <scope>test</scope>
+         </dependency>
+
+         <dependency>
+            <groupId>org.jboss.as</groupId>
+            <artifactId>jboss-as-arquillian-container-managed</artifactId>
+            <version>${version.org.jboss.as}</version>
+            <scope>test</scope>
+         </dependency>
+
+         <dependency>
+            <groupId>org.infinispan.arquillian.container</groupId>
+            <artifactId>infinispan-arquillian-container-managed</artifactId>
+            <version>${version.org.infinispan.arquillian.containern}</version>
+            <scope>test</scope>
+         </dependency>
+
+         <dependency>
+            <groupId>org.infinispan.arquillian.container</groupId>
+            <artifactId>infinispan-arquillian-impl</artifactId>
+            <version>${version.org.infinispan.arquillian.container}</version>
+            <scope>test</scope>
+         </dependency>
+
+         <dependency>
+            <groupId>org.slf4j</groupId>
+            <artifactId>jul-to-slf4j</artifactId>
+            <version>${version.org.slf4j}</version>
+            <scope>test</scope>
+         </dependency>
+
+         <dependency>
+            <groupId>org.slf4j</groupId>
+            <artifactId>jcl-over-slf4j</artifactId>
+            <version>${version.org.slf4j}</version>
+            <scope>test</scope>
+         </dependency>
+
+         <dependency>
+            <groupId>org.slf4j</groupId>
+            <artifactId>slf4j-log4j12</artifactId>
+            <version>${version.org.slf4j}</version>
+            <scope>test</scope>
+         </dependency>
+
+         <dependency>
+            <groupId>org.xerial.snappy</groupId>
+            <artifactId>snappy-java</artifactId>
+            <version>${version.org.xerial.snappy}</version>
+         </dependency>
+
+         <dependency>
+             <groupId>org.infinispan.protostream</groupId>
+             <artifactId>sample-domain-implementation</artifactId>
+             <version>${version.org.infinispan.protostream}</version>
+             <scope>test</scope>
+         </dependency>
+
+         <dependency>
+             <groupId>org.infinispan</groupId>
+             <artifactId>infinispan-query-dsl</artifactId>
+             <version>${version.org.infinispan}</version>
+             <scope>test</scope>
+         </dependency>
+
+         <dependency>
+             <groupId>org.infinispan</groupId>
+             <artifactId>infinispan-remote-query-client</artifactId>
+             <version>${version.org.infinispan}</version>
+         </dependency>
+
+         <dependency>
+            <groupId>org.iq80.leveldb</groupId>
+            <artifactId>leveldb</artifactId>
+            <version>${version.org.iq80.leveldb}</version>
+         </dependency>
+
+         <dependency>
+            <groupId>ant-contrib</groupId>
+            <artifactId>ant-contrib</artifactId>
+            <version>${version.ant-contrib}</version>
+            <scope>test</scope>
+         </dependency>
+
+         <dependency>
+            <groupId>org.apache.httpcomponents</groupId>
+            <artifactId>httpclient</artifactId>
+            <version>${version.http.client}</version>
+            <scope>test</scope>
+         </dependency>
+
+         <dependency>
+            <groupId>org.apache.httpcomponents</groupId>
+            <artifactId>httpcore</artifactId>
+            <version>${version.http.client}</version>
+            <scope>test</scope>
+         </dependency>
+
+         <dependency>
+            <groupId>org.picketbox</groupId>
+            <artifactId>jbosssx-bare</artifactId>
+            <version>${version.org.picketbox}</version>
+            <scope>test</scope>
+         </dependency>
+
+      </dependencies>
+
+   </dependencyManagement>
+
+   <build>
+      <pluginManagement>
+         <plugins>
+            <plugin>
+               <groupId>org.codehaus.mojo</groupId>
+               <artifactId>xml-maven-plugin</artifactId>
+               <version>${version.xml.maven.plugin}</version>
+            </plugin>
+         </plugins>
+      </pluginManagement>
+      <plugins>
+         <plugin>
+            <groupId>org.apache.maven.plugins</groupId>
+            <artifactId>maven-enforcer-plugin</artifactId>
+            <executions>
+               <execution>
+                  <id>enforce-java</id>
+                  <goals>
+                     <goal>enforce</goal>
+                  </goals>
+                  <configuration>
+                     <rules>
+                        <requireJavaVersion>
+                           <version>[1.7,)</version>
+                        </requireJavaVersion>
+                        <requireMavenVersion>
+                           <version>[3.0.3,)</version>
+                        </requireMavenVersion>
+                     </rules>
+                  </configuration>
+               </execution>
+            </executions>
+         </plugin>
+         <plugin>
+            <groupId>org.codehaus.mojo</groupId>
+            <artifactId>animal-sniffer-maven-plugin</artifactId>
+            <version>1.9</version>
+            <configuration>
+               <signature>
+                  <groupId>org.codehaus.mojo.signature</groupId>
+                  <artifactId>java16</artifactId>
+                  <version>1.0</version>
+               </signature>
+               <ignores>
+                  <ignore>sun.misc.Unsafe</ignore>
+                  <ignore>org.apache.lucene.store.IOContext</ignore>
+               </ignores>
+            </configuration>
+            <executions>
+               <execution>
+                  <phase>process-classes</phase>
+                  <goals>
+                     <goal>check</goal>
+                  </goals>
+               </execution>
+            </executions>
+         </plugin>
+      </plugins>
+   </build>
+
+</project>

@@ -1,0 +1,1 @@
+<socket-binding name="jgroups-udp" port="55200" multicast-address="234.99.54.15" multicast-port="45688"/>

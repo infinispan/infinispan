@@ -1,0 +1,130 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<!-- See src/resources/configuration/ReadMe.txt for how the configuration assembly works -->
+<config>
+   <extension-module>org.jboss.as.clustering.jgroups</extension-module>
+   <subsystem xmlns="urn:jboss:domain:jgroups:1.2" default-stack="${jboss.default.jgroups.stack:udp}">
+      <?JGROUPS-TRANSPORT?>
+   </subsystem>
+   
+   <supplement name="topology">
+      <replacement placeholder="JGROUPS-TRANSPORT">
+         <stack name="udp">
+            <transport type="UDP" socket-binding="jgroups-udp" site="${jboss.jgroups.topology.site:s1}" rack="${jboss.jgroups.topology.rack:r1}" machine="${jboss.jgroups.topology.machine:m1}" />
+            <protocol type="PING" />
+            <protocol type="MERGE2" />
+            <protocol type="FD_SOCK" socket-binding="jgroups-udp-fd" />
+            <protocol type="FD_ALL" />
+            <protocol type="pbcast.NAKACK" />
+            <protocol type="UNICAST2" />
+            <protocol type="pbcast.STABLE" />
+            <protocol type="pbcast.GMS" />
+            <protocol type="UFC" />
+            <protocol type="MFC" />
+            <protocol type="FRAG2" />
+            <protocol type="RSVP" />
+         </stack>
+         <stack name="tcp">
+            <transport type="TCP" socket-binding="jgroups-tcp" site="${jboss.jgroups.topology.site:s1}" rack="${jboss.jgroups.topology.rack:r1}" machine="${jboss.jgroups.topology.machine:m1}" />
+            <protocol type="MPING" socket-binding="jgroups-mping" />
+            <protocol type="MERGE2" />
+            <protocol type="FD_SOCK" socket-binding="jgroups-tcp-fd" />
+            <protocol type="FD" />
+            <protocol type="VERIFY_SUSPECT" />
+            <protocol type="pbcast.NAKACK">
+               <property name="use_mcast_xmit">false</property>
+            </protocol>
+            <protocol type="UNICAST2" />
+            <protocol type="pbcast.STABLE" />
+            <protocol type="pbcast.GMS" />
+            <protocol type="UFC" />
+            <protocol type="MFC" />
+            <protocol type="FRAG2" />
+            <protocol type="RSVP" />
+         </stack>
+      </replacement>
+   </supplement>
+   <supplement name="two-nodes">
+      <replacement placeholder="JGROUPS-TRANSPORT">
+         <stack name="udp">
+            <transport type="UDP" socket-binding="jgroups-udp" />
+            <protocol type="PING" />
+            <protocol type="MERGE2" />
+            <protocol type="FD_SOCK" socket-binding="jgroups-udp-fd" />
+            <protocol type="FD_ALL" />
+            <protocol type="pbcast.NAKACK" />
+            <protocol type="UNICAST" />
+            <protocol type="pbcast.STABLE" />
+            <protocol type="pbcast.GMS" />
+            <protocol type="UFC" />
+            <protocol type="MFC" />
+            <protocol type="FRAG2" />
+         </stack>
+         <stack name="tcp">
+            <transport type="TCP" socket-binding="jgroups-tcp" />
+            <protocol type="MPING" socket-binding="jgroups-mping" />
+            <protocol type="MERGE2" />
+            <protocol type="FD_SOCK" socket-binding="jgroups-tcp-fd" />
+            <protocol type="FD" />
+            <protocol type="VERIFY_SUSPECT" />
+            <protocol type="pbcast.NAKACK">
+               <property name="use_mcast_xmit">false</property>
+            </protocol>
+            <protocol type="UNICAST" />
+            <protocol type="pbcast.STABLE" />
+            <protocol type="pbcast.GMS" />
+            <protocol type="UFC" />
+            <protocol type="MFC" />
+            <protocol type="FRAG2" />
+         </stack>
+      </replacement>
+   </supplement>
+   <supplement name="xsite">
+      <replacement placeholder="JGROUPS-TRANSPORT">
+         <stack name="udp">
+            <transport type="UDP" socket-binding="jgroups-udp" />
+            <protocol type="PING" />
+            <protocol type="MERGE2" />
+            <protocol type="FD_SOCK" socket-binding="jgroups-udp-fd" />
+            <protocol type="FD_ALL" />
+            <protocol type="pbcast.NAKACK" />
+            <protocol type="UNICAST2" />
+            <protocol type="pbcast.STABLE" />
+            <protocol type="pbcast.GMS" />
+            <protocol type="UFC" />
+            <protocol type="MFC" />
+            <protocol type="FRAG2" />
+            <protocol type="RSVP" />
+            <relay site="LON">
+               <remote-site name="NYC" stack="tcp" cluster="global" />
+               <remote-site name="SFO" stack="tcp" cluster="global" />
+               <!-- property name="can_become_site_master">true</property>
+               <property name="max_site_masters">2</property -->
+            </relay>
+         </stack>
+         <stack name="tcp">
+            <transport type="TCP" socket-binding="jgroups-tcp" />
+            <protocol type="MPING" socket-binding="jgroups-mping" />
+            <protocol type="MERGE2" />
+            <protocol type="FD_SOCK" socket-binding="jgroups-tcp-fd" />
+            <protocol type="FD" />
+            <protocol type="VERIFY_SUSPECT" />
+            <protocol type="pbcast.NAKACK">
+               <property name="use_mcast_xmit">false</property>
+            </protocol>
+            <protocol type="UNICAST2" />
+            <protocol type="pbcast.STABLE" />
+            <protocol type="pbcast.GMS" />
+            <protocol type="UFC" />
+            <protocol type="MFC" />
+            <protocol type="FRAG2" />
+            <protocol type="RSVP" />
+         </stack>
+      </replacement>
+   </supplement>
+
+   <socket-binding name="jgroups-mping" port="0" multicast-address="${jboss.default.multicast.address:234.99.54.14}" multicast-port="45700" />
+   <socket-binding name="jgroups-tcp" port="7600" />
+   <socket-binding name="jgroups-tcp-fd" port="57600" />
+   <socket-binding name="jgroups-udp" port="55200" multicast-address="${jboss.default.multicast.address:234.99.54.14}" multicast-port="45688" />
+   <socket-binding name="jgroups-udp-fd" port="54200" />
+</config>

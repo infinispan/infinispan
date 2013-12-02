@@ -35,6 +35,8 @@
       <module>persistence/jdbc</module>
       <module>persistence/remote</module>
       <module>persistence/cli</module>
+      <module>persistence/leveldb</module>
+      <module>persistence/rest</module>
       <module>server</module>
       <module>server/core</module>
       <module>server/memcached</module>
@@ -66,6 +68,7 @@
       <module>compatibility52x/adaptor52x</module>
       <module>compatibility52x/custom52x-store</module>
       <module>compatibility52x/cli-migrator52x</module>
+      <module>server/integration</module>
    </modules>
 
    <profiles>
@@ -106,7 +109,8 @@ try {
 var pageTracker = _gat._getTracker("UA-8601422-4");
 pageTracker._trackPageview();
 } catch(err) {}&lt;/script&gt;
-                     </footer>
+                           </footer>
+                           <excludePackageNames>org.jboss.as:org.infinispan.server.endpoint:org.infinispan.server.rhq</excludePackageNames>
                         </configuration>
                      </execution>
                   </executions>

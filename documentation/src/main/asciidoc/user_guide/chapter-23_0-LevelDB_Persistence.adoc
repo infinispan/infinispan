@@ -1,0 +1,79 @@
+== LevelDB Cache Store
+The Infinispan Community
+:icons: font
+
+=== Introduction
+link:$$http://code.google.com/p/leveldb/$$[LevelDB] is a fast key-value filesystem-based storage from Google.
+LevelDB cache store currently uses a link:$$https://github.com/dain/leveldb$$[Java implementation].
+
+TIP: It may be possible to use a link:$$https://github.com/fusesource/leveldbjni$$[JNI implementation] in the future. 
+
+==== Sample Usage
+LevelDB cache store requires 2 filesystem directories to be configured - each directory for a LevelDB database.
+One location is used to store non-expired data, while the second location is used to store expired keys pending purge.
+
+[source,java]
+----
+EmbeddedCacheManager cacheManager = ...;
+
+Configuration cacheConfig = new ConfigurationBuilder().loaders()
+				.addLoader(LevelDBCacheStoreConfigurationBuilder.class)
+				.build();
+cacheManager.defineCache("usersCache", cacheConfig);
+
+Cache<String, User> usersCache = cacheManager.getCache("usersCache");
+usersCache.put("raytsang", new User(...));
+
+----
+
+=== Configuration
+==== Sample Programatic Configuration
+
+[source,java]
+----
+
+Configuration cacheConfig = new ConfigurationBuilder().loaders()
+				.addLoader(LevelDBCacheStoreConfigurationBuilder.class)
+				.location("/tmp/leveldb/data")
+				.expiredLocation("/tmp/leveldb/expired")
+				.entityClass(User.class)
+				.build();
+
+----
+
+[options="header"]
+|===============
+|Parameter|Description
+|location|Directory to use for LevelDB to store primary cache store data.  Directory will be auto-created if it does not exit.
+|expiredLocation| Directory to use for LevelDB to store expiring data pending to be purged permanently.  Directory will be auto-created if it does not exit. 
+| expiryQueueSize |Size of the in-memory queue to hold expiring entries before it gets flushed into expired LevelDB store
+|clearThreshold| There are two methods to clear all entries in LevelDB.  One method is to iterate through all entries and remove each entry individually.  The other method is to delete the database and re-init.  For smaller databases, deleting individual entries is faster than the latter method.  This configuration sets the max number of entries allowed before using the latter method 
+| compressionType |Configuration for LevelDB for data compression, see CompressionType enum for options
+| blockSize | Configuration for LevelDB - see link:$$http://leveldb.googlecode.com/svn/trunk/doc/index.html$$[documentation] for performance tuning 
+| cacheSize | Configuration for LevelDB - see link:$$http://leveldb.googlecode.com/svn/trunk/doc/index.html$$[documentation] for performance tuning 
+
+|===============
+
+
+==== Sample XML Configuration
+
+.infinispan.xml
+[source,xml]
+----
+
+<namedCache name="vehicleCache">
+	<loaders passivation="false" shared="true" preload="true">
+		<leveldbStore 
+			location="/tmp/leveldb/data"
+			expiredLocation="/tmp/leveldb/expired"
+		/>
+	</loaders>
+</namedCache>
+
+----
+
+=== Additional References
+
+Refer to the link:$$https://github.com/infinispan/infinispan/blob/master/cachestore/leveldb/src/test/java/org/infinispan/loaders/leveldb/config/ConfigurationTest.java$$[test case] for code samples in action. 
+
+Refer to link:$$https://github.com/infinispan/infinispan/blob/master/cachestore/leveldb/src/test/resources/config/leveldb-config-52.xml$$[test configurations] for configuration samples. 

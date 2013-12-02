@@ -1,0 +1,7 @@
+<subsystem xmlns="urn:infinispan:server:endpoint:6.0">
+    <hotrod-connector socket-binding="hotrod" cache-container="clustered">
+        <topology-state-transfer lazy-retrieval="false" lock-timeout="1000" replication-timeout="5000" await-initial-retrieval="false"/>
+    </hotrod-connector>
+    <memcached-connector socket-binding="memcached" cache-container="clustered"/>
+    <rest-connector virtual-server="default-host" cache-container="clustered"/>
+</subsystem>

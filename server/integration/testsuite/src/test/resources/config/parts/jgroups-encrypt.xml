@@ -1,0 +1,5 @@
+                <protocol type="ENCRYPT">
+                    <property name="key_store_name">${jboss.server.config.dir}/server_jceks.keystore</property>
+                    <property name="store_password">secret</property>
+                    <property name="alias">memcached</property>
+                </protocol>

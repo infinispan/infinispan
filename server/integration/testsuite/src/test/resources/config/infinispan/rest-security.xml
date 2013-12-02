@@ -1,0 +1,18 @@
+        <subsystem xmlns="urn:infinispan:server:core:6.0" >
+            <cache-container 
+                name="security"
+                default-cache="default">
+                <local-cache
+                    name="default"
+                    start="EAGER"
+                    batching="false"
+                    >
+                    <locking 
+                        isolation="NONE"
+                        acquire-timeout="20000" 
+                        concurrency-level="500" 
+                        striping="false" />
+                    <transaction mode="NONE" />
+                </local-cache>
+            </cache-container>
+        </subsystem>

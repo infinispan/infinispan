@@ -1,0 +1,47 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<!-- See src/resources/configuration/ReadMe.txt for how the configuration assembly works -->
+<config default-supplement="default">
+   <extension-module>org.jboss.as.clustering.infinispan</extension-module>
+   <subsystem xmlns="urn:infinispan:server:core:6.0" default-cache-container="@@default-cache-container@@">
+      <?CACHE-CONTAINERS?>
+   </subsystem>
+   <supplement name="default">
+      <replacement placeholder="@@default-cache-container@@" attributeValue="local" />
+      <replacement placeholder="CACHE-CONTAINERS">
+         <cache-container name="local" default-cache="default">
+            <local-cache name="default" start="EAGER">
+               <locking isolation="NONE" acquire-timeout="30000" concurrency-level="1000" striping="false" />
+               <transaction mode="NONE" />
+            </local-cache>
+            <local-cache name="memcachedCache" start="EAGER">
+               <locking isolation="NONE" acquire-timeout="30000" concurrency-level="1000" striping="false" />
+               <transaction mode="NONE" />
+            </local-cache>
+            <local-cache name="namedCache" start="EAGER" />
+         </cache-container>
+         <cache-container name="security">
+         </cache-container>
+      </replacement>
+   </supplement>
+   <supplement name="clustered">
+      <replacement placeholder="@@default-cache-container@@" attributeValue="clustered" />
+      <replacement placeholder="CACHE-CONTAINERS">
+         <cache-container name="clustered" default-cache="default">
+            <transport executor="infinispan-transport" lock-timeout="60000" />
+            <distributed-cache name="default" mode="SYNC" segments="20" owners="2" remote-timeout="30000" start="EAGER">
+               <locking isolation="READ_COMMITTED" acquire-timeout="30000" concurrency-level="1000" striping="false" />
+               <transaction mode="NONE" />
+            </distributed-cache>
+
+            <distributed-cache name="memcachedCache" mode="SYNC" segments="20" owners="2" remote-timeout="30000" start="EAGER">
+               <locking isolation="READ_COMMITTED" acquire-timeout="30000" concurrency-level="1000" striping="false" />
+               <transaction mode="NONE" />
+            </distributed-cache>
+
+            <distributed-cache name="namedCache" mode="SYNC" start="EAGER" />
+         </cache-container>
+         <cache-container name="security">
+         </cache-container>
+      </replacement>
+   </supplement>
+</config>

@@ -1,0 +1,296 @@
+<project name="testsuite" basedir="." default="create-all-distros">
+
+    <taskdef resource="net/sf/antcontrib/antlib.xml" classpath="${test_classpath}" />
+    <property name="default.transform" value="${resources.dir}/config/xslt/config-modifier.xsl" />
+    <property name="default.transform.rest" value="${resources.dir}/config/xslt/rest-sec-config-modifier.xsl" />
+    <property name="server1.configs" value="${server1.dist}/standalone/configuration" />
+    <property name="server2.configs" value="${server2.dist}/standalone/configuration" />
+    <property name="server3.configs" value="${server3.dist}/standalone/configuration" />
+    <property name="resources.configs" value="${resources.dir}/config" />
+    <property name="infinispan.parts" value="file:///${resources.configs}/infinispan" />
+    <property name="other.parts" value="file:///${resources.configs}/parts" />
+    <property name="leveldb.compression" value="SNAPPY" />
+    <property name="leveldb.impl" value="JAVA" />
+    <property name="leveldb.patch" value="false" />
+    <property name="zip.dist" value="false" />
+    <property name="zip.dist.old" value="false" />
+    <property name="log.level.infinispan" value="INFO"/>
+    <property name="log.level.jgroups" value="INFO"/>
+    <property name="log.level.console" value="INFO"/>
+
+    <filterset id="commonFilters" begintoken="${" endtoken="}">
+        <filter token="leveldb.compression" value="${leveldb.compression}" />
+        <filter token="leveldb.impl" value="${leveldb.impl}" />
+        <filter token="resources.dir" value="${resources.dir}" />
+    </filterset>
+
+    <target name="create-distro1" description="Create first distribution of Infinispan server by copying the one from build/target directory or unpacking a distro zip">
+        <echo message="Creating test server distro at ${server1.dist}" />
+        <if>
+            <equals arg1="${zip.dist}" arg2="false" />
+            <then>
+                <echo message="Using distribution ${server.build.dist}" />
+                <copy todir="${server1.dist}">
+                    <fileset dir="${server.build.dist}" />
+                </copy>
+            </then>
+            <else>
+                <echo message="Using file ${zip.dist}" />
+                <unzip src="${zip.dist}" dest="${server1.dist}-tmp" />
+                <for param="file">
+                    <path>
+                        <fileset dir="${server1.dist}-tmp" includes="**/jboss-modules.jar" />
+                    </path>
+                    <sequential>
+                        <propertyregex override="yes" property="dir.in.zip" input="@{file}" regexp=".*/([^/]*)/jboss-modules\.jar" replace="\1" />
+                    </sequential>
+                </for>
+                <move file="${server1.dist}-tmp/${dir.in.zip}" tofile="${server1.dist}" />
+                <delete dir="${server1.dist}-tmp" />
+                <if>
+                    <equals arg1="${leveldb.patch}" arg2="true" />
+                    <then>
+                        <property name="leveldb.module1" value="modules/system/layers/base/org/fusesource/leveldbjni-all/main" />
+                        <property name="leveldb.module2" value="modules/system/layers/base/org/iq80/leveldb/main" />
+                        <copy todir="${server1.dist}/${leveldb.module1}" overwrite="true">
+                            <fileset dir="${server.build.dist}/${leveldb.module1}" />
+                        </copy>
+                        <copy todir="${server1.dist}/${leveldb.module2}" overwrite="true">
+                            <fileset dir="${server.build.dist}/${leveldb.module2}" />
+                        </copy>
+                    </then>
+                </if>
+            </else>
+        </if>
+        <copy todir="${server1.dist}/standalone/configuration/examples">
+            <fileset dir="${server1.dist}/docs/examples/configs" />
+        </copy>
+        <copy todir="${server1.dist}/standalone/configuration" overwrite="true">
+            <fileset dir="${resources.dir}">
+                <include name="*.jks" />
+                <include name="*.properties"/>
+                <include name="*.keystore"/>
+            </fileset>
+        </copy>
+    </target>
+
+    <target name="create-all-distros" depends="transform-distro1-configs" description="Create all Infinispan server home directories used in the testsuite">
+        <copy todir="${server2.dist}">
+            <fileset dir="${server1.dist}" />
+        </copy>
+        <copy todir="${server3.dist}">
+            <fileset dir="${server1.dist}" />
+        </copy>
+
+        <echo message="Creating old server distro at ${server.old.dist}" />
+        <if>
+            <equals arg1="${zip.dist.old}" arg2="false" />
+            <then>
+                <echo message="Zip for old server distribution was not passed. Skipping." />
+            </then>
+            <else>
+                <echo message="Using file ${zip.dist.old}" />
+                <unzip src="${zip.dist.old}" dest="${server.old.dist}-tmp" />
+                <for param="file">
+                    <path>
+                        <fileset dir="${server.old.dist}-tmp" includes="**/jboss-modules.jar" />
+                    </path>
+                    <sequential>
+                        <propertyregex override="yes" property="dir.in.zip" input="@{file}" regexp=".*/([^/]*)/jboss-modules\.jar" replace="\1" />
+                    </sequential>
+                </for>
+                <move file="${server.old.dist}-tmp/${dir.in.zip}" tofile="${server.old.dist}" />
+                <delete dir="${server.old.dist}-tmp" />
+            </else>
+        </if>
+    </target>
+
+    <target name="transform-distro1-configs" depends="create-distro1">
+        <!-- copy second node configs -->
+        <copy file="${server1.configs}/examples/clustered-two-nodes.xml"
+              tofile="${server1.configs}/examples/clustered-two-nodes2.xml"/>
+        <!-- transform -->
+        <transform in="examples/clustered-xsite.xml" out="examples/clustered-xsite2.xml"
+                   modifyInfinispan="${infinispan.parts}/xsite-server2.xml"/>
+        <transform in="examples/clustered-xsite.xml" out="examples/clustered-xsite3.xml"
+                   modifyInfinispan="${infinispan.parts}/xsite-server3.xml" modifyRelay="${other.parts}/xsite-relay-server3.xml"
+                   modifyMulticastAddress="${other.parts}/xsite-multicast-address-server3.xml"/>
+        <transform in="examples/standalone-rcs-local.xml" out="examples/standalone-rcs-local.xml"
+                   modifyRemoteDestination="${other.parts}/rcs-remote-destination.xml"/>
+        <transform in="examples/standalone-hotrod-rolling-upgrade.xml" out="examples/standalone-hotrod-rolling-upgrade.xml"
+                   modifyRemoteDestination="${other.parts}/rcs-remote-destination.xml"/>
+        <transform in="examples/standalone-rest-rolling-upgrade.xml" out="examples/standalone-rest-rolling-upgrade.xml"
+                   modifyRemoteDestination="${other.parts}/rest-remote-destination.xml"/>
+        <transform in="examples/standalone-compatibility-mode.xml" out="examples/standalone-compatibility-mode.xml"/>
+        <transform in="examples/clustered-two-nodes.xml" out="examples/clustered-two-nodes.xml"/>
+        <transform in="examples/clustered-two-nodes2.xml" out="examples/clustered-two-nodes2.xml"/>
+        <transform in="clustered.xml" out="testsuite/clustered-jmx.xml" modifyInfinispan="${infinispan.parts}/jmx.xml"/>
+        <transform in="standalone.xml" out="testsuite/standalone-default-local.xml"
+                   modifyInfinispan="${infinispan.parts}/default-local.xml"/>
+        <transform in="clustered.xml" out="testsuite/clustered-default-dist.xml"
+                   modifyInfinispan="${infinispan.parts}/default-dist.xml"/>
+        <transform in="clustered.xml" out="testsuite/clustered-default-repl.xml"
+                   modifyInfinispan="${infinispan.parts}/default-repl.xml"/>
+        <transform in="standalone.xml" out="testsuite/standalone-with-indexing.xml"
+                   modifyInfinispan="${infinispan.parts}/indexing.xml"/>
+        <transform in="standalone.xml" out="testsuite/standalone-leveldb-local.xml"
+                   modifyInfinispan="${infinispan.parts}/leveldb-local.xml"
+                   filtering="true"/>
+        <transform in="clustered.xml" out="testsuite/clustered-leveldb-dist.xml"
+                   modifyInfinispan="${infinispan.parts}/leveldb-dist.xml"
+                   filtering="true"/>
+        <transform in="clustered.xml" out="testsuite/clustered-leveldb-repl.xml"
+                   modifyInfinispan="${infinispan.parts}/leveldb-repl.xml"
+                   filtering="true"/>
+        <transform in="clustered.xml" out="testsuite/clustered-asymmetric-1.xml"
+                   modifyInfinispan="${infinispan.parts}/asymmetric-1.xml"/>
+        <transform in="clustered.xml" out="testsuite/clustered-asymmetric-2.xml"
+                   modifyInfinispan="${infinispan.parts}/asymmetric-2.xml"/>
+        <transform in="examples/standalone-rcs-local.xml" out="testsuite/standalone-rcs-local.xml"
+                   modifyInfinispan="${infinispan.parts}/rcs-local.xml"
+                   modifyRemoteDestination="${other.parts}/rcs-remote-destination.xml"
+                   filtering="true"/>
+        <transform in="standalone.xml" out="testsuite/standalone-rcs-remote.xml"
+                   modifyInfinispan="${infinispan.parts}/rcs-remote.xml"
+                   filtering="true"/>
+        <transform in="clustered.xml" out="testsuite/clustered-suppress-state-transfer.xml"
+                   modifyInfinispan="${infinispan.parts}/suppress-state-transfer.xml"
+                   infinispanServerEndpoint="${other.parts}/suppress-server-endpoint.xml"
+                   filtering="true"/>
+        <!--generate basic rest security for read only entries-->
+        <transform in="standalone.xml" out="testsuite/rest-sec-basic-wr.xml"
+                   modifyInfinispan="${infinispan.parts}/rest-security.xml"
+                   filtering="true">
+            <rest-sec>
+                <transform-rest-sec securityMode="WRITE" cacheContainer="security" in="@{in}" />
+            </rest-sec>
+        </transform>
+        <!--generate basic rest security for read and write entries-->
+        <transform in="standalone.xml" out="testsuite/rest-sec-basic-rw.xml"
+                   modifyInfinispan="${infinispan.parts}/rest-security.xml"
+                   filtering="true">
+            <rest-sec>
+                <transform-rest-sec securityMode="READ_WRITE" cacheContainer="security" in="@{in}"/>
+            </rest-sec>
+        </transform>
+        <!--generate cert rest security for write entries-->
+        <transform in="standalone.xml" out="testsuite/rest-sec-cert-wr.xml"
+                   modifyInfinispan="${infinispan.parts}/rest-security.xml"
+                   filtering="true">
+            <rest-sec>
+                <transform-rest-sec securityMode="WRITE" authMethod="CLIENT-CERT" cacheContainer="security" securityDomain="client_cert_auth" modifyCertSecDomain="true" in="@{in}"/>
+            </rest-sec>
+        </transform>
+        <!--generate cert rest security for read and write entries-->
+        <transform in="standalone.xml" out="testsuite/rest-sec-cert-rw.xml"
+                   modifyInfinispan="${infinispan.parts}/rest-security.xml"
+                   filtering="true">
+            <rest-sec>
+                <transform-rest-sec securityMode="READ_WRITE" authMethod="CLIENT-CERT" cacheContainer="security" securityDomain="client_cert_auth" modifyCertSecDomain="true" in="@{in}"/>
+            </rest-sec>
+        </transform>
+
+        <!--generate digest rest security for write entries-->
+        <transform in="standalone.xml" out="testsuite/rest-sec-digest-wr.xml"
+                   modifyInfinispan="${infinispan.parts}/rest-security.xml"
+                   filtering="true">
+            <rest-sec>
+                <transform-rest-sec securityMode="WRITE" authMethod="DIGEST" cacheContainer="security" securityDomain="digest_auth" modifyDigestSecDomain="true" in="@{in}"/>
+            </rest-sec>
+        </transform>
+        <!--generate digest rest security for read and write entries-->
+        <transform in="standalone.xml" out="testsuite/rest-sec-digest-rw.xml"
+                   modifyInfinispan="${infinispan.parts}/rest-security.xml"
+                   filtering="true">
+            <rest-sec>
+                <transform-rest-sec securityMode="READ_WRITE" authMethod="DIGEST" cacheContainer="security" securityDomain="digest_auth" modifyDigestSecDomain="true" in="@{in}"/>
+            </rest-sec>
+        </transform>
+        <transform in="clustered.xml" out="testsuite/clustered-auth-with-encrypt.xml"
+                   modifyInfinispan="${infinispan.parts}/default-repl.xml"
+                   addAuth="${other.parts}/jgroups-auth.xml"
+                   addEncrypt="${other.parts}/jgroups-encrypt.xml"
+                   filtering="true"/>
+        <transform in="clustered.xml" out="testsuite/clustered-auth.xml"
+                   modifyInfinispan="${infinispan.parts}/default-repl.xml"
+                   addAuth="${other.parts}/jgroups-auth.xml"
+                   filtering="true"/>
+        <transform in="clustered.xml" out="testsuite/clustered-auth-wrong-certificate.xml"
+                   modifyInfinispan="${infinispan.parts}/default-repl.xml"
+                   addAuth="${other.parts}/jgroups-auth-malicious.xml"
+                   filtering="true"/>
+    </target>
+
+    <macrodef name="transform">
+        <attribute name="templateFile" default="${default.transform}"/>
+        <attribute name="transformDir" default="${server1.configs}"/>
+        <attribute name="in"/>
+        <attribute name="out"/>
+        <attribute name="modifyInfinispan" default="false"/>
+        <attribute name="modifyRelay" default="false"/>
+        <attribute name="modifyMulticastAddress" default="false"/>
+        <attribute name="modifyRemoteDestination" default="false"/>
+        <attribute name="modifyOutboundSocketBindingHotRod" default="false"/>
+        <attribute name="removeRestSecurity" default="true"/>
+        <attribute name="infinispanServerEndpoint" default="false"/>
+        <attribute name="infinispanFile" default="false"/>
+        <attribute name="filtering" default="false"/>
+        <element name="rest-sec" optional="yes" />
+        <attribute name="addAuth" default="false"/>
+        <attribute name="addEncrypt" default="false"/>
+
+        <sequential>
+            <xslt in="@{transformDir}/@{in}" out="@{transformDir}/@{in}-transformed" style="@{templateFile}">
+                <param name="modifyInfinispan" expression="@{modifyInfinispan}"/>
+                <param name="modifyRelay" expression="@{modifyRelay}"/>
+                <param name="addAuth" expression="@{addAuth}"/>
+                <param name="addEncrypt" expression="@{addEncrypt}"/>
+                <param name="modifyMulticastAddress" expression="@{modifyMulticastAddress}"/>
+                <param name="modifyRemoteDestination" expression="@{modifyRemoteDestination}"/>
+                <param name="modifyOutboundSocketBindingHotRod" expression="@{modifyOutboundSocketBindingHotRod}"/>
+                <param name="removeRestSecurity" expression="@{removeRestSecurity}"/>
+                <param name="infinispanServerEndpoint" expression="@{infinispanServerEndpoint}"/>
+                <param name="infinispanFile" expression="@{infinispanFile}"/>
+                <param name="log.level.infinispan" expression="${log.level.infinispan}"/>
+                <param name="log.level.jgroups" expression="${log.level.jgroups}"/>
+                <param name="log.level.console" expression="${log.level.console}"/>
+            </xslt>
+
+            <rest-sec />
+
+            <move file="@{transformDir}/@{in}-transformed" tofile="@{transformDir}/@{out}" filtering="@filtering">
+                <filterset refid="commonFilters"/>
+            </move>
+        </sequential>
+    </macrodef>
+
+    <macrodef name="transform-rest-sec" description="make xslt transformation of rest security">
+        <attribute name="transformDir" default="${server1.configs}"/>
+        <attribute name="in" />
+        <attribute name="restTemplateFile" default="${default.transform.rest}" />
+        <attribute name="securityDomain" default="other"/>
+        <attribute name="securityMode" default="WRITE"/>
+        <attribute name="authMethod" default="BASIC" />
+        <attribute name="cacheContainer" default="local"/>
+        <attribute name="modifyCertSecDomain" default="false" />
+        <attribute name="modifyDigestSecDomain" default="false" />
+
+        <sequential>
+            <xslt in="@{transformDir}/@{in}-transformed" out="@{transformDir}/@{in}-transformed-rest"
+                  style="@{restTemplateFile}">
+                <param name="security.domain" expression="@{securityDomain}" />
+                <param name="security.mode" expression="@{securityMode}"/>
+                <param name="cache.container" expression="@{cacheContainer}"/>
+                <param name="auth.method" expression="@{authMethod}"/>
+                <param name="modifyCertSecDomain" expression="@{modifyCertSecDomain}"/>
+                <param name="modifyDigestSecDomain" expression="@{modifyDigestSecDomain}"/>
+
+            </xslt>
+            <move file="@{transformDir}/@{in}-transformed-rest" tofile="@{transformDir}/@{in}-transformed"
+                  filtering="@filtering">
+                <filterset refid="commonFilters"/>
+            </move>
+        </sequential>
+    </macrodef>
+
+</project>

@@ -1,0 +1,41 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<project xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd" xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+   <modelVersion>4.0.0</modelVersion>
+   <parent>
+      <groupId>org.infinispan</groupId>
+      <artifactId>infinispan-persistence-parent</artifactId>
+      <version>6.0.1-SNAPSHOT</version>
+      <relativePath>../pom.xml</relativePath>
+   </parent>
+   <artifactId>infinispan-cachestore-leveldb</artifactId>
+   <packaging>bundle</packaging>
+   <name>Infinispan LevelDB CacheStore</name>
+   <description>Infinispan LevelDB CacheStore module</description>
+
+   <dependencies>
+      <dependency>
+         <groupId>org.fusesource.leveldbjni</groupId>
+         <artifactId>leveldbjni-all</artifactId>
+      </dependency>
+      <dependency>
+         <groupId>org.iq80.leveldb</groupId>
+         <artifactId>leveldb</artifactId>
+      </dependency>
+   </dependencies>
+
+   <build>
+      <plugins>
+         <plugin>
+            <groupId>org.apache.felix</groupId>
+            <artifactId>maven-bundle-plugin</artifactId>
+            <configuration>
+               <instructions>
+                  <Export-Package>
+                     ${project.groupId}.persistence.leveldb.*;version=${project.version};-split-package:=error
+                  </Export-Package>
+               </instructions>
+            </configuration>
+         </plugin>
+      </plugins>
+   </build>
+</project>

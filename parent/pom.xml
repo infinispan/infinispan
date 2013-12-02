@@ -108,6 +108,7 @@
       <version.hibernate.annotations>3.5.6-Final</version.hibernate.annotations>
       <version.hibernate.hql.parser>1.0.0.Alpha5</version.hibernate.hql.parser>
       <version.hibernate.javax.persistence>1.0.1.Final</version.hibernate.javax.persistence>
+      <version.httpclient>4.2.4</version.httpclient>
       <version.jackson>1.9.2</version.jackson>
       <version.javax.cache>1.0.0-PFD</version.javax.cache>
       <version.javax.cache.cache-tests>0.11</version.javax.cache.cache-tests>
@@ -123,6 +124,8 @@
       <version.jsap>2.1</version.jsap>
       <version.jstl>1.2</version.jstl>
       <version.junit>4.10</version.junit>
+      <version.leveldb>0.5</version.leveldb>
+      <version.leveldbjni>1.7</version.leveldbjni>
       <version.log4j>1.2.16</version.log4j>
       <version.lucene.v3>3.6.2</version.lucene.v3>
       <version.lucene.v4>4.6.0</version.lucene.v4>
@@ -631,6 +634,21 @@
             <groupId>spy</groupId>
             <artifactId>memcached</artifactId>
             <version>${version.spymemcached}</version>
+         </dependency>
+         <dependency>
+            <groupId>org.fusesource.leveldbjni</groupId>
+            <artifactId>leveldbjni-all</artifactId>
+            <version>${version.leveldbjni}</version>
+         </dependency>
+         <dependency>
+            <groupId>org.iq80.leveldb</groupId>
+            <artifactId>leveldb</artifactId>
+            <version>${version.leveldb}</version>
+         </dependency>
+         <dependency>
+            <groupId>org.apache.httpcomponents</groupId>
+            <artifactId>httpclient</artifactId>
+            <version>${version.httpclient}</version>
          </dependency>
       </dependencies>
    </dependencyManagement>

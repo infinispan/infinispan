@@ -1,0 +1,89 @@
+<!-- ~ JBoss, Home of Professional Open Source. ~ Copyright 2010, Red Hat,
+   Inc., and individual contributors ~ as indicated by the @author tags. See
+   the copyright.txt file in the ~ distribution for a full listing of individual
+   contributors. ~ ~ This is free software; you can redistribute it and/or modify
+   it ~ under the terms of the GNU Lesser General Public License as ~ published
+   by the Free Software Foundation; either version 2.1 of ~ the License, or
+   (at your option) any later version. ~ ~ This software is distributed in the
+   hope that it will be useful, ~ but WITHOUT ANY WARRANTY; without even the
+   implied warranty of ~ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+   See the GNU ~ Lesser General Public License for more details. ~ ~ You should
+   have received a copy of the GNU Lesser General Public ~ License along with
+   this software; if not, write to the Free ~ Software Foundation, Inc., 51
+   Franklin St, Fifth Floor, Boston, MA ~ 02110-1301 USA, or see the FSF site:
+   http://www.fsf.org. -->
+<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema" 
+    targetNamespace="urn:infinispan:server:endpoint:5.2" 
+    xmlns:tns="urn:infinispan:server:endpoint:5.2" 
+    elementFormDefault="qualified"
+    attributeFormDefault="unqualified" version="5.2">
+
+   <xs:element name="subsystem" type="tns:subsystemType" />
+
+   <xs:complexType name="subsystemType">
+      <xs:choice minOccurs="1" maxOccurs="unbounded">
+         <xs:element name="hotrod-connector" type="tns:hotrod-connector" />
+         <xs:element name="memcached-connector" type="tns:memcached-connector" />
+         <xs:element name="rest-connector" type="tns:rest-connector" />
+      </xs:choice>
+   </xs:complexType>
+
+   <xs:complexType name="protocol-connector" abstract="true">
+      <xs:attribute name="socket-binding" type="xs:string" use="required" />
+      <xs:attribute name="cache-container" type="xs:string" use="required" />
+      <xs:attribute name="worker-threads" type="xs:int" use="optional" />
+      <xs:attribute name="idle-timeout" type="xs:int" use="optional" />
+      <xs:attribute name="tcp-nodelay" type="xs:boolean" use="optional" />
+      <xs:attribute name="send-buffer-size" type="xs:int" use="optional" />
+      <xs:attribute name="receive-buffer-size" type="xs:int" use="optional" />
+   </xs:complexType>
+
+   <xs:complexType name="hotrod-connector">
+      <xs:complexContent>
+         <xs:extension base="tns:protocol-connector">
+            <xs:sequence>
+                <xs:element name="topology-state-transfer" type="tns:topology-state-transfer" minOccurs="0" maxOccurs="1"/>
+            </xs:sequence>
+         </xs:extension>
+      </xs:complexContent>
+   </xs:complexType>
+
+   <xs:complexType name="memcached-connector">
+      <xs:complexContent>
+         <xs:extension base="tns:protocol-connector" />
+      </xs:complexContent>
+   </xs:complexType>
+
+   <xs:complexType name="rest-connector">
+      <xs:attribute name="cache-container" type="xs:string" use="required" />
+      <xs:attribute name="virtual-server" type="xs:string" use="optional" />
+      <xs:attribute name="context-path" type="xs:string" use="optional" />
+      <xs:attribute name="security-domain" type="xs:string" use="optional" />
+      <xs:attribute name="auth-method" type="xs:string" use="optional" />
+      <xs:attribute name="security-mode" type="tns:security-mode" use="optional" />
+   </xs:complexType>
+
+   <xs:complexType name="topology-state-transfer">
+      <xs:attribute name="lock-timeout" type="xs:int" use="optional" />
+      <xs:attribute name="replication-timeout" type="xs:int" use="optional" />
+      <xs:attribute name="update-timeout" type="xs:int" use="optional" />
+      <xs:attribute name="external-host" type="xs:string" use="optional" />
+      <xs:attribute name="external-port" type="xs:int" use="optional" />
+      <xs:attribute name="lazy-retrieval" type="xs:boolean" use="optional" />
+   </xs:complexType>
+
+   <xs:simpleType name="security-mode">
+      <xs:restriction base="xs:token">
+         <xs:enumeration value="WRITE">
+            <xs:annotation>
+               <xs:documentation>Specifies that authentication against the specified security domain should apply only to write methods (PUT, POST, DELETE)</xs:documentation>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration value="READ_WRITE">
+            <xs:annotation>
+               <xs:documentation>Specifies that authentication against the specified security domain should apply to all methods (PUT, POST, DELETE, GET, HEAD)</xs:documentation>
+            </xs:annotation>
+         </xs:enumeration>
+      </xs:restriction>
+   </xs:simpleType>
+</xs:schema>

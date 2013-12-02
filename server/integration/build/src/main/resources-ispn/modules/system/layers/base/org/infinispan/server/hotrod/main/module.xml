@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+   ~ Copyright 2011 Red Hat, Inc. and/or its affiliates.
+   ~
+   ~ This is free software; you can redistribute it and/or modify it
+   ~ under the terms of the GNU Lesser General Public License as
+   ~ published by the Free Software Foundation; either version 2.1 of
+   ~ the License, or (at your option) any later version.
+   ~
+   ~ This software is distributed in the hope that it will be useful,
+   ~ but WITHOUT ANY WARRANTY; without even the implied warranty of
+   ~ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+   ~ Lesser General Public License for more details.
+   ~
+   ~ You should have received a copy of the GNU Lesser General Public
+   ~ License along with this library; if not, write to the Free Software
+   ~ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
+   ~ 02110-1301 USA
+-->
+<module xmlns="urn:jboss:module:1.1" name="org.infinispan.server.hotrod">
+   <properties>
+      <property name="jboss.api" value="private" />
+   </properties>
+   <resources>
+      <!-- Insert resources here -->
+   </resources>
+
+   <dependencies>
+      <module name="javax.api" />
+      <module name="javax.transaction.api" />
+      <module name="javax.xml.bind.api" />
+      <module name="org.apache.xerces" services="import" />
+      <module name="org.infinispan" />
+      <module name="org.infinispan.server" />
+      <module name="org.infinispan.remote-query.server" services="import"/>
+      <module name="org.infinispan.query" />
+      <module name="org.jboss.logging" />
+      <module name="org.jboss.marshalling" />
+      <module name="org.jboss.marshalling.river" services="import" />
+      <module name="org.jboss.netty" />
+      <module name="org.scala-lang.library" />
+      <module name="org.jgroups" />
+   </dependencies>
+</module>

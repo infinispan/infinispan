@@ -1,0 +1,58 @@
+        <subsystem xmlns="urn:infinispan:server:core:6.0" >
+            <cache-container 
+                name="clustered"
+                default-cache="testcache">
+                <transport 
+                    stack="udp"
+                    executor="infinispan-transport"
+                    lock-timeout="240000"/>
+                <distributed-cache 
+                    name="testcache"
+                    start="EAGER"
+                    mode="SYNC" 
+                    segments="1" 
+                    owners="2" 
+                    batching="false"
+                    l1-lifespan="0" 
+                    remote-timeout="60000" >
+                    <transaction mode="NONE" />
+                    <state-transfer 
+                        enabled="true" 
+                        timeout="600000" />
+                    <leveldb-store path="leveldb" block-size="1024"
+                        cache-size="50000" clear-threshold="100000" passivation="false"
+                        purge="false" >
+                        <expiration path="leveldb-expired" queue-size="2000" />
+                        <compression type="${leveldb.compression}" />
+                        <implementation type="${leveldb.impl}" />
+                    </leveldb-store>
+                </distributed-cache>
+                <!-- to get a memcached module to work, there needs to be a named cache called "memcachedCache" -->
+                <distributed-cache 
+                    name="memcachedCache" 
+                    start="EAGER"
+                    mode="SYNC" 
+                    segments="1" 
+                    owners="2" 
+                    batching="false"
+                    l1-lifespan="0" 
+                    remote-timeout="60000" >
+                    <transaction mode="NONE" />
+                    <state-transfer 
+                        enabled="true" 
+                        timeout="600000" />
+                    <leveldb-store path="leveldb-mc" block-size="1024"
+                        cache-size="50000" clear-threshold="100000" passivation="false"
+                        purge="false" >
+                        <expiration path="leveldb-expired-mc" queue-size="2000" />
+                        <compression type="${leveldb.compression}" />
+                        <implementation type="${leveldb.impl}" />
+                    </leveldb-store>
+                </distributed-cache>
+                <distributed-cache
+                    name="namedCache"
+                    start="EAGER"
+                    mode="SYNC" />
+            </cache-container>
+            <cache-container name="security"/>
+        </subsystem>

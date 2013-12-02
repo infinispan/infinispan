@@ -1,0 +1,19 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<!--  See src/resources/configuration/ReadMe.txt for how the configuration assembly works -->
+<config>
+   <subsystems>
+      <subsystem>configuration/subsystems/logging.xml</subsystem>
+      <subsystem>configuration/subsystems/endpoint.xml</subsystem>
+      <subsystem>configuration/subsystems/datasources.xml</subsystem>
+      <subsystem supplement="leveldb-cs-local">configuration/examples/subsystems/infinispan.xml</subsystem>
+      <subsystem>configuration/subsystems/jca.xml</subsystem>
+      <subsystem>configuration/subsystems/jdr.xml</subsystem>
+      <subsystem>configuration/subsystems/jmx.xml</subsystem>
+      <subsystem>configuration/subsystems/naming.xml</subsystem>
+      <subsystem>configuration/subsystems/remoting.xml</subsystem>
+      <subsystem supplement="standalone">configuration/subsystems/security.xml</subsystem>
+      <subsystem>configuration/subsystems/threads.xml</subsystem>
+      <subsystem>configuration/subsystems/transactions.xml</subsystem>
+      <subsystem>configuration/subsystems/web.xml</subsystem>
+   </subsystems>
+</config>

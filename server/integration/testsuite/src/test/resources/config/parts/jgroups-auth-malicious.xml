@@ -1,0 +1,10 @@
+                <protocol type="AUTH">
+                    <property name="auth_class">org.jgroups.auth.X509Token</property>
+                    <property name="keystore_type">JKS</property>
+                    <!-- use an unknown certificate - authentication should fail then -->
+                    <property name="keystore_path">${jboss.server.config.dir}/keystore_client.jks</property>
+                    <property name="cert_alias">hotrod</property>
+                    <property name="auth_value">martin_gencur</property>
+                    <property name="keystore_password">secret</property>
+                    <property name="cipher_type">RSA</property>
+                </protocol>

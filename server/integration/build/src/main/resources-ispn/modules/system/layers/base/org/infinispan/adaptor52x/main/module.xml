@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<module xmlns="urn:jboss:module:1.1" name="org.infinispan.adaptor52x">
+    <properties>
+        <property name="jboss.api" value="private"/>
+    </properties>
+
+    <resources>
+        <!-- Insert resources here -->
+    </resources>
+
+    <dependencies>
+       <module name="javax.api"/>
+       <module name="javax.transaction.api"/>
+       <module name="org.infinispan"/>
+       <module name="org.jboss.logging"/>
+    </dependencies>
+</module>
