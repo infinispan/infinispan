@@ -376,13 +376,13 @@ This leap required two major changes:
 
 
 * Since non-JVM clients cannot benefit from directly using link:$$http://lucene.apache.org/$$[Apache Lucene]'s Java
-API, Infinispan defines it's own new link:$$#_infinispan_s_query_dsl$$[query language], based on an internal DSL that is easily
+API, Infinispan defines its own new link:$$#_infinispan_s_query_dsl$$[query language], based on an internal DSL that is easily
 implementable in all languages for which we currently have an implementation of the Hot Rod client.
 * In order to enable indexing, the entities put in the cache by clients can no longer be opaque binary blobs understood
 solely by the client. Their structure has to be known to both server and client, so a common way of
 encoding structured data had to be adopted. Furthermore, allowing multi-language clients to access the data requires a
 language and platform-neutral encoding. Google's link:$$http://code.google.com/p/protobuf/$$[Protocol Buffers] was
-elected as an encoding format for both over-the-wire and storage due to it's efficiency, robustness, good multi-language
+elected as an encoding format for both over-the-wire and storage due to its efficiency, robustness, good multi-language
 support and support for schema evolution.
 
 

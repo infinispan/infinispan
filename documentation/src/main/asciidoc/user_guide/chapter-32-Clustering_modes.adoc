@@ -458,7 +458,7 @@ _Grouper_ acts as an interceptor, passing the previously computed value in.
 The group passed to the first _Grouper_ will be that determined by _@Group_ (if _@Group_
 is defined).
 This allows you even greater control over the group when using an intrinsic group.
-For a grouper to be used when determining the group for a key, it's _keyType_ must be
+For a grouper to be used when determining the group for a key, its _keyType_ must be
 assignable from the key being grouped.
 
 Let's take a look at an example of a _Grouper_:
