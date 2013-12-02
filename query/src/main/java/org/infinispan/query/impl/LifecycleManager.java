@@ -9,10 +9,8 @@ import java.util.TreeMap;
 import org.hibernate.search.Environment;
 import org.hibernate.search.cfg.SearchMapping;
 import org.hibernate.search.cfg.spi.SearchConfiguration;
-import org.hibernate.search.jmx.StatisticsInfo;
 import org.hibernate.search.spi.SearchFactoryBuilder;
 import org.hibernate.search.spi.SearchFactoryIntegrator;
-import org.hibernate.search.stat.Statistics;
 import org.infinispan.AdvancedCache;
 import org.infinispan.Cache;
 import org.infinispan.commons.CacheException;
@@ -163,12 +161,12 @@ public class LifecycleManager extends AbstractModuleLifecycle {
       jmxDomain = JmxUtil.buildJmxDomain(globalCfg, mbeanServer, queryGroupName);
 
       // Register statistics MBean, but only enable if Infinispan config says so
-      Statistics stats = sf.getStatistics();
+      InfinispanQueryStatisticsInfo stats = new InfinispanQueryStatisticsInfo(sf);
       stats.setStatisticsEnabled(cfg.jmxStatistics().enabled());
       try {
          ObjectName statsObjName = new ObjectName(
                jmxDomain + ":" + queryGroupName + ",component=Statistics");
-         JmxUtil.registerMBean(new StatisticsInfo(stats), statsObjName, mbeanServer);
+         JmxUtil.registerMBean(stats, statsObjName, mbeanServer);
       } catch (Exception e) {
          throw new CacheException(
                "Unable to register query module statistics mbean", e);

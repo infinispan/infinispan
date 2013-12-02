@@ -268,7 +268,10 @@ public class QueryInterceptor extends CommandInterceptor {
       if (locked) {
          final Transaction transaction = suspend();
          try {
+            // we need to preserve the state of this flag manually because addClasses will cause reconfiguration and the flag is lost
+            boolean isStatisticsEnabled = searchFactory.getStatistics().isStatisticsEnabled();
             searchFactory.addClasses(toAdd.toArray(new Class[toAdd.size()]));
+            searchFactory.getStatistics().setStatisticsEnabled(isStatisticsEnabled);
          } finally {
             resume(transaction);
          }
