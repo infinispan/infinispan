@@ -9,6 +9,7 @@ import org.infinispan.jmx.PerThreadMBeanServerLookup;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.query.CacheQuery;
 import org.infinispan.query.Search;
+import org.infinispan.query.SearchManager;
 import org.infinispan.query.test.AnotherGrassEater;
 import org.infinispan.query.test.Person;
 import org.infinispan.test.SingleCacheManagerTest;
@@ -25,6 +26,7 @@ import java.util.Set;
 
 import static org.infinispan.query.helper.TestQueryHelperFactory.createQueryParser;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
 /**
@@ -65,10 +67,10 @@ public class QueryMBeanTest extends SingleCacheManagerTest {
    public void testQueryStatsMBean() throws Exception {
       cacheManager.getCache(CACHE_NAME); // Start cache
       ObjectName name = getQueryStatsObjectName(JMX_DOMAIN, CACHE_NAME);
-      assert server.isRegistered(name);
-      assert !(Boolean) server.getAttribute(name, "StatisticsEnabled");
+      assertTrue(server.isRegistered(name));
+      assertFalse((Boolean) server.getAttribute(name, "StatisticsEnabled"));
       server.setAttribute(name, new Attribute("StatisticsEnabled", true));
-      assert (Boolean) server.getAttribute(name, "StatisticsEnabled");
+      assertTrue((Boolean) server.getAttribute(name, "StatisticsEnabled"));
    }
 
    public void testQueryStats() throws Exception {
@@ -76,24 +78,54 @@ public class QueryMBeanTest extends SingleCacheManagerTest {
       ObjectName name = getQueryStatsObjectName(JMX_DOMAIN, CACHE_NAME);
 
       try {
-         assert server.isRegistered(name);
+         assertTrue(server.isRegistered(name));
 
          if(!(Boolean) server.getAttribute(name, "StatisticsEnabled")) {
             server.setAttribute(name, new Attribute("StatisticsEnabled", true));
          }
 
-         prepareTestingData();
          Cache cache = cacheManager.getCache(CACHE_NAME);
+
+         // check that our settings are not ignored
+         SearchManager searchManager = Search.getSearchManager(cache);
+         assertTrue(searchManager.getSearchFactory().getStatistics().isStatisticsEnabled());
+
+         for(int i = 0; i < numberOfEntries; i++) {
+            Person person = new Person();
+            person.setName("key" + i);
+            person.setAge(i);
+            person.setBlurb("value " + i);
+            person.setNonSearchableField("i: " + i);
+
+            cache.put("key" + i, person);
+         }
+
+         // after adding more classes and reconfiguring the SearchFactory it might happen isStatisticsEnabled is reset, so we check again
+         assertTrue(searchManager.getSearchFactory().getStatistics().isStatisticsEnabled());
+
+         assertEquals(0L, server.getAttribute(name, "SearchQueryExecutionCount"));
 
          QueryParser queryParser = createQueryParser("blurb");
          Query luceneQuery = queryParser.parse("value");
-         CacheQuery cacheQuery = Search.getSearchManager(cache).getQuery( luceneQuery );
+         CacheQuery cacheQuery = searchManager.getQuery(luceneQuery);
          List<Object> found = cacheQuery.list();
+
+         assertEquals(1L, server.getAttribute(name, "SearchQueryExecutionCount"));
 
          assertEquals(numberOfEntries, found.size());
          assertEquals(numberOfEntries, server.invoke(name, "getNumberOfIndexedEntities",
                                        new Object[]{Person.class.getCanonicalName()},
                                        new String[]{String.class.getCanonicalName()}));
+
+         assertEquals(1, searchManager.getSearchFactory().getStatistics().indexedEntitiesCount().size());
+
+         AnotherGrassEater anotherGrassEater = new AnotherGrassEater("Another grass-eater", "Eats grass");
+         cache.put("key101", anotherGrassEater);
+
+         cacheQuery = searchManager.getQuery(luceneQuery);
+         found = cacheQuery.list();
+         assertEquals(numberOfEntries, found.size());
+
          assertEquals(1, server.invoke(name, "getNumberOfIndexedEntities",
                                        new Object[]{AnotherGrassEater.class.getCanonicalName()},
                                        new String[]{String.class.getCanonicalName()}));
@@ -102,23 +134,28 @@ public class QueryMBeanTest extends SingleCacheManagerTest {
          assertEquals(2, classNames.size());
          assertTrue("The set should contain the Person class name.", classNames.contains(Person.class.getCanonicalName()));
          assertTrue("The set should contain the AnotherGrassEater class name.", classNames.contains(AnotherGrassEater.class.getCanonicalName()));
+         assertEquals(2, searchManager.getSearchFactory().getStatistics().indexedEntitiesCount().size());
 
-//         assertTrue("The query execution total time should be > 0.", (Long) server.getAttribute(name, "SearchQueryTotalTime") > 0);
+         // check the statistics and see they have reasonable values
+         assertTrue("The query execution total time should be > 0.", (Long) server.getAttribute(name, "SearchQueryTotalTime") > 0);
+         assertEquals(2L, server.getAttribute(name, "SearchQueryExecutionCount"));
+         assertEquals("blurb:value", server.getAttribute(name, "SearchQueryExecutionMaxTimeQueryString"));
+         assertTrue((Long) server.getAttribute(name, "SearchQueryExecutionMaxTime") > 0);
+         assertTrue((Long) server.getAttribute(name, "SearchQueryExecutionAvgTime") > 0);
 
-//         System.out.println(server.getAttribute(name, "SearchQueryTotalTime"));
-//         System.out.println(server.getAttribute(name, "SearchQueryExecutionCount"));
-//         System.out.println(server.getAttribute(name, "SearchQueryExecutionMaxTimeQueryString"));
-//         System.out.println(server.getAttribute(name, "SearchQueryExecutionMaxTime"));
-//         System.out.println(server.getAttribute(name, "SearchQueryExecutionCount"));
-//         System.out.println(server.getAttribute(name, "SearchQueryExecutionAvgTime"));
-//         System.out.println(server.getAttribute(name, "ObjectsLoadedCount"));
-//         System.out.println(server.getAttribute(name, "ObjectLoadingTotalTime"));
-//         System.out.println(server.getAttribute(name, "ObjectLoadingExecutionMaxTime"));
-//         System.out.println(server.getAttribute(name, "ObjectLoadingExecutionAvgTime"));
-//         server.invoke(name, "clear",
-//                       new Object[] {},
-//                       new String[]{});
+         server.invoke(name, "clear",
+                       new Object[] {},
+                       new String[]{});
 
+         // after "clear" everything must be reset
+         assertEquals(0L, server.getAttribute(name, "SearchQueryExecutionCount"));
+         assertEquals("", server.getAttribute(name, "SearchQueryExecutionMaxTimeQueryString"));
+         assertEquals(0L, server.getAttribute(name, "SearchQueryExecutionMaxTime"));
+         assertEquals(0L, server.getAttribute(name, "SearchQueryExecutionAvgTime"));
+         assertEquals(0L, server.getAttribute(name, "ObjectsLoadedCount"));
+         assertEquals(0L, server.getAttribute(name, "ObjectLoadingTotalTime"));
+         assertEquals(0L, server.getAttribute(name, "ObjectLoadingExecutionMaxTime"));
+         assertEquals(0L, server.getAttribute(name, "ObjectLoadingExecutionAvgTime"));
 
       } finally {
          //resetting statistics
@@ -159,22 +196,6 @@ public class QueryMBeanTest extends SingleCacheManagerTest {
       matchingNames = server.queryNames(new ObjectName(JMX_DOMAIN + ":type=Query,component=Statistics,cache=" + ObjectName.quote(CACHE_NAME) + ",*"), null);
       assertEquals(1, matchingNames.size());
       assertTrue(matchingNames.contains(queryStatsObjectName));
-   }
-
-   private void prepareTestingData() {
-      Cache cache = cacheManager.getCache(CACHE_NAME);
-      for(int i = 0; i < numberOfEntries; i++) {
-         Person person = new Person();
-         person.setName("key" + i);
-         person.setAge(i);
-         person.setBlurb("value " + i);
-         person.setNonSearchableField("i: " + i);
-
-         cache.put("key" + i, person);
-      }
-
-      AnotherGrassEater anotherGrassEater = new AnotherGrassEater("Another grass-eater", "Eats grass");
-      cache.put("key101", anotherGrassEater);
    }
 
    private ObjectName getQueryStatsObjectName(String jmxDomain, String cacheName) {
