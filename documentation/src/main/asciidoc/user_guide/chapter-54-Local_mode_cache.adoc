@@ -26,7 +26,7 @@ In the process of testing and tuning Infinispan on very large clusters, we have 
 Thanks to RadarGun, we have the ability to measure cache performance in standalone, local mode. We compared Infinispan 4.0 in local mode against the latest JBoss Cache release (3.2.2.GA) and EHCache (1.7.2). Some background on the tests: 
 
 *  Used a latest snapshot of RadarGun
-*  Run on a link:$$http://www.redhat.com/rhel/$$[RHEL] 5 server with 4 Intel Xeon cores, 4GB of RAM 
+*  Run on an link:$$http://www.redhat.com/rhel/$$[RHEL] 5 server with 4 Intel Xeon cores, 4GB of RAM 
 * Sun JDK 1.6.0_18, with `-Xms1g -Xmx1g`
 * Test run on a single node, with 25 concurrent threads, using randomly generated Strings as keys and values and a 1kb payload for each entry, with a 80/20 read/write ratio.
 * Performance measured in transactions per second (higher = better).
