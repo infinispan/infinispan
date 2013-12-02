@@ -170,7 +170,7 @@ Unlike simple versioning, which is maintained per entry, a vector clock's node c
 
 ==== External versioning
 
-This scheme is used to encapsulate an external source of data versioning within Infinispan, such as when using Infinispan with Hibernate which in turn gets it's data version information directly from a database.
+This scheme is used to encapsulate an external source of data versioning within Infinispan, such as when using Infinispan with Hibernate which in turn gets its data version information directly from a database.
 
 In this scheme, a mechanism to pass in the version becomes necessary, and overloaded versions of put() and putForExternalRead() will be provided in AdvancedCache to take in an external data version.  This is then stored on the InvocationContext and applied to the entry at commit time. 
 
