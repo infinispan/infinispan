@@ -43,7 +43,7 @@ public class Configurations {
          return true;
       }
       //shared cache store has all the data
-      if (hasSharedCacheLoadOrWriter(configuration)) {
+      if (hasSharedCacheLoaderOrWriter(configuration)) {
          return true;
       }
       final boolean usingStores = configuration.persistence().usingStores();
@@ -58,7 +58,7 @@ public class Configurations {
             (!usingStores && fetchInMemoryState);
    }
 
-   public static boolean hasSharedCacheLoadOrWriter(Configuration configuration) {
+   public static boolean hasSharedCacheLoaderOrWriter(Configuration configuration) {
       for (StoreConfiguration storeConfiguration : configuration.persistence().stores()) {
          if (storeConfiguration.shared()) {
             return true;
