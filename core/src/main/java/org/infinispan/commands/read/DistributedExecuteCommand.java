@@ -80,7 +80,7 @@ public class DistributedExecuteCommand<V> extends BaseRpcCommand implements Visi
    /**
     * Performs invocation of Callable and returns result
     *
-    * @param ctx
+    * @param context
     *           invocation context
     * @return result of Callable invocations
     */
