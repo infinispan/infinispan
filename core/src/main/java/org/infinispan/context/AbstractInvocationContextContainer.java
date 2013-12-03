@@ -22,7 +22,7 @@ public abstract class AbstractInvocationContextContainer implements InvocationCo
    // latter can be fixed once the CacheManager architecture is changed to be associated with a ClassLoader per
    // CacheManager (see ISPN-1413), after which this thread local can be removed and the getInvocationContext() method
    // can also be removed.
-   protected final ThreadLocal<InvocationContext> ctxHolder = new ThreadLocal<InvocationContext>();
+   private final ThreadLocal<InvocationContext> ctxHolder = new ThreadLocal<InvocationContext>();
 
    protected Configuration config;
    protected Equivalence keyEq;
@@ -40,7 +40,7 @@ public abstract class AbstractInvocationContextContainer implements InvocationCo
          VisitableCommand cacheCommand, Address origin) {
       if (cacheCommand instanceof FlagAffectedCommand) {
          InvocationContext context = createRemoteInvocationContext(origin);
-         ctxHolder.set(context);
+         setThreadLocal(context);
          return context;
       } else {
          return this.createRemoteInvocationContext(origin);
@@ -57,5 +57,9 @@ public abstract class AbstractInvocationContextContainer implements InvocationCo
    @Override
    public void clearThreadLocal() {
       ctxHolder.remove();
+   }
+
+   protected void setThreadLocal(InvocationContext ctx) {
+      ctxHolder.set(ctx);
    }
 }

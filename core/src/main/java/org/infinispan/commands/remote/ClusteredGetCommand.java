@@ -106,7 +106,12 @@ public class ClusteredGetCommand extends BaseRpcCommand implements FlagAffectedC
       if (this.flags != null) commandFlags.addAll(this.flags);
       GetKeyValueCommand command = commandsFactory.buildGetKeyValueCommand(key, commandFlags, true);
       InvocationContext invocationContext = icc.createRemoteInvocationContextForCommand(command, getOrigin());
-      CacheEntry cacheEntry = (CacheEntry) invoker.invoke(invocationContext, command);
+      CacheEntry cacheEntry;
+      try {
+         cacheEntry = (CacheEntry) invoker.invoke(invocationContext, command);
+      } finally {
+         icc.clearThreadLocal();
+      }
       if (cacheEntry == null) {
          if (trace) log.trace("Did not find anything, returning null");
          return null;

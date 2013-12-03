@@ -308,7 +308,11 @@ public class CacheImpl<K, V> implements AdvancedCache<K, V> {
 
    final boolean remove(Object key, Object value, EnumSet<Flag> explicitFlags, ClassLoader explicitClassLoader) {
       InvocationContext ctx = getInvocationContextWithImplicitTransaction(false, explicitClassLoader, 1);
-      return removeInternal(key, value, explicitFlags, ctx);
+      try {
+         return removeInternal(key, value, explicitFlags, ctx);
+      } finally {
+         clearInvocationContext(ctx);
+      }
    }
 
    private boolean removeInternal(Object key, Object value, EnumSet<Flag> explicitFlags, InvocationContext ctx) {
@@ -324,8 +328,12 @@ public class CacheImpl<K, V> implements AdvancedCache<K, V> {
 
    final int size(EnumSet<Flag> explicitFlags, ClassLoader explicitClassLoader) {
       SizeCommand command = commandsFactory.buildSizeCommand(explicitFlags);
-      return (Integer) invoker.invoke(getInvocationContextForRead(
-            null, explicitClassLoader, UNBOUNDED), command);
+      InvocationContext ctx = getInvocationContextForRead(null, explicitClassLoader, UNBOUNDED);
+      try {
+         return (Integer) invoker.invoke(ctx, command);
+      } finally {
+         clearInvocationContext(ctx);
+      }
    }
 
    @Override
@@ -345,9 +353,17 @@ public class CacheImpl<K, V> implements AdvancedCache<K, V> {
    final boolean containsKey(Object key, EnumSet<Flag> explicitFlags, ClassLoader explicitClassLoader) {
       assertKeyNotNull(key);
       InvocationContext ctx = getInvocationContextForRead(null, explicitClassLoader, 1);
-      GetKeyValueCommand command = commandsFactory.buildGetKeyValueCommand(key, explicitFlags, false);
-      Object response = invoker.invoke(ctx, command);
-      return response != null;
+      try {
+         GetKeyValueCommand command = commandsFactory.buildGetKeyValueCommand(key, explicitFlags, false);
+         Object response = invoker.invoke(ctx, command);
+         return response != null;
+      } finally {
+         clearInvocationContext(ctx);
+      }
+   }
+
+   private void clearInvocationContext(InvocationContext ctx) {
+      icc.clearThreadLocal();
    }
 
    @Override
@@ -364,16 +380,24 @@ public class CacheImpl<K, V> implements AdvancedCache<K, V> {
    final V get(Object key, EnumSet<Flag> explicitFlags, ClassLoader explicitClassLoader) {
       assertKeyNotNull(key);
       InvocationContext ctx = getInvocationContextForRead(null, explicitClassLoader, 1);
-      GetKeyValueCommand command = commandsFactory.buildGetKeyValueCommand(key, explicitFlags, false);
-      return (V) invoker.invoke(ctx, command);
+      try {
+         GetKeyValueCommand command = commandsFactory.buildGetKeyValueCommand(key, explicitFlags, false);
+         return (V) invoker.invoke(ctx, command);
+      } finally {
+         clearInvocationContext(ctx);
+      }
    }
 
    public final CacheEntry getCacheEntry(Object key, EnumSet<Flag> explicitFlags, ClassLoader explicitClassLoader) {
       assertKeyNotNull(key);
       InvocationContext ctx = getInvocationContextForRead(null, explicitClassLoader, 1);
-      GetKeyValueCommand command = commandsFactory.buildGetKeyValueCommand(key, explicitFlags, true);
-      Object ret = invoker.invoke(ctx, command);
-      return (CacheEntry) ret;
+      try {
+         GetKeyValueCommand command = commandsFactory.buildGetKeyValueCommand(key, explicitFlags, true);
+         Object ret = invoker.invoke(ctx, command);
+         return (CacheEntry) ret;
+      } finally {
+         clearInvocationContext(ctx);
+      }
    }
 
    @Override
@@ -388,7 +412,11 @@ public class CacheImpl<K, V> implements AdvancedCache<K, V> {
 
    final V remove(Object key, EnumSet<Flag> explicitFlags, ClassLoader explicitClassLoader) {
       InvocationContext ctx = getInvocationContextWithImplicitTransaction(false, explicitClassLoader, 1);
-      return removeInternal(key, explicitFlags, ctx);
+      try {
+         return removeInternal(key, explicitFlags, ctx);
+      } finally {
+         clearInvocationContext(ctx);
+      }
    }
 
    @SuppressWarnings("unchecked")
@@ -426,7 +454,11 @@ public class CacheImpl<K, V> implements AdvancedCache<K, V> {
 
    final void clear(EnumSet<Flag> explicitFlags, ClassLoader explicitClassLoader) {
       InvocationContext ctx = getInvocationContextWithImplicitTransaction(false, explicitClassLoader, UNBOUNDED);
-      clearInternal(explicitFlags, ctx);
+      try {
+         clearInternal(explicitFlags, ctx);
+      } finally {
+         clearInvocationContext(ctx);
+      }
    }
 
    private void clearInternal(EnumSet<Flag> explicitFlags, InvocationContext ctx) {
@@ -442,8 +474,12 @@ public class CacheImpl<K, V> implements AdvancedCache<K, V> {
    @SuppressWarnings("unchecked")
    Set<K> keySet(EnumSet<Flag> explicitFlags, ClassLoader explicitClassLoader) {
       InvocationContext ctx = getInvocationContextForRead(null, explicitClassLoader, UNBOUNDED);
-      KeySetCommand command = commandsFactory.buildKeySetCommand(explicitFlags);
-      return (Set<K>) invoker.invoke(ctx, command);
+      try {
+         KeySetCommand command = commandsFactory.buildKeySetCommand(explicitFlags);
+         return (Set<K>) invoker.invoke(ctx, command);
+      } finally {
+         clearInvocationContext(ctx);
+      }
    }
 
    @Override
@@ -454,8 +490,12 @@ public class CacheImpl<K, V> implements AdvancedCache<K, V> {
    @SuppressWarnings("unchecked")
    Collection<V> values(EnumSet<Flag> explicitFlags, ClassLoader explicitClassLoader) {
       InvocationContext ctx = getInvocationContextForRead(null, explicitClassLoader, UNBOUNDED);
-      ValuesCommand command = commandsFactory.buildValuesCommand(explicitFlags);
-      return (Collection<V>) invoker.invoke(ctx, command);
+      try {
+         ValuesCommand command = commandsFactory.buildValuesCommand(explicitFlags);
+         return (Collection<V>) invoker.invoke(ctx, command);
+      } finally {
+         clearInvocationContext(ctx);
+      }
    }
 
    @Override
@@ -466,8 +506,12 @@ public class CacheImpl<K, V> implements AdvancedCache<K, V> {
    @SuppressWarnings("unchecked")
    Set<Map.Entry<K, V>> entrySet(EnumSet<Flag> explicitFlags, ClassLoader explicitClassLoader) {
       InvocationContext ctx = getInvocationContextForRead(null, explicitClassLoader, UNBOUNDED);
-      EntrySetCommand command = commandsFactory.buildEntrySetCommand(explicitFlags);
-      return (Set<Map.Entry<K, V>>) invoker.invoke(ctx, command);
+      try {
+         EntrySetCommand command = commandsFactory.buildEntrySetCommand(explicitFlags);
+         return (Set<Entry<K, V>>) invoker.invoke(ctx, command);
+      } finally {
+         clearInvocationContext(ctx);
+      }
    }
 
    @Override
@@ -510,8 +554,12 @@ public class CacheImpl<K, V> implements AdvancedCache<K, V> {
    final void evict(K key, EnumSet<Flag> explicitFlags, ClassLoader explicitClassLoader) {
       assertKeyNotNull(key);
       InvocationContext ctx = createSingleKeyNonTxInvocationContext(explicitClassLoader);
-      EvictCommand command = commandsFactory.buildEvictCommand(key, explicitFlags);
-      invoker.invoke(ctx, command);
+      try {
+         EvictCommand command = commandsFactory.buildEvictCommand(key, explicitFlags);
+         invoker.invoke(ctx, command);
+      } finally {
+         clearInvocationContext(ctx);
+      }
    }
 
    private InvocationContext createSingleKeyNonTxInvocationContext(ClassLoader explicitClassLoader) {
@@ -567,6 +615,7 @@ public class CacheImpl<K, V> implements AdvancedCache<K, V> {
 
    private InvocationContext getInvocationContextWithImplicitTransactionForAsyncOps(boolean isPutForExternalRead, ClassLoader explicitClassLoader, int keyCount) {
       InvocationContext ctx = getInvocationContextWithImplicitTransaction(isPutForExternalRead, explicitClassLoader, keyCount);
+      icc.clearThreadLocal();
       //If the transaction was injected then we should not have it associated to caller's thread, but with the async thread
       try {
          if (isTxInjected(ctx))
@@ -643,8 +692,12 @@ public class CacheImpl<K, V> implements AdvancedCache<K, V> {
          throw new IllegalArgumentException("Cannot lock empty list of keys");
       }
       InvocationContext ctx = getInvocationContextForWrite(explicitClassLoader, UNBOUNDED, false);
-      LockControlCommand command = commandsFactory.buildLockControlCommand(keys, explicitFlags);
-      return (Boolean) invoker.invoke(ctx, command);
+      try {
+         LockControlCommand command = commandsFactory.buildLockControlCommand(keys, explicitFlags);
+         return (Boolean) invoker.invoke(ctx, command);
+      } finally {
+         clearInvocationContext(ctx);
+      }
    }
 
    @Override
@@ -653,8 +706,12 @@ public class CacheImpl<K, V> implements AdvancedCache<K, V> {
          throw new IllegalArgumentException("Cannot lock empty list of keys");
       }
       InvocationContext ctx = getInvocationContextForWrite(null, UNBOUNDED, false);
-      ApplyDeltaCommand command = commandsFactory.buildApplyDeltaCommand(deltaAwareValueKey, delta, Arrays.asList(locksToAcquire));
-      invoker.invoke(ctx, command);
+      try {
+         ApplyDeltaCommand command = commandsFactory.buildApplyDeltaCommand(deltaAwareValueKey, delta, Arrays.asList(locksToAcquire));
+         invoker.invoke(ctx, command);
+      } finally {
+         clearInvocationContext(ctx);
+      }
    }
 
    @Override
@@ -858,7 +915,11 @@ public class CacheImpl<K, V> implements AdvancedCache<K, V> {
    final V put(K key, V value, Metadata metadata,
          EnumSet<Flag> explicitFlags, ClassLoader explicitClassLoader) {
       InvocationContext ctx = getInvocationContextWithImplicitTransaction(false, explicitClassLoader, 1);
-      return putInternal(key, value, metadata, explicitFlags, ctx);
+      try {
+         return putInternal(key, value, metadata, explicitFlags, ctx);
+      } finally {
+         clearInvocationContext(ctx);
+      }
    }
 
    @SuppressWarnings("unchecked")
@@ -881,7 +942,11 @@ public class CacheImpl<K, V> implements AdvancedCache<K, V> {
    final V putIfAbsent(K key, V value, Metadata metadata,
          EnumSet<Flag> explicitFlags, ClassLoader explicitClassLoader) {
       InvocationContext ctx = getInvocationContextWithImplicitTransaction(isPutForExternalRead(explicitFlags), explicitClassLoader, 1);
-      return putIfAbsentInternal(key, value, metadata, explicitFlags, ctx);
+      try {
+         return putIfAbsentInternal(key, value, metadata, explicitFlags, ctx);
+      } finally {
+         clearInvocationContext(ctx);
+      }
    }
 
    @SuppressWarnings("unchecked")
@@ -903,7 +968,11 @@ public class CacheImpl<K, V> implements AdvancedCache<K, V> {
 
    final void putAll(Map<? extends K, ? extends V> map, Metadata metadata, EnumSet<Flag> explicitFlags, ClassLoader explicitClassLoader) {
       InvocationContext ctx = getInvocationContextWithImplicitTransaction(false, explicitClassLoader, map.size());
-      putAllInternal(map, metadata, explicitFlags, ctx);
+      try {
+         putAllInternal(map, metadata, explicitFlags, ctx);
+      } finally {
+         clearInvocationContext(ctx);
+      }
    }
 
    private void putAllInternal(Map<? extends K, ? extends V> map, Metadata metadata, EnumSet<Flag> explicitFlags, InvocationContext ctx) {
@@ -923,7 +992,11 @@ public class CacheImpl<K, V> implements AdvancedCache<K, V> {
    @SuppressWarnings("unchecked")
    final V replace(K key, V value, Metadata metadata, EnumSet<Flag> explicitFlags, ClassLoader explicitClassLoader) {
       InvocationContext ctx = getInvocationContextWithImplicitTransaction(false, explicitClassLoader, 1);
-      return replaceInternal(key, value, metadata, explicitFlags, ctx);
+      try {
+         return replaceInternal(key, value, metadata, explicitFlags, ctx);
+      } finally {
+         clearInvocationContext(ctx);
+      }
    }
 
    @SuppressWarnings("unchecked")
@@ -944,7 +1017,11 @@ public class CacheImpl<K, V> implements AdvancedCache<K, V> {
    final boolean replace(K key, V oldValue, V value, Metadata metadata,
          EnumSet<Flag> explicitFlags, ClassLoader explicitClassLoader) {
       InvocationContext ctx = getInvocationContextWithImplicitTransaction(false, explicitClassLoader, 1);
-      return replaceInternal(key, oldValue, value, metadata, explicitFlags, ctx);
+      try {
+         return replaceInternal(key, oldValue, value, metadata, explicitFlags, ctx);
+      } finally {
+         clearInvocationContext(ctx);
+      }
    }
 
    private boolean replaceInternal(K key, V oldValue, V value, Metadata metadata,

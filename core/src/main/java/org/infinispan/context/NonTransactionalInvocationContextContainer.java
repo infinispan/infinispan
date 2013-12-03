@@ -31,14 +31,11 @@ public class NonTransactionalInvocationContextContainer extends AbstractInvocati
 
    @Override
    public InvocationContext createInvocationContext(boolean isWrite, int keyCount) {
-      if (keyCount == 1) {
-         SingleKeyNonTxInvocationContext result =
-               new SingleKeyNonTxInvocationContext(true, keyEq);
-         ctxHolder.set(result);
-         return result;
-      } else if (keyCount > 0) {
-         NonTxInvocationContext ctx = new NonTxInvocationContext(keyCount, true, keyEq);
-         ctxHolder.set(ctx);
+      if (keyCount > 0) {
+         InvocationContext ctx = keyCount == 1
+               ? new SingleKeyNonTxInvocationContext(true, keyEq)
+               : new NonTxInvocationContext(keyCount, true, keyEq);
+         setThreadLocal(ctx);
          return ctx;
       }
       return createInvocationContext(null);
@@ -53,14 +50,14 @@ public class NonTransactionalInvocationContextContainer extends AbstractInvocati
    public NonTxInvocationContext createNonTxInvocationContext() {
       NonTxInvocationContext ctx = new NonTxInvocationContext(keyEq);
       ctx.setOriginLocal(true);
-      ctxHolder.set(ctx);
+      setThreadLocal(ctx);
       return ctx;
    }
 
    @Override
    public InvocationContext createSingleKeyNonTxInvocationContext() {
       SingleKeyNonTxInvocationContext result = new SingleKeyNonTxInvocationContext(true, keyEq);
-      ctxHolder.set(result);
+      setThreadLocal(result);
       return result;
    }
 
@@ -68,7 +65,7 @@ public class NonTransactionalInvocationContextContainer extends AbstractInvocati
    public NonTxInvocationContext createRemoteInvocationContext(Address origin) {
       NonTxInvocationContext ctx = new NonTxInvocationContext(keyEq);
       ctx.setOrigin(origin);
-      ctxHolder.set(ctx);
+      setThreadLocal(ctx);
       return ctx;
    }
 

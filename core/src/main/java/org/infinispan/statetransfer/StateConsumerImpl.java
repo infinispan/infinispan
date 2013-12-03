@@ -532,28 +532,32 @@ public class StateConsumerImpl implements StateConsumer {
                ctx = icc.createSingleKeyNonTxInvocationContext();
             }
 
-            PutKeyValueCommand put = commandsFactory.buildPutKeyValueCommand(
-                  e.getKey(), e.getValue(), e.getMetadata(), flags);
-
-            boolean success = false;
             try {
-               interceptorChain.invoke(ctx, put);
-               success = true;
-            } finally {
-               if (ctx.isInTxScope()) {
-                  if (success) {
-                     try {
-                        transactionManager.commit();
-                     } catch (Throwable ex) {
-                        log.errorf(ex, "Could not commit transaction created by state transfer of key %s", e.getKey());
-                        if (transactionManager.getTransaction() != null) {
-                           transactionManager.rollback();
+               PutKeyValueCommand put = commandsFactory.buildPutKeyValueCommand(
+                     e.getKey(), e.getValue(), e.getMetadata(), flags);
+
+               boolean success = false;
+               try {
+                  interceptorChain.invoke(ctx, put);
+                  success = true;
+               } finally {
+                  if (ctx.isInTxScope()) {
+                     if (success) {
+                        try {
+                           transactionManager.commit();
+                        } catch (Throwable ex) {
+                           log.errorf(ex, "Could not commit transaction created by state transfer of key %s", e.getKey());
+                           if (transactionManager.getTransaction() != null) {
+                              transactionManager.rollback();
+                           }
                         }
+                     } else {
+                        transactionManager.rollback();
                      }
-                  } else {
-                     transactionManager.rollback();
                   }
                }
+            } finally {
+               icc.clearThreadLocal();
             }
          } catch (Exception ex) {
             log.problemApplyingStateForKey(ex.getMessage(), e.getKey(), ex);
@@ -932,7 +936,11 @@ public class StateConsumerImpl implements StateConsumer {
          try {
             InvalidateCommand invalidateCmd = commandsFactory.buildInvalidateFromL1Command(true, EnumSet.of(CACHE_MODE_LOCAL, SKIP_LOCKING), keysToL1);
             InvocationContext ctx = icc.createNonTxInvocationContext();
-            interceptorChain.invoke(ctx, invalidateCmd);
+            try {
+               interceptorChain.invoke(ctx, invalidateCmd);
+            } finally {
+               icc.clearThreadLocal();
+            }
 
             log.debugf("Invalidated %d keys, data container now has %d keys", keysToL1.size(), dataContainer.size());
             if (trace) log.tracef("Invalidated keys: %s", keysToL1);
@@ -946,7 +954,11 @@ public class StateConsumerImpl implements StateConsumer {
          try {
             InvalidateCommand invalidateCmd = commandsFactory.buildInvalidateCommand(EnumSet.of(CACHE_MODE_LOCAL, SKIP_LOCKING), keysToRemove.toArray());
             InvocationContext ctx = icc.createNonTxInvocationContext();
-            interceptorChain.invoke(ctx, invalidateCmd);
+            try {
+               interceptorChain.invoke(ctx, invalidateCmd);
+            } finally {
+               icc.clearThreadLocal();
+            }
 
             log.debugf("Invalidated %d keys, data container of cache %s now has %d keys", keysToRemove.size(), cacheName, dataContainer.size());
             if (trace) log.tracef("Invalidated keys: %s", keysToRemove);
