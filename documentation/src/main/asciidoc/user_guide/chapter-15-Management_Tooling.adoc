@@ -46,7 +46,7 @@ Once you have enabled JMX reporting at either the CacheManager or Cache level, y
 
 *  If you enabled Cache level JMX statistics, you should see several different MBeans depending on which configuration options have been enabled. For example, if you have configured a write behind cache store, you should see an MBean exposing properties belonging to the cache store component. All Cache level MBeans follow the same format though which is the following: `org.infinispan:type=Cache,name="${name-of-cache}(${cache-mode})",manager="${name-of-cache-manager}",component=${component-name}` where: 
 
-*  ${name-of-cache} has been substituted by the actual cache name. If this cache represents the default cache, it's name will be `___defaultCache`. 
+*  ${name-of-cache} has been substituted by the actual cache name. If this cache represents the default cache, its name will be `___defaultCache`. 
 
 * ${cache-mode} has been substituted by the cache mode of the cache. The cache mode is represented by the lower case version of the possible enumeration values shown here.
 

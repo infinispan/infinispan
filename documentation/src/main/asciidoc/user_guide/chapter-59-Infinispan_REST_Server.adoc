@@ -219,7 +219,7 @@ public class RestExample {
    }
 
    /**
-    * Method that gets an value by a key in url as param value.
+    * Method that gets a value by a key in url as param value.
     * @param urlServerAddress
     * @return String value
     * @throws IOException

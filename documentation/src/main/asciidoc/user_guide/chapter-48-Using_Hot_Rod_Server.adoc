@@ -108,7 +108,7 @@ link:$$http://docs.jboss.org/infinispan/6.0/apidocs/org/infinispan/client/hotrod
 Each one of these unsupported operation is documented in the link:$$http://docs.jboss.org/infinispan/6.0/apidocs/org/infinispan/client/hotrod/RemoteCache.html$$[RemoteCache] javadoc.
 
 ==== Return values
-There is a set of methods that alter an cached entry and return the previous existing value, e.g.: 
+There is a set of methods that alter a cached entry and return the previous existing value, e.g.: 
 
 [source,java]
 ----
@@ -116,7 +116,7 @@ V remove(Object key);
 V put(K key, V value);
 ----
 
-By default on RemoteCache, these operations return null even if such a previous value exists. This approach reduces the amount of data sent over the network. However, if these return values are needed they can be enforced on an per invocation basis using flags: 
+By default on RemoteCache, these operations return null even if such a previous value exists. This approach reduces the amount of data sent over the network. However, if these return values are needed they can be enforced on a per invocation basis using flags: 
 
 [source,java]
 ----
@@ -174,7 +174,7 @@ The marshaller can be plugged through the "marshaller" configuration element (se
 Since version 5.0, there's a new marshaller available to Java Hot Rod clients based on Apache Avro which generates portable payloads. You can find more information about it <<sid-68355061,here>> 
 
 ===== Statistics
-Various server usage statistics can be obtained through the link:$$http://docs.jboss.org/infinispan/6.0/apidocs/org/infinispan/client/hotrod/RemoteCache.html$$[RemoteCache] .stats() method. This returns an link:$$http://docs.jboss.org/infinispan/6.0/apidocs/org/infinispan/client/hotrod/ServerStatistics.html$$[ServerStatistics] object - please refer to javadoc for details on the available statistics.
+Various server usage statistics can be obtained through the link:$$http://docs.jboss.org/infinispan/6.0/apidocs/org/infinispan/client/hotrod/RemoteCache.html$$[RemoteCache] .stats() method. This returns a link:$$http://docs.jboss.org/infinispan/6.0/apidocs/org/infinispan/client/hotrod/ServerStatistics.html$$[ServerStatistics] object - please refer to javadoc for details on the available statistics.
 
 ===== Configuration
 All the configurations are passed to the RemoteCacheManager's constructor as key-value pairs, through an instance of link:$$http://docs.oracle.com/javase/6/docs/api/java/util/Properties.html$$[java.util.Properties] or reference to a .properties file. Please refer to the javadoc of RemoteCacheManager for a exhaustive list of the possible configuration elements.
@@ -357,7 +357,7 @@ cache.put(bytesKey, cacheValue);
 ----
 
 ===== Multiple Tiers of Caches
-A combination of the Hot Rod protocol and link:$$http://community.jboss.org/docs/DOC-14893?uniqueTitle=false#Remote_cache_loader$$[RemoteCacheLoader] opened the way for a set of new architectures in Infinispan, where layers of caches can exists and interact. This article takes a look at such an layered architecture. 
+A combination of the Hot Rod protocol and link:$$http://community.jboss.org/docs/DOC-14893?uniqueTitle=false#Remote_cache_loader$$[RemoteCacheLoader] opened the way for a set of new architectures in Infinispan, where layers of caches can exists and interact. This article takes a look at such a layered architecture. 
 
 ====== Sample architecture/near caching
 
@@ -376,13 +376,13 @@ This leap required two major changes:
 
 
 * Since non-JVM clients cannot benefit from directly using link:$$http://lucene.apache.org/$$[Apache Lucene]'s Java
-API, Infinispan defines it's own new link:$$#_infinispan_s_query_dsl$$[query language], based on an internal DSL that is easily
+API, Infinispan defines its own new link:$$#_infinispan_s_query_dsl$$[query language], based on an internal DSL that is easily
 implementable in all languages for which we currently have an implementation of the Hot Rod client.
 * In order to enable indexing, the entities put in the cache by clients can no longer be opaque binary blobs understood
 solely by the client. Their structure has to be known to both server and client, so a common way of
 encoding structured data had to be adopted. Furthermore, allowing multi-language clients to access the data requires a
 language and platform-neutral encoding. Google's link:$$http://code.google.com/p/protobuf/$$[Protocol Buffers] was
-elected as an encoding format for both over-the-wire and storage due to it's efficiency, robustness, good multi-language
+elected as an encoding format for both over-the-wire and storage due to its efficiency, robustness, good multi-language
 support and support for schema evolution.
 
 

@@ -349,7 +349,7 @@ include <filename>
 
 |===============
 
-NOTE: The name of this command and it's behaviour is going to change in the next version.
+NOTE: The name of this command and its behaviour is going to change in the next version.
 
 === Interoperability with java clients
 ==== Over REST

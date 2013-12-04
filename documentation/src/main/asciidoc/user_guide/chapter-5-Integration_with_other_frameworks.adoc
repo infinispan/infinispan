@@ -75,7 +75,7 @@ The aim of this section is to explain the default settings for each of the diffe
 
 ===== Defaults for Entity/Collection Caching
 
-*  For all entities and collections, whenever an new _entity or collection is read from database_ and needs to be cached, _it's only cached locally_ in order to reduce intra-cluster traffic. This option cannot be changed. 
+*  For all entities and collections, whenever a new _entity or collection is read from database_ and needs to be cached, _it's only cached locally_ in order to reduce intra-cluster traffic. This option cannot be changed. 
 
 *  All _entities and collections are configured to use a synchronous invalidation_ as clustering mode. This means that when an entity is updated, the updated cache will send a message to the other members of the cluster telling them that the entity has been modified. Upon receipt of this message, the other nodes will remove this data from their local cache, if it was stored there. This option can be changed to use replication by configuring entities or collections to use "replicated-entity" cache but it's generally not a recommended choice. 
 
@@ -169,7 +169,7 @@ For example if you were running with the JBoss Application Server you would set:
 </property>
 ----
 
-*  If you are running standalone and you want to add a JTA transaction manager lookup, things get a bit more complicated. Due to a current limitation, Hibernate does not support injecting a JTA TransactionManager or JTA UserTransaction that are not bound to JNDI. In other words, if you want to use JTA, Hibernate expects your TransactionManager to be bound to JNDI and it also expects that UserTransaction instances are retrieved from JNDI. This means that in an standalone environment, you need to add some code that binds your TransactionManager and UserTransaction to JNDI. With this in mind and with the help of one of our community contributors, we've created an example that does just that: link:$$http://anonsvn.jboss.org/repos/hibernate/core/trunk/cache-infinispan/src/test/java/org/hibernate/test/cache/infinispan/tm/JBossStandaloneJtaExampleTest.java$$[JBoss Standalone JTA Example] . Once you have the code in place, it's just a matter of selecting the correct Hibernate transaction manager lookup class, based on the JNDI names given. If you take _JBossStandaloneJtaExample_ as an example, you simply have to add: 
+*  If you are running standalone and you want to add a JTA transaction manager lookup, things get a bit more complicated. Due to a current limitation, Hibernate does not support injecting a JTA TransactionManager or JTA UserTransaction that are not bound to JNDI. In other words, if you want to use JTA, Hibernate expects your TransactionManager to be bound to JNDI and it also expects that UserTransaction instances are retrieved from JNDI. This means that in a standalone environment, you need to add some code that binds your TransactionManager and UserTransaction to JNDI. With this in mind and with the help of one of our community contributors, we've created an example that does just that: link:$$http://anonsvn.jboss.org/repos/hibernate/core/trunk/cache-infinispan/src/test/java/org/hibernate/test/cache/infinispan/tm/JBossStandaloneJtaExampleTest.java$$[JBoss Standalone JTA Example] . Once you have the code in place, it's just a matter of selecting the correct Hibernate transaction manager lookup class, based on the JNDI names given. If you take _JBossStandaloneJtaExample_ as an example, you simply have to add: 
 
 [source,xml]
 ----
@@ -188,7 +188,7 @@ For example if you were running with the JBoss Application Server you would set:
 
 As you probably have noted through this section, there wasn't a single mention of the need to configure link:$$http://docs.jboss.org/infinispan/5.0/apidocs/config.html#ce_default_transaction$$[Infinispan's transaction manager lookup] and there's a good reason for that. Basically, the code within Infinispan cache provider takes the transaction manager that has been configured at the Hibernate level and uses that. Otherwise, if no Hibernate transaction manager lookup class has been defined, Infinispan uses a default dummy transaction manager.
 
-Since Hibernate 4.0, the way Infinispan hooks into the transaction manager can be configured. By default, since 4.0, Infinispan interacts with the transaction manager as an JTA synchronization, resulting <<_transactions, in a faster interaction with the 2LC thanks to some key optimisations that the transaction manager can apply>>. However if desired, users can configure Infinispan to act as an XA resource (just like it did in 3.6 and earlier) by disabling the use of the synchronization. For example: 
+Since Hibernate 4.0, the way Infinispan hooks into the transaction manager can be configured. By default, since 4.0, Infinispan interacts with the transaction manager as a JTA synchronization, resulting <<_transactions, in a faster interaction with the 2LC thanks to some key optimisations that the transaction manager can apply>>. However if desired, users can configure Infinispan to act as an XA resource (just like it did in 3.6 and earlier) by disabling the use of the synchronization. For example: 
 
 [source,xml]
 ----
@@ -484,7 +484,7 @@ NOTE: A very important aspect is not forgetting to couple the datasource with yo
 
 
 ==== JBoss Transactions
-The example with JBoss Transactions Transaction Manager was the most complex to implement, as JBoss's TransactionManager and UserTransaction objects are not declared serializable whilst it's JNDI-server isn't able to bind non serializable objects out of the box. Special use of NonSerializableFactory is needed, requiring some additional custom code:
+The example with JBoss Transactions Transaction Manager was the most complex to implement, as JBoss's TransactionManager and UserTransaction objects are not declared serializable whilst its JNDI-server isn't able to bind non serializable objects out of the box. Special use of NonSerializableFactory is needed, requiring some additional custom code:
 
 [source,java]
 ----
@@ -681,7 +681,7 @@ The content of the corresponding complete persistence.xml:
 
 ==== JOTM
 
-The example with JOTM is more simple, but apparently it's JNDI implementation is not useable without wasting any rmi port. So it is not completely 'standalone' as the JNDI service is exposed outside your virtual machine.
+The example with JOTM is more simple, but apparently its JNDI implementation is not useable without wasting any rmi port. So it is not completely 'standalone' as the JNDI service is exposed outside your virtual machine.
 
 [source,java]
 ----
@@ -918,7 +918,7 @@ Adjust following 2 properties in your corresponding persistence.xml:
 ----
 
 ==== Atomikos
-Last but not least, the Atomikos Transaction manager. It is currently the unique Transaction manager I've found with a online-documentation on link:$$http://www.atomikos.com/Documentation/HibernateIntegration#Without_Spring$$[how to integrate with Hiberante] link:$$http://www.atomikos.com/Documentation/HibernateIntegration#Without_Spring$$[without Spring, outside any J2EE container.] . It seems to be the unique supporting XaDataSource together with Pooling, so it doesn't matter that It does not come  with it's own JNDI implementation (we will use the one of JBoss in following example). 
+Last but not least, the Atomikos Transaction manager. It is currently the unique Transaction manager I've found with a online-documentation on link:$$http://www.atomikos.com/Documentation/HibernateIntegration#Without_Spring$$[how to integrate with Hiberante] link:$$http://www.atomikos.com/Documentation/HibernateIntegration#Without_Spring$$[without Spring, outside any J2EE container.] . It seems to be the unique supporting XaDataSource together with Pooling, so it doesn't matter that It does not come  with its own JNDI implementation (we will use the one of JBoss in following example). 
 
 [source,java]
 ----
