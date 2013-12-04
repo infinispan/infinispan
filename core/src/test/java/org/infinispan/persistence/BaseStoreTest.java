@@ -76,13 +76,17 @@ public abstract class BaseStoreTest extends AbstractInfinispanTest {
    }
 
    @AfterMethod
+   protected void stopMarshaller() {
+      marshaller.stop();
+   }
+
+   @AfterMethod
    public void tearDown() throws PersistenceException {
       try {
          if (cl != null) {
             cl.clear();
             cl.stop();
          }
-         marshaller.stop();
       } finally {
          cl = null;
       }
