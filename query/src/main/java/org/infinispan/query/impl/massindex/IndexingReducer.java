@@ -19,27 +19,37 @@ import org.infinispan.query.impl.ComponentRegistryUtils;
  */
 public final class IndexingReducer implements Reducer<Object, LuceneWork> {
 
+   private SearchFactoryIntegrator searchFactory;
    private DefaultMassIndexerProgressMonitor progressMonitor;
    private DefaultBatchBackend defaultBatchBackend;
 
    public void initialize(Cache<?, ?> inputCache) {
       QueryInterceptor queryInterceptor = ComponentRegistryUtils.getQueryInterceptor(inputCache);
-      SearchFactoryIntegrator searchFactory = queryInterceptor.getSearchFactory();
-      this.progressMonitor = new DefaultMassIndexerProgressMonitor(inputCache.getAdvancedCache().getComponentRegistry()
+      searchFactory = queryInterceptor.getSearchFactory();
+      progressMonitor = new DefaultMassIndexerProgressMonitor(inputCache.getAdvancedCache().getComponentRegistry()
                                                                          .getTimeService());
-      this.defaultBatchBackend = new DefaultBatchBackend(searchFactory, progressMonitor);
+      defaultBatchBackend = new DefaultBatchBackend(searchFactory, progressMonitor);
    }
 
    @Override
    public LuceneWork reduce(Object reducedKey, Iterator<LuceneWork> iter) {
       try {
          while (iter.hasNext()) {
-            defaultBatchBackend.enqueueAsyncWork(iter.next());
+            LuceneWork work = iter.next();
+            defaultBatchBackend.enqueueAsyncWork(work);
          }
       } catch (InterruptedException e) {
          Thread.currentThread().interrupt();
       }
       return null;
+   }
+
+   /**
+    * Since indexing work is done asynchronously in the backend, we need to flush at the end to
+    * make sure we don't return control to user before all work was processed and flushed.
+    */
+   public void flush() {
+      defaultBatchBackend.flush(searchFactory.getIndexedTypes());
    }
 
 }

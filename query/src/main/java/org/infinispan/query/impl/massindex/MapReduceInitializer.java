@@ -35,7 +35,10 @@ public class MapReduceInitializer implements MapReduceTaskLifecycle {
 
    @Override
    public <KOut, VOut> void onPostExecute(Reducer<KOut, VOut> reducer) {
-    //nothing to do
+      if (reducer instanceof IndexingReducer) {
+         IndexingReducer im = (IndexingReducer) reducer;
+         im.flush();
+      }
    }
 
 }
