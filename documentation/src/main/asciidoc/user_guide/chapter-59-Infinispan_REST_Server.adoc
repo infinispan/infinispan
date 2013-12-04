@@ -46,7 +46,7 @@ Exactly the same as PUT, only if a value in a cache/key already exists, it will 
 .Passing 0 as parameter for timeToLiveSeconds and/or maxIdleTimeSeconds
 *  If both `timeToLiveSeconds` and `maxIdleTimeSeconds` are 0, the cache will use the default `lifespan` and `maxIdle` values configured in XML/programmatically 
 *  If _only_ `maxIdleTimeSeconds` is 0, it uses the `timeToLiveSeconds` value passed as parameter (or -1 if not present), and default `maxIdle` configured in XML/programmatically 
-*  If _only_ `timeToLiveSeconds` is 0, it uses 0 as `timeToLiveSeconds` meaning that it will expire immediately, and `maxIdle` is set whatever came as parameter (or -1 if not present) 
+*  If _only_ `timeToLiveSeconds` is 0, it uses default `lifespan` configured in XML/programmatically, and `maxIdle` is set to whatever came as parameter (or -1 if not present)
 
 ===== Getting data back out
 HTTP GET and HEAD are used to retrieve data from entries. 

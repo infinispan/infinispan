@@ -784,11 +784,16 @@ class IntegrationTest extends RestServerTestBase {
       lifespan = 0
       fullPathKey = "%s-3".format(fullPathKey)
       post = new PostMethod(fullPathKey)
-      // It will expire immediately
+      // Will use the configured lifespan
       post.setRequestHeader("timeToLiveSeconds", "0")
       post.setRequestEntity(new StringRequestEntity("data3", "text/plain", "UTF-8"))
       call(post)
-      waitNotFound(startTime, lifespan, fullPathKey)
+      Thread.sleep(1000)
+      get = call(new GetMethod(fullPathKey))
+      val response = get.getResponseBodyAsString
+      assertEquals("data3", response)
+      Thread.sleep(2000)
+      assertEquals(HttpServletResponse.SC_NOT_FOUND, call(new GetMethod(fullPathKey)).getStatusCode)
 
       fullPathKey = "%s-4".format(fullPathKey)
       post = new PostMethod(fullPathKey)

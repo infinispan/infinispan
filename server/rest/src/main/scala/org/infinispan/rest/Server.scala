@@ -406,6 +406,8 @@ class Server(@Context request: Request, @Context servletContext: ServletContext,
          case (0, 0) => MimeMetadata(dataType,
             cfg.expiration().lifespan(), MILLIS,
             cfg.expiration().maxIdle(), MILLIS)
+         case (0, maxIdle) =>
+            MimeMetadata(dataType, cfg.expiration().lifespan(), MILLIS, maxIdle, SECS)
          case (lifespan, 0) =>
             MimeMetadata(dataType, lifespan, SECS, cfg.expiration().maxIdle(), MILLIS)
          case (lifespan, maxIdle) =>
