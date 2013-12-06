@@ -11,10 +11,8 @@ import org.infinispan.remoting.transport.Address;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.CleanupAfterMethod;
-import org.infinispan.topology.CacheTopology;
-import org.infinispan.topology.LocalTopologyManager;
 import org.infinispan.tx.dld.ControlledRpcManager;
-import org.infinispan.util.AbstractControlledLocalTopologyManager;
+import org.infinispan.util.BlockingLocalTopologyManager;
 import org.infinispan.util.SingleSegmentConsistentHashFactory;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.Test;
@@ -26,6 +24,7 @@ import java.util.concurrent.Callable;
 import java.util.concurrent.Future;
 
 import static org.infinispan.distribution.DistributionTestHelper.isFirstOwner;
+import static org.infinispan.util.BlockingLocalTopologyManager.LatchType;
 import static org.testng.AssertJUnit.assertEquals;
 import static org.testng.AssertJUnit.assertTrue;
 
@@ -39,8 +38,8 @@ import static org.testng.AssertJUnit.assertTrue;
 @CleanupAfterMethod
 public class RemoteGetDuringStateTransferTest extends MultipleCacheManagersTest {
 
-   private final List<ControlledLocalTopologyManager> topologyManagerList =
-         Collections.synchronizedList(new ArrayList<ControlledLocalTopologyManager>(4));
+   private final List<BlockingLocalTopologyManager> topologyManagerList =
+         Collections.synchronizedList(new ArrayList<BlockingLocalTopologyManager>(4));
    private final List<ControlledRpcManager> rpcManagerList =
          Collections.synchronizedList(new ArrayList<ControlledRpcManager>(4));
 
@@ -65,7 +64,7 @@ public class RemoteGetDuringStateTransferTest extends MultipleCacheManagersTest 
    public final void unblockAll() {
       //keep track of all controlled components. In case of failure, we need to unblock all otherwise we have to wait
       //long time until the test is able to stop all cache managers.
-      for (ControlledLocalTopologyManager topologyManager : topologyManagerList) {
+      for (BlockingLocalTopologyManager topologyManager : topologyManagerList) {
          topologyManager.stopBlockingAll();
       }
       topologyManagerList.clear();
@@ -85,7 +84,7 @@ public class RemoteGetDuringStateTransferTest extends MultipleCacheManagersTest 
       ownerCheckAndInit(cache(1), key, "v");
 
       final ControlledRpcManager rpcManager = replaceRpcManager(cache(0));
-      final ControlledLocalTopologyManager topologyManager = replaceTopologyManager(manager(0));
+      final BlockingLocalTopologyManager topologyManager = replaceTopologyManager(manager(0));
       final int currentTopologyId = currentTopologyId(cache(0));
 
       rpcManager.blockBefore(ClusteredGetCommand.class);
@@ -119,7 +118,7 @@ public class RemoteGetDuringStateTransferTest extends MultipleCacheManagersTest 
       final Object key = "key_s2";
       ownerCheckAndInit(cache(1), key, "v");
       final ControlledRpcManager rpcManager = replaceRpcManager(cache(0));
-      final ControlledLocalTopologyManager topologyManager = replaceTopologyManager(manager(0));
+      final BlockingLocalTopologyManager topologyManager = replaceTopologyManager(manager(0));
       final int currentTopologyId = currentTopologyId(cache(0));
 
       rpcManager.blockBefore(ClusteredGetCommand.class);
@@ -154,7 +153,7 @@ public class RemoteGetDuringStateTransferTest extends MultipleCacheManagersTest 
       final Object key = "key_s3";
       ownerCheckAndInit(cache(1), key, "v");
       final ControlledRpcManager rpcManager = replaceRpcManager(cache(0));
-      final ControlledLocalTopologyManager topologyManager = replaceTopologyManager(manager(0));
+      final BlockingLocalTopologyManager topologyManager = replaceTopologyManager(manager(0));
       final int currentTopologyId = currentTopologyId(cache(0));
 
       rpcManager.blockBefore(ClusteredGetCommand.class);
@@ -191,7 +190,7 @@ public class RemoteGetDuringStateTransferTest extends MultipleCacheManagersTest 
       final Object key = "key_s4";
       ownerCheckAndInit(cache(1), key, "v");
       final ControlledRpcManager rpcManager = replaceRpcManager(cache(0));
-      final ControlledLocalTopologyManager topologyManager = replaceTopologyManager(manager(0));
+      final BlockingLocalTopologyManager topologyManager = replaceTopologyManager(manager(0));
       final int currentTopologyId = currentTopologyId(cache(0));
 
       rpcManager.blockBefore(ClusteredGetCommand.class);
@@ -230,7 +229,7 @@ public class RemoteGetDuringStateTransferTest extends MultipleCacheManagersTest 
       final Object key = "key_s4";
       ownerCheckAndInit(cache(1), key, "v");
       final ControlledRpcManager rpcManager = replaceRpcManager(cache(0));
-      final ControlledLocalTopologyManager topologyManager = replaceTopologyManager(manager(0));
+      final BlockingLocalTopologyManager topologyManager = replaceTopologyManager(manager(0));
       final int currentTopologyId = currentTopologyId(cache(0));
 
       rpcManager.blockBefore(ClusteredGetCommand.class);
@@ -336,7 +335,7 @@ public class RemoteGetDuringStateTransferTest extends MultipleCacheManagersTest 
       final Object key = "key_s6";
       ownerCheckAndInit(cache(1), key, "v");
       final ControlledRpcManager rpcManager = replaceRpcManager(cache(0));
-      final ControlledLocalTopologyManager topologyManager = replaceTopologyManager(manager(0));
+      final BlockingLocalTopologyManager topologyManager = replaceTopologyManager(manager(0));
       final int currentTopologyId = currentTopologyId(cache(0));
 
       rpcManager.blockBefore(ClusteredGetCommand.class);
@@ -373,7 +372,7 @@ public class RemoteGetDuringStateTransferTest extends MultipleCacheManagersTest 
       final Object key = "key_s6";
       ownerCheckAndInit(cache(1), key, "v");
       final ControlledRpcManager rpcManager = replaceRpcManager(cache(0));
-      final ControlledLocalTopologyManager topologyManager = replaceTopologyManager(manager(0));
+      final BlockingLocalTopologyManager topologyManager = replaceTopologyManager(manager(0));
       final int currentTopologyId = currentTopologyId(cache(0));
 
       rpcManager.blockBefore(ClusteredGetCommand.class);
@@ -415,7 +414,7 @@ public class RemoteGetDuringStateTransferTest extends MultipleCacheManagersTest 
       final Object key = "key_s7";
       ownerCheckAndInit(cache(1), key, "v");
       final ControlledRpcManager rpcManager = replaceRpcManager(cache(0));
-      final ControlledLocalTopologyManager topologyManager = replaceTopologyManager(manager(0));
+      final BlockingLocalTopologyManager topologyManager = replaceTopologyManager(manager(0));
       final int currentTopologyId = currentTopologyId(cache(0));
 
       rpcManager.blockBefore(ClusteredGetCommand.class);
@@ -457,7 +456,7 @@ public class RemoteGetDuringStateTransferTest extends MultipleCacheManagersTest 
       final Object key = "key_s7";
       ownerCheckAndInit(cache(1), key, "v");
       final ControlledRpcManager rpcManager = replaceRpcManager(cache(0));
-      final ControlledLocalTopologyManager topologyManager = replaceTopologyManager(manager(0));
+      final BlockingLocalTopologyManager topologyManager = replaceTopologyManager(manager(0));
       final int currentTopologyId = currentTopologyId(cache(0));
 
       rpcManager.blockBefore(ClusteredGetCommand.class);
@@ -569,12 +568,10 @@ public class RemoteGetDuringStateTransferTest extends MultipleCacheManagersTest 
       return builder;
    }
 
-   private ControlledLocalTopologyManager replaceTopologyManager(CacheContainer cacheContainer) {
-      LocalTopologyManager manager = TestingUtil.extractGlobalComponent(cacheContainer, LocalTopologyManager.class);
-      ControlledLocalTopologyManager controlledLocalTopologyManager = new ControlledLocalTopologyManager(manager);
-      TestingUtil.replaceComponent(cacheContainer, LocalTopologyManager.class, controlledLocalTopologyManager, true);
-      topologyManagerList.add(controlledLocalTopologyManager);
-      return controlledLocalTopologyManager;
+   private BlockingLocalTopologyManager replaceTopologyManager(CacheContainer cacheContainer) {
+      BlockingLocalTopologyManager localTopologyManager = BlockingLocalTopologyManager.replaceTopologyManager(cacheContainer);
+      topologyManagerList.add(localTopologyManager);
+      return localTopologyManager;
    }
 
    private ControlledRpcManager replaceRpcManager(Cache cache) {
@@ -583,12 +580,6 @@ public class RemoteGetDuringStateTransferTest extends MultipleCacheManagersTest 
       TestingUtil.replaceComponent(cache, RpcManager.class, controlledRpcManager, true);
       rpcManagerList.add(controlledRpcManager);
       return controlledRpcManager;
-   }
-
-   private static enum LatchType {
-      CONSISTENT_HASH_UPDATE,
-      CONFIRM_REBALANCE,
-      REBALANCE
    }
 
    @SuppressWarnings("unchecked")
@@ -603,7 +594,7 @@ public class RemoteGetDuringStateTransferTest extends MultipleCacheManagersTest 
 
    private class NewNode {
       Future<Void> joinerFuture;
-      ControlledLocalTopologyManager localTopologyManager;
+      BlockingLocalTopologyManager localTopologyManager;
    }
 
    private class RemoteGetCallable implements Callable<Object> {
@@ -620,99 +611,5 @@ public class RemoteGetDuringStateTransferTest extends MultipleCacheManagersTest 
       public Object call() throws Exception {
          return cache.get(key);
       }
-   }
-
-   private class ControlledLocalTopologyManager extends AbstractControlledLocalTopologyManager {
-
-      private final Latch blockConfirmRebalance;
-      private final Latch blockConsistentHashUpdate;
-      private final Latch blockRebalanceStart;
-
-      public ControlledLocalTopologyManager(LocalTopologyManager delegate) {
-         super(delegate);
-         blockRebalanceStart = new Latch();
-         blockConsistentHashUpdate = new Latch();
-         blockConfirmRebalance = new Latch();
-      }
-
-      public void startBlocking(LatchType type) {
-         getLatch(type).enable();
-      }
-
-      public void stopBlocking(LatchType type) {
-         getLatch(type).disable();
-      }
-
-      public void waitToBlock(LatchType type) throws InterruptedException {
-         getLatch(type).waitToBlock();
-      }
-
-      public void stopBlockingAll() {
-         for (LatchType type : LatchType.values()) {
-            getLatch(type).disable();
-         }
-      }
-
-      @Override
-      protected final void beforeHandleConsistentHashUpdate(String cacheName, CacheTopology cacheTopology, int viewId) {
-         getLatch(LatchType.CONSISTENT_HASH_UPDATE).blockIfNeeded();
-      }
-
-      @Override
-      protected final void beforeHandleRebalance(String cacheName, CacheTopology cacheTopology, int viewId) {
-         getLatch(LatchType.REBALANCE).blockIfNeeded();
-      }
-
-      @Override
-      protected final void beforeConfirmRebalance(String cacheName, int topologyId, Throwable throwable) {
-         getLatch(LatchType.CONFIRM_REBALANCE).blockIfNeeded();
-      }
-
-      private Latch getLatch(LatchType type) {
-         switch (type) {
-            case CONSISTENT_HASH_UPDATE:
-               return blockConsistentHashUpdate;
-            case CONFIRM_REBALANCE:
-               return blockConfirmRebalance;
-            case REBALANCE:
-               return blockRebalanceStart;
-         }
-         throw new IllegalStateException("Should never happen!");
-      }
-   }
-
-   private class Latch {
-
-      private boolean enabled = false;
-      private boolean blocked = false;
-
-      public final synchronized void enable() {
-         this.enabled = true;
-      }
-
-      public final synchronized void disable() {
-         this.enabled = false;
-         notifyAll();
-      }
-
-      public final synchronized void blockIfNeeded() {
-         blocked = true;
-         notifyAll();
-         while (enabled) {
-            try {
-               wait();
-            } catch (InterruptedException e) {
-               Thread.currentThread().interrupt();
-               return;
-            }
-         }
-      }
-
-      public final synchronized void waitToBlock() throws InterruptedException {
-         while (!blocked) {
-            wait();
-         }
-      }
-
    }
 }
