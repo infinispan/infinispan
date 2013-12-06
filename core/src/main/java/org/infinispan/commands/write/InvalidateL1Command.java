@@ -100,6 +100,8 @@ public class InvalidateL1Command extends InvalidateCommand {
                	if (trace) log.tracef("Invalidating key %s.", k);
                   invalidate(ctx, k);
                }
+            } else {
+               log.tracef("Not invalidating key %s as it is local now", k);
             }
          }
       }

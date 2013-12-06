@@ -3,8 +3,7 @@ package org.infinispan.distribution.rehash;
 import org.testng.annotations.Test;
 
 /**
- * Test that ensure when L1 cache is enabled that if writes occurs during a state transfer and vice versa that the
- * proper data is available.
+ * Test that ensures that state transfer values aren't overridden with a tx cache with L1 enabled.
  *
  * @author William Burns
  * @since 6.0

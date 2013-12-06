@@ -2,6 +2,7 @@ package org.infinispan.distribution.rehash;
 
 import org.infinispan.AdvancedCache;
 import org.infinispan.Cache;
+import org.infinispan.commands.VisitableCommand;
 import org.infinispan.commands.tx.PrepareCommand;
 import org.infinispan.distribution.BaseDistFunctionalTest;
 import org.infinispan.distribution.BlockingInterceptor;
@@ -23,7 +24,6 @@ import org.mockito.stubbing.Answer;
 import org.testng.annotations.Test;
 
 import javax.transaction.TransactionManager;
-import java.util.List;
 import java.util.concurrent.Callable;
 import java.util.concurrent.CyclicBarrier;
 import java.util.concurrent.Future;
@@ -35,7 +35,8 @@ import static org.mockito.Matchers.anyCollection;
 import static org.mockito.Matchers.anyInt;
 import static org.mockito.Matchers.anyString;
 import static org.mockito.Mockito.*;
-import static org.testng.AssertJUnit.*;
+import static org.testng.AssertJUnit.assertEquals;
+import static org.testng.AssertJUnit.fail;
 
 /**
  * Base class used to test various write commands interleaving with state transfer with a tx cache
@@ -55,6 +56,27 @@ public abstract class BaseTxStateTransferOverwriteTest extends BaseDistFunctiona
 
    protected boolean l1Enabled() {
       return cache(0).getCacheConfiguration().clustering().l1().enabled();
+   }
+
+   /**
+    * This command should return a class that extends {@link VisitableCommand} that should match
+    * the command that will cause data to soon be placed into the data container.  Since this test is
+    * transaction based the default value is to return a {@link PrepareCommand}, however other tests
+    * can change this behavior if desired.
+    * @param op
+    * @return
+    */
+   protected Class<? extends VisitableCommand> getVisitableCommand(TestWriteOperation op) {
+      return PrepareCommand.class;
+   }
+
+   protected Callable<Object> runWithTx(final TransactionManager tm, final Callable<? extends Object> callable) {
+      return new Callable<Object>() {
+         @Override
+         public Object call() throws Exception {
+            return TestingUtil.withTx(tm, callable);
+         }
+      };
    }
 
    @Test
@@ -199,33 +221,26 @@ public abstract class BaseTxStateTransferOverwriteTest extends BaseDistFunctiona
       }
 
       // Need to block after Prepare command was sent after it clears the StateTransferInterceptor
-      CyclicBarrier cyclicBarrier = new CyclicBarrier(2);
-      primaryOwnerCache.getAdvancedCache().addInterceptorBefore(new BlockingInterceptor(cyclicBarrier, PrepareCommand.class, true),
-                                                                StateTransferInterceptor.class);
+      final CyclicBarrier cyclicBarrier = new CyclicBarrier(2);
 
       try {
-         Future<Object> future = fork(new Callable<Object>() {
+         TransactionManager tm = primaryOwnerCache.getTransactionManager();
+         Future<Object> future = fork(runWithTx(tm, new Callable<Object>() {
 
             @Override
             public Object call() throws Exception {
-               final TransactionManager tm = primaryOwnerCache.getTransactionManager();
-
-               tm.begin();
-
                if (additionalValueOnNonOwner) {
                   MagicKey mk = new MagicKey("placeholder", nonOwnerCache);
                   String value = "somevalue";
                   primaryOwnerCache.put(mk, value);
                   log.tracef("Adding additional value on nonOwner value inserted: %s = %s", mk, value);
                }
-               Object returnValue = op.perform(primaryOwnerCache, key);
-
-               log.trace("Calling commit on transaction");
-               tm.commit();
-               log.trace("Commit completed");
-               return returnValue;
+               primaryOwnerCache.getAdvancedCache().addInterceptorBefore(new BlockingInterceptor(cyclicBarrier,
+                                                                                                 getVisitableCommand(op), true),
+                                                                         StateTransferInterceptor.class);
+               return op.perform(primaryOwnerCache, key);
             }
-         });
+         }));
 
          cyclicBarrier.await(10, SECONDS);
 
@@ -415,10 +430,10 @@ public abstract class BaseTxStateTransferOverwriteTest extends BaseDistFunctiona
          }
       }
 
-      // Block on the interceptor right after STI which should now have the soon to be old topology id
+      // Block on the interceptor right after ST which should now have the soon to be old topology id
       CyclicBarrier beforeCommitCache1Barrier = new CyclicBarrier(2);
       BlockingInterceptor blockingInterceptor1 = new BlockingInterceptor(beforeCommitCache1Barrier,
-                                                                         PrepareCommand.class, false);
+                                                                         getVisitableCommand(op), false);
       primaryOwnerCache.addInterceptorAfter(blockingInterceptor1, StateTransferInterceptor.class);
 
       // Put/Replace/Remove from primary owner.  This will block before it is committing on remote nodes
@@ -434,6 +449,9 @@ public abstract class BaseTxStateTransferOverwriteTest extends BaseDistFunctiona
       });
 
       beforeCommitCache1Barrier.await(10, SECONDS);
+
+      // Remove blocking interceptor now since we have blocked
+      removeAllBlockingInterceptorsFromCache(primaryOwnerCache);
 
       // Remove the leaver
       log.tracef("Stopping the cache");
@@ -470,41 +488,6 @@ public abstract class BaseTxStateTransferOverwriteTest extends BaseDistFunctiona
       // Check the value to make sure data container contains correct value
       assertEquals(op.getValue(), primaryOwnerCache.get(key));
       assertEquals(op.getValue(), nonOwnerCache.get(key));
-   }
-
-   private <K, V> AdvancedCache<K, V> findCoordinator(Cache<K, V>... caches) {
-      for (Cache<K, V> cache : caches) {
-         if (!cache.getCacheManager().isCoordinator()) {
-            return cache.getAdvancedCache();
-         }
-      }
-      fail("Couldn't find coordinator!");
-      return null;
-   }
-
-   private <K, V> AdvancedCache<K, V> getNextCoordinatorCache(AdvancedCache<K, V> excludeCache, AdvancedCache<K, V>... caches) {
-      AdvancedCache<K, V> currentCache = null;
-      List<Address> members = null;
-      for (AdvancedCache<K, V> cache : caches) {
-         if (cache == excludeCache) {
-            continue;
-         }
-         Address address = cache.getCacheManager().getAddress();
-         if (members == null) {
-            members = cache.getCacheManager().getMembers();
-         }
-         if (members.get(0).equals(address)) {
-            return cache;
-         }
-         if (members.get(1).equals(address)) {
-            currentCache = cache;
-         }
-      }
-      assertNotNull("Couldn't locate next coordinator", currentCache);
-      if (log.isDebugEnabled()) {
-         log.debug("Next Coordinator is " + currentCache);
-      }
-      return currentCache;
    }
 
    private ControlledRpcManager blockStateResponseCommand(final Cache cache) throws InterruptedException {

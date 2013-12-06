@@ -505,7 +505,9 @@ public class EntryWrappingInterceptor extends CommandInterceptor {
    private boolean commitEntryIfNeeded(final InvocationContext ctx, final FlagAffectedCommand command,
          Object key, final CacheEntry entry, boolean isPutForStateTransfer, final Metadata metadata) {
       if (entry == null) {
-         if (key != null && !isPutForStateTransfer && stateConsumer != null) {
+         if (key != null && !isPutForStateTransfer && stateConsumer != null &&
+               // L1 invalidations should not block state transfer puts
+               !(command instanceof InvalidateL1Command)) {
             // this key is not yet stored locally
             stateConsumer.addUpdatedKey(key);
          }
@@ -529,7 +531,9 @@ public class EntryWrappingInterceptor extends CommandInterceptor {
       }
 
       if (entry.isChanged() || entry.isLoaded()) {
-         if (stateConsumer != null) {
+         if (stateConsumer != null &&
+               // L1 invalidations should not block state transfer puts
+               !(command instanceof InvalidateL1Command)) {
             stateConsumer.addUpdatedKey(key);
          }
 
