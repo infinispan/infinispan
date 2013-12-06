@@ -5,9 +5,11 @@ import org.infinispan.factories.scopes.Scope;
 import org.infinispan.factories.scopes.Scopes;
 import org.infinispan.jmx.annotations.DataType;
 import org.infinispan.jmx.annotations.ManagedAttribute;
+import org.infinispan.remoting.responses.Response;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.topology.CacheTopology;
 
+import java.util.Map;
 import java.util.Set;
 
 /**
@@ -49,7 +51,7 @@ public interface StateTransferManager {
     * If there is an state transfer happening at the moment, this method forwards the supplied
     * command to the nodes that are new owners of the data, in order to assure consistency.
     */
-   void forwardCommandIfNeeded(TopologyAffectedCommand command, Set<Object> affectedKeys, Address origin, boolean sync);
+   Map<Address, Response> forwardCommandIfNeeded(TopologyAffectedCommand command, Set<Object> affectedKeys, Address origin, boolean sync);
 
    void notifyEndOfRebalance(int topologyId);
 

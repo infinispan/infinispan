@@ -1,6 +1,8 @@
 package org.infinispan.statetransfer;
 
+import java.util.Collections;
 import java.util.HashSet;
+import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
@@ -19,6 +21,7 @@ import org.infinispan.factories.annotations.Start;
 import org.infinispan.factories.annotations.Stop;
 import org.infinispan.jmx.annotations.MBean;
 import org.infinispan.notifications.cachelistener.CacheNotifier;
+import org.infinispan.remoting.responses.Response;
 import org.infinispan.remoting.rpc.RpcManager;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.topology.CacheJoinInfo;
@@ -233,14 +236,17 @@ public class StateTransferManagerImpl implements StateTransferManager {
    }
 
    @Override
-   public void forwardCommandIfNeeded(TopologyAffectedCommand command, Set<Object> affectedKeys, Address origin, boolean sync) {
+   public Map<Address, Response> forwardCommandIfNeeded(TopologyAffectedCommand command, Set<Object> affectedKeys,
+                                                        Address origin, boolean sync) {
       int cmdTopologyId = command.getTopologyId();
       // forward commands with older topology ids to their new targets
       // but we need to make sure we have the latest topology
       CacheTopology cacheTopology = getCacheTopology();
       int localTopologyId = cacheTopology != null ? cacheTopology.getTopologyId() : -1;
       // if it's a tx/lock/write command, forward it to the new owners
-      log.tracef("CommandTopologyId=%s, localTopologyId=%s", cmdTopologyId, localTopologyId);
+      if (trace) {
+         log.tracef("CommandTopologyId=%s, localTopologyId=%s", cmdTopologyId, localTopologyId);
+      }
 
       if (cmdTopologyId < localTopologyId) {
          ConsistentHash writeCh = cacheTopology.getWriteConsistentHash();
@@ -255,11 +261,14 @@ public class StateTransferManagerImpl implements StateTransferManager {
          if (!newTargets.isEmpty()) {
             // Update the topology id to prevent cycles
             command.setTopologyId(localTopologyId);
-            log.tracef("Forwarding command %s to new targets %s", command, newTargets);
+            if (trace) {
+               log.tracef("Forwarding command %s to new targets %s", command, newTargets);
+            }
             // TODO find a way to forward the command async if it was received async
-            rpcManager.invokeRemotely(newTargets, command, rpcManager.getDefaultRpcOptions(sync));
+            return rpcManager.invokeRemotely(newTargets, command, rpcManager.getDefaultRpcOptions(sync));
          }
       }
+      return Collections.emptyMap();
    }
 
    @Override
