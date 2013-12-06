@@ -318,30 +318,26 @@ public class EntryWrappingInterceptor extends CommandInterceptor {
       cdl.commitEntry(entry, metadata, command, ctx);
    }
 
-   private Object invokeNextAndApplyChanges(InvocationContext ctx, FlagAffectedCommand command, Metadata metadata) throws Throwable {
+   private Object invokeNextAndApplyChanges(InvocationContext ctx, WriteCommand command, Metadata metadata) throws Throwable {
       final Object result = invokeNextInterceptor(ctx, command);
 
       if (!ctx.isInTxScope()) {
          stateTransferLock.acquireSharedTopologyLock();
          try {
-            // We only retry non-tx write commands
-            if (command instanceof WriteCommand) {
-               WriteCommand writeCommand = (WriteCommand) command;
-               // Can't perform the check during preload or if the cache isn't clustered
-               boolean isSync = (cacheConfiguration.clustering().cacheMode().isSynchronous() &&
-                     !command.hasFlag(Flag.FORCE_ASYNCHRONOUS)) || command.hasFlag(Flag.FORCE_SYNCHRONOUS);
-               if (writeCommand.isSuccessful() && stateConsumer != null &&
-                     stateConsumer.getCacheTopology() != null) {
-                  int commandTopologyId = command.getTopologyId();
-                  int currentTopologyId = stateConsumer.getCacheTopology().getTopologyId();
-                  // TotalOrderStateTransferInterceptor doesn't set the topology id for PFERs.
-                  if ( isSync && currentTopologyId != commandTopologyId && commandTopologyId != -1) {
-                     if (trace) log.tracef("Cache topology changed while the command was executing: expected %d, got %d",
-                           commandTopologyId, currentTopologyId);
-                     writeCommand.setIgnorePreviousValue(true);
-                     throw new OutdatedTopologyException("Cache topology changed while the command was executing: expected " +
-                           commandTopologyId + ", got " + currentTopologyId);
-                  }
+            // Can't perform the check during preload or if the cache isn't clustered
+            boolean isSync = (cacheConfiguration.clustering().cacheMode().isSynchronous() &&
+                  !command.hasFlag(Flag.FORCE_ASYNCHRONOUS)) || command.hasFlag(Flag.FORCE_SYNCHRONOUS);
+            if (command.isSuccessful() && stateConsumer != null &&
+                  stateConsumer.getCacheTopology() != null) {
+               int commandTopologyId = command.getTopologyId();
+               int currentTopologyId = stateConsumer.getCacheTopology().getTopologyId();
+               // TotalOrderStateTransferInterceptor doesn't set the topology id for PFERs.
+               if ( isSync && currentTopologyId != commandTopologyId && commandTopologyId != -1) {
+                  if (trace) log.tracef("Cache topology changed while the command was executing: expected %d, got %d",
+                        commandTopologyId, currentTopologyId);
+                  command.setIgnorePreviousValue(true);
+                  throw new OutdatedTopologyException("Cache topology changed while the command was executing: expected " +
+                        commandTopologyId + ", got " + currentTopologyId);
                }
             }
 
@@ -511,7 +507,10 @@ public class EntryWrappingInterceptor extends CommandInterceptor {
    private boolean commitEntryIfNeeded(final InvocationContext ctx, final FlagAffectedCommand command,
          Object key, final CacheEntry entry, boolean isPutForStateTransfer, final Metadata metadata) {
       if (entry == null) {
-         if (key != null && !isPutForStateTransfer && stateConsumer != null) {
+         if (key != null && !isPutForStateTransfer && stateConsumer != null &&
+               // L1 invalidations should only add updatedKeys when they remove a value - else this can prevent
+               // a ST value erroneously.
+               !(command instanceof InvalidateL1Command)) {
             // this key is not yet stored locally
             stateConsumer.addUpdatedKey(key);
          }
