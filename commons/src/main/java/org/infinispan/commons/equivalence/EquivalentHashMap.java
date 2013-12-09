@@ -123,23 +123,26 @@ public class EquivalentHashMap<K, V> extends AbstractMap<K, V> {
       int length = table.length;
       int index = index(hash, length);
 
-      for (; ;) {
-         Node<K, V> e = table[index];
-         if (e == null)
-            return false;
+      Node<K, V> e = table[index];
+      while (e != null) {
 
          if (e.hash == hash && keyEq.equals(e.key, key))
             return true;
 
-         index = nextIndex(index, length);
+         e = e.next;
       }
+      return false;
    }
 
    @Override
    public boolean containsValue(Object value) {
-      for (Node<K, V> e : table)
-         if (e != null && valueEq.equals(e.value, value))
-            return true;
+      for (Node<K, V> e : table) {
+         for (; e != null; e = e.next) {
+            if (valueEq.equals(e.value, value)) {
+               return true;
+            }
+         }
+      }
 
       return false;
    }
@@ -150,23 +153,20 @@ public class EquivalentHashMap<K, V> extends AbstractMap<K, V> {
       return n == null ? null : n.value;
    }
 
-   @SuppressWarnings("unchecked")
    <T> T getNode(Object key) {
       assertKeyNotNull(key);
       int hash = spread(keyEq.hashCode(key));
       int length = table.length;
       int index = index(hash, length);
 
-      for (; ;) {
-         Node<K, V> e = table[index];
-         if (e == null)
-            return null;
-
+      Node<K, V> e = table[index];
+      while (e != null) {
          if (e.hash == hash && keyEq.equals(e.key, key))
             return (T) e;
 
-         index = nextIndex(index, length);
+         e = e.next;
       }
+      return null;
    }
 
    @Override
@@ -175,60 +175,63 @@ public class EquivalentHashMap<K, V> extends AbstractMap<K, V> {
       Node<K, V>[] table = this.table;
       int hash = spread(keyEq.hashCode(key));
       int length = table.length;
-      int start = index(hash, length);
-      int index = start;
+      int index = index(hash, length);
 
-      for (; ;) {
-         Node<K, V> e = table[index];
-         if (e == null)
-            break;
-
+      Node<K, V> e = table[index];
+      while (e != null) {
          if (e.hash == hash && keyEq.equals(e.key, key)) {
-            table[index] = createNode(e.key, value, e.hash);
-            return e.value;
+            V prevValue = e.value;
+            e.value = value;
+            return prevValue;
          }
-
-         index = nextIndex(index, length);
-         if (index == start)
-            throw new IllegalStateException("Table is full!");
+         e = e.next;
       }
 
       modCount++;
-      table[index] = createNode(key, value, hash);
-      if (++size >= threshold)
-         resize(length);
+      addEntry(index, key, value, hash);
 
       return null;
    }
 
-   <T> T createNode(K key, V value, int hash) {
-      return (T) new Node<K, V>(key, hash, value);
+   void addEntry(int index, K key, V value, int hash) {
+      if (++size >= threshold && table[index] != null) {
+         resize(table.length << 1);
+         index = index(hash, table.length);
+      }
+      Node<K, V> currentNode = table[index];
+      table[index] = createNode(key, value, hash, currentNode);
+   }
+
+   Node<K, V> createNode(K key, V value, int hash, Node<K, V> currentNode) {
+      return new Node<K, V>(key, hash, value, currentNode);
    }
 
    @SuppressWarnings("unchecked")
-   private void resize(int from) {
-      int newLength = from << 1;
-
-      // Can't get any bigger
-      if (newLength > MAXIMUM_CAPACITY || newLength <= from)
+   void resize(int newCapacity) {
+      Node<K, V>[] oldTable = table;
+      int oldCapacity = oldTable.length;
+      if (oldCapacity == MAXIMUM_CAPACITY) {
+         threshold = Integer.MAX_VALUE;
          return;
-
-      Node<K, V>[] newTable = new Node[newLength];
-      Node<K, V>[] old = table;
-
-      for (Node<K, V> e : old) {
-         if (e == null)
-            continue;
-
-         int index = index(e.hash, newLength);
-         while (newTable[index] != null)
-            index = nextIndex(index, newLength);
-
-         newTable[index] = e;
       }
 
-      threshold = (int) (loadFactor * newLength);
+      Node<K, V>[] newTable = new Node[newCapacity];
+      transfer(newTable);
       table = newTable;
+      threshold = (int)Math.min(newCapacity * loadFactor, MAXIMUM_CAPACITY + 1);
+   }
+
+   void transfer(Node<K, V>[] newTable) {
+      int newCapacity = newTable.length;
+      for (Node<K,V> e : table) {
+         while(e != null) {
+            Node<K, V> next = e.next;
+            int i = index(spread(keyEq.hashCode(e.key)), newCapacity);
+            e.next = newTable[i];
+            newTable[i] = e;
+            e = next;
+         }
+      }
    }
 
    @Override
@@ -242,50 +245,26 @@ public class EquivalentHashMap<K, V> extends AbstractMap<K, V> {
       Node<K, V>[] table = this.table;
       int length = table.length;
       int hash = spread(keyEq.hashCode(key));
-      int start = index(hash, length);
+      int index = index(hash, length);
 
-      for (int index = start; ;) {
-         Node<K, V> e = table[index];
-         if (e == null)
-            return null;
-
+      Node<K, V> e = table[index];
+      Node<K, V> prevE = null;
+      while (e != null) {
          if (e.hash == hash && keyEq.equals(e.key, key)) {
-            table[index] = null;
-            relocate(index);
+            if (prevE != null) {
+               prevE.next = e.next;
+            } else {
+               table[index] = e.next;
+            }
             modCount++;
             size--;
             return (T) e;
          }
 
-         index = nextIndex(index, length);
-         if (index == start)
-            return null;
+         prevE = e;
+         e = e.next;
       }
-   }
-
-   private void relocate(int start) {
-      Node<K, V>[] table = this.table;
-      int length = table.length;
-      int current = nextIndex(start, length);
-
-      for (; ;) {
-         Node<K, V> e = table[current];
-         if (e == null)
-            return;
-
-         // A Doug Lea variant of Knuth's Section 6.4 Algorithm R.
-         // This provides a non-recursive method of relocating
-         // entries to their optimal positions once a gap is created.
-         int prefer = index(e.hash, length);
-         if ((current < prefer && (prefer <= start || start <= current))
-               || (prefer <= start && start <= current)) {
-            table[start] = e;
-            table[current] = null;
-            start = current;
-         }
-
-         current = nextIndex(current, length);
-      }
+      return null;
    }
 
    @Override
@@ -444,59 +423,48 @@ public class EquivalentHashMap<K, V> extends AbstractMap<K, V> {
    }
 
    private abstract class EquivalentHashMapIterator<E> implements Iterator<E> {
-      private int next = 0;
-      private int expectedCount = modCount;
-      private int current = -1;
-      private boolean hasNext;
-      Node<K, V> table[] = EquivalentHashMap.this.table;
+      Node<K,V> next;        // next entry to return
+      int expectedCount;   // For fast-fail
+      int index;              // current slot
+      Node<K,V> current;     // current entry
+
+      EquivalentHashMapIterator() {
+         expectedCount = modCount;
+         if (size > 0) { // advance to first entry
+            Node<K, V>[] t = table;
+            while (index < t.length && (next = t[index++]) == null)
+               ;
+         }
+      }
 
       public final boolean hasNext() {
-         if (hasNext)
-            return true;
-
-         Node<K, V> table[] = this.table;
-         for (int i = next; i < table.length; i++) {
-            if (table[i] != null) {
-               next = i;
-               return hasNext = true;
-            }
-         }
-
-         next = table.length;
-         return false;
+         return next != null;
       }
 
       final Entry<K,V> nextEntry() {
          if (modCount != expectedCount)
             throw new ConcurrentModificationException();
-
-         if (!hasNext && !hasNext())
+         Node<K,V> e = next;
+         if (e == null)
             throw new NoSuchElementException();
 
-         current = next++;
-         hasNext = false;
-
-         Node<K, V> node = table[this.current];
-         return new MapEntry<K, V>(
-               node.key, node.value, EquivalentHashMap.this);
+         if ((next = e.next) == null) {
+            Node<K, V>[] t = table;
+            while (index < t.length && (next = t[index++]) == null)
+               ;
+         }
+         current = e;
+         return new MapEntry<K, V>(e.key, e.value, EquivalentHashMap.this);
       }
 
       public void remove() {
          if (modCount != expectedCount)
             throw new ConcurrentModificationException();
-
-         int current = this.current;
-
-         if (current == -1)
+         if (current == null)
             throw new IllegalStateException();
-
-         // Invalidate current (prevents multiple remove)
-         this.current = -1;
-
-         // Start were we relocate
-         next = current;
-
-         EquivalentHashMap.this.remove(table[current].key);
+         Object k = current.key;
+         current = null;
+         removeNode(k);
          expectedCount = modCount;
       }
    }
@@ -589,20 +557,34 @@ public class EquivalentHashMap<K, V> extends AbstractMap<K, V> {
       return hashCode & (length - 1);
    }
 
-   private static int nextIndex(int index, int length) {
-      index = (index >= length - 1) ? 0 : index + 1;
-      return index;
-   }
-
-   protected static class Node<K, V> {
+   protected static class Node<K, V> implements Entry<K, V>  {
       final K key;
       final int hash;
-      final V value;
+      V value;
+      Node<K, V> next;
 
-      protected Node(K key, int hash, V value) {
+      protected Node(K key, int hash, V value, Node<K, V> next) {
          this.key = key;
          this.hash = hash;
          this.value = value;
+         this.next = next;
+      }
+
+      @Override
+      public K getKey() {
+         return key;
+      }
+
+      @Override
+      public V getValue() {
+         return value;
+      }
+
+      @Override
+      public V setValue(V value) {
+         V prevValue = this.value;
+         this.value = value;
+         return prevValue;
       }
    }
 

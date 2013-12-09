@@ -10,6 +10,7 @@
 
 package org.infinispan.util.concurrent;
 import org.infinispan.commons.equivalence.Equivalence;
+import org.infinispan.commons.equivalence.EquivalentLinkedHashMap;
 import org.infinispan.commons.util.InfinispanCollections;
 import org.infinispan.commons.util.Util;
 import org.infinispan.container.entries.CacheEntry;
@@ -428,7 +429,7 @@ public class BoundedConcurrentHashMap<K, V> extends AbstractMap<K, V>
       }
    }
 
-   static final class LRU<K, V> extends LinkedHashMap<HashEntry<K,V>, V> implements EvictionPolicy<K, V> {
+   static final class LRU<K, V> extends EquivalentLinkedHashMap<HashEntry<K,V>, V> implements EvictionPolicy<K, V> {
 
       /** The serialVersionUID */
       private static final long serialVersionUID = -7645068174197717838L;
@@ -441,8 +442,42 @@ public class BoundedConcurrentHashMap<K, V> extends AbstractMap<K, V>
       private final Set<HashEntry<K, V>> evicted;
       private final AtomicInteger accessQueueSize = new AtomicInteger(0);
 
-      public LRU(Segment<K,V> s, int capacity, float lf, int maxBatchSize, float batchThresholdFactor) {
-         super(capacity, lf, true);
+      public LRU(final Segment<K,V> s, int capacity, float lf, int maxBatchSize, float batchThresholdFactor) {
+         super(capacity, lf, IterationOrder.ACCESS_ORDER, new Equivalence<HashEntry<K, V>>() {
+            @Override
+            public int hashCode(Object obj) {
+               if (obj instanceof HashEntry<?, ?>) {
+                  return s.map.keyEquivalence.hashCode(((HashEntry<?, ?>)obj).key);
+               }
+               return 0;
+            }
+
+            @Override
+            public boolean equals(HashEntry<K, V> obj, Object otherObj) {
+               if (otherObj instanceof HashEntry<?, ?>) {
+                  return s.map.keyEquivalence.equals(obj.key, ((HashEntry<?, ?>)otherObj).key);
+               }
+               return false;
+            }
+
+            @Override
+            public String toString(Object obj) {
+               HashEntry<K, V> entry = (HashEntry<K, V>)obj;
+               return "HashEntry [Key=" + entry.key + ", Value=" + entry.value + ", Hash=" + entry.hash + "]";
+            }
+
+            @Override
+            public boolean isComparable(Object obj) {
+               // We don't care about comparable
+               return false;
+            }
+
+            @Override
+            public int compare(HashEntry<K, V> obj, HashEntry<K, V> otherObj) {
+               // We don't care about comparable
+               return 0;
+            }
+         }, s.map.valueEquivalence);
          this.segment = s;
          this.trimDownSize = capacity;
          this.maxBatchQueueSize = maxBatchSize > MAX_BATCH_SIZE ? MAX_BATCH_SIZE : maxBatchSize;
@@ -521,7 +556,7 @@ public class BoundedConcurrentHashMap<K, V> extends AbstractMap<K, V>
       }
 
       @Override
-      protected boolean removeEldestEntry(Map.Entry<HashEntry<K,V>,V> eldest){
+      protected boolean removeEldestEntry(Map.Entry<HashEntry<K,V>,V> eldest) {
          boolean aboveThreshold = isAboveThreshold();
          if(aboveThreshold){
             HashEntry<K, V> evictedEntry = eldest.getKey();
