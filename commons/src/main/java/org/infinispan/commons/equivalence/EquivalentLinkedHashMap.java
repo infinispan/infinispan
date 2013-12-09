@@ -40,16 +40,29 @@ public class EquivalentLinkedHashMap<K, V> extends EquivalentHashMap<K, V> {
       header.after = header;
    }
 
+   @Override
+   void addEntry(int index, K key, V value, int hash) {
+      super.addEntry(index, key, value, hash);
+      LinkedNode<K,V> eldest = header.after;
+      if (removeEldestEntry(eldest)) {
+         remove(eldest.getKey());
+      }
+   }
+
+   protected boolean removeEldestEntry(Map.Entry<K, V> eldest) {
+      return false;
+   }
+
    @SuppressWarnings("unchecked")
    private <K, V> LinkedNode<K, V> createLinkedNode() {
-      return new LinkedNode<K, V>(null, -1, null);
+      return new LinkedNode<K, V>(null, -1, null, null);
    }
 
    @Override
-   <T> T createNode(K key, V value, int hash) {
-      LinkedNode<K, V> linkedNode = new LinkedNode<K, V>(key, hash, value);
+   Node<K, V> createNode(K key, V value, int hash, Node<K, V> node) {
+      LinkedNode<K, V> linkedNode = new LinkedNode<K, V>(key, hash, value, node);
       linkedNode.addBefore(header);
-      return (T) linkedNode;
+      return linkedNode;
    }
 
    @Override
@@ -76,8 +89,8 @@ public class EquivalentLinkedHashMap<K, V> extends EquivalentHashMap<K, V> {
       LinkedNode<K, V> before;
       LinkedNode<K, V> after;
 
-      private LinkedNode(K key, int hash, V value) {
-         super(key, hash, value);
+      private LinkedNode(K key, int hash, V value, Node<K, V> next) {
+         super(key, hash, value, next);
       }
 
       private V remove() {
