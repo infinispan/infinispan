@@ -572,12 +572,23 @@ public class BoundedConcurrentHashMap<K, V> extends AbstractMap<K, V>
          this.head.previousEntry = this.head.nextEntry = this.head;
       }
 
+      public void addEntryAndMakeSpaceIfRequired(LRUHashEntry<K,V> e) {
+         V prevValue = put(e, e.value);
+         if (prevValue == null) {
+            // If there was no previous value just add it as is
+            addAndRemoveEldest(e);
+         } else {
+            // If we just replaced an existing value remove the entry from the doubly linked list and add our
+            // entry to the end of the list with the new value
+            addAndRemoveDuplicate(e);
+         }
+      }
+
       @Override
       public Set<HashEntry<K, V>> execute() {
          Set<HashEntry<K, V>> evictedCopy = new HashSet<HashEntry<K, V>>();
-         for (HashEntry<K, V> e : accessQueue) {
-            put(e, e.value);
-            addAndRemoveEldest(e);
+         for (LRUHashEntry<K, V> e : accessQueue) {
+            addEntryAndMakeSpaceIfRequired(e);
          }
          evictedCopy.addAll(evicted);
          accessQueue.clear();
@@ -588,8 +599,7 @@ public class BoundedConcurrentHashMap<K, V> extends AbstractMap<K, V>
 
       @Override
       public Set<HashEntry<K, V>> onEntryMiss(HashEntry<K, V> e) {
-         put(e, e.value);
-         addAndRemoveEldest(e);
+         addEntryAndMakeSpaceIfRequired((LRUHashEntry<K, V>)e);
          if (!evicted.isEmpty()) {
             Set<HashEntry<K, V>> evictedCopy = new HashSet<HashEntry<K, V>>();
             evictedCopy.addAll(evicted);
@@ -600,8 +610,8 @@ public class BoundedConcurrentHashMap<K, V> extends AbstractMap<K, V>
          }
       }
 
-      public void addAndRemoveEldest(HashEntry<K, V> entry) {
-         ((LRUHashEntry<K, V>)entry).addBefore(head);
+      public void addAndRemoveEldest(LRUHashEntry<K, V> entry) {
+         entry.addBefore(head);
          if (isAboveThreshold()) {
             remove(head.nextEntry);
             LRUHashEntry<K, V> evictedEntry = head.nextEntry;
@@ -610,6 +620,13 @@ public class BoundedConcurrentHashMap<K, V> extends AbstractMap<K, V>
             segment.remove(evictedEntry.key, evictedEntry.hash, null, true);
             evicted.add(evictedEntry);
          }
+      }
+
+      public void addAndRemoveDuplicate(LRUHashEntry<K, V> entry) {
+         // Lets remove the duplicate first
+         entry.remove();
+         // Lasly we add our entry to the end
+         entry.addBefore(head);
       }
 
       /*
