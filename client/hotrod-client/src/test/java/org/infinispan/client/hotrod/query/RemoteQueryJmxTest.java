@@ -18,6 +18,7 @@ import org.infinispan.protostream.sampledomain.marshallers.MarshallerRegistratio
 import org.infinispan.query.dsl.Query;
 import org.infinispan.query.dsl.QueryFactory;
 import org.infinispan.query.remote.ProtobufMetadataManager;
+import org.infinispan.query.remote.ProtobufMetadataManagerMBean;
 import org.infinispan.query.remote.indexing.ProtobufValueWrapper;
 import org.infinispan.test.SingleCacheManagerTest;
 import org.infinispan.test.fwk.CleanupAfterMethod;
@@ -27,6 +28,7 @@ import org.testng.annotations.Test;
 import org.infinispan.server.hotrod.HotRodServer;
 
 import javax.management.Attribute;
+import javax.management.JMX;
 import javax.management.MBeanServer;
 import javax.management.MalformedObjectNameException;
 import javax.management.ObjectName;
@@ -97,7 +99,8 @@ public class RemoteQueryJmxTest extends SingleCacheManagerTest {
 
       byte[] descriptor = readClasspathResource("/bank.protobin");
       MBeanServer mBeanServer = PerThreadMBeanServerLookup.getThreadMBeanServer();
-      mBeanServer.invoke(objName, "registerProtofile", new Object[]{descriptor}, new String[]{byte[].class.getName()});
+      ProtobufMetadataManagerMBean protobufMetadataManagerMBean = JMX.newMBeanProxy(mBeanServer, objName, ProtobufMetadataManagerMBean.class);
+      protobufMetadataManagerMBean.registerProtofile(descriptor);
 
       //initialize client-side serialization context
       MarshallerRegistration.registerMarshallers(ProtoStreamMarshaller.getSerializationContext(remoteCacheManager));
