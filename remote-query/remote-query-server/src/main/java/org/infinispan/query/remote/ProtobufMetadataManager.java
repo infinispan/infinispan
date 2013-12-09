@@ -37,7 +37,7 @@ import java.util.UUID;
 @Scope(Scopes.GLOBAL)
 @MBean(objectName = ProtobufMetadataManager.OBJECT_NAME,
        description = "Component that acts as a manager and container for Protocol Buffers metadata descriptors in the scope of a CacheManger.")
-public class ProtobufMetadataManager {
+public class ProtobufMetadataManager implements ProtobufMetadataManagerMBean {
 
    private static final Log log = LogFactory.getLog(ProtobufMetadataManager.class, Log.class);
 
