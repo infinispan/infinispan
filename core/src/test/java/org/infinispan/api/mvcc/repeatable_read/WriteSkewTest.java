@@ -244,18 +244,21 @@ public class WriteSkewTest extends AbstractInfinispanTest {
       postStart();
       final String key = "key1";
       final String subKey = "subK";
-      tm.begin();
-      FineGrainedAtomicMap<String, String> fineGrainedAtomicMap = AtomicMapLookup.getFineGrainedAtomicMap(cache, key);
-      fineGrainedAtomicMap.put(subKey, "some value");
-      fineGrainedAtomicMap = AtomicMapLookup.getFineGrainedAtomicMap(cache, key);
-      fineGrainedAtomicMap.get(subKey);
-      fineGrainedAtomicMap.put(subKey, "v");
-      fineGrainedAtomicMap.put(subKey + 2, "v2");
-      fineGrainedAtomicMap = AtomicMapLookup.getFineGrainedAtomicMap(cache, key);
-      Object object = fineGrainedAtomicMap.get(subKey);
-      assertEquals("Wrong FGAM sub-key value.", "v", object);
-      AtomicMapLookup.removeAtomicMap(cache, key);
-      tm.commit();
+      TestingUtil.withTx(tm, new Callable<Object>() {
+         public Object call() {
+            FineGrainedAtomicMap<String, String> fineGrainedAtomicMap = AtomicMapLookup.getFineGrainedAtomicMap(cache, key);
+            fineGrainedAtomicMap.put(subKey, "some value");
+            fineGrainedAtomicMap = AtomicMapLookup.getFineGrainedAtomicMap(cache, key);
+            fineGrainedAtomicMap.get(subKey);
+            fineGrainedAtomicMap.put(subKey, "v");
+            fineGrainedAtomicMap.put(subKey + 2, "v2");
+            fineGrainedAtomicMap = AtomicMapLookup.getFineGrainedAtomicMap(cache, key);
+            Object object = fineGrainedAtomicMap.get(subKey);
+            assertEquals("Wrong FGAM sub-key value.", "v", object);
+            AtomicMapLookup.removeAtomicMap(cache, key);
+            return null;
+         }
+      });
    }
 
    public void testNoWriteSkew() throws Exception {

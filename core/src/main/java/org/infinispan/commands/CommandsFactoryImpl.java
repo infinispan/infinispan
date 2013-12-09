@@ -157,7 +157,8 @@ public class CommandsFactoryImpl implements CommandsFactory {
 
    @Override
    public PutKeyValueCommand buildPutKeyValueCommand(Object key, Object value, Metadata metadata, Set<Flag> flags) {
-      return new PutKeyValueCommand(key, value, false, notifier, metadata, flags);
+      return new PutKeyValueCommand(key, value, false, notifier, metadata, flags,
+            configuration.dataContainer().valueEquivalence());
    }
 
    @Override
@@ -278,7 +279,7 @@ public class CommandsFactoryImpl implements CommandsFactory {
       if (c == null) return;
       switch (c.getCommandId()) {
          case PutKeyValueCommand.COMMAND_ID:
-            ((PutKeyValueCommand) c).init(notifier);
+            ((PutKeyValueCommand) c).init(notifier, configuration);
             break;
          case ReplaceCommand.COMMAND_ID:
             ((ReplaceCommand) c).init(notifier, configuration);

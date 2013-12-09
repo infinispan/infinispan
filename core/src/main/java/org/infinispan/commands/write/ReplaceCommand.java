@@ -28,7 +28,7 @@ public class ReplaceCommand extends AbstractDataWriteCommand implements Metadata
    private CacheNotifier notifier;
    boolean successful = true;
 
-   boolean ignorePreviousValue;
+   private ValueMatcher valueMatcher;
    private Equivalence valueEquivalence;
 
    public ReplaceCommand() {
@@ -41,6 +41,7 @@ public class ReplaceCommand extends AbstractDataWriteCommand implements Metadata
       this.newValue = newValue;
       this.notifier = notifier;
       this.metadata = metadata;
+      this.valueMatcher = oldValue != null ? ValueMatcher.MATCH_EXPECTED : ValueMatcher.MATCH_NON_NULL;
       this.valueEquivalence = valueEquivalence;
    }
    
@@ -56,34 +57,20 @@ public class ReplaceCommand extends AbstractDataWriteCommand implements Metadata
 
    @Override
    public Object perform(InvocationContext ctx) throws Throwable {
-      final boolean local = ctx.isOriginLocal();
-      if (ctx.isInTxScope() && !local && !ignorePreviousValue) {
-         //ignore previous return value in tx mode is false when the command did not succeed during execution
-         //in this case, we should ignore the command
-         //the return value did not matter in remote context
+      // It's not worth looking up the entry if we're never going to apply the change.
+      if (valueMatcher == ValueMatcher.MATCH_NEVER) {
          successful = false;
          return null;
       }
       MVCCEntry e = (MVCCEntry) ctx.lookupEntry(key);
-      if (e != null) {
-         if (local) {
-            //ISPN-514
-            if (e.isNull() || e.getValue() == null || e.isRemoved()) {
-               return returnValue(null, false, ctx);
-            }
-         }
-
-         // isConditional is false when ignorePreviousValue is true
-         if (oldValue == null || ignorePreviousValue || isValueEquals(oldValue, e.getValue())) {
-            e.setChanged(true);
-            Object old = e.setValue(newValue);
-            // TODO if (newValue.equals(old) returnValue(null, true, ctx);
-            // If ignorePreviousValue == true, the old value is no longer relevant
-            if (!ignorePreviousValue) {
-               return returnValue(old, true, ctx);
-            } else {
-               return returnValue(oldValue, true, ctx);
-            }
+      if (valueMatcher.matches(e, oldValue, newValue, valueEquivalence)) {
+         e.setChanged(true);
+         Object old = e.setValue(newValue);
+         if (valueMatcher != ValueMatcher.MATCH_EXPECTED_OR_NEW) {
+            return returnValue(old, true, ctx);
+         } else {
+            // Return the expected value when retrying
+            return returnValue(oldValue, true, ctx);
          }
       }
 
@@ -123,7 +110,7 @@ public class ReplaceCommand extends AbstractDataWriteCommand implements Metadata
 
    @Override
    public Object[] getParameters() {
-      return new Object[]{key, oldValue, newValue, metadata, ignorePreviousValue,
+      return new Object[]{key, oldValue, newValue, metadata, valueMatcher,
                           Flag.copyWithoutRemotableFlags(flags)};
    }
 
@@ -135,7 +122,7 @@ public class ReplaceCommand extends AbstractDataWriteCommand implements Metadata
       oldValue = parameters[1];
       newValue = parameters[2];
       metadata = (Metadata) parameters[3];
-      ignorePreviousValue = (Boolean) parameters[4];
+      valueMatcher = (ValueMatcher) parameters[4];
       flags = (Set<Flag>) parameters[5];
    }
 
@@ -200,13 +187,22 @@ public class ReplaceCommand extends AbstractDataWriteCommand implements Metadata
    }
 
    @Override
-   public boolean isIgnorePreviousValue() {
-      return ignorePreviousValue;
+   public ValueMatcher getValueMatcher() {
+      return valueMatcher;
    }
 
    @Override
-   public void setIgnorePreviousValue(boolean ignorePreviousValue) {
-      this.ignorePreviousValue = ignorePreviousValue;
+   public void setValueMatcher(ValueMatcher valueMatcher) {
+      this.valueMatcher = valueMatcher;
+   }
+
+   @Override
+   public void updateStatusFromRemoteResponse(Object remoteResponse) {
+      if (oldValue == null) {
+         successful = remoteResponse != null;
+      } else {
+         successful = (Boolean) remoteResponse;
+      }
    }
 
    @Override
@@ -224,7 +220,7 @@ public class ReplaceCommand extends AbstractDataWriteCommand implements Metadata
             ", metadata=" + metadata +
             ", flags=" + flags +
             ", successful=" + successful +
-            ", ignorePreviousValue=" + ignorePreviousValue +
+            ", valueMatcher=" + valueMatcher +
             '}';
    }
 }

@@ -1,6 +1,7 @@
 package org.infinispan.interceptors.distribution;
 
 import org.infinispan.atomic.DeltaCompositeKey;
+import org.infinispan.commands.write.ValueMatcher;
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.commands.FlagAffectedCommand;
 import org.infinispan.commands.control.LockControlCommand;
@@ -66,8 +67,9 @@ public class TxDistributionInterceptor extends BaseDistributionInterceptor {
       try {
          return handleTxWriteCommand(ctx, command, new SingleKeyRecipientGenerator(command.getKey()), false);
       } finally {
-         if (ignorePreviousValueOnBackup(command, ctx)) {
-            command.setIgnorePreviousValue(true);
+         if (ctx.isOriginLocal()) {
+            // If the state transfer interceptor has to retry the command, it should ignore the previous value.
+            command.setValueMatcher(command.isSuccessful() ? ValueMatcher.MATCH_ALWAYS : ValueMatcher.MATCH_NEVER);
          }
       }
    }
@@ -77,8 +79,9 @@ public class TxDistributionInterceptor extends BaseDistributionInterceptor {
       try {
          return handleTxWriteCommand(ctx, command, new SingleKeyRecipientGenerator(command.getKey()), false);
       } finally {
-         if (ignorePreviousValueOnBackup(command, ctx)) {
-            command.setIgnorePreviousValue(true);
+         if (ctx.isOriginLocal()) {
+            // If the state transfer interceptor has to retry the command, it should ignore the previous value.
+            command.setValueMatcher(command.isSuccessful() ? ValueMatcher.MATCH_ALWAYS : ValueMatcher.MATCH_NEVER);
          }
       }
    }
@@ -98,9 +101,9 @@ public class TxDistributionInterceptor extends BaseDistributionInterceptor {
 
       SingleKeyRecipientGenerator skrg = new SingleKeyRecipientGenerator(command.getKey());
       Object returnValue = handleTxWriteCommand(ctx, command, skrg, command.hasFlag(Flag.PUT_FOR_STATE_TRANSFER));
-      if (ignorePreviousValueOnBackup(command, ctx)) {
-         command.setIgnorePreviousValue(true);
-         command.setPutIfAbsent(false);
+      if (ctx.isOriginLocal()) {
+         // If the state transfer interceptor has to retry the command, it should ignore the previous value.
+         command.setValueMatcher(command.isSuccessful() ? ValueMatcher.MATCH_ALWAYS : ValueMatcher.MATCH_NEVER);
       }
       return returnValue;
    }
@@ -249,6 +252,7 @@ public class TxDistributionInterceptor extends BaseDistributionInterceptor {
    }
 
    private boolean shouldFetchRemoteValuesForWriteSkewCheck(InvocationContext ctx, WriteCommand cmd) {
+      // TODO Dan: I don't think this method should always return true: the write skew check should only happen on the primary owner, and the primary owner always has the value already
       if (useClusteredWriteSkewCheck && ctx.isInTxScope() && dm.isRehashInProgress()) {
          for (Object key : cmd.getAffectedKeys()) {
             if (dm.isAffectedByRehash(key) && !dataContainer.containsKey(key)) return true;
@@ -292,8 +296,8 @@ public class TxDistributionInterceptor extends BaseDistributionInterceptor {
       // this should only happen if:
       //   a) unsafeUnreliableReturnValues is false
       //   b) unsafeUnreliableReturnValues is true, we are in a TX and the command is conditional
-      // In both cases, the remote get shouldn't happen on the backup owners, where the ignorePreviousValue flag is set
-      if ((isNeedReliableReturnValues(command) || command.isConditional()) && !command.isIgnorePreviousValue() ||
+      // On the backup owners, the value matching policy should be set to MATCH_ALWAYS, and command.isConditional() should return true
+      if (isNeedReliableReturnValues(command) || command.isConditional() ||
             shouldFetchRemoteValuesForWriteSkewCheck(ctx, command)) {
          for (Object k : keygen.getKeys()) {
             CacheEntry entry = ctx.lookupEntry(k);

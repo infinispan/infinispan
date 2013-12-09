@@ -1,5 +1,7 @@
 package org.infinispan.commands.write;
 
+import org.infinispan.commons.equivalence.Equivalence;
+import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.metadata.Metadata;
 import org.infinispan.atomic.Delta;
 import org.infinispan.atomic.DeltaAware;
@@ -21,6 +23,7 @@ import static org.infinispan.commons.util.Util.toStr;
  * @since 4.0
  */
 public class PutKeyValueCommand extends AbstractDataWriteCommand implements MetadataAwareCommand {
+
    public static final byte COMMAND_ID = 8;
 
    Object value;
@@ -28,22 +31,27 @@ public class PutKeyValueCommand extends AbstractDataWriteCommand implements Meta
    CacheNotifier notifier;
    boolean successful = true;
    Metadata metadata;
-   private boolean ignorePreviousValue;
+   private ValueMatcher valueMatcher;
+   private Equivalence valueEquivalence;
 
    public PutKeyValueCommand() {
    }
 
    public PutKeyValueCommand(Object key, Object value, boolean putIfAbsent,
-         CacheNotifier notifier, Metadata metadata, Set<Flag> flags) {
+                             CacheNotifier notifier, Metadata metadata, Set<Flag> flags,
+                             Equivalence valueEquivalence) {
       super(key, flags);
       setValue(value);
       this.putIfAbsent = putIfAbsent;
+      this.valueMatcher = putIfAbsent ? ValueMatcher.MATCH_EXPECTED : ValueMatcher.MATCH_ALWAYS;
       this.notifier = notifier;
       this.metadata = metadata;
+      this.valueEquivalence = valueEquivalence;
    }
 
-   public void init(CacheNotifier notifier) {
+   public void init(CacheNotifier notifier, Configuration cfg) {
       this.notifier = notifier;
+      this.valueEquivalence = cfg.dataContainer().valueEquivalence();
    }
 
    public Object getValue() {
@@ -64,10 +72,8 @@ public class PutKeyValueCommand extends AbstractDataWriteCommand implements Meta
 
    @Override
    public Object perform(InvocationContext ctx) throws Throwable {
-      if (ctx.isInTxScope() && !ctx.isOriginLocal() && !ignorePreviousValue) {
-         //ignore previous return value in tx mode is false when the command did not succeed during execution
-         //in this case, we should ignore the command
-         //the return value did not matter in remote context
+      // It's not worth looking up the entry if we're never going to apply the change.
+      if (valueMatcher == ValueMatcher.MATCH_NEVER) {
          successful = false;
          return null;
       }
@@ -80,11 +86,9 @@ public class PutKeyValueCommand extends AbstractDataWriteCommand implements Meta
       if (e == null) return null;
 
       Object entryValue = e.getValue();
-      if (putIfAbsent && !ignorePreviousValue) {
-         if (entryValue != null && !e.isRemoved()) {
-            successful = false;
-            return entryValue;
-         }
+      if (!valueMatcher.matches(e, null, value, valueEquivalence)) {
+         successful = false;
+         return entryValue;
       }
 
       return performPut(e, ctx);
@@ -97,7 +101,7 @@ public class PutKeyValueCommand extends AbstractDataWriteCommand implements Meta
 
    @Override
    public Object[] getParameters() {
-      return new Object[]{key, value, metadata, putIfAbsent, ignorePreviousValue, Flag.copyWithoutRemotableFlags(flags)};
+      return new Object[]{key, value, metadata, putIfAbsent, valueMatcher, Flag.copyWithoutRemotableFlags(flags)};
    }
 
    @Override
@@ -108,7 +112,7 @@ public class PutKeyValueCommand extends AbstractDataWriteCommand implements Meta
       value = parameters[1];
       metadata = (Metadata) parameters[2];
       putIfAbsent = (Boolean) parameters[3];
-      ignorePreviousValue = (Boolean) parameters[4];
+      valueMatcher = (ValueMatcher) parameters[4];
       flags = (Set<Flag>) parameters[5];
    }
 
@@ -162,9 +166,9 @@ public class PutKeyValueCommand extends AbstractDataWriteCommand implements Meta
             .append(", value=").append(value)
             .append(", flags=").append(flags)
             .append(", putIfAbsent=").append(putIfAbsent)
+            .append(", valueMatcher=").append(valueMatcher)
             .append(", metadata=").append(metadata)
             .append(", successful=").append(successful)
-            .append(", ignorePreviousValue=").append(ignorePreviousValue)
             .append("}")
             .toString();
    }
@@ -180,13 +184,21 @@ public class PutKeyValueCommand extends AbstractDataWriteCommand implements Meta
    }
 
    @Override
-   public boolean isIgnorePreviousValue() {
-      return ignorePreviousValue;
+   public ValueMatcher getValueMatcher() {
+      return valueMatcher;
    }
 
    @Override
-   public void setIgnorePreviousValue(boolean ignorePreviousValue) {
-      this.ignorePreviousValue = ignorePreviousValue;
+   public void setValueMatcher(ValueMatcher valueMatcher) {
+      this.valueMatcher = valueMatcher;
+   }
+
+   @Override
+   public void updateStatusFromRemoteResponse(Object remoteResponse) {
+      // Only putIfAbsent commands can fail
+      if (putIfAbsent) {
+         successful = remoteResponse == null;
+      }
    }
 
    private Object performPut(MVCCEntry e, InvocationContext ctx) {
@@ -212,6 +224,7 @@ public class PutKeyValueCommand extends AbstractDataWriteCommand implements Meta
          }
       }
       e.setChanged(true);
-      return !ignorePreviousValue ? o : null;
+      // Return the expected value when retrying a putIfAbsent command (i.e. null)
+      return valueMatcher != ValueMatcher.MATCH_EXPECTED_OR_NEW ? o : null;
    }
 }

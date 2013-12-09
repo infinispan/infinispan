@@ -17,6 +17,7 @@ import org.infinispan.commands.write.PutKeyValueCommand;
 import org.infinispan.commands.write.PutMapCommand;
 import org.infinispan.commands.write.RemoveCommand;
 import org.infinispan.commands.write.ReplaceCommand;
+import org.infinispan.commands.write.ValueMatcher;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.commons.CacheConfigurationException;
 import org.infinispan.configuration.global.GlobalConfiguration;
@@ -890,6 +891,7 @@ public class CacheImpl<K, V> implements AdvancedCache<K, V> {
       assertKeyValueNotNull(key, value);
       PutKeyValueCommand command = commandsFactory.buildPutKeyValueCommand(key, value, metadata, explicitFlags);
       command.setPutIfAbsent(true);
+      command.setValueMatcher(ValueMatcher.MATCH_EXPECTED);
       return (V) executeCommandAndCommitIfNeeded(ctx, command);
    }
 

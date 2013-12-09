@@ -31,20 +31,14 @@ public interface WriteCommand extends VisitableCommand, FlagAffectedCommand {
    boolean isConditional();
 
    /**
-    * Only relevant for conditional commands.
-    *
-    * @return {@code true} if the command isn't really conditional, because the previous value was already checked
-    * - either on the originator (tx) or on the primary owner (non-tx).
+    * @return The current value matching policy.
     */
-   boolean isIgnorePreviousValue();
+   ValueMatcher getValueMatcher();
 
    /**
-    * Only relevant for conditional commands.
-    *
-    * @param ignorePreviousValue {@code true} if the command isn't really conditional, because the previous value
-    * was already checked - either on the originator (tx) or on the primary owner (non-tx).
+    * @param valueMatcher The new value matching policy.
     */
-   void setIgnorePreviousValue(boolean ignorePreviousValue);
+   void setValueMatcher(ValueMatcher valueMatcher);
 
    /**
     *
@@ -53,4 +47,9 @@ public interface WriteCommand extends VisitableCommand, FlagAffectedCommand {
     */
    Set<Object> getAffectedKeys();
 
+   /**
+    * Used for conditional commands, to update the status of the command on the originator
+    * based on the result of its execution on the primary owner.
+    */
+   void updateStatusFromRemoteResponse(Object remoteResponse);
 }

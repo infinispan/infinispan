@@ -26,21 +26,22 @@ public class RemoveCommand extends AbstractDataWriteCommand {
    protected CacheNotifier notifier;
    boolean successful = true;
    boolean nonExistent = false;
-   private boolean ignorePreviousValue;
+
+   protected ValueMatcher valueMatcher;
    private Equivalence valueEquivalence;
 
    /**
-    * When not null, value indicates that the entry should only be removed if the key is mapped to this value. By the
-    * time the RemoveCommand needs to be marshalled, the condition must have been true locally already, so there's no
-    * need to marshall the value. *
+    * When not null, value indicates that the entry should only be removed if the key is mapped to this value.
+    * When null, the entry should
     */
-   protected transient Object value;
+   protected Object value;
 
    public RemoveCommand(Object key, Object value, CacheNotifier notifier, Set<Flag> flags, Equivalence valueEquivalence) {
       super(key, flags);
       this.value = value;
       this.notifier = notifier;
       this.valueEquivalence = valueEquivalence;
+      this.valueMatcher = value != null ? ValueMatcher.MATCH_EXPECTED : ValueMatcher.MATCH_ALWAYS;
    }
 
    public void init(CacheNotifier notifier, Configuration configuration) {
@@ -58,32 +59,28 @@ public class RemoveCommand extends AbstractDataWriteCommand {
 
    @Override
    public Object perform(InvocationContext ctx) throws Throwable {
-      if (skipCommand(ctx)) {
-         //ignore previous return value in tx mode is false when the command did not succeed during execution
-         //in this case, we should ignore the command
-         //the return value did not matter in remote context
+      // It's not worth looking up the entry if we're never going to apply the change.
+      if (valueMatcher == ValueMatcher.MATCH_NEVER) {
          successful = false;
          return null;
       }
-      CacheEntry e = ctx.lookupEntry(key);
+      MVCCEntry e = (MVCCEntry) ctx.lookupEntry(key);
       if (e == null || e.isNull() || e.isRemoved()) {
          nonExistent = true;
-         log.trace("Nothing to remove since the entry is null or we have a null entry");
-         if (value == null || ignorePreviousValue) {
+         if (valueMatcher.matches(e, value, null, valueEquivalence)) {
             if (e != null) {
                e.setChanged(true);
                e.setRemoved(true);
             }
-            return null;
+            return isConditional() ? true : null;
          } else {
+            log.trace("Nothing to remove since the entry doesn't exist in the context or it is null");
             successful = false;
             return false;
          }
       }
 
-      if (!(e instanceof MVCCEntry)) ctx.putLookedUpEntry(key, null);
-
-      if (!ignorePreviousValue && value != null && e.getValue() != null && !isValueEquals(e.getValue(), value)) {
+      if (!valueMatcher.matches(e, value, null, valueEquivalence)) {
          successful = false;
          return false;
       }
@@ -93,10 +90,6 @@ public class RemoveCommand extends AbstractDataWriteCommand {
       }
 
       return performRemove(e, ctx);
-   }
-
-   protected boolean skipCommand(InvocationContext ctx) {
-      return ctx.isInTxScope() && !ctx.isOriginLocal() && !ignorePreviousValue;
    }
 
    protected void notify(InvocationContext ctx, Object value, boolean isPre) {
@@ -144,7 +137,7 @@ public class RemoveCommand extends AbstractDataWriteCommand {
          .append(key)
          .append(", value=").append(value)
          .append(", flags=").append(flags)
-         .append(", ignorePreviousValue=").append(ignorePreviousValue)
+         .append(", valueMatcher=").append(valueMatcher)
          .append("}")
          .toString();
    }
@@ -170,22 +163,30 @@ public class RemoveCommand extends AbstractDataWriteCommand {
       key = parameters[0];
       value = parameters[1];
       flags = (Set<Flag>) parameters[2];
-      ignorePreviousValue = (Boolean) parameters[3];
+      valueMatcher = (ValueMatcher) parameters[3];
    }
 
    @Override
    public Object[] getParameters() {
-      return new Object[]{key, value, Flag.copyWithoutRemotableFlags(flags), ignorePreviousValue};
+      return new Object[]{key, value, Flag.copyWithoutRemotableFlags(flags), valueMatcher};
    }
 
    @Override
-   public boolean isIgnorePreviousValue() {
-      return ignorePreviousValue;
+   public ValueMatcher getValueMatcher() {
+      return valueMatcher;
    }
 
    @Override
-   public void setIgnorePreviousValue(boolean ignorePreviousValue) {
-      this.ignorePreviousValue = ignorePreviousValue;
+   public void setValueMatcher(ValueMatcher valueMatcher) {
+      this.valueMatcher = valueMatcher;
+   }
+
+   @Override
+   public void updateStatusFromRemoteResponse(Object remoteResponse) {
+      // Remove without an expected value can't fail
+      if (value != null) {
+         successful = (Boolean) remoteResponse;
+      }
    }
 
    @Override
@@ -215,19 +216,11 @@ public class RemoveCommand extends AbstractDataWriteCommand {
       e.setValid(false);
       e.setChanged(true);
 
-      // If ignorePreviousValue == true, the old value is no longer relevant
-      if (!ignorePreviousValue) {
-         return value == null ? removedValue : true;
+      if (valueMatcher != ValueMatcher.MATCH_EXPECTED_OR_NEW) {
+         return isConditional() ? true : removedValue;
       } else {
-         return value == null ? value : true;
+         // Return the expected value when retrying
+         return isConditional() ? true : value;
       }
-   }
-
-   @SuppressWarnings("unchecked")
-   private boolean isValueEquals(Object oldValue, Object newValue) {
-      if (valueEquivalence != null) {
-         return valueEquivalence.equals(oldValue, newValue);
-      }
-      return oldValue.equals(newValue);
    }
 }

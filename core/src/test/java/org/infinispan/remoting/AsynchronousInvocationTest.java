@@ -1,6 +1,7 @@
 package org.infinispan.remoting;
 
 import org.infinispan.Cache;
+import org.infinispan.commons.equivalence.AnyEquivalence;
 import org.infinispan.metadata.EmbeddedMetadata;
 import org.infinispan.commands.CommandsFactory;
 import org.infinispan.commands.ReplicableCommand;
@@ -95,7 +96,7 @@ public class AsynchronousInvocationTest extends AbstractInfinispanTest {
             new GetKeyValueCommand("key", InfinispanCollections.<Flag>emptySet(), false);
       PutKeyValueCommand putKeyValueCommand =
             new PutKeyValueCommand("key", "value", false, null,
-                  new EmbeddedMetadata.Builder().build(), InfinispanCollections.<Flag>emptySet());
+                  new EmbeddedMetadata.Builder().build(), InfinispanCollections.<Flag>emptySet(), AnyEquivalence.getInstance());
 
       //populate commands
       blockingCacheRpcCommand = new ReduceCommand<Object, Object>(cacheName);

@@ -144,11 +144,17 @@ public class ApplyDeltaCommand extends AbstractDataWriteCommand {
    }
 
    @Override
-   public boolean isIgnorePreviousValue() {
-      return false;
+   public ValueMatcher getValueMatcher() {
+      return ValueMatcher.MATCH_ALWAYS;
    }
 
    @Override
-   public void setIgnorePreviousValue(boolean ignorePreviousValue) {
+   public void setValueMatcher(ValueMatcher valueMatcher) {
+      // Do nothing
+   }
+
+   @Override
+   public void updateStatusFromRemoteResponse(Object remoteResponse) {
+      // Do nothing
    }
 }
