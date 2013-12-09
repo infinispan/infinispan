@@ -27,6 +27,8 @@ public class InvalidateCommand extends RemoveCommand {
    protected Object[] keys;
 
    public InvalidateCommand() {
+      // The value matcher will always be the same, so we don't need to serialize it like we do for the other commands
+      this.valueMatcher = ValueMatcher.MATCH_ALWAYS;
    }
 
    public InvalidateCommand(CacheNotifier notifier, Set<Flag> flags, Object... keys) {
@@ -61,11 +63,6 @@ public class InvalidateCommand extends RemoveCommand {
          invalidate(ctx, k);
       }
       return null;
-   }
-
-   @Override
-   protected boolean skipCommand(InvocationContext ctx) {
-      return false;
    }
 
    protected void invalidate(InvocationContext ctx, Object keyToInvalidate) throws Throwable {

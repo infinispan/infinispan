@@ -133,7 +133,7 @@ public class EntryWrappingInterceptor extends CommandInterceptor {
          for (Object key : command.getKeys()) {
             //for the invalidate command, we need to try to fetch the key from the data container
             //otherwise it may be not removed
-            entryFactory.wrapEntryForRemove(ctx, key, false, true);
+            entryFactory.wrapEntryForRemove(ctx, key, false, true, false);
          }
       }
       return setSkipRemoteGetsAndInvokeNextForDataCommand(ctx, command, null);
@@ -151,7 +151,7 @@ public class EntryWrappingInterceptor extends CommandInterceptor {
       for (Object key : command.getKeys()) {
          //for the invalidate command, we need to try to fetch the key from the data container
          //otherwise it may be not removed
-        entryFactory.wrapEntryForRemove(ctx, key, false, true);
+        entryFactory.wrapEntryForRemove(ctx, key, false, true, false);
         if (trace)
            log.tracef("Entry to be removed: %s", toStr(key));
       }
@@ -166,7 +166,7 @@ public class EntryWrappingInterceptor extends CommandInterceptor {
 
    private void wrapEntryForPutIfNeeded(InvocationContext ctx, PutKeyValueCommand command) throws Throwable {
       if (shouldWrap(command.getKey(), ctx, command)) {
-         entryFactory.wrapEntryForPut(ctx, command.getKey(), null, !command.isPutIfAbsent(), command,
+         entryFactory.wrapEntryForPut(ctx, command.getKey(), null, !command.isConditional(), command,
                                       command.hasFlag(Flag.IGNORE_RETURN_VALUES) && !command.isConditional());
       }
    }
@@ -218,14 +218,12 @@ public class EntryWrappingInterceptor extends CommandInterceptor {
 
    private void wrapEntryForRemoveIfNeeded(InvocationContext ctx, RemoveCommand command) throws InterruptedException {
       if (shouldWrap(command.getKey(), ctx, command)) {
-         if (command.isIgnorePreviousValue()) {
-            //wrap it for put, as the previous value might not be present by now (e.g. might have been deleted)
-            // but we still need to apply the new value.
-            entryFactory.wrapEntryForPut(ctx, command.getKey(), null, false, command, false);
-         } else {
-            entryFactory.wrapEntryForRemove(ctx, command.getKey(),
-                  command.hasFlag(Flag.IGNORE_RETURN_VALUES) && !command.isConditional(), false);
-         }
+         boolean forceWrap = command.getValueMatcher().nonExistentEntryCanMatch();
+         // Should use wrapEntryForPut, but it doesn't work for now because of AtomicMap
+         // AtomicMap put leaves a DeltaAwareCacheEntry in the context, and wrapEntryForPut
+         // always expects a RepeatableReadEntry when repeatable read is enabled.
+         entryFactory.wrapEntryForRemove(ctx, command.getKey(),
+               command.hasFlag(Flag.IGNORE_RETURN_VALUES) && !command.isConditional(), false, forceWrap);
       }
    }
 
@@ -237,8 +235,8 @@ public class EntryWrappingInterceptor extends CommandInterceptor {
 
    private void wrapEntryForReplaceIfNeeded(InvocationContext ctx, ReplaceCommand command) throws InterruptedException {
       if (shouldWrap(command.getKey(), ctx, command)) {
-         if (command.isIgnorePreviousValue()) {
-            //wrap it for put, as the previous value might not be present by now (e.g. might have been deleted)
+         if (command.getValueMatcher().nonExistentEntryCanMatch()) {
+            // wrap it for put, as the previous value might not be present by now (e.g. might have been deleted)
             // but we still need to apply the new value.
             entryFactory.wrapEntryForPut(ctx, command.getKey(), null, false, command, false);
          } else  {
@@ -335,10 +333,11 @@ public class EntryWrappingInterceptor extends CommandInterceptor {
                   int commandTopologyId = command.getTopologyId();
                   int currentTopologyId = stateConsumer.getCacheTopology().getTopologyId();
                   // TotalOrderStateTransferInterceptor doesn't set the topology id for PFERs.
-                  if ( isSync && currentTopologyId != commandTopologyId && commandTopologyId != -1) {
+                  if (isSync && currentTopologyId != commandTopologyId && commandTopologyId != -1) {
                      if (trace) log.tracef("Cache topology changed while the command was executing: expected %d, got %d",
                            commandTopologyId, currentTopologyId);
-                     writeCommand.setIgnorePreviousValue(true);
+                     // This shouldn't be necessary, as we'll have a fresh command instance when retrying
+                     writeCommand.setValueMatcher(writeCommand.getValueMatcher().matcherForRetry());
                      throw new OutdatedTopologyException("Cache topology changed while the command was executing: expected " +
                            commandTopologyId + ", got " + currentTopologyId);
                   }
@@ -451,7 +450,7 @@ public class EntryWrappingInterceptor extends CommandInterceptor {
          if (command.getKeys() != null) {
             for (Object key : command.getKeys()) {
                if (cdl.localNodeIsOwner(key)) {
-                  entryFactory.wrapEntryForRemove(ctx, key, false, false);
+                  entryFactory.wrapEntryForRemove(ctx, key, false, false, false);
                   invokeNextInterceptor(ctx, command);
                }
             }
@@ -462,13 +461,8 @@ public class EntryWrappingInterceptor extends CommandInterceptor {
       @Override
       public Object visitRemoveCommand(InvocationContext ctx, RemoveCommand command) throws Throwable {
          if (cdl.localNodeIsOwner(command.getKey())) {
-            if (command.isIgnorePreviousValue()) {
-               //wrap it for put, as the previous value might not be present by now (e.g. might have been deleted)
-               // but we still need to apply the new value.
-               entryFactory.wrapEntryForPut(ctx, command.getKey(), null, false, command, false);
-            } else  {
-               entryFactory.wrapEntryForRemove(ctx, command.getKey(), false, false);
-            }
+            boolean forceWrap = command.getValueMatcher().nonExistentEntryCanMatch();
+            entryFactory.wrapEntryForRemove(ctx, command.getKey(), false, false, forceWrap);
             invokeNextInterceptor(ctx, command);
          }
          return null;
@@ -477,7 +471,7 @@ public class EntryWrappingInterceptor extends CommandInterceptor {
       @Override
       public Object visitPutKeyValueCommand(InvocationContext ctx, PutKeyValueCommand command) throws Throwable {
          if (cdl.localNodeIsOwner(command.getKey())) {
-            entryFactory.wrapEntryForPut(ctx, command.getKey(), null, !command.isPutIfAbsent(), command, false);
+            entryFactory.wrapEntryForPut(ctx, command.getKey(), null, !command.isConditional(), command, false);
             invokeNextInterceptor(ctx, command);
          }
          return null;
@@ -495,7 +489,7 @@ public class EntryWrappingInterceptor extends CommandInterceptor {
       @Override
       public Object visitReplaceCommand(InvocationContext ctx, ReplaceCommand command) throws Throwable {
          if (cdl.localNodeIsOwner(command.getKey())) {
-            if (command.isIgnorePreviousValue()) {
+            if (command.getValueMatcher().nonExistentEntryCanMatch()) {
                //wrap it for put, as the previous value might not be present by now (e.g. might have been deleted)
                // but we still need to apply the new value.
                entryFactory.wrapEntryForPut(ctx, command.getKey(), null, false, command, false);

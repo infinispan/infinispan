@@ -124,7 +124,8 @@ public class EntryFactoryImpl implements EntryFactory {
    }
 
    @Override
-   public final  MVCCEntry wrapEntryForRemove(InvocationContext ctx, Object key, boolean skipRead, boolean forInvalidation) throws InterruptedException {
+   public final  MVCCEntry wrapEntryForRemove(InvocationContext ctx, Object key, boolean skipRead,
+                                              boolean forInvalidation, boolean forceWrap) throws InterruptedException {
       CacheEntry cacheEntry = getFromContext(ctx, key);
       MVCCEntry mvccEntry = null;
       if (cacheEntry != null) {
@@ -136,7 +137,7 @@ public class EntryFactoryImpl implements EntryFactory {
          }
       } else {
          InternalCacheEntry ice = getFromContainer(key, forInvalidation);
-         if (ice != null || clusterModeWriteSkewCheck) {
+         if (ice != null || clusterModeWriteSkewCheck || forceWrap) {
             mvccEntry = wrapInternalCacheEntryForPut(ctx, key, ice, null, skipRead);
          }
       }
@@ -285,7 +286,7 @@ public class EntryFactoryImpl implements EntryFactory {
    }
 
    private MVCCEntry wrapInternalCacheEntryForPut(InvocationContext ctx, Object key, InternalCacheEntry cacheEntry, Metadata providedMetadata, boolean skipRead) {
-      MVCCEntry mvccEntry = createWrappedEntry(key, cacheEntry, ctx, providedMetadata, false, false, skipRead);
+      MVCCEntry mvccEntry = createWrappedEntry(key, cacheEntry, ctx, providedMetadata, true, false, skipRead);
       ctx.putLookedUpEntry(key, mvccEntry);
       return mvccEntry;
    }

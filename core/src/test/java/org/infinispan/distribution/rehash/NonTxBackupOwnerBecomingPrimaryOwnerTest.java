@@ -11,6 +11,7 @@ import org.infinispan.distribution.ch.ConsistentHash;
 import org.infinispan.interceptors.distribution.NonTxDistributionInterceptor;
 import org.infinispan.manager.CacheContainer;
 import org.infinispan.manager.EmbeddedCacheManager;
+import org.infinispan.remoting.transport.Address;
 import org.infinispan.statetransfer.StateTransferInterceptor;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.TestingUtil;
@@ -19,11 +20,14 @@ import org.infinispan.test.fwk.CleanupAfterMethod;
 import org.infinispan.topology.CacheTopology;
 import org.infinispan.topology.LocalTopologyManager;
 import org.infinispan.transaction.TransactionMode;
+import org.infinispan.util.SingleSegmentConsistentHashFactory;
 import org.mockito.Mockito;
 import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
 import org.testng.annotations.Test;
 
+import java.util.Arrays;
+import java.util.List;
 import java.util.concurrent.Callable;
 import java.util.concurrent.CyclicBarrier;
 import java.util.concurrent.Future;
@@ -36,10 +40,12 @@ import static org.mockito.Mockito.doAnswer;
 import static org.testng.AssertJUnit.assertEquals;
 import static org.testng.AssertJUnit.assertNotNull;
 import static org.testng.AssertJUnit.assertNull;
+import static org.testng.AssertJUnit.assertTrue;
 
 /**
- * Tests data loss during state transfer when the originator of a put operation becomes the primary owner of the
- * modified key. See https://issues.jboss.org/browse/ISPN-3357
+ * Tests data loss during state transfer a backup owner of a key becomes the primary owner
+ * modified key while a putIfAbsent() call is in progress.
+ * See https://issues.jboss.org/browse/ISPN-3357
  *
  * @author Dan Berindei
  */
@@ -61,6 +67,7 @@ public class NonTxBackupOwnerBecomingPrimaryOwnerTest extends MultipleCacheManag
    private ConfigurationBuilder getConfigurationBuilder() {
       ConfigurationBuilder c = new ConfigurationBuilder();
       c.clustering().cacheMode(CacheMode.DIST_SYNC);
+      c.clustering().hash().numSegments(1).consistentHashFactory(new CustomConsistentHashFactory());
       c.transaction().transactionMode(TransactionMode.NON_TRANSACTIONAL);
       return c;
    }
@@ -74,6 +81,8 @@ public class NonTxBackupOwnerBecomingPrimaryOwnerTest extends MultipleCacheManag
    }
 
    private void doTest(final boolean conditional) throws Exception {
+      final String key = "testkey";
+
       CheckPoint checkPoint = new CheckPoint();
       LocalTopologyManager ltm0 = TestingUtil.extractGlobalComponent(manager(0), LocalTopologyManager.class);
       int preJoinTopologyId = ltm0.getCacheTopology(CACHE_NAME).getTopologyId();
@@ -111,7 +120,6 @@ public class NonTxBackupOwnerBecomingPrimaryOwnerTest extends MultipleCacheManag
       CacheTopology duringJoinTopology = ltm0.getCacheTopology(CACHE_NAME);
       assertEquals(duringJoinTopologyId, duringJoinTopology.getTopologyId());
       assertNotNull(duringJoinTopology.getPendingCH());
-      final MagicKey key = getKeyForCache2(duringJoinTopology.getPendingCH());
       log.tracef("Rebalance started. Found key %s with current owners %s and pending owners %s", key,
             duringJoinTopology.getCurrentCH().locateOwners(key), duringJoinTopology.getPendingCH().locateOwners(key));
 
@@ -166,7 +174,11 @@ public class NonTxBackupOwnerBecomingPrimaryOwnerTest extends MultipleCacheManag
 
       // Check that the put command didn't fail
       Object result = future.get(10, TimeUnit.SECONDS);
-      assertNull(result);
+      if (conditional) {
+         assertNull(result);
+      } else {
+         assertTrue(result == null || "v".equals(result));
+      }
       log.tracef("Put operation is done");
 
       // Check the value on all the nodes
@@ -175,19 +187,17 @@ public class NonTxBackupOwnerBecomingPrimaryOwnerTest extends MultipleCacheManag
       assertEquals("v", cache2.get(key));
    }
 
-   private MagicKey getKeyForCache2(ConsistentHash pendingCH) {
-      int attemptsLeft = 1000;
-      MagicKey key;
-      do {
-         key = new MagicKey("key", cache(0));
-         attemptsLeft--;
-      } while (!pendingCH.locatePrimaryOwner(key).equals(address(2)) && attemptsLeft > 0);
-
-      if (attemptsLeft <= 0) {
-         throw new IllegalStateException("Can't find a key that will map to " + address(2) + " after rebalance!");
+   private static class CustomConsistentHashFactory extends SingleSegmentConsistentHashFactory {
+      @Override
+      protected List<Address> createOwnersCollection(List<Address> members, int numberOfOwners) {
+         assertEquals(2, numberOfOwners);
+         if (members.size() == 1)
+            return Arrays.asList(members.get(0));
+         else if (members.size() == 2)
+            return Arrays.asList(members.get(0), members.get(1));
+         else
+            return Arrays.asList(members.get(members.size() - 1), members.get(0));
       }
-
-      return key;
    }
 
    private void addBlockingLocalTopologyManager(final EmbeddedCacheManager manager, final CheckPoint checkPoint,

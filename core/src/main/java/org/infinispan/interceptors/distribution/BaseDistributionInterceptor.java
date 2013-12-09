@@ -3,6 +3,7 @@ package org.infinispan.interceptors.distribution;
 import org.infinispan.commands.FlagAffectedCommand;
 import org.infinispan.commands.remote.ClusteredGetCommand;
 import org.infinispan.commands.write.DataWriteCommand;
+import org.infinispan.commands.write.ValueMatcher;
 import org.infinispan.commands.write.WriteCommand;
 import org.infinispan.commons.CacheException;
 import org.infinispan.container.entries.InternalCacheEntry;
@@ -161,9 +162,12 @@ public abstract class BaseDistributionInterceptor extends ClusteringInterceptor 
       // see if we need to load values from remote sources first
       remoteGetBeforeWrite(ctx, command, recipientGenerator);
 
+      // invoke the command locally, we need to know if it's successful or not
+      Object localResult = invokeNextInterceptor(ctx, command);
+
       // if this is local mode then skip distributing
       if (isLocalModeForced(command)) {
-         return invokeNextInterceptor(ctx, command);
+         return localResult;
       }
 
 
@@ -173,30 +177,36 @@ public abstract class BaseDistributionInterceptor extends ClusteringInterceptor 
       int currentTopologyId = stateTransferManager.getCacheTopology().getTopologyId();
       // TotalOrderStateTransferInterceptor doesn't set the topology id for PFERs.
       // TODO Shouldn't PFERs be executed in a tx with total order?
-      if (isSync && currentTopologyId != commandTopologyId && commandTopologyId != -1) {
+      boolean topologyChanged = isSync && currentTopologyId != commandTopologyId && commandTopologyId != -1;
+      if (command.isSuccessful() && topologyChanged) {
          log.tracef("Cache topology changed while the command was executing: expected %d, got %d",
                commandTopologyId, currentTopologyId);
          throw new OutdatedTopologyException("Cache topology changed while the command was executing: expected " +
                commandTopologyId + ", got " + currentTopologyId);
       }
 
+      ValueMatcher valueMatcher = command.getValueMatcher();
       if (!ctx.isOriginLocal()) {
-         Object returnValue = invokeNextInterceptor(ctx, command);
          if (primaryOwner.equals(rpcManager.getAddress())) {
             if (!command.isSuccessful()) {
                log.tracef("Skipping the replication of the conditional command as it did not succeed on primary owner (%s).", command);
-               return returnValue;
+               return localResult;
             }
-            command.setIgnorePreviousValue(true);
-            rpcManager.invokeRemotely(recipientGenerator.generateRecipients(), command, rpcManager.getDefaultRpcOptions(isSync));
+            // Ignore the previous value on the backup owners
+            command.setValueMatcher(ValueMatcher.MATCH_ALWAYS);
+            try {
+               rpcManager.invokeRemotely(recipientGenerator.generateRecipients(), command, rpcManager.getDefaultRpcOptions(isSync));
+            } finally {
+               // Switch to the retry policy, in case the primary owner changed and the write already succeeded on the new primary
+               command.setValueMatcher(valueMatcher.matcherForRetry());
+            }
          }
-         return returnValue;
+         return localResult;
       } else {
          if (primaryOwner.equals(rpcManager.getAddress())) {
-            Object result = invokeNextInterceptor(ctx, command);
             if (!command.isSuccessful()) {
                log.tracef("Skipping the replication of the command as it did not succeed on primary owner (%s).", command);
-               return result;
+               return localResult;
             }
             List<Address> recipients = recipientGenerator.generateRecipients();
             log.tracef("I'm the primary owner, sending the command to all the backups (%s) in order to be applied.",
@@ -204,13 +214,18 @@ public abstract class BaseDistributionInterceptor extends ClusteringInterceptor 
             // check if a single owner has been configured and the target for the key is the local address
             boolean isSingleOwnerAndLocal = cacheConfiguration.clustering().hash().numOwners() == 1;
             if (!isSingleOwnerAndLocal) {
-               command.setIgnorePreviousValue(true);
-               rpcManager.invokeRemotely(recipients, command, rpcManager.getDefaultRpcOptions(isSync));
+               // Ignore the previous value on the backup owners
+               command.setValueMatcher(ValueMatcher.MATCH_ALWAYS);
+               try {
+                  rpcManager.invokeRemotely(recipients, command, rpcManager.getDefaultRpcOptions(isSync));
+               } finally {
+                  // Switch to the retry policy, in case the primary owner changed and the write already succeeded on the new primary
+                  command.setValueMatcher(valueMatcher.matcherForRetry());
+               }
             }
-            return result;
+            return localResult;
          } else {
             log.tracef("I'm not the primary owner, so sending the command to the primary owner(%s) in order to be forwarded", primaryOwner);
-            Object localResult = invokeNextInterceptor(ctx, command);
             boolean isSyncForwarding = isSync || isNeedReliableReturnValues(command);
 
             Map<Address, Response> addressResponseMap;
@@ -223,15 +238,18 @@ public abstract class BaseDistributionInterceptor extends ClusteringInterceptor 
                   ce = ce.getCause();
                }
                if (ce instanceof OutdatedTopologyException) {
-                  // TODO Set another flag that will make the new primary owner only ignore the final value of the command
                   // If the primary owner throws an OutdatedTopologyException, it must be because the command succeeded there
-                  command.setIgnorePreviousValue(true);
+                  if (trace) log.tracef("Changing the value matching policy from %s to %s (original value was %s)",
+                        command.getValueMatcher(), valueMatcher.matcherForRetry(), valueMatcher);
+                  command.setValueMatcher(valueMatcher.matcherForRetry());
                }
                throw e;
             }
             if (!isSyncForwarding) return localResult;
 
-            return getResponseFromPrimaryOwner(primaryOwner, addressResponseMap);
+            Object primaryResult = getResponseFromPrimaryOwner(primaryOwner, addressResponseMap);
+            command.updateStatusFromRemoteResponse(primaryResult);
+            return primaryResult;
          }
       }
    }

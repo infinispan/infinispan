@@ -2,6 +2,8 @@ package org.infinispan.distribution.rehash;
 
 import org.infinispan.Cache;
 import org.infinispan.commons.CacheException;
+import org.infinispan.commons.util.CollectionFactory;
+import org.infinispan.commons.util.concurrent.jdk8backported.EquivalentConcurrentHashMapV8;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.remoting.RemoteException;
@@ -13,10 +15,13 @@ import org.infinispan.transaction.TransactionMode;
 import org.testng.annotations.Test;
 
 import java.util.concurrent.Callable;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 
 import static org.testng.AssertJUnit.assertEquals;
+import static org.testng.AssertJUnit.assertNull;
 
 /**
  * Tests data loss during state transfer when the originator of a put operation becomes the primary owner of the
@@ -31,6 +36,8 @@ public class NonTxPutIfAbsentDuringLeaveStressTest extends MultipleCacheManagers
    private static final int NUM_WRITERS = 4;
    private static final int NUM_ORIGINATORS = 2;
    private static final int NUM_KEYS = 100;
+   private final ConcurrentMap<String, String> insertedValues = CollectionFactory.makeConcurrentMap();
+   private volatile boolean stop = false;
 
    @Override
    protected void createCacheManagers() throws Throwable {
@@ -54,20 +61,32 @@ public class NonTxPutIfAbsentDuringLeaveStressTest extends MultipleCacheManagers
    public void testNodeLeavingDuringPutIfAbsent() throws Exception {
       Future[] futures = new Future[NUM_WRITERS];
       for (int i = 0; i < NUM_WRITERS; i++) {
-         final int finalI = i;
+         final int writerIndex = i;
          futures[i] = fork(new Callable() {
             @Override
             public Object call() throws Exception {
-               for (int j = 0; j < NUM_KEYS; j++) {
-                  Cache<Object, Object> cache = cache(finalI % NUM_ORIGINATORS);
-                  putRetryOnSuspect(cache, "key_" + finalI + "_" + j, "value_" + finalI + "_" + j);
+               while (!stop) {
+                  for (int j = 0; j < NUM_KEYS; j++) {
+                     Cache<Object, Object> cache = cache(writerIndex % NUM_ORIGINATORS);
+                     putRetryOnSuspect(cache, "key_" + j, "value_" + j + "_" + writerIndex);
+                  }
                }
                return null;
             }
 
             private void putRetryOnSuspect(Cache<Object, Object> cache, String key, String value) {
                try {
-                  cache.putIfAbsent(key, value);
+                  Object oldValue = cache.putIfAbsent(key, value);
+                  Object newValue = cache.get(key);
+                  if (oldValue == null) {
+                     // succeeded
+                     log.tracef("Successfully inserted value %s for key %s", value, key);
+                     assertEquals(value, newValue);
+                     assertNull(insertedValues.putIfAbsent(key, value));
+                  } else {
+                     // failed
+                     assertEquals(oldValue, newValue);
+                  }
                } catch (CacheException e) {
                   Throwable ce = e;
                   while (ce instanceof RemoteException) {
@@ -89,13 +108,14 @@ public class NonTxPutIfAbsentDuringLeaveStressTest extends MultipleCacheManagers
       killMember(3);
       waitForClusterToForm();
 
-      TimeUnit.MILLISECONDS.sleep(NUM_KEYS * NUM_WRITERS);
+      stop = true;
 
       for (int i = 0; i < NUM_WRITERS; i++) {
          futures[i].get(10, TimeUnit.SECONDS);
          for (int j = 0; j < NUM_KEYS; j++) {
             for (int k = 0; k < caches().size(); k++) {
-               assertEquals("value_" + i + "_" + j, cache(k).get("key_" + i + "_" + j));
+               String key = "key_" + j;
+               assertEquals(insertedValues.get(key), cache(k).get(key));
             }
          }
       }

@@ -37,11 +37,6 @@ public class EvictCommand extends RemoveCommand implements LocalCommand {
    }
 
    @Override
-   protected boolean skipCommand(InvocationContext ctx) {
-      return false;
-   }
-
-   @Override
    public void notify(InvocationContext ctx, Object value, boolean isPre) {
       if (!isPre) {
          if (log.isTraceEnabled())

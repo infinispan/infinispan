@@ -1,5 +1,6 @@
 package org.infinispan.marshall;
 
+import org.infinispan.commons.equivalence.AnyEquivalence;
 import org.infinispan.metadata.EmbeddedMetadata;
 import org.infinispan.commands.write.PutKeyValueCommand;
 import org.infinispan.context.Flag;
@@ -36,7 +37,7 @@ public class SharedStreamMultiMarshallerTest {
       cm.getCache(); // Start cache so that global marshaller is resolved
       JGroupsAddress address = new JGroupsAddress(new IpAddress(12345));
       PutKeyValueCommand cmd = new PutKeyValueCommand(
-            "k", "v", false, null, new EmbeddedMetadata.Builder().build(), Collections.<Flag>emptySet());
+            "k", "v", false, null, new EmbeddedMetadata.Builder().build(), Collections.<Flag>emptySet(), AnyEquivalence.getInstance());
       try {
          // Write
          StreamingMarshaller globalMarshal = extractGlobalMarshaller(cm);
