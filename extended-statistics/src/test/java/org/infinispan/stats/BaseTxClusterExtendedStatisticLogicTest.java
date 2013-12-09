@@ -288,7 +288,7 @@ public abstract class BaseTxClusterExtendedStatisticLogicTest extends MultipleCa
                remotePuts++;
                involvesRemoteNode = true;
                //remote puts always acquires local locks
-               if (operation != WriteOperation.PUT_IF && operation != WriteOperation.PUT) {
+               if (operation == WriteOperation.REPLACE) {
                   localLocks++;
                }
             } else {
