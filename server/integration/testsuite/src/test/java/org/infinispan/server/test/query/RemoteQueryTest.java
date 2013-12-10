@@ -1,6 +1,5 @@
 package org.infinispan.server.test.query;
 
-import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.Collections;
@@ -15,6 +14,7 @@ import org.infinispan.client.hotrod.RemoteCacheManager;
 import org.infinispan.client.hotrod.Search;
 import org.infinispan.client.hotrod.configuration.ConfigurationBuilder;
 import org.infinispan.client.hotrod.marshall.ProtoStreamMarshaller;
+import org.infinispan.commons.util.Util;
 import org.infinispan.protostream.sampledomain.Address;
 import org.infinispan.protostream.sampledomain.User;
 import org.infinispan.protostream.sampledomain.marshallers.MarshallerRegistration;
@@ -35,7 +35,6 @@ import static org.junit.Assert.assertNotNull;
  *
  * @author Adrian Nistor
  * @author Martin Gencur
- *
  */
 @RunWith(Arquillian.class)
 @WithRunningServer("remote-query")
@@ -190,18 +189,12 @@ public class RemoteQueryTest {
     }
 
     private byte[] readClasspathResource(String c) throws IOException {
-        InputStream is = getClass().getResourceAsStream(c);
-        try {
-            ByteArrayOutputStream os = new ByteArrayOutputStream();
-            byte[] buf = new byte[1024];
-            int len;
-            while ((len = is.read(buf)) != -1) {
-                os.write(buf, 0, len);
-            }
-            return os.toByteArray();
-        } finally {
-            is.close();
-        }
+       InputStream is = getClass().getResourceAsStream(c);
+       try {
+          return Util.readStream(is);
+       } finally {
+          is.close();
+       }
     }
 
     private Object invokeOperation(MBeanServerConnectionProvider provider, String mbean, String operationName, Object[] params,

@@ -13,6 +13,18 @@
                         <property name="lucene_version">LUCENE_CURRENT</property>
                     </indexing>
                 </local-cache>
+                <local-cache
+                    name="testcache_manual"
+                    start="EAGER"
+                    batching="false">
+                   <transaction mode="NONE" />
+                   <indexing index="ALL">
+                      <property name="default.directory_provider">ram</property>
+                      <property name="lucene_version">LUCENE_CURRENT</property>
+                      <property name="hibernate.search.indexing_strategy">manual</property>
+                      <property name="hibernate.search.jmx_enabled">true</property>
+                   </indexing>
+                </local-cache>
                 <local-cache name="memcachedCache" start="EAGER">
                     <locking isolation="NONE" acquire-timeout="30000" concurrency-level="1000" striping="false"/>
                     <transaction mode="NONE"/>
