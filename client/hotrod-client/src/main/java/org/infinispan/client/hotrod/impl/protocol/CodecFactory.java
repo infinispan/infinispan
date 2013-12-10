@@ -17,12 +17,14 @@ public class CodecFactory {
    private static final Codec CODEC_10 = new Codec10();
    private static final Codec CODEC_11 = new Codec11();
    private static final Codec CODEC_12 = new Codec12();
+   private static final Codec CODEC_13 = new Codec13();
 
    static {
       codecMap = new HashMap<String, Codec>();
       codecMap.put(PROTOCOL_VERSION_10, CODEC_10);
       codecMap.put(PROTOCOL_VERSION_11, CODEC_11);
       codecMap.put(PROTOCOL_VERSION_12, CODEC_12);
+      codecMap.put(PROTOCOL_VERSION_13, CODEC_13);
    }
 
    public static Codec getCodec(String version) {
