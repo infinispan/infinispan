@@ -1,0 +1,626 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plugin [
+   <!ENTITY pluginName 'InfinispanServer'>
+
+   <!ENTITY addConnectorCommandParameters '
+      <c:simple-property name="cache-container" required="true" description="The name of the cache container to apply this endpoint to">
+         <c:option-source target="resource" expression="type=&apos;Cache Container&apos; plugin=&pluginName;"/>
+      </c:simple-property>
+   '>
+
+   <!ENTITY addConnectorProtocolCommandParameters '
+      &addConnectorCommandParameters;
+      <c:simple-property name="socket-binding" required="true" description="The socket binding to use for this connector">
+         <c:option-source target="configuration" expression="*/socket-binding=name:type=SocketBindingGroup"/>
+      </c:simple-property>
+      <c:simple-property name="worker-threads" required="false" type="integer" description="The number of worker threads to use for this connector"/>
+      <c:simple-property name="idle-timeout" required="false" type="long" description="The timeout for idle connections"/>
+      <c:simple-property name="tcp-nodelay" required="false" type="boolean" description="Whether to use TCP NO_DELAY"/>
+      <c:simple-property name="receive-buffer-size" required="false" type="long" description="Size of the receive buffer"/>
+      <c:simple-property name="send-buffer-size" required="false" type="long" description="Size of the send buffer"/>
+   '>
+
+   <!ENTITY commonConnectorMetrics '
+      <metric property="bytesRead" displayName="Bytes Read" displayType="detail" units="none" dataType="measurement" description="Bytes Read" />
+      <metric property="bytesWritten" displayName="Bytes Written" displayType="detail" units="none" dataType="measurement" description="Bytes Written" />
+   '>
+
+   <!ENTITY commonLoaderParameters '
+      <c:simple-property name="shared" required="false" type="boolean" description="This setting should be set to true when multiple cache instances share the same cache loader."/>
+      <c:simple-property name="preload" required="false" type="boolean" description="If true, when the cache starts, data stored in the cache loader will be pre-loaded into memory. This is particularly useful when data in the cache loader will be needed immediately after startup and you want to avoid cache operations being delayed as a result of loading this data lazily. Can be used to provide a &apos;warm-cache&apos; on startup, however there is a performance penalty as startup time is affected by this process."/>
+      <c:simple-property name="class" required="false" description="The custom loader implementation class to use for this cache loader."/>
+      <c:list-property name="properties" displayName="Properties" required="false" readOnly="false">
+         <c:map-property name="*:name" displayName="Name" readOnly="true">
+            <c:simple-property name="name" displayName="Property-Name" readOnly="true"/>
+            <c:simple-property name="value" displayName="Value"/>
+         </c:map-property>
+      </c:list-property>
+   '>
+
+   <!ENTITY commonStoreParamters '
+      &commonLoaderParameters;
+      <c:simple-property name="fetch-state" required="false" type="boolean" description="If true, fetch persistent state when joining a cluster. If multiple cache stores are chained, only one of them can have this property enabled."/>
+      <c:simple-property name="passivation" required="false" type="boolean" description="If true, data is only written to the cache store when it is evicted from memory, a phenomenon known as &apos;passivation&apos;. Next time the data is requested, it will be &apos;activated&apos; which means that data will be brought back to memory and removed from the persistent store. If false, the cache store contains a copy of the contents in memory, so writes to cache result in cache store writes. This essentially gives you a &apos;write-through&apos; configuration."/>
+      <c:simple-property name="purge" required="false" type="boolean" description="If true, purges this cache store when it starts up."/>
+      <c:simple-property name="read-only" required="false" type="boolean" description="If true, the cache store will only be used to load entries. Any modifications made to the caches will not be applied to the store."/>
+      <c:simple-property name="singleton" required="false" type="boolean" description="If true, the singleton store cache store is enabled. SingletonStore is a delegating cache store used for situations when only one instance in a cluster should interact with the underlying store."/>
+   '>
+]>
+
+<plugin name="&pluginName;" displayName="Infinispan Server 6.0.x"
+        description="Supports management and monitoring of Infinispan Server 6.0.x" package="org.infinispan.server.rhq"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns="urn:xmlns:rhq-plugin"
+        xmlns:c="urn:xmlns:rhq-configuration">
+
+    <depends plugin="JBossAS7" useClasses="true"/>
+
+    <service name="Infinispan Server" discovery="org.rhq.modules.plugins.jbossas7.SubsystemDiscovery"
+             class="org.infinispan.server.rhq.IspnServerComponent" singleton="true"
+             description="The Infinispan Server endpoint connectors">
+
+        <runs-inside>
+            <parent-resource-type name="Profile" plugin="JBossAS7"/>
+            <parent-resource-type name="JBossAS7 Standalone Server" plugin="JBossAS7"/>
+            <parent-resource-type name="Managed Server" plugin="JBossAS7"/>
+        </runs-inside>
+
+        <plugin-configuration>
+            <c:simple-property name="path" readOnly="true" default="subsystem=endpoint"/>
+            <c:simple-property name="managedRuntime" default="true" type="boolean" readOnly="true"/>
+        </plugin-configuration>
+
+        <service name="Hotrod Connector" discovery="org.rhq.modules.plugins.jbossas7.SubsystemDiscovery"
+                 class="org.infinispan.server.rhq.IspnServerConnector" createDeletePolicy="both"
+                 creationDataType="configuration">
+
+            <plugin-configuration>
+                <c:simple-property name="path" readOnly="true" default="hotrod-connector"/>
+            </plugin-configuration>
+
+            <operation name="remove" displayName="Remove Endpoint"
+                       description="Removes the given endpoint from the server"/>
+
+            &commonConnectorMetrics;
+
+            <resource-configuration>
+                &addConnectorProtocolCommandParameters;
+            </resource-configuration>
+
+        </service>
+
+        <service name="Memcached Connector" discovery="org.rhq.modules.plugins.jbossas7.SubsystemDiscovery"
+                 class="org.infinispan.server.rhq.IspnServerConnector" createDeletePolicy="both"
+                 creationDataType="configuration">
+
+            <plugin-configuration>
+                <c:simple-property name="path" readOnly="true" default="memcached-connector"/>
+            </plugin-configuration>
+
+            <operation name="remove" displayName="Remove Endpoint"
+                       description="Removes the given endpoint from the server"/>
+
+            &commonConnectorMetrics;
+
+            <resource-configuration>
+                &addConnectorProtocolCommandParameters;
+                <c:simple-property name="cache" required="false" defaultValue="memcachedCache"
+                                   description="The infinispan named cache to use"/>
+            </resource-configuration>
+        </service>
+
+        <service name="Websocket Connector" discovery="org.rhq.modules.plugins.jbossas7.SubsystemDiscovery"
+                 class="org.infinispan.server.rhq.IspnServerConnector" createDeletePolicy="both"
+                 creationDataType="configuration">
+
+            <plugin-configuration>
+                <c:simple-property name="path" readOnly="true" default="websocket-connector"/>
+            </plugin-configuration>
+
+            <operation name="remove" displayName="Remove Endpoint"
+                       description="Removes the given endpoint from the server"/>
+
+            &commonConnectorMetrics;
+
+            <resource-configuration>
+                &addConnectorProtocolCommandParameters;
+            </resource-configuration>
+        </service>
+
+        <service name="Rest Connector" discovery="org.rhq.modules.plugins.jbossas7.SubsystemDiscovery"
+                 class="org.infinispan.server.rhq.IspnServerConnector" createDeletePolicy="both"
+                 creationDataType="configuration">
+
+            <plugin-configuration>
+                <c:simple-property name="path" readOnly="true" default="rest-connector"/>
+            </plugin-configuration>
+
+            <operation name="remove" displayName="Remove Endpoint"
+                       description="Removes the given endpoint from the server"/>
+
+            &commonConnectorMetrics;
+
+            <resource-configuration>
+                &addConnectorCommandParameters;
+                <c:simple-property name="auth-method" required="false"
+                                   description="The authentication method to apply to the REST connector (BASIC, DIGEST, CLIENT-CERT)">
+                    <c:property-options>
+                        <c:option value="BASIC"/>
+                        <c:option value="DIGEST"/>
+                        <c:option value="CLIENT_CERT"/>
+                        <c:option value="SPNEGO"/>
+                    </c:property-options>
+                </c:simple-property>
+                <c:simple-property name="context-path" required="false"
+                                   description="The context path on which the REST connector should be published"/>
+                <c:simple-property name="extended-headers" required="false" defaultValue="ON_DEMAND"
+                                   description="Allow retrieval of extendend information about entries (NEVER, ON_DEMAND)">
+                    <c:property-options>
+                        <c:option value="NEVER"/>
+                        <c:option value="ON_DEMAND"/>
+                    </c:property-options>
+                </c:simple-property>
+                <c:simple-property name="security-domain" required="false"
+                                   description="The security domain to apply to the REST connector">
+                    <!-- TODO: this probably can be a resource ref? -->
+                </c:simple-property>
+                <c:simple-property name="security-mode" required="false"
+                                   description="Whether to authenticate only writes (WRITE) or all access (READ_WRITE)">
+                    <c:property-options>
+                        <c:option value="WRITE"/>
+                        <c:option value="READ_WRITE"/>
+                    </c:property-options>
+                </c:simple-property>
+                <c:simple-property name="virtual-server" required="false"
+                                   description="The virtual server on which the REST connector should be published"/>
+            </resource-configuration>
+        </service>
+    </service>
+
+    <service name="Infinispan" discovery="org.rhq.modules.plugins.jbossas7.SubsystemDiscovery"
+             class="org.infinispan.server.rhq.IspnComponent" singleton="true" description="The Infinispan subsystem">
+
+        <runs-inside>
+            <parent-resource-type name="Profile" plugin="JBossAS7"/>
+            <parent-resource-type name="JBossAS7 Standalone Server" plugin="JBossAS7"/>
+            <parent-resource-type name="Managed Server" plugin="JBossAS7"/>
+        </runs-inside>
+
+        <plugin-configuration>
+            <c:simple-property name="path" readOnly="true" default="subsystem=infinispan"/>
+            <c:simple-property name="managedRuntime" default="true" type="boolean" readOnly="true"/>
+        </plugin-configuration>
+
+        <service name="Cache Container" discovery="org.rhq.modules.plugins.jbossas7.SubsystemDiscovery"
+                 class="org.infinispan.server.rhq.IspnCContainerComponent" description="A cache container">
+
+            <plugin-configuration>
+                <c:simple-property name="path" readOnly="true" default="cache-container"/>
+            </plugin-configuration>
+
+            <operation name="upload-proto-file" description="Uploads a proto file given a specific URL - note this is relative to the Infinispan server">
+                <parameters>
+                    <c:simple-property name="proto-url" type="longString"/>
+                </parameters>
+            </operation>
+
+            <metric property="cacheManagerStatus" displayName="Cache Container Status" displayType="summary"
+                    units="none" dataType="trait" description="The current runtime status of a cache container"/>
+            <metric property="clusterName" displayName="Cluster Name" displayType="summary" units="none"
+                    dataType="trait" description="The name of the cluster"/>
+            <metric property="coordinatorAddress" displayName="Coordinator Address" displayType="summary" units="none"
+                    dataType="trait" description="The coordinator node's address"/>
+            <metric property="localAddress" displayName="Local Address" displayType="summary" units="none"
+                    dataType="trait" description="The local node's address"/>
+
+            <resource-configuration>
+                <c:simple-property name="default-cache" required="false" type="string" readOnly="true"
+                                   description="The default infinispan cache"/>
+                <c:list-property name="aliases" required="false"
+                                 description="The list of aliases for this cache container" readOnly="true">
+                    <c:simple-property name="alias" readOnly="true"/>
+                </c:list-property>
+                <c:simple-property name="jndi-name" required="false" type="string" readOnly="true"
+                                   description="The jndi name to which to bind this cache container"/>
+                <c:simple-property name="start" required="false" type="string" readOnly="true" defaultValue="LAZY"
+                                   description="The cache container start mode, which can be EAGER (immediate start) or LAZY (on-demand start).">
+                    <c:property-options>
+                        <c:option value="LAZY"/>
+                        <c:option value="EAGER"/>
+                    </c:property-options>
+                </c:simple-property>
+                <c:simple-property name="listener-executor" required="false" type="string" readOnly="true"
+                                   description="The executor used for the replication queue"/>
+                <c:simple-property name="eviction-executor" required="false" type="string" readOnly="true"
+                                   description="The scheduled executor used for eviction"/>
+                <c:simple-property name="module" required="false" type="string" readOnly="true"
+                                   defaultValue="org.jboss.as.clustering.infinispan"
+                                   description="The module whose class loader should be used when building this cache container&apos;s configuration. The default value is org.jboss.as.clustering.infinispan."/>
+                <c:simple-property name="replication-queue-executor" required="false" type="string" readOnly="true"
+                                   description="The executor used for asynchronous cache operations"/>
+            </resource-configuration>
+
+            <service name="Cache" discovery="org.rhq.modules.plugins.jbossas7.SubsystemDiscovery"
+                     class="org.infinispan.server.rhq.IspnCacheComponent"
+                     description="The caches within a cache container" createDeletePolicy="both"
+                     creationDataType="configuration">
+
+                <plugin-configuration>
+                    <c:simple-property name="path" readOnly="true"
+                                       default="distributed-cache|local-cache|invalidation-cache|replicated-cache"/>
+                </plugin-configuration>
+
+                <operation name="clear-cache" description="Clears the contents of this cache">
+                    <results>
+                        <c:simple-property name="operationResult"/>
+                    </results>
+                </operation>
+                <operation name="reset-statistics" description="Resets statistics gathered by this cache">
+                    <results>
+                        <c:simple-property name="operationResult"/>
+                    </results>
+                </operation>
+                <operation name="reset-activation-statistics"
+                           description="Resets activation statistics gathered by this cache">
+                    <results>
+                        <c:simple-property name="operationResult"/>
+                    </results>
+                </operation>
+                <operation name="reset-invalidation-statistics"
+                           description="Resets invalidation statistics gathered by this cache">
+                    <results>
+                        <c:simple-property name="operationResult"/>
+                    </results>
+                </operation>
+                <operation name="reset-passivation-statistics"
+                           description="Resets passivation statistics gathered by this cache">
+                    <results>
+                        <c:simple-property name="operationResult"/>
+                    </results>
+                </operation>
+                <operation name="reset-rpc-statistics" description="Resets RPC statistics gathered by this cache">
+                    <results>
+                        <c:simple-property name="operationResult"/>
+                    </results>
+                </operation>
+
+                <operation name="remove" displayName="Remove Cache"
+                           description="Removes the given cache from the cache-container"/>
+
+                <metric property="cacheStatus" displayName="Cache Status" displayType="summary" units="none"
+                        dataType="trait" description="The current runtime status of a cache"/>
+
+                <metric property="numberOfLocksAvailable" displayName="[LockManager] Number of locks available"
+                        displayType="detail" units="none" dataType="measurement"
+                        description="The number of exclusive locks that are available."/>
+                <metric property="numberOfLocksHeld" displayName="[LockManager] Number of locks held"
+                        displayType="detail" units="none" dataType="measurement"
+                        description="The number of exclusive locks that are held."/>
+                <metric property="concurrencyLevel" displayName="[LockManager] Concurrency level" displayType="detail"
+                        units="none" dataType="trait"
+                        description="The concurrency level that the Lock Manager has been configured with."/>
+
+                <metric property="averageReadTime" displayName="[Statistics] Average read time" displayType="summary"
+                        units="milliseconds" dataType="measurement"
+                        description="Average number of milliseconds for a read operation on the cache"/>
+                <metric property="hitRatio" displayName="[Statistics] Hit ratio" displayType="summary"
+                        units="percentage" dataType="measurement"
+                        description="Percentage hit/(hit+miss) ratio for the cache"/>
+                <metric property="elapsedTime" displayName="[Statistics] Seconds since cache started"
+                        displayType="summary" units="seconds" dataType="measurement"
+                        description="Number of seconds since cache started"/>
+                <metric property="readWriteRatio" displayName="[Statistics] Read/write ratio" displayType="summary"
+                        units="percentage" dataType="measurement" description="read/writes ratio for the cache"/>
+                <metric property="averageWriteTime" displayName="[Statistics] Average write time" displayType="summary"
+                        units="milliseconds" dataType="measurement"
+                        description="Average number of milliseconds for a write operation in the cache"/>
+                <metric property="hits" displayName="[Statistics] Number of cache hits" displayType="summary"
+                        units="none" dataType="measurement" description="Number of cache hits"/>
+                <metric property="evictions" displayName="[Statistics] Number of cache evictions" displayType="summary"
+                        units="none" dataType="measurement" description="Number of cache eviction operations"/>
+                <metric property="removeMisses" displayName="[Statistics] Number of cache removal misses"
+                        displayType="summary" units="none" dataType="measurement"
+                        description="Number of cache removals where keys were not found"/>
+                <metric property="timeSinceReset" displayName="[Statistics] Seconds since cache statistics were reset"
+                        displayType="summary" units="seconds" dataType="measurement"
+                        description="Number of seconds since the cache statistics were last reset"/>
+                <metric property="numberOfEntries" displayName="[Statistics] Number of current cache entries"
+                        displayType="summary" units="none" dataType="measurement"
+                        description="Number of entries currently in the cache"/>
+                <metric property="stores" displayName="[Statistics] Number of cache puts" displayType="summary"
+                        units="none" dataType="measurement" description="number of cache put operations"/>
+                <metric property="removeHits" displayName="[Statistics] Number of cache removal hits"
+                        displayType="summary" units="none" dataType="measurement"
+                        description="Number of cache removal hits"/>
+                <metric property="misses" displayName="[Statistics] Number of cache misses" displayType="summary"
+                        units="none" dataType="measurement" description="Number of cache misses"/>
+
+                <metric property="successRatio" displayName="[RpcManager] Successful replication ratio"
+                        displayType="summary" units="percentage" dataType="measurement"
+                        description="Successful replications as a ratio of total replications in numeric double format"/>
+                <metric property="replicationCount" displayName="[RpcManager] Number of successful replications"
+                        displayType="summary" units="none" dataType="measurement"
+                        description="Number of successful replications"/>
+                <metric property="replicationFailures" displayName="[RpcManager] Number of failed replications"
+                        displayType="summary" units="none" dataType="measurement"
+                        description="Number of failed replications"/>
+                <metric property="averageReplicationTime"
+                        displayName="[RpcManager] Average time spent in the transport layer" displayType="summary"
+                        units="milliseconds" dataType="measurement"
+                        description="The average time spent in the transport layer, in milliseconds"/>
+
+                <metric property="commits" displayName="[Transactions] Commits" displayType="summary" units="none"
+                        dataType="measurement" description="Number of transaction commits performed since last reset"/>
+                <metric property="prepares" displayName="[Transactions] Prepares" displayType="summary" units="none"
+                        dataType="measurement" description="Number of transaction prepares performed since last reset"/>
+                <metric property="rollbacks" displayName="[Transactions] Rollbacks" displayType="summary" units="none"
+                        dataType="measurement"
+                        description="Number of transaction rollbacks performed since last reset"/>
+
+                <metric property="invalidations" displayName="[Invalidation] Number of invalidations"
+                        displayType="detail" units="none" dataType="measurement" description="Number of invalidations"/>
+                <metric property="passivations" displayName="[Passivation] Number of cache passivations"
+                        displayType="detail" units="none" dataType="measurement"
+                        description="Number of passivation events"/>
+                <metric property="activations" displayName="[Activation] Number of cache entries activated"
+                        displayType="detail" units="none" dataType="measurement"
+                        description="Number of activation events"/>
+                <metric property="cacheLoaderLoads" displayName="[Activation] Number of cache store loads"
+                        displayType="detail" units="none" dataType="measurement"
+                        description="Number of entries loaded from cache store"/>
+                <metric property="cacheLoaderMisses" displayName="[Activation] Number of cache store load misses"
+                        displayType="detail" units="none" dataType="measurement"
+                        description="Number of entries that did not exist in cache store"/>
+
+                <metric property="cacheLoaderStores" displayName="[CacheStore] Number of cache store stores"
+                        displayType="detail" units="none" dataType="measurement"
+                        description="Number of entries stored in the cache stores"/>
+
+                <resource-configuration>
+                    <c:simple-property name="_flavor" displayName="Kind of cache" required="true" readOnly="true"
+                                       default="local-cache" description="What special kind of cache is this.">
+                        <c:property-options>
+                            <c:option value="local-cache"/>
+                            <c:option value="invalidation-cache"/>
+                            <c:option value="distributed-cache"/>
+                            <c:option value="replicated-cache"/>
+                        </c:property-options>
+                    </c:simple-property>
+                    <c:simple-property name="start" required="false" type="string" readOnly="true" default="LAZY"
+                                       description="The cache start mode, which can be EAGER (immediate start) or LAZY (on-demand start).">
+                        <c:property-options>
+                            <c:option value="LAZY"/>
+                            <c:option value="EAGER"/>
+                        </c:property-options>
+                    </c:simple-property>
+                    <c:simple-property name="batching" required="false" type="boolean" readOnly="true" default="false"
+                                       description="If enabled, the invocation batching API will be made available for this cache."/>
+                    <c:simple-property name="indexing" required="false" type="string" readOnly="true" default="NONE"
+                                       description="If enabled, entries will be indexed when they are added to the cache. Indexes will be updated as entries change or are removed.">
+                        <c:property-options>
+                            <c:option value="NONE"/>
+                            <c:option value="LOCAL"/>
+                            <c:option value="ALL"/>
+                        </c:property-options>
+                    </c:simple-property>
+                    <c:simple-property name="jndi-name" required="false" type="string" readOnly="true"
+                                       description="The jndi-name to which to bind this cache instance."/>
+                    <c:simple-property name="module" required="false" type="string" readOnly="true"
+                                       description="The module whose class loader should be used when building this cache&apos;s configuration."/>
+
+                    <c:group name="cluster-cache-attributes" displayName="Clustered Cache Attributes" hiddenByDefault="true">
+                        <c:simple-property name="mode" required="false" type="string" readOnly="true" default="SYNC"
+                                           description="Sets the clustered cache mode, ASYNC for asynchronous operation, or SYNC for synchronous operation.">
+                            <c:property-options>
+                                <c:option value="SYNC"/>
+                                <c:option value="ASYNC"/>
+                            </c:property-options>
+                        </c:simple-property>
+                        <c:simple-property name="queue-size" required="false" type="integer" readOnly="true" default="0"
+                                           description="In ASYNC mode, this attribute can be used to trigger flushing of the queue when it reaches a specific threshold."/>
+                        <c:simple-property name="queue-flush-interval" required="false" type="long" readOnly="true"
+                                           default="10"
+                                           description="In ASYNC mode, this attribute controls how often the asynchronous thread used to flush the replication queue runs. This should be a positive integer which represents thread wakeup time in milliseconds."/>
+                        <c:simple-property name="remote-timeout" required="false" type="long" readOnly="true"
+                                           default="17500"
+                                           description="In SYNC mode, the timeout (in ms) used to wait for an acknowledgment when making a remote call, after which the call is aborted and an exception is thrown."/>
+                        <c:simple-property name="async-marshalling" required="false" type="boolean" readOnly="true"
+                                           defaultValue="false"
+                                           description="If enabled, this will cause marshalling of entries to be performed asynchronously. The default value is false."/>
+                    </c:group>
+
+                    <c:group name="distributed-cache-attributes" displayName="Distributed Cache Attributes" hiddenByDefault="true">
+                        <c:simple-property name="l1-lifespan" required="false" type="long" readOnly="true"
+                                           defaultValue="600000"
+                                           description="Maximum lifespan of an entry placed in the L1 cache. This element configures the L1 cache behavior in &apos;distributed&apos; caches instances. In any other cache modes, this element is ignored. The default value is 600000."/>
+                        <c:simple-property name="owners" required="false" type="integer" readOnly="true" defaultValue="2"
+                                           description="Number of cluster&#45;wide replicas for each cache entry. The default value is 2."/>
+                        <c:simple-property name="segments" required="false" type="integer" readOnly="true" defaultValue="1"
+                                           description="The total number of segments in use"/>
+                        <c:simple-property name="rebalancing" required="false" type="boolean" readOnly="false"
+                                           description="Configures whether rebalancing is enabled/disabled.  This element configures in only &apos;distributed&apos; cache instances."/>
+                    </c:group>
+                </resource-configuration>
+
+                <service name="Backup" discovery="org.rhq.modules.plugins.jbossas7.SubsystemDiscovery"
+                         class="org.rhq.modules.plugins.jbossas7.BaseComponent" singleton="true"
+                         description="The cross-site backup configuration for this cache">
+                    <plugin-configuration>
+                        <c:simple-property name="path" readOnly="true" default="backup"/>
+                    </plugin-configuration>
+
+                    <operation name="status" description="Shows the site's status">
+                        <results>
+                            <c:simple-property name="operationResult"/>
+                        </results>
+                    </operation>
+                    <operation name="bring-site-online" description="Brings this site online">
+                        <results>
+                            <c:simple-property name="operationResult"/>
+                        </results>
+                    </operation>
+                    <operation name="take-site-offline" description="Takes this site offline">
+                        <results>
+                            <c:simple-property name="operationResult"/>
+                        </results>
+                    </operation>
+                </service>
+
+                <service name="Transactions" discovery="org.rhq.modules.plugins.jbossas7.SubsystemDiscovery"
+                         class="org.rhq.modules.plugins.jbossas7.BaseComponent" singleton="true"
+                         description="Operations on transactions on this cache">
+
+                    <plugin-configuration>
+                        <c:simple-property name="path" readOnly="true" default="transaction=TRANSACTION"/>
+                    </plugin-configuration>
+
+                    <operation name="reset-transaction-statistics" description="Resets transaction statistics">
+                        <results>
+                            <c:simple-property name="operationResult"/>
+                        </results>
+                    </operation>
+                    <operation name="list-in-doubt-transactions" description="Lists in-doubt transactions">
+                        <results>
+                            <c:simple-property name="operationResult"/>
+                        </results>
+                    </operation>
+                    <operation name="force-commit-transaction"
+                               description="Forces the commit of an in-doubt transaction by its internal ID.">
+                        <parameters>
+                            <c:simple-property name="internal-id" required="true" type="long" readOnly="false"
+                                               description="The internal ID of the transaction"/>
+                        </parameters>
+                        <results>
+                            <c:simple-property name="operationResult"/>
+                        </results>
+                    </operation>
+                    <operation name="force-rollback-transaction"
+                               description="Forces the rollback of an in-doubt transaction by its internal ID.">
+                        <parameters>
+                            <c:simple-property name="internal-id" required="true" type="long" readOnly="false"
+                                               description="The internal ID of the transaction"/>
+                        </parameters>
+                        <results>
+                            <c:simple-property name="operationResult"/>
+                        </results>
+                    </operation>
+                    <operation name="forget-transaction"
+                               description="Removes recovery info for the given transaction by its internal ID.">
+                        <parameters>
+                            <c:simple-property name="internal-id" required="true" type="long" readOnly="false"
+                                               description="The internal ID of the transaction"/>
+                        </parameters>
+                        <results>
+                            <c:simple-property name="operationResult"/>
+                        </results>
+                    </operation>
+                </service>
+
+                <service name="Loader" discovery="org.rhq.modules.plugins.jbossas7.SubsystemDiscovery"
+                         class="org.infinispan.server.rhq.IspnLoaderComponent"
+                         description="The loaders that this cache contains" createDeletePolicy="both"
+                         creationDataType="configuration">
+                    <plugin-configuration>
+                        <c:simple-property name="path" readOnly="true"
+                                           default="loader|cluster-loader"/>
+                    </plugin-configuration>
+
+                    <operation name="remove" displayName="Remove Loader"
+                               description="Removes the given loader from the cache"/>
+
+                    <resource-configuration>
+                        <c:simple-property name="_flavor" displayName="Kind of loader" required="true" readOnly="true"
+                                           default="loader" description="What special kind of loader is this.">
+                            <c:property-options>
+                                <c:option name="Generic Loader" value="loader"/>
+                                <c:option name="Cluster Loader" value="cluster-loader"/>
+                            </c:property-options>
+                        </c:simple-property>
+                        &commonLoaderParameters;
+                        <c:group name="cluster-loader-attributes" displayName="Cluster Loader Attributes" hiddenByDefault="true">
+                            <c:simple-property name="remote-timeout" required="false" type="string" readOnly="true"
+                                               description="Specifies the maximum time to wait for a response from remote nodes."/>
+                        </c:group>
+                    </resource-configuration>
+                </service>
+
+                <service name="Store" discovery="org.rhq.modules.plugins.jbossas7.SubsystemDiscovery"
+                         class="org.infinispan.server.rhq.IspnLoaderComponent"
+                         description="The stores that this cache contains" createDeletePolicy="both"
+                         creationDataType="configuration">
+                    <plugin-configuration>
+                        <c:simple-property name="path" readOnly="true"
+                                           default="store|file-store|remote-store"/>
+                    </plugin-configuration>
+
+                    <operation name="remove" displayName="Remove Store"
+                               description="Removes the given store from the cache"/>
+
+                    <resource-configuration>
+                        <c:simple-property name="_flavor" displayName="Kind of store" required="true" readOnly="true"
+                                           default="store" description="What special kind of store is this.">
+                            <c:property-options>
+                                <c:option name="Generic Store" value="store"/>
+                                <c:option name="File Store" value="file-store"/>
+                                <c:option name="Remote Store" value="remote-store"/>
+                            </c:property-options>
+                        </c:simple-property>
+                        &commonStoreParamters;
+                        <c:group name="file-store-attributes" displayName="File Store Attributes" hiddenByDefault="true">
+                            <c:simple-property name="path" required="false" type="string" readOnly="true"
+                                               description="An absolute path if relative-to is not provided, otherwise the relative path to relative-to"/>
+                            <c:simple-property name="relative-to" required="false" type="string" readOnly="true"
+                                               description="The path this is relative to">
+                                <c:option-source target="resource" expression="path=*/*=name"/>
+                            </c:simple-property>
+                        </c:group>
+                        <c:group name="remote-store-attributes" displayName="Remote Store Attributes" hiddenByDefault="true">
+                            <c:simple-property name="cache" required="false" type="string" readOnly="true"
+                                               description="The name of the remote cache to use for this remote store."/>
+                            <c:simple-property name="hotrod-wrapping" required="false" type="boolean" readOnly="true"
+                                               description="Enables wrapping of entries into a form usable by a HotRod server"/>
+                            <c:simple-property name="raw-values" required="false" type="boolean" readOnly="true"
+                                               description="Stores information on the remote cache in a raw format suitable for interoperability with other RemoteCacheManagers"/>
+                            <c:simple-property name="tcp-no-delay" required="false" type="boolean" readOnly="true"
+                                               description="A TCP_NODELAY value for remote cache communication."/>
+                            <c:simple-property name="socket-timeout" required="false" type="long" readOnly="true"
+                                               description="A socket timeout for remote cache communication."/>
+                            <!-- TODO: Need to figure out how to add remote servers here
+                            <c:simple-property name="remote-servers" required="false" type="string" readOnly="true"
+                                               description="A list of remote servers for this cache store."/>
+                            -->
+                        </c:group>
+                    </resource-configuration>
+                </service>
+            </service>
+
+            <service name="Transport" discovery="org.rhq.modules.plugins.jbossas7.SubsystemDiscovery"
+                     class="org.rhq.modules.plugins.jbossas7.BaseComponent" singleton="true"
+                     description="The description of the transport used by this cache container">
+
+                <plugin-configuration>
+                    <c:simple-property name="path" readOnly="true" default="transport=TRANSPORT"/>
+                </plugin-configuration>
+
+                <resource-configuration>
+                    <c:simple-property name="cluster" required="false" type="string" readOnly="true"
+                                       description="The name of the group communication cluster"/>
+                    <c:simple-property name="executor" required="false" type="string" readOnly="true"
+                                       description="The executor to use for the transport"/>
+                    <c:simple-property name="lock-timeout" required="false" type="long" readOnly="true"
+                                       defaultValue="240000"
+                                       description="The timeout for locks for the transport. The default value is 240000."/>
+                    <c:simple-property name="machine" required="false" type="string" readOnly="true"
+                                       description="A machine identifier for the transport"/>
+                    <c:simple-property name="rack" required="false" type="string" readOnly="true"
+                                       description="A rack identifier for the transport"/>
+                    <c:simple-property name="site" required="false" type="string" readOnly="true"
+                                       description="A site identifier for the transport"/>
+                    <c:simple-property name="stack" required="false" type="string" readOnly="true"
+                                       description="The jgroups stack to use for the transport"/>
+                </resource-configuration>
+            </service>
+
+        </service>
+    </service>
+
+</plugin>
