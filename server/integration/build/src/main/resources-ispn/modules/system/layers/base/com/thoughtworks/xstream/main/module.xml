@@ -24,6 +24,6 @@
 
 	<dependencies>
 		<module name="javax.api" />
-		<module name="xmlpull" />
+		<module name="xpp3" />
 	</dependencies>
 </module>
