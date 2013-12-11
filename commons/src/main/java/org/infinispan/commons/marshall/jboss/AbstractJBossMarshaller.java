@@ -6,6 +6,7 @@ import org.infinispan.commons.io.ExposedByteArrayOutputStream;
 import org.infinispan.commons.logging.BasicLogFactory;
 import org.infinispan.commons.marshall.AbstractMarshaller;
 import org.infinispan.commons.marshall.StreamingMarshaller;
+import org.infinispan.commons.util.concurrent.ConcurrentWeakKeyHashMap;
 import org.jboss.logging.BasicLogger;
 import org.jboss.marshalling.ExceptionListener;
 import org.jboss.marshalling.Marshalling;
@@ -54,13 +55,8 @@ public abstract class AbstractJBossMarshaller extends AbstractMarshaller impleme
     * urgent need to clear the thread local since it shouldn't be leaking.
     * It might take a long time to warmup and pre-initialize all needed instances!
     */
-   private final ThreadLocal<PerThreadInstanceHolder> marshallerTL = new ThreadLocal<PerThreadInstanceHolder>() {
-      @Override
-      protected PerThreadInstanceHolder initialValue() {
-         MarshallingConfiguration cfg = baseCfg.clone();
-         return new PerThreadInstanceHolder(cfg);
-      }
-   };
+   private final ConcurrentWeakKeyHashMap<Thread, PerThreadInstanceHolder> marshallerTL =
+         new ConcurrentWeakKeyHashMap<Thread, PerThreadInstanceHolder>();
 
    public AbstractJBossMarshaller() {
       // Class resolver now set when marshaller/unmarshaller will be created
@@ -92,7 +88,7 @@ public abstract class AbstractJBossMarshaller extends AbstractMarshaller impleme
 
    @Override
    final public ObjectOutput startObjectOutput(final OutputStream os, final boolean isReentrant, final int estimatedSize) throws IOException {
-      PerThreadInstanceHolder instanceHolder = marshallerTL.get();
+      PerThreadInstanceHolder instanceHolder = getPerThreadInstanceHolder();
       org.jboss.marshalling.Marshaller marshaller = instanceHolder.getMarshaller(estimatedSize);
       marshaller.start(Marshalling.createByteOutput(os));
       return marshaller;
@@ -124,7 +120,7 @@ public abstract class AbstractJBossMarshaller extends AbstractMarshaller impleme
 
    @Override
    final public ObjectInput startObjectInput(final InputStream is, final boolean isReentrant) throws IOException {
-      PerThreadInstanceHolder instanceHolder = marshallerTL.get();
+      PerThreadInstanceHolder instanceHolder = getPerThreadInstanceHolder();
       Unmarshaller unmarshaller = instanceHolder.getUnmarshaller();
 
       if (trace)
@@ -188,10 +184,23 @@ public abstract class AbstractJBossMarshaller extends AbstractMarshaller impleme
    public void stop() {
        // Clear class cache
       marshallableTypeHints.clear();
+      marshallerTL.clear();
    }
 
    protected boolean isMarshallableCandidate(Object o) {
       return o instanceof Serializable;
+   }
+
+   private PerThreadInstanceHolder getPerThreadInstanceHolder() {
+      final Thread thread = Thread.currentThread();
+      PerThreadInstanceHolder holder = marshallerTL.get(thread);
+      if (holder == null) {
+         holder = new PerThreadInstanceHolder(baseCfg.clone());
+         if (marshallerTL.put(thread, holder) != null) {
+            throw new IllegalStateException();
+         }
+      }
+      return holder;
    }
 
    protected static final class DebuggingExceptionListener implements ExceptionListener {

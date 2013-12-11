@@ -3,7 +3,7 @@
  * Expert Group and released to the public domain, as explained at
  * http://creativecommons.org/licenses/publicdomain
  */
-package org.infinispan.util.concurrent;
+package org.infinispan.commons.util.concurrent;
 
 import java.lang.ref.Reference;
 import java.lang.ref.ReferenceQueue;
