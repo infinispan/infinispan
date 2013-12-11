@@ -48,10 +48,14 @@
       <copy todir="${output.dir}/client/hotrod/java">
          <fileset file="${org.infinispan:infinispan-client-hotrod:jar}" />
          <fileset file="${org.infinispan:infinispan-commons:jar}" />
+         <fileset file="${org.infinispan:infinispan-query-dsl:jar}" />
+         <fileset file="${org.infinispan:infinispan-remote-query-client:jar}" />
+         <fileset file="${org.infinispan.protostream:protostream:jar}" />
          <fileset file="${org.jboss.marshalling:jboss-marshalling:jar}" />
          <fileset file="${org.jboss.marshalling:jboss-marshalling-river:jar}" />
          <fileset file="${org.jboss.logging:jboss-logging:jar}" />
          <fileset file="${commons-pool:commons-pool:jar}" />
+         <fileset file="${com.google.protobuf:protobuf-java:jar}" />
          <mapper type="flatten" />
       </copy>
       
@@ -83,8 +87,8 @@
          <maven-resource group="com.thoughtworks.xstream" artifact="xstream" />
       </module-def>
 
-      <module-def name="xmlpull" src="${infinispan.server.modules.dir}">
-         <maven-resource group="xmlpull" artifact="xmlpull" />
+      <module-def name="xpp3" src="${infinispan.server.modules.dir}">
+         <maven-resource group="xpp3" artifact="xpp3" />
       </module-def>
 
       <module-def name="org.infinispan.server.endpoint" src="${infinispan.server.modules.dir}">
@@ -118,10 +122,6 @@
       <module-def name="org.jboss.as.domain-http-error-context" slot="ispn" src="${infinispan.server.modules.dir}" />
 
       <module-def name="org.jboss.as.product" slot="ispn" src="${infinispan.server.modules.dir}" />
-
-      <module-def name="org.jboss.jts" src="${infinispan.server.modules.dir}">
-         <maven-resource group="org.jboss.jbossts" artifact="jbossjts" />
-      </module-def>
 
       <module-def name="org.jboss.netty">
          <maven-resource group="io.netty" artifact="netty" />

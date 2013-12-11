@@ -40,6 +40,7 @@
       <version.org.infinispan.protostream>1.0.0.CR1</version.org.infinispan.protostream>
       <version.http.client>4.3</version.http.client>
       <version.org.picketbox>4.0.17.SP2</version.org.picketbox>
+      <version.xpp3>1.1.4c</version.xpp3>
       <relocations />
 
    </properties>
@@ -364,6 +365,12 @@
             <artifactId>jbosssx-bare</artifactId>
             <version>${version.org.picketbox}</version>
             <scope>test</scope>
+         </dependency>
+
+         <dependency>
+            <groupId>xpp3</groupId>
+            <artifactId>xpp3</artifactId>
+            <version>${version.xpp3}</version>
          </dependency>
 
       </dependencies>
