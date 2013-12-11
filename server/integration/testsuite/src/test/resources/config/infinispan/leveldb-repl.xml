@@ -3,7 +3,7 @@
                 name="clustered"
                 default-cache="testcache">
                 <transport 
-                    stack="udp"
+                    stack="${transport.stack}"
                     executor="infinispan-transport"
                     lock-timeout="240000"/>
                 <replicated-cache 
