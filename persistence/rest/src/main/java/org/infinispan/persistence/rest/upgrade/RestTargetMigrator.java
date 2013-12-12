@@ -57,7 +57,11 @@ public class RestTargetMigrator implements TargetMigrator {
                      if (log.isDebugEnabled() && i % 100 == 0)
                         log.debugf(">>    Moved %s keys\n", i);
                   } catch (Exception e) {
-                     log.keyMigrationFailed(Util.toStr(key), e);
+                     if ((key instanceof String) && ((String)key).matches("___MigrationManager_.+_KnownKeys___")) {
+                        // ISPN-3724 Ignore keys from other migrators.
+                     } else {
+                        log.keyMigrationFailed(Util.toStr(key), e);
+                     }
                   }
                }
             });
