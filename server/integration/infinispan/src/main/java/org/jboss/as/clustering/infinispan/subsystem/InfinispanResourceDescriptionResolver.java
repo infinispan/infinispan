@@ -100,6 +100,7 @@ public class InfinispanResourceDescriptionResolver extends StandardResourceDescr
         sharedAttributeResolver.put(CacheResource.JNDI_NAME.getName(), "cache");
         sharedAttributeResolver.put(CacheResource.NAME.getName(), "cache");
         sharedAttributeResolver.put(CacheResource.START.getName(), "cache");
+        sharedAttributeResolver.put(CacheResource.STATISTICS.getName(), "cache");
 
         sharedAttributeResolver.put(ClusteredCacheResource.ASYNC_MARSHALLING.getName(), "clustered-cache");
         sharedAttributeResolver.put(ClusteredCacheResource.MODE.getName(), "clustered-cache");

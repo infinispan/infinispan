@@ -376,6 +376,7 @@ public abstract class CacheAdd extends AbstractAddStepHandler {
         CacheResource.JNDI_NAME.validateAndSet(fromModel, toModel);
         CacheResource.CACHE_MODULE.validateAndSet(fromModel, toModel);
         CacheResource.INDEXING_PROPERTIES.validateAndSet(fromModel, toModel);
+        CacheResource.STATISTICS.validateAndSet(fromModel, toModel);
     }
 
     /**
@@ -388,6 +389,8 @@ public abstract class CacheAdd extends AbstractAddStepHandler {
      */
     void processModelNode(OperationContext context, String containerName, ModelNode cache, ConfigurationBuilder builder, List<Dependency<?>> dependencies)
             throws OperationFailedException {
+
+        builder.jmxStatistics().enabled(CacheResource.STATISTICS.resolveModelAttribute(context, cache).asBoolean());
 
         final Indexing indexing = Indexing.valueOf(CacheResource.INDEXING.resolveModelAttribute(context, cache).asString());
         final boolean batching = CacheResource.BATCHING.resolveModelAttribute(context, cache).asBoolean();

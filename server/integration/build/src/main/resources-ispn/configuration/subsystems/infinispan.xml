@@ -8,7 +8,7 @@
    <supplement name="default">
       <replacement placeholder="@@default-cache-container@@" attributeValue="local" />
       <replacement placeholder="CACHE-CONTAINERS">
-         <cache-container name="local" default-cache="default">
+         <cache-container name="local" default-cache="default" statistics="true">
             <local-cache name="default" start="EAGER">
                <locking isolation="NONE" acquire-timeout="30000" concurrency-level="1000" striping="false" />
                <transaction mode="NONE" />
@@ -26,7 +26,7 @@
    <supplement name="clustered">
       <replacement placeholder="@@default-cache-container@@" attributeValue="clustered" />
       <replacement placeholder="CACHE-CONTAINERS">
-         <cache-container name="clustered" default-cache="default">
+         <cache-container name="clustered" default-cache="default" statistics="true">
             <transport executor="infinispan-transport" lock-timeout="60000" />
             <distributed-cache name="default" mode="SYNC" segments="20" owners="2" remote-timeout="30000" start="EAGER">
                <locking isolation="READ_COMMITTED" acquire-timeout="30000" concurrency-level="1000" striping="false" />

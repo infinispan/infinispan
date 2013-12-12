@@ -23,9 +23,11 @@
 package org.jboss.as.clustering.infinispan.subsystem;
 
 import javax.xml.XMLConstants;
+
 import java.util.HashMap;
 import java.util.Map;
 
+import org.hibernate.search.stat.Statistics;
 import org.jboss.as.controller.AttributeDefinition;
 
 /**
@@ -112,6 +114,7 @@ public enum Attribute {
     SOCKET_TIMEOUT(ModelKeys.SOCKET_TIMEOUT),
     STACK(ModelKeys.STACK),
     START(ModelKeys.START),
+    STATISTICS(ModelKeys.STATISTICS),
     STRICT_PEER_TO_PEER(ModelKeys.STRICT_PEER_TO_PEER),
     STOP_TIMEOUT(ModelKeys.STOP_TIMEOUT),
     STRATEGY(ModelKeys.STRATEGY),
