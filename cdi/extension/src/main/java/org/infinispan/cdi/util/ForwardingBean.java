@@ -6,6 +6,7 @@ import java.util.Set;
 
 import javax.enterprise.context.spi.CreationalContext;
 import javax.enterprise.inject.spi.Bean;
+import javax.enterprise.inject.spi.BeanAttributes;
 import javax.enterprise.inject.spi.InjectionPoint;
 
 /**
@@ -15,7 +16,7 @@ import javax.enterprise.inject.spi.InjectionPoint;
  * @param <T> the class of the bean
  * @author Pete Muir
  */
-public abstract class ForwardingBean<T> implements Bean<T> {
+public abstract class ForwardingBean<T> implements Bean<T>, BeanAttributes<T> {
 
     /**
      * All calls to this {@link Bean} instance are forwarded to the delegate
