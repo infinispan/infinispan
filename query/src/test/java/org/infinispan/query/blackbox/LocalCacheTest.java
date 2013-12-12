@@ -18,7 +18,7 @@ import org.apache.lucene.search.Sort;
 import org.apache.lucene.search.SortField;
 import org.apache.lucene.search.TermQuery;
 import org.hibernate.search.FullTextFilter;
-import org.hibernate.search.engine.spi.EntityIndexBinder;
+import org.hibernate.search.engine.spi.EntityIndexBinding;
 import org.hibernate.search.engine.spi.SearchFactoryImplementor;
 import org.hibernate.search.spi.SearchFactoryIntegrator;
 import org.infinispan.Cache;
@@ -674,7 +674,7 @@ public class LocalCacheTest extends SingleCacheManagerTest {
       ComponentRegistry cr = cache.getAdvancedCache().getComponentRegistry();
       SearchFactoryImplementor searchFactoryIntegrator = (SearchFactoryImplementor) cr.getComponent(SearchFactoryIntegrator.class);
       Assert.assertNotNull(searchFactoryIntegrator);
-      Map<Class<?>, EntityIndexBinder> indexBindingForEntity = searchFactoryIntegrator.getIndexBindingForEntity();
+      Map<Class<?>, EntityIndexBinding> indexBindingForEntity = searchFactoryIntegrator.getIndexBindings();
       Assert.assertNotNull(indexBindingForEntity);
       Set<Class<?>> keySet = indexBindingForEntity.keySet();
       Assert.assertEquals(types.length, keySet.size());
