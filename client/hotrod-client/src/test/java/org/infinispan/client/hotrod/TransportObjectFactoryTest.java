@@ -11,7 +11,7 @@ import org.testng.annotations.Test;
 import java.net.InetSocketAddress;
 import java.util.concurrent.atomic.AtomicInteger;
 
-import static org.jgroups.util.Util.assertFalse;
+import static org.testng.AssertJUnit.assertFalse;
 import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;

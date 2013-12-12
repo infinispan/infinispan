@@ -40,7 +40,7 @@ import java.util.Set;
 
 import static org.infinispan.client.hotrod.test.HotRodClientTestingUtil.killRemoteCacheManager;
 import static org.infinispan.client.hotrod.test.HotRodClientTestingUtil.killServers;
-import static org.jgroups.util.Util.assertFalse;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
@@ -77,7 +77,7 @@ public class RemoteQueryJmxTest extends SingleCacheManagerTest {
             .valueEquivalence(ByteArrayEquivalence.INSTANCE)
             .indexing().enable()
             .indexLocalOnly(false)
-            .addProperty("default.directory_provider", getDirectoryProvider())
+            .addProperty("default.directory_provider", getLuceneDirectoryProvider())
             .addProperty("lucene_version", "LUCENE_CURRENT");
 
       cacheManager = TestCacheManagerFactory.createCacheManager(gcb, builder, true);
@@ -114,8 +114,7 @@ public class RemoteQueryJmxTest extends SingleCacheManagerTest {
       return Util.readStream(is);
    }
 
-
-   protected String getDirectoryProvider() {
+   protected String getLuceneDirectoryProvider() {
       return "ram";
    }
 

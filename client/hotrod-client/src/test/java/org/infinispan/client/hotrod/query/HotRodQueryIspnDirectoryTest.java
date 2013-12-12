@@ -13,6 +13,7 @@ import org.testng.annotations.Test;
 @CleanupAfterMethod
 public class HotRodQueryIspnDirectoryTest extends HotRodQueryTest {
 
+   @Override
    protected String getLuceneDirectoryProvider() {
       return "infinispan";
    }

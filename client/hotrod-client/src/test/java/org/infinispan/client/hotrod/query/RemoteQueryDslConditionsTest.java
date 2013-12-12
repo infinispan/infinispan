@@ -52,7 +52,6 @@ import static org.junit.Assert.*;
 @Test(groups = "functional", testName = "client.hotrod.query.RemoteQueryDslConditionsTest")
 @CleanupAfterMethod
 public class RemoteQueryDslConditionsTest extends SingleCacheManagerTest {
-   protected String tmpDirPropertyName = "java.io.tmpdir";
 
    protected final DateFormat DATE_FORMAT = new SimpleDateFormat("yyyy-MM-dd");
 
@@ -87,13 +86,13 @@ public class RemoteQueryDslConditionsTest extends SingleCacheManagerTest {
    protected ConfigurationBuilder getConfigurationBuilder() {
       ConfigurationBuilder builder = hotRodCacheConfiguration();
       builder.indexing().enable()
-            .addProperty("default.directory_provider", getDirectoryProvider())
+            .addProperty("default.directory_provider", getLuceneDirectoryProvider())
             .addProperty("lucene_version", "LUCENE_CURRENT");
 
       return builder;
    }
 
-   public String getDirectoryProvider() {
+   public String getLuceneDirectoryProvider() {
       return "ram";
    }
 
