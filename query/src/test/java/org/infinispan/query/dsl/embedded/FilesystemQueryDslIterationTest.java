@@ -9,6 +9,8 @@ import org.testng.annotations.Test;
 
 import java.io.File;
 
+import static org.junit.Assert.assertTrue;
+
 /**
  * Verifies the functionality of DSL iterators for Filesystem directory provider.
  *
@@ -18,7 +20,7 @@ import java.io.File;
 @CleanupAfterMethod
 public class FilesystemQueryDslIterationTest extends QueryDslIterationTest {
 
-   private final String indexDirectory = TestingUtil.tmpDirectory(this.getClass());
+   private final String indexDirectory = TestingUtil.tmpDirectory(getClass());
 
    @Override
    protected EmbeddedCacheManager createCacheManager() throws Exception {
@@ -32,15 +34,19 @@ public class FilesystemQueryDslIterationTest extends QueryDslIterationTest {
 
    @Override
    protected void setup() throws Exception {
-      new File(indexDirectory).mkdirs();
+      TestingUtil.recursiveFileRemove(indexDirectory);
+      boolean created = new File(indexDirectory).mkdirs();
+      assertTrue(created);
       super.setup();
    }
 
    @Override
    protected void teardown() {
       try {
+         //first stop cache managers, then clear the index
          super.teardown();
       } finally {
+         //delete the index otherwise it will mess up the index for next tests
          TestingUtil.recursiveFileRemove(indexDirectory);
       }
    }

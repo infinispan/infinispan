@@ -7,6 +7,8 @@ import org.testng.annotations.Test;
 
 import java.io.File;
 
+import static org.junit.Assert.assertTrue;
+
 /**
  * Testing the ISPN Directory configuration with Async. FileCacheStore. The tests are performed on Local cache.
  *
@@ -15,7 +17,7 @@ import java.io.File;
 @Test(groups = "functional", testName = "query.blackbox.LocalCacheAsyncCacheStoreTest")
 public class LocalCacheAsyncCacheStoreTest extends LocalCacheTest {
 
-   private String indexDirectory = System.getProperty("java.io.tmpdir") + File.separator + "asyncStore";
+   private final String indexDirectory = System.getProperty("java.io.tmpdir") + File.separator + "asyncStore";
 
    @Override
    protected EmbeddedCacheManager createCacheManager() throws Exception {
@@ -27,7 +29,9 @@ public class LocalCacheAsyncCacheStoreTest extends LocalCacheTest {
 
    @Override
    protected void setup() throws Exception {
-      new File(indexDirectory).mkdirs();
+      TestingUtil.recursiveFileRemove(indexDirectory);
+      boolean created = new File(indexDirectory).mkdirs();
+      assertTrue(created);
       super.setup();
    }
 

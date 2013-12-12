@@ -7,6 +7,8 @@ import org.testng.annotations.Test;
 
 import java.io.File;
 
+import static org.junit.Assert.assertTrue;
+
 /**
  * Tests the functionality of the queries in case when the NRT index manager is used in combination with FileStore.
  *
@@ -27,7 +29,9 @@ public class LocalCachePerformantConfTest extends LocalCacheTest {
 
    @Override
    protected void setup() throws Exception {
-      new File(indexDirectory).mkdirs();
+      TestingUtil.recursiveFileRemove(indexDirectory);
+      boolean created = new File(indexDirectory).mkdirs();
+      assertTrue(created);
       super.setup();
    }
 

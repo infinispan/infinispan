@@ -51,8 +51,8 @@ public class RemoteQueryDslConditionsIspnDirTest extends RemoteQueryDslCondition
       return cacheManager;
    }
 
-   public String getDirectoryProvider() {
+   @Override
+   public String getLuceneDirectoryProvider() {
       return "infinispan";
    }
-
 }

@@ -61,12 +61,7 @@ public class HotRodQueryTest extends SingleCacheManagerTest {
             .jmxDomain(JMX_DOMAIN)
             .mBeanServerLookup(new PerThreadMBeanServerLookup());
 
-      ConfigurationBuilder builder = new ConfigurationBuilder();
-      builder.dataContainer()
-            .keyEquivalence(ByteArrayEquivalence.INSTANCE)
-            .indexing().enable()
-            .addProperty("default.directory_provider", getLuceneDirectoryProvider())
-            .addProperty("lucene_version", "LUCENE_CURRENT");
+      ConfigurationBuilder builder = getConfigurationBuilder();
 
       cacheManager = TestCacheManagerFactory.createCacheManager(gcb, new ConfigurationBuilder(), true);
       cacheManager.defineConfiguration(TEST_CACHE_NAME, builder.build());
@@ -96,13 +91,23 @@ public class HotRodQueryTest extends SingleCacheManagerTest {
       return cacheManager;
    }
 
-   private byte[] readClasspathResource(String classPathResource) throws IOException {
-      InputStream is = getClass().getResourceAsStream(classPathResource);
-      return Util.readStream(is);
+   protected ConfigurationBuilder getConfigurationBuilder() {
+      ConfigurationBuilder builder = new ConfigurationBuilder();
+      builder.dataContainer()
+            .keyEquivalence(ByteArrayEquivalence.INSTANCE)
+            .indexing().enable()
+            .addProperty("default.directory_provider", getLuceneDirectoryProvider())
+            .addProperty("lucene_version", "LUCENE_CURRENT");
+      return builder;
    }
 
    protected String getLuceneDirectoryProvider() {
       return "ram";
+   }
+
+   private byte[] readClasspathResource(String classPathResource) throws IOException {
+      InputStream is = getClass().getResourceAsStream(classPathResource);
+      return Util.readStream(is);
    }
 
    @AfterTest
