@@ -15,27 +15,33 @@
 [ -r /etc/java/java.conf ] && . /etc/java/java.conf
 export JAVA_HOME
 
+prog='infinispan-server'
+
 # Load Infinispan Server init.d configuration.
 if [ -z "$ISPN_SERVER_CONF" ]; then
-  ISPN_SERVER_CONF="/etc/infinispan-server/infinispan-server.conf"
+  ISPN_SERVER_CONF="/etc/$prog/$prog.conf"
 fi
 
 [ -r "$ISPN_SERVER_CONF" ] && . "${ISPN_SERVER_CONF}"
 
 # Set defaults.
 
+if [ -z "$ISPN_SERVER_USER" ]; then
+  ISPN_SERVER_USER=root
+fi
+
 if [ -z "$ISPN_SERVER_HOME" ]; then
-  ISPN_SERVER_HOME=/usr/share/infinispan-server
+  ISPN_SERVER_HOME="/usr/share/$prog"
 fi
 export ISPN_SERVER_HOME
 
 if [ -z "$ISPN_SERVER_PIDFILE" ]; then
-  ISPN_SERVER_PIDFILE=/var/run/infinispan-server/infinispan-server-standalone.pid
+  ISPN_SERVER_PIDFILE="/var/run/$prog/$prog-standalone.pid"
 fi
 export ISPN_SERVER_PIDFILE
 
 if [ -z "$ISPN_SERVER_CONSOLE_LOG" ]; then
-  ISPN_SERVER_CONSOLE_LOG=/var/log/infinispan-server/console.log
+  ISPN_SERVER_CONSOLE_LOG="/var/log/$prog/console.log"
 fi
 
 if [ -z "$STARTUP_WAIT" ]; then
@@ -51,8 +57,6 @@ if [ -z "$ISPN_SERVER_CONFIG" ]; then
 fi
 
 ISPN_SERVER_SCRIPT=$ISPN_SERVER_HOME/bin/standalone.sh
-
-prog='infinispan-server'
 
 CMD_PREFIX=''
 
@@ -87,9 +91,9 @@ start() {
 
   if [ ! -z "$ISPN_SERVER_USER" ]; then
     if [ -x /etc/rc.d/init.d/functions ]; then
-      daemon --user $ISPN_SERVER_USER LAUNCH_ISPN_SERVER_IN_BACKGROUND=1 ISPN_SERVER_PIDFILE=$ISPN_SERVER_PIDFILE $ISPN_SERVER_SCRIPT -c $ISPN_SERVER_CONFIG 2>&1 > $ISPN_SERVER_CONSOLE_LOG &
+      daemon --user $ISPN_SERVER_USER LAUNCH_JBOSS_IN_BACKGROUND=1 JBOSS_PIDFILE=$ISPN_SERVER_PIDFILE $ISPN_SERVER_SCRIPT -c $ISPN_SERVER_CONFIG 2>&1 > $ISPN_SERVER_CONSOLE_LOG &
     else
-      su - $ISPN_SERVER_USER -c "LAUNCH_ISPN_SERVER_IN_BACKGROUND=1 ISPN_SERVER_PIDFILE=$ISPN_SERVER_PIDFILE $ISPN_SERVER_SCRIPT -c $ISPN_SERVER_CONFIG" 2>&1 > $ISPN_SERVER_CONSOLE_LOG &
+      su - $ISPN_SERVER_USER -c "LAUNCH_JBOSS_IN_BACKGROUND=1 JBOSS_PIDFILE=$ISPN_SERVER_PIDFILE $ISPN_SERVER_SCRIPT -c $ISPN_SERVER_CONFIG" 2>&1 > $ISPN_SERVER_CONSOLE_LOG &
     fi
   fi
 
@@ -98,7 +102,7 @@ start() {
 
   until [ $count -gt $STARTUP_WAIT ]
   do
-    grep 'Infinispan Server.*started in' $ISPN_SERVER_CONSOLE_LOG > /dev/null 
+    grep 'JBAS015874.*started in' $ISPN_SERVER_CONSOLE_LOG > /dev/null 
     if [ $? -eq 0 ] ; then
       launched=true
       break
