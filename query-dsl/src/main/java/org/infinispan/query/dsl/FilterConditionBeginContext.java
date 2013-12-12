@@ -1,6 +1,8 @@
 package org.infinispan.query.dsl;
 
 /**
+ * The beginning context of an incomplete condition. It exposes methods for specifying the left hand side of the condition.
+ *
  * @author anistor@redhat.com
  * @since 6.0
  */
