@@ -76,13 +76,15 @@ public class EmbeddedCacheManagerConfigurationService implements Service<Embedde
 
     private final String name;
     private final String defaultCache;
+    private final boolean statistics;
     private final Dependencies dependencies;
     private final ModuleIdentifier moduleId;
     private volatile GlobalConfiguration config;
 
-    public EmbeddedCacheManagerConfigurationService(String name, String defaultCache, ModuleIdentifier moduleIdentifier, Dependencies dependencies) {
+    public EmbeddedCacheManagerConfigurationService(String name, String defaultCache, boolean statistics, ModuleIdentifier moduleIdentifier, Dependencies dependencies) {
         this.name = name;
         this.defaultCache = defaultCache;
+        this.statistics = statistics;
         this.moduleId = moduleIdentifier;
         this.dependencies = dependencies;
     }
@@ -181,7 +183,7 @@ public class EmbeddedCacheManagerConfigurationService implements Service<Embedde
         GlobalJmxStatisticsConfigurationBuilder jmxBuilder = builder.globalJmxStatistics().cacheManagerName(this.name);
 
         MBeanServer server = this.dependencies.getMBeanServer();
-        if (server != null) {
+        if (server != null && this.statistics) {
             jmxBuilder.enable()
                 .mBeanServerLookup(new MBeanServerProvider(server))
                 .jmxDomain(EmbeddedCacheManagerService.getServiceName(null).getCanonicalName())
