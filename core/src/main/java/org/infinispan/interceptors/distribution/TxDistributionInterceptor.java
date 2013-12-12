@@ -267,7 +267,8 @@ public class TxDistributionInterceptor extends BaseDistributionInterceptor {
     */
    private Object handleTxWriteCommand(InvocationContext ctx, WriteCommand command, RecipientGenerator recipientGenerator, boolean skipRemoteGet) throws Throwable {
       // see if we need to load values from remote sources first
-      if (ctx.isOriginLocal() && !skipRemoteGet || command.isConditional() || shouldFetchRemoteValuesForWriteSkewCheck(ctx, command))
+      if (ctx.isOriginLocal() && !skipRemoteGet || command.isConditional() || command.hasFlag(Flag.DELTA_WRITE)
+            || shouldFetchRemoteValuesForWriteSkewCheck(ctx, command))
          remoteGetBeforeWrite(ctx, command, recipientGenerator);
 
       // FIRST pass this call up the chain.  Only if it succeeds (no exceptions) locally do we attempt to distribute.
@@ -295,9 +296,9 @@ public class TxDistributionInterceptor extends BaseDistributionInterceptor {
    protected void remoteGetBeforeWrite(InvocationContext ctx, WriteCommand command, RecipientGenerator keygen) throws Throwable {
       // this should only happen if:
       //   a) unsafeUnreliableReturnValues is false
-      //   b) unsafeUnreliableReturnValues is true, we are in a TX and the command is conditional
+      //   b) unsafeUnreliableReturnValues is true, we are in a TX and the command is conditional or a delta write
       // On the backup owners, the value matching policy should be set to MATCH_ALWAYS, and command.isConditional() should return true
-      if (isNeedReliableReturnValues(command) || command.isConditional() ||
+      if (isNeedReliableReturnValues(command) || command.isConditional() || command.hasFlag(Flag.DELTA_WRITE) ||
             shouldFetchRemoteValuesForWriteSkewCheck(ctx, command)) {
          for (Object k : keygen.getKeys()) {
             CacheEntry entry = ctx.lookupEntry(k);
