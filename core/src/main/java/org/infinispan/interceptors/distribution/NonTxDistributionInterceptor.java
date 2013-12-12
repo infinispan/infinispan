@@ -129,9 +129,9 @@ public class NonTxDistributionInterceptor extends BaseDistributionInterceptor {
    protected void remoteGetBeforeWrite(InvocationContext ctx, WriteCommand command, RecipientGenerator keygen) throws Throwable {
       // this should only happen if:
       //   a) unsafeUnreliableReturnValues is false
-      //   b) unsafeUnreliableReturnValues is true, the command is conditional
+      //   b) unsafeUnreliableReturnValues is true, the command is conditional or a delta write
       // On the backup owners, the value matching policy should be set to MATCH_ALWAYS, and command.isConditional() should return true
-      if (isNeedReliableReturnValues(command) || command.isConditional()) {
+      if (isNeedReliableReturnValues(command) || command.isConditional() || command.hasFlag(Flag.DELTA_WRITE)) {
          for (Object k : keygen.getKeys()) {
             if (cdl.localNodeIsPrimaryOwner(k)) {
                // Then it makes sense to try a local get and wrap again. This will compensate the fact the the entry was not local
