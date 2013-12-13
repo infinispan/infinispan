@@ -17,7 +17,8 @@ public class ClassResolverConfigTest extends WithClassLoaderTest {
    @Override
    protected GlobalConfigurationBuilder createSecondGlobalCfgBuilder(ClassLoader cl) {
       GlobalConfigurationBuilder gcBuilder = super.createSecondGlobalCfgBuilder(cl);
-      gcBuilder.serialization().classResolver(new DefaultContextClassResolver(cl));
+      ClassLoader systemClassLoader = ClassResolverConfigTest.class.getClassLoader();
+      gcBuilder.serialization().classResolver(new DefaultContextClassResolver(systemClassLoader));
       return gcBuilder;
    }
 

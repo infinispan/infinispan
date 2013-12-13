@@ -5,6 +5,7 @@ import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.container.DataContainer;
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.context.InvocationContextContainer;
+import org.infinispan.context.InvocationContextFactory;
 import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.test.SingleCacheManagerTest;
@@ -513,8 +514,7 @@ public abstract class BaseNodeMoveAPITest extends SingleCacheManagerTest {
    protected void assertNoLocks() {
       ComponentRegistry cr = TestingUtil.extractComponentRegistry(cache);
       LockManager lm = cr.getComponent(LockManager.class);
-      InvocationContextContainer icc = cr.getComponent(InvocationContextContainer.class);
-      LockAssert.assertNoLocks(lm, icc);
+      LockAssert.assertNoLocks(lm);
    }
 
    public void testNonexistentSource() {

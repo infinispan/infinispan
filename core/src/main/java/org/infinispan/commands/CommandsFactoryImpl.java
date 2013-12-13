@@ -1,6 +1,7 @@
 package org.infinispan.commands;
 
 import org.infinispan.Cache;
+import org.infinispan.context.InvocationContextFactory;
 import org.infinispan.metadata.Metadata;
 import org.infinispan.atomic.Delta;
 import org.infinispan.commands.control.LockControlCommand;
@@ -44,7 +45,6 @@ import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.container.DataContainer;
 import org.infinispan.container.InternalEntryFactory;
 import org.infinispan.context.Flag;
-import org.infinispan.context.InvocationContextContainer;
 import org.infinispan.distexec.mapreduce.MapReduceManager;
 import org.infinispan.distexec.mapreduce.Mapper;
 import org.infinispan.distexec.mapreduce.Reducer;
@@ -102,7 +102,7 @@ public class CommandsFactoryImpl implements CommandsFactory {
 
    private InterceptorChain interceptorChain;
    private DistributionManager distributionManager;
-   private InvocationContextContainer icc;
+   private InvocationContextFactory icf;
    private TransactionTable txTable;
    private Configuration configuration;
    private RecoveryManager recoveryManager;
@@ -121,7 +121,7 @@ public class CommandsFactoryImpl implements CommandsFactory {
    @Inject
    public void setupDependencies(DataContainer container, CacheNotifier notifier, Cache<Object, Object> cache,
                                  InterceptorChain interceptorChain, DistributionManager distributionManager,
-                                 InvocationContextContainer icc, TransactionTable txTable, Configuration configuration,
+                                 InvocationContextFactory icf, TransactionTable txTable, Configuration configuration,
                                  @ComponentName(KnownComponentNames.MODULE_COMMAND_INITIALIZERS) Map<Byte, ModuleCommandInitializer> moduleCommandInitializers,
                                  RecoveryManager recoveryManager, StateProvider stateProvider, StateConsumer stateConsumer,
                                  LockManager lockManager, InternalEntryFactory entryFactory, MapReduceManager mapReduceManager, 
@@ -132,7 +132,7 @@ public class CommandsFactoryImpl implements CommandsFactory {
       this.cache = cache;
       this.interceptorChain = interceptorChain;
       this.distributionManager = distributionManager;
-      this.icc = icc;
+      this.icf = icf;
       this.txTable = txTable;
       this.configuration = configuration;
       this.moduleCommandInitializers = moduleCommandInitializers;
@@ -292,7 +292,7 @@ public class CommandsFactoryImpl implements CommandsFactory {
             break;
          case MultipleRpcCommand.COMMAND_ID:
             MultipleRpcCommand rc = (MultipleRpcCommand) c;
-            rc.init(interceptorChain, icc);
+            rc.init(interceptorChain, icf);
             if (rc.getCommands() != null)
                for (ReplicableCommand nested : rc.getCommands()) {
                   initializeReplicableCommand(nested, false);
@@ -300,7 +300,7 @@ public class CommandsFactoryImpl implements CommandsFactory {
             break;
          case SingleRpcCommand.COMMAND_ID:
             SingleRpcCommand src = (SingleRpcCommand) c;
-            src.init(interceptorChain, icc);
+            src.init(interceptorChain, icf);
             if (src.getCommand() != null)
                initializeReplicableCommand(src.getCommand(), false);
 
@@ -318,7 +318,7 @@ public class CommandsFactoryImpl implements CommandsFactory {
          case TotalOrderNonVersionedPrepareCommand.COMMAND_ID:
          case TotalOrderVersionedPrepareCommand.COMMAND_ID:
             PrepareCommand pc = (PrepareCommand) c;
-            pc.init(interceptorChain, icc, txTable);
+            pc.init(interceptorChain, icf, txTable);
             pc.initialize(notifier, recoveryManager);
             if (pc.getModifications() != null)
                for (ReplicableCommand nested : pc.getModifications())  {
@@ -335,13 +335,13 @@ public class CommandsFactoryImpl implements CommandsFactory {
          case TotalOrderCommitCommand.COMMAND_ID:
          case TotalOrderVersionedCommitCommand.COMMAND_ID:
             CommitCommand commitCommand = (CommitCommand) c;
-            commitCommand.init(interceptorChain, icc, txTable);
+            commitCommand.init(interceptorChain, icf, txTable);
             commitCommand.markTransactionAsRemote(isRemote);
             break;
          case RollbackCommand.COMMAND_ID:
          case TotalOrderRollbackCommand.COMMAND_ID:
             RollbackCommand rollbackCommand = (RollbackCommand) c;
-            rollbackCommand.init(interceptorChain, icc, txTable);
+            rollbackCommand.init(interceptorChain, icf, txTable);
             rollbackCommand.markTransactionAsRemote(isRemote);
             break;
          case ClearCommand.COMMAND_ID:
@@ -350,13 +350,13 @@ public class CommandsFactoryImpl implements CommandsFactory {
             break;
          case ClusteredGetCommand.COMMAND_ID:
             ClusteredGetCommand clusteredGetCommand = (ClusteredGetCommand) c;
-            clusteredGetCommand.initialize(icc, this, entryFactory,
+            clusteredGetCommand.initialize(icf, this, entryFactory,
                   interceptorChain, distributionManager, txTable,
                   configuration.dataContainer().keyEquivalence());
             break;
          case LockControlCommand.COMMAND_ID:
             LockControlCommand lcc = (LockControlCommand) c;
-            lcc.init(interceptorChain, icc, txTable);
+            lcc.init(interceptorChain, icf, txTable);
             lcc.markTransactionAsRemote(isRemote);
             if (configuration.deadlockDetection().enabled() && isRemote) {
                DldGlobalTransaction gtx = (DldGlobalTransaction) lcc.getGlobalTransaction();

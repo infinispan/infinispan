@@ -8,6 +8,7 @@ import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.cache.VersioningScheme;
 import org.infinispan.context.Flag;
 import org.infinispan.context.InvocationContextContainer;
+import org.infinispan.context.InvocationContextFactory;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.test.AbstractInfinispanTest;
 import org.infinispan.test.TestingUtil;
@@ -48,7 +49,6 @@ public class WriteSkewTest extends AbstractInfinispanTest {
    private static final Log log = LogFactory.getLog(WriteSkewTest.class);
    protected TransactionManager tm;
    protected LockManager lockManager;
-   protected InvocationContextContainer icc;
    protected EmbeddedCacheManager cacheManager;
    protected volatile Cache<String, String> cache;
 
@@ -74,17 +74,15 @@ public class WriteSkewTest extends AbstractInfinispanTest {
       cache =null;
       lockManager = null;
       tm = null;
-      icc = null;
    }
 
    private void postStart() {
       lockManager = TestingUtil.extractComponentRegistry(cache).getComponent(LockManager.class);
-      icc = TestingUtil.extractComponentRegistry(cache).getComponent(InvocationContextContainer.class);
       tm = TestingUtil.extractComponentRegistry(cache).getComponent(TransactionManager.class);
    }
 
    protected void assertNoLocks() {
-      LockAssert.assertNoLocks(lockManager, icc);
+      LockAssert.assertNoLocks(lockManager);
    }
 
    private void setCacheWithWriteSkewCheck() {

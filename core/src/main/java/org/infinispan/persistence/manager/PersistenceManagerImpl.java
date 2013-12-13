@@ -11,7 +11,8 @@ import org.infinispan.configuration.cache.StoreConfiguration;
 import org.infinispan.container.entries.ImmortalCacheEntry;
 import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.context.Flag;
-import org.infinispan.context.InvocationContextContainer;
+import org.infinispan.context.InvocationContext;
+import org.infinispan.context.InvocationContextFactory;
 import org.infinispan.factories.annotations.ComponentName;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.annotations.Start;
@@ -25,6 +26,7 @@ import org.infinispan.marshall.core.MarshalledEntryFactory;
 import org.infinispan.metadata.InternalMetadataImpl;
 import org.infinispan.metadata.Metadata;
 import org.infinispan.notifications.cachelistener.CacheNotifier;
+import org.infinispan.persistence.spi.LocalOnlyCacheLoader;
 import org.infinispan.persistence.spi.PersistenceException;
 import org.infinispan.persistence.InitializationContextImpl;
 import org.infinispan.persistence.async.AdvancedAsyncCacheLoader;
@@ -68,7 +70,6 @@ public class PersistenceManagerImpl implements PersistenceManager {
    Configuration configuration;
    AdvancedCache<Object, Object> cache;
    StreamingMarshaller m;
-   InvocationContextContainer icc;
 
    TransactionManager transactionManager;
    private TimeService timeService;
@@ -89,13 +90,12 @@ public class PersistenceManagerImpl implements PersistenceManager {
 
    @Inject
    public void inject(AdvancedCache<Object, Object> cache, @ComponentName(CACHE_MARSHALLER) StreamingMarshaller marshaller,
-                      Configuration configuration, InvocationContextContainer icc, TransactionManager transactionManager,
+                      Configuration configuration, TransactionManager transactionManager,
                       TimeService timeService, @ComponentName(PERSISTENCE_EXECUTOR) ExecutorService persistenceExecutor,
                       ByteBufferFactory byteBufferFactory, MarshalledEntryFactory marshalledEntryFactory) {
       this.cache = cache;
       this.m = marshaller;
       this.configuration = configuration;
-      this.icc = icc;
       this.transactionManager = transactionManager;
       this.timeService = timeService;
       this.persistenceExecutor = persistenceExecutor;
@@ -420,10 +420,13 @@ public class PersistenceManagerImpl implements PersistenceManager {
    }
 
    @Override
-   public MarshalledEntry loadFromAllStores(Object key) {
+   public MarshalledEntry loadFromAllStores(Object key, InvocationContext context) {
       storesMutex.readLock().lock();
       try {
          for (CacheLoader l : loaders) {
+            if (!context.isOriginLocal() && isLocalOnlyLoader(l))
+               continue;
+
             MarshalledEntry load = l.load(key);
             if (load != null)
                return load;
@@ -432,6 +435,16 @@ public class PersistenceManagerImpl implements PersistenceManager {
       } finally {
          storesMutex.readLock().unlock();
       }
+   }
+
+   private boolean isLocalOnlyLoader(CacheLoader loader) {
+      if (loader instanceof LocalOnlyCacheLoader) return true;
+      if (loader instanceof DelegatingCacheLoader) {
+         CacheLoader unwrappedLoader = ((DelegatingCacheLoader) loader).undelegate();
+         if (unwrappedLoader instanceof LocalOnlyCacheLoader)
+            return true;
+      }
+      return false;
    }
 
    @Override

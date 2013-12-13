@@ -45,6 +45,7 @@ import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.container.entries.InternalCacheValue;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.context.InvocationContextContainer;
+import org.infinispan.context.InvocationContextFactory;
 import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.factories.GlobalComponentRegistry;
 import org.infinispan.factories.KnownComponentNames;
@@ -893,8 +894,8 @@ public class TestingUtil {
    public static void replicateCommand(Cache cache, VisitableCommand command) throws Throwable {
       ComponentRegistry cr = extractComponentRegistry(cache);
       InterceptorChain ic = cr.getComponent(InterceptorChain.class);
-      InvocationContextContainer icc = cr.getComponent(InvocationContextContainer.class);
-      InvocationContext ctxt = icc.createInvocationContext(true, -1);
+      InvocationContextFactory icf = cr.getComponent(InvocationContextFactory.class);
+      InvocationContext ctxt = icf.createInvocationContext(true, -1);
       ic.invoke(ctxt, command);
    }
 

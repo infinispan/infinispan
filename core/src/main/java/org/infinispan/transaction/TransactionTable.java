@@ -11,7 +11,7 @@ import org.infinispan.commons.util.InfinispanCollections;
 import org.infinispan.commons.util.Util;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.cache.Configurations;
-import org.infinispan.context.InvocationContextContainer;
+import org.infinispan.context.InvocationContextFactory;
 import org.infinispan.context.impl.TxInvocationContext;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.annotations.Start;
@@ -64,7 +64,7 @@ public class TransactionTable {
    private ConcurrentMap<GlobalTransaction, RemoteTransaction> remoteTransactions;
 
    protected Configuration configuration;
-   protected InvocationContextContainer icc;
+   protected InvocationContextFactory icf;
    protected TransactionCoordinator txCoordinator;
    protected TransactionFactory txFactory;
    protected RpcManager rpcManager;
@@ -90,14 +90,14 @@ public class TransactionTable {
 
    @Inject
    public void initialize(RpcManager rpcManager, Configuration configuration,
-                          InvocationContextContainer icc, InterceptorChain invoker, CacheNotifier notifier,
+                          InvocationContextFactory icf, InterceptorChain invoker, CacheNotifier notifier,
                           TransactionFactory gtf, TransactionCoordinator txCoordinator,
                           TransactionSynchronizationRegistry transactionSynchronizationRegistry,
                           CommandsFactory commandsFactory, ClusteringDependentLogic clusteringDependentLogic, Cache cache,
                           TimeService timeService) {
       this.rpcManager = rpcManager;
       this.configuration = configuration;
-      this.icc = icc;
+      this.icf = icf;
       this.invoker = invoker;
       this.notifier = notifier;
       this.txFactory = gtf;
@@ -253,7 +253,7 @@ public class TransactionTable {
       for (GlobalTransaction gtx : toKill) {
          log.tracef("Killing remote transaction originating on leaver %s", gtx);
          RollbackCommand rc = new RollbackCommand(cacheName, gtx);
-         rc.init(invoker, icc, TransactionTable.this);
+         rc.init(invoker, icf, TransactionTable.this);
          try {
             rc.perform(null);
             log.tracef("Rollback of transaction %s complete.", gtx);

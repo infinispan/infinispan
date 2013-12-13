@@ -3,6 +3,7 @@ package org.infinispan.persistence.manager;
 import java.util.Collection;
 import java.util.Set;
 
+import org.infinispan.context.InvocationContext;
 import org.infinispan.lifecycle.Lifecycle;
 import org.infinispan.persistence.spi.AdvancedCacheLoader;
 import org.infinispan.marshall.core.MarshalledEntry;
@@ -47,7 +48,7 @@ public interface PersistenceManager extends Lifecycle {
 
    boolean activate(Object key);
 
-   MarshalledEntry loadFromAllStores(Object key);
+   MarshalledEntry loadFromAllStores(Object key, InvocationContext context);
 
    void writeToAllStores(MarshalledEntry marshalledEntry, boolean skipSharedStores);
 

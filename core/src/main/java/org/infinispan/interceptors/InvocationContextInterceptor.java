@@ -6,6 +6,8 @@ import org.infinispan.commands.FlagAffectedCommand;
 import org.infinispan.commands.VisitableCommand;
 import org.infinispan.commands.control.LockControlCommand;
 import org.infinispan.commons.CacheException;
+import org.infinispan.configuration.cache.ClusterLoaderConfiguration;
+import org.infinispan.configuration.cache.StoreConfiguration;
 import org.infinispan.context.Flag;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.context.InvocationContextContainer;
@@ -22,6 +24,7 @@ import org.infinispan.transaction.WriteSkewException;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
+import java.util.List;
 import javax.transaction.Status;
 import javax.transaction.SystemException;
 import javax.transaction.Transaction;
@@ -98,6 +101,7 @@ public class InvocationContextInterceptor extends CommandInterceptor {
 
          LogFactory.pushNDC(componentRegistry.getCacheName(), trace);
 
+         invocationContextContainer.setThreadLocal(ctx);
          try {
             if (trace) log.tracef("Invoked with command %s and InvocationContext [%s]", command, ctx);
             if (ctx == null) throw new IllegalStateException("Null context not allowed!!");
@@ -179,7 +183,12 @@ public class InvocationContextInterceptor extends CommandInterceptor {
    }
 
    private boolean isOngoingTransaction(InvocationContext ctx) throws SystemException {
-      return ctx.isInTxScope() && (txTable.containsLocalTx(tm.getTransaction()) || (!ctx.isOriginLocal() &&
-                                                                                          txTable.containRemoteTx(((TxInvocationContext) ctx).getGlobalTransaction())));
+      if (!ctx.isInTxScope())
+         return false;
+
+      if (ctx.isOriginLocal())
+         return txTable.containsLocalTx(tm.getTransaction());
+      else
+         return txTable.containRemoteTx(((TxInvocationContext) ctx).getGlobalTransaction());
    }
 }

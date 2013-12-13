@@ -167,8 +167,8 @@ public interface AdvancedCache<K, V> extends Cache<K, V> {
 
    /**
     * Returns the component in charge of communication with other caches in
-    * the cluster.  If the cache's {@link org.infinispan.config.Configuration.CacheMode}
-    * is {@link org.infinispan.config.Configuration.CacheMode#LOCAL}, this
+    * the cluster.  If the cache's {@link org.infinispan.configuration.cache.ClusteringConfiguration#cacheMode()}
+    * is {@link org.infinispan.configuration.cache.CacheMode#LOCAL}, this
     * method will return null.
     *
     * @return the RPC manager component associated with this cache instance or null
@@ -187,7 +187,9 @@ public interface AdvancedCache<K, V> extends Cache<K, V> {
     * cache operations and the context information associated with them.
     *
     * @return the invocation context container component
+    * @deprecated This method may be removed in a future version of Infinispan.
     */
+   @Deprecated
    InvocationContextContainer getInvocationContextContainer();
 
    /**
@@ -246,7 +248,7 @@ public interface AdvancedCache<K, V> extends Cache<K, V> {
     * as a result of the cache operation will be done using the {@link ClassLoader}
     * given. For example:
     * <p />
-    * When users store POJO instances in caches configured with {@link org.infinispan.config.Configuration#storeAsBinary},
+    * When users store POJO instances in caches configured with {@link org.infinispan.configuration.cache.StoreAsBinaryConfiguration},
     * these instances are transformed into byte arrays. When these entries are
     * read from the cache, a lazy unmarshalling process happens where these byte
     * arrays are transformed back into POJO instances. Using {@link AdvancedCache#with(ClassLoader)}

@@ -3,6 +3,7 @@ package org.infinispan.marshall.core;
 import java.io.IOException;
 
 import org.infinispan.configuration.cache.Configuration;
+import org.infinispan.configuration.cache.Configurations;
 import org.infinispan.configuration.global.GlobalConfiguration;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.context.InvocationContextContainer;
@@ -60,7 +61,6 @@ public class JBossMarshaller extends AbstractJBossMarshaller implements Streamin
       super.start();
 
       baseCfg.setClassExternalizerFactory(new SerializeWithExtFactory());
-      baseCfg.setObjectTable(externalizerTable);
 
       proxy = new ExternalizerTableProxy(externalizerTable);
       baseCfg.setObjectTable(proxy);
@@ -69,7 +69,7 @@ public class JBossMarshaller extends AbstractJBossMarshaller implements Streamin
       if (classResolver == null) {
          // Override the class resolver with one that can detect injected
          // classloaders via AdvancedCache.with(ClassLoader) calls.
-         ClassLoader cl = cfg == null ? globalCfg.classLoader() : cfg.classLoader();
+         ClassLoader cl = Configurations.getClassLoader(cfg, globalCfg);
          classResolver = new EmbeddedContextClassResolver(cl, icc);
       }
 

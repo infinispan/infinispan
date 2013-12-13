@@ -8,9 +8,12 @@ import org.infinispan.commons.CacheConfigurationException;
 import org.infinispan.commons.io.ByteBufferFactory;
 import org.infinispan.commons.io.ByteBufferFactoryImpl;
 import org.infinispan.configuration.cache.CacheMode;
+import org.infinispan.context.InvocationContext;
 import org.infinispan.context.InvocationContextContainer;
-import org.infinispan.context.NonTransactionalInvocationContextContainer;
-import org.infinispan.context.TransactionalInvocationContextContainer;
+import org.infinispan.context.InvocationContextContainerImpl;
+import org.infinispan.context.InvocationContextFactory;
+import org.infinispan.context.NonTransactionalInvocationContextFactory;
+import org.infinispan.context.TransactionalInvocationContextFactory;
 import org.infinispan.distribution.L1Manager;
 import org.infinispan.distribution.L1ManagerImpl;
 import org.infinispan.distribution.RemoteValueRetrievedListener;
@@ -59,7 +62,7 @@ import static org.infinispan.commons.util.Util.getInstance;
                               ClusteringDependentLogic.class, LockContainer.class,
                               L1Manager.class, TransactionFactory.class, BackupSender.class,
                               TotalOrderManager.class, ByteBufferFactory.class, MarshalledEntryFactory.class,
-                              RemoteValueRetrievedListener.class})
+                              RemoteValueRetrievedListener.class, InvocationContextFactory.class})
 public class EmptyConstructorNamedCacheFactory extends AbstractNamedCacheComponentFactory implements AutoInstantiableFactory {
 
    @Override
@@ -79,10 +82,12 @@ public class EmptyConstructorNamedCacheFactory extends AbstractNamedCacheCompone
          }
       } else {
          boolean isTransactional = configuration.transaction().transactionMode().isTransactional();
-         if (componentType.equals(InvocationContextContainer.class)) {
-            componentImpl = isTransactional ? TransactionalInvocationContextContainer.class
-                  : NonTransactionalInvocationContextContainer.class;
+         if (componentType.equals(InvocationContextFactory.class)) {
+            componentImpl = isTransactional ? TransactionalInvocationContextFactory.class
+                  : NonTransactionalInvocationContextFactory.class;
             return componentType.cast(getInstance(componentImpl));
+         } else if (componentType.equals(InvocationContextContainer.class)) {
+            return (T) new InvocationContextContainerImpl();
          } else if (componentType.equals(CacheNotifier.class)) {
             return (T) new CacheNotifierImpl();
          } else if (componentType.equals(CommandsFactory.class)) {

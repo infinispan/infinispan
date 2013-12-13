@@ -78,9 +78,7 @@ public class LockPerEntryTest extends SingleCacheManagerTest {
 
    private void assertNoLocks() {
       LockManager lm = TestingUtil.extractLockManager(cache);
-      LockAssert.assertNoLocks(
-            lm, TestingUtil.extractComponentRegistry(cache).getComponent(InvocationContextContainer.class)
-      );
+      LockAssert.assertNoLocks(lm);
 
       LockContainer lc = (LockContainer) TestingUtil.extractField(lm, "lockContainer");
       assert lc.size() == 0;

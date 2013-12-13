@@ -5,8 +5,8 @@ import org.jboss.marshalling.ContextClassResolver;
 import java.lang.ref.WeakReference;
 
 /**
- * This class refines <code>ContextClassLoader</code> to add a default class loader
- * in case the context class loader is <code>null</code>.
+ * This class refines <code>ContextClassLoader</code> to add a default class loader.
+ * The context class loader is only used when the default is <code>null</code>.
  *
  * @author Dan Berindei <dberinde@redhat.com>
  * @since 4.2
@@ -21,7 +21,7 @@ public class DefaultContextClassResolver extends ContextClassResolver {
 
    @Override
    protected ClassLoader getClassLoader() {
-      ClassLoader loader = super.getClassLoader();
-      return loader != null ? loader : defaultClassLoader.get();
+      ClassLoader defaultLoader = this.defaultClassLoader.get();
+      return defaultLoader != null ? defaultLoader : super.getClassLoader();
    }
 }

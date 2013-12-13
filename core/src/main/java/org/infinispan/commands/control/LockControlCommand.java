@@ -125,7 +125,7 @@ public class LockControlCommand extends AbstractTransactionBoundaryCommand imple
          //create a remote tx without any modifications (we do not know modifications ahead of time)
          transaction = txTable.getOrCreateRemoteTransaction(globalTx, null);
       }
-      RemoteTxInvocationContext ctxt = icc.createRemoteTxInvocationContext(transaction, getOrigin());
+      RemoteTxInvocationContext ctxt = icf.createRemoteTxInvocationContext(transaction, getOrigin());
       return invoker.invoke(ctxt, this);
    }
 

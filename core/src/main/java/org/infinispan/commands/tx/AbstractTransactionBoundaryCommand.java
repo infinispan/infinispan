@@ -1,7 +1,7 @@
 package org.infinispan.commands.tx;
 
 import org.infinispan.context.InvocationContext;
-import org.infinispan.context.InvocationContextContainer;
+import org.infinispan.context.InvocationContextFactory;
 import org.infinispan.context.impl.RemoteTxInvocationContext;
 import org.infinispan.interceptors.InterceptorChain;
 import org.infinispan.lifecycle.ComponentStatus;
@@ -27,7 +27,7 @@ public abstract class AbstractTransactionBoundaryCommand implements TransactionB
    protected GlobalTransaction globalTx;
    protected final String cacheName;
    protected InterceptorChain invoker;
-   protected InvocationContextContainer icc;
+   protected InvocationContextFactory icf;
    protected TransactionTable txTable;
    private Address origin;
    private int topologyId = -1;
@@ -36,9 +36,9 @@ public abstract class AbstractTransactionBoundaryCommand implements TransactionB
       this.cacheName = cacheName;
    }
 
-   public void init(InterceptorChain chain, InvocationContextContainer icc, TransactionTable txTable) {
+   public void init(InterceptorChain chain, InvocationContextFactory icf, TransactionTable txTable) {
       this.invoker = chain;
-      this.icc = icc;
+      this.icf = icf;
       this.txTable = txTable;
    }
 
@@ -89,7 +89,7 @@ public abstract class AbstractTransactionBoundaryCommand implements TransactionB
          return invalidRemoteTxReturnValue();
       }
       visitRemoteTransaction(transaction);
-      RemoteTxInvocationContext ctxt = icc.createRemoteTxInvocationContext(
+      RemoteTxInvocationContext ctxt = icf.createRemoteTxInvocationContext(
             transaction, getOrigin());
 
       if (trace) log.tracef("About to execute tx command %s", this);

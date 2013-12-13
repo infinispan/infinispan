@@ -3,6 +3,7 @@ package org.infinispan.api.mvcc;
 import org.infinispan.Cache;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.context.InvocationContextContainer;
+import org.infinispan.context.InvocationContextFactory;
 import org.infinispan.manager.CacheContainer;
 import org.infinispan.test.AbstractInfinispanTest;
 import org.infinispan.test.TestingUtil;
@@ -81,7 +82,7 @@ public abstract class LockTestBase extends AbstractInfinispanTest {
 
    protected void assertNoLocks() {
       LockTestBaseTL tl = threadLocal.get();
-      LockAssert.assertNoLocks(tl.lockManager, tl.icc);
+      LockAssert.assertNoLocks(tl.lockManager);
    }
 
    public void testLocksOnPutKeyVal() throws Exception {

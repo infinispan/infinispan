@@ -20,6 +20,7 @@ import org.infinispan.commands.write.ReplaceCommand;
 import org.infinispan.commands.write.ValueMatcher;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.commons.CacheConfigurationException;
+import org.infinispan.configuration.cache.Configurations;
 import org.infinispan.configuration.format.PropertyFormatter;
 import org.infinispan.configuration.global.GlobalConfiguration;
 import org.infinispan.container.DataContainer;
@@ -27,6 +28,7 @@ import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.context.Flag;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.context.InvocationContextContainer;
+import org.infinispan.context.InvocationContextFactory;
 import org.infinispan.context.impl.TxInvocationContext;
 import org.infinispan.distribution.DistributionManager;
 import org.infinispan.eviction.EvictionManager;
@@ -86,6 +88,7 @@ import java.util.concurrent.TimeUnit;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
 import static org.infinispan.context.Flag.*;
 import static org.infinispan.context.InvocationContextContainer.*;
+import static org.infinispan.context.InvocationContextFactory.UNBOUNDED;
 import static org.infinispan.factories.KnownComponentNames.*;
 
 /**
@@ -100,6 +103,7 @@ import static org.infinispan.factories.KnownComponentNames.*;
 public class CacheImpl<K, V> implements AdvancedCache<K, V> {
    public static final String OBJECT_NAME = "Cache";
    protected InvocationContextContainer icc;
+   protected InvocationContextFactory invocationContextFactory;
    protected CommandsFactory commandsFactory;
    protected InterceptorChain invoker;
    protected Configuration config;
@@ -131,6 +135,7 @@ public class CacheImpl<K, V> implements AdvancedCache<K, V> {
 
    @Inject
    public void injectDependencies(EvictionManager evictionManager,
+                                  InvocationContextFactory invocationContextFactory,
                                   InvocationContextContainer icc,
                                   CommandsFactory commandsFactory,
                                   InterceptorChain interceptorChain,
@@ -159,6 +164,7 @@ public class CacheImpl<K, V> implements AdvancedCache<K, V> {
       this.dataContainer = dataContainer;
       this.marshaller = marshaller;
       this.cacheManager = cacheManager;
+      this.invocationContextFactory = invocationContextFactory;
       this.icc = icc;
       this.distributionManager = distributionManager;
       this.asyncExecutor = asyncExecutor;
@@ -518,7 +524,7 @@ public class CacheImpl<K, V> implements AdvancedCache<K, V> {
    }
 
    private InvocationContext createSingleKeyNonTxInvocationContext(ClassLoader explicitClassLoader) {
-      InvocationContext ctx = icc.createSingleKeyNonTxInvocationContext();
+      InvocationContext ctx = invocationContextFactory.createSingleKeyNonTxInvocationContext();
       return setInvocationContextClassLoader(ctx, explicitClassLoader);
    }
 
@@ -549,8 +555,8 @@ public class CacheImpl<K, V> implements AdvancedCache<K, V> {
 
    private InvocationContext getInvocationContextForWrite(ClassLoader explicitClassLoader, int keyCount, boolean isPutForExternalRead) {
       InvocationContext ctx = isPutForExternalRead
-            ? icc.createSingleKeyNonTxInvocationContext()
-            : icc.createInvocationContext(true, keyCount);
+            ? invocationContextFactory.createSingleKeyNonTxInvocationContext()
+            : invocationContextFactory.createInvocationContext(true, keyCount);
       return setInvocationContextClassLoader(ctx, explicitClassLoader);
    }
 
@@ -563,7 +569,7 @@ public class CacheImpl<K, V> implements AdvancedCache<K, V> {
          if (transaction != null)
             return getInvocationContext(transaction, explicitClassLoader);
       }
-      InvocationContext result = icc.createInvocationContext(false, keyCount);
+      InvocationContext result = invocationContextFactory.createInvocationContext(false, keyCount);
       setInvocationContextClassLoader(result, explicitClassLoader);
       return result;
    }
@@ -615,7 +621,7 @@ public class CacheImpl<K, V> implements AdvancedCache<K, V> {
    }
 
    private InvocationContext getInvocationContext(Transaction tx, ClassLoader explicitClassLoader) {
-      InvocationContext ctx = icc.createInvocationContext(tx);
+      InvocationContext ctx = invocationContextFactory.createInvocationContext(tx);
       return setInvocationContextClassLoader(ctx, explicitClassLoader);
    }
 
@@ -1331,16 +1337,8 @@ public class CacheImpl<K, V> implements AdvancedCache<K, V> {
 
    @Override
    public ClassLoader getClassLoader() {
-      ClassLoader cl = config.classLoader();
-      if (cl != null)
-         // The classloader has been set for this configuration
-         return cl;
-      else if (globalCfg.classLoader() != null)
-         // The classloader is not set for this configuration, and we have a global config
-         return globalCfg.classLoader();
-      else
-         // Return the default CL
-         return Thread.currentThread().getContextClassLoader();
+      ClassLoader classLoader = Configurations.getClassLoader(config, globalCfg);
+      return classLoader != null ? classLoader : Thread.currentThread().getContextClassLoader();
    }
 
    @Override

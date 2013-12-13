@@ -11,6 +11,8 @@ import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.cache.PersistenceConfigurationBuilder;
 import org.infinispan.configuration.cache.SingletonStoreConfiguration;
 import org.infinispan.context.Flag;
+import org.infinispan.context.InvocationContext;
+import org.infinispan.context.InvocationContextFactory;
 import org.infinispan.marshall.core.MarshalledEntryImpl;
 import org.infinispan.persistence.dummy.DummyInMemoryStoreConfigurationBuilder;
 import org.infinispan.persistence.manager.PersistenceManager;
@@ -117,7 +119,9 @@ public class UnnecessaryLoadingTest extends SingleCacheManagerTest {
       //returned value from the cache:
       assert "v2-second".equals(putReturn);
       //and verify that the put operation updated the store too:
-      assert "v2-second".equals(persistenceManager.loadFromAllStores("k2").getValue());
+      InvocationContextFactory icf = TestingUtil.extractComponent(cache, InvocationContextFactory.class);
+      InvocationContext context = icf.createSingleKeyNonTxInvocationContext();
+      assert "v2-second".equals(persistenceManager.loadFromAllStores("k2", context).getValue());
       assertEquals(countingCS.numLoads,2, "Expected 2, was " + countingCS.numLoads);
 
       assert countingCS.numContains == 0 : "Expected 0, was " + countingCS.numContains;

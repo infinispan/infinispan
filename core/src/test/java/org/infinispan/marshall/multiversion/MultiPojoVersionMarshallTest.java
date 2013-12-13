@@ -5,6 +5,9 @@ import javassist.ClassPool;
 import javassist.CtClass;
 import javassist.CtField;
 import javassist.CtMethod;
+import org.infinispan.commons.marshall.Marshaller;
+import org.infinispan.configuration.cache.ConfigurationBuilder;
+import org.infinispan.configuration.global.GlobalConfigurationBuilder;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.commons.marshall.AbstractDelegatingMarshaller;
 import org.infinispan.commons.marshall.Externalizer;
@@ -13,6 +16,7 @@ import org.infinispan.commons.util.Util;
 import org.infinispan.test.AbstractInfinispanTest;
 import org.infinispan.test.CherryPickClassLoader;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
+import org.jboss.marshalling.ContextClassResolver;
 import org.testng.annotations.AfterTest;
 import org.testng.annotations.BeforeTest;
 import org.testng.annotations.Test;
@@ -55,7 +59,10 @@ public class MultiPojoVersionMarshallTest extends AbstractInfinispanTest {
 
    @BeforeTest
    public void setUp() {
-      cm = TestCacheManagerFactory.createCacheManager(false);
+      // Always use the current thread's context class loader.
+      GlobalConfigurationBuilder gcb = new GlobalConfigurationBuilder();
+      gcb.serialization().classResolver(new ContextClassResolver());
+      cm = TestCacheManagerFactory.createCacheManager(gcb, new ConfigurationBuilder());
       marshaller = extractCacheMarshaller(cm.getCache());
    }
 
@@ -153,6 +160,7 @@ public class MultiPojoVersionMarshallTest extends AbstractInfinispanTest {
          }
 
          Object oldCarFromWire = unmarshall(oldCarbytes, method);
+         assertEquals(carClass, oldCarFromWire.getClass());
 
          Field plateField = carClass.getDeclaredField("plateNumber");
          assertEquals("E 1660", plateField.get(oldCarFromWire));
@@ -169,6 +177,7 @@ public class MultiPojoVersionMarshallTest extends AbstractInfinispanTest {
             yearField.set(newCar, 2001);
             byte[] bytes = marshall(newCar, method);
             Object readNewCar = unmarshall(bytes, method);
+            assertEquals(carClass, oldCarFromWire.getClass());
             plateField = carClass.getDeclaredField("plateNumber");
             assertEquals("CH 8271", plateField.get(readNewCar));
             yearField = carClass.getDeclaredField("year");
@@ -214,6 +223,7 @@ public class MultiPojoVersionMarshallTest extends AbstractInfinispanTest {
          }
 
          Object oldFromWire = unmarshall(bytes, method);
+         assertEquals(clazz, oldFromWire.getClass());
 
          Field age = clazz.getDeclaredField("age");
          assertEquals(23, age.get(oldFromWire));
@@ -230,6 +240,7 @@ public class MultiPojoVersionMarshallTest extends AbstractInfinispanTest {
             name.set(newObj, "Galder");
             bytes = marshall(newObj, method);
             Object newFromWire = unmarshall(bytes, method);
+            assertEquals(clazz, oldFromWire.getClass());
             age = clazz.getDeclaredField("age");
             assertEquals(34, age.get(newFromWire));
             name = clazz.getDeclaredField("name");
@@ -275,6 +286,7 @@ public class MultiPojoVersionMarshallTest extends AbstractInfinispanTest {
          }
 
          Object oldFromWire = unmarshall(bytes, method);
+         assertEquals(clazz, oldFromWire.getClass());
 
          Field street = clazz.getDeclaredField("street");
          assertEquals("Rue du Seyon", street.get(oldFromWire));
@@ -286,6 +298,7 @@ public class MultiPojoVersionMarshallTest extends AbstractInfinispanTest {
             street.set(newObj, "Fir Close");
             bytes = marshall(newObj, method);
             Object newFromWire = unmarshall(bytes, method);
+            assertEquals(clazz, oldFromWire.getClass());
             street = clazz.getDeclaredField("street");
             assertEquals("Fir Close", street.get(newFromWire));
          }

@@ -310,11 +310,17 @@ public class InterceptorChain {
     * Appends at the end.
     */
    public void appendInterceptor(CommandInterceptor ci, boolean isCustom) {
-      if (isCustom) validateCustomInterceptor(ci.getClass());
+      Class<? extends CommandInterceptor> interceptorClass = ci.getClass();
+      if (isCustom) validateCustomInterceptor(interceptorClass);
+      assertNotAdded(interceptorClass);
       // Called when building interceptor chain and so concurrent start calls are protected already
-      CommandInterceptor it = firstInChain;
-      while (it.hasNext()) it = it.getNext();
-      it.setNext(ci);
+      if (firstInChain == null) {
+         firstInChain = ci;
+      } else {
+         CommandInterceptor it = firstInChain;
+         while (it.hasNext()) it = it.getNext();
+         it.setNext(ci);
+      }
       // make sure we nullify the "next" pointer in the last interceptors.
       ci.setNext(null);
    }
