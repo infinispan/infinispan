@@ -337,6 +337,27 @@ QueryBuilder qb = ...
 qb.having("title").eq("Infinispan Data Grid Platform");
 ----
 
+._FilterConditionEndContext_ exposes the following filtering operators:
+[options="header",cols="1,3,10"]
+|==============================================================================
+| Filter | Arguments | Description
+| in | Collection values | Checks that the left operand is equal to one of the elements from the Collection of values given as argument.
+| in | Object... values | Checks that the left operand is equal to one of the (fixed) list of values given as argument.
+| contains | Object value | Checks that the left argument (which is expected to be an array or a Collection) contains the given element.
+| containsAll | Collection values | Checks that the left argument (which is expected to be an array or a Collection) contains all the elements of the given collection, in any order.
+| containsAll | Object... values | Checks that the left argument (which is expected to be an array or a Collection) contains all of the the given elements, in any order.
+| containsAny | Collection values | Checks that the left argument (which is expected to be an array or a Collection) contains any of the elements of the given collection.
+| containsAny | Object... values | Checks that the left argument (which is expected to be an array or a Collection) contains any of the the given elements.
+| isNull | | Checks that the left argument is null.
+| like | String pattern | Checks that the left argument (which is expected to be a String) matches a wildcard pattern that follows the JPA rules.
+| eq | Object value | Checks that the left argument is equal to the given value.
+| gt | Object value | Checks that the left argument is greater than the given value.
+| gte | Object value | Checks that the left argument is greater than or equal to the given value.
+| lt | Object value | Checks that the left argument is less than the given value.
+| lte | Object value | Checks that the left argument is less than or equal to the given value.
+| between | Object from, Object to | Checks that the left argument is between the given range limits.
+|==============================================================================
+
 It's important to note that query construction requires a multi-step chaining of method invocation that must be done in
 the proper sequence, must be properly completed exactly _once_ and must not be done twice, or it will result in an error.
 The following examples are invalid, and depending on each case they lead to criteria being ignored (in benign cases) or
