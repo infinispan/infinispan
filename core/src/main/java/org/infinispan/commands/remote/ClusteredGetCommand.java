@@ -13,7 +13,7 @@ import org.infinispan.container.entries.InternalCacheValue;
 import org.infinispan.container.entries.MVCCEntry;
 import org.infinispan.context.Flag;
 import org.infinispan.context.InvocationContext;
-import org.infinispan.context.InvocationContextContainer;
+import org.infinispan.context.InvocationContextFactory;
 import org.infinispan.distribution.DistributionManager;
 import org.infinispan.interceptors.InterceptorChain;
 import org.infinispan.lifecycle.ComponentStatus;
@@ -43,7 +43,7 @@ public class ClusteredGetCommand extends BaseRpcCommand implements FlagAffectedC
 
    private Object key;
 
-   private InvocationContextContainer icc;
+   private InvocationContextFactory icf;
    private CommandsFactory commandsFactory;
    private InterceptorChain invoker;
    private boolean acquireRemoteLock;
@@ -79,11 +79,11 @@ public class ClusteredGetCommand extends BaseRpcCommand implements FlagAffectedC
          throw new IllegalArgumentException("Cannot have null tx if we need to acquire locks");
    }
 
-   public void initialize(InvocationContextContainer icc, CommandsFactory commandsFactory, InternalEntryFactory entryFactory,
+   public void initialize(InvocationContextFactory icf, CommandsFactory commandsFactory, InternalEntryFactory entryFactory,
          InterceptorChain interceptorChain, DistributionManager distributionManager, TransactionTable txTable,
          Equivalence keyEquivalence) {
       this.distributionManager = distributionManager;
-      this.icc = icc;
+      this.icf = icf;
       this.commandsFactory = commandsFactory;
       this.invoker = interceptorChain;
       this.txTable = txTable;
@@ -105,7 +105,7 @@ public class ClusteredGetCommand extends BaseRpcCommand implements FlagAffectedC
       Set<Flag> commandFlags = EnumSet.of(Flag.SKIP_REMOTE_LOOKUP, Flag.CACHE_MODE_LOCAL);
       if (this.flags != null) commandFlags.addAll(this.flags);
       GetKeyValueCommand command = commandsFactory.buildGetKeyValueCommand(key, commandFlags, true);
-      InvocationContext invocationContext = icc.createRemoteInvocationContextForCommand(command, getOrigin());
+      InvocationContext invocationContext = icf.createRemoteInvocationContextForCommand(command, getOrigin());
       CacheEntry cacheEntry = (CacheEntry) invoker.invoke(invocationContext, command);
       if (cacheEntry == null) {
          if (trace) log.trace("Did not find anything, returning null");
@@ -129,7 +129,7 @@ public class ClusteredGetCommand extends BaseRpcCommand implements FlagAffectedC
    private void acquireLocksIfNeeded() throws Throwable {
       if (acquireRemoteLock) {
          LockControlCommand lockControlCommand = commandsFactory.buildLockControlCommand(key, flags, gtx);
-         lockControlCommand.init(invoker, icc, txTable);
+         lockControlCommand.init(invoker, icf, txTable);
          lockControlCommand.perform(null);
       }
    }

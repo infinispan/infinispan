@@ -81,10 +81,9 @@ public class InterceptorChainFactory extends AbstractNamedCacheComponentFactory 
 
       // load the icInterceptor first
       if (invocationBatching) {
-         interceptorChain.setFirstInChain(createInterceptor(new BatchingInterceptor(), BatchingInterceptor.class));
-      } else {
-         interceptorChain.setFirstInChain(createInterceptor(new InvocationContextInterceptor(), InvocationContextInterceptor.class));
+         interceptorChain.appendInterceptor(createInterceptor(new BatchingInterceptor(), BatchingInterceptor.class), false);
       }
+      interceptorChain.appendInterceptor(createInterceptor(new InvocationContextInterceptor(), InvocationContextInterceptor.class), false);
 
 
       CompatibilityModeConfiguration compatibility = configuration.compatibility();
@@ -102,11 +101,6 @@ public class InterceptorChainFactory extends AbstractNamedCacheComponentFactory 
       if (configuration.clustering().async().asyncMarshalling()
             || configuration.clustering().async().useReplQueue() || hasAsyncStore())
          interceptorChain.appendInterceptor(createInterceptor(new IsMarshallableInterceptor(), IsMarshallableInterceptor.class), false);
-
-      // NOW add the ICI if we are using batching!
-      if (invocationBatching) {
-         interceptorChain.appendInterceptor(createInterceptor(new InvocationContextInterceptor(), InvocationContextInterceptor.class), false);
-      }
 
       // load the cache management interceptor next
       interceptorChain.appendInterceptor(createInterceptor(new CacheMgmtInterceptor(), CacheMgmtInterceptor.class), false);

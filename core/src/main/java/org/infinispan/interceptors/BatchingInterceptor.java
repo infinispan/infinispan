@@ -5,6 +5,7 @@ import org.infinispan.commands.VisitableCommand;
 import org.infinispan.commands.write.EvictCommand;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.context.InvocationContextContainer;
+import org.infinispan.context.InvocationContextFactory;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.interceptors.base.CommandInterceptor;
 import org.infinispan.util.logging.Log;
@@ -22,7 +23,7 @@ import javax.transaction.TransactionManager;
 public class BatchingInterceptor extends CommandInterceptor {
    private BatchContainer batchContainer;
    private TransactionManager transactionManager;
-   private InvocationContextContainer icc;
+   private InvocationContextFactory invocationContextFactory;
 
    private static final Log log = LogFactory.getLog(BatchingInterceptor.class);
 
@@ -32,10 +33,11 @@ public class BatchingInterceptor extends CommandInterceptor {
    }
 
    @Inject
-   private void inject(BatchContainer batchContainer, TransactionManager transactionManager, InvocationContextContainer icc) {
+   private void inject(BatchContainer batchContainer, TransactionManager transactionManager,
+                       InvocationContextFactory invocationContextFactory) {
       this.batchContainer = batchContainer;
       this.transactionManager = transactionManager;
-      this.icc = icc;
+      this.invocationContextFactory = invocationContextFactory;
    }
 
    @Override
@@ -51,23 +53,33 @@ public class BatchingInterceptor extends CommandInterceptor {
     */
    @Override
    protected Object handleDefault(InvocationContext ctx, VisitableCommand command) throws Throwable {
-      if (!ctx.isOriginLocal()) return invokeNextInterceptor(ctx, command);
-      // if in a batch, attach tx
+      if (!ctx.isOriginLocal()) {
+         // Nothing to do for remote calls
+         return invokeNextInterceptor(ctx, command);
+      }
+
       Transaction tx;
-      if (transactionManager.getTransaction() == null && (tx = batchContainer.getBatchTransaction()) != null) {
-         try {
-            transactionManager.resume(tx);
-            //If there's no ongoing tx then BatchingInterceptor creates one and then invokes next interceptor,
+      if (transactionManager.getTransaction() != null || (tx = batchContainer.getBatchTransaction()) == null) {
+         // The active transaction means we are in an auto-batch.
+         // No batch means a read-only auto-batch.
+         // Either way, we don't need to do anything
+         return invokeNextInterceptor(ctx, command);
+      }
+
+      try {
+         transactionManager.resume(tx);
+         InvocationContext invocationContext = ctx;
+         if (!ctx.isInTxScope()) {
+            // If there's no ongoing tx then BatchingInterceptor creates one and then invokes next interceptor,
             // so that all interceptors in the stack will be executed in a transactional context.
             // This is where a new context (TxInvocationContext) is created, as the existing context is not transactional: NonTxInvocationContext.
-            InvocationContext txContext = icc.createInvocationContext(true, -1);
-            return invokeNextInterceptor(txContext, command);
-         } finally {
-            if (transactionManager.getTransaction() != null && batchContainer.isSuspendTxAfterInvocation())
-               transactionManager.suspend();
+            log.tracef("Called with a non-tx invocation context: %s", ctx);
+            invocationContext = invocationContextFactory.createInvocationContext(true, -1);
          }
-      } else {
-         return invokeNextInterceptor(ctx, command);
+         return invokeNextInterceptor(invocationContext, command);
+      } finally {
+         if (transactionManager.getTransaction() != null && batchContainer.isSuspendTxAfterInvocation())
+            transactionManager.suspend();
       }
    }
 }

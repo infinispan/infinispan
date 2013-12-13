@@ -3,7 +3,7 @@ package org.infinispan.commands.remote;
 import org.infinispan.commands.ReplicableCommand;
 import org.infinispan.commands.VisitableCommand;
 import org.infinispan.context.InvocationContext;
-import org.infinispan.context.InvocationContextContainer;
+import org.infinispan.context.InvocationContextFactory;
 import org.infinispan.interceptors.InterceptorChain;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
@@ -16,7 +16,7 @@ import org.infinispan.util.logging.LogFactory;
 public abstract class BaseRpcInvokingCommand extends BaseRpcCommand {
 
    protected InterceptorChain interceptorChain;
-   protected InvocationContextContainer icc;
+   protected InvocationContextFactory icf;
 
    private static final Log log = LogFactory.getLog(BaseRpcInvokingCommand.class);
    private static final boolean trace = log.isTraceEnabled();
@@ -25,15 +25,15 @@ public abstract class BaseRpcInvokingCommand extends BaseRpcCommand {
       super(cacheName);
    }
 
-   public void init(InterceptorChain interceptorChain, InvocationContextContainer icc) {
+   public void init(InterceptorChain interceptorChain, InvocationContextFactory icf) {
       this.interceptorChain = interceptorChain;
-      this.icc = icc;
+      this.icf = icf;
    }
 
    protected final Object processVisitableCommand(ReplicableCommand cacheCommand) throws Throwable {
       if (cacheCommand instanceof VisitableCommand) {
          VisitableCommand vc = (VisitableCommand) cacheCommand;
-         final InvocationContext ctx = icc.createRemoteInvocationContextForCommand(vc, getOrigin());
+         final InvocationContext ctx = icf.createRemoteInvocationContextForCommand(vc, getOrigin());
          if (vc.shouldInvoke(ctx)) {
             if (trace) log.tracef("Invoking command %s, with originLocal flag set to %b", cacheCommand, ctx.isOriginLocal());
             return interceptorChain.invoke(ctx, vc);

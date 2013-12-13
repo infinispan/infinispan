@@ -13,7 +13,7 @@ import org.infinispan.container.DataContainer;
 import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.context.Flag;
 import org.infinispan.context.InvocationContext;
-import org.infinispan.context.InvocationContextContainer;
+import org.infinispan.context.InvocationContextFactory;
 import org.infinispan.context.impl.TxInvocationContext;
 import org.infinispan.distribution.L1Manager;
 import org.infinispan.distribution.ch.ConsistentHash;
@@ -91,7 +91,7 @@ public class StateConsumerImpl implements StateConsumer {
    private DataContainer dataContainer;
    private PersistenceManager persistenceManager;
    private InterceptorChain interceptorChain;
-   private InvocationContextContainer icc;
+   private InvocationContextFactory icf;
    private StateTransferLock stateTransferLock;
    private CacheNotifier cacheNotifier;
    private TotalOrderManager totalOrderManager;
@@ -221,7 +221,7 @@ public class StateConsumerImpl implements StateConsumer {
                     @ComponentName(ASYNC_TRANSPORT_EXECUTOR) ExecutorService executorService, //TODO Use a dedicated ExecutorService
                     StateTransferManager stateTransferManager,
                     InterceptorChain interceptorChain,
-                    InvocationContextContainer icc,
+                    InvocationContextFactory icf,
                     Configuration configuration,
                     RpcManager rpcManager,
                     TransactionManager transactionManager,
@@ -238,7 +238,7 @@ public class StateConsumerImpl implements StateConsumer {
       this.executorService = executorService;
       this.stateTransferManager = stateTransferManager;
       this.interceptorChain = interceptorChain;
-      this.icc = icc;
+      this.icf = icf;
       this.configuration = configuration;
       this.rpcManager = rpcManager;
       this.transactionManager = transactionManager;
@@ -528,11 +528,11 @@ public class StateConsumerImpl implements StateConsumer {
                // cache is transactional
                transactionManager.begin();
                Transaction transaction = transactionManager.getTransaction();
-               ctx = icc.createInvocationContext(transaction);
+               ctx = icf.createInvocationContext(transaction);
                ((TxInvocationContext) ctx).setImplicitTransaction(true);
             } else {
                // non-tx cache
-               ctx = icc.createSingleKeyNonTxInvocationContext();
+               ctx = icf.createSingleKeyNonTxInvocationContext();
             }
 
             PutKeyValueCommand put = commandsFactory.buildPutKeyValueCommand(
@@ -922,7 +922,7 @@ public class StateConsumerImpl implements StateConsumer {
       if (!keysToL1.isEmpty()) {
          try {
             InvalidateCommand invalidateCmd = commandsFactory.buildInvalidateFromL1Command(true, EnumSet.of(CACHE_MODE_LOCAL, SKIP_LOCKING), keysToL1);
-            InvocationContext ctx = icc.createNonTxInvocationContext();
+            InvocationContext ctx = icf.createNonTxInvocationContext();
             interceptorChain.invoke(ctx, invalidateCmd);
 
             log.debugf("Invalidated %d keys, data container now has %d keys", keysToL1.size(), dataContainer.size());
@@ -936,7 +936,7 @@ public class StateConsumerImpl implements StateConsumer {
       if (!keysToRemove.isEmpty()) {
          try {
             InvalidateCommand invalidateCmd = commandsFactory.buildInvalidateCommand(EnumSet.of(CACHE_MODE_LOCAL, SKIP_LOCKING), keysToRemove.toArray());
-            InvocationContext ctx = icc.createNonTxInvocationContext();
+            InvocationContext ctx = icf.createNonTxInvocationContext();
             interceptorChain.invoke(ctx, invalidateCmd);
 
             log.debugf("Invalidated %d keys, data container of cache %s now has %d keys", keysToRemove.size(), cacheName, dataContainer.size());

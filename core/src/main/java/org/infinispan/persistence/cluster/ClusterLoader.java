@@ -6,8 +6,8 @@ import org.infinispan.commons.util.InfinispanCollections;
 import org.infinispan.configuration.cache.ClusterLoaderConfiguration;
 import org.infinispan.container.entries.InternalCacheValue;
 import org.infinispan.context.Flag;
-import org.infinispan.context.InvocationContext;
 import org.infinispan.lifecycle.ComponentStatus;
+import org.infinispan.persistence.spi.LocalOnlyCacheLoader;
 import org.infinispan.persistence.spi.PersistenceException;
 import org.infinispan.persistence.spi.CacheLoader;
 import org.infinispan.persistence.spi.InitializationContext;
@@ -34,7 +34,7 @@ import java.util.concurrent.TimeUnit;
  *
  * @author Mircea.Markus@jboss.com
  */
-public class ClusterLoader implements CacheLoader {
+public class ClusterLoader implements CacheLoader, LocalOnlyCacheLoader {
    private static final Log log = LogFactory.getLog(ClusterLoader.class);
 
    private RpcManager rpcManager;
@@ -53,7 +53,7 @@ public class ClusterLoader implements CacheLoader {
 
    @Override
    public MarshalledEntry load(Object key) throws PersistenceException {
-      if (!(isCacheReady() && isLocalCall())) return null;
+      if (!isCacheReady()) return null;
 
       ClusteredGetCommand clusteredGetCommand = new ClusteredGetCommand(
             key, cache.getName(), InfinispanCollections.<Flag>emptySet(), false, null,
@@ -113,11 +113,6 @@ public class ClusterLoader implements CacheLoader {
          log.errorDoingRemoteCall(e);
          throw new PersistenceException(e);
       }
-   }
-
-   private boolean isLocalCall() {
-      InvocationContext invocationContext = cache.getInvocationContextContainer().getInvocationContext(false);
-      return invocationContext.isOriginLocal();
    }
 
    /**

@@ -7,7 +7,7 @@ import org.infinispan.commands.tx.RollbackCommand;
 import org.infinispan.commands.write.WriteCommand;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.cache.Configurations;
-import org.infinispan.context.InvocationContextContainer;
+import org.infinispan.context.InvocationContextFactory;
 import org.infinispan.context.impl.LocalTxInvocationContext;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.annotations.Start;
@@ -37,7 +37,7 @@ public class TransactionCoordinator {
 
    private static final Log log = LogFactory.getLog(TransactionCoordinator.class);
    private CommandsFactory commandsFactory;
-   private InvocationContextContainer icc;
+   private InvocationContextFactory icf;
    private InterceptorChain invoker;
    private TransactionTable txTable;
    private Configuration configuration;
@@ -47,10 +47,10 @@ public class TransactionCoordinator {
    boolean trace;
 
    @Inject
-   public void init(CommandsFactory commandsFactory, InvocationContextContainer icc, InterceptorChain invoker,
+   public void init(CommandsFactory commandsFactory, InvocationContextFactory icf, InterceptorChain invoker,
                     TransactionTable txTable, Configuration configuration) {
       this.commandsFactory = commandsFactory;
-      this.icc = icc;
+      this.icf = icf;
       this.invoker = invoker;
       this.txTable = txTable;
       this.configuration = configuration;
@@ -112,7 +112,7 @@ public class TransactionCoordinator {
       PrepareCommand prepareCommand = commandCreator.createPrepareCommand(localTransaction.getGlobalTransaction(), localTransaction.getModifications(), false);
       if (trace) log.tracef("Sending prepare command through the chain: %s", prepareCommand);
 
-      LocalTxInvocationContext ctx = icc.createTxInvocationContext();
+      LocalTxInvocationContext ctx = icf.createTxInvocationContext();
       prepareCommand.setReplayEntryWrapping(replayEntryWrapping);
       ctx.setLocalTransaction(localTransaction);
       try {
@@ -142,7 +142,7 @@ public class TransactionCoordinator {
 
    public boolean commit(LocalTransaction localTransaction, boolean isOnePhase) throws XAException {
       if (trace) log.tracef("Committing transaction %s", localTransaction.getGlobalTransaction());
-      LocalTxInvocationContext ctx = icc.createTxInvocationContext();
+      LocalTxInvocationContext ctx = icf.createTxInvocationContext();
       ctx.setLocalTransaction(localTransaction);
       if (isOnePhaseCommit(localTransaction) || isOnePhase) {
          validateNotMarkedForRollback(localTransaction);
@@ -205,7 +205,7 @@ public class TransactionCoordinator {
    }
 
    private void commitInternal(LocalTransaction localTransaction) throws XAException {
-      LocalTxInvocationContext ctx = icc.createTxInvocationContext();
+      LocalTxInvocationContext ctx = icf.createTxInvocationContext();
       ctx.setLocalTransaction(localTransaction);
       CommitCommand commitCommand = commandCreator.createCommitCommand(localTransaction.getGlobalTransaction());
       try {
@@ -219,7 +219,7 @@ public class TransactionCoordinator {
    private void rollbackInternal(LocalTransaction localTransaction) throws Throwable {
       if (trace) log.tracef("rollback transaction %s ", localTransaction.getGlobalTransaction());
       RollbackCommand rollbackCommand = commandsFactory.buildRollbackCommand(localTransaction.getGlobalTransaction());
-      LocalTxInvocationContext ctx = icc.createTxInvocationContext();
+      LocalTxInvocationContext ctx = icf.createTxInvocationContext();
       ctx.setLocalTransaction(localTransaction);
       invoker.invoke(ctx, rollbackCommand);
       txTable.removeLocalTransaction(localTransaction);
