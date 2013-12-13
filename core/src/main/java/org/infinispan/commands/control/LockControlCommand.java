@@ -126,7 +126,11 @@ public class LockControlCommand extends AbstractTransactionBoundaryCommand imple
          transaction = txTable.getOrCreateRemoteTransaction(globalTx, null);
       }
       RemoteTxInvocationContext ctxt = icc.createRemoteTxInvocationContext(transaction, getOrigin());
-      return invoker.invoke(ctxt, this);
+      try {
+         return invoker.invoke(ctxt, this);
+      } finally {
+         icc.clearThreadLocal();
+      }
    }
 
    @Override

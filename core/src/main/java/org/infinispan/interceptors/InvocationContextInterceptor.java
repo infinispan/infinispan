@@ -77,67 +77,63 @@ public class InvocationContextInterceptor extends CommandInterceptor {
    }
 
    private Object handleAll(InvocationContext ctx, VisitableCommand command) throws Throwable {
+      ComponentStatus status = componentRegistry.getStatus();
+      if (command.ignoreCommandOnStatus(status)) {
+         log.debugf("Status: %s : Ignoring %s command", status, command);
+         return null;
+      }
+
+      if (status.isTerminated()) {
+         throw new IllegalStateException(String.format(
+               "%s is in 'TERMINATED' state and so it does not accept new invocations. " +
+                     "Either restart it or recreate the cache container.",
+               getCacheNamePrefix()));
+      } else if (stoppingAndNotAllowed(status, ctx)) {
+         throw new IllegalStateException(String.format(
+               "%s is in 'STOPPING' state and this is an invocation not belonging to an on-going transaction, so it does not accept new invocations. " +
+                     "Either restart it or recreate the cache container.",
+               getCacheNamePrefix()));
+      }
+
+      LogFactory.pushNDC(componentRegistry.getCacheName(), trace);
+
       try {
-         ComponentStatus status = componentRegistry.getStatus();
-         if (command.ignoreCommandOnStatus(status)) {
-            log.debugf("Status: %s : Ignoring %s command", status, command);
-            return null;
-         }
-
-         if (status.isTerminated()) {
-            throw new IllegalStateException(String.format(
-                  "%s is in 'TERMINATED' state and so it does not accept new invocations. " +
-                        "Either restart it or recreate the cache container.",
-                  getCacheNamePrefix()));
-         } else if (stoppingAndNotAllowed(status, ctx)) {
-            throw new IllegalStateException(String.format(
-                  "%s is in 'STOPPING' state and this is an invocation not belonging to an on-going transaction, so it does not accept new invocations. " +
-                        "Either restart it or recreate the cache container.",
-                  getCacheNamePrefix()));
-         }
-
-         LogFactory.pushNDC(componentRegistry.getCacheName(), trace);
+         if (trace) log.tracef("Invoked with command %s and InvocationContext [%s]", command, ctx);
+         if (ctx == null) throw new IllegalStateException("Null context not allowed!!");
 
          try {
-            if (trace) log.tracef("Invoked with command %s and InvocationContext [%s]", command, ctx);
-            if (ctx == null) throw new IllegalStateException("Null context not allowed!!");
-
-            try {
-               return invokeNextInterceptor(ctx, command);
-            } catch (InvalidCacheUsageException ex) {
-               throw ex; // Propagate back client usage errors regardless of flag
-            } catch (Throwable th) {
-               // Only check for fail silently if there's a failure :)
-               boolean suppressExceptions = (command instanceof FlagAffectedCommand)
-                     && ((FlagAffectedCommand) command).hasFlag(Flag.FAIL_SILENTLY);
-               // If we are shutting down there is every possibility that the invocation fails.
-               suppressExceptions = suppressExceptions || shuttingDown;
-               if (suppressExceptions) {
-                  if (shuttingDown)
-                     log.trace("Exception while executing code, but we're shutting down so failing silently.", th);
-                  else
-                     log.trace("Exception while executing code, failing silently...", th);
-                  return null;
+            return invokeNextInterceptor(ctx, command);
+         } catch (InvalidCacheUsageException ex) {
+            throw ex; // Propagate back client usage errors regardless of flag
+         } catch (Throwable th) {
+            // Only check for fail silently if there's a failure :)
+            boolean suppressExceptions = (command instanceof FlagAffectedCommand)
+                  && ((FlagAffectedCommand) command).hasFlag(Flag.FAIL_SILENTLY);
+            // If we are shutting down there is every possibility that the invocation fails.
+            suppressExceptions = suppressExceptions || shuttingDown;
+            if (suppressExceptions) {
+               if (shuttingDown)
+                  log.trace("Exception while executing code, but we're shutting down so failing silently.", th);
+               else
+                  log.trace("Exception while executing code, failing silently...", th);
+               return null;
+            } else {
+               if (th instanceof WriteSkewException) {
+                  // We log this as DEBUG rather than ERROR - see ISPN-2076
+                  log.debug("Exception executing call", th);
                } else {
-                  if (th instanceof WriteSkewException) {
-                     // We log this as DEBUG rather than ERROR - see ISPN-2076
-                     log.debug("Exception executing call", th);
-                  } else {
-                     log.executionError(th);
-                  }
-                  if (ctx.isInTxScope() && ctx.isOriginLocal()) {
-                     if (trace) log.trace("Transaction marked for rollback as exception was received.");
-                     markTxForRollbackAndRethrow(ctx, th);
-                     throw new IllegalStateException("This should not be reached");
-                  }
-                  throw th;
+                  log.executionError(th);
                }
+               if (ctx.isInTxScope() && ctx.isOriginLocal()) {
+                  if (trace) log.trace("Transaction marked for rollback as exception was received.");
+                  markTxForRollbackAndRethrow(ctx, th);
+                  throw new IllegalStateException("This should not be reached");
+               }
+               throw th;
             }
-         } finally {
-            LogFactory.popNDC(trace);
          }
       } finally {
-         invocationContextContainer.clearThreadLocal();
+         LogFactory.popNDC(trace);
       }
    }
 

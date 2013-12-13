@@ -113,53 +113,61 @@ public class TransactionCoordinator {
       if (trace) log.tracef("Sending prepare command through the chain: %s", prepareCommand);
 
       LocalTxInvocationContext ctx = icc.createTxInvocationContext();
-      prepareCommand.setReplayEntryWrapping(replayEntryWrapping);
-      ctx.setLocalTransaction(localTransaction);
       try {
-         invoker.invoke(ctx, prepareCommand);
-         if (localTransaction.isReadOnly()) {
-            if (trace) log.tracef("Readonly transaction: %s", localTransaction.getGlobalTransaction());
-            // force a cleanup to release any objects held.  Some TMs don't call commit if it is a READ ONLY tx.  See ISPN-845
-            commitInternal(localTransaction);
-            return XA_RDONLY;
-         } else {
-            txTable.localTransactionPrepared(localTransaction);
-            return XA_OK;
-         }
-      } catch (Throwable e) {
-         if (shuttingDown)
-            log.trace("Exception while preparing back, probably because we're shutting down.");
-         else
-            log.errorProcessingPrepare(e);
+         prepareCommand.setReplayEntryWrapping(replayEntryWrapping);
+         ctx.setLocalTransaction(localTransaction);
+         try {
+            invoker.invoke(ctx, prepareCommand);
+            if (localTransaction.isReadOnly()) {
+               if (trace) log.tracef("Readonly transaction: %s", localTransaction.getGlobalTransaction());
+               // force a cleanup to release any objects held.  Some TMs don't call commit if it is a READ ONLY tx.  See ISPN-845
+               commitInternal(localTransaction);
+               return XA_RDONLY;
+            } else {
+               txTable.localTransactionPrepared(localTransaction);
+               return XA_OK;
+            }
+         } catch (Throwable e) {
+            if (shuttingDown)
+               log.trace("Exception while preparing back, probably because we're shutting down.");
+            else
+               log.errorProcessingPrepare(e);
 
-         //rollback transaction before throwing the exception as there's no guarantee the TM calls XAResource.rollback
-         //after prepare failed.
-         rollback(localTransaction);
-         // XA_RBROLLBACK tells the TM that we've rolled back already: the TM shouldn't call rollback after this.
-         throw new XAException(XAException.XA_RBROLLBACK);
+            //rollback transaction before throwing the exception as there's no guarantee the TM calls XAResource.rollback
+            //after prepare failed.
+            rollback(localTransaction);
+            // XA_RBROLLBACK tells the TM that we've rolled back already: the TM shouldn't call rollback after this.
+            throw new XAException(XAException.XA_RBROLLBACK);
+         }
+      } finally {
+         icc.clearThreadLocal();
       }
    }
 
    public boolean commit(LocalTransaction localTransaction, boolean isOnePhase) throws XAException {
       if (trace) log.tracef("Committing transaction %s", localTransaction.getGlobalTransaction());
       LocalTxInvocationContext ctx = icc.createTxInvocationContext();
-      ctx.setLocalTransaction(localTransaction);
-      if (isOnePhaseCommit(localTransaction) || isOnePhase) {
-         validateNotMarkedForRollback(localTransaction);
+      try {
+         ctx.setLocalTransaction(localTransaction);
+         if (isOnePhaseCommit(localTransaction) || isOnePhase) {
+            validateNotMarkedForRollback(localTransaction);
 
-         if (trace) log.trace("Doing an 1PC prepare call on the interceptor chain");
-         List<WriteCommand> modifications = localTransaction.getModifications();
-         PrepareCommand command = commandCreator.createPrepareCommand(localTransaction.getGlobalTransaction(), modifications, true);
-         try {
-            invoker.invoke(ctx, command);
-         } catch (Throwable e) {
-            handleCommitFailure(e, localTransaction, true);
+            if (trace) log.trace("Doing an 1PC prepare call on the interceptor chain");
+            List<WriteCommand> modifications = localTransaction.getModifications();
+            PrepareCommand command = commandCreator.createPrepareCommand(localTransaction.getGlobalTransaction(), modifications, true);
+            try {
+               invoker.invoke(ctx, command);
+            } catch (Throwable e) {
+               handleCommitFailure(e, localTransaction, true);
+            }
+            return true;
+         } else if (!localTransaction.isReadOnly()) {
+            commitInternal(localTransaction);
          }
-         return true;
-      } else if (!localTransaction.isReadOnly()) {
-         commitInternal(localTransaction);
+         return false;
+      } finally {
+         icc.clearThreadLocal();
       }
-      return false;
    }
 
    public void rollback(LocalTransaction localTransaction) throws XAException {
@@ -206,13 +214,17 @@ public class TransactionCoordinator {
 
    private void commitInternal(LocalTransaction localTransaction) throws XAException {
       LocalTxInvocationContext ctx = icc.createTxInvocationContext();
-      ctx.setLocalTransaction(localTransaction);
-      CommitCommand commitCommand = commandCreator.createCommitCommand(localTransaction.getGlobalTransaction());
       try {
-         invoker.invoke(ctx, commitCommand);
-         txTable.removeLocalTransaction(localTransaction);
-      } catch (Throwable e) {
-         handleCommitFailure(e, localTransaction, false);
+         ctx.setLocalTransaction(localTransaction);
+         CommitCommand commitCommand = commandCreator.createCommitCommand(localTransaction.getGlobalTransaction());
+         try {
+            invoker.invoke(ctx, commitCommand);
+            txTable.removeLocalTransaction(localTransaction);
+         } catch (Throwable e) {
+            handleCommitFailure(e, localTransaction, false);
+         }
+      } finally {
+         icc.clearThreadLocal();
       }
    }
 
@@ -220,9 +232,13 @@ public class TransactionCoordinator {
       if (trace) log.tracef("rollback transaction %s ", localTransaction.getGlobalTransaction());
       RollbackCommand rollbackCommand = commandsFactory.buildRollbackCommand(localTransaction.getGlobalTransaction());
       LocalTxInvocationContext ctx = icc.createTxInvocationContext();
-      ctx.setLocalTransaction(localTransaction);
-      invoker.invoke(ctx, rollbackCommand);
-      txTable.removeLocalTransaction(localTransaction);
+      try {
+         ctx.setLocalTransaction(localTransaction);
+         invoker.invoke(ctx, rollbackCommand);
+         txTable.removeLocalTransaction(localTransaction);
+      } finally {
+         icc.clearThreadLocal();
+      }
    }
 
    private void validateNotMarkedForRollback(LocalTransaction localTransaction) throws XAException {

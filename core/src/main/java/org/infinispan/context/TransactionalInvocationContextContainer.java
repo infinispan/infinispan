@@ -76,7 +76,7 @@ public class TransactionalInvocationContextContainer extends AbstractInvocationC
 
       // Required only for marshaller is required, or cluster cache loader needed
       if (isThreadLocalRequired)
-         ctxHolder.set(ctx);
+         setThreadLocal(ctx);
 
       return ctx;
    }
@@ -101,14 +101,14 @@ public class TransactionalInvocationContextContainer extends AbstractInvocationC
       LocalTransaction localTransaction = transactionTable.getLocalTransaction(tx);
       localContext.setLocalTransaction(localTransaction);
       localContext.setTransaction(tx);
-      ctxHolder.set(localContext);
+      setThreadLocal(localContext);
       return localContext;
    }
 
    @Override
    public LocalTxInvocationContext createTxInvocationContext() {
       LocalTxInvocationContext ctx = new LocalTxInvocationContext(keyEq);
-      ctxHolder.set(ctx);
+      setThreadLocal(ctx);
       return ctx;
    }
 
@@ -118,7 +118,7 @@ public class TransactionalInvocationContextContainer extends AbstractInvocationC
       RemoteTxInvocationContext ctx = new RemoteTxInvocationContext();
       ctx.setOrigin(origin);
       ctx.setRemoteTransaction(tx);
-      ctxHolder.set(ctx);
+      setThreadLocal(ctx);
       return ctx;
    }
 
@@ -147,7 +147,7 @@ public class TransactionalInvocationContextContainer extends AbstractInvocationC
    protected final NonTxInvocationContext newNonTxInvocationContext(boolean local) {
       NonTxInvocationContext ctx = new NonTxInvocationContext(keyEq);
       ctx.setOriginLocal(local);
-      ctxHolder.set(ctx);
+      setThreadLocal(ctx);
       return ctx;
    }
 }
