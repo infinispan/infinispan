@@ -23,6 +23,7 @@ import org.hibernate.search.engine.spi.SearchFactoryImplementor;
 import org.hibernate.search.spi.SearchFactoryIntegrator;
 import org.infinispan.Cache;
 import org.infinispan.commands.FlagAffectedCommand;
+import org.infinispan.commands.LocalFlagAffectedCommand;
 import org.infinispan.commands.tx.PrepareCommand;
 import org.infinispan.commands.write.ClearCommand;
 import org.infinispan.commands.write.PutKeyValueCommand;
@@ -217,8 +218,10 @@ public class QueryInterceptor extends CommandInterceptor {
       performSearchWork(value, keyToString(key), WorkType.DELETE, transactionContext);
    }
 
-   protected void updateIndexes(Object value, Object key, TransactionContext transactionContext) {
-      performSearchWork(value, keyToString(key), WorkType.UPDATE, transactionContext);
+   protected void updateIndexes(final boolean usingSkipIndexCleanupFlag, final Object value, final Object key, final TransactionContext transactionContext) {
+      // Note: it's generally unsafe to assume there is no previous entry to cleanup: always use UPDATE
+      // unless the specific flag is allowing this.
+      performSearchWork(value, keyToString(key), usingSkipIndexCleanupFlag ? WorkType.ADD : WorkType.UPDATE, transactionContext);
    }
 
    private void performSearchWork(Object value, Serializable id, WorkType workType, TransactionContext transactionContext) {
@@ -430,20 +433,23 @@ public class QueryInterceptor extends CommandInterceptor {
     */
    private void processReplaceCommand(final ReplaceCommand command, final InvocationContext ctx, final Object valueReplaced, TransactionContext transactionContext) {
       if (valueReplaced != null && command.isSuccessful() && shouldModifyIndexes(command, ctx)) {
+         final boolean usingSkipIndexCleanupFlag = usingSkipIndexCleanup(command);
          Object[] parameters = command.getParameters();
-         Object p1 = extractValue(parameters[1]);
          Object p2 = extractValue(parameters[2]);
-         boolean originalIsIndexed = updateKnownTypesIfNeeded( p1 );
-         boolean newValueIsIndexed = updateKnownTypesIfNeeded( p2 );
+         final boolean newValueIsIndexed = updateKnownTypesIfNeeded( p2 );
          Object key = extractValue(command.getKey());
 
-         if (p1 != null && originalIsIndexed) {
-            transactionContext = transactionContext == null ? makeTransactionalEventContext() : transactionContext;
-            removeFromIndexes(p1, key, transactionContext);
+         if (! usingSkipIndexCleanupFlag) {
+            final Object p1 = extractValue(parameters[1]);
+            final boolean originalIsIndexed = updateKnownTypesIfNeeded( p1 );
+            if (p1 != null && originalIsIndexed) {
+               transactionContext = transactionContext == null ? makeTransactionalEventContext() : transactionContext;
+               removeFromIndexes(p1, key, transactionContext);
+            }
          }
          if (newValueIsIndexed) {
             transactionContext = transactionContext == null ? makeTransactionalEventContext() : transactionContext;
-            updateIndexes(p2, key, transactionContext);
+            updateIndexes(usingSkipIndexCleanupFlag, p2, key, transactionContext);
          }
       }
    }
@@ -477,18 +483,19 @@ public class QueryInterceptor extends CommandInterceptor {
    private void processPutMapCommand(final PutMapCommand command, final InvocationContext ctx, final Map<Object, Object> previousValues, TransactionContext transactionContext) {
       if (shouldModifyIndexes(command, ctx)) {
          Map<Object, Object> dataMap = command.getMap();
+         final boolean usingSkipIndexCleanupFlag = usingSkipIndexCleanup(command);
          // Loop through all the keys and put those key-value pairings into lucene.
          for (Map.Entry<Object, Object> entry : dataMap.entrySet()) {
             final Object key = extractValue(entry.getKey());
             final Object value = extractValue(entry.getValue());
             final Object previousValue = previousValues.get(key);
-            if (updateKnownTypesIfNeeded(previousValue)) {
+            if (!usingSkipIndexCleanupFlag && updateKnownTypesIfNeeded(previousValue)) {
                transactionContext = transactionContext == null ? makeTransactionalEventContext() : transactionContext;
                removeFromIndexes(previousValue, key, transactionContext);
             }
             if (updateKnownTypesIfNeeded(value)) {
                transactionContext = transactionContext == null ? makeTransactionalEventContext() : transactionContext;
-               updateIndexes(value, key, transactionContext);
+               updateIndexes(usingSkipIndexCleanupFlag, value, key, transactionContext);
             }
          }
       }
@@ -503,8 +510,9 @@ public class QueryInterceptor extends CommandInterceptor {
     * @param transactionContext Optional for lazy initialization, or reuse an existing context.
     */
    private void processPutKeyValueCommand(final PutKeyValueCommand command, final InvocationContext ctx, final Object previousValue, TransactionContext transactionContext) {
+      final boolean usingSkipIndexCleanupFlag = usingSkipIndexCleanup(command);
       //whatever the new type, we might still need to cleanup for the previous value (and schedule removal first!)
-      if (updateKnownTypesIfNeeded(previousValue)) {
+      if (!usingSkipIndexCleanupFlag && updateKnownTypesIfNeeded(previousValue)) {
          if (shouldModifyIndexes(command, ctx)) {
             transactionContext = transactionContext == null ? makeTransactionalEventContext() : transactionContext;
             removeFromIndexes(previousValue, extractValue(command.getKey()), transactionContext);
@@ -515,7 +523,7 @@ public class QueryInterceptor extends CommandInterceptor {
          if (shouldModifyIndexes(command, ctx)) {
             // This means that the entry is just modified so we need to update the indexes and not add to them.
             transactionContext = transactionContext == null ? makeTransactionalEventContext() : transactionContext;
-            updateIndexes(value, extractValue(command.getKey()), transactionContext);
+            updateIndexes(usingSkipIndexCleanupFlag, value, extractValue(command.getKey()), transactionContext);
          }
       }
    }
@@ -559,5 +567,10 @@ public class QueryInterceptor extends CommandInterceptor {
          //ignored;
       }
    }
+
+   private boolean usingSkipIndexCleanup(final LocalFlagAffectedCommand command) {
+      return command != null && command.hasFlag(Flag.SKIP_INDEX_CLEANUP);
+   }
+
 
 }
