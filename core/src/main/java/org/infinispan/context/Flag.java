@@ -231,6 +231,16 @@ public enum Flag {
     */
    OPERATION_MEMCACHED,
 
+   /**
+    * Any time a new indexed entry is inserted, a delete statement is issued on the indexes
+    * to remove previous values. This delete statement is executed even if there is no known
+    * entry having the same key. Enable this flag when you know for sure there is no existing
+    * entry in the index for improved performance.
+    * For example, this is useful for speeding up import of new data in an empty cache
+    * having an empty index.
+    */
+   SKIP_INDEX_CLEANUP
+
    ;
 
    /**
