@@ -658,7 +658,11 @@ public class DefaultCacheManager implements EmbeddedCacheManager, CacheManager {
 
    @Override
    public Configuration getCacheConfiguration(String name) {
-      return configurationOverrides.get(name);
+      Configuration configuration = configurationOverrides.get(name);
+      if (configuration == null && cacheExists(name)) {
+         return defaultConfiguration;
+      }
+      return configuration;
    }
 
    @Override
