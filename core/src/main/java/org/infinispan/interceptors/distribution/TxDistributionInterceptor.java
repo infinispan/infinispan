@@ -1,6 +1,5 @@
 package org.infinispan.interceptors.distribution;
 
-import org.infinispan.atomic.DeltaCompositeKey;
 import org.infinispan.commands.write.ValueMatcher;
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.commands.FlagAffectedCommand;
@@ -31,10 +30,13 @@ import org.infinispan.transaction.LockingMode;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.concurrent.TimeoutException;
+
+import static org.infinispan.util.DeltaCompositeKeyUtil.filterDeltaCompositeKey;
+import static org.infinispan.util.DeltaCompositeKeyUtil.filterDeltaCompositeKeys;
+import static org.infinispan.util.DeltaCompositeKeyUtil.getAffectedKeysFromContext;
 
 /**
  * Handles the distribution of the transactional caches.
@@ -137,7 +139,7 @@ public class TxDistributionInterceptor extends BaseDistributionInterceptor {
          // available.  It could just have been removed in the same tx beforehand.  Also don't bother with a remote get if
          // the entry is mapped to the local node.
          if (!skipRemoteGet && returnValue == null && ctx.isOriginLocal()) {
-            Object key = command.getKey();
+            Object key = filterDeltaCompositeKey(command.getKey());
             if (needsRemoteGet(ctx, command)) {
                InternalCacheEntry ice = remoteGet(ctx, key, false, command);
                if (ice != null) {
@@ -166,15 +168,7 @@ public class TxDistributionInterceptor extends BaseDistributionInterceptor {
    public Object visitLockControlCommand(TxInvocationContext ctx, LockControlCommand command) throws Throwable {
       if (ctx.isOriginLocal()) {
          //In Pessimistic mode, the delta composite keys were sent to the wrong owner and never locked.
-         ArrayList<Object> keyToCheckOwners = new ArrayList<Object>(command.getKeys().size());
-         for (Object key : command.getKeys()) {
-            if (key instanceof DeltaCompositeKey) {
-               keyToCheckOwners.add(((DeltaCompositeKey) key).getDeltaAwareValueKey());
-            } else {
-               keyToCheckOwners.add(key);
-            }
-         }
-         final Collection<Address> affectedNodes = cdl.getOwners(keyToCheckOwners);
+         final Collection<Address> affectedNodes = cdl.getOwners(filterDeltaCompositeKeys(command.getKeys()));
          ((LocalTxInvocationContext) ctx).remoteLocksAcquired(affectedNodes == null ? dm.getConsistentHash().getMembers() : affectedNodes);
          log.tracef("Registered remote locks acquired %s", affectedNodes);
          rpcManager.invokeRemotely(affectedNodes, command, rpcManager.getDefaultRpcOptions(true, false));
@@ -198,7 +192,8 @@ public class TxDistributionInterceptor extends BaseDistributionInterceptor {
 
       if (shouldInvokeRemoteTxCommand(ctx)) {
          boolean affectsAllNodes = ctx.getCacheTransaction().hasModification(ClearCommand.class);
-         Collection<Address> recipients = affectsAllNodes ? dm.getWriteConsistentHash().getMembers() : cdl.getOwners(ctx.getAffectedKeys());
+         Collection<Address> recipients = affectsAllNodes ? dm.getWriteConsistentHash().getMembers() :
+               cdl.getOwners(getAffectedKeysFromContext(ctx));
          recipients = recipients == null ? dm.getWriteConsistentHash().getMembers() : recipients;
          prepareOnAffectedNodes(ctx, command, recipients, defaultSynchronous);
 
@@ -234,7 +229,7 @@ public class TxDistributionInterceptor extends BaseDistributionInterceptor {
 
    private Collection<Address> getCommitNodes(TxInvocationContext ctx) {
       LocalTransaction localTx = (LocalTransaction) ctx.getCacheTransaction();
-      Collection<Address> affectedNodes = cdl.getOwners(ctx.getAffectedKeys());
+      Collection<Address> affectedNodes = cdl.getOwners(getAffectedKeysFromContext(ctx));
       List<Address> members = dm.getConsistentHash().getMembers();
       return localTx.getCommitNodes(affectedNodes, rpcManager.getTopologyId(), members);
    }

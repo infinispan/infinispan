@@ -9,10 +9,13 @@ import org.infinispan.remoting.rpc.RpcManager;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.transaction.xa.CacheTransaction;
 import org.infinispan.transaction.xa.GlobalTransaction;
+import org.infinispan.util.DeltaCompositeKeyUtil;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
 import java.util.Collection;
+
+import static org.infinispan.util.DeltaCompositeKeyUtil.filterDeltaCompositeKeys;
 
 /**
  * Base class for both Sync and XAResource enlistment adapters.
@@ -77,7 +80,7 @@ public abstract class AbstractEnlistmentAdapter {
    private void removeTransactionInfoRemotely(LocalTransaction localTransaction, GlobalTransaction gtx) {
       if (mayHaveRemoteLocks(localTransaction) && !isSecondPhaseAsync) {
          final TxCompletionNotificationCommand command = commandsFactory.buildTxCompletionNotificationCommand(null, gtx);
-         final Collection<Address> owners = clusteringLogic.getOwners(localTransaction.getAffectedKeys());
+         final Collection<Address> owners = clusteringLogic.getOwners(filterDeltaCompositeKeys(localTransaction.getAffectedKeys()));
          Collection<Address> commitNodes = localTransaction.getCommitNodes(owners, rpcManager.getTopologyId(), rpcManager.getMembers());
          log.tracef("About to invoke tx completion notification on commitNodes: %s", commitNodes);
          rpcManager.invokeRemotely(commitNodes, command, rpcManager.getDefaultRpcOptions(false, false));
