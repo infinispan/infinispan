@@ -85,6 +85,9 @@ public class FineGrainedAtomicHashMapProxy<K, V> extends AtomicHashMapProxy<K, V
 
    @Override
    public Collection<V> values() {
+      if (hasUncommittedChanges()) {
+         return new HashSet<V>(valuesUncommitted());
+      }
       AtomicHashMap<K, V> map = getDeltaMapForRead().copy();
       Set<V> result = new HashSet<V>(valuesUncommitted());
       if (map != null) {
