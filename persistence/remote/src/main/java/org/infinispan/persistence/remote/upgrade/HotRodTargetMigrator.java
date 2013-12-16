@@ -10,7 +10,6 @@ import org.infinispan.Cache;
 import org.infinispan.client.hotrod.RemoteCache;
 import org.infinispan.commons.CacheException;
 import org.infinispan.commons.marshall.Marshaller;
-import org.infinispan.commons.marshall.jboss.GenericJBossMarshaller;
 import org.infinispan.commons.util.Util;
 import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.persistence.manager.PersistenceManager;
@@ -40,7 +39,7 @@ public class HotRodTargetMigrator implements TargetMigrator {
       ComponentRegistry cr = cache.getAdvancedCache().getComponentRegistry();
       PersistenceManager loaderManager = cr.getComponent(PersistenceManager.class);
       Set<RemoteStore> stores = loaderManager.getStores(RemoteStore.class);
-      Marshaller marshaller = new GenericJBossMarshaller();
+      Marshaller marshaller = new MigrationMarshaller();
       byte[] knownKeys;
       try {
          knownKeys = marshaller.objectToByteBuffer(MIGRATION_MANAGER_HOT_ROD_KNOWN_KEYS);
