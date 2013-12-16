@@ -1,8 +1,9 @@
 package org.infinispan.atomic;
 
-import java.util.Collection;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Map.Entry;
-import java.util.Set;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.atomic.AtomicBoolean;
 
@@ -11,54 +12,66 @@ import javax.transaction.TransactionManager;
 import org.infinispan.Cache;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
+import org.infinispan.distribution.MagicKey;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.transaction.LockingMode;
 import org.infinispan.transaction.TransactionMode;
 import org.testng.annotations.Test;
 
+import static org.infinispan.atomic.AtomicMapLookup.getAtomicMap;
+import static org.infinispan.atomic.AtomicMapLookup.getFineGrainedAtomicMap;
+import static org.testng.AssertJUnit.*;
+
 /**
  * @author Vladimir Blagojevic (C) 2011 Red Hat Inc.
  * @author Sanne Grinovero (C) 2011 Red Hat Inc.
+ * @author Pedro Ruivo
  */
 @Test(groups = "functional", testName = "atomic.FineGrainedAtomicMapAPITest")
 public class FineGrainedAtomicMapAPITest extends MultipleCacheManagersTest {
 
+   @Override
    protected void createCacheManagers() throws Throwable {
       ConfigurationBuilder configurationBuilder = getDefaultClusteredCacheConfig(CacheMode.REPL_SYNC, true);
       configurationBuilder.transaction()
                   .transactionMode(TransactionMode.TRANSACTIONAL)
                   .lockingMode(LockingMode.PESSIMISTIC)
                   .locking().lockAcquisitionTimeout(100l);
-      createCluster( configurationBuilder, 2 );
+      createCluster(configurationBuilder, 2);
    }
 
-   @Test(enabled=true)
-   public void testMultipleTx() throws Exception{
+   public void testMultipleTx() throws Exception {
       final Cache<String, Object> cache1 = cache(0, "atomic");
       final Cache<String, Object> cache2 = cache(1, "atomic");
 
-      final TransactionManager tm1 = TestingUtil.getTransactionManager(cache1);
-      final TransactionManager tm2 = TestingUtil.getTransactionManager(cache2);
+      final TransactionManager tm1 = tm(cache1);
 
-      final FineGrainedAtomicMap<String, String> map1 = AtomicMapLookup.getFineGrainedAtomicMap(cache1, "testMultipleTx", true);
-      final FineGrainedAtomicMap<String, String> map2 = AtomicMapLookup.getFineGrainedAtomicMap(cache2, "testMultipleTx", false);
-      assert map2.size() == 0 && map1.size() == 0;
+      final FineGrainedAtomicMap<String, String> map1 = getFineGrainedAtomicMap(cache1, "testMultipleTx", true);
+      final FineGrainedAtomicMap<String, String> map2 = getFineGrainedAtomicMap(cache2, "testMultipleTx", false);
+
+      Map<Object, Object> expectedMap = Collections.emptyMap();
+      assertMap(expectedMap, map1);
+      assertMap(expectedMap, map2);
 
       tm1.begin();
       map1.put("k1", "initial");
       tm1.commit();
 
-      assert map2.size() == 1 && map1.size() == 1;
+      expectedMap = createMap(new Object[]{"k1"}, new Object[]{"initial"});
+      assertMap(expectedMap, map1);
+      assertMap(expectedMap, map2);
 
       tm1.begin();
       map1.put("k1", "v1");
       map1.put("k2", "v2");
       map1.put("k3", "v3");
-      tm1.commit();  
+      tm1.commit();
 
-      assert map1.size() == 3;
-      assert map2.size() == 3;
+      expectedMap = createMap(new Object[]{"k1", "k2", "k3"},
+                              new Object[]{"v1", "v2", "v3"});
+      assertMap(expectedMap, map1);
+      assertMap(expectedMap, map2);
 
       tm1.begin();
       map1.put("k4", "v4");
@@ -66,81 +79,76 @@ public class FineGrainedAtomicMapAPITest extends MultipleCacheManagersTest {
       map1.put("k6", "v6");
       tm1.commit();
 
-      assert map2.get("k1").equals("v1");
-      assert map2.get("k2").equals("v2");
-      assert map2.get("k3").equals("v3");
-      assert map2.get("k4").equals("v4");
-      assert map2.get("k5").equals("v5");
-      assert map2.get("k6").equals("v6");
-      
-      assert map1.get("k1").equals("v1");
-      assert map1.get("k2").equals("v2");
-      assert map1.get("k3").equals("v3");
-      assert map1.get("k4").equals("v4");
-      assert map1.get("k5").equals("v5");
-      assert map1.get("k6").equals("v6");
+      expectedMap = createMap(new Object[]{"k1", "k2", "k3", "k4", "k5", "k6"},
+                              new Object[]{"v1", "v2", "v3", "v4", "v5", "v6"});
+      assertMap(expectedMap, map1);
+      assertMap(expectedMap, map2);
    }
 
-   @Test(enabled=true)
    public void testSizeOnCache() throws Exception {
-      final Cache<String, Object> cache1 = cache(0, "atomic");
-      assert cache1.size() == 0;
-      cache1.put("Hi", "Someone");
-      assert cache1.size() == 1;
+      final Cache<Object, Object> cache1 = cache(0, "atomic");
+      final TransactionManager tm1 = tm(0, "atomic");
+      assertSize(cache1, 0);
+      cache1.put(new MagicKey("Hi", cache1), "Someone");
+      assertSize(cache1, 1);
 
-      tm(0, "atomic").begin();
-      assert cache1.size() == 1;
-      cache1.put("Need", "Read Consistency");
-      assert cache1.size() == 2;
-      tm(0, "atomic").commit();
-      assert cache1.size() == 2;
+      tm1.begin();
+      assertSize(cache1, 1);
+      cache1.put(new MagicKey("Need", cache1), "Read Consistency");
+      assertSize(cache1, 2);
+      tm1.commit();
+      assertSize(cache1, 2);
 
-      tm(0, "atomic").begin();
-      assert cache1.size() == 2;
-      cache1.put("Need Also", "Speed");
-      assert cache1.size() == 3;
-      tm(0, "atomic").rollback();
-      assert cache1.size() == 2;
+      tm1.begin();
+      assertSize(cache1, 2);
+      cache1.put(new MagicKey("Need Also", cache1), "Speed");
+      assertSize(cache1, 3);
+      tm1.rollback();
+      assertSize(cache1, 2);
 
-      FineGrainedAtomicMap<Object,Object> atomicMap = AtomicMapLookup.getFineGrainedAtomicMap(cache1, "testSizeOnCache", true);
-      assert cache1.size() == 3;
+      FineGrainedAtomicMap<Object, Object> atomicMap = getFineGrainedAtomicMap(cache1,
+                                                                               new MagicKey("testSizeOnCache", cache1),
+                                                                               true);
+      assertSize(cache1, 3);
       atomicMap.put("mm", "nn");
-      assert cache1.size() == 3;
+      assertSize(cache1, 3);
 
-      tm(0, "atomic").begin();
-      assert cache1.size() == 3;
-      atomicMap = AtomicMapLookup.getFineGrainedAtomicMap(cache1, "testSizeOnCache-second", true);
-      assert cache1.size() == 4;
+      tm1.begin();
+      assertSize(cache1, 3);
+      atomicMap = getFineGrainedAtomicMap(cache1, new MagicKey("testSizeOnCache-second", cache1), true);
+      assertSize(cache1, 4);
       atomicMap.put("mm", "nn");
-      assert cache1.size() == 4 : "Cache size is actually " + cache1.size();
-      tm(0, "atomic").commit();
-      assert cache1.size() == 4;
+      assertSize(cache1, 4);
+      tm1.commit();
+      assertSize(cache1, 4);
 
-      tm(0, "atomic").begin();
-      assert cache1.size() == 4;
-      atomicMap = AtomicMapLookup.getFineGrainedAtomicMap(cache1, "testSizeOnCache-third", true);
-      assert cache1.size() == 5;
+      tm1.begin();
+      assertSize(cache1, 4);
+      atomicMap = getFineGrainedAtomicMap(cache1, new MagicKey("testSizeOnCache-third", cache1), true);
+      assertSize(cache1, 5);
       atomicMap.put("mm", "nn");
-      assert cache1.size() == 5 : "Cache size is actually " + cache1.size();
+      assertSize(cache1, 5);
       atomicMap.put("ooo", "weird!");
-      assert cache1.size() == 5 : "Cache size is actually " + cache1.size();
-      atomicMap = AtomicMapLookup.getFineGrainedAtomicMap(cache1, "testSizeOnCache-onemore", true);
-      assert cache1.size() == 6 : "Cache size is actually " + cache1.size();
+      assertSize(cache1, 5);
+      atomicMap = getFineGrainedAtomicMap(cache1, new MagicKey("testSizeOnCache-onemore", cache1), true);
+      assertSize(cache1, 6);
       atomicMap.put("even less?", "weird!");
-      assert cache1.size() == 6 : "Cache size is actually " + cache1.size();
-      tm(0, "atomic").rollback();
-      assert cache1.size() == 4;
+      assertSize(cache1, 6);
+      tm1.rollback();
+      assertSize(cache1, 4);
    }
 
-   @Test(enabled=true)
    public void testConcurrentReadsOnExistingMap() throws Exception {
       final Cache<String, Object> cache1 = cache(0, "atomic");
-      assert cache1.size() == 0;
-      final FineGrainedAtomicMap<String, String> map = AtomicMapLookup.getFineGrainedAtomicMap(cache1, "testConcurrentReadsOnExistingMap", true);
+      assertSize(cache1, 0);
+      final FineGrainedAtomicMap<String, String> map = getFineGrainedAtomicMap(cache1,
+                                                                               "testConcurrentReadsOnExistingMap", true);
       map.put("the-1", "my preciousss");
+      final Map<Object, Object> expectedMap = createMap(new Object[]{"the-1"}, new Object[]{"my preciousss"});
+
       tm(0, "atomic").begin();
-      assert "my preciousss".equals(map.get("the-1"));
-      final AtomicBoolean allok = new AtomicBoolean(false);
+      assertMap(expectedMap, map);
+      final AtomicBoolean allOk = new AtomicBoolean(false);
       map.put("the-2", "a minor");
 
       fork(new Runnable() {
@@ -148,11 +156,12 @@ public class FineGrainedAtomicMapAPITest extends MultipleCacheManagersTest {
          public void run() {
             try {
                tm(0, "atomic").begin();
-               FineGrainedAtomicMap<String, String> map = AtomicMapLookup.getFineGrainedAtomicMap(cache1, "testConcurrentReadsOnExistingMap", true);
-               assert "my preciousss".equals(map.get("the-1"));
-               assert ! map.containsKey("the-2");
+               FineGrainedAtomicMap<String, String> map = getFineGrainedAtomicMap(cache1,
+                                                                                  "testConcurrentReadsOnExistingMap", true);
+               assertMap(expectedMap, map);
+               assertNotContainsKey(map, "the-2");
                tm(0, "atomic").commit();
-               allok.set(true);
+               allOk.set(true);
             } catch (Exception e) {
                log.error("Unexpected error performing transaction", e);
             }
@@ -160,18 +169,20 @@ public class FineGrainedAtomicMapAPITest extends MultipleCacheManagersTest {
       }, true);
 
       tm(0, "atomic").commit();
-      assert allok.get();
+      assertTrue(allOk.get());
    }
 
-   @Test(enabled=true)
    public void testConcurrentWritesOnExistingMap() throws Exception {
       final Cache<String, Object> cache1 = cache(0, "atomic");
-      assert cache1.size() == 0;
-      final FineGrainedAtomicMap<String, String> map = AtomicMapLookup.getFineGrainedAtomicMap(cache1, "testConcurrentReadsOnExistingMap", true);
+      assertSize(cache1, 0);
+      final FineGrainedAtomicMap<String, String> map = getFineGrainedAtomicMap(cache1,
+                                                                               "testConcurrentReadsOnExistingMap", true);
       map.put("the-1", "my preciousss");
+      final Map<Object, Object> expectedMap = createMap(new Object[]{"the-1"}, new Object[]{"my preciousss"});
+
       tm(0, "atomic").begin();
-      assert "my preciousss".equals(map.get("the-1"));
-      final AtomicBoolean allok = new AtomicBoolean(false);
+      assertMap(expectedMap, map);
+      final AtomicBoolean allOk = new AtomicBoolean(false);
       map.put("the-2", "a minor");
 
       fork(new Runnable() {
@@ -179,13 +190,14 @@ public class FineGrainedAtomicMapAPITest extends MultipleCacheManagersTest {
          public void run() {
             try {
                tm(0, "atomic").begin();
-               FineGrainedAtomicMap<String, String> map = AtomicMapLookup.getFineGrainedAtomicMap(cache1, "testConcurrentReadsOnExistingMap", true);
-               assert "my preciousss".equals(map.get("the-1"));
-               assert ! map.containsKey("the-2");
+               FineGrainedAtomicMap<String, String> map = getFineGrainedAtomicMap(cache1,
+                                                                                  "testConcurrentReadsOnExistingMap", true);
+               assertMap(expectedMap, map);
+               assertNotContainsKey(map, "the-2");
                map.put("the-2", "a minor-different"); // We're in pessimistic locking, so this put is going to block
                tm(0, "atomic").commit();
             } catch (org.infinispan.util.concurrent.TimeoutException e) {
-               allok.set(true);
+               allOk.set(true);
             } catch (Exception e) {
                log.error("Unexpected error performing transaction", e);
             }
@@ -193,39 +205,41 @@ public class FineGrainedAtomicMapAPITest extends MultipleCacheManagersTest {
       }, true);
 
       tm(0, "atomic").commit();
-      assert allok.get();
+      assertTrue(allOk.get());
    }
-   
-   @Test(enabled=true)
+
    public void testConcurrentWritesAndIteration() throws Exception {
       final Cache<String, Object> cache1 = cache(0, "atomic");
-      assert cache1.size() == 0;
-      FineGrainedAtomicMap<String, String> map = AtomicMapLookup.getFineGrainedAtomicMap(cache1, "testConcurrentWritesAndIteration", true);
-      assert map.size() == 0;
+      assertSize(cache1, 0);
+      final FineGrainedAtomicMap<String, String> map = getFineGrainedAtomicMap(cache1,
+                                                                               "testConcurrentWritesAndIteration", true);
+      assertSize(map, 0);
       final AtomicBoolean allOk = new AtomicBoolean(true);
       final CountDownLatch latch = new CountDownLatch(1);
       Thread t1 = fork(new Runnable() {
          @Override
          public void run() {
             try {
-               FineGrainedAtomicMap<String, String> map = AtomicMapLookup.getFineGrainedAtomicMap(cache1, "testConcurrentWritesAndIteration", true);
+               FineGrainedAtomicMap<String, String> map = getFineGrainedAtomicMap(cache1,
+                                                                                  "testConcurrentWritesAndIteration", true);
                latch.await();
-               for(int i = 0; i< 500; i++){
+               for (int i = 0; i < 500; i++) {
                   map.put("key-" + i, "value-" + i);
                }
-            } catch (Exception e) {               
+            } catch (Exception e) {
                log.error("Unexpected error performing transaction", e);
             }
          }
       }, false);
-      
+
       Thread t2 = fork(new Runnable() {
          @Override
          public void run() {
-            FineGrainedAtomicMap<String, String> map = AtomicMapLookup.getFineGrainedAtomicMap(cache1, "testConcurrentWritesAndIteration", true);
-            try {               
-               latch.await();               
-               for(int i = 0; i< 500; i++){                  
+            FineGrainedAtomicMap<String, String> map = getFineGrainedAtomicMap(cache1,
+                                                                               "testConcurrentWritesAndIteration", true);
+            try {
+               latch.await();
+               for (int i = 0; i < 500; i++) {
                   map.keySet();
                }
             } catch (Exception e) {
@@ -237,211 +251,172 @@ public class FineGrainedAtomicMapAPITest extends MultipleCacheManagersTest {
       latch.countDown();
       t1.join();
       t2.join();
-      assert allOk.get() : "iteration raised an exception";
+      assertTrue("Iteration raised an expection.", allOk.get());
    }
 
-
-   @Test(enabled=true)
    public void testRollback() throws Exception {
       final Cache<String, Object> cache1 = cache(0, "atomic");
       final Cache<String, Object> cache2 = cache(1, "atomic");
-      final FineGrainedAtomicMap<String, String> map1 = AtomicMapLookup.getFineGrainedAtomicMap(cache1, "testRollback", true);
+      final FineGrainedAtomicMap<String, String> map1 = getFineGrainedAtomicMap(cache1, "testRollback", true);
 
       tm(0, "atomic").begin();
       map1.put("k1", "v");
       map1.put("k2", "v2");
       tm(0, "atomic").rollback();
-      FineGrainedAtomicMap<Object, Object> instance = AtomicMapLookup.getFineGrainedAtomicMap(cache2, "testRollback", true);
-      assert !instance.containsKey("k1");
-
-      assert !map1.containsKey("k1");
+      FineGrainedAtomicMap<Object, Object> instance = getFineGrainedAtomicMap(cache2, "testRollback", true);
+      assertMap(Collections.emptyMap(), instance);
+      assertMap(Collections.emptyMap(), map1);
    }
 
-   @Test(enabled=true,expectedExceptions={IllegalArgumentException.class})
+   @SuppressWarnings("UnusedDeclaration")
+   @Test(expectedExceptions = {IllegalArgumentException.class})
    public void testFineGrainedMapAfterSimpleMap() throws Exception {
       Cache<String, Object> cache1 = cache(0, "atomic");
 
-      AtomicMap<String, String> map = AtomicMapLookup.getAtomicMap(cache1, "testReplicationRemoveCommit");
-      FineGrainedAtomicMap<String, String> map2 = AtomicMapLookup.getFineGrainedAtomicMap(cache1, "testReplicationRemoveCommit");
+      AtomicMap<String, String> map = getAtomicMap(cache1, "testReplicationRemoveCommit");
+      FineGrainedAtomicMap<String, String> map2 = getFineGrainedAtomicMap(cache1, "testReplicationRemoveCommit");
    }
 
-   @Test(enabled=true)
    public void testRollbackAndThenCommit() throws Exception {
       final Cache<String, Object> cache1 = cache(0, "atomic");
       final Cache<String, Object> cache2 = cache(1, "atomic");
-      final FineGrainedAtomicMap<String, String> map1 = AtomicMapLookup.getFineGrainedAtomicMap(cache1, "testRollbackAndThenCommit", true);
+      final FineGrainedAtomicMap<String, String> map1 = getFineGrainedAtomicMap(cache1,
+                                                                                "testRollbackAndThenCommit", true);
 
       tm(0, "atomic").begin();
       map1.put("k1", "v");
       map1.put("k2", "v2");
       tm(0, "atomic").rollback();
-      FineGrainedAtomicMap<Object, Object> map2 = AtomicMapLookup.getFineGrainedAtomicMap(cache2, "testRollbackAndThenCommit", true);
-      assert !map2.containsKey("k1");
-      assert !map1.containsKey("k1");
+      Map<Object, Object> expectedMap = Collections.emptyMap();
+
+      FineGrainedAtomicMap<Object, Object> map2 = getFineGrainedAtomicMap(cache2, "testRollbackAndThenCommit", true);
+      assertMap(expectedMap, map2);
+      assertMap(expectedMap, map1);
 
       tm(0, "atomic").begin();
       map1.put("k3", "v3");
       map1.put("k4", "v4");
       tm(0, "atomic").commit();
 
-      assert map1.size() == 2 && map2.size() == 2;
+      expectedMap = createMap(new Object[]{"k3", "k4"},
+                              new Object[]{"v3", "v4"});
+      assertMap(expectedMap, map2);
+      assertMap(expectedMap, map1);
    }
 
-   @Test(enabled=true)
    public void testCreateMapInTx() throws Exception {
       final Cache<String, Object> cache1 = cache(0, "atomic");
       final Cache<String, Object> cache2 = cache(1, "atomic");
-      FineGrainedAtomicMap<String, String> map1;
+
       tm(0, "atomic").begin();
-      map1 = AtomicMapLookup.getFineGrainedAtomicMap(cache1, "testCreateMapInTx", true);
+      FineGrainedAtomicMap<String, String> map1 = getFineGrainedAtomicMap(cache1, "testCreateMapInTx", true);
       map1.put("k1", "v1");
       tm(0, "atomic").commit();
 
-      assert map1.size() == 1;
-      assert map1.get("k1").equals("v1");
+      Map<Object, Object> expectedMap = createMap(new Object[]{"k1"}, new Object[]{"v1"});
+      assertMap(expectedMap, map1);
 
-      final FineGrainedAtomicMap<String, String> map2 = AtomicMapLookup.getFineGrainedAtomicMap(cache2, "testCreateMapInTx", true);
-
-      assert map2.size() == 1;
-      assert map2.get("k1").equals("v1");
+      final FineGrainedAtomicMap<String, String> map2 = getFineGrainedAtomicMap(cache2, "testCreateMapInTx", true);
+      assertMap(expectedMap, map2);
    }
 
-   @Test(enabled=true)
+   @SuppressWarnings("UnusedDeclaration")
    public void testNoTx() throws Exception {
       final Cache<String, Object> cache1 = cache(0, "atomic");
       final Cache<String, Object> cache2 = cache(1, "atomic");
 
-      final FineGrainedAtomicMap<String, String> map = AtomicMapLookup.getFineGrainedAtomicMap(cache1, "testNoTx", true);
+      final FineGrainedAtomicMap<String, String> map = getFineGrainedAtomicMap(cache1, "testNoTx", true);
       map.put("existing", "existing");
       map.put("blah", "blah");
 
-      assert map.size() == 2;
-      assert map.get("blah").equals("blah");
-      assert map.containsKey("existing");
+      Map<Object, Object> expectedMap = createMap(new Object[]{"existing", "blah"},
+                                                  new Object[]{"existing", "blah"});
+      assertMap(expectedMap, map);
    }
-   
-   @Test(enabled=true)
+
+   @SuppressWarnings("UnusedDeclaration")
    public void testReadUncommittedValues() throws Exception {
-      Cache<String, Object> cache1 = cache(0, "atomic");
-      Cache<String, Object> cache2 = cache(1, "atomic");
+      final Cache<String, Object> cache1 = cache(0, "atomic");
+      final Cache<String, Object> cache2 = cache(1, "atomic");
 
-      FineGrainedAtomicMap<String, String> map = AtomicMapLookup.getFineGrainedAtomicMap(cache1, "testReadUncommittedValues");
+      FineGrainedAtomicMap<String, String> map = getFineGrainedAtomicMap(cache1, "testReadUncommittedValues");
 
-      TestingUtil.getTransactionManager(cache1).begin();
+      tm(cache1).begin();
       map.put("key one", "value one");
       map.put("blah", "blah");
 
-      assert "value one".equals(map.get("key one"));
-      assert map.size() == 2;
-      assert map.keySet().size() == 2;
-      Set<String> keySet = map.keySet();
-      for (String k : keySet) {
-         assert k.equals("key one") || k.equals("blah");
-      }
-      Collection<String> values = map.values();
-      for (String v : values) {
-         assert v.equals("value one") || v.equals("blah");
-      }
-      assert map.containsKey("key one");
-      assert map.values().size() == 2;
-      assert !map.isEmpty();
-      Set<Entry<String,String>> entrySet = map.entrySet();
-      for (Entry<String, String> entry : entrySet) {
-         if(entry.getKey().equals("key one")) assert entry.getValue().equals("value one");
-         if(entry.getKey().equals("blah")) assert entry.getValue().equals("blah");
-      }
+      Map<Object, Object> expectedMap = createMap(new Object[]{"key one", "blah"},
+                                                  new Object[]{"value one", "blah"});
 
-      FineGrainedAtomicMap<String, String> sameAsMap = AtomicMapLookup.getFineGrainedAtomicMap(cache1, "testReadUncommittedValues");
-      assert "value one".equals(sameAsMap.get("key one"));
-      TestingUtil.getTransactionManager(cache1).commit();
+      assertMap(expectedMap, map);
 
-      assert map.size() == 2;
-      assert map.get("blah").equals("blah");
+      FineGrainedAtomicMap<String, String> sameAsMap = getFineGrainedAtomicMap(cache1, "testReadUncommittedValues");
+      assertMap(expectedMap, sameAsMap);
+      tm(cache1).commit();
 
+      assertMap(expectedMap, map);
+      assertMap(expectedMap, sameAsMap);
+
+      expectedMap = createMap(new Object[]{"blah"},
+                              new Object[]{"blah"});
       //now remove one of the elements in a transaction:
-      TestingUtil.getTransactionManager(cache1).begin();
-      map = AtomicMapLookup.getFineGrainedAtomicMap(cache1, "testReadUncommittedValues");
+      tm(cache1).begin();
+      map = getFineGrainedAtomicMap(cache1, "testReadUncommittedValues");
       String removed = map.remove("key one");
-      assert "value one".equals(removed);
-      assert ! map.containsKey("key one");
-      assert ! map.containsValue("value one");
-      assert map.size() == 1;
-      assert ! map.isEmpty();
-      entrySet = map.entrySet();
-      assert entrySet.size() == 1;
-      for (Entry<String, String> entry : entrySet) {
-         assert "blah".equals(entry.getKey());
-         assert "blah".equals(entry.getValue());
-      }
-      TestingUtil.getTransactionManager(cache1).commit();
+      assertEquals("Wrong value removed.", "value one", removed);
+      assertNotContainsKey(map, "key one");
+      assertNotContainsValue(map, "value one");
+      System.out.println(map.values());
+      assertMap(expectedMap, map);
+      tm(cache1).commit();
 
       //verify state after commit:
-      map = AtomicMapLookup.getFineGrainedAtomicMap(cache1, "testReadUncommittedValues");
+      map = getFineGrainedAtomicMap(cache1, "testReadUncommittedValues");
       removed = map.remove("key one");
-      assert removed == null;
-      assert ! map.containsKey("key one");
-      assert ! map.containsValue("value one");
-      assert map.size() == 1;
-      assert ! map.isEmpty();
-      entrySet = map.entrySet();
-      assert entrySet.size() == 1;
-      for (Entry<String, String> entry : entrySet) {
-         assert "blah".equals(entry.getKey());
-         assert "blah".equals(entry.getValue());
-      }
+      assertNull("Wrong value removed.", removed);
+      assertNotContainsKey(map, "key one");
+      assertNotContainsValue(map, "value one");
+      assertMap(expectedMap, map);
+
+      expectedMap = createMap(new Object[]{"key one", "blah"},
+                              new Object[]{"value one", "blah"});
 
       //add the removed element back:
-      TestingUtil.getTransactionManager(cache1).begin();
-      map = AtomicMapLookup.getFineGrainedAtomicMap(cache1, "testReadUncommittedValues");
+      tm(cache1).begin();
+      map = getFineGrainedAtomicMap(cache1, "testReadUncommittedValues");
       map.put("key one", "value one");
-      TestingUtil.getTransactionManager(cache1).commit();
-      assert map.size() == 2;
+      tm(cache1).commit();
+      assertMap(expectedMap, map);
+
+      expectedMap = createMap(new Object[]{"key one", "blah"},
+                              new Object[]{"value two", "blah"});
 
       //now test for element replacement:
-      TestingUtil.getTransactionManager(cache1).begin();
-      map = AtomicMapLookup.getFineGrainedAtomicMap(cache1, "testReadUncommittedValues");
+      tm(cache1).begin();
+      map = getFineGrainedAtomicMap(cache1, "testReadUncommittedValues");
       map.put("key one", "value two");
-      assert map.containsKey("key one");
-      assert ! map.containsValue("value one");
-      assert map.containsValue("value two");
-      assert map.size() == 2;
-      assert ! map.isEmpty();
-      entrySet = map.entrySet();
-      assert entrySet.size() == 2;
-      for (Entry<String, String> entry : entrySet) {
-         if(entry.getKey().equals("key one")) assert entry.getValue().equals("value two");
-         if(entry.getKey().equals("blah")) assert entry.getValue().equals("blah");
-      }
-      TestingUtil.getTransactionManager(cache1).commit();
+      assertNotContainsValue(map, "value one");
+      assertMap(expectedMap, map);
+      tm(cache1).commit();
 
       //verify state after commit:
-      map = AtomicMapLookup.getFineGrainedAtomicMap(cache1, "testReadUncommittedValues");
-      assert map.containsKey("key one");
-      assert ! map.containsValue("value one");
-      assert map.containsValue("value two");
-      assert map.size() == 2;
-      assert ! map.isEmpty();
-      entrySet = map.entrySet();
-      assert entrySet.size() == 2;
-      for (Entry<String, String> entry : entrySet) {
-         if(entry.getKey().equals("key one")) assert entry.getValue().equals("value two");
-         if(entry.getKey().equals("blah")) assert entry.getValue().equals("blah");
-      }
-
+      map = getFineGrainedAtomicMap(cache1, "testReadUncommittedValues");
+      assertNotContainsValue(map, "value one");
+      assertMap(expectedMap, map);
    }
 
-   @Test(enabled=true)
+   @SuppressWarnings("UnusedDeclaration")
    public void testCommitReadUncommittedValues() throws Exception {
-      Cache<String, Object> cache1 = cache(0, "atomic");
-      Cache<String, Object> cache2 = cache(1, "atomic");
+      final Cache<String, Object> cache1 = cache(0, "atomic");
+      final Cache<String, Object> cache2 = cache(1, "atomic");
 
-      FineGrainedAtomicMap<String, String> map = AtomicMapLookup.getFineGrainedAtomicMap(cache1, "testCommitReadUncommittedValues");
-      TestingUtil.getTransactionManager(cache1).begin();
+      final FineGrainedAtomicMap<String, String> map = getFineGrainedAtomicMap(cache1, "testCommitReadUncommittedValues");
+      tm(cache1).begin();
       map.put("existing", "existing");
       map.put("hey", "blah");
-      TestingUtil.getTransactionManager(cache1).commit();
+      tm(cache1).commit();
 
-      TestingUtil.getTransactionManager(cache1).begin();
+      tm(cache1).begin();
       map.put("key one", "fake one");
       map.put("key one", "value one");
       map.put("blah", "montevideo");
@@ -449,170 +424,141 @@ public class FineGrainedAtomicMapAPITest extends MultipleCacheManagersTest {
       map.remove("blah");
       map.put("blah", "toronto");
 
-      assert "value one".equals(map.get("key one"));
-      assert map.size() == 4;
-      assert map.keySet().size() == 4;
-      Set<String> keySet = map.keySet();
-      for (String k : keySet) {
-         assert k.equals("key one") || k.equals("blah") || k.equals("existing") || k.equals("hey");
-      }      
-      Collection<String> values = map.values();
-      for (String v : values) {
-         assert v.equals("value one") || v.equals("blah") || v.equals("existing") || v.equals("toronto");
-      }
-      assert map.containsKey("key one");
-      assert map.values().size() == 4; 
-      assert !map.isEmpty();
-      Set<Entry<String,String>> entrySet = map.entrySet();
-      for (Entry<String, String> entry : entrySet) {
-         if(entry.getKey().equals("key one")) assert entry.getValue().equals("value one");
-         if(entry.getKey().equals("blah")) assert entry.getValue().equals("toronto");
-         if(entry.getKey().equals("existing")) assert entry.getValue().equals("existing");
-         if(entry.getKey().equals("hey")) assert entry.getValue().equals("blah");
-      }
-      
-      FineGrainedAtomicMap<String, String> sameAsMap = AtomicMapLookup.getFineGrainedAtomicMap(cache1, "testCommitReadUncommittedValues");
-      assert "value one".equals(sameAsMap.get("key one"));
-      TestingUtil.getTransactionManager(cache1).commit();
+      Map<Object, Object> expectedMap = createMap(new Object[]{"key one", "blah", "existing", "hey"},
+                                                  new Object[]{"value one", "toronto", "existing", "blah"});
+      assertMap(expectedMap, map);
 
-      assert map.size() == 4;
-      assert map.get("blah").equals("toronto");
+      FineGrainedAtomicMap<String, String> sameAsMap = getFineGrainedAtomicMap(cache1, "testCommitReadUncommittedValues");
+      assertMap(expectedMap, sameAsMap);
+      tm(cache1).commit();
+
+      assertMap(expectedMap, map);
+      assertMap(expectedMap, sameAsMap);
    }
 
-   @Test(enabled=true)
    public void testConcurrentTx() throws Exception {
       final Cache<String, Object> cache1 = cache(0, "atomic");
       final Cache<String, Object> cache2 = cache(1, "atomic");
 
-      final TransactionManager tm1 = TestingUtil.getTransactionManager(cache1);
-      final TransactionManager tm2 = TestingUtil.getTransactionManager(cache2);
+      final TransactionManager tm1 = tm(cache1);
+      final TransactionManager tm2 = tm(cache2);
 
-      final FineGrainedAtomicMap<String, String> map1 = AtomicMapLookup.getFineGrainedAtomicMap(cache1, "testConcurrentTx",true);
+      final FineGrainedAtomicMap<String, String> map1 = getFineGrainedAtomicMap(cache1, "testConcurrentTx", true);
+      Map<Object, Object> expectedMap = createMap(new Object[]{"k1"}, new Object[]{"initial"});
+
       tm1.begin();
       map1.put("k1", "initial");
       tm1.commit();
 
-      final FineGrainedAtomicMap<String, String> map2 = AtomicMapLookup.getFineGrainedAtomicMap(cache2, "testConcurrentTx", false);
-      assert map2.size() == 1 && map1.size() == 1;
-      Thread t1 = new Thread( new Runnable() {
+      final FineGrainedAtomicMap<String, String> map2 = getFineGrainedAtomicMap(cache2, "testConcurrentTx", false);
 
+      assertMap(expectedMap, map1);
+      assertMap(expectedMap, map2);
+
+      Thread t1 = fork(new Runnable() {
          @Override
          public void run() {
             try {
                tm1.begin();
                map1.put("k1", "tx1Value");
                tm1.commit();
-            } 
-            catch (Exception e) {
+            } catch (Exception e) {
                log.error(e);
-            } 
-         }});
-      t1.start();
+            }
+         }
+      }, false);
 
-      Thread t2 = new Thread(new Runnable(){
-
+      Thread t2 = fork(new Runnable() {
          @Override
          public void run() {
             try {
                tm2.begin();
-               map2.put("k2", "tx2Value");  
+               map2.put("k2", "tx2Value");
                tm2.commit();
-            } 
-            catch (Exception e) {
+            } catch (Exception e) {
                log.error(e);
             }
-         }});
-      t2.start();
+         }
+      }, false);
 
       t2.join();
       t1.join();
-      assert map2.get("k2").equals("tx2Value");
-      assert map2.get("k1").equals("tx1Value");
 
-      assert map1.get("k2").equals("tx2Value");
-      assert map1.get("k1").equals("tx1Value");
+      expectedMap = createMap(new Object[]{"k1", "k2"},
+                              new Object[]{"tx1Value", "tx2Value"});
+      assertMap(expectedMap, map1);
+      assertMap(expectedMap, map2);
    }
 
-   
-   @Test(enabled=true)
    public void testReplicationPutCommit() throws Exception {
-      Cache<String, Object> cache1 = cache(0, "atomic");
-      Cache<String, Object> cache2 = cache(1, "atomic");
+      final Cache<String, Object> cache1 = cache(0, "atomic");
+      final Cache<String, Object> cache2 = cache(1, "atomic");
 
-      FineGrainedAtomicMap<String, String> map = AtomicMapLookup.getFineGrainedAtomicMap(cache1, "testReplicationPutCommit");
+      final FineGrainedAtomicMap<String, String> map = getFineGrainedAtomicMap(cache1, "testReplicationPutCommit");
+      Map<Object, Object> expectedMap = createMap(new Object[]{"existing", "blah"},
+                                                  new Object[]{"existing", "blah"});
 
-      TestingUtil.getTransactionManager(cache1).begin();
+      tm(cache1).begin();
       map.put("existing", "existing");
       map.put("blah", "blah");
-      TestingUtil.getTransactionManager(cache1).commit();
+      tm(cache1).commit();
 
-      assert map.size() == 2;
-      assert map.get("blah").equals("blah");
-      assert map.containsKey("existing");
+      assertMap(expectedMap, map);
 
-      FineGrainedAtomicMap<Object, Object> other = AtomicMapLookup.getFineGrainedAtomicMap(cache2, "testReplicationPutCommit", false);
-      assert other.size() == 2:" no, other size is " + other.size(); 
-      assert other.get("blah").equals("blah");
-      assert other.containsKey("blah");
+      final FineGrainedAtomicMap<Object, Object> other = getFineGrainedAtomicMap(cache2, "testReplicationPutCommit", false);
+      assertMap(expectedMap, other);
 
       //ok, do another tx with delta changes
-      TestingUtil.getTransactionManager(cache2).begin();
-      other.put("existing", "not existing"); 
-      other.put("not existing", "peace on Earth"); 
-      TestingUtil.getTransactionManager(cache2).commit();
+      tm(cache2).begin();
+      other.put("existing", "not existing");
+      other.put("not existing", "peace on Earth");
+      tm(cache2).commit();
 
-      assert map.size() == 3;
-      assert map.get("blah").equals("blah");
-      assert map.get("existing").equals("not existing");
-      assert map.get("not existing").equals("peace on Earth");
-
-      assert other.size() == 3;
-      assert other.get("blah").equals("blah");
-      assert other.get("existing").equals("not existing");
-      assert other.get("not existing").equals("peace on Earth");
+      expectedMap = createMap(new Object[]{"blah", "existing", "not existing"},
+                              new Object[]{"blah", "not existing", "peace on Earth"});
+      assertMap(expectedMap, map);
+      assertMap(expectedMap, other);
    }
 
-   @Test(enabled=true)
    public void testReplicationRemoveCommit() throws Exception {
-      Cache<String, Object> cache1 = cache(0, "atomic");
-      Cache<String, Object> cache2 = cache(1, "atomic");
+      final Cache<String, Object> cache1 = cache(0, "atomic");
+      final Cache<String, Object> cache2 = cache(1, "atomic");
 
-      FineGrainedAtomicMap<String, String> map = AtomicMapLookup.getFineGrainedAtomicMap(cache1, "testReplicationRemoveCommit");
+      final FineGrainedAtomicMap<String, String> map = getFineGrainedAtomicMap(cache1, "testReplicationRemoveCommit");
 
-      TestingUtil.getTransactionManager(cache1).begin();
+      Map<Object, Object> expectedMap = createMap(new Object[]{"existing", "blah"},
+                                                  new Object[]{"existing", "blah"});
+
+      tm(cache1).begin();
       map.put("existing", "existing");
       map.put("blah", "blah");
-      TestingUtil.getTransactionManager(cache1).commit();
+      tm(cache1).commit();
 
-      assert map.size() == 2;
-      assert map.get("blah").equals("blah");
-      assert map.containsKey("existing");
+      assertMap(expectedMap, map);
 
-      FineGrainedAtomicMap<Object, Object> other = AtomicMapLookup.getFineGrainedAtomicMap(cache2, "testReplicationRemoveCommit", false);
-      assert other.size() == 2:" no, other size is " + other.size(); 
-      assert other.get("blah").equals("blah");
-      assert other.containsKey("blah");
+      final FineGrainedAtomicMap<Object, Object> other = getFineGrainedAtomicMap(cache2, "testReplicationRemoveCommit", false);
+      assertMap(expectedMap, other);
 
       //ok, do another tx with delta changes
-      TestingUtil.getTransactionManager(cache2).begin();
+      tm(cache2).begin();
       String removed = map.remove("existing");
-      assert removed.equals("existing");
-      TestingUtil.getTransactionManager(cache2).commit();
+      assertEquals("Wrong value removed from map '" + map + "'.", "existing", removed);
+      tm(cache2).commit();
 
-      assert map.size() == 1;
-      assert map.get("blah").equals("blah");
-
-      assert other.size() == 1;
-      assert other.get("blah").equals("blah");
+      expectedMap = createMap(new Object[]{"blah"},
+                              new Object[]{"blah"});
+      assertMap(expectedMap, map);
+      assertMap(expectedMap, other);
    }
 
-   @Test(enabled=true)
    public void testReplicationPutAndClearCommit() throws Exception {
-      Cache<String, Object> cache1 = cache(0, "atomic");
-      Cache<String, Object> cache2 = cache(1, "atomic");
+      final Cache<String, Object> cache1 = cache(0, "atomic");
+      final Cache<String, Object> cache2 = cache(1, "atomic");
 
-      FineGrainedAtomicMap<String, String> map = AtomicMapLookup.getFineGrainedAtomicMap(cache1, "map");
-      FineGrainedAtomicMap<String, String> map2 = AtomicMapLookup.getFineGrainedAtomicMap(cache2, "map", false);
+      final FineGrainedAtomicMap<String, String> map = getFineGrainedAtomicMap(cache1, "map");
+      final FineGrainedAtomicMap<String, String> map2 = getFineGrainedAtomicMap(cache2, "map", false);
+      Map<Object, Object> expectedMap = createMap(new Object[]{"existing", "blah"},
+                                                  new Object[]{"existing", "blah"});
 
       TestingUtil.getTransactionManager(cache1).begin();
       map.put("existing", "existing");
@@ -620,16 +566,107 @@ public class FineGrainedAtomicMapAPITest extends MultipleCacheManagersTest {
       map.size();
       TestingUtil.getTransactionManager(cache1).commit();
 
-      assert map.size() == 2;
-      assert map2.size() == 2;
+      assertMap(expectedMap, map);
+      assertMap(expectedMap, map2);
 
       //ok, do another tx with clear delta changes
-      TestingUtil.getTransactionManager(cache2).begin();
+      tm(cache2).begin();
       map2.clear();
-      TestingUtil.getTransactionManager(cache2).commit();
+      tm(cache2).commit();
 
-      assert map.size() == 0;
-      assert map2.size() == 0;
+      expectedMap = Collections.emptyMap();
+      assertMap(expectedMap, map);
+      assertMap(expectedMap, map2);
    }
 
+   private void assertSize(Map<?, ?> map, int expectedSize) {
+      final int size = map.size();
+      assertEquals("Wrong size in map '" + map + "'.", expectedSize, size);
+      if (size == 0) {
+         assertEmpty(map);
+      } else {
+         assertNotEmpty(map);
+      }
+   }
+
+   private void assertEmpty(Map<?, ?> map) {
+      assertTrue("Map '" + map + "' should be empty.", map.isEmpty());
+   }
+
+   private void assertNotEmpty(Map<?, ?> map) {
+      assertFalse("Map '" + map + "' should *not* be empty.", map.isEmpty());
+   }
+
+   private void assertKeyValue(Map<?, ?> map, Object key, Object expectedValue) {
+      assertEquals("Wrong value for key '" + key + "' on map '" + map + "'.", expectedValue, map.get(key));
+   }
+
+   private void assertKeysValues(Map<?, ?> expected, Map<?, ?> atomicMap) {
+      for (Entry<?, ?> entry : expected.entrySet()) {
+         assertKeyValue(atomicMap, entry.getKey(), entry.getValue());
+      }
+   }
+
+   private void assertNotContainsKey(Map<?, ?> map, Object key) {
+      assertFalse("Map '" + map + "' should *not* contain key '" + key + "'.", map.containsKey(key));
+   }
+
+   private void assertContainsKey(Map<?, ?> map, Object key) {
+      assertTrue("Map '" + map + "' should contain key '" + key + "'.", map.containsKey(key));
+   }
+
+   private void assertNotContainsValue(Map<?, ?> map, Object value) {
+      assertFalse("Map '" + map + "' should *not* contain value '" + value + "'.", map.containsValue(value));
+   }
+
+   private void assertContainsValue(Map<?, ?> map, Object value) {
+      assertTrue("Map '" + map + "' should contain value '" + value + "'.", map.containsValue(value));
+   }
+
+   private void assertMap(Map<?, ?> expected, Map<?, ?> atomicMap) {
+      //check size() and isEmpty()
+      assertEquals("Wrong map '" + atomicMap + "'.size()", expected.size(), atomicMap.size());
+      assertEquals("Wrong map '" + atomicMap + "'.isEmpty()", expected.isEmpty(), atomicMap.isEmpty());
+      assertEquals("Wrong map '" + atomicMap + "'.keySet().size()", expected.keySet().size(), atomicMap.keySet().size());
+      assertEquals("Wrong map '" + atomicMap + "'.keySet().isEmpty()", expected.keySet().isEmpty(), atomicMap.keySet().isEmpty());
+      assertEquals("Wrong map '" + atomicMap + "'.values().size()", expected.values().size(), atomicMap.values().size());
+      assertEquals("Wrong map '" + atomicMap + "'.values().isEmpty()", expected.values().isEmpty(), atomicMap.values().isEmpty());
+      assertEquals("Wrong map '" + atomicMap + "'.entrySet().size()", expected.entrySet().size(), atomicMap.entrySet().size());
+      assertEquals("Wrong map '" + atomicMap + "'.entrySet().isEmpty()", expected.entrySet().isEmpty(), atomicMap.entrySet().isEmpty());
+
+      //check the collections content
+      assertTrue("Wrong map '" + atomicMap + "'.keySet() content.", atomicMap.keySet().containsAll(expected.keySet()));
+      assertTrue("Wrong map '" + atomicMap + "'.values() content.", atomicMap.values().containsAll(expected.values()));
+      external:
+      for (Entry<?, ?> expectedEntry : expected.entrySet()) {
+         for (Entry<?, ?> entry : atomicMap.entrySet()) {
+            if (expectedEntry.getKey().equals(entry.getKey()) && expectedEntry.getValue().equals(entry.getValue())) {
+               continue external;
+            }
+         }
+         fail("Wrong map '" + atomicMap + "'.entrySet() content. Entry<" + expectedEntry + "> not found!");
+      }
+
+      //check the containsKey()
+      for (Object key : expected.keySet()) {
+         assertContainsKey(atomicMap, key);
+      }
+
+      //check the containsValue()
+      for (Object value : expected.values()) {
+         assertContainsValue(atomicMap, value);
+      }
+
+      //check the get()
+      assertKeysValues(expected, atomicMap);
+   }
+
+   private Map<Object, Object> createMap(Object[] keys, Object[] values) {
+      assertEquals("Wrong parameters in createMap() method.", keys.length, values.length);
+      Map<Object, Object> map = new HashMap<Object, Object>();
+      for (int i = 0; i < keys.length; ++i) {
+         map.put(keys[i], values[i]);
+      }
+      return map;
+   }
 }

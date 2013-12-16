@@ -8,19 +8,24 @@ import org.infinispan.util.concurrent.IsolationLevel;
 import org.testng.annotations.Test;
 
 /**
- * @author Vladimir Blagojevic (C) 2011 Red Hat Inc.
- * @author Sanne Grinovero (C) 2011 Red Hat Inc.
+ * FineGrainedAtomicMapAPITest with Repeatable Read and Distributed mode
+ *
+ * @author Pedro Ruivo
+ * @since 6.0
  */
-@Test(groups = "functional", testName = "atomic.RepetableReadFineGrainedAtomicMapAPITest")
-public class RepetableReadFineGrainedAtomicMapAPITest extends FineGrainedAtomicMapAPITest {
+@Test(groups = "functional", testName = "atomic.DistRepeatableReadFineGrainedAtomicMapAPITest")
+public class DistRepeatableReadFineGrainedAtomicMapAPITest extends RepeatableReadFineGrainedAtomicMapAPITest {
 
+   @Override
    protected void createCacheManagers() throws Throwable {
-      ConfigurationBuilder c = getDefaultClusteredCacheConfig(CacheMode.REPL_SYNC, true);
+      ConfigurationBuilder c = getDefaultClusteredCacheConfig(CacheMode.DIST_SYNC, true);
       c.transaction()
             .transactionMode(TransactionMode.TRANSACTIONAL)
+            .syncCommitPhase(true)
             .lockingMode(LockingMode.PESSIMISTIC)
             .locking().isolationLevel(IsolationLevel.REPEATABLE_READ)
             .locking().lockAcquisitionTimeout(100l);
+      c.clustering().hash().numOwners(1);
       createClusteredCaches(2, "atomic", c);
    }
 }
