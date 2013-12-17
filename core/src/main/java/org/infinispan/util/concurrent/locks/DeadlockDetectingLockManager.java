@@ -164,12 +164,12 @@ public class DeadlockDetectingLockManager extends LockManagerImpl {
       cannotRunDld.set(0);
    }
 
-   @ManagedAttribute(description = "Number of remote transaction that were roll backed due to deadlocks", displayName = "Number of remote transaction that were roll backed due to deadlocks", measurementType = MeasurementType.TRENDSUP)
+   @ManagedAttribute(description = "Number of remote transactions that were rollbacked due to deadlocks", displayName = "Number of remote transaction that were roll backed due to deadlocks", measurementType = MeasurementType.TRENDSUP)
    public long getDetectedRemoteDeadlocks() {
       return remoteTxStopped.get();
    }
 
-   @ManagedAttribute (description = "Number of local transaction that were roll backed due to deadlocks", displayName = "Number of local transaction that were roll backed due to deadlocks", measurementType = MeasurementType.TRENDSUP)
+   @ManagedAttribute (description = "Number of local transactions that were rollbacked due to deadlocks", displayName = "Number of local transaction that were roll backed due to deadlocks", measurementType = MeasurementType.TRENDSUP)
    public long getDetectedLocalDeadlocks() {
       return localTxStopped.get();
    }

@@ -363,7 +363,7 @@ public class RpcManagerImpl implements RpcManager {
       return replicationFailures.get();
    }
 
-   @ManagedAttribute(description = "Statistics enabled", displayName = "Statistics enabled", dataType = DataType.TRAIT, writable = true)
+   @ManagedAttribute(description = "Enables or disables the gathering of statistics by this component", displayName = "Statistics enabled", dataType = DataType.TRAIT, writable = true)
    public boolean isStatisticsEnabled() {
       return statisticsEnabled;
    }

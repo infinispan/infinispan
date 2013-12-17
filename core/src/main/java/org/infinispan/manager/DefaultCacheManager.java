@@ -731,9 +731,9 @@ public class DefaultCacheManager implements EmbeddedCacheManager, CacheManager {
       return String.valueOf(running);
    }
 
-   @ManagedAttribute(description = "Infinispan version.", displayName = "Infinispan version", displayType = DisplayType.SUMMARY, dataType = DataType.TRAIT)
+   @ManagedAttribute(description = "Returns the version of Infinispan", displayName = "Infinispan version", displayType = DisplayType.SUMMARY, dataType = DataType.TRAIT)
    public String getVersion() {
-      return Version.printVersion();
+      return Version.VERSION;
    }
 
    @ManagedAttribute(description = "The name of this cache manager", displayName = "Cache manager name", displayType = DisplayType.SUMMARY, dataType = DataType.TRAIT)
