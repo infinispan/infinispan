@@ -4,24 +4,44 @@ package org.infinispan.client.hotrod.impl.query;
 
 message QueryRequest {
 
+   /**
+    * The query string, expressed in JPA query language.
+    * NOTE: currently only a limited subset of the JPA query language is supported.
+    */
    required string jpqlString = 1;
 
-   //todo [anistor] ideally, the sort criteria should be in the jpql string but currently the HQL parser does not support this
-   repeated SortCriteria sortCriteria = 2;
-
    message SortCriteria {
-       required string attributePath = 1;
 
-       required bool isAscending = 2;
+      /**
+       * Dot separated attribute path to sort by.
+       */
+      required string attributePath = 1;
+
+      /**
+       * Sort direction.
+       */
+      required bool isAscending = 2;
    }
 
+   //TODO ideally, the sort criteria should be in the jpql string but currently the used HQL parser does not support this
+   repeated SortCriteria sortCriteria = 2;
+
+   /**
+    * The number of matching results to skip before the first returned result.
+    */
    required int64 startOffset = 3;
 
+   /**
+    * Maximum number of matching results to return.
+    */
    required int32 maxResults = 4;
 }
 
 message QueryResponse {
 
+   /**
+    * The number of returned results.
+    */
    required int32 numResults = 1;
 
   /**
@@ -33,5 +53,12 @@ message QueryResponse {
    */
    required int32 projectionSize = 2;
 
-   repeated  org.infinispan.protostream.WrappedMessage results = 3;
+   /**
+    * The list of matching results. The size should be either numResults, if no projections are used, or numResults *
+    * projectionSize otherwise. If projections are used, then each group of projectionSize consecutive elements
+    * represent together a result.
+    */
+   repeated org.infinispan.protostream.WrappedMessage results = 3;
+
+   //TODO add number of total matching results, which usually != numResults if pagination was used
 }

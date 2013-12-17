@@ -968,8 +968,9 @@ Request format:
 [cols="3,^2,10",options="header"]
 |==============================================================================
 | Field Name          | Size       | Value
-
-| TODO                |            |
+| Header | variable | Request header
+| Query Length | vInt | The length of the protobuf encoded query object
+| Query | byte array | Byte array containing the protobuf encoded query object, having a length specified by previous field.
 |==============================================================================
 
 Response format:
@@ -977,9 +978,16 @@ Response format:
 [cols="3,^2,10",options="header"]
 |==============================================================================
 | Field Name          | Size       | Value
-
-| TODO                |            |
+| Header | variable | Response header
+| Response payload Length | vInt | The length of the protobuf encoded response object
+| Response payload | byte array | Byte array containing the protobuf encoded response object, having a length specified by previous field.
 |==============================================================================
+
+As of Infinispan 6.0, the query and response objects are specified by the protobuf message types 'org.infinispan.client.hotrod.impl.query.QueryRequest' and 'org.infinispan.client.hotrod.impl.query.QueryResponse'
+respectively defined in link:$$https://github.com/infinispan/infinispan/blob/master/remote-query/remote-query-client/src/main/resources/query.proto$$[remote-query/remote-query-client/src/main/resources/query.proto].
+These definitions could change in future Infinispan versions, but as long as these evolutions will be kept backward
+compatible (according to the rules defined link:$$https://developers.google.com/protocol-buffers/docs/proto#updating$$[here]) no new Hot Rod
+protocol version will be introduced to accommodate this.
 
 ==== Hot Rod Hash Functions
 Infinispan makes use of a consistent hash function to place nodes on a hash
