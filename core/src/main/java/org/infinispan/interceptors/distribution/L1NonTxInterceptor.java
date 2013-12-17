@@ -306,7 +306,7 @@ public class L1NonTxInterceptor extends BaseRpcInterceptor {
       if (cdl.localNodeIsOwner(command.getKey())) {
          l1InvalidationFuture = l1Manager.flushCache(Collections.singletonList(command.getKey()), ctx.getOrigin(), assumeOriginKeptEntryInL1);
       } else if (trace) {
-         log.tracef("Not invalidating key '%' as local node(%s) is not owner", command.getKey(), rpcManager.getAddress());
+         log.tracef("Not invalidating key '%s' as local node(%s) is not owner", command.getKey(), rpcManager.getAddress());
       }
       return l1InvalidationFuture;
    }
