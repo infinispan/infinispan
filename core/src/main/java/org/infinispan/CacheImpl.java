@@ -797,11 +797,11 @@ public class CacheImpl<K, V> implements AdvancedCache<K, V> {
    }
 
    /**
-    * Returns the cache configuration as XML string.
+    * Returns the version of Infinispan.
     */
    @ManagedAttribute(
-         description = "Returns the cache configuration as XML string",
-         displayName = "Cache configuration (XML)",
+         description = "Returns the version of Infinispan",
+         displayName = "Infinispan version",
          dataType = DataType.TRAIT,
          displayType = DisplayType.SUMMARY
    )

@@ -369,8 +369,8 @@ public class CacheLoaderInterceptor extends JmxStatsCommandInterceptor {
    }
 
    @ManagedAttribute(
-         description = "Returns a collection of cache loader types which configured and enabled",
-         displayName = "Returns a collection of cache loader types which configured and enabled",
+         description = "Returns a collection of cache loader types which are configured and enabled",
+         displayName = "Returns a collection of cache loader types which are configured and enabled",
          displayType = DisplayType.DETAIL)
    /**
     * This method returns a collection of cache loader types (fully qualified class names) that are configured and enabled.

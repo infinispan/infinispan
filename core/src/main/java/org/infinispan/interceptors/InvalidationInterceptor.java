@@ -249,6 +249,7 @@ public class InvalidationInterceptor extends BaseRpcInterceptor {
 
    @ManagedAttribute(
          displayName = "Statistics enabled",
+         description = "Enables or disables the gathering of statistics by this component",
          dataType = DataType.TRAIT,
          writable = true
    )
