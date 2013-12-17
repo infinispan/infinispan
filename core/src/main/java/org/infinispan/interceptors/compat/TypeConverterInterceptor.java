@@ -24,8 +24,8 @@ public class TypeConverterInterceptor extends BaseTypeConverterInterceptor {
    private TypeConverter<Object, Object, Object, Object> embeddedConverter;
 
    @SuppressWarnings("unchecked")
-   public TypeConverterInterceptor(Marshaller marshaller) {
-      ServiceLoader<TypeConverter> converters = ServiceLoader.load(TypeConverter.class);
+   public TypeConverterInterceptor(Marshaller marshaller, final ClassLoader cl) {
+      ServiceLoader<TypeConverter> converters = ServiceLoader.load(TypeConverter.class, cl);
       for (TypeConverter converter : converters) {
          if (converter.supportsInvocation(Flag.OPERATION_HOTROD)) {
             hotRodConverter = setConverterMarshaller(converter, marshaller);

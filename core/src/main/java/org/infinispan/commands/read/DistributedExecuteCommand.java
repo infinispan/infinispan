@@ -87,7 +87,7 @@ public class DistributedExecuteCommand<V> extends BaseRpcCommand implements Visi
    @Override
    public Object perform(InvocationContext context) throws Throwable {
       // hook into lifecycle
-      DistributedTaskLifecycleService taskLifecycleService = DistributedTaskLifecycleService.getInstance();
+      DistributedTaskLifecycleService taskLifecycleService = new DistributedTaskLifecycleService(cache.getAdvancedCache().getClassLoader());
       Callable<V> callable = getCallable();
       V result = null;
       try {

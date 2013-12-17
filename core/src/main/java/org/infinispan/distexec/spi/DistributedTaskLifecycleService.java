@@ -13,22 +13,14 @@ import org.infinispan.util.logging.LogFactory;
 
 public final class DistributedTaskLifecycleService {
    private static final Log log = LogFactory.getLog(DistributedTaskLifecycleService.class);
-   private static DistributedTaskLifecycleService service;
    private final List<DistributedTaskLifecycle> lifecycles;
 
-   private DistributedTaskLifecycleService() {
-      ServiceLoader<DistributedTaskLifecycle> loader = ServiceLoader.load(DistributedTaskLifecycle.class);
+   public DistributedTaskLifecycleService(final ClassLoader cl) {
+      ServiceLoader<DistributedTaskLifecycle> loader = ServiceLoader.load(DistributedTaskLifecycle.class, cl);
       lifecycles = new ArrayList<DistributedTaskLifecycle>();
-      for (DistributedTaskLifecycle cl : loader) {
-         lifecycles.add(cl);
+      for (DistributedTaskLifecycle lifecycle : loader) {
+         lifecycles.add(lifecycle);
       }
-   }
-
-   public static synchronized DistributedTaskLifecycleService getInstance() {
-      if (service == null) {
-         service = new DistributedTaskLifecycleService();
-      }
-      return service;
    }
 
    public <T,K,V> void onPreExecute(Callable<T> task, Cache <K,V> inputCache) {

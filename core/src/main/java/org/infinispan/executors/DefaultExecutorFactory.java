@@ -40,6 +40,7 @@ public class DefaultExecutorFactory implements ExecutorFactory {
             String threadName = threadNamePrefix + "-" + counter.getAndIncrement() + threadNameSuffix;
             Thread th = new Thread(r, threadName);
             th.setDaemon(true);
+            th.setContextClassLoader(DefaultExecutorFactory.class.getClassLoader());
             th.setPriority(threadPrio);
             return th;
          }

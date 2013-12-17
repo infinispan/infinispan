@@ -15,22 +15,14 @@ import org.infinispan.util.logging.LogFactory;
 public final class MapReduceTaskLifecycleService {
 
    private static final Log log = LogFactory.getLog(MapReduceTaskLifecycleService.class);
-   private static MapReduceTaskLifecycleService service;
    private List<MapReduceTaskLifecycle> lifecycles;
 
-   private MapReduceTaskLifecycleService() {
-      ServiceLoader<MapReduceTaskLifecycle> loader = ServiceLoader.load(MapReduceTaskLifecycle.class);
+   public MapReduceTaskLifecycleService(final ClassLoader cl) {
+      ServiceLoader<MapReduceTaskLifecycle> loader = ServiceLoader.load(MapReduceTaskLifecycle.class, cl);
       lifecycles = new ArrayList<MapReduceTaskLifecycle>();
       for (MapReduceTaskLifecycle l : loader) {
          lifecycles.add(l);
       }
-   }
-
-   public static synchronized MapReduceTaskLifecycleService getInstance() {
-      if (service == null) {
-         service = new MapReduceTaskLifecycleService();
-      }
-      return service;
    }
 
    public <KIn, VIn, KOut, VOut> void onPreExecute(Mapper<KIn, VIn, KOut, VOut> mapper,  Cache<KIn, VIn> inputCache) {

@@ -132,6 +132,7 @@ public class TransactionTable {
                String address = rpcManager != null ? rpcManager.getTransport().getAddress().toString() : "local";
                Thread th = new Thread(r, "TxCleanupService," + cacheName + "," + address);
                th.setDaemon(true);
+               th.setContextClassLoader(TransactionTable.class.getClassLoader());
                return th;
             }
          };
@@ -151,10 +152,10 @@ public class TransactionTable {
    @Stop
    @SuppressWarnings("unused")
    private void stop() {
-      
+
       if (executorService != null)
          executorService.shutdownNow();
-      
+
       if (clustered) {
          notifier.removeListener(this);
          currentTopologyId = CACHE_STOPPED_TOPOLOGY_ID; // indicate that the cache has stopped

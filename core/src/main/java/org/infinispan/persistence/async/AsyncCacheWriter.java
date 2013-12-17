@@ -112,6 +112,7 @@ public class AsyncCacheWriter extends DelegatingCacheWriter {
                                            public Thread newThread(Runnable r) {
                                               Thread t = new Thread(r, "AsyncStoreProcessor-" + cacheName + "-" + threadId.getAndIncrement());
                                               t.setDaemon(true);
+                                              t.setContextClassLoader(AsyncCacheWriter.class.getClassLoader());
                                               return t;
                                            }
                                         });
