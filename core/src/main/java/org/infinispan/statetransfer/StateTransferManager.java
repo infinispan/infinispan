@@ -59,4 +59,10 @@ public interface StateTransferManager {
     * @return  true if this node has already received the first rebalance start
     */
    boolean ownsData();
+
+   /**
+    * @return The id of the first cache topology in which the local node was a member
+    *    (even if it didn't own any data).
+    */
+   int getFirstTopologyAsMember();
 }
