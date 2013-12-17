@@ -75,4 +75,10 @@ public interface StateTransferManager {
    void forwardCommandIfNeeded(TopologyAffectedCommand command, Set<Object> affectedKeys, Address origin, boolean sync);
 
    void notifyEndOfRebalance(int topologyId);
+
+   /**
+    * @return The id of the first cache topology in which the local node was a member
+    *    (even if it didn't own any data).
+    */
+   int getFirstTopologyAsMember();
 }
