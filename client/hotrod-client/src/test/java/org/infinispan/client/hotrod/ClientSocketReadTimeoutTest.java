@@ -96,7 +96,7 @@ public class ClientSocketReadTimeoutTest extends SingleCacheManagerTest {
       }
 
       @Override
-      public <K, V> Cache<K, V> getCache() {
+      public <K, V> Cache<K, V> getCache(String cacheName) {
          log.info("Retrieve cache from hanging cache manager");
          // TODO: Hacky but it's the easiest thing to do - consider ByteMan
          // ByteMan apparently supports testng since 1.5.1 but no clear
@@ -116,7 +116,7 @@ public class ClientSocketReadTimeoutTest extends SingleCacheManagerTest {
          }
          return super.getCache();
       }
-      
+
    }
 
 }
