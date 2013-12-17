@@ -25,7 +25,11 @@ package org.infinispan.remoting;
 import org.infinispan.commands.CancellableCommand;
 import org.infinispan.commands.CancellationService;
 import org.infinispan.commands.CommandsFactory;
+import org.infinispan.commands.ReplicableCommand;
+import org.infinispan.commands.TopologyAffectedCommand;
 import org.infinispan.commands.remote.CacheRpcCommand;
+import org.infinispan.commands.remote.MultipleRpcCommand;
+import org.infinispan.commands.remote.SingleRpcCommand;
 import org.infinispan.configuration.global.GlobalConfiguration;
 import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.factories.GlobalComponentRegistry;
@@ -33,12 +37,12 @@ import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.scopes.Scope;
 import org.infinispan.factories.scopes.Scopes;
 import org.infinispan.remoting.responses.CacheNotFoundResponse;
-import org.infinispan.statetransfer.StateTransferManager;
 import org.infinispan.remoting.responses.ExceptionResponse;
 import org.infinispan.remoting.responses.Response;
 import org.infinispan.remoting.responses.ResponseGenerator;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.remoting.transport.Transport;
+import org.infinispan.statetransfer.StateTransferManager;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
@@ -118,6 +122,13 @@ public class InboundInvocationHandlerImpl implements InboundInvocationHandler {
       if (!stm.isJoinComplete())
          return null;
 
+      int commandTopologyId = extractCommandTopologyId(cmd);
+      if (0 < commandTopologyId && commandTopologyId < stm.getFirstTopologyAsMember()) {
+         if (trace) log.tracef("Ignoring command sent before the local node was a member " +
+                                     "(command topology id is %d)", commandTopologyId);
+         return null;
+      }
+
       Response resp = handleInternal(cmd, cr);
 
       // A null response is valid and OK ...
@@ -129,5 +140,23 @@ public class InboundInvocationHandlerImpl implements InboundInvocationHandler {
       return resp;
    }
 
+   private int extractCommandTopologyId(CacheRpcCommand cmd) {
+      int commandTopologyId = -1;
+      if (cmd instanceof SingleRpcCommand) {
+         ReplicableCommand innerCmd = ((SingleRpcCommand) cmd).getCommand();
+         if (innerCmd instanceof TopologyAffectedCommand) {
+            commandTopologyId = ((TopologyAffectedCommand) innerCmd).getTopologyId();
+         }
+      } else if (cmd instanceof MultipleRpcCommand) {
+         for (ReplicableCommand innerCmd : ((MultipleRpcCommand) cmd).getCommands()) {
+            if (innerCmd instanceof TopologyAffectedCommand) {
+               commandTopologyId = Math.max(((TopologyAffectedCommand) innerCmd).getTopologyId(), commandTopologyId);
+            }
+         }
+      } else if (cmd instanceof TopologyAffectedCommand) {
+         commandTopologyId = ((TopologyAffectedCommand) cmd).getTopologyId();
+      }
+      return commandTopologyId;
+   }
 }
 
