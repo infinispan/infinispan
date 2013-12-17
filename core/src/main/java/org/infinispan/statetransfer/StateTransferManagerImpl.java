@@ -54,6 +54,9 @@ public class StateTransferManagerImpl implements StateTransferManager {
    private LocalTopologyManager localTopologyManager;
 
    private final CountDownLatch initialStateTransferComplete = new CountDownLatch(1);
+   // The first topology in which the local node was a member. Any command with a lower
+   // topology id will be ignored.
+   private volatile int firstTopologyAsMember = -1;
 
    public StateTransferManagerImpl() {
    }
@@ -161,6 +164,12 @@ public class StateTransferManagerImpl implements StateTransferManager {
    private void doTopologyUpdate(CacheTopology newCacheTopology, boolean isRebalance) {
       if (trace) {
          log.tracef("Installing new cache topology %s on cache %s", newCacheTopology, cacheName);
+      }
+
+      // No need for extra synchronization here, since LocalTopologyManager already serializes topology updates.
+      if (firstTopologyAsMember < 0 && newCacheTopology.getMembers().contains(rpcManager.getAddress())) {
+         if (trace) log.trace("This is the first topology in which the local node is a member");
+         firstTopologyAsMember = newCacheTopology.getTopologyId();
       }
 
       // handle grouping
@@ -279,5 +288,10 @@ public class StateTransferManagerImpl implements StateTransferManager {
    @Override
    public boolean ownsData() {
       return stateConsumer.ownsData();
+   }
+
+   @Override
+   public int getFirstTopologyAsMember() {
+      return firstTopologyAsMember;
    }
 }

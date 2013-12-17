@@ -107,7 +107,7 @@ public class InboundInvocationHandlerImpl implements InboundInvocationHandler {
    }
 
    private void handleWithWaitForBlocks(final CacheRpcCommand cmd, final ComponentRegistry cr, final org.jgroups.blocks.Response response, boolean preserveOrder) throws Throwable {
-      StateTransferManager stm = cr.getStateTransferManager();
+      final StateTransferManager stm = cr.getStateTransferManager();
       // We must have completed the join before handling commands
       // (even if we didn't complete the initial state transfer)
       if (cmd instanceof TotalOrderPrepareCommand && !stm.ownsData()) {
@@ -167,6 +167,11 @@ public class InboundInvocationHandlerImpl implements InboundInvocationHandler {
 
                @Override
                public void run() {
+                  if (0 < commandTopologyId && commandTopologyId < stm.getFirstTopologyAsMember()) {
+                     if (trace) log.tracef("Ignoring command sent before the local node was a member " +
+                           "(command topology id is %d)", commandTopologyId);
+                     reply(response, null);
+                  }
                   Response resp;
                   try {
                      resp = handleInternal(cmd, cr);
