@@ -3,7 +3,7 @@
    <modelVersion>4.0.0</modelVersion>
    <groupId>org.infinispan</groupId>
    <artifactId>infinispan-parent</artifactId>
-      <version>6.0.1-SNAPSHOT</version>
+      <version>6.0.1.Final</version>
    <packaging>pom</packaging>
    <name>Infinispan Common Parent</name>
    <description>Infinispan common parent POM module</description>
@@ -1113,7 +1113,7 @@
                    </dependency>
                 </dependencies>
                 <configuration>
-                   <!-- Location is relative to the classpath -->
+                   
                    <configLocation>checkstyle.xml</configLocation>
                    <consoleOutput>true</consoleOutput>
                    <failsOnError>true</failsOnError>
