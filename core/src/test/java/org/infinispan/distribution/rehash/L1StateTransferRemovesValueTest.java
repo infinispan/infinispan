@@ -245,7 +245,6 @@ public class L1StateTransferRemovesValueTest extends BaseDistFunctionalTest<Stri
                owners.add(members.get(i));
             }
          }
-         System.out.println("Owners used are: " + owners);
          return owners;
       }
    }

@@ -171,7 +171,7 @@ public class EntryFactoryImpl implements EntryFactory {
                                                      "but it is " + cacheEntry.getClass().getCanonicalName());
             }
             //if the icEntry is not null, then this is a remote get. We need to update the value and the metadata.
-            if (!mvccEntry.isRemoved() && !mvccEntry.skipRemoteGet() && icEntry != null) {
+            if (!mvccEntry.isRemoved() && !mvccEntry.skipLookup() && icEntry != null) {
                mvccEntry.setValue(icEntry.getValue());
                updateVersion(mvccEntry, icEntry.getMetadata());
             }

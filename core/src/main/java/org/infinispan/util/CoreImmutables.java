@@ -156,7 +156,7 @@ public class CoreImmutables extends Immutables {
       }
 
       @Override
-      public boolean skipRemoteGet() {
+      public boolean skipLookup() {
          return false;
       }
 
@@ -231,7 +231,7 @@ public class CoreImmutables extends Immutables {
       }
 
       @Override
-      public void setSkipRemoteGet(boolean skipRemoteGet) {
+      public void setSkipLookup(boolean skipLookup) {
          throw new UnsupportedOperationException();
       }
 

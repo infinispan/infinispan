@@ -52,7 +52,7 @@ public class ReadCommittedEntry implements MVCCEntry {
       VALID(1 << 3),
       EVICTED(1 << 4),
       LOADED(1 << 5),
-      SKIP_REMOTE_GET(1 << 6),
+      SKIP_LOOKUP(1 << 6),
       COPIED(1 << 7);
 
       final byte mask;
@@ -192,12 +192,12 @@ public class ReadCommittedEntry implements MVCCEntry {
    }
 
    @Override
-   public void setSkipRemoteGet(boolean skipRemoteGet) {
+   public void setSkipLookup(boolean skipLookup) {
       //no-op
    }
 
    @Override
-   public boolean skipRemoteGet() {
+   public boolean skipLookup() {
       //in read committed, it can read from the data container / remote source multiple times.
       return false;
    }
@@ -279,7 +279,7 @@ public class ReadCommittedEntry implements MVCCEntry {
             ", isChanged=" + isChanged() +
             ", isRemoved=" + isRemoved() +
             ", isValid=" + isValid() +
-            ", skipRemoteGet=" + skipRemoteGet() +
+            ", skipRemoteGet=" + skipLookup() +
             ", metadata=" + metadata +
             '}';
    }

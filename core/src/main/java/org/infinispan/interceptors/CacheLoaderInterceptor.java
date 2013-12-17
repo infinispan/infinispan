@@ -259,7 +259,7 @@ public class CacheLoaderInterceptor extends JmxStatsCommandInterceptor {
 
       // first check if the container contains the key we need.  Try and load this into the context.
       CacheEntry e = ctx.lookupEntry(key);
-      if (e == null || e.isNull() || e.getValue() == null) {
+      if (shouldAttemptLookup(e)) {
          MarshalledEntry loaded = persistenceManager.loadFromAllStores(key, ctx);
          if(loaded == null)
             return Boolean.FALSE;
@@ -280,6 +280,14 @@ public class CacheLoaderInterceptor extends JmxStatsCommandInterceptor {
       } else {
          return null;
       }
+   }
+
+   /**
+    * Only perform if context doesn't have a value found (Read Committed) or if we can do a remote
+    * get only if the value is null (Repeatable Read)
+    */
+   protected boolean shouldAttemptLookup(CacheEntry e) {
+      return e == null || (e.isNull() || e.getValue() == null) && !e.skipLookup();
    }
 
    /**
