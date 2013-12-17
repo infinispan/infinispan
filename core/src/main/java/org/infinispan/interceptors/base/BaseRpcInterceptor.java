@@ -7,10 +7,9 @@ import org.infinispan.context.impl.LocalTxInvocationContext;
 import org.infinispan.context.impl.TxInvocationContext;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.annotations.Start;
-import org.infinispan.remoting.responses.IgnoreExtraResponsesValidityFilter;
 import org.infinispan.remoting.responses.Response;
 import org.infinispan.remoting.responses.SelfDeliverFilter;
-import org.infinispan.remoting.rpc.ResponseFilter;
+import org.infinispan.remoting.responses.TimeoutValidationResponseFilter;
 import org.infinispan.remoting.rpc.ResponseMode;
 import org.infinispan.remoting.rpc.RpcManager;
 import org.infinispan.remoting.rpc.RpcOptionsBuilder;
@@ -109,27 +108,25 @@ public abstract class BaseRpcInterceptor extends CommandInterceptor {
 
    protected final Map<Address, Response> totalOrderAnycastPrepare(Collection<Address> recipients,
                                                                    PrepareCommand prepareCommand,
-                                                                   ResponseFilter responseFilter) {
+                                                                   TimeoutValidationResponseFilter responseFilter) {
       Set<Address> realRecipients = new HashSet<Address>(recipients);
       realRecipients.add(rpcManager.getAddress());
       return internalTotalOrderPrepare(realRecipients, prepareCommand, responseFilter);
    }
 
-   protected final Map<Address, Response> totalOrderBroadcastPrepare(PrepareCommand prepareCommand, ResponseFilter responseFilter) {
-      return internalTotalOrderPrepare(null, prepareCommand, responseFilter);
-   }
-
    private Map<Address, Response> internalTotalOrderPrepare(Collection<Address> recipients, PrepareCommand prepareCommand,
-                                                            ResponseFilter responseFilter) {
+                                                            TimeoutValidationResponseFilter responseFilter) {
       if (defaultSynchronous) {
          RpcOptionsBuilder builder = rpcManager.getRpcOptionsBuilder(ResponseMode.SYNCHRONOUS_IGNORE_LEAVERS, false);
          if (responseFilter != null) {
             builder.responseFilter(responseFilter);
-         } else {
-            builder.responseFilter(getIgnoreExtraResponseFilter(recipients));
          }
          builder.totalOrder(true);
-         return rpcManager.invokeRemotely(recipients, prepareCommand, builder.build());
+         Map<Address, Response> responseMap = rpcManager.invokeRemotely(recipients, prepareCommand, builder.build());
+         if (responseFilter != null) {
+            responseFilter.validate();
+         }
+         return responseMap;
       } else {
          RpcOptionsBuilder builder = rpcManager.getRpcOptionsBuilder(ResponseMode.getAsyncResponseMode(cacheConfiguration),
                                                                      false);
@@ -142,15 +139,7 @@ public abstract class BaseRpcInterceptor extends CommandInterceptor {
       return cacheConfiguration.transaction().syncCommitPhase();
    }
 
-   protected final ResponseFilter getSelfDeliverFilter() {
+   protected final TimeoutValidationResponseFilter getSelfDeliverFilter() {
       return new SelfDeliverFilter(rpcManager.getAddress());
-   }
-
-   protected final ResponseFilter getIgnoreExtraResponseFilter(Collection<Address> recipients) {
-      Set<Address> liveMembers = new HashSet<Address>(stateConsumer.getCacheTopology().getMembers());
-      if (recipients != null) {
-         liveMembers.retainAll(recipients);
-      }
-      return new IgnoreExtraResponsesValidityFilter(liveMembers, rpcManager.getAddress(), false);
    }
 }
