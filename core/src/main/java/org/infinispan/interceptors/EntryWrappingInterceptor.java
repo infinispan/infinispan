@@ -121,7 +121,7 @@ public class EntryWrappingInterceptor extends CommandInterceptor {
          else {
             CacheEntry entry = ctx.lookupEntry(command.getKey());
             if (entry != null) {
-               entry.setSkipRemoteGet(true);
+               entry.setSkipLookup(true);
             }
          }
       }
@@ -368,7 +368,7 @@ public class EntryWrappingInterceptor extends CommandInterceptor {
       if (txScope) {
          for (CacheEntry entry : context.getLookedUpEntries().values()) {
             if (entry != null) {
-               entry.setSkipRemoteGet(true);
+               entry.setSkipLookup(true);
             }
          }
       }
@@ -376,7 +376,7 @@ public class EntryWrappingInterceptor extends CommandInterceptor {
       if (txScope) {
          for (CacheEntry entry : context.getLookedUpEntries().values()) {
             if (entry != null) {
-               entry.setSkipRemoteGet(true);
+               entry.setSkipLookup(true);
             }
          }
       }
@@ -392,7 +392,7 @@ public class EntryWrappingInterceptor extends CommandInterceptor {
          for (Object key : command.getAffectedKeys()) {
             CacheEntry entry = context.lookupEntry(key);
             if (entry != null) {
-               entry.setSkipRemoteGet(true);
+               entry.setSkipLookup(true);
             }
          }
       }
@@ -408,7 +408,7 @@ public class EntryWrappingInterceptor extends CommandInterceptor {
       if (context.isInTxScope()) {
          CacheEntry entry = context.lookupEntry(command.getKey());
          if (entry != null) {
-            entry.setSkipRemoteGet(true);
+            entry.setSkipLookup(true);
          }
       }
       return retVal;

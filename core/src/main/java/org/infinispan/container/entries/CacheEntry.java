@@ -80,9 +80,9 @@ public interface CacheEntry extends Map.Entry<Object, Object>, MetadataAware {
    long getMaxIdle();
 
    /**
-    * @return {@code true} if the value must not be fetch from a remote node.
+    * @return {@code true} if the value must not be fetch from an external source
     */
-   boolean skipRemoteGet();
+   boolean skipLookup();
 
    /**
     * Sets the value of the entry, returning the previous value
@@ -118,10 +118,10 @@ public interface CacheEntry extends Map.Entry<Object, Object>, MetadataAware {
    void setLoaded(boolean loaded);
 
    /**
-    * See {@link #skipRemoteGet()}.
-    * @param skipRemoteGet
+    * See {@link #skipLookup()}.
+    * @param skipLookup
     */
-   void setSkipRemoteGet(boolean skipRemoteGet);
+   void setSkipLookup(boolean skipLookup);
 
    /**
     * If the entry is marked as removed and doUndelete==true then the "valid" flag is set to true and "removed"

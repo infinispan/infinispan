@@ -76,7 +76,7 @@ public class DeltaAwareCacheEntry implements CacheEntry, StateChangingEntry {
       VALID(1 << 3),
       EVICTED(1 << 4),
       LOADED(1 << 5),
-      SKIP_REMOTE_GET(1 << 6);
+      SKIP_LOOKUP(1 << 6);
 
       final byte mask;
 
@@ -127,8 +127,8 @@ public class DeltaAwareCacheEntry implements CacheEntry, StateChangingEntry {
    }
 
    @Override
-   public boolean skipRemoteGet() {
-      return isFlagSet(SKIP_REMOTE_GET);
+   public boolean skipLookup() {
+      return isFlagSet(SKIP_LOOKUP);
    }
 
    @Override
@@ -267,8 +267,8 @@ public class DeltaAwareCacheEntry implements CacheEntry, StateChangingEntry {
    }
 
    @Override
-   public void setSkipRemoteGet(boolean skipRemoteGet) {
-      setFlag(skipRemoteGet, SKIP_REMOTE_GET);
+   public void setSkipLookup(boolean skipLookup) {
+      setFlag(skipLookup, SKIP_LOOKUP);
    }
 
    private void setFlag(boolean enable, Flags flag) {

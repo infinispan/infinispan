@@ -7,7 +7,7 @@ import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
 import static org.infinispan.container.entries.ReadCommittedEntry.Flags.COPIED;
-import static org.infinispan.container.entries.ReadCommittedEntry.Flags.SKIP_REMOTE_GET;
+import static org.infinispan.container.entries.ReadCommittedEntry.Flags.SKIP_LOOKUP;
 
 /**
  * An extension of {@link ReadCommittedEntry} that provides Repeatable Read semantics
@@ -62,12 +62,12 @@ public class RepeatableReadEntry extends ReadCommittedEntry {
    }
 
    @Override
-   public void setSkipRemoteGet(boolean skipRemoteGet) {
-      setFlag(skipRemoteGet, SKIP_REMOTE_GET);
+   public void setSkipLookup(boolean skipLookup) {
+      setFlag(skipLookup, SKIP_LOOKUP);
    }
 
    @Override
-   public boolean skipRemoteGet() {
-      return isFlagSet(SKIP_REMOTE_GET);
+   public boolean skipLookup() {
+      return isFlagSet(SKIP_LOOKUP);
    }
 }

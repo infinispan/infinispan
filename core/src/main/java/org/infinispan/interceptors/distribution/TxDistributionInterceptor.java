@@ -131,7 +131,7 @@ public class TxDistributionInterceptor extends BaseDistributionInterceptor {
 
          //if the cache entry has the value lock flag set, skip the remote get.
          CacheEntry entry = ctx.lookupEntry(command.getKey());
-         boolean skipRemoteGet = entry != null && entry.skipRemoteGet();
+         boolean skipRemoteGet = entry != null && entry.skipLookup();
 
          // need to check in the context as well since a null retval is not necessarily an indication of the entry not being
          // available.  It could just have been removed in the same tx beforehand.  Also don't bother with a remote get if
@@ -302,7 +302,7 @@ public class TxDistributionInterceptor extends BaseDistributionInterceptor {
             shouldFetchRemoteValuesForWriteSkewCheck(ctx, command)) {
          for (Object k : keygen.getKeys()) {
             CacheEntry entry = ctx.lookupEntry(k);
-            boolean skipRemoteGet =  entry != null && entry.skipRemoteGet();
+            boolean skipRemoteGet =  entry != null && entry.skipLookup();
             if (skipRemoteGet) {
                continue;
             }

@@ -61,7 +61,7 @@ public abstract class AbstractInternalCacheEntry implements InternalCacheEntry {
    }
 
    @Override
-   public void setSkipRemoteGet(boolean skipRemoteGet) {
+   public void setSkipLookup(boolean skipLookup) {
       //no-op
    }
 
@@ -101,7 +101,7 @@ public abstract class AbstractInternalCacheEntry implements InternalCacheEntry {
    }
 
    @Override
-   public boolean skipRemoteGet() {
+   public boolean skipLookup() {
       return false;
    }
 

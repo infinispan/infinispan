@@ -67,7 +67,7 @@ public class ActivationInterceptor extends CacheLoaderInterceptor {
    @Override
    protected Boolean loadIfNeeded(InvocationContext ctx, Object key, boolean isRetrieval, FlagAffectedCommand cmd) throws Throwable {
       CacheEntry entry = ctx.lookupEntry(key);
-      if (entry != null && !entry.isNull() && entry.getValue() != null) {
+      if (!shouldAttemptLookup(entry)) {
          //the entry is already in the context. Avoid look in the cache loader.
          return null;
       }
