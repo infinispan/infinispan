@@ -171,4 +171,8 @@ public class TotalOrderManager {
       }
       totalOrderExecutor.checkForReadyTasks();
    }
+
+   public final boolean hasAnyLockAcquired() {
+      return !keysLocked.isEmpty() || clear.get() != null;
+   }
 }

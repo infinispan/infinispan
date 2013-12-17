@@ -106,7 +106,7 @@ public class TotalOrderInterceptor extends CommandInterceptor {
       } catch (Throwable exception) {
          if (log.isDebugEnabled()) {
             log.debugf(exception, "Exception while preparing for transaction %s. Local=%s",
-                       command.getGlobalTransaction().globalId());
+                       command.getGlobalTransaction().globalId(), ctx.isOriginLocal());
          }
          if (command.isOnePhaseCommit()) {
             transactionTable.remoteTransactionRollback(command.getGlobalTransaction());
@@ -140,7 +140,7 @@ public class TotalOrderInterceptor extends CommandInterceptor {
       TotalOrderRemoteTransactionState state = getTransactionState(context);
 
       try {
-         if (!processSecondCommand(state, commit)) {
+         if (!processSecondCommand(state, commit) && !context.isOriginLocal()) {
             //we can return here, because we set onePhaseCommit to prepare and it will release all the resources
             return null;
          }

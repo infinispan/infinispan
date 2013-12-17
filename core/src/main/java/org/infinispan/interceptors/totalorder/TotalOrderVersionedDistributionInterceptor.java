@@ -6,7 +6,6 @@ import org.infinispan.commands.tx.PrepareCommand;
 import org.infinispan.commands.tx.RollbackCommand;
 import org.infinispan.commands.tx.VersionedPrepareCommand;
 import org.infinispan.commands.write.ClearCommand;
-import org.infinispan.commons.CacheException;
 import org.infinispan.configuration.cache.Configurations;
 import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.context.InvocationContext;
@@ -73,10 +72,6 @@ public class TotalOrderVersionedDistributionInterceptor extends VersionedDistrib
                null : new KeysValidateFilter(rpcManager.getAddress(), ctx.getAffectedKeys());
 
          totalOrderAnycastPrepare(recipients, command, responseFilter);
-
-         if (responseFilter != null && !responseFilter.isAllKeysValidated()) {
-            throw new CacheException("Not all keys were validated. Possible member has left the cluster");
-         }
       } finally {
          transactionRemotelyPrepared(ctx);
       }
