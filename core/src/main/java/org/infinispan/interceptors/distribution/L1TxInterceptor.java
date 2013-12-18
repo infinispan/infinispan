@@ -72,7 +72,7 @@ public class L1TxInterceptor extends L1NonTxInterceptor {
    }
 
    private Future<?> flushL1Caches(TxInvocationContext ctx) {
-      return l1Manager.flushCacheWithSimpleFuture(ctx.getAffectedKeys(), null, ctx.getOrigin(), true);
+      return l1Manager.flushCache(ctx.getAffectedKeys(), ctx.getOrigin(), true);
    }
 
    private void blockOnL1FutureIfNeeded(Future<?> f) {
