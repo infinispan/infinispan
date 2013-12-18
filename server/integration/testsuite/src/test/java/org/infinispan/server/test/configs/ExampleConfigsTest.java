@@ -54,6 +54,7 @@ import org.infinispan.server.test.util.RemoteCacheManagerFactory;
 import org.infinispan.server.test.util.RemoteInfinispanMBeans;
 import org.infinispan.server.test.util.TestUtil;
 import org.infinispan.server.test.util.TestUtil.Condition;
+import org.jboss.arquillian.container.test.api.Config;
 import org.jboss.arquillian.container.test.api.ContainerController;
 import org.jboss.arquillian.junit.Arquillian;
 import org.jboss.arquillian.test.api.ArquillianResource;
@@ -440,11 +441,49 @@ public class ExampleConfigsTest {
     }
 
     @Test
-    @WithRunningServer({ "clustered-topology-1", "clustered-topology-2", "clustered-topology-3" })
-    public void testTopologyConfig() throws Exception {
-        RemoteInfinispanMBeans s1 = createRemotes("clustered-topology-1", "clustered", DEFAULT_CACHE_NAME);
-        RemoteInfinispanMBeans s2 = createRemotes("clustered-topology-2", "clustered", DEFAULT_CACHE_NAME);
-        RemoteInfinispanMBeans s3 = createRemotes("clustered-topology-3", "clustered", DEFAULT_CACHE_NAME);
+    public void testTopologyConfigMachineAttribute() throws Exception {
+        try {
+            startContainerWithTopology("clustered-topology-1", "node0", 0,   "s1", "r1", "m1");
+            startContainerWithTopology("clustered-topology-2", "node1", 100, "s1", "r1", "m1");
+            startContainerWithTopology("clustered-topology-3", "node2", 200, "s1", "r1", "m2");
+
+            verifyTopologyHinting("clustered-topology-1", "clustered-topology-2", "clustered-topology-3", "clustered", DEFAULT_CACHE_NAME);
+        } finally {
+            stopContainers("clustered-topology-1", "clustered-topology-2", "clustered-topology-3");
+        }
+    }
+
+    @Test
+    public void testTopologyConfigRackAttribute() throws Exception {
+        try {
+            startContainerWithTopology("clustered-topology-1", "node0", 0,   "s1", "r1", "m1");
+            startContainerWithTopology("clustered-topology-2", "node1", 100, "s1", "r1", "m2");
+            startContainerWithTopology("clustered-topology-3", "node2", 200, "s1", "r2", "m3");
+
+            verifyTopologyHinting("clustered-topology-1", "clustered-topology-2", "clustered-topology-3", "clustered", DEFAULT_CACHE_NAME);
+        } finally {
+            stopContainers("clustered-topology-1", "clustered-topology-2", "clustered-topology-3");
+        }
+    }
+
+    @Test
+    public void testTopologyConfigSiteAttribute() throws Exception {
+        try {
+            startContainerWithTopology("clustered-topology-1", "node0", 0,   "s1", "r1", "m1");
+            startContainerWithTopology("clustered-topology-2", "node1", 100, "s1", "r2", "m2");
+            startContainerWithTopology("clustered-topology-3", "node2", 200, "s2", "r3", "m3");
+
+            verifyTopologyHinting("clustered-topology-1", "clustered-topology-2", "clustered-topology-3", "clustered", DEFAULT_CACHE_NAME);
+        } finally {
+            stopContainers("clustered-topology-1", "clustered-topology-2", "clustered-topology-3");
+        }
+    }
+
+    private void verifyTopologyHinting(String container1, String container2, String container3, String manager, String cache) {
+        RemoteInfinispanMBeans s1 = createRemotes(container1, manager, cache);
+        RemoteInfinispanMBeans s2 = createRemotes(container2, manager, cache);
+        RemoteInfinispanMBeans s3 = createRemotes(container3, manager, cache);
+
         RemoteCache<Object, Object> s1Cache = createCache(s1);
         RemoteCache<Object, Object> s2Cache = createCache(s2);
         RemoteCache<Object, Object> s3Cache = createCache(s3);
@@ -487,7 +526,7 @@ public class ExampleConfigsTest {
         assertTrue("Unexpected number of entries in server1: " + s0Entries, s0Entries > 0);
         assertTrue("Unexpected number of entries in server2: " + s1Entries, s1Entries > 0);
         assertTrue("Instead of " + total_elements * 2 + " total elements there were " + (s0Entries + s1Entries + s2Entries),
-            s0Entries + s1Entries + s2Entries == total_elements * 2);
+                s0Entries + s1Entries + s2Entries == total_elements * 2);
         assertTrue("Server 1 elements are not contained in server 2", s2Bulk.containsAll(s1Bulk));
 
         // Now we remove the keys from server 2 therefore they should be removed from server 3 and that should imply
@@ -724,5 +763,21 @@ public class ExampleConfigsTest {
 
     protected RemoteInfinispanMBeans createRemotes(String serverName, String managerName, String cacheName) {
         return RemoteInfinispanMBeans.create(serverManager, serverName, cacheName, managerName);
+    }
+
+    private void startContainerWithTopology(String containerName, String nodeName, int portOffset, String site, String rack, String machine) {
+        controller.start(containerName, new Config().add("javaVmArguments", System.getProperty("server.jvm.args")
+                + " -Djboss.node.name=" + nodeName
+                + " -Djboss.socket.binding.port-offset=" + portOffset
+                + " -Djboss.jgroups.topology.site=" + site
+                + " -Djboss.jgroups.topology.rack=" + rack
+                + " -Djboss.jgroups.topology.machine=" + machine
+        ).map());
+    }
+
+    private void stopContainers(String... containerNames) {
+        for (String name : containerNames) {
+            controller.stop(name);
+        }
     }
 }
