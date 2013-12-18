@@ -2,11 +2,9 @@ package org.infinispan.api.flags;
 
 import static org.infinispan.context.Flag.CACHE_MODE_LOCAL;
 import static org.infinispan.context.Flag.SKIP_CACHE_STORE;
-import static org.infinispan.test.TestingUtil.k;
-import static org.infinispan.test.TestingUtil.v;
-import static org.infinispan.test.TestingUtil.withTx;
+import static org.infinispan.test.TestingUtil.*;
 import static org.testng.AssertJUnit.assertEquals;
-import static org.testng.AssertJUnit.assertNull;
+import static org.testng.AssertJUnit.assertNotSame;
 
 import org.infinispan.AbstractDelegatingAdvancedCache;
 import org.infinispan.AdvancedCache;
@@ -22,7 +20,6 @@ import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.CleanupAfterMethod;
 import org.infinispan.util.concurrent.IsolationLevel;
-import org.testng.AssertJUnit;
 import org.testng.annotations.Test;
 
 import java.lang.reflect.Method;
@@ -35,6 +32,16 @@ import java.util.concurrent.Callable;
 @CleanupAfterMethod
 public class FlagsEnabledTest extends MultipleCacheManagersTest {
 
+   protected final String cacheName;
+
+   public FlagsEnabledTest() {
+      this("tx-replication");
+   }
+
+   protected FlagsEnabledTest(String cacheName) {
+      this.cacheName = cacheName;
+   }
+
    @Override
    protected void createCacheManagers() throws Throwable {
       ConfigurationBuilder builder = getDefaultClusteredCacheConfig(CacheMode.REPL_SYNC, true);
@@ -45,7 +52,7 @@ public class FlagsEnabledTest extends MultipleCacheManagersTest {
             .persistence().addStore(DummyInMemoryStoreConfigurationBuilder.class)
             .transaction().syncCommitPhase(true)
             .clustering().hash().numSegments(2);
-      createClusteredCaches(2, "replication", builder);
+      createClusteredCaches(2, cacheName, builder);
    }
 
    UnnecessaryLoadingTest.CountingStore getCacheStore(Cache cache) {
@@ -53,113 +60,110 @@ public class FlagsEnabledTest extends MultipleCacheManagersTest {
    }
 
    public void testWithFlagsSemantics() {
-      AdvancedCache<String, String> cache1 = advancedCache(0, "replication");
-      AdvancedCache<String, String> cache2 = advancedCache(1, "replication");
-      assert getCacheStore(cache1).numLoads == 0;
-      assert getCacheStore(cache2).numLoads == 0;
+      final AdvancedCache<String, String> cache1 = advancedCache(0, cacheName);
+      final AdvancedCache<String, String> cache2 = advancedCache(1, cacheName);
 
-      AdvancedCache<String, String> cache1LocalOnly =
-            cache1.withFlags(CACHE_MODE_LOCAL);
+      assertNumberOfLoads(cache1, 0);
+      assertNumberOfLoads(cache2, 0);
+
+      final AdvancedCache<String, String> cache1LocalOnly = cache1.withFlags(CACHE_MODE_LOCAL);
       cache1LocalOnly.put("key", "value1");
       cache2.withFlags(CACHE_MODE_LOCAL).put("key", "value2");
-      assert cache1.get("key").equals("value1");
-      assert cache2.get("key").equals("value2");
+      assertCacheValue(cache1, "key", "value1");
+      assertCacheValue(cache2, "key", "value2");
 
-      assert getCacheStore(cache1).numLoads == 1;
-      assert getCacheStore(cache2).numLoads == 1;
-      assert getCacheStore(cache2) != getCacheStore(cache1);
+      assertNumberOfLoads(cache1, 1);
+      assertNumberOfLoads(cache2, 1);
+      assertNotSame("CacheStores", getCacheStore(cache1), getCacheStore(cache2));
 
       cache1.put("nonLocal", "value");
-      assert "value".equals(cache2.get("nonLocal"));
-      assert getCacheStore(cache1).numLoads == 2;
-      assert getCacheStore(cache2).numLoads == 1; //not incremented since ISPN-1642
+      assertCacheValue(cache2, "nonLocal", "value");
+      assertNumberOfLoads(cache1, 2);
+      assertNumberOfLoads(cache2, 1); //not incremented since ISPN-1642
 
-      AdvancedCache<String, String> cache1SkipRemoteAndStores = cache1LocalOnly.withFlags(SKIP_CACHE_STORE);
+      final AdvancedCache<String, String> cache1SkipRemoteAndStores = cache1LocalOnly.withFlags(SKIP_CACHE_STORE);
       cache1SkipRemoteAndStores.put("again", "value");
-      assert getCacheStore(cache1).numLoads == 2;
-      assert getCacheStore(cache2).numLoads == 1;
-      assert cache1.get("again").equals("value");
-      assert cache2.get("again") == null;
+      assertNumberOfLoads(cache1, 2);
+      assertNumberOfLoads(cache2, 1);
+      assertCacheValue(cache1, "again", "value");
+      assertCacheValue(cache2, "again", null);
 
-      assert getCacheStore(cache1).numLoads == 2;
-      assert getCacheStore(cache2).numLoads == 2; //"again" wasn't found in cache, looks into store
+      assertNumberOfLoads(cache1, 2);
+      assertNumberOfLoads(cache2, 2); //"again" wasn't found in cache, looks into store
 
-      assert cache2.get("again") == null;
-      assert getCacheStore(cache2).numLoads == 3;
-      assert cache2.withFlags(SKIP_CACHE_STORE).get("again") == null;
-      assert getCacheStore(cache2).numLoads == 3;
+      assertCacheValue(cache2, "again", null);
+      assertNumberOfLoads(cache2, 3);
+      assertCacheValue(cache2.withFlags(SKIP_CACHE_STORE), "again", null);
+      assertNumberOfLoads(cache2, 3);
 
-      assert getCacheStore(cache1).numLoads == 2;
-      assert cache1LocalOnly.get("localStored") == null;
-      assert getCacheStore(cache1).numLoads == 3; //options on cache1SkipRemoteAndStores did NOT affect this cache
+      assertNumberOfLoads(cache1, 2);
+      assertCacheValue(cache1LocalOnly, "localStored", null);
+      assertNumberOfLoads(cache1, 3); //options on cache1SkipRemoteAndStores did NOT affect this cache
    }
 
    public void testWithFlagsAndDelegateCache() {
-      AdvancedCache<Integer, String> c1 = advancedCache(0, "replication");
-      AdvancedCache<Integer, String> c2 = advancedCache(1, "replication");
-
-      c1 = new CustomDelegateCache<Integer, String>(c1);
+      final AdvancedCache<Integer, String> c1 =
+            new CustomDelegateCache<Integer, String>(this.<Integer, String>advancedCache(0, cacheName));
+      final AdvancedCache<Integer, String> c2 = advancedCache(1, cacheName);
 
       c1.withFlags(CACHE_MODE_LOCAL).put(1, "v1");
-      assertEquals(null, c2.get(1));
+      assertCacheValue(c2, 1, null);
    }
 
    public void testReplicateSkipCacheLoad(Method m) {
-      AdvancedCache<String, String> cache1 = advancedCache(0,"replication");
-      AdvancedCache<String, String> cache2 = advancedCache(1,"replication");
-      assert getCacheStore(cache1).numLoads == 0;
-      assert getCacheStore(cache2).numLoads == 0;
+      final AdvancedCache<String, String> cache1 = advancedCache(0, cacheName);
+      final AdvancedCache<String, String> cache2 = advancedCache(1, cacheName);
+      assertNumberOfLoads(cache1, 0);
+      assertNumberOfLoads(cache2, 0);
 
       final String v = v(m, 1);
       final String k = k(m, 1);
       cache1.withFlags(Flag.SKIP_CACHE_LOAD).put(k, v);
-      assert v.equals(cache2.get(k));
+      assertCacheValue(cache2, k, v);
 
-      assert getCacheStore(cache1).numLoads == 0;
-      assert getCacheStore(cache2).numLoads == 0;
+      assertNumberOfLoads(cache1, 0);
+      assertNumberOfLoads(cache2, 0);
    }
 
    public void testReplicateSkipCacheLoaderWithinTxInCoordinator(Method m) throws Exception {
-      final AdvancedCache<String, String> cache1 = advancedCache(0, "replication");
-      final AdvancedCache<String, String> cache2 = advancedCache(1, "replication");
+      final AdvancedCache<String, String> cache1 = advancedCache(0, cacheName);
+      final AdvancedCache<String, String> cache2 = advancedCache(1, cacheName);
       doReplicateSkipCacheLoaderWithinTx(m, cache1, cache2);
    }
 
    public void testReplicateSkipCacheLoaderWithinTxInNonCoordinator(Method m) throws Exception {
-      final AdvancedCache<String, String> cache1 =
-            this.<String, String>cache(0,"replication").getAdvancedCache();
-      final AdvancedCache<String, String> cache2 =
-            this.<String, String>cache(1, "replication").getAdvancedCache();
+      final AdvancedCache<String, String> cache1 = advancedCache(0, cacheName);
+      final AdvancedCache<String, String> cache2 = advancedCache(1, cacheName);
       doReplicateSkipCacheLoaderWithinTx(m, cache2, cache1);
    }
 
    public void testCacheLocalInPrimaryOwner() {
-      final AdvancedCache<Object, String> cache1 =advancedCache(0, "replication");
-      final AdvancedCache<Object, String> cache2 =advancedCache(1, "replication");
+      final AdvancedCache<Object, String> cache1 = advancedCache(0, cacheName);
+      final AdvancedCache<Object, String> cache2 = advancedCache(1, cacheName);
       final Object key = new MagicKey("k-po", cache1);
 
       cache1.withFlags(CACHE_MODE_LOCAL).put(key, "value");
 
-      assertEquals("Cache '" + cache1 + "' should have the key.", "value", cache1.get(key));
-      assertNull("Cache '" + cache2 + "' should *not* have the key.", cache2.get(key));
+      assertCacheValue(cache1, key, "value");
+      assertCacheValue(cache2, key, null);
    }
 
    public void testCacheLocalInBackupOwner() {
-      final AdvancedCache<Object, String> cache1 =advancedCache(0, "replication");
-      final AdvancedCache<Object, String> cache2 =advancedCache(1, "replication");
+      final AdvancedCache<Object, String> cache1 = advancedCache(0, cacheName);
+      final AdvancedCache<Object, String> cache2 = advancedCache(1, cacheName);
       final Object key = new MagicKey("k-bo", cache1);
 
       cache2.withFlags(CACHE_MODE_LOCAL).put(key, "value");
 
-      assertEquals("Cache '" + cache2 + "' should have the key.", "value", cache2.get(key));
-      assertNull("Cache '" + cache1 + "' should *not* have the key.", cache1.get(key));
+      assertCacheValue(cache2, key, "value");
+      assertCacheValue(cache1, key, null);
    }
 
    private void doReplicateSkipCacheLoaderWithinTx(Method m,
          final AdvancedCache<String, String> cache1,
          AdvancedCache<String, String> cache2) throws Exception {
-      assert getCacheStore(cache1).numLoads == 0;
-      assert getCacheStore(cache2).numLoads == 0;
+      assertNumberOfLoads(cache1, 0);
+      assertNumberOfLoads(cache2, 0);
 
       final String v = v(m, 1);
       final String k = k(m, 1);
@@ -171,9 +175,9 @@ public class FlagsEnabledTest extends MultipleCacheManagersTest {
          }
       });
 
-      assert v.equals(cache2.get(k));
-      assert getCacheStore(cache1).numLoads == 0;
-      assert getCacheStore(cache2).numLoads == 0;
+      assertCacheValue(cache2, k, v);
+      assertNumberOfLoads(cache1, 0);
+      assertNumberOfLoads(cache2, 0);
    }
 
    public static class CustomDelegateCache<K, V>
@@ -187,6 +191,14 @@ public class FlagsEnabledTest extends MultipleCacheManagersTest {
             }
          });
       }
+   }
+
+   private void assertNumberOfLoads(Cache<?, ?> cache, int expectedCounter) {
+      assertEquals("Wrong number of loads for cache '" + cache + "'.", expectedCounter, getCacheStore(cache).numLoads);
+   }
+
+   protected final void assertCacheValue(Cache<?, ?> cache, Object key, Object value) {
+      assertEquals("Wrong value for key '" + key + "' in cache '" + cache + "'.", value, cache.get(key));
    }
 
 }
