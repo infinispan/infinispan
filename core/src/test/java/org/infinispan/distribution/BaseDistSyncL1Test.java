@@ -6,8 +6,15 @@ import org.infinispan.commands.read.GetKeyValueCommand;
 import org.infinispan.commands.write.InvalidateL1Command;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.interceptors.base.CommandInterceptor;
+import org.infinispan.statetransfer.StateTransferLock;
+import org.infinispan.test.TestingUtil;
+import org.infinispan.test.fwk.CheckPoint;
+import org.infinispan.transaction.TransactionMode;
 import org.infinispan.util.concurrent.IsolationLevel;
 import org.junit.Assert;
+import org.mockito.AdditionalAnswers;
+import org.mockito.invocation.InvocationOnMock;
+import org.mockito.stubbing.Answer;
 import org.testng.annotations.Test;
 
 import java.util.concurrent.BrokenBarrierException;
@@ -18,6 +25,10 @@ import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
+import static org.junit.Assert.fail;
+import static org.mockito.Mockito.doAnswer;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.withSettings;
 import static org.testng.AssertJUnit.assertEquals;
 import static org.testng.AssertJUnit.assertNotNull;
 
@@ -28,6 +39,7 @@ import static org.testng.AssertJUnit.assertNotNull;
  * @author wburns
  * @since 6.0
  */
+@Test(groups = "functional", testName = "distribution.BaseDistSyncL1Test")
 public abstract class BaseDistSyncL1Test extends BaseDistFunctionalTest<Object, String> {
 
    protected static final String key = "key-to-the-cache";
@@ -332,5 +344,138 @@ public abstract class BaseDistSyncL1Test extends BaseDistFunctionalTest<Object, 
          removeAllBlockingInterceptorsFromCache(ownerCache);
          removeAllBlockingInterceptorsFromCache(backupOwnerCache);
       }
+   }
+
+   @Test
+   public void testGetBlockedInvalidation() throws Throwable {
+      final Cache<Object, String> nonOwnerCache = getFirstNonOwner(key);
+      final Cache<Object, String> ownerCache = getFirstOwner(key);
+
+      ownerCache.put(key, firstValue);
+
+      assertIsNotInL1(nonOwnerCache, key);
+
+      CheckPoint checkPoint = new CheckPoint();
+      waitUntilAboutToAcquireLock(nonOwnerCache, checkPoint);
+
+      log.warn("Doing get here - ignore all previous");
+
+      Future<String> getFuture = nonOwnerCache.getAsync(key);
+
+      // Wait until we are about to write value into data container on non owner
+      checkPoint.awaitStrict("pre_acquire_shared_topology_lock_invoked", 10, TimeUnit.SECONDS);
+
+      Future<String> putFuture = ownerCache.putAsync(key, secondValue);
+
+      try {
+         putFuture.get(1, TimeUnit.SECONDS);
+         fail("Should have thrown a TimeoutException");
+      } catch (TimeoutException e) {
+      }
+
+      // Let the get complete finally
+      checkPoint.triggerForever("pre_acquire_shared_topology_lock_released");
+
+      Assert.assertEquals(firstValue, getFuture.get(10, TimeUnit.SECONDS));
+
+      Assert.assertEquals(firstValue, putFuture.get(10, TimeUnit.SECONDS));
+
+      assertIsNotInL1(nonOwnerCache, key);
+   }
+
+   @Test
+   public void testGetBlockingAnotherGet() throws Throwable {
+      final Cache<Object, String> nonOwnerCache = getFirstNonOwner(key);
+      final Cache<Object, String> ownerCache = getFirstOwner(key);
+
+      ownerCache.put(key, firstValue);
+
+      assertIsNotInL1(nonOwnerCache, key);
+
+      CheckPoint checkPoint = new CheckPoint();
+      waitUntilAboutToAcquireLock(nonOwnerCache, checkPoint);
+
+      log.warn("Doing get here - ignore all previous");
+
+      Future<String> getFuture = nonOwnerCache.getAsync(key);
+
+      // Wait until we are about to write value into data container on non owner
+      checkPoint.awaitStrict("pre_acquire_shared_topology_lock_invoked", 10, TimeUnit.SECONDS);
+
+      Future<String> getFuture2 = nonOwnerCache.getAsync(key);
+
+      try {
+         getFuture2.get(1, TimeUnit.SECONDS);
+         fail("Should have thrown a TimeoutException");
+      } catch (TimeoutException e) {
+      }
+
+      // Let the get complete finally
+      checkPoint.triggerForever("pre_acquire_shared_topology_lock_released");
+
+      Assert.assertEquals(firstValue, getFuture.get(10, TimeUnit.SECONDS));
+
+      Assert.assertEquals(firstValue, getFuture2.get(10, TimeUnit.SECONDS));
+
+      assertIsInL1(nonOwnerCache, key);
+   }
+
+   @Test
+   public void testGetBlockingLocalPut() throws Throwable {
+      final Cache<Object, String> nonOwnerCache = getFirstNonOwner(key);
+      final Cache<Object, String> ownerCache = getFirstOwner(key);
+
+      ownerCache.put(key, firstValue);
+
+      assertIsNotInL1(nonOwnerCache, key);
+
+      CheckPoint checkPoint = new CheckPoint();
+      waitUntilAboutToAcquireLock(nonOwnerCache, checkPoint);
+
+      log.warn("Doing get here - ignore all previous");
+
+      Future<String> getFuture = nonOwnerCache.getAsync(key);
+
+      // Wait until we are about to write value into data container on non owner
+      checkPoint.awaitStrict("pre_acquire_shared_topology_lock_invoked", 10, TimeUnit.SECONDS);
+
+      Future<String> putFuture = nonOwnerCache.putAsync(key, secondValue);
+
+      try {
+         putFuture.get(1, TimeUnit.SECONDS);
+         fail("Should have thrown a TimeoutException");
+      } catch (TimeoutException e) {
+      }
+
+      // Let the get complete finally
+      checkPoint.triggerForever("pre_acquire_shared_topology_lock_released");
+
+      Assert.assertEquals(firstValue, getFuture.get(10, TimeUnit.SECONDS));
+
+      Assert.assertEquals(firstValue, putFuture.get(10, TimeUnit.SECONDS));
+
+      if (nonOwnerCache.getCacheConfiguration().transaction().transactionMode() == TransactionMode.TRANSACTIONAL) {
+         assertIsInL1(nonOwnerCache, key);
+      } else {
+         assertIsNotInL1(nonOwnerCache, key);
+      }
+   }
+
+   protected void waitUntilAboutToAcquireLock(final Cache<?, ?> cache, final CheckPoint checkPoint) {
+      StateTransferLock stl = TestingUtil.extractComponent(cache, StateTransferLock.class);
+      final Answer<Object> forwardedAnswer = AdditionalAnswers.delegatesTo(stl);
+      StateTransferLock mockLock = mock(StateTransferLock.class, withSettings().defaultAnswer(forwardedAnswer));
+      TestingUtil.replaceComponent(cache, StateTransferLock.class, mockLock, true);
+      doAnswer(new Answer() {
+         @Override
+         public Object answer(InvocationOnMock invocation) throws Throwable {
+            // Wait for main thread to sync up
+            checkPoint.trigger("pre_acquire_shared_topology_lock_invoked");
+            // Now wait until main thread lets us through
+            checkPoint.awaitStrict("pre_acquire_shared_topology_lock_released", 10, TimeUnit.SECONDS);
+
+            return forwardedAnswer.answer(invocation);
+         }
+      }).when(mockLock).acquireSharedTopologyLock();
    }
 }
