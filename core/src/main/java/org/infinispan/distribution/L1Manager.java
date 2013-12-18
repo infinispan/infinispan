@@ -24,9 +24,6 @@ public interface L1Manager {
 	 */
 	void addRequestor(Object key, Address requestor);
 
-   Future<Object> flushCacheWithSimpleFuture(Collection<Object> keys, Object retval, Address origin,
-                                             boolean assumeOriginKeptEntryInL1);
-
    Future<Object> flushCache(Collection<Object> key, Address origin, boolean assumeOriginKeptEntryInL1);
 
    /**
