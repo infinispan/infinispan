@@ -226,6 +226,12 @@ public class L1NonTxInterceptor extends BaseRpcInterceptor {
    public Object visitInvalidateL1Command(InvocationContext ctx, InvalidateL1Command invalidateL1Command) throws Throwable {
       for (Object key : invalidateL1Command.getKeys()) {
          abortL1UpdateOrWait(key);
+         // If our invalidation was sent when the value wasn't yet cached but is still being requested the context
+         // may not have the value - if so we need to add it then now that we know we waited for the get response
+         // to complete
+         if (ctx.lookupEntry(key) == null) {
+            entryFactory.wrapEntryForRemove(ctx, key, true, true, false);
+         }
       }
       return super.visitInvalidateL1Command(ctx, invalidateL1Command);
    }
