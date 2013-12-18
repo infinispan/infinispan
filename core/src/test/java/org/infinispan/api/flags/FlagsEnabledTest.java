@@ -6,6 +6,7 @@ import static org.infinispan.test.TestingUtil.k;
 import static org.infinispan.test.TestingUtil.v;
 import static org.infinispan.test.TestingUtil.withTx;
 import static org.testng.AssertJUnit.assertEquals;
+import static org.testng.AssertJUnit.assertNull;
 
 import org.infinispan.AbstractDelegatingAdvancedCache;
 import org.infinispan.AdvancedCache;
@@ -14,12 +15,14 @@ import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.cache.VersioningScheme;
 import org.infinispan.context.Flag;
+import org.infinispan.distribution.MagicKey;
 import org.infinispan.persistence.UnnecessaryLoadingTest;
 import org.infinispan.persistence.dummy.DummyInMemoryStoreConfigurationBuilder;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.CleanupAfterMethod;
 import org.infinispan.util.concurrent.IsolationLevel;
+import org.testng.AssertJUnit;
 import org.testng.annotations.Test;
 
 import java.lang.reflect.Method;
@@ -40,7 +43,8 @@ public class FlagsEnabledTest extends MultipleCacheManagersTest {
             .versioning().enable().scheme(VersioningScheme.SIMPLE)
             .persistence().addStore(UnnecessaryLoadingTest.CountingStoreConfigurationBuilder.class)
             .persistence().addStore(DummyInMemoryStoreConfigurationBuilder.class)
-            .transaction().syncCommitPhase(true);
+            .transaction().syncCommitPhase(true)
+            .clustering().hash().numSegments(2);
       createClusteredCaches(2, "replication", builder);
    }
 
@@ -127,6 +131,28 @@ public class FlagsEnabledTest extends MultipleCacheManagersTest {
       final AdvancedCache<String, String> cache2 =
             this.<String, String>cache(1, "replication").getAdvancedCache();
       doReplicateSkipCacheLoaderWithinTx(m, cache2, cache1);
+   }
+
+   public void testCacheLocalInPrimaryOwner() {
+      final AdvancedCache<Object, String> cache1 =advancedCache(0, "replication");
+      final AdvancedCache<Object, String> cache2 =advancedCache(1, "replication");
+      final Object key = new MagicKey("k-po", cache1);
+
+      cache1.withFlags(CACHE_MODE_LOCAL).put(key, "value");
+
+      assertEquals("Cache '" + cache1 + "' should have the key.", "value", cache1.get(key));
+      assertNull("Cache '" + cache2 + "' should *not* have the key.", cache2.get(key));
+   }
+
+   public void testCacheLocalInBackupOwner() {
+      final AdvancedCache<Object, String> cache1 =advancedCache(0, "replication");
+      final AdvancedCache<Object, String> cache2 =advancedCache(1, "replication");
+      final Object key = new MagicKey("k-bo", cache1);
+
+      cache2.withFlags(CACHE_MODE_LOCAL).put(key, "value");
+
+      assertEquals("Cache '" + cache2 + "' should have the key.", "value", cache2.get(key));
+      assertNull("Cache '" + cache1 + "' should *not* have the key.", cache1.get(key));
    }
 
    private void doReplicateSkipCacheLoaderWithinTx(Method m,

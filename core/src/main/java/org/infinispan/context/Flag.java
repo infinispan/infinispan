@@ -36,8 +36,10 @@ public enum Flag {
    ZERO_LOCK_ACQUISITION_TIMEOUT,
    /**
     * Forces LOCAL mode operation, even if the cache is configured to use a clustered mode like replication,
-    * invalidation or distribution.  Applying this flag will suppress any RPC messages otherwise associated with this
-    * invocation.
+    * invalidation or distribution. Applying this flag will suppress any RPC messages otherwise associated with this
+    * invocation. Write operations mat not acquire the entry locks. In distributed mode, the modifications performed
+    * during an operation in a non-owner node are going to L1, if it is enabled, otherwise the operation is a no-op in
+    * that node.
     */
    CACHE_MODE_LOCAL,
    /**
