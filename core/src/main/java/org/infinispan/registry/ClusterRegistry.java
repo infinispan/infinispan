@@ -35,9 +35,9 @@ import java.util.Set;
 @Scope(Scopes.GLOBAL)
 public interface ClusterRegistry<S, K, V> {
 
-   V put(S scope, K key, V value);
+   void put(S scope, K key, V value);
 
-   V remove(S scope, K key);
+   void remove(S scope, K key);
 
    V get(S scope, K key);
 
