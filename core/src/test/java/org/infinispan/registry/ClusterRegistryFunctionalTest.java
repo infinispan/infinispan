@@ -55,8 +55,10 @@ public class ClusterRegistryFunctionalTest extends MultipleCacheManagersTest {
       assertTrue(clusterRegistry1.keys("noSuchScope").isEmpty());
 
       //test remove
-      assertNull(clusterRegistry1.remove(scope, "noSuchKey"));
-      assertEquals(1, (int)clusterRegistry1.remove(scope, "k1"));
+      assertNull(clusterRegistry1.get(scope, "noSuchKey"));
+      clusterRegistry1.remove(scope, "noSuchKey");
+      assertEquals(1, (int) clusterRegistry1.get(scope, "k1"));
+      clusterRegistry1.remove(scope, "k1");
       assertNull(clusterRegistry1.get(scope, "k1"));
       assertNull(clusterRegistry0.get(scope, "k1"));
 
@@ -64,14 +66,6 @@ public class ClusterRegistryFunctionalTest extends MultipleCacheManagersTest {
       clusterRegistry1.clearAll();
       assertTrue(clusterRegistry0.keys(scope).isEmpty());
       assertTrue(clusterRegistry1.keys(scope).isEmpty());
-   }
-
-   public void testReturnValues() {
-      String scope = "ClusterRegistryFunctionalTest";
-      assertNull(clusterRegistry0.put(scope, "k1", 1));
-      assertEquals(1, (int) clusterRegistry1.put(scope, "k1", 2));
-      assertNull(clusterRegistry0.remove(scope, "k2"));
-      assertEquals(2, (int) clusterRegistry1.remove(scope, "k1"));
    }
 
    public void testClearAll() {

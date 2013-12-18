@@ -1,11 +1,14 @@
 package org.infinispan.registry;
 
 import net.jcip.annotations.ThreadSafe;
+
+import org.infinispan.AdvancedCache;
 import org.infinispan.Cache;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.global.GlobalConfiguration;
+import org.infinispan.context.Flag;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.notifications.KeyFilter;
@@ -29,6 +32,7 @@ public class ClusterRegistryImpl<S, K, V> implements ClusterRegistry<S, K, V> {
 
    private EmbeddedCacheManager cacheManager;
    private volatile Cache<ScopedKey<S, K>, V> clusterRegistryCache;
+   private volatile AdvancedCache<ScopedKey<S, K>, V> clusterRegistryCacheWithoutReturn;
 
    @Inject
    public void init(EmbeddedCacheManager cacheManager) {
@@ -36,16 +40,16 @@ public class ClusterRegistryImpl<S, K, V> implements ClusterRegistry<S, K, V> {
    }
 
    @Override
-   public V put(S scope, K key, V value) {
+   public void put(S scope, K key, V value) {
       if (value == null) throw new IllegalArgumentException("Null values are not allowed");
       startRegistryCache();
-      return clusterRegistryCache.put(new ScopedKey<S, K>(scope, key), value);
+      clusterRegistryCacheWithoutReturn.put(new ScopedKey<S, K>(scope, key), value);
    }
 
    @Override
-   public V remove(S scope, K key) {
+   public void remove(S scope, K key) {
       startRegistryCache();
-      return clusterRegistryCache.remove(new ScopedKey<S, K>(scope, key));
+      clusterRegistryCacheWithoutReturn.remove(new ScopedKey<S, K>(scope, key));
    }
 
    @Override
@@ -77,7 +81,7 @@ public class ClusterRegistryImpl<S, K, V> implements ClusterRegistry<S, K, V> {
       startRegistryCache();
       for (ScopedKey<S, K> key : clusterRegistryCache.keySet()) {
          if (key.hasScope(scope)) {
-            clusterRegistryCache.remove(key);
+            clusterRegistryCacheWithoutReturn.remove(key);
          }
       }
    }
@@ -130,6 +134,7 @@ public class ClusterRegistryImpl<S, K, V> implements ClusterRegistry<S, K, V> {
             if (clusterRegistryCache != null) return;
             cacheManager.defineConfiguration(GLOBAL_REGISTRY_CACHE_NAME, getRegistryCacheConfig());
             clusterRegistryCache = cacheManager.getCache(GLOBAL_REGISTRY_CACHE_NAME);
+            clusterRegistryCacheWithoutReturn = clusterRegistryCache.getAdvancedCache().withFlags(Flag.IGNORE_RETURN_VALUES);
          }
       }
    }
