@@ -76,8 +76,7 @@ public class QueryInterceptor extends CommandInterceptor {
    private final KeyTransformationHandler keyTransformationHandler = new KeyTransformationHandler();
    private final KnownClassesRegistryListener registryListener = new KnownClassesRegistryListener();
 
-   private ClusterRegistry<String, Class<?>, Boolean> clusterRegistry;
-   private String knownClassesScope;
+   private ReadIntensiveClusterRegistryWrapper<String, Class<?>, Boolean> clusterRegistry;
 
    private SearchWorkCreator<Object> searchWorkCreator = new DefaultSearchWorkCreator<Object>();
 
@@ -110,16 +109,13 @@ public class QueryInterceptor extends CommandInterceptor {
       this.transactionSynchronizationRegistry = transactionSynchronizationRegistry;
       this.asyncExecutor = e;
       this.dataContainer = dataContainer;
-      this.clusterRegistry = clusterRegistry;
-
-      knownClassesScope = "QueryKnownClasses#" + cache.getName();
+      this.clusterRegistry = new ReadIntensiveClusterRegistryWrapper(clusterRegistry, "QueryKnownClasses#" + cache.getName());
    }
 
    @Start
    protected void start() {
-      clusterRegistry.addListener(knownClassesScope, registryListener);
-
-      for (Class<?> c : clusterRegistry.keys(knownClassesScope)) {
+      clusterRegistry.addListener(registryListener);
+      for (Class<?> c : clusterRegistry.keys()) {
          enableClass(c);
       }
    }
@@ -205,7 +201,7 @@ public class QueryInterceptor extends CommandInterceptor {
 
    private void purgeAllIndexes(TransactionContext transactionContext) {
       transactionContext = transactionContext == null ? makeTransactionalEventContext() : transactionContext;
-      for (Class c : clusterRegistry.keys(knownClassesScope)) {
+      for (Class c : clusterRegistry.keys()) {
          if (isIndexed(c)) {
             //noinspection unchecked
             performSearchWorks(searchWorkCreator.createPerEntityTypeWorks(c, WorkType.PURGE_ALL), transactionContext);
@@ -259,7 +255,7 @@ public class QueryInterceptor extends CommandInterceptor {
    private void enableClassesIncrementally(Class<?>[] classes, boolean locked) {
       ArrayList<Class<?>> toAdd = null;
       for (Class<?> type : classes) {
-         if (!clusterRegistry.containsKey(knownClassesScope, type)) {
+         if (!clusterRegistry.containsKey(type)) {
             if (toAdd==null)
                toAdd = new ArrayList<Class<?>>(classes.length);
             toAdd.add(type);
@@ -279,7 +275,7 @@ public class QueryInterceptor extends CommandInterceptor {
             resume(transaction);
          }
          for (Class<?> type : toAdd) {
-            clusterRegistry.put(knownClassesScope, type, isIndexed(type));
+            clusterRegistry.put(type, isIndexed(type));
          }
       } else {
          mutating.lock();
@@ -311,7 +307,7 @@ public class QueryInterceptor extends CommandInterceptor {
    public boolean updateKnownTypesIfNeeded(Object value) {
       if ( value != null ) {
          Class<?> potentialNewType = value.getClass();
-         if (!clusterRegistry.containsKey(knownClassesScope, potentialNewType)) {
+         if (!clusterRegistry.containsKey(potentialNewType)) {
             mutating.lock();
             try {
                enableClassesIncrementally( new Class[]{potentialNewType}, true);
@@ -320,7 +316,7 @@ public class QueryInterceptor extends CommandInterceptor {
                mutating.unlock();
             }
          }
-         return clusterRegistry.get(knownClassesScope, potentialNewType);
+         return clusterRegistry.get(potentialNewType);
       }
       else {
          return false;
