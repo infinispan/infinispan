@@ -175,6 +175,11 @@ public class EntryWrappingInterceptor extends CommandInterceptor {
       if (command.hasFlag(Flag.SKIP_OWNERSHIP_CHECK)) {
          log.tracef("Skipping ownership check and wrapping key %s", key);
          return true;
+      } else if (command.hasFlag(Flag.CACHE_MODE_LOCAL)) {
+         if (trace) {
+            log.tracef("CACHE_MODE_LOCAL is set. Wrapping key %s", key);
+         }
+         return true;
       }
       boolean result;
       if (cacheConfiguration.transaction().transactionMode().isTransactional()) {
