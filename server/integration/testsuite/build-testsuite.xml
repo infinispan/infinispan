@@ -17,11 +17,13 @@
     <property name="log.level.infinispan" value="INFO"/>
     <property name="log.level.jgroups" value="INFO"/>
     <property name="log.level.console" value="INFO"/>
+    <property name="transport.stack" value="udp"/>
 
     <filterset id="commonFilters" begintoken="${" endtoken="}">
         <filter token="leveldb.compression" value="${leveldb.compression}" />
         <filter token="leveldb.impl" value="${leveldb.impl}" />
         <filter token="resources.dir" value="${resources.dir}" />
+        <filter token="transport.stack" value="${transport.stack}" />
     </filterset>
 
     <target name="create-distro1" description="Create first distribution of Infinispan server by copying the one from build/target directory or unpacking a distro zip">
