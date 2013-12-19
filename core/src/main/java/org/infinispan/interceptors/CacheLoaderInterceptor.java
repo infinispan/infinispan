@@ -13,6 +13,7 @@ import org.infinispan.commands.write.PutKeyValueCommand;
 import org.infinispan.commands.write.RemoveCommand;
 import org.infinispan.commands.write.ReplaceCommand;
 import org.infinispan.commons.util.InfinispanCollections;
+import org.infinispan.container.DataContainer;
 import org.infinispan.container.EntryFactory;
 import org.infinispan.container.InternalEntryFactory;
 import org.infinispan.container.entries.CacheEntry;
@@ -21,6 +22,7 @@ import org.infinispan.context.Flag;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.interceptors.base.JmxStatsCommandInterceptor;
+import org.infinispan.interceptors.locking.ClusteringDependentLogic;
 import org.infinispan.jmx.annotations.DisplayType;
 import org.infinispan.jmx.annotations.MBean;
 import org.infinispan.jmx.annotations.ManagedAttribute;
@@ -57,6 +59,8 @@ public class CacheLoaderInterceptor extends JmxStatsCommandInterceptor {
    protected EntryFactory entryFactory;
    private TimeService timeService;
    private InternalEntryFactory iceFactory;
+   private ClusteringDependentLogic cdl;
+   private DataContainer dataContainer;
 
    private static final Log log = LogFactory.getLog(CacheLoaderInterceptor.class);
 
@@ -66,12 +70,16 @@ public class CacheLoaderInterceptor extends JmxStatsCommandInterceptor {
    }
 
    @Inject
-   protected void injectDependencies(PersistenceManager clm, EntryFactory entryFactory, CacheNotifier notifier, TimeService timeService, InternalEntryFactory iceFactory) {
+   protected void injectDependencies(PersistenceManager clm, EntryFactory entryFactory, CacheNotifier notifier,
+                                     TimeService timeService, InternalEntryFactory iceFactory,
+                                     ClusteringDependentLogic cdl, DataContainer dataContainer) {
       this.persistenceManager = clm;
       this.notifier = notifier;
       this.entryFactory = entryFactory;
       this.timeService = timeService;
       this.iceFactory = iceFactory;
+      this.cdl = cdl;
+      this.dataContainer = dataContainer;
    }
 
    @Override
@@ -248,7 +256,7 @@ public class CacheLoaderInterceptor extends JmxStatsCommandInterceptor {
     *         queried for the value, so it was neither a hit or a miss.
     * @throws Throwable
     */
-   protected Boolean loadIfNeeded(InvocationContext ctx, Object key, boolean isRetrieval, FlagAffectedCommand cmd) throws Throwable {
+   protected final Boolean loadIfNeeded(InvocationContext ctx, Object key, boolean isRetrieval, FlagAffectedCommand cmd) throws Throwable {
       if (shouldSkipCacheLoader(cmd) || cmd.hasFlag(Flag.IGNORE_RETURN_VALUES) || !canLoad(key)) {
          return null; //skip operation
       }
@@ -259,34 +267,73 @@ public class CacheLoaderInterceptor extends JmxStatsCommandInterceptor {
 
       // first check if the container contains the key we need.  Try and load this into the context.
       CacheEntry e = ctx.lookupEntry(key);
-      if (shouldAttemptLookup(e)) {
+      if (!shouldAttemptLookup(e)) {
+         return null;
+      }
+
+      final boolean isDelta = cmd instanceof ApplyDeltaCommand;
+
+      try {
+         while (!cdl.lock(key, false));
+
+         //under the lock, check if the entry exists in the DataContainer
+         InternalCacheEntry ice = dataContainer.get(key);
+         if (ice != null) {
+            wrapInternalCacheEntry(ctx, key, cmd, ice, isDelta, false);
+            //Entry wasn't loaded from persistence. return null.
+            return null;
+         }
+
+         //check if the entry was loaded
          MarshalledEntry loaded = persistenceManager.loadFromAllStores(key, ctx);
-         if(loaded == null)
+         if (getLog().isTraceEnabled()) {
+            getLog().tracef("Loaded %s for key %s from persistence.", loaded, key);
+         }
+         if(loaded == null) {
             return Boolean.FALSE;
+         }
          InternalMetadata metadata = loaded.getMetadata();
          if (metadata != null && metadata.isExpired(timeService.wallClockTime())) {
             return Boolean.FALSE;
          }
-         InternalCacheEntry ice = iceFactory.create(loaded.getKey(), loaded.getValue(), metadata);
-         CacheEntry wrappedEntry;
-         if (cmd instanceof ApplyDeltaCommand) {
-            ctx.putLookedUpEntry(key, ice);
-            wrappedEntry = entryFactory.wrapEntryForDelta(ctx, key, ((ApplyDeltaCommand) cmd).getDelta());
-         } else {
-            wrappedEntry = entryFactory.wrapEntryForPut(ctx, key, ice, false, cmd, false);
-         }
-         recordLoadedEntry(ctx, key, wrappedEntry, ice, cmd);
+
+         ice = iceFactory.create(loaded.getKey(), loaded.getValue(), metadata);
+         CacheEntry wrappedEntry = wrapInternalCacheEntry(ctx, key, cmd, ice, isDelta, true);
+         recordLoadedEntry(ctx, key, wrappedEntry, ice, cmd, isDelta);
+         afterSuccessfullyLoaded(wrappedEntry);
          return Boolean.TRUE;
-      } else {
-         return null;
+      } finally {
+         cdl.unlock(key);
       }
+   }
+
+   private CacheEntry wrapInternalCacheEntry(InvocationContext ctx, Object key, FlagAffectedCommand cmd,
+                                             InternalCacheEntry ice, boolean isDelta, boolean storeDeltaInContainer)
+         throws InterruptedException {
+      if (isDelta) {
+         if (storeDeltaInContainer) {
+            //in ApplyDeltaCommand we need to store the entry loaded and not the entry wrapped.
+            CacheEntry entry = entryFactory.wrapEntryForPut(ctx, key, ice, false, cmd, false);
+            entry.setLoaded(true); // mark the entry as loaded from the store
+            cdl.commitEntry(entry, null, cmd, ctx);
+            entry.setLoaded(false); //entry is in DataContainer. Un-mark the load()
+         }
+         ctx.putLookedUpEntry(key, ice);
+         return entryFactory.wrapEntryForDelta(ctx, key, ((ApplyDeltaCommand) cmd).getDelta());
+      } else {
+         return entryFactory.wrapEntryForPut(ctx, key, ice, false, cmd, false);
+      }
+   }
+
+   protected void afterSuccessfullyLoaded(CacheEntry wrappedEntry) {
+      //meant to be override by activation interceptor
    }
 
    /**
     * Only perform if context doesn't have a value found (Read Committed) or if we can do a remote
     * get only if the value is null (Repeatable Read)
     */
-   protected boolean shouldAttemptLookup(CacheEntry e) {
+   private boolean shouldAttemptLookup(CacheEntry e) {
       return e == null || (e.isNull() || e.getValue() == null) && !e.skipLookup();
    }
 
@@ -298,7 +345,7 @@ public class CacheLoaderInterceptor extends JmxStatsCommandInterceptor {
     * listeners</li> </ol>
     */
    private void recordLoadedEntry(InvocationContext ctx, Object key,
-         CacheEntry entry, InternalCacheEntry loadedEntry, FlagAffectedCommand cmd) throws Exception {
+         CacheEntry entry, InternalCacheEntry loadedEntry, FlagAffectedCommand cmd, boolean isDelta) throws Exception {
       boolean entryExists = loadedEntry != null;
       if (log.isTraceEnabled()) {
          log.trace("Entry exists in loader? " + entryExists);
@@ -328,7 +375,12 @@ public class CacheLoaderInterceptor extends JmxStatsCommandInterceptor {
          entry.setMetadata(metadata);
          // TODO shouldn't we also be setting last used and created timestamps?
          entry.setValid(true);
-         entry.setLoaded(true); // mark the entry as loaded from the store
+
+         if (!isDelta) {
+            entry.setLoaded(true); // mark the entry as loaded from the store
+            cdl.commitEntry(entry, null, cmd, ctx);
+            entry.setLoaded(false);
+         }
 
          sendNotification(key, value, false, ctx, cmd);
       }
