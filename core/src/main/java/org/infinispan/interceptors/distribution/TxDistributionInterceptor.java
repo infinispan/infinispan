@@ -252,10 +252,13 @@ public class TxDistributionInterceptor extends BaseDistributionInterceptor {
    }
 
    private boolean shouldFetchRemoteValuesForWriteSkewCheck(InvocationContext ctx, WriteCommand cmd) {
-      // TODO Dan: I don't think this method should always return true: the write skew check should only happen on the primary owner, and the primary owner always has the value already
+      // Note: the primary owner always already has the data, so this method is always going to return false
       if (useClusteredWriteSkewCheck && ctx.isInTxScope() && dm.isRehashInProgress()) {
          for (Object key : cmd.getAffectedKeys()) {
-            if (dm.isAffectedByRehash(key) && !dataContainer.containsKey(key)) return true;
+            // TODO Dan: Do we need a special check for total order?
+            boolean shouldPerformWriteSkewCheck = cdl.localNodeIsPrimaryOwner(key);
+            // TODO Dan: remoteGet() already checks if the key is available locally or not
+            if (shouldPerformWriteSkewCheck && dm.isAffectedByRehash(key) && !dataContainer.containsKey(key)) return true;
          }
       }
       return false;
@@ -267,12 +270,22 @@ public class TxDistributionInterceptor extends BaseDistributionInterceptor {
     */
    private Object handleTxWriteCommand(InvocationContext ctx, WriteCommand command, RecipientGenerator recipientGenerator, boolean skipRemoteGet) throws Throwable {
       // see if we need to load values from remote sources first
-      if (ctx.isOriginLocal() && !skipRemoteGet || command.isConditional() || command.hasFlag(Flag.DELTA_WRITE)
-            || shouldFetchRemoteValuesForWriteSkewCheck(ctx, command))
+      if (!skipRemoteGet && needValuesFromPreviousOwners(ctx, command))
          remoteGetBeforeWrite(ctx, command, recipientGenerator);
 
       // FIRST pass this call up the chain.  Only if it succeeds (no exceptions) locally do we attempt to distribute.
       return invokeNextInterceptor(ctx, command);
+   }
+
+   @Override
+   protected boolean needValuesFromPreviousOwners(InvocationContext ctx, WriteCommand command) {
+      if (ctx.isOriginLocal()) {
+         // The return value only matters on the originator.
+         // Conditional commands also check the previous value only on the originator.
+         if (isNeedReliableReturnValues(command) || command.isConditional())
+            return true;
+      }
+      return shouldFetchRemoteValuesForWriteSkewCheck(ctx, command) || command.hasFlag(Flag.DELTA_WRITE);
    }
 
    private Object localGet(InvocationContext ctx, Object key, boolean isWrite,
@@ -294,22 +307,15 @@ public class TxDistributionInterceptor extends BaseDistributionInterceptor {
    }
 
    protected void remoteGetBeforeWrite(InvocationContext ctx, WriteCommand command, RecipientGenerator keygen) throws Throwable {
-      // this should only happen if:
-      //   a) unsafeUnreliableReturnValues is false
-      //   b) unsafeUnreliableReturnValues is true, we are in a TX and the command is conditional or a delta write
-      // On the backup owners, the value matching policy should be set to MATCH_ALWAYS, and command.isConditional() should return true
-      if (isNeedReliableReturnValues(command) || command.isConditional() || command.hasFlag(Flag.DELTA_WRITE) ||
-            shouldFetchRemoteValuesForWriteSkewCheck(ctx, command)) {
-         for (Object k : keygen.getKeys()) {
-            CacheEntry entry = ctx.lookupEntry(k);
-            boolean skipRemoteGet =  entry != null && entry.skipLookup();
-            if (skipRemoteGet) {
-               continue;
-            }
-            InternalCacheEntry ice = remoteGet(ctx, k, true, command);
-            if (ice == null) {
-               localGet(ctx, k, true, command, false);
-            }
+      for (Object k : keygen.getKeys()) {
+         CacheEntry entry = ctx.lookupEntry(k);
+         boolean skipRemoteGet =  entry != null && entry.skipLookup();
+         if (skipRemoteGet) {
+            continue;
+         }
+         InternalCacheEntry ice = remoteGet(ctx, k, true, command);
+         if (ice == null) {
+            localGet(ctx, k, true, command, false);
          }
       }
    }
