@@ -25,6 +25,63 @@ Hot Rod is a binary, language neutral protocol. This article explains how a Java
 
 TIP: Looking for more clients?  Visit link:$$http://infinispan.org/hotrod-clients$$[this website] for clients written in a variety of different languages.
 
+===== Configuration
+The Java Hot Rod client can be configured both programmatically and externally, through a configuration file.
+
+The code snippet below illustrates the creation of a client instance using the available Java fluent API:
+
+[source,java]
+----
+org.infinispan.client.hotrod.configuration.ConfigurationBuilder cb
+      = new org.infinispan.client.hotrod.configuration.ConfigurationBuilder();
+cb.tcpNoDelay(true)
+  .connectionPool()
+      .numTestsPerEvictionRun(3)
+      .testOnBorrow(false)
+      .testOnReturn(false)
+      .testWhileIdle(true)
+  .addServer()
+      .host("localhost")
+      .port(11222);
+RemoteCacheManager rmc = new RemoteCacheManager(cb.build());
+
+----
+
+For a complete reference to the available configuration option please refer to the link:$$http://docs.jboss.org/infinispan/6.0/apidocs/org/infinispan/client/hotrod/configuration/ConfigurationBuilder.html$$[ConfigurationBuilder]'s javadoc.
+
+It is also possible to configure the Java Hot Rod client using an properties file, e.g.:
+
+[source]
+----
+infinispan.client.hotrod.transport_factory = org.infinispan.client.hotrod.impl.transport.tcp.TcpTransportFactory
+infinispan.client.hotrod.server_list = 127.0.0.1:11222
+infinispan.client.hotrod.marshaller = org.infinispan.commons.marshall.jboss.GenericJBossMarshaller
+infinispan.client.hotrod.async_executor_factory = org.infinispan.client.hotrod.impl.async.DefaultAsyncExecutorFactory
+infinispan.client.hotrod.default_executor_factory.pool_size = 1
+infinispan.client.hotrod.default_executor_factory.queue_size = 10000
+infinispan.client.hotrod.hash_function_impl.1 = org.infinispan.client.hotrod.impl.consistenthash.ConsistentHashV1
+infinispan.client.hotrod.tcp_no_delay = true
+infinispan.client.hotrod.ping_on_startup = true
+infinispan.client.hotrod.request_balancing_strategy = org.infinispan.client.hotrod.impl.transport.tcp.RoundRobinBalancingStrategy
+infinispan.client.hotrod.key_size_estimate = 64
+infinispan.client.hotrod.value_size_estimate = 512
+infinispan.client.hotrod.force_return_values = false
+
+## below is connection pooling config
+maxActive=-1
+maxTotal = -1
+maxIdle = -1
+whenExhaustedAction = 1
+timeBetweenEvictionRunsMillis=120000
+minEvictableIdleTimeMillis=300000
+testWhileIdle = true
+minIdle = 1
+
+----
+
+The properties file is then passed to one of constructors of link:$$http://docs.jboss.org/infinispan/6.0/apidocs/org/infinispan/client/hotrod/RemoteCacheManager.html#RemoteCacheManager(java.net.URL)$$[RemoteCacheManager].
+For a complete reference of the available configuration options for the properties file please refer to link:$$http://docs.jboss.org/infinispan/6.0/apidocs/org/infinispan/client/hotrod/RemoteCacheManager.html$$[RemoteCacheManager]'s javadoc.
+
 ===== Basic API
 Below is a sample code snippet on how the client API can be used to store or retrieve information from a Hot Rod server using the Java Hot Rod client. It assumes that a Hot Rod server has been started bound to the default location (localhost:11222) 
 
