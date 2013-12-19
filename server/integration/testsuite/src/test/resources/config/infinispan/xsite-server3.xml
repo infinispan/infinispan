@@ -1,6 +1,6 @@
 <subsystem xmlns="urn:infinispan:server:core:6.0" >
     <cache-container name="clustered" default-cache="default">
-        <transport executor="infinispan-transport" lock-timeout="60000" cluster="NYC" stack="udp"/>
+        <transport executor="infinispan-transport" lock-timeout="60000" cluster="NYC" stack="${jboss.default.jgroups.stack:udp}"/>
         <distributed-cache name="default" mode="SYNC" segments="20" owners="2" remote-timeout="30000" start="EAGER">
             <locking isolation="READ_COMMITTED" acquire-timeout="30000" concurrency-level="1000" striping="false"/>
             <transaction mode="NONE"/>

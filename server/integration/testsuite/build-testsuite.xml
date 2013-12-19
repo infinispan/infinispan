@@ -157,7 +157,8 @@
                    modifyInfinispan="${infinispan.parts}/suppress-state-transfer.xml"
                    infinispanServerEndpoint="${other.parts}/suppress-server-endpoint.xml"
                    filtering="true"/>
-        <!--generate basic rest security for read only entries-->
+        <transform in="clustered.xml" out="testsuite/clustered-transport-stack.xml"
+                   modifyStack="${other.parts}/jgroups-stack.xml"/>
         <transform in="standalone.xml" out="testsuite/rest-sec-basic-wr.xml"
                    modifyInfinispan="${infinispan.parts}/rest-security.xml"
                    filtering="true">
@@ -165,7 +166,6 @@
                 <transform-rest-sec securityMode="WRITE" cacheContainer="security" in="@{in}" />
             </rest-sec>
         </transform>
-        <!--generate basic rest security for read and write entries-->
         <transform in="standalone.xml" out="testsuite/rest-sec-basic-rw.xml"
                    modifyInfinispan="${infinispan.parts}/rest-security.xml"
                    filtering="true">
@@ -173,7 +173,6 @@
                 <transform-rest-sec securityMode="READ_WRITE" cacheContainer="security" in="@{in}"/>
             </rest-sec>
         </transform>
-        <!--generate cert rest security for write entries-->
         <transform in="standalone.xml" out="testsuite/rest-sec-cert-wr.xml"
                    modifyInfinispan="${infinispan.parts}/rest-security.xml"
                    filtering="true">
@@ -181,7 +180,6 @@
                 <transform-rest-sec securityMode="WRITE" authMethod="CLIENT-CERT" cacheContainer="security" securityDomain="client_cert_auth" modifyCertSecDomain="true" in="@{in}"/>
             </rest-sec>
         </transform>
-        <!--generate cert rest security for read and write entries-->
         <transform in="standalone.xml" out="testsuite/rest-sec-cert-rw.xml"
                    modifyInfinispan="${infinispan.parts}/rest-security.xml"
                    filtering="true">
@@ -190,7 +188,6 @@
             </rest-sec>
         </transform>
 
-        <!--generate digest rest security for write entries-->
         <transform in="standalone.xml" out="testsuite/rest-sec-digest-wr.xml"
                    modifyInfinispan="${infinispan.parts}/rest-security.xml"
                    filtering="true">
@@ -198,7 +195,6 @@
                 <transform-rest-sec securityMode="WRITE" authMethod="DIGEST" cacheContainer="security" securityDomain="digest_auth" modifyDigestSecDomain="true" in="@{in}"/>
             </rest-sec>
         </transform>
-        <!--generate digest rest security for read and write entries-->
         <transform in="standalone.xml" out="testsuite/rest-sec-digest-rw.xml"
                    modifyInfinispan="${infinispan.parts}/rest-security.xml"
                    filtering="true">
@@ -227,6 +223,7 @@
         <attribute name="in"/>
         <attribute name="out"/>
         <attribute name="modifyInfinispan" default="false"/>
+        <attribute name="modifyStack" default="false"/>
         <attribute name="modifyRelay" default="false"/>
         <attribute name="modifyMulticastAddress" default="false"/>
         <attribute name="modifyRemoteDestination" default="false"/>
@@ -242,6 +239,7 @@
         <sequential>
             <xslt in="@{transformDir}/@{in}" out="@{transformDir}/@{in}-transformed" style="@{templateFile}">
                 <param name="modifyInfinispan" expression="@{modifyInfinispan}"/>
+                <param name="modifyStack" expression="@{modifyStack}"/>
                 <param name="modifyRelay" expression="@{modifyRelay}"/>
                 <param name="addAuth" expression="@{addAuth}"/>
                 <param name="addEncrypt" expression="@{addEncrypt}"/>
