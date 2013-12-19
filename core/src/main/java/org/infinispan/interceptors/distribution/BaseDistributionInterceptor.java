@@ -160,7 +160,9 @@ public abstract class BaseDistributionInterceptor extends ClusteringInterceptor 
       RecipientGenerator recipientGenerator = new SingleKeyRecipientGenerator(command.getKey());
 
       // see if we need to load values from remote sources first
-      remoteGetBeforeWrite(ctx, command, recipientGenerator);
+      if (needValuesFromPreviousOwners(ctx, command)) {
+         remoteGetBeforeWrite(ctx, command, recipientGenerator);
+      }
 
       // invoke the command locally, we need to know if it's successful or not
       Object localResult = invokeNextInterceptor(ctx, command);
@@ -274,6 +276,11 @@ public abstract class BaseDistributionInterceptor extends ClusteringInterceptor 
       Throwable cause = fromPrimaryOwner instanceof ExceptionResponse ? ((ExceptionResponse)fromPrimaryOwner).getException() : null;
       throw new CacheException("Got unsuccessful response from primary owner: " + fromPrimaryOwner, cause);
    }
+
+   /**
+    * @return Whether a remote get is needed to obtain the previous values of the affected entries.
+    */
+   protected abstract boolean needValuesFromPreviousOwners(InvocationContext ctx, WriteCommand command);
 
    protected abstract void remoteGetBeforeWrite(InvocationContext ctx, WriteCommand command, RecipientGenerator keygen) throws Throwable;
 

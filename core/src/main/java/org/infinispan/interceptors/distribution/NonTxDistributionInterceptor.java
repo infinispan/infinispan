@@ -127,17 +127,11 @@ public class NonTxDistributionInterceptor extends BaseDistributionInterceptor {
    }
 
    protected void remoteGetBeforeWrite(InvocationContext ctx, WriteCommand command, RecipientGenerator keygen) throws Throwable {
-      // this should only happen if:
-      //   a) unsafeUnreliableReturnValues is false
-      //   b) unsafeUnreliableReturnValues is true, the command is conditional or a delta write
-      // On the backup owners, the value matching policy should be set to MATCH_ALWAYS, and command.isConditional() should return true
-      if (isNeedReliableReturnValues(command) || command.isConditional() || command.hasFlag(Flag.DELTA_WRITE)) {
-         for (Object k : keygen.getKeys()) {
-            if (cdl.localNodeIsPrimaryOwner(k)) {
-               // Then it makes sense to try a local get and wrap again. This will compensate the fact the the entry was not local
-               // earlier when the EntryWrappingInterceptor executed during current invocation context but it should be now.
-               localGetCacheEntry(ctx, k, true, command);
-            }
+      for (Object k : keygen.getKeys()) {
+         if (cdl.localNodeIsPrimaryOwner(k)) {
+            // Then it makes sense to try a local get and wrap again. This will compensate the fact the the entry was not local
+            // earlier when the EntryWrappingInterceptor executed during current invocation context but it should be now.
+            localGetCacheEntry(ctx, k, true, command);
          }
       }
    }
@@ -164,5 +158,20 @@ public class NonTxDistributionInterceptor extends BaseDistributionInterceptor {
          return ice;
 
       return null;
+   }
+
+   protected boolean needValuesFromPreviousOwners(InvocationContext ctx, WriteCommand command) {
+      if (command.hasFlag(Flag.PUT_FOR_STATE_TRANSFER)) return false;
+      if (command.hasFlag(Flag.DELTA_WRITE)) return true;
+
+      // The return value only matters on the primary owner.
+      // The conditional commands also check the previous value only on the primary owner.
+      // Note: This should not be necessary, as the primary owner always has the previous value
+      if (isNeedReliableReturnValues(command) || command.isConditional()) {
+         for (Object key : command.getAffectedKeys()) {
+            if (cdl.localNodeIsPrimaryOwner(key)) return true;
+         }
+      }
+      return false;
    }
 }
