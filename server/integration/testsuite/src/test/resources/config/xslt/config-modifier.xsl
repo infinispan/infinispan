@@ -9,6 +9,7 @@
 
     <!-- Parameter declarations with defaults set -->
     <xsl:param name="modifyInfinispan">false</xsl:param>
+    <xsl:param name="modifyStack">false</xsl:param>
     <xsl:param name="modifyRelay">false</xsl:param>
     <xsl:param name="modifyMulticastAddress">false</xsl:param>
     <xsl:param name="modifyRemoteDestination">false</xsl:param>
@@ -189,6 +190,15 @@
                 <xsl:copy-of select="@*[not(name() = 'security-domain' or name() = 'auth-method')]"/>
                 <xsl:apply-templates/>
             </xsl:copy>
+        </xsl:if>
+    </xsl:template>
+
+    <xsl:template match="core:subsystem/core:cache-container/core:transport">
+        <xsl:if test="$modifyStack = 'false'">
+            <xsl:call-template name="copynode"/>
+        </xsl:if>
+        <xsl:if test="$modifyStack != 'false'">
+            <xsl:copy-of select="document($modifyStack)"/>
         </xsl:if>
     </xsl:template>
 

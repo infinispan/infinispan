@@ -3,7 +3,7 @@
                 name="clustered"
                 default-cache="testcache">
                 <transport 
-                    stack="udp"
+                    stack="${jboss.default.jgroups.stack:udp}"
                     executor="infinispan-transport"
                     lock-timeout="240000"/>
                 <replicated-cache 
