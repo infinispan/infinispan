@@ -59,16 +59,9 @@ public class EvictionWithPassivationAndConcurrentOperationsTest extends Eviction
    }
 
    @Override
-   protected void configureEviction(ConfigurationBuilder builder) {
-      builder.eviction()
-            .maxEntries(1)
-            .strategy(EvictionStrategy.LRU);
-   }
-
-   @Override
    protected void configurePersistence(ConfigurationBuilder builder) {
       builder.persistence().passivation(true)
             .addStore(DummyInMemoryStoreConfigurationBuilder.class)
-            .storeName(storeName);
+            .storeName(storeName + storeNamePrefix.getAndIncrement());
    }
 }

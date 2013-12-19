@@ -132,7 +132,7 @@ public interface ClusteringDependentLogic {
       private ReentrantPerEntryLockContainer createLockContainer(Configuration configuration) {
          //we need a lock container to synchronized the keys being moved between the data container and the persistence
          //with manual eviction.
-         if (configuration.persistence().usingStores() && configuration.persistence().passivation()) {
+         if (configuration.persistence().usingStores()) {
             return new ReentrantPerEntryLockContainer(configuration.locking().concurrencyLevel());
          }
          return null;
