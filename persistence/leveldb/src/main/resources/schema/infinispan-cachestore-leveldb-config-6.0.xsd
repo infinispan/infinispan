@@ -9,7 +9,7 @@
    
    <xs:complexType name="leveldbStoreType">
       <xs:complexContent>
-         <xs:extension base="config:lockSupportStore">
+         <xs:extension base="config:store">
             <xs:attribute name="location" type="xs:string" default="leveldb/data">
                <xs:annotation>
                   <xs:documentation>
