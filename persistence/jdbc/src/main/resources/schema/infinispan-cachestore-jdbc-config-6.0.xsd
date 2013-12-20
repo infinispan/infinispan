@@ -107,7 +107,7 @@
 
   <xs:complexType name="jdbcStore" abstract="true">
     <xs:complexContent>
-      <xs:extension base="config:lockSupportStore">
+      <xs:extension base="config:store">
         <xs:sequence>
           <xs:choice minOccurs="1" maxOccurs="1">
             <xs:element name="connectionPool" type="tns:connectionPool" />
