@@ -75,7 +75,7 @@ public class PropertyFormatter {
          if (cls.getMethod("toString") == plainToString) {
             return true;
          }
-         String plainToStringValue = cls.getName() + "@" + Integer.toHexString(obj.hashCode());
+         String plainToStringValue = cls.getName() + "@" + Integer.toHexString(System.identityHashCode(obj));
          return plainToStringValue.equals(obj.toString());
       } catch (Exception e) {
          return false;
