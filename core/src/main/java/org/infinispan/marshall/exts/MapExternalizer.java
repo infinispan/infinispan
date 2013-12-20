@@ -47,6 +47,7 @@ public class MapExternalizer extends AbstractExternalizer<Map> {
             EquivalentHashMap equivalentMap = (EquivalentHashMap) map;
             output.writeObject(equivalentMap.getKeyEquivalence());
             output.writeObject(equivalentMap.getValueEquivalence());
+            break;
          case FASTCOPYHASHMAP:
             //copy the map to avoid ConcurrentModificationException
             MarshallUtil.marshallMap(((FastCopyHashMap<?, ?>) map).clone(), output);
