@@ -42,7 +42,7 @@
                         <fileset dir="${server1.dist}-tmp" includes="**/jboss-modules.jar" />
                     </path>
                     <sequential>
-                        <propertyregex override="yes" property="dir.in.zip" input="@{file}" regexp=".*/([^/]*)/jboss-modules\.jar" replace="\1" />
+                        <propertyregex override="yes" property="dir.in.zip" input="@{file}" regexp=".*[/\\]([^/\\]*)[/\\]jboss-modules\.jar" replace="\1" />
                     </sequential>
                 </for>
                 <move file="${server1.dist}-tmp/${dir.in.zip}" tofile="${server1.dist}" />
@@ -96,7 +96,7 @@
                         <fileset dir="${server.old.dist}-tmp" includes="**/jboss-modules.jar" />
                     </path>
                     <sequential>
-                        <propertyregex override="yes" property="dir.in.zip" input="@{file}" regexp=".*/([^/]*)/jboss-modules\.jar" replace="\1" />
+                        <propertyregex override="yes" property="dir.in.zip" input="@{file}" regexp=".*[/\\]([^/\\]*)[/\\]jboss-modules\.jar" replace="\1" />
                     </sequential>
                 </for>
                 <move file="${server.old.dist}-tmp/${dir.in.zip}" tofile="${server.old.dist}" />
