@@ -227,6 +227,10 @@ public abstract class AbstractStateTransferSuppressTest {
     }
 
     private void checkRpcManagerStatistics(String[] expectedPendingViews, String expectedCommitedView, MBeanServerConnectionProvider... providers) throws Exception {
+        // on windows, everything is slow and the view might not be yet updated, so we sleep a little
+        if (System.getProperty("os.name").toLowerCase().contains("win")) {
+            Thread.sleep(10000);
+        }
         for (MBeanServerConnectionProvider provider : providers) {
             if (expectedCommitedView != null) {
                 String committedViewAsString = String.valueOf(getAttribute(provider, RPC_MANAGER_MBEAN, COMMITTED_VIEW_AS_STRING_ATTR_NAME));
