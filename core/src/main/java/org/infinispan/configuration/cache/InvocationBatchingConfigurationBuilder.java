@@ -3,8 +3,12 @@ package org.infinispan.configuration.cache;
 import static org.infinispan.transaction.TransactionMode.NON_TRANSACTIONAL;
 
 import org.infinispan.commons.configuration.Builder;
+import org.infinispan.util.logging.Log;
+import org.infinispan.util.logging.LogFactory;
 
 public class InvocationBatchingConfigurationBuilder extends AbstractConfigurationChildBuilder implements Builder<InvocationBatchingConfiguration> {
+
+   private static final Log log = LogFactory.getLog(InvocationBatchingConfigurationBuilder.class);
 
    boolean enabled = false;
 
@@ -30,7 +34,9 @@ public class InvocationBatchingConfigurationBuilder extends AbstractConfiguratio
    @Override
    public void validate() {
       if (enabled && getBuilder().transaction().transactionMode != null && getBuilder().transaction().transactionMode.equals(NON_TRANSACTIONAL))
-         throw new IllegalStateException("Cannot enable Invocation Batching when the Transaction Mode is NON_TRANSACTIONAL, set the transaction mode to TRANSACTIONAL");
+         throw log.invocationBatchingNeedsTransactionalCache();
+      if (enabled && getBuilder().transaction().recovery().enabled && !getBuilder().transaction().useSynchronization())
+         throw log.invocationBatchingCannotBeRecoverable();
    }
 
    @Override

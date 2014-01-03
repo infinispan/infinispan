@@ -84,7 +84,7 @@ public class OperationsTestCase extends OperationTestCaseBase {
         // read the cache container batching attribute
         ModelNode result = servicesA.executeOperation(readLocalCacheBatchingOp);
         Assert.assertEquals(SUCCESS, result.get(OUTCOME).asString());
-        Assert.assertEquals("true", result.get(RESULT).asString());
+        Assert.assertEquals("false", result.get(RESULT).asString());
 
         // write the batching attribute
         result = servicesA.executeOperation(writeLocalCacheBatchingOp);
