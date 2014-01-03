@@ -21,18 +21,22 @@ import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.global.GlobalConfigurationBuilder;
 import org.infinispan.eviction.EvictionStrategy;
+import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.persistence.dummy.DummyInMemoryStoreConfigurationBuilder;
 import org.infinispan.marshall.TestObjectStreamMarshaller;
+import org.infinispan.test.AbstractInfinispanTest;
 import org.infinispan.test.CacheManagerCallable;
+import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.infinispan.test.fwk.TransportFlags;
+import org.infinispan.transaction.TransactionMode;
 import org.infinispan.transaction.lookup.DummyTransactionManagerLookup;
 import org.infinispan.util.concurrent.IsolationLevel;
 import org.testng.Assert;
 import org.testng.annotations.Test;
 
 @Test(groups = "functional", testName = "configuration.ConfigurationUnitTest")
-public class ConfigurationUnitTest {
+public class ConfigurationUnitTest extends AbstractInfinispanTest {
 
    @Test
    public void testBuild() {
@@ -121,7 +125,8 @@ public class ConfigurationUnitTest {
       Assert.assertEquals(configuration.clustering().async().replQueueInterval(), 1222);
    }
 
-   @Test(expectedExceptions = IllegalStateException.class)
+   @Test(expectedExceptions = CacheConfigurationException.class,
+         expectedExceptionsMessageRegExp = "ISPN(\\d)*: Cannot enable Invocation Batching when the Transaction Mode is NON_TRANSACTIONAL, set the transaction mode to TRANSACTIONAL")
    public void testInvocationBatchingAndNonTransactional() throws Exception {
       ConfigurationBuilder cb = new ConfigurationBuilder();
       cb.transaction()
@@ -259,4 +264,105 @@ public class ConfigurationUnitTest {
       });
       marshaller.stop();
    }
+
+   @Test(expectedExceptions = CacheConfigurationException.class)
+   public void testWrongCacheModeConfiguration() throws Exception {
+      withCacheManager(new CacheManagerCallable(createTestCacheManager()) {
+         @Override
+         public void call() {
+            cm.getCache().put("key", "value");
+         }
+      });
+   }
+
+   public void testCacheModeConfiguration() throws Exception {
+      withCacheManager(new CacheManagerCallable(createTestCacheManager()) {
+         @Override
+         public void call() {
+            cm.getCache("local").put("key", "value");
+         }
+      });
+   }
+
+   private EmbeddedCacheManager createTestCacheManager() {
+      ConfigurationBuilder config = new ConfigurationBuilder();
+      config.clustering().cacheMode(CacheMode.REPL_ASYNC);
+      EmbeddedCacheManager cm = TestCacheManagerFactory.createCacheManager(config);
+      config = new ConfigurationBuilder();
+      cm.defineConfiguration("local", config.build());
+      return cm;
+   }
+
+   @Test(expectedExceptions = CacheConfigurationException.class)
+   public void testDistAndReplQueue() {
+      EmbeddedCacheManager ecm = null;
+      try {
+         ConfigurationBuilder c = new ConfigurationBuilder();
+         c.clustering().cacheMode(CacheMode.DIST_ASYNC).async().useReplQueue(true);
+         ecm = TestCacheManagerFactory.createClusteredCacheManager(c);
+         ecm.getCache();
+      } finally {
+         TestingUtil.killCacheManagers(ecm);
+      }
+   }
+
+   @Test(expectedExceptions = CacheConfigurationException.class)
+   public void testEvictionOnButWithoutMaxEntries() {
+      EmbeddedCacheManager ecm = null;
+      try {
+         ConfigurationBuilder c = new ConfigurationBuilder();
+         c.eviction().strategy(EvictionStrategy.LRU);
+         ecm = TestCacheManagerFactory.createClusteredCacheManager(c);
+         ecm.getCache();
+      } finally {
+         TestingUtil.killCacheManagers(ecm);
+      }
+   }
+
+   @Test(expectedExceptions = CacheConfigurationException.class,
+         expectedExceptionsMessageRegExp = "ISPN(\\d)*: Indexing can not be enabled on caches in Invalidation mode")
+   public void testIndexingOnInvalidationCache() {
+      EmbeddedCacheManager ecm = null;
+      try {
+         ConfigurationBuilder c = new ConfigurationBuilder();
+         c.clustering().cacheMode(CacheMode.INVALIDATION_SYNC);
+         c.indexing().enable();
+         ecm = TestCacheManagerFactory.createClusteredCacheManager(c);
+         ecm.getCache();
+      } finally {
+         TestingUtil.killCacheManagers(ecm);
+      }
+   }
+
+   @Test(expectedExceptions = CacheConfigurationException.class, expectedExceptionsMessageRegExp =
+         "ISPN(\\d)*: Indexing can only be enabled if infinispan-query.jar is available on your classpath, and this jar has not been detected.")
+   public void testIndexingRequiresOptionalModule() {
+      EmbeddedCacheManager ecm = null;
+      try {
+         ConfigurationBuilder c = new ConfigurationBuilder();
+         c.indexing().enable();
+         ecm = TestCacheManagerFactory.createClusteredCacheManager(c);
+         ecm.getCache();
+      } finally {
+         TestingUtil.killCacheManagers(ecm);
+      }
+   }
+
+   @Test(expectedExceptions = CacheConfigurationException.class,
+         expectedExceptionsMessageRegExp = "ISPN(\\d)*: A cache configured with invocation batching can't have recovery enabled")
+   public void testInvalidBatchingAndTransactionConfiguration() {
+      ConfigurationBuilder builder = new ConfigurationBuilder();
+      builder.invocationBatching().enable();
+      builder.transaction().transactionMode(TransactionMode.TRANSACTIONAL);
+      builder.transaction().useSynchronization(false);
+      builder.transaction().recovery().enable();
+      withCacheManager(new CacheManagerCallable(
+            TestCacheManagerFactory.createCacheManager(builder)) {
+         @Override
+         public void call() {
+            cm.getCache();
+         }
+      });
+   }
+
 }

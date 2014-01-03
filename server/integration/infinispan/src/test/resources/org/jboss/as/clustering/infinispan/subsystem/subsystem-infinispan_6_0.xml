@@ -4,7 +4,7 @@
     </cache-container>
     <cache-container name="maximal" aliases="alias1 alias2" default-cache="local" eviction-executor="infinispan-eviction" jndi-name="java:global/infinispan/maximal" listener-executor="infinispan-listener" replication-queue-executor="infinispan-repl-queue" module="org.infinispan" statistics="false">
         <transport cluster="maximal-cluster" executor="transport-executor" lock-timeout="120000" stack="tcp" strict-peer-to-peer="false"/>
-        <local-cache name="local" batching="true" start="EAGER" module="org.infinispan" statistics="false">
+        <local-cache name="local" batching="false" start="EAGER" module="org.infinispan" statistics="false">
             <locking acquire-timeout="30000" concurrency-level="2000" isolation="NONE" striping="true"/>
             <transaction mode="FULL_XA" stop-timeout="60000"  locking="OPTIMISTIC"/>
             <eviction max-entries="20000" strategy="LIRS"/>
@@ -24,7 +24,7 @@
                 <implementation/>
             </leveldb-store>
         </local-cache>
-        <local-cache name="reststore-local" batching="true" start="EAGER" module="org.infinispan" statistics="false">
+        <local-cache name="reststore-local" batching="false" start="EAGER" module="org.infinispan" statistics="false">
             <locking acquire-timeout="30000" concurrency-level="2000" isolation="NONE" striping="true"/>
             <transaction mode="FULL_XA" stop-timeout="60000"  locking="OPTIMISTIC"/>
             <eviction max-entries="20000" strategy="LIRS"/>
@@ -72,7 +72,7 @@
             <store name="duplicate-loader" class="org.jboss.as.clustering.infinispan.subsystem.CustomCacheLoader" shared="false" preload="false"/>
             <indexing index="LOCAL" />
         </replicated-cache>
-        <distributed-cache name="dist" mode="SYNC" batching="true" l1-lifespan="1200000" owners="4" remote-timeout="35000" start="EAGER" segments="20"  async-marshalling="true" statistics="false">
+        <distributed-cache name="dist" mode="SYNC" batching="false" l1-lifespan="1200000" owners="4" remote-timeout="35000" start="EAGER" segments="20"  async-marshalling="true" statistics="false">
             <locking acquire-timeout="30000" concurrency-level="2000" isolation="READ_COMMITTED" striping="true"/>
             <transaction mode="FULL_XA" stop-timeout="60000"  locking="OPTIMISTIC"/>
             <eviction max-entries="20000" strategy="UNORDERED"/>
@@ -113,7 +113,7 @@
                 <backup site="SFO" strategy="ASYNC"/>
             </backups>
         </distributed-cache>
-        <distributed-cache name="dist2" mode="SYNC" batching="true" l1-lifespan="1200000" owners="4"
+        <distributed-cache name="dist2" mode="SYNC" batching="false" l1-lifespan="1200000" owners="4"
                            remote-timeout="35000" start="EAGER" segments="20" capacity-factor="2.0"
                            async-marshalling="true" statistics="true">
             <locking acquire-timeout="30000" concurrency-level="2000" isolation="READ_COMMITTED" striping="true"/>

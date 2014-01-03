@@ -216,7 +216,6 @@ public class TransactionConfigurationBuilder extends AbstractConfigurationChildB
     * call {@link org.infinispan.config.FluentConfiguration.RecoveryConfig#disable()}
     */
    public RecoveryConfigurationBuilder recovery() {
-      recovery.enable();
       return recovery;
    }
 

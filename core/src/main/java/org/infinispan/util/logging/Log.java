@@ -1041,4 +1041,10 @@ public interface Log extends BasicLogger {
    @Message(value = "%s reported that a third node was suspected, see cause for info on the node that was suspected", id = 281)
    SuspectException thirdPartySuspected(Address sender, @Cause SuspectException e);
 
+   @Message(value = "Cannot enable Invocation Batching when the Transaction Mode is NON_TRANSACTIONAL, set the transaction mode to TRANSACTIONAL", id = 282)
+   CacheConfigurationException invocationBatchingNeedsTransactionalCache();
+
+   @Message(value = "A cache configured with invocation batching can't have recovery enabled", id = 283)
+   CacheConfigurationException invocationBatchingCannotBeRecoverable();
+
 }
