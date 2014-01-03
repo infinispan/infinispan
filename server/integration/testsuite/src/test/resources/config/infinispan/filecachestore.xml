@@ -1,0 +1,8 @@
+<subsystem xmlns="urn:infinispan:server:core:6.0">
+    <cache-container name="local" default-cache="default">
+        <local-cache name="default" start="EAGER">
+            <file-store name="myFileStore" passivation="false" purge="false" max-entries="2" />
+        </local-cache>
+    </cache-container>
+    <cache-container name="security"/>
+</subsystem>

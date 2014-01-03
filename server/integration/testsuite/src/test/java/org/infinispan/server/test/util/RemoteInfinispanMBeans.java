@@ -21,11 +21,16 @@ public class RemoteInfinispanMBeans {
 
     public static RemoteInfinispanMBeans create(RemoteInfinispanServers servers, String serverName, String cacheName,
         String managerName) {
+        return create(servers.getServer(serverName), serverName, cacheName, managerName);
+    }
+
+    public static RemoteInfinispanMBeans create(RemoteInfinispanServer server, String serverName, String cacheName,
+                                                String managerName) {
         RemoteInfinispanMBeans r = new RemoteInfinispanMBeans();
         r.serverName = serverName;
         r.cacheName = cacheName;
         r.managerName = managerName;
-        r.server = servers.getServer(serverName);
+        r.server = server;
         r.manager = r.server.getCacheManager(managerName);
         r.cache = r.manager.getCache(cacheName);
         return r;

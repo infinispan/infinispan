@@ -1,0 +1,17 @@
+<subsystem xmlns="urn:infinispan:server:core:6.0">
+     <cache-container name="local" default-cache="none">
+         <local-cache name="none" start="EAGER">
+             <eviction strategy="NONE" />
+         </local-cache>
+         <local-cache name="unordered" start="EAGER">
+             <!-- UNORDERED is deprecated and uses LRU instead -->
+             <eviction strategy="UNORDERED" max-entries="3"/>
+         </local-cache>
+         <local-cache name="lirs" start="EAGER">
+             <eviction strategy="LIRS" max-entries="5"/>
+         </local-cache>
+         <local-cache name="lru" start="EAGER">
+             <eviction strategy="LRU" max-entries="3"/>
+         </local-cache>
+     </cache-container>
+</subsystem>
