@@ -159,6 +159,8 @@
                    filtering="true"/>
         <transform in="clustered.xml" out="testsuite/clustered-transport-stack.xml"
                    modifyStack="${other.parts}/jgroups-stack.xml"/>
+        <transform in="clustered.xml" out="testsuite/clustered-with-l1.xml"
+                   modifyInfinispan="${infinispan.parts}/l1.xml"/>
         <transform in="standalone.xml" out="testsuite/rest-sec-basic-wr.xml"
                    modifyInfinispan="${infinispan.parts}/rest-security.xml"
                    filtering="true">
