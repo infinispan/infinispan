@@ -45,6 +45,11 @@ This is controlled by following profiles
   -P client.memcached (Memcached client)
   -P client.hotrod    (Hot Rod client)
 
+Running client tests with TCP stack (UDP by default)
+----------------------------------------------------
+Controlled by property default.transport.stack:
+  mvn clean verify -Psuite.client -Ddefault.transport.stack=tcp
+
 Client side logging
 -------------------
 

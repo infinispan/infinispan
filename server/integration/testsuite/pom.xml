@@ -68,6 +68,10 @@
             </exclusions>
         </dependency>
         <dependency>
+            <groupId>org.infinispan</groupId>
+            <artifactId>infinispan-commons</artifactId>
+        </dependency>
+        <dependency>
             <groupId>net.jcip</groupId>
             <artifactId>jcip-annotations</artifactId>
         </dependency>
@@ -182,7 +186,7 @@
         <suite.client.dist.phase>test</suite.client.dist.phase>
         <suite.client.repl.phase>test</suite.client.repl.phase>
         <suite.manual.include>**/*.java</suite.manual.include>
-        <suite.manual.exclude.groups>org.infinispan.server.test.category.ClientLocal,org.infinispan.server.test.category.ClientClustered,org.infinispan.server.test.category.CacheStore,org.infinispan.server.test.category.RollingUpgrades</suite.manual.exclude.groups>
+        <suite.manual.exclude.groups>org.infinispan.server.test.category.ClientLocal,org.infinispan.server.test.category.ClientClustered,org.infinispan.server.test.category.RollingUpgrades</suite.manual.exclude.groups>
         <suite.client.local.config>testsuite/standalone-default-local.xml</suite.client.local.config>
         <suite.client.dist.config>testsuite/clustered-default-dist.xml</suite.client.dist.config>
         <suite.client.repl.config>testsuite/clustered-default-repl.xml</suite.client.repl.config>
@@ -294,7 +298,7 @@
                             <goal>test</goal>
                         </goals>
                         <configuration>
-                            <reportNameSuffix>localmode</reportNameSuffix>
+                            <reportNameSuffix>localmode-${default.transport.stack}</reportNameSuffix>
                             <groups>${groups.client.local}</groups>
                             <systemPropertyVariables>
                                 <clustering.mode>local</clustering.mode>
@@ -309,7 +313,7 @@
                             <goal>test</goal>
                         </goals>
                         <configuration>
-                            <reportNameSuffix>distmode</reportNameSuffix>
+                            <reportNameSuffix>distmode-${default.transport.stack}</reportNameSuffix>
                             <groups>${groups.client.clustered}</groups>
                             <systemPropertyVariables>
                                 <clustering.mode>dist</clustering.mode>
@@ -324,7 +328,7 @@
                             <goal>test</goal>
                         </goals>
                         <configuration>
-                            <reportNameSuffix>replmode</reportNameSuffix>
+                            <reportNameSuffix>replmode-${default.transport.stack}</reportNameSuffix>
                             <groups>${groups.client.clustered}</groups>
                             <systemPropertyVariables>
                                 <clustering.mode>repl</clustering.mode>
@@ -408,7 +412,6 @@
             <id>suite.cachestore</id>
             <properties>
                 <suite.manual.phase>test</suite.manual.phase>
-                <suite.manual.exclude.groups>org.infinispan.server.test.category.ClientLocal,org.infinispan.server.test.category.ClientClustered,org.infinispan.server.test.category.RollingUpgrades</suite.manual.exclude.groups>
                 <suite.manual.include.groups>org.infinispan.server.test.category.CacheStore</suite.manual.include.groups>
                 <suite.client.local.phase>none</suite.client.local.phase>
                 <suite.client.dist.phase>none</suite.client.dist.phase>
