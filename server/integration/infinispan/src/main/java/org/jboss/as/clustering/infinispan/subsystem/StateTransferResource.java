@@ -78,7 +78,7 @@ public class StateTransferResource extends SimpleResourceDefinition {
                     .setMeasurementUnit(MeasurementUnit.MILLISECONDS)
                     .setAllowExpression(true)
                     .setFlags(AttributeAccess.Flag.RESTART_ALL_SERVICES)
-                    .setDefaultValue(new ModelNode().set(60000))
+                    .setDefaultValue(new ModelNode().set(240000))
                     .build();
 
     static final AttributeDefinition[] STATE_TRANSFER_ATTRIBUTES = {AWAIT_INITIAL_TRANSFER, ENABLED, TIMEOUT, CHUNK_SIZE};
