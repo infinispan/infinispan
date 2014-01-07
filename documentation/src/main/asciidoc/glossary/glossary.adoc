@@ -4,8 +4,8 @@ Manik Surtani, Mircea Markus, Galder Zamarreño, Pete Muir, and others from the 
 :icons: font
 
 TIP: This glossary aims to clarify some of the terms frequently encountered in
-Infinispan's link:user_guide.html[User Guide],
-link:getting_started.html[Getting Started Guide], link:faqs.html[FAQs],
+Infinispan's link:$$../user_guide/user_guide.html$$[User Guide],
+link:$$../getting_started/getting_started.html$$[Getting Started Guide], link:$$../faqs/faqs.html$$[FAQs],
 etc.
 
 === 2-phase commit
@@ -375,4 +375,5 @@ Infinispan, XA defines both Infinispan and the database as XA resources.
 
 Java's API for XA transactions is
 link:$$http://en.wikipedia.org/wiki/Java_Transaction_API$$[JTA] and link:$$http://docs.oracle.com/javase/6/docs/api/javax/transaction/xa/XAResource.html$$[XAResource]
-is the Java interface that describes an XA resource. 
+is the Java interface that describes an XA resource.
+

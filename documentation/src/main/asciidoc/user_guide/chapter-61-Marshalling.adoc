@@ -45,7 +45,7 @@ builder.storeAsBinary().enable();
 
 ===== Equality Considerations
 
-When using lazy deserialization/storing as binary, keys and values are wrapped as link:$$http://docs.jboss.org/infinispan/6.0/apidocs/org/infinispan/marshall/MarshalledValue$$[MarshalledValue]s.
+When using lazy deserialization/storing as binary, keys and values are wrapped as link:$$http://docs.jboss.org/infinispan/6.0/apidocs/org/infinispan/marshall/core/MarshalledValue$$[MarshalledValue]s.
 It is this wrapper class that transparently takes care of serialization and deserialization on demand, and internally may have a reference to the object itself being wrapped, or the serialized, byte array representation of this object. 
 
 This has a particular effect on the behavior of equality.
@@ -53,7 +53,7 @@ The equals() method of this class will either compare binary representations (by
 If one of the instances being compared is in one form and the other in another form, then one instance is either serialized or deserialized.
 The preference will be to compare object representations, unless the cache is link:$$http://docs.jboss.org/infinispan/6.0/apidocs/org/infinispan/Cache.html#compact()$$[compacted], in which case byte array comparison is favored.
 
-This will affect the way keys stored in the cache will work, when {{storeAsBinary]} is used, since comparisons happen on the key which will be wrapped by a MarshalledValue. Implementers of equals() methods on their keys need to be aware of the behavior of equality comparison, when a key is wrapped as a MarshalledValue, as detailed above.
+This will affect the way keys stored in the cache will work, when `storeAsBinary` is used, since comparisons happen on the key which will be wrapped by a MarshalledValue. Implementers of equals() methods on their keys need to be aware of the behavior of equality comparison, when a key is wrapped as a MarshalledValue, as detailed above.
 
 ===== Store-by-value via defensive copying
 From Infinispan 5.3, `storeAsBinary` configuration offers the possibility to enable defensive copying, which allows for store-by-value like behaviour. 
@@ -93,7 +93,7 @@ By default, Infinispan uses the link:$$http://docs.jboss.org/infinispan/6.0/apid
 ----
 
 
-* Programatically:
+* Programmatically:
 
 [source,java]
 ----
