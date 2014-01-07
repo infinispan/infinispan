@@ -1,8 +1,6 @@
 package org.infinispan.remoting;
 
 import org.infinispan.Cache;
-import org.infinispan.commons.equivalence.AnyEquivalence;
-import org.infinispan.metadata.EmbeddedMetadata;
 import org.infinispan.commands.CommandsFactory;
 import org.infinispan.commands.ReplicableCommand;
 import org.infinispan.commands.read.GetKeyValueCommand;
@@ -11,18 +9,21 @@ import org.infinispan.commands.remote.ClusteredGetCommand;
 import org.infinispan.commands.remote.MultipleRpcCommand;
 import org.infinispan.commands.remote.SingleRpcCommand;
 import org.infinispan.commands.write.PutKeyValueCommand;
-import org.infinispan.commons.executors.ExecutorFactory;
+import org.infinispan.commons.equivalence.AnyEquivalence;
 import org.infinispan.commons.util.InfinispanCollections;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
-import org.infinispan.configuration.global.GlobalConfigurationBuilder;
 import org.infinispan.context.Flag;
 import org.infinispan.manager.EmbeddedCacheManager;
+import org.infinispan.metadata.EmbeddedMetadata;
 import org.infinispan.remoting.transport.Transport;
 import org.infinispan.remoting.transport.jgroups.CommandAwareRpcDispatcher;
 import org.infinispan.remoting.transport.jgroups.JGroupsTransport;
 import org.infinispan.test.AbstractInfinispanTest;
+import org.infinispan.test.TestingUtil;
 import org.infinispan.topology.CacheTopologyControlCommand;
+import org.infinispan.util.concurrent.BlockingTaskAwareExecutorService;
+import org.infinispan.util.concurrent.BlockingTaskAwareExecutorServiceImpl;
 import org.jgroups.Address;
 import org.jgroups.Message;
 import org.jgroups.blocks.RpcDispatcher;
@@ -34,14 +35,13 @@ import org.testng.annotations.Test;
 
 import java.util.Arrays;
 import java.util.List;
-import java.util.Properties;
 import java.util.concurrent.AbstractExecutorService;
-import java.util.concurrent.ExecutorService;
 import java.util.concurrent.TimeUnit;
 
 import static org.infinispan.test.TestingUtil.extractCommandsFactory;
 import static org.infinispan.test.TestingUtil.extractGlobalComponent;
 import static org.infinispan.test.fwk.TestCacheManagerFactory.createClusteredCacheManager;
+import static org.infinispan.test.fwk.TestCacheManagerFactory.getDefaultCacheConfiguration;
 
 /**
  * Tests the Asynchronous Invocation API and checks if the commands are correctly processed (or JGroups or Infinispan
@@ -71,14 +71,12 @@ public class AsynchronousInvocationTest extends AbstractInfinispanTest {
 
    @BeforeClass
    public void setUp() {
-      GlobalConfigurationBuilder globalConfigurationBuilder = GlobalConfigurationBuilder.defaultClusteredBuilder();
-      ConfigurationBuilder configurationBuilder = new ConfigurationBuilder();
-      DummyExecutorFactory factory = new DummyExecutorFactory();
-
-      globalConfigurationBuilder.remoteCommandsExecutor().factory(factory);
-      configurationBuilder.clustering().cacheMode(CacheMode.DIST_SYNC);
-
-      cacheManager = createClusteredCacheManager(globalConfigurationBuilder, configurationBuilder);
+      executorService = new DummyTaskCountExecutorService();
+      BlockingTaskAwareExecutorService remoteExecutorService = new BlockingTaskAwareExecutorServiceImpl(executorService,
+                                                                                                        TIME_SERVICE);
+      ConfigurationBuilder builder = getDefaultCacheConfiguration(false);
+      builder.clustering().cacheMode(CacheMode.DIST_SYNC);
+      cacheManager = createClusteredCacheManager(builder);
       Cache<Object, Object> cache = cacheManager.getCache();
       String cacheName = cache.getName();
       Transport transport = extractGlobalComponent(cacheManager, Transport.class);
@@ -90,13 +88,17 @@ public class AsynchronousInvocationTest extends AbstractInfinispanTest {
          Assert.fail("Expected a JGroups Transport");
       }
       commandsFactory = extractCommandsFactory(cache);
-      executorService = factory.getExecutorService();
+      TestingUtil.replaceField(remoteExecutorService, "remoteCommandsExecutor", commandAwareRpcDispatcher,
+                               CommandAwareRpcDispatcher.class);
+      TestingUtil.replaceField(remoteExecutorService, "remoteCommandsExecutor",
+                               extractGlobalComponent(cacheManager, InboundInvocationHandler.class),
+                               InboundInvocationHandlerImpl.class);
 
       GetKeyValueCommand getKeyValueCommand =
             new GetKeyValueCommand("key", InfinispanCollections.<Flag>emptySet(), false);
       PutKeyValueCommand putKeyValueCommand =
             new PutKeyValueCommand("key", "value", false, null,
-                  new EmbeddedMetadata.Builder().build(), InfinispanCollections.<Flag>emptySet(), AnyEquivalence.getInstance());
+                                   new EmbeddedMetadata.Builder().build(), InfinispanCollections.<Flag>emptySet(), AnyEquivalence.getInstance());
 
       //populate commands
       blockingCacheRpcCommand = new ReduceCommand<Object, Object>(cacheName);
@@ -189,24 +191,6 @@ public class AsynchronousInvocationTest extends AbstractInfinispanTest {
          message.setFlag(Message.Flag.OOB);
       }
       return message;
-   }
-
-   private class DummyExecutorFactory implements ExecutorFactory {
-
-      private final DummyTaskCountExecutorService executorService;
-
-      private DummyExecutorFactory() {
-         executorService = new DummyTaskCountExecutorService();
-      }
-
-      @Override
-      public ExecutorService getExecutor(Properties p) {
-         return executorService;
-      }
-
-      public DummyTaskCountExecutorService getExecutorService() {
-         return executorService;
-      }
    }
 
    private class DummyTaskCountExecutorService extends AbstractExecutorService {

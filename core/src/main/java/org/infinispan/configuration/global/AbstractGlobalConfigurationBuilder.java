@@ -28,11 +28,21 @@ abstract class AbstractGlobalConfigurationBuilder implements GlobalConfiguration
       return globalConfig.serialization();
    }
 
+   /**
+    * @deprecated This method always returns null now.
+    * Set thread pool via {@link #listenerExecutorName(String)} instead.
+    */
+   @Deprecated
    @Override
    public ExecutorFactoryConfigurationBuilder asyncListenerExecutor() {
       return globalConfig.asyncListenerExecutor();
    }
 
+   /**
+    * @deprecated This method always returns null now.
+    * Set thread pool via {@link #persistenceExecutorName(String)} instead.
+    */
+   @Deprecated
    @Override
    public ExecutorFactoryConfigurationBuilder persistenceExecutor() {
       return globalConfig.persistenceExecutor();
@@ -43,16 +53,31 @@ abstract class AbstractGlobalConfigurationBuilder implements GlobalConfiguration
       return globalConfig.asyncTransportExecutor();
    }
 
+   /**
+    * @deprecated This method always returns null now.
+    * Set thread pool via {@link TransportConfigurationBuilder#remoteCommandExecutorName(String)} instead.
+    */
+   @Deprecated
    @Override
    public ExecutorFactoryConfigurationBuilder remoteCommandsExecutor() {
       return globalConfig.remoteCommandsExecutor();
    }
 
+   /**
+    * @deprecated This method always returns null now.
+    * Set thread pool via {@link #evictionExecutorName(String)} instead.
+    */
+   @Deprecated
    @Override
    public ScheduledExecutorFactoryConfigurationBuilder evictionScheduledExecutor() {
       return globalConfig.evictionScheduledExecutor();
    }
 
+   /**
+    * @deprecated This method always returns null now.
+    * Set thread pool via {@link #replicationQueueExecutorName(String)} instead.
+    */
+   @Deprecated
    @Override
    public ScheduledExecutorFactoryConfigurationBuilder replicationQueueScheduledExecutor() {
       return globalConfig.replicationQueueScheduledExecutor();

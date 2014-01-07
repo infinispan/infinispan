@@ -8,28 +8,32 @@ import org.infinispan.commons.util.TypedProperties;
  */
 public class IndexingConfiguration extends AbstractTypedPropertiesConfiguration {
 
-   private final boolean enabled;
-   private final boolean indexLocalOnly;
+   private final Index index;
 
-   IndexingConfiguration(TypedProperties properties, boolean enabled, boolean indexLocalOnly) {
+   IndexingConfiguration(TypedProperties properties, Index index) {
       super(properties);
-      this.enabled = enabled;
-      this.indexLocalOnly = indexLocalOnly;
+      this.index = index;
    }
 
    /**
     * Whether indexing is enabled. False by default.
+    *
+    * @deprecated Use {@link #index()} instead
     */
+   @Deprecated
    public boolean enabled() {
-      return enabled;
+      return index.isEnabled();
    }
 
    /**
     * If true, only index changes made locally, ignoring remote changes. This is useful if indexes
     * are shared across a cluster to prevent redundant indexing of updates.
+    *
+    * @deprecated Use {@link #index()} instead
     */
+   @Deprecated
    public boolean indexLocalOnly() {
-      return indexLocalOnly;
+      return index.isLocalOnly();
    }
 
    /**
@@ -49,11 +53,18 @@ public class IndexingConfiguration extends AbstractTypedPropertiesConfiguration 
       return super.properties();
    }
 
+   /**
+    * Returns the indexing mode of this cache.
+    */
+   public Index index() {
+      return index;
+   }
+
    @Override
    public String toString() {
       return "IndexingConfiguration{" +
-            "enabled=" + enabled +
-            ", indexLocalOnly=" + indexLocalOnly +
+            "index=" + index +
+            ", properties=" + properties() +
             '}';
    }
 
@@ -64,17 +75,14 @@ public class IndexingConfiguration extends AbstractTypedPropertiesConfiguration 
 
       IndexingConfiguration that = (IndexingConfiguration) o;
 
-      if (enabled != that.enabled) return false;
-      if (indexLocalOnly != that.indexLocalOnly) return false;
+      if (index != that.index) return false;
 
       return true;
    }
 
    @Override
    public int hashCode() {
-      int result = (enabled ? 1 : 0);
-      result = 31 * result + (indexLocalOnly ? 1 : 0);
-      return result;
+      return 31 * index.hashCode();
    }
 
 }

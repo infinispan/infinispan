@@ -1,7 +1,7 @@
 package org.infinispan.executors;
 
-import org.infinispan.commons.executors.ExecutorFactory;
 import org.infinispan.commons.util.InfinispanCollections;
+import org.infinispan.commons.executors.ThreadPoolExecutorFactory;
 import org.infinispan.util.TimeService;
 import org.infinispan.util.concurrent.BlockingRunnable;
 import org.infinispan.util.concurrent.BlockingTaskAwareExecutorService;
@@ -9,10 +9,10 @@ import org.infinispan.util.concurrent.BlockingTaskAwareExecutorServiceImpl;
 
 import java.util.Collection;
 import java.util.List;
-import java.util.Properties;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
+import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
@@ -24,15 +24,16 @@ import java.util.concurrent.TimeoutException;
  */
 public final class LazyInitializingBlockingTaskAwareExecutorService implements BlockingTaskAwareExecutorService {
 
-   private final ExecutorFactory factory;
-   private final Properties executorProperties;
+   private final ThreadPoolExecutorFactory executorFactory;
+   private final ThreadFactory threadFactory;
    private final TimeService timeService;
    private volatile BlockingTaskAwareExecutorService delegate;
 
-   public LazyInitializingBlockingTaskAwareExecutorService(ExecutorFactory factory, Properties executorProperties,
-                                                           TimeService timeService) {
-      this.factory = factory;
-      this.executorProperties = executorProperties;
+   public LazyInitializingBlockingTaskAwareExecutorService(
+         ThreadPoolExecutorFactory executorFactory, ThreadFactory threadFactory,
+         TimeService timeService) {
+      this.executorFactory = executorFactory;
+      this.threadFactory = threadFactory;
       this.timeService = timeService;
    }
 
@@ -132,7 +133,8 @@ public final class LazyInitializingBlockingTaskAwareExecutorService implements B
       if (delegate == null) {
          synchronized (this) {
             if (delegate == null) {
-               delegate = new BlockingTaskAwareExecutorServiceImpl(factory.getExecutor(executorProperties), timeService);
+               delegate = new BlockingTaskAwareExecutorServiceImpl(
+                     executorFactory.createExecutor(threadFactory), timeService);
             }
          }
       }

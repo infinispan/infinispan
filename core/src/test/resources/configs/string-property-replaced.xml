@@ -1,54 +1,35 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <infinispan
       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-      xsi:schemaLocation="urn:infinispan:config:6.0 http://www.infinispan.org/schemas/infinispan-config-6.0.xsd"
-      xmlns="urn:infinispan:config:6.0">
+      xsi:schemaLocation="urn:infinispan:config:7.0 http://www.infinispan.org/schemas/infinispan-config-7.0.xsd"
+      xmlns="urn:infinispan:config:7.0">
 
    <!-- *************************** -->
    <!-- System-wide global settings -->
    <!-- *************************** -->
 
-   <global>
+   <threads>
+      <thread-factory name="listener-factory" group-name="infinispan" thread-name-pattern="AsyncListenerThread" priority="5"/>
+      <thread-factory name="persistence-factory" group-name="infinispan" thread-name-pattern="PersistenceThread" priority="5"/>
+      <blocking-bounded-queue-thread-pool name="infinispan-listener" thread-factory="listener-factory" max-threads="${test.property.asyncListenerMaxThreads:5}"/>
+      <blocking-bounded-queue-thread-pool name="infinispan-persistence" thread-factory="persistence-factory" max-threads="${test.property.persistenceMaxThreads:5}"/>
+   </threads>
 
-      <asyncListenerExecutor factory="org.infinispan.executors.DefaultExecutorFactory">
-      	<properties>
-         <property name="maxThreads" value="${test.property.asyncListenerMaxThreads:5}"/>
-         <property name="threadNamePrefix" value="AsyncListenerThread"/>
-         </properties>
-      </asyncListenerExecutor>
+   <jgroups>
+      <stack-file name="tcp" path="jgroups-tcp.xml"/>
+   </jgroups>
 
-      <persistenceExecutor factory="org.infinispan.executors.DefaultExecutorFactory">
-      	<properties>
-         <property name="maxThreads" value="${test.property.persistenceMaxThreads:5}"/>
-         <property name="threadNamePrefix" value="PersistenceThread"/>
-         </properties>
-      </persistenceExecutor>
+   <cache-container default-cache="default" listener-executor="infinispan-listener" persistence-executor="infinispan-persistence">
+      <transport stack="tcp"/>
+      <replicated-cache name="default" mode="SYNC">
+         <locking
+               isolation="${test.property.IsolationLevel:REPEATABLE_READ}"
+               acquire-timeout="${test.property.LockAcquisitionTimeout:15000}"
+               write-skew="false"
+               concurrency-level="500"/>
+         <transaction
+               transaction-manager-lookup="org.infinispan.transaction.lookup.GenericTransactionManagerLookup"/>
+      </replicated-cache>
+   </cache-container>
 
-      <transport transportClass="org.infinispan.remoting.transport.jgroups.JGroupsTransport">
-      <properties>
-         <property name="configurationFile" value="${test.property.jgroupsConfigFile:jgroups-tcp.xml}"/>
-         </properties>
-      </transport>
-
-   </global>
-
-   <!-- *************************** -->
-   <!-- Default "template" settings -->
-   <!-- *************************** -->
-   <default>
-      <locking
-            isolationLevel="${test.property.IsolationLevel:REPEATABLE_READ}"
-            lockAcquisitionTimeout="${test.property.LockAcquisitionTimeout:15000}"
-            writeSkewCheck="false"
-            concurrencyLevel="500"/>
-
-      <transaction
-            transactionManagerLookupClass="org.infinispan.transaction.lookup.GenericTransactionManagerLookup"
-            syncRollbackPhase="false"
-            syncCommitPhase="${test.property.SyncCommitPhase:true}"/>
-
-      <clustering mode="REPL">
-         <sync/>
-      </clustering>
-   </default>
 </infinispan>

@@ -18,14 +18,12 @@ import java.util.Properties;
 public class CustomMBeanServerPropertiesTest extends AbstractInfinispanTest {
    public void testDeclarativeCustomMBeanServerLookupProperties() throws IOException {
       String cfg = "<infinispan>" +
-              "<global>" +
-              "<globalJmxStatistics enabled=\"true\" mBeanServerLookup=\"" + TestLookup.class.getName() + "\">" +
-              "<properties>" +
-              "<property name=\"key\" value=\"value\"/>" +
-              "</properties>" +
-              "</globalJmxStatistics>" +
-              "</global>" +
-              "<default><jmxStatistics enabled=\"true\"/></default>" +
+              "<cache-container default-cache=\"default\">" +
+              "<jmx mbean-server-lookup=\"" + TestLookup.class.getName() + "\">" +
+              "<property name=\"key\">value</property>" +
+              "</jmx>" +
+              "<local-cache name=\"default\" statistics=\"true\"/>" +
+              "</cache-container>" +
               "</infinispan>";
       InputStream stream = new ByteArrayInputStream(cfg.getBytes());
       CacheContainer cc = null;

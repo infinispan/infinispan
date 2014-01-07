@@ -74,20 +74,19 @@ public class CacheManagerXmlConfigurationTest extends AbstractInfinispanTest {
 
    public void testNamedCacheXMLClashingNames() {
       String xml = INFINISPAN_START_TAG +
+            "<cache-container default-cache=\"default\">" +
             "\n" +
-            "    <default>\n" +
+            "   <local-cache name=\"default\">\n" +
             "        <locking concurrencyLevel=\"100\" lockAcquisitionTimeout=\"1000\" />\n" +
-            "    </default>\n" +
+            "   </local-cache>\n" +
             "\n" +
-            "    <namedCache name=\"c1\">\n" +
-            "        <transaction transactionManagerLookupClass=\"org.infinispan.transaction.GenericTransactionManagerLookup\"/>\n" +
-            "    </namedCache>\n" +
+            "   <local-cache name=\"c1\">\n" +
+            "        <transaction transaction-manager-lookup=\"org.infinispan.transaction.lookup.GenericTransactionManagerLookup\"/>\n" +
+            "   </local-cache>\n" +
             "\n" +
-            "    <namedCache name=\"c1\">\n" +
-            "        <clustering>\n" +
-            "            <sync replTimeout=\"15000\"/>\n" +
-            "        </clustering>\n" +
-            "    </namedCache>\n" +
+            "   <replicated-cache name=\"c1\" mode=\"SYNC\" remote-timeout=\"15000\">\n" +
+            "   </replicated-cache>\n" +
+            "</cache-container>" +
             INFINISPAN_END_TAG;
 
       ByteArrayInputStream bais = new ByteArrayInputStream(xml.getBytes());
@@ -101,14 +100,16 @@ public class CacheManagerXmlConfigurationTest extends AbstractInfinispanTest {
    public void testNamedCacheXMLClashingNamesProgrammatic() throws IOException {
       String xml = INFINISPAN_START_TAG +
             "\n" +
-            "<global/>\n" +
-            "    <default>\n" +
-            "        <locking concurrencyLevel=\"100\" lockAcquisitionTimeout=\"1000\" />\n" +
-            "    </default>\n" +
+            "<cache-container default-cache=\"default\">" +
+            "   <local-cache name=\"default\">\n" +
+            "        <locking concurrency-level=\"100\" acquire-timeout=\"1000\" />\n" +
+            "    </local-cache>\n" +
             "\n" +
-            "    <namedCache name=\"c1\">\n" +
-            "        <transaction transactionManagerLookupClass=\"org.infinispan.transaction.lookup.GenericTransactionManagerLookup\"/>\n" +
-            "    </namedCache>\n" + INFINISPAN_END_TAG;
+            "   <local-cache name=\"c1\">\n" +
+            "        <transaction transaction-manager-lookup=\"org.infinispan.transaction.lookup.GenericTransactionManagerLookup\"/>\n" +
+            "    </local-cache>\n" +
+            "</cache-container>" +
+            INFINISPAN_END_TAG;
 
       ByteArrayInputStream bais = new ByteArrayInputStream(xml.getBytes());
       cm = TestCacheManagerFactory.fromStream(bais);
@@ -135,22 +136,6 @@ public class CacheManagerXmlConfigurationTest extends AbstractInfinispanTest {
          cm.stop();
       }
    }
-
-   /*public void testCreateWithMultipleXmlFiles() throws Exception {
-      String xmlFile = "configs/local-singlenamedcache-test.xml";
-      withCacheManager(new CacheManagerCallable(TestCacheManagerFactory.fromXml(xmlFile, xmlFile, xmlFile)) {
-         @Override
-         public void call() {
-            Cache<Object, Object> c = cm.getCache();
-            assert c.getCacheConfiguration().locking().lockAcquisitionTimeout() == 1111;
-            Cache<Object, Object> c2 = cm.getCache("localCache");
-            assert c2.getCacheConfiguration().locking().lockAcquisitionTimeout() == 22222;
-            GlobalConfiguration globalCfg = cm.getCacheManagerConfiguration();
-            assert globalCfg.asyncListenerExecutor().properties()
-                  .get("threadNamePrefix").equals("Any-AsyncListenerThread");
-         }
-      });
-   }*/
 
 }
 

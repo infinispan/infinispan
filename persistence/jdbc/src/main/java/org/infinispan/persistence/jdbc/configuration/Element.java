@@ -13,20 +13,20 @@ public enum Element {
     // must be first
     UNKNOWN(null),
 
-    STRING_KEYED_JDBC_STORE("stringKeyedJdbcStore"),
-    BINARY_KEYED_JDBC_STORE("binaryKeyedJdbcStore"),
-    MIXED_KEYED_JDBC_STORE("mixedKeyedJdbcStore"),
+    STRING_KEYED_JDBC_STORE("string-keyed-jdbc-store"),
+    BINARY_KEYED_JDBC_STORE("binary-keyed-jdbc-store"),
+    MIXED_KEYED_JDBC_STORE("mixed-keyed-jdbc-store"),
 
-    CONNECTION_POOL("connectionPool"),
-    DATA_SOURCE("dataSource"),
-    SIMPLE_CONNECTION("simpleConnection"),
+    CONNECTION_POOL("connection-pool"),
+    DATA_SOURCE("data-source"),
+    SIMPLE_CONNECTION("simple-connection"),
 
-    BINARY_KEYED_TABLE("binaryKeyedTable"),
-    STRING_KEYED_TABLE("stringKeyedTable"),
+    BINARY_KEYED_TABLE("binary-keyed-table"),
+    STRING_KEYED_TABLE("string-keyed-table"),
 
-    DATA_COLUMN("dataColumn"),
-    ID_COLUMN("idColumn"),
-    TIMESTAMP_COLUMN("timestampColumn"),
+    DATA_COLUMN("data-column"),
+    ID_COLUMN("id-column"),
+    TIMESTAMP_COLUMN("timestamp-column"),
     ;
 
     private final String name;

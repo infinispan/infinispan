@@ -1,34 +1,30 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <infinispan
-   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-   xsi:schemaLocation="urn:infinispan:config:6.0 http://www.infinispan.org/schemas/infinispan-config-6.0.xsd
-                       urn:infinispan:config:remote:6.0 http://www.infinispan.org/schemas/infinispan-cachestore-remote-config-6.0.xsd"
-   xmlns="urn:infinispan:config:6.0"
-   xmlns:remote="urn:infinispan:config:remote:6.0" >
+      xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+      xsi:schemaLocation="urn:infinispan:config:7.0 http://www.infinispan.org/schemas/infinispan-config-7.0.xsd
+                          urn:infinispan:config:store:remote:7.0 http://www.infinispan.org/schemas/infinispan-cachestore-remote-config-7.0.xsd"
+      xmlns="urn:infinispan:config:7.0"
+      xmlns:remote="urn:infinispan:config:store:remote:7.0" >
 
-   <default>
-      <jmxStatistics enabled="false"/>
-      <deadlockDetection enabled="true" spinDuration="1221"/>
-      <persistence passivation="false">
-         <remoteStore xmlns="urn:infinispan:config:remote:6.0"
-            fetchPersistentState="false" shared="true" preload="false" ignoreModifications="false" purgeOnStartup="false"
-            tcpNoDelay="true" pingOnStartup="true"
-            balancingStrategy="org.infinispan.client.hotrod.impl.transport.tcp.RoundRobinBalancingStrategy"
-            transportFactory="org.infinispan.client.hotrod.impl.transport.tcp.TcpTransportFactory"
-            keySizeEstimate="62" valueSizeEstimate="512"
-            forceReturnValues="false">
-            <servers>
-               <server host="127.0.0.1" port="19711"/>
-            </servers>
-            <connectionPool maxActive="99" maxIdle="97" maxTotal="98" />
-            <asyncTransportExecutor factory="org.infinispan.client.hotrod.impl.async.DefaultAsyncExecutorFactory">
-              <properties xmlns="urn:infinispan:config:6.0">
-                <property name="pool_size" value="1" />
-                <property name="queue_size" value="10000" />
-              </properties>
-            </asyncTransportExecutor>
-         </remoteStore>
-      </persistence>
-   </default>
+   <!-- Default cache named to preserve old default cache name -->
+   <cache-container default-cache="___defaultcache">
+      <local-cache name="___defaultcache">
+         <persistence passivation="false">
+            <remote-store xmlns="urn:infinispan:config:store:remote:7.0"
+                          cache="___defaultcache" fetch-state="false" preload="false" purge="false" shared="true" singleton="false" read-only="false"
+                          hotrod-wrapping="false" raw-values="false" socket-timeout="60000"
+                          tcp-no-delay="true" ping-on-start="true" balancing-strategy="org.infinispan.client.hotrod.impl.transport.tcp.RoundRobinBalancingStrategy"
+                          transport-factory="org.infinispan.client.hotrod.impl.transport.tcp.TcpTransportFactory"
+                          key-size-estimate="62" value-size-estimate="512" force-return-values="false">
+               <async-executor factory="org.infinispan.client.hotrod.impl.async.DefaultAsyncExecutorFactory">
+                  <property name="pool_size">1</property>
+                  <property name="queue_size">10000</property>
+               </async-executor>
+               <remote-server host="127.0.0.1" port="19711" outbound-socket-binding="hotrod-server-1" />
+               <connection-pool max-active="99" max-idle="97" max-total="98"/>
+            </remote-store>
+         </persistence>
+      </local-cache>
+   </cache-container>
 
 </infinispan>

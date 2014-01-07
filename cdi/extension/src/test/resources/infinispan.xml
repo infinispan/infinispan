@@ -1,8 +1,13 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<infinispan xmlns="urn:infinispan:config:6.0"
-            xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" 
-            xsi:schemaLocation="urn:infinispan:config:6.0 http://docs.jboss.org/infinispan/schemas/infinispan-config-6.0.xsd">
-   <default>
-      <eviction maxEntries="1000" />
-   </default>
+<infinispan
+      xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+      xsi:schemaLocation="urn:infinispan:config:7.0 http://www.infinispan.org/schemas/infinispan-config-7.0.xsd"
+      xmlns="urn:infinispan:config:7.0">
+
+   <cache-container default-cache="default">
+      <local-cache name="default">
+         <eviction max-entries="1000" />
+      </local-cache>
+   </cache-container>
+
 </infinispan>

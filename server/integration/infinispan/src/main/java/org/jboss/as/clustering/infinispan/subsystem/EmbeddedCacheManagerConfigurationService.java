@@ -35,8 +35,7 @@ import org.infinispan.configuration.global.TransportConfigurationBuilder;
 import org.infinispan.marshall.core.Ids;
 import org.jboss.as.clustering.infinispan.ChannelProvider;
 import org.jboss.as.clustering.infinispan.MBeanServerProvider;
-import org.jboss.as.clustering.infinispan.ManagedExecutorFactory;
-import org.jboss.as.clustering.infinispan.ManagedScheduledExecutorFactory;
+import org.jboss.as.clustering.infinispan.ManagedThreadPoolExecutorFactory;
 import org.jboss.as.clustering.infinispan.io.SimpleExternalizer;
 import org.jboss.as.clustering.jgroups.ChannelFactory;
 import org.jboss.as.clustering.jgroups.subsystem.ChannelService;
@@ -163,21 +162,25 @@ public class EmbeddedCacheManagerConfigurationService implements Service<Embedde
 
             Executor executor = transport.getExecutor();
             if (executor != null) {
-                builder.asyncTransportExecutor().factory(new ManagedExecutorFactory(executor));
+                builder.transport().threadPool().threadPoolFactory(
+                      new ManagedThreadPoolExecutorFactory(executor));
             }
         }
 
         Executor listenerExecutor = this.dependencies.getListenerExecutor();
         if (listenerExecutor != null) {
-            builder.asyncListenerExecutor().factory(new ManagedExecutorFactory(listenerExecutor));
+            builder.listenerThreadPool().threadPoolFactory(
+                  new ManagedThreadPoolExecutorFactory(listenerExecutor));
         }
         ScheduledExecutorService evictionExecutor = this.dependencies.getEvictionExecutor();
         if (evictionExecutor != null) {
-            builder.evictionScheduledExecutor().factory(new ManagedScheduledExecutorFactory(evictionExecutor));
+            builder.evictionThreadPool().threadPoolFactory(
+                  new ManagedThreadPoolExecutorFactory(evictionExecutor));
         }
         ScheduledExecutorService replicationQueueExecutor = this.dependencies.getReplicationQueueExecutor();
         if (replicationQueueExecutor != null) {
-            builder.replicationQueueScheduledExecutor().factory(new ManagedScheduledExecutorFactory(replicationQueueExecutor));
+            builder.replicationQueueThreadPool().threadPoolFactory(
+                  new ManagedThreadPoolExecutorFactory(replicationQueueExecutor));
         }
 
         GlobalJmxStatisticsConfigurationBuilder jmxBuilder = builder.globalJmxStatistics().cacheManagerName(this.name);

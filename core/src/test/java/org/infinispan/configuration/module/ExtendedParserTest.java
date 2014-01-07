@@ -26,11 +26,13 @@ public class ExtendedParserTest {
 
    public void testExtendedParser() throws IOException {
       String config = INFINISPAN_START_TAG +
-            "   <default>\n" +
+            "<cache-container name=\"container-extra-modules\" default-cache=\"extra-module\">" +
+            "   <local-cache name=\"extra-module\">\n" +
             "     <modules>\n" +
-            "       <sample-element xmlns=\"urn:infinispan:config:mymodule:6.0\" sample-attribute=\"test-value\" />\n" +
+            "       <sample-element xmlns=\"urn:infinispan:config:mymodule\" sample-attribute=\"test-value\" />\n" +
             "     </modules>\n" +
-            "   </default>\n" +
+            "   </local-cache>\n" +
+            "</cache-container>" +
             INFINISPAN_END_TAG;
       assertCacheConfiguration(config);
    }

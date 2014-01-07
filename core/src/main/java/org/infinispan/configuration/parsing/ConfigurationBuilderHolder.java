@@ -15,6 +15,7 @@ public class ConfigurationBuilderHolder {
    private ConfigurationBuilder currentConfigurationBuilder;
    private final Map<Class<? extends ConfigurationParser>, ParserContext> parserContexts;
    private final WeakReference<ClassLoader> classLoader;
+   private String defaultCacheName;
 
    public ConfigurationBuilderHolder() {
       this(Thread.currentThread().getContextClassLoader());
@@ -44,7 +45,8 @@ public class ConfigurationBuilderHolder {
    }
 
    public ConfigurationBuilder getDefaultConfigurationBuilder() {
-      return defaultConfigurationBuilder;
+      ConfigurationBuilder builder = namedConfigurationBuilders.get(defaultCacheName);
+      return builder == null ? defaultConfigurationBuilder : builder;
    }
 
    public Map<String, ConfigurationBuilder> getNamedConfigurationBuilders() {
@@ -72,4 +74,7 @@ public class ConfigurationBuilderHolder {
       return parserContexts;
    }
 
+   public void setDefaultCacheName(String defaultCacheName) {
+      this.defaultCacheName = defaultCacheName;
+   }
 }
