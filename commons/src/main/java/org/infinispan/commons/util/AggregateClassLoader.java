@@ -269,6 +269,29 @@ public class AggregateClassLoader extends ClassLoader {
 	}
 
 	/**
+	 * Instantiates a class based on the class name provided. Instantiation is attempted via an appropriate, static
+	 * factory method named <tt>getInstance()</tt> first, and failing the existence of an appropriate factory, falls
+	 * back to an empty constructor.
+	 * <p />
+	 * Any exceptions encountered loading and instantiating the class is wrapped in a
+	 * {@link CacheConfigurationException}.
+	 * 
+	 * @param classname class to instantiate
+	 * @return an instance of classname
+	 */
+	public <T> T getInstance(String classname) {
+		if ( classname == null )
+			throw new IllegalArgumentException( "Cannot load null class!" );
+		try {
+			Class<T> clazz = (Class<T>) loadClass( classname );
+			return getInstance( clazz );
+		}
+		catch (ClassNotFoundException e) {
+			throw new CacheConfigurationException( "Unable to instantiate class " + classname, e );
+		}
+	}
+
+	/**
 	 * Similar to {@link #getInstance(Class)} except that exceptions are propagated to the caller.
 	 * 
 	 * @param clazz class to instantiate
@@ -351,6 +374,10 @@ public class AggregateClassLoader extends ClassLoader {
 				}
 		}
 		return u;
+	}
+
+	public URL lookupFileLocation(String filename) {
+		return lookupFileLocation(filename, null);
 	}
 
 	public Collection<URL> lookupFileLocations(String filename, ClassLoader cl) throws IOException {

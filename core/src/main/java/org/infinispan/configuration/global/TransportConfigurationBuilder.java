@@ -1,14 +1,13 @@
 package org.infinispan.configuration.global;
 
-import org.infinispan.commons.util.TypedProperties;
-import org.infinispan.commons.util.Util;
+import java.util.Properties;
+import java.util.concurrent.TimeUnit;
+
 import org.infinispan.commons.CacheConfigurationException;
+import org.infinispan.commons.util.TypedProperties;
 import org.infinispan.remoting.transport.Transport;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
-
-import java.util.Properties;
-import java.util.concurrent.TimeUnit;
 
 /**
  * Configures the transport used for network communications across the cluster.
@@ -172,7 +171,7 @@ public class TransportConfigurationBuilder extends AbstractGlobalConfigurationBu
    }
 
    public TransportConfigurationBuilder defaultTransport() {
-      Transport transport = Util.getInstance(DEFAULT_TRANSPORT, this.getGlobalConfig().getClassLoader());
+      Transport transport = this.getGlobalConfig().aggregateClassLader().getInstance(DEFAULT_TRANSPORT);
       transport(transport);
       return this;
    }

@@ -76,6 +76,10 @@ public class GlobalConfigurationBuilder implements GlobalConfigurationChildBuild
 	  aggregateClassLoader.setConfigurationClassLoader( cl );
       return this;
    }
+   
+   public AggregateClassLoader aggregateClassLader() {
+	   return aggregateClassLoader;
+   }
 
    @Override
    public TransportConfigurationBuilder transport() {
@@ -197,14 +201,7 @@ public class GlobalConfigurationBuilder implements GlobalConfigurationChildBuild
    }
 
    public GlobalConfigurationBuilder read(GlobalConfiguration template) {
-	  final ClassLoader classLoader = template.classLoader();
-	  if (classLoader instanceof AggregateClassLoader) {
-		  this.aggregateClassLoader = (AggregateClassLoader) classLoader;
-	  } else {
-		  // TODO: Is this correct?
-		  this.aggregateClassLoader = new AggregateClassLoader();
-		  this.aggregateClassLoader.setConfigurationClassLoader( template.classLoader() );
-	  }
+	  this.aggregateClassLoader.setConfigurationClassLoader( template.aggregateClassLoader() );
 
       for (Object c : template.modules().values()) {
          BuiltBy builtBy = c.getClass().getAnnotation(BuiltBy.class);

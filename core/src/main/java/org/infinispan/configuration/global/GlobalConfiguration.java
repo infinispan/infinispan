@@ -1,13 +1,12 @@
 package org.infinispan.configuration.global;
 
-import java.lang.ref.WeakReference;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
 import org.infinispan.Version;
-
+import org.infinispan.commons.util.AggregateClassLoader;
 import org.infinispan.factories.annotations.SurvivesRestarts;
 import org.infinispan.factories.scopes.Scope;
 import org.infinispan.factories.scopes.Scopes;
@@ -50,14 +49,14 @@ public class GlobalConfiguration {
    private final ShutdownConfiguration shutdown;
    private final Map<Class<?>, ?> modules;
    private final SiteConfiguration site;
-   private final WeakReference<ClassLoader> cl;
+   private final AggregateClassLoader aggregateClassLoader;
 
    GlobalConfiguration(ExecutorFactoryConfiguration asyncListenerExecutor,
          ExecutorFactoryConfiguration asyncTransportExecutor, ExecutorFactoryConfiguration remoteCommandsExecutor,
          ScheduledExecutorFactoryConfiguration evictionScheduledExecutor,
          ScheduledExecutorFactoryConfiguration replicationQueueScheduledExecutor, GlobalJmxStatisticsConfiguration globalJmxStatistics,
          TransportConfiguration transport, SerializationConfiguration serialization, ShutdownConfiguration shutdown,
-         List<?> modules, SiteConfiguration site,ClassLoader cl, ExecutorFactoryConfiguration totalOrderExecutor, ExecutorFactoryConfiguration persistenceExecutor) {
+         List<?> modules, SiteConfiguration site, AggregateClassLoader aggregateClassLoader, ExecutorFactoryConfiguration totalOrderExecutor, ExecutorFactoryConfiguration persistenceExecutor) {
       this.asyncListenerExecutor = asyncListenerExecutor;
       this.persistenceExecutor = persistenceExecutor;
       this.asyncTransportExecutor = asyncTransportExecutor;
@@ -74,7 +73,7 @@ public class GlobalConfiguration {
       }
       this.modules = Collections.unmodifiableMap(moduleMap);
       this.site = site;
-      this.cl = new WeakReference<ClassLoader>(cl);
+      this.aggregateClassLoader = aggregateClassLoader;
       this.totalOrderExecutor = totalOrderExecutor;
    }
 
@@ -131,8 +130,15 @@ public class GlobalConfiguration {
     * Get the classloader in use by this configuration.
     */
    public ClassLoader classLoader() {
-      return cl.get();
+      return aggregateClassLoader;
    }
+   
+	/**
+	 * Allow direct use of the AggregateClassLoader
+	 */
+	public AggregateClassLoader aggregateClassLoader() {
+		return aggregateClassLoader;
+	}
 
    public SiteConfiguration sites() {
       return site;
@@ -152,7 +158,6 @@ public class GlobalConfiguration {
             ", shutdown=" + shutdown +
             ", modules=" + modules +
             ", site=" + site +
-            ", cl=" + cl +
             ", totalOrderExecutor=" + totalOrderExecutor +
             '}';
    }
