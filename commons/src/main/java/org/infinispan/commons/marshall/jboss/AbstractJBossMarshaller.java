@@ -1,19 +1,6 @@
 package org.infinispan.commons.marshall.jboss;
 
-import org.infinispan.commons.io.ByteBuffer;
-import org.infinispan.commons.io.ByteBufferImpl;
-import org.infinispan.commons.io.ExposedByteArrayOutputStream;
-import org.infinispan.commons.logging.BasicLogFactory;
-import org.infinispan.commons.marshall.AbstractMarshaller;
-import org.infinispan.commons.marshall.StreamingMarshaller;
-import org.infinispan.commons.util.concurrent.ConcurrentWeakKeyHashMap;
-import org.jboss.logging.BasicLogger;
-import org.jboss.marshalling.ExceptionListener;
-import org.jboss.marshalling.Marshalling;
-import org.jboss.marshalling.MarshallingConfiguration;
-import org.jboss.marshalling.TraceInformation;
-import org.jboss.marshalling.Unmarshaller;
-import org.jboss.marshalling.reflect.SunReflectiveCreator;
+import static org.infinispan.commons.util.Util.EMPTY_OBJECT_ARRAY;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
@@ -25,8 +12,21 @@ import java.io.Serializable;
 import java.lang.reflect.Method;
 import java.net.URL;
 
-import static org.infinispan.commons.util.ReflectionUtil.EMPTY_CLASS_ARRAY;
-import static org.infinispan.commons.util.Util.EMPTY_OBJECT_ARRAY;
+import org.infinispan.commons.io.ByteBuffer;
+import org.infinispan.commons.io.ByteBufferImpl;
+import org.infinispan.commons.io.ExposedByteArrayOutputStream;
+import org.infinispan.commons.logging.BasicLogFactory;
+import org.infinispan.commons.marshall.AbstractMarshaller;
+import org.infinispan.commons.marshall.StreamingMarshaller;
+import org.infinispan.commons.util.AggregateClassLoader;
+import org.infinispan.commons.util.concurrent.ConcurrentWeakKeyHashMap;
+import org.jboss.logging.BasicLogger;
+import org.jboss.marshalling.ExceptionListener;
+import org.jboss.marshalling.Marshalling;
+import org.jboss.marshalling.MarshallingConfiguration;
+import org.jboss.marshalling.TraceInformation;
+import org.jboss.marshalling.Unmarshaller;
+import org.jboss.marshalling.reflect.SunReflectiveCreator;
 
 /**
  * Common parent for both embedded and standalone JBoss Marshalling-based marshallers.
@@ -247,7 +247,7 @@ public abstract class AbstractJBossMarshaller extends AbstractMarshaller impleme
          URL[] urls = EMPTY_URLS;
          try {
             Class<?> returnType = urls.getClass();
-            Class<?>[] parameterTypes = EMPTY_CLASS_ARRAY;
+            Class<?>[] parameterTypes = AggregateClassLoader.EMPTY_CLASS_ARRAY;
             Method getURLs = cl.getClass().getMethod("getURLs", parameterTypes);
             if (returnType.isAssignableFrom(getURLs.getReturnType())) {
                Object[] args = EMPTY_OBJECT_ARRAY;

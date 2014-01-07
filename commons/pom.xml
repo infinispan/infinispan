@@ -32,7 +32,6 @@
       <dependency>
          <groupId>org.osgi</groupId>
          <artifactId>org.osgi.core</artifactId>
-         <optional>true</optional>
       </dependency>
    </dependencies>
 

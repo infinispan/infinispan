@@ -1,13 +1,5 @@
 package org.infinispan.commons.util;
 
-import org.infinispan.commons.CacheConfigurationException;
-import org.infinispan.commons.CacheException;
-import org.infinispan.commons.hash.Hash;
-import org.infinispan.commons.marshall.Marshaller;
-import org.infinispan.commons.logging.Log;
-import org.infinispan.commons.logging.LogFactory;
-
-import javax.naming.Context;
 import java.io.ByteArrayOutputStream;
 import java.io.Closeable;
 import java.io.IOException;
@@ -19,8 +11,6 @@ import java.lang.management.ManagementFactory;
 import java.lang.management.MonitorInfo;
 import java.lang.management.ThreadInfo;
 import java.lang.management.ThreadMXBean;
-import java.lang.reflect.Method;
-import java.lang.reflect.Modifier;
 import java.net.Socket;
 import java.nio.ByteBuffer;
 import java.text.NumberFormat;
@@ -30,10 +20,16 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.Date;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
+
+import javax.naming.Context;
+
+import org.infinispan.commons.CacheException;
+import org.infinispan.commons.hash.Hash;
+import org.infinispan.commons.marshall.Marshaller;
 
 /**
  * General utility methods used throughout the Infinispan code base.
@@ -49,178 +45,11 @@ public final class Util {
    public static final Object[] EMPTY_OBJECT_ARRAY = new Object[0];
    public static final byte[] EMPTY_BYTE_ARRAY = new byte[0];
 
-   private static final Log log = LogFactory.getLog(Util.class);
-
    /**
     * Current Java vendor. This variable is later used to differentiate LRU implementations
     * for different java vendors.
     */
    private static final String javaVendor = SysPropertyActions.getProperty("java.vendor", "");
-
-   /**
-    * <p>
-    * Loads the specified class using the passed classloader, or, if it is <code>null</code> the Infinispan classes'
-    * classloader.
-    * </p>
-    *
-    * <p>
-    * If loadtime instrumentation via GenerateInstrumentedClassLoader is used, this class may be loaded by the bootstrap
-    * classloader.
-    * </p>
-    * <p>
-    * If the class is not found, the {@link ClassNotFoundException} or {@link NoClassDefFoundError} is wrapped as a
-    * {@link CacheConfigurationException} and is re-thrown.
-    * </p>
-    *
-    * @param classname name of the class to load
-    * @param cl the application classloader which should be used to load the class, or null if the class is always packaged with
-    *        Infinispan
-    * @return the class
-    * @throws CacheConfigurationException if the class cannot be loaded
-    */
-   public static <T> Class<T> loadClass(String classname, ClassLoader cl) {
-      try {
-         return loadClassStrict(classname, cl);
-      } catch (ClassNotFoundException e) {
-         throw new CacheConfigurationException("Unable to instantiate class " + classname, e);
-      }
-   }
-
-   public static ClassLoader[] getClassLoaders(ClassLoader appClassLoader) {
-      return new ClassLoader[] {
-            appClassLoader,  // User defined classes
-            Util.class.getClassLoader(), // Infinispan classes (not always on TCCL [modular env])
-            ClassLoader.getSystemClassLoader() // Used when load time instrumentation is in effect
-            };
-   }
-
-   /**
-    * <p>
-    * Loads the specified class using the passed classloader, or, if it is <code>null</code> the Infinispan classes' classloader.
-    * </p>
-    *
-    * <p>
-    * If loadtime instrumentation via GenerateInstrumentedClassLoader is used, this class may be loaded by the bootstrap classloader.
-    * </p>
-    *
-    * @param classname name of the class to load
-    * @return the class
-    * @param userClassLoader the application classloader which should be used to load the class, or null if the class is always packaged with
-    *        Infinispan
-    * @throws ClassNotFoundException if the class cannot be loaded
-    */
-   @SuppressWarnings("unchecked")
-   public static <T> Class<T> loadClassStrict(String classname, ClassLoader userClassLoader) throws ClassNotFoundException {
-      ClassLoader[] cls = getClassLoaders(userClassLoader);
-         ClassNotFoundException e = null;
-         NoClassDefFoundError ne = null;
-         for (ClassLoader cl : cls)  {
-            if (cl == null)
-               continue;
-
-            try {
-               return (Class<T>) Class.forName(classname, true, cl);
-            } catch (ClassNotFoundException ce) {
-               e = ce;
-            } catch (NoClassDefFoundError ce) {
-               ne = ce;
-            }
-         }
-
-         if (e != null)
-            throw e;
-         else if (ne != null) {
-            // Before we wrap this, make sure we appropriately log this.
-            log.unableToLoadClass(classname, Arrays.toString(cls), ne);
-            throw new ClassNotFoundException(classname, ne);
-         }
-         else
-            throw new IllegalStateException();
-   }
-
-   private static Method getFactoryMethod(Class<?> c) {
-      for (Method m : c.getMethods()) {
-         if (m.getName().equals("getInstance") && m.getParameterTypes().length == 0 && Modifier.isStatic(m.getModifiers()))
-            return m;
-      }
-      return null;
-   }
-
-   /**
-    * Instantiates a class by first attempting a static <i>factory method</i> named <tt>getInstance()</tt> on the class
-    * and then falling back to an empty constructor.
-    * <p/>
-    * Any exceptions encountered are wrapped in a {@link CacheConfigurationException} and rethrown.
-    *
-    * @param clazz class to instantiate
-    * @return an instance of the class
-    */
-   public static <T> T getInstance(Class<T> clazz) {
-      try {
-         return getInstanceStrict(clazz);
-      } catch (IllegalAccessException iae) {
-         throw new CacheConfigurationException("Unable to instantiate class " + clazz.getName(), iae);
-      } catch (InstantiationException ie) {
-         throw new CacheConfigurationException("Unable to instantiate class " + clazz.getName(), ie);
-      }
-   }
-
-   /**
-    * Similar to {@link #getInstance(Class)} except that exceptions are propagated to the caller.
-    *
-    * @param clazz class to instantiate
-    * @return an instance of the class
-    * @throws IllegalAccessException
-    * @throws InstantiationException
-    */
-   @SuppressWarnings("unchecked")
-   public static <T> T getInstanceStrict(Class<T> clazz) throws IllegalAccessException, InstantiationException {
-      // first look for a getInstance() constructor
-      T instance = null;
-      try {
-         Method factoryMethod = getFactoryMethod(clazz);
-         if (factoryMethod != null) instance = (T) factoryMethod.invoke(null);
-      }
-      catch (Exception e) {
-         // no factory method or factory method failed.  Try a constructor.
-         instance = null;
-      }
-      if (instance == null) {
-         instance = clazz.newInstance();
-      }
-      return instance;
-   }
-
-   /**
-    * Instantiates a class based on the class name provided.  Instantiation is attempted via an appropriate, static
-    * factory method named <tt>getInstance()</tt> first, and failing the existence of an appropriate factory, falls
-    * back to an empty constructor.
-    * <p />
-    * Any exceptions encountered loading and instantiating the class is wrapped in a {@link CacheConfigurationException}.
-    *
-    * @param classname class to instantiate
-    * @return an instance of classname
-    */
-   public static <T> T getInstance(String classname, ClassLoader cl) {
-      if (classname == null) throw new IllegalArgumentException("Cannot load null class!");
-      Class<T> clazz = loadClass(classname, cl);
-      return getInstance(clazz);
-   }
-
-   /**
-    * Similar to {@link #getInstance(String, ClassLoader)} except that exceptions are propagated to the caller.
-    *
-    * @param classname class to instantiate
-    * @return an instance of classname
-    * @throws ClassNotFoundException
-    * @throws InstantiationException
-    * @throws IllegalAccessException
-    */
-   public static <T> T getInstanceStrict(String classname, ClassLoader cl) throws ClassNotFoundException, InstantiationException, IllegalAccessException {
-      if (classname == null) throw new IllegalArgumentException("Cannot load null class!");
-      Class<T> clazz = loadClassStrict(classname, cl);
-      return getInstanceStrict(clazz);
-   }
 
    /**
     * Clones parameter x of type T with a given Marshaller reference;

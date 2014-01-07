@@ -1,9 +1,5 @@
 package org.infinispan.commons.util;
 
-import org.infinispan.commons.CacheException;
-import org.infinispan.commons.logging.Log;
-import org.infinispan.commons.logging.LogFactory;
-
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
@@ -16,6 +12,10 @@ import java.util.List;
 import java.util.Map.Entry;
 import java.util.Properties;
 
+import org.infinispan.commons.CacheException;
+import org.infinispan.commons.logging.Log;
+import org.infinispan.commons.logging.LogFactory;
+
 /**
  * Basic reflection utilities to enhance what the JDK provides.
  *
@@ -26,13 +26,6 @@ public class ReflectionUtil {
    private static final Log log = LogFactory.getLog(ReflectionUtil.class);
 
    private static final String[] EMPTY_STRING_ARRAY = {};
-
-   private static final Class<?>[] primitives = {int.class, byte.class, short.class, long.class,
-                                                 float.class, double.class, boolean.class, char.class};
-
-   private static final Class<?>[] primitiveArrays = {int[].class, byte[].class, short[].class, long[].class,
-                                                      float[].class, double[].class, boolean[].class, char[].class};
-   public static final Class<?>[] EMPTY_CLASS_ARRAY = new Class[0];
 
 
    /**
@@ -318,25 +311,6 @@ public class ReflectionUtil {
     */
    public static boolean isAnnotationPresent(Class<?> clazz, Class<? extends Annotation> annotation) {
       return getAnnotation(clazz, annotation) != null;
-   }
-
-   public static Class<?>[] toClassArray(String[] typeList, ClassLoader classLoader) throws ClassNotFoundException {
-      if (typeList == null) return EMPTY_CLASS_ARRAY;
-      Class<?>[] retval = new Class[typeList.length];
-      int i = 0;
-      for (String s : typeList) retval[i++] = getClassForName(s, classLoader);
-      return retval;
-   }
-
-   public static Class<?> getClassForName(String name, ClassLoader cl) throws ClassNotFoundException {
-      try {
-         return Util.loadClassStrict(name, cl);
-      } catch (ClassNotFoundException cnfe) {
-         // Could be a primitive - let's check
-         for (Class<?> primitive : primitives) if (name.equals(primitive.getName())) return primitive;
-         for (Class<?> primitive : primitiveArrays) if (name.equals(primitive.getName())) return primitive;
-      }
-      throw new ClassNotFoundException("Class " + name + " cannot be found");
    }
 
    public static String[] toStringArray(Class<?>[] classes) {

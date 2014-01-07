@@ -1,9 +1,9 @@
 package org.infinispan.commons.util;
 
+import java.lang.reflect.Method;
+
 import org.infinispan.commons.logging.Log;
 import org.infinispan.commons.logging.LogFactory;
-
-import java.lang.reflect.Method;
 
 /**
  * Proxies is a collection of useful dynamic profixes. Internal use only.
@@ -34,7 +34,7 @@ public class Proxies {
       Class<?> superclass = clazz.getSuperclass();
       if (!superclass.equals(Object.class))
          return superclass.getInterfaces();
-      return ReflectionUtil.EMPTY_CLASS_ARRAY;
+      return AggregateClassLoader.EMPTY_CLASS_ARRAY;
    }
     
    /**
