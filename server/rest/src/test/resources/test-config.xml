@@ -1,49 +1,20 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <infinispan
       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-      xsi:schemaLocation="urn:infinispan:config:6.0 http://www.infinispan.org/schemas/infinispan-config-6.0.xsd"
-      xmlns="urn:infinispan:config:6.0">
+      xsi:schemaLocation="urn:infinispan:config:7.0 http://www.infinispan.org/schemas/infinispan-config-7.0.xsd"
+      xmlns="urn:infinispan:config:7.0">
 
-   <global>
-      <globalJmxStatistics
-            enabled="true"
-            jmxDomain="org.infinispan"
-            cacheManagerName="SampleCacheManager"/>
-      <transport
-            clusterName="infinispan-cluster"
-            machineId="m1"
-            rackId="r1" nodeName="Node-A">
-      </transport>
-   </global>
-
-   <default>
-      <locking
-         isolationLevel="READ_COMMITTED"
-         lockAcquisitionTimeout="20000"
-         writeSkewCheck="false"
-         concurrencyLevel="5000"
-         useLockStriping="false"
-      />
-      <jmxStatistics enabled="true"/>
-      <clustering mode="replication">
-         <stateTransfer
-            timeout="240000"
-            fetchInMemoryState="false"
-         />
-         <sync replTimeout="20000"/>
-      </clustering>
-   </default>
-
-   <namedCache name="evictExpiryCache">
-      <eviction
-         maxEntries="5000"
-         strategy="FIFO"
-      />
-      <expiration
-         wakeUpInterval="500"
-         lifespan="3000"
-         maxIdle="1000"
-      />
-   </namedCache>
+   <cache-container name="SampleCacheManager" default-cache="default" statistics="true">
+      <jmx domain="org.infinispan"/>
+      <transport cluster="infinispan-cluster" machine="m1" rack="r1" node-name="Node-A" />
+      <replicated-cache name="default" mode="SYNC" remote-timeout="20000" statistics="true">
+         <state-transfer enabled="false" timeout="240000"/>
+         <locking isolation="READ_COMMITTED" acquire-timeout="20000" write-skew="false" concurrency-level="5000" striping="false"/>
+      </replicated-cache>
+      <replicated-cache name="evictExpiryCache">
+         <eviction max-entries="5000" strategy="FIFO" />
+         <expiration interval="500" lifespan="3000" max-idle="1000"/>
+      </replicated-cache>
+   </cache-container>
 
 </infinispan>

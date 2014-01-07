@@ -1,45 +1,29 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <infinispan
       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-      xsi:schemaLocation="urn:infinispan:config:6.0 http://www.infinispan.org/schemas/infinispan-config-6.0.xsd"
-      xmlns="urn:infinispan:config:6.0">
+      xsi:schemaLocation="urn:infinispan:config:7.0 http://www.infinispan.org/schemas/infinispan-config-7.0.xsd"
+      xmlns="urn:infinispan:config:7.0">
 
-   <global>
-      <transport clusterName="infinispan-cluster" distributedSyncTimeout="50000" nodeName="Jalapeno" machineId="m1" rackId="r1" siteId="s1">
-      </transport>
-   </global>
+   <jgroups/>
 
-   <namedCache name="simpleNonTransactionalCache">
-      <locking concurrencyLevel="100" lockAcquisitionTimeout="1000"/>
-      <transaction transactionMode="NON_TRANSACTIONAL"/>
-   </namedCache>
-
-   <namedCache name="simpleTransactionalCache">
-      <locking concurrencyLevel="100" lockAcquisitionTimeout="1000"/>
-      <transaction transactionMode="TRANSACTIONAL"/>
-   </namedCache>
-
-   <namedCache name="simpleLocalCache">
-   </namedCache>
-
-   <namedCache name="localCacheWithEviction">
-      <eviction strategy="LRU" maxEntries="10" />
-      <expiration lifespan="10000" />
-   </namedCache>
-
-   <namedCache name="replSync">
-      <clustering mode="REPL" />
-   </namedCache>
-
-   <namedCache name="replAsync">
-      <clustering mode="REPL">
-         <async />
-      </clustering>
-   </namedCache>
-
-   <namedCache name="distCacheToChange">
-      <clustering mode="DIST">
-      </clustering>
-   </namedCache>
+   <cache-container>
+      <transport cluster="infinispan-cluster" lock-timeout="50000" node-name="Jalapeno" machine="m1" rack="r1" site="s1"/>
+      <local-cache name="simpleNonTransactionalCache">
+         <locking concurrency-level="100" acquire-timeout="1000"/>
+         <transaction mode="NONE"/>
+      </local-cache>
+      <local-cache name="simpleTransactionalCache">
+         <locking concurrency-level="100" acquire-timeout="1000"/>
+         <transaction mode="NON_XA"/>
+      </local-cache>
+      <local-cache name="simpleLocalCache"/>
+      <local-cache name="localCacheWithEviction">
+         <eviction strategy="LRU" max-entries="10" />
+         <expiration lifespan="10000" />
+      </local-cache>
+      <replicated-cache name="replSync" />
+      <replicated-cache name="replAsync" mode="ASYNC" />
+      <distributed-cache name="distCacheToChange" />
+   </cache-container>
 
 </infinispan>

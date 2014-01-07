@@ -1,1 +1,2 @@
 org.infinispan.persistence.jdbc.configuration.JdbcStoreConfigurationParser60
+org.infinispan.persistence.jdbc.configuration.JdbcStoreConfigurationParser70

@@ -1,5 +1,6 @@
 package org.infinispan.configuration;
 
+import org.infinispan.commons.executors.BlockingThreadPoolExecutorFactory;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.test.SingleCacheManagerTest;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
@@ -7,6 +8,8 @@ import org.infinispan.util.concurrent.IsolationLevel;
 import org.testng.annotations.Test;
 
 import java.util.Properties;
+
+import static org.testng.AssertJUnit.assertEquals;
 
 /**
  * /**
@@ -22,7 +25,7 @@ public class StringPropertyReplacementTest extends SingleCacheManagerTest {
    @Override
    protected EmbeddedCacheManager createCacheManager() throws Exception {
       System.setProperty("test.property.asyncListenerMaxThreads","2");
-      System.setProperty("test.property.persistenceMaxThreads","2");
+      System.setProperty("test.property.persistenceMaxThreads","4");
       System.setProperty("test.property.IsolationLevel","READ_COMMITTED");
       System.setProperty("test.property.writeSkewCheck","true");
       System.setProperty("test.property.SyncCommitPhase","true");
@@ -30,11 +33,13 @@ public class StringPropertyReplacementTest extends SingleCacheManagerTest {
    }
 
    public void testGlobalConfig() {
-      Properties asyncListenerExecutorProperties = cacheManager.getCacheManagerConfiguration().asyncListenerExecutor().properties();
-      asyncListenerExecutorProperties.get("maxThreads").equals("2");
+      BlockingThreadPoolExecutorFactory listenerThreadPool =
+            cacheManager.getCacheManagerConfiguration().listenerThreadPool().threadPoolFactory();
+      assertEquals(2, listenerThreadPool.maxThreads());
 
-      Properties persistenceExecutorProperties = cacheManager.getCacheManagerConfiguration().persistenceExecutor().properties();
-      persistenceExecutorProperties.get("maxThreads").equals("4");
+      BlockingThreadPoolExecutorFactory persistenceThreadPool =
+            cacheManager.getCacheManagerConfiguration().persistenceThreadPool().threadPoolFactory();
+      assertEquals(4, persistenceThreadPool.maxThreads());
 
       Properties transportProps = cacheManager.getCacheManagerConfiguration().transport().properties();
       // Should be "jgroups-tcp.xml", but gets overriden by test cache manager factory

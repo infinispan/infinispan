@@ -35,7 +35,7 @@ public class ClusteringConfigurationBuilder extends AbstractConfigurationChildBu
       return this;
    }
 
-   CacheMode cacheMode() {
+   public CacheMode cacheMode() {
       return cacheMode;
    }
 

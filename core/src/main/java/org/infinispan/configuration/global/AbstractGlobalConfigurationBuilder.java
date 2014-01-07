@@ -28,11 +28,21 @@ abstract class AbstractGlobalConfigurationBuilder implements GlobalConfiguration
       return globalConfig.serialization();
    }
 
+   /**
+    * @deprecated This method always returns null now.
+    * Set thread pool via {@link #listenerThreadPool()} instead.
+    */
+   @Deprecated
    @Override
    public ExecutorFactoryConfigurationBuilder asyncListenerExecutor() {
       return globalConfig.asyncListenerExecutor();
    }
 
+   /**
+    * @deprecated This method always returns null now.
+    * Set thread pool via {@link #persistenceThreadPool()} instead.
+    */
+   @Deprecated
    @Override
    public ExecutorFactoryConfigurationBuilder persistenceExecutor() {
       return globalConfig.persistenceExecutor();
@@ -43,19 +53,54 @@ abstract class AbstractGlobalConfigurationBuilder implements GlobalConfiguration
       return globalConfig.asyncTransportExecutor();
    }
 
+   /**
+    * @deprecated This method always returns null now.
+    * Set thread pool via {@link TransportConfigurationBuilder#remoteCommandThreadPool()} instead.
+    */
+   @Deprecated
    @Override
    public ExecutorFactoryConfigurationBuilder remoteCommandsExecutor() {
       return globalConfig.remoteCommandsExecutor();
    }
 
+   /**
+    * @deprecated This method always returns null now.
+    * Set thread pool via {@link #evictionThreadPool()} instead.
+    */
+   @Deprecated
    @Override
    public ScheduledExecutorFactoryConfigurationBuilder evictionScheduledExecutor() {
       return globalConfig.evictionScheduledExecutor();
    }
 
+   /**
+    * @deprecated This method always returns null now.
+    * Set thread pool via {@link #replicationQueueThreadPool()} instead.
+    */
+   @Deprecated
    @Override
    public ScheduledExecutorFactoryConfigurationBuilder replicationQueueScheduledExecutor() {
       return globalConfig.replicationQueueScheduledExecutor();
+   }
+
+   @Override
+   public ThreadPoolConfigurationBuilder listenerThreadPool() {
+      return globalConfig.listenerThreadPool();
+   }
+
+   @Override
+   public ThreadPoolConfigurationBuilder replicationQueueThreadPool() {
+      return globalConfig.replicationQueueThreadPool();
+   }
+
+   @Override
+   public ThreadPoolConfigurationBuilder evictionThreadPool() {
+      return globalConfig.evictionThreadPool();
+   }
+
+   @Override
+   public ThreadPoolConfigurationBuilder persistenceThreadPool() {
+      return globalConfig.persistenceThreadPool();
    }
 
    @Override

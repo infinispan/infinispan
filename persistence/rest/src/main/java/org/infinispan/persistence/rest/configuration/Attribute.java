@@ -13,17 +13,18 @@ public enum Attribute {
    // must be first
    UNKNOWN(null),
 
-   APPEND_CACHE_NAME_TO_PATH("appendCacheNameToPath"),
-   BUFFER_SIZE("bufferSize"),
-   CONNECTION_TIMEOUT("connectionTimeout"),
+   APPEND_CACHE_NAME_TO_PATH("append-cache-name-to-path"),
+   BUFFER_SIZE("buffer-size"),
+   CONNECTION_TIMEOUT("connection-timeout"),
    HOST("host"),
-   KEY_TO_STRING_MAPPER("key2StringMapper"),
-   MAX_CONNECTIONS_PER_HOST("maxConnectionsPerHost"),
-   MAX_TOTAL_CONNECTIONS("maxTotalConnections"),
+   KEY_TO_STRING_MAPPER("key-to-string-mapper"),
+   MAX_CONNECTIONS_PER_HOST("max-connections-per-host"),
+   MAX_TOTAL_CONNECTIONS("max-total-connections"),
+   OUTBOUND_SOCKET_BINDING("outbound-socket-binding"),
    PATH("path"),
    PORT("port"),
-   SOCKET_TIMEOUT("socketTimeout"),
-   TCP_NO_DELAY("tcpNoDelay"),
+   SOCKET_TIMEOUT("socket-timeout"),
+   TCP_NO_DELAY("tcp-no-delay"),
    ;
 
    private final String name;

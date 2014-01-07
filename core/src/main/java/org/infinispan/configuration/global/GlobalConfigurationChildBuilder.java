@@ -15,6 +15,14 @@ public interface GlobalConfigurationChildBuilder {
 
    ExecutorFactoryConfigurationBuilder remoteCommandsExecutor();
 
+   ThreadPoolConfigurationBuilder listenerThreadPool();
+
+   ThreadPoolConfigurationBuilder replicationQueueThreadPool();
+
+   ThreadPoolConfigurationBuilder evictionThreadPool();
+
+   ThreadPoolConfigurationBuilder persistenceThreadPool();
+
    ScheduledExecutorFactoryConfigurationBuilder evictionScheduledExecutor();
 
    ScheduledExecutorFactoryConfigurationBuilder replicationQueueScheduledExecutor();

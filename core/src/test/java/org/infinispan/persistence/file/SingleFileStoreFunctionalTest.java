@@ -50,11 +50,14 @@ public class SingleFileStoreFunctionalTest extends BaseStoreFunctionalTest {
 
    public void testParsingEmptyElement() throws Exception {
       String config = INFINISPAN_START_TAG_NO_SCHEMA +
-            "<default>\n" +
-            "<persistence passivation=\"false\"> \n" +
-            "<singleFile shared=\"false\" preload=\"true\"/> \n" +
-            "</persistence>\n" +
-            "</default>\n" + INFINISPAN_END_TAG;
+            "<cache-container default-cache=\"default\">" +
+            "   <local-cache name=\"default\">\n" +
+            "      <persistence passivation=\"false\"> \n" +
+            "         <file-store shared=\"false\" preload=\"true\"/> \n" +
+            "      </persistence>\n" +
+            "   </local-cache>\n" +
+            "</cache-container>" +
+            INFINISPAN_END_TAG;
       InputStream is = new ByteArrayInputStream(config.getBytes());
       withCacheManager(new CacheManagerCallable(TestCacheManagerFactory.fromStream(is)) {
          @Override
@@ -71,12 +74,14 @@ public class SingleFileStoreFunctionalTest extends BaseStoreFunctionalTest {
 
    public void testParsingElement() throws Exception {
       String config = INFINISPAN_START_TAG_NO_SCHEMA +
-            "<default>\n" +
-            "<eviction maxEntries=\"100\"/>" +
-            "<persistence passivation=\"false\"> \n" +
-            "<singleFile maxEntries=\"100\" shared=\"false\" preload=\"true\" location=\"other-location\"/> \n" +
-            "</persistence>\n" +
-            "</default>\n" + INFINISPAN_END_TAG;
+            "<cache-container default-cache=\"default\">" +
+            "   <local-cache name=\"default\">\n" +
+            "      <persistence passivation=\"false\"> \n" +
+            "         <file-store path=\"other-location\" max-entries=\"100\" shared=\"false\" preload=\"true\"/> \n" +
+            "      </persistence>\n" +
+            "   </local-cache>\n" +
+            "</cache-container>" +
+            INFINISPAN_END_TAG;
       InputStream is = new ByteArrayInputStream(config.getBytes());
       withCacheManager(new CacheManagerCallable(TestCacheManagerFactory.fromStream(is)) {
          @Override

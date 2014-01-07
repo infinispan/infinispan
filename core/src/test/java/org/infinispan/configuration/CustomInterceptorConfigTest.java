@@ -24,18 +24,21 @@ public class CustomInterceptorConfigTest extends AbstractInfinispanTest {
    public void testCustomInterceptors() throws Exception {
       String xml = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>" +
             "<infinispan>" +
-            "<default><customInterceptors> \n" +
+            "<cache-container name=\"custom\" default-cache=\"default-cache\">" +
+            "<transport />" +
+            "<local-cache name=\"default-cache\"><custom-interceptors> \n" +
             "<interceptor after=\""+ InvocationContextInterceptor.class.getName()+"\" class=\""+DummyInterceptor.class.getName()+"\"/> \n" +
-            "</customInterceptors> </default>" +
-            "<namedCache name=\"x\">" +
-            "<customInterceptors>\n" +
+            "</custom-interceptors> </local-cache>" +
+            "<local-cache name=\"x\">" +
+            "<custom-interceptors>\n" +
             "         <interceptor position=\"first\" class=\""+CustomInterceptor1.class.getName()+"\" />" +
             "         <interceptor" +
             "            position=\"last\"" +
             "            class=\""+CustomInterceptor2.class.getName()+"\"" +
             "         />" +
-            "</customInterceptors>" +
-            "</namedCache>" +
+            "</custom-interceptors>" +
+            "</local-cache>" +
+            "</cache-container>" +
             "</infinispan>";
 
       InputStream stream = new ByteArrayInputStream(xml.getBytes());

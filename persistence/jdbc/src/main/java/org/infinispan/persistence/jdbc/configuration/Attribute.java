@@ -13,19 +13,18 @@ public enum Attribute {
    // must be first
    UNKNOWN(null),
 
-   BATCH_SIZE("batchSize"),
-   CONNECTION_URL("connectionUrl"),
-   CREATE_ON_START("createOnStart"),
-   JNDI_URL("jndiUrl"),
-   DRIVER_CLASS("driverClass"),
-   DROP_ON_EXIT("dropOnExit"),
-   FETCH_SIZE("fetchSize"),
-   KEY_TO_STRING_MAPPER("key2StringMapper"),
+   BATCH_SIZE("batch-size"),
+   CONNECTION_URL("connection-url"),
+   CREATE_ON_START("create-on-start"),
+   JNDI_URL("jndi-url"),
+   DRIVER_CLASS("driver"),
+   DROP_ON_EXIT("drop-on-exit"),
+   FETCH_SIZE("fetch-size"),
+   KEY_TO_STRING_MAPPER("key-to-string-mapper"),
    NAME("name"),
    PASSIVATION("passivation"),
    PASSWORD("password"),
    PREFIX("prefix"),
-   PRELOAD("true"),
    TYPE("type"),
    USERNAME("username")
    ;

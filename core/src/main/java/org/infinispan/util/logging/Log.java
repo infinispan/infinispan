@@ -1081,4 +1081,16 @@ public interface Log extends BasicLogger {
    @LogMessage(level = WARN)
    @Message(value = "Unrecognized attribute %s.  Please check your configuration.  Ignoring!!", id = 292)
    void unrecognizedAttribute(String property);
+
+   @LogMessage(level = INFO)
+   @Message(value = "Ignoring XML attribute %s, please remove from configuration file", id = 293)
+   void ignoreXmlAttribute(Object attribute);
+
+   @LogMessage(level = INFO)
+   @Message(value = "Ignoring XML element %s, please remove from configuration file", id = 294)
+   void ignoreXmlElement(Object element);
+
+   @Message(value = "No thread pool with name %s found", id = 295)
+   CacheConfigurationException undefinedThreadPoolName(String name);
+
 }

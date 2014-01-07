@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<infinispan>
+
+   <cache-container>
+      <local-cache name="testCache">
+         <persistence passivation="false">
+            <leveldb-store path="/tmp/leveldb/52/data" shared="true" preload="true">
+               <expiration path="/tmp/leveldb/52/expired"/>
+               <implementation type="JAVA" />
+            </leveldb-store>
+         </persistence>
+      </local-cache>
+   </cache-container>
+
+</infinispan>

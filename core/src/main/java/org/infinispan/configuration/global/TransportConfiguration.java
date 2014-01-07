@@ -12,10 +12,15 @@ public class TransportConfiguration {
    private final long distributedSyncTimeout;
    private final Transport transport;
    private final String nodeName;
-   private TypedProperties properties;
-   
+   private final TypedProperties properties;
+   private final ThreadPoolConfiguration transportThreadPool;
+   private final ThreadPoolConfiguration remoteCommandThreadPool;
+   private final ThreadPoolConfiguration totalOrderThreadPool;
+
    TransportConfiguration(String clusterName, String machineId, String rackId, String siteId,
-                          long distributedSyncTimeout, Transport transport, String nodeName, TypedProperties properties) {
+         long distributedSyncTimeout, Transport transport, String nodeName, TypedProperties properties,
+         ThreadPoolConfiguration transportThreadPool, ThreadPoolConfiguration remoteCommandThreadPool,
+         ThreadPoolConfiguration totalOrderThreadPool) {
       this.clusterName = clusterName;
       this.machineId = machineId;
       this.rackId = rackId;
@@ -24,6 +29,9 @@ public class TransportConfiguration {
       this.transport = transport;
       this.nodeName = nodeName;
       this.properties = properties;
+      this.transportThreadPool = transportThreadPool;
+      this.remoteCommandThreadPool = remoteCommandThreadPool;
+      this.totalOrderThreadPool = totalOrderThreadPool;
    }
 
    public String clusterName() {
@@ -70,6 +78,18 @@ public class TransportConfiguration {
       return siteId() != null || rackId() != null || machineId() != null;
    }
 
+   public ThreadPoolConfiguration transportThreadPool() {
+      return transportThreadPool;
+   }
+
+   public ThreadPoolConfiguration remoteCommandThreadPool() {
+      return remoteCommandThreadPool;
+   }
+
+   public ThreadPoolConfiguration totalOrderThreadPool() {
+      return totalOrderThreadPool;
+   }
+
    @Override
    public String toString() {
       return "TransportConfiguration{" +
@@ -81,6 +101,9 @@ public class TransportConfiguration {
             ", transport=" + transport +
             ", nodeName='" + nodeName + '\'' +
             ", properties=" + properties +
+            ", transportThreadPool=" + transportThreadPool +
+            ", remoteCommandThreadPool=" + remoteCommandThreadPool +
+            ", totalOrderThreadPool=" + totalOrderThreadPool +
             '}';
    }
 

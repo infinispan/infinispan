@@ -41,24 +41,28 @@ public class KnownComponentNames {
 
    static {
       DEFAULT_THREADCOUNTS.put(ASYNC_NOTIFICATION_EXECUTOR, 1);
-      DEFAULT_THREADCOUNTS.put(PERSISTENCE_EXECUTOR, 4);
       DEFAULT_THREADCOUNTS.put(ASYNC_TRANSPORT_EXECUTOR, 25);
+      DEFAULT_THREADCOUNTS.put(ASYNC_REPLICATION_QUEUE_EXECUTOR, 1);
+      DEFAULT_THREADCOUNTS.put(EVICTION_SCHEDULED_EXECUTOR, 1);
+      DEFAULT_THREADCOUNTS.put(PERSISTENCE_EXECUTOR, 4);
       DEFAULT_THREADCOUNTS.put(REMOTE_COMMAND_EXECUTOR, 32);
       DEFAULT_THREADCOUNTS.put(TOTAL_ORDER_EXECUTOR, 32);
 
       DEFAULT_QUEUE_SIZE.put(ASYNC_NOTIFICATION_EXECUTOR, 100000);
       DEFAULT_QUEUE_SIZE.put(ASYNC_TRANSPORT_EXECUTOR, 100000);
-      DEFAULT_QUEUE_SIZE.put(REMOTE_COMMAND_EXECUTOR, 0);
+      DEFAULT_QUEUE_SIZE.put(ASYNC_REPLICATION_QUEUE_EXECUTOR, 0);
+      DEFAULT_QUEUE_SIZE.put(EVICTION_SCHEDULED_EXECUTOR, 0);
       DEFAULT_QUEUE_SIZE.put(PERSISTENCE_EXECUTOR, 0);
+      DEFAULT_QUEUE_SIZE.put(REMOTE_COMMAND_EXECUTOR, 0);
       DEFAULT_QUEUE_SIZE.put(TOTAL_ORDER_EXECUTOR, 0);
 
       DEFAULT_THREADPRIO.put(ASYNC_NOTIFICATION_EXECUTOR, Thread.MIN_PRIORITY);
+      DEFAULT_THREADPRIO.put(ASYNC_REPLICATION_QUEUE_EXECUTOR, Thread.NORM_PRIORITY);
       DEFAULT_THREADPRIO.put(ASYNC_TRANSPORT_EXECUTOR, Thread.NORM_PRIORITY);
+      DEFAULT_THREADPRIO.put(EVICTION_SCHEDULED_EXECUTOR, Thread.MIN_PRIORITY);
+      DEFAULT_THREADPRIO.put(PERSISTENCE_EXECUTOR, Thread.NORM_PRIORITY);
       DEFAULT_THREADPRIO.put(REMOTE_COMMAND_EXECUTOR, Thread.NORM_PRIORITY);
       DEFAULT_THREADPRIO.put(TOTAL_ORDER_EXECUTOR, Thread.NORM_PRIORITY);
-      DEFAULT_THREADPRIO.put(PERSISTENCE_EXECUTOR, Thread.NORM_PRIORITY);
-      DEFAULT_THREADPRIO.put(EVICTION_SCHEDULED_EXECUTOR, Thread.MIN_PRIORITY);
-      DEFAULT_THREADPRIO.put(ASYNC_REPLICATION_QUEUE_EXECUTOR, Thread.NORM_PRIORITY);
    }
 
    public static int getDefaultThreads(String componentName) {
@@ -72,4 +76,20 @@ public class KnownComponentNames {
    public static int getDefaultQueueSize(String componentName) {
       return DEFAULT_QUEUE_SIZE.get(componentName);
    }
+
+   public static String shortened(String cn) {
+      int dotIndex = cn.lastIndexOf(".");
+      int dotIndexPlusOne = dotIndex + 1;
+      String cname = cn;
+      if (dotIndexPlusOne == cn.length())
+         cname = shortened(cn.substring(0, cn.length() - 1));
+      else {
+         if (dotIndex > -1 && cn.length() > dotIndexPlusOne) {
+            cname = cn.substring(dotIndexPlusOne);
+         }
+         cname += "-thread";
+      }
+      return cname;
+   }
+
 }

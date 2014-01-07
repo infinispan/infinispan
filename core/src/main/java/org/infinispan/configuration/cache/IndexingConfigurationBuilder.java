@@ -15,9 +15,8 @@ public class IndexingConfigurationBuilder extends AbstractConfigurationChildBuil
 
    private static final Log log = LogFactory.getLog(IndexingConfigurationBuilder.class);
 
-   private boolean enabled = false;
-   private boolean indexLocalOnly = false;
    private Properties properties = new Properties();
+   private Index index = Index.NONE;
 
    IndexingConfigurationBuilder(ConfigurationBuilder builder) {
       super(builder);
@@ -25,40 +24,57 @@ public class IndexingConfigurationBuilder extends AbstractConfigurationChildBuil
 
    /**
     * Enable indexing
+    * @deprecated Use {@link #index(Index)} instead
     */
+   @Deprecated
    public IndexingConfigurationBuilder enable() {
-      this.enabled = true;
+      if (this.index == Index.NONE)
+         this.index = Index.ALL;
       return this;
    }
 
    /**
     * Disable indexing
+    * @deprecated Use {@link #index(Index)} instead
     */
+   @Deprecated
    public IndexingConfigurationBuilder disable() {
-      this.enabled = false;
+      this.index = Index.NONE;
       return this;
    }
 
+   /**
+    * Enable or disable indexing
+    * @deprecated Use {@link #index(Index)} instead
+    */
+   @Deprecated
    public IndexingConfigurationBuilder enabled(boolean enabled) {
-      this.enabled = enabled;
+      if (this.index == Index.NONE & enabled)
+         this.index = Index.ALL;
+      else if (!enabled)
+         this.index = Index.NONE;
       return this;
    }
 
    boolean enabled() {
-      return enabled;
+      return index.isEnabled();
    }
 
    /**
     * If true, only index changes made locally, ignoring remote changes. This is useful if indexes
     * are shared across a cluster to prevent redundant indexing of updates.
+    * @deprecated Use {@link #index(Index)} instead
     */
+   @Deprecated
    public IndexingConfigurationBuilder indexLocalOnly(boolean b) {
-      this.indexLocalOnly = b;
+      if (b)
+         this.index = Index.LOCAL;
+
       return this;
    }
 
    boolean indexLocalOnly() {
-      return indexLocalOnly;
+      return this.index.isLocalOnly();
    }
 
    /**
@@ -128,9 +144,17 @@ public class IndexingConfigurationBuilder extends AbstractConfigurationChildBuil
       return this;
    }
 
+   /**
+    * Indicates indexing mode
+    */
+   public IndexingConfigurationBuilder index(Index index) {
+      this.index = index;
+      return this;
+   }
+
    @Override
    public void validate() {
-      if (enabled) {
+      if (index.isEnabled()) {
          //Indexing is not conceptually compatible with Invalidation mode
          if (clustering().cacheMode().isInvalidation()) {
             throw log.invalidConfigurationIndexingWithInvalidation();
@@ -151,13 +175,12 @@ public class IndexingConfigurationBuilder extends AbstractConfigurationChildBuil
 
    @Override
    public IndexingConfiguration create() {
-      return new IndexingConfiguration(TypedProperties.toTypedProperties(properties), enabled, indexLocalOnly);
+      return new IndexingConfiguration(TypedProperties.toTypedProperties(properties), index);
    }
 
    @Override
    public IndexingConfigurationBuilder read(IndexingConfiguration template) {
-      this.enabled = template.enabled();
-      this.indexLocalOnly = template.indexLocalOnly();
+      this.index = template.index();
       this.properties = new Properties();
 
       TypedProperties templateProperties = template.properties();
@@ -173,8 +196,7 @@ public class IndexingConfigurationBuilder extends AbstractConfigurationChildBuil
    @Override
    public String toString() {
       return "IndexingConfigurationBuilder{" +
-            "enabled=" + enabled +
-            ", indexLocalOnly=" + indexLocalOnly +
+            "index=" + index +
             ", properties=" + properties +
             '}';
    }

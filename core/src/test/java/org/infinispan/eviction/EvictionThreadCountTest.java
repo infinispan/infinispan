@@ -2,6 +2,7 @@ package org.infinispan.eviction;
 
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.global.GlobalConfigurationBuilder;
+import org.infinispan.factories.threads.DefaultThreadFactory;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.test.SingleCacheManagerTest;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
@@ -25,10 +26,7 @@ public class EvictionThreadCountTest extends SingleCacheManagerTest {
    @Override
    protected EmbeddedCacheManager createCacheManager() throws Exception {
       GlobalConfigurationBuilder globalCfg = new GlobalConfigurationBuilder();
-      globalCfg
-         .evictionScheduledExecutor()
-            .addProperty("threadNamePrefix", EVICT_THREAD_NAME_PREFIX)
-         .build();
+      globalCfg.evictionThreadPool().threadFactory(new DefaultThreadFactory(null, 1, EVICT_THREAD_NAME_PREFIX, null, null));
       return TestCacheManagerFactory.createCacheManager(globalCfg, new ConfigurationBuilder());
    }
 
@@ -48,7 +46,7 @@ public class EvictionThreadCountTest extends SingleCacheManagerTest {
       ThreadMXBean threadMBean = ManagementFactory.getThreadMXBean();
       ThreadInfo[] threadInfos = threadMBean.dumpAllThreads(false, false);
 
-      String pattern = "Scheduled-" + EVICT_THREAD_NAME_PREFIX;
+      String pattern = EVICT_THREAD_NAME_PREFIX;
       int evictionThreadCount = 0;
       for (ThreadInfo threadInfo : threadInfos) {
          if (threadInfo.getThreadName().startsWith(pattern))

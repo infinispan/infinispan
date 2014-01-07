@@ -1,11 +1,11 @@
 package org.infinispan.statetransfer;
 
 import org.infinispan.AdvancedCache;
+import org.infinispan.commons.executors.BlockingThreadPoolExecutorFactory;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.global.GlobalConfigurationBuilder;
 import org.infinispan.container.DataContainer;
-import org.infinispan.distribution.MagicKey;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.TestingUtil;
@@ -20,8 +20,6 @@ import org.testng.annotations.Test;
 
 import java.util.concurrent.Callable;
 import java.util.concurrent.Future;
-import java.util.concurrent.TimeoutException;
-import javax.transaction.Transaction;
 import javax.transaction.TransactionManager;
 
 import static java.util.concurrent.TimeUnit.SECONDS;
@@ -49,7 +47,8 @@ public class ManyTxsDuringStateTransferTest extends MultipleCacheManagersTest {
 
    private GlobalConfigurationBuilder getGlobalConfigurationBuilder() {
       GlobalConfigurationBuilder globalBuilder = GlobalConfigurationBuilder.defaultClusteredBuilder();
-      globalBuilder.remoteCommandsExecutor().addProperty("maxThreads", "1");
+      BlockingThreadPoolExecutorFactory threadPoolFactory = new BlockingThreadPoolExecutorFactory(1, 1, 0, Thread.NORM_PRIORITY);
+      globalBuilder.transport().remoteCommandThreadPool().threadPoolFactory(threadPoolFactory);
       return globalBuilder;
    }
 
