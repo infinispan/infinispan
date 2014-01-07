@@ -85,7 +85,7 @@ Since Infinispan exposes a distributed data structure, frameworks and libraries 
 This way, any framework can easily be clustered by letting Infinispan do all the heavy lifting.
 
 === How is Infinispan related to JBoss Cache?
-Certain design ideas and indeed some code have been borrowed from link:$$http://www.jbosscache.org$$[JBoss Cache] 3.x, however JBoss Cache is in no way a dependency. 
+Certain design ideas and indeed some code have been borrowed from link:$$http://www.jboss.org/jbosscache/$$[JBoss Cache] 3.x, however JBoss Cache is in no way a dependency. 
 Infinispan is a complete, separate and standalone project.
 Some may consider this a fork, but the people behind Infinispan and JBoss Cache see it as an evolution, since all future effort will be on Infinispan and not JBoss Cache. 
 
@@ -94,7 +94,7 @@ All that is needed is a Java 6.0 compatible JVM.
 An application server is _not_ a requirement. 
 
 === Will there be a POJO Cache replacement in Infinispan?
-Yes, and this is called link:$$http://www.hibernate.org/subprojects/ogm.html$$[Hibernate OGM] . 
+Yes, and this is called link:$$http://hibernate.org/ogm/$$[Hibernate OGM] .
 
 === How come Infinispan's first release is 4.0.0?  This sounds weird!
 We didn't want to release Infinispan as a 1.0, as in all fairness it is not a virgin codebase.
@@ -105,18 +105,18 @@ Infinispan should thus be viewed as a mature and stable platform and not a new, 
 link:$$http://jcp.org/en/jsr/detail?id=107$$[JSR 107] is not complete, but Infinispan's primary API is as close as possible to JSR 107's `javax.cache.Cache` interface.
 The goal is once JSR 107 is complete, `org.infinispan.Cache` would extend `javax.cache.Cache`.
 
-Infinispan core engineers are on the JSR 107 expert group, and have produced link:../user_guide/user_guide.html#_using_infinispan_as_a_jsr107_jcache_provider[a prototype of Infinispan implementing JSR 107].
+Infinispan core engineers are on the JSR 107 expert group, and have produced link:$$../user_guide/user_guide.html#_using_infinispan_as_a_jsr107_jcache_provider$$[a prototype of Infinispan implementing JSR 107].
 
 === Can I use Infinispan with Hibernate?
 Yes, you can combine one or more of these integrations in the same application:
 
-*  _Caching database access_ : Hibernate can cache frequently loaded entities and queries in Infinispan, taking advantage of state of the art eviction algorithms, and clustering if needed but it provides a good performance boost in non-clustered deployments too. See link:../user_guide/user_guide.html#_using_infinispan_as_jpa_hibernate_second_level_cache_provider[Using Infinispan as JPA/Hibernate Second Level Cache Provider] for details on how to do this. 
+*  _Caching database access_ : Hibernate can cache frequently loaded entities and queries in Infinispan, taking advantage of state of the art eviction algorithms, and clustering if needed but it provides a good performance boost in non-clustered deployments too. See link:$$../user_guide/user_guide.html#_using_infinispan_as_jpa_hibernate_second_level_cache_provider$$[Using Infinispan as JPA/Hibernate Second Level Cache Provider] for details on how to do this.
 
 *  _Storing Lucene indexes_ : When using Hibernate Search to provide full-text capabilities to your Hibernate/JPA enabled application, you need to store an Apache Lucene index separately from the database. You can store the index in Infinispan: this is ideal for clustered applications since it's otherwise tricky to share the index with correct locking on shared file systems, but is an interesting option for non-clustered deployments too as it can combine the benefits of in-memory performance with reliability and write-through to cloud storage backends like S3, or the Hibernate database itself. See link:$$http://docs.jboss.org/hibernate/stable/search/reference/en-US/html_single/#infinispan-directories$$[Infinispan Directory Configuration] in the Hibernate Search reference documentation for the integration details. 
 
-*  _Using Infinispan as a database replacement_ : using the experimental Hibernate Object/Grid Mapper (OGM) you can remove the database and store your entities and relations in the grid directly, interacting with it through the well known JPA(2) interface, with some limitations in the query capabilities. For more details see link:$$http://www.hibernate.org/subprojects/ogm.html$$[Hibernate Object/Grid Mapper (OGM)] . 
+*  _Using Infinispan as a database replacement_ : using the experimental Hibernate Object/Grid Mapper (OGM) you can remove the database and store your entities and relations in the grid directly, interacting with it through the well known JPA(2) interface, with some limitations in the query capabilities. For more details see link:$$http://hibernate.org/ogm/$$[Hibernate Object/Grid Mapper (OGM)] .
 
-*  _Using full-text queries on Infinispan_ : If you liked the powerful full-text and data mining capabilities of Hibernate Search, but don't need JPA or a database, you can use the indexing and query engine only: the Infinispan Query module reuses Hibernate Search internally, depending on some Hibernate libraries but exposing the Search capabilities only. See link:../user_guide/user_guide.html#_querying_infinispan[Querying Infinispan] . 
+*  _Using full-text queries on Infinispan_ : If you liked the powerful full-text and data mining capabilities of Hibernate Search, but don't need JPA or a database, you can use the indexing and query engine only: the Infinispan Query module reuses Hibernate Search internally, depending on some Hibernate libraries but exposing the Search capabilities only. See link:$$../user_guide/user_guide.html#_querying_infinispan$$[Querying Infinispan] .
 
 ==  Technical questions
 
@@ -126,7 +126,7 @@ Yes, you can combine one or more of these integrations in the same application:
 Infinispan's primary API - link:$$http://docs.jboss.org/infinispan/6.0/apidocs/org/infinispan/Cache.html$$[`org.infinispan.Cache`] - extends `java.util.concurrent.ConcurrentMap` and closely resembles `javax.cache.Cache` from link:$$http://jcp.org/en/jsr/detail?id=107$$[JSR 107].
 This is the most performant API to use, and should be used for all new projects. 
 
-link:$$http://docs.jboss.org/infinispan/6.0/apidocs/org/infinispan/tree/TreeCache.html$$[`org.infinispan.tree.TreeCache`] is a tree structured API that looks a lot like link:$$http://www.jbosscache.org$$[JBoss Cache's] API.  Note that the similarities end at the interface though, since internal implementation and representation of the tree is completely different, using a much more efficient flat structure.
+link:$$http://docs.jboss.org/infinispan/6.0/apidocs/org/infinispan/tree/TreeCache.html$$[`org.infinispan.tree.TreeCache`] is a tree structured API that looks a lot like link:$$http://www.jboss.org/jbosscache/$$[JBoss Cache's] API.  Note that the similarities end at the interface though, since internal implementation and representation of the tree is completely different, using a much more efficient flat structure.
 
 link:$$http://docs.jboss.org/infinispan/6.0/apidocs/org/infinispan/tree/TreeCache.html$$[TreeCache] should be considered as a compatibility API, if you are migrating from JBoss Cache and cannot invest the time in rewriting your application, or your application specifically relies on a tree structure.
 
@@ -163,7 +163,7 @@ The reverse process, known as _activation_, occurs when a thread attempts to acc
 Activation involves loading the entry into memory, and then _removing_ it from the cache store.
 With passivation enabled, the cache uses the cache store as an overflow tank, akin to link:$$http://en.wikipedia.org/wiki/Paging$$[swapping memory pages to disk] in link:$$http://en.wikipedia.org/wiki/Virtual_memory$$[virtual memory] implementations in operating systems. 
 
-If passivation is disabled, the cache store behaves as a link:../glossary/glossary.html#_write_through[write-through] (or link:../glossary/glossary.html#_write_behind[write-behind] if asynchronous) cache, where all entries in memory are also maintained in the cache store.
+If passivation is disabled, the cache store behaves as a link:$$../glossary/glossary.html#_write_through$$[write-through] (or link:$$../glossary/glossary.html#_write_behind$$[write-behind] if asynchronous) cache, where all entries in memory are also maintained in the cache store.
 The effect of this is that the cache store will always contain a superset of what is in memory. 
 
 ==== What if I get IOException "Unsupported protocol version 48" with JdbcStringBasedCacheStore?
@@ -184,7 +184,7 @@ If, for put operations, you don't need the previous values existing in the cache
 Note that in this case the value returned by `cache.put()` is not reliable.
 This optimization skips a cache store read and can have very significant performance improvement effects. 
 
-TIP: More flags are described at link:../user_guide/user_guide.html#_invocation_flags[Per-Invocation Flags] 
+TIP: More flags are described at link:$$../user_guide/user_guide.html#_invocation_flags$$[Per-Invocation Flags]
 
 === Locking and Transaction questions
 ==== Does Infinispan support distributed eager locking?
@@ -237,7 +237,7 @@ Implicit eager locking is enabled as follows:
 ----
 
 ==== What isolation levels does Infinispan support?
-Infinispan only supports the isolation levels link:../glossary/glossary.html#_read_committed[*READ_COMMITTED*] and link:../glossary/glossary.html#_repeatable_read[*REPEATABLE_READ*].
+Infinispan only supports the isolation levels link:$$../glossary/glossary.html#_read_committed$$[*READ_COMMITTED*] and link:$$../glossary/glossary.html#_repeatable_read$$[*REPEATABLE_READ*].
 
 The default isolation mode is *READ_COMMITTED*.
 We consider *READ_COMMITTED* to be good enough for most applications and hence its use as a default. 
@@ -256,7 +256,7 @@ There're two ways to get around this issue, either:
 ==== Cache's number of entries never reaches configured maxEntries, why is that?
 In the current eviction design, eviction happens per map segment, so when the segment gets filled up, eviction runs in that segment.
 This means that the theoretical maxEntries might never be achieved, but it'll be close enough.
-For more information, see the link:../user_guide/user_guide.html[User Guide] chapter on Eviction. 
+For more information, see the link:$$../user_guide/user_guide.html$$[User Guide] chapter on Eviction.
 
 ==== Expiration does not work, what is the problem?
 Multiple cache operations such as link:$$http://docs.jboss.org/infinispan/6.0/apidocs/org/infinispan/Cache.html#put(K, V, long, java.util.concurrent.TimeUnit)$$[`put()`] can take a lifespan as parameter which defines the time when the entry should be expired.
@@ -302,7 +302,7 @@ As far as possible, internal components are shared between Cache instances.  No
 ==== What is the difference between a replicated cache and a distributed cache?
 Distribution is a new cache mode in Infinispan, in addition to replication and invalidation.  In a replicated cache all nodes in a cluster hold all keys i.e. if a key exists on one nodes, it will also exist on _all_ other modes.  In a distributed cache, a number of copies are maintained to provide redundancy and fault tolerance, however this is typically far fewer than the number of nodes in the cluster. A distributed cache provides a far greater degree of scalability than a replicated cache.  
 
-A distributed cache is also able to transparently locate keys across a cluster, and provides an L1 cache for fast local read access of state that is stored remotely.  You can read more in the relevant link:../user_guide/user_guide.html[User Guide] chapter. 
+A distributed cache is also able to transparently locate keys across a cluster, and provides an L1 cache for fast local read access of state that is stored remotely.  You can read more in the relevant link:$$../user_guide/user_guide.html$$[User Guide] chapter.
 
 
 ==== Does DIST support both synchronous and asynchronous communications?
@@ -336,9 +336,9 @@ There are 3 main configuration settings (modes of usage) that affect the behavio
 [options="header"]
 |===============
 | Config / Mode of usage | Description 
-| _API_ | Usage of link:../user_guide/user_guide.html#_asynchronous_api[Asynchronous API] , i.e. methods of the Cache interface like e.g. putAsync(key, val) 
-| _Marshalling_ | Allowing link:../user_guide/user_guide.html#_asynchronous_marshalling[Asynchronous Marshalling] , in cache configuration (via XML or programmatic configuration) 
-| _Replication_ | Configuring a clustered cache to replicate data asychronously. In Infinispan XML configuration this is done by using &lt;sync&gt; or &lt;async&gt; sub-elements under link:$$http://docs.jboss.org/infinispan/5.1/configdocs/urn_infinispan_config_5.1/complexType/configuration.clustering.html$$[&lt;clustering&gt;] element.
+| _API_ | Usage of link:$$../user_guide/user_guide.html#_asynchronous_api$$[Asynchronous API] , i.e. methods of the Cache interface like e.g. putAsync(key, val)
+| _Marshalling_ | Allowing link:$$../user_guide/user_guide.html#_asynchronous_marshalling$$[Asynchronous Marshalling] , in cache configuration (via XML or programmatic configuration)
+| _Replication_ | Configuring a clustered cache to replicate data asychronously. In Infinispan XML configuration this is done by using <sync> or <async> sub-elements under link:$$http://docs.jboss.org/infinispan/5.1/configdocs/urn_infinispan_config_5.1/complexType/configuration.clustering.html$$[&lt;clustering&gt;] element.
 |===============
 
 Switching to asynchronous mode in each of these areas causes loss of some consistency guarantees. The known problems are summarised here:
@@ -356,7 +356,7 @@ Switching to asynchronous mode in each of these areas causes loss of some consis
 |===============
 
 ==== Grouping API vs Key Affinity Service
-The key affinity (for keys generated with the link:../user_guide/user_guide.html#_key_affinity_service[Key Affinity Service] ) might be lost during topology changes. E.g. if k1 maps to node N1 and another node is added to the system, k1 can me migrated to N2 (affinity is lost). With link:../user_guide/user_guide.html#_the_grouping_api[grouping API] you have the guarantee that the same node (you don't know/control which node) hosts all the data from the same group even after topology changes. 
+The key affinity (for keys generated with the link:$$../user_guide/user_guide.html#_key_affinity_service$$[Key Affinity Service] ) might be lost during topology changes. E.g. if k1 maps to node N1 and another node is added to the system, k1 can me migrated to N2 (affinity is lost). With link:$$../user_guide/user_guide.html#_the_grouping_api$$[grouping API] you have the guarantee that the same node (you don't know/control which node) hosts all the data from the same group even after topology changes.
 
 === Listener questions
 
@@ -398,7 +398,7 @@ You can use this link:$$https://github.com/infinispan/infinispan/blob/master/cor
 Yes, you can, but since Infinispan uses different JGroups jar libraries to the ones shipped by these application servers, you need to make sure that the code using Infinispan, and the Infinispan libraries, are deployed in an isolated WAR/EAR. Information on how to isolate deployments can be found in:
 
 *  link:$$http://community.jboss.org/docs/9288$$[Isolating deployments in JBoss AS 4 or earlier] 
-*  For AS5, follow instructions on adding jars and adding isolated deployment descriptor in link:../user_guide/user_guide.html#_infinispan_as_hibernate_2nd_level_cache_in_jboss_as_5_x[here] 
+*  For AS5, follow instructions on adding jars and adding isolated deployment descriptor in link:$$../user_guide/user_guide.html#_infinispan_as_hibernate_2nd_level_cache_in_jboss_as_5_x$$[here]
 
 Apart from isolating your deployment, you can use Maven's Shade plugin to build Infinispan and all its dependencies in a single jar, and then _shade_ the library that might clash with the one in the app server. For example, to shade org.jgroups, you'd build Infinispan with: 
 
@@ -453,7 +453,7 @@ Thread.currentThread().setContextClassLoader(this.getClass().getClassLoader());
 If you decide to implement link:$$http://docs.oracle.com/javase/6/docs/api/java/io/Externalizable.html$$[Externalizable] interface, please make sure that the link:$$http://docs.oracle.com/javase/6/docs/api/java/io/Externalizable.html#readExternal(java.io.ObjectInput)$$[readExternal()] method is thread safe, otherwise you run the risk of potential getting corrupted data and link:$$http://docs.oracle.com/javase/6/docs/api/java/lang/OutOfMemoryError.html$$[OutOfMemoryException] , as seen in link:$$http://community.jboss.org/message/609296#609296$$[this forum post] .
 
 ==== Does Infinispan support storing Non-Serializable objects?
-See the link:../user_guide/user_guide.html[User Guide's] chapter on marshalling for more information.
+See the link:$$../user_guide/user_guide.html$$[User Guide's] chapter on marshalling for more information.
 
 ==== Do Externalizer implementations need to access internal Externalizer implementations?
 No, they don't. Here's an example of what should not be done:
@@ -557,7 +557,7 @@ java.io.EOFException: Read past end of file
 The current logic is for the state receiver to back off in these scenarios and retry after a few seconds. Quite often, after the retry the state generator might have already finished dealing with the other node and hence the state receiver will be able to fully receive the state.
 
 ==== How do I get more information on marshalling and unmarshalling exceptions?
-See the section on troubleshooting marshalling in the link:../user_guide/user_guide.html[User Guide].
+See the section on troubleshooting marshalling in the link:$$../user_guide/user_guide.html$$[User Guide].
 
 ==== Why am I getting invalid data passed to readExternal?
 If you are using Cache.putAsync() you may find your object is modified after serialization starts, thus corrupting the datastream passed to readExternal . To solve this, make sure you synchronize access to the object. 
@@ -606,7 +606,7 @@ See link:$$https://docs.jboss.org/author/pages/viewpage.action?pageId=3737110$$[
 *TODO*
 
 ==== Is it possible to use the Infinispan 2nd level cache outside of a J2EE server, and if so how do I set up the transaction manager lookup?
-The User Guide provides link:../user_guide/user_guide.html#_using_infinispan_as_jpa_hibernate_second_level_cache_provider[details] on configuring a transaction manager outside of Java EE. The User Guide also provides link:../user_guide/user_guide.html#_implementing_standalone_jpa_jta_hibernate_application_outside_j2ee_server_using_infinispan_2nd_level_cache[details] on how to use Atomikos, JTOM and Bitronix. 
+The User Guide provides link:$$../user_guide/user_guide.html#_using_infinispan_as_jpa_hibernate_second_level_cache_provider$$[details] on configuring a transaction manager outside of Java EE. The User Guide also provides link:$$../user_guide/user_guide.html#_implementing_standalone_jpa_jta_hibernate_application_outside_j2ee_server_using_infinispan_2nd_level_cache$$[details] on how to use Atomikos, JTOM and Bitronix.
 
 ==== What are the pitfalls of not using a non-JTA transaction factory such as JDBCTransactionFactory with Hibernate when Infinispan is used as 2nd level cache provider?
 The problem is that Hibernate will create a Transaction instance via java.sql.Connection and Infinispan will create a transaction via whatever TransactionManager returned by hibernate.transaction.manager_lookup_class . If hibernate.transaction.manager_lookup_class has not been populated, it will default to the dummy transaction manager. 
@@ -624,7 +624,7 @@ This is a bug (see link:$$https://jira.jboss.org/browse/ISPN-669$$[ISPN-669] ) i
 There's no bulk get operation in Hot Rod, but the Java Hot Rod client has implemented via link:$$http://docs.jboss.org/infinispan/6.0/apidocs/org/infinispan/client/hotrod/RemoteCache.html$$[RemoteCache] the getAsync() operation, which returns a link:$$http://docs.jboss.org/infinispan/6.0/apidocs/org/infinispan/util/concurrent/NotifyingFuture.html$$[org.infinispan.util.concurrent.NotifyingFuture] (extends java.util.concurrent.Future). So, if you want to retrieve multiple keys in parallel, just call multiple times _getAsync()_ and when you need the values, just call _Future.get()_ , or attach a link:$$http://docs.jboss.org/infinispan/6.0/apidocs/org/infinispan/util/concurrent/FutureListener.html$$[ _FutureListener_ ] to the _NotifyingFuture_ to get notified when the value is ready.
 
 ==== What is the startServer.sh script used for? What is the startServer.bat script used for?
-These scripts are used for starting Infinispan server instances that can be talked to remotely using either our own link:../user_guide/user_guide.html#_using_hot_rod_server[Hot Rod protocol] or the link:../user_guide/user_guide.html#_using_infinispan_memcached_server[Memcached text protocol] . See link:../user_guide/user_guide.html#_infinispan_server_modules[Infinispan's server modules] for more information on the usage of these scripts. 
+These scripts are used for starting Infinispan server instances that can be talked to remotely using either our own link:$$../user_guide/user_guide.html#_using_hot_rod_server$$[Hot Rod protocol] or the link:$$../user_guide/user_guide.html#_using_infinispan_memcached_server$$[Memcached text protocol] . See link:$$../user_guide/user_guide.html#_infinispan_server_modules$$[Infinispan's server modules] for more information on the usage of these scripts.
 
 
 === Debugging questions

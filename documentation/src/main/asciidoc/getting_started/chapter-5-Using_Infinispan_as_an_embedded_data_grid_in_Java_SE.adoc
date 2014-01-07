@@ -160,7 +160,7 @@ The cache should be configured to work in replication mode (either synchronous o
 
 [source,java]
 ----
-private static EmbeddedCacheManager createCacheManagerProgramatically() {
+private static EmbeddedCacheManager createCacheManagerProgrammatically() {
    return new DefaultCacheManager(
       GlobalConfigurationBuilder.defaultClusteredBuilder()
          .transport().defaultTransport().addProperty("configurationFile", "jgroups.xml")
