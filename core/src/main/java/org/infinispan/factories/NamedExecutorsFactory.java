@@ -1,19 +1,20 @@
 package org.infinispan.factories;
 
-import org.infinispan.commons.executors.ExecutorFactory;
 import org.infinispan.commons.CacheConfigurationException;
+import org.infinispan.commons.executors.BlockingThreadPoolExecutorFactory;
+import org.infinispan.commons.executors.ScheduledThreadPoolExecutorFactory;
+import org.infinispan.configuration.global.GlobalConfiguration;
+import org.infinispan.configuration.global.ThreadPoolConfiguration;
+import org.infinispan.commons.executors.ThreadPoolExecutorFactory;
 import org.infinispan.executors.LazyInitializingBlockingTaskAwareExecutorService;
-import org.infinispan.util.concurrent.BlockingTaskAwareExecutorService;
 import org.infinispan.executors.LazyInitializingExecutorService;
 import org.infinispan.executors.LazyInitializingScheduledExecutorService;
-import org.infinispan.executors.ScheduledExecutorFactory;
 import org.infinispan.factories.annotations.DefaultFactoryFor;
 import org.infinispan.factories.annotations.Stop;
+import org.infinispan.factories.threads.DefaultThreadFactory;
+import org.infinispan.util.concurrent.BlockingTaskAwareExecutorService;
 
-import java.util.Properties;
-import java.util.concurrent.Executor;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.*;
 
 import static org.infinispan.factories.KnownComponentNames.*;
 
@@ -40,71 +41,75 @@ public class NamedExecutorsFactory extends NamedComponentFactory implements Auto
    @SuppressWarnings("unchecked")
    public <T> T construct(Class<T> componentType, String componentName) {
       try {
-         String nodeName = globalConfiguration.transport().nodeName();
-
          // Construction happens only on startup of either CacheManager, or Cache, so
          // using synchronized protection does not have a great impact on app performance.
          if (componentName.equals(ASYNC_NOTIFICATION_EXECUTOR)) {
             synchronized (this) {
                if (notificationExecutor == null) {
-                  notificationExecutor = buildAndConfigureExecutorService(
-                        globalConfiguration.asyncListenerExecutor().factory(),
-                        globalConfiguration.asyncListenerExecutor().properties(), componentName, nodeName);
+                  notificationExecutor = createExecutorService(
+                        globalConfiguration.listenerThreadPool(),
+                        globalConfiguration, ASYNC_NOTIFICATION_EXECUTOR,
+                        ExecutorServiceType.DEFAULT);
                }
             }
             return (T) notificationExecutor;
          } else if (componentName.equals(PERSISTENCE_EXECUTOR)) {
             synchronized (this) {
                if (persistenceExecutor == null) {
-                  persistenceExecutor = buildAndConfigureExecutorService(
-                        globalConfiguration.persistenceExecutor().factory(),
-                        globalConfiguration.persistenceExecutor().properties(), componentName, nodeName);
+                  persistenceExecutor = createExecutorService(
+                        globalConfiguration.persistenceThreadPool(),
+                        globalConfiguration, PERSISTENCE_EXECUTOR,
+                        ExecutorServiceType.DEFAULT);
                }
             }
             return (T) persistenceExecutor;
          } else if (componentName.equals(ASYNC_TRANSPORT_EXECUTOR)) {
             synchronized (this) {
                if (asyncTransportExecutor == null) {
-                  asyncTransportExecutor = buildAndConfigureExecutorService(
-                        globalConfiguration.asyncTransportExecutor().factory(),
-                        globalConfiguration.asyncTransportExecutor().properties(), componentName, nodeName);
+                  asyncTransportExecutor = createExecutorService(
+                        globalConfiguration.transport().transportThreadPool(),
+                        globalConfiguration, ASYNC_TRANSPORT_EXECUTOR,
+                        ExecutorServiceType.DEFAULT);
                }
             }
             return (T) asyncTransportExecutor;
          } else if (componentName.equals(EVICTION_SCHEDULED_EXECUTOR)) {
             synchronized (this) {
                if (evictionExecutor == null) {
-                  evictionExecutor = buildAndConfigureScheduledExecutorService(
-                        globalConfiguration.evictionScheduledExecutor().factory(),
-                        globalConfiguration.evictionScheduledExecutor().properties(), componentName, nodeName);
+                  evictionExecutor = createExecutorService(
+                        globalConfiguration.evictionThreadPool(),
+                        globalConfiguration, EVICTION_SCHEDULED_EXECUTOR,
+                        ExecutorServiceType.SCHEDULED);
                }
             }
             return (T) evictionExecutor;
          } else if (componentName.equals(ASYNC_REPLICATION_QUEUE_EXECUTOR)) {
             synchronized (this) {
                if (asyncReplicationExecutor == null) {
-                  asyncReplicationExecutor = buildAndConfigureScheduledExecutorService(
-                        globalConfiguration.replicationQueueScheduledExecutor().factory(),
-                        globalConfiguration.replicationQueueScheduledExecutor().properties(), componentName,
-                        nodeName);
+                  asyncReplicationExecutor = createExecutorService(
+                        globalConfiguration.replicationQueueThreadPool(),
+                        globalConfiguration, ASYNC_REPLICATION_QUEUE_EXECUTOR,
+                        ExecutorServiceType.SCHEDULED);
                }
             }
             return (T) asyncReplicationExecutor;
          } else if (componentName.equals(REMOTE_COMMAND_EXECUTOR)) {
             synchronized (this) {
                if (remoteCommandsExecutor == null) {
-                  remoteCommandsExecutor = buildAndConfigureBlockingTaskAwareExecutorService(
-                        globalConfiguration.remoteCommandsExecutor().factory(),
-                        globalConfiguration.remoteCommandsExecutor().properties(), componentName, nodeName);
+                  remoteCommandsExecutor = createExecutorService(
+                        globalConfiguration.replicationQueueThreadPool(),
+                        globalConfiguration, REMOTE_COMMAND_EXECUTOR,
+                        ExecutorServiceType.BLOCKING);
                }
             }
             return (T) remoteCommandsExecutor;
          } else if (componentName.equals(TOTAL_ORDER_EXECUTOR)) {
             synchronized (this) {
                if (totalOrderExecutor == null) {
-                  totalOrderExecutor = buildAndConfigureBlockingTaskAwareExecutorService(
-                        globalConfiguration.totalOrderExecutor().factory(),
-                        globalConfiguration.totalOrderExecutor().properties(), componentName, nodeName);
+                  totalOrderExecutor = createExecutorService(
+                        globalConfiguration.transport().totalOrderThreadPool(),
+                        globalConfiguration, TOTAL_ORDER_EXECUTOR,
+                        ExecutorServiceType.BLOCKING);
                }
             }
             return (T) totalOrderExecutor;
@@ -129,76 +134,54 @@ public class NamedExecutorsFactory extends NamedComponentFactory implements Auto
       if (totalOrderExecutor != null) totalOrderExecutor.shutdownNow();
    }
 
-   private ExecutorService buildAndConfigureExecutorService(ExecutorFactory f, Properties p,
-                                                            String componentName, String nodeName) throws Exception {
-      Properties props = new Properties(p); // defensive copy
-      if (p != null && !p.isEmpty()) props.putAll(p);
-      setThreadSuffix(nodeName, props);
-      setComponentName(componentName, props);
-      setDefaultThreads(KnownComponentNames.getDefaultThreads(componentName), props);
-      setDefaultThreadPrio(KnownComponentNames.getDefaultThreadPrio(componentName), props);
-      setDefaultQueueSize(KnownComponentNames.getDefaultQueueSize(componentName), props);
-      return new LazyInitializingExecutorService(f, props);
-   }
+   private <T extends ExecutorService> T createExecutorService(ThreadPoolConfiguration threadPoolConfiguration,
+         GlobalConfiguration globalCfg, String componentName, ExecutorServiceType type) {
+      ThreadFactory threadFactory;
+      ThreadPoolExecutorFactory executorFactory;
+      if (threadPoolConfiguration != null) {
+         threadFactory = threadPoolConfiguration.threadFactory() != null
+               ? threadPoolConfiguration.threadFactory()
+               : createThreadFactoryWithDefaults(globalCfg, componentName);
+         executorFactory = threadPoolConfiguration.threadPoolFactory() != null
+               ? threadPoolConfiguration.threadPoolFactory()
+               : createThreadPoolFactoryWithDefaults(componentName, type);
+      } else {
+         threadFactory = createThreadFactoryWithDefaults(globalCfg, componentName);
+         executorFactory = createThreadPoolFactoryWithDefaults(componentName, type);
+      }
 
-   private ScheduledExecutorService buildAndConfigureScheduledExecutorService(ScheduledExecutorFactory f,
-                                                                              Properties p, String componentName,
-                                                                              String nodeName) throws Exception {
-      Properties props = new Properties(); // defensive copy
-      if (p != null && !p.isEmpty()) props.putAll(p);
-      setThreadSuffix(nodeName, props);
-      setComponentName(componentName, props);
-      setDefaultThreadPrio(KnownComponentNames.getDefaultThreadPrio(componentName), props);
-      return new LazyInitializingScheduledExecutorService(f, props);
-   }
-
-   private BlockingTaskAwareExecutorService buildAndConfigureBlockingTaskAwareExecutorService(ExecutorFactory f,
-                                                                                              Properties p, String componentName,
-                                                                                              String nodeName) throws Exception {
-      Properties props = new Properties(); // defensive copy
-      if (p != null && !p.isEmpty()) props.putAll(p);
-      setThreadSuffix(nodeName, props);
-      setComponentName(componentName, props);
-      setDefaultThreads(KnownComponentNames.getDefaultThreads(componentName), props);
-      setDefaultThreadPrio(KnownComponentNames.getDefaultThreadPrio(componentName), props);
-      setDefaultQueueSize(KnownComponentNames.getDefaultQueueSize(componentName), props);
-      return new LazyInitializingBlockingTaskAwareExecutorService(f, props, globalComponentRegistry.getTimeService());
-   }
-
-   private void setThreadSuffix(String nodeName, Properties props) {
-      if (nodeName != null && !nodeName.isEmpty()) {
-         props.setProperty("threadNameSuffix", ',' + nodeName);
+      switch (type) {
+         case SCHEDULED:
+            return (T) new LazyInitializingScheduledExecutorService(executorFactory, threadFactory);
+         case BLOCKING:
+            return (T) new LazyInitializingBlockingTaskAwareExecutorService(
+                  executorFactory, threadFactory, globalComponentRegistry.getTimeService());
+         default:
+            return (T) new LazyInitializingExecutorService(executorFactory, threadFactory);
       }
    }
 
-   private void setDefaultQueueSize(int queueSize, Properties props) {
-      if (!props.containsKey("queueSize")) props.setProperty("queueSize", String.valueOf(queueSize));
+   private ThreadFactory createThreadFactoryWithDefaults(GlobalConfiguration globalCfg, final String componentName) {
+      // Use defaults
+      return new DefaultThreadFactory(null,
+            KnownComponentNames.getDefaultThreadPrio(componentName), DefaultThreadFactory.DEFAULT_PATTERN,
+            globalCfg.transport().nodeName(), shortened(componentName));
    }
 
-   private void setDefaultThreadPrio(int prio, Properties props) {
-      if (!props.containsKey("threadPriority")) props.setProperty("threadPriority", String.valueOf(prio));
-   }
-
-   private void setDefaultThreads(int numThreads, Properties props) {
-      if (!props.containsKey("maxThreads")) props.setProperty("maxThreads", String.valueOf(numThreads));
-   }
-
-   private void setComponentName(String cn, Properties p) {
-      if (cn != null) p.setProperty("componentName", format(cn));
-   }
-
-   private String format(String cn) {
-      int dotIndex = cn.lastIndexOf(".");
-      int dotIndexPlusOne = dotIndex + 1;
-      String cname = cn;
-      if (dotIndexPlusOne == cn.length())
-         cname = format(cn.substring(0, cn.length() - 1));
-      else {
-         if (dotIndex > -1 && cn.length() > dotIndexPlusOne) {
-            cname = cn.substring(dotIndexPlusOne);
-         }
-         cname += "-thread";
+   private ThreadPoolExecutorFactory createThreadPoolFactoryWithDefaults(
+         final String componentName, ExecutorServiceType type) {
+      switch (type) {
+         case SCHEDULED:
+            return ScheduledThreadPoolExecutorFactory.create();
+         default:
+            int defaultQueueSize = KnownComponentNames.getDefaultQueueSize(componentName);
+            int defaultMaxThreads = KnownComponentNames.getDefaultThreads(componentName);
+            return BlockingThreadPoolExecutorFactory.create(defaultMaxThreads, defaultQueueSize);
       }
-      return cname;
    }
+
+   private enum ExecutorServiceType {
+      DEFAULT, SCHEDULED, BLOCKING
+   }
+
 }

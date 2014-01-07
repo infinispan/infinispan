@@ -37,13 +37,6 @@ public class GlobalConfiguration {
     */
    public static final short DEFAULT_MARSHALL_VERSION = Version.getVersionShort();
 
-   private final ExecutorFactoryConfiguration asyncListenerExecutor;
-   private final ExecutorFactoryConfiguration persistenceExecutor;
-   private final ExecutorFactoryConfiguration asyncTransportExecutor;
-   private final ExecutorFactoryConfiguration remoteCommandsExecutor;
-   private final ExecutorFactoryConfiguration totalOrderExecutor;
-   private final ScheduledExecutorFactoryConfiguration evictionScheduledExecutor;
-   private final ScheduledExecutorFactoryConfiguration replicationQueueScheduledExecutor;
    private final GlobalJmxStatisticsConfiguration globalJmxStatistics;
    private final TransportConfiguration transport;
    private final GlobalSecurityConfiguration security;
@@ -52,19 +45,23 @@ public class GlobalConfiguration {
    private final Map<Class<?>, ?> modules;
    private final SiteConfiguration site;
    private final WeakReference<ClassLoader> cl;
+   private final ThreadPoolConfiguration evictionThreadPool;
+   private final ThreadPoolConfiguration listenerThreadPool;
+   private final ThreadPoolConfiguration replicationQueueThreadPool;
+   private final ThreadPoolConfiguration persistenceThreadPool;
 
-   GlobalConfiguration(ExecutorFactoryConfiguration asyncListenerExecutor,
-         ExecutorFactoryConfiguration asyncTransportExecutor, ExecutorFactoryConfiguration remoteCommandsExecutor,
-         ScheduledExecutorFactoryConfiguration evictionScheduledExecutor,
-         ScheduledExecutorFactoryConfiguration replicationQueueScheduledExecutor, GlobalJmxStatisticsConfiguration globalJmxStatistics,
-         TransportConfiguration transport, GlobalSecurityConfiguration security, SerializationConfiguration serialization, ShutdownConfiguration shutdown,
-         List<?> modules, SiteConfiguration site,ClassLoader cl, ExecutorFactoryConfiguration totalOrderExecutor, ExecutorFactoryConfiguration persistenceExecutor) {
-      this.asyncListenerExecutor = asyncListenerExecutor;
-      this.persistenceExecutor = persistenceExecutor;
-      this.asyncTransportExecutor = asyncTransportExecutor;
-      this.remoteCommandsExecutor = remoteCommandsExecutor;
-      this.evictionScheduledExecutor = evictionScheduledExecutor;
-      this.replicationQueueScheduledExecutor = replicationQueueScheduledExecutor;
+   GlobalConfiguration(ThreadPoolConfiguration evictionThreadPool,
+         ThreadPoolConfiguration listenerThreadPool,
+         ThreadPoolConfiguration replicationQueueThreadPool,
+         ThreadPoolConfiguration persistenceThreadPool,
+         GlobalJmxStatisticsConfiguration globalJmxStatistics,
+         TransportConfiguration transport, GlobalSecurityConfiguration security,
+         SerializationConfiguration serialization, ShutdownConfiguration shutdown,
+         List<?> modules, SiteConfiguration site,ClassLoader cl) {
+      this.evictionThreadPool = evictionThreadPool;
+      this.listenerThreadPool = listenerThreadPool;
+      this.replicationQueueThreadPool = replicationQueueThreadPool;
+      this.persistenceThreadPool = persistenceThreadPool;
       this.globalJmxStatistics = globalJmxStatistics;
       this.transport = transport;
       this.security = security;
@@ -77,31 +74,78 @@ public class GlobalConfiguration {
       this.modules = Collections.unmodifiableMap(moduleMap);
       this.site = site;
       this.cl = new WeakReference<ClassLoader>(cl);
-      this.totalOrderExecutor = totalOrderExecutor;
    }
 
+   /**
+    * @deprecated This method always returns null now.
+    * Look for a thread pool named as {@link #listenerThreadPool()} instead.
+    */
+   @Deprecated
    public ExecutorFactoryConfiguration asyncListenerExecutor() {
-      return asyncListenerExecutor;
+      return null;
    }
 
+   /**
+    * @deprecated This method always returns null now.
+    * Look for a thread pool named as {@link #persistenceThreadPool()} instead.
+    */
+   @Deprecated
    public ExecutorFactoryConfiguration persistenceExecutor() {
-      return persistenceExecutor;
+      return null;
    }
 
+   /**
+    * @deprecated This method always returns null now.
+    * Look for a thread pool named as {@link TransportConfiguration#transportThreadPool()}
+    * instead.
+    */
+   @Deprecated
    public ExecutorFactoryConfiguration asyncTransportExecutor() {
-      return asyncTransportExecutor;
+      return null;
    }
 
+   /**
+    * @deprecated This method always returns null now.
+    * Look for a thread pool named as
+    * {@link TransportConfiguration#remoteCommandThreadPool()} instead.
+    */
+   @Deprecated
    public ExecutorFactoryConfiguration remoteCommandsExecutor() {
-      return remoteCommandsExecutor;
+      return null;
    }
 
+   /**
+    * @deprecated This method always returns null now.
+    * Look for a thread pool named as {@link #evictionThreadPool()} instead.
+    */
+   @Deprecated
    public ScheduledExecutorFactoryConfiguration evictionScheduledExecutor() {
-      return evictionScheduledExecutor;
+      return null;
    }
 
+   /**
+    * @deprecated This method always returns null now.
+    * Look for a thread pool named as {@link #replicationQueueThreadPool()} instead.
+    */
+   @Deprecated
    public ScheduledExecutorFactoryConfiguration replicationQueueScheduledExecutor() {
-      return replicationQueueScheduledExecutor;
+      return null;
+   }
+
+   public ThreadPoolConfiguration evictionThreadPool() {
+      return evictionThreadPool;
+   }
+
+   public ThreadPoolConfiguration listenerThreadPool() {
+      return listenerThreadPool;
+   }
+
+   public ThreadPoolConfiguration replicationQueueThreadPool() {
+      return replicationQueueThreadPool;
+   }
+
+   public ThreadPoolConfiguration persistenceThreadPool() {
+      return persistenceThreadPool;
    }
 
    public GlobalJmxStatisticsConfiguration globalJmxStatistics() {
@@ -147,11 +191,10 @@ public class GlobalConfiguration {
    @Override
    public String toString() {
       return "GlobalConfiguration{" +
-            "asyncListenerExecutor=" + asyncListenerExecutor +
-            ", asyncTransportExecutor=" + asyncTransportExecutor +
-            ", remoteCommandsExecutor=" + remoteCommandsExecutor +
-            ", evictionScheduledExecutor=" + evictionScheduledExecutor +
-            ", replicationQueueScheduledExecutor=" + replicationQueueScheduledExecutor +
+            "listenerThreadPool=" + listenerThreadPool +
+            ", evictionThreadPool=" + evictionThreadPool +
+            ", persistenceThreadPool=" + persistenceThreadPool +
+            ", replicationQueueThreadPool=" + replicationQueueThreadPool +
             ", globalJmxStatistics=" + globalJmxStatistics +
             ", transport=" + transport +
             ", security=" + security +
@@ -160,12 +203,17 @@ public class GlobalConfiguration {
             ", modules=" + modules +
             ", site=" + site +
             ", cl=" + cl +
-            ", totalOrderExecutor=" + totalOrderExecutor +
             '}';
    }
 
+   /**
+    * @deprecated This method always returns null now.
+    * Look for a thread pool named as
+    * {@link TransportConfiguration#totalOrderThreadPool()} instead.
+    */
+   @Deprecated
    public ExecutorFactoryConfiguration totalOrderExecutor() {
-      return totalOrderExecutor;
+      return null;
    }
 
    public boolean isClustered() {

@@ -78,5 +78,8 @@ public interface Log extends BasicLogger {
    @Message(value = "Unwrapping %s to a type of %s is not a supported", id = 909)
    IllegalArgumentException unableToUnwrap(Object o, Class<?> clazz);
 
+   @Message(value = "Illegal value for thread pool parameter(s) %s, it should be: %s", id = 910)
+   CacheConfigurationException illegalValueThreadPoolParameter(String parameter, String requirement);
+
 }
 

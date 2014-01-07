@@ -13,11 +13,11 @@ public enum Element {
     // must be first
     UNKNOWN(null),
 
-    CONNECTION_POOL("connectionPool"),
+    CONNECTION_POOL("connection-pool"),
     PROPERTIES("properties"),
-    REST_STORE("restStore"),
+    REST_STORE("rest-store"),
     SERVERS("servers"),
-    SERVER("server")
+    SERVER("remote-server")
     ;
 
     private final String name;

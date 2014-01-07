@@ -58,8 +58,6 @@ public class XSiteFileParsing2Test extends SingleCacheManagerTest {
    public void testNoBackupFor2() {
       Configuration dcc = cacheManager.getCacheConfiguration("noBackupFor2");
       assertEquals(0, dcc.sites().allBackups().size());
-      assertNull(dcc.sites().backupFor().remoteSite());
-      assertNull(dcc.sites().backupFor().remoteCache());
    }
 
    private void testDefault(Configuration dcc) {

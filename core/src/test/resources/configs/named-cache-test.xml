@@ -1,309 +1,131 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <infinispan
       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-      xsi:schemaLocation="urn:infinispan:config:6.0 http://www.infinispan.org/schemas/infinispan-config-6.0.xsd"
-      xmlns="urn:infinispan:config:6.0">
+      xsi:schemaLocation="urn:infinispan:config:7.0 http://www.infinispan.org/schemas/infinispan-config-7.0.xsd"
+      xmlns="urn:infinispan:config:7.0">
 
-   <global>
+   <jgroups>
+      <stack-file name="udp" path="jgroups-udp.xml"/>
+   </jgroups>
 
-      <asyncListenerExecutor factory="org.infinispan.executors.DefaultExecutorFactory">
-      	 <properties>
-         	<property name="maxThreads" value="5"/>
-            <property name="queueSize" value="10000"/>
-         	<property name="threadNamePrefix" value="AsyncListenerThread"/>
-         </properties>         
-      </asyncListenerExecutor>
+   <threads>
+      <thread-factory name="listener-factory" group-name="infinispan" thread-name-pattern="AsyncListenerThread"/>
+      <thread-factory name="persistence-factory" group-name="infinispan" thread-name-pattern="PersistenceThread"/>
+      <thread-factory name="transport-factory" group-name="infinispan" thread-name-pattern="AsyncSerializationThread"/>
+      <thread-factory name="remote-factory" group-name="infinispan" thread-name-pattern="RemoteCommandThread"/>
+      <thread-factory name="eviction-factory" group-name="infinispan" thread-name-pattern="EvictionThread"/>
+      <thread-factory name="replication-queue-factory" group-name="infinispan" thread-name-pattern="ReplicationQueueThread"/>
+      <thread-factory name="total-order-factory" group-name="infinispan" thread-name-pattern="TotalOrderValidatorThread"/>
+      <blocking-bounded-queue-thread-pool name="listener" thread-factory="listener-factory" max-threads="5" queue-length="10000"/>
+      <blocking-bounded-queue-thread-pool name="persistence" thread-factory="persistence-factory" max-threads="6" queue-length="10001"/>
+      <blocking-bounded-queue-thread-pool name="transport" thread-factory="transport-factory" max-threads="25" queue-length="10000"/>
+      <blocking-bounded-queue-thread-pool name="remote" thread-factory="transport-factory" max-threads="30" core-threads="2" queue-length="10000" keepalive-time="10000"/>
+      <blocking-bounded-queue-thread-pool name="total" thread-factory="total-order-factory" max-threads="16" core-threads="1" queue-length="0" keepalive-time="1000"/>
+      <scheduled-thread-pool name="eviction" thread-factory="eviction-factory" />
+      <scheduled-thread-pool name="replication-queue" thread-factory="replication-queue-factory" />
+   </threads>
 
-      <persistenceExecutor factory="org.infinispan.executors.DefaultExecutorFactory">
-      	 <properties>
-         	<property name="maxThreads" value="6"/>
-            <property name="queueSize" value="10001"/>
-         	<property name="threadNamePrefix" value="PersistenceThread"/>
-         </properties>
-      </persistenceExecutor>
-
-      <asyncTransportExecutor factory="org.infinispan.executors.DefaultExecutorFactory">
-      	<properties>	
-         <property name="maxThreads" value="25"/>
-         <property name="queueSize" value="10000"/>
-         <property name="threadNamePrefix" value="AsyncSerializationThread"/>
-         </properties>
-      </asyncTransportExecutor>
-
-      <remoteCommandsExecutor factory="org.infinispan.executors.DefaultExecutorFactory">
-        <properties>
-            <property name="maxThreads" value="30"/>
-            <property name="coreThreads" value="2"/>
-            <property name="keepAliveTime" value="10000"/>
-            <property name="threadNamePrefix" value="RemoteCommandThread"/>
-        </properties>
-      </remoteCommandsExecutor>
-
-      <evictionScheduledExecutor factory="org.infinispan.executors.DefaultScheduledExecutorFactory">
-      <properties>
-         <property name="threadNamePrefix" value="EvictionThread"/>
-         </properties>
-      </evictionScheduledExecutor>
-
-      <replicationQueueScheduledExecutor factory="org.infinispan.executors.DefaultScheduledExecutorFactory">
-      <properties>
-         <property name="threadNamePrefix" value="ReplicationQueueThread"/>
-         </properties>
-      </replicationQueueScheduledExecutor>
-
-       <totalOrderExecutor factory="org.infinispan.executors.DefaultExecutorFactory">
-           <properties>
-               <property name="threadNamePrefix" value="TotalOrderValidatorThread" />
-               <property name="coreThreads" value="1" />
-               <property name="maxThreads" value="16" />
-               <property name="queueSize" value="0" />
-               <property name="keepAliveTime" value="1000" />
-           </properties>
-       </totalOrderExecutor>
-
-      <transport clusterName="infinispan-cluster" distributedSyncTimeout="50000" nodeName="Jalapeno" machineId="m1" rackId="r1" siteId="s1">
-         <!-- Note that the JGroups transport uses sensible defaults if no configuration property is defined. -->
-         <properties>
-         <property name="configurationFile" value="jgroups-udp.xml"/>
-         </properties>
-         <!-- See the JGroupsTransport javadocs for more flags -->
-      </transport>
-
-      <serialization marshallerClass="org.infinispan.marshall.VersionAwareMarshaller" version="1.0">
-         <advancedExternalizers>
-            <advancedExternalizer id="1234" externalizerClass="org.infinispan.marshall.AdvancedExternalizerTest$IdViaConfigObj$Externalizer"/>
-            <advancedExternalizer externalizerClass="org.infinispan.marshall.AdvancedExternalizerTest$IdViaAnnotationObj$Externalizer"/>
-            <advancedExternalizer id="3456" externalizerClass="org.infinispan.marshall.AdvancedExternalizerTest$IdViaBothObj$Externalizer"/>
-         </advancedExternalizers>
+   <cache-container default-cache="default" statistics="true" shutdown-hook="REGISTER"
+                    listener-executor="listener" replication-queue-executor="replication-queue" persistence-executor="persistence" eviction-executor="eviction">
+      <transport stack="udp" cluster="infinispan-cluster" lock-timeout="50000" node-name="Jalapeno" machine="m1" rack="r1" site="s1"
+                 executor="transport" total-order-executor="total" remote-command-executor="remote" />
+      <jmx domain="funky_domain" mbean-server-lookup="org.infinispan.jmx.PerThreadMBeanServerLookup" duplicate-domains="true" />
+      <serialization marshaller="org.infinispan.marshall.core.VersionAwareMarshaller" version="1.0">
+         <advanced-externalizer id="1234" class="org.infinispan.marshall.AdvancedExternalizerTest$IdViaConfigObj$Externalizer"/>
+         <advanced-externalizer class="org.infinispan.marshall.AdvancedExternalizerTest$IdViaAnnotationObj$Externalizer"/>
+         <advanced-externalizer id="3456" class="org.infinispan.marshall.AdvancedExternalizerTest$IdViaBothObj$Externalizer"/>
       </serialization>
-
-      <globalJmxStatistics enabled="true" jmxDomain="funky_domain"
-                           mBeanServerLookup="org.infinispan.jmx.PerThreadMBeanServerLookup"
-                           allowDuplicateDomains="true"/>
-                           
-      <shutdown hookBehavior="REGISTER"/>                           
-   </global>
-
-   <default>
-      <locking concurrencyLevel="100" lockAcquisitionTimeout="1000"/>
-      <transaction transactionMode="NON_TRANSACTIONAL" reaperWakeUpInterval="123" completedTxTimeout="3123"/>
-      <jmxStatistics enabled="false"/>
-   </default>
-
-   <namedCache name="transactional">
-      <transaction useEagerLocking="true" eagerLockSingleNode="true"
-                   transactionMode="TRANSACTIONAL" autoCommit="true" />
-   </namedCache>
-
-   <namedCache name="transactional2">
-      <transaction transactionManagerLookupClass="org.infinispan.test.tx.TestLookup"
-                   cacheStopTimeout="10000" lockingMode="PESSIMISTIC"
-                   autoCommit="false" />
-   </namedCache>
-
-    <namedCache name="transactional3">
-        <transaction transactionMode="TRANSACTIONAL" autoCommit="true"
-                     transactionProtocol="TOTAL_ORDER">
-            <recovery enabled="false" />
-        </transaction>
-
-        <clustering mode="r" />
-    </namedCache>
-
-   <namedCache name="syncInval">
-      <locking lockAcquisitionTimeout="20000"/>
-      <clustering mode="invalidation">
-      </clustering>
-   </namedCache>
-
-   <namedCache name="asyncInval">
-      <locking lockAcquisitionTimeout="20000"/>
-      <clustering mode="invalidation">
-         <stateTransfer fetchInMemoryState="false" awaitInitialTransfer="false"/>
-         <async useReplQueue="false" asyncMarshalling="false"/>
-      </clustering>
-   </namedCache>
-
-   <namedCache name="syncRepl">
-      <clustering mode="repl">
-         <stateTransfer fetchInMemoryState="false"/>
-         <sync replTimeout="15000"/>
-      </clustering>
-   </namedCache>
-
-   <namedCache name="asyncRepl">
-      <clustering mode="repl">
-         <stateTransfer fetchInMemoryState="false"/>
-         <async asyncMarshalling="false"/>
-      </clustering>
-   </namedCache>
-
-   <namedCache name="asyncReplQueue">
-      <clustering mode="repl">
-         <stateTransfer fetchInMemoryState="false"/>
-         <async useReplQueue="true" replQueueInterval="1234" replQueueMaxElements="100"/>
-      </clustering>
-   </namedCache>
-
-   <namedCache name="txSyncRepl">
-      <transaction transactionManagerLookupClass="org.infinispan.transaction.lookup.GenericTransactionManagerLookup" transactionMode="TRANSACTIONAL"/>
-      <clustering mode="repl">
-         <stateTransfer fetchInMemoryState="false"/>
-         <sync replTimeout="15000"/>
-      </clustering>
-   </namedCache>
-
-   <namedCache name="overriding">
-      <locking isolationLevel="REPEATABLE_READ" concurrencyLevel="1000" lockAcquisitionTimeout="20000"/>
-   </namedCache>
-
-   <namedCache name="storeAsBinary">
-      <locking isolationLevel="REPEATABLE_READ" concurrencyLevel="1000" lockAcquisitionTimeout="20000"/>
-      <storeAsBinary enabled="true"/>
-   </namedCache>
-
-   <namedCache name="withFileStore">
-      <persistence passivation="false">
-
-         <!--
-            We can have multiple cache stores, which get chained
-         -->
-         <singleFile preload="true" fetchPersistentState="true" ignoreModifications="true" purgeOnStartup="true" location="/tmp/FileCacheStore-Location">
-            <async enabled="true" flushLockTimeout="15000" threadPoolSize="5" modificationQueueSize="700"/>
-            <singleton enabled="true" pushStateWhenCoordinator="true" pushStateTimeout="20000"/>
-         </singleFile>
-      </persistence>
-   </namedCache>
-   
-   <namedCache name="withClusterLoader">
-      <persistence passivation="false">
-         <cluster remoteCallTimeout="15000" />
-      </persistence>
-   </namedCache>
-
-   <namedCache name="withLoaderDefaults">
-      <persistence>
-         <store class="org.infinispan.persistence.file.SingleFileStore">
-            <properties>
-               <property name="location" value="/tmp/Another-FileCacheStore-Location"/>
-            </properties>
-         </store>
-      </persistence>
-   </namedCache>
-
-   <namedCache name="dist">
-      <clustering mode="distribution">
-         <stateTransfer timeout="120000" />
-         <sync/>
-         <hash numOwners="3" />
-         <l1 enabled="true" lifespan="600000" cleanupTaskFrequency="1200"/>
-      </clustering>
-   </namedCache>
-
-   <namedCache name="dist_with_capacity_factors">
-      <clustering mode="distribution">
-         <stateTransfer timeout="120000" />
-         <sync/>
-         <hash numOwners="3" numSegments="1000" capacityFactor="0"/>
-         <l1 enabled="true" lifespan="600000"/>
-      </clustering>
-   </namedCache>
-
-   <namedCache name="groups">
-      <clustering mode="distribution">
-         <hash>
-            <groups enabled="true">
-               <grouper class="org.infinispan.distribution.groups.KXGrouper" />
-            </groups>
-         </hash>
-      </clustering>
-   </namedCache>
-
-    <namedCache name="chunkSize">
-        <clustering mode="distribution">
-            <sync/>
-            <hash numOwners="3"/>
-            <l1 enabled="true" lifespan="600000"/>
-            <stateTransfer fetchInMemoryState="true" timeout="120000" chunkSize="1000"/>
-        </clustering>
-    </namedCache>
-
-    <!-- Note that any of the elements appearing in a namedCache section can also appear in the default section as a template. -->
-   <namedCache name="evictionCache">
-
-      <!--
-         Eviction configuration.
-      -->
-      <eviction maxEntries="5000"  threadPolicy="PIGGYBACK" strategy="LRU"/>
-      <!--
-         Expiration wakeUpInterval defines the interval between successive runs
-         to purge expired entries from memory and any cache stores.
-      -->
-      <expiration wakeUpInterval="500" lifespan="60000" maxIdle="1000"/>
-   </namedCache>
-
-   <namedCache name="withouthJmxEnabled">
-      <clustering mode="repl" >
-         <async useReplQueue="true" replQueueInterval="100" replQueueMaxElements="200"/>
-      </clustering>
-      <jmxStatistics enabled="false"/>
-   </namedCache>
-
-   <namedCache name="withDeadlockDetection">
-      <clustering>
-         <sync replTimeout="20000"/>
-      </clustering>
-      <jmxStatistics enabled="false"/>
-      <deadlockDetection enabled="true" spinDuration="1221"/>
-   </namedCache>
-   
-   <namedCache name="withJDBCLoader">
-      <clustering>
-         <sync replTimeout="20000"/>
-      </clustering>
-      <jmxStatistics enabled="false"/>
-      <deadlockDetection enabled="true" spinDuration="1221"/>
-      <eviction maxEntries="1000" strategy="LIRS" />
-      <persistence passivation="true">
-         <store class="org.infinispan.persistence.file.SingleFileStore" shared="false" preload="true" fetchPersistentState="true" ignoreModifications="true" purgeOnStartup="true">
-            <async enabled="true" threadPoolSize="10" flushLockTimeout="10000"/>
-            <singleton enabled="true" pushStateWhenCoordinator="true" pushStateTimeout="20000"/>
-            <properties>
-              <property name="location" value="${java.io.tmpdir}"/>
-           </properties>
-       </store>
-     </persistence>
-     <locking supportsConcurrentUpdates="true"/>
-   </namedCache>
-
-   <namedCache name="withReplicationQueue">
-      <clustering mode="repl">
-         <async useReplQueue="true" replQueueInterval="100" replQueueMaxElements="200"/>
-      </clustering>
-   </namedCache>
-   
-   <namedCache name="cacheWithCustomInterceptors">
-   
-      <!--
-      Define custom interceptors.  All custom interceptors need to extend org.jboss.cache.interceptors.base.CommandInterceptor
-      Here we use existing class so we can actually load it
-      -->   
-      <customInterceptors>
-         <interceptor position="FIRST" class="org.infinispan.interceptors.CallInterceptor" />
-         <interceptor position="LAST" class="org.infinispan.interceptors.CallInterceptor"/>
-         <interceptor index="3" class="org.infinispan.interceptors.CallInterceptor"/>
-         <interceptor before="org.infinispan.interceptors.CallInterceptor" class="org.infinispan.interceptors.CallInterceptor"/>
-         <interceptor after="org.infinispan.interceptors.CallInterceptor" class="org.infinispan.interceptors.CallInterceptor"/>
-         <interceptor position="FIRST" class="org.infinispan.interceptors.FooInterceptor">
-            <properties>
-               <property name="foo" value="bar" />
-            </properties>
-         </interceptor>
-      </customInterceptors>
-   </namedCache>
-
-   <namedCache name="storeKeyValueBinary">
-      <storeAsBinary storeKeysAsBinary="true" storeValuesAsBinary="false" enabled="true" />
-   </namedCache>
+      <local-cache name="default" statistics="false">
+         <locking concurrency-level="100" acquire-timeout="1000"/>
+         <transaction mode="NONE" complete-timeout="3123" reaper-interval="123"/>
+      </local-cache>
+      <local-cache name="transactional">
+         <transaction mode="NON_XA" auto-commit="true" />
+      </local-cache>
+      <local-cache name="transactional2">
+         <transaction transaction-manager-lookup="org.infinispan.test.tx.TestLookup" stop-timeout="10000" locking="PESSIMISTIC" auto-commit="false" />
+      </local-cache>
+      <replicated-cache name="transactional3">
+         <transaction mode="NON_XA" auto-commit="true" protocol="TOTAL_ORDER" />
+      </replicated-cache>
+      <invalidation-cache name="syncInval">
+         <locking acquire-timeout="20000"/>
+      </invalidation-cache>
+      <invalidation-cache name="asyncInval" mode="ASYNC">
+         <locking acquire-timeout="20000"/>
+      </invalidation-cache>
+      <replicated-cache name="syncRepl" mode="SYNC" remote-timeout="15000">
+         <state-transfer enabled="false"/>
+      </replicated-cache>
+      <replicated-cache name="asyncRepl" mode="ASYNC" >
+         <state-transfer enabled="false"/>
+      </replicated-cache>
+      <replicated-cache name="asyncReplQueue" mode="ASYNC" queue-flush-interval="1234" queue-size="100">
+         <state-transfer enabled="false"/>
+      </replicated-cache>
+      <replicated-cache name="txSyncRepl" mode="SYNC" remote-timeout="15000">
+         <transaction mode="NON_XA" transaction-manager-lookup="org.infinispan.transaction.lookup.GenericTransactionManagerLookup"/>
+         <state-transfer enabled="false"/>
+      </replicated-cache>
+      <local-cache name="overriding">
+         <locking isolation="REPEATABLE_READ" concurrency-level="1000" acquire-timeout="20000"/>
+      </local-cache>
+      <local-cache name="storeAsBinary">
+         <locking isolation="REPEATABLE_READ" concurrency-level="1000" acquire-timeout="20000"/>
+         <store-as-binary/>
+      </local-cache>
+      <local-cache name="withFileStore">
+         <persistence passivation="false">
+            <file-store path="/tmp/FileCacheStore-Location" singleton="true" fetch-state="true" preload="true" purge="true" read-only="true">
+               <write-behind flush-lock-timeout="15000" modification-queue-size="700" thread-pool-size="5" />
+            </file-store>
+         </persistence>
+      </local-cache>
+      <local-cache name="withClusterLoader">
+         <persistence passivation="false">
+            <cluster-loader remote-timeout="15000"/>
+         </persistence>
+      </local-cache>
+      <local-cache name="withLoaderDefaults">
+         <persistence>
+            <file-store path="/tmp/Another-FileCacheStore-Location" />
+         </persistence>
+      </local-cache>
+      <distributed-cache name="dist" mode="SYNC" owners="3" l1-lifespan="600000" l1-cleanup-interval="1200">
+         <state-transfer timeout="120000" />
+      </distributed-cache>
+      <distributed-cache name="dist_with_capacity_factors" mode="SYNC" owners="3" segments="1000" capacity="0" l1-lifespan="600000">
+         <state-transfer timeout="120000" />
+      </distributed-cache>
+      <distributed-cache name="groups">
+         <groups enabled="true">
+            <grouper class="org.infinispan.distribution.groups.KXGrouper" />
+         </groups>
+      </distributed-cache>
+      <distributed-cache name="chunkSize" mode="SYNC" owners="3" l1-lifespan="600000">
+         <state-transfer enabled="true" timeout="120000" chunk-size="1000"/>
+      </distributed-cache>
+      <local-cache name="evictionCache">
+         <eviction max-entries="5000"  thread-policy="PIGGYBACK" strategy="LRU"/>
+         <expiration interval="500" lifespan="60000" max-idle="1000"/>
+      </local-cache>
+      <replicated-cache name="withouthJmxEnabled" mode="ASYNC" queue-flush-interval="100" queue-size="200" statistics="false"/>
+      <distributed-cache name="withDeadlockDetection" mode="SYNC" remote-timeout="20000" statistics="false" deadlock-detection-spin="1221" />
+      <local-cache name="cacheWithCustomInterceptors">
+         <custom-interceptors>
+            <interceptor position="FIRST" class="org.infinispan.interceptors.CallInterceptor" />
+            <interceptor position="LAST" class="org.infinispan.interceptors.CallInterceptor"/>
+            <interceptor index="3" class="org.infinispan.interceptors.CallInterceptor"/>
+            <interceptor before="org.infinispan.interceptors.CallInterceptor" class="org.infinispan.interceptors.CallInterceptor"/>
+            <interceptor after="org.infinispan.interceptors.CallInterceptor" class="org.infinispan.interceptors.CallInterceptor"/>
+            <interceptor position="FIRST" class="org.infinispan.interceptors.FooInterceptor">
+               <property name="foo">bar</property>
+            </interceptor>
+         </custom-interceptors>
+      </local-cache>
+      <local-cache name="storeKeyValueBinary">
+         <store-as-binary keys="true" values="false"/>
+      </local-cache>
+   </cache-container>
 
 </infinispan>

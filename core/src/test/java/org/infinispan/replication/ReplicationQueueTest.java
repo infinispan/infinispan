@@ -7,8 +7,6 @@ import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.global.GlobalConfigurationBuilder;
-import org.infinispan.executors.ScheduledExecutorFactory;
-import org.infinispan.factories.KnownComponentNames;
 import org.infinispan.manager.CacheContainer;
 import org.infinispan.remoting.ReplicationQueue;
 import org.infinispan.test.MultipleCacheManagersTest;
@@ -17,15 +15,7 @@ import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.testng.annotations.Test;
 
 import javax.transaction.TransactionManager;
-import java.util.Properties;
 import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.ScheduledFuture;
-import java.util.concurrent.ScheduledThreadPoolExecutor;
-import java.util.concurrent.TimeUnit;
-
-import static org.testng.Assert.assertEquals;
-import static org.testng.Assert.assertTrue;
 
 /**
  * Tests ReplicationQueue's functionality.
@@ -37,6 +27,8 @@ public class ReplicationQueueTest extends MultipleCacheManagersTest {
 
    private static final int REPL_QUEUE_INTERVAL = 5000;
    private static final int REPL_QUEUE_MAX_ELEMENTS = 10;
+   private Cache<Object, Object> cache1;
+   private Cache<Object, Object> cache2;
 
    protected void createCacheManagers() throws Throwable {
       CacheContainer first = TestCacheManagerFactory.createClusteredCacheManager(createGlobalConfigurationBuilder(), new ConfigurationBuilder());
@@ -45,15 +37,13 @@ public class ReplicationQueueTest extends MultipleCacheManagersTest {
 
       manager(0).defineConfiguration("replQueue", createCacheConfig(true));
       manager(1).defineConfiguration("replQueue", createCacheConfig(false));
+
+      cache1 = cache(0, "replQueue");
+      cache2 = cache(1, "replQueue");
    }
 
    private GlobalConfigurationBuilder createGlobalConfigurationBuilder() {
-      GlobalConfigurationBuilder globalConfiguration = GlobalConfigurationBuilder.defaultClusteredBuilder();
-      globalConfiguration.replicationQueueScheduledExecutor()
-            .factory(new ReplQueueTestScheduledExecutorFactory())
-            .withProperties(ReplQueueTestScheduledExecutorFactory.myProps);
-
-      return globalConfiguration;
+      return GlobalConfigurationBuilder.defaultClusteredBuilder();
    }
 
    private Configuration createCacheConfig(boolean useReplQueue) {
@@ -66,28 +56,11 @@ public class ReplicationQueueTest extends MultipleCacheManagersTest {
    }
 
    /**
-    * tests that the replication queue will use an appropriate executor defined through
-    * <tt>replicationQueueScheduledExecutor</tt> config param.
-    */
-   @Test(dependsOnMethods = "testReplicationBasedOnTime")
-   public void testAppropriateExecutorIsUsed() {
-      assert ReplQueueTestScheduledExecutorFactory.methodCalled;
-      assert ReplQueueTestScheduledExecutorFactory.command != null;
-      assert ReplQueueTestScheduledExecutorFactory.delay == REPL_QUEUE_INTERVAL;
-      assert ReplQueueTestScheduledExecutorFactory.initialDelay == REPL_QUEUE_INTERVAL;
-      assert ReplQueueTestScheduledExecutorFactory.unit == TimeUnit.MILLISECONDS;
-   }
-
-   /**
     * Make sure that replication will occur even if <tt>replQueueMaxElements</tt> are not reached, but the
     * <tt>replQueueInterval</tt> is reached.
     */
    public void testReplicationBasedOnTime() throws Exception {
-      
-      Cache cache1 = cache(0, "replQueue");
-      Cache cache2 = cache(1, "replQueue");
-      
-      //only place one element, queue size is 10. 
+      //only place one element, queue size is 10.
       cache1.put("key", "value");
       ReplicationQueue replicationQueue = TestingUtil.extractComponent(cache1, ReplicationQueue.class);
       assert replicationQueue != null;
@@ -95,7 +68,7 @@ public class ReplicationQueueTest extends MultipleCacheManagersTest {
       assert cache2.get("key") == null;
       assert cache1.get("key").equals("value");
 
-      ReplQueueTestScheduledExecutorFactory.command.run();
+      replicationQueue.flush();
 
       //in next 5 secs, expect the replication to occur
       long start = System.currentTimeMillis();
@@ -112,9 +85,6 @@ public class ReplicationQueueTest extends MultipleCacheManagersTest {
     * <tt>replQueueInterval</tt> is reached.
     */
    public void testReplicationBasedOnTimeWithTx() throws Exception {
-      Cache cache1 = cache(0, "replQueue");
-      Cache cache2 = cache(1, "replQueue");
-      
       //only place one element, queue size is 10.
       TransactionManager transactionManager = TestingUtil.getTransactionManager(cache1);
       transactionManager.begin();
@@ -127,7 +97,7 @@ public class ReplicationQueueTest extends MultipleCacheManagersTest {
       assert cache2.get("key") == null;
       assert cache1.get("key").equals("value");
 
-      ReplQueueTestScheduledExecutorFactory.command.run();
+      replicationQueue.flush();
 
       //in next 5 secs, expect the replication to occur
       long start = System.currentTimeMillis();
@@ -145,10 +115,6 @@ public class ReplicationQueueTest extends MultipleCacheManagersTest {
     * <tt>replQueueInterval</tt> is not reached.
     */
    public void testReplicationBasedOnSize() throws Exception {
-      
-      Cache cache1 = cache(0, "replQueue");
-      Cache cache2 = cache(1, "replQueue");
-      
       //place 10 elements, queue size is 10.
       for (int i = 0; i < REPL_QUEUE_MAX_ELEMENTS; i++) {
          cache1.put("key" + i, "value" + i);
@@ -169,10 +135,6 @@ public class ReplicationQueueTest extends MultipleCacheManagersTest {
     * <tt>replQueueInterval</tt> is not reached.
     */
    public void testReplicationBasedOnSizeWithTx() throws Exception {
-      
-      Cache cache1 = cache(0, "replQueue");
-      Cache cache2 = cache(1, "replQueue");
-      
       //only place one element, queue size is 10.
       TransactionManager transactionManager = TestingUtil.getTransactionManager(cache1);
       for (int i = 0; i < REPL_QUEUE_MAX_ELEMENTS; i++) {
@@ -195,8 +157,6 @@ public class ReplicationQueueTest extends MultipleCacheManagersTest {
     * Test that replication queue works fine when multiple threads are putting into the queue.
     */
    public void testReplicationQueueMultipleThreads() throws Exception {
-      final Cache cache1 = cache(0, "replQueue");
-      Cache cache2 = cache(1, "replQueue");
       // put 10 elements in the queue from 5 different threads
       int numThreads = 5;
       final int numLoopsPerThread = 2;
@@ -237,15 +197,14 @@ public class ReplicationQueueTest extends MultipleCacheManagersTest {
    }
 
    public void testAtomicHashMap() throws Exception {
-      Cache cache1 = cache(0, "replQueue");
-      Cache cache2 = cache(1, "replQueue");
       TransactionManager transactionManager = TestingUtil.getTransactionManager(cache1);
       transactionManager.begin();
       AtomicMap am = AtomicMapLookup.getAtomicMap(cache1, "foo");
       am.put("sub-key", "sub-value");
       transactionManager.commit();
 
-      ReplQueueTestScheduledExecutorFactory.command.run();
+      ReplicationQueue replicationQueue = TestingUtil.extractComponent(cache1, ReplicationQueue.class);
+      replicationQueue.flush();
 
       //in next 5 secs, expect the replication to occur
       long start = System.currentTimeMillis();
@@ -257,41 +216,6 @@ public class ReplicationQueueTest extends MultipleCacheManagersTest {
       assert AtomicMapLookup.getAtomicMap(cache2, "foo", false) != null;
       assert AtomicMapLookup.getAtomicMap(cache2, "foo").get("sub-key") != null;
       assert AtomicMapLookup.getAtomicMap(cache2, "foo").get("sub-key").equals("sub-value");
-   }
-
-   public static class ReplQueueTestScheduledExecutorFactory implements ScheduledExecutorFactory {
-      static Properties myProps = new Properties();
-      static boolean methodCalled = false;
-      static Runnable command;
-      static long initialDelay;
-      static long delay;
-      static TimeUnit unit;
-
-      static {
-         myProps.put("aaa", "bbb");
-         myProps.put("ddd", "ccc");
-      }
-
-
-      public ScheduledExecutorService getScheduledExecutor(Properties p) {
-         assertEquals(p.size(), 5);
-         assertEquals(p.get("componentName"), "replicationQueue-thread");
-         assertEquals(p.get("threadPriority"), "" + KnownComponentNames.getDefaultThreadPrio(KnownComponentNames.ASYNC_REPLICATION_QUEUE_EXECUTOR));
-         assertEquals(p.get("aaa"), "bbb");
-         assertEquals(p.get("ddd"), "ccc");
-         assertTrue(p.containsKey("threadNameSuffix")); // don't check p.get("threadNameSuffix"), it depends on the node name
-         methodCalled = true;
-         return new ScheduledThreadPoolExecutor(1) {
-            @Override
-            public ScheduledFuture<?> scheduleWithFixedDelay(Runnable commandP, long initialDelayP, long delayP, TimeUnit unitP) {
-               command = commandP;
-               initialDelay = initialDelayP;
-               delay = delayP;
-               unit = unitP;
-               return null;
-            }
-         };
-      }
    }
 
 }

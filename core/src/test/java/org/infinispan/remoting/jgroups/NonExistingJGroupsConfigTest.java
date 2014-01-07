@@ -18,18 +18,13 @@ public class NonExistingJGroupsConfigTest extends AbstractInfinispanTest {
    
    public void channelLookupTest() throws Exception {
       String config = INFINISPAN_START_TAG +
-      "   <global>\n" +
-      "      <transport clusterName=\"demoCluster\">\n" +
-      " <properties> \n" +
-      "<property name=\"configurationFile\" value=\"nosuchfile.xml\"/> \n" +
-      "</properties> \n" +
-      "</transport> \n " +
-      "   </global>\n" +
-      "\n" +
-      "   <default>\n" +
-      "      <clustering mode=\"replication\">\n" +
-      "      </clustering>\n" +
-      "   </default>\n" +
+      "<jgroups>\n" +
+      "   <stack-file name=\"dummy\" path=\"nosuchfile.xml\"/>\n" +
+      "</jgroups>\n" +
+      "<cache-container default-cache=\"default\">" +
+      "   <transport stack=\"dummy\" cluster=\"demoCluster\" />\n" +
+      "   <replicated-cache name=\"default\" />\n" +
+      "</cache-container>" +
       TestingUtil.INFINISPAN_END_TAG;
 
       InputStream is = new ByteArrayInputStream(config.getBytes());

@@ -12,14 +12,18 @@ public enum Attribute {
    // must be first
    UNKNOWN(null),
 
-   LOCATION("location"),
-   EXPIRED_LOCATION("expiredLocation"),
-   IMPLEMENTATION_TYPE("implementationType"),
-   CLEAR_THRESHOLD("clearThreshold"),
-   EXPIRY_QUEUE_SIZE("expiryQueueSize"),
+   BLOCK_SIZE("block-size"),
+   CACHE_SIZE("cache-size"),
+   CLEAR_THRESHOLD("clear-threshold"),
    COMPRESSION_TYPE("compressionType"),
-   BLOCK_SIZE("blockSize"),
-   CACHE_SIZE("cacheSize");
+   EXPIRED_LOCATION("expiredLocation"),
+   EXPIRY_QUEUE_SIZE("expiryQueueSize"),
+   IMPLEMENTATION_TYPE("implementationType"),
+   LOCATION("location"),
+   PATH("path"),
+   QUEUE_SIZE("queue-size"),
+   TYPE("type"),
+   ;
 
    private final String name;
 

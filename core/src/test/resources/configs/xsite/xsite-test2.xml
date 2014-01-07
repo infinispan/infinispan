@@ -1,49 +1,33 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <infinispan
-        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-        xsi:schemaLocation="urn:infinispan:config:6.0 http://www.infinispan.org/schemas/infinispan-config-6.0.xsd"
-        xmlns="urn:infinispan:config:6.0">
+      xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+      xsi:schemaLocation="urn:infinispan:config:7.0 http://www.infinispan.org/schemas/infinispan-config-7.0.xsd"
+      xmlns="urn:infinispan:config:7.0">
 
-    <global>
+   <jgroups>
+      <stack-file name="udp" path="jgroups-udp.xml"/>
+   </jgroups>
 
-        <site local="LON"/>
-
-        <transport clusterName="infinispan-cluster" distributedSyncTimeout="50000" nodeName="Jalapeno" machineId="m1"
-                   rackId="r1" siteId="s1">
-            <!-- Note that the JGroups transport uses sensible defaults if no configuration property is defined. -->
-            <properties>
-                <property name="configurationFile" value="jgroups-udp.xml"/>
-            </properties>
-            <!-- See the JGroupsTransport javadocs for more flags -->
-        </transport>
-    </global>
-
-    <default>
-        <locking concurrencyLevel="100" lockAcquisitionTimeout="1000"/>
-        <sites>
-            <backups>
-                <backup site="NYC" strategy="SYNC" backupFailurePolicy="IGNORE" timeout="12003" enabled="true"/>
-                <backup site="SFO" strategy="ASYNC" enabled="true"/>
-                <backup site="LON" strategy="SYNC" enabled="false"/>
-            </backups>
-            <backupFor remoteCache="someCache" remoteSite="SFO"/>
-        </sites>
-        <jmxStatistics enabled="false"/>
-    </default>
-
-    <namedCache name="inheritor"/>
-
-    <namedCache name="noBackupFor">
-        <sites>
-            <backups>
-                <backup site="NYC" strategy="SYNC" backupFailurePolicy="WARN" timeout="12003"/>
-            </backups>
-            <backupFor/>
-        </sites>
-    </namedCache>
-
-    <namedCache name="noBackupFor2">
-        <sites/>
-    </namedCache>
+   <cache-container default-cache="default">
+      <transport cluster="infinispan-cluster" lock-timeout="50000" stack="udp" node-name="Jalapeno" machine="m1" rack="r1" site="LON"/>
+      <local-cache name="default">
+         <backups>
+            <backup site="NYC" failure-policy="IGNORE" strategy="SYNC" timeout="12003" enabled="true"/>
+            <backup site="SFO" strategy="ASYNC" enabled="true"/>
+            <backup site="LON" strategy="SYNC" enabled="false" />
+         </backups>
+         <backup-for remote-cache="someCache" remote-site="SFO"/>
+      </local-cache>
+      <local-cache name="inheritor"/>
+      <local-cache name="noBackupFor">
+         <backups>
+            <backup site="NYC" strategy="SYNC" failure-policy="WARN" timeout="12003"/>
+         </backups>
+         <backup-for/>
+      </local-cache>
+      <local-cache name="noBackupFor2">
+         <backups/>
+      </local-cache>
+   </cache-container>
 
 </infinispan>

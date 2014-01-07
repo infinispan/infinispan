@@ -17,14 +17,11 @@ public class GlobalConfigurationBuilder implements GlobalConfigurationChildBuild
    private final TransportConfigurationBuilder transport;
    private final GlobalJmxStatisticsConfigurationBuilder globalJmxStatistics;
    private final SerializationConfigurationBuilder serialization;
-   private final ExecutorFactoryConfigurationBuilder asyncTransportExecutor;
-   private final ExecutorFactoryConfigurationBuilder asyncListenerExecutor;
-   private final ExecutorFactoryConfigurationBuilder persistenceExecutor;
-   private final ExecutorFactoryConfigurationBuilder remoteCommandsExecutor;
-   private final ExecutorFactoryConfigurationBuilder totalOrderExecutor;
-   private final ScheduledExecutorFactoryConfigurationBuilder evictionScheduledExecutor;
-   private final ScheduledExecutorFactoryConfigurationBuilder replicationQueueScheduledExecutor;
    private final GlobalSecurityConfigurationBuilder security;
+   private final ThreadPoolConfigurationBuilder evictionThreadPool;
+   private final ThreadPoolConfigurationBuilder listenerThreadPool;
+   private final ThreadPoolConfigurationBuilder replicationQueueThreadPool;
+   private final ThreadPoolConfigurationBuilder persistenceThreadPool;
    private final ShutdownConfigurationBuilder shutdown;
    private final List<Builder<?>> modules = new ArrayList<Builder<?>>();
    private final SiteConfigurationBuilder site;
@@ -34,17 +31,13 @@ public class GlobalConfigurationBuilder implements GlobalConfigurationChildBuild
       this.transport = new TransportConfigurationBuilder(this);
       this.globalJmxStatistics = new GlobalJmxStatisticsConfigurationBuilder(this);
       this.serialization = new SerializationConfigurationBuilder(this);
-      this.asyncListenerExecutor = new ExecutorFactoryConfigurationBuilder(this);
-      this.persistenceExecutor = new ExecutorFactoryConfigurationBuilder(this);
-      this.asyncTransportExecutor = new ExecutorFactoryConfigurationBuilder(this);
-      this.remoteCommandsExecutor = new ExecutorFactoryConfigurationBuilder(this);
-      this.evictionScheduledExecutor = new ScheduledExecutorFactoryConfigurationBuilder(this);
-      this.replicationQueueScheduledExecutor = new ScheduledExecutorFactoryConfigurationBuilder(this);
       this.security = new GlobalSecurityConfigurationBuilder(this);
       this.shutdown = new ShutdownConfigurationBuilder(this);
       this.site = new SiteConfigurationBuilder(this);
-      //set a new executor by default, that allows to set the core number of threads and the keep alive time
-      this.totalOrderExecutor = new ExecutorFactoryConfigurationBuilder(this);
+      this.evictionThreadPool = new ThreadPoolConfigurationBuilder(this);
+      this.listenerThreadPool = new ThreadPoolConfigurationBuilder(this);
+      this.replicationQueueThreadPool = new ThreadPoolConfigurationBuilder(this);
+      this.persistenceThreadPool = new ThreadPoolConfigurationBuilder(this);
    }
 
    /**
@@ -56,9 +49,7 @@ public class GlobalConfigurationBuilder implements GlobalConfigurationChildBuild
    public GlobalConfigurationBuilder clusteredDefault() {
       transport().
          defaultTransport()
-         .clearProperties()
-      .asyncTransportExecutor()
-         .addProperty("threadNamePrefix", "asyncTransportThread");
+         .clearProperties();
       return this;
    }
 
@@ -102,34 +93,80 @@ public class GlobalConfigurationBuilder implements GlobalConfigurationChildBuild
       return serialization;
    }
 
+   /**
+    * @deprecated This method always returns null now.
+    * Set thread pool via {@link TransportConfigurationBuilder#transportThreadPool()} instead.
+    */
+   @Deprecated
    @Override
    public ExecutorFactoryConfigurationBuilder asyncTransportExecutor() {
-      return asyncTransportExecutor;
+      return null;
    }
 
+   /**
+    * @deprecated This method always returns null now.
+    * Set thread pool via {@link #listenerThreadPool()} instead.
+    */
+   @Deprecated
    @Override
    public ExecutorFactoryConfigurationBuilder asyncListenerExecutor() {
-      return asyncListenerExecutor;
+      return null;
    }
 
+   /**
+    * @deprecated This method always returns null now.
+    * Set thread pool via {@link #persistenceThreadPool()} instead.
+    */
+   @Deprecated
    @Override
    public ExecutorFactoryConfigurationBuilder persistenceExecutor() {
-      return persistenceExecutor;
+      return null;
    }
 
+   /**
+    * @deprecated This method always returns null now.
+    * Set thread pool via {@link TransportConfigurationBuilder#remoteCommandThreadPool()} instead.
+    */
+   @Deprecated
    @Override
    public ExecutorFactoryConfigurationBuilder remoteCommandsExecutor() {
-      return remoteCommandsExecutor;
+      return null;
    }
 
+   /**
+    * @deprecated This method always returns null now.
+    * Set thread pool via {@link #evictionThreadPool()} instead.
+    */
+   @Deprecated
    @Override
    public ScheduledExecutorFactoryConfigurationBuilder evictionScheduledExecutor() {
-      return evictionScheduledExecutor;
+      return null;
    }
 
+   /**
+    * @deprecated This method always returns null now.
+    * Set thread pool via {@link #replicationQueueThreadPool()} instead.
+    */
+   @Deprecated
    @Override
    public ScheduledExecutorFactoryConfigurationBuilder replicationQueueScheduledExecutor() {
-      return replicationQueueScheduledExecutor;
+      return null;
+   }
+
+   public ThreadPoolConfigurationBuilder evictionThreadPool() {
+      return evictionThreadPool;
+   }
+
+   public ThreadPoolConfigurationBuilder listenerThreadPool() {
+      return listenerThreadPool;
+   }
+
+   public ThreadPoolConfigurationBuilder replicationQueueThreadPool() {
+      return replicationQueueThreadPool;
+   }
+
+   public ThreadPoolConfigurationBuilder persistenceThreadPool() {
+      return persistenceThreadPool;
    }
 
    @Override
@@ -167,15 +204,20 @@ public class GlobalConfigurationBuilder implements GlobalConfigurationChildBuild
       }
    }
 
+   /**
+    * @deprecated This method always returns null now.
+    * Set thread pool via {@link TransportConfigurationBuilder#totalOrderThreadPool()} instead.
+    */
+   @Deprecated
    public ExecutorFactoryConfigurationBuilder totalOrderExecutor() {
-      return totalOrderExecutor;
+      return null;
    }
 
    @SuppressWarnings("unchecked")
    public void validate() {
-      for (Builder<?> validatable : asList(asyncListenerExecutor, persistenceExecutor, asyncTransportExecutor,
-            remoteCommandsExecutor, evictionScheduledExecutor, replicationQueueScheduledExecutor, globalJmxStatistics, transport,
-            serialization, shutdown, site, totalOrderExecutor)) {
+      for (Builder<?> validatable : asList(evictionThreadPool, listenerThreadPool,
+            replicationQueueThreadPool, persistenceThreadPool,
+            globalJmxStatistics, transport, serialization, shutdown, site)) {
          validatable.validate();
       }
       for (Builder<?> m : modules) {
@@ -190,11 +232,10 @@ public class GlobalConfigurationBuilder implements GlobalConfigurationChildBuild
       for (Builder<?> module : modules)
          modulesConfig.add(module.create());
       return new GlobalConfiguration(
-            asyncListenerExecutor.create(),
-            asyncTransportExecutor.create(),
-            remoteCommandsExecutor.create(),
-            evictionScheduledExecutor.create(),
-            replicationQueueScheduledExecutor.create(),
+            evictionThreadPool.create(),
+            listenerThreadPool.create(),
+            replicationQueueThreadPool.create(),
+            persistenceThreadPool.create(),
             globalJmxStatistics.create(),
             transport.create(),
             security.create(),
@@ -202,10 +243,7 @@ public class GlobalConfigurationBuilder implements GlobalConfigurationChildBuild
             shutdown.create(),
             modulesConfig,
             site.create(),
-            cl.get(),
-            totalOrderExecutor.create(),
-            persistenceExecutor.create()
-            );
+            cl.get());
    }
 
    public GlobalConfigurationBuilder read(GlobalConfiguration template) {
@@ -217,41 +255,86 @@ public class GlobalConfigurationBuilder implements GlobalConfigurationChildBuild
          builder.read(c);
       }
 
-      asyncListenerExecutor.read(template.asyncListenerExecutor());
-      persistenceExecutor.read(template.asyncListenerExecutor());
-      asyncTransportExecutor.read(template.asyncTransportExecutor());
-      remoteCommandsExecutor.read(template.remoteCommandsExecutor());
-      evictionScheduledExecutor.read(template.evictionScheduledExecutor());
+      evictionThreadPool.read(template.evictionThreadPool());
+      listenerThreadPool.read(template.listenerThreadPool());
+      replicationQueueThreadPool.read(template.replicationQueueThreadPool());
+      persistenceThreadPool.read(template.persistenceThreadPool());
       globalJmxStatistics.read(template.globalJmxStatistics());
-      replicationQueueScheduledExecutor.read(template.replicationQueueScheduledExecutor());
       security.read(template.security());
       serialization.read(template.serialization());
       shutdown.read(template.shutdown());
       transport.read(template.transport());
       site.read(template.sites());
-      totalOrderExecutor.read(template.totalOrderExecutor());
       return this;
    }
 
    public static GlobalConfigurationBuilder defaultClusteredBuilder() {
       GlobalConfigurationBuilder builder = new GlobalConfigurationBuilder();
-      builder
-            .transport()
-               .defaultTransport()
-            .asyncTransportExecutor()
-               .addProperty("threadNamePrefix", "asyncTransportThread");
-
+      builder.transport().defaultTransport();
       return builder;
    }
 
    @Override
    public String toString() {
-      return "GlobalConfigurationBuilder [cl=" + cl + ", transport=" + transport + ", globalJmxStatistics="
-            + globalJmxStatistics + ", serialization=" + serialization + ", asyncTransportExecutor="
-            + asyncTransportExecutor + ", asyncListenerExecutor=" + asyncListenerExecutor + ", persistenceExecutor="
-            + persistenceExecutor + ", remoteCommandsExecutor=" + remoteCommandsExecutor + ", totalOrderExecutor="
-            + totalOrderExecutor + ", evictionScheduledExecutor=" + evictionScheduledExecutor
-            + ", replicationQueueScheduledExecutor=" + replicationQueueScheduledExecutor + ", security=" + security
-            + ", shutdown=" + shutdown + ", modules=" + modules + ", site=" + site + "]";
+      return "GlobalConfigurationBuilder{" +
+            "evictionExecutorThreadPool=" + evictionThreadPool +
+            ", listenerExecutorThreadPool=" + listenerThreadPool +
+            ", cl=" + cl +
+            ", transport=" + transport +
+            ", globalJmxStatistics=" + globalJmxStatistics +
+            ", serialization=" + serialization +
+            ", replicationQueueThreadPool=" + replicationQueueThreadPool +
+            ", persistenceThreadPool=" + persistenceThreadPool +
+            ", security=" + security +
+            ", shutdown=" + shutdown +
+            ", site=" + site +
+            '}';
    }
+
+   @Override
+   public boolean equals(Object o) {
+      if (this == o) return true;
+      if (o == null || getClass() != o.getClass()) return false;
+
+      GlobalConfigurationBuilder that = (GlobalConfigurationBuilder) o;
+
+      if (!evictionThreadPool.equals(that.evictionThreadPool))
+         return false;
+      if (!listenerThreadPool.equals(that.listenerThreadPool))
+         return false;
+      if (!replicationQueueThreadPool.equals(that.replicationQueueThreadPool))
+         return false;
+      if (!persistenceThreadPool.equals(that.persistenceThreadPool))
+         return false;
+      if (cl != null ? !cl.equals(that.cl) : that.cl != null) return false;
+      if (!globalJmxStatistics.equals(that.globalJmxStatistics))
+         return false;
+      if (!serialization.equals(that.serialization))
+         return false;
+      if (!shutdown.equals(that.shutdown))
+         return false;
+      if (!site.equals(that.site))
+         return false;
+      if (!security.equals(that.security))
+         return false;
+
+      return !transport.equals(that.transport);
+   }
+
+   @Override
+   public int hashCode() {
+      int result = cl != null ? cl.hashCode() : 0;
+      result = 31 * result + (transport.hashCode());
+      result = 31 * result + (globalJmxStatistics.hashCode());
+      result = 31 * result + (serialization.hashCode());
+      result = 31 * result + (evictionThreadPool.hashCode());
+      result = 31 * result + (listenerThreadPool.hashCode());
+      result = 31 * result + (replicationQueueThreadPool.hashCode());
+      result = 31 * result + (persistenceThreadPool.hashCode());
+      result = 31 * result + (shutdown.hashCode());
+      result = 31 * result + (site.hashCode());
+      result = 31 * result + (security.hashCode());
+      return result;
+   }
+
 }

@@ -41,6 +41,7 @@ public class AbstractEmbeddedCacheManagerFactory {
             if (logger.isDebugEnabled()) logger.debug("GlobalConfigurationBuilder is null. Using default new " +
                   "instance.");
             gcb = new GlobalConfigurationBuilder();
+            gcb.globalJmxStatistics().allowDuplicateDomains(true);
          }
          if (builder == null) {
             if (logger.isDebugEnabled()) logger.debug("ConfigurationBuilder is null. Using default new instance.");

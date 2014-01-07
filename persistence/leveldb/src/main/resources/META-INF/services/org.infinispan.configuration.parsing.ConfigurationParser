@@ -1,1 +1,2 @@
 org.infinispan.persistence.leveldb.configuration.LevelDBStoreConfigurationParser60
+org.infinispan.persistence.leveldb.configuration.LevelDBStoreConfigurationParser70

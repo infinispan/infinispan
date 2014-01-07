@@ -31,6 +31,7 @@ import org.jboss.as.clustering.concurrent.ManagedScheduledExecutorService;
  * Executor factory that produces {@link ManagedScheduledExecutorService} instances.
  * @author Paul Ferraro
  */
+@Deprecated
 public class ManagedScheduledExecutorFactory implements ScheduledExecutorFactory {
 
     private final ScheduledExecutorService executor;

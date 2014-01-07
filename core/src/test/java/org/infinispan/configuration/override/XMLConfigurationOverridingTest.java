@@ -227,31 +227,6 @@ public class XMLConfigurationOverridingTest extends AbstractInfinispanTest imple
    }
    }
 
-   public void testOverrideIndexing() throws Exception {
-      withCacheManager(new CacheManagerCallable(TestCacheManagerFactory.fromXml("configs/named-cache-override-test.xml")) {
-         @Override
-         public void call() {
-            Configuration cnf = cm.getCacheConfiguration(simpleCacheName);
-            Assert.assertFalse(cnf.indexing().enabled());
-
-            Configuration conf = new ConfigurationBuilder().indexing().indexLocalOnly(false)
-                  .addProperty("default.directory_provider", "infinispan").build();
-
-            cm.defineConfiguration(simpleCacheName, conf);
-
-            cnf = cm.getCacheConfiguration(simpleCacheName);
-            Assert.assertFalse(cnf.indexing().enabled());
-            Assert.assertFalse(cnf.indexing().indexLocalOnly());
-            Assert.assertEquals("infinispan", cnf.indexing().properties().getProperty("default.directory_provider"));
-            Assert.assertFalse(cm.getCacheNames().contains("LuceneIndexesMetadata"));
-
-            cm.getCache(simpleCacheName).put("key0", new NonIndexedClass("value0"));
-
-            Assert.assertFalse(cm.getCacheNames().contains("LuceneIndexesMetadata"));
-         }
-      });
-   }
-
    public void testOverrideNonTransactional2Transactional() throws Exception {
       withCacheManager(new CacheManagerCallable(TestCacheManagerFactory.fromXml("configs/named-cache-override-test.xml")) {
          @Override

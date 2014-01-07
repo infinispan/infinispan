@@ -13,12 +13,13 @@ public enum Element {
     // must be first
     UNKNOWN(null),
 
-    ASYNC_TRANSPORT_EXECUTOR("asyncTransportExecutor"),
-    CONNECTION_POOL("connectionPool"),
+    CACHE("cache"),
+    ASYNC_TRANSPORT_EXECUTOR("async-executor"),
+    CONNECTION_POOL("connection-pool"),
     PROPERTIES("properties"),
-    REMOTE_STORE("remoteStore"),
+    REMOTE_STORE("remote-store"),
     SERVERS("servers"),
-    SERVER("server")
+    SERVER("remote-server")
     ;
 
     private final String name;

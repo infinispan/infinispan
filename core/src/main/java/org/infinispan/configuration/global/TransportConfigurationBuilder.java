@@ -11,6 +11,8 @@ import org.infinispan.util.logging.LogFactory;
 import java.util.Properties;
 import java.util.concurrent.TimeUnit;
 
+import static java.util.Arrays.asList;
+
 /**
  * Configures the transport used for network communications across the cluster.
  */
@@ -29,9 +31,15 @@ public class TransportConfigurationBuilder extends AbstractGlobalConfigurationBu
 
    private String nodeName;
    private Properties properties = new Properties();
+   private final ThreadPoolConfigurationBuilder transportThreadPool;
+   private final ThreadPoolConfigurationBuilder remoteCommandThreadPool;
+   private final ThreadPoolConfigurationBuilder totalOrderThreadPool;
 
    TransportConfigurationBuilder(GlobalConfigurationBuilder globalConfig) {
       super(globalConfig);
+      transportThreadPool = new ThreadPoolConfigurationBuilder(globalConfig);
+      remoteCommandThreadPool = new ThreadPoolConfigurationBuilder(globalConfig);
+      totalOrderThreadPool = new ThreadPoolConfigurationBuilder(globalConfig);
    }
 
    /**
@@ -150,6 +158,10 @@ public class TransportConfigurationBuilder extends AbstractGlobalConfigurationBu
       return this;
    }
 
+   public String getProperty(String key) {
+      return String.valueOf(this.properties.get(key));
+   }
+
    /**
     * @deprecated Since 6.0, strictPeerToPeer is ignored and asymmetric clusters are always allowed.
     */
@@ -159,10 +171,25 @@ public class TransportConfigurationBuilder extends AbstractGlobalConfigurationBu
       return this;
    }
 
+   public ThreadPoolConfigurationBuilder transportThreadPool() {
+      return transportThreadPool;
+   }
+
+   public ThreadPoolConfigurationBuilder remoteCommandThreadPool() {
+      return remoteCommandThreadPool;
+   }
+
+   public ThreadPoolConfigurationBuilder totalOrderThreadPool() {
+      return totalOrderThreadPool;
+   }
 
    @Override
    public
    void validate() {
+      for (Builder<?> validatable : asList(transportThreadPool,
+            remoteCommandThreadPool, totalOrderThreadPool)) {
+         validatable.validate();
+      }
       if(clusterName == null){
           throw new CacheConfigurationException("Transport clusterName cannot be null");
       }
@@ -171,7 +198,9 @@ public class TransportConfigurationBuilder extends AbstractGlobalConfigurationBu
    @Override
    public
    TransportConfiguration create() {
-      return new TransportConfiguration(clusterName, machineId, rackId, siteId, distributedSyncTimeout, transport, nodeName, TypedProperties.toTypedProperties(properties));
+      return new TransportConfiguration(clusterName, machineId, rackId, siteId,
+            distributedSyncTimeout, transport, nodeName, TypedProperties.toTypedProperties(properties),
+            transportThreadPool.create(), remoteCommandThreadPool.create(), totalOrderThreadPool.create());
    }
 
    public TransportConfigurationBuilder defaultTransport() {
@@ -191,6 +220,9 @@ public class TransportConfigurationBuilder extends AbstractGlobalConfigurationBu
       this.rackId = template.rackId();
       this.siteId = template.siteId();
       this.transport = template.transport();
+      this.transportThreadPool.read(template.transportThreadPool());
+      this.remoteCommandThreadPool.read(template.remoteCommandThreadPool());
+      this.totalOrderThreadPool.read(template.totalOrderThreadPool());
 
       return this;
    }
@@ -210,6 +242,9 @@ public class TransportConfigurationBuilder extends AbstractGlobalConfigurationBu
             ", transport=" + transport +
             ", nodeName='" + nodeName + '\'' +
             ", properties=" + properties +
+            ", threadPool=" + transportThreadPool +
+            ", remoteCommandThreadPool=" + remoteCommandThreadPool +
+            ", totalOrderThreadPool=" + totalOrderThreadPool +
             '}';
    }
 
@@ -235,6 +270,12 @@ public class TransportConfigurationBuilder extends AbstractGlobalConfigurationBu
          return false;
       if (transport != null ? !transport.equals(that.transport) : that.transport != null)
          return false;
+      if (!transportThreadPool.equals(that.transportThreadPool))
+         return false;
+      if (!remoteCommandThreadPool.equals(that.remoteCommandThreadPool))
+         return false;
+      if (!totalOrderThreadPool.equals(that.totalOrderThreadPool))
+         return false;
 
       return true;
    }
@@ -249,6 +290,9 @@ public class TransportConfigurationBuilder extends AbstractGlobalConfigurationBu
       result = 31 * result + (transport != null ? transport.hashCode() : 0);
       result = 31 * result + (nodeName != null ? nodeName.hashCode() : 0);
       result = 31 * result + (properties != null ? properties.hashCode() : 0);
+      result = 31 * result + (transportThreadPool.hashCode());
+      result = 31 * result + (remoteCommandThreadPool.hashCode());
+      result = 31 * result + (totalOrderThreadPool.hashCode());
       return result;
    }
 
