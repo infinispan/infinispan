@@ -3,15 +3,15 @@ Manik Surtani, Mircea Markus, Galder Zamarreño, Pete Muir, and others from the 
 :icons: font
 
 TIP: This section contains various recorded demos, presentations and
-screencasts on Infnispan which we hope you'd find useful.
+screencasts on Infinispan which we hope you'd find useful.
 
-===  Monitoring
-* link:$$http://www.youtube.com/watch?v=f2os8tvYFBU$$[Monitoring Infinispan with Jopr console (screencast)] 
+.Monitoring
+* link:$$http://www.youtube.com/watch?v=f2os8tvYFBU$$[Monitoring Infinispan with Jopr console (screencast)]
 * link:$$http://community.jboss.org/docs/DOC-14776$$[How to install Jopr, the Jopr agent and the Infinispan Jopr plugin (video)] 
-* link:$$http://community.jboss.org/docs/DOC-14783$$[Montoring an Infinispan instance that was automatically discovered (video)] 
-* link:$$http://community.jboss.org/docs/DOC-14784$$[Montoring an Infinispan instance that was manually added (video)] 
+* link:$$http://community.jboss.org/docs/DOC-14783$$[Monitoring an Infinispan instance that was automatically discovered (video)]
+* link:$$http://community.jboss.org/docs/DOC-14784$$[Monitoring an Infinispan instance that was manually added (video)]
 
-===  Geographic failover
-* link:$$http://www.vimeo.com/24825312$$[Geographic failover with Infinispan (presentation)] 
+.Geographic failover
+* link:$$http://www.vimeo.com/24825312$$[Geographic failover with Infinispan (presentation)]
 
 
