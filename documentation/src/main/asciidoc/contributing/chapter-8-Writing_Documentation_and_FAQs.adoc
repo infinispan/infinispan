@@ -146,7 +146,6 @@ it applies to.
 Also, only specify a MINOR version rather than a detailed version.
 
 .A bad version statement
-[Quote]
 ====
 _This section talks about a new API in Infinispan, called a WidgetMeister.  The WidgetMeister has the power to rule all widgets in your cluster, and is included in Infinispan from version 6.2.3.Beta2 onwards._
 ====
@@ -159,7 +158,6 @@ Why is this bad?  A number of reasons.
 How _should_ this be written?
 
 .A good version statement
-[Quote]
 ====
 This section talks about a new API in Infinispan, called a WidgetMeister.  The WidgetMeister has the power to rule all widgets in your cluster.
 
@@ -194,7 +192,6 @@ So, are there any tricks to reformulate a sentence so the first person is not us
 
 
 .Articles used correctly
-[Quote]
 ====
 _Infinispan uses **a** logging framework to communicate messages to the user, **the** logging framework used by Infinispan is JBoss Logging_. 
 ====
@@ -209,7 +206,6 @@ This is not a formal or complete description, but is a good rule of thumb.
 * Keep the tense the same. It's very easy to slip between the present, past and future tenses, but this produces text that is feels "unnatural" to the reader. 
 
 .Bad tenses
-[Quote]
 ====
 Data is collected from Infinispan every hour. Upon analysis the data showed that Infinispan is 2 million times faster than it's nearest competitor.
 ====
@@ -220,7 +216,6 @@ This is clearly not actually the order in which the events happened!
 Of course, if you are actually describing the progression of time, then changing tenses is fine.
 
 .Tenses used correctly
-[Quote]
 ====
 In the last section you _were_ shown how to configure Infinispan using XML, and in the next section you _will be_ shown how to configure Infinispan programmatically. 
 ====
@@ -233,15 +228,12 @@ This impacts the professionalism and readability of the documentation.
 The examples below probably need no explanation.
 
 .Bad colloquialisms
-[Quote]
 ====
 _You should use the WidgetMeister API for this sort of problem, coz it's the fastest way and its pretty cool._
 ====
-[Quote]
 ====
 _You've then gotta install the downloaded archive._
 ====
-[Quote]
 ====
 _If the dload fails, contact the SA who runs the svr._
 ====
@@ -250,6 +242,6 @@ _If the dload fails, contact the SA who runs the svr._
 When writing a glossary or FAQ entry, you should follow the existing entries as a template. 
 
 * If the entry is commonly referred to using an acronym, then the title should consistent of the fully expanded name, with the acronym in brackets. You can then use the acronym always within the main text body.
-* If you want to refer to other glossary articles using links in the text body, then just link them with no alternative text
-* If you want to make external links (e.g. wikipedia, user guide), then add a bulleted list with title "More resources", and list them there. This clearly indicates to users when they are moving outside of our definitions
+* If you want to refer to other glossary articles using links in the text body, then just link them with no alternative text.
+* If you want to make external links (e.g. Wikipedia, user guide), then add a bulleted list with title "More resources", and list them there. This clearly indicates to users when they are moving outside of our definitions.
 
