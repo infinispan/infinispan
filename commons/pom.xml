@@ -57,15 +57,27 @@
             </configuration>
          </plugin>
          <plugin>
-            <groupId>org.apache.felix</groupId>
-            <artifactId>maven-bundle-plugin</artifactId>
-            <configuration>
-               <instructions>
-                  <Export-Package>
-                     ${project.groupId}.commons.*;version=${project.version};-split-package:=error
-                  </Export-Package>
-               </instructions>
-            </configuration>
+              <groupId>org.apache.felix</groupId>
+              <artifactId>maven-bundle-plugin</artifactId>
+              <configuration>
+                  <instructions>
+                      <Fragment-Host>org.infinispan.core;bundle-version=6.0.0.CR1</Fragment-Host>
+                      <Export-Package>
+                          ${project.groupId}.commons.*;version=${project.version};-split-package:=error
+                      </Export-Package>
+                      <Import-Package>
+                          javax.naming,
+                          javax.net.ssl,
+                          net.jcip.annotations;resolution:=optional,
+                          org.jboss.logging;version="[3.1,4)",
+                          org.jboss.marshalling;version="[1.3,3)";resolution:=optional,
+                          org.jboss.marshalling.reflect;version="[1.3,3)";resolution:=optional,
+                          org.jboss.marshalling.river;version="[1.3,3)";resolution:=optional,
+                          org.osgi.framework;version="[1.6,2)";resolution:=optional,
+                          sun.misc
+                      </Import-Package>
+                  </instructions>
+              </configuration>
          </plugin>
       </plugins>
    </build>
