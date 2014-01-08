@@ -33,6 +33,8 @@ import java.util.Set;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 
 /**
  * Interceptor that handles L1 logic for non-transactional caches.
@@ -55,6 +57,7 @@ public class L1NonTxInterceptor extends BaseRpcInterceptor {
    protected StateTransferLock stateTransferLock;
 
    private long l1Lifespan;
+   private long replicationTimeout;
 
    /**
     *  This map holds all the current write synchronizers registered for a given key.  This map is only added to when an
@@ -97,6 +100,7 @@ public class L1NonTxInterceptor extends BaseRpcInterceptor {
    @Start
    public void start() {
       l1Lifespan = config.clustering().l1().lifespan();
+      replicationTimeout = config.clustering().sync().replTimeout();
    }
 
    @Override
@@ -161,11 +165,19 @@ public class L1NonTxInterceptor extends BaseRpcInterceptor {
             log.tracef("Found current request for key %s, waiting for their invocation's response", key);
          }
          try {
-            Object returnValue = presentSync.get();
-            // Write commands could have different values so we always want to run them after we know the remote
-            // value is retrieved.  Gets however only need the return value so we don't need to run the additional
-            // interceptors
-            if (runInterceptorOnConflict) {
+            Object returnValue;
+            try {
+               returnValue = presentSync.get(replicationTimeout, TimeUnit.MILLISECONDS);
+               // Write commands could have different values so we always want to run them after we know the remote
+               // value is retrieved.  Gets however only need the return value so we don't need to run the additional
+               // interceptors
+               if (runInterceptorOnConflict) {
+                  returnValue = invokeNextInterceptor(ctx, command);
+               }
+            } catch (TimeoutException e) {
+               // This should never be required since the status is always set in a try catch above - but IBM doesn't...
+               log.warnf("Synchronizer didn't return in %s milliseconds - running command normally!", replicationTimeout);
+               // Always run next interceptor if a timeout occurs
                returnValue = invokeNextInterceptor(ctx, command);
             }
             return returnValue;
