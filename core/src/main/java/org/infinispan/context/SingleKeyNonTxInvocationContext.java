@@ -57,21 +57,26 @@ public final class SingleKeyNonTxInvocationContext implements InvocationContext 
 
    @Override
    public Set<Object> getLockedKeys() {
-      return isLocked && key != null ?
-            Collections.singleton(key) : InfinispanCollections.emptySet();
+      return isLocked ? Collections.singleton(key) : InfinispanCollections.emptySet();
    }
 
    @Override
    public void clearLockedKeys() {
-      key = null;
-      cacheEntry = null;
       isLocked = false;
+      // TODO Dan: this shouldn't be necessary, but we don't clear the looked up keys
+      // when retrying a non-tx command because of a topology change
+      cacheEntry = null;
    }
 
    @Override
    public void addLockedKey(final Object key) {
-      if (cacheEntry != null && !keyEquivalence.equals(key, this.key))
+      if (this.key == null) {
+         // Set the key here
+         this.key = key;
+      } else if (!keyEquivalence.equals(key, this.key)) {
          throw illegalStateException();
+      }
+
       isLocked = true;
    }
 
@@ -81,7 +86,7 @@ public final class SingleKeyNonTxInvocationContext implements InvocationContext 
 
    @Override
    public CacheEntry lookupEntry(final Object key) {
-      if (key != null && this.key !=null && keyEquivalence.equals(key, this.key))
+      if (key != null && this.key != null && keyEquivalence.equals(key, this.key))
          return cacheEntry;
 
       return null;
@@ -89,19 +94,26 @@ public final class SingleKeyNonTxInvocationContext implements InvocationContext 
 
    @Override
    public Map<Object, CacheEntry> getLookedUpEntries() {
-      return key == null ? InfinispanCollections.<Object, CacheEntry>emptyMap() : Collections.singletonMap(key, cacheEntry);
+      return cacheEntry == null ? InfinispanCollections.<Object, CacheEntry>emptyMap() : Collections.singletonMap(key, cacheEntry);
    }
 
    @Override
    public void putLookedUpEntry(final Object key, final CacheEntry e) {
-      this.key = key;
+      if (this.key == null) {
+         // Set the key here
+         this.key = key;
+      } else if (!keyEquivalence.equals(key, this.key)) {
+         throw illegalStateException();
+      }
+
       this.cacheEntry = e;
    }
 
    @Override
    public void removeLookedUpEntry(final Object key) {
-      if (keyEquivalence.equals(key, this.key))
-         clearLockedKeys();
+      if (keyEquivalence.equals(key, this.key)) {
+         this.cacheEntry = null;
+      }
    }
 
    public Object getKey() {

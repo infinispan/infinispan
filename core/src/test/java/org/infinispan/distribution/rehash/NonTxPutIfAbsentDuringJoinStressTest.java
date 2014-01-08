@@ -7,6 +7,7 @@ import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.fwk.CleanupAfterMethod;
 import org.infinispan.transaction.TransactionMode;
+import org.infinispan.util.concurrent.locks.LockManager;
 import org.testng.annotations.Test;
 
 import java.util.concurrent.Callable;
@@ -15,7 +16,7 @@ import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 
 import static org.testng.AssertJUnit.assertEquals;
-import static org.testng.AssertJUnit.assertNull;
+import static org.testng.AssertJUnit.assertFalse;
 import static org.testng.AssertJUnit.assertTrue;
 
 /**
@@ -96,6 +97,15 @@ public class NonTxPutIfAbsentDuringJoinStressTest extends MultipleCacheManagersT
                String key = "key_" + j;
                assertEquals(insertedValues.get(key), cache(k).get(key));
             }
+         }
+      }
+
+      for (int i = 0; i < caches().size(); i++) {
+         LockManager lockManager = advancedCache(i).getLockManager();
+         assertEquals(0, lockManager.getNumberOfLocksHeld());
+         for (int j = 0; j < NUM_KEYS; j++) {
+            String key = "key_" + j;
+            assertFalse(lockManager.isLocked(key));
          }
       }
    }

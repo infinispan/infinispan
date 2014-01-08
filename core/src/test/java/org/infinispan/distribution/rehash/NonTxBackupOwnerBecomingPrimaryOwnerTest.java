@@ -37,10 +37,7 @@ import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyInt;
 import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.doAnswer;
-import static org.testng.AssertJUnit.assertEquals;
-import static org.testng.AssertJUnit.assertNotNull;
-import static org.testng.AssertJUnit.assertNull;
-import static org.testng.AssertJUnit.assertTrue;
+import static org.testng.AssertJUnit.*;
 
 /**
  * Tests data loss during state transfer a backup owner of a key becomes the primary owner
@@ -185,6 +182,11 @@ public class NonTxBackupOwnerBecomingPrimaryOwnerTest extends MultipleCacheManag
       assertEquals("v", cache0.get(key));
       assertEquals("v", cache1.get(key));
       assertEquals("v", cache2.get(key));
+
+      // Check that there are no leaked locks
+      assertFalse(cache0.getAdvancedCache().getLockManager().isLocked(key));
+      assertFalse(cache1.getAdvancedCache().getLockManager().isLocked(key));
+      assertFalse(cache2.getAdvancedCache().getLockManager().isLocked(key));
    }
 
    private static class CustomConsistentHashFactory extends SingleSegmentConsistentHashFactory {
