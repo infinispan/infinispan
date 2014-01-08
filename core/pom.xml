@@ -139,16 +139,58 @@
       </pluginManagement>
       <plugins>
          <plugin>
-            <groupId>org.apache.felix</groupId>
-            <artifactId>maven-bundle-plugin</artifactId>
-            <configuration>
-               <instructions>
-                  <Export-Package>
-                     !${project.groupId}.commons.*,${project.groupId}.*;version=${project.version};-split-package:=error
-                  </Export-Package>
-               </instructions>
-            </configuration>
-         </plugin>
+			<groupId>org.apache.felix</groupId>
+			<artifactId>maven-bundle-plugin</artifactId>
+			<configuration>
+				<instructions>
+					<Include-Resource>src/main/resources/infinispan-core-component-metadata.dat</Include-Resource>
+					<Export-Package>
+						!${project.groupId}.commons.*,
+						org.infinispan.marshall.core,
+						${project.groupId}.*;version=${project.version};-split-package:=error
+					</Export-Package>
+					<Import-Package>
+						javax.management,javax.naming,
+						javax.transaction;version="[1.1,2)",
+						javax.transaction.xa;version="[1.1,2)",
+						javax.xml.namespace,
+						javax.xml.parsers,
+						javax.xml.stream,
+						javax.xml.transform,
+						javax.xml.transform.dom,
+						javax.xml.transform.stream,
+						net.jcip.annotations;resolution:=optional,
+						org.infinispan.commons;version="[6.0,7)",
+						org.infinispan.commons.api;version="[6.0,7)",
+						org.infinispan.commons.configuration;version="[6.0,7)",
+						org.infinispan.commons.equivalence;version="[6.0,7)",
+						org.infinispan.commons.executors;version="[6.0,7)",
+						org.infinispan.commons.hash;version="[6.0,7)",
+						org.infinispan.commons.io;version="[6.0,7)",
+						org.infinispan.commons.marshall;version="[6.0,7)",
+						org.infinispan.commons.marshall.jboss;version="[6.0,7)",
+						org.infinispan.commons.util;version="[6.0,7)",
+						org.infinispan.commons.util.concurrent;version="[6.0,7)",
+						org.infinispan.commons.util.concurrent.jdk8backported;
+						version="[6.0,7)",org.jboss.logging;version="[3.1,4)",
+						org.jboss.marshalling;version="[1.3,3)",
+						org.jboss.marshalling.util;version="[1.3,3)",
+						org.jgroups;version="[3.4,4)",
+						org.jgroups.blocks;version="[3.4,4)",
+						org.jgroups.blocks.mux;version="[3.4,4)",
+						org.jgroups.jmx;version="[3.4,4)",
+						org.jgroups.logging;version="[3.4,4)",
+						org.jgroups.protocols;version="[3.4,4)",
+						org.jgroups.protocols.relay;version="[3.4,4)",
+						org.jgroups.protocols.tom;version="[3.4,4)",
+						org.jgroups.stack;version="[3.4,4)",
+						org.jgroups.util;version="[3.4,4)",
+						org.w3c.dom,
+						org.xml.sax
+					</Import-Package>
+				</instructions>
+			</configuration>
+		</plugin>
       </plugins>
    </build>
 
