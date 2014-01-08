@@ -96,16 +96,42 @@
    <build>     
       <plugins>
          <plugin>
-            <groupId>org.apache.felix</groupId>
-            <artifactId>maven-bundle-plugin</artifactId>
-            <configuration>
-               <instructions>
-                  <Export-Package>
-                     ${project.groupId}.client.hotrod.*;version=${project.version};-split-package:=error
-                  </Export-Package>
-               </instructions>
-            </configuration>
-         </plugin>
+              <groupId>org.apache.felix</groupId>
+              <artifactId>maven-bundle-plugin</artifactId>
+              <configuration>
+                  <instructions>
+                      <Export-Package>
+                          ${project.groupId}.client.hotrod.*;version=${project.version};-split-package:=error
+                      </Export-Package>
+                      <Import-Package>
+                              javax.net.ssl,
+                              net.jcip.annotations;resolution:=optional,
+                              org.apache.avro;resolution:=optional,
+                              org.apache.avro.generic;resolution:=optional,
+                              org.apache.avro.io;resolution:=optional,
+                              org.apache.avro.util;resolution:=optional,
+                              org.apache.commons.pool;version="[1.6,2)",
+                              org.apache.commons.pool.impl;version="[1.6,2)",
+                              org.infinispan.commons;version="[6.0,7)",
+                              org.infinispan.commons.api;version="[6.0,7)",
+                              org.infinispan.commons.configuration;version="[6.0,7)",
+                              org.infinispan.commons.executors;version="[6.0,7)",
+                              org.infinispan.commons.hash;version="[6.0,7)",
+                              org.infinispan.commons.io;version="[6.0,7)",
+                              org.infinispan.commons.logging;version="[6.0,7)",
+                              org.infinispan.commons.marshall;version="[6.0,7)",
+                              org.infinispan.commons.marshall.jboss;version="[6.0,7)",
+                              org.infinispan.commons.util;version="[6.0,7)",
+                              org.infinispan.commons.util.concurrent;version="[6.0,7)",
+                              org.infinispan.protostream;resolution:=optional,
+                              org.infinispan.query.dsl;resolution:=optional,
+                              org.infinispan.query.dsl.impl;resolution:=optional,
+                              org.infinispan.query.remote.client;resolution:=optional,
+                              org.jboss.logging;version="[3.1,4)"
+                      </Import-Package>
+                  </instructions>
+              </configuration>
+          </plugin>
       </plugins>
    </build>
 </project>
