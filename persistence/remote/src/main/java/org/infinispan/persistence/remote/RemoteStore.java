@@ -1,12 +1,14 @@
 package org.infinispan.persistence.remote;
 
 import net.jcip.annotations.ThreadSafe;
+
 import org.infinispan.client.hotrod.Flag;
 import org.infinispan.client.hotrod.MetadataValue;
 import org.infinispan.client.hotrod.RemoteCache;
 import org.infinispan.client.hotrod.RemoteCacheManager;
 import org.infinispan.client.hotrod.configuration.ConfigurationBuilder;
 import org.infinispan.client.hotrod.configuration.ExhaustedAction;
+import org.infinispan.client.hotrod.impl.ConfigurationProperties;
 import org.infinispan.commons.api.BasicCacheContainer;
 import org.infinispan.commons.marshall.Marshaller;
 import org.infinispan.commons.marshall.jboss.GenericJBossMarshaller;
@@ -234,6 +236,8 @@ public class RemoteStore implements AdvancedLoadWriteStore {
             .valueSizeEstimate(configuration.valueSizeEstimate());
       if (configuration.protocolVersion() != null)
          builder.protocolVersion(configuration.protocolVersion());
+      else
+         builder.protocolVersion(ConfigurationProperties.PROTOCOL_VERSION_12);
       if (configuration.transportFactory() != null)
          builder.transportFactory(configuration.transportFactory());
 
