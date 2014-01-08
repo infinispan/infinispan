@@ -1,6 +1,7 @@
 package org.infinispan.distribution;
 
 import org.infinispan.Cache;
+import org.infinispan.commands.ReplicableCommand;
 import org.infinispan.commands.VisitableCommand;
 import org.infinispan.commands.read.GetKeyValueCommand;
 import org.infinispan.commands.tx.CommitCommand;
@@ -12,9 +13,15 @@ import org.infinispan.interceptors.base.CommandInterceptor;
 import org.infinispan.interceptors.distribution.L1NonTxInterceptor;
 import org.infinispan.interceptors.distribution.L1TxInterceptor;
 import org.infinispan.interceptors.distribution.TxDistributionInterceptor;
+import org.infinispan.remoting.RemoteException;
 import org.infinispan.remoting.rpc.RpcManager;
+import org.infinispan.remoting.rpc.RpcOptions;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.tx.dld.ControlledRpcManager;
+import org.mockito.AdditionalAnswers;
+import org.mockito.Mockito;
+import org.mockito.invocation.InvocationOnMock;
+import org.mockito.stubbing.Answer;
 import org.testng.annotations.Test;
 
 import javax.transaction.HeuristicMixedException;
@@ -31,7 +38,10 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 import static org.testng.AssertJUnit.*;
+
+import static org.mockito.Mockito.*;
 
 @Test(groups = "functional", testName = "distribution.DistSyncTxL1FuncTest")
 public class DistSyncTxL1FuncTest extends BaseDistSyncL1Test {
@@ -166,11 +176,68 @@ public class DistSyncTxL1FuncTest extends BaseDistSyncL1Test {
          // Let the replace now finish
          barrier.await(5, TimeUnit.SECONDS);
 
-         assertTrue(futureReplace.get());
+         assertTrue(futureReplace.get(5, TimeUnit.SECONDS));
 
          assertEquals(firstValue, futureGet.get(5, TimeUnit.SECONDS));
       } finally {
          removeAllBlockingInterceptorsFromCache(nonOwnerCache);
+      }
+   }
+
+   @Test
+   public void testGetOccursAfterReplaceRunningBeforeWithRemoteException() throws ExecutionException, InterruptedException, BrokenBarrierException, TimeoutException {
+      final Cache<Object, String> nonOwnerCache = getFirstNonOwner(key);
+      final Cache<Object, String> ownerCache = getFirstOwner(key);
+
+      ownerCache.put(key, firstValue);
+
+      CyclicBarrier barrier = new CyclicBarrier(2);
+      addBlockingInterceptorBeforeTx(nonOwnerCache, barrier, ReplaceCommand.class, false);
+      RpcManager realManager = nonOwnerCache.getAdvancedCache().getComponentRegistry().getComponent(RpcManager.class);
+      RpcManager mockManager = mock(RpcManager.class, AdditionalAnswers.delegatesTo(realManager));
+
+      doAnswer(new Answer() {
+         @Override
+         public Object answer(InvocationOnMock invocationOnMock) throws Throwable {
+            throw new RemoteException("FAIL", new TimeoutException());
+         }
+         // Only throw exception on the first call just in case if test calls it more than once to fail properly
+      }).doAnswer(AdditionalAnswers.delegatesTo(realManager)).when(mockManager).invokeRemotely(anyCollection(), any(ReplicableCommand.class), any(RpcOptions.class));
+
+      TestingUtil.replaceComponent(nonOwnerCache, RpcManager.class, mockManager, true);
+      try {
+         // The replace will internally block the get until it gets the remote value
+         Future<Boolean> futureReplace = nonOwnerCache.replaceAsync(key, firstValue, secondValue);
+
+         barrier.await(5, TimeUnit.SECONDS);
+
+         Future<String> futureGet = nonOwnerCache.getAsync(key);
+
+         try {
+            futureGet.get(100, TimeUnit.MILLISECONDS);
+            fail("Get shouldn't return until after the replace completes");
+         } catch (TimeoutException e) {
+
+         }
+
+         // Let the replace now finish
+         barrier.await(5, TimeUnit.SECONDS);
+         try {
+            futureReplace.get(5, TimeUnit.SECONDS);
+            fail("Test should have thrown an execution exception");
+         } catch (ExecutionException e) {
+            assertTrue(e.getCause() instanceof RemoteException);
+         }
+
+
+         try {
+            assertEquals(firstValue, futureGet.get(5, TimeUnit.SECONDS));
+         } catch (ExecutionException e) {
+            assertTrue(e.getCause() instanceof RemoteException);
+         }
+      } finally {
+         removeAllBlockingInterceptorsFromCache(nonOwnerCache);
+         TestingUtil.replaceComponent(nonOwnerCache, RpcManager.class, realManager, true);
       }
    }
 
