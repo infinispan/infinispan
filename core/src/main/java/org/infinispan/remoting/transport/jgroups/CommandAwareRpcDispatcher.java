@@ -340,13 +340,9 @@ public class CommandAwareRpcDispatcher extends RpcDispatcher {
                                              Marshaller marshaller, CommandAwareRpcDispatcher card, boolean oob,
                                              JGroupsTransport transport) throws Exception {
       if (trace) log.tracef("Replication task sending %s to single recipient %s with response mode %s", command, destination, mode);
+      boolean rsvp = isRsvpCommand(command);
 
       // Replay capability requires responses from all members!
-      /// HACK ALERT!  Used for ISPN-1789.  Enable RSVP if the command is a state transfer control command or cache topology control command.
-      boolean rsvp = command instanceof StateRequestCommand || command instanceof StateResponseCommand
-            || command instanceof CacheTopologyControlCommand
-            || isRsvpCommand(command);
-
       Response retval;
       Buffer buf;
       buf = marshallCall(marshaller, command);
@@ -373,10 +369,7 @@ public class CommandAwareRpcDispatcher extends RpcDispatcher {
                                                Marshaller marshaller, CommandAwareRpcDispatcher card,
                                                boolean oob, boolean ignoreLeavers, boolean totalOrder) throws Exception {
       if (trace) log.tracef("Replication task sending %s to addresses %s with response mode %s", command, dests, mode);
-
-      /// HACK ALERT!  Used for ISPN-1789.  Enable RSVP if the command is a cache topology control command.
-      boolean rsvp = command instanceof CacheTopologyControlCommand
-            || isRsvpCommand(command);
+      boolean rsvp = isRsvpCommand(command);
 
       RspList<Object> retval = null;
       Buffer buf;

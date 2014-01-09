@@ -274,7 +274,8 @@ public class StateTransferManagerImpl implements StateTransferManager {
                log.tracef("Forwarding command %s to new targets %s", command, newTargets);
             }
             // TODO find a way to forward the command async if it was received async
-            return rpcManager.invokeRemotely(newTargets, command, rpcManager.getDefaultRpcOptions(sync));
+            // TxCompletionNotificationCommands are the only commands forwarded asynchronously, and they must be OOB
+            return rpcManager.invokeRemotely(newTargets, command, rpcManager.getDefaultRpcOptions(sync, false));
          }
       }
       return Collections.emptyMap();
