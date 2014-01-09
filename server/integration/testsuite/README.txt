@@ -18,7 +18,7 @@ Currently these subsets are predefined:
   -P suite.others                    (Tests that do not belong to any of the suites above. Useful when running a single test that's outside
                                       of any pre-defined group)
 
-Runnins with specific server zip distribution
+Running with specific server zip distribution
 ---------------------------------------------
 
 If you specify -Dzip.dist=path/to/distro.zip the test server directories target/server/node* will be based on the contents of this zip file.
@@ -89,7 +89,7 @@ properties:
   leveldb.impl        - sets implementation type, allowed values: AUTO, JAVA, JNI
   leveldb.patch       - used with -Dzip.dist. Patches the zip distribution with dependencies of leveldb cache store taken from upstream build.
 
-Runnig test in JDK 6
+Running test in JDK 6
 --------------------
 
 When want to run testsuite on JDK 6, you have to set following profile
