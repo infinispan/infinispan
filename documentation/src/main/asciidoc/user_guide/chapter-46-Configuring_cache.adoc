@@ -152,16 +152,21 @@ GlobalConfiguration globalConfig = new GlobalConfigurationBuilder().transport()
 
 ----
 
-Sometimes you might also want to get link:$$http://docs.jboss.org/infinispan/6.0/apidocs/jmxComponents.html$$[global JMX statistics] and information about the transport, or the cache manager in general.
-To enable global JMX statistics simply do: 
+Sometimes you might also want to enable collection of link:$$http://docs.jboss.org/infinispan/6.0/apidocs/jmxComponents.html$$[global JMX statistics]
+at cache manager level or get information about the transport. To enable global JMX statistics simply do:
 
 [source,java]
 ----
 GlobalConfiguration globalConfig = new GlobalConfigurationBuilder()
   .globalJmxStatistics()
+  .enable()
   .build();
 
 ----
+
+Please note that by not enabling (or by explicitly disabling) global JMX statistics your are just turning off statistics
+collection. The corresponding MBean is still registered and can be used to manage the cache manager in general, but the
+statistics attributes do not return meaningful values.
 
 Further options at the global JMX statistics level allows you to configure the cache manager name which comes handy when you have multiple cache managers running on the same system, or how to locate the JMX MBean Server: 
 
