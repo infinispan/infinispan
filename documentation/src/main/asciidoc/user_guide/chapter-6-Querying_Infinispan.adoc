@@ -258,7 +258,27 @@ SearchManager searchManager = Search.getSearchManager(cache);
 searchManager.getMassIndexer().start();
 ----
 
-TIP: This is also available as a JMX operation.
+TIP: This is also available as a `start` JMX operation on the link:$$http://docs.jboss.org/infinispan/6.0/apidocs/jmxComponents.html#MassIndexer$$[MassIndexer MBean]
+registered under the name `org.infinispan:type=Query,manager="{name-of-cache-manager}",cache="{name-of-cache}",component=MassIndexer`.
+
+=== Obtaining query statistics
+Query link:$$http://docs.jboss.org/hibernate/search/4.4/api/org/hibernate/search/stat/Statistics.html$$[_Statistics_]
+can be obtained from the Hibernate Search' _SearchFactory_, as demonstrated in the following code snippet.
+
+[source,java]
+----
+SearchManager searchManager = Search.getSearchManager(cache);
+org.hibernate.search.stat.Statistics statistics = searchManager.getSearchFactory().getStatistics();
+----
+
+TIP: This data is also available via JMX through the link:$$http://docs.jboss.org/hibernate/search/4.4/reference/en-US/html/search-monitoring.html#d0e7624$$[Hibernate Search StatisticsInfoMBean]
+registered under the name `org.infinispan:type=Query,manager="{name-of-cache-manager}",cache="{name-of-cache}",component=Statistics`.
+Please note this MBean is always registered by Infinispan but the statistics are collected only if
+link:$$#_enabling_jmx_statistics$$[statistics collection is enabled] at cache level.
+
+WARNING: Hibernate Search has its own configuration properties `hibernate.search.jmx_enabled` and `hibernate.search.generate_statistics`
+for JMX statistics as explained link:$$http://docs.jboss.org/hibernate/search/4.4/reference/en-US/html/search-monitoring.html#d0e7595$$[here].
+Using them with Infinispan Query is forbidden as it will only lead to duplicated MBeans and unpredictable results.
 
 === Infinispan's Query DSL
 
@@ -276,7 +296,7 @@ query objects and also has the advantage of being available to link:$$#_querying
 But before delving into further details, let's examine first a simple example of writing a query for the _Book_ entity
 from link:$$#_simple_example$$[previous example].
 
-===== Query example using Infinispan's query DSL
+.Query example using Infinispan's query DSL
 [source,java]
 ----
 import org.infinispan.query.dsl.*;
