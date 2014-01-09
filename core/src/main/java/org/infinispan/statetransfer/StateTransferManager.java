@@ -4,6 +4,7 @@ import org.infinispan.commands.TopologyAffectedCommand;
 import org.infinispan.factories.scopes.Scope;
 import org.infinispan.factories.scopes.Scopes;
 import org.infinispan.jmx.annotations.DataType;
+import org.infinispan.jmx.annotations.MBean;
 import org.infinispan.jmx.annotations.ManagedAttribute;
 import org.infinispan.remoting.responses.Response;
 import org.infinispan.remoting.transport.Address;
@@ -21,6 +22,7 @@ import java.util.Set;
  * @since 5.1
  */
 @Scope(Scopes.NAMED_CACHE)
+@MBean(objectName = "StateTransferManager", description = "Component that handles state transfer")
 public interface StateTransferManager {
 
    //todo [anistor] this is inaccurate. this node does not hold state yet in current implementation
