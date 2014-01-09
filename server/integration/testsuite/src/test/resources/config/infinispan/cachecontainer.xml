@@ -1,0 +1,9 @@
+<subsystem xmlns="urn:infinispan:server:core:6.0">
+    <cache-container name="default" default-cache="default" listener-executor="test-infinispan-listener" eviction-executor="test-infinispan-eviction" replication-queue-executor="test-infinispan-repl-queue">
+        <local-cache name="default" batching="false" />
+    </cache-container>
+    <cache-container name="special-cache-container" start="EAGER" default-cache="special-cache">
+        <local-cache name="special-cache" />
+        <local-cache name="default" />
+    </cache-container>
+</subsystem>

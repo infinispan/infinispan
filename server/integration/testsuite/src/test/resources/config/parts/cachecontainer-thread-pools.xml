@@ -1,0 +1,22 @@
+<subsystem xmlns="urn:jboss:domain:threads:1.1">
+    <thread-factory name="infinispan-factory" group-name="infinispan" priority="5"/>
+    <unbounded-queue-thread-pool name="infinispan-transport">
+        <max-threads count="25"/>
+        <keepalive-time time="0" unit="milliseconds"/>
+        <thread-factory name="infinispan-factory"/>
+    </unbounded-queue-thread-pool>
+
+    <scheduled-thread-pool name="test-infinispan-repl-queue">
+        <max-threads count="1" />
+        <thread-factory name="infinispan-factory"/>
+    </scheduled-thread-pool>
+    <unbounded-queue-thread-pool name="test-infinispan-listener">
+        <max-threads count="100" />
+        <keepalive-time time="1000" unit="MILLISECONDS"/>
+        <thread-factory name="infinispan-factory"/>
+    </unbounded-queue-thread-pool>
+    <scheduled-thread-pool name="test-infinispan-eviction">
+        <max-threads count="1" />
+        <thread-factory name="infinispan-factory"/>
+    </scheduled-thread-pool>
+</subsystem>
