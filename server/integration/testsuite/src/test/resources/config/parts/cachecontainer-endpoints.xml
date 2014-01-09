@@ -1,0 +1,8 @@
+<subsystem xmlns="urn:infinispan:server:endpoint:6.0">
+    <hotrod-connector socket-binding="hotrod" cache-container="default">
+        <topology-state-transfer lazy-retrieval="false" lock-timeout="1000" replication-timeout="5000" />
+    </hotrod-connector>
+    <hotrod-connector name="hotrodconnector2" socket-binding="hotrod2" cache-container="special-cache-container">
+        <topology-state-transfer lazy-retrieval="false" lock-timeout="1000" replication-timeout="5000" />
+    </hotrod-connector>
+</subsystem>

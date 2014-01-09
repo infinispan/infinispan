@@ -4,16 +4,19 @@
                 xmlns:p="urn:jboss:domain:1.4"
                 xmlns:jgroups="urn:jboss:domain:jgroups:1.2"
                 xmlns:core="urn:infinispan:server:core:6.0"
+                xmlns:threads="urn:jboss:domain:threads:1.1"
                 xmlns:endpoint="urn:infinispan:server:endpoint:6.0">
     <xsl:output method="xml" indent="yes" omit-xml-declaration="yes"/>
 
     <!-- Parameter declarations with defaults set -->
     <xsl:param name="modifyInfinispan">false</xsl:param>
+    <xsl:param name="modifyThreads">false</xsl:param>
     <xsl:param name="modifyStack">false</xsl:param>
     <xsl:param name="modifyRelay">false</xsl:param>
     <xsl:param name="modifyMulticastAddress">false</xsl:param>
     <xsl:param name="modifyRemoteDestination">false</xsl:param>
     <xsl:param name="modifyOutboundSocketBindingHotRod">false</xsl:param>
+    <xsl:param name="addHotrodSocketBinding">false</xsl:param>
     <xsl:param name="removeRestSecurity">true</xsl:param>
     <xsl:param name="infinispanServerEndpoint">false</xsl:param>
     <xsl:param name="infinispanFile">none</xsl:param>
@@ -35,6 +38,15 @@
         </xsl:if>
         <xsl:if test="$modifyInfinispan != 'false'">
             <xsl:copy-of select="document($modifyInfinispan)"/>
+        </xsl:if>
+    </xsl:template>
+
+    <xsl:template match="threads:subsystem">
+        <xsl:if test="$modifyThreads = 'false'">
+            <xsl:call-template name="copynode"/>
+        </xsl:if>
+        <xsl:if test="$modifyThreads != 'false'">
+            <xsl:copy-of select="document($modifyThreads)"/>
         </xsl:if>
     </xsl:template>
 
@@ -169,6 +181,16 @@
         </xsl:if>
         <xsl:if test="$modifyOutboundSocketBindingHotRod != 'false'">
             <xsl:copy-of select="document($modifyOutboundSocketBindingHotRod)"/>
+        </xsl:if>
+    </xsl:template>
+
+    <xsl:template match="p:socket-binding[@name='hotrod']">
+        <xsl:if test="$addHotrodSocketBinding = 'false'">
+            <xsl:call-template name="copynode"/>
+        </xsl:if>
+        <xsl:if test="$addHotrodSocketBinding != 'false'">
+            <xsl:copy-of select="document($addHotrodSocketBinding)"/>
+            <xsl:call-template name="copynode"/>
         </xsl:if>
     </xsl:template>
 

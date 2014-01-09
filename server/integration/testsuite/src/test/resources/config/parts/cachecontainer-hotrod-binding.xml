@@ -1,0 +1,1 @@
+<socket-binding name="hotrod2" interface="management" port="11223"/>

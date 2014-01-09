@@ -226,6 +226,11 @@
                    filtering="true"/>
         <transform in="clustered.xml" out="testsuite/clustered-expiration.xml"
                    modifyInfinispan="${infinispan.parts}/expiration.xml"/>
+        <transform in="standalone.xml" out="testsuite/standalone-cachecontainer.xml"
+                   modifyInfinispan="${infinispan.parts}/cachecontainer.xml"
+                   modifyThreads="${other.parts}/cachecontainer-thread-pools.xml"
+                   infinispanServerEndpoint="${other.parts}/cachecontainer-endpoints.xml"
+                   addHotrodSocketBinding="${other.parts}/cachecontainer-hotrod-binding.xml"/>
     </target>
 
     <macrodef name="transform">
@@ -234,11 +239,13 @@
         <attribute name="in"/>
         <attribute name="out"/>
         <attribute name="modifyInfinispan" default="false"/>
+        <attribute name="modifyThreads" default="false"/>
         <attribute name="modifyStack" default="false"/>
         <attribute name="modifyRelay" default="false"/>
         <attribute name="modifyMulticastAddress" default="false"/>
         <attribute name="modifyRemoteDestination" default="false"/>
         <attribute name="modifyOutboundSocketBindingHotRod" default="false"/>
+        <attribute name="addHotrodSocketBinding" default="false"/>
         <attribute name="removeRestSecurity" default="true"/>
         <attribute name="infinispanServerEndpoint" default="false"/>
         <attribute name="infinispanFile" default="false"/>
@@ -250,6 +257,7 @@
         <sequential>
             <xslt in="@{transformDir}/@{in}" out="@{transformDir}/@{in}-transformed" style="@{templateFile}">
                 <param name="modifyInfinispan" expression="@{modifyInfinispan}"/>
+                <param name="modifyThreads" expression="@{modifyThreads}"/>
                 <param name="modifyStack" expression="@{modifyStack}"/>
                 <param name="modifyRelay" expression="@{modifyRelay}"/>
                 <param name="addAuth" expression="@{addAuth}"/>
@@ -257,6 +265,7 @@
                 <param name="modifyMulticastAddress" expression="@{modifyMulticastAddress}"/>
                 <param name="modifyRemoteDestination" expression="@{modifyRemoteDestination}"/>
                 <param name="modifyOutboundSocketBindingHotRod" expression="@{modifyOutboundSocketBindingHotRod}"/>
+                <param name="addHotrodSocketBinding" expression="@{addHotrodSocketBinding}"/>
                 <param name="removeRestSecurity" expression="@{removeRestSecurity}"/>
                 <param name="infinispanServerEndpoint" expression="@{infinispanServerEndpoint}"/>
                 <param name="infinispanFile" expression="@{infinispanFile}"/>
