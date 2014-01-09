@@ -96,8 +96,8 @@
                            <javadocDirectory>${basedir}/src/javadoc</javadocDirectory>
                            <docfilessubdirs>true</docfilessubdirs>
                            <links>
-                              <link>http://java.sun.com/javase/6/docs/api/</link>
-                              <link>http://java.sun.com/javaee/5/docs/api/</link>
+                              <link>http://docs.oracle.com/javase/6/docs/api/</link>
+                              <link>http://docs.oracle.com/javaee/5/api/</link>
                            </links>
                            <footer><![CDATA[
 -->
