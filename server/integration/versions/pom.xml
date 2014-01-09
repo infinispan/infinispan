@@ -437,4 +437,16 @@
       </plugins>
    </build>
 
+   <profiles>
+      <profile>
+         <id>distribution</id>
+         <activation>
+            <activeByDefault>false</activeByDefault>
+         </activation>
+         <properties>
+            <maven.test.skip.exec>true</maven.test.skip.exec>
+         </properties>
+      </profile>
+   </profiles>
+
 </project>
