@@ -7,10 +7,11 @@ import org.infinispan.arquillian.core.RemoteInfinispanServer;
 import org.infinispan.client.hotrod.RemoteCache;
 import org.infinispan.client.hotrod.RemoteCacheManager;
 import org.infinispan.client.hotrod.configuration.ConfigurationBuilder;
+import org.infinispan.client.hotrod.impl.ConfigurationProperties;
 
 /**
  * Keeps collection of {@link RemoteCacheManager} objects, to be able to stop all of them when needed.
- * 
+ *
  * @author Michal Linhard (mlinhard@redhat.com)
  */
 public class RemoteCacheManagerFactory {
@@ -26,7 +27,11 @@ public class RemoteCacheManagerFactory {
     }
 
     public RemoteCache<Object, Object> createCache(RemoteInfinispanMBeans beans) {
-        return createManager(beans.server).getCache(beans.cacheName);
+        return createCache(beans, ConfigurationProperties.DEFAULT_PROTOCOL_VERSION);
+    }
+
+    public RemoteCache<Object, Object> createCache(RemoteInfinispanMBeans beans, String protocolVersion) {
+        return createManager(beans.server, protocolVersion).getCache(beans.cacheName);
     }
 
     public RemoteCacheManager createManager(ConfigurationBuilder configBuilder) {
@@ -38,7 +43,11 @@ public class RemoteCacheManagerFactory {
     }
 
     public RemoteCacheManager createManager(RemoteInfinispanServer server) {
-        return addToCollection(TestUtil.createCacheManager(server));
+        return createManager(server, ConfigurationProperties.DEFAULT_PROTOCOL_VERSION);
+    }
+
+    private RemoteCacheManager createManager(RemoteInfinispanServer server, String protocolVersion) {
+        return addToCollection(TestUtil.createCacheManager(server, protocolVersion));
     }
 
     private RemoteCacheManager addToCollection(RemoteCacheManager rcm) {
