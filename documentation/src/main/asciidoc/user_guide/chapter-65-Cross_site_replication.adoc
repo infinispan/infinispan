@@ -164,7 +164,7 @@ This is the configuration file for the local (intra-site) infinispan cluster. It
 
 ----
 
-In order to allow inter-site calls, the RELAY2 protocol needs to be added to the protocol stack defined in the jgroups configuration (see attached $$https://gist.github.com/maniksurtani/409fe5ece5fe4bcf679f[jgroups.xml] for an example). 
+In order to allow inter-site calls, the RELAY2 protocol needs to be added to the protocol stack defined in the jgroups configuration (see attached link:https://gist.github.com/maniksurtani/409fe5ece5fe4bcf679f[jgroups.xml] for an example).
 
 ==== RELAY2 configuration file
 
@@ -231,7 +231,11 @@ The taking offline of a site can be configured as follows:
 
 ----
 
-The _takeOfline_ element under the _backup_ configures the taking offline of a site: * _afterFailure_ - the number of failed backup operations after which this site should be taken offline. Defaults to 0 (never). A negative value would mean that the site will be taken offline after _minTimeToWait_ * _minTimeToWait_ - the number of milliseconds in which a site is not marked offline even if it is unreachable for 'afterFailures' number of times. If smaller or equal to 0, then only _afterFailures_ is considered. 
+The _takeOfline_ element under the _backup_ configures the taking offline of a site:
+
+* _afterFailure_ - the number of failed backup operations after which this site should be taken offline. Defaults to 0 (never). A negative value would mean that the site will be taken offline after _minTimeToWait_
+
+* _minTimeToWait_ - the number of milliseconds in which a site is not marked offline even if it is unreachable for 'afterFailures' number of times. If smaller or equal to 0, then only _afterFailures_ is considered.
 
 The equivalent programmatic configuration is:
 

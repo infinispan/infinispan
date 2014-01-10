@@ -1,6 +1,7 @@
 package org.infinispan.remoting.transport.jgroups;
 
 import org.infinispan.commons.util.InfinispanCollections;
+import org.infinispan.remoting.CacheUnreachableException;
 import org.infinispan.remoting.responses.ExceptionResponse;
 import org.infinispan.remoting.transport.BackupResponse;
 import org.infinispan.util.TimeService;
@@ -8,6 +9,7 @@ import org.infinispan.util.concurrent.TimeoutException;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 import org.infinispan.xsite.XSiteBackup;
+import org.jgroups.UnreachableException;
 
 import java.util.HashMap;
 import java.util.HashSet;
@@ -73,7 +75,7 @@ public class JGroupsBackupResponse implements BackupResponse {
             addCommunicationError(siteName);
          } catch (ExecutionException ue) {
             log.tracef(ue.getCause(), "Communication error with site %s", siteName);
-            errors.put(siteName, ue.getCause());
+            errors.put(siteName, filterException(ue.getCause()));
             addCommunicationError(siteName);
          } finally {
             elapsedTime += timeService.timeDuration(startNanos, MILLISECONDS);
@@ -129,5 +131,12 @@ public class JGroupsBackupResponse implements BackupResponse {
             ", communicationErrors=" + communicationErrors +
             ", sendTimeNanos=" + sendTimeNanos +
             '}';
+   }
+
+   private Throwable filterException(Throwable throwable) {
+      if (throwable instanceof UnreachableException) {
+         return new CacheUnreachableException((UnreachableException) throwable);
+      }
+      return throwable;
    }
 }

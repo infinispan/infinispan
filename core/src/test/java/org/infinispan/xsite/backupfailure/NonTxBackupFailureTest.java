@@ -76,7 +76,8 @@ public class NonTxBackupFailureTest extends BaseBackupFailureTest {
 
       assertEquals("v2", cache("LON", 0).get("k"));
       assertEquals("v2", cache("LON", 1).get("k"));
-      assertTrue(failureInterceptor.replaceFailed);
+      //the ReplaceCommand is transformed in a PutKeyValueCommand when it succeeds in the originator site!
+      assertTrue(failureInterceptor.putFailed);
       assertEquals("v", backup("LON").get("k"));
    }
 

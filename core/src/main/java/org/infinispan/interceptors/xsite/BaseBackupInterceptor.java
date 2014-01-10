@@ -1,5 +1,7 @@
 package org.infinispan.interceptors.xsite;
 
+import org.infinispan.commands.FlagAffectedCommand;
+import org.infinispan.context.Flag;
 import org.infinispan.context.impl.TxInvocationContext;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.interceptors.base.CommandInterceptor;
@@ -37,6 +39,10 @@ public class BaseBackupInterceptor extends CommandInterceptor {
       boolean shouldBackupRemotely = ctx.isOriginLocal() && ctx.hasModifications();
       getLog().tracef("Should backup remotely? %s", shouldBackupRemotely);
       return shouldBackupRemotely;
+   }
+
+   protected final boolean skipXSiteBackup(FlagAffectedCommand command) {
+      return command.hasFlag(Flag.SKIP_XSITE_BACKUP);
    }
    
    @Override
