@@ -7,6 +7,7 @@ import org.infinispan.arquillian.core.InfinispanResource;
 import org.infinispan.arquillian.core.RemoteInfinispanServers;
 import org.infinispan.arquillian.utils.MBeanServerConnectionProvider;
 import org.infinispan.client.hotrod.RemoteCache;
+import org.infinispan.client.hotrod.impl.ConfigurationProperties;
 import org.infinispan.server.test.category.RollingUpgrades;
 import org.infinispan.server.test.util.RemoteCacheManagerFactory;
 import org.infinispan.server.test.util.RemoteInfinispanMBeans;
@@ -27,7 +28,7 @@ import static org.junit.Assert.*;
  * @author Tomas Sykora (tsykora@redhat.com)
  */
 @RunWith(Arquillian.class)
-@Category({ RollingUpgrades.class })
+@Category({RollingUpgrades.class})
 public class RollingUpgradesTest {
 
     private static final Logger log = Logger.getLogger(RollingUpgradesTest.class);
@@ -67,7 +68,7 @@ public class RollingUpgradesTest {
         controller.start("hotrod-rolling-upgrade-2-old");
         try {
             RemoteInfinispanMBeans s2 = createRemotes("hotrod-rolling-upgrade-2-old", "local", DEFAULT_CACHE_NAME);
-            final RemoteCache<Object, Object> c2 = createCache(s2);
+            final RemoteCache<Object, Object> c2 = createCache(s2, ConfigurationProperties.PROTOCOL_VERSION_12);
 
             c2.put("key1", "value1");
             assertEquals("value1", c2.get("key1"));
@@ -91,13 +92,13 @@ public class RollingUpgradesTest {
             final ObjectName rollMan = new ObjectName("jboss.infinispan:type=Cache," + "name=\"default(local)\","
                     + "manager=\"local\"," + "component=RollingUpgradeManager");
 
-            invokeOperation(provider2, rollMan.toString(), "recordKnownGlobalKeyset", new Object[] {}, new String[] {});
+            invokeOperation(provider2, rollMan.toString(), "recordKnownGlobalKeyset", new Object[]{}, new String[]{});
 
-            invokeOperation(provider1, rollMan.toString(), "synchronizeData", new Object[] { "hotrod" },
-                    new String[] { "java.lang.String" });
+            invokeOperation(provider1, rollMan.toString(), "synchronizeData", new Object[]{"hotrod"},
+                    new String[]{"java.lang.String"});
 
-            invokeOperation(provider1, rollMan.toString(), "disconnectSource", new Object[] { "hotrod" },
-                    new String[] { "java.lang.String" });
+            invokeOperation(provider1, rollMan.toString(), "disconnectSource", new Object[]{"hotrod"},
+                    new String[]{"java.lang.String"});
 
             // is source (RemoteCacheStore) really disconnected?
             c2.put("disconnected", "source");
@@ -121,7 +122,11 @@ public class RollingUpgradesTest {
     }
 
     protected RemoteCache<Object, Object> createCache(RemoteInfinispanMBeans cacheBeans) {
-        return rcmFactory.createCache(cacheBeans);
+        return createCache(cacheBeans, ConfigurationProperties.DEFAULT_PROTOCOL_VERSION);
+    }
+
+    protected RemoteCache<Object, Object> createCache(RemoteInfinispanMBeans cacheBeans, String protocolVersion) {
+        return rcmFactory.createCache(cacheBeans, protocolVersion);
     }
 
     protected RemoteInfinispanMBeans createRemotes(String serverName, String managerName, String cacheName) {
@@ -129,7 +134,7 @@ public class RollingUpgradesTest {
     }
 
     private Object invokeOperation(MBeanServerConnectionProvider provider, String mbean, String operationName, Object[] params,
-        String[] signature) throws Exception {
+                                   String[] signature) throws Exception {
         return provider.getConnection().invoke(new ObjectName(mbean), operationName, params, signature);
     }
 }

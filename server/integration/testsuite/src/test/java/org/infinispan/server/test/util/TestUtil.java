@@ -11,6 +11,7 @@ import org.infinispan.arquillian.core.RemoteInfinispanServer;
 import org.infinispan.arquillian.utils.MBeanServerConnectionProvider;
 import org.infinispan.client.hotrod.RemoteCacheManager;
 import org.infinispan.client.hotrod.configuration.ConfigurationBuilder;
+import org.infinispan.client.hotrod.impl.ConfigurationProperties;
 
 /**
  * Often repeated test code routines.
@@ -30,14 +31,21 @@ public class TestUtil {
      * @return New {@link RemoteCacheManager}
      */
     public static RemoteCacheManager createCacheManager(RemoteInfinispanServer server) {
-        return new RemoteCacheManager(createConfigBuilder(server.getHotrodEndpoint().getInetAddress().getHostName(),
-                server.getHotrodEndpoint().getPort()).build());
+        return createCacheManager(server, ConfigurationProperties.DEFAULT_PROTOCOL_VERSION);
+    }
 
+    public static RemoteCacheManager createCacheManager(RemoteInfinispanServer server, String protocolVersion) {
+        return new RemoteCacheManager(createConfigBuilder(server.getHotrodEndpoint().getInetAddress().getHostName(),
+                server.getHotrodEndpoint().getPort(), protocolVersion).build());
     }
 
     public static ConfigurationBuilder createConfigBuilder(String hostName, int port) {
+        return createConfigBuilder(hostName, port, ConfigurationProperties.DEFAULT_PROTOCOL_VERSION);
+    }
+
+    public static ConfigurationBuilder createConfigBuilder(String hostName, int port, String protocolVersion) {
         ConfigurationBuilder builder = new ConfigurationBuilder();
-        builder.addServer().host(hostName).port(port);
+        builder.addServer().host(hostName).port(port).protocolVersion(protocolVersion);
         return builder;
     }
 
@@ -60,7 +68,7 @@ public class TestUtil {
     }
 
     public static Object invokeOperation(MBeanServerConnectionProvider provider, String mbean, String operationName, Object[] params,
-                                   String[] signature) throws Exception {
+                                         String[] signature) throws Exception {
         return provider.getConnection().invoke(new ObjectName(mbean), operationName, params, signature);
     }
 
