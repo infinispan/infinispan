@@ -62,6 +62,11 @@
          <artifactId>infinispan-lucene-v3</artifactId>
          <scope>provided</scope>
       </dependency>
+      <dependency>
+         <groupId>${project.groupId}</groupId>
+         <artifactId>infinispan-lucene-v4</artifactId>
+         <scope>provided</scope>
+      </dependency>
 
       <dependency>
          <groupId>${project.groupId}</groupId>
