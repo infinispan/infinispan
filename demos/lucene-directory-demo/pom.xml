@@ -24,7 +24,9 @@
          <type>test-jar</type>
          <scope>test</scope>
       </dependency>
-      
+      <!-- Hack to make Eclipse happy when opening multiple modules at once:
+         the eclipse project related to infinispan-lucene-directory does not
+         contain the actual classes packaged in its jar -->
       <dependency>
          <groupId>${project.groupId}</groupId>
          <artifactId>infinispan-lucene-v3</artifactId>
@@ -35,7 +37,7 @@
    <build>
       <plugins>
       
-         
+         <!-- Creates executable scripts -->
          <plugin>
             <groupId>org.codehaus.mojo</groupId>
             <artifactId>appassembler-maven-plugin</artifactId>
@@ -51,7 +53,7 @@
             </configuration>
          </plugin>
          
-         
+         <!-- Testing Configuration -->
          <plugin>
             <groupId>org.apache.maven.plugins</groupId>
             <artifactId>maven-surefire-plugin</artifactId>
