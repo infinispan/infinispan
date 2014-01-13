@@ -46,7 +46,7 @@ public class LockManagerFunctionalTest extends MultipleCacheManagersTest {
       assert ! anotherLock.isLocked();
       assert ! luceneLockA.obtain();
       assert ! luceneLockB.obtain();
-      luceneLockA.release();
+      luceneLockA.close();
       assert ! luceneLockB.isLocked();
       assert luceneLockB.obtain();
       lockManagerA.clearLock(writeLockProvider);

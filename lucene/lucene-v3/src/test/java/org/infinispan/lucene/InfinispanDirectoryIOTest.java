@@ -9,6 +9,7 @@ import java.util.Random;
 import java.util.Set;
 
 import org.apache.lucene.store.Directory;
+import org.apache.lucene.store.IOContext;
 import org.apache.lucene.store.IndexInput;
 import org.apache.lucene.store.IndexOutput;
 import org.apache.lucene.store.RAMDirectory;
@@ -68,7 +69,7 @@ public class InfinispanDirectoryIOTest {
       Directory dir = DirectoryBuilder.newDirectoryInstance(cache, cache, cache, INDEXNAME).chunkSize(BUFFER_SIZE).create();
 
       String fileName = "SomeText.txt";
-      IndexOutput io = dir.createOutput(fileName);
+      IndexOutput io = dir.createOutput(fileName, IOContext.DEFAULT);
       RepeatableLongByteSequence bytesGenerator = new RepeatableLongByteSequence();
       //It writes repeatable text
       final int REPEATABLE_BUFFER_SIZE = 1501;
@@ -189,7 +190,7 @@ public class InfinispanDirectoryIOTest {
       assert BUFFER_SIZE < FILE_SIZE;
       createFileWithRepeatableContent(dir, "RandomSampleFile.txt", FILE_SIZE);
 
-      IndexInput indexInput = dir.openInput("RandomSampleFile.txt");
+      IndexInput indexInput = dir.openInput("RandomSampleFile.txt", IOContext.DEFAULT);
       assert indexInput.length() == FILE_SIZE;
       RepeatableLongByteSequence bytesGenerator = new RepeatableLongByteSequence();
 
@@ -229,7 +230,7 @@ public class InfinispanDirectoryIOTest {
     */
    private void assertReadBytesWorkingCorrectly(Directory dir, String fileName,
             final int contentFileSizeExpected, final int arrayLengthToRead) throws IOException {
-      IndexInput indexInput = dir.openInput(fileName);
+      IndexInput indexInput = dir.openInput(fileName, IOContext.DEFAULT);
       AssertJUnit.assertEquals(contentFileSizeExpected, indexInput.length());
 
       RepeatableLongByteSequence bytesGenerator = new RepeatableLongByteSequence();
@@ -271,7 +272,7 @@ public class InfinispanDirectoryIOTest {
     */
    private void assertReadByteWorkingCorrectly(Directory dir, String fileName,
             final int contentFileSizeExpected) throws IOException {
-      IndexInput indexInput = dir.openInput(fileName);
+      IndexInput indexInput = dir.openInput(fileName, IOContext.DEFAULT);
       AssertJUnit.assertEquals(contentFileSizeExpected, indexInput.length());
       RepeatableLongByteSequence bytesGenerator = new RepeatableLongByteSequence();
 
@@ -307,7 +308,7 @@ public class InfinispanDirectoryIOTest {
     * @throws IOException
     */
    private void createFileWithRepeatableContent(Directory dir, String fileName, final int contentFileSize) throws IOException {
-      IndexOutput indexOutput = dir.createOutput(fileName);
+      IndexOutput indexOutput = dir.createOutput(fileName, IOContext.DEFAULT);
       RepeatableLongByteSequence bytesGenerator = new RepeatableLongByteSequence();
       for (int i = 0; i < contentFileSize; i++) {
          indexOutput.writeByte(bytesGenerator.nextByte());
@@ -365,7 +366,7 @@ public class InfinispanDirectoryIOTest {
       // ok, file listing works.
       AssertJUnit.assertEquals(s, other);
 
-      IndexInput ii = dir.openInput("Hello.txt");
+      IndexInput ii = dir.openInput("Hello.txt", IOContext.DEFAULT);
 
       assert ii.length() == helloText.length();
 
@@ -377,7 +378,7 @@ public class InfinispanDirectoryIOTest {
 
       assert new String(baos.toByteArray()).equals(helloText);
 
-      ii = dir.openInput("World.txt");
+      ii = dir.openInput("World.txt", IOContext.DEFAULT);
 
       assert ii.length() == worldText.length();
 
@@ -391,7 +392,7 @@ public class InfinispanDirectoryIOTest {
 
       // now with buffered reading
 
-      ii = dir.openInput("Hello.txt");
+      ii = dir.openInput("Hello.txt", IOContext.DEFAULT);
 
       assert ii.length() == helloText.length();
 
@@ -408,7 +409,7 @@ public class InfinispanDirectoryIOTest {
 
       assert new String(baos.toByteArray()).equals(helloText);
 
-      ii = dir.openInput("World.txt");
+      ii = dir.openInput("World.txt", IOContext.DEFAULT);
 
       assert ii.length() == worldText.length();
 
@@ -443,7 +444,7 @@ public class InfinispanDirectoryIOTest {
       assert cache.get(new ChunkCacheKey(INDEXNAME, "HelloWorld.txt", 1, BUFFER_SIZE)).equals(ob3);
 
       // test that contents survives a move
-      ii = dir.openInput("HelloWorld.txt");
+      ii = dir.openInput("HelloWorld.txt", IOContext.DEFAULT);
 
       assert ii.length() == worldText.length();
 
@@ -470,7 +471,7 @@ public class InfinispanDirectoryIOTest {
       Cache cache = cacheManager.getCache();
       Directory dir = DirectoryBuilder.newDirectoryInstance(cache, cache, cache, INDEXNAME).chunkSize(BUFFER_SIZE).create();
 
-      IndexOutput io = dir.createOutput("MyNewFile.txt");
+      IndexOutput io = dir.createOutput("MyNewFile.txt", IOContext.DEFAULT);
 
       io.writeByte((byte) 66);
       io.writeByte((byte) 69);
@@ -483,14 +484,14 @@ public class InfinispanDirectoryIOTest {
 
       // test contents by reading:
       byte[] buf = new byte[9];
-      IndexInput ii = dir.openInput("MyNewFile.txt");
+      IndexInput ii = dir.openInput("MyNewFile.txt", IOContext.DEFAULT);
       ii.readBytes(buf, 0, (int) ii.length());
       ii.close();
 
       assert new String(new byte[] { 66, 69 }).equals(new String(buf).trim());
 
       String testText = "This is some rubbish again that will span more than one chunk - one hopes.  Who knows, maybe even three or four chunks.";
-      io = dir.createOutput("MyNewFile.txt");
+      io = dir.createOutput("MyNewFile.txt", IOContext.DEFAULT);
       io.seek(0);
       io.writeBytes(testText.getBytes(), 0, testText.length());
       io.close();
@@ -514,7 +515,7 @@ public class InfinispanDirectoryIOTest {
       final String testText = "This is some rubbish";
       final byte[] testTextAsBytes = testText.getBytes();
 
-      IndexOutput io = dir.createOutput("MyNewFile.txt");
+      IndexOutput io = dir.createOutput("MyNewFile.txt", IOContext.DEFAULT);
 
       io.writeByte((byte) 1);
       io.writeByte((byte) 2);
@@ -530,7 +531,7 @@ public class InfinispanDirectoryIOTest {
       assert null != cache.get(new ChunkCacheKey(INDEXNAME, "MyNewFile.txt", 0, DirectoryBuilderImpl.DEFAULT_BUFFER_SIZE));
 
       // test contents by reading:
-      IndexInput ii = dir.openInput("MyNewFile.txt");
+      IndexInput ii = dir.openInput("MyNewFile.txt", IOContext.DEFAULT);
       assert ii.readByte() == 1;
       assert ii.readByte() == 2;
       assert ii.readByte() == 3;
@@ -607,7 +608,7 @@ public class InfinispanDirectoryIOTest {
    private void testOn(Directory dir, int writeSize, int readSize, Cache cache) throws IOException {
       if (cache != null) cache.clear();//needed to make sure no chunks are left over in case of Infinispan implementation
       final String filename = "chunkTest";
-      IndexOutput indexOutput = dir.createOutput(filename);
+      IndexOutput indexOutput = dir.createOutput(filename, IOContext.DEFAULT);
       byte[] toWrite = fillBytes(writeSize);
       indexOutput.writeBytes(toWrite, writeSize);
       indexOutput.close();
@@ -616,7 +617,7 @@ public class InfinispanDirectoryIOTest {
       }
       AssertJUnit.assertEquals(writeSize, indexOutput.length());
       byte[] results = new byte[readSize];
-      IndexInput openInput = dir.openInput(filename);
+      IndexInput openInput = dir.openInput(filename, IOContext.DEFAULT);
       try {
          openInput.readBytes(results, 0, readSize);
          for (int i = 0; i < writeSize && i < readSize; i++) {
@@ -637,13 +638,13 @@ public class InfinispanDirectoryIOTest {
       cache.clear();
       Directory dir = DirectoryBuilder.newDirectoryInstance(cache, cache, cache, INDEXNAME).chunkSize(13).create();
       byte[] manyBytes = fillBytes(bufferSize);
-      IndexOutput indexOutput = dir.createOutput(filename);
+      IndexOutput indexOutput = dir.createOutput(filename, IOContext.DEFAULT);
       for (int i = 0; i < 10; i++) {
          indexOutput.writeBytes(manyBytes, bufferSize);
          indexOutput.flush();
       }
       indexOutput.close();
-      IndexInput input = dir.openInput(filename);
+      IndexInput input = dir.openInput(filename, IOContext.DEFAULT);
       final int finalSize = (10 * bufferSize);
       AssertJUnit.assertEquals(finalSize, input.length());
       final byte[] resultingBuffer = new byte[finalSize];

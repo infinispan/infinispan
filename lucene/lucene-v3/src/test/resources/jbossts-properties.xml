@@ -39,7 +39,7 @@
     <entry key="CoordinatorEnvironmentBean.commitOnePhase">YES</entry>
 
     <!-- (must be writeable!) -->
-    <entry key="ObjectStoreEnvironmentBean.objectStoreDir">${build.directory,java.io.tmpdir:.}/infinispan-lucene-v3-txstore</entry>
+    <entry key="ObjectStoreEnvironmentBean.objectStoreDir">${build.directory,java.io.tmpdir:.}/infinispan-lucene-txstore</entry>
 
     <!-- The VolatileStore won't be able to recover anything - use only for simple tests! -->
     <entry key="ObjectStoreEnvironmentBean.objectStoreType">com.arjuna.ats.internal.arjuna.objectstore.VolatileStore</entry>

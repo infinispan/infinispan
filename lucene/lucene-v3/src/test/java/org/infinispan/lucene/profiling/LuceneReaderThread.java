@@ -4,7 +4,7 @@ import java.io.IOException;
 import java.util.HashSet;
 import java.util.Set;
 
-import org.apache.lucene.index.IndexReader;
+import org.apache.lucene.index.DirectoryReader;
 import org.apache.lucene.index.Term;
 import org.apache.lucene.search.IndexSearcher;
 import org.apache.lucene.search.Query;
@@ -24,7 +24,7 @@ import org.apache.lucene.store.Directory;
 public class LuceneReaderThread extends LuceneUserThread {
 
    protected IndexSearcher searcher;
-   protected IndexReader indexReader;
+   protected DirectoryReader indexReader;
 
    LuceneReaderThread(Directory dir, SharedState state) {
       super(dir, state);
@@ -50,17 +50,15 @@ public class LuceneReaderThread extends LuceneUserThread {
 
    protected void refreshIndexReader() throws IOException {
       if (indexReader == null) {
-         indexReader = IndexReader.open(directory);
+         indexReader = DirectoryReader.open(directory);
       }
       else {
-         IndexReader before = indexReader;
-         indexReader = indexReader.reopen();
-         if (before != indexReader) {
+         DirectoryReader before = indexReader;
+         DirectoryReader after = DirectoryReader.openIfChanged(indexReader);
+         if (after != null) {
             before.close();
+            indexReader = after;
          }
-      }
-      if (searcher != null) {
-         searcher.close();
       }
       searcher = new IndexSearcher(indexReader);
    }

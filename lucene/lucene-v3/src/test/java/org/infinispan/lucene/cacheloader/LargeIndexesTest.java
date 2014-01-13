@@ -78,7 +78,7 @@ public class LargeIndexesTest {
       @Override
       public IndexInput openInput(String fileName) {
          AssertJUnit.assertEquals(FILE_NAME, fileName);
-         return new IndexInputMock();
+         return new IndexInputMock(fileName);
       }
 
       @Override
@@ -92,6 +92,10 @@ public class LargeIndexesTest {
 
       private boolean closed = false;
       private long position = 0;
+
+      protected IndexInputMock(String resourceDescription) {
+         super(resourceDescription);
+      }
 
       @Override
       public void close() throws IOException {

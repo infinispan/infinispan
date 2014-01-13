@@ -171,7 +171,7 @@ public class DynamicTopologyStressTest extends MultipleCacheManagersTest {
             IndexReader indexReader = null;
             try {
                int i = lastWrittenTermId;
-               indexReader = IndexReader.open(masterDirectory, true);
+               indexReader = IndexReader.open(masterDirectory);
                IndexSearcher indexSearcher = new IndexSearcher(indexReader);
                if (i==0) continue; // nothing written yet
                String termValue = "HA" + i;
