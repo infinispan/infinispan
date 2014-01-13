@@ -214,6 +214,27 @@ public class AggregateClassLoader extends ClassLoader {
 	}
 
 	/**
+	 * <p>
+	 * Loads the specified class using the passed classloader, or, if it is <code>null</code> the Infinispan classes'
+	 * classloader.
+	 * </p>
+	 * <p>
+	 * If loadtime instrumentation via GenerateInstrumentedClassLoader is used, this class may be loaded by the
+	 * bootstrap classloader.
+	 * </p>
+	 * 
+	 * @param classname name of the class to load
+	 * @return the class
+	 * @param userClassLoader the application classloader which should be used to load the class, or null if the class
+	 * is always packaged with Infinispan
+	 * @throws ClassNotFoundException if the class cannot be loaded
+	 */
+	@SuppressWarnings("unchecked")
+	public <T> Class<T> loadClassStrict(String classname) throws ClassNotFoundException {
+		return loadClassStrict(classname, null);
+	}
+
+	/**
 	 * Instantiates a class based on the class name provided. Instantiation is attempted via an appropriate, static
 	 * factory method named <tt>getInstance()</tt> first, and failing the existence of an appropriate factory, falls
 	 * back to an empty constructor.
@@ -355,6 +376,10 @@ public class AggregateClassLoader extends ClassLoader {
 		}
 		return is;
 	}
+	
+	public InputStream lookupFileStrict(String filename) throws FileNotFoundException {
+		return lookupFileStrict(filename, null);
+	}
 
 	public InputStream lookupFileStrict(URI uri, ClassLoader cl) throws FileNotFoundException {
 		return new FileInputStream( new File( uri ) );
@@ -402,6 +427,10 @@ public class AggregateClassLoader extends ClassLoader {
 		for ( String s : typeList )
 			retval[i++] = getClassForName( s, classLoader );
 		return retval;
+	}
+
+	public Class<?>[] toClassArray(String[] typeList) throws ClassNotFoundException {
+		return toClassArray(typeList, null);
 	}
 
 	public Class<?> getClassForName(String name, ClassLoader cl) throws ClassNotFoundException {

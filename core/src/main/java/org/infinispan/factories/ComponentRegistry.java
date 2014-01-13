@@ -1,18 +1,23 @@
 package org.infinispan.factories;
 
+import static org.infinispan.factories.KnownComponentNames.MODULE_COMMAND_INITIALIZERS;
+
+import java.util.Map;
+
 import org.infinispan.AdvancedCache;
 import org.infinispan.commands.CommandsFactory;
 import org.infinispan.commands.module.ModuleCommandInitializer;
+import org.infinispan.commons.CacheConfigurationException;
+import org.infinispan.commons.CacheException;
+import org.infinispan.commons.marshall.StreamingMarshaller;
+import org.infinispan.commons.util.AggregateClassLoader;
+import org.infinispan.commons.util.InfinispanCollections;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.components.ComponentMetadata;
 import org.infinispan.factories.components.ComponentMetadataRepo;
 import org.infinispan.lifecycle.ComponentStatus;
 import org.infinispan.lifecycle.ModuleLifecycle;
-import org.infinispan.commons.CacheConfigurationException;
-import org.infinispan.commons.CacheException;
-import org.infinispan.commons.marshall.StreamingMarshaller;
-import org.infinispan.commons.util.InfinispanCollections;
 import org.infinispan.notifications.cachemanagerlistener.CacheManagerNotifier;
 import org.infinispan.remoting.responses.ResponseGenerator;
 import org.infinispan.statetransfer.StateTransferLock;
@@ -21,11 +26,6 @@ import org.infinispan.transaction.totalorder.TotalOrderManager;
 import org.infinispan.util.TimeService;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
-
-import java.lang.ref.WeakReference;
-import java.util.Map;
-
-import static org.infinispan.factories.KnownComponentNames.MODULE_COMMAND_INITIALIZERS;
 
 /**
  * Named cache specific components
@@ -48,7 +48,7 @@ public class ComponentRegistry extends AbstractComponentRegistry {
    private TotalOrderManager totalOrderManager;
    private StateTransferLock stateTransferLock;
 
-   protected final WeakReference<ClassLoader> defaultClassLoader;
+   protected final AggregateClassLoader aggregateClassLoader;
 
    @Inject
    public void setCacheManagerNotifier(CacheManagerNotifier cacheManagerNotifier) {
@@ -63,8 +63,8 @@ public class ComponentRegistry extends AbstractComponentRegistry {
     * @param globalComponents Shared Component Registry to delegate to
     */
    public ComponentRegistry(String cacheName, Configuration configuration, AdvancedCache<?, ?> cache,
-                            GlobalComponentRegistry globalComponents, ClassLoader defaultClassLoader) {
-      this.defaultClassLoader = new WeakReference<ClassLoader>(defaultClassLoader);
+                            GlobalComponentRegistry globalComponents, AggregateClassLoader aggregateClassLoader) {
+      this.aggregateClassLoader = aggregateClassLoader;
       try {
          this.cacheName = cacheName;
          if (cacheName == null) throw new CacheConfigurationException("Cache name cannot be null!");
@@ -91,8 +91,8 @@ public class ComponentRegistry extends AbstractComponentRegistry {
    }
 
    @Override
-   protected ClassLoader getClassLoader() {
-      return defaultClassLoader.get();
+   protected AggregateClassLoader aggregateClassLoader() {
+      return aggregateClassLoader;
    }
 
    @Override

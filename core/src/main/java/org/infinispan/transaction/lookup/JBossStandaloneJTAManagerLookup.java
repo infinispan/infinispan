@@ -1,14 +1,15 @@
 package org.infinispan.transaction.lookup;
 
-import org.infinispan.commons.util.Util;
-import org.infinispan.configuration.cache.Configuration;
-import org.infinispan.factories.annotations.Inject;
-import org.infinispan.util.logging.Log;
-import org.infinispan.util.logging.LogFactory;
+import java.lang.reflect.Method;
 
 import javax.transaction.TransactionManager;
 import javax.transaction.UserTransaction;
-import java.lang.reflect.Method;
+
+import org.infinispan.commons.util.AggregateClassLoader;
+import org.infinispan.configuration.global.GlobalConfiguration;
+import org.infinispan.factories.annotations.Inject;
+import org.infinispan.util.logging.Log;
+import org.infinispan.util.logging.LogFactory;
 
 /**
  * JTA standalone TM lookup.
@@ -21,20 +22,22 @@ public class JBossStandaloneJTAManagerLookup implements TransactionManagerLookup
    private static final Log log = LogFactory.getLog(JBossStandaloneJTAManagerLookup.class);
 
    @Inject
-   public void init(Configuration configuration) {
-      init(configuration.classLoader());
+   public void init(GlobalConfiguration globalConfiguration) {
+      init(globalConfiguration.aggregateClassLoader());
    }
 
-   private void init(ClassLoader classLoader) {
+   private void init(AggregateClassLoader aggregateClassLoader) {
       // The TM may be deployed embedded alongside the app, so this needs to be looked up on the same CL as the Cache
       try {
-         manager = Util.loadClass("com.arjuna.ats.jta.TransactionManager", classLoader).getMethod("transactionManager");
-         user = Util.loadClass("com.arjuna.ats.jta.UserTransaction", classLoader).getMethod("userTransaction");
+         manager = aggregateClassLoader.loadClass("com.arjuna.ats.jta.TransactionManager").getMethod("transactionManager");
+         user = aggregateClassLoader.loadClass("com.arjuna.ats.jta.UserTransaction").getMethod("userTransaction");
       } catch (SecurityException e) {
          throw new RuntimeException(e);
       } catch (NoSuchMethodException e) {
          throw new RuntimeException(e);
-      }
+      } catch (ClassNotFoundException e) {
+          throw new RuntimeException(e);
+       }
    }
 
    @Override

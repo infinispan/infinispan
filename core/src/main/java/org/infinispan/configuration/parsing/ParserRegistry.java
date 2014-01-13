@@ -20,10 +20,10 @@ import javax.xml.stream.XMLStreamReader;
 
 import org.infinispan.commons.CacheConfigurationException;
 import org.infinispan.commons.util.CollectionFactory;
-import org.infinispan.commons.util.FileLookup;
-import org.infinispan.commons.util.FileLookupFactory;
 import org.infinispan.commons.util.ServiceFinder;
 import org.infinispan.commons.util.Util;
+import org.infinispan.configuration.global.GlobalConfiguration;
+import org.infinispan.factories.annotations.Inject;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
@@ -43,8 +43,15 @@ public class ParserRegistry implements NamespaceMappingParser {
    private final WeakReference<ClassLoader> cl;
    private final ConcurrentMap<QName, ConfigurationParser> parserMappings;
    
+   private GlobalConfiguration globalConfiguration;
+   
+   @Inject
+   public void init(GlobalConfiguration globalConfiguration) {
+	   this.globalConfiguration = globalConfiguration;
+   }
+   
    public ParserRegistry() {
-      this(Thread.currentThread().getContextClassLoader());
+      this(null);
    }
 
    public ParserRegistry(ClassLoader classLoader) {
@@ -79,8 +86,7 @@ public class ParserRegistry implements NamespaceMappingParser {
    }
 
    public ConfigurationBuilderHolder parseFile(String filename) throws IOException {
-      FileLookup fileLookup = FileLookupFactory.newInstance();
-      InputStream is = fileLookup.lookupFile(filename, cl.get());
+      InputStream is = globalConfiguration.aggregateClassLoader().lookupFile(filename, cl.get());
       if (is == null) {
          throw new FileNotFoundException(filename);
       }

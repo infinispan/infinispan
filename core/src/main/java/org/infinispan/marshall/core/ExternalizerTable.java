@@ -214,12 +214,12 @@ public class ExternalizerTable implements ObjectTable {
    }
 
    private void loadInternalMarshallables() {
-      addInternalExternalizer(new ListExternalizer());
+      addInternalExternalizer(new ListExternalizer(gcr.getGlobalConfiguration()));
       addInternalExternalizer(new MapExternalizer());
       addInternalExternalizer(new SetExternalizer());
-      addInternalExternalizer(new EnumSetExternalizer());
+      addInternalExternalizer(new EnumSetExternalizer(gcr.getGlobalConfiguration()));
       addInternalExternalizer(new ArrayExternalizers.ListArray());
-      addInternalExternalizer(new SingletonListExternalizer());
+      addInternalExternalizer(new SingletonListExternalizer(gcr.getGlobalConfiguration()));
 
       addInternalExternalizer(new GlobalTransaction.Externalizer());
       addInternalExternalizer(new RecoveryAwareGlobalTransaction.Externalizer());

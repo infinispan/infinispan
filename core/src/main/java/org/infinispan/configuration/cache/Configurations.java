@@ -1,6 +1,5 @@
 package org.infinispan.configuration.cache;
 
-import org.infinispan.configuration.global.GlobalConfiguration;
 import org.infinispan.transaction.LockingMode;
 
 /**
@@ -66,11 +65,5 @@ public class Configurations {
          }
       }
       return false;
-   }
-
-   public static ClassLoader getClassLoader(Configuration configuration, GlobalConfiguration globalConfiguration) {
-      // The cache-level configuration has a higher priority, even though it is now deprecated
-      ClassLoader classLoader = configuration != null ? configuration.classLoader() : null;
-      return classLoader != null ? classLoader : globalConfiguration.classLoader();
    }
 }

@@ -7,6 +7,7 @@ import org.infinispan.configuration.global.GlobalConfigurationBuilder;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.commons.marshall.AbstractExternalizer;
 import org.infinispan.commons.marshall.AdvancedExternalizer;
+import org.infinispan.commons.util.AggregateClassLoader;
 import org.infinispan.commons.util.Util;
 import org.infinispan.marshall.core.ExternalizerTable;
 import org.infinispan.marshall.core.Ids;
@@ -264,6 +265,8 @@ public class JBossMarshallerTest extends AbstractInfinispanTest {
    }
 
    static class MultiIdViaClassNameExternalizer extends MultiIdViaClassExternalizer {
+	   private final AggregateClassLoader aggregateClassLoader = new AggregateClassLoader();
+	   
       @Override
       public Integer getId() {
          // Revert to default so that it can be retrieved from config
@@ -272,10 +275,14 @@ public class JBossMarshallerTest extends AbstractInfinispanTest {
 
       @Override
       public Set<Class<? extends Object>> getTypeClasses() {
-         return Util.<Class<? extends Object>>asSet(
-               Util.loadClass("org.infinispan.marshall.AdvancedExternalizerTest$IdViaConfigObj", Thread.currentThread().getContextClassLoader()),
-               Util.loadClass("org.infinispan.marshall.AdvancedExternalizerTest$IdViaAnnotationObj", Thread.currentThread().getContextClassLoader()),
-               Util.loadClass("org.infinispan.marshall.AdvancedExternalizerTest$IdViaBothObj", Thread.currentThread().getContextClassLoader()));
+         try {
+			return Util.<Class<? extends Object>>asSet(
+					 aggregateClassLoader.loadClass("org.infinispan.marshall.AdvancedExternalizerTest$IdViaConfigObj"),
+					 aggregateClassLoader.loadClass("org.infinispan.marshall.AdvancedExternalizerTest$IdViaAnnotationObj"),
+					 aggregateClassLoader.loadClass("org.infinispan.marshall.AdvancedExternalizerTest$IdViaBothObj"));
+		} catch (ClassNotFoundException e) {
+			return null;
+		}
       }
    }
 }

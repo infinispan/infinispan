@@ -2,7 +2,6 @@ package org.infinispan;
 
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
 
-import java.lang.ref.WeakReference;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.EnumSet;
@@ -11,6 +10,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
+import org.infinispan.commons.util.AggregateClassLoader;
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.context.Flag;
 import org.infinispan.metadata.EmbeddedMetadata;
@@ -35,7 +35,7 @@ import org.infinispan.util.concurrent.NotifyingFuture;
 public class DecoratedCache<K, V> extends AbstractDelegatingAdvancedCache<K, V> {
 
    private final EnumSet<Flag> flags;
-   private final WeakReference<ClassLoader> classLoader;
+   private final AggregateClassLoader aggregateClassLoader = new AggregateClassLoader();
    private final CacheImpl<K, V> cacheImplementation;
 
    public DecoratedCache(AdvancedCache<K, V> delegate, ClassLoader classLoader) {
@@ -54,11 +54,12 @@ public class DecoratedCache<K, V> extends AbstractDelegatingAdvancedCache<K, V> 
          this.flags = EnumSet.noneOf(Flag.class);
          this.flags.addAll(Arrays.asList(flags));
       }
-      this.classLoader = new WeakReference<ClassLoader>(classLoader);
 
       if (flags == null && classLoader == null)
          throw new IllegalArgumentException("There is no point in using a DecoratedCache if neither a ClassLoader nor any Flags are set.");
 
+      aggregateClassLoader.setConfigurationClassLoader(classLoader);
+      
       // Yuk
       cacheImplementation = (CacheImpl<K, V>) delegate;
    }
@@ -67,7 +68,7 @@ public class DecoratedCache<K, V> extends AbstractDelegatingAdvancedCache<K, V> 
       //this constructor is private so we already checked for argument validity
       super(delegate);
       this.flags = newFlags;
-      this.classLoader = new WeakReference<ClassLoader>(classLoader);
+      aggregateClassLoader.setConfigurationClassLoader(classLoader);
       this.cacheImplementation = delegate;
    }
 
@@ -89,12 +90,12 @@ public class DecoratedCache<K, V> extends AbstractDelegatingAdvancedCache<K, V> 
          }
          else {
             if (this.flags==null) {
-               return new DecoratedCache<K, V>(this.cacheImplementation, this.classLoader.get(), EnumSet.copyOf(flagsToAdd));
+               return new DecoratedCache<K, V>(this.cacheImplementation, aggregateClassLoader, EnumSet.copyOf(flagsToAdd));
             }
             else {
                EnumSet<Flag> newFlags = EnumSet.copyOf(this.flags);
                newFlags.addAll(flagsToAdd);
-               return new DecoratedCache<K, V>(this.cacheImplementation, this.classLoader.get(), newFlags);
+               return new DecoratedCache<K, V>(this.cacheImplementation, aggregateClassLoader, newFlags);
             }
          }
       }
@@ -102,37 +103,32 @@ public class DecoratedCache<K, V> extends AbstractDelegatingAdvancedCache<K, V> 
 
    @Override
    public ClassLoader getClassLoader() {
-      if (this.classLoader == null) {
-         return cacheImplementation.getClassLoader();
-      }
-      else {
-         return this.classLoader.get();
-      }
+      return aggregateClassLoader;
    }
 
    @Override
    public void stop() {
-      cacheImplementation.stop(classLoader.get());
+      cacheImplementation.stop(aggregateClassLoader);
    }
 
    @Override
    public boolean lock(K... keys) {
-      return cacheImplementation.lock(Arrays.asList(keys), flags, classLoader.get());
+      return cacheImplementation.lock(Arrays.asList(keys), flags, aggregateClassLoader);
    }
 
    @Override
    public boolean lock(Collection<? extends K> keys) {
-      return cacheImplementation.lock(keys, flags, classLoader.get());
+      return cacheImplementation.lock(keys, flags, aggregateClassLoader);
    }
 
    @Override
    public void putForExternalRead(K key, V value) {
-      cacheImplementation.putForExternalRead(key, value, flags, classLoader.get());
+      cacheImplementation.putForExternalRead(key, value, flags, aggregateClassLoader);
    }
 
    @Override
    public void evict(K key) {
-      cacheImplementation.evict(key, flags, classLoader.get());
+      cacheImplementation.evict(key, flags, aggregateClassLoader);
    }
 
    @Override
@@ -142,7 +138,7 @@ public class DecoratedCache<K, V> extends AbstractDelegatingAdvancedCache<K, V> 
             .maxIdle(cacheImplementation.defaultMetadata.maxIdle(), MILLISECONDS)
             .build();
 
-      return cacheImplementation.put(key, value, metadata, flags, classLoader.get());
+      return cacheImplementation.put(key, value, metadata, flags, aggregateClassLoader);
    }
 
    @Override
@@ -152,7 +148,7 @@ public class DecoratedCache<K, V> extends AbstractDelegatingAdvancedCache<K, V> 
             .maxIdle(cacheImplementation.defaultMetadata.maxIdle(), MILLISECONDS)
             .build();
 
-      return cacheImplementation.putIfAbsent(key, value, metadata, flags, classLoader.get());
+      return cacheImplementation.putIfAbsent(key, value, metadata, flags, aggregateClassLoader);
    }
 
    @Override
@@ -161,7 +157,7 @@ public class DecoratedCache<K, V> extends AbstractDelegatingAdvancedCache<K, V> 
             .lifespan(lifespan, unit)
             .maxIdle(cacheImplementation.defaultMetadata.maxIdle(), MILLISECONDS)
             .build();
-      cacheImplementation.putAll(map, metadata, flags, classLoader.get());
+      cacheImplementation.putAll(map, metadata, flags, aggregateClassLoader);
    }
 
    @Override
@@ -171,7 +167,7 @@ public class DecoratedCache<K, V> extends AbstractDelegatingAdvancedCache<K, V> 
             .maxIdle(cacheImplementation.defaultMetadata.maxIdle(), MILLISECONDS)
             .build();
 
-      return cacheImplementation.replace(key, value, metadata, flags, classLoader.get());
+      return cacheImplementation.replace(key, value, metadata, flags, aggregateClassLoader);
    }
 
    @Override
@@ -181,7 +177,7 @@ public class DecoratedCache<K, V> extends AbstractDelegatingAdvancedCache<K, V> 
             .maxIdle(cacheImplementation.defaultMetadata.maxIdle(), MILLISECONDS)
             .build();
 
-      return cacheImplementation.replace(key, oldValue, value, metadata, flags, classLoader.get());
+      return cacheImplementation.replace(key, oldValue, value, metadata, flags, aggregateClassLoader);
    }
 
    @Override
@@ -191,7 +187,7 @@ public class DecoratedCache<K, V> extends AbstractDelegatingAdvancedCache<K, V> 
             .maxIdle(maxIdleTime, maxIdleTimeUnit)
             .build();
 
-      return cacheImplementation.put(key, value, metadata, flags, classLoader.get());
+      return cacheImplementation.put(key, value, metadata, flags, aggregateClassLoader);
    }
 
    @Override
@@ -201,7 +197,7 @@ public class DecoratedCache<K, V> extends AbstractDelegatingAdvancedCache<K, V> 
             .maxIdle(maxIdleTime, maxIdleTimeUnit)
             .build();
 
-      return cacheImplementation.putIfAbsent(key, value, metadata, flags, classLoader.get());
+      return cacheImplementation.putIfAbsent(key, value, metadata, flags, aggregateClassLoader);
    }
 
    @Override
@@ -210,7 +206,7 @@ public class DecoratedCache<K, V> extends AbstractDelegatingAdvancedCache<K, V> 
             .lifespan(lifespan, lifespanUnit)
             .maxIdle(maxIdleTime, maxIdleTimeUnit)
             .build();
-      cacheImplementation.putAll(map, metadata, flags, classLoader.get());
+      cacheImplementation.putAll(map, metadata, flags, aggregateClassLoader);
    }
 
    @Override
@@ -220,7 +216,7 @@ public class DecoratedCache<K, V> extends AbstractDelegatingAdvancedCache<K, V> 
             .maxIdle(maxIdleTime, maxIdleTimeUnit)
             .build();
 
-      return cacheImplementation.replace(key, value, metadata, flags, classLoader.get());
+      return cacheImplementation.replace(key, value, metadata, flags, aggregateClassLoader);
    }
 
    @Override
@@ -230,12 +226,12 @@ public class DecoratedCache<K, V> extends AbstractDelegatingAdvancedCache<K, V> 
             .maxIdle(maxIdleTime, maxIdleTimeUnit)
             .build();
 
-      return cacheImplementation.replace(key, oldValue, value, metadata, flags, classLoader.get());
+      return cacheImplementation.replace(key, oldValue, value, metadata, flags, aggregateClassLoader);
    }
 
    @Override
    public NotifyingFuture<V> putAsync(K key, V value) {
-      return cacheImplementation.putAsync(key, value, cacheImplementation.defaultMetadata, flags, classLoader.get());
+      return cacheImplementation.putAsync(key, value, cacheImplementation.defaultMetadata, flags, aggregateClassLoader);
    }
 
    @Override
@@ -245,7 +241,7 @@ public class DecoratedCache<K, V> extends AbstractDelegatingAdvancedCache<K, V> 
             .maxIdle(cacheImplementation.defaultMetadata.maxIdle(), MILLISECONDS)
             .build();
 
-      return cacheImplementation.putAsync(key, value, metadata, flags, classLoader.get());
+      return cacheImplementation.putAsync(key, value, metadata, flags, aggregateClassLoader);
    }
 
    @Override
@@ -255,12 +251,12 @@ public class DecoratedCache<K, V> extends AbstractDelegatingAdvancedCache<K, V> 
             .maxIdle(maxIdle, maxIdleUnit)
             .build();
 
-      return cacheImplementation.putAsync(key, value, metadata, flags, classLoader.get());
+      return cacheImplementation.putAsync(key, value, metadata, flags, aggregateClassLoader);
    }
 
    @Override
    public NotifyingFuture<Void> putAllAsync(Map<? extends K, ? extends V> data) {
-      return cacheImplementation.putAllAsync(data, cacheImplementation.defaultMetadata, flags, classLoader.get());
+      return cacheImplementation.putAllAsync(data, cacheImplementation.defaultMetadata, flags, aggregateClassLoader);
    }
 
    @Override
@@ -269,7 +265,7 @@ public class DecoratedCache<K, V> extends AbstractDelegatingAdvancedCache<K, V> 
             .lifespan(lifespan, unit)
             .maxIdle(cacheImplementation.defaultMetadata.maxIdle(), MILLISECONDS)
             .build();
-      return cacheImplementation.putAllAsync(data, metadata, flags, classLoader.get());
+      return cacheImplementation.putAllAsync(data, metadata, flags, aggregateClassLoader);
    }
 
    @Override
@@ -278,17 +274,17 @@ public class DecoratedCache<K, V> extends AbstractDelegatingAdvancedCache<K, V> 
             .lifespan(lifespan, lifespanUnit)
             .maxIdle(maxIdle, maxIdleUnit)
             .build();
-      return cacheImplementation.putAllAsync(data, metadata, flags, classLoader.get());
+      return cacheImplementation.putAllAsync(data, metadata, flags, aggregateClassLoader);
    }
 
    @Override
    public NotifyingFuture<Void> clearAsync() {
-      return cacheImplementation.clearAsync(flags, classLoader.get());
+      return cacheImplementation.clearAsync(flags, aggregateClassLoader);
    }
 
    @Override
    public NotifyingFuture<V> putIfAbsentAsync(K key, V value) {
-      return cacheImplementation.putIfAbsentAsync(key, value, cacheImplementation.defaultMetadata, flags, classLoader.get());
+      return cacheImplementation.putIfAbsentAsync(key, value, cacheImplementation.defaultMetadata, flags, aggregateClassLoader);
    }
 
    @Override
@@ -298,7 +294,7 @@ public class DecoratedCache<K, V> extends AbstractDelegatingAdvancedCache<K, V> 
             .maxIdle(cacheImplementation.defaultMetadata.maxIdle(), MILLISECONDS)
             .build();
 
-      return cacheImplementation.putIfAbsentAsync(key, value, metadata, flags, classLoader.get());
+      return cacheImplementation.putIfAbsentAsync(key, value, metadata, flags, aggregateClassLoader);
    }
 
    @Override
@@ -308,22 +304,22 @@ public class DecoratedCache<K, V> extends AbstractDelegatingAdvancedCache<K, V> 
             .maxIdle(maxIdle, maxIdleUnit)
             .build();
 
-      return cacheImplementation.putIfAbsentAsync(key, value, metadata, flags, classLoader.get());
+      return cacheImplementation.putIfAbsentAsync(key, value, metadata, flags, aggregateClassLoader);
    }
 
    @Override
    public NotifyingFuture<V> removeAsync(Object key) {
-      return cacheImplementation.removeAsync(key, flags, classLoader.get());
+      return cacheImplementation.removeAsync(key, flags, aggregateClassLoader);
    }
 
    @Override
    public NotifyingFuture<Boolean> removeAsync(Object key, Object value) {
-      return cacheImplementation.removeAsync(key, value, flags, classLoader.get());
+      return cacheImplementation.removeAsync(key, value, flags, aggregateClassLoader);
    }
 
    @Override
    public NotifyingFuture<V> replaceAsync(K key, V value) {
-      return cacheImplementation.replaceAsync(key, value, cacheImplementation.defaultMetadata, flags, classLoader.get());
+      return cacheImplementation.replaceAsync(key, value, cacheImplementation.defaultMetadata, flags, aggregateClassLoader);
    }
 
    @Override
@@ -333,7 +329,7 @@ public class DecoratedCache<K, V> extends AbstractDelegatingAdvancedCache<K, V> 
             .maxIdle(cacheImplementation.defaultMetadata.maxIdle(), MILLISECONDS)
             .build();
 
-      return cacheImplementation.replaceAsync(key, value, metadata, flags, classLoader.get());
+      return cacheImplementation.replaceAsync(key, value, metadata, flags, aggregateClassLoader);
    }
 
    @Override
@@ -343,12 +339,12 @@ public class DecoratedCache<K, V> extends AbstractDelegatingAdvancedCache<K, V> 
             .maxIdle(maxIdle, maxIdleUnit)
             .build();
 
-      return cacheImplementation.replaceAsync(key, value, metadata, flags, classLoader.get());
+      return cacheImplementation.replaceAsync(key, value, metadata, flags, aggregateClassLoader);
    }
 
    @Override
    public NotifyingFuture<Boolean> replaceAsync(K key, V oldValue, V newValue) {
-      return cacheImplementation.replaceAsync(key, oldValue, newValue, cacheImplementation.defaultMetadata, flags, classLoader.get());
+      return cacheImplementation.replaceAsync(key, oldValue, newValue, cacheImplementation.defaultMetadata, flags, aggregateClassLoader);
    }
 
    @Override
@@ -358,7 +354,7 @@ public class DecoratedCache<K, V> extends AbstractDelegatingAdvancedCache<K, V> 
             .maxIdle(cacheImplementation.defaultMetadata.maxIdle(), MILLISECONDS)
             .build();
 
-      return cacheImplementation.replaceAsync(key, oldValue, newValue, metadata, flags, classLoader.get());
+      return cacheImplementation.replaceAsync(key, oldValue, newValue, metadata, flags, aggregateClassLoader);
    }
 
    @Override
@@ -368,87 +364,87 @@ public class DecoratedCache<K, V> extends AbstractDelegatingAdvancedCache<K, V> 
             .maxIdle(maxIdle, maxIdleUnit)
             .build();
 
-      return cacheImplementation.replaceAsync(key, oldValue, newValue, metadata, flags, classLoader.get());
+      return cacheImplementation.replaceAsync(key, oldValue, newValue, metadata, flags, aggregateClassLoader);
    }
 
    @Override
    public NotifyingFuture<V> getAsync(K key) {
-      return cacheImplementation.getAsync(key, flags, classLoader.get());
+      return cacheImplementation.getAsync(key, flags, aggregateClassLoader);
    }
 
    @Override
    public int size() {
-      return cacheImplementation.size(flags, classLoader.get());
+      return cacheImplementation.size(flags, aggregateClassLoader);
    }
 
    @Override
    public boolean isEmpty() {
-      return cacheImplementation.isEmpty(flags, classLoader.get());
+      return cacheImplementation.isEmpty(flags, aggregateClassLoader);
    }
 
    @Override
    public boolean containsKey(Object key) {
-      return cacheImplementation.containsKey(key, flags, classLoader.get());
+      return cacheImplementation.containsKey(key, flags, aggregateClassLoader);
    }
 
    @Override
    public V get(Object key) {
-      return cacheImplementation.get(key, flags, classLoader.get());
+      return cacheImplementation.get(key, flags, aggregateClassLoader);
    }
 
    @Override
    public V put(K key, V value) {
-      return cacheImplementation.put(key, value, cacheImplementation.defaultMetadata, flags, classLoader.get());
+      return cacheImplementation.put(key, value, cacheImplementation.defaultMetadata, flags, aggregateClassLoader);
    }
 
    @Override
    public V remove(Object key) {
-      return cacheImplementation.remove(key, flags, classLoader.get());
+      return cacheImplementation.remove(key, flags, aggregateClassLoader);
    }
 
    @Override
    public void putAll(Map<? extends K, ? extends V> m) {
-      cacheImplementation.putAll(m, cacheImplementation.defaultMetadata, flags, classLoader.get());
+      cacheImplementation.putAll(m, cacheImplementation.defaultMetadata, flags, aggregateClassLoader);
    }
 
    @Override
    public void clear() {
-      cacheImplementation.clear(flags, classLoader.get());
+      cacheImplementation.clear(flags, aggregateClassLoader);
    }
 
    @Override
    public Set<K> keySet() {
-      return cacheImplementation.keySet(flags, classLoader.get());
+      return cacheImplementation.keySet(flags, aggregateClassLoader);
    }
 
    @Override
    public Collection<V> values() {
-      return cacheImplementation.values(flags, classLoader.get());
+      return cacheImplementation.values(flags, aggregateClassLoader);
    }
 
    @Override
    public Set<Entry<K, V>> entrySet() {
-      return cacheImplementation.entrySet(flags, classLoader.get());
+      return cacheImplementation.entrySet(flags, aggregateClassLoader);
    }
 
    @Override
    public V putIfAbsent(K key, V value) {
-      return cacheImplementation.putIfAbsent(key, value, cacheImplementation.defaultMetadata, flags, classLoader.get());
+      return cacheImplementation.putIfAbsent(key, value, cacheImplementation.defaultMetadata, flags, aggregateClassLoader);
    }
 
    @Override
    public boolean remove(Object key, Object value) {
-      return cacheImplementation.remove(key, value, flags, classLoader.get());
+      return cacheImplementation.remove(key, value, flags, aggregateClassLoader);
    }
 
    @Override
    public boolean replace(K key, V oldValue, V newValue) {
-      return cacheImplementation.replace(key, oldValue, newValue, cacheImplementation.defaultMetadata, flags, classLoader.get());
+      return cacheImplementation.replace(key, oldValue, newValue, cacheImplementation.defaultMetadata, flags, aggregateClassLoader);
    }
 
    @Override
    public V replace(K key, V value) {
-      return cacheImplementation.replace(key, value, cacheImplementation.defaultMetadata, flags, classLoader.get());
+      return cacheImplementation.replace(key, value, cacheImplementation.defaultMetadata, flags, aggregateClassLoader);
    }
 
    //Not exposed on interface
@@ -458,42 +454,42 @@ public class DecoratedCache<K, V> extends AbstractDelegatingAdvancedCache<K, V> 
 
    @Override
    public void addListener(Object listener) {
-      cacheImplementation.notifier.addListener(listener, classLoader.get());
+      cacheImplementation.notifier.addListener(listener, aggregateClassLoader);
    }
 
    @Override
    public void addListener(Object listener, KeyFilter filter) {
-      cacheImplementation.notifier.addListener(listener, filter, classLoader.get());
+      cacheImplementation.notifier.addListener(listener, filter, aggregateClassLoader);
    }
 
    @Override
    public V put(K key, V value, Metadata metadata) {
-      return cacheImplementation.put(key, value, metadata, flags, classLoader.get());
+      return cacheImplementation.put(key, value, metadata, flags, aggregateClassLoader);
    }
 
    @Override
    public NotifyingFuture<V> putAsync(K key, V value, Metadata metadata) {
-      return cacheImplementation.putAsync(key, value, metadata, flags, classLoader.get());
+      return cacheImplementation.putAsync(key, value, metadata, flags, aggregateClassLoader);
    }
 
    @Override
    public V putIfAbsent(K key, V value, Metadata metadata) {
-      return cacheImplementation.putIfAbsent(key, value, metadata, flags, classLoader.get());
+      return cacheImplementation.putIfAbsent(key, value, metadata, flags, aggregateClassLoader);
    }
 
    @Override
    public boolean replace(K key, V oldValue, V value, Metadata metadata) {
-      return cacheImplementation.replace(key, oldValue, value, metadata, flags, classLoader.get());
+      return cacheImplementation.replace(key, oldValue, value, metadata, flags, aggregateClassLoader);
    }
 
    @Override
    public V replace(K key, V value, Metadata metadata) {
-      return cacheImplementation.replace(key, value, metadata, flags, classLoader.get());
+      return cacheImplementation.replace(key, value, metadata, flags, aggregateClassLoader);
    }
 
    @Override
    public CacheEntry getCacheEntry(K key) {
-      return cacheImplementation.getCacheEntry(key, flags, classLoader.get());
+      return cacheImplementation.getCacheEntry(key, flags, aggregateClassLoader);
    }
 
 }

@@ -14,9 +14,8 @@ import javax.xml.stream.FactoryConfigurationError;
 import javax.xml.stream.XMLStreamException;
 
 import org.infinispan.commons.marshall.Marshaller;
-import org.infinispan.commons.util.FileLookupFactory;
+import org.infinispan.commons.util.AggregateClassLoader;
 import org.infinispan.commons.util.LegacyKeySupportSystemProperties;
-import org.infinispan.commons.util.Util;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.global.GlobalConfigurationBuilder;
@@ -53,6 +52,8 @@ public class TestCacheManagerFactory {
 
    private static volatile boolean shuttingDown;
    private static CountDownLatch shutDownLatch = new CountDownLatch(1);
+   
+   private static AggregateClassLoader aggregateClassLoader = new AggregateClassLoader();
 
    private static ThreadLocal<PerThreadCacheManagers> perThreadCacheManagers = new ThreadLocal<PerThreadCacheManagers>() {
       @Override
@@ -81,8 +82,7 @@ public class TestCacheManagerFactory {
    }
 
    public static EmbeddedCacheManager fromXml(String xmlFile, boolean keepJmxDomainName) throws IOException {
-      InputStream is = FileLookupFactory.newInstance().lookupFileStrict(
-            xmlFile, Thread.currentThread().getContextClassLoader());
+      InputStream is = aggregateClassLoader.lookupFileStrict(xmlFile, null);
       return fromStream(is, keepJmxDomainName);
    }
 
@@ -91,7 +91,7 @@ public class TestCacheManagerFactory {
    }
 
    public static EmbeddedCacheManager fromStream(InputStream is, boolean keepJmxDomainName) throws IOException {
-      ParserRegistry parserRegistry = new ParserRegistry(Thread.currentThread().getContextClassLoader());
+      ParserRegistry parserRegistry = new ParserRegistry();
       ConfigurationBuilderHolder holder = parserRegistry.parse(is);
       return createClusteredCacheManager(holder, keepJmxDomainName);
    }
@@ -110,7 +110,8 @@ public class TestCacheManagerFactory {
    private static void amendJTA(ConfigurationBuilder builder) {
       org.infinispan.configuration.cache.Configuration c = builder.build();
       if (c.transaction().transactionMode().equals(TransactionMode.TRANSACTIONAL) && c.transaction().transactionManagerLookup() == null) {
-         builder.transaction().transactionManagerLookup((TransactionManagerLookup) Util.getInstance(TransactionSetup.getManagerLookup(), TestCacheManagerFactory.class.getClassLoader()));
+         builder.transaction().transactionManagerLookup((TransactionManagerLookup) aggregateClassLoader.getInstance(
+        		 TransactionSetup.getManagerLookup(), TestCacheManagerFactory.class.getClassLoader()));
       }
    }
 
@@ -338,16 +339,8 @@ public class TestCacheManagerFactory {
 
    public static void amendMarshaller(GlobalConfigurationBuilder builder) {
       if (MARSHALLER != null) {
-         try {
-            Marshaller marshaller = Util.getInstanceStrict(MARSHALLER, Thread.currentThread().getContextClassLoader());
-            builder.serialization().marshaller(marshaller);
-         } catch (ClassNotFoundException e) {
-            // No-op, stick to GlobalConfiguration default.
-         } catch (InstantiationException e) {
-            // No-op, stick to GlobalConfiguration default.
-         } catch (IllegalAccessException e) {
-            // No-op, stick to GlobalConfiguration default.
-         }
+        Marshaller marshaller = aggregateClassLoader.getInstance(MARSHALLER);
+        builder.serialization().marshaller(marshaller);
       }
    }
 
@@ -466,7 +459,7 @@ public class TestCacheManagerFactory {
    public static ConfigurationBuilderHolder buildAggregateHolder(String... xmls)
          throws XMLStreamException, FactoryConfigurationError {
       ClassLoader cl = Thread.currentThread().getContextClassLoader();
-      ParserRegistry registry = new ParserRegistry(cl);
+      ParserRegistry registry = new ParserRegistry();
 
       ConfigurationBuilderHolder holder = new ConfigurationBuilderHolder(cl);
       for (String xml : xmls) {

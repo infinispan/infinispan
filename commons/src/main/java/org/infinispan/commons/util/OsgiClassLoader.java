@@ -31,9 +31,14 @@ public class OsgiClassLoader extends ClassLoader {
 		super( null );
 		
 		// TODO: move this to core and include core CL?
-		final BundleContext bundleContext = ( (BundleReference) OsgiClassLoader.class.getClassLoader() ).getBundle()
-				.getBundleContext();
-		bundles = bundleContext.getBundles();
+		final ClassLoader cl = OsgiClassLoader.class.getClassLoader();
+		if (cl instanceof BundleReference) {
+			final BundleContext bundleContext = ( (BundleReference) OsgiClassLoader.class.getClassLoader() ).getBundle()
+					.getBundleContext();
+			bundles = bundleContext.getBundles();
+		} else {
+			bundles = new Bundle[0];
+		}
 	}
 
 	/**

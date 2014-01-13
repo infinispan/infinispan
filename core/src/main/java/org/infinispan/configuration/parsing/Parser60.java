@@ -1,15 +1,41 @@
 package org.infinispan.configuration.parsing;
 
+import static org.infinispan.commons.util.StringPropertyReplacer.replaceProperties;
+import static org.infinispan.configuration.cache.CacheMode.DIST_ASYNC;
+import static org.infinispan.configuration.cache.CacheMode.DIST_SYNC;
+import static org.infinispan.configuration.cache.CacheMode.INVALIDATION_ASYNC;
+import static org.infinispan.configuration.cache.CacheMode.INVALIDATION_SYNC;
+import static org.infinispan.configuration.cache.CacheMode.LOCAL;
+import static org.infinispan.configuration.cache.CacheMode.REPL_ASYNC;
+import static org.infinispan.configuration.cache.CacheMode.REPL_SYNC;
+
+import java.util.Properties;
+
+import javax.xml.stream.XMLStreamConstants;
+import javax.xml.stream.XMLStreamException;
+
 import org.infinispan.commons.CacheConfigurationException;
 import org.infinispan.commons.equivalence.Equivalence;
 import org.infinispan.commons.executors.ExecutorFactory;
 import org.infinispan.commons.hash.Hash;
 import org.infinispan.commons.marshall.AdvancedExternalizer;
 import org.infinispan.commons.marshall.Marshaller;
-import org.infinispan.commons.util.Util;
-import org.infinispan.configuration.cache.*;
+import org.infinispan.commons.util.AggregateClassLoader;
+import org.infinispan.configuration.cache.BackupConfiguration;
+import org.infinispan.configuration.cache.BackupConfigurationBuilder;
+import org.infinispan.configuration.cache.BackupFailurePolicy;
+import org.infinispan.configuration.cache.BackupForBuilder;
+import org.infinispan.configuration.cache.ClusterLoaderConfigurationBuilder;
+import org.infinispan.configuration.cache.ConfigurationBuilder;
+import org.infinispan.configuration.cache.IndexingConfigurationBuilder;
 import org.infinispan.configuration.cache.InterceptorConfiguration.Position;
+import org.infinispan.configuration.cache.InterceptorConfigurationBuilder;
+import org.infinispan.configuration.cache.RecoveryConfigurationBuilder;
+import org.infinispan.configuration.cache.SingleFileStoreConfigurationBuilder;
+import org.infinispan.configuration.cache.StoreConfigurationBuilder;
+import org.infinispan.configuration.cache.VersioningScheme;
 import org.infinispan.configuration.global.ExecutorFactoryConfigurationBuilder;
+import org.infinispan.configuration.global.GlobalConfiguration;
 import org.infinispan.configuration.global.GlobalConfigurationBuilder;
 import org.infinispan.configuration.global.ScheduledExecutorFactoryConfigurationBuilder;
 import org.infinispan.configuration.global.ShutdownHookBehavior;
@@ -19,6 +45,7 @@ import org.infinispan.distribution.group.Grouper;
 import org.infinispan.eviction.EvictionStrategy;
 import org.infinispan.eviction.EvictionThreadPolicy;
 import org.infinispan.executors.ScheduledExecutorFactory;
+import org.infinispan.factories.annotations.Inject;
 import org.infinispan.interceptors.base.CommandInterceptor;
 import org.infinispan.jmx.MBeanServerLookup;
 import org.infinispan.persistence.cluster.ClusterLoader;
@@ -34,14 +61,6 @@ import org.infinispan.util.concurrent.IsolationLevel;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
-import javax.xml.stream.XMLStreamConstants;
-import javax.xml.stream.XMLStreamException;
-
-import java.util.Properties;
-
-import static org.infinispan.commons.util.StringPropertyReplacer.replaceProperties;
-import static org.infinispan.configuration.cache.CacheMode.*;
-
 /**
  * This class implements the parser for 6.0 schema files
  *
@@ -55,6 +74,13 @@ import static org.infinispan.configuration.cache.CacheMode.*;
 public class Parser60 implements ConfigurationParser {
 
    private static final Log log = LogFactory.getLog(Parser60.class);
+   
+   private AggregateClassLoader aggregateClassLoader;
+   
+   @Inject
+   public void init(GlobalConfiguration globalConfiguration) {
+	   aggregateClassLoader = globalConfiguration.aggregateClassLoader();
+   }
 
    public Parser60() {}
 
@@ -370,7 +396,7 @@ public class Parser60 implements ConfigurationParser {
                builder.transaction().syncRollbackPhase(Boolean.parseBoolean(value));
                break;
             case TRANSACTION_MANAGER_LOOKUP_CLASS:
-               builder.transaction().transactionManagerLookup(Util.<TransactionManagerLookup>getInstance(value, holder.getClassLoader()));
+               builder.transaction().transactionManagerLookup(aggregateClassLoader.<TransactionManagerLookup>getInstance(value, holder.getClassLoader()));
                forceSetTransactional = true;
                break;
             case TRANSACTION_MODE:
@@ -643,7 +669,7 @@ public class Parser60 implements ConfigurationParser {
          Attribute attribute = Attribute.forName(reader.getAttributeLocalName(i));
          switch (attribute) {
             case CLASS:
-               store = Util.getInstance(value, holder.getClassLoader());
+               store = aggregateClassLoader.getInstance(value, holder.getClassLoader());
                break;
             case FETCH_PERSISTENT_STATE:
                fetchPersistentState = Boolean.valueOf(value);
@@ -965,13 +991,13 @@ public class Parser60 implements ConfigurationParser {
          Attribute attribute = Attribute.forName(reader.getAttributeLocalName(i));
          switch (attribute) {
             case CLASS:
-               builder.dataContainer().dataContainer(Util.<DataContainer>getInstance(value, holder.getClassLoader()));
+               builder.dataContainer().dataContainer(aggregateClassLoader.<DataContainer>getInstance(value, holder.getClassLoader()));
                break;
             case KEY_EQUIVALENCE:
-               builder.dataContainer().keyEquivalence(Util.<Equivalence>getInstance(value, holder.getClassLoader()));
+               builder.dataContainer().keyEquivalence(aggregateClassLoader.<Equivalence>getInstance(value, holder.getClassLoader()));
                break;
             case VALUE_EQUIVALENCE:
-               builder.dataContainer().valueEquivalence(Util.<Equivalence>getInstance(value, holder.getClassLoader()));
+               builder.dataContainer().valueEquivalence(aggregateClassLoader.<Equivalence>getInstance(value, holder.getClassLoader()));
                break;
             default:
                throw ParseUtils.unexpectedAttribute(reader, i);
@@ -1015,13 +1041,13 @@ public class Parser60 implements ConfigurationParser {
          Attribute attribute = Attribute.forName(reader.getAttributeLocalName(i));
          switch (attribute) {
             case AFTER:
-               interceptorBuilder.after(Util.<CommandInterceptor>loadClass(value, holder.getClassLoader()));
+               interceptorBuilder.after(aggregateClassLoader.<CommandInterceptor>loadClass(value, holder.getClassLoader()));
                break;
             case BEFORE:
-               interceptorBuilder.before(Util.<CommandInterceptor>loadClass(value, holder.getClassLoader()));
+               interceptorBuilder.before(aggregateClassLoader.<CommandInterceptor>loadClass(value, holder.getClassLoader()));
                break;
             case CLASS:
-               interceptorBuilder.interceptor(Util.<CommandInterceptor>getInstance(value, holder.getClassLoader()));
+               interceptorBuilder.interceptor(aggregateClassLoader.<CommandInterceptor>getInstance(value, holder.getClassLoader()));
                break;
             case INDEX:
                interceptorBuilder.index(Integer.parseInt(value));
@@ -1237,10 +1263,10 @@ public class Parser60 implements ConfigurationParser {
          Attribute attribute = Attribute.forName(reader.getAttributeLocalName(i));
          switch (attribute) {
             case FACTORY:
-               builder.clustering().hash().consistentHashFactory(Util.<ConsistentHashFactory>getInstance(value, holder.getClassLoader()));
+               builder.clustering().hash().consistentHashFactory(aggregateClassLoader.<ConsistentHashFactory>getInstance(value, holder.getClassLoader()));
                break;
             case HASH_FUNCTION_CLASS:
-               builder.clustering().hash().hash(Util.<Hash>getInstance(value, holder.getClassLoader()));
+               builder.clustering().hash().hash(aggregateClassLoader.<Hash>getInstance(value, holder.getClassLoader()));
                break;
             case NUM_OWNERS:
                builder.clustering().hash().numOwners(Integer.parseInt(value));
@@ -1296,7 +1322,7 @@ public class Parser60 implements ConfigurationParser {
          switch (element) {
             case GROUPER:
                String value = ParseUtils.readStringAttributeElement(reader, "class");
-               builder.clustering().hash().groups().addGrouper(Util.<Grouper<?>>getInstance(value, holder.getClassLoader()));
+               builder.clustering().hash().groups().addGrouper(aggregateClassLoader.<Grouper<?>>getInstance(value, holder.getClassLoader()));
                break;
             default:
                throw ParseUtils.unexpectedElement(reader);
@@ -1321,7 +1347,7 @@ public class Parser60 implements ConfigurationParser {
                }
                break;
             case REPL_QUEUE_CLASS:
-               builder.clustering().async().replQueue(Util.<ReplicationQueue> getInstance(value, holder.getClassLoader()));
+               builder.clustering().async().replQueue(aggregateClassLoader.<ReplicationQueue> getInstance(value, holder.getClassLoader()));
                break;
             case REPL_QUEUE_INTERVAL:
                builder.clustering().async().replQueueInterval(Long.parseLong(value));
@@ -1459,7 +1485,7 @@ public class Parser60 implements ConfigurationParser {
                break;
             }
             case TRANSPORT_CLASS: {
-               builder.transport().transport(Util.<Transport> getInstance(value, holder.getClassLoader()));
+               builder.transport().transport(aggregateClassLoader.<Transport> getInstance(value, holder.getClassLoader()));
                break;
             }
             default: {
@@ -1512,7 +1538,7 @@ public class Parser60 implements ConfigurationParser {
 
          switch (attribute) {
             case MARSHALLER_CLASS: {
-               builder.serialization().marshaller(Util.<Marshaller>getInstance(value, holder.getClassLoader()));
+               builder.serialization().marshaller(aggregateClassLoader.<Marshaller>getInstance(value, holder.getClassLoader()));
                break;
             }
             case VERSION: {
@@ -1558,7 +1584,7 @@ public class Parser60 implements ConfigurationParser {
                   Attribute attribute = Attribute.forName(reader.getAttributeLocalName(i));
                   switch (attribute) {
                      case EXTERNALIZER_CLASS: {
-                        advancedExternalizer = Util.getInstance(value, holder.getClassLoader());
+                        advancedExternalizer = aggregateClassLoader.getInstance(value, holder.getClassLoader());
                         break;
                      }
                      case ID: {
@@ -1619,7 +1645,7 @@ public class Parser60 implements ConfigurationParser {
                break;
             }
             case MBEAN_SERVER_LOOKUP: {
-               builder.globalJmxStatistics().mBeanServerLookup(Util.<MBeanServerLookup>getInstance(value, holder.getClassLoader()));
+               builder.globalJmxStatistics().mBeanServerLookup(aggregateClassLoader.<MBeanServerLookup>getInstance(value, holder.getClassLoader()));
                break;
             }
             default: {
@@ -1650,7 +1676,7 @@ public class Parser60 implements ConfigurationParser {
          Attribute attribute = Attribute.forName(reader.getAttributeLocalName(i));
          switch (attribute) {
             case FACTORY: {
-               factoryBuilder.factory(Util.<ScheduledExecutorFactory> getInstance(value, classLoader));
+               factoryBuilder.factory(aggregateClassLoader.<ScheduledExecutorFactory> getInstance(value, classLoader));
                break;
             }
             default: {
@@ -1681,7 +1707,7 @@ public class Parser60 implements ConfigurationParser {
          Attribute attribute = Attribute.forName(reader.getAttributeLocalName(i));
          switch (attribute) {
             case FACTORY: {
-               factoryBuilder.factory(Util.<ExecutorFactory>getInstance(value, classLoader));
+               factoryBuilder.factory(aggregateClassLoader.<ExecutorFactory>getInstance(value, classLoader));
                break;
             }
             default: {
@@ -1762,7 +1788,7 @@ public class Parser60 implements ConfigurationParser {
                }
                break;
             case MARSHALLER_CLASS:
-               builder.compatibility().marshaller(Util.<Marshaller>getInstance(value, holder.getClassLoader()));
+               builder.compatibility().marshaller(aggregateClassLoader.<Marshaller>getInstance(value, holder.getClassLoader()));
                break;
             default:
                throw ParseUtils.unexpectedAttribute(reader, i);

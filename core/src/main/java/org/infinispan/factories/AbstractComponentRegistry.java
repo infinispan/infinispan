@@ -1,22 +1,5 @@
 package org.infinispan.factories;
 
-import org.infinispan.commons.CacheException;
-import org.infinispan.commons.util.ReflectionUtil;
-import org.infinispan.commons.util.Util;
-import org.infinispan.commons.CacheConfigurationException;
-import org.infinispan.configuration.cache.Configuration;
-import org.infinispan.factories.annotations.DefaultFactoryFor;
-import org.infinispan.factories.annotations.Inject;
-import org.infinispan.factories.annotations.SurvivesRestarts;
-import org.infinispan.factories.components.ComponentMetadata;
-import org.infinispan.factories.components.ComponentMetadataRepo;
-import org.infinispan.factories.scopes.Scope;
-import org.infinispan.factories.scopes.Scopes;
-import org.infinispan.lifecycle.ComponentStatus;
-import org.infinispan.lifecycle.Lifecycle;
-import org.infinispan.util.TimeService;
-import org.infinispan.util.logging.Log;
-
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
@@ -30,6 +13,23 @@ import java.util.Stack;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.TimeUnit;
+
+import org.infinispan.commons.CacheConfigurationException;
+import org.infinispan.commons.CacheException;
+import org.infinispan.commons.util.AggregateClassLoader;
+import org.infinispan.commons.util.ReflectionUtil;
+import org.infinispan.configuration.cache.Configuration;
+import org.infinispan.factories.annotations.DefaultFactoryFor;
+import org.infinispan.factories.annotations.Inject;
+import org.infinispan.factories.annotations.SurvivesRestarts;
+import org.infinispan.factories.components.ComponentMetadata;
+import org.infinispan.factories.components.ComponentMetadataRepo;
+import org.infinispan.factories.scopes.Scope;
+import org.infinispan.factories.scopes.Scopes;
+import org.infinispan.lifecycle.ComponentStatus;
+import org.infinispan.lifecycle.Lifecycle;
+import org.infinispan.util.TimeService;
+import org.infinispan.util.logging.Log;
 
 /**
  * A registry where components which have been created are stored.  Components are stored as singletons, registered
@@ -96,7 +96,7 @@ public abstract class AbstractComponentRegistry implements Lifecycle, Cloneable 
       return state;
    }
 
-   protected abstract ClassLoader getClassLoader();
+   protected abstract AggregateClassLoader aggregateClassLoader();
 
    protected abstract Log getLog();
 
@@ -120,7 +120,7 @@ public abstract class AbstractComponentRegistry implements Lifecycle, Cloneable 
             for (ComponentMetadata.InjectMetadata injectMetadata : metadata.getInjectMethods()) {
                Class<?>[] methodParameters = injectMetadata.getParameterClasses();
                if (methodParameters == null) {
-                  methodParameters = ReflectionUtil.toClassArray(injectMetadata.getParameters(), getClassLoader());
+                  methodParameters = aggregateClassLoader().toClassArray(injectMetadata.getParameters());
                   injectMetadata.setParameterClasses(methodParameters);
                }
 
@@ -338,7 +338,7 @@ public abstract class AbstractComponentRegistry implements Lifecycle, Cloneable 
     * @return factory instance
     */
    AbstractComponentFactory instantiateFactory(String factoryName) {
-      Class<?> factory = Util.loadClass(factoryName, getClass().getClassLoader());
+      Class<?> factory = aggregateClassLoader().loadClass(factoryName, getClass().getClassLoader());
       if (AutoInstantiableFactory.class.isAssignableFrom(factory)) {
          try {
             return (AbstractComponentFactory) factory.newInstance();
@@ -817,7 +817,7 @@ public abstract class AbstractComponentRegistry implements Lifecycle, Cloneable 
             for (ComponentMetadata.InjectMetadata meta: injectionMethods) {
                Class<?>[] parameterClasses = meta.getParameterClasses();
                if (parameterClasses == null) {
-                  parameterClasses = ReflectionUtil.toClassArray(meta.getParameters(), getClassLoader());
+                  parameterClasses = aggregateClassLoader().toClassArray(meta.getParameters());
                   meta.setParameterClasses(parameterClasses);
                }
                Method m = meta.getMethod();

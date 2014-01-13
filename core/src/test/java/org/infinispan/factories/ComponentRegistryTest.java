@@ -42,8 +42,8 @@ public class ComponentRegistryTest extends AbstractInfinispanTest {
       AdvancedCache cache = mock(AdvancedCache.class);
 
       gcr = new GlobalComponentRegistry(gc, cm, cachesSet);
-      cr1 = new ComponentRegistry("cache", c, cache, gcr, ComponentRegistryTest.class.getClassLoader());
-      cr2 = new ComponentRegistry("cache", c, cache, gcr, ComponentRegistryTest.class.getClassLoader());
+      cr1 = new ComponentRegistry("cache", c, cache, gcr, gc.aggregateClassLoader());
+      cr2 = new ComponentRegistry("cache", c, cache, gcr, gc.aggregateClassLoader());
 
       control = new TestDelayFactory.Control();
       gcr.registerComponent(control, TestDelayFactory.Control.class);

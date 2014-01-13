@@ -14,15 +14,14 @@ public class ConfigurationBuilderHolder {
    private final Map<String, ConfigurationBuilder> namedConfigurationBuilders;
    private ConfigurationBuilder currentConfigurationBuilder;
    private final Map<Class<? extends ConfigurationParser>, ParserContext> parserContexts;
-   // TODO: Replace all CL concepts, here, w/ aggregate?
    private final WeakReference<ClassLoader> classLoader;
 
    public ConfigurationBuilderHolder() {
-      this(Thread.currentThread().getContextClassLoader());
+      this(null);
    }
 
    public ConfigurationBuilderHolder(ClassLoader classLoader) {
-      this.globalConfigurationBuilder = new GlobalConfigurationBuilder().classLoader( classLoader );
+      this.globalConfigurationBuilder = new GlobalConfigurationBuilder();
       this.defaultConfigurationBuilder = new ConfigurationBuilder();
       this.namedConfigurationBuilders = new HashMap<String, ConfigurationBuilder>();
       this.currentConfigurationBuilder = defaultConfigurationBuilder;
