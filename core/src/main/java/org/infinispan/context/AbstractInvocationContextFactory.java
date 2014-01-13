@@ -33,6 +33,10 @@ public abstract class AbstractInvocationContextFactory implements InvocationCont
    @Override
    public InvocationContext createRemoteInvocationContextForCommand(
          VisitableCommand cacheCommand, Address origin) {
-      return createRemoteInvocationContext(origin);
+	   if (keyEq != null) {
+		   return createRemoteInvocationContext(origin);
+	   } else {
+		   throw new IllegalStateException(getClass().getName() + " has not started yet, so it cannot create a command");
+	   }
    }
 }
