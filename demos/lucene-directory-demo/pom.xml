@@ -24,14 +24,6 @@
          <type>test-jar</type>
          <scope>test</scope>
       </dependency>
-      <!-- Hack to make Eclipse happy when opening multiple modules at once:
-         the eclipse project related to infinispan-lucene-directory does not
-         contain the actual classes packaged in its jar -->
-      <dependency>
-         <groupId>${project.groupId}</groupId>
-         <artifactId>infinispan-lucene-v3</artifactId>
-         <scope>provided</scope>
-      </dependency>
    </dependencies>
 
    <build>

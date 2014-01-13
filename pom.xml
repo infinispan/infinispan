@@ -31,8 +31,6 @@
       <module>tree</module>
       <module>lucene</module>
       <module>lucene/lucene-directory</module>
-      <module>lucene/lucene-v4</module>
-      <module>lucene/lucene-v3</module>
       <module>persistence</module>
       <module>persistence/jdbc</module>
       <module>persistence/jpa</module>
