@@ -6,8 +6,9 @@ import java.util.Scanner;
 
 import org.apache.lucene.queryParser.ParseException;
 import org.apache.lucene.search.Query;
+import org.apache.lucene.store.Directory;
 import org.infinispan.Cache;
-import org.infinispan.lucene.InfinispanDirectory;
+import org.infinispan.lucene.directory.DirectoryBuilder;
 import org.infinispan.manager.DefaultCacheManager;
 import org.infinispan.remoting.transport.Address;
 
@@ -27,7 +28,7 @@ public class DemoDriver implements Runnable {
 
    private final DemoActions actions;
 
-   public DemoDriver(InfinispanDirectory infinispanDirectory, Cache<?, ?> cache) {
+   public DemoDriver(Directory infinispanDirectory, Cache<?, ?> cache) {
       actions = new DemoActions(infinispanDirectory, cache);
    }
 
@@ -36,7 +37,9 @@ public class DemoDriver implements Runnable {
       cacheManager.start();
       try {
          Cache<?, ?> cache = cacheManager.getCache();
-         InfinispanDirectory directory = new InfinispanDirectory(cache);
+         Directory directory = DirectoryBuilder
+                  .newDirectoryInstance(cache, cache, cache, "index-name")
+                  .create();
          DemoDriver driver = new DemoDriver(directory, cache);
          driver.run();
       }

@@ -5,8 +5,9 @@ import java.util.List;
 
 import org.apache.lucene.queryParser.ParseException;
 import org.apache.lucene.search.Query;
+import org.apache.lucene.store.Directory;
 import org.infinispan.Cache;
-import org.infinispan.lucene.InfinispanDirectory;
+import org.infinispan.lucene.directory.DirectoryBuilder;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.testng.annotations.AfterTest;
@@ -24,8 +25,8 @@ public class CacheConfigurationTest {
    
    private EmbeddedCacheManager cacheManager1;
    private EmbeddedCacheManager cacheManager2;
-   private InfinispanDirectory directoryNodeOne;
-   private InfinispanDirectory directoryNodeTwo;
+   private Directory directoryNodeOne;
+   private Directory directoryNodeTwo;
    private Cache cache1;
    private Cache cache2;
 
@@ -35,16 +36,16 @@ public class CacheConfigurationTest {
       cacheManager1.start();
       cache1 = cacheManager1.getCache();
       cache1.clear();
-      directoryNodeOne = new InfinispanDirectory(cache1);
+      directoryNodeOne = DirectoryBuilder.newDirectoryInstance(cache1, cache1, cache1, "index-name").create();
       cacheManager2 = TestCacheManagerFactory.fromXml("config-samples/lucene-demo-cache-config.xml");
       cacheManager2.start();
       cache2 = cacheManager2.getCache();
       cache2.clear();
-      directoryNodeTwo = new InfinispanDirectory(cache2);
+      directoryNodeTwo = DirectoryBuilder.newDirectoryInstance(cache2, cache2, cache2, "index-name").create();
    }
    
    @AfterTest
-   public void cleanup() {
+   public void cleanup() throws IOException {
       directoryNodeOne.close();
       directoryNodeTwo.close();
       cacheManager1.stop();

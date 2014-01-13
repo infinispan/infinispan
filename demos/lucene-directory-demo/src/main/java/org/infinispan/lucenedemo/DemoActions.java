@@ -19,9 +19,9 @@ import org.apache.lucene.search.MatchAllDocsQuery;
 import org.apache.lucene.search.Query;
 import org.apache.lucene.search.ScoreDoc;
 import org.apache.lucene.search.TopDocs;
+import org.apache.lucene.store.Directory;
 import org.apache.lucene.util.Version;
 import org.infinispan.Cache;
-import org.infinispan.lucene.InfinispanDirectory;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.commons.util.InfinispanCollections;
@@ -41,11 +41,11 @@ public class DemoActions {
    /** The Analyzer used in all methods **/
    private static final Analyzer analyzer = new StandardAnalyzer(Version.LUCENE_33);
 
-   private InfinispanDirectory index;
+   private final Directory index;
 
    private final Cache<?, ?> cache;
 
-   public DemoActions(InfinispanDirectory index, Cache<?, ?> cache) {
+   public DemoActions(Directory index, Cache<?, ?> cache) {
       this.index = index;
       this.cache = cache;
    }
