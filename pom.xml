@@ -89,7 +89,9 @@
                         </goals>
                         <configuration>
                            <quiet>true</quiet>
-                           
+                           <!-- In case anyone needs to trace javadoc issues
+                           <additionalJOption>-J-Xrunjdwp:transport=dt_socket,address=8787,server=y,suspend=y</additionalJOption>
+                           -->
                            <stylesheetfile>${basedir}/src/javadoc/stylesheet.css</stylesheetfile>
                            <javadocDirectory>${basedir}/src/javadoc</javadocDirectory>
                            <docfilessubdirs>true</docfilessubdirs>
@@ -97,20 +99,20 @@
                               <link>http://java.sun.com/javase/6/docs/api/</link>
                               <link>http://java.sun.com/javaee/5/docs/api/</link>
                            </links>
-                           <footer>
---&gt;
-                      &lt;!-- Google Analytics --&gt;
-&lt;!--
-&lt;script type='text/javascript'&gt;
+                           <footer><![CDATA[
+-->
+                      <!-- Google Analytics -->
+<!--
+<script type='text/javascript'>
 var gaJsHost = (("https:" == document.location.protocol) ? "https://ssl." : "http://www.");
 document.write(unescape("%3Cscript src='" + gaJsHost + "google-analytics.com/ga.js' type='text/javascript'%3E%3C/script%3E"));
-&lt;/script&gt;
-&lt;script type='text/javascript'&gt;
+</script>
+<script type='text/javascript'>
 try {
 var pageTracker = _gat._getTracker("UA-8601422-4");
 pageTracker._trackPageview();
-} catch(err) {}&lt;/script&gt;
-                           </footer>
+} catch(err) {}</script>
+                     ]]></footer>
                            <excludePackageNames>org.jboss.as:org.infinispan.server.endpoint:org.infinispan.server.rhq</excludePackageNames>
                         </configuration>
                      </execution>
@@ -148,7 +150,7 @@ pageTracker._trackPageview();
                      <outputDirectory>${buildDirectory}/distribution</outputDirectory>
                      <workDirectory>${buildDirectory}/assembly/work</workDirectory>
 
-                     
+                     <!-- Do not attach ZIP files to the Maven repository -->
                      <attach>false</attach>
                   </configuration>
                </plugin>
@@ -156,7 +158,8 @@ pageTracker._trackPageview();
          </build>
       </profile>
 
-      
+      <!-- This profile is an scaled down version of the distribution profile which should only be used to speed up
+      testing of distribution zip files. It doesn't generate any documentation and only generates the -all.zip distribution -->
       <profile>
          <id>minimal-distribution</id>
          <activation>
@@ -202,7 +205,7 @@ pageTracker._trackPageview();
          </build>
       </profile>
 
-      
+      <!-- TODO somehow combine this with the 'distribution' profile so all docs are built together -->
       <profile>
          <id>jmxdoc</id>
          <activation>
@@ -223,18 +226,18 @@ pageTracker._trackPageview();
                         <artifactId>infinispan-tools</artifactId>
                         <version>${project.version}</version>
                      </docletArtifact>
-                     <footer>
-                &lt;!-- Google Analytics --&gt;
-&lt;script type='text/javascript'&gt;
+                     <footer><![CDATA[
+                <!-- Google Analytics -->
+<script type='text/javascript'>
 var gaJsHost = (("https:" == document.location.protocol) ? "https://ssl." : "http://www.");
 document.write(unescape("%3Cscript src='" + gaJsHost + "google-analytics.com/ga.js' type='text/javascript'%3E%3C/script%3E"));
-&lt;/script&gt;
-&lt;script type='text/javascript'&gt;
+</script>
+<script type='text/javascript'>
 try {
 var pageTracker = _gat._getTracker("UA-8601422-4");
 pageTracker._trackPageview();
-} catch(err) {}&lt;/script&gt;
-               </footer>
+} catch(err) {}</script>
+               ]]></footer>
                   </configuration>
                   <executions>
                      <execution>
@@ -261,7 +264,7 @@ pageTracker._trackPageview();
                               <property name="plugin_classpath" refid="maven.plugin.classpath" />
                               <path id="xsd.fileset.path">
                                  <fileset casesensitive="yes" dir="${basedir}">
-                                    <include name="core/src/main/resources/schema/*.xsd" /> 
+                                    <include name="core/src/main/resources/schema/*.xsd" /> <!-- make sure core comes first -->
                                     <include name="cachestore/*/src/main/resources/schema/*.xsd" />
                                  </fileset>
                               </path>

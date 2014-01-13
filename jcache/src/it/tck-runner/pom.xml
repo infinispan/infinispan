@@ -30,7 +30,10 @@
          <scope>test</scope>
       </dependency>
 
-      
+      <!--
+         Order is important here! hamcrest-library needs to be defined before cache-tests:
+         http://stackoverflow.com/questions/7869711/getting-nosuchmethoderror-org-hamcrest-matcher-describemismatch-when-running
+      -->
       <dependency>
          <groupId>org.hamcrest</groupId>
          <artifactId>hamcrest-library</artifactId>
@@ -70,7 +73,7 @@
             <groupId>org.apache.maven.plugins</groupId>
             <artifactId>maven-dependency-plugin</artifactId>
             <executions>
-               
+               <!--Required because JUnit will not detect tests simply included in a dep-->
                <execution>
                   <id>copy-cache-tests</id>
                   <goals>
@@ -148,9 +151,10 @@
 
    <profiles>
 
-      
+      <!--To run all tests do not specify any profile-->
 
-      
+      <!-- Profile for running basic tests.
+           Use mvn -P test-basic-cache clean install -->
       <profile>
          <id>test-basic-cache</id>
          <build>
@@ -171,7 +175,8 @@
          </build>
       </profile>
 
-      
+      <!-- Profile for running optional tests.
+           Use mvn -P test-optional-cache clean install -->
       <profile>
          <id>test-optional-cache</id>
          <build>

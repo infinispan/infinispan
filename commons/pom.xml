@@ -38,7 +38,7 @@
 
    <build>
       <plugins>
-         
+         <!-- compiler to use -XDignore.symbol.file to suppress warnings regarding the use of sun.misc.Unsafe -->
          <plugin>
             <groupId>org.apache.maven.plugins</groupId>
             <artifactId>maven-compiler-plugin</artifactId>
@@ -49,7 +49,7 @@
                <encoding>UTF-8</encoding>
                <compilerArgument>-AtranslationFilesPath=${project.basedir}/target/generated-translation-files</compilerArgument>
                <compilerArgument>-XDignore.symbol.file</compilerArgument>
-               
+               <!-- Forking is necessary to allow for the compiler args to be picked up. -->
                <fork>true</fork>
             </configuration>
          </plugin>

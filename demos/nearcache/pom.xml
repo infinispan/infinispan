@@ -37,7 +37,7 @@
          <artifactId>netty</artifactId>
       </dependency>
 
-      
+      <!-- HornetQ dependencies -->
       <dependency>
           <groupId>org.hornetq</groupId>
           <artifactId>hornetq-bootstrap</artifactId>

@@ -52,7 +52,7 @@
    </issueManagement>
 
    <properties>
-      
+      <!-- Versions for dependencies -->
       <version.protostream>1.0.0.CR1</version.protostream>
       <version.aesh>0.33.7</version.aesh>
       <version.antlr>3.4</version.antlr>
@@ -85,7 +85,7 @@
 
    <dependencyManagement>
       <dependencies>
-         
+         <!-- Infinispan module versions -->
          <dependency>
             <groupId>${project.groupId}</groupId>
             <artifactId>infinispan-cachestore-jdbc</artifactId>
@@ -207,7 +207,7 @@
             <artifactId>infinispan-jcache</artifactId>
             <version>${project.version}</version>
          </dependency>
-         
+         <!-- Infinispan core modules dependencies -->
          <dependency>
             <groupId>gnu-getopt</groupId>
             <artifactId>getopt</artifactId>
@@ -258,7 +258,7 @@
             <artifactId>org.osgi.core</artifactId>
             <version>${version.osgi}</version>
          </dependency>
-         
+         <!-- Infinispan RHQ module dependencies -->
          <dependency>
             <groupId>org.rhq</groupId>
             <artifactId>rhq-core-domain</artifactId>
@@ -290,7 +290,7 @@
             <artifactId>rhq-core-native-system</artifactId>
             <version>${version.rhq}</version>
          </dependency>
-         
+         <!-- Infinispan Query module dependencies -->
          <dependency>
             <groupId>org.hibernate</groupId>
             <artifactId>hibernate-search-engine</artifactId>
@@ -301,7 +301,7 @@
             <artifactId>hibernate-search-infinispan</artifactId>
             <version>${version.hibernate.search}</version>
          </dependency>
-         
+         <!-- Infinispan Remote Query module dependencies -->
          <dependency>
             <groupId>org.infinispan.protostream</groupId>
             <artifactId>protostream</artifactId>
@@ -312,7 +312,7 @@
             <artifactId>sample-domain-implementation</artifactId>
             <version>${version.protostream}</version>
          </dependency>
-         
+         <!-- Infinispan Protocols module dependencies -->
          <dependency>
             <groupId>io.netty</groupId>
             <artifactId>netty</artifactId>
