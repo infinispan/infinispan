@@ -5,8 +5,8 @@ import static org.infinispan.query.helper.TestQueryHelperFactory.createQueryPars
 import java.util.List;
 import java.util.NoSuchElementException;
 
-import org.apache.lucene.queryParser.ParseException;
-import org.apache.lucene.queryParser.QueryParser;
+import org.apache.lucene.queryparser.classic.ParseException;
+import org.apache.lucene.queryparser.classic.QueryParser;
 import org.apache.lucene.search.Query;
 import org.apache.lucene.search.Sort;
 import org.apache.lucene.search.SortField;
