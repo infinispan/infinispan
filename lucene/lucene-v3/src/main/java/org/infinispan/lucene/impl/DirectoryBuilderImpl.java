@@ -55,23 +55,7 @@ public class DirectoryBuilderImpl implements BuildContext {
       if (srl == null) {
          srl = makeDefaultSegmentReadLocker(metadataCache, chunksCache, distLocksCache, indexName);
       }
-      if (LuceneVersionDetector.VERSION == 3) {
-         return new DirectoryLuceneV3(metadataCache, chunksCache, indexName, lockFactory, chunkSize, srl);
-      }
-      else {
-         Class<?>[] ctorType = new Class[]{ Cache.class, Cache.class, String.class, LockFactory.class, int.class, SegmentReadLocker.class };
-         Directory d;
-         try {
-            d = (Directory) DirectoryBuilderImpl.class.getClassLoader()
-               .loadClass("org.infinispan.lucene.impl.DirectoryLuceneV4")
-               .getConstructor(ctorType)
-               .newInstance(metadataCache, chunksCache, indexName, lockFactory, chunkSize, srl);
-         }
-         catch (Exception e) {
-            throw log.failedToCreateLucene4Directory(e);
-         }
-         return d;
-      }
+      return new DirectoryLuceneV4(metadataCache, chunksCache, indexName, lockFactory, chunkSize, srl);
    }
 
    @Override
