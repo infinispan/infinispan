@@ -1,6 +1,6 @@
 package org.infinispan.query.blackbox;
 
-import org.apache.lucene.queryParser.QueryParser;
+import org.apache.lucene.queryparser.classic.QueryParser;
 import org.apache.lucene.search.Query;
 import org.hibernate.search.FullTextFilter;
 import org.hibernate.search.query.dsl.QueryBuilder;

@@ -1,6 +1,6 @@
 package org.infinispan.query.searchmanager;
 
-import org.apache.lucene.queryParser.QueryParser;
+import org.apache.lucene.queryparser.classic.QueryParser;
 import org.hibernate.search.annotations.Field;
 import org.hibernate.search.annotations.Indexed;
 import org.infinispan.Cache;
