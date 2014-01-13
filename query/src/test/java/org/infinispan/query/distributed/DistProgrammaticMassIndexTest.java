@@ -1,8 +1,8 @@
 package org.infinispan.query.distributed;
 
 import junit.framework.Assert;
-import org.apache.lucene.queryParser.ParseException;
-import org.apache.lucene.queryParser.QueryParser;
+import org.apache.lucene.queryparser.classic.ParseException;
+import org.apache.lucene.queryparser.classic.QueryParser;
 import org.apache.lucene.search.Query;
 import org.hibernate.search.infinispan.InfinispanIntegration;
 import org.infinispan.Cache;
