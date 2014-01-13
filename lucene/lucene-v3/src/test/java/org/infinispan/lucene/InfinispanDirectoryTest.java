@@ -1,22 +1,22 @@
 package org.infinispan.lucene;
 
+import static org.infinispan.lucene.CacheTestSupport.assertTextIsFoundInIds;
+import static org.infinispan.lucene.CacheTestSupport.writeTextToIndex;
+
+import java.io.IOException;
+
 import org.apache.lucene.store.Directory;
 import org.apache.lucene.store.IndexOutput;
-import org.apache.lucene.store.Lock;
-import org.apache.lucene.store.LockFactory;
 import org.infinispan.Cache;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
+import org.infinispan.lucene.directory.DirectoryBuilder;
+import org.infinispan.lucene.impl.DirectoryExtensions;
 import org.infinispan.lucene.readlocks.DistributedSegmentReadLocker;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.test.SingleCacheManagerTest;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.testng.AssertJUnit;
 import org.testng.annotations.Test;
-
-import java.io.IOException;
-
-import static org.infinispan.lucene.CacheTestSupport.assertTextIsFoundInIds;
-import static org.infinispan.lucene.CacheTestSupport.writeTextToIndex;
 
 /**
  * Tests covering InfinispanDirectory simple use cases, like:
@@ -29,7 +29,6 @@ import static org.infinispan.lucene.CacheTestSupport.writeTextToIndex;
 @Test(groups = "functional", testName = "lucene.InfinispanDirectoryTest")
 public class InfinispanDirectoryTest extends SingleCacheManagerTest {
 
-
    @Override
    protected EmbeddedCacheManager createCacheManager() throws Exception {
       ConfigurationBuilder configuration = CacheTestSupport.createLocalCacheConfiguration();
@@ -40,91 +39,41 @@ public class InfinispanDirectoryTest extends SingleCacheManagerTest {
    @Test(expectedExceptions = IllegalArgumentException.class, expectedExceptionsMessageRegExp = "chunkSize must be a positive integer")
    public void testInitWithInvalidChunkSize() {
       Cache cache = cacheManager.getCache();
-
-      InfinispanDirectory dir = new InfinispanDirectory(cache, "index", 0, new DistributedSegmentReadLocker(cache, cache, cache, "index"));
+      DirectoryBuilder.newDirectoryInstance(cache, cache, cache, "index")
+         .overrideSegmentReadLocker(new DistributedSegmentReadLocker(cache, cache, cache, "index"))
+         .chunkSize(0);
    }
 
    @Test(expectedExceptions = IllegalArgumentException.class)
    public void testInitWithInvalidCache() {
       Cache cache = cacheManager.getCache();
-
-      InfinispanDirectory dir = new InfinispanDirectory(null, null, "cachename", null, 10, null);
+      DirectoryBuilder.newDirectoryInstance(null, cache, cache, "indexName");
    }
 
    @Test(expectedExceptions = IllegalArgumentException.class)
    public void testInitWithInvalidChunkCache() {
       Cache cache = cacheManager.getCache();
-
-      InfinispanDirectory dir = new InfinispanDirectory(cache, null, "cachename", null, 10, null);
+      DirectoryBuilder.newDirectoryInstance(cache, null, cache, "indexName");
    }
 
    @Test(expectedExceptions = IllegalArgumentException.class)
    public void testInitWithInvalidIndexName() {
       Cache cache = cacheManager.getCache();
-
-      InfinispanDirectory dir = new InfinispanDirectory(cache, cache, null, null, 10, null);
+      DirectoryBuilder.newDirectoryInstance(cache, cache, cache, null);
    }
 
    @Test(expectedExceptions = IllegalArgumentException.class)
    public void testInitWithInvalidLockFactory() {
       Cache cache = cacheManager.getCache();
-
-      InfinispanDirectory dir = new InfinispanDirectory(cache, cache, "indexName", null, 10, null);
+      DirectoryBuilder.newDirectoryInstance(cache, cache, cache, "indexName")
+         .overrideWriteLocker(null);
    }
 
    @Test(expectedExceptions = IllegalArgumentException.class)
    public void testInitWithInvalidSegmentReadLocker() {
       Cache cache = cacheManager.getCache();
-
-      InfinispanDirectory dir = new InfinispanDirectory(cache, cache, "indexName", new LockFactory() {
-         @Override
-         public Lock makeLock(String lockName) {
-            return null;
-         }
-
-         @Override
-         public void clearLock(String lockName) throws IOException {
-         }
-      }, 10, null);
-   }
-
-   @Test
-   public void testInitWithConstructor1() throws Exception {
-      Directory dir = null;
-      try {
-         Cache cache = cacheManager.getCache();
-
-         dir = new InfinispanDirectory(cache, "index", 10, new DistributedSegmentReadLocker(cache, cache, cache, "index"));
-         verifyDir(dir, "index");
-      } finally {
-         if (dir != null) dir.close();
-      }
-   }
-
-   @Test
-   public void testInitWithConstructor2() throws Exception {
-      Directory dir = null;
-      try {
-         Cache cache = cacheManager.getCache();
-
-         dir = new InfinispanDirectory(cache, "index");
-         verifyDir(dir, "index");
-      } finally {
-         if (dir != null) dir.close();
-      }
-   }
-
-   @Test
-   public void testInitWithConstructor3() throws Exception {
-      Directory dir = null;
-      try {
-         Cache cache = cacheManager.getCache();
-
-         dir = new InfinispanDirectory(cache);
-         verifyDir(dir, "");
-      } finally {
-         if (dir != null) dir.close();
-      }
+      DirectoryBuilder.newDirectoryInstance(cache, cache, cache, "indexName")
+         .overrideSegmentReadLocker(null);
    }
 
    @Test
@@ -133,8 +82,7 @@ public class InfinispanDirectoryTest extends SingleCacheManagerTest {
       try {
          Cache cache = cacheManager.getCache();
          String fileName = "dummyFileName";
-
-         dir = new InfinispanDirectory(cache, "index");
+         dir = DirectoryBuilder.newDirectoryInstance(cache, cache, cache, "indexName").create();
          createFile(fileName, dir);
 
          assert dir.fileExists(fileName);
@@ -153,7 +101,7 @@ public class InfinispanDirectoryTest extends SingleCacheManagerTest {
          Cache cache = cacheManager.getCache();
          String fileName = "testfile.txt";
 
-         dir = new InfinispanDirectory(cache, "index");
+         dir = DirectoryBuilder.newDirectoryInstance(cache, cache, cache, "indexName").create();
          createFile(fileName, dir);
 
          long lastModifiedDate = dir.fileModified(fileName);
@@ -173,8 +121,7 @@ public class InfinispanDirectoryTest extends SingleCacheManagerTest {
       try {
          Cache cache = cacheManager.getCache();
          String fileName = "nonExistent.txt";
-
-         dir = new InfinispanDirectory(cache, "index");
+         dir = DirectoryBuilder.newDirectoryInstance(cache, cache, cache, "indexName").create();
 
          long lastModifiedDate = dir.fileModified(fileName);
          Thread.sleep(100);
@@ -194,10 +141,10 @@ public class InfinispanDirectoryTest extends SingleCacheManagerTest {
          String fileName = "testfile.txt";
          String newFileName = "newtestfile.txt";
 
-         dir = new InfinispanDirectory(cache, "index");
+         dir = DirectoryBuilder.newDirectoryInstance(cache, cache, cache, "indexName").create();
          createFile(fileName, dir);
 
-         ((InfinispanDirectory) dir).renameFile(fileName, newFileName);
+         ((DirectoryExtensions) dir).renameFile(fileName, newFileName);
 
          assert !dir.fileExists(fileName);
          assert dir.fileExists(newFileName);
@@ -210,12 +157,11 @@ public class InfinispanDirectoryTest extends SingleCacheManagerTest {
    public void testFileLength() throws IOException {
       Directory dir = null;
       try {
-         dir = new InfinispanDirectory(cache, "index");
+         dir = DirectoryBuilder.newDirectoryInstance(cache, cache, cache, "indexName").create();
          AssertJUnit.assertEquals(0, dir.fileLength("nonExistentFile.txt"));
       } finally {
          if (dir != null) dir.close();
       }
-
    }
 
    private void createFile(final String fileName, final Directory dir) throws IOException {
@@ -230,10 +176,10 @@ public class InfinispanDirectoryTest extends SingleCacheManagerTest {
          io.flush();
          io.close();
       }
-
    }
+
    private void verifyDir(final Directory dir, final String expectedIndexName) throws IOException {
-      InfinispanDirectory infDir = (InfinispanDirectory) dir;
+      DirectoryExtensions infDir = (DirectoryExtensions) dir;
       AssertJUnit.assertEquals(expectedIndexName, infDir.getIndexName());
 
       writeTextToIndex(dir, 0, "hi all");
