@@ -77,63 +77,6 @@ public class InfinispanDirectoryTest extends SingleCacheManagerTest {
    }
 
    @Test
-   public void testFileModified() throws Exception {
-      Directory dir = null;
-      try {
-         Cache cache = cacheManager.getCache();
-         String fileName = "dummyFileName";
-         dir = DirectoryBuilder.newDirectoryInstance(cache, cache, cache, "indexName").create();
-         createFile(fileName, dir);
-
-         assert dir.fileExists(fileName);
-         assert dir.fileModified(fileName) != 0;
-
-         assert dir.fileModified("nonExistentFileName.txt") == 0;
-      } finally {
-         if (dir != null) dir.close();
-      }
-   }
-
-   @Test
-   public void testTouchFile() throws Exception {
-      Directory dir = null;
-      try {
-         Cache cache = cacheManager.getCache();
-         String fileName = "testfile.txt";
-
-         dir = DirectoryBuilder.newDirectoryInstance(cache, cache, cache, "indexName").create();
-         createFile(fileName, dir);
-
-         long lastModifiedDate = dir.fileModified(fileName);
-
-         Thread.sleep(100);
-
-         dir.touchFile(fileName);
-         assert lastModifiedDate != dir.fileModified(fileName);
-      } finally {
-         if (dir != null) dir.close();
-      }
-   }
-
-   @Test
-   public void testTouchNonExistentFile() throws Exception {
-      Directory dir = null;
-      try {
-         Cache cache = cacheManager.getCache();
-         String fileName = "nonExistent.txt";
-         dir = DirectoryBuilder.newDirectoryInstance(cache, cache, cache, "indexName").create();
-
-         long lastModifiedDate = dir.fileModified(fileName);
-         Thread.sleep(100);
-
-         dir.touchFile(fileName);
-         AssertJUnit.assertEquals(lastModifiedDate, dir.fileModified(fileName));
-      } finally {
-         dir.close();
-      }
-   }
-
-   @Test
    public void testRenameFile() throws Exception {
       Directory dir = null;
       try {
