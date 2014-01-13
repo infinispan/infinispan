@@ -54,8 +54,9 @@ public class AuthAndEncryptProtocolTest {
 
     @BeforeClass
     public static void before() {
-        // ibm7 can't read the keystores created by oracle java, so we need to use the one created on ibm7
-        if (System.getProperty("java.vendor").toLowerCase().contains("ibm") && System.getProperty("java.version").contains("1.7")) {
+        // ibm7 and ibm6 can't read the keystores created by oracle java, so we need to use the one created on ibm7
+        if (System.getProperty("java.vendor").toLowerCase().contains("ibm") &&
+              (System.getProperty("java.version").contains("1.7") || System.getProperty("java.version").contains("1.6"))) {
             replaceKeyStoreInConfig(System.getProperty("server1.dist"));
             replaceKeyStoreInConfig(System.getProperty("server2.dist"));
         }
