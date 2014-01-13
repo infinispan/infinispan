@@ -19,6 +19,12 @@
          <artifactId>lucene-core</artifactId>
          <version>${version.lucene}</version>
       </dependency>
+      <dependency>
+         <groupId>org.apache.lucene</groupId>
+         <artifactId>lucene-analyzers-common</artifactId>
+         <version>${version.lucene}</version>
+         <scope>test</scope>
+      </dependency>
 
       <dependency>
          <groupId>org.infinispan</groupId>

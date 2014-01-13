@@ -6,6 +6,7 @@ import static org.infinispan.lucene.CacheTestSupport.writeTextToIndex;
 import java.io.IOException;
 
 import org.apache.lucene.store.Directory;
+import org.apache.lucene.store.IOContext;
 import org.apache.lucene.store.IndexOutput;
 import org.infinispan.Cache;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
@@ -111,7 +112,7 @@ public class InfinispanDirectoryTest extends SingleCacheManagerTest {
       IndexOutput io = null;
 
       try {
-         io = dir.createOutput(fileName);
+         io = dir.createOutput(fileName, IOContext.DEFAULT);
 
          io.writeByte((byte) 66);
          io.writeByte((byte) 69);
