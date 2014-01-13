@@ -145,7 +145,6 @@
       <version.leveldb>0.7</version.leveldb>
       <version.leveldbjni>1.7</version.leveldbjni>
       <version.log4j>1.2.16</version.log4j>
-      <version.lucene.v3>3.6.2</version.lucene.v3>
       <version.lucene.v4>4.8.1</version.lucene.v4>
       <version.mc4j>1.2.6</version.mc4j>
       <version.milyn.smooks>1.2.2</version.milyn.smooks>
@@ -260,22 +259,6 @@
          <dependency>
             <groupId>${project.groupId}</groupId>
             <artifactId>infinispan-lucene-directory</artifactId>
-            <version>${project.version}</version>
-            <type>test-jar</type>
-         </dependency>
-         <dependency>
-            <groupId>${project.groupId}</groupId>
-            <artifactId>infinispan-lucene-v3</artifactId>
-            <version>${project.version}</version>
-         </dependency>
-         <dependency>
-            <groupId>${project.groupId}</groupId>
-            <artifactId>infinispan-lucene-v4</artifactId>
-            <version>${project.version}</version>
-         </dependency>
-         <dependency>
-            <groupId>${project.groupId}</groupId>
-            <artifactId>infinispan-lucene-v4</artifactId>
             <version>${project.version}</version>
             <type>test-jar</type>
          </dependency>
@@ -960,6 +943,21 @@
             <artifactId>pax-url-wrap</artifactId>
             <version>${version.pax.url}</version>
             <scope>test</scope>
+         </dependency>
+         <dependency>
+            <groupId>org.apache.lucene</groupId>
+            <artifactId>lucene-queryparser</artifactId>
+            <version>${version.lucene}</version>
+         </dependency>
+         <dependency>
+            <groupId>org.apache.lucene</groupId>
+            <artifactId>lucene-core</artifactId>
+            <version>${version.lucene}</version>
+         </dependency>
+         <dependency>
+            <groupId>org.apache.lucene</groupId>
+            <artifactId>lucene-analyzers-common</artifactId>
+            <version>${version.lucene}</version>
          </dependency>
       </dependencies>
    </dependencyManagement>
