@@ -1,6 +1,7 @@
 package org.infinispan.lucene.readlocks;
 
 import org.apache.lucene.store.Directory;
+import org.apache.lucene.store.IOContext;
 import org.apache.lucene.store.IndexInput;
 import org.apache.lucene.store.IndexOutput;
 import org.infinispan.Cache;
@@ -34,12 +35,12 @@ public class NoopSegmentReadLockerTest extends DistributedSegmentReadLockerTest 
    @Test @Override
    public void testIndexWritingAndFinding() throws IOException, InterruptedException {
       verifyBoth(cache0,cache1);
-      IndexOutput indexOutput = dirA.createOutput(filename);
+      IndexOutput indexOutput = dirA.createOutput(filename, IOContext.DEFAULT);
       indexOutput.writeString("no need to write, nobody ever will read this");
       indexOutput.flush();
       indexOutput.close();
       assertFileExistsHavingRLCount(filename, 0, true);
-      IndexInput firstOpenOnB = dirB.openInput(filename);
+      IndexInput firstOpenOnB = dirB.openInput(filename, IOContext.DEFAULT);
       assertFileExistsHavingRLCount(filename, 0, true);
       dirA.deleteFile(filename);
       assertFileExistsHavingRLCount(filename, 0, false);
@@ -49,9 +50,9 @@ public class NoopSegmentReadLockerTest extends DistributedSegmentReadLockerTest 
       assertFileExistsHavingRLCount(filename, 0, false);
       cloneOfFirstOpenOnB.close();
       assertFileExistsHavingRLCount(filename, 0, false);
-      IndexInput firstOpenOnA = dirA.openInput(filename);
+      IndexInput firstOpenOnA = dirA.openInput(filename, IOContext.DEFAULT);
       assertFileExistsHavingRLCount(filename, 0, false);
-      IndexInput secondOpenOnA = dirA.openInput(filename);
+      IndexInput secondOpenOnA = dirA.openInput(filename, IOContext.DEFAULT);
       assertFileExistsHavingRLCount(filename, 0, false);
       firstOpenOnA.close();
       assertFileExistsHavingRLCount(filename, 0, false);
