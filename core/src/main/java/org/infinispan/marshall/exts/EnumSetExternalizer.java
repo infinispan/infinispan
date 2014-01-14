@@ -72,6 +72,8 @@ public class EnumSetExternalizer extends AbstractExternalizer<Set> {
             case ENUM_SET:
             case REGULAR_ENUM_SET:
             case JUMBO_ENUM_SET:
+            case MINI_ENUM_SET:
+            case HUGE_ENUM_SET:
                if (i == 0)
                   enumSet = EnumSet.of((Enum) input.readObject());
                else
