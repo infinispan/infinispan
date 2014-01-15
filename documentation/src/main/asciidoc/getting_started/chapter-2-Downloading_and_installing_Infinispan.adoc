@@ -1,9 +1,9 @@
 ==  Downloading and installing Infinispan
 
-To run the Infinispan, you'll need
+To run Infinispan, you'll need
 
-* A Java 6.0 JDK
-* Maven 3, if you wish to use the quickstart examples or create a new project using the Infinispan link:../getting_started/getting_started.html#_maven_archetypes[archetype] 
+* A Java 1.6.0 JDK (a 1.7.0 JDK is required if you wish to recompile Infinispan itself. The generated artifacts will however be compatible with JDK 1.6.0)
+* Maven 3, if you wish to use the quickstart examples or create a new project using Infinispan link:../getting_started/getting_started.html#_maven_archetypes[archetype] 
 * the Infinispan distribution zip, if you wish to use Infinispan in server mode, or want to use the jars in an ant project
 * the Infinispan Quickstart zip, if you want to follow along with the projects discussed in the guide
 
