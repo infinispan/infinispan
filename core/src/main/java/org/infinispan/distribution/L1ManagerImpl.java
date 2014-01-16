@@ -20,10 +20,6 @@ import org.infinispan.remoting.rpc.RpcManager;
 import org.infinispan.remoting.rpc.RpcOptions;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.util.TimeService;
-import org.infinispan.commons.util.concurrent.AggregatingNotifyingFutureImpl;
-import org.infinispan.commons.util.concurrent.NoOpFuture;
-import org.infinispan.commons.util.concurrent.NotifyingFutureImpl;
-import org.infinispan.commons.util.concurrent.NotifyingNotifiableFuture;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 

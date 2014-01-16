@@ -1,5 +1,32 @@
 package org.infinispan;
 
+import static java.util.concurrent.TimeUnit.MILLISECONDS;
+import static org.infinispan.context.Flag.FAIL_SILENTLY;
+import static org.infinispan.context.Flag.FORCE_ASYNCHRONOUS;
+import static org.infinispan.context.Flag.PUT_FOR_EXTERNAL_READ;
+import static org.infinispan.context.Flag.ZERO_LOCK_ACQUISITION_TIMEOUT;
+import static org.infinispan.context.InvocationContextFactory.UNBOUNDED;
+import static org.infinispan.factories.KnownComponentNames.ASYNC_TRANSPORT_EXECUTOR;
+import static org.infinispan.factories.KnownComponentNames.CACHE_MARSHALLER;
+
+import javax.transaction.InvalidTransactionException;
+import javax.transaction.SystemException;
+import javax.transaction.Transaction;
+import javax.transaction.TransactionManager;
+import javax.transaction.xa.XAResource;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.EnumSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Properties;
+import java.util.Set;
+import java.util.concurrent.Callable;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
+
 import org.infinispan.atomic.Delta;
 import org.infinispan.batch.BatchContainer;
 import org.infinispan.commands.CommandsFactory;
@@ -18,8 +45,11 @@ import org.infinispan.commands.write.PutMapCommand;
 import org.infinispan.commands.write.RemoveCommand;
 import org.infinispan.commands.write.ReplaceCommand;
 import org.infinispan.commands.write.ValueMatcher;
-import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.commons.CacheConfigurationException;
+import org.infinispan.commons.CacheException;
+import org.infinispan.commons.marshall.StreamingMarshaller;
+import org.infinispan.commons.util.Util;
+import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.cache.Configurations;
 import org.infinispan.configuration.format.PropertyFormatter;
 import org.infinispan.configuration.global.GlobalConfiguration;
@@ -46,9 +76,6 @@ import org.infinispan.jmx.annotations.ManagedOperation;
 import org.infinispan.lifecycle.ComponentStatus;
 import org.infinispan.manager.CacheContainer;
 import org.infinispan.manager.EmbeddedCacheManager;
-import org.infinispan.commons.CacheException;
-import org.infinispan.commons.marshall.StreamingMarshaller;
-import org.infinispan.commons.util.Util;
 import org.infinispan.metadata.EmbeddedMetadata;
 import org.infinispan.metadata.Metadata;
 import org.infinispan.notifications.KeyFilter;
@@ -66,30 +93,6 @@ import org.infinispan.util.concurrent.NotifyingFuture;
 import org.infinispan.util.concurrent.locks.LockManager;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
-
-import javax.transaction.InvalidTransactionException;
-import javax.transaction.SystemException;
-import javax.transaction.Transaction;
-import javax.transaction.TransactionManager;
-import javax.transaction.xa.XAResource;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.EnumSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Properties;
-import java.util.Set;
-import java.util.concurrent.Callable;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Future;
-import java.util.concurrent.TimeUnit;
-
-import static java.util.concurrent.TimeUnit.MILLISECONDS;
-import static org.infinispan.context.Flag.*;
-import static org.infinispan.context.InvocationContextContainer.*;
-import static org.infinispan.context.InvocationContextFactory.UNBOUNDED;
-import static org.infinispan.factories.KnownComponentNames.*;
 
 /**
  * @author Mircea.Markus@jboss.com
@@ -1009,18 +1012,26 @@ public class CacheImpl<K, V> implements AdvancedCache<K, V> {
          public V call() throws Exception {
             try {
                associateImplicitTransactionWithCurrentThread(ctx);
-               return putInternal(key, value, metadata, explicitFlags, ctx);
-            } finally {
+               V retval = putInternal(key, value, metadata, explicitFlags, ctx);
                try {
-                  result.notifyDone();
+                  result.notifyDone(retval);
                   log.trace("Finished notifying");
                } catch (Throwable e) {
                   log.trace("Exception while notifying the future", e);
                }
+               return retval;
+            } catch (Exception e) {
+               try {
+                  result.notifyException(e);
+                  log.trace("Finished notifying");
+               } catch (Throwable e2) {
+                  log.trace("Exception while notifying the future", e2);
+               }
+               throw e;
             }
          }
       });
-      result.setActual(returnValue);
+      result.setFuture(returnValue);
       return result;
    }
 
@@ -1041,13 +1052,23 @@ public class CacheImpl<K, V> implements AdvancedCache<K, V> {
             try {
                associateImplicitTransactionWithCurrentThread(ctx);
                putAllInternal(data, metadata, explicitFlags, ctx);
+               try {
+                  result.notifyDone(null);
+               } catch (Throwable t) {
+                  log.trace("Error when notifying", t);
+               }
                return null;
-            } finally {
-               result.notifyDone();
+            } catch (Exception e) {
+               try {
+                  result.notifyException(e);
+               } catch (Throwable t) {
+                  log.trace("Error when notifying", t);
+               }
+               throw e;
             }
          }
       });
-      result.setActual(returnValue);
+      result.setFuture(returnValue);
       return result;
    }
 
@@ -1065,13 +1086,23 @@ public class CacheImpl<K, V> implements AdvancedCache<K, V> {
             try {
                associateImplicitTransactionWithCurrentThread(ctx);
                clearInternal(explicitFlags, ctx);
+               try {
+                  result.notifyDone(null);
+               } catch (Throwable t) {
+                  log.trace("Error when notifying", t);
+               }
                return null;
-            } finally {
-               result.notifyDone();
+            } catch (Exception e) {
+               try {
+                  result.notifyException(e);
+               } catch (Throwable t) {
+                  log.trace("Error when notifying", t);
+               }
+               throw e;
             }
          }
       });
-      result.setActual(returnValue);
+      result.setFuture(returnValue);
       return result;
    }
 
@@ -1092,13 +1123,24 @@ public class CacheImpl<K, V> implements AdvancedCache<K, V> {
          public V call() throws Exception {
             try {
                associateImplicitTransactionWithCurrentThread(ctx);
-               return putIfAbsentInternal(key, value, metadata, explicitFlags, ctx);
-            } finally {
-               result.notifyDone();
+               V retval = putIfAbsentInternal(key, value, metadata, explicitFlags, ctx);
+               try {
+                  result.notifyDone(retval);
+               } catch (Throwable t) {
+                  log.trace("Error when notifying", t);
+               }
+               return retval;
+            } catch (Exception e) {
+               try {
+                  result.notifyException(e);
+               } catch (Throwable t) {
+                  log.trace("Error when notifying", t);
+               }
+               throw e;
             }
          }
       });
-      result.setActual(returnValue);
+      result.setFuture(returnValue);
       return result;
    }
 
@@ -1115,13 +1157,24 @@ public class CacheImpl<K, V> implements AdvancedCache<K, V> {
          public V call() throws Exception {
             try {
                associateImplicitTransactionWithCurrentThread(ctx);
-               return removeInternal(key, explicitFlags, ctx);
-            } finally {
-               result.notifyDone();
+               V retval = removeInternal(key, explicitFlags, ctx);
+               try {
+                  result.notifyDone(retval);
+               } catch (Throwable t) {
+                  log.trace("Error when notifying", t);
+               }
+               return retval;
+            } catch (Exception e) {
+               try {
+                  result.notifyException(e);
+               } catch (Throwable t) {
+                  log.trace("Error when notifying", t);
+               }
+               throw e;
             }
          }
       });
-      result.setActual(returnValue);
+      result.setFuture(returnValue);
       return result;
    }
 
@@ -1138,13 +1191,24 @@ public class CacheImpl<K, V> implements AdvancedCache<K, V> {
          public Boolean call() throws Exception {
             try {
                associateImplicitTransactionWithCurrentThread(ctx);
-               return removeInternal(key, value, explicitFlags, ctx);
-            } finally {
-               result.notifyDone();
+               Boolean retval = removeInternal(key, value, explicitFlags, ctx);
+               try {
+                  result.notifyDone(retval);
+               } catch (Throwable t) {
+                  log.trace("Error when notifying", t);
+               }
+               return retval;
+            } catch (Exception e) {
+               try {
+                  result.notifyException(e);
+               } catch (Throwable t) {
+                  log.trace("Error when notifying", t);
+               }
+               throw e;
             }
          }
       });
-      result.setActual(returnValue);
+      result.setFuture(returnValue);
       return result;
    }
 
@@ -1165,13 +1229,24 @@ public class CacheImpl<K, V> implements AdvancedCache<K, V> {
          public V call() throws Exception {
             try {
                associateImplicitTransactionWithCurrentThread(ctx);
-               return replaceInternal(key, value, metadata, explicitFlags, ctx);
-            } finally {
-               result.notifyDone();
+               V retval = replaceInternal(key, value, metadata, explicitFlags, ctx);
+               try {
+                  result.notifyDone(retval);
+               } catch (Throwable t) {
+                  log.trace("Error when notifying", t);
+               }
+               return retval;
+            } catch (Exception e) {
+               try {
+                  result.notifyException(e);
+               } catch (Throwable t) {
+                  log.trace("Error when notifying", t);
+               }
+               throw e;
             }
          }
       });
-      result.setActual(returnValue);
+      result.setFuture(returnValue);
       return result;
    }
 
@@ -1192,13 +1267,24 @@ public class CacheImpl<K, V> implements AdvancedCache<K, V> {
          public Boolean call() throws Exception {
             try {
                associateImplicitTransactionWithCurrentThread(ctx);
-               return replaceInternal(key, oldValue, newValue, metadata, explicitFlags, ctx);
-            } finally {
-               result.notifyDone();
+               Boolean retval = replaceInternal(key, oldValue, newValue, metadata, explicitFlags, ctx);
+               try {
+                  result.notifyDone(retval);
+               } catch (Throwable t) {
+                  log.trace("Error when notifying", t);
+               }
+               return retval;
+            } catch (Exception e) {
+               try {
+                  result.notifyException(e);
+               } catch (Throwable t) {
+                  log.trace("Error when notifying", t);
+               }
+               throw e;
             }
          }
       });
-      result.setActual(returnValue);
+      result.setFuture(returnValue);
       return result;
    }
 
@@ -1221,20 +1307,31 @@ public class CacheImpl<K, V> implements AdvancedCache<K, V> {
             appliedFlags = explicitFlags.clone();
             explicitFlags.clear();
          }
-         final LegacyNotifyingFutureAdaptor<V> f = new LegacyNotifyingFutureAdaptor<V>();
+         final LegacyNotifyingFutureAdaptor<V> result = new LegacyNotifyingFutureAdaptor<V>();
 
          Callable<V> c = new Callable<V>() {
             @Override
             public V call() throws Exception {
                try {
-                  return get(key, appliedFlags, explicitClassLoader);
-               } finally {
-                  f.notifyDone();
+                  V retval = get(key, appliedFlags, explicitClassLoader);
+                  try {
+                     result.notifyDone(retval);
+                  } catch (Throwable t) {
+                     log.trace("Error when notifying", t);
+                  }
+                  return retval;
+               } catch (Exception e) {
+                  try {
+                     result.notifyException(e);
+                  } catch (Throwable t) {
+                     log.trace("Error when notifying", t);
+                  }
+                  throw e;
                }
             }
          };
-         f.setActual(asyncExecutor.submit(c));
-         return f;
+         result.setFuture(asyncExecutor.submit(c));
+         return result;
       }
    }
 

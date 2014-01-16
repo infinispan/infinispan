@@ -1,16 +1,15 @@
 package org.infinispan.commands.read;
 
 import java.util.Collection;
-import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.Callable;
 
 import org.infinispan.Cache;
+import org.infinispan.commands.CancellableCommand;
 import org.infinispan.commands.VisitableCommand;
 import org.infinispan.commands.Visitor;
-import org.infinispan.commands.CancellableCommand;
 import org.infinispan.commands.remote.BaseRpcCommand;
 import org.infinispan.commons.util.InfinispanCollections;
 import org.infinispan.context.InvocationContext;
@@ -85,7 +84,7 @@ public class DistributedExecuteCommand<V> extends BaseRpcCommand implements Visi
     * @return result of Callable invocations
     */
    @Override
-   public Object perform(InvocationContext context) throws Throwable {
+   public V perform(InvocationContext context) throws Exception {
       // hook into lifecycle
       DistributedTaskLifecycleService taskLifecycleService = DistributedTaskLifecycleService.getInstance();
       Callable<V> callable = getCallable();

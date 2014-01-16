@@ -1,19 +1,16 @@
 package org.infinispan.commons.util.concurrent;
 
-import java.util.Set;
-import java.util.concurrent.CopyOnWriteArraySet;
+import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.locks.ReadWriteLock;
-import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 /**
- * Constructs an instance of a {@link org.infinispan.util.concurrent.NotifyingFuture}.
+ * Constructs an instance of a {@link org.infinispan.commons.util.concurrent.NotifyingFuture}.
  * <p/>
  * Typical usage:
  * <p/>
- * <code> Object retval = .... // do some work here NotifyingFuture nf = new NotifyingFutureImpl(retval);
+ * <code> Object retval = .... // do some work here NotifyingFuture nf = new NotifyingFutureImpl();
  * rpcManager.broadcastRpcCommandInFuture(nf, command); return nf; </code>
  *
  * @author Manik Surtani
@@ -21,38 +18,62 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
  */
 public class NotifyingFutureImpl<T> extends BaseNotifyingFuture<T> implements NotifyingNotifiableFuture<T>{
 
-   final T actualReturnValue;
-   volatile Future<T> ioFuture;
-   //TODO revisit if volatile needed
-
-   public NotifyingFutureImpl(T actualReturnValue) {
-      this.actualReturnValue = actualReturnValue;
-   }
+   private T actualReturnValue;
+   private Throwable exceptionThrown;
+   private volatile Future<T> future;
+   private final CountDownLatch latch = new CountDownLatch(1);
 
    @Override
-   public void setNetworkFuture(Future<T> future) {
-      this.ioFuture = future;
+   public void setFuture(Future<T> future) {
+      this.future = future;
+      latch.countDown();
+   }
+
+   public Future<T> getFuture() throws InterruptedException {
+      latch.await();
+      return future;
    }
 
    @Override
    public boolean cancel(boolean mayInterruptIfRunning) {
-      return ioFuture.cancel(mayInterruptIfRunning);
+      try {
+         return getFuture().cancel(mayInterruptIfRunning);
+      } catch (InterruptedException e) {
+         Thread.currentThread().interrupt();
+         return false;
+      }
    }
 
    @Override
    public boolean isCancelled() {
-      return ioFuture.isCancelled();
+      try {
+         return getFuture().isCancelled();
+      } catch (InterruptedException e) {
+         Thread.currentThread().interrupt();
+         return false;
+      }
    }
 
    @Override
    public boolean isDone() {
-      return ioFuture.isDone();
+      if (callCompleted) {
+         return true;
+      }
+      try {
+         return getFuture().isDone();
+      } catch (InterruptedException e) {
+         Thread.currentThread().interrupt();
+         return false;
+      }
    }
 
    @Override
    public T get() throws InterruptedException, ExecutionException {
       if (!callCompleted) {
-         ioFuture.get();
+         getFuture().get();
+      }
+      if (exceptionThrown != null) {
+         throw new ExecutionException(exceptionThrown);
       }
       return actualReturnValue;
    }
@@ -60,8 +81,23 @@ public class NotifyingFutureImpl<T> extends BaseNotifyingFuture<T> implements No
    @Override
    public T get(long timeout, TimeUnit unit) throws InterruptedException, ExecutionException, java.util.concurrent.TimeoutException {
       if (!callCompleted) {
-         ioFuture.get(timeout, unit);
+         getFuture().get(timeout, unit);
+      }
+      if (exceptionThrown != null) {
+         throw new ExecutionException(exceptionThrown);
       }
       return actualReturnValue;
+   }
+
+   @Override
+   public void notifyDone(T result) {
+      actualReturnValue = result;
+      fireListeners();
+   }
+
+   @Override
+   public void notifyException(Throwable exception) {
+      exceptionThrown = exception;
+      fireListeners();
    }
 }

@@ -42,11 +42,17 @@ public class NoOpFuture<E> implements NotifyingNotifiableFuture<E> {
    }
 
    @Override
-   public void notifyDone() {      
+   public void notifyDone(E result) {
+      throw new UnsupportedOperationException();
    }
 
    @Override
-   public void setNetworkFuture(Future<E> eFuture) {
+   public void notifyException(Throwable exception) {
+      throw new UnsupportedOperationException();
+   }
+
+   @Override
+   public void setFuture(Future<E> eFuture) {
       throw new UnsupportedOperationException();
    }
 
