@@ -27,9 +27,12 @@ public abstract class BaseNotifyingFuture<T> implements NotifyingFuture<T> {
       }
    }
 
-   public void notifyDone() {
+   protected void fireListeners() {
       listenerLock.writeLock().lock();
       try {
+         if (callCompleted) {
+            throw new IllegalStateException("Already fired listeners.");
+         }
          callCompleted = true;
          for (FutureListener<T> l : listeners) l.futureDone(this);
       } finally {

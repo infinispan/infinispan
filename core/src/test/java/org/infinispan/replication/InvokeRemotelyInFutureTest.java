@@ -30,7 +30,7 @@ public class InvokeRemotelyInFutureTest extends MultipleCacheManagersTest {
 
       //never mind use of KeyValueCommand, the point is that callback is called and completes without Exceptions thrown
       final AtomicBoolean futureDoneOk = new AtomicBoolean();
-      NotifyingFutureImpl f = new NotifyingFutureImpl(new Integer(2));
+      NotifyingFutureImpl f = new NotifyingFutureImpl();
       f.attachListener(new FutureListener<Object>() {
 
          @Override

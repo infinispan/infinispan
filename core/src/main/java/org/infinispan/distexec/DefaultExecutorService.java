@@ -5,36 +5,10 @@ import static org.infinispan.factories.KnownComponentNames.CACHE_MARSHALLER;
 import java.io.Externalizable;
 import java.io.NotSerializableException;
 import java.io.Serializable;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.Map.Entry;
-import java.util.Random;
-import java.util.Set;
-import java.util.concurrent.AbstractExecutorService;
-import java.util.concurrent.Callable;
-import java.util.concurrent.CancellationException;
-import java.util.concurrent.CompletionService;
-import java.util.concurrent.CopyOnWriteArraySet;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.ExecutorCompletionService;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.Future;
-import java.util.concurrent.RejectedExecutionException;
-import java.util.concurrent.RunnableFuture;
-import java.util.concurrent.ThreadPoolExecutor;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
+import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.concurrent.locks.ReadWriteLock;
-import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 import org.infinispan.AdvancedCache;
 import org.infinispan.Cache;
@@ -42,16 +16,19 @@ import org.infinispan.commands.CancelCommand;
 import org.infinispan.commands.CancellationService;
 import org.infinispan.commands.CommandsFactory;
 import org.infinispan.commands.read.DistributedExecuteCommand;
+import org.infinispan.commons.marshall.Marshaller;
+import org.infinispan.commons.marshall.StreamingMarshaller;
+import org.infinispan.commons.util.InfinispanCollections;
+import org.infinispan.commons.util.Util;
+import org.infinispan.commons.util.concurrent.FutureListener;
+import org.infinispan.commons.util.concurrent.NotifyingFuture;
+import org.infinispan.commons.util.concurrent.NotifyingFutureImpl;
 import org.infinispan.distexec.spi.DistributedTaskLifecycleService;
 import org.infinispan.distribution.DistributionManager;
 import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.interceptors.InterceptorChain;
 import org.infinispan.interceptors.locking.ClusteringDependentLogic;
 import org.infinispan.lifecycle.ComponentStatus;
-import org.infinispan.commons.marshall.Marshaller;
-import org.infinispan.commons.marshall.StreamingMarshaller;
-import org.infinispan.commons.util.InfinispanCollections;
-import org.infinispan.commons.util.Util;
 import org.infinispan.remoting.responses.Response;
 import org.infinispan.remoting.responses.SuccessfulResponse;
 import org.infinispan.remoting.rpc.ResponseMode;
@@ -59,9 +36,6 @@ import org.infinispan.remoting.rpc.RpcManager;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.remoting.transport.TopologyAwareAddress;
 import org.infinispan.util.TimeService;
-import org.infinispan.commons.util.concurrent.FutureListener;
-import org.infinispan.commons.util.concurrent.NotifyingFuture;
-import org.infinispan.commons.util.concurrent.NotifyingNotifiableFuture;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
@@ -532,7 +506,9 @@ public class DefaultExecutorService extends AbstractExecutorService implements D
    protected <T, K> DistributedTaskPart<T> createDistributedTaskPart(DistributedTask<T> task,
             DistributedExecuteCommand<T> c, List<K> inputKeys, Address target,
             int failoverCount) {
-      return new DistributedTaskPart<T>(task, c, (List<Object>) inputKeys, target, failoverCount);
+      return getAddress().equals(target) ?
+            new LocalDistributedTaskPart<T>(task, c, (List<Object>) inputKeys, failoverCount) :
+            new RemoteDistributedTaskPart<T>(task, c, (List<Object>) inputKeys, target, failoverCount);
    }
 
    protected <T, K> DistributedTaskPart<T> createDistributedTaskPart(DistributedTask<T> task,
@@ -788,35 +764,19 @@ public class DefaultExecutorService extends AbstractExecutorService implements D
     * @author Mircea Markus
     * @author Vladimir Blagojevic
     */
-   private class DistributedTaskPart<V> implements NotifyingNotifiableFuture<V>, RunnableFuture<V>{
+   private abstract class DistributedTaskPart<V> implements NotifyingFuture<V>, RunnableFuture<V> {
 
-      private final DistributedExecuteCommand<V> distCommand;
-      private volatile Future<V> f;
-      private final Set<FutureListener<V>> listeners = new CopyOnWriteArraySet<FutureListener<V>>();
-      private final ReadWriteLock listenerLock = new ReentrantReadWriteLock();
-      private final Address executionTarget;
+      protected final DistributedExecuteCommand<V> distCommand;
       private final List<Object> inputKeys;
       private final DistributedTask<V> owningTask;
       private int failedOverCount;
-      private volatile boolean done;
       private volatile boolean cancelled;
 
-
-      /**
-       * Create a new DistributedTaskPart.
-       *
-       * @param task
-       * @param command
-       * @param executionTarget
-       * @param failoverCount
-       */
-      public DistributedTaskPart(DistributedTask<V> task, DistributedExecuteCommand<V> command,
-               List<Object> inputKeys, Address executionTarget, int failoverCount) {
-         this.owningTask = task;
-         this.distCommand = command;
+      protected DistributedTaskPart(List<Object> inputKeys, DistributedExecuteCommand<V> command, DistributedTask<V> task, int failedOverCount) {
          this.inputKeys = inputKeys;
-         this.executionTarget = executionTarget;
-         this.failedOverCount = failoverCount;
+         this.distCommand = command;
+         this.owningTask = task;
+         this.failedOverCount = failedOverCount;
       }
 
       public List<Object> getInputKeys() {
@@ -831,9 +791,17 @@ public class DefaultExecutorService extends AbstractExecutorService implements D
          return owningTask;
       }
 
+      public abstract Address getExecutionTarget();
 
-      public Address getExecutionTarget() {
-         return executionTarget;
+      private DefaultExecutorService getOuterType() {
+         return DefaultExecutorService.this;
+      }
+
+      public abstract void execute();
+
+      @Override
+      public void run() {
+         //intentionally empty
       }
 
       @Override
@@ -842,46 +810,12 @@ public class DefaultExecutorService extends AbstractExecutorService implements D
       }
 
       @Override
-      public boolean isDone() {
-         return done;
-      }
-
-      public boolean isLocalNodeExecutionTarget(){
-         return getAddress().equals(getExecutionTarget());
-      }
-
-      @Override
-      public boolean cancel(boolean mayInterruptIfRunning) {
-         if (!isCancelled()) {
-            CancelCommand ccc = factory.buildCancelCommandCommand(distCommand.getUUID());
-            if (isLocalNodeExecutionTarget()) {
-               ccc.init(cancellationService);
-               try {
-                  ccc.perform(null);
-               } catch (Throwable e) {
-                  log.couldNotExecuteCancellationLocally(e.getLocalizedMessage());
-               }
-            } else {
-               rpc.invokeRemotely(Collections.singletonList(getExecutionTarget()), ccc, rpc.getDefaultRpcOptions(true));
-            }
-            cancelled = true;
-            done = true;
-            return cancelled;
-         } else {
-            //already cancelled
-            return false;
-         }
-      }
-
-      @Override
       public V get() throws InterruptedException, ExecutionException {
-         V result = null;
          try {
-            result = innerGet(0, TimeUnit.MILLISECONDS);
+            return innerGet(0, TimeUnit.MILLISECONDS);
          } catch (TimeoutException e) {
             throw new ExecutionException(e);
          }
-         return result;
       }
 
       @Override
@@ -890,20 +824,15 @@ public class DefaultExecutorService extends AbstractExecutorService implements D
          return innerGet(timeout, unit);
       }
 
-      private V innerGet(long timeout, TimeUnit unit)
+      protected V innerGet(long timeout, TimeUnit unit)
             throws ExecutionException, TimeoutException, InterruptedException {
          if (isCancelled())
             throw new CancellationException("Task already cancelled");
 
          long timeoutNanos = computeTimeoutNanos(timeout, unit);
          long endNanos = timeService.expectedEndTime(timeoutNanos, TimeUnit.NANOSECONDS);
-         V response;
          try {
-            if (timeoutNanos > 0) {
-               response = retrieveResult(f.get(timeoutNanos, TimeUnit.NANOSECONDS));
-            } else {
-               response = retrieveResult(f.get());
-            }
+            return getResult(timeoutNanos);
          } catch (TimeoutException te) {
             throw te;
          } catch (Exception e) {
@@ -917,7 +846,7 @@ public class DefaultExecutorService extends AbstractExecutorService implements D
             boolean canFailover = failedOverCount++ < getOwningTask().getTaskFailoverPolicy().maxFailoverAttempts();
             if (canFailover) {
                try {
-                  response = failoverExecution(e, timeoutNanos, TimeUnit.NANOSECONDS);
+                  return failoverExecution(e, timeoutNanos, TimeUnit.NANOSECONDS);
                } catch (Exception failedOver) {
                   throw wrapIntoExecutionException(failedOver);
                }
@@ -925,10 +854,11 @@ public class DefaultExecutorService extends AbstractExecutorService implements D
                throw wrapIntoExecutionException(e);
             }
          }
-         return response;
       }
 
-      private long computeTimeoutNanos(long timeout, TimeUnit unit) {
+      protected abstract V getResult(long timeoutNanos) throws Exception;
+
+      protected long computeTimeoutNanos(long timeout, TimeUnit unit) {
          long taskTimeout = TimeUnit.MILLISECONDS.toNanos(getOwningTask().timeout());
          long futureTimeout = TimeUnit.NANOSECONDS.convert(timeout, unit);
          long actualTimeout;
@@ -948,9 +878,8 @@ public class DefaultExecutorService extends AbstractExecutorService implements D
          }
       }
 
-
-      private V failoverExecution(final Exception cause, long timeout, TimeUnit unit)
-               throws Exception {
+      protected V failoverExecution(final Exception cause, long timeout, TimeUnit unit)
+            throws Exception {
          final List<Address> executionCandidates = executionCandidates(getOwningTask());
          FailoverContext fc = new FailoverContext() {
             @Override
@@ -976,117 +905,9 @@ public class DefaultExecutorService extends AbstractExecutorService implements D
 
          Address target = getOwningTask().getTaskFailoverPolicy().failover(fc);
          DistributedTaskPart<V> part = createDistributedTaskPart(owningTask, distCommand,
-                  getInputKeys(), target, failedOverCount);
+               getInputKeys(), target, failedOverCount);
          part.execute();
          return part.get(timeout, unit);
-      }
-
-      @Override
-      public void notifyDone() {
-         listenerLock.writeLock().lock();
-         try {
-            done = true;
-            for (FutureListener<V> l : listeners) l.futureDone(this);
-         } finally {
-            listenerLock.writeLock().unlock();
-         }
-      }
-
-      @Override
-      public NotifyingFuture<V> attachListener(FutureListener<V> listener) {
-         listenerLock.readLock().lock();
-         try {
-            if (!done) listeners.add(listener);
-            if (done) listener.futureDone(this);
-            return this;
-         } finally {
-            listenerLock.readLock().unlock();
-         }
-      }
-
-      @Override
-      public void setNetworkFuture(Future<V> future) {
-         this.f = future;
-      }
-
-      V retrieveResult(Object response) throws Exception {
-         V result = null;
-         //this is application level Exception that was raised in execution
-         //simply rethrow it (might be good candidate for failover)
-         if (response instanceof Exception) {
-            throw ((Exception) response);
-         }
-         //these two should never happen, mark them with IllegalStateException
-         if (response == null || !(response instanceof Map<?, ?>)) {
-            throw new IllegalStateException("Invalid response received " + response);
-         }
-         Map<Address, Response> mapResult = (Map<Address, Response>) response;
-         if (mapResult.size() == 1) {
-            for (Entry<Address, Response> e : mapResult.entrySet()) {
-               Response value = e.getValue();
-               if (value instanceof SuccessfulResponse) {
-                  result = (V) ((SuccessfulResponse) value).getResponseValue();
-               }
-            }
-         } else {
-            //should never happen as we send DistributedTaskPart to one node for
-            //execution only, therefore we should get only one response
-            throw new IllegalStateException("Invalid response " + response);
-         }
-         return result;
-      }
-
-      public void execute() {
-         if (isLocalNodeExecutionTarget()) {
-            invokeLocally();
-         } else {
-            if (trace) log.tracef("Sending %s to remote execution at node %s", f, getExecutionTarget());
-            try {
-               rpc.invokeRemotelyInFuture(Collections.singletonList(getExecutionTarget()), getCommand(),
-                                          rpc.getRpcOptionsBuilder(ResponseMode.SYNCHRONOUS)
-                                                .timeout(getOwningTask().timeout(), TimeUnit.MILLISECONDS).build(),
-                                          (DistributedTaskPart<Object>) this);
-            } catch (Throwable e) {
-               log.remoteExecutionFailed(getExecutionTarget(), e);
-            }
-         }
-      }
-
-      protected void invokeLocally() {
-         log.debugf("Sending %s to self", this);
-         try {
-            Callable<Object> call = new Callable<Object>() {
-
-               @Override
-               public Object call() throws Exception {
-                  return doLocalInvoke();
-               }
-
-               private Object doLocalInvoke() {
-                  Object result = null;
-                  getCommand().init(cache);
-                  DistributedTaskLifecycleService lifecycle = DistributedTaskLifecycleService.getInstance();
-                  try {
-                     // hook into lifecycle
-                     lifecycle.onPreExecute(getCommand().getCallable(), cache);
-                     cancellationService.register(Thread.currentThread(), getCommand().getUUID());
-                     result = getCommand().perform(null);
-                     return Collections.singletonMap(getAddress(),
-                              SuccessfulResponse.create(result));
-                  } catch (Throwable e) {
-                     return e;
-                  } finally {
-                     // hook into lifecycle
-                     lifecycle.onPostExecute(getCommand().getCallable());
-                     cancellationService.unregister(getCommand().getUUID());
-                     notifyDone();
-                  }
-               }
-            };
-            setNetworkFuture((Future<V>) localExecutorService.submit(call));
-         } catch (Throwable e1) {
-            log.localExecutionFailed(e1);
-         }
       }
 
       @Override
@@ -1123,13 +944,190 @@ public class DefaultExecutorService extends AbstractExecutorService implements D
          return true;
       }
 
-      @Override
-      public void run() {
-         //intentionally empty
+      protected void setCancelled() {
+         cancelled = true;
+      }
+   }
+
+   private class RemoteDistributedTaskPart<V> extends DistributedTaskPart<V> {
+      private final Address executionTarget;
+      private final NotifyingFutureImpl<Object> future = new NotifyingFutureImpl<Object>();
+
+      public RemoteDistributedTaskPart(DistributedTask<V> task, DistributedExecuteCommand<V> command,
+                                 List<Object> inputKeys, Address executionTarget, int failoverCount) {
+         super(inputKeys, command, task, failoverCount);
+         if (getAddress().equals(executionTarget)) {
+            throw new IllegalArgumentException("This task should be executed as local.");
+         }
+         this.executionTarget = executionTarget;
       }
 
-      private DefaultExecutorService getOuterType() {
-         return DefaultExecutorService.this;
+      @Override
+      public Address getExecutionTarget() {
+         return executionTarget;
+      }
+
+      public void execute() {
+         if (trace) log.tracef("Sending %s to remote execution at node %s", this, getExecutionTarget());
+         try {
+            rpc.invokeRemotelyInFuture(Collections.singletonList(getExecutionTarget()), getCommand(),
+                  rpc.getRpcOptionsBuilder(ResponseMode.SYNCHRONOUS)
+                        .timeout(getOwningTask().timeout(), TimeUnit.MILLISECONDS).build(), future);
+         } catch (Throwable e) {
+            log.remoteExecutionFailed(getExecutionTarget(), e);
+         }
+      }
+
+      @Override
+      public boolean cancel(boolean mayInterruptIfRunning) {
+         if (!isCancelled()) {
+            CancelCommand ccc = factory.buildCancelCommandCommand(distCommand.getUUID());
+            rpc.invokeRemotely(Collections.singletonList(getExecutionTarget()), ccc, rpc.getDefaultRpcOptions(true));
+            setCancelled();
+            return future.cancel(true);
+         } else {
+            //already cancelled
+            return false;
+         }
+      }
+
+      @Override
+      public boolean isDone() {
+         return future.isDone();
+      }
+
+      protected V getResult(long timeoutNanos) throws Exception {
+         if (timeoutNanos > 0) {
+            return retrieveResult(future.get(timeoutNanos, TimeUnit.NANOSECONDS));
+         } else {
+            return retrieveResult(future.get());
+         }
+      }
+
+      private V retrieveResult(Object response) throws Exception {
+         V result = null;
+         //this is application level Exception that was raised in execution
+         //simply rethrow it (might be good candidate for failover)
+         if (response instanceof Exception) {
+            throw ((Exception) response);
+         }
+         //these two should never happen, mark them with IllegalStateException
+         if (response == null || !(response instanceof Map<?, ?>)) {
+            throw new IllegalStateException("Invalid response received " + response);
+         }
+         Map<Address, Response> mapResult = (Map<Address, Response>) response;
+         if (mapResult.size() == 1) {
+            for (Entry<Address, Response> e : mapResult.entrySet()) {
+               Response value = e.getValue();
+               if (value instanceof SuccessfulResponse) {
+                  result = (V) ((SuccessfulResponse) value).getResponseValue();
+               }
+            }
+         } else {
+            //should never happen as we send DistributedTaskPart to one node for
+            //execution only, therefore we should get only one response
+            throw new IllegalStateException("Invalid response " + response);
+         }
+         return result;
+      }
+
+      @Override
+      public NotifyingFuture<V> attachListener(final FutureListener<V> listener) {
+         future.attachListener(new FutureListener<Object>() {
+               @Override
+               public void futureDone(Future<Object> future) {
+                  listener.futureDone(RemoteDistributedTaskPart.this);
+               }
+            });
+         return this;
+      }
+   }
+
+   private class LocalDistributedTaskPart<V> extends DistributedTaskPart<V> {
+      private final NotifyingFutureImpl<V> future = new NotifyingFutureImpl<V>();
+
+      public LocalDistributedTaskPart(DistributedTask<V> task, DistributedExecuteCommand<V> command,
+               List<Object> inputKeys, int failoverCount) {
+         super(inputKeys, command, task, failoverCount);
+      }
+
+      @Override
+      public boolean isDone() {
+         return future.isDone();
+      }
+
+      @Override
+      public synchronized boolean cancel(boolean mayInterruptIfRunning) {
+         if (!isCancelled()) {
+            CancelCommand ccc = factory.buildCancelCommandCommand(distCommand.getUUID());
+            ccc.init(cancellationService);
+            try {
+               ccc.perform(null);
+            } catch (Throwable e) {
+               log.couldNotExecuteCancellationLocally(e.getLocalizedMessage());
+            }
+            setCancelled();
+            return future.cancel(true);
+         } else {
+            //already cancelled
+            return false;
+         }
+      }
+
+      @Override
+      protected V getResult(long timeoutNanos) throws Exception {
+         if (timeoutNanos > 0) {
+            return future.get(timeoutNanos, TimeUnit.NANOSECONDS);
+         } else {
+            return future.get();
+         }
+      }
+
+      @Override
+      public Address getExecutionTarget() {
+         return getAddress();
+      }
+
+      public void execute() {
+         log.debugf("Sending %s to self", this);
+         try {
+            Callable<V> call = new Callable<V>() {
+
+               @Override
+               public V call() throws Exception {
+                  return doLocalInvoke();
+               }
+
+               private V doLocalInvoke() throws Exception {
+                  getCommand().init(cache);
+                  DistributedTaskLifecycleService lifecycle = DistributedTaskLifecycleService.getInstance();
+                  try {
+                     // hook into lifecycle
+                     lifecycle.onPreExecute(getCommand().getCallable(), cache);
+                     cancellationService.register(Thread.currentThread(), getCommand().getUUID());
+                     V result = getCommand().perform(null);
+                     future.notifyDone(result);
+                     return result;
+                  } catch (Exception e) {
+                     future.notifyException(e);
+                     throw e;
+                  } finally {
+                     // hook into lifecycle
+                     lifecycle.onPostExecute(getCommand().getCallable());
+                     cancellationService.unregister(getCommand().getUUID());
+                  }
+               }
+            };
+            future.setFuture(localExecutorService.submit(call));
+         } catch (Throwable e1) {
+            log.localExecutionFailed(e1);
+         }
+      }
+
+      @Override
+      public NotifyingFuture<V> attachListener(final FutureListener<V> listener) {
+         future.attachListener(listener);
+         return this;
       }
    }
 

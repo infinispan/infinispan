@@ -1,47 +1,9 @@
 package org.infinispan.distexec.mapreduce;
 
-import org.infinispan.AdvancedCache;
-import org.infinispan.Cache;
-import org.infinispan.commands.CancelCommand;
-import org.infinispan.commands.CancellationService;
-import org.infinispan.commands.CommandsFactory;
-import org.infinispan.commands.CreateCacheCommand;
-import org.infinispan.commands.read.MapCombineCommand;
-import org.infinispan.commands.read.ReduceCommand;
-import org.infinispan.context.Flag;
-import org.infinispan.distexec.mapreduce.spi.MapReduceTaskLifecycleService;
-import org.infinispan.distribution.DistributionManager;
-import org.infinispan.factories.ComponentRegistry;
-import org.infinispan.interceptors.locking.ClusteringDependentLogic;
-import org.infinispan.lifecycle.ComponentStatus;
-import org.infinispan.manager.EmbeddedCacheManager;
-import org.infinispan.commons.CacheException;
-import org.infinispan.commons.marshall.Marshaller;
-import org.infinispan.commons.marshall.StreamingMarshaller;
-import org.infinispan.commons.util.Util;
-import org.infinispan.remoting.responses.Response;
-import org.infinispan.remoting.responses.SuccessfulResponse;
-import org.infinispan.remoting.rpc.RpcManager;
-import org.infinispan.remoting.rpc.RpcOptionsBuilder;
-import org.infinispan.remoting.transport.Address;
-import org.infinispan.commons.util.concurrent.AbstractInProcessFuture;
-import org.infinispan.commons.util.concurrent.FutureListener;
-import org.infinispan.commons.util.concurrent.NotifyingFuture;
-import org.infinispan.commons.util.concurrent.NotifyingNotifiableFuture;
-import org.infinispan.util.logging.Log;
-import org.infinispan.util.logging.LogFactory;
+import static org.infinispan.factories.KnownComponentNames.CACHE_MARSHALLER;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.Map.Entry;
-import java.util.Set;
-import java.util.UUID;
 import java.util.concurrent.Callable;
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.ExecutionException;
@@ -50,7 +12,35 @@ import java.util.concurrent.FutureTask;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
-import static org.infinispan.factories.KnownComponentNames.CACHE_MARSHALLER;
+import org.infinispan.AdvancedCache;
+import org.infinispan.Cache;
+import org.infinispan.commands.CancelCommand;
+import org.infinispan.commands.CancellationService;
+import org.infinispan.commands.CommandsFactory;
+import org.infinispan.commands.CreateCacheCommand;
+import org.infinispan.commands.read.MapCombineCommand;
+import org.infinispan.commands.read.ReduceCommand;
+import org.infinispan.commons.CacheException;
+import org.infinispan.commons.marshall.Marshaller;
+import org.infinispan.commons.marshall.StreamingMarshaller;
+import org.infinispan.commons.util.Util;
+import org.infinispan.commons.util.concurrent.AbstractInProcessFuture;
+import org.infinispan.commons.util.concurrent.FutureListener;
+import org.infinispan.commons.util.concurrent.NotifyingFuture;
+import org.infinispan.commons.util.concurrent.NotifyingNotifiableFuture;
+import org.infinispan.distexec.mapreduce.spi.MapReduceTaskLifecycleService;
+import org.infinispan.distribution.DistributionManager;
+import org.infinispan.factories.ComponentRegistry;
+import org.infinispan.interceptors.locking.ClusteringDependentLogic;
+import org.infinispan.lifecycle.ComponentStatus;
+import org.infinispan.manager.EmbeddedCacheManager;
+import org.infinispan.remoting.responses.Response;
+import org.infinispan.remoting.responses.SuccessfulResponse;
+import org.infinispan.remoting.rpc.RpcManager;
+import org.infinispan.remoting.rpc.RpcOptionsBuilder;
+import org.infinispan.remoting.transport.Address;
+import org.infinispan.util.logging.Log;
+import org.infinispan.util.logging.LogFactory;
 
 /**
  * MapReduceTask is a distributed task allowing a large scale computation to be transparently
@@ -822,7 +812,7 @@ public class MapReduceTask<KIn, VIn, KOut, VOut> {
 
       @Override
       public NotifyingFuture<V> attachListener(FutureListener<V> listener) {
-         return this;
+         throw new UnsupportedOperationException();
       }
 
       @Override
@@ -882,11 +872,15 @@ public class MapReduceTask<KIn, VIn, KOut, VOut> {
       }
 
       @Override
-      public void notifyDone() {
+      public void notifyDone(V result) {
       }
 
       @Override
-      public void setNetworkFuture(Future<V> future) {
+      public void notifyException(Throwable exception) {
+      }
+
+      @Override
+      public void setFuture(Future<V> future) {
          this.f = future;
       }
    }
@@ -930,7 +924,7 @@ public class MapReduceTask<KIn, VIn, KOut, VOut> {
                };
             }
             FutureTask<V> futureTask = new FutureTask<V>((Callable<V>) callable);
-            setNetworkFuture(futureTask);
+            setFuture(futureTask);
             mapReduceManager.getExecutorService().submit(futureTask);
          } else {
             RpcManager rpc = cache.getRpcManager();
@@ -1003,7 +997,7 @@ public class MapReduceTask<KIn, VIn, KOut, VOut> {
                }
             };
             FutureTask<V> futureTask = new FutureTask<V>((Callable<V>) callable);
-            setNetworkFuture(futureTask);
+            setFuture(futureTask);
             mapReduceManager.getExecutorService().submit(futureTask);
          } else {
             RpcManager rpc = cache.getRpcManager();

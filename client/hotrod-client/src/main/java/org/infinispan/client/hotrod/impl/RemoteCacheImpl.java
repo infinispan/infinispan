@@ -22,27 +22,12 @@ import org.infinispan.client.hotrod.Version;
 import org.infinispan.client.hotrod.VersionedValue;
 import org.infinispan.client.hotrod.exceptions.HotRodClientException;
 import org.infinispan.client.hotrod.exceptions.RemoteCacheManagerNotStartedException;
-import org.infinispan.client.hotrod.impl.async.NotifyingFutureImpl;
-import org.infinispan.client.hotrod.impl.operations.BulkGetKeysOperation;
-import org.infinispan.client.hotrod.impl.operations.BulkGetOperation;
-import org.infinispan.client.hotrod.impl.operations.ClearOperation;
-import org.infinispan.client.hotrod.impl.operations.ContainsKeyOperation;
-import org.infinispan.client.hotrod.impl.operations.GetOperation;
-import org.infinispan.client.hotrod.impl.operations.GetWithMetadataOperation;
-import org.infinispan.client.hotrod.impl.operations.GetWithVersionOperation;
-import org.infinispan.client.hotrod.impl.operations.OperationsFactory;
-import org.infinispan.client.hotrod.impl.operations.PingOperation;
-import org.infinispan.client.hotrod.impl.operations.PutIfAbsentOperation;
-import org.infinispan.client.hotrod.impl.operations.PutOperation;
-import org.infinispan.client.hotrod.impl.operations.RemoveIfUnmodifiedOperation;
-import org.infinispan.client.hotrod.impl.operations.RemoveOperation;
-import org.infinispan.client.hotrod.impl.operations.ReplaceIfUnmodifiedOperation;
-import org.infinispan.client.hotrod.impl.operations.ReplaceOperation;
-import org.infinispan.client.hotrod.impl.operations.StatsOperation;
+import org.infinispan.client.hotrod.impl.operations.*;
 import org.infinispan.client.hotrod.logging.Log;
 import org.infinispan.client.hotrod.logging.LogFactory;
 import org.infinispan.commons.marshall.Marshaller;
 import org.infinispan.commons.util.concurrent.NotifyingFuture;
+import org.infinispan.commons.util.concurrent.NotifyingFutureImpl;
 
 /**
  * @author Mircea.Markus@jboss.com
@@ -101,12 +86,25 @@ public class RemoteCacheImpl<K, V> extends RemoteCacheSupport<K, V> {
       Future<Boolean> future = executorService.submit(new Callable<Boolean>() {
          @Override
          public Boolean call() throws Exception {
-            boolean removed = removeWithVersion(key, version);
-            result.notifyFutureCompletion();
-            return removed;
+            try {
+               boolean removed = removeWithVersion(key, version);
+               try {
+                  result.notifyDone(removed);
+               } catch (Throwable t) {
+                  log.trace("Error when notifying", t);
+               }
+               return removed;
+            } catch (Exception e) {
+               try {
+                  result.notifyException(e);
+               } catch (Throwable t) {
+                  log.trace("Error when notifying", t);
+               }
+               throw e;
+            }
          }
       });
-      result.setExecuting(future);
+      result.setFuture(future);
       return result;
    }
 
@@ -125,12 +123,25 @@ public class RemoteCacheImpl<K, V> extends RemoteCacheSupport<K, V> {
       Future<Boolean> future = executorService.submit(new Callable<Boolean>() {
          @Override
          public Boolean call() throws Exception {
-            boolean removed = replaceWithVersion(key, newValue, version, lifespanSeconds, maxIdleSeconds);
-            result.notifyFutureCompletion();
-            return removed;
+            try {
+               boolean removed = replaceWithVersion(key, newValue, version, lifespanSeconds, maxIdleSeconds);
+               try {
+                  result.notifyDone(removed);
+               } catch (Throwable t) {
+                  log.trace("Error when notifying", t);
+               }
+               return removed;
+            } catch (Exception e) {
+               try {
+                  result.notifyException(e);
+               } catch (Throwable t) {
+                  log.trace("Error when notifying", t);
+               }
+               throw e;
+            }
          }
       });
-      result.setExecuting(future);
+      result.setFuture(future);
       return result;
    }
 
@@ -165,12 +176,25 @@ public class RemoteCacheImpl<K, V> extends RemoteCacheSupport<K, V> {
       Future<Void> future = executorService.submit(new Callable<Void>() {
          @Override
          public Void call() throws Exception {
-            putAll(data, lifespan, lifespanUnit, maxIdle, maxIdleUnit);
-            result.notifyFutureCompletion();
-            return null;
+            try {
+               putAll(data, lifespan, lifespanUnit, maxIdle, maxIdleUnit);
+               try {
+                  result.notifyDone(null);
+               } catch (Throwable t) {
+                  log.trace("Error when notifying", t);
+               }
+               return null;
+            } catch (Exception e) {
+               try {
+                  result.notifyException(e);
+               } catch (Throwable t) {
+                  log.trace("Error when notifying", t);
+               }
+               throw e;
+            }
          }
       });
-      result.setExecuting(future);
+      result.setFuture(future);
       return result;
 
    }
@@ -246,12 +270,25 @@ public class RemoteCacheImpl<K, V> extends RemoteCacheSupport<K, V> {
       Future<V> future = executorService.submit(new Callable<V>() {
          @Override
          public V call() throws Exception {
-            V prevValue = put(key, value, lifespan, lifespanUnit, maxIdle, maxIdleUnit);
-            result.notifyFutureCompletion();
-            return prevValue;
+            try {
+               V prevValue = put(key, value, lifespan, lifespanUnit, maxIdle, maxIdleUnit);
+               try {
+                  result.notifyDone(prevValue);
+               } catch (Throwable t) {
+                  log.trace("Error when notifying", t);
+               }
+               return prevValue;
+            } catch (Exception e) {
+               try {
+                  result.notifyException(e);
+               } catch (Throwable t) {
+                  log.trace("Error when notifying", t);
+               }
+               throw e;
+            }
          }
       });
-      result.setExecuting(future);
+      result.setFuture(future);
       return result;
    }
 
@@ -262,12 +299,25 @@ public class RemoteCacheImpl<K, V> extends RemoteCacheSupport<K, V> {
       Future<Void> future = executorService.submit(new Callable<Void>() {
          @Override
          public Void call() throws Exception {
-            clear();
-            result.notifyFutureCompletion();
-            return null;
+            try {
+               clear();
+               try {
+                  result.notifyDone(null);
+               } catch (Throwable t) {
+                  log.trace("Error when notifying", t);
+               }
+               return null;
+            } catch (Exception e) {
+               try {
+                  result.notifyException(e);
+               } catch (Throwable t) {
+                  log.trace("Error when notifying", t);
+               }
+               throw e;
+            }
          }
       });
-      result.setExecuting(future);
+      result.setFuture(future);
       return result;
    }
 
@@ -278,12 +328,25 @@ public class RemoteCacheImpl<K, V> extends RemoteCacheSupport<K, V> {
       Future<V> future = executorService.submit(new Callable<V>() {
          @Override
          public V call() throws Exception {
-            V prevValue = putIfAbsent(key, value, lifespan, lifespanUnit, maxIdle, maxIdleUnit);
-            result.notifyFutureCompletion();
-            return prevValue;
+            try {
+               V prevValue = putIfAbsent(key, value, lifespan, lifespanUnit, maxIdle, maxIdleUnit);
+               try {
+                  result.notifyDone(prevValue);
+               } catch (Throwable t) {
+                  log.trace("Error when notifying", t);
+               }
+               return prevValue;
+            } catch (Exception e) {
+               try {
+                  result.notifyException(e);
+               } catch (Throwable t) {
+                  log.trace("Error when notifying", t);
+               }
+               throw e;
+            }
          }
       });
-      result.setExecuting(future);
+      result.setFuture(future);
       return result;
    }
 
@@ -294,12 +357,25 @@ public class RemoteCacheImpl<K, V> extends RemoteCacheSupport<K, V> {
       Future<V> future = executorService.submit(new Callable<V>() {
          @Override
          public V call() throws Exception {
-            V toReturn = remove(key);
-            result.notifyFutureCompletion();
-            return toReturn;
+            try {
+               V toReturn = remove(key);
+               try {
+                  result.notifyDone(toReturn);
+               } catch (Throwable t) {
+                  log.trace("Error when notifying", t);
+               }
+               return toReturn;
+            } catch (Exception e) {
+               try {
+                  result.notifyException(e);
+               } catch (Throwable t) {
+                  log.trace("Error when notifying", t);
+               }
+               throw e;
+            }
          }
       });
-      result.setExecuting(future);
+      result.setFuture(future);
       return result;
    }
 
@@ -310,12 +386,25 @@ public class RemoteCacheImpl<K, V> extends RemoteCacheSupport<K, V> {
       Future<V> future = executorService.submit(new Callable<V>() {
          @Override
          public V call() throws Exception {
-            V v = replace(key, value, lifespan, lifespanUnit, maxIdle, maxIdleUnit);
-            result.notifyFutureCompletion();
-            return v;
+            try {
+               V old = replace(key, value, lifespan, lifespanUnit, maxIdle, maxIdleUnit);
+               try {
+                  result.notifyDone(old);
+               } catch (Throwable t) {
+                  log.trace("Error when notifying", t);
+               }
+               return old;
+            } catch (Exception e) {
+               try {
+                  result.notifyException(e);
+               } catch (Throwable t) {
+                  log.trace("Error when notifying", t);
+               }
+               throw e;
+            }
          }
       });
-      result.setExecuting(future);
+      result.setFuture(future);
       return result;
    }
 
@@ -420,12 +509,25 @@ public class RemoteCacheImpl<K, V> extends RemoteCacheSupport<K, V> {
       Future<V> future = executorService.submit(new Callable<V>() {
          @Override
          public V call() throws Exception {
-            V toReturn = get(key);
-            result.notifyFutureCompletion();
-            return toReturn;
+            try {
+               V toReturn = get(key);
+               try {
+                  result.notifyDone(toReturn);
+               } catch (Throwable t) {
+                  log.trace("Error when notifying", t);
+               }
+               return toReturn;
+            } catch (Exception e) {
+               try {
+                  result.notifyException(e);
+               } catch (Throwable t) {
+                  log.trace("Error when notifying", t);
+               }
+               throw e;
+            }
          }
       });
-      result.setExecuting(future);
+      result.setFuture(future);
       return result;
    }
 
