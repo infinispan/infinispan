@@ -4,6 +4,8 @@ import java.util.Collection;
 import java.util.Set;
 
 import org.infinispan.metadata.Metadata;
+import org.infinispan.persistence.spi.AdvancedCacheLoader;
+import org.infinispan.commons.util.concurrent.ParallelIterableMap;
 import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.factories.annotations.Stop;
 import org.infinispan.factories.scopes.Scope;
@@ -108,4 +110,14 @@ public interface DataContainer extends Iterable<InternalCacheEntry> {
     * Purges entries that have passed their expiry time
     */
    void purgeExpired();
+   
+   /**
+    * Executes task specified by the given action on the container key/values filtered using the specified key filter.
+    *
+    * @param filter the filter for the container key/values
+    * @param action the specified action to execute on filtered key/values
+    * @throws InterruptedException
+    */
+   public <K> void executeTask(AdvancedCacheLoader.KeyFilter<K> filter, 
+         ParallelIterableMap.KeyValueAction<Object, InternalCacheEntry> action) throws InterruptedException;
 }

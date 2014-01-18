@@ -7,8 +7,10 @@ import org.infinispan.commands.read.MapCombineCommand;
 import org.infinispan.commands.read.ReduceCommand;
 import org.infinispan.commons.CacheException;
 import org.infinispan.commons.util.CollectionFactory;
+import org.infinispan.commons.util.concurrent.ParallelIterableMap;
 import org.infinispan.configuration.cache.Configuration;
-import org.infinispan.context.Flag;
+import org.infinispan.container.DataContainer;
+import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.distexec.mapreduce.spi.MapReduceTaskLifecycleService;
 import org.infinispan.distribution.DistributionManager;
 import org.infinispan.factories.annotations.ComponentName;
@@ -20,6 +22,7 @@ import org.infinispan.persistence.manager.PersistenceManager;
 import org.infinispan.persistence.PrimaryOwnerFilter;
 import org.infinispan.persistence.spi.AdvancedCacheLoader;
 import org.infinispan.manager.EmbeddedCacheManager;
+import org.infinispan.marshall.core.MarshalledValue;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.util.TimeService;
 import org.infinispan.util.logging.Log;
@@ -55,7 +58,6 @@ import static org.infinispan.factories.KnownComponentNames.ASYNC_TRANSPORT_EXECU
 public class MapReduceManagerImpl implements MapReduceManager {
 
    private static final Log log = LogFactory.getLog(MapReduceManagerImpl.class);
-   private static final int CANCELLATION_CHECK_FREQUENCY = 32; // Should be a power of two so that the compiler can replace a % with a bitmask
    private ClusteringDependentLogic cdl;
    private EmbeddedCacheManager cacheManager;
    private PersistenceManager persistenceManager;
@@ -102,48 +104,60 @@ public class MapReduceManagerImpl implements MapReduceManager {
    }
 
    @Override
-   public <KOut, VOut> Map<KOut, VOut> reduce(ReduceCommand<KOut, VOut> reduceCommand)
-            throws InterruptedException {
-      Cache<?, ?> cache = cacheManager.getCache(reduceCommand.getCacheName());
-      Set<KOut> keys = reduceCommand.getKeys();
-      String taskId = reduceCommand.getTaskId();
-      Reducer<KOut, VOut> reducer = reduceCommand.getReducer();
-      boolean useIntermediateKeys = reduceCommand.isEmitCompositeIntermediateKeys();
+   @SuppressWarnings("unchecked")
+   public <KOut, VOut> Map<KOut, VOut> reduce(ReduceCommand<KOut, VOut> reduceCommand) throws InterruptedException {
+      final Set<KOut> keys = reduceCommand.getKeys();
+      final String taskId = reduceCommand.getTaskId();
       boolean noInputKeys = keys == null || keys.isEmpty();
-      Cache<Object, List<VOut>> tmpCache = cacheManager.getCache(reduceCommand.getCacheName());
-      Map<KOut,VOut> result = new HashMap<KOut, VOut>();
+      final Map<KOut, VOut> result = CollectionFactory.makeConcurrentMap(256);
       if (noInputKeys) {
          //illegal state, raise exception
-         throw new IllegalStateException("Reduce phase of MapReduceTask " + taskId + " on node "
-                  + cdl.getAddress() + " executed with empty input keys");
-      } else{
-         //first hook into lifecycle
+         throw new IllegalStateException("Reduce phase of MapReduceTask " + taskId + " on node " + cdl.getAddress()
+               + " executed with empty input keys");
+      } else {
+         final Reducer<KOut, VOut> reducer = reduceCommand.getReducer();
+         final boolean useIntermediateKeys = reduceCommand.isEmitCompositeIntermediateKeys();         
          MapReduceTaskLifecycleService taskLifecycleService = MapReduceTaskLifecycleService.getInstance();
-         log.tracef("For m/r task %s invoking %s at %s",  taskId, reduceCommand, cdl.getAddress());
-         int interruptCount = 0;
+         log.tracef("For m/r task %s invoking %s at %s", taskId, reduceCommand, cdl.getAddress());
          long start = log.isTraceEnabled() ? timeService.time() : 0;
          try {
+            //first hook into lifecycle
+            Cache<?, ?> cache = cacheManager.getCache(reduceCommand.getCacheName());
             taskLifecycleService.onPreExecute(reducer, cache);
-            for (KOut key : keys) {
-               interruptCount++;
-               if (checkInterrupt(interruptCount++) && Thread.currentThread().isInterrupted())
-                  throw new InterruptedException();
-               //load result value from map phase
-               List<VOut> value;
-               if(useIntermediateKeys) {
-                  value = tmpCache.get(new IntermediateCompositeKey<KOut>(taskId, key));
-               } else {
-                  value = tmpCache.get(key);
-               }
-               // and reduce it
-               VOut reduced = reducer.reduce(key, value.iterator());
-               result.put(key, reduced);
-               log.tracef("For m/r task %s reduced %s to %s at %s ", taskId, key, reduced, cdl.getAddress());
+            AdvancedCacheLoader.KeyFilter<?> filter = null;
+            if (useIntermediateKeys) {
+               //shared tmp cache, filter keys that belong to this task
+               filter = new IntermediateKeyFilter<KOut>(taskId);
+            } else {
+               //dedicated tmp cache, all keys belong to this task
+               filter = AdvancedCacheLoader.KeyFilter.LOAD_ALL_FILTER;
             }
+            //iterate all tmp cache entries in memory, do it in parallel
+            DataContainer dc = cache.getAdvancedCache().getDataContainer();
+            dc.executeTask(filter, new StatelessDataContainerTask<KOut, List<VOut>>() {
+               @Override
+               public void apply(Object k, InternalCacheEntry v) {
+                  KOut key = null;
+                  if (useIntermediateKeys) {
+                     IntermediateCompositeKey<KOut> intKey = (IntermediateCompositeKey<KOut>) k;
+                     key = intKey.getKey();
+                  } else {
+                     key = (KOut) k;
+                  }
+                  //resolve List<VOut> for iterated key stored in tmp cache
+                  List<VOut> value = getValue(v);
+                  if (value != null) {
+                     // and reduce it
+                     VOut reduced = reducer.reduce(key, value.iterator());
+                     result.put(key, reduced);
+                     log.tracef("For m/r task %s reduced %s to %s at %s ", taskId, key, reduced, cdl.getAddress());
+                  }
+               }
+            });
          } finally {
             if (log.isTraceEnabled()) {
                log.tracef("Reduce for task %s took %s milliseconds", reduceCommand.getTaskId(),
-                          timeService.timeDuration(start, TimeUnit.MILLISECONDS));
+                     timeService.timeDuration(start, TimeUnit.MILLISECONDS));
             }
             taskLifecycleService.onPostExecute(reducer);
          }
@@ -151,48 +165,45 @@ public class MapReduceManagerImpl implements MapReduceManager {
       return result;
    }
 
+   @SuppressWarnings("unchecked")
    protected <KIn, VIn, KOut, VOut> CollectableCollector<KOut, VOut> map(
             MapCombineCommand<KIn, VIn, KOut, VOut> mcc) throws InterruptedException {
-      Cache<KIn, VIn> cache = cacheManager.getCache(mcc.getCacheName());
+      final Cache<KIn, VIn> cache = cacheManager.getCache(mcc.getCacheName());
       Set<KIn> keys = mcc.getKeys();
-      Set<KIn> inputKeysCopy = null;
-      Mapper<KIn, VIn, KOut, VOut> mapper = mcc.getMapper();
-      final DistributionManager dm = cache.getAdvancedCache().getDistributionManager();
-      boolean inputKeysSpecified = keys != null && !keys.isEmpty();
-      Set <KIn> inputKeys = keys;
-      if (!inputKeysSpecified) {
-         inputKeys = filterLocalPrimaryOwner(cache.getAdvancedCache().withFlags(Flag.SKIP_CACHE_LOAD).keySet(), dm);
-      } else {
-         inputKeysCopy = new HashSet<KIn>(keys);
-      }
+      final Mapper<KIn, VIn, KOut, VOut> mapper = mcc.getMapper();
+      final boolean inputKeysSpecified = keys != null && !keys.isEmpty();
+
       // hook map function into lifecycle and execute it
       MapReduceTaskLifecycleService taskLifecycleService = MapReduceTaskLifecycleService.getInstance();
-      DefaultCollector<KOut, VOut> collector = new DefaultCollector<KOut, VOut>();
-      log.tracef("For m/r task %s invoking %s with input keys %s",  mcc.getTaskId(), mcc, inputKeys);
-      int interruptCount = 0;
+      final DefaultCollector<KOut, VOut> collector = new DefaultCollector<KOut, VOut>(!inputKeysSpecified);
+      DataContainer dc = cache.getAdvancedCache().getDataContainer();
+      log.tracef("For m/r task %s invoking %s with input keys %s",  mcc.getTaskId(), mcc, keys);
       long start = log.isTraceEnabled() ? timeService.time() : 0;
       try {
          taskLifecycleService.onPreExecute(mapper, cache);
-         for (KIn key : inputKeys) {
-            if (checkInterrupt(interruptCount++) && Thread.currentThread().isInterrupted())
-               throw new InterruptedException();
-
-            VIn value = cache.get(key);
-            mapper.map(key, value, collector);
-            if (inputKeysSpecified) {
-               inputKeysCopy.remove(key);
+         //User specified input taks keys, most likely a short list of input keys (<10^3), iterate serially
+         if (inputKeysSpecified) {
+            for (KIn key : keys) {
+               VIn value = cache.get(key);
+               mapper.map(key, value, collector);
             }
+         } else {
+            // here we have to iterate all entries in memory, do it in parallel
+            dc.executeTask(new PrimaryOwnerFilter(cdl), new StatelessDataContainerTask<KIn,VIn>() {
+               @Override
+               public void apply(Object key , InternalCacheEntry v) {
+                  VIn value = getValue(v);
+                  if (value != null) {
+                     mapper.map((KIn)key, value, collector);
+                  }
+               }
+            });
          }
-
-         if (persistenceManager != null) {
-            AdvancedCacheLoader.KeyFilter keyFilter;
-            if (inputKeysSpecified) {
-               keyFilter = new CollectionKeyFilter(filterLocalPrimaryOwner(inputKeysCopy, dm), true);
-            } else {
-               keyFilter = new CompositeFilter(new PrimaryOwnerFilter(cdl), new CollectionKeyFilter(inputKeys));
-            }
-            persistenceManager.processOnAllStores(keyFilter, new MapReduceCacheLoaderTask(mapper, collector),
-                                                  true, false);
+         // in case we have stores, we have to process key/values from there as well
+         if (persistenceManager != null && !inputKeysSpecified) {
+               AdvancedCacheLoader.KeyFilter<?> keyFilter = new CompositeFilter(new PrimaryOwnerFilter(cdl), new CollectionKeyFilter(dc.keySet()));
+               persistenceManager.processOnAllStores(keyFilter, new MapReduceCacheLoaderTask(mapper, collector),
+                     true, false);
          }
       } finally {
          if (log.isTraceEnabled()) {
@@ -208,11 +219,9 @@ public class MapReduceManagerImpl implements MapReduceManager {
             CollectableCollector<KOut, VOut> collector) throws Exception{
 
       String taskId =  mcc.getTaskId();
-      boolean emitCompositeIntermediateKeys = mcc.isEmitCompositeIntermediateKeys();
-      Reducer <KOut,VOut> combiner = mcc.getCombiner();
       Set<KOut> mapPhaseKeys = new HashSet<KOut>();
       Cache<Object, DeltaAwareList<VOut>> tmpCache = null;
-      if (emitCompositeIntermediateKeys) {
+      if (mcc.isEmitCompositeIntermediateKeys()) {
          tmpCache = cacheManager.getCache(DEFAULT_TMP_CACHE_CONFIGURATION_NAME);
       } else {
          tmpCache = cacheManager.getCache(taskId);
@@ -221,9 +230,8 @@ public class MapReduceManagerImpl implements MapReduceManager {
          throw new IllegalStateException("Temporary cache for MapReduceTask " + taskId
                   + " not found on " + cdl.getAddress());
       }
-      DistributionManager dm = tmpCache.getAdvancedCache().getDistributionManager();
-
-      if (combiner != null) {
+      if (mcc.hasCombiner()) {
+         Reducer <KOut,VOut> combiner = mcc.getCombiner();
          Cache<?, ?> cache = cacheManager.getCache(mcc.getCacheName());
          log.tracef("For m/r task %s invoking combiner %s at %s",  taskId, mcc, cdl.getAddress());
          MapReduceTaskLifecycleService taskLifecycleService = MapReduceTaskLifecycleService.getInstance();
@@ -250,20 +258,22 @@ public class MapReduceManagerImpl implements MapReduceManager {
             }
             taskLifecycleService.onPostExecute(combiner);
          }
-         migrateIntermediateKeys(mcc, taskId, emitCompositeIntermediateKeys, mapPhaseKeys, tmpCache, dm, combinedMap);
+         migrateIntermediateKeys(mcc, mapPhaseKeys, tmpCache, combinedMap);
       } else {
          // Combiner not specified so lets insert each key/uncombined-List pair into tmp cache
-
          Map<KOut, List<VOut>> collectedValues = collector.collectedValues();
-         migrateIntermediateKeys(mcc, taskId, emitCompositeIntermediateKeys, mapPhaseKeys, tmpCache, dm, collectedValues);
+         migrateIntermediateKeys(mcc, mapPhaseKeys, tmpCache, collectedValues);
       }
       return mapPhaseKeys;
    }
 
-   private <KIn, VIn, KOut, VOut> void migrateIntermediateKeys(MapCombineCommand<KIn, VIn, KOut, VOut> mcc, String taskId, boolean emitCompositeIntermediateKeys, Set<KOut> mapPhaseKeys, Cache<Object, DeltaAwareList<VOut>> tmpCache, DistributionManager dm, Map<KOut, List<VOut>> collectedValues) {
+   private <KIn, VIn, KOut, VOut> void migrateIntermediateKeys(MapCombineCommand<KIn, VIn, KOut, VOut> mcc,
+         Set<KOut> mapPhaseKeys, Cache<Object, DeltaAwareList<VOut>> tmpCache, Map<KOut, List<VOut>> collectedValues) {
+      DistributionManager dm = tmpCache.getAdvancedCache().getDistributionManager();
+      String taskId = mcc.getTaskId();
+      boolean emitCompositeIntermediateKeys = mcc.isEmitCompositeIntermediateKeys();
       Map<Address, List<KOut>> keysToNodes = mapKeysToNodes(dm, taskId, collectedValues.keySet(),
             emitCompositeIntermediateKeys);
-
       long start = log.isTraceEnabled() ? timeService.time() : 0;
       try {
          for (Entry<Address, List<KOut>> entry : keysToNodes.entrySet()) {
@@ -339,10 +349,6 @@ public class MapReduceManagerImpl implements MapReduceManager {
       return result;
    }
 
-   static boolean checkInterrupt(int counter) {
-      return counter % CANCELLATION_CHECK_FREQUENCY == 0;
-   }
-
    @Override
    public <T> Map<Address, List<T>> mapKeysToNodes(DistributionManager dm, String taskId,
             Collection<T> keysToMap, boolean useIntermediateCompositeKey) {
@@ -375,15 +381,68 @@ public class MapReduceManagerImpl implements MapReduceManager {
       return selectedKeys;
    }
 
+   abstract class StatelessDataContainerTask<K,V> implements ParallelIterableMap.KeyValueAction<Object, InternalCacheEntry> {
+
+      V getValue(InternalCacheEntry entry){
+         if (entry != null) {
+            Object value = entry.getValue();
+            if (value instanceof MarshalledValue) {
+               value = ((MarshalledValue) value).get();
+            }
+            return  (V)value;
+         } else {
+            return null;
+         }
+      }
+  }
+
+   public class IntermediateKeyFilter<T> implements AdvancedCacheLoader.KeyFilter<IntermediateCompositeKey<T>> {
+
+      private final String taskId;
+
+      public IntermediateKeyFilter(String taskId) {
+         if (taskId == null || taskId.isEmpty()) {
+            throw new IllegalArgumentException("Invalid task Id " + taskId);
+         }
+         this.taskId = taskId;
+      }
+
+     @Override
+      public boolean shouldLoadKey(IntermediateCompositeKey<T> key) {
+         if (key != null) {
+            return taskId.equals(key.getTaskId());
+         } else {
+            return false;
+         }
+      }
+   }
+
+
    /**
     * @author Sanne Grinovero <sanne@hibernate.org> (C) 2011 Red Hat Inc.
     */
    private static class DefaultCollector<KOut, VOut> implements CollectableCollector<KOut, VOut> {
-
-      private final Map<KOut, List<VOut>> store = CollectionFactory.makeConcurrentMap();
+      
+      private final boolean atomicEmit;
+      private final Map<KOut, List<VOut>> store;
+      
+      public DefaultCollector(boolean atomicEmit) {
+         this.atomicEmit = atomicEmit;
+         store = CollectionFactory.makeConcurrentMap();         
+      }
 
       @Override
       public void emit(KOut key, VOut value) {
+         if (atomicEmit) {
+            synchronized (this) {
+               emitHelper(key, value);
+            }
+         } else {
+            emitHelper(key, value);
+         }
+      }
+
+      protected void emitHelper(KOut key, VOut value) {
          List<VOut> list = store.get(key);
          if (list == null) {
             list = new LinkedList<VOut>();
@@ -410,11 +469,6 @@ public class MapReduceManagerImpl implements MapReduceManager {
 
       public DeltaAwareList(Collection<? extends E> c) {
          super(c);
-      }
-
-      public DeltaAwareList(E reducedObject) {
-         super();
-         add(reducedObject);
       }
 
       @Override
@@ -458,6 +512,14 @@ public class MapReduceManagerImpl implements MapReduceManager {
       public IntermediateCompositeKey(String taskId, V key) {
          this.taskId = taskId;
          this.key = key;
+      }
+
+      public String getTaskId() {
+         return taskId;
+      }
+
+      public V getKey(){
+         return key;
       }
 
       @Override

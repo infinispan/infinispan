@@ -100,6 +100,10 @@ public class MapCombineCommand<KIn, VIn, KOut, VOut> extends BaseRpcCommand impl
    public Reducer<KOut, VOut> getCombiner() {
       return combiner;
    }
+   
+   public boolean hasCombiner(){
+      return getCombiner() != null;
+   }
 
    public String getTaskId() {
       return taskId;

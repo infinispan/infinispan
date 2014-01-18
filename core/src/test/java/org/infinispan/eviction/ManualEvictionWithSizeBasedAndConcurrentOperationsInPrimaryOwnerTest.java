@@ -2,6 +2,7 @@ package org.infinispan.eviction;
 
 import org.infinispan.Cache;
 import org.infinispan.commands.write.EvictCommand;
+import org.infinispan.commons.util.concurrent.ParallelIterableMap.KeyValueAction;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.container.DataContainer;
@@ -19,9 +20,11 @@ import org.infinispan.metadata.Metadata;
 import org.infinispan.notifications.cachelistener.annotation.CacheEntriesEvicted;
 import org.infinispan.notifications.cachelistener.event.CacheEntriesEvictedEvent;
 import org.infinispan.persistence.dummy.DummyInMemoryStoreConfigurationBuilder;
+import org.infinispan.persistence.spi.AdvancedCacheLoader.KeyFilter;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
+import org.jboss.util.NotImplementedException;
 import org.testng.AssertJUnit;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
@@ -504,6 +507,12 @@ public class ManualEvictionWithSizeBasedAndConcurrentOperationsInPrimaryOwnerTes
                throw new RuntimeException(e);
             }
          }
+      }
+
+      @Override
+      public <K> void executeTask(KeyFilter<K> filter, KeyValueAction<Object, InternalCacheEntry> action)
+            throws InterruptedException {
+         throw new NotImplementedException();
       }
    }
 
