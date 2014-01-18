@@ -32,7 +32,7 @@ import static org.junit.Assert.assertTrue;
 /**
  * SimpleTwoNodesMapReduceTest tests Map/Reduce functionality using two Infinispan nodes and local
  * reduce
- * 
+ *
  * @author Vladimir Blagojevic
  * @since 5.0
  */
@@ -47,7 +47,7 @@ public class SimpleTwoNodesMapReduceTest extends BaseWordCountMapReduceTest {
       ConfigurationBuilder builder = getDefaultClusteredCacheConfig(getCacheMode(), true);
       createClusteredCaches(2, cacheName(), builder);
    }
-   
+
    @Test(expectedExceptions={CancellationException.class})
    public void testInvokeMapperCancellation() throws Exception {
       final CyclicBarrier barrier = new CyclicBarrier(nodeCount() + 1);
@@ -77,7 +77,7 @@ public class SimpleTwoNodesMapReduceTest extends BaseWordCountMapReduceTest {
          while(root.getCause() != null){
             root = root.getCause();
          }
-         mapperCancelled = root.getClass().equals(RuntimeException.class);
+         mapperCancelled = root.getClass().equals(InterruptedException.class);
       }
       assertTrue("Mapper not cancelled, root cause " + root, mapperCancelled);
       assertTrue(cancelled.get());
@@ -101,21 +101,16 @@ public class SimpleTwoNodesMapReduceTest extends BaseWordCountMapReduceTest {
 
       @Override
       public void map(String key, String value, Collector<String, Integer> collector) {
-         boolean interrupted = false;
          CyclicBarrier barrier = barriers.get(name);
 
          try {
             barrier.await(10, TimeUnit.SECONDS);
             TimeUnit.MILLISECONDS.sleep(5000);
          } catch (InterruptedException e) {
-            interrupted = true;
             Thread.currentThread().interrupt();
          } catch (Exception e) {
             log.error("Error in the mapping phase", e);
          }
-         //as we can not throw InterruptedException
-         //throw a RuntimeException and check for it in the test...
-         if (interrupted) throw new RuntimeException();
       }
    }
 

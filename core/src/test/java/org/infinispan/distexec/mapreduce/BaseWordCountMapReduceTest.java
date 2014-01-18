@@ -5,6 +5,7 @@ import org.infinispan.commons.CacheException;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.testng.AssertJUnit;
+import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 
 import java.util.HashMap;
@@ -22,11 +23,30 @@ import static org.junit.Assert.assertTrue;
  * 
  * @author Vladimir Blagojevic
  */
-@Test(groups = "functional", testName = "distexec.BaseWordCountMapReduceTest")
+@Test(groups = "functional", testName = "distexec.mapreduce.BaseWordCountMapReduceTest")
 public abstract class BaseWordCountMapReduceTest extends MultipleCacheManagersTest {
    
-   protected static HashMap<String,Integer> counts = new HashMap<String, Integer>();
-   static {      
+   protected HashMap<String,Integer> counts = new HashMap<String, Integer>();   
+
+   public BaseWordCountMapReduceTest() {
+      cleanup = CleanupPhase.AFTER_TEST;
+   }
+
+   protected CacheMode getCacheMode() {
+      return CacheMode.DIST_SYNC;
+   }
+   
+   protected String cacheName(){
+      return "mapreducecache";
+   }
+   
+   @BeforeClass(alwaysRun = true)
+   public void createBeforeClass() throws Throwable {
+      super.createBeforeClass();
+      specifyWordCounts();
+   }
+
+   protected void specifyWordCounts() {
       counts.put("of", 2);
       counts.put("open", 1);
       counts.put("is", 6);
@@ -59,18 +79,6 @@ public abstract class BaseWordCountMapReduceTest extends MultipleCacheManagersTe
       counts.put("World", 2);
       counts.put("I", 1);
       counts.put("rules", 2);
-   }
-
-   public BaseWordCountMapReduceTest() {
-      cleanup = CleanupPhase.AFTER_TEST;
-   }
-
-   protected CacheMode getCacheMode() {
-      return CacheMode.DIST_SYNC;
-   }
-   
-   protected String cacheName(){
-      return "mapreducecache";
    }
    
    /**
@@ -198,14 +206,14 @@ public abstract class BaseWordCountMapReduceTest extends MultipleCacheManagersTe
    public void testInvokeMapReduceOnSubsetOfKeys() throws Exception {
       MapReduceTask<String,String,String,Integer> task = invokeMapReduce(new String[]{"1", "2", "3"});
       Map<String, Integer> mapReduce = task.execute();
-      assertWordCount(countWords(mapReduce), 13);
+      assertPartialWordCount(countWords(mapReduce));
    }
    
    public void testInvokeMapReduceOnSubsetOfKeysAsync() throws Exception {
       MapReduceTask<String,String,String,Integer> task = invokeMapReduce(new String[]{"1", "2", "3"});
       Future<Map<String, Integer>> future = task.executeAsynchronously();
       Map<String, Integer> mapReduce = future.get();
-      assertWordCount(countWords(mapReduce), 13); 
+      assertPartialWordCount(countWords(mapReduce)); 
    }
    
    protected void verifyResults(Map <String,Integer> result, Map <String,Integer> verifyAgainst) {
@@ -234,7 +242,7 @@ public abstract class BaseWordCountMapReduceTest extends MultipleCacheManagersTe
             return sum;
          }
       });
-       assertWordCount(totalWords, 56);  
+      assertTotalWordCount(totalWords);  
    }
    
    public void testInvokeMapReduceOnSubsetOfKeysWithCollator() throws Exception {
@@ -250,7 +258,7 @@ public abstract class BaseWordCountMapReduceTest extends MultipleCacheManagersTe
             return sum;
          }
       });     
-      assertWordCount(totalWords, 13);    
+      assertPartialWordCount(totalWords);    
    }
    
    public void testInvokeMapReduceOnAllKeysWithCollatorAsync() throws Exception {
@@ -268,7 +276,7 @@ public abstract class BaseWordCountMapReduceTest extends MultipleCacheManagersTe
          }
       });
      Integer totalWords = future.get(); 
-     assertWordCount(totalWords, 56); 
+     assertTotalWordCount(totalWords);
   }
 
   public void testInvokeMapReduceOnSubsetOfKeysWithCollatorAsync() throws Exception {
@@ -285,7 +293,7 @@ public abstract class BaseWordCountMapReduceTest extends MultipleCacheManagersTe
         }
      });
      Integer totalWords = future.get();
-     assertWordCount(totalWords, 13); 
+     assertPartialWordCount(totalWords); 
    }
 
    @Test(expectedExceptions = CacheException.class)
@@ -304,7 +312,13 @@ public abstract class BaseWordCountMapReduceTest extends MultipleCacheManagersTe
       task.execute();
   }
   
-  protected void assertWordCount(int actualWordCount, int expectedWordCount){
+  protected void assertPartialWordCount(int actualWordCount){
+     int expectedWordCount= 13;
+     assertTrue(" word count of " + actualWordCount + " incorrect , expected " + expectedWordCount, actualWordCount == expectedWordCount);
+  }
+  
+  protected void assertTotalWordCount(int actualWordCount){
+     int expectedWordCount= 56;
      assertTrue(" word count of " + actualWordCount + " incorrect , expected " + expectedWordCount, actualWordCount == expectedWordCount);
   }
   
@@ -326,7 +340,6 @@ public abstract class BaseWordCountMapReduceTest extends MultipleCacheManagersTe
 
       @Override
       public void map(String key, String value, Collector<String, Integer> collector) {
-//         System.out.println("[" + Thread.currentThread().getName() + "] - " + key + " - " + value);
          if(value == null) throw new IllegalArgumentException("Key " + key + " has value " + value);
          StringTokenizer tokens = new StringTokenizer(value);
          while (tokens.hasMoreElements()) {

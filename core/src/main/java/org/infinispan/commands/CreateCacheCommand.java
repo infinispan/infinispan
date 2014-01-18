@@ -1,17 +1,11 @@
 package org.infinispan.commands;
 
-import java.util.concurrent.TimeUnit;
-
-import org.infinispan.Cache;
 import org.infinispan.commands.remote.BaseRpcCommand;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
-import org.infinispan.context.Flag;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.manager.EmbeddedCacheManager;
-import org.infinispan.remoting.rpc.RpcManager;
-import org.infinispan.remoting.transport.Address;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
@@ -34,9 +28,9 @@ public class CreateCacheCommand extends BaseRpcCommand {
    private CreateCacheCommand() {
       super(null);
    }
-   
+
    public CreateCacheCommand(String ownerCacheName) {
-      super(ownerCacheName);      
+      super(ownerCacheName);
    }
 
    public CreateCacheCommand(String ownerCacheName, String cacheNameToCreate, String cacheConfigurationName) {
@@ -68,37 +62,9 @@ public class CreateCacheCommand extends BaseRpcCommand {
          cacheManager.defineConfiguration(cacheNameToCreate, cacheConfig);
          log.debugf("Using default tmp cache configuration, defined as ", cacheNameToCreate);
       }
-      Cache<Object,Object> cache = cacheManager.getCache(cacheNameToCreate);
-      if (start) {
-         waitForClusterToForm(cache);
-      }
-
+      cacheManager.getCache(cacheNameToCreate);
       log.debugf("Defined and started cache %s", cacheNameToCreate);
       return true;
-   }
-
-   private void waitForClusterToForm(Cache<Object, Object> cache) throws InterruptedException {
-      RpcManager rpcManager = cache.getAdvancedCache().getRpcManager();
-      //wait till we see all the expected members
-      while (rpcManager.getMembers().size() != size) {
-         Thread.sleep(50);
-      }
-      //now make sure that all the expected members have also seen us
-      //do this for 15 secs
-      Address localAddress = cacheManager.getTransport().getAddress();
-      for (int i = 0; i < 300; i++) {
-         cache.getAdvancedCache().withFlags(Flag.SKIP_LOCKING, Flag.FORCE_ASYNCHRONOUS, Flag.SKIP_REMOTE_LOOKUP).put(localAddress, "0");
-         boolean clusterFormed = true;
-         for (Address a : rpcManager.getMembers()) {
-            if (!cache.containsKey(a)) {
-               clusterFormed = false;
-               break;
-            }
-
-         }
-         if (clusterFormed) break;
-         Thread.sleep(50);
-      }
    }
 
    @Override

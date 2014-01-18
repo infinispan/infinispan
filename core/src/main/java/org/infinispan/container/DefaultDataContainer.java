@@ -7,6 +7,7 @@ import org.infinispan.commons.logging.LogFactory;
 import org.infinispan.metadata.Metadata;
 import org.infinispan.commons.equivalence.Equivalence;
 import org.infinispan.commons.util.CollectionFactory;
+import org.infinispan.commons.util.concurrent.ParallelIterableMap;
 import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.eviction.ActivationManager;
 import org.infinispan.eviction.EvictionManager;
@@ -15,6 +16,7 @@ import org.infinispan.eviction.EvictionThreadPolicy;
 import org.infinispan.eviction.PassivationManager;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.persistence.manager.PersistenceManager;
+import org.infinispan.persistence.spi.AdvancedCacheLoader;
 import org.infinispan.util.CoreImmutables;
 import org.infinispan.util.TimeService;
 import org.infinispan.util.concurrent.BoundedConcurrentHashMap;
@@ -58,14 +60,14 @@ public class DefaultDataContainer implements DataContainer {
 
    public DefaultDataContainer(int concurrencyLevel) {
       // If no comparing implementations passed, could fallback on JDK CHM
-      entries = CollectionFactory.makeConcurrentMap(128, concurrencyLevel);
+      entries = CollectionFactory.makeConcurrentParallelMap(128, concurrencyLevel);
       evictionListener = null;
    }
 
    public DefaultDataContainer(int concurrencyLevel,
          Equivalence keyEq, Equivalence valueEq) {
       // If at least one comparing implementation give, use ComparingCHMv8
-      entries = CollectionFactory.makeConcurrentMap(128, concurrencyLevel, keyEq, valueEq);
+      entries = CollectionFactory.makeConcurrentParallelMap(128, concurrencyLevel, keyEq, valueEq);
       evictionListener = null;
    }
 
@@ -364,4 +366,25 @@ public class DefaultDataContainer implements DataContainer {
       }
    }
 
+   @Override
+   public <K> void executeTask(final AdvancedCacheLoader.KeyFilter<K> filter, final ParallelIterableMap.KeyValueAction<Object, InternalCacheEntry> action) throws InterruptedException{
+      if (filter == null)
+         throw new IllegalArgumentException("No filter specified");
+      if (action == null)
+         throw new IllegalArgumentException("No action specified");
+
+      ParallelIterableMap<Object, InternalCacheEntry> map = (ParallelIterableMap<Object, InternalCacheEntry>) entries;
+      map.forEach(512, new ParallelIterableMap.KeyValueAction<Object, InternalCacheEntry>() {
+         @Override
+         public void apply(Object key, InternalCacheEntry value) {            
+            if (filter.shouldLoadKey((K)key)) {
+               action.apply((K)key, value);
+            }
+         }
+      });
+      //TODO figure out the way how to do interruption better (during iteration)
+      if(Thread.currentThread().isInterrupted()){
+         throw new InterruptedException();
+      }
+   }
 }

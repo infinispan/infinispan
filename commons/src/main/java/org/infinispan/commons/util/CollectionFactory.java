@@ -5,6 +5,7 @@ import org.infinispan.commons.equivalence.Equivalence;
 import org.infinispan.commons.equivalence.EquivalentHashMap;
 import org.infinispan.commons.equivalence.EquivalentHashSet;
 import org.infinispan.commons.equivalence.EquivalentLinkedHashMap;
+import org.infinispan.commons.util.concurrent.jdk8backported.ConcurrentParallelHashMapV8;
 import org.infinispan.commons.util.concurrent.jdk8backported.EquivalentConcurrentHashMapV8;
 
 import java.util.Arrays;
@@ -31,6 +32,7 @@ public class CollectionFactory {
       <K, V> ConcurrentMap<K, V> createConcurrentMap();
       <K, V> ConcurrentMap<K, V> createConcurrentMap(int initialCapacity);
       <K, V> ConcurrentMap<K, V> createConcurrentMap(int initialCapacity, int concurrencyLevel);
+      <K, V> ConcurrentMap<K, V> createConcurrentParallelMap(int initialCapacity, int concurrencyLevel);
       <K, V> ConcurrentMap<K, V> createConcurrentMap(int initialCapacity, float loadFactor, int concurrencyLevel);
    }
 
@@ -54,6 +56,14 @@ public class CollectionFactory {
       @Override
       public <K, V> ConcurrentMap<K, V> createConcurrentMap(int initialCapacity, float loadFactor, int concurrencyLevel) {
          return new ConcurrentHashMap<K, V>(initialCapacity, loadFactor, concurrencyLevel);
+      }
+
+      @Override
+      public <K, V> ConcurrentMap<K, V> createConcurrentParallelMap(int initialCapacity, int concurrencyLevel) {
+         // by the time we baseline on JDK8 this code will be either dropped or adjusted, 
+         //for now we need to use ConcurrentParallelHashMapV8
+         return new ConcurrentParallelHashMapV8<K, V>(initialCapacity, AnyEquivalence.<K> getInstance(),
+               AnyEquivalence.<V> getInstance());
       }
    }
 
@@ -80,6 +90,12 @@ public class CollectionFactory {
       @Override
       public <K, V> ConcurrentMap<K, V> createConcurrentMap(int initialCapacity, float loadFactor, int concurrencyLevel) {
          return new EquivalentConcurrentHashMapV8<K, V>(initialCapacity, loadFactor,
+               concurrencyLevel, AnyEquivalence.<K>getInstance(), AnyEquivalence.<V>getInstance());
+      }
+
+      @Override
+      public <K, V> ConcurrentMap<K, V> createConcurrentParallelMap(int initialCapacity, int concurrencyLevel) {
+         return new ConcurrentParallelHashMapV8<K, V>(initialCapacity, 0.75f,
                concurrencyLevel, AnyEquivalence.<K>getInstance(), AnyEquivalence.<V>getInstance());
       }
    }
@@ -120,6 +136,10 @@ public class CollectionFactory {
    public static <K, V> ConcurrentMap<K, V> makeConcurrentMap(int initCapacity, int concurrencyLevel) {
       return MAP_CREATOR.createConcurrentMap(initCapacity, concurrencyLevel);
    }
+   
+   public static <K, V> ConcurrentMap<K, V> makeConcurrentParallelMap(int initCapacity, int concurrencyLevel) {
+      return MAP_CREATOR.createConcurrentParallelMap(initCapacity, concurrencyLevel);
+   }
 
    public static <K, V> ConcurrentMap<K, V> makeConcurrentMap(int initCapacity, float loadFactor, int concurrencyLevel) {
       return MAP_CREATOR.createConcurrentMap(initCapacity, loadFactor, concurrencyLevel);
@@ -148,6 +168,15 @@ public class CollectionFactory {
                initCapacity, concurrencyLevel, keyEq, valueEq);
       else
          return MAP_CREATOR.createConcurrentMap(initCapacity, concurrencyLevel);
+   }
+   
+   public static <K, V> ConcurrentMap<K, V> makeConcurrentParallelMap(
+         int initCapacity, int concurrencyLevel, Equivalence<K> keyEq, Equivalence<V> valueEq) {
+      if (requiresEquivalent(keyEq, valueEq))
+         return new ConcurrentParallelHashMapV8<K, V>(
+               initCapacity, concurrencyLevel, keyEq, valueEq);
+      else
+         return MAP_CREATOR.createConcurrentParallelMap(initCapacity, concurrencyLevel);
    }
 
    public static <K, V> ConcurrentMap<K, V> makeConcurrentMap(

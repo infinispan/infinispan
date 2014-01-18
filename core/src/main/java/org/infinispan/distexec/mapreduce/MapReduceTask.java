@@ -365,7 +365,7 @@ public class MapReduceTask<KIn, VIn, KOut, VOut> {
    }
 
 
-   protected void executeTaskInit(String tmpCacheName) {
+   protected void executeTaskInit(String tmpCacheName) throws Exception{
       RpcManager rpc = cache.getRpcManager();
       CommandsFactory factory = cache.getComponentRegistry().getComponent(CommandsFactory.class);
 
@@ -373,7 +373,7 @@ public class MapReduceTask<KIn, VIn, KOut, VOut> {
       final CreateCacheCommand ccc = factory.buildCreateCacheCommand(tmpCacheName, DEFAULT_TMP_CACHE_CONFIGURATION_NAME, true, rpc.getMembers().size());
 
       log.debugf("Invoking %s across members %s ", ccc, cache.getRpcManager().getMembers());
-      mapReduceManager.getExecutorService().submit(new Callable<Object>() {
+      Future<Object> future = mapReduceManager.getExecutorService().submit(new Callable<Object>() {
          @Override
          public Object call() throws Exception {
             //locally
@@ -385,7 +385,15 @@ public class MapReduceTask<KIn, VIn, KOut, VOut> {
             }
          }
       });
-      rpc.invokeRemotely(cache.getRpcManager().getMembers(), ccc, rpcOptionsBuilder.build());
+      future.get();
+      rpc.invokeRemotely(cache.getRpcManager().getMembers(), ccc, rpcOptionsBuilder.build());      
+      Map<Address, Response> map = rpc.invokeRemotely(cache.getRpcManager().getMembers(), ccc, rpcOptionsBuilder.build());
+      for (Entry<Address, Response> e : map.entrySet()) {
+         if (!e.getValue().isSuccessful()) {
+            throw new IllegalStateException("Could not initialize tmp cache " + tmpCacheName + " at " + e.getKey()
+                  + " for  " + this);
+         }
+      }            
    }
 
    protected Set<KOut> executeMapPhase(boolean useCompositeKeys) throws InterruptedException,
