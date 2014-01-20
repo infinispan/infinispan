@@ -231,6 +231,8 @@
                    modifyThreads="${other.parts}/cachecontainer-thread-pools.xml"
                    infinispanServerEndpoint="${other.parts}/cachecontainer-endpoints.xml"
                    addHotrodSocketBinding="${other.parts}/cachecontainer-hotrod-binding.xml"/>
+        <transform in="clustered.xml" out="testsuite/clustered-clusteredcache.xml"
+                   modifyInfinispan="${infinispan.parts}/clusteredcache.xml" />
     </target>
 
     <macrodef name="transform">
