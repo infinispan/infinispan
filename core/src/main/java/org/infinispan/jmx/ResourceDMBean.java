@@ -29,8 +29,6 @@ import java.lang.reflect.Modifier;
 import java.util.HashMap;
 import java.util.Map;
 
-import static org.infinispan.commons.util.ReflectionUtil.EMPTY_CLASS_ARRAY;
-
 /**
  * This class was entirely copied from JGroups 2.7 (same name there). Couldn't simply reuse it because JGroups does not
  * ship with MBean, ManagedAttribute and ManagedOperation. Once JGroups will ship these classes, the code can be
