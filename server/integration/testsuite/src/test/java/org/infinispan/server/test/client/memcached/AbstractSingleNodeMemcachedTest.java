@@ -14,6 +14,7 @@ import java.io.ObjectOutputStream;
 import java.io.Serializable;
 import java.util.Map;
 
+import org.infinispan.Version;
 import org.infinispan.arquillian.core.RemoteInfinispanServer;
 import org.infinispan.server.test.util.TestUtil.Condition;
 import org.junit.After;
@@ -581,8 +582,8 @@ public abstract class AbstractSingleNodeMemcachedTest {
     public void testStatsVersion() throws Exception {
         Map<String, String> stats = mc.getStats();
         String version = stats.get("version");
-        assertTrue(version != null);
-        assertTrue(version.startsWith("6."));
+        assertNotNull(version);
+        assertTrue(version.startsWith(Version.MAJOR_MINOR));
     }
 
     @Test
