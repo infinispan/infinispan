@@ -336,8 +336,7 @@ public class CacheImpl<K, V> implements AdvancedCache<K, V> {
 
    final int size(EnumSet<Flag> explicitFlags, ClassLoader explicitClassLoader) {
       SizeCommand command = commandsFactory.buildSizeCommand(explicitFlags);
-      return (Integer) invoker.invoke(getInvocationContextForRead(
-            null, explicitClassLoader, UNBOUNDED), command);
+      return (Integer) invoker.invoke(getInvocationContextForRead(explicitClassLoader, UNBOUNDED), command);
    }
 
    @Override
@@ -356,7 +355,7 @@ public class CacheImpl<K, V> implements AdvancedCache<K, V> {
 
    final boolean containsKey(Object key, EnumSet<Flag> explicitFlags, ClassLoader explicitClassLoader) {
       assertKeyNotNull(key);
-      InvocationContext ctx = getInvocationContextForRead(null, explicitClassLoader, 1);
+      InvocationContext ctx = getInvocationContextForRead(explicitClassLoader, 1);
       GetKeyValueCommand command = commandsFactory.buildGetKeyValueCommand(key, explicitFlags, false);
       Object response = invoker.invoke(ctx, command);
       return response != null;
@@ -375,14 +374,14 @@ public class CacheImpl<K, V> implements AdvancedCache<K, V> {
    @SuppressWarnings("unchecked")
    final V get(Object key, EnumSet<Flag> explicitFlags, ClassLoader explicitClassLoader) {
       assertKeyNotNull(key);
-      InvocationContext ctx = getInvocationContextForRead(null, explicitClassLoader, 1);
+      InvocationContext ctx = getInvocationContextForRead(explicitClassLoader, 1);
       GetKeyValueCommand command = commandsFactory.buildGetKeyValueCommand(key, explicitFlags, false);
       return (V) invoker.invoke(ctx, command);
    }
 
    public final CacheEntry getCacheEntry(Object key, EnumSet<Flag> explicitFlags, ClassLoader explicitClassLoader) {
       assertKeyNotNull(key);
-      InvocationContext ctx = getInvocationContextForRead(null, explicitClassLoader, 1);
+      InvocationContext ctx = getInvocationContextForRead(explicitClassLoader, 1);
       GetKeyValueCommand command = commandsFactory.buildGetKeyValueCommand(key, explicitFlags, true);
       Object ret = invoker.invoke(ctx, command);
       return (CacheEntry) ret;
@@ -453,7 +452,7 @@ public class CacheImpl<K, V> implements AdvancedCache<K, V> {
 
    @SuppressWarnings("unchecked")
    Set<K> keySet(EnumSet<Flag> explicitFlags, ClassLoader explicitClassLoader) {
-      InvocationContext ctx = getInvocationContextForRead(null, explicitClassLoader, UNBOUNDED);
+      InvocationContext ctx = getInvocationContextForRead(explicitClassLoader, UNBOUNDED);
       KeySetCommand command = commandsFactory.buildKeySetCommand(explicitFlags);
       return (Set<K>) invoker.invoke(ctx, command);
    }
@@ -465,7 +464,7 @@ public class CacheImpl<K, V> implements AdvancedCache<K, V> {
 
    @SuppressWarnings("unchecked")
    Collection<V> values(EnumSet<Flag> explicitFlags, ClassLoader explicitClassLoader) {
-      InvocationContext ctx = getInvocationContextForRead(null, explicitClassLoader, UNBOUNDED);
+      InvocationContext ctx = getInvocationContextForRead(explicitClassLoader, UNBOUNDED);
       ValuesCommand command = commandsFactory.buildValuesCommand(explicitFlags);
       return (Collection<V>) invoker.invoke(ctx, command);
    }
@@ -477,7 +476,7 @@ public class CacheImpl<K, V> implements AdvancedCache<K, V> {
 
    @SuppressWarnings("unchecked")
    Set<Map.Entry<K, V>> entrySet(EnumSet<Flag> explicitFlags, ClassLoader explicitClassLoader) {
-      InvocationContext ctx = getInvocationContextForRead(null, explicitClassLoader, UNBOUNDED);
+      InvocationContext ctx = getInvocationContextForRead(explicitClassLoader, UNBOUNDED);
       EntrySetCommand command = commandsFactory.buildEntrySetCommand(explicitFlags);
       return (Set<Map.Entry<K, V>>) invoker.invoke(ctx, command);
    }
@@ -563,14 +562,14 @@ public class CacheImpl<K, V> implements AdvancedCache<K, V> {
       return setInvocationContextClassLoader(ctx, explicitClassLoader);
    }
 
-   private InvocationContext getInvocationContextForRead(Transaction tx, ClassLoader explicitClassLoader, int keyCount) {
+   private InvocationContext getInvocationContextForRead(ClassLoader explicitClassLoader, int keyCount) {
       if (config.transaction().transactionMode().isTransactional()) {
-         Transaction transaction = tx == null ? getOngoingTransaction() : tx;
+         Transaction transaction = getOngoingTransaction();
          //if we are in the scope of a transaction than return a transactional context. This is relevant e.g.
          // FORCE_WRITE_LOCK is used on read operations - in that case, the lock is held for the the transaction's
          // lifespan (when in tx scope) vs. call lifespan (when not in tx scope).
          if (transaction != null)
-            return getInvocationContext(transaction, explicitClassLoader);
+            return getInvocationContext(transaction, explicitClassLoader, false);
       }
       InvocationContext result = invocationContextFactory.createInvocationContext(false, keyCount);
       setInvocationContextClassLoader(result, explicitClassLoader);
@@ -608,13 +607,9 @@ public class CacheImpl<K, V> implements AdvancedCache<K, V> {
                throw new CacheException("Could not start transaction", e);
             }
          }
-         invocationContext = getInvocationContext(transaction, explicitClassLoader);
+         invocationContext = getInvocationContext(transaction, explicitClassLoader, txInjected);
       } else {
          invocationContext = getInvocationContextForWrite(explicitClassLoader, keyCount, isPutForExternalRead);
-      }
-      if (txInjected) {
-         ((TxInvocationContext) invocationContext).setImplicitTransaction(true);
-         if (trace) log.tracef("Marked tx as implicit.");
       }
       return invocationContext;
    }
@@ -623,8 +618,9 @@ public class CacheImpl<K, V> implements AdvancedCache<K, V> {
       return explicitFlags != null && explicitFlags.contains(PUT_FOR_EXTERNAL_READ);
    }
 
-   private InvocationContext getInvocationContext(Transaction tx, ClassLoader explicitClassLoader) {
-      InvocationContext ctx = invocationContextFactory.createInvocationContext(tx);
+   private InvocationContext getInvocationContext(Transaction tx, ClassLoader explicitClassLoader,
+                                                  boolean implicitTransaction) {
+      InvocationContext ctx = invocationContextFactory.createInvocationContext(tx, implicitTransaction);
       return setInvocationContextClassLoader(ctx, explicitClassLoader);
    }
 

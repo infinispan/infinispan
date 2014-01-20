@@ -2,15 +2,11 @@ package org.infinispan.context;
 
 import org.infinispan.batch.BatchContainer;
 import org.infinispan.commons.CacheException;
-import org.infinispan.configuration.cache.ClusterLoaderConfiguration;
 import org.infinispan.configuration.cache.Configuration;
-import org.infinispan.configuration.cache.StoreConfiguration;
 import org.infinispan.context.impl.LocalTxInvocationContext;
 import org.infinispan.context.impl.NonTxInvocationContext;
 import org.infinispan.context.impl.RemoteTxInvocationContext;
 import org.infinispan.factories.annotations.Inject;
-import org.infinispan.factories.annotations.Start;
-import org.infinispan.factories.annotations.SurvivesRestarts;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.transaction.LocalTransaction;
 import org.infinispan.transaction.RemoteTransaction;
@@ -19,7 +15,6 @@ import org.infinispan.transaction.TransactionTable;
 import javax.transaction.SystemException;
 import javax.transaction.Transaction;
 import javax.transaction.TransactionManager;
-import java.util.List;
 
 /**
  * Invocation context to be used for transactional caches.
@@ -55,8 +50,7 @@ public class TransactionalInvocationContextFactory extends AbstractInvocationCon
    }
 
    @Override
-   public InvocationContext createInvocationContext(
-         boolean isWrite, int keyCount) {
+   public InvocationContext createInvocationContext(boolean isWrite, int keyCount) {
       final Transaction runningTx = getRunningTx();
       if (runningTx == null && !isWrite) {
          if (keyCount == 1)
@@ -64,30 +58,28 @@ public class TransactionalInvocationContextFactory extends AbstractInvocationCon
          else
             return newNonTxInvocationContext(true);
       }
-      return createInvocationContext(runningTx);
+      return createInvocationContext(runningTx, false);
    }
 
    @Override
-   public InvocationContext createInvocationContext(Transaction tx) {
-      if (tx == null) throw new IllegalArgumentException("Cannot create a transactional context without a valid Transaction instance.");
-      LocalTxInvocationContext localContext = new LocalTxInvocationContext(keyEq);
-      LocalTransaction localTransaction = transactionTable.getLocalTransaction(tx);
-      localContext.setLocalTransaction(localTransaction);
-      localContext.setTransaction(tx);
-      return localContext;
+   public InvocationContext createInvocationContext(Transaction tx, boolean implicitTransaction) {
+      if (tx == null) {
+         throw new IllegalArgumentException("Cannot create a transactional context without a valid Transaction instance.");
+      }
+      LocalTransaction localTransaction = transactionTable.getOrCreateLocalTransaction(tx, implicitTransaction);
+      return new LocalTxInvocationContext(localTransaction);
    }
 
    @Override
-   public LocalTxInvocationContext createTxInvocationContext() {
-      return new LocalTxInvocationContext(keyEq);
+   public LocalTxInvocationContext createTxInvocationContext(LocalTransaction localTransaction) {
+      return new LocalTxInvocationContext(localTransaction);
    }
 
    @Override
    public RemoteTxInvocationContext createRemoteTxInvocationContext(
          RemoteTransaction tx, Address origin) {
-      RemoteTxInvocationContext ctx = new RemoteTxInvocationContext();
+      RemoteTxInvocationContext ctx = new RemoteTxInvocationContext(tx);
       ctx.setOrigin(origin);
-      ctx.setRemoteTransaction(tx);
       return ctx;
    }
 

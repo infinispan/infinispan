@@ -1,129 +1,66 @@
 package org.infinispan.context.impl;
 
-import org.infinispan.commands.write.WriteCommand;
-import org.infinispan.container.entries.CacheEntry;
-import org.infinispan.transaction.AbstractCacheTransaction;
 import org.infinispan.transaction.RemoteTransaction;
-import org.infinispan.transaction.xa.GlobalTransaction;
 
 import javax.transaction.Transaction;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
 
 /**
  * Context to be used for transaction that originated remotely.
  *
  * @author Mircea.Markus@jboss.com
  * @author Galder Zamarreño
+ * @author Pedro Ruivo
  * @since 4.0
  */
-public class RemoteTxInvocationContext extends AbstractTxInvocationContext {
+public class RemoteTxInvocationContext extends AbstractTxInvocationContext<RemoteTransaction> {
 
-
-   private RemoteTransaction remoteTransaction;
-
-   public RemoteTxInvocationContext() {
+   public RemoteTxInvocationContext(RemoteTransaction cacheTransaction) {
+      super(cacheTransaction);
    }
 
    @Override
-   public Transaction getTransaction() {
+   public final Transaction getTransaction() {
       // this method is only valid for locally originated transactions!
       return null;
    }
 
    @Override
-   public boolean isTransactionValid() {
+   public final boolean isTransactionValid() {
       // this is always true since we are governed by the originator's transaction
       return true;
    }
 
    @Override
-   public Object getLockOwner() {
-      return remoteTransaction.getGlobalTransaction();
-   }
-
-   @Override
-   public GlobalTransaction getGlobalTransaction() {
-      return remoteTransaction.getGlobalTransaction();
-   }
-
-   @Override
-   public boolean isOriginLocal() {
+   public final boolean isImplicitTransaction() {
+      //has no meaning in remote transaction
       return false;
    }
 
    @Override
-   public List<WriteCommand> getModifications() {
-      return remoteTransaction.getModifications();
-   }
-
-   public void setRemoteTransaction(RemoteTransaction remoteTransaction) {
-      this.remoteTransaction = remoteTransaction;
+   public final boolean isOriginLocal() {
+      return false;
    }
 
    @Override
-   public CacheEntry lookupEntry(Object key) {
-      return remoteTransaction.lookupEntry(key);
-   }
-
-   @Override
-   public Map<Object, CacheEntry> getLookedUpEntries() {
-      return remoteTransaction.getLookedUpEntries();
-   }
-
-   @Override
-   public void putLookedUpEntry(Object key, CacheEntry e) {
-      remoteTransaction.putLookedUpEntry(key, e);
-   }
-
-   @Override
-   public void removeLookedUpEntry(Object key) {
-      remoteTransaction.removeLookedUpEntry(key);
-   }
-
-   @Override
-   public boolean equals(Object o) {
+   public final boolean equals(Object o) {
       if (this == o) return true;
       if (!(o instanceof RemoteTxInvocationContext)) return false;
       RemoteTxInvocationContext that = (RemoteTxInvocationContext) o;
-      return remoteTransaction.equals(that.remoteTransaction);
+      return getCacheTransaction().equals(that.getCacheTransaction());
    }
 
    @Override
-   public int hashCode() {
-      return remoteTransaction.hashCode();
+   public final int hashCode() {
+      return getCacheTransaction().hashCode();
    }
 
    @Override
-   public RemoteTxInvocationContext clone() {
-      RemoteTxInvocationContext dolly = (RemoteTxInvocationContext) super.clone();
-      dolly.remoteTransaction = (RemoteTransaction) remoteTransaction.clone();
-      return dolly;
+   public final void skipTransactionCompleteCheck(boolean skip) {
+      getCacheTransaction().skipTransactionCompleteCheck(skip);
    }
 
    @Override
-   public AbstractCacheTransaction getCacheTransaction() {
-      return remoteTransaction;
-   }
-
-   @Override
-   public void skipTransactionCompleteCheck(boolean skip) {
-      remoteTransaction.skipTransactionCompleteCheck(skip);
-   }
-
-   @Override
-   public boolean skipTransactionCompleteCheck() {
-      return remoteTransaction.skipTransactionCompleteCheck();
-   }
-
-   @Override
-   public Set<Object> getLockedKeys() {
-      return remoteTransaction.getLockedKeys();
-   }
-
-   @Override
-   public void addLockedKey(Object key) {
-      remoteTransaction.registerLockedKey(key);
+   public final boolean skipTransactionCompleteCheck() {
+      return getCacheTransaction().skipTransactionCompleteCheck();
    }
 }

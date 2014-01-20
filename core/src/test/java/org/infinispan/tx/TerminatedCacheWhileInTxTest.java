@@ -82,7 +82,7 @@ public class TerminatedCacheWhileInTxTest extends SingleCacheManagerTest {
             @Override
             public Void call() throws Exception {
                log.debug("Wait very briefly and then make call.");
-               Thread.sleep(1000);
+               Thread.sleep(30000);
                cache.put(k(m, 2), v(m, 2));
                return null;
             }

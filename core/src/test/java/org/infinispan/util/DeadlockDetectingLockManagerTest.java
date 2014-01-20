@@ -14,6 +14,7 @@ import org.infinispan.context.InvocationContext;
 import org.infinispan.context.impl.LocalTxInvocationContext;
 import org.infinispan.context.impl.NonTxInvocationContext;
 import org.infinispan.test.AbstractInfinispanTest;
+import org.infinispan.transaction.LocalTransaction;
 import org.infinispan.transaction.xa.DldGlobalTransaction;
 import org.infinispan.transaction.xa.TransactionFactory;
 import org.infinispan.util.concurrent.locks.DeadlockDetectedException;
@@ -95,13 +96,12 @@ public class DeadlockDetectingLockManagerTest extends AbstractInfinispanTest {
    }
 
    private InvocationContext buildLocalTxIc(final DldGlobalTransaction ddgt) {
-      InvocationContext localTxContext = new LocalTxInvocationContext(AnyEquivalence.getInstance()) {
+      return new LocalTxInvocationContext(mock(LocalTransaction.class)) {
          @Override
          public Object getLockOwner() {
             return ddgt;
          }
       };
-      return localTxContext;
    }
 
    public static class DeadlockDetectingLockManagerMock extends DeadlockDetectingLockManager {

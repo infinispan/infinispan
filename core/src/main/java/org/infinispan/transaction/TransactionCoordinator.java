@@ -112,15 +112,14 @@ public class TransactionCoordinator {
       PrepareCommand prepareCommand = commandCreator.createPrepareCommand(localTransaction.getGlobalTransaction(), localTransaction.getModifications(), false);
       if (trace) log.tracef("Sending prepare command through the chain: %s", prepareCommand);
 
-      LocalTxInvocationContext ctx = icf.createTxInvocationContext();
+      LocalTxInvocationContext ctx = icf.createTxInvocationContext(localTransaction);
       prepareCommand.setReplayEntryWrapping(replayEntryWrapping);
-      ctx.setLocalTransaction(localTransaction);
       try {
          invoker.invoke(ctx, prepareCommand);
          if (localTransaction.isReadOnly()) {
             if (trace) log.tracef("Readonly transaction: %s", localTransaction.getGlobalTransaction());
             // force a cleanup to release any objects held.  Some TMs don't call commit if it is a READ ONLY tx.  See ISPN-845
-            commitInternal(localTransaction);
+            commitInternal(ctx);
             return XA_RDONLY;
          } else {
             txTable.localTransactionPrepared(localTransaction);
@@ -142,8 +141,7 @@ public class TransactionCoordinator {
 
    public boolean commit(LocalTransaction localTransaction, boolean isOnePhase) throws XAException {
       if (trace) log.tracef("Committing transaction %s", localTransaction.getGlobalTransaction());
-      LocalTxInvocationContext ctx = icf.createTxInvocationContext();
-      ctx.setLocalTransaction(localTransaction);
+      LocalTxInvocationContext ctx = icf.createTxInvocationContext(localTransaction);
       if (isOnePhaseCommit(localTransaction) || isOnePhase) {
          validateNotMarkedForRollback(localTransaction);
 
@@ -153,18 +151,18 @@ public class TransactionCoordinator {
          try {
             invoker.invoke(ctx, command);
          } catch (Throwable e) {
-            handleCommitFailure(e, localTransaction, true);
+            handleCommitFailure(e, true, ctx);
          }
          return true;
       } else if (!localTransaction.isReadOnly()) {
-         commitInternal(localTransaction);
+         commitInternal(ctx);
       }
       return false;
    }
 
    public void rollback(LocalTransaction localTransaction) throws XAException {
       try {
-         rollbackInternal(localTransaction);
+         rollbackInternal(icf.createTxInvocationContext(localTransaction));
       } catch (Throwable e) {
          if (shuttingDown)
             log.trace("Exception while rolling back, probably because we're shutting down.");
@@ -180,8 +178,8 @@ public class TransactionCoordinator {
       }
    }
 
-   private void handleCommitFailure(Throwable e, LocalTransaction localTransaction, boolean onePhaseCommit) throws XAException {
-      if (trace) log.tracef("Couldn't commit transaction %s, trying to rollback.", localTransaction);
+   private void handleCommitFailure(Throwable e, boolean onePhaseCommit, LocalTxInvocationContext ctx) throws XAException {
+      if (trace) log.tracef("Couldn't commit transaction %s, trying to rollback.", ctx.getCacheTransaction());
       if (onePhaseCommit) {
          log.errorProcessing1pcPrepareCommand(e);
       } else {
@@ -192,37 +190,33 @@ public class TransactionCoordinator {
             //we cannot send the rollback in Total Order because it will create a new remote transaction.
             //the rollback is not needed any way, because if one node aborts the transaction, then all the nodes will
             //abort too.
-            rollbackInternal(localTransaction);
+            rollbackInternal(ctx);
          }
       } catch (Throwable e1) {
-         log.couldNotRollbackPrepared1PcTransaction(localTransaction, e1);
+         log.couldNotRollbackPrepared1PcTransaction(ctx.getCacheTransaction(), e1);
          // inform the TM that a resource manager error has occurred in the transaction branch (XAER_RMERR).
          throw new XAException(XAException.XAER_RMERR);
       } finally {
-         txTable.failureCompletingTransaction(localTransaction.getTransaction());
+         txTable.failureCompletingTransaction(ctx.getTransaction());
       }
       throw new XAException(XAException.XA_HEURRB); //this is a heuristic rollback
    }
 
-   private void commitInternal(LocalTransaction localTransaction) throws XAException {
-      LocalTxInvocationContext ctx = icf.createTxInvocationContext();
-      ctx.setLocalTransaction(localTransaction);
-      CommitCommand commitCommand = commandCreator.createCommitCommand(localTransaction.getGlobalTransaction());
+   private void commitInternal(LocalTxInvocationContext ctx) throws XAException {
+      CommitCommand commitCommand = commandCreator.createCommitCommand(ctx.getGlobalTransaction());
       try {
          invoker.invoke(ctx, commitCommand);
-         txTable.removeLocalTransaction(localTransaction);
+         txTable.removeLocalTransaction(ctx.getCacheTransaction());
       } catch (Throwable e) {
-         handleCommitFailure(e, localTransaction, false);
+         handleCommitFailure(e, false, ctx);
       }
    }
 
-   private void rollbackInternal(LocalTransaction localTransaction) throws Throwable {
-      if (trace) log.tracef("rollback transaction %s ", localTransaction.getGlobalTransaction());
-      RollbackCommand rollbackCommand = commandsFactory.buildRollbackCommand(localTransaction.getGlobalTransaction());
-      LocalTxInvocationContext ctx = icf.createTxInvocationContext();
-      ctx.setLocalTransaction(localTransaction);
+   private void rollbackInternal(LocalTxInvocationContext ctx) throws Throwable {
+      if (trace) log.tracef("rollback transaction %s ", ctx.getGlobalTransaction());
+      RollbackCommand rollbackCommand = commandsFactory.buildRollbackCommand(ctx.getGlobalTransaction());
       invoker.invoke(ctx, rollbackCommand);
-      txTable.removeLocalTransaction(localTransaction);
+      txTable.removeLocalTransaction(ctx.getCacheTransaction());
    }
 
    private void validateNotMarkedForRollback(LocalTransaction localTransaction) throws XAException {

@@ -4,10 +4,10 @@ import org.infinispan.commands.VisitableCommand;
 import org.infinispan.context.impl.LocalTxInvocationContext;
 import org.infinispan.context.impl.NonTxInvocationContext;
 import org.infinispan.context.impl.RemoteTxInvocationContext;
-import org.infinispan.factories.annotations.SurvivesRestarts;
 import org.infinispan.factories.scopes.Scope;
 import org.infinispan.factories.scopes.Scopes;
 import org.infinispan.remoting.transport.Address;
+import org.infinispan.transaction.LocalTransaction;
 import org.infinispan.transaction.RemoteTransaction;
 
 import javax.transaction.Transaction;
@@ -41,7 +41,7 @@ public interface InvocationContextFactory {
     * @param tx
     * @return
     */
-   InvocationContext createInvocationContext(Transaction tx);
+   InvocationContext createInvocationContext(Transaction tx, boolean implicitTransaction);
 
    /**
     * Will create an {@link org.infinispan.context.impl.NonTxInvocationContext} with the {@link
@@ -58,7 +58,7 @@ public interface InvocationContextFactory {
    /**
     * Returns a {@link org.infinispan.context.impl.LocalTxInvocationContext}.
     */
-   LocalTxInvocationContext createTxInvocationContext();
+   LocalTxInvocationContext createTxInvocationContext(LocalTransaction localTransaction);
 
    /**
     * Returns an {@link org.infinispan.context.impl.RemoteTxInvocationContext}.
