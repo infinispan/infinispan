@@ -9,8 +9,8 @@
    </parent>
    <artifactId>infinispan-cachestore-remote</artifactId>
    <packaging>bundle</packaging>
-   <name>Infinispan remote CacheStore</name>
-   <description>Infinispan remote CacheStore based on Hotrod protocol</description>
+   <name>Infinispan Remote CacheStore</name>
+   <description>Infinispan remote CacheStore based on Hot Rod protocol</description>
 
    <dependencies>
       <dependency>
