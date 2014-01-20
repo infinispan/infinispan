@@ -336,7 +336,7 @@
         </xs:attribute>
         <xs:attribute name="interval" type="xs:long" default="5000">
             <xs:annotation>
-                <xs:documentation>Interval (in milliseconds) between subsequent runs to purge expired entries from memory and any cache stores. If you wish to disable the periodic eviction process altogether, set wakeupInterval to -1.</xs:documentation>
+                <xs:documentation>Interval (in milliseconds) between subsequent runs to purge expired entries from memory and any cache stores. If you wish to disable the periodic eviction process altogether, set interval to -1.</xs:documentation>
             </xs:annotation>
         </xs:attribute>
     </xs:complexType>
