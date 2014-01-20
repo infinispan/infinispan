@@ -5,6 +5,7 @@ import java.util.List;
 
 import javax.management.ObjectName;
 
+import org.infinispan.Version;
 import org.infinispan.arquillian.core.InfinispanResource;
 import org.infinispan.arquillian.core.RemoteInfinispanServer;
 import org.infinispan.arquillian.core.WithRunningServer;
@@ -177,7 +178,7 @@ public class JmxManagementTest {
         assertNotEquals(0, getAttribute(provider, cacheManagerMBean, "NodeAddress").length());
         assertEquals(3, Integer.parseInt(getAttribute(provider, cacheManagerMBean, "RunningCacheCount")));
         assertNotEquals(0, getAttribute(provider, cacheManagerMBean, "PhysicalAddresses").length());
-        assertTrue(getAttribute(provider, cacheManagerMBean, "Version").contains("Infinispan"));
+        assertEquals(Version.VERSION, getAttribute(provider, cacheManagerMBean, "Version"));
         String names = getAttribute(provider, cacheManagerMBean, "DefinedCacheNames");
         assertTrue(names.contains("default") && names.contains("memcachedCache") &&
                 names.contains("hotRodTopologyCache"));
