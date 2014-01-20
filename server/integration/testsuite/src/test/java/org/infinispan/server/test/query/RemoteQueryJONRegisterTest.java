@@ -1,5 +1,8 @@
 package org.infinispan.server.test.query;
 
+import java.net.URL;
+
+import org.infinispan.arquillian.core.RunningServer;
 import org.infinispan.arquillian.core.WithRunningServer;
 import org.infinispan.arquillian.utils.MBeanServerConnectionProvider;
 import org.infinispan.client.hotrod.configuration.ConfigurationBuilder;
@@ -18,8 +21,6 @@ import org.junit.Assert;
 import org.junit.Before;
 import org.junit.runner.RunWith;
 
-import java.net.URL;
-
 import static org.jboss.as.controller.descriptions.ModelDescriptionConstants.OUTCOME;
 import static org.jboss.as.controller.descriptions.ModelDescriptionConstants.SUCCESS;
 
@@ -27,47 +28,46 @@ import static org.jboss.as.controller.descriptions.ModelDescriptionConstants.SUC
  * Tests for remote queries over HotRod but registering the proto file via JON/RHQ plugin.
  *
  * @author William Burns
- *
  */
 @RunWith(Arquillian.class)
-@WithRunningServer("remote-query")
+@WithRunningServer({@RunningServer(name = "remote-query")})
 public class RemoteQueryJONRegisterTest extends RemoteQueryTest {
-   @Before
-   public void setUp() throws Exception {
-      provider = new MBeanServerConnectionProvider(server.getHotrodEndpoint().getInetAddress().getHostName(), 9999);
-      rcmFactory = new RemoteCacheManagerFactory();
-      ConfigurationBuilder clientBuilder = new ConfigurationBuilder();
-      clientBuilder.addServer()
-            .host(server.getHotrodEndpoint().getInetAddress().getHostName())
-            .port(server.getHotrodEndpoint().getPort())
-            .marshaller(new ProtoStreamMarshaller());
-      remoteCacheManager = rcmFactory.createManager(clientBuilder);
-      remoteCache = remoteCacheManager.getCache(DEFAULT_CACHE);
+    @Before
+    public void setUp() throws Exception {
+        provider = new MBeanServerConnectionProvider(server.getHotrodEndpoint().getInetAddress().getHostName(), 9999);
+        rcmFactory = new RemoteCacheManagerFactory();
+        ConfigurationBuilder clientBuilder = new ConfigurationBuilder();
+        clientBuilder.addServer()
+                .host(server.getHotrodEndpoint().getInetAddress().getHostName())
+                .port(server.getHotrodEndpoint().getPort())
+                .marshaller(new ProtoStreamMarshaller());
+        remoteCacheManager = rcmFactory.createManager(clientBuilder);
+        remoteCache = remoteCacheManager.getCache(DEFAULT_CACHE);
 
-      //initialize server-side serialization context via JMX
-      URL resource = getClass().getResource("/bank.protobin");
-      ModelControllerClient client = ModelControllerClient.Factory.create(
-            server.getHotrodEndpoint().getInetAddress().getHostName(), 9999);
+        //initialize server-side serialization context via JMX
+        URL resource = getClass().getResource("/bank.protobin");
+        ModelControllerClient client = ModelControllerClient.Factory.create(
+                server.getHotrodEndpoint().getInetAddress().getHostName(), 9999);
 
-      ModelNode addProtobufFileOp = getOperation("local", "upload-proto-file", new ModelNode().add().set(
-            "proto-url", resource.toString()));
+        ModelNode addProtobufFileOp = getOperation("local", "upload-proto-file", new ModelNode().add().set(
+                "proto-url", resource.toString()));
 
-      ModelNode result = client.execute(addProtobufFileOp);
-      Assert.assertEquals(SUCCESS, result.get(OUTCOME).asString());
+        ModelNode result = client.execute(addProtobufFileOp);
+        Assert.assertEquals(SUCCESS, result.get(OUTCOME).asString());
 
-      client.close();
+        client.close();
 
-      //initialize client-side serialization context
-      MarshallerRegistration.registerMarshallers(ProtoStreamMarshaller.getSerializationContext(remoteCacheManager));
-   }
+        //initialize client-side serialization context
+        MarshallerRegistration.registerMarshallers(ProtoStreamMarshaller.getSerializationContext(remoteCacheManager));
+    }
 
-   protected static PathAddress getCacheContainerAddress(String containerName) {
-      return PathAddress.pathAddress(PathElement.pathElement(ModelDescriptionConstants.SUBSYSTEM,
-                                                             InfinispanExtension.SUBSYSTEM_NAME)).append("cache-container", containerName);
-   }
+    protected static PathAddress getCacheContainerAddress(String containerName) {
+        return PathAddress.pathAddress(PathElement.pathElement(ModelDescriptionConstants.SUBSYSTEM,
+                InfinispanExtension.SUBSYSTEM_NAME)).append("cache-container", containerName);
+    }
 
-   protected static ModelNode getOperation(String containerName, String operationName, ModelNode arguments) {
-      PathAddress cacheAddress = getCacheContainerAddress(containerName);
-      return Util.getOperation(operationName, cacheAddress, arguments);
-   }
+    protected static ModelNode getOperation(String containerName, String operationName, ModelNode arguments) {
+        PathAddress cacheAddress = getCacheContainerAddress(containerName);
+        return Util.getOperation(operationName, cacheAddress, arguments);
+    }
 }

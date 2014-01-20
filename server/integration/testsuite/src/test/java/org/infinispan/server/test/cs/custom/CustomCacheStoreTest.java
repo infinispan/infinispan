@@ -15,6 +15,7 @@ import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.filefilter.WildcardFileFilter;
 import org.infinispan.arquillian.core.InfinispanResource;
 import org.infinispan.arquillian.core.RemoteInfinispanServer;
+import org.infinispan.arquillian.core.RunningServer;
 import org.infinispan.arquillian.core.WithRunningServer;
 import org.infinispan.arquillian.utils.MBeanServerConnectionProvider;
 import org.infinispan.client.hotrod.RemoteCache;
@@ -62,7 +63,7 @@ public class CustomCacheStoreTest {
     }
 
     @Test
-    @WithRunningServer("standalone-customcs")
+    @WithRunningServer({@RunningServer(name = "standalone-customcs")})
     public void test() throws Exception {
         RemoteCacheManager rcm = TestUtil.createCacheManager(server);
         RemoteCache<String, String> rc = rcm.getCache();

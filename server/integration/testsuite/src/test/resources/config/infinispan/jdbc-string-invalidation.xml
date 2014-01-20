@@ -1,0 +1,32 @@
+       <subsystem xmlns="urn:infinispan:server:core:6.0" >
+            <cache-container name="clustered" default-cache="memcachedCache">
+                <transport
+                        stack="${jboss.default.jgroups.stack:udp}"
+                        executor="infinispan-transport"
+                        lock-timeout="240000"/>
+                <invalidation-cache
+                    name="memcachedCache"
+                    start="EAGER"
+                    mode="SYNC"
+                    batching="false"
+
+                    remote-timeout="60000">
+                    <transaction mode="NONE" />
+                    <string-keyed-jdbc-store
+                        datasource="${jndi.name}"
+                        fetch-state="false"
+                        passivation="false"
+                        preload="false"
+                        purge="false"
+                        shared="true"
+                        singleton="false" name="${table.prefix}">
+                        <string-keyed-table prefix="${table.prefix}">
+                            <id-column name="id" type="${id.column.type}"/>
+                            <data-column name="datum" type="${data.column.type}"/>
+                            <timestamp-column name="version" type="${timestamp.column.type}"/>
+                        </string-keyed-table>
+                    </string-keyed-jdbc-store>
+                </invalidation-cache>
+            </cache-container>
+           <cache-container name="security"/>
+        </subsystem>
