@@ -6,6 +6,7 @@ import javax.servlet.http.HttpServletResponse;
 
 import org.infinispan.arquillian.core.InfinispanResource;
 import org.infinispan.arquillian.core.RemoteInfinispanServer;
+import org.infinispan.arquillian.core.RunningServer;
 import org.infinispan.arquillian.core.WithRunningServer;
 import org.infinispan.client.hotrod.RemoteCache;
 import org.infinispan.client.hotrod.RemoteCacheManager;
@@ -24,7 +25,6 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
 /**
- *
  * Test for expiration configuration. Tested with REST (verifies JBPAPP-6928) and HotRod.
  * Memcached cache cannot be configured to use expiration, see https://bugzilla.redhat.com/show_bug.cgi?id=909177#c5 .
  * Tests when individual requests use expiration are also in client tests, here we're testing that they override the global
@@ -34,7 +34,7 @@ import static org.junit.Assert.assertTrue;
  * @author <a href="mailto:mgencur@redhat.com">Martin Gencur</a>
  */
 @RunWith(Arquillian.class)
-@WithRunningServer({ "expiration-1", "expiration-2" })
+@WithRunningServer({@RunningServer(name = "expiration-1"),@RunningServer(name = "expiration-2")})
 public class ExpirationTest {
 
     @InfinispanResource("expiration-1")
@@ -66,18 +66,18 @@ public class ExpirationTest {
                 "timeToLiveSeconds", "0", "maxIdleTimeSeconds", "2");
 
         Thread.sleep(1000);
-        get(key1Path,  "v1");
-        get(key3Path,  "v3");
-        get(key4Path,  "v4");
+        get(key1Path, "v1");
+        get(key3Path, "v3");
+        get(key4Path, "v4");
         Thread.sleep(1100);
         // k3 and k4 expired
-        get(key1Path,  "v1");
+        get(key1Path, "v1");
         head(key3Path, HttpServletResponse.SC_NOT_FOUND);
         head(key4Path, HttpServletResponse.SC_NOT_FOUND);
         Thread.sleep(1000);
         // k1 expired
         head(key1Path, HttpServletResponse.SC_NOT_FOUND);
-        get(key2Path,  "v2");
+        get(key2Path, "v2");
     }
 
     @Test
@@ -92,18 +92,18 @@ public class ExpirationTest {
         // specific entry lifespan + max-idle setting
         c.put("key2", "value2", 4000, TimeUnit.MILLISECONDS, 4000, TimeUnit.MILLISECONDS);
         c2.put("key2_c2", "value2_c2", 4000, TimeUnit.MILLISECONDS, 4000, TimeUnit.MILLISECONDS);
-        assertEquals("key1 should be in cache.","value1", c.get("key1"));
-        assertEquals("key1_c2 should be in cache2.","value1_c2", c2.get("key1_c2"));
+        assertEquals("key1 should be in cache.", "value1", c.get("key1"));
+        assertEquals("key1_c2 should be in cache2.", "value1_c2", c2.get("key1_c2"));
         Thread.sleep(3000);
         // entries using the global lifespan expired
-        assertTrue("key1 should be expired already.",c.get("key1") == null);
-        assertTrue("key1_c2 should be expired already.",c2.get("key1_c2") == null);
-        assertEquals("key2 should still be in the cache.","value2", c.get("key2"));
-        assertEquals("key2_c2 should still be in the cache.","value2_c2", c2.get("key2_c2"));
+        assertTrue("key1 should be expired already.", c.get("key1") == null);
+        assertTrue("key1_c2 should be expired already.", c2.get("key1_c2") == null);
+        assertEquals("key2 should still be in the cache.", "value2", c.get("key2"));
+        assertEquals("key2_c2 should still be in the cache.", "value2_c2", c2.get("key2_c2"));
         Thread.sleep(2000);
         // entries should expire from file-cache-store too
-        assertTrue("key2 should be expired already.",c.get("key2") == null);
-        assertTrue("key2_c2 should be expired already.",c2.get("key2_c2") == null);
+        assertTrue("key2 should be expired already.", c.get("key2") == null);
+        assertTrue("key2_c2 should be expired already.", c2.get("key2_c2") == null);
     }
 
 }

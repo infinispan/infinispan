@@ -8,6 +8,7 @@ import javax.management.ObjectName;
 import org.infinispan.Version;
 import org.infinispan.arquillian.core.InfinispanResource;
 import org.infinispan.arquillian.core.RemoteInfinispanServer;
+import org.infinispan.arquillian.core.RunningServer;
 import org.infinispan.arquillian.core.WithRunningServer;
 import org.infinispan.arquillian.utils.MBeanServerConnectionProvider;
 import org.infinispan.client.hotrod.RemoteCache;
@@ -38,7 +39,7 @@ import static org.junit.Assert.assertTrue;
  * @author <a href="mailto:mgencur@redhat.com">Martin Gencur</a>
  */
 @RunWith(Arquillian.class)
-@WithRunningServer({ "jmx-management-1", "jmx-management-2" })
+@WithRunningServer({@RunningServer(name = "jmx-management-1"),@RunningServer(name = "jmx-management-2")})
 public class JmxManagementTest {
 
     final int managementPort = 9999;

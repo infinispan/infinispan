@@ -5,6 +5,7 @@ import java.util.List;
 
 import org.infinispan.arquillian.core.InfinispanResource;
 import org.infinispan.arquillian.core.RemoteInfinispanServer;
+import org.infinispan.arquillian.core.RunningServer;
 import org.infinispan.arquillian.core.WithRunningServer;
 import org.infinispan.client.hotrod.Search;
 import org.infinispan.protostream.sampledomain.Address;
@@ -25,7 +26,7 @@ import static org.junit.Assert.assertNotNull;
  * @author Martin Gencur
  */
 @RunWith(Arquillian.class)
-@WithRunningServer("remote-query")
+@WithRunningServer({@RunningServer(name = "remote-query")})
 public class RemoteQueryTest extends RemoteQueryBaseTest {
 
     @InfinispanResource("remote-query")

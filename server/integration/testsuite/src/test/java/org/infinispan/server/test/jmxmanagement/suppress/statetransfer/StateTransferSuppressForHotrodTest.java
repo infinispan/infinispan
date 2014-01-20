@@ -12,7 +12,8 @@ import static org.junit.Assert.assertTrue;
 /**
  * Tests verifying that the state transfer suppress works properly for Hotrod server.
  *
- * @author amanukya@redhat.com
+ * @author <a href="mailto:amanukya@redhat.com">Anna Manukyan</a>
+ * @author <a href="mailto:vchepeli@redhat.com">Vitalii Chepeliuk</a>
  */
 @RunWith(Arquillian.class)
 public class StateTransferSuppressForHotrodTest extends AbstractStateTransferSuppressTest {

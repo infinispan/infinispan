@@ -8,6 +8,7 @@
     <property name="server3.configs" value="${server3.dist}/standalone/configuration" />
     <property name="resources.configs" value="${resources.dir}/config" />
     <property name="infinispan.parts" value="file:///${resources.configs}/infinispan" />
+    <property name="datasource.parts" value="file:///${resources.configs}/datasource" />
     <property name="other.parts" value="file:///${resources.configs}/parts" />
     <property name="leveldb.compression" value="SNAPPY" />
     <property name="leveldb.impl" value="JAVA" />
@@ -23,6 +24,41 @@
         <filter token="leveldb.impl" value="${leveldb.impl}" />
         <filter token="resources.dir" value="${resources.dir}" />
     </filterset>
+
+    <filterset id="dbFilters" begintoken="${" endtoken="}">
+        <filtersfile file="${resources.dir}/filters/${database}.properties"/>
+
+        <filter token="database" value="${database}"/>
+        <filter token="driver.dir" value="${driver.dir}"/>
+        <filter token="driver.jar" value="${driver.jar}"/>
+        <filter token="driver.class" value="${driver.class}"/>
+
+        <filter token="connection.url" value="${connection.url}"/>
+        <filter token="connection.url.other" value="${connection.url.other}"/>
+
+        <filter token="password" value="${password}"/>
+        <filter token="username" value="${username}"/>
+
+        <filter token="password.other" value="${password.other}"/>
+        <filter token="username.other" value="${username.other}"/>
+
+        <filter token="connection.url" value="${connection.url}"/>
+        <filter token="connection.url.other" value="${connection.url.other}"/>
+    </filterset>
+
+    <if>
+        <equals arg1="${database}" arg2="h2"/>
+        <then>
+            <echo message="JDBC tests will run with H2 datasource"/>
+            <property name="datasource.file" value="datasource-h2.xml"/>
+            <property name="add.db.module" value="false"/>
+        </then>
+        <else>
+            <echo message="JDBC tests will run with custom datasource"/>
+            <property name="datasource.file" value="datasource.xml"/>
+            <property name="add.db.module" value="true"/>
+        </else>
+    </if>
 
     <target name="create-distro1" description="Create first distribution of Infinispan server by copying the one from build/target directory or unpacking a distro zip">
         <echo message="Creating test server distro at ${server1.dist}" />
@@ -74,7 +110,7 @@
         </copy>
     </target>
 
-    <target name="create-all-distros" depends="transform-distro1-configs" description="Create all Infinispan server home directories used in the testsuite">
+    <target name="create-all-distros" depends="transform-distro1-configs,add-db-module" description="Create all Infinispan server home directories used in the testsuite">
         <copy todir="${server2.dist}">
             <fileset dir="${server1.dist}" />
         </copy>
@@ -109,16 +145,13 @@
 
     <target name="transform-distro1-configs" depends="create-distro1">
         <!-- copy second node configs -->
-        <copy file="${server1.configs}/examples/clustered-two-nodes.xml"
-              tofile="${server1.configs}/examples/clustered-two-nodes2.xml"/>
+        <copy file="${server1.configs}/examples/clustered-two-nodes.xml" tofile="${server1.configs}/examples/clustered-two-nodes2.xml"/>
         <!-- transform -->
-        <transform in="examples/clustered-xsite.xml" out="examples/clustered-xsite2.xml"
-                   modifyInfinispan="${infinispan.parts}/xsite-server2.xml"/>
+        <transform in="examples/clustered-xsite.xml" out="examples/clustered-xsite2.xml" modifyInfinispan="${infinispan.parts}/xsite-server2.xml"/>
         <transform in="examples/clustered-xsite.xml" out="examples/clustered-xsite3.xml"
                    modifyInfinispan="${infinispan.parts}/xsite-server3.xml" modifyRelay="${other.parts}/xsite-relay-server3.xml"
                    modifyMulticastAddress="${other.parts}/xsite-multicast-address-server3.xml"/>
-        <transform in="examples/standalone-rcs-local.xml" out="examples/standalone-rcs-local.xml"
-                   modifyRemoteDestination="${other.parts}/rcs-remote-destination.xml"/>
+        <transform in="examples/standalone-rcs-local.xml" out="examples/standalone-rcs-local.xml" modifyRemoteDestination="${other.parts}/rcs-remote-destination.xml"/>
         <transform in="examples/standalone-hotrod-rolling-upgrade.xml" out="examples/standalone-hotrod-rolling-upgrade.xml"
                    modifyRemoteDestination="${other.parts}/rcs-remote-destination.xml"/>
         <transform in="examples/standalone-rest-rolling-upgrade.xml" out="examples/standalone-rest-rolling-upgrade.xml"
@@ -127,33 +160,17 @@
         <transform in="examples/clustered-two-nodes.xml" out="examples/clustered-two-nodes.xml"/>
         <transform in="examples/clustered-two-nodes2.xml" out="examples/clustered-two-nodes2.xml"/>
         <transform in="clustered.xml" out="testsuite/clustered-jmx.xml" modifyInfinispan="${infinispan.parts}/jmx.xml"/>
-        <transform in="standalone.xml" out="testsuite/standalone-default-local.xml"
-                   modifyInfinispan="${infinispan.parts}/default-local.xml"/>
-        <transform in="clustered.xml" out="testsuite/clustered-default-dist.xml"
-                   modifyInfinispan="${infinispan.parts}/default-dist.xml"/>
-        <transform in="clustered.xml" out="testsuite/clustered-default-repl.xml"
-                   modifyInfinispan="${infinispan.parts}/default-repl.xml"/>
-        <transform in="standalone.xml" out="testsuite/standalone-with-indexing.xml"
-                   modifyInfinispan="${infinispan.parts}/indexing.xml"/>
-        <transform in="clustered.xml" out="testsuite/clustered-with-indexing.xml"
-                   modifyInfinispan="${infinispan.parts}/indexing-clustered.xml"
-                   filtering="true"/>
-        <transform in="clustered.xml" out="testsuite/distributed-with-indexing.xml"
-                   modifyInfinispan="${infinispan.parts}/indexing-distributed.xml"
-                   filtering="true"/>
-        <transform in="standalone.xml" out="testsuite/standalone-leveldb-local.xml"
-                   modifyInfinispan="${infinispan.parts}/leveldb-local.xml"
-                   filtering="true"/>
-        <transform in="clustered.xml" out="testsuite/clustered-leveldb-dist.xml"
-                   modifyInfinispan="${infinispan.parts}/leveldb-dist.xml"
-                   filtering="true"/>
-        <transform in="clustered.xml" out="testsuite/clustered-leveldb-repl.xml"
-                   modifyInfinispan="${infinispan.parts}/leveldb-repl.xml"
-                   filtering="true"/>
-        <transform in="clustered.xml" out="testsuite/clustered-asymmetric-1.xml"
-                   modifyInfinispan="${infinispan.parts}/asymmetric-1.xml"/>
-        <transform in="clustered.xml" out="testsuite/clustered-asymmetric-2.xml"
-                   modifyInfinispan="${infinispan.parts}/asymmetric-2.xml"/>
+        <transform in="standalone.xml" out="testsuite/standalone-default-local.xml" modifyInfinispan="${infinispan.parts}/default-local.xml"/>
+        <transform in="clustered.xml" out="testsuite/clustered-default-dist.xml" modifyInfinispan="${infinispan.parts}/default-dist.xml"/>
+        <transform in="clustered.xml" out="testsuite/clustered-default-repl.xml" modifyInfinispan="${infinispan.parts}/default-repl.xml"/>
+        <transform in="standalone.xml" out="testsuite/standalone-with-indexing.xml" modifyInfinispan="${infinispan.parts}/indexing.xml"/>
+        <transform in="clustered.xml" out="testsuite/distributed-with-indexing.xml" modifyInfinispan="${infinispan.parts}/indexing-distributed.xml" filtering="true"/>
+        <transform in="clustered.xml" out="testsuite/clustered-with-indexing.xml" modifyInfinispan="${infinispan.parts}/indexing-clustered.xml" filtering="true"/>
+        <transform in="standalone.xml" out="testsuite/standalone-leveldb-local.xml" modifyInfinispan="${infinispan.parts}/leveldb-local.xml" filtering="true"/>
+        <transform in="clustered.xml" out="testsuite/clustered-leveldb-dist.xml" modifyInfinispan="${infinispan.parts}/leveldb-dist.xml" filtering="true"/>
+        <transform in="clustered.xml" out="testsuite/clustered-leveldb-repl.xml" modifyInfinispan="${infinispan.parts}/leveldb-repl.xml" filtering="true"/>
+        <transform in="clustered.xml" out="testsuite/clustered-asymmetric-1.xml" modifyInfinispan="${infinispan.parts}/asymmetric-1.xml"/>
+        <transform in="clustered.xml" out="testsuite/clustered-asymmetric-2.xml" modifyInfinispan="${infinispan.parts}/asymmetric-2.xml"/>
         <transform in="examples/standalone-rcs-local.xml" out="testsuite/standalone-rcs-local.xml"
                    modifyInfinispan="${infinispan.parts}/rcs-local.xml"
                    modifyRemoteDestination="${other.parts}/rcs-remote-destination.xml"
@@ -165,73 +182,112 @@
                    modifyInfinispan="${infinispan.parts}/suppress-state-transfer.xml"
                    infinispanServerEndpoint="${other.parts}/suppress-server-endpoint.xml"
                    filtering="true"/>
-        <transform in="clustered.xml" out="testsuite/clustered-transport-stack.xml"
-                   modifyStack="${other.parts}/jgroups-stack.xml"/>
-        <transform in="clustered.xml" out="testsuite/clustered-with-l1.xml"
-                   modifyInfinispan="${infinispan.parts}/l1.xml"/>
-        <transform in="standalone.xml" out="testsuite/rest-sec-basic-wr.xml"
-                   modifyInfinispan="${infinispan.parts}/rest-security.xml"
-                   filtering="true">
+        <transform in="clustered.xml" out="testsuite/clustered-transport-stack.xml" modifyStack="${other.parts}/jgroups-stack.xml"/>
+        <transform in="clustered.xml" out="testsuite/clustered-with-l1.xml" modifyInfinispan="${infinispan.parts}/l1.xml"/>
+        <transform in="standalone.xml" out="testsuite/rest-sec-basic-wr.xml" modifyInfinispan="${infinispan.parts}/rest-security.xml" filtering="true">
             <rest-sec>
                 <transform-rest-sec securityMode="WRITE" cacheContainer="security" in="@{in}" />
             </rest-sec>
         </transform>
-        <transform in="standalone.xml" out="testsuite/rest-sec-basic-rw.xml"
-                   modifyInfinispan="${infinispan.parts}/rest-security.xml"
-                   filtering="true">
+        <transform in="standalone.xml" out="testsuite/rest-sec-basic-rw.xml" modifyInfinispan="${infinispan.parts}/rest-security.xml" filtering="true">
             <rest-sec>
                 <transform-rest-sec securityMode="READ_WRITE" cacheContainer="security" in="@{in}"/>
             </rest-sec>
         </transform>
-        <transform in="standalone.xml" out="testsuite/rest-sec-cert-wr.xml"
-                   modifyInfinispan="${infinispan.parts}/rest-security.xml"
-                   filtering="true">
+        <transform in="standalone.xml" out="testsuite/rest-sec-cert-wr.xml" modifyInfinispan="${infinispan.parts}/rest-security.xml" filtering="true">
             <rest-sec>
                 <transform-rest-sec securityMode="WRITE" authMethod="CLIENT-CERT" cacheContainer="security" securityDomain="client_cert_auth" modifyCertSecDomain="true" in="@{in}"/>
             </rest-sec>
         </transform>
-        <transform in="standalone.xml" out="testsuite/rest-sec-cert-rw.xml"
-                   modifyInfinispan="${infinispan.parts}/rest-security.xml"
-                   filtering="true">
+        <transform in="standalone.xml" out="testsuite/rest-sec-cert-rw.xml" modifyInfinispan="${infinispan.parts}/rest-security.xml" filtering="true">
             <rest-sec>
                 <transform-rest-sec securityMode="READ_WRITE" authMethod="CLIENT-CERT" cacheContainer="security" securityDomain="client_cert_auth" modifyCertSecDomain="true" in="@{in}"/>
             </rest-sec>
         </transform>
 
-        <transform in="standalone.xml" out="testsuite/rest-sec-digest-wr.xml"
-                   modifyInfinispan="${infinispan.parts}/rest-security.xml"
-                   filtering="true">
+        <transform in="standalone.xml" out="testsuite/rest-sec-digest-wr.xml" modifyInfinispan="${infinispan.parts}/rest-security.xml" filtering="true">
             <rest-sec>
                 <transform-rest-sec securityMode="WRITE" authMethod="DIGEST" cacheContainer="security" securityDomain="digest_auth" modifyDigestSecDomain="true" in="@{in}"/>
             </rest-sec>
         </transform>
-        <transform in="standalone.xml" out="testsuite/rest-sec-digest-rw.xml"
-                   modifyInfinispan="${infinispan.parts}/rest-security.xml"
-                   filtering="true">
+        <transform in="standalone.xml" out="testsuite/rest-sec-digest-rw.xml" modifyInfinispan="${infinispan.parts}/rest-security.xml" filtering="true">
             <rest-sec>
                 <transform-rest-sec securityMode="READ_WRITE" authMethod="DIGEST" cacheContainer="security" securityDomain="digest_auth" modifyDigestSecDomain="true" in="@{in}"/>
             </rest-sec>
         </transform>
-        <transform in="clustered.xml" out="testsuite/clustered-with-encrypt.xml"
-                   modifyInfinispan="${infinispan.parts}/default-repl.xml"
-                   addEncrypt="${other.parts}/jgroups-encrypt.xml"
-                   filtering="true"/>
-        <transform in="standalone.xml" out="testsuite/standalone-filecs.xml"
-                   modifyInfinispan="${infinispan.parts}/filecachestore.xml"/>
-        <transform in="standalone.xml" out="testsuite/standalone-eviction.xml"
-                   modifyInfinispan="${infinispan.parts}/eviction.xml"/>
-        <transform in="standalone.xml" out="testsuite/standalone-customcs.xml"
-                   modifyInfinispan="${infinispan.parts}/customcs.xml"
-                   filtering="true"/>
-        <transform in="clustered.xml" out="testsuite/clustered-expiration.xml"
-                   modifyInfinispan="${infinispan.parts}/expiration.xml"/>
+        <transform in="clustered.xml" out="testsuite/clustered-with-encrypt.xml" modifyInfinispan="${infinispan.parts}/default-repl.xml" addEncrypt="${other.parts}/jgroups-encrypt.xml" filtering="true"/>
+        <transform in="clustered.xml" out="testsuite/clustered-auth.xml" modifyInfinispan="${infinispan.parts}/default-repl.xml" addAuth="${other.parts}/jgroups-auth.xml" filtering="true"/>
+        <transform in="clustered.xml" out="testsuite/clustered-auth-wrong-certificate.xml" modifyInfinispan="${infinispan.parts}/default-repl.xml" addAuth="${other.parts}/jgroups-auth-malicious.xml" filtering="true"/>
+        <transform in="standalone.xml" out="testsuite/standalone-filecs.xml" modifyInfinispan="${infinispan.parts}/filecachestore.xml"/>
+        <transform in="standalone.xml" out="testsuite/standalone-eviction.xml" modifyInfinispan="${infinispan.parts}/eviction.xml"/>
+        <transform in="standalone.xml" out="testsuite/standalone-customcs.xml" modifyInfinispan="${infinispan.parts}/customcs.xml" filtering="true"/>
+        <transform in="clustered.xml" out="testsuite/clustered-expiration.xml" modifyInfinispan="${infinispan.parts}/expiration.xml"/>
         <transform in="standalone.xml" out="testsuite/standalone-cachecontainer.xml"
                    modifyInfinispan="${infinispan.parts}/cachecontainer.xml"
                    modifyThreads="${other.parts}/cachecontainer-thread-pools.xml"
                    infinispanServerEndpoint="${other.parts}/cachecontainer-endpoints.xml"
                    addHotrodSocketBinding="${other.parts}/cachecontainer-hotrod-binding.xml"/>
-        <transform in="clustered.xml" out="testsuite/clustered-clusteredcache.xml"
-                   modifyInfinispan="${infinispan.parts}/clusteredcache.xml" />
+        <transform in="clustered.xml" out="testsuite/clustered-clusteredcache.xml" modifyInfinispan="${infinispan.parts}/clusteredcache.xml" />
+        <transform in="standalone.xml" out="testsuite/jdbc-binary-no-passivation.xml" modifyInfinispan="${infinispan.parts}/jdbc-binary-no-passivation.xml" modifyDataSource="${datasource.parts}/${datasource.file}" filtering="true">
+            <jdbc-conf>
+                <configure-jdbc in="@{in}" tablePrefix="BINARY_NO_PASSIVATION"/>
+            </jdbc-conf>
+        </transform>
+        <transform in="standalone.xml" out="testsuite/jdbc-binary-with-passivation.xml" modifyInfinispan="${infinispan.parts}/jdbc-binary-with-passivation.xml" modifyDataSource="${datasource.parts}/${datasource.file}" filtering="true">
+            <jdbc-conf>
+                <configure-jdbc in="@{in}" tablePrefix="BINARY_WITH_PASSIVATION"/>
+            </jdbc-conf>
+        </transform>
+        <transform in="standalone.xml" out="testsuite/jdbc-mixed-no-passivation.xml" modifyInfinispan="${infinispan.parts}/jdbc-mixed-no-passivation.xml" modifyDataSource="${datasource.parts}/${datasource.file}" filtering="true">
+            <jdbc-conf>
+                <configure-jdbc in="@{in}" tablePrefix="MIXED_NO_PASSIVATION"/>
+            </jdbc-conf>
+        </transform>
+        <transform in="standalone.xml" out="testsuite/jdbc-mixed-with-passivation.xml" modifyInfinispan="${infinispan.parts}/jdbc-mixed-with-passivation.xml" modifyDataSource="${datasource.parts}/${datasource.file}" filtering="true">
+            <jdbc-conf>
+                <configure-jdbc in="@{in}" tablePrefix="MIXED_WITH_PASSIVATION"/>
+            </jdbc-conf>
+        </transform>
+        <transform in="standalone.xml" out="testsuite/jdbc-string-no-passivation.xml" modifyInfinispan="${infinispan.parts}/jdbc-string-no-passivation.xml" modifyDataSource="${datasource.parts}/${datasource.file}" filtering="true">
+            <jdbc-conf>
+                <configure-jdbc in="@{in}" tablePrefix="STRING_NO_PASSIVATION"/>
+            </jdbc-conf>
+        </transform>
+        <transform in="standalone.xml" out="testsuite/jdbc-string-with-passivation.xml" modifyInfinispan="${infinispan.parts}/jdbc-string-with-passivation.xml" modifyDataSource="${datasource.parts}/${datasource.file}" filtering="true">
+            <jdbc-conf>
+                <configure-jdbc in="@{in}" tablePrefix="STRING_WITH_PASSIVATION"/>
+            </jdbc-conf>
+        </transform>
+        <transform in="standalone.xml" out="testsuite/jdbc-string-async.xml" modifyInfinispan="${infinispan.parts}/jdbc-string-async.xml" modifyDataSource="${datasource.parts}/${datasource.file}" filtering="true">
+            <jdbc-conf>
+                <configure-jdbc in="@{in}" tablePrefix="STRING_ASYNC"/>
+            </jdbc-conf>
+        </transform>
+        <transform in="clustered.xml" out="testsuite/jdbc-string-multinode-fetch-state1.xml" modifyInfinispan="${infinispan.parts}/jdbc-string-multinode-fetch-state.xml" modifyDataSource="${datasource.parts}/${datasource.file}" filtering="true">
+            <jdbc-conf>
+                <configure-jdbc in="@{in}" tablePrefix="STRING_MULTINODEx"/>
+            </jdbc-conf>
+        </transform>
+        <transform in="clustered.xml" out="testsuite/jdbc-string-multinode-fetch-state2.xml" modifyInfinispan="${infinispan.parts}/jdbc-string-multinode-fetch-state.xml" modifyDataSource="${datasource.parts}/${datasource.file}" filtering="true">
+            <jdbc-conf>
+                <configure-jdbc in="@{in}" tablePrefix="STRING_MULTINODEy" jndiName="java:jboss/datasources/JdbcDSOther"/>
+            </jdbc-conf>
+        </transform>
+        <transform in="clustered.xml" out="testsuite/jdbc-string-multinode-singleton1.xml" modifyInfinispan="${infinispan.parts}/jdbc-string-multinode-singleton.xml" modifyDataSource="${datasource.parts}/${datasource.file}" filtering="true">
+            <jdbc-conf>
+                <configure-jdbc in="@{in}" tablePrefix="STRING_MULTINODEx"/>
+            </jdbc-conf>
+        </transform>
+        <transform in="clustered.xml" out="testsuite/jdbc-string-multinode-singleton2.xml" modifyInfinispan="${infinispan.parts}/jdbc-string-multinode-singleton.xml" modifyDataSource="${datasource.parts}/${datasource.file}" filtering="true">
+            <jdbc-conf>
+                <configure-jdbc in="@{in}" tablePrefix="STRING_MULTINODEy" jndiName="java:jboss/datasources/JdbcDSOther"/>
+            </jdbc-conf>
+        </transform>
+        <transform in="clustered.xml" out="testsuite/jdbc-string-invalidation.xml" modifyInfinispan="${infinispan.parts}/jdbc-string-invalidation.xml" modifyDataSource="${datasource.parts}/${datasource.file}" filtering="true">
+            <jdbc-conf>
+                <configure-jdbc in="@{in}" tablePrefix="STRING_INVALIDATION"/>
+            </jdbc-conf>
+        </transform>
     </target>
 
     <macrodef name="transform">
@@ -241,6 +297,7 @@
         <attribute name="out"/>
         <attribute name="modifyInfinispan" default="false"/>
         <attribute name="modifyThreads" default="false"/>
+        <attribute name="modifyDataSource" default="false"/>
         <attribute name="modifyStack" default="false"/>
         <attribute name="modifyRelay" default="false"/>
         <attribute name="modifyMulticastAddress" default="false"/>
@@ -251,14 +308,16 @@
         <attribute name="infinispanServerEndpoint" default="false"/>
         <attribute name="infinispanFile" default="false"/>
         <attribute name="filtering" default="false"/>
-        <element name="rest-sec" optional="yes" />
         <attribute name="addAuth" default="false"/>
         <attribute name="addEncrypt" default="false"/>
+        <element name="jdbc-conf" optional="yes"/>
+        <element name="rest-sec" optional="yes"/>
 
         <sequential>
             <xslt in="@{transformDir}/@{in}" out="@{transformDir}/@{in}-transformed" style="@{templateFile}">
                 <param name="modifyInfinispan" expression="@{modifyInfinispan}"/>
                 <param name="modifyThreads" expression="@{modifyThreads}"/>
+                <param name="modifyDataSource" expression="@{modifyDataSource}"/>
                 <param name="modifyStack" expression="@{modifyStack}"/>
                 <param name="modifyRelay" expression="@{modifyRelay}"/>
                 <param name="addAuth" expression="@{addAuth}"/>
@@ -275,7 +334,8 @@
                 <param name="log.level.console" expression="${log.level.console}"/>
             </xslt>
 
-            <rest-sec />
+            <jdbc-conf/>
+            <rest-sec/>
 
             <move file="@{transformDir}/@{in}-transformed" tofile="@{transformDir}/@{out}" filtering="@filtering">
                 <filterset refid="commonFilters"/>
@@ -312,4 +372,36 @@
         </sequential>
     </macrodef>
 
+    <macrodef name="configure-jdbc" description="configure jdbc cachestore">
+        <attribute name="transformDir" default="${server1.configs}"/>
+        <attribute name="jndiName" default="java:jboss/datasources/JdbcDS"/>
+        <attribute name="tablePrefix" default="ISPN"/>
+        <attribute name="serverDir" default="${server1.dist}"/>
+        <attribute name="in"/>
+
+        <sequential>
+            <filterset id="nameFilters" begintoken="${" endtoken="}">
+                <filter token="jndi.name" value="@{jndiName}"/>
+                <filter token="table.prefix" value="@{tablePrefix}"/>
+            </filterset>
+
+            <move file="@{transformDir}/@{in}-transformed" tofile="@{transformDir}/@{in}-transformed-jdbc"
+                  filtering="@filtering">
+                <filterset refid="nameFilters"/>
+                <filterset refid="dbFilters"/>
+            </move>
+            <move file="@{transformDir}/@{in}-transformed-jdbc" tofile="@{transformDir}/@{in}-transformed"/>
+        </sequential>
+    </macrodef>
+
+    <target name="add-db-module" if="add.db.module">
+        <delete dir="${server1.dist}/modules/system/layers/base/driver"/>
+        <copy file="${driver.dir}/${driver.jar}"
+              todir="${server1.dist}/modules/system/layers/base/com/${database}/driver/main" overwrite="true"/>
+        <copy file="${resources.dir}/module.xml"
+              todir="${server1.dist}/modules/system/layers/base/com/${database}/driver/main" overwrite="true"
+              filtering="@filtering">
+            <filterset refid="dbFilters"/>
+        </copy>
+    </target>
 </project>

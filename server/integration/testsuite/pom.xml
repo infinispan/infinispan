@@ -1,5 +1,6 @@
 <?xml version='1.0' encoding='UTF-8'?>
-<project xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd" xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+<project xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd"
+         xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
     <modelVersion>4.0.0</modelVersion>
 
     <parent>
@@ -190,15 +191,32 @@
     </dependencies>
 
     <properties>
+        <h2.server.address>tcp://localhost:9092</h2.server.address>
+        <database>h2</database>
+        <driver.dir>${server1.dist}/modules/system/layers/base/com/h2database/h2/main</driver.dir>
+        <driver.jar>h2-1.3.168.jar</driver.jar>
+        <driver.class>org.h2.jdbcx.JdbcDataSource</driver.class>
+
+        <connection.url>jdbc:h2:tcp://localhost:9092/mem:test;DB_CLOSE_DELAY=-1</connection.url>
+        <connection.url.other>jdbc:h2:tcp://localhost:9092/mem:test_other;DB_CLOSE_DELAY=-1</connection.url.other>
+
+        <password>sa</password>
+        <username>sa</username>
+
+        <password.other>sa</password.other>
+        <username.other>sa</username.other>
 
         <ispnserver.project.dir>${basedir}/..</ispnserver.project.dir>
         <server.build.dist>${ispnserver.project.dir}/build/target/infinispan-server-${project.version}</server.build.dist>
+
         <server1.dist>${basedir}/target/server/node1</server1.dist>
         <server2.dist>${basedir}/target/server/node2</server2.dist>
         <server3.dist>${basedir}/target/server/node3</server3.dist>
         <server.old.dist>${basedir}/target/server/node_old</server.old.dist>
+
         <server.jvm>${env.JAVA_HOME}</server.jvm>
         <resources.dir>${basedir}/src/test/resources</resources.dir>
+
         <jvm.memory.args>-Xmx512m -XX:MaxPermSize=128m</jvm.memory.args>
         <jvm.x64.args></jvm.x64.args>
         <default.transport.stack>udp</default.transport.stack>
@@ -212,8 +230,11 @@
         <suite.client.local.phase>test</suite.client.local.phase>
         <suite.client.dist.phase>test</suite.client.dist.phase>
         <suite.client.repl.phase>test</suite.client.repl.phase>
+
         <suite.manual.include>**/*.java</suite.manual.include>
-        <suite.manual.exclude.groups>org.infinispan.server.test.category.ClientLocal,org.infinispan.server.test.category.ClientClustered,org.infinispan.server.test.category.RollingUpgrades,org.infinispan.server.test.category.UnstableTest,org.infinispan.server.test.category.Osgi</suite.manual.exclude.groups>
+        <suite.manual.exclude.groups>
+            org.infinispan.server.test.category.ClientLocal,org.infinispan.server.test.category.ClientClustered,org.infinispan.server.test.category.RollingUpgrades,org.infinispan.server.test.category.UnstableTest,org.infinispan.server.test.category.Osgi
+        </suite.manual.exclude.groups>
         <suite.client.local.config>testsuite/standalone-default-local.xml</suite.client.local.config>
         <suite.client.dist.config>testsuite/clustered-default-dist.xml</suite.client.dist.config>
         <suite.client.repl.config>testsuite/clustered-default-repl.xml</suite.client.repl.config>
@@ -277,9 +298,23 @@
                         <phase>generate-resources</phase>
                         <configuration>
                             <target>
-                                <property name="test_classpath" refid="maven.test.classpath"/>
-                                <ant antfile="build-testsuite.xml" inheritRefs="true">
-                                    <target name="create-all-distros"/>
+                                <ant antfile="build-testsuite.xml" inheritRefs="true" target="create-all-distros">
+                                    <!--redefine uses properties to be propagated to ant build file, should be plugin bug-->
+                                    <property name="test_classpath" refid="maven.test.classpath"/>
+
+                                    <property name="database" value="${database}"/>
+                                    <property name="driver.dir" value="${driver.dir}"/>
+                                    <property name="driver.jar" value="${driver.jar}"/>
+                                    <property name="driver.class" value="${driver.class}"/>
+
+                                    <property name="connection.url" value="${connection.url}"/>
+                                    <property name="connection.url.other" value="${connection.url.other}"/>
+
+                                    <property name="password" value="${password}"/>
+                                    <property name="username" value="${username}"/>
+
+                                    <property name="password.other" value="${password.other}"/>
+                                    <property name="username.other" value="${username.other}"/>
                                 </ant>
                                 <!-- It happens when you do not specify namespaces in the XSLT templates for the newly added nodes
                                      then the IBM jdk transformation is adding empty namespace there - not possible to influence this
@@ -289,6 +324,66 @@
                                     <include name="server/node*/standalone/configuration/**/*.xml"/>
                                     <replacetoken><![CDATA[xmlns=""]]></replacetoken>
                                 </replace>
+                            </target>
+                        </configuration>
+                    </execution>
+                    <!-- we need to start a special H2 TCP server because we need to be able to connect to it with a
+                    specific jdbc connection and verify what is in the DB, this is not possible with default
+                    H2 setting -->
+                    <execution>
+                        <id>check-h2-db-property</id>
+                        <phase>compile</phase>
+                        <goals>
+                            <goal>run</goal>
+                        </goals>
+                        <configuration>
+                            <target>
+                                <condition property="run.h2.server">
+                                    <equals arg1="${database}" arg2="h2"/>
+                                </condition>
+                            </target>
+                            <exportAntProperties>true</exportAntProperties>
+                        </configuration>
+                    </execution>
+
+                    <execution>
+                        <id>start-h2-tcp-server</id>
+                        <phase>process-test-resources</phase>
+                        <goals>
+                            <goal>run</goal>
+                        </goals>
+                        <configuration>
+                            <target if="run.h2.server">
+                                <java classname="org.h2.tools.Server" fork="true" spawn="true">
+                                    <arg value="-tcp"/>
+                                    <arg value="-tcpPort"/>
+                                    <arg value="9092"/>
+                                    <arg value="-tcpAllowOthers"/>
+                                    <!--<arg value="jdbc:h2:mem:test"/>-->
+                                    <classpath>
+                                        <pathelement location="${driver.dir}/${driver.jar}"/>
+                                    </classpath>
+                                </java>
+                            </target>
+                        </configuration>
+                    </execution>
+                    <!-- stop previously started H2 server -->
+                    <execution>
+                        <id>stop-h2-tcp-server</id>
+                        <phase>post-integration-test</phase>
+                        <goals>
+                            <goal>run</goal>
+                        </goals>
+                        <configuration>
+                            <target if="run.h2.server">
+                                <java classname="org.h2.tools.Server">
+                                    <arg value="-tcpShutdown"/>
+                                    <arg value="${h2.server.address}"/>
+                                    <arg value="-tcpShutdownForce"/>
+                                    <classpath>
+                                        <pathelement location="${driver.dir}/${driver.jar}"/>
+                                    </classpath>
+                                </java>
                             </target>
                         </configuration>
                     </execution>
@@ -314,7 +409,26 @@
                         <suite.client.repl.config>${suite.client.repl.config}</suite.client.repl.config>
                         <resources.dir>${project.build.directory}/test-classes</resources.dir>
                         <version.karaf>${version.karaf}</version.karaf>
+
+                        <!--redefine jdbc properties-->
+                        <database>${database}</database>
+                        <driver.dir>${driver.dir}</driver.dir>
+                        <driver.jar>${driver.jar}</driver.jar>
+                        <driver.class>${driver.class}</driver.class>
+
+                        <connection.url>${connection.url}</connection.url>
+                        <connection.url.other>${connection.url.other}</connection.url.other>
+
+                        <username>${username}</username>
+                        <password>${password}</password>
+
+                        <username.other>${username.other}</username.other>
+                        <password.other>${password.other}</password.other>
                     </systemPropertyVariables>
+                    <!--add jdbc driver to classpath-->
+                    <additionalClasspathElements>
+                        <element>${driver.dir}/${driver.jar}</element>
+                    </additionalClasspathElements>
                     <properties>
                         <property>
                             <name>listener</name>

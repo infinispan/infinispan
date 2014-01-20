@@ -5,6 +5,7 @@ import java.util.List;
 
 import org.infinispan.arquillian.core.InfinispanResource;
 import org.infinispan.arquillian.core.RemoteInfinispanServer;
+import org.infinispan.arquillian.core.RunningServer;
 import org.infinispan.arquillian.core.WithRunningServer;
 import org.infinispan.client.hotrod.RemoteCache;
 import org.infinispan.client.hotrod.RemoteCacheManager;
@@ -21,12 +22,11 @@ import static org.junit.Assert.assertTrue;
 
 /**
  * Tests for eviction strategy configurations
- *
+ * <p/>
  * LIRS not tested, see https://issues.jboss.org/browse/ISPN-1347
- *
  */
 @RunWith(Arquillian.class)
-@WithRunningServer("eviction")
+@WithRunningServer({@RunningServer(name = "eviction")})
 public class EvictionStrategyTest {
 
     @InfinispanResource("eviction")
