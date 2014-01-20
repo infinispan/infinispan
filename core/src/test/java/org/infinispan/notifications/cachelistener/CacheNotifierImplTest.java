@@ -241,10 +241,9 @@ public class CacheNotifierImplTest extends AbstractInfinispanTest {
    }
 
    public void testNotifyTransactionRegistered() {
-      InvocationContext ctx = new NonTxInvocationContext(AnyEquivalence.getInstance());
       GlobalTransaction tx = mock(GlobalTransaction.class);
-      n.notifyTransactionRegistered(tx, ctx);
-      n.notifyTransactionRegistered(tx, ctx);
+      n.notifyTransactionRegistered(tx, false);
+      n.notifyTransactionRegistered(tx, false);
 
       assert cl.getInvocationCount() == 2;
       assert cl.getEvents().get(0).getCache() == mockCache;

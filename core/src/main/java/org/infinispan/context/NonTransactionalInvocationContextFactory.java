@@ -5,9 +5,9 @@ import org.infinispan.context.impl.LocalTxInvocationContext;
 import org.infinispan.context.impl.NonTxInvocationContext;
 import org.infinispan.context.impl.RemoteTxInvocationContext;
 import org.infinispan.factories.annotations.Inject;
-import org.infinispan.factories.annotations.Start;
 import org.infinispan.factories.annotations.SurvivesRestarts;
 import org.infinispan.remoting.transport.Address;
+import org.infinispan.transaction.LocalTransaction;
 import org.infinispan.transaction.RemoteTransaction;
 
 import javax.transaction.Transaction;
@@ -33,11 +33,11 @@ public class NonTransactionalInvocationContextFactory extends AbstractInvocation
       } else if (keyCount > 0) {
          return new NonTxInvocationContext(keyCount, true, keyEq);
       }
-      return createInvocationContext(null);
+      return createInvocationContext(null, false);
    }
 
    @Override
-   public InvocationContext createInvocationContext(Transaction tx) {
+   public InvocationContext createInvocationContext(Transaction tx, boolean implicitTransaction) {
       return createNonTxInvocationContext();
    }
 
@@ -61,7 +61,7 @@ public class NonTransactionalInvocationContextFactory extends AbstractInvocation
    }
 
    @Override
-   public LocalTxInvocationContext createTxInvocationContext() {
+   public LocalTxInvocationContext createTxInvocationContext(LocalTransaction localTransaction) {
       throw exception();
    }
 

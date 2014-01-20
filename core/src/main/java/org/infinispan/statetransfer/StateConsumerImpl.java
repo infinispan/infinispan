@@ -528,8 +528,7 @@ public class StateConsumerImpl implements StateConsumer {
                // cache is transactional
                transactionManager.begin();
                Transaction transaction = transactionManager.getTransaction();
-               ctx = icf.createInvocationContext(transaction);
-               ((TxInvocationContext) ctx).setImplicitTransaction(true);
+               ctx = icf.createInvocationContext(transaction, true);
             } else {
                // non-tx cache
                ctx = icf.createSingleKeyNonTxInvocationContext();

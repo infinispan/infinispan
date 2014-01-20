@@ -1,11 +1,14 @@
 package org.infinispan.context.impl;
 
-import javax.transaction.Transaction;
-
+import org.infinispan.commands.write.WriteCommand;
+import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.transaction.AbstractCacheTransaction;
+import org.infinispan.transaction.xa.GlobalTransaction;
 
 import java.util.Collection;
+import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 /**
@@ -13,73 +16,107 @@ import java.util.Set;
  *
  * @author Mircea.Markus@jboss.com
  * @author Galder Zamarreño
+ * @author Pedro Ruivo
  * @since 4.0
  */
-public abstract class AbstractTxInvocationContext extends AbstractInvocationContext implements TxInvocationContext {
+public abstract class AbstractTxInvocationContext<T extends AbstractCacheTransaction> extends AbstractInvocationContext
+      implements TxInvocationContext<T> {
 
-   private Transaction transaction;
+   private final T cacheTransaction;
 
-   private boolean implicitTransaction;
+   protected AbstractTxInvocationContext(T cacheTransaction) {
+      if (cacheTransaction == null) {
+         throw new NullPointerException("CacheTransaction cannot be null");
+      }
+      this.cacheTransaction = cacheTransaction;
+   }
 
    @Override
-   public boolean hasModifications() {
+   public Object getLockOwner() {
+      //not final because the test suite overwrite it...
+      return cacheTransaction.getGlobalTransaction();
+   }
+
+   @Override
+   public final Set<Object> getLockedKeys() {
+      return cacheTransaction.getLockedKeys();
+   }
+
+   @Override
+   public final void addLockedKey(Object key) {
+      cacheTransaction.registerLockedKey(key);
+   }
+
+   @Override
+   public final GlobalTransaction getGlobalTransaction() {
+      return cacheTransaction.getGlobalTransaction();
+   }
+
+   @Override
+   public final boolean hasModifications() {
       return getModifications() != null && !getModifications().isEmpty();
    }
 
    @Override
-   public Set<Object> getAffectedKeys() {
-      return getCacheTransaction().getAffectedKeys();
+   public final List<WriteCommand> getModifications() {
+      return cacheTransaction.getModifications();
    }
 
    @Override
-   public void addAllAffectedKeys(Collection<Object> keys) {
+   public final CacheEntry lookupEntry(Object key) {
+      return cacheTransaction.lookupEntry(key);
+   }
+
+   @Override
+   public final Map<Object, CacheEntry> getLookedUpEntries() {
+      return cacheTransaction.getLookedUpEntries();
+   }
+
+   @Override
+   public final Set<Object> getAffectedKeys() {
+      return cacheTransaction.getAffectedKeys();
+   }
+
+   @Override
+   public final void addAllAffectedKeys(Collection<Object> keys) {
       if (keys != null && !keys.isEmpty()) {
-         getCacheTransaction().addAllAffectedKeys(keys);
+         cacheTransaction.addAllAffectedKeys(keys);
       }
    }
 
    @Override
-   public void addAffectedKey(Object key) {
-      getCacheTransaction().addAffectedKey(key);
+   public final void addAffectedKey(Object key) {
+      cacheTransaction.addAffectedKey(key);
    }
 
    @Override
-   public void setImplicitTransaction(boolean implicit) {
-      this.implicitTransaction = implicit;
+   public final void putLookedUpEntry(Object key, CacheEntry e) {
+      cacheTransaction.putLookedUpEntry(key, e);
    }
 
    @Override
-   public boolean isImplicitTransaction() {
-      return this.implicitTransaction;
+   public final void removeLookedUpEntry(Object key) {
+      cacheTransaction.removeLookedUpEntry(key);
    }
 
    @Override
-   public boolean isInTxScope() {
+   public final boolean isInTxScope() {
       return true;
-   }
-
-   public TxInvocationContext setTransaction(Transaction transaction) {
-      this.transaction = transaction;
-      return this;
-   }
-
-   @Override
-   public Transaction getTransaction() {
-      return transaction;
    }
 
    @Override
    public final void clearLockedKeys() {
-      getCacheTransaction().clearLockedKeys();
+      cacheTransaction.clearLockedKeys();
    }
 
    @Override
-   protected void onEntryValueReplaced(Object key, InternalCacheEntry cacheEntry) {
+   protected final void onEntryValueReplaced(Object key, InternalCacheEntry cacheEntry) {
       //the value to be returned was read from remote node. We need to update the version seen.
-      getCacheTransaction().replaceVersionRead(key, cacheEntry.getMetadata().version());
+      cacheTransaction.replaceVersionRead(key, cacheEntry.getMetadata().version());
    }
 
    @Override
-   public abstract AbstractCacheTransaction getCacheTransaction();
-
+   public final T getCacheTransaction() {
+      return cacheTransaction;
+   }
 }

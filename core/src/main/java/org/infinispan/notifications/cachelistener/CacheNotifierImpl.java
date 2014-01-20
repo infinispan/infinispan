@@ -388,9 +388,8 @@ public final class CacheNotifierImpl extends AbstractListenerImpl implements Cac
    }
 
    @Override
-   public void notifyTransactionRegistered(GlobalTransaction globalTransaction, InvocationContext ctx) {
+   public void notifyTransactionRegistered(GlobalTransaction globalTransaction, boolean isOriginLocal) {
       if (!transactionRegisteredListeners.isEmpty()) {
-         boolean isOriginLocal = ctx.isOriginLocal();
          EventImpl<Object, Object> e = EventImpl.createEvent(cache, TRANSACTION_REGISTERED);
          e.setOriginLocal(isOriginLocal);
          e.setTransactionId(globalTransaction);

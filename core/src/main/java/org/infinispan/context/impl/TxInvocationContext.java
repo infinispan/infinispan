@@ -2,7 +2,7 @@ package org.infinispan.context.impl;
 
 import org.infinispan.commands.write.WriteCommand;
 import org.infinispan.context.InvocationContext;
-import org.infinispan.transaction.xa.CacheTransaction;
+import org.infinispan.transaction.AbstractCacheTransaction;
 import org.infinispan.transaction.xa.GlobalTransaction;
 
 import javax.transaction.Transaction;
@@ -16,7 +16,7 @@ import java.util.Set;
  * @author Mircea.Markus@jboss.com
  * @since 4.0
  */
-public interface TxInvocationContext extends InvocationContext {
+public interface TxInvocationContext<T extends AbstractCacheTransaction> extends InvocationContext {
 
    /**
     * Checks if there are modifications performed within the tx's scope. Any modifications having Flag.CACHE_MODE_LOCAL are ignored.
@@ -62,15 +62,9 @@ public interface TxInvocationContext extends InvocationContext {
     */
    boolean isTransactionValid();
 
-   /**
-    * Marks this transaction as implicit; implicit transactions are started for transactional caches that have the autoCommit enabled.
-    */
-   void setImplicitTransaction(boolean implicit);
-
-
    boolean isImplicitTransaction();
 
-   CacheTransaction getCacheTransaction();
+   T getCacheTransaction();
 
    void skipTransactionCompleteCheck(boolean skip);
 

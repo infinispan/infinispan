@@ -25,7 +25,6 @@ import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.cache.VersioningScheme;
 import org.infinispan.context.Flag;
 import org.infinispan.context.InvocationContext;
-import org.infinispan.context.impl.LocalTxInvocationContext;
 import org.infinispan.context.impl.TxInvocationContext;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.interceptors.base.CommandInterceptor;
@@ -228,9 +227,7 @@ public class TxInterceptor extends CommandInterceptor {
 
    private void enlistIfNeeded(InvocationContext ctx) throws SystemException {
       if (shouldEnlist(ctx)) {
-         LocalTransaction localTransaction = enlist((TxInvocationContext) ctx);
-         LocalTxInvocationContext localTxContext = (LocalTxInvocationContext) ctx;
-         localTxContext.setLocalTransaction(localTransaction);
+         enlist((TxInvocationContext) ctx);
       }
    }
 
@@ -238,8 +235,6 @@ public class TxInterceptor extends CommandInterceptor {
       LocalTransaction localTransaction = null;
       if (shouldEnlist(ctx)) {
          localTransaction = enlist((TxInvocationContext) ctx);
-         LocalTxInvocationContext localTxContext = (LocalTxInvocationContext) ctx;
-         localTxContext.setLocalTransaction(localTransaction);
          if (command.hasFlag(Flag.PUT_FOR_STATE_TRANSFER)) {
             // mark the transaction as originating from state transfer as early as possible
             localTransaction.setFromStateTransfer(true);
@@ -274,7 +269,7 @@ public class TxInterceptor extends CommandInterceptor {
       int status = transaction.getStatus();
       if (isNotValid(status)) throw new IllegalStateException("Transaction " + transaction +
             " is not in a valid state to be invoking cache operations on.");
-      LocalTransaction localTransaction = txTable.getOrCreateLocalTransaction(transaction, ctx);
+      LocalTransaction localTransaction = txTable.getLocalTransaction(transaction);
       txTable.enlist(transaction, localTransaction);
       return localTransaction;
    }

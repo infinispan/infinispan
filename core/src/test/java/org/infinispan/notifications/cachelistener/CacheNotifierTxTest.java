@@ -115,7 +115,7 @@ public class CacheNotifierTxTest extends AbstractInfinispanTest {
    }
 
    private void expectTransactionBoundaries(boolean successful) {
-      verify(mockNotifier).notifyTransactionRegistered(isA(GlobalTransaction.class), isA(InvocationContext.class));
+      verify(mockNotifier).notifyTransactionRegistered(isA(GlobalTransaction.class), anyBoolean());
       verify(mockNotifier).notifyTransactionCompleted(isA(GlobalTransaction.class), eq(successful), isA(InvocationContext.class));
    }
 
