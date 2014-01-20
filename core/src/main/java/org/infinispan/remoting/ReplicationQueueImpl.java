@@ -87,11 +87,11 @@ public class ReplicationQueueImpl implements ReplicationQueue {
    public void start() {
       AsyncConfiguration asyncCfg = configuration.clustering().async();
       long interval = asyncCfg.replQueueInterval();
+      this.maxElements = asyncCfg.replQueueMaxElements();
       trace = log.isTraceEnabled();
       if (trace)
          log.tracef("Starting replication queue, with interval %d and maxElements %s", interval, maxElements);
 
-      this.maxElements = asyncCfg.replQueueMaxElements();
       // check again
       enabled = asyncCfg.useReplQueue();
       if (enabled && interval > 0) {
