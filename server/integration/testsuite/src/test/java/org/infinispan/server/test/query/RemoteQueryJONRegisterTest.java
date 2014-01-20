@@ -1,5 +1,6 @@
 package org.infinispan.server.test.query;
 
+import org.infinispan.arquillian.core.RunningServer;
 import org.infinispan.arquillian.core.WithRunningServer;
 import org.infinispan.arquillian.utils.MBeanServerConnectionProvider;
 import org.infinispan.client.hotrod.configuration.ConfigurationBuilder;
@@ -29,7 +30,7 @@ import static org.jboss.as.controller.descriptions.ModelDescriptionConstants.SUC
  * @author William Burns
  */
 @RunWith(Arquillian.class)
-@WithRunningServer("remote-query")
+@WithRunningServer({@RunningServer(name = "remote-query")})
 public class RemoteQueryJONRegisterTest extends RemoteQueryTest {
 
    @Before

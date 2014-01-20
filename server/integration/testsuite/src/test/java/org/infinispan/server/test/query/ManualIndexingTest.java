@@ -2,6 +2,7 @@ package org.infinispan.server.test.query;
 
 import org.infinispan.arquillian.core.InfinispanResource;
 import org.infinispan.arquillian.core.RemoteInfinispanServer;
+import org.infinispan.arquillian.core.RunningServer;
 import org.infinispan.arquillian.core.WithRunningServer;
 import org.infinispan.arquillian.utils.MBeanServerConnectionProvider;
 import org.infinispan.client.hotrod.RemoteCache;
@@ -35,7 +36,7 @@ import static org.junit.Assert.assertEquals;
  * @author anistor@redhat.com
  */
 @RunWith(Arquillian.class)
-@WithRunningServer("remote-query")
+@WithRunningServer({@RunningServer(name = "remote-query")})
 public class ManualIndexingTest {
 
    private static final String CACHE_MANAGER_NAME = "local";

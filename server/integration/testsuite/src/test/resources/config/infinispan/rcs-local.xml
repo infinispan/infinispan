@@ -23,7 +23,7 @@
                         fetch-state="false" 
                         passivation="true" 
                         preload="true" 
-                        purge="false">
+                        purge="false" name="MEMCACHED">
                         <remote-server outbound-socket-binding="remote-store-hotrod-server" />
                     </remote-store>                  
                 </local-cache>
@@ -49,7 +49,7 @@
                         fetch-state="false" 
                         passivation="true" 
                         preload="false" 
-                        purge="false">
+                        purge="false" name="HOTROD">
                         <remote-server outbound-socket-binding="remote-store-hotrod-server" />
                     </remote-store>                  
                 </local-cache>
@@ -76,7 +76,7 @@
                             fetch-state="false"
                             passivation="true"
                             preload="true"
-                            purge="false">
+                            purge="false" name="READ_ONLY">
                         <remote-server outbound-socket-binding="remote-store-hotrod-server" />
                     </remote-store>
                 </local-cache>

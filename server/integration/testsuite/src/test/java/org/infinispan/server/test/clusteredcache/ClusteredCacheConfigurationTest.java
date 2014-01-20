@@ -2,6 +2,7 @@ package org.infinispan.server.test.clusteredcache;
 
 import org.infinispan.arquillian.core.InfinispanResource;
 import org.infinispan.arquillian.core.RemoteInfinispanServer;
+import org.infinispan.arquillian.core.RunningServer;
 import org.infinispan.arquillian.core.WithRunningServer;
 import org.infinispan.client.hotrod.RemoteCache;
 import org.infinispan.client.hotrod.RemoteCacheManager;
@@ -34,7 +35,7 @@ import static org.junit.Assert.fail;
  *
  */
 @RunWith(Arquillian.class)
-@WithRunningServer({ "clusteredcache-1", "clusteredcache-2" })
+@WithRunningServer({@RunningServer(name="clusteredcache-1"), @RunningServer(name = "clusteredcache-2")})
 public class ClusteredCacheConfigurationTest {
 
     @InfinispanResource("clusteredcache-1")

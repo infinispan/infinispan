@@ -3,15 +3,23 @@ package org.infinispan.server.test.util;
 import static org.junit.Assert.assertTrue;
 
 import java.io.File;
+import java.io.IOException;
+import java.lang.reflect.Field;
 
 import javax.management.Attribute;
 import javax.management.ObjectName;
 
 import org.infinispan.arquillian.core.RemoteInfinispanServer;
 import org.infinispan.arquillian.utils.MBeanServerConnectionProvider;
+import org.infinispan.client.hotrod.RemoteCache;
 import org.infinispan.client.hotrod.RemoteCacheManager;
 import org.infinispan.client.hotrod.configuration.ConfigurationBuilder;
 import org.infinispan.client.hotrod.impl.ConfigurationProperties;
+import org.infinispan.client.hotrod.impl.RemoteCacheImpl;
+import org.infinispan.commons.marshall.Marshaller;
+import org.infinispan.server.test.client.memcached.MemcachedClient;
+import org.jboss.arquillian.container.test.api.Config;
+import org.jboss.arquillian.container.test.api.ContainerController;
 
 /**
  * Often repeated test code routines.
@@ -23,6 +31,7 @@ public class TestUtil {
             + File.separator + "data";
     public static final String SERVER_CONFIG_DIR = System.getProperty("server1.dist") + File.separator + "standalone"
             + File.separator + "configuration";
+    private static final String SERVER_CONFIG_PROPERTY = "serverConfig";
 
     /**
      * Create {@link RemoteCacheManager} for given server.
@@ -101,4 +110,54 @@ public class TestUtil {
         }
     }
 
+    /*
+  * HotRod client automatically creates a ByteArrayKey from each key regardless of its type. This
+  * ByteArrayKey is then stored in a cache/store
+  */
+    public static byte[] getRealKeyStored(String key, RemoteCache rc) throws Exception {
+        Marshaller m = getMarshallerField((RemoteCacheImpl) rc);
+        return m.objectToByteBuffer(key, 64);
+    }
+
+    private static Marshaller getMarshallerField(RemoteCacheImpl rci) throws Exception {
+        Field field;
+        try {
+            field = RemoteCacheImpl.class.getDeclaredField("marshaller");
+        } catch (NoSuchFieldException e) {
+            throw new Exception("Could not access marshaller field", e);
+        }
+        field.setAccessible(true);
+        Marshaller fieldValue;
+        try {
+            fieldValue = (Marshaller) field.get(rci);
+        } catch (IllegalAccessException e) {
+            throw new Exception("Could not access marshaller field", e);
+        }
+        return fieldValue;
+    }
+
+    public static void startContainer(ContainerController controller, String containerName, String config) {
+        controller.start(containerName, new Config().add(SERVER_CONFIG_PROPERTY, config).map());
+    }
+
+    public static void stopContainers(ContainerController controller, String... containerNames) {
+        for (String name : containerNames) {
+            controller.stop(name);
+        }
+    }
+
+    public static RemoteInfinispanMBeans createMBeans(RemoteInfinispanServer server, String containerName, String cacheName, String managerName) {
+        return RemoteInfinispanMBeans.create(server, containerName, cacheName, managerName);
+    }
+
+    public static MemcachedClient createMemcachedClient(RemoteInfinispanServer server) {
+        MemcachedClient mc;
+        try {
+            mc = new MemcachedClient(server.getMemcachedEndpoint().getInetAddress().getHostName(), server.getMemcachedEndpoint()
+                    .getPort());
+        } catch (IOException e) {
+            throw new RuntimeException("Could not create Memcached Client");
+        }
+        return mc;
+    }
 }

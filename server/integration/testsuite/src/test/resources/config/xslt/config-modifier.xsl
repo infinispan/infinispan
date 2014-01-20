@@ -5,12 +5,14 @@
                 xmlns:jgroups="urn:jboss:domain:jgroups:1.2"
                 xmlns:core="urn:infinispan:server:core:6.0"
                 xmlns:threads="urn:jboss:domain:threads:1.1"
+                xmlns:datasources="urn:jboss:domain:datasources:1.1"
                 xmlns:endpoint="urn:infinispan:server:endpoint:6.0">
     <xsl:output method="xml" indent="yes" omit-xml-declaration="yes"/>
 
     <!-- Parameter declarations with defaults set -->
     <xsl:param name="modifyInfinispan">false</xsl:param>
     <xsl:param name="modifyThreads">false</xsl:param>
+    <xsl:param name="modifyDataSource">false</xsl:param>
     <xsl:param name="modifyStack">false</xsl:param>
     <xsl:param name="modifyRelay">false</xsl:param>
     <xsl:param name="modifyMulticastAddress">false</xsl:param>
@@ -47,6 +49,16 @@
         </xsl:if>
         <xsl:if test="$modifyThreads != 'false'">
             <xsl:copy-of select="document($modifyThreads)"/>
+        </xsl:if>
+    </xsl:template>
+
+    <!-- used when the datasource subsystem is already present and needs to be changed - it is then replaced with the provided file -->
+    <xsl:template match="datasources:subsystem">
+        <xsl:if test="$modifyDataSource = 'false'">
+            <xsl:call-template name="copynode"/>
+        </xsl:if>
+        <xsl:if test="$modifyDataSource != 'false'">
+            <xsl:copy-of select="document($modifyDataSource)" />
         </xsl:if>
     </xsl:template>
 

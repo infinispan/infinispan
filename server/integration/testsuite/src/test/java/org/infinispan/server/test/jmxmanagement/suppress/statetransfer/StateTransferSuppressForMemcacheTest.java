@@ -11,7 +11,8 @@ import static org.junit.Assert.assertEquals;
 /**
  * Verifies the state transfer suppress functionality for Memcached Server.
  *
- * @author amanukya@redhat.com
+ * @author <a href="mailto:amanukya@redhat.com">Anna Manukyan</a>
+ * @author <a href="mailto:vchepeli@redhat.com">Vitalii Chepeliuk</a>
  */
 @RunWith(Arquillian.class)
 public class StateTransferSuppressForMemcacheTest extends AbstractStateTransferSuppressTest {

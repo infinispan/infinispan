@@ -2,6 +2,7 @@ package org.infinispan.server.test.asymmetric;
 
 import org.infinispan.arquillian.core.InfinispanResource;
 import org.infinispan.arquillian.core.RemoteInfinispanServer;
+import org.infinispan.arquillian.core.RunningServer;
 import org.infinispan.arquillian.core.WithRunningServer;
 import org.infinispan.client.hotrod.RemoteCache;
 import org.infinispan.client.hotrod.RemoteCacheManager;
@@ -18,14 +19,14 @@ import static org.junit.Assert.assertEquals;
  * A simple test for asymmetric cluster. There are two nodes in the cluster. The first one
  * has two caches defined - default and memcachedCache - both are distributed. The second node has
  * only memcachedCache defined.
- *
+ * <p/>
  * The test verifies that it is possible to store keys to both caches - without problems. The data
  * in memcachedCache is further replicated to the other node.
  *
  * @author <a href="mailto:mgencur@redhat.com">Martin Gencur</a>
  */
 @RunWith(Arquillian.class)
-@WithRunningServer({ "asymmetric-cluster-1", "asymmetric-cluster-2" })
+@WithRunningServer({@RunningServer(name = "asymmetric-cluster-1"),@RunningServer(name = "asymmetric-cluster-2")})
 public class AsymmetricClusterTest {
 
     @InfinispanResource("asymmetric-cluster-1")

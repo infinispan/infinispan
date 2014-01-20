@@ -1,0 +1,27 @@
+        <subsystem xmlns="urn:jboss:domain:datasources:1.1">
+            <datasources>
+                <datasource jndi-name="java:jboss/datasources/JdbcDS" pool-name="java:jboss/datasources/JdbcDS" enabled="true" use-java-context="true" use-ccm="true">
+                    <connection-url>jdbc:h2:tcp://localhost:9092/mem:test</connection-url>
+                    <driver>h2</driver>
+                    <pool/>
+                    <security>
+                        <user-name>${username}</user-name>
+                        <password>${password}</password>
+                    </security>
+                </datasource>
+                <datasource jndi-name="java:jboss/datasources/JdbcDSOther" pool-name="java:jboss/datasources/JdbcDSOther" enabled="true" use-java-context="true" use-ccm="true">
+                    <connection-url>jdbc:h2:tcp://localhost:9092/mem:test_other</connection-url>
+                    <driver>h2</driver>
+                    <pool/>
+                    <security>
+                        <user-name>${username.other}</user-name>
+                        <password>${password.other}</password>
+                    </security>
+                </datasource>
+                <drivers>
+                    <driver name="h2" module="com.h2database.h2">
+                        <xa-datasource-class>${driver.class}</xa-datasource-class>
+                    </driver>
+                </drivers>
+            </datasources>
+        </subsystem>

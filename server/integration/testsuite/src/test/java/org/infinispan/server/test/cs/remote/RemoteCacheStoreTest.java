@@ -1,24 +1,8 @@
-/*
- * JBoss, Home of Professional Open Source
- * Copyright 2011 Red Hat Inc. and/or its affiliates and other contributors
- * as indicated by the @authors tag. All rights reserved.
- * See the copyright.txt in the distribution for a
- * full listing of individual contributors.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- * http://www.apache.org/licenses/LICENSE-2.0
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,  
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
 package org.infinispan.server.test.cs.remote;
 
 import org.infinispan.arquillian.core.InfinispanResource;
 import org.infinispan.arquillian.core.RemoteInfinispanServer;
+import org.infinispan.arquillian.core.RunningServer;
 import org.infinispan.arquillian.core.WithRunningServer;
 import org.infinispan.client.hotrod.RemoteCache;
 import org.infinispan.client.hotrod.RemoteCacheManager;
@@ -29,7 +13,6 @@ import org.infinispan.server.test.category.UnstableTest;
 import org.infinispan.server.test.client.memcached.MemcachedClient;
 import org.jboss.arquillian.container.test.api.ContainerController;
 import org.jboss.arquillian.junit.Arquillian;
-import org.jboss.arquillian.junit.InSequence;
 import org.jboss.arquillian.test.api.ArquillianResource;
 import org.junit.Before;
 import org.junit.Test;
@@ -56,7 +39,7 @@ import static org.junit.Assert.fail;
  */
 @RunWith(Arquillian.class)
 @Category(CacheStore.class)
-@WithRunningServer("standalone-rcs-remote")
+@WithRunningServer({@RunningServer(name = "standalone-rcs-remote")})
 public class RemoteCacheStoreTest {
 
     private final String CONTAINER_LOCAL = "standalone-rcs-local"; // manual container
@@ -91,7 +74,7 @@ public class RemoteCacheStoreTest {
      * Test for read-only attribute of store - if true, no entries will be written into store
      */
     @Test
-    @WithRunningServer(CONTAINER_LOCAL)
+    @WithRunningServer({@RunningServer(name = CONTAINER_LOCAL)})
     public void testReadOnly() throws Exception {
         Configuration conf = new ConfigurationBuilder().addServer().host(server1.getHotrodEndpoint().getInetAddress().getHostName()).port(server1
                 .getHotrodEndpoint().getPort()).build();
@@ -116,7 +99,7 @@ public class RemoteCacheStoreTest {
      * 5. verify the evicted entry was removed from the remote cache
      */
     @Test
-    @WithRunningServer(CONTAINER_LOCAL)
+    @WithRunningServer({@RunningServer(name = CONTAINER_LOCAL)})
     public void testPassivateAfterEviction() throws Exception {
         mc = new MemcachedClient(server1.getMemcachedEndpoint().getInetAddress().getHostName(), server1.getMemcachedEndpoint()
                 .getPort());
@@ -139,8 +122,8 @@ public class RemoteCacheStoreTest {
     }
 
     @Test
-    @WithRunningServer(CONTAINER_LOCAL)
-    @Category(UnstableTest.class) // Exception is thrown but sometimes the error message does not contain SocketTimeoutException
+    @WithRunningServer({@RunningServer(name = CONTAINER_LOCAL)})
+    @Category(UnstableTest.class)
     public void testSocketTimeoutForRemoteStore() throws Exception {
         Configuration conf = new ConfigurationBuilder().addServer().host(server1.getHotrodEndpoint().getInetAddress().getHostName()).port(server1
                 .getHotrodEndpoint().getPort()).build();

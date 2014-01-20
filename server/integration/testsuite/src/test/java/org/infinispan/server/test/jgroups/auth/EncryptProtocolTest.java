@@ -6,6 +6,7 @@ import java.io.IOException;
 import org.apache.commons.io.FileUtils;
 import org.infinispan.arquillian.core.InfinispanResource;
 import org.infinispan.arquillian.core.RemoteInfinispanServers;
+import org.infinispan.arquillian.core.RunningServer;
 import org.infinispan.arquillian.core.WithRunningServer;
 import org.infinispan.arquillian.utils.MBeanServerConnectionProvider;
 import org.infinispan.server.test.category.UnstableTest;
@@ -69,7 +70,6 @@ public class EncryptProtocolTest {
         }
     }
 
-    @WithRunningServer(COORDINATOR_NODE)
     @Test
     public void testEncryptProtocolRegistered() throws Exception {
         try {
@@ -97,5 +97,4 @@ public class EncryptProtocolTest {
             controller.stop(JOINING_NODE);
         }
     }
-
 }
