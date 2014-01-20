@@ -147,6 +147,7 @@ public class MultiHotRodServerQueryTest extends MultiHotRodServersTest {
    }
 
    private void assertUser(User user) {
+      assertNotNull(user);
       assertEquals(1, user.getId());
       assertEquals("Tom", user.getName());
       assertEquals("Cat", user.getSurname());
