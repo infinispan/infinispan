@@ -483,7 +483,7 @@ public abstract class CacheAdd extends AbstractAddStepHandler {
                     .wakeUpInterval(interval)
             ;
             // Only enable the reaper thread if we need it
-            if ((maxIdle > 0) || (lifespan > 0)) {
+            if (interval > 0) {
                 builder.expiration().enableReaper();
             } else {
                 builder.expiration().disableReaper();
