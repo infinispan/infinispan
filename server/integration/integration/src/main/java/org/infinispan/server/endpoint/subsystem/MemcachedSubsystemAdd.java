@@ -75,8 +75,11 @@ class MemcachedSubsystemAdd extends ProtocolServiceSubsystemAdd {
 
       // Setup the various dependencies with injectors and install the service
       ServiceBuilder<?> builder = context.getServiceTarget().addService(EndpointUtils.getServiceName(operation, "memcached"), service);
-      EndpointUtils.addCacheContainerDependency(builder, getCacheContainerName(operation), service.getCacheManager());
-      EndpointUtils.addCacheDependency(builder, getCacheContainerName(operation), cacheName);
+
+      String cacheContainerName = getCacheContainerName(operation);
+      EndpointUtils.addCacheContainerDependency(builder, cacheContainerName, service.getCacheManager());
+      EndpointUtils.addCacheDependency(builder, cacheContainerName, cacheName);
+      EndpointUtils.addCacheDependency(builder, cacheContainerName, null);
       EndpointUtils.addSocketBindingDependency(builder, getSocketBindingName(operation), service.getSocketBinding());
       builder.install();
    }
