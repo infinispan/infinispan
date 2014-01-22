@@ -29,6 +29,7 @@ import org.infinispan.context.impl.TxInvocationContext;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.annotations.Start;
 import org.infinispan.remoting.rpc.RpcManager;
+import org.infinispan.transaction.LocalTransaction;
 
 /**
  * Acts as a base for all RPC calls
@@ -87,5 +88,15 @@ public abstract class BaseRpcInterceptor extends CommandInterceptor {
       }
 
       return shouldInvokeRemotely;
+   }
+
+   protected static void transactionRemotelyPrepared(TxInvocationContext ctx) {
+      if (ctx.isOriginLocal()) {
+         ((LocalTransaction)ctx.getCacheTransaction()).markPrepareSent();
+      }
+   }
+
+   protected final boolean isSyncCommitPhase() {
+      return cacheConfiguration.transaction().syncCommitPhase();
    }
 }

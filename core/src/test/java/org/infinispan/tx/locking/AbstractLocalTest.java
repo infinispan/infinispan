@@ -33,6 +33,8 @@ import javax.transaction.xa.Xid;
 import java.util.Collections;
 import java.util.Map;
 
+import static org.testng.Assert.assertNull;
+
 /**
  * @author Mircea Markus
  * @since 5.1
@@ -73,6 +75,15 @@ public abstract class AbstractLocalTest extends SingleCacheManagerTest {
       assertLocking();
    }
 
+   public void testRollback() throws Exception {
+      tm().begin();
+      cache().put("k", "v");
+      assertLockingOnRollback();
+      assertNull(cache().get("k"));
+   }
+
+   protected abstract void assertLockingOnRollback();
+
    protected abstract void assertLocking();
 
    protected void commit() {
@@ -89,6 +100,15 @@ public abstract class AbstractLocalTest extends SingleCacheManagerTest {
       try {
          dtm.firstEnlistedResource().prepare(getXid());
       } catch (Throwable e) {
+         throw new RuntimeException(e);
+      }
+   }
+
+   protected void rollback() {
+      DummyTransactionManager dtm = (DummyTransactionManager) tm();
+      try {
+         dtm.getTransaction().rollback();
+      } catch (SystemException e) {
          throw new RuntimeException(e);
       }
    }

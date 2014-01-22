@@ -47,6 +47,7 @@ import java.util.Set;
  * Object that holds transaction's state on the node where it originated; as opposed to {@link RemoteTransaction}.
  *
  * @author Mircea.Markus@jboss.com
+ * @author Pedro Ruivo
  * @since 5.0
  */
 public abstract class LocalTransaction extends AbstractCacheTransaction {
@@ -64,6 +65,9 @@ public abstract class LocalTransaction extends AbstractCacheTransaction {
    private volatile boolean isFromRemoteSite;
 
    private volatile boolean isFromStateTransfer;
+
+   private boolean prepareSent;
+   private boolean commitOrRollbackSent;
 
    public LocalTransaction(Transaction transaction, GlobalTransaction tx, boolean implicitTransaction, int topologyId) {
       super(tx, topologyId);
@@ -227,4 +231,33 @@ public abstract class LocalTransaction extends AbstractCacheTransaction {
       if (trace) log.tracef("The merged list of nodes to send commit/rollback is %s", allRecipients);
       return allRecipients;
    }
+
+   /**
+    * Sets the prepare sent for this transaction
+    */
+   public final void markPrepareSent() {
+      prepareSent = true;
+   }
+
+   /**
+    * @return  true if the prepare was sent to the other nodes
+    */
+   public final boolean isPrepareSent() {
+      return prepareSent;
+   }
+
+   /**
+    * Sets the commit or rollback sent for this transaction
+    */
+   public final void markCommitOrRollbackSent() {
+      commitOrRollbackSent = true;
+   }
+
+   /**
+    * @return  true if the commit or rollback was sent to the other nodes
+    */
+   public final boolean isCommitOrRollbackSent() {
+      return commitOrRollbackSent;
+   }
+
 }
