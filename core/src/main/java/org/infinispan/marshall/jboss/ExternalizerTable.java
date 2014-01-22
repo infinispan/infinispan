@@ -24,13 +24,13 @@
 package org.infinispan.marshall.jboss;
 
 import org.infinispan.CacheException;
+import org.infinispan.atomic.DeltaCompositeKey;
 import org.infinispan.atomic.AtomicHashMap;
 import org.infinispan.atomic.AtomicHashMapDelta;
 import org.infinispan.atomic.ClearOperation;
 import org.infinispan.atomic.PutOperation;
 import org.infinispan.atomic.RemoveOperation;
 import org.infinispan.commands.RemoteCommandsFactory;
-import org.infinispan.commands.write.ApplyDeltaCommand;
 import org.infinispan.commons.hash.MurmurHash2;
 import org.infinispan.commons.hash.MurmurHash2Compat;
 import org.infinispan.commons.hash.MurmurHash3;
@@ -278,7 +278,7 @@ public class ExternalizerTable implements ObjectTable {
       addInternalExternalizer(new VersionedTransientCacheValue.Externalizer());
       addInternalExternalizer(new VersionedTransientMortalCacheValue.Externalizer());
 
-      addInternalExternalizer(new ApplyDeltaCommand.DeltaCompositeKeyExternalizer());
+      addInternalExternalizer(new DeltaCompositeKey.DeltaCompositeKeyExternalizer());
       addInternalExternalizer(new AtomicHashMap.Externalizer());
       addInternalExternalizer(new Bucket.Externalizer());
       addInternalExternalizer(new AtomicHashMapDelta.Externalizer());
