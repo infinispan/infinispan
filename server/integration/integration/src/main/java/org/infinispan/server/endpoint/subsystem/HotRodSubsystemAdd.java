@@ -69,8 +69,11 @@ class HotRodSubsystemAdd extends ProtocolServiceSubsystemAdd {
 
       // Setup the various dependencies with injectors and install the service
       ServiceBuilder<?> builder = context.getServiceTarget().addService(EndpointUtils.getServiceName(operation, "hotrod"), service);
-      EndpointUtils.addCacheContainerConfigurationDependency(builder, getCacheContainerName(operation), service.getCacheManagerConfiguration());
-      EndpointUtils.addCacheContainerDependency(builder, getCacheContainerName(operation), service.getCacheManager());
+
+      String cacheContainerName = getCacheContainerName(operation);
+      EndpointUtils.addCacheContainerConfigurationDependency(builder, cacheContainerName, service.getCacheManagerConfiguration());
+      EndpointUtils.addCacheContainerDependency(builder, cacheContainerName, service.getCacheManager());
+      EndpointUtils.addCacheDependency(builder, cacheContainerName, null);
       EndpointUtils.addSocketBindingDependency(builder, getSocketBindingName(operation), service.getSocketBinding());
       if (config.hasDefined(ModelKeys.SECURITY) && config.get(ModelKeys.SECURITY, ModelKeys.SECURITY_NAME).isDefined()) {
          EndpointUtils.addSecurityRealmDependency(builder, config.get(ModelKeys.SECURITY, ModelKeys.SECURITY_NAME, ModelKeys.SECURITY_REALM).asString(), service.getSecurityRealm());
