@@ -245,8 +245,12 @@ public class TxDistributionInterceptor extends BaseDistributionInterceptor {
    }
 
    protected void prepareOnAffectedNodes(TxInvocationContext ctx, PrepareCommand command, Collection<Address> recipients, boolean sync) {
-      // this method will return immediately if we're the only member (because exclude_self=true)
-      rpcManager.invokeRemotely(recipients, command, sync);
+      try {
+         // this method will return immediately if we're the only member (because exclude_self=true)
+         rpcManager.invokeRemotely(recipients, command, sync);
+      } finally {
+         transactionRemotelyPrepared(ctx);
+      }
    }
 
    @Override
