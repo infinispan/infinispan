@@ -23,10 +23,6 @@ public abstract class AbstractInvocationContextFactory implements InvocationCont
    // Derived classes must call init() in their @Inject methods, to keep only one @Inject method per class.
    public void init(Configuration config) {
       this.config = config;
-   }
-
-   @Start
-   public void start() {
       keyEq = config.dataContainer().keyEquivalence();
    }
 

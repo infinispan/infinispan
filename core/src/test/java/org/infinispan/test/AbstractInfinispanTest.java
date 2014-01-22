@@ -10,6 +10,7 @@ import java.util.HashSet;
 import java.util.Set;
 import java.util.concurrent.Callable;
 import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.FutureTask;
 import java.util.concurrent.ThreadFactory;
@@ -85,7 +86,7 @@ public class AbstractInfinispanTest {
    protected <T> Future<T> fork(Runnable r, T result) {
       final String name = "ForkThread-" + spawnedThreadsCounter.incrementAndGet() + "," + getClass().getSimpleName();
       log.tracef("About to start thread '%s' as child of thread '%s'", name, Thread.currentThread().getName());
-      FutureTask<T> future = new FutureTask<T>(r, result);
+      FutureTask<T> future = new FutureTask<T>(new LoggingCallable(Executors.callable(r, result)));
       final Thread t = new Thread(future, name);
       spawnedThreads.add(t);
       t.start();
@@ -95,7 +96,7 @@ public class AbstractInfinispanTest {
    protected <T> Future<T> fork(Callable<T> c) {
       final String name = "ForkThread-" + spawnedThreadsCounter.incrementAndGet() + "," + getClass().getSimpleName();
       log.tracef("About to start thread '%s' as child of thread '%s'", name, Thread.currentThread().getName());
-      FutureTask<T> future = new FutureTask<T>(c);
+      FutureTask<T> future = new FutureTask<T>(new LoggingCallable<T>(c));
       final Thread t = new Thread(future, name);
       spawnedThreads.add(t);
       t.start();
@@ -175,5 +176,23 @@ public class AbstractInfinispanTest {
 
    protected interface Condition {
       public boolean isSatisfied() throws Exception;
+   }
+
+   private class LoggingCallable<T> implements Callable<T> {
+      private final Callable<T> c;
+
+      public LoggingCallable(Callable<T> c) {
+         this.c = c;
+      }
+
+      @Override
+      public T call() throws Exception {
+         try {
+            return c.call();
+         } catch (Exception e) {
+            log.trace("Exception in forked task", e);
+            throw e;
+         }
+      }
    }
 }

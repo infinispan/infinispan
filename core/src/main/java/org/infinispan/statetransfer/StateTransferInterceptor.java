@@ -168,8 +168,7 @@ public class StateTransferInterceptor extends CommandInterceptor {
 
    @Override
    public Object visitInvalidateCommand(InvocationContext ctx, InvalidateCommand command) throws Throwable {
-      // there is not state transfer in invalidation mode so there is not need to forward this command to new owners
-      return invokeNextInterceptor(ctx, command);
+      return handleNonTxWriteCommand(ctx, command);
    }
 
    @Override
