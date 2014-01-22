@@ -241,9 +241,21 @@ public class RpcManagerImpl implements RpcManager {
       }
       if (!configuration.clustering().cacheMode().isClustered())
          throw new IllegalStateException("Trying to invoke a remote command but the cache is not clustered");
+
+      // Set the topology id of the command, in case we don't have it yet
+      if (rpc instanceof TopologyAffectedCommand) {
+         TopologyAffectedCommand topologyAffectedCommand = (TopologyAffectedCommand) rpc;
+         if (topologyAffectedCommand.getTopologyId() == -1) {
+            int currentTopologyId = stateTransferManager.getCacheTopology().getTopologyId();
+            if (trace) log.tracef("Topology id missing on command %s, setting it to %d", rpc, currentTopologyId);
+            topologyAffectedCommand.setTopologyId(currentTopologyId);
+         }
+      }
+
       if (!(rpc instanceof CacheRpcCommand)) {
          rpc = cf.buildSingleRpcCommand(rpc);
       }
+
       long startTimeNanos = 0;
       if (statisticsEnabled) startTimeNanos = timeService.time();
       try {
@@ -265,12 +277,6 @@ public class RpcManagerImpl implements RpcManager {
 //                  responseFilter = new IgnoreExtraResponsesValidityFilter(cacheMembers, getAddress());
 //               }
 //            }
-         if (rpc instanceof TopologyAffectedCommand) {
-            TopologyAffectedCommand topologyAffectedCommand = (TopologyAffectedCommand) rpc;
-            if (topologyAffectedCommand.getTopologyId() == -1) {
-               topologyAffectedCommand.setTopologyId(stateTransferManager.getCacheTopology().getTopologyId());
-            }
-         }
          Map<Address, Response> result = t.invokeRemotely(recipients, rpc, options.responseMode(), options.timeUnit().toMillis(options.timeout()),
                                                           !options.fifoOrder(), options.responseFilter(), options.totalOrder(),
                                                           configuration.clustering().cacheMode().isDistributed());

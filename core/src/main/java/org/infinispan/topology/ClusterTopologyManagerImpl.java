@@ -437,9 +437,12 @@ public class ClusterTopologyManagerImpl implements ClusterTopologyManager {
                   if (statusResponses.containsKey(member)) {
                      // Search through all the responses to get the correct capacity factor
                      Map<String, Object[]> memberStatus = (Map<String, Object[]>) statusResponses.get(member);
-                     CacheJoinInfo memberJoinInfo = (CacheJoinInfo) memberStatus.get(cacheName)[0];
-                     float capacityFactor = memberJoinInfo.getCapacityFactor();
-                     cacheStatusMap.get(cacheName).addMember(member, capacityFactor);
+                     Object[] cacheStatus = memberStatus.get(cacheName);
+                     if (cacheStatus != null) {
+                        CacheJoinInfo memberJoinInfo = (CacheJoinInfo) cacheStatus[0];
+                        float capacityFactor = memberJoinInfo.getCapacityFactor();
+                        cacheStatusMap.get(cacheName).addMember(member, capacityFactor);
+                     }
                   }
                }
             }
