@@ -67,8 +67,11 @@ public class ClearOperation<K, V> extends Operation<K, V> {
       //null means all keys are affected
       return null;
    }
-   
-   
+
+   @Override
+   public String toString() {
+      return "ClearOperation";
+   }
 
    public static class Externalizer extends AbstractExternalizer<ClearOperation> {
       @Override
