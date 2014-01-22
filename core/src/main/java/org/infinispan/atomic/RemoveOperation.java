@@ -68,6 +68,14 @@ public class RemoveOperation<K, V> extends Operation<K, V> {
       return key;
    }
 
+   @Override
+   public String toString() {
+      return "RemoveOperation{" +
+            "key=" + key +
+            ", oldValue=" + oldValue +
+            '}';
+   }
+
    public static class Externalizer extends AbstractExternalizer<RemoveOperation> {
       @Override
       public void writeObject(ObjectOutput output, RemoveOperation remove) throws IOException {

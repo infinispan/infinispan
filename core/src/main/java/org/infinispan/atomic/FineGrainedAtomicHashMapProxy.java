@@ -25,7 +25,6 @@ package org.infinispan.atomic;
 import org.infinispan.AdvancedCache;
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.container.entries.DeltaAwareCacheEntry;
-import org.infinispan.context.Flag;
 import org.infinispan.util.InfinispanCollections;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
@@ -59,7 +58,7 @@ public class FineGrainedAtomicHashMapProxy<K, V> extends AtomicHashMapProxy<K, V
    private static final boolean trace = log.isTraceEnabled();
 
    FineGrainedAtomicHashMapProxy(AdvancedCache<?, ?> cache, Object deltaMapKey) {
-     super((AdvancedCache<Object,AtomicMap<K,V>>) cache, deltaMapKey);
+     super(cache, deltaMapKey);
    }
 
    @SuppressWarnings("unchecked")
@@ -72,20 +71,6 @@ public class FineGrainedAtomicHashMapProxy<K, V> extends AtomicHashMapProxy<K, V
       if (lockedAndCopied) {
          return getDeltaMapForRead();
       } else {
-         // acquire WL
-         boolean suppressLocks = flagContainer != null && flagContainer.hasFlag(Flag.SKIP_LOCKING);
-         if (!suppressLocks && flagContainer != null) flagContainer.setFlags(Flag.FORCE_WRITE_LOCK);
-
-         if (trace) {
-            if (suppressLocks)
-               log.trace("Skip locking flag used.  Skipping locking.");
-            else
-               log.trace("Forcing write lock even for reads");
-         }
-
-         // reinstate the flag
-         if (suppressLocks) flagContainer.setFlags(Flag.SKIP_LOCKING);
-
          AtomicHashMap<K, V> map = getDeltaMapForRead();
          boolean insertNewMap = map == null;
          // copy for write
