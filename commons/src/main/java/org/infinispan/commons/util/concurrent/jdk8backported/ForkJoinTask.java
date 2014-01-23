@@ -6,7 +6,7 @@
  * http://creativecommons.org/publicdomain/zero/1.0/
  */
 
-package org.infinispan.util.concurrent.jdk8backported;
+package org.infinispan.commons.util.concurrent.jdk8backported;
 
 import java.io.Serializable;
 import java.util.Collection;
@@ -883,8 +883,8 @@ public abstract class ForkJoinTask<V> implements Future<V>, Serializable {
    public final Throwable getException() {
       int s = status & DONE_MASK;
       return ((s >= NORMAL)    ? null :
-            (s == CANCELLED) ? new CancellationException() :
-                  getThrowableException());
+                    (s == CANCELLED) ? new CancellationException() :
+                          getThrowableException());
    }
 
    /**
@@ -1145,8 +1145,8 @@ public abstract class ForkJoinTask<V> implements Future<V>, Serializable {
    public boolean tryUnfork() {
       Thread t;
       return (((t = Thread.currentThread()) instanceof ForkJoinWorkerThread) ?
-            ((ForkJoinWorkerThread)t).workQueue.tryUnpush(this) :
-            ForkJoinPool.tryExternalUnpush(this));
+                    ((ForkJoinWorkerThread)t).workQueue.tryUnpush(this) :
+                    ForkJoinPool.tryExternalUnpush(this));
    }
 
    /**
