@@ -174,11 +174,12 @@
         <server.jvm>${env.JAVA_HOME}</server.jvm>
         <resources.dir>${basedir}/src/test/resources</resources.dir>
         <jvm.memory.args>-Xmx512m -XX:MaxPermSize=128m</jvm.memory.args>
+        <jvm.x64.args></jvm.x64.args>
         <default.transport.stack>udp</default.transport.stack>
         <transport.stack>-Djboss.default.jgroups.stack=${default.transport.stack}</transport.stack>
         
         <jvm.ip.stack>-Djava.net.preferIPv4Stack=true</jvm.ip.stack>
-        <server.jvm.args>${jvm.ip.stack} ${jvm.memory.args} ${transport.stack}</server.jvm.args>
+        <server.jvm.args>${jvm.ip.stack} ${jvm.memory.args} ${transport.stack} ${jvm.x64.args}</server.jvm.args>
         <log4j.configuration>log4j.xml</log4j.configuration>
         <suite.manual.phase>test</suite.manual.phase>
         <suite.rollups.manual.phase>none</suite.rollups.manual.phase>
