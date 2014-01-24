@@ -165,4 +165,19 @@ class DirectoryLuceneV3 extends Directory implements DirectoryExtensions {
        return indexName;
    }
 
+   @Override
+   public int getChunkSize() {
+      return impl.getChunkSize();
+   }
+
+   @Override
+   public Cache getMetadataCache() {
+      return impl.getMetadataCache();
+   }
+
+   @Override
+   public Cache getDataCache() {
+      return impl.getDataCache();
+   }
+
 }

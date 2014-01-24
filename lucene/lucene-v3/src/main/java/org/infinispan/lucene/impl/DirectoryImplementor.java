@@ -174,4 +174,16 @@ final class DirectoryImplementor {
        return "DirectoryImplementor{indexName=\'" + indexName + "\'}";
     }
 
+    public int getChunkSize() {
+       return chunkSize;
+    }
+
+    public Cache getMetadataCache() {
+       return metadataCache;
+    }
+
+    public Cache getDataCache() {
+       return chunksCache;
+    }
+
 }

@@ -1,8 +1,8 @@
 package org.infinispan.query.performance;
 
 import java.io.IOException;
-import java.lang.reflect.Field;
 
+import org.apache.lucene.store.Directory;
 import org.hibernate.search.backend.configuration.impl.IndexWriterSetting;
 import org.hibernate.search.backend.spi.LuceneIndexingParameters;
 import org.hibernate.search.backend.spi.LuceneIndexingParameters.ParameterSet;
@@ -13,9 +13,8 @@ import org.hibernate.search.indexes.spi.IndexManager;
 import org.hibernate.search.infinispan.impl.InfinispanDirectoryProvider;
 import org.hibernate.search.store.DirectoryProvider;
 import org.hibernate.search.store.impl.FSDirectoryProvider;
-import org.infinispan.AdvancedCache;
 import org.infinispan.Cache;
-import org.infinispan.lucene.InfinispanDirectory;
+import org.infinispan.lucene.impl.DirectoryExtensions;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.query.Search;
 import org.infinispan.query.SearchManager;
@@ -90,25 +89,17 @@ public class TuningOptionsAppliedTest {
       DirectoryProvider directoryProvider = nrti.getDirectoryProvider();
       Assert.assertTrue(directoryProvider instanceof InfinispanDirectoryProvider);
       InfinispanDirectoryProvider ispn = (InfinispanDirectoryProvider)directoryProvider;
-      InfinispanDirectory infinispanDirectory = ispn.getDirectory();
+      Directory infinispanDirectory = ispn.getDirectory();
+      DirectoryExtensions extended = (DirectoryExtensions)infinispanDirectory;
 
-      int chunkSize = extractFieldfromInfinispanDirectory("chunkSize").getInt(infinispanDirectory);
-      Assert.assertEquals(chunkSize, expectedChunkSize);
+      Assert.assertEquals(expectedChunkSize, extended.getChunkSize());
 
-      AdvancedCache metadataCache = (AdvancedCache) extractFieldfromInfinispanDirectory("metadataCache").get(infinispanDirectory);
-      Assert.assertEquals(metadataCache.getName(), "LuceneIndexesMetadataOWR");
+      Assert.assertEquals(extended.getMetadataCache().getName(), "LuceneIndexesMetadataOWR");
 
-      AdvancedCache chunksCache = (AdvancedCache) extractFieldfromInfinispanDirectory("chunksCache").get(infinispanDirectory);
-      Assert.assertEquals(chunksCache.getName(), "LuceneIndexesDataOWR");
+      Assert.assertEquals(extended.getDataCache().getName(), "LuceneIndexesDataOWR");
 
       //And finally check we're running it in the same CacheManager:
-      Assert.assertTrue(chunksCache.getCacheManager() == embeddedCacheManager);
-   }
-
-   private Field extractFieldfromInfinispanDirectory(String fieldName) throws SecurityException, NoSuchFieldException {
-      Field field = InfinispanDirectory.class.getDeclaredField(fieldName);
-      field.setAccessible(true);
-      return field;
+      Assert.assertTrue(extended.getDataCache().getCacheManager() == embeddedCacheManager);
    }
 
    private void verifyIndexWriterOptions(NRTIndexManager nrtIM, Integer expectedRAMBuffer, Integer expectedMaxMergeSize, Integer expectedMergeFactor) {

@@ -159,4 +159,19 @@ class DirectoryLuceneV4 extends Directory implements DirectoryExtensions {
       this.lockFactory = lockFactory;
    }
 
+   @Override
+   public int getChunkSize() {
+      return impl.getChunkSize();
+   }
+
+   @Override
+   public Cache getMetadataCache() {
+      return impl.getMetadataCache();
+   }
+
+   @Override
+   public Cache getDataCache() {
+      return impl.getDataCache();
+   }
+
 }
