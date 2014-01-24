@@ -16,11 +16,12 @@ import org.infinispan.transaction.TransactionMode;
 
 import java.util.HashSet;
 import java.util.Set;
+import java.util.concurrent.TimeUnit;
 
 /**
  * Default implementation of the ClusterRegistry. Stores all the information in a replicated cache that is lazily
  * instantiated on the first access. This means that if the EmbeddedCacheManager doesn't use the metadata the
- * underlaying cache never gets instantiated.
+ * underlying cache never gets instantiated.
  *
  * @author Mircea Markus
  * @since 6.0
@@ -44,6 +45,13 @@ public class ClusterRegistryImpl<S, K, V> implements ClusterRegistry<S, K, V> {
       if (value == null) throw new IllegalArgumentException("Null values are not allowed");
       startRegistryCache();
       clusterRegistryCacheWithoutReturn.put(new ScopedKey<S, K>(scope, key), value);
+   }
+
+   @Override
+   public void put(S scope, K key, V value, long lifespan, TimeUnit unit) {
+      if (value == null) throw new IllegalArgumentException("Null values are not allowed");
+      startRegistryCache();
+      clusterRegistryCacheWithoutReturn.put(new ScopedKey<S, K>(scope, key), value, lifespan, unit);
    }
 
    @Override
