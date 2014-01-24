@@ -166,7 +166,7 @@ public class GlobalConfigurationBuilder implements GlobalConfigurationChildBuild
 
    @SuppressWarnings("unchecked")
    public void validate() {
-      for (AbstractGlobalConfigurationBuilder<?> validatable : asList(asyncListenerExecutor, persistenceExecutor, asyncTransportExecutor,
+      for (Builder<?> validatable : asList(asyncListenerExecutor, persistenceExecutor, asyncTransportExecutor,
             remoteCommandsExecutor, evictionScheduledExecutor, replicationQueueScheduledExecutor, globalJmxStatistics, transport,
             serialization, shutdown, site, totalOrderExecutor)) {
          validatable.validate();
@@ -205,7 +205,7 @@ public class GlobalConfigurationBuilder implements GlobalConfigurationChildBuild
 
       for (Object c : template.modules().values()) {
          BuiltBy builtBy = c.getClass().getAnnotation(BuiltBy.class);
-         Builder<Object> builder = (Builder<Object>) this.addModule(builtBy.value());
+         Builder<Object> builder = this.addModule(builtBy.value());
          builder.read(c);
       }
 

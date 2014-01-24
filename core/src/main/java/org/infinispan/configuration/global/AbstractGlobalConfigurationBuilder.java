@@ -1,6 +1,6 @@
 package org.infinispan.configuration.global;
 
-abstract class AbstractGlobalConfigurationBuilder<T> implements GlobalConfigurationChildBuilder {
+abstract class AbstractGlobalConfigurationBuilder implements GlobalConfigurationChildBuilder {
 
    private final GlobalConfigurationBuilder globalConfig;
 
@@ -72,11 +72,5 @@ abstract class AbstractGlobalConfigurationBuilder<T> implements GlobalConfigurat
    public GlobalConfiguration build() {
       return globalConfig.build();
    }
-
-   abstract void validate();
-
-   abstract T create();
-
-   protected abstract GlobalConfigurationChildBuilder read(T template);
 
 }

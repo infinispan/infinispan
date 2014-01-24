@@ -1,6 +1,8 @@
 package org.infinispan.configuration.global;
 
-public class ShutdownConfigurationBuilder extends AbstractGlobalConfigurationBuilder<ShutdownConfiguration> {
+import org.infinispan.commons.configuration.Builder;
+
+public class ShutdownConfigurationBuilder extends AbstractGlobalConfigurationBuilder implements Builder<ShutdownConfiguration> {
 
    private ShutdownHookBehavior shutdownHookBehavior = ShutdownHookBehavior.DEFAULT;
 
@@ -14,17 +16,19 @@ public class ShutdownConfigurationBuilder extends AbstractGlobalConfigurationBui
    }
 
    @Override
+   public
    void validate() {
       // No-op, no validation required
    }
 
    @Override
+   public
    ShutdownConfiguration create() {
       return new ShutdownConfiguration(shutdownHookBehavior);
    }
 
    @Override
-   protected
+   public
    ShutdownConfigurationBuilder read(ShutdownConfiguration template) {
       this.shutdownHookBehavior = template.hookBehavior();
 

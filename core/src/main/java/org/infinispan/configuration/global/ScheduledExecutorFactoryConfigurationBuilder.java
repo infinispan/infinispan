@@ -2,6 +2,7 @@ package org.infinispan.configuration.global;
 
 import java.util.Properties;
 
+import org.infinispan.commons.configuration.Builder;
 import org.infinispan.commons.util.TypedProperties;
 import org.infinispan.executors.DefaultScheduledExecutorFactory;
 import org.infinispan.executors.ScheduledExecutorFactory;
@@ -9,19 +10,19 @@ import org.infinispan.executors.ScheduledExecutorFactory;
 /**
  * Configures executor factory.
  */
-public class ScheduledExecutorFactoryConfigurationBuilder extends AbstractGlobalConfigurationBuilder<ScheduledExecutorFactoryConfiguration> {
-   
+public class ScheduledExecutorFactoryConfigurationBuilder extends AbstractGlobalConfigurationBuilder implements Builder<ScheduledExecutorFactoryConfiguration> {
+
    private ScheduledExecutorFactory factory = new DefaultScheduledExecutorFactory();
    private Properties properties;
-   
+
    ScheduledExecutorFactoryConfigurationBuilder(GlobalConfigurationBuilder globalConfig) {
       super(globalConfig);
       this.properties = new Properties();
    }
-   
+
    /**
     * Specify factory class for executor
-    * 
+    *
     * NOTE: Currently Infinispan will not use the object instance, but instead instantiate a new
     * instance of the class. Therefore, do not expect any state to survive, and provide a no-args
     * constructor to any instance. This will be resolved in Infinispan 5.2.0
@@ -56,22 +57,24 @@ public class ScheduledExecutorFactoryConfigurationBuilder extends AbstractGlobal
       this.properties = props;
       return this;
    }
-   
+
    @Override
+   public
    void validate() {
       // No-op, no validation required
-   } 
-   
+   }
+
    @Override
+   public
    ScheduledExecutorFactoryConfiguration create() {
       return new ScheduledExecutorFactoryConfiguration(factory, TypedProperties.toTypedProperties(properties));
    }
-   
+
    @Override
    public ScheduledExecutorFactoryConfigurationBuilder read(ScheduledExecutorFactoryConfiguration template) {
       this.factory = template.factory();
       this.properties = template.properties();
-      
+
       return this;
    }
 
