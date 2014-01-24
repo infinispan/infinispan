@@ -26,9 +26,11 @@ public class PersistentStateTransferQueryIndexTest extends BaseReIndexingTest {
    protected void configureCache(ConfigurationBuilder builder) {
       // Explicitly disable fetching in-memory state in order
       // to fetch it from the persistence layer
-      builder.clustering().stateTransfer().fetchInMemoryState(false)
+      builder.clustering().stateTransfer().fetchInMemoryState(true)
             .persistence().passivation(true)
-            .addStore(DummyInMemoryStoreConfigurationBuilder.class).shared(false)
+            .addStore(DummyInMemoryStoreConfigurationBuilder.class)
+                  .shared(false)
+                  .preload(true)
                   .fetchPersistentState(true);
    }
 

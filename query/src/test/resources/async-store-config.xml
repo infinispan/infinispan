@@ -51,6 +51,7 @@
 
         <persistence passivation="false">
             <singleFile
+                    preload="true"
                     fetchPersistentState="true"
                     ignoreModifications="false"
                     purgeOnStartup="false"
