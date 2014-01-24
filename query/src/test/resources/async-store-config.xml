@@ -51,6 +51,7 @@
 
         <persistence passivation="false">
             <singleFile
+                    preload="true"
                     fetchPersistentState="true"
                     ignoreModifications="false"
                     purgeOnStartup="false"
@@ -112,7 +113,12 @@
         <indexing enabled="false" />
 
         <persistence>
-            <stringKeyedJdbcStore xmlns="urn:infinispan:config:jdbc:6.0" key2StringMapper="org.infinispan.lucene.LuceneKey2StringMapper" fetchPersistentState="false" ignoreModifications="false" purgeOnStartup="false">
+            <stringKeyedJdbcStore xmlns="urn:infinispan:config:jdbc:6.0"
+                    key2StringMapper="org.infinispan.lucene.LuceneKey2StringMapper"
+                    fetchPersistentState="false"
+                    ignoreModifications="false"
+                    preload="true"
+                    purgeOnStartup="false">
                 <stringKeyedTable dropOnExit="true" createOnStart="true" prefix="ISPN_STRING_TABLE">
                     <idColumn name="ID_COLUMN" type="VARCHAR(255)" />
                     <dataColumn name="DATA_COLUMN" type="BINARY" />
