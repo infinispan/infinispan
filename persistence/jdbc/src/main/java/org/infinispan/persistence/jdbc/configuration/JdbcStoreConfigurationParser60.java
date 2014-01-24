@@ -364,6 +364,12 @@ public class JdbcStoreConfigurationParser60 implements ConfigurationParser {
          case PURGE_ON_STARTUP:
             builder.purgeOnStartup(Boolean.parseBoolean(value));
             break;
+         case PRELOAD:
+            builder.preload(Boolean.parseBoolean(value));
+            break;
+         case SHARED:
+            builder.shared(Boolean.parseBoolean(value));
+            break;
          default:
             throw ParseUtils.unexpectedAttribute(reader, i);
       }
