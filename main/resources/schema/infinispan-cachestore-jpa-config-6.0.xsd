@@ -9,7 +9,7 @@
 	<xs:element name="jpaStore" type="tns:jpaStoreType"/>
 	<xs:complexType name="jpaStoreType">
 		<xs:complexContent>
-			<xs:extension base="config:lockSupportStore">
+			<xs:extension base="config:store">
 				<xs:attribute name="persistenceUnitName" type="xs:string" use="required">
 					<xs:annotation>
 						<xs:documentation>
@@ -31,6 +31,13 @@
 						</xs:documentation>
 					</xs:annotation>
 				</xs:attribute>
+            <xs:attribute name="storeMetadata" type="xs:boolean" default="true">
+               <xs:annotation>
+                  <xs:documentation>
+                     Store Infinispan metadata (expiration, versioning) with the entries. Default is true.
+                  </xs:documentation>
+               </xs:annotation>
+            </xs:attribute>
 			</xs:extension>
 		</xs:complexContent>
 	</xs:complexType>

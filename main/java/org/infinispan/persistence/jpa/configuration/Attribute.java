@@ -1,4 +1,4 @@
-package org.infinispan.loaders.jpa.configuration;
+package org.infinispan.persistence.jpa.configuration;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -14,7 +14,8 @@ public enum Attribute {
 
    PERSISTENCE_UNIT_NAME("persistenceUnitName"),
    ENTITY_CLASS_NAME("entityClassName"),
-   BATCH_SIZE("batchSize")
+   BATCH_SIZE("batchSize"),
+   STORE_METADATA("storeMetadata")
    ;
 
    private final String name;

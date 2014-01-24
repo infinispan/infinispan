@@ -1,9 +1,8 @@
-package org.infinispan.loaders.jpa.entity;
-
-import java.io.Serializable;
+package org.infinispan.persistence.jpa.entity;
 
 import javax.persistence.Entity;
 import javax.persistence.Id;
+import java.io.Serializable;
 
 /**
  * 

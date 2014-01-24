@@ -1,4 +1,4 @@
-package org.infinispan.loaders.jpa.entity;
+package org.infinispan.persistence.jpa.entity;
 
 import java.io.Serializable;
 
