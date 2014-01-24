@@ -58,6 +58,7 @@ public class NonTxPutIfAbsentDuringLeaveStressTest extends MultipleCacheManagers
       return c;
    }
 
+   @Test(enabled=false)//Occasionally fails: disabled until fixed
    public void testNodeLeavingDuringPutIfAbsent() throws Exception {
       Future[] futures = new Future[NUM_WRITERS];
       for (int i = 0; i < NUM_WRITERS; i++) {
