@@ -1,10 +1,12 @@
 package org.infinispan.configuration.global;
 
+import org.infinispan.commons.configuration.Builder;
+
 /**
  * @author Mircea.Markus@jboss.com
  * @since 5.2
  */
-public class SiteConfigurationBuilder extends AbstractGlobalConfigurationBuilder<SiteConfiguration> {
+public class SiteConfigurationBuilder extends AbstractGlobalConfigurationBuilder implements Builder<SiteConfiguration> {
 
    private String localSite;
 
@@ -21,16 +23,18 @@ public class SiteConfigurationBuilder extends AbstractGlobalConfigurationBuilder
    }
 
    @Override
+   public
    void validate() {
    }
 
    @Override
+   public
    SiteConfiguration create() {
       return new SiteConfiguration(localSite);
    }
 
    @Override
-   protected GlobalConfigurationChildBuilder read(SiteConfiguration template) {
+   public SiteConfigurationBuilder read(SiteConfiguration template) {
       this.localSite = template.localSite();
       return this;
    }

@@ -2,6 +2,7 @@ package org.infinispan.configuration.global;
 
 import java.util.Properties;
 
+import org.infinispan.commons.configuration.Builder;
 import org.infinispan.commons.util.TypedProperties;
 import org.infinispan.commons.util.Util;
 import org.infinispan.jmx.MBeanServerLookup;
@@ -10,7 +11,7 @@ import org.infinispan.jmx.PlatformMBeanServerLookup;
 /**
  * Configures whether global statistics are gathered and reported via JMX for all caches under this cache manager.
  */
-public class GlobalJmxStatisticsConfigurationBuilder extends AbstractGlobalConfigurationBuilder<GlobalJmxStatisticsConfiguration> {
+public class GlobalJmxStatisticsConfigurationBuilder extends AbstractGlobalConfigurationBuilder implements Builder<GlobalJmxStatisticsConfiguration> {
 
    private Properties properties = new Properties();
    private String jmxDomain = "org.infinispan";
@@ -100,17 +101,19 @@ public class GlobalJmxStatisticsConfigurationBuilder extends AbstractGlobalConfi
    }
 
    @Override
+   public
    void validate() {
       // No-op, no validation required
    }
 
    @Override
+   public
    GlobalJmxStatisticsConfiguration create() {
       return new GlobalJmxStatisticsConfiguration(enabled, jmxDomain, mBeanServerLookupInstance, allowDuplicateDomains,  cacheManagerName, TypedProperties.toTypedProperties(properties));
    }
 
    @Override
-   protected
+   public
    GlobalJmxStatisticsConfigurationBuilder read(GlobalJmxStatisticsConfiguration template) {
       this.allowDuplicateDomains = template.allowDuplicateDomains();
       this.cacheManagerName = template.cacheManagerName();

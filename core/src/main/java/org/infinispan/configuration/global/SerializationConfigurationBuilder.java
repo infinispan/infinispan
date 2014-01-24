@@ -2,6 +2,7 @@ package org.infinispan.configuration.global;
 
 import org.infinispan.Version;
 import org.infinispan.commons.CacheConfigurationException;
+import org.infinispan.commons.configuration.Builder;
 import org.infinispan.commons.marshall.AdvancedExternalizer;
 import org.infinispan.commons.marshall.Marshaller;
 import org.infinispan.marshall.LegacyAdvancedExternalizerAdapter;
@@ -14,7 +15,7 @@ import java.util.Map;
 /**
  * Configures serialization and marshalling settings.
  */
-public class SerializationConfigurationBuilder extends AbstractGlobalConfigurationBuilder<SerializationConfiguration> {
+public class SerializationConfigurationBuilder extends AbstractGlobalConfigurationBuilder implements Builder<SerializationConfiguration> {
 
    private Marshaller marshaller = new VersionAwareMarshaller();
    private short marshallVersion = Short.valueOf(Version.MAJOR_MINOR.replace(".", ""));
@@ -167,18 +168,19 @@ public class SerializationConfigurationBuilder extends AbstractGlobalConfigurati
    }
 
    @Override
-   protected void validate() {
+   public void validate() {
       // No-op, no validation required
    }
 
    @Override
+   public
    SerializationConfiguration create() {
       return new SerializationConfiguration(
             marshaller, marshallVersion, advancedExternalizers, classResolver);
    }
 
    @Override
-   protected
+   public
    SerializationConfigurationBuilder read(SerializationConfiguration template) {
       this.advancedExternalizers = template.advancedExternalizers();
       this.marshaller = template.marshaller();

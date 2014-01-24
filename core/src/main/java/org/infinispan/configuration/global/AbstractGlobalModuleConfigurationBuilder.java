@@ -1,6 +1,6 @@
 package org.infinispan.configuration.global;
 
-public abstract class AbstractGlobalModuleConfigurationBuilder<T> extends AbstractGlobalConfigurationBuilder<T> {
+public abstract class AbstractGlobalModuleConfigurationBuilder extends AbstractGlobalConfigurationBuilder {
 
    protected AbstractGlobalModuleConfigurationBuilder(GlobalConfigurationBuilder globalConfig) {
       super(globalConfig);
