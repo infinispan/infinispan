@@ -1,4 +1,4 @@
-package org.infinispan.loaders.jpa.configuration;
+package org.infinispan.persistence.jpa.configuration;
 
 import java.util.HashMap;
 import java.util.Map;

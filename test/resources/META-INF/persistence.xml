@@ -3,19 +3,21 @@
 	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
 	xsi:schemaLocation="http://java.sun.com/xml/ns/persistence http://java.sun.com/xml/ns/persistence/persistence_2_0.xsd"
 	version="2.0">
-	<persistence-unit name="org.infinispan.loaders.jpa">
+	<persistence-unit name="org.infinispan.persistence.jpa">
+      <!-- This class is required to allow store metadata -->
+      <class>org.infinispan.persistence.jpa.MetadataEntity</class>
 		<properties>
-		<!-- H2  -->
-		<property name="hibernate.connection.url" value="jdbc:h2:mem:test;DB_CLOSE_DELAY=-1"/>
-		<property name="hibernate.connection.driver_class" value="org.h2.Driver"/>
-		<property name="hibernate.dialect" value="org.hibernate.dialect.H2Dialect" />
-			
-		<!--  MySQL -->
-		<!--
+         <!-- H2  -->
+         <!--<property name="hibernate.connection.url" value="jdbc:h2:mem:test;DB_CLOSE_DELAY=-1"/>-->
+         <!--<property name="hibernate.connection.driver_class" value="org.h2.Driver"/>-->
+         <!--<property name="hibernate.dialect" value="org.hibernate.dialect.H2Dialect" />-->
+
+         <!--  MySQL -->
+
 			<property name="hibernate.connection.url" value="jdbc:mysql://localhost:3306/ispn_jpa_test"/>
 			<property name="hibernate.connection.driver_class" value="com.mysql.jdbc.Driver"/>
 			<property name="hibernate.dialect" value="org.hibernate.dialect.MySQLDialect" />
-		-->
+
 			<property name="hibernate.jdbc.batch_size" value="20" />
 			<property name="hibernate.jdbc.fetch_size" value="20" />
 			<property name="hibernate.connection.username" value="root"/>
@@ -25,19 +27,21 @@
 		</properties>
 	</persistence-unit>
 	
-	<persistence-unit name="org.infinispan.loaders.jpa.configurationTest">
-		<properties>
-		<!-- H2  -->
-		<property name="hibernate.connection.url" value="jdbc:h2:mem:configurationTest;DB_CLOSE_DELAY=-1"/>
-		<property name="hibernate.connection.driver_class" value="org.h2.Driver"/>
-		<property name="hibernate.dialect" value="org.hibernate.dialect.H2Dialect" />
+	<persistence-unit name="org.infinispan.persistence.jpa.configurationTest">
+      <!-- This class is required to allow store metadata -->
+      <class>org.infinispan.persistence.jpa.MetadataEntity</class>
+      <properties>
+         <!-- H2  -->
+         <!--<property name="hibernate.connection.url" value="jdbc:h2:mem:configurationTest;DB_CLOSE_DELAY=-1"/>-->
+         <!--<property name="hibernate.connection.driver_class" value="org.h2.Driver"/>-->
+         <!--<property name="hibernate.dialect" value="org.hibernate.dialect.H2Dialect" />-->
 			
-		<!--  MySQL -->
-		<!--
+		   <!--  MySQL -->
+
 			<property name="hibernate.connection.url" value="jdbc:mysql://localhost:3306/ispn_jpa_test"/>
 			<property name="hibernate.connection.driver_class" value="com.mysql.jdbc.Driver"/>
 			<property name="hibernate.dialect" value="org.hibernate.dialect.MySQLDialect" />
-		-->
+
 			<property name="hibernate.jdbc.batch_size" value="20" />
 			<property name="hibernate.jdbc.fetch_size" value="20" />
 			<property name="hibernate.connection.username" value="root"/>

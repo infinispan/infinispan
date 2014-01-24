@@ -1,4 +1,4 @@
-package org.infinispan.loaders.jpa;
+package org.infinispan.persistence.jpa;
 
 /**
  * 

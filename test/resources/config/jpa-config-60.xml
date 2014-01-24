@@ -1,5 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<infinispan>
+<infinispan
+   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+   xsi:schemaLocation="urn:infinispan:config:6.0 http://www.infinispan.org/schemas/infinispan-config-6.0.xsd"
+   xmlns="urn:infinispan:config:6.0">
 
 	<global>
 		<!-- Note that if these are left blank, defaults are used. See the user 
@@ -46,48 +49,17 @@
 		<locking isolationLevel="REPEATABLE_READ"
 			lockAcquisitionTimeout="20000" writeSkewCheck="false"
 			concurrencyLevel="500" useLockStriping="false" />
-
 	</default>
-
-
-	<namedCache name="userCache">
-		<loaders passivation="false" shared="true" preload="true">
-			<loader class="org.infinispan.loaders.jpa.JpaCacheStore"
-				fetchPersistentState="false" ignoreModifications="false"
-				purgeOnStartup="false">
-				<properties>
-					<property name="persistenceUnitName" value="org.infinispan.loaders.jpa.configurationTest" />
-					<property name="entityClassName" value="org.infinispan.loaders.jpa.entity.User" />
-				</properties>
-			</loader>
-		</loaders>
-	</namedCache>
-	
-	<namedCache name="documentCache">
-		<loaders passivation="false" shared="true" preload="true">
-			<loader class="org.infinispan.loaders.jpa.JpaCacheStore"
-				fetchPersistentState="false" ignoreModifications="false"
-				purgeOnStartup="false">
-				<properties>
-					<property name="persistenceUnitName" value="org.infinispan.loaders.jpa.configurationTest" />
-					<property name="entityClassName" value="org.infinispan.loaders.jpa.entity.Document" />
-				</properties>
-			</loader>
-		</loaders>
-	</namedCache>
 	
 	<namedCache name="vehicleCache">
-		<loaders passivation="false" shared="true" preload="true">
-			<loader class="org.infinispan.loaders.jpa.JpaCacheStore"
-				fetchPersistentState="false" ignoreModifications="false"
-				purgeOnStartup="false">
-				<properties>
-					<property name="persistenceUnitName" value="org.infinispan.loaders.jpa.configurationTest" />
-					<property name="entityClassName" value="org.infinispan.loaders.jpa.entity.Vehicle" />
-					<property name='batchSize' value="1" />
-				</properties>
-			</loader>
-		</loaders>
+		<persistence passivation="false">
+			<jpaStore xmlns="urn:infinispan:config:jpa:6.0"
+                   shared="false" preload="true"
+				       persistenceUnitName="org.infinispan.persistence.jpa.configurationTest"
+				       entityClassName="org.infinispan.persistence.jpa.entity.Vehicle"
+				       batchSize="1">
+			</jpaStore>
+		</persistence>
 	</namedCache>
 
 </infinispan>
