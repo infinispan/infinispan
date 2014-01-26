@@ -31,8 +31,14 @@ public class DistributedSegmentReadLocker implements SegmentReadLocker {
    private final AdvancedCache<?, ?> chunksCache;
    private final AdvancedCache<?, ?> metadataCache;
    private final String indexName;
+   private final boolean forceSynchronousDeletes;
 
    public DistributedSegmentReadLocker(Cache<Object, Integer> locksCache, Cache<?, ?> chunksCache, Cache<?, ?> metadataCache, String indexName) {
+      this(locksCache, chunksCache, metadataCache, indexName, false);
+   }
+
+   public DistributedSegmentReadLocker(Cache<Object, Integer> locksCache, Cache<?, ?> chunksCache, Cache<?, ?> metadataCache, String indexName, boolean forceSynchronousDeletes) {
+      this.forceSynchronousDeletes = forceSynchronousDeletes;
       if (locksCache == null)
          throw new IllegalArgumentException("locksCache must not be null");
       if (chunksCache == null)
@@ -82,7 +88,7 @@ public class DistributedSegmentReadLocker implements SegmentReadLocker {
          }
       }
       if (newValue == 0) {
-         realFileDelete(readLockKey, locksCache, chunksCache, metadataCache);
+         realFileDelete(readLockKey, locksCache, chunksCache, metadataCache, forceSynchronousDeletes);
       }
    }
 
@@ -148,9 +154,10 @@ public class DistributedSegmentReadLocker implements SegmentReadLocker {
     * @param locksCache the cache containing the locks
     * @param chunksCache the cache containing the chunks to be deleted
     * @param metadataCache the cache containing the metadata of elements to be deleted
+    * @param forceSynchronousDeletes when false deletion of chunk data is performed asynchronously
     */
    static void realFileDelete(FileReadLockKey readLockKey, AdvancedCache<Object, Integer> locksCache,
-                              AdvancedCache<?, ?> chunksCache, AdvancedCache<?, ?> metadataCache) {
+                              AdvancedCache<?, ?> chunksCache, AdvancedCache<?, ?> metadataCache, boolean forceSynchronousDeletes) {
       final boolean trace = log.isTraceEnabled();
       final String indexName = readLockKey.getIndexName();
       final String filename = readLockKey.getFileName();
@@ -159,16 +166,27 @@ public class DistributedSegmentReadLocker implements SegmentReadLocker {
       final FileMetadata file = (FileMetadata) metadataCache.remove(key);
       if (file != null) { //during optimization of index a same file could be deleted twice, so you could see a null here
          final int bufferSize = file.getBufferSize();
+         AdvancedCache<?, ?> chunksCacheNoReturn = chunksCache.withFlags(Flag.IGNORE_RETURN_VALUES);
          for (int i = 0; i < file.getNumberOfChunks(); i++) {
             ChunkCacheKey chunkKey = new ChunkCacheKey(indexName, filename, i, bufferSize);
             if (trace) log.tracef("deleting chunk: %s", chunkKey);
-            chunksCache.withFlags(Flag.IGNORE_RETURN_VALUES).removeAsync(chunkKey);
+            if (forceSynchronousDeletes) {
+               chunksCacheNoReturn.remove(chunkKey);
+            }
+            else {
+               chunksCacheNoReturn.removeAsync(chunkKey);
+            }
          }
       }
       // last operation, as being set as value==0 it prevents others from using it during the
       // deletion process:
       if (trace) log.tracef("deleting readlock: %s", readLockKey);
-      locksCache.withFlags(Flag.IGNORE_RETURN_VALUES).removeAsync(readLockKey);
+      if (forceSynchronousDeletes) {
+         locksCache.withFlags(Flag.IGNORE_RETURN_VALUES).remove(readLockKey);
+      }
+      else {
+         locksCache.withFlags(Flag.IGNORE_RETURN_VALUES).removeAsync(readLockKey);
+      }
    }
 
    private static void verifyCacheHasNoEviction(AdvancedCache<?, ?> cache) {

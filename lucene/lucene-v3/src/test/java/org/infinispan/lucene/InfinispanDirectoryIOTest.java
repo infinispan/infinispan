@@ -16,6 +16,8 @@ import org.infinispan.Cache;
 import org.infinispan.lucene.directory.DirectoryBuilder;
 import org.infinispan.lucene.impl.DirectoryBuilderImpl;
 import org.infinispan.lucene.impl.DirectoryExtensions;
+import org.infinispan.lucene.readlocks.DistributedSegmentReadLocker;
+import org.infinispan.lucene.readlocks.SegmentReadLocker;
 import org.infinispan.lucene.testutils.RepeatableLongByteSequence;
 import org.infinispan.manager.CacheContainer;
 import org.infinispan.test.TestingUtil;
@@ -125,7 +127,10 @@ public class InfinispanDirectoryIOTest {
       final int BUFFER_SIZE = 64;
 
       Cache cache = cacheManager.getCache();
-      Directory dir = DirectoryBuilder.newDirectoryInstance(cache, cache, cache, INDEXNAME).chunkSize(BUFFER_SIZE).create();
+      Directory dir = DirectoryBuilder.newDirectoryInstance(cache, cache, cache, INDEXNAME)
+         .chunkSize(BUFFER_SIZE)
+         .overrideSegmentReadLocker(makeTestableReadLocker(cache, INDEXNAME))
+         .create();
 
       verifyOnBuffer("SingleChunk.txt", 61, BUFFER_SIZE, cache, dir, 15);
 
@@ -146,6 +151,10 @@ public class InfinispanDirectoryIOTest {
 
       dir.close();
       DirectoryIntegrityCheck.verifyDirectoryStructure(cache, INDEXNAME);
+   }
+
+   private SegmentReadLocker makeTestableReadLocker(Cache cache, String indexName) {
+      return new DistributedSegmentReadLocker(cache, cache, cache, indexName, true);
    }
 
    /**
