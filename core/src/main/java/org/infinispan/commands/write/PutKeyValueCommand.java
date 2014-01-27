@@ -1,5 +1,6 @@
 package org.infinispan.commands.write;
 
+import org.infinispan.atomic.CopyableDeltaAware;
 import org.infinispan.commons.equivalence.Equivalence;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.metadata.Metadata;
@@ -211,7 +212,11 @@ public class PutKeyValueCommand extends AbstractDataWriteCommand implements Meta
          // magic
          Delta dv = (Delta) value;
          DeltaAware toMergeWith = null;
-         if (entryValue instanceof DeltaAware) toMergeWith = (DeltaAware) entryValue;
+         if (entryValue instanceof CopyableDeltaAware) {
+            toMergeWith = ((CopyableDeltaAware) entryValue).copy();
+         } else if (entryValue instanceof DeltaAware) {
+            toMergeWith = (DeltaAware) entryValue;
+         }
          e.setValue(dv.merge(toMergeWith));
          o = entryValue;
          e.setMetadata(metadata);

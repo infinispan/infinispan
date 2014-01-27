@@ -11,8 +11,6 @@ import org.infinispan.transaction.LocalTransaction;
 import org.infinispan.transaction.LockingMode;
 import org.infinispan.transaction.TransactionMode;
 import org.infinispan.transaction.TransactionTable;
-import org.infinispan.util.logging.Log;
-import org.infinispan.util.logging.LogFactory;
 
 import javax.transaction.SystemException;
 import javax.transaction.Transaction;
@@ -41,8 +39,6 @@ import java.util.Set;
  * @since 4.0
  */
 public class AtomicHashMapProxy<K, V> extends AutoBatchSupport implements AtomicMap<K, V> {
-   private static final Log log = LogFactory.getLog(AtomicHashMapProxy.class);
-   private static final boolean trace = log.isTraceEnabled();
    protected final Object deltaMapKey;
    protected final AdvancedCache<Object, AtomicMap<K, V>> cache;
    protected final AdvancedCache<Object, AtomicMap<K, V>> cacheForWriting;
@@ -56,8 +52,7 @@ public class AtomicHashMapProxy<K, V> extends AutoBatchSupport implements Atomic
          throw new IllegalStateException("AtomicMap needs a transactional cache.");
       }
       this.cache = (AdvancedCache<Object, AtomicMap<K, V>>) cache;
-      Flag[] writeFlags = new Flag[]{Flag.DELTA_WRITE};
-      this.cacheForWriting = this.cache.withFlags(writeFlags);
+      this.cacheForWriting = (AdvancedCache<Object, AtomicMap<K, V>>) cache.getAdvancedCache().withFlags(Flag.DELTA_WRITE);
       this.deltaMapKey = deltaMapKey;
       this.batchContainer = cache.getBatchContainer();
       transactionTable = cache.getComponentRegistry().getComponent(TransactionTable.class);
