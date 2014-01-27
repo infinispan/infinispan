@@ -177,7 +177,7 @@ public class L1WriteSynchronizerTest extends AbstractInfinispanTest {
 
          @Override
          public Object call() throws Exception {
-            return sync.get(500, TimeUnit.MILLISECONDS);
+            return sync.get(5, TimeUnit.SECONDS);
          }
       });
 
