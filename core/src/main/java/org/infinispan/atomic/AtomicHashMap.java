@@ -38,7 +38,7 @@ import java.util.Set;
  * @since 4.0
  */
 @NotThreadSafe
-public final class AtomicHashMap<K, V> implements AtomicMap<K, V>, DeltaAware, Cloneable {
+public final class AtomicHashMap<K, V> implements AtomicMap<K, V>, CopyableDeltaAware, Cloneable {
 
    private static final Log log = LogFactory.getLog(AtomicHashMap.class);
    private static final boolean trace = log.isTraceEnabled();

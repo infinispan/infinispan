@@ -4,12 +4,11 @@ import org.infinispan.AdvancedCache;
 import org.infinispan.commons.util.InfinispanCollections;
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.container.entries.DeltaAwareCacheEntry;
-import org.infinispan.util.logging.Log;
-import org.infinispan.util.logging.LogFactory;
 
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -31,9 +30,6 @@ import java.util.Set;
  * @since 5.1
  */
 public class FineGrainedAtomicHashMapProxy<K, V> extends AtomicHashMapProxy<K, V> implements FineGrainedAtomicMap<K,V> {
-
-   private static final Log log = LogFactory.getLog(FineGrainedAtomicHashMapProxy.class);
-   private static final boolean trace = log.isTraceEnabled();
 
    FineGrainedAtomicHashMapProxy(AdvancedCache<?, ?> cache, Object deltaMapKey) {
      super(cache, deltaMapKey);
@@ -86,10 +82,10 @@ public class FineGrainedAtomicHashMapProxy<K, V> extends AtomicHashMapProxy<K, V
    @Override
    public Collection<V> values() {
       if (hasUncommittedChanges()) {
-         return new HashSet<V>(valuesUncommitted());
+         return new ArrayList<V>(valuesUncommitted());
       }
       AtomicHashMap<K, V> map = getDeltaMapForRead().copy();
-      Set<V> result = new HashSet<V>(valuesUncommitted());
+      List<V> result = new ArrayList<V>(valuesUncommitted());
       if (map != null) {
          result.addAll(map.values());
       }
