@@ -4,18 +4,22 @@ import org.infinispan.AdvancedCache;
 import org.infinispan.Cache;
 import org.infinispan.commons.equivalence.AnyEquivalence;
 import org.infinispan.commons.marshall.StreamingMarshaller;
-import org.infinispan.commons.util.Util;
+import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.cache.StoreConfiguration;
+import org.infinispan.configuration.global.GlobalConfiguration;
+import org.infinispan.configuration.global.GlobalConfigurationBuilder;
 import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.container.entries.InternalCacheValue;
 import org.infinispan.factories.ComponentRegistry;
+import org.infinispan.factories.GlobalComponentRegistry;
 import org.infinispan.lifecycle.ComponentStatus;
-import org.infinispan.marshall.core.MarshalledEntryImpl;
-import org.infinispan.persistence.spi.AdvancedLoadWriteStore;
-import org.infinispan.marshall.core.MarshalledEntry;
+import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.marshall.TestObjectStreamMarshaller;
+import org.infinispan.marshall.core.MarshalledEntry;
+import org.infinispan.marshall.core.MarshalledEntryImpl;
 import org.infinispan.marshall.core.MarshalledValue;
+import org.infinispan.persistence.spi.AdvancedLoadWriteStore;
 import org.infinispan.persistence.spi.PersistenceException;
 import org.infinispan.test.AbstractInfinispanTest;
 import org.infinispan.test.TestingUtil;
@@ -37,8 +41,11 @@ import static org.infinispan.test.TestingUtil.allEntries;
 import static org.infinispan.test.TestingUtil.marshalledEntry;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
+import static org.testng.Assert.assertNull;
+import static org.testng.Assert.assertTrue;
 import static org.testng.AssertJUnit.assertEquals;
 import static org.testng.AssertJUnit.assertFalse;
+import static org.testng.AssertJUnit.assertNotNull;
 
 /**
  * This is a base class containing various unit tests for each and every different CacheStore implementations. If you
@@ -99,11 +106,29 @@ public abstract class BaseStoreTest extends AbstractInfinispanTest {
       return marshaller;
    }
 
+   /**
+    * Overridden in stores which accept only certain value types
+    * @param value
+    * @return
+    */
+   protected Object wrap(String key, String value) {
+      return value;
+   }
+
+   /**
+    * Overridden in stores which accept only certain value types
+    * @param wrapped
+    * @return
+    */
+   protected String unwrap(Object wrapped) {
+      return (String) wrapped;
+   }
+
    public void testLoadAndStoreImmortal() throws PersistenceException {
       assertFalse(cl.contains("k"));
-      cl.write(new MarshalledEntryImpl("k", "v", null, getMarshaller()));
+      cl.write(new MarshalledEntryImpl("k", wrap("k", "v"), null, getMarshaller()));
 
-      assert cl.load("k").getValue().equals("v");
+      assertEquals("v", unwrap(cl.load("k").getValue()));
       assert cl.load("k").getMetadata() == null || cl.load("k").getMetadata().expiryTime() == -1;
       assert cl.load("k").getMetadata() == null || cl.load("k").getMetadata().maxIdle() == -1;
       assert cl.contains("k");
@@ -116,8 +141,8 @@ public abstract class BaseStoreTest extends AbstractInfinispanTest {
       assertFalse(cl.contains("k"));
 
       long lifespan = 120000;
-      InternalCacheEntry se = TestInternalCacheEntryFactory.create("k", "v", lifespan);
-      cl.write(new MarshalledEntryImpl("k", "v", internalMetadata(se), getMarshaller()));
+      InternalCacheEntry se = TestInternalCacheEntryFactory.create("k", wrap("k", "v"), lifespan);
+      cl.write(new MarshalledEntryImpl("k", wrap("k", "v"), internalMetadata(se), getMarshaller()));
 
       assert cl.contains("k");
       MarshalledEntry me = cl.load("k");
@@ -127,8 +152,8 @@ public abstract class BaseStoreTest extends AbstractInfinispanTest {
       assertCorrectExpiry(me, "v", lifespan, -1, false);
 
       lifespan = 1;
-      se = TestInternalCacheEntryFactory.create("k", "v", lifespan);
-      cl.write(new MarshalledEntryImpl("k","v", internalMetadata(se), getMarshaller()));
+      se = TestInternalCacheEntryFactory.create("k", wrap("k", "v"), lifespan);
+      cl.write(new MarshalledEntryImpl("k", wrap("k", "v"), internalMetadata(se), getMarshaller()));
       Thread.sleep(100);
       purgeExpired();
       assert se.isExpired(System.currentTimeMillis());
@@ -138,8 +163,8 @@ public abstract class BaseStoreTest extends AbstractInfinispanTest {
    }
 
    private void assertCorrectExpiry(MarshalledEntry me, String value, long lifespan, long maxIdle, boolean expired) {
-      assert me != null : "Cache entry is null";
-      assert Util.safeEquals(me.getValue(), value) : me.getValue() + " was not " + value;
+      assertNotNull(me);
+      assertEquals(value, unwrap(me.getValue()));
 
       if (lifespan > -1) {
          assert me.getMetadata().lifespan() == lifespan : me.getMetadata().lifespan() + " was not " + lifespan;
@@ -159,7 +184,7 @@ public abstract class BaseStoreTest extends AbstractInfinispanTest {
       assertFalse(cl.contains("k"));
 
       long idle = 120000;
-      InternalCacheEntry se = TestInternalCacheEntryFactory.create("k", "v", -1, idle);
+      InternalCacheEntry se = TestInternalCacheEntryFactory.create("k", wrap("k", "v"), -1, idle);
       cl.write(marshalledEntry(se, getMarshaller()));
 
       assert cl.contains("k");
@@ -168,7 +193,7 @@ public abstract class BaseStoreTest extends AbstractInfinispanTest {
       assertCorrectExpiry(TestingUtil.allEntries(cl).iterator().next(), "v", -1, idle, false);
 
       idle = 1;
-      se = TestInternalCacheEntryFactory.create("k", "v", -1, idle);
+      se = TestInternalCacheEntryFactory.create("k", wrap("k", "v"), -1, idle);
       cl.write(marshalledEntry(se, getMarshaller()));
       Thread.sleep(100);
       purgeExpired();
@@ -200,7 +225,7 @@ public abstract class BaseStoreTest extends AbstractInfinispanTest {
 
       long lifespan = 200000;
       long idle = 120000;
-      InternalCacheEntry se = TestInternalCacheEntryFactory.create("k", "v", lifespan, idle);
+      InternalCacheEntry se = TestInternalCacheEntryFactory.create("k", wrap("k", "v"), lifespan, idle);
       InternalCacheValue icv = se.toInternalCacheValue();
       assertEquals(se.getCreated(), icv.getCreated());
       assertEquals(se.getLastUsed(), icv.getLastUsed());
@@ -212,7 +237,7 @@ public abstract class BaseStoreTest extends AbstractInfinispanTest {
       assertCorrectExpiry(TestingUtil.allEntries(cl).iterator().next(), "v", lifespan, idle, false);
 
       idle = 1;
-      se = TestInternalCacheEntryFactory.create("k", "v", lifespan, idle);
+      se = TestInternalCacheEntryFactory.create("k", wrap("k", "v"), lifespan, idle);
       cl.write(marshalledEntry(se, getMarshaller()));
       Thread.sleep(100);
       purgeExpired();
@@ -228,10 +253,10 @@ public abstract class BaseStoreTest extends AbstractInfinispanTest {
 
       long lifespan = 1;
       long idle = 1;
-      InternalCacheEntry se1 = TestInternalCacheEntryFactory.create("k1", "v1", lifespan);
-      InternalCacheEntry se2 = TestInternalCacheEntryFactory.create("k2", "v2");
-      InternalCacheEntry se3 = TestInternalCacheEntryFactory.create("k3", "v3", -1, idle);
-      InternalCacheEntry se4 = TestInternalCacheEntryFactory.create("k4", "v4", lifespan, idle);
+      InternalCacheEntry se1 = TestInternalCacheEntryFactory.create("k1", wrap("k1", "v1"), lifespan);
+      InternalCacheEntry se2 = TestInternalCacheEntryFactory.create("k2", wrap("k2", "v2"));
+      InternalCacheEntry se3 = TestInternalCacheEntryFactory.create("k3", wrap("k3", "v3"), -1, idle);
+      InternalCacheEntry se4 = TestInternalCacheEntryFactory.create("k4", wrap("k4", "v4"), lifespan, idle);
 
       cl.write(marshalledEntry(se1, getMarshaller()));
       cl.write(marshalledEntry(se2, getMarshaller()));
@@ -243,16 +268,16 @@ public abstract class BaseStoreTest extends AbstractInfinispanTest {
       cl.stop();
       cl.start();
       assert se1.isExpired(System.currentTimeMillis());
-      assert cl.load("k1") == null;
+      assertNull(cl.load("k1"));
       assertFalse(cl.contains("k1"));
-      assert cl.load("k2") != null;
+      assertNotNull(cl.load("k2"));
       assert cl.contains("k2");
-      assertEquals(cl.load("k2").getValue(),"v2");
+      assertEquals("v2", unwrap(cl.load("k2").getValue()));
       assert se3.isExpired(System.currentTimeMillis());
-      assert cl.load("k3") == null;
+      assertNull(cl.load("k3"));
       assertFalse(cl.contains("k3"));
       assert se3.isExpired(System.currentTimeMillis());
-      assert cl.load("k3") == null;
+      assertNull(cl.load("k3"));
       assertFalse(cl.contains("k3"));
    }
 
@@ -261,27 +286,27 @@ public abstract class BaseStoreTest extends AbstractInfinispanTest {
    }
 
    public void testPreload() throws Exception {
-      cl.write(new MarshalledEntryImpl("k1","v1", null, getMarshaller()));
-      cl.write(new MarshalledEntryImpl("k2","v2", null, getMarshaller()));
-      cl.write(new MarshalledEntryImpl("k3","v3", null, getMarshaller()));
+      cl.write(new MarshalledEntryImpl("k1", wrap("k1", "v1"), null, getMarshaller()));
+      cl.write(new MarshalledEntryImpl("k2", wrap("k2", "v2"), null, getMarshaller()));
+      cl.write(new MarshalledEntryImpl("k3", wrap("k3", "v3"), null, getMarshaller()));
 
       Set<MarshalledEntry> set = TestingUtil.allEntries(cl);
 
-      assert set.size() == 3;
+      assertEquals(3, set.size());
       Set expected = new HashSet();
       expected.add("k1");
       expected.add("k2");
       expected.add("k3");
       for (MarshalledEntry se : set)
-         assert expected.remove(se.getKey());
-      assert expected.isEmpty();
+         assertTrue(expected.remove(se.getKey()));
+      assertTrue(expected.isEmpty());
    }
 
    public void testStoreAndRemove() throws PersistenceException {
-      cl.write(new MarshalledEntryImpl("k1","v1", null, getMarshaller()));
-      cl.write(new MarshalledEntryImpl("k2","v2", null, getMarshaller()));
-      cl.write(new MarshalledEntryImpl("k3","v3", null, getMarshaller()));
-      cl.write(new MarshalledEntryImpl("k4","v4", null, getMarshaller()));
+      cl.write(new MarshalledEntryImpl("k1", wrap("k1", "v1"), null, getMarshaller()));
+      cl.write(new MarshalledEntryImpl("k2", wrap("k2", "v2"), null, getMarshaller()));
+      cl.write(new MarshalledEntryImpl("k3", wrap("k3", "v3"), null, getMarshaller()));
+      cl.write(new MarshalledEntryImpl("k4", wrap("k4", "v4"), null, getMarshaller()));
 
 
       Set<MarshalledEntry> set = TestingUtil.allEntries(cl);
@@ -309,15 +334,15 @@ public abstract class BaseStoreTest extends AbstractInfinispanTest {
       // Increased lifespan and idle timeouts to accommodate slower cache stores
       long lifespan = 6000;
       long idle = 4000;
-      InternalCacheEntry ice1 = TestInternalCacheEntryFactory.create("k1", "v1", lifespan);
+      InternalCacheEntry ice1 = TestInternalCacheEntryFactory.create("k1", wrap("k1", "v1"), lifespan);
       cl.write(marshalledEntry(ice1, getMarshaller()));
-      InternalCacheEntry ice2 = TestInternalCacheEntryFactory.create("k2", "v2", -1, idle);
+      InternalCacheEntry ice2 = TestInternalCacheEntryFactory.create("k2", wrap("k2", "v2"), -1, idle);
       cl.write(marshalledEntry(ice2, getMarshaller()));
-      InternalCacheEntry ice3 = TestInternalCacheEntryFactory.create("k3", "v3", lifespan, idle);
+      InternalCacheEntry ice3 = TestInternalCacheEntryFactory.create("k3", wrap("k3", "v3"), lifespan, idle);
       cl.write(marshalledEntry(ice3, getMarshaller()));
-      InternalCacheEntry ice4 = TestInternalCacheEntryFactory.create("k4", "v4", -1, -1);
+      InternalCacheEntry ice4 = TestInternalCacheEntryFactory.create("k4", wrap("k4", "v4"), -1, -1);
       cl.write(marshalledEntry(ice4, getMarshaller())); // immortal entry
-      InternalCacheEntry ice5 = TestInternalCacheEntryFactory.create("k5", "v5", lifespan * 1000, idle * 1000);
+      InternalCacheEntry ice5 = TestInternalCacheEntryFactory.create("k5", wrap("k5", "v5"), lifespan * 1000, idle * 1000);
       cl.write(marshalledEntry(ice5, getMarshaller())); // long life mortal entry
       assert cl.contains("k1");
       assert cl.contains("k2");
@@ -337,11 +362,11 @@ public abstract class BaseStoreTest extends AbstractInfinispanTest {
 
    public void testLoadAll() throws PersistenceException {
 
-      cl.write(new MarshalledEntryImpl("k1","v1", null, getMarshaller()));
-      cl.write(new MarshalledEntryImpl("k2","v2", null, getMarshaller()));
-      cl.write(new MarshalledEntryImpl("k3","v3", null, getMarshaller()));
-      cl.write(new MarshalledEntryImpl("k4","v4", null, getMarshaller()));
-      cl.write(new MarshalledEntryImpl("k5","v5", null, getMarshaller()));
+      cl.write(new MarshalledEntryImpl("k1", wrap("k1", "v1"), null, getMarshaller()));
+      cl.write(new MarshalledEntryImpl("k2", wrap("k2", "v2"), null, getMarshaller()));
+      cl.write(new MarshalledEntryImpl("k3", wrap("k3", "v3"), null, getMarshaller()));
+      cl.write(new MarshalledEntryImpl("k4", wrap("k4", "v4"), null, getMarshaller()));
+      cl.write(new MarshalledEntryImpl("k5", wrap("k5", "v5"), null, getMarshaller()));
 
       Set<MarshalledEntry> s = TestingUtil.allEntries(cl);
       assert s.size() == 5 : "Expected 5 keys, was " + s;
@@ -359,13 +384,13 @@ public abstract class BaseStoreTest extends AbstractInfinispanTest {
    public void testReplaceExpiredEntry() throws Exception {
       final long startTime = System.currentTimeMillis();
       final long lifespan = 3000;
-      InternalCacheEntry ice = TestInternalCacheEntryFactory.create("k1", "v1", lifespan);
+      InternalCacheEntry ice = TestInternalCacheEntryFactory.create("k1", wrap("k1", "v1"), lifespan);
       cl.write(marshalledEntry(ice, getMarshaller()));
       while (true) {
          MarshalledEntry entry = cl.load("k1");
          if (System.currentTimeMillis() >= startTime + lifespan)
             break;
-         assertEquals(entry.getValue(),"v1");
+         assertEquals("v1", unwrap(entry.getValue()));
          Thread.sleep(100);
       }
 
@@ -376,13 +401,13 @@ public abstract class BaseStoreTest extends AbstractInfinispanTest {
 
       assert null == cl.load("k1");
 
-      InternalCacheEntry ice2 = TestInternalCacheEntryFactory.create("k1", "v2", lifespan);
+      InternalCacheEntry ice2 = TestInternalCacheEntryFactory.create("k1", wrap("k1", "v2"), lifespan);
       cl.write(marshalledEntry(ice2, getMarshaller()));
       while (true) {
          MarshalledEntry entry = cl.load("k1");
          if (System.currentTimeMillis() >= startTime + lifespan)
             break;
-         assertEquals(entry.getValue(),"v2");
+         assertEquals("v2", unwrap(entry.getValue()));
          Thread.sleep(100);
       }
 
@@ -402,7 +427,7 @@ public abstract class BaseStoreTest extends AbstractInfinispanTest {
       assertFalse(cl.contains(key));
       cl.write(new MarshalledEntryImpl(key, value, null, getMarshaller()));
 
-      assert cl.load(key).getValue().equals(value);
+      assertEquals(value, cl.load(key).getValue());
       assert cl.load(key).getMetadata() == null || cl.load(key).getMetadata().expiryTime() == - 1;
       assert cl.load(key).getMetadata() == null || cl.load(key).getMetadata().lifespan() == - 1;
       assert cl.contains(key);
@@ -451,18 +476,22 @@ public abstract class BaseStoreTest extends AbstractInfinispanTest {
 
    public static Cache mockCache(String name) {
       AdvancedCache cache = mock(AdvancedCache.class);
-      ComponentRegistry registry = mock(ComponentRegistry.class);
-      org.infinispan.configuration.cache.Configuration config =
-            new ConfigurationBuilder()
-                  .dataContainer()
-                     .keyEquivalence(AnyEquivalence.getInstance())
-                     .valueEquivalence(AnyEquivalence.getInstance())
-               .build();
+      Configuration config = new ConfigurationBuilder()
+                                    .dataContainer()
+                                    .keyEquivalence(AnyEquivalence.getInstance())
+                                    .valueEquivalence(AnyEquivalence.getInstance())
+                                    .build();
+
+      GlobalConfiguration gc = new GlobalConfigurationBuilder().build();
+
+      Set<String> cachesSet = new HashSet<String>();
+      EmbeddedCacheManager cm = mock(EmbeddedCacheManager.class);
+      GlobalComponentRegistry gcr = new GlobalComponentRegistry(gc, cm, cachesSet);
+      ComponentRegistry registry = new ComponentRegistry("cache", config, cache, gcr, BaseStoreTest.class.getClassLoader());
 
       when(cache.getName()).thenReturn(name);
       when(cache.getAdvancedCache()).thenReturn(cache);
       when(cache.getComponentRegistry()).thenReturn(registry);
-      when(registry.getTimeService()).thenReturn(TIME_SERVICE);
       when(cache.getStatus()).thenReturn(ComponentStatus.RUNNING);
       when(cache.getCacheConfiguration()).thenReturn(config);
       return cache;

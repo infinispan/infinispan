@@ -4,7 +4,6 @@ import org.infinispan.Cache;
 import org.infinispan.atomic.AtomicMap;
 import org.infinispan.atomic.AtomicMapLookup;
 import org.infinispan.commons.equivalence.ByteArrayEquivalence;
-import org.infinispan.commons.util.Util;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.cache.PersistenceConfigurationBuilder;
@@ -28,6 +27,8 @@ import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
 import static org.infinispan.test.TestingUtil.withCacheManager;
+import static org.testng.Assert.assertNull;
+import static org.testng.AssertJUnit.assertEquals;
 import static org.testng.AssertJUnit.assertNotNull;
 import static org.testng.internal.junit.ArrayAsserts.assertArrayEquals;
 
@@ -43,6 +44,14 @@ public abstract class BaseStoreFunctionalTest extends AbstractInfinispanTest {
 
    protected Set<String> cacheNames = new HashSet<String>();
 
+   protected Object wrap(String key, String value) {
+      return value;
+   }
+
+   protected String unwrap(Object wrapped) {
+      return (String) wrapped;
+   }
+
    public void testTwoCachesSameCacheStore() {
       EmbeddedCacheManager localCacheManager = TestCacheManagerFactory.createCacheManager(false);
       try {
@@ -55,19 +64,19 @@ public abstract class BaseStoreFunctionalTest extends AbstractInfinispanTest {
          cacheNames.add("first");
          cacheNames.add("second");
 
-         Cache<String, String> first = localCacheManager.getCache("first");
-         Cache<String, String> second = localCacheManager.getCache("second");
+         Cache<String, Object> first = localCacheManager.getCache("first");
+         Cache<String, Object> second = localCacheManager.getCache("second");
 
          first.start();
          second.start();
 
-         first.put("key", "val");
-         assert first.get("key").equals("val");
-         assert second.get("key") == null;
+         first.put("key", wrap("key", "val"));
+         assertEquals("val", unwrap(first.get("key")));
+         assertNull(second.get("key"));
 
-         second.put("key2", "val2");
-         assert second.get("key2").equals("val2");
-         assert first.get("key2") == null;
+         second.put("key2", wrap("key2", "val2"));
+         assertEquals("val2", unwrap(second.get("key2")));
+         assertNull(first.get("key2"));
       } finally {
          TestingUtil.killCacheManagers(localCacheManager);
       }
@@ -78,16 +87,16 @@ public abstract class BaseStoreFunctionalTest extends AbstractInfinispanTest {
       createCacheStoreConfig(cb.persistence(), true);
       CacheContainer local = TestCacheManagerFactory.createCacheManager(cb);
       try {
-         Cache<String, String> cache = local.getCache();
+         Cache<String, Object> cache = local.getCache();
          cacheNames.add(cache.getName());
          cache.start();
 
          assert cache.getCacheConfiguration().persistence().preload();
 
-         cache.put("k1", "v");
-         cache.put("k2", "v", 111111, TimeUnit.MILLISECONDS);
-         cache.put("k3", "v", -1, TimeUnit.MILLISECONDS, 222222, TimeUnit.MILLISECONDS);
-         cache.put("k4", "v", 333333, TimeUnit.MILLISECONDS, 444444, TimeUnit.MILLISECONDS);
+         cache.put("k1", wrap("k1", "v"));
+         cache.put("k2", wrap("k2", "v"), 111111, TimeUnit.MILLISECONDS);
+         cache.put("k3", wrap("k3", "v"), -1, TimeUnit.MILLISECONDS, 222222, TimeUnit.MILLISECONDS);
+         cache.put("k4", wrap("k4", "v"), 333333, TimeUnit.MILLISECONDS, 444444, TimeUnit.MILLISECONDS);
 
          assertCacheEntry(cache, "k1", "v", -1, -1);
          assertCacheEntry(cache, "k2", "v", 111111, -1);
@@ -138,7 +147,7 @@ public abstract class BaseStoreFunctionalTest extends AbstractInfinispanTest {
    }
 
    public void testRestoreAtomicMap(Method m) {
-      CacheContainer localCacheContainer = getContainerWithCacheLoader(null);
+      CacheContainer localCacheContainer = getContainerWithCacheLoader(null, false);
       try {
          Cache<String, Object> cache = localCacheContainer.getCache();
          cacheNames.add(cache.getName());
@@ -149,14 +158,14 @@ public abstract class BaseStoreFunctionalTest extends AbstractInfinispanTest {
          cache.evict(m.getName());
 
          // now re-retrieve the map
-         assert AtomicMapLookup.getAtomicMap(cache, m.getName()).get("a").equals("b");
+         assertEquals("b", AtomicMapLookup.getAtomicMap(cache, m.getName()).get("a"));
       } finally {
          TestingUtil.killCacheManagers(localCacheContainer);
       }
    }
 
    public void testRestoreTransactionalAtomicMap(Method m) throws Exception {
-      CacheContainer localCacheContainer = getContainerWithCacheLoader(null);
+      CacheContainer localCacheContainer = getContainerWithCacheLoader(null, false);
       try {
          Cache<String, Object> cache = localCacheContainer.getCache();
          cacheNames.add(cache.getName());
@@ -170,7 +179,7 @@ public abstract class BaseStoreFunctionalTest extends AbstractInfinispanTest {
          cache.evict(m.getName());
 
          // now re-retrieve the map and make sure we see the diffs
-         assert AtomicMapLookup.getAtomicMap(cache, m.getName()).get("a").equals("b");
+         assertEquals("b", AtomicMapLookup.getAtomicMap(cache, m.getName()).get("a"));
       } finally {
          TestingUtil.killCacheManagers(localCacheContainer);
       }
@@ -179,7 +188,10 @@ public abstract class BaseStoreFunctionalTest extends AbstractInfinispanTest {
    public void testStoreByteArrays(final Method m) throws PersistenceException {
       ConfigurationBuilder base = new ConfigurationBuilder();
       base.dataContainer().keyEquivalence(ByteArrayEquivalence.INSTANCE);
-      withCacheManager(new CacheManagerCallable(getContainerWithCacheLoader(base.build())) {
+      // we need to purge the container when loading, because we could try to compare
+      // some old entry using ByteArrayEquivalence and this throws ClassCastException
+      // for non-byte[] arguments
+      withCacheManager(new CacheManagerCallable(getContainerWithCacheLoader(base.build(), true)) {
          @Override
          public void call() {
             Cache<byte[], byte[]> cache = cm.getCache(m.getName());
@@ -200,7 +212,7 @@ public abstract class BaseStoreFunctionalTest extends AbstractInfinispanTest {
       });
    }
 
-   private EmbeddedCacheManager getContainerWithCacheLoader(Configuration base) {
+   private EmbeddedCacheManager getContainerWithCacheLoader(Configuration base, boolean purge) {
       ConfigurationBuilder cfg = new ConfigurationBuilder();
       if (base != null)
          cfg.read(base);
@@ -209,16 +221,17 @@ public abstract class BaseStoreFunctionalTest extends AbstractInfinispanTest {
          .transaction()
             .transactionMode(TransactionMode.TRANSACTIONAL);
       createCacheStoreConfig(cfg.persistence(), false);
+      cfg.persistence().stores().get(0).purgeOnStartup(purge);
       return TestCacheManagerFactory.createCacheManager(cfg);
    }
 
    private void assertCacheEntry(Cache cache, String key, String value, long lifespanMillis, long maxIdleMillis) {
       DataContainer dc = cache.getAdvancedCache().getDataContainer();
       InternalCacheEntry ice = dc.get(key);
-      assert ice != null : "No such entry for key " + key;
-      assert Util.safeEquals(ice.getValue(), value) : ice.getValue() + " is not the same as " + value;
-      assert ice.getLifespan() == lifespanMillis : "Lifespan " + ice.getLifespan() + " not the same as " + lifespanMillis;
-      assert ice.getMaxIdle() == maxIdleMillis : "MaxIdle " + ice.getMaxIdle() + " not the same as " + maxIdleMillis;
+      assertNotNull(ice);
+      assertEquals(value, unwrap(ice.getValue()));
+      assertEquals(lifespanMillis, ice.getLifespan());
+      assertEquals(maxIdleMillis, ice.getMaxIdle());
       if (lifespanMillis > -1) assert ice.getCreated() > -1 : "Lifespan is set but created time is not";
       if (maxIdleMillis > -1) assert ice.getLastUsed() > -1 : "Max idle is set but last used is not";
 
