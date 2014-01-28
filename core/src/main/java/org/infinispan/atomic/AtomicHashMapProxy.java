@@ -72,8 +72,7 @@ public class AtomicHashMapProxy<K, V> extends AutoBatchSupport implements Atomic
 
    AtomicHashMapProxy(AdvancedCache<?, ?> cache, Object deltaMapKey) {
       this.cache = (AdvancedCache<Object, AtomicMap<K, V>>) cache;
-      Flag[] writeFlags = new Flag[]{Flag.DELTA_WRITE};
-      this.cacheForWriting = this.cache.withFlags(writeFlags);
+      this.cacheForWriting = this.cache.withFlags(Flag.DELTA_WRITE);
       this.deltaMapKey = deltaMapKey;
       this.batchContainer = cache.getBatchContainer();
       transactionTable = cache.getComponentRegistry().getComponent(TransactionTable.class);

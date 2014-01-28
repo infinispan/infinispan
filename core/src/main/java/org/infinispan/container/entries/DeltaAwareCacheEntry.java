@@ -23,6 +23,7 @@
 package org.infinispan.container.entries;
 
 import org.infinispan.atomic.AtomicHashMap;
+import org.infinispan.atomic.CopyableDeltaAware;
 import org.infinispan.atomic.Delta;
 import org.infinispan.atomic.DeltaAware;
 import org.infinispan.container.DataContainer;
@@ -182,13 +183,28 @@ public class DeltaAwareCacheEntry implements CacheEntry, StateChangingEntry {
 
    @Override
    public final void commit(DataContainer container, EntryVersion version) {
+      //If possible, we now ensure copy-on-write semantics. This way, it can ensure the correct transaction isolation.
+      //note: this method is invoked under the ClusteringDependentLogic.lock(key)
+      //note2: we want to merge/copy to/from the data container value.
+      CacheEntry entry = container.get(key);
+      DeltaAware containerValue = entry == null ? null : (DeltaAware) entry.getValue();
+      if (containerValue != null && containerValue != value) {
+         value = containerValue;
+      }
       if (value != null && !deltas.isEmpty()) {
+         final boolean makeCopy = value instanceof CopyableDeltaAware;
+         if (makeCopy) {
+            value = ((CopyableDeltaAware) value).copy();
+         }
          for (Delta delta : deltas) {
             delta.merge(value);
          }
+         if (makeCopy) {
+            container.put(key, value, version, getLifespan(), getMaxIdle());
+         }
          value.commit();
          if (wrappedEntry != null) {
-            wrappedEntry.setChanged(true);
+            wrappedEntry.setChanged(!makeCopy);
          }
       }
       reset();
