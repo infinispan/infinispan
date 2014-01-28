@@ -25,6 +25,7 @@ import org.infinispan.util.logging.LogFactory;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 
 /**
@@ -84,7 +85,8 @@ public class L1LastChanceInterceptor extends BaseRpcInterceptor {
          }
          // Send out a last attempt L1 invalidation in case if someone cached the L1
          // value after they already received an invalidation
-         l1Manager.flushCache(Collections.singleton(key), ctx.getOrigin(), assumeOriginKeptEntryInL1);
+         blockOnL1FutureIfNeeded(l1Manager.flushCache(Collections.singleton(key), ctx.getOrigin(),
+                                                      assumeOriginKeptEntryInL1));
       }
       return returnValue;
    }
@@ -104,7 +106,7 @@ public class L1LastChanceInterceptor extends BaseRpcInterceptor {
             if (trace) {
                log.trace("Sending additional invalidation for requestors if necessary.");
             }
-            l1Manager.flushCache(toInvalidate, ctx.getOrigin(), true);
+            blockOnL1FutureIfNeeded(l1Manager.flushCache(toInvalidate, ctx.getOrigin(), true));
          }
       }
       return returnValue;
@@ -118,7 +120,7 @@ public class L1LastChanceInterceptor extends BaseRpcInterceptor {
    public Object visitPrepareCommand(TxInvocationContext ctx, PrepareCommand command) throws Throwable {
       Object retVal = invokeNextInterceptor(ctx, command);
       if (command.isOnePhaseCommit()) {
-         blockOnL1FutureIfNeeded(handleLastChanceL1InvalidationOnCommit(ctx));
+         blockOnL1FutureIfNeededTx(handleLastChanceL1InvalidationOnCommit(ctx));
       }
       return retVal;
    }
@@ -126,7 +128,7 @@ public class L1LastChanceInterceptor extends BaseRpcInterceptor {
    @Override
    public Object visitCommitCommand(TxInvocationContext ctx, CommitCommand command) throws Throwable {
       Object retVal = invokeNextInterceptor(ctx, command);
-      blockOnL1FutureIfNeeded(handleLastChanceL1InvalidationOnCommit(ctx));
+      blockOnL1FutureIfNeededTx(handleLastChanceL1InvalidationOnCommit(ctx));
       return retVal;
    }
 
@@ -144,11 +146,19 @@ public class L1LastChanceInterceptor extends BaseRpcInterceptor {
       return !ctx.getAffectedKeys().isEmpty();
    }
 
+   private void blockOnL1FutureIfNeededTx(Future<?> f) {
+      if (configuration.transaction().syncCommitPhase()) {
+         blockOnL1FutureIfNeeded(f);
+      }
+   }
+
    private void blockOnL1FutureIfNeeded(Future<?> f) {
-      if (f != null && cacheConfiguration.transaction().syncCommitPhase()) {
+      if (f != null) {
          try {
             f.get();
-         } catch (Exception e) {
+         } catch (InterruptedException e) {
+            getLog().failedInvalidatingRemoteCache(e);
+         } catch (ExecutionException e) {
             // Ignore SuspectExceptions - if the node has gone away then there is nothing to invalidate anyway.
             if (!(e.getCause() instanceof SuspectException)) {
                getLog().failedInvalidatingRemoteCache(e);
