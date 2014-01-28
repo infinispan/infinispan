@@ -32,6 +32,7 @@ import org.infinispan.util.logging.LogFactory;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -107,8 +108,11 @@ public class FineGrainedAtomicHashMapProxy<K, V> extends AtomicHashMapProxy<K, V
 
    @Override
    public Collection<V> values() {
+      if (hasUncommittedChanges()) {
+         return new ArrayList<V>(valuesUncommitted());
+      }
       AtomicHashMap<K, V> map = getDeltaMapForRead().copy();
-      Set<V> result = new HashSet<V>(valuesUncommitted());
+      List<V> result = new ArrayList<V>(valuesUncommitted());
       if (map != null) {
          result.addAll(map.values());
       }
