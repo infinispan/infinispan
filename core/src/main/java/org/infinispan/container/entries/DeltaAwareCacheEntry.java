@@ -205,6 +205,9 @@ public class DeltaAwareCacheEntry implements CacheEntry, StateChangingEntry {
          value.commit();
          if (wrappedEntry != null) {
             wrappedEntry.setChanged(!makeCopy);
+            if (wrappedEntry.isLoaded() && makeCopy) {
+               wrappedEntry.setLoaded(false);
+            }
          }
       }
       reset();

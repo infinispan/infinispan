@@ -26,8 +26,10 @@ import org.infinispan.Cache;
 import org.infinispan.container.DataContainer;
 import org.infinispan.container.entries.ImmortalCacheEntry;
 import org.infinispan.container.entries.InternalCacheEntry;
+import org.infinispan.interceptors.locking.ClusteringDependentLogic;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.remoting.transport.Address;
+import org.infinispan.test.TestingUtil;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
@@ -89,14 +91,20 @@ public class DistributionTestHelper {
 
    public static boolean isOwner(Cache<?, ?> c, Object key) {
       DistributionManager dm = c.getAdvancedCache().getDistributionManager();
-      List<Address> ownerAddresses = dm.locate(key);
-      return ownerAddresses.contains(addressOf(c));
+      if (dm != null) {
+         return dm.locate(key).contains(addressOf(c));
+      } else {
+         return TestingUtil.extractComponent(c, ClusteringDependentLogic.class).localNodeIsOwner(key);
+      }
    }
 
    public static boolean isFirstOwner(Cache<?, ?> c, Object key) {
       DistributionManager dm = c.getAdvancedCache().getDistributionManager();
-      Address primaryOwnerAddress = dm.getPrimaryLocation(key);
-      return addressOf(c).equals(primaryOwnerAddress);
+      if (dm != null) {
+         return addressOf(c).equals(dm.getPrimaryLocation(key));
+      } else {
+         return TestingUtil.extractComponent(c, ClusteringDependentLogic.class).localNodeIsPrimaryOwner(key);
+      }
    }
 
    public static boolean hasOwners(Object key, Cache<?, ?> primaryOwner, Cache<?, ?>... backupOwners) {
