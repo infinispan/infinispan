@@ -274,6 +274,7 @@ public class CacheLoaderManagerImpl implements CacheLoaderManager {
       int ne = -1;
       if (configuration.eviction().strategy().isEnabled()) ne = configuration.eviction().maxEntries();
       Set<InternalCacheEntry> state;
+      CacheLoader loader = undelegateCacheLoader(this.loader);
       switch (ne) {
          case -1:
             state = loader.loadAll();
