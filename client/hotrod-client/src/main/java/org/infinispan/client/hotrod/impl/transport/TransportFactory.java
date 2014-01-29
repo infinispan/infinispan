@@ -59,7 +59,7 @@ public interface TransportFactory {
 
    boolean isTcpNoDelay();
 
-   int getTransportCount();
+   int getMaxRetries();
 
    int getSoTimeout();
 

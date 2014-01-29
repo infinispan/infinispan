@@ -57,6 +57,7 @@ public class ConfigurationProperties {
    public static final String SO_TIMEOUT = "infinispan.client.hotrod.socket_timeout";
    public static final String CONNECT_TIMEOUT = "infinispan.client.hotrod.connect_timeout";
    public static final String PROTOCOL_VERSION = "infinispan.client.hotrod.protocol_version";
+   public static final String MAX_RETRIES = "infinispan.client.hotrod.max_retries";
 
    // defaults
 
@@ -65,6 +66,7 @@ public class ConfigurationProperties {
    public static final int DEFAULT_HOTROD_PORT = 11222;
    public static final int DEFAULT_SO_TIMEOUT = 60000;
    public static final int DEFAULT_CONNECT_TIMEOUT = 60000;
+   public static final int DEFAULT_MAX_RETRIES = 10;
    public static final String PROTOCOL_VERSION_12 = "1.2";
    public static final String PROTOCOL_VERSION_11 = "1.1";
    public static final String PROTOCOL_VERSION_10 = "1.0";
@@ -162,4 +164,7 @@ public class ConfigurationProperties {
       return props.getIntProperty(CONNECT_TIMEOUT, DEFAULT_CONNECT_TIMEOUT);
    }
 
+   public int getMaxRetries() {
+      return props.getIntProperty(MAX_RETRIES, DEFAULT_MAX_RETRIES);
+   }
 }

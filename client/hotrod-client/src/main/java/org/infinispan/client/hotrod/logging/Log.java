@@ -22,6 +22,7 @@
 
 package org.infinispan.client.hotrod.logging;
 
+import org.infinispan.CacheConfigurationException;
 import org.infinispan.client.hotrod.exceptions.HotRodClientException;
 import org.infinispan.client.hotrod.impl.transport.tcp.TcpTransport;
 import org.jboss.logging.BasicLogger;
@@ -31,7 +32,6 @@ import org.jboss.logging.Message;
 import org.jboss.logging.MessageLogger;
 
 import java.io.IOException;
-import java.net.InetSocketAddress;
 import java.net.SocketAddress;
 import java.util.Set;
 
@@ -133,4 +133,6 @@ public interface Log extends BasicLogger {
    @Message(value = "Unable to invalidate transport for server: %s", id = 4022)
    void unableToInvalidateTransport(SocketAddress serverAddress);
 
+   @Message(value = "Invalid max_retries (value=%s). Value should be greater or equal than zero.", id = 4029)
+   CacheConfigurationException invalidMaxRetries(int retriesPerServer);
 }
