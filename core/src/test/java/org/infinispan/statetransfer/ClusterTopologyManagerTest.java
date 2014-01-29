@@ -241,7 +241,6 @@ public class ClusterTopologyManagerTest extends MultipleCacheManagersTest {
             LocalTopologyManager.class);
       final CheckPoint checkpoint = new CheckPoint();
       LocalTopologyManager spyLocalTopologyManager = spy(localTopologyManager);
-      TestingUtil.replaceComponent(mergeCoordManager, LocalTopologyManager.class, spyLocalTopologyManager, true);
       doAnswer(new Answer<Object>() {
          @Override
          public Object answer(InvocationOnMock invocation) throws Throwable {
@@ -252,6 +251,7 @@ public class ClusterTopologyManagerTest extends MultipleCacheManagersTest {
             return invocation.callRealMethod();
          }
       }).when(spyLocalTopologyManager).handleRebalance(eq(CACHE_NAME), any(CacheTopology.class), anyInt());
+      TestingUtil.replaceComponent(mergeCoordManager, LocalTopologyManager.class, spyLocalTopologyManager, true);
 
       final EmbeddedCacheManager cm4 = addClusterEnabledCacheManager(defaultConfig,
             new TransportFlags().withFD(true).withMerge(true));
@@ -302,7 +302,6 @@ public class ClusterTopologyManagerTest extends MultipleCacheManagersTest {
             LocalTopologyManager.class);
       final CheckPoint checkpoint = new CheckPoint();
       LocalTopologyManager spyLocalTopologyManager = spy(localTopologyManager);
-      TestingUtil.replaceComponent(manager(1), LocalTopologyManager.class, spyLocalTopologyManager, true);
       doAnswer(new Answer<Object>() {
          @Override
          public Object answer(InvocationOnMock invocation) throws Throwable {
@@ -313,6 +312,7 @@ public class ClusterTopologyManagerTest extends MultipleCacheManagersTest {
             return invocation.callRealMethod();
          }
       }).when(spyLocalTopologyManager).handleStatusRequest(anyInt());
+      TestingUtil.replaceComponent(manager(1), LocalTopologyManager.class, spyLocalTopologyManager, true);
 
       // Node 1 (the coordinator) dies. Node 2 becomes coordinator and tries to call GET_STATUS
       log.debugf("Killing coordinator");
@@ -335,7 +335,6 @@ public class ClusterTopologyManagerTest extends MultipleCacheManagersTest {
       final CheckPoint checkpoint = new CheckPoint();
       StateProvider stateProvider = TestingUtil.extractComponent(c2, StateProvider.class);
       StateProvider spyStateProvider = spy(stateProvider);
-      TestingUtil.replaceComponent(c2, StateProvider.class, spyStateProvider, true);
       doAnswer(new Answer<Object>() {
          @Override
          public Object answer(InvocationOnMock invocation) throws Throwable {
@@ -346,6 +345,7 @@ public class ClusterTopologyManagerTest extends MultipleCacheManagersTest {
             return invocation.callRealMethod();
          }
       }).when(spyStateProvider).getTransactionsForSegments(any(Address.class), anyInt(), anySet());
+      TestingUtil.replaceComponent(c2, StateProvider.class, spyStateProvider, true);
 
       long startTime = System.currentTimeMillis();
       manager(2).stop();

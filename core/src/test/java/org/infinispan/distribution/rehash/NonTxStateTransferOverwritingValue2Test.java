@@ -190,7 +190,6 @@ public class NonTxStateTransferOverwritingValue2Test extends MultipleCacheManage
    private void blockEntryCommit(final CheckPoint checkPoint, AdvancedCache<Object, Object> cache) {
       ClusteringDependentLogic cdl1 = cache.getComponentRegistry().getComponent(ClusteringDependentLogic.class);
       ClusteringDependentLogic spyCdl1 = spy(cdl1);
-      TestingUtil.replaceComponent(cache, ClusteringDependentLogic.class, spyCdl1, true);
       doAnswer(new Answer() {
          @Override
          public Object answer(InvocationOnMock invocation) throws Throwable {
@@ -207,6 +206,7 @@ public class NonTxStateTransferOverwritingValue2Test extends MultipleCacheManage
          }
       }).when(spyCdl1).commitEntry(any(CacheEntry.class), any(Metadata.class), any(FlagAffectedCommand.class),
             any(InvocationContext.class));
+      TestingUtil.replaceComponent(cache, ClusteringDependentLogic.class, spyCdl1, true);
    }
 
    private ControlledRpcManager blockStateResponseCommand(final Cache cache) throws InterruptedException {
@@ -221,7 +221,6 @@ public class NonTxStateTransferOverwritingValue2Test extends MultipleCacheManage
          throws Exception {
       ClusterTopologyManager ctm = TestingUtil.extractGlobalComponent(manager, ClusterTopologyManager.class);
       ClusterTopologyManager spyManager = spy(ctm);
-      TestingUtil.replaceComponent(manager, ClusterTopologyManager.class, spyManager, true);
       doAnswer(new Answer<Object>() {
          @Override
          public Object answer(InvocationOnMock invocation) throws Throwable {
@@ -234,5 +233,6 @@ public class NonTxStateTransferOverwritingValue2Test extends MultipleCacheManage
          }
       }).when(spyManager).handleRebalanceCompleted(anyString(), any(Address.class), anyInt(), any(Throwable.class),
             anyInt());
+      TestingUtil.replaceComponent(manager, ClusterTopologyManager.class, spyManager, true);
    }
 }

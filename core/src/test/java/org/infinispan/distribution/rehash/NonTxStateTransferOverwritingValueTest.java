@@ -191,7 +191,6 @@ public class NonTxStateTransferOverwritingValueTest extends MultipleCacheManager
          throws Exception {
       ClusterTopologyManager ctm = TestingUtil.extractGlobalComponent(manager, ClusterTopologyManager.class);
       ClusterTopologyManager spyManager = spy(ctm);
-      TestingUtil.replaceComponent(manager, ClusterTopologyManager.class, spyManager, true);
       doAnswer(new Answer<Object>() {
          @Override
          public Object answer(InvocationOnMock invocation) throws Throwable {
@@ -204,5 +203,6 @@ public class NonTxStateTransferOverwritingValueTest extends MultipleCacheManager
          }
       }).when(spyManager).handleRebalanceCompleted(anyString(), any(Address.class), anyInt(), any(Throwable.class),
             anyInt());
+      TestingUtil.replaceComponent(manager, ClusterTopologyManager.class, spyManager, true);
    }
 }

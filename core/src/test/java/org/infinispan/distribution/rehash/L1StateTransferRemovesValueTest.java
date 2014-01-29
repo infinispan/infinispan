@@ -195,7 +195,6 @@ public class L1StateTransferRemovesValueTest extends BaseDistFunctionalTest<Stri
       StateConsumer sc = TestingUtil.extractComponent(cache, StateConsumer.class);
       final Answer<Object> forwardedAnswer = AdditionalAnswers.delegatesTo(sc);
       StateConsumer mockConsumer = mock(StateConsumer.class, withSettings().defaultAnswer(forwardedAnswer));
-      TestingUtil.replaceComponent(cache, StateConsumer.class, mockConsumer, true);
       doAnswer(new Answer() {
          @Override
          public Object answer(InvocationOnMock invocation) throws Throwable {
@@ -207,13 +206,13 @@ public class L1StateTransferRemovesValueTest extends BaseDistFunctionalTest<Stri
             return forwardedAnswer.answer(invocation);
          }
       }).when(mockConsumer).onTopologyUpdate(any(CacheTopology.class), anyBoolean());
+      TestingUtil.replaceComponent(cache, StateConsumer.class, mockConsumer, true);
    }
 
    protected void waitUntilToplogyInstalled(final Cache<?, ?> cache, final CheckPoint checkPoint) {
       StateTransferLock sc = TestingUtil.extractComponent(cache, StateTransferLock.class);
       final Answer<Object> forwardedAnswer = AdditionalAnswers.delegatesTo(sc);
       StateTransferLock mockConsumer = mock(StateTransferLock.class, withSettings().defaultAnswer(forwardedAnswer));
-      TestingUtil.replaceComponent(cache, StateTransferLock.class, mockConsumer, true);
       doAnswer(new Answer() {
          @Override
          public Object answer(InvocationOnMock invocation) throws Throwable {
@@ -225,6 +224,7 @@ public class L1StateTransferRemovesValueTest extends BaseDistFunctionalTest<Stri
             return answer;
          }
       }).when(mockConsumer).notifyTopologyInstalled(anyInt());
+      TestingUtil.replaceComponent(cache, StateTransferLock.class, mockConsumer, true);
    }
 
    public static class ControllableConsistentHashFactory extends SingleSegmentConsistentHashFactory {

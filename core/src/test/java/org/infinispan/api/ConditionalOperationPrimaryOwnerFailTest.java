@@ -81,6 +81,8 @@ public class ConditionalOperationPrimaryOwnerFailTest extends MultipleCacheManag
                                                any(InternalCacheEntry.class), anyBoolean(),
                                                any(FlagAffectedCommand.class), anyBoolean());
 
+      replaceComponent(futureBackupOwnerCache.getCacheManager(), InboundInvocationHandler.class, spyHandler, true);
+
       fork(new Runnable() {
          @Override
          public void run() {
@@ -112,7 +114,6 @@ public class ConditionalOperationPrimaryOwnerFailTest extends MultipleCacheManag
 
    private InboundInvocationHandler spyInvocationHandler(Cache cache) {
       InboundInvocationHandler spy = Mockito.spy(extractComponent(cache, InboundInvocationHandler.class));
-      replaceComponent(cache.getCacheManager(), InboundInvocationHandler.class, spy, true);
       JGroupsTransport t = (JGroupsTransport) extractComponent(cache, Transport.class);
       CommandAwareRpcDispatcher card = t.getCommandAwareRpcDispatcher();
       replaceField(spy, "inboundInvocationHandler", card, CommandAwareRpcDispatcher.class);

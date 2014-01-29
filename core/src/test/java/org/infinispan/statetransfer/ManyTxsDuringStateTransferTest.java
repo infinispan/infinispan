@@ -68,7 +68,6 @@ public class ManyTxsDuringStateTransferTest extends MultipleCacheManagersTest {
       // Block state request commands on cache 0
       StateProvider stateProvider = TestingUtil.extractComponent(cache0, StateProvider.class);
       StateProvider spyProvider = spy(stateProvider);
-      TestingUtil.replaceComponent(cache0, StateProvider.class, spyProvider, true);
       doAnswer(new Answer<Object>() {
          @Override
          public Object answer(InvocationOnMock invocation) throws Throwable {
@@ -81,6 +80,7 @@ public class ManyTxsDuringStateTransferTest extends MultipleCacheManagersTest {
             return result;
          }
       }).when(spyProvider).getTransactionsForSegments(any(Address.class), anyInt(), anySetOf(Integer.class));
+      TestingUtil.replaceComponent(cache0, StateProvider.class, spyProvider, true);
 
       // Start cache 1, but the tx data request will be blocked on cache 0
       StateTransferManager stm0 = TestingUtil.extractComponent(cache0, StateTransferManager.class);

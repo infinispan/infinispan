@@ -375,7 +375,7 @@ public class DistSyncTxL1FuncTest extends BaseDistSyncL1Test {
       RpcManager rm2 = TestingUtil.extractComponent(backupOwnerCache, RpcManager.class);
       ControlledRpcManager crm2 = new ControlledRpcManager(rm2);
       // Make our node block and not return the get yet
-      crm.blockBefore(InvalidateL1Command.class);
+      crm2.blockBefore(InvalidateL1Command.class);
       TestingUtil.replaceComponent(backupOwnerCache, RpcManager.class, crm2, true);
 
       try {

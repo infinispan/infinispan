@@ -67,7 +67,6 @@ public class StaleLocksWithLockOnlyTxDuringStateTransferTest extends MultipleCac
       // Block state request commands on cache 0
       StateProvider stateProvider = TestingUtil.extractComponent(cache0, StateProvider.class);
       StateProvider spyProvider = spy(stateProvider);
-      TestingUtil.replaceComponent(cache0, StateProvider.class, spyProvider, true);
       doAnswer(new Answer<Object>() {
          @Override
          public Object answer(InvocationOnMock invocation) throws Throwable {
@@ -89,6 +88,7 @@ public class StaleLocksWithLockOnlyTxDuringStateTransferTest extends MultipleCac
             return invocation.callRealMethod();
          }
       }).when(spyProvider).onTopologyUpdate(any(CacheTopology.class), eq(false));
+      TestingUtil.replaceComponent(cache0, StateProvider.class, spyProvider, true);
 
       // Block prepare commands on cache 0
       CyclicBarrier prepareBarrier = new CyclicBarrier(2);

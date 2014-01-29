@@ -465,7 +465,6 @@ public abstract class BaseDistSyncL1Test extends BaseDistFunctionalTest<Object, 
       StateTransferLock stl = TestingUtil.extractComponent(cache, StateTransferLock.class);
       final Answer<Object> forwardedAnswer = AdditionalAnswers.delegatesTo(stl);
       StateTransferLock mockLock = mock(StateTransferLock.class, withSettings().defaultAnswer(forwardedAnswer));
-      TestingUtil.replaceComponent(cache, StateTransferLock.class, mockLock, true);
       doAnswer(new Answer() {
          @Override
          public Object answer(InvocationOnMock invocation) throws Throwable {
@@ -477,5 +476,6 @@ public abstract class BaseDistSyncL1Test extends BaseDistFunctionalTest<Object, 
             return forwardedAnswer.answer(invocation);
          }
       }).when(mockLock).acquireSharedTopologyLock();
+      TestingUtil.replaceComponent(cache, StateTransferLock.class, mockLock, true);
    }
 }

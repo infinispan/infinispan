@@ -64,14 +64,8 @@ public class EvictionWithConcurrentOperationsTest extends SingleCacheManagerTest
       initializeKeyAndCheckData(key1, "v1");
 
       final Object key2 = new SameHashCodeKey("key2");
-      final ControlledPassivationManager controlledPassivationManager = replacePassivationManager();
       final Latch latch = new Latch();
-      controlledPassivationManager.beforePassivate = new Runnable() {
-         @Override
-         public void run() {
-            latch.blockIfNeeded();
-         }
-      };
+      final ControlledPassivationManager controlledPassivationManager = replacePassivationManager(latch);
 
       //this will trigger the eviction of key1. key1 eviction will be blocked in the latch
       latch.enable();
@@ -99,14 +93,8 @@ public class EvictionWithConcurrentOperationsTest extends SingleCacheManagerTest
       initializeKeyAndCheckData(key1, "v1");
 
       final Object key2 = new SameHashCodeKey("key2");
-      final ControlledPassivationManager controlledPassivationManager = replacePassivationManager();
       final Latch latch = new Latch();
-      controlledPassivationManager.afterPassivate = new Runnable() {
-         @Override
-         public void run() {
-            latch.blockIfNeeded();
-         }
-      };
+      final ControlledPassivationManager controlledPassivationManager = replacePassivationManager(latch);
 
       //this will trigger the eviction of key1. key1 eviction will be blocked in the latch
       latch.enable();
@@ -455,9 +443,15 @@ public class EvictionWithConcurrentOperationsTest extends SingleCacheManagerTest
             .storeName(storeName + storeNamePrefix.getAndIncrement());
    }
 
-   protected final ControlledPassivationManager replacePassivationManager() {
+   protected final ControlledPassivationManager replacePassivationManager(final Latch latch) {
       PassivationManager current = TestingUtil.extractComponent(cache, PassivationManager.class);
       ControlledPassivationManager controlledPassivationManager = new ControlledPassivationManager(current);
+      controlledPassivationManager.beforePassivate = new Runnable() {
+         @Override
+         public void run() {
+            latch.blockIfNeeded();
+         }
+      };
       TestingUtil.replaceComponent(cache, PassivationManager.class, controlledPassivationManager, true);
       return controlledPassivationManager;
    }

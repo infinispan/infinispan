@@ -503,7 +503,6 @@ public abstract class BaseTxStateTransferOverwriteTest extends BaseDistFunctiona
       ClusterTopologyManager ctm = TestingUtil.extractGlobalComponent(manager, ClusterTopologyManager.class);
       final Answer<Object> forwardedAnswer = AdditionalAnswers.delegatesTo(ctm);
       ClusterTopologyManager mockManager = mock(ClusterTopologyManager.class, withSettings().defaultAnswer(forwardedAnswer));
-      TestingUtil.replaceComponent(manager, ClusterTopologyManager.class, mockManager, true);
       doAnswer(new Answer<Object>() {
          @Override
          public Object answer(InvocationOnMock invocation) throws Throwable {
@@ -517,13 +516,13 @@ public abstract class BaseTxStateTransferOverwriteTest extends BaseDistFunctiona
          }
       }).when(mockManager).handleRebalanceCompleted(anyString(), any(Address.class), anyInt(), any(Throwable.class),
                                                    anyInt());
+      TestingUtil.replaceComponent(manager, ClusterTopologyManager.class, mockManager, true);
    }
 
    protected void waitUntilStateBeingTransferred(final Cache<?, ?> cache, final CheckPoint checkPoint) {
       StateConsumer sc = TestingUtil.extractComponent(cache, StateConsumer.class);
       final Answer<Object> forwardedAnswer = AdditionalAnswers.delegatesTo(sc);
       StateConsumer mockConsumer = mock(StateConsumer.class, withSettings().defaultAnswer(forwardedAnswer));
-      TestingUtil.replaceComponent(cache, StateConsumer.class, mockConsumer, true);
       doAnswer(new Answer() {
          @Override
          public Object answer(InvocationOnMock invocation) throws Throwable {
@@ -535,5 +534,6 @@ public abstract class BaseTxStateTransferOverwriteTest extends BaseDistFunctiona
             return forwardedAnswer.answer(invocation);
          }
       }).when(mockConsumer).applyState(any(Address.class), anyInt(), anyCollection());
+      TestingUtil.replaceComponent(cache, StateConsumer.class, mockConsumer, true);
    }
 }
