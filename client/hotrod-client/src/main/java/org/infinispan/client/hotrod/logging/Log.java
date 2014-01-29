@@ -128,4 +128,7 @@ public interface Log extends BasicLogger {
 
    @Message(value = "Unable to parse server IP address %s", id = 4028)
    CacheConfigurationException parseErrorServerAddress(String server);
+
+   @Message(value = "Invalid max_retries (value=%s). Value should be greater or equal than zero.", id = 4029)
+   CacheConfigurationException invalidMaxRetries(int retriesPerServer);
 }

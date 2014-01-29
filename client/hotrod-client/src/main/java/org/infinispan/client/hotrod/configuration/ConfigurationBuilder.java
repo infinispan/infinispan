@@ -58,6 +58,7 @@ public class ConfigurationBuilder implements ConfigurationChildBuilder, Builder<
    private boolean tcpNoDelay = true;
    private Class<? extends TransportFactory> transportFactory = TcpTransportFactory.class;
    private int valueSizeEstimate = ConfigurationProperties.DEFAULT_VALUE_SIZE;
+   private int maxRetries = ConfigurationProperties.DEFAULT_MAX_RETRIES;
 
 
    public ConfigurationBuilder() {
@@ -223,6 +224,12 @@ public class ConfigurationBuilder implements ConfigurationChildBuilder, Builder<
    }
 
    @Override
+   public ConfigurationBuilder maxRetries(int maxRetries) {
+      this.maxRetries = maxRetries;
+      return this;
+   }
+
+   @Override
    public ConfigurationBuilder withProperties(Properties properties) {
       TypedProperties typed = TypedProperties.toTypedProperties(properties);
 
@@ -251,6 +258,7 @@ public class ConfigurationBuilder implements ConfigurationChildBuilder, Builder<
          this.transportFactory(typed.getProperty(ConfigurationProperties.TRANSPORT_FACTORY));
       }
       this.valueSizeEstimate(typed.getIntProperty(ConfigurationProperties.VALUE_SIZE_ESTIMATE, valueSizeEstimate));
+      this.maxRetries(typed.getIntProperty(ConfigurationProperties.MAX_RETRIES, maxRetries));
       return this;
    }
 
@@ -259,6 +267,9 @@ public class ConfigurationBuilder implements ConfigurationChildBuilder, Builder<
       connectionPool.validate();
       asyncExecutorFactory.validate();
       ssl.validate();
+      if (maxRetries < 0) {
+         throw log.invalidMaxRetries(maxRetries);
+      }
    }
 
    @Override
@@ -274,11 +285,11 @@ public class ConfigurationBuilder implements ConfigurationChildBuilder, Builder<
       if (marshaller == null) {
          return new Configuration(asyncExecutorFactory.create(), balancingStrategy, classLoader == null ? null : classLoader.get(), connectionPool.create(), connectionTimeout,
                consistentHashImpl, forceReturnValues, keySizeEstimate, marshallerClass, pingOnStartup, protocolVersion, servers, socketTimeout, ssl.create(), tcpNoDelay, transportFactory,
-               valueSizeEstimate);
+               valueSizeEstimate, maxRetries);
       } else {
          return new Configuration(asyncExecutorFactory.create(), balancingStrategy, classLoader == null ? null : classLoader.get(), connectionPool.create(), connectionTimeout,
                consistentHashImpl, forceReturnValues, keySizeEstimate, marshaller, pingOnStartup, protocolVersion, servers, socketTimeout, ssl.create(), tcpNoDelay, transportFactory,
-               valueSizeEstimate);
+               valueSizeEstimate, maxRetries);
       }
    }
 
@@ -319,6 +330,7 @@ public class ConfigurationBuilder implements ConfigurationChildBuilder, Builder<
       this.tcpNoDelay = template.tcpNoDelay();
       this.transportFactory = template.transportFactory();
       this.valueSizeEstimate = template.valueSizeEstimate();
+      this.maxRetries = template.maxRetries();
       return this;
    }
 }

@@ -66,16 +66,16 @@ public abstract class RetryOnFailureOperation<T> extends HotRodOperation {
    }
 
    protected boolean shouldRetry(int retryCount) {
-      return retryCount < transportFactory.getTransportCount();
+      return retryCount <= transportFactory.getMaxRetries();
    }
 
    protected void logErrorAndThrowExceptionIfNeeded(int i, HotRodClientException e) {
       String message = "Exception encountered. Retry %d out of %d";
-      if (i >= transportFactory.getTransportCount() - 1 || transportFactory.getTransportCount() < 0) {
-         log.exceptionAndNoRetriesLeft(i,transportFactory.getTransportCount(), e);
+      if (i >= transportFactory.getMaxRetries() || transportFactory.getMaxRetries() < 0) {
+         log.exceptionAndNoRetriesLeft(i,transportFactory.getMaxRetries(), e);
          throw e;
       } else {
-         log.tracef(e, message, i, transportFactory.getTransportCount());
+         log.tracef(e, message, i, transportFactory.getMaxRetries());
       }
    }
 

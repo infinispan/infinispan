@@ -9,6 +9,7 @@ import org.infinispan.client.hotrod.SomeCustomConsistentHashV1;
 import org.infinispan.client.hotrod.SomeRequestBalancingStrategy;
 import org.infinispan.client.hotrod.SomeTransportfactory;
 import org.infinispan.client.hotrod.impl.ConfigurationProperties;
+import org.infinispan.commons.CacheConfigurationException;
 import org.testng.annotations.Test;
 
 @Test(testName = "client.hotrod.configuration.ConfigurationTest", groups = "functional" )
@@ -46,6 +47,7 @@ public class ConfigurationTest {
          .pingOnStartup(false)
          .keySizeEstimate(128)
          .valueSizeEstimate(1024)
+         .maxRetries(0)
          .transportFactory(SomeTransportfactory.class);
 
       Configuration configuration = builder.build();
@@ -72,6 +74,15 @@ public class ConfigurationTest {
       assertServer("ff01::1", ConfigurationProperties.DEFAULT_HOTROD_PORT, cfg.servers().get(3));
       assertServer("localhost", ConfigurationProperties.DEFAULT_HOTROD_PORT, cfg.servers().get(4));
       assertServer("localhost", 8382, cfg.servers().get(5));
+   }
+
+   @Test(expectedExceptions = CacheConfigurationException.class,
+         expectedExceptionsMessageRegExp = "ISPN(\\d)*: Invalid max_retries \\(value=-1\\). " +
+               "Value should be greater or equal than zero.")
+   public void testNegativeRetriesPerServer() {
+      ConfigurationBuilder builder = new ConfigurationBuilder();
+      builder.maxRetries(-1);
+      builder.build();
    }
 
    private void assertServer(String host, int port, ServerConfiguration serverCfg) {
@@ -103,5 +114,6 @@ public class ConfigurationTest {
       assertFalse(configuration.pingOnStartup());
       assertEquals(128, configuration.keySizeEstimate());
       assertEquals(1024, configuration.valueSizeEstimate());
+      assertEquals(0, configuration.maxRetries());
    }
 }
