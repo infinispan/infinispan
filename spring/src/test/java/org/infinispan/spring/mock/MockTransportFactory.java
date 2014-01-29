@@ -76,7 +76,7 @@ public final class MockTransportFactory implements TransportFactory {
    }
 
    @Override
-   public int getTransportCount() {
+   public int getMaxRetries() {
       return 0;
    }
 
