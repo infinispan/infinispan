@@ -38,13 +38,15 @@ public class Configuration {
    private final boolean tcpNoDelay;
    private final Class<? extends TransportFactory> transportFactory;
    private final int valueSizeEstimate;
+   private final int maxRetries;
 
    Configuration(ExecutorFactoryConfiguration asyncExecutorFactory, Class<? extends RequestBalancingStrategy> balancingStrategy, ClassLoader classLoader,
          ConnectionPoolConfiguration connectionPool, int connectionTimeout, Class<? extends ConsistentHash>[] consistentHashImpl, boolean forceReturnValues, int keySizeEstimate, Class<? extends Marshaller> marshallerClass,
          boolean pingOnStartup, String protocolVersion, List<ServerConfiguration> servers, int socketTimeout, SslConfiguration ssl, boolean tcpNoDelay,
-         Class<? extends TransportFactory> transportFactory, int valueSizeEstimate) {
+         Class<? extends TransportFactory> transportFactory, int valueSizeEstimate, int maxRetries) {
       this.asyncExecutorFactory = asyncExecutorFactory;
       this.balancingStrategy = balancingStrategy;
+      this.maxRetries = maxRetries;
       this.classLoader = new WeakReference<ClassLoader>(classLoader);
       this.connectionPool = connectionPool;
       this.connectionTimeout = connectionTimeout;
@@ -66,9 +68,10 @@ public class Configuration {
    Configuration(ExecutorFactoryConfiguration asyncExecutorFactory, Class<? extends RequestBalancingStrategy> balancingStrategy, ClassLoader classLoader,
          ConnectionPoolConfiguration connectionPool, int connectionTimeout, Class<? extends ConsistentHash>[] consistentHashImpl, boolean forceReturnValues, int keySizeEstimate, Marshaller marshaller,
          boolean pingOnStartup, String protocolVersion, List<ServerConfiguration> servers, int socketTimeout, SslConfiguration ssl, boolean tcpNoDelay,
-         Class<? extends TransportFactory> transportFactory, int valueSizeEstimate) {
+         Class<? extends TransportFactory> transportFactory, int valueSizeEstimate, int maxRetries) {
       this.asyncExecutorFactory = asyncExecutorFactory;
       this.balancingStrategy = balancingStrategy;
+      this.maxRetries = maxRetries;
       this.classLoader = new WeakReference<ClassLoader>(classLoader);
       this.connectionPool = connectionPool;
       this.connectionTimeout = connectionTimeout;
@@ -163,12 +166,16 @@ public class Configuration {
       return valueSizeEstimate;
    }
 
+   public int maxRetries() {
+      return maxRetries;
+   }
+
    @Override
    public String toString() {
       return "Configuration [asyncExecutorFactory=" + asyncExecutorFactory + ", balancingStrategy=" + balancingStrategy + ", classLoader=" + classLoader + ", connectionPool="
             + connectionPool + ", connectionTimeout=" + connectionTimeout + ", consistentHashImpl=" + Arrays.toString(consistentHashImpl) + ", forceReturnValues="
             + forceReturnValues + ", keySizeEstimate=" + keySizeEstimate + ", marshallerClass=" + marshallerClass + ", marshaller=" + marshaller + ", pingOnStartup="
             + pingOnStartup + ", protocolVersion=" + protocolVersion + ", servers=" + servers + ", socketTimeout=" + socketTimeout + ", ssl=" + ssl + ", tcpNoDelay=" + tcpNoDelay
-            + ", transportFactory=" + transportFactory + ", valueSizeEstimate=" + valueSizeEstimate + "]";
+            + ", transportFactory=" + transportFactory + ", valueSizeEstimate=" + valueSizeEstimate + ", maxRetries=" + maxRetries + "]";
    }
 }

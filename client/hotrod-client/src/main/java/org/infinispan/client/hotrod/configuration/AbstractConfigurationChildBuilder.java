@@ -136,6 +136,11 @@ public abstract class AbstractConfigurationChildBuilder implements Configuration
    }
 
    @Override
+   public ConfigurationBuilder maxRetries(int retriesPerServer) {
+      return builder.maxRetries(retriesPerServer);
+   }
+
+   @Override
    public ConfigurationBuilder withProperties(Properties properties) {
       return builder.withProperties(properties);
    }
