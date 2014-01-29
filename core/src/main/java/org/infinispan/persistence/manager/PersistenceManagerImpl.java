@@ -199,6 +199,8 @@ public class PersistenceManagerImpl implements PersistenceManager {
                                                     + "' as it doesn't implement '" + AdvancedCacheLoader.class.getName() + "'");
             }
             preloadCl = (AdvancedCacheLoader) l;
+            if (preloadCl instanceof AdvancedAsyncCacheLoader)
+               preloadCl = (AdvancedCacheLoader) ((AdvancedAsyncCacheLoader) preloadCl).undelegate();
             break;
          }
       }
