@@ -149,6 +149,9 @@ public abstract class BaseDistributionInterceptor extends ClusteringInterceptor 
             }
          }
       }
+      if (rvrl != null) {
+         rvrl.remoteValueNotFound(key);
+      }
       return null;
    }
 

@@ -228,4 +228,13 @@ public class L1ManagerImpl implements L1Manager, RemoteValueRetrievedListener {
          synchronizer.runL1UpdateIfPossible(ice);
       }
    }
+
+   @Override
+   public void remoteValueNotFound(Object key) {
+      L1WriteSynchronizer synchronizer = synchronizers.get(key);
+      if (synchronizer != null) {
+         // we assume synchronizer supports null value properly
+         synchronizer.runL1UpdateIfPossible(null);
+      }
+   }
 }

@@ -48,6 +48,20 @@ public class L1WriteSynchronizerTest extends AbstractInfinispanTest {
    }
 
    @Test
+   public void testNullICEProvided() throws ExecutionException, InterruptedException {
+      sync.runL1UpdateIfPossible(null);
+
+      assertNull(sync.get());
+   }
+
+   @Test
+   public void testNullICEProvidedWait() throws ExecutionException, InterruptedException, TimeoutException {
+      sync.runL1UpdateIfPossible(null);
+
+      assertNull(sync.get(1, TimeUnit.SECONDS));
+   }
+
+   @Test
    public void testGetReturnValueWait() throws InterruptedException, ExecutionException, TimeoutException {
       Object value = new Object();
       InternalCacheEntry ice = new ImmortalCacheEntry(value, value);
@@ -121,7 +135,7 @@ public class L1WriteSynchronizerTest extends AbstractInfinispanTest {
 
          @Override
          public Object call() throws Exception {
-            return sync.get(500, TimeUnit.MILLISECONDS);
+            return sync.get(5, TimeUnit.SECONDS);
          }
       });
 
@@ -137,6 +151,51 @@ public class L1WriteSynchronizerTest extends AbstractInfinispanTest {
       sync.runL1UpdateIfPossible(ice);
 
       assertEquals(value, future.get(1, TimeUnit.SECONDS));
+   }
+
+   @Test
+   public void testSpawnedThreadBlockingNullValue() throws InterruptedException, ExecutionException, TimeoutException {
+      Future future = fork(new Callable<Object>() {
+
+         @Override
+         public Object call() throws Exception {
+            return sync.get();
+         }
+      });
+
+      try {
+         future.get(50, TimeUnit.MILLISECONDS);
+         fail("Should have thrown a timeout exception");
+      } catch (TimeoutException e) {
+         // This should time out exception
+      }
+
+      sync.runL1UpdateIfPossible(null);
+
+      assertNull(future.get(1, TimeUnit.SECONDS));
+   }
+
+   @Test
+   public void testSpawnedThreadBlockingNullValueTimeWait() throws InterruptedException, ExecutionException, TimeoutException {
+      Future future = fork(new Callable<Object>() {
+
+         @Override
+         public Object call() throws Exception {
+            return sync.get(5, TimeUnit.SECONDS);
+         }
+      });
+
+      // This should not return since we haven't signaled the sync yet
+      try {
+         future.get(50, TimeUnit.MILLISECONDS);
+         fail("Should have thrown a timeout exception");
+      } catch (TimeoutException e) {
+         // This should time out exception
+      }
+
+      sync.runL1UpdateIfPossible(null);
+
+      assertNull(future.get(1, TimeUnit.SECONDS));
    }
 
    @Test
