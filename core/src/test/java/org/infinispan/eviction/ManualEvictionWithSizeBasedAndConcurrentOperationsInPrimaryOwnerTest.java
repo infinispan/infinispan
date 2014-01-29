@@ -104,14 +104,8 @@ public class ManualEvictionWithSizeBasedAndConcurrentOperationsInPrimaryOwnerTes
       final Object key1 = createSameHashCodeKey("key1");
       initializeKeyAndCheckData(key1, "v1");
 
-      final ControlledDataContainer controller = replaceControlledDataContainer();
       final Latch latch = new Latch();
-      controller.beforeRemove = new Runnable() {
-         @Override
-         public void run() {
-            latch.blockIfNeeded();
-         }
-      };
+      final ControlledDataContainer controller = replaceControlledDataContainer(latch);
 
       //this will trigger the eviction of key1. key1 eviction will be blocked in the latch
       latch.enable();
@@ -373,10 +367,16 @@ public class ManualEvictionWithSizeBasedAndConcurrentOperationsInPrimaryOwnerTes
       });
    }
 
-   private ControlledDataContainer replaceControlledDataContainer() {
+   private ControlledDataContainer replaceControlledDataContainer(final Latch latch) {
       DataContainer current = TestingUtil.extractComponent(cache, DataContainer.class);
       ClusteringDependentLogic clusteringDependentLogic = TestingUtil.extractComponent(cache, ClusteringDependentLogic.class);
       ControlledDataContainer controlledDataContainer = new ControlledDataContainer(current, clusteringDependentLogic);
+      controlledDataContainer.beforeRemove = new Runnable() {
+         @Override
+         public void run() {
+            latch.blockIfNeeded();
+         }
+      };
       TestingUtil.replaceComponent(cache, DataContainer.class, controlledDataContainer, true);
       return controlledDataContainer;
    }

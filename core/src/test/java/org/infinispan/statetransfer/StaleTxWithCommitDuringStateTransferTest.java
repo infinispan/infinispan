@@ -81,7 +81,6 @@ public class StaleTxWithCommitDuringStateTransferTest extends MultipleCacheManag
       // Block state request commands on cache 0
       StateProvider stateProvider = TestingUtil.extractComponent(cache0, StateProvider.class);
       StateProvider spyProvider = spy(stateProvider);
-      TestingUtil.replaceComponent(cache0, StateProvider.class, spyProvider, true);
       doAnswer(new Answer<Object>() {
          @Override
          public Object answer(InvocationOnMock invocation) throws Throwable {
@@ -94,6 +93,7 @@ public class StaleTxWithCommitDuringStateTransferTest extends MultipleCacheManag
             return result;
          }
       }).when(spyProvider).getTransactionsForSegments(any(Address.class), anyInt(), anySetOf(Integer.class));
+      TestingUtil.replaceComponent(cache0, StateProvider.class, spyProvider, true);
 
       // Start a transaction on cache 0, which will block on cache 1
       MagicKey key = new MagicKey("testkey", cache0);

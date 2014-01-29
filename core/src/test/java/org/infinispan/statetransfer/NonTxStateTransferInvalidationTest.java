@@ -120,7 +120,6 @@ public class NonTxStateTransferInvalidationTest extends MultipleCacheManagersTes
       ClusterTopologyManager ctm = TestingUtil.extractGlobalComponent(manager, ClusterTopologyManager.class);
       final Answer<Object> forwardedAnswer = AdditionalAnswers.delegatesTo(ctm);
       ClusterTopologyManager mockManager = mock(ClusterTopologyManager.class, withSettings().defaultAnswer(forwardedAnswer));
-      TestingUtil.replaceComponent(manager, ClusterTopologyManager.class, mockManager, true);
       doAnswer(new Answer<Object>() {
          @Override
          public Object answer(InvocationOnMock invocation) throws Throwable {
@@ -130,6 +129,7 @@ public class NonTxStateTransferInvalidationTest extends MultipleCacheManagersTes
             return answer;
          }
       }).when(mockManager).handleJoin(anyString(), any(Address.class), any(CacheJoinInfo.class), anyInt());
+      TestingUtil.replaceComponent(manager, ClusterTopologyManager.class, mockManager, true);
    }
 
 }

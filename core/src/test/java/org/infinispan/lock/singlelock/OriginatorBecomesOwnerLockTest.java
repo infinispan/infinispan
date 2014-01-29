@@ -10,6 +10,7 @@ import javax.transaction.RollbackException;
 import javax.transaction.SystemException;
 
 import org.infinispan.Cache;
+import org.infinispan.commands.VisitableCommand;
 import org.infinispan.commands.tx.CommitCommand;
 import org.infinispan.commands.tx.PrepareCommand;
 import org.infinispan.configuration.cache.CacheMode;
@@ -81,8 +82,7 @@ public class OriginatorBecomesOwnerLockTest extends MultipleCacheManagersTest {
    }
 
    private void testLockMigrationDuringPrepare(final Object key) throws Exception {
-      ControlledRpcManager controlledRpcManager = installControlledRpcManager();
-      controlledRpcManager.blockBefore(PrepareCommand.class);
+      ControlledRpcManager controlledRpcManager = installControlledRpcManager(PrepareCommand.class);
       final DummyTransactionManager tm = dummyTm(ORIGINATOR_INDEX);
 
       Future<DummyTransaction> f = fork(new Callable<DummyTransaction>() {
@@ -169,8 +169,7 @@ public class OriginatorBecomesOwnerLockTest extends MultipleCacheManagersTest {
    }
 
    private void testLockMigrationDuringCommit(final Object key) throws Exception {
-      ControlledRpcManager controlledRpcManager = installControlledRpcManager();
-      controlledRpcManager.blockBefore(CommitCommand.class);
+      ControlledRpcManager controlledRpcManager = installControlledRpcManager(CommitCommand.class);
       final DummyTransactionManager tm = dummyTm(ORIGINATOR_INDEX);
 
       Future<DummyTransaction> f = fork(new Callable<DummyTransaction>() {
@@ -221,9 +220,10 @@ public class OriginatorBecomesOwnerLockTest extends MultipleCacheManagersTest {
       });
    }
 
-   private ControlledRpcManager installControlledRpcManager() {
+   private ControlledRpcManager installControlledRpcManager(Class<? extends VisitableCommand> commandClass) {
       ControlledRpcManager controlledRpcManager = new ControlledRpcManager(
             originatorCache.getAdvancedCache().getRpcManager());
+      controlledRpcManager.blockBefore(commandClass);
       TestingUtil.replaceComponent(originatorCache, RpcManager.class, controlledRpcManager, true);
       return controlledRpcManager;
    }
