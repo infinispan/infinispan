@@ -158,7 +158,9 @@ public class L1WriteSynchronizer {
 
    /**
     * Attempts to the L1 update and set the value.  If the L1 update was marked as being skipped this will instead
-    * just set the value to release blockers
+    * just set the value to release blockers.
+    * A null value can be provided which will not run the L1 update but will just alert other waiters that a null
+    * was given.
     */
    public void runL1UpdateIfPossible(InternalCacheEntry ice) {
       Object value = null;

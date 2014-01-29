@@ -17,4 +17,10 @@ public interface RemoteValueRetrievedListener {
     * @param ice The cache entry that was found
     */
    public void remoteValueFound(InternalCacheEntry ice);
+
+   /**
+    * Invoked when a remote value is not found from the remote source for the given key
+    * @param key The key for which there was no value found
+    */
+   public void remoteValueNotFound(Object key);
 }
