@@ -1,27 +1,7 @@
 ===  Infinispan REST Server
-This server provides easy to use link:$$http://en.wikipedia.org/wiki/Representational_State_Transfer$$[RESTful] HTTP access to the Infinispan data grid, build on JAX_RS.
-This application is delivered (currently) as a link:http://en.wikipedia.org/wiki/WAR_file_format_(Sun)[WAR file], which you can deploy to a servlet container (as many instances as you need). 
 
-==== Configuration
-Out of the box, Infinispan will create and use a new LOCAL mode cache. To set a custom configuration:
-
-.  Unzip the REST WAR file (or use an link:$$http://community.jboss.org/docs/DOC-9719$$[exploded] deployment) 
-.  Create an Infinispan configuration XML file and name this `infinispan.xml`
-.  Place this file in infinispan-server-rest.war/WEB-INF/classes 
-
-Alternatively, you could:
-
-.  Unzip the REST WAR file (or use an link:$$http://community.jboss.org/docs/DOC-9719$$[exploded] deployment) 
-.  Create an Infinispan configuration XML file, call it whatever you want and place it wherever you want 
-.  Edit `infinispan-server-rest.war/WEB-INF/web.xml` and look for the `infinispan.config` init-param. Change the value of this init-param to the full path to your Infinispan configuration. 
-
-image:../images/WebXmlInfinispanConfig.png[]
-
-Please note that the REST server only allows interaction with either the default cache (named `___defaultcache`) or one of the named caches in the configuration file. This is because the REST server starts the default and pre-defined caches on startup in order to provide consistent behavior. 
-
-WARNING: Creation of new named caches on the fly is not supported.
-
-As a result, if you don't use a custom configuration file, you'll only be able to interact with the default cache. To interact with more caches, use a configuration file with the desired named caches.
+The Infinispan Server distribution contains a server module that implements link:$$http://en.wikipedia.org/wiki/Representational_State_Transfer$$[RESTful] HTTP access to the Infinispan data grid, built on JAX_RS.
+Please refer to Infinispan Server's link:$$../infinispan_server_guide/infinispan_server_guide.html$$[documentation] for instructions on how to configure and run a REST server.
 
 ==== REST API
 HTTP PUT and POST methods are used to place data in the cache, with URLs to address the cache name and key(s) - the data being the body of the request (the data can be anything you like). It is important that a Content-Type header is set. Other headers are used to control the cache settings and behaviour (detailed in that link). 
