@@ -15,7 +15,7 @@ import memcache
 import time
 
 ip = "127.0.0.1"
-port = "13211"
+port = "11311"
 ipaddress = ip + ':' + port
 mc = memcache.Client([ipaddress], debug=1)
 
