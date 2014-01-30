@@ -685,18 +685,16 @@ public class Parser60 implements ConfigurationParser {
             ClusterLoaderConfigurationBuilder cscb = builder.persistence().addClusterLoader();
             parseLoaderChildren(reader, cscb);
          } else {
-		    BuiltBy builtByClazz = store.getClass().getAnnotation(
-				BuiltBy.class);
-			if(builtByClazz == null) { 
-			   throw new CacheConfigurationException(
-			      store.getClass()
-				   + " as a custom cache store, should have the annotation @BuiltBy specified for the StoreConfigurationBuilder!");
-			}
-			builderClass = builtByClazz.value();
-			@SuppressWarnings("unchecked")
-			StoreConfigurationBuilder<?, ?> pcb = builder.persistence()
-			   .addStore(builderClass);
-			parseStoreChildren(reader, pcb);
+            BuiltBy builtByClazz = store.getClass().getAnnotation(BuiltBy.class);
+            if (builtByClazz == null) {
+               throw new CacheConfigurationException(
+                     store.getClass()
+                           + " as a custom cache store, should have the annotation @BuiltBy specified for the StoreConfigurationBuilder!");
+            }
+            builderClass = builtByClazz.value();
+            @SuppressWarnings("unchecked")
+            StoreConfigurationBuilder<?, ?> pcb = builder.persistence().addStore(builderClass);
+            parseStoreChildren(reader, pcb);
          }
       }
    }
