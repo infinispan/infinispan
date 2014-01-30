@@ -1,6 +1,7 @@
 package org.infinispan.configuration.parsing;
 
 import org.infinispan.commons.CacheConfigurationException;
+import org.infinispan.commons.configuration.BuiltBy;
 import org.infinispan.commons.equivalence.Equivalence;
 import org.infinispan.commons.executors.ExecutorFactory;
 import org.infinispan.commons.hash.Hash;
@@ -636,6 +637,7 @@ public class Parser60 implements ConfigurationParser {
       Boolean purgeOnStartup = null;
       Boolean preload = null;
       Boolean shared = null;
+      Class builderClass = null;
 
       for (int i = 0; i < reader.getAttributeCount(); i++) {
          ParseUtils.requireNoNamespaceAttribute(reader, i);
@@ -682,6 +684,17 @@ public class Parser60 implements ConfigurationParser {
          } else if (store instanceof ClusterLoader) {
             ClusterLoaderConfigurationBuilder cscb = builder.persistence().addClusterLoader();
             parseLoaderChildren(reader, cscb);
+         } else {
+            BuiltBy builtByClazz = store.getClass().getAnnotation(BuiltBy.class);
+            if (builtByClazz == null) {
+               throw new CacheConfigurationException(
+                     store.getClass()
+                           + " as a custom cache store, should have the annotation @BuiltBy specified for the StoreConfigurationBuilder!");
+            }
+            builderClass = builtByClazz.value();
+            @SuppressWarnings("unchecked")
+            StoreConfigurationBuilder<?, ?> pcb = builder.persistence().addStore(builderClass);
+            parseStoreChildren(reader, pcb);
          }
       }
    }
