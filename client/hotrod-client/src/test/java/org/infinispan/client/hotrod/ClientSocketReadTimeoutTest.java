@@ -114,7 +114,7 @@ public class ClientSocketReadTimeoutTest extends SingleCacheManagerTest {
                throw new CacheException(e);
             }
          }
-         return super.getCache();
+         return super.getCache(cacheName);
       }
 
    }
