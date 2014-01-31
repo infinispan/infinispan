@@ -23,7 +23,7 @@ public class RoundRobinBalancingStrategy implements RequestBalancingStrategy {
 
    private int index = 0;
 
-   private SocketAddress[] servers;
+   private volatile SocketAddress[] servers;
 
    @Override
    public void setServers(Collection<SocketAddress> servers) {
@@ -57,7 +57,11 @@ public class RoundRobinBalancingStrategy implements RequestBalancingStrategy {
    }
 
    private SocketAddress getServerByIndex(int pos) {
-      SocketAddress server = servers[pos];
+      SocketAddress[] copy = servers;
+      if (pos >= copy.length) {
+         pos = 0;
+      }
+      SocketAddress server = copy[pos];
       if (log.isTraceEnabled()) {
          log.tracef("Returning server: %s", server);
       }
@@ -69,6 +73,6 @@ public class RoundRobinBalancingStrategy implements RequestBalancingStrategy {
    }
 
    public int getNextPosition() {
-      return  index;
+      return index;
    }
 }
