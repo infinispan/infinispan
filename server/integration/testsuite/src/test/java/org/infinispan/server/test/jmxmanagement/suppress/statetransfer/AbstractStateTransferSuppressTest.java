@@ -6,6 +6,7 @@ import java.util.List;
 import org.infinispan.arquillian.core.InfinispanResource;
 import org.infinispan.arquillian.core.RemoteInfinispanServer;
 import org.infinispan.arquillian.core.RemoteInfinispanServers;
+import org.infinispan.arquillian.core.RunningServer;
 import org.infinispan.arquillian.core.WithRunningServer;
 import org.infinispan.arquillian.utils.MBeanServerConnectionProvider;
 import org.infinispan.server.test.util.RemoteInfinispanMBeans;
@@ -23,7 +24,8 @@ import static org.junit.Assert.assertTrue;
 /**
  * Abstact class for testing state transfer suppress functionality
  *
- * @author amanukya@redhat.com
+ * @author <a href="mailto:amanukya@redhat.com">Anna Manukyan</a>
+ * @author <a href="mailto:vchepeli@redhat.com">Vitalii Chepeliuk</a>
  */
 public abstract class AbstractStateTransferSuppressTest {
 
@@ -90,7 +92,7 @@ public abstract class AbstractStateTransferSuppressTest {
     }
 
     @Test
-    @WithRunningServer({CONTAINER1, CONTAINER2})
+    @WithRunningServer({@RunningServer(name = CONTAINER1),@RunningServer(name = CONTAINER2)})
     public void testRebalanceSwitch() throws Exception {
 
         //Verifying that the rebalance is enabled by default.
@@ -114,7 +116,7 @@ public abstract class AbstractStateTransferSuppressTest {
     }
 
     @Test
-    @WithRunningServer({CONTAINER1, CONTAINER2})
+    @WithRunningServer({@RunningServer(name = CONTAINER1),@RunningServer(name = CONTAINER2)})
     public void testRebalanceDisabledWithNewNode() throws Exception {
 
         try {
@@ -125,7 +127,7 @@ public abstract class AbstractStateTransferSuppressTest {
     }
 
     @Test
-    @WithRunningServer({CONTAINER1, CONTAINER2})
+    @WithRunningServer({@RunningServer(name = CONTAINER1),@RunningServer(name = CONTAINER2)})
     public void testRebalanceWithFirstNodeStop() throws Exception {
 
         try {
@@ -157,7 +159,7 @@ public abstract class AbstractStateTransferSuppressTest {
     }
 
     @Test
-    @WithRunningServer({CONTAINER1, CONTAINER2})
+    @WithRunningServer({@RunningServer(name = CONTAINER1),@RunningServer(name = CONTAINER2)})
     public void testRebalanceWithJoinedNodeStop() throws Exception {
 
         verifyRebalanceWith3rdNode();

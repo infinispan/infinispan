@@ -6,6 +6,7 @@ import java.io.IOException;
 import org.apache.commons.io.FileUtils;
 import org.infinispan.arquillian.core.InfinispanResource;
 import org.infinispan.arquillian.core.RemoteInfinispanServers;
+import org.infinispan.arquillian.core.RunningServer;
 import org.infinispan.arquillian.core.WithRunningServer;
 import org.infinispan.arquillian.utils.MBeanServerConnectionProvider;
 import org.infinispan.server.test.client.memcached.MemcachedClient;
@@ -23,14 +24,14 @@ import static org.junit.Assert.assertEquals;
 /**
  * Tests for JGroups AUTH and ENCRYPT protocols. Nodes with correct certificate should be allowed to join the cluster, others
  * should not. Communication within cluster should be encrypted.
- *
+ * <p/>
  * TODO: Check replay attack
- *
+ * <p/>
  * Command used to generate the certificate for ENCRYPT protocol:
  * keytool -genseckey -alias memcached -keypass secret -storepass secret -keyalg DESede -keysize 168 -keystore server_jceks.keystore -storetype  JCEKS
  * Command used to inspect the certificate:
  * keytool -list -v -keystore server_jceks.keystore  -storetype JCEKS
- *
+ * <p/>
  * Certificate for AUTH protocol re-used from tests for HotRod SSL (RSA, 2048 bits)
  *
  * @author Martin Gencur
@@ -72,8 +73,8 @@ public class AuthAndEncryptProtocolTest {
         }
     }
 
-    @WithRunningServer(COORDINATOR_NODE)
     @Test
+    @WithRunningServer({@RunningServer(name = COORDINATOR_NODE)})
     public void testFriendlyNodeCanJoin() throws Exception {
         try {
             controller.start(JOINING_NODE_FRIEND);
@@ -103,8 +104,8 @@ public class AuthAndEncryptProtocolTest {
         }
     }
 
-    @WithRunningServer(COORDINATOR_NODE_NO_ENCRYPT)
     @Test
+    @WithRunningServer({@RunningServer(name = COORDINATOR_NODE_NO_ENCRYPT)})
     public void testAlienNodeCannotJoin() throws Exception {
         try {
             controller.start(JOINING_NODE_ALIEN);

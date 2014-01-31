@@ -4,9 +4,12 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.util.Collections;
 import java.util.List;
+
 import javax.management.ObjectName;
+
 import org.infinispan.arquillian.core.InfinispanResource;
 import org.infinispan.arquillian.core.RemoteInfinispanServer;
+import org.infinispan.arquillian.core.RunningServer;
 import org.infinispan.arquillian.core.WithRunningServer;
 import org.infinispan.arquillian.utils.MBeanServerConnectionProvider;
 import org.infinispan.client.hotrod.RemoteCache;
@@ -37,10 +40,10 @@ import static org.junit.Assert.assertNotNull;
  * @author Martin Gencur
  */
 @RunWith(Arquillian.class)
-@WithRunningServer("remote-query")
+@WithRunningServer({@RunningServer(name = "remote-query")})
 public class RemoteQueryTest {
 
-   protected static final String DEFAULT_CACHE = "testcache";
+    protected static final String DEFAULT_CACHE = "testcache";
 
     @InfinispanResource("remote-query")
     protected RemoteInfinispanServer server;
@@ -57,9 +60,9 @@ public class RemoteQueryTest {
         rcmFactory = new RemoteCacheManagerFactory();
         ConfigurationBuilder clientBuilder = new ConfigurationBuilder();
         clientBuilder.addServer()
-                        .host(server.getHotrodEndpoint().getInetAddress().getHostName())
-                        .port(server.getHotrodEndpoint().getPort())
-                     .marshaller(new ProtoStreamMarshaller());
+                .host(server.getHotrodEndpoint().getInetAddress().getHostName())
+                .port(server.getHotrodEndpoint().getPort())
+                .marshaller(new ProtoStreamMarshaller());
         remoteCacheManager = rcmFactory.createManager(clientBuilder);
         remoteCache = remoteCacheManager.getCache(DEFAULT_CACHE);
 
@@ -190,12 +193,12 @@ public class RemoteQueryTest {
     }
 
     private byte[] readClasspathResource(String c) throws IOException {
-       InputStream is = getClass().getResourceAsStream(c);
-       try {
-          return Util.readStream(is);
-       } finally {
-          is.close();
-       }
+        InputStream is = getClass().getResourceAsStream(c);
+        try {
+            return Util.readStream(is);
+        } finally {
+            is.close();
+        }
     }
 
     private Object invokeOperation(MBeanServerConnectionProvider provider, String mbean, String operationName, Object[] params,

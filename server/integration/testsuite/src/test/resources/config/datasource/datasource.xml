@@ -1,0 +1,27 @@
+        <subsystem xmlns="urn:jboss:domain:datasources:1.1">
+            <datasources>
+                <datasource jndi-name="java:jboss/datasources/JdbcDS" pool-name="java:jboss/datasources/JdbcDS" enabled="true" use-java-context="true" use-ccm="true">
+                    <connection-url>${connection.url}</connection-url>
+                    <driver>${database}.driver</driver>
+                    <pool/>
+                    <security>
+                        <user-name>${username}</user-name>
+                        <password>${password}</password>
+                    </security>
+                </datasource>
+                <datasource jndi-name="java:jboss/datasources/JdbcDSOther" pool-name="java:jboss/datasources/JdbcDSOther" enabled="true" use-java-context="true" use-ccm="true">
+                    <connection-url>${connection.url.other}</connection-url>
+                    <driver>${database}.driver</driver>
+                    <pool/>
+                    <security>
+                        <user-name>${username.other}</user-name>
+                        <password>${password.other}</password>
+                    </security>
+                </datasource>
+                <drivers>
+                    <driver name="${database}.driver" module="com.${database}.driver">
+                        <driver-class>${driver.class}</driver-class>
+                    </driver>
+                </drivers>
+            </datasources>
+        </subsystem>
