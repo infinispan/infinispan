@@ -1,12 +1,12 @@
 package org.infinispan.persistence.jpa;
 
+import org.infinispan.commons.io.ByteBuffer;
+
 import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.Id;
 import javax.persistence.Table;
 import javax.persistence.Version;
-
-import org.infinispan.commons.io.ByteBuffer;
 
 /**
  * Entity which should hold serialized metadata
@@ -19,8 +19,10 @@ class MetadataEntity {
    public static final String EXPIRATION = "expiration";
 
    @Id
-   @Column(columnDefinition = "VARBINARY(255)") // Some DBs require primary columns to have specified length
+   // Some DBs require primary columns to have specified length, 767 is max length for InnoDB
+   @Column(columnDefinition = "VARBINARY(767)", length = 767)
    public byte[] name;
+   @Column(length = 65535)
    public byte[] metadata;
    @Column(name = EXPIRATION)
    public long expiration; // to simplify query for expired entries
