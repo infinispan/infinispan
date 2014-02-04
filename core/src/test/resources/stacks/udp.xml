@@ -36,7 +36,7 @@
 
    <org.infinispan.test.fwk.TEST_PING ergonomics="false" testName=""/>
    <!--<PING timeout="3000" num_initial_members="3"/>-->
-   <MERGE2 max_interval="10000" min_interval="3000"/>
+   <MERGE2 max_interval="5000" min_interval="3000"/>
 
    <FD_SOCK/>
    <FD_ALL interval="1000" timeout="3000" timeout_check_interval="1000"/>
