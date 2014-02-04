@@ -17,8 +17,8 @@ import org.testng.annotations.Test;
  * @author Galder Zamarreño
  * @since 5.2
  */
-@Test(groups = "functional", testName = "query.persistence.SharedCacheLoaderQueryIndexTest", enabled = false,
-      description = "Temporary disabled: https://issues.jboss.org/browse/ISPN-2249 , https://issues.jboss.org/browse/ISPN-1586")
+@Test(groups = "unstable", testName = "query.persistence.SharedCacheLoaderQueryIndexTest",
+      description = "Temporary disabled: https://issues.jboss.org/browse/ISPN-2249 , https://issues.jboss.org/browse/ISPN-1586 -- original group: functional")
 public class SharedCacheLoaderQueryIndexTest extends BaseReIndexingTest {
 
    @Override

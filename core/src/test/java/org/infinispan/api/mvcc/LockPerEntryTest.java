@@ -31,7 +31,7 @@ public class LockPerEntryTest extends SingleCacheManagerTest {
       assertNoLocks();
    }
 
-   @Test (enabled = false)
+   @Test (groups = "unstable")
    public void testLocksConcurrency() throws Exception {
       cache = cacheManager.getCache();
       final int NUM_THREADS = 10;

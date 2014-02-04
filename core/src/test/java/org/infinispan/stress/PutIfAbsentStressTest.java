@@ -26,7 +26,7 @@ import java.util.concurrent.atomic.AtomicInteger;
  * @see java.util.concurrent.ConcurrentMap#putIfAbsent(Object, Object)
  * @author Sanne Grinovero
  */
-@Test(groups = "stress", testName = "stress.PutIfAbsentStressTest", enabled = false,
+@Test(groups = "stress", testName = "stress.PutIfAbsentStressTest",
       description = "Since this test is slow to run, it should be disabled by default and run by hand as necessary.")
 public class PutIfAbsentStressTest {
 

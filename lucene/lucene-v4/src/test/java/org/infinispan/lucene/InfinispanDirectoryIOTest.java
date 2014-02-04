@@ -315,7 +315,7 @@ public class InfinispanDirectoryIOTest {
    }
 
 
-   @Test(enabled = false)
+   @Test(groups = "unstable")
    public void testReadChunks() throws Exception {
       final int BUFFER_SIZE = 64;
 

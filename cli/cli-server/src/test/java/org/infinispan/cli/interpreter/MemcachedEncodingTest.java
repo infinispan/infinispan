@@ -27,7 +27,7 @@ import org.testng.annotations.Test;
  * @author Tristan Tarrant
  * @since 5.2
  */
-@Test(testName = "cli-server.MemcachedEncodingTest", groups = "functional", enabled=false)
+@Test(testName = "cli-server.MemcachedEncodingTest", groups = "unstable", description = "original group: functional")
 @CleanupAfterMethod
 public class MemcachedEncodingTest extends SingleCacheManagerTest {
 

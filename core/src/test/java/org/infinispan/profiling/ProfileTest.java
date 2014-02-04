@@ -21,7 +21,7 @@ import java.util.concurrent.atomic.AtomicLong;
  *
  * @author Manik Surtani (<a href="mailto:manik@jboss.org">manik@jboss.org</a>)
  */
-@Test(groups = "profiling", enabled = false, testName = "profiling.ProfileTest")
+@Test(groups = "profiling", testName = "profiling.ProfileTest")
 public class ProfileTest extends AbstractProfileTest {
    /*
       Test configuration flags
@@ -61,12 +61,10 @@ public class ProfileTest extends AbstractProfileTest {
    }
 
 
-   @Test(enabled = false)
    public void testLocalMode() throws Exception {
       runCompleteTest(LOCAL_CACHE_NAME);
    }
 
-   @Test(enabled = false)
    public void testReplMode() throws Exception {
       runCompleteTest(REPL_SYNC_CACHE_NAME);
    }

@@ -70,7 +70,7 @@ public class DeadlockDetectionPerformanceTest extends AbstractInfinispanTest {
       }
    }
 
-   @Test(invocationCount = 10, enabled = false)
+   @Test(invocationCount = 10)
    public void testLocalDifferentTxSize() throws Exception {
       USE_DLD = false;
       for (int i = 2; i < KEY_POOL_SIZE; i++) {
@@ -84,7 +84,7 @@ public class DeadlockDetectionPerformanceTest extends AbstractInfinispanTest {
       }
    }
 
-   @Test(invocationCount = 5, enabled = false)
+   @Test(invocationCount = 5)
    public void testLocalDifferentTxSizeNoCollision() throws Exception {
       NO_COLISION = true;
       USE_DLD = false;
@@ -99,7 +99,7 @@ public class DeadlockDetectionPerformanceTest extends AbstractInfinispanTest {
       }
    }
 
-   @Test(invocationCount = 10, enabled = false)
+   @Test(invocationCount = 10)
    public void testReplDifferentTxSize() throws Exception {
       THREAD_COUNT = 2;
       USE_DLD = false;
@@ -114,7 +114,7 @@ public class DeadlockDetectionPerformanceTest extends AbstractInfinispanTest {
       }
    }
 
-   @Test(invocationCount = 5, enabled = false)
+   @Test(invocationCount = 5)
    public void testReplDifferentTxSizeDldOnly() throws Exception {
       THREAD_COUNT = 3;
       USE_DLD = true;

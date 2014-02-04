@@ -28,7 +28,7 @@ import org.testng.annotations.Test;
  * 
  * @author Vladimir Blagojevic
  */
-@Test(enabled = true, groups = "functional", testName = "cdi.test.distexec.WordCountMapReduceCDITest")
+@Test(groups = "functional", testName = "cdi.test.distexec.WordCountMapReduceCDITest")
 public class WordCountMapReduceCDITest extends MultipleCacheManagersArquillianTest {
 
    BaseWordCountMapReduceTest delegate;

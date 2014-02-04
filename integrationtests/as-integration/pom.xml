@@ -115,6 +115,7 @@
             <configuration>
                <!-- Force use of JUnit, since TestNG+Arquillian break in wonderful ways -->
                <testNGArtifactName>none:none</testNGArtifactName>
+               <excludedGroups>org.infinispan.test.integration.as.category.UnstableTest</excludedGroups>
             </configuration>
             <executions>
                <execution>
@@ -188,5 +189,27 @@
          </plugin>
       </plugins>
    </build>
+
+   <profiles>
+      <profile>
+         <id>test-unstable</id>
+         <activation>
+             <activeByDefault>false</activeByDefault>
+         </activation>
+         <build>
+            <plugins>
+               <plugin>
+                  <groupId>org.apache.maven.plugins</groupId>
+                  <artifactId>maven-failsafe-plugin</artifactId>
+                  <configuration>
+                     <groups combine.self="override">org.infinispan.test.integration.as.category.UnstableTest</groups>
+                     <!-- empty since we are not going to exclude any group -->
+                     <excludedGroups combine.self="override"></excludedGroups>
+                  </configuration>
+               </plugin>
+            </plugins>
+         </build>
+      </profile>
+    </profiles>
 
 </project>

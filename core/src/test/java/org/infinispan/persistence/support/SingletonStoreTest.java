@@ -3,6 +3,10 @@ package org.infinispan.persistence.support;
 import org.infinispan.Cache;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
+import org.infinispan.configuration.cache.PersistenceConfigurationBuilder;
+import org.infinispan.configuration.cache.SingletonStoreConfiguration;
+import org.infinispan.configuration.cache.SingletonStoreConfigurationBuilder;
+import org.infinispan.persistence.spi.CacheWriter;
 import org.infinispan.persistence.spi.PersistenceException;
 import org.infinispan.persistence.dummy.DummyInMemoryStoreConfigurationBuilder;
 import org.infinispan.persistence.spi.CacheLoader;
@@ -28,7 +32,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 import static org.testng.AssertJUnit.assertEquals;
 import static org.testng.AssertJUnit.fail;
 
-@Test(groups = "functional", testName = "persistence.decorators.SingletonStoreTest", enabled = false, description = "See ISPN-1123")
+@Test(groups = "unstable", testName = "persistence.decorators.SingletonStoreTest", description = "See ISPN-1123 -- original group: functional")
 public class SingletonStoreTest extends MultipleCacheManagersTest {
    private static final Log log = LogFactory.getLog(SingletonStoreTest.class);
    private static final AtomicInteger storeCounter = new AtomicInteger(0);
@@ -79,12 +83,12 @@ public class SingletonStoreTest extends MultipleCacheManagersTest {
 
       int i = 0;
       for (Cache c : caches)
-         stores[i++] = (SingletonCacheWriter) TestingUtil.getFirstLoader(c);
+         stores[i++] = (SingletonCacheWriter) TestingUtil.getFirstWriter(c);
       return stores;
    }
 
    private Object load(SingletonCacheWriter cs, Object key) throws PersistenceException {
-      MarshalledEntry se = ((CacheLoader)cs).load(key);
+      MarshalledEntry se = ((CacheLoader)cs.undelegate()).load(key);
       return se == null ? null : se.getValue();
    }
 
@@ -201,7 +205,8 @@ public class SingletonStoreTest extends MultipleCacheManagersTest {
    public void testAvoidConcurrentStatePush() throws Exception {
       final CountDownLatch pushStateCanFinish = new CountDownLatch(1);
       final CountDownLatch secondActiveStatusChangerCanStart = new CountDownLatch(1);
-      final TestingSingletonStore mscl = new TestingSingletonStore(pushStateCanFinish, secondActiveStatusChangerCanStart);
+      SingletonStoreConfiguration singletonConfig = createSingletonStoreConfiguration();
+      final TestingSingletonStore mscl = new TestingSingletonStore(pushStateCanFinish, secondActiveStatusChangerCanStart, singletonConfig);
 
       Future f1 = fork(createActiveStatusChanger(mscl));
       assert secondActiveStatusChangerCanStart.await(1000, TimeUnit.MILLISECONDS) : "Failed waiting on latch";
@@ -214,10 +219,18 @@ public class SingletonStoreTest extends MultipleCacheManagersTest {
       assertEquals(1, mscl.getNumberCreatedTasks());
    }
 
+   private SingletonStoreConfiguration createSingletonStoreConfiguration() {
+      PersistenceConfigurationBuilder persistenceBuilder = new ConfigurationBuilder().persistence();
+      return new DummyInMemoryStoreConfigurationBuilder(persistenceBuilder).singleton()
+            .pushStateTimeout(100L)
+            .create();
+   }
+
    public void testPushStateTimedOut() throws Throwable {
       final CountDownLatch pushStateCanFinish = new CountDownLatch(1);
 
-      final TestingSingletonStore mscl = new TestingSingletonStore(pushStateCanFinish, null);
+      SingletonStoreConfiguration singletonConfig = createSingletonStoreConfiguration();
+      final TestingSingletonStore mscl = new TestingSingletonStore(pushStateCanFinish, null, singletonConfig);
 
       Future f = fork(createActiveStatusChanger(mscl));
       pushStateCanFinish.await(200, TimeUnit.MILLISECONDS);
@@ -250,8 +263,9 @@ public class SingletonStoreTest extends MultipleCacheManagersTest {
       private CountDownLatch pushStateCanFinish;
       private CountDownLatch secondActiveStatusChangerCanStart;
 
-      public TestingSingletonStore(CountDownLatch pushStateCanFinish, CountDownLatch secondActiveStatusChangerCanStart) {
-         super(null, null);
+      public TestingSingletonStore(CountDownLatch pushStateCanFinish, CountDownLatch secondActiveStatusChangerCanStart,
+                                   SingletonStoreConfiguration singletonConfig) {
+         super(null, singletonConfig);
          this.pushStateCanFinish = pushStateCanFinish;
          this.secondActiveStatusChangerCanStart = secondActiveStatusChangerCanStart;
       }

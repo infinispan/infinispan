@@ -12,7 +12,7 @@ import java.text.NumberFormat;
 import java.util.Arrays;
 import java.util.Random;
 
-@Test(groups = "profiling", enabled = false, testName = "profiling.MemConsumptionTest")
+@Test(groups = "profiling", testName = "profiling.MemConsumptionTest")
 public class MemConsumptionTest extends AbstractInfinispanTest {
    // adjust the next 4 values
    int numEntries = 1000000;

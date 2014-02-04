@@ -84,7 +84,7 @@ public class CLInterfaceLoaderFunctionalTest extends AbstractInfinispanTest {
       });
    }
 
-   @Test(enabled = false) // Needs a way to convert keys to JSON format
+   @Test(groups = "unstable") // Needs a way to convert keys to JSON format
    public void testCustomKey() {
       withCacheManager(new CacheManagerCallable(createSourceCacheManager()) {
          @Override

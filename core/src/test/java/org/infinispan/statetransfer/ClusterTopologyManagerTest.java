@@ -208,6 +208,7 @@ public class ClusterTopologyManagerTest extends MultipleCacheManagersTest {
       TestingUtil.waitForRehashToComplete(c2, c3, c4);
    }
 
+   @Test(groups = "unstable")
    public void testClusterRecoveryWithRebalance() throws Exception {
       // Compute the merge coordinator by sorting the JGroups addresses, the same way MERGE2/3 do
       List<Address> members = new ArrayList<Address>(manager(0).getMembers());

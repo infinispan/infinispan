@@ -8,7 +8,7 @@ import org.testng.annotations.Test;
 
 import javax.transaction.TransactionManager;
 
-@Test(groups = "functional", enabled=false, testName = "distribution.DistSyncTxFuncTest")
+@Test(groups = "unstable", testName = "distribution.DistSyncTxFuncTest", description = "original group: functional")
 public class DistSyncTxFuncTest extends BaseDistFunctionalTest<Object, String> {
    
    public DistSyncTxFuncTest() {
@@ -253,8 +253,8 @@ public class DistSyncTxFuncTest extends BaseDistFunctionalTest<Object, String> {
 
    public void testConditionalRemoveFromNonOwner() throws Exception {
       // we need 2 keys that reside on different caches...
-      MagicKey k1 = new MagicKey("k1", c1); // maps on to c1 and c2
-      MagicKey k2 = new MagicKey("k2", c2); // maps on to c2 and c3
+      MagicKey k1 = new MagicKey("k1", c1, c2); // maps on to c1 and c2
+      MagicKey k2 = new MagicKey("k2", c2, c3); // maps on to c2 and c3
 
       init(k1, k2);
 

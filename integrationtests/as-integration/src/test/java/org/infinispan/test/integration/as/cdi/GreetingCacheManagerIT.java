@@ -1,10 +1,12 @@
 package org.infinispan.test.integration.as.cdi;
 
 import org.infinispan.eviction.EvictionStrategy;
+import org.infinispan.test.integration.as.category.UnstableTest;
 import org.jboss.arquillian.container.test.api.Deployment;
 import org.jboss.arquillian.junit.Arquillian;
 import org.jboss.shrinkwrap.api.spec.WebArchive;
 import org.junit.Test;
+import org.junit.experimental.categories.Category;
 import org.junit.runner.RunWith;
 
 import javax.inject.Inject;
@@ -15,6 +17,7 @@ import static org.junit.Assert.*;
  * @author Kevin Pollet <pollet.kevin@gmail.com> (C) 2011
  */
 @RunWith(Arquillian.class)
+@Category(UnstableTest.class)
 public class GreetingCacheManagerIT {
 
    @Deployment

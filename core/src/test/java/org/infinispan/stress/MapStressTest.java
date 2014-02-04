@@ -25,7 +25,7 @@ import static java.lang.Math.sqrt;
  * @author Dan Berindei <dberinde@redhat.com>
  * @since 4.0
  */
-@Test(testName = "stress.MapStressTest", groups = "stress", enabled = false, description = "Disabled by default, designed to be run manually.")
+@Test(testName = "stress.MapStressTest", groups = "stress", description = "Disabled by default, designed to be run manually.")
 public class MapStressTest {
    private static Log log = LogFactory.getLog(MapStressTest.class);
 
@@ -121,7 +121,7 @@ public class MapStressTest {
       return maps;
    }
 
-   @Test(dataProvider = "readWriteRemove", enabled = false)
+   @Test(dataProvider = "readWriteRemove")
    public void testReadWriteRemove(int capacity, int numKeys, int concurrency, int readerThreads, int writerThreads, int removerThreads) throws Exception {
       System.out.printf("Testing independent read/write/remove performance with capacity %d, keys %d, concurrency level %d, readers %d, writers %d, removers %d\n",
             capacity, numKeys, concurrency, readerThreads, writerThreads, removerThreads);
@@ -184,7 +184,7 @@ public class MapStressTest {
       return perf;
    }
 
-   @Test(dataProvider = "readWriteRatio", enabled = false)
+   @Test(dataProvider = "readWriteRatio")
    public void testMixedReadWrite(int capacity, int numKeys, int concurrency, int threads, int readToWriteRatio) throws Exception {
       System.out.printf("Testing mixed read/write performance with capacity %d, keys %d, concurrency level %d, threads %d, read:write ratio %d:1\n",
             capacity, numKeys, concurrency, threads, readToWriteRatio);
@@ -237,7 +237,7 @@ public class MapStressTest {
       return perf;
    }
 
-   @Test(dataProvider = "writeOnMiss", enabled = false)
+   @Test(dataProvider = "writeOnMiss")
    public void testWriteOnMiss(int capacity, int numKeys, int concurrency, int threads) throws Exception {
       System.out.printf("Testing write on miss performance with capacity %d, keys %d, concurrency level %d, threads %d\n",
             capacity, numKeys, concurrency, threads);

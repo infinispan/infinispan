@@ -19,7 +19,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
  * @author Manik Surtani
  * @since 4.0
  */
-@Test(testName = "stress.DataContainerStressTest", groups = "stress", enabled = false,
+@Test(testName = "stress.DataContainerStressTest", groups = "stress",
       description = "Disabled by default, designed to be run manually.")
 public class DataContainerStressTest {
    volatile CountDownLatch latch;

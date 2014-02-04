@@ -1,11 +1,18 @@
 package org.infinispan.tx;
 
+import org.infinispan.Cache;
+import org.infinispan.commands.CommandsFactory;
+import org.infinispan.commands.CommandsFactoryImpl;
 import org.infinispan.commons.equivalence.AnyEquivalence;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
+import org.infinispan.context.InvocationContextFactory;
+import org.infinispan.context.TransactionalInvocationContextFactory;
+import org.infinispan.interceptors.InterceptorChain;
 import org.infinispan.interceptors.locking.ClusteringDependentLogic;
 import org.infinispan.transaction.TransactionCoordinator;
+import org.infinispan.transaction.tm.DummyBaseTransactionManager;
 import org.infinispan.transaction.tm.DummyTransaction;
 import org.infinispan.transaction.tm.DummyXid;
 import org.infinispan.transaction.xa.GlobalTransaction;
@@ -20,11 +27,14 @@ import javax.transaction.xa.XAException;
 import javax.transaction.xa.XAResource;
 import java.util.UUID;
 
+import static org.mockito.Mockito.mock;
+import static org.testng.AssertJUnit.assertEquals;
+
 /**
  * @author Mircea.Markus@jboss.com
  * @since 4.2
  */
-@Test(testName = "tx.TransactionXaAdapterTmIntegrationTest", groups = "unit", enabled = false, description = "Disabled due to instability - see ISPN-1123")
+@Test(testName = "tx.TransactionXaAdapterTmIntegrationTest", groups = "unstable", description = "Disabled due to instability - see ISPN-1123 -- original group: unit")
 public class TransactionXaAdapterTmIntegrationTest {
    private Configuration configuration;
    private XaTransactionTable txTable;
@@ -36,21 +46,30 @@ public class TransactionXaAdapterTmIntegrationTest {
    private TransactionCoordinator txCoordinator;
 
    @BeforeMethod
-   public void setUp() {
+   public void setUp() throws XAException {
+      Cache mockCache = mock(Cache.class);
+      configuration = new ConfigurationBuilder().build();
       txTable = new XaTransactionTable();
+      txTable.initialize(null, configuration, null, null, null, null,
+            null, null, null, null, mockCache, null);
+      txTable.start();
+      txTable.startXidMapping();
       TransactionFactory gtf = new TransactionFactory();
       gtf.init(false, false, true, false);
       globalTransaction = gtf.newGlobalTransaction(null, false);
-      localTx = new LocalXaTransaction(new DummyTransaction(null), globalTransaction, false, 1, AnyEquivalence.getInstance());
+      DummyBaseTransactionManager tm = new DummyBaseTransactionManager();
+      localTx = new LocalXaTransaction(new DummyTransaction(tm), globalTransaction, false, 1, AnyEquivalence.getInstance());
       xid = new DummyXid(uuid);
-      localTx.setXid(xid);
-      txTable.addLocalTransactionMapping(localTx);      
 
-      configuration = new ConfigurationBuilder().build();
+      InvocationContextFactory icf = new TransactionalInvocationContextFactory();
+      CommandsFactory commandsFactory = mock(CommandsFactory.class);
+      InterceptorChain invoker = mock(InterceptorChain.class);
       txCoordinator = new TransactionCoordinator();
-      txCoordinator.init(null, null, null, null, configuration);
+      txCoordinator.init(commandsFactory, icf, invoker, txTable, configuration);
       xaAdapter = new TransactionXaAdapter(localTx, txTable, null, txCoordinator, null, null,
                                            new ClusteringDependentLogic.InvalidationLogic(), configuration, "");
+
+      xaAdapter.start(xid, 0);
    }
 
    public void testPrepareOnNonexistentXid() {
@@ -59,7 +78,7 @@ public class TransactionXaAdapterTmIntegrationTest {
          xaAdapter.prepare(xid);
          assert false;
       } catch (XAException e) {
-         assert e.errorCode == XAException.XAER_NOTA;
+         assertEquals(XAException.XAER_NOTA, e.errorCode);
       }
    }
 
@@ -69,7 +88,7 @@ public class TransactionXaAdapterTmIntegrationTest {
          xaAdapter.commit(xid, false);
          assert false;
       } catch (XAException e) {
-         assert e.errorCode == XAException.XAER_NOTA;
+         assertEquals(XAException.XAER_NOTA, e.errorCode);
       }
    }
 
@@ -79,7 +98,7 @@ public class TransactionXaAdapterTmIntegrationTest {
          xaAdapter.rollback(xid);
          assert false;
       } catch (XAException e) {
-         assert e.errorCode == XAException.XAER_NOTA;
+         assertEquals(XAException.XAER_NOTA, e.errorCode);
       }
    }
 
@@ -89,7 +108,7 @@ public class TransactionXaAdapterTmIntegrationTest {
          xaAdapter.prepare(xid);
          assert false;
       } catch (XAException e) {
-         assert e.errorCode == XAException.XA_RBROLLBACK;
+         assertEquals(XAException.XA_RBROLLBACK, e.errorCode);
       }
    }
 
@@ -107,7 +126,7 @@ public class TransactionXaAdapterTmIntegrationTest {
          xaAdapter.commit(doesNotExists, false);
          assert false;
       } catch (XAException e) {
-         assert e.errorCode == XAException.XAER_NOTA;
+         assertEquals(XAException.XAER_NOTA, e.errorCode);
       }
    }
 
@@ -119,7 +138,7 @@ public class TransactionXaAdapterTmIntegrationTest {
          xaAdapter.commit(doesNotExists, true);
          assert false;
       } catch (XAException e) {
-         assert e.errorCode == XAException.XAER_NOTA;
+         assertEquals(XAException.XAER_NOTA, e.errorCode);
       }
    }
 }

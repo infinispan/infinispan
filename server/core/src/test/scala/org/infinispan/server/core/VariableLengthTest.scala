@@ -91,7 +91,7 @@ class VariableLengthTest {
       readUnsignedInt(buffer)
    }
 
-   @Test(enabled = false)
+   @Test(groups = Array("unstable"))
    def testPrintHexadecimalVint {
       val buffer = ChannelBuffers.directBuffer(1024)
       assert(buffer.writerIndex == 0)

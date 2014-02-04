@@ -12,7 +12,7 @@ import org.testng.annotations.Test;
  * @author Anna Manukyan
  */
 @SuppressWarnings("unchecked")
-@Test(groups = "functional", testName = "lucene.locking.TransactionalLockManagerUsingBaseLockFactoryTest", enabled = true)
+@Test(groups = "functional", testName = "lucene.locking.TransactionalLockManagerUsingBaseLockFactoryTest")
 public class TransactionalLockManagerUsingBaseLockFactoryTest extends MultipleCacheManagersTest {
 
    protected void createCacheManagers() throws Throwable {

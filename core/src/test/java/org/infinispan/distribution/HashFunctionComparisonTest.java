@@ -23,7 +23,7 @@ import static org.infinispan.profiling.testinternals.Generator.*;
 /**
  * This test benchmarks different hash functions.
  */
-@Test (groups = "manual", enabled = false, testName = "distribution.HashFunctionComparisonTest")
+@Test (groups = "manual", testName = "distribution.HashFunctionComparisonTest")
 public class HashFunctionComparisonTest {
 
    private static final int MAX_STRING_SIZE = 16;
