@@ -153,7 +153,7 @@ public class ClusterTopologyManagerTest extends MultipleCacheManagersTest {
 
       // wait for the merged cluster to form
       long startTime = System.currentTimeMillis();
-      TestingUtil.blockUntilViewsReceived(30000, c1, c2, c3);
+      TestingUtil.blockUntilViewsReceived(60000, c1, c2, c3);
       TestingUtil.waitForRehashToComplete(c1, c2, c3);
 
       long endTime = System.currentTimeMillis();
@@ -247,7 +247,7 @@ public class ClusterTopologyManagerTest extends MultipleCacheManagersTest {
             int viewId = (Integer) invocation.getArguments()[2];
             checkpoint.trigger("rebalance_" + viewId);
             log.debugf("Blocking the REBALANCE_START command on the merge coordinator");
-            checkpoint.awaitStrict("merge", 10, TimeUnit.SECONDS);
+            checkpoint.awaitStrict("merge", 30, TimeUnit.SECONDS);
             return invocation.callRealMethod();
          }
       }).when(spyLocalTopologyManager).handleRebalance(eq(CACHE_NAME), any(CacheTopology.class), anyInt());
