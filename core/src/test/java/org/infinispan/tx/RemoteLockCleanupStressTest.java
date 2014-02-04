@@ -19,13 +19,12 @@ import javax.transaction.TransactionManager;
 
 import static org.infinispan.test.TestingUtil.sleepThread;
 
-@Test (groups = "functional", testName = "tx.RemoteLockCleanupStressTest", invocationCount = 20, enabled = false)
+@Test (groups = "unstable", testName = "tx.RemoteLockCleanupStressTest", invocationCount = 20, description = "original group: functional")
 @CleanupAfterMethod
 public class RemoteLockCleanupStressTest extends MultipleCacheManagersTest {
 
    private static final Log log = LogFactory.getLog(RemoteLockCleanupStressTest.class);
 
-   private EmbeddedCacheManager cm1, cm2;
    private String key = "locked-counter";
 
    @Override
@@ -34,12 +33,12 @@ public class RemoteLockCleanupStressTest extends MultipleCacheManagersTest {
       c.clustering().stateTransfer().fetchInMemoryState(true)
             .locking().lockAcquisitionTimeout(1500);
 
-      cm1 = addClusterEnabledCacheManager(c);
-      cm2 = addClusterEnabledCacheManager(c);
+      createClusteredCaches(2, c);
    }
 
    public void testLockRelease() {
-
+      final EmbeddedCacheManager cm1 = manager(0);
+      final EmbeddedCacheManager cm2 = manager(1);
       Thread t1 = new Thread(new CounterTask(cm1));
       Thread t2 = new Thread(new CounterTask(cm2));
 
@@ -49,6 +48,7 @@ public class RemoteLockCleanupStressTest extends MultipleCacheManagersTest {
       sleepThread(1000);
       t2.interrupt();
       TestingUtil.killCacheManagers(cm2);
+      cacheManagers.remove(1);
       sleepThread(1100);
       t1.interrupt();
       LockManager lm = TestingUtil.extractComponent(cm1.getCache(), LockManager.class);

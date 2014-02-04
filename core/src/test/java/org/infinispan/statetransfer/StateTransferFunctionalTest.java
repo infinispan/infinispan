@@ -257,7 +257,7 @@ public class StateTransferFunctionalTest extends MultipleCacheManagersTest {
       logTestEnd(m);
    }
 
-   @Test (timeOut = 120000)
+   @Test (timeOut = 120000, groups = "unstable")
    public void testSTWithWritingTxThread(Method m) throws Exception {
       TestCacheManagerFactory.backgroundTestStarted(this);
       testCount++;

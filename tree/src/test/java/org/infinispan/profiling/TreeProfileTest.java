@@ -38,7 +38,7 @@ import java.util.concurrent.atomic.AtomicLong;
  * @author Manik Surtani (<a href="mailto:manik@jboss.org">manik@jboss.org</a>)
  * @author Navin Surtani (<a href="mailto:nsurtani@redhat.com">nsurtani@redhat.com</a>)
  */
-@Test(groups = "profiling", testName = "profiling.TreeProfileTest", enabled = false)
+@Test(groups = "unstable", testName = "profiling.TreeProfileTest", description = "original group: profiling")
 public class TreeProfileTest {
    Log log = LogFactory.getLog(TreeProfileTest.class);
 

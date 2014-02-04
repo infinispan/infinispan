@@ -68,7 +68,7 @@ public class ConfigurationTest extends AbstractInfinispanTest {
       cacheManager.stop();
    }
 
-   @Test(enabled = false, description = "ISPN-3388")
+   @Test(groups = "unstable", description = "ISPN-3388")
    public void testLegacyJavaConfig() {
       GlobalConfiguration globalConfig = new GlobalConfigurationBuilder().globalJmxStatistics().transport().defaultTransport().build();
 
@@ -87,7 +87,7 @@ public class ConfigurationTest extends AbstractInfinispanTest {
       cacheManager.stop();
    }
 
-   @Test(enabled = false, description = "ISPN-3388")
+   @Test(groups = "unstable", description = "ISPN-3388")
    public void textXmlConfigLegacy() throws IOException {
       EmbeddedCacheManager cacheManager = new DefaultCacheManager("config/leveldb-config-legacy-" +
             LevelDBStoreConfiguration.ImplementationType.AUTO.toString().toLowerCase() + ".xml");

@@ -21,7 +21,7 @@ import java.util.List;
  * @since 4.0
  */
 // TODO This test makes no sense anymore, now that a joiner blocks until the join completes, before returning from cache.start().  This test needs to be re-thought and redesigned to test the eventual consistency (UnsureResponse) of a remote GET properly.
-@Test(groups = "functional", testName = "distribution.rehash.WorkDuringJoinTest", enabled = false)
+@Test(groups = "unstable", testName = "distribution.rehash.WorkDuringJoinTest", description = "original group: functional")
 public class WorkDuringJoinTest extends BaseDistFunctionalTest<Object, String> {
 
    EmbeddedCacheManager joinerManager;
@@ -29,6 +29,7 @@ public class WorkDuringJoinTest extends BaseDistFunctionalTest<Object, String> {
 
    public WorkDuringJoinTest() {
       INIT_CLUSTER_SIZE = 2;
+      performRehashing = true;
    }
 
    private List<MagicKey> init() {

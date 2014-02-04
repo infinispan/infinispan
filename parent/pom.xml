@@ -77,6 +77,8 @@
       <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
       <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
       <defaultTestGroup>functional,unit,arquillian</defaultTestGroup>
+      <!-- unstable and stress because we can have them inside a functional class, for example -->
+      <defaultExcludedTestGroup>unstable,stress,unstable_xsite</defaultExcludedTestGroup>
       <testNGListener>org.infinispan.test.fwk.UnitTestTestNGListener</testNGListener>
       <infinispan.test.parallel.threads>15</infinispan.test.parallel.threads>
       <infinispan.test.jgroups.protocol>tcp</infinispan.test.jgroups.protocol>
@@ -1323,6 +1325,7 @@
                <forkCount>1</forkCount>
                <reuseForks>true</reuseForks>
                <groups>${defaultTestGroup}</groups>
+               <excludedGroups>${defaultExcludedTestGroup}</excludedGroups>
                <systemPropertyVariables>
                   <infinispan.test.jgroups.protocol>${infinispan.test.jgroups.protocol}</infinispan.test.jgroups.protocol>
                   <jgroups.bind_addr>127.0.0.1</jgroups.bind_addr>
@@ -1511,6 +1514,15 @@
             </plugins>
          </build>
       </profile>
+      <profile>
+         <id>test-unstable</id>
+         <properties>
+            <defaultTestGroup>unstable</defaultTestGroup>
+             <!-- empty since we are not going to exclude any group -->
+            <defaultExcludedTestGroup></defaultExcludedTestGroup>
+            <infinispan.test.jgroups.protocol>tcp</infinispan.test.jgroups.protocol>
+         </properties>
+       </profile>
       <profile>
          <id>test-unit</id>
          <properties>
@@ -1876,6 +1888,7 @@
                      <forkCount>1</forkCount>
                      <reuseForks>true</reuseForks>
                      <groups>${defaultTestGroup}</groups>
+                     <excludedGroups>${defaultExcludedTestGroup}</excludedGroups>
                      <systemPropertyVariables>
                         <infinispan.test.jgroups.protocol>${infinispan.test.jgroups.protocol}</infinispan.test.jgroups.protocol>
                         <jgroups.bind_addr>127.0.0.1</jgroups.bind_addr>

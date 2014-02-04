@@ -14,7 +14,7 @@ import java.io.IOException;
  *
  * @author Anna Manukyan
  */
-@Test(groups = "functional", testName = "lucene.locking.TransactionalLockManagerExcFunctionalTest", enabled = true)
+@Test(groups = "functional", testName = "lucene.locking.TransactionalLockManagerExcFunctionalTest")
 public class TransactionalLockManagerExcFunctionalTest extends TransactionalLockManagerFunctionalTest {
 
    @Test(expectedExceptions = CacheException.class, expectedExceptionsMessageRegExp = "Failed looking up TransactionManager: the cache is not running")

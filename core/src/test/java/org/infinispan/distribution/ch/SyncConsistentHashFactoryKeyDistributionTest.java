@@ -35,7 +35,7 @@ import static org.testng.Assert.assertEquals;
  * @author Dan Berindei
  * @since 5.2
  */
-@Test(testName = "distribution.ch.SyncConsistentHashFactoryKeyDistributionTest", groups = "manual", enabled = false, description = "See the results in vnodes_key_dist.txt")
+@Test(testName = "distribution.ch.SyncConsistentHashFactoryKeyDistributionTest", groups = "manual", description = "See the results in vnodes_key_dist.txt")
 public class SyncConsistentHashFactoryKeyDistributionTest extends AbstractInfinispanTest {
 
    // numbers of nodes to test

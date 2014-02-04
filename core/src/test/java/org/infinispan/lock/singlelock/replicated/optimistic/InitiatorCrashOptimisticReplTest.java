@@ -12,7 +12,7 @@ import java.util.concurrent.CountDownLatch;
  * @author Mircea Markus
  * @since 5.1
  */
-@Test(groups = "functional", testName = "lock.singlelock.replicated.optimistic.InitiatorCrashOptimisticReplTest", enabled = false, description = "See ISPN-2161")
+@Test(groups = "unstable", testName = "lock.singlelock.replicated.optimistic.InitiatorCrashOptimisticReplTest", description = "See ISPN-2161 -- original group: functional")
 @CleanupAfterMethod
 public class InitiatorCrashOptimisticReplTest extends AbstractCrashTest {
 

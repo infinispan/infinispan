@@ -101,7 +101,7 @@ public class OptimisticLockingTxClusterExtendedStatisticLogicTest extends Multip
       doWriteSkewTest(true);
    }
 
-   @Test (enabled = false, description = "https://issues.jboss.org/browse/ISPN-3341")
+   @Test (groups = "unstable", description = "https://issues.jboss.org/browse/ISPN-3341")
    public void testWriteSkewOnNonOwner() throws Exception {
       doWriteSkewTest(false);
    }

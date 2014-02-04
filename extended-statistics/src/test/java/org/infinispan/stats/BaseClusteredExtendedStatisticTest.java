@@ -154,7 +154,7 @@ public abstract class BaseClusteredExtendedStatisticTest extends MultipleCacheMa
       assertNoTxStats();
    }
 
-   @Test (enabled = false, description = "https://issues.jboss.org/browse/ISPN-3353")
+   @Test(groups = "unstable", description = "https://issues.jboss.org/browse/ISPN-3353")
    public void testReplace() {
       assertEmpty(KEY_1);
 

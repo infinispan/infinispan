@@ -21,7 +21,7 @@ import static org.testng.AssertJUnit.assertEquals;
  * @author Galder Zamarreño
  * @since 5.0
  */
-@Test(groups = "functional", testName = "client.hotrod.ExpiryTest", enabled = false)
+@Test(groups = "unstable", testName = "client.hotrod.ExpiryTest", description = "original group: functional")
 public class ExpiryTest extends MultiHotRodServersTest {
 
    @Override

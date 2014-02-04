@@ -98,7 +98,7 @@ public class PessimisticLockingTxClusterExtendedStatisticLogicTest extends Multi
       doLocalDeadlockTest(true);
    }
 
-   @Test (enabled = false, description = "https://issues.jboss.org/browse/ISPN-3342")
+   @Test (groups = "unstable", description = "https://issues.jboss.org/browse/ISPN-3342")
    public void testDeadlockOnOwnerWithRemoteTx() throws Exception {
       doLocalDeadlockTest(false);
    }
@@ -107,7 +107,7 @@ public class PessimisticLockingTxClusterExtendedStatisticLogicTest extends Multi
       doRemoteDeadlockTest(true);
    }
 
-   @Test (enabled = false, description = "https://issues.jboss.org/browse/ISPN-3342")
+   @Test (groups = "unstable", description = "https://issues.jboss.org/browse/ISPN-3342")
    public void testDeadlockOnNonOwnerWithRemoteTx() throws Exception {
       doRemoteDeadlockTest(false);
    }

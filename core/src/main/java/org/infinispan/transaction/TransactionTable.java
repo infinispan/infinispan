@@ -111,7 +111,7 @@ public class TransactionTable {
 
    @Start(priority = 9) // Start before cache loader manager
    @SuppressWarnings("unused")
-   private void start() {
+   public void start() {
       final int concurrencyLevel = configuration.locking().concurrencyLevel();
       localTransactions = CollectionFactory.makeConcurrentMap(concurrencyLevel, 0.75f, concurrencyLevel);
       globalToLocalTransactions = CollectionFactory.makeConcurrentMap(concurrencyLevel, 0.75f, concurrencyLevel);

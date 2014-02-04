@@ -85,6 +85,7 @@ public class NonTxStateTransferInvalidationTest extends MultipleCacheManagersTes
       assertTrue("The joiner should receive at least one key", keysOnJoiner > 0);
    }
 
+   @Test(groups = "unstable")
    public void testInvalidationDuringStateTransfer() throws Exception {
       cache(0).put("key1", "value1");
 

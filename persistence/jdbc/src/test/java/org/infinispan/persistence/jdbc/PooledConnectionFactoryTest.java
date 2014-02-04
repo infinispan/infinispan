@@ -31,7 +31,7 @@ public class PooledConnectionFactoryTest {
       factory.stop();
    }
 
-   @Test(enabled = false, description = "This test is disabled due to: http://sourceforge.net/tracker/index.php?func=detail&aid=1892195&group_id=25357&atid=383690")
+   @Test(groups = "unstable", description = "This test is disabled due to: http://sourceforge.net/tracker/index.php?func=detail&aid=1892195&group_id=25357&atid=383690")
    public void testValuesNoOverrides() throws Exception {
 
       JdbcStringBasedStoreConfigurationBuilder storeBuilder = TestCacheManagerFactory

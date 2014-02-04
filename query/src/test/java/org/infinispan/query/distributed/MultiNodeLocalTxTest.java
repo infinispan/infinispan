@@ -9,7 +9,7 @@ import org.testng.annotations.Test;
  *
  * @author Anna Manukyan
  */
-@Test(groups = "functional", testName = "query.distributed.MultiNodeLocalTxTest", enabled = false)
+@Test(groups = "unstable", testName = "query.distributed.MultiNodeLocalTxTest", description = "original group: functional -- ISPN-2727")
 public class MultiNodeLocalTxTest extends MultiNodeLocalTest {
 
    public boolean transactionsEnabled() {
@@ -17,8 +17,8 @@ public class MultiNodeLocalTxTest extends MultiNodeLocalTest {
    }
 
    //@TODO enable the test when ISPN-2727 is fixed.
-   @Test(enabled = false)
+   @Test(groups = "unstable")
    public void testIndexingWorkDistribution() throws Exception {
-
+      super.testIndexingWorkDistribution();
    }
 }

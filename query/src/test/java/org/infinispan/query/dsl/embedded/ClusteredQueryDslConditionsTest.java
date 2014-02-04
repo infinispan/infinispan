@@ -797,7 +797,7 @@ public class ClusteredQueryDslConditionsTest extends MultipleCacheManagersTest {
       assertEquals("Spider", list.get(1).getName());
    }
 
-   @Test(enabled = false, description = "String literal escaping is not properly done yet")  //todo [anistor] fix disabled test
+   @Test(groups = "unstable", description = "String literal escaping is not properly done yet")  //todo [anistor] fix disabled test
    public void testStringEscape() throws Exception {
       QueryFactory qf = Search.getSearchManager(cache2).getQueryFactory();
 
@@ -1047,6 +1047,7 @@ public class ClusteredQueryDslConditionsTest extends MultipleCacheManagersTest {
       assertTrue(Arrays.asList(1, 2).contains(list.get(1).getId()));
    }
 
+   @Test(groups = "unstable")
    public void testSampleDomainQuery16() throws Exception {
       for (int i = 0; i < 50; i++) {
          Transaction transaction = new Transaction();
@@ -1126,7 +1127,7 @@ public class ClusteredQueryDslConditionsTest extends MultipleCacheManagersTest {
       assertNull(list.get(2)[1]);
    }
 
-   @Test(enabled = false, description = "Nulls not correctly indexed for numeric properties")  //todo [anistor] fix disabled test
+   @Test(groups = "unstable", description = "Nulls not correctly indexed for numeric properties")  //todo [anistor] fix disabled test
    public void testNullOnIntegerField() throws Exception {
       QueryFactory qf = Search.getSearchManager(cache2).getQueryFactory();
 

@@ -29,7 +29,7 @@ import static org.testng.AssertJUnit.assertEquals;
  * @author Galder Zamarreño
  * @since 5.1
  */
-@Test(groups = "functional", testName = "marshall.SharedStreamMultiMarshallerTest", enabled = true)
+@Test(groups = "functional", testName = "marshall.SharedStreamMultiMarshallerTest")
 public class SharedStreamMultiMarshallerTest {
 
    public void testSharingStream() throws Exception {

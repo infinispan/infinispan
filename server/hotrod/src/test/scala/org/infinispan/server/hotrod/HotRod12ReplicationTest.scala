@@ -15,7 +15,7 @@ class HotRod12ReplicationTest extends HotRodReplicationTest {
 
    override protected def protocolVersion: Byte = 12
 
-   @Test(enabled = false)
+   @Test(enabled = false) // Disable explicitly to avoid TestNG thinking this is a test!!
    override protected def checkTopologyReceived(topoResp: AbstractTestTopologyAwareResponse,
            servers: List[HotRodServer], cacheName: String) {
       assertHashTopologyReceived(topoResp, servers, cacheName, 0, 1, currentServerTopologyId)

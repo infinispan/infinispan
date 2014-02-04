@@ -7,6 +7,7 @@ import javax.servlet.http.HttpServletResponse;
 import org.infinispan.arquillian.core.InfinispanResource;
 import org.infinispan.arquillian.core.RemoteInfinispanServer;
 import org.infinispan.server.test.category.RESTClustered;
+import org.infinispan.server.test.category.UnstableTest;
 import org.jboss.arquillian.junit.Arquillian;
 import org.junit.After;
 import org.junit.Before;
@@ -31,7 +32,7 @@ import static org.junit.Assert.assertTrue;
  * @version October 2011
  */
 @RunWith(Arquillian.class)
-@Category({ RESTClustered.class })
+@Category({ RESTClustered.class, UnstableTest.class})
 public class RESTAsyncTest {
 
     @InfinispanResource("container1")

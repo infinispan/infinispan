@@ -18,7 +18,7 @@ import static org.testng.Assert.assertEquals;
  * @author Pete Muir
  * @see Config
  */
-@Test(groups = "functional", testName = "cdi.test.event.CacheEventTest", enabled = false)
+@Test(groups = "unstable", testName = "cdi.test.event.CacheEventTest", description = "original group: functional")
 public class CacheEventTest extends Arquillian {
 
    @Deployment

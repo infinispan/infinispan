@@ -35,6 +35,7 @@ public class ConcurrentInterceptorVisibilityTest extends AbstractInfinispanTest 
       updateCache(Visibility.SIZE);
    }
 
+   @Test(groups = "unstable")
    public void testGetVisibility() throws Exception {
       updateCache(Visibility.GET);
    }

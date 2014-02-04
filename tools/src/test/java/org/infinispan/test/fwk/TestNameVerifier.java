@@ -45,7 +45,7 @@ public class TestNameVerifier {
       }
    };
 
-   @Test(enabled = false, description = "Do not enable this unless you want your files to be updated with test names!!!")
+   @Test(groups = "manual", description = "Do not enable this unless you want your files to be updated with test names!!!")
    public void process() throws Exception {
       File[] javaFiles = getAllJavaFiles();
       for (File file : javaFiles) {

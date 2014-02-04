@@ -15,7 +15,7 @@ public class AsyncReplExtendedStatisticTest extends BaseClusteredExtendedStatist
       super(CacheMode.REPL_ASYNC, false, false, false);
    }
 
-   @Test(enabled = false, description = "https://issues.jboss.org/browse/ISPN-3727")
+   @Test(groups = "unstable", description = "https://issues.jboss.org/browse/ISPN-3727")
    public void testReplaceWithOldVal() {
    }
 }

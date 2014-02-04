@@ -6,7 +6,7 @@ import org.infinispan.notifications.cachemanagerlistener.event.ViewChangedEvent;
 import org.infinispan.test.TestingUtil;
 import org.testng.annotations.Test;
 
-@Test(groups = "profiling", enabled = false, testName = "profiling.TestProfileSlave")
+@Test(groups = "profiling", testName = "profiling.TestProfileSlave")
 public class TestProfileSlave extends AbstractProfileTest {
 
    public static void main(String[] args) throws Exception {

@@ -79,7 +79,7 @@ public class LoopingWriterTest {
       System.out.println("Query OK! found (as expected) " + resultSize + " elements");
    }
 
-   @Test(enabled=false)
+   @Test(enabled=false) // Disable explicitly to avoid TestNG thinking this is a test!!
    public static void main(String[] args) throws IOException {
       LoopingWriterTest runner = new LoopingWriterTest();
       runner.neverEndingWrite();

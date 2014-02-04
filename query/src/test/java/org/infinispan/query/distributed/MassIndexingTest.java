@@ -13,6 +13,7 @@ import org.testng.annotations.Test;
 @Test(groups = "functional", testName = "query.distributed.MassIndexingTest")
 public class MassIndexingTest extends DistributedMassIndexingTest {
 
+   @Test(groups = "unstable")
    public void testReindexing() throws Exception {
       for(int i = 0; i < 200; i++) {
          caches.get(i % 2).getAdvancedCache().withFlags(Flag.SKIP_INDEXING).put(key("F" + i + "NUM"),

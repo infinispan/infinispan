@@ -18,7 +18,7 @@ import java.io.IOException;
  *
  * @author Anna Manukyan
  */
-@Test(groups = "functional", testName = "query.distributed.MultiNodeReplicatedTxTest", enabled = false)
+@Test(groups = "unstable", testName = "query.distributed.MultiNodeReplicatedTxTest", description = "original group: functional -- ISPN-2727")
 public class MultiNodeReplicatedTxTest extends MultiNodeReplicatedTest {
 
    protected boolean transactionsEnabled() {
@@ -41,8 +41,8 @@ public class MultiNodeReplicatedTxTest extends MultiNodeReplicatedTest {
    }
 
    //@TODO enable the test when ISPN-2727 is fixed.
-   @Test(enabled = false)
+   @Test(groups = "unstable")
    public void testIndexingWorkDistribution() throws Exception {
-
+      super.testIndexingWorkDistribution();
    }
 }

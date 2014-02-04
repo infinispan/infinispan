@@ -25,7 +25,7 @@ class HotRodAsymmetricClusterTest extends HotRodMultiNodeTest {
         getDefaultClusteredCacheConfig(CacheMode.REPL_SYNC, false))
 
 
-  @Test(enabled = false)
+  @Test(enabled = false) // Disable explicitly to avoid TestNG thinking this is a test!!
   override def createCacheManagers() {
      for (i <- 0 until 2) {
         val cm = TestCacheManagerFactory.createClusteredCacheManager(hotRodCacheConfiguration())

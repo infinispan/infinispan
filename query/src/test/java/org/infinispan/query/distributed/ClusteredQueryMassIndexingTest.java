@@ -17,7 +17,7 @@ import static org.infinispan.query.helper.TestQueryHelperFactory.createQueryPars
  *
  * @TODO enable the test when ISPN-2661 is fixed.
  */
-@Test(groups = "functional", testName = "query.distributed.ClusteredQueryMassIndexingTest", enabled = false)
+@Test(groups = "functional", testName = "query.distributed.ClusteredQueryMassIndexingTest")
 public class ClusteredQueryMassIndexingTest extends DistributedMassIndexingTest {
 
    protected void verifyFindsCar(Cache cache, int expectedCount, String carMake) {
@@ -35,6 +35,8 @@ public class ClusteredQueryMassIndexingTest extends DistributedMassIndexingTest 
    }
 
    //@TODO remove when ISPN-2661 is fixed.
-   @Test(enabled = false)
-   public void testReindexing() throws Exception {}
+   @Test(groups = "unstable")
+   public void testReindexing() throws Exception {
+      super.testReindexing();
+   }
 }

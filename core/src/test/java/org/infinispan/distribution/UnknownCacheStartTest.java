@@ -18,7 +18,7 @@ import static org.infinispan.test.AbstractCacheTest.*;
 import static org.infinispan.test.TestingUtil.killCacheManagers;
 import static org.infinispan.test.fwk.TestCacheManagerFactory.createCacheManager;
 
-@Test(groups = "functional", testName = "distribution.UnknownCacheStartTest", enabled = false)
+@Test(groups = "unstable", testName = "distribution.UnknownCacheStartTest", description = "original group: functional")
 public class UnknownCacheStartTest extends AbstractInfinispanTest {
 
    ConfigurationBuilder configuration;
@@ -34,7 +34,7 @@ public class UnknownCacheStartTest extends AbstractInfinispanTest {
       killCacheManagers(cm1, cm2);
    }
 
-   @Test (expectedExceptions = {CacheException.class, TestException.class}, timeOut = 60000, enabled = false)
+   @Test (expectedExceptions = {CacheException.class, TestException.class}, timeOut = 60000)
    public void testStartingUnknownCaches() throws Throwable {
       TestCacheManagerFactory.backgroundTestStarted(this);
 

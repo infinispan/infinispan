@@ -37,6 +37,7 @@ public class EmbeddedRestCacheListenerTest extends AbstractInfinispanTest {
       CompatibilityCacheFactory.killCacheFactories(cacheFactory);
    }
 
+   @Test(groups = "unstable")
    public void testLoadingAndStoringEventsRest() throws IOException {
       Cache<String, String> embedded = cacheFactory.getEmbeddedCache();
       HttpClient remote = cacheFactory.getRestClient();

@@ -58,8 +58,7 @@ import static org.junit.Assert.assertTrue;
  * @author Galder Zamarreño
  * @since 5.2
  */
-@Test(testName = "stress.AsyncStoreStressTest", groups = "stress",
-      enabled = true, description = "Disabled by default, designed to be run manually.")
+@Test(testName = "stress.AsyncStoreStressTest", groups = "stress")
 public class AsyncStoreStressTest {
 
    static final Log log = LogFactory.getLog(AsyncStoreStressTest.class);

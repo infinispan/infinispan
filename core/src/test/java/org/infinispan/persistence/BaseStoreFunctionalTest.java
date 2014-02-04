@@ -155,6 +155,7 @@ public abstract class BaseStoreFunctionalTest extends AbstractInfinispanTest {
       }
    }
 
+   @Test(groups = "unstable")
    public void testRestoreTransactionalAtomicMap(Method m) throws Exception {
       CacheContainer localCacheContainer = getContainerWithCacheLoader(null);
       try {

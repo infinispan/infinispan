@@ -11,7 +11,7 @@ import org.testng.annotations.Test;
 /**
  * @author Sanne Grinovero <sanne@infinispan.org> (C) 2011 Red Hat Inc.
  */
-@Test(groups = "profiling", enabled = false, testName = "eviction.ExpensiveEvictionTest")
+@Test(groups = "profiling", testName = "eviction.ExpensiveEvictionTest")
 public class ExpensiveEvictionTest extends SingleCacheManagerTest {
 
    private final Integer MAX_CACHE_ELEMENTS = 10 * 1000 * 1000;

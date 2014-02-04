@@ -42,7 +42,7 @@ import static org.infinispan.test.TestingUtil.sleepRandom;
 import static org.infinispan.test.fwk.TestCacheManagerFactory.*;
 
 // As this is a SLOW stress test, leave it disabled by default.  Only run it manually.
-@Test(groups = "stress", testName = "distribution.rehash.ConsistencyStressTest", enabled = false)
+@Test(groups = "stress", testName = "distribution.rehash.ConsistencyStressTest")
 public class ConsistencyStressTest extends MultipleCacheManagersTest {
    private static final int NUM_NODES = 10;
    private static final int WORKERS_PER_NODE = 2;

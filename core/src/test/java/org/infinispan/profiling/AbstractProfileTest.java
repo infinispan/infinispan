@@ -16,7 +16,7 @@ import java.util.concurrent.ExecutorService;
 
 import static org.infinispan.configuration.cache.CacheMode.*;
 
-@Test(groups = "profiling", enabled = false, testName = "profiling.AbstractProfileTest")
+@Test(groups = "profiling", testName = "profiling.AbstractProfileTest")
 public abstract class AbstractProfileTest extends SingleCacheManagerTest {
 
    protected static final String LOCAL_CACHE_NAME = "local";

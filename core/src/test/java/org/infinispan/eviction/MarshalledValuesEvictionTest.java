@@ -19,7 +19,7 @@ import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
 
-@Test(groups = "functional", testName = "eviction.MarshalledValuesEvictionTest", enabled = false, description = "Is this test even valid?  Evictions don't go thru the marshalled value interceptor when initiated form the data container!")
+@Test(groups = "unstable", testName = "eviction.MarshalledValuesEvictionTest", description = "Is this test even valid?  Evictions don't go thru the marshalled value interceptor when initiated form the data container! -- original group: functional")
 public class MarshalledValuesEvictionTest extends SingleCacheManagerTest {
 
    private static final int CACHE_SIZE=128;
@@ -33,12 +33,12 @@ public class MarshalledValuesEvictionTest extends SingleCacheManagerTest {
          .locking().useLockStriping(false) // to minimise chances of deadlock in the unit test
          .storeAsBinary()
          .build();
-      EmbeddedCacheManager cm = TestCacheManagerFactory.createCacheManager(cfg);
-      cache = cm.getCache();
+      cacheManager = TestCacheManagerFactory.createCacheManager(cfg);
+      cache = cacheManager.getCache();
       StreamingMarshaller marshaller = TestingUtil.extractComponent(cache, StreamingMarshaller.class);
       MockMarshalledValueInterceptor interceptor = new MockMarshalledValueInterceptor(marshaller);
       assert TestingUtil.replaceInterceptor(cache, interceptor, MarshalledValueInterceptor.class);
-      return cm;
+      return cacheManager;
    }
 
    public void testEvictCustomKeyValue() {

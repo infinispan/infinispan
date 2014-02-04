@@ -12,6 +12,7 @@ import org.infinispan.marshall.core.MarshalledEntryFactoryImpl;
 import org.infinispan.persistence.BaseStoreTest;
 import org.infinispan.persistence.DummyInitializationContext;
 import org.infinispan.persistence.spi.AdvancedLoadWriteStore;
+import org.infinispan.persistence.spi.PersistenceException;
 import org.infinispan.rest.EmbeddedRestServer;
 import org.infinispan.rest.RestTestingUtil;
 import org.infinispan.test.TestingUtil;
@@ -24,7 +25,7 @@ import org.testng.annotations.Test;
  * @author Tristan Tarrant
  * @since 6.0
  */
-@Test(testName = "persistence.remote.RemoteCacheStoreTest", groups = "functional")
+@Test(testName = "persistence.remote.RemoteCacheStoreTest", groups = "unstable", description = "original group: functional")
 public class RestStoreTest extends BaseStoreTest {
 
    private static final String REMOTE_CACHE = "remote-cache";

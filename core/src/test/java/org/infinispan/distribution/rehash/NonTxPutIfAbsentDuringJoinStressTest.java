@@ -51,6 +51,7 @@ public class NonTxPutIfAbsentDuringJoinStressTest extends MultipleCacheManagersT
       return c;
    }
 
+   @Test(groups = "unstable")
    public void testNodeJoiningDuringPutIfAbsent() throws Exception {
       Future[] futures = new Future[NUM_WRITERS];
       for (int i = 0; i < NUM_WRITERS; i++) {

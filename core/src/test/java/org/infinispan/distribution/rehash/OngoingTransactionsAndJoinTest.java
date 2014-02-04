@@ -21,6 +21,7 @@ import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.CleanupAfterMethod;
 import org.infinispan.topology.CacheTopologyControlCommand;
+import org.infinispan.transaction.TransactionMode;
 import org.testng.annotations.Test;
 
 import javax.transaction.Transaction;
@@ -34,6 +35,7 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 
+import static java.util.concurrent.TimeUnit.SECONDS;
 import static org.infinispan.test.TestingUtil.extractComponent;
 import static org.infinispan.test.TestingUtil.replaceComponent;
 import static org.infinispan.test.TestingUtil.replaceField;
@@ -44,7 +46,7 @@ import static org.infinispan.test.TestingUtil.replaceField;
  * 1 node exists.  Transactions running.  Some complete, some in prepare, some in commit. New node joins, rehash occurs.
  * Test that the new node is the owner and receives this state.
  */
-@Test(groups = "functional", testName = "distribution.rehash.OngoingTransactionsAndJoinTest", enabled = false)
+@Test(groups = "unstable", testName = "distribution.rehash.OngoingTransactionsAndJoinTest", description = "original group: functional")
 @CleanupAfterMethod
 public class OngoingTransactionsAndJoinTest extends MultipleCacheManagersTest {
    ConfigurationBuilder configuration;
@@ -53,7 +55,9 @@ public class OngoingTransactionsAndJoinTest extends MultipleCacheManagersTest {
    @Override
    protected void createCacheManagers() throws Throwable {
       configuration = getDefaultClusteredCacheConfig(CacheMode.DIST_SYNC);
+      configuration.transaction().transactionMode(TransactionMode.TRANSACTIONAL);
       configuration.locking().lockAcquisitionTimeout(60000).useLockStriping(false);
+      configuration.clustering().stateTransfer().timeout(30, SECONDS);
       addClusterEnabledCacheManager(configuration);
    }
 
@@ -90,7 +94,7 @@ public class OngoingTransactionsAndJoinTest extends MultipleCacheManagersTest {
 
       for (Thread t : threads) t.start();
 
-      txsStarted.await();
+      txsStarted.await(10, SECONDS);
 
       // we don't have a hook for the start of the rehash any more
       delayedExecutor.schedule(new Callable<Object>() {
@@ -164,7 +168,7 @@ public class OngoingTransactionsAndJoinTest extends MultipleCacheManagersTest {
             // start a tx
             startTx();
             txsReady.countDown();
-            joinEnded.await();
+            joinEnded.await(10, SECONDS);
             tm(cache).commit();
          } catch (Exception e) {
             throw new RuntimeException(e);
@@ -201,7 +205,7 @@ public class OngoingTransactionsAndJoinTest extends MultipleCacheManagersTest {
       public Object visitPrepareCommand(TxInvocationContext tcx, PrepareCommand cc) throws Throwable {
          if (tx.equals(tcx.getTransaction())) {
             txsReady.countDown();
-            rehashStarted.await();
+            rehashStarted.await(10, SECONDS);
          }
          return super.visitPrepareCommand(tcx, cc);
       }
@@ -210,7 +214,7 @@ public class OngoingTransactionsAndJoinTest extends MultipleCacheManagersTest {
       public Object visitCommitCommand(TxInvocationContext tcx, CommitCommand cc) throws Throwable {
          if (tx.equals(tcx.getTransaction())) {
             try {
-               joinEnded.await();
+               joinEnded.await(10, SECONDS);
             } catch (InterruptedException e) {
                e.printStackTrace();
             }
@@ -258,7 +262,7 @@ public class OngoingTransactionsAndJoinTest extends MultipleCacheManagersTest {
       public Object visitCommitCommand(TxInvocationContext tcx, CommitCommand cc) throws Throwable {
          if (tx.equals(tcx.getTransaction())) {
             try {
-               rehashStarted.await();
+               rehashStarted.await(10, SECONDS);
             } catch (InterruptedException e) {
                e.printStackTrace();
             }
@@ -287,7 +291,7 @@ public class OngoingTransactionsAndJoinTest extends MultipleCacheManagersTest {
             log.debugf("Intercepted command: %s", cmd);
             switch (rcc.getType()) {
                case REBALANCE_START:
-                  txsReady.await();
+                  txsReady.await(10, SECONDS);
                   notifyRehashStarted = true;
                   break;
                case CH_UPDATE:

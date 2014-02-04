@@ -14,7 +14,7 @@ import org.testng.annotations.Test
  * @author Galder Zamarreño
  * @since 5.1
  */
-@Test(groups = Array("stress"), testName = "server.hotrod.stress.HotRodBigDataStressTest", enabled = false)
+@Test(groups = Array("unstable"), testName = "server.hotrod.stress.HotRodBigDataStressTest", description = "original group: stress")
 class HotRodBigDataStressTest extends HotRodSingleNodeTest {
 
    def testPutBigSizeValue(m: Method) {

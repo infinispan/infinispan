@@ -29,7 +29,7 @@ abstract class HotRodSingleNodeTest extends SingleCacheManagerTest {
       cacheManager
    }
 
-   @Test(enabled = false)
+   @Test(enabled = false) // Disable explicitly to avoid TestNG thinking this is a test!!
    protected override def setup() {
       super.setup()
       hotRodServer = createStartHotRodServer(cacheManager)
