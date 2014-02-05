@@ -66,7 +66,9 @@ public abstract class AbstractRemoteCacheTest {
 
     @AfterClass
     public static void release() {
-        remoteCacheManager.stop();
+        if (remoteCacheManager != null) {
+            remoteCacheManager.stop();
+        }
     }
 
     private Configuration createRemoteCacheManagerConfiguration() {
