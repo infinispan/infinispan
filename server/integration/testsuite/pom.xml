@@ -161,6 +161,32 @@
                 </exclusion>
             </exclusions>
         </dependency>
+        <!-- TODO: Make it possible to use a different version of Karaf -->
+        <dependency>
+            <groupId>org.apache.karaf</groupId>
+            <artifactId>apache-karaf</artifactId>
+            <type>zip</type>
+        </dependency>
+        <dependency>
+            <groupId>org.ops4j.pax.exam</groupId>
+            <artifactId>pax-exam-container-karaf</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.ops4j.pax.exam</groupId>
+            <artifactId>pax-exam-junit4</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.ops4j.pax.exam</groupId>
+            <artifactId>pax-exam</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.ops4j.pax.exam</groupId>
+            <artifactId>pax-exam-inject</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>javax.inject</groupId>
+            <artifactId>javax.inject</artifactId>
+        </dependency>
     </dependencies>
 
     <properties>
@@ -188,7 +214,7 @@
         <suite.client.dist.phase>test</suite.client.dist.phase>
         <suite.client.repl.phase>test</suite.client.repl.phase>
         <suite.manual.include>**/*.java</suite.manual.include>
-        <suite.manual.exclude.groups>org.infinispan.server.test.category.ClientLocal,org.infinispan.server.test.category.ClientClustered,org.infinispan.server.test.category.RollingUpgrades,org.infinispan.server.test.category.UnstableTest</suite.manual.exclude.groups>
+        <suite.manual.exclude.groups>org.infinispan.server.test.category.ClientLocal,org.infinispan.server.test.category.ClientClustered,org.infinispan.server.test.category.RollingUpgrades,org.infinispan.server.test.category.UnstableTest,org.infinispan.server.test.category.Osgi</suite.manual.exclude.groups>
         <suite.client.local.config>testsuite/standalone-default-local.xml</suite.client.local.config>
         <suite.client.dist.config>testsuite/clustered-default-dist.xml</suite.client.dist.config>
         <suite.client.repl.config>testsuite/clustered-default-repl.xml</suite.client.repl.config>
@@ -197,6 +223,15 @@
     </properties>
 
     <build>
+        <testResources>
+         <testResource>
+            <directory>${project.basedir}/src/test/resources</directory>
+            <filtering>true</filtering>
+            <includes>
+               <include>**/*</include>
+            </includes>
+         </testResource>
+        </testResources>
         <plugins>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
@@ -205,6 +240,19 @@
                     <execution>
                         <goals>
                             <goal>test-jar</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
+            <!-- IMPORTANT: generates META-INF/maven/dependencies.properties required by PAX-EXAM framework -->
+            <plugin>
+                <groupId>org.apache.servicemix.tooling</groupId>
+                <artifactId>depends-maven-plugin</artifactId>
+                <executions>
+                    <execution>
+                        <id>generate-depends-file</id>
+                        <goals>
+                            <goal>generate-depends-file</goal>
                         </goals>
                     </execution>
                 </executions>
@@ -247,6 +295,8 @@
                         <suite.client.local.config>${suite.client.local.config}</suite.client.local.config>
                         <suite.client.dist.config>${suite.client.dist.config}</suite.client.dist.config>
                         <suite.client.repl.config>${suite.client.repl.config}</suite.client.repl.config>
+                        <resources.dir>${project.build.directory}/test-classes</resources.dir>
+                        <version.karaf>${version.karaf}</version.karaf>
                     </systemPropertyVariables>
                     <properties>
                         <property>
@@ -481,6 +531,53 @@
                 <groups.client.local>org.infinispan.server.test.category.MemcachedLocal</groups.client.local>
                 <groups.client.clustered>org.infinispan.server.test.category.MemcachedClustered</groups.client.clustered>
             </properties>
+        </profile>
+        <profile>
+            <id>client.hotrod.osgi</id>
+            <properties>
+                <suite.manual.phase>test</suite.manual.phase>
+                <suite.client.local.phase>none</suite.client.local.phase>
+                <suite.client.dist.phase>none</suite.client.dist.phase>
+                <suite.client.repl.phase>none</suite.client.repl.phase>
+                <suite.manual.exclude.groups></suite.manual.exclude.groups>
+                <suite.manual.include.groups>org.infinispan.server.test.category.Osgi</suite.manual.include.groups>
+                <suite.manual.include>org/infinispan/server/test/client/hotrod/osgi/RemoteCacheOsgiTest.java</suite.manual.include>
+            </properties>
+            <build>
+                <plugins>
+                    <!-- Register Protofile on the server before the test starts.
+                         TODO: Do it directly from the test. The remoting-jmx implementation for
+                         JMX is normally loaded via ServiceLoader and this is not working out-of-box in OSGi. -->
+                    <plugin>
+                        <artifactId>maven-antrun-plugin</artifactId>
+                        <executions>
+                            <execution>
+                                <id>register-protofile-with-server</id>
+                                <goals>
+                                    <goal>run</goal>
+                                </goals>
+                                <phase>test</phase>
+                                <configuration>
+                                    <target>
+                                        <property name="test_classpath" refid="maven.test.classpath"/>
+                                        <java classname="org.infinispan.server.test.util.ProtofileRegistrar"
+                                              fork="false"
+                                              failonerror="true" >
+                                            <arg value="/sample_bank_account/bank.protobin"/>
+                                            <arg value="localhost"/>
+                                            <arg value="9999"/>
+                                            <classpath>
+                                                <pathelement path="${project.build.directory}/test-classes"/>
+                                                <pathelement path="${test_classpath}"/>
+                                            </classpath>
+                                        </java>
+                                    </target>
+                                </configuration>
+                            </execution>
+                        </executions>
+                    </plugin>
+                </plugins>
+            </build>
         </profile>
         <profile>
             <id>testsuite-jdk6</id>

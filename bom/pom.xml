@@ -54,6 +54,7 @@
    <properties>
       <!-- Versions for dependencies -->
       <version.protostream>1.0.0.Final</version.protostream>
+      <version.protobuf>2.5.0</version.protobuf>
       <version.aesh>0.33.7</version.aesh>
       <version.antlr>3.4</version.antlr>
       <version.commons.pool>1.6</version.commons.pool>

@@ -44,6 +44,22 @@ This is controlled by following profiles
   -P client.rest      (REST client)
   -P client.memcached (Memcached client)
   -P client.hotrod    (Hot Rod client)
+  -P client.hotrod.osgi    These tests require an Infinispan server to be started manually with the following
+  cache added to its configuration:
+
+  <local-cache name="indexed" start="EAGER">
+      <locking isolation="none" acquire-timeout="30000" concurrency-level="1000" striping="false"/>
+      <transaction mode="none"/>
+      <indexing index="all">
+          <property name="default.directory_provider">ram</property>
+          <property name="lucene_version">LUCENE_36</property>
+      </indexing>
+  </local-cache>
+
+  Tests for OSGi run by default in Karaf 2.3.3. A different version of Karaf may be specified via the command line:
+  -Dversion.karaf=<version>
+
+
 
 Running client tests with TCP stack (UDP by default)
 ----------------------------------------------------

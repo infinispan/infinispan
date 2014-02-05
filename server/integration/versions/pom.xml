@@ -22,7 +22,6 @@
       <product.version>${project.version}</product.version>
       <product.name>infinispan-server</product.name>
 
-      
       <version.ant-contrib>1.0b3</version.ant-contrib>
       <version.com.github.relaxng.relaxngDatatype>2011.1</version.com.github.relaxng.relaxngDatatype>
       <version.commons.logging>1.1.1</version.commons.logging>
@@ -41,6 +40,10 @@
       <version.http.client>4.3</version.http.client>
       <version.org.picketbox>4.0.17.SP2</version.org.picketbox>
       <version.xpp3>1.1.4c</version.xpp3>
+      <version.pax.url>1.3.7</version.pax.url>
+      <version.karaf>2.3.3</version.karaf>
+      <version.pax.exam>3.4.0</version.pax.exam>
+      <version.javax.inject>1</version.javax.inject>
       <relocations />
 
    </properties>
@@ -373,6 +376,49 @@
             <version>${version.xpp3}</version>
          </dependency>
 
+         <dependency>
+            <groupId>org.apache.karaf</groupId>
+            <artifactId>apache-karaf</artifactId>
+            <version>${version.karaf}</version>
+            <type>zip</type>
+            <scope>test</scope>
+         </dependency>
+
+         <dependency>
+            <groupId>org.ops4j.pax.exam</groupId>
+            <artifactId>pax-exam-container-karaf</artifactId>
+            <version>${version.pax.exam}</version>
+            <scope>test</scope>
+         </dependency>
+
+         <dependency>
+            <groupId>org.ops4j.pax.exam</groupId>
+            <artifactId>pax-exam-junit4</artifactId>
+            <version>${version.pax.exam}</version>
+            <scope>test</scope>
+         </dependency>
+
+         <dependency>
+            <groupId>org.ops4j.pax.exam</groupId>
+            <artifactId>pax-exam</artifactId>
+            <version>${version.pax.exam}</version>
+            <scope>test</scope>
+         </dependency>
+
+         <dependency>
+            <groupId>org.ops4j.pax.exam</groupId>
+            <artifactId>pax-exam-inject</artifactId>
+            <version>${version.pax.exam}</version>
+            <scope>test</scope>
+         </dependency>
+
+         <dependency>
+            <groupId>javax.inject</groupId>
+            <artifactId>javax.inject</artifactId>
+            <version>${version.javax.inject}</version>
+            <scope>test</scope>
+         </dependency>
+
       </dependencies>
 
    </dependencyManagement>
@@ -434,6 +480,11 @@
                </execution>
             </executions>
          </plugin>
+         <plugin>
+            <groupId>org.apache.servicemix.tooling</groupId>
+            <artifactId>depends-maven-plugin</artifactId>
+            <version>1.2</version>
+          </plugin>
       </plugins>
    </build>
 
