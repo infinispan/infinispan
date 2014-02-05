@@ -12,7 +12,7 @@
    <packaging>bundle</packaging>
    <name>Infinispan Commons</name>
    <description>Infinispan Commons</description>
-   
+
    <dependencies>
       <dependency>
          <groupId>org.jboss.logging</groupId>
@@ -28,7 +28,7 @@
          <artifactId>jboss-marshalling-river</artifactId>
          <optional>true</optional>
       </dependency>
-      
+
       <dependency>
          <groupId>org.osgi</groupId>
          <artifactId>org.osgi.core</artifactId>
@@ -47,7 +47,8 @@
                <source>1.6</source>
                <target>1.6</target>
                <encoding>UTF-8</encoding>
-               <compilerArgument>-AtranslationFilesPath=${project.basedir}/target/generated-translation-files</compilerArgument>
+               <compilerArgument>-AtranslationFilesPath=${project.basedir}/target/generated-translation-files
+               </compilerArgument>
                <compilerArgument>-XDignore.symbol.file</compilerArgument>
                <!-- Forking is necessary to allow for the compiler args to be picked up. -->
                <fork>true</fork>
@@ -61,6 +62,17 @@
                   <Export-Package>
                      ${project.groupId}.commons.*;version=${project.version};-split-package:=error
                   </Export-Package>
+                  <Import-Package>
+                     javax.naming,
+                     javax.net.ssl,
+                     net.jcip.annotations;resolution:=optional,
+                     org.jboss.logging;version=${version.jboss.logging},
+                     org.jboss.marshalling;version=${version.jboss.marshalling};resolution:=optional,
+                     org.jboss.marshalling.reflect;version=${version.jboss.marshalling};resolution:=optional,
+                     org.jboss.marshalling.river;version=${version.jboss.marshalling};resolution:=optional,
+                     org.osgi.framework;version=${version.jboss.marshalling};resolution:=optional,
+                     sun.misc;resolution:=optional
+                  </Import-Package>
                </instructions>
             </configuration>
          </plugin>

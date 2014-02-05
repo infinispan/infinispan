@@ -18,7 +18,7 @@
          <groupId>${project.groupId}</groupId>
          <artifactId>infinispan-commons</artifactId>
       </dependency>
-      
+
       <dependency>
          <groupId>org.jboss.marshalling</groupId>
          <artifactId>jboss-marshalling-river</artifactId>
@@ -93,7 +93,16 @@
       </dependency>
    </dependencies>
 
-   <build>     
+   <build>
+      <resources>
+         <resource>
+            <directory>${project.basedir}/src/main/resources</directory>
+            <filtering>true</filtering>
+            <includes>
+               <include>**/*</include>
+            </includes>
+         </resource>
+      </resources>
       <plugins>
          <plugin>
             <groupId>org.apache.felix</groupId>
@@ -103,8 +112,56 @@
                   <Export-Package>
                      ${project.groupId}.client.hotrod.*;version=${project.version};-split-package:=error
                   </Export-Package>
+                  <Import-Package>
+                     javax.net.ssl,
+                     net.jcip.annotations;resolution:=optional,
+                     org.apache.avro;resolution:=optional,
+                     org.apache.avro.generic;resolution:=optional,
+                     org.apache.avro.io;resolution:=optional,
+                     org.apache.avro.util;resolution:=optional,
+                     org.apache.commons.pool;version=${version.commons.pool},
+                     org.apache.commons.pool.impl;version=${version.commons.pool},
+                     org.infinispan.commons;version=${project.version},
+                     org.infinispan.commons.api;version=${project.version},
+                     org.infinispan.commons.configuration;version=${project.version},
+                     org.infinispan.commons.executors;version=${project.version},
+                     org.infinispan.commons.hash;version=${project.version},
+                     org.infinispan.commons.io;version=${project.version},
+                     org.infinispan.commons.logging;version=${project.version},
+                     org.infinispan.commons.marshall;version=${project.version},
+                     org.infinispan.commons.marshall.jboss;version=${project.version},
+                     org.infinispan.commons.util;version=${project.version},
+                     org.infinispan.commons.util.concurrent;version=${project.version},
+                     org.infinispan.protostream;resolution:=optional,
+                     org.infinispan.query.dsl;resolution:=optional,
+                     org.infinispan.query.dsl.impl;resolution:=optional,
+                     org.infinispan.query.remote.client;resolution:=optional,
+                     org.jboss.logging;version=${version.jboss.logging}
+                  </Import-Package>
                </instructions>
             </configuration>
+         </plugin>
+         <plugin>
+            <groupId>org.codehaus.mojo</groupId>
+            <artifactId>build-helper-maven-plugin</artifactId>
+            <executions>
+               <execution>
+                  <id>attach-artifacts</id>
+                  <phase>package</phase>
+                  <goals>
+                     <goal>attach-artifact</goal>
+                  </goals>
+                  <configuration>
+                     <artifacts>
+                        <artifact>
+                           <file>target/classes/features.xml</file>
+                           <type>xml</type>
+                           <classifier>features</classifier>
+                        </artifact>
+                     </artifacts>
+                  </configuration>
+               </execution>
+            </executions>
          </plugin>
       </plugins>
    </build>

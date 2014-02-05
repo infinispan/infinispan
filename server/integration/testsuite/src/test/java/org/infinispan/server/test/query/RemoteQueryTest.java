@@ -21,6 +21,7 @@ import org.infinispan.protostream.sampledomain.marshallers.MarshallerRegistratio
 import org.infinispan.query.dsl.Query;
 import org.infinispan.query.dsl.QueryFactory;
 import org.infinispan.server.test.util.RemoteCacheManagerFactory;
+import static org.infinispan.server.test.util.TestUtil.invokeOperation;
 import org.jboss.arquillian.junit.Arquillian;
 import org.junit.After;
 import org.junit.Before;
@@ -198,11 +199,6 @@ public class RemoteQueryTest {
              is.close();
           }
        }
-    }
-
-    private Object invokeOperation(MBeanServerConnectionProvider provider, String mbean, String operationName, Object[] params,
-                                   String[] signature) throws Exception {
-        return provider.getConnection().invoke(new ObjectName(mbean), operationName, params, signature);
     }
 
 }

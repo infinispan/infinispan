@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<features>
+    <feature name="query-sample-domain" version="${project.version}">
+        <bundle>mvn:org.infinispan.protostream/sample-domain-implementation/${version.org.infinispan.protostream}</bundle>
+        <bundle>mvn:org.infinispan.protostream/sample-domain-definition/${version.org.infinispan.protostream}</bundle>
+    </feature>
+</features>
