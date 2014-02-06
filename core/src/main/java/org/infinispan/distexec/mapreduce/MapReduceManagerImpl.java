@@ -282,8 +282,9 @@ public class MapReduceManagerImpl implements MapReduceManager {
                log.tracef("For m/r task %s migrating intermediate keys %s to %s", taskId, keysHashedToAddress, entry.getKey());
                for (KOut key : keysHashedToAddress) {
                   List<VOut> values = collectedValues.get(key);
-                  for (int i = 0; i < values.size(); i += chunkSize) {
-                     List<VOut> chunk = values.subList(i, Math.min(values.size(), i + chunkSize));
+                  int entryTransferCount = chunkSize > 0 ? chunkSize :values.size();
+                  for (int i = 0; i < values.size(); i += entryTransferCount) {
+                     List<VOut> chunk = values.subList(i, Math.min(values.size(), i + entryTransferCount));
                      DeltaAwareList<VOut> delta = new DeltaAwareList<VOut>(chunk);
                      if (emitCompositeIntermediateKeys) {
                         tmpCache.put(new IntermediateCompositeKey<KOut>(taskId, key), delta);
