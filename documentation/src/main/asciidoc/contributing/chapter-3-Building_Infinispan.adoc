@@ -2,7 +2,7 @@
 Infinispan uses link:$$http://maven.apache.org/$$[Maven] as a build system. 
 
 === Requirements
-* Java 6.0 or above
+* Java 7.0 or above
 * Maven 3 or above
 
 WARNING: Make sure you follow the steps outlined in link:$$http://community.jboss.org/docs/15169$$[Maven Getting Started - Users] to set up your JBoss repository correctly.

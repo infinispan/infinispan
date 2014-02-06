@@ -3,7 +3,7 @@ In this chapter we quickly walk through the basics on contributing; future chapt
 
 === Prequisites
 |=============
-| Java 6  | Infinispan is baselined on Java 6, and is built and tested using Sun Java 6.0, OpenJDK and IBM's JDK.
+| Java 7  | Infinispan is baselined on Java 6, however building it requires Java 7 (we build with Oracle JDK, OpenJDK and IBM JDK)
 | Maven 3 | The Infinispan build uses Maven, and we recommend using Maven 3.
 | Git     | The Infinispan source code is stored in Git.
 |=============
