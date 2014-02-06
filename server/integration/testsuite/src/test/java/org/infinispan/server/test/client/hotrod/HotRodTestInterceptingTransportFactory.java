@@ -1,6 +1,8 @@
 package org.infinispan.server.test.client.hotrod;
 
 import java.net.InetSocketAddress;
+import java.net.SocketAddress;
+import java.util.Set;
 
 import org.infinispan.client.hotrod.impl.transport.Transport;
 import org.infinispan.client.hotrod.impl.transport.tcp.TcpTransport;
@@ -20,8 +22,9 @@ public class HotRodTestInterceptingTransportFactory extends TcpTransportFactory 
     /*
      * Version of getTransport() which keeps track of InetSocketAddress values
      */
-    public Transport getTransport() {
-        Transport transport = super.getTransport();
+    @Override
+    public Transport getTransport(Set<SocketAddress> failedServers) {
+        Transport transport = super.getTransport(failedServers);
         System.out.println("InterceptingTransport called");
         sock_addr = (InetSocketAddress) ((TcpTransport) transport).getServerAddress();
         return transport;

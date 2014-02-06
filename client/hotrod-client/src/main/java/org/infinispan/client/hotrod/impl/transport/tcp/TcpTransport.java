@@ -32,7 +32,6 @@ import org.infinispan.commons.util.Util;
  * @author Mircea.Markus@jboss.com
  * @since 4.1
  */
-@ThreadSafe
 public class TcpTransport extends AbstractTransport {
 
    //needed for debugging

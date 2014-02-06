@@ -41,7 +41,7 @@ public class TcpTransportFactory implements TransportFactory {
 
    /**
     * We need synchronization as the thread that calls {@link org.infinispan.client.hotrod.impl.transport.TransportFactory#start(org.infinispan.client.hotrod.impl.protocol.Codec, org.infinispan.client.hotrod.impl.ConfigurationProperties, java.util.Collection, java.util.concurrent.atomic.AtomicInteger, ClassLoader)}
-    * might(and likely will) be different from the thread(s) that calls {@link #getTransport()} or other methods
+    * might(and likely will) be different from the thread(s) that calls {@link org.infinispan.client.hotrod.impl.transport.TransportFactory#getTransport(java.util.Set} or other methods
     */
    private final Object lock = new Object();
    // The connection pool implementation is assumed to be thread-safe, so we need to synchronize just the access to this field and not the method calls
@@ -157,16 +157,16 @@ public class TcpTransportFactory implements TransportFactory {
    }
 
    @Override
-   public Transport getTransport() {
+   public Transport getTransport(Set<SocketAddress> failedServers) {
       SocketAddress server;
       synchronized (lock) {
-         server = balancer.nextServer();
+         server = balancer.nextServer(failedServers);
       }
       return borrowTransportFromPool(server);
    }
 
    @Override
-   public Transport getTransport(byte[] key) {
+   public Transport getTransport(byte[] key, Set<SocketAddress> failedServers) {
       SocketAddress server;
       synchronized (lock) {
          if (consistentHash != null) {
@@ -175,7 +175,7 @@ public class TcpTransportFactory implements TransportFactory {
                log.tracef("Using consistent hash for determining the server: " + server);
             }
          } else {
-            server = balancer.nextServer();
+            server = balancer.nextServer(failedServers);
             if (log.isTraceEnabled()) {
                log.tracef("Using the balancer for determining the server: %s", server);
             }

@@ -4,6 +4,7 @@ import java.net.InetSocketAddress;
 import java.net.SocketAddress;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Set;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
@@ -58,7 +59,7 @@ public class Node0OnlyBalancingStrategy implements RequestBalancingStrategy {
      * Multiple threads might call this method at the same time.
      */
     @Override
-    public SocketAddress nextServer() {
+    public SocketAddress nextServer(Set<SocketAddress> failedServers) {
         readLock.lock();
         try {
             return server;

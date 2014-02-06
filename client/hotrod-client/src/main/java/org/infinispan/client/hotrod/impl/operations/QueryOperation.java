@@ -15,8 +15,10 @@ import org.infinispan.query.remote.client.QueryRequest;
 import org.infinispan.query.remote.client.QueryResponse;
 
 import java.io.IOException;
+import java.net.SocketAddress;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
 
 /**
@@ -34,8 +36,8 @@ public class QueryOperation extends RetryOnFailureOperation<QueryResponse> {
    }
 
    @Override
-   protected Transport getTransport(int retryCount) {
-      return transportFactory.getTransport();
+   protected Transport getTransport(int retryCount, Set<SocketAddress> failedServers) {
+      return transportFactory.getTransport(failedServers);
    }
 
    @Override

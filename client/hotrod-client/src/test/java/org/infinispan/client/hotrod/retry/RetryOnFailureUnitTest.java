@@ -11,6 +11,8 @@ import org.mockito.Mockito;
 import org.testng.AssertJUnit;
 import org.testng.annotations.Test;
 
+import java.net.SocketAddress;
+import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import static org.testng.AssertJUnit.assertEquals;
@@ -81,7 +83,7 @@ public class RetryOnFailureUnitTest {
       }
 
       @Override
-      protected Transport getTransport(int retryCount) {
+      protected Transport getTransport(int retryCount, Set<SocketAddress> failedServers) {
          transportInvocationCount.incrementAndGet();
          if (failOnTransport) {
             throw new TransportException("Induced Failure", null);

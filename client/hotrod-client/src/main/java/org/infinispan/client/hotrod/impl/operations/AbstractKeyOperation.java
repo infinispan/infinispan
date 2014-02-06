@@ -1,9 +1,10 @@
 package org.infinispan.client.hotrod.impl.operations;
 
+import java.net.SocketAddress;
+import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import net.jcip.annotations.Immutable;
-
 import org.infinispan.client.hotrod.Flag;
 import org.infinispan.client.hotrod.impl.VersionedOperationResponse;
 import org.infinispan.client.hotrod.impl.protocol.Codec;
@@ -34,11 +35,11 @@ public abstract class AbstractKeyOperation<T> extends RetryOnFailureOperation<T>
    }
 
    @Override
-   protected Transport getTransport(int retryCount) {
+   protected Transport getTransport(int retryCount, Set<SocketAddress> failedServers) {
       if (retryCount == 0) {
-         return transportFactory.getTransport(key);
+         return transportFactory.getTransport(key, failedServers);
       } else {
-         return transportFactory.getTransport();
+         return transportFactory.getTransport(failedServers);
       }
    }
 

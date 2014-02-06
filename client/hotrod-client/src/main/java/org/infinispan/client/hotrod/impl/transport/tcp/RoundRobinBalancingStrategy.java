@@ -4,9 +4,9 @@ import java.net.InetSocketAddress;
 import java.net.SocketAddress;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Set;
 
 import net.jcip.annotations.ThreadSafe;
-
 import org.infinispan.client.hotrod.logging.Log;
 import org.infinispan.client.hotrod.logging.LogFactory;
 
@@ -16,14 +16,13 @@ import org.infinispan.client.hotrod.logging.LogFactory;
  * @author Mircea.Markus@jboss.com
  * @since 4.1
  */
-@ThreadSafe
 public class RoundRobinBalancingStrategy implements RequestBalancingStrategy {
 
    private static final Log log = LogFactory.getLog(RoundRobinBalancingStrategy.class);
 
    private int index = 0;
 
-   private volatile SocketAddress[] servers;
+   private SocketAddress[] servers;
 
    @Override
    public void setServers(Collection<SocketAddress> servers) {
@@ -38,30 +37,31 @@ public class RoundRobinBalancingStrategy implements RequestBalancingStrategy {
    }
 
    /**
-    * Multiple threads might call this method at the same time.
+    * @param failedServers Servers that should not be returned (if any other are available)
     */
    @Override
-   public SocketAddress nextServer() {
-      SocketAddress server = getServerByIndex(index++);
-      // don't allow index to overflow and have a negative value
-      if (index >= servers.length)
-         index = 0;
-      return server;
+   public SocketAddress nextServer(Set<SocketAddress> failedServers) {
+      for (int i = 0;; ++i) {
+         SocketAddress server = getServerByIndex(index++);
+         // don't allow index to overflow and have a negative value
+         if (index >= servers.length)
+            index = 0;
+
+         if (failedServers == null || !failedServers.contains(server) || i >= failedServers.size()) {
+            return server;
+         }
+      }
    }
 
    /**
-    * Returns same value as {@link #nextServer()} without modifying indexes/state.
+    * Returns same value as {@link RequestBalancingStrategy#nextServer(java.util.Set} without modifying indexes/state.
     */
    public SocketAddress dryRunNextServer() {
       return getServerByIndex(index);
    }
 
    private SocketAddress getServerByIndex(int pos) {
-      SocketAddress[] copy = servers;
-      if (pos >= copy.length) {
-         pos = 0;
-      }
-      SocketAddress server = copy[pos];
+      SocketAddress server = servers[pos];
       if (log.isTraceEnabled()) {
          log.tracef("Returning server: %s", server);
       }

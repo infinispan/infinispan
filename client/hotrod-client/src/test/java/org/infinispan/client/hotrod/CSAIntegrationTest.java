@@ -121,7 +121,7 @@ public class CSAIntegrationTest extends HitsAwareCacheManagersTest {
    public void testHashFunctionReturnsSameValues() {
       for (int i = 0; i < 1000; i++) {
          byte[] key = generateKey(i);
-         TcpTransport transport = (TcpTransport) tcpConnectionFactory.getTransport(key);
+         TcpTransport transport = (TcpTransport) tcpConnectionFactory.getTransport(key, null);
          SocketAddress serverAddress = transport.getServerAddress();
          CacheContainer cacheContainer = hrServ2CacheManager.get(serverAddress);
          assertNotNull("For server address " + serverAddress + " found " + cacheContainer + ". Map is: " + hrServ2CacheManager, cacheContainer);
@@ -147,7 +147,7 @@ public class CSAIntegrationTest extends HitsAwareCacheManagersTest {
          keys.add(key);
          String keyStr = new String(key);
          remoteCache.put(keyStr, "value");
-         TcpTransport transport = (TcpTransport) tcpConnectionFactory.getTransport(marshall(keyStr));
+         TcpTransport transport = (TcpTransport) tcpConnectionFactory.getTransport(marshall(keyStr), null);
          assertHotRodEquals(hrServ2CacheManager.get(transport.getServerAddress()), keyStr, "value");
          tcpConnectionFactory.releaseTransport(transport);
       }
@@ -158,7 +158,7 @@ public class CSAIntegrationTest extends HitsAwareCacheManagersTest {
          resetStats();
          String keyStr = new String(key);
          assert remoteCache.get(keyStr).equals("value");
-         TcpTransport transport = (TcpTransport) tcpConnectionFactory.getTransport(marshall(keyStr));
+         TcpTransport transport = (TcpTransport) tcpConnectionFactory.getTransport(marshall(keyStr), null);
          assertOnlyServerHit(transport.getServerAddress());
          tcpConnectionFactory.releaseTransport(transport);
       }

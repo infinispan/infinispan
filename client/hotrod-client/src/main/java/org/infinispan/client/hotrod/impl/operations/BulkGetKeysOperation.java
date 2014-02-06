@@ -1,5 +1,6 @@
 package org.infinispan.client.hotrod.impl.operations;
 
+import java.net.SocketAddress;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -25,8 +26,8 @@ public class BulkGetKeysOperation extends RetryOnFailureOperation<Set<byte[]>> {
    }
    
    @Override
-   protected Transport getTransport(int retryCount) {
-      return transportFactory.getTransport();
+   protected Transport getTransport(int retryCount, Set<SocketAddress> failedServers) {
+      return transportFactory.getTransport(failedServers);
    }
 
    @Override
