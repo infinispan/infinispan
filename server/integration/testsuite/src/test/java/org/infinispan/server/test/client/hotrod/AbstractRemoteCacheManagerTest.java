@@ -213,17 +213,17 @@ public abstract class AbstractRemoteCacheManagerTest {
         TcpTransportFactory ttf = (TcpTransportFactory) getTransportFactoryField(of);
 
         // perform first simulated operation
-        tt = (TcpTransport) ttf.getTransport();
+        tt = (TcpTransport) ttf.getTransport(null);
         sock_addr = (InetSocketAddress) tt.getServerAddress();
         ttf.releaseTransport(tt);
         serverAddrSequence.append(sock_addr.getAddress().getHostAddress() + ":" + sock_addr.getPort()).append(" ");
 
-        tt = (TcpTransport) ttf.getTransport();
+        tt = (TcpTransport) ttf.getTransport(null);
         sock_addr = (InetSocketAddress) tt.getServerAddress();
         ttf.releaseTransport(tt);
         serverAddrSequence.append(sock_addr.getAddress().getHostAddress() + ":" + sock_addr.getPort()).append(" ");
 
-        tt = (TcpTransport) ttf.getTransport();
+        tt = (TcpTransport) ttf.getTransport(null);
         sock_addr = (InetSocketAddress) tt.getServerAddress();
         ttf.releaseTransport(tt);
         serverAddrSequence.append(sock_addr.getAddress().getHostAddress() + ":" + sock_addr.getPort());
@@ -281,13 +281,13 @@ public abstract class AbstractRemoteCacheManagerTest {
         OperationsFactory of = getOperationsFactoryField(rci);
         TcpTransportFactory ttf = (TcpTransportFactory) getTransportFactoryField(of);
         // perform first simulated operation
-        tt = (TcpTransport) ttf.getTransport();
+        tt = (TcpTransport) ttf.getTransport(null);
         sock_addr = (InetSocketAddress) tt.getServerAddress();
         ttf.releaseTransport(tt);
         assertEquals("load balancing first request: server address expected " + hostport0 + ", actual server address "
                 + sock_addr, sock_addr, hostport0);
 
-        tt = (TcpTransport) ttf.getTransport();
+        tt = (TcpTransport) ttf.getTransport(null);
         sock_addr = (InetSocketAddress) tt.getServerAddress();
         ttf.releaseTransport(tt);
         assertEquals("load balancing second request: server address expected " + hostport0 + ", actual server address"

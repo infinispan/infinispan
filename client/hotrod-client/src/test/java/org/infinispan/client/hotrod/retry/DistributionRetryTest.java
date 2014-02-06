@@ -116,7 +116,7 @@ public class DistributionRetryTest extends AbstractRetryTest {
       TcpTransportFactory tcpTp = (TcpTransportFactory) TestingUtil.extractField(remoteCacheManager, "transportFactory");
 
       Marshaller sm = new JBossMarshaller();
-      TcpTransport transport = (TcpTransport) tcpTp.getTransport(sm.objectToByteBuffer(key, 64));
+      TcpTransport transport = (TcpTransport) tcpTp.getTransport(sm.objectToByteBuffer(key, 64), null);
       try {
       assertEquals(transport.getServerAddress(), new InetSocketAddress("localhost", hotRodServer2.getPort()));
       } finally {

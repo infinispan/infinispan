@@ -11,7 +11,9 @@ import org.infinispan.client.hotrod.impl.transport.TransportFactory;
 import org.infinispan.client.hotrod.logging.Log;
 import org.infinispan.client.hotrod.logging.LogFactory;
 
-
+import java.net.SocketAddress;
+import java.util.HashSet;
+import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
 
 /**
@@ -38,13 +40,18 @@ public abstract class RetryOnFailureOperation<T> extends HotRodOperation {
    @Override
    public T execute() {
       int retryCount = 0;
+      Set<SocketAddress> failedServers = null;
       while (shouldRetry(retryCount)) {
          Transport transport = null;
          try {
             // Transport retrieval should be retried
-            transport = getTransport(retryCount);
+            transport = getTransport(retryCount, failedServers);
             return executeOperation(transport);
          } catch (TransportException te) {
+            if (failedServers == null) {
+               failedServers = new HashSet<SocketAddress>();
+            }
+            failedServers.add(te.getServerAddress());
             // Invalidate transport since this exception means that this
             // instance is no longer usable and should be destroyed.
             transportFactory.invalidateTransport(
@@ -84,7 +91,7 @@ public abstract class RetryOnFailureOperation<T> extends HotRodOperation {
          transportFactory.releaseTransport(transport);
    }
 
-   protected abstract Transport getTransport(int retryCount);
+   protected abstract Transport getTransport(int retryCount, Set<SocketAddress> failedServers);
 
    protected abstract T executeOperation(Transport transport);
 }

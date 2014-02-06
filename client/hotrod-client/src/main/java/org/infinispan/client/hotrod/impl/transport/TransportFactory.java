@@ -5,7 +5,6 @@ import java.util.Collection;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
-
 import javax.net.ssl.SSLContext;
 
 import org.infinispan.client.hotrod.configuration.Configuration;
@@ -20,7 +19,7 @@ import org.infinispan.client.hotrod.impl.protocol.Codec;
  */
 public interface TransportFactory {
 
-   Transport getTransport();
+   Transport getTransport(Set<SocketAddress> failedServers);
 
    void releaseTransport(Transport transport);
 
@@ -34,7 +33,7 @@ public interface TransportFactory {
 
    ConsistentHashFactory getConsistentHashFactory();
 
-   Transport getTransport(byte[] key);
+   Transport getTransport(byte[] key, Set<SocketAddress> failedServers);
 
    boolean isTcpNoDelay();
 

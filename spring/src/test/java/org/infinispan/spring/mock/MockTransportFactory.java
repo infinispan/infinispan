@@ -5,7 +5,6 @@ import java.util.Collection;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
-
 import javax.net.ssl.SSLContext;
 
 import org.infinispan.client.hotrod.configuration.Configuration;
@@ -17,7 +16,7 @@ import org.infinispan.client.hotrod.impl.transport.TransportFactory;
 public final class MockTransportFactory implements TransportFactory {
 
    @Override
-   public Transport getTransport() {
+   public Transport getTransport(Set<SocketAddress> failedServers) {
       return null;
    }
 
@@ -43,7 +42,7 @@ public final class MockTransportFactory implements TransportFactory {
    }
 
    @Override
-   public Transport getTransport(final byte[] key) {
+   public Transport getTransport(final byte[] key, Set<SocketAddress> failedServers) {
       return null;
    }
 
