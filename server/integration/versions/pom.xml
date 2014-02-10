@@ -457,30 +457,6 @@
             </executions>
          </plugin>
          <plugin>
-            <groupId>org.codehaus.mojo</groupId>
-            <artifactId>animal-sniffer-maven-plugin</artifactId>
-            <version>1.9</version>
-            <configuration>
-               <signature>
-                  <groupId>org.codehaus.mojo.signature</groupId>
-                  <artifactId>java16</artifactId>
-                  <version>1.0</version>
-               </signature>
-               <ignores>
-                  <ignore>sun.misc.Unsafe</ignore>
-                  <ignore>org.apache.lucene.store.IOContext</ignore>
-               </ignores>
-            </configuration>
-            <executions>
-               <execution>
-                  <phase>process-classes</phase>
-                  <goals>
-                     <goal>check</goal>
-                  </goals>
-               </execution>
-            </executions>
-         </plugin>
-         <plugin>
             <groupId>org.apache.servicemix.tooling</groupId>
             <artifactId>depends-maven-plugin</artifactId>
             <version>1.2</version>
@@ -497,6 +473,39 @@
          <properties>
             <maven.test.skip.exec>true</maven.test.skip.exec>
          </properties>
+      </profile>
+      <profile>
+         <activation>
+            <jdk>1.7</jdk>
+         </activation>
+         <build>
+            <plugins>
+               <plugin>
+                  <groupId>org.codehaus.mojo</groupId>
+                  <artifactId>animal-sniffer-maven-plugin</artifactId>
+                  <version>1.9</version>
+                  <configuration>
+                     <signature>
+                        <groupId>org.codehaus.mojo.signature</groupId>
+                        <artifactId>java16</artifactId>
+                        <version>1.0</version>
+                     </signature>
+                     <ignores>
+                        <ignore>sun.misc.Unsafe</ignore>
+                        <ignore>org.apache.lucene.store.IOContext</ignore>
+                     </ignores>
+                  </configuration>
+                  <executions>
+                     <execution>
+                        <phase>process-classes</phase>
+                        <goals>
+                           <goal>check</goal>
+                        </goals>
+                     </execution>
+                  </executions>
+               </plugin>
+            </plugins>
+         </build>
       </profile>
    </profiles>
 

@@ -87,7 +87,14 @@
         <attribute name="slot"/>
         <![CDATA[
             name = attributes.get("name");
-            name = name.replace(".", "/");
+            name = name.split(".").join("/");
+            if (name) {
+              self.log("Use JDK8 method to build module names");
+            } else {
+              name = attributes.get("name");
+              name = name.replace(".", "/");
+              self.log("Use JDK7 method to build module names");
+            }
             project.setProperty("source.module.path", name + "/main");
             project.setProperty("current.module.path", name + "/" + attributes.get("slot"));
         ]]>
@@ -98,7 +105,14 @@
         <attribute name="slot"/>
         <![CDATA[
             name = attributes.get("name");
-            name = name.replace(".", "/");
+            name = name.split(".").join("/");
+            if (name) {
+              self.log("Use JDK8 method to build module names");
+            } else {
+              name = attributes.get("name");
+              name = name.replace(".", "/");
+              self.log("Use JDK7 method to build module names");
+            }
             project.setProperty("current.bundle.path", name + "/" + attributes.get("slot"));
         ]]>
     </scriptdef>

@@ -32,10 +32,6 @@
          <maven-resource group="org.infinispan" artifact="infinispan-core" />
       </module-def>
 
-      <module-def name="org.infinispan.cachestore.jdbc" slot="${infinispan.slot}" />
-
-      <module-def name="org.infinispan.cachestore.remote" slot="${infinispan.slot}" />
-      
       <module-def name="org.infinispan.persistence.jdbc" slot="${infinispan.slot}">
          <maven-resource group="org.infinispan" artifact="infinispan-cachestore-jdbc" />
       </module-def>

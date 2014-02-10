@@ -16,6 +16,8 @@ import org.infinispan.tools.doclet.html.HtmlGenerator;
 
 import java.io.File;
 import java.io.IOException;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.LinkedList;
@@ -64,7 +66,7 @@ public class JmxDoclet {
    }
 
    public static int optionLength(String option) {
-      return (ConfigurationImpl.getInstance()).optionLength(option);
+      return (createConfigurationImpl()).optionLength(option);
    }
 
    public static boolean validOptions(String options[][], DocErrorReporter reporter) {
@@ -77,7 +79,23 @@ public class JmxDoclet {
          else if (option[0].equals("-header")) header = option[1];
          else if (option[0].equals("-doctitle")) title = option[1];
       }
-      return (ConfigurationImpl.getInstance()).validOptions(options, reporter);
+      return (createConfigurationImpl()).validOptions(options, reporter);
+   }
+
+   private static ConfigurationImpl createConfigurationImpl() {
+      try {
+         // Deal with JDK7/JDK8 differences
+         Method getInstanceMethod = ConfigurationImpl.class.getMethod("getInstance");
+         return (ConfigurationImpl) getInstanceMethod.invoke(null);
+      } catch (NoSuchMethodException e) {
+         try {
+            return ConfigurationImpl.class.newInstance();
+         } catch (Exception e1) {
+            throw new RuntimeException(e1);
+         }
+      } catch (Exception e1) {
+         throw new RuntimeException(e1);
+      }
    }
 
    private static MBeanComponent toJmxComponent(ClassDoc cd) {
