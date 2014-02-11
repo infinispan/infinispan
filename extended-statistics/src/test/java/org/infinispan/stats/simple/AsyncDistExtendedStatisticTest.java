@@ -14,4 +14,10 @@ public class AsyncDistExtendedStatisticTest extends BaseClusteredExtendedStatist
    protected AsyncDistExtendedStatisticTest() {
       super(CacheMode.DIST_ASYNC, false, false, false);
    }
+
+   @Test(groups = "unstable")
+   @Override
+   public void testReplaceWithOldVal() {
+      super.testReplaceWithOldVal();
+   }
 }

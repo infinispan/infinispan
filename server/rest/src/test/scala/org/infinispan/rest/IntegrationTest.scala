@@ -48,7 +48,7 @@ class IntegrationTest extends RestServerTestBase {
 
    //val HOST = "http://localhost:8080/infinispan/"
 
-   @BeforeClass
+   @BeforeClass(alwaysRun = true)
    def setUp() {
       addServer("single", 8888, TestCacheManagerFactory.fromXml("test-config.xml"))
       startServers()
@@ -544,6 +544,7 @@ class IntegrationTest extends RestServerTestBase {
       assertEquals(HttpServletResponse.SC_NOT_FOUND, call(new HeadMethod(fullPathKey)).getStatusCode)
    }
 
+   @Test(groups = Array("unstable"))
    def testAsyncAddRemove(m: Method) {
       val fullPathKey = fullPath + "/" + m.getName
       val put = new PostMethod(fullPathKey)

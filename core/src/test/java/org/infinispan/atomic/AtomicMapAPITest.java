@@ -28,4 +28,10 @@ public class AtomicMapAPITest extends BaseAtomicHashMapAPITest {
    protected <CK, K, V> Map<K, V> createAtomicMap(Cache<CK, Object> cache, CK key, boolean createIfAbsent) {
       return getAtomicMap(cache, key, createIfAbsent);
    }
+
+   @Test(groups = "unstable")
+   @Override
+   public void testConcurrentTx() throws Exception {
+      super.testConcurrentTx();
+   }
 }

@@ -48,7 +48,7 @@ public class LocalDistributedExecutorTest extends MultipleCacheManagersTest {
       createClusteredCaches(1, cacheName(), builder);
    }
    
-   @AfterMethod
+   @AfterMethod(alwaysRun = true)
    public void shutDownDistributedExecutorService() {
       if (cleanupService != null) {
          cleanupService.shutdownNow();
