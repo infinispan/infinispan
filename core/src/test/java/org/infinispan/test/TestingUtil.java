@@ -172,8 +172,8 @@ public class TestingUtil {
    }
 
    public static void waitForRehashToComplete(Cache... caches) {
-      int gracetime = 90000; // 90 seconds
-      long giveup = System.currentTimeMillis() + gracetime;
+      final int REHASH_TIMEOUT_SECONDS = 180; //Needs to be rather large to prevent sporadic failures on CI
+      final long giveup = System.nanoTime() + TimeUnit.SECONDS.toNanos(REHASH_TIMEOUT_SECONDS);
       for (Cache c : caches) {
          StateTransferManager stateTransferManager = extractComponent(c, StateTransferManager.class);
          DefaultRebalancePolicy rebalancePolicy = (DefaultRebalancePolicy) TestingUtil.extractGlobalComponent(c.getCacheManager(), RebalancePolicy.class);
@@ -186,7 +186,7 @@ public class TestingUtil {
             if (chIsBalanced && chContainsAllMembers)
                break;
 
-            if (System.currentTimeMillis() > giveup) {
+            if (System.nanoTime() > giveup) {
                String message;
                if (!chContainsAllMembers) {
                   Address[] addresses = new Address[caches.length];
