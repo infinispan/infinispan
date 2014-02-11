@@ -44,6 +44,11 @@ public class RestStoreParallelIterationTest  extends ParallelIterationTest {
       return KnownComponentNames.getDefaultThreads(KnownComponentNames.PERSISTENCE_EXECUTOR) + 1 /** caller's thread */;
    }
 
+   /*
+    * Unfortunately we need to mark each test individual as unstable because the super class belong to a valid test
+    * group. I think that it appends the unstable group to the super class group making it running the tests anyway.
+    */
+
    @Test(groups = "unstable", description = "don't know why but it is still running this test even the class is marked as unstable")
    @Override
    public void testParallelIteration() {
@@ -54,5 +59,11 @@ public class RestStoreParallelIterationTest  extends ParallelIterationTest {
    @Override
    public void testSequentialIteration() {
       super.testSequentialIteration();
+   }
+
+   @Test(groups = "unstable")
+   @Override
+   public void testCancelingTaskMultipleProcessors() {
+      super.testCancelingTaskMultipleProcessors();
    }
 }
