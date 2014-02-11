@@ -115,6 +115,7 @@ public class RestStoreTest extends BaseStoreTest {
       super.testLoadAndStoreImmortal();
    }
 
+   @Test(groups = "unstable")
    @Override
    public void testLoadAndStoreWithLifespan() throws Exception {
       super.testLoadAndStoreWithLifespan();

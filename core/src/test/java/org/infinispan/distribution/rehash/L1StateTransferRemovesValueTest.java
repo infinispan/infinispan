@@ -127,7 +127,7 @@ public class L1StateTransferRemovesValueTest extends BaseDistFunctionalTest<Stri
       assertFalse(DistributionTestHelper.isOwner(cm.getCache(cacheName), key));
    }
 
-   @Test
+   @Test(groups = "unstable")
    public void testStateTransferWithL1InvalidationAboutToBeCommitted() throws Exception {
       // First 2 caches are primary and backup respectively at the beginning
       c1.put(key, startValue);

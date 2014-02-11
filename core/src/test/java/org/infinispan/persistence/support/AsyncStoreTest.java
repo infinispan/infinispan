@@ -101,7 +101,7 @@ public class AsyncStoreTest extends AbstractInfinispanTest {
       doTestRemove(number, key);
    }
 
-   @Test(timeOut=30000)
+   @Test(timeOut=30000, groups = "unstable")
    public void testPutClearPut() throws Exception {
       TestCacheManagerFactory.backgroundTestStarted(this);
       createStore();
