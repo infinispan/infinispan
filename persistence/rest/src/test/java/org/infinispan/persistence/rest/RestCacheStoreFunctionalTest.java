@@ -33,10 +33,14 @@ public class RestCacheStoreFunctionalTest extends BaseStoreFunctionalTest {
       return loaders;
    }
 
-   @AfterMethod
+   @AfterMethod(alwaysRun = true)
    public void tearDown() throws Exception {
-      RestTestingUtil.killServers(restServer);
-      TestingUtil.killCacheManagers(localCacheManager);
+      if (restServer != null) {
+         RestTestingUtil.killServers(restServer);
+      }
+      if (localCacheManager != null) {
+         TestingUtil.killCacheManagers(localCacheManager);
+      }
    }
 
    @Override

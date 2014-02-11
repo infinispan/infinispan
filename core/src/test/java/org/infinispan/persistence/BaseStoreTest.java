@@ -70,7 +70,8 @@ public abstract class BaseStoreTest extends AbstractInfinispanTest {
       gtf.init(false, false, true, false);
    }
 
-   @BeforeMethod
+   //alwaysRun = true otherwise, when we run unstable tests, this method is not invoked (because it belongs to the unit group)
+   @BeforeMethod(alwaysRun = true)
    public void setUp() throws Exception {
       marshaller = new TestObjectStreamMarshaller();
       try {
@@ -82,12 +83,16 @@ public abstract class BaseStoreTest extends AbstractInfinispanTest {
       }
    }
 
-   @AfterMethod
+   //alwaysRun = true otherwise, when we run unstable tests, this method is not invoked (because it belongs to the unit group)
+   @AfterMethod(alwaysRun = true)
    protected void stopMarshaller() {
-      marshaller.stop();
+      if (marshaller != null) {
+         marshaller.stop();
+      }
    }
 
-   @AfterMethod
+   //alwaysRun = true otherwise, when we run unstable tests, this method is not invoked (because it belongs to the unit group)
+   @AfterMethod(alwaysRun = true)
    public void tearDown() throws PersistenceException {
       try {
          if (cl != null) {
