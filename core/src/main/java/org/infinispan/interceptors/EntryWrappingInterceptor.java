@@ -212,7 +212,13 @@ public class EntryWrappingInterceptor extends CommandInterceptor {
    @Override
    public final Object visitReplaceCommand(InvocationContext ctx, ReplaceCommand command) throws Throwable {
       if (shouldWrap(command.getKey(), ctx, command)) {
-         entryFactory.wrapEntryForReplace(ctx, command.getKey());
+         if (command.isIgnorePreviousValue()) {
+            //wrap it for put, as the previous value might not be present by now (e.g. might have been deleted)
+            // but we still need to apply the new value.
+            entryFactory.wrapEntryForPut(ctx, command.getKey(), null, false, command);
+         } else  {
+            entryFactory.wrapEntryForReplace(ctx, command.getKey());
+         }
       }
       return invokeNextAndApplyChanges(ctx, command);
    }
