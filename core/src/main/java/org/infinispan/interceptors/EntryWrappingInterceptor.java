@@ -203,10 +203,20 @@ public class EntryWrappingInterceptor extends CommandInterceptor {
 
    @Override
    public final Object visitRemoveCommand(InvocationContext ctx, RemoveCommand command) throws Throwable {
-      if (shouldWrap(command.getKey(), ctx, command)) {
-         entryFactory.wrapEntryForRemove(ctx, command.getKey());
-      }
+      wrapEntryForRemoveIfNeeded(ctx, command);
       return invokeNextAndApplyChanges(ctx, command);
+   }
+
+   private void wrapEntryForRemoveIfNeeded(InvocationContext ctx, RemoveCommand command) throws InterruptedException {
+      if (shouldWrap(command.getKey(), ctx, command)) {
+         if (command.isIgnorePreviousValue()) {
+            //wrap it for put, as the previous value might not be present by now (e.g. might have been deleted)
+            // but we still need to apply the new value.
+            entryFactory.wrapEntryForPut(ctx, command.getKey(), null, false, command);
+         } else {
+            entryFactory.wrapEntryForRemove(ctx, command.getKey());
+         }
+      }
    }
 
    @Override
@@ -366,7 +376,13 @@ public class EntryWrappingInterceptor extends CommandInterceptor {
       @Override
       public Object visitRemoveCommand(InvocationContext ctx, RemoveCommand command) throws Throwable {
          if (cdl.localNodeIsOwner(command.getKey())) {
-            entryFactory.wrapEntryForRemove(ctx, command.getKey());
+            if (command.isIgnorePreviousValue()) {
+               //wrap it for put, as the previous value might not be present by now (e.g. might have been deleted)
+               // but we still need to apply the new value.
+               entryFactory.wrapEntryForPut(ctx, command.getKey(), null, false, command);
+            } else  {
+               entryFactory.wrapEntryForRemove(ctx, command.getKey());
+            }
             invokeNextInterceptor(ctx, command);
          }
          return null;
@@ -406,7 +422,8 @@ public class EntryWrappingInterceptor extends CommandInterceptor {
       }
    }
 
-   private boolean commitEntryIfNeeded(InvocationContext ctx, boolean skipOwnershipCheck, Object key, CacheEntry entry, boolean isPutForStateTransfer) {
+   private boolean commitEntryIfNeeded(final InvocationContext ctx, final boolean skipOwnershipCheck,
+         Object key, final CacheEntry entry, boolean isPutForStateTransfer) {
       if (entry == null) {
          if (key != null && !isPutForStateTransfer && stateConsumer != null) {
             // this key is not yet stored locally
@@ -415,20 +432,29 @@ public class EntryWrappingInterceptor extends CommandInterceptor {
          return false;
       }
 
-      if (isPutForStateTransfer && stateConsumer.isKeyUpdated(key)) {
-         // This is a state transfer put command on a key that was already modified by other user commands. We need to back off.
-         log.tracef("State transfer will not write key/value %s/%s because it was already updated by somebody else", key, entry.getValue());
-         entry.rollback();
-         return false;
+      if (isPutForStateTransfer && (entry.isChanged() || entry.isLoaded())) {
+         boolean updated = stateConsumer.executeIfKeyIsNotUpdated(key, new Runnable() {
+            @Override
+            public void run() {
+               log.tracef("About to commit entry %s", entry);
+               commitContextEntry(entry, ctx, skipOwnershipCheck);
+            }
+         });
+         if (!updated) {
+            // This is a state transfer put command on a key that was already modified by other user commands. We need to back off.
+            log.tracef("State transfer will not write key/value %s/%s because it was already updated by somebody else", key, entry.getValue());
+            entry.rollback();
+         }
+         return updated;
       }
 
       if (entry.isChanged() || entry.isLoaded()) {
-         log.tracef("About to commit entry %s", entry);
-         commitContextEntry(entry, ctx, skipOwnershipCheck);
-
-         if (!isPutForStateTransfer && stateConsumer != null) {
+         if (stateConsumer != null) {
             stateConsumer.addUpdatedKey(key);
          }
+
+         log.tracef("About to commit entry %s", entry);
+         commitContextEntry(entry, ctx, skipOwnershipCheck);
 
          return true;
       }

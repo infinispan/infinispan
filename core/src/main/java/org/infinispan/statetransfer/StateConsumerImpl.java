@@ -59,9 +59,26 @@ import org.infinispan.transaction.xa.CacheTransaction;
 import org.infinispan.util.InfinispanCollections;
 import org.infinispan.util.ReadOnlyDataContainerBackedKeySet;
 import org.infinispan.util.concurrent.ConcurrentHashSet;
+import org.infinispan.util.concurrent.jdk8backported.ConcurrentHashMapV8;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.EnumSet;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.concurrent.BlockingDeque;
+import java.util.concurrent.Callable;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.LinkedBlockingDeque;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
 import javax.transaction.Transaction;
 import javax.transaction.TransactionManager;
 import java.util.*;
@@ -81,6 +98,7 @@ public class StateConsumerImpl implements StateConsumer {
 
    private static final Log log = LogFactory.getLog(StateConsumerImpl.class);
    private static final boolean trace = log.isTraceEnabled();
+   private static final Object UPDATED_KEY_MARKER = new Object();
 
    private ExecutorService executorService;
    private StateTransferManager stateTransferManager;
@@ -109,7 +127,7 @@ public class StateConsumerImpl implements StateConsumer {
     * state transfer is not allowed to update anything. This can be null if there is not state transfer in progress at
     * the moment of there is one but a ClearCommand was encountered.
     */
-   private volatile Set<Object> updatedKeys;
+   private volatile ConcurrentHashMapV8<Object, Object> updatedKeys;
 
    /**
     * Indicates if there is a rebalance in progress. It is set to true when onTopologyUpdate with isRebalance==true is called.
@@ -166,10 +184,11 @@ public class StateConsumerImpl implements StateConsumer {
    @Override
    public void addUpdatedKey(Object key) {
       // grab a copy of the reference to prevent issues if another thread calls stopApplyingState() between null check and actual usage
-      final Set<Object> localUpdatedKeys = updatedKeys;
+      final ConcurrentHashMapV8<Object, Object> localUpdatedKeys = updatedKeys;
       if (localUpdatedKeys != null) {
          if (cacheTopology.getWriteConsistentHash().isKeyLocalToNode(rpcManager.getAddress(), key)) {
-            localUpdatedKeys.add(key);
+            if (trace) log.tracef("Key %s modified by a regular tx, state transfer will ignore it", key);
+            localUpdatedKeys.put(key, UPDATED_KEY_MARKER);
          }
       }
    }
@@ -183,8 +202,25 @@ public class StateConsumerImpl implements StateConsumer {
    @Override
    public boolean isKeyUpdated(Object key) {
       // grab a copy of the reference to prevent issues if another thread calls stopApplyingState() between null check and actual usage
-      final Set<Object> localUpdatedKeys = updatedKeys;
-      return localUpdatedKeys == null || localUpdatedKeys.contains(key);
+      final ConcurrentHashMapV8<Object, Object> localUpdatedKeys = updatedKeys;
+      return localUpdatedKeys == null || localUpdatedKeys.containsKey(key);
+   }
+
+   @Override
+   public boolean executeIfKeyIsNotUpdated(Object key, final Runnable callback) {
+      // grab a copy of the reference to prevent issues if another thread calls stopApplyingState() between null check and actual usage
+      final ConcurrentHashMapV8<Object, Object> localUpdatedKeys = updatedKeys;
+      if (localUpdatedKeys != null) {
+         Object value = localUpdatedKeys.computeIfAbsent(key, new ConcurrentHashMapV8.Fun<Object, Object>() {
+            @Override
+            public Object apply(Object o) {
+               callback.run();
+               return null;
+            }
+         });
+         return value == null;
+      }
+      return false;
    }
 
    @Inject
@@ -285,7 +321,7 @@ public class StateConsumerImpl implements StateConsumer {
       this.cacheTopology = cacheTopology;
       if (isRebalance) {
          if (trace) log.tracef("Start keeping track of keys for rebalance");
-         updatedKeys = new ConcurrentHashSet<Object>();
+         updatedKeys = new ConcurrentHashMapV8<Object, Object>();
       }
       stateTransferLock.releaseExclusiveTopologyLock();
       stateTransferLock.notifyTopologyInstalled(cacheTopology.getTopologyId());
