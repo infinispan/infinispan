@@ -3,6 +3,8 @@ package org.infinispan.distribution;
 import org.infinispan.commands.VisitableCommand;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.interceptors.base.CommandInterceptor;
+import org.infinispan.util.logging.Log;
+import org.infinispan.util.logging.LogFactory;
 
 import java.util.concurrent.BrokenBarrierException;
 import java.util.concurrent.CyclicBarrier;
@@ -17,6 +19,8 @@ import java.util.concurrent.atomic.AtomicBoolean;
  * @since 6.0
  */
 public class BlockingInterceptor extends CommandInterceptor {
+   private static final Log log = LogFactory.getLog(BlockingInterceptor.class);
+
    private final CyclicBarrier barrier;
    private final AtomicBoolean firstBlocked = new AtomicBoolean();
    private final Class<? extends VisitableCommand> commandClass;
@@ -33,17 +37,17 @@ public class BlockingInterceptor extends CommandInterceptor {
       if (commandClass.isInstance(command)) {
          if (firstBlocked.compareAndSet(false, true)) {
             try {
-               getLog().tracef("Command blocking %s completion of %s", blockAfter ? "after" : "before", command);
+               log.tracef("Command blocking %s completion of %s", blockAfter ? "after" : "before", command);
                // The first arrive and await is to sync with main thread
                barrier.await();
                // Now we actually block until main thread lets us go
                barrier.await();
-               getLog().tracef("Command completed blocking completion of %s", command);
+               log.tracef("Command completed blocking completion of %s", command);
             } finally {
                firstBlocked.set(false);
             }
          } else {
-            getLog().trace("Command arrived but already found a blocker");
+            log.trace("Command arrived but already found a blocker");
          }
       }
    }
