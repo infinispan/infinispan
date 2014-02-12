@@ -55,7 +55,7 @@ public final class ProtobufValueWrapperFieldBridge implements FieldBridge {
       }
 
       try {
-         new ProtobufParser().parse(new WrappedMessageTagHandler(document, luceneOptions, serializationContext), wrapperDescriptor, bytes);
+         ProtobufParser.INSTANCE.parse(new WrappedMessageTagHandler(document, luceneOptions, serializationContext), wrapperDescriptor, bytes);
       } catch (IOException e) {
          throw new CacheException(e);
       }

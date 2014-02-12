@@ -27,5 +27,6 @@
 
     <dependencies>
         <module name="com.google.protobuf"/>
+        <module name="org.jboss.logging"/>
     </dependencies>
 </module>

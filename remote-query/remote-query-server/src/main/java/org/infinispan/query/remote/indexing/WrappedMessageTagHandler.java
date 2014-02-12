@@ -41,7 +41,7 @@ class WrappedMessageTagHandler implements TagHandler {
 
    private Descriptors.Descriptor messageDescriptor;
    private byte[] bytes;
-   private Object numericValue;
+   private Number numericValue;
    private String stringValue;
 
    public WrappedMessageTagHandler(Document document, LuceneOptions luceneOptions, SerializationContext serCtx) {
@@ -57,9 +57,6 @@ class WrappedMessageTagHandler implements TagHandler {
    @Override
    public void onTag(int fieldNumber, String fieldName, Descriptors.FieldDescriptor.Type type, Descriptors.FieldDescriptor.JavaType javaType, Object value) {
       switch (fieldNumber) {
-         case wrappedEnum:
-            numericValue = value;
-            break;
          case wrappedBool:
             numericValue = Boolean.TRUE.equals(value) ? IndexingTagHandler.TRUE_INT : IndexingTagHandler.FALSE_INT;
             break;
@@ -67,6 +64,7 @@ class WrappedMessageTagHandler implements TagHandler {
          case wrappedString:
             stringValue = (String) value;
             break;
+         case wrappedEnum:
          case wrappedDouble:
          case wrappedFloat:
          case wrappedInt64:
@@ -79,7 +77,7 @@ class WrappedMessageTagHandler implements TagHandler {
          case wrappedSFixed64:
          case wrappedSInt32:
          case wrappedSInt64:
-            numericValue = value;
+            numericValue = (Number) value;
             break;
          case wrappedDescriptorFullName:
             messageDescriptor = serCtx.getMessageDescriptor((String) value);
@@ -109,7 +107,7 @@ class WrappedMessageTagHandler implements TagHandler {
             throw new IllegalStateException("Descriptor name is missing");
          }
          try {
-            new ProtobufParser().parse(new IndexingTagHandler(messageDescriptor, document), messageDescriptor, bytes);
+            ProtobufParser.INSTANCE.parse(new IndexingTagHandler(messageDescriptor, document), messageDescriptor, bytes);
          } catch (IOException e) {
             throw new CacheException(e);
          }

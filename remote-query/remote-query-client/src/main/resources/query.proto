@@ -1,4 +1,4 @@
-import "message-wrapping.proto";
+import "org/infinispan/protostream/message-wrapping.proto";
 
 package org.infinispan.client.hotrod.impl.query;
 

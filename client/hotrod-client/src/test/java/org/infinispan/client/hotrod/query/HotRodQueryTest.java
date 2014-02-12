@@ -81,7 +81,7 @@ public class HotRodQueryTest extends SingleCacheManagerTest {
                                                 + ",component=" + ProtobufMetadataManager.OBJECT_NAME);
 
       //initialize server-side serialization context via JMX
-      byte[] descriptor = readClasspathResource("/bank.protobin");
+      byte[] descriptor = readClasspathResource("/sample_bank_account/bank.protobin");
       MBeanServer mBeanServer = PerThreadMBeanServerLookup.getThreadMBeanServer();
       mBeanServer.invoke(objName, "registerProtofile", new Object[]{descriptor}, new String[]{byte[].class.getName()});
 
@@ -107,7 +107,13 @@ public class HotRodQueryTest extends SingleCacheManagerTest {
 
    private byte[] readClasspathResource(String classPathResource) throws IOException {
       InputStream is = getClass().getResourceAsStream(classPathResource);
-      return Util.readStream(is);
+      try {
+         return Util.readStream(is);
+      } finally {
+         if (is != null) {
+            is.close();
+         }
+      }
    }
 
    @AfterTest

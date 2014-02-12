@@ -10,8 +10,6 @@ import org.hibernate.search.engine.metadata.impl.DocumentFieldMetadata;
 import org.infinispan.protostream.TagHandler;
 import org.infinispan.query.remote.QueryFacadeImpl;
 
-import java.util.List;
-
 /**
  * Extracts and indexes all tags (fields) from a protobuf encoded message.
  *
@@ -52,7 +50,7 @@ class IndexingTagHandler implements TagHandler {
 
    @Override
    public void onTag(int fieldNumber, String fieldName, Descriptors.FieldDescriptor.Type type, Descriptors.FieldDescriptor.JavaType javaType, Object tagValue) {
-      messageContext.getSeenFields().add(fieldNumber);
+      messageContext.markField(fieldNumber);
 
       //todo [anistor] unknown fields are not indexed
       if (fieldName != null && isIndexed(fieldNumber)) {
@@ -116,7 +114,7 @@ class IndexingTagHandler implements TagHandler {
 
    @Override
    public void onStartNested(int fieldNumber, String fieldName, Descriptors.Descriptor messageDescriptor) {
-      messageContext.getSeenFields().add(fieldNumber);
+      messageContext.markField(fieldNumber);
       pushContext(fieldName, messageDescriptor);
    }
 
@@ -146,7 +144,7 @@ class IndexingTagHandler implements TagHandler {
     */
    private void indexMissingFields() {
       for (Descriptors.FieldDescriptor fd : messageContext.getMessageDescriptor().getFields()) {
-         if (!messageContext.getSeenFields().contains(fd.getNumber())) {
+         if (!messageContext.isFieldMarked(fd.getNumber())) {
             Object defaultValue = fd.getType() == Descriptors.FieldDescriptor.Type.MESSAGE
                   || fd.getType() == Descriptors.FieldDescriptor.Type.GROUP
                   || fd.toProto().getDefaultValue().isEmpty() ? null : fd.getDefaultValue();

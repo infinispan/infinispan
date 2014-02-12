@@ -97,7 +97,7 @@ public class RemoteQueryJmxTest extends SingleCacheManagerTest {
                                                 + ObjectName.quote("DefaultCacheManager")
                                                 + ",component=" + ProtobufMetadataManager.OBJECT_NAME);
 
-      byte[] descriptor = readClasspathResource("/bank.protobin");
+      byte[] descriptor = readClasspathResource("/sample_bank_account/bank.protobin");
       MBeanServer mBeanServer = PerThreadMBeanServerLookup.getThreadMBeanServer();
       ProtobufMetadataManagerMBean protobufMetadataManagerMBean = JMX.newMBeanProxy(mBeanServer, objName, ProtobufMetadataManagerMBean.class);
       protobufMetadataManagerMBean.registerProtofile(descriptor);
@@ -111,7 +111,13 @@ public class RemoteQueryJmxTest extends SingleCacheManagerTest {
 
    private byte[] readClasspathResource(String classPathResource) throws IOException {
       InputStream is = getClass().getResourceAsStream(classPathResource);
-      return Util.readStream(is);
+      try {
+         return Util.readStream(is);
+      } finally {
+         if (is != null) {
+            is.close();
+         }
+      }
    }
 
    protected String getLuceneDirectoryProvider() {

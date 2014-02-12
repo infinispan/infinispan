@@ -40,7 +40,7 @@ import static org.junit.Assert.assertNotNull;
 @WithRunningServer("remote-query")
 public class RemoteQueryTest {
 
-   protected static final String DEFAULT_CACHE = "testcache";
+    protected static final String DEFAULT_CACHE = "testcache";
 
     @InfinispanResource("remote-query")
     protected RemoteInfinispanServer server;
@@ -68,7 +68,7 @@ public class RemoteQueryTest {
                 + ",component=ProtobufMetadataManager";
 
         //initialize server-side serialization context via JMX
-        byte[] descriptor = readClasspathResource("/bank.protobin");
+        byte[] descriptor = readClasspathResource("/sample_bank_account/bank.protobin");
         invokeOperation(provider, mbean, "registerProtofile", new Object[]{descriptor}, new String[]{byte[].class.getName()});
 
         //initialize client-side serialization context
@@ -194,7 +194,9 @@ public class RemoteQueryTest {
        try {
           return Util.readStream(is);
        } finally {
-          is.close();
+          if (is != null) {
+             is.close();
+          }
        }
     }
 

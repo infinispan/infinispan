@@ -69,7 +69,7 @@ public class EmbeddedCompatTest extends SingleCacheManagerTest {
 
       //initialize server-side serialization context
       ProtobufMetadataManager protobufMetadataManager = cacheManager.getGlobalComponentRegistry().getComponent(ProtobufMetadataManager.class);
-      protobufMetadataManager.registerProtofile("/bank.protobin");
+      protobufMetadataManager.registerProtofile("/sample_bank_account/bank.protobin");
       protobufMetadataManager.registerMarshaller(EmbeddedAccount.class, new EmbeddedAccountMarshaller());
 
       return cacheManager;
