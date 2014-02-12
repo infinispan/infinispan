@@ -638,6 +638,15 @@ public class JGroupsTransport extends AbstractTransport implements MembershipLis
       // we need a defensive copy anyway
       members = fromJGroupsAddressList(newMembers);
 
+      // Delta view debug log for large cluster
+      if (log.isDebugEnabled() && oldMembers != null) {
+         List<Address> joined = new ArrayList(members);
+         joined.removeAll(oldMembers);
+         List<Address> left = new ArrayList(oldMembers);
+         left.removeAll(members);
+         log.debugf("Joined: %s, Left: %s", joined, left);
+      }
+
       // Now that we have a view, figure out if we are the isCoordinator
       coordinator = fromJGroupsAddress(newView.getCreator());
       isCoordinator = coordinator != null && coordinator.equals(getAddress());
