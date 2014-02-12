@@ -5,20 +5,21 @@ import Operation._
 import java.util.concurrent.TimeUnit
 import transport._
 import java.io.StreamCorruptedException
-import transport.ExtendedChannelBuffer._
-import org.jboss.netty.buffer.ChannelBuffer
-import org.jboss.netty.channel._
+import transport.ExtendedByteBuf._
 import DecoderState._
 import logging.Log
 import java.lang.StringBuilder
-import org.jboss.netty.handler.codec.replay.ReplayingDecoder
-import org.jboss.netty.buffer.ChannelBuffers
-import org.jboss.netty.util.CharsetUtil
 import org.infinispan.container.entries.CacheEntry
 import org.infinispan.metadata.{Metadata, EmbeddedMetadata}
 import org.infinispan.container.versioning.{NumericVersionGenerator, EntryVersion, VersionGenerator, NumericVersion}
 import org.infinispan.context.Flag
 import java.io.IOException
+import io.netty.handler.codec.ReplayingDecoder
+import io.netty.channel._
+import io.netty.buffer.{Unpooled, ByteBuf}
+import java.util
+import io.netty.util.CharsetUtil
+import java.net.SocketAddress
 
 /**
  * Common abstract decoder for Memcached and Hot Rod protocols.
@@ -27,7 +28,7 @@ import java.io.IOException
  * @since 4.1
  */
 abstract class AbstractProtocolDecoder[K, V](transport: NettyTransport)
-      extends ReplayingDecoder[DecoderState](DECODE_HEADER, true) with ServerConstants with Log {
+      extends ReplayingDecoder[DecoderState](DECODE_HEADER) with ChannelOutboundHandler with ServerConstants with Log {
    import AbstractProtocolDecoder._
 
    type SuitableParameters <: RequestParameters
@@ -43,35 +44,35 @@ abstract class AbstractProtocolDecoder[K, V](transport: NettyTransport)
    protected var defaultLifespanTime: Long = _
    protected var defaultMaxIdleTime: Long = _
 
-   override def decode(ctx: ChannelHandlerContext, ch: Channel, buffer: ChannelBuffer, state: DecoderState): AnyRef = {
-      val ch = ctx.getChannel
-      try {
-         if (isTrace) // To aid debugging
-            trace("Decode using instance @%x", System.identityHashCode(this))
-         state match {
-            case DECODE_HEADER => decodeHeader(ch, buffer, state)
-            case DECODE_KEY => decodeKey(ch, buffer, state)
-            case DECODE_PARAMETERS => decodeParameters(ch, buffer, state)
-            case DECODE_VALUE => decodeValue(ch, buffer, state)
-         }
-      } catch {
-         case e: Exception => {
-            val (serverException, isClientError) = createServerException(e, buffer)
-            // If decode returns an exception, decode won't be called again so,
-            // we need to fire the exception explicitly so that requests can
-            // carry on being processed on same connection after a client error
-            if (isClientError) {
-               Channels.fireExceptionCaught(ch, serverException)
-               null
-            } else {
-               throw serverException
-            }
-         }
-         case t: Throwable => throw t
-      }
-   }
 
-   private def decodeHeader(ch: Channel, buffer: ChannelBuffer, state: DecoderState): AnyRef = {
+  def decode(ctx: ChannelHandlerContext, in: ByteBuf, out: util.List[AnyRef]): Unit = {
+    val ch = ctx.channel
+    try {
+      if (isTrace) // To aid debugging
+        trace("Decode using instance @%x", System.identityHashCode(this))
+      state match {
+        case DECODE_HEADER => decodeHeader(ch, in, state)
+        case DECODE_KEY => decodeKey(ch, in, state)
+        case DECODE_PARAMETERS => decodeParameters(ch, in, state)
+        case DECODE_VALUE => decodeValue(ch, in, state)
+      }
+    } catch {
+      case e: Exception => {
+        val (serverException, isClientError) = createServerException(e, in)
+        // If decode returns an exception, decode won't be called again so,
+        // we need to fire the exception explicitly so that requests can
+        // carry on being processed on same connection after a client error
+        if (isClientError) {
+          ctx.pipeline.fireExceptionCaught(serverException)
+        } else {
+          throw serverException
+        }
+      }
+      case t: Throwable => throw t
+    }
+  }
+
+  private def decodeHeader(ch: Channel, buffer: ByteBuf, state: DecoderState): AnyRef = {
       header = createHeader
       val endOfOp = readHeader(buffer, header)
       if (endOfOp == None) {
@@ -93,7 +94,7 @@ abstract class AbstractProtocolDecoder[K, V](transport: NettyTransport)
       }
    }
 
-   private def decodeKey(ch: Channel, buffer: ChannelBuffer, state: DecoderState): AnyRef = {
+   private def decodeKey(ch: Channel, buffer: ByteBuf, state: DecoderState): AnyRef = {
       header.op match {
          // Get, put and remove are the most typical operations, so they're first
          case GetRequest => writeResponse(ch, get(buffer))
@@ -106,7 +107,7 @@ abstract class AbstractProtocolDecoder[K, V](transport: NettyTransport)
       }
    }
 
-   def handleModification(ch: Channel, buf: ChannelBuffer): AnyRef = {
+   def handleModification(ch: Channel, buf: ByteBuf): AnyRef = {
       val (k, endOfOp) = readKey(buf)
       key = k
       if (endOfOp) {
@@ -118,7 +119,7 @@ abstract class AbstractProtocolDecoder[K, V](transport: NettyTransport)
    }
 
 
-   private def decodeParameters(ch: Channel, buffer: ChannelBuffer, state: DecoderState): AnyRef = {
+   private def decodeParameters(ch: Channel, buffer: ByteBuf, state: DecoderState): AnyRef = {
       val endOfOp = readParameters(ch, buffer)
       if (!endOfOp && params.valueLength > 0) {
          // Create value holder and checkpoint only if there's more to read
@@ -132,7 +133,7 @@ abstract class AbstractProtocolDecoder[K, V](transport: NettyTransport)
       }
    }
 
-   private def decodeValue(ch: Channel, buffer: ChannelBuffer, state: DecoderState): AnyRef = {
+   private def decodeValue(ch: Channel, buffer: ByteBuf, state: DecoderState): AnyRef = {
       val ret = header.op match {
          case PutRequest | PutIfAbsentRequest | ReplaceRequest | ReplaceIfUnmodifiedRequest  => {
             readValue(buffer)
@@ -149,18 +150,19 @@ abstract class AbstractProtocolDecoder[K, V](transport: NettyTransport)
       writeResponse(ch, ret)
    }
 
-   override def decodeLast(ctx: ChannelHandlerContext, ch: Channel, buffer: ChannelBuffer, state: DecoderState): AnyRef = null // no-op
-
    protected def writeResponse(ch: Channel, response: AnyRef): AnyRef = {
       try {
          if (response != null) {
             if (isTrace) trace("Write response %s", response)
             response match {
                // We only expect Lists of ChannelBuffer instances, so don't worry about type erasure
-               case l: Array[ChannelBuffer] => l.foreach(ch.write(_))
-               case a: Array[Byte] => ch.write(wrappedBuffer(a))
-               case cs: CharSequence => ch.write(ChannelBuffers.copiedBuffer(cs, CharsetUtil.UTF_8))
-               case _ => ch.write(response)
+               case l: Array[ByteBuf] => {
+                 l.foreach(ch.write(_))
+                 ch.flush
+               }
+               case a: Array[Byte] => ch.writeAndFlush(wrappedBuffer(a))
+               case cs: CharSequence => ch.writeAndFlush(Unpooled.copiedBuffer(cs, CharsetUtil.UTF_8))
+               case _ => ch.writeAndFlush(response)
             }
          }
          null
@@ -255,22 +257,21 @@ abstract class AbstractProtocolDecoder[K, V](transport: NettyTransport)
          createNotExistResponse
    }
 
-   protected def get(buffer: ChannelBuffer): AnyRef =
+   protected def get(buffer: ByteBuf): AnyRef =
       createGetResponse(key, cache.getCacheEntry(readKey(buffer)._1))
 
-   override def exceptionCaught(ctx: ChannelHandlerContext, e: ExceptionEvent) {
-      val ch = ctx.getChannel
-      val cause = e.getCause
+   override def exceptionCaught(ctx: ChannelHandlerContext, cause: Throwable) {
+      val ch = ctx.channel
       // Log it just in case the channel is closed or similar
       debug(cause, "Exception caught")
       if (!cause.isInstanceOf[IOException]) {
          val errorResponse = createErrorResponse(cause)
          if (errorResponse != null) {
             errorResponse match {
-               case a: Array[Byte] => ch.write(wrappedBuffer(a))
-               case cs: CharSequence => ch.write(ChannelBuffers.copiedBuffer(cs, CharsetUtil.UTF_8))
+               case a: Array[Byte] => ch.writeAndFlush(wrappedBuffer(a))
+               case cs: CharSequence => ch.writeAndFlush(Unpooled.copiedBuffer(cs, CharsetUtil.UTF_8))
                case null => // ignore
-               case _ => ch.write(errorResponse)
+               case _ => ch.writeAndFlush(errorResponse)
             }
          }
       }
@@ -278,9 +279,9 @@ abstract class AbstractProtocolDecoder[K, V](transport: NettyTransport)
       resetParams
    }
 
-   override def channelOpen(ctx: ChannelHandlerContext, e: ChannelStateEvent) {
-      transport.acceptedChannels.add(e.getChannel)
-      super.channelOpen(ctx, e)
+   override def channelActive(ctx: ChannelHandlerContext) {
+      transport.acceptedChannels.add(ctx.channel)
+      super.channelActive(ctx)
    }
 
    def checkpointTo(state: DecoderState): AnyRef = {
@@ -290,7 +291,7 @@ abstract class AbstractProtocolDecoder[K, V](transport: NettyTransport)
 
    protected def createHeader: SuitableHeader
 
-   protected def readHeader(b: ChannelBuffer, header: SuitableHeader): Option[Boolean]
+   protected def readHeader(b: ByteBuf, header: SuitableHeader): Option[Boolean]
 
    protected def getCache: Cache[K, V]
 
@@ -300,11 +301,11 @@ abstract class AbstractProtocolDecoder[K, V](transport: NettyTransport)
     * differentiate between extra parameters or pipelined sequence of
     * operations.
     */
-   protected def readKey(b: ChannelBuffer): (K, Boolean)
+   protected def readKey(b: ByteBuf): (K, Boolean)
 
-   protected def readParameters(ch: Channel, b: ChannelBuffer): Boolean
+   protected def readParameters(ch: Channel, b: ByteBuf): Boolean
 
-   protected def readValue(b: ChannelBuffer)
+   protected def readValue(b: ByteBuf)
 
    protected def createValue(): V
 
@@ -322,13 +323,13 @@ abstract class AbstractProtocolDecoder[K, V](transport: NettyTransport)
 
    protected def createStatsResponse: AnyRef
 
-   protected def customDecodeHeader(ch: Channel, buffer: ChannelBuffer): AnyRef
+   protected def customDecodeHeader(ch: Channel, buffer: ByteBuf): AnyRef
 
-   protected def customDecodeKey(ch: Channel, buffer: ChannelBuffer): AnyRef
+   protected def customDecodeKey(ch: Channel, buffer: ByteBuf): AnyRef
 
-   protected def customDecodeValue(ch: Channel, buffer: ChannelBuffer): AnyRef
+   protected def customDecodeValue(ch: Channel, buffer: ByteBuf): AnyRef
 
-   protected def createServerException(e: Exception, b: ChannelBuffer): (Exception, Boolean)
+   protected def createServerException(e: Exception, b: ByteBuf): (Exception, Boolean)
 
    protected def generateVersion(cache: Cache[K, V]): EntryVersion = {
       val registry = cache.getAdvancedCache.getComponentRegistry
@@ -367,16 +368,35 @@ abstract class AbstractProtocolDecoder[K, V](transport: NettyTransport)
       }
    }
 
-   override def writeComplete(ctx: ChannelHandlerContext, e: WriteCompletionEvent) {
-      transport.updateTotalBytesWritten(e)
-      ctx.sendUpstream(e)
-   }
+  def bind(ctx: ChannelHandlerContext, localAddress: SocketAddress, promise: ChannelPromise): Unit = ctx.bind(localAddress, promise)
 
-   override def messageReceived(ctx: ChannelHandlerContext, e: MessageEvent) {
-      transport.updateTotalBytesRead(e)
-      super.messageReceived(ctx, e)
-   }
+  def connect(ctx: ChannelHandlerContext, remoteAddress: SocketAddress, localAddress: SocketAddress, promise: ChannelPromise): Unit = ctx.connect(remoteAddress, localAddress, promise)
 
+  def disconnect(ctx: ChannelHandlerContext, promise: ChannelPromise): Unit = ctx.disconnect(promise)
+
+  def close(ctx: ChannelHandlerContext, promise: ChannelPromise): Unit = ctx.close(promise)
+
+  def deregister(ctx: ChannelHandlerContext, promise: ChannelPromise): Unit = ctx.deregister(promise)
+
+  def read(ctx: ChannelHandlerContext): Unit = ctx.read()
+
+  def write(ctx: ChannelHandlerContext, msg: scala.Any, promise: ChannelPromise): Unit = {
+    val readable = msg.asInstanceOf[ByteBuf].readableBytes()
+    ctx.write(msg, promise.addListener(new ChannelFutureListener {
+      def operationComplete(future: ChannelFuture): Unit = {
+        if (future.isSuccess) {
+          transport.updateTotalBytesWritten(readable)
+        }
+      }
+    }))
+  }
+
+  def flush(ctx: ChannelHandlerContext): Unit = ctx.flush()
+
+  override def channelRead(ctx: ChannelHandlerContext, msg: scala.Any): Unit = {
+    transport.updateTotalBytesRead(msg.asInstanceOf[ByteBuf].readableBytes())
+    super.channelRead(ctx, msg)
+  }
 }
 
 object AbstractProtocolDecoder extends Log {

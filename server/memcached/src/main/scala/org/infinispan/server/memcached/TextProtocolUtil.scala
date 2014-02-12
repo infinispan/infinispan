@@ -1,10 +1,10 @@
 package org.infinispan.server.memcached
 
-import org.jboss.netty.buffer.ChannelBuffer
 import java.lang.StringBuilder
 import collection.mutable.{Buffer, ListBuffer}
 import annotation.tailrec
 import java.io.{ByteArrayOutputStream, OutputStream}
+import io.netty.buffer.ByteBuf
 
 /**
  * Memcached text protocol utilities.
@@ -48,7 +48,7 @@ object TextProtocolUtil {
     * found instead of end of operation character, then it'd return the element and false.
     */
    @tailrec
-   def readElement(buffer: ChannelBuffer, byteBuffer: OutputStream): Boolean = {
+   def readElement(buffer: ByteBuf, byteBuffer: OutputStream): Boolean = {
       var next = buffer.readByte
       if (next == SP) { // Space
          false
@@ -75,7 +75,7 @@ object TextProtocolUtil {
    }
 
    @tailrec
-   private def readElement(buffer: ChannelBuffer, sb: StringBuilder): (String, Boolean) = {
+   private def readElement(buffer: ByteBuf, sb: StringBuilder): (String, Boolean) = {
       var next = buffer.readByte 
       if (next == SP) { // Space
          (sb.toString.trim, false)
@@ -95,18 +95,18 @@ object TextProtocolUtil {
       }
    }
 
-   def readDiscardedLine(buffer: ChannelBuffer): String = {
+   def readDiscardedLine(buffer: ByteBuf): String = {
       if (readableBytes(buffer) > 0)
          readDiscardedLine(buffer, new StringBuilder())
       else
          ""
    }
 
-   def readableBytes(buffer: ChannelBuffer): Int =
+   def readableBytes(buffer: ByteBuf): Int =
       buffer.writerIndex - buffer.readerIndex
 
    @tailrec
-   private def readDiscardedLine(buffer: ChannelBuffer, sb: StringBuilder): String = {
+   private def readDiscardedLine(buffer: ByteBuf, sb: StringBuilder): String = {
       var next = buffer.readByte
       if (next == CR) { // CR
          next = buffer.readByte
@@ -125,7 +125,7 @@ object TextProtocolUtil {
    }
 
    @tailrec
-   def skipLine(buffer: ChannelBuffer) {
+   def skipLine(buffer: ByteBuf) {
       if (readableBytes(buffer) > 0) {
          var next = buffer.readByte
          if (next == CR) { // CR
@@ -150,7 +150,7 @@ object TextProtocolUtil {
        data
    }
 
-   def readSplitLine(buffer: ChannelBuffer): Seq[String] = {
+   def readSplitLine(buffer: ByteBuf): Seq[String] = {
       if (readableBytes(buffer) > 0)
          readSplitLine(buffer, new ListBuffer[String](), buffer.readerIndex(), 0)
       else
@@ -158,7 +158,7 @@ object TextProtocolUtil {
    }
 
    @tailrec
-   private def readSplitLine(buffer: ChannelBuffer, list: Buffer[String],
+   private def readSplitLine(buffer: ByteBuf, list: Buffer[String],
            start: Int, length: Int): Seq[String] = {
       var next = buffer.readByte
       if (next == CR) { // CR

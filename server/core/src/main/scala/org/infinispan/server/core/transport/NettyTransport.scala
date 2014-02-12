@@ -1,17 +1,11 @@
 package org.infinispan.server.core.transport
 
-import org.jboss.netty.channel.group.DefaultChannelGroup
-import org.jboss.netty.channel.socket.nio.{NioServerBossPool, NioWorkerPool, NioServerSocketChannelFactory}
-import org.jboss.netty.bootstrap.ServerBootstrap
+import io.netty.channel.group.DefaultChannelGroup
 import scala.collection.JavaConversions._
 import org.infinispan.server.core.ProtocolServer
 import org.infinispan.commons.util.Util
-import org.jboss.netty.util.ThreadNameDeterminer
-import org.jboss.netty.logging.{InternalLoggerFactory, Log4JLoggerFactory}
 import org.infinispan.server.core.logging.Log
-import java.util.concurrent.atomic.AtomicLong
-import org.jboss.netty.channel.{WriteCompletionEvent, MessageEvent, ChannelDownstreamHandler}
-import org.jboss.netty.buffer.ChannelBuffer
+import java.util.concurrent.atomic.{AtomicInteger, AtomicLong}
 import java.net.InetSocketAddress
 import org.infinispan.manager.EmbeddedCacheManager
 import org.infinispan.distexec.{DistributedCallable, DefaultExecutorService}
@@ -19,9 +13,15 @@ import org.infinispan.Cache
 import java.util
 import org.infinispan.jmx.JmxUtil
 import javax.management.ObjectName
-import util.concurrent.{TimeUnit, Executors}
+import java.util.concurrent.{ThreadFactory, TimeUnit}
 import org.infinispan.server.core.configuration.ProtocolServerConfiguration
-import org.jboss.netty.channel.ChannelPipelineFactory
+import io.netty.util.concurrent.ImmediateEventExecutor
+import io.netty.util.internal.logging.{Log4JLoggerFactory, InternalLoggerFactory}
+import io.netty.bootstrap.ServerBootstrap
+import io.netty.channel.{Channel, ChannelInitializer, ChannelOption}
+import io.netty.channel.nio.NioEventLoopGroup
+import io.netty.channel.socket.nio.NioServerSocketChannel
+import io.netty.buffer.PooledByteBufAllocator
 
 /**
  * A Netty based transport.
@@ -29,41 +29,17 @@ import org.jboss.netty.channel.ChannelPipelineFactory
  * @author Galder Zamarreño
  * @since 4.1
  */
-class NettyTransport(server: ProtocolServer, pipeline: LifecycleChannelPipelineFactory,
+class NettyTransport(server: ProtocolServer, handler: ChannelInitializer[Channel],
                      address: InetSocketAddress, configuration: ProtocolServerConfiguration, threadNamePrefix: String, cacheManager: EmbeddedCacheManager)
         extends Transport with Log {
 
-   private val serverChannels = new DefaultChannelGroup(threadNamePrefix + "-Channels")
-   val acceptedChannels = new DefaultChannelGroup(threadNamePrefix + "-Accepted")
+   private val serverChannels = new DefaultChannelGroup(threadNamePrefix + "-Channels", ImmediateEventExecutor.INSTANCE)
+   val acceptedChannels = new DefaultChannelGroup(threadNamePrefix + "-Accepted", ImmediateEventExecutor.INSTANCE)
 
-   private val masterPool = new NioServerBossPool(Executors.newCachedThreadPool, 1, new ThreadNameDeterminer {
-     override def determineThreadName(currentThreadName: String, proposedThreadName: String): String = {
-       val index = proposedThreadName.indexWhere(_ == '#')
-       val typeInFix = "ServerMaster-"
-       // Set thread name to be: <prefix><ServerWorker-|ServerMaster-|ClientWorker-|ClientMaster-><number>
-       val name = threadNamePrefix + typeInFix + proposedThreadName.substring(index + 1, proposedThreadName.length)
-       if (isTrace)
-         trace("Thread name will be %s, with current thread name being %s and proposed name being '%s'",
-           name, Thread.currentThread, proposedThreadName)
-       name
-     }
-   })
-   private val workerPool = new NioWorkerPool(Executors.newCachedThreadPool, configuration.workerThreads, new ThreadNameDeterminer {
-     override def determineThreadName(currentThreadName: String, proposedThreadName: String): String = {
-       val index = proposedThreadName.indexWhere(_ == '#')
-       val typeInFix = "ServerWorker-"
-       // Set thread name to be: <prefix><ServerWorker-<number>
-       val name = threadNamePrefix + typeInFix + proposedThreadName.substring(index + 1, proposedThreadName.length)
-       if (isTrace)
-         trace("Thread name will be %s, with current thread name being %s and proposed name being '%s'",
-           name, Thread.currentThread, proposedThreadName)
-       name
-     }
-   })
-   private val factory = new NioServerSocketChannelFactory(masterPool, workerPool)
+   private val masterGroup = new NioEventLoopGroup(1, new InfinispanThreadFactory(threadNamePrefix + "ServerMaster"))
+   private val workerGroup = new NioEventLoopGroup(configuration.workerThreads, new InfinispanThreadFactory(threadNamePrefix + "ServerWorker"))
 
    private val totalBytesWritten, totalBytesRead = new AtomicLong
-   private val isTrace = isTraceEnabled
    private val isGlobalStatsEnabled =
       cacheManager.getCacheManagerConfiguration.globalJmxStatistics().enabled()
 
@@ -72,15 +48,18 @@ class NettyTransport(server: ProtocolServer, pipeline: LifecycleChannelPipelineF
       if (isLog4jAvailable)
          InternalLoggerFactory.setDefaultFactory(new Log4JLoggerFactory)
 
-      val bootstrap = new ServerBootstrap(factory)
-      bootstrap.setPipelineFactory(pipeline)
-      bootstrap.setOption("child.tcpNoDelay", configuration.tcpNoDelay) // Sets server side tcpNoDelay
+      val bootstrap = new ServerBootstrap()
+      bootstrap.group(masterGroup, workerGroup)
+      bootstrap.channel(classOf[NioServerSocketChannel])
+      bootstrap.childHandler(handler)
+      bootstrap.childOption(ChannelOption.ALLOCATOR, PooledByteBufAllocator.DEFAULT)
+      bootstrap.childOption[java.lang.Boolean](ChannelOption.TCP_NODELAY, configuration.tcpNoDelay) // Sets server side tcpNoDelay
       if (configuration.sendBufSize > 0)
-         bootstrap.setOption("child.sendBufferSize", configuration.sendBufSize) // Sets server side send buffer
+         bootstrap.childOption[java.lang.Integer](ChannelOption.SO_SNDBUF, configuration.sendBufSize) // Sets server side send buffer
       if (configuration.recvBufSize > 0)
-         bootstrap.setOption("child.receiveBufferSize", configuration.recvBufSize) // Sets server side receive buffer
+         bootstrap.childOption[java.lang.Integer](ChannelOption.SO_RCVBUF, configuration.recvBufSize) // Sets server side receive buffer
 
-      val ch = bootstrap.bind(address)
+      val ch = bootstrap.bind(address).sync().channel()
       serverChannels.add(ch)
    }
 
@@ -96,31 +75,30 @@ class NettyTransport(server: ProtocolServer, pipeline: LifecycleChannelPipelineF
 
    override def stop() {
       // We *pause* the acceptor so no new connections are made
-      var future = serverChannels.unbind().awaitUninterruptibly()
-      if (!future.isCompleteSuccess) {
+      var future = serverChannels.close().awaitUninterruptibly()
+      if (!future.isSuccess) {
          logServerDidNotUnbind
-         for (ch <- asScalaIterator(future.getGroup.iterator)) {
-            if (ch.isBound) {
-               logChannelStillBound(ch, ch.getRemoteAddress)
+         for (ch <- asScalaIterator(future.group().iterator)) {
+            if (ch.isActive) {
+               logChannelStillBound(ch, ch.remoteAddress())
             }
          }
       }
 
       serverChannels.close().awaitUninterruptibly()
       future = acceptedChannels.close().awaitUninterruptibly()
-      if (!future.isCompleteSuccess) {
+      if (!future.isSuccess) {
          logServerDidNotClose
-         for (ch <- asScalaIterator(future.getGroup.iterator)) {
-            if (ch.isBound) {
-               logChannelStillConnected(ch, ch.getRemoteAddress)
+         for (ch <- asScalaIterator(future.group().iterator)) {
+            if (ch.isActive) {
+               logChannelStillConnected(ch, ch.remoteAddress)
             }
          }
       }
-      pipeline.stop
       if (isDebugEnabled)
          debug("Channel group completely closed, release external resources")
-      factory.shutdown()
-      factory.releaseExternalResources()
+      masterGroup.shutdownGracefully()
+      workerGroup.shutdownGracefully()
    }
 
    override def getTotalBytesWritten: String = totalBytesWritten.toString
@@ -151,24 +129,24 @@ class NettyTransport(server: ProtocolServer, pipeline: LifecycleChannelPipelineF
          getNumberOfLocalConnections
    }
 
-   private[core] def updateTotalBytesWritten(e: WriteCompletionEvent) {
+   private[core] def updateTotalBytesWritten(bytes: Int) {
       if (isGlobalStatsEnabled)
-         incrementTotalBytesWritten(totalBytesWritten, e)
+         incrementTotalBytesWritten(totalBytesWritten, bytes)
    }
 
-   private def incrementTotalBytesWritten(base: AtomicLong, e: WriteCompletionEvent) {
+   private def incrementTotalBytesWritten(base: AtomicLong, bytes: Int) {
       if (isGlobalStatsEnabled)
-         base.addAndGet(e.getWrittenAmount)
+         base.addAndGet(bytes)
    }
 
-   private[core] def updateTotalBytesRead(e: MessageEvent) {
+   private[core] def updateTotalBytesRead(bytes: Int) {
       if (isGlobalStatsEnabled)
-         incrementTotalBytesRead(totalBytesRead, e)
+         incrementTotalBytesRead(totalBytesRead, bytes)
    }
 
-   private def incrementTotalBytesRead(base: AtomicLong, e: MessageEvent) {
+   private def incrementTotalBytesRead(base: AtomicLong, bytes: Int) {
       if (isGlobalStatsEnabled)
-         base.addAndGet(e.getMessage.asInstanceOf[ChannelBuffer].readableBytes)
+         base.addAndGet(bytes)
    }
 
    private def needDistributedCalculation(): Boolean = {
@@ -192,8 +170,15 @@ class NettyTransport(server: ProtocolServer, pipeline: LifecycleChannelPipelineF
       }
    }
 
-}
 
+   private [this] class InfinispanThreadFactory(prefix: String) extends ThreadFactory {
+      private final val nextId: AtomicInteger = new AtomicInteger
+      def newThread(r: Runnable): Thread = {
+         val thread = new Thread(r, prefix + "-" + nextId.incrementAndGet())
+         thread
+      }
+   }
+}
 // TODO: Could be generalised to calculate any jmx params cluster wide
 class ConnectionAdderTask(serverName: String)
         extends DistributedCallable[AnyRef, AnyRef, java.lang.Integer] with Serializable {
@@ -216,3 +201,4 @@ class ConnectionAdderTask(serverName: String)
    }
 
 }
+

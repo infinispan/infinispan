@@ -2,7 +2,7 @@ package org.infinispan.server.hotrod
 
 import org.testng.annotations.Test
 import java.lang.reflect.Method
-import org.jboss.netty.channel.ChannelFuture
+import io.netty.channel.ChannelFuture
 
 /**
  * Tests that Hot Rod server can shutdown even if client dies not close connection.

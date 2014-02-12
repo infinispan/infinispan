@@ -1,7 +1,7 @@
 package org.infinispan.server.websocket;
 
+import io.netty.channel.ChannelHandlerContext;
 import org.infinispan.Cache;
-import org.jboss.netty.channel.ChannelHandlerContext;
 import org.json.JSONException;
 import org.json.JSONObject;
 

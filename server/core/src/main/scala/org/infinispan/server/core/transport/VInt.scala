@@ -1,8 +1,7 @@
 package org.infinispan.server.core.transport
 
-import org.jboss.netty.buffer.ChannelBuffer
-import java.io.StreamCorruptedException
 import java.lang.IllegalStateException
+import io.netty.buffer.ByteBuf
 
 /**
  * Reads and writes unsigned variable length integer values. Even though it's deprecated, do not
@@ -14,7 +13,7 @@ import java.lang.IllegalStateException
  */
 object VInt {
 
-   def write(out: ChannelBuffer, i: Int) {
+   def write(out: ByteBuf, i: Int) {
       if ((i & ~0x7F) == 0) out.writeByte(i.toByte)
       else {
          out.writeByte(((i & 0x7f) | 0x80).toByte)
@@ -22,12 +21,12 @@ object VInt {
       }
    }
 
-   def read(in: ChannelBuffer): Int = {
+   def read(in: ByteBuf): Int = {
       val b = in.readByte
       read(in, b, 7, b & 0x7F, 1)
    }
 
-   private def read(in: ChannelBuffer, b: Byte, shift: Int, i: Int, count: Int): Int = {
+   private def read(in: ByteBuf, b: Byte, shift: Int, i: Int, count: Int): Int = {
       if ((b & 0x80) == 0) i
       else {
          if (count > 5)

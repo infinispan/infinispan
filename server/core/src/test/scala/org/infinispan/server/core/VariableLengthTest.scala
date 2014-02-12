@@ -1,10 +1,10 @@
 package org.infinispan.server.core
 
 import org.testng.annotations.Test
-import org.jboss.netty.buffer.{ChannelBuffers}
 import org.testng.Assert._
-import transport.ExtendedChannelBuffer._
+import transport.ExtendedByteBuf._
 import org.infinispan.commons.util.Util
+import io.netty.buffer.Unpooled
 
 /**
  * Variable length number test.
@@ -85,19 +85,21 @@ class VariableLengthTest {
 
    @Test(expectedExceptions = Array(classOf[IllegalStateException]))
    def testTooLongInt {
-      val buffer = ChannelBuffers.directBuffer(1024)
+      val buffer = Unpooled.directBuffer(1024)
       assert(buffer.writerIndex == 0)
       writeUnsignedLong(9223372036854775807L, buffer)
       readUnsignedInt(buffer)
+      buffer.release()
    }
 
    @Test(groups = Array("unstable"))
    def testPrintHexadecimalVint {
-      val buffer = ChannelBuffers.directBuffer(1024)
+      val buffer = Unpooled.directBuffer(1024)
       assert(buffer.writerIndex == 0)
       writeUnsignedLong(512, buffer)
-      println(Util.hexDump(buffer.toByteBuffer))
+      println(Util.hexDump(buffer.nioBuffer()))
       println
+      buffer.release()
    }
 
 //   def test2pow63() {
@@ -105,19 +107,21 @@ class VariableLengthTest {
 //   }
 
    private def writeReadInt(num: Int, expected: Int) {
-      val buffer = ChannelBuffers.directBuffer(1024)
+      val buffer = Unpooled.directBuffer(1024)
       assert(buffer.writerIndex == 0)
       writeUnsignedInt(num, buffer)
       assertEquals(buffer.writerIndex, expected)
       assertEquals(readUnsignedInt(buffer), num)
+      buffer.release()
    }
 
    private def writeReadLong(num: Long, expected: Int) {
-      val buffer = ChannelBuffers.directBuffer(1024)
+      val buffer = Unpooled.directBuffer(1024)
       assert(buffer.writerIndex == 0)
       writeUnsignedLong(num, buffer)
       assertEquals(buffer.writerIndex, expected)
       assertEquals(readUnsignedLong(buffer), num)
+      buffer.release()
    }
 
 }

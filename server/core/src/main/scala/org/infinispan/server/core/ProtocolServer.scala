@@ -1,11 +1,8 @@
 package org.infinispan.server.core
 
 import org.infinispan.manager.EmbeddedCacheManager
-import java.util.Properties
-import org.jboss.netty.handler.codec.oneone.OneToOneEncoder
-import org.jboss.netty.channel.ChannelHandler
 import org.infinispan.server.core.configuration.ProtocolServerConfiguration
-import org.infinispan.server.core.transport.LifecycleChannelPipelineFactory
+import io.netty.channel.{Channel, ChannelInitializer, ChannelInboundHandler, ChannelOutboundHandler}
 
 /**
  * Represents a protocol compliant server.
@@ -31,13 +28,13 @@ trait ProtocolServer {
     * back to client. This method can return null if the server has no encoder. You can find an example of the server
     * that has no encoder in the Memcached server.
     */
-   def getEncoder: OneToOneEncoder
+   def getEncoder: ChannelOutboundHandler
 
    /**
     * Gets the decoder for this protocol server. The decoder is responsible for reading client requests.
     * This method cannot return null.
     */
-   def getDecoder: ChannelHandler
+   def getDecoder: ChannelInboundHandler
 
    /**
     * Returns the configuration used to start this server
@@ -47,5 +44,5 @@ trait ProtocolServer {
    /**
     * Returns a pipeline factory
     */
-   def getPipeline: LifecycleChannelPipelineFactory
+   def getInitializer: ChannelInitializer[Channel]
 }

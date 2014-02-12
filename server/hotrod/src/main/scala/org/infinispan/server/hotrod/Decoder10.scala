@@ -12,11 +12,11 @@ import collection.immutable
 import org.infinispan.util.concurrent.TimeoutException
 import java.io.IOException
 import org.infinispan.context.Flag.IGNORE_RETURN_VALUES
-import org.jboss.netty.buffer.ChannelBuffer
-import org.infinispan.server.core.transport.ExtendedChannelBuffer._
+import org.infinispan.server.core.transport.ExtendedByteBuf._
 import transport.NettyTransport
 import org.infinispan.container.entries.{CacheEntry, InternalCacheEntry}
 import org.infinispan.container.versioning.NumericVersion
+import io.netty.buffer.ByteBuf
 
 /**
  * HotRod protocol decoder specific for specification version 1.0.
@@ -30,7 +30,7 @@ object Decoder10 extends AbstractVersionedDecoder with ServerConstants with Log 
    type SuitableHeader = HotRodHeader
    private val isTrace = isTraceEnabled
 
-   override def readHeader(buffer: ChannelBuffer, version: Byte, messageId: Long, header: HotRodHeader): Boolean = {
+   override def readHeader(buffer: ByteBuf, version: Byte, messageId: Long, header: HotRodHeader): Boolean = {
       val streamOp = buffer.readUnsignedByte
       val (op, endOfOp) = streamOp match {
          case 0x01 => (PutRequest, false)
@@ -73,7 +73,7 @@ object Decoder10 extends AbstractVersionedDecoder with ServerConstants with Log 
       endOfOp
    }
 
-   override def readKey(h: HotRodHeader, buffer: ChannelBuffer): (Array[Byte], Boolean) = {
+   override def readKey(h: HotRodHeader, buffer: ByteBuf): (Array[Byte], Boolean) = {
       val k = readKey(buffer)
       h.op match {
          case RemoveRequest => (k, true)
@@ -81,9 +81,9 @@ object Decoder10 extends AbstractVersionedDecoder with ServerConstants with Log 
       }
    }
 
-   private def readKey(buffer: ChannelBuffer): Array[Byte] = readRangedBytes(buffer)
+   private def readKey(buffer: ByteBuf): Array[Byte] = readRangedBytes(buffer)
 
-   override def readParameters(header: HotRodHeader, buffer: ChannelBuffer): (RequestParameters, Boolean) = {
+   override def readParameters(header: HotRodHeader, buffer: ByteBuf): (RequestParameters, Boolean) = {
       header.op match {
          case RemoveRequest => (null, true)
          case RemoveIfUnmodifiedRequest => (new RequestParameters(-1, -1, -1, buffer.readLong), true)
@@ -107,7 +107,7 @@ object Decoder10 extends AbstractVersionedDecoder with ServerConstants with Log 
       (h.flag & f.id) == f.id
    }
 
-   private def readLifespanOrMaxIdle(buffer: ChannelBuffer, useDefault: Boolean): Int = {
+   private def readLifespanOrMaxIdle(buffer: ByteBuf, useDefault: Boolean): Int = {
       val stream = readUnsignedInt(buffer)
       if (stream <= 0) {
          if (useDefault)
@@ -154,7 +154,7 @@ object Decoder10 extends AbstractVersionedDecoder with ServerConstants with Log 
                h.topologyId, None, 0)
    }
 
-   override def customReadHeader(h: HotRodHeader, buffer: ChannelBuffer,
+   override def customReadHeader(h: HotRodHeader, buffer: ByteBuf,
            cache: AdvancedCache[Array[Byte], Array[Byte]]): AnyRef = {
       h.op match {
          case ClearRequest => {
@@ -168,7 +168,7 @@ object Decoder10 extends AbstractVersionedDecoder with ServerConstants with Log 
       }
    }
 
-   override def customReadKey(h: HotRodHeader, buffer: ChannelBuffer,
+   override def customReadKey(h: HotRodHeader, buffer: ByteBuf,
            cache: AdvancedCache[Array[Byte], Array[Byte]], queryFacades: Seq[QueryFacade]): AnyRef = {
       h.op match {
          case RemoveIfUnmodifiedRequest => {
@@ -245,7 +245,7 @@ object Decoder10 extends AbstractVersionedDecoder with ServerConstants with Log 
       }
    }
 
-   override def customReadValue(header: HotRodHeader, buffer: ChannelBuffer,
+   override def customReadValue(header: HotRodHeader, buffer: ByteBuf,
            cache: AdvancedCache[Array[Byte], Array[Byte]]): AnyRef = null
 
    override def createStatsResponse(h: HotRodHeader, cacheStats: Stats, t: NettyTransport): AnyRef = {

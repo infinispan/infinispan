@@ -6,12 +6,18 @@ import java.lang.reflect.Method;
 import java.lang.reflect.Proxy;
 import java.net.SocketAddress;
 
-import org.jboss.netty.channel.Channel;
-import org.jboss.netty.channel.ChannelConfig;
-import org.jboss.netty.channel.ChannelFactory;
-import org.jboss.netty.channel.ChannelFuture;
-import org.jboss.netty.channel.ChannelPipeline;
-import org.jboss.netty.handler.codec.http.websocketx.TextWebSocketFrame;
+import io.netty.buffer.ByteBufAllocator;
+import io.netty.channel.Channel;
+import io.netty.channel.ChannelConfig;
+import io.netty.channel.ChannelFuture;
+import io.netty.channel.ChannelMetadata;
+import io.netty.channel.ChannelPipeline;
+import io.netty.channel.ChannelProgressivePromise;
+import io.netty.channel.ChannelPromise;
+import io.netty.channel.EventLoop;
+import io.netty.handler.codec.http.websocketx.TextWebSocketFrame;
+import io.netty.util.Attribute;
+import io.netty.util.AttributeKey;
 import org.json.JSONException;
 import org.json.JSONObject;
 
@@ -24,64 +30,13 @@ public class MockChannel implements Channel {
 
 	private StringWriter writer = new StringWriter();
 
-	/* (non-Javadoc)
-	 * @see org.jboss.netty.channel.Channel#getConfig()
-	 */
-	@Override
-	public ChannelConfig getConfig() {
-		return null;
-	}
-
-	/* (non-Javadoc)
-	 * @see org.jboss.netty.channel.Channel#getLocalAddress()
-	 */
-	@Override
-	public SocketAddress getLocalAddress() {
-		return null;
-	}
-
-	/* (non-Javadoc)
-	 * @see org.jboss.netty.channel.Channel#getRemoteAddress()
-	 */
-	@Override
-	public SocketAddress getRemoteAddress() {
-		return null;
-	}
-
-	/* (non-Javadoc)
-	 * @see org.jboss.netty.channel.Channel#isBound()
-	 */
-	@Override
-	public boolean isBound() {
-		return true;
-	}
-
-	/* (non-Javadoc)
-	 * @see org.jboss.netty.channel.Channel#isConnected()
-	 */
-	@Override
-	public boolean isConnected() {
-		return false;
-	}
-
-
-
-	@Override
-   public Object getAttachment() {
-      return null;
-   }
-
-   @Override
-   public void setAttachment(Object attachment) {
-   }
-
    /* (non-Javadoc)
 	 * @see org.jboss.netty.channel.AbstractChannel#write(java.lang.Object)
 	 */
 	@Override
 	public ChannelFuture write(Object message) {
 		if(message instanceof TextWebSocketFrame) {
-			writer.write(((TextWebSocketFrame)message).getText());
+			writer.write(((TextWebSocketFrame)message).text());
 		} else {
 			throw new IllegalStateException("Expected a TextWebSocketFrame but got " + message);
 		}
@@ -117,42 +72,10 @@ public class MockChannel implements Channel {
 	}
 
 	/* (non-Javadoc)
-	 * @see org.jboss.netty.channel.Channel#bind(java.net.SocketAddress)
-	 */
-	@Override
-	public ChannelFuture bind(SocketAddress arg0) {
-		return null;
-	}
-
-	/* (non-Javadoc)
-	 * @see org.jboss.netty.channel.Channel#close()
-	 */
-	@Override
-	public ChannelFuture close() {
-		return null;
-	}
-
-	/* (non-Javadoc)
-	 * @see org.jboss.netty.channel.Channel#connect(java.net.SocketAddress)
-	 */
-	@Override
-	public ChannelFuture connect(SocketAddress arg0) {
-		return null;
-	}
-
-	/* (non-Javadoc)
-	 * @see org.jboss.netty.channel.Channel#disconnect()
-	 */
-	@Override
-	public ChannelFuture disconnect() {
-		return null;
-	}
-
-	/* (non-Javadoc)
 	 * @see org.jboss.netty.channel.Channel#getCloseFuture()
 	 */
 	@Override
-	public ChannelFuture getCloseFuture() {
+	public ChannelFuture closeFuture() {
 		return (ChannelFuture) Proxy.newProxyInstance(getClass().getClassLoader(),
                 new Class[] { ChannelFuture.class },
                 new InvocationHandler() {
@@ -163,107 +86,191 @@ public class MockChannel implements Channel {
 		});
 	}
 
-	/* (non-Javadoc)
-	 * @see org.jboss.netty.channel.Channel#getFactory()
-	 */
-	@Override
-	public ChannelFactory getFactory() {
-		return null;
-	}
+    @Override
+    public EventLoop eventLoop() {
+        return null;
+    }
 
-	/* (non-Javadoc)
-	 * @see org.jboss.netty.channel.Channel#getId()
-	 */
-	@Override
-	public Integer getId() {
-		return null;
-	}
+    @Override
+    public Channel parent() {
+        return null;
+    }
 
-	/* (non-Javadoc)
-	 * @see org.jboss.netty.channel.Channel#getInterestOps()
-	 */
-	@Override
-	public int getInterestOps() {
-		return 0;
-	}
+    @Override
+    public ChannelConfig config() {
+        return null;
+    }
 
-	/* (non-Javadoc)
-	 * @see org.jboss.netty.channel.Channel#getParent()
-	 */
-	@Override
-	public Channel getParent() {
-		return null;
-	}
+    @Override
+    public boolean isOpen() {
+        return true;
+    }
 
-	/* (non-Javadoc)
-	 * @see org.jboss.netty.channel.Channel#getPipeline()
-	 */
-	@Override
-	public ChannelPipeline getPipeline() {
-		return null;
-	}
+    @Override
+    public boolean isRegistered() {
+        return false;
+    }
 
-	/* (non-Javadoc)
-	 * @see org.jboss.netty.channel.Channel#isOpen()
-	 */
-	@Override
-	public boolean isOpen() {
-		return true;
-	}
+    @Override
+    public boolean isActive() {
+        return false;
+    }
 
-	/* (non-Javadoc)
-	 * @see org.jboss.netty.channel.Channel#isReadable()
-	 */
-	@Override
-	public boolean isReadable() {
-		return false;
-	}
+    @Override
+    public ChannelMetadata metadata() {
+        return null;
+    }
 
-	/* (non-Javadoc)
-	 * @see org.jboss.netty.channel.Channel#isWritable()
-	 */
-	@Override
-	public boolean isWritable() {
-		return false;
-	}
+    @Override
+    public SocketAddress localAddress() {
+        return null;
+    }
 
-	/* (non-Javadoc)
-	 * @see org.jboss.netty.channel.Channel#setInterestOps(int)
-	 */
-	@Override
-	public ChannelFuture setInterestOps(int arg0) {
-		return null;
-	}
+    @Override
+    public SocketAddress remoteAddress() {
+        return null;
+    }
 
-	/* (non-Javadoc)
-	 * @see org.jboss.netty.channel.Channel#setReadable(boolean)
-	 */
-	@Override
-	public ChannelFuture setReadable(boolean arg0) {
-		return null;
-	}
+    @Override
+    public boolean isWritable() {
+        return false;
+    }
 
-	/* (non-Javadoc)
-	 * @see org.jboss.netty.channel.Channel#unbind()
-	 */
-	@Override
-	public ChannelFuture unbind() {
-		return null;
-	}
+    @Override
+    public Unsafe unsafe() {
+        return null;
+    }
 
-	/* (non-Javadoc)
-	 * @see org.jboss.netty.channel.Channel#write(java.lang.Object, java.net.SocketAddress)
-	 */
-	@Override
-	public ChannelFuture write(Object arg0, SocketAddress arg1) {
-		return null;
-	}
+    @Override
+    public ChannelPipeline pipeline() {
+        return null;
+    }
 
-	/* (non-Javadoc)
-	 * @see java.lang.Comparable#compareTo(java.lang.Object)
-	 */
-	@Override
-	public int compareTo(Channel o) {
-		return 0;
-	}
+    @Override
+    public ByteBufAllocator alloc() {
+        return null;
+    }
+
+    @Override
+    public ChannelPromise newPromise() {
+        return null;
+    }
+
+    @Override
+    public ChannelProgressivePromise newProgressivePromise() {
+        return null;
+    }
+
+    @Override
+    public ChannelFuture newSucceededFuture() {
+        return null;
+    }
+
+    @Override
+    public ChannelFuture newFailedFuture(Throwable cause) {
+        return null;
+    }
+
+    @Override
+    public ChannelPromise voidPromise() {
+        return null;
+    }
+
+    @Override
+    public ChannelFuture bind(SocketAddress localAddress) {
+        return null;
+    }
+
+    @Override
+    public ChannelFuture connect(SocketAddress remoteAddress) {
+        return null;
+    }
+
+    @Override
+    public ChannelFuture connect(SocketAddress remoteAddress, SocketAddress localAddress) {
+        return null;
+    }
+
+    @Override
+    public ChannelFuture disconnect() {
+        return null;
+    }
+
+    @Override
+    public ChannelFuture close() {
+        return null;
+    }
+
+    @Override
+    public ChannelFuture deregister() {
+        return null;
+    }
+
+    @Override
+    public ChannelFuture bind(SocketAddress localAddress, ChannelPromise promise) {
+        return null;
+    }
+
+    @Override
+    public ChannelFuture connect(SocketAddress remoteAddress, ChannelPromise promise) {
+        return null;
+    }
+
+    @Override
+    public ChannelFuture connect(SocketAddress remoteAddress, SocketAddress localAddress, ChannelPromise promise) {
+        return null;
+    }
+
+    @Override
+    public ChannelFuture disconnect(ChannelPromise promise) {
+        return null;
+    }
+
+    @Override
+    public ChannelFuture close(ChannelPromise promise) {
+        return null;
+    }
+
+    @Override
+    public ChannelFuture deregister(ChannelPromise promise) {
+        return null;
+    }
+
+    @Override
+    public Channel read() {
+        return null;
+    }
+
+    @Override
+    public ChannelFuture write(Object msg, ChannelPromise promise) {
+        write(msg);
+        return promise.setSuccess();
+    }
+
+    @Override
+    public Channel flush() {
+        return null;
+    }
+
+    @Override
+    public ChannelFuture writeAndFlush(Object msg, ChannelPromise promise) {
+        write(msg);
+        return promise.setSuccess();
+    }
+
+    @Override
+    public ChannelFuture writeAndFlush(Object msg) {
+        write(msg);
+        return null;
+    }
+
+    @Override
+    public <T> Attribute<T> attr(AttributeKey<T> key) {
+        return null;
+    }
+
+    @Override
+    public int compareTo(Channel o) {
+        return 0;
+    }
 }
