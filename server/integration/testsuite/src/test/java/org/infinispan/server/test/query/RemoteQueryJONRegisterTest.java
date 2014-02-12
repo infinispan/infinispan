@@ -45,7 +45,7 @@ public class RemoteQueryJONRegisterTest extends RemoteQueryTest {
       remoteCache = remoteCacheManager.getCache(DEFAULT_CACHE);
 
       //initialize server-side serialization context via JMX
-      URL resource = getClass().getResource("/bank.protobin");
+      URL resource = getClass().getResource("/sample_bank_account/bank.protobin");
       ModelControllerClient client = ModelControllerClient.Factory.create(
             server.getHotrodEndpoint().getInetAddress().getHostName(), 9999);
 

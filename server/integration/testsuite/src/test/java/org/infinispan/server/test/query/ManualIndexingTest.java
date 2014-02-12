@@ -68,7 +68,7 @@ public class ManualIndexingTest {
       ProtobufMetadataManagerMBean protobufMetadataManagerMBean = JMX.newMBeanProxy(provider.getConnection(),
                                                                                     protobufMetadataManagerName,
                                                                                     ProtobufMetadataManagerMBean.class);
-      protobufMetadataManagerMBean.registerProtofile(readClasspathResource("/bank.protobin"));
+      protobufMetadataManagerMBean.registerProtofile(readClasspathResource("/sample_bank_account/bank.protobin"));
 
       //initialize client-side serialization context
       MarshallerRegistration.registerMarshallers(ProtoStreamMarshaller.getSerializationContext(remoteCacheManager));
@@ -120,7 +120,9 @@ public class ManualIndexingTest {
       try {
          return Util.readStream(is);
       } finally {
-         is.close();
+         if (is != null) {
+            is.close();
+         }
       }
    }
 }
