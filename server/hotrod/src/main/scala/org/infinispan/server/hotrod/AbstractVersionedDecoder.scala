@@ -2,10 +2,10 @@ package org.infinispan.server.hotrod
 
 import org.infinispan.AdvancedCache
 import org.infinispan.stats.Stats
-import org.jboss.netty.buffer.ChannelBuffer
 import org.infinispan.server.core.{QueryFacade, RequestParameters}
 import org.infinispan.server.core.transport.NettyTransport
 import org.infinispan.container.entries.CacheEntry
+import io.netty.buffer.ByteBuf
 
 /**
  * This class represents the work to be done by a decoder of a particular Hot Rod protocol version.
@@ -18,17 +18,17 @@ abstract class AbstractVersionedDecoder {
    /**
     * Having read the message's Id, read the rest of Hot Rod header from the given buffer and return it.
     */
-   def readHeader(buffer: ChannelBuffer, version: Byte, messageId: Long, header: HotRodHeader): Boolean
+   def readHeader(buffer: ByteBuf, version: Byte, messageId: Long, header: HotRodHeader): Boolean
 
    /**
     * Read the key to operate on from the message.
     */
-   def readKey(header: HotRodHeader, buffer: ChannelBuffer): (Array[Byte], Boolean)
+   def readKey(header: HotRodHeader, buffer: ByteBuf): (Array[Byte], Boolean)
 
    /**
     * Read the parameters of the operation, if present.
     */
-   def readParameters(header: HotRodHeader, buffer: ChannelBuffer): (RequestParameters, Boolean)
+   def readParameters(header: HotRodHeader, buffer: ByteBuf): (RequestParameters, Boolean)
 
    /**
     * Create a successful response.
@@ -53,18 +53,18 @@ abstract class AbstractVersionedDecoder {
    /**
     * Handle a protocol specific header reading.
     */
-   def customReadHeader(header: HotRodHeader, buffer: ChannelBuffer, cache: AdvancedCache[Array[Byte], Array[Byte]]): AnyRef
+   def customReadHeader(header: HotRodHeader, buffer: ByteBuf, cache: AdvancedCache[Array[Byte], Array[Byte]]): AnyRef
 
    /**
     * Handle a protocol specific key reading.
     */
-   def customReadKey(header: HotRodHeader, buffer: ChannelBuffer, cache: AdvancedCache[Array[Byte], Array[Byte]],
+   def customReadKey(header: HotRodHeader, buffer: ByteBuf, cache: AdvancedCache[Array[Byte], Array[Byte]],
            queryFacades: Seq[QueryFacade]): AnyRef
 
    /**
     * Handle a protocol specific value reading.
     */
-   def customReadValue(header: HotRodHeader, buffer: ChannelBuffer, cache: AdvancedCache[Array[Byte], Array[Byte]]): AnyRef
+   def customReadValue(header: HotRodHeader, buffer: ByteBuf, cache: AdvancedCache[Array[Byte], Array[Byte]]): AnyRef
 
    /**
     * Create a response for the stats command.

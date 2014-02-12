@@ -4,6 +4,10 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
 
+import io.netty.channel.Channel;
+import io.netty.channel.ChannelFuture;
+import io.netty.channel.ChannelFutureListener;
+import io.netty.handler.codec.http.websocketx.TextWebSocketFrame;
 import org.infinispan.Cache;
 import org.infinispan.notifications.Listener;
 import org.infinispan.notifications.cachelistener.annotation.CacheEntryCreated;
@@ -14,10 +18,6 @@ import org.infinispan.notifications.cachelistener.event.CacheEntryEvent;
 import org.infinispan.notifications.cachelistener.event.CacheEntryModifiedEvent;
 import org.infinispan.notifications.cachelistener.event.CacheEntryRemovedEvent;
 import org.infinispan.notifications.cachelistener.event.Event;
-import org.jboss.netty.channel.Channel;
-import org.jboss.netty.channel.ChannelFuture;
-import org.jboss.netty.channel.ChannelFutureListener;
-import org.jboss.netty.handler.codec.http.websocketx.TextWebSocketFrame;
 import org.json.JSONException;
 import org.json.JSONObject;
 
@@ -87,10 +87,10 @@ public class CacheListener {
 			if(channel.channel.isOpen() && channel.onEvents.contains(eventType)) {
 				if(channel.key != null) {
 					if(event.getKey().equals(channel.key) || channel.key.equals("*")) {
-						channel.channel.write(new TextWebSocketFrame(jsonString));
+						channel.channel.writeAndFlush(new TextWebSocketFrame(jsonString));
 					}
 				} else {					
-					channel.channel.write(new TextWebSocketFrame(jsonString));
+					channel.channel.writeAndFlush(new TextWebSocketFrame(jsonString));
 				}
 			}
 		}
@@ -99,7 +99,7 @@ public class CacheListener {
 	public void addChannel(ChannelNotifyParams channel) {
 		if(!channels.contains(channel)) {
 			channels.add(channel);
-			channel.channel.getCloseFuture().addListener(new ChannelCloseFutureListener());
+			channel.channel.closeFuture().addListener(new ChannelCloseFutureListener());
 		}
 	}
 	
@@ -171,7 +171,7 @@ public class CacheListener {
 		@Override
       public void operationComplete(ChannelFuture channelCloseFuture) throws Exception {
 			for(ChannelNotifyParams channel : channels) {
-				if(channelCloseFuture.getChannel() ==  channel.channel) {
+				if(channelCloseFuture.channel() ==  channel.channel) {
 					removeChannel(channel);
 				}
 			}

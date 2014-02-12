@@ -1,17 +1,17 @@
 package org.infinispan.server.hotrod
 
 import logging.Log
-import org.jboss.netty.buffer.ChannelBuffer
 import org.infinispan.Cache
 import org.infinispan.manager.EmbeddedCacheManager
 import org.infinispan.remoting.transport.Address
-import org.infinispan.server.core.transport.ExtendedChannelBuffer._
+import org.infinispan.server.core.transport.ExtendedByteBuf._
 import collection.JavaConversions._
 import OperationStatus._
 import org.infinispan.configuration.cache.Configuration
 import org.infinispan.distribution.ch.DefaultConsistentHash
 import collection.mutable.ArrayBuffer
 import org.infinispan.server.hotrod.util.BulkUtil
+import io.netty.buffer.ByteBuf
 
 /**
  * Hot Rod encoder for protocol version 1.1
@@ -23,7 +23,7 @@ abstract class AbstractEncoder1x extends AbstractVersionedEncoder with Constants
 
    import HotRodServer._
 
-   override def writeHeader(r: Response, buf: ChannelBuffer,
+   override def writeHeader(r: Response, buf: ByteBuf,
            addressCache: Cache[Address, ServerAddress], server: HotRodServer) {
       val topologyResp = getTopologyResponse(r, addressCache, server)
       buf.writeByte(MAGIC_RES.byteValue)
@@ -46,7 +46,7 @@ abstract class AbstractEncoder1x extends AbstractVersionedEncoder with Constants
       }
    }
 
-   override def writeResponse(r: Response, buf: ChannelBuffer,
+   override def writeResponse(r: Response, buf: ByteBuf,
            cacheManager: EmbeddedCacheManager, server: HotRodServer) {
       r match {
          case r: ResponseWithPrevious => {
@@ -195,7 +195,7 @@ abstract class AbstractEncoder1x extends AbstractVersionedEncoder with Constants
    }
 
    def writeHashTopologyUpdate(h: AbstractHashDistAwareResponse, server: HotRodServer, r: Response,
-                               buffer: ChannelBuffer) {
+                               buffer: ByteBuf) {
       trace("Write hash distribution change response header %s", h)
       val cache = server.getCacheInstance(r.cacheName, server.getCacheManager, false)
       val distManager = cache.getAdvancedCache.getDistributionManager
@@ -231,7 +231,7 @@ abstract class AbstractEncoder1x extends AbstractVersionedEncoder with Constants
       }
    }
 
-   def writeLimitedHashTopologyUpdate(t: AbstractTopologyResponse, buffer: ChannelBuffer) {
+   def writeLimitedHashTopologyUpdate(t: AbstractTopologyResponse, buffer: ByteBuf) {
       trace("Return limited hash distribution aware header because the client %s doesn't ", t)
       writeCommonHashTopologyHeader(buffer, t.topologyId, 0, 0, 0, t.serverEndpointsMap.size)
       for (address <- t.serverEndpointsMap.values) {
@@ -241,7 +241,7 @@ abstract class AbstractEncoder1x extends AbstractVersionedEncoder with Constants
       }
    }
 
-   def writeTopologyUpdate(t: TopologyAwareResponse, buffer: ChannelBuffer) {
+   def writeTopologyUpdate(t: TopologyAwareResponse, buffer: ByteBuf) {
       trace("Write topology change response header %s", t)
       buffer.writeByte(1) // Topology changed
       writeUnsignedInt(t.topologyId, buffer)
@@ -253,12 +253,12 @@ abstract class AbstractEncoder1x extends AbstractVersionedEncoder with Constants
    }
 
 
-   def writeNoTopologyUpdate(buffer: ChannelBuffer) {
+   def writeNoTopologyUpdate(buffer: ByteBuf) {
       trace("Write topology response header with no change")
       buffer.writeByte(0)
    }
 
-   protected def writeCommonHashTopologyHeader(buffer: ChannelBuffer, viewId: Int,
+   protected def writeCommonHashTopologyHeader(buffer: ByteBuf, viewId: Int,
            numOwners: Int, hashFct: Byte, hashSpace: Int, numServers: Int) {
       buffer.writeByte(1) // Topology changed
       writeUnsignedInt(viewId, buffer)

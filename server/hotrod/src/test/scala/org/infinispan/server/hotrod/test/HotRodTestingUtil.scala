@@ -16,7 +16,6 @@ import org.infinispan.notifications.cachelistener.annotation.CacheEntryRemoved
 import org.infinispan.notifications.cachelistener.event.CacheEntryRemovedEvent
 import org.infinispan.remoting.transport.Address
 import java.util.concurrent.CountDownLatch
-import org.jboss.netty.channel.ChannelFuture
 import org.infinispan.configuration.cache.ConfigurationBuilder
 import scala.{Array, Byte}
 import scala.collection.JavaConversions._
@@ -27,6 +26,7 @@ import org.infinispan.marshall.core.JBossMarshaller
 import org.testng.AssertJUnit.assertEquals
 import org.infinispan.container.entries.InternalCacheEntry
 import org.infinispan.Cache
+import io.netty.channel.ChannelFuture
 
 /**
  * Test utils for Hot Rod tests.

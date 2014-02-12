@@ -1,12 +1,12 @@
 package org.infinispan.server.websocket.handlers;
 
+import io.netty.channel.ChannelHandlerContext;
 import org.infinispan.Cache;
 import org.infinispan.server.websocket.CacheListener;
 import org.infinispan.server.websocket.CacheListener.ChannelNotifyParams;
 import org.infinispan.server.websocket.ChannelUtils;
 import org.infinispan.server.websocket.OpHandler;
 import org.infinispan.commons.util.CollectionFactory;
-import org.jboss.netty.channel.ChannelHandlerContext;
 import org.json.JSONException;
 import org.json.JSONObject;
 
@@ -46,7 +46,7 @@ public class NotifyHandler implements OpHandler {
 		
 		String[] keyTokens = key.split(",");		
 		for(String keyToken : keyTokens) {
-			ChannelNotifyParams notifyParams = new ChannelNotifyParams(ctx.getChannel(), keyToken, onEvents);		
+			ChannelNotifyParams notifyParams = new ChannelNotifyParams(ctx.channel(), keyToken, onEvents);
 			
 			if(opCode.equals("notify")) {
 				listener.addChannel(notifyParams);

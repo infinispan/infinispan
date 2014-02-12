@@ -1,6 +1,6 @@
 package org.infinispan.server.core.transport
 
-import org.jboss.netty.buffer.ChannelBuffer
+import io.netty.buffer.ByteBuf
 
 /**
  * Reads and writes unsigned variable length long values. Even though it's deprecated, do not
@@ -12,7 +12,7 @@ import org.jboss.netty.buffer.ChannelBuffer
  */
 object VLong {
 
-   def write(out: ChannelBuffer, i: Long) {
+   def write(out: ByteBuf, i: Long) {
       if ((i & ~0x7F) == 0) out.writeByte(i.toByte)
       else {
          out.writeByte(((i & 0x7f) | 0x80).toByte)
@@ -20,12 +20,12 @@ object VLong {
       }
    }
 
-   def read(in: ChannelBuffer): Long = {
+   def read(in: ByteBuf): Long = {
       val b = in.readByte
       read(in, b, 7, b & 0x7F, 1)
    }
 
-   private def read(in: ChannelBuffer, b: Byte, shift: Int, i: Long, count: Int): Long = {
+   private def read(in: ByteBuf, b: Byte, shift: Int, i: Long, count: Int): Long = {
       if ((b & 0x80) == 0) i
       else {
          if (count > 9)

@@ -1,14 +1,14 @@
 package org.infinispan.server.hotrod
 
 import logging.Log
-import org.jboss.netty.buffer.ChannelBuffer
 import org.infinispan.Cache
 import org.infinispan.remoting.transport.Address
-import org.infinispan.server.core.transport.ExtendedChannelBuffer._
+import org.infinispan.server.core.transport.ExtendedByteBuf._
 import collection.JavaConversions._
 import org.infinispan.configuration.cache.Configuration
 import collection.mutable.ArrayBuffer
 import org.infinispan.distribution.ch.ConsistentHash
+import io.netty.buffer.ByteBuf
 
 /**
  * Hot Rod encoder for protocol version 1.1
@@ -28,7 +28,7 @@ abstract class AbstractTopologyAwareEncoder1x extends AbstractEncoder1x with Con
 
 
    override def writeHashTopologyUpdate(h: AbstractHashDistAwareResponse, server: HotRodServer, r: Response,
-                                        buf: ChannelBuffer) {
+                                        buf: ByteBuf) {
       h match {
          case h: HashDistAware11Response => {
             writeHashTopologyUpdate11(h, server, r, buf)
@@ -39,7 +39,7 @@ abstract class AbstractTopologyAwareEncoder1x extends AbstractEncoder1x with Con
    }
 
    def writeHashTopologyUpdate11(h: HashDistAware11Response,
-                               server: HotRodServer, r: Response, buf: ChannelBuffer) {
+                               server: HotRodServer, r: Response, buf: ByteBuf) {
       trace("Write hash distribution change response header %s", h)
       if (h.hashFunction == 0) {
          writeLimitedHashTopologyUpdate(h, buf)
@@ -91,7 +91,7 @@ abstract class AbstractTopologyAwareEncoder1x extends AbstractEncoder1x with Con
    }
 
 
-   override def writeLimitedHashTopologyUpdate(t: AbstractTopologyResponse, buf: ChannelBuffer) {
+   override def writeLimitedHashTopologyUpdate(t: AbstractTopologyResponse, buf: ByteBuf) {
       trace("Return limited hash distribution aware header in spite of having a hash aware client %s", t)
       writeCommonHashTopologyHeader(buf, t.topologyId, 0, 0, 0, t.serverEndpointsMap.size)
       writeUnsignedInt(1, buf) // Num virtual nodes

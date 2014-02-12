@@ -1,11 +1,6 @@
 package org.infinispan.server.hotrod.test
 
-import org.jboss.netty.channel.socket.nio.NioClientSocketChannelFactory
-import org.jboss.netty.bootstrap.ClientBootstrap
 import java.net.InetSocketAddress
-import org.jboss.netty.handler.codec.oneone.OneToOneEncoder
-import org.jboss.netty.channel._
-import org.jboss.netty.buffer.ChannelBuffer
 import org.testng.Assert._
 import org.infinispan.server.hotrod.logging.Log
 import org.infinispan.server.hotrod.OperationStatus._
@@ -14,19 +9,24 @@ import collection.mutable
 import collection.immutable
 import java.lang.reflect.Method
 import HotRodTestingUtil._
-import java.util.concurrent.{ConcurrentHashMap, Executors}
+import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.atomic.AtomicLong
 import mutable.ListBuffer
 import org.infinispan.test.TestingUtil
 import org.infinispan.commons.util.Util
-import org.infinispan.server.core.transport.ExtendedChannelBuffer._
-import org.jboss.netty.handler.codec.replay.{VoidEnum, ReplayingDecoder}
+import org.infinispan.server.core.transport.ExtendedByteBuf._
 import org.infinispan.server.hotrod._
 import java.lang.IllegalStateException
 import java.lang.StringBuilder
 import javax.net.ssl.SSLEngine
-import org.jboss.netty.handler.ssl.SslHandler
-import java.util
+import io.netty.handler.ssl.SslHandler
+import io.netty.channel._
+import io.netty.channel.nio.NioEventLoopGroup
+import io.netty.bootstrap.Bootstrap
+import io.netty.handler.codec.{ReplayingDecoder, MessageToByteEncoder}
+import io.netty.buffer.ByteBuf
+import io.netty.channel.socket.nio.NioSocketChannel
+import scala.Some
 
 /**
  * A very simply Hot Rod client for testing purpouses. It's a quick and dirty client implementation done for testing
@@ -44,15 +44,17 @@ class HotRodClient(host: String, port: Int, defaultCacheName: String, rspTimeout
    val idToOp = new ConcurrentHashMap[Long, Op]
 
    private lazy val ch: Channel = {
-      val factory = new NioClientSocketChannelFactory(Executors.newCachedThreadPool, Executors.newCachedThreadPool)
-      val bootstrap: ClientBootstrap = new ClientBootstrap(factory)
-      bootstrap.setPipelineFactory(new ClientPipelineFactory(this, rspTimeoutSeconds, sslEngine))
-      bootstrap.setOption("tcpNoDelay", true)
-      bootstrap.setOption("keepAlive", true)
+      val eventLoopGroup = new NioEventLoopGroup()
+      val bootstrap: Bootstrap = new Bootstrap()
+      bootstrap.group(eventLoopGroup)
+      bootstrap.handler(new ClientChannelInitializer(this, rspTimeoutSeconds, sslEngine))
+      bootstrap.channel(classOf[NioSocketChannel])
+      bootstrap.option[java.lang.Boolean](ChannelOption.TCP_NODELAY, true)
+      bootstrap.option[java.lang.Boolean](ChannelOption.SO_KEEPALIVE, true)
       // Make a new connection.
       val connectFuture = bootstrap.connect(new InetSocketAddress(host, port))
       // Wait until the connection is made successfully.
-      val ch = connectFuture.awaitUninterruptibly.getChannel
+      val ch = connectFuture.syncUninterruptibly().channel
       assertTrue(connectFuture.isSuccess)
       ch
    }
@@ -72,7 +74,7 @@ class HotRodClient(host: String, port: Int, defaultCacheName: String, rspTimeout
    def assertPutFail(m: Method) {
       val op = new Op(0xA0, protocolVersion, 0x01, defaultCacheName, k(m), 0, 0, v(m), 0, 1 , 0, 0)
       idToOp.put(op.id, op)
-      val future = ch.write(op)
+      val future = ch.writeAndFlush(op)
       future.awaitUninterruptibly
       assertFalse(future.isSuccess)
    }
@@ -149,13 +151,13 @@ class HotRodClient(host: String, port: Int, defaultCacheName: String, rspTimeout
 
    private def execute(op: Op, expectedResponseMessageId: Long): TestResponse = {
       writeOp(op)
-      val handler = ch.getPipeline.getLast.asInstanceOf[ClientHandler]
+      val handler = ch.pipeline.last.asInstanceOf[ClientHandler]
       handler.getResponse(expectedResponseMessageId)
    }
 
    private def writeOp(op: Op) {
       idToOp.put(op.id, op)
-      val future = ch.write(op)
+      val future = ch.writeAndFlush(op)
       future.awaitUninterruptibly
       assertTrue(future.isSuccess)
    }
@@ -182,7 +184,7 @@ class HotRodClient(host: String, port: Int, defaultCacheName: String, rspTimeout
       val op = new Op(0xA0, protocolVersion, code, defaultCacheName, k, 0, 0, null, flags, 0, 1, 0)
       val writeFuture = writeOp(op)
       // Get the handler instance to retrieve the answer.
-      val handler = ch.getPipeline.getLast.asInstanceOf[ClientHandler]
+      val handler = ch.pipeline.last.asInstanceOf[ClientHandler]
       if (code == 0x03 || code == 0x11 || code == 0x0F || code == 0x1B) {
          handler.getResponse(op.id)
       } else {
@@ -196,7 +198,7 @@ class HotRodClient(host: String, port: Int, defaultCacheName: String, rspTimeout
       val op = new StatsOp(0xA0, protocolVersion, 0x15, defaultCacheName, 1, 0, null)
       val writeFuture = writeOp(op)
       // Get the handler instance to retrieve the answer.
-      val handler = ch.getPipeline.getLast.asInstanceOf[ClientHandler]
+      val handler = ch.pipeline.last.asInstanceOf[ClientHandler]
       val resp = handler.getResponse(op.id).asInstanceOf[TestStatsResponse]
       resp.stats
    }
@@ -212,61 +214,56 @@ class HotRodClient(host: String, port: Int, defaultCacheName: String, rspTimeout
       val op = new BulkGetOp(0xA0, protocolVersion, 0x19, defaultCacheName, 1, 0, count)
       val writeFuture = writeOp(op)
       // Get the handler instance to retrieve the answer.
-      val handler = ch.getPipeline.getLast.asInstanceOf[ClientHandler]
+      val handler = ch.pipeline.last.asInstanceOf[ClientHandler]
       handler.getResponse(op.id).asInstanceOf[TestBulkGetResponse]
    }
 
    def bulkGetKeys: TestBulkGetKeysResponse = {
    	val op = new BulkGetKeysOp(0xA0, protocolVersion, 0x1D, defaultCacheName, 1, 0, 0)
       val writeFuture = writeOp(op)
-      val handler = ch.getPipeline.getLast.asInstanceOf[ClientHandler]
+      val handler = ch.pipeline.last.asInstanceOf[ClientHandler]
       handler.getResponse(op.id).asInstanceOf[TestBulkGetKeysResponse]
    }
 
    def bulkGetKeys(scope: Int): TestBulkGetKeysResponse = {
    	val op = new BulkGetKeysOp(0xA0, protocolVersion, 0x1D, defaultCacheName, 1, 0, scope)
       val writeFuture = writeOp(op)
-      val handler = ch.getPipeline.getLast.asInstanceOf[ClientHandler]
+      val handler = ch.pipeline.last.asInstanceOf[ClientHandler]
       handler.getResponse(op.id).asInstanceOf[TestBulkGetKeysResponse]
    }
 
    def query(query: Array[Byte]): TestQueryResponse = {
       val op = new QueryOp(0xA0, protocolVersion, 0x1F, defaultCacheName, 1, 0, query)
       val writeFuture = writeOp(op)
-      val handler = ch.getPipeline.getLast.asInstanceOf[ClientHandler]
+      val handler = ch.pipeline.last.asInstanceOf[ClientHandler]
       handler.getResponse(op.id).asInstanceOf[TestQueryResponse]
    }
 }
 
-private class ClientPipelineFactory(client: HotRodClient, rspTimeoutSeconds: Int, sslEngine: SSLEngine) extends ChannelPipelineFactory {
+private class ClientChannelInitializer(client: HotRodClient, rspTimeoutSeconds: Int, sslEngine: SSLEngine) extends ChannelInitializer[Channel] {
 
-   override def getPipeline = {
-      val pipeline = Channels.pipeline
+   override def initChannel(ch: Channel) = {
+      val pipeline = ch.pipeline
       if (sslEngine != null)
          pipeline.addLast("ssl", new SslHandler(sslEngine));
       pipeline.addLast("decoder", new Decoder(client))
       pipeline.addLast("encoder", new Encoder)
       pipeline.addLast("handler", new ClientHandler(rspTimeoutSeconds))
-      pipeline
    }
-
 }
 
-private class Encoder extends OneToOneEncoder {
+private class Encoder extends MessageToByteEncoder[Object] {
 
-   override def encode(ctx: ChannelHandlerContext, ch: Channel, msg: AnyRef) = {
+  override def encode(ctx: ChannelHandlerContext, msg: AnyRef, buffer: ByteBuf): Unit = {
       trace("Encode %s so that it's sent to the server", msg)
       msg match {
          case partial: PartialOp => {
-            val buffer = dynamicBuffer
             buffer.writeByte(partial.magic.asInstanceOf[Byte]) // magic
             writeUnsignedLong(partial.id, buffer) // message id
             buffer.writeByte(partial.version) // version
             buffer.writeByte(partial.code) // opcode
-            buffer
          }
          case op: Op => {
-            val buffer = dynamicBuffer
             buffer.writeByte(op.magic.asInstanceOf[Byte]) // magic
             writeUnsignedLong(op.id, buffer) // message id
             buffer.writeByte(op.version) // version
@@ -303,7 +300,6 @@ private class Encoder extends OneToOneEncoder {
             } else if (op.code == 0x1F) {
                writeRangedBytes(op.asInstanceOf[QueryOp].query, buffer)
             }
-            buffer
          }
       }
    }
@@ -314,9 +310,9 @@ object HotRodClient {
    val idCounter = new AtomicLong
 }
 
-private class Decoder(client: HotRodClient) extends ReplayingDecoder[VoidEnum] with Log with Constants {
+private class Decoder(client: HotRodClient) extends ReplayingDecoder[Void] with Log with Constants {
 
-   override def decode(ctx: ChannelHandlerContext, ch: Channel, buf: ChannelBuffer, state: VoidEnum): Object = {
+   override def decode(ctx: ChannelHandlerContext, buf: ByteBuf, out: java.util.List[AnyRef]): Unit = {
       trace("Decode response from server")
       buf.readUnsignedByte // magic byte
       val id = readUnsignedLong(buf)
@@ -473,14 +469,14 @@ private class Decoder(client: HotRodClient) extends ReplayingDecoder[VoidEnum] w
 
       }
       trace("Got response from server: %s", resp)
-      resp
+      out.add(resp)
    }
 
-   override def exceptionCaught(ctx: ChannelHandlerContext, e: ExceptionEvent) {
-      logExceptionReported(e.getCause)
+   override def exceptionCaught(ctx: ChannelHandlerContext, cause: Throwable) {
+      logExceptionReported(cause)
    }
 
-   private def read10HashDistAwareHeader(buf: ChannelBuffer, topologyId: Int,
+   private def read10HashDistAwareHeader(buf: ByteBuf, topologyId: Int,
             numOwners: Int, hashFunction: Byte, hashSpace: Int,
             numServersInTopo: Int): Option[AbstractTestTopologyAwareResponse] = {
       // The exact number of topology addresses in the list is unknown
@@ -521,7 +517,7 @@ private class Decoder(client: HotRodClient) extends ReplayingDecoder[VoidEnum] w
             numOwners, hashFunction, hashSpace))
    }
 
-   private def read11HashDistAwareHeader(buf: ChannelBuffer, topologyId: Int,
+   private def read11HashDistAwareHeader(buf: ByteBuf, topologyId: Int,
             numOwners: Int, hashFunction: Byte, hashSpace: Int,
             numServersInTopo: Int): Option[AbstractTestTopologyAwareResponse] = {
       val numVirtualNodes = readUnsignedInt(buf)
@@ -535,12 +531,12 @@ private class Decoder(client: HotRodClient) extends ReplayingDecoder[VoidEnum] w
 
 }
 
-private class ClientHandler(rspTimeoutSeconds: Int) extends SimpleChannelUpstreamHandler {
+private class ClientHandler(rspTimeoutSeconds: Int) extends ChannelInboundHandlerAdapter {
 
    private val responses = new ConcurrentHashMap[Long, TestResponse]
 
-   override def messageReceived(ctx: ChannelHandlerContext, e: MessageEvent) {
-      val resp = e.getMessage.asInstanceOf[TestResponse]
+   override def channelRead(ctx: ChannelHandlerContext, msg: AnyRef) {
+      val resp = msg.asInstanceOf[TestResponse]
       trace("Put %s in responses", resp)
       responses.put(resp.messageId, resp)
    }

@@ -63,7 +63,7 @@
       <version.jgroups>3.4.1.Final</version.jgroups>
       <version.json>20090211</version.json>
       <version.jta>1.0.1.Final</version.jta>
-      <version.netty>3.6.6.Final</version.netty>
+      <version.netty>4.0.15.Final</version.netty>
       <version.osgi>4.3.0</version.osgi>
       <version.rhq>4.4.0</version.rhq>
       <version.scala>2.10.2</version.scala>
@@ -315,7 +315,7 @@
          <!-- Infinispan Protocols module dependencies -->
          <dependency>
             <groupId>io.netty</groupId>
-            <artifactId>netty</artifactId>
+            <artifactId>netty-all</artifactId>
             <version>${version.netty}</version>
          </dependency>
          <dependency>

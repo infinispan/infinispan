@@ -1,8 +1,8 @@
 package org.infinispan.server.websocket;
 
+import io.netty.channel.ChannelHandlerContext;
+import io.netty.handler.codec.http.websocketx.TextWebSocketFrame;
 import org.infinispan.Cache;
-import org.jboss.netty.channel.ChannelHandlerContext;
-import org.jboss.netty.handler.codec.http.websocketx.TextWebSocketFrame;
 import org.json.JSONException;
 import org.json.JSONObject;
 
@@ -26,7 +26,7 @@ public class ChannelUtils {
 		JSONObject responseObject = toJSON(key, value, cache.getName());
 		
 		// Write the JSON response out onto the channel...
-		ctx.getChannel().write(new TextWebSocketFrame(responseObject.toString()));
+		ctx.channel().writeAndFlush(new TextWebSocketFrame(responseObject.toString()));
 	}
 
 	/**

@@ -21,4 +21,12 @@
   ~ Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
   ~ 02110-1301 USA, or see the FSF site: http://www.fsf.org.
   -->
-<module-alias xmlns="urn:jboss:module:1.1" name="org.jboss.netty" target-name="io.netty.netty-all"/>
+
+<module xmlns="urn:jboss:module:1.1" name="io.netty">
+    <resources>
+        <!-- Insert resources here -->
+    </resources>
+
+    <dependencies>
+    </dependencies>
+</module>

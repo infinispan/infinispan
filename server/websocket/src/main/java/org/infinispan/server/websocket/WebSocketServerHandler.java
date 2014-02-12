@@ -1,37 +1,37 @@
 package org.infinispan.server.websocket;
 
-import static org.jboss.netty.handler.codec.http.HttpHeaders.*;
-import static org.jboss.netty.handler.codec.http.HttpHeaders.Names.*;
-import static org.jboss.netty.handler.codec.http.HttpMethod.*;
-import static org.jboss.netty.handler.codec.http.HttpResponseStatus.*;
-import static org.jboss.netty.handler.codec.http.HttpVersion.*;
+import static io.netty.handler.codec.http.HttpHeaders.*;
+import static io.netty.handler.codec.http.HttpHeaders.Names.*;
+import static io.netty.handler.codec.http.HttpMethod.*;
+import static io.netty.handler.codec.http.HttpResponseStatus.*;
+import static io.netty.handler.codec.http.HttpVersion.*;
 
 import java.io.StringWriter;
 import java.util.Map;
 
+import io.netty.buffer.ByteBuf;
+import io.netty.buffer.Unpooled;
+import io.netty.channel.ChannelFuture;
+import io.netty.channel.ChannelFutureListener;
+import io.netty.channel.ChannelHandlerContext;
+import io.netty.channel.SimpleChannelInboundHandler;
+import io.netty.handler.codec.http.DefaultFullHttpRequest;
+import io.netty.handler.codec.http.DefaultFullHttpResponse;
+import io.netty.handler.codec.http.DefaultHttpResponse;
+import io.netty.handler.codec.http.FullHttpRequest;
+import io.netty.handler.codec.http.FullHttpResponse;
+import io.netty.handler.codec.http.HttpHeaders;
+import io.netty.handler.codec.http.HttpRequest;
+import io.netty.handler.codec.http.websocketx.CloseWebSocketFrame;
+import io.netty.handler.codec.http.websocketx.PingWebSocketFrame;
+import io.netty.handler.codec.http.websocketx.PongWebSocketFrame;
+import io.netty.handler.codec.http.websocketx.WebSocketFrame;
+import io.netty.handler.codec.http.websocketx.WebSocketServerHandshaker;
+import io.netty.handler.codec.http.websocketx.WebSocketServerHandshakerFactory;
+import io.netty.util.CharsetUtil;
 import org.infinispan.Cache;
+import org.infinispan.commons.io.ByteBuffer;
 import org.infinispan.manager.CacheContainer;
-import org.jboss.netty.buffer.ChannelBuffer;
-import org.jboss.netty.buffer.ChannelBuffers;
-import org.jboss.netty.channel.ChannelFuture;
-import org.jboss.netty.channel.ChannelFutureListener;
-import org.jboss.netty.channel.ChannelHandlerContext;
-import org.jboss.netty.channel.ChannelPipeline;
-import org.jboss.netty.channel.Channels;
-import org.jboss.netty.channel.ExceptionEvent;
-import org.jboss.netty.channel.MessageEvent;
-import org.jboss.netty.channel.SimpleChannelUpstreamHandler;
-import org.jboss.netty.handler.codec.http.DefaultHttpResponse;
-import org.jboss.netty.handler.codec.http.HttpHeaders;
-import org.jboss.netty.handler.codec.http.HttpRequest;
-import org.jboss.netty.handler.codec.http.HttpResponse;
-import org.jboss.netty.handler.codec.http.websocketx.CloseWebSocketFrame;
-import org.jboss.netty.handler.codec.http.websocketx.PingWebSocketFrame;
-import org.jboss.netty.handler.codec.http.websocketx.PongWebSocketFrame;
-import org.jboss.netty.handler.codec.http.websocketx.WebSocketFrame;
-import org.jboss.netty.handler.codec.http.websocketx.WebSocketServerHandshaker;
-import org.jboss.netty.handler.codec.http.websocketx.WebSocketServerHandshakerFactory;
-import org.jboss.netty.util.CharsetUtil;
 import org.json.JSONException;
 import org.json.JSONObject;
 
@@ -40,7 +40,7 @@ import org.json.JSONObject;
  * <p/>
  * Websocket specific code lifted from Netty WebSocket Server example.
  */
-public class WebSocketServerHandler extends SimpleChannelUpstreamHandler {
+public class WebSocketServerHandler extends SimpleChannelInboundHandler<Object> {
 
    private static final String INFINISPAN_WS_JS_FILENAME = "infinispan-ws.js";
    private CacheContainer cacheContainer;
@@ -56,27 +56,25 @@ public class WebSocketServerHandler extends SimpleChannelUpstreamHandler {
    }
 
    @Override
-   public void messageReceived(ChannelHandlerContext ctx, MessageEvent e) throws Exception {
-      Object msg = e.getMessage();
-      if (msg instanceof HttpRequest) {
-         handleHttpRequest(ctx, (HttpRequest) msg);
+   public void channelRead0(ChannelHandlerContext ctx, Object msg) throws Exception {
+      if (msg instanceof FullHttpRequest) {
+         handleHttpRequest(ctx, (FullHttpRequest) msg);
       } else if (msg instanceof WebSocketFrame) {
          handleWebSocketFrame(ctx, (WebSocketFrame) msg);
       }
    }
 
-   private void handleHttpRequest(ChannelHandlerContext ctx, HttpRequest req) throws Exception {
+   private void handleHttpRequest(ChannelHandlerContext ctx, FullHttpRequest req) throws Exception {
       // Allow only GET methods.
       if (req.getMethod() != GET) {
-         sendHttpResponse(ctx, req, new DefaultHttpResponse(HTTP_1_1, FORBIDDEN));
+         sendHttpResponse(ctx, req, new DefaultFullHttpResponse(HTTP_1_1, FORBIDDEN, Unpooled.EMPTY_BUFFER));
          return;
       }
 
       if (!connectionUpgraded && req.getUri().equalsIgnoreCase("/" + INFINISPAN_WS_JS_FILENAME)) {
-         DefaultHttpResponse res = new DefaultHttpResponse(HTTP_1_1, OK);
+         DefaultFullHttpResponse res = new DefaultFullHttpResponse(HTTP_1_1, OK);
          loadScriptToResponse(req, res);
          sendHttpResponse(ctx, req, res);
-         return;
       } else {
           // Handshake
           WebSocketServerHandshakerFactory wsFactory = new WebSocketServerHandshakerFactory(
@@ -84,36 +82,33 @@ public class WebSocketServerHandler extends SimpleChannelUpstreamHandler {
           handshaker = wsFactory.newHandshaker(req);
           // Check if we can find the right handshaker for the requested version
           if (handshaker == null) {
-              wsFactory.sendUnsupportedWebSocketVersionResponse(ctx.getChannel());
+              WebSocketServerHandshakerFactory.sendUnsupportedVersionResponse(ctx.channel());
           } else {
-              // fuehre den Handshake
-              handshaker.handshake(ctx.getChannel(), req).addListener(new ChannelFutureListener() {
+              handshaker.handshake(ctx.channel(), req).addListener(new ChannelFutureListener() {
                   @Override
                   public void operationComplete(ChannelFuture future) throws Exception {
                       if(!future.isSuccess()) {
                           // Handshake failed with an Exception, forward it to the other handlers in the chain
-                          Channels.fireExceptionCaught(future.getChannel(), future.getCause());
+                          future.channel().pipeline().fireExceptionCaught(future.cause());
                       } else {
                          connectionUpgraded = true;
                       }
                   }
               });
           }
-
-         return;
       }
    }
 
    private void handleWebSocketFrame(ChannelHandlerContext ctx, WebSocketFrame frame) {
       if (frame instanceof PingWebSocketFrame) {
          // received a ping, so write back a pong
-         ctx.getChannel().write(new PongWebSocketFrame(frame.getBinaryData()));
+         ctx.channel().writeAndFlush(new PongWebSocketFrame(frame.content().retain()));
       } else if (frame instanceof CloseWebSocketFrame) {
          // request to close the connection
-         handshaker.close(ctx.getChannel(), (CloseWebSocketFrame) frame);
+         handshaker.close(ctx.channel(), ((CloseWebSocketFrame) frame).retain());
       } else {
          try {
-            ChannelBuffer binaryData = frame.getBinaryData();
+            ByteBuf binaryData = frame.content();
             if (binaryData == null) {
                return;
             }
@@ -161,41 +156,40 @@ public class WebSocketServerHandler extends SimpleChannelUpstreamHandler {
       return cache;
    }
 
-   private void sendHttpResponse(ChannelHandlerContext ctx, HttpRequest req, HttpResponse res) {
+   private void sendHttpResponse(ChannelHandlerContext ctx, FullHttpRequest req, FullHttpResponse res) {
       // Generate an error page if response status code is not OK (200).
-      if (res.getStatus().getCode() != 200) {
-         res.setContent(ChannelBuffers.copiedBuffer(res.getStatus().toString(), CharsetUtil.UTF_8));
-         HttpHeaders.setContentLength(res, res.getContent().readableBytes());
+      if (res.getStatus().code() != 200) {
+         res.content().writeBytes(res.getStatus().toString().getBytes(CharsetUtil.UTF_8));
+         HttpHeaders.setContentLength(res, res.content().readableBytes());
       }
 
       // Send the response and close the connection if necessary.
-      ChannelFuture f = ctx.getChannel().write(res);
-      if (!isKeepAlive(req) || res.getStatus().getCode() != 200) {
+      ChannelFuture f = ctx.channel().writeAndFlush(res);
+      if (!isKeepAlive(req) || res.getStatus().code() != 200) {
          f.addListener(ChannelFutureListener.CLOSE);
       }
    }
 
-   private void loadScriptToResponse(HttpRequest req, DefaultHttpResponse res) {
+   private void loadScriptToResponse(FullHttpRequest req, DefaultFullHttpResponse res) {
       String wsAddress = getWebSocketLocation(req);
 
       StringWriter writer = new StringWriter();
       writer.write("var defaultWSAddress = '" + wsAddress + "';");
       writer.write(WebSocketServer.getJavascript());
 
-      ChannelBuffer content = ChannelBuffers.copiedBuffer(writer.toString(), CharsetUtil.UTF_8);
+      ByteBuf content = res.content().writeBytes(writer.toString().getBytes(CharsetUtil.UTF_8));
 
-      res.setHeader(CONTENT_TYPE, "text/javascript; charset=UTF-8");
+      res.headers().set(CONTENT_TYPE, "text/javascript; charset=UTF-8");
       setContentLength(res, content.readableBytes());
-      res.setContent(content);
    }
 
    @Override
-   public void exceptionCaught(ChannelHandlerContext ctx, ExceptionEvent e) throws Exception {
-      e.getCause().printStackTrace();
-      e.getChannel().close();
+   public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) throws Exception {
+      cause.printStackTrace();
+      ctx.close();
    }
 
    private String getWebSocketLocation(HttpRequest req) {
-      return "ws://" + req.getHeader(HttpHeaders.Names.HOST) + "/";
+      return "ws://" + req.headers().get(HttpHeaders.Names.HOST) + "/";
    }
 }

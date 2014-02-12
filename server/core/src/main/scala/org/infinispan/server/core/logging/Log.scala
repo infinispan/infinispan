@@ -1,8 +1,8 @@
 package org.infinispan.server.core.logging
 
-import org.jboss.netty.channel.Channel
 import java.net.SocketAddress
 import org.infinispan.util.logging.LogFactory
+import io.netty.channel.Channel
 
 /**
  * A logging facade for Scala code.

@@ -4,15 +4,15 @@ import org.infinispan.server.core._
 import transport._
 import OperationStatus._
 import org.infinispan.manager.EmbeddedCacheManager
-import org.infinispan.server.core.transport.ExtendedChannelBuffer._
+import org.infinispan.server.core.transport.ExtendedByteBuf._
 import java.nio.channels.ClosedChannelException
 import org.infinispan.{AdvancedCache, Cache}
 import java.io.{IOException, StreamCorruptedException}
-import org.jboss.netty.buffer.ChannelBuffer
-import org.jboss.netty.channel.Channel
 import java.lang.StringBuilder
 import org.infinispan.container.entries.CacheEntry
 import org.infinispan.server.hotrod.configuration.HotRodServerConfiguration
+import io.netty.buffer.ByteBuf
+import io.netty.channel.Channel
 
 /**
  * Top level Hot Rod decoder that after figuring out the version, delegates the rest of the reading to the
@@ -32,7 +32,7 @@ class HotRodDecoder(cacheManager: EmbeddedCacheManager, transport: NettyTranspor
 
    protected def createHeader: HotRodHeader = new HotRodHeader
 
-   override def readHeader(buffer: ChannelBuffer, header: HotRodHeader): Option[Boolean] = {
+   override def readHeader(buffer: ByteBuf, header: HotRodHeader): Option[Boolean] = {
       try {
          val magic = buffer.readUnsignedByte
          if (magic != MAGIC_REQ) {
@@ -101,16 +101,16 @@ class HotRodDecoder(cacheManager: EmbeddedCacheManager, transport: NettyTranspor
       server.getCacheInstance(cacheName, cacheManager, seenForFirstTime)
    }
 
-   override def readKey(b: ChannelBuffer): (Array[Byte], Boolean) =
+   override def readKey(b: ByteBuf): (Array[Byte], Boolean) =
       header.decoder.readKey(header, b)
 
-   override def readParameters(ch: Channel, b: ChannelBuffer): Boolean = {
+   override def readParameters(ch: Channel, b: ByteBuf): Boolean = {
       val (parameters, endOfOp) = header.decoder.readParameters(header, b)
       params = parameters
       endOfOp
    }
 
-   override protected def readValue(b: ChannelBuffer) {
+   override protected def readValue(b: ByteBuf) {
       b.readBytes(rawValue)
    }
 
@@ -131,13 +131,13 @@ class HotRodDecoder(cacheManager: EmbeddedCacheManager, transport: NettyTranspor
    override def createMultiGetResponse(pairs: Map[Array[Byte], CacheEntry]): AnyRef =
       null // Unsupported
 
-   override protected def customDecodeHeader(ch: Channel, buffer: ChannelBuffer): AnyRef =
+   override protected def customDecodeHeader(ch: Channel, buffer: ByteBuf): AnyRef =
       writeResponse(ch, header.decoder.customReadHeader(header, buffer, cache))
 
-   override protected def customDecodeKey(ch: Channel, buffer: ChannelBuffer): AnyRef =
+   override protected def customDecodeKey(ch: Channel, buffer: ByteBuf): AnyRef =
       writeResponse(ch, header.decoder.customReadKey(header, buffer, cache, server.getQueryFacades))
 
-   override protected def customDecodeValue(ch: Channel, buffer: ChannelBuffer): AnyRef =
+   override protected def customDecodeValue(ch: Channel, buffer: ByteBuf): AnyRef =
       writeResponse(ch, header.decoder.customReadValue(header, buffer, cache))
 
    override def createStatsResponse: AnyRef =
@@ -157,7 +157,7 @@ class HotRodDecoder(cacheManager: EmbeddedCacheManager, transport: NettyTranspor
    override protected def getOptimizedCache(c: AdvancedCache[Array[Byte], Array[Byte]]): AdvancedCache[Array[Byte], Array[Byte]] =
       header.decoder.getOptimizedCache(header, c)
 
-   override protected def createServerException(e: Exception, b: ChannelBuffer): (HotRodException, Boolean) = {
+   override protected def createServerException(e: Exception, b: ByteBuf): (HotRodException, Boolean) = {
       e match {
          case i: InvalidMagicIdException => {
             logExceptionReported(i)

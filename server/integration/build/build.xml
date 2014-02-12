@@ -123,8 +123,8 @@
 
       <module-def name="org.jboss.as.product" slot="ispn" src="${infinispan.server.modules.dir}" />
 
-      <module-def name="org.jboss.netty">
-         <maven-resource group="io.netty" artifact="netty" />
+      <module-def name="io.netty" src="${infinispan.server.modules.dir}">
+         <maven-resource group="io.netty" artifact="netty-all" />
       </module-def>
 
       <module-def name="org.fusesource.leveldbjni-all" src="${infinispan.server.modules.dir}">

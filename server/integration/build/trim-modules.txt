@@ -64,6 +64,7 @@ org/jboss/iiop-client/main/**
 org/jboss/integration/ext-content/main/**
 org/jboss/jaxbintros/main/**
 org/jboss/logging/jul-to-slf4j-stub/main/**
+org/jboss/netty/main/**
 org/jboss/osgi/framework/main/**
 org/jboss/osgi/metadata/main/**
 org/jboss/osgi/repository/main/**

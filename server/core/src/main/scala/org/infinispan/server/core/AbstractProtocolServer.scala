@@ -6,9 +6,9 @@ import transport.NettyTransport
 import logging.Log
 import org.infinispan.jmx.{JmxUtil, ResourceDMBean}
 import javax.management.{ObjectName, MBeanServer}
-import org.infinispan.server.core.transport.LifecycleChannelPipelineFactory
-import org.infinispan.server.core.transport.TimeoutEnabledChannelPipelineFactory
-import org.infinispan.server.core.transport.NettyChannelPipelineFactory
+import org.infinispan.server.core.transport.TimeoutEnabledChannelInitializer
+import org.infinispan.server.core.transport.NettyChannelInitializer
+import io.netty.channel.{Channel, ChannelInitializer}
 
 /**
  * A common protocol server dealing with common property parameter validation and assignment and transport lifecycle.
@@ -52,7 +52,7 @@ abstract class AbstractProtocolServer(protocolName: String) extends ProtocolServ
 
    def startTransport() {
       val address = new InetSocketAddress(configuration.host, configuration.port)
-      transport = new NettyTransport(this, getPipeline, address, configuration, getQualifiedName(), cacheManager)
+      transport = new NettyTransport(this, getInitializer, address, configuration, getQualifiedName(), cacheManager)
 
       // Register transport MBean regardless
       registerTransportMBean()
@@ -60,11 +60,11 @@ abstract class AbstractProtocolServer(protocolName: String) extends ProtocolServ
       transport.start()
    }
 
-   override def getPipeline: LifecycleChannelPipelineFactory = {
+   override def getInitializer: ChannelInitializer[Channel] = {
       if (configuration.idleTimeout > 0)
-         new TimeoutEnabledChannelPipelineFactory(this, getEncoder)
+         new TimeoutEnabledChannelInitializer(this, getEncoder)
       else // Idle timeout logic is disabled with -1 or 0 values
-         new NettyChannelPipelineFactory(this, getEncoder)
+         new NettyChannelInitializer(this, getEncoder)
    }
 
    protected def registerTransportMBean() {
