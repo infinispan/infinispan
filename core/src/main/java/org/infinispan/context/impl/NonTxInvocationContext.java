@@ -87,15 +87,6 @@ public class NonTxInvocationContext extends AbstractInvocationContext {
    }
 
    @Override
-   public boolean isOriginLocal() {
-      return isContextFlagSet(ContextFlag.ORIGIN_LOCAL);
-   }
-
-   public void setOriginLocal(boolean originLocal) {
-      setContextFlag(ContextFlag.ORIGIN_LOCAL, originLocal);
-   }
-
-   @Override
    public boolean isInTxScope() {
       return false;
    }

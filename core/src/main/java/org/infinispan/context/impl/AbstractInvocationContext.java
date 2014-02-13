@@ -35,75 +35,28 @@ import org.infinispan.remoting.transport.Address;
  */
 public abstract class AbstractInvocationContext implements InvocationContext {
 
-   // since this is finite, small, and strictly an internal API, it is cheaper/quicker to use bitmasking rather than
-   // an EnumSet.
-   protected byte contextFlags = 0;
+   private boolean useFutureReturnType = false;
+   private boolean isOriginLocal = false;
    private Address origin;
    // Class loader associated with this invocation which supports AdvancedCache.with() functionality
    private ClassLoader classLoader;
 
-   // if this or any context subclass ever needs to store a boolean, always use a context flag instead.  This is far
-   // more space-efficient.  Note that this value will be stored in a byte, which means up to 8 flags can be stored in
-   // a single byte.  Always start shifting with 0, the last shift cannot be greater than 7.
-   protected enum ContextFlag {
-      USE_FUTURE_RETURN_TYPE(1), // same as 1 << 0
-      ORIGIN_LOCAL(1 << 1);
-
-      final byte mask;
-
-      ContextFlag(int mask) {
-         this.mask = (byte) mask;
-      }
+   @Override
+   public final Address getOrigin() {
+	   return origin;
    }
 
-   /**
-    * Tests whether a context flag is set.
-    *
-    * @param flag context flag to test
-    * @return true if set, false otherwise.
-    */
-   protected final boolean isContextFlagSet(ContextFlag flag) {
-      return (contextFlags & flag.mask) != 0;
-   }
-
-   /**
-    * Utility method that sets a given context flag.
-    *
-    * @param flag context flag to set
-    */
-   protected final void setContextFlag(ContextFlag flag) {
-      contextFlags |= flag.mask;
-   }
-
-   /**
-    * Utility method that un-sets a context flag.
-    *
-    * @param flag context flag to unset
-    */
-   protected final void unsetContextFlag(ContextFlag flag) {
-      contextFlags &= ~flag.mask;
-   }
-
-   /**
-    * Utility value that sets or un-sets a context flag based on a boolean passed in
-    *
-    * @param flag flag to set or unset
-    * @param set  if true, the context flag is set.  If false, the context flag is unset.
-    */
-   protected final void setContextFlag(ContextFlag flag, boolean set) {
-      if (set)
-         setContextFlag(flag);
-      else
-         unsetContextFlag(flag);
+   public final void setOrigin(Address origin) {
+	   this.origin = origin;
    }
 
    @Override
-   public Address getOrigin() {
-	   return origin;
+   public boolean isOriginLocal() {
+      return isOriginLocal;
    }
-   
-   public void setOrigin(Address origin) {
-	   this.origin = origin;
+
+   public void setOriginLocal(boolean isOriginLocal) {
+      this.isOriginLocal = isOriginLocal;
    }
 
    @Override
@@ -111,15 +64,14 @@ public abstract class AbstractInvocationContext implements InvocationContext {
       return getLockedKeys().contains(key);
    }
 
-
    @Override
-   public boolean isUseFutureReturnType() {
-      return isContextFlagSet(ContextFlag.USE_FUTURE_RETURN_TYPE);
+   public final boolean isUseFutureReturnType() {
+      return useFutureReturnType;
    }
 
    @Override
-   public void setUseFutureReturnType(boolean useFutureReturnType) {
-      setContextFlag(ContextFlag.USE_FUTURE_RETURN_TYPE, useFutureReturnType);
+   public final void setUseFutureReturnType(final boolean useFutureReturnType) {
+      this.useFutureReturnType = useFutureReturnType;
    }
 
    @Override
@@ -132,12 +84,12 @@ public abstract class AbstractInvocationContext implements InvocationContext {
    }
 
    @Override
-   public ClassLoader getClassLoader() {
+   public final ClassLoader getClassLoader() {
       return classLoader;
    }
 
    @Override
-   public void setClassLoader(ClassLoader classLoader) {
+   public final void setClassLoader(final ClassLoader classLoader) {
       this.classLoader = classLoader;
    }
 
