@@ -24,7 +24,8 @@
 package org.infinispan.context;
 
 import org.infinispan.container.entries.CacheEntry;
-import org.infinispan.context.impl.AbstractInvocationContext;
+import org.infinispan.container.entries.InternalCacheEntry;
+import org.infinispan.remoting.transport.Address;
 import org.infinispan.util.InfinispanCollections;
 
 import java.util.Collections;
@@ -33,23 +34,30 @@ import java.util.Set;
 
 /**
  * @author Mircea Markus
+ * @author Sanne Grinovero
  * @since 5.1
  */
-public class SingleKeyNonTxInvocationContext extends AbstractInvocationContext {
-
-   private final boolean isOriginLocal;
-
-   private Object key;
+public final class SingleKeyNonTxInvocationContext implements InvocationContext {
 
    /**
     * It is possible for the key to only be wrapped but not locked, e.g. when a get takes place.
     */
    private boolean isLocked;
+   private boolean useFutureReturnType;
+   private final boolean isOriginLocal;
+
+   private Object key;
 
    private CacheEntry cacheEntry;
 
-   public SingleKeyNonTxInvocationContext(boolean originLocal) {
-      isOriginLocal = originLocal;
+   //TODO move reference to ClassLoader to InvocationContextFactory (Memory allocation cost)
+   private ClassLoader classLoader;
+   //TODO move the Origin's address to the InvocationContextFactory when isOriginLocal=true -> all addresses are the same  (Memory allocation cost)
+   //(verify if this is worth it by looking at object alignment - would need a different implementation as pointing to null wouldn't help)
+   private Address origin;
+
+   public SingleKeyNonTxInvocationContext(final boolean originLocal) {
+      this.isOriginLocal = originLocal;
    }
 
    @Override
@@ -77,6 +85,7 @@ public class SingleKeyNonTxInvocationContext extends AbstractInvocationContext {
    public void clearLockedKeys() {
       key = null;
       cacheEntry = null;
+      isLocked = false;
    }
 
    @Override
@@ -102,7 +111,7 @@ public class SingleKeyNonTxInvocationContext extends AbstractInvocationContext {
    }
 
    @Override
-   public void putLookedUpEntry(Object key, CacheEntry e) {
+   public void putLookedUpEntry(final Object key, final CacheEntry e) {
       this.key = key;
       this.cacheEntry = e;
    }
@@ -133,4 +142,57 @@ public class SingleKeyNonTxInvocationContext extends AbstractInvocationContext {
    public CacheEntry getCacheEntry() {
       return cacheEntry;
    }
+
+   @Override
+   public Address getOrigin() {
+      return origin;
+   }
+
+   @Override
+   public boolean isUseFutureReturnType() {
+      return useFutureReturnType;
+   }
+
+   @Override
+   public void setUseFutureReturnType(final boolean useFutureReturnType) {
+      this.useFutureReturnType = useFutureReturnType;
+   }
+
+   @Override
+   public ClassLoader getClassLoader() {
+      return classLoader;
+   }
+
+   @Override
+   public void setClassLoader(ClassLoader classLoader) {
+      this.classLoader = classLoader;
+   }
+
+   @Override
+   public boolean hasLockedKey(final Object key) {
+      return isLocked && key.equals(this.key);
+   }
+
+   @Override
+   public boolean replaceValue(Object key, Object value) {
+      CacheEntry ce = lookupEntry(key);
+      if (ce == null || ce.isNull() || ce.isLockPlaceholder() || ce.getValue() == null) {
+         if (ce != null && ce.isChanged()) {
+            ce.setValue(value);
+         } else {
+            return false;
+         }
+      }
+      return true;
+   }
+
+   @Override
+   public SingleKeyNonTxInvocationContext clone() {
+      try {
+         return (SingleKeyNonTxInvocationContext) super.clone();
+      } catch (CloneNotSupportedException e) {
+         throw new IllegalStateException("Impossible!");
+      }
+   }
+
 }
