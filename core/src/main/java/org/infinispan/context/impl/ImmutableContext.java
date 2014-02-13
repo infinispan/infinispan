@@ -58,17 +58,8 @@ public final class ImmutableContext implements InvocationContext {
    }
 
    @Override
-   public void putLookedUpEntries(Map<Object, CacheEntry> lookedUpEntries) {
-      throw newUnsupportedMethod();
-   }
-
-   @Override
    public void removeLookedUpEntry(Object key) {
       throw newUnsupportedMethod();
-   }
-
-   @Override
-   public void clearLookedUpEntries() {
    }
 
    @Override
