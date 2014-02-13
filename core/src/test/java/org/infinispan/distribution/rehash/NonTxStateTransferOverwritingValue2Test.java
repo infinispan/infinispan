@@ -42,7 +42,7 @@ import static org.testng.AssertJUnit.assertTrue;
  * @author Dan Berindei
  * @since 6.0
  */
-@Test(groups = "functional", testName = "distribution.rehash.NonTxStateTransferOverwritingValueTest")
+@Test(groups = "functional", testName = "distribution.rehash.NonTxStateTransferOverwritingValue2Test")
 public class NonTxStateTransferOverwritingValue2Test extends MultipleCacheManagersTest {
 
    {
@@ -152,7 +152,8 @@ public class NonTxStateTransferOverwritingValue2Test extends MultipleCacheManage
       assertTrue(blocked);
 
       // Allow the command to commit (though it will still be blocked)
-      checkPoint.trigger("resume_commit_entry_" + key + "_from_" + address(0));
+      // Trigger the event twice because the command may be retried (if the rebalance finishes first)
+      checkPoint.trigger("resume_commit_entry_" + key + "_from_" + address(0), 2);
 
       // Allow state transfer to commit
       checkPoint.trigger("resume_commit_entry_" + key + "_from_" + null);
