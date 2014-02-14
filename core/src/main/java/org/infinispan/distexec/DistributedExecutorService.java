@@ -8,6 +8,8 @@ import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
 
+import org.infinispan.commons.util.concurrent.FutureListener;
+import org.infinispan.commons.util.concurrent.NotifyingFuture;
 import org.infinispan.remoting.transport.Address;
 
 /**
@@ -50,7 +52,7 @@ public interface DistributedExecutorService extends ExecutorService {
     * @param task a task to execute on selected Infinispan node
     * @return a Future representing pending completion of the task
     */
-   <T> Future<T> submit(Address target, Callable<T> task);
+   <T> NotifyingFuture<T> submit(Address target, Callable<T> task);
 
    /**
     *  Submits the given DistributedTask for execution on the specified target Infinispan node.
@@ -61,7 +63,7 @@ public interface DistributedExecutorService extends ExecutorService {
     * @param task a task to execute on selected Infinispan node
     * @return a Future representing pending completion of the task
     */
-   <T> Future<T> submit(Address target, DistributedTask<T> task);
+   <T> NotifyingFuture<T> submit(Address target, DistributedTask<T> task);
 
    /**
     * Submits the given Callable task for execution on a single Infinispan node.
@@ -75,7 +77,7 @@ public interface DistributedExecutorService extends ExecutorService {
     * @param input input keys for this task, effective if and only if task is instance of {@link DistributedCallable}
     * @return a Future representing pending completion of the task
     */
-   <T, K> Future<T> submit(Callable<T> task, K... input);
+   <T, K> NotifyingFuture<T> submit(Callable<T> task, K... input);
 
    /**
     * Submits the given DistributedTask for execution on a single Infinispan node.
@@ -92,7 +94,7 @@ public interface DistributedExecutorService extends ExecutorService {
     *           {@link DistributedCallable}
     * @return a Future representing pending completion of the task
     */
-   <T, K> Future<T> submit(DistributedTask<T> task, K... input);
+   <T, K> NotifyingFuture<T> submit(DistributedTask<T> task, K... input);
 
    /**
     * Submits the given Callable task for execution on all available Infinispan nodes.

@@ -213,4 +213,21 @@ public @interface Listener {
     *  @since 5.3
     */
    boolean primaryOnly() default false;
+
+   /**
+    * Defines whether the annotated listener is clustered or not.
+    * Important: Clustered listener can only be notified for @CacheEntryRemoved, @CacheEntryCreated and
+    * @CacheEntryModified events.
+    */
+   boolean clustered() default false;
+
+   /**
+    * If set to true then the entire existing state within the cluster is
+    * evaluated. For existing matches of the value, an @CacheEntryCreated event is triggered against the listener
+    * during registration.  If this is a local listener only the current node state is evaluated.  Only in a cluster
+    * listener is the entire state sent back.
+    * <p>
+    * <b>Currently this is not supported!</b>
+    **/
+   boolean includeCurrentState() default false;
 }

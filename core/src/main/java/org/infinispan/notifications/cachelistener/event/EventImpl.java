@@ -6,9 +6,11 @@ import org.infinispan.commons.util.InfinispanCollections;
 import org.infinispan.commons.util.Util;
 import org.infinispan.distribution.ch.ConsistentHash;
 import org.infinispan.marshall.core.MarshalledValue;
+import org.infinispan.metadata.Metadata;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.transaction.xa.GlobalTransaction;
 
+import java.io.Serializable;
 import java.util.Collection;
 import java.util.Map;
 
@@ -23,9 +25,10 @@ public class EventImpl<K, V> implements CacheEntryActivatedEvent, CacheEntryCrea
                                         CacheEntryPassivatedEvent, CacheEntryRemovedEvent, CacheEntryVisitedEvent, TransactionCompletedEvent, TransactionRegisteredEvent,
                                   CacheEntryInvalidatedEvent, DataRehashedEvent, TopologyChangedEvent, CacheEntryEvictedEvent {
    private boolean pre = false; // by default events are after the fact
-   private Cache<K, V> cache;
+   private transient Cache<K, V> cache;
    private K key;
    private GlobalTransaction transaction;
+   private Metadata metadata;
    private boolean originLocal = true; // by default events all originate locally
    private boolean transactionSuccessful;
    private Type type;
@@ -35,6 +38,7 @@ public class EventImpl<K, V> implements CacheEntryActivatedEvent, CacheEntryCrea
    private int newTopologyId;
    private Map<Object, Object> entries;
    private boolean created;
+   private boolean commandRetried;
 
    public EventImpl() {
    }
@@ -118,12 +122,29 @@ public class EventImpl<K, V> implements CacheEntryActivatedEvent, CacheEntryCrea
       this.newTopologyId = newTopologyId;
    }
 
+   public void setMetadata(Metadata metadata) {
+      this.metadata = metadata;
+   }
+
+   public Metadata getMetadata() {
+      return metadata;
+   }
+
    @Override
    @SuppressWarnings("unchecked")
    public V getValue() {
       if (value instanceof MarshalledValue)
          value = (V) ((MarshalledValue) value).get();
       return value;
+   }
+
+   public void setCommandRetried(boolean commandRetried) {
+      this.commandRetried = commandRetried;
+   }
+
+   @Override
+   public boolean isCommandRetried() {
+      return commandRetried;
    }
 
    @Override

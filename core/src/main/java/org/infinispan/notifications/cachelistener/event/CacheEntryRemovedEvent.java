@@ -30,4 +30,11 @@ public interface CacheEntryRemovedEvent<K, V> extends CacheEntryEvent<K, V> {
     */
    V getOldValue();
 
+   /**
+    * This will be true if the write command that caused this had to be retried again due to a topology change.  This
+    * could be a sign that this event has been duplicated or another event was dropped and replaced
+    * (eg: ModifiedEvent replaced CreateEvent)
+    * @return Whether the command that caused this event was retried
+    */
+   boolean isCommandRetried();
 }

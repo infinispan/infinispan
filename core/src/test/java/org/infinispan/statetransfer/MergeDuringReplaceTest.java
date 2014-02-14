@@ -21,9 +21,11 @@ import java.util.List;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
 
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
+import static org.testng.Assert.assertEquals;
 
 @Test(groups = "functional", testName = "statetransfer.MergeDuringReplaceTest")
 @CleanupAfterMethod
@@ -84,13 +86,7 @@ public class MergeDuringReplaceTest extends MultipleCacheManagersTest {
 
       controlledRpcManager.stopBlocking();
 
-      try {
-         future.get();
-         fail("The expected ExecutionException did not occur!");
-      } catch (ExecutionException e) {
-         Throwable cause = e.getCause();
-         assertTrue(cause instanceof SuspectException);
-         assertTrue(cause.getMessage().startsWith("One or more nodes have left the cluster while replicating command"));
-      }
+      // Since the non owner didn't have the value before the split it can't do the replace correctly
+      assertEquals(future.get(10, TimeUnit.SECONDS), Boolean.FALSE);
    }
 }

@@ -1,10 +1,12 @@
 package org.infinispan.statetransfer;
 
+import org.infinispan.distexec.DistributedCallable;
 import org.infinispan.factories.scopes.Scope;
 import org.infinispan.factories.scopes.Scopes;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.topology.CacheTopology;
 
+import java.util.Collection;
 import java.util.List;
 import java.util.Set;
 
@@ -38,6 +40,8 @@ public interface StateProvider {
     * @return list transactions and locks for the given segments
     */
    List<TransactionInfo> getTransactionsForSegments(Address destination, int topologyId, Set<Integer> segments) throws InterruptedException;
+
+   Collection<DistributedCallable> getClusterListenersToInstall();
 
    /**
     * Start to send cache entries that belong to the given set of segments. This is invoked in response to a

@@ -17,4 +17,17 @@ public interface FilteringListenable extends Listenable {
     * @param listener must not be null.
     */
    void addListener(Object listener, KeyFilter filter);
+
+   /**
+    * Registers a listener that will be notified on events that pass the filter condition.  The value presented in the
+    * notifications will be first converted using the provided converter if there is one.
+    * @param listener The listener to callback upon event notifications.  Must not be null.
+    * @param filter The filter to see if the notification should be sent to the listener.  Can be null.
+    * @param converter The converter to apply to the entry before being sent to the listener.  Can be null.
+    * @param <K> The type of the key
+    * @param <V> The type of the Value
+    * @param <C> The type of the resultant value after being converted
+    * @throws NullPointerException if the specified listener is null
+    */
+   <K,V,C> void addListener(Object listener, KeyValueFilter<K, V> filter, Converter<K, V, C> converter);
 }

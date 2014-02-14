@@ -1,18 +1,24 @@
 package org.infinispan.notifications.cachelistener;
 
+import org.infinispan.AdvancedCache;
 import org.infinispan.Cache;
 import org.infinispan.commons.equivalence.AnyEquivalence;
+import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.context.impl.NonTxInvocationContext;
 import org.infinispan.interceptors.locking.ClusteringDependentLogic;
+import org.infinispan.lifecycle.ComponentStatus;
 import org.infinispan.notifications.KeyFilter;
 import org.infinispan.notifications.cachelistener.event.CacheEntryCreatedEvent;
 import org.infinispan.notifications.cachelistener.event.Event;
 import org.infinispan.test.AbstractInfinispanTest;
+import org.mockito.Mockito;
+import org.mockito.invocation.InvocationOnMock;
+import org.mockito.stubbing.Answer;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
-import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.*;
 
 @Test(testName = "notifications.cachelistener.KeyFilterTest", groups = "unit")
 public class KeyFilterTest extends AbstractInfinispanTest {
@@ -31,8 +37,18 @@ public class KeyFilterTest extends AbstractInfinispanTest {
       };
 
       n = new CacheNotifierImpl();
-      mockCache = mock(Cache.class);
-      n.injectDependencies(mockCache, new ClusteringDependentLogic.LocalLogic(), null);
+      mockCache = mock(Cache.class, RETURNS_DEEP_STUBS);
+      Configuration config = mock(Configuration.class, RETURNS_DEEP_STUBS);
+      when(mockCache.getAdvancedCache().getStatus()).thenReturn(ComponentStatus.INITIALIZING);
+      Answer answer = new Answer<Object>() {
+         @Override
+         public Object answer(InvocationOnMock invocationOnMock) throws Throwable {
+            return Mockito.mock((Class)invocationOnMock.getArguments()[0]);
+         }
+      };
+      when(mockCache.getAdvancedCache().getComponentRegistry().getComponent(any(Class.class))).then(answer);
+      when(mockCache.getAdvancedCache().getComponentRegistry().getComponent(any(Class.class), anyString())).then(answer);
+      n.injectDependencies(mockCache, new ClusteringDependentLogic.LocalLogic(), null, config);
       cl = new CacheListener();
       n.start();
       n.addListener(cl, kf);

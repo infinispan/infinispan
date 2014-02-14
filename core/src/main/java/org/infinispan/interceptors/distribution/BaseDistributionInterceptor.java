@@ -23,6 +23,7 @@ import org.infinispan.remoting.responses.Response;
 import org.infinispan.remoting.responses.SuccessfulResponse;
 import org.infinispan.remoting.rpc.ResponseFilter;
 import org.infinispan.remoting.rpc.ResponseMode;
+import org.infinispan.remoting.rpc.RpcManager;
 import org.infinispan.remoting.rpc.RpcOptions;
 import org.infinispan.remoting.rpc.RpcOptionsBuilder;
 import org.infinispan.remoting.transport.Address;
@@ -198,10 +199,12 @@ public abstract class BaseDistributionInterceptor extends ClusteringInterceptor 
                log.tracef("Skipping the replication of the conditional command as it did not succeed on primary owner (%s).", command);
                return localResult;
             }
+            List<Address> recipients = recipientGenerator.generateRecipients();
             // Ignore the previous value on the backup owners
             command.setValueMatcher(ValueMatcher.MATCH_ALWAYS);
             try {
-               rpcManager.invokeRemotely(recipientGenerator.generateRecipients(), command, rpcManager.getDefaultRpcOptions(isSync));
+               rpcManager.invokeRemotely(recipients, command, determineRpcOptionsForBackupReplication(rpcManager,
+                                                                                                      isSync, recipients));
             } finally {
                // Switch to the retry policy, in case the primary owner changed and the write already succeeded on the new primary
                command.setValueMatcher(valueMatcher.matcherForRetry());
@@ -223,7 +226,8 @@ public abstract class BaseDistributionInterceptor extends ClusteringInterceptor 
                // Ignore the previous value on the backup owners
                command.setValueMatcher(ValueMatcher.MATCH_ALWAYS);
                try {
-                  rpcManager.invokeRemotely(recipients, command, rpcManager.getDefaultRpcOptions(isSync));
+                  rpcManager.invokeRemotely(recipients, command, determineRpcOptionsForBackupReplication(rpcManager,
+                                                                                                         isSync, recipients));
                } finally {
                   // Switch to the retry policy, in case the primary owner changed and the write already succeeded on the new primary
                   command.setValueMatcher(valueMatcher.matcherForRetry());
@@ -267,6 +271,21 @@ public abstract class BaseDistributionInterceptor extends ClusteringInterceptor 
             return primaryResult;
          }
       }
+   }
+
+   private RpcOptions determineRpcOptionsForBackupReplication(RpcManager rpc, boolean isSync, List<Address> recipients) {
+      RpcOptions options;
+      if (isSync) {
+         // If no recipients, means a broadcast, so we can ignore leavers
+         if (recipients == null) {
+            options = rpc.getRpcOptionsBuilder(ResponseMode.SYNCHRONOUS_IGNORE_LEAVERS).build();
+         } else {
+            options = rpc.getDefaultRpcOptions(true);
+         }
+      } else {
+         options = rpc.getDefaultRpcOptions(false);
+      }
+      return options;
    }
 
    private Object getResponseFromPrimaryOwner(Address primaryOwner, Map<Address, Response> addressResponseMap) {

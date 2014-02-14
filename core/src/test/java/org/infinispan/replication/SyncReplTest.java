@@ -156,7 +156,7 @@ public class SyncReplTest extends MultipleCacheManagersTest {
          // check that the replication call was sync
          cache1.put("k", "v");
          verify(mockTransport).invokeRemotely((List<Address>) anyObject(),
-                                              (CacheRpcCommand) anyObject(), eq(ResponseMode.SYNCHRONOUS), anyLong(),
+                                              (CacheRpcCommand) anyObject(), eq(ResponseMode.SYNCHRONOUS_IGNORE_LEAVERS), anyLong(),
                                               anyBoolean(), (ResponseFilter) anyObject(), anyBoolean(), anyBoolean());
 
          // resume to test for async
