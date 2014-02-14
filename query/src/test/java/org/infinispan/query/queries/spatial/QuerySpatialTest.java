@@ -75,7 +75,7 @@ public class QuerySpatialTest extends SingleCacheManagerTest {
    }
 
    @Indexed
-   @Spatial(name = "city_location", spatialMode = SpatialMode.GRID)
+   @Spatial(name = "city_location", spatialMode = SpatialMode.HASH)
    static public class CitySpatial implements Coordinates {
 
       private Double latitude;

@@ -10,6 +10,7 @@ import junit.framework.Assert;
 import org.apache.lucene.index.Term;
 import org.apache.lucene.queryparser.classic.ParseException;
 import org.apache.lucene.queryparser.classic.QueryParser;
+import org.apache.lucene.search.BooleanQuery;
 import org.apache.lucene.search.Explanation;
 import org.apache.lucene.search.Filter;
 import org.apache.lucene.search.PrefixFilter;
@@ -17,6 +18,7 @@ import org.apache.lucene.search.Query;
 import org.apache.lucene.search.Sort;
 import org.apache.lucene.search.SortField;
 import org.apache.lucene.search.TermQuery;
+import org.apache.lucene.search.BooleanClause.Occur;
 import org.hibernate.search.FullTextFilter;
 import org.hibernate.search.engine.spi.EntityIndexBinding;
 import org.hibernate.search.engine.spi.SearchFactoryImplementor;
@@ -251,7 +253,7 @@ public class LocalCacheTest extends SingleCacheManagerTest {
    public void testSetSort() throws ParseException {
       loadTestingData();
 
-      Sort sort = new Sort( new SortField("age", SortField.STRING));
+      Sort sort = new Sort( new SortField("age", SortField.Type.STRING));
 
       queryParser = createQueryParser("name");
 
@@ -604,11 +606,9 @@ public class LocalCacheTest extends SingleCacheManagerTest {
       // Create a term that I know will return me everything with name goat.
       Term goat = new Term ("name", "goat");
 
-      Query[] queries = new Query[2];
-      queries[0] = new TermQuery(goat);
-      queries[1] = new TermQuery(navin);
-
-      Query luceneQuery = queries[0].combine(queries);
+      BooleanQuery luceneQuery = new BooleanQuery();
+      luceneQuery.add(new TermQuery(goat), Occur.SHOULD);
+      luceneQuery.add(new TermQuery(navin), Occur.SHOULD);
       CacheQuery cacheQuery = Search.getSearchManager(cache).getQuery(luceneQuery);
 
       // We know that we've got all 3 hits.
