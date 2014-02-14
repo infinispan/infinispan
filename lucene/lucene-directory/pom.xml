@@ -20,18 +20,6 @@
             <artifactId>lucene-core</artifactId>
             <version>${version.lucene}</version>
         </dependency>
-        <dependency>
-            <groupId>org.infinispan</groupId>
-            <artifactId>infinispan-lucene-v3</artifactId>
-            <!-- Not actually needed: we just want to make sure the reactor builds it first -->
-            <scope>test</scope>
-        </dependency>
-        <dependency>
-            <groupId>org.infinispan</groupId>
-            <artifactId>infinispan-lucene-v4</artifactId>
-            <!-- Not actually needed: we just want to make sure the reactor builds it first -->
-            <scope>test</scope>
-        </dependency>
     </dependencies>
 
     <build>
@@ -49,34 +37,6 @@
                        </Include-Resource>
                     </instructions>
                 </configuration>
-            </plugin>
-            <plugin>
-                <artifactId>maven-dependency-plugin</artifactId>
-                <executions>
-                    <execution>
-                        <id>unpack</id>
-                        <phase>generate-resources</phase>
-                        <goals>
-                            <goal>unpack</goal>
-                        </goals>
-                        <configuration>
-                            <artifactItems>
-                                <artifactItem>
-                                    <groupId>org.infinispan</groupId>
-                                    <artifactId>infinispan-lucene-v4</artifactId>
-                                    <overWrite>false</overWrite>
-                                    <outputDirectory>${project.build.outputDirectory}</outputDirectory>
-                                </artifactItem>
-                                <artifactItem>
-                                    <groupId>org.infinispan</groupId>
-                                    <artifactId>infinispan-lucene-v3</artifactId>
-                                    <overWrite>false</overWrite>
-                                    <outputDirectory>${project.build.outputDirectory}</outputDirectory>
-                                </artifactItem>
-                            </artifactItems>
-                        </configuration>
-                    </execution>
-                </executions>
             </plugin>
         </plugins>
     </build>
