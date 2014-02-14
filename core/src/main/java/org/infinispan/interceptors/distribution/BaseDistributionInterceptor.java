@@ -26,6 +26,7 @@ import org.infinispan.remoting.rpc.ResponseMode;
 import org.infinispan.remoting.rpc.RpcOptions;
 import org.infinispan.remoting.rpc.RpcOptionsBuilder;
 import org.infinispan.remoting.transport.Address;
+import org.infinispan.remoting.transport.jgroups.SuspectException;
 import org.infinispan.statetransfer.OutdatedTopologyException;
 import org.infinispan.topology.CacheTopology;
 import org.infinispan.transaction.xa.GlobalTransaction;
@@ -248,6 +249,15 @@ public abstract class BaseDistributionInterceptor extends ClusteringInterceptor 
                         command.getValueMatcher(), valueMatcher.matcherForRetry(), valueMatcher);
                   command.setValueMatcher(valueMatcher.matcherForRetry());
                }
+               throw e;
+            } catch (SuspectException e) {
+               // If the primary owner became suspected, we don't know if it was able to replicate it's data properly
+               // to all backup owners and notify all listeners, thus we need to retry with new matcher in case if
+               // it had updated the backup owners
+               if (trace) log.tracef("Primary owner suspected - Changing the value matching policy from %s to %s " +
+                                           "(original value was %s)", command.getValueMatcher(),
+                                     valueMatcher.matcherForRetry(), valueMatcher);
+               command.setValueMatcher(valueMatcher.matcherForRetry());
                throw e;
             }
             if (!isSyncForwarding) return localResult;
