@@ -384,14 +384,14 @@ public class DefaultExecutorService extends AbstractExecutorService implements D
    }
 
    @Override
-   public <T> Future<T> submit(Address target, Callable<T> task) {
+   public <T> NotifyingFuture<T> submit(Address target, Callable<T> task) {
       DistributedTaskBuilder<T> distributedTaskBuilder = createDistributedTaskBuilder(task);
       DistributedTask<T> distributedTask = distributedTaskBuilder.build();
       return submit(target, distributedTask);
    }
 
    @Override
-   public <T> Future<T> submit(Address target, DistributedTask<T> task) {
+   public <T> NotifyingFuture<T> submit(Address target, DistributedTask<T> task) {
       if (task == null)
          throw new NullPointerException();
       if (target == null)
@@ -414,14 +414,14 @@ public class DefaultExecutorService extends AbstractExecutorService implements D
    }
 
    @Override
-   public <T, K> Future<T> submit(Callable<T> task, K... input) {
+   public <T, K> NotifyingFuture<T> submit(Callable<T> task, K... input) {
       DistributedTaskBuilder<T> distributedTaskBuilder = createDistributedTaskBuilder(task);
       DistributedTask<T> distributedTask = distributedTaskBuilder.build();
       return submit(distributedTask, input);
    }
 
    @Override
-   public <T, K> Future<T> submit(DistributedTask<T> task, K... input) {
+   public <T, K> NotifyingFuture<T> submit(DistributedTask<T> task, K... input) {
       if (task == null) throw new NullPointerException();
 
       if(inputKeysSpecified(input)){
@@ -628,7 +628,9 @@ public class DefaultExecutorService extends AbstractExecutorService implements D
    private void ensureProperCacheState(AdvancedCache<?, ?> cache) throws NullPointerException,
             IllegalStateException {
 
-      if (cache.getStatus() != ComponentStatus.RUNNING)
+      // We allow for INITIALIZING state so the ExecutorService can be used by components defining a method with
+      // {@link Start} annotation
+      if (cache.getStatus() != ComponentStatus.RUNNING && cache.getStatus() != ComponentStatus.INITIALIZING)
          throw new IllegalStateException("Invalid cache state " + cache.getStatus());
    }
 

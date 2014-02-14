@@ -21,6 +21,7 @@ public class StateRequestCommand extends BaseRpcCommand {
 
    public enum Type {
       GET_TRANSACTIONS,
+      GET_CACHE_LISTENERS,
       START_STATE_TRANSFER,
       CANCEL_STATE_TRANSFER
    }
@@ -74,6 +75,8 @@ public class StateRequestCommand extends BaseRpcCommand {
                // originator does not care about the result, so we can return null
                return null;
 
+            case GET_CACHE_LISTENERS:
+               return stateProvider.getClusterListenersToInstall();
             default:
                throw new CacheException("Unknown state request command type: " + type);
          }

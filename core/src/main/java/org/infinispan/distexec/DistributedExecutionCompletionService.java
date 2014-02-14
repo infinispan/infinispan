@@ -13,6 +13,7 @@ import java.util.concurrent.TimeUnit;
 
 import org.infinispan.commons.util.concurrent.FutureListener;
 import org.infinispan.commons.util.concurrent.NotifyingFuture;
+import org.infinispan.remoting.transport.Address;
 
 /**
  * A {@link CompletionService} that uses a supplied {@link DistributedExecutorService} to execute
@@ -152,7 +153,7 @@ public class DistributedExecutionCompletionService<V> implements CompletionServi
     }
 
     public <K> Future<V> submit(Callable<V> task, K... input) {
-       NotifyingFuture<V> f = (NotifyingFuture<V>) executor.submit(task, input);
+       NotifyingFuture<V> f = executor.submit(task, input);
        f.attachListener(listener);
        return f;
     }
@@ -173,4 +174,9 @@ public class DistributedExecutionCompletionService<V> implements CompletionServi
        return fl;
     }
 
+   public <K> Future<V> submit(Address target, Callable<V> task) {
+      NotifyingFuture<V> f = executor.submit(target, task);
+      f.attachListener(listener);
+      return f;
+   }
 }

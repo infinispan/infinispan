@@ -1,22 +1,32 @@
 package org.infinispan.notifications.cachelistener;
 
 import org.infinispan.Cache;
+import org.infinispan.commands.FlagAffectedCommand;
 import org.infinispan.commons.equivalence.AnyEquivalence;
+import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.interceptors.locking.ClusteringDependentLogic;
+import org.infinispan.lifecycle.ComponentStatus;
 import org.infinispan.test.fwk.TestInternalCacheEntryFactory;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.context.impl.NonTxInvocationContext;
 import org.infinispan.notifications.cachelistener.event.*;
 import org.infinispan.test.AbstractInfinispanTest;
 import org.infinispan.transaction.xa.GlobalTransaction;
+import org.mockito.Mockito;
+import org.mockito.invocation.InvocationOnMock;
+import org.mockito.stubbing.Answer;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
 import java.util.Collections;
 import java.util.Map;
 
+import static org.mockito.Matchers.any;
+import static org.mockito.Matchers.anyString;
+import static org.mockito.Mockito.RETURNS_DEEP_STUBS;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
 
 @Test(groups = "unit", testName = "notifications.cachelistener.CacheNotifierImplTest")
@@ -25,12 +35,23 @@ public class CacheNotifierImplTest extends AbstractInfinispanTest {
    Cache mockCache;
    CacheListener cl;
    InvocationContext ctx;
+   FlagAffectedCommand command;
 
    @BeforeMethod
    public void setUp() {
       n = new CacheNotifierImpl();
-      mockCache = mock(Cache.class);
-      n.injectDependencies(mockCache, new ClusteringDependentLogic.LocalLogic(), null);
+      mockCache = mock(Cache.class, RETURNS_DEEP_STUBS);
+      Configuration config = mock(Configuration.class, RETURNS_DEEP_STUBS);
+      when(mockCache.getAdvancedCache().getStatus()).thenReturn(ComponentStatus.INITIALIZING);
+      Answer answer = new Answer<Object>() {
+         @Override
+         public Object answer(InvocationOnMock invocationOnMock) throws Throwable {
+            return Mockito.mock((Class) invocationOnMock.getArguments()[0]);
+         }
+      };
+      when(mockCache.getAdvancedCache().getComponentRegistry().getComponent(any(Class.class))).then(answer);
+      when(mockCache.getAdvancedCache().getComponentRegistry().getComponent(any(Class.class), anyString())).then(answer);
+      n.injectDependencies(mockCache, new ClusteringDependentLogic.LocalLogic(), null, config);
       cl = new CacheListener();
       n.start();
       n.addListener(cl);

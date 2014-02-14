@@ -27,6 +27,7 @@ import org.infinispan.factories.annotations.DefaultFactoryFor;
 import org.infinispan.interceptors.locking.ClusteringDependentLogic;
 import org.infinispan.marshall.core.MarshalledEntryFactory;
 import org.infinispan.marshall.core.MarshalledEntryFactoryImpl;
+import org.infinispan.notifications.cachelistener.cluster.ClusterCacheNotifier;
 import org.infinispan.persistence.manager.PersistenceManager;
 import org.infinispan.persistence.manager.PersistenceManagerImpl;
 import org.infinispan.notifications.cachelistener.CacheNotifier;
@@ -54,7 +55,7 @@ import static org.infinispan.commons.util.Util.getInstance;
  * @author Pedro Ruivo
  * @since 4.0
  */
-@DefaultFactoryFor(classes = {CacheNotifier.class, CommandsFactory.class,
+@DefaultFactoryFor(classes = {CacheNotifier.class, ClusterCacheNotifier.class, CommandsFactory.class,
                               PersistenceManager.class, InvocationContextContainer.class,
                               PassivationManager.class, ActivationManager.class,
                               BatchContainer.class, EvictionManager.class,
@@ -131,6 +132,8 @@ public class EmptyConstructorNamedCacheFactory extends AbstractNamedCacheCompone
          } else if (componentType.equals(RemoteValueRetrievedListener.class)) {
             // L1Manager is currently only listener for remotely retrieved values
             return (T) componentRegistry.getComponent(L1Manager.class);
+         } else if (componentType.equals(ClusterCacheNotifier.class)) {
+            return (T) componentRegistry.getComponent(CacheNotifier.class);
          }
       }
 

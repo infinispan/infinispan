@@ -15,6 +15,7 @@ import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.distribution.TestAddress;
 import org.infinispan.distribution.ch.DefaultConsistentHash;
 import org.infinispan.distribution.ch.DefaultConsistentHashFactory;
+import org.infinispan.notifications.cachelistener.cluster.ClusterCacheNotifier;
 import org.infinispan.persistence.manager.PersistenceManager;
 import org.infinispan.notifications.cachelistener.CacheNotifier;
 import org.infinispan.remoting.responses.Response;
@@ -72,7 +73,7 @@ public class StateProviderTest {
 
    private RpcManager rpcManager;
    private CommandsFactory commandsFactory;
-   private CacheNotifier cacheNotifier;
+   private ClusterCacheNotifier cacheNotifier;
    private PersistenceManager persistenceManager;
    private DataContainer dataContainer;
    private TransactionTable transactionTable;
@@ -108,7 +109,7 @@ public class StateProviderTest {
 
       rpcManager = mock(RpcManager.class);
       commandsFactory = mock(CommandsFactory.class);
-      cacheNotifier = mock(CacheNotifier.class);
+      cacheNotifier = mock(ClusterCacheNotifier.class);
       persistenceManager = mock(PersistenceManager.class);
       dataContainer = mock(DataContainer.class);
       transactionTable = mock(TransactionTable.class);

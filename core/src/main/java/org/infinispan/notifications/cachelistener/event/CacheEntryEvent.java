@@ -11,4 +11,11 @@ public interface CacheEntryEvent<K, V> extends TransactionalEvent<K, V> {
     * @return the key to the affected cache entry.
     */
    K getKey();
+
+   /**
+    * Retrieves the value of the affected cache entry
+    *
+    * @return the value of the cache entry
+    */
+   V getValue();
 }

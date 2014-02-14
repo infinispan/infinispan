@@ -57,6 +57,11 @@ public class CacheEntryModifiedAdapter<K, V> extends AbstractAdapter<CacheEntryM
          return false;
       }
 
+      @Override
+      public boolean isCommandRetried() {
+         return false;
+      }
+
    };
 
    @SuppressWarnings("serial")

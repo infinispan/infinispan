@@ -1047,4 +1047,15 @@ public interface Log extends BasicLogger {
    @Message(value = "A cache configured with invocation batching can't have recovery enabled", id = 283)
    CacheConfigurationException invocationBatchingCannotBeRecoverable();
 
+   @LogMessage(level = WARN)
+   @Message(value = "Problem encountered while installing cluster listener", id = 284)
+   void clusterListenerInstallationFailure(@Cause Throwable cause);
+
+   @LogMessage(level = WARN)
+   @Message(value = "Issue when retrieving cluster listeners from %s response was %s", id = 285)
+   void unsuccessfulResponseForClusterListeners(Address address, Response response);
+
+   @LogMessage(level = WARN)
+   @Message(value = "Issue when retrieving cluster listeners from %s", id = 286)
+   void exceptionDuringClusterListenerRetrieval(Address address, @Cause Throwable cause);
 }

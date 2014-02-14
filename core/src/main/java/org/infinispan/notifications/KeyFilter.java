@@ -6,11 +6,11 @@ package org.infinispan.notifications;
  * @author Manik Surtani
  * @since 6.0
  */
-public interface KeyFilter {
+public interface KeyFilter<K> {
 
    /**
     * @param key key to test
     * @return true if the given key is accepted by this filter.
     */
-   boolean accept(Object key);
+   boolean accept(K key);
 }
