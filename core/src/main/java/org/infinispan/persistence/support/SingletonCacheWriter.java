@@ -89,7 +89,9 @@ public class SingletonCacheWriter extends DelegatingCacheWriter {
       executor = Executors.newSingleThreadExecutor(new ThreadFactory() {
          @Override
          public Thread newThread(Runnable r) {
-            return new Thread(r, THREAD_NAME);
+            Thread t = new Thread(r, THREAD_NAME);
+            t.setContextClassLoader(SingletonCacheWriter.class.getClassLoader());
+            return t;
          }
       });
       this.singletonConfiguration = singletonConfiguration;

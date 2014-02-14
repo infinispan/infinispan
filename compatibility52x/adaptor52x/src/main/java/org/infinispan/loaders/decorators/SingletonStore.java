@@ -95,7 +95,9 @@ public class SingletonStore extends AbstractDelegatingStore {
       executor = Executors.newSingleThreadExecutor(new ThreadFactory() {
          @Override
          public Thread newThread(Runnable r) {
-            return new Thread(r, THREAD_NAME);
+            Thread t = new Thread(r, THREAD_NAME);
+            t.setContextClassLoader(SingletonStore.class.getClassLoader());
+            return t;
          }
       });
 
@@ -152,7 +154,7 @@ public class SingletonStore extends AbstractDelegatingStore {
       cacheManager.addListener(new SingletonStoreListener());
       super.start();
    }
-   
+
    @Override
    public void stop() throws CacheLoaderException {
       try {

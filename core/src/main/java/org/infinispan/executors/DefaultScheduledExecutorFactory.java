@@ -28,6 +28,7 @@ public class DefaultScheduledExecutorFactory implements ScheduledExecutorFactory
          public Thread newThread(Runnable r) {
             Thread th = new Thread(r, "Scheduled-" + threadNamePrefix + "-" + counter.getAndIncrement());
             th.setDaemon(true);
+            th.setContextClassLoader(DefaultScheduledExecutorFactory.class.getClassLoader());
             th.setPriority(threadPrio);
             return th;
          }

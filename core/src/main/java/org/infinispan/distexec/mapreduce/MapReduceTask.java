@@ -486,8 +486,7 @@ public class MapReduceTask<KIn, VIn, KOut, VOut> {
       }
 
       // hook into lifecycle
-      MapReduceTaskLifecycleService taskLifecycleService = MapReduceTaskLifecycleService
-               .getInstance();
+      MapReduceTaskLifecycleService taskLifecycleService = new MapReduceTaskLifecycleService(cache.getClassLoader());
       log.tracef("For m/r task %s invoking %s locally", taskId, reducer);
       try {
          taskLifecycleService.onPreExecute(reducer, cache);

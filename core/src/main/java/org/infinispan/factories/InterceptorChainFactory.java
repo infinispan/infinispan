@@ -93,7 +93,7 @@ public class InterceptorChainFactory extends AbstractNamedCacheComponentFactory 
             componentRegistry.wireDependencies(compatibilityMarshaller);
          }
          interceptorChain.appendInterceptor(createInterceptor(
-               new TypeConverterInterceptor(compatibilityMarshaller), TypeConverterInterceptor.class), false);
+               new TypeConverterInterceptor(compatibilityMarshaller, globalConfiguration.classLoader()), TypeConverterInterceptor.class), false);
       }
 
       // add marshallable check interceptor for situations where we want to figure out before marshalling

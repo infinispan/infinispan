@@ -1100,7 +1100,7 @@ public class DefaultExecutorService extends AbstractExecutorService implements D
 
                private V doLocalInvoke() throws Exception {
                   getCommand().init(cache);
-                  DistributedTaskLifecycleService lifecycle = DistributedTaskLifecycleService.getInstance();
+                  DistributedTaskLifecycleService lifecycle = new DistributedTaskLifecycleService(cache.getClassLoader());
                   try {
                      // hook into lifecycle
                      lifecycle.onPreExecute(getCommand().getCallable(), cache);

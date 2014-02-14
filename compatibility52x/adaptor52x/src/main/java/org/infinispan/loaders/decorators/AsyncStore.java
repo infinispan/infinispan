@@ -289,6 +289,7 @@ public class AsyncStore extends AbstractDelegatingStore {
                public Thread newThread(Runnable r) {
                   Thread t = new Thread(r, "AsyncStoreProcessor-" + cacheName + "-" + threadId.getAndIncrement());
                   t.setDaemon(true);
+                  t.setContextClassLoader(AsyncStore.class.getClassLoader());
                   return t;
                }
             });

@@ -62,6 +62,7 @@ public abstract class AbstractCacheStore extends AbstractCacheLoader implements 
                // Thread name: <cache>-<CacheStore>-<purger>-ID
                Thread t = new Thread(r, (cache == null ? "" : cache.getName() + '-') + loaderName + '-' + THREAD_COUNTER.getAndIncrement());
                t.setDaemon(true);
+               t.setContextClassLoader(AbstractCacheStore.class.getClassLoader());
                return t;
             }
          });

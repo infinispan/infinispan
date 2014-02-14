@@ -29,6 +29,7 @@ public class DefaultAsyncExecutorFactory implements ExecutorFactory {
          public Thread newThread(Runnable r) {
             Thread th = new Thread(r, THREAD_NAME + "-" + counter.getAndIncrement());
             th.setDaemon(true);
+            th.setContextClassLoader(DefaultAsyncExecutorFactory.class.getClassLoader());
             return th;
          }
       };

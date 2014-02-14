@@ -72,7 +72,9 @@ public class Interpreter {
       this.executor = Executors.newSingleThreadScheduledExecutor(new ThreadFactory() {
          @Override
          public Thread newThread(final Runnable r) {
-            return new Thread(r, "Interpreter");
+            Thread t = new Thread(r, "Interpreter");
+            t.setContextClassLoader(Interpreter.class.getClassLoader());
+            return t;
          }
       });
       sessionReaperTask = executor.scheduleWithFixedDelay(new ScheduledTask(), sessionReaperWakeupInterval, sessionReaperWakeupInterval, TimeUnit.MILLISECONDS);

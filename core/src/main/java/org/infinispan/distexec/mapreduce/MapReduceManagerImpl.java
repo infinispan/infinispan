@@ -118,7 +118,7 @@ public class MapReduceManagerImpl implements MapReduceManager {
                   + cdl.getAddress() + " executed with empty input keys");
       } else{
          //first hook into lifecycle
-         MapReduceTaskLifecycleService taskLifecycleService = MapReduceTaskLifecycleService.getInstance();
+         MapReduceTaskLifecycleService taskLifecycleService = new MapReduceTaskLifecycleService(cache.getAdvancedCache().getClassLoader());
          log.tracef("For m/r task %s invoking %s at %s",  taskId, reduceCommand, cdl.getAddress());
          int interruptCount = 0;
          long start = log.isTraceEnabled() ? timeService.time() : 0;
@@ -166,7 +166,7 @@ public class MapReduceManagerImpl implements MapReduceManager {
          inputKeysCopy = new HashSet<KIn>(keys);
       }
       // hook map function into lifecycle and execute it
-      MapReduceTaskLifecycleService taskLifecycleService = MapReduceTaskLifecycleService.getInstance();
+      MapReduceTaskLifecycleService taskLifecycleService = new MapReduceTaskLifecycleService(cache.getAdvancedCache().getClassLoader());
       DefaultCollector<KOut, VOut> collector = new DefaultCollector<KOut, VOut>();
       log.tracef("For m/r task %s invoking %s with input keys %s",  mcc.getTaskId(), mcc, inputKeys);
       int interruptCount = 0;
@@ -226,7 +226,7 @@ public class MapReduceManagerImpl implements MapReduceManager {
       if (combiner != null) {
          Cache<?, ?> cache = cacheManager.getCache(mcc.getCacheName());
          log.tracef("For m/r task %s invoking combiner %s at %s",  taskId, mcc, cdl.getAddress());
-         MapReduceTaskLifecycleService taskLifecycleService = MapReduceTaskLifecycleService.getInstance();
+         MapReduceTaskLifecycleService taskLifecycleService = new MapReduceTaskLifecycleService(cache.getAdvancedCache().getClassLoader());
          Map<KOut, List<VOut>> combinedMap = new ConcurrentHashMap<KOut, List<VOut>>();
          long start = log.isTraceEnabled() ? timeService.time() : 0;
          try {
@@ -305,11 +305,11 @@ public class MapReduceManagerImpl implements MapReduceManager {
 
       if (combiner != null) {
          result = new HashMap<KOut, List<VOut>>();
+         Cache<?, ?> cache = cacheManager.getCache(mcc.getCacheName());
          log.tracef("For m/r task %s invoking combiner %s at %s",  taskId, mcc, cdl.getAddress());
-         MapReduceTaskLifecycleService taskLifecycleService = MapReduceTaskLifecycleService.getInstance();
+         MapReduceTaskLifecycleService taskLifecycleService = new MapReduceTaskLifecycleService(cache.getAdvancedCache().getClassLoader());
          long start = log.isTraceEnabled() ? timeService.time() : 0;
          try {
-            Cache<?, ?> cache = cacheManager.getCache(mcc.getCacheName());
             taskLifecycleService.onPreExecute(combiner, cache);
             Map<KOut, List<VOut>> collectedValues = collector.collectedValues();
             for (Entry<KOut, List<VOut>> e : collectedValues.entrySet()) {

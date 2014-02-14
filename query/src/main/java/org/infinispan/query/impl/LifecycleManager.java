@@ -217,7 +217,10 @@ public class LifecycleManager extends AbstractModuleLifecycle {
    }
 
    private Properties addProgrammaticMappings(Properties indexingProperties, ComponentRegistry cr) {
-      Iterator<ProgrammaticSearchMappingProvider> providers = ServiceLoader.load(ProgrammaticSearchMappingProvider.class).iterator();
+      Iterator<ProgrammaticSearchMappingProvider> providers = ServiceLoader.load(
+              ProgrammaticSearchMappingProvider.class,
+              cr.getGlobalComponentRegistry().getGlobalConfiguration().classLoader()
+      ).iterator();
       if (providers.hasNext()) {
          SearchMapping mapping = (SearchMapping) indexingProperties.get(Environment.MODEL_MAPPING);
          if (mapping == null) {
