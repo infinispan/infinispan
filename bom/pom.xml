@@ -308,6 +308,11 @@
             <artifactId>hibernate-search-infinispan</artifactId>
             <version>${version.hibernate.search}</version>
          </dependency>
+         <dependency>
+            <groupId>org.hibernate</groupId>
+            <artifactId>hibernate-search-serialization-avro</artifactId>
+            <version>${version.hibernate.search}</version>
+         </dependency>
          <!-- Infinispan Remote Query module dependencies -->
          <dependency>
             <groupId>org.infinispan.protostream</groupId>
