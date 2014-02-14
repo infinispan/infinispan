@@ -20,6 +20,7 @@ import org.infinispan.remoting.RemoteException;
 import org.infinispan.remoting.responses.Response;
 import org.infinispan.remoting.responses.SuccessfulResponse;
 import org.infinispan.remoting.transport.Address;
+import org.infinispan.remoting.transport.jgroups.SuspectException;
 import org.infinispan.topology.CacheTopology;
 import org.infinispan.transaction.LockingMode;
 import org.infinispan.transaction.RemoteTransaction;
@@ -222,7 +223,7 @@ public class StateTransferInterceptor extends CommandInterceptor {
          while (ce instanceof RemoteException) {
             ce = ce.getCause();
          }
-         if (!(ce instanceof OutdatedTopologyException))
+         if (!(ce instanceof OutdatedTopologyException) && !(ce instanceof SuspectException))
             throw e;
 
          log.tracef("Retrying command because of topology change: %s", command);
@@ -230,6 +231,7 @@ public class StateTransferInterceptor extends CommandInterceptor {
          // Without this, we could retry the command too fast and we could get the OutdatedTopologyException again.
          int newTopologyId = Math.max(stateTransferManager.getCacheTopology().getTopologyId(), commandTopologyId + 1);
          command.setTopologyId(newTopologyId);
+         command.setFlags(Flag.COMMAND_RETRY);
          stateTransferLock.waitForTransactionData(newTopologyId, transactionDataTimeout, TimeUnit.MILLISECONDS);
          localResult = handleNonTxWriteCommand(ctx, command);
       }

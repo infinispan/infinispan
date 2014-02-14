@@ -241,7 +241,14 @@ public enum Flag {
     * For example, this is useful for speeding up import of new data in an empty cache
     * having an empty index.
     */
-   SKIP_INDEX_CLEANUP
+   SKIP_INDEX_CLEANUP,
+
+   /**
+    * If a write operation encounters a retry due to a topology change this flag should be used to tell the new owner
+    * that such a thing happened.  This flag was created purely for internal Infinispan usage, and should not be
+    * used by clients calling into Infinispan.
+    */
+   COMMAND_RETRY
 
    ;
 
