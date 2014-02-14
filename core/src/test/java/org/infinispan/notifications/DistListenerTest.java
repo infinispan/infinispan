@@ -58,7 +58,7 @@ public class DistListenerTest extends MultipleCacheManagersTest {
       assertModified(false);
       owner1.addListener(listener);
       owner1.put(key1, "hello");
-      assertModified(true);
+      assertModified(false);
       assertCreated(true);
       assertCreated(false);
       assertModified(false);
@@ -76,17 +76,22 @@ public class DistListenerTest extends MultipleCacheManagersTest {
       owner1.addListener(listener);
       nonOwner.put(key1, "hello");
       assertModified(true);
+      assertCreated(false);
       owner1.removeListener(listener);
       assertModified(false);
+      assertCreated(false);
       
       //listen on non-owner:
       nonOwner.addListener(listener);
       nonOwner.put(key1, "hello");
-      assertModified(true);
+      assertModified(false);
+      // TODO: should originators raise these events?  it seems broken
+      assertCreated(true);
       
       //listen on non-owner non-putting:
       owner1.put(key1, "hello");
       assertModified(false);
+      assertCreated(false);
    }
    
    private void assertCreated(boolean b) {

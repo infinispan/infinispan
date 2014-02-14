@@ -114,18 +114,14 @@ public interface ClusteringDependentLogic {
             notifier.notifyCacheEntryRemoved(
                   entry.getKey(), null, entry.getValue(), false, ctx, command);
          } else {
-            // TODO: We're not very consistent (will JSR-107 solve it?):
-            // Current tests expect entry modified to be fired when entry
-            // created but not when entry removed
-
-            // Notify entry modified after container has been updated
-            notifier.notifyCacheEntryModified(entry.getKey(),
-                                              entry.getValue(), created, false, ctx, command);
-
-            // Notify entry created event after container has been updated
-            if (created)
+            // Notify entry event after container has been updated
+            if (created) {
                notifier.notifyCacheEntryCreated(
                      entry.getKey(), entry.getValue(), false, ctx, command);
+            } else {
+               notifier.notifyCacheEntryModified(entry.getKey(),
+                                                 entry.getValue(), created, false, ctx, command);
+            }
          }
       }
 

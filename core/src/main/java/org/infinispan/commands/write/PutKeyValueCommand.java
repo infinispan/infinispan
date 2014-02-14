@@ -205,8 +205,11 @@ public class PutKeyValueCommand extends AbstractDataWriteCommand implements Meta
    private Object performPut(MVCCEntry e, InvocationContext ctx) {
       Object entryValue = e.getValue();
       Object o;
-      notifier.notifyCacheEntryModified(
-            key, entryValue, entryValue == null, true, ctx, this);
+
+      if (!e.isCreated()) {
+         notifier.notifyCacheEntryModified(
+               key, entryValue, entryValue == null, true, ctx, this);
+      }
 
       if (value instanceof Delta) {
          // magic

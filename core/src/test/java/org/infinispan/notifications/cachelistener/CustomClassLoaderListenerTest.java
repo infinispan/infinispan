@@ -53,7 +53,7 @@ public class CustomClassLoaderListenerTest extends SingleCacheManagerTest {
 
       cache().put("a", "a"); // Created + Modified
       assertEquals(1, listener.createdCounter);
-      assertEquals(1, listener.modifiedCounter);
+      assertEquals(0, listener.modifiedCounter);
       assertEquals(0, listener.removedCounter);
       assertEquals(0, listener.visitedCounter);
       assertEquals(0, listener.activatedCounter);

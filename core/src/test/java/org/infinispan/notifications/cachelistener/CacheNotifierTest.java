@@ -229,10 +229,6 @@ public class CacheNotifierTest extends AbstractInfinispanTest {
             isA(InvocationContext.class), argThat(matcher));
       verify(mockNotifier).notifyCacheEntryCreated(eq(key), eq(value), eq(false),
             isA(InvocationContext.class), argThat(matcher));
-      verify(mockNotifier).notifyCacheEntryModified(eq(key), isNull(),
-            eq(true), eq(true), isA(InvocationContext.class), argThat(matcher));
-      verify(mockNotifier).notifyCacheEntryModified(eq(key), eq(value),
-            eq(true), eq(false), isA(InvocationContext.class), argThat(matcher));
    }
 
    private static class SkipListenerFlagMatcher
