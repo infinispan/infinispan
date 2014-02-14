@@ -55,8 +55,20 @@
       </dependency>
 
       <dependency>
+         <groupId>org.hibernate</groupId>
+         <artifactId>hibernate-search-serialization-avro</artifactId>
+      </dependency>
+
+      <dependency>
          <groupId>${project.groupId}</groupId>
          <artifactId>infinispan-lucene-directory</artifactId>
+      </dependency>
+
+      <dependency>
+         <groupId>org.apache.lucene</groupId>
+         <artifactId>lucene-queryparser</artifactId>
+         <version>${version.lucene.v4}</version>
+         <scope>test</scope>
       </dependency>
 
       <!-- Hack to make Eclipse happy when opening multiple modules at once:
