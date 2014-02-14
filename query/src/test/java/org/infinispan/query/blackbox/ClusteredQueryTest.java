@@ -7,9 +7,11 @@ import java.util.NoSuchElementException;
 
 import org.apache.lucene.queryparser.classic.ParseException;
 import org.apache.lucene.queryparser.classic.QueryParser;
+import org.apache.lucene.search.BooleanQuery;
 import org.apache.lucene.search.Query;
 import org.apache.lucene.search.Sort;
 import org.apache.lucene.search.SortField;
+import org.apache.lucene.search.BooleanClause.Occur;
 import org.infinispan.Cache;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
@@ -104,7 +106,7 @@ public class ClusteredQueryTest extends MultipleCacheManagersTest {
       populateCache();
 
       // applying sort
-      SortField sortField = new SortField("age", SortField.INT);
+      SortField sortField = new SortField("age", SortField.Type.INT);
       Sort sort = new Sort(sortField);
       cacheQuery.sort(sort);
 
@@ -142,7 +144,7 @@ public class ClusteredQueryTest extends MultipleCacheManagersTest {
       populateCache();
 
       // applying sort
-      SortField sortField = new SortField("age", SortField.INT);
+      SortField sortField = new SortField("age", SortField.Type.INT);
       Sort sort = new Sort(sortField);
       cacheQuery.sort(sort);
 
@@ -196,7 +198,7 @@ public class ClusteredQueryTest extends MultipleCacheManagersTest {
       populateCache();
 
       // applying sort
-      SortField sortField = new SortField("age", SortField.INT);
+      SortField sortField = new SortField("age", SortField.Type.INT);
       Sort sort = new Sort(sortField);
       cacheQuery.sort(sort);
 
@@ -223,7 +225,7 @@ public class ClusteredQueryTest extends MultipleCacheManagersTest {
       cacheQuery.maxResults(1);
 
       // applying sort
-      SortField sortField = new SortField("age", SortField.INT);
+      SortField sortField = new SortField("age", SortField.Type.INT);
       Sort sort = new Sort(sortField);
       cacheQuery.sort(sort);
 
@@ -235,16 +237,11 @@ public class ClusteredQueryTest extends MultipleCacheManagersTest {
 
    private void populateCache() throws ParseException {
       prepareTestData();
-      Query[] queries = new Query[2];
       queryParser = createQueryParser("blurb");
 
-      luceneQuery = queryParser.parse("eats");
-      queries[0] = luceneQuery;
-
-      luceneQuery = queryParser.parse("playing");
-      queries[1] = luceneQuery;
-
-      luceneQuery = luceneQuery.combine(queries);
+      BooleanQuery luceneQuery = new BooleanQuery();
+      luceneQuery.add(queryParser.parse("eats"), Occur.SHOULD);
+      luceneQuery.add(queryParser.parse("playing"), Occur.SHOULD);
       cacheQuery = Search.getSearchManager(cacheAMachine1).getClusteredQuery(luceneQuery);
    }
 
