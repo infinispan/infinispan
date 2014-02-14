@@ -61,8 +61,7 @@ public class EmbeddedMemcachedCacheListenerTest extends AbstractInfinispanTest {
       assertEquals(1, l.createdCounter);
       assertEquals("v", l.created.get("k"));
       assertTrue(l.removed.isEmpty());
-      assertEquals(1, l.modifiedCounter);
-      assertEquals("v", l.modified.get("k"));
+      assertTrue(l.modified.isEmpty());
       assertTrue(l.visited.isEmpty());
 
       Future<Boolean> future2 = remote.set("key", 0, "value");
@@ -70,7 +69,7 @@ public class EmbeddedMemcachedCacheListenerTest extends AbstractInfinispanTest {
 
       assertEquals(2, l.createdCounter);
       assertTrue(l.removed.isEmpty());
-      assertEquals(2, l.modifiedCounter);
+      assertTrue(l.modified.isEmpty());
       assertTrue(l.visited.isEmpty());
 
       Future<Boolean> future3 = remote.set("key", 0, "modifiedValue");
@@ -78,7 +77,7 @@ public class EmbeddedMemcachedCacheListenerTest extends AbstractInfinispanTest {
 
       assertEquals(2, l.createdCounter);
       assertTrue(l.removed.isEmpty());
-      assertEquals(3, l.modifiedCounter);
+      assertEquals(1, l.modifiedCounter);
       assertEquals("modifiedValue", l.modified.get("key"));
       assertTrue(l.visited.isEmpty());
 
@@ -87,7 +86,7 @@ public class EmbeddedMemcachedCacheListenerTest extends AbstractInfinispanTest {
 
       assertEquals(2, l.createdCounter);
       assertTrue(l.removed.isEmpty());
-      assertEquals(4, l.modifiedCounter);
+      assertEquals(2, l.modifiedCounter);
       assertEquals("replacedValue", l.modified.get("k"));
       assertTrue(l.visited.isEmpty());
 

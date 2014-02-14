@@ -435,6 +435,7 @@ public class CacheListenerVisibilityTest extends SingleCacheManagerTest {
          super(latch);
       }
 
+      @CacheEntryCreated
       @CacheEntryModified
       @SuppressWarnings("unused")
       public void entryCreated(CacheEntryEvent e) {

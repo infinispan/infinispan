@@ -12,6 +12,8 @@ import org.infinispan.context.InvocationContext;
 import org.infinispan.interceptors.InterceptorChain;
 import org.infinispan.interceptors.MarshalledValueInterceptor;
 import org.infinispan.interceptors.base.CommandInterceptor;
+import org.infinispan.notifications.cachelistener.annotation.CacheEntryCreated;
+import org.infinispan.notifications.cachelistener.event.CacheEntryCreatedEvent;
 import org.infinispan.persistence.dummy.DummyInMemoryStoreConfigurationBuilder;
 import org.infinispan.notifications.Listener;
 import org.infinispan.notifications.cachelistener.annotation.CacheEntryModified;
@@ -421,6 +423,11 @@ public class MarshalledValueTest extends MultipleCacheManagersTest {
 
       @CacheEntryModified
       public void modified(CacheEntryModifiedEvent e) {
+         if (!e.isPre()) newValue = e.getValue();
+      }
+
+      @CacheEntryCreated
+      public void created(CacheEntryCreatedEvent e) {
          if (!e.isPre()) newValue = e.getValue();
       }
    }

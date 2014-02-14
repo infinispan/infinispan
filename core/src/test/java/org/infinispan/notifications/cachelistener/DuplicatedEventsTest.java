@@ -40,10 +40,10 @@ public class DuplicatedEventsTest extends MultipleCacheManagersTest {
       cacheA.put("a", "a");
 
 		/*
-       * We expect 4 events on both nodes: pre-create, pre-modified, post-modified, post-create
+       * We expect 2 events on both nodes: pre-create, post-create
 		 */
-      assertEquals(4, listenerA.events.size());
-      assertEquals(4, listenerB.events.size());
+      assertEquals(2, listenerA.events.size());
+      assertEquals(2, listenerB.events.size());
 
       checkEvents(listenerA, "a");
       checkEvents(listenerB, "a");
@@ -58,10 +58,10 @@ public class DuplicatedEventsTest extends MultipleCacheManagersTest {
       cacheA.put("b", "b");
 
 		/*
-       * We expect 4 events again
+       * We expect 2 events again
 		 */
-      assertEquals(4, listenerA.events.size());
-      assertEquals(4, listenerB.events.size());
+      assertEquals(2, listenerA.events.size());
+      assertEquals(2, listenerB.events.size());
 
       checkEvents(listenerA, "b");
       checkEvents(listenerB, "b");
@@ -76,10 +76,10 @@ public class DuplicatedEventsTest extends MultipleCacheManagersTest {
       cacheA.put("a0", "a0");
 
 		/*
-       * We expect another 4 events, but on the local node (A in this case) we get 8
+       * We expect another 2 events
 		 */
-      assertEquals(4, listenerA.events.size());
-      assertEquals(4, listenerB.events.size());
+      assertEquals(2, listenerA.events.size());
+      assertEquals(2, listenerB.events.size());
 
       checkEvents(listenerA, "a0");
       checkEvents(listenerB, "a0");
@@ -97,17 +97,9 @@ public class DuplicatedEventsTest extends MultipleCacheManagersTest {
       assertEquals(expectedKey, listener.events.get(0).getKey());
       assertTrue(listener.events.get(0).isPre());
 
-      assertTrue(listener.events.get(1) instanceof CacheEntryModifiedEvent);
+      assertTrue(listener.events.get(1) instanceof CacheEntryCreatedEvent);
       assertEquals(expectedKey, listener.events.get(1).getKey());
-      assertTrue(listener.events.get(1).isPre());
-
-      assertTrue(listener.events.get(2) instanceof CacheEntryModifiedEvent);
-      assertEquals(expectedKey, listener.events.get(2).getKey());
-      assertFalse(listener.events.get(2).isPre());
-
-      assertTrue(listener.events.get(3) instanceof CacheEntryCreatedEvent);
-      assertEquals(expectedKey, listener.events.get(3).getKey());
-      assertFalse(listener.events.get(3).isPre());
+      assertFalse(listener.events.get(1).isPre());
    }
 
    @Listener

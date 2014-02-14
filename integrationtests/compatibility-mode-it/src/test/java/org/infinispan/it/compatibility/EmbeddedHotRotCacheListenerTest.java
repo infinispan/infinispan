@@ -54,27 +54,26 @@ public class EmbeddedHotRotCacheListenerTest extends AbstractInfinispanTest {
       assertEquals(1, l.createdCounter);
       assertEquals("v", l.created.get("k"));
       assertTrue(l.removed.isEmpty());
-      assertEquals(1, l.modifiedCounter);
-      assertEquals("v", l.modified.get("k"));
+      assertTrue(l.modified.isEmpty());
       assertTrue(l.visited.isEmpty());
 
       remote.put("key", "value");
       assertEquals(2, l.createdCounter);
       assertTrue(l.removed.isEmpty());
-      assertEquals(2, l.modifiedCounter);
+      assertTrue(l.modified.isEmpty());
       assertTrue(l.visited.isEmpty());
 
       remote.put("key", "modifiedValue");
       assertEquals(2, l.createdCounter);
       assertTrue(l.removed.isEmpty());
-      assertEquals(3, l.modifiedCounter);
+      assertEquals(1, l.modifiedCounter);
       assertEquals("modifiedValue", l.modified.get("key"));
       assertTrue(l.visited.isEmpty());
 
       remote.replace("k", "replacedValue");
       assertEquals(2, l.createdCounter);
       assertTrue(l.removed.isEmpty());
-      assertEquals(4, l.modifiedCounter);
+      assertEquals(2, l.modifiedCounter);
       assertEquals("replacedValue", l.modified.get("k"));
       assertTrue(l.visited.isEmpty());
 
@@ -114,9 +113,7 @@ public class EmbeddedHotRotCacheListenerTest extends AbstractInfinispanTest {
       assertEquals(2, l.createdCounter); //one event for every put
       assertEquals("value", l.created.get("key"));
       assertEquals("value2", l.created.get("key2"));
-      assertEquals(2, l.modifiedCounter);
-      assertEquals("value", l.modified.get("key"));
-      assertEquals("value2", l.modified.get("key2"));
+      assertTrue(l.modified.isEmpty());
       assertTrue(l.removed.isEmpty());
       assertTrue(l.visited.isEmpty());
 
@@ -125,8 +122,7 @@ public class EmbeddedHotRotCacheListenerTest extends AbstractInfinispanTest {
       remote.putIfAbsent("newKey", "newValue");
       assertEquals(1, l.createdCounter);
       assertEquals("newValue", l.created.get("newKey"));
-      assertEquals(1, l.modifiedCounter);
-      assertEquals("newValue", l.modified.get("newKey"));
+      assertTrue(l.modified.isEmpty());
       assertTrue(l.removed.isEmpty());
       assertTrue(l.visited.isEmpty());
 
@@ -152,7 +148,7 @@ public class EmbeddedHotRotCacheListenerTest extends AbstractInfinispanTest {
       VersionedValue oldVersionedValue = remote.getVersioned("key");
       assertEquals("value", oldVersionedValue.getValue());
       assertEquals(1, l.createdCounter);
-      assertEquals(1, l.modifiedCounter);
+      assertTrue(l.modified.isEmpty());
       assertTrue(l.removed.isEmpty());
       assertEquals(1, l.visitedCounter);
       assertEquals("value", l.visited.get("key"));
@@ -217,22 +213,21 @@ public class EmbeddedHotRotCacheListenerTest extends AbstractInfinispanTest {
       assertEquals(1, l.createdCounter);
       assertEquals("v", l.created.get("k"));
       assertTrue(l.removed.isEmpty());
-      assertEquals(1, l.modifiedCounter);
-      assertEquals("v", l.modified.get("k"));
+      assertTrue(l.modified.isEmpty());
       assertTrue(l.visited.isEmpty());
 
       NotifyingFuture future2 = remote.putAsync("key", "value");
       future2.get(60, TimeUnit.SECONDS);
       assertEquals(2, l.createdCounter);
       assertTrue(l.removed.isEmpty());
-      assertEquals(2, l.modifiedCounter);
+      assertTrue(l.modified.isEmpty());
       assertTrue(l.visited.isEmpty());
 
       NotifyingFuture future3 = remote.putAsync("key", "modifiedValue");
       future3.get(60, TimeUnit.SECONDS);
       assertEquals(2, l.createdCounter);
       assertTrue(l.removed.isEmpty());
-      assertEquals(3, l.modifiedCounter);
+      assertEquals(1, l.modifiedCounter);
       assertEquals("modifiedValue", l.modified.get("key"));
       assertTrue(l.visited.isEmpty());
 
@@ -240,7 +235,7 @@ public class EmbeddedHotRotCacheListenerTest extends AbstractInfinispanTest {
       future4.get(60, TimeUnit.SECONDS);
       assertEquals(2, l.createdCounter);
       assertTrue(l.removed.isEmpty());
-      assertEquals(4, l.modifiedCounter);
+      assertEquals(2, l.modifiedCounter);
       assertEquals("replacedValue", l.modified.get("k"));
       assertTrue(l.visited.isEmpty());
 
