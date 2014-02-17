@@ -157,7 +157,7 @@ public class ReplaceCommand extends AbstractDataWriteCommand implements Metadata
 
    @Override
    public boolean isConditional() {
-      return oldValue != null;
+      return true;
    }
 
    @Override

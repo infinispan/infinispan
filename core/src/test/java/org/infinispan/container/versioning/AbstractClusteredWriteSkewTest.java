@@ -184,22 +184,22 @@ public abstract class AbstractClusteredWriteSkewTest extends MultipleCacheManage
             break;
          case REPLACE:
             finalValue = "v2";
-            rollbackExpected = true;
+            rollbackExpected = initKey;
             c.withFlags(Flag.IGNORE_RETURN_VALUES).replace(key, "v1");
             break;
          case CONDITIONAL_PUT:
             finalValue = "v2";
-            rollbackExpected = true;
+            rollbackExpected = !initKey;
             c.withFlags(Flag.IGNORE_RETURN_VALUES).putIfAbsent(key, "v1");
             break;
          case CONDITIONAL_REMOVE:
             finalValue = "v2";
-            rollbackExpected = true;
+            rollbackExpected = initKey;
             c.withFlags(Flag.IGNORE_RETURN_VALUES).remove(key, "init");
             break;
          case CONDITIONAL_REPLACE:
             finalValue = "v2";
-            rollbackExpected = true;
+            rollbackExpected = initKey;
             c.withFlags(Flag.IGNORE_RETURN_VALUES).replace(key, "init", "v1");
             break;
          default:
