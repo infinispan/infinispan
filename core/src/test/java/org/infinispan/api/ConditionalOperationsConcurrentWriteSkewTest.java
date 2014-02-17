@@ -96,7 +96,6 @@ public class ConditionalOperationsConcurrentWriteSkewTest extends ConditionalOpe
          //tx1 has already committed in cache(0) but not in cache(1)
          //we block the remote get in order to force the tx2 to read the most recent value from cache(0)
          controller.awaitCommit.await();
-         controller.awaitPrepare = new CountDownLatch(1);
          controller.blockRemoteGet = new CountDownLatch(1);
 
          final Future<Boolean> tx2 = fork(new Callable<Boolean>() {
@@ -119,15 +118,14 @@ public class ConditionalOperationsConcurrentWriteSkewTest extends ConditionalOpe
             }
          });
 
-         //await tx2 prepare on cache1. tx2 read the most recent value. it should not apply the replace
-         //neither rollback!
-         controller.awaitPrepare.await();
+         //tx2 will not prepare the transaction remotely since the operation should fail.
+         assertTrue("Tx2 has not finished", tx2.get(20, TimeUnit.SECONDS));
 
          //let everything run normally
          controller.reset();
 
          assertTrue("Tx1 has not finished", tx1.get(20, TimeUnit.SECONDS));
-         assertTrue("Tx2 has not finished", tx2.get(20, TimeUnit.SECONDS));
+
 
          //check if no transactions are active
          assertNoTransactions();
