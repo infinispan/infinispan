@@ -138,10 +138,6 @@ public class ThreadLocalLeakTest extends AbstractInfinispanTest {
          return null;
       }
 
-      // The key to the ThreadLocalMap is a WeakReference object. The referent field of this object
-      // is a reference to the actual ThreadLocal variable
-      Field referentField = Reference.class.getDeclaredField("referent");
-      referentField.setAccessible(true);
       Class<?> entryClass = Class.forName("java.lang.ThreadLocal$ThreadLocalMap$Entry");
       Field valueField = entryClass.getDeclaredField("value");
       valueField.setAccessible(true);
@@ -150,10 +146,10 @@ public class ThreadLocalLeakTest extends AbstractInfinispanTest {
       for (int i=0; i < Array.getLength(table); i++) {
          // Each entry in the table array of ThreadLocalMap is an Entry object
          // representing the thread local reference and its value
-         Object entry = Array.get(table, i);
+         Reference<ThreadLocal<?>> entry = (Reference) Array.get(table, i);
          if (entry != null) {
             // Get a reference to the thread local object and remove it from the table
-            ThreadLocal<?> threadLocal = (ThreadLocal<?>) referentField.get(entry);
+            ThreadLocal<?> threadLocal = entry.get();
             if (threadLocal != null) {
                if (filterThreadLocals(threadLocal)) {
                   log.error("Thread local leak: " + threadLocal);
