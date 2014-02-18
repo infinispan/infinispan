@@ -88,6 +88,7 @@ import org.infinispan.transaction.xa.recovery.SerializableXid;
 import org.infinispan.util.KeyValuePair;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
+import org.infinispan.xsite.statetransfer.XSiteState;
 import org.jboss.marshalling.Marshaller;
 import org.jboss.marshalling.ObjectTable;
 import org.jboss.marshalling.Unmarshaller;
@@ -313,6 +314,7 @@ public class ExternalizerTable implements ObjectTable {
       addInternalExternalizer(new ClusterEventCallable.Externalizer());
       addInternalExternalizer(new ClusterListenerRemoveCallable.Externalizer());
       addInternalExternalizer(new ClusterListenerReplicateCallable.Externalizer());
+      addInternalExternalizer(new XSiteState.XSiteStateExternalizer());
    }
 
    void addInternalExternalizer(AdvancedExternalizer<?> ext) {

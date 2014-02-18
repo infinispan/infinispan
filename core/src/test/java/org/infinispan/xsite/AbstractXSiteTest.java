@@ -9,7 +9,6 @@ import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.remoting.transport.Transport;
 import org.infinispan.test.AbstractCacheTest;
 import org.infinispan.test.TestingUtil;
-import org.infinispan.test.fwk.CleanupAfterMethod;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.infinispan.test.fwk.TransportFlags;
 import org.infinispan.transaction.TransactionTable;
@@ -20,6 +19,8 @@ import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
 import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -35,17 +36,17 @@ public abstract class AbstractXSiteTest extends AbstractCacheTest {
 
    @BeforeMethod(alwaysRun = true) // run even for tests in the unstable_xsite group
    public void createBeforeMethod() throws Throwable {
-      if (isCleanupAfterMethod()) createSites();
+      if (cleanupAfterMethod()) createSites();
    }
 
    @BeforeClass(alwaysRun = true) // run even for tests in the unstable_xsite group
    public void createBeforeClass() throws Throwable {
-      if (!isCleanupAfterMethod()) createSites();
+      if (cleanupAfterTest()) createSites();
    }
 
    @AfterMethod(alwaysRun = true) // run even if the test failed
    protected void clearContent() throws Throwable {
-      if (!isCleanupAfterMethod()) {
+      if (cleanupAfterTest()) {
          for (TestSite ts : sites) {
             TestingUtil.clearContent(ts.cacheManagers);
          }
@@ -95,6 +96,14 @@ public abstract class AbstractXSiteTest extends AbstractCacheTest {
       return site(site).cache(cacheName, index);
    }
 
+   protected <K,V> List<Cache<K,V>> caches(String site) {
+      return caches(site, null);
+   }
+
+   protected <K,V> List<Cache<K,V>> caches(String site, String cacheName) {
+      return Collections.unmodifiableList(site(site).<K,V>getCaches(cacheName));
+   }
+
 
    protected void startCache(String siteName, String cacheName, ConfigurationBuilder configurationBuilder) {
       TestSite site = site(siteName);
@@ -117,7 +126,7 @@ public abstract class AbstractXSiteTest extends AbstractCacheTest {
             if (cacheName != null)
                cm.defineConfiguration(cacheName, builder.build());
 
-            Cache<K, V> cache = (Cache<K, V>) (cacheName == null ? cm.getCache() : cm.getCache(cacheName));
+            Cache<K, V> cache = cacheName == null ? cm.<K,V>getCache() : cm.<K,V>getCache(cacheName);
 
             caches.add(cache);
          }
@@ -142,7 +151,7 @@ public abstract class AbstractXSiteTest extends AbstractCacheTest {
       }
 
       protected void waitForClusterToForm(String cacheName) {
-         List<Cache> caches = getCaches(cacheName);
+         List<Cache<Object, Object>> caches = getCaches(cacheName);
          Cache<Object, Object> cache = caches.get(0);
          TestingUtil.blockUntilViewsReceived(10000, caches);
          if (cache.getCacheConfiguration().clustering().cacheMode().isDistributed()) {
@@ -150,11 +159,10 @@ public abstract class AbstractXSiteTest extends AbstractCacheTest {
          }
       }
 
-      private List<Cache> getCaches(String cacheName) {
-         List<Cache> caches;
-         caches = new ArrayList<Cache>();
+      private <K,V> List<Cache<K,V>> getCaches(String cacheName) {
+         List<Cache<K,V>> caches = new ArrayList<Cache<K,V>>(cacheManagers.size());
          for (EmbeddedCacheManager cm : cacheManagers) {
-            caches.add(cacheName == null ? cm.getCache() : cm.getCache(cacheName));
+            caches.add(cacheName == null ? cm.<K,V>getCache() : cm.<K,V>getCache(cacheName));
          }
          return caches;
       }
@@ -171,10 +179,10 @@ public abstract class AbstractXSiteTest extends AbstractCacheTest {
       public <K, V> Cache<K, V> cache(String cacheName, int index) {
          return cacheManagers.get(index).getCache(cacheName);
       }
-   }
 
-   private boolean isCleanupAfterMethod() {
-      return getClass().getAnnotation(CleanupAfterMethod.class) != null;
+      public Collection<EmbeddedCacheManager> cacheManagers() {
+         return Collections.unmodifiableCollection(cacheManagers);
+      }
    }
 
    protected  TransactionTable txTable(Cache cache) {

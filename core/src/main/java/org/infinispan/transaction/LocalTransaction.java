@@ -43,8 +43,6 @@ public abstract class LocalTransaction extends AbstractCacheTransaction {
 
    private volatile boolean isFromRemoteSite;
 
-   private volatile boolean isFromStateTransfer;
-
    private boolean prepareSent;
    private boolean commitOrRollbackSent;
 
@@ -150,7 +148,7 @@ public abstract class LocalTransaction extends AbstractCacheTransaction {
             ", lockedKeys=" + lockedKeys +
             ", backupKeyLocks=" + backupKeyLocks +
             ", topologyId=" + topologyId +
-            ", isFromStateTransfer=" + isFromStateTransfer +
+            ", stateTransferFlag=" + getStateTransferFlag() +
             "} " + super.toString();
    }
 
@@ -165,12 +163,12 @@ public abstract class LocalTransaction extends AbstractCacheTransaction {
       return readKeys != null && readKeys.contains(key);
    }
 
-   public boolean isFromStateTransfer() {
-      return isFromStateTransfer;
-   }
-
-   public void setFromStateTransfer(boolean isFromStateTransfer) {
-      this.isFromStateTransfer = isFromStateTransfer;
+   public void setStateTransferFlag(Flag stateTransferFlag) {
+      if (this.getStateTransferFlag() == null &&
+            (stateTransferFlag == Flag.PUT_FOR_STATE_TRANSFER ||
+                   stateTransferFlag == Flag.PUT_FOR_X_SITE_STATE_TRANSFER)) {
+         internalSetStateTransferFlag(stateTransferFlag);
+      }
    }
 
    /**

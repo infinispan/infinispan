@@ -230,10 +230,6 @@ public class TxInterceptor extends CommandInterceptor {
       LocalTransaction localTransaction = null;
       if (shouldEnlist(ctx)) {
          localTransaction = enlist((TxInvocationContext) ctx);
-         if (command.hasFlag(Flag.PUT_FOR_STATE_TRANSFER)) {
-            // mark the transaction as originating from state transfer as early as possible
-            localTransaction.setFromStateTransfer(true);
-         }
          boolean implicitWith1Pc = useOnePhaseForAutoCommitTx && localTransaction.isImplicitTransaction();
          if (implicitWith1Pc) {
             //in this situation we don't support concurrent updates so skip locking entirely

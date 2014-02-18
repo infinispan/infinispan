@@ -25,9 +25,12 @@ public class BackupConfigurationBuilder extends AbstractConfigurationChildBuilde
 
    private boolean enabled = true;
 
+   private XSiteStateTransferConfigurationBuilder stateTransferBuilder;
+
    public BackupConfigurationBuilder(ConfigurationBuilder builder) {
       super(builder);
       takeOfflineBuilder = new TakeOfflineConfigurationBuilder(builder, this);
+      this.stateTransferBuilder = new XSiteStateTransferConfigurationBuilder(builder, this);
    }
 
    /**
@@ -79,7 +82,7 @@ public class BackupConfigurationBuilder extends AbstractConfigurationChildBuilde
 
    /**
     * Sets the strategy used for backing up data: sync or async. If not specified defaults
-    * to {@link BackupConfiguration.BackupStrategy.ASYNC}.
+    * to {@link org.infinispan.configuration.cache.BackupConfiguration.BackupStrategy#ASYNC}.
     */
    public BackupConfigurationBuilder strategy(BackupConfiguration.BackupStrategy strategy) {
       this.strategy = strategy;
@@ -99,7 +102,7 @@ public class BackupConfigurationBuilder extends AbstractConfigurationChildBuilde
 
    /**
     * Configures how the system behaves when the backup call fails. Only applies to sync backups.
-    * The default values is  {@link BackupFailurePolicy.WARN}
+    * The default values is  {@link org.infinispan.configuration.cache.BackupFailurePolicy#WARN}
     */
    public BackupConfigurationBuilder backupFailurePolicy(BackupFailurePolicy backupFailurePolicy) {
       this.backupFailurePolicy = backupFailurePolicy;
@@ -130,9 +133,14 @@ public class BackupConfigurationBuilder extends AbstractConfigurationChildBuilde
       return this;
    }
 
+   public XSiteStateTransferConfigurationBuilder stateTransfer() {
+      return this.stateTransferBuilder;
+   }
+
    @Override
    public void validate() {
       takeOfflineBuilder.validate();
+      stateTransferBuilder.validate();
       if (site == null)
          throw new CacheConfigurationException("The 'site' must be specified!");
       if (backupFailurePolicy == BackupFailurePolicy.CUSTOM && (failurePolicyClass == null)) {
@@ -144,12 +152,13 @@ public class BackupConfigurationBuilder extends AbstractConfigurationChildBuilde
    @Override
    public BackupConfiguration create() {
       return new BackupConfiguration(site, strategy, replicationTimeout, backupFailurePolicy, failurePolicyClass,
-                                     useTwoPhaseCommit, takeOfflineBuilder.create(), enabled);
+                                     useTwoPhaseCommit, takeOfflineBuilder.create(), stateTransferBuilder.create(), enabled);
    }
 
    @Override
    public Builder read(BackupConfiguration template) {
       this.takeOfflineBuilder.read(template.takeOffline());
+      this.stateTransferBuilder.read(template.stateTransfer());
       this.site = template.site();
       this.strategy = template.strategy();
       this.backupFailurePolicy = template.backupFailurePolicy();
@@ -175,8 +184,12 @@ public class BackupConfigurationBuilder extends AbstractConfigurationChildBuilde
       if (strategy != that.strategy) return false;
       if (takeOfflineBuilder != null ? !takeOfflineBuilder.equals(that.takeOfflineBuilder) : that.takeOfflineBuilder != null)
          return false;
-      if( useTwoPhaseCommit != that.useTwoPhaseCommit ) return false;
-      if( enabled != that.enabled) return false;
+      if (useTwoPhaseCommit != that.useTwoPhaseCommit) return false;
+      if (enabled != that.enabled) return false;
+      if (stateTransferBuilder != null ?
+            !stateTransferBuilder.equals(that.stateTransferBuilder) :
+            that.stateTransferBuilder != null)
+         return false;
 
       return true;
    }
@@ -189,6 +202,7 @@ public class BackupConfigurationBuilder extends AbstractConfigurationChildBuilde
       result = 31 * result + (backupFailurePolicy != null ? backupFailurePolicy.hashCode() : 0);
       result = 31 * result + (failurePolicyClass != null ? failurePolicyClass.hashCode() : 0);
       result = 31 * result + (takeOfflineBuilder != null ? takeOfflineBuilder.hashCode() : 0);
+      result = 31 * result + (stateTransferBuilder != null ? stateTransferBuilder.hashCode() : 0);
       result = 31 * result + (useTwoPhaseCommit ? 1 : 0);
       return result;
    }
@@ -203,6 +217,7 @@ public class BackupConfigurationBuilder extends AbstractConfigurationChildBuilde
             ", backupFailurePolicy=" + backupFailurePolicy +
             ", failurePolicyClass='" + failurePolicyClass + '\'' +
             ", takeOfflineBuilder=" + takeOfflineBuilder +
+            ", stateTransferBuilder=" + stateTransferBuilder +
             ", enabled=" + enabled +
             '}';
    }

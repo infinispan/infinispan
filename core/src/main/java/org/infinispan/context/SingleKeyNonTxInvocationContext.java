@@ -173,4 +173,10 @@ public final class SingleKeyNonTxInvocationContext implements InvocationContext 
       }
    }
 
+   public void resetState() {
+      this.key = null;
+      this.cacheEntry = null;
+      this.isLocked = false;
+   }
+
 }

@@ -1,6 +1,5 @@
 package org.infinispan.xsite;
 
-import org.infinispan.Cache;
 import org.infinispan.commands.VisitableCommand;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
@@ -29,7 +28,7 @@ public class RollbackNoPrepareOptimisticTest extends AbstractTwoSitesTest {
       ComponentRegistry cr = backup("LON").getAdvancedCache().getComponentRegistry();
       GlobalComponentRegistry gcr = cr.getGlobalComponentRegistry();
       BackupReceiverRepositoryImpl brr = (BackupReceiverRepositoryImpl) gcr.getComponent(BackupReceiverRepository.class);
-      BackupReceiver backupCacheManager = brr.getBackupCacheManager("LON", CacheContainer.DEFAULT_CACHE_NAME);
+      BackupReceiver backupCacheManager = brr.getBackupReceiver("LON", CacheContainer.DEFAULT_CACHE_NAME);
       BackupReceiverWrapper brWrapper = new BackupReceiverWrapper(backupCacheManager);
       brr.replace("LON", CacheContainer.DEFAULT_CACHE_NAME, brWrapper);
 
@@ -50,25 +49,18 @@ public class RollbackNoPrepareOptimisticTest extends AbstractTwoSitesTest {
       assertNull(brWrapper.received);
    }
 
-   public class BackupReceiverWrapper implements BackupReceiver {
-
-      final BackupReceiver br;
+   public class BackupReceiverWrapper extends BackupReceiverDelegator {
 
       volatile VisitableCommand received;
 
       public BackupReceiverWrapper(BackupReceiver br) {
-         this.br = br;
-      }
-
-      @Override
-      public Cache getCache() {
-         return br.getCache();
+         super(br);
       }
 
       @Override
       public Object handleRemoteCommand(VisitableCommand command) throws Throwable {
          received = command;
-         return br.handleRemoteCommand(command);
+         return super.handleRemoteCommand(command);
       }
    }
 

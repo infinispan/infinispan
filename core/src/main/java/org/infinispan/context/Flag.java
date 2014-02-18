@@ -126,6 +126,12 @@ public enum Flag {
    PUT_FOR_STATE_TRANSFER,
 
    /**
+    * Flags the invocation as a put operation done internally by the cross-site state transfer. This flag was created
+    * purely for internal Infinispan usage, and should not be used by clients calling into Infinispan.
+    */
+   PUT_FOR_X_SITE_STATE_TRANSFER,
+
+   /**
     * If this flag is enabled, if a cache store is shared, then storage to the store is skipped.
     */
    SKIP_SHARED_CACHE_STORE,

@@ -5,12 +5,15 @@ import org.infinispan.configuration.cache.BackupFailurePolicy;
 import org.infinispan.configuration.cache.BackupForConfiguration;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.cache.TakeOfflineConfiguration;
+import org.infinispan.configuration.cache.XSiteStateTransferConfiguration;
 import org.infinispan.configuration.global.GlobalConfiguration;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.test.SingleCacheManagerTest;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.testng.annotations.Test;
 
+import static org.infinispan.configuration.cache.XSiteStateTransferConfigurationBuilder.DEFAULT_CHUNK_SIZE;
+import static org.infinispan.configuration.cache.XSiteStateTransferConfigurationBuilder.DEFAULT_TIMEOUT;
 import static org.testng.AssertJUnit.assertEquals;
 import static org.testng.AssertJUnit.assertTrue;
 
@@ -22,11 +25,13 @@ import static org.testng.AssertJUnit.assertTrue;
 public class XSiteFileParsingTest extends SingleCacheManagerTest {
 
    public static final String FILE_NAME = "configs/xsite/xsite-test.xml";
+   private static final TakeOfflineConfiguration DEFAULT_TAKE_OFFLINE = new TakeOfflineConfiguration(0, 0);
+   private static final XSiteStateTransferConfiguration DEFAULT_STATE_TRANSFER =
+         new XSiteStateTransferConfiguration(DEFAULT_CHUNK_SIZE, DEFAULT_TIMEOUT);
 
    @Override
    protected EmbeddedCacheManager createCacheManager() throws Exception {
-      EmbeddedCacheManager embeddedCacheManager = TestCacheManagerFactory.fromXml(FILE_NAME);
-      return embeddedCacheManager;
+      return TestCacheManagerFactory.fromXml(FILE_NAME);
    }
 
    public void testGlobalConfiguration() {
@@ -63,19 +68,21 @@ public class XSiteFileParsingTest extends SingleCacheManagerTest {
       Configuration dcc = cacheManager.getCacheConfiguration("customBackupPolicy");
       assertEquals(dcc.sites().allBackups().size(), 1);
 
-            assertTrue(dcc.sites().allBackups().contains(new BackupConfiguration("NYC2", BackupConfiguration.BackupStrategy.SYNC,
-                                                                              160000, BackupFailurePolicy.CUSTOM,
-                                                                              CountingCustomFailurePolicy.class.getName(),
-                                                                              false,
-                                                                              new TakeOfflineConfiguration(0, 0), true)));
+      assertTrue(dcc.sites().allBackups().contains(new BackupConfiguration("NYC2", BackupConfiguration.BackupStrategy.SYNC,
+                                                                           160000, BackupFailurePolicy.CUSTOM,
+                                                                           CountingCustomFailurePolicy.class.getName(),
+                                                                           false, DEFAULT_TAKE_OFFLINE ,
+                                                                           DEFAULT_STATE_TRANSFER, true)));
       assertEquals(dcc.sites().backupFor().remoteCache(), null);
    }
 
    private void testDefault(Configuration dcc) {
       assertEquals(dcc.sites().allBackups().size(), 2);
       assertTrue(dcc.sites().allBackups().contains(new BackupConfiguration("NYC", BackupConfiguration.BackupStrategy.SYNC,
-                                                                        12003l, BackupFailurePolicy.IGNORE, null, false, new TakeOfflineConfiguration(0, 0), true)));
+                                                                        12003l, BackupFailurePolicy.IGNORE, null, false,
+                                                                        DEFAULT_TAKE_OFFLINE, DEFAULT_STATE_TRANSFER, true)));
       assertTrue(dcc.sites().allBackups().contains(new BackupConfiguration("SFO", BackupConfiguration.BackupStrategy.ASYNC,
-                                                                        10000l, BackupFailurePolicy.WARN, null, false, new TakeOfflineConfiguration(0, 0), true)));
+                                                                        10000l, BackupFailurePolicy.WARN, null, false,
+                                                                        DEFAULT_TAKE_OFFLINE, DEFAULT_STATE_TRANSFER, true)));
    }
 }

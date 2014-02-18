@@ -302,7 +302,7 @@ public class RpcManagerImpl implements RpcManager {
    @Override
    public void invokeRemotelyInFuture(final Collection<Address> recipients, final ReplicableCommand rpc,
                                       final RpcOptions options, final NotifyingNotifiableFuture<Object> future) {
-      if (trace) log.tracef("%s invoking in future call %s to recipient list %s with options &s", t.getAddress(),
+      if (trace) log.tracef("%s invoking in future call %s to recipient list %s with options %s", t.getAddress(),
                             rpc, recipients, options);
       Callable<Object> c = new Callable<Object>() {
          @Override

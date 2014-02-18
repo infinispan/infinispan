@@ -1,5 +1,6 @@
 package org.infinispan.interceptors;
 
+import org.infinispan.context.Flag;
 import org.infinispan.metadata.EmbeddedMetadata;
 import org.infinispan.metadata.Metadata;
 import org.infinispan.commands.FlagAffectedCommand;
@@ -14,7 +15,6 @@ import org.infinispan.container.versioning.VersionGenerator;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.context.impl.TxInvocationContext;
 import org.infinispan.factories.annotations.Inject;
-import org.infinispan.transaction.LocalTransaction;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
@@ -46,7 +46,7 @@ public class VersionedEntryWrappingInterceptor extends EntryWrappingInterceptor 
       }
       wrapEntriesForPrepare(ctx, command);
       EntryVersionsMap newVersionData= null;
-      if (ctx.isOriginLocal() && !((LocalTransaction)ctx.getCacheTransaction()).isFromStateTransfer()) newVersionData = cdl.createNewVersionsAndCheckForWriteSkews(versionGenerator, ctx, (VersionedPrepareCommand) command);
+      if (ctx.isOriginLocal() && !ctx.getCacheTransaction().isFromStateTransfer()) newVersionData = cdl.createNewVersionsAndCheckForWriteSkews(versionGenerator, ctx, (VersionedPrepareCommand) command);
 
       Object retval = invokeNextInterceptor(ctx, command);
 
@@ -73,8 +73,9 @@ public class VersionedEntryWrappingInterceptor extends EntryWrappingInterceptor 
    }
 
    @Override
-   protected void commitContextEntry(CacheEntry entry, InvocationContext ctx, FlagAffectedCommand command, Metadata metadata) {
-      if (ctx.isInTxScope() && !isFromStateTransfer(ctx)) {
+   protected void commitContextEntry(CacheEntry entry, InvocationContext ctx, FlagAffectedCommand command,
+                                     Metadata metadata, Flag stateTransferFlag, boolean l1Invalidation) {
+      if (ctx.isInTxScope() && stateTransferFlag == null) {
          EntryVersion updatedEntryVersion = ((TxInvocationContext) ctx)
                .getCacheTransaction().getUpdatedEntryVersions().get(entry.getKey());
          Metadata commitMetadata;
@@ -89,10 +90,10 @@ public class VersionedEntryWrappingInterceptor extends EntryWrappingInterceptor 
             commitMetadata = metadata != null ? metadata : entry.getMetadata();
          }
 
-         cdl.commitEntry(entry, commitMetadata, command, ctx);
+         cdl.commitEntry(entry, commitMetadata, command, ctx, null, l1Invalidation);
       } else {
          // This could be a state transfer call!
-         cdl.commitEntry(entry, entry.getMetadata(), command, ctx);
+         cdl.commitEntry(entry, entry.getMetadata(), command, ctx, stateTransferFlag, l1Invalidation);
       }
    }
 

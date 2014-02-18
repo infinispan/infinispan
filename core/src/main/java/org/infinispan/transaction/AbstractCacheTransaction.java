@@ -80,6 +80,8 @@ public abstract class AbstractCacheTransaction implements CacheTransaction {
     */
    protected final Equivalence<Object> keyEquivalence;
 
+   private volatile Flag stateTransferFlag;
+
    public final boolean isMarkedForRollback() {
       return isMarkedForRollback;
    }
@@ -335,5 +337,19 @@ public abstract class AbstractCacheTransaction implements CacheTransaction {
    @Override
    public EntryVersionsMap getVersionsRead() {
       return versionsSeenMap == null ? new EntryVersionsMap() : versionsSeenMap;
+   }
+
+   public final boolean isFromStateTransfer() {
+      return stateTransferFlag != null;
+   }
+
+   public final Flag getStateTransferFlag() {
+      return stateTransferFlag;
+   }
+
+   public abstract void setStateTransferFlag(Flag stateTransferFlag);
+
+   protected final void internalSetStateTransferFlag(Flag stateTransferFlag) {
+      this.stateTransferFlag = stateTransferFlag;
    }
 }

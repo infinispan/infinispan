@@ -11,6 +11,7 @@ import org.infinispan.remoting.rpc.RpcManager;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
+import org.infinispan.xsite.statetransfer.XSiteStateTransferManager;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -36,13 +37,16 @@ public class XSiteAdminOperations {
    private Cache cache;
 
    private volatile BackupSender backupSender;
+   private XSiteStateTransferManager stateTransferManager;
 
    @Inject
-   public void init(RpcManager rpcManager, BackupSender backupSender, Cache cache) {
+   public void init(RpcManager rpcManager, BackupSender backupSender, Cache cache,
+                    XSiteStateTransferManager stateTransferManager) {
       this.backupSender = backupSender;
       this.rpcManager = rpcManager;
       this.backupSender = backupSender;
       this.cache = cache;
+      this.stateTransferManager = stateTransferManager;
    }
 
    @ManagedOperation(description = "Check whether the given backup site is offline or not.", displayName = "Check whether the given backup site is offline or not.")
@@ -50,7 +54,7 @@ public class XSiteAdminOperations {
       //also consider local node
       OfflineStatus offlineStatus = backupSender.getOfflineStatus(site);
       if (offlineStatus == null)
-         return "Incorrect site name: " + offlineStatus;
+         return "Incorrect site name: " + site;
       log.tracef("This node's status is %s", offlineStatus);
 
       XSiteAdminCommand command = new XSiteAdminCommand(cache.getName(), site, XSiteAdminCommand.AdminOperation.SITE_STATUS, null, null);
@@ -112,7 +116,8 @@ public class XSiteAdminOperations {
          }
       }
       for (Map.Entry<Address, Response> response : responses.entrySet()) {
-         Map<String, Boolean> status = (Map<String, Boolean>) ((SuccessfulResponse)response.getValue()).getResponseValue();
+         @SuppressWarnings("unchecked")
+         Map<String, Boolean> status = (Map<String, Boolean>) ((SuccessfulResponse) response.getValue()).getResponseValue();
          for (Map.Entry<String, Boolean> entry : status.entrySet()) {
             List<Address> addresses = result.get(entry.getKey());
             if (addresses == null)
@@ -146,7 +151,7 @@ public class XSiteAdminOperations {
       return resultStr.toString();
    }
 
-   @ManagedOperation(description = "Takes this site offline in all nodes in the cluster.",displayName = "Takes this site offline in all nodes in the cluster.")
+   @ManagedOperation(description = "Takes this site offline in all nodes in the cluster.", displayName = "Takes this site offline in all nodes in the cluster.")
    public String takeSiteOffline(@Parameter(name = "site", description = "The name of the backup site") String site) {
       OfflineStatus offlineStatus = backupSender.getOfflineStatus(site);
       if (offlineStatus == null)
@@ -175,7 +180,7 @@ public class XSiteAdminOperations {
    public String setTakeOfflineMinTimeToWait(
          @Parameter(name = "site", description = "The name of the backup site") String site,
          @Parameter(name = "minTimeToWait", description = "The minimum amount of time in milliseconds to wait before taking a site offline", type = "long") long minTimeToWait) {
-      return takeOffline(site, null,  minTimeToWait);
+      return takeOffline(site, null, minTimeToWait);
    }
 
    @ManagedOperation(description = "Amends the values for 'TakeOffline' functionality on all the nodes in the cluster.", displayName = "Amends the values for 'TakeOffline' functionality on all the nodes in the cluster.")
@@ -204,7 +209,7 @@ public class XSiteAdminOperations {
    public String bringSiteOnline(@Parameter(name = "site", description = "The name of the backup site") String site) {
       OfflineStatus offlineStatus = backupSender.getOfflineStatus(site);
       if (offlineStatus == null)
-         return "Incorrect site name: " + offlineStatus;
+         return "Incorrect site name: " + site;
       backupSender.bringSiteOnline(site);
 
       XSiteAdminCommand command = new XSiteAdminCommand(cache.getName(), site, XSiteAdminCommand.AdminOperation.BRING_ONLINE, null, null);
@@ -213,6 +218,31 @@ public class XSiteAdminOperations {
       List<Address> failed = checkForErrors(responses);
 
       return returnFailureOrSuccess(failed, "Could not take the site online on nodes:");
+   }
+
+   @ManagedOperation(displayName = "Push state to site",
+                     description = "Pushes the state of this cache to the remote site. " +
+                           "The remote site will be bring back online",
+                     name = "pushState")
+   public final String pushState(@Parameter(description = "The destination site name", name = "SiteName") String siteName) {
+      String status = bringSiteOnline(siteName);
+      if (!SUCCESS.equals(status)) {
+         return String.format("Unable to pushState to '%s'. %s", siteName, status);
+      }
+      try {
+         stateTransferManager.startPushState(siteName);
+      } catch (Throwable throwable) {
+         log.debugf(throwable, "Unable to pushState to '%s'.", siteName);
+         return String.format("Unable to pushState to '%s'. %s", siteName, throwable.getLocalizedMessage());
+      }
+      return SUCCESS;
+   }
+
+   @ManagedOperation(displayName = "Running State Transfer",
+                     description = "Shows a list of sites to where this cache is pushing state.",
+                     name = "RunningStateTransfer")
+   public final List<String> getRunningStateTransfer() {
+      return stateTransferManager.getRunningStateTransfers();
    }
 
    private List<Address> checkForErrors(Map<Address, Response> responses) {
@@ -235,7 +265,7 @@ public class XSiteAdminOperations {
       Map<Address, Response> responses = invokeRemotely(command);
 
       //also amend locally
-      offlineStatus.amend(afterFailures,minTimeToWait);
+      offlineStatus.amend(afterFailures, minTimeToWait);
 
       List<Address> failed = checkForErrors(responses);
 

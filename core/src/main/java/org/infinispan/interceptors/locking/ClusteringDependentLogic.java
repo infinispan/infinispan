@@ -23,6 +23,7 @@ import org.infinispan.factories.scopes.Scopes;
 import org.infinispan.notifications.cachelistener.CacheNotifier;
 import org.infinispan.remoting.rpc.RpcManager;
 import org.infinispan.remoting.transport.Address;
+import org.infinispan.statetransfer.CommitManager;
 import org.infinispan.statetransfer.StateTransferLock;
 import org.infinispan.statetransfer.StateTransferManager;
 import org.infinispan.transaction.WriteSkewHelper;
@@ -54,7 +55,8 @@ public interface ClusteringDependentLogic {
 
    Address getPrimaryOwner(Object key);
 
-   void commitEntry(CacheEntry entry, Metadata metadata, FlagAffectedCommand command, InvocationContext ctx);
+   void commitEntry(CacheEntry entry, Metadata metadata, FlagAffectedCommand command, InvocationContext ctx,
+                    Flag trackFlag, boolean l1Invalidation);
 
    List<Address> getOwners(Collection<Object> keys);
 
@@ -82,14 +84,17 @@ public interface ClusteringDependentLogic {
       protected boolean totalOrder;
       private WriteSkewHelper.KeySpecificLogic keySpecificLogic;
       private ReentrantPerEntryLockContainer lockContainer;
+      private CommitManager commitManager;
 
       @Inject
-      public void init(DataContainer dataContainer, CacheNotifier notifier, Configuration configuration) {
+      public void init(DataContainer dataContainer, CacheNotifier notifier, Configuration configuration,
+                       CommitManager commitManager) {
          this.dataContainer = dataContainer;
          this.notifier = notifier;
          this.totalOrder = configuration.transaction().transactionProtocol().isTotalOrder();
          this.keySpecificLogic = initKeySpecificLogic(totalOrder);
          this.lockContainer = createLockContainer(configuration);
+         this.commitManager = commitManager;
       }
 
       @Override
@@ -191,9 +196,9 @@ public interface ClusteringDependentLogic {
          }
       }
 
-      protected final void commitCacheEntry(CacheEntry entry, Metadata metadata) {
+      protected final void commitCacheEntry(CacheEntry entry, Metadata metadata, Flag trackFlag, boolean l1Invalidation) {
          forceLock(entry.getKey());
-         entry.commit(dataContainer, metadata);
+         commitManager.commit(entry, metadata, trackFlag, l1Invalidation);
          unlock(entry.getKey());
       }
 
@@ -260,14 +265,15 @@ public interface ClusteringDependentLogic {
       }
 
       @Override
-      public void commitEntry(CacheEntry entry, Metadata metadata, FlagAffectedCommand command, InvocationContext ctx) {
+      public void commitEntry(CacheEntry entry, Metadata metadata, FlagAffectedCommand command, InvocationContext ctx,
+                              Flag trackFlag, boolean l1Invalidation) {
          // Cache flags before they're reset
          // TODO: Can the reset be done after notification instead?
          boolean created = entry.isCreated();
          boolean removed = entry.isRemoved();
          boolean evicted = entry.isEvicted();
 
-         commitCacheEntry(entry, metadata);
+         commitCacheEntry(entry, metadata, trackFlag, l1Invalidation);
 
          // Notify after events if necessary
          notifyCommitEntry(created, removed, evicted, entry, ctx, command);
@@ -327,14 +333,14 @@ public interface ClusteringDependentLogic {
 
       @Override
       public void commitEntry(CacheEntry entry, Metadata metadata,
-            FlagAffectedCommand command, InvocationContext ctx) {
+                              FlagAffectedCommand command, InvocationContext ctx, Flag trackFlag, boolean l1Invalidation) {
          // Cache flags before they're reset
          // TODO: Can the reset be done after notification instead?
          boolean created = entry.isCreated();
          boolean removed = entry.isRemoved();
          boolean evicted = entry.isEvicted();
 
-         commitCacheEntry(entry, metadata);
+         commitCacheEntry(entry, metadata, trackFlag, l1Invalidation);
 
          // Notify after events if necessary
          notifyCommitEntry(created, removed, evicted, entry, ctx, command);
@@ -374,10 +380,11 @@ public interface ClusteringDependentLogic {
       }
 
       @Override
-      public void commitEntry(CacheEntry entry, Metadata metadata, FlagAffectedCommand command, InvocationContext ctx) {
+      public void commitEntry(CacheEntry entry, Metadata metadata, FlagAffectedCommand command, InvocationContext ctx,
+                              Flag trackFlag, boolean l1Invalidation) {
          stateTransferLock.acquireSharedTopologyLock();
          try {
-            super.commitEntry(entry, metadata, command, ctx);
+            super.commitEntry(entry, metadata, command, ctx, trackFlag, l1Invalidation);
          } finally {
             stateTransferLock.releaseSharedTopologyLock();
          }
@@ -444,7 +451,8 @@ public interface ClusteringDependentLogic {
       }
 
       @Override
-      public void commitEntry(CacheEntry entry, Metadata metadata, FlagAffectedCommand command, InvocationContext ctx) {
+      public void commitEntry(CacheEntry entry, Metadata metadata, FlagAffectedCommand command, InvocationContext ctx,
+                              Flag trackFlag, boolean l1Invalidation) {
          // Don't allow the CH to change (and state transfer to invalidate entries)
          // between the ownership check and the commit
          stateTransferLock.acquireSharedTopologyLock();
@@ -471,10 +479,9 @@ public interface ClusteringDependentLogic {
                      } else {
                         builder = entry.getMetadata().builder();
                      }
-                     Metadata newMetadata = builder
+                     metadata = builder
                            .lifespan(configuration.clustering().l1().lifespan())
                            .build();
-                     metadata = newMetadata;
                   }
                } else {
                   doCommit = false;
@@ -491,7 +498,7 @@ public interface ClusteringDependentLogic {
             }
 
             if (doCommit)
-               commitCacheEntry(entry, metadata);
+               commitCacheEntry(entry, metadata, trackFlag, l1Invalidation);
             else
                entry.rollback();
 

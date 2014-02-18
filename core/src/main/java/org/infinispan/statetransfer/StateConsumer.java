@@ -40,31 +40,6 @@ public interface StateConsumer {
    void stop();
 
    /**
-    * Receive notification of updated keys right before they are committed in DataContainer.
-    *
-    * @param key the key that is being modified
-    */
-   void addUpdatedKey(Object key);
-
-   /**
-    * Checks if a given key was updated by user code during state transfer (and consequently it is untouchable by state transfer).
-    *
-    * @param key the key to check
-    * @return true if the key is known to be modified, false otherwise
-    */
-   boolean isKeyUpdated(Object key);
-
-   /**
-    * Run a callback only if the key was not updated by user code, and prevent user code from updating
-    * the key while running the callback.
-    *
-    * @param key The key to check
-    * @param callback The callback to run
-    * @return {@code true} if the callback was executed, {@code false} otherwise.
-    */
-   boolean executeIfKeyIsNotUpdated(Object key, Runnable callback);
-
-   /**
     * Stops applying incoming state. Also stops tracking updated keys. Should be called at the end of state transfer or
     * when a ClearCommand is committed during state transfer.
     */
