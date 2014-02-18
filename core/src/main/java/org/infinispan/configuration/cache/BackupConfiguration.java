@@ -13,10 +13,11 @@ public class BackupConfiguration {
    private final String failurePolicyClass;
    private final boolean useTwoPhaseCommit;
    private final TakeOfflineConfiguration takeOfflineConfiguration;
+   private final XSiteStateTransferConfiguration stateTransferConfiguration;
    private final boolean enabled;
 
    public BackupConfiguration(String site, BackupStrategy strategy, long timeout, BackupFailurePolicy backupFailurePolicy,
-                              String failurePolicyClass, boolean useTwoPhaseCommit, TakeOfflineConfiguration takeOfflineConfiguration, boolean enabled) {
+                              String failurePolicyClass, boolean useTwoPhaseCommit, TakeOfflineConfiguration takeOfflineConfiguration, XSiteStateTransferConfiguration stateTransferConfiguration, boolean enabled) {
       this.site = site;
       this.strategy = strategy;
       this.timeout = timeout;
@@ -24,6 +25,7 @@ public class BackupConfiguration {
       this.failurePolicyClass = failurePolicyClass;
       this.useTwoPhaseCommit = useTwoPhaseCommit;
       this.takeOfflineConfiguration = takeOfflineConfiguration;
+      this.stateTransferConfiguration = stateTransferConfiguration;
       this.enabled = enabled;
    }
 
@@ -80,6 +82,10 @@ public class BackupConfiguration {
       return enabled;
    }
 
+   public XSiteStateTransferConfiguration stateTransfer() {
+      return stateTransferConfiguration;
+   }
+
    @Override
    public boolean equals(Object o) {
       if (this == o) return true;
@@ -92,9 +98,13 @@ public class BackupConfiguration {
       if (failurePolicyClass != null ? !failurePolicyClass.equals(that.failurePolicyClass) : that.failurePolicyClass != null)
          return false;
       if (site != null ? !site.equals(that.site) : that.site != null) return false;
-      if( useTwoPhaseCommit != that.useTwoPhaseCommit ) return false;
+      if (useTwoPhaseCommit != that.useTwoPhaseCommit) return false;
       if (strategy != that.strategy) return false;
       if (enabled != that.enabled) return false;
+      if (stateTransferConfiguration != null ?
+            !stateTransferConfiguration.equals(that.stateTransferConfiguration) :
+            that.stateTransferConfiguration != null)
+         return false;
 
       return true;
    }
@@ -106,6 +116,7 @@ public class BackupConfiguration {
       result = 31 * result + (int) (timeout ^ (timeout >>> 32));
       result = 31 * result + (backupFailurePolicy != null ? backupFailurePolicy.hashCode() : 0);
       result = 31 * result + (failurePolicyClass != null ? failurePolicyClass.hashCode() : 0);
+      result = 31 * result + (stateTransferConfiguration != null ? stateTransferConfiguration.hashCode() : 0);
       result = 31 * result + (useTwoPhaseCommit ? 1 : 0);
       return result;
    }
@@ -119,6 +130,7 @@ public class BackupConfiguration {
             ", useTwoPhaseCommit=" + useTwoPhaseCommit +
             ", backupFailurePolicy=" + backupFailurePolicy +
             ", failurePolicyClass='" + failurePolicyClass + '\'' +
+            ", stateTransferConfiguration=" + stateTransferConfiguration +
             ", enabled='" + enabled + '\'' +
             '}';
    }

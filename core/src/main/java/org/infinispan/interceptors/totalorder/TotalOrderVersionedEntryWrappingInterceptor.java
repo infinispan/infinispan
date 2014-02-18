@@ -1,5 +1,6 @@
 package org.infinispan.interceptors.totalorder;
 
+import org.infinispan.context.Flag;
 import org.infinispan.metadata.EmbeddedMetadata;
 import org.infinispan.metadata.Metadata;
 import org.infinispan.commands.FlagAffectedCommand;
@@ -81,8 +82,9 @@ public class TotalOrderVersionedEntryWrappingInterceptor extends VersionedEntryW
    }
 
    @Override
-   protected void commitContextEntry(CacheEntry entry, InvocationContext ctx, FlagAffectedCommand command, Metadata metadata) {
-      if (ctx.isInTxScope() && !isFromStateTransfer(ctx)) {
+   protected void commitContextEntry(CacheEntry entry, InvocationContext ctx, FlagAffectedCommand command,
+                                     Metadata metadata, Flag stateTransferFlag, boolean l1Invalidation) {
+      if (ctx.isInTxScope() && stateTransferFlag == null) {
          Metadata commitMetadata;
          // If user provided version, use it, otherwise generate/increment accordingly
          ClusteredRepeatableReadEntry clusterMvccEntry = (ClusteredRepeatableReadEntry) entry;
@@ -99,10 +101,10 @@ public class TotalOrderVersionedEntryWrappingInterceptor extends VersionedEntryW
          else
             commitMetadata = metadata.builder().version(newVersion).build();
 
-         cdl.commitEntry(entry, commitMetadata, command, ctx);
+         cdl.commitEntry(entry, commitMetadata, command, ctx, null, l1Invalidation);
       } else {
          // This could be a state transfer call!
-         cdl.commitEntry(entry, entry.getMetadata(), command, ctx);
+         cdl.commitEntry(entry, entry.getMetadata(), command, ctx, stateTransferFlag, l1Invalidation);
       }
    }
 }

@@ -1,11 +1,11 @@
 package org.infinispan.xsite.offline;
 
-import org.infinispan.commands.ReplicableCommand;
 import org.infinispan.remoting.transport.AbstractDelegatingTransport;
 import org.infinispan.remoting.transport.BackupResponse;
 import org.infinispan.remoting.transport.Transport;
 import org.infinispan.util.logging.Log;
 import org.infinispan.xsite.XSiteBackup;
+import org.infinispan.xsite.XSiteReplicateCommand;
 
 import java.util.Collection;
 import java.util.Collections;
@@ -28,7 +28,7 @@ public class DelegatingTransport extends AbstractDelegatingTransport {
    }
 
    @Override
-   public BackupResponse backupRemotely(final Collection<XSiteBackup> backups, ReplicableCommand rpcCommand) throws Exception {
+   public BackupResponse backupRemotely(final Collection<XSiteBackup> backups, XSiteReplicateCommand rpcCommand) throws Exception {
       return new BackupResponse() {
 
          final long creationTime = System.currentTimeMillis();

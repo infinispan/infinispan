@@ -33,7 +33,7 @@ public class BackupCacheStoppedTest extends AbstractTwoSitesTest {
          @Override
          public boolean isSatisfied() throws Exception {
             BackupReceiverRepositoryImpl component = (BackupReceiverRepositoryImpl) gcr.getComponent(BackupReceiverRepository.class);
-            return component.getBackupReceiver(site, EmbeddedCacheManager.DEFAULT_CACHE_NAME) == null;
+            return component.get(site, EmbeddedCacheManager.DEFAULT_CACHE_NAME) == null;
          }
       });
 

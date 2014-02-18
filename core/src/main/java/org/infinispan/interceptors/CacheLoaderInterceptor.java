@@ -315,7 +315,7 @@ public class CacheLoaderInterceptor extends JmxStatsCommandInterceptor {
             //in ApplyDeltaCommand we need to store the entry loaded and not the entry wrapped.
             CacheEntry entry = entryFactory.wrapEntryForPut(ctx, key, ice, false, cmd, false);
             entry.setLoaded(true); // mark the entry as loaded from the store
-            cdl.commitEntry(entry, null, cmd, ctx);
+            cdl.commitEntry(entry, null, cmd, ctx, null, false);
             entry.setLoaded(false); //entry is in DataContainer. Un-mark the load()
          }
          ctx.putLookedUpEntry(key, ice);
@@ -378,7 +378,7 @@ public class CacheLoaderInterceptor extends JmxStatsCommandInterceptor {
 
          if (!isDelta) {
             entry.setLoaded(true); // mark the entry as loaded from the store
-            cdl.commitEntry(entry, null, cmd, ctx);
+            cdl.commitEntry(entry, null, cmd, ctx, null, false);
             entry.setLoaded(false);
          }
 

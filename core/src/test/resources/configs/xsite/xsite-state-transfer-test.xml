@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<infinispan
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="urn:infinispan:config:6.0 http://www.infinispan.org/schemas/infinispan-config-6.0.xsd"
+        xmlns="urn:infinispan:config:6.0">
+
+    <global>
+
+        <site local="LON"/>
+
+        <transport clusterName="infinispan-cluster" distributedSyncTimeout="50000" nodeName="Jalapeno" machineId="m1"
+                   rackId="r1" siteId="s1">
+            <!-- Note that the JGroups transport uses sensible defaults if no configuration property is defined. -->
+            <properties>
+                <property name="configurationFile" value="jgroups-udp.xml"/>
+            </properties>
+            <!-- See the JGroupsTransport javadocs for more flags -->
+        </transport>
+    </global>
+
+    <default>
+        <locking concurrencyLevel="100" lockAcquisitionTimeout="1000"/>
+        <sites>
+            <backups>
+                <backup site="NYC" strategy="SYNC" backupFailurePolicy="WARN" timeout="12003">
+                    <stateTransfer chunkSize="123" timeout="4567" />
+                </backup>
+            </backups>
+            <backupFor remoteCache="someCache" remoteSite="SFO"/>
+        </sites>
+        <jmxStatistics enabled="false"/>
+    </default>
+
+    <namedCache name="inheritor"/>
+
+    <namedCache name="noStateTransfer">
+        <sites>
+            <backups>
+                <backup site="NYC" strategy="SYNC" backupFailurePolicy="WARN" timeout="12003"/>
+            </backups>
+            <backupFor/>
+        </sites>
+    </namedCache>
+
+    <namedCache name="stateTransferDifferentConfiguration">
+        <sites>
+            <backups>
+                <backup site="NYC" strategy="SYNC" backupFailurePolicy="WARN" timeout="12003">
+                    <stateTransfer chunkSize="098" timeout="7654" />
+                </backup>
+            </backups>
+        </sites>
+    </namedCache>
+
+</infinispan>

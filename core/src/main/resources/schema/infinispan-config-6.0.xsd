@@ -1268,6 +1268,31 @@
                   </xs:attribute>
               </xs:complexType>
           </xs:element>
+          <xs:element name="stateTransfer" minOccurs="0">
+              <xs:annotation>
+                  <xs:documentation>
+                      Configures the properties needed to transfer the state for this site.
+                  </xs:documentation>
+              </xs:annotation>
+              <xs:complexType>
+                  <xs:attribute name="chunkSize" type="xs:int" default="512">
+                      <xs:annotation>
+                          <xs:documentation>
+                              If &gt; 0, the state will be transferred in batches of {@code chunkSize} cache entries.
+                              If &lt;= 0, the state will be transferred in all at once. Not recommended. Defaults to 512.
+                          </xs:documentation>
+                      </xs:annotation>
+                  </xs:attribute>
+                  <xs:attribute name="timeout" type="xs:long" default="1200000">
+                      <xs:annotation>
+                          <xs:documentation>
+                              The time (in milliseconds) to wait for the backup site acknowledge the state chunk
+                              received and applied. Default value is 20 min.
+                          </xs:documentation>
+                      </xs:annotation>
+                  </xs:attribute>
+              </xs:complexType>
+          </xs:element>
       </xs:sequence>
       <xs:attribute name="site" type="xs:string" use="required">
           <xs:annotation>

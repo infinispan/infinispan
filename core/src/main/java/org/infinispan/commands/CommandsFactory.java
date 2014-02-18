@@ -34,6 +34,11 @@ import org.infinispan.statetransfer.StateRequestCommand;
 import org.infinispan.statetransfer.StateResponseCommand;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.transaction.xa.GlobalTransaction;
+import org.infinispan.xsite.SingleXSiteRpcCommand;
+import org.infinispan.xsite.XSiteAdminCommand;
+import org.infinispan.xsite.statetransfer.XSiteState;
+import org.infinispan.xsite.statetransfer.XSiteStatePushCommand;
+import org.infinispan.xsite.statetransfer.XSiteStateTransferControlCommand;
 
 import javax.transaction.xa.Xid;
 import java.util.Collection;
@@ -42,6 +47,9 @@ import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.Callable;
+
+import static org.infinispan.xsite.XSiteAdminCommand.*;
+import static org.infinispan.xsite.statetransfer.XSiteStateTransferControlCommand.*;
 
 /**
  * A factory to build commands, initializing and injecting dependencies accordingly.  Commands built for a specific,
@@ -287,20 +295,20 @@ public interface CommandsFactory {
     * Builds a {@link org.infinispan.commands.remote.recovery.TxCompletionNotificationCommand}.
     */
    TxCompletionNotificationCommand buildTxCompletionNotificationCommand(Xid xid, GlobalTransaction globalTransaction);
-   
+
    /**
-    * Builds a DistributedExecuteCommand used for migration and execution of distributed Callables and Runnables. 
-    * 
+    * Builds a DistributedExecuteCommand used for migration and execution of distributed Callables and Runnables.
+    *
     * @param callable the callable task
     * @param sender sender's Address
-    * @param keys keys used in Callable 
+    * @param keys keys used in Callable
     * @return a DistributedExecuteCommand
     */
    <T>DistributedExecuteCommand<T> buildDistributedExecuteCommand(Callable<T> callable, Address sender, Collection keys);
-   
+
    /**
     * Builds a MapCombineCommand used for migration and map phase execution of MapReduce tasks.
-    * 
+    *
     * @param m Mapper for MapReduceTask
     * @param r Combiner for MapReduceTask
     * @param keys keys used in MapReduceTask
@@ -309,10 +317,10 @@ public interface CommandsFactory {
    <KIn, VIn, KOut, VOut> MapCombineCommand<KIn, VIn, KOut, VOut> buildMapCombineCommand(
             String taskId, Mapper<KIn, VIn, KOut, VOut> m, Reducer<KOut, VOut> r,
             Collection<KIn> keys);
-   
+
    /**
     * Builds a ReduceCommand used for migration and reduce phase execution of MapReduce tasks.
-    * 
+    *
     * @param r Reducer for MapReduceTask
     * @param keys keys used in MapReduceTask
     * @return created ReduceCommand
@@ -337,11 +345,11 @@ public interface CommandsFactory {
     * @see org.infinispan.commands.remote.recovery.TxCompletionNotificationCommand
     */
    TxCompletionNotificationCommand buildTxCompletionNotificationCommand(long internalId);
-   
-   
+
+
    /**
-    * Builds a ApplyDeltaCommand used for applying Delta objects to DeltaAware containers stored in cache 
-    * 
+    * Builds a ApplyDeltaCommand used for applying Delta objects to DeltaAware containers stored in cache
+    *
     * @return ApplyDeltaCommand instance
     * @see ApplyDeltaCommand
     */
@@ -362,9 +370,40 @@ public interface CommandsFactory {
 
    /**
     * Builds CancelCommandCommand used to cancel other commands executing on Infinispan cluster
-    * 
+    *
     * @param commandUUID UUID for command to cancel
     * @return created CancelCommandCommand
     */
    CancelCommand buildCancelCommandCommand(UUID commandUUID);
+
+   /**
+    * Builds XSiteStateTransferControlCommand used to control the-cross site state transfer.
+    *
+    * @param control  the control operation
+    * @param siteName the site name, needed for some control operations.
+    * @return the XSiteStateTransferControlCommand created
+    */
+   XSiteStateTransferControlCommand buildXSiteStateTransferControlCommand(StateTransferControl control, String siteName);
+
+   /**
+    * Builds XSiteAdminCommand used to perform system administrator operations.
+    *
+    * @return the XSiteAdminCommand created
+    */
+   XSiteAdminCommand buildXSiteAdminCommand(String siteName, AdminOperation op, Integer afterFailures, Long minTimeToWait);
+
+   /**
+    * Builds XSiteStatePushCommand used to transfer a single chunk of data between sites.
+    *
+    * @param chunk the data chunk
+    * @return the XSiteStatePushCommand created
+    */
+   XSiteStatePushCommand buildXSiteStatePushCommand(XSiteState[] chunk);
+
+   /**
+    * Builds SingleRpcCommand used to perform {@link org.infinispan.commands.VisitableCommand} on the backup site,
+    * @param command the visitable command.
+    * @return the SingleXSiteRpcCommand created
+    */
+   SingleXSiteRpcCommand buildSingleXSiteRpcCommand(VisitableCommand command);
 }

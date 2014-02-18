@@ -253,8 +253,94 @@ lon.sites().addBackup()
 ----
 
 ==== Taking a site back online
-In order to bring a site back online after being taken offline, one can use the JMX console and invoke the "bringSiteOnline(siteName)" operation on the _XSiteAdmin_ managed bean. At the moment this method would need to be invoked on all the nodes within the site(further releases will overcome this limitation). 
+In order to bring a site back online after being taken offline, one can use the JMX console and invoke the "bringSiteOnline(siteName)" operation on the _XSiteAdmin_ managed bean. At the moment this method would need to be invoked on all the nodes within the site(further releases will overcome this limitation).
 
+=== State Transfer between sites
+
+NOTE: This feature is available since Infinispan *7.0.0.Alpha2*
+
+CAUTION: This is an experimental feature. Please check the release notes for more information about what is implemented.
+
+When a new site is bough back online, it is necessary to re-sync the site with the most recent updates. This feature
+allows state to be transferred from one site to another.
+
+The state transfer is triggered manually by a system administrator (or other responsible entity) via JMX. The operation
+can be found over the +XSiteAdminOperations+ managed bean and it is named +pushState(String)+. The system
+administrator should invoke this operation in the provider site (i.e. the site that will send the state) and
+set the name of the consumer site (i.e. the site that will receive the state). The figure below shows where to find
+the +pushState(String)+ operation using JConsole:
+
+image::images/xsite-state-transfer.png["JConsole pushState operation",height=495,width=720]
+
+NOTE: The +pushState(siteName)+ operation will automatically bring the new site online. The system administrator does
+not need to bring the site online first.
+
+The consumer site can be in any state (online or offline) in respect to the provider site and the system administrator
+can trigger the push state at any time. The system will ignore multiple invocations if the provider site is already
+pushing state to the consumer site.
+
+It is worth to refer that it is not necessary to consumer site to be in an empty state. But be aware, the existing keys
+can be overwritten but they are never deleted. In other words, if a key +K+ does not exists in the provider site but it
+exists in consumer site, it will not be deleted. In other way, if a key +K+ exists in both sites, it will be overwritten
+in the consumer site.
+
+For more technical information, you can check the Cross Site design document (See <<x-site-reference, Reference>>).
+
+==== Configuration
+State transfer between sites cannot be enabled or disabled but it allows to tune some parameters. The values shown
+below are the default values:
+
+.infinispan.xml
+[source,xml]
+----
+
+<namedCache name="xSiteStateTransfer">
+   ...
+    <sites>
+        <backups>
+           <backup site="NYC" strategy="SYNC" backupFailurePolicy="FAIL">
+               <stateTransfer chunkSize="512" timeout="1200000" />
+           </backup>
+        </backups>
+    </sites>
+    ...
+</namedCache>
+
+----
+
+The equivalent programmatic configuration is:
+
+[source,java]
+----
+
+lon.sites().addBackup()
+      .site("NYC")
+      .backupFailurePolicy(BackupFailurePolicy.FAIL)
+      .strategy(BackupConfiguration.BackupStrategy.SYNC)
+      .stateTransfer()
+         .chunkSize(512)
+         .timeout(1200000);
+
+----
+
+Below, it is the parameters description:
+
+* _chunkSize_ - The number of keys to batch before sending them to the consumer site. A negative or a zero value is
+*not* a valid value. Default value is 512 keys.
+
+* _timeout_ - The time (in milliseconds) to wait for the consumer site acknowledge the reception and appliance of a
+state chunk. A negative or zero value is *not* a valid value. Default value is 20 minutes.
+
+==== Release Notes
+
+===== 7.0.0.Alpha2
+
+This release only contains the basic behavior to transfer the state. It's assumed that no nodes will join or leave (crash) either
+in local or backup site. Also, it assumes a reliable links between sites.
+
+For the moment, it is not possible to cancel the state transfer.
+
+[[x-site-reference]]
 === Reference
 link:$$https://community.jboss.org/wiki/DesignForCrossSiteReplication$$[This document] (Sept 2012) describes the technical design of cross site replication in more detail. 
 

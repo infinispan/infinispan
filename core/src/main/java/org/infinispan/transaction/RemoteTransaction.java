@@ -6,6 +6,7 @@ import org.infinispan.commons.equivalence.Equivalence;
 import org.infinispan.commons.util.CollectionFactory;
 import org.infinispan.commons.util.InfinispanCollections;
 import org.infinispan.container.entries.CacheEntry;
+import org.infinispan.context.Flag;
 import org.infinispan.transaction.xa.GlobalTransaction;
 import org.infinispan.transaction.xa.InvalidTransactionException;
 import org.infinispan.util.logging.Log;
@@ -57,6 +58,13 @@ public class RemoteTransaction extends AbstractCacheTransaction implements Clone
       super(tx, topologyId, keyEquivalence);
       this.modifications = new LinkedList<WriteCommand>();
       lookedUpEntries = CollectionFactory.makeMap(2, keyEquivalence, AnyEquivalence.<CacheEntry>getInstance());
+   }
+
+   @Override
+   public void setStateTransferFlag(Flag stateTransferFlag) {
+      if (getStateTransferFlag() == null && stateTransferFlag == Flag.PUT_FOR_X_SITE_STATE_TRANSFER) {
+         internalSetStateTransferFlag(stateTransferFlag);
+      }
    }
 
    @Override

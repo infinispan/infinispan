@@ -10,7 +10,7 @@ import java.util.Collection;
  * @author Mircea Markus
  * @since 6.0
  */
-public class CollectionKeyFilter implements AdvancedCacheLoader.KeyFilter {
+public class CollectionKeyFilter implements AdvancedCacheLoader.KeyFilter<Object> {
 
    Collection acceptedKeys = null;
    private boolean accept = false;

@@ -13,8 +13,9 @@ import org.infinispan.notifications.cachemanagerlistener.annotation.CacheStopped
 import org.infinispan.notifications.cachemanagerlistener.event.CacheStoppedEvent;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
+import org.infinispan.xsite.statetransfer.XSiteStatePushCommand;
+import org.infinispan.xsite.statetransfer.XSiteStateTransferControlCommand;
 import org.jgroups.protocols.relay.SiteAddress;
-import org.jgroups.protocols.relay.SiteUUID;
 
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
@@ -28,6 +29,7 @@ import java.util.concurrent.ConcurrentMap;
 public class BackupReceiverRepositoryImpl implements BackupReceiverRepository {
 
    private static Log log = LogFactory.getLog(BackupReceiverRepositoryImpl.class);
+   private static boolean trace = log.isTraceEnabled();
 
    private final ConcurrentMap<SiteCachePair, BackupReceiver> backupReceivers = new ConcurrentHashMap<SiteCachePair, BackupReceiver>();
 
@@ -60,14 +62,6 @@ public class BackupReceiverRepositoryImpl implements BackupReceiverRepository {
       }
    }
 
-   @Override
-   public Object handleRemoteCommand(SingleRpcCommand cmd, SiteAddress src) throws Throwable {
-      log.tracef("Handling command %s from remote site %s", cmd, src);
-      String name = cmd.getCacheName();
-      BackupReceiver localBackupCache = getBackupCacheManager(src.getSite(), name);
-      return localBackupCache.handleRemoteCommand((VisitableCommand)cmd.getCommand());
-   }
-
    /**
     * Returns the local cache associated defined as backup for the provided remote (site, cache) combo, or throws an
     * exception of no such site is defined.
@@ -75,7 +69,8 @@ public class BackupReceiverRepositoryImpl implements BackupReceiverRepository {
     * Also starts the cache if not already stated; that is because the cache is needed for update after when this method
     * is invoked.
     */
-   public BackupReceiver getBackupCacheManager(String remoteSite, String remoteCache) {
+   @Override
+   public BackupReceiver getBackupReceiver(String remoteSite, String remoteCache) {
       SiteCachePair toLookFor = new SiteCachePair(remoteCache, remoteSite);
       BackupReceiver backupManager = backupReceivers.get(toLookFor);
       if (backupManager != null) return backupManager;
@@ -166,7 +161,7 @@ public class BackupReceiverRepositoryImpl implements BackupReceiverRepository {
       backupReceivers.replace(new SiteCachePair(cache, site), bcr);
    }
 
-   public BackupReceiver getBackupReceiver(String site, String cache) {
+   public BackupReceiver get(String site, String cache) {
       return backupReceivers.get(new SiteCachePair(site, cache));
    }
 }

@@ -38,7 +38,10 @@ import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.statetransfer.StateRequestCommand;
 import org.infinispan.statetransfer.StateResponseCommand;
 import org.infinispan.topology.CacheTopologyControlCommand;
+import org.infinispan.xsite.SingleXSiteRpcCommand;
 import org.infinispan.xsite.XSiteAdminCommand;
+import org.infinispan.xsite.statetransfer.XSiteStatePushCommand;
+import org.infinispan.xsite.statetransfer.XSiteStateTransferControlCommand;
 
 import java.util.Map;
 
@@ -224,6 +227,15 @@ public class RemoteCommandsFactory {
                break;
             case CancelCommand.COMMAND_ID:
                command = new CancelCommand(cacheName);
+               break;
+            case XSiteStateTransferControlCommand.COMMAND_ID:
+               command = new XSiteStateTransferControlCommand(cacheName);
+               break;
+            case XSiteStatePushCommand.COMMAND_ID:
+               command = new XSiteStatePushCommand(cacheName);
+               break;
+            case SingleXSiteRpcCommand.COMMAND_ID:
+               command = new SingleXSiteRpcCommand(cacheName);
                break;
             default:
                throw new CacheException("Unknown command id " + id + "!");

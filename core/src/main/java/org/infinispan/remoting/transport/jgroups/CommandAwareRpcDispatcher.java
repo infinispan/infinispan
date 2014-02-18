@@ -4,24 +4,22 @@ import net.jcip.annotations.GuardedBy;
 import org.infinispan.commands.FlagAffectedCommand;
 import org.infinispan.commands.ReplicableCommand;
 import org.infinispan.commands.remote.CacheRpcCommand;
-import org.infinispan.commands.remote.SingleRpcCommand;
 import org.infinispan.commons.CacheException;
 import org.infinispan.commons.util.Util;
 import org.infinispan.context.Flag;
 import org.infinispan.factories.GlobalComponentRegistry;
 import org.infinispan.remoting.responses.SuccessfulResponse;
-import org.infinispan.statetransfer.StateRequestCommand;
-import org.infinispan.statetransfer.StateResponseCommand;
 import org.infinispan.remoting.InboundInvocationHandler;
 import org.infinispan.remoting.RpcException;
 import org.infinispan.remoting.responses.ExceptionResponse;
 import org.infinispan.remoting.responses.Response;
-import org.infinispan.topology.CacheTopologyControlCommand;
 import org.infinispan.util.TimeService;
 import org.infinispan.util.concurrent.TimeoutException;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
+import org.infinispan.xsite.BackupReceiver;
 import org.infinispan.xsite.BackupReceiverRepository;
+import org.infinispan.xsite.XSiteReplicateCommand;
 import org.jgroups.Address;
 import org.jgroups.AnycastAddress;
 import org.jgroups.Channel;
@@ -225,23 +223,29 @@ public class CommandAwareRpcDispatcher extends RpcDispatcher {
       }
    }
 
-   private void executeCommandFromRemoteSite(final ReplicableCommand cmd, final SiteAddress src, final org.jgroups.blocks.Response response, boolean preserveOrder) throws Throwable {
-      if (! (cmd instanceof SingleRpcCommand)) {
-         throw new IllegalStateException("Only CacheRpcCommand commands expected as a result of xsite calls but got " + cmd.getClass().getName());
+   private void executeCommandFromRemoteSite(final ReplicableCommand cmd, final SiteAddress src,
+                                             final org.jgroups.blocks.Response response, boolean preserveOrder) throws Throwable {
+      if (!(cmd instanceof XSiteReplicateCommand)) {
+         throw new IllegalStateException("Only XSiteReplicateCommand commands expected as a result of xsite calls but got "
+                                               + cmd.getClass().getName());
       }
-      
+      if (trace) {
+         log.tracef("Handling command %s from remote site %s", cmd, src);
+      }
+
+      final BackupReceiver receiver = backupReceiverRepository.getBackupReceiver(src.getSite(),
+                                                                                 ((XSiteReplicateCommand) cmd).getCacheName());
       if (preserveOrder) {
-         reply(response, backupReceiverRepository.handleRemoteCommand((SingleRpcCommand) cmd, src));
+         reply(response, ((XSiteReplicateCommand) cmd).performInLocalSite(receiver));
          return;
       }
-      
+
       //the remote site commands may need to be forwarded to the appropriate owners
       remoteCommandsExecutor.execute(new Runnable() {
          @Override
          public void run() {
             try {
-               Object retVal = backupReceiverRepository.handleRemoteCommand((SingleRpcCommand) cmd, src);
-               reply(response, retVal);
+               reply(response, ((XSiteReplicateCommand) cmd).performInLocalSite(receiver));
             } catch (InterruptedException e) {
                log.shutdownHandlingCommand(cmd);
                reply(response, new ExceptionResponse(new CacheException("Cache is shutting down")));
@@ -298,7 +302,7 @@ public class CommandAwareRpcDispatcher extends RpcDispatcher {
    public String toString() {
       return getClass().getSimpleName() + "[Outgoing marshaller: " + req_marshaller + "; incoming marshaller: " + rsp_marshaller + "]";
    }
-   
+
    private void reply(org.jgroups.blocks.Response response, Object retVal) {
       if (response != null) {
          //exceptionThrown is always false because the exceptions are wrapped in an ExceptionResponse
@@ -375,7 +379,7 @@ public class CommandAwareRpcDispatcher extends RpcDispatcher {
       Buffer buf;
       if (totalOrder) {
          buf = marshallCall(marshaller, command);
-         Message message = constructMessage(buf, null, oob, mode, rsvp, totalOrder);
+         Message message = constructMessage(buf, null, oob, mode, rsvp, true);
 
          AnycastAddress address = new AnycastAddress(dests);
          message.setDest(address);
@@ -389,7 +393,7 @@ public class CommandAwareRpcDispatcher extends RpcDispatcher {
          //For correctness, ispn doesn't need their own message, so add own address to exclusion list
          opts.setExclusionList(card.getChannel().getAddress());
 
-         retval = card.castMessage(dests, constructMessage(buf, null, oob, mode, rsvp, totalOrder),opts);
+         retval = card.castMessage(dests, constructMessage(buf, null, oob, mode, rsvp, false),opts);
       } else {
          RequestOptions opts = new RequestOptions(mode, timeout);
 

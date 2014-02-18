@@ -54,6 +54,7 @@ public class SitesConfigurationBuilder extends AbstractConfigurationChildBuilder
          if (!backupNames.add(bcb.site())) {
             throw new CacheConfigurationException("Multiple sites with name '" + bcb.site() + "' are configured. That is not allowed!");
          }
+         bcb.validate();
       }
 
       for (String site : inUseBackupSites) {

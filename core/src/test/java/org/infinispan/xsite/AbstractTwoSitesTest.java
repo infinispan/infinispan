@@ -27,7 +27,7 @@ public abstract class AbstractTwoSitesTest extends AbstractXSiteTest {
     * If true, the caches from one site will backup to a cache having the same name remotely (mirror)
     * and the backupFor config element won't be used.
     */
-   boolean implicitBackupCache = false;
+   protected boolean implicitBackupCache = false;
 
    @Override
    protected void createSites() {

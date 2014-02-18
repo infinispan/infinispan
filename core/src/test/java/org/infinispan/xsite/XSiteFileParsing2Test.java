@@ -4,11 +4,13 @@ import org.infinispan.configuration.cache.BackupConfiguration;
 import org.infinispan.configuration.cache.BackupFailurePolicy;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.cache.TakeOfflineConfiguration;
+import org.infinispan.configuration.cache.XSiteStateTransferConfiguration;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.test.SingleCacheManagerTest;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.testng.annotations.Test;
 
+import static org.infinispan.configuration.cache.XSiteStateTransferConfigurationBuilder.*;
 import static org.testng.AssertJUnit.assertEquals;
 import static org.testng.AssertJUnit.assertNull;
 import static org.testng.AssertJUnit.assertTrue;
@@ -21,11 +23,13 @@ import static org.testng.AssertJUnit.assertTrue;
 public class XSiteFileParsing2Test extends SingleCacheManagerTest {
 
    public static final String FILE_NAME = "configs/xsite/xsite-test2.xml";
+   private static final TakeOfflineConfiguration DEFAULT_TAKE_OFFLINE = new TakeOfflineConfiguration(0, 0);
+   private static final XSiteStateTransferConfiguration DEFAULT_STATE_TRANSFER =
+         new XSiteStateTransferConfiguration(DEFAULT_CHUNK_SIZE, DEFAULT_TIMEOUT);
 
    @Override
    protected EmbeddedCacheManager createCacheManager() throws Exception {
-      EmbeddedCacheManager embeddedCacheManager = TestCacheManagerFactory.fromXml(FILE_NAME);
-      return embeddedCacheManager;
+      return TestCacheManagerFactory.fromXml(FILE_NAME);
    }
 
    public void testDefaultCache() {
@@ -45,7 +49,8 @@ public class XSiteFileParsing2Test extends SingleCacheManagerTest {
       assertEquals(1, dcc.sites().allBackups().size());
 
       assertTrue(dcc.sites().allBackups().contains(new BackupConfiguration("NYC", BackupConfiguration.BackupStrategy.SYNC,
-                                                                        12003, BackupFailurePolicy.WARN, null, false, new TakeOfflineConfiguration(0,0), true)));
+                                                                        12003, BackupFailurePolicy.WARN, null, false,
+                                                                        DEFAULT_TAKE_OFFLINE, DEFAULT_STATE_TRANSFER, true)));
       assertNull(dcc.sites().backupFor().remoteSite());
       assertNull(dcc.sites().backupFor().remoteCache());
    }
@@ -59,11 +64,14 @@ public class XSiteFileParsing2Test extends SingleCacheManagerTest {
 
    private void testDefault(Configuration dcc) {
       BackupConfiguration nyc = new BackupConfiguration("NYC", BackupConfiguration.BackupStrategy.SYNC,
-                                                        12003l, BackupFailurePolicy.IGNORE, null, false, new TakeOfflineConfiguration(0,0), true);
+                                                        12003l, BackupFailurePolicy.IGNORE, null, false,
+                                                        DEFAULT_TAKE_OFFLINE, DEFAULT_STATE_TRANSFER, true);
       BackupConfiguration sfo = new BackupConfiguration("SFO", BackupConfiguration.BackupStrategy.ASYNC,
-                                                        10000l, BackupFailurePolicy.WARN, null, false, new TakeOfflineConfiguration(0,0), true);
+                                                        10000l, BackupFailurePolicy.WARN, null, false,
+                                                        DEFAULT_TAKE_OFFLINE, DEFAULT_STATE_TRANSFER, true);
       BackupConfiguration lon = new BackupConfiguration("LON", BackupConfiguration.BackupStrategy.SYNC,
-                                                        10000l, BackupFailurePolicy.WARN, null, false, new TakeOfflineConfiguration(0,0), false);
+                                                        10000l, BackupFailurePolicy.WARN, null, false,
+                                                        DEFAULT_TAKE_OFFLINE, DEFAULT_STATE_TRANSFER, false);
       assertTrue(dcc.sites().allBackups().contains(nyc));
       assertTrue(dcc.sites().allBackups().contains(sfo));
       assertTrue(dcc.sites().allBackups().contains(lon));
