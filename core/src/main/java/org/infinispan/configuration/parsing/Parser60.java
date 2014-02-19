@@ -75,7 +75,8 @@ public class Parser60 implements ConfigurationParser {
 
    private static final Log log = LogFactory.getLog(Parser60.class);
    
-   private AggregateClassLoader aggregateClassLoader;
+   // TODO: Shouldn't need to do this, but hibernate-infinispan using the parser directly.
+   private AggregateClassLoader aggregateClassLoader = new AggregateClassLoader();
    
    @Inject
    public void init(GlobalConfiguration globalConfiguration) {
