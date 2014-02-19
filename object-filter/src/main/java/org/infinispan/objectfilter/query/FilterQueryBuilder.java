@@ -21,6 +21,6 @@ public final class FilterQueryBuilder extends BaseQueryBuilder<Query> {
    public Query build() {
       String jpqlString = accept(new FilterJPAQueryGenerator());
       log.tracef("JPQL string : %s", jpqlString);
-      return new FilterQuery(jpqlString, sortCriteria, startOffset, maxResults);
+      return new FilterQuery(jpqlString, startOffset, maxResults);
    }
 }

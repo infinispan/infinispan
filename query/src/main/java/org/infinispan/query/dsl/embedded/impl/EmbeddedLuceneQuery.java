@@ -1,6 +1,5 @@
 package org.infinispan.query.dsl.embedded.impl;
 
-import org.apache.lucene.search.Sort;
 import org.hibernate.hql.lucene.LuceneQueryParsingResult;
 import org.infinispan.query.CacheQuery;
 import org.infinispan.query.FetchOptions;
@@ -22,18 +21,15 @@ class EmbeddedLuceneQuery implements LuceneQuery {
 
    private final LuceneQueryParsingResult parsingResult;
 
-   private final Sort sort;
-
    private final long startOffset;
 
    private final int maxResults;
 
    private CacheQuery cacheQuery = null;
 
-   public EmbeddedLuceneQuery(SearchManager sm, LuceneQueryParsingResult parsingResult, Sort sort, long startOffset, int maxResults) {
+   public EmbeddedLuceneQuery(SearchManager sm, LuceneQueryParsingResult parsingResult, long startOffset, int maxResults) {
       this.sm = sm;
       this.parsingResult = parsingResult;
-      this.sort = sort;
       this.startOffset = startOffset;
       this.maxResults = maxResults;
    }
@@ -41,8 +37,8 @@ class EmbeddedLuceneQuery implements LuceneQuery {
    private CacheQuery getCacheQuery() {
       if (cacheQuery == null) {
          cacheQuery = sm.getQuery(parsingResult.getQuery(), parsingResult.getTargetEntity());
-         if (sort != null) {
-            cacheQuery = cacheQuery.sort(sort);
+         if (parsingResult.getSort() != null) {
+            cacheQuery = cacheQuery.sort(parsingResult.getSort());
          }
          if (parsingResult.getProjections() != null && !parsingResult.getProjections().isEmpty()) {
             cacheQuery = cacheQuery.projection(parsingResult.getProjections().toArray(new String[parsingResult.getProjections().size()]));
@@ -82,7 +78,6 @@ class EmbeddedLuceneQuery implements LuceneQuery {
    public String toString() {
       return "EmbeddedLuceneQuery{" +
             "parsingResult=" + parsingResult +
-            ", sort=" + sort +
             ", startOffset=" + startOffset +
             ", maxResults=" + maxResults +
             '}';

@@ -54,7 +54,6 @@ public class JPAQueryGenerator implements Visitor<String> {
          }
       }
 
-      //TODO the 'ORDER BY' clause is ignored by HQL parser anyway, see https://hibernate.atlassian.net/browse/HQLPARSER-24
       if (baseQueryBuilder.getSortCriteria() != null && !baseQueryBuilder.getSortCriteria().isEmpty()) {
          sb.append(" ORDER BY ");
          boolean isFirst = true;

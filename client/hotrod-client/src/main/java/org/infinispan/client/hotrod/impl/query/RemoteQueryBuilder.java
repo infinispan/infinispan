@@ -28,6 +28,6 @@ public final class RemoteQueryBuilder extends BaseQueryBuilder<Query> {
    public Query build() {
       String jpqlString = accept(new RemoteJPAQueryGenerator(serializationContext));
       log.tracef("JPQL string : %s", jpqlString);
-      return new RemoteQuery(cache, serializationContext, jpqlString, sortCriteria, startOffset, maxResults);
+      return new RemoteQuery(cache, serializationContext, jpqlString, startOffset, maxResults);
    }
 }
