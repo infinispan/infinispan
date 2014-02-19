@@ -1,7 +1,6 @@
 package org.infinispan.objectfilter.query;
 
 import org.infinispan.query.dsl.Query;
-import org.infinispan.query.dsl.impl.SortCriteria;
 
 import java.util.List;
 
@@ -12,13 +11,11 @@ import java.util.List;
 public final class FilterQuery implements Query {
 
    private String jpqlString;
-   private List<SortCriteria> sortCriteria;
    private long startOffset;
    private int maxResults;
 
-   public FilterQuery(String jpqlString, List<SortCriteria> sortCriteria, long startOffset, int maxResults) {
+   public FilterQuery(String jpqlString, long startOffset, int maxResults) {
       this.jpqlString = jpqlString;
-      this.sortCriteria = sortCriteria;
       this.startOffset = startOffset;
       this.maxResults = maxResults;
    }
@@ -36,10 +33,6 @@ public final class FilterQuery implements Query {
 
    public String getJpqlString() {
       return jpqlString;
-   }
-
-   public List<SortCriteria> getSortCriteria() {
-      return sortCriteria;
    }
 
    public long getStartOffset() {

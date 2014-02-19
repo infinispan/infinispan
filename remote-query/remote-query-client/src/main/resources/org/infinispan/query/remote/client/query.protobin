@@ -1,16 +1,12 @@
 
-÷
-.org/infinispan/query/remote/client/query.proto"org.infinispan.query.remote.client1org/infinispan/protostream/message-wrapping.proto"Ü
+å
+.org/infinispan/query/remote/client/query.proto"org.infinispan.query.remote.client1org/infinispan/protostream/message-wrapping.proto"K
 QueryRequest
 
-jpqlString (	S
-sortCriteria (2=.org.infinispan.query.remote.client.QueryRequest.SortCriteria
+jpqlString (	
 startOffset (
 
-maxResults (:
-SortCriteria
-attributePath (	
-isAscending ("Ž
+maxResults ("Ž
 QueryResponse
 
 numResults (

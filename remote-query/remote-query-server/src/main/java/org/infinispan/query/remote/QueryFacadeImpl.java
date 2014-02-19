@@ -2,8 +2,6 @@ package org.infinispan.query.remote;
 
 import com.google.protobuf.Descriptors;
 import org.apache.lucene.search.Query;
-import org.apache.lucene.search.Sort;
-import org.apache.lucene.search.SortField;
 import org.hibernate.hql.QueryParser;
 import org.hibernate.hql.ast.spi.EntityNamesResolver;
 import org.hibernate.hql.lucene.LuceneProcessingChain;
@@ -39,6 +37,8 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
+ * A Lucene based query facade implementation.
+ *
  * @author anistor@redhat.com
  * @since 6.0
  */
@@ -73,10 +73,8 @@ public class QueryFacadeImpl implements QueryFacade {
       QueryRequest request = ProtobufUtil.fromByteArray(serCtx, query, 0, query.length, QueryRequest.class);
 
       SearchManager searchManager = Search.getSearchManager(cache);
-      Query luceneQuery;
-      List<String> projections;
-      Class targetEntity;
-      Descriptors.Descriptor messageDescriptor;
+      CacheQuery cacheQuery;
+      LuceneQueryParsingResult parsingResult;
 
       QueryParser queryParser = new QueryParser();
       SearchFactoryIntegrator searchFactory = (SearchFactoryIntegrator) searchManager.getSearchFactory();
@@ -94,13 +92,8 @@ public class QueryFacadeImpl implements QueryFacade {
          LuceneProcessingChain processingChain = new LuceneProcessingChain.Builder(searchFactory, entityNamesResolver)
                .buildProcessingChainForClassBasedEntities();
 
-         LuceneQueryParsingResult parsingResult = queryParser.parseQuery(request.getJpqlString(), processingChain);
-
-         MessageMarshaller messageMarshaller = (MessageMarshaller) serCtx.getMarshaller(parsingResult.getTargetEntity());
-         messageDescriptor = serCtx.getMessageDescriptor(messageMarshaller.getTypeName());
-         targetEntity = parsingResult.getTargetEntity();
-         projections = parsingResult.getProjections();
-         luceneQuery = parsingResult.getQuery();
+         parsingResult = queryParser.parseQuery(request.getJpqlString(), processingChain);
+         cacheQuery = searchManager.getQuery(parsingResult.getQuery(), parsingResult.getTargetEntity());
       } else {
          EntityNamesResolver entityNamesResolver = new EntityNamesResolver() {
             @Override
@@ -145,54 +138,26 @@ public class QueryFacadeImpl implements QueryFacade {
 
          LuceneProcessingChain processingChain = new LuceneProcessingChain.Builder(searchFactory, entityNamesResolver)
                .buildProcessingChainForDynamicEntities(fieldBridgeProvider);
-         LuceneQueryParsingResult parsingResult = queryParser.parseQuery(request.getJpqlString(), processingChain);
-         targetEntity = parsingResult.getTargetEntity();
-         messageDescriptor = serCtx.getMessageDescriptor(parsingResult.getTargetEntityName());
-         projections = parsingResult.getProjections();
+         parsingResult = queryParser.parseQuery(request.getJpqlString(), processingChain);
 
-         QueryBuilder qb = searchManager.getSearchFactory().buildQueryBuilder().forEntity(targetEntity).get();
-         luceneQuery = qb.bool()
-               .must(qb.keyword().onField(TYPE_FIELD_NAME).ignoreFieldBridge().ignoreAnalyzer().matching(messageDescriptor.getFullName()).createQuery())
+         QueryBuilder qb = searchManager.getSearchFactory().buildQueryBuilder().forEntity(parsingResult.getTargetEntity()).get();
+         Query luceneQuery = qb.bool()
+               .must(qb.keyword().onField(TYPE_FIELD_NAME).ignoreFieldBridge().ignoreAnalyzer().matching(parsingResult.getTargetEntityName()).createQuery())
                .must(parsingResult.getQuery())
                .createQuery();
+
+         cacheQuery = searchManager.getQuery(luceneQuery, parsingResult.getTargetEntity());
       }
 
-      CacheQuery cacheQuery = searchManager.getQuery(luceneQuery, targetEntity);
 
-      if (request.getSortCriteria() != null && !request.getSortCriteria().isEmpty()) {
-         SortField[] sortField = new SortField[request.getSortCriteria().size()];
-         int i = 0;
-         for (QueryRequest.SortCriteria sc : request.getSortCriteria()) {
-            //TODO [anistor] sort type is not properly handled right now
-            Descriptors.FieldDescriptor field = getFieldDescriptor(messageDescriptor, sc.getAttributePath());
-            int sortType = SortField.STRING;
-            if (field != null) {
-               switch (field.getJavaType()) {
-                  case INT:
-                  case BOOLEAN:
-                  case ENUM:
-                     sortType = SortField.INT;
-                     break;
-                  case LONG:
-                     sortType = SortField.LONG;
-                     break;
-                  case FLOAT:
-                     sortType = SortField.FLOAT;
-                     break;
-                  case DOUBLE:
-                     sortType = SortField.DOUBLE;
-                     break;
-               }
-            }
-            sortField[i++] = new SortField(sc.getAttributePath(), sortType, !sc.isAscending());
-         }
-         cacheQuery = cacheQuery.sort(new Sort(sortField));
+      if (parsingResult.getSort() != null) {
+         cacheQuery = cacheQuery.sort(parsingResult.getSort());
       }
 
       int projSize = 0;
-      if (projections != null && !projections.isEmpty()) {
-         projSize = projections.size();
-         cacheQuery = cacheQuery.projection(projections.toArray(new String[projSize]));
+      if (parsingResult.getProjections() != null && !parsingResult.getProjections().isEmpty()) {
+         projSize = parsingResult.getProjections().size();
+         cacheQuery = cacheQuery.projection(parsingResult.getProjections().toArray(new String[projSize]));
       }
       if (request.getStartOffset() > 0) {
          cacheQuery = cacheQuery.firstResult((int) request.getStartOffset());

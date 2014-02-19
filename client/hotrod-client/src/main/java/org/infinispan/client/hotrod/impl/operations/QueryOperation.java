@@ -9,15 +9,11 @@ import org.infinispan.client.hotrod.impl.transport.TransportFactory;
 import org.infinispan.commons.CacheException;
 import org.infinispan.protostream.ProtobufUtil;
 import org.infinispan.protostream.SerializationContext;
-import org.infinispan.query.dsl.SortOrder;
-import org.infinispan.query.dsl.impl.SortCriteria;
 import org.infinispan.query.remote.client.QueryRequest;
 import org.infinispan.query.remote.client.QueryResponse;
 
 import java.io.IOException;
 import java.net.SocketAddress;
-import java.util.ArrayList;
-import java.util.List;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -47,16 +43,7 @@ public class QueryOperation extends RetryOnFailureOperation<QueryResponse> {
       queryRequest.setJpqlString(remoteQuery.getJpqlString());
       queryRequest.setStartOffset(remoteQuery.getStartOffset());
       queryRequest.setMaxResults(remoteQuery.getMaxResults());
-      if (remoteQuery.getSortCriteria() != null && !remoteQuery.getSortCriteria().isEmpty()) {
-         List<QueryRequest.SortCriteria> scl = new ArrayList<QueryRequest.SortCriteria>();
-         for (SortCriteria sc : remoteQuery.getSortCriteria()) {
-            QueryRequest.SortCriteria sc2 = new QueryRequest.SortCriteria();
-            sc2.setAttributePath(sc.getAttributePath());
-            sc2.setAscending(sc.getSortOrder() == SortOrder.ASC);
-            scl.add(sc2);
-         }
-         queryRequest.setSortCriteria(scl);
-      }
+
       SerializationContext serCtx = remoteQuery.getSerializationContext();
       byte[] requestBytes;
       try {

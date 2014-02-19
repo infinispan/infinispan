@@ -7,7 +7,6 @@ import org.infinispan.protostream.ProtobufUtil;
 import org.infinispan.protostream.SerializationContext;
 import org.infinispan.protostream.WrappedMessage;
 import org.infinispan.query.dsl.Query;
-import org.infinispan.query.dsl.impl.SortCriteria;
 import org.infinispan.query.remote.client.QueryResponse;
 
 import java.io.IOException;
@@ -25,7 +24,6 @@ public final class RemoteQuery implements Query {
    private final SerializationContext serializationContext;
 
    private final String jpqlString;
-   private final List<SortCriteria> sortCriteria;
    private final long startOffset; //todo can this really be long or it has to be int due to limitations in query module?
    private final int maxResults;
 
@@ -33,11 +31,10 @@ public final class RemoteQuery implements Query {
    private int totalResults;
 
    public RemoteQuery(RemoteCacheImpl cache, SerializationContext serializationContext,
-                      String jpqlString, List<SortCriteria> sortCriteria, long startOffset, int maxResults) {
+                      String jpqlString, long startOffset, int maxResults) {
       this.cache = cache;
       this.serializationContext = serializationContext;
       this.jpqlString = jpqlString;
-      this.sortCriteria = sortCriteria;
       this.startOffset = startOffset;
       this.maxResults = maxResults;
    }
@@ -48,10 +45,6 @@ public final class RemoteQuery implements Query {
 
    public String getJpqlString() {
       return jpqlString;
-   }
-
-   public List<SortCriteria> getSortCriteria() {
-      return sortCriteria;
    }
 
    public long getStartOffset() {

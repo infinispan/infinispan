@@ -10,21 +10,7 @@ message QueryRequest {
     */
    required string jpqlString = 1;
 
-   message SortCriteria {
-
-      /**
-       * Dot separated attribute path to sort by.
-       */
-      required string attributePath = 1;
-
-      /**
-       * Sort direction.
-       */
-      required bool isAscending = 2;
-   }
-
-   //TODO ideally, the sort criteria should be in the jpql string but currently the used HQL parser does not support this
-   repeated SortCriteria sortCriteria = 2;
+   // id 2 was used for sort criteria
 
    /**
     * The number of matching results to skip before the first returned result.

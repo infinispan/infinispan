@@ -6,4 +6,5 @@
 *.py   text diff=python
 *.rb   text diff=ruby
 *.mkdn text
+*.protobin -text -diff
 
