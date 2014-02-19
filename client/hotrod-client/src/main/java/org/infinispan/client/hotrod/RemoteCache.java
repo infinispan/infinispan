@@ -3,7 +3,6 @@ package org.infinispan.client.hotrod;
 import java.util.Collection;
 import java.util.Map;
 import java.util.Set;
-import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.TimeUnit;
 
 import org.infinispan.commons.api.BasicCache;

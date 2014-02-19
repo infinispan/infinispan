@@ -2,7 +2,6 @@ package org.infinispan.query.indexmanager;
 
 import java.util.Collection;
 import java.util.Collections;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Properties;
 import java.util.concurrent.locks.Lock;
@@ -48,7 +47,6 @@ public class InfinispanCommandsBackend implements BackendQueueProcessor {
    private RpcManager rpcManager;
    private String cacheName;
    private DirectoryBasedIndexManager indexManager;
-   private HashSet<Class> knownTypes = new HashSet<Class>(10);
 
    @Override
    public void initialize(Properties props, WorkerBuildContext context, DirectoryBasedIndexManager indexManager) {
