@@ -45,7 +45,7 @@ class HotRodAsymmetricClusterTest extends HotRodMultiNodeTest {
 
    def testPutInNonCacheDefinedNode(m: Method) {
       val resp = clients.tail.head.put(k(m) , 0, 0, v(m))
-      assertStatus(resp, ParseError)
+      assertStatus(resp, Success)
    }
 
 }

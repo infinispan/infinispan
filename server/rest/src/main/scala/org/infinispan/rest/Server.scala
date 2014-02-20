@@ -498,12 +498,7 @@ class Server(@Context request: Request, @Context servletContext: ServletContext,
    private def lastModified(ice: InternalCacheEntry): Date = { new Date(ice.getCreated / 1000 * 1000) }
 
    private def protectCacheNotFound(request: Request, useAsync: Boolean) (op: (Request, Boolean) => Response): Response = {
-      try {
-         op(request, useAsync)
-      } catch {
-         case e: CacheNotFoundException =>
-            Response.status(Status.NOT_FOUND).build
-      }
+      op(request, useAsync)
    }
 
 }
@@ -517,8 +512,6 @@ class ManagerInstance(instance: EmbeddedCacheManager) {
 
    def getCache(name: String): AdvancedCache[String, Array[Byte]] = {
       val isKnownCache = knownCaches.containsKey(name)
-      if (name != BasicCacheContainer.DEFAULT_CACHE_NAME && !isKnownCache && !instance.getCacheNames.contains(name))
-         throw new CacheNotFoundException("Cache with name '" + name + "' not found amongst the configured caches")
 
       if (isKnownCache) {
          knownCaches.get(name)
@@ -571,8 +564,6 @@ class ManagerInstance(instance: EmbeddedCacheManager) {
    }
 
 }
-
-class CacheNotFoundException(msg: String) extends CacheException(msg)
 
 object Escaper {
    def escapeHtml(html: String): String = {
