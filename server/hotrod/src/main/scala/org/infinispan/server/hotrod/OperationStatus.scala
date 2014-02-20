@@ -15,9 +15,9 @@ object OperationStatus extends Enumeration {
 
    val InvalidMagicOrMsgId = Value(0x81)
    val UnknownOperation = Value(0x82)
-   val UnknownVersion = Value(0x83) // todo: test
-   val ParseError = Value(0x84) // todo: test
-   val ServerError = Value(0x85) // todo: test
-   val OperationTimedOut = Value(0x86) // todo: test
+   val UnknownVersion = Value(0x83)
+   val ParseError = Value(0x84)
+   val ServerError = Value(0x85)
+   val OperationTimedOut = Value(0x86)
 
 }
