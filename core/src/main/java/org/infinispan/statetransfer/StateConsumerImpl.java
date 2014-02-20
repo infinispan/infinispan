@@ -196,7 +196,7 @@ public class StateConsumerImpl implements StateConsumer {
    public boolean isKeyUpdated(Object key) {
       // grab a copy of the reference to prevent issues if another thread calls stopApplyingState() between null check and actual usage
       final EquivalentConcurrentHashMapV8<Object, Object> localUpdatedKeys = updatedKeys;
-      return localUpdatedKeys == null || localUpdatedKeys.contains(key);
+      return localUpdatedKeys == null || localUpdatedKeys.containsKey(key);
    }
 
    @Override
