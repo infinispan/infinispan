@@ -27,9 +27,11 @@ tr { background-color:rgb(232,232,232);border:1px solid rgb(211,211,211);}
 .title { padding: 107px 0 0 0; }
 #main {	padding: 2em 0 1.75em 0; }
 #main, .title, #console { width:800px;margin:0 auto;}
+#console { margin-bottom: 40px; }
 
 #console-wrapper { position: fixed; bottom: 0; left: 0; z-index: 9999; background: #eee;width: 100%; margin: 0;padding: 5px;	text-align: left; height:15px; display:block;transition:height 1s;-webkit-transition:height 1s; -moz-transition:height 1s; }
 #console-wrapper a { height:20px; position: relative;  padding: 5px 0; -webkit-transition:height 2s; -moz-transition:height 2s;	-o-transition:height 2s; -ms-transition:height 2s; transition:height 2s; }
+#scrollable-wrapper { height: 100%; width: 850px; margin: 0 auto; overflow-y: auto; }
 #prompt { width: 95%; }
 #history { height: 250px; overflow:scroll; width:95%; background-color:#ccc;}
 #headers { width: 95%; }
