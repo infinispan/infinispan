@@ -191,25 +191,27 @@
     </div> <!--  main -->
     <div id="console-wrapper">
         <a href="#">[+]</a>
-        <div id="console">
-            <h2>RESTful Console</h2>
-            <hr />
-            <ol id="history"></ol>
-            <form id="input-form">
-                <input type="text" id="prompt"/>
-                <table id="headers">
-                    <tr>
-                        <td><label for="content-type">Content-Type</label></td>
-                        <td><input type="text" id="content-type" value="text/plain"/></td>
-                        <td><label for="perform-async">Async</label></td>
-                        <td><input type="checkbox" id="perform-async"/></td>
-                    </tr>
-                    <tr>
-                        <td><label for="ttl">Time to Live (secs)</label></td><td><input type="number" id="ttl"/></td>
-                        <td><label for="max-idle">Max Idle (secs)</label></td><td><input type="number" id="max-idle"/></td>
-                    </tr>
-                </table>
-            </form>
+        <div id="scrollable-wrapper">
+            <div id="console">
+                <h2>RESTful Console</h2>
+                <hr />
+                <ol id="history"></ol>
+                <form id="input-form">
+                    <input type="text" id="prompt"/>
+                    <table id="headers">
+                        <tr>
+                            <td><label for="content-type">Content-Type</label></td>
+                            <td><input type="text" id="content-type" value="text/plain"/></td>
+                            <td><label for="perform-async">Async</label></td>
+                            <td><input type="checkbox" id="perform-async"/></td>
+                        </tr>
+                        <tr>
+                            <td><label for="ttl">Time to Live (secs)</label></td><td><input type="number" id="ttl"/></td>
+                            <td><label for="max-idle">Max Idle (secs)</label></td><td><input type="number" id="max-idle"/></td>
+                        </tr>
+                    </table>
+                </form>
+            </div>
         </div>
     </div>
 </body>
