@@ -11,6 +11,7 @@ import org.infinispan.lifecycle.ComponentStatus;
 import org.infinispan.manager.CacheContainer;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.test.CacheManagerCallable;
+import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.SingleCacheManagerTest;
 import static org.infinispan.test.TestingUtil.*;
 import static org.testng.AssertJUnit.assertFalse;
@@ -23,16 +24,19 @@ import org.infinispan.util.logging.LogFactory;
 import org.testng.annotations.Test;
 
 @Test(groups = "functional", testName = "jmx.CacheMBeanTest")
-public class CacheMBeanTest extends SingleCacheManagerTest {
+public class CacheMBeanTest extends MultipleCacheManagersTest {
    private static final Log log = LogFactory.getLog(CacheMBeanTest.class);
    public static final String JMX_DOMAIN = CacheMBeanTest.class.getSimpleName();
+   private EmbeddedCacheManager cacheManager;
    private MBeanServer server;
 
    @Override
-   protected EmbeddedCacheManager createCacheManager() throws Exception {
+   protected void createCacheManagers() throws Exception {
       cacheManager = TestCacheManagerFactory.createCacheManagerEnforceJmxDomain(JMX_DOMAIN);
+      registerCacheManager(cacheManager);
+      // Create the default cache and register its JMX beans
+      cacheManager.getCache();
       server = PerThreadMBeanServerLookup.getThreadMBeanServer();
-      return cacheManager;
    }
 
    public void testJmxOperationMetadata() throws Exception {
@@ -75,6 +79,7 @@ public class CacheMBeanTest extends SingleCacheManagerTest {
       ObjectName galderOn = getCacheObjectName(otherJmxDomain, "galder(local)");
       ObjectName managerON = getCacheManagerObjectName(otherJmxDomain);
       CacheContainer otherContainer = TestCacheManagerFactory.createCacheManagerEnforceJmxDomain(otherJmxDomain);
+      registerCacheManager(otherContainer);
       server.invoke(managerON, "startCache", new Object[]{}, new String[]{});
       server.invoke(managerON, "startCache", new Object[]{"galder"}, new String[]{String.class.getName()});
       assert ComponentStatus.RUNNING.toString().equals(server.getAttribute(defaultOn, "CacheStatus"));
