@@ -11,6 +11,7 @@ import org.infinispan.persistence.jpa.entity.KeyValueEntity;
 import org.infinispan.persistence.spi.AdvancedLoadWriteStore;
 import org.infinispan.persistence.spi.PersistenceException;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
+import org.testng.annotations.AfterMethod;
 import org.testng.annotations.Test;
 
 /**
@@ -20,6 +21,13 @@ import org.testng.annotations.Test;
 public class JpaStoreTest extends BaseStoreTest {
 
    private JpaStore store;
+   
+   // make this method public to be able to call it from wrapper classes
+   @Override
+   @AfterMethod
+   public void stopMarshaller() {
+      super.stopMarshaller();
+   }
 
    @Override
    protected AdvancedLoadWriteStore createStore() throws Exception {
