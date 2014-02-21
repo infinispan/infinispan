@@ -434,7 +434,20 @@ public class MapReduceTask<KIn, VIn, KOut, VOut> {
       }
       try {
          for (MapTaskPart<Set<KOut>> mapTaskPart : futures) {
-            mapPhasesResult.addAll(mapTaskPart.get());
+            Set<KOut> result = null;
+            try {
+               result = mapTaskPart.get();
+            } catch (ExecutionException ee) {
+               Throwable cause = ee.getCause();
+               if (cause instanceof org.infinispan.util.concurrent.TimeoutException) {
+                  throw new ExecutionException("Map phase executing at " + mapTaskPart.getAddress()
+                        + " did not complete within " + rpcOptionsBuilder.timeout(TimeUnit.SECONDS) + " sec timeout",
+                        cause);
+               } else {
+                  throw ee;
+               }
+            }
+            mapPhasesResult.addAll(result);
          }
       } finally {
          cancellableTasks.clear();
@@ -486,8 +499,20 @@ public class MapReduceTask<KIn, VIn, KOut, VOut> {
       Map<KOut, VOut> reducedResult = new HashMap<KOut, VOut>();
       try {
          for (MapTaskPart<Map<KOut, List<VOut>>> mapTaskPart : futures) {
-            // TODO in parallel with futures
-            mergeResponse(mapPhasesResult, mapTaskPart.get());
+            Map<KOut, List<VOut>> result = null;
+            try {
+               result = mapTaskPart.get();
+            } catch (ExecutionException ee) {
+               Throwable cause = ee.getCause();
+               if (cause instanceof org.infinispan.util.concurrent.TimeoutException) {
+                  throw new ExecutionException("Map phase executing at " + mapTaskPart.getAddress()
+                        + " did not complete within " + rpcOptionsBuilder.timeout(TimeUnit.SECONDS) + " sec timeout",
+                        cause);
+               } else {
+                  throw ee;
+               }               
+            }
+            mergeResponse(mapPhasesResult, result);
          }
       } finally {
          cancellableTasks.clear();
@@ -547,7 +572,20 @@ public class MapReduceTask<KIn, VIn, KOut, VOut> {
       }
       try {
          for (ReduceTaskPart<Map<KOut, VOut>> reduceTaskPart : reduceTasks) {
-            reduceResult.putAll(reduceTaskPart.get());
+            Map<KOut, VOut> result = null;
+            try {
+               result = reduceTaskPart.get();
+            } catch (ExecutionException ee) {
+               Throwable cause = ee.getCause();
+               if (cause instanceof org.infinispan.util.concurrent.TimeoutException) {
+                  throw new ExecutionException("Reduce phase executing at " + reduceTaskPart.getAddress()
+                        + " did not complete within " + rpcOptionsBuilder.timeout(TimeUnit.SECONDS) + " sec timeout",
+                        cause);
+               } else {
+                  throw ee;
+               }
+            }
+            reduceResult.putAll(result);
          }
       } finally {
          cancellableTasks.clear();
