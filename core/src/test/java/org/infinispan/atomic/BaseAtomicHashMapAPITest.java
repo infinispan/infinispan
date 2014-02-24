@@ -42,7 +42,7 @@ public abstract class BaseAtomicHashMapAPITest extends MultipleCacheManagersTest
             .transactionMode(TransactionMode.TRANSACTIONAL).transactionManagerLookup(new DummyTransactionManagerLookup())
             .lockingMode(LockingMode.PESSIMISTIC)
             .locking().lockAcquisitionTimeout(100l);
-      createCluster(configurationBuilder, 2);
+      createClusteredCaches(2, "atomic", configurationBuilder);
    }
 
    public void testMultipleTx() throws Exception {
