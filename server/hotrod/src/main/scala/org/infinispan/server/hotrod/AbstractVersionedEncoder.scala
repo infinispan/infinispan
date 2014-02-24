@@ -1,8 +1,6 @@
 package org.infinispan.server.hotrod
 
-import org.infinispan.Cache
 import org.infinispan.manager.EmbeddedCacheManager
-import org.infinispan.remoting.transport.Address
 import io.netty.buffer.ByteBuf
 
 /**
@@ -17,8 +15,7 @@ abstract class AbstractVersionedEncoder {
    /**
     * Write the header to the given channel buffer
     */
-   def writeHeader(r: Response, buf: ByteBuf,
-         addressCache: Cache[Address, ServerAddress], server: HotRodServer)
+   def writeHeader(r: Response, buf: ByteBuf, addressCache: AddressCache, server: HotRodServer)
 
    /**
     * Write operation response using the given channel buffer

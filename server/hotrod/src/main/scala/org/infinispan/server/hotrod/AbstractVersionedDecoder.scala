@@ -1,6 +1,5 @@
 package org.infinispan.server.hotrod
 
-import org.infinispan.AdvancedCache
 import org.infinispan.stats.Stats
 import org.infinispan.server.core.{QueryFacade, RequestParameters}
 import org.infinispan.server.core.transport.NettyTransport
@@ -53,18 +52,17 @@ abstract class AbstractVersionedDecoder {
    /**
     * Handle a protocol specific header reading.
     */
-   def customReadHeader(header: HotRodHeader, buffer: ByteBuf, cache: AdvancedCache[Array[Byte], Array[Byte]]): AnyRef
+   def customReadHeader(header: HotRodHeader, buffer: ByteBuf, cache: Cache): AnyRef
 
    /**
     * Handle a protocol specific key reading.
     */
-   def customReadKey(header: HotRodHeader, buffer: ByteBuf, cache: AdvancedCache[Array[Byte], Array[Byte]],
-           queryFacades: Seq[QueryFacade]): AnyRef
+   def customReadKey(header: HotRodHeader, buffer: ByteBuf, cache: Cache, queryFacades: Seq[QueryFacade]): AnyRef
 
    /**
     * Handle a protocol specific value reading.
     */
-   def customReadValue(header: HotRodHeader, buffer: ByteBuf, cache: AdvancedCache[Array[Byte], Array[Byte]]): AnyRef
+   def customReadValue(header: HotRodHeader, buffer: ByteBuf, cache: Cache): AnyRef
 
    /**
     * Create a response for the stats command.
@@ -79,6 +77,6 @@ abstract class AbstractVersionedDecoder {
    /**
     * Get an optimized cache instance depending on the operation parameters.
     */
-   def getOptimizedCache(h: HotRodHeader, c: AdvancedCache[Array[Byte], Array[Byte]]): AdvancedCache[Array[Byte], Array[Byte]]
+   def getOptimizedCache(h: HotRodHeader, c: Cache): Cache
 
 }

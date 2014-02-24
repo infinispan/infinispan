@@ -33,7 +33,7 @@ class HotRodSingleClusteredTest extends MultipleCacheManagersTest {
    override def createBeforeClass() {
       super.createBeforeClass()
       hotRodServer = startHotRodServer(cacheManagers.get(0))
-      hotRodClient = new HotRodClient("127.0.0.1", hotRodServer.getPort, cacheName, 60, 10)
+      hotRodClient = new HotRodClient("127.0.0.1", hotRodServer.getPort, cacheName, 60, 20)
    }
 
    @AfterClass(alwaysRun = true)

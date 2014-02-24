@@ -96,6 +96,13 @@ public class HeaderParams {
       }
    }
 
-
+   static int joinFlags(Flag[] flags) {
+      int flagInt = 0;
+      if (flags != null) {
+         for (Flag flag : flags)
+            flagInt = flag.getFlagInt() | flagInt;
+      }
+      return flagInt;
+   }
 
 }

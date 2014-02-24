@@ -190,3 +190,8 @@ case class HashDistAware11Response(override val topologyId: Int,
                                    override val numOwners: Int, override val hashFunction: Byte,
                                    override val hashSpace: Int, numVNodes: Int)
         extends AbstractHashDistAwareResponse(topologyId, serverEndpointsMap, numOwners, hashFunction, hashSpace)
+
+case class HashDistAware20Response(override val topologyId: Int,
+        override val serverEndpointsMap : Map[Address, ServerAddress],
+        hashFunction: Byte)
+        extends AbstractTopologyResponse(topologyId, serverEndpointsMap)

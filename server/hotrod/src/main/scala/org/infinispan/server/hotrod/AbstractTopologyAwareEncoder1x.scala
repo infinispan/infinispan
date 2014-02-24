@@ -1,12 +1,10 @@
 package org.infinispan.server.hotrod
 
 import logging.Log
-import org.infinispan.Cache
 import org.infinispan.remoting.transport.Address
 import org.infinispan.server.core.transport.ExtendedByteBuf._
 import collection.JavaConversions._
 import org.infinispan.configuration.cache.Configuration
-import collection.mutable.ArrayBuffer
 import org.infinispan.distribution.ch.ConsistentHash
 import io.netty.buffer.ByteBuf
 
@@ -22,7 +20,7 @@ abstract class AbstractTopologyAwareEncoder1x extends AbstractEncoder1x with Con
                                                   serverEndpointsMap: Map[Address, ServerAddress],
                                                   cfg: Configuration): AbstractHashDistAwareResponse = {
       HashDistAware11Response(lastViewId, serverEndpointsMap, cfg.clustering().hash().numOwners(),
-            DEFAULT_HASH_FUNCTION_VERSION, Integer.MAX_VALUE,
+            DEFAULT_CONSISTENT_HASH_VERSION_1x, Integer.MAX_VALUE,
             cfg.clustering().hash().numVirtualNodes())
    }
 
@@ -53,7 +51,7 @@ abstract class AbstractTopologyAwareEncoder1x extends AbstractEncoder1x with Con
       // of the keys (at the "segment borders"), so it's still much better than having no hash information.
       // The idea here is to be able to be compatible with clients running version 1.0 of the protocol.
       // With time, users should migrate to version 1.2 capable clients.
-      val distManager = cache.getAdvancedCache.getDistributionManager
+      val distManager = cache.getDistributionManager
       val ch = distManager.getReadConsistentHash
       val numSegments = ch.getNumSegments
 

@@ -31,6 +31,6 @@ class HotRodSslFunctionalTest extends HotRodFunctionalTest {
       val ssl = hotRodServer.getConfiguration.ssl
       val sslContext = SslContextFactory.getContext(ssl.keyStoreFileName, ssl.keyStorePassword, ssl.trustStoreFileName, ssl.trustStorePassword)
       val sslEngine = SslContextFactory.getEngine(sslContext, true, false)
-      new HotRodClient(host, hotRodServer.getPort, cacheName, 60, 10, sslEngine)
+      new HotRodClient(host, hotRodServer.getPort, cacheName, 60, 20, sslEngine)
    }
 }

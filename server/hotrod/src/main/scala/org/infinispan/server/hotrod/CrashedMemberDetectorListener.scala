@@ -5,8 +5,6 @@ import org.infinispan.notifications.Listener
 import org.infinispan.notifications.cachemanagerlistener.annotation.ViewChanged
 import org.infinispan.notifications.cachemanagerlistener.event.ViewChangedEvent
 import scala.collection.JavaConversions._
-import org.infinispan.Cache
-import org.infinispan.remoting.transport.Address
 import org.infinispan.context.Flag
 
 /**
@@ -17,7 +15,7 @@ import org.infinispan.context.Flag
  * @since 5.1
  */
 @Listener(sync = false) // Use a separate thread to avoid blocking the view handler thread
-class CrashedMemberDetectorListener(cache: Cache[Address, ServerAddress], server: HotRodServer) extends Log {
+class CrashedMemberDetectorListener(cache: AddressCache, server: HotRodServer) extends Log {
 
    // Let all nodes remove the address from their own cache locally. By doing
    // this, we can guarantee that transport view id has been updated before

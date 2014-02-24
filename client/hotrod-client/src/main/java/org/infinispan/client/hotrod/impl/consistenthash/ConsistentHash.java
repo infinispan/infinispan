@@ -12,6 +12,7 @@ import java.util.Set;
  */
 public interface ConsistentHash {
 
+   @Deprecated
    void init(Map<SocketAddress, Set<Integer>> servers2Hash, int numKeyOwners, int hashSpace);
 
    SocketAddress getServer(byte[] key);

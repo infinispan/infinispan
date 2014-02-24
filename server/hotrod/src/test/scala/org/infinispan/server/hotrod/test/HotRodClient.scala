@@ -47,7 +47,7 @@ class HotRodClient(host: String, port: Int, defaultCacheName: String, rspTimeout
       val eventLoopGroup = new NioEventLoopGroup()
       val bootstrap: Bootstrap = new Bootstrap()
       bootstrap.group(eventLoopGroup)
-      bootstrap.handler(new ClientChannelInitializer(this, rspTimeoutSeconds, sslEngine))
+      bootstrap.handler(new ClientChannelInitializer(this, rspTimeoutSeconds, sslEngine, protocolVersion))
       bootstrap.channel(classOf[NioSocketChannel])
       bootstrap.option[java.lang.Boolean](ChannelOption.TCP_NODELAY, true)
       bootstrap.option[java.lang.Boolean](ChannelOption.SO_KEEPALIVE, true)
@@ -240,19 +240,19 @@ class HotRodClient(host: String, port: Int, defaultCacheName: String, rspTimeout
    }
 }
 
-private class ClientChannelInitializer(client: HotRodClient, rspTimeoutSeconds: Int, sslEngine: SSLEngine) extends ChannelInitializer[Channel] {
+private class ClientChannelInitializer(client: HotRodClient, rspTimeoutSeconds: Int, sslEngine: SSLEngine, protocolVersion: Byte) extends ChannelInitializer[Channel] {
 
    override def initChannel(ch: Channel) = {
       val pipeline = ch.pipeline
       if (sslEngine != null)
-         pipeline.addLast("ssl", new SslHandler(sslEngine));
+         pipeline.addLast("ssl", new SslHandler(sslEngine))
       pipeline.addLast("decoder", new Decoder(client))
-      pipeline.addLast("encoder", new Encoder)
+      pipeline.addLast("encoder", new Encoder(protocolVersion))
       pipeline.addLast("handler", new ClientHandler(rspTimeoutSeconds))
    }
 }
 
-private class Encoder extends MessageToByteEncoder[Object] {
+private class Encoder(protocolVersion: Byte) extends MessageToByteEncoder[Object] {
 
   override def encode(ctx: ChannelHandlerContext, msg: AnyRef, buffer: ByteBuf): Unit = {
       trace("Encode %s so that it's sent to the server", msg)
@@ -276,7 +276,8 @@ private class Encoder extends MessageToByteEncoder[Object] {
             writeUnsignedInt(op.flags, buffer) // flags
             buffer.writeByte(op.clientIntel) // client intelligence
             writeUnsignedInt(op.topologyId, buffer) // topology id
-            writeRangedBytes(new Array[Byte](0), buffer)
+            if (protocolVersion < 20)
+               writeRangedBytes(new Array[Byte](0), buffer) // transaction id
             if (op.code != 0x13 && op.code != 0x15
                     && op.code != 0x17 && op.code != 0x19
                     && op.code != 0x1D && op.code != 0x1F) { // if it's a key based op...
@@ -333,16 +334,10 @@ private class Decoder(client: HotRodClient) extends ReplayingDecoder[Void] with 
                }
                Some(TestTopologyAwareResponse(topologyId, viewArray.toList))
             } else if (op.clientIntel == INTELLIGENCE_HASH_DISTRIBUTION_AWARE) {
-               val numOwners = readUnsignedShort(buf)
-               val hashFunction = buf.readByte
-               val hashSpace = readUnsignedInt(buf)
-               val numServersInTopo = readUnsignedInt(buf)
-               op.version match {
-                  case 10 => read10HashDistAwareHeader(buf, topologyId,
-                        numOwners, hashFunction, hashSpace, numServersInTopo)
-                  case _ => read11HashDistAwareHeader(buf, topologyId,
-                        numOwners, hashFunction, hashSpace, numServersInTopo)
-               }
+               if (op.version < 20)
+                  read1xHashDistAwareHeader(buf, topologyId, op)
+               else
+                  read2xHashDistAwareHeader(buf, topologyId, op)
             } else {
                throw new UnsupportedOperationException(
                   "Client intelligence " + op.clientIntel + " not supported");
@@ -474,6 +469,43 @@ private class Decoder(client: HotRodClient) extends ReplayingDecoder[Void] with 
 
    override def exceptionCaught(ctx: ChannelHandlerContext, cause: Throwable) {
       logExceptionReported(cause)
+   }
+
+   private def read2xHashDistAwareHeader(buf: ByteBuf, topologyId: Int, op: Op): Option[AbstractTestTopologyAwareResponse] = {
+      val numServersInTopo = readUnsignedInt(buf)
+      var members = mutable.ListBuffer[ServerAddress]()
+      for (i <- 1 to numServersInTopo) {
+         val node = new ServerAddress(readString(buf), readUnsignedShort(buf))
+         members += node
+      }
+
+      val hashFunction = buf.readByte
+      val numSegments = readUnsignedInt(buf)
+      var segments = mutable.ListBuffer[Iterable[ServerAddress]]()
+      for (i <- 1 to numSegments) {
+         val owners = buf.readByte()
+         var membersInSegment = mutable.ListBuffer[ServerAddress]()
+         for (j <- 1 to owners) {
+            val index = readUnsignedInt(buf)
+            membersInSegment += members(index)
+         }
+         segments += membersInSegment.toList
+      }
+
+      Some(TestHashDistAware20Response(topologyId, members.toList, segments.toList, hashFunction))
+   }
+
+   private def read1xHashDistAwareHeader(buf: ByteBuf, topologyId: Int, op: Op): Option[AbstractTestTopologyAwareResponse] = {
+      val numOwners = readUnsignedShort(buf)
+      val hashFunction = buf.readByte
+      val hashSpace = readUnsignedInt(buf)
+      val numServersInTopo = readUnsignedInt(buf)
+      op.version match {
+         case 10 => read10HashDistAwareHeader(buf, topologyId,
+            numOwners, hashFunction, hashSpace, numServersInTopo)
+         case _ => read11HashDistAwareHeader(buf, topologyId,
+            numOwners, hashFunction, hashSpace, numServersInTopo)
+      }
    }
 
    private def read10HashDistAwareHeader(buf: ByteBuf, topologyId: Int,
@@ -755,7 +787,13 @@ case class TestHashDistAware10Response(override val topologyId: Int,
       extends AbstractTestTopologyAwareResponse(topologyId, members)
 
 case class TestHashDistAware11Response(override val topologyId: Int,
-                        val membersToHash: Map[ServerAddress, Int],
+                        membersToHash: Map[ServerAddress, Int],
                         numOwners: Int, hashFunction: Byte, hashSpace: Int,
                         numVirtualNodes: Int)
       extends AbstractTestTopologyAwareResponse(topologyId, membersToHash.keys)
+
+case class TestHashDistAware20Response(override val topologyId: Int,
+        override val members: Iterable[ServerAddress],
+        segments: Seq[Iterable[ServerAddress]],
+        hashFunction: Byte)
+        extends AbstractTestTopologyAwareResponse(topologyId, members)

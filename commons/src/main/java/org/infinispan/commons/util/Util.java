@@ -648,6 +648,15 @@ public final class Util {
       return hashFct.hash(object) & Integer.MAX_VALUE;
    }
 
+   /**
+    * Returns the size of each segment, given a number of segments.
+    * @param numSegments number of segments required
+    * @return the size of each segment
+    */
+   public static int getSegmentSize(int numSegments) {
+      return (int)Math.ceil((float)Integer.MAX_VALUE / numSegments);
+   }
+
    public static boolean isIBMJavaVendor() {
       return javaVendor.toLowerCase().contains("ibm");
    }

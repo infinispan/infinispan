@@ -343,7 +343,7 @@ public abstract class AbstractRemoteCacheManagerTest {
         rc.stats();
         // get hash function only for distribution mode
         if (isDistributedMode()) {
-            assertEquals(config.consistentHashImpl(2).getName(), getHashFunctionImplProperty(rc));
+            assertEquals(config.consistentHashImpl(3).getName(), getHashFunctionImplProperty(rc));
         }
 
         assertEquals(config.keySizeEstimate(), getKeySizeEstimateProperty(rc));

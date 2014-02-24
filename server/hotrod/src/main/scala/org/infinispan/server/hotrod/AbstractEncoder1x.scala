@@ -1,7 +1,6 @@
 package org.infinispan.server.hotrod
 
 import logging.Log
-import org.infinispan.Cache
 import org.infinispan.manager.EmbeddedCacheManager
 import org.infinispan.remoting.transport.Address
 import org.infinispan.server.core.transport.ExtendedByteBuf._
@@ -23,8 +22,7 @@ abstract class AbstractEncoder1x extends AbstractVersionedEncoder with Constants
 
    import HotRodServer._
 
-   override def writeHeader(r: Response, buf: ByteBuf,
-           addressCache: Cache[Address, ServerAddress], server: HotRodServer) {
+   override def writeHeader(r: Response, buf: ByteBuf, addressCache: AddressCache, server: HotRodServer) {
       val topologyResp = getTopologyResponse(r, addressCache, server)
       buf.writeByte(MAGIC_RES.byteValue)
       writeUnsignedLong(r.messageId, buf)
@@ -87,8 +85,7 @@ abstract class AbstractEncoder1x extends AbstractVersionedEncoder with Constants
          case g: BulkGetResponse => {
             log.trace("About to respond to bulk get request")
             if (g.status == Success) {
-               val cache: Cache[Array[Byte], Array[Byte]] =
-                  server.getCacheInstance(g.cacheName, cacheManager, false)
+               val cache: Cache = server.getCacheInstance(g.cacheName, cacheManager, false)
                var iterator = asScalaIterator(cache.entrySet.iterator)
                if (g.count != 0) {
                   trace("About to write (max) %d messages to the client", g.count)
@@ -105,11 +102,9 @@ abstract class AbstractEncoder1x extends AbstractVersionedEncoder with Constants
          case g: BulkGetKeysResponse => {
          	log.trace("About to respond to bulk get keys request")
             if (g.status == Success) {
-               val cache: Cache[Array[Byte], Array[Byte]] =
-                  server.getCacheInstance(g.cacheName, cacheManager, false)
-               
-               var keys = BulkUtil.getAllKeys(cache, g.scope)
-               var iterator = asScalaIterator(keys.iterator)
+               val cache: Cache = server.getCacheInstance(g.cacheName, cacheManager, false)
+               val keys = BulkUtil.getAllKeys(cache, g.scope)
+               val iterator = asScalaIterator(keys.iterator)
                for (key <- iterator) {
                   buf.writeByte(1) // Not done
                   writeRangedBytes(key, buf)
@@ -127,15 +122,14 @@ abstract class AbstractEncoder1x extends AbstractVersionedEncoder with Constants
       }
    }
 
-   def getTopologyResponse(r: Response, addressCache: Cache[Address, ServerAddress],
-           server: HotRodServer): AbstractTopologyResponse = {
+   def getTopologyResponse(r: Response, addressCache: AddressCache, server: HotRodServer): AbstractTopologyResponse = {
       // If clustered, set up a cache for topology information
       if (addressCache != null) {
          r.clientIntel match {
             case INTELLIGENCE_TOPOLOGY_AWARE | INTELLIGENCE_HASH_DISTRIBUTION_AWARE => {
                // Use the request cache's topology id as the HotRod topologyId.
                val cache = server.getCacheInstance(r.cacheName, addressCache.getCacheManager, false)
-               val rpcManager = cache.getAdvancedCache.getRpcManager
+               val rpcManager = cache.getRpcManager
                // Only send a topology update if the cache is clustered
                val currentTopologyId = rpcManager match {
                   case null => DEFAULT_TOPOLOGY_ID
@@ -151,7 +145,7 @@ abstract class AbstractEncoder1x extends AbstractVersionedEncoder with Constants
       } else null
    }
 
-   private def generateTopologyResponse(r: Response, addressCache: Cache[Address, ServerAddress],
+   private def generateTopologyResponse(r: Response, addressCache: AddressCache,
            server: HotRodServer, currentTopologyId: Int): AbstractTopologyResponse = {
       // If the topology cache is incomplete, we assume that a node has joined but hasn't added his HotRod
       // endpoint address to the topology cache yet. We delay the topology update until the next client
@@ -164,7 +158,7 @@ abstract class AbstractEncoder1x extends AbstractVersionedEncoder with Constants
       // will have the topology id of the server - 1, so it won't prevent a regular topology update if/when
       // the topology cache is updated.
       val cache = server.getCacheInstance(r.cacheName, addressCache.getCacheManager, false)
-      val cacheMembers = cache.getAdvancedCache.getRpcManager.getMembers
+      val cacheMembers = cache.getRpcManager.getMembers
       val serverEndpointsMap = addressCache.toMap
       var responseTopologyId = currentTopologyId
       if (!serverEndpointsMap.keySet.containsAll(cacheMembers)) {
@@ -191,14 +185,14 @@ abstract class AbstractEncoder1x extends AbstractVersionedEncoder with Constants
    protected def createHashDistAwareResp(topologyId: Int, serverEndpointsMap: Map[Address, ServerAddress],
                                          cfg: Configuration): AbstractHashDistAwareResponse = {
       HashDistAwareResponse(topologyId, serverEndpointsMap, cfg.clustering().hash().numOwners(),
-         DEFAULT_HASH_FUNCTION_VERSION, Integer.MAX_VALUE)
+         DEFAULT_CONSISTENT_HASH_VERSION_1x, Integer.MAX_VALUE)
    }
 
    def writeHashTopologyUpdate(h: AbstractHashDistAwareResponse, server: HotRodServer, r: Response,
                                buffer: ByteBuf) {
       trace("Write hash distribution change response header %s", h)
       val cache = server.getCacheInstance(r.cacheName, server.getCacheManager, false)
-      val distManager = cache.getAdvancedCache.getDistributionManager
+      val distManager = cache.getDistributionManager
       val ch = distManager.getConsistentHash
 
       // This is not quite correct, as the ownership of segments on the 1.0/1.1/1.2 clients is not exactly

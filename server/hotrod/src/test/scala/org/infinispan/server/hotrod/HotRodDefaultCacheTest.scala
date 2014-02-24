@@ -1,14 +1,8 @@
 package org.infinispan.server.hotrod
 
-import org.infinispan.test.SingleCacheManagerTest
-import test.HotRodClient
-import org.infinispan.AdvancedCache
 import test.HotRodTestingUtil._
-import io.netty.channel.ChannelFuture
-import org.infinispan.test.fwk.TestCacheManagerFactory
 import org.infinispan.manager.EmbeddedCacheManager
-import org.infinispan.server.core.test.ServerTestingUtil._
-import org.testng.annotations.{Test, AfterClass}
+import org.testng.annotations.Test
 import java.lang.reflect.Method
 import org.infinispan.server.hotrod.OperationStatus._
 import org.testng.AssertJUnit._

@@ -29,18 +29,14 @@ public class Codec12 extends Codec11 {
       transport.writeByte(params.opCode);
       transport.writeArray(params.cacheName);
 
-      int flagInt = 0;
-      if (params.flags != null) {
-         for (Flag flag : params.flags) {
-            flagInt = flag.getFlagInt() | flagInt;
-         }
-      }
-      transport.writeVInt(flagInt);
+      int joinedFlags = HeaderParams.joinFlags(params.flags);
+      transport.writeVInt(joinedFlags);
       transport.writeByte(params.clientIntel);
       transport.writeVInt(params.topologyId.get());
       //todo change once TX support is added
       transport.writeByte(params.txMarker);
-      getLog().tracef("Wrote header for message %d. Operation code: %#04x. Flags: %#x", params.messageId, params.opCode, flagInt);
+      getLog().tracef("Wrote header for message %d. Operation code: %#04x. Flags: %#x",
+            params.messageId, params.opCode, joinedFlags);
       return params;
    }
 
