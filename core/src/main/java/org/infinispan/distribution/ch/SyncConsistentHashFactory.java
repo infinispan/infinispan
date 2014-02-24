@@ -16,6 +16,7 @@ import java.util.TreeSet;
 
 import org.infinispan.commons.hash.Hash;
 import org.infinispan.commons.marshall.AbstractExternalizer;
+import org.infinispan.commons.util.Util;
 import org.infinispan.marshall.core.Ids;
 import org.infinispan.remoting.transport.Address;
 
@@ -268,7 +269,7 @@ public class SyncConsistentHashFactory implements ConsistentHashFactory<DefaultC
          this.capacityFactors = capacityFactors;
          this.actualNumOwners = Math.min(numOwners, members.size());
          this.sortedMembers = sort(members, capacityFactors);
-         this.segmentSize = (int)Math.ceil((double)Integer.MAX_VALUE / numSegments);
+         this.segmentSize = Util.getSegmentSize(numSegments);
          this.segmentOwners = new List[numSegments];
          for (int i = 0; i < numSegments; i++) {
             segmentOwners[i] = new ArrayList<Address>(actualNumOwners);

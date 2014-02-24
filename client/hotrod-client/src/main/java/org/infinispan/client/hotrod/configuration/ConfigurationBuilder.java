@@ -13,6 +13,7 @@ import org.infinispan.client.hotrod.impl.TypedProperties;
 import org.infinispan.client.hotrod.impl.consistenthash.ConsistentHash;
 import org.infinispan.client.hotrod.impl.consistenthash.ConsistentHashV1;
 import org.infinispan.client.hotrod.impl.consistenthash.ConsistentHashV2;
+import org.infinispan.client.hotrod.impl.consistenthash.SegmentConsistentHash;
 import org.infinispan.client.hotrod.impl.transport.TransportFactory;
 import org.infinispan.client.hotrod.impl.transport.tcp.RequestBalancingStrategy;
 import org.infinispan.client.hotrod.impl.transport.tcp.RoundRobinBalancingStrategy;
@@ -45,7 +46,9 @@ public class ConfigurationBuilder implements ConfigurationChildBuilder, Builder<
    private final ConnectionPoolConfigurationBuilder connectionPool;
    private int connectionTimeout = ConfigurationProperties.DEFAULT_CONNECT_TIMEOUT;
    @SuppressWarnings("unchecked")
-   private Class<? extends ConsistentHash> consistentHashImpl[] = new Class[] { ConsistentHashV1.class, ConsistentHashV2.class };
+   private Class<? extends ConsistentHash> consistentHashImpl[] = new Class[] {
+         ConsistentHashV1.class, ConsistentHashV2.class, SegmentConsistentHash.class
+   };
    private boolean forceReturnValues;
    private int keySizeEstimate = ConfigurationProperties.DEFAULT_KEY_SIZE;
    private Class<? extends Marshaller> marshallerClass = GenericJBossMarshaller.class;

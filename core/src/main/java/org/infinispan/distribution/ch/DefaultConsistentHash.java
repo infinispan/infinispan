@@ -16,6 +16,7 @@ import net.jcip.annotations.Immutable;
 import org.infinispan.commons.hash.Hash;
 import org.infinispan.commons.marshall.AbstractExternalizer;
 import org.infinispan.commons.util.Immutables;
+import org.infinispan.commons.util.Util;
 import org.infinispan.marshall.core.Ids;
 import org.infinispan.remoting.transport.Address;
 
@@ -64,7 +65,7 @@ public class DefaultConsistentHash implements ConsistentHash {
          }
          this.segmentOwners[i] = Immutables.immutableListCopy(segmentOwners[i]);
       }
-      this.segmentSize = (int)Math.ceil((float)Integer.MAX_VALUE / numSegments);
+      this.segmentSize = Util.getSegmentSize(numSegments);
    }
 
    @Override

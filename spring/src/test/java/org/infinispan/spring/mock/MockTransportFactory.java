@@ -41,6 +41,9 @@ public final class MockTransportFactory implements TransportFactory {
             final int numKeyOwners, final short hashFunctionVersion, final int hashSpace) {
    }
 
+   public void updateHashFunction(SocketAddress[][] segmentOwners, int numSegments, short hashFunctionVersion) {
+   }
+
    @Override
    public Transport getTransport(final byte[] key, Set<SocketAddress> failedServers) {
       return null;

@@ -29,7 +29,10 @@ public interface TransportFactory {
 
    void destroy();
 
+   @Deprecated
    void updateHashFunction(Map<SocketAddress, Set<Integer>> servers2Hash, int numKeyOwners, short hashFunctionVersion, int hashSpace);
+
+   void updateHashFunction(SocketAddress[][] segmentOwners, int numSegments, short hashFunctionVersion);
 
    ConsistentHashFactory getConsistentHashFactory();
 

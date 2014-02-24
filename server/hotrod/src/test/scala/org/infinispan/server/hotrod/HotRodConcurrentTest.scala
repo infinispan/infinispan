@@ -41,7 +41,7 @@ class HotRodConcurrentTest extends HotRodSingleNodeTest {
 
    class Operator(barrier: CyclicBarrier, m: Method, clientId: Int, numOpsPerClient: Int) extends Callable[Unit] {
 
-      private lazy val client = new HotRodClient("127.0.0.1", server.getPort, cacheName, 60, 10)
+      private lazy val client = new HotRodClient("127.0.0.1", server.getPort, cacheName, 60, 20)
 
       override def call {
          log.debug("Wait for all executions paths to be ready to perform calls")

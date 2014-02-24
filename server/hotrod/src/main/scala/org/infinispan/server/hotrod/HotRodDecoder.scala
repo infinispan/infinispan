@@ -6,7 +6,6 @@ import OperationStatus._
 import org.infinispan.manager.EmbeddedCacheManager
 import org.infinispan.server.core.transport.ExtendedByteBuf._
 import java.nio.channels.ClosedChannelException
-import org.infinispan.{AdvancedCache, Cache}
 import java.io.{IOException, StreamCorruptedException}
 import java.lang.StringBuilder
 import org.infinispan.container.entries.CacheEntry
@@ -56,6 +55,7 @@ class HotRodDecoder(cacheManager: EmbeddedCacheManager, transport: NettyTranspor
       try {
          val decoder = version match {
             case VERSION_10 | VERSION_11 | VERSION_12 | VERSION_13 => Decoder10
+            case VERSION_20 => Decoder2x
             case _ => throw new UnknownVersionException(
                "Unknown version:" + version, version, messageId)
          }
@@ -76,7 +76,7 @@ class HotRodDecoder(cacheManager: EmbeddedCacheManager, transport: NettyTranspor
       }
    }
 
-   override def getCache: Cache[Array[Byte], Array[Byte]] = {
+   override def getCache: Cache = {
       val cacheName = header.cacheName
       // Talking to the wrong cache are really request parsing errors
       // and hence should be treated as client errors
@@ -128,7 +128,7 @@ class HotRodDecoder(cacheManager: EmbeddedCacheManager, transport: NettyTranspor
       writeResponse(ch, header.decoder.customReadValue(header, buffer, cache))
 
    override def createStatsResponse: AnyRef =
-      header.decoder.createStatsResponse(header, cache.getAdvancedCache.getStats, transport)
+      header.decoder.createStatsResponse(header, cache.getStats, transport)
 
    override def createErrorResponse(t: Throwable): AnyRef = {
       t match {
@@ -141,7 +141,7 @@ class HotRodDecoder(cacheManager: EmbeddedCacheManager, transport: NettyTranspor
       }
    }
 
-   override protected def getOptimizedCache(c: AdvancedCache[Array[Byte], Array[Byte]]): AdvancedCache[Array[Byte], Array[Byte]] =
+   override protected def getOptimizedCache(c: Cache): Cache =
       header.decoder.getOptimizedCache(header, c)
 
    override protected def createServerException(e: Exception, b: ByteBuf): (HotRodException, Boolean) = {

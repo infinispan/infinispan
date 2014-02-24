@@ -27,6 +27,7 @@ import org.testng.AssertJUnit.assertEquals
 import org.infinispan.container.entries.InternalCacheEntry
 import org.infinispan.Cache
 import io.netty.channel.ChannelFuture
+import org.infinispan.distribution.ch.DefaultConsistentHash
 
 /**
  * Test utils for Hot Rod tests.
@@ -177,6 +178,31 @@ object HotRodTestingUtil extends Log {
          case t: TestTopologyAwareResponse =>
             assertEquals(t.members.size, servers.size)
             assertEquals(t.members.toSet, servers.map(_.getAddress).toSet)
+      }
+   }
+
+   def assertHashTopology20Received(topoResp: AbstractTestTopologyAwareResponse,
+           servers: List[HotRodServer], cacheName: String, expectedTopologyId : Int) {
+      val hashTopologyResp = topoResp.asInstanceOf[TestHashDistAware20Response]
+      assertEquals(hashTopologyResp.topologyId, expectedTopologyId)
+      assertEquals(hashTopologyResp.members.size, servers.size)
+      val serverAddresses = servers.map(_.getAddress)
+      hashTopologyResp.members.foreach(member => assertTrue(serverAddresses.exists(_ == member)))
+      assertEquals(hashTopologyResp.hashFunction, 3)
+      // Assert segments
+      val cache = servers.head.getCacheManager.getCache(cacheName)
+      val stateTransferManager = TestingUtil.extractComponent(cache, classOf[StateTransferManager])
+      val ch = stateTransferManager.getCacheTopology.getCurrentCH
+      val numSegments = ch.getNumSegments
+      val numOwners = ch.getNumOwners
+      assertEquals(hashTopologyResp.segments.size, numSegments)
+      for (i <- 0 until numSegments) {
+         val segment = ch.locateOwnersForSegment(i)
+         val members = hashTopologyResp.segments(i)
+         assertEquals(numOwners, members.size)
+         assertEquals(segment.size(), members.size)
+         members.foreach(member =>
+            assertTrue(servers.map(_.getAddress).exists(_ == member)))
       }
    }
 

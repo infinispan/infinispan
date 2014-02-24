@@ -27,9 +27,9 @@ public class ConsistentHashFactory {
       this.version2ConsistentHash = configuration.consistentHashImpl();
    }
 
-   public ConsistentHash newConsistentHash(int version) {
+   public <T extends ConsistentHash> T newConsistentHash(int version) {
       Class<? extends ConsistentHash> hashFunctionClass = version2ConsistentHash[version-1];
       // TODO: Why create a brand new instance via reflection everytime a new hash topology is received? Caching???
-      return Util.getInstance(hashFunctionClass);
+      return (T) Util.getInstance(hashFunctionClass);
    }
 }

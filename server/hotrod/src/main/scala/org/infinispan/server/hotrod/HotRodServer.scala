@@ -29,16 +29,11 @@ class HotRodServer extends AbstractProtocolServer("HotRod") with Log {
 
    type SuitableConfiguration = HotRodServerConfiguration
 
-   // Type aliases to reduce boilerplate definitions
-   type Bytes = Array[Byte]
-   type Cache = org.infinispan.Cache[Bytes, Bytes]
-   type AddressCache = org.infinispan.Cache[Address, ServerAddress]
-
    private var isClustered: Boolean = _
    private var clusterAddress: Address = _
    private var address: ServerAddress = _
    private var addressCache: AddressCache = _
-   private val knownCaches : java.util.Map[String, Cache] = CollectionFactory.makeConcurrentMap(4, 0.9f, 16)
+   private val knownCaches = CollectionFactory.makeConcurrentMap[String, Cache](4, 0.9f, 16)
    private var queryFacades: Seq[QueryFacade] = _
 
    def getAddress: ServerAddress = address
@@ -112,8 +107,7 @@ class HotRodServer extends AbstractProtocolServer("HotRod") with Log {
       debug("Map %s cluster address with %s server endpoint in address cache", clusterAddress, address)
       // Guaranteed delivery required since if data is lost, there won't be
       // any further cache calls, so negative acknowledgment can cause issues.
-      addressCache.getAdvancedCache
-              .withFlags(Flag.SKIP_CACHE_LOAD, Flag.GUARANTEED_DELIVERY)
+      addressCache.getAdvancedCache.withFlags(Flag.SKIP_CACHE_LOAD, Flag.GUARANTEED_DELIVERY)
               .put(clusterAddress, address)
    }
 
@@ -169,7 +163,7 @@ class HotRodServer extends AbstractProtocolServer("HotRod") with Log {
          if (compatibility || indexing)
             cache = tmpCache.getAdvancedCache.withFlags(Flag.OPERATION_HOTROD)
          else
-            cache = tmpCache
+            cache = tmpCache.getAdvancedCache
 
          knownCaches.put(cacheName, cache)
          // make sure we register a Migrator for this cache!
@@ -180,7 +174,7 @@ class HotRodServer extends AbstractProtocolServer("HotRod") with Log {
    }
 
    def tryRegisterMigrationManager(cacheName: String, cache: Cache) {
-      val cr = cache.getAdvancedCache.getComponentRegistry
+      val cr = cache.getComponentRegistry
       val migrationManager = cr.getComponent(classOf[RollingUpgradeManager])
       if (migrationManager != null) migrationManager.addSourceMigrator(new HotRodSourceMigrator(cache))
    }
