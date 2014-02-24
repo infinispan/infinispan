@@ -26,6 +26,7 @@ import org.infinispan.Cache;
 import org.infinispan.container.DataContainer;
 import org.infinispan.container.entries.ImmortalCacheEntry;
 import org.infinispan.container.entries.InternalCacheEntry;
+import org.infinispan.distribution.ch.ConsistentHash;
 import org.infinispan.interceptors.locking.ClusteringDependentLogic;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.remoting.transport.Address;
@@ -108,12 +109,13 @@ public class DistributionTestHelper {
    }
 
    public static boolean hasOwners(Object key, Cache<?, ?> primaryOwner, Cache<?, ?>... backupOwners) {
-      DistributionManager dm = primaryOwner.getAdvancedCache().getDistributionManager();
-      List<Address> ownerAddresses = dm.locate(key);
+      ConsistentHash consistentHash = primaryOwner.getAdvancedCache().getComponentRegistry().getStateTransferManager()
+            .getCacheTopology().getWriteConsistentHash();
+      List<Address> ownerAddresses = consistentHash.locateOwners(key);
       if (!addressOf(primaryOwner).equals(ownerAddresses.get(0)))
          return false;
-      for (int i = 0; i < backupOwners.length; i++) {
-         if (!ownerAddresses.contains(addressOf(backupOwners[i])))
+      for (Cache<?, ?> backupOwner : backupOwners) {
+         if (!ownerAddresses.contains(addressOf(backupOwner)))
             return false;
       }
       return true;
