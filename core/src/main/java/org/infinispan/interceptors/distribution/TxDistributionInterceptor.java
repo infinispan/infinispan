@@ -197,7 +197,7 @@ public class TxDistributionInterceptor extends BaseDistributionInterceptor {
                keyToCheckOwners.add(key);
             }
          }
-         final Collection<Address> affectedNodes = dm.getAffectedNodes(command.getKeys());
+         final Collection<Address> affectedNodes = dm.getAffectedNodes(keyToCheckOwners);
          ((LocalTxInvocationContext) ctx).remoteLocksAcquired(affectedNodes);
          log.tracef("Registered remote locks acquired %s", affectedNodes);
          rpcManager.invokeRemotely(affectedNodes, command, true, true);
