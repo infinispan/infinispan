@@ -10,7 +10,7 @@
          use_send_queues="true"
          sock_conn_timeout="300"
          enable_diagnostics="false"
-         bundler_type="old"
+         bundler_type="sender-sends-with-timer"
          send_queue_size="0"
 
          thread_pool.enabled="true"
