@@ -36,6 +36,29 @@
          <protocol type="FRAG2" />
          <protocol type="RSVP" />
       </stack>
+       <stack name="s3">
+           <transport type="TCP" socket-binding="jgroups-tcp"/>
+           <protocol type='S3_PING'>
+               <property name="location">${jgroups.s3.bucket:jgroups}</property>
+               <property name="access_key">${jgroups.s3.access_key}</property>
+               <property name="secret_access_key">${jgroups.s3.secret_access_key}</property>
+               <property name="pre_signed_delete_url">${jgroups.s3.pre_signed_delete_url}</property>
+               <property name="pre_signed_put_url">${jgroups.s3.pre_signed_put_url}</property>
+               <property name="prefix">${jgroups.s3.prefix}</property>
+           </protocol>
+           <protocol type="MERGE2"/>
+           <protocol type="FD_SOCK" socket-binding="jgroups-tcp-fd"/>
+           <protocol type="FD"/>
+           <protocol type="VERIFY_SUSPECT"/>
+           <protocol type="pbcast.NAKACK2"/>
+           <protocol type="UNICAST2"/>
+           <protocol type="pbcast.STABLE"/>
+           <protocol type="pbcast.GMS"/>
+           <protocol type="UFC"/>
+           <protocol type="MFC"/>
+           <protocol type="FRAG2"/>
+           <protocol type="RSVP"/>
+       </stack>
    </subsystem>
 
    <socket-binding name="jgroups-mping" port="0" multicast-address="${jboss.default.multicast.address:234.99.54.14}" multicast-port="45700" />
