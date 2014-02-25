@@ -20,7 +20,7 @@
          mcast_send_buf_size="640000"
          loopback="true"
          max_bundle_size="64k"
-         bundler_type="old"
+         bundler_type="sender-sends-with-timer"
          ip_ttl="${jgroups.udp.ip_ttl:0}"
          enable_diagnostics="true"
          thread_naming_pattern="cl"

@@ -13,7 +13,7 @@
          max_bundle_size="31k"
          ip_ttl="${jgroups.udp.ip_ttl:2}"
          enable_diagnostics="false"
-         bundler_type="old"
+         bundler_type="sender-sends-with-timer"
 
          thread_naming_pattern="pl"
 

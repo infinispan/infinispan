@@ -16,7 +16,7 @@
          send_buf_size="640000"
          loopback="false"
          max_bundle_size="64k"
-         bundler_type="old"
+         bundler_type="sender-sends-with-timer"
          enable_diagnostics="true"
          thread_naming_pattern="cl"
 
