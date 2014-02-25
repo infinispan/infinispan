@@ -277,6 +277,7 @@ public class AsyncStoreEvictionTest {
       });
    }
 
+   @Test(groups = "unstable", description = "See ISPN-3631")
    public void testSizeAfterRemoveAndExpiration() throws Exception {
       TestingUtil.withCacheManager(new CacheCallable(config(false, 1)) {
          @Override

@@ -36,7 +36,7 @@ import javax.ws.rs.core.CacheControl
  * @author Michal Linhard
  * @since 4.0
  */
-@Test(groups = Array("functional"), testName = "rest.IntegrationTest")
+@Test(groups = Array("unstable"), testName = "rest.IntegrationTest", description = "See ISPN-3994, original group: functional")
 class IntegrationTest extends RestServerTestBase {
 
    private lazy val log: JavaLog = LogFactory.getLog(getClass, classOf[JavaLog])

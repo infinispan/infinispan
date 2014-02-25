@@ -87,6 +87,7 @@ public class ClusteredCacheConfigurationTest {
 
     // test queue-flush-interval=3000 (ms) with memcached
     @Test
+    @Category(UnstableTest.class) // See ISPN-4057
     public void testQueueFlushIntervalMemcached() throws Exception {
         final MemcachedClient mc1 = new MemcachedClient(server1.getMemcachedEndpoint().getInetAddress().getHostName(), server1.getMemcachedEndpoint()
                 .getPort());
