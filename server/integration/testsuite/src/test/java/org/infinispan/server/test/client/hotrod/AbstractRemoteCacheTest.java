@@ -733,19 +733,6 @@ public abstract class AbstractRemoteCacheTest {
         assertTrue(!future.get());
     }
 
-    /*
-     * Test getVersion method - it returns the infinispan version, which we're comparing with the version we have set
-     * in the testsuite pom - so it also works as a simple check for us
-     *
-     * Leftover from migration:
-     * Ignore? Do we still need this check in Infinispan server? Or add/change to any other version check?
-     */
-    @Ignore
-    @Test
-    public void testGetVersion() throws Exception {
-        assertEquals(System.getProperty("version.infinispan"), remoteCache.getVersion());
-    }
-
     @Test
     public void testGetProtocolVersion() throws Exception {
         assertEquals("HotRod client, protocol version :1.3", remoteCache.getProtocolVersion());
