@@ -1,11 +1,14 @@
 package org.infinispan.server.test.client.hotrod;
 
 import java.lang.reflect.Field;
+import java.net.Inet6Address;
 import java.net.InetSocketAddress;
 import java.net.SocketAddress;
 import java.util.Collection;
 import java.util.Iterator;
 import java.util.List;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import org.infinispan.arquillian.core.RemoteInfinispanServer;
 import org.infinispan.client.hotrod.RemoteCache;
@@ -43,6 +46,9 @@ import static org.junit.Assert.fail;
  */
 public abstract class AbstractRemoteCacheManagerTest {
 
+    private static final String IPV6_REGEX = "\\A\\[(.*)\\]:([0-9]+)\\z";
+    private static final String IPV4_REGEX = "\\A([^:]+):([0-9]+)\\z";
+
     private final String TEST_CACHE_NAME = "testcache";
     final static String DEFAULT_CLUSTERING_MODE = "dist";
     protected final static String DEFAULT_NAMED_CACHE = "namedCache";
@@ -70,6 +76,25 @@ public abstract class AbstractRemoteCacheManagerTest {
         }
 
         return config;
+    }
+
+    /*
+     * Tests the constructor RemoteCacheManager() - the properties file hotrod-client.properties from classpath is used to
+     * define properties - confirm that the file hotrod-client.properties is picked up
+     */
+    @Test
+    public void testDefaultConstructor() throws Exception {
+        Configuration conf = createRemoteCacheManagerConfigurationBuilder().build();
+        // use the properties file hotrod-client.properties on classpath
+        // this properties file contains the test properties with server_list set to ${node0.address}:11222;${node1.address}:11222
+        RemoteCacheManager rcm = new RemoteCacheManager();
+        RemoteCacheManager rcm2 = new RemoteCacheManager(false);
+
+        assertTrue(rcm.isStarted());
+        assertFalse(rcm2.isStarted());
+
+        RemoteCache rc = rcm.getCache(TEST_CACHE_NAME);
+        assertEqualConfiguration(conf, rc);
     }
 
     @Test
@@ -304,12 +329,22 @@ public abstract class AbstractRemoteCacheManagerTest {
         String servers = getServerListProperty(rc);
         for (ServerConfiguration scfg : config.servers()) {
             boolean found = false;
+            String host;
+            int port = ConfigurationProperties.DEFAULT_HOTROD_PORT;
+            Pattern patternIpv6 = Pattern.compile(IPV6_REGEX);
+            Pattern patternIpv4 = Pattern.compile(IPV4_REGEX);
             for (String server : servers.split(";")) {
-                String[] components = server.trim().split(":");
-                String host = components[0];
-                int port = ConfigurationProperties.DEFAULT_HOTROD_PORT;
-                if (components.length > 1)
-                    port = Integer.parseInt(components[1]);
+                Matcher matcher6 = patternIpv6.matcher(server);
+                Matcher matcher4 = patternIpv4.matcher(server);
+                if (matcher6.matches()) {
+                    host = matcher6.group(1);
+                    port = Integer.parseInt(matcher6.group(2));
+                } else if (matcher4.matches()) {
+                    host = matcher4.group(1);
+                    port = Integer.parseInt(matcher4.group(2));
+                } else {
+                    host = server;
+                }
                 if (scfg.host().equals(host) && scfg.port() == port)
                     found = true;
             }
@@ -368,10 +403,14 @@ public abstract class AbstractRemoteCacheManagerTest {
             InetSocketAddress addr = (InetSocketAddress) iter.next();
             // take care to remove prepended backslash
             String serverAddress = addr.getAddress().toString();
-            if (serverAddress.startsWith("/"))
-                serverAddress = serverAddress.substring(1);
+//            if (serverAddress.startsWith("/"))
+//                serverAddress = serverAddress.substring(1);
 //            serverList.append(serverAddress);
-            serverList.append(addr.getHostName());
+            if (addr.getAddress() instanceof Inet6Address) {
+                serverList.append('[').append(addr.getHostName()).append(']');
+            } else {
+                serverList.append(addr.getHostName());
+            }
             serverList.append(":");
             serverList.append(addr.getPort());
             if (i < listSize - 1)

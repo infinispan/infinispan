@@ -1,1 +1,1 @@
-<remote-destination host="127.0.0.1" port="8180"/>
+<remote-destination host="${jboss.bind.address:127.0.0.1}" port="8180"/>

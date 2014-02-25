@@ -1,7 +1,7 @@
         <subsystem xmlns="urn:jboss:domain:datasources:1.1">
             <datasources>
                 <datasource jndi-name="java:jboss/datasources/JdbcDS" pool-name="java:jboss/datasources/JdbcDS" enabled="true" use-java-context="true" use-ccm="true">
-                    <connection-url>jdbc:h2:tcp://localhost:9092/mem:test</connection-url>
+                    <connection-url>${connection.url}</connection-url>
                     <driver>h2</driver>
                     <pool/>
                     <security>
@@ -10,7 +10,7 @@
                     </security>
                 </datasource>
                 <datasource jndi-name="java:jboss/datasources/JdbcDSOther" pool-name="java:jboss/datasources/JdbcDSOther" enabled="true" use-java-context="true" use-ccm="true">
-                    <connection-url>jdbc:h2:tcp://localhost:9092/mem:test_other</connection-url>
+                    <connection-url>${connection.url.other}</connection-url>
                     <driver>h2</driver>
                     <pool/>
                     <security>

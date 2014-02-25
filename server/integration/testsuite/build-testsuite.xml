@@ -46,20 +46,6 @@
         <filter token="connection.url.other" value="${connection.url.other}"/>
     </filterset>
 
-    <if>
-        <equals arg1="${database}" arg2="h2"/>
-        <then>
-            <echo message="JDBC tests will run with H2 datasource"/>
-            <property name="datasource.file" value="datasource-h2.xml"/>
-            <property name="add.db.module" value="false"/>
-        </then>
-        <else>
-            <echo message="JDBC tests will run with custom datasource"/>
-            <property name="datasource.file" value="datasource.xml"/>
-            <property name="add.db.module" value="true"/>
-        </else>
-    </if>
-
     <target name="create-distro1" description="Create first distribution of Infinispan server by copying the one from build/target directory or unpacking a distro zip">
         <echo message="Creating test server distro at ${server1.dist}" />
         <if>
@@ -98,6 +84,27 @@
                 </if>
             </else>
         </if>
+
+        <if>
+            <equals arg1="${database}" arg2="h2"/>
+            <then>
+                <echo message="JDBC tests will run with H2 datasource"/>
+                <property name="datasource.file" value="datasource-h2.xml"/>
+            </then>
+            <else>
+                <echo message="JDBC tests will run with custom datasource"/>
+                <property name="datasource.file" value="datasource.xml"/>
+                <delete dir="${server1.dist}/modules/system/layers/base/driver"/>
+                <copy file="${driver.dir}/${driver.jar}"
+                      todir="${server1.dist}/modules/system/layers/base/com/${database}/driver/main" overwrite="true"/>
+                <copy file="${resources.dir}/module.xml"
+                      todir="${server1.dist}/modules/system/layers/base/com/${database}/driver/main" overwrite="true"
+                      filtering="@filtering">
+                    <filterset refid="dbFilters"/>
+                </copy>
+            </else>
+        </if>
+
         <copy todir="${server1.dist}/standalone/configuration/examples">
             <fileset dir="${server1.dist}/docs/examples/configs" />
         </copy>
@@ -110,7 +117,7 @@
         </copy>
     </target>
 
-    <target name="create-all-distros" depends="transform-distro1-configs,add-db-module" description="Create all Infinispan server home directories used in the testsuite">
+    <target name="create-all-distros" depends="transform-distro1-configs" description="Create all Infinispan server home directories used in the testsuite">
         <copy todir="${server2.dist}">
             <fileset dir="${server1.dist}" />
         </copy>
@@ -393,15 +400,4 @@
             <move file="@{transformDir}/@{in}-transformed-jdbc" tofile="@{transformDir}/@{in}-transformed"/>
         </sequential>
     </macrodef>
-
-    <target name="add-db-module" if="add.db.module">
-        <delete dir="${server1.dist}/modules/system/layers/base/driver"/>
-        <copy file="${driver.dir}/${driver.jar}"
-              todir="${server1.dist}/modules/system/layers/base/com/${database}/driver/main" overwrite="true"/>
-        <copy file="${resources.dir}/module.xml"
-              todir="${server1.dist}/modules/system/layers/base/com/${database}/driver/main" overwrite="true"
-              filtering="@filtering">
-            <filterset refid="dbFilters"/>
-        </copy>
-    </target>
 </project>
