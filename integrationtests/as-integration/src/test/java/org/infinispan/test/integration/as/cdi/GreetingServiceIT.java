@@ -1,11 +1,13 @@
 package org.infinispan.test.integration.as.cdi;
 
+import org.infinispan.test.integration.as.category.UnstableTest;
 import org.jboss.arquillian.container.test.api.Deployment;
 import org.jboss.arquillian.junit.Arquillian;
 import org.jboss.shrinkwrap.api.spec.WebArchive;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.junit.experimental.categories.Category;
 
 import javax.cache.annotation.CacheKey;
 import javax.inject.Inject;
@@ -17,6 +19,7 @@ import static org.junit.Assert.assertTrue;
  * @author Kevin Pollet <pollet.kevin@gmail.com> (C) 2011
  */
 @RunWith(Arquillian.class)
+@Category(UnstableTest.class) // See ISPN-4058
 public class GreetingServiceIT {
 
    @Deployment
