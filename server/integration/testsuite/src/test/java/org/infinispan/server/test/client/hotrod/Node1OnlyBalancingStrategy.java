@@ -33,7 +33,7 @@ public class Node1OnlyBalancingStrategy implements RequestBalancingStrategy {
     private static InetSocketAddress server;
 
     static {
-        host = System.getProperty("jbosstest.cluster.node1", "localhost");
+        host = System.getProperty("node1.ip", "localhost");
         server = new InetSocketAddress(host, port);
         if (log.isDebugEnabled())
             log.trace("node1 server = " + server);

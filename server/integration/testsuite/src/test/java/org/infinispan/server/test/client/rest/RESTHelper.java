@@ -19,6 +19,10 @@ import org.apache.http.util.EntityUtils;
 
 import javax.servlet.http.HttpServletResponse;
 import java.io.ByteArrayInputStream;
+import java.net.MalformedURLException;
+import java.net.URI;
+import java.net.URISyntaxException;
+import java.net.URL;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
@@ -67,23 +71,23 @@ public class RESTHelper {
         return format.format(cal.getTime());
     }
 
-    public static HttpResponse head(String uri) throws Exception {
+    public static HttpResponse head(URI uri) throws Exception {
         return head(uri, HttpServletResponse.SC_OK);
     }
 
-    public static HttpResponse headWithoutClose(String uri) throws Exception {
+    public static HttpResponse headWithoutClose(URI uri) throws Exception {
         return head(uri, HttpServletResponse.SC_OK);
     }
 
-    public static HttpResponse head(String uri, int expectedCode) throws Exception {
+    public static HttpResponse head(URI uri, int expectedCode) throws Exception {
         return head(uri, expectedCode, new String[0][0]);
     }
 
-    public static HttpResponse headWithoutClose(String uri, int expectedCode) throws Exception {
+    public static HttpResponse headWithoutClose(URI uri, int expectedCode) throws Exception {
         return head(uri, expectedCode, new String[0][0]);
     }
 
-    public static HttpResponse headWithout(String uri, int expectedCode, String[][] headers) throws Exception {
+    public static HttpResponse headWithout(URI uri, int expectedCode, String[][] headers) throws Exception {
         HttpHead head = new HttpHead(uri);
         for (String[] eachHeader : headers) {
             head.setHeader(eachHeader[0], eachHeader[1]);
@@ -93,7 +97,7 @@ public class RESTHelper {
         return resp;
     }
 
-    public static HttpResponse head(String uri, int expectedCode, String[][] headers) throws Exception {
+    public static HttpResponse head(URI uri, int expectedCode, String[][] headers) throws Exception {
         HttpHead head = new HttpHead(uri);
         HttpResponse resp = null;
         try {
@@ -108,31 +112,31 @@ public class RESTHelper {
         return resp;
     }
 
-    public static HttpResponse get(String uri) throws Exception {
+    public static HttpResponse get(URI uri) throws Exception {
         return get(uri, HttpServletResponse.SC_OK);
     }
 
-    public static HttpResponse getWithoutClose(String uri) throws Exception {
+    public static HttpResponse getWithoutClose(URI uri) throws Exception {
         return getWithoutClose(uri, HttpServletResponse.SC_OK);
     }
 
-    public static HttpResponse get(String uri, String expectedResponseBody) throws Exception {
+    public static HttpResponse get(URI uri, String expectedResponseBody) throws Exception {
         return get(uri, expectedResponseBody, HttpServletResponse.SC_OK, true);
     }
 
-    public static HttpResponse getWithoutClose(String uri, String expectedResponseBody) throws Exception {
+    public static HttpResponse getWithoutClose(URI uri, String expectedResponseBody) throws Exception {
         return get(uri, expectedResponseBody, HttpServletResponse.SC_OK, false);
     }
 
-    public static HttpResponse get(String uri, int expectedCode) throws Exception {
+    public static HttpResponse get(URI uri, int expectedCode) throws Exception {
         return get(uri, null, expectedCode, true, new Object[0]);
     }
 
-    public static HttpResponse getWithoutClose(String uri, int expectedCode) throws Exception {
+    public static HttpResponse getWithoutClose(URI uri, int expectedCode) throws Exception {
         return get(uri, null, expectedCode, false, new Object[0]);
     }
 
-    public static HttpResponse get(String uri, String expectedResponseBody, int expectedCode, boolean closeConnection, Object... headers) throws Exception {
+    public static HttpResponse get(URI uri, String expectedResponseBody, int expectedCode, boolean closeConnection, Object... headers) throws Exception {
         HttpGet get = new HttpGet(uri);
         if (headers.length % 2 != 0)
             throw new IllegalArgumentException("bad headers argument");
@@ -153,15 +157,15 @@ public class RESTHelper {
         return resp;
     }
 
-    public static HttpResponse put(String uri, Object data, String contentType) throws Exception {
+    public static HttpResponse put(URI uri, Object data, String contentType) throws Exception {
         return put(uri, data, contentType, HttpServletResponse.SC_OK);
     }
 
-    public static HttpResponse put(String uri, Object data, String contentType, int expectedCode) throws Exception {
+    public static HttpResponse put(URI uri, Object data, String contentType, int expectedCode) throws Exception {
         return put(uri, data, contentType, expectedCode, new Object[0]);
     }
 
-    public static HttpResponse put(String uri, Object data, String contentType, int expectedCode, Object... headers)
+    public static HttpResponse put(URI uri, Object data, String contentType, int expectedCode, Object... headers)
             throws Exception {
         HttpPut put = new HttpPut(uri);
         if (data instanceof String) {
@@ -195,15 +199,15 @@ public class RESTHelper {
         credsProvider.clear();
     }
 
-    public static HttpResponse post(String uri, Object data, String contentType) throws Exception {
+    public static HttpResponse post(URI uri, Object data, String contentType) throws Exception {
         return post(uri, data, contentType, HttpServletResponse.SC_OK);
     }
 
-    public static HttpResponse post(String uri, Object data, String contentType, int expectedCode) throws Exception {
+    public static HttpResponse post(URI uri, Object data, String contentType, int expectedCode) throws Exception {
         return post(uri, data, contentType, expectedCode, new Object[0]);
     }
 
-    public static HttpResponse post(String uri, Object data, String contentType, int expectedCode, Object... headers)
+    public static HttpResponse post(URI uri, Object data, String contentType, int expectedCode, Object... headers)
             throws Exception {
         HttpPost post = new HttpPost(uri);
         if (data instanceof String) {
@@ -227,14 +231,14 @@ public class RESTHelper {
         return resp;
     }
 
-    public static HttpResponse delete(String uri) throws Exception {
+    public static HttpResponse delete(URI uri) throws Exception {
         HttpDelete delete = new HttpDelete(uri);
         HttpResponse resp = client.execute(delete);
         EntityUtils.consume(resp.getEntity());
         return resp;
     }
 
-    public static HttpResponse delete(String uri, int expectedCode, Object... headers) throws Exception {
+    public static HttpResponse delete(URI uri, int expectedCode, Object... headers) throws Exception {
         HttpDelete delete = new HttpDelete(uri);
         if (headers.length % 2 != 0)
             throw new IllegalArgumentException("bad headers argument");
@@ -250,33 +254,42 @@ public class RESTHelper {
     /**
      * returns full uri for given server number cache name and key if key is null the key part is ommited
      */
-    public static String fullPathKey(int server, String cache, String key, int offset) {
-        StringBuffer sb = new StringBuffer("http://" + servers.get(server).getHostname() + ":" + (port + offset)
-                + servers.get(server).getRestServerPath() + "/" + cache);
-        if (key == null) {
-            return sb.toString();
-        } else {
-            return sb.append("/").append(key).toString();
+    public static URI fullPathKey(int server, String cache, String key, int offset) {
+        StringBuffer queryBuilder = new StringBuffer(servers.get(server).getRestServerPath() + "/" + cache);
+        if (key != null) {
+            queryBuilder.append("/").append(key);
         }
+
+        URI uri = null;
+        URL url = null;
+        try {
+            url = new URL("http", servers.get(server).getHostname(), port + offset, queryBuilder.toString());
+            uri = new URI(url.getProtocol(), url.getUserInfo(), url.getHost(), url.getPort(), url.getPath(), url.getQuery(), null);
+        } catch (MalformedURLException e) {
+            System.out.println("URL " + url.toString() + " is a malformed URL");
+        } catch (URISyntaxException e) {
+            System.out.println("URI " + uri.toString() + " is a malformed URL");
+        }
+      return uri;
     }
 
-    public static String fullPathKey(int server, String key) {
+    public static URI fullPathKey(int server, String key) {
         return fullPathKey(server, "___defaultcache", key, 0);
     }
 
-    public static String fullPathKey(int server, String key, int portOffset) {
+    public static URI fullPathKey(int server, String key, int portOffset) {
         return fullPathKey(server, "___defaultcache", key, portOffset);
     }
 
-    public static String fullPathKey(String key) {
+    public static URI fullPathKey(String key) {
         return fullPathKey(0, key);
     }
 
-    public static String fullPathKey(String cache, String key) {
+    public static URI fullPathKey(String cache, String key) {
         return fullPathKey(0, cache, key, 0);
     }
 
-    public static String fullPathKey(String cache, String key, int portOffset) {
+    public static URI fullPathKey(String cache, String key, int portOffset) {
         return fullPathKey(0, cache, key, portOffset);
     }
 

@@ -1,5 +1,6 @@
 package org.infinispan.server.test.expiration;
 
+import java.net.URI;
 import java.util.concurrent.TimeUnit;
 
 import javax.servlet.http.HttpServletResponse;
@@ -49,10 +50,10 @@ public class ExpirationTest {
                 .getContextPath());
         RESTHelper.addServer(server2.getRESTEndpoint().getInetAddress().getHostName(), server2.getRESTEndpoint()
                 .getContextPath());
-        String key1Path = fullPathKey(0, "k1");
-        String key2Path = fullPathKey(1, "k2");
-        String key3Path = fullPathKey(0, "k3");
-        String key4Path = fullPathKey(0, "k4");
+        URI key1Path = fullPathKey(0, "k1");
+        URI key2Path = fullPathKey(1, "k2");
+        URI key3Path = fullPathKey(0, "k3");
+        URI key4Path = fullPathKey(0, "k4");
         Assert.assertEquals(2, server1.getCacheManager("clustered").getClusterSize());
         // specific entry timeToLiveSeconds and maxIdleTimeSeconds that overrides the default
         post(key1Path, "v1", "application/text", HttpServletResponse.SC_OK, "Content-Type", "application/text",

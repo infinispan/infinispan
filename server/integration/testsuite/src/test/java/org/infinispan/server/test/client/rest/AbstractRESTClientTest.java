@@ -8,6 +8,7 @@ import org.junit.Test;
 
 import javax.servlet.http.HttpServletResponse;
 import java.io.*;
+import java.net.URI;
 import java.net.URLEncoder;
 import java.util.Arrays;
 
@@ -68,7 +69,7 @@ public abstract class AbstractRESTClientTest {
 
     @Test
     public void testBasicOperation() throws Exception {
-        String fullPathKey = fullPathKey(KEY_A);
+        URI fullPathKey = fullPathKey(KEY_A);
         String initialXML = "<hey>ho</hey>";
 
         HttpResponse insert = put(fullPathKey, initialXML, "application/octet-stream");
@@ -114,7 +115,7 @@ public abstract class AbstractRESTClientTest {
 
     @Test
     public void testGet() throws Exception {
-        String fullPathKey = fullPathKey(KEY_A);
+        URI fullPathKey = fullPathKey(KEY_A);
         post(fullPathKey, "data", "application/text");
         HttpResponse resp = get(fullPathKey, "data");
         assertNotNull(resp.getHeaders("ETag")[0].getValue());
@@ -124,7 +125,7 @@ public abstract class AbstractRESTClientTest {
 
     @Test
     public void testGetNamedCache() throws Exception {
-        String fullPathKey = fullPathKey(DEFAULT_NAMED_CACHE, KEY_A);
+        URI fullPathKey = fullPathKey(DEFAULT_NAMED_CACHE, KEY_A);
         post(fullPathKey, "data", "application/text");
         HttpResponse resp = get(fullPathKey, "data");
         assertNotNull(resp.getHeaders("ETag")[0].getValue());
@@ -134,7 +135,7 @@ public abstract class AbstractRESTClientTest {
 
     @Test
     public void testHead() throws Exception {
-        String fullPathKey = fullPathKey(KEY_A);
+        URI fullPathKey = fullPathKey(KEY_A);
         post(fullPathKey, "data", "application/text");
         HttpResponse resp = null;
         try {
@@ -150,7 +151,7 @@ public abstract class AbstractRESTClientTest {
 
     @Test
     public void testPostDuplicate() throws Exception {
-        String fullPathKey = fullPathKey(KEY_A);
+        URI fullPathKey = fullPathKey(KEY_A);
 
         post(fullPathKey, "data", "application/text");
         // second post, returns 409
@@ -161,7 +162,7 @@ public abstract class AbstractRESTClientTest {
 
     @Test
     public void testPutDataWithTimeToLive() throws Exception {
-        String fullPathKey = fullPathKey(KEY_A);
+        URI fullPathKey = fullPathKey(KEY_A);
 
         post(fullPathKey, "data", "application/text", HttpServletResponse.SC_OK,
                 // headers
@@ -175,7 +176,7 @@ public abstract class AbstractRESTClientTest {
 
     @Test
     public void testPutDataWithMaxIdleTime() throws Exception {
-        String fullPathKey = fullPathKey(KEY_A);
+        URI fullPathKey = fullPathKey(KEY_A);
 
         post(fullPathKey, "data", "application/text", HttpServletResponse.SC_OK,
                 // headers
@@ -197,7 +198,7 @@ public abstract class AbstractRESTClientTest {
 
     @Test
     public void testPutDataTTLMaxIdleCombo1() throws Exception {
-        String fullPathKey = fullPathKey(KEY_A);
+        URI fullPathKey = fullPathKey(KEY_A);
 
         post(fullPathKey, "data", "application/text", HttpServletResponse.SC_OK,
                 // headers
@@ -219,7 +220,7 @@ public abstract class AbstractRESTClientTest {
 
     @Test
     public void testPutDataTTLMaxIdleCombo2() throws Exception {
-        String fullPathKey = fullPathKey(KEY_A);
+        URI fullPathKey = fullPathKey(KEY_A);
 
         post(fullPathKey, "data", "application/text", HttpServletResponse.SC_OK,
                 // headers
@@ -233,7 +234,7 @@ public abstract class AbstractRESTClientTest {
 
     @Test
     public void testRemoveEntry() throws Exception {
-        String fullPathKey = fullPathKey(KEY_A);
+        URI fullPathKey = fullPathKey(KEY_A);
         post(fullPathKey, "data", "application/text");
         head(fullPathKey);
         delete(fullPathKey);
@@ -253,7 +254,7 @@ public abstract class AbstractRESTClientTest {
 
     @Test
     public void testPutUnknownClass() throws Exception {
-        String fullPathKey = fullPathKey("x");
+        URI fullPathKey = fullPathKey("x");
 
         ByteArrayOutputStream bout = new ByteArrayOutputStream();
         ObjectOutputStream oo = new ObjectOutputStream(bout);
@@ -274,7 +275,7 @@ public abstract class AbstractRESTClientTest {
 
     @Test
     public void testPutKnownClass() throws Exception {
-        String fullPathKey = fullPathKey("y");
+        URI fullPathKey = fullPathKey("y");
         ByteArrayOutputStream bout = new ByteArrayOutputStream();
         ObjectOutputStream oo = new ObjectOutputStream(bout);
         Integer i1 = 42;
@@ -295,7 +296,7 @@ public abstract class AbstractRESTClientTest {
 
     @Test
     public void testETagChanges() throws Exception {
-        String fullPathKey = fullPathKey(KEY_A);
+        URI fullPathKey = fullPathKey(KEY_A);
         put(fullPathKey, "data1", "application/text");
         String eTagFirst = get(fullPathKey).getHeaders("ETag")[0].getValue();
         // second get should get the same ETag
@@ -309,13 +310,13 @@ public abstract class AbstractRESTClientTest {
     @Test
     public void testXJavaSerializedObjectPutAndDelete() throws Exception {
         //show that "application/text" works for delete
-        String fullPathKey1 = fullPathKey("j");
+        URI fullPathKey1 = fullPathKey("j");
         put(fullPathKey1, "data1", "application/text");
         head(fullPathKey1, HttpServletResponse.SC_OK);
         delete(fullPathKey1);
         head(fullPathKey1, HttpServletResponse.SC_NOT_FOUND);
 
-        String fullPathKey2 = fullPathKey("k");
+        URI fullPathKey2 = fullPathKey("k");
         ByteArrayOutputStream bout = new ByteArrayOutputStream();
         ObjectOutputStream oo = new ObjectOutputStream(bout);
         Integer i1 = 42;
@@ -330,7 +331,7 @@ public abstract class AbstractRESTClientTest {
 
     @Test
     public void testIfModifiedSince() throws Exception {
-        String fullPathKey = fullPathKey(KEY_A);
+        URI fullPathKey = fullPathKey(KEY_A);
         put(fullPathKey, "data", "application/text");
         HttpResponse resp = get(fullPathKey);
         String dateLast = resp.getHeaders("Last-Modified")[0].getValue();
@@ -352,7 +353,7 @@ public abstract class AbstractRESTClientTest {
 
     @Test
     public void testIfUnmodifiedSince() throws Exception {
-        String fullPathKey = fullPathKey(KEY_A);
+        URI fullPathKey = fullPathKey(KEY_A);
         put(fullPathKey, "data", "application/text");
 
         HttpResponse resp = get(fullPathKey);
@@ -369,7 +370,7 @@ public abstract class AbstractRESTClientTest {
 
     @Test
     public void testIfNoneMatch() throws Exception {
-        String fullPathKey = fullPathKey(KEY_A);
+        URI fullPathKey = fullPathKey(KEY_A);
         put(fullPathKey, "data", "application/text");
         HttpResponse resp = get(fullPathKey);
         String eTag = resp.getHeaders("ETag")[0].getValue();
@@ -381,7 +382,7 @@ public abstract class AbstractRESTClientTest {
 
     @Test
     public void testIfMatch() throws Exception {
-        String fullPathKey = fullPathKey(KEY_A);
+        URI fullPathKey = fullPathKey(KEY_A);
         put(fullPathKey, "data", "application/text");
         HttpResponse resp = get(fullPathKey);
 

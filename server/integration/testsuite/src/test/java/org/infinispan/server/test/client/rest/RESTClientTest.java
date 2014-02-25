@@ -7,8 +7,6 @@ import org.jboss.arquillian.junit.Arquillian;
 import org.junit.experimental.categories.Category;
 import org.junit.runner.RunWith;
 
-import java.net.Inet6Address;
-
 /**
  *
  * @author <a href="mailto:jvilkola@redhat.com">Jozef Vilkolak</a>
@@ -24,11 +22,6 @@ public class RESTClientTest extends AbstractRESTClientTest {
 
     @Override
     protected void addRestServer() {
-        // IPv6 address should be in square brackets, otherwise http client does not understand it
-        if (server1.getRESTEndpoint().getInetAddress() instanceof Inet6Address) {
-            RESTHelper.addServer("[" + server1.getRESTEndpoint().getInetAddress().getHostName() + "]", server1.getRESTEndpoint().getContextPath());
-        } else { // otherwise should be IPv4
-            RESTHelper.addServer(server1.getRESTEndpoint().getInetAddress().getHostName(), server1.getRESTEndpoint().getContextPath());
-        }
+        RESTHelper.addServer(server1.getRESTEndpoint().getInetAddress().getHostName(), server1.getRESTEndpoint().getContextPath());
     }
 }

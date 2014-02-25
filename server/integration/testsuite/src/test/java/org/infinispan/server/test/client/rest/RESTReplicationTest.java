@@ -1,7 +1,5 @@
 package org.infinispan.server.test.client.rest;
 
-import java.net.Inet6Address;
-
 import javax.servlet.http.HttpServletResponse;
 
 import org.infinispan.arquillian.core.InfinispanResource;
@@ -43,18 +41,8 @@ public class RESTReplicationTest {
 
     @Before
     public void setUp() throws Exception {
-        // IPv6 addresses should be in square brackets, otherwise http client does not understand it
-        if (server1.getRESTEndpoint().getInetAddress() instanceof Inet6Address) {
-            RESTHelper.addServer("[" + server1.getRESTEndpoint().getInetAddress().getHostName() + "]", server1.getRESTEndpoint().getContextPath());
-        } else { // otherwise should be IPv4
-            RESTHelper.addServer(server1.getRESTEndpoint().getInetAddress().getHostName(), server1.getRESTEndpoint().getContextPath());
-        }
-
-        if (server2.getRESTEndpoint().getInetAddress() instanceof Inet6Address) {
-            RESTHelper.addServer("[" + server2.getRESTEndpoint().getInetAddress().getHostName() + "]", server2.getRESTEndpoint().getContextPath());
-        } else { // otherwise should be IPv4
-            RESTHelper.addServer(server2.getRESTEndpoint().getInetAddress().getHostName(), server2.getRESTEndpoint().getContextPath());
-        }
+        RESTHelper.addServer(server1.getRESTEndpoint().getInetAddress().getHostName(), server1.getRESTEndpoint().getContextPath());
+        RESTHelper.addServer(server2.getRESTEndpoint().getInetAddress().getHostName(), server2.getRESTEndpoint().getContextPath());
 
         delete(fullPathKey(KEY_A));
         delete(fullPathKey(KEY_B));
