@@ -8,7 +8,7 @@ import org.testng.annotations.Test;
  * @since 5.2
  */
 @Test(groups = "unstable", testName = "query.persistence.SharedCacheLoaderQueryDistributedIndexTest",
-      description = "Temporary disabled: https://issues.jboss.org/browse/ISPN-2249 , https://issues.jboss.org/browse/ISPN-1586 -- original group: functional")
+      description = "ISPN-4048 -- original group: functional")
 public class SharedCacheLoaderQueryDistributedIndexTest extends SharedCacheLoaderQueryIndexTest {
 
    @Override

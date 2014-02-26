@@ -33,17 +33,17 @@ public abstract class AbstractXSiteTest extends AbstractCacheTest {
    List<TestSite> sites = new ArrayList<TestSite>();
    private Map<String, Integer> siteName2index = new HashMap<String, Integer>();
 
-   @BeforeMethod
+   @BeforeMethod(alwaysRun = true) // run even for tests in the unstable_xsite group
    public void createBeforeMethod() throws Throwable {
       if (isCleanupAfterMethod()) createSites();
    }
 
-   @BeforeClass
+   @BeforeClass(alwaysRun = true) // run even for tests in the unstable_xsite group
    public void createBeforeClass() throws Throwable {
       if (!isCleanupAfterMethod()) createSites();
    }
 
-   @AfterMethod
+   @AfterMethod(alwaysRun = true) // run even if the test failed
    protected void clearContent() throws Throwable {
       if (!isCleanupAfterMethod()) {
          for (TestSite ts : sites) {
@@ -54,7 +54,7 @@ public abstract class AbstractXSiteTest extends AbstractCacheTest {
       }
    }
 
-   @AfterClass
+   @AfterClass(alwaysRun = true) // run even if the test failed
    protected void destroy() {
       if (cleanupAfterTest())  {
          killSites();

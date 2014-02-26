@@ -25,7 +25,7 @@ public class RepeatableReadAtomicMapAPITest extends AtomicMapAPITest {
       createClusteredCaches(2, "atomic", c);
    }
 
-   @Test(groups = "unstable")
+   @Test(groups = "unstable", description = "See ISPN-3990")
    @Override
    public void testConcurrentTx() throws Exception {
       super.testConcurrentTx();

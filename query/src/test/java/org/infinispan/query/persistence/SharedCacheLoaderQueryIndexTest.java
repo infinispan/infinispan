@@ -18,7 +18,7 @@ import org.testng.annotations.Test;
  * @since 5.2
  */
 @Test(groups = "unstable", testName = "query.persistence.SharedCacheLoaderQueryIndexTest",
-      description = "Temporary disabled: https://issues.jboss.org/browse/ISPN-2249 , https://issues.jboss.org/browse/ISPN-1586 -- original group: functional")
+      description = "See ISPN-4048 -- original group: functional")
 public class SharedCacheLoaderQueryIndexTest extends BaseReIndexingTest {
 
    @Override
@@ -39,8 +39,8 @@ public class SharedCacheLoaderQueryIndexTest extends BaseReIndexingTest {
          DummyInMemoryStore dimcs = (DummyInMemoryStore) cs;
          assert dimcs.stats().get("clear") == 0:
                "Cache store should not be cleared, purgeOnStartup is false";
-         assert dimcs.stats().get("store") == 4:
-               "Cache store should have been written to 4 times, but was written to " + dimcs.stats().get("store") + " times";
+         assert dimcs.stats().get("write") == 4:
+               "Cache store should have been written to 4 times, but was written to " + dimcs.stats().get("write") + " times";
       }
 
       // Before adding a node, verify that the query resolves properly
