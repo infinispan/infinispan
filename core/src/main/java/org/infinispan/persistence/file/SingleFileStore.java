@@ -240,13 +240,14 @@ public class SingleFileStore implements AdvancedLoadWriteStore {
 
             // found one, remove from freeList
             it.remove();
+            if (trace) log.tracef("Found free entry at %d:%d, %d free entries remaining", free.offset, free.size, freeList.size());
             return free;
          }
 
          // no appropriate free section available, append at end of file
          FileEntry fe = new FileEntry(filePos, len);
          filePos += len;
-         log.tracef("New entry allocated, file size is %d", filePos);
+         if (trace) log.tracef("New entry allocated at %d:%d, %d free entries, file size is %d", fe.offset, fe.size, freeList.size(), filePos);
          return fe;
       }
    }
@@ -262,8 +263,10 @@ public class SingleFileStore implements AdvancedLoadWriteStore {
          // No need to wait for readers to unlock here, the FileEntry instance is not modified,
          // and allocate() won't return an entry as long as it has a reader.
          channel.write(ByteBuffer.wrap(ZERO_INT), fe.offset + KEYLEN_POS);
-         if (trace) log.tracef("Deleted entry at %d", fe.offset);
-         freeList.add(fe);
+         if (!freeList.add(fe)) {
+            throw new IllegalStateException(String.format("Trying to free an entry that was not allocated: %s", fe));
+         }
+         if (trace) log.tracef("Deleted entry at %d:%d, there are now %d free entries", fe.offset, fe.size, freeList.size());
       }
    }
 
@@ -297,7 +300,7 @@ public class SingleFileStore implements AdvancedLoadWriteStore {
                buf.put(metadata.getBuf(), metadata.getOffset(), metadata.getLength());
             buf.flip();
             channel.write(buf, fe.offset);
-            if (trace) log.tracef("Wrote entry %s at %d", marshalledEntry.getKey(), fe.offset);
+            if (trace) log.tracef("Wrote entry %s at %d:%d", marshalledEntry.getKey(), fe.offset, len);
 
             // add the new entry to in-memory index
             fe = entries.put(marshalledEntry.getKey(), fe);
@@ -434,7 +437,7 @@ public class SingleFileStore implements AdvancedLoadWriteStore {
          fe.unlock();
       }
 
-      if (trace) log.tracef("Read entry %s at %d", key, fe.offset);
+      if (trace) log.tracef("Read entry %s at %d:%d", key, fe.offset, fe.actualSize());
       ByteBufferFactory factory = ctx.getByteBufferFactory();
       org.infinispan.commons.io.ByteBuffer keyBb = factory.newByteBuffer(data, 0, fe.keyLen);
       org.infinispan.commons.io.ByteBuffer valueBb = null;
@@ -646,10 +649,45 @@ public class SingleFileStore implements AdvancedLoadWriteStore {
          return expiryTime > 0 && expiryTime < now;
       }
 
+      public int actualSize() {
+         return KEY_POS + keyLen + dataLen + metadataLen;
+      }
+
       @Override
       public int compareTo(FileEntry fe) {
+         // We compare the size first, as the entries in the free list must be sorted by size
          int diff = size - fe.size;
-         return (diff != 0) ? diff : offset > fe.offset ? 1 : -1;
+         if (diff != 0) return diff;
+         return (offset < fe.offset) ? -1 : ((offset == fe.offset) ? 0 : 1);
+      }
+
+      @Override
+      public boolean equals(Object o) {
+         if (this == o) return true;
+         if (o == null || getClass() != o.getClass()) return false;
+
+         FileEntry fileEntry = (FileEntry) o;
+
+         if (offset != fileEntry.offset) return false;
+         if (size != fileEntry.size) return false;
+
+         return true;
+      }
+
+      @Override
+      public int hashCode() {
+         int result = (int) (offset ^ (offset >>> 32));
+         result = 31 * result + size;
+         return result;
+      }
+
+      @Override
+      public String toString() {
+         return "FileEntry@" +
+               offset +
+               "{size=" + size +
+               ", actual=" + actualSize() +
+               '}';
       }
    }
 }
