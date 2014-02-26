@@ -60,7 +60,7 @@ public class EvictionStrategyTest {
      * Test for Eviction with LRU(Least Recently used) ordering
      */
     @Test
-    @Category(UnstableTest.class)
+    @Category(UnstableTest.class) // See ISPN-4040
     public void testEvictionStrategyLRU() {
         RemoteCache<String, String> rc = remoteCacheManager.getCache("lru");
         rc.clear();

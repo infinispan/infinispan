@@ -32,7 +32,7 @@ import static org.junit.Assert.*;
 @Test(groups = "functional", testName = "query.dsl.QueryDslConditionsTest")
 public class QueryDslConditionsTest extends AbstractQueryDslTest {
 
-   @BeforeMethod
+   @BeforeMethod(alwaysRun = true)
    protected void populateCache() throws Exception {
       // create the test objects
       User user1 = new User();
@@ -753,7 +753,7 @@ public class QueryDslConditionsTest extends AbstractQueryDslTest {
       assertEquals("Spider", list.get(1).getName());
    }
 
-   @Test(groups = "unstable", description = "String literal escaping is not properly done yet")  //todo [anistor] fix disabled test
+   @Test(enabled = false, description = "String literal escaping is not properly done yet, see ISPN-4045")  //todo [anistor] fix disabled test
    public void testStringEscape() throws Exception {
       QueryFactory qf = Search.getSearchManager(cache).getQueryFactory();
 
@@ -1082,7 +1082,7 @@ public class QueryDslConditionsTest extends AbstractQueryDslTest {
       assertNull(list.get(2)[1]);
    }
 
-   @Test(groups = "unstable", description = "Nulls not correctly indexed for numeric properties")  //todo [anistor] fix disabled test
+   @Test(enabled = false, description = "Nulls not correctly indexed for numeric properties, see ISPN-4046")  //todo [anistor] fix disabled test
    public void testNullOnIntegerField() throws Exception {
       QueryFactory qf = Search.getSearchManager(cache).getQueryFactory();
 

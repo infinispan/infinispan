@@ -42,19 +42,21 @@ public class InfinispanDirectoryIOTest {
    private CacheContainer cacheManager;
    private File indexDir = new File(TestingUtil.tmpDirectory(this.getClass()), INDEXNAME);
 
-   @BeforeTest
+   @BeforeTest(alwaysRun = true)
    public void prepareCacheManager() {
       cacheManager = CacheTestSupport.createTestCacheManager();
    }
 
-   @AfterTest
+   @AfterTest(alwaysRun = true)
    public void killCacheManager() {
       TestingUtil.killCacheManagers(cacheManager);
    }
 
-   @AfterMethod
+   @AfterMethod(alwaysRun = true)
    public void clearCache() {
-      cacheManager.getCache().clear();
+      if (cacheManager != null) {
+         cacheManager.getCache().clear();
+      }
       TestingUtil.recursiveFileRemove(indexDir);
    }
 

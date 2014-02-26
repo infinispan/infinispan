@@ -32,7 +32,7 @@ import java.util.Properties;
  * @author Dan Berindei &lt;dan@infinispan.org&gt;
  */
 @Test(groups = "unstable", testName = "remoting.jgroups.MissingRpcDispatcherTest",
-      description = "Temporarily disabled because I removed the cache members filter in 5.2 -- original group: functional")
+      description = "See ISPN-4034. Disabled because I removed the cache members filter in 5.2 -- original group: functional")
 @CleanupAfterMethod
 public class MissingRpcDispatcherTest extends MultipleCacheManagersTest {
    protected String cacheName = "replSync";

@@ -29,7 +29,7 @@ public class AtomicMapAPITest extends BaseAtomicHashMapAPITest {
       return getAtomicMap(cache, key, createIfAbsent);
    }
 
-   @Test(groups = "unstable")
+   @Test(groups = "unstable", description = "See ISPN-3990")
    @Override
    public void testConcurrentTx() throws Exception {
       super.testConcurrentTx();

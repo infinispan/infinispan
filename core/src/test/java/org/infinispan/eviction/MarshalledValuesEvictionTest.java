@@ -19,7 +19,10 @@ import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
 
-@Test(groups = "unstable", testName = "eviction.MarshalledValuesEvictionTest", description = "Is this test even valid?  Evictions don't go thru the marshalled value interceptor when initiated form the data container! -- original group: functional")
+@Test(groups = "unstable", testName = "eviction.MarshalledValuesEvictionTest",
+      description = "See ISPN-4042. Is this test even valid?  Evictions don't go thru the " +
+            "marshalled value interceptor when initiated form the data container! " +
+            "-- original group: functional")
 public class MarshalledValuesEvictionTest extends SingleCacheManagerTest {
 
    private static final int CACHE_SIZE=128;
@@ -31,7 +34,7 @@ public class MarshalledValuesEvictionTest extends SingleCacheManagerTest {
       cfg.eviction().strategy(EvictionStrategy.LRU).maxEntries(CACHE_SIZE) // CACHE_SIZE max entries
          .expiration().wakeUpInterval(100L)
          .locking().useLockStriping(false) // to minimise chances of deadlock in the unit test
-         .storeAsBinary()
+         .storeAsBinary().enable()
          .build();
       cacheManager = TestCacheManagerFactory.createCacheManager(cfg);
       cache = cacheManager.getCache();
@@ -107,7 +110,7 @@ public class MarshalledValuesEvictionTest extends SingleCacheManagerTest {
       }
    }
 
-   static class EvictionPojo implements Externalizable {
+   public static class EvictionPojo implements Externalizable {
       int i;
 
       @Override

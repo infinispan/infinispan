@@ -40,7 +40,7 @@ public class RemoteStoreFunctionalTest extends BaseStoreFunctionalTest {
       return persistence;
    }
 
-   @AfterMethod
+   @AfterMethod(alwaysRun = true) // run even if the test failed
    public void tearDown() {
       HotRodClientTestingUtil.killServers(hrServer);
       TestingUtil.killCacheManagers(localCacheManager);

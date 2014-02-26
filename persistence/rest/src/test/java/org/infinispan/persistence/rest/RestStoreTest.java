@@ -25,7 +25,7 @@ import org.testng.annotations.Test;
  * @author Tristan Tarrant
  * @since 6.0
  */
-@Test(testName = "persistence.rest.RestStoreTest", groups = "unstable", description = "original group: functional")
+@Test(testName = "persistence.rest.RestStoreTest", groups = "unstable", description = "See ISPN-3973, original group: functional")
 public class RestStoreTest extends BaseStoreTest {
 
    private static final String REMOTE_CACHE = "remote-cache";
