@@ -1,6 +1,7 @@
 package org.infinispan.api;
 
 import org.infinispan.AdvancedCache;
+import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.container.entries.ReadCommittedEntry;
 import org.infinispan.context.Flag;
@@ -9,22 +10,29 @@ import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.test.SingleCacheManagerTest;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
+import org.infinispan.transaction.LocalTransaction;
+import org.infinispan.transaction.LockingMode;
+import org.infinispan.transaction.TransactionCoordinator;
+import org.infinispan.transaction.TransactionTable;
 import org.testng.annotations.Test;
 
 import javax.transaction.TransactionManager;
 
+import static org.testng.AssertJUnit.assertTrue;
+
 /**
  * @author Mircea.Markus@jboss.com
  */
-@Test(groups = "unstable", testName = "api.ForceWriteLockTest",
-      description = "mmarkus: email sent on 5 Sep '11 -> optimistic locking :: Flag.FORCE_WRITE_LOCK -- original group: functional ")
+@Test(groups = "functional", testName = "api.ForceWriteLockTest")
 public class ForceWriteLockTest extends SingleCacheManagerTest {
    private TransactionManager tm;
    private AdvancedCache advancedCache;
 
    @Override
    protected EmbeddedCacheManager createCacheManager() throws Exception {
-      EmbeddedCacheManager cacheManager = TestCacheManagerFactory.createCacheManager(TestCacheManagerFactory.getDefaultCacheConfiguration(true));
+      ConfigurationBuilder cacheConfiguration = TestCacheManagerFactory.getDefaultCacheConfiguration(true);
+      cacheConfiguration.transaction().lockingMode(LockingMode.PESSIMISTIC);
+      EmbeddedCacheManager cacheManager = TestCacheManagerFactory.createCacheManager(cacheConfiguration);
       advancedCache = cacheManager.getCache().getAdvancedCache();
       tm = TestingUtil.getTransactionManager(advancedCache);
       return cacheManager;
@@ -36,11 +44,11 @@ public class ForceWriteLockTest extends SingleCacheManagerTest {
       tm.begin();
       advancedCache.withFlags(Flag.FORCE_WRITE_LOCK).get("k");
 
-      InvocationContext ic = advancedCache.getInvocationContextContainer().getInvocationContext(true);
-      CacheEntry cacheEntry = ic.getLookedUpEntries().get("k");
-      assert (cacheEntry instanceof ReadCommittedEntry && cacheEntry.isChanged());
-
+      TransactionTable txTable = advancedCache.getComponentRegistry().getComponent(TransactionTable.class);
+      LocalTransaction tx = txTable.getLocalTransaction(tm.getTransaction());
+      assertTrue(tx.ownsLock("k"));
       assertLocked(advancedCache,"k");
+
       tm.commit();
       assertNotLocked(advancedCache,"k");
    }
