@@ -136,7 +136,7 @@ public class MapReduceTask<KIn, VIn, KOut, VOut> {
    protected Reducer<KOut, VOut> reducer;
    protected Reducer<KOut, VOut> combiner;
    protected final boolean distributeReducePhase;
-   protected final boolean useIntermediateSharedCache;
+   protected boolean useIntermediateSharedCache;
 
    protected final Collection<KIn> keys;
    protected final AdvancedCache<KIn, VIn> cache;
@@ -148,6 +148,8 @@ public class MapReduceTask<KIn, VIn, KOut, VOut> {
    protected final ClusteringDependentLogic clusteringDependentLogic;
    protected final boolean isLocalOnly;
    protected RpcOptionsBuilder rpcOptionsBuilder;
+   protected String customIntermediateCacheName;
+   protected String intermediateCacheConfigurationName = DEFAULT_TMP_CACHE_CONFIGURATION_NAME;
 
    /**
     * Create a new MapReduceTask given a master cache node. All distributed task executions will be
@@ -205,6 +207,11 @@ public class MapReduceTask<KIn, VIn, KOut, VOut> {
       this.mapReduceManager = cache.getComponentRegistry().getComponent(MapReduceManager.class);
       this.cancellationService = cache.getComponentRegistry().getComponent(CancellationService.class);
       this.taskId = UUID.randomUUID();
+      if (useIntermediateSharedCache) {
+         this.customIntermediateCacheName = DEFAULT_TMP_CACHE_CONFIGURATION_NAME;
+      } else {
+         this.customIntermediateCacheName = taskId.toString();
+      }
       this.distributeReducePhase = distributeReducePhase;
       this.useIntermediateSharedCache = useIntermediateSharedCache;
       this.cancellableTasks = Collections.synchronizedList(new ArrayList<CancellableTaskPart>());
@@ -306,6 +313,78 @@ public class MapReduceTask<KIn, VIn, KOut, VOut> {
    }
 
    /**
+    * Allows this MapReduceTask to use specific intermediate custom defined cache for storage of
+    * intermediate <KOut, List<VOut>> key/values pairs. Intermediate cache is used to store output
+    * of map phase and it is not shared with other M/R tasks. Upon completion of M/R task this intermediate
+    * cache is destroyed.
+    *
+    * @param cacheConfiguration
+    *           name of the cache configuration to use for the intermediate cache
+    * @return this MapReduceTask iteself
+    * @since 7.0
+    */
+   public MapReduceTask<KIn, VIn, KOut, VOut> usingIntermediateCache(String cacheConfigurationName) {
+      if (cacheConfigurationName == null || cacheConfigurationName.isEmpty()) {
+         throw new IllegalArgumentException("Invalid configuration name " + cacheConfigurationName
+               + ", cacheConfigurationName cannot be null or empty");
+      }
+      this.intermediateCacheConfigurationName = cacheConfigurationName;
+      this.useIntermediateSharedCache = false;
+      return this;
+   }
+
+   /**
+    * Allows this MapReduceTask to use a specific shared intermediate cache for storage of
+    * intermediate <KOut, List<VOut>> key/values pairs. Intermediate shared cache is used to store
+    * output of map phase and it is shared with other M/R tasks that also specify a shared
+    * intermediate cache with the same name.
+    *
+    * @param cacheName
+    *           name of the custom cache
+    * @return this MapReduceTask iteself
+    * @since 7.0
+    */
+   public MapReduceTask<KIn, VIn, KOut, VOut> usingSharedIntermediateCache(String cacheName) {
+      if (cacheName == null || cacheName.isEmpty()) {
+         throw new IllegalArgumentException("Invalid cache name" + cacheName + ", cache name cannot be null or empty");
+      }
+      this.customIntermediateCacheName = cacheName;
+      this.useIntermediateSharedCache = true;
+      return this;
+   }
+
+   /**
+    * Allows this MapReduceTask to use a specific shared intermediate cache for storage of
+    * intermediate <KOut, List<VOut>> key/values pairs. Intermediate shared cache is used to store
+    * output of map phase and it is shared with other M/R tasks that also specify a shared
+    * intermediate cache with the same name.
+    * <p>
+    * Rather than using MapReduceTask default configuration for intermediate cache this method
+    * allows clients to specify custom shared cache configuration.
+    *
+    *
+    * @param cacheName
+    *           name of the custom cache
+    * @param cacheConfiguration
+    *           name of the cache configuration to use for the intermediate cache
+    * @return this MapReduceTask iteself
+    * @since 7.0
+    */
+   public MapReduceTask<KIn, VIn, KOut, VOut> usingSharedIntermediateCache(String cacheName, String cacheConfigurationName) {
+      if (cacheConfigurationName == null || cacheConfigurationName.isEmpty()) {
+         throw new IllegalArgumentException("Invalid configuration name " + cacheConfigurationName
+               + ", cacheConfigurationName cannot be null or empty");
+      }
+      if (cacheName == null || cacheName.isEmpty()) {
+         throw new IllegalArgumentException("Invalid cache name" + cacheName + ", cache name cannot be null or empty");
+      }
+      this.customIntermediateCacheName = cacheName;
+      this.intermediateCacheConfigurationName = cacheConfigurationName;
+      this.useIntermediateSharedCache = true;
+      return this;
+   }
+
+   /**
     * Executes this task across Infinispan cluster nodes.
     *
     * @return a Map where each key is an output key and value is reduced value for that output key
@@ -321,15 +400,15 @@ public class MapReduceTask<KIn, VIn, KOut, VOut> {
 
       if(!isLocalOnly && distributeReducePhase()){
          boolean useCompositeKeys = useIntermediateSharedCache();
-         String intermediateCacheName = DEFAULT_TMP_CACHE_CONFIGURATION_NAME;
-         if (useIntermediatePerTaskCache()) {
-            intermediateCacheName = taskId.toString();
+         // init and create tmp caches
+         try {
+            //Note: move to try/catch/finally clause below once ISPN-4161 is fixed
+            executeTaskInit(getIntermediateCacheName());
+         } catch (Exception e){
+            throw new CacheException(e);
          }
 
          try {
-            // init and create tmp caches
-            executeTaskInit(intermediateCacheName);
-
             // map
             Set<KOut> allMapPhasesResponses = executeMapPhase(useCompositeKeys);
 
@@ -342,7 +421,7 @@ public class MapReduceTask<KIn, VIn, KOut, VOut> {
             // cleanup tmp caches across cluster
             if(useIntermediatePerTaskCache()){
                EmbeddedCacheManager cm = cache.getCacheManager();
-               cm.removeCache(intermediateCacheName);
+               cm.removeCache(getIntermediateCacheName());
             }
          }
       } else {
@@ -352,6 +431,10 @@ public class MapReduceTask<KIn, VIn, KOut, VOut> {
             throw new CacheException(cause);
          }
       }
+   }
+
+   protected String getIntermediateCacheName() {
+      return customIntermediateCacheName;
    }
 
    protected boolean distributeReducePhase(){
@@ -372,7 +455,7 @@ public class MapReduceTask<KIn, VIn, KOut, VOut> {
       CommandsFactory factory = cache.getComponentRegistry().getComponent(CommandsFactory.class);
 
       //first create tmp caches on all nodes
-      final CreateCacheCommand ccc = factory.buildCreateCacheCommand(tmpCacheName, DEFAULT_TMP_CACHE_CONFIGURATION_NAME, true, rpc.getMembers().size());
+      final CreateCacheCommand ccc = factory.buildCreateCacheCommand(tmpCacheName, intermediateCacheConfigurationName, true, rpc.getMembers().size());
 
       log.debugf("Invoking %s across members %s ", ccc, cache.getRpcManager().getMembers());
       Future<Object> future = mapReduceManager.getExecutorService().submit(new Callable<Object>() {
@@ -408,10 +491,10 @@ public class MapReduceTask<KIn, VIn, KOut, VOut> {
          for (Address target : rpc.getMembers()) {
             if (target.equals(rpc.getAddress())) {
                cmd = buildMapCombineCommand(taskId.toString(), clone(mapper), clone(combiner),
-                        null, true, useCompositeKeys);
+                     getIntermediateCacheName(), null, true, useCompositeKeys);
             } else {
-               cmd = buildMapCombineCommand(taskId.toString(), mapper, combiner, null, true,
-                        useCompositeKeys);
+               cmd = buildMapCombineCommand(taskId.toString(), mapper, combiner, getIntermediateCacheName(), null,
+                     true, useCompositeKeys);
             }
             MapTaskPart<Set<KOut>> part = createTaskMapPart(cmd, target, true);
             part.execute();
@@ -424,10 +507,10 @@ public class MapReduceTask<KIn, VIn, KOut, VOut> {
             Collection<KIn> keys = e.getValue();
             if (address.equals(rpc.getAddress())) {
                cmd = buildMapCombineCommand(taskId.toString(), clone(mapper), clone(combiner),
-                        keys, true, useCompositeKeys);
+                     getIntermediateCacheName(), keys, true, useCompositeKeys);
             } else {
-               cmd = buildMapCombineCommand(taskId.toString(), mapper, combiner, keys, true,
-                        useCompositeKeys);
+               cmd = buildMapCombineCommand(taskId.toString(), mapper, combiner, getIntermediateCacheName(), keys,
+                     true, useCompositeKeys);
             }
             MapTaskPart<Set<KOut>> part = createTaskMapPart(cmd, address, true);
             part.execute();
@@ -474,9 +557,10 @@ public class MapReduceTask<KIn, VIn, KOut, VOut> {
          for (Address target : targets) {
             if (target.equals(localAddress)) {
                cmd = buildMapCombineCommand(taskId.toString(), clone(mapper), clone(combiner),
-                        null, false, false);
+                     getIntermediateCacheName(), null, false, false);
             } else {
-               cmd = buildMapCombineCommand(taskId.toString(), mapper, combiner, null, false, false);
+               cmd = buildMapCombineCommand(taskId.toString(), mapper, combiner, getIntermediateCacheName(), null,
+                     false, false);
             }
             MapTaskPart<Map<KOut, List<VOut>>> part = createTaskMapPart(cmd, target, false);
             part.execute();
@@ -489,9 +573,10 @@ public class MapReduceTask<KIn, VIn, KOut, VOut> {
             Collection<KIn> keys = e.getValue();
             if (address.equals(localAddress)) {
                cmd = buildMapCombineCommand(taskId.toString(), clone(mapper), clone(combiner),
-                        keys, false, false);
+                     getIntermediateCacheName(), keys, false, false);
             } else {
-               cmd = buildMapCombineCommand(taskId.toString(), mapper, combiner, keys, false, false);
+               cmd = buildMapCombineCommand(taskId.toString(), mapper, combiner, getIntermediateCacheName(), keys,
+                     false, false);
             }
             MapTaskPart<Map<KOut, List<VOut>>> part = createTaskMapPart(cmd, address, false);
             part.execute();
@@ -512,7 +597,7 @@ public class MapReduceTask<KIn, VIn, KOut, VOut> {
                         cause);
                } else {
                   throw ee;
-               }               
+               }
             }
             mergeResponse(mapPhasesResult, result);
          }
@@ -546,12 +631,8 @@ public class MapReduceTask<KIn, VIn, KOut, VOut> {
    protected Map<KOut, VOut> executeReducePhase(Set<KOut> allMapPhasesResponses,
             boolean useCompositeKeys) throws InterruptedException, ExecutionException {
       RpcManager rpc = cache.getRpcManager();
-      String destCache = null;
-      if (useCompositeKeys) {
-         destCache = DEFAULT_TMP_CACHE_CONFIGURATION_NAME;
-      } else {
-         destCache = taskId.toString();
-      }
+      String destCache = getIntermediateCacheName();
+
       Cache<Object, Object> dstCache = cache.getCacheManager().getCache(destCache);
       Map<Address, ? extends Collection<KOut>> keysToNodes = mapKeysToNodes(dstCache.getAdvancedCache()
                .getDistributionManager(), allMapPhasesResponses, useCompositeKeys);
@@ -618,13 +699,14 @@ public class MapReduceTask<KIn, VIn, KOut, VOut> {
    }
 
    private MapCombineCommand<KIn, VIn, KOut, VOut> buildMapCombineCommand(
-            String taskId, Mapper<KIn, VIn, KOut, VOut> m, Reducer<KOut, VOut> r,
+            String taskId, Mapper<KIn, VIn, KOut, VOut> m, Reducer<KOut, VOut> r, String intermediateCacheName,
             Collection<KIn> keys, boolean reducePhaseDistributed, boolean emitCompositeIntermediateKeys){
       ComponentRegistry registry = cache.getComponentRegistry();
       CommandsFactory factory = registry.getComponent(CommandsFactory.class);
       MapCombineCommand<KIn, VIn, KOut, VOut> c = factory.buildMapCombineCommand(taskId, m, r, keys);
       c.setReducePhaseDistributed(reducePhaseDistributed);
       c.setEmitCompositeIntermediateKeys(emitCompositeIntermediateKeys);
+      c.setIntermediateCacheName(intermediateCacheName);
       return c;
    }
 

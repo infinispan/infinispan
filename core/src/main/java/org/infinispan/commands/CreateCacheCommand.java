@@ -5,6 +5,7 @@ import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.context.InvocationContext;
+import org.infinispan.distexec.mapreduce.MapReduceTask;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
@@ -53,15 +54,23 @@ public class CreateCacheCommand extends BaseRpcCommand {
 
    @Override
    public Object perform(InvocationContext ctx) throws Throwable {
-      Configuration cacheConfig = cacheManager.getCacheConfiguration(cacheConfigurationName);
-      if (cacheConfig == null) {
-         // our sensible default
-         cacheConfig = new ConfigurationBuilder()
-               .unsafe().unreliableReturnValues(true)
-               .clustering().cacheMode(CacheMode.DIST_SYNC).hash().numOwners(2).sync().build();
-         cacheManager.defineConfiguration(cacheNameToCreate, cacheConfig);
-         log.debugf("Using default tmp cache configuration, defined as ", cacheNameToCreate);
+      Configuration cacheConfig = null;
+      if (cacheConfigurationName != null) {
+         cacheConfig = cacheManager.getCacheConfiguration(cacheConfigurationName);
+         if (cacheConfig == null) {
+            // Special case for the default temporary cache, which may or may not have been defined by the user
+            if (MapReduceTask.DEFAULT_TMP_CACHE_CONFIGURATION_NAME.equals(cacheConfigurationName)) {
+               cacheConfig = new ConfigurationBuilder().unsafe().unreliableReturnValues(true).clustering()
+                     .cacheMode(CacheMode.DIST_SYNC).hash().numOwners(2).sync().build();
+               log.debugf("Using default tmp cache configuration, defined as ", cacheNameToCreate);
+            } else {
+               throw new IllegalStateException("Cache configuration " + cacheConfigurationName
+                     + " is not defined on node " + this.cacheManager.getAddress());
+            }
+         }
       }
+
+      cacheManager.defineConfiguration(cacheNameToCreate, cacheConfig);
       cacheManager.getCache(cacheNameToCreate);
       log.debugf("Defined and started cache %s", cacheNameToCreate);
       return true;
