@@ -1,16 +1,17 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<infinispan xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-    xsi:schemaLocation="urn:infinispan:config:6.0 http://www.infinispan.org/schemas/infinispan-config-6.0.xsd"
-    xmlns="urn:infinispan:config:6.0">
+<infinispan
+      xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+      xsi:schemaLocation="urn:infinispan:config:7.0 http://www.infinispan.org/schemas/infinispan-config-7.0.xsd"
+      xmlns="urn:infinispan:config:7.0">
 
-    <default>
-        <transaction cacheStopTimeout="2"/>
-        <invocationBatching enabled="true" />
-    </default>
-
-    <namedCache name="tml">
-        <transaction transactionManagerLookupClass="org.infinispan.transaction.lookup.DummyTransactionManagerLookup" cacheStopTimeout="2"/>
-    </namedCache>
+   <cache-container default-cache="default">
+      <local-cache name="default" batching="true">
+         <transaction mode="NON_XA" stop-timeout="2"/>
+      </local-cache>
+      <local-cache name="tml">
+         <transaction mode="NON_XA" transaction-manager-lookup="org.infinispan.transaction.lookup.DummyTransactionManagerLookup" stop-timeout="2"/>
+      </local-cache>
+   </cache-container>
 
 </infinispan>
 

@@ -25,7 +25,9 @@ public class DataContainerTest {
    public void testDefault() throws IOException {
       String xml = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>" +
               "<infinispan>" +
-              "<default><dataContainer /></default>" +
+              "<cache-container name=\"1\" default-cache=\"default-cache\">" +
+              "<local-cache name=\"default-cache\" />" +
+              "</cache-container>" +
               "</infinispan>";
 
       InputStream stream = new ByteArrayInputStream(xml.getBytes());
@@ -47,11 +49,15 @@ public class DataContainerTest {
    @Test
    public void testCustomDataContainerClass() throws IOException {
       String xml = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>" +
-              "<infinispan>" +
-              "<default><dataContainer class=\"" + QueryableDataContainer.class.getName() + "\">" +
-              "<properties><property name=\"foo\" value=\"bar\" /></properties>" +
-           	  "</dataContainer></default>" +
-              "</infinispan>";
+            "<infinispan>" +
+            "<cache-container name=\"1\" default-cache=\"default-cache\">" +
+            "<local-cache name=\"default-cache\">" +
+            "  <data-container class=\"org.infinispan.configuration.QueryableDataContainer\">" +
+            "     <property name=\"foo\">bar</property>" +
+            "  </data-container>" +
+            "</local-cache>" +
+            "</cache-container>" +
+            "</infinispan>";
 
       InputStream stream = new ByteArrayInputStream(xml.getBytes());
       EmbeddedCacheManager cm = TestCacheManagerFactory.fromStream(stream);

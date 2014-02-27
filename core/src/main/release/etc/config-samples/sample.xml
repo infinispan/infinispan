@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <infinispan
       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-      xsi:schemaLocation="urn:infinispan:config:6.0 http://www.infinispan.org/schemas/infinispan-config-6.0.xsd"
-      xmlns="urn:infinispan:config:6.0">
+      xsi:schemaLocation="urn:infinispan:config:7.0 http://www.infinispan.org/schemas/infinispan-config-7.0.xsd"
+      xmlns="urn:infinispan:config:7.0">
 
    <!--
       ******************************************************************************************************************
@@ -15,99 +15,68 @@
 
       A summary of the format of this XML file and all available options can be see online:
 
-         http://docs.jboss.org/infinispan/5.0/apidocs/config.html
+         http://docs.jboss.org/infinispan/7.0/apidocs/config.html
 
       ******************************************************************************************************************
    -->
 
    <!--
+   ******************************************************************************************************************
+
+   JGroups transport stack definitions
+
+   ******************************************************************************************************************
+   -->
+
+   <jgroups>
+      <stack-file name="udp" path="jgroups-udp.xml"/>
+      <stack-file name="tcp" path="jgroups-tcp.xml"/>
+   </jgroups>
+
+   <!--
+   ******************************************************************************************************************
+
+   Sample thread executor definitions. Each executor can be hooked to one or multiple services:
+
+   - The asynchronous listener executor is only useful if you have asynchronous listeners attached. See:
+         - http://infinispan.org/docs/7.0.x/user_guide/user_guide.html#_listeners_and_notifications for more details
+   - The persistence executor is passed down to cache loader/writer implementations to be able to execute tasks in parallel
+   - The asynchronous transport executor is only useful if you intend to use the async cache API or have configured your cluster to use asynchronous communications.  See:
+         - http://infinispan.org/docs/7.0.x/user_guide/user_guide.html#_asynchronous_api
+         - http://infinispan.org/docs/7.0.x/user_guide/user_guide.html#_asynchronous_options
+   - The eviction executor is useful when eviction enabled and wish to customize the executor used by the eviction process:
+         - http://infinispan.org/docs/7.0.x/user_guide/user_guide.html#eviction_anchor
+   - The replication queue executors is useful if you have enabled a Replication Queue and wish to fine tune the scheduled thread that flushes such batch RPCs.  See:
+         - http://infinispan.org/docs/7.0.x/user_guide/user_guide.html#_replication_queue
+
+   ******************************************************************************************************************
+   -->
+
+   <!--
+      <threads>
+         <thread-factory name="infinispan-factory" group-name="infinispan" thread-name-pattern="%G %i" priority="5"/>
+         <cached-thread-pool name="infinispan-cached" thread-factory="infinispan-factory" />
+         <blocking-bounded-queue-thread-pool name="infinispan-listener" thread-factory="infinispan-factory" core-threads="1" max-threads="1" queue-length="0" keepalive-time="0" />
+         <blocking-bounded-queue-thread-pool name="infinispan-transport" thread-factory="infinispan-factory" core-threads="5" max-threads="10" queue-length="100" keepalive-time="10000" />
+         <scheduled-thread-pool name="infinispan-eviction" thread-factory="infinispan-factory" />
+         <scheduled-thread-pool name="infinispan-repl-queue" thread-factory="infinispan-factory" />
+      </threads>
+   -->
+
+   <!--
       ******************************************************************************************************************
 
-      System-wide global settings, which are shared across all caches managed by the same EmbeddedCacheManager
+      System-wide global settings, which are shared across all caches managed by the same EmbeddedCacheManager:
+      - Enables collection of global JMX statistics, and allows you to customize the JMX domain name under which MBeans are registered.
 
       ******************************************************************************************************************
    -->
 
-   <global>
+   <cache-container name="SampleCacheManager" statistics="true"  default-cache="the-default-cache">
 
-      <!--
-         The asynchronous listener executor is only useful if you have asynchronous listeners attached.  See
+      <jmx domain="org.infinispan" />
 
-            http://community.jboss.org/wiki/ListenersandNotifications
-
-          for more details.
-      -->
-      <!--
-      <asyncListenerExecutor factory="org.infinispan.executors.DefaultExecutorFactory">
-         <properties>
-            <property name="maxThreads" value="5"/>
-            <property name="threadNamePrefix" value="AsyncListenerThread"/>
-         </properties>
-      </asyncListenerExecutor>
-      -->
-
-      <!--
-      <persistenceExecutor factory="org.infinispan.executors.DefaultExecutorFactory">
-         <properties>
-            <property name="maxThreads" value="5"/>
-            <property name="threadNamePrefix" value="persistenceThread"/>
-         </properties>
-      </persistenceExecutor>
-      -->
-
-      <!--
-         The asynchronous transport executor is only useful if you intend to use the async cache API or have
-         configured your cluster to use asynchronous communications.  See:
-
-            http://community.jboss.org/wiki/AsynchronousAPI
-            http://community.jboss.org/wiki/AsynchronousOptions
-      -->
-      <!--
-      <asyncTransportExecutor factory="org.infinispan.executors.DefaultExecutorFactory">
-         <properties>
-            <property name="maxThreads" value="25"/>
-            <property name="threadNamePrefix" value="AsyncSerializationThread"/>
-         </properties>
-      </asyncTransportExecutor>
-      -->
-
-      <!--
-         Useful if you have eviction enabled and wish to customize the executor used by the eviction process.
-
-            http://community.jboss.org/wiki/Eviction
-      -->
-      <!--
-      <evictionScheduledExecutor factory="org.infinispan.executors.DefaultScheduledExecutorFactory">
-         <properties>
-            <property name="threadNamePrefix" value="EvictionThread"/>
-         </properties>
-      </evictionScheduledExecutor>
-      -->
-
-      <!--
-         Useful if you have enabled a Replication Queue and wish to fine tune the scheduled thread that flushes
-         such batch RPCs.  See
-
-            http://community.jboss.org/wiki/AsynchronousOptions#Replication_Queue
-      -->
-      <!--
-      <replicationQueueScheduledExecutor factory="org.infinispan.executors.DefaultScheduledExecutorFactory">
-         <properties>
-            <property name="threadNamePrefix" value="ReplicationQueueThread"/>
-         </properties>
-      </replicationQueueScheduledExecutor>
-      -->
-
-      <!--
-         Enables collection of global JMX statistics, and allows you to customize the JMX domain name under which
-         MBeans are registered.
-      -->
-      <globalJmxStatistics
-            enabled="true"
-            jmxDomain="org.infinispan"
-            cacheManagerName="SampleCacheManager"/>
      <!--
-        Defines the site needed for Infinispan 's cross-site (x-site) replication.
      -->
      <!--
      <site local="LON"/>
@@ -120,23 +89,15 @@
 
         Note that the JGroups transport uses sensible defaults if no configuration property is defined.
 
+        It also defines the site needed for Infinispan 's cross-site (x-site) replication.
+
         See:
 
-           http://community.jboss.org/wiki/ClusteredConfigurationQuickStart
-           http://docs.jboss.org/infinispan/5.0/apidocs/org/infinispan/remoting/transport/jgroups/JGroupsTransport.html
+           https://github.com/infinispan/infinispan-quickstart/tree/master/clustered-cache
+           http://docs.jboss.org/infinispan/7.0/apidocs/org/infinispan/remoting/transport/jgroups/JGroupsTransport.html
 
      -->
-      <transport
-            clusterName="infinispan-cluster"
-            machineId="m1"
-            rackId="r1" nodeName="Node-A">
-         <!-- Use the property below to point to a specific JGroups configuration file on your classpath -->
-         <!--
-         <properties>
-            <property name="configurationFile" value="jgroups-tcp.xml" />
-         </properties>
-         -->
-      </transport>
+      <transport stack="tcp" cluster="infinispan-cluster" node-name="Node-A" machine-id="m1" rack-id="r1" site-id="LON" />
 
       <!--
          Used to customize the marshaller used to serialize objects and deserialize byte streams.  Also allows you to
@@ -144,8 +105,8 @@
 
          See:
 
-            http://community.jboss.org/wiki/Marshalling
-            http://community.jboss.org/wiki/PluggingInfinispanWithUserDefinedExternalizers
+            http://infinispan.org/docs/7.0.x/user_guide/user_guide.html#_the_role_of_jboss_marshalling
+            http://infinispan.org/docs/7.0.x/user_guide/user_guide.html#_plugging_infinispan_with_user_defined_externalizers
        -->
       <!--<serialization marshallerClass="org.infinispan.marshall.VersionAwareMarshaller" version="1.0">-->
 
@@ -164,7 +125,6 @@
          hookBehavior: DEFAULT, REGISTER, DONT_REGISTER
       -->
       <!-- <shutdown hookBehavior="DEFAULT"/> -->
-   </global>
 
    <!--
       ******************************************************************************************************************
@@ -172,8 +132,8 @@
       ******************************************************************************************************************
    -->
 
-   <default>
-      <storeAsBinary />
+   <replicated-cache name="the-default-cache" statistics="true" mode="SYNC" remote-timeout="20000">
+      <store-as-binary />
       <!--
          Tunes the locking and concurrency characteristics of the cache.
 
@@ -181,12 +141,11 @@
 
             http://community.jboss.org/wiki/LockingandConcurrency
       -->
-      <locking
-         isolationLevel="READ_COMMITTED"
-         lockAcquisitionTimeout="20000"
-         writeSkewCheck="false"
-         concurrencyLevel="5000"
-         useLockStriping="false"
+      <locking isolation="READ_COMMITTED"
+         acquire-timeout="20000"
+         write-skew="false"
+         concurrency-level="5000"
+         striping="false"
       />
 
       <!--
@@ -219,11 +178,6 @@
 
 
       <!--
-         Used to register JMX statistics in any available MBean server
-      -->
-      <jmxStatistics enabled="true"/>
-
-      <!--
          Used to control whether objects stored in Infinispan nodes are primarily stored as rehydrated Objects or as
          raw byte arrays.  See:
 
@@ -244,33 +198,26 @@
 
          http://community.jboss.org/wiki/Clusteringmodes
       -->
-      <clustering mode="replication">
 
-         <!--
-            Configures how state is transferred between the nodes
-         -->
-         <stateTransfer
-            timeout="240000"
-            fetchInMemoryState="false"
-            chunkSize="10000"
-         />
+      <!--
+         Configures how state is transferred between the nodes
+      -->
+      <state-transfer enabled="false" timeout="240000" chunk-size="10000" />
 
-         <!--
-            Network calls are synchronous.
-         -->
-         <sync replTimeout="20000"/>
+      <!--
+         Network calls are synchronous.
+      -->
 
-         <!--
-            Uncomment this for async replication.
-         -->
-         <!--
-         <async
-            useReplQueue="true"
-            replQueueInterval="10000"
-            replQueueMaxElements="500"
-         />
-         -->
-      </clustering>
+      <!--
+         Uncomment this for async replication.
+      -->
+      <!--
+      <async
+         useReplQueue="true"
+         replQueueInterval="10000"
+         replQueueMaxElements="500"
+      />
+      -->
 
 
       <!--
@@ -287,7 +234,7 @@
       -->
 
 
-   </default>
+   </replicated-cache>
 
 
    <!--
@@ -371,21 +318,13 @@
          http://community.jboss.org/wiki/CacheLoaders
          http://community.jboss.org/wiki/Write-ThroughAndWrite-BehindCaching
    -->
-   <namedCache name="writeThroughToFile">
+   <local-cache name="writeThroughToFile">
       <persistence passivation="false">
-         <store
-            class="org.infinispan.persistence.file.SingleFileStore"
-            fetchPersistentState="false" preload="true" shared="false"
-            purgeOnStartup="true" ignoreModifications="false">
-
-            <async enabled="true" flushLockTimeout="12321" shutdownTimeout="321" modificationQueueSize="123" threadPoolSize="23"/>
-            <properties>
-               <property name="location" value="${java.io.tmpdir}"/>
-            </properties>
-
-         </store>
+         <file-store path="${java.io.tmpdir}" shared="false" preload="true" purge="true">
+            <write-behind flush-lock-timeout="12321" modification-queue-size="123" shutdown-timeout="321" thread-pool-size="22" />
+         </file-store>
       </persistence>
-   </namedCache>
+   </local-cache>
 
 
    <!--
@@ -586,4 +525,5 @@
    </namedCache>
    -->
 
+   </cache-container>
 </infinispan>

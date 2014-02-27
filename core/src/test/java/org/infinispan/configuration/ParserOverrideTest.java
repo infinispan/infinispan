@@ -24,25 +24,23 @@ public class ParserOverrideTest {
    public void testNamedCacheOverride() throws Exception {
       final String cacheName = "asyncRepl";
       String xml1 = INFINISPAN_START_TAG +
-            "   <namedCache name=\"" + cacheName + "\">\n" +
-            "      <clustering mode=\"repl\">\n" +
-            "         <stateTransfer fetchInMemoryState=\"false\"/>\n" +
-            "         <async useReplQueue=\"false\" asyncMarshalling=\"false\"/>\n" +
-            "      </clustering>\n" +
-            "      <locking isolationLevel=\"REPEATABLE_READ\" concurrencyLevel=\"1000\" lockAcquisitionTimeout=\"20000\"/>\n" +
-            "      <storeAsBinary enabled=\"true\"/>\n" +
-            "      <expiration wakeUpInterval=\"23\" lifespan=\"50012\" maxIdle=\"1341\"/>\n" +
-            "   </namedCache>\n" +
+            "<cache-container name=\"1\" default-cache=\"" + cacheName + "\">" +
+            "   <replicated-cache name=\"" + cacheName + "\" mode=\"ASYNC\" async-marshalling=\"false\">\n" +
+            "      <state-transfer enabled=\"false\"/>\n" +
+            "      <locking isolation=\"REPEATABLE_READ\" concurrency-level=\"1000\" acquire-timeout=\"20000\"/>\n" +
+            "      <store-as-binary/>\n" +
+            "      <expiration interval=\"23\" lifespan=\"50012\" max-idle=\"1341\"/>\n" +
+            "   </replicated-cache>\n" +
+            "</cache-container>" +
             TestingUtil.INFINISPAN_END_TAG;
       String xml2 = INFINISPAN_START_TAG +
-            "   <namedCache name=\"" + cacheName + "\">\n" +
-            "      <clustering mode=\"repl\">\n" +
-            "         <stateTransfer fetchInMemoryState=\"true\"/>\n" +
-            "         <sync replTimeout=\"30000\"/>\n" +
-            "      </clustering>\n" +
-            "      <locking isolationLevel=\"READ_COMMITTED\" concurrencyLevel=\"30\" lockAcquisitionTimeout=\"25000\"/>\n" +
-            "      <storeAsBinary enabled=\"false\"/>\n" +
-            "   </namedCache>\n" +
+            "<cache-container name=\"2\" default-cache=\"" + cacheName + "\">" +
+            "   <replicated-cache name=\"" + cacheName + "\" mode=\"SYNC\" remote-timeout=\"30000\">\n" +
+            "      <state-transfer enabled=\"true\"/>\n" +
+            "      <locking isolation=\"READ_COMMITTED\" concurrency-level=\"30\" acquire-timeout=\"25000\"/>\n" +
+            "      <store-as-binary keys=\"false\" values=\"false\"/>\n" +
+            "   </replicated-cache>\n" +
+            "</cache-container>" +
             TestingUtil.INFINISPAN_END_TAG;
 
       ConfigurationBuilderHolder holder = TestCacheManagerFactory.buildAggregateHolder(xml1, xml2);
@@ -74,26 +72,23 @@ public class ParserOverrideTest {
     */
    public void testDefaultCacheOverride() throws Exception {
       String xml1 = INFINISPAN_START_TAG +
-            "   <default>\n" +
-            "      <clustering mode=\"repl\">\n" +
-            "         <stateTransfer fetchInMemoryState=\"false\"/>\n" +
-            "         <async useReplQueue=\"false\" asyncMarshalling=\"false\"/>\n" +
-            "      </clustering>\n" +
-            "      <locking isolationLevel=\"REPEATABLE_READ\" concurrencyLevel=\"1000\" lockAcquisitionTimeout=\"20000\"/>\n" +
-            "      <storeAsBinary enabled=\"true\"/>\n" +
-            "      <expiration wakeUpInterval=\"23\" lifespan=\"50012\" maxIdle=\"1341\"/>\n" +
-            "      <jmxStatistics enabled=\"true\"/>\n" +
-            "   </default>\n" +
+            "<cache-container name=\"1\" default-cache=\"default-cache\">" +
+            "   <replicated-cache name=\"default-cache\" mode=\"ASYNC\" statistics=\"true\">\n" +
+            "      <state-transfer enabled=\"false\"/>\n" +
+            "      <locking isolation=\"REPEATABLE_READ\" concurrency-level=\"1000\" acquire-timeout=\"20000\"/>\n" +
+            "      <store-as-binary/>\n" +
+            "      <expiration interval=\"23\" lifespan=\"50012\" max-idle=\"1341\"/>\n" +
+            "   </replicated-cache>\n" +
+            "</cache-container>" +
             TestingUtil.INFINISPAN_END_TAG;
       String xml2 = INFINISPAN_START_TAG +
-            "   <default>\n" +
-            "      <clustering mode=\"repl\">\n" +
-            "         <stateTransfer fetchInMemoryState=\"true\"/>\n" +
-            "         <sync replTimeout=\"30000\"/>\n" +
-            "      </clustering>\n" +
-            "      <locking isolationLevel=\"READ_COMMITTED\" concurrencyLevel=\"30\" lockAcquisitionTimeout=\"25000\"/>\n" +
-            "      <storeAsBinary enabled=\"false\"/>\n" +
-            "   </default>\n" +
+            "<cache-container name=\"2\" default-cache=\"default-cache\">" +
+            "   <replicated-cache name=\"default-cache\" mode=\"SYNC\" remote-timeout=\"30000\">\n" +
+            "      <state-transfer enabled=\"true\"/>\n" +
+            "      <locking isolation=\"READ_COMMITTED\" concurrency-level=\"30\" acquire-timeout=\"25000\"/>\n" +
+            "      <store-as-binary keys=\"false\" values=\"false\"/>\n" +
+            "   </replicated-cache>\n" +
+            "</cache-container>" +
             TestingUtil.INFINISPAN_END_TAG;
 
       ConfigurationBuilderHolder holder = TestCacheManagerFactory.buildAggregateHolder(xml1, xml2);
@@ -128,44 +123,26 @@ public class ParserOverrideTest {
    public void testDefaultAndNamedCacheOverride() throws Exception {
       final String cacheName = "ourCache";
       String xml1 = INFINISPAN_START_TAG +
-            "   <default>\n" +
-            "      <clustering mode=\"repl\">\n" +
-            "         <stateTransfer fetchInMemoryState=\"false\"/>\n" +
-            "         <async useReplQueue=\"false\" asyncMarshalling=\"false\"/>\n" +
-            "      </clustering>\n" +
-            "      <locking isolationLevel=\"REPEATABLE_READ\" concurrencyLevel=\"1000\" lockAcquisitionTimeout=\"20000\"/>\n" +
-            "      <storeAsBinary enabled=\"true\"/>\n" +
-            "      <expiration wakeUpInterval=\"23\" lifespan=\"50012\" maxIdle=\"1341\"/>\n" +
-            "      <deadlockDetection enabled=\"true\" spinDuration=\"1221\"/>\n" +
-            "   </default>\n" +
-            "   <namedCache name=\"" + cacheName + "\">\n" +
-            "      <clustering>\n" +
-            "         <async useReplQueue=\"true\" replQueueInterval=\"105\" replQueueMaxElements=\"341\"/>\n" +
-            "      </clustering>\n" +
-            "      <jmxStatistics enabled=\"true\"/>\n" +
-            "      <deadlockDetection enabled=\"true\" spinDuration=\"502\"/>\n" +
-            "      <deadlockDetection enabled=\"true\" spinDuration=\"1223\"/>\n" +
-            "   </namedCache>" +
+            "<cache-container name=\"1\" default-cache=\"default-cache\">" +
+            "   <replicated-cache name=\"default-cache\" mode=\"ASYNC\" statistics=\"true\" deadlock-detection-spin=\"1221\">\n" +
+            "      <state-transfer enabled=\"false\"/>\n" +
+            "      <locking isolation=\"REPEATABLE_READ\" concurrency-level=\"1000\" acquire-timeout=\"20000\"/>\n" +
+            "      <store-as-binary/>\n" +
+            "      <expiration interval=\"23\" lifespan=\"50012\" max-idle=\"1341\"/>\n" +
+            "   </replicated-cache>\n" +
+            "   <replicated-cache name=\"" + cacheName + "\" mode=\"ASYNC\" queue-flush-interval=\"105\" queue-size=\"341\" statistics=\"true\" deadlock-detection-spin=\"1223\" />\n" +
+            "</cache-container>" +
             TestingUtil.INFINISPAN_END_TAG;
       String xml2 = INFINISPAN_START_TAG +
-            "   <default>\n" +
-            "      <clustering mode=\"repl\">\n" +
-            "         <stateTransfer fetchInMemoryState=\"true\"/>\n" +
-            "         <sync replTimeout=\"30000\"/>\n" +
-            "      </clustering>\n" +
-            "      <locking isolationLevel=\"READ_COMMITTED\" concurrencyLevel=\"30\" lockAcquisitionTimeout=\"25000\"/>\n" +
-            "      <storeAsBinary enabled=\"false\"/>\n" +
-            "      <deadlockDetection enabled=\"true\" spinDuration=\"1222\"/>\n" +
-            "   </default>\n" +
-            "   <namedCache name=\"" + cacheName + "\">\n" +
-            "      <clustering mode=\"dist\">\n" +
-            "         <hash numOwners=\"3\" numSegments=\"51\"/>\n" +
-            "         <l1 enabled=\"true\" lifespan=\"12345\"/>\n" +
-            "         <async useReplQueue=\"false\"/>\n" +
-            "      </clustering>\n" +
-            "      <jmxStatistics enabled=\"true\"/>\n" +
-            "      <deadlockDetection enabled=\"true\" spinDuration=\"1224\"/>\n" +
-            "   </namedCache>" +
+            "<cache-container name=\"2\" default-cache=\"default-cache\">" +
+            "   <replicated-cache name=\"default-cache\" mode=\"SYNC\" deadlock-detection-spin=\"1222\" remote-timeout=\"30000\">\n" +
+            "      <state-transfer enabled=\"true\"/>\n" +
+            "      <locking isolation=\"READ_COMMITTED\" concurrency-level=\"30\" acquire-timeout=\"25000\"/>\n" +
+            "      <store-as-binary keys=\"false\" values=\"false\"/>\n" +
+            "   </replicated-cache>\n" +
+            "   <distributed-cache name=\"" + cacheName + "\" mode=\"ASYNC\" owners=\"3\" segments=\"51\" l1-lifespan=\"12345\" queue-size=\"-1\" statistics=\"true\" deadlock-detection-spin=\"1224\" >\n" +
+            "   </distributed-cache>" +
+            "</cache-container>" +
             TestingUtil.INFINISPAN_END_TAG;
 
       ConfigurationBuilderHolder holder = TestCacheManagerFactory.buildAggregateHolder(xml1, xml2);
@@ -183,8 +160,7 @@ public class ParserOverrideTest {
             Assert.assertEquals(c.clustering().l1().lifespan(), 12345);
             Assert.assertEquals(c.clustering().stateTransfer().fetchInMemoryState(), true);
             Assert.assertEquals(c.clustering().async().useReplQueue(), false);
-            Assert.assertEquals(c.clustering().async().replQueueInterval(), 105);
-            Assert.assertEquals(c.clustering().async().replQueueMaxElements(), 341);
+            // Interval and max elements irrelevant since replication queue is disabled
             Assert.assertEquals(c.jmxStatistics().enabled(), true);
             Assert.assertEquals(c.locking().isolationLevel(), IsolationLevel.READ_COMMITTED);
             Assert.assertEquals(c.locking().concurrencyLevel(), 30);

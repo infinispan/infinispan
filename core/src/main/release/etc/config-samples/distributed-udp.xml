@@ -1,23 +1,16 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <infinispan
       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-      xsi:schemaLocation="urn:infinispan:config:6.0 http://www.infinispan.org/schemas/infinispan-config-6.0.xsd"
-      xmlns="urn:infinispan:config:6.0">
+      xsi:schemaLocation="urn:infinispan:config:7.0 http://www.infinispan.org/schemas/infinispan-config-7.0.xsd"
+      xmlns="urn:infinispan:config:7.0">
 
-   <global>
-      <transport>
-         <properties>
-            <property name="configurationFile" value="jgroups-udp.xml" />
-         </properties>
-      </transport>
-   </global>
+   <jgroups>
+      <stack-file name="udp" path="jgroups-udp.xml"/>
+   </jgroups>
 
-   <default>
-      <clustering mode="distribution">
-         <l1 enabled="false" />
-         <hash numOwners="2"/>
-         <sync/>
-      </clustering>
-   </default>
+   <cache-container name="udp-cache-container" default-cache="the-default-cache">
+      <transport stack="udp"/>
+      <distributed-cache name="the-default-cache" l1-lifespan="30000" owners="2" mode="SYNC" />
+   </cache-container>
 
 </infinispan>

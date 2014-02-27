@@ -13,6 +13,7 @@ import java.util.concurrent.CountDownLatch;
 import javax.xml.stream.FactoryConfigurationError;
 import javax.xml.stream.XMLStreamException;
 
+import org.infinispan.commons.executors.BlockingThreadPoolExecutorFactory;
 import org.infinispan.commons.marshall.Marshaller;
 import org.infinispan.commons.util.FileLookupFactory;
 import org.infinispan.commons.util.LegacyKeySupportSystemProperties;
@@ -328,12 +329,13 @@ public class TestCacheManagerFactory {
    }
 
    public static void minimizeThreads(GlobalConfigurationBuilder builder) {
-      builder.asyncTransportExecutor().addProperty("maxThreads", String.valueOf(MAX_ASYNC_EXEC_THREADS))
-            .addProperty("queueSize", String.valueOf(ASYNC_EXEC_QUEUE_SIZE))
-            .addProperty("keepAliveTime", String.valueOf(KEEP_ALIVE));
-      builder.remoteCommandsExecutor().addProperty("maxThreads", String.valueOf(MAX_REQ_EXEC_THREADS))
-            .addProperty("queueSize", String.valueOf(REQ_EXEC_QUEUE_SIZE))
-            .addProperty("keepAliveTime", String.valueOf(KEEP_ALIVE));
+      BlockingThreadPoolExecutorFactory executorFactory = new BlockingThreadPoolExecutorFactory(
+            MAX_ASYNC_EXEC_THREADS, MAX_ASYNC_EXEC_THREADS, ASYNC_EXEC_QUEUE_SIZE, KEEP_ALIVE);
+      builder.transport().threadPool().threadPoolFactory(executorFactory);
+
+      executorFactory = new BlockingThreadPoolExecutorFactory(
+            MAX_REQ_EXEC_THREADS, MAX_REQ_EXEC_THREADS, REQ_EXEC_QUEUE_SIZE, KEEP_ALIVE);
+      builder.transport().remoteCommandThreadPool().threadPoolFactory(executorFactory);
    }
 
    public static void amendMarshaller(GlobalConfigurationBuilder builder) {

@@ -1,1 +1,2 @@
 org.infinispan.persistence.remote.configuration.RemoteStoreConfigurationParser60
+org.infinispan.persistence.remote.configuration.RemoteStoreConfigurationParser70

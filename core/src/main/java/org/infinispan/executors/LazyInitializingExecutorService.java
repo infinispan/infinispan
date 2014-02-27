@@ -1,16 +1,15 @@
 package org.infinispan.executors;
 
-import org.infinispan.commons.executors.ExecutorFactory;
 import org.infinispan.commons.util.InfinispanCollections;
+import org.infinispan.commons.executors.ThreadPoolExecutorFactory;
 
 import java.util.Collection;
-import java.util.Collections;
 import java.util.List;
-import java.util.Properties;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
+import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
@@ -24,19 +23,20 @@ import java.util.concurrent.TimeoutException;
 public final class LazyInitializingExecutorService implements ExecutorService {
 
    private volatile ExecutorService delegate;
-   private final ExecutorFactory factory;
-   private final Properties executorProperties;
+   private final ThreadPoolExecutorFactory executorFactory;
+   private final ThreadFactory threadFactory;
 
-   public LazyInitializingExecutorService(ExecutorFactory factory, Properties executorProperties) {
-      this.factory = factory;
-      this.executorProperties = executorProperties;
+   public LazyInitializingExecutorService(
+         ThreadPoolExecutorFactory executorFactory, ThreadFactory threadFactory) {
+      this.executorFactory = executorFactory;
+      this.threadFactory = threadFactory;
    }
 
    private void initIfNeeded() {
       if (delegate == null) {
          synchronized (this) {
             if (delegate == null) {
-               delegate = factory.getExecutor(executorProperties);
+               delegate = executorFactory.createExecutor(threadFactory);
             }
          }
       }

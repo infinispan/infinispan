@@ -21,12 +21,14 @@ public class DifferentCacheModesTest extends AbstractInfinispanTest {
       EmbeddedCacheManager cm = null;
       try {
          String xml = "<infinispan>" +
-                 "<global><transport /></global>" +
-                 "<default><clustering mode=\"repl\"><sync /></clustering></default>" +
-                 "<namedCache name=\"local\"><clustering mode=\"local\" /></namedCache>" +
-                 "<namedCache name=\"dist\"><clustering mode=\"dist\"><sync /></clustering></namedCache>" +
-                 "<namedCache name=\"distasync\"><clustering mode=\"distribution\"><async /></clustering></namedCache>" +
-                 "<namedCache name=\"replicationasync\"><clustering mode=\"replication\"><async /></clustering></namedCache>" +
+                 "<jgroups/>" +
+                 "<cache-container name=\"different-cache-modes\" default-cache=\"replicated\">" +
+                 "<replicated-cache name=\"replicated\" mode=\"SYNC\"></replicated-cache>" +
+                 "<local-cache name=\"local\"></local-cache>" +
+                 "<distributed-cache name=\"dist\" mode=\"SYNC\"></distributed-cache>" +
+                 "<distributed-cache name=\"distasync\" mode=\"ASYNC\"></distributed-cache>" +
+                 "<replicated-cache name=\"replicationasync\" mode=\"ASYNC\"></replicated-cache>" +
+                 "</cache-container>" +
                  "</infinispan>";
 
          InputStream is = new ByteArrayInputStream(xml.getBytes());
@@ -60,27 +62,20 @@ public class DifferentCacheModesTest extends AbstractInfinispanTest {
       try {
          String xml =
             "<infinispan>" +
-               "<global><transport /></global>" +
-               "<default><clustering mode=\"repl\"><sync /></clustering></default>" +
-               "<namedCache name=\"explicit-state-disable\">" +
-                  "<clustering mode=\"repl\">" +
-                     "<sync />" +
-                     "<stateTransfer fetchInMemoryState=\"false\"/>" +
-                  "</clustering>" +
-               "</namedCache>" +
-               "<namedCache name=\"explicit-state-enable\">" +
-                  "<clustering mode=\"repl\">" +
-                     "<sync />" +
-                     "<stateTransfer fetchInMemoryState=\"true\"/>" +
-                  "</clustering>" +
-               "</namedCache>" +
-               "<namedCache name=\"explicit-state-enable-async\">" +
-                  "<clustering mode=\"repl\">" +
-                     "<async />" +
-                     "<stateTransfer fetchInMemoryState=\"true\"/>" +
-                  "</clustering>" +
-               "</namedCache>" +
-             "</infinispan>";
+               "<jgroups/>" +
+               "<cache-container name=\"different-cache-modes\" default-cache=\"replicated\">" +
+               "<replicated-cache name=\"replicated\" mode=\"SYNC\"/>" +
+               "<replicated-cache name=\"explicit-state-disable\" mode=\"SYNC\">" +
+                  "<state-transfer enabled=\"false\"/>" +
+               "</replicated-cache>" +
+               "<replicated-cache name=\"explicit-state-enable\" mode=\"SYNC\">" +
+                  "<state-transfer enabled=\"true\"/>" +
+               "</replicated-cache>" +
+               "<replicated-cache name=\"explicit-state-enable-async\" mode=\"ASYNC\">" +
+                  "<state-transfer enabled=\"true\"/>" +
+               "</replicated-cache>" +
+               "</cache-container>" +
+            "</infinispan>";
 
          InputStream is = new ByteArrayInputStream(xml.getBytes());
          cm = TestCacheManagerFactory.fromStream(is);

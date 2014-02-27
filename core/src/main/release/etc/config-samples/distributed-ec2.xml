@@ -1,23 +1,16 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <infinispan
       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-      xsi:schemaLocation="urn:infinispan:config:6.0 http://www.infinispan.org/schemas/infinispan-config-6.0.xsd"
-      xmlns="urn:infinispan:config:6.0">
+      xsi:schemaLocation="urn:infinispan:config:7.0 http://www.infinispan.org/schemas/infinispan-config-7.0.xsd"
+      xmlns="urn:infinispan:config:7.0">
 
-   <global>
-      <transport>
-         <properties>
-            <property name="configurationFile" value="jgroups-ec2.xml" />
-         </properties>
-      </transport>
-   </global>
+   <jgroups>
+      <stack-file name="ec2" path="jgroups-ec2.xml"/>
+   </jgroups>
 
-   <default>
-      <clustering mode="distribution">
-         <l1 enabled="false" />
-         <hash numOwners="2"/>
-         <sync/>
-      </clustering>
-   </default>
+   <cache-container default-cache="default">
+      <transport stack="ec2"/>
+      <distributed-cache name="default" l1-lifespan="-1" owners="2" mode="SYNC" />
+   </cache-container>
 
 </infinispan>

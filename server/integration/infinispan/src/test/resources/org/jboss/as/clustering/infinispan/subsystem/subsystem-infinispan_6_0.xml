@@ -72,7 +72,7 @@
             <store name="duplicate-loader" class="org.jboss.as.clustering.infinispan.subsystem.CustomCacheLoader" shared="false" preload="false"/>
             <indexing index="LOCAL" />
         </replicated-cache>
-        <distributed-cache name="dist" mode="SYNC" batching="false" l1-lifespan="1200000" owners="4" remote-timeout="35000" start="EAGER" segments="20"  async-marshalling="true" statistics="false">
+        <distributed-cache name="dist" mode="SYNC" batching="false" l1-lifespan="1200000" owners="4" remote-timeout="35000" start="EAGER" segments="20" async-marshalling="true" statistics="false">
             <locking acquire-timeout="30000" concurrency-level="2000" isolation="READ_COMMITTED" striping="true"/>
             <transaction mode="FULL_XA" stop-timeout="60000"  locking="OPTIMISTIC"/>
             <eviction max-entries="20000" strategy="UNORDERED"/>

@@ -7,6 +7,8 @@ import org.infinispan.commons.CacheException;
 import org.infinispan.commons.CacheListenerException;
 import org.infinispan.commons.marshall.AdvancedExternalizer;
 import org.infinispan.commons.util.TypedProperties;
+import org.infinispan.configuration.parsing.Attribute;
+import org.infinispan.configuration.parsing.Element;
 import org.infinispan.lifecycle.ComponentStatus;
 import org.infinispan.persistence.spi.PersistenceException;
 import org.infinispan.persistence.support.SingletonCacheWriter;
@@ -1065,4 +1067,16 @@ public interface Log extends BasicLogger {
 
    @Message(value = "A principal-to-role mapper has not been specified", id = 288)
    CacheConfigurationException invalidPrincipalRoleMapper();
+
+   @LogMessage(level = INFO)
+   @Message(value = "Ignoring XML attribute %s, please remove from configuration file", id = 289)
+   void ignoreXmlAttribute(Object attribute);
+
+   @LogMessage(level = INFO)
+   @Message(value = "Ignoring XML element %s, please remove from configuration file", id = 290)
+   void ignoreXmlElement(Object element);
+
+   @Message(value = "No thread pool with name %s found", id = 291)
+   CacheConfigurationException undefinedThreadPoolName(String name);
+
 }

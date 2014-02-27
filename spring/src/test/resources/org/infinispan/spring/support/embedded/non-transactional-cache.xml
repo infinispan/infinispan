@@ -1,47 +1,11 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <infinispan
       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-      xsi:schemaLocation="urn:infinispan:config:6.0 http://www.infinispan.org/schemas/infinispan-config-6.0.xsd"
-      xmlns="urn:infinispan:config:6.0">
+      xsi:schemaLocation="urn:infinispan:config:7.0 http://www.infinispan.org/schemas/infinispan-config-7.0.xsd"
+      xmlns="urn:infinispan:config:7.0">
 
-   <global>
-      <evictionScheduledExecutor
-            factory="org.infinispan.executors.DefaultScheduledExecutorFactory">
-         <properties>
-            <property name="threadNamePrefix" value="EvictionThread" />
-         </properties>
-      </evictionScheduledExecutor>
-      <globalJmxStatistics allowDuplicateDomains="true"
-                           enabled="true" jmxDomain="org.infinispan" cacheManagerName="SampleCacheManager" />
-   </global>
-
-   <default>
-      <locking isolationLevel="READ_COMMITTED"
-               lockAcquisitionTimeout="20000" writeSkewCheck="false"
-               concurrencyLevel="5000" useLockStriping="false" />
-
-      <transaction
-            transactionManagerLookupClass="org.infinispan.transaction.lookup.GenericTransactionManagerLookup"
-            syncRollbackPhase="false" syncCommitPhase="false" useEagerLocking="false"
-            eagerLockSingleNode="false" />
-
-      <jmxStatistics enabled="true" />
-
-      <invocationBatching enabled="true" />
-   </default>
-
-   <namedCache name="named" >
-      <transaction transactionMode="TRANSACTIONAL" autoCommit="false" lockingMode="OPTIMISTIC"/>
-      <storeAsBinary enabled="true" storeValuesAsBinary="true" storeKeysAsBinary="false"/>
-   </namedCache>
-
-   <namedCache name="cachedMock">
-      <transaction transactionMode="NON_TRANSACTIONAL"/>
-      <eviction maxEntries="50" strategy="NONE" />
-      <expiration lifespan="600000" wakeUpInterval="600000" />
-      <invocationBatching enabled="false" />
-      <storeAsBinary enabled="true" storeKeysAsBinary="true" storeValuesAsBinary="true"/>
-   </namedCache>
-
+   <cache-container name="NonTransactionalCacheManager">
+      <jmx duplicate-domains="true"/>
+   </cache-container>
 
 </infinispan>

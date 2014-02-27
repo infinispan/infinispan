@@ -12,7 +12,10 @@ public enum Element {
    // must be first
    UNKNOWN(null),
 
-   LEVELDB_STORE("leveldbStore")
+   COMPRESSION("compression"),
+   EXPIRATION("expiration"),
+   IMPLEMENTATION("implementation"),
+   LEVELDB_STORE("leveldb-store"),
 
    ;
 

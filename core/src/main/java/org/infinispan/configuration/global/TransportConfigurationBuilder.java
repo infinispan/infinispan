@@ -29,9 +29,15 @@ public class TransportConfigurationBuilder extends AbstractGlobalConfigurationBu
 
    private String nodeName;
    private Properties properties = new Properties();
+   private ThreadPoolConfigurationBuilder threadPool;
+   private ThreadPoolConfigurationBuilder remoteCommandThreadPool;
+   private ThreadPoolConfigurationBuilder totalOrderThreadPool;
 
    TransportConfigurationBuilder(GlobalConfigurationBuilder globalConfig) {
       super(globalConfig);
+      threadPool = new ThreadPoolConfigurationBuilder(globalConfig);
+      remoteCommandThreadPool = new ThreadPoolConfigurationBuilder(globalConfig);
+      totalOrderThreadPool = new ThreadPoolConfigurationBuilder(globalConfig);
    }
 
    /**
@@ -150,6 +156,10 @@ public class TransportConfigurationBuilder extends AbstractGlobalConfigurationBu
       return this;
    }
 
+   public String getProperty(String key) {
+      return this.properties.get(key).toString();
+   }
+
    /**
     * @deprecated Since 6.0, strictPeerToPeer is ignored and asymmetric clusters are always allowed.
     */
@@ -159,6 +169,17 @@ public class TransportConfigurationBuilder extends AbstractGlobalConfigurationBu
       return this;
    }
 
+   public ThreadPoolConfigurationBuilder threadPool() {
+      return threadPool;
+   }
+
+   public ThreadPoolConfigurationBuilder remoteCommandThreadPool() {
+      return remoteCommandThreadPool;
+   }
+
+   public ThreadPoolConfigurationBuilder totalOrderThreadPool() {
+      return totalOrderThreadPool;
+   }
 
    @Override
    public
@@ -171,7 +192,9 @@ public class TransportConfigurationBuilder extends AbstractGlobalConfigurationBu
    @Override
    public
    TransportConfiguration create() {
-      return new TransportConfiguration(clusterName, machineId, rackId, siteId, distributedSyncTimeout, transport, nodeName, TypedProperties.toTypedProperties(properties));
+      return new TransportConfiguration(clusterName, machineId, rackId, siteId,
+            distributedSyncTimeout, transport, nodeName, TypedProperties.toTypedProperties(properties),
+            threadPool.create(), remoteCommandThreadPool.create(), totalOrderThreadPool.create());
    }
 
    public TransportConfigurationBuilder defaultTransport() {
@@ -191,6 +214,9 @@ public class TransportConfigurationBuilder extends AbstractGlobalConfigurationBu
       this.rackId = template.rackId();
       this.siteId = template.siteId();
       this.transport = template.transport();
+      this.threadPool.read(template.threadPool());
+      this.remoteCommandThreadPool.read(template.remoteCommandThreadPool());
+      this.totalOrderThreadPool.read(template.totalOrderThreadPool());
 
       return this;
    }
@@ -210,6 +236,9 @@ public class TransportConfigurationBuilder extends AbstractGlobalConfigurationBu
             ", transport=" + transport +
             ", nodeName='" + nodeName + '\'' +
             ", properties=" + properties +
+            ", threadPool=" + threadPool +
+            ", remoteCommandThreadPool=" + remoteCommandThreadPool +
+            ", totalOrderThreadPool=" + totalOrderThreadPool +
             '}';
    }
 
@@ -235,6 +264,12 @@ public class TransportConfigurationBuilder extends AbstractGlobalConfigurationBu
          return false;
       if (transport != null ? !transport.equals(that.transport) : that.transport != null)
          return false;
+      if (threadPool != null ? !threadPool.equals(that.threadPool) : that.threadPool != null)
+         return false;
+      if (remoteCommandThreadPool != null ? !remoteCommandThreadPool.equals(that.remoteCommandThreadPool) : that.remoteCommandThreadPool != null)
+         return false;
+      if (totalOrderThreadPool != null ? !totalOrderThreadPool.equals(that.totalOrderThreadPool) : that.totalOrderThreadPool != null)
+         return false;
 
       return true;
    }
@@ -249,6 +284,9 @@ public class TransportConfigurationBuilder extends AbstractGlobalConfigurationBu
       result = 31 * result + (transport != null ? transport.hashCode() : 0);
       result = 31 * result + (nodeName != null ? nodeName.hashCode() : 0);
       result = 31 * result + (properties != null ? properties.hashCode() : 0);
+      result = 31 * result + (threadPool != null ? threadPool.hashCode() : 0);
+      result = 31 * result + (remoteCommandThreadPool != null ? remoteCommandThreadPool.hashCode() : 0);
+      result = 31 * result + (totalOrderThreadPool != null ? totalOrderThreadPool.hashCode() : 0);
       return result;
    }
 

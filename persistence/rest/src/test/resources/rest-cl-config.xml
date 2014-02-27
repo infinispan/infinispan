@@ -22,21 +22,24 @@
   ~ 02110-1301 USA, or see the FSF site: http://www.fsf.org.
   -->
 <infinispan
-   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-   xsi:schemaLocation="urn:infinispan:config:6.0 http://www.infinispan.org/schemas/infinispan-config-6.0.xsd
-                       urn:infinispan:config:store:rest:6.0 http://www.infinispan.org/schemas/infinispan-cachestore-rest-config-6.0.xsd"
-   xmlns="urn:infinispan:config:6.0"
-   xmlns:rest="urn:infinispan:config:store:rest:6.0" >
+      xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+      xsi:schemaLocation="urn:infinispan:config:7.0 http://www.infinispan.org/schemas/infinispan-config-7.0.xsd
+                          urn:infinispan:config:store:rest:7.0 http://www.infinispan.org/schemas/infinispan-cachestore-rest-config-7.0.xsd"
+      xmlns="urn:infinispan:config:7.0"
+      xmlns:remote="urn:infinispan:config:store:rest:7.0" >
 
-   <default>
-      <jmxStatistics enabled="false"/>
-      <persistence passivation="false">
-         <restStore xmlns="urn:infinispan:config:store:rest:6.0"
-            fetchPersistentState="false" ignoreModifications="false" purgeOnStartup="false" shared="true" preload="false"
-            key2StringMapper="org.infinispan.persistence.keymappers.MarshalledValueOrPrimitiveMapper" path="/rest/___defaultcache" host="localhost" port="18212" appendCacheNameToPath="false">
-            <connectionPool connectionTimeout="10000" maxConnectionsPerHost="10" maxTotalConnections="10" bufferSize="20000" socketTimeout="10000" tcpNoDelay="true"/>
-         </restStore>
-      </persistence>
-   </default>
+   <cache-container default-cache="default">
+      <local-cache name="default">
+         <persistence passivation="false">
+            <rest-store xmlns="urn:infinispan:config:store:rest:7.0"
+                        fetch-state="false" read-only="false" preload="false" purge="false" shared="true"
+                        path="/rest/___defaultcache" append-cache-name-to-path="false"
+                        key-to-string-mapper="org.infinispan.persistence.keymappers.MarshalledValueOrPrimitiveMapper">
+               <connection-pool connection-timeout="10000" max-connections-per-host="10" max-total-connections="10" buffer-size="20000" socket-timeout="10000" tcp-no-delay="true" />
+               <remote-server host="localhost" port="18212" outbound-socket-binding="rest-server-1" />
+            </rest-store>
+         </persistence>
+      </local-cache>
+   </cache-container>
 
 </infinispan>

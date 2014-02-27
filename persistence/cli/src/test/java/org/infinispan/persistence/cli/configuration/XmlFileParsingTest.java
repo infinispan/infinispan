@@ -27,13 +27,14 @@ public class XmlFileParsingTest extends AbstractInfinispanTest {
 
    public void testRemoteCacheStore() throws Exception {
       String config = INFINISPAN_START_TAG +
-            "   <default>\n" +
+            "   <cache-container default-cache=\"default\">\n" +
+            "      <local-cache name=\"default\">\n" +
             "     <persistence>\n" +
-            "       <cliLoader xmlns=\"urn:infinispan:config:cli:6.0\" " +
+            "       <cli-loader xmlns=\"urn:infinispan:config:store:cli:7.0\" " +
             "                  connection=\"jmx://1.2.3.4:4444/MyCacheManager/myCache\">\n" +
-            "       </cliLoader>\n" +
+            "       </cli-loader>\n" +
             "     </persistence>\n" +
-            "   </default>\n" +
+            "   </local-cache></cache-container>\n" +
             TestingUtil.INFINISPAN_END_TAG;
 
       CLInterfaceLoaderConfiguration store = (CLInterfaceLoaderConfiguration) buildCacheManagerWithCacheStore(config);

@@ -25,23 +25,21 @@ public class XmlFileParsingTest extends AbstractInfinispanTest {
 
    public void testRemoteCacheStore() throws Exception {
       String config = INFINISPAN_START_TAG +
-            "   <default>\n" +
+            "<cache-container default-cache=\"default\">" +
+            "   <local-cache name=\"default\">\n" +
             "     <persistence>\n" +
-            "       <remoteStore xmlns=\"urn:infinispan:config:remote:6.0\" >\n" +
-            "         <servers>\n" +
-            "           <server host=\"one\" />\n" +
-            "           <server host=\"two\" />\n" +
-            "         </servers>\n" +
-            "         <connectionPool maxActive=\"10\" exhaustedAction=\"CREATE_NEW\" />\n" +
-            "         <asyncTransportExecutor>\n" +
-            "           <properties>\n" +
-            "             <property name=\"maxThreads\" value=\"4\" />" +
-            "           </properties>\n" +
-            "         </asyncTransportExecutor>\n" +
-            "         <async enabled=\"true\" />\n" +
-            "       </remoteStore>\n" +
+            "       <remote-store xmlns=\"urn:infinispan:config:store:remote:7.0\" >\n" +
+            "         <remote-server host=\"one\" />\n" +
+            "         <remote-server host=\"two\" />\n" +
+            "         <connection-pool max-active=\"10\" exhausted-action=\"CREATE_NEW\" />\n" +
+            "         <async-executor>\n" +
+            "             <property name=\"maxThreads\">4</property>" +
+            "         </async-executor>\n" +
+            "         <write-behind/>\n" +
+            "       </remote-store>\n" +
             "     </persistence>\n" +
-            "   </default>\n" +
+            "   </local-cache>\n" +
+            "</cache-container>" +
             TestingUtil.INFINISPAN_END_TAG;
 
       RemoteStoreConfiguration store = (RemoteStoreConfiguration) buildCacheManagerWithCacheStore(config);

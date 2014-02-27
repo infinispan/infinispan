@@ -14,7 +14,7 @@ public enum Element {
     // must be first
     UNKNOWN(null),
 
-    CLI_LOADER("cliLoader")
+    CLI_LOADER("cli-loader")
     ;
 
     private final String name;
