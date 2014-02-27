@@ -43,7 +43,6 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.TimeUnit;
 
-import static org.infinispan.distexec.mapreduce.MapReduceTask.DEFAULT_TMP_CACHE_CONFIGURATION_NAME;
 import static org.infinispan.factories.KnownComponentNames.ASYNC_TRANSPORT_EXECUTOR;
 
 /**
@@ -124,13 +123,11 @@ public class MapReduceManagerImpl implements MapReduceManager {
             //first hook into lifecycle
             Cache<?, ?> cache = cacheManager.getCache(reduceCommand.getCacheName());
             taskLifecycleService.onPreExecute(reducer, cache);
-            AdvancedCacheLoader.KeyFilter<?> filter = null;
+            //assume dedicated tmp cache, all keys belong to this task
+            AdvancedCacheLoader.KeyFilter<?> filter = AdvancedCacheLoader.KeyFilter.LOAD_ALL_FILTER;
             if (useIntermediateKeys) {
                //shared tmp cache, filter keys that belong to this task
                filter = new IntermediateKeyFilter<KOut>(taskId);
-            } else {
-               //dedicated tmp cache, all keys belong to this task
-               filter = AdvancedCacheLoader.KeyFilter.LOAD_ALL_FILTER;
             }
             //iterate all tmp cache entries in memory, do it in parallel
             DataContainer dc = cache.getAdvancedCache().getDataContainer();
@@ -219,17 +216,14 @@ public class MapReduceManagerImpl implements MapReduceManager {
             CollectableCollector<KOut, VOut> collector) throws Exception{
 
       String taskId =  mcc.getTaskId();
-      Set<KOut> mapPhaseKeys = new HashSet<KOut>();
-      Cache<Object, DeltaAwareList<VOut>> tmpCache = null;
-      if (mcc.isEmitCompositeIntermediateKeys()) {
-         tmpCache = cacheManager.getCache(DEFAULT_TMP_CACHE_CONFIGURATION_NAME);
-      } else {
-         tmpCache = cacheManager.getCache(taskId);
-      }
+      String tmpCacheName = mcc.getIntermediateCacheName();
+      Cache<Object, DeltaAwareList<VOut>> tmpCache = cacheManager.getCache(tmpCacheName);
       if (tmpCache == null) {
          throw new IllegalStateException("Temporary cache for MapReduceTask " + taskId
-                  + " not found on " + cdl.getAddress());
+                  + " named " + tmpCacheName + " not found on " + cdl.getAddress());
       }
+
+      Set<KOut> mapPhaseKeys = new HashSet<KOut>();
       if (mcc.hasCombiner()) {
          Reducer <KOut,VOut> combiner = mcc.getCombiner();
          Cache<?, ?> cache = cacheManager.getCache(mcc.getCacheName());

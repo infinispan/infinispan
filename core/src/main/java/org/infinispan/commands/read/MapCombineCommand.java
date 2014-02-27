@@ -33,6 +33,7 @@ public class MapCombineCommand<KIn, VIn, KOut, VOut> extends BaseRpcCommand impl
    private boolean emitCompositeIntermediateKeys;
    private MapReduceManager mrManager;
    private UUID uuid;
+   private String intermediateCacheName;
 
    public MapCombineCommand() {
       super(null); // For command id uniqueness test
@@ -89,6 +90,10 @@ public class MapCombineCommand<KIn, VIn, KOut, VOut> extends BaseRpcCommand impl
       this.reducePhaseDistributed = reducePhaseDistributed;
    }
 
+   public void setIntermediateCacheName(String intermediateCacheName) {
+      this.intermediateCacheName = intermediateCacheName;
+   }
+
    public Set<KIn> getKeys() {
       return keys;
    }
@@ -109,6 +114,10 @@ public class MapCombineCommand<KIn, VIn, KOut, VOut> extends BaseRpcCommand impl
       return taskId;
    }
 
+   public String getIntermediateCacheName() {
+      return intermediateCacheName;
+   }
+
    @Override
    public byte getCommandId() {
       return COMMAND_ID;
@@ -122,7 +131,7 @@ public class MapCombineCommand<KIn, VIn, KOut, VOut> extends BaseRpcCommand impl
    @Override
    public Object[] getParameters() {
       return new Object[] { taskId, keys, mapper, combiner, reducePhaseDistributed,
-               emitCompositeIntermediateKeys, uuid };
+               emitCompositeIntermediateKeys, uuid, intermediateCacheName};
    }
 
    @SuppressWarnings("unchecked")
@@ -138,6 +147,7 @@ public class MapCombineCommand<KIn, VIn, KOut, VOut> extends BaseRpcCommand impl
       reducePhaseDistributed = (Boolean) args[i++];
       emitCompositeIntermediateKeys = (Boolean) args[i++];
       uuid = (UUID) args[i++];
+      intermediateCacheName = (String) args[i++]; 
    }
 
    @Override
