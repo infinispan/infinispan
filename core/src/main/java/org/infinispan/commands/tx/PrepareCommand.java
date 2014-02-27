@@ -12,7 +12,6 @@ import org.infinispan.commands.write.WriteCommand;
 import org.infinispan.commons.hash.Hash;
 import org.infinispan.commons.hash.MurmurHash3;
 import org.infinispan.commons.util.InfinispanCollections;
-import org.infinispan.commons.util.TimSort;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.context.impl.RemoteTxInvocationContext;
 import org.infinispan.context.impl.TxInvocationContext;
@@ -252,7 +251,7 @@ public class PrepareCommand extends AbstractTransactionBoundaryCommand {
       }
       Object[] sorted = set.toArray(new Object[set.size()]);
       if (sort) {
-         TimSort.sort(sorted, KEY_COMPARATOR);
+         Arrays.sort(sorted, KEY_COMPARATOR);
       }
       return sorted;
    }
