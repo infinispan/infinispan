@@ -3,7 +3,7 @@
    <parent>
       <artifactId>compatibility52x-parent</artifactId>
       <groupId>org.infinispan</groupId>
-      <version>7.0.0-SNAPSHOT</version>
+      <version>7.0.0.Alpha1</version>
    </parent>
    <modelVersion>4.0.0</modelVersion>
 

@@ -5,7 +5,7 @@
     <parent>
         <groupId>org.infinispan.server</groupId>
         <artifactId>infinispan-server-versions</artifactId>
-        <version>7.0.0-SNAPSHOT</version>
+        <version>7.0.0.Alpha1</version>
         <relativePath>../versions/pom.xml</relativePath>
     </parent>
 
@@ -161,7 +161,7 @@
                 </exclusion>
             </exclusions>
         </dependency>
-        <!-- TODO: Make it possible to use a different version of Karaf -->
+        
         <dependency>
             <groupId>org.apache.karaf</groupId>
             <artifactId>apache-karaf</artifactId>
@@ -200,7 +200,7 @@
         <server.jvm>${env.JAVA_HOME}</server.jvm>
         <resources.dir>${basedir}/src/test/resources</resources.dir>
         <jvm.memory.args>-Xmx512m -XX:MaxPermSize=128m</jvm.memory.args>
-        <jvm.x64.args></jvm.x64.args>
+        <jvm.x64.args />
         <default.transport.stack>udp</default.transport.stack>
         <transport.stack>-Djboss.default.jgroups.stack=${default.transport.stack}</transport.stack>
         
@@ -244,7 +244,7 @@
                     </execution>
                 </executions>
             </plugin>
-            <!-- IMPORTANT: generates META-INF/maven/dependencies.properties required by PAX-EXAM framework -->
+            
             <plugin>
                 <groupId>org.apache.servicemix.tooling</groupId>
                 <artifactId>depends-maven-plugin</artifactId>
@@ -401,7 +401,7 @@
                         </goals>
                         <configuration>
                             <groups combine.self="override">org.infinispan.server.test.category.UnstableTest</groups>
-                            <excludedGroups combine.self="override"></excludedGroups>
+                            <excludedGroups combine.self="override" />
                             <systemPropertyVariables>
                                 <arquillian.launch>suite-manual</arquillian.launch>
                             </systemPropertyVariables>
@@ -539,15 +539,13 @@
                 <suite.client.local.phase>none</suite.client.local.phase>
                 <suite.client.dist.phase>none</suite.client.dist.phase>
                 <suite.client.repl.phase>none</suite.client.repl.phase>
-                <suite.manual.exclude.groups></suite.manual.exclude.groups>
+                <suite.manual.exclude.groups />
                 <suite.manual.include.groups>org.infinispan.server.test.category.Osgi</suite.manual.include.groups>
                 <suite.manual.include>org/infinispan/server/test/client/hotrod/osgi/RemoteCacheOsgiTest.java</suite.manual.include>
             </properties>
             <build>
                 <plugins>
-                    <!-- Register Protofile on the server before the test starts.
-                         TODO: Do it directly from the test. The remoting-jmx implementation for
-                         JMX is normally loaded via ServiceLoader and this is not working out-of-box in OSGi. -->
+                    
                     <plugin>
                         <artifactId>maven-antrun-plugin</artifactId>
                         <executions>
@@ -559,16 +557,14 @@
                                 <phase>test</phase>
                                 <configuration>
                                     <target>
-                                        <property name="test_classpath" refid="maven.test.classpath"/>
-                                        <java classname="org.infinispan.server.test.util.ProtofileRegistrar"
-                                              fork="false"
-                                              failonerror="true" >
-                                            <arg value="/sample_bank_account/bank.protobin"/>
-                                            <arg value="localhost"/>
-                                            <arg value="9999"/>
+                                        <property name="test_classpath" refid="maven.test.classpath" />
+                                        <java classname="org.infinispan.server.test.util.ProtofileRegistrar" failonerror="true" fork="false">
+                                            <arg value="/sample_bank_account/bank.protobin" />
+                                            <arg value="localhost" />
+                                            <arg value="9999" />
                                             <classpath>
-                                                <pathelement path="${project.build.directory}/test-classes"/>
-                                                <pathelement path="${test_classpath}"/>
+                                                <pathelement path="${project.build.directory}/test-classes" />
+                                                <pathelement path="${test_classpath}" />
                                             </classpath>
                                         </java>
                                     </target>
