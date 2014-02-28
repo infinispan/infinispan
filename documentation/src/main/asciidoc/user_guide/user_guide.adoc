@@ -50,4 +50,4 @@ include::chapter-70-Using_Infinispan_as_a_JCache_provider.adoc[]
 include::chapter-69-Total_Order_based_commit_protocol.adoc[]
 include::chapter-72-Storing_objects_e_g_arrays_with_custom_Equivalence_functions.adoc[]
 include::chapter-73-Interoperability_between_Embedded_and_Remote_Server_Endpoints.adoc[]
-
+include::chapter-75-Security.adoc[]
