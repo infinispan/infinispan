@@ -144,7 +144,7 @@ public class DBServer {
             Connection connection = factory.getConnection();
             final PreparedStatement ps = connection.prepareStatement(getRowByKeySql);
             Object result = null;
-            ps.setInt(1, keyHash);
+            ps.setString(1, String.valueOf(keyHash));
             try {
                 ResultSet rs;
                 rs = ps.executeQuery();
@@ -162,7 +162,7 @@ public class DBServer {
             Connection connection = factory.getConnection();
             final PreparedStatement ps = connection.prepareStatement(getRowByKeySql);
             Object result = null;
-            ps.setInt(1, keyHash);
+            ps.setString(1, String.valueOf(keyHash));
             try {
                 ResultSet rs;
                 rs = withAwait(new Callable<ResultSet>() {
