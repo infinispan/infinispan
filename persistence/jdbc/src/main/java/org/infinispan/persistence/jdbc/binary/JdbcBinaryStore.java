@@ -473,7 +473,7 @@ public class JdbcBinaryStore implements AdvancedLoadWriteStore {
          }
          conn = connectionFactory.getConnection();
          ps = conn.prepareStatement(sql);
-         ps.setInt(1, bucketId);
+         ps.setString(1, String.valueOf(bucketId));
          rs = ps.executeQuery();
          if (!rs.next()) {
             return null;
