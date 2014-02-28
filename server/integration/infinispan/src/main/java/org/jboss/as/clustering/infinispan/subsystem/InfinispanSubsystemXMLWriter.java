@@ -439,6 +439,10 @@ public class InfinispanSubsystemXMLWriter implements XMLElementWriter<SubsystemM
             for (Property levelDbStoreEntry : cache.get(ModelKeys.LEVELDB_STORE).asPropertyList()) {
                 ModelNode store = levelDbStoreEntry.getValue();
                 writer.writeStartElement(Element.LEVELDB_STORE.getLocalName());
+                // write identifier before other attributes
+                ModelNode name = new ModelNode();
+                name.get(ModelKeys.NAME).set(levelDbStoreEntry.getName());
+                LevelDBStoreResource.NAME.marshallAsAttribute(name, false, writer);
                 this.writeOptional(writer, Attribute.RELATIVE_TO, store, ModelKeys.RELATIVE_TO);
                 this.writeOptional(writer, Attribute.PATH, store, ModelKeys.PATH);
                 this.writeOptional(writer, Attribute.BLOCK_SIZE, store, ModelKeys.BLOCK_SIZE);
@@ -448,6 +452,7 @@ public class InfinispanSubsystemXMLWriter implements XMLElementWriter<SubsystemM
                 this.writeStoreExpiration(writer, store);
                 this.writeStoreCompression(writer, store);
                 this.writeStoreImplementation(writer, store);
+                this.writeStoreProperties(writer, store);
                 writer.writeEndElement();
             }
         }
@@ -562,7 +567,7 @@ public class InfinispanSubsystemXMLWriter implements XMLElementWriter<SubsystemM
         if (store.get(ModelKeys.IMPLEMENTATION, ModelKeys.IMPLEMENTATION_NAME).isDefined()) {
             ModelNode implementation = store.get(ModelKeys.IMPLEMENTATION, ModelKeys.IMPLEMENTATION_NAME);
             writer.writeStartElement(Element.IMPLEMENTATION.getLocalName());
-            this.writeOptional(writer, Attribute.TYPE, implementation, ModelKeys.TYPE);
+            this.writeOptional(writer, Attribute.TYPE, implementation, ModelKeys.IMPLEMENTATION);
             writer.writeEndElement();
         }
     }

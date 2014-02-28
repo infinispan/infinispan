@@ -25,14 +25,6 @@ public class LevelDBExpirationResource extends SimpleResourceDefinition {
                     .setFlags(AttributeAccess.Flag.RESTART_ALL_SERVICES)
                     .build();
 
-    static final SimpleAttributeDefinition RELATIVE_TO =
-            new SimpleAttributeDefinitionBuilder(ModelKeys.RELATIVE_TO, ModelType.STRING, true)
-                    .setXmlName(Attribute.RELATIVE_TO.getLocalName())
-                    .setAllowExpression(false)
-                    .setFlags(AttributeAccess.Flag.RESTART_ALL_SERVICES)
-                    .setDefaultValue(new ModelNode().set(ServerEnvironment.SERVER_DATA_DIR))
-                    .build();
-
     static final SimpleAttributeDefinition QUEUE_SIZE =
             new SimpleAttributeDefinitionBuilder(ModelKeys.QUEUE_SIZE, ModelType.INT, true)
                     .setXmlName(Attribute.QUEUE_SIZE.getLocalName())

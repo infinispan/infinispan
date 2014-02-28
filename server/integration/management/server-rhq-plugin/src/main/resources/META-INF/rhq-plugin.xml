@@ -28,13 +28,19 @@
    <!ENTITY commonLoaderParameters '
       <c:simple-property name="shared" required="false" type="boolean" description="This setting should be set to true when multiple cache instances share the same cache loader."/>
       <c:simple-property name="preload" required="false" type="boolean" description="If true, when the cache starts, data stored in the cache loader will be pre-loaded into memory. This is particularly useful when data in the cache loader will be needed immediately after startup and you want to avoid cache operations being delayed as a result of loading this data lazily. Can be used to provide a &apos;warm-cache&apos; on startup, however there is a performance penalty as startup time is affected by this process."/>
-      <c:simple-property name="class" required="false" description="The custom loader implementation class to use for this cache loader."/>
-      <c:list-property name="properties" displayName="Properties" required="false" readOnly="false">
-         <c:map-property name="*:name" displayName="Name" readOnly="true">
-            <c:simple-property name="name" displayName="Property-Name" readOnly="true"/>
-            <c:simple-property name="value" displayName="Value"/>
-         </c:map-property>
-      </c:list-property>
+   '>
+
+   <!-- Note this cannot be placed in commonLoaderParameters as is desired.  This is due to ordering or rhq-plugin.xsd
+        preventing groups to be added before other types such as simple-property -->
+   <!ENTITY commonLoaderProperties '
+      <c:group name="children:property:name+" displayName="Loader/Store Properties" hiddenByDefault="true">
+         <c:list-property name="*2" displayName="Properties" readOnly="false">
+            <c:map-property name="*:name" displayName="Properties" readOnly="true">
+               <c:simple-property name="name" displayName="Name" required="true" description="The name of the configuration property." readOnly="true"/>
+               <c:simple-property name="value" displayName="Value" required="true" description="The value of the configuration property."/>
+            </c:map-property>
+         </c:list-property>
+      </c:group>
    '>
 
    <!ENTITY commonStoreParamters '
@@ -283,9 +289,6 @@
                     </results>
                 </operation>
 
-                <operation name="remove" displayName="Remove Cache"
-                           description="Removes the given cache from the cache-container"/>
-
                 <metric property="cacheStatus" displayName="Cache Status" displayType="summary" units="none"
                         dataType="trait" description="The current runtime status of a cache"/>
 
@@ -515,80 +518,158 @@
                     </operation>
                 </service>
 
-                <service name="Loader" discovery="org.rhq.modules.plugins.jbossas7.SubsystemDiscovery"
-                         class="org.infinispan.server.rhq.IspnLoaderComponent"
-                         description="The loaders that this cache contains" createDeletePolicy="both"
+                <service name="Generic Loader" discovery="org.rhq.modules.plugins.jbossas7.SubsystemDiscovery"
+                         class="org.rhq.modules.plugins.jbossas7.BaseComponent"
+                         description="The generic loaders that this cache contains" createDeletePolicy="both"
                          creationDataType="configuration">
                     <plugin-configuration>
                         <c:simple-property name="path" readOnly="true"
-                                           default="loader|cluster-loader"/>
+                                           default="loader"/>
                     </plugin-configuration>
 
-                    <operation name="remove" displayName="Remove Loader"
-                               description="Removes the given loader from the cache"/>
-
                     <resource-configuration>
-                        <c:simple-property name="_flavor" displayName="Kind of loader" required="true" readOnly="true"
-                                           default="loader" description="What special kind of loader is this.">
-                            <c:property-options>
-                                <c:option name="Generic Loader" value="loader"/>
-                                <c:option name="Cluster Loader" value="cluster-loader"/>
-                            </c:property-options>
-                        </c:simple-property>
+                        <c:simple-property name="class" required="true"
+                                           description="The custom loader implementation class to use for this cache loader."/>
                         &commonLoaderParameters;
-                        <c:group name="cluster-loader-attributes" displayName="Cluster Loader Attributes" hiddenByDefault="true">
-                            <c:simple-property name="remote-timeout" required="false" type="string" readOnly="true"
-                                               description="Specifies the maximum time to wait for a response from remote nodes."/>
-                        </c:group>
+                        &commonLoaderProperties;
                     </resource-configuration>
                 </service>
 
-                <service name="Store" discovery="org.rhq.modules.plugins.jbossas7.SubsystemDiscovery"
-                         class="org.infinispan.server.rhq.IspnLoaderComponent"
-                         description="The stores that this cache contains" createDeletePolicy="both"
+                <service name="Cluster Loader" discovery="org.rhq.modules.plugins.jbossas7.SubsystemDiscovery"
+                         class="org.rhq.modules.plugins.jbossas7.BaseComponent"
+                         description="The cluster loaders that this cache contains" createDeletePolicy="both"
                          creationDataType="configuration">
                     <plugin-configuration>
                         <c:simple-property name="path" readOnly="true"
-                                           default="store|file-store|remote-store"/>
+                                           default="cluster-loader"/>
                     </plugin-configuration>
 
-                    <operation name="remove" displayName="Remove Store"
-                               description="Removes the given store from the cache"/>
+                    <resource-configuration>
+                        &commonLoaderParameters;
+                        <c:simple-property name="remote-timeout" required="false" type="string" readOnly="true"
+                                           description="Specifies the maximum time to wait for a response from remote nodes."/>
+                        &commonLoaderProperties;
+                    </resource-configuration>
+                </service>
+
+                <service name="Generic Store" discovery="org.rhq.modules.plugins.jbossas7.SubsystemDiscovery"
+                         class="org.rhq.modules.plugins.jbossas7.BaseComponent"
+                         description="The generic stores that this cache contains" createDeletePolicy="both"
+                         creationDataType="configuration">
+                    <plugin-configuration>
+                        <c:simple-property name="path" readOnly="true"
+                                           default="store"/>
+                    </plugin-configuration>
 
                     <resource-configuration>
-                        <c:simple-property name="_flavor" displayName="Kind of store" required="true" readOnly="true"
-                                           default="store" description="What special kind of store is this.">
-                            <c:property-options>
-                                <c:option name="Generic Store" value="store"/>
-                                <c:option name="File Store" value="file-store"/>
-                                <c:option name="Remote Store" value="remote-store"/>
-                            </c:property-options>
-                        </c:simple-property>
+                        <c:simple-property name="class" required="true"
+                                           description="The custom store implementation class to use for this cache store."/>
                         &commonStoreParamters;
-                        <c:group name="file-store-attributes" displayName="File Store Attributes" hiddenByDefault="true">
-                            <c:simple-property name="path" required="false" type="string" readOnly="true"
-                                               description="An absolute path if relative-to is not provided, otherwise the relative path to relative-to"/>
-                            <c:simple-property name="relative-to" required="false" type="string" readOnly="true"
-                                               description="The path this is relative to">
-                                <c:option-source target="resource" expression="path=*/*=name"/>
-                            </c:simple-property>
+                        &commonLoaderProperties;
+                    </resource-configuration>
+                </service>
+
+                <service name="File Store" discovery="org.rhq.modules.plugins.jbossas7.SubsystemDiscovery"
+                         class="org.rhq.modules.plugins.jbossas7.BaseComponent"
+                         description="The file stores that this cache contains" createDeletePolicy="both"
+                         creationDataType="configuration">
+                    <plugin-configuration>
+                        <c:simple-property name="path" readOnly="true"
+                                           default="file-store"/>
+                    </plugin-configuration>
+
+                    <resource-configuration>
+                        &commonStoreParamters;
+                        <c:simple-property name="path" required="false" type="string" readOnly="true"
+                                           description="An absolute path if relative-to is not provided, otherwise the relative path to relative-to"/>
+                        <c:simple-property name="relative-to" required="false" type="string" readOnly="true"
+                                           description="The path this is relative to">
+                            <c:option-source target="resource" expression="path=*/*=name"/>
+                        </c:simple-property>
+                        &commonLoaderProperties;
+                    </resource-configuration>
+                </service>
+
+                <service name="LevelDB Store" discovery="org.rhq.modules.plugins.jbossas7.SubsystemDiscovery"
+                         class="org.rhq.modules.plugins.jbossas7.BaseComponent"
+                         description="The level DB stores that this cache contains" createDeletePolicy="both"
+                         creationDataType="configuration">
+                    <plugin-configuration>
+                        <c:simple-property name="path" readOnly="true"
+                                           default="leveldb-store"/>
+                    </plugin-configuration>
+
+                    <resource-configuration>
+                        &commonStoreParamters;
+                        <c:simple-property name="path" required="false" type="string" readOnly="true"
+                                           description="An absolute path if relative-to is not provided, otherwise the relative path to relative-to"/>
+                        <c:simple-property name="block-size" required="false" type="integer" readOnly="true"
+                                           description="The level DB block size"/>
+                        <c:simple-property name="cache-size" required="false" type="long" readOnly="true"
+                                           description="Cache size for the cache store"/>
+                        <c:simple-property name="clear-threshold" required="false" type="integer" readOnly="true"
+                                           description="Cache store cache clear threshold"/>
+                        <c:group name="child:expiration=EXPIRATION" displayName="Expiration Configuration" hiddenByDefault="false">
+                            <c:map-property name="*ExpirationConfiguration+" displayName="Expiration Properties" readOnly="false" required="false">
+                                <c:simple-property name="path" required="false" type="string"
+                                                   description="Path for cache store expiration data."/>
+                                <c:simple-property name="queue-size" required="false" type="integer"
+                                                   description="Maximum amount of expirable entries to allow"/>
+                            </c:map-property>
                         </c:group>
-                        <c:group name="remote-store-attributes" displayName="Remote Store Attributes" hiddenByDefault="true">
-                            <c:simple-property name="cache" required="false" type="string" readOnly="true"
-                                               description="The name of the remote cache to use for this remote store."/>
-                            <c:simple-property name="hotrod-wrapping" required="false" type="boolean" readOnly="true"
-                                               description="Enables wrapping of entries into a form usable by a HotRod server"/>
-                            <c:simple-property name="raw-values" required="false" type="boolean" readOnly="true"
-                                               description="Stores information on the remote cache in a raw format suitable for interoperability with other RemoteCacheManagers"/>
-                            <c:simple-property name="tcp-no-delay" required="false" type="boolean" readOnly="true"
-                                               description="A TCP_NODELAY value for remote cache communication."/>
-                            <c:simple-property name="socket-timeout" required="false" type="long" readOnly="true"
-                                               description="A socket timeout for remote cache communication."/>
-                            <!-- TODO: Need to figure out how to add remote servers here
-                            <c:simple-property name="remote-servers" required="false" type="string" readOnly="true"
-                                               description="A list of remote servers for this cache store."/>
-                            -->
+                        <c:group name="child:compression=COMPRESSION" displayName="Compression Configuration" hiddenByDefault="false">
+                            <c:map-property name="*CompressionConfiguration+" displayName="Compression Properties" readOnly="false" required="false">
+                                <c:simple-property name="type" required="false" type="string"
+                                                   description="Compression to be used when storing entries in Level DB">
+                                    <c:property-options>
+                                        <c:option value="SNAPPY" name="Snappy"/>
+                                        <c:option value="NONE" name="None"/>
+                                    </c:property-options>
+                                </c:simple-property>
+                            </c:map-property>
                         </c:group>
+                        <c:group name="child:implementation=IMPLEMENTATION" displayName="Implementation Configuration" hiddenByDefault="false">
+                            <c:map-property name="*ImplementationConfiguration+" displayName="Implementation Properties" readOnly="false" required="false">
+                                <c:simple-property name="implementation" required="false" type="string"
+                                                   description="Underlying implementation to use when interacting with Level DB.">
+                                    <c:property-options>
+                                        <c:option value="AUTO" name="Auto"/>
+                                        <c:option value="JAVA" name="Java"/>
+                                        <c:option value="JNI" name="Java Native Interface"/>
+                                    </c:property-options>
+                                </c:simple-property>
+                            </c:map-property>
+                        </c:group>
+                        &commonLoaderProperties;
+                    </resource-configuration>
+                </service>
+
+                <service name="Remote Store" discovery="org.rhq.modules.plugins.jbossas7.SubsystemDiscovery"
+                         class="org.rhq.modules.plugins.jbossas7.BaseComponent"
+                         description="The remote stores that this cache contains" createDeletePolicy="both"
+                         creationDataType="configuration">
+                    <plugin-configuration>
+                        <c:simple-property name="path" readOnly="true"
+                                           default="remote-store"/>
+                    </plugin-configuration>
+
+                    <resource-configuration>
+                        &commonStoreParamters;
+                        <c:simple-property name="cache" required="false" type="string" readOnly="true"
+                                           description="The name of the remote cache to use for this remote store."/>
+                        <c:simple-property name="hotrod-wrapping" required="false" type="boolean" readOnly="true"
+                                           description="Enables wrapping of entries into a form usable by a HotRod server"/>
+                        <c:simple-property name="raw-values" required="false" type="boolean" readOnly="true"
+                                           description="Stores information on the remote cache in a raw format suitable for interoperability with other RemoteCacheManagers"/>
+                        <c:simple-property name="tcp-no-delay" required="false" type="boolean" readOnly="true"
+                                           description="A TCP_NODELAY value for remote cache communication."/>
+                        <c:simple-property name="socket-timeout" required="false" type="long" readOnly="true"
+                                           description="A socket timeout for remote cache communication."/>
+                        <!-- TODO: Need to figure out how to add remote servers here
+                        <c:simple-property name="remote-servers" required="false" type="string" readOnly="true"
+                                           description="A list of remote servers for this cache store."/>
+                        -->
+                        &commonLoaderProperties;
                     </resource-configuration>
                 </service>
             </service>
