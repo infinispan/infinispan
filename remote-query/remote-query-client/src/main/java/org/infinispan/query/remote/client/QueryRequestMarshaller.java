@@ -36,6 +36,6 @@ public class QueryRequestMarshaller implements MessageMarshaller<QueryRequest> {
 
    @Override
    public String getTypeName() {
-      return "org.infinispan.client.hotrod.impl.query.QueryRequest";
+      return "org.infinispan.query.remote.client.QueryRequest";
    }
 }

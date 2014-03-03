@@ -30,7 +30,7 @@ public final class RemoteQuery implements Query {
    private final int maxResults;
 
    private List results = null;
-   private int numResults;
+   private int totalResults;
 
    public RemoteQuery(RemoteCacheImpl cache, SerializationContext serializationContext,
                       String jpqlString, List<SortCriteria> sortCriteria, long startOffset, int maxResults) {
@@ -77,7 +77,7 @@ public final class RemoteQuery implements Query {
 
       QueryOperation op = cache.getOperationsFactory().newQueryOperation(this);
       QueryResponse response = op.execute();
-      numResults = response.getNumResults();
+      totalResults = (int) response.getTotalResults();
       if (response.getProjectionSize() > 0) {
          results = new ArrayList<Object>(response.getResults().size() / response.getProjectionSize());
          Iterator<WrappedMessage> it = response.getResults().iterator();
@@ -108,7 +108,7 @@ public final class RemoteQuery implements Query {
    @Override
    public int getResultSize() {
       list();
-      return numResults;
+      return totalResults;
    }
 
    public SerializationContext getSerializationContext() {

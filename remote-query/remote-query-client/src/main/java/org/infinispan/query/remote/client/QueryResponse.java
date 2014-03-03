@@ -16,6 +16,8 @@ public class QueryResponse {
 
    private List<WrappedMessage> results;
 
+   private long totalResults;
+
    public int getNumResults() {
       return numResults;
    }
@@ -38,5 +40,13 @@ public class QueryResponse {
 
    public void setResults(List<WrappedMessage> results) {
       this.results = results;
+   }
+
+   public long getTotalResults() {
+      return totalResults;
+   }
+
+   public void setTotalResults(long totalResults) {
+      this.totalResults = totalResults;
    }
 }

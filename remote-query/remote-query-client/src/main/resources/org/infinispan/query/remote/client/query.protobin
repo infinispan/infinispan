@@ -1,0 +1,19 @@
+
+÷
+.org/infinispan/query/remote/client/query.proto"org.infinispan.query.remote.client1org/infinispan/protostream/message-wrapping.proto"Ü
+QueryRequest
+
+jpqlString (	S
+sortCriteria (2=.org.infinispan.query.remote.client.QueryRequest.SortCriteria
+startOffset (
+
+maxResults (:
+SortCriteria
+attributePath (	
+isAscending ("Ž
+QueryResponse
+
+numResults (
+projectionSize (;
+results (2*.org.infinispan.protostream.WrappedMessage
+totalResults (
