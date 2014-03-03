@@ -64,18 +64,7 @@ public class QueryDslIterationTest extends AbstractQueryDslTest {
 
       List<User> list = q.list();
       assertEquals(4, list.size());
-      checkNamesAsc(list);
-   }
-
-   private void checkNamesAsc(List<User> list) {
-      String prevName = null;
-      for (User u : list) {
-         assertNotNull(u.getName());
-         if (prevName != null) {
-            assertTrue(u.getName().compareTo(prevName) >= 0);
-         }
-         prevName = u.getName();
-      }
+      checkNameOrder(list, true);
    }
 
    public void testOrderByDesc() throws Exception {
@@ -88,14 +77,7 @@ public class QueryDslIterationTest extends AbstractQueryDslTest {
 
       List<User> list = q.list();
       assertEquals(4, list.size());
-      String prevName = null;
-      for (User u : list) {
-         assertNotNull(u.getSurname());
-         if (prevName != null) {
-            assertTrue(u.getSurname().compareTo(prevName) <= 0);
-         }
-         prevName = u.getSurname();
-      }
+      checkSurnameOrder(list, false);
    }
 
    public void testMaxResults() throws Exception {
@@ -108,7 +90,7 @@ public class QueryDslIterationTest extends AbstractQueryDslTest {
 
       List<User> list = q.list();
       assertEquals(2, list.size());
-      checkNamesAsc(list);
+      checkNameOrder(list, true);
    }
 
    public void testStartOffset() throws Exception {
@@ -121,7 +103,7 @@ public class QueryDslIterationTest extends AbstractQueryDslTest {
 
       List<User> list = q.list();
       assertEquals(2, list.size());
-      checkNamesAsc(list);
+      checkNameOrder(list, true);
    }
 
    public void testProjection1() throws Exception {
@@ -182,5 +164,29 @@ public class QueryDslIterationTest extends AbstractQueryDslTest {
          ++elements;
       }
       assertEquals(expected, elements);
+   }
+
+   private void checkNameOrder(List<User> list, boolean isAsc) {
+      String prevName = null;
+      for (User u : list) {
+         assertNotNull(u.getName());
+         if (prevName != null) {
+            int comp = u.getName().compareTo(prevName);
+            assertTrue(isAsc ? comp >= 0 : comp <= 0);
+         }
+         prevName = u.getName();
+      }
+   }
+
+   private void checkSurnameOrder(List<User> list, boolean isAsc) {
+      String prevSurname = null;
+      for (User u : list) {
+         assertNotNull(u.getSurname());
+         if (prevSurname != null) {
+            int comp = u.getSurname().compareTo(prevSurname);
+            assertTrue(isAsc ? comp >= 0 : comp <= 0);
+         }
+         prevSurname = u.getSurname();
+      }
    }
 }

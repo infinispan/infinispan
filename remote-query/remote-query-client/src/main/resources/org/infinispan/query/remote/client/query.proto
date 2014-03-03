@@ -1,6 +1,6 @@
 import "org/infinispan/protostream/message-wrapping.proto";
 
-package org.infinispan.client.hotrod.impl.query;
+package org.infinispan.query.remote.client;
 
 message QueryRequest {
 
@@ -60,5 +60,5 @@ message QueryResponse {
     */
    repeated org.infinispan.protostream.WrappedMessage results = 3;
 
-   //TODO add number of total matching results, which usually != numResults if pagination was used
+   required int64 totalResults = 4;
 }

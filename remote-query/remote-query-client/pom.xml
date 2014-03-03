@@ -33,7 +33,7 @@
             <configuration>
                <instructions>
                   <Export-Package>
-                     ${project.groupId}.query.remote.*;version=${project.version};-split-package:=error,
+                     ${project.groupId}.query.remote.client.*;version=${project.version};-split-package:=error,
                   </Export-Package>
                </instructions>
             </configuration>

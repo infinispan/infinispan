@@ -215,6 +215,7 @@ public class QueryFacadeImpl implements QueryFacade {
       }
 
       QueryResponse response = new QueryResponse();
+      response.setTotalResults(cacheQuery.getResultSize());
       response.setNumResults(list.size());
       response.setProjectionSize(projSize);
       response.setResults(results);

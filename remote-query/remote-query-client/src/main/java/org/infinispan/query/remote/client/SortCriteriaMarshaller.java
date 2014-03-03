@@ -31,6 +31,6 @@ public class SortCriteriaMarshaller implements MessageMarshaller<QueryRequest.So
 
    @Override
    public String getTypeName() {
-      return "org.infinispan.client.hotrod.impl.query.QueryRequest.SortCriteria";
+      return "org.infinispan.query.remote.client.QueryRequest.SortCriteria";
    }
 }

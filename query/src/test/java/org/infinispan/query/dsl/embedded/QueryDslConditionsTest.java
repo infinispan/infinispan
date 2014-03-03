@@ -1025,6 +1025,7 @@ public class QueryDslConditionsTest extends AbstractQueryDslTest {
             .toBuilder().build();
 
       List<Transaction> list = q.list();
+      assertEquals(50, q.getResultSize());
       assertEquals(10, list.size());
       for (int i = 0; i < 10; i++) {
          assertEquals("Expensive shoes " + (20 + i), list.get(i).getDescription());
