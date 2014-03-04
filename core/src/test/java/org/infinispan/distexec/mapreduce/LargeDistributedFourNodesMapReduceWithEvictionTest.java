@@ -21,7 +21,7 @@ public class LargeDistributedFourNodesMapReduceWithEvictionTest extends BaseLarg
    @Override
    protected void createCacheManagers() throws Throwable {
       ConfigurationBuilder builder = getDefaultClusteredCacheConfig(getCacheMode(), true);
-      builder.clustering().stateTransfer().chunkSize(20).sync().replTimeout(45, TimeUnit.SECONDS).eviction()
+      builder.clustering().stateTransfer().sync().replTimeout(45, TimeUnit.SECONDS).eviction()
             .maxEntries(100000);
       createClusteredCaches(4, cacheName(), builder);
    }

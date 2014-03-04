@@ -4,7 +4,6 @@ import org.infinispan.Cache;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.testng.annotations.Test;
 
-import java.util.Map;
 
 /**
  * DistributedSharedCacheTwoNodesMapReduceTest tests Map/Reduce functionality using two Infinispan nodes,

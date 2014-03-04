@@ -8,11 +8,11 @@ import java.util.UUID;
 import org.infinispan.commands.CancellableCommand;
 import org.infinispan.commands.remote.BaseRpcCommand;
 import org.infinispan.context.InvocationContext;
+import org.infinispan.distexec.mapreduce.Collector;
 import org.infinispan.distexec.mapreduce.MapReduceManager;
 import org.infinispan.distexec.mapreduce.Mapper;
 import org.infinispan.distexec.mapreduce.Reducer;
-import org.infinispan.util.logging.Log;
-import org.infinispan.util.logging.LogFactory;
+
 
 /**
  * MapCombineCommand is a container to migrate {@link Mapper} and {@link Reducer} which is a
@@ -24,7 +24,6 @@ import org.infinispan.util.logging.LogFactory;
  */
 public class MapCombineCommand<KIn, VIn, KOut, VOut> extends BaseRpcCommand implements CancellableCommand {
    public static final int COMMAND_ID = 30;
-   private static final Log log = LogFactory.getLog(MapCombineCommand.class);
    private Set<KIn> keys = new HashSet<KIn>();
    private Mapper<KIn, VIn, KOut, VOut> mapper;
    private Reducer<KOut, VOut> combiner;  
@@ -34,6 +33,7 @@ public class MapCombineCommand<KIn, VIn, KOut, VOut> extends BaseRpcCommand impl
    private MapReduceManager mrManager;
    private UUID uuid;
    private String intermediateCacheName;
+   private int maxCollectorSize;
 
    public MapCombineCommand() {
       super(null); // For command id uniqueness test
@@ -94,6 +94,30 @@ public class MapCombineCommand<KIn, VIn, KOut, VOut> extends BaseRpcCommand impl
       this.intermediateCacheName = intermediateCacheName;
    }
 
+   /**
+    * Limits Mapper's Collector<KOut, VOut> size to a given value.
+    * <p>
+    * During execution of map/combine phase, number of intermediate keys/values collected in
+    * Collector could potentially become very large. By limiting size of collector intermediate
+    * key/values are transferred to intermediate cache in batches before reduce phase is executed.
+    * <p>
+    * The default value for max collector size is 1024.
+    *
+    * @param size
+    *           the number of key/value pairs for one batch transfer
+    *
+    * @see Mapper#map(Object, Object, Collector)
+    */
+   public void setMaxCollectorSize(int size) {
+      if (size <= 0)
+         throw new IllegalArgumentException("Invalid size " + size);
+      maxCollectorSize = size;
+   }
+
+   public int getMaxCollectorSize() {
+      return maxCollectorSize;
+   }
+
    public Set<KIn> getKeys() {
       return keys;
    }
@@ -131,7 +155,7 @@ public class MapCombineCommand<KIn, VIn, KOut, VOut> extends BaseRpcCommand impl
    @Override
    public Object[] getParameters() {
       return new Object[] { taskId, keys, mapper, combiner, reducePhaseDistributed,
-               emitCompositeIntermediateKeys, uuid, intermediateCacheName};
+               emitCompositeIntermediateKeys, uuid, intermediateCacheName, maxCollectorSize};
    }
 
    @SuppressWarnings("unchecked")
@@ -148,6 +172,7 @@ public class MapCombineCommand<KIn, VIn, KOut, VOut> extends BaseRpcCommand impl
       emitCompositeIntermediateKeys = (Boolean) args[i++];
       uuid = (UUID) args[i++];
       intermediateCacheName = (String) args[i++]; 
+      maxCollectorSize = (Integer) args[i++];
    }
 
    @Override

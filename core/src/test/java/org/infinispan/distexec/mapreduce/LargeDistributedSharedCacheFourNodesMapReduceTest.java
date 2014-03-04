@@ -20,7 +20,7 @@ public class LargeDistributedSharedCacheFourNodesMapReduceTest extends BaseLarge
    @Override
    protected void createCacheManagers() throws Throwable {
       ConfigurationBuilder builder = getDefaultClusteredCacheConfig(getCacheMode(), true);
-      builder.clustering().stateTransfer().chunkSize(20).sync().replTimeout(45, TimeUnit.SECONDS);
+      builder.clustering().stateTransfer().sync().replTimeout(45, TimeUnit.SECONDS);
       createClusteredCaches(4, cacheName(), builder);
    }
 
