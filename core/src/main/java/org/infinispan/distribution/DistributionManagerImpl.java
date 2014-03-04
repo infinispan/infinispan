@@ -12,6 +12,7 @@ import org.infinispan.remoting.transport.Address;
 import org.infinispan.topology.CacheTopology;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
+
 import java.util.*;
 
 /**
@@ -124,6 +125,7 @@ public class DistributionManagerImpl implements DistributionManager {
 
    /**
     * Tests whether a rehash is in progress
+    *
     * @return true if a rehash is in progress, false otherwise
     */
    @Override
@@ -137,7 +139,8 @@ public class DistributionManagerImpl implements DistributionManager {
    }
 
    @ManagedOperation(
-         description = "Tells you whether a given key is local to this instance of the cache.  Only works with String keys.",
+         description = "Tells you whether a given key is local to this instance of the cache according to the consistent hashing algorithm. " +
+               "Only works with String keys. This operation might return true even if the object does not exist in the cache.",
          displayName = "Is key local?"
    )
    public boolean isLocatedLocally(@Parameter(name = "key", description = "Key to query") String key) {
@@ -145,7 +148,8 @@ public class DistributionManagerImpl implements DistributionManager {
    }
 
    @ManagedOperation(
-         description = "Locates an object in a cluster.  Only works with String keys.",
+         description = "Shows the addresses of the nodes where a put operation would store the entry associated with the specified key. Only " +
+               "works with String keys. The list of potential owners is returned even if the object does not exist in the cache.",
          displayName = "Locate key"
    )
    public List<String> locateKey(@Parameter(name = "key", description = "Key to locate") String key) {

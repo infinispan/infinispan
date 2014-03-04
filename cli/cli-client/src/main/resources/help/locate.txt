@@ -4,8 +4,8 @@
 .B ]
 .I key
 .SH DESCRIPTION
-Shows the addresses of the owners in the cluster of the entry associated with the specified key. This command only
-works for distributed caches
+Shows the addresses of the nodes where a put operation would store the entry associated with the specified key. This command only
+works for distributed caches and the list of potential owners is returned even if the entry does not exist in the cache.
 .SH ARGUMENTS
 .IP cache
 (optional) the name of the cache to use. If not specified, the currently selected cache will be used. See the 
