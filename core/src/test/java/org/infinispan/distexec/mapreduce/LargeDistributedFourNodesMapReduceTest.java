@@ -1,5 +1,6 @@
 package org.infinispan.distexec.mapreduce;
 
+import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
 import org.infinispan.Cache;
@@ -19,7 +20,7 @@ public class LargeDistributedFourNodesMapReduceTest extends BaseLargeWordCountMa
    @Override
    protected void createCacheManagers() throws Throwable {
       ConfigurationBuilder builder = getDefaultClusteredCacheConfig(getCacheMode(), true);
-      builder.clustering().stateTransfer().chunkSize(20).sync().replTimeout(45, TimeUnit.SECONDS);
+      builder.clustering().stateTransfer().sync().replTimeout(45, TimeUnit.SECONDS);
       createClusteredCaches(4, cacheName(), builder);
    }
 
@@ -27,5 +28,16 @@ public class LargeDistributedFourNodesMapReduceTest extends BaseLargeWordCountMa
    protected MapReduceTask<String, String, String, Integer> createMapReduceTask(Cache c) {
       //run distributed reduce with per task cache
       return new MapReduceTask<String, String, String, Integer>(c, true, false);
+   }
+
+   @Override
+   public void testInvokeMapReduceOnAllKeys() throws Exception {
+      MapReduceTask<String, String, String, Integer> task = invokeMapReduce(null);
+      task.setMaxCollectorSize(256);
+      System.out.println("Read macbeth.txt and inserted keys into cache. Executing M/R task...");
+      long start = System.currentTimeMillis();
+      Map<String, Integer> mapReduce = task.execute();
+      System.out.println("Task completed in " + (System.currentTimeMillis() - start) + " ms");
+      verifyResults(mapReduce);
    }
 }

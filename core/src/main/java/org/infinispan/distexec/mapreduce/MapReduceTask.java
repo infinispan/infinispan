@@ -150,6 +150,7 @@ public class MapReduceTask<KIn, VIn, KOut, VOut> {
    protected RpcOptionsBuilder rpcOptionsBuilder;
    protected String customIntermediateCacheName;
    protected String intermediateCacheConfigurationName = DEFAULT_TMP_CACHE_CONFIGURATION_NAME;
+   private int maxCollectorSize = 1024;
 
    /**
     * Create a new MapReduceTask given a master cache node. All distributed task executions will be
@@ -313,6 +314,7 @@ public class MapReduceTask<KIn, VIn, KOut, VOut> {
    }
 
    /**
+    * 
     * Allows this MapReduceTask to use specific intermediate custom defined cache for storage of
     * intermediate <KOut, List<VOut>> key/values pairs. Intermediate cache is used to store output
     * of map phase and it is not shared with other M/R tasks. Upon completion of M/R task this intermediate
@@ -382,6 +384,26 @@ public class MapReduceTask<KIn, VIn, KOut, VOut> {
       this.intermediateCacheConfigurationName = cacheConfigurationName;
       this.useIntermediateSharedCache = true;
       return this;
+   }
+
+   /**
+    * Limits Mapper's Collector<KOut, VOut> size to a given value.
+    * <p>
+    * During execution of map/combine phase, number of intermediate keys/values collected in
+    * Collector could potentially become very large. By limiting size of collector intermediate
+    * key/values are transferred to intermediate cache in batches before reduce phase is executed.
+    * <p>
+    * The default value for max collector size is 1024.
+    *
+    * @param size
+    *           the number of key/value pairs for one batch transfer
+    *
+    * @see Mapper#map(Object, Object, Collector)
+    */
+   public void setMaxCollectorSize(int size) {
+      if (size <= 0)
+         throw new IllegalArgumentException("Invalid size " + size);
+      maxCollectorSize = size;
    }
 
    /**
@@ -707,6 +729,7 @@ public class MapReduceTask<KIn, VIn, KOut, VOut> {
       c.setReducePhaseDistributed(reducePhaseDistributed);
       c.setEmitCompositeIntermediateKeys(emitCompositeIntermediateKeys);
       c.setIntermediateCacheName(intermediateCacheName);
+      c.setMaxCollectorSize(maxCollectorSize);
       return c;
    }
 
