@@ -41,6 +41,7 @@ import org.infinispan.query.backend.IndexModificationStrategy;
 import org.infinispan.query.backend.QueryInterceptor;
 import org.infinispan.query.backend.SearchableCacheConfiguration;
 import org.infinispan.query.clustered.QueryBox;
+import org.infinispan.query.dsl.embedded.impl.QueryCache;
 import org.infinispan.query.dsl.embedded.impl.FilterAndConverter;
 import org.infinispan.query.impl.externalizers.ClusteredTopDocsExternalizer;
 import org.infinispan.query.impl.externalizers.ExternalizerIds;
@@ -294,6 +295,9 @@ public class LifecycleManager extends AbstractModuleLifecycle {
 
    @Override
    public void cacheManagerStarting(GlobalComponentRegistry gcr, GlobalConfiguration globalCfg) {
+      QueryCache queryCache = new QueryCache();
+      gcr.registerComponent(queryCache, QueryCache.class);
+
       Map<Integer,AdvancedExternalizer<?>> externalizerMap = globalCfg.serialization().advancedExternalizers();
       externalizerMap.put(ExternalizerIds.FILTER_AND_CONVERTER, new FilterAndConverter.FilterAndConverterExternalizer());
       externalizerMap.put(ExternalizerIds.FILTER_RESULT, new FilterAndConverter.FilterResultExternalizer());

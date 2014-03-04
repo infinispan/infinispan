@@ -10,6 +10,7 @@ import org.infinispan.query.dsl.embedded.LuceneQuery;
 import org.infinispan.query.dsl.impl.BaseQueryBuilder;
 import org.infinispan.query.dsl.impl.JPAQueryGenerator;
 import org.infinispan.query.logging.Log;
+import org.infinispan.util.KeyValuePair;
 import org.infinispan.util.logging.LogFactory;
 
 /**
@@ -22,11 +23,17 @@ final class EmbeddedLuceneQueryBuilder extends BaseQueryBuilder<LuceneQuery> {
 
    private final SearchManager searchManager;
 
+   /**
+    * Optional cache for query objects.
+    */
+   private final QueryCache queryCache;
+
    private final EntityNamesResolver entityNamesResolver;
 
-   public EmbeddedLuceneQueryBuilder(EmbeddedLuceneQueryFactory queryFactory, SearchManager searchManager, EntityNamesResolver entityNamesResolver, String rootType) {
+   public EmbeddedLuceneQueryBuilder(EmbeddedLuceneQueryFactory queryFactory, SearchManager searchManager, QueryCache queryCache, EntityNamesResolver entityNamesResolver, String rootType) {
       super(queryFactory, rootType);
       this.searchManager = searchManager;
+      this.queryCache = queryCache;
       this.entityNamesResolver = entityNamesResolver;
    }
 
@@ -37,11 +44,25 @@ final class EmbeddedLuceneQueryBuilder extends BaseQueryBuilder<LuceneQuery> {
          log.tracef("JPQL string : %s", jpqlString);
       }
 
+      LuceneQueryParsingResult parsingResult;
+      if (queryCache != null) {
+         KeyValuePair<String, Class> queryCacheKey = new KeyValuePair<String, Class>(jpqlString, LuceneQueryParsingResult.class);
+         parsingResult = queryCache.get(queryCacheKey);
+         if (parsingResult == null) {
+            parsingResult = parse(jpqlString);
+            queryCache.put(queryCacheKey, parsingResult);
+         }
+      } else {
+         parsingResult = parse(jpqlString);
+      }
+
+      return new EmbeddedLuceneQuery(searchManager, parsingResult, startOffset, maxResults);
+   }
+
+   private LuceneQueryParsingResult parse(String jpqlString) {
       SearchFactoryIntegrator searchFactory = (SearchFactoryIntegrator) searchManager.getSearchFactory();
       LuceneProcessingChain processingChain = new LuceneProcessingChain.Builder(searchFactory, entityNamesResolver).buildProcessingChainForClassBasedEntities();
       QueryParser queryParser = new QueryParser();
-      LuceneQueryParsingResult parsingResult = queryParser.parseQuery(jpqlString, processingChain);
-
-      return new EmbeddedLuceneQuery(searchManager, parsingResult, startOffset, maxResults);
+      return queryParser.parseQuery(jpqlString, processingChain);
    }
 }

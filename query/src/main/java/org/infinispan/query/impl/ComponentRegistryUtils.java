@@ -3,6 +3,7 @@ package org.infinispan.query.impl;
 import org.infinispan.Cache;
 import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.query.backend.QueryInterceptor;
+import org.infinispan.query.dsl.embedded.impl.QueryCache;
 
 /**
  * Component registry utilities
@@ -32,4 +33,7 @@ public class ComponentRegistryUtils {
       return getComponent(cache, QueryInterceptor.class);
    }
 
+   public static QueryCache getQueryCache(Cache<?, ?> cache) {
+      return cache.getCacheManager().getGlobalComponentRegistry().getComponent(QueryCache.class);
+   }
 }

@@ -28,18 +28,20 @@ import org.infinispan.query.Search;
 import org.infinispan.query.SearchManager;
 import org.infinispan.query.backend.QueryInterceptor;
 import org.infinispan.query.dsl.embedded.impl.EmbeddedQuery;
+import org.infinispan.query.dsl.embedded.impl.QueryCache;
 import org.infinispan.query.impl.ComponentRegistryUtils;
 import org.infinispan.query.remote.client.QueryRequest;
 import org.infinispan.query.remote.client.QueryResponse;
 import org.infinispan.query.remote.indexing.ProtobufValueWrapper;
 import org.infinispan.server.core.QueryFacade;
+import org.infinispan.util.KeyValuePair;
 
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
 /**
- * A Lucene based query facade implementation.
+ * A query facade implementation for both Lucene based queries and non-indexed queries.
  *
  * @author anistor@redhat.com
  * @since 6.0
@@ -111,13 +113,84 @@ public class QueryFacadeImpl implements QueryFacade {
       return response;
    }
 
-   private QueryResponse executeQuery(AdvancedCache<byte[], byte[]> cache, final SerializationContext serCtx, QueryRequest request) {
-      SearchManager searchManager = Search.getSearchManager(cache);
-      CacheQuery cacheQuery;
-      LuceneQueryParsingResult parsingResult;
+   /**
+    * Execute Lucene index query.
+    */
+   private QueryResponse executeQuery(AdvancedCache<byte[], byte[]> cache, SerializationContext serCtx, QueryRequest request) {
+      final SearchManager searchManager = Search.getSearchManager(cache);
+      final SearchFactoryIntegrator searchFactory = (SearchFactoryIntegrator) searchManager.getSearchFactory();
+      final QueryCache queryCache = ComponentRegistryUtils.getQueryCache(cache);  // optional component
 
-      QueryParser queryParser = new QueryParser();
-      SearchFactoryIntegrator searchFactory = (SearchFactoryIntegrator) searchManager.getSearchFactory();
+      LuceneQueryParsingResult parsingResult;
+      Query luceneQuery;
+
+      if (queryCache != null) {
+         KeyValuePair<String, Class> queryCacheKey = new KeyValuePair<String, Class>(request.getJpqlString(), LuceneQueryParsingResult.class);
+         parsingResult = queryCache.get(queryCacheKey);
+         if (parsingResult == null) {
+            parsingResult = parseQuery(cache, serCtx, request.getJpqlString(), searchFactory);
+            queryCache.put(queryCacheKey, parsingResult);
+         }
+      } else {
+         parsingResult = parseQuery(cache, serCtx, request.getJpqlString(), searchFactory);
+      }
+
+      luceneQuery = parsingResult.getQuery();
+
+      if (!cache.getCacheConfiguration().compatibility().enabled()) {
+         // restrict on entity type
+         QueryBuilder qb = searchFactory.buildQueryBuilder().forEntity(parsingResult.getTargetEntity()).get();
+         luceneQuery = qb.bool()
+               .must(qb.keyword().onField(TYPE_FIELD_NAME)
+                           .ignoreFieldBridge()
+                           .ignoreAnalyzer()
+                           .matching(parsingResult.getTargetEntityName()).createQuery())
+               .must(luceneQuery)
+               .createQuery();
+      }
+
+      CacheQuery cacheQuery = searchManager.getQuery(luceneQuery, parsingResult.getTargetEntity());
+
+      if (parsingResult.getSort() != null) {
+         cacheQuery = cacheQuery.sort(parsingResult.getSort());
+      }
+
+      int projSize = 0;
+      if (parsingResult.getProjections() != null && !parsingResult.getProjections().isEmpty()) {
+         projSize = parsingResult.getProjections().size();
+         cacheQuery = cacheQuery.projection(parsingResult.getProjections().toArray(new String[projSize]));
+      }
+      if (request.getStartOffset() > 0) {
+         cacheQuery = cacheQuery.firstResult((int) request.getStartOffset());
+      }
+      if (request.getMaxResults() > 0) {
+         cacheQuery = cacheQuery.maxResults(request.getMaxResults());
+      }
+
+      List<?> list = cacheQuery.list();
+      List<WrappedMessage> results = new ArrayList<WrappedMessage>(projSize == 0 ? list.size() : list.size() * projSize);
+      for (Object o : list) {
+         if (projSize == 0) {
+            results.add(new WrappedMessage(o));
+         } else {
+            Object[] row = (Object[]) o;
+            for (int j = 0; j < projSize; j++) {
+               results.add(new WrappedMessage(row[j]));
+            }
+         }
+      }
+
+      QueryResponse response = new QueryResponse();
+      response.setTotalResults(cacheQuery.getResultSize());
+      response.setNumResults(list.size());
+      response.setProjectionSize(projSize);
+      response.setResults(results);
+
+      return response;
+   }
+
+   private LuceneQueryParsingResult parseQuery(AdvancedCache<byte[], byte[]> cache, final SerializationContext serCtx, String queryString, SearchFactoryIntegrator searchFactory) {
+      LuceneProcessingChain processingChain;
       if (cache.getCacheConfiguration().compatibility().enabled()) {
          final QueryInterceptor queryInterceptor = ComponentRegistryUtils.getQueryInterceptor(cache);
          EntityNamesResolver entityNamesResolver = new EntityNamesResolver() {
@@ -129,11 +202,8 @@ public class QueryFacadeImpl implements QueryFacade {
             }
          };
 
-         LuceneProcessingChain processingChain = new LuceneProcessingChain.Builder(searchFactory, entityNamesResolver)
+         processingChain = new LuceneProcessingChain.Builder(searchFactory, entityNamesResolver)
                .buildProcessingChainForClassBasedEntities();
-
-         parsingResult = queryParser.parseQuery(request.getJpqlString(), processingChain);
-         cacheQuery = searchManager.getQuery(parsingResult.getQuery(), parsingResult.getTargetEntity());
       } else {
          EntityNamesResolver entityNamesResolver = new EntityNamesResolver() {
             @Override
@@ -176,55 +246,11 @@ public class QueryFacadeImpl implements QueryFacade {
             }
          };
 
-         LuceneProcessingChain processingChain = new LuceneProcessingChain.Builder(searchFactory, entityNamesResolver)
+         processingChain = new LuceneProcessingChain.Builder(searchFactory, entityNamesResolver)
                .buildProcessingChainForDynamicEntities(fieldBridgeProvider);
-         parsingResult = queryParser.parseQuery(request.getJpqlString(), processingChain);
-
-         QueryBuilder qb = searchManager.getSearchFactory().buildQueryBuilder().forEntity(parsingResult.getTargetEntity()).get();
-         Query luceneQuery = qb.bool()
-               .must(qb.keyword().onField(TYPE_FIELD_NAME).ignoreFieldBridge().ignoreAnalyzer().matching(parsingResult.getTargetEntityName()).createQuery())
-               .must(parsingResult.getQuery())
-               .createQuery();
-
-         cacheQuery = searchManager.getQuery(luceneQuery, parsingResult.getTargetEntity());
       }
 
-      if (parsingResult.getSort() != null) {
-         cacheQuery = cacheQuery.sort(parsingResult.getSort());
-      }
-
-      int projSize = 0;
-      if (parsingResult.getProjections() != null && !parsingResult.getProjections().isEmpty()) {
-         projSize = parsingResult.getProjections().size();
-         cacheQuery = cacheQuery.projection(parsingResult.getProjections().toArray(new String[projSize]));
-      }
-      if (request.getStartOffset() > 0) {
-         cacheQuery = cacheQuery.firstResult((int) request.getStartOffset());
-      }
-      if (request.getMaxResults() > 0) {
-         cacheQuery = cacheQuery.maxResults(request.getMaxResults());
-      }
-
-      List<?> list = cacheQuery.list();
-      List<WrappedMessage> results = new ArrayList<WrappedMessage>(projSize == 0 ? list.size() : list.size() * projSize);
-      for (Object o : list) {
-         if (projSize == 0) {
-            results.add(new WrappedMessage(o));
-         } else {
-            Object[] row = (Object[]) o;
-            for (int j = 0; j < projSize; j++) {
-               results.add(new WrappedMessage(row[j]));
-            }
-         }
-      }
-
-      QueryResponse response = new QueryResponse();
-      response.setTotalResults(cacheQuery.getResultSize());
-      response.setNumResults(list.size());
-      response.setProjectionSize(projSize);
-      response.setResults(results);
-
-      return response;
+      return new QueryParser().parseQuery(queryString, processingChain);
    }
 
    private FieldDescriptor getFieldDescriptor(Descriptor messageDescriptor, String attributePath) {

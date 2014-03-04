@@ -6,39 +6,39 @@ import org.infinispan.query.dsl.Query;
  * @author anistor@redhat.com
  * @since 6.0
  */
-interface Visitor<ResultType> {
+interface Visitor<ReturnType> {
 
-   ResultType visit(EqOperator operator);
+   ReturnType visit(EqOperator operator);
 
-   ResultType visit(GtOperator operator);
+   ReturnType visit(GtOperator operator);
 
-   ResultType visit(GteOperator operator);
+   ReturnType visit(GteOperator operator);
 
-   ResultType visit(LtOperator operator);
+   ReturnType visit(LtOperator operator);
 
-   ResultType visit(LteOperator operator);
+   ReturnType visit(LteOperator operator);
 
-   ResultType visit(BetweenOperator operator);
+   ReturnType visit(BetweenOperator operator);
 
-   ResultType visit(LikeOperator operator);
+   ReturnType visit(LikeOperator operator);
 
-   ResultType visit(IsNullOperator operator);
+   ReturnType visit(IsNullOperator operator);
 
-   ResultType visit(InOperator operator);
+   ReturnType visit(InOperator operator);
 
-   ResultType visit(ContainsOperator operator);
+   ReturnType visit(ContainsOperator operator);
 
-   ResultType visit(ContainsAllOperator operator);
+   ReturnType visit(ContainsAllOperator operator);
 
-   ResultType visit(ContainsAnyOperator operator);
+   ReturnType visit(ContainsAnyOperator operator);
 
-   ResultType visit(AttributeCondition attributeCondition);
+   ReturnType visit(AttributeCondition attributeCondition);
 
-   ResultType visit(AndCondition booleanCondition);
+   ReturnType visit(AndCondition booleanCondition);
 
-   ResultType visit(OrCondition booleanCondition);
+   ReturnType visit(OrCondition booleanCondition);
 
-   ResultType visit(NotCondition notCondition);
+   ReturnType visit(NotCondition notCondition);
 
-   <T extends Query> ResultType visit(BaseQueryBuilder<T> baseQueryBuilder);
+   <T extends Query> ReturnType visit(BaseQueryBuilder<T> baseQueryBuilder);
 }

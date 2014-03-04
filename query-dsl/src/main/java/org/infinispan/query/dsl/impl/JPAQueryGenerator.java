@@ -11,6 +11,7 @@ import java.util.TimeZone;
 
 /**
  * Generates a JPA query to satisfy the condition created with the builder.
+ * TODO This class is not immutable and thread safe.
  *
  * @author anistor@redhat.com
  * @since 6.0

@@ -18,6 +18,7 @@ import org.infinispan.query.clustered.ClusteredCacheQueryImpl;
 import org.infinispan.query.dsl.QueryFactory;
 import org.infinispan.query.dsl.embedded.LuceneQuery;
 import org.infinispan.query.dsl.embedded.impl.EmbeddedLuceneQueryFactory;
+import org.infinispan.query.dsl.embedded.impl.QueryCache;
 import org.infinispan.query.impl.massindex.MapReduceMassIndexer;
 import org.infinispan.query.spi.SearchManagerImplementor;
 
@@ -34,6 +35,7 @@ public class SearchManagerImpl implements SearchManagerImplementor {
    private final AdvancedCache<?, ?> cache;
    private final SearchFactoryIntegrator searchFactory;
    private final QueryInterceptor queryInterceptor;
+   private final QueryCache queryCache;
    private TimeoutExceptionFactory timeoutExceptionFactory;
 
    public SearchManagerImpl(AdvancedCache<?, ?> cache) {
@@ -43,6 +45,7 @@ public class SearchManagerImpl implements SearchManagerImplementor {
       this.cache = cache;
       this.searchFactory = ComponentRegistryUtils.getComponent(cache, SearchFactoryIntegrator.class);
       this.queryInterceptor = ComponentRegistryUtils.getQueryInterceptor(cache);
+      this.queryCache = ComponentRegistryUtils.getQueryCache(cache);
    }
 
    @Override
@@ -59,7 +62,7 @@ public class SearchManagerImpl implements SearchManagerImplementor {
             return queryInterceptor.isIndexed(clazz) ? clazz : null;
          }
       };
-      return new EmbeddedLuceneQueryFactory(this, entityNamesResolver);
+      return new EmbeddedLuceneQueryFactory(this, queryCache, entityNamesResolver);
    }
 
    /* (non-Javadoc)

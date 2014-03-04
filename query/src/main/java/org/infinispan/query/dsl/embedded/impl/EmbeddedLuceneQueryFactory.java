@@ -14,20 +14,23 @@ public final class EmbeddedLuceneQueryFactory extends BaseQueryFactory<LuceneQue
 
    private final SearchManager searchManager;
 
+   private final QueryCache queryCache;
+
    private final EntityNamesResolver entityNamesResolver;
 
-   public EmbeddedLuceneQueryFactory(SearchManager searchManager, EntityNamesResolver entityNamesResolver) {
+   public EmbeddedLuceneQueryFactory(SearchManager searchManager, QueryCache queryCache, EntityNamesResolver entityNamesResolver) {
       this.searchManager = searchManager;
+      this.queryCache = queryCache;
       this.entityNamesResolver = entityNamesResolver;
    }
 
    @Override
    public QueryBuilder<LuceneQuery> from(Class type) {
-      return new EmbeddedLuceneQueryBuilder(this, searchManager, entityNamesResolver, type.getCanonicalName());
+      return new EmbeddedLuceneQueryBuilder(this, searchManager, queryCache, entityNamesResolver, type.getCanonicalName());
    }
 
    @Override
    public QueryBuilder<LuceneQuery> from(String type) {
-      return new EmbeddedLuceneQueryBuilder(this, searchManager, entityNamesResolver, type);
+      return new EmbeddedLuceneQueryBuilder(this, searchManager, queryCache, entityNamesResolver, type);
    }
 }
