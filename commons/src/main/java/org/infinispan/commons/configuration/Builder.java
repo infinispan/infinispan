@@ -5,6 +5,7 @@ package org.infinispan.commons.configuration;
  *
  * @author Tristan Tarrant
  * @since 5.2
+ * @public
  */
 public interface Builder<T> {
    /**

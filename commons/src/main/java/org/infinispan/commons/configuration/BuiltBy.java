@@ -10,6 +10,7 @@ import java.lang.annotation.RetentionPolicy;
  *
  * @author Tristan Tarrant
  * @since 5.2
+ * @public
  */
 @Retention(RetentionPolicy.RUNTIME)
 public @interface BuiltBy {

@@ -54,6 +54,7 @@ import org.infinispan.util.logging.LogFactory;
  *
  * @author Vladimir Blagojevic
  * @since 5.0
+ * @public
  *
  */
 public class DefaultExecutorService extends AbstractExecutorService implements DistributedExecutorService {
@@ -969,6 +970,7 @@ public class DefaultExecutorService extends AbstractExecutorService implements D
          return executionTarget;
       }
 
+      @Override
       public void execute() {
          if (trace) log.tracef("Sending %s to remote execution at node %s", this, getExecutionTarget());
          try {
@@ -998,6 +1000,7 @@ public class DefaultExecutorService extends AbstractExecutorService implements D
          return future.isDone();
       }
 
+      @Override
       protected V getResult(long timeoutNanos) throws Exception {
          if (timeoutNanos > 0) {
             return retrieveResult(future.get(timeoutNanos, TimeUnit.NANOSECONDS));
@@ -1090,6 +1093,7 @@ public class DefaultExecutorService extends AbstractExecutorService implements D
          return getAddress();
       }
 
+      @Override
       public void execute() {
          log.debugf("Sending %s to self", this);
          try {

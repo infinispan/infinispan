@@ -15,6 +15,7 @@ import java.util.concurrent.Future;
  *
  * @author Manik Surtani
  * @since 4.0
+ * @public
  */
 public interface NotifyingFuture<T> extends Future<T> {
 

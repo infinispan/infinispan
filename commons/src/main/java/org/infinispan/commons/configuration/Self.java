@@ -8,6 +8,7 @@ package org.infinispan.commons.configuration;
  *
  * @author Tristan Tarrant
  * @since 5.2
+ * @public
  */
 public interface Self<S extends Self<S>> {
    S self();

@@ -1,9 +1,10 @@
-package org.infinispan.manager;
+package org.infinispan.manager.impl;
 
 import org.infinispan.Cache;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.factories.GlobalComponentRegistry;
 import org.infinispan.lifecycle.ComponentStatus;
+import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.remoting.transport.Transport;
 
@@ -18,8 +19,8 @@ import java.util.Set;
  * it is interested in.
  *
  * @author Dan Berindei &lt;dan@infinispan.org&gt;
- * @see org.infinispan.AbstractDelegatingCache
- * @see org.infinispan.AbstractDelegatingAdvancedCache
+ * @see org.infinispan.cache.impl.AbstractDelegatingCache
+ * @see org.infinispan.cache.impl.AbstractDelegatingAdvancedCache
  */
 public class AbstractDelegatingEmbeddedCacheManager implements EmbeddedCacheManager {
 

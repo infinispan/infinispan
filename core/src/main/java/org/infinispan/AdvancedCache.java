@@ -2,6 +2,7 @@ package org.infinispan;
 
 import org.infinispan.atomic.Delta;
 import org.infinispan.batch.BatchContainer;
+import org.infinispan.cache.impl.DecoratedCache;
 import org.infinispan.container.DataContainer;
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.context.Flag;
@@ -30,6 +31,7 @@ import java.util.List;
  * @author Galder Zamarreño
  * @author Tristan Tarrant
  * @since 4.0
+ * @public
  */
 public interface AdvancedCache<K, V> extends Cache<K, V> {
 

@@ -75,6 +75,7 @@ import java.io.Serializable;
  *
  * @author Galder Zamarreño
  * @since 5.0
+ * @public
  */
 public interface Externalizer<T> extends Serializable {
 

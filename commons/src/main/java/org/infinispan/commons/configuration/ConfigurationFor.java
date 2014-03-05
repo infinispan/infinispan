@@ -8,6 +8,7 @@ import java.lang.annotation.RetentionPolicy;
  *
  * @author Tristan Tarrant
  * @since 6.0
+ * @public
  */
 @Retention(RetentionPolicy.RUNTIME)
 public @interface ConfigurationFor {

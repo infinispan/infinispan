@@ -1,8 +1,8 @@
 package org.infinispan.api.flags;
 
 import org.infinispan.AdvancedCache;
-import org.infinispan.CacheImpl;
-import org.infinispan.DecoratedCache;
+import org.infinispan.cache.impl.CacheImpl;
+import org.infinispan.cache.impl.DecoratedCache;
 import org.infinispan.context.Flag;
 import org.infinispan.test.CherryPickClassLoader;
 import org.testng.annotations.Test;

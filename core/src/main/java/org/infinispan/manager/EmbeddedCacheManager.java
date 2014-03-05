@@ -37,6 +37,7 @@ import java.util.Set;
  * @author Galder Zamarreno
  * @author Mircea.Markus@jboss.com
  * @since 4.1
+ * @public
  */
 @Scope(Scopes.GLOBAL)
 @SurvivesRestarts

@@ -48,6 +48,7 @@ import java.util.concurrent.TimeUnit;
  * @see org.infinispan.persistence.remote.configuration.RemoteStoreConfiguration
  * @see <a href="http://community.jboss.org/wiki/JavaHotRodclient">Hotrod Java Client</a>
  * @since 4.1
+ * @public
  */
 @ThreadSafe
 public class RemoteStore implements AdvancedLoadWriteStore {

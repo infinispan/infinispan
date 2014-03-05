@@ -99,6 +99,7 @@ import java.util.concurrent.atomic.AtomicReference;
  * @author Manik Surtani
  * @author Galder Zamarreño
  * @since 4.0
+ * @public
  */
 @Scope(Scopes.GLOBAL)
 @SurvivesRestarts
