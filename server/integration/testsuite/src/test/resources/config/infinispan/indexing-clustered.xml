@@ -1,0 +1,23 @@
+        <subsystem xmlns="urn:infinispan:server:core:6.0" >
+            <cache-container 
+                name="clustered"
+                default-cache="testcache">
+                <transport
+                    stack="${jboss.default.jgroups.stack:udp}"
+                    executor="infinispan-transport"
+                    lock-timeout="240000"/>
+                <replicated-cache
+                    name="testcache"
+                    mode="SYNC"
+                    start="EAGER"
+                    batching="false"
+                    module="org.infinispan.remote-query.server">
+                    <transaction mode="NONE" />
+                    <indexing index="ALL">
+                        <property name="default.directory_provider">infinispan</property>
+                        <property name="lucene_version">LUCENE_36</property>
+                    </indexing>
+                </replicated-cache>
+            </cache-container>
+            <cache-container name="security"/>
+        </subsystem>

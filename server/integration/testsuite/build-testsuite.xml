@@ -133,6 +133,9 @@
                    modifyInfinispan="${infinispan.parts}/default-repl.xml"/>
         <transform in="standalone.xml" out="testsuite/standalone-with-indexing.xml"
                    modifyInfinispan="${infinispan.parts}/indexing.xml"/>
+        <transform in="clustered.xml" out="testsuite/clustered-with-indexing.xml"
+                   modifyInfinispan="${infinispan.parts}/indexing-clustered.xml"
+                   filtering="true"/>
         <transform in="standalone.xml" out="testsuite/standalone-leveldb-local.xml"
                    modifyInfinispan="${infinispan.parts}/leveldb-local.xml"
                    filtering="true"/>
