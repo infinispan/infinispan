@@ -32,7 +32,7 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 
 /**
- * Tests for remote queries over HotRod.
+ * Tests for remote queries over HotRod on a local cache using RAM directory.
  *
  * @author Adrian Nistor
  * @author Martin Gencur
@@ -41,36 +41,41 @@ import static org.junit.Assert.assertNotNull;
 @WithRunningServer("remote-query")
 public class RemoteQueryTest {
 
-    protected static final String DEFAULT_CACHE = "testcache";
+    protected String cacheContainerName = "local";
+    protected String cacheName = "testcache";
 
     @InfinispanResource("remote-query")
-    protected RemoteInfinispanServer server;
+    private RemoteInfinispanServer server;
 
     protected RemoteCacheManager remoteCacheManager;
     protected RemoteCache<Integer, User> remoteCache;
-    protected MBeanServerConnectionProvider provider;
+    protected MBeanServerConnectionProvider jmxConnectionProvider;
 
     protected RemoteCacheManagerFactory rcmFactory;
 
+    protected RemoteInfinispanServer getServer() {
+        return server;
+    }
+
     @Before
     public void setUp() throws Exception {
-        provider = new MBeanServerConnectionProvider(server.getHotrodEndpoint().getInetAddress().getHostName(), 9999);
+        jmxConnectionProvider = new MBeanServerConnectionProvider(getServer().getHotrodEndpoint().getInetAddress().getHostName(), 9999);
         rcmFactory = new RemoteCacheManagerFactory();
         ConfigurationBuilder clientBuilder = new ConfigurationBuilder();
         clientBuilder.addServer()
-                        .host(server.getHotrodEndpoint().getInetAddress().getHostName())
-                        .port(server.getHotrodEndpoint().getPort())
+                        .host(getServer().getHotrodEndpoint().getInetAddress().getHostName())
+                        .port(getServer().getHotrodEndpoint().getPort())
                      .marshaller(new ProtoStreamMarshaller());
         remoteCacheManager = rcmFactory.createManager(clientBuilder);
-        remoteCache = remoteCacheManager.getCache(DEFAULT_CACHE);
+        remoteCache = remoteCacheManager.getCache(cacheName);
 
         String mbean = "jboss.infinispan:type=RemoteQuery,name="
-                + ObjectName.quote("local")
+                + ObjectName.quote(cacheContainerName)
                 + ",component=ProtobufMetadataManager";
 
         //initialize server-side serialization context via JMX
         byte[] descriptor = readClasspathResource("/sample_bank_account/bank.protobin");
-        invokeOperation(provider, mbean, "registerProtofile", new Object[]{descriptor}, new String[]{byte[].class.getName()});
+        invokeOperation(jmxConnectionProvider, mbean, "registerProtofile", new Object[]{descriptor}, new String[]{byte[].class.getName()});
 
         //initialize client-side serialization context
         MarshallerRegistration.registerMarshallers(ProtoStreamMarshaller.getSerializationContext(remoteCacheManager));

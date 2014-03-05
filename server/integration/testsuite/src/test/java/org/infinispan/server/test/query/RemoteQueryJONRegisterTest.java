@@ -27,27 +27,27 @@ import static org.jboss.as.controller.descriptions.ModelDescriptionConstants.SUC
  * Tests for remote queries over HotRod but registering the proto file via JON/RHQ plugin.
  *
  * @author William Burns
- *
  */
 @RunWith(Arquillian.class)
 @WithRunningServer("remote-query")
 public class RemoteQueryJONRegisterTest extends RemoteQueryTest {
+
    @Before
    public void setUp() throws Exception {
-      provider = new MBeanServerConnectionProvider(server.getHotrodEndpoint().getInetAddress().getHostName(), 9999);
+      jmxConnectionProvider = new MBeanServerConnectionProvider(getServer().getHotrodEndpoint().getInetAddress().getHostName(), 9999);
       rcmFactory = new RemoteCacheManagerFactory();
       ConfigurationBuilder clientBuilder = new ConfigurationBuilder();
       clientBuilder.addServer()
-            .host(server.getHotrodEndpoint().getInetAddress().getHostName())
-            .port(server.getHotrodEndpoint().getPort())
+            .host(getServer().getHotrodEndpoint().getInetAddress().getHostName())
+            .port(getServer().getHotrodEndpoint().getPort())
             .marshaller(new ProtoStreamMarshaller());
       remoteCacheManager = rcmFactory.createManager(clientBuilder);
-      remoteCache = remoteCacheManager.getCache(DEFAULT_CACHE);
+      remoteCache = remoteCacheManager.getCache(cacheName);
 
-      //initialize server-side serialization context via JMX
+      //initialize server-side serialization context via JON/RHQ
       URL resource = getClass().getResource("/sample_bank_account/bank.protobin");
       ModelControllerClient client = ModelControllerClient.Factory.create(
-            server.getHotrodEndpoint().getInetAddress().getHostName(), 9999);
+            getServer().getHotrodEndpoint().getInetAddress().getHostName(), 9999);
 
       ModelNode addProtobufFileOp = getOperation("local", "upload-proto-file", new ModelNode().add().set(
             "proto-url", resource.toString()));
