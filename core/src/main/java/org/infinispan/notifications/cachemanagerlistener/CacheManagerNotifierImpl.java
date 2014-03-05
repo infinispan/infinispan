@@ -2,6 +2,8 @@ package org.infinispan.notifications.cachemanagerlistener;
 
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.manager.EmbeddedCacheManager;
+import org.infinispan.notifications.Listener;
+import org.infinispan.notifications.impl.ListenerInvocation;
 import org.infinispan.notifications.cachemanagerlistener.annotation.CacheStarted;
 import org.infinispan.notifications.cachemanagerlistener.annotation.CacheStopped;
 import org.infinispan.notifications.cachemanagerlistener.annotation.Merged;
@@ -31,7 +33,8 @@ import java.util.concurrent.CopyOnWriteArrayList;
  * @author Manik Surtani
  * @since 4.0
  */
-public class CacheManagerNotifierImpl extends AbstractListenerImpl implements CacheManagerNotifier {
+public class CacheManagerNotifierImpl extends AbstractListenerImpl<Event, ListenerInvocation<Event>>
+      implements CacheManagerNotifier {
 
    private static final Log log = LogFactory.getLog(CacheManagerNotifierImpl.class);
 
@@ -44,10 +47,10 @@ public class CacheManagerNotifierImpl extends AbstractListenerImpl implements Ca
       allowedListeners.put(Merged.class, MergeEvent.class);
    }
 
-   final List<ListenerInvocation> cacheStartedListeners = new CopyOnWriteArrayList<ListenerInvocation>();
-   final List<ListenerInvocation> cacheStoppedListeners = new CopyOnWriteArrayList<ListenerInvocation>();
-   final List<ListenerInvocation> viewChangedListeners = new CopyOnWriteArrayList<ListenerInvocation>();
-   final List<ListenerInvocation> mergeListeners = new CopyOnWriteArrayList<ListenerInvocation>();
+   final List<ListenerInvocation<Event>> cacheStartedListeners = new CopyOnWriteArrayList<ListenerInvocation<Event>>();
+   final List<ListenerInvocation<Event>> cacheStoppedListeners = new CopyOnWriteArrayList<ListenerInvocation<Event>>();
+   final List<ListenerInvocation<Event>> viewChangedListeners = new CopyOnWriteArrayList<ListenerInvocation<Event>>();
+   final List<ListenerInvocation<Event>> mergeListeners = new CopyOnWriteArrayList<ListenerInvocation<Event>>();
 
    private EmbeddedCacheManager cacheManager;
 
@@ -56,6 +59,14 @@ public class CacheManagerNotifierImpl extends AbstractListenerImpl implements Ca
       listenersMap.put(CacheStopped.class, cacheStoppedListeners);
       listenersMap.put(ViewChanged.class, viewChangedListeners);
       listenersMap.put(Merged.class, mergeListeners);
+   }
+
+   protected class DefaultBuilder extends AbstractInvocationBuilder {
+
+      @Override
+      public ListenerInvocation<Event> build() {
+         return new ListenerInvocationImpl(target, method, sync, classLoader, subject);
+      }
    }
 
    @Inject
@@ -117,12 +128,17 @@ public class CacheManagerNotifierImpl extends AbstractListenerImpl implements Ca
    }
 
    @Override
+   public void addListener(Object listener) {
+      validateAndAddListenerInvocation(listener, new DefaultBuilder());
+   }
+
+   @Override
    protected Log getLog() {
       return log;
    }
 
    @Override
-   protected Map<Class<? extends Annotation>, Class<?>> getAllowedMethodAnnotations() {
+   protected Map<Class<? extends Annotation>, Class<?>> getAllowedMethodAnnotations(Listener l) {
       return allowedListeners;
    }
 

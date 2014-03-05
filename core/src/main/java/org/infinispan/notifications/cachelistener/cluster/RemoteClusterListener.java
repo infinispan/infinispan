@@ -89,7 +89,15 @@ public class RemoteClusterListener {
       if (!event.isPre()) {
          GlobalTransaction transaction = event.getGlobalTransaction();
          if (transaction != null) {
+            // If we are in a transaction, queue up those events so we can send them as 1 batch.
             Queue<CacheEntryEvent> events = transactionChanges.get(transaction);
+            if (events == null) {
+               events = new ConcurrentLinkedQueue<>();
+               Queue<CacheEntryEvent> otherQueue = transactionChanges.putIfAbsent(transaction, events);
+               if (otherQueue != null) {
+                  events = otherQueue;
+               }
+            }
             events.add(event);
          }  else {
             // Send event back to origin who has the cluster listener
@@ -102,16 +110,11 @@ public class RemoteClusterListener {
       }
    }
 
-   @TransactionRegistered
-   public void transactionStart(TransactionRegisteredEvent event) {
-       transactionChanges.put(event.getGlobalTransaction(), new ConcurrentLinkedQueue<CacheEntryEvent>());
-   }
-
    @TransactionCompleted
    public void transactionCompleted(TransactionCompletedEvent event) throws Exception {
       Queue<CacheEntryEvent> events = transactionChanges.remove(event.getGlobalTransaction());
-      if (event.isTransactionSuccessful()) {
-         List<ClusterEvent> eventsToSend = new ArrayList<ClusterEvent>(events.size());
+      if (event.isTransactionSuccessful() && events != null) {
+         List<ClusterEvent> eventsToSend = new ArrayList<>(events.size());
          for (CacheEntryEvent cacheEvent : events) {
             eventsToSend.add(ClusterEvent.fromEvent(cacheEvent));
             // Send event back to origin who has the cluster listener

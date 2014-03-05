@@ -1,17 +1,20 @@
 package org.infinispan.notifications.cachelistener;
 
 import org.infinispan.Cache;
-import org.infinispan.commands.FlagAffectedCommand;
 import org.infinispan.commons.equivalence.AnyEquivalence;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.container.entries.InternalCacheEntry;
-import org.infinispan.interceptors.locking.ClusteringDependentLogic;
-import org.infinispan.lifecycle.ComponentStatus;
-import org.infinispan.test.fwk.TestInternalCacheEntryFactory;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.context.impl.NonTxInvocationContext;
+import org.infinispan.distribution.DistributionManager;
+import org.infinispan.interceptors.locking.ClusteringDependentLogic;
+import org.infinispan.iteration.impl.EntryRetriever;
+import org.infinispan.lifecycle.ComponentStatus;
+import org.infinispan.notifications.cachelistener.CacheListener;
 import org.infinispan.notifications.cachelistener.event.*;
+import org.infinispan.notifications.cachelistener.CacheNotifierImpl;
 import org.infinispan.test.AbstractInfinispanTest;
+import org.infinispan.test.fwk.TestInternalCacheEntryFactory;
 import org.infinispan.transaction.xa.GlobalTransaction;
 import org.mockito.Mockito;
 import org.mockito.invocation.InvocationOnMock;
@@ -24,9 +27,7 @@ import java.util.Map;
 
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyString;
-import static org.mockito.Mockito.RETURNS_DEEP_STUBS;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.*;
 
 
 @Test(groups = "unit", testName = "notifications.cachelistener.CacheNotifierImplTest")
@@ -35,7 +36,6 @@ public class CacheNotifierImplTest extends AbstractInfinispanTest {
    Cache mockCache;
    CacheListener cl;
    InvocationContext ctx;
-   FlagAffectedCommand command;
 
    @BeforeMethod
    public void setUp() {
@@ -51,7 +51,8 @@ public class CacheNotifierImplTest extends AbstractInfinispanTest {
       };
       when(mockCache.getAdvancedCache().getComponentRegistry().getComponent(any(Class.class))).then(answer);
       when(mockCache.getAdvancedCache().getComponentRegistry().getComponent(any(Class.class), anyString())).then(answer);
-      n.injectDependencies(mockCache, new ClusteringDependentLogic.LocalLogic(), null, config);
+      n.injectDependencies(mockCache, new ClusteringDependentLogic.LocalLogic(), null, config,
+                           mock(DistributionManager.class), mock(EntryRetriever.class));
       cl = new CacheListener();
       n.start();
       n.addListener(cl);

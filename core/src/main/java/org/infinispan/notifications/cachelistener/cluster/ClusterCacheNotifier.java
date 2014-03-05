@@ -2,6 +2,7 @@ package org.infinispan.notifications.cachelistener.cluster;
 
 import org.infinispan.distexec.DistributedCallable;
 import org.infinispan.notifications.cachelistener.CacheNotifier;
+import org.infinispan.notifications.cachelistener.event.CacheEntryEvent;
 import org.infinispan.notifications.cachelistener.event.Event;
 
 import java.util.Collection;
@@ -23,7 +24,7 @@ public interface ClusterCacheNotifier<K, V> extends CacheNotifier<K, V> {
     * @param events
     * @param listenerId
     */
-   void notifyClusterListeners(Collection<? extends Event<? extends K, ? extends V>> events, UUID listenerId);
+   void notifyClusterListeners(Collection<? extends CacheEntryEvent<K, V>> events, UUID listenerId);
 
    /**
     * This method is invoked so that this node can send the details required for a new node to be bootstrapped with
