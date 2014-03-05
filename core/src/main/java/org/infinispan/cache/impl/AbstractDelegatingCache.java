@@ -1,5 +1,7 @@
-package org.infinispan;
+package org.infinispan.cache.impl;
 
+import org.infinispan.AdvancedCache;
+import org.infinispan.Cache;
 import org.infinispan.lifecycle.ComponentStatus;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.notifications.Converter;
@@ -16,10 +18,10 @@ import java.util.concurrent.TimeUnit;
  * This is a convenient base class for implementing a cache delegate. The only constructor takes a {@link Cache}
  * argument, to which each method call is delegated. One can extend this class and override the method sub-set it is
  * interested in. There is also an similar implementation for {@link org.infinispan.AdvancedCache}: {@link
- * org.infinispan.AbstractDelegatingAdvancedCache}.
+ * org.infinispan.cache.impl.AbstractDelegatingAdvancedCache}.
  *
  * @author Mircea.Markus@jboss.com
- * @see org.infinispan.AbstractDelegatingAdvancedCache
+ * @see org.infinispan.cache.impl.AbstractDelegatingAdvancedCache
  */
 public abstract class AbstractDelegatingCache<K, V> implements Cache<K, V> {
 
@@ -77,7 +79,7 @@ public abstract class AbstractDelegatingCache<K, V> implements Cache<K, V> {
 
    /**
     * Don't remove.
-    * @see {@link org.infinispan.CacheSupport#set(Object, Object)}
+    * @see {@link org.infinispan.cache.impl.CacheSupport#set(Object, Object)}
     */
    protected void set(K key, V value) {
       cache.put(key, value);

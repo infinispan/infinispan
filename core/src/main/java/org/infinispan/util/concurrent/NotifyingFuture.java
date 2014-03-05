@@ -14,6 +14,7 @@ package org.infinispan.util.concurrent;
  * @author Manik Surtani
  * @since 4.0
  * @deprecated Use {@link org.infinispan.commons.util.concurrent.NotifyingFuture} instead
+ * @public
  */
 @Deprecated
 public interface NotifyingFuture<T> extends org.infinispan.commons.util.concurrent.NotifyingFuture<T> {

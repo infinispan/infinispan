@@ -19,6 +19,7 @@ import java.lang.annotation.Target;
  *
  * @author Galder Zamarreño
  * @since 5.0
+ * @public
  */
 @Retention(RetentionPolicy.RUNTIME)
 @Target(ElementType.TYPE)

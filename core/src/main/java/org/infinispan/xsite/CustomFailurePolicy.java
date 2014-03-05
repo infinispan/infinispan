@@ -19,6 +19,7 @@ import java.util.Map;
  * @author Mircea Markus
  * @see BackupFailureException
  * @since 5.2
+ * @public
  */
 public interface CustomFailurePolicy<K, V> {
 

@@ -57,6 +57,7 @@ import java.util.concurrent.TimeUnit;
  *
  * @author Tristan Tarrant
  * @since 6.0
+ * @public
  */
 @ThreadSafe
 public class RestStore implements AdvancedLoadWriteStore {

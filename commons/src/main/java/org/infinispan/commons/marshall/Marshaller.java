@@ -17,6 +17,7 @@ import java.io.IOException;
  *
  * @author Manik Surtani
  * @version 4.1
+ * @public
  */
 @ThreadSafe
 public interface Marshaller {

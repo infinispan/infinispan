@@ -83,6 +83,7 @@ import java.util.concurrent.ConcurrentMap;
  * @see <a href="http://www.jboss.org/infinispan/docs">Infinispan documentation</a>
  * @see <a href="http://www.jboss.org/community/wiki/5minutetutorialonInfinispan">5 Minute Usage Tutorial</a>
  * @since 4.0
+ * @public
  */
 public interface Cache<K, V> extends BasicCache<K, V>, BatchingCache, FilteringListenable {
    /**
@@ -166,15 +167,15 @@ public interface Cache<K, V> extends BasicCache<K, V>, BatchingCache, FilteringL
     * This method should only be used for debugging purposes such as to verify that the cache contains all the keys
     * entered. Any other use involving execution of this method on a production system is not recommended.
     * <p/>
-    * 
+    *
     * @return a set view of the keys contained in this cache and cache loader.
     */
    @Override
    Set<K> keySet();
 
    /**
-    * Returns a collection view of the values contained in this cache. This collection is immutable, so it cannot be modified 
-    * and changes to the cache won't be reflected in the set. When this method is called on a cache configured with 
+    * Returns a collection view of the values contained in this cache. This collection is immutable, so it cannot be modified
+    * and changes to the cache won't be reflected in the set. When this method is called on a cache configured with
     * distribution mode, the collection returned only contains the values locally available in the cache instance
     * including the cache loader if provided. To avoid memory issues, there is no attempt to bring values from other nodes.
     * <p/>
@@ -184,7 +185,7 @@ public interface Cache<K, V> extends BasicCache<K, V>, BatchingCache, FilteringL
     * This method should only be used for testing or debugging purposes such as to verify that the cache contains all the
     * values entered. Any other use involving execution of this method on a production system is not recommended.
     * <p/>
-    * 
+    *
     * @return a collection view of the values contained in this cache and cache loader.
     */
    @Override
@@ -203,7 +204,7 @@ public interface Cache<K, V> extends BasicCache<K, V>, BatchingCache, FilteringL
     * This method should only be used for debugging purposes such as to verify that the cache contains all the mappings
     * entered. Any other use involving execution of this method on a production system is not recommended.
     * <p/>
-    * 
+    *
     * @return a set view of the mappings contained in this cache and cache loader
     */
    @Override

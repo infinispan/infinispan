@@ -38,7 +38,7 @@ import javax.transaction.TransactionManager;
 
 import org.infinispan.AdvancedCache;
 import org.infinispan.Cache;
-import org.infinispan.CacheImpl;
+import org.infinispan.cache.impl.CacheImpl;
 import org.infinispan.commands.CommandsFactory;
 import org.infinispan.commands.VisitableCommand;
 import org.infinispan.container.DataContainer;

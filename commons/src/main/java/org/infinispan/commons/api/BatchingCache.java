@@ -5,6 +5,7 @@ package org.infinispan.commons.api;
  *
  * @author Tristan Tarrant
  * @since 6.0
+ * @public
  */
 public interface BatchingCache {
    /**

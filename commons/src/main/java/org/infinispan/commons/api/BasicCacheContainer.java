@@ -12,6 +12,7 @@ package org.infinispan.commons.api;
  * @author Galder Zamarreño
  * @author Mircea.Markus@jboss.com
  * @since 4.0
+ * @public
  */
 public interface BasicCacheContainer extends Lifecycle {
    String DEFAULT_CACHE_NAME = "___defaultcache";

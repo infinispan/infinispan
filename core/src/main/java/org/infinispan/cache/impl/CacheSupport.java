@@ -1,4 +1,4 @@
-package org.infinispan;
+package org.infinispan.cache.impl;
 
 import org.infinispan.api.BasicCache;
 import org.infinispan.util.concurrent.NotifyingFuture;

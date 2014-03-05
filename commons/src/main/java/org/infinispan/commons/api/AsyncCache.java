@@ -39,6 +39,7 @@ import org.infinispan.commons.util.concurrent.NotifyingFuture;
  * @author Galder Zamarreño
  * @author Tristan Tarrant
  * @since 6.0
+ * @public
  */
 public interface AsyncCache<K, V> {
    /**

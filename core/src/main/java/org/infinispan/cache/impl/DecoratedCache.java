@@ -1,4 +1,4 @@
-package org.infinispan;
+package org.infinispan.cache.impl;
 
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
 
@@ -11,6 +11,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
+import org.infinispan.AdvancedCache;
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.context.Flag;
 import org.infinispan.metadata.EmbeddedMetadata;

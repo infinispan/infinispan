@@ -1,7 +1,7 @@
 package org.infinispan.interceptors.base;
 
 import org.infinispan.Cache;
-import org.infinispan.CacheImpl;
+import org.infinispan.cache.impl.CacheImpl;
 import org.infinispan.commands.AbstractVisitor;
 import org.infinispan.commands.FlagAffectedCommand;
 import org.infinispan.commands.VisitableCommand;

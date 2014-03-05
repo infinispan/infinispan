@@ -1,5 +1,6 @@
-package org.infinispan;
+package org.infinispan.cache.impl;
 
+import org.infinispan.AdvancedCache;
 import org.infinispan.atomic.Delta;
 import org.infinispan.batch.BatchContainer;
 import org.infinispan.container.DataContainer;
@@ -26,11 +27,11 @@ import java.util.EnumSet;
 import java.util.List;
 
 /**
- * Similar to {@link org.infinispan.AbstractDelegatingCache}, but for {@link AdvancedCache}.
+ * Similar to {@link org.infinispan.cache.impl.AbstractDelegatingCache}, but for {@link AdvancedCache}.
  *
  * @author Mircea.Markus@jboss.com
  * @author Tristan Tarrant
- * @see org.infinispan.AbstractDelegatingCache
+ * @see org.infinispan.cache.impl.AbstractDelegatingCache
  */
 public class AbstractDelegatingAdvancedCache<K, V> extends AbstractDelegatingCache<K, V> implements AdvancedCache<K, V> {
 

@@ -8,6 +8,7 @@ package org.infinispan.commons.marshall.jboss;
  * @author Manik Surtani
  * @version 4.1
  * @see <a href="http://www.jboss.org/jbossmarshalling">JBoss Marshalling</a>
+ * @public
  */
 public final class GenericJBossMarshaller extends AbstractJBossMarshaller {
 

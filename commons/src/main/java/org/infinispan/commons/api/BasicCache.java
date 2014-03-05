@@ -37,6 +37,7 @@ import java.util.concurrent.TimeUnit;
  * @see <a href="http://www.jboss.org/community/wiki/5minutetutorialonInfinispan">5 Minute Usage Tutorial</a>
  *
  * @since 5.1
+ * @public
  */
 public interface BasicCache<K, V> extends AsyncCache<K, V>, ConcurrentMap<K, V>, Lifecycle {
    /**

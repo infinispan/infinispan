@@ -12,6 +12,7 @@ import java.util.concurrent.Future;
  *
  * @author Manik Surtani
  * @since 4.0
+ * @public
  */
 public interface FutureListener<T> {
    void futureDone(Future<T> future);

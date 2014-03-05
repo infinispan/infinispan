@@ -1,7 +1,7 @@
 package org.infinispan.api;
 
-import org.infinispan.AbstractDelegatingAdvancedCache;
 import org.infinispan.AdvancedCache;
+import org.infinispan.cache.impl.AbstractDelegatingAdvancedCache;
 import org.infinispan.commons.CacheException;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.global.GlobalConfigurationBuilder;

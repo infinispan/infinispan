@@ -6,9 +6,9 @@ import static org.infinispan.test.TestingUtil.*;
 import static org.testng.AssertJUnit.assertEquals;
 import static org.testng.AssertJUnit.assertNotSame;
 
-import org.infinispan.AbstractDelegatingAdvancedCache;
 import org.infinispan.AdvancedCache;
 import org.infinispan.Cache;
+import org.infinispan.cache.impl.AbstractDelegatingAdvancedCache;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.cache.VersioningScheme;

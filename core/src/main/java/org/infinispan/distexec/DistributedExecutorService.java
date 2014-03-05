@@ -40,6 +40,8 @@ import org.infinispan.remoting.transport.Address;
  * @author Vladimir Blagojevic
  *
  * @since 5.0
+ *
+ * @public
  */
 public interface DistributedExecutorService extends ExecutorService {
 

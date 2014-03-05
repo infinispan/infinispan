@@ -15,8 +15,10 @@ import org.apache.commons.httpclient.{HttpMethodBase, Header, HttpClient}
 import org.apache.commons.httpclient.HttpMethod
 import java.util.{Calendar, Locale}
 import org.testng.AssertJUnit._
-import org.infinispan.manager.{EmbeddedCacheManager, AbstractDelegatingEmbeddedCacheManager}
-import org.infinispan.{Cache, AdvancedCache, AbstractDelegatingAdvancedCache}
+import org.infinispan.manager.EmbeddedCacheManager
+import org.infinispan.manager.impl.AbstractDelegatingEmbeddedCacheManager
+import org.infinispan.{Cache, AdvancedCache}
+import org.infinispan.cache.impl.AbstractDelegatingAdvancedCache
 import java.util.concurrent.{TimeUnit, CountDownLatch}
 import scala.concurrent.ops._
 import org.infinispan.server.core.logging.JavaLog
