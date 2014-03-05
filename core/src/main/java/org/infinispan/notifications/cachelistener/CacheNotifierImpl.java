@@ -3,6 +3,7 @@ package org.infinispan.notifications.cachelistener;
 import org.infinispan.Cache;
 import org.infinispan.commands.FlagAffectedCommand;
 import org.infinispan.commons.CacheListenerException;
+import org.infinispan.commons.util.CloseableIterator;
 import org.infinispan.commons.util.InfinispanCollections;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.container.entries.CacheEntry;
@@ -13,6 +14,7 @@ import org.infinispan.context.impl.TxInvocationContext;
 import org.infinispan.distexec.DistributedCallable;
 import org.infinispan.distexec.DistributedExecutionCompletionService;
 import org.infinispan.distexec.DistributedExecutorService;
+import org.infinispan.distribution.DistributionManager;
 import org.infinispan.distribution.ch.ConsistentHash;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.filter.Converter;
@@ -20,6 +22,7 @@ import org.infinispan.filter.KeyFilter;
 import org.infinispan.filter.KeyFilterAsKeyValueFilter;
 import org.infinispan.filter.KeyValueFilter;
 import org.infinispan.interceptors.locking.ClusteringDependentLogic;
+import org.infinispan.iteration.impl.EntryRetriever;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.notifications.Listener;
 import org.infinispan.notifications.cachelistener.annotation.*;
@@ -30,28 +33,22 @@ import org.infinispan.notifications.cachelistener.cluster.RemoteClusterListener;
 import org.infinispan.notifications.cachelistener.event.*;
 import org.infinispan.notifications.cachelistener.event.impl.EventImpl;
 import org.infinispan.notifications.impl.AbstractListenerImpl;
+import org.infinispan.notifications.impl.ListenerInvocation;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.topology.CacheTopology;
 import org.infinispan.transaction.xa.GlobalTransaction;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
-import javax.security.auth.Subject;
 import javax.transaction.Status;
 import javax.transaction.Transaction;
 import javax.transaction.TransactionManager;
+import java.io.IOException;
 import java.lang.annotation.Annotation;
-import java.lang.reflect.Method;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.UUID;
+import java.util.*;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
@@ -64,9 +61,10 @@ import static org.infinispan.notifications.cachelistener.event.Event.Type.*;
  *
  * @author Manik Surtani (manik AT infinispan DOT org)
  * @author Mircea.Markus@jboss.com
+ * @author William Burns
  * @since 4.0
  */
-public final class CacheNotifierImpl<K, V> extends AbstractListenerImpl<Event<? extends K, ? extends V>, K, V>
+public final class CacheNotifierImpl<K, V> extends AbstractListenerImpl<Event<K, V>, CacheEntryListenerInvocation<K, V>>
       implements ClusterCacheNotifier<K, V> {
 
    private static final Log log = LogFactory.getLog(CacheNotifierImpl.class);
@@ -100,32 +98,46 @@ public final class CacheNotifierImpl<K, V> extends AbstractListenerImpl<Event<? 
       clusterAllowedListeners.put(CacheEntryRemoved.class, CacheEntryRemovedEvent.class);
    }
 
-   final List<ListenerInvocation> cacheEntryCreatedListeners = new CopyOnWriteArrayList<ListenerInvocation>();
-   final List<ListenerInvocation> cacheEntryRemovedListeners = new CopyOnWriteArrayList<ListenerInvocation>();
-   final List<ListenerInvocation> cacheEntryVisitedListeners = new CopyOnWriteArrayList<ListenerInvocation>();
-   final List<ListenerInvocation> cacheEntryModifiedListeners = new CopyOnWriteArrayList<ListenerInvocation>();
-   final List<ListenerInvocation> cacheEntryActivatedListeners = new CopyOnWriteArrayList<ListenerInvocation>();
-   final List<ListenerInvocation> cacheEntryPassivatedListeners = new CopyOnWriteArrayList<ListenerInvocation>();
-   final List<ListenerInvocation> cacheEntryLoadedListeners = new CopyOnWriteArrayList<ListenerInvocation>();
-   final List<ListenerInvocation> cacheEntryInvalidatedListeners = new CopyOnWriteArrayList<ListenerInvocation>();
-   final List<ListenerInvocation> cacheEntriesEvictedListeners = new CopyOnWriteArrayList<ListenerInvocation>();
-   final List<ListenerInvocation> transactionRegisteredListeners = new CopyOnWriteArrayList<ListenerInvocation>();
-   final List<ListenerInvocation> transactionCompletedListeners = new CopyOnWriteArrayList<ListenerInvocation>();
-   final List<ListenerInvocation> dataRehashedListeners = new CopyOnWriteArrayList<ListenerInvocation>();
-   final List<ListenerInvocation> topologyChangedListeners = new CopyOnWriteArrayList<ListenerInvocation>();
+   final List<CacheEntryListenerInvocation<K, V>> cacheEntryCreatedListeners = new CopyOnWriteArrayList<CacheEntryListenerInvocation<K, V>>();
+   final List<CacheEntryListenerInvocation<K, V>> cacheEntryRemovedListeners = new CopyOnWriteArrayList<CacheEntryListenerInvocation<K, V>>();
+   final List<CacheEntryListenerInvocation<K, V>> cacheEntryVisitedListeners = new CopyOnWriteArrayList<CacheEntryListenerInvocation<K, V>>();
+   final List<CacheEntryListenerInvocation<K, V>> cacheEntryModifiedListeners = new CopyOnWriteArrayList<CacheEntryListenerInvocation<K, V>>();
+   final List<CacheEntryListenerInvocation<K, V>> cacheEntryActivatedListeners = new CopyOnWriteArrayList<CacheEntryListenerInvocation<K, V>>();
+   final List<CacheEntryListenerInvocation<K, V>> cacheEntryPassivatedListeners = new CopyOnWriteArrayList<CacheEntryListenerInvocation<K, V>>();
+   final List<CacheEntryListenerInvocation<K, V>> cacheEntryLoadedListeners = new CopyOnWriteArrayList<CacheEntryListenerInvocation<K, V>>();
+   final List<CacheEntryListenerInvocation<K, V>> cacheEntryInvalidatedListeners = new CopyOnWriteArrayList<CacheEntryListenerInvocation<K, V>>();
+   final List<CacheEntryListenerInvocation<K, V>> cacheEntriesEvictedListeners = new CopyOnWriteArrayList<CacheEntryListenerInvocation<K, V>>();
+   final List<CacheEntryListenerInvocation<K, V>> transactionRegisteredListeners = new CopyOnWriteArrayList<CacheEntryListenerInvocation<K, V>>();
+   final List<CacheEntryListenerInvocation<K, V>> transactionCompletedListeners = new CopyOnWriteArrayList<CacheEntryListenerInvocation<K, V>>();
+   final List<CacheEntryListenerInvocation<K, V>> dataRehashedListeners = new CopyOnWriteArrayList<CacheEntryListenerInvocation<K, V>>();
+   final List<CacheEntryListenerInvocation<K, V>> topologyChangedListeners = new CopyOnWriteArrayList<CacheEntryListenerInvocation<K, V>>();
 
    // For backward compat
-   final List<ListenerInvocation> cacheEntryEvictedListeners = new CopyOnWriteArrayList<ListenerInvocation>();
+   final List<CacheEntryListenerInvocation<K, V>> cacheEntryEvictedListeners = new CopyOnWriteArrayList<CacheEntryListenerInvocation<K, V>>();
 
    private Cache<K, V> cache;
    private ClusteringDependentLogic clusteringDependentLogic;
    private TransactionManager transactionManager;
    private DistributedExecutorService distExecutorService;
    private Configuration config;
+   private DistributionManager distributionManager;
+   private EntryRetriever<K, V> entryRetriever;
 
    private final Map<Object, UUID> clusterListenerIDs = new ConcurrentHashMap<Object, UUID>();
 
+   /**
+    * This map is used to store the handler used when a listener is registered which has includeCurrentState and
+    * is only used for that listener during the initial state transfer
+    */
+   private final ConcurrentMap<UUID, QueueingSegmentListener<K, V, ? extends Event<K, V>>> segmentHandler;
+
+
    public CacheNotifierImpl() {
+      this(new ConcurrentHashMap<UUID, QueueingSegmentListener<K, V, ? extends Event<K, V>>>());
+   }
+
+   CacheNotifierImpl(ConcurrentMap<UUID, QueueingSegmentListener<K, V, ? extends Event<K, V>>> handler) {
+      segmentHandler = handler;
 
       listenersMap.put(CacheEntryCreated.class, cacheEntryCreatedListeners);
       listenersMap.put(CacheEntryRemoved.class, cacheEntryRemovedListeners);
@@ -147,11 +159,14 @@ public final class CacheNotifierImpl<K, V> extends AbstractListenerImpl<Event<? 
 
    @Inject
    void injectDependencies(Cache<K, V> cache, ClusteringDependentLogic clusteringDependentLogic,
-                           TransactionManager transactionManager, Configuration config) {
+                           TransactionManager transactionManager, Configuration config,
+                           DistributionManager distributionManager, EntryRetriever<K ,V> entryRetriever) {
       this.cache = cache;
       this.clusteringDependentLogic = clusteringDependentLogic;
       this.transactionManager = transactionManager;
       this.config = config;
+      this.distributionManager = distributionManager;
+      this.entryRetriever = entryRetriever;
    }
 
    @Override
@@ -166,7 +181,11 @@ public final class CacheNotifierImpl<K, V> extends AbstractListenerImpl<Event<? 
    }
 
    @Override
-   protected Map<Class<? extends Annotation>, Class<?>> getAllowedMethodAnnotations() {
+   protected Map<Class<? extends Annotation>, Class<?>> getAllowedMethodAnnotations(Listener l) {
+      if (l.clustered()) {
+         // Cluster listeners only allow a subset of types
+         return clusterAllowedListeners;
+      }
       return allowedListeners;
    }
 
@@ -222,7 +241,7 @@ public final class CacheNotifierImpl<K, V> extends AbstractListenerImpl<Event<? 
          EventImpl<K, V> e = EventImpl.createEvent(cache, CACHE_ENTRY_CREATED);
          configureEvent(e, key, value, pre, ctx, command);
          boolean isLocalNodePrimaryOwner = clusteringDependentLogic.localNodeIsPrimaryOwner(key);
-         for (ListenerInvocation listener : cacheEntryCreatedListeners) listener.invoke(e, isLocalNodePrimaryOwner);
+         for (CacheEntryListenerInvocation<K, V> listener : cacheEntryCreatedListeners) listener.invoke(e, isLocalNodePrimaryOwner);
       }
    }
 
@@ -242,7 +261,7 @@ public final class CacheNotifierImpl<K, V> extends AbstractListenerImpl<Event<? 
          // want to fire it when isPre=false.
          e.setCreated(created);
          boolean isLocalNodePrimaryOwner = clusteringDependentLogic.localNodeIsPrimaryOwner(key);
-         for (ListenerInvocation listener : cacheEntryModifiedListeners) listener.invoke(e, isLocalNodePrimaryOwner);
+         for (CacheEntryListenerInvocation<K, V> listener : cacheEntryModifiedListeners) listener.invoke(e, isLocalNodePrimaryOwner);
       }
    }
 
@@ -255,7 +274,7 @@ public final class CacheNotifierImpl<K, V> extends AbstractListenerImpl<Event<? 
          e.setOldValue(oldValue);
          setTx(ctx, e);
          boolean isLocalNodePrimaryOwner = clusteringDependentLogic.localNodeIsPrimaryOwner(key);
-         for (ListenerInvocation listener : cacheEntryRemovedListeners) listener.invoke(e, isLocalNodePrimaryOwner);
+         for (CacheEntryListenerInvocation<K, V> listener : cacheEntryRemovedListeners) listener.invoke(e, isLocalNodePrimaryOwner);
       }
    }
 
@@ -287,7 +306,7 @@ public final class CacheNotifierImpl<K, V> extends AbstractListenerImpl<Event<? 
          e.setValue(value);
          setTx(ctx, e);
          boolean isLocalNodePrimaryOwner = clusteringDependentLogic.localNodeIsPrimaryOwner(key);
-         for (ListenerInvocation listener : cacheEntryVisitedListeners) listener.invoke(e, isLocalNodePrimaryOwner);
+         for (CacheEntryListenerInvocation<K, V> listener : cacheEntryVisitedListeners) listener.invoke(e, isLocalNodePrimaryOwner);
       }
    }
 
@@ -321,7 +340,7 @@ public final class CacheNotifierImpl<K, V> extends AbstractListenerImpl<Event<? 
             );
 
             e.setEntries(evictedKeysAndValues);
-            for (ListenerInvocation listener : cacheEntriesEvictedListeners) listener.invoke(e);
+            for (CacheEntryListenerInvocation<K, V> listener : cacheEntriesEvictedListeners) listener.invoke(e);
          }
 
          // For backward compat
@@ -331,7 +350,7 @@ public final class CacheNotifierImpl<K, V> extends AbstractListenerImpl<Event<? 
                e.setKey(ice.getKey());
                e.setValue(ice.getValue());
                boolean isLocalNodePrimaryOwner = clusteringDependentLogic.localNodeIsPrimaryOwner(ice.getKey());
-               for (ListenerInvocation listener : cacheEntryEvictedListeners) listener.invoke(e, isLocalNodePrimaryOwner);
+               for (CacheEntryListenerInvocation<K, V> listener : cacheEntryEvictedListeners) listener.invoke(e, isLocalNodePrimaryOwner);
             }
          }
       }
@@ -345,7 +364,7 @@ public final class CacheNotifierImpl<K, V> extends AbstractListenerImpl<Event<? 
          EventImpl<K, V> e = EventImpl.createEvent(cache, CACHE_ENTRY_EVICTED);
          Map<K, V> map = Collections.singletonMap(key, value);
          e.setEntries(map);
-         for (ListenerInvocation listener : cacheEntriesEvictedListeners) listener.invoke(e, isLocalNodePrimaryOwner);
+         for (CacheEntryListenerInvocation<K, V> listener : cacheEntriesEvictedListeners) listener.invoke(e, isLocalNodePrimaryOwner);
       }
 
       // For backward compat
@@ -353,7 +372,7 @@ public final class CacheNotifierImpl<K, V> extends AbstractListenerImpl<Event<? 
          EventImpl<K, V> e = EventImpl.createEvent(cache, CACHE_ENTRY_EVICTED);
          e.setKey(key);
          e.setValue(value);
-         for (ListenerInvocation listener : cacheEntryEvictedListeners) listener.invoke(e, isLocalNodePrimaryOwner);
+         for (CacheEntryListenerInvocation<K, V> listener : cacheEntryEvictedListeners) listener.invoke(e, isLocalNodePrimaryOwner);
       }
    }
 
@@ -369,7 +388,7 @@ public final class CacheNotifierImpl<K, V> extends AbstractListenerImpl<Event<? 
          e.setValue(value);
          setTx(ctx, e);
          boolean isLocalNodePrimaryOwner = clusteringDependentLogic.localNodeIsPrimaryOwner(key);
-         for (ListenerInvocation listener : cacheEntryInvalidatedListeners) listener.invoke(e, isLocalNodePrimaryOwner);
+         for (CacheEntryListenerInvocation<K, V> listener : cacheEntryInvalidatedListeners) listener.invoke(e, isLocalNodePrimaryOwner);
       }
    }
 
@@ -385,7 +404,7 @@ public final class CacheNotifierImpl<K, V> extends AbstractListenerImpl<Event<? 
          e.setValue(value);
          setTx(ctx, e);
          boolean isLocalNodePrimaryOwner = clusteringDependentLogic.localNodeIsPrimaryOwner(key);
-         for (ListenerInvocation listener : cacheEntryLoadedListeners) listener.invoke(e, isLocalNodePrimaryOwner);
+         for (CacheEntryListenerInvocation<K, V> listener : cacheEntryLoadedListeners) listener.invoke(e, isLocalNodePrimaryOwner);
       }
    }
 
@@ -400,7 +419,7 @@ public final class CacheNotifierImpl<K, V> extends AbstractListenerImpl<Event<? 
          e.setValue(value);
          setTx(ctx, e);
          boolean isLocalNodePrimaryOwner = clusteringDependentLogic.localNodeIsPrimaryOwner(key);
-         for (ListenerInvocation listener : cacheEntryActivatedListeners) listener.invoke(e, isLocalNodePrimaryOwner);
+         for (CacheEntryListenerInvocation<K, V> listener : cacheEntryActivatedListeners) listener.invoke(e, isLocalNodePrimaryOwner);
       }
    }
 
@@ -419,7 +438,7 @@ public final class CacheNotifierImpl<K, V> extends AbstractListenerImpl<Event<? 
          e.setKey(key);
          e.setValue(value);
          boolean isLocalNodePrimaryOwner = clusteringDependentLogic.localNodeIsPrimaryOwner(key);
-         for (ListenerInvocation listener : cacheEntryPassivatedListeners) listener.invoke(e, isLocalNodePrimaryOwner);
+         for (CacheEntryListenerInvocation<K, V> listener : cacheEntryPassivatedListeners) listener.invoke(e, isLocalNodePrimaryOwner);
       }
    }
 
@@ -431,7 +450,7 @@ public final class CacheNotifierImpl<K, V> extends AbstractListenerImpl<Event<? 
          e.setOriginLocal(isOriginLocal);
          e.setTransactionId(transaction);
          e.setTransactionSuccessful(successful);
-         for (ListenerInvocation listener : transactionCompletedListeners) listener.invoke(e);
+         for (CacheEntryListenerInvocation<K, V> listener : transactionCompletedListeners) listener.invoke(e);
       }
    }
 
@@ -441,7 +460,7 @@ public final class CacheNotifierImpl<K, V> extends AbstractListenerImpl<Event<? 
          EventImpl<K, V> e = EventImpl.createEvent(cache, TRANSACTION_REGISTERED);
          e.setOriginLocal(isOriginLocal);
          e.setTransactionId(globalTransaction);
-         for (ListenerInvocation listener : transactionRegisteredListeners) listener.invoke(e);
+         for (CacheEntryListenerInvocation<K, V> listener : transactionRegisteredListeners) listener.invoke(e);
       }
    }
 
@@ -454,7 +473,7 @@ public final class CacheNotifierImpl<K, V> extends AbstractListenerImpl<Event<? 
          e.setConsistentHashAtEnd(writeCH);
          e.setUnionConsistentHash(unionCH);
          e.setNewTopologyId(newTopologyId);
-         for (ListenerInvocation listener : dataRehashedListeners) listener.invoke(e);
+         for (CacheEntryListenerInvocation<K, V> listener : dataRehashedListeners) listener.invoke(e);
       }
    }
 
@@ -468,38 +487,41 @@ public final class CacheNotifierImpl<K, V> extends AbstractListenerImpl<Event<? 
          }
          e.setConsistentHashAtEnd(newTopology.getWriteConsistentHash());
          e.setNewTopologyId(newTopologyId);
-         for (ListenerInvocation listener : topologyChangedListeners) listener.invoke(e);
+         for (CacheEntryListenerInvocation<K, V> listener : topologyChangedListeners) listener.invoke(e);
       }
    }
 
    @Override
-   public void notifyClusterListeners(Collection<? extends Event<? extends K, ? extends V>> events, UUID uuid) {
-      for (Event<? extends K, ? extends V> event : events) {
+   public void notifyClusterListeners(Collection<? extends CacheEntryEvent<K, V>> events, UUID uuid) {
+      for (CacheEntryEvent<K, V> event : events) {
          if (event.isPre()) {
             throw new IllegalArgumentException("Events for cluster listener should never be pre change");
          }
          switch (event.getType()) {
             case CACHE_ENTRY_MODIFIED:
-               for (ListenerInvocation listener : cacheEntryModifiedListeners) {
-                  if (listener.clustered && uuid.equals(listener.generatedId)) {
-                     // We bypass any check to force invocation
-                     listener.invoke(event, true, true);
+               for (CacheEntryListenerInvocation<K, V> listener : cacheEntryModifiedListeners) {
+                  if (listener.isClustered() && uuid.equals(listener.getIdentifier())) {
+                     // We force invocation, since it means the owning node passed filters already and they
+                     // already converted so don't run converter either
+                     listener.invokeNoChecks(event, false, true);
                   }
                }
                break;
             case CACHE_ENTRY_CREATED:
-               for (ListenerInvocation listener : cacheEntryCreatedListeners) {
-                  if (listener.clustered && uuid.equals(listener.generatedId)) {
-                     // We bypass any check to force invocation
-                     listener.invoke(event, true, true);
+               for (CacheEntryListenerInvocation<K, V> listener : cacheEntryCreatedListeners) {
+                  if (listener.isClustered() && uuid.equals(listener.getIdentifier())) {
+                     // We force invocation, since it means the owning node passed filters already and they
+                     // already converted so don't run converter either
+                     listener.invokeNoChecks(event, false, true);
                   }
                }
                break;
             case CACHE_ENTRY_REMOVED:
-               for (ListenerInvocation listener : cacheEntryRemovedListeners) {
-                  if (listener.clustered && uuid.equals(listener.generatedId)) {
-                     // We bypass any check to force invocation
-                     listener.invoke(event, true, true);
+               for (CacheEntryListenerInvocation<K, V> listener : cacheEntryRemovedListeners) {
+                  if (listener.isClustered() && uuid.equals(listener.getIdentifier())) {
+                     // We force invocation, since it means the owning node passed filters already and they
+                     // already converted so don't run converter either
+                     listener.invokeNoChecks(event, false, true);
                   }
                }
                break;
@@ -511,8 +533,8 @@ public final class CacheNotifierImpl<K, V> extends AbstractListenerImpl<Event<? 
 
    @Override
    public Collection<DistributedCallable> retrieveClusterListenerCallablesToInstall() {
-      Set<Object> enlistedAlready = new HashSet<Object>();
-      Set<DistributedCallable> callables = new HashSet<DistributedCallable>();
+      Set<Object> enlistedAlready = new HashSet<>();
+      Set<DistributedCallable> callables = new HashSet<>();
 
       if (log.isTraceEnabled()) {
          log.tracef("Request received to get cluster listeners currently registered");
@@ -531,58 +553,58 @@ public final class CacheNotifierImpl<K, V> extends AbstractListenerImpl<Event<? 
 
    private void registerClusterListenerCallablesToInstall(Set<Object> enlistedAlready,
                                                           Set<DistributedCallable> callables,
-                                                          List<ListenerInvocation> listenerInvocations) {
-      for (ListenerInvocation listener : listenerInvocations) {
-         if (!enlistedAlready.contains(listener.target)) {
+                                                          List<CacheEntryListenerInvocation<K, V>> listenerInvocations) {
+      for (CacheEntryListenerInvocation<K, V> listener : listenerInvocations) {
+         if (!enlistedAlready.contains(listener.getTarget())) {
             // If clustered means it is local - so use our address
-            if (listener.clustered) {
-               callables.add(new ClusterListenerReplicateCallable(listener.generatedId,
-                                                                  cache.getCacheManager().getAddress(), listener.filter,
-                                                                  listener.converter));
-               enlistedAlready.add(listener.target);
+            if (listener.isClustered()) {
+               callables.add(new ClusterListenerReplicateCallable(listener.getIdentifier(),
+                                                                  cache.getCacheManager().getAddress(), listener.getFilter(),
+                                                                  listener.getConverter()));
+               enlistedAlready.add(listener.getTarget());
             }
-            else if (listener.target instanceof RemoteClusterListener) {
-               RemoteClusterListener lcl = (RemoteClusterListener)listener.target;
-               callables.add(new ClusterListenerReplicateCallable(lcl.getId(), lcl.getOwnerAddress(), listener.filter,
-                                                                  listener.converter));
-               enlistedAlready.add(listener.target);
+            else if (listener.getTarget() instanceof RemoteClusterListener) {
+               RemoteClusterListener lcl = (RemoteClusterListener)listener.getTarget();
+               callables.add(new ClusterListenerReplicateCallable(lcl.getId(), lcl.getOwnerAddress(), listener.getFilter(),
+                                                                  listener.getConverter()));
+               enlistedAlready.add(listener.getTarget());
             }
          }
       }
    }
 
    public boolean isNotificationAllowed(
-         FlagAffectedCommand cmd, List<ListenerInvocation> listeners) {
+         FlagAffectedCommand cmd, List<CacheEntryListenerInvocation<K, V>> listeners) {
       return (cmd == null || !cmd.hasFlag(Flag.SKIP_LISTENER_NOTIFICATION))
             && !listeners.isEmpty();
    }
 
    @Override
+   public void addListener(Object listener) {
+      addListener(listener, null, null, null);
+   }
+
+   @Override
+   public void addListener(Object listener, ClassLoader classLoader) {
+      addListener(listener, null, null, classLoader);
+   }
+
+   @Override
    public void addListener(Object listener, KeyFilter<? super K> filter, ClassLoader classLoader) {
-      validateAndAddListenerInvocation(listener, new KeyFilterAsKeyValueFilter<K, V>(filter), null, classLoader);
+      addListener(listener, new KeyFilterAsKeyValueFilter<K, V>(filter), null, classLoader);
    }
 
    @Override
    public <C> void addListener(Object listener, KeyValueFilter<? super K, ? super V> filter,
                            Converter<? super K, ? super V, C> converter, ClassLoader classLoader) {
-      validateAndAddListenerInvocation(listener, filter, converter, classLoader);
-   }
+      Listener l = testListenerClassValidity(listener.getClass());
+      UUID generatedId = UUID.randomUUID();
+      CacheInvocationBuilder builder = new CacheInvocationBuilder();
+      builder.setClustered(l.clustered()).setOnlyPrimary(l.clustered() ? true : l.primaryOnly()).setFilter(filter).setConverter(converter)
+            .setIdentifier(generatedId).setIncludeCurrentState(l.includeCurrentState()).setClassLoader(classLoader);
+      boolean foundMethods = validateAndAddListenerInvocation(listener, builder);
 
-   @Override
-   public void addListener(Object listener, KeyFilter filter) {
-      addListener(listener, filter, null);
-   }
-
-   @Override
-   public <C> void addListener(Object listener, KeyValueFilter<? super K, ? super V> filter, Converter<? super K,
-         ? super V, C> converter) {
-      validateAndAddListenerInvocation(listener, filter, converter, null);
-   }
-
-   @Override
-   protected <C> void addedListener(Object listener, UUID generatedId, boolean hasClusteredMethods, KeyValueFilter<? super K, ? super V> filter,
-                                Converter<? super K, ? super V, C> converter) {
-      if (hasClusteredMethods) {
+      if (foundMethods && l.clustered()) {
          if (config.clustering().cacheMode().isInvalidation()) {
             throw new UnsupportedOperationException("Cluster listeners cannot be used with Invalidation Caches!");
          }
@@ -595,8 +617,10 @@ public final class CacheNotifierImpl<K, V> extends AbstractListenerImpl<Event<? 
          if (members != null && members.size() > 1) {
             DistributedExecutionCompletionService decs = new DistributedExecutionCompletionService(distExecutorService);
 
-            log.tracef("Replicating cluster listener to other nodes %s for cluster listener with id %s",
-                       members, generatedId);
+            if (log.isTraceEnabled()) {
+               log.tracef("Replicating cluster listener to other nodes %s for cluster listener with id %s",
+                          members, generatedId);
+            }
             Callable callable = new ClusterListenerReplicateCallable(generatedId, ourAddress, filter, converter);
             for (Address member : members) {
                if (!member.equals(ourAddress)) {
@@ -620,8 +644,10 @@ public final class CacheNotifierImpl<K, V> extends AbstractListenerImpl<Event<? 
             List<Address> membersAfter = manager.getMembers();
             for (Address member : membersAfter) {
                if (!members.contains(member) && !member.equals(ourAddress)) {
-                  log.tracef("Found additional node %s that joined during replication of cluster listener with id %s",
-                             member, generatedId);
+                  if (log.isTraceEnabled()) {
+                     log.tracef("Found additional node %s that joined during replication of cluster listener with id %s",
+                                member, generatedId);
+                  }
                   extraCount++;
                   decs.submit(member, callable);
                }
@@ -638,15 +664,385 @@ public final class CacheNotifierImpl<K, V> extends AbstractListenerImpl<Event<? 
             }
          }
       }
+
+      // If we have a segment listener handler, it means we have to do initial state
+      QueueingSegmentListener handler = segmentHandler.remove(generatedId);
+      if (handler != null) {
+         if (log.isTraceEnabled()) {
+            log.tracef("Listener %s requests initial state for cache", generatedId);
+         }
+         CloseableIterator<Map.Entry<K, C>> iterator = entryRetriever.retrieveEntries(filter, converter, handler);
+         try {
+            while (iterator.hasNext()) {
+               Map.Entry<K, C> entry = iterator.next();
+               // Mark the key as processed and see if we had a concurrent update
+               Object value = handler.markKeyAsProcessing(entry.getKey());
+               if (value == null) {
+                  value = entry.getValue();
+               } else if (value == BaseQueueingSegmentListener.REMOVED) {
+                  // Don't process this value if we had a concurrent remove
+                  continue;
+               }
+               EventImpl preEvent;
+               if (l.clustered()) {
+                  // In clustered mode we only send post event
+                  preEvent = null;
+               } else {
+                  preEvent = EventImpl.createEvent(cache, CACHE_ENTRY_CREATED);
+                  preEvent.setKey(entry.getKey());
+                  preEvent.setPre(true);
+               }
+
+               EventImpl postEvent = EventImpl.createEvent(cache, CACHE_ENTRY_CREATED);
+               postEvent.setKey(entry.getKey());
+               postEvent.setValue(value);
+               postEvent.setPre(false);
+
+               for (CacheEntryListenerInvocation<K, V> invocation : cacheEntryCreatedListeners) {
+                  // Now notify all our methods of the creates
+                  if (invocation.getIdentifier() == generatedId) {
+                     if (preEvent != null) {
+                        // Non clustered notifications are done twice
+                        invocation.invokeNoChecks(preEvent, true, false);
+                     }
+                     invocation.invokeNoChecks(postEvent, true, false);
+                  }
+               }
+
+               handler.notifiedKey(entry.getKey());
+            }
+         } finally {
+            try {
+               iterator.close();
+            } catch (Exception e) {
+               log.ignoringException("addListener", e.toString(), e);
+            }
+         }
+
+         Set<Map.Entry> entries = handler.findCreatedEntries();
+
+         for (Map.Entry entry : entries) {
+            EventImpl preEvent;
+            if (l.clustered()) {
+               // In clustered mode we only send post event
+               preEvent = null;
+            } else {
+               preEvent = EventImpl.createEvent(cache, CACHE_ENTRY_CREATED);
+               preEvent.setKey(entry.getKey());
+               preEvent.setPre(true);
+            }
+
+            EventImpl postEvent = EventImpl.createEvent(cache, CACHE_ENTRY_CREATED);
+            postEvent.setKey(entry.getKey());
+            postEvent.setValue(entry.getValue());
+            postEvent.setPre(false);
+
+            for (CacheEntryListenerInvocation<K, V> invocation : cacheEntryCreatedListeners) {
+               // Now notify all our methods of the creates
+               if (invocation.getIdentifier() == generatedId) {
+                  if (preEvent != null) {
+                     // Non clustered notifications are done twice
+                     invocation.invokeNoChecks(preEvent, true, false);
+                  }
+                  invocation.invokeNoChecks(postEvent, true, false);
+               }
+            }
+         }
+
+         if (log.isTraceEnabled()) {
+            log.tracef("Listener %s initial state for cache completed", generatedId);
+         }
+
+         handler.transferComplete();
+      }
    }
 
    @Override
-   protected ListenerInvocation createListenerInvocation(Object listener, Method m, Listener l, KeyValueFilter filter,
-                                                         Converter converter, ClassLoader classLoader, UUID generatedId, Subject subject) {
-      // If we are dealing with clustered events that forces the cluster listener to only use primary only else we would
-      // have duplicate events
-      return new ListenerInvocation(listener, m, l.sync(), l.clustered() ? true : l.primaryOnly(), l.clustered(),
-                                    filter, converter, classLoader, generatedId, subject);
+   public void addListener(Object listener, KeyFilter filter) {
+      addListener(listener, filter, null);
+   }
+
+   @Override
+   public <C> void addListener(Object listener, KeyValueFilter<? super K, ? super V> filter, Converter<? super K,
+         ? super V, C> converter) {
+      addListener(listener, filter, converter, null);
+   }
+
+   class CacheInvocationBuilder extends AbstractInvocationBuilder {
+      KeyValueFilter<? super K, ? super V> filter;
+      Converter<? super K, ? super V, ?> converter;
+      boolean onlyPrimary;
+      boolean clustered;
+      boolean includeCurrentState;
+      UUID identifier;
+
+      public KeyValueFilter<? super K, ? super V> getFilter() {
+         return filter;
+      }
+
+      public CacheInvocationBuilder setFilter(KeyValueFilter<? super K, ? super V> filter) {
+         this.filter = filter;
+         return this;
+      }
+
+      public Converter<? super K, ? super V, ?> getConverter() {
+         return converter;
+      }
+
+      public CacheInvocationBuilder setConverter(Converter<? super K, ? super V, ?> converter) {
+         this.converter = converter;
+         return this;
+      }
+
+      public boolean isOnlyPrimary() {
+         return onlyPrimary;
+      }
+
+      public CacheInvocationBuilder setOnlyPrimary(boolean onlyPrimary) {
+         this.onlyPrimary = onlyPrimary;
+         return this;
+      }
+
+      public boolean isClustered() {
+         return clustered;
+      }
+
+      public CacheInvocationBuilder setClustered(boolean clustered) {
+         this.clustered = clustered;
+         return this;
+      }
+
+      public UUID getIdentifier() {
+         return identifier;
+      }
+
+      public CacheInvocationBuilder setIdentifier(UUID identifier) {
+         this.identifier = identifier;
+         return this;
+      }
+
+      public boolean isIncludeCurrentState() {
+         return includeCurrentState;
+      }
+
+      public CacheInvocationBuilder setIncludeCurrentState(boolean includeCurrentState) {
+         this.includeCurrentState = includeCurrentState;
+         return this;
+      }
+
+      @Override
+      public CacheEntryListenerInvocation<K, V> build() {
+         ListenerInvocation<Event<K, V>> invocation = new ListenerInvocationImpl(target, method, sync, classLoader,
+                                                                                 subject);
+         // If we are dealing with clustered events that forces the cluster listener to only use primary only else we would
+         // have duplicate events
+         CacheEntryListenerInvocation<K, V> returnValue;
+
+         if (includeCurrentState) {
+            // If it is a clustered listener and distributed cache we can do some extra optimizations
+            if (clustered) {
+               QueueingSegmentListener handler = segmentHandler.get(identifier);
+               if (handler == null) {
+                  if (config.clustering().cacheMode().isDistributed()) {
+                     handler = new DistributedQueueingSegmentListener(distributionManager);
+                  } else {
+                     handler = new QueueingAllSegmentListener();
+                  }
+                  QueueingSegmentListener currentQueue = segmentHandler.putIfAbsent(identifier, handler);
+                  if (currentQueue != null) {
+                     handler = currentQueue;
+                  }
+               }
+               returnValue = new ClusteredListenerInvocation<K, V>(invocation, handler, filter, converter, identifier);
+            } else {
+//               TODO: this is removed until non cluster listeners are supported
+//               QueueingSegmentListener handler = segmentHandler.get(identifier);
+//               if (handler == null) {
+//                  handler = new QueueingAllSegmentListener();
+//                  QueueingSegmentListener currentQueue = segmentHandler.putIfAbsent(identifier, handler);
+//                  if (currentQueue != null) {
+//                     handler = currentQueue;
+//                  }
+//               }
+//               returnValue = new NonClusteredListenerInvocation(invocation, handler, filter, converter, onlyPrimary,
+//                                                                identifier);
+               returnValue = new BaseCacheEntryListenerInvocation(invocation, filter, converter, onlyPrimary, clustered,
+                                                                  identifier);
+            }
+         } else {
+            // If no includeCurrentState just use the base listener invocation which immediately passes all notifications
+            // off
+            returnValue = new BaseCacheEntryListenerInvocation(invocation, filter, converter, onlyPrimary, clustered,
+                                                               identifier);
+         }
+         return returnValue;
+      }
+   }
+
+   protected class NonClusteredListenerInvocation extends BaseCacheEntryListenerInvocation<K, V> {
+
+      private final QueueingSegmentListener<K, V, Event<K, V>> handler;
+
+      protected NonClusteredListenerInvocation(ListenerInvocation<Event<K, V>> invocation,
+                                                 QueueingSegmentListener<K, V, Event<K, V>> handler,
+                                                KeyValueFilter<? super K, ? super V> filter,
+                                                Converter<? super K, ? super V, ?> converter,
+                                                boolean onlyPrimary, UUID identifier) {
+         super(invocation, filter, converter, onlyPrimary, false, identifier);
+         this.handler = handler;
+      }
+
+      @Override
+      protected void doRealInvocation(Event<K, V> event) {
+         if (!handler.handleEvent(event, invocation)) {
+            super.doRealInvocation(event);
+         }
+      }
+   }
+
+   /**
+    * This class is to be used with cluster listener invocations only when they have included current state.  Thus
+    * we can assume all types are CacheEntryEvent, since it doesn't allow other types.
+    */
+   protected static class ClusteredListenerInvocation<K, V> extends BaseCacheEntryListenerInvocation<K, V> {
+
+      private final QueueingSegmentListener<K, V, CacheEntryEvent<K, V>> handler;
+
+
+      public ClusteredListenerInvocation(ListenerInvocation<Event<K, V>> invocation, QueueingSegmentListener handler,
+                                       KeyValueFilter<? super K, ? super V> filter,
+                                       Converter<? super K, ? super V, ?> converter, UUID identifier)  {
+         super(invocation, filter, converter, true, true, identifier);
+         this.handler = handler;
+      }
+
+      @Override
+      public void invoke(Event<K, V> event) {
+         throw new UnsupportedOperationException("Clustered initial transfer don't support regular events!");
+      }
+
+      @Override
+      protected void doRealInvocation(Event<K, V> event) {
+         // This is only used with clusters and such we can safely cast this here
+         if (!handler.handleEvent((CacheEntryEvent<K,V>)event, invocation)) {
+            super.doRealInvocation(event);
+         }
+      }
+   }
+
+   protected static class BaseCacheEntryListenerInvocation<K, V> implements CacheEntryListenerInvocation<K, V> {
+
+      protected final ListenerInvocation<Event<K, V>> invocation;
+      protected final KeyValueFilter<? super K, ? super V> filter;
+      protected final Converter<? super K, ? super V, ?> converter;
+      protected final boolean onlyPrimary;
+      protected final boolean clustered;
+      protected final UUID identifier;
+
+
+      protected BaseCacheEntryListenerInvocation(ListenerInvocation<Event<K, V>> invocation,
+                                              KeyValueFilter<? super K, ? super V> filter,
+                                              Converter<? super K, ? super V, ?> converter, boolean onlyPrimary,
+                                              boolean clustered, UUID identifier)  {
+         this.invocation = invocation;
+         this.filter = filter;
+         this.converter = converter;
+         this.onlyPrimary = onlyPrimary;
+         this.clustered = clustered;
+         this.identifier = identifier;
+      }
+
+      @Override
+      public void invoke(Event<K, V> event) {
+         doRealInvocation(event);
+      }
+
+      /**
+       * This is the entry point for local listeners firing events
+       * @param event
+       * @param isLocalNodePrimaryOwner
+       */
+      @Override
+      public void invoke(CacheEntryEvent<K, V> event, boolean isLocalNodePrimaryOwner) {
+         // See if this should be filtered first before evaluating
+         if (shouldInvoke(event, isLocalNodePrimaryOwner)) {
+            invokeNoChecks(event, false, false);
+         }
+      }
+
+      /**
+       * This is the entry point for remote listener events being fired
+       * @param event
+       * @param skipQueue
+       */
+      @Override
+      public void invokeNoChecks(CacheEntryEvent<K, V> event, boolean skipQueue, boolean skipConverter) {
+         // We run the converter first, this way the converter doesn't have to run serialized when enqueued and also
+         // the handler doesn't have to worry about it
+         if (!skipConverter) {
+            convertValue(converter, event);
+         }
+         if (skipQueue) {
+            invocation.invoke(event);
+         } else {
+            doRealInvocation(event);
+         }
+      }
+
+      protected void doRealInvocation(Event<K, V> event) {
+         invocation.invoke(event);
+      }
+
+      @Override
+      public boolean shouldInvoke(CacheEntryEvent<K, V> event, boolean isLocalNodePrimaryOwner) {
+         if (onlyPrimary && !isLocalNodePrimaryOwner) return false;
+         if (event instanceof EventImpl) {
+            EventImpl<K, V> eventImpl = (EventImpl<K, V>)event;
+            // Cluster listeners only get post events
+            if (eventImpl.isPre() && clustered) return false;
+            if (filter != null && !filter.accept(eventImpl.getKey(), eventImpl.getValue(), eventImpl.getMetadata())) return false;
+         }
+         return true;
+      }
+
+      @Override
+      public Object getTarget() {
+         return invocation.getTarget();
+      }
+
+      @Override
+      public KeyValueFilter<? super K, ? super V> getFilter() {
+         return filter;
+      }
+
+      @Override
+      public Converter<? super K, ? super V, ?> getConverter() {
+         return converter;
+      }
+
+      @Override
+      public boolean isClustered() {
+         return clustered;
+      }
+
+      @Override
+      public UUID getIdentifier() {
+         return identifier;
+      }
+
+      protected void convertValue(Converter<? super K, ? super V, ?> converter, CacheEntryEvent<? extends K, ? extends V> event) {
+         if (converter != null) {
+            if (event instanceof EventImpl) {
+               // This is a bit hacky to let the C type be passed in for the V type
+               EventImpl<K, Object> eventImpl = (EventImpl<K, Object>)event;
+               eventImpl.setValue(converter.convert(eventImpl.getKey(), (V) eventImpl.getValue(),
+                                                    eventImpl.getMetadata()));
+            } else {
+               throw new IllegalArgumentException("Provided event should be org.infinispan.notifications.cachelistener.eventEventImpl " +
+                                                        "when a converter is being used!");
+            }
+         }
+      }
    }
 
    @Override

@@ -65,8 +65,14 @@ public interface EntryRetriever<K, V> {
     * and finally completes.
     */
    public interface SegmentListener {
-      public void segmentTransferred(int segment);
-
-      public void transferComplete();
+      /**
+       * Notifies the listener that the segment has been completed.  This is only invoked when a segment no longer has
+       * any keys left to iterate on.  Thus empty segments will be completed right away, however segments with keys
+       * will be completed immediately following the iterator returning the last value for that segment.
+       * @param segment The segment that just completed
+       * @param sentLastEntry Whether the segment just saw the last value from the iterator.  If this is false then
+       *                      the segment was empty
+       */
+      public void segmentTransferred(int segment, boolean sentLastEntry);
    }
 }

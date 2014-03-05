@@ -5,7 +5,9 @@ import org.infinispan.commons.equivalence.AnyEquivalence;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.context.impl.NonTxInvocationContext;
+import org.infinispan.distribution.DistributionManager;
 import org.infinispan.interceptors.locking.ClusteringDependentLogic;
+import org.infinispan.iteration.impl.EntryRetriever;
 import org.infinispan.lifecycle.ComponentStatus;
 import org.infinispan.filter.KeyFilter;
 import org.infinispan.notifications.cachelistener.event.CacheEntryCreatedEvent;
@@ -47,7 +49,8 @@ public class KeyFilterTest extends AbstractInfinispanTest {
       };
       when(mockCache.getAdvancedCache().getComponentRegistry().getComponent(any(Class.class))).then(answer);
       when(mockCache.getAdvancedCache().getComponentRegistry().getComponent(any(Class.class), anyString())).then(answer);
-      n.injectDependencies(mockCache, new ClusteringDependentLogic.LocalLogic(), null, config);
+      n.injectDependencies(mockCache, new ClusteringDependentLogic.LocalLogic(), null, config,
+                           mock(DistributionManager.class), mock(EntryRetriever.class));
       cl = new CacheListener();
       n.start();
       n.addListener(cl, kf);
