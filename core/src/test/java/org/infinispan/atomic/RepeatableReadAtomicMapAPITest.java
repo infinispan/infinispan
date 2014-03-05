@@ -21,13 +21,7 @@ public class RepeatableReadAtomicMapAPITest extends AtomicMapAPITest {
             .transactionMode(TransactionMode.TRANSACTIONAL)
             .lockingMode(LockingMode.PESSIMISTIC)
             .locking().isolationLevel(IsolationLevel.REPEATABLE_READ)
-            .locking().lockAcquisitionTimeout(100l);
+            .locking().lockAcquisitionTimeout(2000l);
       createClusteredCaches(2, "atomic", c);
-   }
-
-   @Test(groups = "unstable", description = "See ISPN-3990")
-   @Override
-   public void testConcurrentTx() throws Exception {
-      super.testConcurrentTx();
    }
 }

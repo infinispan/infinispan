@@ -19,7 +19,9 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.concurrent.Callable;
 import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.Future;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import static org.testng.AssertJUnit.*;
@@ -41,7 +43,7 @@ public abstract class BaseAtomicHashMapAPITest extends MultipleCacheManagersTest
       configurationBuilder.transaction()
             .transactionMode(TransactionMode.TRANSACTIONAL).transactionManagerLookup(new DummyTransactionManagerLookup())
             .lockingMode(LockingMode.PESSIMISTIC)
-            .locking().lockAcquisitionTimeout(100l);
+            .locking().lockAcquisitionTimeout(2000l);
       createClusteredCaches(2, "atomic", configurationBuilder);
    }
 
@@ -430,34 +432,38 @@ public abstract class BaseAtomicHashMapAPITest extends MultipleCacheManagersTest
       assertMap(expectedMap, map1);
       assertMap(expectedMap, map2);
 
-      Thread t1 = fork(new Runnable() {
+      Future<Void> t1 = fork(new Callable<Void>() {
          @Override
-         public void run() {
+         public Void call() throws Exception {
             try {
                tm1.begin();
                map1.put("k1", "tx1Value");
                tm1.commit();
             } catch (Exception e) {
                log.error(e);
+               throw e;
             }
+            return null;
          }
-      }, false);
+      });
 
-      Thread t2 = fork(new Runnable() {
+      Future<Void> t2 = fork(new Callable<Void>() {
          @Override
-         public void run() {
+         public Void call() throws Exception {
             try {
                tm2.begin();
                map2.put("k2", "tx2Value");
                tm2.commit();
             } catch (Exception e) {
                log.error(e);
+               throw e;
             }
+            return null;
          }
-      }, false);
+      });
 
-      t2.join();
-      t1.join();
+      t2.get();
+      t1.get();
 
       expectedMap = createMap("k1", "tx1Value", "k2", "tx2Value");
       assertMap(expectedMap, map1);

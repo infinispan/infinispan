@@ -21,7 +21,7 @@ public class RepeatableReadFineGrainedAtomicMapAPITest extends FineGrainedAtomic
             .transactionMode(TransactionMode.TRANSACTIONAL)
             .lockingMode(LockingMode.PESSIMISTIC)
             .locking().isolationLevel(IsolationLevel.REPEATABLE_READ)
-            .locking().lockAcquisitionTimeout(100l);
+            .locking().lockAcquisitionTimeout(2000l);
       createClusteredCaches(2, "atomic", c);
    }
 }
