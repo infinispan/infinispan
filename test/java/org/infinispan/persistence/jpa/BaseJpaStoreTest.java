@@ -11,14 +11,22 @@ import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 
+import javax.persistence.EntityManager;
+import javax.persistence.EntityManagerFactory;
+import javax.persistence.EntityTransaction;
+import javax.persistence.Persistence;
+
 import org.hibernate.ejb.HibernateEntityManagerFactory;
 import org.hornetq.utils.ConcurrentHashSet;
 import org.infinispan.commons.marshall.StreamingMarshaller;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
+import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.marshall.core.MarshalledEntry;
 import org.infinispan.marshall.core.MarshalledEntryFactoryImpl;
 import org.infinispan.marshall.core.MarshalledEntryImpl;
+import org.infinispan.marshall.core.MarshalledValue;
+import org.infinispan.persistence.BaseStoreTest.Pojo;
 import org.infinispan.persistence.InitializationContextImpl;
 import org.infinispan.persistence.jpa.configuration.JpaStoreConfigurationBuilder;
 import org.infinispan.persistence.spi.AdvancedCacheLoader;
@@ -26,6 +34,7 @@ import org.infinispan.persistence.spi.AdvancedLoadWriteStore;
 import org.infinispan.persistence.spi.PersistenceException;
 import org.infinispan.test.AbstractInfinispanTest;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
+import org.infinispan.test.fwk.TestInternalCacheEntryFactory;
 import org.infinispan.util.DefaultTimeService;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
@@ -42,6 +51,8 @@ import org.testng.annotations.Test;
 @Test(groups = "functional", testName = "persistence.BaseJpaStoreTest")
 public abstract class BaseJpaStoreTest extends AbstractInfinispanTest {
 
+   private static final String PERSISTENCE_UNIT_NAME = "org.infinispan.persistence.jpa";
+   
    protected EmbeddedCacheManager cm;
 
    protected AdvancedLoadWriteStore cs;
@@ -61,7 +72,7 @@ public abstract class BaseJpaStoreTest extends AbstractInfinispanTest {
    protected AdvancedLoadWriteStore createCacheStore() {
       ConfigurationBuilder builder = new ConfigurationBuilder();
       builder.persistence().addStore(JpaStoreConfigurationBuilder.class)
-            .persistenceUnitName("org.infinispan.persistence.jpa")
+            .persistenceUnitName(PERSISTENCE_UNIT_NAME)
             .entityClass(getEntityClass());
 
       JpaStore store = new JpaStore();
@@ -209,6 +220,48 @@ public abstract class BaseJpaStoreTest extends AbstractInfinispanTest {
       assertFalse(cs.contains(obj3.getKey()));
       assertFalse(cs.contains(obj4.getKey()));
 	}
+   
+   public void testStoreValuesViaNonJpaCacheStore() {
+      TestObject obj1 = createTestObject("testStoreViaNonJpaCacheStore1");
+      TestObject obj2 = createTestObject("testStoreViaNonJpaCacheStore2");
+      
+      assertEquals(cs.size(), 0);
+      assertFalse(cs.contains(obj1.getKey()));
+      assertFalse(cs.contains(obj1.getKey()));
+      
+      EntityManagerFactory emf = Persistence.createEntityManagerFactory(PERSISTENCE_UNIT_NAME);
+      EntityManager em = emf.createEntityManager();      
+      EntityTransaction txn = em.getTransaction();
+      txn.begin();
+      em.persist(obj1.getValue());
+      em.persist(obj2.getValue());
+      em.flush();
+      txn.commit();
+      em.close();
+      
+      assertEquals(cs.size(), 2);
+      assertTrue(cs.contains(obj1.getKey()));
+      assertTrue(cs.contains(obj1.getKey()));
+   }
+   
+   public void testLoadValuesViaNonJpaCacheStore() {
+      TestObject obj1 = createTestObject("testLoadViaNonJpaCacheStore1");
+      TestObject obj2 = createTestObject("testLoadViaNonJpaCacheStore2");
+      cs.write(createEntry(obj1));
+      cs.write(createEntry(obj2));
+      
+      assertEquals(cs.size(), 2);
+      assertTrue(cs.contains(obj1.getKey()));
+      assertTrue(cs.contains(obj1.getKey()));
+      
+      EntityManagerFactory emf = Persistence.createEntityManagerFactory(PERSISTENCE_UNIT_NAME);
+      EntityManager em = emf.createEntityManager();      
+      
+      assertEquals(em.find(obj1.getValue().getClass(), obj1.getKey()), obj1.getValue()); 
+      assertEquals(em.find(obj2.getValue().getClass(), obj2.getKey()), obj2.getValue());
+      
+      em.close();
+   }
 
    /*
 
