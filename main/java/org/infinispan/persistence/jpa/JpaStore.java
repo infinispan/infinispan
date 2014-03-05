@@ -1,8 +1,13 @@
 package org.infinispan.persistence.jpa;
 
+import java.util.List;
+import java.util.concurrent.Callable;
+import java.util.concurrent.Executor;
+
 import javax.persistence.EntityManager;
 import javax.persistence.EntityManagerFactory;
 import javax.persistence.EntityTransaction;
+import javax.persistence.FlushModeType;
 import javax.persistence.GeneratedValue;
 import javax.persistence.PersistenceException;
 import javax.persistence.Query;
@@ -13,8 +18,6 @@ import javax.persistence.metamodel.IdentifiableType;
 import javax.persistence.metamodel.ManagedType;
 import javax.persistence.metamodel.SingularAttribute;
 import javax.persistence.metamodel.Type;
-import java.util.concurrent.Callable;
-import java.util.concurrent.Executor;
 
 import org.infinispan.commons.marshall.StreamingMarshaller;
 import org.infinispan.executors.ExecutorAllCompletionService;
@@ -120,15 +123,16 @@ public class JpaStore implements AdvancedLoadWriteStore {
             try {
                log.trace("Clearing JPA Store");
                String entityTable = em.getMetamodel().entity(configuration.entityClass()).getName();
-               Query clearEntities = em.createQuery("DELETE FROM " + entityTable);
-               clearEntities.executeUpdate();
+               @SuppressWarnings("unchecked") List<Object> items = em.createQuery("FROM " + entityTable).getResultList();
+               for(Object o : items)
+                  em.remove(o);
                if (configuration.storeMetadata()) {
                   String metadataTable = em.getMetamodel().entity(MetadataEntity.class).getName();
                   Query clearMetadata = em.createQuery("DELETE FROM " + metadataTable);
                   clearMetadata.executeUpdate();
                }
-               em.clear();
                txn.commit();
+               em.clear();
                break;
             } catch (Exception e) {
                log.trace("Failed to clear store", e);

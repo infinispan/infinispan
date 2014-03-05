@@ -8,6 +8,7 @@
      <class>org.infinispan.persistence.jpa.MetadataEntity</class>
      <class>org.infinispan.persistence.jpa.entity.Document</class>
      <class>org.infinispan.persistence.jpa.entity.KeyValueEntity</class>
+     <class>org.infinispan.persistence.jpa.entity.Person</class>
      <class>org.infinispan.persistence.jpa.entity.User</class>
      <class>org.infinispan.persistence.jpa.entity.Vehicle</class>
      <properties>
@@ -28,6 +29,7 @@
      <class>org.infinispan.persistence.jpa.MetadataEntity</class>
      <class>org.infinispan.persistence.jpa.entity.Document</class>
      <class>org.infinispan.persistence.jpa.entity.KeyValueEntity</class>
+     <class>org.infinispan.persistence.jpa.entity.Person</class>
      <class>org.infinispan.persistence.jpa.entity.User</class>
      <class>org.infinispan.persistence.jpa.entity.Vehicle</class>
      <properties>
