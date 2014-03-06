@@ -84,7 +84,7 @@ import java.util.concurrent.ConcurrentMap;
  * @see <a href="http://www.jboss.org/community/wiki/5minutetutorialonInfinispan">5 Minute Usage Tutorial</a>
  * @since 4.0
  */
-public interface Cache<K, V> extends BasicCache<K, V>, BatchingCache, FilteringListenable {
+public interface Cache<K, V> extends BasicCache<K, V>, BatchingCache, FilteringListenable<K, V> {
    /**
     * Under special operating behavior, associates the value with the specified key. <ul> <li> Only goes through if the
     * key specified does not exist; no-op otherwise (similar to {@link ConcurrentMap#putIfAbsent(Object, Object)})</i>

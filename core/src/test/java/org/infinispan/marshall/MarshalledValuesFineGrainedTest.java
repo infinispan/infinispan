@@ -36,7 +36,7 @@ public class MarshalledValuesFineGrainedTest extends AbstractInfinispanTest {
       ecm = TestCacheManagerFactory.createCacheManager(c);
       ecm.getCache().put(key, value);
 
-      DataContainer dc = ecm.getCache().getAdvancedCache().getDataContainer();
+      DataContainer<?, ?> dc = ecm.getCache().getAdvancedCache().getDataContainer();
 
       InternalCacheEntry entry = dc.iterator().next();
       Object key = entry.getKey();
@@ -55,7 +55,7 @@ public class MarshalledValuesFineGrainedTest extends AbstractInfinispanTest {
       ecm = TestCacheManagerFactory.createCacheManager(c);
       ecm.getCache().put(key, value);
 
-      DataContainer dc = ecm.getCache().getAdvancedCache().getDataContainer();
+      DataContainer<?, ?> dc = ecm.getCache().getAdvancedCache().getDataContainer();
 
       InternalCacheEntry entry = dc.iterator().next();
       Object key = entry.getKey();
@@ -73,7 +73,7 @@ public class MarshalledValuesFineGrainedTest extends AbstractInfinispanTest {
       ecm = TestCacheManagerFactory.createCacheManager(c);
       ecm.getCache().put(key, value);
 
-      DataContainer dc = ecm.getCache().getAdvancedCache().getDataContainer();
+      DataContainer<?, ?> dc = ecm.getCache().getAdvancedCache().getDataContainer();
 
       InternalCacheEntry entry = dc.iterator().next();
       Object key = entry.getKey();

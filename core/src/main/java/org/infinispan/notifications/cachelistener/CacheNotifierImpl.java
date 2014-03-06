@@ -67,7 +67,8 @@ import static org.infinispan.notifications.cachelistener.event.Event.Type.*;
  * @author Mircea.Markus@jboss.com
  * @since 4.0
  */
-public final class CacheNotifierImpl extends AbstractListenerImpl implements ClusterCacheNotifier {
+public final class CacheNotifierImpl<K, V> extends AbstractListenerImpl<Event<? extends K, ? extends V>, K, V>
+      implements ClusterCacheNotifier<K, V> {
 
    private static final Log log = LogFactory.getLog(CacheNotifierImpl.class);
 
@@ -117,7 +118,7 @@ public final class CacheNotifierImpl extends AbstractListenerImpl implements Clu
    // For backward compat
    final List<ListenerInvocation> cacheEntryEvictedListeners = new CopyOnWriteArrayList<ListenerInvocation>();
 
-   private Cache<Object, Object> cache;
+   private Cache<K, V> cache;
    private ClusteringDependentLogic clusteringDependentLogic;
    private TransactionManager transactionManager;
    private DistributedExecutorService distExecutorService;
@@ -146,7 +147,7 @@ public final class CacheNotifierImpl extends AbstractListenerImpl implements Clu
    }
 
    @Inject
-   void injectDependencies(Cache<Object, Object> cache, ClusteringDependentLogic clusteringDependentLogic,
+   void injectDependencies(Cache<K, V> cache, ClusteringDependentLogic clusteringDependentLogic,
                            TransactionManager transactionManager, Configuration config) {
       this.cache = cache;
       this.clusteringDependentLogic = clusteringDependentLogic;
@@ -216,10 +217,10 @@ public final class CacheNotifierImpl extends AbstractListenerImpl implements Clu
    }
 
    @Override
-   public void notifyCacheEntryCreated(Object key, Object value, boolean pre,
+   public void notifyCacheEntryCreated(K key, V value, boolean pre,
          InvocationContext ctx, FlagAffectedCommand command) {
       if (!cacheEntryCreatedListeners.isEmpty()) {
-         EventImpl<Object, Object> e = EventImpl.createEvent(cache, CACHE_ENTRY_CREATED);
+         EventImpl<K, V> e = EventImpl.createEvent(cache, CACHE_ENTRY_CREATED);
          configureEvent(e, key, value, pre, ctx, command);
          boolean isLocalNodePrimaryOwner = clusteringDependentLogic.localNodeIsPrimaryOwner(key);
          for (ListenerInvocation listener : cacheEntryCreatedListeners) listener.invoke(e, isLocalNodePrimaryOwner);
@@ -227,11 +228,11 @@ public final class CacheNotifierImpl extends AbstractListenerImpl implements Clu
    }
 
    @Override
-   public void notifyCacheEntryModified(Object key, Object value,
+   public void notifyCacheEntryModified(K key, V value,
          boolean created, boolean pre, InvocationContext ctx,
          FlagAffectedCommand command) {
       if (!cacheEntryModifiedListeners.isEmpty()) {
-         EventImpl<Object, Object> e = EventImpl.createEvent(cache, CACHE_ENTRY_MODIFIED);
+         EventImpl<K, V> e = EventImpl.createEvent(cache, CACHE_ENTRY_MODIFIED);
          configureEvent(e, key, value, pre, ctx, command);
          // Even if CacheEntryCreatedEvent.getValue() has been added, to
          // avoid breaking old behaviour and make it easy to comply with
@@ -247,10 +248,10 @@ public final class CacheNotifierImpl extends AbstractListenerImpl implements Clu
    }
 
    @Override
-   public void notifyCacheEntryRemoved(Object key, Object value, Object oldValue,
+   public void notifyCacheEntryRemoved(K key, V value, V oldValue,
          boolean pre, InvocationContext ctx, FlagAffectedCommand command) {
       if (isNotificationAllowed(command, cacheEntryRemovedListeners)) {
-         EventImpl<Object, Object> e = EventImpl.createEvent(cache, CACHE_ENTRY_REMOVED);
+         EventImpl<K, V> e = EventImpl.createEvent(cache, CACHE_ENTRY_REMOVED);
          configureEvent(e, key, value, pre, ctx, command);
          e.setOldValue(oldValue);
          setTx(ctx, e);
@@ -259,7 +260,7 @@ public final class CacheNotifierImpl extends AbstractListenerImpl implements Clu
       }
    }
 
-   private void configureEvent(EventImpl<Object, Object> e, Object key, Object value, boolean pre,
+   private void configureEvent(EventImpl<K, V> e, K key, V value, boolean pre,
                                InvocationContext ctx, FlagAffectedCommand command) {
       boolean originLocal = ctx.isOriginLocal();
 
@@ -279,9 +280,9 @@ public final class CacheNotifierImpl extends AbstractListenerImpl implements Clu
    }
 
    @Override
-   public void notifyCacheEntryVisited(Object key, Object value, boolean pre, InvocationContext ctx, FlagAffectedCommand command) {
+   public void notifyCacheEntryVisited(K key, V value, boolean pre, InvocationContext ctx, FlagAffectedCommand command) {
       if (isNotificationAllowed(command, cacheEntryVisitedListeners)) {
-         EventImpl<Object, Object> e = EventImpl.createEvent(cache, CACHE_ENTRY_VISITED);
+         EventImpl<K, V> e = EventImpl.createEvent(cache, CACHE_ENTRY_VISITED);
          e.setPre(pre);
          e.setKey(key);
          e.setValue(value);
@@ -292,27 +293,27 @@ public final class CacheNotifierImpl extends AbstractListenerImpl implements Clu
    }
 
    @Override
-   public void notifyCacheEntriesEvicted(Collection<InternalCacheEntry> entries, InvocationContext ctx, FlagAffectedCommand command) {
+   public void notifyCacheEntriesEvicted(Collection<InternalCacheEntry<? extends K, ? extends V>> entries, InvocationContext ctx, FlagAffectedCommand command) {
       if (!entries.isEmpty()) {
          if (isNotificationAllowed(command, cacheEntriesEvictedListeners)) {
-            EventImpl<Object, Object> e = EventImpl.createEvent(cache, CACHE_ENTRY_EVICTED);
-            Map<Object, Object> evictedKeysAndValues = transformCollectionToMap(entries,
-               new InfinispanCollections.MapMakerFunction<Object, Object, InternalCacheEntry>() {
+            EventImpl<K, V> e = EventImpl.createEvent(cache, CACHE_ENTRY_EVICTED);
+            Map<K, V> evictedKeysAndValues = transformCollectionToMap(entries,
+               new InfinispanCollections.MapMakerFunction<K, V, InternalCacheEntry<? extends K, ? extends V>>() {
                   @Override
-                  public Map.Entry<Object, Object> transform(final InternalCacheEntry input) {
-                     return new Map.Entry<Object, Object>() {
+                  public Map.Entry<K, V> transform(final InternalCacheEntry<? extends K, ? extends V> input) {
+                     return new Map.Entry<K, V>() {
                         @Override
-                        public Object getKey() {
+                        public K getKey() {
                           return input.getKey();
                         }
 
                         @Override
-                        public Object getValue() {
+                        public V getValue() {
                           return input.getValue();
                         }
 
                         @Override
-                        public Object setValue(Object value) {
+                        public V setValue(V value) {
                           throw new UnsupportedOperationException();
                         }
                      };
@@ -326,8 +327,8 @@ public final class CacheNotifierImpl extends AbstractListenerImpl implements Clu
 
          // For backward compat
          if (isNotificationAllowed(command, cacheEntryEvictedListeners)) {
-            for (InternalCacheEntry ice : entries) {
-               EventImpl<Object, Object> e = EventImpl.createEvent(cache, CACHE_ENTRY_EVICTED);
+            for (InternalCacheEntry<? extends K, ? extends V> ice : entries) {
+               EventImpl<K, V> e = EventImpl.createEvent(cache, CACHE_ENTRY_EVICTED);
                e.setKey(ice.getKey());
                e.setValue(ice.getValue());
                boolean isLocalNodePrimaryOwner = clusteringDependentLogic.localNodeIsPrimaryOwner(ice.getKey());
@@ -338,18 +339,19 @@ public final class CacheNotifierImpl extends AbstractListenerImpl implements Clu
    }
 
    @Override
-   public void notifyCacheEntryEvicted(Object key, Object value,
+   public void notifyCacheEntryEvicted(K key, V value,
          InvocationContext ctx, FlagAffectedCommand command) {
       boolean isLocalNodePrimaryOwner = clusteringDependentLogic.localNodeIsPrimaryOwner(key);
       if (isNotificationAllowed(command, cacheEntriesEvictedListeners)) {
-         EventImpl<Object, Object> e = EventImpl.createEvent(cache, CACHE_ENTRY_EVICTED);
-         e.setEntries(Collections.singletonMap(key, value));
+         EventImpl<K, V> e = EventImpl.createEvent(cache, CACHE_ENTRY_EVICTED);
+         Map<K, V> map = Collections.singletonMap(key, value);
+         e.setEntries(map);
          for (ListenerInvocation listener : cacheEntriesEvictedListeners) listener.invoke(e, isLocalNodePrimaryOwner);
       }
 
       // For backward compat
       if (isNotificationAllowed(command, cacheEntryEvictedListeners)) {
-         EventImpl<Object, Object> e = EventImpl.createEvent(cache, CACHE_ENTRY_EVICTED);
+         EventImpl<K, V> e = EventImpl.createEvent(cache, CACHE_ENTRY_EVICTED);
          e.setKey(key);
          e.setValue(value);
          for (ListenerInvocation listener : cacheEntryEvictedListeners) listener.invoke(e, isLocalNodePrimaryOwner);
@@ -357,11 +359,11 @@ public final class CacheNotifierImpl extends AbstractListenerImpl implements Clu
    }
 
    @Override
-   public void notifyCacheEntryInvalidated(final Object key, Object value, final boolean pre,
+   public void notifyCacheEntryInvalidated(final K key, V value, final boolean pre,
          InvocationContext ctx, FlagAffectedCommand command) {
       if (isNotificationAllowed(command, cacheEntryInvalidatedListeners)) {
          final boolean originLocal = ctx.isOriginLocal();
-         EventImpl<Object, Object> e = EventImpl.createEvent(cache, CACHE_ENTRY_INVALIDATED);
+         EventImpl<K, V> e = EventImpl.createEvent(cache, CACHE_ENTRY_INVALIDATED);
          e.setOriginLocal(originLocal);
          e.setPre(pre);
          e.setKey(key);
@@ -373,11 +375,11 @@ public final class CacheNotifierImpl extends AbstractListenerImpl implements Clu
    }
 
    @Override
-   public void notifyCacheEntryLoaded(Object key, Object value, boolean pre,
+   public void notifyCacheEntryLoaded(K key, V value, boolean pre,
          InvocationContext ctx, FlagAffectedCommand command) {
       if (isNotificationAllowed(command, cacheEntryLoadedListeners)) {
          boolean originLocal = ctx.isOriginLocal();
-         EventImpl<Object, Object> e = EventImpl.createEvent(cache, CACHE_ENTRY_LOADED);
+         EventImpl<K, V> e = EventImpl.createEvent(cache, CACHE_ENTRY_LOADED);
          e.setOriginLocal(originLocal);
          e.setPre(pre);
          e.setKey(key);
@@ -389,10 +391,10 @@ public final class CacheNotifierImpl extends AbstractListenerImpl implements Clu
    }
 
    @Override
-   public void notifyCacheEntryActivated(Object key, Object value, boolean pre, InvocationContext ctx, FlagAffectedCommand command) {
+   public void notifyCacheEntryActivated(K key, V value, boolean pre, InvocationContext ctx, FlagAffectedCommand command) {
       if (isNotificationAllowed(command, cacheEntryActivatedListeners)) {
          boolean originLocal = ctx.isOriginLocal();
-         EventImpl<Object, Object> e = EventImpl.createEvent(cache, CACHE_ENTRY_ACTIVATED);
+         EventImpl<K, V> e = EventImpl.createEvent(cache, CACHE_ENTRY_ACTIVATED);
          e.setOriginLocal(originLocal);
          e.setPre(pre);
          e.setKey(key);
@@ -403,7 +405,7 @@ public final class CacheNotifierImpl extends AbstractListenerImpl implements Clu
       }
    }
 
-   private void setTx(InvocationContext ctx, EventImpl<Object, Object> e) {
+   private void setTx(InvocationContext ctx, EventImpl<K, V> e) {
       if (ctx != null && ctx.isInTxScope()) {
          GlobalTransaction tx = ((TxInvocationContext) ctx).getGlobalTransaction();
          e.setTransactionId(tx);
@@ -411,9 +413,9 @@ public final class CacheNotifierImpl extends AbstractListenerImpl implements Clu
    }
 
    @Override
-   public void notifyCacheEntryPassivated(Object key, Object value, boolean pre, InvocationContext ctx, FlagAffectedCommand command) {
+   public void notifyCacheEntryPassivated(K key, V value, boolean pre, InvocationContext ctx, FlagAffectedCommand command) {
       if (isNotificationAllowed(command, cacheEntryPassivatedListeners)) {
-         EventImpl<Object, Object> e = EventImpl.createEvent(cache, CACHE_ENTRY_PASSIVATED);
+         EventImpl<K, V> e = EventImpl.createEvent(cache, CACHE_ENTRY_PASSIVATED);
          e.setPre(pre);
          e.setKey(key);
          e.setValue(value);
@@ -426,7 +428,7 @@ public final class CacheNotifierImpl extends AbstractListenerImpl implements Clu
    public void notifyTransactionCompleted(GlobalTransaction transaction, boolean successful, InvocationContext ctx) {
       if (!transactionCompletedListeners.isEmpty()) {
          boolean isOriginLocal = ctx.isOriginLocal();
-         EventImpl<Object, Object> e = EventImpl.createEvent(cache, TRANSACTION_COMPLETED);
+         EventImpl<K, V> e = EventImpl.createEvent(cache, TRANSACTION_COMPLETED);
          e.setOriginLocal(isOriginLocal);
          e.setTransactionId(transaction);
          e.setTransactionSuccessful(successful);
@@ -437,7 +439,7 @@ public final class CacheNotifierImpl extends AbstractListenerImpl implements Clu
    @Override
    public void notifyTransactionRegistered(GlobalTransaction globalTransaction, boolean isOriginLocal) {
       if (!transactionRegisteredListeners.isEmpty()) {
-         EventImpl<Object, Object> e = EventImpl.createEvent(cache, TRANSACTION_REGISTERED);
+         EventImpl<K, V> e = EventImpl.createEvent(cache, TRANSACTION_REGISTERED);
          e.setOriginLocal(isOriginLocal);
          e.setTransactionId(globalTransaction);
          for (ListenerInvocation listener : transactionRegisteredListeners) listener.invoke(e);
@@ -447,7 +449,7 @@ public final class CacheNotifierImpl extends AbstractListenerImpl implements Clu
    @Override
    public void notifyDataRehashed(ConsistentHash oldCH, ConsistentHash newCH, int newTopologyId, boolean pre) {
       if (!dataRehashedListeners.isEmpty()) {
-         EventImpl<Object, Object> e = EventImpl.createEvent(cache, DATA_REHASHED);
+         EventImpl<K, V> e = EventImpl.createEvent(cache, DATA_REHASHED);
          e.setPre(pre);
          e.setConsistentHashAtStart(oldCH);
          e.setConsistentHashAtEnd(newCH);
@@ -459,7 +461,7 @@ public final class CacheNotifierImpl extends AbstractListenerImpl implements Clu
    @Override
    public void notifyTopologyChanged(ConsistentHash oldConsistentHash, ConsistentHash newConsistentHash, int newTopologyId, boolean pre) {
       if (!topologyChangedListeners.isEmpty()) {
-         EventImpl<Object, Object> e = EventImpl.createEvent(cache, TOPOLOGY_CHANGED);
+         EventImpl<K, V> e = EventImpl.createEvent(cache, TOPOLOGY_CHANGED);
          e.setPre(pre);
          e.setConsistentHashAtStart(oldConsistentHash);
          e.setConsistentHashAtEnd(newConsistentHash);
@@ -469,8 +471,8 @@ public final class CacheNotifierImpl extends AbstractListenerImpl implements Clu
    }
 
    @Override
-   public void notifyClusterListeners(Collection<? extends Event> events, UUID uuid) {
-      for (Event event : events) {
+   public void notifyClusterListeners(Collection<? extends Event<? extends K, ? extends V>> events, UUID uuid) {
+      for (Event<? extends K, ? extends V> event : events) {
          if (event.isPre()) {
             throw new IllegalArgumentException("Events for cluster listener should never be pre change");
          }
@@ -554,8 +556,14 @@ public final class CacheNotifierImpl extends AbstractListenerImpl implements Clu
    }
 
    @Override
-   public void addListener(Object listener, KeyFilter filter, ClassLoader classLoader) {
-      validateAndAddListenerInvocation(listener, new KeyFilterAsKeyValueFilter(filter), null, classLoader);
+   public void addListener(Object listener, KeyFilter<? super K> filter, ClassLoader classLoader) {
+      validateAndAddListenerInvocation(listener, new KeyFilterAsKeyValueFilter<K, V>(filter), null, classLoader);
+   }
+
+   @Override
+   public <C> void addListener(Object listener, KeyValueFilter<? super K, ? super V> filter,
+                           Converter<? super K, ? super V, C> converter, ClassLoader classLoader) {
+      validateAndAddListenerInvocation(listener, filter, converter, classLoader);
    }
 
    @Override
@@ -564,13 +572,14 @@ public final class CacheNotifierImpl extends AbstractListenerImpl implements Clu
    }
 
    @Override
-   public <K, V, C> void addListener(Object listener, KeyValueFilter<K, V> filter, Converter<K, V, C> converter) {
+   public <C> void addListener(Object listener, KeyValueFilter<? super K, ? super V> filter, Converter<? super K,
+         ? super V, C> converter) {
       validateAndAddListenerInvocation(listener, filter, converter, null);
    }
 
    @Override
-   protected void addedListener(Object listener, UUID generatedId, boolean hasClusteredMethods, KeyValueFilter filter,
-                                Converter converter) {
+   protected <C> void addedListener(Object listener, UUID generatedId, boolean hasClusteredMethods, KeyValueFilter<? super K, ? super V> filter,
+                                Converter<? super K, ? super V, C> converter) {
       if (hasClusteredMethods) {
          if (config.clustering().cacheMode().isInvalidation()) {
             throw new UnsupportedOperationException("Cluster listeners cannot be used with Invalidation Caches!");

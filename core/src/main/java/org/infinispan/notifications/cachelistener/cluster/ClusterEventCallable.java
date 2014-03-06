@@ -33,13 +33,13 @@ public class ClusterEventCallable<K, V> implements DistributedCallable<K, V, Voi
    private transient ClusterCacheNotifier clusterCacheNotifier;
 
    private final UUID identifier;
-   private final Collection<? extends ClusterEvent> events;
+   private final Collection<? extends ClusterEvent<K, V>> events;
 
-   public ClusterEventCallable(UUID identifier, ClusterEvent event) {
+   public ClusterEventCallable(UUID identifier, ClusterEvent<K, V> event) {
       this(identifier, Collections.singleton(event));
    }
 
-   public ClusterEventCallable(UUID identifier, Collection<? extends ClusterEvent> events) {
+   public ClusterEventCallable(UUID identifier, Collection<? extends ClusterEvent<K, V>> events) {
       this.identifier = identifier;
       this.events = events;
    }

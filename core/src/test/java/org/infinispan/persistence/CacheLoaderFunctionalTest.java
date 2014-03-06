@@ -58,8 +58,8 @@ public class CacheLoaderFunctionalTest extends AbstractInfinispanTest {
    private static final Log log = LogFactory.getLog(CacheLoaderFunctionalTest.class);
 
    Cache<String, String> cache;
-   AdvancedLoadWriteStore store;
-   AdvancedCacheWriter writer;
+   AdvancedLoadWriteStore<String, String> store;
+   AdvancedCacheWriter<String, String> writer;
    TransactionManager tm;
    ConfigurationBuilder cfg;
    EmbeddedCacheManager cm;
@@ -77,8 +77,8 @@ public class CacheLoaderFunctionalTest extends AbstractInfinispanTest {
       configure(cfg);
       cm = TestCacheManagerFactory.createCacheManager(cfg);
       cache = cm.getCache();
-      store = (AdvancedLoadWriteStore) TestingUtil.getFirstLoader(cache);
-      writer = (AdvancedCacheWriter) TestingUtil.getFirstLoader(cache);
+      store = (AdvancedLoadWriteStore<String, String>) TestingUtil.getFirstLoader(cache);
+      writer = (AdvancedCacheWriter<String, String>) TestingUtil.getFirstLoader(cache);
       tm = TestingUtil.getTransactionManager(cache);
       sm = cache.getAdvancedCache().getComponentRegistry().getCacheMarshaller();
    }
@@ -96,20 +96,20 @@ public class CacheLoaderFunctionalTest extends AbstractInfinispanTest {
       store = null;
    }
 
-   private void assertInCacheAndStore(Object key, Object value) throws PersistenceException {
+   private void assertInCacheAndStore(String key, Object value) throws PersistenceException {
       assertInCacheAndStore(key, value, -1);
    }
 
-   private void assertInCacheAndStore(Object key, Object value, long lifespanMillis) throws PersistenceException {
+   private void assertInCacheAndStore(String key, Object value, long lifespanMillis) throws PersistenceException {
       assertInCacheAndStore(cache, store, key, value, lifespanMillis);
    }
 
 
-   private void assertInCacheAndStore(Cache<?, ?> cache, CacheLoader store, Object key, Object value) throws PersistenceException {
+   private <K> void assertInCacheAndStore(Cache<? super K, ?> cache, CacheLoader store, K key, Object value) throws PersistenceException {
       assertInCacheAndStore(cache, store, key, value, -1);
    }
 
-   private void assertInCacheAndStore(Cache<?, ?> cache, CacheLoader loader, Object key, Object value, long lifespanMillis) throws PersistenceException {
+   private <K> void assertInCacheAndStore(Cache<? super K, ?> cache, CacheLoader loader, K key, Object value, long lifespanMillis) throws PersistenceException {
       InternalCacheEntry se = cache.getAdvancedCache().getDataContainer().get(key);
       testStoredEntry(se.getValue(), value, se.getLifespan(), lifespanMillis, "Cache", key);
       MarshalledEntry load = loader.load(key);
@@ -122,34 +122,34 @@ public class CacheLoaderFunctionalTest extends AbstractInfinispanTest {
       assert lifespan == expectedLifespan : src + " expected lifespan for key " + key + " to be " + expectedLifespan + " but was " + value;
    }
 
-   private void assertNotInCacheAndStore(Cache<?, ?> cache, CacheLoader store, Object... keys) throws PersistenceException {
-      for (Object key : keys) {
+   private static <K> void assertNotInCacheAndStore(Cache<? super K, ?> cache, CacheLoader<? super K, ?> store, K... keys) throws PersistenceException {
+      for (K key : keys) {
          assert !cache.getAdvancedCache().getDataContainer().containsKey(key) : "Cache should not contain key " + key;
          assert !store.contains(key) : "Store should not contain key " + key;
       }
    }
 
-   private void assertNotInCacheAndStore(Object... keys) throws PersistenceException {
+   private void assertNotInCacheAndStore(String... keys) throws PersistenceException {
       assertNotInCacheAndStore(cache, store, keys);
    }
 
-   private void assertInStoreNotInCache(Object... keys) throws PersistenceException {
+   private void assertInStoreNotInCache(String... keys) throws PersistenceException {
       assertInStoreNotInCache(cache, store, keys);
    }
 
-   private void assertInStoreNotInCache(Cache<?, ?> cache, CacheLoader store, Object... keys) throws PersistenceException {
-      for (Object key : keys) {
+   private static <K> void assertInStoreNotInCache(Cache<? super K, ?> cache, CacheLoader<? super K, ?> store, K... keys) throws PersistenceException {
+      for (K key : keys) {
          assert !cache.getAdvancedCache().getDataContainer().containsKey(key) : "Cache should not contain key " + key;
          assert store.contains(key) : "Store should contain key " + key;
       }
    }
 
-   private void assertInCacheAndNotInStore(Object... keys) throws PersistenceException {
+   private void assertInCacheAndNotInStore(String... keys) throws PersistenceException {
       assertInCacheAndNotInStore(cache, store, keys);
    }
 
-   private void assertInCacheAndNotInStore(Cache<?, ?> cache, CacheLoader store, Object... keys) throws PersistenceException {
-      for (Object key : keys) {
+   private static <K> void assertInCacheAndNotInStore(Cache<? super K, ?> cache, CacheLoader<? super K, ?> store, K... keys) throws PersistenceException {
+      for (K key : keys) {
          assert cache.getAdvancedCache().getDataContainer().containsKey(key) : "Cache should not contain key " + key;
          assert !store.contains(key) : "Store should contain key " + key;
       }
@@ -584,7 +584,7 @@ public class CacheLoaderFunctionalTest extends AbstractInfinispanTest {
       assertEquals("Wrong number of entries in data container", expectedEntriesInContainer, c.size());
 
       for (int i = 1; i < 5; i++) {
-         final Object key = "k" + i;
+         final String key = "k" + i;
          final Object value = "v" + i;
          final long lifespan = i % 2 == 1 ? -1 : this.lifespan;
          boolean found = false;
@@ -615,7 +615,7 @@ public class CacheLoaderFunctionalTest extends AbstractInfinispanTest {
       assertEquals("Wrong number of entries in data container", expectedEntriesInContainer, c.size());
 
       for (int i = 1; i < 5; i++) {
-         final Object key = "k" + i;
+         final String key = "k" + i;
          final Object value = "v" + i;
          final long lifespan = i % 2 == 1 ? -1 : this.lifespan;
          boolean found = false;

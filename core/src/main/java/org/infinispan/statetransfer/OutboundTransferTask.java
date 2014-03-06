@@ -54,7 +54,7 @@ public class OutboundTransferTask implements Runnable {
 
    private final ConsistentHash readCh;
 
-   private final DataContainer dataContainer;
+   private final DataContainer<Object, Object> dataContainer;
 
    private final PersistenceManager persistenceManager;
 

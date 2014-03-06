@@ -13,7 +13,7 @@ import java.util.Map;
  * @author Galder Zamarreño
  * @since 4.0
  */
-public interface CacheEntry extends Map.Entry<Object, Object>, MetadataAware {
+public interface CacheEntry<K, V> extends Map.Entry<K, V>, MetadataAware {
 
    /**
     * Tests whether the entry represents a null value, typically used for repeatable read.
@@ -59,7 +59,7 @@ public interface CacheEntry extends Map.Entry<Object, Object>, MetadataAware {
     * @return a key
     */
    @Override
-   Object getKey();
+   K getKey();
 
    /**
     * Retrieves the value of this entry
@@ -67,7 +67,7 @@ public interface CacheEntry extends Map.Entry<Object, Object>, MetadataAware {
     * @return the value of the entry
     */
    @Override
-   Object getValue();
+   V getValue();
 
    /**
     * @return retrieves the lifespan of this entry.  -1 means an unlimited lifespan.
@@ -91,7 +91,7 @@ public interface CacheEntry extends Map.Entry<Object, Object>, MetadataAware {
     * @return previous value
     */
    @Override
-   Object setValue(Object value);
+   V setValue(V value);
 
    /**
     * Commits changes

@@ -25,7 +25,7 @@ import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 
 @ThreadSafe
-public class EvictionManagerImpl implements EvictionManager {
+public class EvictionManagerImpl<K, V> implements EvictionManager<K, V> {
    private static final Log log = LogFactory.getLog(EvictionManagerImpl.class);
    private static final boolean trace = log.isTraceEnabled();
    ScheduledFuture <?> evictionTask;
@@ -35,7 +35,7 @@ public class EvictionManagerImpl implements EvictionManager {
    private Configuration configuration;
    private PersistenceManager persistenceManager;
    private DataContainer dataContainer;
-   private CacheNotifier cacheNotifier;
+   private CacheNotifier<K, V> cacheNotifier;
    private TimeService timeService;
    private boolean enabled;
    private String cacheName;
@@ -43,14 +43,14 @@ public class EvictionManagerImpl implements EvictionManager {
    @Inject
    public void initialize(@ComponentName(KnownComponentNames.EVICTION_SCHEDULED_EXECUTOR)
          ScheduledExecutorService executor, Cache cache, Configuration cfg, DataContainer dataContainer,
-         PersistenceManager persistenceManager, CacheNotifier cacheNotifier, TimeService timeService) {
+         PersistenceManager persistenceManager, CacheNotifier<K, V> cacheNotifier, TimeService timeService) {
       initialize(executor, cache.getName(), cfg, dataContainer,
                  persistenceManager, cacheNotifier, timeService);
    }
 
    void initialize(ScheduledExecutorService executor,
             String cacheName, Configuration cfg, DataContainer dataContainer,
-            PersistenceManager persistenceManager, CacheNotifier cacheNotifier, TimeService timeService) {
+            PersistenceManager persistenceManager, CacheNotifier<K, V> cacheNotifier, TimeService timeService) {
       this.executor = executor;
       this.configuration = cfg;
       this.cacheName = cacheName;
@@ -127,7 +127,7 @@ public class EvictionManagerImpl implements EvictionManager {
    }
 
    @Override
-   public void onEntryEviction(Map<Object, InternalCacheEntry> evicted) {
+   public void onEntryEviction(Map<? extends K, InternalCacheEntry<? extends K, ? extends V>> evicted) {
       // don't reuse the threadlocal context as we don't want to include eviction
       // operations in any ongoing transaction, nor be affected by flags
       // especially see ISPN-1154: it's illegal to acquire locks in a committing transaction

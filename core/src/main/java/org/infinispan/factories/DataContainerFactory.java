@@ -29,12 +29,11 @@ public class DataContainerFactory extends AbstractNamedCacheComponentFactory imp
          EvictionStrategy st = configuration.eviction().strategy();
          int level = configuration.locking().concurrencyLevel();
          Equivalence keyEquivalence = configuration.dataContainer().keyEquivalence();
-         Equivalence valueEquivalence = configuration.dataContainer().valueEquivalence();
 
          switch (st) {
             case NONE:
                return (T) DefaultDataContainer.unBoundedDataContainer(
-                     level, keyEquivalence, valueEquivalence);
+                     level, keyEquivalence);
             case UNORDERED:
             case LRU:
             case FIFO:
@@ -43,13 +42,13 @@ public class DataContainerFactory extends AbstractNamedCacheComponentFactory imp
                //handle case when < 0 value signifies unbounded container 
                if(maxEntries < 0) {
                    return (T) DefaultDataContainer.unBoundedDataContainer(
-                         level, keyEquivalence, valueEquivalence);
+                         level, keyEquivalence);
                }
 
                EvictionThreadPolicy policy = configuration.eviction().threadPolicy();
 
                return (T) DefaultDataContainer.boundedDataContainer(
-                  level, maxEntries, st, policy, keyEquivalence, valueEquivalence);
+                  level, maxEntries, st, policy, keyEquivalence);
             default:
                throw new CacheConfigurationException("Unknown eviction strategy "
                         + configuration.eviction().strategy());

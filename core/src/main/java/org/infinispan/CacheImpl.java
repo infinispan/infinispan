@@ -548,12 +548,13 @@ public class CacheImpl<K, V> implements AdvancedCache<K, V> {
    }
 
    @Override
-   public void addListener(Object listener, KeyFilter filter) {
+   public void addListener(Object listener, KeyFilter<? super K> filter) {
       notifier.addListener(listener, filter);
    }
 
    @Override
-   public <K, V, C> void addListener(Object listener, KeyValueFilter<K, V> filter, Converter<K, V, C> converter) {
+   public <C> void addListener(Object listener, KeyValueFilter<? super K, ? super V> filter,
+                               Converter<? super K, ? super V, C> converter) {
       notifier.addListener(listener, filter, converter);
    }
 

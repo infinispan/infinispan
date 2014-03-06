@@ -46,26 +46,26 @@ public class EquivalentHashMap<K, V> extends AbstractMap<K, V> {
 
    int modCount;
 
-   private final Equivalence<K> keyEq;
+   private final Equivalence<? super K> keyEq;
 
-   private final Equivalence<V> valueEq;
+   private final Equivalence<? super V> valueEq;
 
    @SuppressWarnings("unchecked")
    public EquivalentHashMap(
-         Equivalence<K> keyEq, Equivalence<V> valueEq) {
+         Equivalence<? super K> keyEq, Equivalence<? super V> valueEq) {
       this(DEFAULT_INITIAL_CAPACITY, keyEq, valueEq);
    }
 
    @SuppressWarnings("unchecked")
    public EquivalentHashMap(
-         int initialCapacity, Equivalence<K> keyEq, Equivalence<V> valueEq) {
+         int initialCapacity, Equivalence<? super K> keyEq, Equivalence<? super V> valueEq) {
       this(initialCapacity, DEFAULT_LOAD_FACTOR, keyEq, valueEq);
    }
 
    @SuppressWarnings("unchecked")
    public EquivalentHashMap(
          int initialCapacity, float loadFactor,
-         Equivalence<K> keyEq, Equivalence<V> valueEq) {
+         Equivalence<? super K> keyEq, Equivalence<? super V> valueEq) {
       int capacity = 1;
       while (capacity < initialCapacity)
          capacity <<= 1;
@@ -79,7 +79,7 @@ public class EquivalentHashMap<K, V> extends AbstractMap<K, V> {
 
    @SuppressWarnings("unchecked")
    public EquivalentHashMap(
-         Map<? extends K, ? extends V> map, Equivalence<K> keyEq, Equivalence<V> valueEq) {
+         Map<? extends K, ? extends V> map, Equivalence<? super K> keyEq, Equivalence<? super V> valueEq) {
       if (map instanceof EquivalentHashMap) {
          EquivalentHashMap<? extends K, ? extends V> equivalentMap =
                (EquivalentHashMap<? extends K, ? extends V>) map;
@@ -329,11 +329,11 @@ public class EquivalentHashMap<K, V> extends AbstractMap<K, V> {
       return true;
    }
 
-   public Equivalence<K> getKeyEquivalence() {
+   public Equivalence<? super K> getKeyEquivalence() {
       return keyEq;
    }
 
-   public Equivalence<V> getValueEquivalence() {
+   public Equivalence<? super V> getValueEquivalence() {
       return valueEq;
    }
 

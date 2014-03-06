@@ -57,7 +57,7 @@ public class XSiteStateProviderImpl implements XSiteStateProvider {
 
    private final ConcurrentMap<String, StateProviderRunnable> runningStateTransfer;
 
-   private DataContainer dataContainer;
+   private DataContainer<Object, Object> dataContainer;
    private PersistenceManager persistenceManager;
    private ClusteringDependentLogic clusteringDependentLogic;
    private CommandsFactory commandsFactory;

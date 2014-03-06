@@ -20,7 +20,7 @@ import org.infinispan.factories.scopes.Scopes;
  * @since 4.0
  */
 @Scope(Scopes.NAMED_CACHE)
-public interface DataContainer extends Iterable<InternalCacheEntry> {
+public interface DataContainer<K, V> extends Iterable<InternalCacheEntry<K, V>> {
 
    /**
     * Retrieves a cached entry
@@ -28,8 +28,8 @@ public interface DataContainer extends Iterable<InternalCacheEntry> {
     * @param k key under which entry is stored
     * @return entry, if it exists and has not expired, or null if not
     */
-   InternalCacheEntry get(Object k);
-
+   InternalCacheEntry<K, V> get(Object k);
+   
    /**
     * Retrieves a cache entry in the same way as {@link #get(Object)}} except that it does not update or reorder any of
     * the internal constructs. I.e., expiration does not happen, and in the case of the LRU container, the entry is not
@@ -41,7 +41,7 @@ public interface DataContainer extends Iterable<InternalCacheEntry> {
     * @param k key under which entry is stored
     * @return entry, if it exists, or null if not
     */
-   InternalCacheEntry peek(Object k);
+   InternalCacheEntry<K, V> peek(Object k);
 
    /**
     * Puts an entry in the cache along with metadata adding information such lifespan of entry, max idle time, version
@@ -50,11 +50,11 @@ public interface DataContainer extends Iterable<InternalCacheEntry> {
     * If the {@code key} does not exists previously, it must be activate by invoking {@link
     * org.infinispan.eviction.ActivationManager#activate(Object)}.
     *
-    * @param k        key under which to store entry
-    * @param v        value to store
+    * @param k key under which to store entry
+    * @param v value to store
     * @param metadata metadata of the entry
     */
-   void put(Object k, Object v, Metadata metadata);
+   void put(K k, V v, Metadata metadata);
 
    /**
     * Tests whether an entry exists in the container
@@ -70,9 +70,10 @@ public interface DataContainer extends Iterable<InternalCacheEntry> {
     * @param k key to remove
     * @return entry removed, or null if it didn't exist or had expired
     */
-   InternalCacheEntry remove(Object k);
+   InternalCacheEntry<K, V> remove(Object k);
 
    /**
+    *
     * @return count of the number of entries in the container
     */
    int size();
@@ -90,12 +91,12 @@ public interface DataContainer extends Iterable<InternalCacheEntry> {
     *
     * @return a set of keys
     */
-   Set<Object> keySet();
+   Set<K> keySet();
 
    /**
     * @return a set of values contained in the container
     */
-   Collection<Object> values();
+   Collection<V> values();
 
    /**
     * Returns a mutable set of immutable cache entries exposed as immutable Map.Entry instances. Clients of this method
@@ -107,7 +108,7 @@ public interface DataContainer extends Iterable<InternalCacheEntry> {
     *
     * @return a set of immutable cache entries
     */
-   Set<InternalCacheEntry> entrySet();
+   Set<InternalCacheEntry<K, V>> entrySet();
 
    /**
     * Purges entries that have passed their expiry time
@@ -121,7 +122,7 @@ public interface DataContainer extends Iterable<InternalCacheEntry> {
     *
     * @param key The key to evict.
     */
-   void evict(Object key);
+   void evict(K key);
 
    /**
     * Computes the new value for the key.
@@ -134,7 +135,7 @@ public interface DataContainer extends Iterable<InternalCacheEntry> {
     * @param key    The key.
     * @param action The action that will compute the new value.
     */
-   void compute(Object key, ComputeAction action);
+   void compute(K key, ComputeAction<K, V> action);
 
    /**
     * Executes task specified by the given action on the container key/values filtered using the specified key filter.
@@ -143,10 +144,10 @@ public interface DataContainer extends Iterable<InternalCacheEntry> {
     * @param action the specified action to execute on filtered key/values
     * @throws InterruptedException
     */
-   public <K> void executeTask(AdvancedCacheLoader.KeyFilter<K> filter,
-                               ParallelIterableMap.KeyValueAction<Object, InternalCacheEntry> action) throws InterruptedException;
+   public void executeTask(AdvancedCacheLoader.KeyFilter<? super K> filter,
+         ParallelIterableMap.KeyValueAction<? super K, InternalCacheEntry<? super K, ? super V>> action) throws InterruptedException;
 
-   public static interface ComputeAction {
+   public static interface ComputeAction<K, V> {
 
       /**
        * Computes the new value for the key.
@@ -154,7 +155,7 @@ public interface DataContainer extends Iterable<InternalCacheEntry> {
        * @return The new {@code InternalCacheEntry} for the key, {@code null} if the entry is to be removed or {@code
        * oldEntry} is the entry is not to be changed (i.e. not entries are added, removed or touched).
        */
-      InternalCacheEntry compute(Object key, InternalCacheEntry oldEntry, InternalEntryFactory factory);
+      InternalCacheEntry<K, V> compute(K key, InternalCacheEntry<K, V> oldEntry, InternalEntryFactory factory);
 
    }
 }

@@ -49,7 +49,7 @@ public class CLInterfaceLoader<K, V> implements CacheLoader<K, V> {
    }
 
    @Override
-   public MarshalledEntry<K, V> load(K key) {
+   public MarshalledEntry<K, V> load(Object key) {
       // TODO: a CLI command to retrieve value + metadata is needed
       ProcessedCommand parsed = new ProcessedCommand("get " + key.toString() + ";");
 
@@ -91,7 +91,7 @@ public class CLInterfaceLoader<K, V> implements CacheLoader<K, V> {
    }
 
    @Override
-   public boolean contains(K key) {
+   public boolean contains(Object key) {
       return load(key) != null;
    }
 

@@ -210,7 +210,7 @@ public interface AdvancedCache<K, V> extends Cache<K, V> {
     *
     * @return the data container associated with this cache instance
     */
-   DataContainer getDataContainer();
+   DataContainer<K, V> getDataContainer();
 
    /**
     * Returns the transaction manager configured for this cache. If no
@@ -380,5 +380,5 @@ public interface AdvancedCache<K, V> extends Cache<K, V> {
     *
     * @since 5.3
     */
-   CacheEntry getCacheEntry(K key);
+   CacheEntry<K, V> getCacheEntry(K key);
 }

@@ -20,9 +20,9 @@ import java.util.Set;
  * @since 7.0
  */
 public class KeyFilterAsKeyValueFilter<K, V> implements KeyValueFilter<K, V> {
-   private final KeyFilter filter;
+   private final KeyFilter<? super K> filter;
 
-   public KeyFilterAsKeyValueFilter(KeyFilter<K> filter) {
+   public KeyFilterAsKeyValueFilter(KeyFilter<? super K> filter) {
       if (filter == null) {
          throw new NullPointerException();
       }

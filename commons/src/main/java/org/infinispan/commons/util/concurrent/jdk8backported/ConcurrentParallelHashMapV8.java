@@ -15,27 +15,27 @@ public class ConcurrentParallelHashMapV8<K, V> extends EquivalentConcurrentHashM
     */
    private static final long serialVersionUID = 7306507951179792494L;
 
-   public ConcurrentParallelHashMapV8(Equivalence<K> keyEquivalence, Equivalence<V> valueEquivalence) {
+   public ConcurrentParallelHashMapV8(Equivalence<? super K> keyEquivalence, Equivalence<? super V> valueEquivalence) {
       super(keyEquivalence, valueEquivalence);
    }
 
-   public ConcurrentParallelHashMapV8(int initialCapacity, Equivalence<K> keyEquivalence,
-         Equivalence<V> valueEquivalence) {
+   public ConcurrentParallelHashMapV8(int initialCapacity, Equivalence<? super K> keyEquivalence,
+         Equivalence<? super V> valueEquivalence) {
       super(initialCapacity, keyEquivalence, valueEquivalence);
    }
 
-   public ConcurrentParallelHashMapV8(int initialCapacity, float loadFactor, Equivalence<K> keyEquivalence,
-         Equivalence<V> valueEquivalence) {
+   public ConcurrentParallelHashMapV8(int initialCapacity, float loadFactor, Equivalence<? super K> keyEquivalence,
+         Equivalence<? super V> valueEquivalence) {
       super(initialCapacity, loadFactor, keyEquivalence, valueEquivalence);
    }
 
    public ConcurrentParallelHashMapV8(int initialCapacity, float loadFactor, int concurrencyLevel,
-         Equivalence<K> keyEquivalence, Equivalence<V> valueEquivalence) {
+         Equivalence<? super K> keyEquivalence, Equivalence<? super V> valueEquivalence) {
       super(initialCapacity, loadFactor, concurrencyLevel, keyEquivalence, valueEquivalence);
    }
 
-   public ConcurrentParallelHashMapV8(Map<? extends K, ? extends V> m, Equivalence<K> keyEquivalence,
-         Equivalence<V> valueEquivalence) {
+   public ConcurrentParallelHashMapV8(Map<? extends K, ? extends V> m, Equivalence<? super K> keyEquivalence,
+         Equivalence<? super V> valueEquivalence) {
       super(m, keyEquivalence, valueEquivalence);
    }
 

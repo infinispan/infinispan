@@ -14,11 +14,12 @@ import java.util.Set;
 
 import static java.util.Collections.synchronizedCollection;
 
-public class QueryableDataContainer implements DataContainer {
+public class QueryableDataContainer implements DataContainer<Object, Object> {
 
-   private static DataContainer delegate;
+   // Since this static field is here, we can't use generic types properly
+   private static DataContainer<Object, Object> delegate;
 
-   public static void setDelegate(DataContainer delegate) {
+   public static void setDelegate(DataContainer<Object, Object> delegate) {
       QueryableDataContainer.delegate = delegate;
    }
 
@@ -33,19 +34,19 @@ public class QueryableDataContainer implements DataContainer {
    }
 
    @Override
-   public Iterator<InternalCacheEntry> iterator() {
+   public Iterator<InternalCacheEntry<Object, Object>> iterator() {
       loggedOperations.add("iterator()");
       return delegate.iterator();
    }
 
    @Override
-   public InternalCacheEntry get(Object k) {
+   public InternalCacheEntry<Object, Object> get(Object k) {
       loggedOperations.add("get(" + k + ")" );
       return delegate.get(k);
    }
 
    @Override
-   public InternalCacheEntry peek(Object k) {
+   public InternalCacheEntry<Object, Object> peek(Object k) {
       loggedOperations.add("peek(" + k + ")" );
       return delegate.peek(k);
    }
@@ -63,7 +64,7 @@ public class QueryableDataContainer implements DataContainer {
    }
 
    @Override
-   public InternalCacheEntry remove(Object k) {
+   public InternalCacheEntry<Object, Object> remove(Object k) {
       loggedOperations.add("remove(" + k + ")" );
       return delegate.remove(k);
    }
@@ -93,7 +94,7 @@ public class QueryableDataContainer implements DataContainer {
    }
 
    @Override
-   public Set<InternalCacheEntry> entrySet() {
+   public Set<InternalCacheEntry<Object, Object>> entrySet() {
       loggedOperations.add("entrySet()" );
       return delegate.entrySet();
    }
@@ -121,7 +122,7 @@ public class QueryableDataContainer implements DataContainer {
    }
 
    @Override
-   public <K> void executeTask(KeyFilter<K> filter, ParallelIterableMap.KeyValueAction <Object, InternalCacheEntry> action)
+   public void executeTask(KeyFilter<? super Object> filter, ParallelIterableMap.KeyValueAction <? super Object, InternalCacheEntry<? super Object, ? super Object>> action)
          throws InterruptedException {
       throw new NotImplementedException();
    }

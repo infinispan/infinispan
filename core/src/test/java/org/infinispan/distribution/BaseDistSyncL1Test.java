@@ -80,7 +80,7 @@ public abstract class BaseDistSyncL1Test extends BaseDistFunctionalTest<Object, 
 
    protected abstract Class<? extends CommandInterceptor> getL1InterceptorClass();
 
-   protected void assertL1StateOnLocalWrite(Cache<?,?> cache, Cache<?, ?> updatingCache, Object key, Object valueWrite) {
+   protected <K> void assertL1StateOnLocalWrite(Cache<? super K,?> cache, Cache<?, ?> updatingCache, K key, Object valueWrite) {
       // Default just assumes it invalidated the cache
       assertIsNotInL1(cache, key);
    }

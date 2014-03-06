@@ -22,7 +22,7 @@ import static org.testng.AssertJUnit.assertEquals;
 public class EquivalentLinkedHashMapTest {
 
    public void testIterationAndSize() {
-      EquivalentLinkedHashMap map = new EquivalentLinkedHashMap(16, 0.75f,
+      EquivalentLinkedHashMap<String, String> map = new EquivalentLinkedHashMap<String, String>(16, 0.75f,
                                                                 EquivalentLinkedHashMap.IterationOrder.ACCESS_ORDER,
                                                                 AnyEquivalence.getInstance(), AnyEquivalence.getInstance());
 

@@ -175,9 +175,9 @@ public class BoundedConcurrentHashMap<K, V> extends AbstractMap<K, V>
    transient Set<Map.Entry<K,V>> entrySet;
    transient Collection<V> values;
 
-   private transient final Equivalence<K> keyEquivalence;
-   private transient final Equivalence<V> valueEquivalence;
-   private transient final EvictionListener<K, V> evictionListener;
+   private transient final Equivalence<? super K> keyEquivalence;
+   private transient final Equivalence<? super V> valueEquivalence;
+   private transient final EvictionListener<? super K, ? super V> evictionListener;
    private final int evictCap;
    
    private final ExecutorService executor;
@@ -1710,8 +1710,8 @@ public class BoundedConcurrentHashMap<K, V> extends AbstractMap<K, V>
     *             nonpositive.
     */
    public BoundedConcurrentHashMap(int capacity, int concurrencyLevel,
-         Eviction evictionStrategy, EvictionListener<K, V> evictionListener,
-         Equivalence<K> keyEquivalence, Equivalence<V> valueEquivalence) {
+         Eviction evictionStrategy, EvictionListener<? super K, ? super V> evictionListener,
+         Equivalence<? super K> keyEquivalence, Equivalence<? super V> valueEquivalence) {
       this.keyEquivalence = keyEquivalence;
       this.valueEquivalence = valueEquivalence;
 
@@ -1782,7 +1782,7 @@ public class BoundedConcurrentHashMap<K, V> extends AbstractMap<K, V>
     *             nonpositive.
     */
    public BoundedConcurrentHashMap(int capacity, int concurrencyLevel,
-         Equivalence<K> keyEquivalence, Equivalence<V> valueEquivalence) {
+         Equivalence<? super K> keyEquivalence, Equivalence<? super V> valueEquivalence) {
       this(capacity, concurrencyLevel, Eviction.LRU, keyEquivalence, valueEquivalence);
    }
 
@@ -1805,7 +1805,7 @@ public class BoundedConcurrentHashMap<K, V> extends AbstractMap<K, V>
     *             nonpositive.
     */
    public BoundedConcurrentHashMap(int capacity, int concurrencyLevel,
-         Eviction evictionStrategy, Equivalence<K> keyEquivalence, Equivalence<V> valueEquivalence) {
+         Eviction evictionStrategy, Equivalence<? super K> keyEquivalence, Equivalence<? super V> valueEquivalence) {
       this(capacity, concurrencyLevel, evictionStrategy, new NullEvictionListener<K, V>(), keyEquivalence, valueEquivalence);
    }
 
@@ -1822,14 +1822,14 @@ public class BoundedConcurrentHashMap<K, V> extends AbstractMap<K, V>
     *
     * @since 1.6
     */
-   public BoundedConcurrentHashMap(int capacity, Equivalence<K> keyEquivalence, Equivalence<V> valueEquivalence) {
+   public BoundedConcurrentHashMap(int capacity, Equivalence<? super K> keyEquivalence, Equivalence<? super V> valueEquivalence) {
       this(capacity, DEFAULT_CONCURRENCY_LEVEL, keyEquivalence, valueEquivalence);
    }
 
    /**
     * Creates a new, empty map with the default maximum capacity
     */
-   public BoundedConcurrentHashMap(Equivalence<K> keyEquivalence, Equivalence<V> valueEquivalence) {
+   public BoundedConcurrentHashMap(Equivalence<? super K> keyEquivalence, Equivalence<? super V> valueEquivalence) {
       this(DEFAULT_MAXIMUM_CAPACITY, DEFAULT_CONCURRENCY_LEVEL, keyEquivalence, valueEquivalence);
    }
 

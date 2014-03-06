@@ -66,7 +66,7 @@ public class DistSyncTxL1FuncTest extends BaseDistSyncL1Test {
    }
 
    @Override
-   protected void assertL1StateOnLocalWrite(Cache<?, ?> cache, Cache<?, ?> updatingCache, Object key, Object valueWrite) {
+   protected <K> void assertL1StateOnLocalWrite(Cache<? super K, ?> cache, Cache<?, ?> updatingCache, K key, Object valueWrite) {
       if (cache != updatingCache) {
          super.assertL1StateOnLocalWrite(cache, updatingCache, key, valueWrite);
       }

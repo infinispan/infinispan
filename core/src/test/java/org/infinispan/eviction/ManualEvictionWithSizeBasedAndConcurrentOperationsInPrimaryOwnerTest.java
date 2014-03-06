@@ -12,6 +12,7 @@ import org.infinispan.distribution.DistributionManager;
 import org.infinispan.factories.annotations.Stop;
 import org.infinispan.interceptors.CacheLoaderInterceptor;
 import org.infinispan.interceptors.CacheWriterInterceptor;
+import org.infinispan.interceptors.DistCacheWriterInterceptor;
 import org.infinispan.interceptors.InterceptorChain;
 import org.infinispan.interceptors.base.CommandInterceptor;
 import org.infinispan.manager.EmbeddedCacheManager;
@@ -415,7 +416,7 @@ public class ManualEvictionWithSizeBasedAndConcurrentOperationsInPrimaryOwnerTes
       }
    }
 
-   private class ControlledDataContainer implements DataContainer {
+   private class ControlledDataContainer<K, V> implements DataContainer<K, V> {
 
       private final DataContainer delegate;
       private volatile Runnable beforeEvict;
@@ -425,17 +426,17 @@ public class ManualEvictionWithSizeBasedAndConcurrentOperationsInPrimaryOwnerTes
       }
 
       @Override
-      public InternalCacheEntry get(Object k) {
+      public InternalCacheEntry<K, V> get(Object k) {
          return delegate.get(k);
       }
 
       @Override
-      public InternalCacheEntry peek(Object k) {
+      public InternalCacheEntry<K, V> peek(Object k) {
          return delegate.peek(k);
       }
 
       @Override
-      public void put(Object k, Object v, Metadata metadata) {
+      public void put(K k, V v, Metadata metadata) {
          delegate.put(k, v, metadata);
       }
 
@@ -445,7 +446,7 @@ public class ManualEvictionWithSizeBasedAndConcurrentOperationsInPrimaryOwnerTes
       }
 
       @Override
-      public InternalCacheEntry remove(Object k) {
+      public InternalCacheEntry<K, V> remove(Object k) {
          return delegate.remove(k);
       }
 
@@ -461,17 +462,17 @@ public class ManualEvictionWithSizeBasedAndConcurrentOperationsInPrimaryOwnerTes
       }
 
       @Override
-      public Set<Object> keySet() {
+      public Set<K> keySet() {
          return delegate.keySet();
       }
 
       @Override
-      public Collection<Object> values() {
+      public Collection<V> values() {
          return delegate.values();
       }
 
       @Override
-      public Set<InternalCacheEntry> entrySet() {
+      public Set<InternalCacheEntry<K, V>> entrySet() {
          return delegate.entrySet();
       }
 
@@ -492,7 +493,7 @@ public class ManualEvictionWithSizeBasedAndConcurrentOperationsInPrimaryOwnerTes
       }
 
       @Override
-      public Iterator<InternalCacheEntry> iterator() {
+      public Iterator<InternalCacheEntry<K, V>> iterator() {
          return delegate.iterator();
       }
 
@@ -504,7 +505,7 @@ public class ManualEvictionWithSizeBasedAndConcurrentOperationsInPrimaryOwnerTes
       }
 
       @Override
-      public <K> void executeTask(KeyFilter<K> filter, KeyValueAction<Object, InternalCacheEntry> action)
+      public void executeTask(KeyFilter<? super K> filter, KeyValueAction<? super K, InternalCacheEntry<? super K, ? super V>> action)
             throws InterruptedException {
          throw new NotImplementedException();
       }

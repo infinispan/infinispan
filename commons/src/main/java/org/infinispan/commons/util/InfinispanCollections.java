@@ -228,7 +228,7 @@ public class InfinispanCollections {
     * @param <E> input collection's entry type
     * @return a Map with keys and values generated from the input collection
     */
-   public static <K, V, E> Map<K, V> transformCollectionToMap(Collection<E> input, MapMakerFunction<K, V, E> f) {
+   public static <K, V, E> Map<K, V> transformCollectionToMap(Collection<? extends E> input, MapMakerFunction<K, V, ? super E> f) {
       // This screams for a map function! Gimme functional programming pleasee...
       if (input.isEmpty()) return InfinispanCollections.emptyMap();
       if (input.size() == 1) {
@@ -254,7 +254,7 @@ public class InfinispanCollections {
     * @param <E> type of objects in Set
     * @return the elements in s1 that are not in s2
     */
-   public static <E> Set<E> difference(Set<E> s1, Set<E> s2) {
+   public static <E> Set<E> difference(Set<? extends E> s1, Set<? extends E> s2) {
       Set<E> copy1 = new HashSet<E>(s1);
       copy1.removeAll(new HashSet<E>(s2));
       return copy1;

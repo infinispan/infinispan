@@ -55,7 +55,7 @@ import static org.infinispan.commons.util.Util.toStr;
 public class EntryWrappingInterceptor extends CommandInterceptor {
 
    private EntryFactory entryFactory;
-   protected DataContainer dataContainer;
+   protected DataContainer<Object, Object> dataContainer;
    protected ClusteringDependentLogic cdl;
    protected final EntryWrappingVisitor entryWrappingVisitor = new EntryWrappingVisitor();
    private CommandsFactory commandFactory;

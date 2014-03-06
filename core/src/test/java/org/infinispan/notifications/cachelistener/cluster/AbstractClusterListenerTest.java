@@ -314,7 +314,8 @@ public abstract class AbstractClusterListenerTest extends MultipleCacheManagersT
       verifySimpleInsertion(cache0, key, FIRST_VALUE, null, clusterListener, FIRST_VALUE.substring(0, 2));
    }
 
-   protected void testConverter(Object key, String value, Object resultingValue, Long lifespan, Converter<?, ? super String, ?> converter) {
+   protected <C> void testConverter(Object key, String value, Object resultingValue, Long lifespan,
+                                    Converter<Object, ? super String, C> converter) {
       Cache<Object, String> cache0 = cache(0, CACHE_NAME);
 
       ClusterListener clusterListener = new ClusterListener();

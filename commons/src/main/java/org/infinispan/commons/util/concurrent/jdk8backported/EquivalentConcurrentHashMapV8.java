@@ -621,10 +621,10 @@ public class EquivalentConcurrentHashMapV8<K,V> extends AbstractMap<K,V>
     /* ---------------- Nodes -------------- */
 
    static class NodeEquivalence<K,V> {
-      final Equivalence<K> keyEq;
-      final Equivalence<V> valueEq;
+      final Equivalence<? super K> keyEq;
+      final Equivalence<? super V> valueEq;
 
-      NodeEquivalence(Equivalence<K> keyEq, Equivalence<V> valueEq) {
+      NodeEquivalence(Equivalence<? super K> keyEq, Equivalence<? super V> valueEq) {
          this.keyEq = keyEq;
          this.valueEq = valueEq;
       }
@@ -838,8 +838,8 @@ public class EquivalentConcurrentHashMapV8<K,V> extends AbstractMap<K,V>
    private transient ValuesView<K,V> values;
    private transient EntrySetView<K,V> entrySet;
 
-   Equivalence<K> keyEq;
-   Equivalence<V> valueEq;
+   Equivalence<? super K> keyEq;
+   Equivalence<? super V> valueEq;
    transient NodeEquivalence<K, V> nodeEq;
 
     /* ---------------- Public operations -------------- */
@@ -848,7 +848,7 @@ public class EquivalentConcurrentHashMapV8<K,V> extends AbstractMap<K,V>
     * Creates a new, empty map with the default initial table size (16).
     */
    public EquivalentConcurrentHashMapV8(
-         Equivalence<K> keyEquivalence, Equivalence<V> valueEquivalence) {
+         Equivalence<? super K> keyEquivalence, Equivalence<? super V> valueEquivalence) {
       this.keyEq = keyEquivalence; // EQUIVALENCE_MOD
       this.valueEq = valueEquivalence; // EQUIVALENCE_MOD
       this.nodeEq = new NodeEquivalence<K, V>(this.keyEq, this.valueEq); // EQUIVALENCE_MOD
@@ -865,7 +865,7 @@ public class EquivalentConcurrentHashMapV8<K,V> extends AbstractMap<K,V>
     * elements is negative
     */
    public EquivalentConcurrentHashMapV8(int initialCapacity,
-         Equivalence<K> keyEquivalence, Equivalence<V> valueEquivalence) {
+         Equivalence<? super K> keyEquivalence, Equivalence<? super V> valueEquivalence) {
       this(keyEquivalence, valueEquivalence); // EQUIVALENCE_MOD
       if (initialCapacity < 0)
          throw new IllegalArgumentException();
@@ -881,7 +881,7 @@ public class EquivalentConcurrentHashMapV8<K,V> extends AbstractMap<K,V>
     * @param m the map
     */
    public EquivalentConcurrentHashMapV8(Map<? extends K, ? extends V> m,
-         Equivalence<K> keyEquivalence, Equivalence<V> valueEquivalence) {
+         Equivalence<? super K> keyEquivalence, Equivalence<? super V> valueEquivalence) {
       this(keyEquivalence, valueEquivalence); // EQUIVALENCE_MOD
       this.sizeCtl = DEFAULT_CAPACITY;
       putAll(m);
@@ -903,7 +903,7 @@ public class EquivalentConcurrentHashMapV8<K,V> extends AbstractMap<K,V>
     * @since 1.6
     */
    public EquivalentConcurrentHashMapV8(int initialCapacity, float loadFactor,
-         Equivalence<K> keyEquivalence, Equivalence<V> valueEquivalence) {
+         Equivalence<? super K> keyEquivalence, Equivalence<? super V> valueEquivalence) {
       this(initialCapacity, loadFactor, 1, keyEquivalence, valueEquivalence); // EQUIVALENCE_MOD
    }
 
@@ -927,7 +927,7 @@ public class EquivalentConcurrentHashMapV8<K,V> extends AbstractMap<K,V>
     */
    public EquivalentConcurrentHashMapV8(int initialCapacity,
          float loadFactor, int concurrencyLevel,
-         Equivalence<K> keyEquivalence, Equivalence<V> valueEquivalence) {
+         Equivalence<? super K> keyEquivalence, Equivalence<? super V> valueEquivalence) {
       this(keyEquivalence, valueEquivalence); // EQUIVALENCE_MOD
       if (!(loadFactor > 0.0f) || initialCapacity < 0 || concurrencyLevel <= 0)
          throw new IllegalArgumentException();

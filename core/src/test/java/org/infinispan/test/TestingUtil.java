@@ -683,9 +683,9 @@ public class TestingUtil {
       persistenceManager.clearAllStores(false);
    }
 
-   public static <K, V> List<CacheLoader> cachestores(List<Cache<K, V>> caches) {
-      List<CacheLoader> l = new LinkedList<CacheLoader>();
-      for (Cache<?, ?> c: caches)
+   public static <K, V> List<CacheLoader<K, V>> cachestores(List<Cache<K, V>> caches) {
+      List<CacheLoader<K, V>> l = new LinkedList<CacheLoader<K, V>>();
+      for (Cache<K, V> c: caches)
          l.add(TestingUtil.getFirstLoader(c));
       return l;
    }
@@ -1027,19 +1027,19 @@ public class TestingUtil {
       return builder.toString();
    }
 
-   public static Set getInternalKeys(Cache cache) {
-      DataContainer dataContainer = TestingUtil.extractComponent(cache, DataContainer.class);
-      Set keys = new HashSet();
-      for (CacheEntry entry : dataContainer) {
+   public static <K> Set<K> getInternalKeys(Cache<K, ?> cache) {
+      DataContainer<K, ?> dataContainer = TestingUtil.extractComponent(cache, DataContainer.class);
+      Set<K> keys = new HashSet<K>();
+      for (CacheEntry<K, ?> entry : dataContainer) {
          keys.add(entry.getKey());
       }
       return keys;
    }
 
-   public static Collection getInternalValues(Cache cache) {
-      DataContainer dataContainer = TestingUtil.extractComponent(cache, DataContainer.class);
-      Collection values = new ArrayList();
-      for (CacheEntry entry : dataContainer) {
+   public static <V> Collection<V> getInternalValues(Cache<?, V> cache) {
+      DataContainer<?, V> dataContainer = TestingUtil.extractComponent(cache, DataContainer.class);
+      Collection<V> values = new ArrayList<V>();
+      for (CacheEntry<?, V> entry : dataContainer) {
          values.add(entry.getValue());
       }
       return values;
@@ -1297,13 +1297,13 @@ public class TestingUtil {
    }
 
 
-   public static CacheLoader getFirstLoader(Cache cache) {
+   public static <K, V> CacheLoader<K, V> getFirstLoader(Cache<K, V> cache) {
       PersistenceManagerImpl persistenceManager = (PersistenceManagerImpl) extractComponent(cache, PersistenceManager.class);
       return persistenceManager.getAllLoaders().get(0);
    }
 
    @SuppressWarnings("unchecked")
-   public static <T extends CacheWriter> T getFirstWriter(Cache cache) {
+   public static <T extends CacheWriter<K, V>, K, V> T getFirstWriter(Cache<K, V> cache) {
       PersistenceManagerImpl persistenceManager = (PersistenceManagerImpl) extractComponent(cache, PersistenceManager.class);
       return (T) persistenceManager.getAllWriters().get(0);
    }

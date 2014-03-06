@@ -26,7 +26,7 @@ import static org.testng.AssertJUnit.assertEquals;
 
 @Test(groups = "unit", testName = "container.SimpleDataContainerTest")
 public class SimpleDataContainerTest extends AbstractInfinispanTest {
-   DataContainer dc;
+   DataContainer<Object, String> dc;
 
    @BeforeMethod
    public void setUp() {
@@ -39,7 +39,7 @@ public class SimpleDataContainerTest extends AbstractInfinispanTest {
    }
 
    protected DataContainer createContainer() {
-      DefaultDataContainer dc = new DefaultDataContainer(16, AnyEquivalence.getInstance(), AnyEquivalence.<InternalCacheEntry>getInstance());
+      DefaultDataContainer dc = new DefaultDataContainer<Object, String>(16, AnyEquivalence.getInstance());
       InternalEntryFactoryImpl internalEntryFactory = new InternalEntryFactoryImpl();
       internalEntryFactory.injectTimeService(TIME_SERVICE);
       ActivationManager activationManager = mock(ActivationManager.class);
