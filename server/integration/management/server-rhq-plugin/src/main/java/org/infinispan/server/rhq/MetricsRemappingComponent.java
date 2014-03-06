@@ -46,8 +46,6 @@ public abstract class MetricsRemappingComponent<T extends MetricsRemappingCompon
 
    static {
       server2plugin = new HashMap<String, String>();
-      server2plugin.put("bytes-read", "bytesRead");
-      server2plugin.put("bytes-written", "bytesWritten");
       server2plugin.put("cache-manager-status", "cacheManagerStatus");
       server2plugin.put("cluster-name", "clusterName");
       server2plugin.put("coordinator-address", "coordinatorAddress");
@@ -81,6 +79,10 @@ public abstract class MetricsRemappingComponent<T extends MetricsRemappingCompon
       server2plugin.put("activations", "activations");
       server2plugin.put("cache-loader-loads", "cacheLoaderLoads");
       server2plugin.put("cache-loader-misses", "cacheLoaderMisses");
+
+      // we will put these 2 here as well, just to be aware of them
+      server2plugin.put("bytesRead", "bytesRead");
+      server2plugin.put("bytesWritten", "bytesWritten");
 
       plugin2server = new HashMap<String, String>(server2plugin.size());
       for (Entry<String, String> entry : server2plugin.entrySet()) {
