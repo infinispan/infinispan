@@ -43,7 +43,7 @@ public class SharedStoreTest extends MultipleCacheManagersTest {
       for (Cache<Object, Object> c: caches())
          assert "value".equals(c.get("key"));
 
-      List<CacheLoader> cacheStores = TestingUtil.cachestores(caches());
+      List<CacheLoader<Object, Object>> cacheStores = TestingUtil.cachestores(caches());
       for (CacheLoader cs: cacheStores) {
          assert cs.contains("key");
          DummyInMemoryStore dimcs = (DummyInMemoryStore) cs;
@@ -67,7 +67,7 @@ public class SharedStoreTest extends MultipleCacheManagersTest {
       cache(0).getAdvancedCache().withFlags(Flag.SKIP_SHARED_CACHE_STORE).put("key", "value");
       assert cache(0).get("key").equals("value");
 
-      List<CacheLoader> cachestores = TestingUtil.cachestores(caches());
+      List<CacheLoader<Object, Object>> cachestores = TestingUtil.cachestores(caches());
       for (CacheLoader cs : cachestores) {
          assert !cs.contains("key");
          DummyInMemoryStore dimcs = (DummyInMemoryStore) cs;

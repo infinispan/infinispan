@@ -3,6 +3,7 @@ package org.infinispan.persistence.dummy;
 import org.infinispan.Cache;
 import org.infinispan.commons.CacheException;
 import org.infinispan.commons.configuration.ConfiguredBy;
+import org.infinispan.commons.equivalence.ByteArrayEquivalence;
 import org.infinispan.commons.equivalence.Equivalence;
 import org.infinispan.commons.marshall.StreamingMarshaller;
 import org.infinispan.commons.util.InfinispanCollections;
@@ -174,7 +175,7 @@ public class DummyInMemoryStore implements AdvancedLoadWriteStore {
          return;
 
       Equivalence<Object> keyEq = cache.getCacheConfiguration().dataContainer().keyEquivalence();
-      Equivalence<byte[]> valueEq = cache.getCacheConfiguration().dataContainer().valueEquivalence();
+      Equivalence<byte[]> valueEq = ByteArrayEquivalence.INSTANCE;
       store = new EquivalentConcurrentHashMapV8<Object, byte[]>(keyEq, valueEq);
       stats = newStatsMap();
 

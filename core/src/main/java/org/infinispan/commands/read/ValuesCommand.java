@@ -57,15 +57,13 @@ public class ValuesCommand extends AbstractLocalCommand implements VisitableComm
    }
 
    private static class FilteredValues extends AbstractCollection<Object> {
-      final DataContainer container;
-      final Collection<Object> values;
+      final DataContainer<Object, Object> container;
       final Set<InternalCacheEntry> entrySet;
       final Map<Object, CacheEntry> lookedUpEntries;
       final TimeService timeService;
 
       FilteredValues(DataContainer container, Map<Object, CacheEntry> lookedUpEntries, TimeService timeService) {
          this.container = container;
-         values = container.values();
          entrySet = container.entrySet();
          this.lookedUpEntries = lookedUpEntries;
          this.timeService = timeService;

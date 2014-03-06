@@ -27,11 +27,11 @@ public interface CacheWriter<K, V> extends Lifecycle {
     * @throws PersistenceException in case of an error, e.g. communicating with the external storage
     * @see MarshalledEntry
     */
-   void write(MarshalledEntry<K, V> entry);
+   void write(MarshalledEntry<? extends K, ? extends V> entry);
 
    /**
     * @return true if the entry existed in the persistent store and it was deleted.
     * @throws PersistenceException in case of an error, e.g. communicating with the external storage
     */
-   boolean delete(K key);
+   boolean delete(Object key);
 }

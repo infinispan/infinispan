@@ -19,14 +19,14 @@ import org.infinispan.metadata.Metadata;
  * @author Manik Surtani
  * @since 4.0
  */
-public interface InternalCacheValue {
+public interface InternalCacheValue<V> {
 
    /**
     * @return the value represented by this internal wrapper
     */
-   Object getValue();
+   V getValue();
 
-   InternalCacheEntry toInternalCacheEntry(Object key);
+   <K> InternalCacheEntry<K, V> toInternalCacheEntry(K key);
 
    /**
     * @param now the current time as expressed by {@link System#currentTimeMillis()}

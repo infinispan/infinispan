@@ -135,13 +135,13 @@ public class TopologyAwareStateTransferTest extends MultipleCacheManagersTest {
    }
 
 
-   private void assertExistence(final Object key) {
+   private <K> void assertExistence(final K key) {
       org.infinispan.distribution.ch.ConsistentHash hash = cache(addresses[0]).getAdvancedCache().getDistributionManager().getConsistentHash();
       final List<Address> addresses = hash.locateOwners(key);
       log.debug(key + " should be present on = " + addresses);
 
       int count = 0;
-      for (Cache<?, ?> c : caches()) {
+      for (Cache<? super K, ?> c : caches()) {
          if (c.getAdvancedCache().getDataContainer().containsKey(key)) {
             log.debug("It is here = " + address(c));
             count++;
@@ -150,7 +150,7 @@ public class TopologyAwareStateTransferTest extends MultipleCacheManagersTest {
       log.debug("count = " + count);
       assert count == 2;
 
-      for (Cache<?, ?> c : caches()) {
+      for (Cache<? super K, ?> c : caches()) {
          if (addresses.contains(address(c))) {
             assert c.getAdvancedCache().getDataContainer().containsKey(key);
          } else {

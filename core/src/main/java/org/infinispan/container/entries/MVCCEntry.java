@@ -8,14 +8,14 @@ import org.infinispan.container.DataContainer;
  * @author Manik Surtani
  * @since 4.0
  */
-public interface MVCCEntry extends CacheEntry, StateChangingEntry {
+public interface MVCCEntry<K, V> extends CacheEntry<K, V>, StateChangingEntry {
 
    /**
     * Makes internal copies of the entry for updates
     *
     * @param container      data container
     */
-   void copyForUpdate(DataContainer container);
+   void copyForUpdate(DataContainer<? super K, ? super V> container);
 
    void setChanged(boolean isChanged);
 }

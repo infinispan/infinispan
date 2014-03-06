@@ -24,7 +24,7 @@ import org.infinispan.factories.scopes.Scopes;
  */
 @ThreadSafe
 @Scope(Scopes.NAMED_CACHE)
-public interface EvictionManager {
+public interface EvictionManager<K, V> {
 
    /**
     * Processes the eviction event queue.
@@ -36,5 +36,5 @@ public interface EvictionManager {
     */
    boolean isEnabled();
 
-   void onEntryEviction(Map<Object, InternalCacheEntry> evicted);
+   void onEntryEviction(Map<? extends K, InternalCacheEntry<? extends K, ? extends V>> evicted);
 }

@@ -33,7 +33,7 @@ public class PassivationManagerImpl implements PassivationManager {
    boolean enabled = false;
    private static final Log log = LogFactory.getLog(PassivationManagerImpl.class);
    private final AtomicLong passivations = new AtomicLong(0);
-   private DataContainer container;
+   private DataContainer<Object, Object> container;
    private TimeService timeService;
    private static final boolean trace = log.isTraceEnabled();
    private MarshalledEntryFactory marshalledEntryFactory;

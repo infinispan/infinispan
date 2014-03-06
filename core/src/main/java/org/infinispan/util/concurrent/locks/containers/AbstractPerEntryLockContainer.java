@@ -24,7 +24,7 @@ public abstract class AbstractPerEntryLockContainer<L extends RefCountingLock> e
 
    protected AbstractPerEntryLockContainer(int concurrencyLevel) {
       locks = new EquivalentConcurrentHashMapV8<Object, L>(
-            16, concurrencyLevel, AnyEquivalence.getInstance(), AnyEquivalence.<L>getInstance());
+            16, concurrencyLevel, AnyEquivalence.getInstance(), AnyEquivalence.getInstance());
    }
 
    protected abstract L newLock();

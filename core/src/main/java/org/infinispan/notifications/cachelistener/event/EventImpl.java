@@ -36,7 +36,7 @@ public class EventImpl<K, V> implements CacheEntryActivatedEvent, CacheEntryCrea
    private V oldValue;
    private ConsistentHash consistentHashAtStart, consistentHashAtEnd;
    private int newTopologyId;
-   private Map<Object, Object> entries;
+   private Map<? extends K, ? extends V> entries;
    private boolean created;
    private boolean commandRetried;
 
@@ -161,7 +161,7 @@ public class EventImpl<K, V> implements CacheEntryActivatedEvent, CacheEntryCrea
       this.value = value;
    }
 
-   public void setEntries(Map<Object, Object> entries) {
+   public void setEntries(Map<? extends K, ? extends V> entries) {
       this.entries = entries;
    }
 
@@ -268,7 +268,7 @@ public class EventImpl<K, V> implements CacheEntryActivatedEvent, CacheEntryCrea
 
    @Override
    @SuppressWarnings("unchecked")
-   public Map<K, V> getEntries() {
-      return (Map<K, V>) entries;
+   public Map<? extends K, ? extends V> getEntries() {
+      return entries;
    }
 }

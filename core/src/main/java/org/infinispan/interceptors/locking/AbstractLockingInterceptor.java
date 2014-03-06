@@ -26,7 +26,7 @@ import java.util.Arrays;
 public abstract class AbstractLockingInterceptor extends CommandInterceptor {
 
    protected LockManager lockManager;
-   protected DataContainer dataContainer;
+   protected DataContainer<Object, Object> dataContainer;
    protected EntryFactory entryFactory;
    protected ClusteringDependentLogic cdl;
 

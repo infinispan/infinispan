@@ -134,7 +134,7 @@ object Decoder10 extends AbstractVersionedDecoder with ServerConstants with Log 
          new Response(h.version, h.messageId, h.cacheName, h.clientIntel, op, st, h.topologyId)
    }
 
-   override def createGetResponse(h: HotRodHeader, entry: CacheEntry): AnyRef = {
+   override def createGetResponse(h: HotRodHeader, entry: CacheEntry[Array[Byte], Array[Byte]]): AnyRef = {
       val op = h.op
       if (entry != null && op == GetRequest)
          new GetResponse(h.version, h.messageId, h.cacheName, h.clientIntel,
@@ -227,7 +227,7 @@ object Decoder10 extends AbstractVersionedDecoder with ServerConstants with Log 
    def getKeyMetadata(h: HotRodHeader, k: Array[Byte], cache: Cache): GetWithMetadataResponse = {
       val ce = cache.getAdvancedCache.getCacheEntry(k)
       if (ce != null) {
-         val ice = ce.asInstanceOf[InternalCacheEntry]
+         val ice = ce.asInstanceOf[InternalCacheEntry[Array[Byte], Array[Byte]]]
          val entryVersion = ice.getMetadata.version().asInstanceOf[NumericVersion]
          val v = ce.getValue.asInstanceOf[Array[Byte]]
          val lifespan = if (ice.getLifespan < 0) -1 else (ice.getLifespan / 1000).toInt

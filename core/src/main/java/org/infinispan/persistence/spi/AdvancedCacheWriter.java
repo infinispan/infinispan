@@ -26,7 +26,7 @@ public interface AdvancedCacheWriter<K, V> extends CacheWriter<K, V> {
     *
     * @throws PersistenceException in case of an error, e.g. communicating with the external storage
     */
-   void purge(Executor threadPool, PurgeListener listener);
+   void purge(Executor threadPool, PurgeListener<? super K> listener);
 
    /**
     * Callback to be notified when an entry is removed by the {@link #purge(java.util.concurrent.Executor,

@@ -108,13 +108,13 @@ class Server(@Context request: Request, @Context servletContext: ServletContext,
 
    @GET
    @Path("/{cacheName}/{cacheKey}")
-   def getEntry(@PathParam("cacheName") cacheName: String,
+   def getEntry[V](@PathParam("cacheName") cacheName: String,
                 @PathParam("cacheKey") key: String,
                 @QueryParam("extended") extended: String,
                 @DefaultValue("") @HeaderParam("Cache-Control") cacheControl: String): Response = {
       protectCacheNotFound(request, useAsync) { (request, useAsync) =>
          manager.getInternalEntry(cacheName, key) match {
-            case ice: InternalCacheEntry => {
+            case ice: InternalCacheEntry[String, V] => {
                val lastMod = lastModified(ice)
                val expires = if (ice.canExpire) new Date(ice.getExpiryTime) else null
                val minFreshSeconds = minFresh(cacheControl)
@@ -157,9 +157,9 @@ class Server(@Context request: Request, @Context servletContext: ServletContext,
       case expiry => ((expiry.getTime - new Date().getTime) / 1000).toInt
    }
 
-   private def getMimeEntry(ice: InternalCacheEntry, meta: MimeMetadata,
+   private def getMimeEntry[V](ice: InternalCacheEntry[String, V], meta: MimeMetadata,
            lastMod: Date, expires: Date, cacheName: String, extended: String): Response = {
-      val key = ice.getKey.asInstanceOf[String]
+      val key = ice.getKey
       request.evaluatePreconditions(lastMod, calcETAG(ice, meta)) match {
          case bldr: ResponseBuilder => bldr.build
          case null => Response.ok(ice.getValue, meta.contentType)
@@ -173,9 +173,9 @@ class Server(@Context request: Request, @Context servletContext: ServletContext,
       }
    }
 
-   private def getAnyEntry(ice: InternalCacheEntry, meta: Metadata,
+   private def getAnyEntry[V](ice: InternalCacheEntry[String, V], meta: Metadata,
          lastMod: Date, expires: Date, cacheName: String, extended: String): Response = {
-      val key = ice.getKey.asInstanceOf[String]
+      val key = ice.getKey
       ice.getValue match {
 
          case s: String => Response.ok(s, MediaType.TEXT_PLAIN)
@@ -307,13 +307,13 @@ class Server(@Context request: Request, @Context servletContext: ServletContext,
 
    @HEAD
    @Path("/{cacheName}/{cacheKey}")
-   def headEntry(@PathParam("cacheName") cacheName: String,
+   def headEntry[V](@PathParam("cacheName") cacheName: String,
                  @PathParam("cacheKey") key: String,
                  @QueryParam("extended") extended: String,
                  @DefaultValue("") @HeaderParam("Cache-Control") cacheControl: String): Response = {
       protectCacheNotFound(request, useAsync) { (request, useAsync) =>
          manager.getInternalEntry(cacheName, key) match {
-            case ice: InternalCacheEntry => {
+            case ice: InternalCacheEntry[String, V] => {
                val lastMod = lastModified(ice)
                val expires = if (ice.canExpire) new Date(ice.getExpiryTime) else null
                val minFreshSeconds = minFresh(cacheControl)
@@ -350,7 +350,7 @@ class Server(@Context request: Request, @Context servletContext: ServletContext,
    @PUT
    @POST
    @Path("/{cacheName}/{cacheKey}")
-   def putEntry(@PathParam("cacheName") cacheName: String, @PathParam("cacheKey") key: String,
+   def putEntry[V](@PathParam("cacheName") cacheName: String, @PathParam("cacheKey") key: String,
                 @HeaderParam("Content-Type") mediaType: String, data: Array[Byte],
                 @DefaultValue("-1") @HeaderParam("timeToLiveSeconds") ttl: Long,
                 @DefaultValue("-1") @HeaderParam("maxIdleTimeSeconds") idleTime: Long): Response = {
@@ -360,7 +360,7 @@ class Server(@Context request: Request, @Context servletContext: ServletContext,
             Response.status(Status.CONFLICT).build()
          } else {
             manager.getInternalEntry(cacheName, key, skipListener = true) match {
-               case ice: InternalCacheEntry => {
+               case ice: InternalCacheEntry[String, V] => {
                   val lastMod = lastModified(ice)
                   ice.getMetadata match {
                      case mime: MimeMetadata =>
@@ -435,9 +435,9 @@ class Server(@Context request: Request, @Context servletContext: ServletContext,
 
    @DELETE
    @Path("/{cacheName}/{cacheKey}")
-   def removeEntry(@PathParam("cacheName") cacheName: String, @PathParam("cacheKey") key: String): Response = {
+   def removeEntry[V](@PathParam("cacheName") cacheName: String, @PathParam("cacheKey") key: String): Response = {
       manager.getInternalEntry(cacheName, key) match {
-         case ice: InternalCacheEntry => {
+         case ice: InternalCacheEntry[String, V] => {
             val lastMod = lastModified(ice)
             ice.getMetadata match {
                case meta: MimeMetadata =>
@@ -492,10 +492,10 @@ class Server(@Context request: Request, @Context servletContext: ServletContext,
 
    val hashFunc = new MurmurHash3()
 
-   private def calcETAG(entry: InternalCacheEntry, meta: MimeMetadata): EntityTag =
+   private def calcETAG[K, V](entry: InternalCacheEntry[K, V], meta: MimeMetadata): EntityTag =
       new EntityTag(meta.contentType + hashFunc.hash(entry.getValue))
 
-   private def lastModified(ice: InternalCacheEntry): Date = { new Date(ice.getCreated / 1000 * 1000) }
+   private def lastModified[K, V](ice: InternalCacheEntry[K, V]): Date = { new Date(ice.getCreated / 1000 * 1000) }
 
    private def protectCacheNotFound(request: Request, useAsync: Boolean) (op: (Request, Boolean) => Response): Response = {
       op(request, useAsync)
@@ -529,15 +529,15 @@ class ManagerInstance(instance: EmbeddedCacheManager) {
 
    def getEntry(cacheName: String, key: String): Array[Byte] = getCache(cacheName).get(key)
 
-   def getInternalEntry(cacheName: String, key: String, skipListener: Boolean = false): CacheEntry = {
+   def getInternalEntry[V](cacheName: String, key: String, skipListener: Boolean = false): CacheEntry[String, V] = {
       val cache =
          if (skipListener) getCache(cacheName).withFlags(Flag.SKIP_LISTENER_NOTIFICATION)
          else getCache(cacheName)
 
       cache.getCacheEntry(key) match {
-         case ice: InternalCacheEntry => ice
+         case ice: InternalCacheEntry[String, V] => ice
          case null => null
-         case mvcc: MVCCEntry => cache.getCacheEntry(key)  // FIXME: horrible re-get to be fixed by ISPN-3460
+         case mvcc: MVCCEntry[String, V] => cache.getCacheEntry(key)  // FIXME: horrible re-get to be fixed by ISPN-3460
       }
    }
 

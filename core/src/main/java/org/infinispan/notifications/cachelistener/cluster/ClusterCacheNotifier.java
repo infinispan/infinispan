@@ -15,7 +15,7 @@ import java.util.UUID;
  * @author wburns
  * @since 7.0
  */
-public interface ClusterCacheNotifier extends CacheNotifier {
+public interface ClusterCacheNotifier<K, V> extends CacheNotifier<K, V> {
    /**
     * Method that is invoked on the node that has the given cluster listener that when registered generated the given
     * listenerId.  Note this will notify only cluster listeners and regular listeners are not notified of the events.
@@ -23,7 +23,7 @@ public interface ClusterCacheNotifier extends CacheNotifier {
     * @param events
     * @param listenerId
     */
-   void notifyClusterListeners(Collection<? extends Event> events, UUID listenerId);
+   void notifyClusterListeners(Collection<? extends Event<? extends K, ? extends V>> events, UUID listenerId);
 
    /**
     * This method is invoked so that this node can send the details required for a new node to be bootstrapped with

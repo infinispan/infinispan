@@ -62,8 +62,8 @@ public class CollectionFactory {
       public <K, V> ConcurrentMap<K, V> createConcurrentParallelMap(int initialCapacity, int concurrencyLevel) {
          // by the time we baseline on JDK8 this code will be either dropped or adjusted, 
          //for now we need to use ConcurrentParallelHashMapV8
-         return new ConcurrentParallelHashMapV8<K, V>(initialCapacity, AnyEquivalence.<K> getInstance(),
-               AnyEquivalence.<V> getInstance());
+         return new ConcurrentParallelHashMapV8<K, V>(initialCapacity, AnyEquivalence.getInstance(),
+               AnyEquivalence.getInstance());
       }
    }
 
@@ -72,31 +72,31 @@ public class CollectionFactory {
       @Override
       public <K, V> ConcurrentMap<K, V> createConcurrentMap() {
          return new EquivalentConcurrentHashMapV8<K, V>(
-               AnyEquivalence.<K>getInstance(), AnyEquivalence.<V>getInstance());
+               AnyEquivalence.getInstance(), AnyEquivalence.getInstance());
       }
 
       @Override
       public <K, V> ConcurrentMap<K, V> createConcurrentMap(int initialCapacity) {
          return new EquivalentConcurrentHashMapV8<K, V>(initialCapacity,
-               AnyEquivalence.<K>getInstance(), AnyEquivalence.<V>getInstance());
+               AnyEquivalence.getInstance(), AnyEquivalence.getInstance());
       }
 
       @Override
       public <K, V> ConcurrentMap<K, V> createConcurrentMap(int initialCapacity, int concurrencyLevel) {
          return new EquivalentConcurrentHashMapV8<K, V>(initialCapacity, 0.75f,
-               concurrencyLevel, AnyEquivalence.<K>getInstance(), AnyEquivalence.<V>getInstance());
+               concurrencyLevel, AnyEquivalence.getInstance(), AnyEquivalence.getInstance());
       }
 
       @Override
       public <K, V> ConcurrentMap<K, V> createConcurrentMap(int initialCapacity, float loadFactor, int concurrencyLevel) {
          return new EquivalentConcurrentHashMapV8<K, V>(initialCapacity, loadFactor,
-               concurrencyLevel, AnyEquivalence.<K>getInstance(), AnyEquivalence.<V>getInstance());
+               concurrencyLevel, AnyEquivalence.getInstance(), AnyEquivalence.getInstance());
       }
 
       @Override
       public <K, V> ConcurrentMap<K, V> createConcurrentParallelMap(int initialCapacity, int concurrencyLevel) {
          return new ConcurrentParallelHashMapV8<K, V>(initialCapacity, 0.75f,
-               concurrencyLevel, AnyEquivalence.<K>getInstance(), AnyEquivalence.<V>getInstance());
+               concurrencyLevel, AnyEquivalence.getInstance(), AnyEquivalence.getInstance());
       }
    }
    
@@ -146,7 +146,7 @@ public class CollectionFactory {
    }
 
    public static <K, V> ConcurrentMap<K, V> makeConcurrentMap(
-         Equivalence<K> keyEq, Equivalence<V> valueEq) {
+         Equivalence<? super K> keyEq, Equivalence<? super V> valueEq) {
       if (requiresEquivalent(keyEq, valueEq))
          return new EquivalentConcurrentHashMapV8<K, V>(keyEq, valueEq);
       else
@@ -154,7 +154,7 @@ public class CollectionFactory {
    }
 
    public static <K, V> ConcurrentMap<K, V> makeConcurrentMap(
-         int initCapacity, Equivalence<K> keyEq, Equivalence<V> valueEq) {
+         int initCapacity, Equivalence<? super K> keyEq, Equivalence<? super V> valueEq) {
       if (requiresEquivalent(keyEq, valueEq))
          return new EquivalentConcurrentHashMapV8<K, V>(initCapacity, keyEq, valueEq);
       else
@@ -162,7 +162,7 @@ public class CollectionFactory {
    }
 
    public static <K, V> ConcurrentMap<K, V> makeConcurrentMap(
-         int initCapacity, int concurrencyLevel, Equivalence<K> keyEq, Equivalence<V> valueEq) {
+         int initCapacity, int concurrencyLevel, Equivalence<? super K> keyEq, Equivalence<? super V> valueEq) {
       if (requiresEquivalent(keyEq, valueEq))
          return new EquivalentConcurrentHashMapV8<K, V>(
                initCapacity, concurrencyLevel, keyEq, valueEq);
@@ -171,7 +171,7 @@ public class CollectionFactory {
    }
    
    public static <K, V> ConcurrentMap<K, V> makeConcurrentParallelMap(
-         int initCapacity, int concurrencyLevel, Equivalence<K> keyEq, Equivalence<V> valueEq) {
+         int initCapacity, int concurrencyLevel, Equivalence<? super K> keyEq, Equivalence<? super V> valueEq) {
       if (requiresEquivalent(keyEq, valueEq))
          return new ConcurrentParallelHashMapV8<K, V>(
                initCapacity, concurrencyLevel, keyEq, valueEq);
@@ -181,7 +181,7 @@ public class CollectionFactory {
 
    public static <K, V> ConcurrentMap<K, V> makeConcurrentMap(
          int initCapacity, float loadFactor, int concurrencyLevel,
-         Equivalence<K> keyEq, Equivalence<V> valueEq) {
+         Equivalence<? super K> keyEq, Equivalence<? super V> valueEq) {
       if (requiresEquivalent(keyEq, valueEq))
          return new EquivalentConcurrentHashMapV8<K, V>(
                initCapacity, loadFactor, concurrencyLevel, keyEq, valueEq);
@@ -190,7 +190,7 @@ public class CollectionFactory {
    }
 
    public static <K, V> Map<K, V> makeMap(
-         Equivalence<K> keyEq, Equivalence<V> valueEq) {
+         Equivalence<? super K> keyEq, Equivalence<? super V> valueEq) {
       if (requiresEquivalent(keyEq, valueEq))
          return new EquivalentHashMap<K, V>(keyEq, valueEq);
       else
@@ -198,7 +198,7 @@ public class CollectionFactory {
    }
 
    public static <K, V> Map<K, V> makeMap(
-         int initialCapacity, Equivalence<K> keyEq, Equivalence<V> valueEq) {
+         int initialCapacity, Equivalence<? super K> keyEq, Equivalence<? super V> valueEq) {
       if (requiresEquivalent(keyEq, valueEq))
          return new EquivalentHashMap<K, V>(initialCapacity, keyEq, valueEq);
       else
@@ -206,7 +206,7 @@ public class CollectionFactory {
    }
 
    public static <K, V> Map<K, V> makeMap(
-         Map<? extends K, ? extends V> entries, Equivalence<K> keyEq, Equivalence<V> valueEq) {
+         Map<? extends K, ? extends V> entries, Equivalence<? super K> keyEq, Equivalence<? super V> valueEq) {
       if (requiresEquivalent(keyEq, valueEq))
          return new EquivalentHashMap<K, V>(entries, keyEq, valueEq);
       else
@@ -215,21 +215,21 @@ public class CollectionFactory {
 
    public static <K, V> Map<K, V> makeLinkedMap(int initialCapacity,
          float loadFactor, EquivalentLinkedHashMap.IterationOrder iterationOrder,
-         Equivalence<K> keyEq, Equivalence<V> valueEq) {
+         Equivalence<? super K> keyEq, Equivalence<? super V> valueEq) {
       if (requiresEquivalent(keyEq, valueEq))
          return new EquivalentLinkedHashMap<K, V>(initialCapacity, loadFactor, iterationOrder, keyEq, valueEq);
       else
          return new LinkedHashMap<K, V>(initialCapacity, loadFactor, iterationOrder.toJdkAccessOrder());
    }
 
-   public static <T> Set<T> makeSet(Equivalence<T> entryEq) {
+   public static <T> Set<T> makeSet(Equivalence<? super T> entryEq) {
       if (requiresEquivalent(entryEq))
          return new EquivalentHashSet<T>(entryEq);
       else
          return new HashSet<T>();
    }
 
-   public static <T> Set<T> makeSet(int initialCapacity, Equivalence<T> entryEq) {
+   public static <T> Set<T> makeSet(int initialCapacity, Equivalence<? super T> entryEq) {
       if (requiresEquivalent(entryEq))
          return new EquivalentHashSet<T>(initialCapacity, entryEq);
       else

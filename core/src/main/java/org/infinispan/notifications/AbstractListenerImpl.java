@@ -34,10 +34,13 @@ import java.util.concurrent.ExecutorService;
 /**
  * Functionality common to both {@link org.infinispan.notifications.cachemanagerlistener.CacheManagerNotifierImpl} and
  * {@link org.infinispan.notifications.cachelistener.CacheNotifierImpl}
- *
+ * @param <T> Defines the type of event that will be used by the subclass
+ * @param <K> The key type for filters and converters used
+ * @param <V> The value type for filters and converters used
  * @author Manik Surtani
+ * @author William Burns
  */
-public abstract class AbstractListenerImpl {
+public abstract class AbstractListenerImpl<T, K, V> {
 
    protected final Map<Class<? extends Annotation>, List<ListenerInvocation>> listenersMap = new HashMap<Class<? extends Annotation>, List<ListenerInvocation>>(16, 0.99f);
 
@@ -86,7 +89,7 @@ public abstract class AbstractListenerImpl {
    private void removeListenerInvocation(Class<? extends Annotation> annotation, Object listener) {
       if (listener == null) return;
       List<ListenerInvocation> l = getListenerCollectionForAnnotation(annotation);
-      Set<Object> markedForRemoval = new HashSet<Object>(4);
+      Set<ListenerInvocation> markedForRemoval = new HashSet<ListenerInvocation>(4);
       for (ListenerInvocation li : l) {
          if (listener.equals(li.target)) markedForRemoval.add(li);
       }
@@ -115,7 +118,7 @@ public abstract class AbstractListenerImpl {
     *
     * @param listener object to be considered as a listener.
     */
-   protected void validateAndAddListenerInvocation(Object listener, KeyValueFilter filter, Converter converter,
+   protected <C> void validateAndAddListenerInvocation(Object listener, KeyValueFilter<? super K, ? super V> filter, Converter<? super K, ? super V, C> converter,
                                                    ClassLoader classLoader) {
       Listener l = testListenerClassValidity(listener.getClass());
       UUID generatedId = UUID.randomUUID();
@@ -148,14 +151,15 @@ public abstract class AbstractListenerImpl {
       }
    }
 
-   protected ListenerInvocation createListenerInvocation(Object listener, Method m, Listener l, KeyValueFilter filter,
-                                                         Converter converter, ClassLoader classLoader, UUID generatedId, Subject subject) {
+   protected <C> ListenerInvocation createListenerInvocation(Object listener, Method m, Listener l,
+                                                             KeyValueFilter<? super K, ? super V> filter,
+                                                         Converter<? super K, ? super V, C> converter, ClassLoader classLoader, UUID generatedId, Subject subject) {
       return new ListenerInvocation(listener, m, l.sync(), l.primaryOnly(), l.clustered(), filter, converter,
                                     classLoader, generatedId, subject);
    }
 
-   protected void addedListener(Object listener, UUID generatedId, boolean hasClusteredMethods, KeyValueFilter filter,
-                                Converter converter) {
+   protected <C> void addedListener(Object listener, UUID generatedId, boolean hasClusteredMethods, KeyValueFilter<? super K, ? super V> filter,
+                                Converter<? super K, ? super V, C> converter) {
       // Default is noop
    }
 
@@ -199,13 +203,14 @@ public abstract class AbstractListenerImpl {
       public final boolean onlyPrimary;
       public final boolean clustered;
       public final WeakReference<ClassLoader> classLoader;
-      public final KeyValueFilter filter;
-      public final Converter converter;
+      public final KeyValueFilter<? super K, ? super V> filter;
+      public final Converter<? super K, ? super V, ?> converter;
       public final UUID generatedId;
       public final Subject subject;
 
       public ListenerInvocation(Object target, Method method, boolean sync, boolean onlyPrimary, boolean clustered,
-                                KeyValueFilter filter, Converter converter, ClassLoader classLoader, UUID generatedId, Subject subject) {
+                                KeyValueFilter<? super K, ? super V> filter, Converter<? super K, ? super V, ?> converter, ClassLoader classLoader,
+                                UUID generatedId, Subject subject) {
          this.target = target;
          this.method = method;
          this.sync = sync;
@@ -218,15 +223,15 @@ public abstract class AbstractListenerImpl {
          this.subject = subject;
       }
 
-      public void invoke(final Object event) {
+      public void invoke(final T event) {
          invoke(event, false, true);
       }
 
-      public void invoke(final Object event, boolean isLocalNodePrimaryOwner) {
+      public void invoke(final T event, boolean isLocalNodePrimaryOwner) {
          invoke(event, isLocalNodePrimaryOwner, false);
       }
 
-      public void invoke(final Object event, boolean isLocalNodePrimaryOwner, final boolean unKeyed) {
+      public void invoke(final T event, boolean isLocalNodePrimaryOwner, final boolean unKeyed) {
          if (unKeyed || shouldInvoke(event, isLocalNodePrimaryOwner)) {
             Runnable r = new Runnable() {
 
@@ -241,8 +246,9 @@ public abstract class AbstractListenerImpl {
                      // Only run converter on events we can change and if it was keyed
                      if (!unKeyed && converter != null) {
                         if (event instanceof EventImpl) {
-                           EventImpl eventImpl = (EventImpl)event;
-                           eventImpl.setValue(converter.convert(eventImpl.getKey(), eventImpl.getValue(),
+                           // This is a bit hacky to let the C type be passed in for the V type
+                           EventImpl<K, Object> eventImpl = (EventImpl<K, Object>)event;
+                           eventImpl.setValue(converter.convert(eventImpl.getKey(), (V) eventImpl.getValue(),
                                                                 eventImpl.getMetadata()));
                         } else {
                            throw new IllegalArgumentException("Provided event should be EventImpl when a converter is" +
@@ -298,10 +304,10 @@ public abstract class AbstractListenerImpl {
          }
       }
 
-      private boolean shouldInvoke(Object event, boolean isLocalNodePrimaryOwner) {
+      private boolean shouldInvoke(T event, boolean isLocalNodePrimaryOwner) {
          if (onlyPrimary && !isLocalNodePrimaryOwner) return false;
          if (event instanceof  EventImpl) {
-            EventImpl eventImpl = (EventImpl)event;
+            EventImpl<K, V> eventImpl = (EventImpl<K, V>)event;
             // Cluster listeners only get post events
             if (eventImpl.isPre() && clustered) return false;
             if (filter != null && !filter.accept(eventImpl.getKey(), eventImpl.getValue(), eventImpl.getMetadata())) return false;

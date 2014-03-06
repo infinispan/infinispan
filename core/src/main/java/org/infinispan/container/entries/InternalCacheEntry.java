@@ -7,7 +7,7 @@ package org.infinispan.container.entries;
  * @author Sanne Grinovero
  * @since 4.0
  */
-public interface InternalCacheEntry extends CacheEntry, Cloneable {
+public interface InternalCacheEntry<K, V> extends CacheEntry<K, V>, Cloneable {
 
    /**
     * @param now the current time as defined by {@link System#currentTimeMillis()} or {@link
@@ -88,7 +88,7 @@ public interface InternalCacheEntry extends CacheEntry, Cloneable {
     *
     * @return a new InternalCacheValue encapsulating this InternalCacheEntry's value and expiration information.
     */
-   InternalCacheValue toInternalCacheValue();
+   InternalCacheValue<V> toInternalCacheValue();
 
-   InternalCacheEntry clone();
+   InternalCacheEntry<K, V> clone();
 }

@@ -112,10 +112,10 @@ class HotRodDecoder(cacheManager: EmbeddedCacheManager, transport: NettyTranspor
    override def createNotExistResponse: AnyRef =
       header.decoder.createNotExistResponse(header)
 
-   override def createGetResponse(k: Array[Byte], entry: CacheEntry): AnyRef =
+   override def createGetResponse(k: Array[Byte], entry: CacheEntry[Array[Byte], Array[Byte]]): AnyRef =
       header.decoder.createGetResponse(header, entry)
 
-   override def createMultiGetResponse(pairs: Map[Array[Byte], CacheEntry]): AnyRef =
+   override def createMultiGetResponse(pairs: Map[Array[Byte], CacheEntry[Array[Byte], Array[Byte]]]): AnyRef =
       null // Unsupported
 
    override protected def customDecodeHeader(ch: Channel, buffer: ByteBuf): AnyRef =

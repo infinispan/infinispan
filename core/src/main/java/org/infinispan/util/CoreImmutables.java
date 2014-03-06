@@ -24,34 +24,34 @@ public class CoreImmutables extends Immutables {
     * @param entry the internal cache entry to wrap.
     * @return an immutable {@link InternalCacheEntry}} wrapper that delegates to the original entry.
     */
-   public static InternalCacheEntry immutableInternalCacheEntry(InternalCacheEntry entry) {
-      return new ImmutableInternalCacheEntry(entry);
+   public static <K, V> InternalCacheEntry<K, V> immutableInternalCacheEntry(InternalCacheEntry<K, V> entry) {
+      return new ImmutableInternalCacheEntry<K, V>(entry);
    }
 
    /**
     * Immutable version of InternalCacheEntry for traversing data containers.
     */
-   private static class ImmutableInternalCacheEntry implements InternalCacheEntry, Immutable {
-      private final InternalCacheEntry entry;
+   private static class ImmutableInternalCacheEntry<K, V> implements InternalCacheEntry<K, V>, Immutable {
+      private final InternalCacheEntry<K, V> entry;
       private final int hash;
 
-      ImmutableInternalCacheEntry(InternalCacheEntry entry) {
+      ImmutableInternalCacheEntry(InternalCacheEntry<K, V> entry) {
          this.entry = entry;
          this.hash = entry.hashCode();
       }
 
       @Override
-      public Object getKey() {
+      public K getKey() {
          return entry.getKey();
       }
 
       @Override
-      public Object getValue() {
+      public V getValue() {
          return entry.getValue();
       }
 
       @Override
-      public Object setValue(Object value) {
+      public V setValue(V value) {
          throw new UnsupportedOperationException();
       }
 
@@ -111,7 +111,7 @@ public class CoreImmutables extends Immutables {
       }
 
       @Override
-      public InternalCacheValue toInternalCacheValue() {
+      public InternalCacheValue<V> toInternalCacheValue() {
          return new CoreImmutables.ImmutableInternalCacheValue(this);
       }
 
@@ -246,10 +246,10 @@ public class CoreImmutables extends Immutables {
       }
    }
 
-   private static class ImmutableInternalCacheValue implements InternalCacheValue, Immutable {
-      private final ImmutableInternalCacheEntry entry;
+   private static class ImmutableInternalCacheValue<V> implements InternalCacheValue<V>, Immutable {
+      private final ImmutableInternalCacheEntry<?, V> entry;
 
-      ImmutableInternalCacheValue(ImmutableInternalCacheEntry entry) {
+      ImmutableInternalCacheValue(ImmutableInternalCacheEntry<?, V> entry) {
          this.entry = entry;
       }
 
@@ -279,7 +279,7 @@ public class CoreImmutables extends Immutables {
       }
 
       @Override
-      public Object getValue() {
+      public V getValue() {
          return entry.getValue();
       }
 
@@ -294,8 +294,8 @@ public class CoreImmutables extends Immutables {
       }
 
       @Override
-      public InternalCacheEntry toInternalCacheEntry(Object key) {
-         return entry;
+      public <K> InternalCacheEntry<K, V> toInternalCacheEntry(K key) {
+         return (InternalCacheEntry<K, V>)entry;
       }
 
       @Override

@@ -10,21 +10,21 @@ public final class AnyEquivalence<T> implements Equivalence<T> {
 
    private static AnyEquivalence<Object> OBJECT = new AnyEquivalence<Object>();
 
-   public static AnyEquivalence<String> STRING = new AnyEquivalence<String>();
+   public static AnyEquivalence<String> STRING = getInstance(String.class);
 
-   public static AnyEquivalence<Byte> BYTE = new AnyEquivalence<Byte>();
+   public static AnyEquivalence<Byte> BYTE = getInstance(Byte.class);
 
-   public static AnyEquivalence<Short> SHORT = new AnyEquivalence<Short>();
+   public static AnyEquivalence<Short> SHORT = getInstance(Short.class);
 
-   public static AnyEquivalence<Integer> INT = new AnyEquivalence<Integer>();
+   public static AnyEquivalence<Integer> INT = getInstance(Integer.class);
 
-   public static AnyEquivalence<Long> LONG = new AnyEquivalence<Long>();
+   public static AnyEquivalence<Long> LONG = getInstance(Long.class);
 
-   public static AnyEquivalence<Double> DOUBLE  = new AnyEquivalence<Double>();
+   public static AnyEquivalence<Double> DOUBLE  = getInstance(Double.class);
 
-   public static AnyEquivalence<Float> FLOAT = new AnyEquivalence<Float>();
+   public static AnyEquivalence<Float> FLOAT = getInstance(Float.class);
 
-   public static AnyEquivalence<Boolean> BOOLEAN = new AnyEquivalence<Boolean>();
+   public static AnyEquivalence<Boolean> BOOLEAN = getInstance(Boolean.class);
 
    // To avoid instantiation
    private AnyEquivalence() {
@@ -61,4 +61,8 @@ public final class AnyEquivalence<T> implements Equivalence<T> {
       return (AnyEquivalence<T>) OBJECT;
    }
 
+   @SuppressWarnings("unchecked")
+   public static <T> AnyEquivalence<T> getInstance(Class<T> classType) {
+      return (AnyEquivalence<T>) OBJECT;
+   }
 }

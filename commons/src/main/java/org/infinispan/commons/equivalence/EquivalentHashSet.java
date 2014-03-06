@@ -22,7 +22,7 @@ public class EquivalentHashSet<E> extends AbstractSet<E> {
     * functionality to check equality, calculate hash codes...etc of the
     * stored entries.
     */
-   private final Equivalence<E> entryEq;
+   private final Equivalence<? super E> entryEq;
 
    /**
     * The underlying map. Uses Boolean.TRUE as value for each element.
@@ -35,7 +35,7 @@ public class EquivalentHashSet<E> extends AbstractSet<E> {
     * @param entryEq the Equivalence function to be used to compare entries
     *                in this set.
     */
-   public EquivalentHashSet(Equivalence<E> entryEq) {
+   public EquivalentHashSet(Equivalence<? super E> entryEq) {
       this.entryEq = entryEq;
       m = new EquivalentHashMap<E, Boolean>(entryEq, AnyEquivalence.BOOLEAN);
    }
@@ -48,7 +48,7 @@ public class EquivalentHashSet<E> extends AbstractSet<E> {
     * @param entryEq the Equivalence function to be used to compare entries
     *                in this set.
     */
-   public EquivalentHashSet(int initialCapacity, Equivalence<E> entryEq) {
+   public EquivalentHashSet(int initialCapacity, Equivalence<? super E> entryEq) {
       this.entryEq = entryEq;
       m = new EquivalentHashMap<E, Boolean>(
             initialCapacity, entryEq, AnyEquivalence.BOOLEAN);

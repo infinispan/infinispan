@@ -30,12 +30,12 @@ public interface CacheLoader<K, V> extends Lifecycle {
     * @return the entry, or null if the entry does not exist
     * @throws PersistenceException in case of an error, e.g. communicating with the external storage
     */
-   MarshalledEntry<K, V> load(K key);
+   MarshalledEntry<K, V> load(Object key);
 
    /**
     * Returns true if the storage contains an entry associated with the given key.
     *
     * @throws PersistenceException in case of an error, e.g. communicating with the external storage
     */
-   boolean contains(K key);
+   boolean contains(Object key);
 }

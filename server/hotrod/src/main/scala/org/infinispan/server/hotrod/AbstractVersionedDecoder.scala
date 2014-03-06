@@ -47,7 +47,7 @@ abstract class AbstractVersionedDecoder {
    /**
     * Create a response for get a request.
     */
-   def createGetResponse(header: HotRodHeader, entry: CacheEntry): AnyRef
+   def createGetResponse(header: HotRodHeader, entry: CacheEntry[Array[Byte], Array[Byte]]): AnyRef
 
    /**
     * Handle a protocol specific header reading.

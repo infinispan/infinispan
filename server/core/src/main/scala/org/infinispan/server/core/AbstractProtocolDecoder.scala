@@ -315,9 +315,9 @@ abstract class AbstractProtocolDecoder[K, V](transport: NettyTransport)
 
    protected def createNotExistResponse: AnyRef
 
-   protected def createGetResponse(k: K, entry: CacheEntry): AnyRef
+   protected def createGetResponse(k: K, entry: CacheEntry[K, V]): AnyRef
 
-   protected def createMultiGetResponse(pairs: Map[K, CacheEntry]): AnyRef
+   protected def createMultiGetResponse(pairs: Map[K, CacheEntry[K, V]]): AnyRef
 
    protected def createErrorResponse(t: Throwable): AnyRef
 

@@ -78,7 +78,7 @@ public class StateConsumerImpl implements StateConsumer {
    private TransactionManager transactionManager;   // optional
    private CommandsFactory commandsFactory;
    private TransactionTable transactionTable;       // optional
-   private DataContainer dataContainer;
+   private DataContainer<Object, Object> dataContainer;
    private PersistenceManager persistenceManager;
    private InterceptorChain interceptorChain;
    private InvocationContextFactory icf;
