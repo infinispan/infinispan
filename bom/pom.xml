@@ -69,7 +69,7 @@
       <version.osgi>4.3.0</version.osgi>
       <version.rhq>4.4.0</version.rhq>
       <version.scala>2.10.2</version.scala>
-      <version.xstream>1.4.1</version.xstream>
+      <version.xstream>1.4.7</version.xstream>
    </properties>
 
    <distributionManagement>
