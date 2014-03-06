@@ -143,8 +143,6 @@
             <operation name="remove" displayName="Remove Endpoint"
                        description="Removes the given endpoint from the server"/>
 
-            &commonConnectorMetrics;
-
             <resource-configuration>
                 &addConnectorCommandParameters;
                 <c:simple-property name="auth-method" required="false"
