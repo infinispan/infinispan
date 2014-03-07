@@ -6,7 +6,6 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ExecutorService;
 
-
 import org.infinispan.commands.read.MapCombineCommand;
 import org.infinispan.commands.read.ReduceCommand;
 import org.infinispan.distribution.DistributionManager;
@@ -59,6 +58,18 @@ public interface MapReduceManager {
     */
    <KOut, VOut> Map<KOut, VOut> reduce(ReduceCommand<KOut, VOut> reducer) throws InterruptedException;
    
+   /**
+    * Invoked when ReduceCommand arrives to a target Infinispan node. However, instead of returning
+    * a resulting Map<KOut, VOut> to master node, reduce command emits results of reduce phase to a
+    * specified resulting cache.
+    *
+    * @param reducer ReduceCommand sent from MapReduceTask
+    * @param resultCache result cache to store results of reduce phase
+    * @return map of reduced output keys and values returned to MapReduceTask
+    */
+   <KOut, VOut> void reduce(ReduceCommand<KOut, VOut> reducer, String resultCache)
+         throws InterruptedException;
+
    /**
     * Maps Map/Reduce task intermediate or input keys to nodes on Infinispan cluster
     * 

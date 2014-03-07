@@ -15,6 +15,7 @@ import org.infinispan.Cache;
 import org.infinispan.commons.util.FileLookup;
 import org.infinispan.commons.util.FileLookupFactory;
 import org.infinispan.configuration.cache.CacheMode;
+import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
@@ -60,10 +61,40 @@ public abstract class BaseLargeWordCountMapReduceTest extends MultipleCacheManag
       verifyResults(mapReduce);
    }
 
+   public void testInvokeMapReduceOnAllKeysWithResultCache() throws Exception {
+      String cacheName = "resultCache";
+      ConfigurationBuilder builder = getDefaultClusteredCacheConfig(CacheMode.REPL_SYNC, true);
+      defineConfigurationOnAllManagers(cacheName, builder);
+      try {
+         MapReduceTask<String, String, String, Integer> task = invokeMapReduce(null);
+         Cache c1 = cache(0, cacheName);
+         task.execute(c1);
+         verifyResults(c1);
+         c1.clear();
+      } finally {
+         removeCacheFromCluster(cacheName);
+      }
+   }
+
    public void testInvokeMapReduceOnSubsetOfKeys() throws Exception {
       MapReduceTask<String, String, String, Integer> task = invokeMapReduce(new String[] { "1", "2", "3" });
       Map<String, Integer> mapReduce = task.execute();
       assertPartialWordCount(countWords(mapReduce));
+   }
+
+   public void testInvokeMapReduceOnSubsetOfKeysWithResultCache() throws Exception {
+      String cacheName = "resultCache2";
+      ConfigurationBuilder builder = getDefaultClusteredCacheConfig(CacheMode.REPL_SYNC, true);
+      defineConfigurationOnAllManagers(cacheName, builder);
+      try {
+         MapReduceTask<String, String, String, Integer> task = invokeMapReduce(new String[] { "1", "2", "3" });
+         task.execute(cacheName);
+         Cache c1 = cache(0, cacheName);
+         assertPartialWordCount(countWords(c1));
+         c1.clear();
+      } finally {
+         removeCacheFromCluster(cacheName);
+      }
    }
 
    protected MapReduceTask<String, String, String, Integer> invokeMapReduce(String keys[],

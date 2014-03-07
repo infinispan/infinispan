@@ -107,12 +107,25 @@ public class MapReduceManagerImpl implements MapReduceManager {
    }
 
    @Override
-   @SuppressWarnings("unchecked")
    public <KOut, VOut> Map<KOut, VOut> reduce(ReduceCommand<KOut, VOut> reduceCommand) throws InterruptedException {
+      final Map<KOut, VOut> result = CollectionFactory.makeConcurrentMap(256);
+      reduce(reduceCommand, result);
+      return result;
+   }
+
+   @Override
+   public <KOut, VOut> void reduce(ReduceCommand<KOut, VOut> reduceCommand, String resultCache) throws InterruptedException{
+      Cache<KOut, VOut> cache = cacheManager.getCache(resultCache);
+      reduce(reduceCommand, cache);
+   }
+
+   @SuppressWarnings("unchecked")
+   protected <KOut, VOut> void reduce(ReduceCommand<KOut, VOut> reduceCommand, final Map<KOut, VOut> result)
+         throws InterruptedException {
       final Set<KOut> keys = reduceCommand.getKeys();
       final String taskId = reduceCommand.getTaskId();
       boolean noInputKeys = keys == null || keys.isEmpty();
-      final Map<KOut, VOut> result = CollectionFactory.makeConcurrentMap(256);
+
       if (noInputKeys) {
          //illegal state, raise exception
          throw new IllegalStateException("Reduce phase of MapReduceTask " + taskId + " on node " + cdl.getAddress()
@@ -165,7 +178,6 @@ public class MapReduceManagerImpl implements MapReduceManager {
             taskLifecycleService.onPostExecute(reducer);
          }
       }
-      return result;
    }
 
    @SuppressWarnings("unchecked")

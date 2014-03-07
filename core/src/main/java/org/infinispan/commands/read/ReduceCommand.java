@@ -1,6 +1,7 @@
 package org.infinispan.commands.read;
 
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.UUID;
@@ -10,8 +11,6 @@ import org.infinispan.commands.remote.BaseRpcCommand;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.distexec.mapreduce.MapReduceManager;
 import org.infinispan.distexec.mapreduce.Reducer;
-import org.infinispan.util.logging.Log;
-import org.infinispan.util.logging.LogFactory;
 
 /**
  * ReduceCommand is a container to migrate {@link Reducer} to a remote Infinispan node where it will
@@ -23,13 +22,13 @@ import org.infinispan.util.logging.LogFactory;
 public class ReduceCommand<KOut, VOut> extends BaseRpcCommand implements CancellableCommand {
 
    public static final int COMMAND_ID = 31;
-   private static final Log log = LogFactory.getLog(ReduceCommand.class);
    private Set<KOut> keys = new HashSet<KOut>();
    private Reducer<KOut, VOut> reducer;
    private String taskId;
    private boolean emitCompositeIntermediateKeys;
    private MapReduceManager mrManager;
    private UUID uuid;
+   private String resultCacheName;
 
    private ReduceCommand() {
       super(null); // For command id uniqueness test
@@ -63,7 +62,12 @@ public class ReduceCommand<KOut, VOut> extends BaseRpcCommand implements Cancell
     */
    @Override
    public Object perform(InvocationContext context) throws Throwable {
-      return mrManager.reduce(this);
+      if (emitsIntoResultingCache()){
+         mrManager.reduce(this, getResultCacheName());
+         return Collections.emptyMap();
+      } else {
+         return mrManager.reduce(this);
+      }
    }
 
    public boolean isEmitCompositeIntermediateKeys() {
@@ -72,6 +76,18 @@ public class ReduceCommand<KOut, VOut> extends BaseRpcCommand implements Cancell
 
    public void setEmitCompositeIntermediateKeys(boolean emitCompositeIntermediateKeys) {
       this.emitCompositeIntermediateKeys = emitCompositeIntermediateKeys;
+   }
+
+   public boolean emitsIntoResultingCache(){
+      return resultCacheName != null && !resultCacheName.isEmpty();
+   }
+
+   public String getResultCacheName() {
+      return resultCacheName;
+   }
+
+   public void setResultCacheName(String resultCacheName) {
+      this.resultCacheName = resultCacheName;
    }
 
    public Set<KOut> getKeys() {
@@ -98,7 +114,7 @@ public class ReduceCommand<KOut, VOut> extends BaseRpcCommand implements Cancell
 
    @Override
    public Object[] getParameters() {
-      return new Object[] { taskId, keys, reducer, emitCompositeIntermediateKeys, uuid };
+      return new Object[] { taskId, keys, reducer, emitCompositeIntermediateKeys, uuid, resultCacheName };
    }
 
    @SuppressWarnings({ "unchecked", "rawtypes" })
@@ -112,6 +128,7 @@ public class ReduceCommand<KOut, VOut> extends BaseRpcCommand implements Cancell
       reducer = (Reducer) args[i++];
       emitCompositeIntermediateKeys = (Boolean) args[i++];
       uuid = (UUID) args[i++];
+      resultCacheName = (String) args[i++];
    }
 
    @Override
