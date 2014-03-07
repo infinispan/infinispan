@@ -28,7 +28,7 @@ public class XmlFileParsingTest extends AbstractInfinispanTest {
       String config = INFINISPAN_START_TAG +
             "   <default>\n" +
             "     <persistence>\n" +
-            "       <stringKeyedJdbcStore xmlns=\"urn:infinispan:config:jdbc:6.0\" key2StringMapper=\"DummyKey2StringMapper\">\n" +
+            "       <stringKeyedJdbcStore xmlns=\"urn:infinispan:config:jdbc:6.0\" key2StringMapper=\"DummyKey2StringMapper\" preload=\"true\" shared=\"true\">\n" +
             "         <connectionPool connectionUrl=\"jdbc:h2:mem:infinispan;DB_CLOSE_DELAY=-1\" username=\"dbuser\" password=\"dbpass\" driverClass=\"org.h2.Driver\"/>\n" +
             "         <stringKeyedTable prefix=\"entry\" fetchSize=\"34\" batchSize=\"128\" >\n" +
             "           <idColumn name=\"id\" type=\"VARCHAR\" />\n" +
@@ -48,6 +48,8 @@ public class XmlFileParsingTest extends AbstractInfinispanTest {
       assertEquals("version", store.table().timestampColumnName());
       assertTrue(store.async().enabled());
       assertEquals("DummyKey2StringMapper", store.key2StringMapper());
+      assertTrue(store.shared());
+      assertTrue(store.preload());
       PooledConnectionFactoryConfiguration connectionFactory = (PooledConnectionFactoryConfiguration) store.connectionFactory();
       assertEquals("jdbc:h2:mem:infinispan;DB_CLOSE_DELAY=-1", connectionFactory.connectionUrl());
       assertEquals("org.h2.Driver", connectionFactory.driverClass());
