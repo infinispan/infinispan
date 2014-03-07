@@ -1,7 +1,7 @@
 package org.infinispan.cli.interpreter.logging;
 
-import org.jboss.logging.Message;
-import org.jboss.logging.MessageBundle;
+import org.jboss.logging.annotations.Message;
+import org.jboss.logging.annotations.MessageBundle;
 
 /**
  * Informational CLI messages. These start from 19500 so as not to overlap with the logging messages defined in {@link Log}
