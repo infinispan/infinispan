@@ -1,6 +1,6 @@
 package org.infinispan.server.websocket.logging;
 
-import org.jboss.logging.MessageLogger;
+import org.jboss.logging.annotations.MessageLogger;
 
 /**
  * Log abstraction for the websocket server. For this module, message ids

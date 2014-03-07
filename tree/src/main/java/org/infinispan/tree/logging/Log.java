@@ -1,6 +1,6 @@
 package org.infinispan.tree.logging;
 
-import org.jboss.logging.MessageLogger;
+import org.jboss.logging.annotations.MessageLogger;
 
 /**
  * Log abstraction for the tree module. For this module, message ids

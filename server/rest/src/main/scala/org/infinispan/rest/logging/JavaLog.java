@@ -2,10 +2,10 @@ package org.infinispan.rest.logging;
 
 import static org.jboss.logging.Logger.Level.ERROR;
 
-import org.jboss.logging.Cause;
-import org.jboss.logging.LogMessage;
-import org.jboss.logging.Message;
-import org.jboss.logging.MessageLogger;
+import org.jboss.logging.annotations.Cause;
+import org.jboss.logging.annotations.LogMessage;
+import org.jboss.logging.annotations.Message;
+import org.jboss.logging.annotations.MessageLogger;
 
 /**
  * Log abstraction for the REST server module. For this module, message ids
