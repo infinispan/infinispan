@@ -2,6 +2,7 @@ package org.infinispan.distexec.mapreduce;
 
 import org.infinispan.Cache;
 import org.infinispan.configuration.cache.CacheMode;
+import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.testng.annotations.Test;
@@ -25,6 +26,36 @@ public class LocalMapReduceTest extends DistributedFourNodesMapReduceTest {
    protected void createCacheManagers() throws Throwable {
       EmbeddedCacheManager cacheManager = TestCacheManagerFactory.createCacheManager(false);
       cacheManagers.add(cacheManager);
+   }
+
+   public void testInvokeMapReduceOnSubsetOfKeysWithResultCache() throws Exception {
+      String cacheName = "resultCache2";
+      ConfigurationBuilder builder = getDefaultClusteredCacheConfig(CacheMode.LOCAL, true);
+      defineConfigurationOnAllManagers(cacheName, builder);
+      try {
+         MapReduceTask<String, String, String, Integer> task = invokeMapReduce(new String[] { "1", "2", "3" });
+         task.execute(cacheName);
+         Cache c1 = cache(0, cacheName);
+         assertPartialWordCount(countWords(c1));
+         c1.clear();
+      } finally {
+         removeCacheFromCluster(cacheName);
+      }
+   }
+
+   public void testInvokeMapReduceOnAllKeysWithResultCache() throws Exception {
+      String cacheName = "resultCache";
+      ConfigurationBuilder builder = getDefaultClusteredCacheConfig(CacheMode.LOCAL, true);
+      defineConfigurationOnAllManagers(cacheName, builder);
+      try {
+         MapReduceTask<String, String, String, Integer> task = invokeMapReduce(null);
+         Cache c1 = cache(0, cacheName);
+         task.execute(c1);
+         verifyResults(c1);
+         c1.clear();
+      } finally {
+         removeCacheFromCluster(cacheName);
+      }
    }
 
    @Override
