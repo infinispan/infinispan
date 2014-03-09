@@ -67,7 +67,6 @@ public class StateProviderTest {
 
    private Configuration configuration;
 
-   private ExecutorService pooledExecutorService;
    private ExecutorService mockExecutorService;
    private Cache cache;
 
@@ -100,9 +99,6 @@ public class StateProviderTest {
          }
       };
 
-      pooledExecutorService = new ThreadPoolExecutor(10, 20, 0L, TimeUnit.MILLISECONDS,
-            new LinkedBlockingDeque<Runnable>(), threadFactory, new ThreadPoolExecutor.CallerRunsPolicy());
-
       mockExecutorService = mock(ExecutorService.class);
       cache = mock(Cache.class);
       when(cache.getName()).thenReturn("testCache");
@@ -122,11 +118,6 @@ public class StateProviderTest {
             return cacheTopology;
          }
       });
-   }
-
-   @AfterTest
-   public void tearDown() {
-      pooledExecutorService.shutdownNow();
    }
 
    public void test1() throws InterruptedException {
@@ -272,7 +263,7 @@ public class StateProviderTest {
 
       // create state provider
       StateProviderImpl stateProvider = new StateProviderImpl();
-      stateProvider.init(cache, pooledExecutorService,
+      stateProvider.init(cache, mockExecutorService,
             configuration, rpcManager, commandsFactory, cacheNotifier, persistenceManager,
             dataContainer, transactionTable, stateTransferLock, stateConsumer, ef);
 
