@@ -163,7 +163,7 @@ public interface Log extends BasicLogger {
    @Message(value = "Passivated %d entries in %s", id = 30)
    void passivatedEntries(int numEntries, String duration);
 
-   @LogMessage(level = INFO)
+   @LogMessage(level = TRACE)
    @Message(value = "MBeans were successfully registered to the platform MBean server.", id = 31)
    void mbeansSuccessfullyRegistered();
 
