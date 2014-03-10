@@ -43,18 +43,6 @@ import static org.ops4j.pax.exam.CoreOptions.maven;
  * Simple test for RemoteCache running in OSGi (Karaf). Both basic put/get operations and remote queries are
  * tested.
  *
- * Infinispan server must be started manually before running these tests. The following cache must be added into the
- * server's configuration:
- *
- * <local-cache name="indexed" start="EAGER">
-        <locking isolation="NONE" acquire-timeout="30000" concurrency-level="1000" striping="false"/>
-        <transaction mode="NONE"/>
-        <indexing index="ALL">
-            <property name="default.directory_provider">ram</property>
-            <property name="lucene_version">LUCENE_36</property>
-        </indexing>
-   </local-cache>
- *
  * @author mgencur
  */
 @RunWith(PaxExam.class)
@@ -64,8 +52,8 @@ public class RemoteCacheOsgiTest extends KarafTestSupport {
 
     private final String SERVER_HOST = "localhost";
     private final int HOTROD_PORT = 11222;
-    private final String DEFAULT_CACHE = "default";
-    private final String INDEXED_CACHE = "indexed";
+    private final String DEFAULT_CACHE = "notindexed";
+    private final String INDEXED_CACHE = "testcache";
     private final String KARAF_VERSION = System.getProperty("version.karaf", "2.3.3");
     private final String RESOURCES_DIR = System.getProperty("resources.dir", System.getProperty("java.io.tmpdir"));
 
@@ -80,7 +68,7 @@ public class RemoteCacheOsgiTest extends KarafTestSupport {
                 KarafDistributionOption.features(maven().groupId("org.infinispan")
                         .artifactId("infinispan-client-hotrod").type("xml").classifier("features")
                         .versionAsInProject(), "hotrod-client-with-query"),
-                KarafDistributionOption.features(new RawUrlReference("file://" + RESOURCES_DIR + "/test-features.xml"), "query-sample-domain"),
+                KarafDistributionOption.features(new RawUrlReference("file:///" + RESOURCES_DIR.replace("\\", "/") + "/test-features.xml"), "query-sample-domain"),
                 KarafDistributionOption.editConfigurationFileExtend("etc/jre.properties", "jre-1.7", "sun.misc"),
                 KarafDistributionOption.editConfigurationFileExtend("etc/jre.properties", "jre-1.6", "sun.misc"),
                 KarafDistributionOption.keepRuntimeFolder(),
