@@ -9,5 +9,5 @@ The Infinispan Community
 *TODO* 
 
 === Configuration
+*TODO*
 
-*TODO* 
