@@ -50,10 +50,6 @@
         </dependency>
         <dependency>
             <groupId>org.infinispan</groupId>
-            <artifactId>infinispan-adaptor52x</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>org.infinispan</groupId>
             <artifactId>infinispan-cachestore-jdbc</artifactId>
         </dependency>
         <dependency>

@@ -163,12 +163,6 @@
 
          <dependency>
             <groupId>org.infinispan</groupId>
-            <artifactId>infinispan-adaptor52x</artifactId>
-            <version>${version.org.infinispan}</version>
-         </dependency>
-
-         <dependency>
-            <groupId>org.infinispan</groupId>
             <artifactId>infinispan-cachestore-parent</artifactId>
             <version>${version.org.infinispan}</version>
             <type>pom</type>

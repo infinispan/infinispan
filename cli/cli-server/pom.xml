@@ -55,11 +55,6 @@
       </dependency>
       <dependency>
          <groupId>${project.groupId}</groupId>
-         <artifactId>infinispan-adaptor52x</artifactId>
-         <scope>test</scope>
-      </dependency>
-      <dependency>
-         <groupId>${project.groupId}</groupId>
          <artifactId>infinispan-server-hotrod</artifactId>
          <scope>test</scope>
       </dependency>

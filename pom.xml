@@ -65,10 +65,6 @@
       <module>integrationtests/compatibility-mode-it</module>
       <module>integrationtests/cdi-jcache-it</module>
       <module>jcache</module>
-      <module>compatibility52x</module>
-      <module>compatibility52x/adaptor52x</module>
-      <module>compatibility52x/custom52x-store</module>
-      <module>compatibility52x/cli-migrator52x</module>
       <module>server/integration</module>
    </modules>
 
