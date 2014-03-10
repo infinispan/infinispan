@@ -25,6 +25,12 @@
                       <property name="hibernate.search.jmx_enabled">true</property>
                    </indexing>
                 </local-cache>
+                <local-cache
+                    name="notindexed"
+                    start="EAGER"
+                    batching="false">
+                    <transaction mode="NONE" />
+                </local-cache>
             </cache-container>
             <cache-container name="security"/>
         </subsystem>
