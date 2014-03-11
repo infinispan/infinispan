@@ -24,7 +24,7 @@ import org.infinispan.server.hotrod.HotRodServer;
 import org.infinispan.test.SingleCacheManagerTest;
 import org.infinispan.test.fwk.CleanupAfterMethod;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
-import org.testng.annotations.AfterTest;
+import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
@@ -96,7 +96,7 @@ public class RemoteQueryDslConditionsTest extends SingleCacheManagerTest {
       return "ram";
    }
 
-   @AfterTest
+   @AfterMethod(alwaysRun = true)
    public void release() {
       killRemoteCacheManager(remoteCacheManager);
       killServers(hotRodServer);
