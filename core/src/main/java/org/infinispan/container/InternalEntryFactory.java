@@ -98,6 +98,20 @@ public interface InternalEntryFactory {
    InternalCacheEntry update(InternalCacheEntry cacheEntry, Metadata metadata);
 
    /**
+    * Similar to {@link #update(org.infinispan.container.entries.InternalCacheEntry, org.infinispan.metadata.Metadata)}
+    * but it also updates the {@link org.infinispan.container.entries.InternalCacheEntry} value.
+    * <p/>
+    * If the same internal cache entry is returned and if it is a mortal cache entry, the returned instance needs to be
+    * reincarnated.
+    *
+    * @param cacheEntry original internal cache entry
+    * @param value      new value
+    * @param metadata   new metadata
+    * @return a new InternalCacheEntry instance or the existing original
+    */
+   InternalCacheEntry update(InternalCacheEntry cacheEntry, Object value, Metadata metadata);
+
+   /**
     * Creates an {@link InternalCacheValue} based on the {@link InternalCacheEntry} passed in.
     * 
     * @param cacheEntry to use to generate a {@link InternalCacheValue}

@@ -8,6 +8,7 @@ import org.infinispan.metadata.Metadata;
 import org.infinispan.commons.equivalence.Equivalence;
 import org.infinispan.commons.util.CollectionFactory;
 import org.infinispan.commons.util.concurrent.ParallelIterableMap;
+import org.infinispan.commons.util.concurrent.jdk8backported.EquivalentConcurrentHashMapV8;
 import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.eviction.ActivationManager;
 import org.infinispan.eviction.EvictionManager;
@@ -49,9 +50,10 @@ public class DefaultDataContainer implements DataContainer {
    private static final Log log = LogFactory.getLog(DefaultDataContainer.class);
    private static final boolean trace = log.isTraceEnabled();
 
-   final protected ConcurrentMap<Object, InternalCacheEntry> entries;
+   private final ConcurrentMap<Object, InternalCacheEntry> entries;
+   private final DefaultEvictionListener evictionListener;
+   private final ExtendedMap extendedMap;
    protected InternalEntryFactory entryFactory;
-   final protected DefaultEvictionListener evictionListener;
    private EvictionManager evictionManager;
    private PassivationManager passivator;
    private ActivationManager activator;
@@ -62,18 +64,121 @@ public class DefaultDataContainer implements DataContainer {
       // If no comparing implementations passed, could fallback on JDK CHM
       entries = CollectionFactory.makeConcurrentParallelMap(128, concurrencyLevel);
       evictionListener = null;
+      extendedMap = new ExtendedMap() {
+         @Override
+         public void evict(Object key) {
+            ((EquivalentConcurrentHashMapV8<Object, InternalCacheEntry>) entries)
+                  .computeIfPresent(key, new EquivalentConcurrentHashMapV8.BiFun<Object, InternalCacheEntry, InternalCacheEntry>() {
+                     @Override
+                     public InternalCacheEntry apply(Object o, InternalCacheEntry entry) {
+                        passivator.passivate(entry);
+                        return null;
+                     }
+                  });
+         }
+
+         @Override
+         public void compute(Object key, final ComputeAction action) {
+            ((EquivalentConcurrentHashMapV8<Object, InternalCacheEntry>) entries)
+                  .compute(key, new EquivalentConcurrentHashMapV8.BiFun<Object, InternalCacheEntry, InternalCacheEntry>() {
+                     @Override
+                     public InternalCacheEntry apply(Object key, InternalCacheEntry oldEntry) {
+                        InternalCacheEntry newEntry = action.compute(key, oldEntry, entryFactory);
+                        if (newEntry == oldEntry) {
+                           return oldEntry;
+                        } else if (newEntry == null) {
+                           return null;
+                        }
+                        if (oldEntry == null) {
+                           //new entry. need to activate the key.
+                           activator.activate(key);
+                        }
+                        if (trace)
+                           log.tracef("Store %s in container", newEntry);
+                        return newEntry;
+                     }
+                  });
+         }
+
+         @Override
+         public void putAndActivate(final InternalCacheEntry newEntry) {
+            ((EquivalentConcurrentHashMapV8<Object, InternalCacheEntry>) entries)
+                  .compute(newEntry.getKey(), new EquivalentConcurrentHashMapV8.BiFun<Object, InternalCacheEntry, InternalCacheEntry>() {
+                     @Override
+                     public InternalCacheEntry apply(Object key, InternalCacheEntry entry) {
+                        if (entry == null) {
+                           //entry does not exists before. we need to activate it.
+                           activator.activate(key);
+                        }
+
+                        return newEntry;
+                     }
+                  });
+         }
+      };
    }
 
-   public DefaultDataContainer(int concurrencyLevel,
-         Equivalence keyEq, Equivalence valueEq) {
+   public DefaultDataContainer(int concurrencyLevel, Equivalence<Object> keyEq, Equivalence<InternalCacheEntry> valueEq) {
       // If at least one comparing implementation give, use ComparingCHMv8
       entries = CollectionFactory.makeConcurrentParallelMap(128, concurrencyLevel, keyEq, valueEq);
       evictionListener = null;
+      extendedMap = new ExtendedMap() {
+         @Override
+         public void evict(Object key) {
+            ((EquivalentConcurrentHashMapV8<Object, InternalCacheEntry>) entries)
+                  .computeIfPresent(key, new EquivalentConcurrentHashMapV8.BiFun<Object, InternalCacheEntry, InternalCacheEntry>() {
+                     @Override
+                     public InternalCacheEntry apply(Object o, InternalCacheEntry entry) {
+                        passivator.passivate(entry);
+                        return null;
+                     }
+                  });
+         }
+
+         @Override
+         public void compute(Object key, final ComputeAction action) {
+            ((EquivalentConcurrentHashMapV8<Object, InternalCacheEntry>) entries)
+                  .compute(key, new EquivalentConcurrentHashMapV8.BiFun<Object, InternalCacheEntry, InternalCacheEntry>() {
+                     @Override
+                     public InternalCacheEntry apply(Object key, InternalCacheEntry oldEntry) {
+                        InternalCacheEntry newEntry = action.compute(key, oldEntry, entryFactory);
+                        if (newEntry == oldEntry) {
+                           return oldEntry;
+                        } else if (newEntry == null) {
+                           return null;
+                        }
+                        if (oldEntry == null) {
+                           //new entry. need to activate the key.
+                           activator.activate(key);
+                        }
+                        if (trace)
+                           log.tracef("Store %s in container", newEntry);
+                        return newEntry;
+                     }
+                  });
+         }
+
+         @Override
+         public void putAndActivate(final InternalCacheEntry newEntry) {
+            ((EquivalentConcurrentHashMapV8<Object, InternalCacheEntry>) entries)
+                  .compute(newEntry.getKey(), new EquivalentConcurrentHashMapV8.BiFun<Object, InternalCacheEntry, InternalCacheEntry>() {
+                     @Override
+                     public InternalCacheEntry apply(Object key, InternalCacheEntry entry) {
+                        if (entry == null) {
+                           //entry does not exists before. we need to activate it.
+                           activator.activate(key);
+                        }
+
+                        return newEntry;
+                     }
+                  });
+         }
+      };
    }
 
    protected DefaultDataContainer(int concurrencyLevel, int maxEntries,
-         EvictionStrategy strategy, EvictionThreadPolicy policy,
-         Equivalence keyEquivalence, Equivalence valueEquivalence) {
+                                  EvictionStrategy strategy, EvictionThreadPolicy policy,
+                                  Equivalence<Object> keyEquivalence, Equivalence<InternalCacheEntry> valueEquivalence) {
       // translate eviction policy and strategy
       switch (policy) {
          case PIGGYBACK:
@@ -98,14 +203,48 @@ public class DefaultDataContainer implements DataContainer {
             throw new IllegalArgumentException("No such eviction strategy " + strategy);
       }
 
-      entries = new BoundedConcurrentHashMap<Object, InternalCacheEntry>(
-            maxEntries, concurrencyLevel, eviction, evictionListener,
-            keyEquivalence, valueEquivalence);
+      final BoundedConcurrentHashMap<Object, InternalCacheEntry> boundedMap =
+            new BoundedConcurrentHashMap<Object, InternalCacheEntry>(maxEntries, concurrencyLevel, eviction, evictionListener,
+                                                                     keyEquivalence, valueEquivalence);
+      entries = boundedMap;
+      extendedMap = new ExtendedMap() {
+         @Override
+         public void evict(Object key) {
+            boundedMap.evict(key);
+         }
+
+         @Override
+         public void compute(Object key, final ComputeAction action) {
+            boundedMap.lock(key);
+            try {
+               InternalCacheEntry oldEntry = boundedMap.get(key);
+               InternalCacheEntry newEntry = action.compute(key, oldEntry, entryFactory);
+               if (oldEntry == newEntry) {
+                  return;
+               } else if (newEntry == null) {
+                  boundedMap.remove(key);
+                  return;
+               }
+               if (trace)
+                  log.tracef("Store %s in container", newEntry);
+               //put already activate the entry if it is new.
+               boundedMap.put(key, newEntry);
+            } finally {
+               boundedMap.unlock(key);
+            }
+         }
+
+         @Override
+         public void putAndActivate(InternalCacheEntry newEntry) {
+            //put already activate the entry if it is new.
+            boundedMap.put(newEntry.getKey(), newEntry);
+         }
+      };
    }
 
    @Inject
    public void initialize(EvictionManager evictionManager, PassivationManager passivator,
-         InternalEntryFactory entryFactory, ActivationManager activator, PersistenceManager clm, TimeService timeService) {
+                          InternalEntryFactory entryFactory, ActivationManager activator, PersistenceManager clm, TimeService timeService) {
       this.evictionManager = evictionManager;
       this.passivator = passivator;
       this.entryFactory = entryFactory;
@@ -115,14 +254,14 @@ public class DefaultDataContainer implements DataContainer {
    }
 
    public static DataContainer boundedDataContainer(int concurrencyLevel, int maxEntries,
-            EvictionStrategy strategy, EvictionThreadPolicy policy,
-            Equivalence keyEquivalence, Equivalence valueEquivalence) {
+                                                    EvictionStrategy strategy, EvictionThreadPolicy policy,
+                                                    Equivalence<Object> keyEquivalence, Equivalence<InternalCacheEntry> valueEquivalence) {
       return new DefaultDataContainer(concurrencyLevel, maxEntries, strategy,
-            policy, keyEquivalence, valueEquivalence);
+                                      policy, keyEquivalence, valueEquivalence);
    }
 
    public static DataContainer unBoundedDataContainer(int concurrencyLevel,
-         Equivalence keyEquivalence, Equivalence valueEquivalence) {
+                                                      Equivalence<Object> keyEquivalence, Equivalence<InternalCacheEntry> valueEquivalence) {
       return new DefaultDataContainer(concurrencyLevel, keyEquivalence, valueEquivalence);
    }
 
@@ -153,14 +292,12 @@ public class DefaultDataContainer implements DataContainer {
    @Override
    public void put(Object k, Object v, Metadata metadata) {
       InternalCacheEntry e = entries.get(k);
+
+      if (trace) {
+         log.tracef("Creating new ICE for writing. Existing=%s, metadata=%s, new value=%s", e, metadata, v);
+      }
       if (e != null) {
-         e.setValue(v);
-         InternalCacheEntry original = e;
-         e = entryFactory.update(e, metadata);
-         // we have the same instance. So we need to reincarnate, if mortal.
-         if (isMortalEntry(e) && original == e) {
-            e.reincarnate(timeService.wallClockTime());
-         }
+         e = entryFactory.update(e, v, metadata);
       } else {
          // this is a brand-new entry
          e = entryFactory.create(k, v, metadata);
@@ -169,11 +306,7 @@ public class DefaultDataContainer implements DataContainer {
       if (trace)
          log.tracef("Store %s in container", e);
 
-      entries.put(k, e);
-   }
-
-   private boolean isMortalEntry(InternalCacheEntry e) {
-      return e.getLifespan() > 0;
+      extendedMap.putAndActivate(e);
    }
 
    @Override
@@ -226,6 +359,16 @@ public class DefaultDataContainer implements DataContainer {
             purgeCandidates.remove();
          }
       }
+   }
+
+   @Override
+   public void evict(Object key) {
+      extendedMap.evict(key);
+   }
+
+   @Override
+   public void compute(Object key, ComputeAction action) {
+      extendedMap.compute(key, action);
    }
 
    @Override
@@ -376,7 +519,7 @@ public class DefaultDataContainer implements DataContainer {
       ParallelIterableMap<Object, InternalCacheEntry> map = (ParallelIterableMap<Object, InternalCacheEntry>) entries;
       map.forEach(512, new ParallelIterableMap.KeyValueAction<Object, InternalCacheEntry>() {
          @Override
-         public void apply(Object key, InternalCacheEntry value) {            
+         public void apply(Object key, InternalCacheEntry value) {
             if (filter.shouldLoadKey((K)key)) {
                action.apply((K)key, value);
             }
@@ -387,4 +530,17 @@ public class DefaultDataContainer implements DataContainer {
          throw new InterruptedException();
       }
    }
+
+   /**
+    * Atomic logic to activate/passivate entries. This is dependent of the {@code ConcurrentMap} implementation.
+    */
+   private static interface ExtendedMap {
+      void evict(Object key);
+
+      void compute(Object key, ComputeAction action);
+
+      void putAndActivate(InternalCacheEntry newEntry);
+   }
+
+
 }

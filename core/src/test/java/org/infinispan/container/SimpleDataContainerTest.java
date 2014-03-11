@@ -1,5 +1,6 @@
 package org.infinispan.container;
 
+import org.infinispan.eviction.ActivationManager;
 import org.infinispan.metadata.EmbeddedMetadata;
 import org.infinispan.commons.equivalence.AnyEquivalence;
 import org.infinispan.container.entries.ImmortalCacheEntry;
@@ -9,6 +10,7 @@ import org.infinispan.container.entries.TransientCacheEntry;
 import org.infinispan.container.entries.TransientMortalCacheEntry;
 import org.infinispan.test.AbstractInfinispanTest;
 import org.infinispan.util.CoreImmutables;
+import org.mockito.Mockito;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
@@ -18,6 +20,8 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
+import static org.mockito.Mockito.doNothing;
+import static org.mockito.Mockito.mock;
 import static org.testng.AssertJUnit.assertEquals;
 
 @Test(groups = "unit", testName = "container.SimpleDataContainerTest")
@@ -35,10 +39,12 @@ public class SimpleDataContainerTest extends AbstractInfinispanTest {
    }
 
    protected DataContainer createContainer() {
-      DefaultDataContainer dc = new DefaultDataContainer(16, AnyEquivalence.getInstance(), AnyEquivalence.getInstance());
+      DefaultDataContainer dc = new DefaultDataContainer(16, AnyEquivalence.getInstance(), AnyEquivalence.<InternalCacheEntry>getInstance());
       InternalEntryFactoryImpl internalEntryFactory = new InternalEntryFactoryImpl();
       internalEntryFactory.injectTimeService(TIME_SERVICE);
-      dc.initialize(null, null, internalEntryFactory, null, null, TIME_SERVICE);
+      ActivationManager activationManager = mock(ActivationManager.class);
+      doNothing().when(activationManager).activate(Mockito.anyObject());
+      dc.initialize(null, null, internalEntryFactory, activationManager, null, TIME_SERVICE);
       return dc;
    }
 

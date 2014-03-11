@@ -154,7 +154,9 @@ public class ReadCommittedEntry implements MVCCEntry {
             if (isRemoved() && !isEvicted()) ahm.markRemoved(true);
          }
 
-         if (isRemoved()) {
+         if (isEvicted()) {
+            container.evict(key);
+         } else if (isRemoved()) {
             container.remove(key);
          } else if (value != null) {
             // Can't just rely on the entry's metadata because it could have
