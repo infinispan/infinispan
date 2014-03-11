@@ -104,6 +104,18 @@ public class QueryableDataContainer implements DataContainer {
       delegate.purgeExpired();
    }
 
+   @Override
+   public void evict(Object key) {
+      loggedOperations.add("evict(" + key + ")");
+      delegate.evict(key);
+   }
+
+   @Override
+   public void compute(Object key, ComputeAction action) {
+      loggedOperations.add("compute(" + key + "," + action + ")");
+      delegate.compute(key, action);
+   }
+
    public Collection<String> getLoggedOperations() {
       return loggedOperations;
    }

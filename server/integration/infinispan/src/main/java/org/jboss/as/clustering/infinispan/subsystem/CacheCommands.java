@@ -1,11 +1,11 @@
 package org.jboss.as.clustering.infinispan.subsystem;
 
 import org.infinispan.Cache;
+import org.infinispan.eviction.PassivationManager;
 import org.infinispan.interceptors.ActivationInterceptor;
 import org.infinispan.interceptors.CacheMgmtInterceptor;
 import org.infinispan.interceptors.CacheWriterInterceptor;
 import org.infinispan.interceptors.InvalidationInterceptor;
-import org.infinispan.interceptors.PassivationInterceptor;
 import org.infinispan.interceptors.TxInterceptor;
 import org.infinispan.remoting.rpc.RpcManagerImpl;
 import org.infinispan.transaction.xa.recovery.RecoveryAdminOperations;
@@ -158,10 +158,9 @@ public abstract class CacheCommands implements OperationStepHandler {
 
         @Override
         protected ModelNode invokeCommand(Cache<?, ?> cache, ModelNode operation) throws Exception {
-            PassivationInterceptor interceptor = getFirstInterceptorWhichExtends(cache.getAdvancedCache()
-                    .getInterceptorChain(), PassivationInterceptor.class);
-            if (interceptor != null) {
-                interceptor.resetStatistics();
+            PassivationManager manager = cache.getAdvancedCache().getComponentRegistry().getComponent(PassivationManager.class);
+            if (manager != null) {
+               manager.resetStatistics();
             }
             return null;
         }

@@ -156,7 +156,7 @@ public class EntryFactoryImpl implements EntryFactory {
    @Override
    //removed final modifier to allow mock this method
    public MVCCEntry wrapEntryForPut(InvocationContext ctx, Object key, InternalCacheEntry icEntry,
-         boolean undeleteIfNeeded, FlagAffectedCommand cmd, boolean skipRead) throws InterruptedException {
+         boolean undeleteIfNeeded, FlagAffectedCommand cmd, boolean skipRead) {
       CacheEntry cacheEntry = getFromContext(ctx, key);
       MVCCEntry mvccEntry;
       if (cacheEntry != null && cacheEntry.isNull() && !useRepeatableRead) cacheEntry = null;
@@ -211,7 +211,7 @@ public class EntryFactoryImpl implements EntryFactory {
    }
    
    @Override
-   public CacheEntry wrapEntryForDelta(InvocationContext ctx, Object deltaKey, Delta delta ) throws InterruptedException {
+   public CacheEntry wrapEntryForDelta(InvocationContext ctx, Object deltaKey, Delta delta ) {
       CacheEntry cacheEntry = getFromContext(ctx, deltaKey);
       DeltaAwareCacheEntry deltaAwareEntry = null;
       if (cacheEntry != null) {        

@@ -529,13 +529,13 @@ public class EvictionWithConcurrentOperationsTest extends SingleCacheManagerTest
       }
 
       @Override
-      public long getPassivationCount() {
-         return delegate.getPassivationCount();
+      public long getPassivations() {
+         return delegate.getPassivations();
       }
 
       @Override
-      public void resetPassivationCount() {
-         delegate.resetPassivationCount();
+      public void resetStatistics() {
+         delegate.resetStatistics();
       }
    }
 

@@ -4,16 +4,10 @@ import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.container.DataContainer;
 import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.marshall.core.MarshalledEntry;
-import org.infinispan.notifications.cachelistener.annotation.CacheEntriesEvicted;
-import org.infinispan.notifications.cachelistener.event.CacheEntriesEvictedEvent;
 import org.infinispan.persistence.dummy.DummyInMemoryStoreConfigurationBuilder;
 import org.infinispan.persistence.spi.CacheLoader;
 import org.infinispan.test.TestingUtil;
 import org.testng.annotations.Test;
-
-import java.util.concurrent.Future;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
 
 import static org.testng.AssertJUnit.*;
 
@@ -27,48 +21,6 @@ import static org.testng.AssertJUnit.*;
 @Test(groups = "functional", testName = "eviction.ManualEvictionWithPassivationAndSizeBasedAndConcurrentOperationsInBackupOwnerTest")
 public class ManualEvictionWithPassivationAndSizeBasedAndConcurrentOperationsInBackupOwnerTest
       extends ManualEvictionWithSizeBasedAndConcurrentOperationsInBackupOwnerTest {
-
-   @Override
-   public void testScenario3() throws Exception {
-      final Object key1 = createSameHashCodeKey("key1");
-      initializeKeyAndCheckData(key1, "v1");
-
-      final Latch latch = new Latch();
-      final SyncEvictionListener evictionListener = new SyncEvictionListener() {
-         @CacheEntriesEvicted
-         @Override
-         public void evicted(CacheEntriesEvictedEvent event) {
-            if (event.getEntries().containsKey(key1)) {
-               latch.blockIfNeeded();
-            }
-         }
-      };
-      cache.addListener(evictionListener);
-
-      //this will trigger the eviction of key1. key1 eviction will be blocked in the latch
-      latch.enable();
-      Future<Void> evict = evictWithFuture(key1);
-      latch.waitToBlock(30, TimeUnit.SECONDS);
-
-      //the eviction was trigger and the key is no longer in the map
-      Future<Object> get = cache.getAsync(key1);
-
-      try {
-         get.get(10, TimeUnit.SECONDS);
-         //the eviction acquires the lock to atomically passivate and remove from DC. the get acquires the lock to
-         //atomically activate and put it in DC. so, we have a deadlock.
-         fail("Get should not succeed while the eviction is in progress");
-      } catch (TimeoutException expected) {
-         //expected
-      }
-
-      //let the eviction continue and wait for put
-      latch.disable();
-      evict.get();
-      assertEquals("Wrong value for key " + key1 + " in get operation.", "v1", get.get(30, TimeUnit.SECONDS));
-
-      assertInMemory(key1, "v1");
-   }
 
    @Override
    protected void configurePersistence(ConfigurationBuilder builder) {
