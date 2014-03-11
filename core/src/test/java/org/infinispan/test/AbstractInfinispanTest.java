@@ -6,6 +6,7 @@ import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 import org.testng.annotations.AfterTest;
 
+import javax.transaction.TransactionManager;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.concurrent.Callable;
@@ -193,6 +194,14 @@ public class AbstractInfinispanTest {
             log.trace("Exception in forked task", e);
             throw e;
          }
+      }
+   }
+
+   public void safeRollback(TransactionManager transactionManager) {
+      try {
+         transactionManager.rollback();
+      } catch (Exception e) {
+         //ignored
       }
    }
 }

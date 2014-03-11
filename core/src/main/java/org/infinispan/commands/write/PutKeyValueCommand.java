@@ -222,7 +222,6 @@ public class PutKeyValueCommand extends AbstractDataWriteCommand implements Meta
          }
          e.setValue(dv.merge(toMergeWith));
          o = entryValue;
-         e.setMetadata(metadata);
       } else {
          o = e.setValue(value);
          if (e.isRemoved()) {
