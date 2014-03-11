@@ -75,12 +75,12 @@ public interface EntryFactory {
     * Used for wrapping Delta entry to be applied to DeltaAware object stored in cache. The wrapped
     * entry is added to the supplied InvocationContext.
     */
-   CacheEntry wrapEntryForDelta(InvocationContext ctx, Object deltaKey, Delta delta) throws InterruptedException;
+   CacheEntry wrapEntryForDelta(InvocationContext ctx, Object deltaKey, Delta delta);
 
    /**
     * Used for wrapping a cache entry for addition to cache. The wrapped entry is added to the
     * supplied InvocationContext.
     */
    MVCCEntry wrapEntryForPut(InvocationContext ctx, Object key, InternalCacheEntry ice,
-         boolean undeleteIfNeeded, FlagAffectedCommand cmd) throws InterruptedException;
+         boolean undeleteIfNeeded, FlagAffectedCommand cmd);
 }

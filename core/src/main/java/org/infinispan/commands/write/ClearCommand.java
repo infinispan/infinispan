@@ -69,6 +69,7 @@ public class ClearCommand extends AbstractFlagAffectedCommand implements WriteCo
             notifier.notifyCacheEntryRemoved(k, v, true, ctx);
             me.setRemoved(true);
             me.setValid(false);
+            me.setChanged(true);
          }
       }
       return null;

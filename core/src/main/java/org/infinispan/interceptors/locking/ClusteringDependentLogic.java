@@ -43,10 +43,8 @@ import org.infinispan.statetransfer.StateTransferLock;
 import org.infinispan.statetransfer.StateTransferManager;
 import org.infinispan.transaction.WriteSkewHelper;
 import org.infinispan.transaction.xa.CacheTransaction;
-import org.infinispan.util.concurrent.locks.containers.ReentrantPerEntryLockContainer;
 
 import java.util.Collection;
-import java.util.concurrent.TimeUnit;
 
 import static org.infinispan.transaction.WriteSkewHelper.performWriteSkewCheckAndReturnNewVersions;
 
@@ -80,13 +78,11 @@ public interface ClusteringDependentLogic {
       protected DataContainer dataContainer;
 
       protected CacheNotifier notifier;
-      private ReentrantPerEntryLockContainer lockContainer;
 
       @Inject
       public void init(DataContainer dataContainer, CacheNotifier notifier, Configuration configuration) {
          this.dataContainer = dataContainer;
          this.notifier = notifier;
-         this.lockContainer = createLockContainer(configuration);
       }
 
       protected void notifyCommitEntry(boolean created, boolean removed,
@@ -114,45 +110,8 @@ public interface ClusteringDependentLogic {
          }
       }
 
-      private ReentrantPerEntryLockContainer createLockContainer(Configuration configuration) {
-         //we need a lock container to synchronized the keys being moved between the data container and the persistence
-         //also, it needed to merge the DeltaAware values
-         return new ReentrantPerEntryLockContainer(configuration.locking().concurrencyLevel());
-      }
-
-      public final boolean lock(Object key, boolean noWaitTime) throws InterruptedException {
-         if (lockContainer == null) {
-            return true;
-         }
-         final long timeout = noWaitTime ? 0 : 1;
-         return lockContainer.acquireLock(null, key, timeout, TimeUnit.DAYS) != null;
-      }
-
-      public final void unlock(Object key) {
-         if (lockContainer != null) {
-            lockContainer.releaseLock(null, key);
-         }
-      }
-
       protected final void commitCacheEntry(CacheEntry entry, EntryVersion version) {
-         forceLock(entry.getKey());
          entry.commit(dataContainer, version);
-         unlock(entry.getKey());
-      }
-
-      private void forceLock(Object key) {
-         boolean interrupted = false;
-         boolean locked = false;
-         do {
-            try {
-               locked = lock(key, false);
-            } catch (InterruptedException e) {
-               interrupted = true;
-            }
-         } while (!locked);
-         if (interrupted) {
-            Thread.currentThread().interrupt();
-         }
       }
    }
 

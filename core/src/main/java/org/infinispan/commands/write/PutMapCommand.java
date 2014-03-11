@@ -82,6 +82,7 @@ public class PutMapCommand extends AbstractFlagAffectedCommand implements WriteC
             me.setValue(e.getValue());
             me.setLifespan(lifespanMillis);
             me.setMaxIdle(maxIdleTimeMillis);
+            me.setChanged(true);
          }
       }
       return null;

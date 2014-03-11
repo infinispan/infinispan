@@ -103,7 +103,7 @@ public class RemoveCommand extends AbstractDataWriteCommand {
       notify(ctx, removedValue, true);
       e.setRemoved(true);
       e.setValid(false);
-
+      e.setChanged(true);
 
       if (this instanceof EvictCommand) {
          e.setEvicted(true);

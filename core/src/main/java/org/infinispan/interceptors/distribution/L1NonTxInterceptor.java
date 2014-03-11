@@ -29,6 +29,7 @@ import org.infinispan.commands.write.RemoveCommand;
 import org.infinispan.commands.write.ReplaceCommand;
 import org.infinispan.container.EntryFactory;
 import org.infinispan.container.entries.InternalCacheEntry;
+import org.infinispan.container.entries.MVCCEntry;
 import org.infinispan.context.Flag;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.distribution.L1Manager;
@@ -170,7 +171,11 @@ public class L1NonTxInterceptor extends BaseRpcInterceptor {
    private void removeFromL1(InvocationContext ctx, Object key) throws InterruptedException {
       log.tracef("Removing entry from L1 for key %s", key);
       ctx.removeLookedUpEntry(key);
-      entryFactory.wrapEntryForRemove(ctx, key);
+      MVCCEntry entry = entryFactory.wrapEntryForRemove(ctx, key);
+      if (entry != null) {
+         entry.setChanged(true);
+         entry.setRemoved(true);
+      }
    }
 
    private void processInvalidationResult(InvocationContext ctx, FlagAffectedCommand command, Future<Object> l1InvalidationFuture) throws InterruptedException, ExecutionException {

@@ -27,6 +27,7 @@ import org.infinispan.atomic.CopyableDeltaAware;
 import org.infinispan.atomic.Delta;
 import org.infinispan.atomic.DeltaAware;
 import org.infinispan.container.DataContainer;
+import org.infinispan.container.InternalEntryFactory;
 import org.infinispan.container.versioning.EntryVersion;
 import org.infinispan.util.Util;
 import org.infinispan.util.logging.Log;
@@ -182,39 +183,47 @@ public class DeltaAwareCacheEntry implements CacheEntry, StateChangingEntry {
    }
 
    @Override
-   public final void commit(DataContainer container, EntryVersion version) {
+   public final void commit(final DataContainer container, final EntryVersion version) {
       //If possible, we now ensure copy-on-write semantics. This way, it can ensure the correct transaction isolation.
-      //note: this method is invoked under the ClusteringDependentLogic.lock(key)
-      //note2: we want to merge/copy to/from the data container value.
-      CacheEntry entry = container.get(key);
-      DeltaAware containerValue = entry == null ? null : (DeltaAware) entry.getValue();
-      if (containerValue != null && containerValue != value) {
-         value = containerValue;
-      }
-      if (value != null && !deltas.isEmpty()) {
-         final boolean makeCopy = value instanceof CopyableDeltaAware;
-         if (makeCopy) {
-            value = ((CopyableDeltaAware) value).copy();
-         }
-         for (Delta delta : deltas) {
-            delta.merge(value);
-         }
-         if (makeCopy) {
-            container.put(key, value, version, getLifespan(), getMaxIdle());
-         }
-         value.commit();
-         if (wrappedEntry != null) {
-            wrappedEntry.setChanged(!makeCopy);
-            if (wrappedEntry.isLoaded() && makeCopy) {
-               wrappedEntry.setLoaded(false);
+      //note: we want to merge/copy to/from the data container value.
+      container.compute(key, new DataContainer.ComputeAction() {
+         @Override
+         public InternalCacheEntry compute(Object key, InternalCacheEntry oldEntry, InternalEntryFactory factory) {
+            InternalCacheEntry newEntry = oldEntry;
+            DeltaAware containerValue = oldEntry == null ? null : (DeltaAware) oldEntry.getValue();
+            if (containerValue != null && containerValue != value) {
+               value = containerValue;
             }
+            if (!deltas.isEmpty()) {
+               // If we were created don't use the original value
+               if (isCreated()) {
+                  value = null;
+                  for (Delta delta : deltas) {
+                     value = delta.merge(value);
+                  }
+                  value.commit();
+                  newEntry = factory.create(key, value, null, -1, -1);
+               } else if (value != null) {
+                  final boolean makeCopy = value instanceof CopyableDeltaAware;
+                  if (makeCopy) {
+                     value = ((CopyableDeltaAware) value).copy();
+                  }
+                  for (Delta delta : deltas) {
+                     delta.merge(value);
+                  }
+                  if (makeCopy) {
+                     //create or update existing entry.
+                     newEntry = oldEntry == null ?
+                           factory.create(key, value, null, -1, -1) :
+                           factory.create(key, value, oldEntry);
+                  }
+                  value.commit();
+               }
+            }
+            reset();
+            return newEntry;
          }
-      }
-      reset();
-      // only do stuff if there are changes.
-      if (wrappedEntry != null) {
-         wrappedEntry.commit(container, version);
-      }
+      });
    }
 
    private void reset() {

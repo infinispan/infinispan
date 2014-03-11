@@ -48,7 +48,6 @@ public class InterceptorChainTest {
    public void testConcurrentAddRemove() throws Exception {
       InterceptorChain ic = new InterceptorChain(new ComponentMetadataRepo());
       ic.setFirstInChain(new CallInterceptor());
-      ic.addInterceptor(new ActivationInterceptor(), 1);
       CyclicBarrier barrier = new CyclicBarrier(4);
       List<Future<Void>> futures = new ArrayList<Future<Void>>(2);
       ExecutorService executorService = Executors.newFixedThreadPool(3);
@@ -68,11 +67,10 @@ public class InterceptorChainTest {
          executorService.shutdownNow();
       }
       assert ic.containsInterceptorType(CallInterceptor.class);
-      assert ic.containsInterceptorType(ActivationInterceptor.class);
       assert ic.containsInterceptorType(CacheMgmtInterceptor.class);
       assert ic.containsInterceptorType(DistCacheStoreInterceptor.class);
       assert ic.containsInterceptorType(InvalidationInterceptor.class);
-      assert ic.asList().size() == 5 : "Resulting interceptor chain was actually " + ic.asList();
+      assert ic.asList().size() == 4 : "Resulting interceptor chain was actually " + ic.asList();
    }
 
    private static class InterceptorChainUpdater implements Callable<Void> {
