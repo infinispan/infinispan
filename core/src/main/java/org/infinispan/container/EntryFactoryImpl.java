@@ -147,7 +147,7 @@ public class EntryFactoryImpl implements EntryFactory {
 
    @Override
    public final MVCCEntry wrapEntryForPut(InvocationContext ctx, Object key, InternalCacheEntry icEntry,
-         boolean undeleteIfNeeded, FlagAffectedCommand cmd) throws InterruptedException {
+         boolean undeleteIfNeeded, FlagAffectedCommand cmd) {
       CacheEntry cacheEntry = getFromContext(ctx, key);
       MVCCEntry mvccEntry;
       if (cacheEntry != null && cacheEntry.isNull()) cacheEntry = null;
@@ -172,7 +172,7 @@ public class EntryFactoryImpl implements EntryFactory {
    }
    
    @Override
-   public CacheEntry wrapEntryForDelta(InvocationContext ctx, Object deltaKey, Delta delta ) throws InterruptedException {
+   public CacheEntry wrapEntryForDelta(InvocationContext ctx, Object deltaKey, Delta delta ) {
       CacheEntry cacheEntry = getFromContext(ctx, deltaKey);
       DeltaAwareCacheEntry deltaAwareEntry = null;
       if (cacheEntry != null) {        

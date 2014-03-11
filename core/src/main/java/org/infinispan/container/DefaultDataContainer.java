@@ -190,6 +190,7 @@ public class DefaultDataContainer implements DataContainer {
       return e == null || (e.canExpire() && e.isExpired(System.currentTimeMillis())) ? null : e;
    }
 
+   @Override
    public void evict(Object k) {
       extendedMap.evict(k);
    }
@@ -228,6 +229,11 @@ public class DefaultDataContainer implements DataContainer {
             purgeCandidates.remove();
          }
       }
+   }
+
+   @Override
+   public void compute(Object key, ComputeAction action) {
+      extendedMap.compute(key, action);
    }
 
    @Override
@@ -376,6 +382,8 @@ public class DefaultDataContainer implements DataContainer {
 
       void putAndActivate(InternalCacheEntry newEntry);
 
+      void compute(Object key, ComputeAction action);
+
       InternalCacheEntry removeAndActivate(Object key);
    }
 
@@ -388,6 +396,28 @@ public class DefaultDataContainer implements DataContainer {
                   public InternalCacheEntry apply(Object o, InternalCacheEntry entry) {
                      passivator.passivate(entry);
                      return null;
+                  }
+               });
+      }
+
+
+      @Override
+      public void compute(Object key, final ComputeAction action) {
+         ((ConcurrentHashMapV8<Object, InternalCacheEntry>) entries)
+               .compute(key, new ConcurrentHashMapV8.BiFun<Object, InternalCacheEntry, InternalCacheEntry>() {
+                  @Override
+                  public InternalCacheEntry apply(Object key, InternalCacheEntry oldEntry) {
+                     InternalCacheEntry newEntry = action.compute(key, oldEntry, entryFactory);
+                     if (newEntry == oldEntry) {
+                        return oldEntry;
+                     } else if (newEntry == null) {
+                        return null;
+                     }
+                     if (oldEntry == null) {
+                        //new entry. need to activate the key.
+                        activator.activate(key);
+                     }
+                     return newEntry;
                   }
                });
       }
@@ -465,6 +495,27 @@ public class DefaultDataContainer implements DataContainer {
                   }
                });
          return reference.get();
+      }
+
+      @Override
+      public void compute(Object key, final ComputeAction action) {
+         ((BoundedConcurrentHashMapV8<Object, InternalCacheEntry>) entries)
+               .compute(key, new BoundedConcurrentHashMapV8.BiFun<Object, InternalCacheEntry, InternalCacheEntry>() {
+                  @Override
+                  public InternalCacheEntry apply(Object key, InternalCacheEntry oldEntry) {
+                     InternalCacheEntry newEntry = action.compute(key, oldEntry, entryFactory);
+                     if (newEntry == oldEntry) {
+                        return oldEntry;
+                     } else if (newEntry == null) {
+                        return null;
+                     }
+                     if (oldEntry == null) {
+                        //new entry. need to activate the key.
+                        activator.activate(key);
+                     }
+                     return newEntry;
+                  }
+               });
       }
    }
 }

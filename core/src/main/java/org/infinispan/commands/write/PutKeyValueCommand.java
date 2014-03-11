@@ -126,6 +126,7 @@ public class PutKeyValueCommand extends AbstractDataWriteCommand {
             e.setMaxIdle(maxIdleTimeMillis);
          }
       }
+      e.setChanged(true);
       return !ignorePreviousValue ? o : null;
    }
 

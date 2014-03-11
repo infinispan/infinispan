@@ -77,12 +77,12 @@ public class ConcurrentPassivationActivationTest extends SingleCacheManagerTest 
       cache.addListener(new SlowPassivator());
 
       assertEquals(0, activation.getActivationCount());
-      assertEquals(0, passivation.getPassivationCount());
+      assertEquals(0, passivation.getPassivations());
 
       // 1. Store an entry in the cache
       cache.put(1, "v1");
       assertEquals(0, activation.getActivationCount());
-      assertEquals(0, passivation.getPassivationCount());
+      assertEquals(0, passivation.getPassivations());
 
       ExecutorService exec = Executors.newFixedThreadPool(2);
 
@@ -114,7 +114,7 @@ public class ConcurrentPassivationActivationTest extends SingleCacheManagerTest 
 
       activatorFuture.get(30, TimeUnit.SECONDS);
       assertEquals(0, activation.getActivationCount());
-      assertEquals(1, passivation.getPassivationCount());
+      assertEquals(1, passivation.getPassivations());
 
       // 4. With entry stored, then removed, now let the passivator thread
       // remove the entry from memory
@@ -127,7 +127,7 @@ public class ConcurrentPassivationActivationTest extends SingleCacheManagerTest 
       assertEquals("v1", cache.get(1));
       assertEquals(1, activation.getActivationCount());
       // Second key gets passivated now to make space for the 1st one
-      assertEquals(2, passivation.getPassivationCount());
+      assertEquals(2, passivation.getPassivations());
    }
 
    @Listener

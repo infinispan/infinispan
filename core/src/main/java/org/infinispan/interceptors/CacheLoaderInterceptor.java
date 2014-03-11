@@ -24,11 +24,18 @@ package org.infinispan.interceptors;
 
 import org.infinispan.commands.FlagAffectedCommand;
 import org.infinispan.commands.read.GetKeyValueCommand;
-import org.infinispan.commands.write.*;
+import org.infinispan.commands.write.ApplyDeltaCommand;
+import org.infinispan.commands.write.InvalidateCommand;
+import org.infinispan.commands.write.PutKeyValueCommand;
+import org.infinispan.commands.write.RemoveCommand;
+import org.infinispan.commands.write.ReplaceCommand;
 import org.infinispan.configuration.cache.CacheStoreConfiguration;
+import org.infinispan.container.DataContainer;
 import org.infinispan.container.EntryFactory;
+import org.infinispan.container.InternalEntryFactory;
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.container.entries.InternalCacheEntry;
+import org.infinispan.container.entries.MVCCEntry;
 import org.infinispan.context.Flag;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.factories.annotations.Inject;
@@ -41,6 +48,7 @@ import org.infinispan.jmx.annotations.ManagedOperation;
 import org.infinispan.jmx.annotations.MeasurementType;
 import org.infinispan.jmx.annotations.Parameter;
 import org.infinispan.loaders.CacheLoader;
+import org.infinispan.loaders.CacheLoaderException;
 import org.infinispan.loaders.CacheLoaderManager;
 import org.infinispan.loaders.CacheStore;
 import org.infinispan.loaders.decorators.ChainingCacheStore;
@@ -55,6 +63,7 @@ import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicLong;
+import java.util.concurrent.atomic.AtomicReference;
 
 import static org.infinispan.loaders.decorators.AbstractDelegatingStore.undelegateCacheLoader;
 
@@ -67,7 +76,8 @@ public class CacheLoaderInterceptor extends JmxStatsCommandInterceptor {
    protected CacheNotifier notifier;
    protected CacheLoader loader;
    protected volatile boolean enabled = true;
-   private EntryFactory entryFactory;
+   protected EntryFactory entryFactory;
+   private DataContainer dataContainer;
 
    private static final Log log = LogFactory.getLog(CacheLoaderInterceptor.class);
 
@@ -77,10 +87,12 @@ public class CacheLoaderInterceptor extends JmxStatsCommandInterceptor {
    }
 
    @Inject
-   protected void injectDependencies(CacheLoaderManager clm, EntryFactory entryFactory, CacheNotifier notifier) {
+   protected void injectDependencies(CacheLoaderManager clm, EntryFactory entryFactory, CacheNotifier notifier,
+                                     DataContainer dataContainer) {
       this.clm = clm;
       this.notifier = notifier;
       this.entryFactory = entryFactory;
+      this.dataContainer = dataContainer;
    }
 
    @Start(priority = 15)
@@ -170,10 +182,28 @@ public class CacheLoaderInterceptor extends JmxStatsCommandInterceptor {
       return flags != null && flags.contains(Flag.DELTA_WRITE);
    }
 
-   private boolean loadIfNeeded(InvocationContext ctx, Object key, boolean isRetrieval, FlagAffectedCommand cmd) throws Throwable {
-      if (cmd.hasFlag(Flag.SKIP_CACHE_STORE) || cmd.hasFlag(Flag.SKIP_CACHE_LOAD)
-            || cmd.hasFlag(Flag.IGNORE_RETURN_VALUES)) {
-         return false; //skip operation
+   private boolean shouldSkipCacheLoader(FlagAffectedCommand cmd) {
+      return cmd.hasFlag(Flag.SKIP_CACHE_STORE) || cmd.hasFlag(Flag.SKIP_CACHE_LOAD);
+   }
+
+   protected boolean canLoad(Object key) {
+      return true;
+   }
+
+   /**
+    * Loads from the cache loader the entry for the given key.  A found value is loaded into the current context.  The
+    * method returns whether the value was found or not, or even if the cache loader was checked.
+    * @param ctx The current invocation's context
+    * @param key The key for the entry to look up
+    * @param isRetrieval Whether or not this was called in the scope of a get
+    * @param cmd The command that was called that now wants to query the cache loader
+    * @return Whether or not the entry was found in the cache loader.  A value of null means the cache loader was never
+    *         queried for the value, so it was neither a hit or a miss.
+    * @throws Throwable
+    */
+   protected final Boolean loadIfNeeded(final InvocationContext ctx, Object key, boolean isRetrieval, final FlagAffectedCommand cmd) throws Throwable {
+      if (shouldSkipCacheLoader(cmd) || cmd.hasFlag(Flag.IGNORE_RETURN_VALUES) || !canLoad(key)) {
+         return null; //skip operation
       }
 
       // If this is a remote call, skip loading UNLESS we are the primary data owner of this key, and
@@ -182,23 +212,74 @@ public class CacheLoaderInterceptor extends JmxStatsCommandInterceptor {
 
       // first check if the container contains the key we need.  Try and load this into the context.
       CacheEntry e = ctx.lookupEntry(key);
-      if (e == null || e.isNull() || e.getValue() == null) {
-         InternalCacheEntry loaded = loader.load(key);
-         if (loaded != null) {
-            CacheEntry wrappedEntry;
-            if (cmd instanceof ApplyDeltaCommand) {
-               ctx.putLookedUpEntry(key, loaded);
-               wrappedEntry = entryFactory.wrapEntryForDelta(ctx, key, ((ApplyDeltaCommand)cmd).getDelta());
-            } else {
-               wrappedEntry = entryFactory.wrapEntryForPut(ctx, key, loaded, false, cmd);
+      if (!shouldAttemptLookup(e)) {
+         return null;
+      }
+
+      final boolean isDelta = cmd instanceof ApplyDeltaCommand;
+      final AtomicReference<Boolean> isLoaded = new AtomicReference<Boolean>();
+      dataContainer.compute(key, new DataContainer.ComputeAction() {
+         @Override
+         public InternalCacheEntry compute(Object key, InternalCacheEntry oldEntry,
+                                           InternalEntryFactory factory) {
+            //under the lock, check if the entry exists in the DataContainer
+            if (oldEntry != null) {
+               wrapInternalCacheEntry(ctx, key, cmd, oldEntry, isDelta);
+               isLoaded.set(null); //not loaded
+               return oldEntry; //no changes in container
             }
+
+            InternalCacheEntry loaded;
+            try {
+               loaded = internalLoadAndUpdateStats(key);
+            } catch (CacheLoaderException e1) {
+               isLoaded.set(null);
+               return null;
+            }
+            if(loaded == null) {
+               isLoaded.set(Boolean.FALSE); //not loaded
+               return null; //no changed in container
+            }
+
+            CacheEntry wrappedEntry = wrapInternalCacheEntry(ctx, key, cmd, loaded, isDelta);
             recordLoadedEntry(ctx, key, wrappedEntry, loaded);
-            return true;
-         } else {
-            return false;
+
+            isLoaded.set(Boolean.TRUE); //loaded!
+            return loaded;
          }
+      });
+
+      return isLoaded.get();
+   }
+
+   private InternalCacheEntry internalLoadAndUpdateStats(Object key) throws CacheLoaderException {
+      final InternalCacheEntry loaded = loader.load(key);
+      if (getLog().isTraceEnabled()) {
+         getLog().tracef("Loaded %s for key %s from persistence.", loaded, key);
+      }
+      if(loaded == null || loaded.isExpired()) {
+         return null;
+      }
+      return loaded;
+   }
+
+   /**
+    * Only perform if context doesn't have a value found (Read Committed) or if we can do a remote
+    * get only if the value is null (Repeatable Read)
+    */
+   private boolean shouldAttemptLookup(CacheEntry e) {
+      return e == null || (e.isNull() || e.getValue() == null);
+   }
+
+   private CacheEntry wrapInternalCacheEntry(InvocationContext ctx, Object key, FlagAffectedCommand cmd,
+                                             InternalCacheEntry ice, boolean isDelta) {
+      if (isDelta) {
+         ctx.putLookedUpEntry(key, ice);
+         return entryFactory.wrapEntryForDelta(ctx, key, ((ApplyDeltaCommand) cmd).getDelta());
       } else {
-         return true;
+         MVCCEntry entry = entryFactory.wrapEntryForPut(ctx, key, ice, false, cmd);
+         entry.setChanged(false);
+         return entry;
       }
    }
 
@@ -215,7 +296,7 @@ public class CacheLoaderInterceptor extends JmxStatsCommandInterceptor {
     * @param loadedEntry the internal entry loaded from the cache store.
     */
    private void recordLoadedEntry(InvocationContext ctx, Object key,
-         CacheEntry entry, InternalCacheEntry loadedEntry) throws Exception {
+         CacheEntry entry, InternalCacheEntry loadedEntry) {
       boolean entryExists = loadedEntry != null;
       if (log.isTraceEnabled()) {
          log.trace("Entry exists in loader? " + entryExists);
@@ -238,7 +319,6 @@ public class CacheLoaderInterceptor extends JmxStatsCommandInterceptor {
          entry.setMaxIdle(loadedEntry.getMaxIdle());
          // TODO shouldn't we also be setting last used and created timestamps?
          entry.setValid(true);
-         entry.setLoaded(true); // mark the entry as loaded from the store
 
          sendNotification(key, value, false, ctx);
       }
@@ -249,8 +329,8 @@ public class CacheLoaderInterceptor extends JmxStatsCommandInterceptor {
    }
 
    private void loadIfNeededAndUpdateStats(InvocationContext ctx, Object key, boolean isRetrieval, FlagAffectedCommand cmd) throws Throwable {
-      boolean found = loadIfNeeded(ctx, key, isRetrieval, cmd);
-      if (!found && getStatisticsEnabled()) {
+      Boolean found = loadIfNeeded(ctx, key, isRetrieval, cmd);
+      if (found != null && !found && getStatisticsEnabled()) {
          cacheMisses.incrementAndGet();
       }
    }

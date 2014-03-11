@@ -2241,6 +2241,19 @@ public class BoundedConcurrentHashMap<K, V> extends AbstractMap<K, V>
       return segmentFor(hash).remove(key, hash, null, false);
    }
 
+   public void evict(Object key) {
+      int hash = hash(key.hashCode());
+      segmentFor(hash).remove(key, hash, null, true);
+   }
+
+   public void lock(Object key) {
+      segmentFor(hash(key.hashCode())).lock();
+   }
+
+   public void unlock(Object key) {
+      segmentFor(hash(key.hashCode())).unlock();
+   }
+
    /**
     * {@inheritDoc}
     *

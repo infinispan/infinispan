@@ -28,6 +28,8 @@ import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 import org.infinispan.container.versioning.EntryVersion;
 
+import static org.infinispan.container.entries.ReadCommittedEntry.Flags.COPIED;
+
 /**
  * An extension of {@link ReadCommittedEntry} that provides Repeatable Read semantics
  *
@@ -43,10 +45,9 @@ public class RepeatableReadEntry extends ReadCommittedEntry {
 
    @Override
    public void copyForUpdate(DataContainer container, boolean localModeWriteSkewCheck) {
-      if (isChanged()) return; // already copied
+      if (isFlagSet(COPIED)) return; // already copied
 
-      // mark entry as changed.
-      setChanged(true);
+      setFlag(COPIED); //mark as copied
 
       if (localModeWriteSkewCheck) {
          performLocalWriteSkewCheck(container, false);

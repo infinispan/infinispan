@@ -24,13 +24,19 @@ package org.infinispan.container.entries;
 
 import org.infinispan.atomic.AtomicHashMap;
 import org.infinispan.container.DataContainer;
-import org.infinispan.container.DefaultDataContainer;
 import org.infinispan.container.versioning.EntryVersion;
 import org.infinispan.util.Util;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
-import static org.infinispan.container.entries.ReadCommittedEntry.Flags.*;
+import static org.infinispan.container.entries.ReadCommittedEntry.Flags.CHANGED;
+import static org.infinispan.container.entries.ReadCommittedEntry.Flags.COPIED;
+import static org.infinispan.container.entries.ReadCommittedEntry.Flags.CREATED;
+import static org.infinispan.container.entries.ReadCommittedEntry.Flags.EVICTED;
+import static org.infinispan.container.entries.ReadCommittedEntry.Flags.LOADED;
+import static org.infinispan.container.entries.ReadCommittedEntry.Flags.LOCK_PLACEHOLDER;
+import static org.infinispan.container.entries.ReadCommittedEntry.Flags.REMOVED;
+import static org.infinispan.container.entries.ReadCommittedEntry.Flags.VALID;
 
 /**
  * A wrapper around a cached entry that encapsulates read committed semantics when writes are initiated, committed or
@@ -79,7 +85,8 @@ public class ReadCommittedEntry implements MVCCEntry {
       VALID(1 << 3),
       LOCK_PLACEHOLDER(1 << 4),
       EVICTED(1 << 5),
-      LOADED(1 << 6);
+      LOADED(1 << 6),
+      COPIED(1 << 7);
 
       final byte mask;
 
@@ -156,14 +163,14 @@ public class ReadCommittedEntry implements MVCCEntry {
 
    @Override
    public boolean isNull() {
-      return false;
+      return value == null;
    }
 
    @Override
    public void copyForUpdate(DataContainer container, boolean writeSkewCheck) {
-      if (isChanged()) return; // already copied
+      if (isFlagSet(COPIED)) return; // already copied
 
-      setChanged(true); // mark as changed
+      setFlag(COPIED); //mark as copied
 
       // if newly created, then nothing to copy.
       if (!isCreated()) oldValue = value;
@@ -195,8 +202,8 @@ public class ReadCommittedEntry implements MVCCEntry {
             if (isRemoved() && !isEvicted()) ahm.markRemoved(true);
          }
 
-         if (isEvicted() && container instanceof DefaultDataContainer) {
-            ((DefaultDataContainer)container).evict(key);
+         if (isEvicted()) {
+            container.evict(key);
          } else if (isRemoved()) {
             container.remove(key);
          } else if (value != null) {
