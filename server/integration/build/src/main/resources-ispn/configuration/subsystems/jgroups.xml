@@ -39,7 +39,7 @@
        <stack name="s3">
            <transport type="TCP" socket-binding="jgroups-tcp"/>
            <protocol type='S3_PING'>
-               <property name="location">${jgroups.s3.bucket:jgroups}</property>
+               <property name="location">${jgroups.s3.bucket}</property>
                <property name="access_key">${jgroups.s3.access_key}</property>
                <property name="secret_access_key">${jgroups.s3.secret_access_key}</property>
                <property name="pre_signed_delete_url">${jgroups.s3.pre_signed_delete_url}</property>
