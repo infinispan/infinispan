@@ -40,7 +40,14 @@
         internal_thread_pool.rejection_policy="Discard"
         />
 
-   <S3_PING secret_access_key="${jgroups.s3.secret_access_key}" access_key="${jgroups.s3.access_key}" location="${jgroups.s3.bucket:jgroups}" />
+   <S3_PING 
+            access_key="${jgroups.s3.access_key}" 
+            secret_access_key="${jgroups.s3.secret_access_key}" 
+            location="${jgroups.s3.bucket}" 
+            pre_signed_delete_url="${jgroups.s3.pre_signed_delete_url}"
+            pre_signed_put_url="${jgroups.s3.pre_signed_put_url}"
+            prefix="${jgroups.s3.prefix}"
+            />
 
    <MERGE2 max_interval="30000"
            min_interval="10000"/>
