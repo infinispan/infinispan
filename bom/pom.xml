@@ -60,7 +60,7 @@
       <version.commons.pool>1.6</version.commons.pool>
       <version.gnu.getopt>1.0.13</version.gnu.getopt>
       <version.hibernate.search>4.5.0.Final</version.hibernate.search>
-      <version.jboss.marshalling>1.4.2.Final</version.jboss.marshalling>
+      <version.jboss.marshalling>1.4.4.Final</version.jboss.marshalling>
       <version.jboss.logging>3.1.2.GA</version.jboss.logging>
       <version.jgroups>3.5.0.Alpha1</version.jgroups>
       <version.json>20090211</version.json>

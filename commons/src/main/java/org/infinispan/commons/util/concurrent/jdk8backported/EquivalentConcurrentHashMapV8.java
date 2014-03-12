@@ -1425,8 +1425,6 @@ public class EquivalentConcurrentHashMapV8<K,V> extends AbstractMap<K,V>
    @SuppressWarnings("unchecked")
    private void writeObject(java.io.ObjectOutputStream s)
          throws java.io.IOException {
-      s.writeObject(keyEq); // EQUIVALENCE_MOD
-      s.writeObject(valueEq); // EQUIVALENCE_MOD
       // For serialization compatibility
       // Emulate segment calculation from previous version of this class
       int sshift = 0;
@@ -1445,6 +1443,9 @@ public class EquivalentConcurrentHashMapV8<K,V> extends AbstractMap<K,V>
       s.putFields().put("segmentShift", segmentShift);
       s.putFields().put("segmentMask", segmentMask);
       s.writeFields();
+
+      s.writeObject(keyEq); // EQUIVALENCE_MOD
+      s.writeObject(valueEq); // EQUIVALENCE_MOD
 
       Node<K,V>[] t;
       if ((t = table) != null) {
@@ -1469,9 +1470,6 @@ public class EquivalentConcurrentHashMapV8<K,V> extends AbstractMap<K,V>
    @SuppressWarnings("unchecked")
    private void readObject(java.io.ObjectInputStream s)
          throws java.io.IOException, ClassNotFoundException {
-      keyEq = (Equivalence<K>) s.readObject();
-      valueEq = (Equivalence<V>) s.readObject();
-      nodeEq = new NodeEquivalence<K, V>(keyEq, valueEq);
       /*
        * To improve performance in typical cases, we create nodes
        * while reading, then place in table once size is known.
@@ -1481,6 +1479,11 @@ public class EquivalentConcurrentHashMapV8<K,V> extends AbstractMap<K,V>
        */
       sizeCtl = -1; // force exclusion for table construction
       s.defaultReadObject();
+
+      keyEq = (Equivalence<K>) s.readObject(); // EQUIVALENCE MOD
+      valueEq = (Equivalence<V>) s.readObject(); // EQUIVALENCE MOD
+      nodeEq = new NodeEquivalence<K, V>(keyEq, valueEq);
+
       long size = 0L;
       Node<K,V> p = null;
       for (;;) {
