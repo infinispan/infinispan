@@ -619,8 +619,8 @@ public class StateConsumerImpl implements StateConsumer {
    private Address findSource(int segmentId, Set<Address> excludedSources) {
       List<Address> owners = cacheTopology.getReadConsistentHash().locateOwnersForSegment(segmentId);
       if (!owners.contains(rpcManager.getAddress())) {
-         // iterate backwards because we prefer to fetch from newer nodes
-         for (int i = owners.size() - 1; i >= 0; i--) {
+         // We should prefer that transactions and state are sourced from primary owners.
+         for (int i = 0; i < owners.size(); i++) {
             Address o = owners.get(i);
             if (!o.equals(rpcManager.getAddress()) && !excludedSources.contains(o)) {
                return o;
