@@ -1,6 +1,9 @@
 package org.infinispan.persistence.jdbc.configuration;
 
+import java.util.Properties;
+
 import org.infinispan.configuration.cache.PersistenceConfigurationBuilder;
+import org.infinispan.configuration.parsing.XmlConfigHelper;
 import org.infinispan.commons.util.TypedProperties;
 
 public class JdbcBinaryStoreConfigurationBuilder extends
@@ -32,8 +35,11 @@ public class JdbcBinaryStoreConfigurationBuilder extends
    }
 
    @Override
-   public void validate() {
-      super.validate();
+   public JdbcBinaryStoreConfigurationBuilder withProperties(Properties props) {
+      XmlConfigHelper.setValues(this, props, false, false);
+      XmlConfigHelper.setValues(table, props, false, false);
+      this.properties = props;
+      return this;
    }
 
    public JdbcBinaryStoreConfigurationBuilder lockAcquisitionTimeout(long lockAcquisitionTimeout) {

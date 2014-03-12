@@ -1,6 +1,9 @@
 package org.infinispan.persistence.jdbc.configuration;
 
+import java.util.Properties;
+
 import org.infinispan.configuration.cache.PersistenceConfigurationBuilder;
+import org.infinispan.configuration.parsing.XmlConfigHelper;
 import org.infinispan.persistence.keymappers.DefaultTwoWayKey2StringMapper;
 import org.infinispan.persistence.keymappers.Key2StringMapper;
 import org.infinispan.commons.configuration.Builder;
@@ -52,7 +55,11 @@ public class JdbcStringBasedStoreConfigurationBuilder extends AbstractJdbcStoreC
    }
 
    @Override
-   public void validate() {
+   public JdbcStringBasedStoreConfigurationBuilder withProperties(Properties props) {
+      XmlConfigHelper.setValues(this, props, false, false);
+      XmlConfigHelper.setValues(table, props, false, false);
+      this.properties = props;
+      return this;
    }
 
    @Override
