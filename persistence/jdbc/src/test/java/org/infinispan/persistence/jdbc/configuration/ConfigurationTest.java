@@ -1,5 +1,10 @@
 package org.infinispan.persistence.jdbc.configuration;
 
+import static org.testng.AssertJUnit.assertTrue;
+import static org.testng.AssertJUnit.assertFalse;
+import static org.testng.AssertJUnit.assertEquals;
+import java.util.Properties;
+
 import org.h2.Driver;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
@@ -192,4 +197,48 @@ public class ConfigurationTest {
       assert store2.fetchPersistentState();
       assert store2.async().enabled();
    }
+
+   public void testTableProperties() {
+      Properties props = new Properties();
+      props.put("databaseType", DatabaseType.DERBY.toString());
+      props.put("createOnStart", "false");
+      props.put("dropOnExit", "true");
+
+      ConfigurationBuilder b = new ConfigurationBuilder();
+      b.persistence().addStore(JdbcStringBasedStoreConfigurationBuilder.class)
+         .connectionPool().connectionUrl(JDBC_URL)
+         .withProperties(props);
+      Configuration stringConfiguration = b.build();
+
+      JdbcStringBasedStoreConfiguration stringStoreConfiguration = (JdbcStringBasedStoreConfiguration) stringConfiguration.persistence().stores().get(0);
+      verifyTableManipulation(stringStoreConfiguration.table());
+
+      b = new ConfigurationBuilder();
+      b.persistence().addStore(JdbcBinaryStoreConfigurationBuilder.class)
+         .connectionPool().connectionUrl(JDBC_URL)
+         .withProperties(props);
+      Configuration binaryConfiguration = b.build();
+
+      JdbcBinaryStoreConfiguration binaryStoreConfiguration = (JdbcBinaryStoreConfiguration) binaryConfiguration.persistence().stores().get(0);
+      verifyTableManipulation(binaryStoreConfiguration.table());
+
+      b = new ConfigurationBuilder();
+      b.persistence().addStore(JdbcMixedStoreConfigurationBuilder.class)
+         .stringTable().tableNamePrefix("STRINGS_")
+         .binaryTable().tableNamePrefix("BINARY_")
+         .connectionPool().connectionUrl(JDBC_URL)
+         .withProperties(props);
+      Configuration mixedConfiguration = b.build();
+
+      JdbcMixedStoreConfiguration mixedStoreConfiguration = (JdbcMixedStoreConfiguration) mixedConfiguration.persistence().stores().get(0);
+      verifyTableManipulation(mixedStoreConfiguration.binaryTable());
+      verifyTableManipulation(mixedStoreConfiguration.stringTable());
+   }
+
+   private void verifyTableManipulation(TableManipulationConfiguration table) {
+      assertEquals(table.databaseType(), DatabaseType.DERBY);
+      assertFalse(table.createOnStart());
+      assertTrue(table.dropOnExit());
+   }
+
 }

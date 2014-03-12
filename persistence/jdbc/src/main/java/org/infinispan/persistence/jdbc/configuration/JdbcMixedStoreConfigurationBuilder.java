@@ -1,7 +1,10 @@
 package org.infinispan.persistence.jdbc.configuration;
 
+import java.util.Properties;
+
 import org.infinispan.commons.CacheConfigurationException;
 import org.infinispan.configuration.cache.PersistenceConfigurationBuilder;
+import org.infinispan.configuration.parsing.XmlConfigHelper;
 import org.infinispan.persistence.jdbc.DatabaseType;
 import org.infinispan.persistence.jdbc.TableManipulation;
 import org.infinispan.persistence.keymappers.DefaultTwoWayKey2StringMapper;
@@ -85,6 +88,15 @@ public class JdbcMixedStoreConfigurationBuilder extends AbstractJdbcStoreConfigu
       return stringTable;
    }
 
+   @Override
+   public JdbcMixedStoreConfigurationBuilder withProperties(Properties props) {
+      XmlConfigHelper.setValues(this, props, false, false);
+      XmlConfigHelper.setValues(binaryTable, props, false, false);
+      XmlConfigHelper.setValues(stringTable, props, false, false);
+      this.properties = props;
+      return this;
+   }
+
    /**
     * The class name of a {@link org.infinispan.persistence.keymappers.Key2StringMapper} to use for mapping keys to strings suitable for
     * storage in a database table. Defaults to {@link org.infinispan.persistence.keymappers.DefaultTwoWayKey2StringMapper}
@@ -107,6 +119,7 @@ public class JdbcMixedStoreConfigurationBuilder extends AbstractJdbcStoreConfigu
 
    @Override
    public void validate() {
+      super.validate();
       if (binaryTable.tableNamePrefix.equals(stringTable.tableNamePrefix))
          throw new CacheConfigurationException("There cannot be the same tableNamePrefix on both the binary and " +
                "String tables.");
