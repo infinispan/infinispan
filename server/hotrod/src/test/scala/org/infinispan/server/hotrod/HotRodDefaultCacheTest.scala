@@ -4,7 +4,7 @@ import org.infinispan.test.SingleCacheManagerTest
 import test.HotRodClient
 import org.infinispan.AdvancedCache
 import test.HotRodTestingUtil._
-import org.jboss.netty.channel.ChannelFuture
+import io.netty.channel.ChannelFuture
 import org.infinispan.test.fwk.TestCacheManagerFactory
 import org.infinispan.manager.EmbeddedCacheManager
 import org.infinispan.server.core.test.ServerTestingUtil._
