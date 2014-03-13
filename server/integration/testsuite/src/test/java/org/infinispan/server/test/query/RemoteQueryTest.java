@@ -1,30 +1,17 @@
 package org.infinispan.server.test.query;
 
-import java.io.IOException;
-import java.io.InputStream;
 import java.util.Collections;
 import java.util.List;
-import javax.management.ObjectName;
+
 import org.infinispan.arquillian.core.InfinispanResource;
 import org.infinispan.arquillian.core.RemoteInfinispanServer;
 import org.infinispan.arquillian.core.WithRunningServer;
-import org.infinispan.arquillian.utils.MBeanServerConnectionProvider;
-import org.infinispan.client.hotrod.RemoteCache;
-import org.infinispan.client.hotrod.RemoteCacheManager;
 import org.infinispan.client.hotrod.Search;
-import org.infinispan.client.hotrod.configuration.ConfigurationBuilder;
-import org.infinispan.client.hotrod.marshall.ProtoStreamMarshaller;
-import org.infinispan.commons.util.Util;
 import org.infinispan.protostream.sampledomain.Address;
 import org.infinispan.protostream.sampledomain.User;
-import org.infinispan.protostream.sampledomain.marshallers.MarshallerRegistration;
 import org.infinispan.query.dsl.Query;
 import org.infinispan.query.dsl.QueryFactory;
-import org.infinispan.server.test.util.RemoteCacheManagerFactory;
-import static org.infinispan.server.test.util.TestUtil.invokeOperation;
 import org.jboss.arquillian.junit.Arquillian;
-import org.junit.After;
-import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
@@ -39,57 +26,22 @@ import static org.junit.Assert.assertNotNull;
  */
 @RunWith(Arquillian.class)
 @WithRunningServer("remote-query")
-public class RemoteQueryTest {
-
-    protected String cacheContainerName = "local";
-    protected String cacheName = "testcache";
+public class RemoteQueryTest extends RemoteQueryBaseTest {
 
     @InfinispanResource("remote-query")
-    private RemoteInfinispanServer server;
+    protected RemoteInfinispanServer server;
 
-    protected RemoteCacheManager remoteCacheManager;
-    protected RemoteCache<Integer, User> remoteCache;
-    protected MBeanServerConnectionProvider jmxConnectionProvider;
+    public RemoteQueryTest() {
+        super("local", "testcache");
+    }
 
-    protected RemoteCacheManagerFactory rcmFactory;
+    protected RemoteQueryTest(String cacheContainerName, String cacheName) {
+        super(cacheContainerName, cacheName);
+    }
 
+    @Override
     protected RemoteInfinispanServer getServer() {
         return server;
-    }
-
-    @Before
-    public void setUp() throws Exception {
-        jmxConnectionProvider = new MBeanServerConnectionProvider(getServer().getHotrodEndpoint().getInetAddress().getHostName(), 9999);
-        rcmFactory = new RemoteCacheManagerFactory();
-        ConfigurationBuilder clientBuilder = new ConfigurationBuilder();
-        clientBuilder.addServer()
-                        .host(getServer().getHotrodEndpoint().getInetAddress().getHostName())
-                        .port(getServer().getHotrodEndpoint().getPort())
-                     .marshaller(new ProtoStreamMarshaller());
-        remoteCacheManager = rcmFactory.createManager(clientBuilder);
-        remoteCache = remoteCacheManager.getCache(cacheName);
-
-        String mbean = "jboss.infinispan:type=RemoteQuery,name="
-                + ObjectName.quote(cacheContainerName)
-                + ",component=ProtobufMetadataManager";
-
-        //initialize server-side serialization context via JMX
-        byte[] descriptor = readClasspathResource("/sample_bank_account/bank.protobin");
-        invokeOperation(jmxConnectionProvider, mbean, "registerProtofile", new Object[]{descriptor}, new String[]{byte[].class.getName()});
-
-        //initialize client-side serialization context
-        MarshallerRegistration.registerMarshallers(ProtoStreamMarshaller.getSerializationContext(remoteCacheManager));
-    }
-
-    @After
-    public void tearDown() {
-        if (remoteCache != null) {
-            remoteCache.clear();
-        }
-        if (rcmFactory != null) {
-            rcmFactory.stopManagers();
-        }
-        rcmFactory = null;
     }
 
     @Test
@@ -194,16 +146,4 @@ public class RemoteQueryTest {
         assertEquals("Dark Alley", user.getAddresses().get(0).getStreet());
         assertEquals("1234", user.getAddresses().get(0).getPostCode());
     }
-
-    private byte[] readClasspathResource(String c) throws IOException {
-       InputStream is = getClass().getResourceAsStream(c);
-       try {
-          return Util.readStream(is);
-       } finally {
-          if (is != null) {
-             is.close();
-          }
-       }
-    }
-
 }

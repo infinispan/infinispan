@@ -19,48 +19,49 @@ import org.infinispan.distexec.mapreduce.Reducer;
  *
  */
 public final class BulkUtil {
-	public static final int DEFAULT_SCOPE = 0;
+
+   // The scope constants correspond to values defined in by the Hot Rod protocol spec
+   // (http://infinispan.org/docs/7.0.x/user_guide/user_guide.html#_hot_rod_protocol_1_2)
+   public static final int DEFAULT_SCOPE = 0;
 	public static final int GLOBAL_SCOPE = 1;
 	public static final int LOCAL_SCOPE = 2;
-	
-	public static final Set<byte[]> getAllKeys(Cache<byte[], byte[]> cache, int scope) {
+
+	public static <K> Set<K> getAllKeys(Cache<K, ?> cache, int scope) {
 		CacheMode cacheMode = cache.getAdvancedCache().getCacheConfiguration().clustering().cacheMode(); 
 		boolean keysAreLocal = !cacheMode.isClustered() || cacheMode.isReplicated();
 		if (keysAreLocal || scope == LOCAL_SCOPE) {
 			return cache.keySet();
 		} else {
-			MapReduceTask<byte[], byte[], byte[], Object> task =
-               new MapReduceTask<byte[], byte[], byte[], Object>(cache)
-					.mappedWith(new KeyMapper())
-					.reducedWith(new KeyReducer());
-			return task.execute(new KeysCollator());
-		}
+         MapReduceTask<K, Object, K, Object> task =
+               new MapReduceTask<K, Object, K, Object>((Cache<K, Object>) cache)
+               .mappedWith(new KeyMapper<K>())
+               .reducedWith(new KeyReducer<K>());
+         return task.execute(new KeysCollator<K>());
+      }
 	}
-	
-	static class KeyMapper implements Mapper<byte[], byte[], byte[], Object> {
+
+   private static class KeyMapper<K> implements Mapper<K, Object, K, Object> {
 		private static final long serialVersionUID = -5054573988280497412L;
 
 		@Override
-		public void map(byte[] key, byte[] value,
-				Collector<byte[], Object> collector) {
+		public void map(K key, Object value, Collector<K, Object> collector) {
 			collector.emit(key, null);
 		}
 	}
 	
-	static class KeyReducer implements Reducer<byte[], Object> {
+	private static class KeyReducer<K> implements Reducer<K, Object> {
 		private static final long serialVersionUID = -8199097945001793869L;
 
 		@Override
-		public Boolean reduce(byte[] reducedKey, Iterator<Object> iter) {
-			return iter.hasNext();
+		public Object reduce(K reducedKey, Iterator<Object> iter) {
+         return null;  // the value is not actually used, we can output null
 		}
 	}
-	
-	static class KeysCollator implements Collator<byte[], Object, Set<byte[]>> {
+
+   private static class KeysCollator<K> implements Collator<K, Object, Set<K>> {
 		@Override
-		public Set<byte[]> collate(Map<byte[], Object> reducedResults) {
-			return reducedResults.keySet();
+		public Set<K> collate(Map<K, Object> reducedResults) {
+         return reducedResults.keySet();
 		}
-		
 	}
 }
