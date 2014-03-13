@@ -6,9 +6,6 @@ import org.infinispan.arquillian.core.WithRunningServer;
 import org.jboss.arquillian.junit.Arquillian;
 import org.junit.runner.RunWith;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
-
 /**
  * Tests for remote queries over HotRod on a replicated cache using Infinispan directory.
  *
@@ -18,15 +15,15 @@ import static org.junit.Assert.assertNotNull;
 @WithRunningServer("remote-query-infinispan-dir")
 public class RemoteQueryIspnDirTest extends RemoteQueryTest {
 
-    @InfinispanResource("remote-query-infinispan-dir")
-    private RemoteInfinispanServer server;
+   @InfinispanResource("remote-query-infinispan-dir")
+   protected RemoteInfinispanServer server;
 
-    public RemoteQueryIspnDirTest() {
-       cacheContainerName = "clustered";
-    }
+   public RemoteQueryIspnDirTest() {
+      super("clustered", "testcache");
+   }
 
-    @Override
-    protected RemoteInfinispanServer getServer() {
-        return server;
-    }
+   @Override
+   protected RemoteInfinispanServer getServer() {
+      return server;
+   }
 }
