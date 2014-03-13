@@ -6,7 +6,7 @@ import org.infinispan.server.hotrod.HotRodServer;
 import org.infinispan.server.hotrod.test.HotRodTestingUtil;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
-import org.jboss.netty.channel.ChannelException;
+import io.netty.channel.ChannelException;
 
 import java.net.BindException;
 import java.util.concurrent.atomic.AtomicInteger;
