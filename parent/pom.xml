@@ -690,7 +690,7 @@
                </exclusion>
                <exclusion>
                   <artifactId>netty</artifactId>
-                  <groupId>org.jboss.netty</groupId>
+                  <groupId>io.netty</groupId>
                </exclusion>
                <exclusion>
                   <artifactId>wrapper</artifactId>
@@ -787,6 +787,14 @@
                <exclusion>
                   <artifactId>jboss-transaction-api_1.1_spec</artifactId>
                   <groupId>org.jboss.spec.javax.transaction</groupId>
+               </exclusion>
+               <exclusion>
+                  <artifactId>byteman</artifactId>
+                  <groupId>org.jboss.byteman</groupId>
+               </exclusion>
+               <exclusion>
+                  <artifactId>byteman-submit</artifactId>
+                  <groupId>org.jboss.byteman</groupId>
                </exclusion>
             </exclusions>
          </dependency>
