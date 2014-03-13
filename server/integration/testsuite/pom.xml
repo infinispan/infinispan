@@ -207,7 +207,6 @@
         <jvm.ip.stack>-Djava.net.preferIPv4Stack=true</jvm.ip.stack>
         <server.jvm.args>${jvm.ip.stack} ${jvm.memory.args} ${transport.stack} ${jvm.x64.args}</server.jvm.args>
         <log4j.configuration>log4j.xml</log4j.configuration>
-        <suite.manual.unstable.phase>none</suite.manual.unstable.phase>
         <suite.manual.phase>test</suite.manual.phase>
         <suite.rollups.manual.phase>none</suite.rollups.manual.phase>
         <suite.client.local.phase>test</suite.client.local.phase>
@@ -220,6 +219,7 @@
         <suite.client.repl.config>testsuite/clustered-default-repl.xml</suite.client.repl.config>
         <groups.client.local>org.infinispan.server.test.category.ClientLocal</groups.client.local>
         <groups.client.clustered>org.infinispan.server.test.category.ClientClustered</groups.client.clustered>
+        <groups.unstable>org.infinispan.server.test.category.UnstableTest,org.infinispan.server.test.category.UnstableClientLocalTest,org.infinispan.server.test.category.UnstableClientClusteredTest</groups.unstable>
     </properties>
 
     <build>
@@ -282,7 +282,7 @@
                 <artifactId>maven-surefire-plugin</artifactId>
                 <configuration>
                     <forkMode>once</forkMode>
-                    <excludedGroups>org.infinispan.server.test.category.UnstableTest</excludedGroups>
+                    <excludedGroups>${groups.unstable}</excludedGroups>
                     <systemPropertyVariables>
                         <server1.dist>${server1.dist}</server1.dist>
                         <server2.dist>${server2.dist}</server2.dist>
@@ -339,7 +339,7 @@
                         </goals>
                         <configuration>
                             <groups>org.infinispan.server.test.category.RollingUpgrades</groups>
-                            <excludedGroups>org.infinispan.server.test.category.UnstableTest</excludedGroups>
+                            <excludedGroups>${groups.unstable}</excludedGroups>
                             <systemPropertyVariables>
                                 <arquillian.launch>suite-rollups-manual</arquillian.launch>
                             </systemPropertyVariables>
@@ -354,7 +354,7 @@
                         <configuration>
                             <reportNameSuffix>localmode-${default.transport.stack}</reportNameSuffix>
                             <groups>${groups.client.local}</groups>
-                            <excludedGroups>org.infinispan.server.test.category.UnstableTest</excludedGroups>
+                            <excludedGroups>${groups.unstable}</excludedGroups>
                             <systemPropertyVariables>
                                 <clustering.mode>local</clustering.mode>
                                 <arquillian.launch>suite-client-local</arquillian.launch>
@@ -370,7 +370,7 @@
                         <configuration>
                             <reportNameSuffix>distmode-${default.transport.stack}</reportNameSuffix>
                             <groups>${groups.client.clustered}</groups>
-                            <excludedGroups>org.infinispan.server.test.category.UnstableTest</excludedGroups>
+                            <excludedGroups>${groups.unstable}</excludedGroups>
                             <systemPropertyVariables>
                                 <clustering.mode>dist</clustering.mode>
                                 <arquillian.launch>suite-client-dist</arquillian.launch>
@@ -386,24 +386,10 @@
                         <configuration>
                             <reportNameSuffix>replmode-${default.transport.stack}</reportNameSuffix>
                             <groups>${groups.client.clustered}</groups>
-                            <excludedGroups>org.infinispan.server.test.category.UnstableTest</excludedGroups>
+                            <excludedGroups>${groups.unstable}</excludedGroups>
                             <systemPropertyVariables>
                                 <clustering.mode>repl</clustering.mode>
                                 <arquillian.launch>suite-client-repl</arquillian.launch>
-                            </systemPropertyVariables>
-                        </configuration>
-                    </execution>
-                    <execution>
-                        <id>suite-manual-unstable</id>
-                        <phase>${suite.manual.unstable.phase}</phase>
-                        <goals>
-                            <goal>test</goal>
-                        </goals>
-                        <configuration>
-                            <groups combine.self="override">org.infinispan.server.test.category.UnstableTest</groups>
-                            <excludedGroups combine.self="override"></excludedGroups>
-                            <systemPropertyVariables>
-                                <arquillian.launch>suite-manual</arquillian.launch>
                             </systemPropertyVariables>
                         </configuration>
                     </execution>
@@ -599,12 +585,24 @@
         <profile>
             <id>test-unstable</id>
             <properties>
-                <suite.manual.phase>none</suite.manual.phase>
-                <suite.client.local.phase>none</suite.client.local.phase>
-                <suite.client.dist.phase>none</suite.client.dist.phase>
-                <suite.client.repl.phase>none</suite.client.repl.phase>
-                <suite.manual.unstable.phase>test</suite.manual.unstable.phase>
+                <groups.unstable></groups.unstable>
+                <suite.manual.exclude.groups></suite.manual.exclude.groups>
+                <suite.manual.include.groups>org.infinispan.server.test.category.UnstableTest</suite.manual.include.groups>
+                <groups.client.local>org.infinispan.server.test.category.UnstableClientLocalTest</groups.client.local>
+                <groups.client.clustered>org.infinispan.server.test.category.UnstableClientClusteredTest</groups.client.clustered>
             </properties>
+            <!-- don't fail if there are no unstable tests (applies to all surefire executions) -->
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-surefire-plugin</artifactId>
+                        <configuration>
+                            <failIfNoTests>false</failIfNoTests>
+                        </configuration>
+                    </plugin>
+                </plugins>
+            </build>
         </profile>
     </profiles>
 </project>
