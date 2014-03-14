@@ -188,13 +188,16 @@
         <attribute name="property" />
         <attribute name="artifact"/>
         <attribute name="version"/>
+        <attribute name="prefix" />
         <![CDATA[
+            prefix = attributes.get("prefix");
+            prefix = prefix != null ? prefix : "";
             property = attributes.get("property");
             artifact = attributes.get("artifact");
             version = artifact != null ? new java.io.File(artifact).getParentFile().getName() : attributes.get("version");
             matcher = java.util.regex.Pattern.compile("([0-9]+\\.[0-9]+).*").matcher(version);
             if (matcher.matches()) {
-               project.setProperty(property, matcher.group(1));
+               project.setProperty(property, prefix + matcher.group(1));
             } else {
                throw version + " does not match a know version pattern";
             }

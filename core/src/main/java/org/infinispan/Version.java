@@ -24,6 +24,7 @@ public class Version {
    public static final String PROJECT_NAME = "Infinispan";
    public static final byte[] VERSION_ID = readVersionBytes();
    public static final String MAJOR_MINOR = MAJOR + "." + MINOR;
+   public static final String MODULE_SLOT = "ispn-" + MAJOR_MINOR;
 
    private static final int MAJOR_SHIFT = 11;
    private static final int MINOR_SHIFT = 6;

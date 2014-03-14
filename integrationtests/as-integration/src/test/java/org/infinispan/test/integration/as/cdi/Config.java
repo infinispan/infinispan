@@ -4,8 +4,7 @@ import org.infinispan.cdi.ConfigureCache;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.eviction.EvictionStrategy;
-import org.infinispan.test.TestingUtil;
-import org.infinispan.test.fwk.TestCacheManagerFactory;
+import org.infinispan.manager.DefaultCacheManager;
 
 import javax.enterprise.context.ApplicationScoped;
 import javax.enterprise.inject.Disposes;
@@ -34,10 +33,9 @@ public class Config {
    @GreetingCache
    @ConfigureCache("greeting-cache")
    @Produces
-   @SuppressWarnings("unused")
    public Configuration greetingCache() {
       return new ConfigurationBuilder()
-            .eviction().strategy(EvictionStrategy.LRU).maxEntries(4)
+            .eviction().strategy(EvictionStrategy.LRU).maxEntries(128)
             .build();
    }
 
@@ -47,7 +45,6 @@ public class Config {
     * <p>The default cache configuration defines that a cache entry will have a lifespan of 60000 ms.</p>
     */
    @Produces
-   @SuppressWarnings("unused")
    public Configuration defaultCacheConfiguration() {
       return new ConfigurationBuilder()
             .expiration().lifespan(60000l)
@@ -56,14 +53,12 @@ public class Config {
 
    @Produces
    @ApplicationScoped
-   @SuppressWarnings("unused")
    public org.infinispan.manager.EmbeddedCacheManager defaultEmbeddedCacheManager() {
-      return TestCacheManagerFactory.createCacheManager();
+      return new DefaultCacheManager();
    }
 
-   @SuppressWarnings("unused")
    public void killCacheManager(@Disposes org.infinispan.manager.EmbeddedCacheManager cacheManager) {
-      TestingUtil.killCacheManagers(cacheManager);
+      cacheManager.stop();
    }
 
 }

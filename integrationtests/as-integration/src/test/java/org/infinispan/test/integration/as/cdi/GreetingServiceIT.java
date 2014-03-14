@@ -1,31 +1,45 @@
 package org.infinispan.test.integration.as.cdi;
 
-import org.infinispan.test.integration.as.category.UnstableTest;
-import org.jboss.arquillian.container.test.api.Deployment;
-import org.jboss.arquillian.junit.Arquillian;
-import org.jboss.shrinkwrap.api.spec.WebArchive;
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.junit.experimental.categories.Category;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 
 import javax.cache.annotation.CacheKey;
 import javax.inject.Inject;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
+import org.infinispan.Version;
+import org.jboss.arquillian.container.test.api.Deployment;
+import org.jboss.arquillian.junit.Arquillian;
+import org.jboss.shrinkwrap.api.Archive;
+import org.jboss.shrinkwrap.api.ShrinkWrap;
+import org.jboss.shrinkwrap.api.asset.Asset;
+import org.jboss.shrinkwrap.api.asset.StringAsset;
+import org.jboss.shrinkwrap.api.spec.WebArchive;
+import org.jboss.shrinkwrap.descriptor.api.Descriptors;
+import org.jboss.shrinkwrap.descriptor.api.spec.se.manifest.ManifestDescriptor;
+import org.junit.Before;
+import org.junit.Test;
+import org.junit.runner.RunWith;
 
 /**
  * @author Kevin Pollet <pollet.kevin@gmail.com> (C) 2011
  */
 @RunWith(Arquillian.class)
-@Category(UnstableTest.class) // See ISPN-4058
 public class GreetingServiceIT {
 
    @Deployment
-   public static WebArchive deployment() {
-      return Deployments.baseDeployment()
-            .addClass(GreetingServiceIT.class);
+   public static Archive<?> deployment() {
+      WebArchive archive = ShrinkWrap
+            .create(WebArchive.class, "cdi.war")
+            .addPackage(GreetingServiceIT.class.getPackage())
+            .add(manifest(), "META-INF/MANIFEST.MF")
+            .addAsWebInfResource("beans.xml");
+      return archive;
+   }
+
+   private static Asset manifest() {
+      String manifest = Descriptors.create(ManifestDescriptor.class)
+            .attribute("Dependencies", "org.infinispan.cdi:" + Version.MODULE_SLOT + " services, org.infinispan.jcache:" + Version.MODULE_SLOT + " services").exportAsString();
+      return new StringAsset(manifest);
    }
 
    @Inject

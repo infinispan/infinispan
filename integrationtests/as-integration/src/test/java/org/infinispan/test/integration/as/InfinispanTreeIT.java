@@ -38,7 +38,7 @@ public class InfinispanTreeIT {
 
    private static Asset manifest() {
       String manifest = Descriptors.create(ManifestDescriptor.class)
-            .attribute("Dependencies", "org.infinispan:" + Version.MAJOR_MINOR + " service, org.infinispan.tree:" + Version.MAJOR_MINOR + " services").exportAsString();
+            .attribute("Dependencies", "org.infinispan:" + Version.MODULE_SLOT + " service, org.infinispan.tree:" + Version.MODULE_SLOT + " services").exportAsString();
       return new StringAsset(manifest);
    }
 
