@@ -7,7 +7,9 @@ import org.apache.avro.generic.GenericDatumWriter;
 import org.apache.avro.io.BinaryEncoder;
 import org.apache.avro.io.Decoder;
 import org.apache.avro.io.DecoderFactory;
+import org.apache.avro.io.DirectBinaryEncoder;
 import org.apache.avro.io.Encoder;
+import org.apache.avro.io.EncoderFactory;
 import org.apache.avro.util.Utf8;
 import org.infinispan.commons.CacheException;
 import org.infinispan.commons.io.ByteBuffer;
@@ -74,6 +76,9 @@ public class ApacheAvroMarshaller extends AbstractMarshaller {
    private static final MarshallableType DOUBLE_ARRAY_TYPE = new ArrayMarshallableType<Double>(DOUBLE_ARRAY_SCHEMA, Double.class, 11);
    private static final MarshallableType FLOAT_ARRAY_TYPE = new ArrayMarshallableType<Float>(FLOAT_ARRAY_SCHEMA, Float.class, 12);
    private static final MarshallableType BOOLEAN_ARRAY_TYPE = new ArrayMarshallableType<Boolean>(BOOLEAN_ARRAY_SCHEMA, Boolean.class, 13);
+   private static final EncoderFactory AVRO_ENCODER_FACTORY = EncoderFactory.get();
+   private static final DecoderFactory AVRO_DECODER_FACTORY = DecoderFactory.get();
+
    private final MarshallableType listType = new ListMarshallableType(14, this);
    private final MarshallableType mapType = new MapMarshallableType(15, this);
    private final MarshallableType setType = new SetMarshallableType(16, this);
@@ -104,7 +109,7 @@ public class ApacheAvroMarshaller extends AbstractMarshaller {
    @Override
    protected ByteBuffer objectToBuffer(Object o, int estimatedSize) throws IOException {
       ExposedByteArrayOutputStream baos = new ExposedByteArrayOutputStream(estimatedSize);
-      Encoder encoder = new BinaryEncoder(baos);
+      Encoder encoder = AVRO_ENCODER_FACTORY.directBinaryEncoder(baos, null);
       objectToBuffer(o, encoder);
       return new ByteBufferImpl(baos.getRawBuffer(), 0, baos.size());
    }
@@ -140,9 +145,7 @@ public class ApacheAvroMarshaller extends AbstractMarshaller {
 
    @Override
    public Object objectFromByteBuffer(byte[] buf, int offset, int length) throws IOException {
-      DecoderFactory factory = new DecoderFactory(); // TODO: Could this be cached?
-      InputStream is = new ByteArrayInputStream(buf, offset, length);
-      Decoder decoder = factory.createBinaryDecoder(is, null);
+      Decoder decoder = AVRO_DECODER_FACTORY.binaryDecoder(buf, offset, length, null);
       return objectFromByteBuffer(decoder);
    }
 
