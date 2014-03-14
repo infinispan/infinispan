@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<module xmlns="urn:jboss:module:1.1" name="org.infinispan.cdi" slot="${slot}">
+    <resources>
+        <!-- Insert resources here -->
+    </resources>
+
+    <dependencies>
+        <module name="javax.api" />
+        <module name="javax.enterprise.api" />
+        <module name="javax.cache.api" slot="${slot}" export="true"/>
+        <module name="org.infinispan" slot="${slot}" export="true" />
+        <module name="org.infinispan.client.hotrod" slot="${slot}" export="true" />
+        <module name="org.jboss.logging" />
+    </dependencies>
+</module>

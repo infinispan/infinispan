@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<module xmlns="urn:jboss:module:1.1" name="org.infinispan.client.hotrod" slot="${slot}">
+    <resources>
+        <!-- Insert resources here -->
+    </resources>
+
+    <dependencies>
+        <module name="javax.api"/>
+        <module name="org.apache.commons.pool"/>
+        <module name="org.infinispan.commons" slot="${slot}"/>
+        <module name="org.infinispan.protostream" slot="${slot}"/>
+        <module name="org.infinispan.query.dsl" slot="${slot}"/>
+        <module name="org.infinispan.query.remote.client" slot="${slot}"/>
+        <module name="org.jboss.logging"/>
+    </dependencies>
+</module>

@@ -1,0 +1,309 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<project xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd"
+         xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+    <modelVersion>4.0.0</modelVersion>
+
+    <parent>
+        <groupId>org.infinispan</groupId>
+        <artifactId>infinispan-parent</artifactId>
+        <version>7.0.0-SNAPSHOT</version>
+        <relativePath>../../parent/pom.xml</relativePath>
+    </parent>
+
+    <artifactId>infinispan-as-module-client-integrationtests</artifactId>
+    <name>Integration tests: AS Client Module Integration Tests</name>
+    <description>Integration tests: AS Client Module Integration Tests</description>
+
+    <properties>
+        <ispnserver.project.dir>${basedir}/../../server/integration</ispnserver.project.dir>
+        <server.build.dist>${ispnserver.project.dir}/build/target/infinispan-server-${project.version}</server.build.dist>
+        <server.dist>${basedir}/target/server</server.dist>
+        <server.jvm>${env.JAVA_HOME}</server.jvm>
+        <resources.dir>${basedir}/src/test/resources</resources.dir>
+        <jvm.memory.args>-Xmx512m -XX:MaxPermSize=128m</jvm.memory.args>
+        <jvm.x64.args></jvm.x64.args>
+        <default.transport.stack>udp</default.transport.stack>
+        <transport.stack>-Djboss.default.jgroups.stack=${default.transport.stack}</transport.stack>
+        <jvm.ip.stack>-Djava.net.preferIPv4Stack=true</jvm.ip.stack>
+        <mcast.ip>234.99.54.14</mcast.ip>
+        <!-- Default multicast address. -->
+        <jvm.ip.stack>-Djava.net.preferIPv4Stack=true -Djava.net.preferIPv6Addresses=false -Djboss.default.multicast.address=${mcast.ip}</jvm.ip.stack>
+        <server.jvm.args>${jvm.ip.stack} ${jvm.memory.args} ${transport.stack} ${jvm.x64.args}</server.jvm.args>
+        <log4j.configuration>log4j.xml</log4j.configuration>
+    </properties>
+
+    <dependencies>
+        <dependency>
+            <groupId>org.infinispan</groupId>
+            <artifactId>infinispan-core</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.infinispan</groupId>
+            <artifactId>infinispan-core</artifactId>
+            <type>test-jar</type>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.jboss.arquillian.junit</groupId>
+            <artifactId>arquillian-junit-container</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.jboss.shrinkwrap.resolver</groupId>
+            <artifactId>shrinkwrap-resolver-depchain</artifactId>
+            <type>pom</type>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.jboss.shrinkwrap.resolver</groupId>
+            <artifactId>shrinkwrap-resolver-impl-maven</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.jboss.shrinkwrap.descriptors</groupId>
+            <artifactId>shrinkwrap-descriptors-impl-javaee</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.wildfly</groupId>
+            <artifactId>wildfly-arquillian-container-managed</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.infinispan</groupId>
+            <artifactId>infinispan-client-hotrod</artifactId>
+        </dependency>
+    </dependencies>
+
+    <build>
+        <testResources>
+            <testResource>
+                <filtering>true</filtering>
+                <directory>src/test/resources</directory>
+            </testResource>
+        </testResources>
+
+        <plugins>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-deploy-plugin</artifactId>
+                <configuration>
+                    <skip>true</skip>
+                </configuration>
+            </plugin>
+
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-failsafe-plugin</artifactId>
+                <configuration>
+
+                    <testNGArtifactName>none:none</testNGArtifactName>
+                    <excludedGroups>org.infinispan.test.integration.as.category.UnstableTest</excludedGroups>
+                </configuration>
+                <executions>
+                    <execution>
+                        <goals>
+                            <goal>integration-test</goal>
+                            <goal>verify</goal>
+                        </goals>
+                        <configuration>
+                            <redirectTestOutputToFile>true</redirectTestOutputToFile>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+
+            <plugin>
+                <artifactId>maven-dependency-plugin</artifactId>
+                <executions>
+                    <execution>
+                        <id>unpack</id>
+                        <phase>pre-integration-test</phase>
+                        <goals>
+                            <goal>unpack</goal>
+                        </goals>
+                        <configuration>
+                            <artifactItems>
+                                <artifactItem>
+                                    <groupId>org.wildfly</groupId>
+                                    <artifactId>wildfly-dist</artifactId>
+                                    <version>${version.wildfly}</version>
+                                    <type>zip</type>
+                                    <overWrite>false</overWrite>
+                                    <outputDirectory>${project.build.directory}</outputDirectory>
+                                </artifactItem>
+                                <artifactItem>
+                                    <groupId>org.infinispan</groupId>
+                                    <artifactId>infinispan-as-client-modules</artifactId>
+                                    <version>${project.version}</version>
+                                    <type>zip</type>
+                                    <overWrite>false</overWrite>
+                                    <outputDirectory>${project.build.directory}/wildfly-${version.wildfly}/modules</outputDirectory>
+                                </artifactItem>
+                            </artifactItems>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-resources-plugin</artifactId>
+                <executions>
+                    <execution>
+                        <id>configure-as-node</id>
+                        <phase>pre-integration-test</phase>
+                        <goals>
+                            <goal>copy-resources</goal>
+                        </goals>
+                        <configuration>
+                            <outputDirectory>${project.build.directory}/wildfly-${version.wildfly}</outputDirectory>
+                            <overwrite>true</overwrite>
+                            <resources>
+                                <resource>
+                                    <directory>${basedir}/src/as-config</directory>
+                                </resource>
+                            </resources>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+            <plugin>
+                <artifactId>maven-antrun-plugin</artifactId>
+                <executions>
+                    <execution>
+                        <id>generate-distros-and-configs</id>
+                        <goals>
+                            <goal>run</goal>
+                        </goals>
+                        <phase>generate-resources</phase>
+                        <configuration>
+                            <target>
+                                <echo message="Creating test server distro at ${server.dist}"/>
+                                <echo message="Using distribution ${server.build.dist}"/>
+                                <copy todir="${server.dist}">
+                                    <fileset dir="${server.build.dist}"/>
+                                </copy>
+                                <!-- It happens when you do not specify namespaces in the XSLT templates for the newly added nodes
+                                                             then the IBM jdk transformation is adding empty namespace there - not possible to influence this
+                                                             behaviour by any environmental property - this is a bit workaround for it -->
+                                <echo message="Removing empty xmlns attributes (xmlns='') which IBM JDK could produce"/>
+                                <replace dir="target" value="">
+                                    <include name="server/standalone/configuration/**/*.xml"/>
+                                    <replacetoken><![CDATA[xmlns=""]]></replacetoken>
+                                </replace>
+                            </target>
+                        </configuration>
+                    </execution>
+                    <execution>
+                        <id>infinispan-server-startup</id>
+                        <phase>pre-integration-test</phase>
+                        <goals>
+                            <goal>run</goal>
+                        </goals>
+                        <configuration>
+                            <target>
+                                <echo>Starting Infinispan server from ${server.dist}</echo>
+                                <exec dir="${server.dist}/bin" spawn="true" executable="chmod" osfamily="unix">
+                                    <arg value="+x"/>
+                                    <arg value="../bin"/>
+                                    <arg value="standalone.sh"/>
+                                </exec>
+                                <exec executable="${server.dist}/bin/standalone.sh" osfamily="unix" spawn="true">
+                                    <env key="JAVA_OPTS" value="${server.jvm.args} -Djboss.socket.binding.port-offset=0 -Djboss.node.name=ispn-server"/>
+                                    <env key="JBOSS_HOME" value="${server.dist}"/>
+                                </exec>
+                                <exec executable="${server.dist}/bin/standalone.bat" osfamily="windows" spawn="true">
+                                    <env key="JAVA_OPTS" value="${server.jvm.args} -Djboss.socket.binding.port-offset=0 -Djboss.node.name=ispn-server"/>
+                                    <env key="JBOSS_HOME" value="${server.dist}"/>
+                                </exec>
+                                <echo>Waiting for Infinispan server to start</echo>
+                                <waitfor maxwait="15" maxwaitunit="second" checkevery="1" checkeveryunit="second">
+                                    <and>
+                                        <socket server="127.0.0.1" port="9999"/>
+                                        <socket server="127.0.0.1" port="11222"/>
+                                    </and>
+                                </waitfor>
+                                <echo message="Infinispan server started"/>
+                            </target>
+                        </configuration>
+                    </execution>
+                    <execution>
+                        <id>infinispan-server-shutdown</id>
+                        <phase>post-integration-test</phase>
+                        <goals>
+                            <goal>run</goal>
+                        </goals>
+                        <configuration>
+                            <target>
+                                <exec executable="${server.jvm}/bin/jps" output="jps.pid" osfamily="unix"/>
+                                <loadfile srcfile="jps.pid" property="pid" failonerror="false">
+                                    <filterchain>
+                                        <linecontains>
+                                            <contains value="jboss-modules.jar"/>
+                                        </linecontains>
+                                        <tokenfilter>
+                                            <deletecharacters chars="jboss-modules.jar"/>
+                                            <ignoreblank/>
+                                        </tokenfilter>
+                                        <striplinebreaks/>
+                                    </filterchain>
+                                </loadfile>
+                                <exec executable="netstat" output="jps.pid" osfamily="windows">
+                                    <arg line="-aon"/>
+                                </exec>
+                                <loadfile srcfile="jps.pid" property="pid" failonerror="false">
+                                    <filterchain>
+                                        <linecontains>
+                                            <contains value="LISTENING"/>
+                                            <contains value=":11222"/>
+                                        </linecontains>
+                                        <tokenfilter>
+                                            <replaceregex pattern=".*LISTENING([ \t]+)([0-9]+)" replace="\2"
+                                                          flags="gi"/>
+                                            <ignoreblank/>
+                                        </tokenfilter>
+                                        <striplinebreaks/>
+                                    </filterchain>
+                                </loadfile>
+                                <echo message="Killing Infinispan server with PID - ${pid}"/>
+                                <exec executable="kill" osfamily="unix">
+                                    <arg line="-9 ${pid}"/>
+                                </exec>
+                                <exec executable="taskkill" osfamily="windows">
+                                    <arg line="/F /T /PID ${pid}"/>
+                                </exec>
+                                <delete file="jps.pid"/>
+                            </target>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+        </plugins>
+    </build>
+
+    <profiles>
+        <profile>
+            <id>test-unstable</id>
+            <activation>
+                <activeByDefault>false</activeByDefault>
+            </activation>
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-failsafe-plugin</artifactId>
+                        <configuration>
+                            <groups combine.self="override">org.infinispan.test.integration.as.category.UnstableTest
+                            </groups>
+                            <!-- empty since we are not going to exclude any group -->
+                            <excludedGroups combine.self="override"></excludedGroups>
+                        </configuration>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
+    </profiles>
+
+</project>

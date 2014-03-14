@@ -1,0 +1,89 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<project xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd" xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+   <modelVersion>4.0.0</modelVersion>
+   <parent>
+      <groupId>org.infinispan</groupId>
+      <artifactId>infinispan-parent</artifactId>
+      <version>7.0.0-SNAPSHOT</version>
+      <relativePath>../../parent/pom.xml</relativePath>
+   </parent>
+
+   <artifactId>infinispan-as-client-modules</artifactId>
+   <name>Infinispan AS/EAP client modules</name>
+   <packaging>pom</packaging>
+
+   <dependencies>
+
+      <dependency>
+         <groupId>org.infinispan</groupId>
+         <artifactId>infinispan-client-hotrod</artifactId>
+      </dependency>
+
+      <dependency>
+         <groupId>org.infinispan</groupId>
+         <artifactId>infinispan-remote-query-client</artifactId>
+      </dependency>
+
+      <dependency>
+         <groupId>org.infinispan.protostream</groupId>
+         <artifactId>protostream</artifactId>
+      </dependency>
+
+      <dependency>
+         <groupId>${project.groupId}</groupId>
+         <artifactId>infinispan-query-dsl</artifactId>
+      </dependency>
+
+      <dependency>
+         <groupId>com.google.protobuf</groupId>
+         <artifactId>protobuf-java</artifactId>
+         <version>${version.protobuf}</version>
+      </dependency>
+   </dependencies>
+
+   <build>
+      <plugins>
+         <plugin>
+            <artifactId>maven-antrun-plugin</artifactId>
+            <executions>
+               <execution>
+                  <id>build-dist-dir</id>
+                  <goals>
+                     <goal>run</goal>
+                  </goals>
+                  <phase>package</phase>
+                  <configuration>
+                     <target>
+                        <ant antfile="build.xml" inheritRefs="true">
+                           <target name="all" />
+                        </ant>
+                     </target>
+                  </configuration>
+               </execution>
+            </executions>
+         </plugin>
+         <plugin>
+            <groupId>org.apache.maven.plugins</groupId>
+            <artifactId>maven-assembly-plugin</artifactId>
+            <executions>
+               <execution>
+                  <id>assemble</id>
+                  <phase>package</phase>
+                  <goals>
+                     <goal>single</goal>
+                  </goals>
+               </execution>
+            </executions>
+            <configuration>
+               <descriptors>
+                  <descriptor>src/main/assembly/dist.xml</descriptor>
+               </descriptors>
+               <finalName>${project.artifactId}-${project.version}</finalName>
+               <outputDirectory>${buildDirectory}/distribution</outputDirectory>
+               <workDirectory>${buildDirectory}/assembly/work</workDirectory>
+               <appendAssemblyId>false</appendAssemblyId>
+            </configuration>
+         </plugin>
+      </plugins>
+   </build>
+</project>

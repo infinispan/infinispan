@@ -61,16 +61,18 @@
       <module>demos/nearcache</module>
       <module>demos/nearcache-client</module>
       <module>cdi/extension</module>
-      <module>as-modules</module>
+      <module>jcache</module>
+      <module>server/integration</module>
+      <module>as-modules/embedded</module>
+      <module>as-modules/client</module>
       <module>integrationtests/luceneintegration</module>
-      <module>integrationtests/as-integration</module>
+      <module>integrationtests/as-integration-embedded</module>
+      <module>integrationtests/as-integration-client</module>
       <module>integrationtests/compatibility-mode-it</module>
       <module>integrationtests/cdi-jcache-it</module>
       <module>integrationtests/security-it</module>
       <module>integrationtests/security-manager-it</module>
       <module>integrationtests/osgi</module>
-      <module>jcache</module>
-      <module>server/integration</module>
    </modules>
 
    <profiles>
