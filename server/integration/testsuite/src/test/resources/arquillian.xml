@@ -731,5 +731,29 @@
                 <property name="waitForPorts">11311 11322 8180</property>
             </configuration>
         </container>
+        <container qualifier="rest-rolling-upgrade-1" mode="manual">
+            <configuration>
+                <property name="javaHome">${server.jvm}</property>
+                <property name="jbossHome">${server1.dist}</property>
+                <property name="serverConfig">examples/standalone-rest-rolling-upgrade.xml</property>
+                <property name="javaVmArguments">${server.jvm.args} -Djboss.node.name=node0
+                    -Dorg.apache.tomcat.util.buf.UDecoder.ALLOW_ENCODED_SLASH=true
+                </property>
+                <property name="managementPort">9999</property>
+                <property name="waitForPorts">11211 11222 8080</property>
+            </configuration>
+        </container>
+        <container qualifier="rest-rolling-upgrade-2-old" mode="manual">
+            <configuration>
+                <property name="javaHome">${server.jvm}</property>
+                <property name="jbossHome">${server.old.dist}</property>
+                <property name="serverConfig">standalone.xml</property>
+                <property name="javaVmArguments">${server.jvm.args} -Djboss.node.name=node1
+                    -Djboss.socket.binding.port-offset=100
+                </property>
+                <property name="managementPort">10099</property>
+                <property name="waitForPorts">11311 11322 8180</property>
+            </configuration>
+        </container>
     </group>
 </arquillian>

@@ -101,6 +101,8 @@
                 </for>
                 <move file="${server.old.dist}-tmp/${dir.in.zip}" tofile="${server.old.dist}" />
                 <delete dir="${server.old.dist}-tmp" />
+                <transform transformDir="${server.old.dist}/standalone/configuration" in="standalone.xml" out="standalone.xml"
+                           removeRestSecurity="true"/>
             </else>
         </if>
     </target>
@@ -120,7 +122,7 @@
         <transform in="examples/standalone-hotrod-rolling-upgrade.xml" out="examples/standalone-hotrod-rolling-upgrade.xml"
                    modifyRemoteDestination="${other.parts}/rcs-remote-destination.xml"/>
         <transform in="examples/standalone-rest-rolling-upgrade.xml" out="examples/standalone-rest-rolling-upgrade.xml"
-                   modifyRemoteDestination="${other.parts}/rest-remote-destination.xml"/>
+                   modifyRemoteDestination="${other.parts}/rest-remote-destination.xml" removeRestSecurity="true"/>
         <transform in="examples/standalone-compatibility-mode.xml" out="examples/standalone-compatibility-mode.xml"/>
         <transform in="examples/clustered-two-nodes.xml" out="examples/clustered-two-nodes.xml"/>
         <transform in="examples/clustered-two-nodes2.xml" out="examples/clustered-two-nodes2.xml"/>

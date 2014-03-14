@@ -29,9 +29,9 @@ import static org.junit.Assert.*;
  */
 @RunWith(Arquillian.class)
 @Category({RollingUpgrades.class})
-public class RollingUpgradesTest {
+public class HotRodRollingUpgradesTest {
 
-    private static final Logger log = Logger.getLogger(RollingUpgradesTest.class);
+    private static final Logger log = Logger.getLogger(HotRodRollingUpgradesTest.class);
 
     @InfinispanResource
     RemoteInfinispanServers serverManager;
