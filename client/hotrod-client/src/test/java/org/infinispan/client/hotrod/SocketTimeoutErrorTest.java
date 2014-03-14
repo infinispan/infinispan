@@ -21,6 +21,7 @@ import org.infinispan.marshall.core.JBossMarshaller;
 import org.infinispan.server.hotrod.HotRodServer;
 import org.infinispan.test.SingleCacheManagerTest;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
+import org.testng.Assert;
 import org.testng.annotations.Test;
 
 import static org.infinispan.server.hotrod.test.HotRodTestingUtil.hotRodCacheConfiguration;
@@ -80,6 +81,7 @@ public class SocketTimeoutErrorTest extends SingleCacheManagerTest {
 
       try {
          remoteCache.put("FailFailFail", "whatever...");
+         Assert.fail("No exception was thrown.");
       } catch (HotRodClientException e) {
          // ignore
          assert e.getCause() instanceof SocketTimeoutException;
