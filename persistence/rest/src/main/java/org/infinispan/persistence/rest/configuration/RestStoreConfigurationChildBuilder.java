@@ -61,4 +61,9 @@ public interface RestStoreConfigurationChildBuilder<S> extends StoreConfiguratio
     * Determines whether to append the cache name to the path URI. Defaults to false.
     */
    RestStoreConfigurationBuilder appendCacheNameToPath(boolean appendCacheNameToPath);
+
+   /**
+    * Reads/writes "raw" values to the REST server instead of marshalling (used by the rolling upgrades feature)
+    */
+   RestStoreConfigurationBuilder rawValues(boolean rawValues);
 }

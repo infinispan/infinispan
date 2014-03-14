@@ -778,6 +778,7 @@ public abstract class CacheAdd extends AbstractAddStepHandler {
                 if (store.hasDefined(ModelKeys.PATH)) {
                     builder.path(store.get(ModelKeys.PATH).asString());
                 }
+                builder.rawValues(true);
                 builder.metadataHelper(MimeMetadataHelper.class);
 
                 if (store.hasDefined(ModelKeys.CONNECTION_POOL)) {

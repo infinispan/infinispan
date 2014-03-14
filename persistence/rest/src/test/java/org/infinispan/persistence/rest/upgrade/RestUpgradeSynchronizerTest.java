@@ -47,7 +47,7 @@ public class RestUpgradeSynchronizerTest extends AbstractInfinispanTest {
 
       ConfigurationBuilder targetConfigurationBuilder = TestCacheManagerFactory.getDefaultCacheConfiguration(false);
       targetConfigurationBuilder.persistence().addStore(RestStoreConfigurationBuilder.class).host("localhost").port(sourceServer.getPort())
-            .path("/rest/" + BasicCacheContainer.DEFAULT_CACHE_NAME).metadataHelper(MimeMetadataHelper.class).locking().isolationLevel(IsolationLevel.NONE);
+            .path("/rest/" + BasicCacheContainer.DEFAULT_CACHE_NAME).metadataHelper(MimeMetadataHelper.class).rawValues(true).locking().isolationLevel(IsolationLevel.NONE);
 
       targetContainer = TestCacheManagerFactory.createCacheManager(targetConfigurationBuilder);
       targetServerCache = targetContainer.getCache();
