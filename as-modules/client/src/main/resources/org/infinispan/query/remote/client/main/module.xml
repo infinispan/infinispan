@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<module xmlns="urn:jboss:module:1.1" name="org.infinispan.query.remote.client" slot="${slot}">
+    <resources>
+        <!-- Insert resources here -->
+    </resources>
+
+    <dependencies>
+        <module name="org.infinispan.commons" slot="${slot}" export="true"/>
+        <module name="org.infinispan.protostream" slot="${slot}" export="true"/>
+    </dependencies>
+</module>
