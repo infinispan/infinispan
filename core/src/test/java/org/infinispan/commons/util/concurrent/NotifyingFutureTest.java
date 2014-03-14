@@ -38,6 +38,7 @@ public class NotifyingFutureTest {
       testDoneOtherThread(100, 0);
    }
 
+   @Test(groups = "unstable", description = "See ISPN-4029")
    public void testDoneOtherThread2() throws ExecutionException, InterruptedException {
       testDoneOtherThread(0, 100);
    }
@@ -47,6 +48,7 @@ public class NotifyingFutureTest {
       testExceptionOtherThread(100, 0);
    }
 
+   @Test(groups = "unstable", description = "See ISPN-4029")
    public void testExceptionOtherThread2() throws ExecutionException, InterruptedException {
       testExceptionOtherThread(0, 100);
    }
