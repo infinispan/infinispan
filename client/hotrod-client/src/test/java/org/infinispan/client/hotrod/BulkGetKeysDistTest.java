@@ -43,4 +43,10 @@ public class BulkGetKeysDistTest extends BaseBulkGetKeysTest {
 			assert set.contains(i);
 		}
 	}
+
+   @Override
+   @Test(groups = "unstable") // see http://ci.infinispan.org/viewLog.html?buildId=6719&tab=buildResultsDiv&buildTypeId=bt8
+   public void testBulkGetAfterLifespanExpire() throws InterruptedException {
+      super.testBulkGetAfterLifespanExpire();
+   }
 }

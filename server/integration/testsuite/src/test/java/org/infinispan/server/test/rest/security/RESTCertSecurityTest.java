@@ -44,6 +44,7 @@ import org.jboss.arquillian.junit.InSequence;
 import org.jboss.arquillian.test.api.ArquillianResource;
 import org.jboss.security.JBossJSSESecurityDomain;
 import org.junit.Test;
+import org.junit.experimental.categories.Category;
 import org.junit.runner.RunWith;
 import org.junit.experimental.categories.Category;
 
@@ -84,6 +85,7 @@ import static org.junit.Assert.assertEquals;
  */
 @Category(UnstableTest.class) // See ISPN-4023
 @RunWith(Arquillian.class)
+@Category(UnstableTest.class) // see http://ci.infinispan.org/viewLog.html?buildId=6719&tab=buildResultsDiv&buildTypeId=bt8
 public class RESTCertSecurityTest {
 
     private static final String SERVER_CONFIG_PROPERTY = "serverConfig";

@@ -63,6 +63,7 @@ import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
+import org.junit.experimental.categories.Category;
 import org.junit.runner.RunWith;
 import org.junit.experimental.categories.Category;
 
@@ -400,6 +401,7 @@ public class ExampleConfigsTest {
 
     @Test
     @WithRunningServer("standalone-hotrod-ssl")
+    @Category(UnstableTest.class) // see http://ci.infinispan.org/viewLog.html?buildId=6719&tab=buildResultsDiv&buildTypeId=bt8
     public void testSSLHotRodConfig() throws Exception {
         RemoteInfinispanMBeans s = createRemotes("standalone-hotrod-ssl", "local", DEFAULT_CACHE_NAME);
         RemoteCache<Object, Object> c = createCache(s, securityConfig("keystore_client.jks", "truststore_client.jks", s.server));

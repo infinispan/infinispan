@@ -6,8 +6,8 @@ import org.jboss.arquillian.junit.Arquillian;
 import org.jboss.shrinkwrap.api.spec.WebArchive;
 import org.junit.Before;
 import org.junit.Test;
-import org.junit.runner.RunWith;
 import org.junit.experimental.categories.Category;
+import org.junit.runner.RunWith;
 
 import javax.cache.annotation.CacheKey;
 import javax.inject.Inject;
