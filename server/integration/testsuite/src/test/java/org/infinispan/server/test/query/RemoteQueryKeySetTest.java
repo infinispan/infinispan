@@ -2,6 +2,7 @@ package org.infinispan.server.test.query;
 
 import org.infinispan.arquillian.core.InfinispanResource;
 import org.infinispan.arquillian.core.RemoteInfinispanServer;
+import org.infinispan.arquillian.core.RunningServer;
 import org.infinispan.arquillian.core.WithRunningServer;
 import org.infinispan.protostream.sampledomain.User;
 import org.jboss.arquillian.junit.Arquillian;
@@ -18,7 +19,7 @@ import static org.junit.Assert.*;
  * @author anistor@redhat.com
  */
 @RunWith(Arquillian.class)
-@WithRunningServer("remote-query-keySet")
+@WithRunningServer({@RunningServer(name = "remote-query-keySet")})
 public class RemoteQueryKeySetTest extends RemoteQueryBaseTest {
 
    @InfinispanResource("remote-query-keySet")

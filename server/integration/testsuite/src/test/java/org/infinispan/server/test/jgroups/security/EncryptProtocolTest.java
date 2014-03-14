@@ -1,4 +1,4 @@
-package org.infinispan.server.test.jgroups.auth;
+package org.infinispan.server.test.jgroups.security;
 
 import java.io.File;
 import java.io.IOException;
@@ -9,7 +9,6 @@ import org.infinispan.arquillian.core.RemoteInfinispanServers;
 import org.infinispan.arquillian.core.RunningServer;
 import org.infinispan.arquillian.core.WithRunningServer;
 import org.infinispan.arquillian.utils.MBeanServerConnectionProvider;
-import org.infinispan.server.test.category.UnstableTest;
 import org.infinispan.server.test.client.memcached.MemcachedClient;
 import org.infinispan.server.test.util.RemoteInfinispanMBeans;
 import org.jboss.arquillian.container.test.api.ContainerController;
@@ -17,7 +16,6 @@ import org.jboss.arquillian.junit.Arquillian;
 import org.jboss.arquillian.test.api.ArquillianResource;
 import org.junit.BeforeClass;
 import org.junit.Test;
-import org.junit.experimental.categories.Category;
 import org.junit.runner.RunWith;
 
 import static org.infinispan.server.test.util.TestUtil.getAttribute;
@@ -71,6 +69,7 @@ public class EncryptProtocolTest {
     }
 
     @Test
+    @WithRunningServer(@RunningServer(name = COORDINATOR_NODE))
     public void testEncryptProtocolRegistered() throws Exception {
         try {
             controller.start(JOINING_NODE);
@@ -97,4 +96,5 @@ public class EncryptProtocolTest {
             controller.stop(JOINING_NODE);
         }
     }
+
 }
