@@ -26,12 +26,13 @@ public class RestStoreConfiguration extends AbstractStoreConfiguration {
    private final int port;
    private final String path;
    private final boolean appendCacheNameToPath;
+   private final boolean rawValues;
 
    public RestStoreConfiguration(boolean purgeOnStartup, boolean fetchPersistentState, boolean ignoreModifications,
                                  AsyncStoreConfiguration async, SingletonStoreConfiguration singletonStore,
                                  boolean preload, boolean shared, Properties properties,
                                  ConnectionPoolConfiguration connectionPool, String key2StringMapper,
-                                 String metadataHelper, String host, int port, String path, boolean appendCacheNameToPath) {
+                                 String metadataHelper, String host, int port, String path, boolean appendCacheNameToPath, boolean rawValues) {
       super(purgeOnStartup, fetchPersistentState, ignoreModifications, async, singletonStore, preload, shared, properties);
       this.connectionPool = connectionPool;
       this.key2StringMapper = key2StringMapper;
@@ -40,6 +41,7 @@ public class RestStoreConfiguration extends AbstractStoreConfiguration {
       this.port = port;
       this.path = path;
       this.appendCacheNameToPath = appendCacheNameToPath;
+      this.rawValues = rawValues;
    }
 
    public ConnectionPoolConfiguration connectionPool() {
@@ -70,9 +72,15 @@ public class RestStoreConfiguration extends AbstractStoreConfiguration {
       return appendCacheNameToPath;
    }
 
+   public boolean rawValues() {
+      return rawValues;
+   }
+
    @Override
    public String toString() {
-      return "RestStoreConfiguration [connectionPool=" + connectionPool + ", key2StringMapper=" + key2StringMapper + ", metadataHelper=" + metadataHelper + ", host=" + host
-            + ", port=" + port + ", path=" + path + ", appendCacheNameToPath=" + appendCacheNameToPath + ", " + super.toString() + "]";
+      return "RestStoreConfiguration [connectionPool=" + connectionPool + ", key2StringMapper=" + key2StringMapper
+            + ", metadataHelper=" + metadataHelper + ", host=" + host + ", port=" + port + ", path=" + path
+            + ", appendCacheNameToPath=" + appendCacheNameToPath + ", rawValues=" + rawValues + ", "
+            + super.toString() + "]";
    }
 }

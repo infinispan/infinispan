@@ -73,7 +73,7 @@ public class RestStore implements AdvancedLoadWriteStore {
    private PoolingClientConnectionManager connectionManager;
    private String path;
    private MetadataHelper metadataHelper;
-   private URLCodec urlCodec = new URLCodec();
+   private final URLCodec urlCodec = new URLCodec();
    private InitializationContext ctx;
    private HttpHost httpHost;
 
@@ -138,20 +138,31 @@ public class RestStore implements AdvancedLoadWriteStore {
    }
 
    private byte[] marshall(String contentType, MarshalledEntry entry) throws IOException, InterruptedException {
-      if (contentType.startsWith("text/")) {
+      if (configuration.rawValues()) {
          return (byte[]) entry.getValue();
+      } else {
+         if (isTextContentType(contentType)) {
+            return (byte[]) entry.getValue();
+         }
+         return ctx.getMarshaller().objectToByteBuffer(entry.getValue());
       }
-      return ctx.getMarshaller().objectToByteBuffer(entry.getValue());
    }
 
    private Object unmarshall(String contentType, byte[] b) throws IOException, ClassNotFoundException {
-      if (contentType.startsWith("text/")) {
-         return new String(b); // TODO: use response header Content Encoding
+      if (configuration.rawValues()) {
+         return b;
       } else {
-         return ctx.getMarshaller().objectFromByteBuffer(b);
+         if (isTextContentType(contentType)) {
+            return new String(b); // TODO: use response header Content Encoding
+         } else {
+            return ctx.getMarshaller().objectFromByteBuffer(b);
+         }
       }
    }
 
+   private boolean isTextContentType(String contentType) {
+      return contentType.startsWith("text/") || "application/xml".equals(contentType) || "application/json".equals(contentType);
+   }
 
    @Override
    public void write(MarshalledEntry entry) {

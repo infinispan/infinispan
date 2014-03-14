@@ -62,4 +62,9 @@ public abstract class AbstractRestStoreConfigurationChildBuilder<S> extends Abst
    public RestStoreConfigurationBuilder appendCacheNameToPath(boolean appendCacheNameToPath) {
       return builder.appendCacheNameToPath(appendCacheNameToPath);
    }
+
+   @Override
+   public RestStoreConfigurationBuilder rawValues(boolean rawValues) {
+      return builder.rawValues(rawValues);
+   }
 }
