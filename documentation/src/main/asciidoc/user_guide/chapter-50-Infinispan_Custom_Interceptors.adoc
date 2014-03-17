@@ -49,3 +49,4 @@ When writing a custom interceptor, you need to abide by the following rules.
 * Custom interceptors must declare a public, empty constructor to enable construction.
 
 * Custom interceptors will have setters for any property defined through property tags used in the XML configuration.
+

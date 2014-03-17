@@ -38,3 +38,4 @@ image::images/local_puts_all_included.png[]
 In summary, what we have here is that when run in local mode, Infinispan is a high-performance standalone caching engine which offers a rich set of features while still being trivially simple to configure and use. 
 
 NOTE: These tests were run in 2010.  An updated benchmark is expected soon.
+
