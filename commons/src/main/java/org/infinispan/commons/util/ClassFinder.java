@@ -1,13 +1,9 @@
 package org.infinispan.commons.util;
 
-import org.infinispan.commons.logging.Log;
-import org.infinispan.commons.logging.LogFactory;
-
 import java.io.File;
 import java.io.IOException;
 import java.lang.annotation.Annotation;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.Enumeration;
 import java.util.HashSet;
 import java.util.List;
@@ -15,8 +11,13 @@ import java.util.Set;
 import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
 
+import org.infinispan.commons.logging.Log;
+import org.infinispan.commons.logging.LogFactory;
+
 /**
  * Find infinispan classes utility
+ * 
+ * TODO: Now exists purely for test cases.  Move it?
  */
 public class ClassFinder {
    
@@ -24,6 +25,8 @@ public class ClassFinder {
    
    public static final String PATH = SysPropertyActions.getProperty("java.class.path") + File.pathSeparator
             + SysPropertyActions.getProperty("surefire.test.class.path");
+   
+   private static final AggregateClassLoader aggregateClassLoader = new AggregateClassLoader();
 
    public static List<Class<?>> withAnnotationPresent(List<Class<?>> classes, Class<? extends Annotation> c) {
       List<Class<?>> clazzes = new ArrayList<Class<?>>(classes.size());
@@ -115,7 +118,7 @@ public class ClassFinder {
             String clazz = null;
             try {
                clazz = toClassName(cf.getAbsolutePath());
-               claz = Util.loadClassStrict(clazz, null);
+               claz = aggregateClassLoader.loadClassStrict(clazz);
                classes.add(claz);
             } catch (NoClassDefFoundError ncdfe) {
                log.warnf("%s has reference to a class %s that could not be loaded from classpath",
@@ -142,7 +145,7 @@ public class ClassFinder {
                      String clazz = null;
                      try {
                         clazz = toClassName(entry.getName());
-                        claz = Util.loadClassStrict(clazz, null);
+                        claz = aggregateClassLoader.loadClassStrict(clazz);
                         classes.add(claz);
                      } catch (NoClassDefFoundError ncdfe) {
                         log.warnf("%s has reference to a class %s that could not be loaded from classpath",

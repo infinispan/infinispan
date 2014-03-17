@@ -1,12 +1,23 @@
 package org.infinispan.factories;
 
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
+
+import javax.management.MBeanServer;
+import javax.management.MBeanServerFactory;
+
 import net.jcip.annotations.ThreadSafe;
+
 import org.infinispan.Version;
-import org.infinispan.registry.ClusterRegistry;
-import org.infinispan.registry.ClusterRegistryImpl;
 import org.infinispan.commands.module.ModuleCommandFactory;
 import org.infinispan.commands.module.ModuleCommandInitializer;
 import org.infinispan.commons.CacheException;
+import org.infinispan.commons.util.AggregateClassLoader;
 import org.infinispan.commons.util.InfinispanCollections;
 import org.infinispan.configuration.global.GlobalConfiguration;
 import org.infinispan.configuration.global.ShutdownHookBehavior;
@@ -21,6 +32,8 @@ import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.manager.EmbeddedCacheManagerStartupException;
 import org.infinispan.notifications.cachemanagerlistener.CacheManagerNotifier;
 import org.infinispan.notifications.cachemanagerlistener.CacheManagerNotifierImpl;
+import org.infinispan.registry.ClusterRegistry;
+import org.infinispan.registry.ClusterRegistryImpl;
 import org.infinispan.remoting.transport.Transport;
 import org.infinispan.topology.ClusterTopologyManager;
 import org.infinispan.topology.LocalTopologyManager;
@@ -28,17 +41,6 @@ import org.infinispan.util.ModuleProperties;
 import org.infinispan.util.TimeService;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
-
-import javax.management.MBeanServer;
-import javax.management.MBeanServerFactory;
-import java.lang.ref.WeakReference;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ConcurrentMap;
 
 /**
  * A global component registry where shared components are stored.
@@ -78,7 +80,7 @@ public class GlobalComponentRegistry extends AbstractComponentRegistry {
 
    final ConcurrentMap<String, ComponentRegistry> namedComponents = new ConcurrentHashMap<String, ComponentRegistry>(4);
 
-   protected final WeakReference<ClassLoader> defaultClassLoader;
+   protected final AggregateClassLoader aggregateClassLoader;
 
    /**
     * Creates an instance of the component registry.  The configuration passed in is automatically registered.
@@ -88,15 +90,15 @@ public class GlobalComponentRegistry extends AbstractComponentRegistry {
    public GlobalComponentRegistry(GlobalConfiguration configuration,
                                   EmbeddedCacheManager cacheManager,
                                   Set<String> createdCaches) {
-      ClassLoader configuredClassLoader = configuration.classLoader();
-      moduleLifecycles = moduleProperties.resolveModuleLifecycles(configuredClassLoader);
+	  aggregateClassLoader = configuration.aggregateClassLoader();
+      moduleLifecycles = moduleProperties.resolveModuleLifecycles(aggregateClassLoader);
 
       componentMetadataRepo = new ComponentMetadataRepo();
 
       // Load up the component metadata
-      componentMetadataRepo.initialize(moduleProperties.getModuleMetadataFiles(configuredClassLoader), configuredClassLoader);
+      componentMetadataRepo.initialize(moduleProperties.getModuleMetadataFiles(aggregateClassLoader), aggregateClassLoader);
 
-      defaultClassLoader = new WeakReference<ClassLoader>(registerDefaultClassLoader(configuredClassLoader));
+      registerDefaultClassLoader(aggregateClassLoader);
 
       try {
          // this order is important ...
@@ -109,7 +111,7 @@ public class GlobalComponentRegistry extends AbstractComponentRegistry {
          registerComponent(new CacheManagerNotifierImpl(), CacheManagerNotifier.class);
          registerComponent(new ClusterRegistryImpl(), ClusterRegistry.class);
 
-         moduleProperties.loadModuleCommandHandlers(configuredClassLoader);
+         moduleProperties.loadModuleCommandHandlers(aggregateClassLoader);
          Map<Byte, ModuleCommandFactory> factories = moduleProperties.moduleCommandFactories();
          if (factories != null && !factories.isEmpty())
             registerNonVolatileComponent(factories, KnownComponentNames.MODULE_COMMAND_FACTORIES);
@@ -126,13 +128,14 @@ public class GlobalComponentRegistry extends AbstractComponentRegistry {
          getOrCreateComponent(ClusterTopologyManager.class);
 
       } catch (Exception e) {
+    	  e.printStackTrace();
          throw new CacheException("Unable to construct a GlobalComponentRegistry!", e);
       }
    }
 
    @Override
-   protected ClassLoader getClassLoader() {
-      return defaultClassLoader.get();
+   protected AggregateClassLoader aggregateClassLoader() {
+      return aggregateClassLoader;
    }
 
    @Override

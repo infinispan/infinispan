@@ -1,14 +1,5 @@
 package org.infinispan.marshall.exts;
 
-import net.jcip.annotations.Immutable;
-
-import org.infinispan.commons.io.UnsignedNumeric;
-import org.infinispan.commons.marshall.AbstractExternalizer;
-import org.infinispan.commons.marshall.MarshallUtil;
-import org.infinispan.commons.util.Util;
-import org.infinispan.marshall.core.Ids;
-import org.jboss.marshalling.util.IdentityIntMap;
-
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
@@ -16,6 +7,16 @@ import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Set;
+
+import net.jcip.annotations.Immutable;
+
+import org.infinispan.commons.io.UnsignedNumeric;
+import org.infinispan.commons.marshall.AbstractExternalizer;
+import org.infinispan.commons.marshall.MarshallUtil;
+import org.infinispan.commons.util.Util;
+import org.infinispan.configuration.global.GlobalConfiguration;
+import org.infinispan.marshall.core.Ids;
+import org.jboss.marshalling.util.IdentityIntMap;
 
 /**
  * List externalizer dealing with ArrayList and LinkedList implementations.
@@ -30,8 +31,11 @@ public class ListExternalizer extends AbstractExternalizer<List> {
    private static final int LINKED_LIST = 1;
 
    private final IdentityIntMap<Class<?>> numbers = new IdentityIntMap<Class<?>>(2);
+   
+   private final GlobalConfiguration globalConfiguration;
 
-   public ListExternalizer() {
+   public ListExternalizer(GlobalConfiguration globalConfiguration) {
+	   this.globalConfiguration = globalConfiguration;
       numbers.put(ArrayList.class, ARRAY_LIST);
       numbers.put(getPrivateArrayListClass(), ARRAY_LIST);
       numbers.put(LinkedList.class, LINKED_LIST);
@@ -76,7 +80,8 @@ public class ListExternalizer extends AbstractExternalizer<List> {
    }
 
    private Class<List> getPrivateArrayListClass() {
-      return Util.<List>loadClass("java.util.Arrays$ArrayList", List.class.getClassLoader());
+      return globalConfiguration.aggregateClassLoader().<List>loadClass(
+    		  "java.util.Arrays$ArrayList", List.class.getClassLoader());
    }
 
 }

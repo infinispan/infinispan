@@ -45,8 +45,6 @@ import org.infinispan.util.concurrent.locks.containers.ReentrantStripedLockConta
 import org.infinispan.xsite.BackupSender;
 import org.infinispan.xsite.BackupSenderImpl;
 
-import static org.infinispan.commons.util.Util.getInstance;
-
 /**
  * Simple factory that just uses reflection and an empty constructor of the component type.
  *
@@ -85,7 +83,7 @@ public class EmptyConstructorNamedCacheFactory extends AbstractNamedCacheCompone
          if (componentType.equals(InvocationContextFactory.class)) {
             componentImpl = isTransactional ? TransactionalInvocationContextFactory.class
                   : NonTransactionalInvocationContextFactory.class;
-            return componentType.cast(getInstance(componentImpl));
+            return componentType.cast(globalConfiguration.aggregateClassLoader().getInstance(componentImpl));
          } else if (componentType.equals(InvocationContextContainer.class)) {
             return (T) new InvocationContextContainerImpl();
          } else if (componentType.equals(CacheNotifier.class)) {

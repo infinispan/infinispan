@@ -1,19 +1,20 @@
 package org.infinispan.configuration.global;
 
-import java.lang.ref.WeakReference;
+import static java.util.Arrays.asList;
+
 import java.lang.reflect.Constructor;
 import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
 
+import org.infinispan.commons.CacheConfigurationException;
 import org.infinispan.commons.configuration.Builder;
 import org.infinispan.commons.configuration.BuiltBy;
-import org.infinispan.commons.CacheConfigurationException;
-import static java.util.Arrays.asList;
+import org.infinispan.commons.util.AggregateClassLoader;
 
 public class GlobalConfigurationBuilder implements GlobalConfigurationChildBuilder {
 
-   private WeakReference<ClassLoader> cl;
+   private AggregateClassLoader aggregateClassLoader = new AggregateClassLoader();
    private final TransportConfigurationBuilder transport;
    private final GlobalJmxStatisticsConfigurationBuilder globalJmxStatistics;
    private final SerializationConfigurationBuilder serialization;
@@ -29,7 +30,6 @@ public class GlobalConfigurationBuilder implements GlobalConfigurationChildBuild
    private final SiteConfigurationBuilder site;
 
    public GlobalConfigurationBuilder() {
-      this.cl = new WeakReference<ClassLoader>(Thread.currentThread().getContextClassLoader());
       this.transport = new TransportConfigurationBuilder(this);
       this.globalJmxStatistics = new GlobalJmxStatisticsConfigurationBuilder(this);
       this.serialization = new SerializationConfigurationBuilder(this);
@@ -72,13 +72,13 @@ public class GlobalConfigurationBuilder implements GlobalConfigurationChildBuild
       return this;
    }
 
-   protected ClassLoader getClassLoader() {
-      return cl.get();
-   }
-
    public GlobalConfigurationBuilder classLoader(ClassLoader cl) {
-      this.cl = new WeakReference<ClassLoader>(cl);
+	  aggregateClassLoader.setConfigurationClassLoader( cl );
       return this;
+   }
+   
+   public AggregateClassLoader aggregateClassLader() {
+	   return aggregateClassLoader;
    }
 
    @Override
@@ -194,14 +194,14 @@ public class GlobalConfigurationBuilder implements GlobalConfigurationChildBuild
             shutdown.create(),
             modulesConfig,
             site.create(),
-            cl.get(),
+            aggregateClassLoader,
             totalOrderExecutor.create(),
             persistenceExecutor.create()
             );
    }
 
    public GlobalConfigurationBuilder read(GlobalConfiguration template) {
-      this.cl = new WeakReference<ClassLoader>(template.classLoader());
+	  this.aggregateClassLoader.setConfigurationClassLoader( template.aggregateClassLoader() );
 
       for (Object c : template.modules().values()) {
          BuiltBy builtBy = c.getClass().getAnnotation(BuiltBy.class);
@@ -240,7 +240,6 @@ public class GlobalConfigurationBuilder implements GlobalConfigurationChildBuild
       return "GlobalConfigurationBuilder{" +
             "asyncListenerExecutor=" + asyncListenerExecutor +
             "persistenceExecutor=" + persistenceExecutor +
-            ", cl=" + cl +
             ", transport=" + transport +
             ", globalJmxStatistics=" + globalJmxStatistics +
             ", serialization=" + serialization +
@@ -269,7 +268,6 @@ public class GlobalConfigurationBuilder implements GlobalConfigurationChildBuild
          return false;
       if (remoteCommandsExecutor != null ? !remoteCommandsExecutor.equals(that.remoteCommandsExecutor) : that.remoteCommandsExecutor != null)
          return false;
-      if (cl != null ? !cl.equals(that.cl) : that.cl != null) return false;
       if (evictionScheduledExecutor != null ? !evictionScheduledExecutor.equals(that.evictionScheduledExecutor) : that.evictionScheduledExecutor != null)
          return false;
       if (globalJmxStatistics != null ? !globalJmxStatistics.equals(that.globalJmxStatistics) : that.globalJmxStatistics != null)
@@ -290,8 +288,7 @@ public class GlobalConfigurationBuilder implements GlobalConfigurationChildBuild
 
    @Override
    public int hashCode() {
-      int result = cl != null ? cl.hashCode() : 0;
-      result = 31 * result + (transport != null ? transport.hashCode() : 0);
+      int result = (transport != null ? transport.hashCode() : 0);
       result = 31 * result + (globalJmxStatistics != null ? globalJmxStatistics.hashCode() : 0);
       result = 31 * result + (serialization != null ? serialization.hashCode() : 0);
       result = 31 * result + (asyncTransportExecutor != null ? asyncTransportExecutor.hashCode() : 0);

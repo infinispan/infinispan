@@ -1,20 +1,38 @@
 package org.infinispan.remoting.transport.jgroups;
 
+import static org.infinispan.factories.KnownComponentNames.ASYNC_TRANSPORT_EXECUTOR;
+import static org.infinispan.factories.KnownComponentNames.GLOBAL_MARSHALLER;
+import static org.infinispan.factories.KnownComponentNames.REMOTE_COMMAND_EXECUTOR;
+
+import java.io.FileNotFoundException;
+import java.net.URL;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Future;
+
+import javax.management.MBeanServer;
+import javax.management.ObjectName;
+
 import org.infinispan.commands.ReplicableCommand;
 import org.infinispan.commands.remote.ClusteredGetCommand;
-import org.infinispan.configuration.parsing.XmlConfigHelper;
+import org.infinispan.commons.CacheConfigurationException;
+import org.infinispan.commons.CacheException;
+import org.infinispan.commons.marshall.StreamingMarshaller;
+import org.infinispan.commons.util.InfinispanCollections;
+import org.infinispan.commons.util.TypedProperties;
 import org.infinispan.configuration.global.TransportConfiguration;
+import org.infinispan.configuration.parsing.XmlConfigHelper;
 import org.infinispan.factories.GlobalComponentRegistry;
 import org.infinispan.factories.annotations.ComponentName;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.jmx.JmxUtil;
-import org.infinispan.commons.CacheConfigurationException;
-import org.infinispan.commons.CacheException;
-import org.infinispan.commons.marshall.StreamingMarshaller;
-import org.infinispan.commons.util.FileLookupFactory;
-import org.infinispan.commons.util.InfinispanCollections;
-import org.infinispan.commons.util.TypedProperties;
-import org.infinispan.commons.util.Util;
 import org.infinispan.notifications.cachemanagerlistener.CacheManagerNotifier;
 import org.infinispan.remoting.InboundInvocationHandler;
 import org.infinispan.remoting.responses.Response;
@@ -47,26 +65,6 @@ import org.jgroups.util.Buffer;
 import org.jgroups.util.Rsp;
 import org.jgroups.util.RspList;
 import org.jgroups.util.TopologyUUID;
-
-import javax.management.MBeanServer;
-import javax.management.ObjectName;
-
-import java.io.FileNotFoundException;
-import java.net.URL;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Future;
-
-import static org.infinispan.factories.KnownComponentNames.REMOTE_COMMAND_EXECUTOR;
-import static org.infinispan.factories.KnownComponentNames.ASYNC_TRANSPORT_EXECUTOR;
-import static org.infinispan.factories.KnownComponentNames.GLOBAL_MARSHALLER;
 
 /**
  * An encapsulation of a JGroups transport. JGroups transports can be configured using a variety of
@@ -342,7 +340,7 @@ public class JGroupsTransport extends AbstractTransport implements MembershipLis
             String channelLookupClassName = props.getProperty(CHANNEL_LOOKUP);
 
             try {
-               JGroupsChannelLookup lookup = Util.getInstance(channelLookupClassName, configuration.classLoader());
+               JGroupsChannelLookup lookup = configuration.aggregateClassLoader().getInstance(channelLookupClassName);
                channel = lookup.getJGroupsChannel(props);
                connectChannel = lookup.shouldConnect();
                disconnectChannel = lookup.shouldDisconnect();
@@ -358,7 +356,7 @@ public class JGroupsTransport extends AbstractTransport implements MembershipLis
 
          if (channel == null && props.containsKey(CONFIGURATION_FILE)) {
             cfg = props.getProperty(CONFIGURATION_FILE);
-            URL conf = FileLookupFactory.newInstance().lookupFileLocation(cfg, configuration.classLoader());
+            URL conf = configuration.aggregateClassLoader().lookupFileLocation(cfg);
             if (conf == null) {
                throw new CacheConfigurationException(CONFIGURATION_FILE
                         + " property specifies value " + cfg + " that could not be read!",
@@ -396,7 +394,7 @@ public class JGroupsTransport extends AbstractTransport implements MembershipLis
       if (channel == null) {
          log.unableToUseJGroupsPropertiesProvided(props);
          try {
-            channel = new JChannel(FileLookupFactory.newInstance().lookupFileLocation(DEFAULT_JGROUPS_CONFIGURATION_FILE, configuration.classLoader()));
+            channel = new JChannel(configuration.aggregateClassLoader().lookupFileLocation(DEFAULT_JGROUPS_CONFIGURATION_FILE));
          } catch (Exception e) {
             throw new CacheException("Unable to start JGroups channel", e);
          }

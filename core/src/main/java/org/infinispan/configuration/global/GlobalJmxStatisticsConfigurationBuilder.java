@@ -3,7 +3,6 @@ package org.infinispan.configuration.global;
 import java.util.Properties;
 
 import org.infinispan.commons.util.TypedProperties;
-import org.infinispan.commons.util.Util;
 import org.infinispan.jmx.MBeanServerLookup;
 import org.infinispan.jmx.PlatformMBeanServerLookup;
 
@@ -16,11 +15,12 @@ public class GlobalJmxStatisticsConfigurationBuilder extends AbstractGlobalConfi
    private String jmxDomain = "org.infinispan";
    private Boolean allowDuplicateDomains= false;
    private String cacheManagerName = "DefaultCacheManager";
-   private MBeanServerLookup mBeanServerLookupInstance = Util.getInstance(PlatformMBeanServerLookup.class);
+   private MBeanServerLookup mBeanServerLookupInstance;
    private boolean enabled = false;
 
    GlobalJmxStatisticsConfigurationBuilder(GlobalConfigurationBuilder globalConfig) {
       super(globalConfig);
+      mBeanServerLookupInstance = globalConfig.aggregateClassLader().getInstance(PlatformMBeanServerLookup.class);
    }
 
    /**

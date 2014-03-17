@@ -69,7 +69,7 @@ public class JBossMarshaller extends AbstractJBossMarshaller implements Streamin
       if (classResolver == null) {
          // Override the class resolver with one that can detect injected
          // classloaders via AdvancedCache.with(ClassLoader) calls.
-         ClassLoader cl = Configurations.getClassLoader(cfg, globalCfg);
+         ClassLoader cl = globalCfg.classLoader();
          classResolver = new EmbeddedContextClassResolver(cl, icc);
       }
 

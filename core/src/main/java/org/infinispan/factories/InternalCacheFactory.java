@@ -1,5 +1,7 @@
 package org.infinispan.factories;
 
+import javax.naming.ConfigurationException;
+
 import org.infinispan.AdvancedCache;
 import org.infinispan.Cache;
 import org.infinispan.CacheImpl;
@@ -7,11 +9,9 @@ import org.infinispan.commons.CacheConfigurationException;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.jmx.CacheJmxRegistration;
 import org.infinispan.manager.DefaultCacheManager;
-import org.infinispan.upgrade.RollingUpgradeManager;
 import org.infinispan.transaction.xa.recovery.RecoveryAdminOperations;
+import org.infinispan.upgrade.RollingUpgradeManager;
 import org.infinispan.xsite.XSiteAdminOperations;
-
-import java.lang.ref.WeakReference;
 
 /**
  * An internal factory for constructing Caches.  Used by the {@link DefaultCacheManager}, this is not intended as public
@@ -67,7 +67,7 @@ public class InternalCacheFactory<K, V> extends AbstractNamedCacheComponentFacto
       this.configuration = configuration;
 
       // injection bootstrap stuff
-      componentRegistry = new ComponentRegistry(cacheName, configuration, cache, globalComponentRegistry, globalComponentRegistry.getClassLoader());
+      componentRegistry = new ComponentRegistry(cacheName, configuration, cache, globalComponentRegistry, globalComponentRegistry.aggregateClassLoader());
 
       /*
          --------------------------------------------------------------------------------------------------------------

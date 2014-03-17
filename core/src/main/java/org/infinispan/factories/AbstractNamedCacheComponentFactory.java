@@ -1,6 +1,7 @@
 package org.infinispan.factories;
 
 import org.infinispan.configuration.cache.Configuration;
+import org.infinispan.configuration.global.GlobalConfiguration;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.scopes.Scope;
 import org.infinispan.factories.scopes.Scopes;
@@ -13,11 +14,14 @@ import org.infinispan.factories.scopes.Scopes;
  */
 @Scope(Scopes.NAMED_CACHE)
 public abstract class AbstractNamedCacheComponentFactory extends AbstractComponentFactory {
+	protected GlobalConfiguration globalConfiguration;
    protected Configuration configuration;
    protected ComponentRegistry componentRegistry;
 
    @Inject
-   private void injectGlobalDependencies(Configuration configuration, ComponentRegistry componentRegistry) {
+   private void injectGlobalDependencies(GlobalConfiguration globalConfiguration, Configuration configuration,
+		   ComponentRegistry componentRegistry) {
+	   this.globalConfiguration = globalConfiguration;
       this.componentRegistry = componentRegistry;
       this.configuration = configuration;
    }

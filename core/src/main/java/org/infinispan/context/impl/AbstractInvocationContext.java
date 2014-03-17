@@ -1,5 +1,6 @@
 package org.infinispan.context.impl;
 
+import org.infinispan.commons.util.AggregateClassLoader;
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.context.InvocationContext;
@@ -17,7 +18,7 @@ public abstract class AbstractInvocationContext implements InvocationContext {
    private boolean isOriginLocal = false;
    private Address origin;
    // Class loader associated with this invocation which supports AdvancedCache.with() functionality
-   private ClassLoader classLoader;
+   private final AggregateClassLoader aggregateClassLoader = new AggregateClassLoader();
 
    @Override
    public final Address getOrigin() {
@@ -53,12 +54,12 @@ public abstract class AbstractInvocationContext implements InvocationContext {
 
    @Override
    public final ClassLoader getClassLoader() {
-      return classLoader;
+      return aggregateClassLoader;
    }
 
    @Override
    public final void setClassLoader(final ClassLoader classLoader) {
-      this.classLoader = classLoader;
+	   aggregateClassLoader.setConfigurationClassLoader(classLoader);
    }
 
    @Override

@@ -1,25 +1,8 @@
 package org.infinispan.marshall.multiversion;
 
-import javassist.ClassClassPath;
-import javassist.ClassPool;
-import javassist.CtClass;
-import javassist.CtField;
-import javassist.CtMethod;
-import org.infinispan.commons.marshall.Marshaller;
-import org.infinispan.configuration.cache.ConfigurationBuilder;
-import org.infinispan.configuration.global.GlobalConfigurationBuilder;
-import org.infinispan.manager.EmbeddedCacheManager;
-import org.infinispan.commons.marshall.AbstractDelegatingMarshaller;
-import org.infinispan.commons.marshall.Externalizer;
-import org.infinispan.commons.marshall.SerializeWith;
-import org.infinispan.commons.util.Util;
-import org.infinispan.test.AbstractInfinispanTest;
-import org.infinispan.test.CherryPickClassLoader;
-import org.infinispan.test.fwk.TestCacheManagerFactory;
-import org.jboss.marshalling.ContextClassResolver;
-import org.testng.annotations.AfterTest;
-import org.testng.annotations.BeforeTest;
-import org.testng.annotations.Test;
+import static org.infinispan.test.TestingUtil.extractCacheMarshaller;
+import static org.testng.AssertJUnit.assertEquals;
+import static org.testng.AssertJUnit.assertNull;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
@@ -31,9 +14,26 @@ import java.io.ObjectOutputStream;
 import java.io.Serializable;
 import java.lang.reflect.Field;
 
-import static org.infinispan.test.TestingUtil.extractCacheMarshaller;
-import static org.testng.AssertJUnit.assertEquals;
-import static org.testng.AssertJUnit.assertNull;
+import javassist.ClassClassPath;
+import javassist.ClassPool;
+import javassist.CtClass;
+import javassist.CtField;
+import javassist.CtMethod;
+
+import org.infinispan.commons.marshall.AbstractDelegatingMarshaller;
+import org.infinispan.commons.marshall.Externalizer;
+import org.infinispan.commons.marshall.SerializeWith;
+import org.infinispan.configuration.cache.ConfigurationBuilder;
+import org.infinispan.configuration.global.GlobalConfiguration;
+import org.infinispan.configuration.global.GlobalConfigurationBuilder;
+import org.infinispan.manager.EmbeddedCacheManager;
+import org.infinispan.test.AbstractInfinispanTest;
+import org.infinispan.test.CherryPickClassLoader;
+import org.infinispan.test.fwk.TestCacheManagerFactory;
+import org.jboss.marshalling.ContextClassResolver;
+import org.testng.annotations.AfterTest;
+import org.testng.annotations.BeforeTest;
+import org.testng.annotations.Test;
 
 /**
  * Test how marshalling code can deal with new versions of classes being used
@@ -56,11 +56,13 @@ public class MultiPojoVersionMarshallTest extends AbstractInfinispanTest {
 
    private AbstractDelegatingMarshaller marshaller;
    private EmbeddedCacheManager cm;
+   private GlobalConfiguration globalCfg;
 
    @BeforeTest
    public void setUp() {
       // Always use the current thread's context class loader.
       GlobalConfigurationBuilder gcb = new GlobalConfigurationBuilder();
+      globalCfg = gcb.build();
       gcb.serialization().classResolver(new ContextClassResolver());
       cm = TestCacheManagerFactory.createCacheManager(gcb, new ConfigurationBuilder());
       marshaller = extractCacheMarshaller(cm.getCache());
@@ -90,7 +92,7 @@ public class MultiPojoVersionMarshallTest extends AbstractInfinispanTest {
    }
 
    private byte[] marshallOldHouse(MarshallingMethod method) throws Exception {
-      Class clazz = Util.loadClass(HOUSE, Thread.currentThread().getContextClassLoader());
+      Class clazz = globalCfg.classLoader().loadClass(HOUSE);
       Object old = clazz.newInstance();
       Field street = clazz.getDeclaredField("street");
       street.set(old, "Rue du Seyon");
@@ -101,7 +103,7 @@ public class MultiPojoVersionMarshallTest extends AbstractInfinispanTest {
    }
 
    private byte[] marshallOldCar(MarshallingMethod method) throws Exception {
-      Class oldCarClass = Util.loadClass(CAR, Thread.currentThread().getContextClassLoader());
+      Class oldCarClass = globalCfg.classLoader().loadClass(CAR);
       Object oldCar = oldCarClass.newInstance();
       Field oldPlate = oldCarClass.getDeclaredField("plateNumber");
       oldPlate.set(oldCar, "E 1660");
@@ -109,7 +111,7 @@ public class MultiPojoVersionMarshallTest extends AbstractInfinispanTest {
    }
 
    private byte[] marshallOldPerson(MarshallingMethod method) throws Exception {
-      Class clazz = Util.loadClass(PERSON, Thread.currentThread().getContextClassLoader());
+      Class clazz = globalCfg.classLoader().loadClass(PERSON);
       Object old = clazz.newInstance();
       Field ageField = clazz.getDeclaredField("age");
       ageField.set(old, 23);

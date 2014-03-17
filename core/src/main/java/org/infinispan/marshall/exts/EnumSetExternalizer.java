@@ -1,19 +1,21 @@
 package org.infinispan.marshall.exts;
 
-import net.jcip.annotations.Immutable;
-import org.infinispan.commons.io.UnsignedNumeric;
-import org.infinispan.commons.marshall.AbstractExternalizer;
-import org.infinispan.commons.marshall.MarshallUtil;
-import org.infinispan.commons.util.Util;
-import org.infinispan.marshall.core.Ids;
-import org.jboss.marshalling.util.IdentityIntMap;
-
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
 import java.util.AbstractSet;
 import java.util.EnumSet;
 import java.util.Set;
+
+import net.jcip.annotations.Immutable;
+
+import org.infinispan.commons.io.UnsignedNumeric;
+import org.infinispan.commons.marshall.AbstractExternalizer;
+import org.infinispan.commons.marshall.MarshallUtil;
+import org.infinispan.commons.util.Util;
+import org.infinispan.configuration.global.GlobalConfiguration;
+import org.infinispan.marshall.core.Ids;
+import org.jboss.marshalling.util.IdentityIntMap;
 
 /**
  * {@link EnumSet} externalizer.
@@ -30,7 +32,10 @@ public class EnumSetExternalizer extends AbstractExternalizer<Set> {
 
    private final IdentityIntMap<Class<?>> numbers = new IdentityIntMap<Class<?>>(3);
 
-   public EnumSetExternalizer() {
+   private final GlobalConfiguration globalConfiguration;
+
+   public EnumSetExternalizer(GlobalConfiguration globalConfiguration) {
+	  this.globalConfiguration = globalConfiguration;
       numbers.put(EnumSet.class, ENUM_SET);
       numbers.put(getRegularEnumSetClass(), REGULAR_ENUM_SET);
       numbers.put(getJumboEnumSetClass(), JUMBO_ENUM_SET);
@@ -84,7 +89,7 @@ public class EnumSetExternalizer extends AbstractExternalizer<Set> {
    }
 
    private Class<EnumSet> getEnumSetClass(String className) {
-      return Util.loadClass(className, EnumSet.class.getClassLoader());
+         return globalConfiguration.aggregateClassLoader().loadClass(className, EnumSet.class.getClassLoader());
    }
 
 }

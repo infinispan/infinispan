@@ -17,7 +17,7 @@ public class ConfigurationBuilderHolder {
    private final WeakReference<ClassLoader> classLoader;
 
    public ConfigurationBuilderHolder() {
-      this(Thread.currentThread().getContextClassLoader());
+      this(null);
    }
 
    public ConfigurationBuilderHolder(ClassLoader classLoader) {

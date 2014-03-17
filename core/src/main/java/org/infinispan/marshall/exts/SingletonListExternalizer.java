@@ -11,6 +11,7 @@ import net.jcip.annotations.Immutable;
 
 import org.infinispan.commons.marshall.AbstractExternalizer;
 import org.infinispan.commons.util.Util;
+import org.infinispan.configuration.global.GlobalConfiguration;
 import org.infinispan.marshall.core.Ids;
 
 /**
@@ -21,6 +22,13 @@ import org.infinispan.marshall.core.Ids;
  */
 @Immutable
 public class SingletonListExternalizer extends AbstractExternalizer<List<?>> {
+	
+	private final GlobalConfiguration globalConfiguration;
+
+	public SingletonListExternalizer(GlobalConfiguration globalConfiguration) {
+		this.globalConfiguration = globalConfiguration;
+		
+	}
 
    @Override
    public void writeObject(ObjectOutput output, List<?> list) throws IOException {
@@ -40,7 +48,12 @@ public class SingletonListExternalizer extends AbstractExternalizer<List<?>> {
    @Override
    public Set<Class<? extends List<?>>> getTypeClasses() {
       // This is loadable from any classloader
-      return Util.<Class<? extends List<?>>>asSet(Util.<List<?>>loadClass("java.util.Collections$SingletonList", null));
+      try {
+		return Util.<Class<? extends List<?>>>asSet(globalConfiguration.aggregateClassLoader().<List<?>>loadClassStrict(
+				"java.util.Collections$SingletonList"));
+	} catch (ClassNotFoundException e) {
+		return null;
+	}
    }
 
 }
