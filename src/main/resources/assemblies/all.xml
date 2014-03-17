@@ -57,6 +57,7 @@
             <include>org.infinispan:infinispan-cli-client</include>
             <include>org.infinispan:infinispan-cli-server</include>
             <include>org.infinispan:infinispan-cachestore-jdbc</include>
+            <include>org.infinispan:infinispan-cachestore-jpa</include>
             <include>org.infinispan:infinispan-cachestore-remote</include>
             <include>org.infinispan:infinispan-cachestore-cli</include>
             <include>org.infinispan:infinispan-cachestore-rest</include>
@@ -307,6 +308,7 @@
          <includeSubModules>false</includeSubModules>
          <includes>
             <include>org.infinispan:infinispan-cachestore-jdbc</include>
+            <include>org.infinispan:infinispan-cachestore-jpa</include>
             <include>org.infinispan:infinispan-cachestore-remote</include>
             <include>org.infinispan:infinispan-cachestore-cli</include>
             <include>org.infinispan:infinispan-cachestore-leveldb</include>
