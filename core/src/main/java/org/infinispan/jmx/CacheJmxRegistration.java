@@ -116,7 +116,8 @@ public class CacheJmxRegistration extends AbstractJmxRegistration {
 
    public void unregisterCacheMBean() {
       if (mBeanServer != null) {
-         String pattern = jmxDomain + ":" + CACHE_JMX_GROUP + ",*";
+         String groupName = CACHE_JMX_GROUP + "," + getCacheJmxName() + ",manager=" + ObjectName.quote(globalConfig.globalJmxStatistics().cacheManagerName());
+         String pattern = jmxDomain + ":" + groupName + ",*";
          try {
             Set<ObjectName> names = mBeanServer.queryNames(new ObjectName(pattern), null);
             for (ObjectName name : names) {
@@ -145,6 +146,11 @@ public class CacheJmxRegistration extends AbstractJmxRegistration {
       updateDomain(registrar, cache.getComponentRegistry().getGlobalComponentRegistry(), mBeanServer, groupName);
       return registrar;
    }
+
+    private String getCacheJmxName() {
+        return ComponentsJmxRegistration.NAME_KEY + "="
+                + ObjectName.quote(cache.getName() + "(" + cache.getCacheConfiguration().clustering().cacheModeString().toLowerCase() + ")");
+    }
 
    protected void updateDomain(ComponentsJmxRegistration registrar, GlobalComponentRegistry componentRegistry,
                                MBeanServer mBeanServer, String groupName) {
