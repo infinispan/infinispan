@@ -227,8 +227,17 @@
             <testResource>
                 <directory>${project.basedir}/src/test/resources</directory>
                 <filtering>true</filtering>
+                <excludes>
+                    <exclude>*.jks</exclude>
+                    <exclude>*.keystore</exclude>
+                </excludes>
+            </testResource>
+            <testResource>
+                <directory>${project.basedir}/src/test/resources</directory>
+                <filtering>false</filtering>
                 <includes>
-                    <include>**/*</include>
+                    <include>*.jks</include>
+                    <include>*.keystore</include>
                 </includes>
             </testResource>
         </testResources>
