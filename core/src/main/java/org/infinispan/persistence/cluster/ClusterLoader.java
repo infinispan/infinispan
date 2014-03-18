@@ -2,6 +2,7 @@ package org.infinispan.persistence.cluster;
 
 import org.infinispan.AdvancedCache;
 import org.infinispan.commands.remote.ClusteredGetCommand;
+import org.infinispan.commons.configuration.ConfiguredBy;
 import org.infinispan.commons.util.InfinispanCollections;
 import org.infinispan.configuration.cache.ClusterLoaderConfiguration;
 import org.infinispan.container.entries.InternalCacheValue;
@@ -34,6 +35,7 @@ import java.util.concurrent.TimeUnit;
  *
  * @author Mircea.Markus@jboss.com
  */
+@ConfiguredBy(ClusterLoaderConfiguration.class)
 public class ClusterLoader implements CacheLoader, LocalOnlyCacheLoader {
    private static final Log log = LogFactory.getLog(ClusterLoader.class);
 

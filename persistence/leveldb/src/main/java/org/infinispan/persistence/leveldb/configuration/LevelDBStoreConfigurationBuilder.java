@@ -81,6 +81,8 @@ public class LevelDBStoreConfigurationBuilder extends AbstractStoreConfiguration
 
    @Override
    public Builder<?> read(LevelDBStoreConfiguration template) {
+      super.read(template);
+
       location = template.location();
       expiredLocation = template.expiredLocation();
       implementationType = template.implementationType();
@@ -93,15 +95,6 @@ public class LevelDBStoreConfigurationBuilder extends AbstractStoreConfiguration
 
       expiryQueueSize = template.expiryQueueSize();
       clearThreshold = template.clearThreshold();
-
-
-      // AbstractStore-specific configuration
-      fetchPersistentState = template.fetchPersistentState();
-      ignoreModifications = template.ignoreModifications();
-      properties = template.properties();
-      purgeOnStartup = template.purgeOnStartup();
-      this.async.read(template.async());
-      this.singletonStore.read(template.singletonStore());
 
       return self();
    }

@@ -17,11 +17,6 @@ public class JCacheWriterAdapterConfigurationBuilder extends AbstractStoreConfig
    }
 
    @Override
-   public Builder<?> read(JCacheWriterAdapterConfiguration template) {
-      return this;
-   }
-
-   @Override
    public JCacheWriterAdapterConfigurationBuilder self() {
       return this;
    }

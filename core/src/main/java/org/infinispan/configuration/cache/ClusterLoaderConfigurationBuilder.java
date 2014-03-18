@@ -46,6 +46,7 @@ public class ClusterLoaderConfigurationBuilder extends AbstractStoreConfiguratio
 
    @Override
    public ClusterLoaderConfigurationBuilder read(ClusterLoaderConfiguration template) {
+      super.read(template);
       this.remoteCallTimeout = template.remoteCallTimeout();
       this.properties = template.properties();
       return this;

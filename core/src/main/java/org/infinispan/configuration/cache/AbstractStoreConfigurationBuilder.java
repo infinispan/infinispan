@@ -1,5 +1,6 @@
 package org.infinispan.configuration.cache;
 
+import org.infinispan.commons.configuration.Builder;
 import org.infinispan.configuration.parsing.XmlConfigHelper;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
@@ -125,4 +126,17 @@ public abstract class AbstractStoreConfigurationBuilder<T extends StoreConfigura
          log.localIndexingWithSharedCacheLoaderRequiresPreload();
    }
 
+   @Override
+   public Builder<?> read(T template) {
+      async.read(template.async());
+      singletonStore.read(template.singletonStore());
+      fetchPersistentState = template.fetchPersistentState();
+      ignoreModifications = template.ignoreModifications();
+      purgeOnStartup = template.purgeOnStartup();
+      shared = template.shared();
+      preload = template.preload();
+      properties = template.properties();
+
+      return this;
+   }
 }

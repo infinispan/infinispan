@@ -18,20 +18,6 @@ public class RemoteEventStoreConfigurationBuilder extends AbstractStoreConfigura
    }
 
    @Override
-   public Builder<?> read(RemoteEventStoreConfiguration template) {
-      // AbstractStore-specific configuration
-      fetchPersistentState = template.fetchPersistentState();
-      ignoreModifications = template.ignoreModifications();
-      properties = template.properties();
-      purgeOnStartup = template.purgeOnStartup();
-      async.read(template.async());
-      singletonStore.read(template.singletonStore());
-      shared = template.shared();
-      preload = template.preload();
-      return this;
-   }
-
-   @Override
    public RemoteEventStoreConfigurationBuilder self() {
       return this;
    }

@@ -23,18 +23,12 @@
 package org.jboss.as.clustering.infinispan.subsystem;
 
 import org.infinispan.Cache;
+import org.infinispan.commons.configuration.BuiltBy;
+import org.infinispan.commons.configuration.ConfiguredBy;
 import org.infinispan.commons.marshall.Marshaller;
 import org.infinispan.commons.util.TypedProperties;
+import org.infinispan.configuration.cache.*;
 import org.infinispan.configuration.cache.BackupConfiguration.BackupStrategy;
-import org.infinispan.configuration.cache.BackupFailurePolicy;
-import org.infinispan.configuration.cache.CacheMode;
-import org.infinispan.configuration.cache.ClusterLoaderConfigurationBuilder;
-import org.infinispan.configuration.cache.Configuration;
-import org.infinispan.configuration.cache.ConfigurationBuilder;
-import org.infinispan.configuration.cache.PersistenceConfigurationBuilder;
-import org.infinispan.configuration.cache.SingleFileStoreConfigurationBuilder;
-import org.infinispan.configuration.cache.SitesConfigurationBuilder;
-import org.infinispan.configuration.cache.StoreConfigurationBuilder;
 import org.infinispan.configuration.parsing.ConfigurationBuilderHolder;
 import org.infinispan.configuration.parsing.ParserRegistry;
 import org.infinispan.eviction.EvictionStrategy;
@@ -590,10 +584,37 @@ public abstract class CacheAdd extends AbstractAddStepHandler {
                 builder.remoteCallTimeout(loader.require(ModelKeys.REMOTE_TIMEOUT).asLong());
             }
             return builder;
+        } else if (loaderKey.equals(ModelKeys.LOADER)) {
+           String className = loader.require(ModelKeys.CLASS).asString();
+           try {
+              Object instance = newInstance(className);
+              return handleStoreOrLoaderClass(className, persistenceBuilder);
+           } catch (Exception e) {
+              throw InfinispanMessages.MESSAGES.invalidCacheStore(e, className);
+           }
         } else {
            throw new IllegalStateException();
         }
 
+    }
+
+    private StoreConfigurationBuilder handleStoreOrLoaderClass(String className,
+                                                               PersistenceConfigurationBuilder persistenceBuilder)
+          throws ClassNotFoundException {
+       Class<?> storeImplClass = CacheLoader.class.getClassLoader().loadClass(className);
+       ConfiguredBy annotation = storeImplClass.getAnnotation(ConfiguredBy.class);
+       Class<? extends StoreConfigurationBuilder> builderClass = null;
+       if (annotation != null) {
+          Class<?> configuredBy = annotation.value();
+          if (configuredBy != null) {
+             BuiltBy builtBy = configuredBy.getAnnotation(BuiltBy.class);
+             builderClass = builtBy.value().asSubclass(StoreConfigurationBuilder.class);
+          }
+       }
+       if (builderClass == null) {
+          builderClass = BaseStoreConfigurationBuilder.class;
+       }
+       return persistenceBuilder.addStore(builderClass);
     }
 
    private StoreConfigurationBuilder<?, ?> buildCacheStore(OperationContext context, PersistenceConfigurationBuilder persistenceBuilder, String containerName, ModelNode store, String storeKey, List<Dependency<?>> dependencies) throws OperationFailedException {
@@ -785,11 +806,7 @@ public abstract class CacheAdd extends AbstractAddStepHandler {
            String className = store.require(ModelKeys.CLASS).asString();
            try {
               Object instance = newInstance(className);
-              StoreConfigurationBuilder storeConfigurationBuilder;
-              Class<?> storeImplClass = CacheLoader.class.getClassLoader().loadClass(className);
-              Class<? extends StoreConfigurationBuilder> builderClass = StoreConfigurationBuilder.class.getClassLoader().loadClass(storeImplClass.getName() + "ConfigurationBuilder").asSubclass(StoreConfigurationBuilder.class);
-              storeConfigurationBuilder = persistenceBuilder.addStore(builderClass);
-              return storeConfigurationBuilder;
+              return handleStoreOrLoaderClass(className, persistenceBuilder);
            } catch (Exception e) {
               throw InfinispanMessages.MESSAGES.invalidCacheStore(e, className);
            }

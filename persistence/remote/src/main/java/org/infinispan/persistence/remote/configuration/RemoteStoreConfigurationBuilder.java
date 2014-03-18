@@ -183,6 +183,8 @@ public class RemoteStoreConfigurationBuilder extends
 
    @Override
    public RemoteStoreConfigurationBuilder read(RemoteStoreConfiguration template) {
+      super.read(template);
+
       this.asyncExecutorFactory.read(template.asyncExecutorFactory());
       this.balancingStrategy = template.balancingStrategy();
       this.connectionPool.read(template.connectionPool());
@@ -203,13 +205,6 @@ public class RemoteStoreConfigurationBuilder extends
          this.addServer().host(server.host()).port(server.port());
       }
 
-      // AbstractStore-specific configuration
-      fetchPersistentState = template.fetchPersistentState();
-      ignoreModifications = template.ignoreModifications();
-      properties = template.properties();
-      purgeOnStartup = template.purgeOnStartup();
-      async.read(template.async());
-      singletonStore.read(template.singletonStore());
       return this;
    }
 

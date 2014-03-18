@@ -62,19 +62,11 @@ public class SingleFileStoreConfigurationBuilder
 
    @Override
    public Builder<?> read(SingleFileStoreConfiguration template) {
+      super.read(template);
+
       // SingleFileStore-specific configuration
       location = template.location();
       maxEntries = template.maxEntries();
-
-      // AbstractStore-specific configuration
-      fetchPersistentState = template.fetchPersistentState();
-      ignoreModifications = template.ignoreModifications();
-      properties = template.properties();
-      purgeOnStartup = template.purgeOnStartup();
-      async.read(template.async());
-      singletonStore.read(template.singletonStore());
-      preload = template.preload();
-      shared = template.shared();
 
       return this;
    }

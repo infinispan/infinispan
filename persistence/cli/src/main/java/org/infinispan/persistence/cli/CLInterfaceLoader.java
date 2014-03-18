@@ -11,6 +11,7 @@ import org.infinispan.cli.impl.CommandBufferImpl;
 import org.infinispan.cli.impl.ContextImpl;
 import org.infinispan.cli.io.IOAdapter;
 import org.infinispan.commons.CacheException;
+import org.infinispan.commons.configuration.ConfiguredBy;
 import org.infinispan.commons.util.CollectionFactory;
 import org.infinispan.marshall.core.MarshalledEntry;
 import org.infinispan.persistence.cli.configuration.CLInterfaceLoaderConfiguration;
@@ -31,6 +32,7 @@ import java.util.concurrent.ConcurrentMap;
  * @author Galder Zamarreño
  * @since 6.0
  */
+@ConfiguredBy(CLInterfaceLoaderConfiguration.class)
 public class CLInterfaceLoader<K, V> implements CacheLoader<K, V> {
 
    private InitializationContext ctx;

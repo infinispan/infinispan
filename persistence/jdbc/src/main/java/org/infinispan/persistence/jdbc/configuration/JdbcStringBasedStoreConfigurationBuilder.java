@@ -64,7 +64,8 @@ public class JdbcStringBasedStoreConfigurationBuilder extends AbstractJdbcStoreC
 
    @Override
    public Builder<?> read(JdbcStringBasedStoreConfiguration template) {
-      super.readInternal(template);
+      super.read(template);
+
       this.key2StringMapper = template.key2StringMapper();
       this.table.read(template.table());
       return this;

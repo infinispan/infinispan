@@ -1,5 +1,6 @@
 package org.infinispan.persistence.file;
 
+import org.infinispan.commons.configuration.ConfiguredBy;
 import org.infinispan.commons.equivalence.AnyEquivalence;
 import org.infinispan.commons.equivalence.Equivalence;
 import org.infinispan.commons.equivalence.EquivalentLinkedHashMap;
@@ -65,6 +66,7 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
  * @author Mircea Markus
  * @since 6.0
  */
+@ConfiguredBy(SingleFileStoreConfiguration.class)
 public class SingleFileStore implements AdvancedLoadWriteStore {
    private static final Log log = LogFactory.getLog(SingleFileStore.class);
    private static final boolean trace = log.isTraceEnabled();

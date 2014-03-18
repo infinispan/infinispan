@@ -1,5 +1,6 @@
 package org.infinispan.persistence.jdbc.stringbased;
 
+import org.infinispan.commons.configuration.ConfiguredBy;
 import org.infinispan.commons.io.ByteBuffer;
 import org.infinispan.marshall.core.MarshalledEntry;
 import org.infinispan.persistence.spi.PersistenceException;
@@ -66,6 +67,7 @@ import static org.infinispan.persistence.PersistenceUtil.getExpiryTime;
  * @see org.infinispan.persistence.keymappers.Key2StringMapper
  * @see org.infinispan.persistence.keymappers.DefaultTwoWayKey2StringMapper
  */
+@ConfiguredBy(JdbcStringBasedStoreConfiguration.class)
 public class JdbcStringBasedStore implements AdvancedLoadWriteStore {
 
    private static final Log log = LogFactory.getLog(JdbcStringBasedStore.class, Log.class);

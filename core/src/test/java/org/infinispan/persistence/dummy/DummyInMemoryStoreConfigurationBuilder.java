@@ -49,21 +49,13 @@ public class DummyInMemoryStoreConfigurationBuilder extends
 
    @Override
    public DummyInMemoryStoreConfigurationBuilder read(DummyInMemoryStoreConfiguration template) {
+      super.read(template);
+
       debug = template.debug();
       slow = template.slow();
       storeName = template.storeName();
       failKey = template.failKey();
       shared =template.shared();
-
-      // AbstractStore-specific configuration
-      fetchPersistentState = template.fetchPersistentState();
-      ignoreModifications = template.ignoreModifications();
-      properties = template.properties();
-      purgeOnStartup = template.purgeOnStartup();
-      async.read(template.async());
-      singletonStore.read(template.singletonStore());
-
-      this.preload = template.preload();
 
       return this;
    }

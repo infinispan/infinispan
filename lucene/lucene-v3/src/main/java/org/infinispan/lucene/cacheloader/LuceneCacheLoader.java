@@ -1,6 +1,7 @@
 package org.infinispan.lucene.cacheloader;
 
 import org.apache.lucene.store.FSDirectory;
+import org.infinispan.commons.configuration.ConfiguredBy;
 import org.infinispan.executors.ExecutorAllCompletionService;
 import org.infinispan.lucene.IndexScopedKey;
 import org.infinispan.lucene.cacheloader.configuration.LuceneLoaderConfiguration;
@@ -33,6 +34,7 @@ import java.util.concurrent.Executor;
  * @author Sanne Grinovero
  * @since 5.2
  */
+@ConfiguredBy(LuceneLoaderConfiguration.class)
 public class LuceneCacheLoader implements AdvancedCacheLoader {
 
    private static final Log log = LogFactory.getLog(LuceneCacheLoader.class, Log.class);

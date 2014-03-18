@@ -1,6 +1,9 @@
 package org.infinispan.configuration.parsing;
 
 import org.infinispan.commons.CacheConfigurationException;
+import org.infinispan.commons.configuration.Builder;
+import org.infinispan.commons.configuration.BuiltBy;
+import org.infinispan.commons.configuration.ConfiguredBy;
 import org.infinispan.commons.equivalence.Equivalence;
 import org.infinispan.commons.executors.ExecutorFactory;
 import org.infinispan.commons.hash.Hash;
@@ -24,6 +27,7 @@ import org.infinispan.jmx.MBeanServerLookup;
 import org.infinispan.persistence.cluster.ClusterLoader;
 import org.infinispan.persistence.file.SingleFileStore;
 import org.infinispan.persistence.spi.CacheLoader;
+import org.infinispan.persistence.spi.CacheWriter;
 import org.infinispan.remoting.ReplicationQueue;
 import org.infinispan.remoting.transport.Transport;
 import org.infinispan.transaction.LockingMode;
@@ -718,6 +722,39 @@ public class Parser60 implements ConfigurationParser {
          } else if (store instanceof ClusterLoader) {
             ClusterLoaderConfigurationBuilder cscb = builder.persistence().addClusterLoader();
             parseLoaderChildren(reader, cscb);
+         } else {
+            ConfiguredBy annotation = store.getClass().getAnnotation(ConfiguredBy.class);
+            Class<? extends StoreConfigurationBuilder> builderClass = null;
+            if (annotation != null) {
+               Class<?> configuredBy = annotation.value();
+               if (configuredBy != null) {
+                  BuiltBy builtBy = configuredBy.getAnnotation(BuiltBy.class);
+                  builderClass = builtBy.value().asSubclass(StoreConfigurationBuilder.class);
+               }
+            }
+
+            // If they don't specify a builder just use the base configuration builder
+            if (builderClass == null) {
+               builderClass = BaseStoreConfigurationBuilder.class;
+            }
+
+            StoreConfigurationBuilder configBuilder = builder.persistence().addStore(
+                  builderClass);
+            if (fetchPersistentState != null)
+               configBuilder.fetchPersistentState(fetchPersistentState);
+            if (ignoreModifications != null)
+               configBuilder.ignoreModifications(ignoreModifications);
+            if (purgeOnStartup != null)
+               configBuilder.purgeOnStartup(purgeOnStartup);
+            if (preload != null)
+               configBuilder.preload(preload);
+            if (shared != null)
+               configBuilder.shared(shared);
+            if (store instanceof CacheWriter) {
+               parseStoreChildren(reader, configBuilder);
+            } else if (store instanceof CacheLoader) {
+               parseLoaderChildren(reader, configBuilder);
+            }
          }
       }
    }
