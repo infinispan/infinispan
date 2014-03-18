@@ -232,6 +232,7 @@ public class DistSyncL1FuncTest extends BaseDistSyncL1Test {
       }
    }
 
+   @Test(groups = "unstable", description = "ISPN-4133")
    public void testNonOwnerRetrievesValueFromBackupOwnerWhileWrite() throws Exception {
       final Cache<Object, String>[] owners = getOwners(key, 2);
 
