@@ -272,6 +272,14 @@
                                 <ant antfile="build-testsuite.xml" inheritRefs="true">
                                     <target name="create-all-distros"/>
                                 </ant>
+                                <!-- It happens when you do not specify namespaces in the XSLT templates for the newly added nodes
+                                     then the IBM jdk transformation is adding empty namespace there - not possible to influence this
+                                     behaviour by any environmental property - this is a bit workaround for it -->
+                                <echo message="Removing empty xmlns attributes (xmlns='') which IBM JDK could produce" />
+                                <replace dir="target" value="">
+                                    <include name="server/node*/standalone/configuration/**/*.xml"/>
+                                    <replacetoken><![CDATA[xmlns=""]]></replacetoken>
+                                </replace>
                             </target>
                         </configuration>
                     </execution>
