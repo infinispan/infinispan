@@ -21,6 +21,7 @@ import org.apache.http.params.BasicHttpParams;
 import org.apache.http.params.CoreConnectionPNames;
 import org.apache.http.params.HttpParams;
 import org.apache.http.util.EntityUtils;
+import org.infinispan.commons.configuration.ConfiguredBy;
 import org.infinispan.commons.util.Util;
 import org.infinispan.container.InternalEntryFactory;
 import org.infinispan.executors.ExecutorAllCompletionService;
@@ -59,6 +60,7 @@ import java.util.concurrent.TimeUnit;
  * @since 6.0
  */
 @ThreadSafe
+@ConfiguredBy(RestStoreConfiguration.class)
 public class RestStore implements AdvancedLoadWriteStore {
    private static final String MAX_IDLE_TIME_SECONDS = "maxIdleTimeSeconds";
    private static final String TIME_TO_LIVE_SECONDS = "timeToLiveSeconds";

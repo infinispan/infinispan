@@ -1,5 +1,6 @@
 package org.infinispan.persistence.jdbc.binary;
 
+import org.infinispan.commons.configuration.ConfiguredBy;
 import org.infinispan.commons.equivalence.Equivalence;
 import org.infinispan.commons.io.ByteBuffer;
 import org.infinispan.commons.marshall.StreamingMarshaller;
@@ -53,6 +54,7 @@ import java.util.concurrent.Executor;
  * @see org.infinispan.persistence.jdbc.configuration.JdbcBinaryStoreConfiguration
  * @see org.infinispan.persistence.jdbc.stringbased.JdbcStringBasedStore
  */
+@ConfiguredBy(JdbcBinaryStoreConfiguration.class)
 public class JdbcBinaryStore implements AdvancedLoadWriteStore {
 
    private static final Log log = LogFactory.getLog(JdbcBinaryStore.class, Log.class);

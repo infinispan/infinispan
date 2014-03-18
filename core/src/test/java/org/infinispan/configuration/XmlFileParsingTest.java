@@ -20,11 +20,14 @@ import org.infinispan.Version;
 import org.infinispan.commons.CacheConfigurationException;
 import org.infinispan.commons.equivalence.AnyEquivalence;
 import org.infinispan.commons.equivalence.ByteArrayEquivalence;
+import org.infinispan.configuration.cache.AbstractStoreConfiguration;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ClusterLoaderConfiguration;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.cache.InterceptorConfiguration;
+import org.infinispan.configuration.cache.PersistenceConfiguration;
 import org.infinispan.configuration.cache.SingleFileStoreConfiguration;
+import org.infinispan.configuration.cache.StoreConfiguration;
 import org.infinispan.configuration.global.GlobalConfiguration;
 import org.infinispan.configuration.global.ShutdownHookBehavior;
 import org.infinispan.eviction.EvictionStrategy;
@@ -36,8 +39,14 @@ import org.infinispan.jmx.PerThreadMBeanServerLookup;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.commons.marshall.AdvancedExternalizer;
 import org.infinispan.marshall.AdvancedExternalizerTest;
+import org.infinispan.marshall.core.MarshalledEntry;
 import org.infinispan.marshall.core.VersionAwareMarshaller;
 import org.infinispan.commons.marshall.jboss.GenericJBossMarshaller;
+import org.infinispan.persistence.dummy.DummyInMemoryStoreConfiguration;
+import org.infinispan.persistence.dummy.DummyInMemoryStoreConfigurationBuilder;
+import org.infinispan.persistence.spi.CacheLoader;
+import org.infinispan.persistence.spi.CacheWriter;
+import org.infinispan.persistence.spi.InitializationContext;
 import org.infinispan.remoting.transport.jgroups.JGroupsTransport;
 import org.infinispan.test.AbstractInfinispanTest;
 import org.infinispan.test.CacheManagerCallable;
@@ -341,6 +350,77 @@ public class XmlFileParsingTest extends AbstractInfinispanTest {
             Configuration cfg = cm.getDefaultCacheConfiguration();
             assertTrue(cfg.dataContainer().<byte[]>keyEquivalence() instanceof ByteArrayEquivalence);
             assertTrue(cfg.dataContainer().<byte[]>valueEquivalence() instanceof ByteArrayEquivalence);
+         }
+      });
+   }
+
+   public void testDummyInMemoryStore() throws IOException {
+      String config = INFINISPAN_START_TAG_NO_SCHEMA +
+            "<default>\n" +
+            "<persistence >\n" +
+               "<store class=\"org.infinispan.persistence.dummy.DummyInMemoryStore\" >\n" +
+                  "<properties >" +
+                     "<property name=\"storeName\" value=\"myStore\"/>" +
+                  "</properties >" +
+               "</store >\n" +
+            "</persistence >\n" +
+            "</default>\n" +
+            INFINISPAN_END_TAG;
+
+      InputStream is = new ByteArrayInputStream(config.getBytes());
+      withCacheManager(new CacheManagerCallable(TestCacheManagerFactory.fromStream(is)) {
+         @Override
+         public void call() {
+            PersistenceConfiguration cfg = cm.getDefaultCacheConfiguration().persistence();
+            StoreConfiguration config = cfg.stores().get(0);
+            assertTrue(config instanceof DummyInMemoryStoreConfiguration);
+            DummyInMemoryStoreConfiguration dummyInMemoryStoreConfiguration = (DummyInMemoryStoreConfiguration)config;
+            assertEquals("myStore", dummyInMemoryStoreConfiguration.storeName());
+         }
+      });
+   }
+
+   public static class GenericLoader implements CacheLoader {
+
+      @Override
+      public void init(InitializationContext ctx) { }
+
+      @Override
+      public MarshalledEntry load(Object key) { return null; }
+
+      @Override
+      public boolean contains(Object key) { return false; }
+
+      @Override
+      public void start() { }
+
+      @Override
+      public void stop() { }
+   }
+
+   public void testStoreWithNoConfigureBy() throws IOException {
+      String config = INFINISPAN_START_TAG_NO_SCHEMA +
+            "<default>\n" +
+            "<persistence >\n" +
+               "<store class=\"org.infinispan.configuration.XmlFileParsingTest$GenericLoader\" preload=\"true\" >\n" +
+                  "<properties >" +
+                     "<property name=\"fetchPersistentState\" value=\"true\"/>" +
+                  "</properties >" +
+               "</store >\n" +
+            "</persistence >\n" +
+            "</default>\n" +
+            INFINISPAN_END_TAG;
+
+      InputStream is = new ByteArrayInputStream(config.getBytes());
+      withCacheManager(new CacheManagerCallable(TestCacheManagerFactory.fromStream(is)) {
+         @Override
+         public void call() {
+            PersistenceConfiguration cfg = cm.getDefaultCacheConfiguration().persistence();
+            StoreConfiguration config = cfg.stores().get(0);
+            assertTrue(config instanceof AbstractStoreConfiguration);
+            AbstractStoreConfiguration abstractStoreConfiguration = (AbstractStoreConfiguration)config;
+            assertTrue(abstractStoreConfiguration.fetchPersistentState());
+            assertTrue(abstractStoreConfiguration.preload());
          }
       });
    }

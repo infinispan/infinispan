@@ -99,6 +99,8 @@ public class RestStoreConfigurationBuilder extends AbstractStoreConfigurationBui
 
    @Override
    public RestStoreConfigurationBuilder read(RestStoreConfiguration template) {
+      super.read(template);
+
       this.connectionPool.read(template.connectionPool());
       this.host = template.host();
       this.port = template.port();
@@ -107,15 +109,6 @@ public class RestStoreConfigurationBuilder extends AbstractStoreConfigurationBui
       this.key2StringMapper = template.key2StringMapper();
       this.metadataHelper = template.metadataHelper();
 
-      // AbstractStore-specific configuration
-      fetchPersistentState = template.fetchPersistentState();
-      ignoreModifications = template.ignoreModifications();
-      properties = template.properties();
-      purgeOnStartup = template.purgeOnStartup();
-      shared = template.shared();
-      preload = template.preload();
-      async.read(template.async());
-      singletonStore.read(template.singletonStore());
       return this;
    }
 

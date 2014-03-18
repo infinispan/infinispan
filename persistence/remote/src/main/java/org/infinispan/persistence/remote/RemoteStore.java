@@ -10,6 +10,7 @@ import org.infinispan.client.hotrod.configuration.ConfigurationBuilder;
 import org.infinispan.client.hotrod.configuration.ExhaustedAction;
 import org.infinispan.client.hotrod.impl.ConfigurationProperties;
 import org.infinispan.commons.api.BasicCacheContainer;
+import org.infinispan.commons.configuration.ConfiguredBy;
 import org.infinispan.commons.marshall.Marshaller;
 import org.infinispan.commons.marshall.jboss.GenericJBossMarshaller;
 import org.infinispan.commons.util.Util;
@@ -50,6 +51,7 @@ import java.util.concurrent.TimeUnit;
  * @since 4.1
  */
 @ThreadSafe
+@ConfiguredBy(RemoteStoreConfiguration.class)
 public class RemoteStore implements AdvancedLoadWriteStore {
 
    private static final Log log = LogFactory.getLog(RemoteStore.class, Log.class);

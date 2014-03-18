@@ -57,7 +57,8 @@ public class JdbcBinaryStoreConfigurationBuilder extends
 
    @Override
    public JdbcBinaryStoreConfigurationBuilder read(JdbcBinaryStoreConfiguration template) {
-      super.readInternal(template);
+      super.read(template);
+
       this.table.read(template.table());
       this.lockAcquisitionTimeout = template.lockAcquisitionTimeout();
       this.concurrencyLevel = template.lockConcurrencyLevel();

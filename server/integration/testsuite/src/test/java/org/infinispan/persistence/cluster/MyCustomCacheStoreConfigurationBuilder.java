@@ -42,8 +42,8 @@ public class MyCustomCacheStoreConfigurationBuilder extends AbstractStoreConfigu
 
     @Override
     public MyCustomCacheStoreConfigurationBuilder read(MyCustomCacheStoreConfiguration template) {
+        super.read(template);
         this.customProperty = template.customProperty();
-        this.properties = template.properties();
         return this;
     }
 }

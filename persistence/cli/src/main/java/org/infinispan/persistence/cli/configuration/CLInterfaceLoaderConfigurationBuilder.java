@@ -34,6 +34,7 @@ public class CLInterfaceLoaderConfigurationBuilder
 
    @Override
    public Builder<?> read(CLInterfaceLoaderConfiguration template) {
+      super.read(template);
       this.connectionString = template.connectionString();
       return this;
    }

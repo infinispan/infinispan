@@ -2,6 +2,7 @@ package org.infinispan.persistence.dummy;
 
 import org.infinispan.Cache;
 import org.infinispan.commons.CacheException;
+import org.infinispan.commons.configuration.ConfiguredBy;
 import org.infinispan.commons.equivalence.Equivalence;
 import org.infinispan.commons.marshall.StreamingMarshaller;
 import org.infinispan.commons.util.InfinispanCollections;
@@ -32,6 +33,7 @@ import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.Executor;
 import java.util.concurrent.atomic.AtomicInteger;
 
+@ConfiguredBy(DummyInMemoryStoreConfiguration.class)
 public class DummyInMemoryStore implements AdvancedLoadWriteStore {
    private static final Log log = LogFactory.getLog(DummyInMemoryStore.class);
    private static final boolean trace = log.isTraceEnabled();

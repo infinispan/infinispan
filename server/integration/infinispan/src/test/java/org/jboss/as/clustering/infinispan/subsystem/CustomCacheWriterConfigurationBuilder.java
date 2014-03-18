@@ -25,22 +25,6 @@ public class CustomCacheWriterConfigurationBuilder extends AbstractStoreConfigur
    }
 
    @Override
-   public Builder<?> read(CustomCacheWriterConfiguration template) {
-      // AbstractStore-specific configuration
-      fetchPersistentState = template.fetchPersistentState();
-      ignoreModifications = template.ignoreModifications();
-      properties = template.properties();
-      purgeOnStartup = template.purgeOnStartup();
-      async.read(template.async());
-      singletonStore.read(template.singletonStore());
-      preload = template.preload();
-      shared = template.shared();
-
-      return this;
-
-   }
-
-   @Override
    public CustomCacheWriterConfigurationBuilder self() {
       return this;
    }

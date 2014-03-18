@@ -22,11 +22,6 @@ public class JStoreAdapterConfigurationBuilder extends AbstractStoreConfiguratio
    }
 
    @Override
-   public Builder<?> read(JStoreAdapterConfiguration template) {
-      return this;
-   }
-
-   @Override
    public JStoreAdapterConfigurationBuilder self() {
       return this;
    }

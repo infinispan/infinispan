@@ -138,7 +138,8 @@ public class JdbcMixedStoreConfigurationBuilder extends AbstractJdbcStoreConfigu
 
    @Override
    public JdbcMixedStoreConfigurationBuilder read(JdbcMixedStoreConfiguration template) {
-      super.readInternal(template);
+      super.read(template);
+
       this.binaryTable.read(template.binaryTable());
       this.stringTable.read(template.stringTable());
       this.key2StringMapper = template.key2StringMapper();

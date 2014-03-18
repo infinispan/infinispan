@@ -262,18 +262,6 @@ public class UnnecessaryLoadingTest extends SingleCacheManagerTest {
       }
 
       @Override
-      public Builder<?> read(CountingStoreConfiguration template) {
-         // AbstractStore-specific configuration
-         fetchPersistentState = template.fetchPersistentState();
-         ignoreModifications = template.ignoreModifications();
-         properties = template.properties();
-         purgeOnStartup = template.purgeOnStartup();
-         async.read(template.async());
-         singletonStore.read(template.singletonStore());
-         return this;
-      }
-
-      @Override
       public CountingStoreConfigurationBuilder self() {
          return this;
       }
