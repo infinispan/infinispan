@@ -10,7 +10,7 @@ import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.test.SingleCacheManagerTest;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
-import org.infinispan.transaction.TransactionTable;
+import org.infinispan.transaction.impl.TransactionTable;
 import org.infinispan.transaction.tm.BatchModeTransactionManager;
 import org.infinispan.transaction.tm.DummyTransaction;
 import org.testng.annotations.Test;

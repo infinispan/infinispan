@@ -1,7 +1,7 @@
 package org.infinispan.api.tree;
 
 import org.infinispan.tree.Fqn;
-import org.infinispan.tree.NodeKey;
+import org.infinispan.tree.impl.NodeKey;
 import org.infinispan.util.concurrent.locks.containers.LockContainer;
 import org.infinispan.util.concurrent.locks.containers.ReentrantStripedLockContainer;
 import org.testng.annotations.Test;

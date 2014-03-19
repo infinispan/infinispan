@@ -7,7 +7,7 @@ import org.infinispan.interceptors.base.CommandInterceptor;
 import org.infinispan.remoting.RemoteException;
 import org.infinispan.statetransfer.StateTransferManager;
 import org.infinispan.topology.CacheTopology;
-import org.infinispan.transaction.RemoteTransaction;
+import org.infinispan.transaction.impl.RemoteTransaction;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 

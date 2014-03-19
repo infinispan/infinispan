@@ -1,7 +1,7 @@
 package org.infinispan.server.hotrod
 
 import io.netty.buffer.ByteBuf
-import org.infinispan.distribution.ch.DefaultConsistentHash
+import org.infinispan.distribution.ch.impl.DefaultConsistentHash
 import org.infinispan.manager.EmbeddedCacheManager
 import org.infinispan.remoting.transport.Address
 import org.infinispan.server.core.transport.ExtendedByteBuf._

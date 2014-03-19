@@ -1,7 +1,7 @@
 package org.infinispan.transaction.xa;
 
 import org.infinispan.commons.equivalence.Equivalence;
-import org.infinispan.transaction.LocalTransaction;
+import org.infinispan.transaction.impl.LocalTransaction;
 import org.infinispan.transaction.xa.recovery.RecoverableTransactionIdentifier;
 
 import javax.transaction.Transaction;

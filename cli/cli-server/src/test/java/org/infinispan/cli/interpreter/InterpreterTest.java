@@ -10,7 +10,7 @@ import static org.testng.AssertJUnit.fail;
 import java.util.Map;
 
 import org.infinispan.Cache;
-import org.infinispan.api.BasicCacheContainer;
+import org.infinispan.commons.api.BasicCacheContainer;
 import org.infinispan.cli.interpreter.logging.Log;
 import org.infinispan.cli.interpreter.result.ResultKeys;
 import org.infinispan.cli.interpreter.statement.CacheStatement;

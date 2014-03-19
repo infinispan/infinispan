@@ -2,10 +2,11 @@ package org.infinispan.context.impl;
 
 import org.infinispan.commands.write.WriteCommand;
 import org.infinispan.context.InvocationContext;
-import org.infinispan.transaction.AbstractCacheTransaction;
+import org.infinispan.transaction.impl.AbstractCacheTransaction;
 import org.infinispan.transaction.xa.GlobalTransaction;
 
 import javax.transaction.Transaction;
+
 import java.util.Collection;
 import java.util.List;
 import java.util.Set;

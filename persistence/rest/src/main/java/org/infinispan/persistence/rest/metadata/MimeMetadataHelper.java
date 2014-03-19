@@ -1,8 +1,8 @@
 package org.infinispan.persistence.rest.metadata;
 
 import org.infinispan.marshall.core.MarshalledEntry;
-import org.infinispan.metadata.InternalMetadataImpl;
 import org.infinispan.metadata.Metadata;
+import org.infinispan.metadata.impl.InternalMetadataImpl;
 import org.infinispan.rest.MimeMetadata;
 
 import java.util.concurrent.TimeUnit;

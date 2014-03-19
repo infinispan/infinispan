@@ -2,7 +2,7 @@ package org.infinispan.commands.tx.totalorder;
 
 import org.infinispan.commands.tx.VersionedPrepareCommand;
 import org.infinispan.commands.write.WriteCommand;
-import org.infinispan.transaction.TotalOrderRemoteTransactionState;
+import org.infinispan.transaction.impl.TotalOrderRemoteTransactionState;
 import org.infinispan.transaction.xa.GlobalTransaction;
 
 import java.util.List;

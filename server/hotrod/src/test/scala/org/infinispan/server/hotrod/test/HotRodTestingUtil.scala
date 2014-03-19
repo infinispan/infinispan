@@ -27,7 +27,7 @@ import org.testng.AssertJUnit.assertEquals
 import org.infinispan.container.entries.InternalCacheEntry
 import org.infinispan.Cache
 import io.netty.channel.ChannelFuture
-import org.infinispan.distribution.ch.DefaultConsistentHash
+import org.infinispan.distribution.ch.impl.DefaultConsistentHash
 
 /**
  * Test utils for Hot Rod tests.

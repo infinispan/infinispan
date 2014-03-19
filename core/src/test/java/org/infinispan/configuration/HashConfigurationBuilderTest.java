@@ -3,7 +3,7 @@ package org.infinispan.configuration;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
-import org.infinispan.distribution.ch.SyncConsistentHashFactory;
+import org.infinispan.distribution.ch.impl.SyncConsistentHashFactory;
 import org.infinispan.test.AbstractInfinispanTest;
 import org.testng.Assert;
 import org.testng.annotations.Test;

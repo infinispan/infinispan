@@ -8,7 +8,7 @@ import java.util.concurrent.TimeUnit.{SECONDS => SECS}
 import javax.ws.rs._
 import core._
 import core.Response.{ResponseBuilder, Status}
-import org.infinispan.api.BasicCacheContainer
+import org.infinispan.commons.api.BasicCacheContainer
 import org.infinispan.manager._
 import org.codehaus.jackson.map.ObjectMapper
 import org.infinispan.AdvancedCache

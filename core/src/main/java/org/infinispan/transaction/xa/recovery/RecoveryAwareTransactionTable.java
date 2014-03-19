@@ -3,8 +3,8 @@ package org.infinispan.transaction.xa.recovery;
 import org.infinispan.commons.CacheException;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.topology.CacheTopology;
-import org.infinispan.transaction.LocalTransaction;
-import org.infinispan.transaction.RemoteTransaction;
+import org.infinispan.transaction.impl.LocalTransaction;
+import org.infinispan.transaction.impl.RemoteTransaction;
 import org.infinispan.transaction.xa.GlobalTransaction;
 import org.infinispan.transaction.xa.LocalXaTransaction;
 import org.infinispan.transaction.xa.XaTransactionTable;
@@ -13,6 +13,7 @@ import org.infinispan.util.logging.LogFactory;
 
 import javax.transaction.Transaction;
 import javax.transaction.xa.Xid;
+
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedList;
@@ -53,7 +54,7 @@ public class RecoveryAwareTransactionTable extends XaTransactionTable {
    }
 
    /**
-    * @see #localTransactionPrepared(org.infinispan.transaction.LocalTransaction)
+    * @see #localTransactionPrepared(org.infinispan.transaction.impl.LocalTransaction)
     */
    @Override
    public void localTransactionPrepared(LocalTransaction localTransaction) {

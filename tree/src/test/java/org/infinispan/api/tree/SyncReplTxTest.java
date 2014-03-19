@@ -7,8 +7,10 @@ import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.tree.Fqn;
 import org.infinispan.tree.Node;
 import org.infinispan.tree.TreeCache;
-import org.infinispan.tree.TreeCacheImpl;
+import org.infinispan.tree.impl.TreeCacheImpl;
+
 import static org.testng.AssertJUnit.*;
+
 import org.testng.annotations.Test;
 
 import javax.transaction.HeuristicMixedException;

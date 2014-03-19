@@ -1,7 +1,7 @@
 package org.infinispan.tx.recovery.admin;
 
 import org.infinispan.configuration.cache.ConfigurationBuilder;
-import org.infinispan.transaction.RemoteTransaction;
+import org.infinispan.transaction.impl.RemoteTransaction;
 import org.infinispan.transaction.tm.DummyTransaction;
 import org.infinispan.transaction.xa.XaTransactionTable;
 import org.infinispan.transaction.xa.recovery.RecoverableTransactionIdentifier;

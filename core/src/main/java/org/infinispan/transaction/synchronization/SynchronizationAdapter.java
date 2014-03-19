@@ -5,10 +5,10 @@ import org.infinispan.commons.CacheException;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.interceptors.locking.ClusteringDependentLogic;
 import org.infinispan.remoting.rpc.RpcManager;
-import org.infinispan.transaction.AbstractEnlistmentAdapter;
-import org.infinispan.transaction.LocalTransaction;
-import org.infinispan.transaction.TransactionCoordinator;
-import org.infinispan.transaction.TransactionTable;
+import org.infinispan.transaction.impl.AbstractEnlistmentAdapter;
+import org.infinispan.transaction.impl.LocalTransaction;
+import org.infinispan.transaction.impl.TransactionCoordinator;
+import org.infinispan.transaction.impl.TransactionTable;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 

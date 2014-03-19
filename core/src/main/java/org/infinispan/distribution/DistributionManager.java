@@ -58,7 +58,7 @@ public interface DistributionManager {
 
    /**
     * Retrieves the consistent hash instance currently in use, an instance of the configured ConsistentHash
-    * class (which defaults to {@link org.infinispan.distribution.ch.DefaultConsistentHash}.
+    * class (which defaults to {@link org.infinispan.distribution.ch.impl.DefaultConsistentHash}.
     *
     * @return a ConsistentHash instance
     */

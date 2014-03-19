@@ -30,8 +30,8 @@ import java.util.concurrent.ThreadFactory;
 
 import org.infinispan.Cache;
 import org.infinispan.affinity.KeyAffinityService;
-import org.infinispan.affinity.KeyAffinityServiceImpl;
 import org.infinispan.affinity.KeyGenerator;
+import org.infinispan.affinity.impl.KeyAffinityServiceImpl;
 import org.infinispan.remoting.transport.Address;
 import org.jboss.msc.service.Service;
 import org.jboss.msc.service.ServiceName;

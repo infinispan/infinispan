@@ -7,7 +7,6 @@ import java.util.concurrent.Executor;
 import javax.persistence.EntityManager;
 import javax.persistence.EntityManagerFactory;
 import javax.persistence.EntityTransaction;
-import javax.persistence.FlushModeType;
 import javax.persistence.GeneratedValue;
 import javax.persistence.PersistenceException;
 import javax.persistence.Query;
@@ -27,6 +26,10 @@ import org.infinispan.marshall.core.MarshalledEntryFactory;
 import org.infinispan.metadata.InternalMetadata;
 import org.infinispan.persistence.TaskContextImpl;
 import org.infinispan.persistence.jpa.configuration.JpaStoreConfiguration;
+import org.infinispan.persistence.jpa.impl.EntityManagerFactoryRegistry;
+import org.infinispan.persistence.jpa.impl.MetadataEntity;
+import org.infinispan.persistence.jpa.impl.MetadataEntityKey;
+import org.infinispan.persistence.jpa.impl.Stats;
 import org.infinispan.persistence.spi.AdvancedLoadWriteStore;
 import org.infinispan.persistence.spi.InitializationContext;
 import org.infinispan.util.TimeService;
@@ -49,7 +52,7 @@ public class JpaStore implements AdvancedLoadWriteStore {
    private StreamingMarshaller marshaller;
    private MarshalledEntryFactory marshallerEntryFactory;
    private TimeService timeService;
-   private Stats stats = new Stats();
+   private final Stats stats = new Stats();
 
    @Override
    public void init(InitializationContext ctx) {

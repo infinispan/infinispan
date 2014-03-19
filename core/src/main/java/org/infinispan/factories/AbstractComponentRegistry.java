@@ -688,7 +688,7 @@ public abstract class AbstractComponentRegistry implements Lifecycle, Cloneable 
     * org.infinispan.lifecycle.ComponentStatus#INITIALIZING}, this method will block for up to {@link
     * org.infinispan.configuration.cache.StateTransferConfiguration#timeout()} millis, checking for a valid state.
     *
-    * @param originLocal true if the call originates locally (i.e., from the {@link org.infinispan.CacheImpl} or false
+    * @param originLocal true if the call originates locally (i.e., from the {@link org.infinispan.cache.impl.CacheImpl} or false
     *                    if it originates remotely, i.e., from the {@link org.infinispan.remoting.InboundInvocationHandler}.
     * @return true if invocations are allowed, false otherwise.
     */

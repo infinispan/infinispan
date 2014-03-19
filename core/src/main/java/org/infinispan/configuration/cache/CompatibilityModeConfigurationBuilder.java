@@ -2,7 +2,6 @@ package org.infinispan.configuration.cache;
 
 import org.infinispan.commons.configuration.Builder;
 import org.infinispan.commons.marshall.Marshaller;
-import org.infinispan.marshall.LegacyMarshallerAdapter;
 
 /**
  * Compatibility mode configuration builder
@@ -52,15 +51,6 @@ public class CompatibilityModeConfigurationBuilder
     */
    public CompatibilityModeConfigurationBuilder marshaller(Marshaller marshaller) {
       this.marshaller = marshaller;
-      return this;
-   }
-
-   /**
-    * Sets the marshaller instance to be used by the interoperability layer.
-    */
-   @Deprecated
-   public CompatibilityModeConfigurationBuilder marshaller(org.infinispan.marshall.Marshaller marshaller) {
-      this.marshaller = new LegacyMarshallerAdapter(marshaller);
       return this;
    }
 

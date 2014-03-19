@@ -85,6 +85,12 @@
                            <goal>aggregate</goal>
                         </goals>
                         <configuration>
+                           <doclet>org.infinispan.tools.doclet.PublicAPI</doclet>
+                           <docletArtifact>
+                              <groupId>org.infinispan</groupId>
+                              <artifactId>infinispan-tools</artifactId>
+                              <version>${project.version}</version>
+                           </docletArtifact>
                            <quiet>true</quiet>
                            <!-- In case anyone needs to trace javadoc issues
                            <additionalJOption>-J-Xrunjdwp:transport=dt_socket,address=8787,server=y,suspend=y</additionalJOption>

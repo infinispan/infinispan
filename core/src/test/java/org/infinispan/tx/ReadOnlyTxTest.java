@@ -12,7 +12,7 @@ import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.CleanupAfterMethod;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.infinispan.transaction.LockingMode;
-import org.infinispan.transaction.TransactionTable;
+import org.infinispan.transaction.impl.TransactionTable;
 import org.infinispan.transaction.xa.LocalXaTransaction;
 import org.testng.AssertJUnit;
 import org.testng.annotations.Test;
@@ -20,6 +20,7 @@ import org.testng.annotations.Test;
 import javax.transaction.NotSupportedException;
 import javax.transaction.SystemException;
 import javax.transaction.Transaction;
+
 import java.util.concurrent.atomic.AtomicInteger;
 
 /**

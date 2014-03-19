@@ -19,12 +19,13 @@ import org.infinispan.factories.annotations.Stop;
 import org.infinispan.interceptors.base.CommandInterceptor;
 import org.infinispan.lifecycle.ComponentStatus;
 import org.infinispan.manager.CacheContainer;
-import org.infinispan.transaction.TransactionTable;
 import org.infinispan.transaction.WriteSkewException;
+import org.infinispan.transaction.impl.TransactionTable;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
 import java.util.List;
+
 import javax.transaction.Status;
 import javax.transaction.SystemException;
 import javax.transaction.Transaction;

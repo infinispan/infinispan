@@ -11,7 +11,7 @@ import org.infinispan.context.InvocationContextFactory;
 import org.infinispan.context.TransactionalInvocationContextFactory;
 import org.infinispan.interceptors.InterceptorChain;
 import org.infinispan.interceptors.locking.ClusteringDependentLogic;
-import org.infinispan.transaction.TransactionCoordinator;
+import org.infinispan.transaction.impl.TransactionCoordinator;
 import org.infinispan.transaction.tm.DummyBaseTransactionManager;
 import org.infinispan.transaction.tm.DummyTransaction;
 import org.infinispan.transaction.tm.DummyXid;
@@ -25,6 +25,7 @@ import org.testng.annotations.Test;
 
 import javax.transaction.xa.XAException;
 import javax.transaction.xa.XAResource;
+
 import java.util.UUID;
 
 import static org.mockito.Mockito.mock;

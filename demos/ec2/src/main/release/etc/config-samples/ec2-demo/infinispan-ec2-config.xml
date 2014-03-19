@@ -39,7 +39,7 @@
             <property name="configurationFile" value="${CFGPath}/jgroups-s3_ping-aws.xml"/>
          </properties>
       </transport>
-      <serialization marshallerClass="org.infinispan.marshall.VersionAwareMarshaller"
+      <serialization marshallerClass="org.infinispan.marshall.core.VersionAwareMarshaller"
                      version="1.0"/>
       <shutdown hookBehavior="DEFAULT"/>
    </global>

@@ -4,7 +4,7 @@ import org.testng.annotations.Test
 import org.testng.Assert._
 import org.infinispan.commands.remote.ClusteredGetCommand
 import org.infinispan.server.core.AbstractMarshallingTest
-import org.infinispan.api.BasicCacheContainer
+import org.infinispan.commons.api.BasicCacheContainer
 import org.infinispan.commons.equivalence.ByteArrayEquivalence
 import org.infinispan.commons.util.InfinispanCollections
 

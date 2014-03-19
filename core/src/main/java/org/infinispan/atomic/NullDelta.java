@@ -1,6 +1,6 @@
 package org.infinispan.atomic;
 
-import org.infinispan.atomic.AtomicHashMap;
+import org.infinispan.atomic.impl.AtomicHashMap;
 
 /**
  * Represents no changes.

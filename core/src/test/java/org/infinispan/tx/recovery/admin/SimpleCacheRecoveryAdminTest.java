@@ -9,7 +9,7 @@ import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.CleanupAfterMethod;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.infinispan.test.fwk.TransportFlags;
-import org.infinispan.transaction.TransactionTable;
+import org.infinispan.transaction.impl.TransactionTable;
 import org.infinispan.transaction.tm.DummyTransaction;
 import org.infinispan.transaction.xa.recovery.RecoveryManager;
 import org.infinispan.tx.recovery.RecoveryDummyTransactionManagerLookup;
@@ -18,6 +18,7 @@ import org.testng.annotations.Test;
 import javax.management.MBeanServer;
 import javax.management.ObjectName;
 import javax.transaction.xa.Xid;
+
 import java.util.List;
 
 import static org.infinispan.test.TestingUtil.checkMBeanOperationParameterNaming;

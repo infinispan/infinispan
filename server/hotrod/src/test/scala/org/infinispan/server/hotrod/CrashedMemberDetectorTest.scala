@@ -8,7 +8,7 @@ import org.infinispan.distribution.TestAddress
 import java.util.ArrayList
 import org.testng.AssertJUnit._
 import org.infinispan.test.SingleCacheManagerTest
-import org.infinispan.notifications.cachemanagerlistener.event.EventImpl
+import org.infinispan.notifications.cachemanagerlistener.event.impl.EventImpl
 
 /**
  * Tests crashed or stopped member logic.

@@ -1,5 +1,6 @@
 package org.infinispan.statetransfer;
 
+import org.infinispan.commons.util.concurrent.NotifyingFuture;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.container.entries.InternalCacheEntry;
@@ -11,7 +12,6 @@ import org.infinispan.test.fwk.CheckPoint;
 import org.infinispan.test.fwk.CleanupAfterMethod;
 import org.infinispan.topology.CacheJoinInfo;
 import org.infinispan.topology.ClusterTopologyManager;
-import org.infinispan.util.concurrent.NotifyingFuture;
 import org.mockito.AdditionalAnswers;
 import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;

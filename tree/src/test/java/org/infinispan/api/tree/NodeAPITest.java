@@ -7,10 +7,11 @@ import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.infinispan.tree.Fqn;
 import org.infinispan.tree.Node;
 import org.infinispan.tree.TreeCache;
-import org.infinispan.tree.TreeCacheImpl;
+import org.infinispan.tree.impl.TreeCacheImpl;
 import org.testng.annotations.Test;
 
 import javax.transaction.TransactionManager;
+
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;

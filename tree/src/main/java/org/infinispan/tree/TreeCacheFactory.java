@@ -2,6 +2,7 @@ package org.infinispan.tree;
 
 import org.infinispan.Cache;
 import org.infinispan.commons.CacheConfigurationException;
+import org.infinispan.tree.impl.TreeCacheImpl;
 
 /**
  * Factory class that contains API for users to create instances of {@link org.infinispan.tree.TreeCache}

@@ -2,8 +2,6 @@ package org.infinispan.stats.container;
 
 import org.infinispan.stats.ExtendedStatisticNotFoundException;
 
-import java.io.PrintStream;
-
 /**
  * Contains the statistic's values and allows to perform modifications on them.
  *

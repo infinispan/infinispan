@@ -11,13 +11,13 @@ import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.test.SingleCacheManagerTest;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
-import org.infinispan.transaction.LocalTransaction;
-import org.infinispan.transaction.TransactionTable;
+import org.infinispan.transaction.impl.LocalTransaction;
+import org.infinispan.transaction.impl.TransactionTable;
 import org.infinispan.tree.Fqn;
 import org.infinispan.tree.Node;
-import org.infinispan.tree.NodeKey;
-import org.infinispan.tree.TreeCacheImpl;
-import org.infinispan.tree.TreeStructureSupport;
+import org.infinispan.tree.impl.NodeKey;
+import org.infinispan.tree.impl.TreeCacheImpl;
+import org.infinispan.tree.impl.TreeStructureSupport;
 import org.infinispan.commons.util.Util;
 import org.infinispan.util.concurrent.locks.LockManager;
 import org.infinispan.util.logging.Log;
@@ -25,6 +25,7 @@ import org.infinispan.util.logging.LogFactory;
 import org.testng.annotations.Test;
 
 import javax.transaction.*;
+
 import java.util.Collections;
 import java.util.Set;
 import java.util.concurrent.Callable;

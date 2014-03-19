@@ -7,7 +7,7 @@ import org.infinispan.server.core.transport.ExtendedByteBuf._
 import collection.JavaConversions._
 import OperationStatus._
 import org.infinispan.configuration.cache.Configuration
-import org.infinispan.distribution.ch.DefaultConsistentHash
+import org.infinispan.distribution.ch.impl.DefaultConsistentHash
 import collection.mutable.ArrayBuffer
 import org.infinispan.server.hotrod.util.BulkUtil
 import io.netty.buffer.ByteBuf

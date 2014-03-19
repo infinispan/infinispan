@@ -1,5 +1,7 @@
 package org.infinispan.atomic;
 
+import org.infinispan.atomic.impl.AtomicHashMap;
+import org.infinispan.atomic.impl.AtomicHashMapDelta;
 import org.infinispan.test.AbstractInfinispanTest;
 import org.testng.annotations.Test;
 

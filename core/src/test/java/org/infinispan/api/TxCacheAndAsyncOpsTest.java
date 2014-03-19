@@ -1,10 +1,10 @@
 package org.infinispan.api;
 
+import org.infinispan.commons.util.concurrent.NotifyingFuture;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.test.SingleCacheManagerTest;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
-import org.infinispan.util.concurrent.NotifyingFuture;
 import org.testng.annotations.Test;
 
 import java.util.Collections;

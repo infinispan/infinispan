@@ -12,15 +12,16 @@ import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.infinispan.tree.Fqn;
 import org.infinispan.tree.Node;
-import org.infinispan.tree.NodeKey;
 import org.infinispan.tree.TreeCache;
 import org.infinispan.tree.TreeCacheFactory;
-import org.infinispan.tree.TreeCacheImpl;
+import org.infinispan.tree.impl.NodeKey;
+import org.infinispan.tree.impl.TreeCacheImpl;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 import org.testng.annotations.Test;
 
 import javax.transaction.TransactionManager;
+
 import java.util.HashMap;
 import java.util.Map;
 

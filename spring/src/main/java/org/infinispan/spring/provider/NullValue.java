@@ -5,7 +5,7 @@ import java.io.ObjectInput;
 import java.io.ObjectOutput;
 import java.io.Serializable;
 
-import org.infinispan.marshall.SerializeWith;
+import org.infinispan.commons.marshall.SerializeWith;
 import org.springframework.cache.Cache.ValueWrapper;
 
 /**
@@ -41,7 +41,7 @@ final class NullValue implements ValueWrapper, Serializable {
       // Intentionally left blank
    }
 
-   public static class Externalizer implements org.infinispan.marshall.Externalizer<NullValue>, Serializable {
+   public static class Externalizer implements org.infinispan.commons.marshall.Externalizer<NullValue>, Serializable {
 
       /** The serialVersionUID */
       private static final long serialVersionUID = -6374308529927819177L;

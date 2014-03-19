@@ -5,7 +5,7 @@
    version="2.0">
    <persistence-unit name="org.infinispan.persistence.jpa">
      <!-- This class is required to allow store metadata -->
-     <class>org.infinispan.persistence.jpa.MetadataEntity</class>
+     <class>org.infinispan.persistence.jpa.impl.MetadataEntity</class>
      <class>org.infinispan.persistence.jpa.entity.Document</class>
      <class>org.infinispan.persistence.jpa.entity.KeyValueEntity</class>
      <class>org.infinispan.persistence.jpa.entity.Person</class>
@@ -27,7 +27,7 @@
    
    <persistence-unit name="org.infinispan.persistence.jpa.configurationTest">
      <!-- This class is required to allow store metadata -->
-     <class>org.infinispan.persistence.jpa.MetadataEntity</class>
+     <class>org.infinispan.persistence.jpa.impl.MetadataEntity</class>
      <class>org.infinispan.persistence.jpa.entity.Document</class>
      <class>org.infinispan.persistence.jpa.entity.KeyValueEntity</class>
      <class>org.infinispan.persistence.jpa.entity.Person</class>

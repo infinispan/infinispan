@@ -3,6 +3,7 @@ package org.infinispan.metadata;
 import org.infinispan.container.entries.AbstractInternalCacheEntry;
 import org.infinispan.container.entries.InternalCacheValue;
 import org.infinispan.container.versioning.EntryVersion;
+import org.infinispan.metadata.impl.InternalMetadataImpl;
 import org.testng.annotations.Test;
 
 import java.util.concurrent.TimeUnit;
