@@ -1,14 +1,15 @@
 package org.infinispan.distribution;
 
 import org.infinispan.Cache;
+import org.infinispan.commons.util.concurrent.NotifyingFuture;
 import org.infinispan.context.Flag;
 import org.infinispan.transaction.LockingMode;
-import org.infinispan.util.concurrent.NotifyingFuture;
 import org.infinispan.util.concurrent.TimeoutException;
 import org.testng.annotations.Test;
 
 import javax.transaction.Status;
 import javax.transaction.TransactionManager;
+
 import java.lang.reflect.Method;
 import java.util.concurrent.Callable;
 import java.util.concurrent.CountDownLatch;

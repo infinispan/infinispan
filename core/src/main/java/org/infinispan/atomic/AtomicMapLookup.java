@@ -2,6 +2,9 @@ package org.infinispan.atomic;
 
 import org.infinispan.AdvancedCache;
 import org.infinispan.Cache;
+import org.infinispan.atomic.impl.AtomicHashMap;
+import org.infinispan.atomic.impl.AtomicHashMapProxy;
+import org.infinispan.atomic.impl.FineGrainedAtomicHashMapProxy;
 import org.infinispan.commons.util.InfinispanCollections;
 import org.infinispan.context.Flag;
 

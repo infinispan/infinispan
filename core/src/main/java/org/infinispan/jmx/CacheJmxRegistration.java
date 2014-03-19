@@ -3,7 +3,7 @@ package org.infinispan.jmx;
 import org.infinispan.AdvancedCache;
 import org.infinispan.Cache;
 import org.infinispan.commons.CacheException;
-import org.infinispan.configuration.cache.Configuration;
+import org.infinispan.commons.api.BasicCacheContainer;
 import org.infinispan.configuration.global.GlobalConfiguration;
 import org.infinispan.factories.AbstractComponentRegistry;
 import org.infinispan.factories.GlobalComponentRegistry;
@@ -12,7 +12,6 @@ import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.annotations.SurvivesRestarts;
 import org.infinispan.factories.annotations.Start;
 import org.infinispan.factories.annotations.Stop;
-import org.infinispan.manager.CacheContainer;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
@@ -62,7 +61,7 @@ public class CacheJmxRegistration extends AbstractJmxRegistration {
          needToUnregister = true;
          log.mbeansSuccessfullyRegistered();
       } else {
-         if (cache.getName().equals(CacheContainer.DEFAULT_CACHE_NAME)) {
+         if (cache.getName().equals(BasicCacheContainer.DEFAULT_CACHE_NAME)) {
             log.unableToRegisterMBeans();
          } else {
             log.unableToRegisterMBeans(cache.getName());

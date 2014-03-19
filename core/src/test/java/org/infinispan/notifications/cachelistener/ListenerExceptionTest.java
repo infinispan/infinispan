@@ -105,7 +105,7 @@ public class ListenerExceptionTest extends MultipleCacheManagersTest {
 
    /**
     * If it is used asynchronous listener all callbacks are made in separate thread. Exceptions are only logged, not
-    * thrown. See {@link org.infinispan.notifications.AbstractListenerImpl} invoke() method logic
+    * thrown. See {@link org.infinispan.notifications.impl.AbstractListenerImpl} invoke() method logic
     */
    private void doCallsWithExcepListAsync(Method m, boolean isInjectInPre,
                                           FailureLocation failLoc) {

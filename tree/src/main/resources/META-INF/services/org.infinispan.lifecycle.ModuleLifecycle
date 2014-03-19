@@ -1,1 +1,1 @@
-org.infinispan.tree.LifecycleCallbacks
+org.infinispan.tree.impl.LifecycleCallbacks

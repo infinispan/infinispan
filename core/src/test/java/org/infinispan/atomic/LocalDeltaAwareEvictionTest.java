@@ -1,6 +1,8 @@
 package org.infinispan.atomic;
 
 import org.infinispan.Cache;
+import org.infinispan.atomic.impl.AtomicHashMapProxy;
+import org.infinispan.atomic.impl.FineGrainedAtomicHashMapProxy;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.container.DataContainer;
 import org.infinispan.eviction.EvictionStrategy;

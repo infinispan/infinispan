@@ -7,13 +7,14 @@ import org.infinispan.context.Flag;
 import org.infinispan.distribution.MagicKey;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.TestingUtil;
-import org.infinispan.transaction.LocalTransaction;
 import org.infinispan.transaction.LockingMode;
-import org.infinispan.transaction.RemoteTransaction;
+import org.infinispan.transaction.impl.LocalTransaction;
+import org.infinispan.transaction.impl.RemoteTransaction;
 import org.infinispan.transaction.lookup.DummyTransactionManagerLookup;
 import org.testng.annotations.Test;
 
 import javax.transaction.TransactionManager;
+
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;

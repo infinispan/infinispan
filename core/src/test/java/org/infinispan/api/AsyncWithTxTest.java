@@ -1,13 +1,14 @@
 package org.infinispan.api;
 
+import org.infinispan.commons.util.concurrent.NotifyingFuture;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.TestingUtil;
-import org.infinispan.util.concurrent.NotifyingFuture;
 import org.testng.annotations.Test;
 
 import javax.transaction.TransactionManager;
+
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -27,7 +28,7 @@ public class AsyncWithTxTest extends MultipleCacheManagersTest {
       TransactionManager transactionManager = TestingUtil.getTransactionManager(cache(0));
       cache(0).put("k","v1");
       transactionManager.begin();
-      NotifyingFuture future = cache(0).putAsync("k", "v2");
+      NotifyingFuture<Object> future = cache(0).putAsync("k", "v2");
       "v1".equals(future.get(2000, TimeUnit.MILLISECONDS));
       transactionManager.commit();
    }

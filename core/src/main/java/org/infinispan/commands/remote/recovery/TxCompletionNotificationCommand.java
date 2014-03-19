@@ -3,8 +3,8 @@ package org.infinispan.commands.remote.recovery;
 import org.infinispan.commands.TopologyAffectedCommand;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.statetransfer.StateTransferManager;
-import org.infinispan.transaction.RemoteTransaction;
-import org.infinispan.transaction.TransactionTable;
+import org.infinispan.transaction.impl.RemoteTransaction;
+import org.infinispan.transaction.impl.TransactionTable;
 import org.infinispan.transaction.xa.GlobalTransaction;
 import org.infinispan.transaction.xa.recovery.RecoveryManager;
 import org.infinispan.util.concurrent.locks.LockManager;
@@ -12,6 +12,7 @@ import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
 import javax.transaction.xa.Xid;
+
 import java.util.Set;
 
 /**

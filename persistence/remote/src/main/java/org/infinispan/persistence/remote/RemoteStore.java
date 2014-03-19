@@ -28,8 +28,8 @@ import org.infinispan.persistence.spi.InitializationContext;
 import org.infinispan.marshall.core.MarshalledEntry;
 import org.infinispan.metadata.EmbeddedMetadata;
 import org.infinispan.metadata.InternalMetadata;
-import org.infinispan.metadata.InternalMetadataImpl;
 import org.infinispan.metadata.Metadata;
+import org.infinispan.metadata.impl.InternalMetadataImpl;
 import org.infinispan.util.logging.LogFactory;
 
 import java.util.concurrent.Executor;

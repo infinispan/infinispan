@@ -1,9 +1,10 @@
 package org.infinispan.factories;
 
 import net.jcip.annotations.ThreadSafe;
+
 import org.infinispan.Version;
 import org.infinispan.registry.ClusterRegistry;
-import org.infinispan.registry.ClusterRegistryImpl;
+import org.infinispan.registry.impl.ClusterRegistryImpl;
 import org.infinispan.commands.module.ModuleCommandFactory;
 import org.infinispan.commands.module.ModuleCommandInitializer;
 import org.infinispan.commons.CacheException;
@@ -31,6 +32,7 @@ import org.infinispan.util.logging.LogFactory;
 
 import javax.management.MBeanServer;
 import javax.management.MBeanServerFactory;
+
 import java.lang.ref.WeakReference;
 import java.util.ArrayList;
 import java.util.Collections;

@@ -11,9 +11,9 @@ import org.infinispan.remoting.responses.Response;
 import org.infinispan.remoting.responses.SuccessfulResponse;
 import org.infinispan.remoting.rpc.RpcManager;
 import org.infinispan.remoting.transport.Address;
-import org.infinispan.transaction.LocalTransaction;
-import org.infinispan.transaction.TransactionCoordinator;
-import org.infinispan.transaction.TransactionTable;
+import org.infinispan.transaction.impl.LocalTransaction;
+import org.infinispan.transaction.impl.TransactionCoordinator;
+import org.infinispan.transaction.impl.TransactionTable;
 import org.infinispan.transaction.xa.GlobalTransaction;
 import org.infinispan.transaction.xa.LocalXaTransaction;
 import org.infinispan.transaction.xa.TransactionFactory;
@@ -22,6 +22,7 @@ import org.infinispan.util.logging.LogFactory;
 
 import javax.transaction.xa.XAException;
 import javax.transaction.xa.Xid;
+
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;

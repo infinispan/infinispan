@@ -2,8 +2,8 @@ package org.infinispan.distribution;
 
 import org.infinispan.AdvancedCache;
 import org.infinispan.Cache;
+import org.infinispan.commons.util.concurrent.NotifyingFuture;
 import org.infinispan.context.Flag;
-import org.infinispan.util.concurrent.NotifyingFuture;
 import org.testng.annotations.Test;
 
 import java.lang.reflect.Method;

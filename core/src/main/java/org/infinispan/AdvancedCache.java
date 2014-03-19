@@ -2,6 +2,8 @@ package org.infinispan;
 
 import org.infinispan.atomic.Delta;
 import org.infinispan.batch.BatchContainer;
+import org.infinispan.cache.impl.DecoratedCache;
+import org.infinispan.commons.util.concurrent.NotifyingFuture;
 import org.infinispan.container.DataContainer;
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.context.Flag;
@@ -14,7 +16,6 @@ import org.infinispan.metadata.Metadata;
 import org.infinispan.remoting.rpc.RpcManager;
 import org.infinispan.security.AuthorizationManager;
 import org.infinispan.stats.Stats;
-import org.infinispan.util.concurrent.NotifyingFuture;
 import org.infinispan.util.concurrent.locks.LockManager;
 
 import javax.transaction.TransactionManager;

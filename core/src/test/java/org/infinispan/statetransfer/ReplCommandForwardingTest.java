@@ -13,7 +13,7 @@ import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.fwk.CleanupAfterMethod;
 import org.infinispan.topology.CacheTopology;
-import org.infinispan.transaction.LocalTransaction;
+import org.infinispan.transaction.impl.LocalTransaction;
 import org.testng.annotations.Test;
 
 import java.util.concurrent.BrokenBarrierException;

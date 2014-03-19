@@ -2,7 +2,7 @@ package org.infinispan.commands.tx.totalorder;
 
 import org.infinispan.commands.tx.TransactionBoundaryCommand;
 import org.infinispan.commands.write.WriteCommand;
-import org.infinispan.transaction.TotalOrderRemoteTransactionState;
+import org.infinispan.transaction.impl.TotalOrderRemoteTransactionState;
 
 /**
  * Interface with the utilities methods that the prepare command must have when Total Order based protocol is used

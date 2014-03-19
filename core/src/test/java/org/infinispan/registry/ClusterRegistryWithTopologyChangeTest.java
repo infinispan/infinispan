@@ -2,6 +2,7 @@ package org.infinispan.registry;
 
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
+import org.infinispan.registry.impl.ClusterRegistryImpl;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.testng.annotations.Test;
 

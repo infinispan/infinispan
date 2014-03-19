@@ -3,14 +3,13 @@ package org.infinispan.it.compatibility;
 import net.spy.memcached.MemcachedClient;
 import org.apache.commons.httpclient.HttpClient;
 import org.infinispan.Cache;
-import org.infinispan.api.BasicCacheContainer;
 import org.infinispan.client.hotrod.RemoteCache;
 import org.infinispan.client.hotrod.RemoteCacheManager;
 import org.infinispan.client.hotrod.configuration.ConfigurationBuilder;
+import org.infinispan.commons.api.BasicCacheContainer;
 import org.infinispan.commons.equivalence.Equivalence;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.manager.EmbeddedCacheManager;
-import org.infinispan.marshall.LegacyMarshallerAdapter;
 import org.infinispan.commons.marshall.Marshaller;
 import org.infinispan.rest.ServerBootstrap;
 import org.infinispan.server.hotrod.HotRodServer;
@@ -92,13 +91,6 @@ public class CompatibilityCacheFactory<K, V> {
    CompatibilityCacheFactory<K, V> valueEquivalence(Equivalence equivalence) {
       this.valueEquivalence = equivalence;
       return this;
-   }
-
-   @Deprecated
-   CompatibilityCacheFactory(String cacheName, org.infinispan.marshall.Marshaller marshaller, CacheMode cacheMode) {
-      this.cacheName = cacheName;
-      this.marshaller = new LegacyMarshallerAdapter(marshaller);
-      this.cacheMode = cacheMode;
    }
 
    CompatibilityCacheFactory<K, V> setup() throws Exception {

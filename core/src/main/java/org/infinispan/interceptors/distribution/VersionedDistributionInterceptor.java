@@ -11,7 +11,7 @@ import org.infinispan.util.logging.LogFactory;
 import java.util.Collection;
 import java.util.Map;
 
-import static org.infinispan.transaction.WriteSkewHelper.readVersionsFromResponse;
+import static org.infinispan.transaction.impl.WriteSkewHelper.readVersionsFromResponse;
 
 /**
  * A version of the {@link TxDistributionInterceptor} that adds logic to handling prepares when entries are versioned.

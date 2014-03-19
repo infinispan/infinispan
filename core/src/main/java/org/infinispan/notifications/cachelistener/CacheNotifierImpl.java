@@ -18,7 +18,6 @@ import org.infinispan.distribution.ch.ConsistentHash;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.interceptors.locking.ClusteringDependentLogic;
 import org.infinispan.manager.EmbeddedCacheManager;
-import org.infinispan.notifications.AbstractListenerImpl;
 import org.infinispan.notifications.Converter;
 import org.infinispan.notifications.KeyFilter;
 import org.infinispan.notifications.KeyValueFilter;
@@ -29,7 +28,9 @@ import org.infinispan.notifications.cachelistener.cluster.ClusterListenerRemoveC
 import org.infinispan.notifications.cachelistener.cluster.ClusterListenerReplicateCallable;
 import org.infinispan.notifications.cachelistener.cluster.RemoteClusterListener;
 import org.infinispan.notifications.cachelistener.event.*;
+import org.infinispan.notifications.cachelistener.event.impl.EventImpl;
 import org.infinispan.notifications.cachelistener.filter.KeyFilterAsKeyValueFilter;
+import org.infinispan.notifications.impl.AbstractListenerImpl;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.transaction.xa.GlobalTransaction;
 import org.infinispan.util.concurrent.WithinThreadExecutor;

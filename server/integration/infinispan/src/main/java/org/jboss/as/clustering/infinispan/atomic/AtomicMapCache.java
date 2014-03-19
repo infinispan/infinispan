@@ -25,10 +25,10 @@ package org.jboss.as.clustering.infinispan.atomic;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
-import org.infinispan.AbstractDelegatingAdvancedCache;
 import org.infinispan.AdvancedCache;
 import org.infinispan.atomic.AtomicMapLookup;
-import org.infinispan.util.concurrent.NotifyingFuture;
+import org.infinispan.cache.impl.AbstractDelegatingAdvancedCache;
+import org.infinispan.commons.util.concurrent.NotifyingFuture;
 
 /**
  * A cache wrapper that simplifies atomic map semantics.

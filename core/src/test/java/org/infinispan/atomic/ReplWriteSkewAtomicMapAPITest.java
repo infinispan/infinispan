@@ -21,7 +21,7 @@ import static org.infinispan.atomic.AtomicMapLookup.getAtomicMap;
 import static org.testng.AssertJUnit.fail;
 
 /**
- * {@link org.infinispan.atomic.AtomicHashMap} test with write skew check enabled in a replicated cluster.
+ * {@link org.infinispan.atomic.impl.AtomicHashMap} test with write skew check enabled in a replicated cluster.
  *
  * @author Pedro Ruivo
  * @since 7.0

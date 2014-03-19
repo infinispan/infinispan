@@ -10,16 +10,16 @@ import org.infinispan.test.SingleCacheManagerTest;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.infinispan.tree.Fqn;
-import org.infinispan.tree.NodeKey;
 import org.infinispan.tree.TreeCache;
-import org.infinispan.tree.TreeCacheImpl;
+import org.infinispan.tree.impl.NodeKey;
+import org.infinispan.tree.impl.TreeCacheImpl;
 import org.testng.annotations.Test;
 
 import java.util.Map;
 
 import static org.infinispan.tree.Fqn.ROOT;
-import static org.infinispan.tree.NodeKey.Type.DATA;
-import static org.infinispan.tree.NodeKey.Type.STRUCTURE;
+import static org.infinispan.tree.impl.NodeKey.Type.DATA;
+import static org.infinispan.tree.impl.NodeKey.Type.STRUCTURE;
 
 @Test(groups = "functional", testName = "persistence.TreeCacheWithLoaderTest")
 public class TreeCacheWithLoaderTest extends SingleCacheManagerTest {

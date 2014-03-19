@@ -2,9 +2,11 @@ package org.infinispan.tree;
 
 
 import net.jcip.annotations.Immutable;
+
 import org.infinispan.commons.marshall.AbstractExternalizer;
 import org.infinispan.commons.util.ReflectionUtil;
 import org.infinispan.commons.util.Util;
+import org.infinispan.tree.impl.FqnComparator;
 
 import java.io.IOException;
 import java.io.ObjectInput;
@@ -453,7 +455,7 @@ public class Fqn implements Comparable<Fqn>, Serializable {
    }
 
    /**
-    * Compares this Fqn to another using {@link FqnComparator}.
+    * Compares this Fqn to another
     */
    @Override
    public int compareTo(Fqn fqn) {

@@ -11,6 +11,7 @@ import org.infinispan.commons.marshall.SerializeWith;
 import org.infinispan.commons.marshall.StreamingMarshaller;
 import org.infinispan.commons.marshall.jboss.AbstractJBossMarshaller;
 import org.infinispan.commons.marshall.jboss.DefaultContextClassResolver;
+import org.infinispan.commons.marshall.jboss.SerializeWithExtFactory;
 import org.jboss.marshalling.ClassResolver;
 import org.jboss.marshalling.Externalize;
 import org.jboss.marshalling.ObjectTable;
@@ -91,8 +92,7 @@ public class JBossMarshaller extends AbstractJBossMarshaller implements Streamin
       return super.isMarshallableCandidate(o)
             || externalizerTable.isMarshallableCandidate(o)
             || o.getClass().getAnnotation(SerializeWith.class) != null
-            || o.getClass().getAnnotation(Externalize.class) != null
-            || o.getClass().getAnnotation(org.infinispan.marshall.SerializeWith.class) != null; // Legacy annotation
+            || o.getClass().getAnnotation(Externalize.class) != null;
    }
 
    /**

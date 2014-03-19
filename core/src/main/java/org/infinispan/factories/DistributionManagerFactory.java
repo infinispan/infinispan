@@ -1,7 +1,7 @@
 package org.infinispan.factories;
 
 import org.infinispan.distribution.DistributionManager;
-import org.infinispan.distribution.DistributionManagerImpl;
+import org.infinispan.distribution.impl.DistributionManagerImpl;
 import org.infinispan.factories.annotations.DefaultFactoryFor;
 
 @DefaultFactoryFor(classes = DistributionManager.class)

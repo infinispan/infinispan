@@ -5,7 +5,7 @@ import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.test.MultipleCacheManagersTest;
-import org.infinispan.transaction.TransactionTable;
+import org.infinispan.transaction.impl.TransactionTable;
 import org.infinispan.transaction.tm.DummyTransaction;
 import org.infinispan.transaction.xa.GlobalTransaction;
 import org.infinispan.transaction.xa.XaTransactionTable;
@@ -17,6 +17,7 @@ import org.infinispan.util.logging.LogFactory;
 import org.testng.annotations.Test;
 
 import javax.transaction.xa.Xid;
+
 import java.util.Collection;
 import java.util.List;
 import java.util.Set;

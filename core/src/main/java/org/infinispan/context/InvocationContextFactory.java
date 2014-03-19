@@ -7,8 +7,8 @@ import org.infinispan.context.impl.RemoteTxInvocationContext;
 import org.infinispan.factories.scopes.Scope;
 import org.infinispan.factories.scopes.Scopes;
 import org.infinispan.remoting.transport.Address;
-import org.infinispan.transaction.LocalTransaction;
-import org.infinispan.transaction.RemoteTransaction;
+import org.infinispan.transaction.impl.LocalTransaction;
+import org.infinispan.transaction.impl.RemoteTransaction;
 
 import javax.transaction.Transaction;
 

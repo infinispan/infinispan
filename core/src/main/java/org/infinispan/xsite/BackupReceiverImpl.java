@@ -27,9 +27,9 @@ import org.infinispan.remoting.LocalInvocation;
 import org.infinispan.remoting.responses.Response;
 import org.infinispan.remoting.rpc.RpcManager;
 import org.infinispan.remoting.transport.Address;
-import org.infinispan.transaction.LocalTransaction;
 import org.infinispan.transaction.TransactionMode;
-import org.infinispan.transaction.TransactionTable;
+import org.infinispan.transaction.impl.LocalTransaction;
+import org.infinispan.transaction.impl.TransactionTable;
 import org.infinispan.transaction.xa.GlobalTransaction;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
@@ -38,6 +38,7 @@ import org.infinispan.xsite.statetransfer.XSiteStatePushCommand;
 import org.infinispan.xsite.statetransfer.XSiteStateTransferControlCommand;
 
 import javax.transaction.TransactionManager;
+
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;

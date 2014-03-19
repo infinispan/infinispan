@@ -5,8 +5,8 @@ import org.infinispan.commons.CacheException;
 import org.infinispan.commons.util.CollectionFactory;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.annotations.Start;
-import org.infinispan.transaction.LocalTransaction;
-import org.infinispan.transaction.TransactionTable;
+import org.infinispan.transaction.impl.LocalTransaction;
+import org.infinispan.transaction.impl.TransactionTable;
 import org.infinispan.transaction.xa.recovery.RecoveryManager;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
@@ -14,6 +14,7 @@ import org.infinispan.util.logging.LogFactory;
 import javax.transaction.Transaction;
 import javax.transaction.xa.XAException;
 import javax.transaction.xa.Xid;
+
 import java.util.concurrent.ConcurrentMap;
 
 /**

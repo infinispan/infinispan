@@ -1,5 +1,6 @@
 package org.infinispan.affinity;
 
+import org.infinispan.affinity.impl.KeyAffinityServiceImpl;
 import org.infinispan.notifications.Listener;
 import org.infinispan.notifications.cachelistener.annotation.TopologyChanged;
 import org.infinispan.notifications.cachelistener.event.TopologyChangedEvent;

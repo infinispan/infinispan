@@ -1,6 +1,7 @@
 package org.infinispan.statetransfer;
 
 import net.jcip.annotations.GuardedBy;
+
 import org.infinispan.Cache;
 import org.infinispan.commands.CommandsFactory;
 import org.infinispan.commands.write.InvalidateCommand;
@@ -35,8 +36,8 @@ import org.infinispan.remoting.rpc.RpcManager;
 import org.infinispan.remoting.rpc.RpcOptions;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.topology.CacheTopology;
-import org.infinispan.transaction.RemoteTransaction;
-import org.infinispan.transaction.TransactionTable;
+import org.infinispan.transaction.impl.RemoteTransaction;
+import org.infinispan.transaction.impl.TransactionTable;
 import org.infinispan.transaction.totalorder.TotalOrderLatch;
 import org.infinispan.transaction.totalorder.TotalOrderManager;
 import org.infinispan.transaction.xa.CacheTransaction;
@@ -48,6 +49,7 @@ import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
 import javax.transaction.TransactionManager;
+
 import java.util.*;
 import java.util.concurrent.BlockingDeque;
 import java.util.concurrent.ExecutorService;

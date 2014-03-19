@@ -1,6 +1,8 @@
 package org.infinispan.atomic;
 
 import java.util.Map;
+
+import org.infinispan.atomic.impl.AtomicHashMap;
 import org.infinispan.util.concurrent.IsolationLevel;
 
 /**

@@ -13,7 +13,7 @@ import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.infinispan.transaction.tm.DummyTransactionManager;
 import org.infinispan.tree.Fqn;
 import org.infinispan.tree.TreeCache;
-import org.infinispan.tree.TreeCacheImpl;
+import org.infinispan.tree.impl.TreeCacheImpl;
 import org.infinispan.util.concurrent.IsolationLevel;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;

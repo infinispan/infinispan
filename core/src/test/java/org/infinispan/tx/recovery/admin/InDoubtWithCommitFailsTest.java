@@ -9,7 +9,7 @@ import org.infinispan.context.impl.TxInvocationContext;
 import org.infinispan.interceptors.InvocationContextInterceptor;
 import org.infinispan.interceptors.base.CommandInterceptor;
 import org.infinispan.test.fwk.CleanupAfterMethod;
-import org.infinispan.transaction.TransactionTable;
+import org.infinispan.transaction.impl.TransactionTable;
 import org.infinispan.transaction.tm.DummyTransaction;
 import org.infinispan.tx.recovery.RecoveryDummyTransactionManagerLookup;
 import org.testng.annotations.Test;

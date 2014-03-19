@@ -27,13 +27,14 @@ import org.infinispan.factories.annotations.Start;
 import org.infinispan.remoting.transport.AggregateBackupResponse;
 import org.infinispan.remoting.transport.BackupResponse;
 import org.infinispan.remoting.transport.Transport;
-import org.infinispan.transaction.LocalTransaction;
-import org.infinispan.transaction.TransactionTable;
+import org.infinispan.transaction.impl.LocalTransaction;
+import org.infinispan.transaction.impl.TransactionTable;
 import org.infinispan.util.TimeService;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
 import javax.transaction.Transaction;
+
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;

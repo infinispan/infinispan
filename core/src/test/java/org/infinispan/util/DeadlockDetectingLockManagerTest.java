@@ -14,7 +14,7 @@ import org.infinispan.context.InvocationContext;
 import org.infinispan.context.impl.LocalTxInvocationContext;
 import org.infinispan.context.impl.NonTxInvocationContext;
 import org.infinispan.test.AbstractInfinispanTest;
-import org.infinispan.transaction.LocalTransaction;
+import org.infinispan.transaction.impl.LocalTransaction;
 import org.infinispan.transaction.xa.DldGlobalTransaction;
 import org.infinispan.transaction.xa.TransactionFactory;
 import org.infinispan.util.concurrent.locks.DeadlockDetectedException;

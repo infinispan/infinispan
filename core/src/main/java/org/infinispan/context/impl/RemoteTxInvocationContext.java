@@ -1,6 +1,6 @@
 package org.infinispan.context.impl;
 
-import org.infinispan.transaction.RemoteTransaction;
+import org.infinispan.transaction.impl.RemoteTransaction;
 
 import javax.transaction.Transaction;
 

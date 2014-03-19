@@ -8,10 +8,12 @@ import org.infinispan.test.TestingUtil;
 import org.infinispan.tree.Fqn;
 import org.infinispan.tree.Node;
 import org.infinispan.tree.TreeCache;
-import org.infinispan.tree.TreeCacheImpl;
-import org.infinispan.tree.TreeStructureSupport;
+import org.infinispan.tree.impl.TreeCacheImpl;
+import org.infinispan.tree.impl.TreeStructureSupport;
+
 import static org.testng.AssertJUnit.assertEquals;
 import static org.testng.AssertJUnit.assertNull;
+
 import org.testng.annotations.Test;
 
 import javax.transaction.TransactionManager;

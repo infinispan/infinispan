@@ -5,7 +5,7 @@ import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.test.SingleCacheManagerTest;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.infinispan.tree.TreeCache;
-import org.infinispan.tree.TreeCacheImpl;
+import org.infinispan.tree.impl.TreeCacheImpl;
 import org.testng.annotations.Test;
 
 @Test(groups = "functional", testName = "api.tree.LazyDeserializationTreeCacheTest")

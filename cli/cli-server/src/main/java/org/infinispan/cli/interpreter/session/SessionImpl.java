@@ -6,7 +6,7 @@ import javax.transaction.TransactionManager;
 
 import org.infinispan.AdvancedCache;
 import org.infinispan.Cache;
-import org.infinispan.api.BasicCacheContainer;
+import org.infinispan.commons.api.BasicCacheContainer;
 import org.infinispan.cli.interpreter.codec.Codec;
 import org.infinispan.cli.interpreter.codec.CodecException;
 import org.infinispan.cli.interpreter.codec.CodecRegistry;

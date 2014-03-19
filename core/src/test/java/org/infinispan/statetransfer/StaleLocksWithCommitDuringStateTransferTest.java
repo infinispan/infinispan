@@ -17,10 +17,10 @@ import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.CleanupAfterMethod;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
-import org.infinispan.transaction.LocalTransaction;
-import org.infinispan.transaction.TransactionCoordinator;
 import org.infinispan.transaction.TransactionMode;
-import org.infinispan.transaction.TransactionTable;
+import org.infinispan.transaction.impl.LocalTransaction;
+import org.infinispan.transaction.impl.TransactionCoordinator;
+import org.infinispan.transaction.impl.TransactionTable;
 import org.testng.annotations.Test;
 
 @Test(testName = "statetransfer.StaleLocksWithCommitDuringStateTransferTest", groups = "functional")

@@ -2,7 +2,7 @@ package org.infinispan.util;
 
 import org.infinispan.commons.hash.Hash;
 import org.infinispan.distribution.ch.ConsistentHashFactory;
-import org.infinispan.distribution.ch.DefaultConsistentHash;
+import org.infinispan.distribution.ch.impl.DefaultConsistentHash;
 import org.infinispan.remoting.transport.Address;
 
 import java.io.Serializable;
