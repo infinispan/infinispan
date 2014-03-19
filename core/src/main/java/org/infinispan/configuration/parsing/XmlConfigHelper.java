@@ -6,6 +6,7 @@ import org.infinispan.commons.util.TypedProperties;
 import org.infinispan.commons.CacheConfigurationException;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
+import org.jboss.logging.Logger;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.Node;
@@ -446,8 +447,12 @@ public class XmlConfigHelper {
             }
          }
          // Skip hot rod properties ...
-         if (!setterFound && failOnMissingSetter && !propName.startsWith("infinispan.client.hotrod"))
-            throw new CacheConfigurationException("Couldn't find a setter named [" + setter + "] which takes a single parameter, for parameter " + propName + " on class [" + objectClass + "]");
+         if (!setterFound && !propName.startsWith("infinispan.client.hotrod"))
+            if (failOnMissingSetter) {
+               throw new CacheConfigurationException("Couldn't find a setter named [" + setter + "] which takes a single parameter, for parameter " + propName + " on class [" + objectClass + "]");
+            } else {
+               log.unrecognizedAttribute(propName);
+            }
       }
    }
 

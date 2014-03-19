@@ -1077,4 +1077,8 @@ public interface Log extends BasicLogger {
    @LogMessage(level = WARN)
    @Message(value = "Unable to apply X-Site state chunk.", id = 291)
    void unableToApplyXSiteState(@Cause Throwable cause);
+
+   @LogMessage(level = WARN)
+   @Message(value = "Unrecognized attribute %s.  Please check your configuration.  Ignoring!!", id = 292)
+   void unrecognizedAttribute(String property);
 }
