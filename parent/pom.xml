@@ -111,6 +111,8 @@
       <version.guava>11.0.2</version.guava>
       <version.h2.driver>1.3.166</version.h2.driver>
       <version.hibernate.annotations>3.5.6-Final</version.hibernate.annotations>
+      <version.hibernate.core>4.2.2.Final</version.hibernate.core>
+      <version.hibernate.entitymanager>${version.hibernate.core}</version.hibernate.entitymanager>
       <version.hibernate.hql.parser>1.0.0.Alpha6</version.hibernate.hql.parser>
       <version.hibernate.javax.persistence>1.0.1.Final</version.hibernate.javax.persistence>
       <version.httpclient>4.2.4</version.httpclient>
@@ -472,6 +474,12 @@
             <version>${version.hibernate.annotations}</version>
          </dependency>
          <dependency>
+            <groupId>org.hibernate</groupId>
+            <artifactId>hibernate-entitymanager</artifactId>
+            <version>${version.hibernate.entitymanager}</version>
+            <scope>test</scope>
+         </dependency>
+         <dependency>
             <groupId>org.hibernate.hql</groupId>
             <artifactId>hibernate-hql-parser</artifactId>
             <version>${version.hibernate.hql.parser}</version>
@@ -480,6 +488,11 @@
             <groupId>org.hibernate.hql</groupId>
             <artifactId>hibernate-hql-lucene</artifactId>
             <version>${version.hibernate.hql.parser}</version>
+         </dependency>
+         <dependency>
+            <groupId>org.hibernate.javax.persistence</groupId>
+            <artifactId>hibernate-jpa-2.0-api</artifactId>
+            <version>${version.hibernate.javax.persistence}</version>
          </dependency>
          <dependency>
             <groupId>org.jboss.arquillian</groupId>

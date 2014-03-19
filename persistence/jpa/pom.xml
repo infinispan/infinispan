@@ -1,0 +1,105 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+   <modelVersion>4.0.0</modelVersion>
+   <parent>
+      <groupId>org.infinispan</groupId>
+      <artifactId>infinispan-persistence-parent</artifactId>
+      <version>7.0.0-SNAPSHOT</version>
+      <relativePath>../pom.xml</relativePath>
+   </parent>
+   <artifactId>infinispan-cachestore-jpa</artifactId>
+   <packaging>bundle</packaging>
+   <name>Infinispan JPA CacheStore</name>
+   <description>Infinispan JPA CacheStore module</description>
+
+   <properties>
+      
+      <!-- Tests against single database cannot be executed in paralllel -->
+      <infinispan.test.parallel.threads>1</infinispan.test.parallel.threads>
+   </properties>
+
+   <build>
+      <plugins>
+         <plugin>
+            <groupId>org.apache.felix</groupId>
+            <artifactId>maven-bundle-plugin</artifactId>
+            <configuration>
+               <instructions>
+                  <Export-Package>
+                     ${project.groupId}.loaders.jpa.*;version=${project.version};-split-package:=error
+                  </Export-Package>
+               </instructions>
+            </configuration>
+         </plugin>
+      </plugins>
+   </build>
+   <dependencies>
+      <dependency>
+         <groupId>org.hibernate.javax.persistence</groupId>
+         <artifactId>hibernate-jpa-2.0-api</artifactId>
+         <scope>provided</scope>
+      </dependency>
+      <dependency>
+         <groupId>com.h2database</groupId>
+         <artifactId>h2</artifactId>
+         <scope>test</scope>
+      </dependency>
+      <dependency>
+         <groupId>mysql</groupId>
+         <artifactId>mysql-connector-java</artifactId>
+         <scope>test</scope>
+      </dependency>
+      <dependency>
+         <groupId>org.slf4j</groupId>
+         <artifactId>slf4j-simple</artifactId>
+         <scope>test</scope>
+      </dependency>
+      <dependency>
+         <groupId>org.hibernate</groupId>
+         <artifactId>hibernate-entitymanager</artifactId>
+         <scope>test</scope>
+      </dependency>
+   </dependencies>
+
+   <profiles>
+      <profile>
+         <id>h2</id>
+         <activation>
+            <activeByDefault>true</activeByDefault>
+         </activation>
+         <build>
+            <plugins>
+               <plugin>
+                  <groupId>org.apache.maven.plugins</groupId>
+                  <artifactId>maven-surefire-plugin</artifactId>
+                  <configuration>
+                     <systemPropertyVariables>
+                        <connection.url>jdbc:h2:mem:test;DB_CLOSE_DELAY=-1</connection.url>
+                        <driver.class>org.h2.Driver</driver.class>
+                     </systemPropertyVariables>
+                  </configuration>
+               </plugin>
+            </plugins>
+         </build>
+      </profile>
+      <profile>
+         <id>mysql</id>
+         <build>
+            <plugins>
+               <plugin>
+                  <groupId>org.apache.maven.plugins</groupId>
+                  <artifactId>maven-surefire-plugin</artifactId>
+                  <configuration>
+                     <systemPropertyVariables>
+                        <connection.url>jdbc:mysql://localhost:3306/ispn_jpa_test</connection.url>
+                        <driver.class>com.mysql.jdbc.Driver</driver.class>
+                        <db.username>root</db.username>
+                     </systemPropertyVariables>
+                  </configuration>
+               </plugin>
+            </plugins>
+         </build>
+      </profile>
+   </profiles>
+</project>
+
