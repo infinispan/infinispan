@@ -101,6 +101,7 @@
                 </for>
                 <move file="${server.old.dist}-tmp/${dir.in.zip}" tofile="${server.old.dist}" />
                 <delete dir="${server.old.dist}-tmp" />
+                <transform transformDir="${server.old.dist}/standalone/configuration" in="standalone.xml" out="standalone.xml" removeRestSecurity="true"/>
             </else>
         </if>
     </target>
