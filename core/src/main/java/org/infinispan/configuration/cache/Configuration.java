@@ -1,6 +1,5 @@
 package org.infinispan.configuration.cache;
 
-import java.lang.ref.WeakReference;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
@@ -8,7 +7,6 @@ import java.util.Map;
 
 public class Configuration {
 
-   private final WeakReference<ClassLoader> classLoader; //TODO remove this
    private final ClusteringConfiguration clusteringConfiguration;
    private final CustomInterceptorsConfiguration customInterceptorsConfiguration;
    private final DataContainerConfiguration dataContainerConfiguration;
@@ -39,7 +37,7 @@ public class Configuration {
                  TransactionConfiguration transactionConfiguration, UnsafeConfiguration unsafeConfiguration,
                  VersioningConfiguration versioningConfiguration, SitesConfiguration sitesConfiguration,
                  CompatibilityModeConfiguration compatibilityConfiguration,
-                 List<?> modules, ClassLoader cl) {
+                 List<?> modules) {
       this.clusteringConfiguration = clusteringConfiguration;
       this.customInterceptorsConfiguration = customInterceptorsConfiguration;
       this.dataContainerConfiguration = dataContainerConfiguration;
@@ -62,15 +60,6 @@ public class Configuration {
          modulesMap.put(module.getClass(), module);
       }
       this.moduleConfiguration = Collections.unmodifiableMap(modulesMap);
-      this.classLoader = new WeakReference<ClassLoader>(cl);
-   }
-
-   /**
-    * Will be removed with no replacement
-    */
-   @Deprecated
-   public ClassLoader classLoader() {
-      return classLoader == null ? null : classLoader.get();
    }
 
    public ClusteringConfiguration clustering() {
@@ -153,8 +142,7 @@ public class Configuration {
    @Override
    public String toString() {
       return "Configuration{" +
-            "classLoader=" + classLoader +
-            ", clustering=" + clusteringConfiguration +
+            "clustering=" + clusteringConfiguration +
             ", customInterceptors=" + customInterceptorsConfiguration +
             ", dataContainer=" + dataContainerConfiguration +
             ", deadlockDetection=" + deadlockDetectionConfiguration +
@@ -182,8 +170,6 @@ public class Configuration {
 
       Configuration that = (Configuration) o;
 
-      if (classLoader != null && classLoader.get() != null && that.classLoader != null ? !classLoader.get().equals(that.classLoader.get()) : that.classLoader != null && that.classLoader.get() != null)
-         return false;
       if (clusteringConfiguration != null ? !clusteringConfiguration.equals(that.clusteringConfiguration) : that.clusteringConfiguration != null)
          return false;
       if (customInterceptorsConfiguration != null ? !customInterceptorsConfiguration.equals(that.customInterceptorsConfiguration) : that.customInterceptorsConfiguration != null)
@@ -226,8 +212,7 @@ public class Configuration {
 
    @Override
    public int hashCode() {
-      int result = classLoader != null && classLoader.get() != null ? classLoader.get().hashCode() : 0;
-      result = 31 * result + (clusteringConfiguration != null ? clusteringConfiguration.hashCode() : 0);
+      int result = clusteringConfiguration != null ? clusteringConfiguration.hashCode() : 0;
       result = 31 * result + (customInterceptorsConfiguration != null ? customInterceptorsConfiguration.hashCode() : 0);
       result = 31 * result + (dataContainerConfiguration != null ? dataContainerConfiguration.hashCode() : 0);
       result = 31 * result + (deadlockDetectionConfiguration != null ? deadlockDetectionConfiguration.hashCode() : 0);

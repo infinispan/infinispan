@@ -1,14 +1,15 @@
 package org.infinispan.transaction.lookup;
 
-import org.infinispan.commons.util.Util;
-import org.infinispan.configuration.cache.Configuration;
-import org.infinispan.factories.annotations.Inject;
-import org.infinispan.util.logging.Log;
-import org.infinispan.util.logging.LogFactory;
+import java.lang.reflect.Method;
 
 import javax.transaction.TransactionManager;
 import javax.transaction.UserTransaction;
-import java.lang.reflect.Method;
+
+import org.infinispan.commons.util.Util;
+import org.infinispan.configuration.global.GlobalConfiguration;
+import org.infinispan.factories.annotations.Inject;
+import org.infinispan.util.logging.Log;
+import org.infinispan.util.logging.LogFactory;
 
 /**
  * JTA standalone TM lookup.
@@ -21,8 +22,8 @@ public class JBossStandaloneJTAManagerLookup implements TransactionManagerLookup
    private static final Log log = LogFactory.getLog(JBossStandaloneJTAManagerLookup.class);
 
    @Inject
-   public void init(Configuration configuration) {
-      init(configuration.classLoader());
+   public void init(GlobalConfiguration globalCfg) {
+      init(globalCfg.classLoader());
    }
 
    private void init(ClassLoader classLoader) {

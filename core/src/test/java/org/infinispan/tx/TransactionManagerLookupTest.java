@@ -1,15 +1,15 @@
 package org.infinispan.tx;
 
-import org.infinispan.configuration.cache.Configuration;
-import org.infinispan.configuration.cache.ConfigurationBuilder;
+import javax.transaction.TransactionManager;
+
+import org.infinispan.configuration.global.GlobalConfiguration;
+import org.infinispan.configuration.global.GlobalConfigurationBuilder;
 import org.infinispan.test.AbstractInfinispanTest;
 import org.infinispan.transaction.lookup.DummyTransactionManagerLookup;
 import org.infinispan.transaction.lookup.GenericTransactionManagerLookup;
 import org.infinispan.transaction.lookup.JBossStandaloneJTAManagerLookup;
 import org.infinispan.transaction.lookup.TransactionManagerLookup;
 import org.testng.annotations.Test;
-
-import javax.transaction.TransactionManager;
 
 /**
  * Tests all TransactionManagerLookup impls shipped with Infinispan for correctness
@@ -20,11 +20,11 @@ import javax.transaction.TransactionManager;
 @Test(testName = "tx.TransactionManagerLookupTest", groups = "unit")
 public class TransactionManagerLookupTest extends AbstractInfinispanTest {
    
-   Configuration configuration = new ConfigurationBuilder().build();
+   final GlobalConfiguration globalConfiguration = new GlobalConfigurationBuilder().build();
 
    public void testGenericTransactionManagerLookup() throws Exception {
       GenericTransactionManagerLookup lookup = new GenericTransactionManagerLookup();
-      lookup.setConfiguration(configuration);
+      lookup.init(globalConfiguration);
       doTest(lookup);
    }
 
@@ -34,7 +34,7 @@ public class TransactionManagerLookupTest extends AbstractInfinispanTest {
 
    public void testJBossStandaloneJTAManagerLookup() throws Exception {
       JBossStandaloneJTAManagerLookup lookup = new JBossStandaloneJTAManagerLookup();
-      lookup.init(configuration);
+      lookup.init(globalConfiguration);
       doTest(lookup);
    }
    
