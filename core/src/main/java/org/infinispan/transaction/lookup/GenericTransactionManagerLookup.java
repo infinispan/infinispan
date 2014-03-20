@@ -1,16 +1,17 @@
 package org.infinispan.transaction.lookup;
 
-import org.infinispan.commons.util.Util;
-import org.infinispan.configuration.cache.Configuration;
-import org.infinispan.factories.annotations.Inject;
-import org.infinispan.transaction.tm.DummyTransactionManager;
-import org.infinispan.util.logging.Log;
-import org.infinispan.util.logging.LogFactory;
+import java.lang.reflect.Method;
 
 import javax.naming.InitialContext;
 import javax.naming.NamingException;
 import javax.transaction.TransactionManager;
-import java.lang.reflect.Method;
+
+import org.infinispan.commons.util.Util;
+import org.infinispan.configuration.global.GlobalConfiguration;
+import org.infinispan.factories.annotations.Inject;
+import org.infinispan.transaction.tm.DummyTransactionManager;
+import org.infinispan.util.logging.Log;
+import org.infinispan.util.logging.LogFactory;
 
 /**
  * A transaction manager lookup class that attempts to locate a TransactionManager. A variety of different classes and
@@ -74,11 +75,11 @@ public class GenericTransactionManagerLookup implements TransactionManagerLookup
     */
    private static final String WS_FACTORY_CLASS_4 = "com.ibm.ejs.jts.jta.JTSXA";
    
-   private Configuration configuration;
+   private GlobalConfiguration globalCfg;
    
    @Inject
-   public void setConfiguration(Configuration configuration) {
-      this.configuration = configuration;
+   public void init(GlobalConfiguration globalCfg) {
+      this.globalCfg = globalCfg;
    }
 
    /**
@@ -89,7 +90,7 @@ public class GenericTransactionManagerLookup implements TransactionManagerLookup
    @Override
    public synchronized TransactionManager getTransactionManager() {
       if (!lookupDone) {
-         doLookups(configuration.classLoader());
+         doLookups(globalCfg.classLoader());
       }
       if (tm != null)
          return tm;
@@ -115,7 +116,7 @@ public class GenericTransactionManagerLookup implements TransactionManagerLookup
    private void tryEmbeddedJBossTM() {
       try {
          JBossStandaloneJTAManagerLookup jBossStandaloneJTAManagerLookup = new JBossStandaloneJTAManagerLookup();
-         jBossStandaloneJTAManagerLookup.init(configuration);
+         jBossStandaloneJTAManagerLookup.init(globalCfg);
          tm = jBossStandaloneJTAManagerLookup.getTransactionManager();
       } catch (Exception e) {
          noJBossTM = true;
