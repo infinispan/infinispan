@@ -89,6 +89,7 @@ public final class Util {
    public static ClassLoader[] getClassLoaders(ClassLoader appClassLoader) {
       return new ClassLoader[] {
             appClassLoader,  // User defined classes
+            new OsgiClassLoader(),
             Util.class.getClassLoader(), // Infinispan classes (not always on TCCL [modular env])
             ClassLoader.getSystemClassLoader() // Used when load time instrumentation is in effect
             };
