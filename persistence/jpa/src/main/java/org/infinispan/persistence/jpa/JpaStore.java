@@ -19,6 +19,7 @@ import javax.persistence.metamodel.ManagedType;
 import javax.persistence.metamodel.SingularAttribute;
 import javax.persistence.metamodel.Type;
 
+import org.infinispan.commons.configuration.ConfiguredBy;
 import org.infinispan.commons.marshall.StreamingMarshaller;
 import org.infinispan.executors.ExecutorAllCompletionService;
 import org.infinispan.marshall.core.MarshalledEntry;
@@ -37,6 +38,7 @@ import org.infinispan.util.logging.LogFactory;
  * @author <a href="mailto:rtsang@redhat.com">Ray Tsang</a>
  *
  */
+@ConfiguredBy(JpaStoreConfiguration.class)
 public class JpaStore implements AdvancedLoadWriteStore {
    private static final Log log = LogFactory.getLog(JpaStore.class);
    private static boolean trace = log.isTraceEnabled();
