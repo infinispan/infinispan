@@ -17,6 +17,8 @@ import org.infinispan.container.entries.{CacheEntry, InternalCacheEntry}
 import org.infinispan.container.versioning.NumericVersion
 import io.netty.buffer.ByteBuf
 import scala.Some
+import org.infinispan.server.hotrod.configuration.HotRodServerConfiguration
+import io.netty.channel.ChannelHandlerContext
 
 /**
  * HotRod protocol decoder specific for specification version 1.0.
@@ -154,7 +156,7 @@ object Decoder10 extends AbstractVersionedDecoder with ServerConstants with Log 
                h.topologyId, None, 0)
    }
 
-   override def customReadHeader(h: HotRodHeader, buffer: ByteBuf, cache: Cache): AnyRef = {
+   override def customReadHeader(h: HotRodHeader, buffer: ByteBuf, cache: Cache, server: HotRodServer, ctx: ChannelHandlerContext): AnyRef = {
       h.op match {
          case ClearRequest => {
             // Get an optimised cache in case we can make the operation more efficient
@@ -167,7 +169,7 @@ object Decoder10 extends AbstractVersionedDecoder with ServerConstants with Log 
       }
    }
 
-   override def customReadKey(h: HotRodHeader, buffer: ByteBuf, cache: Cache, queryFacades: Seq[QueryFacade]): AnyRef = {
+   override def customReadKey(h: HotRodHeader, buffer: ByteBuf, cache: Cache, server: HotRodServer): AnyRef = {
       h.op match {
          case RemoveIfUnmodifiedRequest => {
             val k = readKey(buffer)
@@ -217,7 +219,7 @@ object Decoder10 extends AbstractVersionedDecoder with ServerConstants with Log 
          }
          case QueryRequest => {
             val query = readRangedBytes(buffer)
-            val result = queryFacades.head.query(cache, query)
+            val result = server.getQueryFacades.head.query(cache, query)
             new QueryResponse(h.version, h.messageId, h.cacheName, h.clientIntel,
                h.topologyId, result)
          }
@@ -328,6 +330,8 @@ object OperationResponse extends Enumeration {
    val GetWithMetadataResponse = Value(0x1C)
    val BulkGetKeysResponse = Value(0x1E)
    val QueryResponse = Value(0x20)
+   val AuthMechListResponse = Value(0x22)
+   val AuthResponse = Value(0x24)
    val ErrorResponse = Value(0x50)
 }
 

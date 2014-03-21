@@ -25,12 +25,14 @@ import io.netty.channel.nio.NioEventLoopGroup
 import io.netty.bootstrap.Bootstrap
 import io.netty.handler.codec.{ReplayingDecoder, MessageToByteEncoder}
 import io.netty.buffer.ByteBuf
+import io.netty.buffer.Unpooled;
 import io.netty.channel.socket.nio.NioSocketChannel
 import scala.Some
+import javax.security.sasl.SaslClient
 
 /**
- * A very simply Hot Rod client for testing purpouses. It's a quick and dirty client implementation done for testing
- * purpouses. As a result, it might not be very readable, particularly for readers not used to scala.
+ * A very simple Hot Rod client for testing purposes. It's a quick and dirty client implementation.
+ * As a result, it might not be very readable, particularly for readers not used to scala.
  *
  * Reasons why this should not really be a trait:
  * Storing var instances in a trait cause issues with TestNG, see:
@@ -42,6 +44,7 @@ import scala.Some
  */
 class HotRodClient(host: String, port: Int, defaultCacheName: String, rspTimeoutSeconds: Int, protocolVersion: Byte, sslEngine: SSLEngine = null) extends Log {
    val idToOp = new ConcurrentHashMap[Long, Op]
+   var saslClient: SaslClient = null
 
    private lazy val ch: Channel = {
       val eventLoopGroup = new NioEventLoopGroup()
@@ -238,6 +241,30 @@ class HotRodClient(host: String, port: Int, defaultCacheName: String, rspTimeout
       val handler = ch.pipeline.last.asInstanceOf[ClientHandler]
       handler.getResponse(op.id).asInstanceOf[TestQueryResponse]
    }
+
+   def authMechList(): TestAuthMechListResponse = {
+      val op = new AuthMechListOp(0xA0, protocolVersion, 0x21, defaultCacheName, 1, 0)
+      val writeFuture = writeOp(op)
+      val handler = ch.pipeline.last.asInstanceOf[ClientHandler]
+      handler.getResponse(op.id).asInstanceOf[TestAuthMechListResponse]
+   }
+
+   def auth(sc: SaslClient): TestAuthResponse = {
+      saslClient = sc
+      var saslResponse = if (saslClient.hasInitialResponse()) saslClient.evaluateChallenge(new Array[Byte](0)) else new Array[Byte](0)
+      val handler = ch.pipeline.last.asInstanceOf[ClientHandler]
+      var op = new AuthOp(0xA0, protocolVersion, 0x23, defaultCacheName, 1, 0, saslClient.getMechanismName(), saslResponse)
+      writeOp(op)
+      var response = handler.getResponse(op.id).asInstanceOf[TestAuthResponse]
+      while (!saslClient.isComplete() || !response.complete) {
+         saslResponse = saslClient.evaluateChallenge(response.challenge)
+         op = new AuthOp(0xA0, protocolVersion, 0x23, defaultCacheName, 1, 0, "", saslResponse)
+         writeOp(op)
+         response = handler.getResponse(op.id).asInstanceOf[TestAuthResponse]
+      }
+      saslClient.dispose
+      response
+   }
 }
 
 private class ClientChannelInitializer(client: HotRodClient, rspTimeoutSeconds: Int, sslEngine: SSLEngine, protocolVersion: Byte) extends ChannelInitializer[Channel] {
@@ -280,7 +307,8 @@ private class Encoder(protocolVersion: Byte) extends MessageToByteEncoder[Object
                writeRangedBytes(new Array[Byte](0), buffer) // transaction id
             if (op.code != 0x13 && op.code != 0x15
                     && op.code != 0x17 && op.code != 0x19
-                    && op.code != 0x1D && op.code != 0x1F) { // if it's a key based op...
+                    && op.code != 0x1D && op.code != 0x1F
+                    && op.code != 0x21 && op.code != 0x23) { // if it's a key based op...
                writeRangedBytes(op.key, buffer) // key length + key
                if (op.value != null) {
                   if (op.code != 0x0D) { // If it's not removeIfUnmodified...
@@ -300,6 +328,14 @@ private class Encoder(protocolVersion: Byte) extends MessageToByteEncoder[Object
                writeUnsignedInt(op.asInstanceOf[BulkGetKeysOp].scope, buffer) // Bulk Get Keys Scope
             } else if (op.code == 0x1F) {
                writeRangedBytes(op.asInstanceOf[QueryOp].query, buffer)
+            } else if (op.code == 0x23) {
+               val authop = op.asInstanceOf[AuthOp]
+               if (!authop.mech.isEmpty) {
+                  writeRangedBytes(authop.mech.getBytes(), buffer)
+               } else {
+                  writeUnsignedInt(0, buffer)
+               }
+               writeRangedBytes(op.asInstanceOf[AuthOp].response, buffer)
             }
          }
       }
@@ -453,6 +489,21 @@ private class Decoder(client: HotRodClient) extends ReplayingDecoder[Void] with 
             new TestQueryResponse(op.version, id, op.cacheName, op.clientIntel,
                result, op.topologyId, topologyChangeResponse)
          }
+         case AuthMechListResponse => {
+            val size = readUnsignedInt(buf)
+            val mechs = mutable.Set.empty[String]
+            for (i <- 1 to size) {
+               mechs += readString(buf)
+            }
+            new TestAuthMechListResponse(op.version, id, op.cacheName, op.clientIntel,
+               mechs.toSet, op.topologyId, topologyChangeResponse)
+         }
+         case AuthResponse => {
+            val complete = buf.readBoolean
+            val challenge = readRangedBytes(buf)
+            new TestAuthResponse(op.version, id, op.cacheName, op.clientIntel,
+                     complete, challenge, op.topologyId, topologyChangeResponse)
+         }
          case ErrorResponse => {
             if (op == null)
                new TestErrorResponse(10, id, "", 0, status, 0,
@@ -463,8 +514,10 @@ private class Decoder(client: HotRodClient) extends ReplayingDecoder[Void] with 
          }
 
       }
-      trace("Got response from server: %s", resp)
-      out.add(resp)
+      if (resp != null) {
+         trace("Got response from server: %s", resp)
+         out.add(resp)
+      }
    }
 
    override def exceptionCaught(ctx: ChannelHandlerContext, cause: Throwable) {
@@ -678,6 +731,26 @@ class QueryOp(override val magic: Int,
         extends Op(magic, version, code, cacheName, null, 0, 0, null, 0, 0,
            clientIntel, topologyId)
 
+class AuthMechListOp(override val magic: Int,
+              override val version: Byte,
+              override val code: Byte,
+              override val cacheName: String,
+              override val clientIntel: Byte,
+              override val topologyId: Int)
+      extends Op(magic, version, code, cacheName, null, 0, 0, null, 0, 0,
+                 clientIntel, topologyId)
+
+class AuthOp(override val magic: Int,
+              override val version: Byte,
+              override val code: Byte,
+              override val cacheName: String,
+              override val clientIntel: Byte,
+              override val topologyId: Int,
+              val mech: String,
+              val response: Array[Byte])
+      extends Op(magic, version, code, cacheName, null, 0, 0, null, 0, 0,
+                 clientIntel, topologyId)
+
 class TestResponse(override val version: Byte, override val messageId: Long,
                    override val cacheName: String, override val clientIntel: Short,
                    override val operation: OperationResponse,
@@ -769,6 +842,18 @@ class TestQueryResponse(override val version: Byte, override val messageId: Long
                           val result: Array[Byte],
                           override val topologyId: Int, override val topologyResponse: Option[AbstractTestTopologyAwareResponse])
       extends TestResponse(version, messageId, cacheName, clientIntel, QueryResponse, Success, topologyId, topologyResponse)
+
+class TestAuthMechListResponse(override val version: Byte, override val messageId: Long,
+                        override val cacheName: String, override val clientIntel: Short,
+                        val mechs: Set[String], override val topologyId: Int,
+                        override val topologyResponse: Option[AbstractTestTopologyAwareResponse])
+      extends TestResponse(version, messageId, cacheName, clientIntel, AuthMechListResponse, Success, topologyId, topologyResponse)
+
+class TestAuthResponse(override val version: Byte, override val messageId: Long,
+                        override val cacheName: String, override val clientIntel: Short,
+                        val complete: Boolean, val challenge: Array[Byte], override val topologyId: Int,
+                        override val topologyResponse: Option[AbstractTestTopologyAwareResponse])
+      extends TestResponse(version, messageId, cacheName, clientIntel, AuthResponse, Success, topologyId, topologyResponse)
 
 
 case class ServerNode(val host: String, val port: Int)

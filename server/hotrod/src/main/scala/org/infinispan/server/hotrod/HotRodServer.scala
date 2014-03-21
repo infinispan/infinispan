@@ -14,6 +14,10 @@ import org.infinispan.upgrade.RollingUpgradeManager
 import org.infinispan.server.hotrod.configuration.HotRodServerConfiguration
 import java.util.ServiceLoader
 import org.infinispan.util.concurrent.IsolationLevel
+import javax.security.sasl.SaslServerFactory
+import org.infinispan.server.core.security.SaslUtils
+import java.util.Arrays
+import java.util.Collections
 
 /**
  * Hot Rod server, in charge of defining its encoder/decoder and, if clustered, update the topology information
@@ -35,6 +39,7 @@ class HotRodServer extends AbstractProtocolServer("HotRod") with Log {
    private var addressCache: AddressCache = _
    private val knownCaches = CollectionFactory.makeConcurrentMap[String, Cache](4, 0.9f, 16)
    private var queryFacades: Seq[QueryFacade] = _
+   private val saslMechFactories = CollectionFactory.makeConcurrentMap[String, SaslServerFactory](4, 0.9f, 16)
 
    def getAddress: ServerAddress = address
 
@@ -47,6 +52,9 @@ class HotRodServer extends AbstractProtocolServer("HotRod") with Log {
 
    override def startInternal(configuration: HotRodServerConfiguration, cacheManager: EmbeddedCacheManager) {
       this.configuration = configuration
+
+      // populate the sasl factories based on the required mechs
+      setupSasl
 
       // 1. Start default cache and the endpoint before adding self to
       // topology in order to avoid topology updates being used before
@@ -177,6 +185,25 @@ class HotRodServer extends AbstractProtocolServer("HotRod") with Log {
       val cr = cache.getComponentRegistry
       val migrationManager = cr.getComponent(classOf[RollingUpgradeManager])
       if (migrationManager != null) migrationManager.addSourceMigrator(new HotRodSourceMigrator(cache))
+   }
+
+   private def setupSasl {
+      val saslFactories = SaslUtils.getSaslServerFactories(this.getClass().getClassLoader(), true)
+      while (saslFactories.hasNext) {
+         val saslFactory = saslFactories.next
+         val saslFactoryMechs = saslFactory.getMechanismNames(configuration.authentication.mechProperties)
+         for (supportedMech <- saslFactoryMechs) {
+            for (mech <- configuration.authentication.allowedMechs) {
+               if (supportedMech == mech) {
+                  saslMechFactories.putIfAbsent(mech, saslFactory)
+               }
+            }
+         }
+      }
+   }
+
+   def getSaslServerFactory(mech: String): SaslServerFactory = {
+      saslMechFactories.get(mech)
    }
 
    private[hotrod] def getAddressCache = addressCache

@@ -20,6 +20,8 @@ import io.netty.buffer.{Unpooled, ByteBuf}
 import java.util
 import io.netty.util.CharsetUtil
 import java.net.SocketAddress
+import javax.security.auth.Subject
+import java.security.PrivilegedExceptionAction
 
 /**
  * Common abstract decoder for Memcached and Hot Rod protocols.
@@ -43,18 +45,29 @@ abstract class AbstractProtocolDecoder[K, V](transport: NettyTransport)
    protected var cache: AdvancedCache[K, V] = null
    protected var defaultLifespanTime: Long = _
    protected var defaultMaxIdleTime: Long = _
-
+   var subject: Subject = null
 
   def decode(ctx: ChannelHandlerContext, in: ByteBuf, out: util.List[AnyRef]): Unit = {
-    val ch = ctx.channel
+     if (subject != null) {
+        Subject.doAs(subject, new PrivilegedExceptionAction[Unit] {
+           def run: Unit = {
+              decodeDispatch(ctx, in, out)
+           }
+        })
+     } else {
+        decodeDispatch(ctx, in, out)
+     }
+  }
+
+  private def decodeDispatch(ctx: ChannelHandlerContext, in: ByteBuf, out: util.List[AnyRef]): Unit = {
     try {
       if (isTrace) // To aid debugging
         trace("Decode using instance @%x", System.identityHashCode(this))
       state match {
-        case DECODE_HEADER => decodeHeader(ch, in, state)
-        case DECODE_KEY => decodeKey(ch, in, state)
-        case DECODE_PARAMETERS => decodeParameters(ch, in, state)
-        case DECODE_VALUE => decodeValue(ch, in, state)
+        case DECODE_HEADER => decodeHeader(ctx, in, state, out)
+        case DECODE_KEY => decodeKey(ctx, in, state)
+        case DECODE_PARAMETERS => decodeParameters(ctx, in, state)
+        case DECODE_VALUE => decodeValue(ctx, in, state)
       }
     } catch {
       case e: Exception => {
@@ -72,7 +85,7 @@ abstract class AbstractProtocolDecoder[K, V](transport: NettyTransport)
     }
   }
 
-  private def decodeHeader(ch: Channel, buffer: ByteBuf, state: DecoderState): AnyRef = {
+  private def decodeHeader(ctx: ChannelHandlerContext, buffer: ByteBuf, state: DecoderState, out: util.List[AnyRef]): AnyRef = {
       header = createHeader
       val endOfOp = readHeader(buffer, header)
       if (endOfOp == None) {
@@ -80,21 +93,27 @@ abstract class AbstractProtocolDecoder[K, V](transport: NettyTransport)
          // It can happen with Hot Rod if the header is completely corrupted
          return null
       }
-
+      val ch = ctx.channel
       cache = getCache.getAdvancedCache
       defaultLifespanTime = cache.getCacheConfiguration.expiration().lifespan()
       defaultMaxIdleTime = cache.getCacheConfiguration.expiration().maxIdle()
       if (endOfOp.get) {
-         header.op match {
+         val message = header.op match {
             case StatsRequest => writeResponse(ch, createStatsResponse)
-            case _ => customDecodeHeader(ch, buffer)
+            case _ => customDecodeHeader(ctx, buffer)
          }
+         message match {
+            case pr: PartialResponse => pr.buffer.map(out.add(_))
+            case _ => null
+         }
+         null
       } else {
          checkpointTo(DECODE_KEY)
       }
    }
 
-   private def decodeKey(ch: Channel, buffer: ByteBuf, state: DecoderState): AnyRef = {
+   private def decodeKey(ctx: ChannelHandlerContext, buffer: ByteBuf, state: DecoderState): AnyRef = {
+      val ch = ctx.channel
       header.op match {
          // Get, put and remove are the most typical operations, so they're first
          case GetRequest => writeResponse(ch, get(buffer))
@@ -103,7 +122,7 @@ abstract class AbstractProtocolDecoder[K, V](transport: NettyTransport)
          case GetWithVersionRequest => writeResponse(ch, get(buffer))
          case PutIfAbsentRequest | ReplaceRequest | ReplaceIfUnmodifiedRequest =>
             handleModification(ch, buffer)
-         case _ => customDecodeKey(ch, buffer)
+         case _ => customDecodeKey(ctx, buffer)
       }
    }
 
@@ -119,7 +138,8 @@ abstract class AbstractProtocolDecoder[K, V](transport: NettyTransport)
    }
 
 
-   private def decodeParameters(ch: Channel, buffer: ByteBuf, state: DecoderState): AnyRef = {
+   private def decodeParameters(ctx: ChannelHandlerContext, buffer: ByteBuf, state: DecoderState): AnyRef = {
+      val ch = ctx.channel
       val endOfOp = readParameters(ch, buffer)
       if (!endOfOp && params.valueLength > 0) {
          // Create value holder and checkpoint only if there's more to read
@@ -127,13 +147,14 @@ abstract class AbstractProtocolDecoder[K, V](transport: NettyTransport)
          checkpointTo(DECODE_VALUE)
       } else if (params.valueLength == 0){
          rawValue = Array.empty
-         decodeValue(ch, buffer, state)
+         decodeValue(ctx, buffer, state)
       } else {
-         decodeValue(ch, buffer, state)
+         decodeValue(ctx, buffer, state)
       }
    }
 
-   private def decodeValue(ch: Channel, buffer: ByteBuf, state: DecoderState): AnyRef = {
+   private def decodeValue(ctx: ChannelHandlerContext, buffer: ByteBuf, state: DecoderState): AnyRef = {
+      val ch = ctx.channel
       val ret = header.op match {
          case PutRequest | PutIfAbsentRequest | ReplaceRequest | ReplaceIfUnmodifiedRequest  => {
             readValue(buffer)
@@ -145,7 +166,7 @@ abstract class AbstractProtocolDecoder[K, V](transport: NettyTransport)
             }
          }
          case RemoveRequest => remove
-         case _ => customDecodeValue(ch, buffer)
+         case _ => customDecodeValue(ctx, buffer)
       }
       writeResponse(ch, ret)
    }
@@ -162,6 +183,7 @@ abstract class AbstractProtocolDecoder[K, V](transport: NettyTransport)
                }
                case a: Array[Byte] => ch.writeAndFlush(wrappedBuffer(a))
                case cs: CharSequence => ch.writeAndFlush(Unpooled.copiedBuffer(cs, CharsetUtil.UTF_8))
+               case pr: PartialResponse => return pr
                case _ => ch.writeAndFlush(response)
             }
          }
@@ -201,6 +223,10 @@ abstract class AbstractProtocolDecoder[K, V](transport: NettyTransport)
                     .maxIdle(toMillis(params.maxIdle))
       }
       metadata.build()
+   }
+
+   override def actualReadableBytes(): Int = {
+      super.actualReadableBytes()
    }
 
    private def putIfAbsent: AnyRef = {
@@ -321,11 +347,11 @@ abstract class AbstractProtocolDecoder[K, V](transport: NettyTransport)
 
    protected def createStatsResponse: AnyRef
 
-   protected def customDecodeHeader(ch: Channel, buffer: ByteBuf): AnyRef
+   protected def customDecodeHeader(ctx: ChannelHandlerContext, buffer: ByteBuf): AnyRef
 
-   protected def customDecodeKey(ch: Channel, buffer: ByteBuf): AnyRef
+   protected def customDecodeKey(ctx: ChannelHandlerContext, buffer: ByteBuf): AnyRef
 
-   protected def customDecodeValue(ch: Channel, buffer: ByteBuf): AnyRef
+   protected def customDecodeValue(ctx: ChannelHandlerContext, buffer: ByteBuf): AnyRef
 
    protected def createServerException(e: Exception, b: ByteBuf): (Exception, Boolean)
 
@@ -424,3 +450,5 @@ class RequestParameters(val valueLength: Int, val lifespan: Int, val maxIdle: In
 }
 
 class UnknownOperationException(reason: String) extends StreamCorruptedException(reason)
+
+class PartialResponse(val buffer: Option[ByteBuf])

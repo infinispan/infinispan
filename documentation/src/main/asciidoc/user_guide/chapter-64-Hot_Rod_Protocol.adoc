@@ -1068,7 +1068,7 @@ Response format:
 |==============================================================================
 
 The purpose of this operation is to authenticate a client against a server using SASL. The authentication process, depending
-on the chosen mech, might be a multi-step operation. Once complete a unique session identifier is generated
+on the chosen mech, might be a multi-step operation. Once complete the connection becomes authenticated
 
 ==== Hot Rod Hash Functions
 Infinispan makes use of a consistent hash function to place nodes on a hash

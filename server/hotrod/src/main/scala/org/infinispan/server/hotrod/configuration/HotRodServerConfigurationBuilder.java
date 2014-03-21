@@ -13,7 +13,8 @@ import org.infinispan.server.core.configuration.ProtocolServerConfigurationBuild
  * @since 5.3
  */
 public class HotRodServerConfigurationBuilder extends ProtocolServerConfigurationBuilder<HotRodServerConfiguration, HotRodServerConfigurationBuilder> implements
-      Builder<HotRodServerConfiguration> {
+      Builder<HotRodServerConfiguration>, HotRodServerChildConfigurationBuilder {
+   private final AuthenticationConfigurationBuilder authentication = new AuthenticationConfigurationBuilder(this);
    private String proxyHost;
    private int proxyPort = -1;
    private long topologyLockTimeout = 10000L;
@@ -30,9 +31,15 @@ public class HotRodServerConfigurationBuilder extends ProtocolServerConfiguratio
       return this;
    }
 
+   @Override
+   public AuthenticationConfigurationBuilder authentication() {
+      return authentication;
+   }
+
    /**
     * Sets the external address of this node, i.e. the address which clients will connect to
     */
+   @Override
    public HotRodServerConfigurationBuilder proxyHost(String proxyHost) {
       this.proxyHost = proxyHost;
       return this;
@@ -41,6 +48,7 @@ public class HotRodServerConfigurationBuilder extends ProtocolServerConfiguratio
    /**
     * Sets the external port of this node, i.e. the port which clients will connect to
     */
+   @Override
    public HotRodServerConfigurationBuilder proxyPort(int proxyPort) {
       this.proxyPort = proxyPort;
       return this;
@@ -49,6 +57,7 @@ public class HotRodServerConfigurationBuilder extends ProtocolServerConfiguratio
    /**
     * Configures the lock acquisition timeout for the topology cache. See {@link LockingConfigurationBuilder#lockAcquisitionTimeout(long)}. Defaults to 10 seconds
     */
+   @Override
    public HotRodServerConfigurationBuilder topologyLockTimeout(long topologyLockTimeout) {
       this.topologyLockTimeout = topologyLockTimeout;
       return this;
@@ -57,6 +66,7 @@ public class HotRodServerConfigurationBuilder extends ProtocolServerConfiguratio
    /**
     * Configures the replication timeout for the topology cache. See {@link SyncConfigurationBuilder#replTimeout(long)}. Defaults to 10 seconds
     */
+   @Override
    public HotRodServerConfigurationBuilder topologyReplTimeout(long topologyReplTimeout) {
       this.topologyReplTimeout = topologyReplTimeout;
       return this;
@@ -65,6 +75,7 @@ public class HotRodServerConfigurationBuilder extends ProtocolServerConfiguratio
    /**
     * Configures whether to enable waiting for initial state transfer for the topology cache. See {@link StateTransferConfigurationBuilder#awaitInitialTransfer(boolean)}
     */
+   @Override
    public HotRodServerConfigurationBuilder topologyAwaitInitialTransfer(boolean topologyAwaitInitialTransfer) {
       this.topologyAwaitInitialTransfer = topologyAwaitInitialTransfer;
       return this;
@@ -74,6 +85,7 @@ public class HotRodServerConfigurationBuilder extends ProtocolServerConfiguratio
     * Configures whether to enable state transfer for the topology cache. If disabled, a {@link org.infinispan.persistence.cluster.ClusterLoader} will be used to lazily retrieve topology information from the other nodes.
     * Defaults to true.
     */
+   @Override
    public HotRodServerConfigurationBuilder topologyStateTransfer(boolean topologyStateTransfer) {
       this.topologyStateTransfer = topologyStateTransfer;
       return this;
@@ -82,7 +94,7 @@ public class HotRodServerConfigurationBuilder extends ProtocolServerConfiguratio
    @Override
    public HotRodServerConfiguration create() {
       return new HotRodServerConfiguration(defaultCacheName, proxyHost, proxyPort, topologyLockTimeout, topologyReplTimeout, topologyAwaitInitialTransfer, topologyStateTransfer, name, host, port, idleTimeout,
-            recvBufSize, sendBufSize, ssl.create(), tcpNoDelay, workerThreads);
+            recvBufSize, sendBufSize, ssl.create(), tcpNoDelay, workerThreads, authentication.create());
    }
 
    @Override
@@ -106,6 +118,7 @@ public class HotRodServerConfigurationBuilder extends ProtocolServerConfiguratio
       if (proxyPort < 0) {
          proxyPort = port;
       }
+      authentication.validate();
    }
 
    public HotRodServerConfiguration build(boolean validate) {

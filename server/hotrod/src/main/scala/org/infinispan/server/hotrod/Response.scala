@@ -168,6 +168,31 @@ class QueryResponse(override val version: Byte, override val messageId: Long, ov
    }
 }
 
+class AuthMechListResponse(override val version: Byte, override val messageId: Long, override val cacheName: String,
+                    override val clientIntel: Short, val mechs: Set[String],
+                    override val topologyId: Int)
+      extends Response(version, messageId, cacheName, clientIntel, AuthMechListResponse, Success, topologyId) {
+   override def toString = {
+      new StringBuilder().append("AuthMechListResponse").append("{")
+         .append("version=").append(version)
+         .append(", messageId=").append(messageId)
+         .append(", mechs=").append(mechs)
+         .append("}").toString
+   }
+}
+
+class AuthResponse(override val version: Byte, override val messageId: Long, override val cacheName: String,
+                    override val clientIntel: Short, val challenge: Array[Byte], override val topologyId: Int)
+      extends Response(version, messageId, cacheName, clientIntel, AuthResponse, Success, topologyId) {
+   override def toString = {
+      new StringBuilder().append("AuthResponse").append("{")
+         .append("version=").append(version)
+         .append(", messageId=").append(messageId)
+         .append(", challenge=").append(Util.printArray(challenge, true))
+         .append("}").toString
+   }
+}
+
 abstract class AbstractTopologyResponse(val topologyId: Int, val serverEndpointsMap : Map[Address, ServerAddress])
 
 abstract class AbstractHashDistAwareResponse(override val topologyId: Int,
