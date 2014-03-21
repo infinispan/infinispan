@@ -1,5 +1,6 @@
 package org.infinispan.lucene.locking;
 
+import java.io.Closeable;
 import java.io.IOException;
 
 import javax.transaction.Transaction;
@@ -24,7 +25,7 @@ import org.infinispan.util.logging.LogFactory;
  * @see org.apache.lucene.store.Lock
  */
 @SuppressWarnings("unchecked")
-class TransactionalSharedLuceneLock extends Lock {
+class TransactionalSharedLuceneLock extends Lock implements Closeable {
 
    private static final Log log = LogFactory.getLog(TransactionalSharedLuceneLock.class, Log.class);
 
@@ -178,6 +179,14 @@ class TransactionalSharedLuceneLock extends Lock {
             }
          }
       }
+   }
+
+   /**
+    * Since Lucene 4.7, method release() was renamed to close()
+    */
+   @Override
+   public void close() throws IOException {
+      release();
    }
 
 }
