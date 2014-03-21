@@ -1,5 +1,6 @@
 package org.infinispan.lucene.locking;
 
+import java.io.Closeable;
 import org.apache.lucene.store.Lock;
 import org.infinispan.Cache;
 import org.infinispan.context.Flag;
@@ -17,7 +18,7 @@ import org.infinispan.util.logging.LogFactory;
  * @see org.apache.lucene.store.Lock
  */
 @SuppressWarnings("unchecked")
-class BaseLuceneLock extends Lock {
+class BaseLuceneLock extends Lock implements Closeable {
 
    private static final Log log = LogFactory.getLog(BaseLuceneLock.class);
 
@@ -75,6 +76,14 @@ class BaseLuceneLock extends Lock {
    public boolean isLocked() {
       boolean locked = noCacheStoreCache.containsKey(keyOfLock);
       return locked;
+   }
+
+   /**
+    * Since Lucene 4.7, method release() was renamed to close()
+    */
+   @Override
+   public void close() {
+      clearLock();
    }
 
 }

@@ -11,7 +11,7 @@ Two different _LockFactory_ implementations are provided to guarantee only one _
 Javadoc: link:$$http://docs.jboss.org/infinispan/6.0/apidocs/org/infinispan/lucene/InfinispanDirectory.html$$[] Issue tracker: link:$$https://jira.jboss.org/browse/ISPN/component/12312732$$[] Source code: link:$$http://www.jboss.org/infinispan/sourcecode.html$$[]
 
 === Lucene compatibility
-The current version was developed and compiled against both _Lucene 3.6.2_ and _Lucene 4.3.0_ (separately and then assembled in a single jar for your convenience as most code is shared). It is also regularly tested to work with Lucene versions from 3.0.x to 3.5.0, version 2.9.x, the older 2.4.1 and newer version 4.0, 4.1, 4.2. 
+The current version was developed and compiled against both _Lucene 3.6.2_ and _Lucene 4.7.0_ (separately and then assembled in a single jar for your convenience as most code is shared). It is also regularly tested to work with Lucene versions from 3.0.x to 3.5.0, version 2.9.x, the older 2.4.1 and newer versions 4.0 to 4.7.
 
 === How to use it
 To create a Directory instance:
