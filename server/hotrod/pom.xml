@@ -33,6 +33,11 @@
          <artifactId>infinispan-remote-query-server</artifactId>
          <optional>true</optional>
       </dependency>
+      <dependency>
+         <groupId>org.jboss.sasl</groupId>
+         <artifactId>jboss-sasl</artifactId>
+         <scope>test</scope>
+      </dependency>
    </dependencies>
 
    <build>

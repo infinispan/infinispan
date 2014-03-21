@@ -258,7 +258,8 @@ class MemcachedDecoder(memcachedCache: AdvancedCache[String, Array[Byte]], sched
 
    override def getCache: Cache[String, Array[Byte]] = cache
 
-   override protected def customDecodeHeader(ch: Channel, buffer: ByteBuf): AnyRef = {
+   override protected def customDecodeHeader(ctx: ChannelHandlerContext, buffer: ByteBuf): AnyRef = {
+      val ch = ctx.channel
       header.op match {
          case FlushAllRequest => flushAll(buffer, ch, isReadParams = false) // Without params
          case VersionRequest => {
@@ -269,7 +270,8 @@ class MemcachedDecoder(memcachedCache: AdvancedCache[String, Array[Byte]], sched
       }
    }
 
-   override protected def customDecodeKey(ch: Channel, buffer: ByteBuf): AnyRef = {
+   override protected def customDecodeKey(ctx: ChannelHandlerContext, buffer: ByteBuf): AnyRef = {
+      val ch = ctx.channel
       header.op match {
          case AppendRequest | PrependRequest | IncrementRequest | DecrementRequest => {
             key = readKey(buffer)._1
@@ -279,7 +281,8 @@ class MemcachedDecoder(memcachedCache: AdvancedCache[String, Array[Byte]], sched
       }
    }
 
-   override protected def customDecodeValue(ch: Channel, buffer: ByteBuf): AnyRef = {
+   override protected def customDecodeValue(ctx: ChannelHandlerContext, buffer: ByteBuf): AnyRef = {
+      val ch = ctx.channel
       val op = header.op
       op match {
          case AppendRequest | PrependRequest => {

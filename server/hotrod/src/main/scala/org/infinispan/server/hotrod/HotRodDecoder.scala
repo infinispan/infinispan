@@ -12,6 +12,9 @@ import org.infinispan.container.entries.CacheEntry
 import org.infinispan.server.hotrod.configuration.HotRodServerConfiguration
 import io.netty.buffer.ByteBuf
 import io.netty.channel.Channel
+import io.netty.channel.ChannelHandlerContext
+import javax.security.sasl.SaslServer
+import org.infinispan.server.core.security.AuthorizingCallbackHandler
 
 /**
  * Top level Hot Rod decoder that after figuring out the version, delegates the rest of the reading to the
@@ -28,6 +31,9 @@ class HotRodDecoder(cacheManager: EmbeddedCacheManager, transport: NettyTranspor
    private var isError = false
 
    private val isTrace = isTraceEnabled
+
+   var saslServer : SaslServer = null
+   var callbackHandler: AuthorizingCallbackHandler = null
 
    protected def createHeader: HotRodHeader = new HotRodHeader
 
@@ -119,14 +125,14 @@ class HotRodDecoder(cacheManager: EmbeddedCacheManager, transport: NettyTranspor
    override def createMultiGetResponse(pairs: Map[Array[Byte], CacheEntry[Array[Byte], Array[Byte]]]): AnyRef =
       null // Unsupported
 
-   override protected def customDecodeHeader(ch: Channel, buffer: ByteBuf): AnyRef =
-      writeResponse(ch, header.decoder.customReadHeader(header, buffer, cache))
+   override protected def customDecodeHeader(ctx: ChannelHandlerContext, buffer: ByteBuf): AnyRef =
+      writeResponse(ctx.channel, header.decoder.customReadHeader(header, buffer, cache, server, ctx))
 
-   override protected def customDecodeKey(ch: Channel, buffer: ByteBuf): AnyRef =
-      writeResponse(ch, header.decoder.customReadKey(header, buffer, cache, server.getQueryFacades))
+   override protected def customDecodeKey(ctx: ChannelHandlerContext, buffer: ByteBuf): AnyRef =
+      writeResponse(ctx.channel, header.decoder.customReadKey(header, buffer, cache, server))
 
-   override protected def customDecodeValue(ch: Channel, buffer: ByteBuf): AnyRef =
-      writeResponse(ch, header.decoder.customReadValue(header, buffer, cache))
+   override protected def customDecodeValue(ctx: ChannelHandlerContext, buffer: ByteBuf): AnyRef =
+      writeResponse(ctx.channel, header.decoder.customReadValue(header, buffer, cache))
 
    override def createStatsResponse: AnyRef =
       header.decoder.createStatsResponse(header, cache.getStats, transport)
