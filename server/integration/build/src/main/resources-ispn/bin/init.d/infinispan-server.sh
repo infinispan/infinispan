@@ -60,7 +60,13 @@ if [ -z "$ISPN_SERVER_RUN_CONF" ]; then
   ISPN_SERVER_RUN_CONF=""
 fi
 
-ISPN_SERVER_SCRIPT=$ISPN_SERVER_HOME/bin/standalone.sh
+if [ -z "$ISPN_SERVER_SCRIPT" ]; then
+  ISPN_SERVER_SCRIPT=standalone.sh
+fi
+ 
+if [[ "$ISPN_SERVER_SCRIPT"=~"^[^/]" ]]; then
+  ISPN_SERVER_SCRIPT=$ISPN_SERVER_HOME/bin/$ISPN_SERVER_SCRIPT
+fi
 
 CMD_PREFIX=''
 
