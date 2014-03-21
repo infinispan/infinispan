@@ -68,16 +68,6 @@ if [[ "$ISPN_SERVER_SCRIPT"=~"^[^/]" ]]; then
   ISPN_SERVER_SCRIPT=$ISPN_SERVER_HOME/bin/$ISPN_SERVER_SCRIPT
 fi
 
-CMD_PREFIX=''
-
-if [ ! -z "$ISPN_SERVER_USER" ]; then
-  if [ -x /etc/rc.d/init.d/functions ]; then
-    CMD_PREFIX="daemon --user $ISPN_SERVER_USER"
-  else
-    CMD_PREFIX="su - $ISPN_SERVER_USER -c"
-  fi
-fi
-
 start() {
   echo -n "Starting $prog: "
   if [ -f $ISPN_SERVER_PIDFILE ]; then
@@ -96,8 +86,6 @@ start() {
 
   mkdir -p $(dirname $ISPN_SERVER_PIDFILE)
   chown $ISPN_SERVER_USER $(dirname $ISPN_SERVER_PIDFILE) || true
-  #$CMD_PREFIX ISPN_SERVER_PIDFILE=$ISPN_SERVER_PIDFILE $ISPN_SERVER_SCRIPT 2>&1 > $ISPN_SERVER_CONSOLE_LOG &
-  #$CMD_PREFIX ISPN_SERVER_PIDFILE=$ISPN_SERVER_PIDFILE $ISPN_SERVER_SCRIPT &
 
   if [ ! -z "$ISPN_SERVER_USER" ]; then
     if [ -x /etc/rc.d/init.d/functions ]; then
