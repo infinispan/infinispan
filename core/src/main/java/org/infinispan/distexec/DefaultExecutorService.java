@@ -788,7 +788,7 @@ public class DefaultExecutorService extends AbstractExecutorService implements D
     * @author Mircea Markus
     * @author Vladimir Blagojevic
     */
-   private class DistributedTaskPart<V> implements NotifyingNotifiableFuture<V>, RunnableFuture<V>{
+   protected class DistributedTaskPart<V> implements NotifyingNotifiableFuture<V>, RunnableFuture<V>{
 
       private final DistributedExecuteCommand<V> distCommand;
       private volatile Future<V> f;
