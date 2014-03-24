@@ -174,14 +174,13 @@ public class TransactionConfigurationBuilder extends AbstractConfigurationChildB
    }
 
    /**
-    * Only has effect for DIST mode and when useEagerLocking is set to true. When this is enabled,
-    * then only one node is locked in the cluster, disregarding numOwners config. On the opposite,
-    * if this is false, then on all cache.lock() calls numOwners RPCs are being performed. The node
-    * that gets locked is the main data owner, i.e. the node where data would reside if
-    * numOwners==1. If the node where the lock resides crashes, then the transaction is marked for
-    * rollback - data is in a consistent state, no fault tolerance.
-    * <p />
-    * Note: Starting with infinispan 5.1 eager locking is replaced with pessimistic locking and can
+    * Prevents more than one transaction being written to a key by enforcing cluster-wide locks
+    * on each write operation. Infinispan attempts to obtain locks on specified cache keys across
+    * all nodes in a cluster. All locks are released during the commit or rollback phase.
+    * This configuration might be used when a high contention on keys is occurring, resulting in
+    * inefficiencies and unexpected roll back operations.
+    *
+    * @deprecated Starting with Infinispan 5.1 eager locking is replaced with pessimistic locking and can
     * be enforced by setting transaction's locking mode to PESSIMISTIC.
     */
    @Deprecated
