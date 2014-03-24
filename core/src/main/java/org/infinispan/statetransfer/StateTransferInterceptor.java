@@ -108,7 +108,6 @@ public class StateTransferInterceptor extends CommandInterceptor {
                        command.getTopologyId());
          }
          if (remoteTx.lookedUpEntriesTopology() < command.getTopologyId()) {
-            ctx.skipTransactionCompleteCheck(true);
             remoteTx.setLookedUpEntriesTopology(command.getTopologyId());
 
             PrepareCommand prepareCommand;

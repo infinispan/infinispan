@@ -60,17 +60,6 @@ public class LocalTxInvocationContext extends AbstractTxInvocationContext<LocalT
    }
 
    @Override
-   public final void skipTransactionCompleteCheck(boolean skip) {
-      //no-op
-   }
-
-   @Override
-   public final boolean skipTransactionCompleteCheck() {
-      //no-op. the check is only performed in remote transactions
-      return true;
-   }
-
-   @Override
    public final Transaction getTransaction() {
       return getCacheTransaction().getTransaction();
    }

@@ -65,7 +65,7 @@ public class TransactionXaAdapterTmIntegrationTest {
       CommandsFactory commandsFactory = mock(CommandsFactory.class);
       InterceptorChain invoker = mock(InterceptorChain.class);
       txCoordinator = new TransactionCoordinator();
-      txCoordinator.init(commandsFactory, icf, invoker, txTable, configuration);
+      txCoordinator.init(commandsFactory, icf, invoker, txTable, null, configuration);
       xaAdapter = new TransactionXaAdapter(localTx, txTable, null, txCoordinator, null, null,
                                            new ClusteringDependentLogic.InvalidationLogic(), configuration, "");
 
@@ -114,13 +114,13 @@ public class TransactionXaAdapterTmIntegrationTest {
 
    public void testOnePhaseCommitConfigured() throws XAException {
       Configuration configuration = new ConfigurationBuilder().clustering().cacheMode(CacheMode.INVALIDATION_ASYNC).build();
-      txCoordinator.init(null, null, null, null, configuration);
+      txCoordinator.init(null, null, null, null, null, configuration);
       assert XAResource.XA_OK == xaAdapter.prepare(xid);
    }
 
    public void test1PcAndNonExistentXid() {
       Configuration configuration = new ConfigurationBuilder().clustering().cacheMode(CacheMode.INVALIDATION_ASYNC).build();
-      txCoordinator.init(null, null, null, null, configuration);
+      txCoordinator.init(null, null, null, null, null, configuration);
       try {
          DummyXid doesNotExists = new DummyXid(uuid);
          xaAdapter.commit(doesNotExists, false);
@@ -132,7 +132,7 @@ public class TransactionXaAdapterTmIntegrationTest {
 
    public void test1PcAndNonExistentXid2() {
       Configuration configuration = new ConfigurationBuilder().clustering().cacheMode(CacheMode.DIST_SYNC).build();
-      txCoordinator.init(null, null, null, null, configuration);
+      txCoordinator.init(null, null, null, null, null, configuration);
       try {
          DummyXid doesNotExists = new DummyXid(uuid);
          xaAdapter.commit(doesNotExists, true);
