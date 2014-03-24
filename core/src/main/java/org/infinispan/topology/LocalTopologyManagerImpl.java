@@ -264,9 +264,22 @@ public class LocalTopologyManagerImpl implements LocalTopologyManager {
    }
 
    public void setRebalancingEnabled(boolean enabled) throws Exception {
+      setRebalancingEnabled(null, enabled);
+   }
+
+   @Override
+   public void setRebalancingEnabled(String cacheName, boolean enabled) throws Exception {
+      //cacheName is null when we are switching balancing on/off for all caches
+      if (cacheName != null) {
+         LocalCacheStatus cacheStatus = runningCaches.get(cacheName);
+         if (cacheStatus == null) {
+            log.tracef("Ignoring rebalance switching for cache %s that doesn't exist locally", cacheName);
+            return;
+         }
+      }
       CacheTopologyControlCommand.Type type = enabled ? CacheTopologyControlCommand.Type.POLICY_ENABLE
             : CacheTopologyControlCommand.Type.POLICY_DISABLE;
-      ReplicableCommand command = new CacheTopologyControlCommand(null, type, transport.getAddress(),
+      ReplicableCommand command = new CacheTopologyControlCommand(cacheName, type, transport.getAddress(),
             transport.getViewId());
       executeOnClusterSync(command, getGlobalTimeout(), false, false);
    }
@@ -386,6 +399,7 @@ public class LocalTopologyManagerImpl implements LocalTopologyManager {
       // TODO Rename setting to something like globalRpcTimeout
       return (int) gcr.getGlobalConfiguration().transport().distributedSyncTimeout();
    }
+
 }
 
 class LocalCacheStatus {

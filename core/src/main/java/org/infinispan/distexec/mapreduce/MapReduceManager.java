@@ -84,4 +84,14 @@ public interface MapReduceManager {
     */
    ExecutorService getExecutorService();
 
+   /**
+    * Cleanly shuts down and destroys intermediate cache with a given name
+    * <p>
+    * This is a cluster wide operation.
+    *
+    * @param cacheName
+    *           the name of the intermediate cache
+    */
+   void destroyIntermediateCache(String cacheName);
+
 }

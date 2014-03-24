@@ -87,4 +87,9 @@ public class BlockingLocalTopologyManager extends AbstractControlledLocalTopolog
       REBALANCE
    }
 
+   @Override
+   public void setRebalancingEnabled(String cacheName, boolean enabled) throws Exception {
+      // ignored
+   }
+
 }

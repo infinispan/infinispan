@@ -341,8 +341,7 @@ public class MapReduceTask<KIn, VIn, KOut, VOut> {
          } finally {
             // cleanup tmp caches across cluster
             if(useIntermediatePerTaskCache()){
-               EmbeddedCacheManager cm = cache.getCacheManager();
-               cm.removeCache(intermediateCacheName);
+               mapReduceManager.destroyIntermediateCache(intermediateCacheName);
             }
          }
       } else {

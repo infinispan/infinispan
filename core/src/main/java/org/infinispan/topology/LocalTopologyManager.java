@@ -58,4 +58,14 @@ public interface LocalTopologyManager {
     * @return the current topology for a cache.
     */
    CacheTopology getCacheTopology(String cacheName);
+
+   /**
+    * Enables or disables rebalancing on a specified local cache
+    *
+    * @param cacheName the name of the cache
+    * @param enabled the switch to turn on/off rebalancing
+    * @throws Exception
+    */
+   void setRebalancingEnabled(String cacheName, boolean enabled) throws Exception;
+
 }
