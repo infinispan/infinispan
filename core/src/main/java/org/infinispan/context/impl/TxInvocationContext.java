@@ -65,8 +65,4 @@ public interface TxInvocationContext<T extends AbstractCacheTransaction> extends
    boolean isImplicitTransaction();
 
    T getCacheTransaction();
-
-   void skipTransactionCompleteCheck(boolean skip);
-
-   boolean skipTransactionCompleteCheck();
 }

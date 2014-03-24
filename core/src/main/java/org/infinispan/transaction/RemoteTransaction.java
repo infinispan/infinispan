@@ -37,11 +37,6 @@ public class RemoteTransaction extends AbstractCacheTransaction implements Clone
    // Default value of MAX_VALUE basically means it hasn't yet received what topology id this is for the entries
    private volatile int lookedUpEntriesTopology = Integer.MAX_VALUE;
 
-   /**
-    * If true, the check transaction completed in TxInterceptor is skipped for this transaction.
-    */
-   private volatile boolean skipTransactionCompletedCheck;
-
    private volatile TotalOrderRemoteTransactionState transactionState;
    private final Object transactionStateLock = new Object();
 
@@ -131,14 +126,6 @@ public class RemoteTransaction extends AbstractCacheTransaction implements Clone
 
    public int lookedUpEntriesTopology() {
       return lookedUpEntriesTopology;
-   }
-
-   public void skipTransactionCompleteCheck(boolean skip) {
-      skipTransactionCompletedCheck = skip;
-   }
-
-   public boolean skipTransactionCompleteCheck() {
-      return skipTransactionCompletedCheck;
    }
 
    private void checkIfRolledBack() {

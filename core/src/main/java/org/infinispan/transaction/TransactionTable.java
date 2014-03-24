@@ -520,6 +520,7 @@ public class TransactionTable {
       if (totalOrder) {
          return;
       }
+      log.tracef("Marking transaction %s as completed", globalTx);
       completedTransactions.put(globalTx, timeService.time());
    }
 
