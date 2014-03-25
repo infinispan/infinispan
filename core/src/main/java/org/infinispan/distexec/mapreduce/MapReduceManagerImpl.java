@@ -24,6 +24,7 @@ import org.infinispan.persistence.spi.AdvancedCacheLoader;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.marshall.core.MarshalledValue;
 import org.infinispan.remoting.transport.Address;
+import org.infinispan.topology.LocalTopologyManager;
 import org.infinispan.util.TimeService;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
@@ -62,6 +63,7 @@ public class MapReduceManagerImpl implements MapReduceManager {
    private EmbeddedCacheManager cacheManager;
    private PersistenceManager persistenceManager;
    private ExecutorService executorService;
+   private LocalTopologyManager topologyManager;
    private TimeService timeService;
    private int chunkSize;
 
@@ -71,11 +73,13 @@ public class MapReduceManagerImpl implements MapReduceManager {
    @Inject
    public void init(EmbeddedCacheManager cacheManager, PersistenceManager persistenceManager,
             @ComponentName(ASYNC_TRANSPORT_EXECUTOR) ExecutorService asyncTransportExecutor,
-            ClusteringDependentLogic cdl, TimeService timeService, Configuration configuration) {
+            ClusteringDependentLogic cdl, LocalTopologyManager topologyManager, TimeService timeService, 
+            Configuration configuration) {
       this.cacheManager = cacheManager;
       this.persistenceManager = persistenceManager;
       this.cdl = cdl;
       this.executorService = asyncTransportExecutor;
+      this.topologyManager = topologyManager;
       this.timeService = timeService;
       this.chunkSize = configuration.clustering().stateTransfer().chunkSize();
    }
@@ -163,6 +167,16 @@ public class MapReduceManagerImpl implements MapReduceManager {
          }
       }
       return result;
+   }
+
+   @Override
+   public void destroyIntermediateCache(String cacheName) {
+      try {
+         topologyManager.setRebalancingEnabled(cacheName, false);
+         cacheManager.removeCache(cacheName);
+      } catch (Exception e) {
+         log.warn("Could not cleanly shutdown intermediate cache " + cacheName, e);
+      }
    }
 
    @SuppressWarnings("unchecked")
