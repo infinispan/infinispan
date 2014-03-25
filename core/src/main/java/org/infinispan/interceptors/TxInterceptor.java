@@ -110,7 +110,7 @@ public class TxInterceptor extends CommandInterceptor {
       try {
          return invokeNextInterceptor(ctx, command);
       } finally {
-         if (!ctx.isOriginLocal() && !ctx.skipTransactionCompleteCheck()) {
+         if (!ctx.isOriginLocal()) {
             //It is possible to receive a prepare or lock control command from a node that crashed. If that's the case rollback
             //the transaction forcefully in order to cleanup resources.
             boolean originatorMissing = !rpcManager.getTransport().getMembers().contains(command.getOrigin());
@@ -141,10 +141,18 @@ public class TxInterceptor extends CommandInterceptor {
 
    @Override
    public Object visitCommitCommand(TxInvocationContext ctx, CommitCommand command) throws Throwable {
+      GlobalTransaction gtx = ctx.getGlobalTransaction();
+      // TODO The local origin check is needed for CommitFailsTest, but it doesn't appear correct to roll back an in-doubt tx
+      if (!ctx.isOriginLocal() && txTable.isTransactionCompleted(gtx)) {
+         log.tracef("Transaction %s already completed, skipping commit", gtx);
+         return null;
+      }
+
       if (this.statisticsEnabled) commits.incrementAndGet();
+      txTable.markTransactionCompleted(gtx);
       Object result = invokeNextInterceptor(ctx, command);
       if (!ctx.isOriginLocal() || isTotalOrder) {
-         txTable.remoteTransactionCommitted(ctx.getGlobalTransaction(), false);
+         txTable.remoteTransactionCommitted(gtx, false);
       }
       return result;
    }
@@ -152,6 +160,7 @@ public class TxInterceptor extends CommandInterceptor {
    @Override
    public Object visitRollbackCommand(TxInvocationContext ctx, RollbackCommand command) throws Throwable {
       if (this.statisticsEnabled) rollbacks.incrementAndGet();
+      // The transaction was marked as completed in RollbackCommand.prepare()
       if (!ctx.isOriginLocal() || isTotalOrder) {
          txTable.remoteTransactionRollback(command.getGlobalTransaction());
       }

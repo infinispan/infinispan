@@ -14,6 +14,7 @@ import org.infinispan.factories.annotations.Start;
 import org.infinispan.factories.annotations.Stop;
 import org.infinispan.interceptors.InterceptorChain;
 import org.infinispan.transaction.xa.GlobalTransaction;
+import org.infinispan.transaction.xa.recovery.RecoveryManager;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
@@ -40,6 +41,7 @@ public class TransactionCoordinator {
    private InvocationContextFactory icf;
    private InterceptorChain invoker;
    private TransactionTable txTable;
+   private RecoveryManager recoveryManager;
    private Configuration configuration;
    private CommandCreator commandCreator;
    private volatile boolean shuttingDown = false;
@@ -48,11 +50,12 @@ public class TransactionCoordinator {
 
    @Inject
    public void init(CommandsFactory commandsFactory, InvocationContextFactory icf, InterceptorChain invoker,
-                    TransactionTable txTable, Configuration configuration) {
+                    TransactionTable txTable, RecoveryManager recoveryManager, Configuration configuration) {
       this.commandsFactory = commandsFactory;
       this.icf = icf;
       this.invoker = invoker;
       this.txTable = txTable;
+      this.recoveryManager = recoveryManager;
       this.configuration = configuration;
       trace = log.isTraceEnabled();
    }
@@ -186,7 +189,9 @@ public class TransactionCoordinator {
          log.errorProcessing2pcCommitCommand(e);
       }
       try {
-         if (!(onePhaseCommit && configuration.transaction().transactionProtocol().isTotalOrder())) {
+         boolean isRecoveryEnabled = recoveryManager != null;
+         boolean isTotalOrder = onePhaseCommit && configuration.transaction().transactionProtocol().isTotalOrder();
+         if (!isRecoveryEnabled && !isTotalOrder) {
             //we cannot send the rollback in Total Order because it will create a new remote transaction.
             //the rollback is not needed any way, because if one node aborts the transaction, then all the nodes will
             //abort too.

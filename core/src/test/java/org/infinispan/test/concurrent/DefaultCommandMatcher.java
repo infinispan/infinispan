@@ -5,6 +5,8 @@ import org.infinispan.commands.ReplicableCommand;
 import org.infinispan.commands.remote.CacheRpcCommand;
 import org.infinispan.remoting.transport.Address;
 
+import java.util.concurrent.atomic.AtomicInteger;
+
 /**
  * Generic {@link CommandMatcher} implementation that can use both {@link CacheRpcCommand} criteria (cache name, origin)
  * and {@link DataCommand} criteria (key).
@@ -13,15 +15,29 @@ import org.infinispan.remoting.transport.Address;
  * @since 7.0
  */
 public class DefaultCommandMatcher implements CommandMatcher {
-   public static Address LOCAL_ORIGIN_PLACEHOLDER = new AddressPlaceholder();
-   public static Address ANY_REMOTE_PLACEHOLDER = new AddressPlaceholder();
+   public static final Address LOCAL_ORIGIN_PLACEHOLDER = new AddressPlaceholder();
+   public static final Address ANY_REMOTE_PLACEHOLDER = new AddressPlaceholder();
 
    private final Class<? extends ReplicableCommand> commandClass;
    private final String cacheName;
    private final Address origin;
    private final Object key;
 
-   public DefaultCommandMatcher(Class<? extends ReplicableCommand> commandClass, String cacheName, Address origin, Object key) {
+   private final AtomicInteger actualMatchCount = new AtomicInteger(0);
+
+   public DefaultCommandMatcher(Class<? extends ReplicableCommand> commandClass) {
+      this(commandClass, null, null, null);
+   }
+
+   public DefaultCommandMatcher(Class<? extends CacheRpcCommand> commandClass, String cacheName, Address origin) {
+      this(commandClass, cacheName, origin, null);
+   }
+
+   public DefaultCommandMatcher(Class<? extends DataCommand> commandClass, Object key) {
+      this(commandClass, null, null, key);
+   }
+
+   DefaultCommandMatcher(Class<? extends ReplicableCommand> commandClass, String cacheName, Address origin, Object key) {
       this.commandClass = commandClass;
       this.cacheName = cacheName;
       this.origin = origin;

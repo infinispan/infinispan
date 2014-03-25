@@ -38,8 +38,6 @@ public class LockContainerHashingTest extends AbstractInfinispanTest {
          }
       }
 
-      System.out.println(distribution);
-
       // cannot be larger than the number of locks
       log.trace("dist size: " + distribution.size());
       log.trace("num shared locks: " + stripedLock.size());
