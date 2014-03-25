@@ -301,8 +301,8 @@ public class StateSequencer {
             timedOutStates.add(dependencyName);
          }
       }
-      String errorMessage = String.format("Timed out waiting to enter state %s. Dependencies not satisfied " +
-            "are %s. Full sequencer order is %s", state.name, timedOutStates, this);
+      String errorMessage = String.format("Timed out waiting to enter state %s. Dependencies not satisfied are %s",
+            state.name, timedOutStates);
       log.trace(errorMessage);
       throw new TimeoutException(errorMessage);
    }

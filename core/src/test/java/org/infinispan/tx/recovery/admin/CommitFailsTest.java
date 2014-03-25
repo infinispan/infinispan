@@ -105,7 +105,7 @@ public class CommitFailsTest extends AbstractRecoveryTest {
 
    protected void runTest(int where) {
       List<Long> internalIds = getInternalIds(recoveryOps(where).showInDoubtTransactions());
-      log.info("About to force commit!");
+      log.debugf("About to force commit on node %s", address(where));
       recoveryOps(where).forceCommit(internalIds.get(0));
       assertCleanup(0);
       assertCleanup(1);

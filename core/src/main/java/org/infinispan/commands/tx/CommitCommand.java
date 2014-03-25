@@ -28,12 +28,6 @@ public class CommitCommand extends AbstractTransactionBoundaryCommand {
    }
 
    @Override
-   public Object perform(InvocationContext ctx) throws Throwable {
-      txTable.markTransactionCompleted(globalTx);
-      return super.perform(ctx);
-   }
-
-   @Override
    public Object acceptVisitor(InvocationContext ctx, Visitor visitor) throws Throwable {
       return visitor.visitCommitCommand((TxInvocationContext) ctx, this);
    }

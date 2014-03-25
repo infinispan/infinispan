@@ -30,6 +30,7 @@ public class RollbackCommand extends AbstractTransactionBoundaryCommand {
 
    @Override
    public Object perform(InvocationContext ctx) throws Throwable {
+      // Need to mark the transaction as completed even if the prepare command was not executed on this node
       txTable.markTransactionCompleted(globalTx);
       return super.perform(ctx);
    }

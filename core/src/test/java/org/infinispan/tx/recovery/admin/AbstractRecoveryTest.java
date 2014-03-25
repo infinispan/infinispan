@@ -37,6 +37,7 @@ public abstract class AbstractRecoveryTest extends MultipleCacheManagersTest {
    }
 
    protected int countInDoubtTx(String inDoubt) {
+      log.tracef("Retrieved in-doubt transactions: %s", inDoubt);
       int lastIndex = 0;
       int count = 0;
       while ((lastIndex = inDoubt.indexOf("internalId", lastIndex + 1)) >= 0) {

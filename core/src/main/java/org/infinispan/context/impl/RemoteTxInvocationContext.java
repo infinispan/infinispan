@@ -53,14 +53,4 @@ public class RemoteTxInvocationContext extends AbstractTxInvocationContext<Remot
    public final int hashCode() {
       return getCacheTransaction().hashCode();
    }
-
-   @Override
-   public final void skipTransactionCompleteCheck(boolean skip) {
-      getCacheTransaction().skipTransactionCompleteCheck(skip);
-   }
-
-   @Override
-   public final boolean skipTransactionCompleteCheck() {
-      return getCacheTransaction().skipTransactionCompleteCheck();
-   }
 }
