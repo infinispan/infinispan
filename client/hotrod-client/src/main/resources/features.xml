@@ -8,7 +8,7 @@
      features:install hotrod-client-with-query
 
 -->
-<features>
+<features name="infinispan-client-hotrod-${project.version}">
    <feature name="hotrod-client" version="${project.version}">
       <bundle>mvn:org.jboss.logging/jboss-logging/${version.jboss.logging}</bundle>
       <bundle>mvn:org.infinispan/infinispan-commons/${project.version}</bundle>
