@@ -16,7 +16,7 @@ import java.io.IOException;
  *
  * @author Anna Manukyan
  */
-@Test(groups = "functional", testName = "query.distributed.MultiNodeDistributedTxTest")
+@Test(groups = "unstable", description = "ISPN-4165", testName = "query.distributed.MultiNodeDistributedTxTest")
 public class MultiNodeDistributedTxTest extends MultiNodeDistributedTest {
 
    protected boolean transactionsEnabled() {
