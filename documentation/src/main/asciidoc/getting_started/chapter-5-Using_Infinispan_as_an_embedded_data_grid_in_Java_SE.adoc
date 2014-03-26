@@ -145,13 +145,17 @@ You can also configure the JGroups configuration to use in Infinispan's XML conf
 
 [source,xml]
 ----
-<global>
-   <transport>
-      <properties>
-         <property name="configurationFile" value="jgroups.xml"/>
-      </properties>
-   </transport>
-</global>
+<infinispan>
+  <jgroups>
+     <stack-file name="external-file" path="jgroups.xml"/>
+  </jgroups>
+  <cache-container>
+    <transport stack="external-file" />
+  </cache-container>
+
+  ...
+
+</infinispan>
 ----
 
 === Configuring a replicated data-grid
@@ -177,20 +181,14 @@ You can configure an identical cache using XML:
 .cfg.xml
 [source,xml]
 ----
-<infinispan xsi:schemaLocation="urn:infinispan:config:5.1 http://www.infinispan.org/schemas/infinispan-config-5.1.xsd" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns="urn:infinispan:config:5.1">
-   <global>
-      <transport>
-         <properties>
-            <property name="configurationFile" value="jgroups.xml"/>
-         </properties>
-      </transport>
-   </global>
-   <default>
-      <!-- Configure a synchronous replication cache -->
-      <clustering mode="replication">
-         <sync/>
-      </clustering>
-   </default>
+<infinispan>
+  <jgroups>
+     <stack-file name="external-file" path="jgroups.xml"/>
+  </jgroups>
+  <cache-container default-cache="repl">
+     <transport stack="external-file" />
+     <replicated-cache name="repl" mode="SYNC" />
+  </cache-container>
 </infinispan>
 ----
 
@@ -224,13 +222,7 @@ You can configure an identical cache using XML:
 .cfg.xml:
 [source,xml]
 ----
-<default>
-   <!-- Configure a synchronous replication cache -->
-   <clustering mode="distribution">
-      <sync/>
-      <hash numOwners="2"/>
-   </clustering>
-</default>
+<distributed-cache owners="2" mode="SYNC" />
 ----
 
 along with

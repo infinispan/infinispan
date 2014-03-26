@@ -204,12 +204,7 @@ This is how you configure hashing declaratively, via XML:
 
 [source,xml]
 ----
-   <namedCache name="distributedCache">
-      <clustering mode="dist">
-         <hash numOwners="2" numSegments="100" capacityFactor="2"
-            factory="org.infinispan.distribution.ch.SyncConsistentHashFactory"/>
-      </clustering>
-   </namedCache>
+   <distributed-cache name="distributedCache" owners="2" segments="100" capacity-factor="2" />
 ----
 
 And this is how you can configure it programmatically, in Java:
@@ -222,7 +217,6 @@ Configuration c = new ConfigurationBuilder()
          .numOwners(2)
          .numSegments(100)
          .capacityFactor(2)
-         .consistentHashFactory(new SyncConsistentHashFactory())
    .build();
 ----
 
@@ -271,21 +265,21 @@ The hints are configured at transport level:
 [source,xml]
 ----
 <transport
-    clusterName = "MyCluster"
-    machineId = "LinuxServer01"
-    rackId = "Rack01"
-    siteId = "US-WestCoast" />
+    cluster = "MyCluster"
+    machine = "LinuxServer01"
+    rack = "Rack01"
+    site = "US-WestCoast" />
 ----
 
 The following topology hints can be specified:
 
-machineId::
+machine::
   This is probably the most useful, to disambiguate between multiple JVM instances on the
   same node, or even multiple virtual hosts on the same physical host.
-rackId::
+rack::
   In larger clusters with nodes occupying more than a single rack, this setting would help
   prevent backups being stored on the same rack.
-siteId::
+site::
   To differentiate between nodes in different data centres replicating to each other. Note
   that <<CrossSiteReplication, Cross site replication>> is another alternative for
   clusters that need to span two or more data centres.
@@ -299,7 +293,7 @@ guarantees that backups will not be stored in instances on the same machine/rack
 The key affinity service solves the following problem: for a distributed Infinispan
 cluster one wants to make sure that a value is placed in a certain node.
 Based on a supplied cluster
-link:$$http://docs.jboss.org/infinispan/6.0/apidocs/org/infinispan/remoting/transport/Address.html$$[address]
+link:$$http://docs.jboss.org/infinispan/7.0/apidocs/org/infinispan/remoting/transport/Address.html$$[address]
 identifying the node, the service returns a key that will be hashed to that particular
 node.
 
@@ -375,7 +369,7 @@ doesn't apply during the instability of topology changes.
 
 ====  The Grouping API
 Complementary to <<KeyAffinityService, Key affinity service>> and similar to
-link:$$https://docs.jboss.org/infinispan/6.0/apidocs/org/infinispan/atomic/AtomicMap.html$$[AtomicMap],
+link:$$https://docs.jboss.org/infinispan/7.0/apidocs/org/infinispan/atomic/AtomicMap.html$$[AtomicMap],
 the grouping API allows you to co-locate a group of entries on the same nodes, but without
 being able to select the actual nodes.
 
@@ -413,11 +407,9 @@ Or, if you are using XML:
 
 [source,xml]
 ----
-<clustering>
-   <hash>
-      <groups enabled="true" />
-   </hash>
-</clustering>
+<distributed-cache>
+   <groups enabled="true"/>
+</distributed-cache>
 ----
 
 If you have control of the key class (you can alter the class definition, it's not part of
@@ -506,13 +498,11 @@ Or, if you are using XML:
 
 [source,xml]
 ----
-<clustering>
-  <hash>
-     <groups enabled="true">
-        <grouper class="com.acme.KXGrouper" />
-     </groups>
-  </hash>
-</clustering>
+<distributed-cache>
+   <groups enabled="true">
+      <grouper class="com.acme.KXGrouper" />
+   </groups>
+</distributed-cache>
 ----
 
 
@@ -534,15 +524,15 @@ important to understand the following configuration settings:
 
 ==== Asynchronous Communications
 Whenever you add
-link:$$http://docs.jboss.org/infinispan/6.0/configdocs/infinispan-config-6.0.html$$[`<async />`]
-element within `<clustering />`, you're telling the underlying JGroups layer in Infinispan
+link:$$http://docs.jboss.org/infinispan/7.0/configdocs/infinispan-config-7.0.html$$[`<replicated-cache mode="ASYNC"> or <distributed-cache mode="ASYNC"> or <invalidation-cache mode="ASYNC">`]
+element, you're telling the underlying JGroups layer in Infinispan
 to use asynchronous communication. What this means is that JGroups will send any
 replication/distribution/invalidation request to the wire but will not wait for a reply
 from the receiver.
 
 ==== Asynchronous Marshalling
 This is a configurable boolean property of
-link:$$http://docs.jboss.org/infinispan/6.0/configdocs/infinispan-config-6.0.html$$[`<async />`]
+link:$$http://docs.jboss.org/infinispan/7.0/configdocs/infinispan-config-7.0.html$$[`<[replicated|distributed|invalidation]-cache />`]
 element that indicates whether the actual call from Infinispan to the JGroups layer is
 done on a separate thread or not.
 When set to true, once Infinispan has figured out that a request needs to be sent to
@@ -580,9 +570,9 @@ cache.put("car", "bmw");
 
 The end result is clearly different which is often not desirable.
 So, if your application makes multiple modifications on the same key, you should either:
-turn off asynchronous marshalling, or set
-link:$$http://docs.jboss.org/infinispan/6.0/configdocs/infinispan-config-6.0.html$$[`<asyncTransportExecutor />`]
-element's maxThreads to 1.
+turn off asynchronous marshalling, or set a custom executor via
+link:$$http://docs.jboss.org/infinispan/7.0/configdocs/infinispan-config-7.0.html$$[`<transport executor="custom" />`]
+element and define the executor's max-threads to 1 in the _<threads>_ section.
 The first modification only applies to a particular named cache, whereas the second option
 affects all named caches in configuration file that are configured with async marshalling.
 It's worth noting though that having this type of executor configured with a single thread
@@ -626,7 +616,7 @@ With replication, the previous value is already available locally, and with dist
 regardless of whether it's asynchronous or synchronous, Infinispan sends a synchronous
 request to get the previous value if not present locally.
 If on the other hand the asynchronous API is used, client code needs to get hold of the
-link:$$https://docs.jboss.org/infinispan/6.0/apidocs/org/infinispan/commons/util/concurrent/NotifyingFuture.html$$[NotifiyngFuture]
+link:$$https://docs.jboss.org/infinispan/7.0/apidocs/org/infinispan/commons/util/concurrent/NotifyingFuture.html$$[NotifiyngFuture]
 returned by the async operation in order to be able to query the previous value.
 
 

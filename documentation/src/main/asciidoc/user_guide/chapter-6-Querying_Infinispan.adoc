@@ -149,13 +149,13 @@ To enable indexing via XML, you need to add the `<indexing />` element to your c
 [source,xml]
 ----
 <infinispan>
-   <default>
-      <indexing enabled="true" indexLocalOnly="true">
-         <properties>
-            <property name="default.directory_provider" value="ram" />
-         </properties>
-      </indexing>
-   </default>
+   <cache-container default-cache="default">
+      <local-cache name="default">
+         <indexing index="LOCAL">
+            <property name="default.directory_provider">ram</property>
+         </indexing>
+      </local-cache>
+   </cache-container>
 </infinispan>
 
 ----
@@ -213,7 +213,7 @@ Assert.assertEquals(cq.getResultSize(), 1);
 ----
 
 === Cache modes and managing indexes
-Index management is currently controlled by the _Configuration.setIndexLocalOnly()_ setter, or the `<indexing indexLocalOnly="true" />` XML element. If you set this to true, only modifications made locally on each node are considered in indexing. Otherwise, remote changes are considered too. 
+Index management is currently controlled by the _Configuration.setIndexLocalOnly()_ setter, or the `<indexing index="LOCAL" />` XML element. If you set this to true, only modifications made locally on each node are considered in indexing. Otherwise, remote changes are considered too.
 
 Regarding actually configuring a Lucene directory, refer to the link:$$http://docs.jboss.org/hibernate/stable/search/reference/en-US/html_single/#search-configuration$$[Hibernate Search documentation] on how to pass in the appropriate Lucene configuration via the Properties object passed to QueryHelper. 
 
@@ -258,7 +258,7 @@ SearchManager searchManager = Search.getSearchManager(cache);
 searchManager.getMassIndexer().start();
 ----
 
-TIP: This is also available as a `start` JMX operation on the link:$$http://docs.jboss.org/infinispan/6.0/apidocs/jmxComponents.html#MassIndexer$$[MassIndexer MBean]
+TIP: This is also available as a `start` JMX operation on the link:$$http://docs.jboss.org/infinispan/7.0/apidocs/jmxComponents.html#MassIndexer$$[MassIndexer MBean]
 registered under the name `org.infinispan:type=Query,manager="{name-of-cache-manager}",cache="{name-of-cache}",component=MassIndexer`.
 
 === Obtaining query statistics
@@ -344,7 +344,7 @@ Constructing a query is a hierarchical process of composing multiple criteria an
 The simplest possible form of a query criteria is a restriction on the values of an entity attribute according to a
 filtering operator that accepts zero or more arguments. The entity attribute is specified by invoking the
 `having(String attributePath)` method of the query builder which returns an intermediate context object
-(link:$$http://docs.jboss.org/infinispan/6.0/apidocs/org/infinispan/query/dsl/FilterConditionEndContext.html$$[_FilterConditionEndContext_])
+(link:$$http://docs.jboss.org/infinispan/7.0/apidocs/org/infinispan/query/dsl/FilterConditionEndContext.html$$[_FilterConditionEndContext_])
 that exposes all the available operators. Each of the methods defined by _FilterConditionEndContext_ is an operator that
 accepts an argument, except for `between` which has two arguments and `isNull` which has no arguments. The arguments are
 statically evaluated at the time the query is constructed, so if you're looking for a feature similar to SQL's
@@ -533,6 +533,6 @@ TODO Does pagination make sense if no stable sort criteria is defined? Luckily w
 === Usage samples
 
 Probably the best way to explore using the new API is to look at our tests suite.
-link:$$https://github.com/infinispan/infinispan/blob/6.0.0.CR1/query/src/test/java/org/infinispan/query/dsl/embedded/QueryDslConditionsTest.java$$[QueryDslConditionsTest]
+link:$$https://github.com/infinispan/infinispan/blob/6.0.0.Final/query/src/test/java/org/infinispan/query/dsl/embedded/QueryDslConditionsTest.java$$[QueryDslConditionsTest]
 is a fine example.
 

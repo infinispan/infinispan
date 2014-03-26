@@ -29,12 +29,12 @@
                     listener-executor="listener" replication-queue-executor="replication-queue" persistence-executor="persistence" eviction-executor="eviction">
       <transport stack="udp" cluster="infinispan-cluster" lock-timeout="50000" node-name="Jalapeno" machine="m1" rack="r1" site="s1"
                  executor="transport" total-order-executor="total" remote-command-executor="remote" />
-      <jmx domain="funky_domain" mbean-server-lookup="org.infinispan.jmx.PerThreadMBeanServerLookup" duplicate-domains="true" />
       <serialization marshaller="org.infinispan.marshall.core.VersionAwareMarshaller" version="1.0">
          <advanced-externalizer id="1234" class="org.infinispan.marshall.AdvancedExternalizerTest$IdViaConfigObj$Externalizer"/>
          <advanced-externalizer class="org.infinispan.marshall.AdvancedExternalizerTest$IdViaAnnotationObj$Externalizer"/>
          <advanced-externalizer id="3456" class="org.infinispan.marshall.AdvancedExternalizerTest$IdViaBothObj$Externalizer"/>
       </serialization>
+      <jmx domain="funky_domain" mbean-server-lookup="org.infinispan.jmx.PerThreadMBeanServerLookup" duplicate-domains="true" />
       <local-cache name="default" statistics="false">
          <locking concurrency-level="100" acquire-timeout="1000"/>
          <transaction mode="NONE" complete-timeout="3123" reaper-interval="123"/>

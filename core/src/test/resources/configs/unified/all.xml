@@ -1,4 +1,7 @@
-<infinispan>
+<infinispan
+      xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+      xsi:schemaLocation="urn:infinispan:config:7.0 http://www.infinispan.org/schemas/infinispan-config-7.0.xsd"
+      xmlns="urn:infinispan:config:7.0">
    <jgroups>
       <stack-file name="udp" path="jgroups-udp.xml"/>
       <stack-file name="tcp" path="jgroups-tcp.xml"/>
@@ -57,7 +60,9 @@
          <expiration interval="11500" lifespan="13" max-idle="13"/>
          <state-transfer enabled="true" timeout="60500" chunk-size="10500" />
          <backups>
-            <backup site="NYC" failure-policy="WARN" strategy="SYNC" timeout="12500" enabled="false"/>
+            <backup site="NYC" failure-policy="WARN" strategy="SYNC" timeout="12500" enabled="false">
+               <state-transfer chunk-size="600" timeout="2400000"/>
+            </backup>
             <backup site="SFO" failure-policy="IGNORE" strategy="ASYNC" timeout="13000" enabled="true"/>
             <backup site="LON" failure-policy="FAIL" strategy="SYNC" timeout="13500" enabled="true">
                <take-offline after-failures="3" min-wait="10000"/>
@@ -76,7 +81,7 @@
          <transaction mode="NON_XA"/>
          <eviction strategy="NONE" max-entries="-1"/>
          <persistence passivation="true">
-            <store class="org.infinispan.persistence.dummy.DummyInMemoryStoreConfigurationBuilder" />
+            <store class="org.infinispan.persistence.dummy.DummyInMemoryStore" />
          </persistence>
       </replicated-cache>
       <replicated-cache name="capedwarf-memcache" mode="ASYNC">

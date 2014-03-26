@@ -47,11 +47,7 @@ The local site is defined in the the global configuration section. The local is 
 [source,xml]
 ----
 
-<global>
-  ...
-  <site local="LON"/>
-  ...
-</global>
+<transport site="LON" />
 
 ----
 
@@ -71,29 +67,27 @@ The names of the site (case sensitive) should match the name of a site as define
 [source,xml]
 ----
 
-<namedCache name="users">
-   <sites>
-     <backups>
-       <backup site="NYC" backupFailurePolicy="WARN" strategy="SYNC" timeout="12000"/>
-       <backup site="SFO" backupFailurePolicy="IGNORE" strategy="ASYNC"/>
-       <backup site="LON" strategy="SYNC" enabled="false"/>
-     </backups>
-  </sites>
-</namedCache>
+<distributed-cache name="users">
+  <backups>
+    <backup site="NYC" failure-policy="WARN" strategy="SYNC" timeout="12000"/>
+    <backup site="SFO" failure-policy="IGNORE" strategy="ASYNC"/>
+    <backup site="LON" strategy="SYNC" enabled="false"/>
+  </backups>
+</distributed-cache>
 
 ----
 
 The "users" cache backups its data to the "NYC" and "SFO" sites. Even though the "LON" appears as a backup site, it has the "enabled" attribute set to _false_ so it will be ignored . For each site backup, the following configuration attributes can be specified: 
 
 
-* strategy - the strategy used for backing up data, either "SYNC" or "ASYNC". Defaults to "ASYNC"
-* backupFailurePolicy - Decides what the system would do in case of failure during backup. Possible values are:
-** IGNORE - allow the local operation/transaction to succeed
-** WARN - same as IGNORE but also logs a warning message. Default.
-** FAIL - only in effect if "strategy" is "SYNC" - fails local cluster operation/transaction by throwing an exception to the user
-** CUSTOM - user provided, see "failurePolicyClass" below
+* _strategy_ - the strategy used for backing up data, either "SYNC" or "ASYNC". Defaults to "ASYNC"
+* _failure-policy_ - Decides what the system would do in case of failure during backup. Possible values are:
+** _IGNORE_ - allow the local operation/transaction to succeed
+** _WARN_ - same as IGNORE but also logs a warning message. Default.
+** _FAIL_ - only in effect if "strategy" is "SYNC" - fails local cluster operation/transaction by throwing an exception to the user
+** _CUSTOM_ - user provided, see "failurePolicyClass" below
 
-* failurePolicyClass - If the 'backupFailurePolicy' is set to 'CUSTOM' then this attribute is required and should contain the fully qualified name of a class implementing org.infinispan.xsite.CustomFailurePolicy
+* failurePolicyClass - If the 'failure-policy' is set to 'CUSTOM' then this attribute is required and should contain the fully qualified name of a class implementing org.infinispan.xsite.CustomFailurePolicy
 * timeout - The timeout(milliseconds) to be used when backing up data remotely. Defaults to 10000 (10 seconds)
 
 The same setup can be achieved programatically:
@@ -123,11 +117,11 @@ The "users" cache above doesn't know on which cache on the remote sites its data
 ----
 
 <infinispan>
-  <namedCache name="usersLONBackup">
-    <sites>
-      <backupFor remoteCache="users" remoteSite="LON"/>
-    </sites>
-  </namedCache>
+  <cache-container default-cache="">
+     <distributed-cache name="usersLONBackup">
+        <backup-for remote-cache="users" remote-site="LON"/>
+     </distributed-cache>
+  </cache-container>
 </infinispan>
 
 ----
@@ -149,19 +143,17 @@ This is the configuration file for the local (intra-site) infinispan cluster. It
 .infinispan.xml
 [source,xml]
 ----
-
 <infinispan>
-..
-  <global>
-    <transport clusterName="infinispan-cluster">
-      <properties>
-        <property name="configurationFile" value="jgroups.xml"/>
-      </properties>
-    </transport>
-  </global>
-..
-</infinispan>
+  <jgroups>
+     <stack-file name="external-file" path="jgroups.xml"/>
+  </jgroups>
+  <cache-container>
+    <transport stack="external-file" />
+  </cache-container>
 
+  ...
+
+</infinispan>
 ----
 
 In order to allow inter-site calls, the RELAY2 protocol needs to be added to the protocol stack defined in the jgroups configuration (see attached link:https://gist.github.com/maniksurtani/409fe5ece5fe4bcf679f[jgroups.xml] for an example).
@@ -217,25 +209,23 @@ The taking offline of a site can be configured as follows:
 [source,xml]
 ----
 
-<namedCache name="bestEffortBackup">
+<replicated-cache name="bestEffortBackup">
    ...
-    <sites>
-        <backups>
-           <backup site="NYC" strategy="SYNC" backupFailurePolicy="FAIL">
-               <takeOffline afterFailures="500" minTimeToWait="10000"/>
-           </backup>
-        </backups>
-    </sites>
+   <backups>
+     <backup site="NYC" strategy="SYNC" failure-policy="FAIL">
+         <take-offline after-failures="500" min-wait="10000"/>
+     </backup>
+   </backups>
     ...
-</namedCache>
+</replicated-cache>
 
 ----
 
-The _takeOfline_ element under the _backup_ configures the taking offline of a site:
+The _take-offline_ element under the _backup_ configures the taking offline of a site:
 
-* _afterFailure_ - the number of failed backup operations after which this site should be taken offline. Defaults to 0 (never). A negative value would mean that the site will be taken offline after _minTimeToWait_
+* _after-failures_ - the number of failed backup operations after which this site should be taken offline. Defaults to 0 (never). A negative value would mean that the site will be taken offline after _minTimeToWait_
 
-* _minTimeToWait_ - the number of milliseconds in which a site is not marked offline even if it is unreachable for 'afterFailures' number of times. If smaller or equal to 0, then only _afterFailures_ is considered.
+* _min-wait_ - the number of milliseconds in which a site is not marked offline even if it is unreachable for 'afterFailures' number of times. If smaller or equal to 0, then only _afterFailures_ is considered.
 
 The equivalent programmatic configuration is:
 
@@ -294,17 +284,15 @@ below are the default values:
 [source,xml]
 ----
 
-<namedCache name="xSiteStateTransfer">
+<replicated-cache name="xSiteStateTransfer">
    ...
-    <sites>
-        <backups>
-           <backup site="NYC" strategy="SYNC" backupFailurePolicy="FAIL">
-               <stateTransfer chunkSize="512" timeout="1200000" />
-           </backup>
-        </backups>
-    </sites>
+   <backups>
+      <backup site="NYC" strategy="SYNC" failure-policy="FAIL">
+         <state-transfer chunk-size="512" timeout="1200000" />
+      </backup>
+   </backups>
     ...
-</namedCache>
+</replicated-cache>
 
 ----
 
@@ -330,15 +318,6 @@ Below, it is the parameters description:
 
 * _timeout_ - The time (in milliseconds) to wait for the consumer site acknowledge the reception and appliance of a
 state chunk. A negative or zero value is *not* a valid value. Default value is 20 minutes.
-
-==== Release Notes
-
-===== 7.0.0.Alpha2
-
-This release only contains the basic behavior to transfer the state. It's assumed that no nodes will join or leave (crash) either
-in local or backup site. Also, it assumes a reliable links between sites.
-
-For the moment, it is not possible to cancel the state transfer.
 
 [[x-site-reference]]
 === Reference

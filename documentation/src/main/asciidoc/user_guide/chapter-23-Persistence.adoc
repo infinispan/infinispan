@@ -12,7 +12,7 @@ The integration with the persistent store is done through the following SPI: Cac
 
 This SPI was refactored in Infinispan 6. It brings the following improvements over the previous (up to 5.x) persistence integration::
 
-* Alignment with link:$$http://jcp.org/en/jsr/detail?id=107$$[JSR-107]. The link:$$http://docs.jboss.org/infinispan/6.0/apidocs/org/infinispan/persistence/spi/CacheWriter.html$$[CacheWriter] and link:$$http://docs.jboss.org/infinispan/6.0/apidocs/org/infinispan/persistence/spi/CacheLoader.html$$[CacheLoader] interface are similar to the the loader and writer in JSR 107. This should considerably help writing portable stores across JCache compliant vendors.
+* Alignment with link:$$http://jcp.org/en/jsr/detail?id=107$$[JSR-107]. The link:$$http://docs.jboss.org/infinispan/7.0/apidocs/org/infinispan/persistence/spi/CacheWriter.html$$[CacheWriter] and link:$$http://docs.jboss.org/infinispan/7.0/apidocs/org/infinispan/persistence/spi/CacheLoader.html$$[CacheLoader] interface are similar to the the loader and writer in JSR 107. This should considerably help writing portable stores across JCache compliant vendors.
 
 * Simplified Transaction Integration. All necessary locking is handled by Infinispan automatically and implementations don’t have to be concerned with coordinating concurrent access to the store. Even though concurrent writes on the same key are not going to happen (depending locking mode in use), implementors should expect operations on the store to happen from multiple/different threads and code the implementation accordingly.
 
@@ -43,21 +43,21 @@ image::images/Figure2_1_persistence_API.png[]
 
 Some notes about the classes:
 
-* link:$$http://docs.jboss.org/infinispan/6.0/apidocs/org/infinispan/commons/io/ByteBuffer.html$$[ByteBuffer] - abstracts the serialized form of an object
+* link:$$http://docs.jboss.org/infinispan/7.0/apidocs/org/infinispan/commons/io/ByteBuffer.html$$[ByteBuffer] - abstracts the serialized form of an object
 
-* link:$$http://docs.jboss.org/infinispan/6.0/apidocs/org/infinispan/persistence/spi/MarshalledEntry.html$$[MarshalledEntry] - abstracts the information held within
-  a persistent store corresponding to a key-value added to the cache. Provides method for reading this information both in serialized (link:$$http://docs.jboss.org/infinispan/6.0/apidocs/org/infinispan/commons/io/ByteBuffer.html$$[ByteBuffer]) and deserialized (Object) format. Normally data read from the store is kept in serialized format and lazily deserialized on demand, within the
-  link:$$http://docs.jboss.org/infinispan/6.0/apidocs/org/infinispan/persistence/spi/MarshalledEntry.html$$[MarshalledEntry] implementation
+* link:$$http://docs.jboss.org/infinispan/7.0/apidocs/org/infinispan/persistence/spi/MarshalledEntry.html$$[MarshalledEntry] - abstracts the information held within
+  a persistent store corresponding to a key-value added to the cache. Provides method for reading this information both in serialized (link:$$http://docs.jboss.org/infinispan/7.0/apidocs/org/infinispan/commons/io/ByteBuffer.html$$[ByteBuffer]) and deserialized (Object) format. Normally data read from the store is kept in serialized format and lazily deserialized on demand, within the
+  link:$$http://docs.jboss.org/infinispan/7.0/apidocs/org/infinispan/persistence/spi/MarshalledEntry.html$$[MarshalledEntry] implementation
 
-* link:$$http://docs.jboss.org/infinispan/6.0/apidocs/org/infinispan/persistence/spi/CacheWriter.html$$[CacheWriter] and link:$$http://docs.jboss.org/infinispan/6.0/apidocs/org/infinispan/persistence/spi/CacheLoader.html$$[CacheLoader] provide basic methods for reading and writing to a store
+* link:$$http://docs.jboss.org/infinispan/7.0/apidocs/org/infinispan/persistence/spi/CacheWriter.html$$[CacheWriter] and link:$$http://docs.jboss.org/infinispan/7.0/apidocs/org/infinispan/persistence/spi/CacheLoader.html$$[CacheLoader] provide basic methods for reading and writing to a store
 
-* link:$$http://docs.jboss.org/infinispan/6.0/apidocs/org/infinispan/persistence/spi/AdvancedCacheLoader.html$$[AdvancedCacheLoader] and link:$$http://docs.jboss.org/infinispan/6.0/apidocs/org/infinispan/persistence/spi/AdvancedCacheWriter.html$$[AdvancedCacheWriter] provide operations to manipulate the underlaying storage in bulk: parallel iteration and purging of expired entries, clear and size.
+* link:$$http://docs.jboss.org/infinispan/7.0/apidocs/org/infinispan/persistence/spi/AdvancedCacheLoader.html$$[AdvancedCacheLoader] and link:$$http://docs.jboss.org/infinispan/7.0/apidocs/org/infinispan/persistence/spi/AdvancedCacheWriter.html$$[AdvancedCacheWriter] provide operations to manipulate the underlaying storage in bulk: parallel iteration and purging of expired entries, clear and size.
 
 A provider might choose to only implement a subset of these interfaces:
 
-* Not implementing the  link:$$http://docs.jboss.org/infinispan/6.0/apidocs/org/infinispan/persistence/spi/AdvancedCacheWriter.html$$[AdvancedCacheWriter] makes the given writer not usable for purging expired entries or clear
+* Not implementing the  link:$$http://docs.jboss.org/infinispan/7.0/apidocs/org/infinispan/persistence/spi/AdvancedCacheWriter.html$$[AdvancedCacheWriter] makes the given writer not usable for purging expired entries or clear
 
-* Not implementing  the link:$$http://docs.jboss.org/infinispan/6.0/apidocs/org/infinispan/persistence/spi/AdvancedCacheWriter.html$$[AdvancedCacheLoader] makes the information stored in the given loader not used for preloading, nor for the map/reduce iteration
+* Not implementing  the link:$$http://docs.jboss.org/infinispan/7.0/apidocs/org/infinispan/persistence/spi/AdvancedCacheWriter.html$$[AdvancedCacheLoader] makes the information stored in the given loader not used for preloading, nor for the map/reduce iteration
 
 If you're looking at migrating your existing store to the new API or to write a new store implementation, the link:$$https://github.com/infinispan/infinispan/blob/master/core/src/main/java/org/infinispan/persistence/file/SingleFileStore.java$$[SingleFileStore] might be a good starting point/example.
 
@@ -65,32 +65,24 @@ If you're looking at migrating your existing store to the new API or to write a 
 Stores (readers and/or writers) can be configured in a chain. Cache read operation looks at all of the specified `CacheLoader` s, in the order they are configured, until it finds a valid and non-null element of data. When performing writes all cache `CacheWriter` s are written to, except if the `ignoreModifications` element has been set to true for a specific cache writer.
 
 .Implementing both a CacheWriter and CacheLoader
-IMPORTANT: it is possible and recommended for a store provider to implement both the `CacheWriter` and the `CacheLoader` interface. The stores that do this are considered both for reading and writing(assuming `ignoreModifications=false`) data.
+IMPORTANT: it is possible and recommended for a store provider to implement both the `CacheWriter` and the `CacheLoader` interface. The stores that do this are considered both for reading and writing(assuming `read-only=false`) data.
 
 [source,xml]
 ----
 This is the configuration of a custom(not shipped with infinispan) store:
-   <namedCache name="myCustomStore">
+   <local-cache name="myCustomStore">
       <persistence passivation="false">
          <store
             class="org.acme.CustomStore"
-            fetchPersistentState="false" preload="true" shared="false"
-            purgeOnStartup="true" ignoreModifications="false">
+            fetch-state="false" preload="true" shared="false"
+            purge="true" read-only="false" singleton="false">
 
-            <async enabled="true" flushLockTimeout="12321" shutdownTimeout="321" modificationQueueSize="123" threadPoolSize="23"/>
+            <write-behind flush-lock-timeout="12321" modification-queue-size="123" shutdown-timeout="321" thread-pool-size="23" />
 
-            <properties>
-               <property name="myProp" value="${system.property}"/>
-            </properties>
-
-            <singletonStore
-                 enabled="true"
-                 pushStateWhenCoordinator="true"
-                 pushStateTimeout="20000" />
-
+            <property name="myProp">${system.property}</property>
          </store>
       </persistence>
-   </namedCache>
+   </local-cache>
 
 ----
 
@@ -100,23 +92,21 @@ Explanation of the configuration options:
 
 * `class` defines the class of the store and must implement CacheLoader, CacheWriter or both
 
-* `fetchPersistentState` (false by default) determines whether or not to fetch the persistent state of a cache when joining a cluster. The aim here is to take the persistent state of a cache and apply it to the local cache store of the joining node. Fetch persistent state is ignored if a cache store is configured to be shared, since they access the same data. Only one configured cache loader may set this property to true; if more than one cache loader does so, a configuration exception will be thrown when starting your cache service.
+* `fetch-state` (false by default) determines whether or not to fetch the persistent state of a cache when joining a cluster. The aim here is to take the persistent state of a cache and apply it to the local cache store of the joining node. Fetch persistent state is ignored if a cache store is configured to be shared, since they access the same data. Only one configured cache loader may set this property to true; if more than one cache loader does so, a configuration exception will be thrown when starting your cache service.
 
 * `preload` (false by default) if true, when the cache starts, data stored in the cache loader will be pre-loaded into memory. This is particularly useful when data in the cache loader is needed immediately after startup and you want to avoid cache operations being delayed as a result of loading this data lazily. Can be used to provide a 'warm-cache' on startup, however there is a performance penalty as startup time is affected by this process. Note that preloading is done in a local fashion, so any data loaded is only stored locally in the node. No replication or distribution of the preloaded data happens. Also, Infinispan only preloads up to the maximum configured number of entries in <<eviction_anchor,eviction>>.
 
 * `shared` (false by default) indicates that the cache loader is shared among different cache instances, for example where all instances in a cluster use the same JDBC settings to talk to the same remote, shared database. Setting this to true prevents repeated and unnecessary writes of the same data to the cache loader by different cache instances.
 
-* `purgeOnStartup`(false by default) empties the specified cache loader (if ignoreModifications is false) when the cache loader starts up.
+* `purge`(false by default) empties the specified cache loader (if `read-only` is false) when the cache loader starts up.
 
-* `ignoreModifications` (false by default) prevents new data to be persisted to the store.
+* `read-only` (false by default) prevents new data to be persisted to the store.
 
-* `async` (disabled by default) element has to do with a persisting data asynchronously to the actual store. It is discussed in detail <<_write_behind_asynchronous, here>>.
+* `write-behind` (disabled by default) element has to do with a persisting data asynchronously to the actual store. It is discussed in detail <<_write_behind_asynchronous, here>>.
+
+* `singleton` (disabled by default) attribute enables modifications to be stored by only one node in the cluster, the coordinator. Essentially, whenever any data comes in to some node it is always replicated(or distributed) so as to keep the caches in-memory states in sync; the coordinator, though, has the sole responsibility of pushing that state to disk. This functionality must be configured by setting the enabled attribute to true in all nodes. Only the coordinator of the cluster will persist data, but all nodes must have this configured to prevent others from persisting as well. You cannot configure a store as shared and singleton.
 
 * additional attributes can be configures within the `properties` section. These attributes configure aspects specific to each cache loader, e.g. the `myProp` attribute in the previous example. Other loaders, with more complex configuration, also introduce additional sub-elements to the basic configuration. See for example the JDBC cache store configuration examples below
-
-* `singletonStore` (disabled by default) element enables modifications to be stored by only one node in the cluster, the coordinator. Essentially, whenever any data comes in to some node it is always replicated(or distributed) so as to keep the caches in-memory states in sync; the coordinator, though, has the sole responsibility of pushing that state to disk. This functionality must be configured by setting the enabled attribute to true in all nodes. Only the coordinator of the cluster will persist data, but all nodes must have this configured to prevent others from persisting as well. You cannot configure a store as shared and singleton.
-
-* `pushStateWhenCoordinator` (true by default) If true, when a node becomes the coordinator, it will transfer in-memory state to the underlying cache loader. This can be very useful in situations where the coordinator crashes and the new coordinator is elected.
 
 
 The configuration above is used for a generic store implementation. However the store implementation provided by default with Infinispan have a more rich configuration schema, in which the `properties` section is replaced with XML attributes:
@@ -125,19 +115,15 @@ The configuration above is used for a generic store implementation. However the 
 ----
 <persistence passivation="false">
    <!-- note that class is missing and is induced by the fileStore element name -->
-   <singleFile
+   <file-store
            shared="false" preload="true"
-           fetchPersistentState="true"
-           purgerThreads="3"
-           ignoreModifications="false"
-           purgeOnStartup="false"
-           location="${java.io.tmpdir}">
-      <async
-           enabled="true"
-           flushLockTimeout="15000"
-           threadPoolSize="5" />
-   </singleFile>
-</loaders>
+           fetch-state="true"
+           read-only="false"
+           purge="false"
+           path="${java.io.tmpdir}">
+      <write-behind flush-lock-timeout="15000" thread-pool-size="5" />
+   </file-store>
+</persistence>
 
 ----
 
@@ -222,19 +208,11 @@ Configuring a write-through or synchronous cache store does not require any part
 
 [source,xml]
 ----
-<?xml version="1.0" encoding="UTF-8"?>
-<infinispan
-      xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-      xsi:schemaLocation="urn:infinispan:config:6.0 http://www.infinispan.org/schemas/infinispan-config-6.0.xsd"
-      xmlns="urn:infinispan:config:6.0">
-   <namedCache name="persistentCache">
-      <persistence passivation="false">
-         <singleFile fetchPersistentState="true"
-                     ignoreModifications="false"
-                     purgeOnStartup="false" location="${java.io.tmpdir}"/>
-      </persistence>
-   </namedCache>
-</infinispan>
+<persistence passivation="false">
+   <file-store fetch-state="true"
+               read-only="false"
+               purge="false" path="${java.io.tmpdir}"/>
+         </persistence>
 
 ----
 
@@ -250,24 +228,15 @@ This strategy is suited for cache stores with low latency and cheap operation co
 
 [source,xml]
 ----
-<?xml version="1.0" encoding="UTF-8"?>
-<infinispan
-      xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-      xsi:schemaLocation="urn:infinispan:config:6.0 http://www.infinispan.org/schemas/infinispan-config-6.0.xsd"
-      xmlns="urn:infinispan:config:6.0">
-   <namedCache name="persistentCache">
-      <persistence passivation="false">
-         <singleFile fetchPersistentState="true"
-                     ignoreModifications="false"
-                     purgeOnStartup="false" location="${java.io.tmpdir}">
-            <!-- write behind configuration starts here -->
-            <async enabled="true"/>
-            <!-- write behind configuration ends here -->
-         </singleFile>
-      </persistence>
-   </namedCache>
-</infinispan>
-
+<persistence passivation="false">
+   <file-store fetch-state="true"
+               read-only="false"
+               purge="false" path="${java.io.tmpdir}">
+   <!-- write behind configuration starts here -->
+   <write-behind />
+   <!-- write behind configuration ends here -->
+   </file-store>
+</persistence>
 ----
 
 ===== Scheduled Write-Behind Strategy
@@ -308,10 +277,10 @@ phase) cannot be recovered.
 
 These are the available configuration options for the single file cache store:
 
-* `location` where data will be stored. (e.g., `location="/tmp/myDataStore"`).
+* `path` where data will be stored. (e.g., `path="/tmp/myDataStore"`).
 By default, the location is `Infinispan-SingleFileStore`.
 
-* `maxEntries` specifies the maximum number of entries to keep in this file
+* `max-entries` specifies the maximum number of entries to keep in this file
 store. As mentioned before, in order to speed up lookups, the single file
 cache store keeps an index of keys and their corresponding position in the
 file. To avoid this index resulting in memory consumption problems, this
@@ -328,9 +297,9 @@ loss, and hence it's not recommended for this use case. The default value is
 [source,xml]
 ----
 
-<loaders>
-   <singleFile location="/tmp/myDataStore" maxEntries="5000"/>
-</loaders>
+<persistence>
+   <file-store path="/tmp/myDataStore" max-entries="5000"/>
+</persistence>
 
 ----
 
@@ -346,63 +315,50 @@ b.loaders()
 ----
 
 For detailed description of all the parameters supported by the stores,
-please consult the link:$$http://docs.jboss.org/infinispan/6.0/apidocs/$$[javadoc].
+please consult the link:$$http://docs.jboss.org/infinispan/7.0/apidocs/$$[javadoc].
 
 === JDBC based cache loaders
 Based on the type of keys to be persisted, there are three JDBC cache loaders:
 
-*  link:$$http://docs.jboss.org/infinispan/6.0/apidocs/org/infinispan/persistence/jdbc/binary/JdbcBinaryStore.html$$[JdbcBinaryStore] - can store any type of keys. It stores all the keys that have the same hash value (hashCode method on key) in the same table row/blob, having as primary key the hash value. While this offers great flexibility (can store any key type), it impacts concurrency/throughput. E.g. If storing k1,k2 and k3 keys, and keys had same hash code, then they'd persisted in the same table row. Now, if 3 threads try to concurrently update k1, k2 and k3 respectively, they would need to do it sequentially since these threads would be updating the same row.
+*  link:$$http://docs.jboss.org/infinispan/7.0/apidocs/org/infinispan/persistence/jdbc/binary/JdbcBinaryStore.html$$[JdbcBinaryStore] - can store any type of keys. It stores all the keys that have the same hash value (hashCode method on key) in the same table row/blob, having as primary key the hash value. While this offers great flexibility (can store any key type), it impacts concurrency/throughput. E.g. If storing k1,k2 and k3 keys, and keys had same hash code, then they'd persisted in the same table row. Now, if 3 threads try to concurrently update k1, k2 and k3 respectively, they would need to do it sequentially since these threads would be updating the same row.
 
-*  link:$$http://docs.jboss.org/infinispan/6.0/apidocs/org/infinispan/persistence/jdbc/stringbased/JdbcStringBasedStore.html$$[JdbcStringBasedStore] - stores each key in its own row, increasing throughput under concurrent load. In order to store each key in its own column, it relies on a (pluggable) bijection that maps the each key to a String object. The bijection is defined by the Key2StringMapper interface. Infinispans ships a default implementation (smartly named link:$$http://docs.jboss.org/infinispan/6.0/apidocs/org/infinispan/persistence/keymappers/DefaultTwoWayKey2StringMapper.html$$[DefaultTwoWayKey2StringMapper] ) that knows how to handle primitive types.
+*  link:$$http://docs.jboss.org/infinispan/7.0/apidocs/org/infinispan/persistence/jdbc/stringbased/JdbcStringBasedStore.html$$[JdbcStringBasedStore] - stores each key in its own row, increasing throughput under concurrent load. In order to store each key in its own column, it relies on a (pluggable) bijection that maps the each key to a String object. The bijection is defined by the Key2StringMapper interface. Infinispans ships a default implementation (smartly named link:$$http://docs.jboss.org/infinispan/7.0/apidocs/org/infinispan/persistence/keymappers/DefaultTwoWayKey2StringMapper.html$$[DefaultTwoWayKey2StringMapper] ) that knows how to handle primitive types.
 
-*  link:$$http://docs.jboss.org/infinispan/6.0/apidocs/org/infinispan/persistence/jdbc/mixed/JdbcMixedStore.html$$[JdbcMixedStore] - it is a hybrid implementation that, based on the key type, delegates to either link:$$http://docs.jboss.org/infinispan/6.0/apidocs/org/infinispan/persistence/jdbc/binary/JdbcBinaryStore.html$$[JdbcBinaryStore] or link:$$http://docs.jboss.org/infinispan/6.0/apidocs/org/infinispan/persistence/jdbc/stringbased/JdbcStringBasedStore.html$$[JdbcStringBasedStore].
+*  link:$$http://docs.jboss.org/infinispan/7.0/apidocs/org/infinispan/persistence/jdbc/mixed/JdbcMixedStore.html$$[JdbcMixedStore] - it is a hybrid implementation that, based on the key type, delegates to either link:$$http://docs.jboss.org/infinispan/7.0/apidocs/org/infinispan/persistence/jdbc/binary/JdbcBinaryStore.html$$[JdbcBinaryStore] or link:$$http://docs.jboss.org/infinispan/7.0/apidocs/org/infinispan/persistence/jdbc/stringbased/JdbcStringBasedStore.html$$[JdbcStringBasedStore].
 
 ==== Which JDBC cache loader should I use?
 
-It is generally preferable to use link:$$http://docs.jboss.org/infinispan/6.0/apidocs/org/infinispan/loaders/jdbc/stringbased/JdbcStringBasedCacheStore.html$$[JdbcStringBasedCacheStore] when you are in control of the key types, as it offers better throughput under heavy load. One scenario in which it is not possible to use it though, is when you can't write a link:$$http://docs.jboss.org/infinispan/6.0/apidocs/org/infinispan/persistence/keymappers/Key2StringMapper.html$$[Key2StringMapper] to map the keys to to string objects (e.g. when you don't have control over the types of the keys, for whatever reason). Then you should use either link:$$http://docs.jboss.org/infinispan/6.0/apidocs/org/infinispan/persistence/jdbc/binary/JdbcBinaryStore.html$$[JdbcBinaryStore] or link:$$http://docs.jboss.org/infinispan/6.0/apidocs/org/infinispan/persistence/jdbc/mixed/JdbcMixedStore.html$$[JdbcMixedStore] . The later is preferred to the former when the majority of the keys are handled by link:$$http://docs.jboss.org/infinispan/6.0/apidocs/org/infinispan/persistence/jdbc/stringbased/JdbcStringBasedStore.html$$[JdbcStringBasedStore] , but you still have some keys you cannot convert through link:$$http://docs.jboss.org/infinispan/6.0/apidocs/org/infinispan/persistence/keymappers/DefaultTwoWayKey2StringMapper.html$$[DefaultTwoWayKey2StringMapper].
+It is generally preferable to use link:$$http://docs.jboss.org/infinispan/7.0/apidocs/org/infinispan/loaders/jdbc/stringbased/JdbcStringBasedCacheStore.html$$[JdbcStringBasedCacheStore] when you are in control of the key types, as it offers better throughput under heavy load. One scenario in which it is not possible to use it though, is when you can't write a link:$$http://docs.jboss.org/infinispan/7.0/apidocs/org/infinispan/persistence/keymappers/Key2StringMapper.html$$[Key2StringMapper] to map the keys to to string objects (e.g. when you don't have control over the types of the keys, for whatever reason). Then you should use either link:$$http://docs.jboss.org/infinispan/7.0/apidocs/org/infinispan/persistence/jdbc/binary/JdbcBinaryStore.html$$[JdbcBinaryStore] or link:$$http://docs.jboss.org/infinispan/7.0/apidocs/org/infinispan/persistence/jdbc/mixed/JdbcMixedStore.html$$[JdbcMixedStore] . The later is preferred to the former when the majority of the keys are handled by link:$$http://docs.jboss.org/infinispan/7.0/apidocs/org/infinispan/persistence/jdbc/stringbased/JdbcStringBasedStore.html$$[JdbcStringBasedStore] , but you still have some keys you cannot convert through link:$$http://docs.jboss.org/infinispan/7.0/apidocs/org/infinispan/persistence/keymappers/DefaultTwoWayKey2StringMapper.html$$[DefaultTwoWayKey2StringMapper].
 
 ==== Connection management (pooling)
-In order to obtain a connection to the database all the JDBC cache loaders rely on a link:$$http://docs.jboss.org/infinispan/6.0/apidocs/org/infinispan/loaders/jdbc/connectionfactory/ConnectionFactory.html$$[ConnectionFactory] implementation. The connection factory is specified programmatically using one of the connectionPool(), dataSource() or simpleConnection() methods on the JdbcBinaryCacheStoreConfigurationBuilder class or declaratively using one of the `<connectionPool />`, `<dataSource />` or `<simpleConnection />` elements. Infinispan ships with three ConnectionFactory implementations:
+In order to obtain a connection to the database all the JDBC cache loaders rely on a link:$$http://docs.jboss.org/infinispan/7.0/apidocs/org/infinispan/loaders/jdbc/connectionfactory/ConnectionFactory.html$$[ConnectionFactory] implementation. The connection factory is specified programmatically using one of the connectionPool(), dataSource() or simpleConnection() methods on the JdbcBinaryCacheStoreConfigurationBuilder class or declaratively using one of the `<connectionPool />`, `<dataSource />` or `<simpleConnection />` elements. Infinispan ships with three ConnectionFactory implementations:
 
 
-*  link:$$http://docs.jboss.org/infinispan/6.0/apidocs/org/infinispan/persistence/jdbc/connectionfactory/PooledConnectionFactory.html$$[PooledConnectionFactory] is a factory based on link:$$http://sourceforge.net/projects/c3p0/$$[C3P0] . Refer to link:$$http://docs.jboss.org/infinispan/6.0/apidocs/org/infinispan/persistence/jdbc/connectionfactory/PooledConnectionFactory.html$$[javadoc] for details on configuring it.
+*  link:$$http://docs.jboss.org/infinispan/7.0/apidocs/org/infinispan/persistence/jdbc/connectionfactory/PooledConnectionFactory.html$$[PooledConnectionFactory] is a factory based on link:$$http://sourceforge.net/projects/c3p0/$$[C3P0] . Refer to link:$$http://docs.jboss.org/infinispan/7.0/apidocs/org/infinispan/persistence/jdbc/connectionfactory/PooledConnectionFactory.html$$[javadoc] for details on configuring it.
 
 
-*  link:$$http://docs.jboss.org/infinispan/6.0/apidocs/org/infinispan/persistence/jdbc/connectionfactory/ManagedConnectionFactory.html$$[ManagedConnectionFactory] is a connection factory that can be used within managed environments, such as application servers. It knows how to look into the JNDI tree at a certain location (configurable) and delegate connection management to the DataSource. Refer to javadoc link:$$http://docs.jboss.org/infinispan/6.0/apidocs/org/infinispan/persistence/jdbc/connectionfactory/ManagedConnectionFactory.html$$[javadoc] for details on how this can be configured.
+*  link:$$http://docs.jboss.org/infinispan/7.0/apidocs/org/infinispan/persistence/jdbc/connectionfactory/ManagedConnectionFactory.html$$[ManagedConnectionFactory] is a connection factory that can be used within managed environments, such as application servers. It knows how to look into the JNDI tree at a certain location (configurable) and delegate connection management to the DataSource. Refer to javadoc link:$$http://docs.jboss.org/infinispan/7.0/apidocs/org/infinispan/persistence/jdbc/connectionfactory/ManagedConnectionFactory.html$$[javadoc] for details on how this can be configured.
 
 
-*  link:$$http://docs.jboss.org/infinispan/6.0/apidocs/org/infinispan/persistence/jdbc/connectionfactory/SimpleConnectionFactory.html$$[SimpleConnectionFactory] is a factory implementation that will create database connection on a per invocation basis. Not recommended in production.
+*  link:$$http://docs.jboss.org/infinispan/7.0/apidocs/org/infinispan/persistence/jdbc/connectionfactory/SimpleConnectionFactory.html$$[SimpleConnectionFactory] is a factory implementation that will create database connection on a per invocation basis. Not recommended in production.
 
 The `PooledConnectionFactory` is generally recommended for stand-alone deployments (i.e. not running within AS or servlet container). `ManagedConnectionFactory` can be used when running in a managed environment where a `DataSource` is present, so that connection pooling is performed within the `DataSource`.
 
 ==== Sample configurations
-Below is a sample configuration for the link:$$http://docs.jboss.org/infinispan/6.0/apidocs/org/infinispan/persistence/jdbc/binary/JdbcBinaryStore.html$$[JdbcBinaryStore] . For detailed description of all the parameters used refer to the link:$$http://docs.jboss.org/infinispan/6.0/apidocs/org/infinispan/persistence/jdbc/binary/JdbcBinaryStore.html$$[JdbcBinaryStore] .  Please note the use of multiple XML schemas, since each store has its own schema.
+Below is a sample configuration for the link:$$http://docs.jboss.org/infinispan/7.0/apidocs/org/infinispan/persistence/jdbc/binary/JdbcBinaryStore.html$$[JdbcBinaryStore] . For detailed description of all the parameters used refer to the link:$$http://docs.jboss.org/infinispan/7.0/apidocs/org/infinispan/persistence/jdbc/binary/JdbcBinaryStore.html$$[JdbcBinaryStore] .  Please note the use of multiple XML schemas, since each store has its own schema.
 
 [source,xml]
 ----
-<?xml version="1.0" encoding="UTF-8"?>
-<infinispan
-   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-   xsi:schemaLocation="urn:infinispan:config:6.0 http://www.infinispan.org/schemas/infinispan-config-6.0.xsd
-                       urn:infinispan:config:jdbc:6.0 http://www.infinispan.org/schemas/infinispan-cachestore-jdbc-config-6.0.xsd"
-   xmlns="urn:infinispan:config:6.0"
-   xmlns:jdbc="urn:infinispan:config:jdbc:6.0" >
-
-   <persistence>
-      <binaryKeyedJdbcStore fetchPersistentState="false"
-              ignoreModifications="false" purgeOnStartup="false">
-         <simpleConnection connectionUrl="jdbc:h2:mem:infinispan_binary_based;DB_CLOSE_DELAY=-1" driverClass="org.h2.Driver" username="sa"/>
-         <binaryKeyedTable prefix="ISPN_BUCKET_TABLE" createOnStart="true" dropOnExit="true">
-            <idColumn name="ID_COLUMN" type="VARCHAR(255)" />
-            <dataColumn name="DATA_COLUMN" type="BINARY" />
-            <timestampColumn name="TIMESTAMP_COLUMN" type="BIGINT" />
-         </binaryKeyedTable>
-      </binaryKeyedJdbcStore>
-   </persistence>
-
- :
-
-</infinispan>
+<persistence>
+   <binary-keyed-jdbc-store fetch-state="false" read-only="false" purge="false">
+      <simple-connection connection-url="jdbc:h2:mem:infinispan_binary_based;DB_CLOSE_DELAY=-1" driver="org.h2.Driver" username="sa"/>
+      <binary-keyed-table prefix="ISPN_BUCKET_TABLE" drop-on-exit="true" create-on-start="true">
+         <id-column name="ID_COLUMN" type="VARCHAR(255)" />
+         <data-column name="DATA_COLUMN" type="BINARY" />
+         <timestamp-column name="TIMESTAMP_COLUMN" type="BIGINT" />
+      </binary-keyed-table>
+   </binary-keyed-jdbc-store>
+</persistence>
 
 ----
 
@@ -429,19 +385,19 @@ builder.persistence()
 
 ----
 
-Below is a sample configuration for the link:$$http://docs.jboss.org/infinispan/6.0/apidocs/org/infinispan/persistence/jdbc/stringbased/JdbcStringBasedStore.html$$[JdbcStringBasedStore] . For detailed description of all the parameters used refer to the link:$$http://docs.jboss.org/infinispan/6.0/apidocs/org/infinispan/persistence/jdbc/stringbased/JdbcStringBasedStore.html$$[JdbcStringBasedStore] .
+Below is a sample configuration for the link:$$http://docs.jboss.org/infinispan/7.0/apidocs/org/infinispan/persistence/jdbc/stringbased/JdbcStringBasedStore.html$$[JdbcStringBasedStore] . For detailed description of all the parameters used refer to the link:$$http://docs.jboss.org/infinispan/7.0/apidocs/org/infinispan/persistence/jdbc/stringbased/JdbcStringBasedStore.html$$[JdbcStringBasedStore] .
 
 [source,xml]
 ----
 <persistence>
-   <stringKeyedJdbcStore fetchPersistentState="false" ignoreModifications="false" purgeOnStartup="false">
-      <connectionPool connectionUrl="jdbc:h2:mem:infinispan_string_based;DB_CLOSE_DELAY=-1" username="sa" driverClass="org.h2.Driver"/>
-      <stringKeyedTable dropOnExit="true" createOnStart="true" prefix="ISPN_STRING_TABLE">
-         <idColumn name="ID_COLUMN" type="VARCHAR(255)" />
-         <dataColumn name="DATA_COLUMN" type="BINARY" />
-         <timestampColumn name="TIMESTAMP_COLUMN" type="BIGINT" />
-      </stringKeyedTable>
-   </stringKeyedJdbcStore>
+   <string-keyed-jdbc-store fetch-state="false" read-only="false" purge="false">
+      <connection-pool connection-url="jdbc:h2:mem:infinispan_string_based;DB_CLOSE_DELAY=-1" username="sa" driver="org.h2.Driver"/>
+      <string-keyed-table drop-on-exit="true" create-on-start="true" prefix="ISPN_STRING_TABLE">
+         <id-column name="ID_COLUMN" type="VARCHAR(255)" />
+         <data-column name="DATA_COLUMN" type="BINARY" />
+         <timestamp-column name="TIMESTAMP_COLUMN" type="BIGINT" />
+      </string-keyed-table>
+   </string-keyed-jdbc-store>
 </persistence>
 
 ----
@@ -468,24 +424,24 @@ builder.persistence().addStore(JdbcStringBasedStoreConfigurationBuilder.class)
 
 ----
 
-Below is a sample configuration for the link:$$http://docs.jboss.org/infinispan/6.0/apidocs/org/infinispan/persistence/jdbc/mixed/JdbcMixedStore.html$$[JdbcMixedStore] . For detailed description of all the parameters used refer to the link:$$http://docs.jboss.org/infinispan/6.0/apidocs/org/infinispan/persistence/jdbc/mixed/JdbcMixedStore.html$$[JdbcMixedStore] .
+Below is a sample configuration for the link:$$http://docs.jboss.org/infinispan/7.0/apidocs/org/infinispan/persistence/jdbc/mixed/JdbcMixedStore.html$$[JdbcMixedStore] . For detailed description of all the parameters used refer to the link:$$http://docs.jboss.org/infinispan/7.0/apidocs/org/infinispan/persistence/jdbc/mixed/JdbcMixedStore.html$$[JdbcMixedStore] .
 
 [source,xml]
 ----
 <persistence>
-   <mixedKeyedJdbcStore fetchPersistentState="false" ignoreModifications="false" purgeOnStartup="false">
-      <simpleConnection connectionUrl="jdbc:h2:mem:infinispan_binary_based;DB_CLOSE_DELAY=-1" driverClass="org.h2.Driver" username="sa"/>
-      <stringKeyedTable prefix="ISPN_MIXED_STR_TABLE" createOnStart="true" dropOnExit="true">
-         <idColumn name="ID_COLUMN" type="VARCHAR(255)" />
-         <dataColumn name="DATA_COLUMN" type="BINARY" />
-         <timestampColumn name="TIMESTAMP_COLUMN" type="BIGINT" />
-      </stringKeyedTable>
-      <binaryKeyedTable prefix="ISPN_MIXED_BINARY_TABLE" createOnStart="true" dropOnExit="true">
-         <idColumn name="ID_COLUMN" type="VARCHAR(255)" />
-         <dataColumn name="DATA_COLUMN" type="BINARY" />
-         <timestampColumn name="TIMESTAMP_COLUMN" type="BIGINT" />
-      </binaryKeyedTable>
-   </mixedKeyedJdbcStore>
+   <mixed-keyed-jdbc-store fetch-state="false" read-only="false" purge="false">
+      <simple-connection connection-url="jdbc:h2:mem:infinispan_binary_based;DB_CLOSE_DELAY=-1" driver="org.h2.Driver" username="sa"/>
+      <string-keyed-table prefix="ISPN_MIXED_STR_TABLE" drop-on-exit="true" create-on-start="true">
+         <id-column name="ID_COLUMN" type="VARCHAR(255)" />
+         <data-column name="DATA_COLUMN" type="BINARY" />
+         <timestamp-column name="TIMESTAMP_COLUMN" type="BIGINT" />
+      </string-keyed-table>
+      <binary-keyed-table prefix="ISPN_MIXED_BINARY_TABLE" drop-on-exit="true" create-on-start="true">
+         <id-column name="ID_COLUMN" type="VARCHAR(255)" />
+         <data-column name="DATA_COLUMN" type="BINARY" />
+         <timestamp-column name="TIMESTAMP_COLUMN" type="BIGINT" />
+      </binary-keyed-table>
+   </mixed-keyed-jdbc-store>
 </persistence>
 
 ----
@@ -521,14 +477,14 @@ Finally, below is an example of a JDBC cache store with a managed connection fac
 [source,xml]
 ----
 
-<stringKeyedJdbcStore xmlns="urn:infinispan:config:jdbc:6.0" fetchPersistentState="false" ignoreModifications="false" purgeOnStartup="false">
-   <dataSource jndiUrl="java:/StringStoreWithManagedConnectionTest/DS" />
-   <stringKeyedTable dropOnExit="true" createOnStart="true" prefix="ISPN_STRING_TABLE">
-       <idColumn name="ID_COLUMN" type="VARCHAR(255)" />
-       <dataColumn name="DATA_COLUMN" type="BINARY" />
-       <timestampColumn name="TIMESTAMP_COLUMN" type="BIGINT" />
-   </stringKeyedTable>
-</stringKeyedJdbcStore>
+<string-keyed-jdbc-store xmlns="urn:infinispan:config:store:jdbc:7.0" fetch-state="false" read-only="false" purge="false">
+   <data-source jndi-url="java:/StringStoreWithManagedConnectionTest/DS" />
+   <string-keyed-table drop-on-exit="true" create-on-start="true" prefix="ISPN_STRING_TABLE">
+      <id-column name="ID_COLUMN" type="VARCHAR(255)" />
+      <data-column name="DATA_COLUMN" type="BINARY" />
+      <timestamp-column name="TIMESTAMP_COLUMN" type="BIGINT" />
+   </string-keyed-table>
+</string-keyed-jdbc-store>
 
 ----
 
@@ -551,39 +507,21 @@ builder.persistence().addStore(JdbcStringBasedStoreConfigurationBuilder.class)
 ----
 
 .Apache Derby users
-NOTE: If you're connecting to an Apache Derby database, make sure you set dataColumnType to BLOB: `<dataColumn name="DATA_COLUMN" type="BLOB"/>`
+NOTE: If you're connecting to an Apache Derby database, make sure you set dataColumnType to BLOB: `<data-column name="DATA_COLUMN" type="BLOB"/>`
 
 === Remote store
-The `RemoteStore` is a cache loader and writer implementation that stores data in a remote infinispan cluster. In order to communicate with the remote cluster, the `RemoteStore` uses the HotRod client/server architecture. HotRod bering the load balancing and fault tolerance of calls and the possibility to fine-tune the connection between the RemoteCacheStore and the actual cluster. Please refer to Hot Rod for more information on the protocol, client and server configuration. For a list of RemoteStore configuration refer to the link:$$http://docs.jboss.org/infinispan/6.0/apidocs/org/infinispan/persistence/remote/configuration/RemoteStoreConfigurationBuilder.html$$[javadoc] . Example:
+The `RemoteStore` is a cache loader and writer implementation that stores data in a remote infinispan cluster. In order to communicate with the remote cluster, the `RemoteStore` uses the HotRod client/server architecture. HotRod bering the load balancing and fault tolerance of calls and the possibility to fine-tune the connection between the RemoteCacheStore and the actual cluster. Please refer to Hot Rod for more information on the protocol, client and server configuration. For a list of RemoteStore configuration refer to the link:$$http://docs.jboss.org/infinispan/7.0/apidocs/org/infinispan/persistence/remote/configuration/RemoteStoreConfigurationBuilder.html$$[javadoc] . Example:
 
 [source,xml]
 ----
-
-<?xml version="1.0" encoding="UTF-8"?>
-<infinispan
-   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-   xsi:schemaLocation="urn:infinispan:config:6.0 http://www.infinispan.org/schemas/infinispan-config-6.0.xsd
-                       urn:infinispan:config:remote:6.0 http://www.infinispan.org/schemas/infinispan-cachestore-remote-config-6.0.xsd"
-   xmlns="urn:infinispan:config:6.0"
-   xmlns:remote="urn:infinispan:config:remote:6.0" >
-
- :
-<loaders>
-   <remoteStore xmlns="urn:infinispan:config:remote:6.0" fetchPersistentState="false"
-             ignoreModifications="false" purgeOnStartup="false" remoteCache="mycache" rawValues="true">
-      <servers>
-         <server host="one" port="12111"/>
-         <server host="two" />
-      </servers>
-      <connectionPool maxActive="10" exhaustedAction="CREATE_NEW" />
-      <async enabled="true" />
-   </remoteStore>
-</loaders>
-
- :
-
-</infinispan>
-
+<persistence>
+   <remote-store xmlns="urn:infinispan:config:remote:7.0" cache="mycache" raw-values="true">
+      <remote-server host="one" port="12111" />
+      <remote-server host="two" />
+      <connection-pool max-active="10" exhausted-action="CREATE_NEW" />
+      <write-behind />
+   </remote-store>
+</persistence>
 ----
 
 [source,java]
@@ -619,9 +557,9 @@ A cluster cache loader can be used as a non-blocking (partial) alternative to _s
 [source,xml]
 ----
 
-<loaders>
-   <clusterLoader remoteCallTimeout="500" />
-</loaders>
+<persistence>
+   <cluster-loader remote-timeout="500"/>
+</persistence>
 
 ----
 
@@ -635,7 +573,7 @@ b.loaders()
 
 ----
 
-For a list of ClusterCacheLoader configuration refer to the link:$$http://docs.jboss.org/infinispan/6.0/apidocs/org/infinispan/configuration/cache/ClusterLoaderConfiguration.html$$[javadoc] .
+For a list of ClusterCacheLoader configuration refer to the link:$$http://docs.jboss.org/infinispan/7.0/apidocs/org/infinispan/configuration/cache/ClusterLoaderConfiguration.html$$[javadoc] .
 
 NOTE: The ClusterCacheLoader does not support preloading(preload=true). It also won't provide state if fetchPersistentSate=true.
 
@@ -656,9 +594,9 @@ receive invocations via the CLI can be found in the
 [source,xml]
 ----
 
-<loaders>
-   <cliLoader connection="jmx://1.2.3.4:4444/MyCacheManager/myCache" />
-</loaders>
+<persistence>
+   <cli-loader connection="jmx://1.2.3.4:4444/MyCacheManager/myCache" />
+</persistence>
 
 ----
 

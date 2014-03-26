@@ -72,31 +72,23 @@
       ******************************************************************************************************************
    -->
 
-   <cache-container name="SampleCacheManager" statistics="true"  default-cache="the-default-cache">
+   <cache-container name="SampleCacheManager" statistics="true"  default-cache="the-default-cache" shutdown-hook="DEFAULT">
 
-      <jmx domain="org.infinispan" />
+      <!--
+         If the transport is omitted, there is no way to create distributed or clustered caches.
+         There is no added cost to defining a transport and not creating a cache that uses one, since the transport
+         is created and initialized lazily.  By default, the JGroupsTransport is used.
 
-     <!--
-     -->
-     <!--
-     <site local="LON"/>
-     -->
+         Note that the JGroups transport uses sensible defaults if no configuration property is defined.
 
-     <!--
-        If the transport is omitted, there is no way to create distributed or clustered caches.
-        There is no added cost to defining a transport and not creating a cache that uses one, since the transport
-        is created and initialized lazily.  By default, the JGroupsTransport is used.
+         It also defines the site needed for Infinispan 's cross-site (x-site) replication.
 
-        Note that the JGroups transport uses sensible defaults if no configuration property is defined.
+         See:
 
-        It also defines the site needed for Infinispan 's cross-site (x-site) replication.
+            https://github.com/infinispan/infinispan-quickstart/tree/master/clustered-cache
+            http://docs.jboss.org/infinispan/7.0/apidocs/org/infinispan/remoting/transport/jgroups/JGroupsTransport.html
 
-        See:
-
-           https://github.com/infinispan/infinispan-quickstart/tree/master/clustered-cache
-           http://docs.jboss.org/infinispan/7.0/apidocs/org/infinispan/remoting/transport/jgroups/JGroupsTransport.html
-
-     -->
+      -->
       <transport stack="tcp" cluster="infinispan-cluster" node-name="Node-A" machine="m1" rack="r1" site="LON" />
 
       <!--
@@ -108,38 +100,50 @@
             http://infinispan.org/docs/7.0.x/user_guide/user_guide.html#_the_role_of_jboss_marshalling
             http://infinispan.org/docs/7.0.x/user_guide/user_guide.html#_plugging_infinispan_with_user_defined_externalizers
        -->
-      <!--<serialization marshallerClass="org.infinispan.marshall.VersionAwareMarshaller" version="1.0">-->
+      <serialization marshaller="org.infinispan.marshall.core.VersionAwareMarshaller" version="1.0">
+         <!-- AdvancedExternalizer defined as inner static class, with id set via XML configuration -->
+         <advanced-externalizer id="1234" class="org.infinispan.marshall.AdvancedExternalizerTest$IdViaConfigObj$Externalizer"/>
+         <!-- AdvancedExternalizer defined as inner static class, with id set via annotation -->
+         <advanced-externalizer class="org.infinispan.marshall.AdvancedExternalizerTest$IdViaAnnotationObj$Externalizer"/>
+         <!-- AdvancedExternalizer defined as inner static class, with id set both via XML config and annotation -->
+         <advanced-externalizer id="3456" class="org.infinispan.marshall.AdvancedExternalizerTest$IdViaBothObj$Externalizer"/>
+      </serialization>
 
-      <!--<advancedExternalizers>-->
-      <!-- AdvancedExternalizer defined as inner static class, with id set via XML configuration -->
-      <!--<advancedExternalizer id="1234" externalizerClass="org.infinispan.marshall.AdvancedExternalizerTestt$IdViaConfigObj$AdvancedExternalizer"/>-->
-      <!-- AdvancedExternalizer defined as inner static class, with id set via annotation -->
-      <!--<advancedExternalizer externalizerClass="org.infinispan.marshall.AdvancedExternalizerTestt$IdViaAnnotationObj$AdvancedExternalizer"/>-->
-      <!-- AdvancedExternalizer defined as inner static class, with id set both via XML config and annotation -->
-      <!--<advancedExternalizer id="3456" externalizerClass="org.infinispan.marshall.AdvancedExternalizerTestt$IdViaBothObj$AdvancedExternalizer"/>-->
-      <!--</advancedExternalizers>-->
-      <!--</serialization>-->
+     <jmx domain="org.infinispan" />
 
       <!--
-         Used to register JVM shutdown hooks.
-         hookBehavior: DEFAULT, REGISTER, DONT_REGISTER
+         ******************************************************************************************************************
+         All caches are named caches, and one of those is the default cache,
+         according to the default-cache attribute in the cache container.
+         Its configuration is inherited by all other named caches
+         ******************************************************************************************************************
       -->
-      <!-- <shutdown hookBehavior="DEFAULT"/> -->
 
    <!--
-      ******************************************************************************************************************
-      Default "template" settings, used to create the default cache as well as inherited by all other named caches
-      ******************************************************************************************************************
+      Replicated cache with synchronous network calls.
    -->
+   <!--
+      Other cache attributes that can be configured:
+         deadlock-detection-spin :
+            Enables deadlock detection
+            http://infinispan.org/docs/7.0.x/user_guide/user_guide.html#_deadlock_detection
 
+         batching :
+            Used to enable invocation batching and allow the use of Cache.startBatch()/endBatch() methods.
+            http://infinispan.org/docs/7.0.x/user_guide/user_guide.html#_batching
+
+         queue-flush-interval and queue-size:
+            They control whether for asynchronous replicated caches, replication queue is enabled
+            http://infinispan.org/docs/7.0.x/user_guide/user_guide.html#_replication_queue
+
+   -->
    <replicated-cache name="the-default-cache" statistics="true" mode="SYNC" remote-timeout="20000">
-      <store-as-binary />
       <!--
          Tunes the locking and concurrency characteristics of the cache.
 
          See:
 
-            http://community.jboss.org/wiki/LockingandConcurrency
+            http://infinispan.org/docs/7.0.x/user_guide/user_guide.html#_locking_and_concurrency
       -->
       <locking isolation="READ_COMMITTED"
          acquire-timeout="20000"
@@ -153,51 +157,25 @@
 
          See:
 
-            http://community.jboss.org/wiki/Infinispantransactions
+            http://infinispan.org/docs/7.0.x/user_guide/user_guide.html#_transactions
       -->
       <!--
       <transaction
-            transactionManagerLookupClass="org.infinispan.transaction.lookup.GenericTransactionManagerLookup"
-            syncRollbackPhase="false"
-            syncCommitPhase="false"
-            cacheStopTimeout="30000"
-            use1PcForAutoCommitTransactions="false"
-            autoCommit="true"
-            lockingMode="OPTIMISTIC"
-            useSynchronization="false"
-            transactionMode="TRANSACTIONAL"
+            transaction-manager-lookup="org.infinispan.transaction.lookup.GenericTransactionManagerLookup"
+            stop-timeout="30000"
+            auto-commit="true"
+            locking="OPTIMISTIC"
+            mode="FULL_XA"
             />
       -->
-      <!--
-         Enables deadlock detection.  See:
-
-         http://community.jboss.org/wiki/Infinispantransactions#deadlock
-
-      -->
-      <!--<deadlockDetection enabled="true" spinDuration="1000"/>-->
-
 
       <!--
          Used to control whether objects stored in Infinispan nodes are primarily stored as rehydrated Objects or as
          raw byte arrays.  See:
 
-         http://community.jboss.org/wiki/Marshalling#Lazy_Deserialization
+         http://infinispan.org/docs/7.0.x/user_guide/user_guide.html#_store_as_binary
       -->
-      <!--<storeAsBinary enabled="true"/>-->
-
-      <!--
-         Used to enable invocation batching and allow the use of Cache.startBatch()/endBatch() methods.
-
-         http://community.jboss.org/wiki/Batching
-      -->
-      <!--<invocationBatching enabled="true"/>-->
-
-      <!--
-         This element specifies that the cache is clustered.
-         modes supported: distribution (d), replication (r) or invalidation (i).
-
-         http://community.jboss.org/wiki/Clusteringmodes
-      -->
+      <!--<store-as-binary/>-->
 
       <!--
          Configures how state is transferred between the nodes
@@ -205,96 +183,56 @@
       <state-transfer enabled="false" timeout="240000" chunk-size="10000" />
 
       <!--
-         Network calls are synchronous.
-      -->
-
-      <!--
-         Uncomment this for async replication.
-      -->
-      <!--
-      <async
-         useReplQueue="true"
-         replQueueInterval="10000"
-         replQueueMaxElements="500"
-      />
-      -->
-
-
-      <!--
        When x-site replication is used, configures the site and caches where this (default) cache backs up the data.
       -->
       <!--
-        <sites>
-            <backups>
-                <backup site="NYC" strategy="SYNC" backupFailurePolicy="IGNORE" timeout="12003"/>
-                <backup site="SFO" strategy="ASYNC"/>
-            </backups>
-            <backupFor remoteCache="someCache" remoteSite="SFO"/>
-        </sites>
+      <backups>
+          <backup site="NYC" strategy="SYNC" failure-policy="IGNORE" timeout="12003"/>
+          <backup site="SFO" strategy="ASYNC"/>
+      </backups>
+      <backupFor cache="someCache" site="SFO"/>
       -->
-
 
    </replicated-cache>
 
 
-   <!--
-      ******************************************************************************************************************
-
-      Individually configured "named" caches. Note that any of the elements appearing in a namedCache section can also
-      appear in the default section as a template.
-
-      ******************************************************************************************************************
-   -->
-
    <!-- A typical, asynchronously replicated, clustered cache -->
    <!--
-   <namedCache name="asyncCache">
-      <clustering mode="replication">
-         <async asyncMarshalling="true"/>
-      </clustering>
-   </namedCache>
+   <replicated-cache name="asyncCache" mode="ASYNC" async-marshalling="true"/>
    -->
 
    <!--
       An asynchronous replicated cache making use of a replication queue.  See:
 
-         http://community.jboss.org/wiki/AsynchronousOptions#Replication_Queue
+         http://infinispan.org/docs/7.0.x/user_guide/user_guide.html#_replication_queue
    -->
    <!--
-   <namedCache name="withReplicationQueue">
-      <clustering mode="r">
-         <async
-            useReplQueue="true"
-            replQueueInterval="100"
-            replQueueMaxElements="200"
-         />
-      </clustering>
-   </namedCache>
+   <replicated-cache name="asyncCache" mode="ASYNC" queue-interval="100" queue-size="200"/>
    -->
 
    <!--
       A cache configured with eviction.
 
-      Expiration wakeUpInterval defines the interval between successive runs
+      Expiration interval defines the interval between successive runs
       to purge expired entries from memory and any cache stores.
 
       See:
 
-         http://community.jboss.org/wiki/Eviction
-         http://community.jboss.org/wiki/EvictionExamples
+         http://infinispan.org/docs/7.0.x/user_guide/user_guide.html#eviction_anchor
+         http://infinispan.org/docs/7.0.x/user_guide/user_guide.html#_eviction_examples
    -->
    <!--
-   <namedCache name="evictionCache">
+   <local-cache name="evictionCache">
       <eviction
-         maxEntries="5000"
+         max-entries="5000"
          strategy="FIFO"
       />
       <expiration
-         wakeUpInterval="500"
+         interval="500"
          lifespan="60000"
-         maxIdle="1000"
+         max-idle="1000"
       />
-   </namedCache>
+   </local-cache>
    -->
 
    <!--
@@ -315,8 +253,8 @@
 
       See:
 
-         http://community.jboss.org/wiki/CacheLoaders
-         http://community.jboss.org/wiki/Write-ThroughAndWrite-BehindCaching
+         http://infinispan.org/docs/7.0.x/user_guide/user_guide.html#_persistence
+         http://infinispan.org/docs/7.0.x/user_guide/user_guide.html#_write_through_and_write_behind_caching
    -->
    <local-cache name="writeThroughToFile">
       <persistence passivation="false">
@@ -334,63 +272,22 @@
       requested, the cache store will be checked and data will be activated and brought back to memory 
    -->
    <!--
-   <namedCache name="evictionAndPassivationCache">
+   <local-cache name="evictionAndPassivationCache">
       <eviction
-         maxEntries="5000"
+         max-entries="5000"
          strategy="LIRS"
       />
       <expiration
-         wakeUpInterval="500"
+         interval="500"
          lifespan="60000"
-         maxIdle="1000"
+         max-idle="1000"
       />
 
       <persistence passivation="true">
-         <store class="SingleFileStore">
-            <properties>
-               <property name="location" value="${java.io.tmpdir}"/>
-            </properties>
-         </store>
+         <file-store path="${java.io.tmpdir}"/>
       </persistence>
-   </namedCache>
+   </local-cache>
    -->
-
-   <!-- 
-      A write behind cache is one where data is stored in a backend store in a separate process, making cache
-      calls return very fast while at the same time persisting data permanently. This type of caches are
-      particularly interesting for stores with high latency such as cloud based store, or very remote databases. 
-
-      See:
-         http://docs.jboss.org/infinispan/4.2/apidocs/org/infinispan/persistence/cloud/CloudCacheStoreConfig.html
-   -->
-   <!--
-   <namedCache name="writeBehindToCloudCache">
-      <persistence passivation="false">
-         <store class="org.infinispan.persistence.cloud.CloudCacheStore"
-                 fetchPersistentState="false"
-                 shared="false"
-                 preload="true"
-                 ignoreModifications="false"
-                 purgeOnStartup="false">
-            <async
-                  enabled="true"
-                  flushLockTimeout="15000"
-                  threadPoolSize="10"
-                  />
-            <properties>
-               <property name="identity" value="${ec2.access_key}"/>
-               <property name="password" value="${ec2.access_secret}"/>
-               <property name="bucketPrefix" value="${ec2.bucket}"/>
-               <property name="requestTimeout" value="20000"/>
-               <property name="cloudService" value="s3"/>
-               <property name="secure" value="true"/>
-               <property name="compress" value="true"/>
-            </properties>
-         </store>
-      </persistence>
-   </namedCache>
-   -->
-
 
    <!-- 
       A cache configured with cache invalidation that instead of using state transfer to retrieve data on startup,
@@ -399,44 +296,9 @@
       lengthy process. 
    -->
    <!--
-   <namedCache name="invalidatedWithClusterCacheLoaderCache">
-      <clustering mode="invalidation">
-         <sync replTimeout="20000"/>
-      </clustering>
-
+   <invalidation-cache name="invalidatedWithClusterCacheLoaderCache" mode="SYNC" remote-timeout="20000">
       <persistence>
-         <store class="ClusterLoader" preload="false">
-         <properties>
-               <property name="remoteCallTimeout" value="20000"/>
-            </properties>
-         </store>
-      </persistence>
-   </namedCache>
-   -->
-
-   <!-- 
-      A cache configured to use a write behind cache store where only one of the nodes in the cluster
-      interacts with the store at one point in time. This type of cache store is useful when the
-      underlying cache store does not cope well with concurrent modifications.
-   -->
-   <!--
-   <namedCache name="writeBehindSingletonStoreCache">
-      <persistence>
-         <store class="SingleFileStore" shared="true" preload="false">
-            <async
-                  enabled="true"
-                  flushLockTimeout="15000"
-                  threadPoolSize="10"
-                  />
-            <singleton
-                  enabled="true"
-                  pushStateWhenCoordinator="true"
-                  pushStateTimeout="20000"
-                  />
-            <properties>
-               <property name="location" value="${java.io.tmpdir}"/>
-            </properties>
-         </store>
+         <cluster-loader remote-timeout="20000" preload="false"/>
       </persistence>
    </namedCache>
    -->
@@ -445,29 +307,14 @@
       A distributed cache that uses highly scalable, consistent hash based distribution to store entries on remote
       cluster nodes.
 
-      numOwners: number of owners for each entry.  The larger this number is, the safer your data will be, but the
+      owners: number of owners for each entry.  The larger this number is, the safer your data will be, but the
                  slower the cluster will be.
 
-      rehashRpcTimeout: timeout used for RPC calls relating to rehashing.  This defaults to 600000 (10 minutes).
-
       See:
-         http://community.jboss.org/wiki/Clusteringmodes#distribution
+         http://infinispan.org/docs/7.0.x/user_guide/user_guide.html#_distribution_mode
    -->
    <!--
-   <namedCache name="distributedCache">
-      <clustering mode="distribution">
-         <sync/>
-         <hash
-            numOwners="3"
-            rehashWait="120000"
-            rehashRpcTimeout="600000"
-         />
-         <l1
-            enabled="true"
-            lifespan="600000"
-         />
-      </clustering>
-   </namedCache>
+   <distributed-cache name="distributedCache" mode="SYNC" owners="3" l1-lifespan="600000" />
    -->
 
    <!--
@@ -475,14 +322,14 @@
       interceptors need to extend org.jboss.cache.interceptors.base.CommandInterceptor
 
       See:
-         http://community.jboss.org/wiki/InfinispanCustomInterceptors
+         http://infinispan.org/docs/7.0.x/user_guide/user_guide.html#_custom_interceptors
    -->
    <!--
-   <namedCache name="cacheWithCustomInterceptors">
-      <customInterceptors>
+   <local-cache name="cacheWithCustomInterceptors">
+      <custom-interceptors>
          <interceptor position="first" class="com.mycompany.CustomInterceptor1">
-            <property name="com.mycompany.attributeOne" value="value1" />
-            <property name="com.mycompany.attributeTwo" value="value2" />
+            <property name="com.mycompany.attributeOne">value1</property>
+            <property name="com.mycompany.attributeTwo">value2</property>
          </interceptor>
          <interceptor
             position="last"
@@ -500,29 +347,27 @@
             after="org.infinispanpan.interceptors.CallInterceptor"
             class="com.mycompany.CustomInterceptor1"
          />
-      </customInterceptors>
-   </namedCache>
+      </custom-interceptors>
+   </local-cache>
    -->
 
    <!--
       A transactional cache configured to run in pessimistic mode.
       See:
-         http://community.jboss.org/wiki/Infinispantransactions
+         http://infinispan.org/docs/7.0.x/user_guide/user_guide.html#_transactions
    -->
    <!--
-   <namedCache name="pessimisticCache">
+   <local-cache name="pessimisticCache">
 
       <transaction
-            transactionManagerLookupClass="org.infinispan.transaction.lookup.GenericTransactionManagerLookup"
-            syncCommitPhase="false"
-            cacheStopTimeout="30000"
-            use1PcForAutoCommitTransactions="false"
-            autoCommit="true"
-            lockingMode="PESSIMISTIC"
-            useSynchronization="false"
-            transactionMode="TRANSACTIONAL"/>
+         transaction-manager-lookup="org.infinispan.transaction.lookup.GenericTransactionManagerLookup"
+         stop-timeout="30000"
+         auto-commit="true"
+         locking="PESSIMISTIC"
+         mode="NON_DURABLE_XA"
+         />
 
-   </namedCache>
+   </local-cache>
    -->
 
    </cache-container>

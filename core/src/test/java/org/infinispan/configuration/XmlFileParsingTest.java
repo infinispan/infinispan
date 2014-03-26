@@ -229,15 +229,15 @@ public class XmlFileParsingTest extends AbstractInfinispanTest {
 
    public void testDummyInMemoryStore() throws IOException {
       String config = INFINISPAN_START_TAG_NO_SCHEMA +
-            "<default>\n" +
+            "<cache-container default-cache=\"default\">" +
+            "   <local-cache name=\"default\">\n" +
             "<persistence >\n" +
                "<store class=\"org.infinispan.persistence.dummy.DummyInMemoryStore\" >\n" +
-                  "<properties >" +
-                     "<property name=\"storeName\" value=\"myStore\"/>" +
-                  "</properties >" +
+                  "<property name=\"storeName\">myStore</property>" +
                "</store >\n" +
             "</persistence >\n" +
-            "</default>\n" +
+            "   </local-cache>\n" +
+            "</cache-container>" +
             INFINISPAN_END_TAG;
 
       InputStream is = new ByteArrayInputStream(config.getBytes());
@@ -273,15 +273,15 @@ public class XmlFileParsingTest extends AbstractInfinispanTest {
 
    public void testStoreWithNoConfigureBy() throws IOException {
       String config = INFINISPAN_START_TAG_NO_SCHEMA +
-            "<default>\n" +
+            "<cache-container default-cache=\"default\">" +
+            "   <local-cache name=\"default\">\n" +
             "<persistence >\n" +
                "<store class=\"org.infinispan.configuration.XmlFileParsingTest$GenericLoader\" preload=\"true\" >\n" +
-                  "<properties >" +
-                     "<property name=\"fetchPersistentState\" value=\"true\"/>" +
-                  "</properties >" +
+                     "<property name=\"fetchPersistentState\">true</property>" +
                "</store >\n" +
             "</persistence >\n" +
-            "</default>\n" +
+            "   </local-cache>\n" +
+            "</cache-container>" +
             INFINISPAN_END_TAG;
 
       InputStream is = new ByteArrayInputStream(config.getBytes());

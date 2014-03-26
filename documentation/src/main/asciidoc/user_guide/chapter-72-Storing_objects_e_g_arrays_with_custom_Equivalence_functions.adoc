@@ -219,7 +219,7 @@ public class AnyServerEquivalence implements Equivalence<Object> {
 ==== Configuring Equivalence functions
 
 ===== Using XML
-The way to configure Infinispan with these Equivalence implementations is by adding them to the `<dataContainer />` XML element. For example, if we wanted to have byte array based keys, but the values would be normal objects, we'd define: 
+The way to configure Infinispan with these Equivalence implementations is by adding them to the `<data-container />` XML element. For example, if we wanted to have byte array based keys, but the values would be normal objects, we'd define:
 
 [source,xml]
 ----

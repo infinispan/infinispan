@@ -154,22 +154,11 @@ Infinispan configuration file configured to replicate caches like this:
 .infinispan.xml
 [source,xml]
 ----
-<infinispan xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-            xmlns="urn:infinispan:config:5.3"
-            xsi:schemaLocation="urn:infinispan:config:5.3 http://www.infinispan.org/schemas/infinispan-config-5.3.xsd">
-   <global>
-      <transport
-         transportClass="org.infinispan.remoting.transport.jgroups.JGroupsTransport"
-         clusterName="jcache-cluster">
-      </transport>
-   </global>
-
-   <default />
-
-   <namedCache name="namedCache">
-      <clustering mode="replication" />
-   </namedCache>
-
+<infinispan>
+   <cache-container default-cache="namedCache">
+      <transport cluster="jcache-cluster" />
+      <replicated-cache name="namedCache" />
+   </cache-container>
 </infinispan>
 ----
 

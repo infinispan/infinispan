@@ -9,6 +9,8 @@ import org.infinispan.configuration.parsing.Namespaces;
 import org.infinispan.configuration.parsing.ParseUtils;
 import org.infinispan.configuration.parsing.Parser70;
 import org.infinispan.configuration.parsing.XMLExtendedStreamReader;
+import org.infinispan.util.logging.Log;
+import org.infinispan.util.logging.LogFactory;
 
 import javax.xml.stream.XMLStreamConstants;
 import javax.xml.stream.XMLStreamException;
@@ -23,6 +25,8 @@ import javax.xml.stream.XMLStreamException;
       @Namespace(root = "leveldb-store")
 })
 public class LevelDBStoreConfigurationParser70 implements ConfigurationParser {
+
+   private static final Log log = LogFactory.getLog(LevelDBStoreConfigurationParser70.class);
 
    public LevelDBStoreConfigurationParser70() {
    }
@@ -53,6 +57,10 @@ public class LevelDBStoreConfigurationParser70 implements ConfigurationParser {
          switch (attribute) {
             case PATH: {
                builder.location(value);
+               break;
+            }
+            case RELATIVE_TO: {
+               log.ignoreXmlAttribute(attribute);
                break;
             }
             case CLEAR_THRESHOLD: {
@@ -121,7 +129,7 @@ public class LevelDBStoreConfigurationParser70 implements ConfigurationParser {
          Attribute attribute = Attribute.forName(reader.getAttributeLocalName(i));
          switch (attribute) {
             case TYPE: {
-               builder.implementationType(LevelDBStoreConfiguration.ImplementationType.valueOf(value));
+               builder.compressionType(CompressionType.valueOf(value));
                break;
             }
             default:
@@ -137,7 +145,7 @@ public class LevelDBStoreConfigurationParser70 implements ConfigurationParser {
          Attribute attribute = Attribute.forName(reader.getAttributeLocalName(i));
          switch (attribute) {
             case TYPE: {
-               builder.compressionType(CompressionType.valueOf(value));
+               builder.implementationType(LevelDBStoreConfiguration.ImplementationType.valueOf(value));
                break;
             }
             default:
