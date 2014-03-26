@@ -74,7 +74,7 @@ public class AuthAndEncryptProtocolTest {
     }
 
     @WithRunningServer(COORDINATOR_NODE)
-    @Test
+    @Test(group = "unstable", description = "ISPN-4164")
     public void testFriendlyNodeCanJoin() throws Exception {
         try {
             controller.start(JOINING_NODE_FRIEND);
@@ -105,7 +105,7 @@ public class AuthAndEncryptProtocolTest {
     }
 
     @WithRunningServer(COORDINATOR_NODE_NO_ENCRYPT)
-    @Test
+    @Test(group = "unstable", description = "ISPN-4164")
     public void testAlienNodeCannotJoin() throws Exception {
         try {
             controller.start(JOINING_NODE_ALIEN);
