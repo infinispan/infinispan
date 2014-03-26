@@ -245,7 +245,7 @@ public class RestExample {
     * @throws IOException
     */
    public static void main(String\[\] args) throws IOException {
-      //Attention to the cache name "cacheX" it was configured in xml file with tag <namedCache name="cacheX">
+      //Attention to the cache name "cacheX" it was configured in xml file with tag <*-cache name="cacheX">
       RestExample restExample = new RestExample();
       restExample.putMethod("http://localhost:8080/infinispan/rest/cacheX/1", "Infinispan REST Test");
       restExample.getMethod("http://localhost:8080/infinispan/rest/cacheX/1");         

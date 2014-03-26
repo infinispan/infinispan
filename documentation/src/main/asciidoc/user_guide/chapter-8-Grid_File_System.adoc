@@ -3,10 +3,10 @@ Infinispan's GridFileSystem is a new, experimental API that exposes an Infinispa
 
 WARNING: This is an _experimental_ API.  Use at your own risk.
 
-Specifically, the API works as an extension to the JDK's link:$$http://docs.oracle.com/javase/6/docs/api/java/io/File.html$$[File] , link:$$http://docs.oracle.com/javase/6/docs/api/java/io/InputStream.html$$[InputStream] and link:$$http://docs.oracle.com/javase/6/docs/api/java/io/OutputStream.html$$[OutputStream] classes: specifically, link:$$http://docs.jboss.org/infinispan/6.0/apidocs/org/infinispan/io/GridFile.html$$[GridFile], link:$$http://docs.jboss.org/infinispan/6.0/apidocs/org/infinispan/io/GridInputStream.html$$[GridInputStream] and link:$$http://docs.jboss.org/infinispan/6.0/apidocs/org/infinispan/io/GridOutputStream.html$$[GridOutputStream].
-A helper class, link:$$http://docs.jboss.org/infinispan/6.0/apidocs/org/infinispan/io/GridFilesystem.html$$[GridFilesystem], is also included.
+Specifically, the API works as an extension to the JDK's link:$$http://docs.oracle.com/javase/6/docs/api/java/io/File.html$$[File] , link:$$http://docs.oracle.com/javase/6/docs/api/java/io/InputStream.html$$[InputStream] and link:$$http://docs.oracle.com/javase/6/docs/api/java/io/OutputStream.html$$[OutputStream] classes: specifically, link:$$http://docs.jboss.org/infinispan/7.0/apidocs/org/infinispan/io/GridFile.html$$[GridFile], link:$$http://docs.jboss.org/infinispan/7.0/apidocs/org/infinispan/io/GridInputStream.html$$[GridInputStream] and link:$$http://docs.jboss.org/infinispan/7.0/apidocs/org/infinispan/io/GridOutputStream.html$$[GridOutputStream].
+A helper class, link:$$http://docs.jboss.org/infinispan/7.0/apidocs/org/infinispan/io/GridFilesystem.html$$[GridFilesystem], is also included.
 
-Essentially, the link:$$http://docs.jboss.org/infinispan/6.0/apidocs/org/infinispan/io/GridFilesystem.html$$[GridFilesystem] is backed by 2 Infinispan caches - one for metadata (typically replicated) and one for the actual data (typically distributed).
+Essentially, the link:$$http://docs.jboss.org/infinispan/7.0/apidocs/org/infinispan/io/GridFilesystem.html$$[GridFilesystem] is backed by 2 Infinispan caches - one for metadata (typically replicated) and one for the actual data (typically distributed).
 The former is replicated so that each node has metadata information locally and would not need to make RPC calls to list files, etc.
 The latter is distributed since this is where the bulk of storage space is used up, and a scalable mechanism is needed here.
 Files themselves are chunked and each chunk is stored as a cache entry, as a byte array. 

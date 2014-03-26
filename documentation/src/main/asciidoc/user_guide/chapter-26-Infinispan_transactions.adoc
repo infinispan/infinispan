@@ -6,18 +6,18 @@ On every cache operation Infinispan does the following:
 . Retrieves the current link:$$http://docs.oracle.com/javaee/1.3/api/javax/transaction/Transaction.html$$[Transaction] associated with the thread
 . If not already done, registers link:$$http://docs.oracle.com/javaee/1.3/api/javax/transaction/xa/XAResource.html$$[XAResource] with the transaction manager to be notified when a transaction commits or is rolled back.
 
-In order to do this, the cache has to be provided with a reference to the environment's link:$$http://docs.oracle.com/javaee/1.3/api/javax/transaction/TransactionManager.html$$[TransactionManager] . This is usually done by configuring the cache with the class name of an implementation of the link:$$http://docs.jboss.org/infinispan/6.0/apidocs/org/infinispan/transaction/lookup/TransactionManagerLookup.html$$[TransactionManagerLookup] interface. When the cache starts, it will create an instance of this class and invoke its getTransactionManager() method, which returns a reference to the TransactionManager.
+In order to do this, the cache has to be provided with a reference to the environment's link:$$http://docs.oracle.com/javaee/1.3/api/javax/transaction/TransactionManager.html$$[TransactionManager] . This is usually done by configuring the cache with the class name of an implementation of the link:$$http://docs.jboss.org/infinispan/7.0/apidocs/org/infinispan/transaction/lookup/TransactionManagerLookup.html$$[TransactionManagerLookup] interface. When the cache starts, it will create an instance of this class and invoke its getTransactionManager() method, which returns a reference to the TransactionManager.
 
 Infinispan ships with several transaction manager lookup classes:
 
 .Transaction manager lookup implementations
-*  link:$$http://docs.jboss.org/infinispan/6.0/apidocs/org/infinispan/transaction/lookup/DummyTransactionManagerLookup.html$$[DummyTransactionManagerLookup] : This provides with a dummy transaction manager which should only be used for testing.  Being a dummy, this is not recommended for production use a it has some severe limitations to do with concurrent transactions and recovery.
+*  link:$$http://docs.jboss.org/infinispan/7.0/apidocs/org/infinispan/transaction/lookup/DummyTransactionManagerLookup.html$$[DummyTransactionManagerLookup] : This provides with a dummy transaction manager which should only be used for testing.  Being a dummy, this is not recommended for production use a it has some severe limitations to do with concurrent transactions and recovery.
 
-*  link:$$http://docs.jboss.org/infinispan/6.0/apidocs/org/infinispan/transaction/lookup/JBossStandaloneJTAManagerLookup.html$$[JBossStandaloneJTAManagerLookup] : If you're running Infinispan in a standalone environment, this should be your default choice for transaction manager. It's a fully fledged transaction manager based on link:$$http://www.jboss.org/jbosstm$$[JBoss Transactions] which overcomes all the deficiencies of the dummy transaction manager.
+*  link:$$http://docs.jboss.org/infinispan/7.0/apidocs/org/infinispan/transaction/lookup/JBossStandaloneJTAManagerLookup.html$$[JBossStandaloneJTAManagerLookup] : If you're running Infinispan in a standalone environment, this should be your default choice for transaction manager. It's a fully fledged transaction manager based on link:$$http://www.jboss.org/jbosstm$$[JBoss Transactions] which overcomes all the deficiencies of the dummy transaction manager.
 
-*  link:$$http://docs.jboss.org/infinispan/6.0/apidocs/org/infinispan/transaction/lookup/GenericTransactionManagerLookup.html$$[GenericTransactionManagerLookup] : This is a lookup class that locate transaction managers in the most  popular Java EE application servers. If no transaction manager can be found, it defaults on the dummy transaction manager.
+*  link:$$http://docs.jboss.org/infinispan/7.0/apidocs/org/infinispan/transaction/lookup/GenericTransactionManagerLookup.html$$[GenericTransactionManagerLookup] : This is a lookup class that locate transaction managers in the most  popular Java EE application servers. If no transaction manager can be found, it defaults on the dummy transaction manager.
 
-*  link:$$http://docs.jboss.org/infinispan/6.0/apidocs/org/infinispan/transaction/lookup/JBossTransactionManagerLookup.html$$[JBossTransactionManagerLookup] : This lookup class locates the transaction manager running within a JBoss Application Server instance.
+*  link:$$http://docs.jboss.org/infinispan/7.0/apidocs/org/infinispan/transaction/lookup/JBossTransactionManagerLookup.html$$[JBossTransactionManagerLookup] : This lookup class locates the transaction manager running within a JBoss Application Server instance.
 
 Once initialized, the TransactionManager can also be obtained from the Cache itself:
 
@@ -39,38 +39,40 @@ Transactions are being configured at cache level.
 ----
 
 <transaction 
-      transactionManagerLookupClass="org.infinispan.transaction.lookup.GenericTransactionManagerLookup"
-      transactionMode="TRANSACTIONAL"
-      lockingMode="OPTIMISTIC"/>
+      transaction-manager-lookup="org.infinispan.transaction.lookup.GenericTransactionManagerLookup"
+      mode="FULL_XA"
+      locking="OPTIMISTIC"/>
 
 ----
 
 
 * transactionManagerLookupClass fully qualified class name of a class that looks up a reference to a javax.transaction.TransactionManager
-* transactionMode - configures whether the cache is transactional or not
-* lockingMode - configures whether the cache uses optimistic or pessimistic locking.
+* mode - configures whether the cache is transaction mode, the available options are:
+** `NONE` - non transactional cache
+** `FULL_XA` - XA transactional cache with recovery enabled.
+** `NON_DURABLE_XA` - XA transactional cache with recovery disabled.
+** `NON_XA` - Transactional cache with intergration via Synchronization instead of XA.
+* locking - configures whether the cache uses optimistic or pessimistic locking.
 
-For more details on how two phase commit (2PC) is implemented in Infinispan and how locks are being acquired see the section below. All possible transactional settings are available in link:$$http://docs.jboss.org/infinispan/5.1/configdocs/$$[Configuration reference] 
+For more details on how two phase commit (2PC) is implemented in Infinispan and how locks are being acquired see the section below. All possible transactional settings are available in link:$$http://docs.jboss.org/infinispan/7.0/configdocs/$$[Configuration reference]
 
 === Transaction modes
 Starting with Infinispan 5.1 release a cache can accessed either transactionally or non-transactionally.
 The mixed access mode that existed in Infinispan 4 and 5.0 is no longer supported.
 There are several reasons for going this path, but one of them most important is a cleaner semantic on how concurrency is managed between multiple requestors for the same cache entry.
 
-By default, all Infinispan caches are non-transactional. A cache can be made transactional by changing the transactionMode attribute:
+By default, all Infinispan caches are non-transactional. A cache can be made transactional by changing the `mode` attribute:
 
 [source,xml]
 ----
 
-<namedCache name="transactional">
-  <transaction transactionMode="TRANSACTIONAL"/>
-</namedCache>
+<local-cache name="transactional">
+  <transaction mode="NON_XA"/>
+</local-cache>
 
 ----
 
-`transactionMode` can only take one of two values: `TRANSACTIONAL` or `NON_TRANSACTIONAL`.
-
-One can configure a transactional cache programatically as well:
+One can configure a transactional cache programatically as well, the equivalent is:
 
 [source,java]
 ----
@@ -93,9 +95,9 @@ Optimistic transactions can be enabled in the configuration file:
 [source,xml]
 ----
 
-<namedCache name="transactional">
-  <transaction transactionMode="TRANSACTIONAL" lockingMode="OPTIMISTIC"/>
-</namedCache>
+<local-cache name="transactional">
+  <transaction mode="NON_XA" locking="OPTIMISTIC"/>
+</local-cache>
 
 ----
 
@@ -133,9 +135,9 @@ Pessimistic transactions can be enabled in the configuration file:
 [source,xml]
 ----
 
-<namedCache name="transactional"/>
-  <transaction transactionMode="TRANSACTIONAL" lockingMode="PESSIMISTIC"/>
-</namedCache>
+<local-cache name="transactional">
+  <transaction mode="NON_XA" locking="PESSIMISTIC"/>
+</local-cache>
 
 ----
 
@@ -159,9 +161,9 @@ The autoCommit feature can be managed through configuration:
 [source,xml]
 ----
 
-<namedCache name="transactional">;
-  <transaction transactionMode="TRANSACTIONAL" autoCommit="true"/>
-</namedCache>
+<local-cache name="transactional">
+  <transaction mode="NON_XA" autoCommit="true"/>
+</local-cache>
 
 ----
 
@@ -176,25 +178,25 @@ Deadlocks can significantly (up to one order of magnitude, see benchmarks) reduc
 
 [source,xml]
 ----
-<deadlockDetection enabled="true" spinDuration="1000"/>
+<local-cache deadlock-detection-spin="1000"/>
 
 ----
 
-Some clues on when to enable deadlock detection. A high number of transaction rolling back due to link:$$http://docs.jboss.org/infinispan/6.0/apidocs/org/infinispan/util/concurrent/TimeoutException.html$$[TimeoutException] is an indicator that this functionality might help. TimeoutException might be caused by other causes as well, but deadlocks will always result in this exception being thrown. Generally, when you have a high contention on a set of keys, deadlock detection may help. But the best way is not to guess the performance improvement but to benchmark and monitor it: you can have access to statistics (e.g. number of deadlocks detected) through JMX, as it is exposed via the DeadlockDetectingLockManager MBean. For more details on how deadlock detection works, benchmarks and design details refer to link:$$http://infinispan.blogspot.com/2009/07/increase-transactional-throughput-with.html$$[this] article.
+Some clues on when to enable deadlock detection. A high number of transaction rolling back due to link:$$http://docs.jboss.org/infinispan/7.0/apidocs/org/infinispan/util/concurrent/TimeoutException.html$$[TimeoutException] is an indicator that this functionality might help. TimeoutException might be caused by other causes as well, but deadlocks will always result in this exception being thrown. Generally, when you have a high contention on a set of keys, deadlock detection may help. But the best way is not to guess the performance improvement but to benchmark and monitor it: you can have access to statistics (e.g. number of deadlocks detected) through JMX, as it is exposed via the DeadlockDetectingLockManager MBean. For more details on how deadlock detection works, benchmarks and design details refer to link:$$http://infinispan.blogspot.com/2009/07/increase-transactional-throughput-with.html$$[this] article.
 
 Note: deadlock detection only runs on an a per cache basis: deadlocks that spread over two or more caches won't be detected.
 
 === Dealing with exceptions
-If a link:$$http://docs.jboss.org/infinispan/6.0/apidocs/org/infinispan/CacheException.html$$[CacheException] (or a subclass of it) is thrown by a cache method within the scope of a JTA transaction, then the transaction is automatically marked for rollback.
+If a link:$$http://docs.jboss.org/infinispan/7.0/apidocs/org/infinispan/CacheException.html$$[CacheException] (or a subclass of it) is thrown by a cache method within the scope of a JTA transaction, then the transaction is automatically marked for rollback.
 
 === Enlisting Synchronizations
 By default Infinispan registers itself as a first class participant in distributed transactions through link:$$http://docs.oracle.com/javaee/6/api/javax/transaction/xa/XAResource.html$$[XAResource] . There are situations where Infinispan is not required to be a participant in the transaction, but only to be notified by its lifecycle (prepare, complete): e.g. in the case Infinispan is used as a 2nd level cache in Hibernate.
 
-Starting with 5.0  release, Infinispan allows transaction enlistment through link:$$http://docs.oracle.com/javaee/6/api/javax/transaction/Synchronization.html$$[Synchronisation] . This can be enabled through the _useSynchronization_ attribute on the _transaction_ element:
+Starting with 5.0  release, Infinispan allows transaction enlistment through link:$$http://docs.oracle.com/javaee/6/api/javax/transaction/Synchronization.html$$[Synchronisation] . To enable it just use `NON_XA` transaction mode:
 
 [source,xml]
 ----
-<transaction useSynchronization="true"/>
+<transaction mode="NON_XA"/>
 
 ----
 
@@ -219,7 +221,7 @@ or in your XML file:
 
 [source,xml]
 ----
-<invocationBatching enabled="true" />
+<local-cache batching="true" />
 
 ----
 
@@ -262,9 +264,7 @@ Behind the scenes, the batching functionality starts a JTA transaction, and all 
 
 [source,xml]
 ----
-<transaction
-    syncRollbackPhase="false" syncCommitPhase="false"
-    useEagerLocking="true" eagerLockSingleNode="true" />
+<transaction mode="NON_XA" />
 
 ----
 
@@ -285,23 +285,21 @@ Recovery is _not_ enabled by default in Infinispan. If disabled the TransactionM
 
 [source,xml]
 ----
-<transaction useEagerLocking="true" eagerLockSingleNode="true">
-    <recovery enabled="true" recoveryInfoCacheName="noRecovery"/>
-</transaction>
+<transaction mode="FULL_XA" recovery-cache="noRecovery"/>
 
 ----
 
-NOTE:  the _recoveryInfoCacheName_ attribute is not mandatory.
+NOTE:  the _recovery-cache_ attribute is not mandatory.
 
 Alternatively you can enable it through the fluent configuration API as follows:
 
 [source,java]
 ----
 //simply calling .recovery() enables it
-configuration.fluent().transaction().recovery();
+configuration.transaction().recovery();
 
 //then you can disable it
-configuration.fluent().transaction().recovery().disable();
+configuration.transaction().recovery().disable();
 
 //or just check its status
 boolean isRecoveryEnabled = configuration.isTransactionRecoveryEnabled();
@@ -310,7 +308,7 @@ boolean isRecoveryEnabled = configuration.isTransactionRecoveryEnabled();
 
 Recovery can be enabled/disabled o a per cache level: e..g it is possible to have a transaction spanning a cache that is has it enabled and another one that doesn't.
 
-NOTE: For recovery to work, `useSynchronization` must be set to `false`, since full-blown XA transactions are needed.
+NOTE: For recovery to work, `mode` must be set to `FULL_XA`, since full-blown XA transactions are needed.
 
 ===== Enable JMX support
 IMPORTANT: In order to be able to use JMX for managing recovery JMX support must be explicitly enabled. More about enabling JMX link:$$http://community.jboss.org/docs/DOC-14865#Enabling_JMX_Statistics$$[here] . 
@@ -320,7 +318,7 @@ In order to track in-doubt transactions and be able to reply them Infinispan cac
 
 This in-doubt transaction data is held within a local cache: this allows one to configure swapping this info to disk through cache loader in the case it gets too big. This cache can be specified through the  "recoveryInfoCacheName" configuration attribute. If not specified infinispan will configure a local cache for you.
 
-It is possible (though not mandated) to share same recovery cache between all the Infinispan caches that have recovery enabled.  If default recovery cache is overridden then the specified recovery cache must use a link:$$http://docs.jboss.org/infinispan/6.0/apidocs/org/infinispan/transaction/lookup/class-use/TransactionManagerLookup.html$$[TransactionManagerLookup] that returns a different transaction manager than the one used by the cache itself.
+It is possible (though not mandated) to share same recovery cache between all the Infinispan caches that have recovery enabled.  If default recovery cache is overridden then the specified recovery cache must use a link:$$http://docs.jboss.org/infinispan/7.0/apidocs/org/infinispan/transaction/lookup/class-use/TransactionManagerLookup.html$$[TransactionManagerLookup] that returns a different transaction manager than the one used by the cache itself.
 
 ==== Integration with the transaction manager
 Even though this is transaction manager specific, generally a transaction manager would need a reference to an XAResource implementation in order to invoke `XAResource.recover()` on it. In order to obtain a reference to an Infinispan XAResource following API can be used:

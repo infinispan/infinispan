@@ -61,14 +61,13 @@ Configuration cacheConfig = new ConfigurationBuilder().loaders()
 [source,xml]
 ----
 
-<namedCache name="vehicleCache">
-	<loaders passivation="false" shared="true" preload="true">
-		<leveldbStore 
-			location="/tmp/leveldb/data"
-			expiredLocation="/tmp/leveldb/expired"
-		/>
-	</loaders>
-</namedCache>
+<local-cache name="vehicleCache">
+   <persistence>
+      <leveldb-store path="/tmp/leveldb/data">
+         <expiration path="/tmp/leveldb/expired"/>
+      </leveldb-store>
+   </persistence>
+</local-cache>
 
 ----
 

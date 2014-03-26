@@ -12,9 +12,9 @@ So, to get started using Infinispan's compatibility mode, it needs to be enabled
 [source,xml]
 ----
 
-<namedCache...>
-   <compatibility enabled="true"/>
-</namedCache>
+<local-cache>
+   <compatibility/>
+</local-cache>
 
 ----
 
@@ -31,15 +31,15 @@ builder.compatibility().enable();
 The key thing to remember about Infinispan's compatibility mode is that where possible, it tries to store data unmarshalling or deserializing it. It does so because the most common use case is for it to store Java objects and having Java objects stored in deserialized form means that they're very easy to use from an embedded cache. With this in mind, it makes some assumptions. For example, if something is stored via Hot Rod, it's most likely coming from the reference Hot Rod client, which is written in Java, and which uses a marshaller that keeps binary payloads very compact. So, when the Hot Rod operation reaches the compatibility layer, it will try to unmarshall it, by default using the same default marshaller used by the Java Hot Rod client, hence providing good out-of-the-box support for the majority of cases.
 
 ==== Optional: Configuring Compatibility Marshaller
-It could happen though the client might be using a Hot Rod client written for another language other than Java, say link:$$https://github.com/infinispan/ruby-client$$[Ruby] or link:$$https://github.com/infinispan/python-client$$[Python] . In this case, some kind of custom marshaller needs to be configured that either translates that serialized payload into a Java object to be stored in the cache, or keeps it in serialized form. Both options are valid, but of course it will have an impact on what kind of objects are retrieved from Infinispan if using the embedded cache. The marshaller is expected to implement link:$$http://docs.jboss.org/infinispan/6.0/apidocs/org/infinispan/marshall/Marshaller.html$$[this interface] . Configuring the compatibility marshaller is optional and can be done via XML:
+It could happen though the client might be using a Hot Rod client written for another language other than Java, say link:$$https://github.com/infinispan/ruby-client$$[Ruby] or link:$$https://github.com/infinispan/python-client$$[Python] . In this case, some kind of custom marshaller needs to be configured that either translates that serialized payload into a Java object to be stored in the cache, or keeps it in serialized form. Both options are valid, but of course it will have an impact on what kind of objects are retrieved from Infinispan if using the embedded cache. The marshaller is expected to implement link:$$http://docs.jboss.org/infinispan/7.0/apidocs/org/infinispan/marshall/Marshaller.html$$[this interface] . Configuring the compatibility marshaller is optional and can be done via XML:
 
 .infinispan.xml
 [source,xml]
 ----
 
-<namedCache...>
-   <compatibility enabled="true" marshallerClass="com.acme.CustomMarshaller"/>
-</namedCache>
+<local-cache>
+   <compatibility marshaller="com.acme.CustomMarshaller"/>
+</local-cache>
 
 ----
 

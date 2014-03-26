@@ -7,7 +7,7 @@ TIP:  Passivation is also a popular option when using eviction, so that only a s
 IMPORTANT: that eviction occurs on a _local_ basis, and is not cluster-wide.  Each node runs an eviction thread to analyse the contents of its in-memory container and decide what to evict. Eviction does not take into account the amount of free memory in the JVM as threshold to  starts evicting entries. You have to set maxEntries attribute of the eviction element to be greater than zero in order for eviction to be turned on. If maxEntries is too large you can run out of memory. maxEntries attribute will probably take some tuning in each use case. 
 
 === Enabling Eviction
-Eviction is configured by adding the link:$$http://docs.jboss.org/infinispan/5.2/configdocs/urn_infinispan_config_5.2/complexType/configuration.eviction.html$$[`<eviction />`] element to your `<default />` or `<namedCache />` configuration sections or using link:$$http://docs.jboss.org/infinispan/6.0/apidocs/org/infinispan/configuration/cache/EvictionConfigurationBuilder.html$$[EvictionConfigurationBuilder] API programmatic approach.
+Eviction is configured by adding the link:$$http://docs.jboss.org/infinispan/7.0/configdocs/infinispan-config-7.0.html$$[`<eviction />`] element to your `<*-cache />` configuration sections or using link:$$http://docs.jboss.org/infinispan/7.0/apidocs/org/infinispan/configuration/cache/EvictionConfigurationBuilder.html$$[EvictionConfigurationBuilder] API programmatic approach.
 
 All cache entry are evicted by piggybacking on user threads that are hitting the cache.
 Periodic pruning of expired cache entries from cache is done on a dedicated thread which is turned on by enabling reaper in expiration configuration element/API.
@@ -37,15 +37,15 @@ In case there is an eviction element, this table describes behaviour of eviction
 |===============
 |Supplied maxEntries|Supplied strategy|Example|Eviction behaviour
 |-|-| `<eviction />` |no eviction
-|&gt; 0|-| `<eviction maxEntries="100" />` |the strategy defaults to LIRS and eviction takes place
-|&gt; 0|NONE| `<eviction maxEntries="100" strategy="NONE" />` | the strategy defaults to LIRS and eviction takes place
-|&gt; 0| != NONE | `<eviction maxEntries="100" strategy="LRU" />` |eviction takes place with defined strategy
-|0|-| `<eviction maxEntries="0" />` | no eviction 
-|0| NONE | `<eviction maxEntries="0" strategy="NONE" />` | no eviction 
-|0| != NONE | `<eviction maxEntries="0" strategy="LRU" />` | ConfigurationException 
-|&lt; 0|-| `<eviction maxEntries="-1" />` | no eviction 
-|&lt; 0| NONE | `<eviction maxEntries="-1" strategy="NONE" />` | no eviction 
-|&lt; 0| != NONE | `<eviction maxEntries="-1" strategy="LRU" />` |ConfigurationException
+|&gt; 0|-| `<eviction max-entries="100" />` |the strategy defaults to LIRS and eviction takes place
+|&gt; 0|NONE| `<eviction max-entries="100" strategy="NONE" />` | the strategy defaults to LIRS and eviction takes place
+|&gt; 0| != NONE | `<eviction max-entries="100" strategy="LRU" />` |eviction takes place with defined strategy
+|0|-| `<eviction max-entries="0" />` | no eviction
+|0| NONE | `<eviction max-entries="0" strategy="NONE" />` | no eviction
+|0| != NONE | `<eviction max-entries="0" strategy="LRU" />` | ConfigurationException
+|&lt; 0|-| `<eviction max-entries="-1" />` | no eviction
+|&lt; 0| NONE | `<eviction max-entries="-1" strategy="NONE" />` | no eviction
+|&lt; 0| != NONE | `<eviction max-entries="-1" strategy="LRU" />` |ConfigurationException
 
 |===============
 
@@ -72,15 +72,15 @@ With _expiration_ you set _time criteria_ for entries, _how long you want to kee
 .  _Expiration_ is a top-level construct, represented in the configuration as well as in the cache API.
 .  While eviction is _local to each cache instance_ , expiration is _cluster-wide_ .  Expiration lifespans and maxIdle values are replicated along with the cache entry. 
 .  Expiration lifespan and maxIdle are also persisted in CacheStores, so this information survives eviction/passivation. 
-.  Four eviction strategies are shipped, link:$$http://docs.jboss.org/infinispan/6.0/apidocs/org/infinispan/eviction/EvictionStrategy.html#NONE$$[EvictionStrategy.NONE] , link:$$http://docs.jboss.org/infinispan/6.0/apidocs/org/infinispan/eviction/EvictionStrategy.html#LRU$$[EvictionStrategy.LRU] , link:$$http://docs.jboss.org/infinispan/6.0/apidocs/org/infinispan/eviction/EvictionStrategy.html#UNORDERED$$[EvictionStrategy.UNORDERED] , and link:$$http://docs.jboss.org/infinispan/6.0/apidocs/org/infinispan/eviction/EvictionStrategy.html#LIRS$$[EvictionStrategy.LIRS] .
+.  Four eviction strategies are shipped, link:$$http://docs.jboss.org/infinispan/7.0/apidocs/org/infinispan/eviction/EvictionStrategy.html#NONE$$[EvictionStrategy.NONE] , link:$$http://docs.jboss.org/infinispan/7.0/apidocs/org/infinispan/eviction/EvictionStrategy.html#LRU$$[EvictionStrategy.LRU] , link:$$http://docs.jboss.org/infinispan/7.0/apidocs/org/infinispan/eviction/EvictionStrategy.html#UNORDERED$$[EvictionStrategy.UNORDERED] , and link:$$http://docs.jboss.org/infinispan/7.0/apidocs/org/infinispan/eviction/EvictionStrategy.html#LIRS$$[EvictionStrategy.LIRS] .
 
 ==== Configuration
 Eviction may be configured using the Configuration bean or the XML file.  Eviction configuration is on a per-cache basis.  Valid eviction-related configuration elements are:
 
 [source,xml]
 ----
-<eviction strategy="LRU" maxEntries="2000"/>
-<expiration lifespan="1000" maxIdle="500" wakeupInterval="1000" />
+<eviction strategy="LRU" max-entries="2000"/>
+<expiration lifespan="1000" max-idle="500" interval="1000" />
 
 ----
 

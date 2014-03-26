@@ -1,0 +1,239 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<xs:schema attributeFormDefault="unqualified" elementFormDefault="qualified" version="1.0"
+           targetNamespace="urn:infinispan:config:store:remote:7.0"
+           xmlns:tns="urn:infinispan:config:store:remote:7.0"
+           xmlns:config="urn:infinispan:config:7.0" xmlns:xs="http://www.w3.org/2001/XMLSchema">
+  <xs:import namespace="urn:infinispan:config:7.0"
+             schemaLocation="http://www.infinispan.org/schemas/infinispan-config-7.0.xsd" />
+
+  <xs:element name="remote-store" type="tns:remote-store"/>
+
+  <xs:complexType name="remote-store">
+    <xs:complexContent>
+      <xs:extension base="config:store">
+        <xs:sequence>
+          <xs:element name="remote-server" type="config:remote-server" minOccurs="1" maxOccurs="unbounded"/>
+          <xs:element name="connection-pool" type="tns:connectionPool" minOccurs="0">
+            <xs:annotation>
+              <xs:documentation>
+                Configuration of the connection pool
+              </xs:documentation>
+            </xs:annotation>
+          </xs:element>
+          <xs:element name="async-executor" type="tns:executorFactory" minOccurs="0">
+            <xs:annotation>
+              <xs:documentation>
+                Configuration for the executor service used for asynchronous work on the Transport, including asynchronous marshalling and Cache 'async operations' such as Cache.putAsync().
+              </xs:documentation>
+            </xs:annotation>
+          </xs:element>
+        </xs:sequence>
+        <xs:attribute name="socket-timeout" type="xs:long" default="60000">
+          <xs:annotation>
+            <xs:documentation>
+              Enable/disable SO_TIMEOUT on socket connections to remote Hot Rod servers with the specified timeout, in milliseconds.
+              A timeout of zero is interpreted as an infinite timeout.
+            </xs:documentation>
+          </xs:annotation>
+        </xs:attribute>
+        <xs:attribute name="tcp-no-delay" type="xs:boolean" default="true">
+          <xs:annotation>
+            <xs:documentation>
+              Enable/disable TCP_NODELAY on socket connections to remote Hot Rod servers.
+            </xs:documentation>
+          </xs:annotation>
+        </xs:attribute>
+        <xs:attribute name="hotrod-wrapping" type="xs:boolean" default="false">
+          <xs:annotation>
+            <xs:documentation>
+              Ensures that, when entries are retrieved from the remote store, they will be wrapped in a format suitable for serving via HotRod. This flag must be enabled when performing a rolling upgrade
+            </xs:documentation>
+          </xs:annotation>
+        </xs:attribute>
+        <xs:attribute name="raw-values" type="xs:boolean" default="false">
+          <xs:annotation>
+            <xs:documentation>
+              Enables the storage of data on the remote server in "raw" format as opposed to wrapping the entries in InternalCacheEntry. This will make the remote cache interoperable between direct RemoteCacheManager clients and RemoteCacheStore stores
+            </xs:documentation>
+          </xs:annotation>
+        </xs:attribute>
+        <xs:attribute name="balancing-strategy" type="xs:string" default="org.infinispan.client.hotrod.impl.transport.tcp.RoundRobinBalancingStrategy">
+          <xs:annotation>
+            <xs:documentation>
+              For replicated (vs distributed) Hot Rod server clusters, the client balances requests to the servers according to this strategy.
+            </xs:documentation>
+          </xs:annotation>
+        </xs:attribute>
+        <xs:attribute name="connection-timeout" type="xs:int" default="60000">
+          <xs:annotation>
+            <xs:documentation>
+              This property defines the maximum socket connect timeout before giving up connecting to the server.
+            </xs:documentation>
+          </xs:annotation>
+        </xs:attribute>
+        <xs:attribute name="force-return-values" type="xs:boolean" default="false">
+          <xs:annotation>
+            <xs:documentation>
+              Whether or not to implicitly FORCE_RETURN_VALUE for all calls.
+            </xs:documentation>
+          </xs:annotation>
+        </xs:attribute>
+        <xs:attribute name="key-size-estimate" type="xs:int" default="64">
+          <xs:annotation>
+            <xs:documentation>
+              The class name of the driver used for connecting to the database.
+            </xs:documentation>
+          </xs:annotation>
+        </xs:attribute>
+        <xs:attribute name="marshaller" type="xs:string">
+          <xs:annotation>
+            <xs:documentation>
+              Allows you to specify a custom {@link org.infinispan.marshall.Marshaller} implementation to serialize and deserialize user objects.
+            </xs:documentation>
+          </xs:annotation>
+        </xs:attribute>
+        <xs:attribute name="ping-on-start" type="xs:boolean" default="true">
+          <xs:annotation>
+            <xs:documentation>
+              If true, a ping request is sent to a back end server in order to fetch cluster's topology.
+            </xs:documentation>
+          </xs:annotation>
+        </xs:attribute>
+        <xs:attribute name="protocol-version" type="xs:string" default="1.1">
+          <xs:annotation>
+            <xs:documentation>
+              This property defines the protocol version that this client should use. Defaults to 1.1. Other valid values include 1.0.
+            </xs:documentation>
+          </xs:annotation>
+        </xs:attribute>
+        <xs:attribute name="cache" type="xs:string">
+          <xs:annotation>
+            <xs:documentation>
+              The name of the remote cache in the remote infinispan cluster, to which to connect to. If unspecified, the default
+              cache will be used
+            </xs:documentation>
+          </xs:annotation>
+        </xs:attribute>
+        <xs:attribute name="transport-factory" type="xs:string">
+          <xs:annotation>
+            <xs:documentation>
+              Controls which transport to use. Currently only the TcpTransport is supported.
+            </xs:documentation>
+          </xs:annotation>
+        </xs:attribute>
+        <xs:attribute name="value-size-estimate" type="xs:int" default="512">
+          <xs:annotation>
+            <xs:documentation>
+              This hint allows sizing of byte buffers when serializing and deserializing values, to minimize array resizing.
+            </xs:documentation>
+          </xs:annotation>
+        </xs:attribute>
+      </xs:extension>
+    </xs:complexContent>
+  </xs:complexType>
+
+  <xs:complexType name="connectionPool">
+    <xs:attribute name="exhausted-action" type="tns:exhaustedAction" default="WAIT">
+      <xs:annotation>
+        <xs:documentation>
+           Specifies what happens when asking for a connection from a server's pool, and that pool is exhausted.
+        </xs:documentation>
+      </xs:annotation>
+    </xs:attribute>
+    <xs:attribute name="max-active" type="xs:int" default="-1">
+      <xs:annotation>
+        <xs:documentation>
+          Controls the maximum number of connections per server that are allocated (checked out to client threads, or idle in the pool) at one time. When non-positive, there is no limit to the number of connections per server. When maxActive is reached, the connection pool for that server is said to be exhausted. The default setting for this parameter is -1, i.e. there is no limit.
+        </xs:documentation>
+      </xs:annotation>
+    </xs:attribute>
+    <xs:attribute name="max-idle" type="xs:int" default="-1">
+      <xs:annotation>
+        <xs:documentation>
+          Controls the maximum number of idle persistent connections, per server, at any time. When negative, there is no limit to the number of connections that may be idle per server. The default setting for this parameter is -1.
+        </xs:documentation>
+      </xs:annotation>
+    </xs:attribute>
+    <xs:attribute name="max-total" type="xs:int" default="-1">
+      <xs:annotation>
+        <xs:documentation>
+          Sets a global limit on the number persistent connections that can be in circulation within the combined set of servers. When non-positive, there is no limit to the total number of persistent connections in circulation. When maxTotal is exceeded, all connections pools are exhausted. The default setting for this parameter is -1 (no limit). 
+        </xs:documentation>
+      </xs:annotation>
+    </xs:attribute>
+    <xs:attribute name="min-idle" type="xs:int" default="1">
+      <xs:annotation>
+        <xs:documentation>
+          Sets a target value for the minimum number of idle connections (per server) that should always be available. If this parameter is set to a positive number and timeBetweenEvictionRunsMillis > 0, each time the idle connection eviction thread runs, it will try to create enough idle instances so that there will be minIdle idle instances available for each server. The default setting for this parameter is 1. 
+        </xs:documentation>
+      </xs:annotation>
+    </xs:attribute>
+    <xs:attribute name="time-between-eviction-runs" type="xs:long" default="120000">
+      <xs:annotation>
+        <xs:documentation>
+          Indicates how long the eviction thread should sleep before "runs" of examining idle connections. When non-positive, no eviction thread will be launched. The default setting for this parameter is 2 minutes. 
+        </xs:documentation>
+      </xs:annotation>
+    </xs:attribute>
+    <xs:attribute name="min-evictable-idle-time" type="xs:long" default="1800000">
+      <xs:annotation>
+        <xs:documentation>
+          Specifies the minimum amount of time that an connection may sit idle in the pool before it is eligible for eviction due to idle time. When non-positive, no connection will be dropped from the pool due to idle time alone. This setting has no effect unless timeBetweenEvictionRunsMillis > 0. The default setting for this parameter is 1800000(30 minutes).  
+        </xs:documentation>
+      </xs:annotation>
+    </xs:attribute>
+    <xs:attribute name="test-while-idle" type="xs:boolean" default="true">
+      <xs:annotation>
+        <xs:documentation>
+          Indicates whether or not idle connections should be validated by sending an TCP packet to the server, during idle connection eviction runs. Connections that fail to validate will be dropped from the pool. This setting has no effect unless timeBetweenEvictionRunsMillis > 0. The default setting for this parameter is true.  
+        </xs:documentation>
+      </xs:annotation>
+    </xs:attribute>
+  </xs:complexType>
+  
+  <xs:simpleType name="exhaustedAction">
+    <xs:restriction base="xs:string">
+      <xs:enumeration value="EXCEPTION">
+        <xs:annotation>
+          <xs:documentation>
+            An exception will be thrown to the calling user
+          </xs:documentation>
+        </xs:annotation>
+      </xs:enumeration>
+      <xs:enumeration value="WAIT">
+        <xs:annotation>
+          <xs:documentation>
+            The caller will block (invoke waits until a new or idle connections is available. 
+          </xs:documentation>
+        </xs:annotation>
+      </xs:enumeration>
+      <xs:enumeration value="CREATE_NEW">
+        <xs:annotation>
+          <xs:documentation>
+            A new persistent connection will be created and returned (essentially making maxActive meaningless.) 
+          </xs:documentation>
+        </xs:annotation>
+      </xs:enumeration>
+    </xs:restriction>
+  </xs:simpleType>
+
+  <xs:complexType name="executorFactory">
+    <xs:sequence>
+      <xs:element name="property" type="config:property" minOccurs="0" maxOccurs="unbounded">
+        <xs:annotation>
+          <xs:documentation>
+            Add key/value property pair to this factory configuration. Example properties include "maxThreads" which sets the maximum number of threads for this executor and "threadNamePrefix" which sets the thread name prefix for threads created by this executor ( default values can be found at https://docs.jboss.org/author/display/ISPN/Default+Values+For+Property+Based+Attributes ).
+          </xs:documentation>
+        </xs:annotation>
+      </xs:element>
+    </xs:sequence>
+    <xs:attribute name="factory" type="xs:string">
+      <xs:annotation>
+        <xs:documentation>
+          Fully qualified class name of the ExecutorFactory to use.  Must implement org.infinispan.executors.ExecutorFactory
+        </xs:documentation>
+      </xs:annotation>
+    </xs:attribute>
+  </xs:complexType>
+
+</xs:schema>

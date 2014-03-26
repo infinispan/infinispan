@@ -25,7 +25,7 @@ import org.testng.annotations.Test;
  * @author <a href="mailto:rtsang@redhat.com">Ray Tsang</a>
  * 
  */
-@Test(groups = "unit", testName = "persistence.JpaConfigurationTest")
+@Test(groups = "unstable", testName = "persistence.JpaConfigurationTest", description = "Re-enable in ISPN-4157")
 public class JpaConfigurationTest {
 
    private static final String PERSISTENCE_UNIT_NAME = "org.infinispan.persistence.jpa.configurationTest";

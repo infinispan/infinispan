@@ -79,11 +79,9 @@ Check the JGroups manual for more detail in here: link:$$http://jgroups.org/manu
 [source,xml]
 ----
 
-<namedCache >
-  <transaction
-    transactionMode="TRANSACTIONAL"
-    transactionProtocol="TOTAL_ORDER" />
-</namedCache>
+<local-cache>
+  <transaction mode="NON_XA" protocol="TOTAL_ORDER" />
+</local-cache>
 
 ----
 
@@ -102,13 +100,15 @@ Optionally, you can configure the total order executor to use your own executor 
 .infinispan.xml
 [source,xml]
 ----
-
-<global>
-  <totalOrderExecutor factory="org.infinispan.executor.DefaultExecutorFactory>
-    <property name="coreThreads" value="1" />
-    <property name="maxThreads" value="32" />
-  </totalOrderExecutor>
-</global>
+<infinispan>
+   <threads>
+      <blocking-bounded-queue-thread-pool name="custom-totalorder"
+            core-threads="1" max-threads="32"/>
+   </threads>
+   <cache-container>
+      <transport total-order-executor="custom-totalorder" />
+   </cache-container>
+</infinispan>
 
 ----
 
@@ -118,7 +118,8 @@ or programmaticaly:
 ----
 
 GlobalConfigurationBuilder gcb = new GlobalConfigurationBuilder();
-gcb.totalOrderExectutor().factory(new DefaultExecutorFactory()).addProperty("coreThread", "1").addProperty("maxThreads", "32");
+gcb.transport().totalOrderThreadPool().threadPoolFactory(
+   new BlockingThreadPoolExecutorFactory(32, 1, 10000, 60000));
 
 ----
 
@@ -155,30 +156,21 @@ The Infinispan configuration used is:
 .infinispan.xml
 [source, xml]
 ----
-<infinispan xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns="urn:infinispan:config:5.3">
-    <global>
-        <transport clusterName="x">
-            <properties>
-                <property name="configurationFile" value="jgroups/jgroups.xml"/>
-            </properties>
-        </transport>
-    </global>
-    <default>
-        <transaction
-                transactionManagerLookupClass="org.infinispan.transaction.lookup.GenericTransactionManagerLookup"
-                transactionMode="TRANSACTIONAL"
-                transactionProtocol="TOTAL_ORDER"> <!-- transactionProtocol="DEFAULT" for the locking model -->
-            <recovery enabled="false"/>
-        </transaction>
-
-        <locking concurrencyLevel="1000" useLockStriping="false" isolationLevel="REPEATABLE_READ" writeSkewCheck="true"/> <!-- writeSkewCheck="false" for the no write skew experiments -->
-        <clustering mode="r"> <!-- mode="d" for distributed mode -->
-            <sync replTimeout="10000"/>
-            <stateTransfer fetchInMemoryState="false"/>
-            <hash numOwners="2" /> <!-- for distributed mode only -->
-        </clustering>
-    </default>
-    <namedCache name="testCache"/>
+<infinispan>
+   <jgroups>
+      <stack-file name="external" path="jgroups/jgroups.xml"/>
+   </jgroups>
+   <cache-container default-cache="default">
+      <transport cluster="x" stack="external">
+      <replicated-cache name="default" mode="SYNC" remote-timeout="10000">
+         <transaction transaction-manager-lookup="org.infinispan.transaction.lookup.GenericTransactionManagerLookup"
+                      mode="NON_XA" protocol="TOTAL_ORDER" />
+           <locking concurrency-level="1000" striping="false"
+                    isolation="REPEATABLE_READ" write-skew="true"/> <!-- write-skew="false" for the no write skew experiments -->
+           <state-transfer enabled="false"/>
+      </replicated-cache>
+      <replicated-cache name="testCache"/>
+   </cache-container>
 </infinispan>
 
 ----

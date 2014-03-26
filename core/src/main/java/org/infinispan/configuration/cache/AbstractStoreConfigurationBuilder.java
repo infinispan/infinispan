@@ -19,7 +19,7 @@ public abstract class AbstractStoreConfigurationBuilder<T extends StoreConfigura
    protected boolean purgeOnStartup = false;
    protected boolean shared = false;
    protected boolean preload = false;
-   protected Properties properties;
+   protected Properties properties = new Properties();
 
    public AbstractStoreConfigurationBuilder(PersistenceConfigurationBuilder builder) {
       super(builder);
@@ -81,6 +81,7 @@ public abstract class AbstractStoreConfigurationBuilder<T extends StoreConfigura
    @Override
    public S addProperty(String key, String value) {
       this.properties.put(key, value);
+      XmlConfigHelper.setValues(this, properties, false, false);
       return self();
    }
 

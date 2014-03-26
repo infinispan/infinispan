@@ -21,6 +21,7 @@ public enum Attribute {
    IMPLEMENTATION_TYPE("implementationType"),
    LOCATION("location"),
    PATH("path"),
+   RELATIVE_TO("relative-to"),
    QUEUE_SIZE("queue-size"),
    TYPE("type"),
    ;

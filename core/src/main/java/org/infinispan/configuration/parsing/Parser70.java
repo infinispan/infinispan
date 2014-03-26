@@ -1,5 +1,7 @@
 package org.infinispan.configuration.parsing;
 
+import org.infinispan.commons.configuration.BuiltBy;
+import org.infinispan.commons.configuration.ConfiguredBy;
 import org.infinispan.commons.equivalence.Equivalence;
 import org.infinispan.commons.executors.BlockingThreadPoolExecutorFactory;
 import org.infinispan.commons.executors.CachedThreadPoolExecutorFactory;
@@ -21,6 +23,9 @@ import org.infinispan.eviction.EvictionThreadPolicy;
 import org.infinispan.factories.threads.DefaultThreadFactory;
 import org.infinispan.interceptors.base.CommandInterceptor;
 import org.infinispan.jmx.MBeanServerLookup;
+import org.infinispan.persistence.cluster.ClusterLoader;
+import org.infinispan.persistence.file.SingleFileStore;
+import org.infinispan.persistence.spi.CacheLoader;
 import org.infinispan.transaction.LockingMode;
 import org.infinispan.transaction.TransactionProtocol;
 import org.infinispan.transaction.lookup.TransactionManagerLookup;
@@ -466,18 +471,6 @@ public class Parser70 implements ConfigurationParser {
                builder.shutdown().hookBehavior(ShutdownHookBehavior.valueOf(value));
                break;
             }
-            case JMX_DOMAIN: {
-               builder.globalJmxStatistics().jmxDomain(value);
-               break;
-            }
-            case MBEAN_SERVER_LOOKUP: {
-               builder.globalJmxStatistics().mBeanServerLookup(Util.<MBeanServerLookup>getInstance(value, holder.getClassLoader()));
-               break;
-            }
-            case ALLOW_DUPLICATE_DOMAINS: {
-               builder.globalJmxStatistics().allowDuplicateDomains(Boolean.valueOf(value));
-               break;
-            }
             default: {
                throw ParseUtils.unexpectedAttribute(reader, i);
             }
@@ -774,6 +767,10 @@ public class Parser70 implements ConfigurationParser {
                this.parseTakeOffline(reader, backup);
                break;
             }
+            case STATE_TRANSFER: {
+               this.parseXSiteStateTransfer(reader, backup);
+               break;
+            }
             default: {
                throw ParseUtils.unexpectedElement(reader);
             }
@@ -797,6 +794,25 @@ public class Parser70 implements ConfigurationParser {
             default: {
                throw ParseUtils.unexpectedAttribute(reader, i);
             }
+         }
+      }
+      ParseUtils.requireNoContent(reader);
+   }
+
+   private void parseXSiteStateTransfer(XMLExtendedStreamReader reader, BackupConfigurationBuilder backup) throws XMLStreamException {
+      for (int i = 0; i < reader.getAttributeCount(); i++) {
+         ParseUtils.requireNoNamespaceAttribute(reader, i);
+         String value = replaceProperties(reader.getAttributeValue(i));
+         Attribute attribute = Attribute.forName(reader.getAttributeLocalName(i));
+         switch (attribute) {
+            case CHUNK_SIZE:
+               backup.stateTransfer().chunkSize(Integer.parseInt(value));
+               break;
+            case TIMEOUT:
+               backup.stateTransfer().timeout(Long.parseLong(value));
+               break;
+            default:
+               throw ParseUtils.unexpectedElement(reader);
          }
       }
       ParseUtils.requireNoContent(reader);
@@ -1550,7 +1566,8 @@ public class Parser70 implements ConfigurationParser {
       Boolean purgeOnStartup = null;
       Boolean preload = null;
       Boolean shared = null;
-      StoreConfigurationBuilder<?, ?> pcb = null;
+      Boolean singleton = null;
+      CacheLoader store = null;
 
       for (int i = 0; i < reader.getAttributeCount(); i++) {
          ParseUtils.requireNoNamespaceAttribute(reader, i);
@@ -1558,8 +1575,7 @@ public class Parser70 implements ConfigurationParser {
          Attribute attribute = Attribute.forName(reader.getAttributeLocalName(i));
          switch (attribute) {
             case CLASS:
-               Class storeBuilderClass = Util.loadClass(value, holder.getClassLoader());
-               pcb = builder.persistence().addStore(storeBuilderClass);
+               store = Util.getInstance(value, holder.getClassLoader());
                break;
             case FETCH_STATE:
                fetchPersistentState = Boolean.valueOf(value);
@@ -1576,24 +1592,64 @@ public class Parser70 implements ConfigurationParser {
             case SHARED:
                shared = Boolean.parseBoolean(value);
                break;
+            case SINGLETON:
+               singleton = Boolean.parseBoolean(value);
+               break;
             default:
                throw ParseUtils.unexpectedAttribute(reader, i);
          }
       }
 
-      if (pcb != null) {
-         if (fetchPersistentState != null)
-            pcb.fetchPersistentState(fetchPersistentState);
-         if (ignoreModifications != null)
-            pcb.ignoreModifications(ignoreModifications);
-         if (purgeOnStartup != null)
-            pcb.purgeOnStartup(purgeOnStartup);
-         if (preload != null)
-            pcb.preload(preload);
-         if (shared != null)
-            pcb.shared(shared);
+      if (store != null) {
+         if (store instanceof SingleFileStore) {
+            SingleFileStoreConfigurationBuilder sfs = builder.persistence().addSingleFileStore();
+            if (fetchPersistentState != null)
+               sfs.fetchPersistentState(fetchPersistentState);
+            if (ignoreModifications != null)
+               sfs.ignoreModifications(ignoreModifications);
+            if (purgeOnStartup != null)
+               sfs.purgeOnStartup(purgeOnStartup);
+            if (preload != null)
+               sfs.preload(preload);
+            if (shared != null)
+               sfs.shared(shared);
+            if (singleton != null)
+               sfs.singleton().enabled(singleton);
+            parseStoreElements(reader, sfs);
+         } else if (store instanceof ClusterLoader) {
+            ClusterLoaderConfigurationBuilder cscb = builder.persistence().addClusterLoader();
+            parseStoreElements(reader, cscb);
+         } else {
+            ConfiguredBy annotation = store.getClass().getAnnotation(ConfiguredBy.class);
+            Class<? extends StoreConfigurationBuilder> builderClass = null;
+            if (annotation != null) {
+               Class<?> configuredBy = annotation.value();
+               if (configuredBy != null) {
+                  BuiltBy builtBy = configuredBy.getAnnotation(BuiltBy.class);
+                  builderClass = builtBy.value().asSubclass(StoreConfigurationBuilder.class);
+               }
+            }
 
-         parseStoreElements(reader, pcb);
+            // If they don't specify a builder just use the base configuration builder
+            if (builderClass == null) {
+               builderClass = BaseStoreConfigurationBuilder.class;
+            }
+
+            StoreConfigurationBuilder configBuilder = builder.persistence().addStore(
+                  builderClass);
+            if (fetchPersistentState != null)
+               configBuilder.fetchPersistentState(fetchPersistentState);
+            if (ignoreModifications != null)
+               configBuilder.ignoreModifications(ignoreModifications);
+            if (purgeOnStartup != null)
+               configBuilder.purgeOnStartup(purgeOnStartup);
+            if (preload != null)
+               configBuilder.preload(preload);
+            if (shared != null)
+               configBuilder.shared(shared);
+
+            parseStoreElements(reader, configBuilder);
+         }
       }
    }
 

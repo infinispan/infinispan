@@ -81,7 +81,7 @@ There are two levels of configuration: global and per-cache. The global configur
 [source,xml]
 ----
 <infinispan>
-   <global>
+   <cache-container default-cache="secured">
       <security>
          <roles mapper="my.package.MyRoleMapper">
             <role name="admin" permissions="ALL" />
@@ -90,15 +90,12 @@ There are two levels of configuration: global and per-cache. The global configur
             <role name="supervisor" permission="READ WRITE EXEC BULK"/>
          </roles>
       </security>
-   </global>
+      <local-cache name="secured">
+         <security enabled="true">
+            <authorization roles="admin reader writer supervisor" />
+         </security>
+      </local-cache>
+   </cache-container>
 
-   <default>
-   </default>
-
-   <namedCache name="secured">
-      <security enabled="true">
-         <authorization roles="admin reader writer supervisor" />
-      </security>
-   </namedCache>
 </infinispan>
 ----
