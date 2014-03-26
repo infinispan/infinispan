@@ -8,6 +8,7 @@ import org.infinispan.arquillian.core.InfinispanResource;
 import org.infinispan.arquillian.core.RemoteInfinispanServers;
 import org.infinispan.arquillian.core.WithRunningServer;
 import org.infinispan.arquillian.utils.MBeanServerConnectionProvider;
+import org.infinispan.server.test.category.UnstableTest;
 import org.infinispan.server.test.client.memcached.MemcachedClient;
 import org.infinispan.server.test.util.RemoteInfinispanMBeans;
 import org.jboss.arquillian.container.test.api.ContainerController;
@@ -15,6 +16,7 @@ import org.jboss.arquillian.junit.Arquillian;
 import org.jboss.arquillian.test.api.ArquillianResource;
 import org.junit.BeforeClass;
 import org.junit.Test;
+import org.junit.experimental.categories.Category;
 import org.junit.runner.RunWith;
 
 import static org.infinispan.server.test.util.TestUtil.getAttribute;
@@ -36,6 +38,7 @@ import static org.junit.Assert.assertEquals;
  * @author Martin Gencur
  */
 @RunWith(Arquillian.class)
+@Category(UnstableTest.class)
 public class AuthAndEncryptProtocolTest {
 
     @InfinispanResource
@@ -74,7 +77,7 @@ public class AuthAndEncryptProtocolTest {
     }
 
     @WithRunningServer(COORDINATOR_NODE)
-    @Test(groups = "unstable", description = "ISPN-4164")
+    @Test
     public void testFriendlyNodeCanJoin() throws Exception {
         try {
             controller.start(JOINING_NODE_FRIEND);
@@ -105,7 +108,7 @@ public class AuthAndEncryptProtocolTest {
     }
 
     @WithRunningServer(COORDINATOR_NODE_NO_ENCRYPT)
-    @Test(groups = "unstable", description = "ISPN-4164")
+    @Test
     public void testAlienNodeCannotJoin() throws Exception {
         try {
             controller.start(JOINING_NODE_ALIEN);
