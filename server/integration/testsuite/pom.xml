@@ -5,7 +5,7 @@
     <parent>
         <groupId>org.infinispan.server</groupId>
         <artifactId>infinispan-server-versions</artifactId>
-        <version>7.0.0-SNAPSHOT</version>
+        <version>7.0.0.Alpha2</version>
         <relativePath>../versions/pom.xml</relativePath>
     </parent>
 
@@ -161,7 +161,7 @@
                 </exclusion>
             </exclusions>
         </dependency>
-        <!-- TODO: Make it possible to use a different version of Karaf -->
+        
         <dependency>
             <groupId>org.apache.karaf</groupId>
             <artifactId>apache-karaf</artifactId>
@@ -200,7 +200,7 @@
         <server.jvm>${env.JAVA_HOME}</server.jvm>
         <resources.dir>${basedir}/src/test/resources</resources.dir>
         <jvm.memory.args>-Xmx512m -XX:MaxPermSize=128m</jvm.memory.args>
-        <jvm.x64.args></jvm.x64.args>
+        <jvm.x64.args />
         <default.transport.stack>udp</default.transport.stack>
         <transport.stack>-Djboss.default.jgroups.stack=${default.transport.stack}</transport.stack>
 
@@ -253,7 +253,7 @@
                     </execution>
                 </executions>
             </plugin>
-            <!-- IMPORTANT: generates META-INF/maven/dependencies.properties required by PAX-EXAM framework -->
+            
             <plugin>
                 <groupId>org.apache.servicemix.tooling</groupId>
                 <artifactId>depends-maven-plugin</artifactId>
@@ -277,9 +277,9 @@
                         <phase>generate-resources</phase>
                         <configuration>
                             <target>
-                                <property name="test_classpath" refid="maven.test.classpath"/>
+                                <property name="test_classpath" refid="maven.test.classpath" />
                                 <ant antfile="build-testsuite.xml" inheritRefs="true">
-                                    <target name="create-all-distros"/>
+                                    <target name="create-all-distros" />
                                 </ant>
                             </target>
                         </configuration>
@@ -534,7 +534,7 @@
                 <suite.client.local.phase>none</suite.client.local.phase>
                 <suite.client.dist.phase>none</suite.client.dist.phase>
                 <suite.client.repl.phase>none</suite.client.repl.phase>
-                <suite.manual.exclude.groups></suite.manual.exclude.groups>
+                <suite.manual.exclude.groups />
                 <suite.manual.include.groups>org.infinispan.server.test.category.Osgi</suite.manual.include.groups>
                 <suite.manual.include>org/infinispan/server/test/client/hotrod/osgi/RemoteCacheOsgiTest.java</suite.manual.include>
             </properties>
@@ -551,27 +551,27 @@
                                 </goals>
                                 <configuration>
                                     <target>
-                                        <exec dir="${server1.dist}/bin" spawn="true" executable="chmod" osfamily="unix">
-                                            <arg value="+x"/>
-                                            <arg value="../bin"/>
-                                            <arg value="standalone.sh"/>
+                                        <exec dir="${server1.dist}/bin" executable="chmod" osfamily="unix" spawn="true">
+                                            <arg value="+x" />
+                                            <arg value="../bin" />
+                                            <arg value="standalone.sh" />
                                         </exec>
                                         <exec executable="${server1.dist}/bin/standalone.sh" osfamily="unix" spawn="true">
-                                            <arg line="-c testsuite/standalone-with-indexing.xml"/>
-                                            <env key="JAVA_OPTS" value="${server.jvm.args} -Djboss.socket.binding.port-offset=0 -Djboss.node.name=jdg"/>
+                                            <arg line="-c testsuite/standalone-with-indexing.xml" />
+                                            <env key="JAVA_OPTS" value="${server.jvm.args} -Djboss.socket.binding.port-offset=0 -Djboss.node.name=jdg" />
                                         </exec>
                                         <exec executable="${server1.dist}/bin/standalone.bat" osfamily="windows" spawn="true">
-                                            <arg line="-c testsuite/standalone-with-indexing.xml"/>
-                                            <env key="JAVA_OPTS" value="${server.jvm.args} -Djboss.socket.binding.port-offset=0 -Djboss.node.name=jdg"/>
+                                            <arg line="-c testsuite/standalone-with-indexing.xml" />
+                                            <env key="JAVA_OPTS" value="${server.jvm.args} -Djboss.socket.binding.port-offset=0 -Djboss.node.name=jdg" />
                                         </exec>
                                         <echo>Waiting for Infinispan server to start</echo>
-                                        <waitfor maxwait="15" maxwaitunit="second" checkevery="1" checkeveryunit="second">
+                                        <waitfor checkevery="1" checkeveryunit="second" maxwait="15" maxwaitunit="second">
                                             <and>
-                                                <socket server="127.0.0.1" port="9999"/>
-                                                <socket server="127.0.0.1" port="11222"/>
+                                                <socket port="9999" server="127.0.0.1" />
+                                                <socket port="11222" server="127.0.0.1" />
                                             </and>
                                         </waitfor>
-                                        <echo message="Infinispan server started"/>
+                                        <echo message="Infinispan server started" />
                                     </target>
                                 </configuration>
                             </execution>
@@ -583,49 +583,47 @@
                                 </goals>
                                 <configuration>
                                     <target>
-                                        <exec executable="${server.jvm}/bin/jps" output="jps.pid" osfamily="unix"/>
-                                        <loadfile srcfile="jps.pid" property="pid" failonerror="false">
+                                        <exec executable="${server.jvm}/bin/jps" osfamily="unix" output="jps.pid" />
+                                        <loadfile failonerror="false" property="pid" srcfile="jps.pid">
                                             <filterchain>
                                                 <linecontains>
-                                                    <contains value="jboss-modules.jar"/>
+                                                    <contains value="jboss-modules.jar" />
                                                 </linecontains>
                                                 <tokenfilter>
-                                                    <deletecharacters chars="jboss-modules.jar"/>
-                                                    <ignoreblank/>
+                                                    <deletecharacters chars="jboss-modules.jar" />
+                                                    <ignoreblank />
                                                 </tokenfilter>
-                                                <striplinebreaks/>
+                                                <striplinebreaks />
                                             </filterchain>
                                         </loadfile>
-                                        <exec executable="netstat" output="jps.pid" osfamily="windows">
-                                            <arg line="-aon"/>
+                                        <exec executable="netstat" osfamily="windows" output="jps.pid">
+                                            <arg line="-aon" />
                                         </exec>
-                                        <loadfile srcfile="jps.pid" property="pid" failonerror="false">
+                                        <loadfile failonerror="false" property="pid" srcfile="jps.pid">
                                             <filterchain>
                                                 <linecontains>
-                                                    <contains value="LISTENING"/>
-                                                    <contains value=":11222"/>
+                                                    <contains value="LISTENING" />
+                                                    <contains value=":11222" />
                                                 </linecontains>
                                                 <tokenfilter>
-                                                    <replaceregex pattern=".*LISTENING([ \t]+)([0-9]+)" replace="\2" flags="gi"/>
-                                                    <ignoreblank/>
+                                                    <replaceregex flags="gi" pattern=".*LISTENING([ \t]+)([0-9]+)" replace="\2" />
+                                                    <ignoreblank />
                                                 </tokenfilter>
-                                                <striplinebreaks/>
+                                                <striplinebreaks />
                                             </filterchain>
                                         </loadfile>
-                                        <echo message="Killing Infinispan server with PID - ${pid}"/>
+                                        <echo message="Killing Infinispan server with PID - ${pid}" />
                                         <exec executable="kill" osfamily="unix">
-                                            <arg line="-9 ${pid}"/>
+                                            <arg line="-9 ${pid}" />
                                         </exec>
                                         <exec executable="taskkill" osfamily="windows">
-                                            <arg line="/F /T /PID ${pid}"/>
+                                            <arg line="/F /T /PID ${pid}" />
                                         </exec>
-                                        <delete file="jps.pid"/>
+                                        <delete file="jps.pid" />
                                     </target>
                                 </configuration>
                             </execution>
-                            <!-- Register Protofile on the server before the test starts.
-                                 TODO: Do it directly from the test. The remoting-jmx implementation for
-                                 JMX is normally loaded via ServiceLoader and this is not working out-of-box in OSGi. -->
+                            
                             <execution>
                                 <id>register-protofile-with-server</id>
                                 <goals>
@@ -634,16 +632,14 @@
                                 <phase>test</phase>
                                 <configuration>
                                     <target>
-                                        <property name="test_classpath" refid="maven.test.classpath"/>
-                                        <java classname="org.infinispan.server.test.util.ProtofileRegistrar"
-                                              fork="false"
-                                              failonerror="true">
-                                            <arg value="/sample_bank_account/bank.protobin"/>
-                                            <arg value="localhost"/>
-                                            <arg value="9999"/>
+                                        <property name="test_classpath" refid="maven.test.classpath" />
+                                        <java classname="org.infinispan.server.test.util.ProtofileRegistrar" failonerror="true" fork="false">
+                                            <arg value="/sample_bank_account/bank.protobin" />
+                                            <arg value="localhost" />
+                                            <arg value="9999" />
                                             <classpath>
-                                                <pathelement path="${project.build.directory}/test-classes"/>
-                                                <pathelement path="${test_classpath}"/>
+                                                <pathelement path="${project.build.directory}/test-classes" />
+                                                <pathelement path="${test_classpath}" />
                                             </classpath>
                                         </java>
                                     </target>
@@ -674,13 +670,13 @@
         <profile>
             <id>test-unstable</id>
             <properties>
-                <groups.unstable></groups.unstable>
-                <suite.manual.exclude.groups></suite.manual.exclude.groups>
+                <groups.unstable />
+                <suite.manual.exclude.groups />
                 <suite.manual.include.groups>org.infinispan.server.test.category.UnstableTest</suite.manual.include.groups>
                 <groups.client.local>org.infinispan.server.test.category.UnstableClientLocalTest</groups.client.local>
                 <groups.client.clustered>org.infinispan.server.test.category.UnstableClientClusteredTest</groups.client.clustered>
             </properties>
-            <!-- don't fail if there are no unstable tests (applies to all surefire executions) -->
+            
             <build>
                 <plugins>
                     <plugin>
