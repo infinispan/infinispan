@@ -212,18 +212,9 @@
                 <transform-rest-sec securityMode="READ_WRITE" authMethod="DIGEST" cacheContainer="security" securityDomain="digest_auth" modifyDigestSecDomain="true" in="@{in}"/>
             </rest-sec>
         </transform>
-        <transform in="clustered.xml" out="testsuite/clustered-auth-with-encrypt.xml"
+        <transform in="clustered.xml" out="testsuite/clustered-with-encrypt.xml"
                    modifyInfinispan="${infinispan.parts}/default-repl.xml"
-                   addAuth="${other.parts}/jgroups-auth.xml"
                    addEncrypt="${other.parts}/jgroups-encrypt.xml"
-                   filtering="true"/>
-        <transform in="clustered.xml" out="testsuite/clustered-auth.xml"
-                   modifyInfinispan="${infinispan.parts}/default-repl.xml"
-                   addAuth="${other.parts}/jgroups-auth.xml"
-                   filtering="true"/>
-        <transform in="clustered.xml" out="testsuite/clustered-auth-wrong-certificate.xml"
-                   modifyInfinispan="${infinispan.parts}/default-repl.xml"
-                   addAuth="${other.parts}/jgroups-auth-malicious.xml"
                    filtering="true"/>
         <transform in="standalone.xml" out="testsuite/standalone-filecs.xml"
                    modifyInfinispan="${infinispan.parts}/filecachestore.xml"/>
