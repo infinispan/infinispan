@@ -1,7 +1,6 @@
 package org.infinispan.configuration.parsing;
 
 import org.infinispan.commons.CacheConfigurationException;
-import org.infinispan.commons.configuration.Builder;
 import org.infinispan.commons.configuration.BuiltBy;
 import org.infinispan.commons.configuration.ConfiguredBy;
 import org.infinispan.commons.equivalence.Equivalence;
@@ -40,7 +39,6 @@ import org.infinispan.util.logging.LogFactory;
 
 import javax.xml.stream.XMLStreamConstants;
 import javax.xml.stream.XMLStreamException;
-
 import java.util.Properties;
 
 import static org.infinispan.commons.util.StringPropertyReplacer.replaceProperties;
@@ -732,13 +730,14 @@ public class Parser60 implements ConfigurationParser {
                }
             }
 
-            // If they don't specify a builder just use the base configuration builder
+            StoreConfigurationBuilder configBuilder;
+            // If they don't specify a builder just use the custom configuration builder and set the class
             if (builderClass == null) {
-               builderClass = BaseStoreConfigurationBuilder.class;
+               configBuilder = builder.persistence().addStore(CustomStoreConfigurationBuilder.class).customStoreClass(
+                     store.getClass());
+            } else {
+               configBuilder = builder.persistence().addStore(builderClass);
             }
-
-            StoreConfigurationBuilder configBuilder = builder.persistence().addStore(
-                  builderClass);
             if (fetchPersistentState != null)
                configBuilder.fetchPersistentState(fetchPersistentState);
             if (ignoreModifications != null)

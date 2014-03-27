@@ -611,10 +611,13 @@ public abstract class CacheAdd extends AbstractAddStepHandler {
              builderClass = builtBy.value().asSubclass(StoreConfigurationBuilder.class);
           }
        }
+       StoreConfigurationBuilder scb;
        if (builderClass == null) {
-          builderClass = BaseStoreConfigurationBuilder.class;
+          scb = persistenceBuilder.addStore(CustomStoreConfigurationBuilder.class).customStoreClass(storeImplClass);
+       } else {
+          scb = persistenceBuilder.addStore(builderClass);
        }
-       return persistenceBuilder.addStore(builderClass);
+       return scb;
     }
 
    private StoreConfigurationBuilder<?, ?> buildCacheStore(OperationContext context, PersistenceConfigurationBuilder persistenceBuilder, String containerName, ModelNode store, String storeKey, List<Dependency<?>> dependencies) throws OperationFailedException {

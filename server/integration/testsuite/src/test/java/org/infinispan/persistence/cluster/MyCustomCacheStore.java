@@ -1,5 +1,6 @@
 package org.infinispan.persistence.cluster;
 
+import org.infinispan.commons.configuration.ConfiguredBy;
 import org.infinispan.marshall.core.MarshalledEntry;
 import org.infinispan.persistence.spi.PersistenceException;
 import org.infinispan.persistence.spi.ExternalStore;
@@ -12,6 +13,7 @@ import org.infinispan.util.logging.LogFactory;
  *
  *  @author Jakub Markos
  */
+@ConfiguredBy(MyCustomCacheStoreConfiguration.class)
 public class MyCustomCacheStore implements ExternalStore {
 
     private static final Log log = LogFactory.getLog(MyCustomCacheStore.class);

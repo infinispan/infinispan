@@ -123,7 +123,7 @@ public class PersistenceConfigurationBuilder extends AbstractConfigurationChildB
       for (StoreConfiguration c : template.stores()) {
          Class<? extends StoreConfigurationBuilder<?, ?>> builderClass = (Class<? extends StoreConfigurationBuilder<?, ?>>) ConfigurationUtils.builderForNonStrict(c);
          if (builderClass == null) {
-            builderClass = BaseStoreConfigurationBuilder.class;
+            builderClass = CustomStoreConfigurationBuilder.class;
          }
          StoreConfigurationBuilder builder =  this.addStore(builderClass);
          builder.read(c);
