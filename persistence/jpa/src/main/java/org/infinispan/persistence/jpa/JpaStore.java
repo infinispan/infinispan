@@ -172,7 +172,7 @@ public class JpaStore implements AdvancedLoadWriteStore {
                throw new JpaStoreException("Failed to marshall key", e);
             }
             long metadataFindBegin = timeService.time();
-            metadata = em.find(MetadataEntity.class, keyBytes);
+            metadata = em.find(MetadataEntity.class, new MetadataEntityKey(keyBytes));
             stats.addMetadataFind(timeService.time() - metadataFindBegin);
          }
 
@@ -282,10 +282,10 @@ public class JpaStore implements AdvancedLoadWriteStore {
                      throw new JpaStoreException("Cannot marshall key", e);
                   }
                   long metadataFindBegin = timeService.time();
-                  MetadataEntity metadata = em.find(MetadataEntity.class, keyBytes);
+                  MetadataEntity metadata = em.find(MetadataEntity.class, new MetadataEntityKey(keyBytes));
                   stats.addMetadataFind(timeService.time() - metadataFindBegin);
                   if (trace) log.trace("Metadata " + key + " -> " + toString(metadata));
-                  return metadata == null || metadata.expiration > timeService.wallClockTime();
+                  return metadata == null || metadata.getExpiration() > timeService.wallClockTime();
                } else {
                   return true;
                }
@@ -332,7 +332,7 @@ public class JpaStore implements AdvancedLoadWriteStore {
                      throw new JpaStoreException("Failed to marshall key", e);
                   }
                   long metadataFindBegin = timeService.time();
-                  MetadataEntity metadata = em.find(MetadataEntity.class, keyBytes);
+                  MetadataEntity metadata = em.find(MetadataEntity.class, new MetadataEntityKey(keyBytes));
                   stats.addMetadataFind(timeService.time() - metadataFindBegin);
                   if (metadata != null && metadata.getMetadata() != null) {
                      try {
@@ -447,7 +447,7 @@ public class JpaStore implements AdvancedLoadWriteStore {
       } catch (Exception e) {
          throw new JpaStoreException("Failed to marshall key", e);
       }
-      MetadataEntity m = em.find(MetadataEntity.class, keyBytes);
+      MetadataEntity m = em.find(MetadataEntity.class, new MetadataEntityKey(keyBytes));
       if (m == null) return null;
 
       try {
@@ -486,7 +486,7 @@ public class JpaStore implements AdvancedLoadWriteStore {
             EntityTransaction txn = em.getTransaction();
             final Object key;
             try {
-               key = marshaller.objectFromByteBuffer(metadata.name);
+               key = marshaller.objectFromByteBuffer(metadata.getKeyBytes());
             } catch (Exception e) {
                throw new JpaStoreException("Cannot unmarshall key", e);
             }
@@ -494,10 +494,10 @@ public class JpaStore implements AdvancedLoadWriteStore {
             txn.begin();
             try {
                long metadataFindBegin = timeService.time();
-               metadata = em.find(MetadataEntity.class, metadata.name);
+               metadata = em.find(MetadataEntity.class, metadata.getKey());
                stats.addMetadataFind(timeService.time() - metadataFindBegin);
                // check for transaction - I hope write skew check is done here
-               if (metadata.expiration > currentTime) {
+               if (metadata.getExpiration() > currentTime) {
                   txn.rollback();
                   continue;
                }

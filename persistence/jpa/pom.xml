@@ -40,16 +40,6 @@
          <scope>provided</scope>
       </dependency>
       <dependency>
-         <groupId>com.h2database</groupId>
-         <artifactId>h2</artifactId>
-         <scope>test</scope>
-      </dependency>
-      <dependency>
-         <groupId>mysql</groupId>
-         <artifactId>mysql-connector-java</artifactId>
-         <scope>test</scope>
-      </dependency>
-      <dependency>
          <groupId>org.slf4j</groupId>
          <artifactId>slf4j-simple</artifactId>
          <scope>test</scope>
@@ -67,6 +57,13 @@
          <activation>
             <activeByDefault>true</activeByDefault>
          </activation>
+         <dependencies>
+            <dependency>
+               <groupId>com.h2database</groupId>
+               <artifactId>h2</artifactId>
+               <scope>test</scope>
+            </dependency>
+         </dependencies>
          <build>
             <plugins>
                <plugin>
@@ -84,6 +81,13 @@
       </profile>
       <profile>
          <id>mysql</id>
+         <dependencies>
+            <dependency>
+               <groupId>mysql</groupId>
+               <artifactId>mysql-connector-java</artifactId>
+               <scope>test</scope>
+            </dependency>
+         </dependencies>
          <build>
             <plugins>
                <plugin>
@@ -93,7 +97,33 @@
                      <systemPropertyVariables>
                         <connection.url>jdbc:mysql://localhost:3306/ispn_jpa_test</connection.url>
                         <driver.class>com.mysql.jdbc.Driver</driver.class>
-                        <db.username>root</db.username>
+                        <db.username>${db.username}</db.username>
+                        <db.password>${db.password}</db.password>
+                     </systemPropertyVariables>
+                  </configuration>
+               </plugin>
+            </plugins>
+         </build>
+      </profile>
+      <profile>
+         <id>postgres</id>
+         <dependencies>
+            <dependency>
+               <groupId>org.postgresql</groupId>
+               <artifactId>postgresql</artifactId>
+            </dependency>
+         </dependencies>
+         <build>
+            <plugins>
+               <plugin>
+                  <groupId>org.apache.maven.plugins</groupId>
+                  <artifactId>maven-surefire-plugin</artifactId>
+                  <configuration>
+                     <systemPropertyVariables>
+                        <connection.url>jdbc:postgresql://localhost:5432/ispn_jpa_test</connection.url>
+                        <driver.class>org.postgresql.Driver</driver.class>
+                        <db.username>${db.username}</db.username>
+                        <db.password>${db.password}</db.password>
                      </systemPropertyVariables>
                   </configuration>
                </plugin>

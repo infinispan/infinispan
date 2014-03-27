@@ -1,9 +1,11 @@
 package org.infinispan.persistence.jpa.entity;
 
+import java.io.Serializable;
+
 import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.Id;
-import java.io.Serializable;
+import javax.persistence.Table;
 
 /**
  * 
@@ -11,6 +13,7 @@ import java.io.Serializable;
  *
  */
 @Entity
+@Table(name="Users")
 public class User implements Serializable {
 	/**
 	 * 
