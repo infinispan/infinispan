@@ -313,7 +313,6 @@
                             <value>org.infinispan.server.test.util.TestsuiteListener</value>
                         </property>
                     </properties>
-                    <testFailureIgnore>true</testFailureIgnore>
                 </configuration>
                 <executions>
                     <execution>
