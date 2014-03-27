@@ -1,8 +1,36 @@
 package org.infinispan.config;
 
+import java.io.BufferedReader;
+import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.io.Reader;
+import java.io.StringReader;
+import java.io.StringWriter;
+import java.lang.ref.SoftReference;
+import java.net.URL;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
+import javax.xml.bind.JAXBContext;
+import javax.xml.bind.JAXBException;
+import javax.xml.bind.Marshaller;
+import javax.xml.bind.Unmarshaller;
+import javax.xml.bind.ValidationEvent;
+import javax.xml.bind.ValidationEventHandler;
+import javax.xml.bind.annotation.XmlAccessType;
+import javax.xml.bind.annotation.XmlAccessorType;
+import javax.xml.bind.annotation.XmlElement;
+import javax.xml.bind.annotation.XmlRootElement;
+import javax.xml.transform.sax.SAXSource;
+import javax.xml.transform.stream.StreamSource;
+import javax.xml.validation.SchemaFactory;
+
 import org.infinispan.Version;
 import org.infinispan.commons.util.FileLookup;
-import org.infinispan.commons.util.FileLookupFactory;
 import org.infinispan.commons.util.StringPropertyReplacer;
 import org.infinispan.commons.util.SysPropertyActions;
 import org.infinispan.config.parsing.NamespaceFilter;
@@ -15,22 +43,6 @@ import org.xml.sax.InputSource;
 import org.xml.sax.XMLFilter;
 import org.xml.sax.XMLReader;
 import org.xml.sax.helpers.XMLReaderFactory;
-
-import javax.xml.bind.*;
-import javax.xml.bind.annotation.XmlAccessType;
-import javax.xml.bind.annotation.XmlAccessorType;
-import javax.xml.bind.annotation.XmlElement;
-import javax.xml.bind.annotation.XmlRootElement;
-import javax.xml.transform.sax.SAXSource;
-import javax.xml.transform.stream.StreamSource;
-import javax.xml.validation.SchemaFactory;
-import java.io.*;
-import java.lang.ref.SoftReference;
-import java.net.URL;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
 
 /**
  * InfinispanConfiguration encapsulates root component of Infinispan XML configuration. Can be empty
@@ -343,7 +355,7 @@ public class InfinispanConfiguration implements XmlConfigurationParser, JAXBUnma
          return null;
 
       //1. resolve given path
-      FileLookup fileLookup = FileLookupFactory.newInstance();
+      FileLookup fileLookup = new FileLookup();
       InputStream is;
       if (localPathToSchema != null) {
          // Schema's are always stored in Infinispan
@@ -413,7 +425,7 @@ public class InfinispanConfiguration implements XmlConfigurationParser, JAXBUnma
    private static InputStream findInputStream(String fileName, ClassLoader cl) throws FileNotFoundException {
       if (fileName == null)
          throw new NullPointerException("File name cannot be null!");
-      FileLookup fileLookup = FileLookupFactory.newInstance();
+      FileLookup fileLookup = new FileLookup();
       InputStream is = fileLookup.lookupFile(fileName, cl);
       if (is == null)
          throw new FileNotFoundException("File " + fileName

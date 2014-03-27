@@ -1,9 +1,19 @@
 package org.infinispan.query.distributed;
 
+import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.io.InputStream;
+import java.util.ArrayList;
+import java.util.List;
+
+import javax.transaction.TransactionManager;
+
 import junit.framework.Assert;
+
 import org.apache.lucene.search.MatchAllDocsQuery;
 import org.hibernate.search.engine.spi.SearchFactoryImplementor;
 import org.infinispan.Cache;
+import org.infinispan.commons.util.FileLookup;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.parsing.ConfigurationBuilderHolder;
 import org.infinispan.configuration.parsing.ParserRegistry;
@@ -17,15 +27,7 @@ import org.infinispan.query.test.Person;
 import org.infinispan.test.AbstractInfinispanTest;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
-import org.infinispan.commons.util.FileLookupFactory;
 import org.testng.annotations.Test;
-
-import javax.transaction.TransactionManager;
-import java.io.FileNotFoundException;
-import java.io.IOException;
-import java.io.InputStream;
-import java.util.ArrayList;
-import java.util.List;
 
 /**
  * Configures the Hibernate Search backend to use Infinispan custom commands as a backend
@@ -125,7 +127,7 @@ public class MultiNodeDistributedTest extends AbstractInfinispanTest {
    }
 
    protected ConfigurationBuilderHolder readFromXml() throws FileNotFoundException {
-      InputStream is = FileLookupFactory.newInstance().lookupFileStrict(
+      InputStream is = new FileLookup().lookupFileStrict(
             getConfigurationResourceName(), Thread.currentThread().getContextClassLoader());
       ParserRegistry parserRegistry = new ParserRegistry(Thread.currentThread().getContextClassLoader());
       ConfigurationBuilderHolder holder = parserRegistry.parse(is);
