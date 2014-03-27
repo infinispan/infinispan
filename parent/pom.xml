@@ -93,6 +93,7 @@
       <module.metadata.isCoreModule>false</module.metadata.isCoreModule>
       <!-- Versions for dependencies -->
       <version.antlr>3.4</version.antlr>
+      <version.apache.ds>2.0.0-M15</version.apache.ds>
       <version.arquillian>1.0.3.Final</version.arquillian>
       <version.arquillian.container.managed>8.0.0.Beta1</version.arquillian.container.managed>
       <version.arquillian.container.weld>1.0.0.CR3</version.arquillian.container.weld>
@@ -151,7 +152,7 @@
       <version.testng.arquillian>6.5.2</version.testng.arquillian>
       <version.webdav.servlet>2.0.1</version.webdav.servlet>
       <version.weld>1.1.13.Final</version.weld>
-      <version.wildfly>8.0.0.Beta1</version.wildfly>
+      <version.wildfly>8.0.0.Final</version.wildfly>
       <version.javassist>3.18.0-GA</version.javassist>
       <version.maven.animal.sniffer>1.9</version.maven.animal.sniffer>
       <version.maven.buildhelper>1.8</version.maven.buildhelper>
@@ -809,6 +810,12 @@
                   <groupId>org.jboss.byteman</groupId>
                </exclusion>
             </exclusions>
+         </dependency>
+         <dependency>
+            <groupId>org.apache.directory.server</groupId>
+            <artifactId>apacheds-all</artifactId>
+            <version>${version.apache.ds}</version>
+            <scope>test</scope>
          </dependency>
       </dependencies>
    </dependencyManagement>

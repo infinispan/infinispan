@@ -1,0 +1,40 @@
+dn: ou=People,dc=infinispan,dc=org
+objectclass: top
+objectclass: organizationalUnit
+ou: People
+
+dn: uid=admin,ou=People,dc=infinispan,dc=org
+objectclass: top
+objectclass: uidObject
+objectclass: person
+uid: admin
+cn: ISPN Admin
+sn: admin
+userPassword: strong_password
+
+dn: uid=writer,ou=People,dc=infinispan,dc=org
+objectclass: top
+objectclass: uidObject
+objectclass: person
+uid: writer
+cn: ISPN Writer
+sn: writer
+userPassword: some_password
+
+dn: uid=reader,ou=People,dc=infinispan,dc=org
+objectclass: top
+objectclass: uidObject
+objectclass: person
+uid: reader
+cn: ISPN Reader
+sn: reader
+userPassword: password
+
+dn: uid=unprivileged,ou=People,dc=infinispan,dc=org
+objectclass: top
+objectclass: uidObject
+objectclass: person
+uid: unprivileged
+cn: ISPN Unprivileged
+sn: unprivileged
+userPassword: weak_password
