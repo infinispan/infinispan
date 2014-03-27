@@ -73,7 +73,8 @@
 							org.jboss.marshalling;version="[1.3,3)";resolution:=optional,
 							org.jboss.marshalling.reflect;version="[1.3,3)";resolution:=optional,
 							org.jboss.marshalling.river;version="[1.3,3)";resolution:=optional,
-							org.osgi.framework;version="[1.6,2)";resolution:=optional,
+                     org.osgi.framework,
+                     org.osgi.util.tracker,
 							sun.misc
 						</Import-Package>
 					</instructions>

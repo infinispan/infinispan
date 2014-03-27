@@ -140,7 +140,7 @@
 				<artifactId>maven-bundle-plugin</artifactId>
 				<configuration>
 					<instructions>
-						<Include-Resource>src/main/resources/infinispan-core-component-metadata.dat</Include-Resource>
+						<Include-Resource>src/main/resources</Include-Resource>
 						<Export-Package>
 							!${project.groupId}.commons.*,
 							org.infinispan.marshall.core,
