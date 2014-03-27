@@ -140,6 +140,7 @@
       <version.mockito>1.9.5</version.mockito>
       <version.mysql.driver>5.1.19</version.mysql.driver>
       <version.org.jboss.naming>5.0.6.CR1</version.org.jboss.naming>
+      <version.postgresql.driver>9.3-1101-jdbc41</version.postgresql.driver>
       <version.resteasy>2.3.2.Final</version.resteasy>
       <version.shrinkwrapResolver>2.0.0-alpha-6</version.shrinkwrapResolver>
       <version.slf4j>1.6.4</version.slf4j>
@@ -411,6 +412,11 @@
             <groupId>mysql</groupId>
             <artifactId>mysql-connector-java</artifactId>
             <version>${version.mysql.driver}</version>
+         </dependency>
+         <dependency>
+            <groupId>org.postgresql</groupId>
+            <artifactId>postgresql</artifactId>
+            <version>${version.postgresql.driver}</version>
          </dependency>
          <dependency>
             <groupId>junit</groupId>

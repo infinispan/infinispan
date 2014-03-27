@@ -55,7 +55,7 @@ public class JpaStoreTest extends BaseStoreTest {
 
    @Override
    public String unwrap(Object wrapper) {
-      return ((KeyValueEntity) wrapper).value;
+      return ((KeyValueEntity) wrapper).getValue();
    }
 
    @Test(enabled = false)
