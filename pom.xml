@@ -65,6 +65,7 @@
       <module>integrationtests/as-integration</module>
       <module>integrationtests/compatibility-mode-it</module>
       <module>integrationtests/cdi-jcache-it</module>
+      <module>integrationtests/security-it</module>
       <module>jcache</module>
       <module>server/integration</module>
    </modules>
