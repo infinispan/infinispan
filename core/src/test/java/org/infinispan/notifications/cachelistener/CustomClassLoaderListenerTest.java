@@ -4,7 +4,6 @@ import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.persistence.dummy.DummyInMemoryStoreConfigurationBuilder;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.notifications.Listener;
-import org.infinispan.notifications.cachelistener.annotation.CacheEntriesEvicted;
 import org.infinispan.notifications.cachelistener.annotation.CacheEntryActivated;
 import org.infinispan.notifications.cachelistener.annotation.CacheEntryCreated;
 import org.infinispan.notifications.cachelistener.annotation.CacheEntryEvicted;
@@ -86,7 +85,7 @@ public class CustomClassLoaderListenerTest extends SingleCacheManagerTest {
 
       cache().get("a"); // Loaded + Activated + Visited
       assertEquals(0, listener.createdCounter);
-      assertEquals(1, listener.modifiedCounter);
+      assertEquals(0, listener.modifiedCounter);
       assertEquals(0, listener.removedCounter);
       assertEquals(1, listener.visitedCounter);
       assertEquals(1, listener.activatedCounter);

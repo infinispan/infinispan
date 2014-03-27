@@ -104,16 +104,6 @@ public class OnlyPrimaryOwnerTest {
       public Address getAddress() {
          throw new UnsupportedOperationException();
       }
-
-      @Override
-      public boolean lock(Object key, boolean noWaitTime) {
-         throw new UnsupportedOperationException();
-      }
-
-      @Override
-      public void unlock(Object key) {
-         throw new UnsupportedOperationException();
-      }
    }
 
    public void testOwnership() {

@@ -1,6 +1,7 @@
 package org.infinispan.container.entries;
 
 import org.infinispan.atomic.CopyableDeltaAware;
+import org.infinispan.container.InternalEntryFactory;
 import org.infinispan.metadata.Metadata;
 import org.infinispan.atomic.AtomicHashMap;
 import org.infinispan.atomic.Delta;
@@ -155,36 +156,44 @@ public class DeltaAwareCacheEntry implements CacheEntry, StateChangingEntry {
    }
 
    @Override
-   public final void commit(DataContainer container, Metadata metadata) {
+   public final void commit(final DataContainer container, final Metadata metadata) {
       //If possible, we now ensure copy-on-write semantics. This way, it can ensure the correct transaction isolation.
-      //note: this method is invoked under the ClusteringDependentLogic.lock(key)
-      //note2: we want to merge/copy to/from the data container value.
-      CacheEntry entry = container.get(key);
-      DeltaAware containerValue = entry == null ? null : (DeltaAware) entry.getValue();
-      if (containerValue != null && containerValue != value) {
-         value = containerValue;
-      }
-      if (value != null && !deltas.isEmpty()) {
-         final boolean makeCopy = value instanceof CopyableDeltaAware;
-         if (makeCopy) {
-            value = ((CopyableDeltaAware) value).copy();
+      //note: we want to merge/copy to/from the data container value.
+      container.compute(key, new DataContainer.ComputeAction() {
+         @Override
+         public InternalCacheEntry compute(Object key, InternalCacheEntry oldEntry, InternalEntryFactory factory) {
+            InternalCacheEntry newEntry = oldEntry;
+            DeltaAware containerValue = oldEntry == null ? null : (DeltaAware) oldEntry.getValue();
+            if (containerValue != null && containerValue != value) {
+               value = containerValue;
+            }
+            if (value != null && !deltas.isEmpty()) {
+               final boolean makeCopy = value instanceof CopyableDeltaAware;
+               if (makeCopy) {
+                  value = ((CopyableDeltaAware) value).copy();
+               }
+               for (Delta delta : deltas) {
+                  delta.merge(value);
+               }
+               if (makeCopy) {
+                  //create or update existing entry.
+                  newEntry = oldEntry == null ?
+                        factory.create(key, value, extractMetadata(null, metadata)) :
+                        factory.update(oldEntry, value, extractMetadata(oldEntry, metadata));
+               }
+               value.commit();
+               if (wrappedEntry != null) {
+                  wrappedEntry.setChanged(!makeCopy);
+               }
+            }
+            reset();
+            // only do stuff if there are changes.
+            if (wrappedEntry != null) {
+               wrappedEntry.commit(container, metadata);
+            }
+            return newEntry;
          }
-         for (Delta delta : deltas) {
-            delta.merge(value);
-         }
-         if (makeCopy) {
-            container.put(key, value, extractMetadata(entry, metadata));
-         }
-         value.commit();
-         if (wrappedEntry != null) {
-            wrappedEntry.setChanged(!makeCopy);
-         }
-      }
-      reset();
-      // only do stuff if there are changes.
-      if (wrappedEntry != null) {
-         wrappedEntry.commit(container, metadata);
-      }
+      });
    }
 
    private Metadata extractMetadata(CacheEntry entry, Metadata provided) {

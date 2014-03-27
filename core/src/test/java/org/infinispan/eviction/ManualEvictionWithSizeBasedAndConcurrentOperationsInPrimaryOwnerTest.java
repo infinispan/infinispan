@@ -10,11 +10,10 @@ import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.distribution.DistributionManager;
 import org.infinispan.factories.annotations.Stop;
+import org.infinispan.interceptors.CacheLoaderInterceptor;
 import org.infinispan.interceptors.CacheWriterInterceptor;
-import org.infinispan.interceptors.DistCacheWriterInterceptor;
 import org.infinispan.interceptors.InterceptorChain;
-import org.infinispan.interceptors.PassivationInterceptor;
-import org.infinispan.interceptors.locking.ClusteringDependentLogic;
+import org.infinispan.interceptors.base.CommandInterceptor;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.metadata.Metadata;
 import org.infinispan.notifications.cachelistener.annotation.CacheEntriesEvicted;
@@ -33,6 +32,7 @@ import org.testng.annotations.Test;
 import java.io.Serializable;
 import java.util.Collection;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Set;
 import java.util.concurrent.Callable;
 import java.util.concurrent.Future;
@@ -372,9 +372,8 @@ public class ManualEvictionWithSizeBasedAndConcurrentOperationsInPrimaryOwnerTes
 
    private ControlledDataContainer replaceControlledDataContainer(final Latch latch) {
       DataContainer current = TestingUtil.extractComponent(cache, DataContainer.class);
-      ClusteringDependentLogic clusteringDependentLogic = TestingUtil.extractComponent(cache, ClusteringDependentLogic.class);
-      ControlledDataContainer controlledDataContainer = new ControlledDataContainer(current, clusteringDependentLogic);
-      controlledDataContainer.beforeRemove = new Runnable() {
+      ControlledDataContainer controlledDataContainer = new ControlledDataContainer(current);
+      controlledDataContainer.beforeEvict = new Runnable() {
          @Override
          public void run() {
             latch.blockIfNeeded();
@@ -419,12 +418,10 @@ public class ManualEvictionWithSizeBasedAndConcurrentOperationsInPrimaryOwnerTes
    private class ControlledDataContainer implements DataContainer {
 
       private final DataContainer delegate;
-      private final ClusteringDependentLogic clusteringDependentLogic;
-      private volatile Runnable beforeRemove;
+      private volatile Runnable beforeEvict;
 
-      private ControlledDataContainer(DataContainer delegate, ClusteringDependentLogic clusteringDependentLogic) {
+      private ControlledDataContainer(DataContainer delegate) {
          this.delegate = delegate;
-         this.clusteringDependentLogic = clusteringDependentLogic;
       }
 
       @Override
@@ -449,7 +446,6 @@ public class ManualEvictionWithSizeBasedAndConcurrentOperationsInPrimaryOwnerTes
 
       @Override
       public InternalCacheEntry remove(Object k) {
-         run(beforeRemove, k);
          return delegate.remove(k);
       }
 
@@ -485,28 +481,26 @@ public class ManualEvictionWithSizeBasedAndConcurrentOperationsInPrimaryOwnerTes
       }
 
       @Override
+      public void evict(Object key) {
+         run(beforeEvict);
+         delegate.evict(key);
+      }
+
+      @Override
+      public void compute(Object key, ComputeAction action) {
+         delegate.compute(key, action);
+      }
+
+      @Override
       public Iterator<InternalCacheEntry> iterator() {
          return delegate.iterator();
       }
 
-      @SuppressWarnings("ThrowFromFinallyBlock")
-      private void run(Runnable runnable, Object key) {
+      private void run(Runnable runnable) {
          if (runnable == null) {
             return;
          }
-         try {
-            clusteringDependentLogic.unlock(key);
-            runnable.run();
-         } finally {
-            try {
-               if (!clusteringDependentLogic.lock(key, false)) {
-                  throw new RuntimeException("Not locked!");
-               }
-            } catch (InterruptedException e) {
-               Thread.currentThread().interrupt();
-               throw new RuntimeException(e);
-            }
-         }
+         runnable.run();
       }
 
       @Override
@@ -523,15 +517,14 @@ public class ManualEvictionWithSizeBasedAndConcurrentOperationsInPrimaryOwnerTes
 
       public AfterPassivationOrCacheWriter injectThis(Cache<Object, Object> injectInCache) {
          InterceptorChain chain = TestingUtil.extractComponent(injectInCache, InterceptorChain.class);
-         if (chain.containsInterceptorType(DistCacheWriterInterceptor.class)) {
-            injectInCache.getAdvancedCache().addInterceptorAfter(this, DistCacheWriterInterceptor.class);
-         } else if (chain.containsInterceptorType(CacheWriterInterceptor.class)) {
-            injectInCache.getAdvancedCache().addInterceptorAfter(this, CacheWriterInterceptor.class);
-         } else if (chain.containsInterceptorType(PassivationInterceptor.class)) {
-            injectInCache.getAdvancedCache().addInterceptorAfter(this, PassivationInterceptor.class);
-         } else {
+         List<CommandInterceptor> list = chain.getInterceptorsWhichExtend(CacheWriterInterceptor.class);
+         if (list.isEmpty()) {
+            list = chain.getInterceptorsWhichExtend(CacheLoaderInterceptor.class);
+         }
+         if (list.isEmpty()) {
             throw new IllegalStateException("Should not happen!");
          }
+         injectInCache.getAdvancedCache().addInterceptorAfter(this, list.get(0).getClass());
          return this;
       }
 

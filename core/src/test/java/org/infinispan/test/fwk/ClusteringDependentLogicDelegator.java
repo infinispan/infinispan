@@ -68,14 +68,4 @@ public class ClusteringDependentLogicDelegator implements ClusteringDependentLog
    public Address getAddress() {
       return clusteringDependentLogic.getAddress();
    }
-
-   @Override
-   public boolean lock(Object key, boolean noWaitTime) throws InterruptedException {
-      return clusteringDependentLogic.lock(key, noWaitTime);
-   }
-
-   @Override
-   public void unlock(Object key) {
-      clusteringDependentLogic.unlock(key);
-   }
 }
