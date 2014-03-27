@@ -16,7 +16,8 @@ import java.util.Properties
  * @author Galder Zamarreño
  * @since 5.2
  */
-@Test(groups = Array("functional"), testName = "server.memcached.MemcachedClusteredStatsTest")
+@Test(groups = Array("unstable"), testName = "server.memcached.MemcachedClusteredStatsTest",
+   description = "original group: functional - randomly fails with: expected [2] but found [1])")
 class MemcachedClusteredStatsTest extends MemcachedMultiNodeTest {
 
    private val jmxDomain = classOf[MemcachedClusteredStatsTest].getSimpleName

@@ -20,6 +20,7 @@ import org.infinispan.arquillian.utils.MBeanServerConnectionProvider;
 import org.infinispan.client.hotrod.RemoteCache;
 import org.infinispan.client.hotrod.RemoteCacheManager;
 import org.infinispan.server.test.category.CacheStore;
+import org.infinispan.server.test.category.UnstableTest;
 import org.infinispan.server.test.util.TestUtil;
 import org.jboss.arquillian.junit.Arquillian;
 import org.junit.BeforeClass;
@@ -37,7 +38,7 @@ import static org.junit.Assert.assertNull;
  *
  */
 @RunWith(Arquillian.class)
-@Category(CacheStore.class)
+@Category({CacheStore.class, UnstableTest.class})
 public class CustomCacheStoreTest {
 
     @InfinispanResource("standalone-customcs")
