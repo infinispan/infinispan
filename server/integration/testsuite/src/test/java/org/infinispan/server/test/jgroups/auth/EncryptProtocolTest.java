@@ -23,23 +23,19 @@ import static org.infinispan.server.test.util.TestUtil.getAttribute;
 import static org.junit.Assert.assertEquals;
 
 /**
- * Tests for JGroups AUTH and ENCRYPT protocols. Nodes with correct certificate should be allowed to join the cluster, others
- * should not. Communication within cluster should be encrypted.
- *
- * TODO: Check replay attack
+ * Test JGroups' ENCRYPT protocol. Only proper registration of the protocol is tested, making
+ * sure that the server can work with ENCRYPT protocol. This test does NOT check whether the
+ * communication between nodes is really encrypted.
  *
  * Command used to generate the certificate for ENCRYPT protocol:
  * keytool -genseckey -alias memcached -keypass secret -storepass secret -keyalg DESede -keysize 168 -keystore server_jceks.keystore -storetype  JCEKS
  * Command used to inspect the certificate:
  * keytool -list -v -keystore server_jceks.keystore  -storetype JCEKS
  *
- * Certificate for AUTH protocol re-used from tests for HotRod SSL (RSA, 2048 bits)
- *
  * @author Martin Gencur
  */
 @RunWith(Arquillian.class)
-@Category(UnstableTest.class)
-public class AuthAndEncryptProtocolTest {
+public class EncryptProtocolTest {
 
     @InfinispanResource
     RemoteInfinispanServers servers;
@@ -47,13 +43,10 @@ public class AuthAndEncryptProtocolTest {
     @ArquillianResource
     ContainerController controller;
 
-    final String COORDINATOR_NODE = "clustered-auth-1";
-    final String JOINING_NODE_FRIEND = "clustered-auth-2";
-    final String COORDINATOR_NODE_NO_ENCRYPT = "clustered-auth-3";
-    final String JOINING_NODE_ALIEN = "clustered-auth-4"; //having different certificate
+    final String COORDINATOR_NODE = "clustered-encrypt-1";
+    final String JOINING_NODE = "clustered-encrypt-2";
 
     final String ENCRYPT_MBEAN = "jgroups:type=protocol,cluster=\"clustered\",protocol=ENCRYPT";
-    final String AUTH_MBEAN = "jgroups:type=protocol,cluster=\"clustered\",protocol=AUTH";
 
     @BeforeClass
     public static void before() {
@@ -67,7 +60,7 @@ public class AuthAndEncryptProtocolTest {
 
     private static void replaceKeyStoreInConfig(String serverDir) {
         try {
-            File configFile = new File(serverDir + "/standalone/configuration/testsuite/clustered-auth-with-encrypt.xml");
+            File configFile = new File(serverDir + "/standalone/configuration/testsuite/clustered-with-encrypt.xml");
             String configContent = FileUtils.readFileToString(configFile, "UTF-8");
             configContent = configContent.replaceAll("server_jceks.keystore", "ibm7_server_jceks.keystore");
             FileUtils.writeStringToFile(configFile, configContent, "UTF-8");
@@ -78,11 +71,11 @@ public class AuthAndEncryptProtocolTest {
 
     @WithRunningServer(COORDINATOR_NODE)
     @Test
-    public void testFriendlyNodeCanJoin() throws Exception {
+    public void testEncryptProtocolRegistered() throws Exception {
         try {
-            controller.start(JOINING_NODE_FRIEND);
+            controller.start(JOINING_NODE);
             RemoteInfinispanMBeans coordinator = RemoteInfinispanMBeans.create(servers, COORDINATOR_NODE, "memcachedCache", "clustered");
-            RemoteInfinispanMBeans friend = RemoteInfinispanMBeans.create(servers, JOINING_NODE_FRIEND, "memcachedCache", "clustered");
+            RemoteInfinispanMBeans friend = RemoteInfinispanMBeans.create(servers, JOINING_NODE, "memcachedCache", "clustered");
             MBeanServerConnectionProvider providerCoordinator = new MBeanServerConnectionProvider(coordinator.server.getHotrodEndpoint().getInetAddress().getHostName(), 9999);
             MBeanServerConnectionProvider providerFriend = new MBeanServerConnectionProvider(friend.server.getHotrodEndpoint().getInetAddress().getHostName(), 10099);
             MemcachedClient mcCoordinator = new MemcachedClient(coordinator.server.getMemcachedEndpoint().getInetAddress().getHostName(),
@@ -94,28 +87,15 @@ public class AuthAndEncryptProtocolTest {
             assertEquals(2, coordinator.manager.getClusterSize());
             assertEquals(2, friend.manager.getClusterSize());
 
-            //check that required protocols (AUTH,ENCRYPT) are registered with JGroups
+            //check that ENCRYPT protocol is registered with JGroups
             assertEquals("secret", getAttribute(providerCoordinator, ENCRYPT_MBEAN, "store_password"));
             assertEquals("secret", getAttribute(providerFriend, ENCRYPT_MBEAN, "store_password"));
-            assertEquals("org.jgroups.auth.X509Token", getAttribute(providerCoordinator, AUTH_MBEAN, "auth_class"));
-            assertEquals("org.jgroups.auth.X509Token", getAttribute(providerFriend, AUTH_MBEAN, "auth_class"));
 
             mcFriend.set("key1", "value1");
             assertEquals("Could not read replicated pair key1/value1", "value1", mcCoordinator.get("key1"));
         } finally {
-            controller.stop(JOINING_NODE_FRIEND);
+            controller.stop(JOINING_NODE);
         }
     }
 
-    @WithRunningServer(COORDINATOR_NODE_NO_ENCRYPT)
-    @Test
-    public void testAlienNodeCannotJoin() throws Exception {
-        try {
-            controller.start(JOINING_NODE_ALIEN);
-            //still only one node in cluster expected - no join happened
-            assertEquals(1, servers.getServer(COORDINATOR_NODE_NO_ENCRYPT).getCacheManager("clustered").getClusterSize());
-        } finally {
-            controller.stop(JOINING_NODE_ALIEN);
-        }
-    }
 }
