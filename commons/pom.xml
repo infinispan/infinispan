@@ -61,7 +61,7 @@
               <artifactId>maven-bundle-plugin</artifactId>
               <configuration>
                   <instructions>
-                      <Fragment-Host>org.infinispan.core;bundle-version=6.0.0.CR1</Fragment-Host>
+                      <Fragment-Host>org.infinispan.core;bundle-version=${project.version}</Fragment-Host>
                       <Export-Package>
                           ${project.groupId}.commons.*;version=${project.version};-split-package:=error
                       </Export-Package>
