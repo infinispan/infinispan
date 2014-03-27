@@ -5,7 +5,7 @@
             xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
 
   <bean id="hotRodTypeConverter" class="org.infinispan.server.hotrod.HotRodTypeConverter"/>
-  <service ref=""hotRodTypeConverter"" interface="org.infinispan.compat.TypeConverter"/>
+  <service ref="hotRodTypeConverter" interface="org.infinispan.compat.TypeConverter"/>
 
   <bean id="lifecycleCallbacks" class="org.infinispan.server.hotrod.LifecycleCallbacks"/>
   <service ref="lifecycleCallbacks" interface="org.infinispan.lifecycle.ModuleLifecycle"/>
