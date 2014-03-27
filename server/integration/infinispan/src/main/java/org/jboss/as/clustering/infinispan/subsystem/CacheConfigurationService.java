@@ -64,13 +64,14 @@ public class CacheConfigurationService extends AbstractCacheConfigurationService
 
     @Override
     protected ConfigurationBuilder getConfigurationBuilder() {
-        if (this.moduleId != null) {
-            try {
-                builder.classLoader(this.dependencies.getModuleLoader().loadModule(this.moduleId).getClassLoader());
-            } catch (ModuleLoadException e) {
-                throw new IllegalArgumentException(e);
-            }
-        }
+       // TODO: Still needed?
+//        if (this.moduleId != null) {
+//            try {
+//                builder.classLoader(this.dependencies.getModuleLoader().loadModule(this.moduleId).getClassLoader());
+//            } catch (ModuleLoadException e) {
+//                throw new IllegalArgumentException(e);
+//            }
+//        }
         this.builder.jmxStatistics().enabled(this.dependencies.getCacheContainer().getCacheManagerConfiguration().globalJmxStatistics().enabled());
         TransactionManager tm = this.dependencies.getTransactionManager();
         if (tm != null) {

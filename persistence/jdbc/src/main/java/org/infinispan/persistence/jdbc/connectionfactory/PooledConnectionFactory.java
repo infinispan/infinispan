@@ -1,19 +1,20 @@
 package org.infinispan.persistence.jdbc.connectionfactory;
 
-import com.mchange.v2.c3p0.ComboPooledDataSource;
-import com.mchange.v2.c3p0.DataSources;
-import org.infinispan.persistence.spi.PersistenceException;
-import org.infinispan.persistence.jdbc.JdbcUtil;
-import org.infinispan.persistence.jdbc.configuration.ConnectionFactoryConfiguration;
-import org.infinispan.persistence.jdbc.configuration.PooledConnectionFactoryConfiguration;
-import org.infinispan.persistence.jdbc.logging.Log;
-import org.infinispan.commons.util.FileLookupFactory;
-import org.infinispan.util.logging.LogFactory;
-
 import java.net.URL;
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.util.Properties;
+
+import org.infinispan.commons.util.FileLookup;
+import org.infinispan.persistence.jdbc.JdbcUtil;
+import org.infinispan.persistence.jdbc.configuration.ConnectionFactoryConfiguration;
+import org.infinispan.persistence.jdbc.configuration.PooledConnectionFactoryConfiguration;
+import org.infinispan.persistence.jdbc.logging.Log;
+import org.infinispan.persistence.spi.PersistenceException;
+import org.infinispan.util.logging.LogFactory;
+
+import com.mchange.v2.c3p0.ComboPooledDataSource;
+import com.mchange.v2.c3p0.DataSources;
 
 /**
  * Pooled connection factory based on C3P0. For a complete configuration reference, look <a
@@ -63,8 +64,8 @@ public class PooledConnectionFactory extends ConnectionFactory {
    }
 
    private void logFileOverride(ClassLoader classLoader) {
-      URL propsUrl = FileLookupFactory.newInstance().lookupFileLocation("c3p0.properties", classLoader);
-      URL xmlUrl = FileLookupFactory.newInstance().lookupFileLocation("c3p0-config.xml", classLoader);
+      URL propsUrl = new FileLookup().lookupFileLocation("c3p0.properties", classLoader);
+      URL xmlUrl = new FileLookup().lookupFileLocation("c3p0-config.xml", classLoader);
       if (log.isDebugEnabled() && propsUrl != null) {
          log.debugf("Found 'c3p0.properties' in classpath: %s", propsUrl);
       }

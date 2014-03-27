@@ -26,7 +26,7 @@ import org.infinispan.client.hotrod.logging.LogFactory;
 import org.infinispan.commons.api.BasicCacheContainer;
 import org.infinispan.commons.executors.ExecutorFactory;
 import org.infinispan.commons.marshall.Marshaller;
-import org.infinispan.commons.util.FileLookupFactory;
+import org.infinispan.commons.util.FileLookup;
 import org.infinispan.commons.util.TypedProperties;
 import org.infinispan.commons.util.Util;
 
@@ -356,7 +356,7 @@ public class RemoteCacheManager implements BasicCacheContainer {
       ConfigurationBuilder builder = new ConfigurationBuilder();
       ClassLoader cl = Thread.currentThread().getContextClassLoader();
       builder.classLoader(cl);
-      InputStream stream = FileLookupFactory.newInstance().lookupFile(HOTROD_CLIENT_PROPERTIES, cl);
+      InputStream stream = new FileLookup().lookupFile(HOTROD_CLIENT_PROPERTIES, cl);
       if (stream == null) {
          log.couldNotFindPropertiesFile(HOTROD_CLIENT_PROPERTIES);
       } else {
