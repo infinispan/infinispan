@@ -7,12 +7,12 @@ import org.infinispan.commons.io.ByteBufferFactory;
 import org.infinispan.commons.marshall.StreamingMarshaller;
 import org.infinispan.commons.util.Util;
 import org.infinispan.configuration.cache.Configuration;
+import org.infinispan.configuration.cache.CustomStoreConfiguration;
 import org.infinispan.configuration.cache.StoreConfiguration;
 import org.infinispan.container.entries.ImmortalCacheEntry;
 import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.context.Flag;
 import org.infinispan.context.InvocationContext;
-import org.infinispan.context.InvocationContextFactory;
 import org.infinispan.factories.annotations.ComponentName;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.annotations.Start;
@@ -26,8 +26,6 @@ import org.infinispan.marshall.core.MarshalledEntryFactory;
 import org.infinispan.metadata.InternalMetadataImpl;
 import org.infinispan.metadata.Metadata;
 import org.infinispan.notifications.cachelistener.CacheNotifier;
-import org.infinispan.persistence.spi.LocalOnlyCacheLoader;
-import org.infinispan.persistence.spi.PersistenceException;
 import org.infinispan.persistence.InitializationContextImpl;
 import org.infinispan.persistence.async.AdvancedAsyncCacheLoader;
 import org.infinispan.persistence.async.AdvancedAsyncCacheWriter;
@@ -38,6 +36,8 @@ import org.infinispan.persistence.spi.AdvancedCacheLoader;
 import org.infinispan.persistence.spi.AdvancedCacheWriter;
 import org.infinispan.persistence.spi.CacheLoader;
 import org.infinispan.persistence.spi.CacheWriter;
+import org.infinispan.persistence.spi.LocalOnlyCacheLoader;
+import org.infinispan.persistence.spi.PersistenceException;
 import org.infinispan.persistence.support.AdvancedSingletonCacheWriter;
 import org.infinispan.persistence.support.DelegatingCacheLoader;
 import org.infinispan.persistence.support.DelegatingCacheWriter;
@@ -503,10 +503,18 @@ public class PersistenceManagerImpl implements PersistenceManager {
    private void createLoadersAndWriters() {
       for (StoreConfiguration cfg : configuration.persistence().stores()) {
          ConfigurationFor annotation = cfg.getClass().getAnnotation(ConfigurationFor.class);
+         Class classAnnotation = null;
          if (annotation == null) {
+            if (cfg instanceof CustomStoreConfiguration) {
+               classAnnotation = ((CustomStoreConfiguration)cfg).customStoreClass();
+            }
+         } else {
+            classAnnotation = annotation.value();
+         }
+         if (classAnnotation == null) {
             throw log.loaderConfigurationDoesNotSpecifyLoaderClass(cfg.getClass().getName());
          }
-         Object instance = Util.getInstance(annotation.value());
+         Object instance = Util.getInstance(classAnnotation);
          CacheWriter writer = instance instanceof CacheWriter ? (CacheWriter) instance : null;
          CacheLoader loader = instance instanceof CacheLoader ? (CacheLoader) instance : null;
 

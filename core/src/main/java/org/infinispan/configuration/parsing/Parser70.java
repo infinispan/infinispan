@@ -1630,13 +1630,15 @@ public class Parser70 implements ConfigurationParser {
                }
             }
 
-            // If they don't specify a builder just use the base configuration builder
+            StoreConfigurationBuilder configBuilder;
+            // If they don't specify a builder just use the custom configuration builder and set the class
             if (builderClass == null) {
-               builderClass = BaseStoreConfigurationBuilder.class;
+               configBuilder = builder.persistence().addStore(CustomStoreConfigurationBuilder.class).customStoreClass(
+                     store.getClass());
+            } else {
+               configBuilder = builder.persistence().addStore(builderClass);
             }
 
-            StoreConfigurationBuilder configBuilder = builder.persistence().addStore(
-                  builderClass);
             if (fetchPersistentState != null)
                configBuilder.fetchPersistentState(fetchPersistentState);
             if (ignoreModifications != null)
