@@ -25,18 +25,12 @@ public class FileLookup {
     * @return an input stream to the file or null if nothing found through all lookup steps.
     */
    public InputStream lookupFile(String filename, ClassLoader cl) {
-      InputStream is = filename == null || filename.length() == 0 ? null : getAsInputStreamFromClassLoader(filename, cl);
-      if (is == null) {
-         if (log.isDebugEnabled())
-            log.debugf("Unable to find file %s in classpath; searching for this file on the filesystem instead.", filename);
-         try {
-            is = new FileInputStream(filename);
-         }
-         catch (FileNotFoundException e) {
-            return null;
-         }
+      try {
+         return lookupFileStrict( filename, cl );
       }
-      return is;
+      catch (FileNotFoundException e) {
+         return null;
+      }
    }
 
    /**

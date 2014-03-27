@@ -76,7 +76,7 @@ public class RemoteStore implements AdvancedLoadWriteStore {
    public void start() throws PersistenceException {
       final Marshaller marshaller;
       if (configuration.marshaller() != null) {
-         marshaller = Util.getInstance(configuration.marshaller(), ctx.getCache().getCacheConfiguration().classLoader());
+         marshaller = Util.getInstance(configuration.marshaller(), ctx.getCache().getAdvancedCache().getClassLoader());
       } else if (configuration.hotRodWrapping()) {
          marshaller = new HotRodEntryMarshaller(ctx.getByteBufferFactory());
       } else if (configuration.rawValues()) {

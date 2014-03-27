@@ -1,21 +1,22 @@
 package org.infinispan.query.jmx;
 
+import java.io.InputStream;
+
+import javax.management.MBeanServer;
+import javax.management.MalformedObjectNameException;
+import javax.management.ObjectName;
+
 import org.infinispan.Cache;
 import org.infinispan.commons.CacheException;
 import org.infinispan.commons.api.BasicCacheContainer;
+import org.infinispan.commons.util.FileLookup;
 import org.infinispan.configuration.parsing.ConfigurationBuilderHolder;
 import org.infinispan.configuration.parsing.ParserRegistry;
 import org.infinispan.jmx.PerThreadMBeanServerLookup;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.query.distributed.DistributedMassIndexingTest;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
-import org.infinispan.commons.util.FileLookupFactory;
 import org.testng.annotations.Test;
-
-import javax.management.MBeanServer;
-import javax.management.MalformedObjectNameException;
-import javax.management.ObjectName;
-import java.io.InputStream;
 
 /**
  * Test reindexing happens when executed via JMX
@@ -33,7 +34,7 @@ public class DistributedMassIndexingViaJmxTest extends DistributedMassIndexingTe
    protected void createCacheManagers() throws Throwable {
       server = PerThreadMBeanServerLookup.getThreadMBeanServer();
       for (int i = 0; i < NUM_NODES; i++) {
-         InputStream is = FileLookupFactory.newInstance().lookupFileStrict(
+         InputStream is = new FileLookup().lookupFileStrict(
                "dynamic-indexing-distribution.xml",
                Thread.currentThread().getContextClassLoader());
          ParserRegistry parserRegistry = new ParserRegistry(
