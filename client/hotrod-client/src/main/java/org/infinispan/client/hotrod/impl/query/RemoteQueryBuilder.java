@@ -18,7 +18,7 @@ public final class RemoteQueryBuilder extends BaseQueryBuilder<Query> {
    private final RemoteCacheImpl cache;
    private final SerializationContext serializationContext;
 
-   public RemoteQueryBuilder(RemoteCacheImpl cache, SerializationContext serializationContext, Class rootType) {
+   public RemoteQueryBuilder(RemoteCacheImpl cache, SerializationContext serializationContext, String rootType) {
       super(rootType);
       this.cache = cache;
       this.serializationContext = serializationContext;

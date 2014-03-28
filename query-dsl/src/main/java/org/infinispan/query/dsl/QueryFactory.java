@@ -8,20 +8,28 @@ package org.infinispan.query.dsl;
  * @author anistor@redhat.com
  * @since 6.0
  */
-public interface QueryFactory<T extends Query> {
+public interface QueryFactory<Q extends Query> {
 
    /**
     * Creates a QueryBuilder for the given entity type.
     *
-    * @param entityType
-    * @return
+    * @param entityType the Class of the entity
+    * @return a builder capable of creating queries for the specified entity type
     */
-   QueryBuilder<T> from(Class entityType);
+   QueryBuilder<Q> from(Class entityType);
+
+   /**
+    * Creates a QueryBuilder for the given entity type.
+    *
+    * @param entityType fully qualified entity type name
+    * @return a builder capable of creating queries for the specified entity type
+    */
+   QueryBuilder<Q> from(String entityType);
 
    /**
     * Creates a condition on the given attribute path that is to be completed later by using it as a sub-condition.
     *
-    * @param attributePath
+    * @param attributePath the attribute path
     * @return the incomplete sub-condition
     */
    FilterConditionEndContext having(String attributePath);

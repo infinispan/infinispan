@@ -16,8 +16,14 @@ import java.util.List;
  */
 public abstract class BaseQueryBuilder<T extends Query> implements QueryBuilder<T>, Visitable {
 
-   protected final Class rootType;
+   /**
+    * The fully qualified name of the entity being queried. It can be a Java Class name or a Protobuf message type name.
+    */
+   protected final String rootTypeName;
 
+   /**
+    * The attribute paths for the projection.
+    */
    protected String[] projection;
 
    protected BaseCondition filterCondition;
@@ -28,19 +34,19 @@ public abstract class BaseQueryBuilder<T extends Query> implements QueryBuilder<
 
    protected int maxResults = -1;
 
-   protected BaseQueryBuilder(Class rootType) {
-      if (rootType == null) {
-         throw new IllegalArgumentException("rootType cannot be null");
+   protected BaseQueryBuilder(String rootTypeName) {
+      if (rootTypeName == null) {
+         throw new IllegalArgumentException("rootTypeName cannot be null");
       }
-      this.rootType = rootType;
+      this.rootTypeName = rootTypeName;
    }
 
-   protected Class getRootType() {
-      return rootType;
+   protected String getRootTypeName() {
+      return rootTypeName;
    }
 
    @Override
-   public QueryBuilder orderBy(String attributePath, SortOrder sortOrder) {
+   public QueryBuilder<T> orderBy(String attributePath, SortOrder sortOrder) {
       if (sortCriteria == null) {
          sortCriteria = new ArrayList<SortCriteria>();
       }
@@ -53,7 +59,7 @@ public abstract class BaseQueryBuilder<T extends Query> implements QueryBuilder<
    }
 
    @Override
-   public QueryBuilder setProjection(String... projection) {
+   public QueryBuilder<T> setProjection(String... projection) {
       this.projection = projection;
       return this;
    }
@@ -63,13 +69,13 @@ public abstract class BaseQueryBuilder<T extends Query> implements QueryBuilder<
    }
 
    @Override
-   public QueryBuilder startOffset(long startOffset) {
+   public QueryBuilder<T> startOffset(long startOffset) {
       this.startOffset = startOffset;
       return this;
    }
 
    @Override
-   public QueryBuilder maxResults(int maxResults) {
+   public QueryBuilder<T> maxResults(int maxResults) {
       this.maxResults = maxResults;
       return this;
    }

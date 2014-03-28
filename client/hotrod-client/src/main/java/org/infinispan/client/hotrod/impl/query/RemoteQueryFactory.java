@@ -33,6 +33,12 @@ public final class RemoteQueryFactory extends BaseQueryFactory<Query> {
 
    @Override
    public QueryBuilder<Query> from(Class entityType) {
+      String typeName = serializationContext.getMarshaller(entityType).getTypeName();
+      return new RemoteQueryBuilder(cache, serializationContext, typeName);
+   }
+
+   @Override
+   public QueryBuilder<Query> from(String entityType) {
       return new RemoteQueryBuilder(cache, serializationContext, entityType);
    }
 }

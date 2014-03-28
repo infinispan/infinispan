@@ -123,7 +123,7 @@ public class MultiNodeDistributedTest extends AbstractInfinispanTest {
    }
 
    protected boolean transactionsEnabled() {
-      return false; //TODO extend this test using a Transactional configuration
+      return false;
    }
 
    protected ConfigurationBuilderHolder readFromXml() throws FileNotFoundException {

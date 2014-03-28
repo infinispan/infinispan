@@ -7,6 +7,7 @@ import org.infinispan.commons.CacheException;
 import org.infinispan.protostream.ProtobufParser;
 import org.infinispan.protostream.SerializationContext;
 import org.infinispan.protostream.TagHandler;
+import org.infinispan.protostream.impl.WrappedMessageMarshaller;
 
 import java.io.IOException;
 
@@ -15,25 +16,6 @@ import java.io.IOException;
  * @since 6.0
  */
 class WrappedMessageTagHandler implements TagHandler {
-
-   private static final int wrappedDouble = 1;
-   private static final int wrappedFloat = 2;
-   private static final int wrappedInt64 = 3;
-   private static final int wrappedUInt64 = 4;
-   private static final int wrappedInt32 = 5;
-   private static final int wrappedFixed64 = 6;
-   private static final int wrappedFixed32 = 7;
-   private static final int wrappedBool = 8;
-   private static final int wrappedString = 9;
-   private static final int wrappedBytes = 10;
-   private static final int wrappedUInt32 = 11;
-   private static final int wrappedSFixed32 = 12;
-   private static final int wrappedSFixed64 = 13;
-   private static final int wrappedSInt32 = 14;
-   private static final int wrappedSInt64 = 15;
-   private static final int wrappedDescriptorFullName = 16;
-   private static final int wrappedMessageBytes = 17;
-   private static final int wrappedEnum = 18;
 
    private final Document document;
    private final LuceneOptions luceneOptions;
@@ -57,32 +39,31 @@ class WrappedMessageTagHandler implements TagHandler {
    @Override
    public void onTag(int fieldNumber, String fieldName, Descriptors.FieldDescriptor.Type type, Descriptors.FieldDescriptor.JavaType javaType, Object value) {
       switch (fieldNumber) {
-         case wrappedBool:
+         case WrappedMessageMarshaller.WRAPPED_BOOL:
             numericValue = Boolean.TRUE.equals(value) ? IndexingTagHandler.TRUE_INT : IndexingTagHandler.FALSE_INT;
             break;
-         case wrappedBytes:
-         case wrappedString:
+         case WrappedMessageMarshaller.WRAPPED_BYTES:
+         case WrappedMessageMarshaller.WRAPPED_STRING:
             stringValue = (String) value;
             break;
-         case wrappedEnum:
-         case wrappedDouble:
-         case wrappedFloat:
-         case wrappedInt64:
-         case wrappedUInt64:
-         case wrappedInt32:
-         case wrappedFixed64:
-         case wrappedFixed32:
-         case wrappedUInt32:
-         case wrappedSFixed32:
-         case wrappedSFixed64:
-         case wrappedSInt32:
-         case wrappedSInt64:
+         case WrappedMessageMarshaller.WRAPPED_ENUM:
+         case WrappedMessageMarshaller.WRAPPED_DOUBLE:
+         case WrappedMessageMarshaller.WRAPPED_FLOAT:
+         case WrappedMessageMarshaller.WRAPPED_INT64:
+         case WrappedMessageMarshaller.WRAPPED_INT32:
+         case WrappedMessageMarshaller.WRAPPED_FIXED64:
+         case WrappedMessageMarshaller.WRAPPED_FIXED32:
+         case WrappedMessageMarshaller.WRAPPED_UINT32:
+         case WrappedMessageMarshaller.WRAPPED_SFIXED32:
+         case WrappedMessageMarshaller.WRAPPED_SFIXED64:
+         case WrappedMessageMarshaller.WRAPPED_SINT32:
+         case WrappedMessageMarshaller.WRAPPED_SINT64:
             numericValue = (Number) value;
             break;
-         case wrappedDescriptorFullName:
+         case WrappedMessageMarshaller.WRAPPED_DESCRIPTOR_FULL_NAME:
             messageDescriptor = serCtx.getMessageDescriptor((String) value);
             break;
-         case wrappedMessageBytes:
+         case WrappedMessageMarshaller.WRAPPED_MESSAGE_BYTES:
             bytes = (byte[]) value;
             break;
          default:
