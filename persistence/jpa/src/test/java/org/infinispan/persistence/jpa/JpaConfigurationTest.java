@@ -23,7 +23,7 @@ import org.testng.annotations.Test;
 /**
  * @author <a href="mailto:rtsang@redhat.com">Ray Tsang</a>
  */
-@Test(groups = "unstable", testName = "persistence.JpaConfigurationTest", description = "Re-enable in ISPN-4157")
+@Test(groups = "functional", testName = "persistence.JpaConfigurationTest")
 public class JpaConfigurationTest {
 
    private static final String PERSISTENCE_UNIT_NAME = "org.infinispan.persistence.jpa.configurationTest";
@@ -69,8 +69,8 @@ public class JpaConfigurationTest {
       assertEquals(PERSISTENCE_UNIT_NAME, jpaConfig.persistenceUnitName());
    }
 
-   public void testXmlConfig60() throws IOException {
-      EmbeddedCacheManager cacheManager = new DefaultCacheManager("config/jpa-config-60.xml");
+   public void testXmlConfig() throws IOException {
+      EmbeddedCacheManager cacheManager = new DefaultCacheManager("config/jpa-config.xml");
 
       Cache<VehicleId, Vehicle> vehicleCache = cacheManager.getCache("vehicleCache");
       validateConfig(vehicleCache);
