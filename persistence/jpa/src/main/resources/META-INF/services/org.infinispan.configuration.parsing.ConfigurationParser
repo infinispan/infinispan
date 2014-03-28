@@ -1,1 +1,2 @@
 org.infinispan.persistence.jpa.configuration.JpaStoreConfigurationParser60
+org.infinispan.persistence.jpa.configuration.JpaStoreConfigurationParser70
