@@ -854,7 +854,7 @@ public class ClusteredQueryDslConditionsTest extends MultipleCacheManagersTest {
       assertEquals("John", list.get(2).getName());
    }
 
-   public void testSampleDomainQuery4Wity2SortingOptions() throws Exception {
+   public void testSampleDomainQuery4With2SortingOptions() throws Exception {
       QueryFactory qf = Search.getSearchManager(cache2).getQueryFactory();
 
       // all users ordered descendingly by name

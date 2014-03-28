@@ -18,9 +18,7 @@ import org.infinispan.commons.io.ByteBufferImpl;
 import org.infinispan.commons.marshall.AbstractMarshaller;
 import org.infinispan.commons.marshall.Externalizer;
 import org.infinispan.protostream.SerializationContext;
-import org.infinispan.protostream.sampledomain.Account;
 import org.infinispan.protostream.sampledomain.Address;
-import org.infinispan.protostream.sampledomain.Transaction;
 import org.infinispan.protostream.sampledomain.User;
 import org.infinispan.protostream.sampledomain.marshallers.AccountMarshaller;
 import org.infinispan.protostream.sampledomain.marshallers.AddressMarshaller;
@@ -121,12 +119,12 @@ public class RemoteCacheOsgiTest extends KarafTestSupport {
         URL resourceUrl = bundleContext.getBundle().getResource("/sample_bank_account/bank.protobin");
         ctx.registerProtofile(resourceUrl.openStream());
 
-        ctx.registerMarshaller(User.class, new UserMarshaller());
-        ctx.registerMarshaller(User.Gender.class, new GenderMarshaller());
-        ctx.registerMarshaller(Address.class, new AddressMarshaller());
-        ctx.registerMarshaller(Account.class, new AccountMarshaller());
-        ctx.registerMarshaller(Account.Limits.class, new LimitsMarshaller());
-        ctx.registerMarshaller(Transaction.class, new TransactionMarshaller());
+        ctx.registerMarshaller(new UserMarshaller());
+        ctx.registerMarshaller(new GenderMarshaller());
+        ctx.registerMarshaller(new AddressMarshaller());
+        ctx.registerMarshaller(new AccountMarshaller());
+        ctx.registerMarshaller(new LimitsMarshaller());
+        ctx.registerMarshaller(new TransactionMarshaller());
 
         cache.put(1, createUser1());
         cache.put(2, createUser2());

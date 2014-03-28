@@ -60,7 +60,7 @@ abstract class BaseCondition implements FilterConditionContext, Visitable {
 
    @Override
    public FilterConditionContext and(FilterConditionContext rightCondition) {
-      //todo [anistor] check rightCondition does not already belong to a builder
+      //todo [anistor] check rightCondition was created with the same factory and does not already belong to a builder
       combine(true, rightCondition);
       return this;
    }
@@ -74,7 +74,7 @@ abstract class BaseCondition implements FilterConditionContext, Visitable {
 
    @Override
    public FilterConditionContext or(FilterConditionContext rightCondition) {
-      //todo [anistor] check rightCondition does not already belong to a builder
+      //todo [anistor] check rightCondition was created with the same factory and does not already belong to a builder
       combine(false, rightCondition);
       return this;
    }

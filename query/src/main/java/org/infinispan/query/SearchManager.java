@@ -4,6 +4,7 @@ import org.apache.lucene.search.Query;
 import org.hibernate.search.SearchFactory;
 import org.hibernate.search.query.dsl.EntityContext;
 import org.infinispan.query.dsl.QueryFactory;
+import org.infinispan.query.dsl.embedded.LuceneQuery;
 
 /**
  * The SearchManager is the entry point to create full text queries on top of a cache.
@@ -18,7 +19,7 @@ public interface SearchManager {
     *
     * @return a factory capable of building queries for the cache this SearchManager belongs to
     */
-   QueryFactory getQueryFactory();
+   QueryFactory<LuceneQuery> getQueryFactory();
 
    /**
     * This is a simple method that will just return a {@link CacheQuery}, filtered according to a set of classes passed

@@ -32,7 +32,7 @@ class EmbeddedLuceneQueryBuilder extends BaseQueryBuilder<LuceneQuery> {
 
    private final EntityNamesResolver entityNamesResolver;
 
-   public EmbeddedLuceneQueryBuilder(SearchManager searchManager, EntityNamesResolver entityNamesResolver, Class rootType) {
+   public EmbeddedLuceneQueryBuilder(SearchManager searchManager, EntityNamesResolver entityNamesResolver, String rootType) {
       super(rootType);
       this.searchManager = searchManager;
       this.entityNamesResolver = entityNamesResolver;

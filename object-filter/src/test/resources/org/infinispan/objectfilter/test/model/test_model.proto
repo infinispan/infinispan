@@ -1,0 +1,24 @@
+package org.infinispan.objectfilter.test.model;
+
+message Address {
+
+   required string street = 1;
+
+   required string postCode = 2;
+}
+
+message PhoneNumber {
+
+   required string number = 1;
+}
+
+message Person {
+
+   required string name = 1;
+
+   required string surname = 2;
+
+   optional Address address = 3;
+
+   repeated PhoneNumber phoneNumbers = 4;
+}

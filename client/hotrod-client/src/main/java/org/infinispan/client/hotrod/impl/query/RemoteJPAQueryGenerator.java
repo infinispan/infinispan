@@ -17,8 +17,11 @@ class RemoteJPAQueryGenerator extends JPAQueryGenerator {
    }
 
    @Override
-   protected String renderEntityName(Class<?> rootType) {
-      return serializationContext.getMarshaller(rootType).getTypeName();
+   protected String renderEntityName(String rootType) {
+      // this just checks the type can actually be marshalled with current config
+      serializationContext.getMarshaller(rootType);
+
+      return rootType;
    }
 
    @Override
