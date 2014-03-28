@@ -1,5 +1,6 @@
 package org.infinispan.persistence.jdbc.configuration;
 
+import java.util.Map;
 import java.util.Properties;
 
 import org.infinispan.configuration.cache.PersistenceConfigurationBuilder;
@@ -36,8 +37,9 @@ public class JdbcBinaryStoreConfigurationBuilder extends
 
    @Override
    public JdbcBinaryStoreConfigurationBuilder withProperties(Properties props) {
-      XmlConfigHelper.setValues(this, props, false, false);
-      XmlConfigHelper.setValues(table, props, false, false);
+      Map<Object, Object> unrecognized = XmlConfigHelper.setValues(this, props, false, false);
+      unrecognized = XmlConfigHelper.setValues(table, unrecognized, false, false);
+      XmlConfigHelper.showUnrecognizedAttributes(unrecognized);
       this.properties = props;
       return this;
    }
