@@ -12,10 +12,10 @@ public enum Attribute {
    // must be first
    UNKNOWN(null),
 
-   PERSISTENCE_UNIT_NAME("persistenceUnitName"),
-   ENTITY_CLASS_NAME("entityClassName"),
-   BATCH_SIZE("batchSize"),
-   STORE_METADATA("storeMetadata")
+   PERSISTENCE_UNIT_NAME("persistence-unit"),
+   ENTITY_CLASS_NAME("entity-class"),
+   BATCH_SIZE("batch-size"),
+   STORE_METADATA("store-metadata")
    ;
 
    private final String name;

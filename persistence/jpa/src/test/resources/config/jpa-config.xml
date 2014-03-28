@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<infinispan
+   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+   xsi:schemaLocation="urn:infinispan:config:7.0 http://www.infinispan.org/schemas/infinispan-config-7.0.xsd"
+   xmlns="urn:infinispan:config:7.0">
+
+  <cache-container default-cache="default">
+    <local-cache name="default">
+      <locking isolation="REPEATABLE_READ"
+               acquire-timeout="20000" write-skew="false"
+               concurrency-level="500" striping="false" />
+    </local-cache>
+    <local-cache name="vehicleCache">
+      <persistence passivation="false">
+        <jpa-store xmlns="urn:infinispan:config:store:jpa:7.0"
+                  shared="false" preload="true"
+                  persistence-unit="org.infinispan.persistence.jpa.configurationTest"
+                  entity-class="org.infinispan.persistence.jpa.entity.Vehicle"
+                  batch-size="1">
+        </jpa-store>
+      </persistence>
+    </local-cache>
+  </cache-container>
+
+</infinispan>

@@ -12,7 +12,7 @@ public enum Element {
     // must be first
     UNKNOWN(null),
 
-    JPA_STORE("jpaStore")
+    JPA_STORE("jpa-store")
     
     ;
 
