@@ -22,8 +22,27 @@
 
 package org.jboss.as.clustering.infinispan.subsystem;
 
+import static org.jboss.as.controller.descriptions.ModelDescriptionConstants.OP_ADDR;
+
+import java.io.File;
+import java.io.IOException;
+import java.io.InputStream;
+import java.net.URL;
+import java.net.UnknownHostException;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.EnumMap;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Map;
+import java.util.Properties;
+
+import javax.transaction.TransactionManager;
+import javax.transaction.TransactionSynchronizationRegistry;
+
 import org.infinispan.Cache;
 import org.infinispan.commons.marshall.Marshaller;
+import org.infinispan.commons.util.FileLookup;
 import org.infinispan.commons.util.TypedProperties;
 import org.infinispan.compatibility.adaptor52x.Adaptor52xStoreConfigurationBuilder;
 import org.infinispan.configuration.cache.BackupConfiguration.BackupStrategy;
@@ -88,23 +107,6 @@ import org.jboss.msc.value.InjectedValue;
 import org.jboss.msc.value.Value;
 import org.jboss.tm.XAResourceRecoveryRegistry;
 
-import javax.transaction.TransactionManager;
-import javax.transaction.TransactionSynchronizationRegistry;
-import java.io.File;
-import java.io.IOException;
-import java.io.InputStream;
-import java.net.URL;
-import java.net.UnknownHostException;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.EnumMap;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Map;
-import java.util.Properties;
-
-import static org.jboss.as.controller.descriptions.ModelDescriptionConstants.OP_ADDR;
-
 /**
  * Base class for cache add handlers
  *
@@ -164,7 +166,7 @@ public abstract class CacheAdd extends AbstractAddStepHandler {
     private static URL find(String resource, ClassLoader... loaders) {
         for (ClassLoader loader : loaders) {
             if (loader != null) {
-                URL url = loader.getResource(resource);
+                URL url = new FileLookup().lookupFileLocation(resource, loader);
                 if (url != null) {
                     return url;
                 }

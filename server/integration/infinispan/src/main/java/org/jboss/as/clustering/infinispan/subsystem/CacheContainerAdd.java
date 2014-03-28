@@ -28,12 +28,12 @@ import static org.jboss.as.controller.descriptions.ModelDescriptionConstants.OP_
 import java.util.Collection;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.ServiceLoader;
 import java.util.concurrent.Executor;
 import java.util.concurrent.ScheduledExecutorService;
 
 import javax.management.MBeanServer;
 
+import org.infinispan.commons.util.ServiceFinder;
 import org.infinispan.manager.CacheContainer;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.jboss.as.clustering.infinispan.affinity.KeyAffinityServiceFactoryService;
@@ -165,7 +165,7 @@ public class CacheContainerAdd extends AbstractAddStepHandler {
 
             controllers.add(this.installChannelService(target, name, cluster, stack, verificationHandler));
 
-            for (ChannelDependentServiceProvider provider: ServiceLoader.load(ChannelDependentServiceProvider.class, ChannelDependentServiceProvider.class.getClassLoader())) {
+            for (ChannelDependentServiceProvider provider: ServiceFinder.load(ChannelDependentServiceProvider.class, ChannelDependentServiceProvider.class.getClassLoader())) {
                 controllers.add(provider.install(target, name));
             }
         }
@@ -208,7 +208,7 @@ public class CacheContainerAdd extends AbstractAddStepHandler {
         final ServiceName channelServiceName = ChannelService.getServiceName(containerName) ;
         final ServiceController<?> channelServiceController = context.getServiceRegistry(false).getService(channelServiceName);
         if (channelServiceController != null) {
-            for (ChannelDependentServiceProvider provider: ServiceLoader.load(ChannelDependentServiceProvider.class, ChannelDependentServiceProvider.class.getClassLoader())) {
+            for (ChannelDependentServiceProvider provider: ServiceFinder.load(ChannelDependentServiceProvider.class, ChannelDependentServiceProvider.class.getClassLoader())) {
                 context.removeService(provider.getServiceName(containerName));
             }
             context.removeService(channelServiceName);

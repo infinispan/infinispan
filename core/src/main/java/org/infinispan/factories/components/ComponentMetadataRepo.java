@@ -1,10 +1,5 @@
 package org.infinispan.factories.components;
 
-import org.infinispan.commons.CacheException;
-import org.infinispan.factories.annotations.DefaultFactoryFor;
-import org.infinispan.util.logging.Log;
-import org.infinispan.util.logging.LogFactory;
-
 import java.io.BufferedInputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -12,6 +7,10 @@ import java.io.ObjectInputStream;
 import java.net.URL;
 import java.util.HashMap;
 import java.util.Map;
+
+import org.infinispan.commons.CacheException;
+import org.infinispan.commons.util.FileLookup;
+import org.infinispan.factories.annotations.DefaultFactoryFor;
 
 /**
  * This is a repository of component metadata, which is populated when the Infinispan core jar is loaded up.  Actual
@@ -106,7 +105,7 @@ public class ComponentMetadataRepo {
    public void initialize(Iterable<ModuleMetadataFileFinder> moduleMetadataFiles, ClassLoader cl) {
       // First init core module metadata
       try {
-         readMetadata(cl.getResource("infinispan-core-component-metadata.dat"));
+         readMetadata(new FileLookup().lookupFileLocation("infinispan-core-component-metadata.dat", cl));
       } catch (Exception e) {
          throw new CacheException("Unable to load component metadata!", e);
       }
@@ -114,7 +113,7 @@ public class ComponentMetadataRepo {
       // Now the modules
       for (ModuleMetadataFileFinder finder: moduleMetadataFiles) {
          try {
-            readMetadata(cl.getResource(finder.getMetadataFilename()));
+            readMetadata(new FileLookup().lookupFileLocation(finder.getMetadataFilename(), cl));
          } catch (Exception e) {
             throw new CacheException("Unable to load component metadata in file " + finder.getMetadataFilename(), e);
          }
