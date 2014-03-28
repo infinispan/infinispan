@@ -428,9 +428,6 @@ public class UnifiedXmlFileParsingTest extends AbstractInfinispanTest {
             assertTrue(c.storeAsBinary().enabled());
             assertTrue(c.storeAsBinary().storeKeysAsBinary());
             assertFalse(c.storeAsBinary().storeValuesAsBinary());
-
-            c = cm.getCache("extra-module").getCacheConfiguration();
-            assertEquals("cache-extra-module", c.module(MyModuleConfiguration.class).attribute());
          }
       });
    }

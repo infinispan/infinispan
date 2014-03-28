@@ -8,9 +8,9 @@
    </jgroups>
    <threads>
       <thread-factory name="infinispan-factory" group-name="infinispan" thread-name-pattern="%G %i" priority="5"/>
-      <cached-thread-pool name="infinispan-cached" thread-factory="infinispan-factory" /> <!-- transport.total-order-executor, transport.remote-command-executor, persistence-executor -->
       <blocking-bounded-queue-thread-pool name="infinispan-listener" thread-factory="infinispan-factory" core-threads="1" max-threads="1" queue-length="0" keepalive-time="0" /> <!-- listener-executor -->
       <blocking-bounded-queue-thread-pool name="infinispan-transport" thread-factory="infinispan-factory" core-threads="5" max-threads="10" queue-length="100" keepalive-time="10000" /> <!-- transport.executor -->
+      <cached-thread-pool name="infinispan-cached" thread-factory="infinispan-factory" /> <!-- transport.total-order-executor, transport.remote-command-executor, persistence-executor -->
       <scheduled-thread-pool name="infinispan-eviction" thread-factory="infinispan-factory" /> <!-- eviction-executor -->
       <scheduled-thread-pool name="infinispan-repl-queue" thread-factory="infinispan-factory" /> <!-- replication-queue-executor -->
    </threads>
@@ -48,17 +48,16 @@
          <transaction mode="NON_DURABLE_XA" stop-timeout="61000" locking="PESSIMISTIC"/>
          <eviction max-entries="21000" strategy="FIFO"/>
          <expiration interval="11000" lifespan="12" max-idle="12"/>
-         <state-transfer enabled="false" timeout="60000" chunk-size="10000" />
          <persistence>
             <cluster-loader remote-timeout="35000" preload="true"/>
          </persistence>
+         <state-transfer enabled="false" timeout="60000" chunk-size="10000" />
       </replicated-cache>
       <distributed-cache name="dist" mode="SYNC" batching="false" l1-lifespan="1200000" owners="4" remote-timeout="35000" start="EAGER" segments="2" async-marshalling="false" statistics="true">
          <locking acquire-timeout="31500" concurrency-level="3500" isolation="READ_COMMITTED" striping="true"/>
          <transaction mode="FULL_XA" stop-timeout="61500" locking="OPTIMISTIC"/>
          <eviction max-entries="21500" strategy="UNORDERED"/>
          <expiration interval="11500" lifespan="13" max-idle="13"/>
-         <state-transfer enabled="true" timeout="60500" chunk-size="10500" />
          <backups>
             <backup site="NYC" failure-policy="WARN" strategy="SYNC" timeout="12500" enabled="false">
                <state-transfer chunk-size="600" timeout="2400000"/>
@@ -69,6 +68,7 @@
             </backup>
          </backups>
          <backup-for remote-cache="users" remote-site="LON"/>
+         <state-transfer enabled="true" timeout="60500" chunk-size="10500" />
       </distributed-cache>
       <replicated-cache name="capedwarf-data" mode="ASYNC">
          <transaction mode="NON_XA"/>
@@ -154,11 +154,6 @@
       </local-cache>
       <local-cache name="store-as-binary">
          <store-as-binary keys="true" values="false"/>
-      </local-cache>
-      <local-cache name="extra-module">
-         <modules>
-            <sample-element xmlns="urn:infinispan:config:mymodule" sample-attribute="cache-extra-module" />
-         </modules>
       </local-cache>
    </cache-container>
 </infinispan>
