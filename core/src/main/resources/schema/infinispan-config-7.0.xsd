@@ -37,8 +37,8 @@
         Defines JGroups transport stacks.
       </xs:documentation>
     </xs:annotation>
-    <xs:all>
-      <xs:element name="stack-file" minOccurs="1">
+    <xs:sequence>
+      <xs:element name="stack-file" minOccurs="1" maxOccurs="unbounded">
         <xs:complexType>
           <xs:annotation>
             <xs:documentation>
@@ -53,7 +53,7 @@
           </xs:attribute>
         </xs:complexType>
       </xs:element>
-    </xs:all>
+    </xs:sequence>
   </xs:complexType>
 
   <xs:complexType name="threads">
