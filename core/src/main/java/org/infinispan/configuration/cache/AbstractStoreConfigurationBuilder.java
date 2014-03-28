@@ -90,7 +90,7 @@ public abstract class AbstractStoreConfigurationBuilder<T extends StoreConfigura
     */
    @Override
    public S withProperties(Properties props) {
-      XmlConfigHelper.setValues(this, props, false, false);
+      XmlConfigHelper.showUnrecognizedAttributes(XmlConfigHelper.setValues(this, props, false, false));
       this.properties = props;
       return self();
    }

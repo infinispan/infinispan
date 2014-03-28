@@ -1,5 +1,6 @@
 package org.infinispan.persistence.jdbc.configuration;
 
+import java.util.Map;
 import java.util.Properties;
 
 import org.infinispan.commons.CacheConfigurationException;
@@ -90,9 +91,10 @@ public class JdbcMixedStoreConfigurationBuilder extends AbstractJdbcStoreConfigu
 
    @Override
    public JdbcMixedStoreConfigurationBuilder withProperties(Properties props) {
-      XmlConfigHelper.setValues(this, props, false, false);
-      XmlConfigHelper.setValues(binaryTable, props, false, false);
-      XmlConfigHelper.setValues(stringTable, props, false, false);
+      Map<Object, Object> unrecognized = XmlConfigHelper.setValues(this, props, false, false);
+      XmlConfigHelper.setValues(binaryTable, unrecognized, false, false);
+      unrecognized = XmlConfigHelper.setValues(stringTable, unrecognized, false, false);
+      XmlConfigHelper.showUnrecognizedAttributes(unrecognized);
       this.properties = props;
       return this;
    }
