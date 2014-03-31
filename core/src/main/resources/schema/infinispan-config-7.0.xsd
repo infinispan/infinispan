@@ -361,6 +361,13 @@
               </xs:complexType>
             </xs:element>
           </xs:sequence>
+          <xs:attribute name="audit-logger" type="xs:string">
+            <xs:annotation>
+              <xs:documentation>
+                Class of the audit logger.
+              </xs:documentation>
+            </xs:annotation>
+          </xs:attribute>
           <xs:attribute name="mapper" type="xs:string">
             <xs:annotation>
               <xs:documentation>

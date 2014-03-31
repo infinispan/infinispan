@@ -12,6 +12,7 @@ import org.infinispan.configuration.global.GlobalConfiguration;
 import org.infinispan.configuration.global.GlobalSecurityConfiguration;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.registry.ClusterRegistry;
+import org.infinispan.security.AuditContext;
 import org.infinispan.security.AuthorizationManager;
 import org.infinispan.security.AuthorizationPermission;
 
@@ -28,6 +29,7 @@ public class AuthorizationManagerImpl implements AuthorizationManager {
    private AuthorizationConfiguration configuration;
    private ClusterRegistry<String, Subject, Integer> subjectRoleMaskCache;
    private String authCacheScope;
+   private AuthorizationHelper authzHelper;
 
    public AuthorizationManagerImpl() {
    }
@@ -39,6 +41,7 @@ public class AuthorizationManagerImpl implements AuthorizationManager {
       this.configuration = configuration.security().authorization();
       this.subjectRoleMaskCache = clusterRegistry;
       authCacheScope = String.format("%s_%s", AuthorizationManager.class.getName(), cache.getName());
+      this.authzHelper = new AuthorizationHelper(this.globalConfiguration, AuditContext.CACHE, cache.getName());
    }
 
    @Override
@@ -49,6 +52,6 @@ public class AuthorizationManagerImpl implements AuthorizationManager {
          subjectMask = AuthorizationHelper.computeSubjectRoleMask(subject, globalConfiguration, configuration);
          //ISPN-4056 subjectRoleMaskCache.put(authCacheScope, subject, subjectMask, globalConfiguration.securityCacheTimeout(), TimeUnit.MILLISECONDS);
       }
-      AuthorizationHelper.checkPermission(subject, subjectMask, perm);
+      authzHelper.checkPermission(subject, subjectMask, perm);
    }
 }

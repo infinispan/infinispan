@@ -63,7 +63,7 @@ There are two levels of configuration: global and per-cache. The global configur
   GlobalConfigurationBuilder global = new GlobalConfigurationBuilder();
   global
      .security()
-        .roles()
+        .authorization()
            .principalRoleMapper(new IdentityRoleMapper())
            .role("admin")
               .permission(CachePermission.ALL)
@@ -94,7 +94,7 @@ There are two levels of configuration: global and per-cache. The global configur
             <role name="reader" permission="READ" />
             <role name="writer" permission="WRITE" />
             <role name="supervisor" permission="READ WRITE EXEC BULK"/>
-         </roles>
+         </authorization>
       </security>
       <local-cache name="secured">
          <security enabled="true">
@@ -105,3 +105,39 @@ There are two levels of configuration: global and per-cache. The global configur
 
 </infinispan>
 ----
+
+== Security Audit
+
+Infinispan offers a pluggable audit logger which tracks whether a cache or a cache manager operation was allowed or denied.
+The audit logger is configured at the cache container authorization level:
+
+==== Programmatic
+[source,java]
+----
+  GlobalConfigurationBuilder global = new GlobalConfigurationBuilder();
+  global
+     .authorization()
+        .auditLogger(new DefaultAuditLogger());
+----
+
+==== Declarative
+[source,xml]
+----
+<infinispan>
+   <cache-container default-cache="secured">
+      <security>
+         <authorization audit-logger="org.infinispan.security.impl.DefaultAuditLogger">
+            ...
+         </authorization>
+      </security>
+      ...
+   </cache-container>
+</infinispan>
+----
+
+
+The default audit logger is org.infinispan.security.impl.DefaultAuditLogger which outputs audit logs through the available logging framework (e.g. Log4J) at level TRACE and category AUDIT. These logs look like: 
+
+[ALLOW] user READ cache[defaultCache]
+
+Using an appropriate logging appender it is possible to send the AUDIT category either to a log file, a JMS queue, a database, etc.

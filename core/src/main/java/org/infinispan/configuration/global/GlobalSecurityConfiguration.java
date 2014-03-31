@@ -10,8 +10,9 @@ public class GlobalSecurityConfiguration {
    private final GlobalAuthorizationConfiguration authorization;
    private final long securityCacheTimeout;
 
-   GlobalSecurityConfiguration(GlobalAuthorizationConfiguration roles, long securityCacheTimeout) {
-      this.authorization = roles;
+
+   GlobalSecurityConfiguration(GlobalAuthorizationConfiguration authorization, long securityCacheTimeout) {
+      this.authorization = authorization;
       this.securityCacheTimeout = securityCacheTimeout;
    }
 
@@ -25,9 +26,8 @@ public class GlobalSecurityConfiguration {
 
    @Override
    public String toString() {
-      return "GlobalSecurityConfiguration [authorization=" + authorization + ", securityCacheTimeout="
-            + securityCacheTimeout + "]";
+      return "GlobalSecurityConfiguration [authorization=" + authorization
+            + ", securityCacheTimeout=" + securityCacheTimeout + "]";
    }
-
 
 }

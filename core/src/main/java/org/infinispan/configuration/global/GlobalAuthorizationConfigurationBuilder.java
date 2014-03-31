@@ -7,8 +7,10 @@ import java.util.Map;
 import javax.security.auth.Subject;
 
 import org.infinispan.commons.configuration.Builder;
+import org.infinispan.security.AuditLogger;
 import org.infinispan.security.PrincipalRoleMapper;
 import org.infinispan.security.Role;
+import org.infinispan.security.impl.DefaultAuditLogger;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
@@ -21,6 +23,7 @@ import org.infinispan.util.logging.LogFactory;
 public class GlobalAuthorizationConfigurationBuilder extends AbstractGlobalConfigurationBuilder implements Builder<GlobalAuthorizationConfiguration> {
    public static final Log log = LogFactory.getLog(GlobalAuthorizationConfigurationBuilder.class);
    private boolean enabled = false;
+   private AuditLogger auditLogger;
    private PrincipalRoleMapper principalRoleMapper;
    private final Map<String, GlobalRoleConfigurationBuilder> roles = new HashMap<String, GlobalRoleConfigurationBuilder>();
 
@@ -40,6 +43,15 @@ public class GlobalAuthorizationConfigurationBuilder extends AbstractGlobalConfi
 
    public GlobalAuthorizationConfigurationBuilder enabled(boolean enabled) {
       this.enabled = enabled;
+      return this;
+   }
+
+   /**
+    * The instance of an {@link AuditLogger} to be used to track operations performed on caches and cachemanagers
+    * @param auditLogger
+    */
+   public GlobalAuthorizationConfigurationBuilder auditLogger(AuditLogger auditLogger) {
+      this.auditLogger = auditLogger;
       return this;
    }
 
@@ -64,6 +76,9 @@ public class GlobalAuthorizationConfigurationBuilder extends AbstractGlobalConfi
       if (enabled && principalRoleMapper == null) {
          throw log.invalidPrincipalRoleMapper();
       }
+      if (auditLogger == null) {
+         auditLogger = new DefaultAuditLogger();
+      }
    }
 
    @Override
@@ -73,12 +88,13 @@ public class GlobalAuthorizationConfigurationBuilder extends AbstractGlobalConfi
          Role roleCfg = role.create();
          rolesCfg.put(roleCfg.getName(), roleCfg);
       }
-      return new GlobalAuthorizationConfiguration(enabled, principalRoleMapper, rolesCfg);
+      return new GlobalAuthorizationConfiguration(enabled, auditLogger, principalRoleMapper, rolesCfg);
    }
 
    @Override
    public Builder<?> read(GlobalAuthorizationConfiguration template) {
       this.enabled = template.enabled();
+      this.auditLogger = template.auditLogger();
       this.principalRoleMapper = template.principalRoleMapper();
       this.roles.clear();
       for(Role role : template.roles().values()) {
