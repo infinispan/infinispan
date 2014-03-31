@@ -74,13 +74,15 @@ public class OsgiClassLoader extends ClassLoader {
       }
 
       for (WeakReference<Bundle> bundle : bundles) {
-         try {
-            final Class clazz = bundle.get().loadClass(name);
-            if (clazz != null) {
-               classCache.put(name, clazz);
-               return clazz;
+         if (bundle.get().getState() == Bundle.ACTIVE) {
+            try {
+               final Class clazz = bundle.get().loadClass(name);
+               if (clazz != null) {
+                  classCache.put(name, clazz);
+                  return clazz;
+               }
+            } catch (Exception ignore) {
             }
-         } catch (Exception ignore) {
          }
       }
 
@@ -98,15 +100,17 @@ public class OsgiClassLoader extends ClassLoader {
       if (resourceCache.containsKey(name)) {
          return resourceCache.get(name);
       }
-
+      
       for (WeakReference<Bundle> bundle : bundles) {
-         try {
-            final URL resource = bundle.get().getResource(name);
-            if (resource != null) {
-               resourceCache.put(name, resource);
-               return resource;
+         if (bundle.get().getState() == Bundle.ACTIVE) {
+            try {
+               final URL resource = bundle.get().getResource(name);
+               if (resource != null) {
+                  resourceCache.put(name, resource);
+                  return resource;
+               }
+            } catch (Exception ignore) {
             }
-         } catch (Exception ignore) {
          }
       }
 
@@ -125,12 +129,14 @@ public class OsgiClassLoader extends ClassLoader {
       final List<Enumeration<URL>> enumerations = new ArrayList<Enumeration<URL>>();
 
       for (WeakReference<Bundle> bundle : bundles) {
-         try {
-            final Enumeration<URL> resources = bundle.get().getResources(name);
-            if (resources != null) {
-               enumerations.add(resources);
+         if (bundle.get().getState() == Bundle.ACTIVE) {
+            try {
+               final Enumeration<URL> resources = bundle.get().getResources(name);
+               if (resources != null) {
+                  enumerations.add(resources);
+               }
+            } catch (Exception ignore) {
             }
-         } catch (Exception ignore) {
          }
       }
 
