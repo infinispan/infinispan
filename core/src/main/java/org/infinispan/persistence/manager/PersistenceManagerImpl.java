@@ -410,9 +410,18 @@ public class PersistenceManagerImpl implements PersistenceManager {
    @Override
    public void processOnAllStores(AdvancedCacheLoader.KeyFilter keyFilter, AdvancedCacheLoader.CacheLoaderTask task,
                                   boolean fetchValue, boolean fetchMetadata) {
+      processOnAllStores(keyFilter, task, fetchValue, fetchMetadata, false);
+   }
+
+   @Override
+   public void processOnAllStores(AdvancedCacheLoader.KeyFilter keyFilter, AdvancedCacheLoader.CacheLoaderTask task,
+                                  boolean fetchValue, boolean fetchMetadata, boolean skipSharedStore) {
       storesMutex.readLock().lock();
       try {
          for (CacheLoader loader : loaders) {
+            if (skipSharedStore && configMap.get(loader).shared())
+               continue;
+
             if (loader instanceof AdvancedCacheLoader) {
                ((AdvancedCacheLoader) loader).process(keyFilter, task, persistenceExecutor, fetchValue, fetchMetadata);
             }
