@@ -20,4 +20,11 @@ public interface PrincipalRoleMapper {
     * @return
     */
    Set<String> principalToRoles(Principal principal);
+
+   /**
+    * Sets the context for this {@link PrincipalRoleMapper}
+    *
+    * @param context
+    */
+   void setContext(PrincipalRoleMapperContext context);
 }

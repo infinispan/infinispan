@@ -8,7 +8,7 @@ package org.infinispan.configuration.global;
  */
 public interface GlobalSecurityConfigurationChildBuilder extends GlobalConfigurationChildBuilder {
    /**
-    * Roles define groups of permissions
+    * Defines global roles as groups of permissions
     */
    GlobalAuthorizationConfigurationBuilder authorization();
    /**

@@ -19,6 +19,7 @@ public enum Attribute {
     ALIASES("aliases"),
     ALLOW_DUPLICATE_DOMAINS("duplicate-domains"),
     ASYNC_MARSHALLING("async-marshalling"),
+    AUDIT_LOGGER("audit-logger"),
     AUTO_COMMIT("auto-commit"),
     AWAIT_INITIAL_TRANSFER("await-initial-transfer"),
     BACKUP_FAILURE_POLICY("failure-policy"),

@@ -9,6 +9,9 @@ import javax.security.auth.Subject;
 
 import org.infinispan.configuration.cache.AuthorizationConfiguration;
 import org.infinispan.configuration.global.GlobalSecurityConfiguration;
+import org.infinispan.security.AuditContext;
+import org.infinispan.security.AuditLogger;
+import org.infinispan.security.AuditResponse;
 import org.infinispan.security.AuthorizationPermission;
 import org.infinispan.security.PrincipalRoleMapper;
 import org.infinispan.security.Role;
@@ -24,19 +27,31 @@ import org.infinispan.util.logging.LogFactory;
  */
 public class AuthorizationHelper {
    private static final Log log = LogFactory.getLog(AuthorizationHelper.class);
+   private final GlobalSecurityConfiguration globalConfiguration;
+   private final AuditLogger audit;
+   private final AuditContext context;
+   private final String name;
 
-   public static void checkPermission(Subject subject, int subjectMask, AuthorizationPermission perm) {
+   public AuthorizationHelper(GlobalSecurityConfiguration globalConfiguration, AuditContext context, String name) {
+      this.globalConfiguration = globalConfiguration;
+      this.audit = globalConfiguration.authorization().auditLogger();
+      this.context = context;
+      this.name = name;
+   }
+
+   public void checkPermission(Subject subject, int subjectMask, AuthorizationPermission perm) {
       if ((subjectMask & perm.getMask()) != perm.getMask()) {
          if (System.getSecurityManager() == null) {
+            audit.audit(subject, context, name, perm, AuditResponse.DENY);
             throw log.unauthorizedAccess(String.valueOf(subject), perm.toString());
          } else {
             System.getSecurityManager().checkPermission(perm.getSecurityPermission());
          }
       }
+      audit.audit(subject, context, name, perm, AuditResponse.ALLOW);
    }
 
-   public static void checkPermission(GlobalSecurityConfiguration globalConfiguration,
-         AuthorizationConfiguration configuration, AuthorizationPermission perm) {
+   public void checkPermission(AuthorizationConfiguration configuration, AuthorizationPermission perm) {
       if (globalConfiguration.authorization().enabled()) {
          AccessControlContext acc = AccessController.getContext();
          Subject subject = Subject.getSubject(acc);
@@ -45,8 +60,8 @@ public class AuthorizationHelper {
       }
    }
 
-   public static void checkPermission(GlobalSecurityConfiguration globalConfiguration, AuthorizationPermission perm) {
-      checkPermission(globalConfiguration, null, perm);
+   public void checkPermission(AuthorizationPermission perm) {
+      checkPermission(null, perm);
    }
 
    public static int computeSubjectRoleMask(Subject subject, GlobalSecurityConfiguration globalConfiguration,
