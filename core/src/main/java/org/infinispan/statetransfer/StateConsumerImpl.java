@@ -885,7 +885,7 @@ public class StateConsumerImpl implements StateConsumer {
                   keysToRemove.add(key);
                }
             }
-         }, false, false);
+         }, false, false, true);
       } catch (CacheException e) {
          log.failedLoadingKeysFromCacheStore(e);
       }

@@ -85,7 +85,7 @@ public class DummyInMemoryStore implements AdvancedLoadWriteStore {
          TestingUtil.sleepThread(100);
       }
       if (entry!= null) {
-         if (debug) log.debugf("Store %s in dummy map store@%s", entry, Util.hexIdHashCode(store));
+         if (debug) log.tracef("Store %s in dummy map store@%s", entry, Util.hexIdHashCode(store));
          configuration.failKey();
          store.put(entry.getKey(), serialize(entry));
       }
@@ -102,11 +102,11 @@ public class DummyInMemoryStore implements AdvancedLoadWriteStore {
    public boolean delete(Object key) {
       record("delete");
       if (store.remove(key) != null) {
-         if (debug) log.debugf("Removed %s from dummy store", key);
+         if (debug) log.tracef("Removed %s from dummy store", key);
          return true;
       }
 
-      if (debug) log.debugf("Key %s not present in store, so don't remove", key);
+      if (debug) log.tracef("Key %s not present in store, so don't remove", key);
       return false;
    }
 
@@ -133,7 +133,7 @@ public class DummyInMemoryStore implements AdvancedLoadWriteStore {
       if (me == null) return null;
       long now = System.currentTimeMillis();
       if (isExpired(me, now)) {
-         log.debugf("Key %s exists, but has expired.  Entry is %s", key, me);
+         log.tracef("Key %s exists, but has expired.  Entry is %s", key, me);
          store.remove(key);
          return null;
       }
@@ -147,6 +147,7 @@ public class DummyInMemoryStore implements AdvancedLoadWriteStore {
    @Override
    public void process(KeyFilter filter, CacheLoaderTask task, Executor executor, boolean fetchValue, boolean fetchMetadata) {
       record("process");
+      log.tracef("Processing entries in store %s with filter %s and callback %s", storeName, filter, task);
       final long currentTimeMillis = System.currentTimeMillis();
       TaskContext tx = new TaskContextImpl();
       for (Iterator<Map.Entry<Object, byte[]>> i = store.entrySet().iterator(); i.hasNext();) {
@@ -155,7 +156,7 @@ public class DummyInMemoryStore implements AdvancedLoadWriteStore {
          if (filter == null || filter.shouldLoadKey(entry.getKey())) {
             MarshalledEntry se = deserialize(entry.getKey(), entry.getValue());
             if (isExpired(se, currentTimeMillis)) {
-               log.debugf("Key %s exists, but has expired.  Entry is %s", entry.getKey(), se);
+               log.tracef("Key %s exists, but has expired.  Entry is %s", entry.getKey(), se);
                i.remove();
             } else {
                try {
@@ -224,6 +225,10 @@ public class DummyInMemoryStore implements AdvancedLoadWriteStore {
 
    public boolean isEmpty() {
       return store.isEmpty();
+   }
+
+   public Set<Object> keySet() {
+      return store.keySet();
    }
 
    public Map<String, Integer> stats() {

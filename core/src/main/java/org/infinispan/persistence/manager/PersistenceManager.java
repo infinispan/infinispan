@@ -46,6 +46,8 @@ public interface PersistenceManager extends Lifecycle {
 
    void processOnAllStores(AdvancedCacheLoader.KeyFilter keyFilter, AdvancedCacheLoader.CacheLoaderTask task, boolean fetchValue, boolean fetchMetadata);
 
+   void processOnAllStores(AdvancedCacheLoader.KeyFilter keyFilter, AdvancedCacheLoader.CacheLoaderTask task, boolean fetchValue, boolean fetchMetadata, boolean skipSharedStore);
+
    boolean activate(Object key);
 
    MarshalledEntry loadFromAllStores(Object key, InvocationContext context);
