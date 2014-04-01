@@ -4,121 +4,28 @@ import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertFalse;
 import static org.testng.Assert.assertNull;
 import static org.testng.Assert.assertTrue;
-import static org.testng.AssertJUnit.assertNotNull;
 
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
-
 import javax.persistence.EntityManager;
 import javax.persistence.EntityManagerFactory;
 import javax.persistence.EntityTransaction;
 import javax.persistence.Persistence;
 
-import org.hibernate.ejb.HibernateEntityManagerFactory;
 import org.hornetq.utils.ConcurrentHashSet;
-import org.infinispan.commons.marshall.StreamingMarshaller;
-import org.infinispan.configuration.cache.ConfigurationBuilder;
-import org.infinispan.container.entries.InternalCacheEntry;
-import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.marshall.core.MarshalledEntry;
-import org.infinispan.marshall.core.MarshalledEntryFactoryImpl;
 import org.infinispan.marshall.core.MarshalledEntryImpl;
-import org.infinispan.marshall.core.MarshalledValue;
-import org.infinispan.persistence.BaseStoreTest.Pojo;
-import org.infinispan.persistence.InitializationContextImpl;
-import org.infinispan.persistence.jpa.configuration.JpaStoreConfigurationBuilder;
 import org.infinispan.persistence.spi.AdvancedCacheLoader;
-import org.infinispan.persistence.spi.AdvancedLoadWriteStore;
 import org.infinispan.persistence.spi.PersistenceException;
-import org.infinispan.test.AbstractInfinispanTest;
-import org.infinispan.test.fwk.TestCacheManagerFactory;
-import org.infinispan.test.fwk.TestInternalCacheEntryFactory;
-import org.infinispan.util.DefaultTimeService;
-import org.testng.annotations.AfterMethod;
-import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
 /**
- * This is a base class containing various unit tests for each and every different CacheStore implementations. If you
- * need to add Cache/CacheManager tests that need to be run for each cache store/loader implementation, then use
- * BaseCacheStoreFunctionalTest.
- *
- * @author <a href="mailto:rtsang@redhat.com">Ray Tsang</a>
- *
+ * @author Radim Vansa &lt;rvansa@redhat.com&gt;
  */
 @Test(groups = "functional", testName = "persistence.BaseJpaStoreTest")
-public abstract class BaseJpaStoreTest extends AbstractInfinispanTest {
-
-   private static final String PERSISTENCE_UNIT_NAME = "org.infinispan.persistence.jpa";
-   
-   protected EmbeddedCacheManager cm;
-
-   protected AdvancedLoadWriteStore cs;
-
-   //protected TransactionFactory gtf = new TransactionFactory();
-
-   protected StreamingMarshaller marshaller;
-
-   protected BaseJpaStoreTest() {
-     // gtf.init(false, false, true, false);
-   }
-
-   protected EmbeddedCacheManager createCacheManager() {
-      return TestCacheManagerFactory.createCacheManager(true);
-   }
-
-   protected AdvancedLoadWriteStore createCacheStore() {
-      ConfigurationBuilder builder = new ConfigurationBuilder();
-      builder.persistence().addStore(JpaStoreConfigurationBuilder.class)
-            .persistenceUnitName(PERSISTENCE_UNIT_NAME)
-            .entityClass(getEntityClass());
-
-      JpaStore store = new JpaStore();
-      store.init(new InitializationContextImpl(builder.persistence().stores().get(0).create(), cm.getCache(),
-            getMarshaller(), new DefaultTimeService(), null, new MarshalledEntryFactoryImpl(getMarshaller())));
-      store.start();
-
-      assertNotNull(store.getEntityManagerFactory());
-      assertTrue(store.getEntityManagerFactory() instanceof HibernateEntityManagerFactory);
-
-      return store;
-   }
-
-   protected abstract Class<?> getEntityClass();
-
-   @BeforeMethod(alwaysRun = true)
-   public void setUp() throws Exception {
-      cm = createCacheManager();
-      marshaller = cm.getCache().getAdvancedCache().getComponentRegistry().getCacheMarshaller();
-      cs = createCacheStore();
-      cs.clear();
-   }
-
-   @AfterMethod
-   public void stopMarshaller() {
-      //marshaller.stop();
-      cs.stop();
-      cm.stop();
-   }
-
-   /**
-    * @return a mock marshaller for use with the cache store impls
-    */
-   protected StreamingMarshaller getMarshaller() {
-      return marshaller;
-   }
-
-   private MarshalledEntryImpl createEntry(Object key, Object value) {
-      return new MarshalledEntryImpl(key, value, null, getMarshaller());
-   }
-
-   private MarshalledEntryImpl createEntry(TestObject obj) {
-      return createEntry(obj.getKey(), obj.getValue());
-   }
-
-
+public abstract class BaseJpaStoreTest extends AbstractJpaStoreTest {
    protected abstract TestObject createTestObject(String key);
 
    @Test(expectedExceptions = PersistenceException.class)
@@ -141,21 +48,21 @@ public abstract class BaseJpaStoreTest extends AbstractInfinispanTest {
 	   cs.write(me);
    }
 
-	public void testLoadAndStoreImmortal() {
-		TestObject obj = createTestObject("testLoadAndStoreImmortal");
+   public void testLoadAndStoreImmortal() {
+      TestObject obj = createTestObject("testLoadAndStoreImmortal");
       assertFalse(cs.contains(obj.getKey()));
       MarshalledEntryImpl me = createEntry(obj);
       cs.write(me);
 
-		assertTrue(cs.contains(obj.getKey()));
-		assertEquals(obj.getValue(), cs.load(obj.getKey()).getValue());
-		assertNull(cs.load(obj.getKey()).getMetadata());
+      assertTrue(cs.contains(obj.getKey()));
+      assertEquals(obj.getValue(), cs.load(obj.getKey()).getValue());
+      assertNull(cs.load(obj.getKey()).getMetadata());
 
       // TODO test with metadata
 
-		boolean removed = cs.delete("nonExistentKey");
-		assertFalse(removed);
-	}
+      boolean removed = cs.delete("nonExistentKey");
+      assertFalse(removed);
+   }
 
    public void testPreload() throws Exception {
 		TestObject obj1 = createTestObject("testPreload1");
@@ -220,17 +127,17 @@ public abstract class BaseJpaStoreTest extends AbstractInfinispanTest {
       assertFalse(cs.contains(obj3.getKey()));
       assertFalse(cs.contains(obj4.getKey()));
 	}
-   
+
    public void testStoreValuesViaNonJpaCacheStore() {
       TestObject obj1 = createTestObject("testStoreViaNonJpaCacheStore1");
       TestObject obj2 = createTestObject("testStoreViaNonJpaCacheStore2");
-      
+
       assertEquals(cs.size(), 0);
       assertFalse(cs.contains(obj1.getKey()));
       assertFalse(cs.contains(obj1.getKey()));
-      
+
       EntityManagerFactory emf = Persistence.createEntityManagerFactory(PERSISTENCE_UNIT_NAME);
-      EntityManager em = emf.createEntityManager();      
+      EntityManager em = emf.createEntityManager();
       EntityTransaction txn = em.getTransaction();
       txn.begin();
       em.persist(obj1.getValue());
@@ -238,30 +145,31 @@ public abstract class BaseJpaStoreTest extends AbstractInfinispanTest {
       em.flush();
       txn.commit();
       em.close();
-      
+
       assertEquals(cs.size(), 2);
       assertTrue(cs.contains(obj1.getKey()));
       assertTrue(cs.contains(obj1.getKey()));
    }
-   
+
    public void testLoadValuesViaNonJpaCacheStore() {
       TestObject obj1 = createTestObject("testLoadViaNonJpaCacheStore1");
       TestObject obj2 = createTestObject("testLoadViaNonJpaCacheStore2");
       cs.write(createEntry(obj1));
       cs.write(createEntry(obj2));
-      
+
       assertEquals(cs.size(), 2);
       assertTrue(cs.contains(obj1.getKey()));
       assertTrue(cs.contains(obj1.getKey()));
-      
+
       EntityManagerFactory emf = Persistence.createEntityManagerFactory(PERSISTENCE_UNIT_NAME);
-      EntityManager em = emf.createEntityManager();      
-      
-      assertEquals(em.find(obj1.getValue().getClass(), obj1.getKey()), obj1.getValue()); 
+      EntityManager em = emf.createEntityManager();
+
+      assertEquals(em.find(obj1.getValue().getClass(), obj1.getKey()), obj1.getValue());
       assertEquals(em.find(obj2.getValue().getClass(), obj2.getKey()), obj2.getValue());
-      
+
       em.close();
    }
+
 
    /*
 
@@ -494,5 +402,4 @@ public abstract class BaseJpaStoreTest extends AbstractInfinispanTest {
       assert cs.remove(key);
    }
    */
-
 }
