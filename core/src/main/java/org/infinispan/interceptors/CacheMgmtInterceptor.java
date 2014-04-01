@@ -166,16 +166,30 @@ public class CacheMgmtInterceptor extends JmxStatsCommandInterceptor {
       Object retval = invokeNextInterceptor(ctx, command);
 
       if (statisticsEnabled && ctx.isOriginLocal()) {
-         if (retval == null) {
-            removeMisses.increment();
+         if (command.isConditional()) {
+            if (command.isSuccessful())
+               increaseRemoveHits(start);
+            else
+               increaseRemoveMisses();
          } else {
-            long intervalMilliseconds = timeService.timeDuration(start, TimeUnit.MILLISECONDS);
-            removeTimes.add(intervalMilliseconds);
-            removeHits.increment();
+            if (retval == null)
+               increaseRemoveMisses();
+            else
+               increaseRemoveHits(start);
          }
       }
 
       return retval;
+   }
+
+   private void increaseRemoveHits(long start) {
+      long intervalMilliseconds = timeService.timeDuration(start, TimeUnit.MILLISECONDS);
+      removeTimes.add(intervalMilliseconds);
+      removeHits.increment();
+   }
+
+   private void increaseRemoveMisses() {
+      removeMisses.increment();
    }
 
    @ManagedAttribute(

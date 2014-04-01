@@ -1,5 +1,6 @@
 package org.infinispan.jcache.logging;
 
+import org.infinispan.lifecycle.ComponentStatus;
 import org.jboss.logging.annotations.Cause;
 import org.jboss.logging.annotations.LogMessage;
 import org.jboss.logging.annotations.Message;
@@ -7,6 +8,7 @@ import org.jboss.logging.annotations.MessageLogger;
 
 import javax.cache.CacheException;
 import javax.cache.configuration.Configuration;
+import javax.cache.processor.EntryProcessorException;
 
 import java.util.List;
 
@@ -50,7 +52,7 @@ public interface Log extends org.infinispan.util.logging.Log {
    @Message(value = "The provider implementation cannot be unwrapped to '%s'", id = 21009)
    IllegalArgumentException unableToUnwrapProviderImplementation(Class<?> type);
 
-   @Message(value = "%s parameter must not be null", id = 21010)
+   @Message(value = "'%s' parameter must not be null", id = 21010)
    NullPointerException parameterMustNotBeNull(String parameterName);
 
    @Message(value = "Incompatible cache value types specified, expected %s but %s was specified", id = 21011)
@@ -71,6 +73,18 @@ public interface Log extends org.infinispan.util.logging.Log {
    @LogMessage(level = ERROR)
    @Message(value = "Error loading %s keys from persistence store", id = 21017)
    <K> void errorLoadingAll(List<K> keysToLoad, @Cause Throwable t);
+
+   @Message(value = "The configuration class %s is not supported by this implementation", id = 21018)
+   IllegalArgumentException configurationClassNotSupported(Class clazz);
+
+   @Message(value = "Entry processing failed", id = 21019)
+   EntryProcessorException entryProcessingFailed(@Cause Throwable t);
+
+   @Message(value = "Cache manager is in %s status", id = 21020)
+   IllegalStateException cacheManagerClosed(ComponentStatus status);
+
+   @Message(value = "Cache is in %s status", id = 21021)
+   IllegalStateException cacheClosed(ComponentStatus status);
 
    class LeakDescription extends Throwable {
 

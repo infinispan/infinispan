@@ -20,7 +20,10 @@
 
       <CacheManagerImpl>org.infinispan.jcache.JCacheManager</CacheManagerImpl>
       <CacheImpl>org.infinispan.jcache.JCache</CacheImpl>
+      <CacheEntryImpl>org.infinispan.jcache.JCacheEntry</CacheEntryImpl>
       <CacheInvocationContextImpl>org.infinispan.jcache.annotation.CacheKeyInvocationContextImpl</CacheInvocationContextImpl>
+      <javax.management.builder.initial>org.infinispan.jcache.test.tck.TckMbeanServerBuilder</javax.management.builder.initial>
+      <org.jsr107.tck.management.agentId>TckMbeanServer</org.jsr107.tck.management.agentId>
    </properties>
 
    <dependencies>
@@ -112,6 +115,11 @@
             <configuration>
                <systemPropertyVariables>
                   <domainJar>${domain-lib-dir}/${domain-jar}</domainJar>
+                 <javax.cache.Cache>${CacheImpl}</javax.cache.Cache>
+                 <javax.cache.Cache.Entry>${CacheEntryImpl}</javax.cache.Cache.Entry>
+                 <javax.management.builder.initial>${javax.management.builder.initial}</javax.management.builder.initial>
+                 <org.jsr107.tck.management.agentId>${org.jsr107.tck.management.agentId}</org.jsr107.tck.management.agentId>
+                 <log4j.configuration>${log4j.configuration}</log4j.configuration>
                </systemPropertyVariables>
                <properties>
                   <property>
