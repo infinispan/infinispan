@@ -2,7 +2,10 @@ package org.infinispan.jcache;
 
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 
+import javax.cache.configuration.CompleteConfiguration;
+import javax.cache.configuration.Configuration;
 import javax.cache.configuration.Factory;
+import javax.cache.configuration.MutableConfiguration;
 import javax.cache.integration.CacheLoader;
 import javax.cache.integration.CacheWriter;
 
@@ -16,10 +19,14 @@ import javax.cache.integration.CacheWriter;
  */
 public class ConfigurationAdapter<K, V> {
 
-   private javax.cache.configuration.Configuration<K, V> c;
+   private MutableConfiguration<K, V> c;
 
-   public ConfigurationAdapter(javax.cache.configuration.Configuration<K, V> configuration) {
+   private ConfigurationAdapter(MutableConfiguration<K, V> configuration) {
       this.c = configuration;
+   }
+
+   public MutableConfiguration<K, V> getConfiguration() {
+      return c;
    }
 
    public org.infinispan.configuration.cache.Configuration build() {
@@ -44,4 +51,24 @@ public class ConfigurationAdapter<K, V> {
 
       return cb.build();
    }
+
+   public static <K, V> ConfigurationAdapter<K, V> create(Configuration<K, V> c) {
+      // A configuration copy as required by the spec
+      if (c instanceof CompleteConfiguration) {
+         return new ConfigurationAdapter<K, V>(
+               new MutableConfiguration<K, V>((CompleteConfiguration<K, V>) c));
+      } else {
+         //support use of Basic Configuration
+         MutableConfiguration<K, V> mutableConfiguration = new MutableConfiguration<K, V>();
+         mutableConfiguration.setStoreByValue(c.isStoreByValue());
+         mutableConfiguration.setTypes(c.getKeyType(), c.getValueType());
+         return new ConfigurationAdapter<K, V>(
+               new MutableConfiguration<K, V>(mutableConfiguration));
+      }
+   }
+
+   public static <K, V> ConfigurationAdapter<K, V> create() {
+      return new ConfigurationAdapter<K, V>(new MutableConfiguration<K, V>());
+   }
+
 }

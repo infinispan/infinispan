@@ -118,8 +118,8 @@
       <version.hibernate.javax.persistence>1.0.1.Final</version.hibernate.javax.persistence>
       <version.httpclient>4.2.4</version.httpclient>
       <version.jackson>1.9.2</version.jackson>
-      <version.javax.cache>1.0.0-PFD</version.javax.cache>
-      <version.javax.cache.cache-tests>0.11</version.javax.cache.cache-tests>
+      <version.javax.cache>1.0.0</version.javax.cache>
+      <version.javax.cache.cache-tests>${version.javax.cache}</version.javax.cache.cache-tests>
       <version.javax.servlet>2.5</version.javax.servlet>
       <version.jbossjta>4.17.13.Final</version.jbossjta>
       <version.jboss.logging.processor>1.1.0.Final</version.jboss.logging.processor>
@@ -130,7 +130,7 @@
       <version.jgoodies.forms>1.0.5</version.jgoodies.forms>
       <version.jsap>2.1</version.jsap>
       <version.jstl>1.2</version.jstl>
-      <version.junit>4.10</version.junit>
+      <version.junit>4.11</version.junit>
       <version.leveldb>0.5</version.leveldb>
       <version.leveldbjni>1.7</version.leveldbjni>
       <version.log4j>1.2.16</version.log4j>
