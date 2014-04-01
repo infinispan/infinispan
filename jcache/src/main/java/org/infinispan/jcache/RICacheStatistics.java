@@ -6,6 +6,7 @@ import org.infinispan.stats.Stats;
 import javax.cache.management.CacheStatisticsMXBean;
 import java.io.Serializable;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicLong;
 
 /**
  * The reference implementation of {@link CacheStatisticsMXBean}.
@@ -15,6 +16,8 @@ public class RICacheStatistics implements CacheStatisticsMXBean, Serializable {
    private static final long serialVersionUID = -5589437411679003894L;
 
    private final AdvancedCache<?, ?> cache;
+   private final AtomicLong unsupportCacheHits = new AtomicLong();
+   private final AtomicLong unsupportCacheGetTotalTime = new AtomicLong();
 
    /**
     * Constructs a cache statistics object
@@ -41,7 +44,7 @@ public class RICacheStatistics implements CacheStatisticsMXBean, Serializable {
     */
    @Override
    public long getCacheHits() {
-      return mapToSpecValidStat(cache.getStats().getHits());
+      return mapToSpecValidStat(cache.getStats().getHits() + unsupportCacheHits.longValue());
    }
 
    /**
@@ -55,7 +58,7 @@ public class RICacheStatistics implements CacheStatisticsMXBean, Serializable {
       if (hits == 0)
          return 0;
 
-      return hits / getCacheGets();
+      return (float) hits / getCacheGets() * 100.0f;
    }
 
    /**
@@ -77,7 +80,7 @@ public class RICacheStatistics implements CacheStatisticsMXBean, Serializable {
       if (misses == 0)
          return 0;
 
-      return misses / getCacheGets();
+      return (float) misses / getCacheGets() * 100.0f;
    }
 
    /**
@@ -91,7 +94,7 @@ public class RICacheStatistics implements CacheStatisticsMXBean, Serializable {
    @Override
    public long getCacheGets() {
       Stats stats = cache.getStats();
-      return stats.getHits() + stats.getMisses();
+      return stats.getHits() + stats.getMisses() + unsupportCacheHits.longValue();
    }
 
    /**
@@ -117,7 +120,7 @@ public class RICacheStatistics implements CacheStatisticsMXBean, Serializable {
    @Override
    public long getCacheRemovals() {
       Stats stats = cache.getStats();
-      return mapToSpecValidStat(stats.getRemoveHits() + stats.getRemoveMisses());
+      return mapToSpecValidStat(stats.getRemoveHits());
    }
 
    /**
@@ -137,8 +140,9 @@ public class RICacheStatistics implements CacheStatisticsMXBean, Serializable {
     */
    @Override
    public float getAverageGetTime() {
-      return TimeUnit.MILLISECONDS.toMicros(
-            mapToSpecValidStat(cache.getStats().getAverageReadTime()));
+      long unsupportedCacheGetTotalMillis = TimeUnit.NANOSECONDS.toMillis(unsupportCacheGetTotalTime.longValue());
+      return TimeUnit.MILLISECONDS.toMicros(mapToSpecValidStat(
+            cache.getStats().getAverageReadTime() + unsupportedCacheGetTotalMillis));
    }
 
    /**
@@ -161,6 +165,20 @@ public class RICacheStatistics implements CacheStatisticsMXBean, Serializable {
    public float getAverageRemoveTime() {
       return TimeUnit.MILLISECONDS.toMicros(
             mapToSpecValidStat(cache.getStats().getAverageRemoveTime()));
+   }
+
+   void increaseCacheHits(long number) {
+      unsupportCacheHits.getAndAdd(number);
+   }
+
+   void addGetTimeNano(long duration) {
+      if (unsupportCacheGetTotalTime.get() <= Long.MAX_VALUE - duration) {
+         unsupportCacheGetTotalTime.addAndGet(duration);
+      } else {
+         //counter full. Just reset.
+         clear();
+         unsupportCacheGetTotalTime.set(duration);
+      }
    }
 
    /**
