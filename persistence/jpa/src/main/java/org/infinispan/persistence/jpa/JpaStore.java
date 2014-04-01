@@ -1,23 +1,32 @@
 package org.infinispan.persistence.jpa;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.Callable;
 import java.util.concurrent.Executor;
-
 import javax.persistence.EntityManager;
 import javax.persistence.EntityManagerFactory;
+import javax.persistence.EntityNotFoundException;
 import javax.persistence.EntityTransaction;
 import javax.persistence.GeneratedValue;
 import javax.persistence.PersistenceException;
 import javax.persistence.Query;
 import javax.persistence.criteria.CriteriaBuilder;
 import javax.persistence.criteria.CriteriaQuery;
-import javax.persistence.criteria.Root;
 import javax.persistence.metamodel.IdentifiableType;
 import javax.persistence.metamodel.ManagedType;
-import javax.persistence.metamodel.SingularAttribute;
 import javax.persistence.metamodel.Type;
 
+import org.hibernate.Criteria;
+import org.hibernate.ScrollMode;
+import org.hibernate.ScrollableResults;
+import org.hibernate.Session;
+import org.hibernate.SessionFactory;
+import org.hibernate.criterion.Projections;
+import org.hibernate.criterion.Restrictions;
+import org.hibernate.dialect.Dialect;
+import org.hibernate.dialect.MySQLDialect;
+import org.hibernate.engine.spi.SessionFactoryImplementor;
 import org.infinispan.commons.configuration.ConfiguredBy;
 import org.infinispan.commons.marshall.StreamingMarshaller;
 import org.infinispan.executors.ExecutorAllCompletionService;
@@ -52,7 +61,8 @@ public class JpaStore implements AdvancedLoadWriteStore {
    private StreamingMarshaller marshaller;
    private MarshalledEntryFactory marshallerEntryFactory;
    private TimeService timeService;
-   private final Stats stats = new Stats();
+   private Stats stats = new Stats();
+   private boolean setFetchSizeMinInteger = false;
 
    @Override
    public void init(InitializationContext ctx) {
@@ -95,6 +105,15 @@ public class JpaStore implements AdvancedLoadWriteStore {
          throw new JpaStoreException(
                "Entity class has one identifier, but it must not have @GeneratedValue annotation");
       }
+
+      // Hack: MySQL needs to have fetchSize set to Integer.MIN_VALUE in order to do streaming
+      SessionFactory sessionFactory = emf.createEntityManager().unwrap(Session.class).getSessionFactory();
+      if (sessionFactory instanceof SessionFactoryImplementor) {
+         Dialect dialect = ((SessionFactoryImplementor) sessionFactory).getDialect();
+         if (dialect instanceof MySQLDialect) {
+            setFetchSizeMinInteger = true;
+         }
+      }
    }
 
    EntityManagerFactory getEntityManagerFactory() {
@@ -116,41 +135,144 @@ public class JpaStore implements AdvancedLoadWriteStore {
       return emf.getMetamodel().entity(configuration.entityClass()).getIdType().getJavaType().isAssignableFrom(key.getClass());
    }
 
+   private Object findEntity(EntityManager em, Object key) {
+      long begin = timeService.time();
+      try {
+         return em.find(configuration.entityClass(), key);
+      } finally {
+         stats.addEntityFind(timeService.time() - begin);
+      }
+   }
+
+   private MetadataEntity findMetadata(EntityManager em, Object key) {
+      long begin = timeService.time();
+      try {
+         return em.find(MetadataEntity.class, key);
+      } finally {
+         stats.addMetadataFind(timeService.time() - begin);
+      }
+   }
+
+   private void removeEntity(EntityManager em, Object entity) {
+      long begin = timeService.time();
+      try {
+         em.remove(entity);
+      } finally {
+         stats.addEntityRemove(timeService.time() - begin);
+      }
+   }
+
+   private void removeMetadata(EntityManager em, MetadataEntity metadata) {
+      long begin = timeService.time();
+      try {
+         em.remove(metadata);
+      } finally {
+         stats.addMetadataRemove(timeService.time() - begin);
+      }
+   }
+
+   private void mergeEntity(EntityManager em, Object entity) {
+      long begin = timeService.time();
+      try {
+         em.merge(entity);
+      } finally {
+         stats.addEntityMerge(timeService.time() - begin);
+      }
+   }
+
+   private void mergeMetadata(EntityManager em, MetadataEntity metadata) {
+      long begin = timeService.time();
+      try {
+         em.merge(metadata);
+      } finally {
+         stats.addMetadataMerge(timeService.time() - begin);
+      }
+   }
+
    @Override
    public void clear() {
-      EntityManager em = emf.createEntityManager();
-      EntityTransaction txn = em.getTransaction();
-
+      EntityManager emStream = emf.createEntityManager();
       try {
-         // the clear operation often deadlocks - let's try several times
-         for (int i = 0;; ++i) {
-            txn.begin();
-            try {
-               log.trace("Clearing JPA Store");
-               String entityTable = em.getMetamodel().entity(configuration.entityClass()).getName();
-               @SuppressWarnings("unchecked") List<Object> items = em.createQuery("FROM " + entityTable).getResultList();
-               for(Object o : items)
-                  em.remove(o);
-               if (configuration.storeMetadata()) {
-                  String metadataTable = em.getMetamodel().entity(MetadataEntity.class).getName();
-                  Query clearMetadata = em.createQuery("DELETE FROM " + metadataTable);
-                  clearMetadata.executeUpdate();
+         ScrollableResults results = null;
+         ArrayList<Object> batch = new ArrayList<Object>((int) configuration.batchSize());
+         EntityTransaction txStream = emStream.getTransaction();
+         txStream.begin();
+         try {
+            log.trace("Clearing JPA Store");
+            Session session = emStream.unwrap(Session.class);
+            Criteria criteria = session.createCriteria(configuration.entityClass()).setReadOnly(true)
+                  .setProjection(Projections.id());
+            if (setFetchSizeMinInteger) {
+               criteria.setFetchSize(Integer.MIN_VALUE);
+            }
+            results = criteria.scroll(ScrollMode.FORWARD_ONLY);
+
+            while (results.next()) {
+               Object o = results.get(0);
+               batch.add(o);
+               if (batch.size() == configuration.batchSize()) {
+                  session.clear();
+                  removeBatch(batch);
                }
-               txn.commit();
-               em.clear();
-               break;
-            } catch (Exception e) {
-               log.trace("Failed to clear store", e);
-               if (i >= 10) throw new JpaStoreException("Exception caught in clear()", e);
-            } finally {
-               if (txn != null && txn.isActive())
-                  txn.rollback();
+            }
+            if (configuration.storeMetadata()) {
+               /* We have to close the stream before executing further request */
+               results.close();
+               results = null;
+               String metadataTable = emStream.getMetamodel().entity(MetadataEntity.class).getName();
+               Query clearMetadata = emStream.createQuery("DELETE FROM " + metadataTable);
+               clearMetadata.executeUpdate();
+            }
+            txStream.commit();
+         } finally {
+            removeBatch(batch);
+            if (results != null) {
+               results.close();
+            }
+            if (txStream != null && txStream.isActive()) {
+               txStream.rollback();
             }
          }
+      } catch (RuntimeException e) {
+         log.error("Error in clear", e);
+         throw e;
       } finally {
-         em.close();
+         emStream.close();
       }
+   }
 
+   private void removeBatch(ArrayList<Object> batch) {
+      for (int i = 10; i >= 0; --i) {
+         EntityManager emExec = emf.createEntityManager();
+         EntityTransaction txn = null;
+         try {
+            txn = emExec.getTransaction();
+            txn.begin();
+            try {
+               for (Object key : batch) {
+                  try {
+                     Object entity = emExec.getReference(configuration.entityClass(), key);
+                     removeEntity(emExec, entity);
+                  } catch (EntityNotFoundException e) {
+                     log.trace("Cleared entity with key " + key + " not found", e);
+                  }
+               }
+               txn.commit();
+               batch.clear();
+               break;
+            } catch (Exception e) {
+               if (i != 0) {
+                  log.trace("Remove batch failed once", e);
+               } else {
+                  throw new JpaStoreException("Remove batch failing", e);
+               }
+            }
+         } finally {
+            if (txn != null && txn.isActive())
+               txn.rollback();
+            emExec.close();
+         }
+      }
    }
 
    public boolean delete(Object key) {
@@ -160,9 +282,7 @@ public class JpaStore implements AdvancedLoadWriteStore {
 
       EntityManager em = emf.createEntityManager();
       try {
-         long entityFindBegin = timeService.time();
-         Object entity = em.find(configuration.entityClass(), key);
-         stats.addEntityFind(timeService.time() - entityFindBegin);
+         Object entity = findEntity(em, key);
          if (entity == null) {
             return false;
          }
@@ -174,9 +294,7 @@ public class JpaStore implements AdvancedLoadWriteStore {
             } catch (Exception e) {
                throw new JpaStoreException("Failed to marshall key", e);
             }
-            long metadataFindBegin = timeService.time();
-            metadata = em.find(MetadataEntity.class, new MetadataEntityKey(keyBytes));
-            stats.addMetadataFind(timeService.time() - metadataFindBegin);
+            metadata = findMetadata(em, new MetadataEntityKey(keyBytes));
          }
 
          EntityTransaction txn = em.getTransaction();
@@ -184,13 +302,9 @@ public class JpaStore implements AdvancedLoadWriteStore {
          long txnBegin = timeService.time();
          txn.begin();
          try {
-            long entityRemoveBegin = timeService.time();
-            em.remove(entity);
-            stats.addEntityRemove(timeService.time() - entityRemoveBegin);
+            removeEntity(em, entity);
             if (metadata != null) {
-               long metadataRemoveBegin = timeService.time();
-               em.remove(metadata);
-               stats.addMetadataRemove(timeService.time() - metadataRemoveBegin);
+               removeMetadata(em, metadata);
             }
             txn.commit();
             stats.addRemoveTxCommitted(timeService.time() - txnBegin);
@@ -234,13 +348,9 @@ public class JpaStore implements AdvancedLoadWriteStore {
                if (trace) log.trace("Writing " + entity + "(" + toString(metadata) + ")");
                txn.begin();
 
-               long entityMergeBegin = timeService.time();
-               em.merge(entity);
-               stats.addEntityMerge(timeService.time() - entityMergeBegin);
+               mergeEntity(em, entity);
                if (metadata != null && metadata.hasBytes()) {
-                  long metadataMergeBegin = timeService.time();
-                  em.merge(metadata);
-                  stats.addMetadataMerge(timeService.time() - metadataMergeBegin);
+                  mergeMetadata(em, metadata);
                }
 
                txn.commit();
@@ -271,9 +381,7 @@ public class JpaStore implements AdvancedLoadWriteStore {
          long txnBegin = timeService.time();
          txn.begin();
          try {
-            long entityFindBegin = timeService.time();
-            Object entity = em.find(configuration.entityClass(), key);
-            stats.addEntityFind(timeService.time() - entityFindBegin);
+            Object entity = findEntity(em, key);
             if (trace) log.trace("Entity " + key + " -> " + entity);
             try {
                if (entity == null) return false;
@@ -284,9 +392,7 @@ public class JpaStore implements AdvancedLoadWriteStore {
                   } catch (Exception e) {
                      throw new JpaStoreException("Cannot marshall key", e);
                   }
-                  long metadataFindBegin = timeService.time();
-                  MetadataEntity metadata = em.find(MetadataEntity.class, new MetadataEntityKey(keyBytes));
-                  stats.addMetadataFind(timeService.time() - metadataFindBegin);
+                  MetadataEntity metadata = findMetadata(em, new MetadataEntityKey(keyBytes));
                   if (trace) log.trace("Metadata " + key + " -> " + toString(metadata));
                   return metadata == null || metadata.getExpiration() > timeService.wallClockTime();
                } else {
@@ -320,9 +426,7 @@ public class JpaStore implements AdvancedLoadWriteStore {
          long txnBegin = timeService.time();
          txn.begin();
          try {
-            long entityFindBegin = timeService.time();
-            Object entity = em.find(configuration.entityClass(), key);
-            stats.addEntityFind(timeService.time() - entityFindBegin);
+            Object entity = findEntity(em, key);
             try {
                if (entity == null)
                   return null;
@@ -334,9 +438,7 @@ public class JpaStore implements AdvancedLoadWriteStore {
                   } catch (Exception e) {
                      throw new JpaStoreException("Failed to marshall key", e);
                   }
-                  long metadataFindBegin = timeService.time();
-                  MetadataEntity metadata = em.find(MetadataEntity.class, new MetadataEntityKey(keyBytes));
-                  stats.addMetadataFind(timeService.time() - metadataFindBegin);
+                  MetadataEntity metadata = findMetadata(em, new MetadataEntityKey(keyBytes));
                   if (metadata != null && metadata.getMetadata() != null) {
                      try {
                         m = (InternalMetadata) marshaller.objectFromByteBuffer(metadata.getMetadata());
@@ -372,74 +474,98 @@ public class JpaStore implements AdvancedLoadWriteStore {
    public void process(KeyFilter filter, final CacheLoaderTask task, Executor executor, boolean fetchValue, final boolean fetchMetadata) {
       ExecutorAllCompletionService eacs = new ExecutorAllCompletionService(executor);
       final TaskContextImpl taskContext = new TaskContextImpl();
-      EntityManager em = emf.createEntityManager();
-
+      EntityManager emStream = emf.createEntityManager();
       try {
-         CriteriaBuilder cb = em.getCriteriaBuilder();
-         CriteriaQuery cq = cb.createQuery();
-         Root root = cq.from(configuration.entityClass());
-         Type idType = root.getModel().getIdType();
-         SingularAttribute idAttr = root.getModel().getId(idType.getJavaType());
-         cq.select(root.get(idAttr));
-
-         for (final Object key : em.createQuery(cq).getResultList()) {
-            if (taskContext.isStopped())
-               break;
-            if (filter != null && !filter.shouldLoadKey(key)) {
-               if (trace) log.trace("Key " + key + " filtered");
-               continue;
+         EntityTransaction txStream = emStream.getTransaction();
+         ScrollableResults keys = null;
+         txStream.begin();
+         try {
+            Session session = emStream.unwrap(Session.class);
+            Criteria criteria = session.createCriteria(configuration.entityClass()).setReadOnly(true)
+                  .setProjection(Projections.id());
+            if (setFetchSizeMinInteger) {
+               criteria.setFetchSize(Integer.MIN_VALUE);
             }
-            EntityTransaction txn = em.getTransaction();
 
-            Object tempEntity = null;
-            InternalMetadata tempMetadata = null;
-            boolean loaded = false;
-            txn.begin();
-            try {
-               do {
+            keys = criteria.scroll(ScrollMode.FORWARD_ONLY);
+            while (keys.next()) {
+               if (taskContext.isStopped())
+                  break;
+               final Object key = keys.get(0);
+               if (filter != null && !filter.shouldLoadKey(key)) {
+                  if (trace) log.trace("Key " + key + " filtered");
+                  continue;
+               }
+
+               Object tempEntity = null;
+               InternalMetadata tempMetadata = null;
+               boolean loaded = false;
+
+               /* We need second entity manager because with MySQL we can't do streaming in parallel with other queries
+                  using single connection */
+               EntityManager emExec = emf.createEntityManager();
+               try {
+                  EntityTransaction txExec = emExec.getTransaction();
+                  txExec.begin();
                   try {
-                     tempEntity = fetchValue ? em.find(configuration.entityClass(), key) : null;
-                     tempMetadata = fetchMetadata ? getMetadata(em, key) : null;
+                     do {
+                        try {
+                           tempEntity = fetchValue ? findEntity(emExec, key) : null;
+                           tempMetadata = fetchMetadata ? getMetadata(emExec, key) : null;
+                        } finally {
+                           try {
+                              txExec.commit();
+                              loaded = true;
+                           } catch (Exception e) {
+                              log.trace("Failed to load once", e);
+                           }
+                        }
+                     } while (!loaded);
                   } finally {
-                     try {
-                        txn.commit();
-                        loaded = true;
-                     } catch (Exception e) {
-                        log.trace("Failed to load once", e);
+                     if (txExec != null && txExec.isActive()) {
+                        txExec.rollback();
                      }
-                  }
-               } while (!loaded);
-            } finally {
-               if (txn != null && txn.isActive())
-                  txn.rollback();
-            }
-            final Object entity = tempEntity;
-            final InternalMetadata metadata = tempMetadata;
-            if (trace) log.trace("Processing " + key + " -> " + entity + "(" + metadata + ")");
 
-            if (metadata != null && metadata.isExpired(timeService.wallClockTime())) continue;
-            eacs.submit(new Callable<Void>() {
-               @Override
-               public Void call() throws Exception {
-                  try {
-                     final MarshalledEntry marshalledEntry = marshallerEntryFactory.newMarshalledEntry(key, entity, metadata);
-                     if (marshalledEntry != null) {
-                        task.processEntry(marshalledEntry, taskContext);
-                     }
-                     return null;
-                  } catch (Exception e) {
-                     log.errorExecutingParallelStoreTask(e);
-                     throw e;
+                  }
+               } finally {
+                  if (emExec != null) {
+                     emExec.close();
                   }
                }
-            });
-         }
-         eacs.waitUntilAllCompleted();
-         if (eacs.isExceptionThrown()) {
-            throw new org.infinispan.persistence.spi.PersistenceException("Execution exception!", eacs.getFirstException());
+               final Object entity = tempEntity;
+               final InternalMetadata metadata = tempMetadata;
+               if (trace) log.trace("Processing " + key + " -> " + entity + "(" + metadata + ")");
+
+               if (metadata != null && metadata.isExpired(timeService.wallClockTime())) continue;
+               eacs.submit(new Callable<Void>() {
+                  @Override
+                  public Void call() throws Exception {
+                     try {
+                        final MarshalledEntry marshalledEntry = marshallerEntryFactory.newMarshalledEntry(key, entity, metadata);
+                        if (marshalledEntry != null) {
+                           task.processEntry(marshalledEntry, taskContext);
+                        }
+                        return null;
+                     } catch (Exception e) {
+                        log.errorExecutingParallelStoreTask(e);
+                        throw e;
+                     }
+                  }
+               });
+            }
+            txStream.commit();
+         } finally {
+            if (keys != null) keys.close();
+            if (txStream != null && txStream.isActive()) {
+               txStream.rollback();
+            }
          }
       } finally {
-         em.close();
+         emStream.close();
+      }
+      eacs.waitUntilAllCompleted();
+      if (eacs.isExceptionThrown()) {
+         throw new org.infinispan.persistence.spi.PersistenceException("Execution exception!", eacs.getFirstException());
       }
    }
 
@@ -450,7 +576,7 @@ public class JpaStore implements AdvancedLoadWriteStore {
       } catch (Exception e) {
          throw new JpaStoreException("Failed to marshall key", e);
       }
-      MetadataEntity m = em.find(MetadataEntity.class, new MetadataEntityKey(keyBytes));
+      MetadataEntity m = findMetadata(em, new MetadataEntityKey(keyBytes));
       if (m == null) return null;
 
       try {
@@ -463,12 +589,21 @@ public class JpaStore implements AdvancedLoadWriteStore {
    @Override
    public int size() {
       EntityManager em = emf.createEntityManager();
+      EntityTransaction txn = em.getTransaction();
+      txn.begin();
       try {
          CriteriaBuilder builder = em.getCriteriaBuilder();
          CriteriaQuery<Long> cq = builder.createQuery(Long.class);
          cq.select(builder.count(cq.from(configuration.entityClass())));
          return em.createQuery(cq).getSingleResult().intValue();
       } finally {
+         try {
+            txn.commit();
+         } finally {
+            if (txn != null && txn.isActive()) {
+               txn.rollback();
+            }
+         }
          em.close();
       }
    }
@@ -476,47 +611,74 @@ public class JpaStore implements AdvancedLoadWriteStore {
    @Override
    public void purge(Executor threadPool, final PurgeListener listener) {
       ExecutorAllCompletionService eacs = new ExecutorAllCompletionService(threadPool);
-      EntityManager em = emf.createEntityManager();
+      EntityManager emStream = emf.createEntityManager();
       try {
-         CriteriaBuilder cb = em.getCriteriaBuilder();
-         CriteriaQuery<MetadataEntity> cq = cb.createQuery(MetadataEntity.class);
-
-         Root root = cq.from(MetadataEntity.class);
-         long currentTime = timeService.wallClockTime();
-         cq.where(cb.le(root.get(MetadataEntity.EXPIRATION), currentTime));
-
-         for (MetadataEntity metadata : em.createQuery(cq).getResultList()) {
-            EntityTransaction txn = em.getTransaction();
-            final Object key;
-            try {
-               key = marshaller.objectFromByteBuffer(metadata.getKeyBytes());
-            } catch (Exception e) {
-               throw new JpaStoreException("Cannot unmarshall key", e);
+         EntityTransaction txStream = emStream.getTransaction();
+         ScrollableResults metadataKeys = null;
+         txStream.begin();
+         try {
+            long currentTime = timeService.wallClockTime();
+            Session session = emStream.unwrap(Session.class);
+            Criteria criteria = session.createCriteria(MetadataEntity.class).setReadOnly(true)
+                  .add(Restrictions.le(MetadataEntity.EXPIRATION, currentTime)).setProjection(Projections.id());
+            if (setFetchSizeMinInteger) {
+               criteria.setFetchSize(Integer.MIN_VALUE);
             }
-            long txnBegin = timeService.time();
-            txn.begin();
-            try {
-               long metadataFindBegin = timeService.time();
-               metadata = em.find(MetadataEntity.class, metadata.getKey());
-               stats.addMetadataFind(timeService.time() - metadataFindBegin);
+
+            metadataKeys = criteria.scroll(ScrollMode.FORWARD_ONLY);
+            ArrayList<MetadataEntityKey> batch = new ArrayList<MetadataEntityKey>((int) configuration.batchSize());
+            while (metadataKeys.next()) {
+               MetadataEntityKey mKey = (MetadataEntityKey) metadataKeys.get(0);
+               batch.add(mKey);
+               if (batch.size() == configuration.batchSize()) {
+                  purgeBatch(batch, listener, eacs, currentTime);
+                  batch.clear();
+               }
+            }
+            purgeBatch(batch, listener, eacs, currentTime);
+            txStream.commit();
+         } finally {
+            if (metadataKeys != null) metadataKeys.close();
+            if (txStream != null && txStream.isActive()) {
+               txStream.rollback();
+            }
+         }
+      } finally {
+         emStream.close();
+      }
+      eacs.waitUntilAllCompleted();
+      if (eacs.isExceptionThrown()) {
+         throw new JpaStoreException(eacs.getFirstException());
+      }
+   }
+
+   private void purgeBatch(List<MetadataEntityKey> batch, final PurgeListener listener, ExecutorAllCompletionService eacs, long currentTime) {
+      EntityManager emExec = emf.createEntityManager();
+      try {
+         EntityTransaction txn = emExec.getTransaction();
+         txn.begin();
+         try {
+            for (MetadataEntityKey metadataKey : batch) {
+               MetadataEntity metadata = findMetadata(emExec, metadataKey);
                // check for transaction - I hope write skew check is done here
                if (metadata.getExpiration() > currentTime) {
-                  txn.rollback();
                   continue;
                }
-               long entityFindBegin = timeService.time();
-               Object entity = em.find(configuration.entityClass(), key);
-               stats.addEntityFind(timeService.time() - entityFindBegin);
-               if (entity != null) { // the entry may have been removed
-                  long entityRemoveBegin = timeService.time();
-                  em.remove(entity);
-                  stats.addEntityRemove(timeService.time() - entityRemoveBegin);
+
+               final Object key;
+               try {
+                  key = marshaller.objectFromByteBuffer(metadata.getKeyBytes());
+               } catch (Exception e) {
+                  throw new JpaStoreException("Cannot unmarshall key", e);
                }
-               long metadataRemoveBegin = timeService.time();
-               em.remove(metadata);
-               stats.addMetadataRemove(timeService.time() - metadataRemoveBegin);
-               txn.commit();
-               stats.addRemoveTxCommitted(timeService.time() - txnBegin);
+               Object entity = null;
+               try {
+                  entity = emExec.getReference(configuration.entityClass(), key);
+                  removeEntity(emExec, entity);
+               } catch (EntityNotFoundException e) {
+                  log.trace("Expired entity with key " + key + " not found", e);
+               }
+               removeMetadata(emExec, metadata);
 
                if (trace) log.trace("Expired " + key + " -> " + entity + "(" + toString(metadata) + ")");
                if (listener != null) {
@@ -527,21 +689,15 @@ public class JpaStore implements AdvancedLoadWriteStore {
                      }
                   }, null);
                }
-            } catch (RuntimeException e) {
-               stats.addRemoveTxFailed(timeService.time() - txnBegin);
-               throw e;
-            } finally {
-               if (txn != null && txn.isActive()) {
-                  txn.rollback();
-               }
+            }
+            txn.commit();
+         } finally {
+            if (txn != null && txn.isActive()) {
+               txn.rollback();
             }
          }
       } finally {
-         em.close();
-      }
-      eacs.waitUntilAllCompleted();
-      if (eacs.isExceptionThrown()) {
-         throw new JpaStoreException(eacs.getFirstException());
+         emExec.close();
       }
    }
 
