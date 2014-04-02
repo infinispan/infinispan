@@ -316,24 +316,24 @@ public interface Log extends BasicLogger {
    void msgOrMsgBufferEmpty();
 
    @LogMessage(level = INFO)
-   @Message(value = "Starting JGroups Channel", id = 78)
-   void startingJGroupsChannel();
+   @Message(value = "Starting JGroups channel %s", id = 78)
+   void startingJGroupsChannel(String cluster);
 
    @LogMessage(level = INFO)
-   @Message(value = "Cache local address is %s, physical addresses are %s", id = 79)
-   void localAndPhysicalAddress(Address address, List<Address> physicalAddresses);
+   @Message(value = "Channel %s local address is %s, physical addresses are %s", id = 79)
+   void localAndPhysicalAddress(String cluster, Address address, List<Address> physicalAddresses);
 
    @LogMessage(level = INFO)
-   @Message(value = "Disconnecting JGroups Channel", id = 80)
-   void disconnectJGroups();
+   @Message(value = "Disconnecting JGroups channel %s", id = 80)
+   void disconnectJGroups(String cluster);
 
    @LogMessage(level = ERROR)
-   @Message(value = "Problem closing channel; setting it to null", id = 81)
-   void problemClosingChannel(@Cause Exception e);
+   @Message(value = "Problem closing channel %s; setting it to null", id = 81)
+   void problemClosingChannel(@Cause Exception e, String cluster);
 
    @LogMessage(level = INFO)
-   @Message(value = "Stopping the RpcDispatcher", id = 82)
-   void stoppingRpcDispatcher();
+   @Message(value = "Stopping the RpcDispatcher for channel %s", id = 82)
+   void stoppingRpcDispatcher(String cluster);
 
    @LogMessage(level = ERROR)
    @Message(value = "Class [%s] cannot be cast to JGroupsChannelLookup! Not using a channel lookup.", id = 83)
@@ -369,12 +369,12 @@ public interface Log extends BasicLogger {
    void channelNotSetUp();
 
    @LogMessage(level = INFO)
-   @Message(value = "Received new, MERGED cluster view: %s", id = 93)
-   void receivedMergedView(View newView);
+   @Message(value = "Received new, MERGED cluster view for channel %s: %s", id = 93)
+   void receivedMergedView(String cluster, View newView);
 
    @LogMessage(level = INFO)
-   @Message(value = "Received new cluster view: %s", id = 94)
-   void receivedClusterView(View newView);
+   @Message(value = "Received new cluster view for channel %s: %s", id = 94)
+   void receivedClusterView(String cluster, View newView);
 
    @LogMessage(level = ERROR)
    @Message(value = "Error while processing a prepare in a single-phase transaction", id = 97)

@@ -182,7 +182,7 @@ public class JGroupsTransport extends AbstractTransport implements MembershipLis
       props = TypedProperties.toTypedProperties(configuration.transport().properties());
 
       if (log.isInfoEnabled())
-         log.startingJGroupsChannel();
+         log.startingJGroupsChannel(configuration.transport().clusterName());
 
       initChannelAndRPCDispatcher();
       startJGroupsChannelIfNeeded();
@@ -191,8 +191,8 @@ public class JGroupsTransport extends AbstractTransport implements MembershipLis
    }
 
    protected void startJGroupsChannelIfNeeded() {
+      String clusterName = configuration.transport().clusterName();
       if (connectChannel) {
-         String clusterName = configuration.transport().clusterName();
          try {
             channel.connect(clusterName);
          } catch (Exception e) {
@@ -220,7 +220,7 @@ public class JGroupsTransport extends AbstractTransport implements MembershipLis
          viewAccepted(channel.getView());
       }
       if (log.isInfoEnabled())
-         log.localAndPhysicalAddress(getAddress(), getPhysicalAddresses());
+         log.localAndPhysicalAddress(clusterName, getAddress(), getPhysicalAddresses());
    }
 
    @Override
@@ -235,9 +235,10 @@ public class JGroupsTransport extends AbstractTransport implements MembershipLis
 
    @Override
    public void stop() {
+      String clusterName = configuration.transport().clusterName();
       try {
          if (disconnectChannel && channel != null && channel.isConnected()) {
-            log.disconnectJGroups();
+            log.disconnectJGroups(clusterName);
 
             // Unregistering before disconnecting/closing because
             // after that the cluster name is null
@@ -251,11 +252,11 @@ public class JGroupsTransport extends AbstractTransport implements MembershipLis
             channel.close();
          }
       } catch (Exception toLog) {
-         log.problemClosingChannel(toLog);
+         log.problemClosingChannel(toLog, clusterName);
       }
 
       if (dispatcher != null) {
-         log.stoppingRpcDispatcher();
+         log.stoppingRpcDispatcher(clusterName);
          dispatcher.stop();
          if (channel != null) {
             // Remove reference to up_handler
@@ -659,12 +660,13 @@ public class JGroupsTransport extends AbstractTransport implements MembershipLis
       // now notify listeners - *after* updating the isCoordinator. - JBCACHE-662
       boolean hasNotifier = notifier != null;
       if (hasNotifier) {
+         String clusterName = configuration.transport().clusterName();
          Notify n;
          if (newView instanceof MergeView) {
-            log.receivedMergedView(newView);
+            log.receivedMergedView(clusterName, newView);
             n = new NotifyMerge();
          } else {
-            log.receivedClusterView(newView);
+            log.receivedClusterView(clusterName, newView);
             n = new NotifyViewChange();
          }
 
