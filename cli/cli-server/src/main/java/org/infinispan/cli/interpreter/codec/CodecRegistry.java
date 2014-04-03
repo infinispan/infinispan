@@ -23,7 +23,7 @@ public class CodecRegistry {
 
    public CodecRegistry(ClassLoader cl) {
       codecs = new HashMap<String, Codec>();
-      Iterator<Codec> it = ServiceFinder.load(Codec.class).iterator();
+      Iterator<Codec> it = ServiceFinder.load(Codec.class, cl).iterator();
       for(;;) {
          try {
             Codec codec = it.next();
