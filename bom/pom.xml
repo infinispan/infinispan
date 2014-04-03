@@ -62,7 +62,7 @@
       <version.hibernate.search>4.5.0.Final</version.hibernate.search>
       <version.jboss.marshalling>1.4.4.Final</version.jboss.marshalling>
       <version.jboss.logging>3.1.2.GA</version.jboss.logging>
-      <version.jgroups>3.5.0.Alpha1</version.jgroups>
+      <version.jgroups>3.5.0.Beta3</version.jgroups>
       <version.json>20090211</version.json>
       <version.jta>1.0.1.Final</version.jta>
       <version.netty>4.0.15.Final</version.netty>

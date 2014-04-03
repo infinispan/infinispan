@@ -2,7 +2,6 @@
         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
         xsi:schemaLocation="urn:org:jgroups http://www.jgroups.org/schema/JGroups-3.4.xsd">
    <TCP bind_port="7800"
-        loopback="true"
         port_range="30"
         recv_buf_size="20000000"
         send_buf_size="640000"
