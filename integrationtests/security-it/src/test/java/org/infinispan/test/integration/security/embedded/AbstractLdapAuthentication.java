@@ -69,7 +69,7 @@ public abstract class AbstractLdapAuthentication {
       cacheConfig.transaction().lockingMode(LockingMode.PESSIMISTIC);
       cacheConfig.invocationBatching().enable();
       cacheConfig.jmxStatistics().disable();
-      AuthorizationConfigurationBuilder authConfig = cacheConfig.security().enable().authorization();
+      AuthorizationConfigurationBuilder authConfig = cacheConfig.security().authorization().enable();
 
       //authorization setup
       Map<String, AuthorizationPermission[]> rolePermissionMap = getRolePermissionMap();

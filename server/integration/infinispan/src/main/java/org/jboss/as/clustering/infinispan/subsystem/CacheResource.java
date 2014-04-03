@@ -212,5 +212,6 @@ public class CacheResource extends SimpleResourceDefinition {
         resourceRegistration.registerSubModel(new RemoteStoreResource());
         resourceRegistration.registerSubModel(new LevelDBStoreResource(resolvePathHandler));
         resourceRegistration.registerSubModel(new RestStoreResource());
+        resourceRegistration.registerSubModel(new CacheSecurityResource());
     }
 }

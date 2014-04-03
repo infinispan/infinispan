@@ -9,7 +9,7 @@ public class AuthorizationManagerFactory extends AbstractNamedCacheComponentFact
    @Override
    @SuppressWarnings("unchecked")
    public <T> T construct(Class<T> componentType) {
-      if (configuration.security().enabled())
+      if (configuration.security().authorization().enabled())
          return (T) new AuthorizationManagerImpl();
       else
          return null;

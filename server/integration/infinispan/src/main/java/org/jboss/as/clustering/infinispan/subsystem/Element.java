@@ -39,6 +39,7 @@ public enum Element {
     UNKNOWN((String)null),
 
     ALIAS(ModelKeys.ALIAS),
+    AUTHORIZATION(ModelKeys.AUTHORIZATION),
     BACKUP(ModelKeys.BACKUP),
     BACKUPS(ModelKeys.BACKUPS),
     BINARY_KEYED_TABLE(ModelKeys.BINARY_KEYED_TABLE),
@@ -72,6 +73,8 @@ public enum Element {
     REMOTE_STORE(ModelKeys.REMOTE_STORE),
     REPLICATED_CACHE(ModelKeys.REPLICATED_CACHE),
     REST_STORE(ModelKeys.REST_STORE),
+    ROLE(ModelKeys.ROLE),
+    SECURITY(ModelKeys.SECURITY),
     STATE_TRANSFER(ModelKeys.STATE_TRANSFER),
     STORE(ModelKeys.STORE),
     STRING_KEYED_TABLE(ModelKeys.STRING_KEYED_TABLE),
@@ -79,7 +82,7 @@ public enum Element {
     TIMESTAMP_COLUMN(ModelKeys.TIMESTAMP_COLUMN),
     TRANSACTION(ModelKeys.TRANSACTION),
     TRANSPORT(ModelKeys.TRANSPORT),
-    WRITE_BEHIND(ModelKeys.WRITE_BEHIND)
+    WRITE_BEHIND(ModelKeys.WRITE_BEHIND),
     ;
 
     private final String name;

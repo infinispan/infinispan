@@ -10,10 +10,16 @@ import java.util.Set;
  * @since 7.0
  */
 public class AuthorizationConfiguration {
+   private final boolean enabled;
    private final Set<String> roles;
 
-   AuthorizationConfiguration(Set<String> roles) {
+   AuthorizationConfiguration(boolean enabled, Set<String> roles) {
+      this.enabled = enabled;
       this.roles = Collections.unmodifiableSet(roles);
+   }
+
+   public boolean enabled() {
+      return enabled;
    }
 
    public Set<String> roles() {
@@ -22,13 +28,14 @@ public class AuthorizationConfiguration {
 
    @Override
    public String toString() {
-      return "AuthorizationConfiguration [roles=" + roles + "]";
+      return "AuthorizationConfiguration [enabled=" + enabled + ", roles=" + roles + "]";
    }
 
    @Override
    public int hashCode() {
       final int prime = 31;
       int result = 1;
+      result = prime * result + (enabled ? 1231 : 1237);
       result = prime * result + ((roles == null) ? 0 : roles.hashCode());
       return result;
    }
@@ -42,6 +49,8 @@ public class AuthorizationConfiguration {
       if (getClass() != obj.getClass())
          return false;
       AuthorizationConfiguration other = (AuthorizationConfiguration) obj;
+      if (enabled != other.enabled)
+         return false;
       if (roles == null) {
          if (other.roles != null)
             return false;
