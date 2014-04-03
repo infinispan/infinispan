@@ -25,7 +25,7 @@ import org.testng.annotations.Test;
  * @author Tristan Tarrant
  * @since 6.0
  */
-@Test(testName = "persistence.rest.RestStoreTest", groups = "unstable", description = "See ISPN-3973, original group: functional")
+@Test(testName = "persistence.rest.RestStoreTest", groups = "functional")
 public class RestStoreTest extends BaseStoreTest {
 
    private static final String REMOTE_CACHE = "remote-cache";
@@ -90,12 +90,6 @@ public class RestStoreTest extends BaseStoreTest {
       localCacheManager.getCache().getAdvancedCache().getEvictionManager().processEviction();
    }
 
-    /*
-    * Unfortunately we need to mark each test individual as unstable because the super class belong to a valid test
-    * group. I think that it appends the unstable group to the super class group making it running the tests anyway.
-    */
-
-   @Test(groups = "unstable")
    @Override
    public void testReplaceExpiredEntry() throws Exception {
       InternalCacheEntry ice = TestInternalCacheEntryFactory.create("k1", "v1", 100);
@@ -109,63 +103,4 @@ public class RestStoreTest extends BaseStoreTest {
       assert cl.load("k1").getValue().equals("v2");
    }
 
-   @Test(groups = "unstable")
-   @Override
-   public void testLoadAndStoreImmortal() throws PersistenceException {
-      super.testLoadAndStoreImmortal();
-   }
-
-   @Test(groups = "unstable")
-   @Override
-   public void testLoadAndStoreWithLifespan() throws Exception {
-      super.testLoadAndStoreWithLifespan();
-   }
-
-   @Test(groups = "unstable")
-   @Override
-   public void testLoadAndStoreWithIdle() throws Exception {
-      super.testLoadAndStoreWithIdle();
-   }
-
-   @Test(groups = "unstable")
-   @Override
-   public void testLoadAndStoreWithLifespanAndIdle() throws Exception {
-      super.testLoadAndStoreWithLifespanAndIdle();
-   }
-
-   @Test(groups = "unstable")
-   @Override
-   public void testStopStartDoesNotNukeValues() throws InterruptedException, PersistenceException {
-      super.testStopStartDoesNotNukeValues();
-   }
-
-   @Test(groups = "unstable")
-   @Override
-   public void testPreload() throws Exception {
-      super.testPreload();
-   }
-
-   @Test(groups = "unstable")
-   @Override
-   public void testStoreAndRemove() throws PersistenceException {
-      super.testStoreAndRemove();
-   }
-
-   @Test(groups = "unstable")
-   @Override
-   public void testPurgeExpired() throws Exception {
-      super.testPurgeExpired();
-   }
-
-   @Test(groups = "unstable")
-   @Override
-   public void testLoadAll() throws PersistenceException {
-      super.testLoadAll();
-   }
-
-   @Test(groups = "unstable")
-   @Override
-   public void testLoadAndStoreMarshalledValues() throws PersistenceException {
-      super.testLoadAndStoreMarshalledValues();
-   }
 }

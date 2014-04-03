@@ -119,7 +119,17 @@
          <artifactId>infinispan-server-rest</artifactId>
          <classifier>classes</classifier>
       </dependency>
-      
+
+      <dependency>
+         <groupId>org.jboss.resteasy</groupId>
+         <artifactId>resteasy-jaxrs</artifactId>
+      </dependency>
+
+      <dependency>
+         <groupId>org.jboss.resteasy</groupId>
+         <artifactId>jaxrs-api</artifactId>
+      </dependency>
+
       <dependency>
          <groupId>org.infinispan</groupId>
          <artifactId>infinispan-server-websocket</artifactId>

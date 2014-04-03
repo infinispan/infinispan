@@ -1156,6 +1156,10 @@
             <maven-resource group="org.jboss.resteasy" artifact="resteasy-jaxrs"/>
         </module-def>
 
+        <module-def name="org.jboss.resteasy.resteasy-jaxrs-api">
+            <maven-resource group="org.jboss.resteasy" artifact="jaxrs-api"/>
+        </module-def>
+
         <module-def name="org.jboss.resteasy.resteasy-jsapi">
             <maven-resource group="org.jboss.resteasy" artifact="resteasy-jsapi"/>
         </module-def>

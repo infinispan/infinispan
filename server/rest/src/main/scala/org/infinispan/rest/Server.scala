@@ -52,7 +52,8 @@ class Server(@Context request: Request, @Context servletContext: ServletContext,
    val TIME_TO_LIVE_HEADER = "timeToLiveSeconds"
    val MAX_IDLE_TIME_HEADER = "maxIdleTimeSeconds"
    /**For dealing with binary entries in the cache */
-   lazy val variantList = Variant.VariantListBuilder.newInstance.mediaTypes(MediaType.APPLICATION_XML_TYPE, MediaType.APPLICATION_JSON_TYPE, ApplicationXJavaSerializedObjectType).build
+   lazy val variantList = Variant.VariantListBuilder.newInstance.mediaTypes(
+      MediaType.APPLICATION_XML_TYPE, ApplicationXJavaSerializedObjectType, MediaType.APPLICATION_JSON_TYPE).build
    lazy val collectionVariantList = Variant.VariantListBuilder.newInstance.mediaTypes(
             MediaType.TEXT_HTML_TYPE,
             MediaType.APPLICATION_XML_TYPE,

@@ -37,7 +37,6 @@ public class EmbeddedRestCacheListenerTest extends AbstractInfinispanTest {
       CompatibilityCacheFactory.killCacheFactories(cacheFactory);
    }
 
-   @Test(groups = "unstable")
    public void testLoadingAndStoringEventsRest() throws IOException {
       Cache<String, String> embedded = cacheFactory.getEmbeddedCache();
       HttpClient remote = cacheFactory.getRestClient();
@@ -59,8 +58,7 @@ public class EmbeddedRestCacheListenerTest extends AbstractInfinispanTest {
       assertEquals(1, l.createdCounter);
       assertEquals("v".getBytes(), (byte[]) l.created.get("k"));
       assertTrue(l.removed.isEmpty());
-      assertEquals(1, l.modifiedCounter);
-      assertEquals("v".getBytes(), (byte[]) l.modified.get("k"));
+      assertEquals(0, l.modifiedCounter);
       assertTrue(l.visited.isEmpty());
 
 
@@ -71,7 +69,7 @@ public class EmbeddedRestCacheListenerTest extends AbstractInfinispanTest {
 
       assertEquals(2, l.createdCounter);
       assertTrue(l.removed.isEmpty());
-      assertEquals(2, l.modifiedCounter);
+      assertEquals(0, l.modifiedCounter);
       assertTrue(l.visited.isEmpty());
 
       EntityEnclosingMethod put3 = new PutMethod(restUrl + "/key");
@@ -81,7 +79,7 @@ public class EmbeddedRestCacheListenerTest extends AbstractInfinispanTest {
 
       assertEquals(2, l.createdCounter);
       assertTrue(l.removed.isEmpty());
-      assertEquals(3, l.modifiedCounter);
+      assertEquals(1, l.modifiedCounter);
       assertEquals("modifiedValue".getBytes(), (byte[]) l.modified.get("key"));
       assertTrue(l.visited.isEmpty());
 
@@ -92,7 +90,7 @@ public class EmbeddedRestCacheListenerTest extends AbstractInfinispanTest {
 
       assertEquals(2, l.createdCounter);
       assertTrue(l.removed.isEmpty());
-      assertEquals(4, l.modifiedCounter);
+      assertEquals(2, l.modifiedCounter);
       assertEquals("replacedValue".getBytes(), (byte[]) l.modified.get("k"));
       assertTrue(l.visited.isEmpty());
 
