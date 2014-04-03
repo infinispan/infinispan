@@ -92,7 +92,7 @@ public class ClusteringConfigurationBuilder extends AbstractConfigurationChildBu
       hashConfigurationBuilder.validate();
       l1ConfigurationBuilder.validate();
       syncConfigurationBuilder.validate();
-
+      stateTransferConfigurationBuilder.validate();
    }
 
    @Override

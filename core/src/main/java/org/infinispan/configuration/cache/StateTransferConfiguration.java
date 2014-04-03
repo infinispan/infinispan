@@ -62,8 +62,8 @@ public class StateTransferConfiguration {
    }
 
    /**
-    * If &gt; 0, the state will be transferred in batches of {@code chunkSize} cache entries.
-    * If &lt;= 0, the state will be transferred in all at once. Not recommended.
+    * The state will be transferred in batches of {@code chunkSize} cache entries.
+    * If chunkSize is equal to Integer.MAX_VALUE, the state will be transferred in all at once. Not recommended.
     */
    public int chunkSize() {
       return chunkSize;
