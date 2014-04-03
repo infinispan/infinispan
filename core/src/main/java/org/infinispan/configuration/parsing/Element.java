@@ -16,6 +16,7 @@ public enum Element {
 
     ADVANCED_EXTERNALIZER("advanced-externalizer"),
     ASYNC("async"),
+    AUTHORIZATION("authorization"),
     BACKUP("backup"),
     BACKUPS("backups"),
     BACKUP_FOR("backup-for"),
@@ -53,8 +54,10 @@ public enum Element {
     PROPERTY("property"),
     RECOVERY("recovery"),
     REPLICATED_CACHE("replicated-cache"),
+    ROLE("role"),
     ROOT("infinispan"),
     SCHEDULED_THREAD_POOL("scheduled-thread-pool"),
+    SECURITY("security"),
     SERIALIZATION("serialization"),
     SHUTDOWN("shutdown"),
     SINGLETON_STORE("singleton"),

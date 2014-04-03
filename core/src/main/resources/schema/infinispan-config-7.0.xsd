@@ -168,6 +168,11 @@
           <xs:documentation>Overrides the transport characteristics for this cache container.</xs:documentation>
         </xs:annotation>
       </xs:element>
+      <xs:element name="security" type="tns:global-security" minOccurs="0">
+        <xs:annotation>
+          <xs:documentation>Configures security for this cache container.</xs:documentation>
+        </xs:annotation>
+      </xs:element>
       <xs:element name="serialization" type="tns:serialization">
         <xs:annotation>
           <xs:documentation>Specifies how data serialization will be performed by the cache container.</xs:documentation>
@@ -320,6 +325,59 @@
         </xs:documentation>
       </xs:annotation>
     </xs:attribute>
+  </xs:complexType>
+  
+  <xs:complexType name="global-security">
+    <xs:sequence>
+      <xs:element name="authorization" minOccurs="0">
+        <xs:annotation>
+          <xs:documentation>
+            Configures the global authorization role to permission mapping
+          </xs:documentation>
+        </xs:annotation>
+        <xs:complexType>
+          <xs:sequence>
+            <xs:element name="role" minOccurs="0" maxOccurs="unbounded">
+              <xs:annotation>
+                <xs:documentation>
+                  Defines a new role name and assigns permissions to it.
+                </xs:documentation>
+              </xs:annotation>
+              <xs:complexType>
+                <xs:attribute name="name" use="required" type="xs:string">
+                  <xs:annotation>
+                    <xs:documentation>
+                      Defines the name of the role.
+                    </xs:documentation>
+                  </xs:annotation>
+                </xs:attribute>
+                <xs:attribute name="permissions" use="required" type="tns:permission-list">
+                  <xs:annotation>
+                    <xs:documentation>
+                      Defines the list of permissions for the role.
+                    </xs:documentation>
+                  </xs:annotation>
+                </xs:attribute>
+              </xs:complexType>
+            </xs:element>
+          </xs:sequence>
+          <xs:attribute name="mapper" type="xs:string">
+            <xs:annotation>
+              <xs:documentation>
+                Class of the principal to role mapper.
+              </xs:documentation>
+            </xs:annotation>
+          </xs:attribute>
+          <xs:attribute name="enabled" type="xs:boolean">
+            <xs:annotation>
+              <xs:documentation>
+                Enables authorization for this cache-container.
+              </xs:documentation>
+            </xs:annotation>
+          </xs:attribute>
+        </xs:complexType>
+      </xs:element>
+    </xs:sequence>
   </xs:complexType>
 
   <xs:complexType name="serialization">
@@ -482,6 +540,11 @@
       <xs:element name="custom-interceptors" type="tns:custom-interceptors" minOccurs="0">
         <xs:annotation>
           <xs:documentation>Configures custom interceptors to be added to the cache.</xs:documentation>
+        </xs:annotation>
+      </xs:element>
+      <xs:element name="security" type="tns:cache-security" minOccurs="0">
+        <xs:annotation>
+          <xs:documentation>Configures cache-level security.</xs:documentation>
         </xs:annotation>
       </xs:element>
     </xs:sequence>
@@ -737,6 +800,34 @@
           </xs:attribute>
           <xs:attribute name="position" type="xs:string">
             <xs:annotation><xs:documentation>Specifies a position where to place the new interceptor. Allowed values are FIRST, LAST, and OTHER_THAN_FIRST_OR_LAST</xs:documentation></xs:annotation>
+          </xs:attribute>
+        </xs:complexType>
+      </xs:element>
+    </xs:sequence>
+  </xs:complexType>
+  
+  <xs:complexType name="cache-security">
+    <xs:sequence>
+      <xs:element name="authorization" minOccurs="0">
+        <xs:annotation>
+          <xs:documentation>
+            Configures authorization for this cache.
+          </xs:documentation>
+        </xs:annotation>
+        <xs:complexType>
+          <xs:attribute name="enabled" type="xs:boolean">
+            <xs:annotation>
+              <xs:documentation>
+                Enables authorization checks for this cache.
+              </xs:documentation>
+            </xs:annotation>
+          </xs:attribute>
+          <xs:attribute name="roles" type="tns:role-list">
+            <xs:annotation>
+              <xs:documentation>
+                Sets the valid roles required to access this cache.
+              </xs:documentation>
+            </xs:annotation>
           </xs:attribute>
         </xs:complexType>
       </xs:element>
@@ -1495,6 +1586,103 @@
         </xs:annotation>
       </xs:enumeration>
     </xs:restriction>
+  </xs:simpleType>
+  
+  <xs:simpleType name="permission-list">
+    <xs:list itemType="tns:permission"/>
+  </xs:simpleType>
+  
+  <xs:simpleType name="permission">
+    <xs:restriction base="xs:string">
+      <xs:enumeration value="LIFECYCLE">
+        <xs:annotation>
+          <xs:documentation>
+            Allows control of a cache's lifecycle (i.e. starting and stopping a cache)
+          </xs:documentation>
+        </xs:annotation>
+      </xs:enumeration>
+      <xs:enumeration value="READ">
+        <xs:annotation>
+          <xs:documentation>
+            Allows reading data from a cache
+          </xs:documentation>
+        </xs:annotation>
+      </xs:enumeration>
+      <xs:enumeration value="WRITE">
+        <xs:annotation>
+          <xs:documentation>
+            Allows writing data to a cache
+          </xs:documentation>
+        </xs:annotation>
+      </xs:enumeration>
+      <xs:enumeration value="EXEC">
+        <xs:annotation>
+          <xs:documentation>
+            Allows performing task execution (e.g. distributed executors, map/reduce) on a cache
+          </xs:documentation>
+        </xs:annotation>
+      </xs:enumeration>
+      <xs:enumeration value="LISTEN">
+        <xs:annotation>
+          <xs:documentation>
+            Allows attaching listeners to a cache
+          </xs:documentation>
+        </xs:annotation>
+      </xs:enumeration>
+      <xs:enumeration value="BULK_READ">
+        <xs:annotation>
+          <xs:documentation>
+            Allows bulk-read operations (e.g. obtaining all the keys in a cache)
+          </xs:documentation>
+        </xs:annotation>
+      </xs:enumeration>
+      <xs:enumeration value="BULK_WRITE">
+        <xs:annotation>
+          <xs:documentation>
+            Allows bulk-write operations (e.g. clearing a cache)
+          </xs:documentation>
+        </xs:annotation>
+      </xs:enumeration>
+      <xs:enumeration value="ADMIN">
+        <xs:annotation>
+          <xs:documentation>
+            Allows performing "administrative" operations on a cache
+          </xs:documentation>
+        </xs:annotation>
+      </xs:enumeration>
+      <xs:enumeration value="ALL">
+        <xs:annotation>
+          <xs:documentation>
+            Aggregate permission which implies all of the others
+          </xs:documentation>
+        </xs:annotation>
+      </xs:enumeration>
+      <xs:enumeration value="ALL_READ">
+        <xs:annotation>
+          <xs:documentation>
+            Aggregate permission which implies all read permissions (READ and BULK_READ)
+          </xs:documentation>
+        </xs:annotation>
+      </xs:enumeration>
+      <xs:enumeration value="ALL_WRITE">
+        <xs:annotation>
+          <xs:documentation>
+            Aggregate permission which implies all write permissions (WRITE and BULK_WRITE)
+          </xs:documentation>
+        </xs:annotation>
+      </xs:enumeration>
+      <xs:enumeration value="NONE">
+        <xs:annotation>
+          <xs:documentation>
+            Permission which means no permissions
+          </xs:documentation>
+        </xs:annotation>
+      </xs:enumeration>
+    </xs:restriction>
+  </xs:simpleType>
+
+  <xs:simpleType name="role-list">
+    <xs:list itemType="xs:string"/>
   </xs:simpleType>
 
 </xs:schema>

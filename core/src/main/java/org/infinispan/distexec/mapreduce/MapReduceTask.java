@@ -314,7 +314,7 @@ public class MapReduceTask<KIn, VIn, KOut, VOut> {
    }
 
    /**
-    * 
+    *
     * Allows this MapReduceTask to use specific intermediate custom defined cache for storage of
     * intermediate <KOut, List<VOut>> key/values pairs. Intermediate cache is used to store output
     * of map phase and it is not shared with other M/R tasks. Upon completion of M/R task this intermediate
@@ -887,7 +887,7 @@ public class MapReduceTask<KIn, VIn, KOut, VOut> {
    }
 
    private void ensureAccessPermissions(AdvancedCache<?, ?> cache) {
-      if (cache.getCacheConfiguration().security().enabled()) {
+      if (cache.getCacheConfiguration().security().authorization().enabled()) {
          cache.getAuthorizationManager().checkPermission(AuthorizationPermission.EXEC);
       }
    }
@@ -1098,8 +1098,8 @@ public class MapReduceTask<KIn, VIn, KOut, VOut> {
 
    private class MapTaskPart<V> extends TaskPart<V> {
 
-      private MapCombineCommand<KIn, VIn, KOut, VOut> mcc;
-      private boolean distributedReduce;
+      private final MapCombineCommand<KIn, VIn, KOut, VOut> mcc;
+      private final boolean distributedReduce;
 
       public MapTaskPart(Address executionTarget, MapCombineCommand<KIn, VIn, KOut, VOut> command,
                boolean distributedReduce) {
@@ -1184,8 +1184,8 @@ public class MapReduceTask<KIn, VIn, KOut, VOut> {
 
    private class ReduceTaskPart<V> extends TaskPart<V> {
 
-      private ReduceCommand<KOut, VOut> rc;
-      private String cacheName;
+      private final ReduceCommand<KOut, VOut> rc;
+      private final String cacheName;
 
       public ReduceTaskPart(Address executionTarget, ReduceCommand<KOut, VOut> command,
                String destinationCacheName) {

@@ -45,7 +45,7 @@ public class CacheAuthorizationTest extends SingleCacheManagerTest {
       ConfigurationBuilder config = TestCacheManagerFactory.getDefaultCacheConfiguration(true);
       config.transaction().lockingMode(LockingMode.PESSIMISTIC);
       config.invocationBatching().enable();
-      AuthorizationConfigurationBuilder authConfig = config.security().enable().authorization();
+      AuthorizationConfigurationBuilder authConfig = config.security().authorization().enable();
 
       for (AuthorizationPermission perm : AuthorizationPermission.values()) {
          globalRoles.role(perm.toString()).permission(perm);
