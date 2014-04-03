@@ -1,8 +1,8 @@
-= JPA Cache Store
+== JPA Cache Store
 The Infinispan Community
 :icons: font
 
-== Introduction
+=== Introduction
 The implementation depends on JPA 2.0 specification to access entity meta model.
 
 In normal use cases, it's recommended to leverage Infinispan for JPA second level cache and/or query cache.
@@ -14,7 +14,7 @@ However, if you'd like to use only Infinispan API and you want Infinispan to per
 * Auto-generated ID is not supported.
 * Lastly, all entries will be stored as immortal entries.
 
-=== Sample Usage
+==== Sample Usage
 For example, given a persistence unit "myPersistenceUnit", and a JPA entity User:
 
 .persistence.xml
@@ -114,8 +114,8 @@ public class VehicleId implements Serializable
 Lastly, auto-generated IDs ﻿(e.g., `@GeneratedValue`) is not supported.
 When putting things into the cache with a JPA cache store, the key should be the ID value!
 
-== Configuration
-=== Sample Programatic Configuration
+=== Configuration
+==== Sample Programatic Configuration
 
 [source,java]
 ----
@@ -135,7 +135,7 @@ Configuration cacheConfig = new ConfigurationBuilder().loaders()
 |entityClass| JPA entity class that is expected to be stored in this cache.  Only one class is allowed. 
 |===============
 
-=== Sample XML Configuration
+==== Sample XML Configuration
 
 [source,xml]
 ----
@@ -159,11 +159,12 @@ Configuration cacheConfig = new ConfigurationBuilder().loaders()
 
 |===============
 
-== Additional References
+=== Additional References
 Refer to the link:$$https://github.com/infinispan/infinispan-cachestore-jpa/tree/master/src/test/java/org/infinispan/loaders/jpa/config/ConfigurationTest.java$$[test case] for code samples in action. 
 
 Refer to link:$$https://github.com/infinispan/infinispan-cachestore-jpa/tree/master/src/test/resources/config/jpa-config-53.xml$$[test configurations] for configuration samples. 
 
-== Javadoc
+=== Javadoc
 
 *TODO* 
+
