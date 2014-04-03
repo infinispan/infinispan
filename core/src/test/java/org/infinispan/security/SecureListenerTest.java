@@ -34,7 +34,7 @@ public class SecureListenerTest extends SingleCacheManagerTest {
       GlobalAuthorizationConfigurationBuilder globalRoles = global.security().authorization()
             .principalRoleMapper(new IdentityRoleMapper());
       ConfigurationBuilder config = TestCacheManagerFactory.getDefaultCacheConfiguration(true);
-      AuthorizationConfigurationBuilder authConfig = config.security().enable().authorization();
+      AuthorizationConfigurationBuilder authConfig = config.security().authorization().enable();
 
       globalRoles
          .role("listener").permission(AuthorizationPermission.LISTEN)

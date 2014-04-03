@@ -81,6 +81,7 @@ public enum Attribute {
     LOCK_TIMEOUT(ModelKeys.LOCK_TIMEOUT),
     LOCKING(ModelKeys.LOCKING),
     MACHINE(ModelKeys.MACHINE),
+    MAPPER(ModelKeys.MAPPER),
     MARSHALLER(ModelKeys.MARSHALLER),
     MAX_CONNECTIONS_PER_HOST(ModelKeys.MAX_CONNECTIONS_PER_HOST),
     MAX_ENTRIES(ModelKeys.MAX_ENTRIES),
@@ -95,6 +96,7 @@ public enum Attribute {
     OWNERS(ModelKeys.OWNERS),
     PASSIVATION(ModelKeys.PASSIVATION),
     PATH(ModelKeys.PATH),
+    PERMISSIONS(ModelKeys.PERMISSIONS),
     PREFIX(ModelKeys.PREFIX),
     PRELOAD(ModelKeys.PRELOAD),
     PURGE(ModelKeys.PURGE),
@@ -106,6 +108,7 @@ public enum Attribute {
     RELATIVE_TO(ModelKeys.RELATIVE_TO),
     REMOTE_TIMEOUT(ModelKeys.REMOTE_TIMEOUT),
     REPLICATION_QUEUE_EXECUTOR(ModelKeys.REPLICATION_QUEUE_EXECUTOR),
+    ROLES(ModelKeys.ROLES),
     SEGMENTS(ModelKeys.SEGMENTS),
     SHARED(ModelKeys.SHARED),
     SHUTDOWN_TIMEOUT(ModelKeys.SHUTDOWN_TIMEOUT),
@@ -125,7 +128,7 @@ public enum Attribute {
     THREAD_POOL_SIZE(ModelKeys.THREAD_POOL_SIZE),
     TIMEOUT(ModelKeys.TIMEOUT),
     TYPE(ModelKeys.TYPE),
-    @Deprecated VIRTUAL_NODES("virtual-nodes"),
+    @Deprecated VIRTUAL_NODES("virtual-nodes")
     ;
 
     private final String name;

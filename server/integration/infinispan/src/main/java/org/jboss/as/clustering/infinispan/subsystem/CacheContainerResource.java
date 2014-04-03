@@ -191,6 +191,7 @@ public class CacheContainerResource extends SimpleResourceDefinition {
 
         // child resources
         resourceRegistration.registerSubModel(new TransportResource());
+        resourceRegistration.registerSubModel(new CacheContainerSecurityResource());
         resourceRegistration.registerSubModel(new LocalCacheResource(resolvePathHandler, runtimeRegistration));
         resourceRegistration.registerSubModel(new InvalidationCacheResource(resolvePathHandler, runtimeRegistration));
         resourceRegistration.registerSubModel(new ReplicatedCacheResource(resolvePathHandler, runtimeRegistration));
