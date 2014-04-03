@@ -22,7 +22,7 @@
   ~ 02110-1301 USA, or see the FSF site: http://www.fsf.org.
   -->
 
-<module xmlns="urn:jboss:module:1.1" name="org.jboss.resteasy.resteasy-jaxrs">
+<module xmlns="urn:jboss:module:1.1" name="org.jboss.resteasy.resteasy-jaxrs-api">
 
     <resources>
         <!-- Insert resources here -->
@@ -40,6 +40,5 @@
         <module name="org.slf4j" />
         <module name="javax.servlet.api"/>
         <module name="org.apache.commons.io"/>
-        <module name="org.jboss.resteasy.resteasy-jaxrs-api"/>
     </dependencies>
 </module>

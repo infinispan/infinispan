@@ -140,7 +140,7 @@ public class EmbeddedRestHotRodTest {
 
       // 3. Get with REST
       HttpMethod get = new GetMethod(cacheFactory.getRestUrl() + "/" + key);
-      get.setRequestHeader("Accept", "application/x-java-serialized-object;level=1, application/json;q=0.3");
+      get.setRequestHeader("Accept", "application/x-java-serialized-object, application/json;q=0.3");
 
       cacheFactory.getRestClient().executeMethod(get);
       assertEquals("application/x-java-serialized-object", get.getResponseHeader("Content-Type").getValue());

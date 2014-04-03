@@ -116,7 +116,6 @@ public class EmbeddedRestMemcachedHotRodTest {
             cacheFactory.getHotRodCache().get(key));
    }
 
-   @Test(groups = "unstable") // sometimes fails with "expected:<200> but was:<500>" checking status code
    public void testHotRodPutEmbeddedMemcachedRestGetTest() throws Exception {
       final String key = "4";
 

@@ -142,7 +142,7 @@
       <version.mysql.driver>5.1.19</version.mysql.driver>
       <version.org.jboss.naming>5.0.6.CR1</version.org.jboss.naming>
       <version.postgresql.driver>9.3-1101-jdbc41</version.postgresql.driver>
-      <version.resteasy>2.3.2.Final</version.resteasy>
+      <version.resteasy>3.0.7.Final</version.resteasy>
       <version.shrinkwrapResolver>2.0.0-alpha-6</version.shrinkwrapResolver>
       <version.slf4j>1.6.4</version.slf4j>
       <version.solder>3.1.0.Final</version.solder>
