@@ -20,7 +20,7 @@ public class StateTransferConfigurationBuilder extends
 
    private Boolean fetchInMemoryState = null;
    private Boolean awaitInitialTransfer = null;
-   private int chunkSize = 10000;
+   private int chunkSize = 512;
    private long timeout = TimeUnit.MINUTES.toMillis(4);
 
    StateTransferConfigurationBuilder(ClusteringConfigurationBuilder builder) {
@@ -54,8 +54,8 @@ public class StateTransferConfigurationBuilder extends
    }
 
    /**
-    * If &gt; 0, the state will be transferred in batches of {@code chunkSize} cache entries.
-    * If &lt;= 0, the state will be transferred in all at once. Not recommended.
+    * The state will be transferred in batches of {@code chunkSize} cache entries.
+    * If chunkSize is equal to Integer.MAX_VALUE, the state will be transferred in all at once. Not recommended.
     */
    public StateTransferConfigurationBuilder chunkSize(int i) {
       this.chunkSize = i;
@@ -81,10 +81,10 @@ public class StateTransferConfigurationBuilder extends
 
    @Override
    public void validate() {
-      // certain combinations are illegal, such as state transfer + invalidation
-      if (fetchInMemoryState != null && fetchInMemoryState && getClusteringBuilder().cacheMode().isInvalidation())
-         throw new CacheConfigurationException(
-               "Cache cannot use INVALIDATION mode and have fetchInMemoryState set to true.");
+      if (chunkSize <= 0) {
+         throw new CacheConfigurationException("chunkSize can not be <= 0");
+      }
+
       if (awaitInitialTransfer != null && awaitInitialTransfer
             && !getClusteringBuilder().cacheMode().isReplicated() && !getClusteringBuilder().cacheMode().isDistributed())
          throw new CacheConfigurationException(

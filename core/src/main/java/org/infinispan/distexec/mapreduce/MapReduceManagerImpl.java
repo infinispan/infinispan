@@ -80,8 +80,7 @@ public class MapReduceManagerImpl implements MapReduceManager {
       this.cdl = cdl;
       this.executorService = asyncTransportExecutor;
       this.timeService = timeService;
-      int size = configuration.clustering().stateTransfer().chunkSize();
-      this.chunkSize = size > 0 ? size : 512;
+      this.chunkSize = configuration.clustering().stateTransfer().chunkSize();
    }
 
    @Override

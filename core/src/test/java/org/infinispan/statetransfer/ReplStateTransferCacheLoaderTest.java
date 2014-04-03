@@ -51,7 +51,7 @@ public class ReplStateTransferCacheLoaderTest extends MultipleCacheManagersTest 
             .useLockStriping(false).writeSkewCheck(false).isolationLevel(IsolationLevel.READ_COMMITTED)
             .dataContainer().storeAsBinary()
             .clustering().sync().replTimeout(20000)
-            .stateTransfer().timeout(240000).fetchInMemoryState(false).chunkSize(0)
+            .stateTransfer().timeout(240000).fetchInMemoryState(false).chunkSize(Integer.MAX_VALUE)
             .persistence().passivation(false).addSingleFileStore().location(new File(tmpDir, "store0").getAbsolutePath()).shared(false).preload(false)
             .fetchPersistentState(true)
             .ignoreModifications(false)
