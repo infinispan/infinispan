@@ -25,6 +25,7 @@ import org.infinispan.client.hotrod.RemoteCacheManager;
 import org.infinispan.client.hotrod.configuration.Configuration;
 import org.infinispan.client.hotrod.configuration.ConfigurationBuilder;
 import org.infinispan.server.test.category.CacheStore;
+import org.infinispan.server.test.category.UnstableTest;
 import org.infinispan.server.test.client.memcached.MemcachedClient;
 import org.jboss.arquillian.container.test.api.ContainerController;
 import org.jboss.arquillian.junit.Arquillian;
@@ -139,6 +140,7 @@ public class RemoteCacheStoreTest {
 
     @Test
     @WithRunningServer(CONTAINER_LOCAL)
+    @Category(UnstableTest.class) // Exception is thrown but sometimes the error message does not contain SocketTimeoutException
     public void testSocketTimeoutForRemoteStore() throws Exception {
         Configuration conf = new ConfigurationBuilder().addServer().host(server1.getHotrodEndpoint().getInetAddress().getHostName()).port(server1
                 .getHotrodEndpoint().getPort()).build();
@@ -164,7 +166,7 @@ public class RemoteCacheStoreTest {
             fail("Socket timeout for remote store was set to 1 millis and so a SocketTimeoutException was expected but not thrown.");
         } catch (Exception e) {
             // ok
-            assertTrue(e.getMessage().contains("SocketTimeoutException"));
+            assertTrue(e.getMessage(), e.getMessage().contains("SocketTimeoutException"));
         } finally {
             controller.kill(CONTAINER_LOCAL);
         }
