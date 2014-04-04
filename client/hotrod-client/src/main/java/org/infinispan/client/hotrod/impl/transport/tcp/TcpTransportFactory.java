@@ -300,7 +300,7 @@ public class TcpTransportFactory implements TransportFactory {
          return pool.borrowObject(server);
       } catch (Exception e) {
          String message = "Could not fetch transport";
-         log.couldNotFetchTransport(e);
+         log.debug(message, e);
          throw new TransportException(message, e, server);
       } finally {
          logConnectionInfo(server);

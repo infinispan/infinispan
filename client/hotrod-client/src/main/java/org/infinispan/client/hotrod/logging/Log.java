@@ -87,10 +87,6 @@ public interface Log extends BasicLogger {
    @Message(value = "Server not in cluster anymore(%s), removing from the pool.", id = 4016)
    void removingServer(SocketAddress server);
 
-   @LogMessage(level = ERROR)
-   @Message(value = "Could not fetch transport", id = 4017)
-   void couldNotFetchTransport(@Cause Exception e);
-
    @LogMessage(level = WARN)
    @Message(value = "Unable to convert string property [%s] to an int! Using default value of %d", id = 4018)
    void unableToConvertStringPropertyToInt(String value, int defaultValue);
