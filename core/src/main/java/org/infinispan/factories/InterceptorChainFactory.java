@@ -26,8 +26,6 @@ import org.infinispan.util.logging.LogFactory;
 
 import java.util.List;
 
-import static org.infinispan.commons.util.ReflectionUtil.applyProperties;
-
 /**
  * Factory class that builds an interceptor chain based on cache configuration.
  *
@@ -264,7 +262,7 @@ public class InterceptorChainFactory extends AbstractNamedCacheComponentFactory 
          if (interceptorChain.containsInterceptorType(config.interceptor().getClass())) continue;
 
          CommandInterceptor customInterceptor = config.interceptor();
-         applyProperties(customInterceptor, config.properties());
+         SecurityActions.applyProperties(customInterceptor, config.properties());
          register(customInterceptor.getClass(), customInterceptor);
          if (config.first())
             interceptorChain.addInterceptor(customInterceptor, 0);

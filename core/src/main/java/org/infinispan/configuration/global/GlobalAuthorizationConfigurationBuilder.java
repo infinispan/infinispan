@@ -22,7 +22,7 @@ public class GlobalAuthorizationConfigurationBuilder extends AbstractGlobalConfi
    public static final Log log = LogFactory.getLog(GlobalAuthorizationConfigurationBuilder.class);
    private boolean enabled = false;
    private PrincipalRoleMapper principalRoleMapper;
-   private Map<String, GlobalRoleConfigurationBuilder> roles = new HashMap<String, GlobalRoleConfigurationBuilder>();
+   private final Map<String, GlobalRoleConfigurationBuilder> roles = new HashMap<String, GlobalRoleConfigurationBuilder>();
 
    public GlobalAuthorizationConfigurationBuilder(GlobalSecurityConfigurationBuilder builder) {
       super(builder.getGlobalConfig());
@@ -61,7 +61,7 @@ public class GlobalAuthorizationConfigurationBuilder extends AbstractGlobalConfi
 
    @Override
    public void validate() {
-      if (principalRoleMapper == null) {
+      if (enabled && principalRoleMapper == null) {
          throw log.invalidPrincipalRoleMapper();
       }
    }

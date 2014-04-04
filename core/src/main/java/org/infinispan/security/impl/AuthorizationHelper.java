@@ -27,7 +27,11 @@ public class AuthorizationHelper {
 
    public static void checkPermission(Subject subject, int subjectMask, AuthorizationPermission perm) {
       if ((subjectMask & perm.getMask()) != perm.getMask()) {
-         throw log.unauthorizedAccess(subject == null ? "null" : subject.toString(), perm.toString());
+         if (System.getSecurityManager() == null) {
+            throw log.unauthorizedAccess(String.valueOf(subject), perm.toString());
+         } else {
+            System.getSecurityManager().checkPermission(perm.getSecurityPermission());
+         }
       }
    }
 
@@ -49,21 +53,22 @@ public class AuthorizationHelper {
          AuthorizationConfiguration configuration) {
       PrincipalRoleMapper roleMapper = globalConfiguration.authorization().principalRoleMapper();
       int mask = 0;
-      for (Principal principal : subject.getPrincipals()) {
-         Set<String> roleNames = roleMapper.principalToRoles(principal);
-         if (roleNames != null) {
-            for (String roleName : roleNames) {
-               // Skip roles not defined for this cache
-               if (configuration != null && !configuration.roles().contains(roleName))
-                  continue;
-               Role role = globalConfiguration.authorization().roles().get(roleName);
-               if (role != null) {
-                  mask |= role.getMask();
+      if (subject != null) {
+         for (Principal principal : subject.getPrincipals()) {
+            Set<String> roleNames = roleMapper.principalToRoles(principal);
+            if (roleNames != null) {
+               for (String roleName : roleNames) {
+                  // Skip roles not defined for this cache
+                  if (configuration != null && !configuration.roles().contains(roleName))
+                     continue;
+                  Role role = globalConfiguration.authorization().roles().get(roleName);
+                  if (role != null) {
+                     mask |= role.getMask();
+                  }
                }
             }
          }
       }
       return mask;
    }
-
 }

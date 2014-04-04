@@ -84,7 +84,7 @@ public class DistributedIterator implements ResultIterator {
          // reversing sort fields to FieldDocSortedHitQueue work properly
          for (SortField sf : sort.getSort()) {
             boolean reverse = (Boolean) ReflectionUtil.getValue(sf, "reverse");
-            ReflectionUtil.setValue(sf, "reverse", !reverse);
+            SecurityActions.setValue(sf, "reverse", !reverse);
          }
          hq = ISPNPriorityQueueFactory.getFieldDocSortedHitQueue(
                topDocsResponses.size(), sort.getSort());

@@ -13,9 +13,6 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.Map.Entry;
-import java.util.Properties;
-
 /**
  * Basic reflection utilities to enhance what the JDK provides.
  *
@@ -146,18 +143,6 @@ public class ReflectionUtil {
             return false;
       }
       return true;
-   }
-
-   public static void setValue(Object instance, String fieldName, Object value) {
-      try {
-         Field f = findFieldRecursively(instance.getClass(), fieldName);
-         if (f == null)
-            throw new NoSuchMethodException("Cannot find field " + fieldName + " on " + instance.getClass() + " or superclasses");
-         f.setAccessible(true);
-         f.set(instance, value);
-      } catch (Exception e) {
-         log.unableToSetValue(e);
-      }
    }
 
    private static Field findFieldRecursively(Class<?> c, String fieldName) {
@@ -358,12 +343,6 @@ public class ReflectionUtil {
          } else {
             return null;
          }
-      }
-   }
-
-   public static void applyProperties(Object o, Properties p) {
-      for(Entry<Object, Object> entry : p.entrySet()) {
-         setValue(o, (String) entry.getKey(), entry.getValue());
       }
    }
 

@@ -9,8 +9,8 @@ import org.infinispan.commons.configuration.Builder;
  * @since 7.0
  */
 public class GlobalSecurityConfigurationBuilder extends AbstractGlobalConfigurationBuilder implements GlobalSecurityConfigurationChildBuilder, Builder<GlobalSecurityConfiguration> {
-   private GlobalAuthorizationConfigurationBuilder authorizationBuilder;
-   private boolean enabled = false;
+   private final GlobalAuthorizationConfigurationBuilder authorizationBuilder;
+   private final boolean enabled = false;
    private long securityCacheTimeout = 30000;
 
    public GlobalSecurityConfigurationBuilder(GlobalConfigurationBuilder builder) {
@@ -31,6 +31,7 @@ public class GlobalSecurityConfigurationBuilder extends AbstractGlobalConfigurat
 
    @Override
    public void validate() {
+      authorizationBuilder.validate();
    }
 
    @Override

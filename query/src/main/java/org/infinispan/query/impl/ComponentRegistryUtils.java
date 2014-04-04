@@ -21,7 +21,7 @@ public class ComponentRegistryUtils {
    }
 
    public static <T> T getComponent(Cache<?, ?> cache, Class<T> class1, String name) {
-      ComponentRegistry componentRegistry = cache.getAdvancedCache().getComponentRegistry();
+      ComponentRegistry componentRegistry = SecurityActions.getCacheComponentRegistry(cache.getAdvancedCache());
       T component = componentRegistry.getComponent(class1, name);
       if (component == null) {
          throw new IllegalArgumentException("Indexing was not enabled on this cache. " + class1 + " not found in registry");
@@ -30,7 +30,7 @@ public class ComponentRegistryUtils {
    }
 
    public static QueryInterceptor getQueryInterceptor(Cache<?, ?> cache) {
-      Class<? extends QueryInterceptor> queryType = cache.getCacheConfiguration().indexing().indexLocalOnly()
+      Class<? extends QueryInterceptor> queryType = SecurityActions.getCacheConfiguration(cache.getAdvancedCache()).indexing().indexLocalOnly()
             ? LocalQueryInterceptor.class : QueryInterceptor.class;
       return getComponent(cache, queryType);
    }

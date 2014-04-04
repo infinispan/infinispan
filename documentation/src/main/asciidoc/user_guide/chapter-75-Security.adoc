@@ -32,9 +32,12 @@ Access to a cache manager or a cache is controlled by using a list of required p
 * WRITE (put, putIfAbsent, replace, remove, evict): whether data can be written/replaced/removed/evicted from the cache
 * EXEC (distexec, mapreduce): whether code execution can be run against the cache
 * LISTEN (addListener): whether listeners can be registered against a cache
-* BULK (keySet, values, entrySet): whether bulk retrieve operations can be executed
+* BULK_READ (keySet, values, entrySet, query): whether bulk retrieve operations can be executed
+* BULK_WRITE (clear, putAll): whether bulk write operations can be executed
 * LIFECYCLE (start, stop): whether a cache can be started / stopped
 * ALL: a convenience permission which includes all of the above
+* ALL_READ: combines READ and BULK_READ
+* ALL_WRITE: combines WRITE and BULK_WRITE
 
 Some permissions might need to be combined with others in order to be useful, e.g. EXEC with READ and/or WRITE.
 
@@ -47,6 +50,9 @@ public Void run() throws Exception {
     cache.put(“key”, “value”);
 }
 });
+
+In order for Infinispan to be able to enforce and check permissions correctly at all entry points, running under a SecurityManager with an appropriate policy is required. 
+The Infinispan distribution contains an example security.policy file which you should customize with the appropriate paths before supplying it to your JVM.
 
 === Embedded Configuration
 There are two levels of configuration: global and per-cache. The global configuration defines the set of roles/permissions mappings while each cache can decide whether to enable authorization checks and the required roles.
@@ -83,7 +89,7 @@ There are two levels of configuration: global and per-cache. The global configur
 <infinispan>
    <cache-container default-cache="secured">
       <security>
-         <roles mapper="my.package.MyRoleMapper">
+         <authorization enabled="true" mapper="my.package.MyRoleMapper">
             <role name="admin" permissions="ALL" />
             <role name="reader" permission="READ" />
             <role name="writer" permission="WRITE" />
@@ -92,7 +98,7 @@ There are two levels of configuration: global and per-cache. The global configur
       </security>
       <local-cache name="secured">
          <security enabled="true">
-            <authorization roles="admin reader writer supervisor" />
+            <authorization enabled="true" roles="admin reader writer supervisor" />
          </security>
       </local-cache>
    </cache-container>

@@ -22,11 +22,14 @@ import org.infinispan.test.SingleCacheManagerTest;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.infinispan.transaction.LockingMode;
+import org.infinispan.util.logging.Log;
+import org.infinispan.util.logging.LogFactory;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 
 @Test(groups = "functional", testName = "security.SingleCacheManagerTest")
 public class CacheAuthorizationTest extends SingleCacheManagerTest {
+   static final Log log = LogFactory.getLog(CacheAuthorizationTest.class);
    Map<AuthorizationPermission, Subject> subjects;
 
    @BeforeClass
@@ -113,11 +116,14 @@ public class CacheAuthorizationTest extends SingleCacheManagerTest {
                      methodName, driver.getClass().getName()));
             }
             final AuthorizationPermission expectedPerm = annotation.value();
-            System.out.printf("Method: %s ", methodName);
             for (final AuthorizationPermission perm : AuthorizationPermission.values()) {
                if (perm == AuthorizationPermission.NONE)
                   continue;// Skip
-               System.out.printf(" %s", perm.toString());
+               if (annotation.needsSecurityManager() && System.getSecurityManager() == null) {
+                  log.debugf("Method %s (skipped, needs SecurityManager)", methodName);
+                  break;
+               }
+               log.debugf("Method %s > %s", methodName, perm.toString());
                if (expectedPerm == AuthorizationPermission.NONE) {
                   try {
                      method.invoke(driver, cache);
@@ -126,12 +132,11 @@ public class CacheAuthorizationTest extends SingleCacheManagerTest {
                   }
                } else {
                   Subject.doAs(subjects.get(perm), new PrivilegedExceptionAction<Void>() {
-
                      @Override
                      public Void run() throws Exception {
                         try {
                            method.invoke(driver, cache);
-                           if (perm != expectedPerm && perm != AuthorizationPermission.ALL) {
+                           if (!perm.implies(expectedPerm)) {
                               throw new Exception(String.format("Expected SecurityException while invoking %s with permission %s",
                                     methodName, perm.toString()));
                            }
@@ -139,7 +144,7 @@ public class CacheAuthorizationTest extends SingleCacheManagerTest {
                         } catch (InvocationTargetException e) {
                            Throwable cause = e.getCause();
                            if (cause instanceof SecurityException) {
-                              if (perm == expectedPerm && perm != AuthorizationPermission.ALL) {
+                              if (perm.implies(expectedPerm)) {
                                  throw new Exception(String.format("Unexpected SecurityException while invoking %s with permission %s", methodName, perm.toString() ), e);
                               } else {
                                  // We were expecting a security exception
@@ -151,7 +156,6 @@ public class CacheAuthorizationTest extends SingleCacheManagerTest {
                   });
                }
             }
-            System.out.println();
 
          } catch (NoSuchMethodException e) {
             throw new Exception(

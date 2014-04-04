@@ -1,7 +1,5 @@
 package org.infinispan.ec2demo;
 
-import org.infinispan.commons.util.SysPropertyActions;
-
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.util.ArrayList;
@@ -24,7 +22,7 @@ public class Influenza_Parser {
 		System.out.println("Processing Influenza file " + fileName);
 		try {
 			Scanner scanner = new Scanner(new File(fileName.trim()));
-			scanner.useDelimiter(SysPropertyActions.getProperty("line.separator"));
+			scanner.useDelimiter(SecurityActions.getProperty("line.separator"));
 			while (scanner.hasNext()) {
 
 				Influenza_N_P_CR_Element x = parseLine(scanner.next());
