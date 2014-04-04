@@ -75,7 +75,7 @@ public class JpaStoreConfigurationParser70 implements ConfigurationParser {
       }
 
       if (reader.hasNext() && (reader.nextTag() != XMLStreamConstants.END_ELEMENT)) {
-         ParseUtils.unexpectedElement(reader);
+         throw ParseUtils.unexpectedElement(reader);
       }
    }
 }
