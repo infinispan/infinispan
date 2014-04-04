@@ -54,8 +54,10 @@ public abstract class RetryOnFailureOperation<T> extends HotRodOperation {
             failedServers.add(te.getServerAddress());
             // Invalidate transport since this exception means that this
             // instance is no longer usable and should be destroyed.
-            transportFactory.invalidateTransport(
-                  te.getServerAddress(), transport);
+            if (transport != null) {
+               transportFactory.invalidateTransport(
+                     te.getServerAddress(), transport);
+            }
             logErrorAndThrowExceptionIfNeeded(retryCount, te);
          } catch (RemoteNodeSuspectException e) {
             // Do not invalidate transport because this exception is caused
