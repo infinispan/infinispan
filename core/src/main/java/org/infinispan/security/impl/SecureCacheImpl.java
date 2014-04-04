@@ -613,4 +613,9 @@ public final class SecureCacheImpl<K, V> implements SecureCache<K, V> {
    public int hashCode() {
       return delegate.hashCode();
    }
+
+   @Override
+   public String toString() {
+      return String.format("SecureCache '%s'", delegate.getName());
+   }
 }

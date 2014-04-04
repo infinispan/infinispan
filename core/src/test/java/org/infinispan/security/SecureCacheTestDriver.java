@@ -441,17 +441,17 @@ public class SecureCacheTestDriver {
    }
 
    @TestCachePermission(AuthorizationPermission.WRITE)
-   public void testApplyDelta_Object_Delta_ObjectArray(SecureCache<String, String> cache) throws NotSupportedException, SystemException {
+   public void testApplyDelta_Object_Delta_ObjectArray(SecureCache<String, String> cache) throws Exception {
       try {
          cache.getTransactionManager().begin();
 
-         cache.applyDelta("a", new Delta() {
+         cache.applyDelta("deltakey", new Delta() {
 
             @Override
             public DeltaAware merge(DeltaAware d) {
                return d;
             }
-         }, "a");
+         }, "deltakey");
       } finally {
          cache.getTransactionManager().rollback();
       }
