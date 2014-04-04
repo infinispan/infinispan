@@ -2,7 +2,6 @@ package org.infinispan.security.impl;
 
 import java.security.AccessController;
 import java.security.Principal;
-import java.util.concurrent.TimeUnit;
 
 import javax.security.auth.Subject;
 

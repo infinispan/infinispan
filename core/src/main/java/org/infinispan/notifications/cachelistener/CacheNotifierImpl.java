@@ -10,7 +10,6 @@ import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.context.Flag;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.context.impl.TxInvocationContext;
-import org.infinispan.distexec.DefaultExecutorService;
 import org.infinispan.distexec.DistributedCallable;
 import org.infinispan.distexec.DistributedExecutionCompletionService;
 import org.infinispan.distexec.DistributedExecutorService;
@@ -33,7 +32,6 @@ import org.infinispan.notifications.cachelistener.filter.KeyFilterAsKeyValueFilt
 import org.infinispan.notifications.impl.AbstractListenerImpl;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.transaction.xa.GlobalTransaction;
-import org.infinispan.util.concurrent.WithinThreadExecutor;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
@@ -159,7 +157,7 @@ public final class CacheNotifierImpl<K, V> extends AbstractListenerImpl<Event<? 
    @Override
    public void start() {
       super.start();
-      this.distExecutorService = new DefaultExecutorService(cache, new WithinThreadExecutor());
+      this.distExecutorService = SecurityActions.getDefaultExecutorService(cache);
    }
 
    @Override

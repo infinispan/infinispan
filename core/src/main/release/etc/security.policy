@@ -1,0 +1,30 @@
+// Grant permissions to all of the Infinispan libraries. Modify the URLs of the codebases below to actually point to the physical location of the libraries in your environment
+
+grant codeBase "file://jboss-marshalling.jar" {
+    permission java.lang.RuntimePermission "accessDeclaredMembers";
+    permission java.lang.reflect.ReflectPermission "suppressAccessChecks";
+}
+
+grant codeBase "file://jgroups.jar" {
+    permission java.io.FilePermission ".${/}jgroups.xml", "read"; // Modify this depending on the naming and location of your configuration files
+    permission java.util.PropertyPermission "*" "read";
+    permission java.net.SocketPermission "*";
+}
+
+grant codeBase "file://infinispan-commons.jar" {
+    permission java.util.PropertyPermission "*" "read";
+}
+
+grant codeBase "file://infinispan-core.jar" {
+    permission java.io.FilePermission ".${/}infinispan.xml", "read"; // Modify this depending on the naming and location of your configuration files
+    permission java.lang.reflect.ReflectPermission "suppressAccessChecks"; 
+    permission java.lang.RuntimePermission "accessClassInPackage.sun.misc"; // ForkJoin backport
+    permission java.lang.RuntimePermission "shutdownHooks"; // Infinispan shutdown hooks
+    permission java.util.PropertyPermission "user.dir" "read";
+    permission java.util.PropertyPermission "java.util.concurrent.ForkJoinPool.common.parallelism" "read"; // ConcurrentHashMap backport
+    permission java.util.PropertyPermission "java.util.concurrent.ForkJoinPool.common.exceptionHandler" "read"; // ConcurrentHashMap backport
+    permission java.util.PropertyPermission "java.util.concurrent.ForkJoinPool.common.threadFactory" "read"; // ConcurrentHashMap backport
+    permission javax.security.auth.AuthPermission "doAs"; // Infinispan security
+    permission javax.security.auth.AuthPermission "getSubject"; // Infinispan security
+    permission org.infinispan.security.CachePermission "ALL"; // Infinispan security
+}

@@ -18,7 +18,6 @@ import java.util.concurrent.TimeUnit;
 import org.antlr.runtime.ANTLRStringStream;
 import org.antlr.runtime.CharStream;
 import org.antlr.runtime.CommonTokenStream;
-import org.infinispan.commons.api.BasicCacheContainer;
 import org.infinispan.cli.interpreter.codec.CodecRegistry;
 import org.infinispan.cli.interpreter.logging.Log;
 import org.infinispan.cli.interpreter.result.EmptyResult;
@@ -27,6 +26,7 @@ import org.infinispan.cli.interpreter.result.ResultKeys;
 import org.infinispan.cli.interpreter.session.Session;
 import org.infinispan.cli.interpreter.session.SessionImpl;
 import org.infinispan.cli.interpreter.statement.Statement;
+import org.infinispan.commons.api.BasicCacheContainer;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.annotations.Start;
 import org.infinispan.factories.annotations.Stop;
@@ -36,7 +36,6 @@ import org.infinispan.jmx.annotations.MBean;
 import org.infinispan.jmx.annotations.ManagedAttribute;
 import org.infinispan.jmx.annotations.ManagedOperation;
 import org.infinispan.manager.EmbeddedCacheManager;
-import org.infinispan.commons.util.SysPropertyActions;
 import org.infinispan.util.TimeService;
 import org.infinispan.util.logging.LogFactory;
 
@@ -129,7 +128,7 @@ public class Interpreter {
    @ManagedOperation(description = "Parses and executes IspnCliQL statements")
    public Map<String, String> execute(final String sessionId, final String s) throws Exception {
       Session session = null;
-      ClassLoader oldCL = SysPropertyActions.setThreadContextClassLoader(cacheManager.getCacheManagerConfiguration().classLoader());
+      ClassLoader oldCL = SecurityActions.setThreadContextClassLoader(cacheManager.getCacheManagerConfiguration().classLoader());
       Map<String, String> response = new HashMap<String, String>();
       try {
          session = validateSession(sessionId);
@@ -167,7 +166,7 @@ public class Interpreter {
             session.reset();
             response.put(ResultKeys.CACHE.toString(), session.getCurrentCacheName());
          }
-         SysPropertyActions.setThreadContextClassLoader(oldCL);
+         SecurityActions.setThreadContextClassLoader(oldCL);
 
       }
       return response;

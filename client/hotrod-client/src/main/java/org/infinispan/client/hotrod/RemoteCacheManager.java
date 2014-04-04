@@ -27,7 +27,6 @@ import org.infinispan.commons.api.BasicCacheContainer;
 import org.infinispan.commons.executors.ExecutorFactory;
 import org.infinispan.commons.marshall.Marshaller;
 import org.infinispan.commons.util.FileLookupFactory;
-import org.infinispan.commons.util.SysPropertyActions;
 import org.infinispan.commons.util.TypedProperties;
 import org.infinispan.commons.util.Util;
 
@@ -140,7 +139,7 @@ public class RemoteCacheManager implements BasicCacheContainer {
    private volatile boolean started = false;
    private final Map<String, RemoteCacheHolder> cacheName2RemoteCache = new HashMap<String, RemoteCacheHolder>();
    // Use an invalid topologyID (-1) so we always get a topology update on connection.
-   private AtomicInteger topologyId = new AtomicInteger(-1);
+   private final AtomicInteger topologyId = new AtomicInteger(-1);
    private Configuration configuration;
    private Codec codec;
 
@@ -545,7 +544,7 @@ public class RemoteCacheManager implements BasicCacheContainer {
    @Override
    public void start() {
       // Workaround for JDK6 NPE: http://bugs.sun.com/view_bug.do?bug_id=6427854
-      SysPropertyActions.setProperty("sun.nio.ch.bugLevel", "\"\"");
+      SecurityActions.setProperty("sun.nio.ch.bugLevel", "\"\"");
 
       codec = CodecFactory.getCodec(configuration.protocolVersion());
 

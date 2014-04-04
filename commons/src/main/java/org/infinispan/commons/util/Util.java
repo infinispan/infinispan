@@ -55,7 +55,7 @@ public final class Util {
     * Current Java vendor. This variable is later used to differentiate LRU implementations
     * for different java vendors.
     */
-   private static final String javaVendor = SysPropertyActions.getProperty("java.vendor", "");
+   private static final String javaVendor = SecurityActions.getProperty("java.vendor", "");
 
    /**
     * <p>

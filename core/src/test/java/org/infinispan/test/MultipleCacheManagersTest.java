@@ -198,7 +198,7 @@ public abstract class MultipleCacheManagersTest extends AbstractCacheTest {
    }
 
    protected void createCluster(GlobalConfigurationBuilder globalBuilder, ConfigurationBuilder builder, int count) {
-      for (int i = 0; i < count; i++) addClusterEnabledCacheManager(globalBuilder, builder);
+      for (int i = 0; i < count; i++) addClusterEnabledCacheManager(new GlobalConfigurationBuilder().read(globalBuilder.build()), builder);
    }
 
    protected void defineConfigurationOnAllManagers(String cacheName, ConfigurationBuilder b) {

@@ -2,8 +2,17 @@ package org.infinispan.distexec.mapreduce;
 
 import static org.infinispan.factories.KnownComponentNames.CACHE_MARSHALLER;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Set;
+import java.util.UUID;
 import java.util.concurrent.Callable;
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.ExecutionException;
@@ -39,6 +48,7 @@ import org.infinispan.remoting.responses.SuccessfulResponse;
 import org.infinispan.remoting.rpc.RpcManager;
 import org.infinispan.remoting.rpc.RpcOptionsBuilder;
 import org.infinispan.remoting.transport.Address;
+import org.infinispan.security.AuthorizationManager;
 import org.infinispan.security.AuthorizationPermission;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
@@ -204,9 +214,10 @@ public class MapReduceTask<KIn, VIn, KOut, VOut> {
       ensureProperCacheState(masterCacheNode.getAdvancedCache());
       this.cache = masterCacheNode.getAdvancedCache();
       this.keys = new LinkedList<KIn>();
-      this.marshaller = cache.getComponentRegistry().getComponent(StreamingMarshaller.class, CACHE_MARSHALLER);
-      this.mapReduceManager = cache.getComponentRegistry().getComponent(MapReduceManager.class);
-      this.cancellationService = cache.getComponentRegistry().getComponent(CancellationService.class);
+      ComponentRegistry componentRegistry = SecurityActions.getCacheComponentRegistry(cache);
+      this.marshaller = componentRegistry.getComponent(StreamingMarshaller.class, CACHE_MARSHALLER);
+      this.mapReduceManager = componentRegistry.getComponent(MapReduceManager.class);
+      this.cancellationService = componentRegistry.getComponent(CancellationService.class);
       this.taskId = UUID.randomUUID();
       if (useIntermediateSharedCache) {
          this.customIntermediateCacheName = DEFAULT_TMP_CACHE_CONFIGURATION_NAME;
@@ -216,9 +227,9 @@ public class MapReduceTask<KIn, VIn, KOut, VOut> {
       this.distributeReducePhase = distributeReducePhase;
       this.useIntermediateSharedCache = useIntermediateSharedCache;
       this.cancellableTasks = Collections.synchronizedList(new ArrayList<CancellableTaskPart>());
-      this.clusteringDependentLogic = cache.getComponentRegistry().getComponent(ClusteringDependentLogic.class);
-      this.isLocalOnly = cache.getRpcManager() == null;
-      this.rpcOptionsBuilder = isLocalOnly ? null : new RpcOptionsBuilder(cache.getRpcManager().getDefaultRpcOptions(true));
+      this.clusteringDependentLogic = componentRegistry.getComponent(ClusteringDependentLogic.class);
+      this.isLocalOnly = SecurityActions.getCacheRpcManager(cache) == null;
+      this.rpcOptionsBuilder = isLocalOnly ? null : new RpcOptionsBuilder(SecurityActions.getCacheRpcManager(cache).getDefaultRpcOptions(true));
    }
 
    /**
@@ -617,7 +628,7 @@ public class MapReduceTask<KIn, VIn, KOut, VOut> {
 
    protected void executeMapPhaseWithLocalReduction(Map<KOut, VOut> reducedResult) throws InterruptedException,
             ExecutionException {
-      RpcManager rpc = cache.getRpcManager();
+      RpcManager rpc = SecurityActions.getCacheRpcManager(cache);
       MapCombineCommand<KIn, VIn, KOut, VOut> cmd = null;
       Map<KOut, List<VOut>> mapPhasesResult = new HashMap<KOut, List<VOut>>();
       List<MapTaskPart<Map<KOut, List<VOut>>>> futures = new ArrayList<MapTaskPart<Map<KOut, List<VOut>>>>();
@@ -774,7 +785,7 @@ public class MapReduceTask<KIn, VIn, KOut, VOut> {
    private MapCombineCommand<KIn, VIn, KOut, VOut> buildMapCombineCommand(
             String taskId, Mapper<KIn, VIn, KOut, VOut> m, Reducer<KOut, VOut> r, String intermediateCacheName,
             Collection<KIn> keys, boolean reducePhaseDistributed, boolean emitCompositeIntermediateKeys){
-      ComponentRegistry registry = cache.getComponentRegistry();
+      ComponentRegistry registry = SecurityActions.getCacheComponentRegistry(cache);
       CommandsFactory factory = registry.getComponent(CommandsFactory.class);
       MapCombineCommand<KIn, VIn, KOut, VOut> c = factory.buildMapCombineCommand(taskId, m, r, keys);
       c.setReducePhaseDistributed(reducePhaseDistributed);
@@ -886,9 +897,10 @@ public class MapReduceTask<KIn, VIn, KOut, VOut> {
       return Util.cloneWithMarshaller(marshaller, reducer);
    }
 
-   private void ensureAccessPermissions(AdvancedCache<?, ?> cache) {
-      if (cache.getCacheConfiguration().security().authorization().enabled()) {
-         cache.getAuthorizationManager().checkPermission(AuthorizationPermission.EXEC);
+   private void ensureAccessPermissions(final AdvancedCache<?, ?> cache) {
+      AuthorizationManager authorizationManager = SecurityActions.getCacheAuthorizationManager(cache);
+      if (authorizationManager != null) {
+         authorizationManager.checkPermission(AuthorizationPermission.EXEC);
       }
    }
 
@@ -897,7 +909,7 @@ public class MapReduceTask<KIn, VIn, KOut, VOut> {
       if (cache.getStatus() != ComponentStatus.RUNNING)
          throw log.invalidCacheState(cache.getStatus().toString());
 
-      if (cache.getRpcManager() != null && cache.getDistributionManager() == null) {
+      if (SecurityActions.getCacheRpcManager(cache) != null && SecurityActions.getCacheDistributionManager(cache) == null) {
          throw log.requireDistOrReplCache(cache.getCacheConfiguration().clustering().cacheModeString());
       }
    }
@@ -1138,7 +1150,7 @@ public class MapReduceTask<KIn, VIn, KOut, VOut> {
             setFuture(futureTask);
             mapReduceManager.getExecutorService().submit(futureTask);
          } else {
-            RpcManager rpc = cache.getRpcManager();
+            RpcManager rpc = SecurityActions.getCacheRpcManager(cache);
             try {
                log.debugf("Invoking %s on %s", mcc, getExecutionTarget());
                rpc.invokeRemotelyInFuture(Collections.singleton(getExecutionTarget()), mcc, rpcOptionsBuilder.build(),

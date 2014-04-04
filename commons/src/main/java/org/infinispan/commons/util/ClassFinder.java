@@ -22,8 +22,8 @@ public class ClassFinder {
    
    private static final Log log = LogFactory.getLog(ClassFinder.class); 
    
-   public static final String PATH = SysPropertyActions.getProperty("java.class.path") + File.pathSeparator
-            + SysPropertyActions.getProperty("surefire.test.class.path");
+   public static final String PATH = SecurityActions.getProperty("java.class.path") + File.pathSeparator
+            + SecurityActions.getProperty("surefire.test.class.path");
 
    public static List<Class<?>> withAnnotationPresent(List<Class<?>> classes, Class<? extends Annotation> c) {
       List<Class<?>> clazzes = new ArrayList<Class<?>>(classes.size());
