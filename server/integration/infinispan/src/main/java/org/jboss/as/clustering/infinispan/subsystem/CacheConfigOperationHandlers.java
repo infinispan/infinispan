@@ -60,11 +60,14 @@ import org.jboss.msc.service.ServiceController;
 public class CacheConfigOperationHandlers {
 
     static final OperationStepHandler TRANSPORT_ADD = new CacheConfigAdd(TRANSPORT_ATTRIBUTES);
+    static final OperationStepHandler CONTAINER_SECURITY_ADD = new CacheConfigAdd();
     static final OperationStepHandler LOCKING_ADD = new CacheConfigAdd(LOCKING_ATTRIBUTES);
     static final OperationStepHandler TRANSACTION_ADD = new CacheConfigAdd(TRANSACTION_ATTRIBUTES);
     static final OperationStepHandler EVICTION_ADD = new CacheConfigAdd(EVICTION_ATTRIBUTES);
     static final OperationStepHandler EXPIRATION_ADD = new CacheConfigAdd(EXPIRATION_ATTRIBUTES);
     static final OperationStepHandler STATE_TRANSFER_ADD = new CacheConfigAdd(STATE_TRANSFER_ATTRIBUTES);
+    static final OperationStepHandler CACHE_SECURITY_ADD = new CacheConfigAdd();
+
 
     static final OperationStepHandler LOADER_ADD = new CacheLoaderAdd();
     static final OperationStepHandler LOADER_PROPERTY_ADD = new CacheConfigAdd(new AttributeDefinition[]{LoaderPropertyResource.VALUE});
@@ -89,6 +92,10 @@ public class CacheConfigOperationHandlers {
      */
     public static class CacheConfigAdd extends AbstractAddStepHandler  {
         private final AttributeDefinition[] attributes;
+
+        CacheConfigAdd() {
+            this.attributes = new AttributeDefinition[0];
+        }
 
         CacheConfigAdd(final AttributeDefinition[] attributes) {
             this.attributes = attributes;

@@ -32,6 +32,8 @@ public class ModelKeys {
     static final String ALIASES = "aliases";
     static final String APPEND_CACHE_NAME_TO_PATH = "append-cache-name-to-path";
     static final String ASYNC_MARSHALLING = "async-marshalling";
+    static final String AUTHORIZATION = "authorization";
+    static final String AUTHORIZATION_NAME = "AUTHORIZATION";
     static final String AWAIT_INITIAL_TRANSFER = "await-initial-transfer";
     static final String BACKUP = "backup";
     static final String BACKUP_FAILURE_POLICY = "failure-policy";
@@ -111,6 +113,7 @@ public class ModelKeys {
     static final String LOCKING = "locking";
     static final String LOCKING_NAME = "LOCKING";
     static final String MACHINE = "machine";
+    static final String MAPPER = "mapper";
     static final String MARSHALLER = "marshaller";
     static final String MAX_CONNECTIONS_PER_HOST = "max-connections-per-host";
     static final String MAX_ENTRIES = "max-entries";
@@ -124,6 +127,7 @@ public class ModelKeys {
     static final String OWNERS = "owners";
     static final String PASSIVATION = "passivation";
     static final String PATH = "path";
+    static final String PERMISSIONS = "permissions";
     static final String PREFIX = "prefix";
     static final String PRELOAD = "preload";
     static final String PROPERTY = "property";
@@ -145,6 +149,10 @@ public class ModelKeys {
     static final String REPLICATION_QUEUE_EXECUTOR = "replication-queue-executor";
     static final String REST_STORE = "rest-store";
     static final String REST_STORE_NAME = "REST_STORE";
+    static final String ROLE = "role";
+    static final String ROLES = "roles";
+    static final String SECURITY = "security";
+    static final String SECURITY_NAME = "SECURITY";
     static final String SEGMENTS = "segments";
     static final String CAPACITY_FACTOR = "capacity-factor";
     static final String SHARED = "shared";

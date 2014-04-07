@@ -9,27 +9,11 @@ import org.infinispan.commons.configuration.Builder;
  * @since 7.0
  */
 public class SecurityConfigurationBuilder extends AbstractConfigurationChildBuilder implements SecurityConfigurationChildBuilder, Builder<SecurityConfiguration> {
-   private AuthorizationConfigurationBuilder authorizationBuilder;
-   private boolean enabled = false;
+   private final AuthorizationConfigurationBuilder authorizationBuilder;
 
    public SecurityConfigurationBuilder(ConfigurationBuilder builder) {
       super(builder);
       authorizationBuilder = new AuthorizationConfigurationBuilder(this);
-   }
-
-   public SecurityConfigurationBuilder disable() {
-      enabled = false;
-      return this;
-   }
-
-   public SecurityConfigurationBuilder enable() {
-      enabled = true;
-      return this;
-   }
-
-   public SecurityConfigurationBuilder enabled(boolean enabled) {
-      this.enabled = enabled;
-      return this;
    }
 
    @Override
@@ -38,12 +22,11 @@ public class SecurityConfigurationBuilder extends AbstractConfigurationChildBuil
 
    @Override
    public SecurityConfiguration create() {
-      return new SecurityConfiguration(authorizationBuilder.create(), enabled);
+      return new SecurityConfiguration(authorizationBuilder.create());
    }
 
    @Override
    public SecurityConfigurationBuilder read(SecurityConfiguration template) {
-      this.enabled = template.enabled();
       this.authorizationBuilder.read(template.authorization());
       return this;
    }

@@ -217,7 +217,7 @@ public class GlobalConfigurationBuilder implements GlobalConfigurationChildBuild
    public void validate() {
       for (Builder<?> validatable : asList(evictionThreadPool, listenerThreadPool,
             replicationQueueThreadPool, persistenceThreadPool,
-            globalJmxStatistics, transport, serialization, shutdown, site)) {
+            globalJmxStatistics, transport, security, serialization, shutdown, site)) {
          validatable.validate();
       }
       for (Builder<?> m : modules) {

@@ -543,7 +543,7 @@ public class DefaultCacheManager implements EmbeddedCacheManager {
                return null; //signal that the cache was created by someone else
             }
             c = getConfiguration(cacheName);
-            if (c.security().enabled()) {
+            if (c.security().authorization().enabled()) {
                // Don't even attempt to wire anything if we don't have LIFECYCLE privileges
                AuthorizationHelper.checkPermission(globalConfiguration.security(), c.security().authorization(), AuthorizationPermission.LIFECYCLE);
             }
@@ -587,6 +587,9 @@ public class DefaultCacheManager implements EmbeddedCacheManager {
    @Override
    public void start() {
       AuthorizationHelper.checkPermission(globalConfiguration.security(), AuthorizationPermission.LIFECYCLE);
+      if (globalConfiguration.security().authorization().enabled() && System.getSecurityManager() == null) {
+         log.authorizationEnabledWithoutSecurityManager();
+      }
       globalComponentRegistry.getComponent(CacheManagerJmxRegistration.class).start();
       String clusterName = globalConfiguration.transport().clusterName();
       String nodeName = globalConfiguration.transport().nodeName();

@@ -51,20 +51,31 @@ public enum AuthorizationPermission {
    NONE(0);
 
    private final int mask;
+   private final SecurityPermission securityPermission;
 
    AuthorizationPermission() {
       this.mask = 1 << ordinal();
+      securityPermission = new SecurityPermission(this);
    }
 
    AuthorizationPermission(int mask) {
       this.mask = mask;
+      securityPermission = new SecurityPermission(this);
    }
 
    public int getMask() {
       return mask;
    }
 
+   public SecurityPermission getSecurityPermission() {
+      return securityPermission;
+   }
+
    public boolean matches(int mask) {
       return ((this.mask & mask) == this.mask);
+   }
+
+   public boolean implies(AuthorizationPermission that) {
+      return ((this.mask & that.mask) == that.mask);
    }
 }

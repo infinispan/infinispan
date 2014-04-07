@@ -77,6 +77,7 @@ import org.infinispan.remoting.ReplicationQueue;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.remoting.transport.Transport;
 import org.infinispan.remoting.transport.jgroups.JGroupsTransport;
+import org.infinispan.security.impl.SecureCacheImpl;
 import org.infinispan.statetransfer.StateTransferManager;
 import org.infinispan.topology.CacheTopology;
 import org.infinispan.topology.DefaultRebalancePolicy;
@@ -181,6 +182,9 @@ public class TestingUtil {
       final int REHASH_TIMEOUT_SECONDS = 180; //Needs to be rather large to prevent sporadic failures on CI
       final long giveup = System.nanoTime() + TimeUnit.SECONDS.toNanos(REHASH_TIMEOUT_SECONDS);
       for (Cache c : caches) {
+         if (c instanceof SecureCacheImpl) {
+            c = (Cache) extractField(SecureCacheImpl.class, c, "delegate");
+         }
          StateTransferManager stateTransferManager = extractComponent(c, StateTransferManager.class);
          DefaultRebalancePolicy rebalancePolicy = (DefaultRebalancePolicy) TestingUtil.extractGlobalComponent(c.getCacheManager(), RebalancePolicy.class);
          Address cacheAddress = c.getAdvancedCache().getRpcManager().getAddress();

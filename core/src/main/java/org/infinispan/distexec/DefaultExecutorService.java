@@ -23,6 +23,7 @@ import org.infinispan.commons.util.Util;
 import org.infinispan.commons.util.concurrent.FutureListener;
 import org.infinispan.commons.util.concurrent.NotifyingFuture;
 import org.infinispan.commons.util.concurrent.NotifyingFutureImpl;
+import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.distexec.spi.DistributedTaskLifecycleService;
 import org.infinispan.distribution.DistributionManager;
 import org.infinispan.factories.ComponentRegistry;
@@ -35,6 +36,9 @@ import org.infinispan.remoting.rpc.ResponseMode;
 import org.infinispan.remoting.rpc.RpcManager;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.remoting.transport.TopologyAwareAddress;
+import org.infinispan.security.AuthorizationManager;
+import org.infinispan.security.AuthorizationPermission;
+import org.infinispan.security.impl.AuthorizationHelper;
 import org.infinispan.util.TimeService;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
@@ -160,13 +164,13 @@ public class DefaultExecutorService extends AbstractExecutorService implements D
          throw new IllegalArgumentException("Can not use null instance of ExecutorService");
       else if (localExecutorService.isShutdown())
          throw new IllegalArgumentException("Can not use an instance of ExecutorService which is shutdown");
-
+      ensureAccessPermissions(masterCacheNode.getAdvancedCache());
       ensureProperCacheState(masterCacheNode.getAdvancedCache());
 
       this.cache = masterCacheNode.getAdvancedCache();
-      ComponentRegistry registry = cache.getComponentRegistry();
+      ComponentRegistry registry = AuthorizationHelper.getCacheComponentRegistry(cache);
 
-      this.rpc = cache.getRpcManager();
+      this.rpc = AuthorizationHelper.getCacheRpcManager(cache);
       this.invoker = registry.getComponent(InterceptorChain.class);
       this.factory = registry.getComponent(CommandsFactory.class);
       this.marshaller = registry.getComponent(StreamingMarshaller.class, CACHE_MARSHALLER);
@@ -179,7 +183,8 @@ public class DefaultExecutorService extends AbstractExecutorService implements D
 
    @Override
    public <T> DistributedTaskBuilder<T> createDistributedTaskBuilder(Callable<T> callable) {
-      long to = cache.getCacheConfiguration().clustering().sync().replTimeout();
+      Configuration cacheConfiguration = AuthorizationHelper.getCacheConfiguration(cache);
+      long to = cacheConfiguration.clustering().sync().replTimeout();
       DistributedTaskBuilder<T> dtb = new DefaultDistributedTaskBuilder<T>(to);
       dtb.callable(callable);
       return dtb;
@@ -623,6 +628,13 @@ public class DefaultExecutorService extends AbstractExecutorService implements D
          }
       }
       return result;
+   }
+
+   private void ensureAccessPermissions(final AdvancedCache<?, ?> cache) {
+      AuthorizationManager authorizationManager = AuthorizationHelper.getCacheAuthorizationManager(cache);
+      if (authorizationManager != null) {
+         authorizationManager.checkPermission(AuthorizationPermission.EXEC);
+      }
    }
 
    private void ensureProperCacheState(AdvancedCache<?, ?> cache) throws NullPointerException,

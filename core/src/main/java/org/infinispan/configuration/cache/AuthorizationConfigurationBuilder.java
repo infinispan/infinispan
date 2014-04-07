@@ -12,11 +12,28 @@ import org.infinispan.commons.configuration.Builder;
  * @since 7.0
  */
 public class AuthorizationConfigurationBuilder extends AbstractSecurityConfigurationChildBuilder implements Builder<AuthorizationConfiguration> {
-   private Set<String> roles = new HashSet<String>();
+   private final Set<String> roles = new HashSet<String>();
+   private boolean enabled = false;
 
    public AuthorizationConfigurationBuilder(SecurityConfigurationBuilder securityBuilder) {
       super(securityBuilder);
    }
+
+   public AuthorizationConfigurationBuilder disable() {
+      enabled = false;
+      return this;
+   }
+
+   public AuthorizationConfigurationBuilder enable() {
+      enabled = true;
+      return this;
+   }
+
+   public AuthorizationConfigurationBuilder enabled(boolean enabled) {
+      this.enabled = enabled;
+      return this;
+   }
+
 
    public AuthorizationConfigurationBuilder role(String name) {
       roles.add(name);
@@ -29,11 +46,12 @@ public class AuthorizationConfigurationBuilder extends AbstractSecurityConfigura
 
    @Override
    public AuthorizationConfiguration create() {
-      return new AuthorizationConfiguration(roles);
+      return new AuthorizationConfiguration(enabled, roles);
    }
 
    @Override
    public Builder<?> read(AuthorizationConfiguration template) {
+      this.enabled = template.enabled();
       this.roles.clear();
       this.roles.addAll(template.roles());
 

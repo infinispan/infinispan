@@ -15,11 +15,10 @@ import org.jboss.as.controller.descriptions.StandardResourceDescriptionResolver;
  */
 public class InfinispanResourceDescriptionResolver extends StandardResourceDescriptionResolver {
 
-    private Map<String, String> sharedAttributeResolver = new HashMap<String, String>();
+    private static final Map<String, String> sharedAttributeResolver;
 
     public InfinispanResourceDescriptionResolver(String keyPrefix, String bundleBaseName, ClassLoader bundleLoader) {
         super(keyPrefix, bundleBaseName, bundleLoader, true, false);
-        initMap();
     }
 
     @Override
@@ -91,7 +90,8 @@ public class InfinispanResourceDescriptionResolver extends StandardResourceDescr
         return sb.toString();
     }
 
-    private void initMap() {
+    static {
+        sharedAttributeResolver = new HashMap<String, String>();
         // shared cache attributes
         sharedAttributeResolver.put(CacheResource.BATCHING.getName(), "cache");
         sharedAttributeResolver.put(CacheResource.CACHE_MODULE.getName(), "cache");
@@ -167,6 +167,7 @@ public class InfinispanResourceDescriptionResolver extends StandardResourceDescr
 
        // shared children - this avoids having to describe the children for each parent resource
         sharedAttributeResolver.put(ModelKeys.TRANSPORT, null);
+        sharedAttributeResolver.put(ModelKeys.SECURITY, "cache");
         sharedAttributeResolver.put(ModelKeys.LOCKING, null);
         sharedAttributeResolver.put(ModelKeys.TRANSACTION, null);
         sharedAttributeResolver.put(ModelKeys.EVICTION, null);
@@ -187,7 +188,6 @@ public class InfinispanResourceDescriptionResolver extends StandardResourceDescr
         sharedAttributeResolver.put(ModelKeys.PROPERTY, null);
         sharedAttributeResolver.put(ModelKeys.IMPLEMENTATION, null);
         sharedAttributeResolver.put(ModelKeys.COMPRESSION, null);
-        sharedAttributeResolver.put(ModelKeys.EXPIRATION, null);
         sharedAttributeResolver.put(ModelKeys.LEVELDB_STORE, null);
     }
 }

@@ -10,7 +10,10 @@ import org.infinispan.commons.marshall.AdvancedExternalizer;
 import org.infinispan.commons.marshall.Marshaller;
 import org.infinispan.commons.util.Util;
 import org.infinispan.configuration.cache.*;
+import org.infinispan.configuration.global.GlobalAuthorizationConfigurationBuilder;
 import org.infinispan.configuration.global.GlobalConfigurationBuilder;
+import org.infinispan.configuration.global.GlobalRoleConfigurationBuilder;
+import org.infinispan.configuration.global.GlobalSecurityConfigurationBuilder;
 import org.infinispan.configuration.global.ShutdownHookBehavior;
 import org.infinispan.configuration.global.ThreadPoolConfiguration;
 import org.infinispan.configuration.global.ThreadPoolConfigurationBuilder;
@@ -26,6 +29,7 @@ import org.infinispan.jmx.MBeanServerLookup;
 import org.infinispan.persistence.cluster.ClusterLoader;
 import org.infinispan.persistence.file.SingleFileStore;
 import org.infinispan.persistence.spi.CacheLoader;
+import org.infinispan.security.PrincipalRoleMapper;
 import org.infinispan.transaction.LockingMode;
 import org.infinispan.transaction.TransactionProtocol;
 import org.infinispan.transaction.lookup.TransactionManagerLookup;
@@ -35,6 +39,7 @@ import org.infinispan.util.logging.LogFactory;
 
 import javax.xml.stream.XMLStreamConstants;
 import javax.xml.stream.XMLStreamException;
+
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
@@ -59,9 +64,9 @@ public class Parser70 implements ConfigurationParser {
 
    private static final Log log = LogFactory.getLog(Parser70.class);
 
-   private Map<String, DefaultThreadFactory> threadFactories = new HashMap<String, DefaultThreadFactory>();
-   private Map<String, ThreadPoolConfigurationBuilder> threadPools = new HashMap<String, ThreadPoolConfigurationBuilder>();
-   private Map<String, String> threadPoolToThreadFactory = new HashMap<String, String>();
+   private final Map<String, DefaultThreadFactory> threadFactories = new HashMap<String, DefaultThreadFactory>();
+   private final Map<String, ThreadPoolConfigurationBuilder> threadPools = new HashMap<String, ThreadPoolConfigurationBuilder>();
+   private final Map<String, String> threadPoolToThreadFactory = new HashMap<String, String>();
 
    public Parser70() {
    }
@@ -511,11 +516,88 @@ public class Parser70 implements ConfigurationParser {
                parseJmx(reader, holder);
                break;
             }
+            case SECURITY: {
+               parseGlobalSecurity(reader, holder);
+               break;
+            }
             default: {
                throw ParseUtils.unexpectedElement(reader);
             }
          }
       }
+   }
+
+   private void parseGlobalSecurity(XMLExtendedStreamReader reader, ConfigurationBuilderHolder holder) throws XMLStreamException {
+      GlobalSecurityConfigurationBuilder builder = holder.getGlobalConfigurationBuilder().security();
+      ParseUtils.requireNoAttributes(reader);
+      while (reader.hasNext() && (reader.nextTag() != XMLStreamConstants.END_ELEMENT)) {
+         Element element = Element.forName(reader.getLocalName());
+         switch (element) {
+            case AUTHORIZATION: {
+               parseGlobalAuthorization(reader, holder);
+               break;
+            }
+            default: {
+               throw ParseUtils.unexpectedElement(reader);
+            }
+         }
+      }
+   }
+
+   private void parseGlobalAuthorization(XMLExtendedStreamReader reader, ConfigurationBuilderHolder holder) throws XMLStreamException {
+      GlobalAuthorizationConfigurationBuilder builder = holder.getGlobalConfigurationBuilder().security().authorization();
+      for (int i = 0; i < reader.getAttributeCount(); i++) {
+         String value = replaceProperties(reader.getAttributeValue(i));
+         Attribute attribute = Attribute.forName(reader.getAttributeLocalName(i));
+         switch (attribute) {
+            case ENABLED: {
+               builder.enabled(Boolean.parseBoolean(value));
+               break;
+            }
+            case MAPPER: {
+               builder.principalRoleMapper(Util.<PrincipalRoleMapper>getInstance(value, holder.getClassLoader()));
+               break;
+            }
+            default: {
+               throw ParseUtils.unexpectedAttribute(reader, i);
+            }
+         }
+      }
+      while (reader.hasNext() && (reader.nextTag() != XMLStreamConstants.END_ELEMENT)) {
+         Element element = Element.forName(reader.getLocalName());
+         switch (element) {
+            case ROLE: {
+               parseGlobalRole(reader, builder);
+               break;
+            }
+            default: {
+               throw ParseUtils.unexpectedElement(reader);
+            }
+         }
+      }
+   }
+
+   private void parseGlobalRole(XMLExtendedStreamReader reader, GlobalAuthorizationConfigurationBuilder builder) throws XMLStreamException {
+      String[] attributes = ParseUtils.requireAttributes(reader, Attribute.NAME.getLocalName(), Attribute.PERMISSIONS.getLocalName());
+      GlobalRoleConfigurationBuilder role = builder.role(attributes[0]);
+      for(String permission : attributes[1].split("\\s+")) {
+         role.permission(permission);
+      }
+      for (int i = 0; i < reader.getAttributeCount(); i++) {
+         ParseUtils.requireNoNamespaceAttribute(reader, i);
+         Attribute attribute = Attribute.forName(reader.getAttributeLocalName(i));
+         switch (attribute) {
+            case NAME:
+            case PERMISSIONS: {
+               // Already handled
+               break;
+            }
+            default: {
+               throw ParseUtils.unexpectedAttribute(reader, i);
+            }
+         }
+      }
+      ParseUtils.requireNoContent(reader);
    }
 
    private void parseJmx(XMLExtendedStreamReader reader, ConfigurationBuilderHolder holder) throws XMLStreamException {
@@ -840,6 +922,46 @@ public class Parser70 implements ConfigurationParser {
       ParseUtils.requireNoContent(reader);
    }
 
+   private void parseCacheSecurity(XMLExtendedStreamReader reader, ConfigurationBuilder builder) throws XMLStreamException {
+      SecurityConfigurationBuilder securityBuilder = builder.security();
+      ParseUtils.requireNoAttributes(reader);
+      while (reader.hasNext() && (reader.nextTag() != XMLStreamConstants.END_ELEMENT)) {
+         Element element = Element.forName(reader.getLocalName());
+         switch (element) {
+            case AUTHORIZATION: {
+               parseCacheAuthorization(reader, securityBuilder.authorization());
+               break;
+            }
+            default: {
+               throw ParseUtils.unexpectedElement(reader);
+            }
+         }
+      }
+   }
+
+   private void parseCacheAuthorization(XMLExtendedStreamReader reader, AuthorizationConfigurationBuilder authzBuilder) throws XMLStreamException {
+      for (int i = 0; i < reader.getAttributeCount(); i++) {
+         String value = replaceProperties(reader.getAttributeValue(i));
+         Attribute attribute = Attribute.forName(reader.getAttributeLocalName(i));
+         switch (attribute) {
+            case ENABLED: {
+               authzBuilder.enabled(Boolean.parseBoolean(value));
+               break;
+            }
+            case ROLES: {
+               for(String role : value.split("\\s+")) {
+                  authzBuilder.role(role);
+               }
+               break;
+            }
+            default: {
+               throw ParseUtils.unexpectedAttribute(reader, i);
+            }
+         }
+      }
+      ParseUtils.requireNoContent(reader);
+   }
+
    protected void parseCacheElement(XMLExtendedStreamReader reader, Element element, ConfigurationBuilderHolder holder) throws XMLStreamException {
       ConfigurationBuilder builder = holder.getCurrentConfigurationBuilder();
       switch (element) {
@@ -897,6 +1019,10 @@ public class Parser70 implements ConfigurationParser {
          }
          case BACKUP_FOR: {
             this.parseBackupFor(reader, builder);
+            break;
+         }
+         case SECURITY: {
+            this.parseCacheSecurity(reader, builder);
             break;
          }
          default: {

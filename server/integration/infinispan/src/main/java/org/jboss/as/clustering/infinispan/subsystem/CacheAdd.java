@@ -49,6 +49,7 @@ import org.infinispan.transaction.LockingMode;
 import org.infinispan.transaction.tm.BatchModeTransactionManager;
 import org.infinispan.util.concurrent.IsolationLevel;
 import org.jboss.as.clustering.infinispan.InfinispanMessages;
+import org.jboss.as.clustering.infinispan.subsystem.CacheContainerAdd.Authorization;
 import org.jboss.as.controller.AbstractAddStepHandler;
 import org.jboss.as.controller.AttributeDefinition;
 import org.jboss.as.controller.OperationContext;
@@ -83,6 +84,7 @@ import org.jboss.tm.XAResourceRecoveryRegistry;
 
 import javax.transaction.TransactionManager;
 import javax.transaction.TransactionSynchronizationRegistry;
+
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
@@ -499,6 +501,20 @@ public abstract class CacheAdd extends AbstractAddStepHandler {
                     builder.compatibility().marshaller(marshallerClass.newInstance());
                 } catch (Exception e) {
                     throw InfinispanMessages.MESSAGES.invalidCompatibilityMarshaller(e, marshaller);
+                }
+            }
+        }
+
+        if (cache.hasDefined(ModelKeys.SECURITY) && cache.get(ModelKeys.SECURITY, ModelKeys.SECURITY_NAME).isDefined()) {
+            ModelNode securityModel = cache.get(ModelKeys.SECURITY, ModelKeys.SECURITY_NAME);
+
+            if (securityModel.hasDefined(ModelKeys.AUTHORIZATION) && securityModel.get(ModelKeys.AUTHORIZATION).hasDefined(ModelKeys.AUTHORIZATION_NAME)) {
+                ModelNode authzModel = securityModel.get(ModelKeys.AUTHORIZATION, ModelKeys.AUTHORIZATION_NAME);
+
+                AuthorizationConfigurationBuilder authzBuilder = builder.security().authorization();
+                authzBuilder.enabled(CacheAuthorizationResource.ENABLED.resolveModelAttribute(context, authzModel).asBoolean());
+                for(ModelNode role : CacheAuthorizationResource.ROLES.resolveModelAttribute(context, authzModel).asList()) {
+                    authzBuilder.role(role.asString());
                 }
             }
         }
