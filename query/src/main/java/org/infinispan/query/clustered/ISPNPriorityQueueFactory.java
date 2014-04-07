@@ -1,14 +1,17 @@
 package org.infinispan.query.clustered;
 
+import java.io.IOException;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Method;
 
+import org.apache.lucene.search.FieldValueHitQueue;
 import org.apache.lucene.search.ScoreDoc;
 import org.apache.lucene.search.SortField;
 import org.apache.lucene.util.PriorityQueue;
 import org.hibernate.search.SearchException;
-import org.infinispan.commons.util.ReflectionUtil;
+import org.infinispan.query.indexmanager.InfinispanCommandsBackend;
+import org.infinispan.query.logging.Log;
+import org.infinispan.util.logging.LogFactory;
 
 /**
  * ISPNPriorityQueueFactory.
@@ -21,6 +24,8 @@ import org.infinispan.commons.util.ReflectionUtil;
  */
 class ISPNPriorityQueueFactory {
 
+   private static final Log log = LogFactory.getLog(ISPNPriorityQueueFactory.class, Log.class);
+
    private ISPNPriorityQueueFactory() {
    }
 
@@ -30,26 +35,19 @@ class ISPNPriorityQueueFactory {
     *
     * @param size
     * @param sort
-    * @return a PriorityQueue<FieldDoc> instance
+    * @return a PriorityQueue<ScoreDoc> instance
+    * @throws IOException 
     */
    public static PriorityQueue<ScoreDoc> getFieldDocSortedHitQueue(int size, SortField[] sort) {
-      String className = "org.apache.lucene.search.FieldDocSortedHitQueue";
-      Object[] constructorArgument = new Object[]{ size };
-      Class<?>[] types = new Class[]{ int.class };
-      PriorityQueue<ScoreDoc> queue = buildPriorityQueueSafe(className, types, constructorArgument);
-      Method[] methods = queue.getClass().getDeclaredMethods();
-
-      for (Method method : methods) {
-         if (method.getName().equals("setFields")) {
-            Object[] parameters = new Object[1];
-            parameters[0] = sort;
-            ReflectionUtil.invokeAccessibly(queue, method, parameters);
-            return queue;
-         }
+      //The Lucene API is hiding the generic type and forcing a different type compatibility, so we need
+      //to avoid generics usage.
+      FieldValueHitQueue queue;
+      try {
+         queue = FieldValueHitQueue.create(sort, size);
+      } catch (IOException e) {
+         throw log.unexpectedIOException(e);
       }
-
-      //The setFields should have been found
-      throw new SearchException( "Method org.apache.lucene.search.FieldDocSortedHitQueue.setFields not found. This version of Lucene is not compatible." );
+      return queue;
    }
 
    /**
