@@ -40,12 +40,14 @@ import org.infinispan.query.backend.LocalQueryInterceptor;
 import org.infinispan.query.backend.QueryInterceptor;
 import org.infinispan.query.backend.SearchableCacheConfiguration;
 import org.infinispan.query.clustered.QueryBox;
+import org.infinispan.query.impl.externalizers.ClusteredTopDocsExternalizer;
 import org.infinispan.query.impl.externalizers.ExternalizerIds;
 import org.infinispan.query.impl.externalizers.LuceneBooleanQueryExternalizer;
 import org.infinispan.query.impl.externalizers.LuceneSortExternalizer;
 import org.infinispan.query.impl.externalizers.LuceneSortFieldExternalizer;
 import org.infinispan.query.impl.externalizers.LuceneTermExternalizer;
 import org.infinispan.query.impl.externalizers.LuceneTermQueryExternalizer;
+import org.infinispan.query.impl.externalizers.LuceneTopDocsExternalizer;
 import org.infinispan.query.impl.massindex.MapReduceMassIndexer;
 import org.infinispan.query.logging.Log;
 import org.infinispan.query.spi.ProgrammaticSearchMappingProvider;
@@ -294,6 +296,8 @@ public class LifecycleManager extends AbstractModuleLifecycle {
       externalizerMap.put(ExternalizerIds.LUCENE_TERM, new LuceneTermExternalizer());
       externalizerMap.put(ExternalizerIds.LUCENE_SORT, new LuceneSortExternalizer());
       externalizerMap.put(ExternalizerIds.LUCENE_SORT_FIELD, new LuceneSortFieldExternalizer());
+      externalizerMap.put(ExternalizerIds.CLUSTERED_QUERY_TOPDOCS, new ClusteredTopDocsExternalizer());
+      externalizerMap.put(ExternalizerIds.LUCENE_TOPDOCS, new LuceneTopDocsExternalizer());
    }
 
 }

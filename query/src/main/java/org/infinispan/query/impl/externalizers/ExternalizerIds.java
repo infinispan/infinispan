@@ -12,6 +12,8 @@ package org.infinispan.query.impl.externalizers;
  */
 public class ExternalizerIds {
 
+   public static final Integer CLUSTERED_QUERY_TOPDOCS = 1600;
+
    public static final Integer LUCENE_QUERY_BOOLEAN = 1650;
 
    public static final Integer LUCENE_QUERY_TERM = 1651;
@@ -21,5 +23,8 @@ public class ExternalizerIds {
    public static final Integer LUCENE_SORT = 1641;
 
    public static final Integer LUCENE_SORT_FIELD = 1642;
+
+   public static final Integer LUCENE_TOPDOCS = 1643;
+
 
 }
