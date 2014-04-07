@@ -319,9 +319,11 @@ public class CommandAwareRpcDispatcher extends RpcDispatcher {
       if (oob || mode != ResponseMode.GET_NONE) msg.setFlag(Message.Flag.DONT_BUNDLE);
       if (rsvp) msg.setFlag(Message.Flag.RSVP);
 
-      //In total order protocol, the sequencer is in the protocol stack so we need to bypass the protocol
+      // The sequencer is in the protocol stack so we need to bypass the protocol when total order is not enabled
+      // Without total order, we also have to prevent the local node from receiving the message.
       if(!totalOrder) {
          msg.setFlag(Message.Flag.NO_TOTAL_ORDER);
+         msg.setTransientFlag(Message.TransientFlag.DONT_LOOPBACK);
       } else {
          msg.clearFlag(Message.Flag.OOB);
       }
@@ -389,16 +391,9 @@ public class CommandAwareRpcDispatcher extends RpcDispatcher {
          buf = marshallCall(marshaller, command);
          RequestOptions opts = new RequestOptions(mode, timeout, false, filter);
 
-         //Only the commands in total order must be received...
-         //For correctness, ispn doesn't need their own message, so add own address to exclusion list
-         opts.setExclusionList(card.getChannel().getAddress());
-
          retval = card.castMessage(dests, constructMessage(buf, null, oob, mode, rsvp, false),opts);
       } else {
          RequestOptions opts = new RequestOptions(mode, timeout);
-
-         //Only the commands in total order must be received...
-         opts.setExclusionList(card.getChannel().getAddress());
 
          if (dests.isEmpty()) return new RspList<Object>();
          buf = marshallCall(marshaller, command);
