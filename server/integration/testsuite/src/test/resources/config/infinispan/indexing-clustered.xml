@@ -15,7 +15,7 @@
                     <transaction mode="NONE" />
                     <indexing index="ALL">
                         <property name="default.directory_provider">infinispan</property>
-                        <property name="lucene_version">LUCENE_36</property>
+                        <property name="lucene_version">LUCENE_48</property>
                     </indexing>
                 </replicated-cache>
             </cache-container>

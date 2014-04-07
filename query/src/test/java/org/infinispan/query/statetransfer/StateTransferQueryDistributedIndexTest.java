@@ -17,7 +17,7 @@ public class StateTransferQueryDistributedIndexTest extends StateTransferQueryIn
       builder.indexing().enable().indexLocalOnly(true)
             .addProperty("default.directory_provider", "infinispan")
             .addProperty("default.indexmanager", "org.infinispan.query.indexmanager.InfinispanIndexManager")
-            .addProperty("lucene_version", "LUCENE_36")
+            .addProperty("lucene_version", "LUCENE_48")
             .addProperty("default.exclusive_index_use", "false");
    }
 }
