@@ -34,7 +34,7 @@ public class LocalCachePerfProgrammaticConfTest extends LocalCacheTest {
             .addProperty("default.indexwriter.ram_buffer_size", "220")
             .addProperty("default.locking_strategy", "native")
             .addProperty("default.sharding_strategy.nbr_of_shards", "6")
-            .addProperty("lucene_version", "LUCENE_36");
+            .addProperty("lucene_version", "LUCENE_48");
 
       enhanceConfig(cfg);
       return TestCacheManagerFactory.createCacheManager(cfg);
