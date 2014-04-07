@@ -21,7 +21,7 @@ public class InfinispanDirectoryNonIndexedValuesTest extends NonIndexedValuesTes
             .addProperty("default.indexmanager", "org.infinispan.query.indexmanager.InfinispanIndexManager")
             .addProperty("default.directory_provider", "infinispan")
             .addProperty("default.exclusive_index_use", "false")
-            .addProperty("lucene_version", "LUCENE_36");
+            .addProperty("lucene_version", "LUCENE_48");
       return TestCacheManagerFactory.createCacheManager(c);
    }
 
