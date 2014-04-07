@@ -26,5 +26,7 @@ public class ExternalizerIds {
 
    public static final Integer LUCENE_TOPDOCS = 1643;
 
+   public static final Integer LUCENE_SCORE_DOC = 1644;
+
 
 }
