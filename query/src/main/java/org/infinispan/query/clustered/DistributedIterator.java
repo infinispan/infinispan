@@ -6,7 +6,6 @@ import org.apache.lucene.search.SortField;
 import org.apache.lucene.util.PriorityQueue;
 import org.infinispan.AdvancedCache;
 import org.infinispan.query.ResultIterator;
-import org.infinispan.commons.util.ReflectionUtil;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -83,7 +82,7 @@ public class DistributedIterator implements ResultIterator {
       if (sort != null) {
          // reversing sort fields to FieldDocSortedHitQueue work properly
          for (SortField sf : sort.getSort()) {
-            boolean reverse = (Boolean) ReflectionUtil.getValue(sf, "reverse");
+            boolean reverse = sf.getReverse();
             SecurityActions.setValue(sf, "reverse", !reverse);
          }
          hq = ISPNPriorityQueueFactory.getFieldDocSortedHitQueue(
