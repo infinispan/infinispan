@@ -18,4 +18,8 @@ public class ExternalizerIds {
 
    public static final Integer LUCENE_TERM = 1640;
 
+   public static final Integer LUCENE_SORT = 1641;
+
+   public static final Integer LUCENE_SORT_FIELD = 1642;
+
 }
