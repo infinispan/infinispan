@@ -16,4 +16,6 @@ public class ExternalizerIds {
 
    public static final Integer LUCENE_QUERY_TERM = 1651;
 
+   public static final Integer LUCENE_TERM = 1640;
+
 }

@@ -42,6 +42,7 @@ import org.infinispan.query.backend.SearchableCacheConfiguration;
 import org.infinispan.query.clustered.QueryBox;
 import org.infinispan.query.impl.externalizers.ExternalizerIds;
 import org.infinispan.query.impl.externalizers.LuceneBooleanQueryExternalizer;
+import org.infinispan.query.impl.externalizers.LuceneTermExternalizer;
 import org.infinispan.query.impl.externalizers.LuceneTermQueryExternalizer;
 import org.infinispan.query.impl.massindex.MapReduceMassIndexer;
 import org.infinispan.query.logging.Log;
@@ -288,6 +289,7 @@ public class LifecycleManager extends AbstractModuleLifecycle {
       Map<Integer,AdvancedExternalizer<?>> externalizerMap = globalCfg.serialization().advancedExternalizers();
       externalizerMap.put(ExternalizerIds.LUCENE_QUERY_BOOLEAN, new LuceneBooleanQueryExternalizer());
       externalizerMap.put(ExternalizerIds.LUCENE_QUERY_TERM, new LuceneTermQueryExternalizer());
+      externalizerMap.put(ExternalizerIds.LUCENE_TERM, new LuceneTermExternalizer());
    }
 
 }
