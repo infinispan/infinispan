@@ -14,4 +14,6 @@ public class ExternalizerIds {
 
    public static final Integer LUCENE_QUERY_BOOLEAN = 1650;
 
+   public static final Integer LUCENE_QUERY_TERM = 1651;
+
 }
