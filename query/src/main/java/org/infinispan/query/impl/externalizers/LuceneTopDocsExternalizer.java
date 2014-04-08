@@ -40,7 +40,7 @@ public class LuceneTopDocsExternalizer extends AbstractExternalizer<TopDocs> {
       final int count = scoreDocs.length;
       UnsignedNumeric.writeUnsignedInt(output, count);
       for (int i=0; i<count; i++) {
-         LuceneScoreDocExternalizer.writeObjectStatic(output, scoreDocs[i]);
+         output.writeObject(scoreDocs[i]);
       }
    }
 
@@ -50,7 +50,7 @@ public class LuceneTopDocsExternalizer extends AbstractExternalizer<TopDocs> {
       final int scoreCount = UnsignedNumeric.readUnsignedInt(input);
       final ScoreDoc[] scoreDocs = new ScoreDoc[scoreCount];
       for (int i=0; i<scoreCount; i++) {
-         scoreDocs[i] = LuceneScoreDocExternalizer.readObjectStatic(input);
+         scoreDocs[i] = (ScoreDoc) input.readObject();
       }
       return new TopDocs(totalHits, scoreDocs, maxScore);
    }

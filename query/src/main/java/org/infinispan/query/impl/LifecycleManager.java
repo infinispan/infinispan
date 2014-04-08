@@ -45,6 +45,7 @@ import org.infinispan.query.dsl.embedded.impl.FilterAndConverter;
 import org.infinispan.query.impl.externalizers.ClusteredTopDocsExternalizer;
 import org.infinispan.query.impl.externalizers.ExternalizerIds;
 import org.infinispan.query.impl.externalizers.LuceneBooleanQueryExternalizer;
+import org.infinispan.query.impl.externalizers.LuceneFieldDocExternalizer;
 import org.infinispan.query.impl.externalizers.LuceneScoreDocExternalizer;
 import org.infinispan.query.impl.externalizers.LuceneSortExternalizer;
 import org.infinispan.query.impl.externalizers.LuceneSortFieldExternalizer;
@@ -306,6 +307,7 @@ public class LifecycleManager extends AbstractModuleLifecycle {
       externalizerMap.put(ExternalizerIds.LUCENE_SORT_FIELD, new LuceneSortFieldExternalizer());
       externalizerMap.put(ExternalizerIds.CLUSTERED_QUERY_TOPDOCS, new ClusteredTopDocsExternalizer());
       externalizerMap.put(ExternalizerIds.LUCENE_TOPDOCS, new LuceneTopDocsExternalizer());
+      externalizerMap.put(ExternalizerIds.LUCENE_FIELD_SCORE_DOC, new LuceneFieldDocExternalizer());
       externalizerMap.put(ExternalizerIds.LUCENE_SCORE_DOC, new LuceneScoreDocExternalizer());
       externalizerMap.put(ExternalizerIds.LUCENE_TOPFIELDDOCS, new LuceneTopFieldDocsExternalizer());
    }
