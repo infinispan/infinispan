@@ -22,6 +22,7 @@
                         purge="false" 
                         shared="false" 
                         singleton="true" name="SINGLETON">
+                        <property name="databaseType">${database.type}</property>
                         <string-keyed-table prefix="${table.prefix}">
                             <id-column name="id" type="${id.column.type}"/>
                             <data-column name="datum" type="${data.column.type}"/>
