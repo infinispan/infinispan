@@ -1350,6 +1350,22 @@
               </xs:documentation>
             </xs:annotation>
           </xs:attribute>
+          <xs:attribute name="max-retries" type="xs:int" default="30">
+            <xs:annotation>
+              <xs:documentation>
+                The maximum number of retries when a push state command fails. A value &lt;= 0 (zero) mean that
+                the command will not retry. Default value is 30.
+              </xs:documentation>
+            </xs:annotation>
+          </xs:attribute>
+          <xs:attribute name="wait-time" type="xs:long" default="2000">
+            <xs:annotation>
+              <xs:documentation>
+                The waiting time (in milliseconds) between each retry. The value should be &gt; 0 (zero). Default
+                value is 2 seconds.
+              </xs:documentation>
+            </xs:annotation>
+          </xs:attribute>
         </xs:complexType>
       </xs:element>
     </xs:sequence>

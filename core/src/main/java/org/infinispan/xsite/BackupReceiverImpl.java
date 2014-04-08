@@ -24,6 +24,7 @@ import org.infinispan.context.Flag;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.context.impl.TxInvocationContext;
 import org.infinispan.remoting.LocalInvocation;
+import org.infinispan.remoting.responses.CacheNotFoundResponse;
 import org.infinispan.remoting.responses.Response;
 import org.infinispan.remoting.rpc.RpcManager;
 import org.infinispan.remoting.transport.Address;
@@ -42,6 +43,7 @@ import javax.transaction.TransactionManager;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
@@ -56,16 +58,15 @@ import java.util.concurrent.TimeUnit;
  */
 public class BackupReceiverImpl implements BackupReceiver {
 
+   private static final Log log = LogFactory.getLog(BackupReceiverImpl.class);
+   private static final boolean trace = log.isDebugEnabled();
    private final Cache<Object, Object> cache;
 
-   //todo add some housekeeping logic for this, e.g. timeouts..
-   private final ConcurrentMap<GlobalTransaction, GlobalTransaction> remote2localTx = new ConcurrentHashMap<GlobalTransaction, GlobalTransaction>();
    private final BackupCacheUpdater siteUpdater;
 
-   @SuppressWarnings("unchecked")
-   public BackupReceiverImpl(Cache cache) {
+   public BackupReceiverImpl(Cache<Object, Object> cache) {
       this.cache = cache;
-      siteUpdater = new BackupCacheUpdater(cache, remote2localTx);
+      siteUpdater = new BackupCacheUpdater(cache);
    }
 
    @Override
@@ -80,15 +81,23 @@ public class BackupReceiverImpl implements BackupReceiver {
 
    @Override
    public void handleStateTransferControl(XSiteStateTransferControlCommand command) throws Exception {
+      command.setSiteName(command.getOriginSite());
       invokeRemotelyInLocalSite(command);
    }
 
    @Override
    public void handleStateTransferState(XSiteStatePushCommand cmd) throws Exception {
       //split the state and forward it to the primary owners...
+      if (!cache.getStatus().allowInvocations()) {
+         throw new CacheException("Cache is stopping or terminated: " + cache.getStatus());
+      }
       final ClusteringDependentLogic clusteringDependentLogic = cache.getAdvancedCache().getComponentRegistry()
             .getComponent(ClusteringDependentLogic.class);
       final Map<Address, List<XSiteState>> primaryOwnersChunks = new HashMap<Address, List<XSiteState>>();
+
+      if (trace) {
+         log.tracef("Received X-Site state transfer '%s'. Splitting by primary owner.", cmd);
+      }
 
       for (XSiteState state : cmd.getChunk()) {
          final Address primaryOwner = clusteringDependentLogic.getPrimaryOwner(state.key());
@@ -101,48 +110,105 @@ public class BackupReceiverImpl implements BackupReceiver {
       }
 
       final List<XSiteState> localChunks = primaryOwnersChunks.remove(clusteringDependentLogic.getAddress());
-      final List<Future<?>> remoteFutures = new ArrayList<Future<?>>(primaryOwnersChunks.size());
+      final List<StatePushTask> tasks = new ArrayList<StatePushTask>(primaryOwnersChunks.size());
 
       for (Map.Entry<Address, List<XSiteState>> entry : primaryOwnersChunks.entrySet()) {
-         sendStateTo(entry.getKey(), entry.getValue(), remoteFutures);
-      }
-
-      if (localChunks != null) {
-         LocalInvocation.newInstanceFromCache(cache, newStatePushCommand(localChunks)).call();
-         //help gc
-         localChunks.clear();
+         if (entry.getValue() == null || entry.getValue().isEmpty()) {
+            continue;
+         }
+         if (trace) {
+            log.tracef("Node '%s' will apply %s", entry.getKey(), entry.getValue());
+         }
+         StatePushTask task = new StatePushTask(entry.getValue(), entry.getKey(), cache);
+         tasks.add(task);
+         task.executeRemote();
       }
 
       //help gc. this is safe because the chunks was already sent
       primaryOwnersChunks.clear();
-      for (Future<?> future : remoteFutures) {
-         future.get();
+
+      if (trace) {
+         log.tracef("Local node '%s' will apply %s", cache.getAdvancedCache().getRpcManager().getAddress(),
+                    localChunks);
+      }
+
+      if (localChunks != null) {
+         LocalInvocation.newInstanceFromCache(cache, newStatePushCommand(cache, localChunks)).call();
+         //help gc
+         localChunks.clear();
+      }
+
+      if (trace) {
+         log.tracef("Waiting for the remote tasks...");
+      }
+
+      while (!tasks.isEmpty()) {
+         for (Iterator<StatePushTask> iterator = tasks.iterator(); iterator.hasNext(); ) {
+            awaitRemoteTask(cache, iterator.next());
+            iterator.remove();
+         }
+      }
+      //the put operation can fail silently. check in the end and it is better to resend the chunk than to lose keys.
+      if (!cache.getStatus().allowInvocations()) {
+         throw new CacheException("Cache is stopping or terminated: " + cache.getStatus());
       }
    }
 
-   private void sendStateTo(Address primaryOwner, List<XSiteState> stateList, List<Future<?>> remoteFutures) {
-      if (stateList == null || stateList.isEmpty()) {
-         return;
+   private static void awaitRemoteTask(Cache<?, ?> cache, StatePushTask task) throws Exception {
+      try {
+         if (trace) {
+            log.tracef("Waiting reply from %s", task.address);
+         }
+         Map<Address, Response> responseMap = task.awaitRemote();
+         if (trace) {
+            log.tracef("Response received is %s", responseMap);
+         }
+         if (responseMap.size() > 1 || !responseMap.containsKey(task.address)) {
+            throw new IllegalStateException("Shouldn't happen. Map is " + responseMap);
+         }
+         Response response = responseMap.get(task.address);
+         if (response == CacheNotFoundResponse.INSTANCE) {
+            if (trace) {
+               log.tracef("Cache not found in node '%s'. Retrying locally!", task.address);
+            }
+            if (!cache.getStatus().allowInvocations()) {
+               throw new CacheException("Cache is stopping or terminated: " + cache.getStatus());
+            }
+            task.executeLocal();
+         }
+      } catch (Exception e) {
+         if (!cache.getStatus().allowInvocations()) {
+            throw new CacheException("Cache is stopping or terminated: " + cache.getStatus());
+         }
+         if (cache.getAdvancedCache().getRpcManager().getMembers().contains(task.address)) {
+            if (trace) {
+               log.tracef(e, "An exception was sent by %s. Retrying!", task.address);
+            }
+            task.executeRemote(); //retry!
+         } else {
+            if (trace) {
+               log.tracef(e, "An exception was sent by %s. Retrying locally!", task.address);
+            }
+            //if the node left the cluster, we apply the missing state. This avoids the site provider to re-send the
+            //full chunk.
+            task.executeLocal();
+         }
       }
-      final RpcManager rpcManager = cache.getAdvancedCache().getRpcManager();
-      final NotifyingNotifiableFuture<Object> future = new NotifyingFutureImpl<Object>();
-      remoteFutures.add(future);
-      rpcManager.invokeRemotelyInFuture(Collections.singletonList(primaryOwner), newStatePushCommand(stateList),                                        rpcManager.getDefaultRpcOptions(true), future);
    }
 
-   private XSiteStatePushCommand newStatePushCommand(List<XSiteState> stateList) {
+   private static XSiteStatePushCommand newStatePushCommand(Cache<?,?> cache, List<XSiteState> stateList) {
       CommandsFactory commandsFactory = cache.getAdvancedCache().getComponentRegistry().getCommandsFactory();
       return commandsFactory.buildXSiteStatePushCommand(stateList.toArray(new XSiteState[stateList.size()]));
    }
 
    private Map<Address, Response> invokeRemotelyInLocalSite(CacheRpcCommand command) throws Exception {
       final RpcManager rpcManager = cache.getAdvancedCache().getRpcManager();
-      final NotifyingNotifiableFuture<Object> remoteFuture = new NotifyingFutureImpl<Object>();
+      final NotifyingNotifiableFuture<Map<Address, Response>> remoteFuture = new NotifyingFutureImpl<Map<Address, Response>>();
       final Map<Address, Response> responseMap = new HashMap<Address, Response>();
-      rpcManager.invokeRemotelyInFuture(null, command, rpcManager.getDefaultRpcOptions(true, false), remoteFuture);
+      rpcManager.invokeRemotelyInFuture(remoteFuture, null, command, rpcManager.getDefaultRpcOptions(true, false));
       responseMap.put(rpcManager.getAddress(), LocalInvocation.newInstanceFromCache(cache, command).call());
       //noinspection unchecked
-      responseMap.putAll((Map<? extends Address, ? extends Response>) remoteFuture.get());
+      responseMap.putAll(remoteFuture.get());
       return responseMap;
    }
 
@@ -154,10 +220,10 @@ public class BackupReceiverImpl implements BackupReceiver {
 
       private final AdvancedCache<Object, Object> backupCache;
 
-      BackupCacheUpdater(Cache backup, ConcurrentMap<GlobalTransaction, GlobalTransaction> remote2localTx) {
+      BackupCacheUpdater(Cache<Object, Object> backup) {
          //ignore return values on the backup
          this.backupCache = backup.getAdvancedCache().withFlags(Flag.IGNORE_RETURN_VALUES, Flag.SKIP_XSITE_BACKUP);
-         this.remote2localTx = remote2localTx;
+         this.remote2localTx = new ConcurrentHashMap<GlobalTransaction, GlobalTransaction>();
       }
 
       @Override
@@ -308,5 +374,40 @@ public class BackupReceiverImpl implements BackupReceiver {
             c.acceptVisitor(null, this);
          }
       }
+   }
+
+   private static class StatePushTask {
+      private final List<XSiteState> chunk;
+      private final Address address;
+      private final Cache<?,?> cache;
+      private volatile Future<Map<Address, Response>> remoteFuture;
+
+
+      private StatePushTask(List<XSiteState> chunk, Address address, Cache<?, ?> cache) {
+         this.chunk = chunk;
+         this.address = address;
+         this.cache = cache;
+      }
+
+      public void executeRemote() {
+         final RpcManager rpcManager = cache.getAdvancedCache().getRpcManager();
+         NotifyingNotifiableFuture<Map<Address, Response>> future = new NotifyingFutureImpl<Map<Address, Response>>();
+         remoteFuture = future;
+         rpcManager.invokeRemotelyInFuture(future, Collections.singletonList(address), newStatePushCommand(cache, chunk),
+                                           rpcManager.getDefaultRpcOptions(true));
+      }
+
+      public Response executeLocal() throws Exception {
+         return LocalInvocation.newInstanceFromCache(cache, newStatePushCommand(cache, chunk)).call();
+      }
+
+      public Map<Address, Response> awaitRemote() throws Exception {
+         Future<Map<Address, Response>> future = remoteFuture;
+         if (future == null) {
+            throw new NullPointerException("Should not happen!");
+         }
+         return future.get();
+      }
+
    }
 }

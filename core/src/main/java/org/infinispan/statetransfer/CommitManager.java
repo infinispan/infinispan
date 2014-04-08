@@ -11,6 +11,9 @@ import org.infinispan.metadata.Metadata;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
+import java.util.Iterator;
+import java.util.Map;
+
 /**
  * Keeps track of the keys updated by normal operation and state transfer. Since the command processing happens
  * concurrently with the state transfer, it needs to keep track of the keys updated by normal command in order to reject
@@ -30,7 +33,7 @@ public class CommitManager {
    private volatile boolean trackXSiteStateTransfer;
 
    public CommitManager(Equivalence<Object> keyEq) {
-      tracker = new EquivalentConcurrentHashMapV8<Object, DiscardPolicy>(keyEq, AnyEquivalence.<DiscardPolicy>getInstance());
+      tracker = new EquivalentConcurrentHashMapV8<>(keyEq, AnyEquivalence.getInstance());
    }
 
    @Inject
@@ -60,6 +63,13 @@ public class CommitManager {
             log.tracef("Tracking is disabled. Clear tracker: %s", tracker);
          }
          tracker.clear();
+      } else {
+         for (Iterator<Map.Entry<Object, DiscardPolicy>> iterator = tracker.entrySet().iterator();
+              iterator.hasNext(); ) {
+            if (iterator.next().getValue().update(trackStateTransfer, trackXSiteStateTransfer)) {
+               iterator.remove();
+            }
+         }
       }
    }
 
@@ -137,6 +147,15 @@ public class CommitManager {
       return tracker.isEmpty();
    }
 
+   @Override
+   public String toString() {
+      return "CommitManager{" +
+            "tracker=" + tracker.size() + " key(s)" +
+            ", trackStateTransfer=" + trackStateTransfer +
+            ", trackXSiteStateTransfer=" + trackXSiteStateTransfer +
+            '}';
+   }
+
    private void setTrack(Flag track, boolean value) {
       if (trace) {
          log.tracef("Set track to %s = %s", track, value);
@@ -144,9 +163,10 @@ public class CommitManager {
       switch (track) {
          case PUT_FOR_STATE_TRANSFER:
             this.trackStateTransfer = value;
-            return;
+            break;
          case PUT_FOR_X_SITE_STATE_TRANSFER:
             this.trackXSiteStateTransfer = value;
+            break;
       }
    }
 
@@ -156,37 +176,56 @@ public class CommitManager {
    }
 
    private DiscardPolicy calculateDiscardPolicy() {
-      if (trackStateTransfer && trackXSiteStateTransfer) {
-         return DiscardPolicy.DISCARD_ALL_STATE_TRANSFER;
-      } else if (trackStateTransfer) {
-         return DiscardPolicy.DISCARD_STATE_TRANSFER;
-      } else if (trackXSiteStateTransfer) {
-         return DiscardPolicy.DISCARD_X_SITE_STATE_TRANSFER;
+      if (!trackXSiteStateTransfer && !trackStateTransfer) {
+         return null;
       }
-      return null;
+      return new DiscardPolicy(trackStateTransfer, trackXSiteStateTransfer);
    }
 
-   private static enum DiscardPolicy {
-      DISCARD_STATE_TRANSFER {
-         @Override
-         public boolean ignore(Flag operation) {
-            return operation == Flag.PUT_FOR_STATE_TRANSFER;
-         }
-      },
-      DISCARD_X_SITE_STATE_TRANSFER {
-         @Override
-         public boolean ignore(Flag operation) {
-            return operation == Flag.PUT_FOR_X_SITE_STATE_TRANSFER;
-         }
-      },
-      DISCARD_ALL_STATE_TRANSFER {
-         @Override
-         public boolean ignore(Flag operation) {
-            return operation == Flag.PUT_FOR_STATE_TRANSFER ||
-                  operation == Flag.PUT_FOR_X_SITE_STATE_TRANSFER;
-         }
-      };
+   private static class DiscardPolicy {
+      private boolean discardST;
+      private boolean discardXSiteST;
 
-      public abstract boolean ignore(Flag operation);
+      private DiscardPolicy(boolean discardST, boolean discardXSiteST) {
+         this.discardST = discardST;
+         this.discardXSiteST = discardXSiteST;
+      }
+
+      public synchronized final boolean ignore(Flag operation) {
+         return (discardST && operation == Flag.PUT_FOR_STATE_TRANSFER) ||
+               (discardXSiteST && operation == Flag.PUT_FOR_X_SITE_STATE_TRANSFER);
+      }
+
+      public synchronized boolean update(boolean discardST, boolean discardXSiteST) {
+         this.discardST = discardST;
+         this.discardXSiteST = discardXSiteST;
+         return !this.discardST && !this.discardXSiteST;
+      }
+
+      @Override
+      public boolean equals(Object o) {
+         if (this == o) return true;
+         if (o == null || getClass() != o.getClass()) return false;
+
+         DiscardPolicy that = (DiscardPolicy) o;
+
+         return discardST == that.discardST && discardXSiteST == that.discardXSiteST;
+
+      }
+
+      @Override
+      public int hashCode() {
+         int result = (discardST ? 1 : 0);
+         result = 31 * result + (discardXSiteST ? 1 : 0);
+         return result;
+      }
+
+      @Override
+      public String toString() {
+         return "DiscardPolicy{" +
+               "discardStateTransfer=" + discardST +
+               ", discardXSiteStateTransfer=" + discardXSiteST +
+               '}';
+      }
    }
 }

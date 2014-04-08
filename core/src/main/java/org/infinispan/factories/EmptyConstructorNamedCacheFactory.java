@@ -39,8 +39,6 @@ import org.infinispan.transaction.impl.TransactionCoordinator;
 import org.infinispan.transaction.totalorder.TotalOrderManager;
 import org.infinispan.transaction.xa.TransactionFactory;
 import org.infinispan.transaction.xa.recovery.RecoveryAdminOperations;
-import org.infinispan.util.logging.Log;
-import org.infinispan.util.logging.LogFactory;
 import org.infinispan.xsite.BackupSender;
 import org.infinispan.xsite.BackupSenderImpl;
 import org.infinispan.xsite.statetransfer.XSiteStateConsumer;
@@ -133,7 +131,7 @@ public class EmptyConstructorNamedCacheFactory extends AbstractNamedCacheCompone
          } else if (componentType.equals(CommitManager.class)) {
             return (T) new CommitManager(configuration.dataContainer().keyEquivalence());
          } else if (componentType.equals(XSiteStateTransferManager.class)) {
-            return (T) new XSiteStateTransferManagerImpl();
+            return (T) (configuration.sites().allBackups().isEmpty() ? null : new XSiteStateTransferManagerImpl());
          } else if (componentType.equals(XSiteStateConsumer.class)) {
             return (T) new XSiteStateConsumerImpl();
          } else if (componentType.equals(XSiteStateProvider.class)) {

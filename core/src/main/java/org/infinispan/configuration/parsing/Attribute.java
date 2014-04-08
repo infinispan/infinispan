@@ -62,6 +62,7 @@ public enum Attribute {
     MARSHALLER_CLASS("marshaller"),
     MAX_ENTRIES("max-entries"),
     MAX_IDLE("max-idle"),
+    MAX_RETRIES("max-retries"),
     MAX_THREADS("max-threads"),
     MBEAN_SERVER_LOOKUP("mbean-server-lookup"),
     MODE("mode"),
@@ -125,6 +126,7 @@ public enum Attribute {
     VALUE_EQUIVALENCE("value-equivalence"),
     VERSION("version"),
     VERSIONING_SCHEME("scheme"),
+    WAIT_TIME("wait-time"),
     WRITE_SKEW_CHECK("write-skew"),
     FRAGMENTATION_FACTOR("fragmentation-factor");
 

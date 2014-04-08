@@ -8,6 +8,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
 
@@ -309,6 +310,28 @@ public class RpcManagerImpl implements RpcManager, JmxStatisticsExposer {
             totalReplicationTime.getAndAdd(timeTaken);
          }
       }
+   }
+
+   @Override
+   public void invokeRemotelyInFuture(final NotifyingNotifiableFuture<Map<Address, Response>> future,
+                                      final Collection<Address> recipients, final ReplicableCommand rpc,
+                                      final RpcOptions options) {
+      if (trace) log.tracef("%s invoking in future call %s to recipient list %s with options %s", t.getAddress(),
+                            rpc, recipients, options);
+      Callable<Map<Address, Response>> c = new Callable<Map<Address, Response>>() {
+         @Override
+         public Map<Address, Response> call() throws Exception {
+            try {
+               final Map<Address, Response> result = invokeRemotely(recipients, rpc, options);
+               future.notifyDone(result);
+               return result;
+            } catch (RuntimeException e) {
+               future.notifyException(e);
+               throw e;
+            }
+         }
+      };
+      future.setFuture(asyncExecutor.submit(c));
    }
 
    @Override

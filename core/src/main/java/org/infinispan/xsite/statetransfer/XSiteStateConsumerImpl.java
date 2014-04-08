@@ -2,6 +2,7 @@ package org.infinispan.xsite.statetransfer;
 
 import org.infinispan.commands.CommandsFactory;
 import org.infinispan.commands.write.PutKeyValueCommand;
+import org.infinispan.commons.CacheException;
 import org.infinispan.context.Flag;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.context.InvocationContextFactory;
@@ -14,10 +15,8 @@ import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
 import javax.transaction.TransactionManager;
-import java.util.ArrayList;
-import java.util.Collection;
 import java.util.EnumSet;
-import java.util.List;
+import java.util.concurrent.atomic.AtomicReference;
 
 import static org.infinispan.context.Flag.*;
 
@@ -41,6 +40,7 @@ public class XSiteStateConsumerImpl implements XSiteStateConsumer {
    private CommandsFactory commandsFactory;
    private InterceptorChain interceptorChain;
    private CommitManager commitManager;
+   private AtomicReference<String> sendingSite = new AtomicReference<>(null);
 
    @Inject
    public void inject(TransactionManager transactionManager, InvocationContextFactory invocationContextFactory,
@@ -54,19 +54,32 @@ public class XSiteStateConsumerImpl implements XSiteStateConsumer {
    }
 
    @Override
-   public void startStateTransfer() {
+   public void startStateTransfer(String sendingSite) {
       if (debug) {
-         log.debugf("Starting state transfer.");
+         log.debugf("Starting state transfer. Receiving from %s", sendingSite);
       }
-      commitManager.startTrack(Flag.PUT_FOR_X_SITE_STATE_TRANSFER);
+      if (this.sendingSite.compareAndSet(null, sendingSite)) {
+         commitManager.startTrack(Flag.PUT_FOR_X_SITE_STATE_TRANSFER);
+      } else {
+         throw new CacheException("Already receiving state from " + this.sendingSite.get());
+      }
    }
 
    @Override
-   public void endStateTransfer() {
+   public void endStateTransfer(String sendingSite) {
       if (debug) {
-         log.debugf("Ending state transfer.");
+         log.debugf("Ending state transfer from %s", sendingSite);
       }
-      commitManager.stopTrack(Flag.PUT_FOR_X_SITE_STATE_TRANSFER);
+      String currentSendingSite = this.sendingSite.get();
+      if (sendingSite == null || sendingSite.equals(currentSendingSite)) {
+         this.sendingSite.set(null);
+         commitManager.stopTrack(PUT_FOR_X_SITE_STATE_TRANSFER);
+      } else {
+         if (log.isDebugEnabled()) {
+            log.debugf("Received an end request from a non-sender site. Expects %s but got %s", currentSendingSite,
+                       sendingSite);
+         }
+      }
    }
 
    @Override
@@ -79,6 +92,11 @@ public class XSiteStateConsumerImpl implements XSiteStateConsumer {
       } else {
          applyStateInNonTransaction(chunk);
       }
+   }
+
+   @Override
+   public String getSendingSiteName() {
+      return sendingSite.get();
    }
 
    private void applyStateInTransaction(XSiteState[] chunk) throws Exception {
@@ -134,13 +152,5 @@ public class XSiteStateConsumerImpl implements XSiteStateConsumer {
             log.debug("Error rollbacking transaction.", e);
          }
       }
-   }
-
-   private Collection<Object> extractKeys(XSiteState[] chunk) {
-      List<Object> keys = new ArrayList<Object>(chunk.length);
-      for (XSiteState aChunk : chunk) {
-         keys.add(aChunk.key());
-      }
-      return keys;
    }
 }

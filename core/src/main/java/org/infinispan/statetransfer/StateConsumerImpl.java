@@ -274,6 +274,7 @@ public class StateConsumerImpl implements StateConsumer {
       this.cacheTopology = cacheTopology;
       if (isRebalance) {
          if (trace) log.tracef("Start keeping track of keys for rebalance");
+         commitManager.stopTrack(PUT_FOR_STATE_TRANSFER);
          commitManager.startTrack(PUT_FOR_STATE_TRANSFER);
       }
       stateTransferLock.releaseExclusiveTopologyLock();

@@ -5,8 +5,10 @@ import org.infinispan.factories.annotations.Inject;
 import org.infinispan.jmx.annotations.MBean;
 import org.infinispan.jmx.annotations.ManagedOperation;
 import org.infinispan.jmx.annotations.Parameter;
+import org.infinispan.remoting.responses.CacheNotFoundResponse;
 import org.infinispan.remoting.responses.Response;
 import org.infinispan.remoting.responses.SuccessfulResponse;
+import org.infinispan.remoting.rpc.ResponseMode;
 import org.infinispan.remoting.rpc.RpcManager;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.util.logging.Log;
@@ -14,6 +16,7 @@ import org.infinispan.util.logging.LogFactory;
 import org.infinispan.xsite.statetransfer.XSiteStateTransferManager;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -27,12 +30,10 @@ import java.util.Map;
 @MBean(objectName = "XSiteAdmin", description = "Exposes tooling for handling backing up data to remote sites.")
 public class XSiteAdminOperations {
 
-   private static Log log = LogFactory.getLog(XSiteAdminOperations.class);
-
    public static final String ONLINE = "online";
    public static final String OFFLINE = "offline";
    public static final String SUCCESS = "ok";
-
+   private static Log log = LogFactory.getLog(XSiteAdminOperations.class);
    private RpcManager rpcManager;
    private Cache cache;
 
@@ -64,7 +65,10 @@ public class XSiteAdminOperations {
       List<Address> failed = new ArrayList<Address>(responses.size());
       for (Map.Entry<Address, Response> e : responses.entrySet()) {
          if (!e.getValue().isSuccessful() || !e.getValue().isValid()) {
-            failed.add(e.getKey());
+            if (e.getValue() != CacheNotFoundResponse.INSTANCE) {
+               //the node can be shutting down.
+               failed.add(e.getKey());
+            }
             continue;
          }
          SuccessfulResponse response = (SuccessfulResponse) e.getValue();
@@ -238,17 +242,89 @@ public class XSiteAdminOperations {
       return SUCCESS;
    }
 
-   @ManagedOperation(displayName = "Running State Transfer",
-                     description = "Shows a list of sites to where this cache is pushing state.",
-                     name = "RunningStateTransfer")
+   /**
+    * for debug only!
+    */
    public final List<String> getRunningStateTransfer() {
       return stateTransferManager.getRunningStateTransfers();
+   }
+
+   @ManagedOperation(displayName = "Push State Status",
+                     description = "Shows a map with destination site name and the state transfer status.",
+                     name = "PushStateStatus")
+   public final Map<String, String> getPushStateStatus() {
+      Map<String, String> map = new HashMap<String, String>();
+      try {
+         for (String siteName : getRunningStateTransfer()) {
+            map.put(siteName, "SENDING");
+         }
+         map.putAll(stateTransferManager.getClusterStatus());
+         return map;
+      } catch (Exception e) {
+         return Collections.singletonMap("ERROR", e.getLocalizedMessage());
+      }
+   }
+
+   @ManagedOperation(displayName = "Clear State Status",
+                     description = "Clears the state transfer status.",
+                     name = "ClearPushStateStatus")
+   public final String clearPushStateStatus() {
+      return performOperation(new Operation() {
+         @Override
+         public void execute() throws Throwable {
+            stateTransferManager.clearClusterStatus();
+         }
+      });
+   }
+
+   @ManagedOperation(displayName = "Cancel Push Status",
+                     description = "Cancels the push state to remote site.",
+                     name = "CancelPushState")
+   public final String cancelPushState(@Parameter(description = "The destination site name", name = "SiteName")
+                                          final String siteName) {
+      return performOperation(new Operation() {
+         @Override
+         public void execute() throws Throwable {
+            stateTransferManager.cancelPushState(siteName);
+         }
+      });
+   }
+
+   @ManagedOperation(displayName = "Cancel Receive State",
+                     description = "Cancels the push state to this site. All the state received from state transfer " +
+                           "will be ignored.",
+                     name = "CancelReceiveState")
+   public final String cancelReceiveState(@Parameter(description = "The sending site name", name = "SiteName")
+                                             final String siteName) {
+      return performOperation(new Operation() {
+         @Override
+         public void execute() throws Throwable {
+            stateTransferManager.cancelReceive(siteName);
+         }
+      });
+   }
+
+   @ManagedOperation(displayName = "Sending Site Name",
+                     description = "Returns the site name from which this site is receiving state.",
+                     name = "SendingSiteName")
+   public final String getSendingSiteName() {
+      return stateTransferManager.getSendingSiteName();
+   }
+
+   private static String performOperation(Operation operation) {
+      try {
+         operation.execute();
+      } catch (Throwable t) {
+         return String.format("Unable to perform operation. Error=%s", t.getLocalizedMessage());
+      }
+      return SUCCESS;
    }
 
    private List<Address> checkForErrors(Map<Address, Response> responses) {
       List<Address> failed = new ArrayList<Address>(responses.size());
       for (Map.Entry<Address, Response> e : responses.entrySet()) {
-         if (e.getValue() == null || !e.getValue().isSuccessful() || !e.getValue().isValid()) {
+         if (e.getValue() != CacheNotFoundResponse.INSTANCE &&
+               (e.getValue() == null || !e.getValue().isSuccessful() || !e.getValue().isValid())) {
             failed.add(e.getKey());
          }
       }
@@ -288,6 +364,11 @@ public class XSiteAdminOperations {
    }
 
    private Map<Address, Response> invokeRemotely(XSiteAdminCommand command) {
-      return rpcManager.invokeRemotely(null, command, rpcManager.getDefaultRpcOptions(true, false));
+      return rpcManager.invokeRemotely(null, command,
+                                       rpcManager.getRpcOptionsBuilder(ResponseMode.SYNCHRONOUS_IGNORE_LEAVERS, false).build());
+   }
+
+   private static interface Operation {
+      void execute() throws Throwable;
    }
 }

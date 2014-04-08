@@ -1,55 +1,38 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <infinispan
         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-        xsi:schemaLocation="urn:infinispan:config:6.0 http://www.infinispan.org/schemas/infinispan-config-6.0.xsd"
-        xmlns="urn:infinispan:config:6.0">
+        xsi:schemaLocation="urn:infinispan:config:7.0 http://www.infinispan.org/schemas/infinispan-config-7.0.xsd"
+        xmlns="urn:infinispan:config:7.0">
 
-    <global>
+    <jgroups>
+        <stack-file name="udp" path="jgroups-udp.xml"/>
+    </jgroups>
 
-        <site local="LON"/>
-
-        <transport clusterName="infinispan-cluster" distributedSyncTimeout="50000" nodeName="Jalapeno" machineId="m1"
-                   rackId="r1" siteId="s1">
-            <!-- Note that the JGroups transport uses sensible defaults if no configuration property is defined. -->
-            <properties>
-                <property name="configurationFile" value="jgroups-udp.xml"/>
-            </properties>
-            <!-- See the JGroupsTransport javadocs for more flags -->
-        </transport>
-    </global>
-
-    <default>
-        <locking concurrencyLevel="100" lockAcquisitionTimeout="1000"/>
-        <sites>
+    <cache-container default-cache="default">
+        <transport cluster="infinispan-cluster" lock-timeout="50000" stack="udp" node-name="Jalapeno" machine="m1"
+                   rack="r1" site="LON"/>
+        <replicated-cache name="default">
             <backups>
-                <backup site="NYC" strategy="SYNC" backupFailurePolicy="WARN" timeout="12003">
-                    <stateTransfer chunkSize="123" timeout="4567" />
+                <backup site="NYC" strategy="SYNC" failure-policy="WARN" timeout="12003">
+                    <state-transfer chunk-size="123" timeout="4567" max-retries="890" wait-time="1011"/>
                 </backup>
             </backups>
-            <backupFor remoteCache="someCache" remoteSite="SFO"/>
-        </sites>
-        <jmxStatistics enabled="false"/>
-    </default>
-
-    <namedCache name="inheritor"/>
-
-    <namedCache name="noStateTransfer">
-        <sites>
+            <backup-for remote-cache="someCache" remote-site="SFO"/>
+        </replicated-cache>
+        <replicated-cache name="inheritor"/>
+        <replicated-cache name="noStateTransfer">
             <backups>
-                <backup site="NYC" strategy="SYNC" backupFailurePolicy="WARN" timeout="12003"/>
+                <backup site="NYC" strategy="SYNC" failure-policy="WARN" timeout="12003"/>
             </backups>
-            <backupFor/>
-        </sites>
-    </namedCache>
-
-    <namedCache name="stateTransferDifferentConfiguration">
-        <sites>
+            <backup-for/>
+        </replicated-cache>
+        <replicated-cache name="stateTransferDifferentConfiguration">
             <backups>
-                <backup site="NYC" strategy="SYNC" backupFailurePolicy="WARN" timeout="12003">
-                    <stateTransfer chunkSize="098" timeout="7654" />
+                <backup site="NYC" strategy="SYNC" failure-policy="WARN" timeout="12003">
+                    <state-transfer chunk-size="098" timeout="7654" max-retries="321" wait-time="0101"/>
                 </backup>
             </backups>
-        </sites>
-    </namedCache>
+        </replicated-cache>
+    </cache-container>
 
 </infinispan>

@@ -187,6 +187,13 @@ public class ExtendedStatisticRpcManager implements RpcManager {
    }
 
    @Override
+   public void invokeRemotelyInFuture(NotifyingNotifiableFuture<Map<Address, Response>> future, Collection<Address> recipients, ReplicableCommand rpc, RpcOptions options) {
+      long start = timeService.time();
+      actual.invokeRemotelyInFuture(future, recipients, rpc, options);
+      updateStats(rpc, options.responseMode().isSynchronous(), timeService.timeDuration(start, NANOSECONDS), recipients);
+   }
+
+   @Override
    public RpcOptionsBuilder getRpcOptionsBuilder(ResponseMode responseMode) {
       return actual.getRpcOptionsBuilder(responseMode);
    }

@@ -12,8 +12,7 @@ import org.infinispan.test.SingleCacheManagerTest;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.testng.annotations.Test;
 
-import static org.infinispan.configuration.cache.XSiteStateTransferConfigurationBuilder.DEFAULT_CHUNK_SIZE;
-import static org.infinispan.configuration.cache.XSiteStateTransferConfigurationBuilder.DEFAULT_TIMEOUT;
+import static org.infinispan.configuration.cache.XSiteStateTransferConfigurationBuilder.*;
 import static org.testng.AssertJUnit.assertEquals;
 import static org.testng.AssertJUnit.assertTrue;
 
@@ -27,7 +26,7 @@ public class XSiteFileParsingTest extends SingleCacheManagerTest {
    public static final String FILE_NAME = "configs/xsite/xsite-test.xml";
    private static final TakeOfflineConfiguration DEFAULT_TAKE_OFFLINE = new TakeOfflineConfiguration(0, 0);
    private static final XSiteStateTransferConfiguration DEFAULT_STATE_TRANSFER =
-         new XSiteStateTransferConfiguration(DEFAULT_CHUNK_SIZE, DEFAULT_TIMEOUT);
+         new XSiteStateTransferConfiguration(DEFAULT_CHUNK_SIZE, DEFAULT_TIMEOUT, DEFAULT_MAX_RETRIES, DEFAULT_WAIT_TIME);
 
    @Override
    protected EmbeddedCacheManager createCacheManager() throws Exception {
