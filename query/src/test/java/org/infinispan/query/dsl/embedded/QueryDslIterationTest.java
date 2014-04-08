@@ -8,9 +8,11 @@ import org.infinispan.query.dsl.QueryBuilder;
 import org.infinispan.query.dsl.QueryFactory;
 import org.infinispan.query.dsl.SortOrder;
 import org.infinispan.query.dsl.embedded.sample_domain_model.User;
+import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import static org.testng.AssertJUnit.assertEquals;
@@ -25,6 +27,8 @@ import static org.testng.AssertJUnit.assertTrue;
  */
 @Test(groups = "functional", testName = "query.dsl.QueryDslIterationTest")
 public class QueryDslIterationTest extends AbstractQueryDslTest {
+
+   private List<String> entryIds = new ArrayList<String>();
 
    @BeforeMethod
    protected void populateCache() throws Exception {
@@ -52,6 +56,20 @@ public class QueryDslIterationTest extends AbstractQueryDslTest {
       cache.put("user_" + user2.getId(), user2);
       cache.put("user_" + user3.getId(), user3);
       cache.put("user_" + user4.getId(), user4);
+
+      //track what we stored in the cache (for distributed caches the keySet is not enough)
+      entryIds.add("user_" + user1.getId());
+      entryIds.add("user_" + user2.getId());
+      entryIds.add("user_" + user3.getId());
+      entryIds.add("user_" + user4.getId());
+   }
+
+   @AfterMethod
+   protected void cleanCache() {
+      for (String s : entryIds) {
+         cache.remove(s);
+      }
+      entryIds.clear();
    }
 
    public void testOrderByAsc() throws Exception {

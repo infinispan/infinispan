@@ -5,6 +5,8 @@ import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.CleanupAfterMethod;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
+import org.testng.annotations.AfterClass;
+import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 
 import java.io.File;
@@ -32,22 +34,14 @@ public class FilesystemQueryDslIterationTest extends QueryDslIterationTest {
       return TestCacheManagerFactory.createCacheManager(cfg);
    }
 
-   @Override
-   protected void setup() throws Exception {
+   @BeforeClass(alwaysRun = true)
+   protected void setUp() throws Exception {
       TestingUtil.recursiveFileRemove(indexDirectory);
-      boolean created = new File(indexDirectory).mkdirs();
-      assertTrue(created);
-      super.setup();
+      new File(indexDirectory).mkdirs();
    }
 
-   @Override
-   protected void teardown() {
-      try {
-         //first stop cache managers, then clear the index
-         super.teardown();
-      } finally {
-         //delete the index otherwise it will mess up the index for next tests
-         TestingUtil.recursiveFileRemove(indexDirectory);
-      }
+   @AfterClass(alwaysRun = true)
+   protected void tearDown() {
+      TestingUtil.recursiveFileRemove(indexDirectory);
    }
 }
