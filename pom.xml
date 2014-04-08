@@ -92,6 +92,7 @@
                               <artifactId>infinispan-tools</artifactId>
                               <version>${project.version}</version>
                            </docletArtifact>
+                           <doctitle>Infinispan ${project.version} API</doctitle>
                            <quiet>true</quiet>
                            <!-- In case anyone needs to trace javadoc issues
                            <additionalJOption>-J-Xrunjdwp:transport=dt_socket,address=8787,server=y,suspend=y</additionalJOption>
