@@ -18,7 +18,6 @@ import org.testng.annotations.Test;
 public class ClusteredQueryMultipleCachesTest extends ClusteredQueryTest {
 
    Cache<String, Person> cacheBMachine1, cacheBMachine2;
-   Person person5;
 
    @Override
    protected void createCacheManagers() throws Throwable {
@@ -38,7 +37,7 @@ public class ClusteredQueryMultipleCachesTest extends ClusteredQueryTest {
    protected void prepareTestData() {
       super.prepareTestData();
 
-      person5 = new Person();
+      Person person5 = new Person();
       person5.setName("People In Another Cache");
       person5.setBlurb("Also eats grass");
       person5.setAge(5);
