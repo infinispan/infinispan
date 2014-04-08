@@ -7,6 +7,7 @@
                     >
                     <transaction mode="NONE" />
                     <mixed-keyed-jdbc-store datasource="${jndi.name}" passivation="false" preload="true" purge="false" name="${table.prefix}">
+                        <property name="databaseType">${database.type}</property>
                         <binary-keyed-table prefix="${table.prefix}_BKT">
                             <id-column name="id" type="${id.column.type}"/>
                             <data-column name="datum" type="${data.column.type}"/>

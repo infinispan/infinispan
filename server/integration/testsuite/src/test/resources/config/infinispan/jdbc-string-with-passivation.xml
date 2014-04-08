@@ -10,6 +10,7 @@
                         strategy="LRU" 
                         max-entries="2" />
                     <string-keyed-jdbc-store datasource="${jndi.name}" passivation="true" preload="false" purge="false" name="${table.prefix}_MEMCACHED">
+                        <property name="databaseType">${database.type}</property>
                         <!--  the prefix must be unique for each jdbc cache store tests submodule so that each
                               test uses its own DB table -->
                         <string-keyed-table prefix="${table.prefix}">
