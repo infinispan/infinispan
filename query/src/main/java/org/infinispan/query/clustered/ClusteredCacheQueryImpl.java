@@ -103,7 +103,7 @@ public class ClusteredCacheQueryImpl extends CacheQueryImpl {
             ClusteredQueryCommand command = ClusteredQueryCommand.createEagerIterator(hSearchQuery, cache);
             HashMap<UUID, ClusteredTopDocs> topDocsResponses = broadcastQuery(command);
 
-            return new DistributedIterator(deepCopy(sort),
+            return new DistributedIterator(sort,
                   fetchOptions.getFetchSize(), this.resultSize, maxResults,
                   firstResult, topDocsResponses, cache);
          }
@@ -113,24 +113,13 @@ public class ClusteredCacheQueryImpl extends CacheQueryImpl {
             HashMap<UUID, ClusteredTopDocs> topDocsResponses = broadcastQuery(command);
 
             // Make a sort copy to avoid reversed results
-            return new DistributedLazyIterator(deepCopy(sort),
+            return new DistributedLazyIterator(sort,
                   fetchOptions.getFetchSize(), this.resultSize, maxResults,
                   firstResult, lazyItId, topDocsResponses, asyncExecutor, cache);
          }
          default:
             throw new IllegalArgumentException("Unknown FetchMode " + fetchOptions.getFetchMode());
       }
-   }
-
-   private Sort deepCopy(Sort sort) {
-      if (sort == null) return null;
-
-      SortField[] fields = sort.getSort();
-      SortField[] copyFields = new SortField[fields.length];
-      for (int i = 0; i < copyFields.length; i++)
-         copyFields[i] = Util.cloneWithMarshaller(marshaller, fields[i]);
-
-      return new Sort(copyFields);
    }
 
    // number of results of each node of cluster

@@ -31,7 +31,7 @@ public class LuceneTopFieldDocsExternalizer extends AbstractExternalizer<TopFiel
       final int scoreDocsCount = UnsignedNumeric.readUnsignedInt(input);
       final ScoreDoc[] scoreDocs = new ScoreDoc[scoreDocsCount];
       for (int i=0; i<scoreDocsCount; i++) {
-         scoreDocs[i] = LuceneScoreDocExternalizer.readObjectStatic(input);
+         scoreDocs[i] = (ScoreDoc) input.readObject();
       }
       return new TopFieldDocs(totalHits, scoreDocs, sortFields, maxScore);
    }
@@ -48,7 +48,7 @@ public class LuceneTopFieldDocsExternalizer extends AbstractExternalizer<TopFiel
       final ScoreDoc[] scoreDocs = topFieldDocs.scoreDocs;
       UnsignedNumeric.writeUnsignedInt(output, scoreDocs.length);
       for (ScoreDoc scoreDoc : scoreDocs) {
-         LuceneScoreDocExternalizer.writeObjectStatic(output, scoreDoc);
+         output.writeObject(scoreDoc);
       }
    }
 
