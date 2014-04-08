@@ -13,15 +13,15 @@ import java.util.Collection;
  */
 public class XSiteProviderDelegator implements XSiteStateProvider {
 
-   private final XSiteStateProvider xSiteStateProvider;
+   protected final XSiteStateProvider xSiteStateProvider;
 
    public XSiteProviderDelegator(XSiteStateProvider xSiteStateProvider) {
       this.xSiteStateProvider = xSiteStateProvider;
    }
 
    @Override
-   public void startStateTransfer(String siteName, Address requestor) {
-      xSiteStateProvider.startStateTransfer(siteName, requestor);
+   public void startStateTransfer(String siteName, Address requestor, int minTopologyId) {
+      xSiteStateProvider.startStateTransfer(siteName, requestor, minTopologyId);
    }
 
    @Override
@@ -32,5 +32,10 @@ public class XSiteProviderDelegator implements XSiteStateProvider {
    @Override
    public Collection<String> getCurrentStateSending() {
       return xSiteStateProvider.getCurrentStateSending();
+   }
+
+   @Override
+   public Collection<String> getSitesMissingCoordinator(Collection<Address> currentMembers) {
+      return xSiteStateProvider.getSitesMissingCoordinator(currentMembers);
    }
 }

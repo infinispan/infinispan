@@ -231,6 +231,14 @@ public interface RpcManager {
                                NotifyingNotifiableFuture<Object> future);
 
    /**
+    * Same as {@link #invokeRemotelyInFuture(java.util.Collection, org.infinispan.commands.ReplicableCommand,
+    * RpcOptions, org.infinispan.commons.util.concurrent.NotifyingNotifiableFuture)} but with a different
+    * NotifyingNotifiableFuture type.
+    */
+   void invokeRemotelyInFuture(NotifyingNotifiableFuture<Map<Address, Response>> future, Collection<Address> recipients,
+                               ReplicableCommand rpc, RpcOptions options);
+
+   /**
     * @return a reference to the underlying transport.
     */
    Transport getTransport();

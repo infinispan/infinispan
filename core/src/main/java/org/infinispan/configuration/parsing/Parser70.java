@@ -961,7 +961,6 @@ public class Parser70 implements ConfigurationParser {
 
    private void parseXSiteStateTransfer(XMLExtendedStreamReader reader, BackupConfigurationBuilder backup) throws XMLStreamException {
       for (int i = 0; i < reader.getAttributeCount(); i++) {
-         ParseUtils.requireNoNamespaceAttribute(reader, i);
          String value = replaceProperties(reader.getAttributeValue(i));
          Attribute attribute = Attribute.forName(reader.getAttributeLocalName(i));
          switch (attribute) {
@@ -971,8 +970,14 @@ public class Parser70 implements ConfigurationParser {
             case TIMEOUT:
                backup.stateTransfer().timeout(Long.parseLong(value));
                break;
+            case MAX_RETRIES:
+               backup.stateTransfer().maxRetries(Integer.parseInt(value));
+               break;
+            case WAIT_TIME:
+               backup.stateTransfer().waitTime(Long.parseLong(value));
+               break;
             default:
-               throw ParseUtils.unexpectedElement(reader);
+               throw ParseUtils.unexpectedAttribute(reader, i);
          }
       }
       ParseUtils.requireNoContent(reader);

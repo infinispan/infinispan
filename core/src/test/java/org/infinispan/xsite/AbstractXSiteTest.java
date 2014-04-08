@@ -2,6 +2,7 @@ package org.infinispan.xsite;
 
 import org.infinispan.AdvancedCache;
 import org.infinispan.Cache;
+import org.infinispan.commons.marshall.Marshaller;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.global.GlobalConfigurationBuilder;
@@ -24,6 +25,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.TimeUnit;
 
 /**
  * @author Mircea Markus
@@ -73,8 +75,8 @@ public abstract class AbstractXSiteTest extends AbstractCacheTest {
    protected abstract void createSites();
 
    protected TestSite createSite(String siteName, int numNodes, GlobalConfigurationBuilder gcb, ConfigurationBuilder defaultCacheConfig) {
-      TestSite testSite = new TestSite();
-      testSite.createClusteredCaches(numNodes, siteName, null, gcb, defaultCacheConfig, new TransportFlags().withSiteIndex(sites.size()).withSiteName(siteName));
+      TestSite testSite = new TestSite(siteName, sites.size());
+      testSite.createClusteredCaches(numNodes, null, gcb, defaultCacheConfig);
       sites.add(testSite);
       siteName2index.put(siteName, sites.size() - 1);
       return testSite;
@@ -114,15 +116,55 @@ public abstract class AbstractXSiteTest extends AbstractCacheTest {
       site.waitForClusterToForm(cacheName);
    }
 
+   protected final <K, V> void assertInSite(String siteName, AssertCondition<K, V> condition) {
+      for (Cache<K, V> cache : this.<K, V>caches(siteName)) {
+         condition.assertInCache(cache);
+      }
+   }
+
+   protected final <K, V> void assertEventuallyInSite(final String siteName, final EventuallyAssertCondition<K, V> condition,
+                                                long timeout, TimeUnit timeUnit) {
+      eventually(new Condition() {
+         @Override
+         public boolean isSatisfied() throws Exception {
+            for (Cache<K, V> cache : AbstractXSiteTest.this.<K, V>caches(siteName)) {
+               if (!condition.assertInCache(cache)) {
+                  return false;
+               }
+            }
+            return true;
+         }
+      }, timeUnit.toMillis(timeout));
+   }
+
+   protected static interface AssertCondition<K, V> {
+      void assertInCache(Cache<K, V> cache);
+   }
+
+   protected static interface EventuallyAssertCondition<K, V> {
+      boolean assertInCache(Cache<K, V> cache);
+   }
 
    public static class TestSite {
       protected List<EmbeddedCacheManager> cacheManagers = new ArrayList<EmbeddedCacheManager>();
+      private final String siteName;
+      private final int siteIndex;
 
-      protected <K, V> List<Cache<K, V>> createClusteredCaches(int numMembersInCluster, String siteName, String cacheName,
-                                                               GlobalConfigurationBuilder gcb, ConfigurationBuilder builder, TransportFlags flags) {
+      public TestSite(String siteName, int siteIndex) {
+         this.siteName = siteName;
+         this.siteIndex = siteIndex;
+      }
+
+      private TransportFlags transportFlags() {
+         return new TransportFlags().withSiteIndex(siteIndex).withSiteName(siteName);
+      }
+
+      protected <K, V> List<Cache<K, V>> createClusteredCaches(int numMembersInCluster, String cacheName,
+                                                               GlobalConfigurationBuilder gcb, ConfigurationBuilder builder) {
          List<Cache<K, V>> caches = new ArrayList<Cache<K, V>>(numMembersInCluster);
+         final TransportFlags flags = transportFlags();
          for (int i = 0; i < numMembersInCluster; i++) {
-            EmbeddedCacheManager cm = addClusterEnabledCacheManager(flags, gcb, builder, siteName);
+            EmbeddedCacheManager cm = addClusterEnabledCacheManager(flags, gcb, builder);
             if (cacheName != null)
                cm.defineConfiguration(cacheName, builder.build());
 
@@ -134,15 +176,18 @@ public abstract class AbstractXSiteTest extends AbstractCacheTest {
          return caches;
       }
 
-      protected EmbeddedCacheManager addClusterEnabledCacheManager(TransportFlags flags, GlobalConfigurationBuilder gcb, ConfigurationBuilder builder, String siteName) {
+      protected EmbeddedCacheManager addClusterEnabledCacheManager(TransportFlags flags, GlobalConfigurationBuilder gcb,
+                                                                   ConfigurationBuilder builder) {
          GlobalConfigurationBuilder clone = GlobalConfigurationBuilder.defaultClusteredBuilder();
 
          //get the transport here as clone.read below would inject the same transport reference into the clone
          // which we don't want
          Transport transport = clone.transport().getTransport();
+         Marshaller marshaller = clone.serialization().getMarshaller();
          clone.read(gcb.build());
-
          clone.transport().transport(transport);
+         clone.serialization().marshaller(marshaller);
+
          clone.transport().clusterName("ISPN(SITE " + siteName + ")");
 
          EmbeddedCacheManager cm = TestCacheManagerFactory.createClusteredCacheManager(clone, builder, flags);
@@ -150,7 +195,7 @@ public abstract class AbstractXSiteTest extends AbstractCacheTest {
          return cm;
       }
 
-      protected void waitForClusterToForm(String cacheName) {
+      public void waitForClusterToForm(String cacheName) {
          List<Cache<Object, Object>> caches = getCaches(cacheName);
          Cache<Object, Object> cache = caches.get(0);
          TestingUtil.blockUntilViewsReceived(10000, caches);
@@ -159,12 +204,36 @@ public abstract class AbstractXSiteTest extends AbstractCacheTest {
          }
       }
 
-      private <K,V> List<Cache<K,V>> getCaches(String cacheName) {
+      public void waitForClusterToForm(String cacheName, long timeout, TimeUnit timeUnit) {
+         List<Cache<Object, Object>> caches = getCaches(cacheName);
+         Cache<Object, Object> cache = caches.get(0);
+         TestingUtil.blockUntilViewsReceived((int) timeUnit.toMillis(timeout), false, caches);
+         if (cache.getCacheConfiguration().clustering().cacheMode().isDistributed()) {
+            TestingUtil.waitForRehashToComplete(caches);
+         }
+      }
+
+      public  <K,V> List<Cache<K,V>> getCaches(String cacheName) {
          List<Cache<K,V>> caches = new ArrayList<Cache<K,V>>(cacheManagers.size());
          for (EmbeddedCacheManager cm : cacheManagers) {
             caches.add(cacheName == null ? cm.<K,V>getCache() : cm.<K,V>getCache(cacheName));
          }
          return caches;
+      }
+
+      public void addCache(GlobalConfigurationBuilder gBuilder, ConfigurationBuilder builder) {
+         addCache(null, gBuilder, builder);
+      }
+
+      public void addCache(String cacheName, GlobalConfigurationBuilder gBuilder, ConfigurationBuilder builder) {
+         gBuilder.site().localSite(siteName);
+         EmbeddedCacheManager cm = addClusterEnabledCacheManager(transportFlags(), gBuilder, builder);
+         if (cacheName != null)
+            cm.defineConfiguration(cacheName, builder.build());
+      }
+
+      public void kill(int index) {
+         TestingUtil.killCacheManagers(cacheManagers.remove(index));
       }
 
       public <K,V> Cache<K,V> cache(int index) {

@@ -19,6 +19,8 @@ public class XSiteStateTransferControlCommand extends XSiteReplicateCommand {
    private XSiteStateConsumer consumer;
    private XSiteStateTransferManager stateTransferManager;
    private String siteName;
+   private boolean statusOk;
+   private int topologyId;
 
    public XSiteStateTransferControlCommand(String cacheName, StateTransferControl control, String siteName) {
       super(cacheName);
@@ -51,20 +53,31 @@ public class XSiteStateTransferControlCommand extends XSiteReplicateCommand {
    public Object perform(InvocationContext ctx) throws Throwable {
       switch (control) {
          case START_SEND:
-            provider.startStateTransfer(siteName, getOrigin());
+            provider.startStateTransfer(siteName, getOrigin(), topologyId);
             break;
          case START_RECEIVE:
-            consumer.startStateTransfer();
+            consumer.startStateTransfer(siteName);
             break;
          case FINISH_RECEIVE:
-            consumer.endStateTransfer();
+            consumer.endStateTransfer(siteName);
             break;
          case FINISH_SEND:
-            stateTransferManager.notifyStatePushFinished(siteName, getOrigin());
+            stateTransferManager.notifyStatePushFinished(siteName, getOrigin(), statusOk);
             break;
          case CANCEL_SEND:
             provider.cancelStateTransfer(siteName);
             break;
+         case RESTART_SEND:
+            provider.cancelStateTransfer(siteName);
+            provider.startStateTransfer(siteName, getOrigin(), topologyId);
+            break;
+         case STATUS_REQUEST:
+            return stateTransferManager.getStatus();
+         case CLEAR_STATUS:
+            stateTransferManager.clearStatus();
+            break;
+         default:
+            throw new IllegalStateException("Unknown control command: " + consumer);
       }
       return null;
    }
@@ -76,7 +89,7 @@ public class XSiteStateTransferControlCommand extends XSiteReplicateCommand {
 
    @Override
    public Object[] getParameters() {
-      return new Object[]{control, siteName};
+      return new Object[]{control, siteName, statusOk, topologyId};
    }
 
    @Override
@@ -86,12 +99,29 @@ public class XSiteStateTransferControlCommand extends XSiteReplicateCommand {
       }
       this.control = (StateTransferControl) parameters[0];
       this.siteName = (String) parameters[1];
-
+      this.statusOk = (Boolean) parameters[2];
+      this.topologyId = (Integer) parameters[3];
    }
 
    @Override
    public boolean isReturnValueExpected() {
-      return false;
+      return this.control == StateTransferControl.STATUS_REQUEST;
+   }
+
+   public void setStatusOk(boolean statusOk) {
+      this.statusOk = statusOk;
+   }
+
+   public void setSiteName(String siteName) {
+      this.siteName = siteName;
+   }
+
+   public String getSiteName() {
+      return siteName;
+   }
+
+   public void setTopologyId(int topologyId) {
+      this.topologyId = topologyId;
    }
 
    public static enum StateTransferControl {
@@ -99,6 +129,19 @@ public class XSiteStateTransferControlCommand extends XSiteReplicateCommand {
       START_RECEIVE,
       FINISH_SEND,
       FINISH_RECEIVE,
-      CANCEL_SEND
+      CANCEL_SEND,
+      RESTART_SEND,
+      STATUS_REQUEST,
+      CLEAR_STATUS
+   }
+
+   @Override
+   public String toString() {
+      return "XSiteStateTransferControlCommand{" +
+            "control=" + control +
+            ", siteName='" + siteName + '\'' +
+            ", statusOk=" + statusOk +
+            ", cacheName='" + cacheName + '\'' +
+            '}';
    }
 }

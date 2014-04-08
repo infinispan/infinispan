@@ -16,9 +16,9 @@ import java.util.Set;
  * @since 6.0
  */
 public class CacheNotFoundResponse extends InvalidResponse {
-   public static CacheNotFoundResponse INSTANCE = new CacheNotFoundResponse();
+   public static final CacheNotFoundResponse INSTANCE = new CacheNotFoundResponse();
 
-   public CacheNotFoundResponse() {
+   private CacheNotFoundResponse() {
    }
 
    public static class Externalizer extends AbstractExternalizer<CacheNotFoundResponse> {
@@ -28,7 +28,7 @@ public class CacheNotFoundResponse extends InvalidResponse {
 
       @Override
       public CacheNotFoundResponse readObject(ObjectInput input) throws IOException, ClassNotFoundException {
-         return new CacheNotFoundResponse();
+         return INSTANCE;
       }
 
       @Override

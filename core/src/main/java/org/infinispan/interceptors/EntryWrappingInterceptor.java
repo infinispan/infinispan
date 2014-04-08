@@ -367,7 +367,7 @@ public class EntryWrappingInterceptor extends CommandInterceptor {
             stateConsumer.stopApplyingState();
          }
          if (xSiteStateConsumer != null) {
-            xSiteStateConsumer.endStateTransfer();
+            xSiteStateConsumer.endStateTransfer(null);
          }
       }
    }

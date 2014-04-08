@@ -28,17 +28,19 @@
          oob_thread_pool.queue_max_size="100"
          oob_thread_pool.rejection_policy="Run"/>
 
-    <TCPPING timeout="3000"
+    <!--TCPPING timeout="3000"
              initial_hosts="127.0.0.1[7200]"
              port_range="3"
              ergonomics="false"
-            />
+            /-->
+    <org.infinispan.test.fwk.TEST_PING ergonomics="false" testName=""/>
 
 
     <!--<MPING timeout="1000"-->
            <!--num_initial_members="3"-->
            <!--break_on_coord_rsp="true"/>-->
-    <!--MERGE3/-->
+    <MERGE3 max_interval="5000"
+            min_interval="3000"/>
     <FD_SOCK bind_addr="127.0.0.1"/>
 
     <pbcast.NAKACK2 xmit_interval="1000"

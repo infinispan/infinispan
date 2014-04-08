@@ -154,6 +154,14 @@ public abstract class AbstractControlledRpcManager implements RpcManager {
    }
 
    @Override
+   public void invokeRemotelyInFuture(NotifyingNotifiableFuture<Map<Address, Response>> future, Collection<Address> recipients, ReplicableCommand rpc, RpcOptions options) {
+      log.trace("ControlledRpcManager.invokeRemotelyInFuture6");
+      beforeInvokeRemotely(rpc);
+      realOne.invokeRemotelyInFuture(future, recipients, rpc, options);
+      afterInvokeRemotely(rpc, null);
+   }
+
+   @Override
    public Transport getTransport() {
       return realOne.getTransport();
    }

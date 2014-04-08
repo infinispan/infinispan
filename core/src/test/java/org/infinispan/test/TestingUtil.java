@@ -1486,4 +1486,24 @@ public class TestingUtil {
       }
    }
 
+   public static <T, W extends T> W wrapGlobalComponent(CacheContainer cacheContainer, Class<T> tClass,
+                                                        WrapFactory<T, W, CacheContainer> factory, boolean rewire) {
+      T current = extractGlobalComponent(cacheContainer, tClass);
+      W wrap = factory.wrap(cacheContainer, current);
+      replaceComponent(cacheContainer, tClass, wrap, rewire);
+      return wrap;
+   }
+
+   public static <T, W extends T> W wrapComponent(Cache<?, ?> cache, Class<T> tClass,
+                                                  WrapFactory<T, W, Cache<?, ?>> factory, boolean rewire) {
+      T current = extractComponent(cache, tClass);
+      W wrap = factory.wrap(cache, current);
+      replaceComponent(cache, tClass, wrap, rewire);
+      return wrap;
+   }
+
+   public static interface WrapFactory<T, W, C> {
+      W wrap(C wrapOn, T current);
+   }
+
 }

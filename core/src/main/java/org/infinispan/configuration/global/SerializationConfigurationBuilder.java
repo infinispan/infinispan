@@ -35,6 +35,10 @@ public class SerializationConfigurationBuilder extends AbstractGlobalConfigurati
       return this;
    }
 
+   public Marshaller getMarshaller() {
+      return marshaller;
+   }
+
 
    /**
     * Largest allowable version to use when marshalling internal state. Set this to the lowest version cache instance in

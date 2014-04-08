@@ -1186,4 +1186,8 @@ public interface Log extends BasicLogger {
    @LogMessage(level = WARN)
    @Message(value = "Cyclic dependency detected between caches, stop order ignored", id = 321)
    void stopOrderIgnored();
+
+   @LogMessage(level = WARN)
+   @Message(value = "Unable to re-start x-site state transfer to site %s", id = 322)
+   void failedToRestartXSiteStateTransfer(String siteName, @Cause Throwable cause);
 }

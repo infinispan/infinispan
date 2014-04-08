@@ -25,7 +25,7 @@ public class XSiteFileParsing2Test extends SingleCacheManagerTest {
    public static final String FILE_NAME = "configs/xsite/xsite-test2.xml";
    private static final TakeOfflineConfiguration DEFAULT_TAKE_OFFLINE = new TakeOfflineConfiguration(0, 0);
    private static final XSiteStateTransferConfiguration DEFAULT_STATE_TRANSFER =
-         new XSiteStateTransferConfiguration(DEFAULT_CHUNK_SIZE, DEFAULT_TIMEOUT);
+         new XSiteStateTransferConfiguration(DEFAULT_CHUNK_SIZE, DEFAULT_TIMEOUT, DEFAULT_MAX_RETRIES, DEFAULT_WAIT_TIME);
 
    @Override
    protected EmbeddedCacheManager createCacheManager() throws Exception {

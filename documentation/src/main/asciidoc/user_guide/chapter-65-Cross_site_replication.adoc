@@ -2,6 +2,8 @@
 == Cross site replication
 Cross site (x-site) replication allows backing up the data from one cluster to other clusters, potentially situated in different geographical location. The cross-site replication is built on top of JGroups' link:$$http://www.jgroups.org/manual-3.x/html/user-advanced.html#Relay2Advanced$$[RELAY2 protocol] . link:$$https://community.jboss.org/wiki/DesignForCrossSiteReplication$$[This document] describes the technical design of cross site replication in more detail. 
 
+NOTE: Cross site replication needs the backup cache running in the site master node(s) (i.e. node which receives the backup and applies it). The backup cache starts automatically when it receives the first backup request.
+
 === Sample deployment
 The diagram below depicts a possible setup of replicated sites, followed by a description of individual elements present in the deployment. Options are then explained at large in future paragraphs. Comments on the diagram above: 
 
@@ -249,8 +251,6 @@ In order to bring a site back online after being taken offline, one can use the 
 
 NOTE: This feature is available since Infinispan *7.0.0.Alpha2*
 
-CAUTION: This is an experimental feature. Please check the release notes for more information about what is implemented.
-
 When a new site is bough back online, it is necessary to re-sync the site with the most recent updates. This feature
 allows state to be transferred from one site to another.
 
@@ -265,6 +265,8 @@ image::images/xsite-state-transfer.png["JConsole pushState operation",height=495
 NOTE: The +pushState(siteName)+ operation will automatically bring the new site online. The system administrator does
 not need to bring the site online first.
 
+NOTE: The receiver site can only receive state from a single site.
+
 The consumer site can be in any state (online or offline) in respect to the provider site and the system administrator
 can trigger the push state at any time. The system will ignore multiple invocations if the provider site is already
 pushing state to the consumer site.
@@ -274,8 +276,41 @@ can be overwritten but they are never deleted. In other words, if a key +K+ does
 exists in consumer site, it will not be deleted. In other way, if a key +K+ exists in both sites, it will be overwritten
 in the consumer site.
 
+==== Handling join/leave nodes
+
+The current implementation automatically handles the topology changes in producer or consumer site. Also, the cross-site
+state transfer can run in parallel with a local site state transfer.
+
+==== Handling broken link between sites
+
+A System Administrator action is needed if the link between the producer and consumer site is broken during the
+cross-site state transfer (data consistency is not ensured in consumer site). The producer site retries for a while
+before giving up. Then, it gets back to normal state. However, the consumer site is not able to get back to normal state
+and, here, an action from System Administrator is need. The System Administrator should use the operation
++cancelReceiveState(String siteName)+ to bring the consumer site to normal state.
+
+==== System Administrator Operations
+
+A set of operations can be performed to control the cross-site state transfer:
+
+* +pushState(String siteName)+ - It starts the cross-site state transfer to the site name specified;
+
+* +cancelPushState(String siteName)+ - It cancels the cross-site state transfer to the site name specified;
+
+* +getRunningStateTransfer()+ - It returns a list of site name to which this site is pushing the state;
+
+* +getSendingSiteName()+ - It returns the site name that is pushing state to this site;
+
+* +cancelReceiveState(String siteName)+ - It restores the site to normal state. Should be used when the link between
+the sites is broken during the state transfer (as described above);
+
+* +getPushStateStatus()+ - It returns the status of completed cross-site state transfer;
+
+* +clearPushStateStatus()+ - It clears the status of completed cross-site state transfer.
+
 For more technical information, you can check the Cross Site design document (See <<x-site-reference, Reference>>).
 
+[[x-site-st-configuration]]
 ==== Configuration
 State transfer between sites cannot be enabled or disabled but it allows to tune some parameters. The values shown
 below are the default values:
@@ -288,7 +323,7 @@ below are the default values:
    ...
    <backups>
       <backup site="NYC" strategy="SYNC" failure-policy="FAIL">
-         <state-transfer chunk-size="512" timeout="1200000" />
+         <state-transfer chunk-size="512" timeout="1200000" max-retries="30" wait-time="2000" />
       </backup>
    </backups>
     ...
@@ -307,17 +342,25 @@ lon.sites().addBackup()
       .strategy(BackupConfiguration.BackupStrategy.SYNC)
       .stateTransfer()
          .chunkSize(512)
-         .timeout(1200000);
+         .timeout(1200000)
+         .maxRetries(30)
+         .waitingTimeBetweenRetries(2000);
 
 ----
 
 Below, it is the parameters description:
 
-* _chunkSize_ - The number of keys to batch before sending them to the consumer site. A negative or a zero value is
+* _chunk-size_ - The number of keys to batch before sending them to the consumer site. A negative or a zero value is
 *not* a valid value. Default value is 512 keys.
 
 * _timeout_ - The time (in milliseconds) to wait for the consumer site acknowledge the reception and appliance of a
 state chunk. A negative or zero value is *not* a valid value. Default value is 20 minutes.
+
+* _max-retries_ - The maximum number of retries when a push state command fails. A negative or a zero value means that
+the command will not retry in case of failure. Default value is 30.
+
+* _wait-time_ - The waiting time (in milliseconds) between each retry. A negative or a zero value is *not* a valid
+value. Default value is 2 seconds.
 
 [[x-site-reference]]
 === Reference

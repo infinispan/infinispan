@@ -46,7 +46,7 @@ public class LocalInvocation implements Callable<Response> {
       }
    }
 
-   public static LocalInvocation newInstanceFromCache(Cache<Object, Object> cache, CacheRpcCommand command) {
+   public static LocalInvocation newInstanceFromCache(Cache<?, ?> cache, CacheRpcCommand command) {
       ComponentRegistry registry = cache.getAdvancedCache().getComponentRegistry();
       ResponseGenerator responseGenerator = registry.getResponseGenerator();
       CommandsFactory commandsFactory = registry.getCommandsFactory();

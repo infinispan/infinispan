@@ -10,9 +10,19 @@ import org.infinispan.commands.remote.BaseRpcCommand;
  */
 public abstract class XSiteReplicateCommand extends BaseRpcCommand {
 
+   private String originSite;
+
    protected XSiteReplicateCommand(String cacheName) {
       super(cacheName);
    }
 
    public abstract Object performInLocalSite(BackupReceiver receiver) throws Throwable;
+
+   public String getOriginSite() {
+      return originSite;
+   }
+
+   public void setOriginSite(String originSite) {
+      this.originSite = originSite;
+   }
 }
