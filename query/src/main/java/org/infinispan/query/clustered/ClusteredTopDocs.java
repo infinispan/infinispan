@@ -2,7 +2,6 @@ package org.infinispan.query.clustered;
 
 import java.util.UUID;
 
-import org.apache.lucene.search.FieldDoc;
 import org.apache.lucene.search.ScoreDoc;
 import org.apache.lucene.search.TopDocs;
 import org.infinispan.remoting.transport.Address;
@@ -42,15 +41,12 @@ public class ClusteredTopDocs {
       return topDocs;
    }
 
-   public ScoreDoc getNext() {
+   public ClusteredDoc getNext() {
       if (currentIndex >= topDocs.scoreDocs.length)
          return null;
 
       ScoreDoc scoreDoc = topDocs.scoreDocs[currentIndex];
-      if (scoreDoc instanceof FieldDoc)
-         return new ClusteredFieldDoc((FieldDoc) scoreDoc, id, currentIndex++);
-      else 
-         return new ClusteredScoreDoc(scoreDoc, id, currentIndex++);
+      return new ClusteredScoreDoc(scoreDoc, id, currentIndex++);
    }
 
    public void setNodeAddress(Address nodeAddress) {

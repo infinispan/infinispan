@@ -30,5 +30,6 @@ public class ExternalizerIds {
 
    public static final Integer LUCENE_TOPFIELDDOCS = 1645;
 
+   public static final Integer LUCENE_FIELD_SCORE_DOC = 1646;
 
 }

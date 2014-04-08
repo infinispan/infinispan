@@ -25,8 +25,6 @@ public class DistributedLazyIterator extends DistributedIterator {
 
    private static final Log log = LogFactory.getLog(DistributedLazyIterator.class);
 
-   private final ClusteredQueryInvoker invoker;
-
    public DistributedLazyIterator(Sort sort, int fetchSize, int resultSize, int maxResults, int firstResult, UUID id,
          HashMap<UUID, ClusteredTopDocs> topDocsResponses, ExecutorService asyncExecutor, AdvancedCache<?, ?> cache) {
       super(sort, fetchSize, resultSize, maxResults, firstResult, topDocsResponses, cache);
@@ -47,10 +45,10 @@ public class DistributedLazyIterator extends DistributedIterator {
    }
 
    @Override
-   public Object fetchValue(ClusteredDoc scoreDoc, ClusteredTopDocs topDoc) {
+   public Object fetchValue(int scoreIndex, ClusteredTopDocs topDoc) {
       Object value = null;
       try {
-         value = invoker.getValue(scoreDoc.getIndex(), topDoc.getNodeAddress(), queryId);
+         value = invoker.getValue(scoreIndex, topDoc.getNodeAddress(), queryId);
       } catch (Exception e) {
          log.error("Error while trying to remoting fetch next value: " + e.getMessage());
       }
