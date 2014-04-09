@@ -172,6 +172,7 @@ public class InboundInvocationHandlerImpl implements InboundInvocationHandler {
                      if (trace) log.tracef("Ignoring command sent before the local node was a member " +
                            "(command topology id is %d)", commandTopologyId);
                      reply(response, null);
+                     return;
                   }
                   Response resp;
                   try {
@@ -193,6 +194,7 @@ public class InboundInvocationHandlerImpl implements InboundInvocationHandler {
                if (trace) log.tracef("Ignoring command sent before the local node was a member " +
                      "(command topology id is %d)", commandTopologyId);
                reply(response, null);
+               return;
             }
 
             Response resp = handleInternal(cmd, cr);
