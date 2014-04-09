@@ -70,6 +70,7 @@ public class SingleFileStoreFunctionalTest extends BaseStoreFunctionalTest {
             assertEquals(-1, cacheLoader.getConfiguration().maxEntries());
          }
       });
+      TestingUtil.recursiveFileRemove("Infinispan-SingleFileStore");
    }
 
    public void testParsingElement() throws Exception {
@@ -94,6 +95,7 @@ public class SingleFileStoreFunctionalTest extends BaseStoreFunctionalTest {
             assertEquals(100, store.getConfiguration().maxEntries());
          }
       });
+      TestingUtil.recursiveFileRemove("other-location");
    }
 
 }
