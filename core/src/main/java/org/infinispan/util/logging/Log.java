@@ -1104,4 +1104,6 @@ public interface Log extends BasicLogger {
    @Message(value = "Starting a DefaultCacheManager with authorization enabled but without a SecurityManager installed may lead to unexpected behaviour", id = 298)
    void authorizationEnabledWithoutSecurityManager();
 
+   @Message(value = "Unable to acquire lock after %s for key %s and requestor %s. Lock is held by %s, while request came from %s", id = 299)
+   TimeoutException unableToAcquireLock(String timeout, Object key, Object requestor, Object owner, Address origin);
 }
