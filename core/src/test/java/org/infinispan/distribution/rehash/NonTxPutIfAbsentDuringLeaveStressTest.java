@@ -10,6 +10,7 @@ import org.infinispan.remoting.RemoteException;
 import org.infinispan.remoting.transport.jgroups.SuspectException;
 import org.infinispan.statetransfer.OutdatedTopologyException;
 import org.infinispan.test.MultipleCacheManagersTest;
+import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.CleanupAfterMethod;
 import org.infinispan.transaction.TransactionMode;
 import org.testng.annotations.Test;
@@ -104,10 +105,10 @@ public class NonTxPutIfAbsentDuringLeaveStressTest extends MultipleCacheManagers
       }
 
       killMember(4);
-      waitForClusterToForm();
+      TestingUtil.waitForRehashToComplete(caches());
 
       killMember(3);
-      waitForClusterToForm();
+      TestingUtil.waitForRehashToComplete(caches());
 
       stop = true;
 

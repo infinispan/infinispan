@@ -5,6 +5,7 @@ import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.cache.VersioningScheme;
 import org.infinispan.test.MultipleCacheManagersTest;
+import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.CleanupAfterMethod;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.infinispan.transaction.LockingMode;
@@ -70,7 +71,7 @@ public class VersionedReplStateTransferTest extends MultipleCacheManagersTest {
 
       cacheManagers.get(0).stop();
       cacheManagers.remove(0);
-      waitForClusterToForm();
+      TestingUtil.waitForRehashToComplete(caches());
 
       // Cause a write skew
       cache2.put("hello", "new world");
