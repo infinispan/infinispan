@@ -195,8 +195,8 @@ public class LockManagerImpl implements LockManager {
          if (key instanceof MarshalledValue) {
             key = ((MarshalledValue) key).get();
          }
-         throw new TimeoutException("Unable to acquire lock after [" + Util.prettyPrintTime(timeoutMillis) + "] on key [" + key + "] for requestor [" +
-               ctx.getLockOwner() + "]! Lock held by [" + owner + "]");
+         throw log.unableToAcquireLock(Util.prettyPrintTime(timeoutMillis), key, ctx.getLockOwner(), owner,
+               ctx.getOrigin());
       }
    }
 
