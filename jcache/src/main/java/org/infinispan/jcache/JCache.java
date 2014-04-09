@@ -16,6 +16,7 @@ import java.util.concurrent.TimeoutException;
 
 import javax.cache.*;
 import javax.cache.configuration.CacheEntryListenerConfiguration;
+import javax.cache.configuration.CompleteConfiguration;
 import javax.cache.configuration.Configuration;
 import javax.cache.configuration.Factory;
 import javax.cache.configuration.MutableConfiguration;
@@ -28,6 +29,7 @@ import javax.cache.management.CacheMXBean;
 import javax.cache.management.CacheStatisticsMXBean;
 import javax.cache.processor.EntryProcessor;
 import javax.cache.processor.EntryProcessorException;
+import javax.cache.processor.EntryProcessorResult;
 import javax.management.MBeanServer;
 
 import org.infinispan.AdvancedCache;
@@ -64,13 +66,13 @@ public final class JCache<K, V> implements Cache<K, V> {
          LogFactory.getLog(JCache.class, Log.class);
 
    private final JCacheManager cacheManager;
-   private final Configuration<K, V> configuration;
+   private final MutableConfiguration<K, V> configuration;
    private final AdvancedCache<K, V> cache;
    private final AdvancedCache<K, V> ignoreReturnValuesCache;
    private final AdvancedCache<K, V> skipCacheLoadCache;
    private final AdvancedCache<K, V> skipCacheLoadAndStatsCache;
    private final AdvancedCache<K, V> skipListenerCache;
-   private final CacheStatisticsMXBean stats;
+   private final RICacheStatistics stats;
    private final CacheMXBean mxBean;
 
    private final ExpiryPolicy expiryPolicy;
@@ -80,7 +82,7 @@ public final class JCache<K, V> implements Cache<K, V> {
    private CacheLoader<K, V> jcacheLoader;
    private CacheWriter<? super K, ? super V> jcacheWriter;
 
-   public JCache(AdvancedCache<K, V> cache, JCacheManager cacheManager, Configuration<K, V> c) {
+   public JCache(AdvancedCache<K, V> cache, JCacheManager cacheManager, ConfigurationAdapter<K, V> c) {
       this.cache = cache;
       this.ignoreReturnValuesCache = cache.withFlags(Flag.IGNORE_RETURN_VALUES);
       this.skipCacheLoadCache = cache.withFlags(Flag.SKIP_CACHE_LOAD);
@@ -91,11 +93,7 @@ public final class JCache<K, V> implements Cache<K, V> {
       this.skipListenerCache = cache.withFlags(Flag.SKIP_LISTENER_NOTIFICATION);
       this.cacheManager = cacheManager;
 
-      // A configuration copy as required by the spec
-      // Management enabled setting is not copied in 0.7, this is a workaround
-      this.configuration = new MutableConfiguration<K, V>(c)
-            .setManagementEnabled(c.isManagementEnabled());
-
+      this.configuration = c.getConfiguration();
       this.mxBean = new RIDelegatingCacheMXBean<K, V>(this);
       this.stats = new RICacheStatistics(this.cache);
       this.expiryPolicy = configuration.getExpiryPolicyFactory().create();
@@ -103,11 +101,11 @@ public final class JCache<K, V> implements Cache<K, V> {
             .locking().lockAcquisitionTimeout();
 
       for (CacheEntryListenerConfiguration<K, V> r
-            : c.getCacheEntryListenerConfigurations())
+            : configuration.getCacheEntryListenerConfigurations())
          notifier.addListener(r, this, notifier, cache);
 
-      setCacheLoader(cache, c);
-      setCacheWriter(cache, c);
+      setCacheLoader(cache, configuration);
+      setCacheWriter(cache, configuration);
       addExpirationTrackingInterceptor(cache, notifier);
 
       if (configuration.isManagementEnabled())
@@ -117,7 +115,7 @@ public final class JCache<K, V> implements Cache<K, V> {
          setStatisticsEnabled(true);
    }
 
-   private void setCacheLoader(AdvancedCache<K, V> cache, Configuration<K, V> c) {
+   private void setCacheLoader(AdvancedCache<K, V> cache, CompleteConfiguration<K, V> c) {
       // Plug user-defined cache loader into adaptor
       Factory<CacheLoader<K, V>> cacheLoaderFactory = c.getCacheLoaderFactory();
       if (cacheLoaderFactory != null) {
@@ -135,7 +133,7 @@ public final class JCache<K, V> implements Cache<K, V> {
       return (JCacheLoaderAdapter<K, V>) persistenceManager.getAllLoaders().get(0);
    }
 
-   private void setCacheWriter(AdvancedCache<K, V> cache, Configuration<K, V> c) {
+   private void setCacheWriter(AdvancedCache<K, V> cache, CompleteConfiguration<K, V> c) {
       // Plug user-defined cache writer into adaptor
       Factory<CacheWriter<? super K, ? super V>> cacheWriterFactory = c.getCacheWriterFactory();
       if (cacheWriterFactory != null) {
@@ -183,7 +181,7 @@ public final class JCache<K, V> implements Cache<K, V> {
          });
       }
 
-      return skipCacheLoadCache.containsKey(key);
+      return skipCacheLoadAndStatsCache.containsKey(key);
    }
 
    @Override
@@ -240,16 +238,17 @@ public final class JCache<K, V> implements Cache<K, V> {
          return new WithProcessorLock<V>().call(key, new Callable<V>() {
             @Override
             public V call() {
-               return put(skipCacheLoadCache, skipCacheLoadAndStatsCache, key, value, false);
+               return put(skipCacheLoadCache, skipCacheLoadCache, key, value, false);
             }
          });
       }
-      return put(skipCacheLoadCache, skipCacheLoadAndStatsCache, key, value, false);
+      return put(skipCacheLoadCache, skipCacheLoadCache, key, value, false);
    }
 
    @Override
    public V getAndRemove(final K key) {
       checkNotClosed();
+      skipCacheLoadCache.get(key); // bring in key and update stats
       if (lockRequired(key)) {
          return new WithProcessorLock<V>().call(key, new Callable<V>() {
             @Override
@@ -293,22 +292,13 @@ public final class JCache<K, V> implements Cache<K, V> {
    }
 
    @Override
-   public Configuration<K, V> getConfiguration() {
-      return configuration;
-   }
-
-   @Override
    public String getName() {
       return cache.getName();
    }
 
    @Override
    public <T> T invoke(final K key, final EntryProcessor<K, V, T> entryProcessor, final Object... arguments) {
-      checkNotClosed();
-
-      // spec required null checks
-      verifyKey(key);
-      verifyEntryProcessor(entryProcessor);
+      checkNotClosed().checkNull(key, "key").checkNull(entryProcessor, "entryProcessor");
 
       // Using references for backup copies to provide perceived exclusive
       // read access, and only apply changes if original value was not
@@ -325,7 +315,7 @@ public final class JCache<K, V> implements Cache<K, V> {
          public T call() throws Exception {
             // Get old value skipping any listeners to impacting
             // listener invocation expectations set by the TCK.
-            V oldValue = skipCacheLoadAndStatsCache.get(key);
+            V oldValue = skipCacheLoadCache.get(key);
             V safeOldValue = oldValue;
             if (configuration.isStoreByValue()) {
                // Make a copy because the entry processor could make changes
@@ -341,7 +331,6 @@ public final class JCache<K, V> implements Cache<K, V> {
                case NONE:
                   break;
                case ACCESS:
-                  skipCacheLoadCache.get(key); // update hit stats
                   updateTTLForAccessed(cache, key, oldValue);
                   break;
                case UPDATE:
@@ -349,7 +338,7 @@ public final class JCache<K, V> implements Cache<K, V> {
                   if (oldValue != null) {
                      // Only allow change to be applied if value has not
                      // changed since the start of the processing.
-                     replace(cache, key, oldValue, newValue, true);
+                     replace(cache, skipCacheLoadAndStatsCache, key, oldValue, newValue, true);
                   } else {
                      put(cache, skipCacheLoadCache, key, newValue, true);
                   }
@@ -379,21 +368,24 @@ public final class JCache<K, V> implements Cache<K, V> {
    }
 
    @Override
-   public <T> Map<K, T> invokeAll(Set<? extends K> keys, EntryProcessor<K, V, T> entryProcessor, Object... arguments) {
-      checkNotClosed();
+   public <T> Map<K, EntryProcessorResult<T>> invokeAll(
+         Set<? extends K> keys, EntryProcessor<K, V, T> entryProcessor, Object... arguments) {
+      checkNotClosed().checkNull(entryProcessor, "entryProcessor").verifyKeys(keys);
 
-      // spec required null checks
-      verifyKeys(keys);
-      verifyEntryProcessor(entryProcessor);
-
-      Map<K, T> result = new HashMap<K, T>(keys.size());
+      Map<K, EntryProcessorResult<T>> map = new HashMap<K, EntryProcessorResult<T>>(keys.size());
       for (K key : keys) {
-         T t = invoke(key, entryProcessor, arguments);
-         if (t != null)
-            result.put(key, t);
+         EntryProcessorResult<T> result;
+         try {
+            T t = invoke(key, entryProcessor, arguments);
+            result = t == null ? null : new SuccessEntryProcessorResult<T>(t);
+         } catch (Throwable t) {
+            result = new FailureEntryProcessorResult<T>(t);
+         }
+         if (result != null)
+            map.put(key, result);
       }
 
-      return result;
+      return map;
    }
 
    @SuppressWarnings("unchecked")
@@ -455,7 +447,7 @@ public final class JCache<K, V> implements Cache<K, V> {
       // we separate logic at this level.
 
       if (jcacheLoader == null && jcacheWriter != null)
-         listener.onCompletion(); // A cache writer cannot load data
+         setListenerCompletion(listener);
       else if (jcacheLoader != null)
          loadAllFromJCacheLoader(keys, replaceExistingValues, listener);
       else
@@ -463,10 +455,12 @@ public final class JCache<K, V> implements Cache<K, V> {
    }
 
    private void setListenerException(CompletionListener listener, Throwable t) {
-      if (t instanceof Exception)
-         listener.onException((Exception) t);
-      else
-         listener.onException(new CacheException(t));
+      if (listener !=  null) {
+         if (t instanceof Exception)
+            listener.onException((Exception) t);
+         else
+            listener.onException(new CacheException(t));
+      }
    }
 
    @Override
@@ -527,13 +521,13 @@ public final class JCache<K, V> implements Cache<K, V> {
             @Override
             public Boolean call() {
                return put(skipCacheLoadCache,
-                     skipCacheLoadCache, key, value, true) == null;
+                     skipCacheLoadAndStatsCache, key, value, true) == null;
             }
          });
       }
 
       return put(skipCacheLoadCache,
-            skipCacheLoadCache, key, value, true) == null;
+            skipCacheLoadAndStatsCache, key, value, true) == null;
    }
 
    @Override
@@ -579,8 +573,7 @@ public final class JCache<K, V> implements Cache<K, V> {
 
       // Delete asynchronously and then wait for removals to complete
       List<Future<V>> futures = new ArrayList<Future<V>>();
-      for (Cache.Entry<K, V> entry : this) {
-         final K key = entry.getKey();
+      for (final K key : cache.keySet()) {
          if (lockRequired(key)) {
             new WithProcessorLock<Void>().call(key, new Callable<Void>() {
                @Override
@@ -623,12 +616,14 @@ public final class JCache<K, V> implements Cache<K, V> {
          return new WithProcessorLock<Boolean>().call(key, new Callable<Boolean>() {
             @Override
             public Boolean call() {
-               return replace(skipCacheLoadCache, key, null, value, false);
+               return replace(skipCacheLoadCache, skipCacheLoadCache,
+                     key, null, value, false);
             }
          });
       }
 
-      return replace(skipCacheLoadCache, key, null, value, false);
+      return replace(skipCacheLoadCache, skipCacheLoadCache,
+            key, null, value, false);
    }
 
    @Override
@@ -638,12 +633,14 @@ public final class JCache<K, V> implements Cache<K, V> {
          return new WithProcessorLock<Boolean>().call(key, new Callable<Boolean>() {
             @Override
             public Boolean call() {
-               return replace(skipCacheLoadCache, key, oldValue, newValue, true);
+               return replace(skipCacheLoadCache, skipCacheLoadCache,
+                     key, oldValue, newValue, true);
             }
          });
       }
 
-      return replace(skipCacheLoadCache, key, oldValue, newValue, true);
+      return replace(skipCacheLoadCache, skipCacheLoadCache,
+            key, oldValue, newValue, true);
    }
 
    @Override
@@ -663,7 +660,16 @@ public final class JCache<K, V> implements Cache<K, V> {
       removeCacheEntryListenerConfiguration(listenerCfg);
    }
 
+   @Override
+   public <C extends Configuration<K, V>> C getConfiguration(Class<C> clazz) {
+      if (clazz.isInstance(configuration))
+         return clazz.cast(configuration);
+
+      throw log.configurationClassNotSupported(clazz);
+   }
+
    void setManagementEnabled(boolean enabled) {
+      configuration.setManagementEnabled(enabled);
       if (enabled)
          RIMBeanServerRegistrationUtility.registerCacheObject(this, CONFIGURATION);
       else
@@ -671,13 +677,12 @@ public final class JCache<K, V> implements Cache<K, V> {
    }
 
    void setStatisticsEnabled(boolean enabled) {
-      if (enabled) {
-         cache.getStats().setStatisticsEnabled(enabled);
+      cache.getStats().setStatisticsEnabled(enabled);
+      configuration.setStatisticsEnabled(enabled);
+      if (enabled)
          RIMBeanServerRegistrationUtility.registerCacheObject(this, STATISTICS);
-      } else {
+      else
          RIMBeanServerRegistrationUtility.unregisterCacheObject(this, STATISTICS);
-         cache.getStats().setStatisticsEnabled(enabled);
-      }
    }
 
    CacheMXBean getCacheMXBean() {
@@ -693,39 +698,26 @@ public final class JCache<K, V> implements Cache<K, V> {
             cache.getCacheManager().getCacheManagerConfiguration());
    }
 
-   private void checkNotClosed() {
+   private JCache checkNotClosed() {
       if (isClosed())
-         throw new IllegalStateException("Cache is in " + cache.getStatus() + " state");
+         throw log.cacheClosed(cache.getStatus());
+
+      return this;
    }
 
-   private void verifyKeys(Set<? extends K> keys) {
+   private JCache checkNull(Object obj, String name) {
+      if (obj == null)
+         throw log.parameterMustNotBeNull(name);
+
+      return this;
+   }
+
+   private JCache verifyKeys(Set<? extends K> keys) {
       // spec required
-      if (keys == null || keys.contains(null)) {
+      if (keys == null || keys.contains(null))
          throw new NullPointerException("keys is null or keys contains a null: " + keys);
-      }
-   }
 
-   private void verifyKey(K key) {
-      // spec required
-      if (key == null)
-         throw new NullPointerException("Key cannot be null");
-   }
-
-   private void verifyNewValue(V newValue) {
-      if (newValue == null)
-         throw new NullPointerException(
-               "New value cannot be null");
-   }
-
-   private void verifyOldValue(V oldValue) {
-      if (oldValue == null)
-         throw new NullPointerException(
-               "Old value cannot be null");
-   }
-
-   private <T> void verifyEntryProcessor(EntryProcessor<K, V, T> entryProcessor) {
-      if (entryProcessor == null)
-         throw new NullPointerException("Entry processor cannot be null");
+      return this;
    }
 
    private V put(AdvancedCache<K, V> cache, AdvancedCache<K, V> createCheckCache,
@@ -776,9 +768,15 @@ public final class JCache<K, V> implements Cache<K, V> {
       }
    }
 
-   private boolean replace(AdvancedCache<K, V> cache,
+   private boolean replace(AdvancedCache<K, V> cache, AdvancedCache<K, V> existsCheckCache,
          K key, V oldValue, V value, boolean isConditional) {
-      V current = cache.get(key);
+      checkNull(value, "value");
+      if (isConditional) {
+         // Even if replace fails, values have to be validated (required by TCK)
+         checkNull(oldValue, "oldValue");
+      }
+
+      V current = existsCheckCache.get(key);
       if (current != null) {
          if (isConditional && !current.equals(oldValue)) {
             updateTTLForAccessed(cache, key, value);
@@ -804,16 +802,11 @@ public final class JCache<K, V> implements Cache<K, V> {
          }
       }
 
-      if (isConditional) {
-         // Even if replace fails, values have to be validated (required by TCK)
-         verifyOldValue(oldValue);
-      }
-
-      verifyNewValue(value);
       return false;
    }
 
    private V replace(AdvancedCache<K, V> cache, K key, V value) {
+      checkNull(value, "value");
       boolean exists = cache.containsKey(key);
       if (exists) {
          Duration ttl = Expiration.getExpiry(expiryPolicy, Expiration.Operation.UPDATE);
@@ -831,7 +824,6 @@ public final class JCache<K, V> implements Cache<K, V> {
          }
       }
 
-      verifyNewValue(value);
       return null;
    }
 
@@ -868,7 +860,7 @@ public final class JCache<K, V> implements Cache<K, V> {
       }
 
       if (!alreadyExists) {
-         configuration.getCacheEntryListenerConfigurations().add(listenerCfg);
+         configuration.addCacheEntryListenerConfiguration(listenerCfg);
       } else {
          throw new IllegalArgumentException("A CacheEntryListenerConfiguration can " +
                "be registered only once");
@@ -876,13 +868,13 @@ public final class JCache<K, V> implements Cache<K, V> {
    }
 
    private void removeCacheEntryListenerConfiguration(CacheEntryListenerConfiguration<K, V> listenerCfg) {
-      configuration.getCacheEntryListenerConfigurations().remove(listenerCfg);
+      configuration.removeCacheEntryListenerConfiguration(listenerCfg);
    }
 
    private void loadAllFromInfinispanCacheLoader(Set<? extends K> keys, boolean replaceExistingValues, final CompletionListener listener) {
       final List<K> keysToLoad = filterLoadAllKeys(keys, replaceExistingValues, true);
       if (keysToLoad.isEmpty()) {
-         listener.onCompletion();
+         setListenerCompletion(listener);
          return;
       }
 
@@ -896,7 +888,7 @@ public final class JCache<K, V> implements Cache<K, V> {
                if (log.isTraceEnabled())
                   log.tracef("Keys %s loaded, notify listener on completion", keysToLoad);
 
-               listener.onCompletion();
+               setListenerCompletion(listener);
             }
          });
          FutureListener<V> futureListener = new FutureListener<V>() {
@@ -926,6 +918,11 @@ public final class JCache<K, V> implements Cache<K, V> {
       }
    }
 
+   private void setListenerCompletion(CompletionListener listener) {
+      if (listener != null)
+         listener.onCompletion();
+   }
+
    private List<K> filterLoadAllKeys(Set<? extends K> keys, boolean replaceExistingValues, boolean cacheEvict) {
       if (log.isTraceEnabled())
          log.tracef("Before filtering, keys to load: %s", keys);
@@ -953,7 +950,7 @@ public final class JCache<K, V> implements Cache<K, V> {
    private void loadAllFromJCacheLoader(Set<? extends K> keys, boolean replaceExistingValues, final CompletionListener listener) {
       final List<K> keysToLoad = filterLoadAllKeys(keys, replaceExistingValues, false);
       if (keysToLoad.isEmpty()) {
-         listener.onCompletion();
+         setListenerCompletion(listener);
          return;
       }
 
@@ -976,7 +973,7 @@ public final class JCache<K, V> implements Cache<K, V> {
             V loadedValue = entry.getValue();
             put(skipCacheStoreCache, skipCacheLoadCache, loadedKey, loadedValue, false);
          }
-         listener.onCompletion();
+         setListenerCompletion(listener);
       } catch (Throwable t) {
          setListenerException(listener, t);
       }
@@ -1000,6 +997,10 @@ public final class JCache<K, V> implements Cache<K, V> {
       return cache.remove(key, oldValue);
    }
 
+   private boolean statisticsEnabled() {
+      return getConfiguration(CompleteConfiguration.class).isStatisticsEnabled();
+   }
+
    private class WithProcessorLock<V> {
       public V call(K key, Callable<V> callable) {
          try {
@@ -1013,8 +1014,10 @@ public final class JCache<K, V> implements Cache<K, V> {
             throw Exceptions.launderCacheListenerException(e);
          } catch (EntryProcessorException e) {
             throw e;
-         } catch (Throwable t) {
-            throw new CacheException(t);
+         } catch (CacheException e) {
+            throw e;
+         } catch (Exception e) {
+            throw new EntryProcessorException(e);
          } finally {
             releaseProcessorLock(key);
          }
@@ -1032,10 +1035,16 @@ public final class JCache<K, V> implements Cache<K, V> {
       }
 
       private void fetchNext() {
+         long start = statisticsEnabled() ? System.nanoTime() : 0;
          if (it.hasNext()) {
             Map.Entry<K, V> entry = it.next();
             next = new JCacheEntry<K, V>(
                   entry.getKey(), entry.getValue());
+
+            if (statisticsEnabled()) {
+               stats.increaseCacheHits(1);
+               stats.addGetTimeNano(System.nanoTime() - start);
+            }
          } else {
             next = null;
          }

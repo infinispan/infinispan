@@ -50,36 +50,37 @@ public class JCachingProvider implements CachingProvider {
 
    @Override
    public CacheManager getCacheManager(URI uri, ClassLoader classLoader, Properties properties) {
-      return getCacheManager(uri, classLoader);
-   }
-
-   @Override
-   public CacheManager getCacheManager(URI managerUri, ClassLoader managerClassLoader) {
-      URI uri = managerUri == null ? getDefaultURI() : managerUri;
-      ClassLoader classLoader = managerClassLoader == null ? getDefaultClassLoader() : managerClassLoader;
+      URI globalUri = uri == null ? getDefaultURI() : uri;
+      ClassLoader globalClassLoader = classLoader == null ? getDefaultClassLoader() : classLoader;
+      Properties globalProperties = properties == null ? new Properties() : properties;
 
       synchronized (cacheManagers) {
-         Map<URI, JCacheManager> map = cacheManagers.get(classLoader);
+         Map<URI, JCacheManager> map = cacheManagers.get(globalClassLoader);
          if (map == null) {
             if (log.isTraceEnabled())
-               log.tracef("No cache managers registered under '%s'", uri);
+               log.tracef("No cache managers registered under '%s'", globalUri);
 
             map = new HashMap<URI, JCacheManager>();
-            cacheManagers.put(classLoader, map);
+            cacheManagers.put(globalClassLoader, map);
          }
 
-         JCacheManager cacheManager= map.get(uri);
+         JCacheManager cacheManager= map.get(globalUri);
          if (cacheManager == null || cacheManager.isClosed()) {
             // Not found or stopped, create cache manager and add to collection
-            cacheManager = createCacheManager(classLoader, uri);
+            cacheManager = createCacheManager(globalClassLoader, globalUri, globalProperties);
             if (log.isTraceEnabled())
-               log.tracef("Created '%s' cache manager", uri);
+               log.tracef("Created '%s' cache manager", globalUri);
 
-            map.put(uri, cacheManager);
+            map.put(globalUri, cacheManager);
          }
 
          return cacheManager;
       }
+   }
+
+   @Override
+   public CacheManager getCacheManager(URI uri, ClassLoader classLoader) {
+      return getCacheManager(uri, classLoader, getDefaultProperties());
    }
 
    @Override
@@ -159,8 +160,8 @@ public class JCachingProvider implements CachingProvider {
    }
 
    private JCacheManager createCacheManager(
-         ClassLoader classLoader, URI uri) {
-      return new JCacheManager(uri, classLoader, this);
+         ClassLoader classLoader, URI uri, Properties properties) {
+      return new JCacheManager(uri, classLoader, this, properties);
    }
 
 }

@@ -2,6 +2,7 @@ package org.infinispan.jcache;
 
 import org.infinispan.AdvancedCache;
 import org.infinispan.commons.util.ReflectionUtil;
+import org.infinispan.context.Flag;
 
 import javax.cache.processor.MutableEntry;
 
@@ -38,7 +39,7 @@ public final class MutableJCacheEntry<K, V> implements MutableEntry<K, V> {
       if (value != null)
          return true;
       else if (!operation.isRemoved())
-         return cache.containsKey(key);
+         return cache.withFlags(Flag.SKIP_STATISTICS).containsKey(key);
 
       return false;
    }

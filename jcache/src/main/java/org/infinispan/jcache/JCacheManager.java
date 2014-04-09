@@ -10,7 +10,6 @@ import java.util.Set;
 
 import javax.cache.*;
 import javax.cache.configuration.Configuration;
-import javax.cache.configuration.MutableConfiguration;
 import javax.cache.spi.CachingProvider;
 
 import org.infinispan.AdvancedCache;
@@ -47,6 +46,7 @@ public class JCacheManager implements CacheManager {
    private final EmbeddedCacheManager cm;
    private final CachingProvider provider;
    private final StackTraceElement[] allocationStackTrace;
+   private final Properties properties;
 
    /**
     * Boolean flag tracking down whether the underlying Infinispan cache
@@ -73,7 +73,7 @@ public class JCacheManager implements CacheManager {
     * @param uri identifies the cache manager
     * @param classLoader used to load classes stored in this cache manager
     */
-   public JCacheManager(URI uri, ClassLoader classLoader, CachingProvider provider) {
+   public JCacheManager(URI uri, ClassLoader classLoader, CachingProvider provider, Properties properties) {
       // Track allocation time
       this.allocationStackTrace = Thread.currentThread().getStackTrace();
 
@@ -86,6 +86,7 @@ public class JCacheManager implements CacheManager {
 
       this.uri = uri;
       this.provider = provider;
+      this.properties = properties;
 
       ConfigurationBuilderHolder cbh = getConfigurationBuilderHolder(classLoader);
       GlobalConfigurationBuilder globalBuilder = cbh.getGlobalConfigurationBuilder();
@@ -115,6 +116,7 @@ public class JCacheManager implements CacheManager {
       this.provider = provider;
       this.cm = cacheManager;
       this.managedCacheManager = true;
+      this.properties = null;
       registerPredefinedCaches();
    }
 
@@ -126,8 +128,8 @@ public class JCacheManager implements CacheManager {
       for (String cacheName : cacheNames) {
          // With pre-defined caches, obey only pre-defined configuration
          caches.put(cacheName, new JCache<Object, Object>(
-               cm.getCache(cacheName).getAdvancedCache(),
-               this, new MutableConfiguration<Object, Object>()));
+               cm.getCache(cacheName).getAdvancedCache(), this,
+               ConfigurationAdapter.create()));
       }
    }
 
@@ -157,26 +159,19 @@ public class JCacheManager implements CacheManager {
 
    @Override
    public Properties getProperties() {
-      return null;
+      return properties;
    }
 
    @Override
-   public <K, V> Cache<K, V> createCache(String cacheName, Configuration<K, V> configuration) {
-      checkNotClosed();
-
-      // spec required
-      if (cacheName == null)
-         throw log.parameterMustNotBeNull("cacheName");
-
-      // spec required
-      if (configuration == null)
-         throw log.parameterMustNotBeNull("configuration");
+   public <K, V, C extends Configuration<K, V>> Cache<K, V> createCache(
+         String cacheName, C configuration) {
+      checkNotClosed().checkNull(cacheName, "cacheName").checkNull(configuration, "configuration");
 
       synchronized (caches) {
          JCache<?, ?> cache = caches.get(cacheName);
 
          if (cache == null) {
-            ConfigurationAdapter<K, V> adapter = new ConfigurationAdapter<K, V>(configuration);
+            ConfigurationAdapter<K, V> adapter = ConfigurationAdapter.create(configuration);
             cm.defineConfiguration(cacheName, adapter.build());
             AdvancedCache<K, V> ispnCache =
                   cm.<K, V>getCache(cacheName).getAdvancedCache();
@@ -185,13 +180,14 @@ public class JCacheManager implements CacheManager {
             if (!ispnCache.getStatus().allowInvocations())
                ispnCache.start();
 
-            cache = new JCache<K, V>(ispnCache, this, configuration);
+            cache = new JCache<K, V>(ispnCache, this, adapter);
             caches.put(cache.getName(), cache);
          }
          else {
             // re-register attempt with different configuration
-            if (cache.getConfiguration().equals(configuration))
-               throw log.cacheAlreadyRegistered(cacheName, cache.getConfiguration(), configuration);
+            if (cache.getConfiguration(Configuration.class).equals(configuration))
+               throw log.cacheAlreadyRegistered(cacheName,
+                     cache.getConfiguration(Configuration.class), configuration);
          }
 
          return unchecked(cache);
@@ -200,16 +196,12 @@ public class JCacheManager implements CacheManager {
 
    @Override
    public <K, V> Cache<K, V> getCache(String cacheName, Class<K> keyType, Class<V> valueType) {
-      if (keyType == null)
-         throw new NullPointerException("keyType can not be null");
-
-      if (valueType == null)
-         throw new NullPointerException("valueType can not be null");
+      checkNotClosed().checkNull(keyType, "keyType").checkNull(valueType, "valueType");
 
       synchronized (caches) {
          Cache<K, V> cache = unchecked(caches.get(cacheName));
          if (cache != null) {
-            Configuration<?, ?> configuration = cache.getConfiguration();
+            Configuration<?, ?> configuration = cache.getConfiguration(Configuration.class);
 
             Class<?> cfgKeyType = configuration.getKeyType();
             if (verifyType(keyType, cfgKeyType)) {
@@ -235,7 +227,7 @@ public class JCacheManager implements CacheManager {
       synchronized (caches) {
          JCache<?, ?> cache = caches.get(cacheName);
          if (cache == null) {
-            cache = new JCache<K, V>(ispnCache, this, new MutableConfiguration<K, V>());
+            cache = new JCache<K, V>(ispnCache, this, ConfigurationAdapter.<K, V>create());
             caches.put(cacheName, cache);
          }
          return unchecked(cache);
@@ -248,7 +240,7 @@ public class JCacheManager implements CacheManager {
       synchronized (caches) {
          Cache<K, V> cache = unchecked(caches.get(cacheName));
          if (cache != null) {
-            Configuration<K, V> configuration = cache.getConfiguration();
+            Configuration<K, V> configuration = cache.getConfiguration(Configuration.class);
             Class<K> keyType = configuration.getKeyType();
             Class<V> valueType = configuration.getValueType();
             if (Object.class.equals(keyType) && Object.class.equals(valueType))
@@ -268,9 +260,7 @@ public class JCacheManager implements CacheManager {
 
    @Override
    public void destroyCache(String cacheName) {
-      checkNotClosed();
-      if (cacheName == null)
-         throw new NullPointerException("cacheName cannot be null");
+      checkNotClosed().checkNull(cacheName, "cacheName");
 
       JCache<?, ?> destroyedCache;
       synchronized (caches) {
@@ -290,11 +280,13 @@ public class JCacheManager implements CacheManager {
 
    @Override
    public void enableManagement(String cacheName, boolean enabled) {
+      checkNotClosed();
       caches.get(cacheName).setManagementEnabled(enabled);
    }
 
    @Override
    public void enableStatistics(String cacheName, boolean enabled) {
+      checkNotClosed();
       caches.get(cacheName).setStatisticsEnabled(enabled);
    }
 
@@ -329,6 +321,11 @@ public class JCacheManager implements CacheManager {
       return ReflectionUtil.unwrap(this, clazz);
    }
 
+   @Override
+   public ClassLoader getClassLoader() {
+      return cm.getCacheManagerConfiguration().classLoader();
+   }
+
    /**
     * Avoid weak references to this cache manager
     * being garbage collected without being shutdown.
@@ -349,9 +346,18 @@ public class JCacheManager implements CacheManager {
       }
    }
 
-   private void checkNotClosed() {
+   private JCacheManager checkNotClosed() {
       if (isClosed())
-         throw new IllegalStateException("Cache manager is in " + cm.getStatus() + " status");
+         throw log.cacheManagerClosed(cm.getStatus());
+
+      return this;
+   }
+
+   private JCacheManager checkNull(Object obj, String name) {
+      if (obj == null)
+         throw log.parameterMustNotBeNull(name);
+
+      return this;
    }
 
    @SuppressWarnings("unchecked")

@@ -22,27 +22,24 @@ public class Exceptions {
    }
 
    static RuntimeException launderCacheLoaderException(Exception e) {
-      if (!(e instanceof CacheLoaderException)) {
+      if (!(e instanceof CacheLoaderException))
          return new CacheLoaderException("Exception in CacheLoader", e);
-      } else {
-         return new PersistenceException(e);
-      }
+
+      return new PersistenceException(e);
    }
 
    static RuntimeException launderCacheWriterException(Exception e) {
-      if (!(e instanceof CacheWriterException)) {
+      if (!(e instanceof CacheWriterException))
          return new CacheWriterException("Exception in CacheWriter", e);
-      } else {
-         return new CacheException("Error in CacheWriter", e);
-      }
+
+      return new CacheException("Error in CacheWriter", e);
    }
 
    static RuntimeException launderEntryProcessorException(Exception e) {
-      if (!(e instanceof EntryProcessorException)) {
-         return new EntryProcessorException(e);
-      } else {
-         return new CacheException(e);
-      }
+      if (e instanceof CacheException)
+         return (CacheException) e;
+
+      return new EntryProcessorException(e);
    }
 
    static RuntimeException launderCacheListenerException(CacheListenerException e) {
