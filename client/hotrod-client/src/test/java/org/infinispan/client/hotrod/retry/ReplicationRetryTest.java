@@ -11,6 +11,7 @@ import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.server.hotrod.HotRodServer;
+import org.infinispan.test.TestingUtil;
 import org.testng.annotations.Test;
 
 /**
@@ -131,7 +132,7 @@ public class ReplicationRetryTest extends AbstractRetryTest {
       for (Iterator<EmbeddedCacheManager> ecmIt = cacheManagers.iterator(); ecmIt.hasNext();) {
          if (ecmIt.next().getAddress().equals(expectedServer)) ecmIt.remove();
       }
-      waitForClusterToForm();
+      TestingUtil.waitForRehashToComplete(caches());
    }
 
    @Override

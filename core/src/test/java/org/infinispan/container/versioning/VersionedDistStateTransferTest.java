@@ -9,6 +9,7 @@ import org.infinispan.distribution.MagicKey;
 import org.infinispan.distribution.ch.ConsistentHash;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.test.MultipleCacheManagersTest;
+import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.CleanupAfterMethod;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.infinispan.transaction.LockingMode;
@@ -93,7 +94,7 @@ public class VersionedDistStateTransferTest extends MultipleCacheManagersTest {
       manager(3).stop();
       // Eliminate the dead cache from the caches collection, cache4 now becomes cache(3)
       cacheManagers.remove(3);
-      waitForClusterToForm();
+      TestingUtil.waitForRehashToComplete(caches());
 
       log.debugf("Leaver stopped, checking transferred data");
       checkStateTransfer(keys, values);
