@@ -11,7 +11,7 @@ import org.testng.annotations.Test;
 /**
  * Tests verifying that Mass Indexer works properly on Topology Aware nodes.
  */
-@Test(groups = "functional", testName = "query.distributed.TopologyAwareDistMassIndexingTest")
+@Test(groups = "functional,unstable", testName = "query.distributed.TopologyAwareDistMassIndexingTest", description = "Unstable, see https://issues.jboss.org/browse/ISPN-4012")
 public class TopologyAwareDistMassIndexingTest extends DistributedMassIndexingTest {
 
    @Override
