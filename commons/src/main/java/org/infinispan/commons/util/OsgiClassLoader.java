@@ -73,10 +73,11 @@ public class OsgiClassLoader extends ClassLoader {
          return classCache.get(name);
       }
 
-      for (WeakReference<Bundle> bundle : bundles) {
-         if (bundle.get().getState() == Bundle.ACTIVE) {
+      for (WeakReference<Bundle> ref : bundles) {
+         final Bundle bundle = ref.get();
+         if (bundle.getState() == Bundle.ACTIVE) {
             try {
-               final Class clazz = bundle.get().loadClass(name);
+               final Class clazz = bundle.loadClass(name);
                if (clazz != null) {
                   classCache.put(name, clazz);
                   return clazz;
@@ -101,10 +102,11 @@ public class OsgiClassLoader extends ClassLoader {
          return resourceCache.get(name);
       }
       
-      for (WeakReference<Bundle> bundle : bundles) {
-         if (bundle.get().getState() == Bundle.ACTIVE) {
+      for (WeakReference<Bundle> ref : bundles) {
+         final Bundle bundle = ref.get();
+         if (bundle.getState() == Bundle.ACTIVE) {
             try {
-               final URL resource = bundle.get().getResource(name);
+               final URL resource = bundle.getResource(name);
                if (resource != null) {
                   resourceCache.put(name, resource);
                   return resource;
@@ -128,10 +130,11 @@ public class OsgiClassLoader extends ClassLoader {
    protected Enumeration<URL> findResources(String name) {
       final List<Enumeration<URL>> enumerations = new ArrayList<Enumeration<URL>>();
 
-      for (WeakReference<Bundle> bundle : bundles) {
-         if (bundle.get().getState() == Bundle.ACTIVE) {
+      for (WeakReference<Bundle> ref : bundles) {
+         final Bundle bundle = ref.get();
+         if (bundle.getState() == Bundle.ACTIVE) {
             try {
-               final Enumeration<URL> resources = bundle.get().getResources(name);
+               final Enumeration<URL> resources = bundle.getResources(name);
                if (resources != null) {
                   enumerations.add(resources);
                }
