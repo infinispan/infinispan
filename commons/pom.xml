@@ -60,11 +60,24 @@
          <plugin>
             <groupId>org.apache.felix</groupId>
             <artifactId>maven-bundle-plugin</artifactId>
+            <executions>
+               <execution>
+                  <phase>generate-sources</phase>
+                  <goals>
+                     <goal>cleanVersions</goal>
+                  </goals>
+                  <configuration>
+                     <versions>
+                        <project.version.osgi>${project.version}</project.version.osgi>
+                     </versions>
+                  </configuration>
+               </execution>
+            </executions>
             <configuration>
                <instructions>
-                  <Fragment-Host>org.infinispan.core;bundle-version=${project.version}</Fragment-Host>
+                  <Fragment-Host>org.infinispan.core;bundle-version=${project.version.osgi}</Fragment-Host>
                   <Export-Package>
-                     ${project.groupId}.commons.*;version=${project.version};-split-package:=error
+                     ${project.groupId}.commons.*;version=${project.version.osgi};-split-package:=error
                   </Export-Package>
                   <Import-Package>
                      javax.naming,
