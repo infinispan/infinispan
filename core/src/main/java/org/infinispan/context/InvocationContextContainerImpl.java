@@ -1,15 +1,8 @@
 package org.infinispan.context;
 
-import org.infinispan.commons.equivalence.Equivalence;
-import org.infinispan.configuration.cache.ClusterLoaderConfiguration;
-import org.infinispan.configuration.cache.Configuration;
-import org.infinispan.configuration.cache.Configurations;
-import org.infinispan.configuration.cache.StoreConfiguration;
 import org.infinispan.configuration.global.GlobalConfiguration;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.annotations.Stop;
-
-import java.util.List;
 
 
 /**
@@ -28,8 +21,8 @@ public class InvocationContextContainerImpl implements InvocationContextContaine
    private ClassLoader configuredClassLoader;
 
    @Inject
-   public void init(Configuration configuration, GlobalConfiguration globalConfiguration) {
-      configuredClassLoader = Configurations.getClassLoader(configuration, globalConfiguration);
+   public void init(GlobalConfiguration globalConfiguration) {
+      configuredClassLoader = globalConfiguration.classLoader();
    }
 
    // As late as possible

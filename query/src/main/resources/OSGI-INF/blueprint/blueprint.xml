@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<blueprint  default-activation="eager" 
+            xmlns="http://www.osgi.org/xmlns/blueprint/v1.0.0"
+            xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+
+  <bean id="queryModuleCommandExtensions" class="org.infinispan.query.impl.QueryModuleCommandExtensions"/>
+  <service ref="queryModuleCommandExtensions" interface="org.infinispan.commands.module.ModuleCommandExtensions"/>
+
+  <bean id="mapReduceInitializer" class="org.infinispan.query.impl.massindex.MapReduceInitializer"/>
+  <service ref="mapReduceInitializer" interface="org.infinispan.distexec.mapreduce.spi.MapReduceTaskLifecycle"/>
+
+  <bean id="queryMetadataFileFinder" class="org.infinispan.query.impl.QueryMetadataFileFinder"/>
+  <service ref="queryMetadataFileFinder" interface="org.infinispan.factories.components.ModuleMetadataFileFinder"/>
+
+  <bean id="lifecycleManager" class="org.infinispan.query.impl.LifecycleManager"/>
+  <service ref="lifecycleManager" interface="org.infinispan.lifecycle.ModuleLifecycle"/>
+  
+</blueprint>

@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<blueprint  default-activation="eager" 
+            xmlns="http://www.osgi.org/xmlns/blueprint/v1.0.0"
+            xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+
+  <bean id="remoteStoreConfigurationParser60" class="org.infinispan.persistence.remote.configuration.RemoteStoreConfigurationParser60"/>
+  <service ref="remoteStoreConfigurationParser60" interface="org.infinispan.configuration.parsing.ConfigurationParser"/>
+
+  <bean id="hotRodTargetMigrator" class="org.infinispan.persistence.remote.upgrade.HotRodTargetMigrator"/>
+  <service ref="hotRodTargetMigrator" interface="org.infinispan.upgrade.TargetMigrator"/>
+  
+</blueprint>

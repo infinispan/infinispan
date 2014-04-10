@@ -3,17 +3,17 @@ package org.infinispan.cli;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.ServiceLoader;
 import java.util.Set;
 
 import org.infinispan.cli.commands.Command;
+import org.infinispan.commons.util.ServiceFinder;
 
 public class CommandRegistry {
    private Map<String, Command> commands;
 
    public CommandRegistry() {
       commands = new HashMap<String, Command>();
-      for (Command cmd : ServiceLoader.load(Command.class)) {
+      for (Command cmd : ServiceFinder.load(Command.class)) {
          String name = cmd.getName();
          if (commands.containsKey(name)) {
             throw new RuntimeException("Command " + cmd.getClass().getName() + " overrides "

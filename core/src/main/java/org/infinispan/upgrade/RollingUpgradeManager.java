@@ -1,6 +1,11 @@
 package org.infinispan.upgrade;
 
+import java.util.HashSet;
+import java.util.Set;
+import java.util.concurrent.TimeUnit;
+
 import org.infinispan.Cache;
+import org.infinispan.commons.util.ServiceFinder;
 import org.infinispan.commons.util.Util;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.annotations.SurvivesRestarts;
@@ -12,10 +17,6 @@ import org.infinispan.jmx.annotations.Parameter;
 import org.infinispan.util.TimeService;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
-import java.util.HashSet;
-import java.util.ServiceLoader;
-import java.util.Set;
-import java.util.concurrent.TimeUnit;
 
 /**
  * This component handles the control hooks to handle migrating from one version of Infinispan to
@@ -73,7 +74,7 @@ public class RollingUpgradeManager {
 
    private TargetMigrator getMigrator(String name) throws Exception {
       ClassLoader cl = cache.getCacheManager().getCacheManagerConfiguration().classLoader();
-      for (TargetMigrator m : ServiceLoader.load(TargetMigrator.class, cl)) {
+      for (TargetMigrator m : ServiceFinder.load(TargetMigrator.class, cl)) {
          if (name.equalsIgnoreCase(m.getName())) {
             return m;
          }

@@ -64,7 +64,7 @@
       <version.json>20090211</version.json>
       <version.jta>1.0.1.Final</version.jta>
       <version.netty>3.6.6.Final</version.netty>
-      <version.osgi>4.3.0</version.osgi>
+      <version.osgi>4.3.1</version.osgi>
       <version.rhq>4.4.0</version.rhq>
       <version.scala>2.10.2</version.scala>
       <version.xstream>1.4.1</version.xstream>
@@ -256,6 +256,11 @@
          <dependency>
             <groupId>org.osgi</groupId>
             <artifactId>org.osgi.core</artifactId>
+            <version>${version.osgi}</version>
+         </dependency>
+         <dependency>
+            <groupId>org.osgi</groupId>
+            <artifactId>org.osgi.compendium</artifactId>
             <version>${version.osgi}</version>
          </dependency>
          

@@ -1,5 +1,8 @@
 package org.infinispan.jcache;
 
+import static org.infinispan.jcache.RIMBeanServerRegistrationUtility.ObjectNameType.CONFIGURATION;
+import static org.infinispan.jcache.RIMBeanServerRegistrationUtility.ObjectNameType.STATISTICS;
+
 import java.io.FileNotFoundException;
 import java.io.InputStream;
 import java.net.URI;
@@ -8,12 +11,14 @@ import java.util.HashMap;
 import java.util.Properties;
 import java.util.Set;
 
-import javax.cache.*;
+import javax.cache.Cache;
+import javax.cache.CacheManager;
 import javax.cache.configuration.Configuration;
 import javax.cache.configuration.MutableConfiguration;
 import javax.cache.spi.CachingProvider;
 
 import org.infinispan.AdvancedCache;
+import org.infinispan.commons.util.FileLookup;
 import org.infinispan.commons.util.InfinispanCollections;
 import org.infinispan.commons.util.ReflectionUtil;
 import org.infinispan.configuration.global.GlobalConfigurationBuilder;
@@ -23,12 +28,7 @@ import org.infinispan.jcache.logging.Log;
 import org.infinispan.lifecycle.ComponentStatus;
 import org.infinispan.manager.DefaultCacheManager;
 import org.infinispan.manager.EmbeddedCacheManager;
-import org.infinispan.commons.util.FileLookup;
-import org.infinispan.commons.util.FileLookupFactory;
 import org.infinispan.util.logging.LogFactory;
-
-import static org.infinispan.jcache.RIMBeanServerRegistrationUtility.ObjectNameType.CONFIGURATION;
-import static org.infinispan.jcache.RIMBeanServerRegistrationUtility.ObjectNameType.STATISTICS;
 
 /**
  * Infinispan's implementation of {@link javax.cache.CacheManager}.
@@ -134,7 +134,7 @@ public class JCacheManager implements CacheManager {
    private ConfigurationBuilderHolder getConfigurationBuilderHolder(
          ClassLoader classLoader) {
       try {
-         FileLookup fileLookup = FileLookupFactory.newInstance();
+         FileLookup fileLookup = new FileLookup();
          InputStream configurationStream = uri.isAbsolute()
                ? fileLookup.lookupFileStrict(uri, classLoader)
                : fileLookup.lookupFileStrict(uri.toString(), classLoader);
