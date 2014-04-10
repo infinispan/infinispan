@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<blueprint  default-activation="eager" 
+            xmlns="http://www.osgi.org/xmlns/blueprint/v1.0.0"
+            xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+
+  <bean id="parser60" class="org.infinispan.configuration.parsing.Parser60"/>
+  <service ref="parser60" interface="org.infinispan.configuration.parsing.ConfigurationParser"/>
+
+  <bean id="defaultMapReduceTaskLifecycle" class="org.infinispan.distexec.mapreduce.spi.DefaultMapReduceTaskLifecycle"/>
+  <service ref="defaultMapReduceTaskLifecycle" interface="org.infinispan.distexec.mapreduce.spi.MapReduceTaskLifecycle"/>
+
+  <bean id="defaultDistributedTaskLifecycle" class="org.infinispan.distexec.spi.DefaultDistributedTaskLifecycle"/>
+  <service ref="defaultDistributedTaskLifecycle" interface="org.infinispan.distexec.spi.DistributedTaskLifecycle"/>
+  
+</blueprint>

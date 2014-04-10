@@ -87,7 +87,10 @@ public class FileLookup {
          if (cl == null)
             continue;
          try {
-            return cl.getResourceAsStream(filename);
+            InputStream is = cl.getResourceAsStream(filename);
+            if (is != null) {
+               return is;
+            }
          } catch (RuntimeException e) {
             // Ignore this as the classloader may throw exceptions for a valid path on Windows
          }
@@ -101,7 +104,10 @@ public class FileLookup {
             continue;
 
          try {
-            return cl.getResource(filename);
+            URL url = cl.getResource(filename);
+            if (url != null) {
+               return url;
+            }
          } catch (RuntimeException e) {
             // Ignore this as the classloader may throw exceptions for a valid path on Windows
          }

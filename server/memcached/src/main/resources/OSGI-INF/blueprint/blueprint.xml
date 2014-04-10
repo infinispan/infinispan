@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<blueprint  default-activation="eager" 
+            xmlns="http://www.osgi.org/xmlns/blueprint/v1.0.0"
+            xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+
+  <bean id="memcachedTypeConverter" class="org.infinispan.server.memcached.MemcachedTypeConverter"/>
+  <service ref="memcachedTypeConverter" interface="org.infinispan.compat.TypeConverter"/>
+
+  <bean id="lifecycleCallbacks" class="org.infinispan.server.memcached.LifecycleCallbacks"/>
+  <service ref="lifecycleCallbacks" interface="org.infinispan.lifecycle.ModuleLifecycle"/>
+  
+</blueprint>

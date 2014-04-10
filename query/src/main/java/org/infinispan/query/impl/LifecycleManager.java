@@ -3,8 +3,10 @@ package org.infinispan.query.impl;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.Properties;
-import java.util.ServiceLoader;
 import java.util.TreeMap;
+
+import javax.management.MBeanServer;
+import javax.management.ObjectName;
 
 import org.hibernate.search.Environment;
 import org.hibernate.search.cfg.SearchMapping;
@@ -14,6 +16,7 @@ import org.hibernate.search.spi.SearchFactoryIntegrator;
 import org.infinispan.AdvancedCache;
 import org.infinispan.Cache;
 import org.infinispan.commons.CacheException;
+import org.infinispan.commons.util.ServiceFinder;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.cache.CustomInterceptorsConfigurationBuilder;
@@ -41,9 +44,6 @@ import org.infinispan.query.logging.Log;
 import org.infinispan.query.spi.ProgrammaticSearchMappingProvider;
 import org.infinispan.transaction.LockingMode;
 import org.infinispan.util.logging.LogFactory;
-
-import javax.management.MBeanServer;
-import javax.management.ObjectName;
 
 /**
  * Lifecycle of the Query module: initializes the Hibernate Search engine and shuts it down
@@ -217,7 +217,7 @@ public class LifecycleManager extends AbstractModuleLifecycle {
    }
 
    private Properties addProgrammaticMappings(Properties indexingProperties, ComponentRegistry cr) {
-      Iterator<ProgrammaticSearchMappingProvider> providers = ServiceLoader.load(ProgrammaticSearchMappingProvider.class).iterator();
+      Iterator<ProgrammaticSearchMappingProvider> providers = ServiceFinder.load(ProgrammaticSearchMappingProvider.class).iterator();
       if (providers.hasNext()) {
          SearchMapping mapping = (SearchMapping) indexingProperties.get(Environment.MODEL_MAPPING);
          if (mapping == null) {

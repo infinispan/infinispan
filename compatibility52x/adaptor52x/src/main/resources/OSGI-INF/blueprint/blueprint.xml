@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<blueprint  default-activation="eager" 
+            xmlns="http://www.osgi.org/xmlns/blueprint/v1.0.0"
+            xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+
+  <bean id="parser52" class="org.infinispan.compatibility.parsing.Parser52"/>
+  <service ref="parser52" interface="org.infinispan.configuration.parsing.ConfigurationParser"/>
+
+  <bean id="jdbcCacheStoreConfigurationParser52" class="org.infinispan.compatibility.parsing.JdbcCacheStoreConfigurationParser52"/>
+  <service ref="jdbcCacheStoreConfigurationParser52" interface="org.infinispan.configuration.parsing.ConfigurationParser"/>
+  
+</blueprint>

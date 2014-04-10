@@ -1,5 +1,11 @@
 package org.infinispan.util;
 
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Properties;
+
 import org.infinispan.commands.ReplicableCommand;
 import org.infinispan.commands.module.ExtendedModuleCommandFactory;
 import org.infinispan.commands.module.ModuleCommandExtensions;
@@ -7,20 +13,11 @@ import org.infinispan.commands.module.ModuleCommandFactory;
 import org.infinispan.commands.module.ModuleCommandInitializer;
 import org.infinispan.commands.remote.CacheRpcCommand;
 import org.infinispan.commons.util.InfinispanCollections;
+import org.infinispan.commons.util.ServiceFinder;
 import org.infinispan.factories.components.ModuleMetadataFileFinder;
 import org.infinispan.lifecycle.ModuleLifecycle;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
-
-import java.util.Collection;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Map;
-import java.util.Properties;
-import java.util.ServiceLoader;
 
 /**
  * The <code>ModuleProperties</code> class represents Infinispan's module service extensions
@@ -40,21 +37,8 @@ public class ModuleProperties extends Properties {
    private Map<Byte, ModuleCommandInitializer> commandInitializers;
    private Collection<Class<? extends ReplicableCommand>> moduleCommands;
 
-   public static List<ModuleLifecycle> resolveModuleLifecycles(ClassLoader cl) {
-      ServiceLoader<ModuleLifecycle> moduleLifecycleLoader =
-            ServiceLoader.load(ModuleLifecycle.class, cl);
-
-      if (moduleLifecycleLoader.iterator().hasNext()) {
-         List<ModuleLifecycle> lifecycles = new LinkedList<ModuleLifecycle>();
-         for (ModuleLifecycle lifecycle : moduleLifecycleLoader) {
-            log.debugf("Loading lifecycle SPI class: %s", lifecycle);
-            lifecycles.add(lifecycle);
-         }
-         return lifecycles;
-      } else {
-         log.debugf("No module lifecycle SPI classes available");
-         return InfinispanCollections.emptyList();
-      }
+   public static Collection<ModuleLifecycle> resolveModuleLifecycles(ClassLoader cl) {
+      return ServiceFinder.load(ModuleLifecycle.class, cl);
    }
 
    /**
@@ -63,13 +47,13 @@ public class ModuleProperties extends Properties {
     * @return an Iterable of ModuleMetadataFileFinders
     */
    public static Iterable<ModuleMetadataFileFinder> getModuleMetadataFiles(ClassLoader cl) {
-      return ServiceLoader.load(ModuleMetadataFileFinder.class, cl);
+      return ServiceFinder.load(ModuleMetadataFileFinder.class, cl);
    }
 
    @SuppressWarnings("unchecked")
    public void loadModuleCommandHandlers(ClassLoader cl) {
-      ServiceLoader<ModuleCommandExtensions> moduleCmdExtLoader =
-            ServiceLoader.load(ModuleCommandExtensions.class, cl);
+      Collection<ModuleCommandExtensions> moduleCmdExtLoader =
+            ServiceFinder.load(ModuleCommandExtensions.class, cl);
 
       if (moduleCmdExtLoader.iterator().hasNext()) {
          commandFactories = new HashMap<Byte, ModuleCommandFactory>(1);

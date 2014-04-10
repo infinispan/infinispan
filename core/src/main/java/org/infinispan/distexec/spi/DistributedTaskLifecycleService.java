@@ -4,10 +4,10 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.ServiceConfigurationError;
-import java.util.ServiceLoader;
 import java.util.concurrent.Callable;
 
 import org.infinispan.Cache;
+import org.infinispan.commons.util.ServiceFinder;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
@@ -17,9 +17,8 @@ public final class DistributedTaskLifecycleService {
    private final List<DistributedTaskLifecycle> lifecycles;
 
    private DistributedTaskLifecycleService() {
-      ServiceLoader<DistributedTaskLifecycle> loader = ServiceLoader.load(DistributedTaskLifecycle.class);
       lifecycles = new ArrayList<DistributedTaskLifecycle>();
-      for (DistributedTaskLifecycle cl : loader) {
+      for (DistributedTaskLifecycle cl : ServiceFinder.load(DistributedTaskLifecycle.class)) {
          lifecycles.add(cl);
       }
    }
