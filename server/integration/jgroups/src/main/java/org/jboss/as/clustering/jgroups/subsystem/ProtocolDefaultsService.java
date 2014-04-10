@@ -31,6 +31,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 
+import org.infinispan.commons.util.FileLookup;
 import org.jboss.as.clustering.jgroups.ProtocolDefaults;
 import org.jboss.msc.service.Service;
 import org.jboss.msc.service.ServiceName;
@@ -97,7 +98,7 @@ public class ProtocolDefaultsService implements Service<ProtocolDefaults> {
     private static URL find(String resource, ClassLoader... loaders) throws StartException {
         for (ClassLoader loader: loaders) {
             if (loader != null) {
-                URL url = loader.getResource(resource);
+                URL url = new FileLookup().lookupFileLocation(resource, loader);
                 if (url != null) {
                     return url;
                 }

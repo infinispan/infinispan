@@ -22,13 +22,42 @@
 
 package org.jboss.as.clustering.infinispan.subsystem;
 
+import static org.jboss.as.controller.descriptions.ModelDescriptionConstants.OP_ADDR;
+
+import java.io.File;
+import java.io.IOException;
+import java.io.InputStream;
+import java.net.URL;
+import java.net.UnknownHostException;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.EnumMap;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Map;
+import java.util.Properties;
+
+import javax.transaction.TransactionManager;
+import javax.transaction.TransactionSynchronizationRegistry;
+
 import org.infinispan.Cache;
 import org.infinispan.commons.configuration.BuiltBy;
 import org.infinispan.commons.configuration.ConfiguredBy;
 import org.infinispan.commons.marshall.Marshaller;
+import org.infinispan.commons.util.FileLookup;
 import org.infinispan.commons.util.TypedProperties;
-import org.infinispan.configuration.cache.*;
+import org.infinispan.configuration.cache.AuthorizationConfigurationBuilder;
 import org.infinispan.configuration.cache.BackupConfiguration.BackupStrategy;
+import org.infinispan.configuration.cache.BackupFailurePolicy;
+import org.infinispan.configuration.cache.CacheMode;
+import org.infinispan.configuration.cache.ClusterLoaderConfigurationBuilder;
+import org.infinispan.configuration.cache.Configuration;
+import org.infinispan.configuration.cache.ConfigurationBuilder;
+import org.infinispan.configuration.cache.CustomStoreConfigurationBuilder;
+import org.infinispan.configuration.cache.PersistenceConfigurationBuilder;
+import org.infinispan.configuration.cache.SingleFileStoreConfigurationBuilder;
+import org.infinispan.configuration.cache.SitesConfigurationBuilder;
+import org.infinispan.configuration.cache.StoreConfigurationBuilder;
 import org.infinispan.configuration.parsing.ConfigurationBuilderHolder;
 import org.infinispan.configuration.parsing.ParserRegistry;
 import org.infinispan.eviction.EvictionStrategy;
@@ -49,7 +78,6 @@ import org.infinispan.transaction.LockingMode;
 import org.infinispan.transaction.tm.BatchModeTransactionManager;
 import org.infinispan.util.concurrent.IsolationLevel;
 import org.jboss.as.clustering.infinispan.InfinispanMessages;
-import org.jboss.as.clustering.infinispan.subsystem.CacheContainerAdd.Authorization;
 import org.jboss.as.controller.AbstractAddStepHandler;
 import org.jboss.as.controller.AttributeDefinition;
 import org.jboss.as.controller.OperationContext;
@@ -81,24 +109,6 @@ import org.jboss.msc.service.ServiceTarget;
 import org.jboss.msc.value.InjectedValue;
 import org.jboss.msc.value.Value;
 import org.jboss.tm.XAResourceRecoveryRegistry;
-
-import javax.transaction.TransactionManager;
-import javax.transaction.TransactionSynchronizationRegistry;
-
-import java.io.File;
-import java.io.IOException;
-import java.io.InputStream;
-import java.net.URL;
-import java.net.UnknownHostException;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.EnumMap;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Map;
-import java.util.Properties;
-
-import static org.jboss.as.controller.descriptions.ModelDescriptionConstants.OP_ADDR;
 
 /**
  * Base class for cache add handlers
@@ -159,7 +169,7 @@ public abstract class CacheAdd extends AbstractAddStepHandler {
     private static URL find(String resource, ClassLoader... loaders) {
         for (ClassLoader loader : loaders) {
             if (loader != null) {
-                URL url = loader.getResource(resource);
+                URL url = new FileLookup().lookupFileLocation(resource, loader);
                 if (url != null) {
                     return url;
                 }

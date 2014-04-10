@@ -24,12 +24,12 @@ package org.jboss.as.clustering.infinispan.subsystem;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
-import java.util.ServiceLoader;
 import java.util.concurrent.Executor;
 import java.util.concurrent.ScheduledExecutorService;
 
 import javax.management.MBeanServer;
 
+import org.infinispan.commons.util.ServiceFinder;
 import org.infinispan.configuration.global.GlobalAuthorizationConfigurationBuilder;
 import org.infinispan.configuration.global.GlobalConfiguration;
 import org.infinispan.configuration.global.GlobalConfigurationBuilder;
@@ -137,7 +137,7 @@ public class EmbeddedCacheManagerConfigurationService implements Service<Embedde
             loader = (this.moduleId != null) ? moduleLoader.loadModule(this.moduleId).getClassLoader() : EmbeddedCacheManagerConfiguration.class.getClassLoader();
             builder.classLoader(loader);
             int id = Ids.MAX_ID;
-            for (SimpleExternalizer<?> externalizer: ServiceLoader.load(SimpleExternalizer.class, loader)) {
+            for (SimpleExternalizer<?> externalizer: ServiceFinder.load(SimpleExternalizer.class, loader)) {
                 builder.serialization().addAdvancedExternalizer(id++, externalizer);
             }
         } catch (ModuleLoadException e) {

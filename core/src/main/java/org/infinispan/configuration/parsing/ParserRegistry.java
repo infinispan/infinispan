@@ -49,20 +49,19 @@ public class ParserRegistry implements NamespaceMappingParser {
    public ParserRegistry(ClassLoader classLoader) {
       this.parserMappings = CollectionFactory.makeConcurrentMap();
       this.cl = new WeakReference<ClassLoader>(classLoader);
-      Collection<Class<ConfigurationParser>> parsers = ServiceFinder.load(ConfigurationParser.class, cl.get(), ParserRegistry.class.getClassLoader());
-      for (Class<ConfigurationParser> parserClass : parsers) {
+      Collection<ConfigurationParser> parsers = ServiceFinder.load(ConfigurationParser.class, cl.get(), ParserRegistry.class.getClassLoader());
+      for (ConfigurationParser parser : parsers) {
          try {
-            ConfigurationParser parser = parserClass.newInstance();
-            Namespaces namespacesAnnotation = parserClass.getAnnotation(Namespaces.class);
+            Namespaces namespacesAnnotation = parser.getClass().getAnnotation(Namespaces.class);
             Namespace[] namespaces;
             if (namespacesAnnotation != null) {
                namespaces = namespacesAnnotation.value();
             } else {
-               Namespace namespaceAnnotation = parserClass.getAnnotation(Namespace.class);
+               Namespace namespaceAnnotation = parser.getClass().getAnnotation(Namespace.class);
                if (namespaceAnnotation != null) {
                   namespaces = new Namespace[] { namespaceAnnotation };
                } else {
-                  throw log.parserDoesNotDeclareNamespaces(parserClass.getName());
+                  throw log.parserDoesNotDeclareNamespaces(parser.getClass().getName());
                }
             }
             for (Namespace ns : namespaces) {

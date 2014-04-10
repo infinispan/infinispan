@@ -4,9 +4,9 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.ServiceConfigurationError;
-import java.util.ServiceLoader;
 
 import org.infinispan.Cache;
+import org.infinispan.commons.util.ServiceFinder;
 import org.infinispan.distexec.mapreduce.Mapper;
 import org.infinispan.distexec.mapreduce.Reducer;
 import org.infinispan.util.logging.Log;
@@ -19,9 +19,8 @@ public final class MapReduceTaskLifecycleService {
    private List<MapReduceTaskLifecycle> lifecycles;
 
    private MapReduceTaskLifecycleService() {
-      ServiceLoader<MapReduceTaskLifecycle> loader = ServiceLoader.load(MapReduceTaskLifecycle.class);
       lifecycles = new ArrayList<MapReduceTaskLifecycle>();
-      for (MapReduceTaskLifecycle l : loader) {
+      for (MapReduceTaskLifecycle l : ServiceFinder.load(MapReduceTaskLifecycle.class)) {
          lifecycles.add(l);
       }
    }

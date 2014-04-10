@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<blueprint  default-activation="eager" 
+            xmlns="http://www.osgi.org/xmlns/blueprint/v1.0.0"
+            xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+
+  <bean id="remoteQueryMetadataFileFinder" class="org.infinispan.query.remote.RemoteQueryMetadataFileFinder"/>
+  <service ref="remoteQueryMetadataFileFinder" interface="org.infinispan.factories.components.ModuleMetadataFileFinder"/>
+
+  <bean id="lifecycleManager" class="org.infinispan.query.remote.LifecycleManager"/>
+  <service ref="lifecycleManager" interface="org.infinispan.lifecycle.ModuleLifecycle"/>
+
+  <bean id="programmaticSearchMappingProviderImpl" class="org.infinispan.query.remote.ProgrammaticSearchMappingProviderImpl"/>
+  <service ref="programmaticSearchMappingProviderImpl" interface="org.infinispan.query.spi.ProgrammaticSearchMappingProvider"/>
+
+  <bean id="queryFacadeImpl" class="org.infinispan.query.remote.QueryFacadeImpl"/>
+  <service ref="queryFacadeImpl" interface="org.infinispan.server.core.QueryFacade"/>
+  
+</blueprint>

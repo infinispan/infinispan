@@ -11,6 +11,7 @@ import org.infinispan.notifications.cachelistener.event.Event;
 import org.infinispan.notifications.cachemanagerlistener.annotation.*;
 import org.infinispan.notifications.cachemanagerlistener.event.*;
 import org.infinispan.remoting.transport.Address;
+import org.infinispan.commons.util.FileLookup;
 import org.infinispan.commons.util.LegacyKeySupportSystemProperties;
 import org.infinispan.commons.util.Util;
 import org.infinispan.util.logging.Log;
@@ -352,7 +353,7 @@ public class InfinispanDemo {
          @Override
          public void run() {
             try {
-               URL resource = getClass().getClassLoader().getResource(cacheConfigFile);
+               URL resource = new FileLookup().lookupFileLocation(cacheConfigFile, getClass().getClassLoader());
                if (resource == null) resource = new URL(cacheConfigFile);
 
                if (cacheManager == null) {

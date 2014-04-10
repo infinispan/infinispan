@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<blueprint  default-activation="eager" 
+            xmlns="http://www.osgi.org/xmlns/blueprint/v1.0.0"
+            xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+
+  <bean id="infinispanExtension" class="org.infinispan.cdi.InfinispanExtension"/>
+  <service ref="infinispanExtension" interface="javax.enterprise.inject.spi.Extension"/>
+
+  <bean id="defaultBeanExtension" class="org.infinispan.cdi.util.defaultbean.DefaultBeanExtension"/>
+  <service ref="defaultBeanExtension" interface="javax.enterprise.inject.spi.Extension"/>
+
+  <bean id="beanManagerProvider" class="org.infinispan.cdi.util.BeanManagerProvider"/>
+  <service ref="beanManagerProvider" interface="javax.enterprise.inject.spi.Extension"/>
+
+  <bean id="cdiMapReduceTaskLifecycle" class="org.infinispan.cdi.CDIMapReduceTaskLifecycle"/>
+  <service ref="cdiMapReduceTaskLifecycle" interface="org.infinispan.distexec.mapreduce.spi.MapReduceTaskLifecycle"/>
+
+  <bean id="cdiDistributedTaskLifecycle" class="org.infinispan.cdi.CDIDistributedTaskLifecycle"/>
+  <service ref="cdiDistributedTaskLifecycle" interface="org.infinispan.distexec.spi.DistributedTaskLifecycle"/>
+  
+</blueprint>
