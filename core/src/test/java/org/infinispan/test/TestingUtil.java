@@ -831,6 +831,10 @@ public class TestingUtil {
       return gcr.getComponent(ExternalizerTable.class);
    }
 
+   public static TransactionTable extractTxTable(Cache<Object, Object> c) {
+      return (TransactionTable) TestingUtil.extractField(c, "txTable");
+   }
+
    /**
     * Replaces the existing interceptor chain in the cache wih one represented by the interceptor passed in.  This
     * utility updates dependencies on all components that rely on the interceptor chain as well.

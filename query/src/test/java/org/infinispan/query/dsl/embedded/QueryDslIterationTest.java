@@ -28,8 +28,6 @@ import static org.testng.AssertJUnit.assertTrue;
 @Test(groups = "functional", testName = "query.dsl.QueryDslIterationTest")
 public class QueryDslIterationTest extends AbstractQueryDslTest {
 
-   private List<String> entryIds = new ArrayList<String>();
-
    @BeforeMethod
    protected void populateCache() throws Exception {
       User user1 = new User();
@@ -56,20 +54,11 @@ public class QueryDslIterationTest extends AbstractQueryDslTest {
       cache.put("user_" + user2.getId(), user2);
       cache.put("user_" + user3.getId(), user3);
       cache.put("user_" + user4.getId(), user4);
-
-      //track what we stored in the cache (for distributed caches the keySet is not enough)
-      entryIds.add("user_" + user1.getId());
-      entryIds.add("user_" + user2.getId());
-      entryIds.add("user_" + user3.getId());
-      entryIds.add("user_" + user4.getId());
    }
 
    @AfterMethod
    protected void cleanCache() {
-      for (String s : entryIds) {
-         cache.remove(s);
-      }
-      entryIds.clear();
+      cache.clear();
    }
 
    public void testOrderByAsc() throws Exception {
