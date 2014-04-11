@@ -19,6 +19,10 @@ public class WordCountCollator implements Collator<String, Integer, List<Map.Ent
 
    private final int kthFrequentWord;
 
+   public WordCountCollator() {
+      this.kthFrequentWord = 10;
+   }
+
    public WordCountCollator(int kthFrequentWord) {
       if (kthFrequentWord < 0)
          throw new IllegalArgumentException("kth FrequentWord can not be less than 0");
