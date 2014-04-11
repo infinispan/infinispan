@@ -5,10 +5,12 @@ import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.test.SingleCacheManagerTest;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
+import org.infinispan.transaction.impl.TransactionTable;
 import org.testng.annotations.Test;
 
 import javax.transaction.Transaction;
 import javax.transaction.TransactionManager;
+import static org.infinispan.test.TestingUtil.extractTxTable;
 
 @Test(groups = "functional", testName = "tx.LocalModeTxTest")
 public class LocalModeTxTest extends SingleCacheManagerTest {
@@ -102,5 +104,32 @@ public class LocalModeTxTest extends SingleCacheManagerTest {
       tm().rollback();
       assert cache.keySet().size() == 2;
       assert cache.values().size() == 2;
+   }
+
+   public void testTxCleanupWithKeySet() throws Exception {
+      tm().begin();
+      assert cache.keySet().size() == 0;
+      TransactionTable txTable = extractTxTable(cache);
+      assert txTable.getLocalTransactions().size() == 1;
+      tm().commit();
+      assert txTable.getLocalTransactions().size() == 0;
+   }
+
+   public void testTxCleanupWithEntrySet() throws Exception {
+      tm().begin();
+      assert cache.entrySet().size() == 0;
+      TransactionTable txTable = extractTxTable(cache);
+      assert txTable.getLocalTransactions().size() == 1;
+      tm().commit();
+      assert txTable.getLocalTransactions().size() == 0;
+   }
+
+   public void testTxCleanupWithValues() throws Exception {
+      tm().begin();
+      assert cache.values().size() == 0;
+      TransactionTable txTable = extractTxTable(cache);
+      assert txTable.getLocalTransactions().size() == 1;
+      tm().commit();
+      assert txTable.getLocalTransactions().size() == 0;
    }
 }
