@@ -6,6 +6,7 @@ import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.cdi.InfinispanExtension;
 import org.infinispan.cdi.InfinispanExtension.InstalledCacheManager;
 
+import javax.annotation.PostConstruct;
 import javax.cache.Cache;
 import javax.cache.Caching;
 import javax.cache.annotation.CacheInvocationContext;
@@ -35,12 +36,17 @@ public class InjectedCacheResolver implements CacheResolver {
 
    private EmbeddedCacheManager defaultCacheManager;
 
-   private Map<EmbeddedCacheManager, JCacheManager> jcacheManagers =
+   private final Map<EmbeddedCacheManager, JCacheManager> jcacheManagers =
          new HashMap<EmbeddedCacheManager, JCacheManager>();
    private JCacheManager defaultJCacheManager;
 
+   // for proxy.
+   public InjectedCacheResolver() {
+   }
+
    @Inject
-   public InjectedCacheResolver(InfinispanExtension extension, BeanManager beanManager) {
+   @PostConstruct
+   public void inject(InfinispanExtension extension, BeanManager beanManager) {
       Set<InstalledCacheManager> installedCacheManagers = extension.getInstalledEmbeddedCacheManagers(beanManager);
       for (InstalledCacheManager installedCacheManager : installedCacheManagers) {
          JCacheManager jcacheManager = toJCacheManager(installedCacheManager.getCacheManager());
@@ -57,10 +63,6 @@ public class InjectedCacheResolver implements CacheResolver {
       GlobalConfiguration globalCfg = cacheManager.getCacheManagerConfiguration();
       String name = globalCfg.globalJmxStatistics().cacheManagerName();
       return new JCacheManager(URI.create(name), cacheManager, Caching.getCachingProvider());
-   }
-
-   // for proxy.
-   InjectedCacheResolver() {
    }
 
    @Override

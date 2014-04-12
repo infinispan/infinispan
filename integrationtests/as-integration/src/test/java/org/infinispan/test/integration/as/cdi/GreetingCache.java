@@ -14,7 +14,7 @@ import java.lang.annotation.Target;
  *
  * @author Kevin Pollet <pollet.kevin@gmail.com> (C) 2011
  */
-@Target({ElementType.FIELD, ElementType.PARAMETER, ElementType.METHOD})
+@Target({ElementType.FIELD, ElementType.PARAMETER, ElementType.METHOD, ElementType.TYPE})
 @Retention(RetentionPolicy.RUNTIME)
 @Qualifier
 @Documented

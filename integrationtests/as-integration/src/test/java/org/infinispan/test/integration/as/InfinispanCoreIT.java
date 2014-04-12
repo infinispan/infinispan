@@ -36,7 +36,7 @@ public class InfinispanCoreIT {
    }
 
    private static Asset manifest() {
-      String manifest = Descriptors.create(ManifestDescriptor.class).attribute("Dependencies", "org.infinispan:" + Version.MAJOR_MINOR + " services").exportAsString();
+      String manifest = Descriptors.create(ManifestDescriptor.class).attribute("Dependencies", "org.infinispan:" + Version.MODULE_SLOT + " services").exportAsString();
       return new StringAsset(manifest);
    }
 
