@@ -76,7 +76,7 @@ public final class JCache<K, V> implements Cache<K, V> {
    private final CacheMXBean mxBean;
 
    private final ExpiryPolicy expiryPolicy;
-   private final LockContainer processorLocks = new ReentrantPerEntryLockContainer(32);
+   private final LockContainer processorLocks;
    private final long lockTimeout; // milliseconds
    private final JCacheNotifier<K, V> notifier = new JCacheNotifier<K, V>();
    private CacheLoader<K, V> jcacheLoader;
@@ -84,6 +84,7 @@ public final class JCache<K, V> implements Cache<K, V> {
 
    public JCache(AdvancedCache<K, V> cache, JCacheManager cacheManager, ConfigurationAdapter<K, V> c) {
       this.cache = cache;
+      this.processorLocks = new ReentrantPerEntryLockContainer(32, cache.getCacheConfiguration().dataContainer().keyEquivalence());
       this.ignoreReturnValuesCache = cache.withFlags(Flag.IGNORE_RETURN_VALUES);
       this.skipCacheLoadCache = cache.withFlags(Flag.SKIP_CACHE_LOAD);
       this.skipCacheLoadAndStatsCache = cache.withFlags(Flag.SKIP_CACHE_LOAD, Flag.SKIP_STATISTICS);

@@ -1,8 +1,8 @@
 package org.infinispan.util.concurrent.locks.containers;
 
 import net.jcip.annotations.ThreadSafe;
+import org.infinispan.commons.equivalence.Equivalence;
 import org.infinispan.util.concurrent.locks.VisibleOwnerReentrantLock;
-import org.infinispan.util.concurrent.locks.VisibleOwnerRefCountingReentrantLock;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
@@ -20,7 +20,7 @@ import java.util.concurrent.locks.ReentrantLock;
 @ThreadSafe
 public class ReentrantStripedLockContainer extends AbstractStripedLockContainer<VisibleOwnerReentrantLock> {
 
-   private VisibleOwnerReentrantLock[] sharedLocks;
+   private final VisibleOwnerReentrantLock[] sharedLocks;
    private static final Log log = LogFactory.getLog(ReentrantStripedLockContainer.class);
 
    @Override
@@ -35,12 +35,9 @@ public class ReentrantStripedLockContainer extends AbstractStripedLockContainer<
     * @param concurrencyLevel concurrency level for number of stripes to create.  Stripes are created in powers of two,
     *                         with a minimum of concurrencyLevel created.
     */
-   public ReentrantStripedLockContainer(int concurrencyLevel) {
-      initLocks(calculateNumberOfSegments(concurrencyLevel));
-   }
-
-   @Override
-   protected void initLocks(int numLocks) {
+   public ReentrantStripedLockContainer(int concurrencyLevel, Equivalence<Object> keyEquivalence) {
+      super(keyEquivalence);
+      int numLocks = calculateNumberOfSegments(concurrencyLevel);
       sharedLocks = new VisibleOwnerReentrantLock[numLocks];
       for (int i = 0; i < numLocks; i++) sharedLocks[i] = new VisibleOwnerReentrantLock();
    }
@@ -77,9 +74,10 @@ public class ReentrantStripedLockContainer extends AbstractStripedLockContainer<
       return lock.isLocked();
    }
 
+   @Override
    public String toString() {
       return "ReentrantStripedLockContainer{" +
-            "sharedLocks=" + (sharedLocks == null ? null : Arrays.asList(sharedLocks)) +
+            "sharedLocks=" + Arrays.toString(sharedLocks) +
             '}';
    }
 

@@ -1,5 +1,6 @@
 package org.infinispan.api.tree;
 
+import org.infinispan.commons.equivalence.AnyEquivalence;
 import org.infinispan.tree.Fqn;
 import org.infinispan.tree.impl.NodeKey;
 import org.infinispan.util.concurrent.locks.containers.LockContainer;
@@ -33,7 +34,7 @@ public class TreeStructureHashCodeTest {
    }
 
    private void doTest(List<Fqn> fqns) {
-      LockContainer container = new ReentrantStripedLockContainer(512);
+      LockContainer container = new ReentrantStripedLockContainer(512, AnyEquivalence.getInstance());
       Map<Lock, Integer> distribution = new HashMap<Lock, Integer>();
       for (Fqn f : fqns) {
          NodeKey dataKey = new NodeKey(f, NodeKey.Type.DATA);
