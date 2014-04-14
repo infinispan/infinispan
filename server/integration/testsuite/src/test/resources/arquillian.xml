@@ -761,6 +761,7 @@
         </container>
     </group>
     <group qualifier="suite-rollups-manual">
+         <!-- No dist case, just target: node0 and source: node1 -->
         <container qualifier="hotrod-rolling-upgrade-1" mode="manual">
             <configuration>
                 <property name="javaHome">${server.jvm}</property>
@@ -785,6 +786,58 @@
                 <property name="waitForPorts">11311 11322 8180</property>
             </configuration>
         </container>
+        <!-- Dist case, source: node0 and node1, targets: node2 and node3 -->
+        <container qualifier="hotrod-rolling-upgrade-1-dist" mode="manual">
+            <configuration>
+                <property name="javaHome">${server.jvm}</property>
+                <property name="jbossHome">${server1.dist}</property>
+                <property name="managementAddress">${node0.ip}</property>
+                <property name="serverConfig">examples/clustered-hotrod-rolling-upgrade.xml</property>
+                <property name="javaVmArguments">${server.jvm.args} -Djboss.node.name=node0 -Djboss.bind.address.management=${node0.ip} -Djboss.bind.address=${node0.ip}
+                    -Dremote.destination.port=11422
+                </property>
+                <property name="managementPort">9999</property>
+                <property name="waitForPorts">11211 11222 8080</property>
+            </configuration>
+        </container>
+        <container qualifier="hotrod-rolling-upgrade-2-dist" mode="manual">
+            <configuration>
+                <property name="javaHome">${server.jvm}</property>
+                <property name="jbossHome">${server2.dist}</property>
+                <property name="managementAddress">${node1.ip}</property>
+                <property name="serverConfig">examples/clustered-hotrod-rolling-upgrade.xml</property>
+                <property name="javaVmArguments">${server.jvm.args} -Djboss.node.name=node1 -Djboss.bind.address.management=${node1.ip} -Djboss.bind.address=${node1.ip}
+                    -Djboss.socket.binding.port-offset=100 -Dremote.destination.port=11522
+                </property>
+                <property name="managementPort">10099</property>
+                <property name="waitForPorts">11311 11322 8180</property>
+            </configuration>
+        </container>
+        <container qualifier="hotrod-rolling-upgrade-3-old-dist" mode="manual">
+            <configuration>
+                <property name="javaHome">${server.jvm}</property>
+                <property name="jbossHome">${server2.old.dist}</property>
+                <property name="serverConfig">clustered.xml</property>
+                <property name="javaVmArguments">${server.jvm.args} -Djboss.node.name=node2 -Djboss.bind.address.management=${node2.ip} -Djboss.bind.address=${node2.ip}
+                    -Djboss.socket.binding.port-offset=200
+                </property>
+                <property name="managementPort">10199</property>
+                <property name="waitForPorts">11411 11422 8280</property>
+            </configuration>
+        </container>
+        <container qualifier="hotrod-rolling-upgrade-4-old-dist" mode="manual">
+            <configuration>
+                <property name="javaHome">${server.jvm}</property>
+                <property name="jbossHome">${server3.old.dist}</property>
+                <property name="serverConfig">clustered.xml</property>
+                <property name="javaVmArguments">${server.jvm.args} -Djboss.node.name=node3 -Djboss.bind.address.management=${node3.ip} -Djboss.bind.address=${node3.ip}
+                    -Djboss.socket.binding.port-offset=300
+                </property>
+                <property name="managementPort">10299</property>
+                <property name="waitForPorts">11511 11522 8380</property>
+            </configuration>
+        </container>
+        <!-- REST Rolling Upgrades -->
         <container qualifier="rest-rolling-upgrade-1" mode="manual">
             <configuration>
                 <property name="javaHome">${server.jvm}</property>
