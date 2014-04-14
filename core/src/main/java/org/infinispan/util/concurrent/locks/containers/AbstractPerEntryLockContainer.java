@@ -1,6 +1,7 @@
 package org.infinispan.util.concurrent.locks.containers;
 
 import org.infinispan.commons.equivalence.AnyEquivalence;
+import org.infinispan.commons.equivalence.Equivalence;
 import org.infinispan.commons.util.ByRef;
 import org.infinispan.commons.util.Util;
 import org.infinispan.commons.util.concurrent.jdk8backported.EquivalentConcurrentHashMapV8;
@@ -22,9 +23,9 @@ public abstract class AbstractPerEntryLockContainer<L extends RefCountingLock> e
    // We specifically need a CHMV8, to be able to use methods like computeIfAbsent, computeIfPresent and compute
    protected final EquivalentConcurrentHashMapV8<Object, L> locks;
 
-   protected AbstractPerEntryLockContainer(int concurrencyLevel) {
+   protected AbstractPerEntryLockContainer(int concurrencyLevel, Equivalence<Object> keyEquivalence) {
       locks = new EquivalentConcurrentHashMapV8<Object, L>(
-            16, concurrencyLevel, AnyEquivalence.getInstance(), AnyEquivalence.getInstance());
+            16, concurrencyLevel, keyEquivalence, AnyEquivalence.getInstance());
    }
 
    protected abstract L newLock();

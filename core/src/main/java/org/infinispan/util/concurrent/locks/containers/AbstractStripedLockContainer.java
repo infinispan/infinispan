@@ -1,6 +1,7 @@
 package org.infinispan.util.concurrent.locks.containers;
 
 import net.jcip.annotations.ThreadSafe;
+import org.infinispan.commons.equivalence.Equivalence;
 
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.Lock;
@@ -15,7 +16,11 @@ import java.util.concurrent.locks.Lock;
 public abstract class AbstractStripedLockContainer<L extends Lock> extends AbstractLockContainer<L> {
    private int lockSegmentMask;
    private int lockSegmentShift;
+   private final Equivalence<Object> keyEquivalence;
 
+   protected AbstractStripedLockContainer(Equivalence<Object> keyEquivalence) {
+      this.keyEquivalence = keyEquivalence;
+   }
 
    final int calculateNumberOfSegments(int concurrencyLevel) {
       int tempLockSegShift = 0;
@@ -30,18 +35,18 @@ public abstract class AbstractStripedLockContainer<L extends Lock> extends Abstr
    }
 
    final int hashToIndex(Object object) {
-      return (hash(object) >>> lockSegmentShift) & lockSegmentMask;
+      return (hash(keyEquivalence.hashCode(object)) >>> lockSegmentShift) & lockSegmentMask;
    }
 
    /**
     * Returns a hash code for non-null Object x. Uses the same hash code spreader as most other java.util hash tables,
     * except that this uses the string representation of the object passed in.
     *
-    * @param object the object serving as a key
+    * @param hashCode the object's hash code serving as a key.
     * @return the hash code
     */
-   static final int hash(Object object) {
-      int h = object.hashCode();
+   static int hash(int hashCode) {
+      int h = hashCode;
       h += ~(h << 9);
       h ^= (h >>> 14);
       h += (h << 4);
@@ -49,8 +54,6 @@ public abstract class AbstractStripedLockContainer<L extends Lock> extends Abstr
       return h;
 
    }
-
-   protected abstract void initLocks(int numLocks);
 
    @Override
    public L acquireLock(Object lockOwner, Object key, long timeout, TimeUnit unit) throws InterruptedException {

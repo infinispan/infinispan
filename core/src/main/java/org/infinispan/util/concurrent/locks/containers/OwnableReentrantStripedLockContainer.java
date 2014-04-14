@@ -1,8 +1,8 @@
 package org.infinispan.util.concurrent.locks.containers;
 
 import net.jcip.annotations.ThreadSafe;
+import org.infinispan.commons.equivalence.Equivalence;
 import org.infinispan.util.concurrent.locks.OwnableReentrantLock;
-import org.infinispan.util.concurrent.locks.OwnableRefCountingReentrantLock;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
@@ -20,7 +20,7 @@ import java.util.concurrent.TimeUnit;
 @ThreadSafe
 public class OwnableReentrantStripedLockContainer extends AbstractStripedLockContainer<OwnableReentrantLock> {
 
-   private OwnableReentrantLock[] sharedLocks;
+   private final OwnableReentrantLock[] sharedLocks;
    private static final Log log = LogFactory.getLog(OwnableReentrantStripedLockContainer.class);
 
    @Override
@@ -35,12 +35,9 @@ public class OwnableReentrantStripedLockContainer extends AbstractStripedLockCon
     * @param concurrencyLevel concurrency level for number of stripes to create.  Stripes are created in powers of two,
     *                         with a minimum of concurrencyLevel created.
     */
-   public OwnableReentrantStripedLockContainer(int concurrencyLevel) {
-      initLocks(calculateNumberOfSegments(concurrencyLevel));
-   }
-
-   @Override
-   protected void initLocks(int numLocks) {
+   public OwnableReentrantStripedLockContainer(int concurrencyLevel, Equivalence<Object> keyEquivalence) {
+      super(keyEquivalence);
+      int numLocks = calculateNumberOfSegments(concurrencyLevel);
       sharedLocks = new OwnableReentrantLock[numLocks];
       for (int i = 0; i < numLocks; i++) sharedLocks[i] = new OwnableReentrantLock();
    }
@@ -69,9 +66,10 @@ public class OwnableReentrantStripedLockContainer extends AbstractStripedLockCon
       return i;
    }
 
+   @Override
    public String toString() {
       return "OwnableReentrantStripedLockContainer{" +
-            "sharedLocks=" + (sharedLocks == null ? null : Arrays.asList(sharedLocks)) +
+            "sharedLocks=" + Arrays.toString(sharedLocks) +
             '}';
    }
 

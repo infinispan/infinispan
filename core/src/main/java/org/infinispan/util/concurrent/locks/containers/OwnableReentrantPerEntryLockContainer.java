@@ -1,5 +1,6 @@
 package org.infinispan.util.concurrent.locks.containers;
 
+import org.infinispan.commons.equivalence.Equivalence;
 import org.infinispan.util.concurrent.locks.OwnableReentrantLock;
 import org.infinispan.util.concurrent.locks.OwnableRefCountingReentrantLock;
 import org.infinispan.util.logging.Log;
@@ -22,8 +23,8 @@ public class OwnableReentrantPerEntryLockContainer extends AbstractPerEntryLockC
       return log;
    }
 
-   public OwnableReentrantPerEntryLockContainer(int concurrencyLevel) {
-      super(concurrencyLevel);
+   public OwnableReentrantPerEntryLockContainer(int concurrencyLevel, Equivalence<Object> keyEquivalence) {
+      super(concurrencyLevel, keyEquivalence);
    }
 
    @Override

@@ -1,5 +1,6 @@
 package org.infinispan.lock;
 
+import org.infinispan.commons.equivalence.AnyEquivalence;
 import org.infinispan.test.AbstractInfinispanTest;
 import org.infinispan.util.concurrent.locks.OwnableReentrantLock;
 import org.infinispan.util.concurrent.locks.containers.OwnableReentrantPerEntryLockContainer;
@@ -10,7 +11,7 @@ import java.util.concurrent.TimeUnit;
 @Test (groups = "functional", testName = "lock.SimpleLockContainerTest")
 public class SimpleLockContainerTest extends AbstractInfinispanTest {
 
-   OwnableReentrantPerEntryLockContainer lc = new OwnableReentrantPerEntryLockContainer(1000);
+   OwnableReentrantPerEntryLockContainer lc = new OwnableReentrantPerEntryLockContainer(1000, AnyEquivalence.getInstance());
 
    public void simpleTest() throws Exception {
       final String k1 = ab();

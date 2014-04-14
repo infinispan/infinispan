@@ -1,5 +1,6 @@
 package org.infinispan.lock;
 
+import org.infinispan.commons.equivalence.AnyEquivalence;
 import org.infinispan.test.AbstractInfinispanTest;
 import org.infinispan.util.concurrent.locks.containers.AbstractStripedLockContainer;
 import org.infinispan.util.concurrent.locks.containers.ReentrantStripedLockContainer;
@@ -18,7 +19,7 @@ public class LockContainerHashingTest extends AbstractInfinispanTest {
 
    @BeforeMethod
    public void setUp() {
-      stripedLock = new ReentrantStripedLockContainer(500);
+      stripedLock = new ReentrantStripedLockContainer(500, AnyEquivalence.getInstance());
    }
 
    public void testHashingDistribution() {

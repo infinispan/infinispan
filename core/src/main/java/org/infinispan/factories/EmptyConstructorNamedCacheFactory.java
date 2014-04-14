@@ -66,8 +66,7 @@ import static org.infinispan.commons.util.Util.getInstance;
                               PassivationManager.class, ActivationManager.class,
                               BatchContainer.class, EvictionManager.class,
                               TransactionCoordinator.class, RecoveryAdminOperations.class, StateTransferLock.class,
-                              ClusteringDependentLogic.class, LockContainer.class,
-                              L1Manager.class, TransactionFactory.class, BackupSender.class,
+                              ClusteringDependentLogic.class, L1Manager.class, TransactionFactory.class, BackupSender.class,
                               TotalOrderManager.class, ByteBufferFactory.class, MarshalledEntryFactory.class,
                               RemoteValueRetrievedListener.class, InvocationContextFactory.class, CommitManager.class,
                               XSiteStateTransferManager.class, XSiteStateConsumer.class, XSiteStateProvider.class})
@@ -116,14 +115,6 @@ public class EmptyConstructorNamedCacheFactory extends AbstractNamedCacheCompone
             return (T) new StateTransferLockImpl();
          } else if (componentType.equals(EvictionManager.class)) {
             return (T) new EvictionManagerImpl();
-         } else if (componentType.equals(LockContainer.class)) {
-            boolean  notTransactional = !isTransactional;
-            LockContainer<?> lockContainer = configuration.locking().useLockStriping() ?
-                  notTransactional ? new ReentrantStripedLockContainer(configuration.locking().concurrencyLevel())
-                        : new OwnableReentrantStripedLockContainer(configuration.locking().concurrencyLevel()) :
-                  notTransactional ? new ReentrantPerEntryLockContainer(configuration.locking().concurrencyLevel())
-                        : new OwnableReentrantPerEntryLockContainer(configuration.locking().concurrencyLevel());
-            return (T) lockContainer;
          } else if (componentType.equals(L1Manager.class)) {
             return (T) new L1ManagerImpl();
          } else if (componentType.equals(TransactionFactory.class)) {
