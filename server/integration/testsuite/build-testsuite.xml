@@ -146,6 +146,13 @@
                 <delete dir="${server.old.dist}-tmp" />
                 <transform transformDir="${server.old.dist}/standalone/configuration" in="standalone.xml" out="standalone.xml"
                            removeRestSecurity="true"/>
+
+                <copy todir="${server2.old.dist}">
+                    <fileset dir="${server.old.dist}" />
+                </copy>
+                <copy todir="${server3.old.dist}">
+                    <fileset dir="${server.old.dist}" />
+                </copy>
             </else>
         </if>
     </target>
@@ -161,6 +168,11 @@
         <transform in="examples/standalone-rcs-local.xml" out="examples/standalone-rcs-local.xml" modifyRemoteDestination="${other.parts}/rcs-remote-destination.xml"/>
         <transform in="examples/standalone-hotrod-rolling-upgrade.xml" out="examples/standalone-hotrod-rolling-upgrade.xml"
                    modifyRemoteDestination="${other.parts}/rcs-remote-destination.xml"/>
+        <transform in="clustered.xml" out="examples/clustered-hotrod-rolling-upgrade.xml"
+                   modifyRemoteDestination="${other.parts}/rcs-remote-destination.xml"
+                   modifyInfinispan="${infinispan.parts}/rolling-upgrades-clustered.xml"
+                   infinispanServerEndpoint="${other.parts}/rolling-upgrades-server-endpoint.xml"
+                   addNewHotrodSocketBinding="true"/>
         <transform in="examples/standalone-rest-rolling-upgrade.xml" out="examples/standalone-rest-rolling-upgrade.xml"
                    modifyRemoteDestination="${other.parts}/rest-remote-destination.xml" removeRestSecurity="true"/>
         <transform in="examples/standalone-compatibility-mode.xml" out="examples/standalone-compatibility-mode.xml"/>
@@ -309,6 +321,7 @@
         <attribute name="modifyRemoteDestination" default="false"/>
         <attribute name="modifyOutboundSocketBindingHotRod" default="false"/>
         <attribute name="addHotrodSocketBinding" default="false"/>
+        <attribute name="addNewHotrodSocketBinding" default="false"/>
         <attribute name="removeRestSecurity" default="true"/>
         <attribute name="infinispanServerEndpoint" default="false"/>
         <attribute name="infinispanFile" default="false"/>
@@ -331,6 +344,7 @@
                 <param name="modifyRemoteDestination" expression="@{modifyRemoteDestination}"/>
                 <param name="modifyOutboundSocketBindingHotRod" expression="@{modifyOutboundSocketBindingHotRod}"/>
                 <param name="addHotrodSocketBinding" expression="@{addHotrodSocketBinding}"/>
+                <param name="addNewHotrodSocketBinding" expression="@{addNewHotrodSocketBinding}"/>
                 <param name="removeRestSecurity" expression="@{removeRestSecurity}"/>
                 <param name="infinispanServerEndpoint" expression="@{infinispanServerEndpoint}"/>
                 <param name="infinispanFile" expression="@{infinispanFile}"/>

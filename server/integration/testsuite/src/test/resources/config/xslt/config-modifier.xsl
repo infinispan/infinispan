@@ -19,6 +19,7 @@
     <xsl:param name="modifyRemoteDestination">false</xsl:param>
     <xsl:param name="modifyOutboundSocketBindingHotRod">false</xsl:param>
     <xsl:param name="addHotrodSocketBinding">false</xsl:param>
+    <xsl:param name="addNewHotrodSocketBinding">false</xsl:param>
     <xsl:param name="removeRestSecurity">true</xsl:param>
     <xsl:param name="infinispanServerEndpoint">false</xsl:param>
     <xsl:param name="infinispanFile">none</xsl:param>
@@ -58,7 +59,7 @@
             <xsl:call-template name="copynode"/>
         </xsl:if>
         <xsl:if test="$modifyDataSource != 'false'">
-            <xsl:copy-of select="document($modifyDataSource)" />
+            <xsl:copy-of select="document($modifyDataSource)"/>
         </xsl:if>
     </xsl:template>
 
@@ -203,6 +204,33 @@
         <xsl:if test="$addHotrodSocketBinding != 'false'">
             <xsl:copy-of select="document($addHotrodSocketBinding)"/>
             <xsl:call-template name="copynode"/>
+        </xsl:if>
+    </xsl:template>
+
+    <xsl:template match="p:socket-binding[position()=last() and position()!=1]">
+        <xsl:if test="$addNewHotrodSocketBinding = 'false'">
+            <xsl:call-template name="copynode"/>
+        </xsl:if>
+        <xsl:if test="$addNewHotrodSocketBinding != 'false'">
+            <xsl:copy-of select="."/>
+            <xsl:element name="outbound-socket-binding">
+                <xsl:attribute name="name">
+                    <xsl:value-of select="node()"/>
+                    <xsl:text>remote-store-hotrod-server</xsl:text>
+                </xsl:attribute>
+                <xsl:apply-templates/>
+                <xsl:element name="remote-destination">
+                    <xsl:attribute name="host">
+                        <xsl:value-of select="node()"/>
+                        <xsl:text>127.0.0.1</xsl:text>
+                    </xsl:attribute>
+                    <xsl:attribute name="port">
+                        <xsl:value-of select="node()"/>
+                        <xsl:text>${remote.destination.port:11222}</xsl:text>
+                    </xsl:attribute>
+                    <xsl:apply-templates/>
+                </xsl:element>
+            </xsl:element>
         </xsl:if>
     </xsl:template>
 

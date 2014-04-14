@@ -219,6 +219,8 @@
         <server2.dist>${basedir}/target/server/node2</server2.dist>
         <server3.dist>${basedir}/target/server/node3</server3.dist>
         <server.old.dist>${basedir}/target/server/node_old</server.old.dist>
+        <server2.old.dist>${basedir}/target/server/node2_old</server2.old.dist>
+        <server3.old.dist>${basedir}/target/server/node3_old</server3.old.dist>
 
         <server.jvm>${env.JAVA_HOME}</server.jvm>
         <resources.dir>${basedir}/src/test/resources</resources.dir>
@@ -232,6 +234,7 @@
         <node0.ip>127.0.0.1</node0.ip>
         <node1.ip>127.0.0.1</node1.ip>
         <node2.ip>127.0.0.1</node2.ip>
+        <node3.ip>127.0.0.1</node3.ip>
         <mcast.ip>234.99.54.14</mcast.ip> <!-- Default multicast address. -->
         <jvm.ip.stack>-Djava.net.preferIPv4Stack=true -Djava.net.preferIPv6Addresses=false -Djboss.default.multicast.address=${mcast.ip}</jvm.ip.stack>
         <server.jvm.args>${jvm.ip.stack} ${jvm.memory.args} ${transport.stack} ${jvm.x64.args}</server.jvm.args>
@@ -437,6 +440,8 @@
                         <server2.dist>${server2.dist}</server2.dist>
                         <server3.dist>${server3.dist}</server3.dist>
                         <server.old.dist>${server.old.dist}</server.old.dist>
+                        <server2.old.dist>${server2.old.dist}</server2.old.dist>
+                        <server3.old.dist>${server3.old.dist}</server3.old.dist>
                         <server.jvm>${server.jvm}</server.jvm>
                         <server.jvm.args>${server.jvm.args}</server.jvm.args>
                         <log4j.configuration>${log4j.configuration}</log4j.configuration>
