@@ -10,7 +10,7 @@ import org.testng.annotations.Test;
 
 import javax.transaction.Transaction;
 import javax.transaction.TransactionManager;
-import static org.infinispan.test.TestingUtil.extractTxTable;
+import static org.infinispan.test.TestingUtil.getTransactionTable;
 
 @Test(groups = "functional", testName = "tx.LocalModeTxTest")
 public class LocalModeTxTest extends SingleCacheManagerTest {
@@ -109,7 +109,7 @@ public class LocalModeTxTest extends SingleCacheManagerTest {
    public void testTxCleanupWithKeySet() throws Exception {
       tm().begin();
       assert cache.keySet().size() == 0;
-      TransactionTable txTable = extractTxTable(cache);
+      TransactionTable txTable = getTransactionTable(cache);
       assert txTable.getLocalTransactions().size() == 1;
       tm().commit();
       assert txTable.getLocalTransactions().size() == 0;
@@ -118,7 +118,7 @@ public class LocalModeTxTest extends SingleCacheManagerTest {
    public void testTxCleanupWithEntrySet() throws Exception {
       tm().begin();
       assert cache.entrySet().size() == 0;
-      TransactionTable txTable = extractTxTable(cache);
+      TransactionTable txTable = getTransactionTable(cache);
       assert txTable.getLocalTransactions().size() == 1;
       tm().commit();
       assert txTable.getLocalTransactions().size() == 0;
@@ -127,7 +127,7 @@ public class LocalModeTxTest extends SingleCacheManagerTest {
    public void testTxCleanupWithValues() throws Exception {
       tm().begin();
       assert cache.values().size() == 0;
-      TransactionTable txTable = extractTxTable(cache);
+      TransactionTable txTable = getTransactionTable(cache);
       assert txTable.getLocalTransactions().size() == 1;
       tm().commit();
       assert txTable.getLocalTransactions().size() == 0;

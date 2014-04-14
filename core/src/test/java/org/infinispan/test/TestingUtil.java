@@ -46,7 +46,6 @@ import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.container.entries.InternalCacheValue;
 import org.infinispan.context.InvocationContext;
-import org.infinispan.context.InvocationContextContainer;
 import org.infinispan.context.InvocationContextFactory;
 import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.factories.GlobalComponentRegistry;
@@ -829,10 +828,6 @@ public class TestingUtil {
    public static ExternalizerTable extractExtTable(CacheContainer cacheContainer) {
       GlobalComponentRegistry gcr = (GlobalComponentRegistry) extractField(cacheContainer, "globalComponentRegistry");
       return gcr.getComponent(ExternalizerTable.class);
-   }
-
-   public static TransactionTable extractTxTable(Cache<Object, Object> c) {
-      return (TransactionTable) TestingUtil.extractField(c, "txTable");
    }
 
    /**
