@@ -115,8 +115,7 @@
                <locking isolation="READ_COMMITTED" acquire-timeout="30000" concurrency-level="1000" striping="false" />
                <transaction mode="NONE" />
                <eviction strategy="LRU" max-entries="1000" />
-               <mixed-keyed-jdbc-store datasource="java:jboss/datasources/JdbcDS" passivation="true" preload="true" purge="false">
-                  <!-- property name="databaseType">H2</property -->
+               <mixed-keyed-jdbc-store datasource="java:jboss/datasources/JdbcDS" dialect="H2" passivation="true" preload="true" purge="false">
                   <binary-keyed-table prefix="ISPN_MIX_BKT">
                      <id-column name="id" type="VARCHAR" />
                      <data-column name="datum" type="BINARY" />
@@ -134,8 +133,7 @@
                <locking isolation="READ_COMMITTED" acquire-timeout="30000" concurrency-level="1000" striping="false" />
                <transaction mode="NONE" />
                <eviction strategy="LRU" max-entries="1000" />
-               <string-keyed-jdbc-store datasource="java:jboss/datasources/JdbcDS" passivation="true" preload="false" purge="false" shared="false">
-                  <!-- property name="databaseType">H2</property -->
+               <string-keyed-jdbc-store datasource="java:jboss/datasources/JdbcDS" dialect="H2" passivation="true" preload="false" purge="false" shared="false">
                   <string-keyed-table prefix="ISPN_MC_SK">
                      <id-column name="id" type="VARCHAR" />
                      <data-column name="datum" type="BINARY" />
@@ -147,8 +145,7 @@
 
             <distributed-cache name="namedCache" mode="SYNC" start="EAGER">
                <expiration lifespan="2000" max-idle="1000" />
-               <binary-keyed-jdbc-store datasource="java:jboss/datasources/JdbcDS" passivation="false" preload="true" purge="false" shared="false">
-                  <!-- property name="databaseType">H2</property -->
+               <binary-keyed-jdbc-store datasource="java:jboss/datasources/JdbcDS" dialect="H2" passivation="false" preload="true" purge="false" shared="false">
                   <binary-keyed-table prefix="ISPN_NC_BK">
                      <id-column name="id" type="VARCHAR" />
                      <data-column name="datum" type="BINARY" />

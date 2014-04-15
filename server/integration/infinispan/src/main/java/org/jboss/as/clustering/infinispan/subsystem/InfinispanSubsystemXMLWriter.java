@@ -337,8 +337,7 @@ public class InfinispanSubsystemXMLWriter implements XMLElementWriter<SubsystemM
                 ModelNode name = new ModelNode();
                 name.get(ModelKeys.NAME).set(stringKeyedJDBCStoreEntry.getName());
                 StringKeyedJDBCStoreResource.NAME.marshallAsAttribute(name, false, writer);
-                this.writeRequired(writer, Attribute.DATASOURCE, store, ModelKeys.DATASOURCE);
-                this.writeStoreAttributes(writer, store);
+                this.writeJdbcStoreAttributes(writer, store);
                 this.writeStoreWriteBehind(writer, store);
                 this.writeStoreProperties(writer, store);
                 this.writeJDBCStoreTable(writer, Element.STRING_KEYED_TABLE, store, ModelKeys.STRING_KEYED_TABLE);
@@ -354,8 +353,7 @@ public class InfinispanSubsystemXMLWriter implements XMLElementWriter<SubsystemM
                 ModelNode name = new ModelNode();
                 name.get(ModelKeys.NAME).set(binaryKeyedJDBCStoreEntry.getName());
                 BinaryKeyedJDBCStoreResource.NAME.marshallAsAttribute(name, false, writer);
-                this.writeRequired(writer, Attribute.DATASOURCE, store, ModelKeys.DATASOURCE);
-                this.writeStoreAttributes(writer, store);
+                this.writeJdbcStoreAttributes(writer, store);
                 this.writeStoreWriteBehind(writer, store);
                 this.writeStoreProperties(writer, store);
                 this.writeJDBCStoreTable(writer, Element.BINARY_KEYED_TABLE, store, ModelKeys.BINARY_KEYED_TABLE);
@@ -371,8 +369,7 @@ public class InfinispanSubsystemXMLWriter implements XMLElementWriter<SubsystemM
                 ModelNode name = new ModelNode();
                 name.get(ModelKeys.NAME).set(mixedKeyedJDBCStoreEntry.getName());
                 MixedKeyedJDBCStoreResource.NAME.marshallAsAttribute(name, false, writer);
-                this.writeRequired(writer, Attribute.DATASOURCE, store, ModelKeys.DATASOURCE);
-                this.writeStoreAttributes(writer, store);
+                this.writeJdbcStoreAttributes(writer, store);
                 this.writeStoreWriteBehind(writer, store);
                 this.writeStoreProperties(writer, store);
                 this.writeJDBCStoreTable(writer, Element.STRING_KEYED_TABLE, store, ModelKeys.STRING_KEYED_TABLE);
@@ -540,6 +537,12 @@ public class InfinispanSubsystemXMLWriter implements XMLElementWriter<SubsystemM
     private void writeLoaderAttributes(XMLExtendedStreamWriter writer, ModelNode store) throws XMLStreamException {
         this.writeOptional(writer, Attribute.SHARED, store, ModelKeys.SHARED);
         this.writeOptional(writer, Attribute.PRELOAD, store, ModelKeys.PRELOAD);
+    }
+
+    private void writeJdbcStoreAttributes(XMLExtendedStreamWriter writer, ModelNode store) throws XMLStreamException {
+        this.writeRequired(writer, Attribute.DATASOURCE, store, ModelKeys.DATASOURCE);
+        this.writeOptional(writer, Attribute.DIALECT, store, ModelKeys.DIALECT);
+        this.writeStoreAttributes(writer, store);
     }
 
     private void writeStoreAttributes(XMLExtendedStreamWriter writer, ModelNode store) throws XMLStreamException {

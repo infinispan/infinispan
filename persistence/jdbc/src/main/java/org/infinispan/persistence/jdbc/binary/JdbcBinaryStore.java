@@ -507,7 +507,7 @@ public class JdbcBinaryStore implements AdvancedLoadWriteStore {
 
    public void doConnectionFactoryInitialization(ConnectionFactory connectionFactory) {
       this.connectionFactory = connectionFactory;
-      this.tableManipulation = new TableManipulation(configuration.table());
+      this.tableManipulation = new TableManipulation(configuration.table(), configuration.dialect());
       tableManipulation.setCacheName(ctx.getCache().getName());
       tableManipulation.start(connectionFactory);
    }

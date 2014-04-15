@@ -1218,6 +1218,10 @@ public final class InfinispanSubsystemXMLReader_7_0 implements XMLElementReader<
                     BaseJDBCStoreResource.DATA_SOURCE.parseAndSetParameter(value, store, reader);
                     break;
                 }
+                case DIALECT: {
+                    BaseJDBCStoreResource.DIALECT.parseAndSetParameter(value, store, reader);
+                    break;
+                }
                 default: {
                     name = this.parseStoreAttribute(name, reader, i, attribute, value, store);
                 }
@@ -1268,6 +1272,10 @@ public final class InfinispanSubsystemXMLReader_7_0 implements XMLElementReader<
                     BaseJDBCStoreResource.DATA_SOURCE.parseAndSetParameter(value, store, reader);
                     break;
                 }
+                case DIALECT: {
+                    BaseJDBCStoreResource.DIALECT.parseAndSetParameter(value, store, reader);
+                    break;
+                }
                 default: {
                     name = this.parseStoreAttribute(name, reader, i, attribute, value, store);
                 }
@@ -1315,6 +1323,10 @@ public final class InfinispanSubsystemXMLReader_7_0 implements XMLElementReader<
             switch (attribute) {
                 case DATASOURCE: {
                     BaseJDBCStoreResource.DATA_SOURCE.parseAndSetParameter(value, store, reader);
+                    break;
+                }
+                case DIALECT: {
+                    BaseJDBCStoreResource.DIALECT.parseAndSetParameter(value, store, reader);
                     break;
                 }
                 default: {

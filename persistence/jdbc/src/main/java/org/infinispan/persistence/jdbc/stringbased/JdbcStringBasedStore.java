@@ -412,7 +412,7 @@ public class JdbcStringBasedStore implements AdvancedLoadWriteStore {
     */
    public void initializeConnectionFactory(ConnectionFactory connectionFactory) throws PersistenceException {
       this.connectionFactory = connectionFactory;
-      tableManipulation = new TableManipulation(configuration.table());
+      tableManipulation = new TableManipulation(configuration.table(), configuration.dialect());
       tableManipulation.setCacheName(cacheName);
       tableManipulation.start(connectionFactory);
    }

@@ -9,6 +9,7 @@ import org.infinispan.configuration.parsing.Namespaces;
 import org.infinispan.configuration.parsing.ParseUtils;
 import org.infinispan.configuration.parsing.Parser70;
 import org.infinispan.configuration.parsing.XMLExtendedStreamReader;
+import org.infinispan.persistence.jdbc.Dialect;
 
 import javax.xml.stream.XMLStreamConstants;
 import javax.xml.stream.XMLStreamException;
@@ -22,12 +23,12 @@ import static org.infinispan.commons.util.StringPropertyReplacer.replaceProperti
  * @since 7.0
  */
 @Namespaces({
-   @Namespace(uri = "urn:infinispan:config:store:jdbc:7.0", root = "string-keyed-jdbc-store"),
-   @Namespace(root = "string-keyed-jdbc-store"),
-   @Namespace(uri = "urn:infinispan:config:store:jdbc:7.0", root = "binary-keyed-jdbc-store"),
-   @Namespace(root = "binary-keyed-jdbc-store"),
-   @Namespace(uri = "urn:infinispan:config:store:jdbc:7.0", root = "mixed-keyed-jdbc-store"),
-   @Namespace(root = "mixed-keyed-jdbc-store")
+    @Namespace(uri = "urn:infinispan:config:store:jdbc:7.0", root = "string-keyed-jdbc-store"),
+    @Namespace(root = "string-keyed-jdbc-store"),
+    @Namespace(uri = "urn:infinispan:config:store:jdbc:7.0", root = "binary-keyed-jdbc-store"),
+    @Namespace(root = "binary-keyed-jdbc-store"),
+    @Namespace(uri = "urn:infinispan:config:store:jdbc:7.0", root = "mixed-keyed-jdbc-store"),
+    @Namespace(root = "mixed-keyed-jdbc-store")
 })
 public class JdbcStoreConfigurationParser70 implements ConfigurationParser {
 
@@ -60,7 +61,7 @@ public class JdbcStoreConfigurationParser70 implements ConfigurationParser {
    }
 
    private void parseStringKeyedJdbcStore(final XMLExtendedStreamReader reader,
-         PersistenceConfigurationBuilder persistenceBuilder) throws XMLStreamException {
+                                          PersistenceConfigurationBuilder persistenceBuilder) throws XMLStreamException {
       JdbcStringBasedStoreConfigurationBuilder builder = new JdbcStringBasedStoreConfigurationBuilder(
             persistenceBuilder);
       for (int i = 0; i < reader.getAttributeCount(); i++) {
@@ -69,6 +70,9 @@ public class JdbcStoreConfigurationParser70 implements ConfigurationParser {
          switch (attribute) {
             case KEY_TO_STRING_MAPPER:
                builder.key2StringMapper(value);
+               break;
+            case DIALECT:
+               builder.dialect(Dialect.valueOf(value));
                break;
             default:
                Parser70.parseStoreAttribute(reader, i, builder);
@@ -95,7 +99,18 @@ public class JdbcStoreConfigurationParser70 implements ConfigurationParser {
          throws XMLStreamException {
       JdbcBinaryStoreConfigurationBuilder builder = new JdbcBinaryStoreConfigurationBuilder(
             persistenceBuilder);
-      parseCommonJdbcStoreAttributes(reader, builder);
+      for (int i = 0; i < reader.getAttributeCount(); i++) {
+         String value = replaceProperties(reader.getAttributeValue(i));
+         Attribute attribute = Attribute.forName(reader.getAttributeLocalName(i));
+         switch (attribute) {
+            case DIALECT:
+               builder.dialect(Dialect.valueOf(value));
+               break;
+            default:
+               Parser70.parseStoreAttribute(reader, i, builder);
+               break;
+         }
+      }
       while (reader.hasNext() && (reader.nextTag() != XMLStreamConstants.END_ELEMENT)) {
          Element element = Element.forName(reader.getLocalName());
          switch (element) {
@@ -133,21 +148,15 @@ public class JdbcStoreConfigurationParser70 implements ConfigurationParser {
       }
    }
 
-   private void parseCommonJdbcStoreAttributes(XMLExtendedStreamReader reader, AbstractJdbcStoreConfigurationBuilder<?, ?> builder) throws XMLStreamException {
-      for (int i = 0; i < reader.getAttributeCount(); i++) {
-         Parser70.parseStoreAttribute(reader, i, builder);
-      }
-   }
-
    private void parseDataSourceAttributes(XMLExtendedStreamReader reader,
-         ManagedConnectionFactoryConfigurationBuilder<?> builder) throws XMLStreamException {
+                                          ManagedConnectionFactoryConfigurationBuilder<?> builder) throws XMLStreamException {
       String jndiUrl = ParseUtils.requireSingleAttribute(reader, Attribute.JNDI_URL.getLocalName());
       builder.jndiUrl(jndiUrl);
       ParseUtils.requireNoContent(reader);
    }
 
    private void parseConnectionPoolAttributes(XMLExtendedStreamReader reader,
-         PooledConnectionFactoryConfigurationBuilder<?> builder) throws XMLStreamException {
+                                              PooledConnectionFactoryConfigurationBuilder<?> builder) throws XMLStreamException {
       for (int i = 0; i < reader.getAttributeCount(); i++) {
          ParseUtils.requireNoNamespaceAttribute(reader, i);
          String value = replaceProperties(reader.getAttributeValue(i));
@@ -178,7 +187,7 @@ public class JdbcStoreConfigurationParser70 implements ConfigurationParser {
    }
 
    private void parseSimpleConnectionAttributes(XMLExtendedStreamReader reader,
-         SimpleConnectionFactoryConfigurationBuilder<?> builder) throws XMLStreamException {
+                                                SimpleConnectionFactoryConfigurationBuilder<?> builder) throws XMLStreamException {
       for (int i = 0; i < reader.getAttributeCount(); i++) {
          ParseUtils.requireNoNamespaceAttribute(reader, i);
          String value = replaceProperties(reader.getAttributeValue(i));
@@ -217,6 +226,9 @@ public class JdbcStoreConfigurationParser70 implements ConfigurationParser {
          switch (attribute) {
             case KEY_TO_STRING_MAPPER:
                builder.key2StringMapper(value);
+               break;
+            case DIALECT:
+               builder.dialect(Dialect.valueOf(value));
                break;
             default:
                Parser70.parseStoreAttribute(reader, i, builder);

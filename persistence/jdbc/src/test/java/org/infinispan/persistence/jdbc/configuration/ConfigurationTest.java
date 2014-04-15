@@ -8,7 +8,7 @@ import java.util.Properties;
 import org.h2.Driver;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
-import org.infinispan.persistence.jdbc.DatabaseType;
+import org.infinispan.persistence.jdbc.Dialect;
 import org.testng.annotations.Test;
 
 @Test(groups = "unit", testName = "persistence.jdbc.configuration.ConfigurationTest")
@@ -91,7 +91,7 @@ public class ConfigurationTest {
          .lockConcurrencyLevel(32)
          .fetchSize(50)
          .batchSize(50)
-         .databaseType(DatabaseType.H2);
+         .dialect(Dialect.H2);
       mixedBuilder.async().enable();
 
       mixedBuilder.binaryTable()
@@ -126,7 +126,7 @@ public class ConfigurationTest {
       assert store.stringTable().timestampColumnType().equals("BIGINT");
       assert store.batchSize() == 50;
       assert store.fetchSize() == 50;
-      assert store.databaseType() == DatabaseType.H2;
+      assert store.dialect() == Dialect.H2;
       assert store.fetchPersistentState();
       assert store.lockConcurrencyLevel() == 32;
       assert store.async().enabled();
@@ -200,7 +200,6 @@ public class ConfigurationTest {
 
    public void testTableProperties() {
       Properties props = new Properties();
-      props.put("databaseType", DatabaseType.DERBY.toString());
       props.put("createOnStart", "false");
       props.put("dropOnExit", "true");
 
@@ -217,6 +216,7 @@ public class ConfigurationTest {
       b.persistence().addStore(JdbcBinaryStoreConfigurationBuilder.class)
          .connectionPool().connectionUrl(JDBC_URL)
          .withProperties(props);
+
       Configuration binaryConfiguration = b.build();
 
       JdbcBinaryStoreConfiguration binaryStoreConfiguration = (JdbcBinaryStoreConfiguration) binaryConfiguration.persistence().stores().get(0);
@@ -236,7 +236,6 @@ public class ConfigurationTest {
    }
 
    private void verifyTableManipulation(TableManipulationConfiguration table) {
-      assertEquals(table.databaseType(), DatabaseType.DERBY);
       assertFalse(table.createOnStart());
       assertTrue(table.dropOnExit());
    }

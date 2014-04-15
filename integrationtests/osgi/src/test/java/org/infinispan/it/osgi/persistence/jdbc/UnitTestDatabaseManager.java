@@ -1,6 +1,6 @@
 package org.infinispan.it.osgi.persistence.jdbc;
 
-import org.infinispan.persistence.jdbc.DatabaseType;
+import org.infinispan.persistence.jdbc.Dialect;
 import org.infinispan.persistence.jdbc.configuration.AbstractJdbcStoreConfigurationBuilder;
 import org.infinispan.persistence.jdbc.configuration.ConnectionFactoryConfigurationBuilder;
 import org.infinispan.persistence.jdbc.configuration.TableManipulationConfigurationBuilder;
@@ -19,13 +19,13 @@ public class UnitTestDatabaseManager {
 
    private static AtomicInteger userIndex = new AtomicInteger(0);
    private static final String H2_DRIVER = org.h2.Driver.class.getName();
-   private static final DatabaseType dt;
+   private static final Dialect dt;
 
    static {
       String driver = "";
       try {
          driver = H2_DRIVER;
-         dt = DatabaseType.H2;
+         dt = Dialect.H2;
          try {
             Class.forName(driver);
          } catch (ClassNotFoundException e) {
@@ -35,6 +35,10 @@ public class UnitTestDatabaseManager {
       } catch (ClassNotFoundException e) {
          throw new RuntimeException(e);
       }
+   }
+   
+   public static void setDialect(AbstractJdbcStoreConfigurationBuilder<?, ?> builder) {
+      builder.dialect(dt);
    }
 
    public static ConnectionFactoryConfigurationBuilder<?> configureUniqueConnectionFactory(AbstractJdbcStoreConfigurationBuilder<?, ?> store) {
@@ -59,9 +63,7 @@ public class UnitTestDatabaseManager {
    }
 
    public static void buildTableManipulation(TableManipulationConfigurationBuilder<?, ?> table, boolean binary) {
-      table
-         .databaseType(dt)
-         .tableNamePrefix(binary ? "ISPN_BINARY" : "ISPN_STRING")
+      table.tableNamePrefix(binary ? "ISPN_BINARY" : "ISPN_STRING")
          .idColumnName("ID_COLUMN")
          .idColumnType(binary ? "INT" : "VARCHAR(255)")
          .dataColumnName("DATA_COLUMN")

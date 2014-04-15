@@ -7,6 +7,7 @@ import java.io.InputStream;
 
 import org.infinispan.configuration.cache.StoreConfiguration;
 import org.infinispan.manager.EmbeddedCacheManager;
+import org.infinispan.persistence.jdbc.Dialect;
 import org.infinispan.test.AbstractInfinispanTest;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
@@ -30,7 +31,7 @@ public class XmlFileParsingTest extends AbstractInfinispanTest {
             "      <local-cache name=\"default\">\n" +
             "     <persistence>\n" +
             "       <string-keyed-jdbc-store xmlns=\"urn:infinispan:config:store:jdbc:7.0\" key-to-string-mapper=\"DummyKey2StringMapper\" shared=\"true\" " +
-            "                                preload=\"true\" read-only=\"true\" fetch-state=\"true\" purge=\"true\" singleton=\"false\" >\n" +
+            "                                preload=\"true\" read-only=\"true\" fetch-state=\"true\" purge=\"true\" singleton=\"false\" dialect=\"H2\">\n" +
             "         <connection-pool connection-url=\"jdbc:h2:mem:infinispan;DB_CLOSE_DELAY=-1\" username=\"dbuser\" password=\"dbpass\" driver=\"org.h2.Driver\"/>\n" +
             "         <string-keyed-table prefix=\"entry\" fetch-size=\"34\" batch-size=\"128\" >\n" +
             "           <id-column name=\"id\" type=\"VARCHAR\" />\n" +
@@ -52,6 +53,7 @@ public class XmlFileParsingTest extends AbstractInfinispanTest {
       assertEquals("DummyKey2StringMapper", store.key2StringMapper());
       assertTrue(store.shared());
       assertTrue(store.preload());
+      assertEquals(Dialect.H2, store.dialect());
       PooledConnectionFactoryConfiguration connectionFactory = (PooledConnectionFactoryConfiguration) store.connectionFactory();
       assertEquals("jdbc:h2:mem:infinispan;DB_CLOSE_DELAY=-1", connectionFactory.connectionUrl());
       assertEquals("org.h2.Driver", connectionFactory.driverClass());
@@ -68,7 +70,7 @@ public class XmlFileParsingTest extends AbstractInfinispanTest {
             "   <cache-container default-cache=\"default\">\n" +
             "      <local-cache name=\"default\">\n" +
             "     <persistence>\n" +
-            "       <binary-keyed-jdbc-store xmlns=\"urn:infinispan:config:store:jdbc:7.0\" read-only=\"true\" singleton=\"true\">\n" +
+            "       <binary-keyed-jdbc-store xmlns=\"urn:infinispan:config:store:jdbc:7.0\" read-only=\"true\" singleton=\"true\" dialect=\"H2\">\n" +
             "         <simple-connection connection-url=\"jdbc:h2:mem:infinispan;DB_CLOSE_DELAY=-1\" username=\"dbuser\" password=\"dbpass\" driver=\"org.h2.Driver\"/>\n" +
             "         <binary-keyed-table prefix=\"bucket\" fetch-size=\"34\" batch-size=\"128\">\n" +
             "           <id-column name=\"id\" type=\"BINARY\" />\n" +
@@ -88,6 +90,7 @@ public class XmlFileParsingTest extends AbstractInfinispanTest {
       assertEquals("BINARY", store.table().dataColumnType());
       assertEquals("version", store.table().timestampColumnName());
       assertTrue(store.singletonStore().enabled());
+      assertEquals(Dialect.H2, store.dialect());
       SimpleConnectionFactoryConfiguration connectionFactory = (SimpleConnectionFactoryConfiguration) store.connectionFactory();
       assertEquals("jdbc:h2:mem:infinispan;DB_CLOSE_DELAY=-1", connectionFactory.connectionUrl());
       assertEquals("org.h2.Driver", connectionFactory.driverClass());
@@ -100,7 +103,7 @@ public class XmlFileParsingTest extends AbstractInfinispanTest {
             "   <cache-container default-cache=\"default\">\n" +
             "      <local-cache name=\"default\">\n" +
             "     <persistence>\n" +
-            "       <mixed-keyed-jdbc-store xmlns=\"urn:infinispan:config:store:jdbc:7.0\" key-to-string-mapper=\"DummyKey2StringMapper\" singleton=\"true\" >\n" +
+            "       <mixed-keyed-jdbc-store xmlns=\"urn:infinispan:config:store:jdbc:7.0\" key-to-string-mapper=\"DummyKey2StringMapper\" singleton=\"true\" dialect=\"H2\">\n" +
             "         <data-source jndi-url=\"java:MyDataSource\" />\n" +
             "         <string-keyed-table prefix=\"entry\" fetch-size=\"34\" batch-size=\"128\">\n" +
             "           <id-column name=\"id\" type=\"VARCHAR\" />\n" +
@@ -131,6 +134,7 @@ public class XmlFileParsingTest extends AbstractInfinispanTest {
       assertEquals(44, store.binaryTable().fetchSize());
       assertEquals("BINARY", store.binaryTable().dataColumnType());
       assertEquals("version", store.binaryTable().timestampColumnName());
+      assertEquals(Dialect.H2, store.dialect());
 
       assertTrue(store.async().enabled());
       assertTrue(store.singletonStore().enabled());

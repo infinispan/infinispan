@@ -15,14 +15,15 @@
                     <state-transfer 
                         enabled="true"
                         timeout="60000" />
-                    <string-keyed-jdbc-store datasource="${jndi.name}"
+                    <string-keyed-jdbc-store
+                        datasource="${jndi.name}"
+                        dialect="${database.type}"
                         fetch-state="true"                        
                         passivation="false"
                         preload="false" 
                         purge="false" 
                         shared="false" 
                         singleton="true" name="SINGLETON">
-                        <property name="databaseType">${database.type}</property>
                         <string-keyed-table prefix="${table.prefix}">
                             <id-column name="id" type="${id.column.type}"/>
                             <data-column name="datum" type="${data.column.type}"/>

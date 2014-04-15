@@ -3,7 +3,7 @@ package org.infinispan.persistence.jdbc.configuration;
 import org.infinispan.commons.configuration.Builder;
 import org.infinispan.commons.configuration.Self;
 import org.infinispan.commons.logging.LogFactory;
-import org.infinispan.persistence.jdbc.DatabaseType;
+import org.infinispan.persistence.jdbc.Dialect;
 import org.infinispan.persistence.jdbc.TableManipulation;
 import org.infinispan.persistence.jdbc.logging.Log;
 
@@ -21,7 +21,6 @@ public abstract class TableManipulationConfigurationBuilder<B extends AbstractJd
    private boolean createOnStart = true;
    private boolean dropOnExit = false;
    private String cacheName;
-   DatabaseType databaseType;
    private String idColumnName;
    private String idColumnType;
    private String dataColumnName;
@@ -60,15 +59,6 @@ public abstract class TableManipulationConfigurationBuilder<B extends AbstractJd
     */
    public S tableNamePrefix(String tableNamePrefix) {
       this.tableNamePrefix = tableNamePrefix;
-      return self();
-   }
-
-   /**
-    * Specifies the type of the underlying database. If unspecified the database type will be
-    * determined automatically
-    */
-   public S databaseType(DatabaseType databaseType) {
-      this.databaseType = databaseType;
       return self();
    }
 
@@ -156,7 +146,7 @@ public abstract class TableManipulationConfigurationBuilder<B extends AbstractJd
    @Override
    public TableManipulationConfiguration create() {
       return new TableManipulationConfiguration(idColumnName, idColumnType, tableNamePrefix, cacheName, dataColumnName, dataColumnType, timestampColumnName, timestampColumnType,
-            databaseType, fetchSize, batchSize, createOnStart, dropOnExit);
+               fetchSize, batchSize, createOnStart, dropOnExit);
    }
 
    @Override
@@ -165,7 +155,6 @@ public abstract class TableManipulationConfigurationBuilder<B extends AbstractJd
       this.fetchSize = template.fetchSize();
       this.createOnStart = template.createOnStart();
       this.dropOnExit = template.dropOnExit();
-      this.databaseType = template.databaseType();
       this.idColumnName = template.idColumnName();
       this.idColumnType = template.idColumnType();
       this.dataColumnName = template.dataColumnName();

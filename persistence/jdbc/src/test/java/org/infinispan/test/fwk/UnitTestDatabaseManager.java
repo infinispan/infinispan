@@ -7,11 +7,14 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.util.concurrent.atomic.AtomicInteger;
 
-import org.infinispan.persistence.jdbc.DatabaseType;
+import org.infinispan.persistence.jdbc.Dialect;
 import org.infinispan.persistence.jdbc.JdbcUtil;
 import org.infinispan.persistence.jdbc.TableName;
 import org.infinispan.persistence.jdbc.configuration.AbstractJdbcStoreConfigurationBuilder;
 import org.infinispan.persistence.jdbc.configuration.ConnectionFactoryConfigurationBuilder;
+import org.infinispan.persistence.jdbc.configuration.JdbcBinaryStoreConfigurationBuilder;
+import org.infinispan.persistence.jdbc.configuration.JdbcMixedStoreConfigurationBuilder;
+import org.infinispan.persistence.jdbc.configuration.JdbcStringBasedStoreConfigurationBuilder;
 import org.infinispan.persistence.jdbc.configuration.TableManipulationConfigurationBuilder;
 import org.infinispan.persistence.jdbc.connectionfactory.ConnectionFactory;
 import org.infinispan.persistence.jdbc.connectionfactory.PooledConnectionFactory;
@@ -30,17 +33,17 @@ public class UnitTestDatabaseManager {
    private static final String DB_TYPE = System.getProperty("infinispan.test.jdbc.db", "H2");
    private static final String H2_DRIVER = org.h2.Driver.class.getName();
    private static final String NON_EXISTENT_DRIVER = "non.existent.Driver";
-   private static final DatabaseType dt;
+   private static final Dialect dt;
 
    static {
       String driver = "";
       try {
          if (DB_TYPE.equalsIgnoreCase("mysql")) {
             driver = com.mysql.jdbc.Driver.class.getName();
-            dt = DatabaseType.MYSQL;
+            dt = Dialect.MYSQL;
          } else {
             driver = H2_DRIVER;
-            dt = DatabaseType.H2;
+            dt = Dialect.H2;
          }
          try {
             Class.forName(driver);
@@ -100,10 +103,12 @@ public class UnitTestDatabaseManager {
       return null;
    }
 
+   public static void setDialect(AbstractJdbcStoreConfigurationBuilder builder) {
+      builder.dialect(dt);
+   }
 
    public static void buildTableManipulation(TableManipulationConfigurationBuilder<?, ?> table, boolean binary) {
       table
-         .databaseType(dt)
          .tableNamePrefix(binary ? "ISPN_BINARY" : "ISPN_STRING")
          .idColumnName("ID_COLUMN")
          .idColumnType(binary ? "INT" : "VARCHAR(255)")
