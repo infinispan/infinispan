@@ -34,6 +34,7 @@ public class JdbcStringBasedStoreFunctionalTest extends BaseStoreFunctionalTest 
             .addStore(JdbcStringBasedStoreConfigurationBuilder.class)
             .preload(preload);
       UnitTestDatabaseManager.buildTableManipulation(store.table(), false);
+      UnitTestDatabaseManager.setDialect(store);
       UnitTestDatabaseManager.configureUniqueConnectionFactory(store);
       return persistence;
    }

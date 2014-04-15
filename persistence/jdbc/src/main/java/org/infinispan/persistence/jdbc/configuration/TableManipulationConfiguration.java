@@ -1,7 +1,6 @@
 package org.infinispan.persistence.jdbc.configuration;
 
 import org.infinispan.commons.util.Util;
-import org.infinispan.persistence.jdbc.DatabaseType;
 
 public class TableManipulationConfiguration {
    private final String idColumnName;
@@ -16,11 +15,10 @@ public class TableManipulationConfiguration {
    private final int batchSize;
    private final boolean createOnStart;
    private final boolean dropOnExit;
-   private final DatabaseType databaseType;
 
    TableManipulationConfiguration(String idColumnName, String idColumnType, String tableNamePrefix, String cacheName,
          String dataColumnName, String dataColumnType, String timestampColumnName, String timestampColumnType,
-         DatabaseType databaseType, int fetchSize, int batchSize, boolean createOnStart, boolean dropOnExit) {
+         int fetchSize, int batchSize, boolean createOnStart, boolean dropOnExit) {
       this.idColumnName = idColumnName;
       this.idColumnType = idColumnType;
       this.tableNamePrefix = tableNamePrefix;
@@ -29,7 +27,6 @@ public class TableManipulationConfiguration {
       this.dataColumnType = dataColumnType;
       this.timestampColumnName = timestampColumnName;
       this.timestampColumnType = timestampColumnType;
-      this.databaseType = databaseType;
       this.batchSize = Util.findNextHighestPowerOfTwo(batchSize);
       this.fetchSize = fetchSize;
       this.createOnStart = createOnStart;
@@ -42,10 +39,6 @@ public class TableManipulationConfiguration {
 
    public boolean dropOnExit() {
       return dropOnExit;
-   }
-
-   public DatabaseType databaseType() {
-      return databaseType;
    }
 
    public String idColumnName() {

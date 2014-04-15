@@ -5,7 +5,8 @@ import org.infinispan.commons.CacheConfigurationException;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
-import org.infinispan.persistence.jdbc.DatabaseType;
+import org.infinispan.persistence.jdbc.Dialect;
+import org.infinispan.persistence.jdbc.configuration.JdbcBinaryStoreConfigurationBuilder;
 import org.infinispan.persistence.jdbc.configuration.JdbcMixedStoreConfiguration;
 import org.infinispan.persistence.jdbc.configuration.JdbcMixedStoreConfigurationBuilder;
 import org.infinispan.persistence.keymappers.DefaultTwoWayKey2StringMapper;
@@ -104,7 +105,7 @@ public class JdbcMixedStoreConfigurationTest {
       bld.clustering().cacheMode(CacheMode.LOCAL)
             .persistence()
             .addStore(JdbcMixedStoreConfigurationBuilder.class).fetchPersistentState(false).purgeOnStartup(false)
-            .databaseType(DatabaseType.MYSQL)
+            .dialect(Dialect.MYSQL)
             .stringTable()
             .dropOnExit(false)
             .createOnStart(true)
@@ -123,8 +124,6 @@ public class JdbcMixedStoreConfigurationTest {
             .jndiUrl("java:jboss/datasources/ExampleDS");
       Configuration build = bld.build();
       JdbcMixedStoreConfiguration sc = (JdbcMixedStoreConfiguration) build.persistence().stores().get(0);
-      Assert.assertEquals(sc.databaseType(), DatabaseType.MYSQL);
-      Assert.assertEquals(sc.binaryTable().databaseType(), DatabaseType.MYSQL);
-      Assert.assertEquals(sc.stringTable().databaseType(), DatabaseType.MYSQL);
+      Assert.assertEquals(Dialect.MYSQL, sc.dialect());
    }
 }

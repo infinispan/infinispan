@@ -50,14 +50,15 @@ public class TableManipulation implements Cloneable {
    private String selectExpiredRowsSql;
    private String deleteExpiredRowsSql;
    private String loadSomeRowsSql;
-   public DatabaseType databaseType;
+   private Dialect dialect;
    private String loadAllKeysBinarySql;
    private String loadAllKeysStringSql;
 
    private TableName tableName;
 
-   public TableManipulation(TableManipulationConfiguration config) {
+   public TableManipulation(TableManipulationConfiguration config, Dialect dialect) {
       this.config = config;
+      this.dialect = dialect;
    }
 
    public TableManipulation() {
@@ -74,7 +75,7 @@ public class TableManipulation implements Cloneable {
          DatabaseMetaData metaData = connection.getMetaData();
          String schemaPattern = tableName.getSchema();
          if(schemaPattern == null){
-            switch (getDatabaseType()) {
+            switch (getDialect()) {
                case ORACLE:
                   schemaPattern = metaData.getUserName();
                   break;
@@ -174,7 +175,7 @@ public class TableManipulation implements Cloneable {
 
    public String getUpdateRowSql() {
       if (updateRowSql == null) {
-         switch(getDatabaseType()) {
+         switch(getDialect()) {
             case SYBASE:
                updateRowSql = "UPDATE " + getTableName() + " SET " + config.dataColumnName() + " = ? , " + config.timestampColumnName() + "=? WHERE " + config.idColumnName() + " = convert(" + config.idColumnType() + "," + "?)";
                break;
@@ -191,7 +192,7 @@ public class TableManipulation implements Cloneable {
 
    public String getSelectRowSql() {
       if (selectRowSql == null) {
-         switch(getDatabaseType()) {
+         switch(getDialect()) {
             case SYBASE:
                selectRowSql = "SELECT " + config.idColumnName() + ", " + config.dataColumnName() + " FROM " + getTableName() + " WHERE " + config.idColumnName() + " = convert(" + config.idColumnType() + "," + "?)";
                break;
@@ -208,7 +209,7 @@ public class TableManipulation implements Cloneable {
 
    public String getSelectIdRowSql() {
       if (selectIdRowSql == null) {
-         switch(getDatabaseType()) {
+         switch(getDialect()) {
             case SYBASE:
                selectIdRowSql = "SELECT " + config.idColumnName() + " FROM " + getTableName() + " WHERE " + config.idColumnName() + " = convert(" + config.idColumnType() + "," + "?)";
                break;
@@ -232,7 +233,7 @@ public class TableManipulation implements Cloneable {
 
    public String getDeleteRowSql() {
       if (deleteRowSql == null) {
-         switch(getDatabaseType()) {
+         switch(getDialect()) {
             case SYBASE:
                deleteRowSql = "DELETE FROM " + getTableName() + " WHERE " + config.idColumnName() + " = convert(" + config.idColumnType() + "," + "?)";
                break;
@@ -309,8 +310,8 @@ public class TableManipulation implements Cloneable {
    }
 
    public boolean isVariableLimitSupported() {
-      DatabaseType type = getDatabaseType();
-      return !(type == DatabaseType.DB2 || type == DatabaseType.DB2_390 || type == DatabaseType.SYBASE);
+      Dialect type = getDialect();
+      return !(type == Dialect.DB2 || type == Dialect.DB2_390 || type == Dialect.SYBASE);
    }
 
    public String getLoadSomeRowsSql() {
@@ -318,7 +319,7 @@ public class TableManipulation implements Cloneable {
          // this stuff is going to be database specific!!
          // see http://stackoverflow.com/questions/595123/is-there-an-ansi-sql-alternative-to-the-mysql-limit-keyword
 
-         switch (getDatabaseType()) {
+         switch (getDialect()) {
             case ORACLE:
                loadSomeRowsSql = String.format("SELECT %s, %s FROM (SELECT %s, %s FROM %s) WHERE ROWNUM <= ?", config.dataColumnName(), config.idColumnName(), config.dataColumnName(), config.idColumnName(), getTableName());
                break;
@@ -380,72 +381,71 @@ public class TableManipulation implements Cloneable {
       return config.batchSize();
    }
 
-   private DatabaseType getDatabaseType() {
-      databaseType = config.databaseType();
-      if (databaseType == null) {
+   private Dialect getDialect() {
+      if (dialect == null) {
          // need to guess from the database type!
          Connection connection = null;
          try {
             connection = connectionFactory.getConnection();
             String dbProduct = connection.getMetaData().getDatabaseProductName();
-            databaseType = guessDatabaseType(dbProduct);
+            dialect = guessDialect(dbProduct);
          } catch (Exception e) {
-            log.debug("Unable to guess database type from JDBC metadata.", e);
+            log.debug("Unable to guess dialect from JDBC metadata.", e);
          } finally {
             connectionFactory.releaseConnection(connection);
          }
-         if (databaseType == null) {
-            log.debug("Unable to detect database type using connection metadata.  Attempting to guess on driver name.");
+         if (dialect == null) {
+            log.debug("Unable to detect database dialect using connection metadata.  Attempting to guess on driver name.");
             try {
                connection = connectionFactory.getConnection();
                String dbProduct = connectionFactory.getConnection().getMetaData().getDriverName();
-               databaseType = guessDatabaseType(dbProduct);
+               dialect = guessDialect(dbProduct);
             } catch (Exception e) {
-               log.debug("Unable to guess database type from JDBC driver name.", e);
+               log.debug("Unable to guess database dialect from JDBC driver name.", e);
             } finally {
                connectionFactory.releaseConnection(connection);
             }
          }
-         if (databaseType == null) {
-            throw new CacheConfigurationException("Unable to detect database type from JDBC driver name or connection metadata.  Please provide this manually using the 'databaseType' property in your configuration.  Supported database type strings are " + Arrays.toString(DatabaseType.values()));
+         if (dialect == null) {
+            throw new CacheConfigurationException("Unable to detect database dialect from JDBC driver name or connection metadata.  Please provide this manually using the 'dialect' property in your configuration.  Supported database dialect strings are " + Arrays.toString(Dialect.values()));
          } else {
-            log.debugf("Guessing database type as '%s'.  If this is incorrect, please specify the correct type using the 'databaseType' property in your configuration.  Supported database type strings are %s", databaseType, Arrays.toString(DatabaseType.values()));
+            log.debugf("Guessing database dialect as '%s'.  If this is incorrect, please specify the correct dialect using the 'dialect' attribute in your configuration.  Supported database dialect strings are %s", dialect, Arrays.toString(Dialect.values()));
          }
       }
-      return databaseType;
+      return dialect;
    }
 
-   private DatabaseType guessDatabaseType(String name) {
-      DatabaseType type = null;
+   private Dialect guessDialect(String name) {
+      Dialect type = null;
       if (name != null) {
          if (name.toLowerCase().contains("mysql")) {
-            type = DatabaseType.MYSQL;
+            type = Dialect.MYSQL;
          } else if (name.toLowerCase().contains("postgres")) {
-            type = DatabaseType.POSTGRES;
+            type = Dialect.POSTGRES;
          } else if (name.toLowerCase().contains("derby")) {
-            type = DatabaseType.DERBY;
+            type = Dialect.DERBY;
          } else if (name.toLowerCase().contains("hsql") || name.toLowerCase().contains("hypersonic")) {
-            type = DatabaseType.HSQL;
+            type = Dialect.HSQL;
          } else if (name.toLowerCase().contains("h2")) {
-            type = DatabaseType.H2;
+            type = Dialect.H2;
          } else if (name.toLowerCase().contains("sqlite")) {
-            type = DatabaseType.SQLITE;
+            type = Dialect.SQLITE;
          } else if (name.toLowerCase().contains("db2")) {
-            type = DatabaseType.DB2;
+            type = Dialect.DB2;
          } else if (name.toLowerCase().contains("informix")) {
-            type = DatabaseType.INFORMIX;
+            type = Dialect.INFORMIX;
          } else if (name.toLowerCase().contains("interbase")) {
-            type = DatabaseType.INTERBASE;
+            type = Dialect.INTERBASE;
          } else if (name.toLowerCase().contains("firebird")) {
-            type = DatabaseType.FIREBIRD;
+            type = Dialect.FIREBIRD;
          } else if (name.toLowerCase().contains("sqlserver") || name.toLowerCase().contains("microsoft")) {
-            type = DatabaseType.SQL_SERVER;
+            type = Dialect.SQL_SERVER;
          } else if (name.toLowerCase().contains("access")) {
-            type = DatabaseType.ACCESS;
+            type = Dialect.ACCESS;
          } else if (name.toLowerCase().contains("oracle")) {
-            type = DatabaseType.ORACLE;
+            type = Dialect.ORACLE;
          } else if (name.toLowerCase().contains("adaptive")) {
-            type = DatabaseType.SYBASE;
+            type = Dialect.SYBASE;
          }
       }
       return type;
@@ -453,7 +453,7 @@ public class TableManipulation implements Cloneable {
 
    public String getIdentifierQuoteString() {
       if(identifierQuoteString == null){
-         switch (getDatabaseType()) {
+         switch (getDialect()) {
             case MYSQL:
                identifierQuoteString = "`";
                break;

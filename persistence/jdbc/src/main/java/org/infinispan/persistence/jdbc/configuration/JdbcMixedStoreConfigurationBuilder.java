@@ -6,7 +6,7 @@ import java.util.Properties;
 import org.infinispan.commons.CacheConfigurationException;
 import org.infinispan.configuration.cache.PersistenceConfigurationBuilder;
 import org.infinispan.configuration.parsing.XmlConfigHelper;
-import org.infinispan.persistence.jdbc.DatabaseType;
+import org.infinispan.persistence.jdbc.Dialect;
 import org.infinispan.persistence.jdbc.TableManipulation;
 import org.infinispan.persistence.keymappers.DefaultTwoWayKey2StringMapper;
 import org.infinispan.persistence.keymappers.Key2StringMapper;
@@ -23,7 +23,6 @@ public class JdbcMixedStoreConfigurationBuilder extends AbstractJdbcStoreConfigu
    private final MixedTableManipulationConfigurationBuilder binaryTable;
    private final MixedTableManipulationConfigurationBuilder stringTable;
    private String key2StringMapper = DefaultTwoWayKey2StringMapper.class.getName();
-   private DatabaseType databaseType;
    private int batchSize = TableManipulation.DEFAULT_BATCH_SIZE;
    private int fetchSize = TableManipulation.DEFAULT_FETCH_SIZE;
 
@@ -60,16 +59,6 @@ public class JdbcMixedStoreConfigurationBuilder extends AbstractJdbcStoreConfigu
       this.fetchSize = fetchSize;
       return this;
    }
-
-   /**
-    * Specifies the type of the underlying database. If unspecified the database type will be
-    * determined automatically
-    */
-   public JdbcMixedStoreConfigurationBuilder databaseType(DatabaseType databaseType) {
-      this.databaseType = databaseType;
-      return this;
-   }
-
 
    /**
     * Allows configuration of table-specific parameters such as column names and types for the table
@@ -140,15 +129,9 @@ public class JdbcMixedStoreConfigurationBuilder extends AbstractJdbcStoreConfigu
 
    @Override
    public JdbcMixedStoreConfiguration create() {
-      if (databaseType != null) {
-         if (stringTable.databaseType == null)
-            stringTable.databaseType(databaseType);
-         if (binaryTable.databaseType == null)
-            binaryTable.databaseType(databaseType);
-      }
       return new JdbcMixedStoreConfiguration(purgeOnStartup, fetchPersistentState, ignoreModifications, async.create(),
                                              singletonStore.create(), preload, shared, properties, connectionFactory.create(), manageConnectionFactory,
-                                             batchSize, fetchSize, databaseType, binaryTable.create(), stringTable.create(), key2StringMapper, lockConcurrencyLevel, lockAcquisitionTimeout);
+                                             batchSize, fetchSize, dialect, binaryTable.create(), stringTable.create(), key2StringMapper, lockConcurrencyLevel, lockAcquisitionTimeout);
    }
 
    @Override
@@ -160,7 +143,6 @@ public class JdbcMixedStoreConfigurationBuilder extends AbstractJdbcStoreConfigu
       this.key2StringMapper = template.key2StringMapper();
       this.batchSize = template.batchSize();
       this.fetchSize = template.fetchSize();
-      this.databaseType = template.databaseType();
       this.lockAcquisitionTimeout = template.lockAcquisitionTimeout();
       this.lockConcurrencyLevel = template.lockConcurrencyLevel();
       return this;

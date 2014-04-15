@@ -9,8 +9,7 @@
                     <eviction 
                         strategy="LRU" 
                         max-entries="2" />
-                    <mixed-keyed-jdbc-store datasource="${jndi.name}" passivation="true" preload="false" purge="false" name="${table.prefix}">
-                        <property name="databaseType">${database.type}</property>
+                    <mixed-keyed-jdbc-store datasource="${jndi.name}" dialect="${database.type}" passivation="true" preload="false" purge="false" name="${table.prefix}">
                         <binary-keyed-table prefix="${table.prefix}_BKT">
                             <id-column name="id" type="${id.column.type}"/>
                             <data-column name="datum" type="${data.column.type}"/>

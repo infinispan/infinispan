@@ -60,6 +60,7 @@ public class StringKeyedJDBCStoreResource extends BaseJDBCStoreResource {
     private static final OperationDefinition STRING_KEYED_JDBC_STORE_ADD_DEFINITION = new SimpleOperationDefinitionBuilder(ADD, InfinispanExtension.getResourceDescriptionResolver(ModelKeys.STRING_KEYED_JDBC_STORE))
         .setParameters(COMMON_STORE_PARAMETERS)
         .addParameter(DATA_SOURCE)
+        .addParameter(DIALECT)
         .addParameter(STRING_KEYED_TABLE)
         .setAttributeResolver(InfinispanExtension.getResourceDescriptionResolver(ModelKeys.JDBC_STORE))
         .build();

@@ -31,6 +31,7 @@ public class JdbcStringBasedStoreManagedFactoryFunctionalTest extends JdbcString
             .preload(preload);
       store.dataSource().jndiUrl("osgi:service/h2ds");
       UnitTestDatabaseManager.buildTableManipulation(store.table(), false);
+      UnitTestDatabaseManager.setDialect(store);
       return persistence;
    }
 }

@@ -16,6 +16,7 @@ public enum Attribute {
    BATCH_SIZE("batch-size"),
    CONNECTION_URL("connection-url"),
    CREATE_ON_START("create-on-start"),
+   DIALECT("dialect"),
    JNDI_URL("jndi-url"),
    DRIVER_CLASS("driver"),
    DROP_ON_EXIT("drop-on-exit"),

@@ -35,6 +35,7 @@ public class MixedStoreWithManagedConnectionTest extends ManagedConnectionFactor
             .persistence()
             .addStore(JdbcMixedStoreConfigurationBuilder.class);
       storeBuilder.dataSource().jndiUrl(getDatasourceLocation());
+      UnitTestDatabaseManager.setDialect(storeBuilder);
       UnitTestDatabaseManager.buildTableManipulation(storeBuilder.stringTable(), false);
       UnitTestDatabaseManager.buildTableManipulation(storeBuilder.binaryTable(), true);
 

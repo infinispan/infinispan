@@ -38,9 +38,10 @@ public class TableManipulationTest {
             .getDefaultCacheConfiguration(false)
             .persistence()
                .addStore(JdbcStringBasedStoreConfigurationBuilder.class);
+      UnitTestDatabaseManager.setDialect(storeBuilder);
       UnitTestDatabaseManager.buildTableManipulation(storeBuilder.table(), false);
       factoryConfiguration = UnitTestDatabaseManager.configureUniqueConnectionFactory(storeBuilder).create();
-      tableManipulation = new TableManipulation(storeBuilder.table().create());
+      tableManipulation = new TableManipulation(storeBuilder.table().create(), storeBuilder.create().dialect());
 
       if (factoryConfiguration instanceof SimpleConnectionFactoryConfiguration) {
          SimpleConnectionFactoryConfiguration simpleConfiguration = (SimpleConnectionFactoryConfiguration)
@@ -62,7 +63,7 @@ public class TableManipulationTest {
       connection.close();
    }
 
-   public void testConnectionLeakGuessDatabaseType() throws Exception {
+   public void testConnectionLeakGuessDialect() throws Exception {
       JdbcStringBasedStoreConfigurationBuilder storeBuilder = TestCacheManagerFactory
             .getDefaultCacheConfiguration(false)
             .persistence()
@@ -70,10 +71,9 @@ public class TableManipulationTest {
 
       UnitTestDatabaseManager.buildTableManipulation(storeBuilder.table(), false);
 
-      TableManipulation tableManipulation = new TableManipulation(storeBuilder.table().create());
-      // database type must now be determined
-      tableManipulation.databaseType = null;
-      tableManipulation.setCacheName("GuessDatabaseType");
+      //pass null dialect, it must now be determined automatically
+      TableManipulation tableManipulation = new TableManipulation(storeBuilder.table().create(), null);
+      tableManipulation.setCacheName("GuessDialect");
 
       PooledConnectionFactory factory = new PooledConnectionFactory();
       ConnectionFactoryConfiguration config = UnitTestDatabaseManager

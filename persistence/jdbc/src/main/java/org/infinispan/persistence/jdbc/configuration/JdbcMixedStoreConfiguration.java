@@ -2,7 +2,7 @@ package org.infinispan.persistence.jdbc.configuration;
 
 import org.infinispan.configuration.cache.AsyncStoreConfiguration;
 import org.infinispan.configuration.cache.SingletonStoreConfiguration;
-import org.infinispan.persistence.jdbc.DatabaseType;
+import org.infinispan.persistence.jdbc.Dialect;
 import org.infinispan.persistence.jdbc.mixed.JdbcMixedStore;
 import org.infinispan.commons.configuration.BuiltBy;
 import org.infinispan.commons.configuration.ConfigurationFor;
@@ -22,7 +22,6 @@ public class JdbcMixedStoreConfiguration extends AbstractJdbcStoreConfiguration 
 
    private final int batchSize;
    private final int fetchSize;
-   private final DatabaseType databaseType;
    private final TableManipulationConfiguration binaryTable;
    private final TableManipulationConfiguration stringTable;
    private final String key2StringMapper;
@@ -36,13 +35,12 @@ public class JdbcMixedStoreConfiguration extends AbstractJdbcStoreConfiguration 
                                       AsyncStoreConfiguration async, SingletonStoreConfiguration singletonStore,
                                       boolean preload, boolean shared, Properties properties,
                                       ConnectionFactoryConfiguration connectionFactory, boolean manageConnectionFactory,
-                                      int batchSize, int fetchSize, DatabaseType databaseType,
+                                      int batchSize, int fetchSize, Dialect dialect,
                                       TableManipulationConfiguration binaryTable,
                                       TableManipulationConfiguration stringTable, String key2StringMapper, int lockConcurrencyLevel, long lockAcquisitionTimeout) {
-      super(purgeOnStartup, fetchPersistentState, ignoreModifications, async, singletonStore, preload, shared, properties, connectionFactory, manageConnectionFactory);
+      super(purgeOnStartup, fetchPersistentState, ignoreModifications, async, singletonStore, preload, shared, properties, connectionFactory, manageConnectionFactory, dialect);
       this.batchSize = batchSize;
       this.fetchSize = fetchSize;
-      this.databaseType = databaseType;
       this.binaryTable = binaryTable;
       this.stringTable = stringTable;
       this.key2StringMapper = key2StringMapper;
@@ -70,10 +68,6 @@ public class JdbcMixedStoreConfiguration extends AbstractJdbcStoreConfiguration 
       return fetchSize;
    }
 
-   public DatabaseType databaseType() {
-      return databaseType;
-   }
-
    public int lockConcurrencyLevel() {
       return lockConcurrencyLevel;
    }
@@ -87,10 +81,10 @@ public class JdbcMixedStoreConfiguration extends AbstractJdbcStoreConfiguration 
       return "JdbcMixedStoreConfiguration{" +
             "batchSize=" + batchSize +
             ", fetchSize=" + fetchSize +
-            ", databaseType=" + databaseType +
             ", binaryTable=" + binaryTable +
             ", stringTable=" + stringTable +
-            ", key2StringMapper='" + key2StringMapper + '\'' + super.toString() +
+            ", key2StringMapper='" + key2StringMapper + '\'' +
+            ", " + super.toString() +
             '}';
    }
 }

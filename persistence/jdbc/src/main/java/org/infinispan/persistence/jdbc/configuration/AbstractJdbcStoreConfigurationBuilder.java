@@ -8,6 +8,7 @@ import org.infinispan.commons.logging.LogFactory;
 import org.infinispan.commons.CacheConfigurationException;
 import org.infinispan.configuration.cache.AbstractStoreConfigurationBuilder;
 import org.infinispan.configuration.cache.PersistenceConfigurationBuilder;
+import org.infinispan.persistence.jdbc.Dialect;
 import org.infinispan.persistence.jdbc.connectionfactory.ConnectionFactory;
 import org.infinispan.persistence.jdbc.logging.Log;
 
@@ -17,6 +18,7 @@ public abstract class AbstractJdbcStoreConfigurationBuilder<T extends AbstractJd
    private static final Log log = LogFactory.getLog(AbstractJdbcStoreConfigurationBuilder.class, Log.class);
    protected ConnectionFactoryConfigurationBuilder<ConnectionFactoryConfiguration> connectionFactory;
    protected boolean manageConnectionFactory = true;
+   protected Dialect dialect;
 
    public AbstractJdbcStoreConfigurationBuilder(PersistenceConfigurationBuilder builder) {
       super(builder);
@@ -70,6 +72,11 @@ public abstract class AbstractJdbcStoreConfigurationBuilder<T extends AbstractJd
       return self();
    }
 
+   public S dialect(Dialect dialect) {
+      this.dialect = dialect;
+      return self();
+   }
+
    @Override
    public void validate() {
       super.validate();
@@ -86,6 +93,7 @@ public abstract class AbstractJdbcStoreConfigurationBuilder<T extends AbstractJd
       connectionFactory(cfb);
       connectionFactory.read(template.connectionFactory());
       manageConnectionFactory = template.manageConnectionFactory();
+      dialect = template.dialect();
 
       return super.read(template);
    }

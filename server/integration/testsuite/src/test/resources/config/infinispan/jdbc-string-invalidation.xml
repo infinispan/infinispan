@@ -14,13 +14,13 @@
                     <transaction mode="NONE" />
                     <string-keyed-jdbc-store
                         datasource="${jndi.name}"
+                        dialect="${database.type}"
                         fetch-state="false"
                         passivation="false"
                         preload="false"
                         purge="false"
                         shared="true"
                         singleton="false" name="${table.prefix}">
-                        <property name="databaseType">${database.type}</property>
                         <string-keyed-table prefix="${table.prefix}">
                             <id-column name="id" type="${id.column.type}"/>
                             <data-column name="datum" type="${data.column.type}"/>

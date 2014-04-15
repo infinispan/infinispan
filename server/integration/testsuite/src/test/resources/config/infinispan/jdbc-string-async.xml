@@ -6,8 +6,7 @@
                     batching="false"
                     >
                     <transaction mode="NONE" />
-                    <string-keyed-jdbc-store datasource="${jndi.name}" passivation="false" preload="false" purge="false" name="${table.prefix}">
-                        <property name="databaseType">${database.type}</property>
+                    <string-keyed-jdbc-store datasource="${jndi.name}" dialect="${database.type}" passivation="false" preload="false" purge="false" name="${table.prefix}">
                         <write-behind flush-lock-timeout="2" modification-queue-size="2048" shutdown-timeout="20000" thread-pool-size="15" />
                         <!--  the prefix must be unique for each jdbc cache store tests submodule so that each
                               test uses its own DB table -->

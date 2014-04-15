@@ -222,6 +222,8 @@ public class InfinispanTransformers {
                 .getAttributeBuilder()
                 .addRejectCheck(jdbcKeyedTableChecker, BaseJDBCStoreResource.BINARY_KEYED_TABLE)
                 .addRejectCheck(RejectAttributeChecker.SIMPLE_EXPRESSIONS, jdbcStoreSimpleAttributes)
+                .setDiscard(new DiscardAttributeChecker.DiscardAttributeValueChecker(), BaseJDBCStoreResource.DIALECT)
+                .addRejectCheck(RejectAttributeChecker.DEFINED, BaseJDBCStoreResource.DIALECT)
                 .end();
         registerStoreTransformerChildren(binaryKeyedJdbcStoreBuilder);
 
@@ -230,6 +232,8 @@ public class InfinispanTransformers {
                 .getAttributeBuilder()
                 .addRejectCheck(jdbcKeyedTableChecker, BaseJDBCStoreResource.STRING_KEYED_TABLE)
                 .addRejectCheck(RejectAttributeChecker.SIMPLE_EXPRESSIONS, jdbcStoreSimpleAttributes)
+                .setDiscard(new DiscardAttributeChecker.DiscardAttributeValueChecker(), BaseJDBCStoreResource.DIALECT)
+                .addRejectCheck(RejectAttributeChecker.DEFINED, BaseJDBCStoreResource.DIALECT)
                 .end();
         registerStoreTransformerChildren(stringKeyedJdbcStoreBuilder);
 
@@ -238,6 +242,8 @@ public class InfinispanTransformers {
                 .getAttributeBuilder()
                 .addRejectCheck(jdbcKeyedTableChecker, BaseJDBCStoreResource.STRING_KEYED_TABLE, BaseJDBCStoreResource.BINARY_KEYED_TABLE)
                 .addRejectCheck(RejectAttributeChecker.SIMPLE_EXPRESSIONS, jdbcStoreSimpleAttributes)
+                .setDiscard(new DiscardAttributeChecker.DiscardAttributeValueChecker(), BaseJDBCStoreResource.DIALECT)
+                .addRejectCheck(RejectAttributeChecker.DEFINED, BaseJDBCStoreResource.DIALECT)
                 .end();
         registerStoreTransformerChildren(mixedKeyedJdbcStoreBuilder);
 
