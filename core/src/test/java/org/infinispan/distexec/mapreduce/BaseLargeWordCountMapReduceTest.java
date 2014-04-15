@@ -8,12 +8,11 @@ import java.io.InputStreamReader;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
-import java.util.StringTokenizer;
 import java.util.Map.Entry;
+import java.util.StringTokenizer;
 
 import org.infinispan.Cache;
 import org.infinispan.commons.util.FileLookup;
-import org.infinispan.commons.util.FileLookupFactory;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.test.MultipleCacheManagersTest;
@@ -118,7 +117,7 @@ public abstract class BaseLargeWordCountMapReduceTest extends MultipleCacheManag
 
       Cache c1 = cache(0, cacheName());
       Cache c2 = cache(1, cacheName());
-      FileLookup fileLookup = FileLookupFactory.newInstance();
+      FileLookup fileLookup = new FileLookup();
       InputStream is = fileLookup.lookupFile("mapreduce/macbeth.txt", getClass().getClassLoader());
 
       BufferedReader br = new BufferedReader(new InputStreamReader(is));
