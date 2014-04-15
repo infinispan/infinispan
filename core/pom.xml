@@ -141,26 +141,13 @@
 			<plugin>
 				<groupId>org.apache.felix</groupId>
 				<artifactId>maven-bundle-plugin</artifactId>
-            <executions>
-               <execution>
-                  <phase>generate-sources</phase>
-                  <goals>
-                     <goal>cleanVersions</goal>
-                  </goals>
-                  <configuration>
-                     <versions>
-                        <project.version.osgi>${project.version}</project.version.osgi>
-                     </versions>
-                  </configuration>
-               </execution>
-            </executions>
 				<configuration>
 					<instructions>
 						<Include-Resource>src/main/resources</Include-Resource>
 						<Export-Package>
 							!${project.groupId}.commons.*,
 							org.infinispan.marshall.core,
-							${project.groupId}.*;version=${project.version.osgi};-split-package:=error
+							${project.groupId}.*;version=${project.version};-split-package:=error
 						</Export-Package>
 						<Import-Package>
 							javax.management,javax.naming,
@@ -173,7 +160,7 @@
 							javax.xml.transform.dom,
 							javax.xml.transform.stream,
 							net.jcip.annotations;resolution:=optional,
-							${project.groupId}.commons.*;version=${project.version.osgi},
+							${project.groupId}.commons.*;version=${project.version},
 							org.jboss.logging;version="[3.1,4)",
 							org.jboss.marshalling;version="[1.3,3)",
                      org.jboss.marshalling.util;version="[1.3,3)",

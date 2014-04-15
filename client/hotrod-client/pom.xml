@@ -121,10 +121,10 @@
                      org.apache.avro.util;resolution:=optional,
                      org.apache.commons.pool;version=${version.commons.pool},
                      org.apache.commons.pool.impl;version=${version.commons.pool},
-                     ${project.groupId}.commons.*;version=${project.version.osgi},
+                     ${project.groupId}.commons.*;version=${project.version},
                      org.infinispan.protostream;resolution:=optional,
-                     ${project.groupId}.query.dsl.*;version=${project.version.osgi};resolution:=optional,
-                     ${project.groupId}.query.remote.client;version=${project.version.osgi};resolution:=optional,
+                     ${project.groupId}.query.dsl.*;version=${project.version};resolution:=optional,
+                     ${project.groupId}.query.remote.client;version=${project.version};resolution:=optional,
                      org.jboss.logging;version=${version.jboss.logging}
                   </Import-Package>
                </instructions>
