@@ -11,6 +11,7 @@ import org.infinispan.commons.util.concurrent.ParallelIterableMap;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.container.DataContainer;
 import org.infinispan.container.entries.InternalCacheEntry;
+import org.infinispan.context.Flag;
 import org.infinispan.distexec.mapreduce.spi.MapReduceTaskLifecycleService;
 import org.infinispan.distribution.DistributionManager;
 import org.infinispan.factories.annotations.ComponentName;
@@ -347,6 +348,7 @@ public class MapReduceManagerImpl implements MapReduceManager {
       Map<Address, List<KOut>> keysToNodes = mapKeysToNodes(dm, taskId, collectedValues.keySet(),
             emitCompositeIntermediateKeys);
       long start = log.isTraceEnabled() ? timeService.time() : 0;
+      tmpCache = tmpCache.getAdvancedCache().withFlags(Flag.IGNORE_RETURN_VALUES);
       try {
          for (Entry<Address, List<KOut>> entry : keysToNodes.entrySet()) {
             List<KOut> keysHashedToAddress = entry.getValue();
