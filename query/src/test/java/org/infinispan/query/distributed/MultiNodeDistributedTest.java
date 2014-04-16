@@ -34,7 +34,7 @@ import java.util.List;
  *
  * @author Sanne Grinovero
  */
-@Test(groups = "functional,unstable", testName = "query.distributed.MultiNodeDistributedTest", description = "See https://issues.jboss.org/browse/ISPN-4186")
+@Test(groups = /*functional*/"unstable", testName = "query.distributed.MultiNodeDistributedTest", description = "Unstable, see https://issues.jboss.org/browse/ISPN-4186")
 public class MultiNodeDistributedTest extends AbstractInfinispanTest {
 
    protected List<EmbeddedCacheManager> cacheManagers = new ArrayList<EmbeddedCacheManager>(4);
