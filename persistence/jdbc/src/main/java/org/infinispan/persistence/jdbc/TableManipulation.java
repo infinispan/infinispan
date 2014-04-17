@@ -310,7 +310,7 @@ public class TableManipulation implements Cloneable {
 
    public boolean isVariableLimitSupported() {
       DatabaseType type = getDatabaseType();
-      return !(type == DatabaseType.DB2_390 || type == DatabaseType.SYBASE);
+      return !(type == DatabaseType.DB2 || type == DatabaseType.DB2_390 || type == DatabaseType.SYBASE);
    }
 
    public String getLoadSomeRowsSql() {
