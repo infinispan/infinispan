@@ -125,4 +125,6 @@ public interface Ids extends org.infinispan.commons.marshall.Ids {
    int CLUSTER_EVENT_CALLABLE = 128;
    int X_SITE_STATE = 129;
    int COMPOSITE_KEY_VALUE_FILTER = 130;
+   int DELTA_MAPREDUCE_LIST_ID = 131;
+   int DELTA_AWARE_MAPREDUCE_LIST_ID = 132;
 }

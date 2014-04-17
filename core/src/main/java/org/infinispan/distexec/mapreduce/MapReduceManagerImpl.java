@@ -6,7 +6,9 @@ import org.infinispan.atomic.DeltaAware;
 import org.infinispan.commands.read.MapCombineCommand;
 import org.infinispan.commands.read.ReduceCommand;
 import org.infinispan.commons.CacheException;
+import org.infinispan.commons.marshall.AbstractExternalizer;
 import org.infinispan.commons.util.CollectionFactory;
+import org.infinispan.commons.util.Util;
 import org.infinispan.commons.util.concurrent.ParallelIterableMap;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.container.DataContainer;
@@ -25,6 +27,7 @@ import org.infinispan.persistence.PrimaryOwnerFilter;
 import org.infinispan.persistence.spi.AdvancedCacheLoader;
 import org.infinispan.persistence.spi.AdvancedCacheLoader.TaskContext;
 import org.infinispan.manager.EmbeddedCacheManager;
+import org.infinispan.marshall.core.Ids;
 import org.infinispan.marshall.core.MarshalledEntry;
 import org.infinispan.marshall.core.MarshalledValue;
 import org.infinispan.remoting.transport.Address;
@@ -32,10 +35,12 @@ import org.infinispan.util.TimeService;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
+import java.io.IOException;
+import java.io.ObjectInput;
+import java.io.ObjectOutput;
 import java.io.Serializable;
 import java.util.*;
 import java.util.Map.Entry;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -125,7 +130,7 @@ public class MapReduceManagerImpl implements MapReduceManager {
                + " executed with empty input keys");
       } else {
          final Reducer<KOut, VOut> reducer = reduceCommand.getReducer();
-         final boolean useIntermediateKeys = reduceCommand.isEmitCompositeIntermediateKeys();         
+         final boolean useIntermediateKeys = reduceCommand.isEmitCompositeIntermediateKeys();
          MapReduceTaskLifecycleService taskLifecycleService = MapReduceTaskLifecycleService.getInstance();
          log.tracef("For m/r task %s invoking %s at %s", taskId, reduceCommand, cdl.getAddress());
          long start = log.isTraceEnabled() ? timeService.time() : 0;
@@ -153,8 +158,8 @@ public class MapReduceManagerImpl implements MapReduceManager {
                   } else {
                      key = (KOut) k;
                   }
-                  //resolve List<VOut> for iterated key stored in tmp cache
-                  List<VOut> value = getValue(v);
+                  //resolve Iterable<VOut> for iterated key stored in tmp cache
+                  Iterable<VOut> value = getValue(v);
                   if (value == null) {
                      throw new IllegalStateException("Found invalid value in intermediate cache, for key " + key
                            + " during reduce phase execution on " + cacheManager.getAddress() + " for M/R task " + taskId);
@@ -330,7 +335,7 @@ public class MapReduceManagerImpl implements MapReduceManager {
 
       String taskId =  mcc.getTaskId();
       String tmpCacheName = mcc.getIntermediateCacheName();
-      Cache<Object, DeltaAwareList<VOut>> tmpCache = cacheManager.getCache(tmpCacheName);
+      Cache<Object, DeltaList<VOut>> tmpCache = cacheManager.getCache(tmpCacheName);
       if (tmpCache == null) {
          throw new IllegalStateException("Temporary cache for MapReduceTask " + taskId
                   + " named " + tmpCacheName + " not found on " + cdl.getAddress());
@@ -353,7 +358,7 @@ public class MapReduceManagerImpl implements MapReduceManager {
                   int entryTransferCount = chunkSize;
                   for (int i = 0; i < values.size(); i += entryTransferCount) {
                      List<VOut> chunk = values.subList(i, Math.min(values.size(), i + entryTransferCount));
-                     DeltaAwareList<VOut> delta = new DeltaAwareList<VOut>(chunk);
+                     DeltaList<VOut> delta = new DeltaList<VOut>(chunk);
                      if (emitCompositeIntermediateKeys) {
                         tmpCache.put(new IntermediateCompositeKey<KOut>(taskId, key), delta);
                      } else {
@@ -604,45 +609,108 @@ public class MapReduceManagerImpl implements MapReduceManager {
       Map<K, List<V>> removeLRUEntry();
    }
 
-   private static final class DeltaAwareList<E> extends LinkedList<E> implements DeltaAware, Delta{
+   private static class DeltaAwareList<E> implements Iterable<E>, DeltaAware {
 
+      private final List<E> list;
 
-      /** The serialVersionUID */
-      private static final long serialVersionUID = 2176345973026460708L;
-
-      public DeltaAwareList(Collection<? extends E> c) {
-         super(c);
+      public DeltaAwareList(List<E> list) {
+         this.list = list;
       }
 
       @Override
       public Delta delta() {
-         return new DeltaAwareList<E>(this);
+         return new DeltaList<E>(list);
       }
 
       @Override
       public void commit() {
-         this.clear();
+         list.clear();
+      }
+
+      @Override
+      public Iterator<E> iterator(){
+         return list.iterator();
+      }
+   }
+
+   private static class DeltaList<E> implements Delta {
+
+      private final List<E> deltas;
+
+      public DeltaList(List<E> list) {
+         deltas = new ArrayList<E>(list);
       }
 
       @SuppressWarnings("unchecked")
       @Override
       public DeltaAware merge(DeltaAware d) {
-         List<E> other = null;
-         if (d != null && d instanceof DeltaAwareList) {
-            other = (List<E>) d;
-            for (E e : this) {
-               other.add(e);
-            }
-            return (DeltaAware) other;
+         DeltaAwareList<E> other = null;
+         if (d instanceof DeltaAwareList) {
+            other = (DeltaAwareList<E>) d;
+            other.list.addAll(deltas);
          } else {
-            return this;
+            other = new DeltaAwareList<E>(deltas);
          }
+         return other;
+      }
+   }
+
+   public static class DeltaListExternalizer extends AbstractExternalizer<DeltaList> {
+
+      private static final long serialVersionUID = 5859147782602054109L;
+
+      @Override
+      public void writeObject(ObjectOutput output, DeltaList list) throws IOException {
+         output.writeObject(list.deltas);
+      }
+
+      @Override
+      @SuppressWarnings("unchecked")
+      public DeltaList readObject(ObjectInput input) throws IOException, ClassNotFoundException {
+         return new DeltaList((List) input.readObject());
+      }
+
+      @Override
+      public Integer getId() {
+         return Ids.DELTA_MAPREDUCE_LIST_ID;
+      }
+
+      @Override
+      @SuppressWarnings("unchecked")
+      public Set<Class<? extends DeltaList>> getTypeClasses() {
+         return Util.<Class<? extends DeltaList>>asSet(DeltaList.class);
+      }
+   }
+
+   public static class DeltaAwareListExternalizer extends AbstractExternalizer<DeltaAwareList> {
+
+      private static final long serialVersionUID = -8956663669844107351L;
+
+      @Override
+      public void writeObject(ObjectOutput output, DeltaAwareList deltaAwareList) throws IOException {
+         output.writeObject(deltaAwareList.list);
+      }
+
+      @Override
+      @SuppressWarnings("unchecked")
+      public DeltaAwareList readObject(ObjectInput input) throws IOException, ClassNotFoundException {
+         return new DeltaAwareList((List) input.readObject());
+      }
+
+      @Override
+      public Integer getId() {
+         return Ids.DELTA_AWARE_MAPREDUCE_LIST_ID;
+      }
+
+      @Override
+      @SuppressWarnings("unchecked")
+      public Set<Class<? extends DeltaAwareList>> getTypeClasses() {
+         return Util.<Class<? extends DeltaAwareList>>asSet(DeltaAwareList.class);
       }
    }
 
    /**
     * IntermediateCompositeKey
-    *
     */
    public static final class IntermediateCompositeKey<V> implements Serializable {
 
