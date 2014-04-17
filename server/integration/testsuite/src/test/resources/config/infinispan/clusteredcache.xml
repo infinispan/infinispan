@@ -1,4 +1,4 @@
-<subsystem xmlns="urn:infinispan:server:core:6.0">
+<subsystem xmlns="urn:infinispan:server:core:7.0">
     <cache-container name="clustered" default-cache="queueSizeCache">
         <transport stack="udp" executor="infinispan-transport" lock-timeout="240000"/>
         <replicated-cache name="memcachedCache" start="EAGER" mode="ASYNC" queue-size="1000" queue-flush-interval="3000"/>
