@@ -385,7 +385,7 @@ public class DefaultDataContainer<K, V> implements DataContainer<K, V> {
          throw new IllegalArgumentException("No action specified");
 
       ParallelIterableMap<K, InternalCacheEntry<K, V>> map = (ParallelIterableMap<K, InternalCacheEntry<K, V>>) entries;
-      map.forEach(512, new ParallelIterableMap.KeyValueAction<K, InternalCacheEntry<K, V>>() {
+      map.forEach(32, new ParallelIterableMap.KeyValueAction<K, InternalCacheEntry<K, V>>() {
          @Override
          public void apply(K key, InternalCacheEntry<K, V> value) {
             if (filter.accept(key)) {
@@ -408,7 +408,7 @@ public class DefaultDataContainer<K, V> implements DataContainer<K, V> {
          throw new IllegalArgumentException("No action specified");
 
       ParallelIterableMap<K, InternalCacheEntry<K, V>> map = (ParallelIterableMap<K, InternalCacheEntry<K, V>>) entries;
-      map.forEach(512, new ParallelIterableMap.KeyValueAction<K, InternalCacheEntry<K, V>>() {
+      map.forEach(32, new ParallelIterableMap.KeyValueAction<K, InternalCacheEntry<K, V>>() {
          @Override
          public void apply(K key, InternalCacheEntry<K, V> value) {
             if (filter.accept(key, value.getValue(), value.getMetadata())) {
