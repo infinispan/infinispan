@@ -1,4 +1,4 @@
-        <subsystem xmlns="urn:infinispan:server:core:6.0" >
+        <subsystem xmlns="urn:infinispan:server:core:7.0" >
             <cache-container 
                 name="clustered"
                 default-cache="memcachedCache">
