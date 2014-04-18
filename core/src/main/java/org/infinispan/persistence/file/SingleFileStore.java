@@ -25,6 +25,7 @@ import java.nio.channels.FileChannel;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
@@ -115,8 +116,10 @@ public class SingleFileStore implements AdvancedLoadWriteStore {
 
          // check file format and read persistent state if enabled for the cache
          byte[] header = new byte[MAGIC.length];
-         if (channel.read(ByteBuffer.wrap(header), 0) == MAGIC.length && Arrays.equals(MAGIC, header))
+         if (channel.read(ByteBuffer.wrap(header), 0) == MAGIC.length && Arrays.equals(MAGIC, header)) {
             rebuildIndex();
+            processFreeEntries();
+         }
          else
             clear(); // otherwise (unknown file format or no preload) just reset the file
       } catch (Exception e) {
@@ -488,6 +491,52 @@ public class SingleFileStore implements AdvancedLoadWriteStore {
       }
    }
 
+   /**
+    * Manipulates the free entries for optimizing disk space.
+    * Removes free entries towards the end of the file and truncates the file.	
+    */
+   private void processFreeEntries() {
+      long startTime = 0;
+      if (trace) startTime = System.currentTimeMillis();
+	  
+      // Get a reverse sorted list of free entries based on file offset
+      // This helps to work backwards with free entries at end of the file
+      List<FileEntry> l  = new ArrayList<FileEntry>(freeList);
+      Collections.sort(l, new FileEntryByOffsetComparator());
+
+      int reclaimedSpace = 0;
+      int removedEntries = 0;
+      long truncateOffset = -1;
+      for (Iterator<FileEntry> it = l.iterator() ; it.hasNext(); ) {
+         FileEntry fe = it.next();
+         // Till we have free entries at the end of the file,
+         // we can remove them and contract the file to release disk
+         // space.
+         if (!fe.isLocked() && ((fe.offset + fe.size) == filePos)) {
+            truncateOffset = fe.offset;
+            filePos = fe.offset;
+            freeList.remove(fe);
+            reclaimedSpace += fe.size;
+            removedEntries++;
+         } else {
+            break;
+         }
+      }
+
+      if (truncateOffset > 0) {
+         try {
+            channel.truncate(truncateOffset);
+         } catch (IOException e) {
+            throw new PersistenceException("Error while truncating file", e);
+         }
+      }
+
+      if (trace) {
+         log.tracef("Removed entries: " + removedEntries + ", Reclaimed Space: " + reclaimedSpace);
+         log.tracef("Time taken for truncateFile: " + (System.currentTimeMillis() - startTime) + " (ms)");
+      }
+   }
+
    @Override
    public void purge(Executor threadPool, final PurgeListener task) {
 
@@ -521,6 +570,11 @@ public class SingleFileStore implements AdvancedLoadWriteStore {
                      }
                      if (task != null) task.entryPurged(next.getKey());
                   }
+               }
+               
+               // Disk space optimizations
+               synchronized (freeList) {
+            	  processFreeEntries();
                }
             } finally {
                resizeLock.readLock().unlock();
@@ -649,7 +703,19 @@ public class SingleFileStore implements AdvancedLoadWriteStore {
       @Override
       public int compareTo(FileEntry fe) {
          int diff = size - fe.size;
-         return (diff != 0) ? diff : offset > fe.offset ? 1 : -1;
+         return (diff != 0) ? diff : offset > fe.offset ? 1 : offset == fe.offset ? 0 : -1;
+      }
+   }
+
+   /**
+    * Compares two file entries based on their offset in the file
+    * in the reverse order (bigger entries will be ahead of smaller entries)
+    */
+   private static class FileEntryByOffsetComparator implements Comparator<FileEntry> {
+      @Override
+      public int compare(FileEntry o1, FileEntry o2) {
+         long diff = o1.offset - o2.offset;
+         return (diff == 0) ? 0 : ((diff > 0) ? -1 : 1);
       }
    }
 }
