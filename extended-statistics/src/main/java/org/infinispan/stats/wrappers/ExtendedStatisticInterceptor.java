@@ -800,7 +800,7 @@ public class ExtendedStatisticInterceptor extends BaseCustomInterceptor {
    }
 
    private boolean isLockTimeout(TimeoutException e) {
-      return e.getMessage().startsWith("Unable to acquire lock after");
+      return e.getMessage().startsWith("ISPN000299: Unable to acquire lock after");
    }
 
    private void updateTime(ExtendedStatistic duration, ExtendedStatistic counter, long initTime, long endTime,
