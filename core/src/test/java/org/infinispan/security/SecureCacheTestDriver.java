@@ -13,9 +13,9 @@ import org.infinispan.context.Flag;
 import org.infinispan.interceptors.InvocationContextInterceptor;
 import org.infinispan.interceptors.base.CommandInterceptor;
 import org.infinispan.metadata.Metadata;
-import org.infinispan.notifications.Converter;
-import org.infinispan.notifications.KeyFilter;
-import org.infinispan.notifications.KeyValueFilter;
+import org.infinispan.filter.Converter;
+import org.infinispan.filter.KeyFilter;
+import org.infinispan.filter.KeyValueFilter;
 import org.infinispan.notifications.Listener;
 
 public class SecureCacheTestDriver {
@@ -578,6 +578,16 @@ public class SecureCacheTestDriver {
    public void testAddInterceptorBefore_CommandInterceptor_Class(SecureCache<String, String> cache) {
       cache.addInterceptorBefore(interceptor, InvocationContextInterceptor.class);
       cache.removeInterceptor(interceptor.getClass());
+   }
+
+   @TestCachePermission(AuthorizationPermission.BULK_READ)
+   public void testFilterEntries_KeyValueFilter(SecureCache<String, String> cache) {
+      cache.filterEntries(new KeyValueFilter<String, String>() {
+         @Override
+         public boolean accept(String key, String value, Metadata metadata) {
+            return true;
+         }
+      });
    }
 
    @Listener

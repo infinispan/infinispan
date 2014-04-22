@@ -74,6 +74,9 @@ import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.annotations.SurvivesRestarts;
 import org.infinispan.interceptors.InterceptorChain;
 import org.infinispan.interceptors.base.CommandInterceptor;
+import org.infinispan.iteration.EntryIterable;
+import org.infinispan.iteration.impl.EntryIterableImpl;
+import org.infinispan.iteration.impl.EntryRetriever;
 import org.infinispan.jmx.annotations.DataType;
 import org.infinispan.jmx.annotations.DisplayType;
 import org.infinispan.jmx.annotations.MBean;
@@ -83,9 +86,9 @@ import org.infinispan.lifecycle.ComponentStatus;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.metadata.EmbeddedMetadata;
 import org.infinispan.metadata.Metadata;
-import org.infinispan.notifications.Converter;
-import org.infinispan.notifications.KeyFilter;
-import org.infinispan.notifications.KeyValueFilter;
+import org.infinispan.filter.Converter;
+import org.infinispan.filter.KeyFilter;
+import org.infinispan.filter.KeyValueFilter;
 import org.infinispan.notifications.cachelistener.CacheNotifier;
 import org.infinispan.remoting.rpc.RpcManager;
 import org.infinispan.security.AuthorizationManager;
@@ -137,6 +140,7 @@ public class CacheImpl<K, V> implements AdvancedCache<K, V> {
    private AuthorizationManager authorizationManager;
    private GlobalConfiguration globalCfg;
    private boolean isClassLoaderInContext;
+   private EntryRetriever<K, V> entryRetriever;
 
    public CacheImpl(String name) {
       this.name = name;
@@ -161,7 +165,8 @@ public class CacheImpl<K, V> implements AdvancedCache<K, V> {
                                   TransactionTable txTable, RecoveryManager recoveryManager, TransactionCoordinator txCoordinator,
                                   LockManager lockManager,
                                   AuthorizationManager authorizationManager,
-                                  GlobalConfiguration globalCfg) {
+                                  GlobalConfiguration globalCfg,
+                                  EntryRetriever<K, V> entryRetriever) {
       this.commandsFactory = commandsFactory;
       this.invoker = interceptorChain;
       this.config = configuration;
@@ -184,6 +189,7 @@ public class CacheImpl<K, V> implements AdvancedCache<K, V> {
       this.lockManager = lockManager;
       this.authorizationManager = authorizationManager;
       this.globalCfg = globalCfg;
+      this.entryRetriever = entryRetriever;
    }
 
    private void assertKeyNotNull(Object key) {
@@ -398,6 +404,11 @@ public class CacheImpl<K, V> implements AdvancedCache<K, V> {
    @Override
    public final CacheEntry getCacheEntry(K key) {
       return getCacheEntry(key, null, null);
+   }
+
+   @Override
+   public EntryIterable<K, V> filterEntries(KeyValueFilter<? super K, ? super V> filter) {
+      return new EntryIterableImpl<K, V>(entryRetriever, filter);
    }
 
    @Override

@@ -96,6 +96,21 @@ public class ReplicatedConsistentHash implements ConsistentHash {
    }
 
    @Override
+   public Set<Integer> getPrimarySegmentsForOwner(Address owner) {
+      int index = members.indexOf(owner);
+      if (index == -1) {
+         throw new IllegalArgumentException("The node is not a member : " + owner);
+      }
+      Set<Integer> primarySegments = new HashSet<Integer>();
+      for (int i = 0; i < primaryOwners.length; ++i) {
+         if (primaryOwners[i] == index) {
+            primarySegments.add(i);
+         }
+      }
+      return primarySegments;
+   }
+
+   @Override
    public String getRoutingTableAsString() {
       return Arrays.toString(primaryOwners);
    }

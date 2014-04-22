@@ -51,6 +51,8 @@ import org.infinispan.factories.annotations.Start;
 import org.infinispan.factories.annotations.Stop;
 import org.infinispan.factories.scopes.Scope;
 import org.infinispan.factories.scopes.Scopes;
+import org.infinispan.filter.CollectionKeyFilter;
+import org.infinispan.filter.CompositeKeyValueFilter;
 import org.infinispan.marshall.exts.ArrayExternalizers;
 import org.infinispan.marshall.exts.EnumSetExternalizer;
 import org.infinispan.marshall.exts.ListExternalizer;
@@ -65,8 +67,7 @@ import org.infinispan.notifications.cachelistener.cluster.ClusterEvent;
 import org.infinispan.notifications.cachelistener.cluster.ClusterEventCallable;
 import org.infinispan.notifications.cachelistener.cluster.ClusterListenerRemoveCallable;
 import org.infinispan.notifications.cachelistener.cluster.ClusterListenerReplicateCallable;
-import org.infinispan.notifications.cachelistener.filter.KeyFilterAsKeyValueFilter;
-import org.infinispan.notifications.cachelistener.filter.SimpleCollectionKeyFilter;
+import org.infinispan.filter.KeyFilterAsKeyValueFilter;
 import org.infinispan.registry.ScopedKey;
 import org.infinispan.remoting.responses.CacheNotFoundResponse;
 import org.infinispan.remoting.responses.ExceptionResponse;
@@ -308,13 +309,14 @@ public class ExternalizerTable implements ObjectTable {
       addInternalExternalizer(new InternalMetadataImpl.Externalizer());
       addInternalExternalizer(new MarshalledEntryImpl.Externalizer(globalMarshaller));
 
-      addInternalExternalizer(new SimpleCollectionKeyFilter.Externalizer());
+      addInternalExternalizer(new CollectionKeyFilter.Externalizer());
       addInternalExternalizer(new KeyFilterAsKeyValueFilter.Externalizer());
       addInternalExternalizer(new ClusterEvent.Externalizer());
       addInternalExternalizer(new ClusterEventCallable.Externalizer());
       addInternalExternalizer(new ClusterListenerRemoveCallable.Externalizer());
       addInternalExternalizer(new ClusterListenerReplicateCallable.Externalizer());
       addInternalExternalizer(new XSiteState.XSiteStateExternalizer());
+      addInternalExternalizer(new CompositeKeyValueFilter.Externalizer());
    }
 
    void addInternalExternalizer(AdvancedExternalizer<?> ext) {

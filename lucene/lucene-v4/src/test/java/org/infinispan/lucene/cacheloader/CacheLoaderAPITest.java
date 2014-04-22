@@ -13,7 +13,7 @@ import org.infinispan.container.InternalEntryFactory;
 import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.lucene.cacheloader.configuration.LuceneLoaderConfigurationBuilder;
 import org.infinispan.persistence.spi.PersistenceException;
-import org.infinispan.persistence.CollectionKeyFilter;
+import org.infinispan.filter.CollectionKeyFilter;
 import org.infinispan.persistence.PersistenceUtil;
 import org.infinispan.persistence.spi.CacheLoader;
 import org.infinispan.lucene.ChunkCacheKey;

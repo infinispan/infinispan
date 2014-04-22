@@ -10,9 +10,10 @@ import org.infinispan.container.DataContainer;
 import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.factories.annotations.ComponentName;
 import org.infinispan.factories.annotations.Inject;
+import org.infinispan.filter.KeyFilter;
 import org.infinispan.interceptors.locking.ClusteringDependentLogic;
 import org.infinispan.marshall.core.MarshalledEntry;
-import org.infinispan.persistence.CollectionKeyFilter;
+import org.infinispan.filter.CollectionKeyFilter;
 import org.infinispan.persistence.manager.PersistenceManager;
 import org.infinispan.persistence.spi.AdvancedCacheLoader;
 import org.infinispan.remoting.rpc.RpcManager;
@@ -278,15 +279,15 @@ public class XSiteStateProviderImpl implements XSiteStateProvider {
 
    }
 
-   private class CacheLoaderFilter extends CollectionKeyFilter {
+   private class CacheLoaderFilter<K> extends CollectionKeyFilter<K> {
 
-      public CacheLoaderFilter(Collection rejectedKeys) {
+      public CacheLoaderFilter(Collection<? extends K> rejectedKeys) {
          super(rejectedKeys);
       }
 
       @Override
-      public boolean shouldLoadKey(Object key) {
-         return shouldSendKey(key) && super.shouldLoadKey(key);
+      public boolean accept(K key) {
+         return shouldSendKey(key) && super.accept(key);
       }
    }
 

@@ -190,7 +190,8 @@ public class LocalTopologyManagerImpl implements LocalTopologyManager {
 
          CacheTopologyHandler handler = cacheStatus.getHandler();
          CacheTopology unionTopology = new CacheTopology(cacheTopology.getTopologyId(),
-               cacheTopology.getCurrentCH(), unionCH);
+               cacheTopology.getCurrentCH(), cacheTopology.getPendingCH(), unionCH);
+
          unionTopology.logRoutingTableInformation();
          if ((existingTopology == null || existingTopology.getPendingCH() == null) && unionCH != null) {
             // This CH_UPDATE command was sent after a REBALANCE_START command, but arrived first.
@@ -234,8 +235,10 @@ public class LocalTopologyManagerImpl implements LocalTopologyManager {
 
          ConsistentHash unionCH = cacheStatus.getJoinInfo().getConsistentHashFactory().union(
                cacheTopology.getCurrentCH(), cacheTopology.getPendingCH());
+         CacheTopology newTopology = new CacheTopology(cacheTopology.getTopologyId(), cacheTopology.getCurrentCH(),
+               cacheTopology.getPendingCH(), unionCH);
          CacheTopologyHandler handler = cacheStatus.getHandler();
-         handler.rebalance(new CacheTopology(cacheTopology.getTopologyId(), cacheTopology.getCurrentCH(), unionCH));
+         handler.rebalance(newTopology);
       }
    }
 

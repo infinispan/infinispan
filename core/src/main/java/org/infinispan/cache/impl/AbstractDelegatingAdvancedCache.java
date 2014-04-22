@@ -11,17 +11,17 @@ import org.infinispan.context.InvocationContextContainer;
 import org.infinispan.distribution.DistributionManager;
 import org.infinispan.eviction.EvictionManager;
 import org.infinispan.factories.ComponentRegistry;
+import org.infinispan.filter.KeyValueFilter;
 import org.infinispan.interceptors.base.CommandInterceptor;
+import org.infinispan.iteration.EntryIterable;
 import org.infinispan.metadata.Metadata;
 import org.infinispan.remoting.rpc.RpcManager;
-import org.infinispan.util.concurrent.locks.LockManager;
 import org.infinispan.security.AuthorizationManager;
 import org.infinispan.stats.Stats;
+import org.infinispan.util.concurrent.locks.LockManager;
 
-import javax.security.auth.Subject;
 import javax.transaction.TransactionManager;
 import javax.transaction.xa.XAResource;
-
 import java.util.Collection;
 import java.util.EnumSet;
 import java.util.List;
@@ -184,6 +184,11 @@ public class AbstractDelegatingAdvancedCache<K, V> extends AbstractDelegatingCac
    @Override
    public CacheEntry getCacheEntry(K key) {
       return cache.getCacheEntry(key);
+   }
+
+   @Override
+   public EntryIterable<K, V> filterEntries(KeyValueFilter<? super K, ? super V> filter) {
+      return cache.filterEntries(filter);
    }
 
    @Override

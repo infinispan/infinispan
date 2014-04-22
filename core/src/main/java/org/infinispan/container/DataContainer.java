@@ -3,7 +3,9 @@ package org.infinispan.container;
 import java.util.Collection;
 import java.util.Set;
 
+import org.infinispan.filter.KeyFilter;
 import org.infinispan.metadata.Metadata;
+import org.infinispan.filter.KeyValueFilter;
 import org.infinispan.persistence.spi.AdvancedCacheLoader;
 import org.infinispan.commons.util.concurrent.ParallelIterableMap;
 import org.infinispan.container.entries.InternalCacheEntry;
@@ -140,12 +142,22 @@ public interface DataContainer<K, V> extends Iterable<InternalCacheEntry<K, V>> 
    /**
     * Executes task specified by the given action on the container key/values filtered using the specified key filter.
     *
+    * @param filter the filter for the container keys
+    * @param action the specified action to execute on filtered key/values
+    * @throws InterruptedException
+    */
+   public void executeTask(KeyFilter<? super K> filter,
+         ParallelIterableMap.KeyValueAction<? super K, InternalCacheEntry<? super K, ? super V>> action) throws InterruptedException;
+
+   /**
+    * Executes task specified by the given action on the container key/values filtered using the specified keyvalue filter.
+    *
     * @param filter the filter for the container key/values
     * @param action the specified action to execute on filtered key/values
     * @throws InterruptedException
     */
-   public void executeTask(AdvancedCacheLoader.KeyFilter<? super K> filter,
-         ParallelIterableMap.KeyValueAction<? super K, InternalCacheEntry<? super K, ? super V>> action) throws InterruptedException;
+   public void executeTask(KeyValueFilter<? super K, ? super V> filter,
+                           ParallelIterableMap.KeyValueAction<? super K, InternalCacheEntry<? super K, ? super V>> action) throws InterruptedException;
 
    public static interface ComputeAction<K, V> {
 

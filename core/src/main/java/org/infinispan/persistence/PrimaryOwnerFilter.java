@@ -1,5 +1,6 @@
 package org.infinispan.persistence;
 
+import org.infinispan.filter.KeyFilter;
 import org.infinispan.interceptors.locking.ClusteringDependentLogic;
 import org.infinispan.persistence.spi.AdvancedCacheLoader;
 
@@ -7,7 +8,7 @@ import org.infinispan.persistence.spi.AdvancedCacheLoader;
  * @author Mircea Markus
  * @since 6.0
  */
-public class PrimaryOwnerFilter implements AdvancedCacheLoader.KeyFilter {
+public class PrimaryOwnerFilter<K> implements KeyFilter<K> {
 
    private final ClusteringDependentLogic cdl;
 
@@ -16,7 +17,7 @@ public class PrimaryOwnerFilter implements AdvancedCacheLoader.KeyFilter {
    }
 
    @Override
-   public boolean shouldLoadKey(Object key) {
+   public boolean accept(K key) {
       return cdl.localNodeIsPrimaryOwner(key);
    }
 }

@@ -4,9 +4,9 @@ import org.infinispan.AdvancedCache;
 import org.infinispan.Cache;
 import org.infinispan.lifecycle.ComponentStatus;
 import org.infinispan.manager.EmbeddedCacheManager;
-import org.infinispan.notifications.Converter;
-import org.infinispan.notifications.KeyFilter;
-import org.infinispan.notifications.KeyValueFilter;
+import org.infinispan.filter.Converter;
+import org.infinispan.filter.KeyFilter;
+import org.infinispan.filter.KeyValueFilter;
 import org.infinispan.commons.util.concurrent.NotifyingFuture;
 
 import java.util.Collection;

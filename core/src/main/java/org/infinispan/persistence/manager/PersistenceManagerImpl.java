@@ -17,6 +17,7 @@ import org.infinispan.factories.annotations.ComponentName;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.annotations.Start;
 import org.infinispan.factories.annotations.Stop;
+import org.infinispan.filter.KeyFilter;
 import org.infinispan.interceptors.CacheLoaderInterceptor;
 import org.infinispan.interceptors.CacheWriterInterceptor;
 import org.infinispan.interceptors.InterceptorChain;
@@ -408,14 +409,24 @@ public class PersistenceManagerImpl implements PersistenceManager {
    }
 
    @Override
-   public void processOnAllStores(AdvancedCacheLoader.KeyFilter keyFilter, AdvancedCacheLoader.CacheLoaderTask task,
+   public void processOnAllStores(KeyFilter keyFilter, AdvancedCacheLoader.CacheLoaderTask task,
                                   boolean fetchValue, boolean fetchMetadata) {
-      processOnAllStores(keyFilter, task, fetchValue, fetchMetadata, false);
+      processOnAllStores(persistenceExecutor, keyFilter, task, fetchValue, fetchMetadata);
    }
 
    @Override
-   public void processOnAllStores(AdvancedCacheLoader.KeyFilter keyFilter, AdvancedCacheLoader.CacheLoaderTask task,
+   public void processOnAllStores(Executor executor, KeyFilter keyFilter, AdvancedCacheLoader.CacheLoaderTask task, boolean fetchValue, boolean fetchMetadata) {
+      processOnAllStores(executor, keyFilter, task, fetchValue, fetchMetadata, false);
+   }
+
+   @Override
+   public void processOnAllStores(KeyFilter keyFilter, AdvancedCacheLoader.CacheLoaderTask task,
                                   boolean fetchValue, boolean fetchMetadata, boolean skipSharedStore) {
+      processOnAllStores(persistenceExecutor, keyFilter, task, fetchValue, fetchMetadata, skipSharedStore);
+   }
+
+   @Override
+   public void processOnAllStores(Executor executor, KeyFilter keyFilter, AdvancedCacheLoader.CacheLoaderTask task, boolean fetchValue, boolean fetchMetadata, boolean skipSharedStore) {
       storesMutex.readLock().lock();
       try {
          for (CacheLoader loader : loaders) {
@@ -423,7 +434,7 @@ public class PersistenceManagerImpl implements PersistenceManager {
                continue;
 
             if (loader instanceof AdvancedCacheLoader) {
-               ((AdvancedCacheLoader) loader).process(keyFilter, task, persistenceExecutor, fetchValue, fetchMetadata);
+               ((AdvancedCacheLoader) loader).process(keyFilter, task, executor, fetchValue, fetchMetadata);
             }
          }
       } finally {

@@ -17,7 +17,7 @@ import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.context.Flag;
 import org.infinispan.metadata.EmbeddedMetadata;
 import org.infinispan.metadata.Metadata;
-import org.infinispan.notifications.KeyFilter;
+import org.infinispan.filter.KeyFilter;
 
 /**
  * A decorator to a cache, which can be built with a specific {@link ClassLoader} and a set of {@link Flag}s.  This

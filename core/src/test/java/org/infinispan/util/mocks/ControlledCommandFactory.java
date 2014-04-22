@@ -2,6 +2,8 @@ package org.infinispan.util.mocks;
 
 import org.infinispan.Cache;
 import org.infinispan.commands.VisitableCommand;
+import org.infinispan.iteration.impl.EntryRequestCommand;
+import org.infinispan.iteration.impl.EntryResponseCommand;
 import org.infinispan.metadata.Metadata;
 import org.infinispan.atomic.Delta;
 import org.infinispan.commands.CancelCommand;
@@ -35,6 +37,8 @@ import org.infinispan.distexec.mapreduce.Mapper;
 import org.infinispan.distexec.mapreduce.Reducer;
 import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.manager.EmbeddedCacheManager;
+import org.infinispan.filter.Converter;
+import org.infinispan.filter.KeyValueFilter;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.statetransfer.StateChunk;
 import org.infinispan.statetransfer.StateRequestCommand;
@@ -344,5 +348,16 @@ public class ControlledCommandFactory implements CommandsFactory {
    @Override
    public SingleXSiteRpcCommand buildSingleXSiteRpcCommand(VisitableCommand command) {
       return actual.buildSingleXSiteRpcCommand(command);
+   }
+
+   @Override
+   public <K, V, C> EntryRequestCommand<K, V, C> buildEntryRequestCommand(UUID identifier, Set<Integer> segments, KeyValueFilter<? super K, ? super V> filter, Converter<? super K, ? super V, C> converter) {
+      return actual.buildEntryRequestCommand(identifier, segments, filter, converter);
+   }
+
+   @Override
+   public <K, C> EntryResponseCommand buildEntryResponseCommand(UUID identifier, Set<Integer> completedSegments,
+                                                                Set<Integer> inDoubtSegments, Collection<Map.Entry<K, C>> values) {
+      return actual.buildEntryResponseCommand(identifier, completedSegments, inDoubtSegments, values);
    }
 }

@@ -35,8 +35,13 @@ public class CacheTopology {
    private final int topologyId;
    private final ConsistentHash currentCH;
    private final ConsistentHash pendingCH;
+   private final transient ConsistentHash unionCH;
 
    public CacheTopology(int topologyId, ConsistentHash currentCH, ConsistentHash pendingCH) {
+      this(topologyId, currentCH, pendingCH, null);
+   }
+
+   public CacheTopology(int topologyId, ConsistentHash currentCH, ConsistentHash pendingCH, ConsistentHash unionCH) {
       if (pendingCH != null && !pendingCH.getMembers().containsAll(currentCH.getMembers())) {
          throw new IllegalArgumentException("A cache topology's pending consistent hash must " +
                "contain all the current consistent hash's members");
@@ -44,6 +49,7 @@ public class CacheTopology {
       this.topologyId = topologyId;
       this.currentCH = currentCH;
       this.pendingCH = pendingCH;
+      this.unionCH = unionCH;
    }
 
    public int getTopologyId() {
@@ -64,6 +70,13 @@ public class CacheTopology {
       return pendingCH;
    }
 
+   /**
+    * The union of the current and future consistent hashes. Should be {@code null} if there is no rebalance in progress.
+    */
+   public ConsistentHash getUnionCH() {
+      return unionCH;
+   }
+
    public List<Address> getMembers() {
       if (pendingCH != null)
          return pendingCH.getMembers();
@@ -74,22 +87,23 @@ public class CacheTopology {
    }
 
    /**
-    * Read operations should always go to the "current" members.
+    * Read operations should always go to the "current" owners.
     */
    public ConsistentHash getReadConsistentHash() {
       return currentCH;
    }
 
    /**
-    * When there is a rebalance in progress, write operations should go to the "pending" members.
-    *
-    * Note: The pending members always include the current members (unless there is no rebalance in progress).
+    * When there is a rebalance in progress, write operations should go to the union of the "current" and "future" owners.
     */
    public ConsistentHash getWriteConsistentHash() {
-      if (pendingCH != null)
-         return pendingCH;
-      else
-         return currentCH;
+      if (pendingCH != null) {
+         if (unionCH == null)
+            throw new IllegalStateException("Need a union CH when a pending CH is set");
+         return unionCH;
+      }
+
+      return currentCH;
    }
 
    @Override
@@ -102,6 +116,7 @@ public class CacheTopology {
       if (topologyId != that.topologyId) return false;
       if (currentCH != null ? !currentCH.equals(that.currentCH) : that.currentCH != null) return false;
       if (pendingCH != null ? !pendingCH.equals(that.pendingCH) : that.pendingCH != null) return false;
+      if (unionCH != null ? !unionCH.equals(that.unionCH) : that.unionCH != null) return false;
 
       return true;
    }
@@ -111,6 +126,7 @@ public class CacheTopology {
       int result = topologyId;
       result = 31 * result + (currentCH != null ? currentCH.hashCode() : 0);
       result = 31 * result + (pendingCH != null ? pendingCH.hashCode() : 0);
+      result = 31 * result + (unionCH != null ? unionCH.hashCode() : 0);
       return result;
    }
 
@@ -120,6 +136,7 @@ public class CacheTopology {
             "id=" + topologyId +
             ", currentCH=" + currentCH +
             ", pendingCH=" + pendingCH +
+            ", unionCH=" + unionCH +
             '}';
    }
 
@@ -127,6 +144,7 @@ public class CacheTopology {
       if (trace) {
          log.tracef("Current consistent hash's routing table: %s", currentCH.getRoutingTableAsString());
          if (pendingCH != null) log.tracef("Pending consistent hash's routing table: %s", pendingCH.getRoutingTableAsString());
+         if (unionCH != null) log.tracef("Target consistent hash's routing table: %s", unionCH.getRoutingTableAsString());
       }
    }
 
@@ -137,6 +155,7 @@ public class CacheTopology {
          output.writeInt(cacheTopology.topologyId);
          output.writeObject(cacheTopology.currentCH);
          output.writeObject(cacheTopology.pendingCH);
+         output.writeObject(cacheTopology.unionCH);
       }
 
       @Override
@@ -144,7 +163,8 @@ public class CacheTopology {
          int topologyId = unmarshaller.readInt();
          ConsistentHash currentCH = (ConsistentHash) unmarshaller.readObject();
          ConsistentHash pendingCH = (ConsistentHash) unmarshaller.readObject();
-         return new CacheTopology(topologyId, currentCH, pendingCH);
+         ConsistentHash unionCH = (ConsistentHash) unmarshaller.readObject();
+         return new CacheTopology(topologyId, currentCH, pendingCH, unionCH);
       }
 
       @Override

@@ -3,6 +3,7 @@ package org.infinispan.persistence.support;
 import org.infinispan.commons.equivalence.AnyEquivalence;
 import org.infinispan.commons.equivalence.Equivalence;
 import org.infinispan.commons.util.CollectionFactory;
+import org.infinispan.filter.KeyFilter;
 import org.infinispan.persistence.PersistenceUtil;
 import org.infinispan.persistence.spi.AdvancedCacheLoader;
 import org.infinispan.marshall.core.MarshalledEntry;
@@ -94,13 +95,13 @@ public final class Bucket {
       return entries;
    }
 
-   public Map<Object, MarshalledEntry> getStoredEntries(AdvancedCacheLoader.KeyFilter filter, TimeService timeService) {
+   public Map<Object, MarshalledEntry> getStoredEntries(KeyFilter filter, TimeService timeService) {
       filter = PersistenceUtil.notNull(filter);
       long currentTimeMillis = timeService.wallClockTime();
       Map<Object, MarshalledEntry> result = new HashMap<Object, MarshalledEntry>();
       for (Map.Entry<Object, MarshalledEntry> entry : getStoredEntries().entrySet()) {
          MarshalledEntry me = entry.getValue();
-         if (!isExpired(currentTimeMillis, me) && filter.shouldLoadKey(entry.getKey()))
+         if (!isExpired(currentTimeMillis, me) && filter.accept(entry.getKey()))
             result.put(entry.getKey(), me);
       }
       return result;

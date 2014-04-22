@@ -5,6 +5,7 @@ import org.infinispan.commons.equivalence.Equivalence;
 import org.infinispan.commons.io.ByteBuffer;
 import org.infinispan.commons.marshall.StreamingMarshaller;
 import org.infinispan.executors.ExecutorAllCompletionService;
+import org.infinispan.filter.KeyFilter;
 import org.infinispan.marshall.core.MarshalledEntry;
 import org.infinispan.metadata.InternalMetadata;
 import org.infinispan.persistence.spi.PersistenceException;

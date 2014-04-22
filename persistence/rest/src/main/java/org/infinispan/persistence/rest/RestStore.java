@@ -26,6 +26,7 @@ import org.infinispan.commons.configuration.ConfiguredBy;
 import org.infinispan.commons.util.Util;
 import org.infinispan.container.InternalEntryFactory;
 import org.infinispan.executors.ExecutorAllCompletionService;
+import org.infinispan.filter.KeyFilter;
 import org.infinispan.marshall.core.MarshalledEntry;
 import org.infinispan.metadata.InternalMetadata;
 import org.infinispan.metadata.Metadata;
@@ -275,7 +276,7 @@ public class RestStore implements AdvancedLoadWriteStore {
          Set<Object> entries = new HashSet<Object>(batchSize);
          for (String stringKey = reader.readLine(); stringKey != null; stringKey = reader.readLine()) {
             Object key = key2StringMapper.getKeyMapping(stringKey);
-            if (keyFilter == null || keyFilter.shouldLoadKey(key))
+            if (keyFilter == null || keyFilter.accept(key))
                entries.add(key);
             if (entries.size() == batchSize) {
                final Set<Object> batch = entries;

@@ -218,6 +218,9 @@ public @interface Listener {
     * Defines whether the annotated listener is clustered or not.
     * Important: Clustered listener can only be notified for @CacheEntryRemoved, @CacheEntryCreated and
     * @CacheEntryModified events.
+    * @return true if the expectation is that this listener is to be a cluster listener, as in it will receive
+    *         all notifications for data modifications
+    * @since 7.0
     */
    boolean clustered() default false;
 
@@ -228,6 +231,9 @@ public @interface Listener {
     * listener is the entire state sent back.
     * <p>
     * <b>Currently this is not supported!</b>
+    * @return true if the expectation is that when the listener is installed that all of the current data is sent
+    *         as new events to the listener before receiving new events
+    * @since 7.0
     **/
    boolean includeCurrentState() default false;
 }

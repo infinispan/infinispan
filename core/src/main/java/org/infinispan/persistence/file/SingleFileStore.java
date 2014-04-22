@@ -8,6 +8,7 @@ import org.infinispan.commons.io.ByteBufferFactory;
 import org.infinispan.commons.util.CollectionFactory;
 import org.infinispan.configuration.cache.SingleFileStoreConfiguration;
 import org.infinispan.executors.ExecutorAllCompletionService;
+import org.infinispan.filter.KeyFilter;
 import org.infinispan.marshall.core.MarshalledEntry;
 import org.infinispan.persistence.spi.PersistenceException;
 import org.infinispan.persistence.PersistenceUtil;
@@ -503,7 +504,7 @@ public class SingleFileStore implements AdvancedLoadWriteStore {
       Set<Object> keysToLoad = new HashSet<Object>(entries.size());
       synchronized (entries) {
          for (Object k : entries.keySet()) {
-            if (filter.shouldLoadKey(k))
+            if (filter.accept(k))
                keysToLoad.add(k);
          }
       }
@@ -511,7 +512,6 @@ public class SingleFileStore implements AdvancedLoadWriteStore {
       ExecutorAllCompletionService eacs = new ExecutorAllCompletionService(executor);
 
       final TaskContextImpl taskContext = new TaskContextImpl();
-      int taskCount = 0;
       for (final Object key : keysToLoad) {
          if (taskContext.isStopped())
             break;

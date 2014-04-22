@@ -6,10 +6,11 @@ import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.distribution.MagicKey;
+import org.infinispan.filter.CollectionKeyFilter;
 import org.infinispan.manager.CacheContainer;
 import org.infinispan.metadata.Metadata;
-import org.infinispan.notifications.Converter;
-import org.infinispan.notifications.KeyValueFilter;
+import org.infinispan.filter.Converter;
+import org.infinispan.filter.KeyValueFilter;
 import org.infinispan.notifications.Listener;
 import org.infinispan.notifications.cachelistener.CacheNotifier;
 import org.infinispan.notifications.cachelistener.annotation.CacheEntryCreated;
@@ -18,8 +19,7 @@ import org.infinispan.notifications.cachelistener.annotation.CacheEntryRemoved;
 import org.infinispan.notifications.cachelistener.event.CacheEntryEvent;
 import org.infinispan.notifications.cachelistener.event.CacheEntryModifiedEvent;
 import org.infinispan.notifications.cachelistener.event.Event;
-import org.infinispan.notifications.cachelistener.filter.KeyFilterAsKeyValueFilter;
-import org.infinispan.notifications.cachelistener.filter.SimpleCollectionKeyFilter;
+import org.infinispan.filter.KeyFilterAsKeyValueFilter;
 import org.infinispan.notifications.cachemanagerlistener.CacheManagerNotifier;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.statetransfer.StateProvider;
@@ -236,7 +236,7 @@ public abstract class AbstractClusterListenerTest extends MultipleCacheManagersT
    protected void testSimpleFilter(Object key) {
       final String keyToFilterOut = "filter-me";
       testFilter(keyToFilterOut, key, null, new KeyFilterAsKeyValueFilter<Object, String>(
-            new SimpleCollectionKeyFilter(Collections.singleton(key))));
+            new CollectionKeyFilter(Collections.singleton(key), true)));
    }
 
    protected void testFilter(Object keyToFilterOut, Object keyToUse, Long lifespan, KeyValueFilter<? super Object, ? super String> filter) {
@@ -372,7 +372,7 @@ public abstract class AbstractClusterListenerTest extends MultipleCacheManagersT
 
       ClusterListener clusterListener = new ClusterListener();
       cache0.addListener(clusterListener, new KeyFilterAsKeyValueFilter<Object, String>(
-            new SimpleCollectionKeyFilter<Object>(Collections.singleton(keyToFilter))), new StringTruncator(0, 3));
+            new CollectionKeyFilter<Object>(Collections.singleton(keyToFilter), true)), new StringTruncator(0, 3));
 
       log.info("Adding a new node ..");
       addClusterEnabledCacheManager(builderUsed);

@@ -4,6 +4,7 @@ import org.infinispan.commons.CacheConfigurationException;
 import org.infinispan.commons.configuration.ConfiguredBy;
 import org.infinispan.commons.util.Util;
 import org.infinispan.executors.ExecutorAllCompletionService;
+import org.infinispan.filter.KeyFilter;
 import org.infinispan.marshall.core.MarshalledEntry;
 import org.infinispan.metadata.InternalMetadata;
 import org.infinispan.persistence.spi.PersistenceException;
@@ -289,7 +290,7 @@ public class LevelDBStore implements AdvancedLoadWriteStore {
                for (Map.Entry<byte[], byte[]> entry : batch) {
                   if (taskContext.isStopped()) {break;}
                   Object key = unmarshall(entry.getKey());
-                  if (filter == null || filter.shouldLoadKey(key)) {
+                  if (filter == null || filter.accept(key)) {
                      MarshalledEntry unmarshall = (MarshalledEntry) unmarshall(entry.getValue());
                      boolean isExpired = unmarshall.getMetadata() != null && unmarshall.getMetadata().isExpired(now);
                      if (!isExpired) {

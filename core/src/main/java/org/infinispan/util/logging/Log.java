@@ -1106,4 +1106,12 @@ public interface Log extends BasicLogger {
 
    @Message(value = "Unable to acquire lock after %s for key %s and requestor %s. Lock is held by %s, while request came from %s", id = 299)
    TimeoutException unableToAcquireLock(String timeout, Object key, Object requestor, Object owner, Address origin);
+
+   @LogMessage(level = WARN)
+   @Message(value = "There was an exception while processing retrieval of entry values", id = 300)
+   void exceptionProcessingEntryRetrievalValues(@Cause Throwable cause);
+
+   @LogMessage(level = WARN)
+   @Message(value = "Iterator response for identifier %s encountered unexpected exception", id = 301)
+   void exceptionProcessingIteratorResponse(UUID identifier, @Cause Throwable cause);
 }

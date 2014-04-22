@@ -2,7 +2,7 @@ package org.infinispan.registry;
 
 import org.infinispan.factories.scopes.Scope;
 import org.infinispan.factories.scopes.Scopes;
-import org.infinispan.notifications.KeyFilter;
+import org.infinispan.filter.KeyFilter;
 
 import java.util.Set;
 import java.util.concurrent.TimeUnit;

@@ -16,6 +16,7 @@ import org.infinispan.commons.marshall.jboss.GenericJBossMarshaller;
 import org.infinispan.commons.util.Util;
 import org.infinispan.container.InternalEntryFactory;
 import org.infinispan.container.versioning.NumericVersion;
+import org.infinispan.filter.KeyFilter;
 import org.infinispan.persistence.spi.PersistenceException;
 import org.infinispan.persistence.TaskContextImpl;
 import org.infinispan.persistence.remote.configuration.ConnectionPoolConfiguration;
@@ -133,7 +134,7 @@ public class RemoteStore implements AdvancedLoadWriteStore {
       for (Object key : remoteCache.keySet()) {
          if (taskContext.isStopped())
             break;
-         if (filter == null || filter.shouldLoadKey(key)) {
+         if (filter == null || filter.accept(key)) {
             try {
                MarshalledEntry marshalledEntry = load(key);
                if (marshalledEntry != null) {

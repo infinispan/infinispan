@@ -27,6 +27,8 @@ import org.infinispan.commands.tx.totalorder.TotalOrderVersionedCommitCommand;
 import org.infinispan.commands.tx.totalorder.TotalOrderVersionedPrepareCommand;
 import org.infinispan.commands.write.*;
 import org.infinispan.commons.CacheException;
+import org.infinispan.iteration.impl.EntryRequestCommand;
+import org.infinispan.iteration.impl.EntryResponseCommand;
 import org.infinispan.factories.GlobalComponentRegistry;
 import org.infinispan.factories.KnownComponentNames;
 import org.infinispan.factories.annotations.ComponentName;
@@ -236,6 +238,12 @@ public class RemoteCommandsFactory {
                break;
             case SingleXSiteRpcCommand.COMMAND_ID:
                command = new SingleXSiteRpcCommand(cacheName);
+               break;
+            case EntryRequestCommand.COMMAND_ID:
+               command = new EntryRequestCommand(cacheName);
+               break;
+            case EntryResponseCommand.COMMAND_ID:
+               command = new EntryResponseCommand(cacheName);
                break;
             default:
                throw new CacheException("Unknown command id " + id + "!");

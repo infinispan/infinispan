@@ -15,11 +15,12 @@ import org.infinispan.distexec.DistributedExecutionCompletionService;
 import org.infinispan.distexec.DistributedExecutorService;
 import org.infinispan.distribution.ch.ConsistentHash;
 import org.infinispan.factories.annotations.Inject;
+import org.infinispan.filter.Converter;
+import org.infinispan.filter.KeyFilter;
+import org.infinispan.filter.KeyFilterAsKeyValueFilter;
+import org.infinispan.filter.KeyValueFilter;
 import org.infinispan.interceptors.locking.ClusteringDependentLogic;
 import org.infinispan.manager.EmbeddedCacheManager;
-import org.infinispan.notifications.Converter;
-import org.infinispan.notifications.KeyFilter;
-import org.infinispan.notifications.KeyValueFilter;
 import org.infinispan.notifications.Listener;
 import org.infinispan.notifications.cachelistener.annotation.*;
 import org.infinispan.notifications.cachelistener.cluster.ClusterCacheNotifier;
@@ -28,9 +29,9 @@ import org.infinispan.notifications.cachelistener.cluster.ClusterListenerReplica
 import org.infinispan.notifications.cachelistener.cluster.RemoteClusterListener;
 import org.infinispan.notifications.cachelistener.event.*;
 import org.infinispan.notifications.cachelistener.event.impl.EventImpl;
-import org.infinispan.notifications.cachelistener.filter.KeyFilterAsKeyValueFilter;
 import org.infinispan.notifications.impl.AbstractListenerImpl;
 import org.infinispan.remoting.transport.Address;
+import org.infinispan.topology.CacheTopology;
 import org.infinispan.transaction.xa.GlobalTransaction;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
@@ -39,7 +40,6 @@ import javax.security.auth.Subject;
 import javax.transaction.Status;
 import javax.transaction.Transaction;
 import javax.transaction.TransactionManager;
-
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Method;
 import java.util.Collection;
@@ -446,24 +446,27 @@ public final class CacheNotifierImpl<K, V> extends AbstractListenerImpl<Event<? 
    }
 
    @Override
-   public void notifyDataRehashed(ConsistentHash oldCH, ConsistentHash newCH, int newTopologyId, boolean pre) {
+   public void notifyDataRehashed(ConsistentHash readCH, ConsistentHash writeCH, ConsistentHash unionCH, int newTopologyId, boolean pre) {
       if (!dataRehashedListeners.isEmpty()) {
          EventImpl<K, V> e = EventImpl.createEvent(cache, DATA_REHASHED);
          e.setPre(pre);
-         e.setConsistentHashAtStart(oldCH);
-         e.setConsistentHashAtEnd(newCH);
+         e.setConsistentHashAtStart(readCH);
+         e.setConsistentHashAtEnd(writeCH);
+         e.setUnionConsistentHash(unionCH);
          e.setNewTopologyId(newTopologyId);
          for (ListenerInvocation listener : dataRehashedListeners) listener.invoke(e);
       }
    }
 
    @Override
-   public void notifyTopologyChanged(ConsistentHash oldConsistentHash, ConsistentHash newConsistentHash, int newTopologyId, boolean pre) {
+   public void notifyTopologyChanged(CacheTopology oldTopology, CacheTopology newTopology, int newTopologyId, boolean pre) {
       if (!topologyChangedListeners.isEmpty()) {
          EventImpl<K, V> e = EventImpl.createEvent(cache, TOPOLOGY_CHANGED);
          e.setPre(pre);
-         e.setConsistentHashAtStart(oldConsistentHash);
-         e.setConsistentHashAtEnd(newConsistentHash);
+         if (oldTopology != null) {
+            e.setConsistentHashAtStart(oldTopology.getReadConsistentHash());
+         }
+         e.setConsistentHashAtEnd(newTopology.getWriteConsistentHash());
          e.setNewTopologyId(newTopologyId);
          for (ListenerInvocation listener : topologyChangedListeners) listener.invoke(e);
       }

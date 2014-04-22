@@ -62,7 +62,17 @@ public class TestCacheManagerFactory {
       }
    };
 
-   private static DefaultCacheManager newDefaultCacheManager(boolean start, GlobalConfigurationBuilder gc, ConfigurationBuilder c, boolean keepJmxDomain) {
+   /**
+    * Note this method does not amend the global configuration to reduce overall resource footprint.  It is therefore
+    * suggested to use {@link org.infinispan.test.fwk.TestCacheManagerFactory#createClusteredCacheManager(org.infinispan.configuration.cache.ConfigurationBuilder, TransportFlags)}
+    * instead when this is needed
+    * @param start Whether to start this cache container
+    * @param gc The global configuration builder to use
+    * @param c The default configuration to use
+    * @param keepJmxDomain Whether or not the provided jmx domain should be used or if a unique one is generated
+    * @return The resultant cache manager that is created
+    */
+   public static EmbeddedCacheManager newDefaultCacheManager(boolean start, GlobalConfigurationBuilder gc, ConfigurationBuilder c, boolean keepJmxDomain) {
       if (!keepJmxDomain) {
          gc.globalJmxStatistics().jmxDomain("infinispan-" + UUID.randomUUID());
       }
@@ -363,11 +373,6 @@ public class TestCacheManagerFactory {
       return addThreadCacheManager(defaultCacheManager);
    }
 
-   private static DefaultCacheManager newDefaultCacheManager(boolean start, ConfigurationBuilderHolder holder) {
-      DefaultCacheManager defaultCacheManager = new DefaultCacheManager(holder, start);
-      return addThreadCacheManager(defaultCacheManager);
-   }
-
    private static DefaultCacheManager addThreadCacheManager(DefaultCacheManager cm) {
       if (shuttingDown) {
          try {
@@ -390,6 +395,11 @@ public class TestCacheManagerFactory {
 
       threadCacheManagers.add(allocationThrowable, cm);
       return cm;
+   }
+
+   private static DefaultCacheManager newDefaultCacheManager(boolean start, ConfigurationBuilderHolder holder) {
+      DefaultCacheManager defaultCacheManager = new DefaultCacheManager(holder, start);
+      return addThreadCacheManager(defaultCacheManager);
    }
 
    public static void backgroundTestStarted(Object testInstance) {

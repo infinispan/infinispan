@@ -1,5 +1,9 @@
 package org.infinispan.notifications;
 
+import org.infinispan.filter.Converter;
+import org.infinispan.filter.KeyFilter;
+import org.infinispan.filter.KeyValueFilter;
+
 /**
  * A Listable that can also filter events based on key
  *

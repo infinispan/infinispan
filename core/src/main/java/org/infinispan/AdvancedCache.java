@@ -11,7 +11,9 @@ import org.infinispan.context.InvocationContextContainer;
 import org.infinispan.distribution.DistributionManager;
 import org.infinispan.eviction.EvictionManager;
 import org.infinispan.factories.ComponentRegistry;
+import org.infinispan.filter.KeyValueFilter;
 import org.infinispan.interceptors.base.CommandInterceptor;
+import org.infinispan.iteration.EntryIterable;
 import org.infinispan.metadata.Metadata;
 import org.infinispan.remoting.rpc.RpcManager;
 import org.infinispan.security.AuthorizationManager;
@@ -382,4 +384,27 @@ public interface AdvancedCache<K, V> extends Cache<K, V> {
     * @since 5.3
     */
    CacheEntry<K, V> getCacheEntry(K key);
+
+   /**
+    * Retrieve the entry iterable that can be used to iterate over the contents of this cache.  Note that every
+    * invocation of {@link Iterable#iterator()} will cause a new request chain to retrieve all of the values in
+    * the cache, including any configured loaders.  This iterator is performed in memory sensitive way and thus works
+    * for distributed caches unlike {@link Cache#entrySet()}.
+    * <p>Whenever possible a user should provide a converter through
+    * {@link org.infinispan.iteration.EntryIterable#converter(org.infinispan.filter.Converter)} to reduce value
+    * payloads or create projection views.</p>
+    * <p>This iterator does not participate in any ongoing transaction that may be present.  This is because
+    * {@link org.infinispan.util.concurrent.IsolationLevel#REPEATABLE_READ} transactions have to keep track of all
+    * the entries they have read (which in this case would include the entries that did not match the filter).
+    * Keeping all the values on a single node would negate the benefits of using a filter and/or converter, and in many
+    * cases it would cause OutOfMemoryErrors.  If it is desired to remove entries the
+    * {@link org.infinispan.Cache#remove(Object)} method or another similar method may be used which would
+    * participate in the transaction</p>
+    * <p>The iterable should always be closed after finished with it, using the standard
+    * try/finally or try with resource idioms to ensure that any current resources are freed if an exception prevents
+    * full iteration of iterator.  Note this will prevent any ongoing iterators that were created from it from
+    * progressing further.</p>
+    * @param filter The filter to use.  Note this is required and for distributed caches must be serializable
+    */
+   EntryIterable<K, V> filterEntries(KeyValueFilter<? super K, ? super V> filter);
 }

@@ -19,15 +19,12 @@ import org.infinispan.notifications.cachelistener.event.CacheEntryPassivatedEven
 import org.infinispan.notifications.cachelistener.event.CacheEntryRemovedEvent;
 import org.infinispan.notifications.cachelistener.event.CacheEntryVisitedEvent;
 import org.infinispan.notifications.cachelistener.event.DataRehashedEvent;
-import org.infinispan.notifications.cachelistener.event.Event;
 import org.infinispan.notifications.cachelistener.event.TopologyChangedEvent;
 import org.infinispan.notifications.cachelistener.event.TransactionCompletedEvent;
 import org.infinispan.notifications.cachelistener.event.TransactionRegisteredEvent;
-import org.infinispan.notifications.cachelistener.event.Event.Type;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.transaction.xa.GlobalTransaction;
 
-import java.io.Serializable;
 import java.util.Collection;
 import java.util.Map;
 
@@ -51,7 +48,7 @@ public class EventImpl<K, V> implements CacheEntryActivatedEvent, CacheEntryCrea
    private Type type;
    private V value;
    private V oldValue;
-   private ConsistentHash consistentHashAtStart, consistentHashAtEnd;
+   private ConsistentHash consistentHashAtStart, consistentHashAtEnd, unionConsistentHash;
    private int newTopologyId;
    private Map<? extends K, ? extends V> entries;
    private boolean created;
@@ -135,6 +132,10 @@ public class EventImpl<K, V> implements CacheEntryActivatedEvent, CacheEntryCrea
       this.consistentHashAtEnd = consistentHashAtEnd;
    }
 
+   public void setUnionConsistentHash(ConsistentHash unionConsistentHash) {
+      this.unionConsistentHash = unionConsistentHash;
+   }
+
    public void setNewTopologyId(int newTopologyId) {
       this.newTopologyId = newTopologyId;
    }
@@ -207,6 +208,7 @@ public class EventImpl<K, V> implements CacheEntryActivatedEvent, CacheEntryCrea
       if (value != null ? !value.equals(event.value) : event.value != null) return false;
       if (!Util.safeEquals(consistentHashAtStart, event.consistentHashAtStart)) return false;
       if (!Util.safeEquals(consistentHashAtEnd, event.consistentHashAtEnd)) return false;
+      if (!Util.safeEquals(unionConsistentHash, event.unionConsistentHash)) return false;
       if (newTopologyId != event.newTopologyId) return false;
       if (created != event.created) return false;
       if (oldValue != null ? !oldValue.equals(event.oldValue) : event.oldValue != null) return false;
@@ -226,6 +228,7 @@ public class EventImpl<K, V> implements CacheEntryActivatedEvent, CacheEntryCrea
       result = 31 * result + (value != null ? value.hashCode() : 0);
       result = 31 * result + (consistentHashAtStart != null ? consistentHashAtStart.hashCode() : 0);
       result = 31 * result + (consistentHashAtEnd != null ? consistentHashAtEnd.hashCode() : 0);
+      result = 31 * result + (unionConsistentHash != null ? unionConsistentHash.hashCode() : 0);
       result = 31 * result + newTopologyId;
       result = 31 * result + (created ? 1 : 0);
       result = 31 * result + (oldValue != null ? oldValue.hashCode() : 0);
@@ -241,6 +244,7 @@ public class EventImpl<K, V> implements CacheEntryActivatedEvent, CacheEntryCrea
                ", cache=" + cache +
                ", consistentHashAtStart=" + consistentHashAtStart +
                ", consistentHashAtEnd=" + consistentHashAtEnd +
+               ", unionConsistentHash=" + unionConsistentHash +
                ", newTopologyId=" + newTopologyId +
                '}';
       return "EventImpl{" +
@@ -269,11 +273,6 @@ public class EventImpl<K, V> implements CacheEntryActivatedEvent, CacheEntryCrea
    }
 
    @Override
-   public int getNewTopologyId() {
-      return newTopologyId;
-   }
-
-   @Override
    public ConsistentHash getConsistentHashAtStart() {
       return consistentHashAtStart;
    }
@@ -281,6 +280,16 @@ public class EventImpl<K, V> implements CacheEntryActivatedEvent, CacheEntryCrea
    @Override
    public ConsistentHash getConsistentHashAtEnd() {
       return consistentHashAtEnd;
+   }
+
+   @Override
+   public ConsistentHash getUnionConsistentHash() {
+      return unionConsistentHash;
+   }
+
+   @Override
+   public int getNewTopologyId() {
+      return newTopologyId;
    }
 
    @Override

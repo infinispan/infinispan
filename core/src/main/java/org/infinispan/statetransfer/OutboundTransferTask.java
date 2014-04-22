@@ -8,7 +8,7 @@ import org.infinispan.container.DataContainer;
 import org.infinispan.container.InternalEntryFactory;
 import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.distribution.ch.ConsistentHash;
-import org.infinispan.persistence.CollectionKeyFilter;
+import org.infinispan.filter.CollectionKeyFilter;
 import org.infinispan.persistence.manager.PersistenceManager;
 import org.infinispan.persistence.spi.AdvancedCacheLoader;
 import org.infinispan.marshall.core.MarshalledEntry;

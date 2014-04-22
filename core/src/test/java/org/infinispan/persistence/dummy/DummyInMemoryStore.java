@@ -9,6 +9,7 @@ import org.infinispan.commons.marshall.StreamingMarshaller;
 import org.infinispan.commons.util.InfinispanCollections;
 import org.infinispan.commons.util.Util;
 import org.infinispan.commons.util.concurrent.jdk8backported.EquivalentConcurrentHashMapV8;
+import org.infinispan.filter.KeyFilter;
 import org.infinispan.marshall.core.MarshalledEntryImpl;
 import org.infinispan.persistence.TaskContextImpl;
 import org.infinispan.metadata.InternalMetadata;
@@ -153,7 +154,7 @@ public class DummyInMemoryStore implements AdvancedLoadWriteStore {
       for (Iterator<Map.Entry<Object, byte[]>> i = store.entrySet().iterator(); i.hasNext();) {
          Map.Entry<Object, byte[]> entry = i.next();
          if (tx.isStopped()) break;
-         if (filter == null || filter.shouldLoadKey(entry.getKey())) {
+         if (filter == null || filter.accept(entry.getKey())) {
             MarshalledEntry se = deserialize(entry.getKey(), entry.getValue());
             if (isExpired(se, currentTimeMillis)) {
                log.tracef("Key %s exists, but has expired.  Entry is %s", entry.getKey(), se);

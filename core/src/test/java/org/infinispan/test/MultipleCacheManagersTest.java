@@ -419,7 +419,14 @@ public abstract class MultipleCacheManagersTest extends AbstractCacheTest {
     * Kills the cache manager with the given index and waits for the new cluster to form.
     */
    protected void killMember(int cacheIndex) {
-      List<Cache<Object, Object>> caches = caches();
+      killMember(cacheIndex, null);
+   }
+
+   /**
+    * Kills the cache manager with the given index and waits for the new cluster to form using the provided cache
+    */
+   protected void killMember(int cacheIndex, String cacheName) {
+      List<Cache<Object, Object>> caches = caches(cacheName);
       caches.remove(cacheIndex);
       manager(cacheIndex).stop();
       cacheManagers.remove(cacheIndex);

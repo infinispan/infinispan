@@ -30,6 +30,7 @@ import org.hibernate.engine.spi.SessionFactoryImplementor;
 import org.infinispan.commons.configuration.ConfiguredBy;
 import org.infinispan.commons.marshall.StreamingMarshaller;
 import org.infinispan.executors.ExecutorAllCompletionService;
+import org.infinispan.filter.KeyFilter;
 import org.infinispan.marshall.core.MarshalledEntry;
 import org.infinispan.marshall.core.MarshalledEntryFactory;
 import org.infinispan.metadata.InternalMetadata;
@@ -492,7 +493,7 @@ public class JpaStore implements AdvancedLoadWriteStore {
                if (taskContext.isStopped())
                   break;
                final Object key = keys.get(0);
-               if (filter != null && !filter.shouldLoadKey(key)) {
+               if (filter != null && !filter.accept(key)) {
                   if (trace) log.trace("Key " + key + " filtered");
                   continue;
                }

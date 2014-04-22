@@ -11,7 +11,7 @@ import org.infinispan.configuration.global.GlobalConfiguration;
 import org.infinispan.context.Flag;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.manager.EmbeddedCacheManager;
-import org.infinispan.notifications.KeyFilter;
+import org.infinispan.filter.KeyFilter;
 import org.infinispan.registry.ClusterRegistry;
 import org.infinispan.registry.ScopedKey;
 import org.infinispan.transaction.TransactionMode;
