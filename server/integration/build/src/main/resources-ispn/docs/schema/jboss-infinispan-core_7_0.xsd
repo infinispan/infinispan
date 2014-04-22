@@ -176,7 +176,7 @@
             <xs:element name="authorization" minOccurs="0">
                 <xs:annotation>
                     <xs:documentation>
-                        Configures the global authorization role to permission mapping
+                        Configures the global authorization role to permission mapping. The presence of this element in the configuration implicitly enables authorization.
                     </xs:documentation>
                 </xs:annotation>
                 <xs:complexType>
@@ -212,13 +212,6 @@
                         <xs:annotation>
                             <xs:documentation>
                                 Class of the principal to role mapper.
-                            </xs:documentation>
-                        </xs:annotation>
-                    </xs:attribute>
-                    <xs:attribute name="enabled" type="xs:boolean">
-                        <xs:annotation>
-                            <xs:documentation>
-                                Enables authorization for this cache-container.
                             </xs:documentation>
                         </xs:annotation>
                     </xs:attribute>
@@ -1495,10 +1488,10 @@
                     </xs:documentation>
                 </xs:annotation>
                 <xs:complexType>
-                    <xs:attribute name="enabled" type="xs:boolean">
+                    <xs:attribute name="enabled" type="xs:boolean" default="true">
                         <xs:annotation>
                             <xs:documentation>
-                                Enables authorization checks for this cache.
+                                Enables authorization checks for this cache. Defaults to true if the authorization element is present.
                             </xs:documentation>
                         </xs:annotation>
                     </xs:attribute>

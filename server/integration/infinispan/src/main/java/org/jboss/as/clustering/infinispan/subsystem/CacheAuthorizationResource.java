@@ -46,11 +46,11 @@ import org.jboss.dmr.ModelType;
 public class CacheAuthorizationResource extends SimpleResourceDefinition {
 
     static final SimpleAttributeDefinition ENABLED = new SimpleAttributeDefinitionBuilder(ModelKeys.ENABLED, ModelType.BOOLEAN, true)
-        .setXmlName(Attribute.ENABLED.getLocalName())
-        .setAllowExpression(true)
-        .setFlags(AttributeAccess.Flag.RESTART_ALL_SERVICES)
-        .setDefaultValue(new ModelNode().set(false))
-        .build()
+            .setXmlName(Attribute.ENABLED.getLocalName())
+            .setAllowExpression(true)
+            .setFlags(AttributeAccess.Flag.RESTART_ALL_SERVICES)
+            .setDefaultValue(new ModelNode().set(true))
+            .build()
     ;
 
     static final StringListAttributeDefinition ROLES = new StringListAttributeDefinition.Builder(ModelKeys.ROLES)

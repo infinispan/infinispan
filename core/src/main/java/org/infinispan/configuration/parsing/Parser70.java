@@ -13,7 +13,6 @@ import org.infinispan.configuration.cache.*;
 import org.infinispan.configuration.global.GlobalAuthorizationConfigurationBuilder;
 import org.infinispan.configuration.global.GlobalConfigurationBuilder;
 import org.infinispan.configuration.global.GlobalRoleConfigurationBuilder;
-import org.infinispan.configuration.global.GlobalSecurityConfigurationBuilder;
 import org.infinispan.configuration.global.ShutdownHookBehavior;
 import org.infinispan.configuration.global.ThreadPoolConfiguration;
 import org.infinispan.configuration.global.ThreadPoolConfigurationBuilder;
@@ -544,15 +543,11 @@ public class Parser70 implements ConfigurationParser {
    }
 
    private void parseGlobalAuthorization(XMLExtendedStreamReader reader, ConfigurationBuilderHolder holder) throws XMLStreamException {
-      GlobalAuthorizationConfigurationBuilder builder = holder.getGlobalConfigurationBuilder().security().authorization();
+      GlobalAuthorizationConfigurationBuilder builder = holder.getGlobalConfigurationBuilder().security().authorization().enable();
       for (int i = 0; i < reader.getAttributeCount(); i++) {
          String value = replaceProperties(reader.getAttributeValue(i));
          Attribute attribute = Attribute.forName(reader.getAttributeLocalName(i));
          switch (attribute) {
-            case ENABLED: {
-               builder.enabled(Boolean.parseBoolean(value));
-               break;
-            }
             case MAPPER: {
                builder.principalRoleMapper(Util.<PrincipalRoleMapper>getInstance(value, holder.getClassLoader()));
                break;
@@ -928,7 +923,7 @@ public class Parser70 implements ConfigurationParser {
          Element element = Element.forName(reader.getLocalName());
          switch (element) {
             case AUTHORIZATION: {
-               parseCacheAuthorization(reader, securityBuilder.authorization());
+               parseCacheAuthorization(reader, securityBuilder.authorization().enable());
                break;
             }
             default: {
