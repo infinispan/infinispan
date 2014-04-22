@@ -10,6 +10,7 @@ import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.distribution.DistributionManager;
 import org.infinispan.factories.annotations.Stop;
+import org.infinispan.filter.KeyFilter;
 import org.infinispan.interceptors.CacheLoaderInterceptor;
 import org.infinispan.interceptors.CacheWriterInterceptor;
 import org.infinispan.interceptors.DistCacheWriterInterceptor;
@@ -17,10 +18,10 @@ import org.infinispan.interceptors.InterceptorChain;
 import org.infinispan.interceptors.base.CommandInterceptor;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.metadata.Metadata;
+import org.infinispan.filter.KeyValueFilter;
 import org.infinispan.notifications.cachelistener.annotation.CacheEntriesEvicted;
 import org.infinispan.notifications.cachelistener.event.CacheEntriesEvictedEvent;
 import org.infinispan.persistence.dummy.DummyInMemoryStoreConfigurationBuilder;
-import org.infinispan.persistence.spi.AdvancedCacheLoader.KeyFilter;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
@@ -507,6 +508,11 @@ public class ManualEvictionWithSizeBasedAndConcurrentOperationsInPrimaryOwnerTes
       @Override
       public void executeTask(KeyFilter<? super K> filter, KeyValueAction<? super K, InternalCacheEntry<? super K, ? super V>> action)
             throws InterruptedException {
+         throw new NotImplementedException();
+      }
+
+      @Override
+      public void executeTask(KeyValueFilter<? super K, ? super V> filter, KeyValueAction<? super K, InternalCacheEntry<? super K, ? super V>> action) throws InterruptedException {
          throw new NotImplementedException();
       }
    }

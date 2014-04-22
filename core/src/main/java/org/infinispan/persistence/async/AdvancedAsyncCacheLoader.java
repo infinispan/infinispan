@@ -1,6 +1,7 @@
 package org.infinispan.persistence.async;
 
 import org.infinispan.executors.ExecutorAllCompletionService;
+import org.infinispan.filter.KeyFilter;
 import org.infinispan.marshall.core.MarshalledEntry;
 import org.infinispan.persistence.spi.PersistenceException;
 import org.infinispan.persistence.TaskContextImpl;
@@ -54,7 +55,7 @@ public class AdvancedAsyncCacheLoader extends AsyncCacheLoader implements Advanc
          switch (mod.getType()) {
             case STORE:
                Object key = ((Store) mod).getStoredValue().getKey();
-               if (filter == null || filter.shouldLoadKey(key))
+               if (filter == null || filter.accept(key))
                   result.add(key);
                break;
             case REMOVE:

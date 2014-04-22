@@ -3,6 +3,7 @@ package org.infinispan.lucene.cacheloader;
 import org.apache.lucene.store.FSDirectory;
 import org.infinispan.commons.configuration.ConfiguredBy;
 import org.infinispan.executors.ExecutorAllCompletionService;
+import org.infinispan.filter.KeyFilter;
 import org.infinispan.lucene.IndexScopedKey;
 import org.infinispan.lucene.cacheloader.configuration.LuceneLoaderConfiguration;
 import org.infinispan.lucene.logging.Log;
@@ -104,7 +105,7 @@ public class LuceneCacheLoader implements AdvancedCacheLoader {
                   for (MarshalledEntry me : allInternalEntries) {
                      if (taskContext.isStopped())
                         break;
-                     if (filter == null || filter.shouldLoadKey(me.getKey())) {
+                     if (filter == null || filter.accept(me.getKey())) {
                         task.processEntry(me, taskContext);
                      }
                   }
@@ -130,7 +131,7 @@ public class LuceneCacheLoader implements AdvancedCacheLoader {
 
    /**
     * There might be Directories we didn't store yet in the openDirectories Map.
-    * Make sure they are all initialized before serving methods such as {@link #process(org.infinispan.persistence.spi.AdvancedCacheLoader.KeyFilter, org.infinispan.persistence.spi.AdvancedCacheLoader.CacheLoaderTask, java.util.concurrent.Executor, boolean, boolean)}
+    * Make sure they are all initialized before serving methods such as {@link #process(KeyFilter, org.infinispan.persistence.spi.AdvancedCacheLoader.CacheLoaderTask, java.util.concurrent.Executor, boolean, boolean)}
     */
    private void scanForUnknownDirectories() {
       File[] filesInRoot = rootDirectory.listFiles();

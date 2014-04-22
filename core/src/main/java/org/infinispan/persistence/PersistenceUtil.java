@@ -3,6 +3,7 @@ package org.infinispan.persistence;
 import org.infinispan.container.InternalEntryFactory;
 import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.container.entries.InternalCacheValue;
+import org.infinispan.filter.KeyFilter;
 import org.infinispan.marshall.core.MarshalledEntry;
 import org.infinispan.metadata.InternalMetadata;
 import org.infinispan.metadata.impl.InternalMetadataImpl;
@@ -24,11 +25,11 @@ public class PersistenceUtil {
 
    private static Log log = LogFactory.getLog(PersistenceUtil.class);
 
-   public static AdvancedCacheLoader.KeyFilter notNull(AdvancedCacheLoader.KeyFilter filter) {
-      return filter == null ? AdvancedCacheLoader.KeyFilter.LOAD_ALL_FILTER : filter;
+   public static KeyFilter notNull(KeyFilter filter) {
+      return filter == null ? KeyFilter.LOAD_ALL_FILTER : filter;
    }
 
-   public static int count(AdvancedCacheLoader acl, AdvancedCacheLoader.KeyFilter filter) {
+   public static <K> int count(AdvancedCacheLoader<K, ?> acl, KeyFilter<? super K> filter) {
       final AtomicInteger result = new AtomicInteger(0);
       acl.process(filter, new AdvancedCacheLoader.CacheLoaderTask() {
          @Override
@@ -39,20 +40,20 @@ public class PersistenceUtil {
       return result.get();
    }
 
-   public static Set<Object> toKeySet(AdvancedCacheLoader acl, AdvancedCacheLoader.KeyFilter filter) {
+   public static <K> Set<K> toKeySet(AdvancedCacheLoader<K, ?> acl, KeyFilter<? super K> filter) {
       if (acl == null)
          return Collections.emptySet();
-      final Set<Object> set = new HashSet<Object>();
-      acl.process(filter, new AdvancedCacheLoader.CacheLoaderTask() {
+      final Set<K> set = new HashSet<K>();
+      acl.process(filter, new AdvancedCacheLoader.CacheLoaderTask<K, Object>() {
          @Override
-         public void processEntry(MarshalledEntry marshalledEntry, AdvancedCacheLoader.TaskContext taskContext) throws InterruptedException {
+         public void processEntry(MarshalledEntry<K, Object> marshalledEntry, AdvancedCacheLoader.TaskContext taskContext) throws InterruptedException {
             set.add(marshalledEntry.getKey());
          }
       }, new WithinThreadExecutor(), false, false);
       return set;
    }
 
-   public static Set<InternalCacheEntry> toEntrySet(AdvancedCacheLoader acl, AdvancedCacheLoader.KeyFilter filter, final InternalEntryFactory ief) {
+   public static <K> Set<InternalCacheEntry> toEntrySet(AdvancedCacheLoader<K, ?> acl, KeyFilter<? super K> filter, final InternalEntryFactory ief) {
       if (acl == null)
          return Collections.emptySet();
       final Set<InternalCacheEntry> set = new HashSet<InternalCacheEntry>();

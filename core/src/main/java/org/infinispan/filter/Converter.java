@@ -1,4 +1,4 @@
-package org.infinispan.notifications;
+package org.infinispan.filter;
 
 import org.infinispan.metadata.Metadata;
 

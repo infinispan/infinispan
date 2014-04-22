@@ -50,6 +50,7 @@ import org.infinispan.context.InvocationContextFactory;
 import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.factories.GlobalComponentRegistry;
 import org.infinispan.factories.KnownComponentNames;
+import org.infinispan.filter.KeyFilter;
 import org.infinispan.interceptors.InterceptorChain;
 import org.infinispan.interceptors.base.CommandInterceptor;
 import org.infinispan.jmx.PerThreadMBeanServerLookup;
@@ -1315,7 +1316,7 @@ public class TestingUtil {
       return cache.getAdvancedCache().getComponentRegistry().getCacheMarshaller();
    }
 
-   public static Set<MarshalledEntry> allEntries(AdvancedLoadWriteStore cl, AdvancedCacheLoader.KeyFilter filter) {
+   public static Set<MarshalledEntry> allEntries(AdvancedLoadWriteStore cl, KeyFilter filter) {
       final Set<MarshalledEntry> result = new HashSet<MarshalledEntry>();
       cl.process(filter, new AdvancedCacheLoader.CacheLoaderTask() {
          @Override

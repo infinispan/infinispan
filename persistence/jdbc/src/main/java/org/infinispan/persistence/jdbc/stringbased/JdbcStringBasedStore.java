@@ -2,6 +2,7 @@ package org.infinispan.persistence.jdbc.stringbased;
 
 import org.infinispan.commons.configuration.ConfiguredBy;
 import org.infinispan.commons.io.ByteBuffer;
+import org.infinispan.filter.KeyFilter;
 import org.infinispan.marshall.core.MarshalledEntry;
 import org.infinispan.persistence.spi.PersistenceException;
 import org.infinispan.persistence.TaskContextImpl;
@@ -330,7 +331,7 @@ public class JdbcStringBasedStore implements AdvancedLoadWriteStore {
                   String keyStr = rs.getString(2);
                   Object key = ((TwoWayKey2StringMapper) key2StringMapper).getKeyMapping(keyStr);
                   if (taskContext.isStopped()) break;
-                  if (filter != null && !filter.shouldLoadKey(key))
+                  if (filter != null && !filter.accept(key))
                      continue;
                   InputStream inputStream = rs.getBinaryStream(1);
                   MarshalledEntry entry;

@@ -1,6 +1,5 @@
 package org.infinispan.notifications.cachelistener;
 
-import org.infinispan.AdvancedCache;
 import org.infinispan.Cache;
 import org.infinispan.commons.equivalence.AnyEquivalence;
 import org.infinispan.configuration.cache.Configuration;
@@ -8,7 +7,7 @@ import org.infinispan.context.InvocationContext;
 import org.infinispan.context.impl.NonTxInvocationContext;
 import org.infinispan.interceptors.locking.ClusteringDependentLogic;
 import org.infinispan.lifecycle.ComponentStatus;
-import org.infinispan.notifications.KeyFilter;
+import org.infinispan.filter.KeyFilter;
 import org.infinispan.notifications.cachelistener.event.CacheEntryCreatedEvent;
 import org.infinispan.notifications.cachelistener.event.Event;
 import org.infinispan.test.AbstractInfinispanTest;

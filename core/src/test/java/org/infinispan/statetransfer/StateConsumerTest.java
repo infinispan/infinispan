@@ -118,6 +118,7 @@ public class StateConsumerTest extends AbstractInfinispanTest {
       DefaultConsistentHash ch1 = chf.create(new MurmurHash3(), 2, 40, members1, null);
       final DefaultConsistentHash ch2 = chf.updateMembers(ch1, members2, null);
       DefaultConsistentHash ch3 = chf.rebalance(ch2);
+      DefaultConsistentHash ch23 = chf.union(ch2, ch3);
 
       log.debug(ch1);
       log.debug(ch2);
@@ -222,7 +223,7 @@ public class StateConsumerTest extends AbstractInfinispanTest {
       assertFalse(stateConsumer.hasActiveTransfers());
 
       // start a rebalance
-      stateConsumer.onTopologyUpdate(new CacheTopology(2, ch2, ch3), true);
+      stateConsumer.onTopologyUpdate(new CacheTopology(2, ch2, ch3, ch23), true);
       assertTrue(stateConsumer.hasActiveTransfers());
 
       // check that all segments have been requested
@@ -247,7 +248,7 @@ public class StateConsumerTest extends AbstractInfinispanTest {
 
       // restart the rebalance
       requestedSegments.clear();
-      stateConsumer.onTopologyUpdate(new CacheTopology(4, ch2, ch3), true);
+      stateConsumer.onTopologyUpdate(new CacheTopology(4, ch2, ch3, ch23), true);
       assertTrue(stateConsumer.hasActiveTransfers());
       assertEquals(flatRequestedSegments, newSegments);
 

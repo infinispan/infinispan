@@ -28,24 +28,22 @@ public class DefaultTimeService implements TimeService {
 
    @Override
    public long timeDuration(long startTime, long endTime, TimeUnit outputTimeUnit) {
-      if (startTime < 0 || endTime < 0 || startTime >= endTime) {
+      long remaining = endTime - startTime;
+      if (remaining <= 0) {
          return 0;
       }
-      return outputTimeUnit.convert(endTime - startTime, TimeUnit.NANOSECONDS);
+      return outputTimeUnit.convert(remaining, TimeUnit.NANOSECONDS);
    }
 
    @Override
    public boolean isTimeExpired(long endTime) {
-      return time() >= endTime;
+      return time() - endTime >= 0;
    }
 
    @Override
    public long remainingTime(long endTime, TimeUnit outputTimeUnit) {
-      if (endTime <= 0) {
-         return 0;
-      }
-      long now = time();
-      return now > endTime ? 0 : outputTimeUnit.convert(endTime - now, TimeUnit.NANOSECONDS);
+      long remaining = endTime - time();
+      return remaining <= 0 ? 0 : outputTimeUnit.convert(remaining, TimeUnit.NANOSECONDS);
    }
 
    @Override

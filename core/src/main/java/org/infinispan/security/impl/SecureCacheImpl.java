@@ -1,39 +1,39 @@
  package org.infinispan.security.impl;
 
-import java.util.Collection;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.concurrent.TimeUnit;
+ import org.infinispan.AdvancedCache;
+ import org.infinispan.atomic.Delta;
+ import org.infinispan.batch.BatchContainer;
+ import org.infinispan.commons.util.concurrent.NotifyingFuture;
+ import org.infinispan.configuration.cache.Configuration;
+ import org.infinispan.container.DataContainer;
+ import org.infinispan.container.entries.CacheEntry;
+ import org.infinispan.context.Flag;
+ import org.infinispan.context.InvocationContextContainer;
+ import org.infinispan.distribution.DistributionManager;
+ import org.infinispan.eviction.EvictionManager;
+ import org.infinispan.factories.ComponentRegistry;
+ import org.infinispan.filter.KeyFilter;
+ import org.infinispan.filter.KeyValueFilter;
+ import org.infinispan.interceptors.base.CommandInterceptor;
+ import org.infinispan.iteration.EntryIterable;
+ import org.infinispan.lifecycle.ComponentStatus;
+ import org.infinispan.manager.EmbeddedCacheManager;
+ import org.infinispan.metadata.Metadata;
+ import org.infinispan.filter.Converter;
+ import org.infinispan.remoting.rpc.RpcManager;
+ import org.infinispan.security.AuthorizationManager;
+ import org.infinispan.security.AuthorizationPermission;
+ import org.infinispan.security.SecureCache;
+ import org.infinispan.stats.Stats;
+ import org.infinispan.util.concurrent.locks.LockManager;
 
-import javax.transaction.TransactionManager;
-import javax.transaction.xa.XAResource;
-
-import org.infinispan.AdvancedCache;
-import org.infinispan.atomic.Delta;
-import org.infinispan.batch.BatchContainer;
-import org.infinispan.commons.util.concurrent.NotifyingFuture;
-import org.infinispan.configuration.cache.Configuration;
-import org.infinispan.container.DataContainer;
-import org.infinispan.container.entries.CacheEntry;
-import org.infinispan.context.Flag;
-import org.infinispan.context.InvocationContextContainer;
-import org.infinispan.distribution.DistributionManager;
-import org.infinispan.eviction.EvictionManager;
-import org.infinispan.factories.ComponentRegistry;
-import org.infinispan.interceptors.base.CommandInterceptor;
-import org.infinispan.lifecycle.ComponentStatus;
-import org.infinispan.manager.EmbeddedCacheManager;
-import org.infinispan.metadata.Metadata;
-import org.infinispan.notifications.Converter;
-import org.infinispan.notifications.KeyFilter;
-import org.infinispan.notifications.KeyValueFilter;
-import org.infinispan.remoting.rpc.RpcManager;
-import org.infinispan.security.AuthorizationManager;
-import org.infinispan.security.AuthorizationPermission;
-import org.infinispan.security.SecureCache;
-import org.infinispan.stats.Stats;
-import org.infinispan.util.concurrent.locks.LockManager;
+ import javax.transaction.TransactionManager;
+ import javax.transaction.xa.XAResource;
+ import java.util.Collection;
+ import java.util.List;
+ import java.util.Map;
+ import java.util.Set;
+ import java.util.concurrent.TimeUnit;
 
 /**
  * SecureCacheImpl.
@@ -602,6 +602,12 @@ public final class SecureCacheImpl<K, V> implements SecureCache<K, V> {
    public CacheEntry getCacheEntry(K key) {
       authzManager.checkPermission(AuthorizationPermission.READ);
       return delegate.getCacheEntry(key);
+   }
+
+   @Override
+   public EntryIterable<K, V> filterEntries(KeyValueFilter<? super K, ? super V> filter) {
+      authzManager.checkPermission(AuthorizationPermission.BULK_READ);
+      return delegate.filterEntries(filter);
    }
 
    @Override

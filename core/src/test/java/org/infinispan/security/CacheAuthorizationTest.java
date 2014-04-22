@@ -84,6 +84,7 @@ public class CacheAuthorizationTest extends SingleCacheManagerTest {
       });
    }
 
+   @Test(invocationCount = 1000)
    public void testAllCombinations() throws Exception {
       Method[] allMethods = SecureCache.class.getMethods();
       Set<String> methodNames = new HashSet<String>();

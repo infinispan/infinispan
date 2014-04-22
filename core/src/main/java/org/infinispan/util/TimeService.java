@@ -59,7 +59,7 @@ public interface TimeService {
    /**
     * @param duration      the duration.
     * @param inputTimeUnit the {@link TimeUnit} of the duration.
-    * @return the expected end time. If duration is less or equals to zero, the current cpu time is returned ({@link
+    * @return the expected end time in nano seconds. If duration is less or equals to zero, the current cpu time is returned ({@link
     *         #time()}).
     */
    long expectedEndTime(long duration, TimeUnit inputTimeUnit);

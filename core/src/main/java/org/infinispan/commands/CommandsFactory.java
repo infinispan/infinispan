@@ -1,5 +1,7 @@
 package org.infinispan.commands;
 
+import org.infinispan.iteration.impl.EntryRequestCommand;
+import org.infinispan.iteration.impl.EntryResponseCommand;
 import org.infinispan.metadata.Metadata;
 import org.infinispan.atomic.Delta;
 import org.infinispan.commands.control.LockControlCommand;
@@ -29,6 +31,8 @@ import org.infinispan.distexec.mapreduce.Mapper;
 import org.infinispan.distexec.mapreduce.Reducer;
 import org.infinispan.factories.scopes.Scope;
 import org.infinispan.factories.scopes.Scopes;
+import org.infinispan.filter.Converter;
+import org.infinispan.filter.KeyValueFilter;
 import org.infinispan.statetransfer.StateChunk;
 import org.infinispan.statetransfer.StateRequestCommand;
 import org.infinispan.statetransfer.StateResponseCommand;
@@ -406,4 +410,11 @@ public interface CommandsFactory {
     * @return the SingleXSiteRpcCommand created
     */
    SingleXSiteRpcCommand buildSingleXSiteRpcCommand(VisitableCommand command);
+
+   <K, V, C> EntryRequestCommand<K, V, C> buildEntryRequestCommand(UUID identifier, Set<Integer> segments,
+                                                KeyValueFilter<? super K, ? super V> filter,
+                                                Converter<? super K, ? super V, C> converter);
+
+   <K, C> EntryResponseCommand buildEntryResponseCommand(UUID identifier, Set<Integer> completedSegments,
+                                                         Set<Integer> inDoubtSegments, Collection<Map.Entry<K, C>> values);
 }

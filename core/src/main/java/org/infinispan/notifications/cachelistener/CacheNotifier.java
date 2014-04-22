@@ -9,6 +9,7 @@ import org.infinispan.factories.scopes.Scopes;
 import org.infinispan.notifications.ClassLoaderAwareFilteringListenable;
 import org.infinispan.notifications.ClassLoaderAwareListenable;
 import org.infinispan.notifications.FilteringListenable;
+import org.infinispan.topology.CacheTopology;
 import org.infinispan.transaction.xa.GlobalTransaction;
 
 import java.util.Collection;
@@ -101,8 +102,8 @@ public interface CacheNotifier<K, V> extends ClassLoaderAwareFilteringListenable
     */
    void notifyTransactionRegistered(GlobalTransaction globalTransaction, boolean isOriginLocal);
 
-   void notifyDataRehashed(ConsistentHash oldCH, ConsistentHash newCH, int newTopologyId, boolean pre);
+   void notifyDataRehashed(ConsistentHash oldCH, ConsistentHash newCH, ConsistentHash unionCH, int newTopologyId, boolean pre);
 
-   void notifyTopologyChanged(ConsistentHash oldConsistentHash, ConsistentHash newConsistentHash, int newTopologyId, boolean pre);
+   void notifyTopologyChanged(CacheTopology oldTopology, CacheTopology newTopology, int newTopologyId, boolean pre);
 
 }

@@ -16,9 +16,10 @@ import org.infinispan.distexec.mapreduce.spi.MapReduceTaskLifecycleService;
 import org.infinispan.distribution.DistributionManager;
 import org.infinispan.factories.annotations.ComponentName;
 import org.infinispan.factories.annotations.Inject;
+import org.infinispan.filter.CollectionKeyFilter;
+import org.infinispan.filter.CompositeKeyFilter;
+import org.infinispan.filter.KeyFilter;
 import org.infinispan.interceptors.locking.ClusteringDependentLogic;
-import org.infinispan.persistence.CollectionKeyFilter;
-import org.infinispan.persistence.CompositeFilter;
 import org.infinispan.persistence.manager.PersistenceManager;
 import org.infinispan.persistence.PrimaryOwnerFilter;
 import org.infinispan.persistence.spi.AdvancedCacheLoader;
@@ -32,19 +33,9 @@ import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
 import java.io.Serializable;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.LinkedHashMap;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.Map.Entry;
-import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -142,11 +133,13 @@ public class MapReduceManagerImpl implements MapReduceManager {
             //first hook into lifecycle
             Cache<?, ?> cache = cacheManager.getCache(reduceCommand.getCacheName());
             taskLifecycleService.onPreExecute(reducer, cache);
-            //assume per-task intermediate cache, all keys belong to this task
-            AdvancedCacheLoader.KeyFilter<?> filter = AdvancedCacheLoader.KeyFilter.LOAD_ALL_FILTER;
+            KeyFilter<?> filter;
             if (useIntermediateKeys) {
                //shared intermediate cache, filter keys that belong to this task
                filter = new IntermediateKeyFilter<KOut>(taskId);
+            } else {
+               //dedicated tmp cache, all keys belong to this task
+               filter = KeyFilter.LOAD_ALL_FILTER;
             }
             //iterate all tmp cache entries in memory, do it in parallel
             DataContainer dc = cache.getAdvancedCache().getDataContainer();
@@ -218,7 +211,7 @@ public class MapReduceManagerImpl implements MapReduceManager {
          }
          // in case we have stores, we have to process key/values from there as well
          if (persistenceManager != null && !inputKeysSpecified) {
-               AdvancedCacheLoader.KeyFilter<?> keyFilter = new CompositeFilter(new PrimaryOwnerFilter(cdl), new CollectionKeyFilter(dc.keySet()));
+               KeyFilter<?> keyFilter = new CompositeKeyFilter(new PrimaryOwnerFilter(cdl), new CollectionKeyFilter(dc.keySet()));
                persistenceManager.processOnAllStores(keyFilter, new MapReduceCacheLoaderTask(mapper, collector),
                      true, false);
          }
@@ -272,7 +265,7 @@ public class MapReduceManagerImpl implements MapReduceManager {
          // in case we have stores, we have to process key/values from there as well
          if (persistenceManager != null && !inputKeysSpecified) {
             final DefaultCollector<KOut, VOut> pmc = new DefaultCollector<KOut, VOut>(maxCSize, true);
-            AdvancedCacheLoader.KeyFilter<?> keyFilter = new CompositeFilter(new PrimaryOwnerFilter(cdl),
+            KeyFilter<?> keyFilter = new CompositeKeyFilter(new PrimaryOwnerFilter(cdl),
                   new CollectionKeyFilter(dc.keySet()));
 
             MapCombineTask<KIn, VIn, KOut, VOut> task = new MapCombineTask<KIn, VIn, KOut, VOut>(pmc, mcc, maxCSize);
@@ -486,7 +479,7 @@ public class MapReduceManagerImpl implements MapReduceManager {
 
       protected void combineAndMigrate() throws CacheException {
          if (collector.size() > maxCollectorSize) {
-            final Map<KOut, List<VOut>> batch = collector.removeLRUEntry();
+            final Map<KOut, List<VOut>> batch = collector.removeCollectedValues();
             if (!batch.isEmpty()) {
                Map<KOut, List<VOut>> combinedValues = combine(mcc, batch);
                Set<KOut> migratedKeys = migrateIntermediateKeysAndValues(mcc, combinedValues);
@@ -511,7 +504,7 @@ public class MapReduceManagerImpl implements MapReduceManager {
       }
    }
 
-   private static final class IntermediateKeyFilter<T> implements AdvancedCacheLoader.KeyFilter<IntermediateCompositeKey<T>> {
+   private static final class IntermediateKeyFilter<T> implements KeyFilter<IntermediateCompositeKey<T>> {
 
       private final String taskId;
 
@@ -523,7 +516,7 @@ public class MapReduceManagerImpl implements MapReduceManager {
       }
 
      @Override
-      public boolean shouldLoadKey(IntermediateCompositeKey<T> key) {
+      public boolean accept(IntermediateCompositeKey<T> key) {
          if (key != null) {
             return taskId.equals(key.getTaskId());
          } else {

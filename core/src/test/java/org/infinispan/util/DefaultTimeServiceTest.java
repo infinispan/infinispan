@@ -35,7 +35,7 @@ public class DefaultTimeServiceTest {
          }
       };
       assertEquals(timeService.timeDuration(0, TimeUnit.NANOSECONDS), 10);
-      assertEquals(timeService.timeDuration(-1, TimeUnit.NANOSECONDS), 0);
+      assertEquals(timeService.timeDuration(-1, TimeUnit.NANOSECONDS), 11);
       assertEquals(timeService.timeDuration(10, TimeUnit.NANOSECONDS), 0);
       assertEquals(timeService.timeDuration(11, TimeUnit.NANOSECONDS), 0);
       assertEquals(timeService.timeDuration(9, TimeUnit.NANOSECONDS), 1);

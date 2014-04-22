@@ -1,6 +1,7 @@
 package org.infinispan.persistence.spi;
 
 import net.jcip.annotations.ThreadSafe;
+import org.infinispan.filter.KeyFilter;
 import org.infinispan.marshall.core.MarshalledEntry;
 
 import java.util.concurrent.Executor;
@@ -61,23 +62,6 @@ public interface AdvancedCacheLoader<K, V> extends CacheLoader<K, V> {
        *                        org.infinispan.persistence.spi.AdvancedCacheLoader.TaskContext#stop()}
        */
       void processEntry(MarshalledEntry<K, V> marshalledEntry, TaskContext taskContext) throws InterruptedException;
-   }
-
-   /**
-    * Used during the parallel iteration to filter-out the keys that the caller is not interested in. Implementors
-    * should be thread safe.
-    */
-   @ThreadSafe
-   interface KeyFilter<K> {
-
-      public static final KeyFilter LOAD_ALL_FILTER = new KeyFilter() {
-         @Override
-         public boolean shouldLoadKey(Object key) {
-            return true;
-         }
-      };
-
-      boolean shouldLoadKey(K key);
    }
 
    /**

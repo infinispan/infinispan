@@ -1,5 +1,9 @@
 package org.infinispan.notifications;
 
+import org.infinispan.filter.Converter;
+import org.infinispan.filter.KeyFilter;
+import org.infinispan.filter.KeyValueFilter;
+
 /**
  * Interface that enhances {@link FilteringListenable} with the possibility of specifying the
  * {@link ClassLoader} which should be set as the context class loader for the invoked
@@ -25,7 +29,7 @@ public interface ClassLoaderAwareFilteringListenable<K, V> extends FilteringList
 
    /**
     * Adds a listener with the provided filter and converter and using a given classloader when invoked.  See
-    * {@link org.infinispan.notifications.FilteringListenable#addListener(Object, KeyValueFilter, Converter)}
+    * {@link org.infinispan.notifications.FilteringListenable#addListener(Object, org.infinispan.filter.KeyValueFilter, org.infinispan.filter.Converter)}
     * for more details.
     * <p/>
     * @param listener must not be null.  The listener to callback on when an event is raised

@@ -2,8 +2,10 @@ package org.infinispan.persistence.manager;
 
 import java.util.Collection;
 import java.util.Set;
+import java.util.concurrent.Executor;
 
 import org.infinispan.context.InvocationContext;
+import org.infinispan.filter.KeyFilter;
 import org.infinispan.lifecycle.Lifecycle;
 import org.infinispan.persistence.spi.AdvancedCacheLoader;
 import org.infinispan.marshall.core.MarshalledEntry;
@@ -44,9 +46,13 @@ public interface PersistenceManager extends Lifecycle {
 
    boolean deleteFromAllStores(Object key, boolean skipSharedStores);
 
-   void processOnAllStores(AdvancedCacheLoader.KeyFilter keyFilter, AdvancedCacheLoader.CacheLoaderTask task, boolean fetchValue, boolean fetchMetadata);
+   void processOnAllStores(KeyFilter keyFilter, AdvancedCacheLoader.CacheLoaderTask task, boolean fetchValue, boolean fetchMetadata);
 
-   void processOnAllStores(AdvancedCacheLoader.KeyFilter keyFilter, AdvancedCacheLoader.CacheLoaderTask task, boolean fetchValue, boolean fetchMetadata, boolean skipSharedStore);
+   void processOnAllStores(Executor executor, KeyFilter keyFilter, AdvancedCacheLoader.CacheLoaderTask task, boolean fetchValue, boolean fetchMetadata);
+
+   void processOnAllStores(KeyFilter keyFilter, AdvancedCacheLoader.CacheLoaderTask task, boolean fetchValue, boolean fetchMetadata, boolean skipSharedStore);
+
+   void processOnAllStores(Executor executor, KeyFilter keyFilter, AdvancedCacheLoader.CacheLoaderTask task, boolean fetchValue, boolean fetchMetadata, boolean skipSharedStore);
 
    boolean activate(Object key);
 

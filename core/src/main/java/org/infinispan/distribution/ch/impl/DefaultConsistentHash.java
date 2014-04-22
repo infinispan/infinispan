@@ -99,6 +99,24 @@ public class DefaultConsistentHash implements ConsistentHash {
    }
 
    @Override
+   public Set<Integer> getPrimarySegmentsForOwner(Address owner) {
+      if (owner == null) {
+         throw new IllegalArgumentException("owner cannot be null");
+      }
+      if (!members.contains(owner)) {
+         throw new IllegalArgumentException("Node " + owner + " is not a member");
+      }
+
+      Set<Integer> segments = new HashSet<Integer>();
+      for (int segment = 0; segment < segmentOwners.length; segment++) {
+         if (owner.equals(segmentOwners[segment].get(0))) {
+            segments.add(segment);
+         }
+      }
+      return segments;
+   }
+
+   @Override
    public int getSegment(Object key) {
       // The result must always be positive, so we make sure the dividend is positive first
       return getNormalizedHash(key) / segmentSize;

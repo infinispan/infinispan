@@ -29,7 +29,7 @@ import org.infinispan.jmx.annotations.ManagedOperation;
 import org.infinispan.jmx.annotations.MeasurementType;
 import org.infinispan.jmx.annotations.Parameter;
 import org.infinispan.metadata.impl.InternalMetadataImpl;
-import org.infinispan.persistence.CollectionKeyFilter;
+import org.infinispan.filter.CollectionKeyFilter;
 import org.infinispan.persistence.manager.PersistenceManager;
 import org.infinispan.persistence.spi.AdvancedCacheLoader;
 import org.infinispan.marshall.core.MarshalledEntry;

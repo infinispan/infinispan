@@ -26,7 +26,7 @@ import org.infinispan.factories.annotations.Stop;
 import org.infinispan.interceptors.InterceptorChain;
 import org.infinispan.marshall.core.MarshalledEntry;
 import org.infinispan.notifications.cachelistener.CacheNotifier;
-import org.infinispan.persistence.CollectionKeyFilter;
+import org.infinispan.filter.CollectionKeyFilter;
 import org.infinispan.persistence.manager.PersistenceManager;
 import org.infinispan.persistence.spi.AdvancedCacheLoader;
 import org.infinispan.remoting.responses.Response;
@@ -246,7 +246,7 @@ public class StateConsumerImpl implements StateConsumer {
          }
          rebalanceInProgress.set(true);
          cacheNotifier.notifyDataRehashed(cacheTopology.getCurrentCH(), cacheTopology.getPendingCH(),
-               cacheTopology.getTopologyId(), true);
+                                          cacheTopology.getUnionCH(), cacheTopology.getTopologyId(), true);
 
          //in total order, we should wait for remote transactions before proceeding
          if (isTotalOrder) {
@@ -363,7 +363,7 @@ public class StateConsumerImpl implements StateConsumer {
                if (changed) {
                   // if the coordinator changed, we might get two concurrent topology updates,
                   // but we only want to notify the @DataRehashed listeners once
-                  cacheNotifier.notifyDataRehashed(previousReadCh, cacheTopology.getCurrentCH(),
+                  cacheNotifier.notifyDataRehashed(previousReadCh, cacheTopology.getCurrentCH(), previousWriteCh,
                         cacheTopology.getTopologyId(), false);
                   if (log.isTraceEnabled()) {
                      log.tracef("Unlock State Transfer in Progress for topology ID %s", cacheTopology.getTopologyId());

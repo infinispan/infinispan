@@ -3,6 +3,7 @@ package org.infinispan.persistence;
 import org.infinispan.AdvancedCache;
 import org.infinispan.Cache;
 import org.infinispan.commons.equivalence.AnyEquivalence;
+import org.infinispan.filter.CollectionKeyFilter;
 import org.infinispan.commons.marshall.StreamingMarshaller;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.cache.ConfigurationBuilder;

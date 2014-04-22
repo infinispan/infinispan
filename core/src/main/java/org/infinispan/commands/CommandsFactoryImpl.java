@@ -2,6 +2,9 @@ package org.infinispan.commands;
 
 import org.infinispan.Cache;
 import org.infinispan.context.InvocationContextFactory;
+import org.infinispan.iteration.impl.EntryRequestCommand;
+import org.infinispan.iteration.impl.EntryResponseCommand;
+import org.infinispan.iteration.impl.EntryRetriever;
 import org.infinispan.metadata.Metadata;
 import org.infinispan.atomic.Delta;
 import org.infinispan.commands.control.LockControlCommand;
@@ -54,6 +57,8 @@ import org.infinispan.factories.annotations.ComponentName;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.annotations.Start;
 import org.infinispan.interceptors.InterceptorChain;
+import org.infinispan.filter.Converter;
+import org.infinispan.filter.KeyValueFilter;
 import org.infinispan.statetransfer.StateProvider;
 import org.infinispan.statetransfer.StateConsumer;
 import org.infinispan.statetransfer.StateRequestCommand;
@@ -129,6 +134,7 @@ public class CommandsFactoryImpl implements CommandsFactory {
    private XSiteStateProvider xSiteStateProvider;
    private XSiteStateConsumer xSiteStateConsumer;
    private XSiteStateTransferManager xSiteStateTransferManager;
+   private EntryRetriever entryRetriever;
 
    private Map<Byte, ModuleCommandInitializer> moduleCommandInitializers;
 
@@ -141,7 +147,7 @@ public class CommandsFactoryImpl implements CommandsFactory {
                                  LockManager lockManager, InternalEntryFactory entryFactory, MapReduceManager mapReduceManager, 
                                  StateTransferManager stm, BackupSender backupSender, CancellationService cancellationService,
                                  TimeService timeService, XSiteStateProvider xSiteStateProvider, XSiteStateConsumer xSiteStateConsumer,
-                                 XSiteStateTransferManager xSiteStateTransferManager) {
+                                 XSiteStateTransferManager xSiteStateTransferManager, EntryRetriever entryRetriever) {
       this.dataContainer = container;
       this.notifier = notifier;
       this.cache = cache;
@@ -164,6 +170,7 @@ public class CommandsFactoryImpl implements CommandsFactory {
       this.xSiteStateConsumer = xSiteStateConsumer;
       this.xSiteStateProvider = xSiteStateProvider;
       this.xSiteStateTransferManager = xSiteStateTransferManager;
+      this.entryRetriever = entryRetriever;
    }
 
    @Start(priority = 1)
@@ -448,6 +455,14 @@ public class CommandsFactoryImpl implements CommandsFactory {
             XSiteStatePushCommand xSiteStatePushCommand = (XSiteStatePushCommand) c;
             xSiteStatePushCommand.initialize(xSiteStateConsumer);
             break;
+         case EntryRequestCommand.COMMAND_ID:
+            EntryRequestCommand entryRequestCommand = (EntryRequestCommand) c;
+            entryRequestCommand.init(entryRetriever);
+            break;
+         case EntryResponseCommand.COMMAND_ID:
+            EntryResponseCommand entryResponseCommand = (EntryResponseCommand) c;
+            entryResponseCommand.init(entryRetriever);
+            break;
          default:
             ModuleCommandInitializer mci = moduleCommandInitializers.get(c.getCommandId());
             if (mci != null) {
@@ -571,5 +586,21 @@ public class CommandsFactoryImpl implements CommandsFactory {
    @Override
    public SingleXSiteRpcCommand buildSingleXSiteRpcCommand(VisitableCommand command) {
       return new SingleXSiteRpcCommand(cacheName, command);
+   }
+
+   @Override
+   public <K, V, C> EntryRequestCommand<K, V, C> buildEntryRequestCommand(UUID identifier, Set<Integer> segments,
+                                                                    KeyValueFilter<? super K, ? super V> filter,
+                                                                    Converter<? super K, ? super V, C> converter) {
+      return new EntryRequestCommand<K, V, C>(cacheName, identifier, cache.getCacheManager().getAddress(), segments,
+                                              filter, converter);
+   }
+
+   @Override
+   public <K, C> EntryResponseCommand buildEntryResponseCommand(UUID identifier, Set<Integer> completedSegments,
+                                                                Set<Integer> inDoubtSegments,
+                                                                Collection<Map.Entry<K, C>> values) {
+      return new EntryResponseCommand(cache.getCacheManager().getAddress(), cacheName, identifier, completedSegments,
+                                      inDoubtSegments, values);
    }
 }

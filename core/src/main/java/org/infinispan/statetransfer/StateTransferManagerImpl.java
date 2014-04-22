@@ -159,7 +159,11 @@ public class StateTransferManagerImpl implements StateTransferManager {
       if (pendingCH != null) {
          pendingCH = new GroupingConsistentHash(pendingCH, groupManager);
       }
-      return new CacheTopology(cacheTopology.getTopologyId(), currentCH, pendingCH);
+      ConsistentHash unionCH = cacheTopology.getUnionCH();
+      if (unionCH != null) {
+         unionCH = new GroupingConsistentHash(unionCH, groupManager);
+      }
+      return new CacheTopology(cacheTopology.getTopologyId(), currentCH, pendingCH, unionCH);
    }
 
    private void doTopologyUpdate(CacheTopology newCacheTopology, boolean isRebalance) {
@@ -182,16 +186,12 @@ public class StateTransferManagerImpl implements StateTransferManager {
          throw new IllegalStateException("Old topology is higher: old=" + oldCacheTopology + ", new=" + newCacheTopology);
       }
 
-      ConsistentHash oldCH = oldCacheTopology != null ? oldCacheTopology.getWriteConsistentHash() : null;
-      ConsistentHash newCH = newCacheTopology.getWriteConsistentHash();
-
-      // TODO Improve notification to contain both CHs
-      cacheNotifier.notifyTopologyChanged(oldCH, newCH, newCacheTopology.getTopologyId(), true);
+      cacheNotifier.notifyTopologyChanged(oldCacheTopology, newCacheTopology, newCacheTopology.getTopologyId(), true);
 
       stateConsumer.onTopologyUpdate(newCacheTopology, isRebalance);
       stateProvider.onTopologyUpdate(newCacheTopology, isRebalance);
 
-      cacheNotifier.notifyTopologyChanged(oldCH, newCH, newCacheTopology.getTopologyId(), false);
+      cacheNotifier.notifyTopologyChanged(oldCacheTopology, newCacheTopology, newCacheTopology.getTopologyId(), false);
 
       if (initialStateTransferComplete.getCount() > 0) {
          boolean isJoined = stateConsumer.getCacheTopology().getReadConsistentHash().getMembers().contains(rpcManager.getAddress());
