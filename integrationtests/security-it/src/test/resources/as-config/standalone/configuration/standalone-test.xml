@@ -27,6 +27,13 @@
         <extension module="org.wildfly.extension.io"/>
         <extension module="org.wildfly.extension.undertow"/>
     </extensions>
+    
+    <system-properties>
+        <property name="java.security.krb5.conf" value="${basedir}/src/test/resources/krb5.conf"/>
+        <property name="java.security.krb5.debug" value="true"/>
+        <property name="jboss.security.disable.secdomain.option" value="true"/>
+    </system-properties>
+    
     <management>
         <security-realms>
             <security-realm name="ManagementRealm">
@@ -321,6 +328,134 @@
                         <module-option name="searchScope" value="ONELEVEL_SCOPE"/>
                      </login-module>
                   </authentication>
+                </security-domain>
+                <security-domain name="ldap-service" cache-type="default">
+                    <authentication>
+                        <login-module code="Kerberos" flag="required">
+                            <module-option name="storeKey" value="true"/>
+                            <module-option name="useKeyTab" value="true"/>
+                            <module-option name="refreshKrb5Config" value="true"/>
+                            <module-option name="principal" value="ldap/localhost@INFINISPAN.ORG"/>
+                            <module-option name="keyTab" value="${basedir}/src/test/resources/keytab/ldap.keytab"/>
+                            <module-option name="doNotPrompt" value="true"/>
+                        </login-module>
+                    </authentication>
+                </security-domain>
+                <security-domain name="krb-admin" cache-type="default">
+                    <authentication>
+                        <login-module code="Kerberos" flag="required">
+                            <module-option name="useKeyTab" value="true"/>
+                            <module-option name="principal" value="admin@INFINISPAN.ORG"/>
+                            <module-option name="keyTab" value="${basedir}/src/test/resources/keytab/admin.keytab"/>
+                        </login-module>
+                    </authentication>
+                </security-domain>
+                <security-domain name="krb-writer" cache-type="default">
+                    <authentication>
+                        <login-module code="Kerberos" flag="required">
+                            <module-option name="useKeyTab" value="true"/>
+                            <module-option name="principal" value="writer@INFINISPAN.ORG"/>
+                            <module-option name="keyTab" value="${basedir}/src/test/resources/keytab/writer.keytab"/>
+                        </login-module>
+                    </authentication>
+                </security-domain>
+                <security-domain name="krb-reader" cache-type="default">
+                    <authentication>
+                        <login-module code="Kerberos" flag="required">
+                            <module-option name="useKeyTab" value="true"/>
+                            <module-option name="principal" value="reader@INFINISPAN.ORG"/>
+                            <module-option name="keyTab" value="${basedir}/src/test/resources/keytab/reader.keytab"/>
+                        </login-module>
+                    </authentication>
+                </security-domain>
+                <security-domain name="krb-unprivileged" cache-type="default">
+                    <authentication>
+                        <login-module code="Kerberos" flag="required">
+                            <module-option name="useKeyTab" value="true"/>
+                            <module-option name="principal" value="unprivileged@INFINISPAN.ORG"/>
+                            <module-option name="keyTab" value="${basedir}/src/test/resources/keytab/unprivileged.keytab"/>
+                        </login-module>
+                    </authentication>
+                </security-domain>
+                <security-domain name="ispn-admin" cache-type="default">
+                    <authentication>
+                        <login-module code="SPNEGO" flag="requisite">
+                            <module-option name="password-stacking" value="useFirstPass"/>
+                            <module-option name="serverSecurityDomain" value="ldap-service"/>
+                            <module-option name="usernamePasswordDomain" value="krb-admin"/>
+                        </login-module>
+                        <login-module code="AdvancedLdap" flag="required">
+                            <module-option name="password-stacking" value="useFirstPass"/>
+                            <module-option name="bindAuthentication" value="GSSAPI"/>
+                            <module-option name="jaasSecurityDomain" value="ldap-service"/>
+                            <module-option name="java.naming.provider.url" value="ldap://localhost:10389"/>
+                            <module-option name="baseCtxDN" value="ou=People,dc=infinispan,dc=org"/>
+                            <module-option name="baseFilter" value="(krb5PrincipalName={0})"/>
+                            <module-option name="rolesCtxDN" value="ou=Roles,dc=infinispan,dc=org"/>
+                            <module-option name="roleFilter" value="(member={1})"/>
+                            <module-option name="roleAttributeID" value="cn"/>
+                        </login-module>
+                    </authentication>
+                </security-domain>
+                <security-domain name="ispn-writer" cache-type="default">
+                    <authentication>
+                        <login-module code="SPNEGO" flag="requisite">
+                            <module-option name="password-stacking" value="useFirstPass"/>
+                            <module-option name="serverSecurityDomain" value="ldap-service"/>
+                            <module-option name="usernamePasswordDomain" value="krb-writer"/>
+                        </login-module>
+                        <login-module code="AdvancedLdap" flag="required">
+                            <module-option name="password-stacking" value="useFirstPass"/>
+                            <module-option name="bindAuthentication" value="GSSAPI"/>
+                            <module-option name="jaasSecurityDomain" value="ldap-service"/>
+                            <module-option name="java.naming.provider.url" value="ldap://localhost:10389"/>
+                            <module-option name="baseCtxDN" value="ou=People,dc=infinispan,dc=org"/>
+                            <module-option name="baseFilter" value="(krb5PrincipalName={0})"/>
+                            <module-option name="rolesCtxDN" value="ou=Roles,dc=infinispan,dc=org"/>
+                            <module-option name="roleFilter" value="(member={1})"/>
+                            <module-option name="roleAttributeID" value="cn"/>
+                        </login-module>
+                    </authentication>
+                </security-domain>
+                <security-domain name="ispn-reader" cache-type="default">
+                    <authentication>
+                        <login-module code="SPNEGO" flag="requisite">
+                            <module-option name="password-stacking" value="useFirstPass"/>
+                            <module-option name="serverSecurityDomain" value="ldap-service"/>
+                            <module-option name="usernamePasswordDomain" value="krb-reader"/>
+                        </login-module>
+                        <login-module code="AdvancedLdap" flag="required">
+                            <module-option name="password-stacking" value="useFirstPass"/>
+                            <module-option name="bindAuthentication" value="GSSAPI"/>
+                            <module-option name="jaasSecurityDomain" value="ldap-service"/>
+                            <module-option name="java.naming.provider.url" value="ldap://localhost:10389"/>
+                            <module-option name="baseCtxDN" value="ou=People,dc=infinispan,dc=org"/>
+                            <module-option name="baseFilter" value="(krb5PrincipalName={0})"/>
+                            <module-option name="rolesCtxDN" value="ou=Roles,dc=infinispan,dc=org"/>
+                            <module-option name="roleFilter" value="(member={1})"/>
+                            <module-option name="roleAttributeID" value="cn"/>
+                        </login-module>
+                    </authentication>
+                </security-domain>
+                <security-domain name="ispn-unprivileged" cache-type="default">
+                    <authentication>
+                        <login-module code="SPNEGO" flag="requisite">
+                            <module-option name="password-stacking" value="useFirstPass"/>
+                            <module-option name="serverSecurityDomain" value="ldap-service"/>
+                            <module-option name="usernamePasswordDomain" value="krb-unprivileged"/>
+                        </login-module>
+                        <login-module code="AdvancedLdap" flag="required">
+                            <module-option name="password-stacking" value="useFirstPass"/>
+                            <module-option name="bindAuthentication" value="GSSAPI"/>
+                            <module-option name="jaasSecurityDomain" value="ldap-service"/>
+                            <module-option name="java.naming.provider.url" value="ldap://localhost:10389"/>
+                            <module-option name="baseCtxDN" value="ou=People,dc=infinispan,dc=org"/>
+                            <module-option name="baseFilter" value="(krb5PrincipalName={0})"/>
+                            <module-option name="rolesCtxDN" value="ou=Roles,dc=infinispan,dc=org"/>
+                            <module-option name="roleFilter" value="(member={1})"/>
+                            <module-option name="roleAttributeID" value="cn"/>
+                        </login-module>
+                    </authentication>
                 </security-domain>
             </security-domains>
         </subsystem>
