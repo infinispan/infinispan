@@ -141,6 +141,7 @@
       <version.mockito>1.9.5</version.mockito>
       <version.mysql.driver>5.1.19</version.mysql.driver>
       <version.org.jboss.naming>5.0.6.CR1</version.org.jboss.naming>
+      <version.org.picketbox>4.0.20.Final</version.org.picketbox>
       <version.postgresql.driver>9.3-1101-jdbc41</version.postgresql.driver>
       <version.resteasy>3.0.7.Final</version.resteasy>
       <version.shrinkwrapResolver>2.0.0-alpha-6</version.shrinkwrapResolver>
@@ -820,6 +821,12 @@
             <groupId>org.apache.directory.server</groupId>
             <artifactId>apacheds-all</artifactId>
             <version>${version.apache.ds}</version>
+            <scope>test</scope>
+         </dependency>
+         <dependency>
+            <groupId>org.picketbox</groupId>
+            <artifactId>jbosssx-bare</artifactId>
+            <version>${version.org.picketbox}</version>
             <scope>test</scope>
          </dependency>
       </dependencies>

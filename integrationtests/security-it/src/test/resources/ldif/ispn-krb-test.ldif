@@ -1,0 +1,115 @@
+dn: ou=People,dc=infinispan,dc=org
+objectClass: organizationalUnit
+objectClass: top
+ou: People
+
+dn: uid=krbtgt,ou=People,dc=infinispan,dc=org
+objectClass: top
+objectClass: person
+objectClass: inetOrgPerson
+objectClass: krb5principal
+objectClass: krb5kdcentry
+cn: KDC Service
+sn: Service
+uid: krbtgt
+userPassword: secret
+krb5PrincipalName: krbtgt/INFINISPAN.ORG@INFINISPAN.ORG
+krb5KeyVersionNumber: 0
+
+dn: uid=ldap,ou=People,dc=infinispan,dc=org
+objectClass: top
+objectClass: person
+objectClass: inetOrgPerson
+objectClass: krb5principal
+objectClass: krb5kdcentry
+cn: LDAP
+sn: Service
+uid: ldap
+userPassword: ldapPassword
+krb5PrincipalName: ldap/localhost@INFINISPAN.ORG
+krb5KeyVersionNumber: 0
+
+dn: uid=admin,ou=People,dc=infinispan,dc=org
+objectClass: top
+objectClass: person
+objectClass: inetOrgPerson
+objectClass: krb5principal
+objectClass: krb5kdcentry
+cn: ISPN Admin
+sn: admin
+uid: admin
+userPassword: strongPassword
+krb5PrincipalName: admin@INFINISPAN.ORG
+krb5KeyVersionNumber: 0
+
+dn: uid=writer,ou=People,dc=infinispan,dc=org
+objectClass: top
+objectClass: person
+objectClass: inetOrgPerson
+objectClass: krb5principal
+objectClass: krb5kdcentry
+cn: ISPN Writer
+sn: writer
+uid: writer
+userPassword: somePassword
+krb5PrincipalName: writer@INFINISPAN.ORG
+krb5KeyVersionNumber: 0
+
+dn: uid=reader,ou=People,dc=infinispan,dc=org
+objectClass: top
+objectClass: person
+objectClass: inetOrgPerson
+objectClass: krb5principal
+objectClass: krb5kdcentry
+cn: ISPN Reader
+sn: reader
+uid: reader
+userPassword: password
+krb5PrincipalName: reader@INFINISPAN.ORG
+krb5KeyVersionNumber: 0
+
+dn: uid=unprivileged,ou=People,dc=infinispan,dc=org
+objectClass: top
+objectClass: person
+objectClass: inetOrgPerson
+objectClass: krb5principal
+objectClass: krb5kdcentry
+cn: ISPN Unprivileged
+sn: unprivileged
+uid: unprivileged
+userPassword: weakPassword
+krb5PrincipalName: unprivileged@INFINISPAN.ORG
+krb5KeyVersionNumber: 0
+
+dn: ou=Roles,dc=infinispan,dc=org
+objectclass: top
+objectclass: organizationalUnit
+ou: Roles
+
+dn: cn=AdminIspnRole,ou=Roles,dc=infinispan,dc=org
+objectClass: top
+objectClass: groupOfNames
+cn: AdminIspnRole
+description: the Infinispan admin group
+member: uid=admin,ou=People,dc=infinispan,dc=org
+
+dn: cn=WriterIspnRole,ou=Roles,dc=infinispan,dc=org
+objectClass: top
+objectClass: groupOfNames
+cn: WriterIspnRole
+description: the Infinispan writer group
+member: uid=writer,ou=People,dc=infinispan,dc=org
+
+dn: cn=ReaderIspnRole,ou=Roles,dc=infinispan,dc=org
+objectClass: top
+objectClass: groupOfNames
+cn: ReaderIspnRole
+description: the Infinispan reader group
+member: uid=reader,ou=People,dc=infinispan,dc=org
+
+dn: cn=UnprivilegedIspnRole,ou=Roles,dc=infinispan,dc=org
+objectClass: top
+objectClass: groupOfNames
+cn: UnprivilegedIspnRole
+description: the Infinispan unprivileged group
+member: uid=unprivileged,ou=People,dc=infinispan,dc=org

@@ -35,6 +35,11 @@
          <artifactId>wildfly-arquillian-container-managed</artifactId>
          <scope>test</scope>
       </dependency>
+      <dependency>
+         <groupId>org.picketbox</groupId>
+         <artifactId>jbosssx-bare</artifactId>
+         <scope>test</scope>
+      </dependency>
    </dependencies>
 
    <build>
@@ -42,6 +47,14 @@
          <testResource>
             <filtering>true</filtering>
             <directory>src/test/resources</directory>
+            <excludes>
+               <exclude>keytab</exclude>
+               <exclude>ldif</exclude>
+            </excludes>
+         </testResource>
+         <testResource>
+            <filtering>false</filtering>
+            <directory>src/test/resources/ldif</directory>
          </testResource>
       </testResources>
 
@@ -59,7 +72,9 @@
                      <goal>integration-test</goal>
                      <goal>verify</goal>
                   </goals>
-                  <configuration> <redirectTestOutputToFile>true</redirectTestOutputToFile> </configuration>
+                  <configuration>
+                     <redirectTestOutputToFile>true</redirectTestOutputToFile>
+                  </configuration>
                </execution>
             </executions>
          </plugin>
@@ -117,7 +132,7 @@
                      <overwrite>true</overwrite>
                      <resources>
                         <resource>
-                           <directory>${basedir}/src/as-config</directory>
+                           <directory>${project.build.directory}/test-classes/as-config</directory>
                         </resource>
                      </resources>
                   </configuration>

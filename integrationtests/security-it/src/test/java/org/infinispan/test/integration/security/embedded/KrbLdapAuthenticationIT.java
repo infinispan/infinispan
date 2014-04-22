@@ -1,4 +1,5 @@
-package org.infinispan.test.integration.security.embedded;
+
+ package org.infinispan.test.integration.security.embedded;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -8,9 +9,9 @@ import javax.security.auth.login.LoginException;
 
 import org.infinispan.security.AuthorizationPermission;
 import org.infinispan.security.PrincipalRoleMapper;
-import org.infinispan.security.impl.IdentityRoleMapper;
-import org.infinispan.test.integration.security.utils.ApacheDsLdap;
+import org.infinispan.test.integration.security.utils.ApacheDsKrbLdap;
 import org.infinispan.test.integration.security.utils.Deployments;
+import org.infinispan.test.integration.security.utils.SimplePrincipalGroupRoleMapper;
 import org.jboss.arquillian.container.test.api.Deployment;
 import org.jboss.arquillian.junit.Arquillian;
 import org.jboss.shrinkwrap.api.spec.WebArchive;
@@ -23,29 +24,24 @@ import org.junit.runner.RunWith;
  * @since 7.0
  */
 @RunWith(Arquillian.class)
-public class LdapAuthenticationIT extends AbstractAuthentication {
+public class KrbLdapAuthenticationIT extends AbstractAuthentication {
 
-   public static final String SECURITY_DOMAIN_NAME = "ispn-secure";
-   public static final String ADMIN_ROLE = "admin";
-   public static final String ADMIN_PASSWD = "strong_password";
-   public static final String WRITER_ROLE = "writer";
-   public static final String WRITER_PASSWD = "some_password";
-   public static final String READER_ROLE = "reader";
-   public static final String READER_PASSWD = "password";
-   public static final String UNPRIVILEGED_ROLE = "unprivileged";
-   public static final String UNPRIVILEGED_PASSWD = "weak_password";
-
-   private static ApacheDsLdap ldapServer;
-
+   public static final String ADMIN_ROLE = "AdminIspnRole";
+   public static final String WRITER_ROLE = "WriterIspnRole";
+   public static final String READER_ROLE = "ReaderIspnRole";
+   public static final String UNPRIVILEGED_ROLE = "UnprivilegedIspnRole";
+   
+   private static ApacheDsKrbLdap krbLdapServer;
+   
    @BeforeClass
    public static void ldapSetup() throws Exception {
-      ldapServer = new ApacheDsLdap("localhost");
-      ldapServer.start();
+      krbLdapServer = new ApacheDsKrbLdap("localhost");
+      krbLdapServer.start();
    }
 
    @AfterClass
    public static void ldapTearDown() throws Exception {
-      ldapServer.stop();
+      krbLdapServer.stop();
    }
 
    @Deployment
@@ -63,27 +59,27 @@ public class LdapAuthenticationIT extends AbstractAuthentication {
    }
 
    public PrincipalRoleMapper getPrincipalRoleMapper() {
-      return new IdentityRoleMapper();
+      return new SimplePrincipalGroupRoleMapper();
    }
    
    public String getSecurityDomainName() {
-      return SECURITY_DOMAIN_NAME;
+      return null; //not used in this test
    }
-
+   
    public Subject getAdminSubject() throws LoginException {
-      return authenticate(ADMIN_ROLE, ADMIN_PASSWD);
+      return authenticateWithKrb("ispn-admin");
    }
 
    public Subject getWriterSubject() throws LoginException {
-      return authenticate(WRITER_ROLE, WRITER_PASSWD);
+      return authenticateWithKrb("ispn-writer");
    }
-
+   
    public Subject getReaderSubject() throws LoginException {
-      return authenticate(READER_ROLE, READER_PASSWD);
+      return authenticateWithKrb("ispn-reader");
    }
-
+   
    public Subject getUnprivilegedSubject() throws LoginException {
-      return authenticate(UNPRIVILEGED_ROLE, UNPRIVILEGED_PASSWD);
+      return authenticateWithKrb("ispn-unprivileged");
    }
 
 }
