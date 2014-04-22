@@ -71,7 +71,6 @@ public class EmbeddedCacheManagerConfigurationService implements Service<Embedde
     }
 
     interface AuthorizationConfiguration {
-        boolean isEnabled();
         String getPrincipalMapper();
         Map<String, List<String>> getRoles();
     }
@@ -183,7 +182,7 @@ public class EmbeddedCacheManagerConfigurationService implements Service<Embedde
         GlobalAuthorizationConfigurationBuilder authorizationBuilder = builder.security().authorization();
 
         if (authorization != null) {
-            authorizationBuilder.enabled(authorization.isEnabled());
+            authorizationBuilder.enable();
             if (authorization.getPrincipalMapper() != null) {
                 try {
                     authorizationBuilder.principalRoleMapper(Class.forName(authorization.getPrincipalMapper(), true, loader).asSubclass(PrincipalRoleMapper.class).newInstance());

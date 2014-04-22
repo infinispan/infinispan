@@ -131,7 +131,7 @@
     </cache-container>
     <cache-container name="secure-container">
         <security>
-            <authorization mapper="org.infinispan.security.impl.IdentityRoleMapper" enabled="true">
+            <authorization mapper="org.infinispan.security.impl.IdentityRoleMapper">
                 <role name="admin" permissions="ALL" />
                 <role name="reader" permissions="READ" />
                 <role name="writer" permissions="WRITE" />
@@ -141,7 +141,7 @@
 
         <local-cache name="secured">
             <security>
-                <authorization enabled="true" roles="admin reader writer" />
+                <authorization roles="admin reader writer" />
             </security>
         </local-cache>
     </cache-container>

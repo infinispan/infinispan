@@ -33,7 +33,6 @@ import org.jboss.as.controller.SimpleAttributeDefinitionBuilder;
 import org.jboss.as.controller.SimpleResourceDefinition;
 import org.jboss.as.controller.registry.AttributeAccess;
 import org.jboss.as.controller.registry.ManagementResourceRegistration;
-import org.jboss.dmr.ModelNode;
 import org.jboss.dmr.ModelType;
 
 /**
@@ -44,14 +43,6 @@ import org.jboss.dmr.ModelType;
  */
 public class CacheContainerAuthorizationResource extends SimpleResourceDefinition {
 
-    static final SimpleAttributeDefinition ENABLED = new SimpleAttributeDefinitionBuilder(ModelKeys.ENABLED, ModelType.BOOLEAN, true)
-        .setXmlName(Attribute.ENABLED.getLocalName())
-        .setAllowExpression(true)
-        .setFlags(AttributeAccess.Flag.RESTART_ALL_SERVICES)
-        .setDefaultValue(new ModelNode().set(false))
-        .build()
-    ;
-
     static final SimpleAttributeDefinition MAPPER = new SimpleAttributeDefinitionBuilder(ModelKeys.MAPPER, ModelType.STRING, true)
         .setXmlName(Attribute.MAPPER.getLocalName())
         .setAllowExpression(true)
@@ -59,7 +50,7 @@ public class CacheContainerAuthorizationResource extends SimpleResourceDefinitio
         .build()
     ;
 
-    static final AttributeDefinition[] ATTRIBUTES = new AttributeDefinition[] { ENABLED, MAPPER };
+    static final AttributeDefinition[] ATTRIBUTES = new AttributeDefinition[] { MAPPER };
 
     CacheContainerAuthorizationResource() {
         super(PathElement.pathElement(ModelKeys.AUTHORIZATION), InfinispanExtension.getResourceDescriptionResolver(ModelKeys.CACHE_CONTAINER, ModelKeys.SECURITY, ModelKeys.AUTHORIZATION), new CacheConfigAdd(ATTRIBUTES), ReloadRequiredRemoveStepHandler.INSTANCE);

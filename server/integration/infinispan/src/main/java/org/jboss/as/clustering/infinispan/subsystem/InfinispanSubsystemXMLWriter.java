@@ -87,7 +87,6 @@ public class InfinispanSubsystemXMLWriter implements XMLElementWriter<SubsystemM
                     if (security.hasDefined(ModelKeys.AUTHORIZATION)) {
                         writer.writeStartElement(Element.AUTHORIZATION.getLocalName());
                         ModelNode authorization = security.get(ModelKeys.AUTHORIZATION, ModelKeys.AUTHORIZATION_NAME);
-                        this.writeOptional(writer, Attribute.ENABLED, authorization, ModelKeys.ENABLED);
                         this.writeOptional(writer, Attribute.MAPPER, authorization, ModelKeys.MAPPER);
 
                         ModelNode roles = authorization.get(ModelKeys.ROLE);

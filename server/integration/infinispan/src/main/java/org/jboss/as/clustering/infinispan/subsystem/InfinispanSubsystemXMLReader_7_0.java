@@ -234,10 +234,6 @@ public final class InfinispanSubsystemXMLReader_7_0 implements XMLElementReader<
             String value = reader.getAttributeValue(i);
             Attribute attribute = Attribute.forName(reader.getAttributeLocalName(i));
             switch (attribute) {
-                case ENABLED: {
-                    CacheContainerAuthorizationResource.ENABLED.parseAndSetParameter(value, authorization, reader);
-                    break;
-                }
                 case MAPPER: {
                     CacheContainerAuthorizationResource.MAPPER.parseAndSetParameter(value, authorization, reader);
                     break;

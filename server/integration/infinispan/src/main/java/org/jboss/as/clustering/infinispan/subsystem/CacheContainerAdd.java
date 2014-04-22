@@ -182,7 +182,6 @@ public class CacheContainerAdd extends AbstractAddStepHandler {
                 ModelNode authzModel = securityModel.get(ModelKeys.AUTHORIZATION, ModelKeys.AUTHORIZATION_NAME);
 
                 authorizationConfig = new Authorization();
-                authorizationConfig.setEnabled(CacheContainerAuthorizationResource.ENABLED.resolveModelAttribute(context, authzModel).asBoolean());
                 authorizationConfig.setPrincipalMapper((resolvedValue = CacheContainerAuthorizationResource.MAPPER.resolveModelAttribute(context, authzModel)).isDefined() ? resolvedValue.asString() : null);
 
                 for(ModelNode roleNode : authzModel.get(ModelKeys.ROLE).asList()) {
@@ -452,13 +451,8 @@ public class CacheContainerAdd extends AbstractAddStepHandler {
     }
 
     static class Authorization implements EmbeddedCacheManagerConfigurationService.AuthorizationConfiguration {
-        private boolean enabled;
         private String principalMapper;
         private Map<String, List<String>> roles = new HashMap<String, List<String>>();
-
-        public void setEnabled(boolean enabled) {
-            this.enabled = enabled;
-        }
 
         public void setPrincipalMapper(String principalMapper) {
             this.principalMapper = principalMapper;
@@ -466,11 +460,6 @@ public class CacheContainerAdd extends AbstractAddStepHandler {
 
         public void setRoles(Map<String, List<String>> roles) {
             this.roles = roles;
-        }
-
-        @Override
-        public boolean isEnabled() {
-            return enabled;
         }
 
         @Override
