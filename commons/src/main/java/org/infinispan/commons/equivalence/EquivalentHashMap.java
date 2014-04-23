@@ -181,7 +181,7 @@ public class EquivalentHashMap<K, V> extends AbstractMap<K, V> {
       while (e != null) {
          if (e.hash == hash && keyEq.equals(e.key, key)) {
             V prevValue = e.value;
-            e.value = value;
+            e.setValue(value, this);
             return prevValue;
          }
          e = e.next;
@@ -585,6 +585,10 @@ public class EquivalentHashMap<K, V> extends AbstractMap<K, V> {
          V prevValue = this.value;
          this.value = value;
          return prevValue;
+      }
+
+      protected V setValue(V value, EquivalentHashMap<K, V> map) {
+         return setValue(value);
       }
    }
 
