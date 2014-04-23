@@ -123,6 +123,7 @@ public enum Attribute {
     VERSION("version"),
     VERSIONING_SCHEME("scheme"),
     WRITE_SKEW_CHECK("write-skew"),
+    FRAGMENTATION_FACTOR("fragmentation-factor");
 
     ;
 
