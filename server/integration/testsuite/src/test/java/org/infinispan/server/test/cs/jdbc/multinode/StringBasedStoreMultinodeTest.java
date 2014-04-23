@@ -44,7 +44,6 @@ public class StringBasedStoreMultinodeTest extends AbstractJdbcStoreMultinodeTes
      */
     @Test
     @WithRunningServer({@RunningServer(name = CONTAINER1, config = CONFIG_FETCH_STATE_1)})
-    @Category(UnstableTest.class)
     public void testFetchState() throws Exception {
         try {
             mc1 = createMemcachedClient(server1);

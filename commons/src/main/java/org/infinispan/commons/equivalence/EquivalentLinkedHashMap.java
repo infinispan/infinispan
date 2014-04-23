@@ -115,6 +115,13 @@ public class EquivalentLinkedHashMap<K, V> extends EquivalentHashMap<K, V> {
          }
          return value;
       }
+
+      @Override
+      protected V setValue(V value, EquivalentHashMap<K, V> map) {
+         V retValue = super.setValue(value, map);
+         recordAccess(map);
+         return retValue;
+      }
    }
 
    public enum IterationOrder {
