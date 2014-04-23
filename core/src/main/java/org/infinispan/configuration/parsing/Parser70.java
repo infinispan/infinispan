@@ -1577,6 +1577,10 @@ public class Parser70 implements ConfigurationParser {
                storeBuilder.maxEntries(Integer.valueOf(value));
                break;
             }
+            case FRAGMENTATION_FACTOR: {
+               storeBuilder.fragmentationFactor(Float.parseFloat(value));
+               break;
+            }
             default: {
                parseStoreAttribute(reader, i, storeBuilder);
             }

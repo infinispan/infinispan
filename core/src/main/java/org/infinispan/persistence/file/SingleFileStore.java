@@ -76,6 +76,7 @@ public class SingleFileStore implements AdvancedLoadWriteStore {
    private static final byte[] ZERO_INT = {0, 0, 0, 0};
    private static final int KEYLEN_POS = 4;
    private static final int KEY_POS = 4 + 4 + 4 + 4 + 8;
+   private static final int SMALLEST_ENTRY_SIZE = 128;
 
    private SingleFileStoreConfiguration configuration;
 
@@ -86,6 +87,7 @@ public class SingleFileStore implements AdvancedLoadWriteStore {
    private SortedSet<FileEntry> freeList;
    private long filePos = MAGIC.length;
    private File file;
+   private float fragmentationFactor = .75f;
    // Prevent clear() from truncating the file after a write() allocated the entry but before it wrote the data
    private ReadWriteLock resizeLock = new ReentrantReadWriteLock();
 
@@ -124,6 +126,9 @@ public class SingleFileStore implements AdvancedLoadWriteStore {
          }
          else
             clear(); // otherwise (unknown file format or no preload) just reset the file
+			
+         // Initialize the fragmentation factor
+         fragmentationFactor = configuration.fragmentationFactor();
       } catch (Exception e) {
          throw new PersistenceException(e);
       }
@@ -226,11 +231,12 @@ public class SingleFileStore implements AdvancedLoadWriteStore {
     * @return allocated file position and length as FileEntry object
     */
    private FileEntry allocate(int len) {
+      FileEntry free = null;
       synchronized (freeList) {
          // lookup a free entry of sufficient size
          SortedSet<FileEntry> candidates = freeList.tailSet(new FileEntry(0, len));
          for (Iterator<FileEntry> it = candidates.iterator(); it.hasNext(); ) {
-            FileEntry free = it.next();
+            free = it.next();
             // ignore entries that are still in use by concurrent readers
             if (free.isLocked())
                continue;
@@ -245,7 +251,24 @@ public class SingleFileStore implements AdvancedLoadWriteStore {
 
             // found one, remove from freeList
             it.remove();
-            if (trace) log.tracef("Found free entry at %d:%d, %d free entries remaining", free.offset, free.size, freeList.size());
+            break;
+         }
+           
+         if (free != null) {
+            int remainder = free.size - len;
+            // If the entry is quite bigger than configured threshold, then split it
+            if ((remainder >= SMALLEST_ENTRY_SIZE) && (len <= (free.size * fragmentationFactor))) {
+               try {
+                  if (trace) log.tracef("Requested len: %d, Found free entry at %d:%d, splitting it, %d free entries remaining", len, free.offset, free.size, (freeList.size() + 1));
+                  // Add remainder of the space as a fileEntry
+                  addNewFreeEntry(new FileEntry(free.offset + len, remainder));
+                  return new FileEntry(free.offset, len);
+               } catch (IOException e) {
+                  throw new PersistenceException("Cannot add new free entry", e);
+               }
+            }
+
+            if (trace) log.tracef("Requested len: %d, Found free entry at %d:%d, %d free entries remaining", len, free.offset, free.size, freeList.size());
             return free;
          }
 
@@ -255,6 +278,22 @@ public class SingleFileStore implements AdvancedLoadWriteStore {
          if (trace) log.tracef("New entry allocated at %d:%d, %d free entries, file size is %d", fe.offset, fe.size, freeList.size(), filePos);
          return fe;
       }
+   }
+ 
+   /**
+    * Writes a new free entry to the file and also adds it to the free list
+    *
+    */
+   private void addNewFreeEntry(FileEntry fe) throws IOException {
+      ByteBuffer buf = ByteBuffer.allocate(KEY_POS);
+      buf.putInt(fe.size);
+      buf.putInt(0);
+      buf.putInt(0);
+      buf.putInt(0);
+      buf.putLong(-1);
+      buf.flip();
+      channel.write(buf, fe.offset);
+      freeList.add(fe);
    }
 
    /**
@@ -498,21 +537,28 @@ public class SingleFileStore implements AdvancedLoadWriteStore {
 
    /**
     * Manipulates the free entries for optimizing disk space.
-    * Removes free entries towards the end of the file and truncates the file.	
     */
    private void processFreeEntries() {
-      long startTime = 0;
-      if (trace) startTime = System.currentTimeMillis();
-	  
       // Get a reverse sorted list of free entries based on file offset
       // This helps to work backwards with free entries at end of the file
       List<FileEntry> l  = new ArrayList<FileEntry>(freeList);
       Collections.sort(l, new FileEntryByOffsetComparator());
 
+      truncateFile(l);
+      mergeFreeEntries(l);
+   }
+
+   /**
+    * Removes free entries towards the end of the file and truncates the file.
+    */
+   private void truncateFile(List<FileEntry> entries) {
+      long startTime = 0;
+      if (trace) startTime = System.currentTimeMillis();
+        
       int reclaimedSpace = 0;
       int removedEntries = 0;
       long truncateOffset = -1;
-      for (Iterator<FileEntry> it = l.iterator() ; it.hasNext(); ) {
+      for (Iterator<FileEntry> it = entries.iterator() ; it.hasNext(); ) {
          FileEntry fe = it.next();
          // Till we have free entries at the end of the file,
          // we can remove them and contract the file to release disk
@@ -521,6 +567,7 @@ public class SingleFileStore implements AdvancedLoadWriteStore {
             truncateOffset = fe.offset;
             filePos = fe.offset;
             freeList.remove(fe);
+            it.remove();
             reclaimedSpace += fe.size;
             removedEntries++;
          } else {
@@ -542,6 +589,59 @@ public class SingleFileStore implements AdvancedLoadWriteStore {
       }
    }
 
+   /**
+    * Coalesces adjacent free entries to create larger free entries (so that the probability of finding a free entry during allocation increases)
+    */
+   private void mergeFreeEntries(List<FileEntry> entries) {
+      long startTime = 0;
+      if (trace) startTime = System.currentTimeMillis();
+      FileEntry lastEntry = null;
+      FileEntry newEntry = null;
+      int mergeCounter = 0;
+      for (Iterator<FileEntry> it = entries.iterator() ; it.hasNext(); ) {
+         FileEntry fe = it.next();
+         if (fe.isLocked()) {
+            continue;
+         }
+            
+         // Merge any holes created (consecutive free entries) in the file
+         if ((lastEntry != null) && (lastEntry.offset == (fe.offset + fe.size))) {
+            if (newEntry == null) {
+               newEntry = new FileEntry(fe.offset, fe.size + lastEntry.size);
+               freeList.remove(lastEntry);
+               mergeCounter++;
+            } else {
+               newEntry = new FileEntry(fe.offset, fe.size + newEntry.size);
+            }
+            freeList.remove(fe);
+            mergeCounter++;
+         } else {
+            if (newEntry != null) {
+               try {
+                  addNewFreeEntry(newEntry);
+                  if (trace) log.tracef("Merged entries: " + mergeCounter + ", merged size: " + newEntry.size);
+               } catch (IOException e) {
+                  throw new PersistenceException("Could not add new merged entry", e);
+               }
+               newEntry = null;
+               mergeCounter = 0;
+            }
+         }
+         lastEntry = fe;
+      }
+      
+      if (newEntry != null) {
+         try {
+            addNewFreeEntry(newEntry);
+            if (trace) log.tracef("Merged entries: " + mergeCounter + ", merged space: " + newEntry.size);
+         } catch (IOException e) {
+            throw new PersistenceException("Could not add new merged entry", e);
+         }
+      }
+
+      if (trace) log.tracef("Total time taken for mergeFreeEntries: " + (System.currentTimeMillis() - startTime) + " (ms)");
+   }
+   
    @Override
    public void purge(Executor threadPool, final PurgeListener task) {
 

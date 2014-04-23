@@ -19,6 +19,8 @@ import java.util.List;
 import java.util.Random;
 import java.util.concurrent.Callable;
 import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ExecutorService;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 
@@ -60,7 +62,8 @@ public class SingleFileStoreStressTest extends SingleCacheManagerTest {
       PersistenceManager persistenceManager = TestingUtil.extractComponent(cache, PersistenceManager.class);
       final SingleFileStore store = persistenceManager.getStores(SingleFileStore.class).iterator().next();
       final StreamingMarshaller marshaller = TestingUtil.extractComponentRegistry(cache).getCacheMarshaller();
-
+      store.clear();
+      
       final List<String> keys = new ArrayList<String>(NUM_KEYS);
       for (int j = 0; j < NUM_KEYS; j++) {
          String key = "key" + j;
@@ -102,6 +105,7 @@ public class SingleFileStoreStressTest extends SingleCacheManagerTest {
       PersistenceManager persistenceManager = TestingUtil.extractComponent(cache, PersistenceManager.class);
       final SingleFileStore store = persistenceManager.getStores(SingleFileStore.class).iterator().next();
       final StreamingMarshaller marshaller = TestingUtil.extractComponentRegistry(cache).getCacheMarshaller();
+      store.clear();
 
       final List<String> keys = new ArrayList<String>(NUM_KEYS);
       for (int j = 0; j < NUM_KEYS; j++) {
@@ -132,6 +136,136 @@ public class SingleFileStoreStressTest extends SingleCacheManagerTest {
       clearFuture.get();
    }
 
+   public void testSpaceOptimization() throws ExecutionException, InterruptedException {
+      final int NUM_KEYS = 100;
+      final int TIMES = 10;
+
+      Cache<String, String> cache = cacheManager.getCache(CACHE_NAME);
+      PersistenceManager persistenceManager = TestingUtil.extractComponent(cache, PersistenceManager.class);
+      final SingleFileStore store = persistenceManager.getStores(SingleFileStore.class).iterator().next();
+      final StreamingMarshaller marshaller = TestingUtil.extractComponentRegistry(cache).getCacheMarshaller();
+      store.clear();
+
+      long [] fileSizesWithoutPurge = new long [TIMES];
+      long [] fileSizesWithPurge = new long [TIMES];
+      File file = new File(location, CACHE_NAME + ".dat");
+
+      // Write values for all keys iteratively such that the entry size increases during each iteration
+      // Also record the file size after each such iteration.
+      // Since entry sizes increase during each iteration, new entries won't fit in old free entries
+      for (int i = 0; i < TIMES; i++) {
+         for (int j = 0; j < NUM_KEYS; j++) {
+            String key = "key" + j;
+            String value = key + "_value_" + j + "_" + times("123456789_", i);
+            MarshalledEntryImpl entry = new MarshalledEntryImpl<String, String>(key, value, null, marshaller);
+            store.write(entry);
+         }
+         fileSizesWithoutPurge[i] = file.length();
+      }
+
+      // Clear the store so that we can start fresh again
+      store.clear();
+
+      ExecutorService executor = Executors.newSingleThreadExecutor();
+      // Repeat the same logic as above
+      // Just that, in this case we will call purge after each iteration
+      for (int i = 0; i < TIMES; i++) {
+         for (int j = 0; j < NUM_KEYS; j++) {
+            String key = "key" + j;
+            String value = key + "_value_" + j + "_" + times("123456789_", i);
+            MarshalledEntryImpl entry = new MarshalledEntryImpl<String, String>(key, value, null, marshaller);
+            store.write(entry);
+         }
+         // Call purge so that the entries are coalesced
+         // Since this will merge and make bigger free entries available, new entries should get some free slots (unlike earlier case)
+         // This should prove that the file size increases slowly
+         store.purge(executor, null);
+         // Give some time for the purge thread to finish
+         MILLISECONDS.sleep(200);
+         fileSizesWithoutPurge[i] = file.length();
+      }
+      executor.shutdown();
+
+      // Verify that file size increases slowly when the space optimization logic (implemented within store.purge()) is used
+      for (int j = 2; j < TIMES; j++) {
+         assertTrue(fileSizesWithPurge[j] < fileSizesWithoutPurge[j]);
+      }
+   }
+
+   public void testFileTruncation() throws ExecutionException, InterruptedException {
+      final int NUM_WRITER_THREADS = 1;
+      final int NUM_READER_THREADS = 1;
+      final int NUM_KEYS = 10;
+      final int TEST_DURATION_SECONDS = 2;
+
+      Cache<String, String> cache = cacheManager.getCache(CACHE_NAME);
+      PersistenceManager persistenceManager = TestingUtil.extractComponent(cache, PersistenceManager.class);
+      final SingleFileStore store = persistenceManager.getStores(SingleFileStore.class).iterator().next();
+      final StreamingMarshaller marshaller = TestingUtil.extractComponentRegistry(cache).getCacheMarshaller();
+      store.clear();
+
+      // Write a few entries into the cache
+      final List<String> keys = new ArrayList<String>(NUM_KEYS);
+      for (int j = 0; j < NUM_KEYS; j++) {
+         String key = "key" + j;
+         String value = key + "_value_" + j;
+         keys.add(key);
+         MarshalledEntryImpl entry = new MarshalledEntryImpl<String, String>(key, value, null, marshaller);
+         store.write(entry);
+      }
+
+      // Do some reading/writing entries with random size
+      final CountDownLatch stopLatch = new CountDownLatch(1);
+      Future[] writeFutures = new Future[NUM_WRITER_THREADS];
+      for (int i = 0; i < NUM_WRITER_THREADS; i++) {
+         writeFutures[i] = fork(stopOnException(new WriteTask(store, marshaller, keys, stopLatch), stopLatch));
+      }
+
+      Future[] readFutures = new Future[NUM_READER_THREADS];
+      for (int i = 0; i < NUM_READER_THREADS; i++) {
+         readFutures[i] = fork(stopOnException(new ReadTask(store, keys, false, stopLatch), stopLatch));
+      }
+
+      stopLatch.await(TEST_DURATION_SECONDS, SECONDS);
+      stopLatch.countDown();
+
+      for (int i = 0; i < NUM_WRITER_THREADS; i++) {
+         writeFutures[i].get();
+      }
+      for (int i = 0; i < NUM_READER_THREADS; i++) {
+         readFutures[i].get();
+      }
+
+      File file = new File(location, CACHE_NAME + ".dat");
+      long length1 = file.length();
+
+      ExecutorService executor = Executors.newSingleThreadExecutor();
+      store.purge(executor, null);
+      // Give some time for the purge thread to finish
+      MILLISECONDS.sleep(200);
+      long length2 = file.length();
+
+      // Again write entries with smaller size
+      for (int j = 0; j < NUM_KEYS; j++) {
+         String key = "key" + j;
+         String value = key + "_value_" + j;
+         keys.add(key);
+         MarshalledEntryImpl entry = new MarshalledEntryImpl<String, String>(key, value, null, marshaller);
+         store.write(entry);
+      }
+
+      store.purge(executor, null);
+      // Give some time for the purge thread to finish
+      MILLISECONDS.sleep(200);
+      long length3 = file.length();
+
+      executor.shutdown();
+
+      // Verify that file size decreases and the file shrinks
+      assertTrue(length2 <= length1);
+      assertTrue(length3 < length2);
+   }
+   
    private Callable<Object> stopOnException(Callable<Object> task, CountDownLatch stopLatch) {
       return new StopOnExceptionTask(task, stopLatch);
    }
