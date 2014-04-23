@@ -47,7 +47,7 @@ public class OsgiClassLoader extends ClassLoader {
       super(null);
 
       final ClassLoader cl = OsgiClassLoader.class.getClassLoader();
-      if (cl instanceof BundleReference) {
+      if ((cl != null) && cl.getClass().getName().equals("org.osgi.framework.BundleReference")) {
          final BundleContext bundleContext = ((BundleReference) OsgiClassLoader.class.getClassLoader()).getBundle()
                .getBundleContext();
          Bundle[] foundBundles = bundleContext.getBundles();
