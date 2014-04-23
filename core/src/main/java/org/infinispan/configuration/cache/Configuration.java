@@ -1,6 +1,5 @@
 package org.infinispan.configuration.cache;
 
-import java.lang.ref.WeakReference;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
@@ -8,7 +7,6 @@ import java.util.Map;
 
 public class Configuration {
 
-   private final WeakReference<ClassLoader> classLoader; //TODO remove this
    private final ClusteringConfiguration clusteringConfiguration;
    private final CustomInterceptorsConfiguration customInterceptorsConfiguration;
    private final DataContainerConfiguration dataContainerConfiguration;
@@ -43,7 +41,7 @@ public class Configuration {
                  VersioningConfiguration versioningConfiguration,
                  SitesConfiguration sitesConfiguration,
                  CompatibilityModeConfiguration compatibilityConfiguration,
-                 List<?> modules, ClassLoader cl) {
+                 List<?> modules) {
       this.clusteringConfiguration = clusteringConfiguration;
       this.customInterceptorsConfiguration = customInterceptorsConfiguration;
       this.dataContainerConfiguration = dataContainerConfiguration;
@@ -67,15 +65,6 @@ public class Configuration {
          modulesMap.put(module.getClass(), module);
       }
       this.moduleConfiguration = Collections.unmodifiableMap(modulesMap);
-      this.classLoader = new WeakReference<ClassLoader>(cl);
-   }
-
-   /**
-    * Will be removed with no replacement
-    */
-   @Deprecated
-   public ClassLoader classLoader() {
-      return classLoader == null ? null : classLoader.get();
    }
 
    public ClusteringConfiguration clustering() {
@@ -162,8 +151,7 @@ public class Configuration {
    @Override
    public String toString() {
       return "Configuration{" +
-            "classLoader=" + classLoader +
-            ", clustering=" + clusteringConfiguration +
+            "clustering=" + clusteringConfiguration +
             ", customInterceptors=" + customInterceptorsConfiguration +
             ", dataContainer=" + dataContainerConfiguration +
             ", deadlockDetection=" + deadlockDetectionConfiguration +
@@ -189,7 +177,6 @@ public class Configuration {
    public int hashCode() {
       final int prime = 31;
       int result = 1;
-      result = prime * result + ((classLoader == null) ? 0 : classLoader.hashCode());
       result = prime * result + ((clusteringConfiguration == null) ? 0 : clusteringConfiguration.hashCode());
       result = prime * result + ((compatibilityConfiguration == null) ? 0 : compatibilityConfiguration.hashCode());
       result = prime * result
@@ -214,7 +201,7 @@ public class Configuration {
       result = prime * result + ((versioningConfiguration == null) ? 0 : versioningConfiguration.hashCode());
       return result;
    }
-
+   
    @Override
    public boolean equals(Object obj) {
       if (this == obj)
@@ -321,6 +308,4 @@ public class Configuration {
          return false;
       return true;
    }
-
-
 }

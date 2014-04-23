@@ -2,16 +2,15 @@ package org.infinispan.marshall.core;
 
 import java.io.IOException;
 
-import org.infinispan.configuration.cache.Configuration;
-import org.infinispan.configuration.cache.Configurations;
-import org.infinispan.configuration.global.GlobalConfiguration;
-import org.infinispan.context.InvocationContext;
-import org.infinispan.context.InvocationContextContainer;
 import org.infinispan.commons.marshall.SerializeWith;
 import org.infinispan.commons.marshall.StreamingMarshaller;
 import org.infinispan.commons.marshall.jboss.AbstractJBossMarshaller;
 import org.infinispan.commons.marshall.jboss.DefaultContextClassResolver;
 import org.infinispan.commons.marshall.jboss.SerializeWithExtFactory;
+import org.infinispan.configuration.cache.Configuration;
+import org.infinispan.configuration.global.GlobalConfiguration;
+import org.infinispan.context.InvocationContext;
+import org.infinispan.context.InvocationContextContainer;
 import org.jboss.marshalling.ClassResolver;
 import org.jboss.marshalling.Externalize;
 import org.jboss.marshalling.ObjectTable;
@@ -39,11 +38,9 @@ public class JBossMarshaller extends AbstractJBossMarshaller implements Streamin
    final ExternalizerTable externalizerTable;
    ExternalizerTableProxy proxy;
    final GlobalConfiguration globalCfg;
-   final Configuration cfg;
    final InvocationContextContainer icc;
 
    public JBossMarshaller() {
-      this.cfg = null;
       this.externalizerTable = null;
       this.globalCfg = null;
       this.icc = null;
@@ -53,7 +50,6 @@ public class JBossMarshaller extends AbstractJBossMarshaller implements Streamin
          InvocationContextContainer icc, GlobalConfiguration globalCfg) {
       this.externalizerTable = externalizerTable;
       this.globalCfg = globalCfg;
-      this.cfg = cfg;
       this.icc = icc;
    }
 
@@ -70,7 +66,7 @@ public class JBossMarshaller extends AbstractJBossMarshaller implements Streamin
       if (classResolver == null) {
          // Override the class resolver with one that can detect injected
          // classloaders via AdvancedCache.with(ClassLoader) calls.
-         ClassLoader cl = Configurations.getClassLoader(cfg, globalCfg);
+         ClassLoader cl = globalCfg.classLoader();
          classResolver = new EmbeddedContextClassResolver(cl, icc);
       }
 

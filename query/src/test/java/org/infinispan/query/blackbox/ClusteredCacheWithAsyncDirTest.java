@@ -1,6 +1,8 @@
 package org.infinispan.query.blackbox;
 
-import org.infinispan.commons.util.FileLookupFactory;
+import java.io.InputStream;
+
+import org.infinispan.commons.util.FileLookup;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.cache.StoreConfigurationBuilder;
 import org.infinispan.configuration.parsing.ConfigurationBuilderHolder;
@@ -9,8 +11,6 @@ import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.persistence.jdbc.configuration.AbstractJdbcStoreConfigurationBuilder;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.testng.annotations.Test;
-
-import java.io.InputStream;
 
 /**
  * Testing the ISPN Directory configuration with Async. JDBC CacheStore. The tests are performed for Clustered cache.
@@ -31,7 +31,7 @@ public class ClusteredCacheWithAsyncDirTest extends ClusteredCacheTest {
    }
 
    private EmbeddedCacheManager createCacheManager(int nodeIndex) throws Exception {
-      InputStream is = FileLookupFactory.newInstance().lookupFileStrict("async-store-config.xml",
+      InputStream is = new FileLookup().lookupFileStrict("async-store-config.xml",
                                                                         Thread.currentThread().getContextClassLoader());
       ParserRegistry parserRegistry = new ParserRegistry(Thread.currentThread().getContextClassLoader());
 

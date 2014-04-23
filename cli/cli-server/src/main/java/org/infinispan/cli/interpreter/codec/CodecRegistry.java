@@ -6,9 +6,9 @@ import java.util.Iterator;
 import java.util.Map;
 import java.util.NoSuchElementException;
 import java.util.ServiceConfigurationError;
-import java.util.ServiceLoader;
 
 import org.infinispan.cli.interpreter.logging.Log;
+import org.infinispan.commons.util.ServiceFinder;
 import org.infinispan.util.logging.LogFactory;
 
 /**
@@ -23,8 +23,7 @@ public class CodecRegistry {
 
    public CodecRegistry(ClassLoader cl) {
       codecs = new HashMap<String, Codec>();
-      ServiceLoader<Codec> services = ServiceLoader.load(Codec.class, cl);
-      Iterator<Codec> it = services.iterator();
+      Iterator<Codec> it = ServiceFinder.load(Codec.class, cl).iterator();
       for(;;) {
          try {
             Codec codec = it.next();

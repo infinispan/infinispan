@@ -1,12 +1,13 @@
 package org.infinispan.interceptors.compat;
 
-import org.infinispan.compat.TypeConverter;
-import org.infinispan.context.Flag;
+import java.util.Collection;
+import java.util.Set;
+
 import org.infinispan.commons.CacheException;
 import org.infinispan.commons.marshall.Marshaller;
-
-import java.util.ServiceLoader;
-import java.util.Set;
+import org.infinispan.commons.util.ServiceFinder;
+import org.infinispan.compat.TypeConverter;
+import org.infinispan.context.Flag;
 
 /**
  * An interceptor that applies type conversion to the data stored in the cache.
@@ -25,7 +26,7 @@ public class TypeConverterInterceptor extends BaseTypeConverterInterceptor {
 
    @SuppressWarnings("unchecked")
    public TypeConverterInterceptor(Marshaller marshaller) {
-      ServiceLoader<TypeConverter> converters = ServiceLoader.load(TypeConverter.class);
+      Collection<TypeConverter> converters = ServiceFinder.load(TypeConverter.class);
       for (TypeConverter converter : converters) {
          if (converter.supportsInvocation(Flag.OPERATION_HOTROD)) {
             hotRodConverter = setConverterMarshaller(converter, marshaller);

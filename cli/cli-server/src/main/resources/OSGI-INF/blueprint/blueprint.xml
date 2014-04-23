@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<blueprint  default-activation="eager" 
+            xmlns="http://www.osgi.org/xmlns/blueprint/v1.0.0"
+            xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+
+  <bean id="noneCodec" class="org.infinispan.cli.interpreter.codec.NoneCodec"/>
+  <service ref="noneCodec" interface="org.infinispan.cli.interpreter.codec.Codec"/>
+
+  <bean id="hotRodCodec" class="org.infinispan.cli.interpreter.codec.HotRodCodec"/>
+  <service ref="hotRodCodec" interface="org.infinispan.cli.interpreter.codec.Codec"/>
+
+  <bean id="memcachedCodec" class="org.infinispan.cli.interpreter.codec.MemcachedCodec"/>
+  <service ref="memcachedCodec" interface="org.infinispan.cli.interpreter.codec.Codec"/>
+
+  <bean id="restCodec" class="org.infinispan.cli.interpreter.codec.RestCodec"/>
+  <service ref="restCodec" interface="org.infinispan.cli.interpreter.codec.Codec"/>
+
+  <bean id="interpreterMetadataFileFinder" class="org.infinispan.cli.interpreter.InterpreterMetadataFileFinder"/>
+  <service ref="interpreterMetadataFileFinder" interface="org.infinispan.factories.components.ModuleMetadataFileFinder"/>
+
+  <bean id="lifecycleCallbacks" class="org.infinispan.cli.interpreter.LifecycleCallbacks"/>
+  <service ref="lifecycleCallbacks" interface="org.infinispan.lifecycle.ModuleLifecycle"/>
+  
+</blueprint>

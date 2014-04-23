@@ -2,19 +2,17 @@ package org.infinispan.configuration.cache;
 
 import static java.util.Arrays.asList;
 
-import java.lang.ref.WeakReference;
 import java.lang.reflect.Constructor;
 import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
 
+import org.infinispan.commons.CacheConfigurationException;
 import org.infinispan.commons.configuration.Builder;
 import org.infinispan.commons.configuration.ConfigurationUtils;
-import org.infinispan.commons.CacheConfigurationException;
 
 public class ConfigurationBuilder implements ConfigurationChildBuilder {
 
-   private WeakReference<ClassLoader> classLoader;
    private final ClusteringConfigurationBuilder clustering;
    private final CustomInterceptorsConfigurationBuilder customInterceptors;
    private final DataContainerConfigurationBuilder dataContainer;
@@ -54,15 +52,6 @@ public class ConfigurationBuilder implements ConfigurationChildBuilder {
       this.unsafe = new UnsafeConfigurationBuilder(this);
       this.sites = new SitesConfigurationBuilder(this);
       this.compatibility = new CompatibilityModeConfigurationBuilder(this);
-   }
-
-   public ConfigurationBuilder classLoader(ClassLoader cl) {
-      this.classLoader = new WeakReference<ClassLoader>(cl);
-      return this;
-   }
-
-   ClassLoader classLoader() {
-      return classLoader != null ? classLoader.get() : null;
    }
 
    @Override
@@ -208,11 +197,10 @@ public class ConfigurationBuilder implements ConfigurationChildBuilder {
                jmxStatistics.create(), persistence.create(), locking.create(), security.create(),
                storeAsBinary.create(), transaction.create(), unsafe.create(), versioning.create(), sites.create(),
                compatibility.create(),
-               modulesConfig, classLoader == null ? null : classLoader.get());
+               modulesConfig);
    }
 
    public ConfigurationBuilder read(Configuration template) {
-      this.classLoader = new WeakReference<ClassLoader>(template.classLoader());
       this.clustering.read(template.clustering());
       this.customInterceptors.read(template.customInterceptors());
       this.dataContainer.read(template.dataContainer());
@@ -243,8 +231,7 @@ public class ConfigurationBuilder implements ConfigurationChildBuilder {
    @Override
    public String toString() {
       return "ConfigurationBuilder{" +
-            "classLoader=" + classLoader +
-            ", clustering=" + clustering +
+            "clustering=" + clustering +
             ", customInterceptors=" + customInterceptors +
             ", dataContainer=" + dataContainer +
             ", deadlockDetection=" + deadlockDetection +

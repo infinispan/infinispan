@@ -1,11 +1,10 @@
 package org.infinispan.cli.connection;
 
-import java.util.ServiceLoader;
+import org.infinispan.commons.util.ServiceFinder;
 
 public final class ConnectionFactory {
    public static Connection getConnection(final String connectionString) {
-      ServiceLoader<Connector> connectors = ServiceLoader.load(Connector.class);
-      for (Connector connector : connectors) {
+      for (Connector connector : ServiceFinder.load(Connector.class)) {
          Connection connection = connector.getConnection(connectionString);
          if (connection != null) {
             return connection;
