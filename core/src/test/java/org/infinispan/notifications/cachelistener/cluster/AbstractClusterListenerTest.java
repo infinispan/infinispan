@@ -538,7 +538,8 @@ public abstract class AbstractClusterListenerTest extends MultipleCacheManagersT
       cacheManagers.remove(0);
       log.info("Node 0 killed");
 
-      waitForClusterToForm(CACHE_NAME);
+      TestingUtil.blockUntilViewsReceived(10000, false, cacheManagers);
+      TestingUtil.waitForRehashToComplete(caches(CACHE_NAME));
 
       checkPoint.triggerForever("pre_cluster_listeners_invoked_" + cache0);
 
