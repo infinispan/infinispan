@@ -26,11 +26,14 @@ import java.util.HashSet;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
+
 import static org.infinispan.test.TestingUtil.withCacheManager;
-import static org.testng.Assert.assertNull;
-import static org.testng.AssertJUnit.assertEquals;
-import static org.testng.AssertJUnit.assertNotNull;
-import static org.testng.internal.junit.ArrayAsserts.assertArrayEquals;
+
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertArrayEquals;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertNotNull;
+
 
 /**
  * This is a base functional test class containing tests that should be executed for each cache store/loader

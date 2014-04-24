@@ -1,5 +1,9 @@
 package org.infinispan.server.test.client.hotrod.osgi;
 
+import java.io.IOException;
+import java.io.ObjectInput;
+import java.io.ObjectOutput;
+import java.io.Serializable;
 import java.net.URL;
 import java.util.Collections;
 import java.util.List;
@@ -9,6 +13,10 @@ import org.infinispan.client.hotrod.RemoteCacheManager;
 import org.infinispan.client.hotrod.Search;
 import org.infinispan.client.hotrod.configuration.ConfigurationBuilder;
 import org.infinispan.client.hotrod.marshall.ProtoStreamMarshaller;
+import org.infinispan.commons.io.ByteBuffer;
+import org.infinispan.commons.io.ByteBufferImpl;
+import org.infinispan.commons.marshall.AbstractMarshaller;
+import org.infinispan.commons.marshall.Externalizer;
 import org.infinispan.protostream.SerializationContext;
 import org.infinispan.protostream.sampledomain.Account;
 import org.infinispan.protostream.sampledomain.Address;
@@ -24,6 +32,8 @@ import org.infinispan.query.dsl.Query;
 import org.infinispan.query.dsl.QueryFactory;
 import org.infinispan.server.test.category.Osgi;
 import org.infinispan.server.test.util.osgi.KarafTestSupport;
+import org.junit.After;
+import org.junit.Before;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
 import org.junit.runner.RunWith;
@@ -56,14 +66,15 @@ public class RemoteCacheOsgiTest extends KarafTestSupport {
     private final String INDEXED_CACHE = "testcache";
     private final String KARAF_VERSION = System.getProperty("version.karaf", "2.3.3");
     private final String RESOURCES_DIR = System.getProperty("resources.dir", System.getProperty("java.io.tmpdir"));
+    private ConfigurationBuilder builder;
+    private RemoteCacheManager manager;
 
     @Configuration
     public Option[] config() throws Exception {
         return new Option[]{
                 KarafDistributionOption.karafDistributionConfiguration()
                         .frameworkUrl(maven().groupId("org.apache.karaf").artifactId("apache-karaf").type("zip").version(KARAF_VERSION))
-                        .karafVersion(KARAF_VERSION)
-                        .name("Apache Karaf"),
+                        .karafVersion(KARAF_VERSION),
                 //install HotRod client feature ("feature" is a set of bundles, all the bundles are installed at once)
                 KarafDistributionOption.features(maven().groupId("org.infinispan")
                         .artifactId("infinispan-client-hotrod").type("xml").classifier("features")
@@ -75,26 +86,34 @@ public class RemoteCacheOsgiTest extends KarafTestSupport {
         };
     }
 
-    @Test
-    public void testPutGet() throws Exception {
-        ConfigurationBuilder builder = new ConfigurationBuilder();
+    @Before
+    public void setUp() {
+        builder = new ConfigurationBuilder();
         builder.addServer()
                 .host(SERVER_HOST)
                 .port(HOTROD_PORT);
-        RemoteCacheManager manager = new RemoteCacheManager(builder.build());
-        RemoteCache<String, String> cache = manager.getCache(DEFAULT_CACHE);
-        cache.put("k1", "v1");
-        assertEquals("v1", cache.get("k1"));
+    }
+
+    @After
+    public void tearDown() {
+        if (manager != null) {
+            manager.stop();
+        }
+    }
+
+    @Test
+    public void testCustomObjectPutGet() {
+        Person p = new Person("Martin");
+        manager = new RemoteCacheManager(builder.build());
+        RemoteCache<Object, Object> cache = manager.getCache(DEFAULT_CACHE);
+        cache.put("k1", p);
+        assertEquals(p, cache.get("k1"));
     }
 
     @Test
     public void testAttributeQuery() throws Exception {
-        ConfigurationBuilder builder = new ConfigurationBuilder();
-        builder.addServer()
-                .host(SERVER_HOST)
-                .port(HOTROD_PORT)
-                .marshaller(new ProtoStreamMarshaller());
-        RemoteCacheManager manager = new RemoteCacheManager(builder.build());
+        builder.marshaller(new ProtoStreamMarshaller());
+        manager = new RemoteCacheManager(builder.build());
         RemoteCache<Integer, User> cache = manager.getCache(INDEXED_CACHE);
 
         SerializationContext ctx = ProtoStreamMarshaller.getSerializationContext(manager);
@@ -168,6 +187,36 @@ public class RemoteCacheOsgiTest extends KarafTestSupport {
         assertEquals(1, user.getAddresses().size());
         assertEquals("Dark Alley", user.getAddresses().get(0).getStreet());
         assertEquals("1234", user.getAddresses().get(0).getPostCode());
+    }
+
+    static class Person implements Serializable {
+
+        final String name;
+
+        public Person(String name) {
+            this.name = name;
+        }
+
+        public String getName() {
+            return name;
+        }
+
+        @Override
+        public boolean equals(Object o) {
+            if (this == o) return true;
+            if (o == null || getClass() != o.getClass()) return false;
+
+            Person person = (Person) o;
+
+            if (!name.equals(person.name)) return false;
+
+            return true;
+        }
+
+        @Override
+        public int hashCode() {
+            return name.hashCode();
+        }
     }
 
 }

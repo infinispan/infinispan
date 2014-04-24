@@ -31,8 +31,8 @@ import java.util.concurrent.atomic.AtomicInteger;
 @Test(groups = "functional", testName = "distexec.LocalDistributedExecutorTest")
 public class LocalDistributedExecutorTest extends MultipleCacheManagersTest {
    
-   private DistributedExecutorService cleanupService;
-   private static final Map<String, AtomicInteger> counterMap = new ConcurrentHashMap<String, AtomicInteger>();
+   protected DistributedExecutorService cleanupService;
+   protected static final Map<String, AtomicInteger> counterMap = new ConcurrentHashMap<String, AtomicInteger>();
 
    public LocalDistributedExecutorTest() {
       cleanup = CleanupPhase.AFTER_METHOD;
