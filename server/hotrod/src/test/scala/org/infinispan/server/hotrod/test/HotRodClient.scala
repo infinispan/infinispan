@@ -163,7 +163,7 @@ class HotRodClient(host: String, port: Int, defaultCacheName: String, rspTimeout
    }
 
    def get(k: Array[Byte], flags: Int): TestGetResponse = {
-      get(0x03, k, 0).asInstanceOf[TestGetResponse]
+      get(0x03, k, flags).asInstanceOf[TestGetResponse]
    }
 
    def assertGet(m: Method): TestGetResponse = assertGet(m, 0)
@@ -171,14 +171,14 @@ class HotRodClient(host: String, port: Int, defaultCacheName: String, rspTimeout
    def assertGet(m: Method, flags: Int): TestGetResponse = get(k(m), flags)
 
    def containsKey(k: Array[Byte], flags: Int): TestResponse = {
-      get(0x0F, k, 0)
+      get(0x0F, k, flags)
    }
 
    def getWithVersion(k: Array[Byte], flags: Int): TestGetWithVersionResponse =
-      get(0x11, k, 0).asInstanceOf[TestGetWithVersionResponse]
+      get(0x11, k, flags).asInstanceOf[TestGetWithVersionResponse]
 
    def getWithMetadata(k: Array[Byte], flags: Int): TestGetWithMetadataResponse =
-      get(0x1B, k, 0).asInstanceOf[TestGetWithMetadataResponse]
+      get(0x1B, k, flags).asInstanceOf[TestGetWithMetadataResponse]
 
    private def get(code: Byte, k: Array[Byte], flags: Int): TestResponse = {
       val op = new Op(0xA0, protocolVersion, code, defaultCacheName, k, 0, 0, null, flags, 0, 1, 0)
@@ -358,7 +358,7 @@ private class Decoder(client: HotRodClient) extends ReplayingDecoder[Void] with 
          }
          case PutResponse | PutIfAbsentResponse | ReplaceResponse | ReplaceIfUnmodifiedResponse
               | RemoveResponse | RemoveIfUnmodifiedResponse => {
-            if (op.flags == 1) {
+            if ((op.flags & ProtocolFlag.ForceReturnPreviousValue.id) == 1) {
                val length = readUnsignedInt(buf)
                if (length == 0) {
                   new TestResponseWithPrevious(op.version, id, op.cacheName,

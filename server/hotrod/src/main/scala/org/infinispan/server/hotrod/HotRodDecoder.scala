@@ -85,7 +85,8 @@ class HotRodDecoder(cacheManager: EmbeddedCacheManager, transport: NettyTranspor
             "Remote requests are not allowed to topology cache. Do no send remote requests to cache '%s'".format(cacheName),
             header.version, header.messageId)
 
-      server.getCacheInstance(cacheName, cacheManager, server.isCacheNameKnown(cacheName))
+      val cache = server.getCacheInstance(cacheName, cacheManager, server.isCacheNameKnown(cacheName))
+      header.decoder.getOptimizedCache(header, cache)
    }
 
    override def readKey(b: ByteBuf): (Array[Byte], Boolean) =
@@ -140,9 +141,6 @@ class HotRodDecoder(cacheManager: EmbeddedCacheManager, transport: NettyTranspor
          }
       }
    }
-
-   override protected def getOptimizedCache(c: Cache): Cache =
-      header.decoder.getOptimizedCache(header, c)
 
    override protected def createServerException(e: Exception, b: ByteBuf): (HotRodException, Boolean) = {
       e match {

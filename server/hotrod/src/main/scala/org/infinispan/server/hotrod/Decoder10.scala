@@ -4,19 +4,19 @@ import logging.Log
 import org.infinispan.server.core.Operation._
 import HotRodOperation._
 import OperationStatus._
-import org.infinispan.AdvancedCache
 import org.infinispan.stats.Stats
 import org.infinispan.server.core._
 import collection.mutable
 import collection.immutable
 import org.infinispan.util.concurrent.TimeoutException
 import java.io.IOException
-import org.infinispan.context.Flag.IGNORE_RETURN_VALUES
+import org.infinispan.context.Flag._
 import org.infinispan.server.core.transport.ExtendedByteBuf._
 import transport.NettyTransport
 import org.infinispan.container.entries.{CacheEntry, InternalCacheEntry}
 import org.infinispan.container.versioning.NumericVersion
 import io.netty.buffer.ByteBuf
+import scala.Some
 
 /**
  * HotRod protocol decoder specific for specification version 1.0.
@@ -158,7 +158,7 @@ object Decoder10 extends AbstractVersionedDecoder with ServerConstants with Log 
       h.op match {
          case ClearRequest => {
             // Get an optimised cache in case we can make the operation more efficient
-            getOptimizedCache(h, cache).clear()
+            cache.clear()
             new Response(h.version, h.messageId, h.cacheName, h.clientIntel,
                          ClearResponse, Success, h.topologyId)
          }
@@ -276,11 +276,16 @@ object Decoder10 extends AbstractVersionedDecoder with ServerConstants with Log 
    }
 
    override def getOptimizedCache(h: HotRodHeader, c: Cache): Cache = {
+      var optCache = c
       if (!hasFlag(h, ForceReturnPreviousValue)) {
-         c.withFlags(IGNORE_RETURN_VALUES)
-      } else {
-         c
+         h.op match {
+            case PutRequest =>
+            case PutIfAbsentRequest =>
+               optCache = optCache.withFlags(IGNORE_RETURN_VALUES)
+            case _ =>
+         }
       }
+      optCache
    }
 
    def toResponse(request: Enumeration#Value): OperationResponse = {
@@ -332,4 +337,5 @@ object ProtocolFlag extends Enumeration {
    val ForceReturnPreviousValue = Value(0x01)
    val DefaultLifespan = Value(0x02)
    val DefaultMaxIdle = Value(0x04)
+   val SkipCacheLoader = Value(0x08)
 }

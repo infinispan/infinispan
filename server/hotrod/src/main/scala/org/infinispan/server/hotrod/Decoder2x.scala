@@ -4,14 +4,13 @@ import logging.Log
 import org.infinispan.server.core.Operation._
 import HotRodOperation._
 import OperationStatus._
-import org.infinispan.AdvancedCache
 import org.infinispan.stats.Stats
 import org.infinispan.server.core._
 import collection.mutable
 import collection.immutable
 import org.infinispan.util.concurrent.TimeoutException
 import java.io.IOException
-import org.infinispan.context.Flag.IGNORE_RETURN_VALUES
+import org.infinispan.context.Flag.{SKIP_CACHE_LOAD, IGNORE_RETURN_VALUES}
 import org.infinispan.server.core.transport.ExtendedByteBuf._
 import transport.NettyTransport
 import org.infinispan.container.entries.{CacheEntry, InternalCacheEntry}
@@ -156,7 +155,7 @@ object Decoder2x extends AbstractVersionedDecoder with ServerConstants with Log 
       h.op match {
          case ClearRequest => {
             // Get an optimised cache in case we can make the operation more efficient
-            getOptimizedCache(h, cache).clear()
+            cache.clear()
             new Response(h.version, h.messageId, h.cacheName, h.clientIntel,
                ClearResponse, Success, h.topologyId)
          }
@@ -274,11 +273,30 @@ object Decoder2x extends AbstractVersionedDecoder with ServerConstants with Log 
    }
 
    override def getOptimizedCache(h: HotRodHeader, c: Cache): Cache = {
-      if (!hasFlag(h, ForceReturnPreviousValue)) {
-         c.withFlags(IGNORE_RETURN_VALUES)
-      } else {
-         c
+      var optCache = c
+      if (hasFlag(h, SkipCacheLoader)) {
+         h.op match {
+            case PutRequest
+                 | GetRequest
+                 | GetWithVersionRequest
+                 | RemoveRequest
+                 | ContainsKeyRequest
+                 | BulkGetRequest
+                 | GetWithMetadataRequest
+                 | BulkGetKeysRequest =>
+               optCache = optCache.withFlags(SKIP_CACHE_LOAD)
+            case _ =>
+         }
       }
+      if (!hasFlag(h, ForceReturnPreviousValue)) {
+         h.op match {
+            case PutRequest
+                 | PutIfAbsentRequest =>
+               optCache = optCache.withFlags(IGNORE_RETURN_VALUES)
+            case _ =>
+         }
+      }
+      optCache
    }
 
    def toResponse(request: Enumeration#Value): OperationResponse = {
