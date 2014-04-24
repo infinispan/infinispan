@@ -8,6 +8,7 @@ import java.util.List;
 
 import org.infinispan.commons.configuration.Builder;
 import org.infinispan.commons.configuration.BuiltBy;
+import org.infinispan.commons.util.Util;
 import org.infinispan.commons.CacheConfigurationException;
 import static java.util.Arrays.asList;
 
@@ -27,7 +28,9 @@ public class GlobalConfigurationBuilder implements GlobalConfigurationChildBuild
    private final SiteConfigurationBuilder site;
 
    public GlobalConfigurationBuilder() {
-      this.cl = new WeakReference<ClassLoader>(Thread.currentThread().getContextClassLoader());
+      // In OSGi contexts the TCCL should not be used. Use the infinispan-core bundle as default instead.
+      ClassLoader defaultCL = Util.isOSGiContext() ? GlobalConfigurationBuilder.class.getClassLoader() : Thread.currentThread().getContextClassLoader();
+      this.cl = new WeakReference<ClassLoader>(defaultCL);
       this.transport = new TransportConfigurationBuilder(this);
       this.globalJmxStatistics = new GlobalJmxStatisticsConfigurationBuilder(this);
       this.serialization = new SerializationConfigurationBuilder(this);

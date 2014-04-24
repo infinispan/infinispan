@@ -65,8 +65,11 @@ public class ServiceFinder {
    }
 
    private static <T> void addOsgiServices(Class<T> contract, Set<T> services) {
+      if (!Util.isOSGiContext()) {
+          return;
+      }
       ClassLoader loader = ServiceFinder.class.getClassLoader();
-      if ((loader != null) && loader.getClass().getName().equals("org.osgi.framework.BundleReference")) {
+      if ((loader != null) && (loader instanceof org.osgi.framework.BundleReference)) {
          final BundleContext bundleContext = ((BundleReference) loader).getBundle().getBundleContext();
          final ServiceTracker<T, T> serviceTracker = new ServiceTracker<T, T>(bundleContext, contract.getName(),
                null);

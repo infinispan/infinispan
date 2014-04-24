@@ -86,6 +86,22 @@ public final class Util {
       }
    }
 
+   /**
+    * Tries to determine if the code is running in an OSGi context.
+    * 
+    * @return true if an OSGi context is detected
+    */
+   public static boolean isOSGiContext() {
+      ClassLoader cl = Util.class.getClassLoader();
+      boolean result = false;
+      try {
+         result = cl instanceof org.osgi.framework.BundleReference;
+      } catch (NoClassDefFoundError ex) {
+         // OSGi bundle not on the classpath. Ignore.
+      }
+      return result;
+   }
+
    public static ClassLoader[] getClassLoaders(ClassLoader appClassLoader) {
       return new ClassLoader[] {
             appClassLoader,  // User defined classes
