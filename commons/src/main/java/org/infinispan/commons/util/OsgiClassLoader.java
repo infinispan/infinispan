@@ -46,8 +46,7 @@ public class OsgiClassLoader extends ClassLoader {
       // later on. This is especially important for embedded OSGi containers, etc.
       super(null);
 
-      final ClassLoader cl = OsgiClassLoader.class.getClassLoader();
-      if ((cl != null) && cl.getClass().getName().equals("org.osgi.framework.BundleReference")) {
+      if (Util.isOSGiContext()) {
          final BundleContext bundleContext = ((BundleReference) OsgiClassLoader.class.getClassLoader()).getBundle()
                .getBundleContext();
          Bundle[] foundBundles = bundleContext.getBundles();

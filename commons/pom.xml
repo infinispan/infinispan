@@ -75,7 +75,6 @@
             </executions>
             <configuration>
                <instructions>
-                  <Fragment-Host>org.infinispan.core;bundle-version=${project.version.osgi}</Fragment-Host>
                   <Export-Package>
                      ${project.groupId}.commons.*;version=${project.version.osgi};-split-package:=error
                   </Export-Package>
