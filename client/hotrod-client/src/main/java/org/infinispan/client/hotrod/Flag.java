@@ -18,6 +18,8 @@ import java.util.Map;
  *    <li>{@link #DEFAULT_MAXIDLE}      This flag can either be used as a request flag during a put operation to mean
  *                                      that the default server maxIdle should be applied or as a response flag meaning that
  *                                      the return entry has a default maxIdle value</li>
+ *    <li>{@link #SKIP_CACHE_LOAD}      Skips loading an entry from any configured
+ *                                      {@link org.infinispan.persistence.spi.CacheLoader}s.</li>
  * </ul>
  *
  * @author Mircea.Markus@jboss.com
@@ -44,7 +46,11 @@ public enum Flag {
     * server maxIdle should be applied or as a response flag meaning that the return entry has a
     * default maxIdle value
     */
-   DEFAULT_MAXIDLE(0x0004)
+   DEFAULT_MAXIDLE(0x0004),
+   /**
+    * Skips loading an entry from any configured {@link org.infinispan.persistence.spi.CacheLoader}s.
+    */
+   SKIP_CACHE_LOAD(0x0008),
    ;
 
    private int flagInt;

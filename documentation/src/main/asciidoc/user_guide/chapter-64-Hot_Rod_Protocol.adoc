@@ -989,6 +989,18 @@ These definitions could change in future Infinispan versions, but as long as the
 compatible (according to the rules defined link:$$https://developers.google.com/protocol-buffers/docs/proto#updating$$[here]) no new Hot Rod
 protocol version will be introduced to accommodate this.
 
+===== Hot Rod Protocol 2.0
+
+.Infinispan versions
+TIP: This version of the protocol is implemented since Infinispan 7.0.0.Alpha2.
+
+====== Request Header
+The `version` field in the header is updated to `20`.
+
+One new flag has been added too:
+
+* +0x0008+	= operation skips loading from configured cache loader.
+
 ==== Hot Rod Hash Functions
 Infinispan makes use of a consistent hash function to place nodes on a hash
 wheel, and to place keys of entries on the same wheel to determine where

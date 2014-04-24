@@ -182,7 +182,7 @@ abstract class AbstractProtocolDecoder[K, V](transport: NettyTransport)
 
    private def put: AnyRef = {
       // Get an optimised cache in case we can make the operation more efficient
-      val prev = getOptimizedCache(cache).put(key, createValue(), buildMetadata())
+      val prev = cache.put(key, createValue(), buildMetadata())
       createSuccessResponse(prev)
    }
 
@@ -203,12 +203,10 @@ abstract class AbstractProtocolDecoder[K, V](transport: NettyTransport)
       metadata.build()
    }
 
-   protected def getOptimizedCache(c: AdvancedCache[K, V]): AdvancedCache[K, V] = c
-
    private def putIfAbsent: AnyRef = {
       var prev = cache.get(key)
       if (prev == null) { // Generate new version only if key not present
-         prev = getOptimizedCache(cache).putIfAbsent(key, createValue(), buildMetadata())
+         prev = cache.putIfAbsent(key, createValue(), buildMetadata())
       }
       if (prev == null)
          createSuccessResponse(prev)
