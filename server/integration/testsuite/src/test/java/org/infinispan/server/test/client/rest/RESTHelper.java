@@ -255,22 +255,24 @@ public class RESTHelper {
      * returns full uri for given server number cache name and key if key is null the key part is ommited
      */
     public static URI fullPathKey(int server, String cache, String key, int offset) {
-        StringBuffer queryBuilder = new StringBuffer(servers.get(server).getRestServerPath() + "/" + cache);
+        final StringBuilder queryBuilder = new StringBuilder(servers.get(server).getRestServerPath() + "/" + cache);
         if (key != null) {
             queryBuilder.append("/").append(key);
         }
+        final String query = queryBuilder.toString();
+        final String hostname = servers.get(server).getHostname();
+        final int connectionPort = port + offset;
 
-        URI uri = null;
-        URL url = null;
         try {
-            url = new URL("http", servers.get(server).getHostname(), port + offset, queryBuilder.toString());
-            uri = new URI(url.getProtocol(), url.getUserInfo(), url.getHost(), url.getPort(), url.getPath(), url.getQuery(), null);
+           final URL url = new URL("http", hostname, connectionPort, query);
+           try {
+              return new URI(url.getProtocol(), url.getUserInfo(), url.getHost(), url.getPort(), url.getPath(), url.getQuery(), null);
+           } catch (URISyntaxException e) {
+              throw new RuntimeException(e);
+           }
         } catch (MalformedURLException e) {
-            System.out.println("URL " + url.toString() + " is a malformed URL");
-        } catch (URISyntaxException e) {
-            System.out.println("URI " + uri.toString() + " is a malformed URL");
+           throw new RuntimeException(e);
         }
-      return uri;
     }
 
     public static URI fullPathKey(int server, String key) {
