@@ -10,6 +10,7 @@ import org.infinispan.interceptors.distribution.L1WriteSynchronizer;
 import org.infinispan.statetransfer.StateTransferLock;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.CheckPoint;
+import org.infinispan.test.fwk.CleanupAfterMethod;
 import org.infinispan.transaction.TransactionMode;
 import org.infinispan.util.concurrent.IsolationLevel;
 import org.junit.Assert;
@@ -41,6 +42,7 @@ import static org.testng.AssertJUnit.assertNotNull;
  * @author wburns
  * @since 6.0
  */
+@CleanupAfterMethod
 @Test(groups = "functional", testName = "distribution.BaseDistSyncL1Test")
 public abstract class BaseDistSyncL1Test extends BaseDistFunctionalTest<Object, String> {
 
