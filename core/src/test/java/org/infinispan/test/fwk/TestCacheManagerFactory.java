@@ -99,9 +99,14 @@ public class TestCacheManagerFactory {
 
    private static void markAsTransactional(boolean transactional, ConfigurationBuilder builder) {
       builder.transaction().transactionMode(transactional ? TransactionMode.TRANSACTIONAL : TransactionMode.NON_TRANSACTIONAL);
-      if (transactional)
-         // Set volatile stores just in case...
-         JBossTransactionsUtils.setVolatileStores();
+      if (transactional) {
+         //Skip this step in OSGi. This operation requires internal packages of Arjuna. These are not exported from the Arjuna
+         //bundle in OSGi
+         if (!Util.isOSGiContext()) {
+            // Set volatile stores just in case...
+            JBossTransactionsUtils.setVolatileStores();
+         }
+      }
    }
 
    private static void updateTransactionSupport(boolean transactional, ConfigurationBuilder builder) {

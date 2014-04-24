@@ -719,13 +719,8 @@
                                 </goals>
                                 <configuration>
                                     <target>
-                                        <exec dir="${server1.dist}/bin" spawn="true" executable="chmod" osfamily="unix">
-                                            <arg value="+x"/>
-                                            <arg value="../bin"/>
-                                            <arg value="standalone.sh"/>
-                                        </exec>
-                                        <exec executable="${server1.dist}/bin/standalone.sh" osfamily="unix" spawn="true">
-                                            <arg line="-c testsuite/standalone-with-indexing.xml"/>
+                                        <exec executable="bash" osfamily="unix" spawn="true">
+                                            <arg line="${server1.dist}/bin/standalone.sh -c testsuite/standalone-with-indexing.xml"/>
                                             <env key="JAVA_OPTS" value="${server.jvm.args} -Djboss.socket.binding.port-offset=0 -Djboss.node.name=jdg"/>
                                         </exec>
                                         <exec executable="${server1.dist}/bin/standalone.bat" osfamily="windows" spawn="true">

@@ -165,6 +165,9 @@
       <version.maven.invoker>1.8</version.maven.invoker>
       <version.jacoco>0.5.10.201208310627</version.jacoco>
       <version.asm>3.3.1</version.asm>
+      <version.pax.url>1.3.7</version.pax.url>
+      <version.karaf>2.3.3</version.karaf>
+      <version.pax.exam>3.4.0</version.pax.exam>
       <reportTitle>Infinispan JaCoCo Report</reportTitle>
       <dir.ispn>../</dir.ispn>
       <dir.report>../jacoco-html</dir.report>
@@ -829,6 +832,47 @@
             <version>${version.org.picketbox}</version>
             <scope>test</scope>
          </dependency>
+         <dependency>
+            <groupId>org.apache.karaf</groupId>
+            <artifactId>apache-karaf</artifactId>
+            <version>${version.karaf}</version>
+            <type>zip</type>
+            <scope>test</scope>
+            <exclusions>
+               <exclusion>
+                  <groupId>org.ops4j.pax.logging</groupId>
+                  <artifactId>pax-logging-api</artifactId>
+               </exclusion>
+               <exclusion>
+                  <groupId>org.ops4j.pax.logging</groupId>
+                  <artifactId>pax-logging-service</artifactId>
+               </exclusion>
+            </exclusions>
+         </dependency>
+         <dependency>
+            <groupId>org.ops4j.pax.exam</groupId>
+            <artifactId>pax-exam-container-karaf</artifactId>
+            <version>${version.pax.exam}</version>
+            <scope>test</scope>
+         </dependency>
+         <dependency>
+            <groupId>org.ops4j.pax.exam</groupId>
+            <artifactId>pax-exam</artifactId>
+            <version>${version.pax.exam}</version>
+            <scope>test</scope>
+         </dependency>
+         <dependency>
+            <groupId>org.ops4j.pax.exam</groupId>
+            <artifactId>pax-exam-junit4</artifactId>
+            <version>${version.pax.exam}</version>
+            <scope>test</scope>
+         </dependency>
+         <dependency>
+            <groupId>org.ops4j.pax.exam</groupId>
+            <artifactId>pax-exam-inject</artifactId>
+            <version>${version.pax.exam}</version>
+            <scope>test</scope>
+         </dependency>
       </dependencies>
    </dependencyManagement>
    <dependencies>
@@ -970,6 +1014,11 @@
                <groupId>org.apache.maven.plugins</groupId>
                <artifactId>maven-dependency-plugin</artifactId>
                <version>2.6</version>
+            </plugin>
+            <plugin>
+               <groupId>org.apache.servicemix.tooling</groupId>
+               <artifactId>depends-maven-plugin</artifactId>
+               <version>1.2</version>
             </plugin>
             <plugin>
                <groupId>org.apache.maven.plugins</groupId>
@@ -1566,6 +1615,42 @@
                   <configuration>
                      <threadCount>1</threadCount>
                   </configuration>
+               </plugin>
+            </plugins>
+         </build>
+      </profile>
+      <profile>
+         <id>test-osgi</id>
+         <properties>
+            <defaultTestGroup>org.infinispan.it.osgi.Osgi</defaultTestGroup>
+            <defaultExcludedTestGroup></defaultExcludedTestGroup>
+            <infinispan.test.jgroups.protocol>tcp</infinispan.test.jgroups.protocol>
+         </properties>
+         <build>
+            <plugins>
+               <plugin>
+                  <groupId>org.apache.maven.plugins</groupId>
+                  <artifactId>maven-surefire-plugin</artifactId>
+                  <configuration>
+                     <threadCount>1</threadCount>
+                     <systemPropertyVariables>
+                        <version.karaf>${version.karaf}</version.karaf>
+                     </systemPropertyVariables>
+                  </configuration>
+                  <executions>
+                     <execution>
+                        <id>default-test</id>
+                        <configuration>
+                           <testNGArtifactName>none:none</testNGArtifactName>
+                           <properties>
+                              <property>
+                                 <name>listener</name>
+                                 <value>org.junit.runner.notification.RunListener</value>
+                              </property>
+                           </properties>
+                        </configuration>
+                     </execution>
+                  </executions>
                </plugin>
             </plugins>
          </build>

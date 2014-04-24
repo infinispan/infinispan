@@ -2,6 +2,7 @@ package org.infinispan.server.test.client.hotrod;
 
 
 import java.io.IOException;
+import java.io.Serializable;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -736,6 +737,43 @@ public abstract class AbstractRemoteCacheTest {
     @Test
     public void testGetProtocolVersion() throws Exception {
         assertEquals("HotRod client, protocol version :1.3", remoteCache.getProtocolVersion());
+    }
+
+    @Test
+    public void testPutGetCustomObject() throws Exception {
+        final Person p = new Person("Martin");
+        remoteCache.put("k1", p);
+        assertEquals(p, remoteCache.get("k1"));
+    }
+
+    static class Person implements Serializable {
+
+        final String name;
+
+        public Person(String name) {
+            this.name = name;
+        }
+
+        public String getName() {
+            return name;
+        }
+
+        @Override
+        public boolean equals(Object o) {
+            if (this == o) return true;
+            if (o == null || getClass() != o.getClass()) return false;
+
+            Person person = (Person) o;
+
+            if (!name.equals(person.name)) return false;
+
+            return true;
+        }
+
+        @Override
+        public int hashCode() {
+            return name.hashCode();
+        }
     }
 
     protected <T extends Map<String, String>> void fill(T map, int entryCount) {

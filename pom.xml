@@ -67,6 +67,7 @@
       <module>integrationtests/cdi-jcache-it</module>
       <module>integrationtests/security-it</module>
       <module>integrationtests/security-manager-it</module>
+      <module>integrationtests/osgi</module>
       <module>jcache</module>
       <module>server/integration</module>
    </modules>

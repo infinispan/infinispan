@@ -2,7 +2,7 @@
 <!-- Features are groups of bundles that are installed into OSGi(Karaf) at once. This is for
      users' convenience. The features can be installed with the following commands:
 
-     features:addUrl mvn:org.infinispan/infinispan-client-hotrod/{project.version}/xml/features
+     features:addUrl mvn:org.infinispan/infinispan-client-hotrod/${project.version}/xml/features
      features:install hotrod-client
         or
      features:install hotrod-client-with-query
