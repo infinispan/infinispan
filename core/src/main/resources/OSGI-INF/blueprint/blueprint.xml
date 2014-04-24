@@ -4,8 +4,8 @@
             xmlns="http://www.osgi.org/xmlns/blueprint/v1.0.0"
             xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
 
-  <bean id="parser60" class="org.infinispan.configuration.parsing.Parser60"/>
-  <service ref="parser60" interface="org.infinispan.configuration.parsing.ConfigurationParser"/>
+  <bean id="parser70" class="org.infinispan.configuration.parsing.Parser70"/>
+  <service ref="parser70" interface="org.infinispan.configuration.parsing.ConfigurationParser"/>
 
   <bean id="defaultMapReduceTaskLifecycle" class="org.infinispan.distexec.mapreduce.spi.DefaultMapReduceTaskLifecycle"/>
   <service ref="defaultMapReduceTaskLifecycle" interface="org.infinispan.distexec.mapreduce.spi.MapReduceTaskLifecycle"/>

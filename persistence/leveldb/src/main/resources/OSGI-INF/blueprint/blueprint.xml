@@ -4,7 +4,7 @@
             xmlns="http://www.osgi.org/xmlns/blueprint/v1.0.0"
             xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
 
-  <bean id="levelDBStoreConfigurationParser60" class="org.infinispan.persistence.leveldb.configuration.LevelDBStoreConfigurationParser60"/>
-  <service ref="levelDBStoreConfigurationParser60" interface="org.infinispan.configuration.parsing.ConfigurationParser"/>
+  <bean id="levelDBStoreConfigurationParser70" class="org.infinispan.persistence.leveldb.configuration.LevelDBStoreConfigurationParser70"/>
+  <service ref="levelDBStoreConfigurationParser70" interface="org.infinispan.configuration.parsing.ConfigurationParser"/>
   
 </blueprint>
