@@ -1280,6 +1280,10 @@
             <maven-resource group="joda-time" artifact="joda-time"/>
         </module-def>
 
+        <module-def name="org.json">
+            <maven-resource group="org.json" artifact="json"/>
+        </module-def>
+
         <module-def name="org.kohsuke.rngom">
             <maven-resource group="org.kohsuke.rngom" artifact="rngom"/>
         </module-def>
