@@ -57,7 +57,7 @@ public class StateTransferManagerImpl implements StateTransferManager {
    private final CountDownLatch initialStateTransferComplete = new CountDownLatch(1);
    // The first topology in which the local node was a member. Any command with a lower
    // topology id will be ignored.
-   private volatile int firstTopologyAsMember = -1;
+   private volatile int firstTopologyAsMember = Integer.MAX_VALUE;
 
    public StateTransferManagerImpl() {
    }
@@ -168,7 +168,7 @@ public class StateTransferManagerImpl implements StateTransferManager {
       }
 
       // No need for extra synchronization here, since LocalTopologyManager already serializes topology updates.
-      if (firstTopologyAsMember < 0 && newCacheTopology.getMembers().contains(rpcManager.getAddress())) {
+      if (firstTopologyAsMember == Integer.MAX_VALUE && newCacheTopology.getMembers().contains(rpcManager.getAddress())) {
          if (trace) log.trace("This is the first topology in which the local node is a member");
          firstTopologyAsMember = newCacheTopology.getTopologyId();
       }
