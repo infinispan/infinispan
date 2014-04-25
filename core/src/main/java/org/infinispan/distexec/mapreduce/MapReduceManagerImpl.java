@@ -38,6 +38,8 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Iterator;
+import java.util.LinkedHashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
@@ -412,7 +414,7 @@ public class MapReduceManagerImpl implements MapReduceManager {
       return selectedKeys;
    }
 
-   abstract class DataContainerTask<K,V> implements ParallelIterableMap.KeyValueAction<Object, InternalCacheEntry> {
+   private abstract class DataContainerTask<K,V> implements ParallelIterableMap.KeyValueAction<Object, InternalCacheEntry> {
 
       V getValue(InternalCacheEntry entry){
          if (entry != null) {
@@ -441,7 +443,7 @@ public class MapReduceManagerImpl implements MapReduceManager {
     * smoothly as parallel traversal of container's key/value pairs is progress.
     *
     */
-   private class MapCombineTask<K,V, KOut,VOut> extends DataContainerTask<K, V> implements AdvancedCacheLoader.CacheLoaderTask {
+   private final class MapCombineTask<K,V, KOut,VOut> extends DataContainerTask<K, V> implements AdvancedCacheLoader.CacheLoaderTask {
 
       DefaultCollector<KOut, VOut> collector;
       MapCombineCommand<K, V, KOut, VOut> mcc;
@@ -484,7 +486,7 @@ public class MapReduceManagerImpl implements MapReduceManager {
 
       protected void combineAndMigrate() throws CacheException {
          if (collector.size() > maxCollectorSize) {
-            final Map<KOut, List<VOut>> batch = collector.removeCollectedValues();
+            final Map<KOut, List<VOut>> batch = collector.removeLRUEntry();
             if (!batch.isEmpty()) {
                Map<KOut, List<VOut>> combinedValues = combine(mcc, batch);
                Set<KOut> migratedKeys = migrateIntermediateKeysAndValues(mcc, combinedValues);
@@ -509,7 +511,7 @@ public class MapReduceManagerImpl implements MapReduceManager {
       }
    }
 
-   public class IntermediateKeyFilter<T> implements AdvancedCacheLoader.KeyFilter<IntermediateCompositeKey<T>> {
+   private static final class IntermediateKeyFilter<T> implements AdvancedCacheLoader.KeyFilter<IntermediateCompositeKey<T>> {
 
       private final String taskId;
 
@@ -536,7 +538,7 @@ public class MapReduceManagerImpl implements MapReduceManager {
     * @author William Burns
     * @author Vladimir Blagojevic
     */
-   private static class DefaultCollector<KOut, VOut> implements CollectableCollector<KOut, VOut> {
+   private static final class DefaultCollector<KOut, VOut> implements CollectableCollector<KOut, VOut> {
 
       private final boolean atomicEmit;
       private Map<KOut, List<VOut>> store;
@@ -544,7 +546,7 @@ public class MapReduceManagerImpl implements MapReduceManager {
 
       public DefaultCollector(int size, boolean atomicEmit) {
          this.atomicEmit = atomicEmit;
-         store = CollectionFactory.makeConcurrentMap(size);
+         store = new LinkedHashMap<KOut, List<VOut>>(size, 0.75f, true);
          emitCount = new AtomicInteger();
       }
 
@@ -584,6 +586,21 @@ public class MapReduceManagerImpl implements MapReduceManager {
          return values;
       }
 
+      @Override
+      public Map<KOut, List<VOut>> removeLRUEntry() {
+         Map<KOut, List<VOut>> lrus = Collections.emptyMap();
+         synchronized (this) {
+            Iterator<KOut> iterator = store.keySet().iterator();
+            if (iterator.hasNext()){
+               KOut out = iterator.next();
+               List<VOut> list = store.remove(out);
+               lrus = Collections.singletonMap(out, list);
+               emitCount.addAndGet(-list.size());
+            }
+         }
+         return lrus;
+      }
+
       public int size() {
          return emitCount.get();
       }
@@ -591,9 +608,10 @@ public class MapReduceManagerImpl implements MapReduceManager {
 
    private interface CollectableCollector<K,V> extends Collector<K, V>{
       Map<K, List<V>> removeCollectedValues();
+      Map<K, List<V>> removeLRUEntry();
    }
 
-   private static class DeltaAwareList<E> extends LinkedList<E> implements DeltaAware, Delta{
+   private static final class DeltaAwareList<E> extends LinkedList<E> implements DeltaAware, Delta{
 
 
       /** The serialVersionUID */
