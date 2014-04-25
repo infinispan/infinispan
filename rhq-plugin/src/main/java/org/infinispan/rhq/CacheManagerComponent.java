@@ -49,11 +49,9 @@ public class CacheManagerComponent extends MBeanResourceComponent<JMXServerCompo
       boolean trace = log.isTraceEnabled();
       EmsConnection conn = getEmsConnection();
       try {
-         conn.refresh();
          EmsBean bean = queryCacheManagerBean(conn);
          if (bean != null) {
-            bean.refreshAttributes();
-            if (trace) log.trace("Cache manager "+bean+" could be found and attributes where refreshed, so it's up.");
+            if (trace) log.trace("Cache manager "+bean+" could be found, so it's up.");
             return AvailabilityType.UP;
          }
          if (trace) log.trace("Cache manager could not be found, so cache manager is down");
