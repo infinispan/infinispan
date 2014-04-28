@@ -22,11 +22,30 @@ import org.infinispan.marshall.core.Ids;
 import org.infinispan.remoting.transport.Address;
 
 /**
- * A {@link ConsistentHashFactory} implementation that guarantees caches with the same members
+ * One of the assumptions people made on consistent hashing involves thinking
+ * that given a particular key and same topology, it would produce the same
+ * consistent hash value no matter which cache it was stored in. However,
+ * that's not exactly the case in Infinispan.
+ *
+ * In order to the optimise the number of segments moved on join/leave,
+ * Infinispan uses a consistent hash that depends on the previous consistent
+ * hash. Given two caches, even if they contain exactly the same keyset, it's
+ * very easy for the consistent hash history to differ, e.g. if 2 nodes join
+ * you might see two separate topology change in one cache and a single
+ * topology change in the other. The reason for that each node has to send a
+ * {@link org.infinispan.topology.CacheTopologyControlCommand} for each cache
+ * it wants to join and Infinispan can and does batch cache topology changes.
+ * For example, if a rebalance is in progress, joins are queued and send in
+ * one go when the rebalance has finished.
+ *
+ * This {@link ConsistentHashFactory} implementation avois any of the issues
+ * mentioned and guarantees that multiple caches with the same members will
  * have the same consistent hash.
  *
- * It has a drawback compared to {@link DefaultConsistentHashFactory}, though: it can potentially
- * move a lot more segments during a rebalance than strictly necessary.
+ * It has a drawback compared to {@link DefaultConsistentHashFactory} though:
+ * it can potentially move a lot more segments during a rebalance than
+ * strictly necessary because it's not taking advantage of the optimisation
+ * mentioned above.
  *
  * @author Dan Berindei
  * @since 5.2
