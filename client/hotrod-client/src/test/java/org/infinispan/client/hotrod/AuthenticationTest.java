@@ -1,18 +1,17 @@
 package org.infinispan.client.hotrod;
 
 import static org.infinispan.server.hotrod.test.HotRodTestingUtil.hotRodCacheConfiguration;
-import static org.testng.AssertJUnit.assertTrue;
-import static org.testng.AssertJUnit.fail;
-
-import javax.net.ssl.SSLException;
+import static org.testng.AssertJUnit.assertEquals;
 
 import org.infinispan.client.hotrod.configuration.ConfigurationBuilder;
 import org.infinispan.client.hotrod.exceptions.TransportException;
 import org.infinispan.client.hotrod.test.HotRodClientTestingUtil;
 import org.infinispan.manager.EmbeddedCacheManager;
+import org.infinispan.server.core.security.simple.SimpleServerAuthenticationProvider;
 import org.infinispan.server.hotrod.HotRodServer;
 import org.infinispan.server.hotrod.configuration.HotRodServerConfigurationBuilder;
 import org.infinispan.server.hotrod.test.HotRodTestingUtil;
+import org.infinispan.server.hotrod.test.TestCallbackHandler;
 import org.infinispan.test.SingleCacheManagerTest;
 import org.infinispan.test.fwk.CleanupAfterMethod;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
@@ -21,17 +20,13 @@ import org.infinispan.util.logging.LogFactory;
 import org.testng.annotations.Test;
 
 /**
- * @author Adrian Brock
  * @author Tristan Tarrant
- * @since 5.3
+ * @since 7.0
  */
-@Test(testName = "client.hotrod.SslTest", groups = "functional")
+@Test(testName = "client.hotrod.AuthenticationTest", groups = "functional")
 @CleanupAfterMethod
-public class SslTest extends SingleCacheManagerTest {
-
-   private static final Log log = LogFactory.getLog(SslTest.class);
-
-   RemoteCache<String, String> defaultRemote;
+public class AuthenticationTest extends SingleCacheManagerTest {
+   private static final Log log = LogFactory.getLog(AuthenticationTest.class);
    private RemoteCacheManager remoteCacheManager;
 
    protected HotRodServer hotrodServer;
@@ -45,19 +40,16 @@ public class SslTest extends SingleCacheManagerTest {
       return cacheManager;
    }
 
-   private void initServerAndClient(boolean sslServer, boolean sslClient) {
+   private ConfigurationBuilder initServerAndClient() {
       hotrodServer = new HotRodServer();
       HotRodServerConfigurationBuilder serverBuilder = HotRodTestingUtil.getDefaultHotRodConfiguration();
-
-      ClassLoader tccl = Thread.currentThread().getContextClassLoader();
-      String keyStoreFileName = tccl.getResource("keystore.jks").getPath();
-      String trustStoreFileName = tccl.getResource("truststore.jks").getPath();
-      serverBuilder.ssl()
-         .enabled(sslServer)
-         .keyStoreFileName(keyStoreFileName)
-         .keyStorePassword("secret".toCharArray())
-         .trustStoreFileName(trustStoreFileName)
-         .trustStorePassword("secret".toCharArray());
+      SimpleServerAuthenticationProvider sap = new SimpleServerAuthenticationProvider();
+      sap.addUser("user", "realm", "password".toCharArray(), null);
+      serverBuilder.authentication()
+         .enable()
+         .serverName("localhost")
+         .addAllowedMech("CRAM-MD5")
+         .serverAuthenticationProvider(sap);
       hotrodServer.start(serverBuilder.build(), cacheManager);
       log.info("Started server on port: " + hotrodServer.getPort());
 
@@ -70,16 +62,30 @@ public class SslTest extends SingleCacheManagerTest {
          .connectionPool()
             .maxActive(1)
          .security()
-            .ssl()
-               .enabled(sslClient)
-               .keyStoreFileName(keyStoreFileName)
-               .keyStorePassword("secret".toCharArray())
-               .trustStoreFileName(trustStoreFileName)
-               .trustStorePassword("secret".toCharArray())
+            .authentication()
+               .enable()
+               .saslMechanism("CRAM-MD5")
           .connectionPool()
              .timeBetweenEvictionRuns(2000);
+      return clientBuilder;
+   }
+
+   @Test
+   public void testAuthentication() {
+      ConfigurationBuilder clientBuilder = initServerAndClient();
+      clientBuilder.security().authentication().callbackHandler(new TestCallbackHandler("user", "realm", "password".toCharArray()));
       remoteCacheManager = new RemoteCacheManager(clientBuilder.build());
-      defaultRemote = remoteCacheManager.getCache();
+      RemoteCache<String, String> defaultRemote = remoteCacheManager.getCache();
+      defaultRemote.put("a", "a");
+      assertEquals("a", defaultRemote.get("a"));
+   }
+
+   @Test(expectedExceptions=TransportException.class)
+   public void testAuthenticationFail() {
+      ConfigurationBuilder clientBuilder = initServerAndClient();
+      clientBuilder.security().authentication().callbackHandler(new TestCallbackHandler("user", "realm", "foobar".toCharArray()));
+      remoteCacheManager = new RemoteCacheManager(clientBuilder.build());
+      remoteCacheManager.getCache();
    }
 
    @Override
@@ -89,24 +95,5 @@ public class SslTest extends SingleCacheManagerTest {
       super.teardown();
    }
 
-   public void testSSLServerSSLClient() throws Exception {
-      initServerAndClient(true, true);
-      defaultRemote.put("k","v");
-      assert defaultRemote.get("k").equals("v");
-   }
 
-   @Test(expectedExceptions = TransportException.class)
-   public void testSSLServerPlainClient() throws Exception {
-      // The server just disconnect the client
-      initServerAndClient(true, false);
-   }
-
-   public void testPlainServerSSLClient() throws Exception {
-      try {
-         initServerAndClient(false, true);
-         fail("Expecting a SSLException");
-      } catch (TransportException e) {
-          assertTrue(e.getCause() instanceof SSLException);
-      }
-   }
 }

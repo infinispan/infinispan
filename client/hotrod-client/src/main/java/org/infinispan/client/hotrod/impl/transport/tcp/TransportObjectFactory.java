@@ -17,11 +17,11 @@ public class TransportObjectFactory
       extends BaseKeyedPoolableObjectFactory<SocketAddress, TcpTransport> {
 
    private static final Log log = LogFactory.getLog(TransportObjectFactory.class);
-   private final TcpTransportFactory tcpTransportFactory;
-   private final AtomicInteger topologyId;
-   private final boolean pingOnStartup;
-   private volatile boolean firstPingExecuted = false;
-   private final Codec codec;
+   protected final TcpTransportFactory tcpTransportFactory;
+   protected final AtomicInteger topologyId;
+   protected final boolean pingOnStartup;
+   protected volatile boolean firstPingExecuted = false;
+   protected final Codec codec;
 
    public TransportObjectFactory(Codec codec, TcpTransportFactory tcpTransportFactory, AtomicInteger topologyId, boolean pingOnStartup) {
       this.tcpTransportFactory = tcpTransportFactory;
@@ -47,7 +47,7 @@ public class TransportObjectFactory
       return tcpTransport;
    }
 
-   private PingOperation.PingResult ping(TcpTransport tcpTransport, AtomicInteger topologyId) {
+   protected PingOperation.PingResult ping(TcpTransport tcpTransport, AtomicInteger topologyId) {
       PingOperation po = new PingOperation(codec, topologyId, tcpTransport);
       return po.execute();
    }

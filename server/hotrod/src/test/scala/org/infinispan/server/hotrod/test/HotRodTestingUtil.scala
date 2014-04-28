@@ -93,6 +93,13 @@ object HotRodTestingUtil extends Log {
       server
    }
 
+   def getDefaultHotRodConfiguration(): HotRodServerConfigurationBuilder = {
+      val builder = new HotRodServerConfigurationBuilder
+      val port = UniquePortThreadLocal.get.intValue
+      builder.host(host).port(port).proxyHost(host).proxyPort(port)
+      builder
+   }
+
    def startCrashingHotRodServer(manager: EmbeddedCacheManager, port: Int): HotRodServer = {
       val server = new HotRodServer {
          override protected def createTopologyCacheConfig(distSyncTimeout: Long): ConfigurationBuilder = {

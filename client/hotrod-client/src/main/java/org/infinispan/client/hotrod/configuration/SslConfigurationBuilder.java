@@ -15,7 +15,7 @@ import org.infinispan.client.hotrod.logging.Log;
  * @author Tristan Tarrant
  * @since 5.3
  */
-public class SslConfigurationBuilder extends AbstractConfigurationChildBuilder implements Builder<SslConfiguration> {
+public class SslConfigurationBuilder extends AbstractSecurityConfigurationChildBuilder implements Builder<SslConfiguration> {
    private static final Log log = LogFactory.getLog(SslConfigurationBuilder.class);
    private boolean enabled = false;
    private String keyStoreFileName;
@@ -24,7 +24,7 @@ public class SslConfigurationBuilder extends AbstractConfigurationChildBuilder i
    private char[] trustStorePassword;
    private SSLContext sslContext;
 
-   protected SslConfigurationBuilder(ConfigurationBuilder builder) {
+   protected SslConfigurationBuilder(SecurityConfigurationBuilder builder) {
       super(builder);
    }
 

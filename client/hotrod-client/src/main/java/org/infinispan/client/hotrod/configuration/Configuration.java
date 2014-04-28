@@ -34,7 +34,7 @@ public class Configuration {
    private final String protocolVersion;
    private final List<ServerConfiguration> servers;
    private final int socketTimeout;
-   private final SslConfiguration ssl;
+   private final SecurityConfiguration security;
    private final boolean tcpNoDelay;
    private final Class<? extends TransportFactory> transportFactory;
    private final int valueSizeEstimate;
@@ -42,7 +42,7 @@ public class Configuration {
 
    Configuration(ExecutorFactoryConfiguration asyncExecutorFactory, Class<? extends RequestBalancingStrategy> balancingStrategy, ClassLoader classLoader,
          ConnectionPoolConfiguration connectionPool, int connectionTimeout, Class<? extends ConsistentHash>[] consistentHashImpl, boolean forceReturnValues, int keySizeEstimate, Class<? extends Marshaller> marshallerClass,
-         boolean pingOnStartup, String protocolVersion, List<ServerConfiguration> servers, int socketTimeout, SslConfiguration ssl, boolean tcpNoDelay,
+         boolean pingOnStartup, String protocolVersion, List<ServerConfiguration> servers, int socketTimeout, SecurityConfiguration security, boolean tcpNoDelay,
          Class<? extends TransportFactory> transportFactory, int valueSizeEstimate, int maxRetries) {
       this.asyncExecutorFactory = asyncExecutorFactory;
       this.balancingStrategy = balancingStrategy;
@@ -59,7 +59,7 @@ public class Configuration {
       this.protocolVersion = protocolVersion;
       this.servers = Collections.unmodifiableList(servers);
       this.socketTimeout = socketTimeout;
-      this.ssl = ssl;
+      this.security = security;
       this.tcpNoDelay = tcpNoDelay;
       this.transportFactory = transportFactory;
       this.valueSizeEstimate = valueSizeEstimate;
@@ -67,7 +67,7 @@ public class Configuration {
 
    Configuration(ExecutorFactoryConfiguration asyncExecutorFactory, Class<? extends RequestBalancingStrategy> balancingStrategy, ClassLoader classLoader,
          ConnectionPoolConfiguration connectionPool, int connectionTimeout, Class<? extends ConsistentHash>[] consistentHashImpl, boolean forceReturnValues, int keySizeEstimate, Marshaller marshaller,
-         boolean pingOnStartup, String protocolVersion, List<ServerConfiguration> servers, int socketTimeout, SslConfiguration ssl, boolean tcpNoDelay,
+         boolean pingOnStartup, String protocolVersion, List<ServerConfiguration> servers, int socketTimeout, SecurityConfiguration security, boolean tcpNoDelay,
          Class<? extends TransportFactory> transportFactory, int valueSizeEstimate, int maxRetries) {
       this.asyncExecutorFactory = asyncExecutorFactory;
       this.balancingStrategy = balancingStrategy;
@@ -84,7 +84,7 @@ public class Configuration {
       this.protocolVersion = protocolVersion;
       this.servers = Collections.unmodifiableList(servers);
       this.socketTimeout = socketTimeout;
-      this.ssl = ssl;
+      this.security = security;
       this.tcpNoDelay = tcpNoDelay;
       this.transportFactory = transportFactory;
       this.valueSizeEstimate = valueSizeEstimate;
@@ -150,8 +150,8 @@ public class Configuration {
       return socketTimeout;
    }
 
-   public SslConfiguration ssl() {
-      return ssl;
+   public SecurityConfiguration security() {
+      return security;
    }
 
    public boolean tcpNoDelay() {
@@ -175,7 +175,7 @@ public class Configuration {
       return "Configuration [asyncExecutorFactory=" + asyncExecutorFactory + ", balancingStrategy=" + balancingStrategy + ", classLoader=" + classLoader + ", connectionPool="
             + connectionPool + ", connectionTimeout=" + connectionTimeout + ", consistentHashImpl=" + Arrays.toString(consistentHashImpl) + ", forceReturnValues="
             + forceReturnValues + ", keySizeEstimate=" + keySizeEstimate + ", marshallerClass=" + marshallerClass + ", marshaller=" + marshaller + ", pingOnStartup="
-            + pingOnStartup + ", protocolVersion=" + protocolVersion + ", servers=" + servers + ", socketTimeout=" + socketTimeout + ", ssl=" + ssl + ", tcpNoDelay=" + tcpNoDelay
+            + pingOnStartup + ", protocolVersion=" + protocolVersion + ", servers=" + servers + ", socketTimeout=" + socketTimeout + ", security=" + security + ", tcpNoDelay=" + tcpNoDelay
             + ", transportFactory=" + transportFactory + ", valueSizeEstimate=" + valueSizeEstimate + ", maxRetries=" + maxRetries + "]";
    }
 }
