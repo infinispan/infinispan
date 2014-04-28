@@ -75,8 +75,8 @@ public class TcpTransportFactory implements TransportFactory {
          connectTimeout = configuration.connectionTimeout();
          maxRetries = configuration.maxRetries();
 
-         if (configuration.ssl().enabled()) {
-            SslConfiguration ssl = configuration.ssl();
+         if (configuration.security().ssl().enabled()) {
+            SslConfiguration ssl = configuration.security().ssl();
             if (ssl.sslContext() != null) {
                sslContext = ssl.sslContext();
             } else {
@@ -90,9 +90,15 @@ public class TcpTransportFactory implements TransportFactory {
             log.debugf("Tcp no delay = %b; client socket timeout = %d ms; connect timeout = %d ms",
                        tcpNoDelay, soTimeout, connectTimeout);
          }
+         TransportObjectFactory connectionFactory;
+         if (configuration.security().authentication().enabled()) {
+            connectionFactory = new SaslTransportObjectFactory(codec, this, topologyId, pingOnStartup, configuration.security().authentication());
+         } else {
+            connectionFactory = new TransportObjectFactory(codec, this, topologyId, pingOnStartup);
+         }
          PropsKeyedObjectPoolFactory<SocketAddress, TcpTransport> poolFactory =
                new PropsKeyedObjectPoolFactory<SocketAddress, TcpTransport>(
-                     new TransportObjectFactory(codec, this, topologyId, pingOnStartup),
+                     connectionFactory,
                      configuration.connectionPool());
          createAndPreparePool(poolFactory);
          balancer.setServers(servers);

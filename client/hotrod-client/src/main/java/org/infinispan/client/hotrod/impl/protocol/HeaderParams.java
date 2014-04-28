@@ -91,6 +91,10 @@ public class HeaderParams {
             return HotRodConstants.BULK_GET_KEYS_RESPONSE;
          case HotRodConstants.QUERY_REQUEST:
             return HotRodConstants.QUERY_RESPONSE;
+         case HotRodConstants.AUTH_MECH_LIST_REQUEST:
+            return HotRodConstants.AUTH_MECH_LIST_RESPONSE;
+         case HotRodConstants.AUTH_REQUEST:
+            return HotRodConstants.AUTH_RESPONSE;
          default:
             throw new IllegalStateException("Unknown operation code: " + opCode);
       }

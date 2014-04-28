@@ -10,14 +10,14 @@ import java.io.BufferedOutputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.OutputStream;
 import java.net.Socket;
 import java.net.SocketAddress;
 import java.nio.channels.SocketChannel;
 import java.util.concurrent.atomic.AtomicLong;
 
 import javax.net.ssl.SSLContext;
-
-import net.jcip.annotations.ThreadSafe;
+import javax.security.sasl.SaslClient;
 
 import org.infinispan.client.hotrod.exceptions.TransportException;
 import org.infinispan.client.hotrod.impl.transport.AbstractTransport;
@@ -42,12 +42,14 @@ public class TcpTransport extends AbstractTransport {
 
    private final Socket socket;
    private final SocketChannel socketChannel;
-   private final InputStream socketInputStream;
-   private final BufferedOutputStream socketOutputStream;
+   private InputStream socketInputStream;
+   private OutputStream socketOutputStream;
    private final SocketAddress serverAddress;
    private final long id = ID_COUNTER.incrementAndGet();
 
    private volatile boolean invalid;
+
+   private SaslClient saslClient;
 
    public TcpTransport(SocketAddress serverAddress, TransportFactory transportFactory) {
       super(transportFactory);
@@ -71,6 +73,17 @@ public class TcpTransport extends AbstractTransport {
          String message = String.format("Could not connect to server: %s", serverAddress);
          log.tracef(e, "Could not connect to server: %s", serverAddress);
          throw new TransportException(message, e, serverAddress);
+      }
+   }
+
+   void setSaslClient(SaslClient saslClient) {
+      this.saslClient = saslClient;
+      try {
+         this.socketInputStream = new SaslInputStream(socket.getInputStream(), saslClient);
+         this.socketOutputStream = new SaslOutputStream(socket.getOutputStream(), saslClient);
+      } catch (IOException e) {
+         invalid = true;
+         throw new TransportException(e, serverAddress);
       }
    }
 
@@ -266,6 +279,7 @@ public class TcpTransport extends AbstractTransport {
          if (socketOutputStream != null) socketOutputStream.close();
          if (socketChannel != null) socketChannel.close();
          if (socket != null) socket.close();
+         if (saslClient != null) saslClient.dispose();
          if (trace) {
             log.tracef("Successfully closed socket: %s", socket);
          }

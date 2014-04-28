@@ -120,9 +120,9 @@ public interface ConfigurationChildBuilder {
    ConfigurationBuilder socketTimeout(int socketTimeout);
 
    /**
-    * SSL Configuration
+    * Security Configuration
     */
-   SslConfigurationBuilder ssl();
+   SecurityConfigurationBuilder security();
 
    /**
     * Affects TCP NODELAY on the TCP stack. Defaults to enabled

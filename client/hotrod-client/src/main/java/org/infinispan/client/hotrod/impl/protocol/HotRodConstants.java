@@ -36,6 +36,8 @@ public interface HotRodConstants {
    static final byte GET_WITH_METADATA = 0x1B;
    static final byte BULK_GET_KEYS_REQUEST = 0x1D;
    static final byte QUERY_REQUEST = 0x1F;
+   static final byte AUTH_MECH_LIST_REQUEST = 0x21;
+   static final byte AUTH_REQUEST = 0x23;
 
 
    //responses
@@ -55,6 +57,8 @@ public interface HotRodConstants {
    static final byte GET_WITH_METADATA_RESPONSE = 0x1C;
    static final byte BULK_GET_KEYS_RESPONSE = 0x1E;
    static final byte QUERY_RESPONSE = 0x20;
+   static final byte AUTH_MECH_LIST_RESPONSE = 0x22;
+   static final byte AUTH_RESPONSE = 0x24;
    static final byte ERROR_RESPONSE = 0x50;
 
    //response status

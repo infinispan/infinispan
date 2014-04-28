@@ -11,6 +11,7 @@ import org.jboss.logging.annotations.MessageLogger;
 
 import java.io.IOException;
 import java.net.SocketAddress;
+import java.util.List;
 import java.util.Set;
 
 import static org.jboss.logging.Logger.Level.*;
@@ -127,4 +128,13 @@ public interface Log extends BasicLogger {
 
    @Message(value = "Invalid max_retries (value=%s). Value should be greater or equal than zero.", id = 4029)
    CacheConfigurationException invalidMaxRetries(int retriesPerServer);
+
+   @Message(value = "Cannot enable authentication without specifying a Callback Handler", id = 4030)
+   CacheConfigurationException invalidCallbackHandler();
+
+   @Message(value = "The selected authentication mechanism '%s' is not among the supported server mechanisms: %s", id = 4031)
+   SecurityException unsupportedMech(String authMech, List<String> serverMechs);
+
+   @Message(value = "'%s' is an invalid SASL mechanism", id = 4032)
+   CacheConfigurationException invalidSaslMechanism(String saslMechanism);
 }
