@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<features name="infinispan-cachestore-leveldb-${project.version}">
+   <feature name="infinispan-cachestore-leveldb-java" version="${project.version}">
+      <bundle>wrap:mvn:org.iq80.leveldb/leveldb/${version.leveldb}</bundle>
+      <bundle>mvn:org.infinispan/infinispan-cachestore-leveldb/${project.version}</bundle>
+   </feature>
+   <feature name="infinispan-cachestore-leveldb-jni" version="${project.version}">
+      <bundle>mvn:org.fusesource.leveldbjni/leveldbjni-all/${version.leveldbjni}</bundle>
+      <bundle>mvn:org.infinispan/infinispan-cachestore-leveldb/${project.version}</bundle>
+   </feature>
+</features>
