@@ -42,7 +42,6 @@ import static org.testng.AssertJUnit.assertNotNull;
  * @author wburns
  * @since 6.0
  */
-@CleanupAfterMethod
 @Test(groups = "functional", testName = "distribution.BaseDistSyncL1Test")
 public abstract class BaseDistSyncL1Test extends BaseDistFunctionalTest<Object, String> {
 
@@ -51,6 +50,10 @@ public abstract class BaseDistSyncL1Test extends BaseDistFunctionalTest<Object, 
    protected static final String secondValue = "second-put";
 
    protected IsolationLevel isolationLevel = IsolationLevel.READ_COMMITTED;
+
+   public BaseDistSyncL1Test() {
+      cleanup = CleanupPhase.AFTER_METHOD;
+   }
 
    @Override
    protected ConfigurationBuilder buildConfiguration() {
