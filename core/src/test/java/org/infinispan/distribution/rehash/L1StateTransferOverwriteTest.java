@@ -13,6 +13,5 @@ public class L1StateTransferOverwriteTest extends StateTransferOverwriteTest {
    public L1StateTransferOverwriteTest() {
       super();
       l1CacheEnabled = true;
-      l1OnRehash = true;
    }
 }

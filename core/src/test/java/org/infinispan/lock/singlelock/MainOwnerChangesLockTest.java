@@ -35,7 +35,7 @@ public class MainOwnerChangesLockTest extends MultipleCacheManagersTest {
    protected void createCacheManagers() throws Throwable {
       dccc = getDefaultClusteredCacheConfig(CacheMode.DIST_SYNC, true, true);
       dccc.transaction().transactionManagerLookup(new DummyTransactionManagerLookup());
-      dccc.clustering().hash().l1().disable().onRehash(false).locking().lockAcquisitionTimeout(1000l);
+      dccc.clustering().hash().l1().disable().locking().lockAcquisitionTimeout(1000l);
       dccc.clustering().stateTransfer().fetchInMemoryState(true);
       createCluster(dccc, 2);
       waitForClusterToForm();

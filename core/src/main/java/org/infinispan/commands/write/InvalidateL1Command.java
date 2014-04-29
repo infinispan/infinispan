@@ -88,18 +88,8 @@ public class InvalidateL1Command extends InvalidateCommand {
             DataLocality locality = dm.getLocality(k);
 
             if (!locality.isLocal()) {
-               if (forRehash && config.clustering().l1().onRehash()) {
-                  if (trace) log.trace("Not removing, instead entry will be stored in L1");
-                  // don't need to do anything here, DistLockingInterceptor.commitEntry() will put the entry in L1
-                  CacheEntry entry = ctx.lookupEntry(k);
-                  if (entry != null) {
-                     //set changed to true because the flag is no longer set in the EntryFactoryImpl.
-                     entry.setChanged(true);
-                  }
-               } else {
-               	if (trace) log.tracef("Invalidating key %s.", k);
-                  invalidate(ctx, k);
-               }
+               if (trace) log.tracef("Invalidating key %s.", k);
+               invalidate(ctx, k);
             } else {
                log.tracef("Not invalidating key %s as it is local now", k);
             }

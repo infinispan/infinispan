@@ -78,7 +78,7 @@ public abstract class BaseOperationsDuringStateTransferTest extends MultipleCach
          }
       }
       cacheConfigBuilder.clustering().hash().numSegments(10).numOwners(2)
-            .l1().disable().onRehash(false)
+            .l1().disable()
             .locking().lockAcquisitionTimeout(1000l);
       cacheConfigBuilder.clustering().stateTransfer().fetchInMemoryState(true).awaitInitialTransfer(false);
 
