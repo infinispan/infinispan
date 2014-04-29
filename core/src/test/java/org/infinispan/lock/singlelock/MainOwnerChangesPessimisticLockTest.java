@@ -39,7 +39,7 @@ public class MainOwnerChangesPessimisticLockTest extends MultipleCacheManagersTe
             .syncRollbackPhase(true)
             .locking().lockAcquisitionTimeout(1000l)
             .clustering().hash().numOwners(1).numSegments(3)
-            .l1().disable().onRehash(false)
+            .l1().disable()
             .stateTransfer().fetchInMemoryState(true);
       createCluster(dccc, 2);
       waitForClusterToForm();

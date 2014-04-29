@@ -39,7 +39,6 @@ public abstract class BaseDistFunctionalTest<K, V> extends MultipleCacheManagers
    protected boolean tx = false;
    protected boolean testRetVals = true;
    protected boolean l1CacheEnabled = true;
-   protected boolean l1OnRehash = false;
    protected int l1Threshold = 5;
    protected boolean performRehashing = false;
    protected boolean batchingEnabled = false;
@@ -95,7 +94,7 @@ public abstract class BaseDistFunctionalTest<K, V> extends MultipleCacheManagers
           configuration.clustering().hash().groups().enabled(true);
           configuration.clustering().hash().groups().withGroupers(groupers);
       }
-      if (l1CacheEnabled) configuration.clustering().l1().onRehash(l1OnRehash).invalidationThreshold(l1Threshold);
+      if (l1CacheEnabled) configuration.clustering().l1().invalidationThreshold(l1Threshold);
       return configuration;
    }
 

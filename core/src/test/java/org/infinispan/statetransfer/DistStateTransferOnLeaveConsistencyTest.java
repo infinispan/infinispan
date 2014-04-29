@@ -66,7 +66,7 @@ public class DistStateTransferOnLeaveConsistencyTest extends MultipleCacheManage
          builder.transaction().lockingMode(LockingMode.PESSIMISTIC);
       }
 
-      builder.clustering().hash().numSegments(10).numOwners(2).l1().disable().onRehash(false).locking().lockAcquisitionTimeout(1000l);
+      builder.clustering().hash().numSegments(10).numOwners(2).l1().disable().locking().lockAcquisitionTimeout(1000l);
       builder.clustering().stateTransfer().fetchInMemoryState(true).awaitInitialTransfer(false);
       return builder;
    }

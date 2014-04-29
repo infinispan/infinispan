@@ -37,7 +37,7 @@ public class StateTransferPessimisticTest extends MultipleCacheManagersTest {
             .lockingMode(LockingMode.PESSIMISTIC)
             .syncCommitPhase(true)
             .syncRollbackPhase(true);
-      dccc.clustering().hash().numOwners(1).l1().disable().onRehash(false).locking().lockAcquisitionTimeout(1000l);
+      dccc.clustering().hash().numOwners(1).l1().disable().locking().lockAcquisitionTimeout(1000l);
       dccc.clustering().stateTransfer().fetchInMemoryState(true);
       createCluster(dccc, 2);
       waitForClusterToForm();

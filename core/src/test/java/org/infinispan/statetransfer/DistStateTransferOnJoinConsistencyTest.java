@@ -68,7 +68,7 @@ public class DistStateTransferOnJoinConsistencyTest extends MultipleCacheManager
          builder.transaction().lockingMode(LockingMode.PESSIMISTIC);
       }
 
-      builder.clustering().l1().disable().onRehash(false).locking().lockAcquisitionTimeout(1000l);
+      builder.clustering().l1().disable().locking().lockAcquisitionTimeout(1000l);
       builder.clustering().stateTransfer().fetchInMemoryState(true).awaitInitialTransfer(false);
       return builder;
    }

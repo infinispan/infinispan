@@ -138,9 +138,9 @@ public abstract class RehashTestBase extends BaseDistFunctionalTest<Object, Stri
       if (!rollback.get()) {
          // the ownership of k1 might change during the tx and a cache might end up with it in L1
          assertOwnershipAndNonOwnership(keys.get(0), true);
-         assertOwnershipAndNonOwnership(keys.get(1), l1OnRehash);
-         assertOwnershipAndNonOwnership(keys.get(2), l1OnRehash);
-         assertOwnershipAndNonOwnership(keys.get(3), l1OnRehash);
+         assertOwnershipAndNonOwnership(keys.get(1), false);
+         assertOwnershipAndNonOwnership(keys.get(2), false);
+         assertOwnershipAndNonOwnership(keys.get(3), false);
 
          // checking the values will bring the keys to L1, so we want to do it after checking ownership
          assertOnAllCaches(keys.get(0), "transactionally_replaced");

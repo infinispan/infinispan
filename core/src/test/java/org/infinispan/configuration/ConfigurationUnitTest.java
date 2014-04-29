@@ -143,11 +143,10 @@ public class ConfigurationUnitTest extends AbstractInfinispanTest {
          @Override
          public void call() {
             ConfigurationBuilder cb = new ConfigurationBuilder();
-            cb.clustering().cacheMode(CacheMode.DIST_SYNC).l1().disable().disableOnRehash();
+            cb.clustering().cacheMode(CacheMode.DIST_SYNC).l1().disable();
             cm.defineConfiguration("testConfigCache", cb.build());
             Cache<Object, Object> cache = cm.getCache("testConfigCache");
             assert !cache.getCacheConfiguration().clustering().l1().enabled();
-            assert !cache.getCacheConfiguration().clustering().l1().onRehash();
          }
       });
    }

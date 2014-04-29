@@ -13,6 +13,5 @@ public class TxL1StateTransferOverwriteTest extends BaseTxStateTransferOverwrite
    public TxL1StateTransferOverwriteTest() {
       super();
       l1CacheEnabled = true;
-      l1OnRehash = true;
    }
 }
