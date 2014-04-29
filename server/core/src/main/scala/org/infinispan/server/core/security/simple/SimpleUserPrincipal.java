@@ -1,65 +1,41 @@
 package org.infinispan.server.core.security.simple;
 
-import java.security.Principal;
+import org.infinispan.server.core.security.UserPrincipal;
 
 /**
- * A principal representing an authenticated user.
+ * SimpleUserPrincipal.
  *
- * @author <a href="mailto:david.lloyd@redhat.com">David M. Lloyd</a>
+ * @author Tristan Tarrant
+ * @since 7.0
  */
-public final class SimpleUserPrincipal implements Principal {
+public final class SimpleUserPrincipal implements UserPrincipal {
+   private final String name;
 
-    private final String name;
+   public SimpleUserPrincipal(final String name) {
+      if (name == null) {
+         throw new IllegalArgumentException("name is null");
+      }
+      this.name = name;
+   }
 
-    /**
-     * Construct a new instance.
-     *
-     * @param name the name of the user
-     */
-    public SimpleUserPrincipal(final String name) {
-        if (name == null) {
-            throw new IllegalArgumentException("name is null");
-        }
-        this.name = name;
-    }
+   @Override
+   public String getName() {
+      return name;
+   }
 
-    /**
-     * Get the name of this principal.
-     *
-     * @return the name
-     */
-    public String getName() {
-        return name;
-    }
+   @Override
+   public int hashCode() {
+      return name.hashCode();
+   }
 
-    /**
-     * Get the hash code.
-     *
-     * @return the hash code
-     */
-    public int hashCode() {
-        return name.hashCode();
-    }
+   @Override
+   public boolean equals(Object other) {
+      return other instanceof SimpleUserPrincipal && equals((SimpleUserPrincipal) other);
+   }
 
-    /**
-     * Determine whether this object is equal to another.
-     *
-     * @param other the other object
-     * @return {@code true} if they are equal, {@code false} otherwise
-     */
-    public boolean equals(Object other) {
-        return other instanceof SimpleUserPrincipal && equals((SimpleUserPrincipal)other);
-    }
-
-    /**
-     * Determine whether this object is equal to another.
-     *
-     * @param other the other object
-     * @return {@code true} if they are equal, {@code false} otherwise
-     */
-    public boolean equals(SimpleUserPrincipal other) {
-        return this == other || other != null && name.equals(other.name);
-    }
+   public boolean equals(SimpleUserPrincipal other) {
+      return this == other || other != null && name.equals(other.name);
+   }
 
    @Override
    public String toString() {

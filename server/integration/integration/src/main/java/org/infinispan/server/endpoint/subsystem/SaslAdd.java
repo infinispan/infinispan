@@ -29,17 +29,17 @@ import org.jboss.dmr.ModelNode;
 import org.jboss.msc.service.ServiceController;
 
 /**
- * SecurityAdd.
+ * SaslAdd.
  *
  * @author Tristan Tarrant
- * @since 5.3
+ * @since 7.0
  */
-public class SecurityAdd extends AbstractAddStepHandler {
-   static final SecurityAdd INSTANCE = new SecurityAdd(SecurityResource.SECURITY_ATTRIBUTES);
+public class SaslAdd extends AbstractAddStepHandler {
+   static final SaslAdd INSTANCE = new SaslAdd(SaslResource.SASL_ATTRIBUTES);
 
    private final AttributeDefinition[] attributes;
 
-   SecurityAdd(final AttributeDefinition[] attributes) {
+   SaslAdd(final AttributeDefinition[] attributes) {
       this.attributes = attributes;
    }
 

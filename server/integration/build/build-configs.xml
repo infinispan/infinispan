@@ -108,6 +108,10 @@
            paramTemplateFile="configuration/standalone/template.xml" 
            paramSubsystemsFile="configuration/examples/subsystems-rest-rolling-upgrade.xml"
            paramOutputFile="${generated.configs.examples}/standalone-rest-rolling-upgrade.xml"/>
+       <generate-server-config 
+           paramTemplateFile="configuration/standalone/template.xml" 
+           paramSubsystemsFile="configuration/examples/subsystems-auth.xml"
+           paramOutputFile="${generated.configs.examples}/standalone-auth.xml"/>
     </target>
 
 

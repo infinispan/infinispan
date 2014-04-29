@@ -128,14 +128,14 @@ The default TCP stack uses the MPING protocol for discovery, which uses UDP mult
 ----
 
 === Infinispan subsystem configuration
-The Infinispan subsystem configures the cache containers and caches. Its schema differs from the default Infinispan library declarative because it needs to adhere to the application server standards, but the underlying concepts are the same.
+The Infinispan subsystem configures the cache containers and caches.
 
 The subsystem declaration is enclosed in the following XML element:
 
 [source,xml]
 ----
 
-<subsystem xmlns="urn:infinispan:server:core:5.2" default-cache-container="clustered">
+<subsystem xmlns="urn:infinispan:server:core:7.0" default-cache-container="clustered">
   ...
 </subsystem>
 

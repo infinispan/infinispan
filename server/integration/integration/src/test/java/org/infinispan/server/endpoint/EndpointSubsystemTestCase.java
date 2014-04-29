@@ -67,6 +67,7 @@ public class EndpointSubsystemTestCase extends ClusteringSubsystemTest {
             { "endpoint-5.2.xml", 7 },
             { "endpoint-5.3.xml", 9 },
             { "endpoint-6.0.xml", 9 },
+            { "endpoint-7.0.xml", 14 },
       };
       return Arrays.asList(data);
    }

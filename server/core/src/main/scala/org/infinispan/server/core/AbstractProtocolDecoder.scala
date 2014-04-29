@@ -22,6 +22,9 @@ import io.netty.util.CharsetUtil
 import java.net.SocketAddress
 import javax.security.auth.Subject
 import java.security.PrivilegedExceptionAction
+import org.infinispan.configuration.cache.Configuration
+import org.infinispan.factories.ComponentRegistry
+import org.infinispan.remoting.rpc.RpcManager
 
 /**
  * Common abstract decoder for Memcached and Hot Rod protocols.
@@ -43,6 +46,7 @@ abstract class AbstractProtocolDecoder[K, V](transport: NettyTransport)
    protected var key: K = null.asInstanceOf[K]
    protected var rawValue: Array[Byte] = null.asInstanceOf[Array[Byte]]
    protected var cache: AdvancedCache[K, V] = null
+   protected var cacheConfiguration: Configuration = null
    protected var defaultLifespanTime: Long = _
    protected var defaultMaxIdleTime: Long = _
    var subject: Subject = null
@@ -95,8 +99,9 @@ abstract class AbstractProtocolDecoder[K, V](transport: NettyTransport)
       }
       val ch = ctx.channel
       cache = getCache.getAdvancedCache
-      defaultLifespanTime = cache.getCacheConfiguration.expiration().lifespan()
-      defaultMaxIdleTime = cache.getCacheConfiguration.expiration().maxIdle()
+      cacheConfiguration = getCacheConfiguration
+      defaultLifespanTime = cacheConfiguration.expiration().lifespan()
+      defaultMaxIdleTime = cacheConfiguration.expiration().maxIdle()
       if (endOfOp.get) {
          val message = header.op match {
             case StatsRequest => writeResponse(ch, createStatsResponse)
@@ -319,6 +324,10 @@ abstract class AbstractProtocolDecoder[K, V](transport: NettyTransport)
 
    protected def getCache: Cache[K, V]
 
+   protected def getCacheConfiguration: Configuration
+
+   protected def getCacheRegistry: ComponentRegistry
+
    /**
     * Returns the key read along with a boolean indicating whether the
     * end of the operation was found or not. This allows client to
@@ -356,14 +365,14 @@ abstract class AbstractProtocolDecoder[K, V](transport: NettyTransport)
    protected def createServerException(e: Exception, b: ByteBuf): (Exception, Boolean)
 
    protected def generateVersion(cache: Cache[K, V]): EntryVersion = {
-      val registry = cache.getAdvancedCache.getComponentRegistry
+      val registry = getCacheRegistry
       val cacheVersionGenerator = registry.getComponent(classOf[VersionGenerator])
       if (cacheVersionGenerator == null) {
          // It could be null, for example when not running in compatibility mode.
          // The reason for that is that if no other component depends on the
          // version generator, the factory does not get invoked.
          val newVersionGenerator = new NumericVersionGenerator()
-                 .clustered(cache.getAdvancedCache.getRpcManager != null)
+                 .clustered(registry.getComponent(classOf[RpcManager]) != null)
          registry.registerComponent(newVersionGenerator, classOf[VersionGenerator])
          newVersionGenerator.generateNew()
       } else {

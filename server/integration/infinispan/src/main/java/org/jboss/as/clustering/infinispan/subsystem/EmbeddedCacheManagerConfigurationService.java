@@ -189,6 +189,8 @@ public class EmbeddedCacheManagerConfigurationService implements Service<Embedde
                 } catch (Exception e) {
                     throw new StartException(e);
                 }
+            } else {
+                authorizationBuilder.principalRoleMapper(new ServerPrincipalMapper());
             }
             for(Entry<String, List<String>> role : authorization.getRoles().entrySet()) {
                 GlobalRoleConfigurationBuilder roleBuilder = authorizationBuilder.role(role.getKey());

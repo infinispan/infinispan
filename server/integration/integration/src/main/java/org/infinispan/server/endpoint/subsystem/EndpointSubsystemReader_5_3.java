@@ -324,24 +324,24 @@ class EndpointSubsystemReader_5_3 implements XMLStreamConstants, XMLElementReade
    }
 
    private void parseSecurity(XMLExtendedStreamReader reader, ModelNode connector, List<ModelNode> operations) throws XMLStreamException {
-      PathAddress address = PathAddress.pathAddress(connector.get(OP_ADDR)).append(PathElement.pathElement(ModelKeys.SECURITY, ModelKeys.SECURITY_NAME));
+      PathAddress address = PathAddress.pathAddress(connector.get(OP_ADDR)).append(PathElement.pathElement(ModelKeys.ENCRYPTION, ModelKeys.ENCRYPTION_NAME));
       ModelNode security = Util.createAddOperation(address);
-
+      boolean ssl = false;
       for (int i = 0; i < reader.getAttributeCount(); i++) {
          ParseUtils.requireNoNamespaceAttribute(reader, i);
          String value = reader.getAttributeValue(i);
          Attribute attribute = Attribute.forName(reader.getAttributeLocalName(i));
          switch (attribute) {
-         case REQUIRE_CLIENT_AUTH: {
-            SecurityResource.REQUIRE_SSL_CLIENT_AUTH.parseAndSetParameter(value, security, reader);
+         case REQUIRE_SSL_CLIENT_AUTH: {
+            EncryptionResource.REQUIRE_SSL_CLIENT_AUTH.parseAndSetParameter(value, security, reader);
             break;
          }
          case SECURITY_REALM: {
-            SecurityResource.SECURITY_REALM.parseAndSetParameter(value, security, reader);
+            EncryptionResource.SECURITY_REALM.parseAndSetParameter(value, security, reader);
             break;
          }
          case SSL: {
-            SecurityResource.SSL.parseAndSetParameter(value, security, reader);
+            ssl = Boolean.parseBoolean(value);
             break;
          }
          default: {
@@ -351,6 +351,8 @@ class EndpointSubsystemReader_5_3 implements XMLStreamConstants, XMLElementReade
 
       }
       ParseUtils.requireNoContent(reader);
-      operations.add(security);
+      if (ssl) {
+         operations.add(security);
+      }
    }
 }

@@ -1,6 +1,7 @@
 package org.infinispan.security.impl;
 
 import java.security.AccessControlContext;
+import java.security.AccessControlException;
 import java.security.AccessController;
 import java.security.Principal;
 import java.util.Set;
@@ -42,8 +43,12 @@ public class AuthorizationHelper {
    public void checkPermission(Subject subject, int subjectMask, AuthorizationPermission perm) {
       if ((subjectMask & perm.getMask()) != perm.getMask()) {
          if (System.getSecurityManager() == null) {
-            audit.audit(subject, context, name, perm, AuditResponse.DENY);
-            throw log.unauthorizedAccess(String.valueOf(subject), perm.toString());
+            try {
+               AccessController.getContext().checkPermission(perm.getSecurityPermission());
+            } catch (AccessControlException ace) {
+               audit.audit(subject, context, name, perm, AuditResponse.DENY);
+               throw log.unauthorizedAccess(String.valueOf(subject), perm.toString());
+            }
          } else {
             System.getSecurityManager().checkPermission(perm.getSecurityPermission());
          }
@@ -64,8 +69,7 @@ public class AuthorizationHelper {
       checkPermission(null, perm);
    }
 
-   public static int computeSubjectRoleMask(Subject subject, GlobalSecurityConfiguration globalConfiguration,
-         AuthorizationConfiguration configuration) {
+   public static int computeSubjectRoleMask(Subject subject, GlobalSecurityConfiguration globalConfiguration, AuthorizationConfiguration configuration) {
       PrincipalRoleMapper roleMapper = globalConfiguration.authorization().principalRoleMapper();
       int mask = 0;
       if (subject != null) {

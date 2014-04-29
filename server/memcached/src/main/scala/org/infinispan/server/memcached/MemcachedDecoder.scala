@@ -28,6 +28,8 @@ import org.infinispan.container.versioning.NumericVersion
 import org.infinispan.commons.CacheException
 import scala.Some
 import java.util
+import org.infinispan.factories.ComponentRegistry
+import org.infinispan.configuration.cache.Configuration
 
 /**
  * A Memcached protocol specific decoder
@@ -257,6 +259,10 @@ class MemcachedDecoder(memcachedCache: AdvancedCache[String, Array[Byte]], sched
    }
 
    override def getCache: Cache[String, Array[Byte]] = cache
+
+   override def getCacheConfiguration: Configuration = cache.getCacheConfiguration
+
+   override def getCacheRegistry: ComponentRegistry = cache.getComponentRegistry
 
    override protected def customDecodeHeader(ctx: ChannelHandlerContext, buffer: ByteBuf): AnyRef = {
       val ch = ctx.channel

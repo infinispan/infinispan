@@ -28,6 +28,12 @@ import javax.security.auth.Subject
 import java.security.PrivilegedAction
 import javax.security.sasl.SaslServer
 import org.infinispan.server.core.security.SaslUtils
+import io.netty.handler.ssl.SslHandler
+import java.util.ArrayList
+import java.security.Principal
+import org.infinispan.server.core.security.InetAddressPrincipal
+import java.net.InetSocketAddress
+import org.infinispan.server.core.security.simple.SimpleUserPrincipal
 
 /**
  * HotRod protocol decoder specific for specification version 2.0.
@@ -207,7 +213,13 @@ object Decoder2x extends AbstractVersionedDecoder with ServerConstants with Log 
                val clientResponse = readRangedBytes(buffer)
                val serverChallenge = decoder.saslServer.evaluateResponse(clientResponse)
                if (decoder.saslServer.isComplete) {
-                  decoder.subject = decoder.callbackHandler.getSubjectUserInfo(null).getSubject // FIXME: add InetAddress and SSL Principals if necessary
+                  val extraPrincipals = new ArrayList[Principal]
+                  val id = normalizeAuthorizationId(decoder.saslServer.getAuthorizationID)
+                  extraPrincipals.add(new SimpleUserPrincipal(id))
+                  extraPrincipals.add(new InetAddressPrincipal(ctx.channel.remoteAddress.asInstanceOf[InetSocketAddress].getAddress))
+                  val sslHandler = ctx.pipeline.get("ssl").asInstanceOf[SslHandler]
+                  if (sslHandler != null) extraPrincipals.add(sslHandler.engine.getSession.getPeerPrincipal)
+                  decoder.subject = decoder.callbackHandler.getSubjectUserInfo(extraPrincipals).getSubject
                   decoder.saslServer.dispose
                   decoder.callbackHandler = null
                   decoder.saslServer = null
@@ -376,4 +388,8 @@ object Decoder2x extends AbstractVersionedDecoder with ServerConstants with Log 
       }
    }
 
+   def normalizeAuthorizationId(id: String): String = {
+      val realm = id.indexOf('@')
+      if (realm >= 0) id.substring(0, realm) else id
+   }
 }

@@ -276,6 +276,32 @@
          </cache-container>
       </replacement>
    </supplement>
+   <supplement name="auth">
+      <replacement placeholder="@@default-cache-container@@" attributeValue="local" />
+      <replacement placeholder="CACHE-CONTAINERS">
+         <cache-container name="local" default-cache="default">
+            <security>
+                <authorization mapper="org.infinispan.security.impl.IdentityRoleMapper">
+                    <role name="admin" permissions="ALL" />
+                    <role name="reader" permissions="READ" />
+                    <role name="writer" permissions="WRITE" />
+                    <role name="supervisor" permissions="ALL_READ ALL_WRITE"/>
+                </authorization>
+            </security>
+            <local-cache name="default" start="EAGER">
+               <locking isolation="NONE" acquire-timeout="30000" concurrency-level="1000" striping="false" />
+               <transaction mode="NONE" />
+            </local-cache>
+            <local-cache name="secured">
+                <security>
+                    <authorization roles="admin reader writer supervisor" />
+                </security>
+            </local-cache>
+         </cache-container>
+         <cache-container name="security">
+         </cache-container>
+      </replacement>
+   </supplement>
    <outbound-socket-binding name="remote-store-hotrod-server">
       <remote-destination host="remote-host" port="11222" />
    </outbound-socket-binding>

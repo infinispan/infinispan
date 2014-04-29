@@ -15,6 +15,8 @@ import io.netty.channel.Channel
 import io.netty.channel.ChannelHandlerContext
 import javax.security.sasl.SaslServer
 import org.infinispan.server.core.security.AuthorizingCallbackHandler
+import org.infinispan.configuration.cache.Configuration
+import org.infinispan.factories.ComponentRegistry
 
 /**
  * Top level Hot Rod decoder that after figuring out the version, delegates the rest of the reading to the
@@ -93,6 +95,14 @@ class HotRodDecoder(cacheManager: EmbeddedCacheManager, transport: NettyTranspor
 
       val cache = server.getCacheInstance(cacheName, cacheManager, server.isCacheNameKnown(cacheName))
       header.decoder.getOptimizedCache(header, cache)
+   }
+
+   override def getCacheConfiguration: Configuration = {
+      server.getCacheConfiguration(header.cacheName)
+   }
+
+   override def getCacheRegistry: ComponentRegistry = {
+      server.getCacheRegistry(header.cacheName)
    }
 
    override def readKey(b: ByteBuf): (Array[Byte], Boolean) =

@@ -24,9 +24,12 @@ import java.util.List;
 import javax.xml.stream.XMLStreamConstants;
 import javax.xml.stream.XMLStreamException;
 
+import org.jboss.as.controller.AttributeDefinition;
 import org.jboss.as.controller.SimpleAttributeDefinition;
+import org.jboss.as.controller.StringListAttributeDefinition;
 import org.jboss.as.controller.persistence.SubsystemMarshallingContext;
 import org.jboss.dmr.ModelNode;
+import org.jboss.dmr.ModelType;
 import org.jboss.dmr.Property;
 import org.jboss.staxmapper.XMLElementWriter;
 import org.jboss.staxmapper.XMLExtendedStreamWriter;
@@ -40,12 +43,12 @@ import org.jboss.staxmapper.XMLExtendedStreamWriter;
  */
 class EndpointSubsystemWriter implements XMLStreamConstants, XMLElementWriter<SubsystemMarshallingContext> {
 
-
    EndpointSubsystemWriter() {
    }
 
    @Override
-   public void writeContent(final XMLExtendedStreamWriter writer, final SubsystemMarshallingContext context) throws XMLStreamException {
+   public void writeContent(final XMLExtendedStreamWriter writer, final SubsystemMarshallingContext context)
+         throws XMLStreamException {
       context.startSubsystemElement(Namespace.CURRENT.getUri(), false);
       final ModelNode node = context.getModelNode();
       writeConnectors(writer, node);
@@ -53,16 +56,16 @@ class EndpointSubsystemWriter implements XMLStreamConstants, XMLElementWriter<Su
    }
 
    private void writeConnectors(final XMLExtendedStreamWriter writer, final ModelNode node) throws XMLStreamException {
-      for(Property property : getConnectorsByType(node, ModelKeys.HOTROD_CONNECTOR)) {
+      for (Property property : getConnectorsByType(node, ModelKeys.HOTROD_CONNECTOR)) {
          writeHotRodConnector(writer, property.getValue());
       }
-      for(Property property : getConnectorsByType(node, ModelKeys.MEMCACHED_CONNECTOR)) {
+      for (Property property : getConnectorsByType(node, ModelKeys.MEMCACHED_CONNECTOR)) {
          writeMemcachedConnector(writer, property.getValue());
       }
-      for(Property property : getConnectorsByType(node, ModelKeys.REST_CONNECTOR)) {
+      for (Property property : getConnectorsByType(node, ModelKeys.REST_CONNECTOR)) {
          writeRestConnector(writer, property.getValue());
       }
-      for(Property property : getConnectorsByType(node, ModelKeys.WEBSOCKET_CONNECTOR)) {
+      for (Property property : getConnectorsByType(node, ModelKeys.WEBSOCKET_CONNECTOR)) {
          writeWebSocketConnector(writer, property.getValue());
       }
    }
@@ -76,72 +79,142 @@ class EndpointSubsystemWriter implements XMLStreamConstants, XMLElementWriter<Su
       }
    }
 
-   private void writeHotRodConnector(final XMLExtendedStreamWriter writer, final ModelNode connector) throws XMLStreamException {
+   private void writeHotRodConnector(final XMLExtendedStreamWriter writer, final ModelNode connector)
+         throws XMLStreamException {
       writer.writeStartElement(Element.HOTROD_CONNECTOR.getLocalName());
       writeCommonConnector(writer, connector);
       writeProtocolServerConnector(writer, connector);
       writeTopologyStateTransfer(writer, connector);
-      writeSecurity(writer, connector);
+      writeAuthentication(writer, connector);
+      writeEncryption(writer, connector);
       writer.writeEndElement();
    }
 
-   private void writeMemcachedConnector(final XMLExtendedStreamWriter writer, final ModelNode connector) throws XMLStreamException {
+   private void writeMemcachedConnector(final XMLExtendedStreamWriter writer, final ModelNode connector)
+         throws XMLStreamException {
       writer.writeStartElement(Element.MEMCACHED_CONNECTOR.getLocalName());
       writeCommonConnector(writer, connector);
       writeProtocolServerConnector(writer, connector);
-      for(SimpleAttributeDefinition attribute : MemcachedConnectorResource.MEMCACHED_CONNECTOR_ATTRIBUTES) {
+      for (SimpleAttributeDefinition attribute : MemcachedConnectorResource.MEMCACHED_CONNECTOR_ATTRIBUTES) {
          attribute.marshallAsAttribute(connector, true, writer);
       }
       writer.writeEndElement();
    }
 
-   private void writeRestConnector(final XMLExtendedStreamWriter writer, final ModelNode connector) throws XMLStreamException {
+   private void writeRestConnector(final XMLExtendedStreamWriter writer, final ModelNode connector)
+         throws XMLStreamException {
       writer.writeStartElement(Element.REST_CONNECTOR.getLocalName());
       writeCommonConnector(writer, connector);
-      for(SimpleAttributeDefinition attribute : RestConnectorResource.REST_ATTRIBUTES) {
+      for (SimpleAttributeDefinition attribute : RestConnectorResource.REST_ATTRIBUTES) {
          attribute.marshallAsAttribute(connector, true, writer);
       }
       writer.writeEndElement();
    }
 
-   private void writeWebSocketConnector(final XMLExtendedStreamWriter writer, final ModelNode connector) throws XMLStreamException {
+   private void writeWebSocketConnector(final XMLExtendedStreamWriter writer, final ModelNode connector)
+         throws XMLStreamException {
       writer.writeStartElement(Element.WEBSOCKET_CONNECTOR.getLocalName());
       writeCommonConnector(writer, connector);
       writeProtocolServerConnector(writer, connector);
       writer.writeEndElement();
    }
 
-   private void writeCommonConnector(final XMLExtendedStreamWriter writer, final ModelNode connector) throws XMLStreamException {
-      for(SimpleAttributeDefinition attribute : CommonConnectorResource.COMMON_CONNECTOR_ATTRIBUTES) {
+   private void writeCommonConnector(final XMLExtendedStreamWriter writer, final ModelNode connector)
+         throws XMLStreamException {
+      for (SimpleAttributeDefinition attribute : CommonConnectorResource.COMMON_CONNECTOR_ATTRIBUTES) {
          attribute.marshallAsAttribute(connector, true, writer);
       }
    }
 
-   private void writeProtocolServerConnector(final XMLExtendedStreamWriter writer, final ModelNode connector) throws XMLStreamException {
-      for(SimpleAttributeDefinition attribute : ProtocolServerConnectorResource.PROTOCOL_SERVICE_ATTRIBUTES) {
+   private void writeProtocolServerConnector(final XMLExtendedStreamWriter writer, final ModelNode connector)
+         throws XMLStreamException {
+      for (SimpleAttributeDefinition attribute : ProtocolServerConnectorResource.PROTOCOL_SERVICE_ATTRIBUTES) {
          attribute.marshallAsAttribute(connector, true, writer);
       }
    }
 
-   private void writeTopologyStateTransfer(final XMLExtendedStreamWriter writer, final ModelNode connector) throws XMLStreamException {
+   private void writeTopologyStateTransfer(final XMLExtendedStreamWriter writer, final ModelNode connector)
+         throws XMLStreamException {
       if (connector.hasDefined(ModelKeys.TOPOLOGY_STATE_TRANSFER)) {
-         ModelNode topologyStateTransfer = connector.get(ModelKeys.TOPOLOGY_STATE_TRANSFER, ModelKeys.TOPOLOGY_STATE_TRANSFER_NAME);
+         ModelNode topologyStateTransfer = connector.get(ModelKeys.TOPOLOGY_STATE_TRANSFER,
+               ModelKeys.TOPOLOGY_STATE_TRANSFER_NAME);
          writer.writeStartElement(Element.TOPOLOGY_STATE_TRANSFER.getLocalName());
-         for(SimpleAttributeDefinition attribute : TopologyStateTransferResource.TOPOLOGY_ATTRIBUTES) {
+         for (SimpleAttributeDefinition attribute : TopologyStateTransferResource.TOPOLOGY_ATTRIBUTES) {
             attribute.marshallAsAttribute(topologyStateTransfer, true, writer);
          }
          writer.writeEndElement();
       }
    }
 
-   private void writeSecurity(final XMLExtendedStreamWriter writer, final ModelNode connector) throws XMLStreamException {
-      if (connector.hasDefined(ModelKeys.SECURITY)) {
-         ModelNode security = connector.get(ModelKeys.SECURITY, ModelKeys.SECURITY_NAME);
-         writer.writeStartElement(Element.SECURITY.getLocalName());
-         for(SimpleAttributeDefinition attribute : SecurityResource.SECURITY_ATTRIBUTES) {
-            attribute.marshallAsAttribute(security, true, writer);
+   private void writeAuthentication(final XMLExtendedStreamWriter writer, final ModelNode connector)
+         throws XMLStreamException {
+      if (connector.hasDefined(ModelKeys.AUTHENTICATION)) {
+         ModelNode authentication = connector.get(ModelKeys.AUTHENTICATION, ModelKeys.AUTHENTICATION_NAME);
+         writer.writeStartElement(Element.AUTHENTICATION.getLocalName());
+         for (SimpleAttributeDefinition attribute : AuthenticationResource.AUTHENTICATION_ATTRIBUTES) {
+            attribute.marshallAsAttribute(authentication, true, writer);
+         }
+         writeSasl(writer, authentication);
+         writer.writeEndElement();
+      }
+   }
+
+   private void writeSasl(final XMLExtendedStreamWriter writer, final ModelNode authentication) throws XMLStreamException {
+      if (authentication.hasDefined(ModelKeys.SASL)) {
+         ModelNode sasl = authentication.get(ModelKeys.SASL, ModelKeys.SASL_NAME);
+         writer.writeStartElement(Element.SASL.getLocalName());
+         for (AttributeDefinition attribute : SaslResource.SASL_ATTRIBUTES) {
+            if (attribute instanceof SimpleAttributeDefinition) {
+               ((SimpleAttributeDefinition)attribute).marshallAsAttribute(sasl, true, writer);
+            } else if (attribute instanceof StringListAttributeDefinition) {
+               writeListAsAttribute(writer, attribute.getXmlName(), sasl, attribute.getName());
+            }
+         }
+         writePolicy(writer, sasl);
+         writer.writeEndElement();
+      }
+   }
+
+   private void writePolicy(final XMLExtendedStreamWriter writer, final ModelNode sasl) throws XMLStreamException {
+      if (sasl.hasDefined(ModelKeys.SASL_POLICY)) {
+         ModelNode policy = sasl.get(ModelKeys.SASL_POLICY, ModelKeys.SASL_POLICY_NAME);
+         writer.writeStartElement(Element.POLICY.getLocalName());
+         SaslPolicyResource.FORWARD_SECRECY.marshallAsElement(policy, writer);
+         SaslPolicyResource.NO_ACTIVE.marshallAsElement(policy, writer);
+         SaslPolicyResource.NO_ANONYMOUS.marshallAsElement(policy, writer);
+         SaslPolicyResource.NO_DICTIONARY.marshallAsElement(policy, writer);
+         SaslPolicyResource.NO_PLAIN_TEXT.marshallAsElement(policy, writer);
+         SaslPolicyResource.PASS_CREDENTIALS.marshallAsElement(policy, writer);
+         writer.writeEndElement();
+      }
+   }
+
+   private void writeEncryption(final XMLExtendedStreamWriter writer, final ModelNode connector)
+         throws XMLStreamException {
+      if (connector.hasDefined(ModelKeys.ENCRYPTION)) {
+         ModelNode encryption = connector.get(ModelKeys.ENCRYPTION, ModelKeys.ENCRYPTION_NAME);
+         writer.writeStartElement(Element.ENCRYPTION.getLocalName());
+         for (SimpleAttributeDefinition attribute : EncryptionResource.ENCRYPTION_ATTRIBUTES) {
+            attribute.marshallAsAttribute(encryption, true, writer);
          }
          writer.writeEndElement();
+      }
+   }
+
+   private void writeListAsAttribute(XMLExtendedStreamWriter writer, String attributeName, ModelNode node, String key) throws XMLStreamException {
+      if (node.hasDefined(key)) {
+         StringBuilder result = new StringBuilder();
+         ModelNode list = node.get(key);
+         if (list.isDefined() && list.getType() == ModelType.LIST) {
+            List<ModelNode> nodeList = list.asList();
+            for (int i = 0; i < nodeList.size(); i++) {
+               result.append(nodeList.get(i).asString());
+               if (i < nodeList.size() - 1) {
+                  result.append(" ");
+               }
+            }
+            writer.writeAttribute(attributeName, result.toString());
+         }
       }
    }
 }

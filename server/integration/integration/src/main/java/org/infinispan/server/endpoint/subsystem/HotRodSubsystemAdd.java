@@ -21,8 +21,8 @@ package org.infinispan.server.endpoint.subsystem;
 import java.util.List;
 
 import org.infinispan.server.hotrod.HotRodServer;
+import org.infinispan.server.hotrod.configuration.AuthenticationConfigurationBuilder;
 import org.infinispan.server.hotrod.configuration.HotRodServerConfigurationBuilder;
-import org.jboss.as.clustering.infinispan.subsystem.EmbeddedCacheManagerConfigurationService;
 import org.jboss.as.controller.AttributeDefinition;
 import org.jboss.as.controller.OperationContext;
 import org.jboss.as.controller.OperationFailedException;
@@ -62,7 +62,8 @@ class HotRodSubsystemAdd extends ProtocolServiceSubsystemAdd {
       // Create the builder
       HotRodServerConfigurationBuilder configurationBuilder = new HotRodServerConfigurationBuilder();
       configureProtocolServer(configurationBuilder, config);
-      configureProtocolServerSecurity(configurationBuilder, config);
+      configureProtocolServerAuthentication(configurationBuilder, config);
+      configureProtocolServerEncryption(configurationBuilder, config);
       configureProtocolServerTopology(configurationBuilder, config);
       // Create the service
       final ProtocolServerService service = new ProtocolServerService(getServiceName(operation), HotRodServer.class, configurationBuilder);
@@ -75,10 +76,31 @@ class HotRodSubsystemAdd extends ProtocolServiceSubsystemAdd {
       EndpointUtils.addCacheContainerDependency(builder, cacheContainerName, service.getCacheManager());
       EndpointUtils.addCacheDependency(builder, cacheContainerName, null);
       EndpointUtils.addSocketBindingDependency(builder, getSocketBindingName(operation), service.getSocketBinding());
-      if (config.hasDefined(ModelKeys.SECURITY) && config.get(ModelKeys.SECURITY, ModelKeys.SECURITY_NAME).isDefined()) {
-         EndpointUtils.addSecurityRealmDependency(builder, config.get(ModelKeys.SECURITY, ModelKeys.SECURITY_NAME, ModelKeys.SECURITY_REALM).asString(), service.getSecurityRealm());
+      if (config.hasDefined(ModelKeys.ENCRYPTION) && config.get(ModelKeys.ENCRYPTION, ModelKeys.ENCRYPTION_NAME).isDefined()) {
+         EndpointUtils.addSecurityRealmDependency(builder, config.get(ModelKeys.ENCRYPTION, ModelKeys.ENCRYPTION_NAME, ModelKeys.SECURITY_REALM).asString(), service.getEncryptionSecurityRealm());
       }
+      if (config.hasDefined(ModelKeys.AUTHENTICATION) && config.get(ModelKeys.AUTHENTICATION, ModelKeys.AUTHENTICATION_NAME).isDefined()) {
+         ModelNode authentication = config.get(ModelKeys.AUTHENTICATION, ModelKeys.AUTHENTICATION_NAME);
+         EndpointUtils.addSecurityRealmDependency(builder, authentication.get(ModelKeys.SECURITY_REALM).asString(), service.getAuthenticationSecurityRealm());
+         if (authentication.hasDefined(ModelKeys.SASL) && authentication.get(ModelKeys.SASL, ModelKeys.SASL_NAME).isDefined()) {
+            AuthenticationConfigurationBuilder authenticationBuilder = configurationBuilder.authentication();
+            ModelNode sasl = authentication.get(ModelKeys.SASL, ModelKeys.SASL_NAME);
+            if (sasl.hasDefined(ModelKeys.SERVER_CONTEXT_NAME)) {
+               String serverContextName = sasl.get(ModelKeys.SERVER_CONTEXT_NAME).asString();
+               service.setServerContextName(serverContextName);
+               EndpointUtils.addSecurityDomainDependency(builder, serverContextName, service.getSaslSecurityDomain()); // FIXME: needed ???
+            }
 
+            if (sasl.hasDefined(ModelKeys.SERVER_NAME)) {
+               authenticationBuilder.serverName(sasl.get(ModelKeys.SERVER_NAME).asString());
+            }
+            if (sasl.hasDefined(ModelKeys.MECHANISMS)) {
+               for(ModelNode mech : sasl.get(ModelKeys.MECHANISMS).asList()) {
+                  authenticationBuilder.addAllowedMech(mech.asString());
+               }
+            }
+         }
+      }
       builder.install();
    }
 
@@ -106,13 +128,17 @@ class HotRodSubsystemAdd extends ProtocolServiceSubsystemAdd {
       }
    }
 
+   private void configureProtocolServerAuthentication(HotRodServerConfigurationBuilder builder, ModelNode config) {
+      if (config.hasDefined(ModelKeys.AUTHENTICATION) && config.get(ModelKeys.AUTHENTICATION, ModelKeys.AUTHENTICATION_NAME).isDefined()) {
+         config = config.get(ModelKeys.AUTHENTICATION, ModelKeys.AUTHENTICATION_NAME);
+         builder.authentication().enable();
+      }
+   }
 
-   private void configureProtocolServerSecurity(HotRodServerConfigurationBuilder builder, ModelNode config) {
-      if (config.hasDefined(ModelKeys.SECURITY) && config.get(ModelKeys.SECURITY, ModelKeys.SECURITY_NAME).isDefined()) {
-         config = config.get(ModelKeys.SECURITY, ModelKeys.SECURITY_NAME);
-         if (config.hasDefined(ModelKeys.SSL)) {
-            builder.ssl().enabled(config.get(ModelKeys.SSL).asBoolean());
-         }
+   private void configureProtocolServerEncryption(HotRodServerConfigurationBuilder builder, ModelNode config) {
+      if (config.hasDefined(ModelKeys.ENCRYPTION) && config.get(ModelKeys.ENCRYPTION, ModelKeys.ENCRYPTION_NAME).isDefined()) {
+         config = config.get(ModelKeys.ENCRYPTION, ModelKeys.ENCRYPTION_NAME);
+         builder.ssl().enable();
          if (config.hasDefined(ModelKeys.REQUIRE_SSL_CLIENT_AUTH)) {
             builder.ssl().requireClientAuth(config.get(ModelKeys.REQUIRE_SSL_CLIENT_AUTH).asBoolean());
          }
