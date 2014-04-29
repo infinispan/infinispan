@@ -155,7 +155,6 @@
       <version.weld>1.1.13.Final</version.weld>
       <version.wildfly>8.0.0.Final</version.wildfly>
       <version.javassist>3.18.0-GA</version.javassist>
-      <version.maven.animal.sniffer>1.9</version.maven.animal.sniffer>
       <version.maven.buildhelper>1.8</version.maven.buildhelper>
       <version.maven.bundle>2.4.0</version.maven.bundle>
       <version.maven.source>2.2.1</version.maven.source>
@@ -1037,7 +1036,7 @@
                <version>2.7.1</version>
                <configuration>
                   <minimumTokens>100</minimumTokens>
-                  <targetJdk>1.6</targetJdk>
+                  <targetJdk>1.7</targetJdk>
                   <linkXref>false</linkXref>
                   <sourceEncoding>utf-8</sourceEncoding>
                </configuration>
@@ -1337,14 +1336,14 @@
                </execution>
             </executions>
          </plugin>
-         <!-- by default, compile to JDK 1.6 compatibility (individual modules and/or user can override) -->
+         <!-- by default, compile to JDK 1.7 compatibility (individual modules and/or user can override) -->
          <plugin>
             <groupId>org.apache.maven.plugins</groupId>
             <artifactId>maven-compiler-plugin</artifactId>
             <version>3.0</version>
             <configuration>
-               <source>1.6</source>
-               <target>1.6</target>
+               <source>1.7</source>
+               <target>1.7</target>
                <encoding>UTF-8</encoding>
                <compilerArgument>-AtranslationFilesPath=${project.basedir}/target/generated-translation-files</compilerArgument>
             </configuration>
@@ -1888,74 +1887,5 @@
          </build>
       </profile>
 
-      <profile>
-         <id>jdk6testsuite</id>
-         <build>
-            <plugins>
-               <plugin>
-                  <groupId>org.apache.maven.plugins</groupId>
-                  <artifactId>maven-surefire-plugin</artifactId>
-                  <configuration>
-                     <jvm>${env.JAVA_HOME_16}/bin/java</jvm>
-                     <parallel>tests</parallel>
-                     <threadCount>${infinispan.test.parallel.threads}</threadCount>
-                     <forkCount>1</forkCount>
-                     <reuseForks>true</reuseForks>
-                     <groups>${defaultTestGroup}</groups>
-                     <excludedGroups>${defaultExcludedTestGroup}</excludedGroups>
-                     <systemPropertyVariables>
-                        <infinispan.test.jgroups.protocol>${infinispan.test.jgroups.protocol}</infinispan.test.jgroups.protocol>
-                        <jgroups.bind_addr>127.0.0.1</jgroups.bind_addr>
-                        <java.net.preferIPv4Stack>true</java.net.preferIPv4Stack>
-                        <infinispan.unsafe.allow_jdk8_chm>true</infinispan.unsafe.allow_jdk8_chm>
-                        <log4j.configuration>${log4j.configuration}</log4j.configuration>
-                     </systemPropertyVariables>
-                     <trimStackTrace>false</trimStackTrace>
-                     <properties>
-                        <property>
-                           <name>listener</name>
-                           <value>${testNGListener}</value>
-                        </property>
-                     </properties>
-                     <!-- -Dsun.nio.ch.bugLevel needed because of http://bugs.sun.com/view_bug.do?bug_id=6427854 -->
-                     <argLine>-Xmx1024m -XX:MaxPermSize=256m -Dsun.nio.ch.bugLevel</argLine>
-                  </configuration>
-               </plugin>
-            </plugins>
-         </build>
-      </profile>
-      <profile>
-         <activation>
-            <jdk>1.7</jdk>
-         </activation>
-         <build>
-            <plugins>
-               <plugin>
-                  <groupId>org.codehaus.mojo</groupId>
-                  <artifactId>animal-sniffer-maven-plugin</artifactId>
-                  <version>${version.maven.animal.sniffer}</version>
-                  <configuration>
-                     <signature>
-                        <groupId>org.codehaus.mojo.signature</groupId>
-                        <artifactId>java16</artifactId>
-                        <version>1.0</version>
-                     </signature>
-                     <ignores>
-                        <ignore>sun.misc.Unsafe</ignore>
-                        <ignore>org.apache.lucene.store.IOContext</ignore>
-                     </ignores>
-                  </configuration>
-                  <executions>
-                     <execution>
-                        <phase>process-classes</phase>
-                        <goals>
-                        <goal>check</goal>
-                        </goals>
-                     </execution>
-                  </executions>
-               </plugin>
-            </plugins>
-         </build>
-      </profile>
    </profiles>
 </project>
