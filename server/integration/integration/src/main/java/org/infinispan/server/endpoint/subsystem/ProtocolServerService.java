@@ -23,17 +23,22 @@ import static org.infinispan.server.endpoint.EndpointLogger.ROOT_LOGGER;
 import java.net.InetSocketAddress;
 
 import javax.net.ssl.SSLContext;
+import javax.security.auth.Subject;
+import javax.security.auth.login.LoginContext;
+import javax.security.auth.login.LoginException;
 
+import org.infinispan.commons.util.ReflectionUtil;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.server.core.ProtocolServer;
 import org.infinispan.server.core.configuration.ProtocolServerConfiguration;
 import org.infinispan.server.core.configuration.ProtocolServerConfigurationBuilder;
 import org.infinispan.server.core.transport.Transport;
-import org.infinispan.commons.util.ReflectionUtil;
+import org.infinispan.server.hotrod.configuration.HotRodServerConfigurationBuilder;
 import org.jboss.as.clustering.infinispan.subsystem.EmbeddedCacheManagerConfiguration;
 import org.jboss.as.domain.management.SecurityRealm;
 import org.jboss.as.network.NetworkUtils;
 import org.jboss.as.network.SocketBinding;
+import org.jboss.as.security.plugins.SecurityDomainContext;
 import org.jboss.msc.service.Service;
 import org.jboss.msc.service.StartContext;
 import org.jboss.msc.service.StartException;
@@ -53,8 +58,12 @@ class ProtocolServerService implements Service<ProtocolServer> {
    private final InjectedValue<EmbeddedCacheManagerConfiguration> cacheManagerConfiguration = new InjectedValue<EmbeddedCacheManagerConfiguration>();
    // The socketBinding that will be injected by the container
    private final InjectedValue<SocketBinding> socketBinding = new InjectedValue<SocketBinding>();
-   // The securityRealm that will be injected by the container
-   private final InjectedValue<SecurityRealm> securityRealm = new InjectedValue<SecurityRealm>();
+   // The security realm for authentication that will be injected by the container
+   private final InjectedValue<SecurityRealm> authenticationSecurityRealm = new InjectedValue<SecurityRealm>();
+   // The security domain to use for creating the SASL server subject (e.g. for the GSSAPI mech)
+   private final InjectedValue<SecurityDomainContext> saslSecurityDomain = new InjectedValue<SecurityDomainContext>();
+   // The security realm for encryption that will be injected by the container
+   private final InjectedValue<SecurityRealm> encryptionSecurityRealm = new InjectedValue<SecurityRealm>();
    // The configuration for this service
    private final ProtocolServerConfigurationBuilder<?, ?> configurationBuilder;
    // The class which determines the type of server
@@ -66,6 +75,10 @@ class ProtocolServerService implements Service<ProtocolServer> {
    private Transport transport;
    // The name of the server
    private final String serverName;
+   // The login context used to obtain the server subject
+   private LoginContext serverLoginContext = null;
+   private String serverContextName;
+
 
    ProtocolServerService(String serverName, Class<? extends ProtocolServer> serverClass, ProtocolServerConfigurationBuilder<?, ?> configurationBuilder) {
       this.configurationBuilder = configurationBuilder;
@@ -89,18 +102,30 @@ class ProtocolServerService implements Service<ProtocolServer> {
          configurationBuilder.host(socketAddress.getAddress().getHostAddress());
          configurationBuilder.port(socketAddress.getPort());
 
-         SecurityRealm realm = securityRealm.getOptionalValue();
+         SecurityRealm encryptionRealm = encryptionSecurityRealm.getOptionalValue();
          final String qual;
-         if (realm != null) {
-            SSLContext sslContext = realm.getSSLContext();
+         if (encryptionRealm != null) {
+            SSLContext sslContext = encryptionRealm.getSSLContext();
             if (sslContext == null) {
-               throw ROOT_LOGGER.noSSLContext(serverName, realm.getName());
+               throw ROOT_LOGGER.noSSLContext(serverName, encryptionRealm.getName());
             }
             configurationBuilder.ssl().sslContext(sslContext);
             qual = " (SSL)";
          } else {
             qual = "";
          }
+         if (configurationBuilder instanceof HotRodServerConfigurationBuilder) { // FIXME: extend to all protocol servers once they support authn
+            HotRodServerConfigurationBuilder hotRodBuilder = (HotRodServerConfigurationBuilder) configurationBuilder;
+
+            if (serverContextName != null) {
+               hotRodBuilder.authentication().serverSubject(getServerSubject(serverContextName));
+            }
+            SecurityRealm authenticationRealm = authenticationSecurityRealm.getOptionalValue();
+            if (authenticationRealm != null) {
+               hotRodBuilder.authentication().serverAuthenticationProvider(new EndpointServerAuthenticationProvider(authenticationRealm));
+            }
+         }
+
 
          ROOT_LOGGER.endpointStarted(serverName + qual, NetworkUtils.formatAddress(socketAddress));
          // Start the connector
@@ -127,7 +152,7 @@ class ProtocolServerService implements Service<ProtocolServer> {
          throw ROOT_LOGGER.failedConnectorInstantiation(e, serverName);
       }
       ROOT_LOGGER.connectorStarting(serverName);
-      server.start(configuration, getCacheManager().getValue());
+      SecurityActions.startProtocolServer(server, configuration, getCacheManager().getValue());
       protocolServer = server;
 
       try {
@@ -150,6 +175,12 @@ class ProtocolServerService implements Service<ProtocolServer> {
                protocolServer.stop();
             } catch (Exception e) {
                ROOT_LOGGER.connectorStopFailed(e, serverName);
+            }
+         }
+         if (serverLoginContext != null) {
+            try {
+               serverLoginContext.logout();
+            } catch (LoginException e) {
             }
          }
       } finally {
@@ -177,11 +208,36 @@ class ProtocolServerService implements Service<ProtocolServer> {
       return socketBinding;
    }
 
-   InjectedValue<SecurityRealm> getSecurityRealm() {
-      return securityRealm;
+   InjectedValue<SecurityRealm> getAuthenticationSecurityRealm() {
+      return authenticationSecurityRealm;
+   }
+
+   InjectedValue<SecurityDomainContext> getSaslSecurityDomain() {
+      return saslSecurityDomain;
+   }
+
+   InjectedValue<SecurityRealm> getEncryptionSecurityRealm() {
+      return encryptionSecurityRealm;
    }
 
    public Transport getTransport() {
       return transport;
    }
+
+   Subject getServerSubject(String serverSecurityDomain) throws LoginException
+   {
+      LoginContext lc = new LoginContext(serverSecurityDomain);
+      lc.login();
+      // Cache so we can log out.
+      serverLoginContext  = lc;
+
+      Subject serverSubject = serverLoginContext.getSubject();
+
+      return serverSubject;
+   }
+
+   void setServerContextName(String serverContextName) {
+      this.serverContextName = serverContextName;
+   }
+
 }

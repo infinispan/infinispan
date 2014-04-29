@@ -39,7 +39,8 @@ public class HotRodConnectorResource extends ProtocolServerConnectorResource imp
    @Override
    public void registerChildren(ManagementResourceRegistration resourceRegistration) {
       resourceRegistration.registerSubModel(new TopologyStateTransferResource());
-      resourceRegistration.registerSubModel(new SecurityResource());
+      resourceRegistration.registerSubModel(new AuthenticationResource());
+      resourceRegistration.registerSubModel(new EncryptionResource());
    }
 
    @Override

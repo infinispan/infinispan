@@ -2,7 +2,7 @@
 <!-- See src/resources/configuration/ReadMe.txt for how the configuration assembly works -->
 <config default-supplement="default">
    <extension-module>org.infinispan.server.endpoint</extension-module>
-   <subsystem xmlns="urn:infinispan:server:endpoint:6.0">
+   <subsystem xmlns="urn:infinispan:server:endpoint:7.0">
       <?CONNECTORS?>
    </subsystem>
    <supplement name="hotrod-rolling-upgrade">
@@ -33,7 +33,7 @@
       <replacement placeholder="CONNECTORS">
          <hotrod-connector socket-binding="hotrod" cache-container="local">
             <topology-state-transfer lock-timeout="1000" replication-timeout="5000" />
-            <security ssl="true" security-realm="ApplicationRealm" require-ssl-client-auth="true"/>
+            <encryption security-realm="ApplicationRealm" require-ssl-client-auth="true"/>
          </hotrod-connector>
       </replacement>
    </supplement>
@@ -56,6 +56,17 @@
          </hotrod-connector>
          <memcached-connector socket-binding="memcached" cache-container="local" cache="default" />
          <rest-connector virtual-server="default-host" cache-container="local" />
+      </replacement>
+   </supplement>
+   <supplement name="auth">
+      <replacement placeholder="@@default-cache-container@@" attributeValue="local" />
+      <replacement placeholder="CONNECTORS">
+         <hotrod-connector socket-binding="hotrod" cache-container="local">
+            <topology-state-transfer lock-timeout="1000" replication-timeout="5000" />
+            <authentication security-realm="ApplicationRealm">
+                <sasl server-name="localhost" mechanisms="PLAIN" />
+              </authentication>
+         </hotrod-connector>
       </replacement>
    </supplement>
    <socket-binding name="hotrod" port="11222" />

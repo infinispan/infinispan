@@ -19,6 +19,9 @@
                     <truststore path="truststore_server.jks" relative-to="jboss.server.config.dir" keystore-password="secret"/>
                     <properties path="application-users.properties" relative-to="jboss.server.config.dir"/>
                 </authentication>
+                <authorization>
+                    <properties path="application-roles.properties" relative-to="jboss.server.config.dir"/>
+                </authorization>
                 <server-identities>
                     <ssl>
                        <keystore path="keystore_server.jks" relative-to="jboss.server.config.dir" keystore-password="secret" />

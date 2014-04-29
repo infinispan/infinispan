@@ -56,9 +56,29 @@ public class ModelKeys {
    public static final String LAZY_RETRIEVAL = "lazy-retrieval"; // boolean
    public static final String AWAIT_INITIAL_RETRIEVAL = "await-initial-retrieval"; // boolean
 
-   public static final String SECURITY_NAME = "SECURITY";
-   public static final String SECURITY = "security";
+   public static final String AUTHENTICATION_NAME = "AUTHENTICATION";
+   public static final String AUTHENTICATION = "authentication";
+   public static final String ENCRYPTION_NAME = "ENCRYPTION";
+   public static final String ENCRYPTION = "encryption";
+   public static final String SASL_NAME = "SASL";
+   public static final String SASL = "sasl";
+   public static final String SASL_POLICY_NAME = "SASL_POLICY";
+   public static final String SASL_POLICY = "sasl-policy";
    public static final String SSL = "ssl"; // boolean
+   @Deprecated
+   public static final String SECURITY = "security";
+   public static final String SERVER_CONTEXT_NAME = "server-context-name";
+   public static final String SERVER_NAME = "server-name";
+   public static final String MECHANISMS = "mechanisms";
+   public static final String POLICY = "policy";
+   public static final String QOP = "qop";
+   public static final String STRENGTH = "strength";
+   public static final String VALUE = "value";
 
-
+   public static final String FORWARD_SECRECY = "forward-secrecy";
+   public static final String NO_ACTIVE = "no-active";
+   public static final String NO_ANONYMOUS = "no-anonymous";
+   public static final String NO_DICTIONARY = "no-dictionary";
+   public static final String NO_PLAIN_TEXT = "no-plain-text";
+   public static final String PASS_CREDENTIALS = "pass-credentials";
 }

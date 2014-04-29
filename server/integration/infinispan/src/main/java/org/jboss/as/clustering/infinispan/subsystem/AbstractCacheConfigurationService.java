@@ -78,7 +78,7 @@ public abstract class AbstractCacheConfigurationService implements Service<Confi
             throw InfinispanMessages.MESSAGES.transportRequired(mode, this.name, container.getCacheManagerConfiguration().globalJmxStatistics().cacheManagerName());
         }
 
-        container.defineConfiguration(this.name, this.config);
+        SecurityActions.defineContainerConfiguration(container, this.name, this.config);
 
         log.debugf("%s cache configuration started", this.name);
     }

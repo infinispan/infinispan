@@ -65,17 +65,16 @@ public class EmbeddedCacheManagerService implements Service<EmbeddedCacheManager
     public void start(StartContext context) {
         EmbeddedCacheManagerConfiguration config = this.config.getValue();
         this.container = new DefaultEmbeddedCacheManager(config.getGlobalConfiguration(), config.getDefaultCache());
-        this.container.addListener(this);
-        this.container.start();
+        SecurityActions.registerAndStartContainer(this.container, this);
         log.debugf("%s cache container started", config.getName());
     }
 
     @Override
     public void stop(StopContext context) {
-        if ((this.container != null) && this.container.getStatus().allowInvocations()) {
-            this.container.stop();
-            this.container.removeListener(this);
-            log.debugf("%s cache container stopped", this.config.getValue().getName());
+        if (this.container != null) {
+            if (SecurityActions.stopAndUnregisterContainer(this.container, this)) {
+                log.debugf("%s cache container stopped", this.config.getValue().getName());
+            }
         }
     }
 

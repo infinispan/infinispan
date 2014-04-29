@@ -27,6 +27,7 @@ import org.jboss.as.clustering.infinispan.subsystem.EmbeddedCacheManagerConfigur
 import org.jboss.as.clustering.infinispan.subsystem.EmbeddedCacheManagerConfigurationService;
 import org.jboss.as.controller.PathAddress;
 import org.jboss.as.controller.PathElement;
+import org.jboss.as.controller.security.ServerSecurityManager;
 import org.jboss.as.domain.management.SecurityRealm;
 import org.jboss.as.domain.management.security.SecurityRealmService;
 import org.jboss.as.network.SocketBinding;
@@ -109,5 +110,9 @@ public class EndpointUtils {
       if (source.hasDefined(name)) {
          target.get(name).set(source.get(name));
       }
+   }
+
+   public static void addServerSecurityManagerDependency(ServiceBuilder<?> builder, InjectedValue<ServerSecurityManager> serverSecurityManager) {
+      builder.addDependency(ServiceName.JBOSS.append("security", "simple-security-manager"), ServerSecurityManager.class, serverSecurityManager);
    }
 }

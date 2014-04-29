@@ -27,26 +27,17 @@ import org.jboss.as.controller.SimpleAttributeDefinition;
 import org.jboss.as.controller.SimpleAttributeDefinitionBuilder;
 import org.jboss.as.controller.SimpleResourceDefinition;
 import org.jboss.as.controller.registry.ManagementResourceRegistration;
-import org.jboss.dmr.ModelNode;
 import org.jboss.dmr.ModelType;
 
 /**
- * SecurityResource.
+ * AuthenticationResource.
  *
  * @author Tristan Tarrant
- * @since 5.3
+ * @since 7.0
  */
-public class SecurityResource extends SimpleResourceDefinition {
+public class AuthenticationResource extends SimpleResourceDefinition {
 
-   private static final PathElement SECURITY_PATH = PathElement.pathElement(ModelKeys.SECURITY, ModelKeys.SECURITY_NAME);
-
-   static final SimpleAttributeDefinition REQUIRE_SSL_CLIENT_AUTH =
-         new SimpleAttributeDefinitionBuilder(ModelKeys.REQUIRE_SSL_CLIENT_AUTH, ModelType.BOOLEAN, true)
-                 .setAllowExpression(true)
-                 .setXmlName(ModelKeys.REQUIRE_SSL_CLIENT_AUTH)
-                 .setRestartAllServices()
-                 .setDefaultValue(new ModelNode().set(false))
-                 .build();
+   private static final PathElement AUTHENTICATION_PATH = PathElement.pathElement(ModelKeys.AUTHENTICATION, ModelKeys.AUTHENTICATION_NAME);
 
    static final SimpleAttributeDefinition SECURITY_REALM =
          new SimpleAttributeDefinitionBuilder(ModelKeys.SECURITY_REALM, ModelType.STRING, true)
@@ -55,26 +46,23 @@ public class SecurityResource extends SimpleResourceDefinition {
                  .setRestartAllServices()
                  .build();
 
-   static final SimpleAttributeDefinition SSL =
-         new SimpleAttributeDefinitionBuilder(ModelKeys.SSL, ModelType.BOOLEAN, true)
-                 .setAllowExpression(true)
-                 .setXmlName(ModelKeys.SSL)
-                 .setRestartAllServices()
-                 .setDefaultValue(new ModelNode().set(false))
-                 .build();
+   static final SimpleAttributeDefinition[] AUTHENTICATION_ATTRIBUTES = { SECURITY_REALM };
 
-   static final SimpleAttributeDefinition[] SECURITY_ATTRIBUTES = { REQUIRE_SSL_CLIENT_AUTH, SECURITY_REALM, SSL };
+   public AuthenticationResource() {
+      super(AUTHENTICATION_PATH, EndpointExtension.getResourceDescriptionResolver(ModelKeys.AUTHENTICATION), AuthenticationAdd.INSTANCE, ReloadRequiredRemoveStepHandler.INSTANCE);
+   }
 
-   public SecurityResource() {
-      super(SECURITY_PATH, EndpointExtension.getResourceDescriptionResolver(ModelKeys.SECURITY), SecurityAdd.INSTANCE, ReloadRequiredRemoveStepHandler.INSTANCE);
+   @Override
+   public void registerChildren(ManagementResourceRegistration resourceRegistration) {
+      resourceRegistration.registerSubModel(new SaslResource());
    }
 
    @Override
    public void registerAttributes(ManagementResourceRegistration resourceRegistration) {
        super.registerAttributes(resourceRegistration);
 
-       final OperationStepHandler writeHandler = new ReloadRequiredWriteAttributeHandler(SECURITY_ATTRIBUTES);
-       for (AttributeDefinition attr : SECURITY_ATTRIBUTES) {
+       final OperationStepHandler writeHandler = new ReloadRequiredWriteAttributeHandler(AUTHENTICATION_ATTRIBUTES);
+       for (AttributeDefinition attr : AUTHENTICATION_ATTRIBUTES) {
            resourceRegistration.registerReadWriteAttribute(attr, null, writeHandler);
        }
    }

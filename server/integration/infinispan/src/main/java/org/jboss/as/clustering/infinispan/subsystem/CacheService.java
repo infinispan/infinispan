@@ -75,8 +75,7 @@ public class CacheService<K, V> implements Service<Cache<K, V>> {
     public void start(StartContext context) {
         EmbeddedCacheManager container = this.dependencies.getCacheContainer();
 
-        this.cache = container.getCache(this.name);
-        this.cache.start();
+        this.cache = SecurityActions.startCache(container, this.name);
 
         XAResourceRecoveryRegistry recoveryRegistry = this.dependencies.getRecoveryRegistry();
         if (recoveryRegistry != null) {

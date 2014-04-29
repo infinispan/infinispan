@@ -34,13 +34,14 @@ public enum Namespace {
     INFINISPAN_ENDPOINT_5_2("infinispan:server:endpoint", 5, 2, new EndpointSubsystemReader_1_0()),
     INFINISPAN_ENDPOINT_5_3("infinispan:server:endpoint", 5, 3, new EndpointSubsystemReader_5_3()),
     INFINISPAN_ENDPOINT_6_0("infinispan:server:endpoint", 6, 0, new EndpointSubsystemReader_6_0()),
+    INFINISPAN_ENDPOINT_7_0("infinispan:server:endpoint", 7, 0, new EndpointSubsystemReader_7_0()),
     ;
     private static final String URN_PATTERN = "urn:%s:%d.%d";
 
     /**
      * The current namespace version.
      */
-    public static final Namespace CURRENT = INFINISPAN_ENDPOINT_6_0;
+    public static final Namespace CURRENT = INFINISPAN_ENDPOINT_7_0;
 
     private final int major;
     private final int minor;

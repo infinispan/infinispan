@@ -44,10 +44,11 @@ import org.jboss.staxmapper.XMLExtendedStreamReader;
  * @author Tristan Tarrant
  *
  */
-class EndpointSubsystemReader_6_0 implements XMLStreamConstants, XMLElementReader<List<ModelNode>> {
+class EndpointSubsystemReader_7_0 implements XMLStreamConstants, XMLElementReader<List<ModelNode>> {
 
    @Override
-   public void readElement(final XMLExtendedStreamReader reader, final List<ModelNode> operations) throws XMLStreamException {
+   public void readElement(final XMLExtendedStreamReader reader, final List<ModelNode> operations)
+         throws XMLStreamException {
 
       PathAddress subsystemAddress = PathAddress.pathAddress(Constants.SUBSYSTEM_PATH);
       ModelNode subsystem = Util.createAddOperation(subsystemAddress);
@@ -80,7 +81,8 @@ class EndpointSubsystemReader_6_0 implements XMLStreamConstants, XMLElementReade
       }
    }
 
-   private void parseHotRodConnector(XMLExtendedStreamReader reader, PathAddress subsystemAddress, List<ModelNode> operations) throws XMLStreamException {
+   private void parseHotRodConnector(XMLExtendedStreamReader reader, PathAddress subsystemAddress,
+         List<ModelNode> operations) throws XMLStreamException {
 
       ModelNode connector = Util.getEmptyOperation(ADD, null);
       String name = ModelKeys.HOTROD_CONNECTOR;
@@ -110,8 +112,12 @@ class EndpointSubsystemReader_6_0 implements XMLStreamConstants, XMLElementReade
             parseTopologyStateTransfer(reader, connector, operations);
             break;
          }
-         case SECURITY: {
-            parseSecurity(reader, connector, operations);
+         case AUTHENTICATION: {
+            parseAuthentication(reader, connector, operations);
+            break;
+         }
+         case ENCRYPTION: {
+            parseEncryption(reader, connector, operations);
             break;
          }
          default: {
@@ -121,7 +127,8 @@ class EndpointSubsystemReader_6_0 implements XMLStreamConstants, XMLElementReade
       }
    }
 
-   private void parseMemcachedConnector(XMLExtendedStreamReader reader, PathAddress subsystemAddress, List<ModelNode> operations) throws XMLStreamException {
+   private void parseMemcachedConnector(XMLExtendedStreamReader reader, PathAddress subsystemAddress,
+         List<ModelNode> operations) throws XMLStreamException {
 
       ModelNode connector = Util.getEmptyOperation(ADD, null);
       String name = ModelKeys.MEMCACHED_CONNECTOR;
@@ -132,7 +139,7 @@ class EndpointSubsystemReader_6_0 implements XMLStreamConstants, XMLElementReade
          String value = reader.getAttributeValue(i);
          Attribute attribute = Attribute.forName(reader.getAttributeLocalName(i));
          required.remove(attribute);
-         switch(attribute) {
+         switch (attribute) {
          case CACHE:
             MemcachedConnectorResource.CACHE.parseAndSetParameter(value, connector, reader);
             break;
@@ -146,7 +153,8 @@ class EndpointSubsystemReader_6_0 implements XMLStreamConstants, XMLElementReade
          throw ParseUtils.missingRequired(reader, required);
       }
 
-      PathAddress connectorAddress = subsystemAddress.append(PathElement.pathElement(ModelKeys.MEMCACHED_CONNECTOR, name));
+      PathAddress connectorAddress = subsystemAddress.append(PathElement.pathElement(ModelKeys.MEMCACHED_CONNECTOR,
+            name));
       connector.get(OP_ADDR).set(connectorAddress.toModelNode());
 
       ParseUtils.requireNoContent(reader);
@@ -154,7 +162,8 @@ class EndpointSubsystemReader_6_0 implements XMLStreamConstants, XMLElementReade
       operations.add(connector);
    }
 
-   private String parseConnectorAttributes(XMLExtendedStreamReader reader, ModelNode connector, String name, int i, String value, Attribute attribute) throws XMLStreamException {
+   private String parseConnectorAttributes(XMLExtendedStreamReader reader, ModelNode connector, String name, int i,
+         String value, Attribute attribute) throws XMLStreamException {
       switch (attribute) {
       case CACHE_CONTAINER: {
          CommonConnectorResource.CACHE_CONTAINER.parseAndSetParameter(value, connector, reader);
@@ -196,7 +205,8 @@ class EndpointSubsystemReader_6_0 implements XMLStreamConstants, XMLElementReade
       return name;
    }
 
-   private void parseRestConnector(XMLExtendedStreamReader reader, PathAddress subsystemAddress, List<ModelNode> operations) throws XMLStreamException {
+   private void parseRestConnector(XMLExtendedStreamReader reader, PathAddress subsystemAddress,
+         List<ModelNode> operations) throws XMLStreamException {
 
       ModelNode connector = Util.getEmptyOperation(ADD, null);
       String name = ModelKeys.REST_CONNECTOR;
@@ -253,7 +263,8 @@ class EndpointSubsystemReader_6_0 implements XMLStreamConstants, XMLElementReade
       operations.add(connector);
    }
 
-   private void parseWebSocketConnector(XMLExtendedStreamReader reader, PathAddress subsystemAddress, List<ModelNode> operations) throws XMLStreamException {
+   private void parseWebSocketConnector(XMLExtendedStreamReader reader, PathAddress subsystemAddress,
+         List<ModelNode> operations) throws XMLStreamException {
 
       ModelNode connector = Util.getEmptyOperation(ADD, null);
       String name = ModelKeys.WEBSOCKET_CONNECTOR;
@@ -271,7 +282,8 @@ class EndpointSubsystemReader_6_0 implements XMLStreamConstants, XMLElementReade
          throw ParseUtils.missingRequired(reader, required);
       }
 
-      PathAddress connectorAddress = subsystemAddress.append(PathElement.pathElement(ModelKeys.WEBSOCKET_CONNECTOR, name));
+      PathAddress connectorAddress = subsystemAddress.append(PathElement.pathElement(ModelKeys.WEBSOCKET_CONNECTOR,
+            name));
       connector.get(OP_ADDR).set(connectorAddress.toModelNode());
 
       ParseUtils.requireNoContent(reader);
@@ -279,7 +291,8 @@ class EndpointSubsystemReader_6_0 implements XMLStreamConstants, XMLElementReade
       operations.add(connector);
    }
 
-   private void parseTopologyStateTransfer(XMLExtendedStreamReader reader, ModelNode connector, List<ModelNode> operations) throws XMLStreamException {
+   private void parseTopologyStateTransfer(XMLExtendedStreamReader reader, ModelNode connector,
+         List<ModelNode> operations) throws XMLStreamException {
       PathAddress address = PathAddress.pathAddress(connector.get(OP_ADDR)).append(
             PathElement.pathElement(ModelKeys.TOPOLOGY_STATE_TRANSFER, ModelKeys.TOPOLOGY_STATE_TRANSFER_NAME));
       ModelNode topologyStateTransfer = Util.createAddOperation(address);
@@ -290,7 +303,8 @@ class EndpointSubsystemReader_6_0 implements XMLStreamConstants, XMLElementReade
          Attribute attribute = Attribute.forName(reader.getAttributeLocalName(i));
          switch (attribute) {
          case AWAIT_INITIAL_RETRIEVAL: {
-            TopologyStateTransferResource.AWAIT_INITIAL_RETRIEVAL.parseAndSetParameter(value, topologyStateTransfer, reader);
+            TopologyStateTransferResource.AWAIT_INITIAL_RETRIEVAL.parseAndSetParameter(value, topologyStateTransfer,
+                  reader);
             break;
          }
          case EXTERNAL_HOST: {
@@ -310,7 +324,8 @@ class EndpointSubsystemReader_6_0 implements XMLStreamConstants, XMLElementReade
             break;
          }
          case REPLICATION_TIMEOUT: {
-            TopologyStateTransferResource.REPLICATION_TIMEOUT.parseAndSetParameter(value, topologyStateTransfer, reader);
+            TopologyStateTransferResource.REPLICATION_TIMEOUT
+                  .parseAndSetParameter(value, topologyStateTransfer, reader);
             break;
          }
          case UPDATE_TIMEOUT: {
@@ -327,10 +342,171 @@ class EndpointSubsystemReader_6_0 implements XMLStreamConstants, XMLElementReade
 
    }
 
-   private void parseSecurity(XMLExtendedStreamReader reader, ModelNode connector, List<ModelNode> operations) throws XMLStreamException {
-      PathAddress address = PathAddress.pathAddress(connector.get(OP_ADDR)).append(PathElement.pathElement(ModelKeys.ENCRYPTION, ModelKeys.ENCRYPTION_NAME));
+   private void parseAuthentication(XMLExtendedStreamReader reader, ModelNode connector, List<ModelNode> operations)
+         throws XMLStreamException {
+      PathAddress address = PathAddress.pathAddress(connector.get(OP_ADDR)).append(
+            PathElement.pathElement(ModelKeys.AUTHENTICATION, ModelKeys.AUTHENTICATION_NAME));
+      ModelNode authentication = Util.createAddOperation(address);
+
+      for (int i = 0; i < reader.getAttributeCount(); i++) {
+         ParseUtils.requireNoNamespaceAttribute(reader, i);
+         String value = reader.getAttributeValue(i);
+         Attribute attribute = Attribute.forName(reader.getAttributeLocalName(i));
+         switch (attribute) {
+         case SECURITY_REALM: {
+            AuthenticationResource.SECURITY_REALM.parseAndSetParameter(value, authentication, reader);
+            break;
+         }
+         default: {
+            ParseUtils.unexpectedAttribute(reader, i);
+         }
+         }
+      }
+      operations.add(authentication);
+
+      final EnumSet<Element> visited = EnumSet.noneOf(Element.class);
+      while (reader.hasNext() && (reader.nextTag() != XMLStreamConstants.END_ELEMENT)) {
+         final Element element = Element.forName(reader.getLocalName());
+         if (visited.contains(element)) {
+            throw ParseUtils.unexpectedElement(reader);
+         }
+         visited.add(element);
+         switch (element) {
+         case SASL: {
+            parseSasl(reader, authentication, operations);
+            break;
+         }
+         default: {
+            throw ParseUtils.unexpectedElement(reader);
+         }
+         }
+      }
+   }
+
+   private void parseSasl(final XMLExtendedStreamReader reader, final ModelNode authentication, final List<ModelNode> list) throws XMLStreamException {
+      PathAddress address = PathAddress.pathAddress(authentication.get(OP_ADDR)).append(
+            PathElement.pathElement(ModelKeys.SASL, ModelKeys.SASL_NAME));
+      ModelNode sasl = Util.createAddOperation(address);
+      list.add(sasl);
+
+      for (int i = 0; i < reader.getAttributeCount(); i++) {
+         ParseUtils.requireNoNamespaceAttribute(reader, i);
+         String value = reader.getAttributeValue(i);
+         Attribute attribute = Attribute.forName(reader.getAttributeLocalName(i));
+         switch (attribute) {
+         case MECHANISMS: {
+            for(String mech : reader.getListAttributeValue(i)) {
+               SaslResource.MECHANISMS.parseAndAddParameterElement(mech, sasl, reader);
+            }
+            break;
+         }
+         case QOP: {
+            for(String qop : reader.getListAttributeValue(i)) {
+               SaslResource.QOP.parseAndAddParameterElement(qop, sasl, reader);
+            }
+            break;
+         }
+         case SERVER_CONTEXT_NAME: {
+            SaslResource.SERVER_CONTEXT_NAME.parseAndSetParameter(value, sasl, reader);
+            break;
+         }
+         case SERVER_NAME: {
+            SaslResource.SERVER_NAME.parseAndSetParameter(value, sasl, reader);
+            break;
+         }
+         case STRENGTH: {
+            for(String strength : reader.getListAttributeValue(i)) {
+               SaslResource.STRENGTH.parseAndAddParameterElement(strength, sasl, reader);
+            }
+            break;
+         }
+         default: {
+            ParseUtils.unexpectedAttribute(reader, i);
+         }
+         }
+      }
+      // Nested elements
+      final EnumSet<Element> visited = EnumSet.noneOf(Element.class);
+      while (reader.hasNext() && (reader.nextTag() != XMLStreamConstants.END_ELEMENT)) {
+         final Element element = Element.forName(reader.getLocalName());
+         if (visited.contains(element)) {
+            throw ParseUtils.unexpectedElement(reader);
+         }
+         visited.add(element);
+         switch (element) {
+         case POLICY: {
+            parsePolicy(reader, sasl, list);
+            break;
+         }
+         default: {
+            throw ParseUtils.unexpectedElement(reader);
+         }
+         }
+      }
+   }
+
+   void parsePolicy(XMLExtendedStreamReader reader, final ModelNode sasl, final List<ModelNode> list)
+         throws XMLStreamException {
+      PathAddress address = PathAddress.pathAddress(sasl.get(OP_ADDR)).append(
+            PathElement.pathElement(ModelKeys.SASL_POLICY, ModelKeys.SASL_POLICY_NAME));
+      ModelNode policy = Util.createAddOperation(address);
+      list.add(policy);
+
+      if (reader.getAttributeCount() > 0) {
+         throw ParseUtils.unexpectedAttribute(reader, 0);
+      }
+      // Handle nested elements.
+      final EnumSet<Element> visited = EnumSet.noneOf(Element.class);
+      while (reader.hasNext() && (reader.nextTag() != XMLStreamConstants.END_ELEMENT)) {
+         final Element element = Element.forName(reader.getLocalName());
+         if (visited.contains(element)) {
+            throw ParseUtils.unexpectedElement(reader);
+         }
+         visited.add(element);
+         switch (element) {
+         case FORWARD_SECRECY: {
+            SaslPolicyResource.FORWARD_SECRECY.parseAndSetParameter(
+                  ParseUtils.readStringAttributeElement(reader, "value"), policy, reader);
+            break;
+         }
+         case NO_ACTIVE: {
+            SaslPolicyResource.NO_ACTIVE.parseAndSetParameter(ParseUtils.readStringAttributeElement(reader, "value"),
+                  policy, reader);
+            break;
+         }
+         case NO_ANONYMOUS: {
+            SaslPolicyResource.NO_ANONYMOUS.parseAndSetParameter(
+                  ParseUtils.readStringAttributeElement(reader, "value"), policy, reader);
+            break;
+         }
+         case NO_DICTIONARY: {
+            SaslPolicyResource.NO_DICTIONARY.parseAndSetParameter(
+                  ParseUtils.readStringAttributeElement(reader, "value"), policy, reader);
+            break;
+         }
+         case NO_PLAIN_TEXT: {
+            SaslPolicyResource.NO_PLAIN_TEXT.parseAndSetParameter(
+                  ParseUtils.readStringAttributeElement(reader, "value"), policy, reader);
+            break;
+         }
+         case PASS_CREDENTIALS: {
+            SaslPolicyResource.PASS_CREDENTIALS.parseAndSetParameter(
+                  ParseUtils.readStringAttributeElement(reader, "value"), policy, reader);
+            break;
+         }
+         default: {
+            throw ParseUtils.unexpectedElement(reader);
+         }
+         }
+      }
+   }
+
+   private void parseEncryption(XMLExtendedStreamReader reader, ModelNode connector, List<ModelNode> operations)
+         throws XMLStreamException {
+      PathAddress address = PathAddress.pathAddress(connector.get(OP_ADDR)).append(
+            PathElement.pathElement(ModelKeys.ENCRYPTION, ModelKeys.ENCRYPTION_NAME));
       ModelNode security = Util.createAddOperation(address);
-      boolean ssl = false;
+
       for (int i = 0; i < reader.getAttributeCount(); i++) {
          ParseUtils.requireNoNamespaceAttribute(reader, i);
          String value = reader.getAttributeValue(i);
@@ -344,10 +520,6 @@ class EndpointSubsystemReader_6_0 implements XMLStreamConstants, XMLElementReade
             EncryptionResource.SECURITY_REALM.parseAndSetParameter(value, security, reader);
             break;
          }
-         case SSL: {
-            ssl = Boolean.parseBoolean(value);
-            break;
-         }
          default: {
             ParseUtils.unexpectedAttribute(reader, i);
          }
@@ -355,8 +527,6 @@ class EndpointSubsystemReader_6_0 implements XMLStreamConstants, XMLElementReade
 
       }
       ParseUtils.requireNoContent(reader);
-      if (ssl) {
-         operations.add(security);
-      }
+      operations.add(security);
    }
 }

@@ -2,11 +2,11 @@
 
 Security within Infinispan is implemented at several layers:
 
-* within the core library, to provide coarse and fine-grained access control to CacheManagers, Caches and data and to provide encryption of data
+* within the core library, to provide coarse-grained access control to CacheManagers, Caches and data
 * over remote protocols, to obtain credentials from remote clients and to secure the transport using encryption
 * between nodes in a cluster, so that only authorized nodes can join and to secure the transport using encryption
 
-In order to maximize compatibility and integration, Infinispan uses widespread security standards where possible and appropriate, such as X.509 certificates, SSL/TLS encryption and Kerberos.
+In order to maximize compatibility and integration, Infinispan uses widespread security standards where possible and appropriate, such as X.509 certificates, SSL/TLS encryption and Kerberos/GSSAPI.
 Also, to avoid pulling in any external dependencies and to increase the ease of integration with third party libraries and containers, the implementation makes use of any facilities provided by the 
 standard Java security libraries (JAAS, JSSE, JCA, JCE, SASL, etc).
 For this reason, the Infinispan core library only provides interfaces and a set of basic implementations.
@@ -135,9 +135,54 @@ The audit logger is configured at the cache container authorization level:
 </infinispan>
 ----
 
-
 The default audit logger is org.infinispan.security.impl.DefaultAuditLogger which outputs audit logs through the available logging framework (e.g. Log4J) at level TRACE and category AUDIT. These logs look like: 
 
 [ALLOW] user READ cache[defaultCache]
 
 Using an appropriate logging appender it is possible to send the AUDIT category either to a log file, a JMS queue, a database, etc.
+
+== Hot Rod authentication
+
+The Hot Rod protocol supports authentication since version 2.0 (Infinispan 7.0) by leveraging the SASL mechanisms. In the context of Infinispan server, Hot Rod authentication is based upon the Security Realms defined in the configuration. 
+By default, the server comes with two configured realms: ManagementRealm, which is used for managing administrative users (e.g. when using the CLI), and ApplicationRealm, for user-application purposes. 
+The following is an example of a properties-based security realm:
+
+[source,xml]
+----
+
+<server xmlns="urn:jboss:domain:1.4">
+   ...
+   <management>
+        ...
+        <security-realm name="ApplicationRealm">
+           <authentication>
+              <properties path="application-users.properties" relative-to="jboss.server.config.dir"/>
+           </authentication>
+           <authorization>
+              <properties path="application-roles.properties" relative-to="jboss.server.config.dir"/>
+           </authorization>
+        </security-realm>
+        ...
+    </management>
+    ...
+</server>
+---- 
+Infinispan Server comes with an add-user.sh script (add-user.bat for Windows) to ease the process of adding new user/role mappings to the above property files. An example invocation for adding a user to the ApplicationRealm with an initial set of roles:
+
+./bin/add-user.sh -a -u myuser -p "qwer1234!" -ro supervisor,reader,writer
+
+It is also possible to authenticate/authorize against alternative sources, such as LDAP, JAAS, etc. Refer to the Application Server guide on how to configure the Security Realms at https://docs.jboss.org/author/display/WFLY8/Security+Realms. 
+Bear in mind that the choice of SASL mechanism limits the type of authentication sources, since the credentials must be in a format supported by the algorithm itself. 
+Infinispan server currently supports the following SASL mechanisms for the HotRod protocol: PLAIN, DIGEST-MD5, GSSAPI (Kerberos), EXTERNAL (X.509 Client certificate).
+
+The following configuration enables authentication against ApplicationRealm, using the DIGEST-MD5 SASL mechanism: 
+
+[source,xml]
+----
+<hotrod-connector socket-binding="hotrod" cache-container="default">
+   <authentication security-realm="ApplicationRealm">
+      <sasl server-name="localhost" mechanisms="DIGEST-MD5" qop="auth" />
+   </authentication>
+</hotrod-connector>
+----
+
