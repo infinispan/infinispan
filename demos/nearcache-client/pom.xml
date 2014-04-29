@@ -127,17 +127,6 @@
             <artifactId>jboss-as-maven-plugin</artifactId>
             <version>7.1.0.Beta1b</version>
          </plugin>
-
-         <!-- Compiler plugin enforces Java 1.6 compatibility and activates
-            annotation processors -->
-         <plugin>
-            <artifactId>maven-compiler-plugin</artifactId>
-            <version>2.3.2</version>
-            <configuration>
-               <source>1.6</source>
-               <target>1.6</target>
-            </configuration>
-         </plugin>
       </plugins>
    </build>
 
