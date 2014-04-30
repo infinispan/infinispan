@@ -222,12 +222,7 @@
          </dependency>
          <dependency>
             <groupId>org.jboss.marshalling</groupId>
-            <artifactId>jboss-marshalling</artifactId>
-            <version>${version.jboss.marshalling}</version>
-         </dependency>
-         <dependency>
-            <groupId>org.jboss.marshalling</groupId>
-            <artifactId>jboss-marshalling-river</artifactId>
+            <artifactId>jboss-marshalling-osgi</artifactId>
             <version>${version.jboss.marshalling}</version>
          </dependency>
          <dependency>
