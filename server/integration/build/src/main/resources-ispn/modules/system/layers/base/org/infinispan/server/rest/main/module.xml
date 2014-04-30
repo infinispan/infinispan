@@ -41,8 +41,7 @@
       <module name="org.infinispan" />
       <module name="org.infinispan.server" />
       <module name="org.jboss.logging" />
-      <module name="org.jboss.marshalling" />
-      <module name="org.jboss.marshalling.river" services="import" />
+      <module name="org.jboss.marshalling" services="import"/>
       <module name="org.jboss.resteasy.resteasy-jaxrs" />
       <module name="org.scala-lang.library" />
       <module name="org.jgroups" />

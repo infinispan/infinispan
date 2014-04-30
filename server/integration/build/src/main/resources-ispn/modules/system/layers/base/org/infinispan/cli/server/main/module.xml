@@ -37,8 +37,7 @@
         <module name="org.infinispan.server"/>
         <module name="org.infinispan.server.memcached"/>
         <module name="org.jboss.logging"/>
-        <module name="org.jboss.marshalling"/>
-        <module name="org.jboss.marshalling.river" services="import"/>
+        <module name="org.jboss.marshalling" services="import"/>
         <module name="org.jgroups"/>
     </dependencies>
 </module>
