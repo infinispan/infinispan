@@ -93,7 +93,7 @@ public class SingleFileStoreFunctionalTest extends BaseStoreFunctionalTest {
             SingleFileStore store = (SingleFileStore) TestingUtil.getFirstLoader(cache);
             assertEquals("other-location", store.getConfiguration().location());
             assertEquals(100, store.getConfiguration().maxEntries());
-            assertEquals(0.75f, store.getConfiguration().fragmentationFactor());
+            assertEquals(0.75f, store.getConfiguration().fragmentationFactor(), 0f);
          }
       });
       TestingUtil.recursiveFileRemove("other-location");
