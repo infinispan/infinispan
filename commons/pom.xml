@@ -91,6 +91,8 @@
                      org.osgi.util.tracker,
                      sun.misc;resolution:=optional
                   </Import-Package>
+                  <!-- Required for loading client classes. -->
+                  <DynamicImport-Package>*</DynamicImport-Package>
                </instructions>
             </configuration>
          </plugin>
