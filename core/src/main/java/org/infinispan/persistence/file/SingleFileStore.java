@@ -232,6 +232,7 @@ public class SingleFileStore implements AdvancedLoadWriteStore {
     */
    private FileEntry allocate(int len) {
       FileEntry free = null;
+      boolean found = false;
       synchronized (freeList) {
          // lookup a free entry of sufficient size
          SortedSet<FileEntry> candidates = freeList.tailSet(new FileEntry(0, len));
@@ -251,10 +252,11 @@ public class SingleFileStore implements AdvancedLoadWriteStore {
 
             // found one, remove from freeList
             it.remove();
+            found = true;
             break;
          }
-           
-         if (free != null) {
+
+         if ((found == true) && (free != null)) {
             int remainder = free.size - len;
             // If the entry is quite bigger than configured threshold, then split it
             if ((remainder >= SMALLEST_ENTRY_SIZE) && (len <= (free.size * fragmentationFactor))) {
