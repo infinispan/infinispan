@@ -15,6 +15,8 @@ public class SingleFileStoreConfigurationBuilder
 
    private int maxEntries = -1;
 
+   private float fragmentationFactor  = 0.75f;
+
    public SingleFileStoreConfigurationBuilder(PersistenceConfigurationBuilder builder) {
       super(builder);
    }
@@ -53,11 +55,25 @@ public class SingleFileStoreConfigurationBuilder
       return this;
    }
 
+   /**
+    * The store tries to fit in a new entry into an existing entry from a free entry pool (if one is available)
+    * However, this existing free entry may be quite bigger than what is required to contain the new entry
+    * It may then make sense to split the free entry into two parts:
+    * 1. That is required to contain the new entry requested
+    * 2. the remaining part to be returned to the pool of free entries.
+    * The fragmentationFactor decides when to split the free entry.
+    * So, if this value is set as 0.75, then the free entry will be split if the new entry is equal to or less than 0.75 times the size of free entry
+    */
+   public SingleFileStoreConfigurationBuilder fragmentationFactor(float fragmentationFactor) {
+      this.fragmentationFactor  = fragmentationFactor;
+      return this;
+   }
+
    @Override
    public SingleFileStoreConfiguration create() {
       return new SingleFileStoreConfiguration(purgeOnStartup, fetchPersistentState,ignoreModifications,
                                                     async.create(), singletonStore.create(), preload,
-                                                    shared, properties, location, maxEntries);
+                                                    shared, properties, location, maxEntries, fragmentationFactor);
    }
 
    @Override
@@ -67,6 +83,7 @@ public class SingleFileStoreConfigurationBuilder
       // SingleFileStore-specific configuration
       location = template.location();
       maxEntries = template.maxEntries();
+      fragmentationFactor  = template.fragmentationFactor();
 
       return this;
    }

@@ -78,7 +78,7 @@ public class SingleFileStoreFunctionalTest extends BaseStoreFunctionalTest {
             "<cache-container default-cache=\"default\">" +
             "   <local-cache name=\"default\">\n" +
             "      <persistence passivation=\"false\"> \n" +
-            "         <file-store path=\"other-location\" max-entries=\"100\" shared=\"false\" preload=\"true\"/> \n" +
+            "         <file-store path=\"other-location\" max-entries=\"100\" shared=\"false\" preload=\"true\" fragmentation-factor=\"0.75\"/> \n" +
             "      </persistence>\n" +
             "   </local-cache>\n" +
             "</cache-container>" +
@@ -93,6 +93,7 @@ public class SingleFileStoreFunctionalTest extends BaseStoreFunctionalTest {
             SingleFileStore store = (SingleFileStore) TestingUtil.getFirstLoader(cache);
             assertEquals("other-location", store.getConfiguration().location());
             assertEquals(100, store.getConfiguration().maxEntries());
+            assertEquals(0.75f, store.getConfiguration().fragmentationFactor());
          }
       });
       TestingUtil.recursiveFileRemove("other-location");

@@ -20,13 +20,16 @@ public class SingleFileStoreConfiguration extends AbstractStoreConfiguration {
 
    private final int maxEntries;
 
+   private final float fragmentationFactor;
+
    public SingleFileStoreConfiguration(boolean purgeOnStartup, boolean fetchPersistentState,
                                        boolean ignoreModifications, AsyncStoreConfiguration async,
                                        SingletonStoreConfiguration singletonStore, boolean preload, boolean shared,
-                                       Properties properties, String location, int maxEntries) {
+                                       Properties properties, String location, int maxEntries, float fragmentationFactor) {
       super(purgeOnStartup, fetchPersistentState, ignoreModifications, async, singletonStore, preload, shared, properties);
       this.location = location;
       this.maxEntries = maxEntries;
+      this.fragmentationFactor  = fragmentationFactor;
    }
 
    public String location() {
@@ -35,6 +38,10 @@ public class SingleFileStoreConfiguration extends AbstractStoreConfiguration {
 
    public int maxEntries() {
       return maxEntries;
+   }
+
+   public float fragmentationFactor () {
+      return fragmentationFactor;
    }
 
    @Override
@@ -48,6 +55,7 @@ public class SingleFileStoreConfiguration extends AbstractStoreConfiguration {
       if (maxEntries != that.maxEntries) return false;
       if (location != null ? !location.equals(that.location) : that.location != null)
          return false;
+      if (fragmentationFactor  != that.fragmentationFactor) return false;
 
       return true;
    }
@@ -57,6 +65,7 @@ public class SingleFileStoreConfiguration extends AbstractStoreConfiguration {
       int result = super.hashCode();
       result = 31 * result + (location != null ? location.hashCode() : 0);
       result = 31 * result + maxEntries;
+      result = 31 * result + Float.floatToIntBits(fragmentationFactor);
       return result;
    }
 
@@ -65,6 +74,7 @@ public class SingleFileStoreConfiguration extends AbstractStoreConfiguration {
       return "SingleFileStoreConfiguration{" +
             "location='" + location + '\'' +
             ", maxEntries=" + maxEntries +
+            ", fragmentationFactor =" + fragmentationFactor  +
             '}';
    }
 
