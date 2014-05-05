@@ -48,21 +48,21 @@ public class SingleFileStoreStressTest extends SingleCacheManagerTest {
    protected EmbeddedCacheManager createCacheManager() throws Exception {
       location = TestingUtil.tmpDirectory(SingleFileStoreStressTest.class);
       ConfigurationBuilder builder = new ConfigurationBuilder();
-      builder.persistence().addSingleFileStore().location(this.location);
+      builder.persistence().addSingleFileStore().location(this.location).purgeOnStartup(true);
       return TestCacheManagerFactory.createCacheManager(builder);
    }
 
    public void testReadsAndWrites() throws ExecutionException, InterruptedException {
-      final int NUM_WRITER_THREADS = 1;
-      final int NUM_READER_THREADS = 1;
-      final int NUM_KEYS = 1;
+      final int NUM_WRITER_THREADS = 2;
+      final int NUM_READER_THREADS = 2;
+      final int NUM_KEYS = 5;
       final int TEST_DURATION_SECONDS = 2;
 
       Cache<String, String> cache = cacheManager.getCache(CACHE_NAME);
       PersistenceManager persistenceManager = TestingUtil.extractComponent(cache, PersistenceManager.class);
       final SingleFileStore store = persistenceManager.getStores(SingleFileStore.class).iterator().next();
       final StreamingMarshaller marshaller = TestingUtil.extractComponentRegistry(cache).getCacheMarshaller();
-      store.clear();
+      assertEquals(0, store.size());
       
       final List<String> keys = new ArrayList<String>(NUM_KEYS);
       for (int j = 0; j < NUM_KEYS; j++) {
@@ -96,16 +96,16 @@ public class SingleFileStoreStressTest extends SingleCacheManagerTest {
    }
 
    public void testWritesAndClear() throws ExecutionException, InterruptedException {
-      final int NUM_WRITER_THREADS = 1;
-      final int NUM_READER_THREADS = 1;
-      final int NUM_KEYS = 100;
+      final int NUM_WRITER_THREADS = 2;
+      final int NUM_READER_THREADS = 2;
+      final int NUM_KEYS = 5;
       final int TEST_DURATION_SECONDS = 2;
 
       Cache<String, String> cache = cacheManager.getCache(CACHE_NAME);
       PersistenceManager persistenceManager = TestingUtil.extractComponent(cache, PersistenceManager.class);
       final SingleFileStore store = persistenceManager.getStores(SingleFileStore.class).iterator().next();
       final StreamingMarshaller marshaller = TestingUtil.extractComponentRegistry(cache).getCacheMarshaller();
-      store.clear();
+      assertEquals(0, store.size());
 
       final List<String> keys = new ArrayList<String>(NUM_KEYS);
       for (int j = 0; j < NUM_KEYS; j++) {
@@ -144,7 +144,7 @@ public class SingleFileStoreStressTest extends SingleCacheManagerTest {
       PersistenceManager persistenceManager = TestingUtil.extractComponent(cache, PersistenceManager.class);
       final SingleFileStore store = persistenceManager.getStores(SingleFileStore.class).iterator().next();
       final StreamingMarshaller marshaller = TestingUtil.extractComponentRegistry(cache).getCacheMarshaller();
-      store.clear();
+      assertEquals(0, store.size());
 
       long [] fileSizesWithoutPurge = new long [TIMES];
       long [] fileSizesWithPurge = new long [TIMES];
@@ -193,16 +193,16 @@ public class SingleFileStoreStressTest extends SingleCacheManagerTest {
    }
 
    public void testFileTruncation() throws ExecutionException, InterruptedException {
-      final int NUM_WRITER_THREADS = 1;
-      final int NUM_READER_THREADS = 1;
-      final int NUM_KEYS = 10;
+      final int NUM_WRITER_THREADS = 2;
+      final int NUM_READER_THREADS = 2;
+      final int NUM_KEYS = 5;
       final int TEST_DURATION_SECONDS = 2;
 
       Cache<String, String> cache = cacheManager.getCache(CACHE_NAME);
       PersistenceManager persistenceManager = TestingUtil.extractComponent(cache, PersistenceManager.class);
       final SingleFileStore store = persistenceManager.getStores(SingleFileStore.class).iterator().next();
       final StreamingMarshaller marshaller = TestingUtil.extractComponentRegistry(cache).getCacheMarshaller();
-      store.clear();
+      assertEquals(0, store.size());
 
       // Write a few entries into the cache
       final List<String> keys = new ArrayList<String>(NUM_KEYS);
@@ -301,7 +301,7 @@ public class SingleFileStoreStressTest extends SingleCacheManagerTest {
             String value = key + "_value_" + i + "_" + times("123456789_", random.nextInt(MAX_VALUE_SIZE) / 10);
             MarshalledEntry entry = new MarshalledEntryImpl<String, String>(key, value, null, marshaller);
             store.write(entry);
-            log.tracef("Wrote value %s for key %s", value, key);
+//            log.tracef("Wrote value %s for key %s", value, key);
 
             i++;
          }
@@ -332,7 +332,7 @@ public class SingleFileStoreStressTest extends SingleCacheManagerTest {
                assertTrue(allowNulls);
             } else {
                String storeValue = (String) entryFromStore.getValue();
-               log.tracef("Read value %s for key %s", storeValue, key);
+//               log.tracef("Read value %s for key %s", storeValue, key);
                assertEquals(key, entryFromStore.getKey());
                assertTrue(storeValue.startsWith(key));
             }
