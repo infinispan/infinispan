@@ -1,10 +1,6 @@
 package org.infinispan.it.osgi.distexec.mapreduce;
 
 import org.infinispan.commons.CacheException;
-import org.infinispan.configuration.cache.ConfigurationBuilder;
-import org.infinispan.test.TestingUtil;
-import org.junit.After;
-import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.ops4j.pax.exam.Configuration;
@@ -25,7 +21,7 @@ public abstract class BaseWordCountMapReduceTest extends org.infinispan.distexec
       return options(
             karafContainer(),
             featureIspnCoreDependencies(),
-            featureIspnCorePlusTests(),
+            featureIspnCore(),
             junitBundles(),
             keepRuntimeFolder()
       );

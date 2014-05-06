@@ -1,13 +1,7 @@
 package org.infinispan.it.osgi.tx;
 
-import org.infinispan.Cache;
-import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
-import org.infinispan.it.osgi.BaseInfinispanCoreOSGiTest;
 import org.infinispan.it.osgi.Osgi;
-import org.infinispan.manager.CacheContainer;
-import org.infinispan.manager.EmbeddedCacheManager;
-import org.infinispan.remoting.rpc.RpcManagerImpl;
 import org.infinispan.test.TestingUtil;
 import org.junit.After;
 import org.junit.Before;
@@ -20,12 +14,8 @@ import org.ops4j.pax.exam.junit.PaxExam;
 import org.ops4j.pax.exam.spi.reactors.ExamReactorStrategy;
 import org.ops4j.pax.exam.spi.reactors.PerClass;
 
-import javax.transaction.Transaction;
-import javax.transaction.TransactionManager;
-import java.util.Arrays;
-
 import static org.infinispan.it.osgi.util.IspnKarafOptions.featureIspnCoreDependencies;
-import static org.infinispan.it.osgi.util.IspnKarafOptions.featureIspnCorePlusTests;
+import static org.infinispan.it.osgi.util.IspnKarafOptions.featureIspnCore;
 import static org.infinispan.it.osgi.util.IspnKarafOptions.karafContainer;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
@@ -51,7 +41,7 @@ public class TransactionsSpanningReplicatedCachesTest extends org.infinispan.tx.
       return options(
             karafContainer(),
             featureIspnCoreDependencies(),
-            featureIspnCorePlusTests(),
+            featureIspnCore(),
             junitBundles(),
             keepRuntimeFolder()
       );

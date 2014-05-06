@@ -1,8 +1,5 @@
 package org.infinispan.it.osgi;
 
-import java.util.HashSet;
-import java.util.Set;
-
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.ops4j.pax.exam.Configuration;
 import org.ops4j.pax.exam.Option;
@@ -25,7 +22,7 @@ public abstract class BaseInfinispanCoreOSGiTest extends MultipleCacheManagersTe
       return options(
             karafContainer(),
             featureIspnCoreDependencies(),
-            featureIspnCorePlusTests(),
+            featureIspnCore(),
             junitBundles(),
             keepRuntimeFolder()
       );

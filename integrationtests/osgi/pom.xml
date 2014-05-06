@@ -37,6 +37,16 @@
          </exclusions>
       </dependency>
       <dependency>
+         <groupId>${project.groupId}</groupId>
+         <artifactId>infinispan-cachestore-jdbc</artifactId>
+      </dependency>
+      <dependency>
+         <groupId>${project.groupId}</groupId>
+         <artifactId>infinispan-cachestore-jdbc</artifactId>
+         <type>test-jar</type>
+         <scope>test</scope>
+      </dependency>
+      <dependency>
          <groupId>junit</groupId>
          <artifactId>junit</artifactId>
       </dependency>
@@ -61,6 +71,16 @@
       <dependency>
          <groupId>${project.groupId}</groupId>
          <artifactId>infinispan-cachestore-remote</artifactId>
+      </dependency>
+      <dependency>
+         <groupId>c3p0</groupId>
+         <artifactId>c3p0</artifactId>
+         <scope>test</scope>
+      </dependency>
+      <dependency>
+         <groupId>com.h2database</groupId>
+         <artifactId>h2</artifactId>
+         <scope>test</scope>
       </dependency>
       <dependency>
          <groupId>${project.groupId}</groupId>
@@ -92,14 +112,14 @@
    </dependencies>
 
    <properties>
-      <project.exports>
+      <infinispan.core.exports>
          !org.infinispan.commons.*,
          org.infinispan.marshall.core,
          org.infinispan.*;version=${project.version};-split-package:=error,
          stacks,
          configs,
          configs.xsite
-      </project.exports>
+      </infinispan.core.exports>
    </properties>
 
    <build>
@@ -112,6 +132,15 @@
             </includes>
          </testResource>
       </testResources>
+      <resources>
+         <resource>
+            <directory>${project.basedir}/src/main/resources/OSGI-INF</directory>
+            <filtering>true</filtering>
+            <includes>
+               <include>**/*</include>
+            </includes>
+         </resource>
+      </resources>
       <plugins>
          <!-- IMPORTANT: generates META-INF/maven/dependencies.properties required by PAX-EXAM framework -->
          <plugin>
@@ -137,13 +166,15 @@
                      <goal>bundle</goal>
                   </goals>
                   <configuration>
+                     <finalName>infinispan-core-with-tests</finalName>
                      <instructions>
+                        <Bundle-SymbolicName>org.infinispan.core</Bundle-SymbolicName>
                         <Embed-Dependency>
                            infinispan-core;groupId=org.infinispan;type=jar;scope=compile;inline=true,
                            infinispan-core;groupId=org.infinispan;type=test-jar;scope=test;inline=true
                         </Embed-Dependency>
-                        <Export-Package>${project.exports}</Export-Package>
-                        <_exportcontents>${project.exports}</_exportcontents>
+                        <Export-Package>${infinispan.core.exports}</Export-Package>
+                        <_exportcontents>${infinispan.core.exports}</_exportcontents>
                         <Import-Package>
                            ${project.groupId}.commons;version=${project.version},
                            ${project.groupId}.commons.marshall;version=${project.version},
@@ -184,6 +215,31 @@
                            TODO: package just the TEST_PING protocol in a fragment and attach it to JGroups.
                         -->
                         <Fragment-Host>org.jgroups;bundle-version=${version.jgroups}</Fragment-Host>
+                     </instructions>
+                  </configuration>
+               </execution>
+               <execution>
+                  <id>bundle-jdbc-stores</id>
+                  <phase>process-classes</phase>
+                  <goals>
+                     <goal>bundle</goal>
+                  </goals>
+                  <configuration>
+                     <finalName>infinispan-cachestore-jdbc-with-tests</finalName>
+                     <instructions>
+                        <Bundle-SymbolicName>org.infinispan.cachestore.jdbc</Bundle-SymbolicName>
+                        <Embed-Dependency>
+                           infinispan-cachestore-jdbc;groupId=org.infinispan;type=jar;scope=compile;inline=true,
+                           infinispan-cachestore-jdbc;groupId=org.infinispan;type=test-jar;scope=test;inline=true
+                        </Embed-Dependency>
+                        <Export-Package>${project.groupId}.persistence.jdbc.*;version=${project.version}</Export-Package>
+                        <_exportcontents>${project.groupId}.persistence.jdbc.*;version=${project.version}</_exportcontents>
+                        <Import-Package>
+                           !com.mysql.jdbc,
+                           !org.mockito.*,
+                           ${project.groupId}.test.fwk;version=${project.version},
+                           *
+                        </Import-Package>
                      </instructions>
                   </configuration>
                </execution>
