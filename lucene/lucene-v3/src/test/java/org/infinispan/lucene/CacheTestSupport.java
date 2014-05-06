@@ -54,7 +54,6 @@ public abstract class CacheTestSupport {
                   .fetchInMemoryState(true)
                .l1()
                   .enable()
-                  .enableOnRehash()
                .sync()
                   .replTimeout(10000)
             .transaction()
