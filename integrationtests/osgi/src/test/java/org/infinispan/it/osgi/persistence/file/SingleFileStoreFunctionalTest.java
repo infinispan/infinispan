@@ -1,6 +1,7 @@
 package org.infinispan.it.osgi.persistence.file;
 
-import static org.infinispan.it.osgi.util.IspnKarafOptions.allOptions;
+import static org.infinispan.it.osgi.util.IspnKarafOptions.perSuiteOptions;
+import static org.ops4j.pax.exam.CoreOptions.options;
 
 import java.io.File;
 
@@ -22,12 +23,11 @@ import org.ops4j.pax.exam.spi.reactors.PerSuite;
 @RunWith(PaxExam.class)
 @ExamReactorStrategy(PerSuite.class)
 public class SingleFileStoreFunctionalTest extends org.infinispan.persistence.file.SingleFileStoreFunctionalTest {
-
    private static String tmpDirectory;
 
    @Configuration
    public Option[] config() throws Exception {
-      return allOptions();
+      return options(perSuiteOptions());
    }
 
    @BeforeClass

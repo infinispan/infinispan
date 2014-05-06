@@ -1,6 +1,7 @@
 package org.infinispan.it.osgi.distexec;
 
-import static org.infinispan.it.osgi.util.IspnKarafOptions.allOptions;
+import static org.infinispan.it.osgi.util.IspnKarafOptions.perSuiteOptions;
+import static org.ops4j.pax.exam.CoreOptions.options;
 
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.RejectedExecutionException;
@@ -24,10 +25,9 @@ import org.ops4j.pax.exam.spi.reactors.PerSuite;
 @RunWith(PaxExam.class)
 @ExamReactorStrategy(PerSuite.class)
 public class LocalDistributedExecutorTest extends org.infinispan.distexec.LocalDistributedExecutorTest {
-
    @Configuration
    public Option[] config() throws Exception {
-      return allOptions();
+      return options(perSuiteOptions());
    }
 
    @Before

@@ -1,6 +1,7 @@
 package org.infinispan.it.osgi.persistence.leveldb;
 
-import static org.infinispan.it.osgi.util.IspnKarafOptions.allOptions;
+import static org.infinispan.it.osgi.util.IspnKarafOptions.perSuiteOptions;
+import static org.ops4j.pax.exam.CoreOptions.options;
 
 import java.io.File;
 
@@ -30,7 +31,7 @@ public class JniLevelDBStoreFunctionalTest extends BaseStoreFunctionalTest {
 
    @Configuration
    public Option[] config() throws Exception {
-      return allOptions();
+      return options(perSuiteOptions());
    }
 
    @BeforeClass

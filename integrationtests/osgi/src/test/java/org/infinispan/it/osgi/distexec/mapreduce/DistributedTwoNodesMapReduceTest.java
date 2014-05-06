@@ -11,14 +11,12 @@ import org.ops4j.pax.exam.junit.PaxExam;
 import org.ops4j.pax.exam.spi.reactors.ExamReactorStrategy;
 import org.ops4j.pax.exam.spi.reactors.PerSuite;
 
-
 /**
  * @author mgencur
  */
 @RunWith(PaxExam.class)
 @ExamReactorStrategy(PerSuite.class)
 public class DistributedTwoNodesMapReduceTest extends BaseWordCountMapReduceTest {
-
    @Override
    protected void createCacheManagers() throws Throwable {
       //not used

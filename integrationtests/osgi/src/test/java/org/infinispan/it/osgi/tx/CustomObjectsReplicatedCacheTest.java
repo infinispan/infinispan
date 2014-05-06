@@ -1,12 +1,14 @@
 package org.infinispan.it.osgi.tx;
 
-import static org.infinispan.it.osgi.util.IspnKarafOptions.allOptions;
+import static org.infinispan.it.osgi.util.IspnKarafOptions.perSuiteOptions;
 import static org.junit.Assert.assertEquals;
+import static org.ops4j.pax.exam.CoreOptions.options;
 
 import java.io.Serializable;
 
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
+import org.infinispan.it.osgi.util.PaxExamUtils;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.TestingUtil;
 import org.junit.After;
@@ -35,27 +37,12 @@ public class CustomObjectsReplicatedCacheTest extends MultipleCacheManagersTest 
 
    @Configuration
    public Option[] config() throws Exception {
-      return allOptions();
+      return options(perSuiteOptions());
    }
-   
+
    @ProbeBuilder
-   public TestProbeBuilder exportTestPackages(TestProbeBuilder probeBuilder) {
-       StringBuilder builder = new StringBuilder();
-
-       /* Export all test subpackages. */
-       Package[] pkgs = Package.getPackages();
-       for (Package pkg : pkgs) {
-           String pkgName = pkg.getName();
-           if (pkgName.startsWith("org.infinispan.it.osgi")) {
-               if (builder.length() > 0) {
-                   builder.append(",");
-               }
-               builder.append(pkgName);
-           }
-       }
-
-       probeBuilder.setHeader("Export-Package", builder.toString());
-       return probeBuilder;
+   public TestProbeBuilder probe(TestProbeBuilder probeBuilder) {
+      return PaxExamUtils.exportTestPackages(probeBuilder);
    }
 
    @Before

@@ -1,6 +1,7 @@
 package org.infinispan.it.osgi.persistence.jdbc.stringbased;
 
-import static org.infinispan.it.osgi.util.IspnKarafOptions.allOptions;
+import static org.infinispan.it.osgi.util.IspnKarafOptions.perSuiteOptions;
+import static org.ops4j.pax.exam.CoreOptions.options;
 
 import org.infinispan.configuration.cache.PersistenceConfigurationBuilder;
 import org.infinispan.it.osgi.persistence.jdbc.UnitTestDatabaseManager;
@@ -22,10 +23,9 @@ import org.ops4j.pax.exam.spi.reactors.PerSuite;
 @RunWith(PaxExam.class)
 @ExamReactorStrategy(PerSuite.class)
 public class JdbcStringBasedStoreFunctionalTest extends BaseStoreFunctionalTest {
-
    @Configuration
    public Option[] config() throws Exception {
-      return allOptions();
+      return options(perSuiteOptions());
    }
 
    @Override

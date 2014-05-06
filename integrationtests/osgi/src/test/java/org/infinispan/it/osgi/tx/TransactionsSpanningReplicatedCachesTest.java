@@ -1,6 +1,7 @@
 package org.infinispan.it.osgi.tx;
 
-import static org.infinispan.it.osgi.util.IspnKarafOptions.allOptions;
+import static org.infinispan.it.osgi.util.IspnKarafOptions.perSuiteOptions;
+import static org.ops4j.pax.exam.CoreOptions.options;
 
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.test.TestingUtil;
@@ -20,7 +21,6 @@ import org.ops4j.pax.exam.spi.reactors.PerSuite;
 @RunWith(PaxExam.class)
 @ExamReactorStrategy(PerSuite.class)
 public class TransactionsSpanningReplicatedCachesTest extends org.infinispan.tx.TransactionsSpanningReplicatedCachesTest {
-
    @Override
    protected void createCacheManagers() {
       //not used
@@ -28,7 +28,7 @@ public class TransactionsSpanningReplicatedCachesTest extends org.infinispan.tx.
 
    @Configuration
    public Option[] config() throws Exception {
-      return allOptions();
+      return options(perSuiteOptions());
    }
 
    @Before
