@@ -56,6 +56,10 @@ public class IspnKarafOptions {
       return features(new RawUrlReference(TEST_UTILS_FEATURE_FILE), "infinispan-core-tests");
    }
 
+   public static Option featureJdbcStore() {
+      return features(new RawUrlReference(TEST_UTILS_FEATURE_FILE), "infinispan-cachestore-jdbc");
+   }
+
    public static Option featureIspnCoreDependencies() {
       return features(new RawUrlReference(TEST_UTILS_FEATURE_FILE), "infinispan-core-deps");
    }
