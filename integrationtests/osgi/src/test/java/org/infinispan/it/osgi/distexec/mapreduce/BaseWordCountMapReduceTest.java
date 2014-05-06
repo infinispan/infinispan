@@ -1,6 +1,7 @@
 package org.infinispan.it.osgi.distexec.mapreduce;
 
-import static org.infinispan.it.osgi.util.IspnKarafOptions.allOptions;
+import static org.infinispan.it.osgi.util.IspnKarafOptions.perSuiteOptions;
+import static org.ops4j.pax.exam.CoreOptions.options;
 
 import org.infinispan.commons.CacheException;
 import org.junit.BeforeClass;
@@ -12,10 +13,9 @@ import org.ops4j.pax.exam.Option;
  * @author mgencur
  */
 public abstract class BaseWordCountMapReduceTest extends org.infinispan.distexec.mapreduce.BaseWordCountMapReduceTest {
-
    @Configuration
    public Option[] config() throws Exception {
-      return allOptions();
+      return options(perSuiteOptions());
    }
 
    @BeforeClass

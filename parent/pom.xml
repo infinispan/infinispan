@@ -169,11 +169,14 @@
       <version.asm>3.3.1</version.asm>
       <version.pax.url>1.3.7</version.pax.url>
       <version.karaf>2.3.3</version.karaf>
-      <version.pax.exam>3.4.0</version.pax.exam>
+      <version.pax.exam>3.5.0</version.pax.exam>
       <reportTitle>Infinispan JaCoCo Report</reportTitle>
       <dir.ispn>../</dir.ispn>
       <dir.report>../jacoco-html</dir.report>
       <m2e.apt.activation>jdt_apt</m2e.apt.activation>
+      <!-- The version mask restricts the version for all imports to the exact version used in maven. -->
+      <bnd.consumer.policy>$&lt;range;[====,====]&gt;</bnd.consumer.policy>
+      <bnd.provider.policy>$&lt;range;[====,====]&gt;</bnd.provider.policy>
    </properties>
    
    <dependencyManagement>
@@ -872,6 +875,12 @@
             </exclusions>
          </dependency>
          <dependency>
+            <groupId>org.apache.karaf.features</groupId>
+            <artifactId>org.apache.karaf.features.core</artifactId>
+            <version>${version.karaf}</version>
+            <scope>test</scope>
+         </dependency>
+         <dependency>
             <groupId>org.ops4j.pax.exam</groupId>
             <artifactId>pax-exam-container-karaf</artifactId>
             <version>${version.pax.exam}</version>
@@ -910,6 +919,30 @@
             <groupId>org.objectweb.howl</groupId>
             <artifactId>howl</artifactId>
             <version>${version.howl}</version>
+            <scope>test</scope>
+         </dependency>
+         <dependency>
+            <groupId>org.ops4j.pax.url</groupId>
+            <artifactId>pax-url-aether</artifactId>
+            <version>${version.pax.url}</version>
+            <scope>test</scope>
+         </dependency>
+         <dependency>
+            <groupId>org.ops4j.pax.url</groupId>
+            <artifactId>pax-url-assembly</artifactId>
+            <version>${version.pax.url}</version>
+            <scope>test</scope>
+         </dependency>
+         <dependency>
+            <groupId>org.ops4j.pax.url</groupId>
+            <artifactId>pax-url-mvn</artifactId>
+            <version>${version.pax.url}</version>
+            <scope>test</scope>
+         </dependency>
+         <dependency>
+            <groupId>org.ops4j.pax.url</groupId>
+            <artifactId>pax-url-wrap</artifactId>
+            <version>${version.pax.url}</version>
             <scope>test</scope>
          </dependency>
       </dependencies>
@@ -1358,6 +1391,8 @@
                <instructions>
                   <Bundle-DocURL>http://www.infinispan.org/</Bundle-DocURL>
                   <Export-Package>${project.groupId}.*;version=${project.version};-split-package:=error</Export-Package>
+                  <_consumer-policy>${bnd.consumer.policy}</_consumer-policy>
+                  <_provider-policy>${bnd.provider.policy}</_provider-policy>
                </instructions>
             </configuration>
          </plugin>

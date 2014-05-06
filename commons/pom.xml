@@ -35,6 +35,25 @@
    </dependencies>
 
    <build>
+      <resources>
+         <resource>
+            <directory>${project.basedir}/src/main/resources</directory>
+            <filtering>true</filtering>
+            <includes>
+               <include>features.xml</include>
+            </includes>
+         </resource>
+         <resource>
+            <directory>${project.basedir}/src/main/resources</directory>
+            <filtering>false</filtering>
+            <includes>
+               <include>**/*</include>
+            </includes>
+            <excludes>
+               <exclude>features.xml</exclude>
+            </excludes>
+         </resource>
+      </resources>
       <plugins>
          <!-- compiler to use -XDignore.symbol.file to suppress warnings regarding the use of sun.misc.Unsafe -->
          <plugin>
@@ -55,40 +74,45 @@
          <plugin>
             <groupId>org.apache.felix</groupId>
             <artifactId>maven-bundle-plugin</artifactId>
-            <executions>
-               <execution>
-                  <phase>generate-sources</phase>
-                  <goals>
-                     <goal>cleanVersions</goal>
-                  </goals>
-                  <configuration>
-                     <versions>
-                        <project.version.osgi>${project.version}</project.version.osgi>
-                     </versions>
-                  </configuration>
-               </execution>
-            </executions>
             <configuration>
                <instructions>
                   <Export-Package>
-                     ${project.groupId}.commons.*;version=${project.version.osgi};-split-package:=error
+                     ${project.groupId}.commons.*;version=${project.version};-split-package:=error
                   </Export-Package>
-                  <Import-Package>
-                     javax.naming,
-                     javax.net.ssl,
-                     net.jcip.annotations;resolution:=optional,
-                     org.jboss.logging;version=${version.jboss.logging},
-                     org.jboss.marshalling;version=${version.jboss.marshalling};resolution:=optional,
-                     org.jboss.marshalling.reflect;version=${version.jboss.marshalling};resolution:=optional,
-                     org.jboss.marshalling.river;version=${version.jboss.marshalling};resolution:=optional,
-                     org.osgi.framework,
-                     org.osgi.util.tracker,
-                     sun.misc;resolution:=optional
+                  <!-- Relax the versioning rule for osgi packages as a specific version is provided by the container and
+                       it might not match the one used to build. -->
+                  <Import-Package><![CDATA[
+                  org.osgi.*;version="$<range;[==,+)>",
+                  !sun.misc,
+                  *
+                  ]]>
                   </Import-Package>
                   <!-- Required for loading client classes. -->
                   <DynamicImport-Package>*</DynamicImport-Package>
                </instructions>
             </configuration>
+         </plugin>
+         <plugin>
+            <groupId>org.codehaus.mojo</groupId>
+            <artifactId>build-helper-maven-plugin</artifactId>
+            <executions>
+               <execution>
+                  <id>attach-artifacts</id>
+                  <phase>package</phase>
+                  <goals>
+                     <goal>attach-artifact</goal>
+                  </goals>
+                  <configuration>
+                     <artifacts>
+                        <artifact>
+                           <file>target/classes/features.xml</file>
+                           <type>xml</type>
+                           <classifier>features</classifier>
+                        </artifact>
+                     </artifacts>
+                  </configuration>
+               </execution>
+            </executions>
          </plugin>
       </plugins>
       <pluginManagement>

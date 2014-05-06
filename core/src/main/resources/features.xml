@@ -1,12 +1,11 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<features name="infinispan-core-${project.version}">
+<features name="infinispan-core-${project.version}" xmlns="http://karaf.apache.org/xmlns/features/v1.0.0">
+   <repository>mvn:org.infinispan/infinispan-commons/${project.version}/xml/features</repository>
+
    <feature name="infinispan-core" version="${project.version}">
-      <feature>transaction</feature>
-      <bundle>mvn:commons-pool/commons-pool/${version.commons.pool}</bundle>
-      <bundle>mvn:org.infinispan/infinispan-commons/${project.version}</bundle>
+      <feature version="${project.version}">infinispan-commons</feature>
       <bundle>mvn:org.infinispan/infinispan-core/${project.version}</bundle>
-      <bundle>mvn:org.jboss.logging/jboss-logging/${version.jboss.logging}</bundle>
-      <bundle>mvn:org.jboss.marshalling/jboss-marshalling-osgi/${version.jboss.marshalling}</bundle>
+      <feature>transaction</feature>
       <bundle>mvn:org.jgroups/jgroups/${version.jgroups}</bundle>
    </feature>
 </features>
