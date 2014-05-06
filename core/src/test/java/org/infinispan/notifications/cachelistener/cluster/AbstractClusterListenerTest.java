@@ -627,7 +627,8 @@ public abstract class AbstractClusterListenerTest extends MultipleCacheManagersT
       checkPoint.triggerForever("pre_view_listener_release_" + "manager1");
 
       // Now wait for cache3 to come up fully
-      waitForClusterToForm(CACHE_NAME);
+      TestingUtil.blockUntilViewsReceived(60000, false, cache1, cache2);
+      TestingUtil.waitForRehashToComplete(cache1, cache2);
 
       MagicKey key = new MagicKey(cache3);
       cache3.put(key, FIRST_VALUE);
@@ -790,13 +791,37 @@ public abstract class AbstractClusterListenerTest extends MultipleCacheManagersT
       checkPoint.triggerForever("post_cluster_listeners_release_" + cache0);
 
       // Now wait for cache3 to come up fully
-      waitForClusterToForm(CACHE_NAME);
+      TestingUtil.blockUntilViewsReceived(10000, false, cacheManagers);
+      TestingUtil.waitForRehashToComplete(caches(CACHE_NAME));
 
       Cache<Object, String> cache3 = future.get(10, TimeUnit.SECONDS);
 
       for (Object listener : cache3.getAdvancedCache().getListeners()) {
          assertFalse(listener instanceof RemoteClusterListener);
       }
+   }
+
+   @Test
+   public void testMemberLeavesThatClusterListenerNotNotified() {
+      Cache<Object, String> cache0 = cache(0, CACHE_NAME);
+      Cache<Object, String> cache1 = cache(1, CACHE_NAME);
+      Cache<Object, String> cache2 = cache(2, CACHE_NAME);
+
+      Object key = new MagicKey(cache1, cache2);
+      cache1.put(key, "some-key");
+
+      final ClusterListener clusterListener = new ClusterListener();
+      cache0.addListener(clusterListener);
+
+      log.info("Killing node 1 ..");
+      TestingUtil.killCacheManagers(manager(1));
+      cacheManagers.remove(1);
+      log.info("Node 1 killed");
+
+      TestingUtil.blockUntilViewsReceived(10000, false, cacheManagers);
+      TestingUtil.waitForRehashToComplete(caches(CACHE_NAME));
+
+      assertEquals(0, clusterListener.events.size());
    }
 
    protected void waitUntilListenerInstalled(final Cache<?, ?> cache, final CheckPoint checkPoint) {
