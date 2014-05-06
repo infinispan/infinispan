@@ -1,12 +1,16 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <features>
-   <feature name="infinispan-core-tests" version="${project.version}">
-      <bundle>wrap:mvn:org.infinispan/infinispan-core/${project.version}/jar/tests</bundle>
+   <feature name="infinispan-cachestore" version="${project.version}">
+      <!-- jndi is an embedded feature in Karaf -->
+      <feature>jndi</feature>
+      <bundle>wrap:mvn:c3p0/c3p0/${version.c3p0}$Bundle-SymbolicName=C3P0&amp;DynamicImport-Package=*</bundle>
+      <bundle>file:///${basedir}/target/infinispan-cachestore-jdbc-with-tests.jar</bundle>
    </feature>
-   <feature name="infinispan-core-plus-tests" version="${project.version}">
+   <feature name="infinispan-core" version="${project.version}">
       <bundle>mvn:org.testng/testng/${version.testng}</bundle>
+      <bundle>mvn:com.h2database/h2/${version.h2.driver}</bundle>
       <bundle>wrap:mvn:junit/junit/${version.junit}</bundle>
-      <bundle>file:///${basedir}/target/integrationtests-osgi.jar</bundle>
+      <bundle>file:///${basedir}/target/infinispan-core-with-tests.jar</bundle>
    </feature>
    <feature name="infinispan-core-deps" version="${project.version}">
       <bundle>mvn:org.jboss.logging/jboss-logging/${version.jboss.logging}</bundle>

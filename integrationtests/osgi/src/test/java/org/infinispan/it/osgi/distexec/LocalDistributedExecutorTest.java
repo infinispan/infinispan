@@ -36,7 +36,7 @@ public class LocalDistributedExecutorTest extends org.infinispan.distexec.LocalD
       return options(
             karafContainer(),
             featureIspnCoreDependencies(),
-            featureIspnCorePlusTests(),
+            featureIspnCore(),
             junitBundles(),
             keepRuntimeFolder()
       );

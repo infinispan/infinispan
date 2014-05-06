@@ -43,7 +43,7 @@ public class RemoteStoreFunctionalTest extends BaseStoreFunctionalTest {
       return options(
             karafContainer(),
             featureIspnCoreDependencies(),
-            featureIspnCorePlusTests(),
+            featureIspnCore(),
             featureRemoteStore(),
             junitBundles(),
             keepRuntimeFolder()

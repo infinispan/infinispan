@@ -1,12 +1,8 @@
-package org.infinispan.it.osgi.notifications;
+package org.infinispan.it.osgi.persistence.jdbc.configuration;
 
-import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.it.osgi.Osgi;
-import org.infinispan.persistence.dummy.DummyInMemoryStoreConfigurationBuilder;
 import org.infinispan.test.TestingUtil;
-import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.junit.After;
-import org.junit.Before;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
 import org.junit.runner.RunWith;
@@ -22,15 +18,12 @@ import static org.ops4j.pax.exam.CoreOptions.options;
 import static org.ops4j.pax.exam.karaf.options.KarafDistributionOption.keepRuntimeFolder;
 
 /**
- *
  * @author mgencur
  */
 @RunWith(PaxExam.class)
 @Category(Osgi.class)
 @ExamReactorStrategy(PerClass.class)
-public class CustomClassLoaderListenerTest extends org.infinispan.notifications.cachelistener.CustomClassLoaderListenerTest {
-
-   private CustomClassLoader ccl;
+public class XmlFileParsingTest extends org.infinispan.persistence.jdbc.configuration.XmlFileParsingTest {
 
    @Configuration
    public Option[] config() throws Exception {
@@ -38,33 +31,29 @@ public class CustomClassLoaderListenerTest extends org.infinispan.notifications.
             karafContainer(),
             featureIspnCoreDependencies(),
             featureIspnCore(),
+            featureJdbcStore(),
             junitBundles(),
             keepRuntimeFolder()
       );
    }
 
-   @Before
-   public void setUp() throws Exception {
-      ConfigurationBuilder builder = getDefaultStandaloneCacheConfig(false);
-      builder.persistence().passivation(true).addStore(DummyInMemoryStoreConfigurationBuilder.class);
-      cacheManager = TestCacheManagerFactory.createCacheManager(builder);
-      if (cache == null) cache = cacheManager.getCache();
-   }
-
    @After
-   public void tearDown() {
+   public void cleanup() {
       TestingUtil.killCacheManagers(cacheManager);
    }
 
    @Test
-   public void testCustomClassLoaderListener() throws Exception {
-      super.testCustomClassLoaderListener();
+   public void testStringKeyedJdbcStore() throws Exception {
+      super.testStringKeyedJdbcStore();
    }
 
-   public static class CustomClassLoader extends ClassLoader {
-      public CustomClassLoader(ClassLoader parent) {
-         super(parent);
-      }
+   @Test
+   public void testBinaryKeyedJdbcStore() throws Exception {
+      super.testBinaryKeyedJdbcStore();
    }
 
+   @Test
+   public void testMixedKeyedJdbcStore() throws Exception {
+      super.testMixedKeyedJdbcStore();
+   }
 }

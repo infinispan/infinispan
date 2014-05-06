@@ -17,7 +17,7 @@ import static org.testng.AssertJUnit.*;
 @Test(groups = "unit", testName = "persistence.jdbc.configuration.XmlFileParsingTest")
 public class XmlFileParsingTest extends AbstractInfinispanTest {
 
-   private EmbeddedCacheManager cacheManager;
+   protected EmbeddedCacheManager cacheManager;
 
    @AfterMethod
    public void cleanup() {
