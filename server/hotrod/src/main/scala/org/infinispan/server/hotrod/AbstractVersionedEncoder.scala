@@ -2,6 +2,7 @@ package org.infinispan.server.hotrod
 
 import org.infinispan.manager.EmbeddedCacheManager
 import io.netty.buffer.ByteBuf
+import org.infinispan.server.hotrod.Events.Event
 
 /**
  * This class represents the work to be done by an encoder of a particular
@@ -21,5 +22,10 @@ abstract class AbstractVersionedEncoder {
     * Write operation response using the given channel buffer
     */
    def writeResponse(r: Response, buf: ByteBuf, cacheManager: EmbeddedCacheManager, server: HotRodServer)
+
+   /**
+    * Write an event, including its header, using the given channel buffer
+    */
+   def writeEvent(e: Event, buf: ByteBuf)
 
 }

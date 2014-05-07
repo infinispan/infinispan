@@ -13,12 +13,13 @@ import java.io.IOException
 import org.infinispan.context.Flag._
 import org.infinispan.server.core.transport.ExtendedByteBuf._
 import transport.NettyTransport
-import org.infinispan.container.entries.{CacheEntry, InternalCacheEntry}
+import org.infinispan.container.entries.CacheEntry
 import org.infinispan.container.versioning.NumericVersion
 import io.netty.buffer.ByteBuf
 import scala.Some
 import org.infinispan.server.hotrod.configuration.HotRodServerConfiguration
 import io.netty.channel.ChannelHandlerContext
+import io.netty.channel.Channel
 
 /**
  * HotRod protocol decoder specific for specification version 1.0.
@@ -169,7 +170,7 @@ object Decoder10 extends AbstractVersionedDecoder with ServerConstants with Log 
       }
    }
 
-   override def customReadKey(h: HotRodHeader, buffer: ByteBuf, cache: Cache, server: HotRodServer): AnyRef = {
+   override def customReadKey(h: HotRodHeader, buffer: ByteBuf, cache: Cache, server: HotRodServer, ch: Channel): AnyRef = {
       h.op match {
          case RemoveIfUnmodifiedRequest => {
             val k = readKey(buffer)
@@ -229,9 +230,9 @@ object Decoder10 extends AbstractVersionedDecoder with ServerConstants with Log 
    def getKeyMetadata(h: HotRodHeader, k: Array[Byte], cache: Cache): GetWithMetadataResponse = {
       val ce = cache.getAdvancedCache.getCacheEntry(k)
       if (ce != null) {
-         val ice = ce.asInstanceOf[InternalCacheEntry[Array[Byte], Array[Byte]]]
+         val ice = ce.asInstanceOf[InternalCacheEntry]
          val entryVersion = ice.getMetadata.version().asInstanceOf[NumericVersion]
-         val v = ce.getValue.asInstanceOf[Array[Byte]]
+         val v = ce.getValue
          val lifespan = if (ice.getLifespan < 0) -1 else (ice.getLifespan / 1000).toInt
          val maxIdle = if (ice.getMaxIdle < 0) -1 else (ice.getMaxIdle / 1000).toInt
          new GetWithMetadataResponse(h.version, h.messageId, h.cacheName,
@@ -290,56 +291,4 @@ object Decoder10 extends AbstractVersionedDecoder with ServerConstants with Log 
       optCache
    }
 
-   def toResponse(request: Enumeration#Value): OperationResponse = {
-      request match {
-         case PutRequest => PutResponse
-         case GetRequest => GetResponse
-         case PutIfAbsentRequest => PutIfAbsentResponse
-         case ReplaceRequest => ReplaceResponse
-         case ReplaceIfUnmodifiedRequest => ReplaceIfUnmodifiedResponse
-         case RemoveRequest => RemoveResponse
-         case RemoveIfUnmodifiedRequest => RemoveIfUnmodifiedResponse
-         case ContainsKeyRequest => ContainsKeyResponse
-         case GetWithVersionRequest => GetWithVersionResponse
-         case ClearRequest => ClearResponse
-         case StatsRequest => StatsResponse
-         case PingRequest => PingResponse
-         case BulkGetRequest => BulkGetResponse
-         case GetWithMetadataRequest => GetWithMetadataResponse
-         case BulkGetKeysRequest => BulkGetKeysResponse
-      }
-   }
-
-}
-
-object OperationResponse extends Enumeration {
-   type OperationResponse = Enumeration#Value
-   val PutResponse = Value(0x02)
-   val GetResponse = Value(0x04)
-   val PutIfAbsentResponse = Value(0x06)
-   val ReplaceResponse = Value(0x08)
-   val ReplaceIfUnmodifiedResponse = Value(0x0A)
-   val RemoveResponse = Value(0x0C)
-   val RemoveIfUnmodifiedResponse = Value(0x0E)
-   val ContainsKeyResponse = Value(0x10)
-   val GetWithVersionResponse = Value(0x12)
-   val ClearResponse = Value(0x14)
-   val StatsResponse = Value(0x16)
-   val PingResponse = Value(0x18)
-   val BulkGetResponse = Value(0x1A)
-   val GetWithMetadataResponse = Value(0x1C)
-   val BulkGetKeysResponse = Value(0x1E)
-   val QueryResponse = Value(0x20)
-   val AuthMechListResponse = Value(0x22)
-   val AuthResponse = Value(0x24)
-   val ErrorResponse = Value(0x50)
-}
-
-object ProtocolFlag extends Enumeration {
-   type ProtocolFlag = Enumeration#Value
-   val NoFlag = Value
-   val ForceReturnPreviousValue = Value(0x01)
-   val DefaultLifespan = Value(0x02)
-   val DefaultMaxIdle = Value(0x04)
-   val SkipCacheLoader = Value(0x08)
 }

@@ -40,9 +40,13 @@ object ExtendedByteBuf {
 
    def writeRangedBytes(src: Array[Byte], bf: ByteBuf) {
       writeUnsignedInt(src.length, bf)
-      bf.writeBytes(src)
+      if (src.length > 0)
+         bf.writeBytes(src)
    }
 
    def writeString(msg: String, bf: ByteBuf) = writeRangedBytes(msg.getBytes(CharsetUtil.UTF_8), bf)
+
+   def writeString(msg: Option[String], bf: ByteBuf) =
+      writeRangedBytes(msg.map(_.getBytes(CharsetUtil.UTF_8)).getOrElse(Array()), bf)
 
 }

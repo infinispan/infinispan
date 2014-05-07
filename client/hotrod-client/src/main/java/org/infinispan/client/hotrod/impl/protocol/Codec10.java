@@ -12,12 +12,14 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 
 import org.infinispan.client.hotrod.Flag;
+import org.infinispan.client.hotrod.event.ClientEvent;
 import org.infinispan.client.hotrod.exceptions.HotRodClientException;
 import org.infinispan.client.hotrod.exceptions.InvalidResponseException;
 import org.infinispan.client.hotrod.exceptions.RemoteNodeSuspectException;
 import org.infinispan.client.hotrod.impl.transport.Transport;
 import org.infinispan.client.hotrod.logging.Log;
 import org.infinispan.client.hotrod.logging.LogFactory;
+import org.infinispan.commons.marshall.Marshaller;
 
 /**
  * A Hot Rod encoder/decoder for version 1.0 of the protocol.
@@ -105,6 +107,11 @@ public class Codec10 implements Codec {
       localLog.tracef("Received operation code is: %#04x", receivedOpCode);
 
       return status;
+   }
+
+   @Override
+   public ClientEvent readEvent(Transport transport, byte[] expectedListenerId, Marshaller marshaller) {
+      return null;  // No events sent in Hot Rod 1.x protocol
    }
 
    @Override

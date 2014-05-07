@@ -13,6 +13,7 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.Socket;
 import java.net.SocketAddress;
+import java.net.SocketException;
 import java.nio.channels.SocketChannel;
 import java.util.concurrent.atomic.AtomicLong;
 
@@ -333,6 +334,26 @@ public class TcpTransport extends AbstractTransport {
    @Override
    public void invalidate() {
       invalid = true;
+   }
+
+   @Override
+   public void setBlocking(boolean blocking) {
+      try {
+         socketChannel.configureBlocking(blocking);
+      } catch (IOException e) {
+         invalid = true;
+         throw new TransportException(e, serverAddress);
+      }
+   }
+
+   @Override
+   public void disableSocketTimeout() {
+      try {
+         socket.setSoTimeout(0);
+      } catch (SocketException e) {
+         invalid = true;
+         throw new TransportException(e, serverAddress);
+      }
    }
 
 }

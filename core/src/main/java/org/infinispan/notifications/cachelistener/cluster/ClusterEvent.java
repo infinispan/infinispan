@@ -148,6 +148,12 @@ public class ClusterEvent<K, V> implements CacheEntryCreatedEvent<K, V>, CacheEn
       return cache;
    }
 
+   @Override
+   @SuppressWarnings("unchecked")
+   public Metadata getMetadata() {
+      return metadata;
+   }
+
    public static class Externalizer extends AbstractExternalizer<ClusterEvent> {
 
       @Override

@@ -1,33 +1,36 @@
 package org.infinispan.server.hotrod.test
 
-import java.util.concurrent.atomic.AtomicInteger
+import io.netty.channel.ChannelFuture
 import java.lang.reflect.Method
-import org.infinispan.server.hotrod.OperationStatus._
-import org.infinispan.server.hotrod._
-import logging.Log
-import org.infinispan.manager.EmbeddedCacheManager
 import java.util.Arrays
+import java.util.concurrent.CountDownLatch
+import java.util.concurrent.atomic.AtomicInteger
 import org.infinispan.commons.api.BasicCacheContainer
-import org.infinispan.commons.util.Util
 import org.infinispan.commons.equivalence.ByteArrayEquivalence
-import org.testng.Assert._
+import org.infinispan.commons.util.Util
+import org.infinispan.configuration.cache.ConfigurationBuilder
+import org.infinispan.container.versioning.NumericVersion
+import org.infinispan.manager.EmbeddedCacheManager
+import org.infinispan.marshall.core.JBossMarshaller
 import org.infinispan.notifications.Listener
 import org.infinispan.notifications.cachelistener.annotation.CacheEntryRemoved
-import org.infinispan.notifications.cachelistener.event.CacheEntryRemovedEvent
+import org.infinispan.notifications.cachelistener.event.{Event, CacheEntryRemovedEvent}
 import org.infinispan.remoting.transport.Address
-import java.util.concurrent.CountDownLatch
-import org.infinispan.configuration.cache.ConfigurationBuilder
-import scala.{Array, Byte}
-import scala.collection.JavaConversions._
-import org.infinispan.test.TestingUtil
-import org.infinispan.statetransfer.StateTransferManager
+import org.infinispan.server.hotrod.OperationStatus._
+import org.infinispan.server.hotrod._
 import org.infinispan.server.hotrod.configuration.HotRodServerConfigurationBuilder
-import org.infinispan.marshall.core.JBossMarshaller
+import org.infinispan.server.hotrod.logging.Log
+import org.infinispan.statetransfer.StateTransferManager
+import org.infinispan.test.TestingUtil
+import org.testng.Assert._
+import org.testng.Assert.assertNull
+import org.testng.Assert.assertTrue
 import org.testng.AssertJUnit.assertEquals
-import org.infinispan.container.entries.InternalCacheEntry
-import org.infinispan.Cache
-import io.netty.channel.ChannelFuture
-import org.infinispan.distribution.ch.impl.DefaultConsistentHash
+import scala.Some
+import scala.collection.JavaConversions._
+import scala.{Array, Byte}
+import scala.collection.mutable.ListBuffer
+import java.util
 
 /**
  * Test utils for Hot Rod tests.
@@ -41,8 +44,10 @@ object HotRodTestingUtil extends Log {
 
    def host = "127.0.0.1"
 
+   def serverPort: Int = UniquePortThreadLocal.get.intValue
+
    def startHotRodServer(manager: EmbeddedCacheManager): HotRodServer =
-      startHotRodServer(manager, UniquePortThreadLocal.get.intValue)
+      startHotRodServer(manager, serverPort)
 
    def startHotRodServer(manager: EmbeddedCacheManager, defaultCacheName: String): HotRodServer =
       startHotRodServer(manager, UniquePortThreadLocal.get.intValue, 0, host, UniquePortThreadLocal.get.intValue, 0, defaultCacheName)
@@ -74,6 +79,9 @@ object HotRodTestingUtil extends Log {
 
    def startHotRodServer(manager: EmbeddedCacheManager, port: Int, builder: HotRodServerConfigurationBuilder): HotRodServer =
       startHotRodServer(manager, port, 0, builder)
+
+   def startHotRodServer(manager: EmbeddedCacheManager, builder: HotRodServerConfigurationBuilder): HotRodServer =
+      startHotRodServer(manager, UniquePortThreadLocal.get.intValue, 0, builder)
 
    def startHotRodServer(manager: EmbeddedCacheManager, port: Int, delay: Long, builder: HotRodServerConfigurationBuilder): HotRodServer = {
       info("Start server in port %d", port)
@@ -145,6 +153,12 @@ object HotRodTestingUtil extends Log {
       assertTrue(isArrayEquals, "Retrieved data should have contained " + Util.printArray(expected, true)
             + " (" + new String(expected) + "), but instead we received " + Util.printArray(resp.data.get, true) + " (" +  new String(resp.data.get) +")")
       isArrayEquals
+   }
+
+   def assertByteArrayEquals(expected: Bytes, actual: Bytes): Unit = {
+      val isArrayEquals = Arrays.equals(expected, actual)
+      assertTrue(isArrayEquals, "Retrieved data should have contained " + Util.printArray(expected, true)
+      + " (" + new String(expected) + "), but instead we received " + Util.printArray(actual, true) + " (" +  new String(actual) +")")
    }
 
    def assertSuccess(resp: TestGetWithVersionResponse, expected: Array[Byte], expectedVersion: Int): Boolean = {
@@ -221,7 +235,17 @@ object HotRodTestingUtil extends Log {
 
    def assertNoHashTopologyReceived(topoResp: AbstractTestTopologyAwareResponse, servers: List[HotRodServer],
                                     cacheName: String, expectedTopologyId : Int) {
-      assertHashTopology10Received(topoResp, servers, cacheName, 0, 0, 0, expectedTopologyId)
+      topoResp match {
+         case t: TestHashDistAware10Response =>
+            assertHashTopology10Received(topoResp, servers, cacheName, 0, 0, 0, expectedTopologyId)
+         case t: TestHashDistAware20Response =>
+            assertEquals(t.topologyId, expectedTopologyId)
+            assertEquals(t.members.size, servers.size)
+            val serverAddresses = servers.map(_.getAddress)
+            t.members.foreach(member => assertTrue(serverAddresses.exists(_ == member)))
+            assertEquals(t.hashFunction, 0)
+            assertEquals(t.segments.size, 0)
+      }
    }
 
    def assertHashTopology10Received(topoResp: AbstractTestTopologyAwareResponse,
@@ -335,27 +359,24 @@ object HotRodTestingUtil extends Log {
       base
    }
 
-   def assertHotRodEquals(cm: EmbeddedCacheManager,
-           key: Array[Byte], expectedValue: Array[Byte]): InternalCacheEntry[Array[Byte], Array[Byte]] =
-      assertHotRodEquals(cm, cm.getCache[Array[Byte], Array[Byte]](), key, expectedValue)
+   def assertHotRodEquals(cm: EmbeddedCacheManager, key: Bytes, expectedValue: Bytes): InternalCacheEntry =
+      assertHotRodEquals(cm, cm.getCache[Bytes, Bytes]().getAdvancedCache, key, expectedValue)
 
    def assertHotRodEquals(cm: EmbeddedCacheManager, cacheName: String,
-           key: Array[Byte], expectedValue: Array[Byte]): InternalCacheEntry[Array[Byte], Array[Byte]] =
-      assertHotRodEquals(cm, cm.getCache[Array[Byte], Array[Byte]](cacheName), key, expectedValue)
+           key: Bytes, expectedValue: Bytes): InternalCacheEntry =
+      assertHotRodEquals(cm, cm.getCache[Bytes, Bytes](cacheName).getAdvancedCache, key, expectedValue)
 
-   def assertHotRodEquals(cm: EmbeddedCacheManager,
-           key: String, expectedValue: String): InternalCacheEntry[Array[Byte], Array[Byte]] =
-      assertHotRodEquals(cm, cm.getCache[Array[Byte], Array[Byte]](),
+   def assertHotRodEquals(cm: EmbeddedCacheManager, key: String, expectedValue: String): InternalCacheEntry =
+      assertHotRodEquals(cm, cm.getCache[Bytes, Bytes]().getAdvancedCache,
          marshall(key), marshall(expectedValue))
 
-   def assertHotRodEquals(cm: EmbeddedCacheManager,
-           cacheName: String, key: String, expectedValue: String): InternalCacheEntry[Array[Byte], Array[Byte]] =
-      assertHotRodEquals(cm, cm.getCache[Array[Byte], Array[Byte]](cacheName),
+   def assertHotRodEquals(cm: EmbeddedCacheManager, cacheName: String,
+           key: String, expectedValue: String): InternalCacheEntry =
+      assertHotRodEquals(cm, cm.getCache[Bytes, Bytes](cacheName).getAdvancedCache,
          marshall(key), marshall(expectedValue))
 
-   private def assertHotRodEquals(cm: EmbeddedCacheManager,
-           cache: Cache[Array[Byte], Array[Byte]],
-           key: Array[Byte], expectedValue: Array[Byte]): InternalCacheEntry[Array[Byte], Array[Byte]] = {
+   private def assertHotRodEquals(cm: EmbeddedCacheManager, cache: Cache,
+           key: Bytes, expectedValue: Bytes): InternalCacheEntry = {
       val entry = cache.getAdvancedCache.getDataContainer.get(key)
       // Assert based on passed parameters
       if (expectedValue == null) {
@@ -363,7 +384,7 @@ object HotRodTestingUtil extends Log {
       } else {
          val value =
             if (entry == null) cache.get(key)
-            else entry.getValue.asInstanceOf[Array[Byte]]
+            else entry.getValue
 
          assertEquals(expectedValue, value)
       }
@@ -376,6 +397,125 @@ object HotRodTestingUtil extends Log {
 
    def unmarshall[T](key: Array[Byte]): T =
       new JBossMarshaller().objectFromByteBuffer(key).asInstanceOf[T]
+
+   // Event listener assertions
+
+   def expectNoEvents(eventType: Option[Event.Type] = None)
+           (implicit eventListener: TestClientListener): Unit = {
+      eventType match {
+         case None =>
+            assertEquals(0, eventListener.queueSize(Event.Type.CACHE_ENTRY_CREATED))
+            assertEquals(0, eventListener.queueSize(Event.Type.CACHE_ENTRY_MODIFIED))
+            assertEquals(0, eventListener.queueSize(Event.Type.CACHE_ENTRY_REMOVED))
+            assertEquals(0, eventListener.customQueueSize())
+         case Some(t) =>
+            assertEquals(0, eventListener.queueSize(t))
+      }
+   }
+
+   def expectOnlyRemovedEvent(k: Bytes)(implicit eventListener: TestClientListener, cache: Cache): Unit = {
+      expectSingleEvent(k, Event.Type.CACHE_ENTRY_REMOVED)
+      expectNoEvents(Some(Event.Type.CACHE_ENTRY_CREATED))
+      expectNoEvents(Some(Event.Type.CACHE_ENTRY_MODIFIED))
+   }
+
+   def expectOnlyModifiedEvent(k: Bytes)(implicit eventListener: TestClientListener, cache: Cache): Unit = {
+      expectSingleEvent(k, Event.Type.CACHE_ENTRY_MODIFIED)
+      expectNoEvents(Some(Event.Type.CACHE_ENTRY_CREATED))
+      expectNoEvents(Some(Event.Type.CACHE_ENTRY_REMOVED))
+   }
+
+   def expectOnlyCreatedEvent(k: Bytes)(implicit eventListener: TestClientListener, cache: Cache): Unit = {
+      expectSingleEvent(k, Event.Type.CACHE_ENTRY_CREATED)
+      expectNoEvents(Some(Event.Type.CACHE_ENTRY_MODIFIED))
+      expectNoEvents(Some(Event.Type.CACHE_ENTRY_REMOVED))
+   }
+
+   def expectSingleEvent(k: Bytes, eventType: Event.Type)
+           (implicit eventListener: TestClientListener, cache: Cache): Unit = {
+      expectEvent(k, eventType)
+      assertEquals(0, eventListener.queueSize(eventType))
+   }
+
+   def expectEvent(k: Bytes, eventType: Event.Type)
+           (implicit eventListener: TestClientListener, cache: Cache): Unit = {
+      val event = eventListener.pollEvent(eventType)
+      assertNotNull(event)
+      event match {
+         case t: TestKeyWithVersionEvent =>
+            assertByteArrayEquals(k, t.key)
+            assertEquals(serverDataVersion(k, cache), t.dataVersion)
+         case t: TestKeyEvent =>
+            assertByteArrayEquals(k, t.key)
+      }
+   }
+
+   def expectUnorderedEvents(keys: Seq[Bytes], eventType: Event.Type)
+           (implicit eventListener: TestClientListener, cache: Cache): Unit = {
+      val assertedKeys = ListBuffer[Bytes]()
+
+      def checkUnorderedKeyEvent(key: Bytes, eventKey: Bytes): Boolean = {
+         if (util.Arrays.equals(key, eventKey)) {
+            assertFalse(assertedKeys.contains(key))
+            assertedKeys += key
+            true
+         } else false
+      }
+
+      for (i <- 0 until keys.size) {
+         val event = eventListener.pollEvent(eventType)
+         assertNotNull(event)
+         val initialSize = assertedKeys.size
+         keys.foreach { key =>
+            event match {
+               case t: TestKeyWithVersionEvent =>
+                  val keyMatched = checkUnorderedKeyEvent(key, t.key)
+                  if (keyMatched)
+                     assertEquals(serverDataVersion(key, cache), t.dataVersion)
+               case t: TestKeyEvent =>
+                  checkUnorderedKeyEvent(key, t.key)
+            }
+         }
+         val finalSize = assertedKeys.size
+         assertEquals(initialSize + 1, finalSize)
+      }
+   }
+
+   def expectSingleCustomEvent(eventData: Bytes)
+           (implicit eventListener: TestClientListener, cache: Cache): Unit = {
+      val event = eventListener.pollCustom()
+      assertNotNull(event)
+      event match {
+         case t: TestCustomEvent => assertByteArrayEquals(eventData, t.eventData)
+      }
+      val remaining = eventListener.customQueueSize()
+      assertEquals(0, remaining)
+   }
+
+   def withClientListener(filterFactory: NamedFactory = None, converterFactory: NamedFactory = None)
+           (fn: () => Unit)(implicit listener: TestClientListener, client: HotRodClient): Unit = {
+      assertStatus(client.addClientListener(listener, filterFactory, converterFactory), Success)
+      try {
+         fn()
+      } finally {
+         assertStatus(client.removeClientListener(listener.getId), Success)
+      }
+   }
+
+   def withClientListener(client: HotRodClient, listener: TestClientListener,
+           filterFactory: NamedFactory, converterFactory: NamedFactory)
+           (fn: () => Unit): Unit = {
+      assertStatus(client.addClientListener(listener, filterFactory, converterFactory), Success)
+      try {
+         fn()
+      } finally {
+         assertStatus(client.removeClientListener(listener.getId), Success)
+      }
+   }
+
+   private def serverDataVersion(k: Bytes, cache: Cache): Long =
+      cache.getCacheEntry(k)
+              .getMetadata.version().asInstanceOf[NumericVersion].getVersion
 
    @Listener
    private class AddressRemovalListener(latch: CountDownLatch) {
@@ -396,7 +536,7 @@ object UniquePortThreadLocal extends ThreadLocal[Int] {
 
    override def initialValue: Int = {
       HotRodTestingUtil.debug("Before incrementing, server port is: %d", uniqueAddr.get())
-      val port = uniqueAddr.getAndAdd(100)
+      val port = uniqueAddr.getAndAdd(110)
       HotRodTestingUtil.debug("For next thread, server port will be: %d", uniqueAddr.get())
       port
    }

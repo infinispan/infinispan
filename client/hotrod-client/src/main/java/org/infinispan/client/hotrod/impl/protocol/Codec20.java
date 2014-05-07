@@ -1,11 +1,18 @@
 package org.infinispan.client.hotrod.impl.protocol;
 
+import org.infinispan.client.hotrod.event.ClientCacheEntryCreatedEvent;
+import org.infinispan.client.hotrod.event.ClientCacheEntryCustomEvent;
+import org.infinispan.client.hotrod.event.ClientCacheEntryModifiedEvent;
+import org.infinispan.client.hotrod.event.ClientCacheEntryRemovedEvent;
+import org.infinispan.client.hotrod.event.ClientEvent;
 import org.infinispan.client.hotrod.exceptions.HotRodClientException;
 import org.infinispan.client.hotrod.exceptions.InvalidResponseException;
 import org.infinispan.client.hotrod.exceptions.RemoteNodeSuspectException;
 import org.infinispan.client.hotrod.impl.transport.Transport;
 import org.infinispan.client.hotrod.logging.Log;
 import org.infinispan.client.hotrod.logging.LogFactory;
+import org.infinispan.client.hotrod.marshall.MarshallerUtil;
+import org.infinispan.commons.marshall.Marshaller;
 
 import java.net.InetSocketAddress;
 import java.net.SocketAddress;
@@ -15,7 +22,7 @@ import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 
-import static org.infinispan.commons.util.Util.hexDump;
+import static org.infinispan.commons.util.Util.*;
 
 /**
  * A Hot Rod encoder/decoder for version 2.0 of the protocol.
@@ -23,7 +30,7 @@ import static org.infinispan.commons.util.Util.hexDump;
  * @author Galder Zamarreño
  * @since 7.0
  */
-public class Codec20 implements Codec {
+public class Codec20 implements Codec, HotRodConstants {
 
    private static final Log log = LogFactory.getLog(Codec20.class, Log.class);
 
@@ -57,31 +64,8 @@ public class Codec20 implements Codec {
 
    @Override
    public short readHeader(Transport transport, HeaderParams params) {
-      short magic = transport.readByte();
-      final Log localLog = getLog();
-      if (magic != HotRodConstants.RESPONSE_MAGIC) {
-         String message = "Invalid magic number. Expected %#x and received %#x";
-         localLog.invalidMagicNumber(HotRodConstants.RESPONSE_MAGIC, magic);
-         if (trace)
-            localLog.tracef("Socket dump: %s", hexDump(transport.dumpStream()));
-
-         throw new InvalidResponseException(String.format(message, HotRodConstants.RESPONSE_MAGIC, magic));
-      }
-      long receivedMessageId = transport.readVLong();
-      // If received id is 0, it could be that a failure was noted before the
-      // message id was detected, so don't consider it to a message id error
-      if (receivedMessageId != params.messageId && receivedMessageId != 0) {
-         String message = "Invalid message id. Expected %d and received %d";
-         localLog.invalidMessageId(params.messageId, receivedMessageId);
-         if (trace)
-            localLog.tracef("Socket dump: %s", hexDump(transport.dumpStream()));
-
-         throw new InvalidResponseException(String.format(message, params.messageId, receivedMessageId));
-      }
-
-      if (trace)
-         localLog.tracef("Received response for message id: %d", receivedMessageId);
-
+      short magic = readMagic(transport);
+      long receivedMessageId = readMessageId(transport, params);
       short receivedOpCode = transport.readByte();
       // Read both the status and new topology (if present),
       // before deciding how to react to error situations.
@@ -101,9 +85,142 @@ public class Codec20 implements Codec {
       }
 
       if (trace)
-         localLog.tracef("Received operation code is: %#04x", receivedOpCode);
+         getLog().tracef("Received operation code is: %#04x", receivedOpCode);
 
       return status;
+   }
+
+   @Override
+   public ClientEvent readEvent(Transport transport, byte[] expectedListenerId, Marshaller marshaller) {
+      readMagic(transport);
+      readMessageId(transport, null);
+      short eventTypeId = transport.readByte();
+      short status = transport.readByte();
+      transport.readByte(); // ignore, no topology expected
+
+      byte[] listenerId = transport.readArray();
+      if (!Arrays.equals(listenerId, expectedListenerId))
+         throw log.unexpectedListenerId(printArray(listenerId), printArray(expectedListenerId));
+
+      short isCustom = transport.readByte();
+
+      ClientEvent.Type eventType;
+      switch (eventTypeId) {
+         case CACHE_ENTRY_CREATED_EVENT_RESPONSE:
+            eventType = ClientEvent.Type.CLIENT_CACHE_ENTRY_CREATED;
+            break;
+         case CACHE_ENTRY_MODIFIED_EVENT_RESPONSE:
+            eventType = ClientEvent.Type.CLIENT_CACHE_ENTRY_MODIFIED;
+            break;
+         case CACHE_ENTRY_REMOVED_EVENT_RESPONSE:
+            eventType = ClientEvent.Type.CLIENT_CACHE_ENTRY_REMOVED;
+            break;
+         default:
+            throw log.unknownEvent(eventTypeId);
+      }
+
+      if (isCustom == 1) {
+         final Object eventData = MarshallerUtil.bytes2obj(marshaller, transport.readArray());
+         return createCustomEvent(eventData, eventType);
+      } else {
+         switch (eventType) {
+            case CLIENT_CACHE_ENTRY_CREATED:
+               final Object createdKey = MarshallerUtil.bytes2obj(marshaller, transport.readArray());
+               final long createdDataVersion = transport.readLong();
+               return createCreatedEvent(createdKey, createdDataVersion);
+            case CLIENT_CACHE_ENTRY_MODIFIED:
+               final Object modifiedKey = MarshallerUtil.bytes2obj(marshaller, transport.readArray());
+               final long modifiedDataVersion = transport.readLong();
+               return createModifiedEvent(modifiedKey, modifiedDataVersion);
+            case CLIENT_CACHE_ENTRY_REMOVED:
+               final Object removedKey = MarshallerUtil.bytes2obj(marshaller, transport.readArray());
+               return createRemovedEvent(removedKey);
+            default:
+               throw log.unknownEvent(eventTypeId);
+         }
+      }
+   }
+
+   private ClientEvent createRemovedEvent(final Object key) {
+      return new ClientCacheEntryRemovedEvent() {
+         @Override public Object getKey() { return key; }
+         @Override public Type getType() { return Type.CLIENT_CACHE_ENTRY_REMOVED; }
+         @Override
+         public String toString() {
+            return "ClientCacheEntryRemovedEvent(" + "key=" + key + ")";
+         }
+      };
+   }
+
+   private ClientCacheEntryModifiedEvent createModifiedEvent(final Object key, final long dataVersion) {
+      return new ClientCacheEntryModifiedEvent() {
+         @Override public Object getKey() { return key; }
+         @Override public long getVersion() { return dataVersion; }
+         @Override public Type getType() { return Type.CLIENT_CACHE_ENTRY_MODIFIED; }
+         @Override
+         public String toString() {
+            return "ClientCacheEntryModifiedEvent(" + "key=" + key
+                  + ",dataVersion=" + dataVersion + ")";
+         }
+      };
+   }
+
+   private ClientCacheEntryCreatedEvent<Object> createCreatedEvent(final Object key, final long dataVersion) {
+      return new ClientCacheEntryCreatedEvent<Object>() {
+         @Override public Object getKey() { return key; }
+         @Override public long getVersion() { return dataVersion; }
+         @Override public Type getType() { return Type.CLIENT_CACHE_ENTRY_CREATED; }
+         @Override
+         public String toString() {
+            return "ClientCacheEntryCreatedEvent(" + "key=" + key
+                  + ",dataVersion=" + dataVersion + ")";
+         }
+      };
+   }
+
+   private ClientCacheEntryCustomEvent<Object> createCustomEvent(final Object eventData, ClientEvent.Type evenType) {
+      return new ClientCacheEntryCustomEvent<Object>() {
+         @Override public Object getEventData() { return eventData; }
+         @Override public Type getType() { return Type.CLIENT_CACHE_ENTRY_CREATED; }
+         @Override
+         public String toString() {
+            return "ClientCacheEntryCustomEvent(" + "eventData=" + eventData + ")";
+         }
+      };
+   }
+
+   private long readMessageId(Transport transport, HeaderParams params) {
+      long receivedMessageId = transport.readVLong();
+      final Log localLog = getLog();
+      // If received id is 0, it could be that a failure was noted before the
+      // message id was detected, so don't consider it to a message id error
+      if (params != null && receivedMessageId != params.messageId && receivedMessageId != 0) {
+         String message = "Invalid message id. Expected %d and received %d";
+         localLog.invalidMessageId(params.messageId, receivedMessageId);
+         if (trace)
+            localLog.tracef("Socket dump: %s", hexDump(transport.dumpStream()));
+
+         throw new InvalidResponseException(String.format(message, params.messageId, receivedMessageId));
+      }
+
+      if (trace)
+         localLog.tracef("Received response for message id: %d", receivedMessageId);
+
+      return receivedMessageId;
+   }
+
+   private short readMagic(Transport transport) {
+      short magic = transport.readByte();
+      if (magic != HotRodConstants.RESPONSE_MAGIC) {
+         final Log localLog = getLog();
+         String message = "Invalid magic number. Expected %#x and received %#x";
+         localLog.invalidMagicNumber(HotRodConstants.RESPONSE_MAGIC, magic);
+         if (trace)
+            localLog.tracef("Socket dump: %s", hexDump(transport.dumpStream()));
+
+         throw new InvalidResponseException(String.format(message, HotRodConstants.RESPONSE_MAGIC, magic));
+      }
+      return magic;
    }
 
    @Override

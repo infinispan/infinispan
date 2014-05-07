@@ -50,6 +50,11 @@ public final class MockTransportFactory implements TransportFactory {
    }
 
    @Override
+   public Transport getAddressTransport(SocketAddress server) {
+      return null;
+   }
+
+   @Override
    public boolean isTcpNoDelay() {
       return false;
    }

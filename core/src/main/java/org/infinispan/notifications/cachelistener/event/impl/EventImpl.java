@@ -35,9 +35,9 @@ import java.util.Map;
  * @since 4.0
  */
 @NotThreadSafe
-public class EventImpl<K, V> implements CacheEntryActivatedEvent, CacheEntryCreatedEvent, CacheEntriesEvictedEvent, CacheEntryLoadedEvent, CacheEntryModifiedEvent,
-                                        CacheEntryPassivatedEvent, CacheEntryRemovedEvent, CacheEntryVisitedEvent, TransactionCompletedEvent, TransactionRegisteredEvent,
-                                  CacheEntryInvalidatedEvent, DataRehashedEvent, TopologyChangedEvent, CacheEntryEvictedEvent {
+public class EventImpl<K, V> implements CacheEntryActivatedEvent<K, V>, CacheEntryCreatedEvent<K, V>, CacheEntriesEvictedEvent<K, V>, CacheEntryLoadedEvent<K, V>, CacheEntryModifiedEvent<K, V>,
+                                        CacheEntryPassivatedEvent<K, V>, CacheEntryRemovedEvent<K, V>, CacheEntryVisitedEvent<K, V>, TransactionCompletedEvent<K, V>, TransactionRegisteredEvent<K, V>,
+                                  CacheEntryInvalidatedEvent<K, V>, DataRehashedEvent<K, V>, TopologyChangedEvent<K, V>, CacheEntryEvictedEvent<K, V> {
    private boolean pre = false; // by default events are after the fact
    private transient Cache<K, V> cache;
    private K key;
@@ -144,6 +144,8 @@ public class EventImpl<K, V> implements CacheEntryActivatedEvent, CacheEntryCrea
       this.metadata = metadata;
    }
 
+   @Override
+   @SuppressWarnings("unchecked")
    public Metadata getMetadata() {
       return metadata;
    }
@@ -171,7 +173,7 @@ public class EventImpl<K, V> implements CacheEntryActivatedEvent, CacheEntryCrea
    }
 
    @Override
-   public Object getOldValue() {
+   public V getOldValue() {
       return oldValue;
    }
 
@@ -294,7 +296,7 @@ public class EventImpl<K, V> implements CacheEntryActivatedEvent, CacheEntryCrea
 
    @Override
    @SuppressWarnings("unchecked")
-   public Map<? extends K, ? extends V> getEntries() {
-      return entries;
+   public Map<K, V> getEntries() {
+      return (Map<K, V>) entries;
    }
 }

@@ -1,7 +1,9 @@
 package org.infinispan.client.hotrod.impl.protocol;
 
+import org.infinispan.client.hotrod.event.ClientEvent;
 import org.infinispan.client.hotrod.impl.transport.Transport;
 import org.infinispan.client.hotrod.logging.Log;
+import org.infinispan.commons.marshall.Marshaller;
 
 /**
  * A Hot Rod protocol encoder/decoder.
@@ -22,6 +24,8 @@ public interface Codec {
     * of the response.
     */
    short readHeader(Transport transport, HeaderParams params);
+
+   ClientEvent readEvent(Transport transport, byte[] expectedListenerId, Marshaller marshaller);
 
    /**
     * Logger for Hot Rod client codec

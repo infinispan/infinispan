@@ -63,6 +63,10 @@ public class CacheEntryCreatedAdapter<K, V> extends AbstractAdapter<CacheEntryCr
          return false;
       }
 
+      @Override
+      public Metadata getMetadata() {
+         return null;
+      }
    };
 
    @SuppressWarnings("serial")

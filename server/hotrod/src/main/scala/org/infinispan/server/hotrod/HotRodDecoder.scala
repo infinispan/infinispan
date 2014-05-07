@@ -152,7 +152,7 @@ class HotRodDecoder(cacheManager: EmbeddedCacheManager, transport: NettyTranspor
       writeResponse(ctx.channel, header.decoder.customReadHeader(header, buffer, cache, server, ctx))
 
    override protected def customDecodeKey(ctx: ChannelHandlerContext, buffer: ByteBuf): AnyRef =
-      writeResponse(ctx.channel, header.decoder.customReadKey(header, buffer, cache, server))
+      writeResponse(ctx.channel, header.decoder.customReadKey(header, buffer, cache, server, ctx.channel))
 
    override protected def customDecodeValue(ctx: ChannelHandlerContext, buffer: ByteBuf): AnyRef =
       writeResponse(ctx.channel, header.decoder.customReadValue(header, buffer, cache))

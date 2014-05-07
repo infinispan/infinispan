@@ -186,6 +186,11 @@ public class TcpTransportFactory implements TransportFactory {
    }
 
    @Override
+   public Transport getAddressTransport(SocketAddress server) {
+      return borrowTransportFromPool(server);
+   }
+
+   @Override
    public Transport getTransport(byte[] key, Set<SocketAddress> failedServers) {
       SocketAddress server;
       synchronized (lock) {

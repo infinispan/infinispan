@@ -57,7 +57,6 @@ public class CacheEntryActivatedAdapter<K, V> extends AbstractAdapter<CacheEntry
       public Metadata getMetadata() {
          return null;
       }
-
    };
 
    @SuppressWarnings("serial")

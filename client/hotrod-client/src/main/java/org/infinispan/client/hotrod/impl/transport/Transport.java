@@ -66,4 +66,9 @@ public interface Transport {
     */
    void invalidate();
 
+   // TODO: Are these two really needed?
+
+   void setBlocking(boolean blocking);
+
+   void disableSocketTimeout();
 }

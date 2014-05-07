@@ -1,8 +1,11 @@
 package org.infinispan.client.hotrod.logging;
 
+import org.infinispan.client.hotrod.event.ClientEvent;
+import org.infinispan.client.hotrod.event.IncorrectClientListenerException;
 import org.infinispan.client.hotrod.exceptions.HotRodClientException;
 import org.infinispan.client.hotrod.impl.transport.tcp.TcpTransport;
 import org.infinispan.commons.CacheConfigurationException;
+import org.infinispan.commons.CacheListenerException;
 import org.jboss.logging.BasicLogger;
 import org.jboss.logging.annotations.Cause;
 import org.jboss.logging.annotations.LogMessage;
@@ -10,8 +13,10 @@ import org.jboss.logging.annotations.Message;
 import org.jboss.logging.annotations.MessageLogger;
 
 import java.io.IOException;
+import java.lang.reflect.Method;
 import java.net.SocketAddress;
 import java.util.List;
+import java.util.Collection;
 import java.util.Set;
 
 import static org.jboss.logging.Logger.Level.*;
@@ -137,4 +142,34 @@ public interface Log extends BasicLogger {
 
    @Message(value = "'%s' is an invalid SASL mechanism", id = 4032)
    CacheConfigurationException invalidSaslMechanism(String saslMechanism);
+
+   @Message(value = "Connection dedicated to listener with id=%s but received event for listener with id=%s", id = 4033)
+   IllegalStateException unexpectedListenerId(String listenerId, String expectedListenerId);
+
+   @Message(value = "Unable to unmarshall bytes %s", id = 4034)
+   HotRodClientException unableToUnmarshallBytes(String bytes, @Cause Exception e);
+
+   @Message(value = "Caught exception [%s] while invoking method [%s] on listener instance: %s", id = 4035)
+   CacheListenerException exceptionInvokingListener(String name, Method m, Object target, @Cause Throwable cause);
+
+   @Message(value = "Methods annotated with %s must accept exactly one parameter, of assignable from type %s", id = 4036)
+   IncorrectClientListenerException incorrectClientListener(String annotationName, Collection<?> allowedParameters);
+
+   @Message(value = "Methods annotated with %s should have a return type of void.", id = 4037)
+   IncorrectClientListenerException incorrectClientListener(String annotationName);
+
+   @LogMessage(level = ERROR)
+   @Message(value = "Unexpected error consuming event %s", id = 4038)
+   void unexpectedErrorConsumingEvent(ClientEvent clientEvent, @Cause Throwable t);
+
+   @LogMessage(level = ERROR)
+   @Message(value = "Unable to complete reading event from server", id = 4039)
+   void unableToReadEventFromServer(@Cause Throwable t);
+
+   @Message(value = "Cache listener class %s must be annotated with org.infinispan.client.hotrod.annotation.ClientListener", id = 4040)
+   IncorrectClientListenerException missingClientListenerAnnotation(String className);
+
+   @Message(value = "Unknown event type %s received", id = 4041)
+   HotRodClientException unknownEvent(short eventTypeId);
+
 }

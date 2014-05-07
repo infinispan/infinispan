@@ -43,10 +43,13 @@ class HotRodServer extends AbstractProtocolServer("HotRod") with Log {
    private val knownCacheRegistries = CollectionFactory.makeConcurrentMap[String, ComponentRegistry](4, 0.9f, 16)
    private var queryFacades: Seq[QueryFacade] = _
    private val saslMechFactories = CollectionFactory.makeConcurrentMap[String, SaslServerFactory](4, 0.9f, 16)
+   private var clientListenerRegistry: ClientListenerRegistry = _
 
    def getAddress: ServerAddress = address
 
    def getQueryFacades: Seq[QueryFacade] = queryFacades
+   
+   def getClientListenerRegistry: ClientListenerRegistry = clientListenerRegistry
 
    override def getEncoder = new HotRodEncoder(getCacheManager, this)
 
@@ -74,6 +77,7 @@ class HotRodServer extends AbstractProtocolServer("HotRod") with Log {
       }
 
       queryFacades = loadQueryFacades()
+      clientListenerRegistry = new ClientListenerRegistry(configuration)
    }
 
    private def loadQueryFacades(): Seq[QueryFacade] =
