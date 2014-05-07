@@ -275,4 +275,29 @@ public interface RemoteCache<K, V> extends BasicCache<K, V> {
     * Returns the HotRod protocol version supported by this RemoteCache implementation
     */
    String getProtocolVersion();
+
+   /**
+    * Add a client listener to receive events that happen in the remote cache.
+    * The listener object must be annotated with @ClientListener annotation.
+    */
+   void addClientListener(Object listener);
+
+   /**
+    * Add a client listener to receive events that happen in the remote cache.
+    * The listener object must be annotated with @ClientListener annotation.
+    */
+   void addClientListener(Object listener, Object[] filterFactoryParams, Object[] converterFactoryParams);
+
+   /**
+    * Remove a previously added client listener. If the listener was not added
+    * before, this operation is a no-op.
+    */
+   void removeClientListener(Object listener);
+
+   /**
+    * Returns a set with all the listeners registered by this client for the
+    * given cache.
+    */
+   Set<Object> getListeners();
+
 }

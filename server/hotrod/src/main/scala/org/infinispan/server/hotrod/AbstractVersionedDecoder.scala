@@ -7,6 +7,7 @@ import org.infinispan.container.entries.CacheEntry
 import io.netty.buffer.ByteBuf
 import org.infinispan.server.hotrod.configuration.HotRodServerConfiguration
 import io.netty.channel.ChannelHandlerContext
+import io.netty.channel.Channel
 
 /**
  * This class represents the work to be done by a decoder of a particular Hot Rod protocol version.
@@ -59,7 +60,7 @@ abstract class AbstractVersionedDecoder {
    /**
     * Handle a protocol specific key reading.
     */
-   def customReadKey(header: HotRodHeader, buffer: ByteBuf, cache: Cache, server: HotRodServer): AnyRef
+   def customReadKey(header: HotRodHeader, buffer: ByteBuf, cache: Cache, server: HotRodServer, ch: Channel): AnyRef
 
    /**
     * Handle a protocol specific value reading.

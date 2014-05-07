@@ -12,5 +12,5 @@ import org.infinispan.metadata.Metadata;
  * @since 7.0
  */
 public interface Converter<K, V, C> {
-   C convert(K key,V value, Metadata metadata);
+   C convert(K key, V value, Metadata metadata);
 }

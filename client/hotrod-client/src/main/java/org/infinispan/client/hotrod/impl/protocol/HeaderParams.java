@@ -95,6 +95,10 @@ public class HeaderParams {
             return HotRodConstants.AUTH_MECH_LIST_RESPONSE;
          case HotRodConstants.AUTH_REQUEST:
             return HotRodConstants.AUTH_RESPONSE;
+         case HotRodConstants.ADD_CLIENT_LISTENER_REQUEST:
+            return HotRodConstants.ADD_CLIENT_LISTENER_RESPONSE;
+         case HotRodConstants.REMOVE_CLIENT_LISTENER_REQUEST:
+            return HotRodConstants.REMOVE_CLIENT_LISTENER_RESPONSE;
          default:
             throw new IllegalStateException("Unknown operation code: " + opCode);
       }

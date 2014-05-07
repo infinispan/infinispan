@@ -8,6 +8,7 @@ import org.infinispan.server.core.test.ServerTestingUtil._
 import org.testng.annotations.{BeforeClass, AfterMethod, AfterClass, Test}
 import org.infinispan.configuration.cache.ConfigurationBuilder
 import org.infinispan.test.fwk.TestCacheManagerFactory
+import scala.collection.JavaConversions._
 
 /**
  * Base test class for multi node or clustered Hot Rod tests.
@@ -21,7 +22,7 @@ abstract class HotRodMultiNodeTest extends MultipleCacheManagersTest {
 
    @Test(enabled=false) // Disable explicitly to avoid TestNG thinking this is a test!!
    override def createCacheManagers() {
-      for (i <- 0 until 2) {
+      for (i <- 0 until nodeCount) {
          val cm = TestCacheManagerFactory.createClusteredCacheManager(hotRodCacheConfiguration())
          cacheManagers.add(cm)
          cm.defineConfiguration(cacheName, createCacheConfig.build())
@@ -32,13 +33,16 @@ abstract class HotRodMultiNodeTest extends MultipleCacheManagersTest {
    @Test(enabled=false) // Disable explicitly to avoid TestNG thinking this is a test!!
    override def createBeforeClass() {
       super.createBeforeClass()
-      hotRodServers = hotRodServers ::: List(startTestHotRodServer(cacheManagers.get(0)))
-      hotRodServers = hotRodServers ::: List(startTestHotRodServer(cacheManagers.get(1), hotRodServers.head.getPort + 50))
+
+      var nextServerPort = serverPort
+      for (i <- 0 until nodeCount) {
+         hotRodServers = hotRodServers ::: List(startTestHotRodServer(cacheManagers.get(i), nextServerPort))
+         nextServerPort += 50
+      }
+
       hotRodClients = hotRodServers.map(s =>
          new HotRodClient("127.0.0.1", s.getPort, cacheName, 60, protocolVersion))
    }
-
-   protected def startTestHotRodServer(cacheManager: EmbeddedCacheManager) = startHotRodServer(cacheManager)
 
    protected def startTestHotRodServer(cacheManager: EmbeddedCacheManager, port: Int) = startHotRodServer(cacheManager, port)
 
@@ -62,16 +66,15 @@ abstract class HotRodMultiNodeTest extends MultipleCacheManagersTest {
             }
          }
 
-      TestingUtil.blockUntilViewsReceived(
-         50000, true, cm, manager(0), manager(1))
+      TestingUtil.blockUntilViewsReceived(50000, true, cacheManagers)
       newServer
    }
 
    protected def stopClusteredServer(server: HotRodServer) {
       killServer(server)
       TestingUtil.killCacheManagers(server.getCacheManager)
-      TestingUtil.blockUntilViewsReceived(
-         50000, false, manager(0), manager(1))
+      cacheManagers.remove(server.getCacheManager)
+      TestingUtil.blockUntilViewsReceived(50000, false, cacheManagers)
    }
 
    def currentServerTopologyId: Int = {
@@ -103,5 +106,7 @@ abstract class HotRodMultiNodeTest extends MultipleCacheManagersTest {
 
    protected def createCacheConfig: ConfigurationBuilder
 
-   protected def protocolVersion: Byte
+   protected def protocolVersion: Byte = 20
+
+   protected def nodeCount: Int = 2
 }

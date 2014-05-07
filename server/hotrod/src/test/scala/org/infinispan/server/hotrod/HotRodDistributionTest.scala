@@ -31,8 +31,6 @@ class HotRodDistributionTest extends HotRodMultiNodeTest {
       cfg
    }
 
-   override protected def protocolVersion : Byte = 20
-
    def testDistributedPutWithTopologyChanges(m: Method) {
       val client1 = clients.head
       val client2 = clients.tail.head

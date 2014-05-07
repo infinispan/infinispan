@@ -19,8 +19,8 @@ import io.netty.channel.ChannelFuture
 abstract class HotRodSingleNodeTest extends SingleCacheManagerTest {
    val cacheName = "HotRodCache"
    protected var hotRodServer: HotRodServer = _
-   private var hotRodClient: HotRodClient = _
-   private var advancedCache: AdvancedCache[Array[Byte], Array[Byte]] = _
+   implicit var hotRodClient: HotRodClient = _
+   implicit var advancedCache: AdvancedCache[Bytes, Bytes] = _
    private val hotRodJmxDomain = getClass.getSimpleName
    
    override def createCacheManager: EmbeddedCacheManager = {
