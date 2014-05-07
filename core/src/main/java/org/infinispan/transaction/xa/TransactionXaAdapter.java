@@ -151,7 +151,9 @@ public class TransactionXaAdapter extends AbstractEnlistmentAdapter implements X
          }
       } catch (Exception e) {
          log.warnExceptionRemovingRecovery(e);
-         throw new XAException(XAException.XAER_RMERR);
+         XAException xe = new XAException(XAException.XAER_RMERR);
+         xe.initCause(e);
+         throw xe;
       }
    }
 
