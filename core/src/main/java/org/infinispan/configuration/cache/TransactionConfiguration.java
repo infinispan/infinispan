@@ -19,8 +19,8 @@ public class TransactionConfiguration {
    private long cacheStopTimeout;
    private final boolean eagerLockingSingleNode;
    private LockingMode lockingMode;
-   private boolean syncCommitPhase;
-   private boolean syncRollbackPhase;
+   private final boolean syncCommitPhase;
+   private final boolean syncRollbackPhase;
    private TransactionManagerLookup transactionManagerLookup;
    private final TransactionSynchronizationRegistryLookup transactionSynchronizationRegistryLookup;
    private final TransactionMode transactionMode;
@@ -129,8 +129,8 @@ public class TransactionConfiguration {
     * If true, the cluster-wide commit phase in two-phase commit (2PC) transactions will be
     * synchronous, so Infinispan will wait for responses from all nodes to which the commit was
     * sent. Otherwise, the commit phase will be asynchronous. Keeping it as false improves
-    * performance of 2PC transactions, since any remote failures are trapped during the prepare
-    * phase anyway and appropriate rollbacks are issued.
+    * performance of 2PC transactions, but it can lead to inconsistencies when the primary owner releases
+    * the lock before the backup commits the change.
     */
    public boolean syncCommitPhase() {
       return syncCommitPhase;
@@ -140,11 +140,13 @@ public class TransactionConfiguration {
     * If true, the cluster-wide commit phase in two-phase commit (2PC) transactions will be
     * synchronous, so Infinispan will wait for responses from all nodes to which the commit was
     * sent. Otherwise, the commit phase will be asynchronous. Keeping it as false improves
-    * performance of 2PC transactions, since any remote failures are trapped during the prepare
-    * phase anyway and appropriate rollbacks are issued.
+    * performance of 2PC transactions, but it can lead to inconsistencies when the primary owner releases
+    * the lock before the backup commits the change.
+    *
+    * @deprecated The syncRollbackPhase setting can no longer be modified at runtime. It must be the same on all nodes.
     */
+   @Deprecated
    public TransactionConfiguration syncCommitPhase(boolean b) {
-      this.syncCommitPhase = b;
       return this;
    }
 
@@ -163,14 +165,12 @@ public class TransactionConfiguration {
    /**
     * If true, the cluster-wide rollback phase in two-phase commit (2PC) transactions will be
     * synchronous, so Infinispan will wait for responses from all nodes to which the rollback was
-    * sent. Otherwise, the rollback phase will be asynchronous. Keeping it as false improves
-    * performance of 2PC transactions.
+    * sent.
     *
-    * @param b
-    * @return
+    * @deprecated The syncRollbackPhase setting can no longer be modified at runtime. It must be the same on all nodes.
     */
+   @Deprecated
    public TransactionConfiguration syncRollbackPhase(boolean b) {
-      this.syncRollbackPhase = b;
       return this;
    }
 

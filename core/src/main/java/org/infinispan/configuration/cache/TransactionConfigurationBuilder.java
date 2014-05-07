@@ -26,7 +26,7 @@ public class TransactionConfigurationBuilder extends AbstractConfigurationChildB
    private boolean eagerLockingSingleNode = false;
    LockingMode lockingMode = LockingMode.OPTIMISTIC;
    private boolean syncCommitPhase = true;
-   private boolean syncRollbackPhase = false;
+   private boolean syncRollbackPhase = true;
    private TransactionManagerLookup transactionManagerLookup = new GenericTransactionManagerLookup();
    private TransactionSynchronizationRegistryLookup transactionSynchronizationRegistryLookup;
    TransactionMode transactionMode = null;
@@ -102,7 +102,7 @@ public class TransactionConfigurationBuilder extends AbstractConfigurationChildB
     * Configures whether the cache uses optimistic or pessimistic locking. If the cache is not
     * transactional then the locking mode is ignored.
     *
-    * @see org.infinispan.config.Configuration#isTransactionalCache()
+    * @see org.infinispan.configuration.cache.TransactionConfiguration#transactionMode()
     */
    public TransactionConfigurationBuilder lockingMode(LockingMode lockingMode) {
       this.lockingMode = lockingMode;
@@ -113,10 +113,8 @@ public class TransactionConfigurationBuilder extends AbstractConfigurationChildB
     * If true, the cluster-wide commit phase in two-phase commit (2PC) transactions will be
     * synchronous, so Infinispan will wait for responses from all nodes to which the commit was
     * sent. Otherwise, the commit phase will be asynchronous. Keeping it as false improves
-    * performance of 2PC transactions, since any remote failures are trapped during the prepare
-    * phase anyway and appropriate rollbacks are issued.
-    * <p/>
-    * This configuration property may be adjusted at runtime
+    * performance of 2PC transactions, but it can lead to inconsistencies when a backup owner
+    * only commits the transaction after the primary owner released the lock.
     */
    public TransactionConfigurationBuilder syncCommitPhase(boolean b) {
       this.syncCommitPhase = b;
@@ -135,11 +133,10 @@ public class TransactionConfigurationBuilder extends AbstractConfigurationChildB
    /**
     * If true, the cluster-wide rollback phase in two-phase commit (2PC) transactions will be
     * synchronous, so Infinispan will wait for responses from all nodes to which the rollback was
-    * sent. Otherwise, the rollback phase will be asynchronous. Keeping it as false improves
-    * performance of 2PC transactions.
-    * <p />
+    * sent. Otherwise, the rollback phase will be asynchronous.
     *
-    * This configuration property may be adjusted at runtime.
+    * Keeping it as false can lead to inconsistencies when a transaction is rolled back because of
+    * a commit timeout, as a backup owner could commit the transaction after the primary released the lock.
     */
    public TransactionConfigurationBuilder syncRollbackPhase(boolean b) {
       this.syncRollbackPhase = b;

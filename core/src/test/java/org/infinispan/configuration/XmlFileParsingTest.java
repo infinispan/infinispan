@@ -374,7 +374,7 @@ public class XmlFileParsingTest extends AbstractInfinispanTest {
       Configuration c = cm.getCacheConfiguration("transactional");
       assertTrue(!c.clustering().cacheMode().isClustered());
       assertTrue(c.transaction().transactionManagerLookup() instanceof GenericTransactionManagerLookup);
-      assertTrue(!c.transaction().syncRollbackPhase());
+      assertTrue(c.transaction().syncRollbackPhase());
       if (!deprecated) {
          assertReaperAndTimeoutInfo(defaultCfg);
       }
