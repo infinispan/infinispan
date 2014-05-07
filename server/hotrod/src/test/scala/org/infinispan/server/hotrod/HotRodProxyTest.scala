@@ -8,6 +8,7 @@ import org.testng.Assert._
 import org.infinispan.test.AbstractCacheTest._
 import org.infinispan.configuration.cache.{CacheMode, ConfigurationBuilder}
 import org.infinispan.commons.equivalence.ByteArrayEquivalence
+import org.infinispan.server.hotrod.test.HotRodTestingUtil
 
 /**
  * Tests Hot Rod instances that are behind a proxy.
@@ -32,13 +33,12 @@ class HotRodProxyTest extends HotRodMultiNodeTest {
       config
    }
 
-   override protected def protocolVersion = 10
-
-   override protected def startTestHotRodServer(cacheManager: EmbeddedCacheManager) =
-      startHotRodServer(cacheManager, proxyHost1, proxyPort1)
-
-   override protected def startTestHotRodServer(cacheManager: EmbeddedCacheManager, port: Int) =
-      startHotRodServer(cacheManager, port, proxyHost2, proxyPort2)
+   override protected def startTestHotRodServer(cacheManager: EmbeddedCacheManager, port: Int) = {
+      if (port == HotRodTestingUtil.serverPort)
+         startHotRodServer(cacheManager, proxyHost1, proxyPort1)
+      else
+         startHotRodServer(cacheManager, port, proxyHost2, proxyPort2)
+   }
 
    def testTopologyWithProxiesReturned() {
       val resp = clients.head.ping(2, 0)

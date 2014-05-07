@@ -1,9 +1,26 @@
 package org.infinispan.client.hotrod.test;
 
+import org.infinispan.Cache;
+import org.infinispan.client.hotrod.RemoteCache;
 import org.infinispan.client.hotrod.RemoteCacheManager;
+import org.infinispan.client.hotrod.event.ClientCacheEntryCreatedEvent;
+import org.infinispan.client.hotrod.event.ClientCacheEntryModifiedEvent;
+import org.infinispan.client.hotrod.event.ClientCacheEntryRemovedEvent;
+import org.infinispan.client.hotrod.event.ClientEvent;
+import org.infinispan.client.hotrod.event.EventLogListener;
 import org.infinispan.client.hotrod.logging.Log;
+import org.infinispan.commons.marshall.Marshaller;
+import org.infinispan.commons.marshall.jboss.GenericJBossMarshaller;
+import org.infinispan.container.versioning.NumericVersion;
+import org.infinispan.metadata.Metadata;
 import org.infinispan.server.hotrod.HotRodServer;
 import org.infinispan.util.logging.LogFactory;
+
+import java.util.ArrayList;
+import java.util.List;
+
+import static org.testng.AssertJUnit.assertEquals;
+import static org.testng.AssertJUnit.assertFalse;
 
 /**
  * Utility methods for the Hot Rod client
@@ -79,6 +96,134 @@ public class HotRodClientTestingUtil {
       } finally {
          killRemoteCacheManager(c.rcm);
       }
+   }
+
+   public static <K, V> void withClientListener(Object listener, RemoteCacheManagerCallable c) {
+      RemoteCache<K, V> cache = c.rcm.getCache();
+      cache.addClientListener(listener);
+      try {
+         c.call();
+      } finally {
+         cache.removeClientListener(listener);
+      }
+   }
+
+   public static <K, V> void withClientListener(Object listener,
+         Object[] filterFactoryParams, Object[] converterFactoryParams, RemoteCacheManagerCallable c) {
+      RemoteCache<K, V> cache = c.rcm.getCache();
+      cache.addClientListener(listener, filterFactoryParams, converterFactoryParams);
+      try {
+         c.call();
+      } finally {
+         cache.removeClientListener(listener);
+      }
+   }
+
+   public static <K> void expectOnlyCreatedEvent(K key, EventLogListener eventListener, Cache cache) {
+      expectSingleEvent(key, eventListener, ClientEvent.Type.CLIENT_CACHE_ENTRY_CREATED, cache);
+      expectNoEvents(eventListener, ClientEvent.Type.CLIENT_CACHE_ENTRY_MODIFIED);
+      expectNoEvents(eventListener, ClientEvent.Type.CLIENT_CACHE_ENTRY_REMOVED);
+   }
+
+   public static <K> void expectOnlyModifiedEvent(K key, EventLogListener eventListener, Cache cache) {
+      expectSingleEvent(key, eventListener, ClientEvent.Type.CLIENT_CACHE_ENTRY_MODIFIED, cache);
+      expectNoEvents(eventListener, ClientEvent.Type.CLIENT_CACHE_ENTRY_CREATED);
+      expectNoEvents(eventListener, ClientEvent.Type.CLIENT_CACHE_ENTRY_REMOVED);
+   }
+
+   public static <K> void expectOnlyRemovedEvent(K key, EventLogListener eventListener, Cache cache) {
+      expectSingleEvent(key, eventListener, ClientEvent.Type.CLIENT_CACHE_ENTRY_REMOVED, cache);
+      expectNoEvents(eventListener, ClientEvent.Type.CLIENT_CACHE_ENTRY_CREATED);
+      expectNoEvents(eventListener, ClientEvent.Type.CLIENT_CACHE_ENTRY_MODIFIED);
+   }
+
+   public static void expectNoEvents(EventLogListener eventListener) {
+      expectNoEvents(eventListener, ClientEvent.Type.CLIENT_CACHE_ENTRY_CREATED);
+      expectNoEvents(eventListener, ClientEvent.Type.CLIENT_CACHE_ENTRY_MODIFIED);
+      expectNoEvents(eventListener, ClientEvent.Type.CLIENT_CACHE_ENTRY_REMOVED);
+   }
+
+   public static void expectNoEvents(EventLogListener eventListener, ClientEvent.Type type) {
+      switch (type) {
+         case CLIENT_CACHE_ENTRY_CREATED:
+            assertEquals(0, eventListener.createdEvents.size());
+            break;
+         case CLIENT_CACHE_ENTRY_MODIFIED:
+            assertEquals(0, eventListener.modifiedEvents.size());
+            break;
+         case CLIENT_CACHE_ENTRY_REMOVED:
+            assertEquals(0, eventListener.removedEvents.size());
+            break;
+      }
+   }
+
+   public static <K> void expectSingleEvent(K key, EventLogListener eventListener, ClientEvent.Type type, Cache cache) {
+      switch (type) {
+         case CLIENT_CACHE_ENTRY_CREATED:
+            ClientCacheEntryCreatedEvent createdEvent = eventListener.pollEvent(type);
+            assertEquals(key, createdEvent.getKey());
+            assertEquals(serverDataVersion(cache, key), createdEvent.getVersion());
+            break;
+         case CLIENT_CACHE_ENTRY_MODIFIED:
+            ClientCacheEntryModifiedEvent modifiedEvent = eventListener.pollEvent(type);
+            assertEquals(key, modifiedEvent.getKey());
+            assertEquals(serverDataVersion(cache, key), modifiedEvent.getVersion());
+            break;
+         case CLIENT_CACHE_ENTRY_REMOVED:
+            ClientCacheEntryRemovedEvent removedEvent = eventListener.pollEvent(type);
+            assertEquals(key, removedEvent.getKey());
+            break;
+      }
+      assertEquals(0, eventListener.queue(type).size());
+   }
+
+   private static <K> long serverDataVersion(Cache cache, K key) {
+      Marshaller marshaller = new GenericJBossMarshaller();
+      try {
+         byte[] keyBytes = marshaller.objectToByteBuffer(key);
+         Metadata metadata = cache.getAdvancedCache().getCacheEntry(keyBytes).getMetadata();
+         return ((NumericVersion) metadata.version()).getVersion();
+      } catch (Exception e) {
+         throw new AssertionError(e);
+      }
+   }
+
+   public static <K> void expectUnorderedEvents(EventLogListener eventListener, ClientEvent.Type type, K... keys) {
+      List<K> assertedKeys = new ArrayList<K>();
+      for (int i = 0; i < keys.length; i++) {
+         ClientEvent event = eventListener.pollEvent(type);
+         int initialSize = assertedKeys.size();
+         for (K key : keys) {
+            K eventKey = null;
+            switch (event.getType()) {
+               case CLIENT_CACHE_ENTRY_CREATED:
+                  eventKey = ((ClientCacheEntryCreatedEvent<K>) event).getKey();
+                  break;
+               case CLIENT_CACHE_ENTRY_MODIFIED:
+                  eventKey = ((ClientCacheEntryModifiedEvent<K>) event).getKey();
+                  break;
+               case CLIENT_CACHE_ENTRY_REMOVED:
+                  eventKey = ((ClientCacheEntryRemovedEvent<K>) event).getKey();
+                  break;
+            }
+            checkUnorderedKeyEvent(assertedKeys, key, eventKey);
+         }
+         int finalSize = assertedKeys.size();
+         assertEquals(initialSize + 1, finalSize);
+      }
+   }
+
+   private static <K> boolean checkUnorderedKeyEvent(List<K> assertedKeys, K key, K eventKey) {
+      if (key.equals(eventKey)) {
+         assertFalse(assertedKeys.contains(key));
+         assertedKeys.add(key);
+         return true;
+      }
+      return false;
+   }
+
+   public static <K> void expectFailoverEvent(EventLogListener eventListener) {
+      eventListener.pollEvent(ClientEvent.Type.CLIENT_CACHE_FAILOVER);
    }
 
 }

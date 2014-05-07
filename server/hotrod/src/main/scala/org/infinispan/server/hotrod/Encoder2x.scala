@@ -13,11 +13,36 @@ import scala.Some
 import scala.collection.JavaConversions._
 import scala.collection.mutable
 import scala.collection.mutable.{ListBuffer, ArrayBuffer}
+import org.infinispan.server.hotrod.Events.{CustomEvent, KeyEvent, Event, KeyWithVersionEvent}
 
 /**
  * @author Galder Zamarreño
  */
 object Encoder2x extends AbstractVersionedEncoder with Constants with Log {
+
+   override def writeEvent(e: Event, buf: ByteBuf) {
+      if (isTraceEnabled)
+         log.tracef("Write event %s", e)
+
+      buf.writeByte(MAGIC_RES.byteValue)
+      writeUnsignedLong(e.messageId, buf)
+      buf.writeByte(e.op.id.byteValue)
+      buf.writeByte(Success.id.byteValue)
+      buf.writeByte(0) // no topology change
+      writeRangedBytes(e.listenerId, buf)
+      e match {
+         case k: KeyWithVersionEvent =>
+            buf.writeByte(0) // custom marker
+            writeRangedBytes(k.key, buf)
+            buf.writeLong(k.dataVersion)
+         case k: KeyEvent =>
+            buf.writeByte(0) // custom marker
+            writeRangedBytes(k.key, buf)
+         case c: CustomEvent =>
+            buf.writeByte(1) // custom marker
+            writeRangedBytes(c.eventData, buf)
+      }
+   }
 
    override def writeHeader(r: Response, buf: ByteBuf, addressCache: AddressCache, server: HotRodServer): Unit = {
       val newTopology = getTopologyResponse(r, addressCache, server)

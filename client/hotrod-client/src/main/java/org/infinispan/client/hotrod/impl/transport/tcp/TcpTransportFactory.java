@@ -19,6 +19,7 @@ import org.apache.commons.pool.impl.GenericKeyedObjectPool;
 import org.infinispan.client.hotrod.configuration.Configuration;
 import org.infinispan.client.hotrod.configuration.ServerConfiguration;
 import org.infinispan.client.hotrod.configuration.SslConfiguration;
+import org.infinispan.client.hotrod.event.ClientListenerNotifier;
 import org.infinispan.client.hotrod.exceptions.TransportException;
 import org.infinispan.client.hotrod.impl.consistenthash.ConsistentHash;
 import org.infinispan.client.hotrod.impl.consistenthash.ConsistentHashFactory;
@@ -58,10 +59,13 @@ public class TcpTransportFactory implements TransportFactory {
    private volatile int connectTimeout;
    private volatile int maxRetries;
    private volatile SSLContext sslContext;
+   private volatile ClientListenerNotifier listenerNotifier;
+   private volatile AtomicInteger topologyId;
 
    @Override
-   public void start(Codec codec, Configuration configuration, AtomicInteger topologyId) {
+   public void start(Codec codec, Configuration configuration, AtomicInteger topologyId, ClientListenerNotifier listenerNotifier) {
       synchronized (lock) {
+         this.listenerNotifier = listenerNotifier;
          hashFactory.init(configuration);
          boolean pingOnStartup = configuration.pingOnStartup();
          servers = new ArrayList<SocketAddress>();
@@ -74,6 +78,7 @@ public class TcpTransportFactory implements TransportFactory {
          soTimeout = configuration.socketTimeout();
          connectTimeout = configuration.connectionTimeout();
          maxRetries = configuration.maxRetries();
+         this.topologyId = topologyId;
 
          if (configuration.security().ssl().enabled()) {
             SslConfiguration ssl = configuration.security().ssl();
@@ -186,6 +191,11 @@ public class TcpTransportFactory implements TransportFactory {
    }
 
    @Override
+   public Transport getAddressTransport(SocketAddress server) {
+      return borrowTransportFromPool(server);
+   }
+
+   @Override
    public Transport getTransport(byte[] key, Set<SocketAddress> failedServers) {
       SocketAddress server;
       synchronized (lock) {
@@ -254,6 +264,7 @@ public class TcpTransportFactory implements TransportFactory {
             log.tracef("Added servers: %s", addedServers);
             log.tracef("Removed servers: %s", failedServers);
          }
+
          if (failedServers.isEmpty() && newServers.isEmpty()) {
             log.debug("Same list of servers, not changing the pool");
             return;
@@ -282,6 +293,10 @@ public class TcpTransportFactory implements TransportFactory {
          }
 
          servers = Collections.unmodifiableList(new ArrayList(newServers));
+
+         if (!failedServers.isEmpty()) {
+            listenerNotifier.failoverClientListeners(failedServers);
+         }
       }
    }
 

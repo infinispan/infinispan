@@ -11,6 +11,7 @@ import org.infinispan.distribution.ch.impl.DefaultConsistentHash
 import collection.mutable.ArrayBuffer
 import org.infinispan.server.hotrod.util.BulkUtil
 import io.netty.buffer.ByteBuf
+import org.infinispan.server.hotrod.Events.Event
 
 /**
  * Hot Rod encoder for protocol version 1.1
@@ -21,6 +22,10 @@ import io.netty.buffer.ByteBuf
 abstract class AbstractEncoder1x extends AbstractVersionedEncoder with Constants with Log {
 
    import HotRodServer._
+
+   override def writeEvent(e: Event, buf: ByteBuf) {
+      // Not implemented in this version of the protocol
+   }
 
    override def writeHeader(r: Response, buf: ByteBuf, addressCache: AddressCache, server: HotRodServer) {
       val topologyResp = getTopologyResponse(r, addressCache, server)

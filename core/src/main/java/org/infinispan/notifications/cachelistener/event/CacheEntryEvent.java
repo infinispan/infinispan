@@ -22,8 +22,11 @@ public interface CacheEntryEvent<K, V> extends TransactionalEvent<K, V> {
    V getValue();
 
    /**
-    * Provides the metadata that was available when the event occurred.
-    * @return the metadata for the cache entry
+    * Retrieves the metadata associated with the entry.
+    *
+    * @return the metadata of the cache entry
+    * @since 7.0
     */
    Metadata getMetadata();
+
 }

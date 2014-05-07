@@ -73,7 +73,7 @@ public abstract class MultiHotRodServersTest extends MultipleCacheManagersTest {
       }
    }
 
-   private HotRodServer addHotRodServer(ConfigurationBuilder builder) {
+   protected HotRodServer addHotRodServer(ConfigurationBuilder builder) {
       EmbeddedCacheManager cm = addClusterEnabledCacheManager(builder);
       HotRodServer server = TestHelper.startHotRodServer(cm);
       servers.add(server);
