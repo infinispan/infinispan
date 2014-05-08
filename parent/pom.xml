@@ -1317,6 +1317,7 @@
             <configuration>
                <instructions>
                   <Bundle-DocURL>http://www.infinispan.org/</Bundle-DocURL>
+                  <Import-Package>!sun.misc,*</Import-Package>
                   <Export-Package>${project.groupId}.*;version=${project.version};-split-package:=error</Export-Package>
                </instructions>
             </configuration>
