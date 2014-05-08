@@ -7,6 +7,7 @@ import java.util.HashSet;
 import java.util.Set;
 
 import org.infinispan.security.PrincipalRoleMapper;
+import org.infinispan.security.PrincipalRoleMapperContext;
 import org.jboss.security.SimpleGroup;
 import org.jboss.security.SimplePrincipal;
 
@@ -38,6 +39,11 @@ public class SimplePrincipalGroupRoleMapper implements PrincipalRoleMapper {
          } 
       }
       return null;
+   }
+   
+   @Override
+   public void setContext(PrincipalRoleMapperContext context) {
+      // Do nothing
    }
 
 }
