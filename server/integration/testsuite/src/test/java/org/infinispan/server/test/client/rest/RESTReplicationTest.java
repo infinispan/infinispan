@@ -21,6 +21,7 @@ import static org.infinispan.server.test.client.rest.RESTHelper.get;
 import static org.infinispan.server.test.client.rest.RESTHelper.head;
 import static org.infinispan.server.test.client.rest.RESTHelper.post;
 import static org.infinispan.server.test.client.rest.RESTHelper.put;
+import static org.infinispan.server.test.util.TestUtil.sleepForSecs;
 
 /**
  * Tests for the REST client.
@@ -97,7 +98,7 @@ public class RESTReplicationTest {
                 // headers
                 "Content-Type", "application/text", "timeToLiveSeconds", "2");
         head(fullPathKey(1, KEY_A));
-        Thread.sleep(2100);
+        sleepForSecs(2.1);
         // should be evicted
         head(fullPathKey(1, KEY_A), HttpServletResponse.SC_NOT_FOUND);
     }

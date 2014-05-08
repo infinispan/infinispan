@@ -1,4 +1,4 @@
-package org.infinispan.server.test.jmxmanagement.suppress.statetransfer;
+package org.infinispan.server.test.jmx.suppress.statetransfer;
 
 import org.infinispan.arquillian.utils.MBeanServerConnectionProvider;
 import org.infinispan.client.hotrod.RemoteCache;
@@ -65,7 +65,7 @@ public class StateTransferSuppressForHotrodTest extends AbstractStateTransferSup
     }
 
     @Override
-    protected void createNewProvider() {
-        providers.add(new MBeanServerConnectionProvider(server(2).getHotrodEndpoint().getInetAddress().getHostName(), managementPort + 200));
+    protected void createNewProvider(int idx) {
+        providers.add(new MBeanServerConnectionProvider(server(idx).getHotrodEndpoint().getInetAddress().getHostName(), managementPort + idx * 100));
     }
 }

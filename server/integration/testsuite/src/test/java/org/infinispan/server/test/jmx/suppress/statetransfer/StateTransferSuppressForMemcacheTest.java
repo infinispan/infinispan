@@ -1,4 +1,4 @@
-package org.infinispan.server.test.jmxmanagement.suppress.statetransfer;
+package org.infinispan.server.test.jmx.suppress.statetransfer;
 
 import org.apache.log4j.Logger;
 import org.infinispan.arquillian.utils.MBeanServerConnectionProvider;
@@ -68,7 +68,7 @@ public class StateTransferSuppressForMemcacheTest extends AbstractStateTransferS
     }
 
     @Override
-    protected void createNewProvider() {
-        providers.add(new MBeanServerConnectionProvider(server(2).getMemcachedEndpoint().getInetAddress().getHostName(), managementPort + 200));
+    protected void createNewProvider(int idx) {
+        providers.add(new MBeanServerConnectionProvider(server(idx).getMemcachedEndpoint().getInetAddress().getHostName(), managementPort + idx * 100));
     }
 }

@@ -1,4 +1,4 @@
-package org.infinispan.server.test.jmxmanagement;
+package org.infinispan.server.test.jmx.management;
 
 import java.io.IOException;
 import java.util.List;
@@ -24,6 +24,7 @@ import org.junit.runner.RunWith;
 
 import static org.infinispan.server.test.util.TestUtil.getAttribute;
 import static org.infinispan.server.test.util.TestUtil.invokeOperation;
+import static org.infinispan.server.test.util.TestUtil.sleepForSecs;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertTrue;
@@ -243,7 +244,7 @@ public class JmxManagementTest {
         assertNotEquals(0.0, Double.parseDouble(getAttribute(provider, memcachedCacheStatisticsMBean, "ReadWriteRatio")));
         assertNotEquals(0, Integer.parseInt(getAttribute(provider, memcachedCacheStatisticsMBean, "Hits")));
         assertEquals(Boolean.TRUE, Boolean.parseBoolean(getAttribute(provider, memcachedCacheStatisticsMBean, "StatisticsEnabled")));
-        Thread.sleep(2000);
+        sleepForSecs(2);
         assertNotEquals(0, Integer.parseInt(getAttribute(provider, memcachedCacheStatisticsMBean, "TimeSinceReset")));
         assertNotEquals(0, Integer.parseInt(getAttribute(provider, memcachedCacheStatisticsMBean, "ElapsedTime")));
         assertEquals(0, Integer.parseInt(getAttribute(provider, memcachedCacheStatisticsMBean, "Misses")));

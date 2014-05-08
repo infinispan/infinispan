@@ -4,7 +4,7 @@ import org.infinispan.arquillian.core.InfinispanResource;
 import org.infinispan.arquillian.core.RemoteInfinispanServer;
 import org.infinispan.client.hotrod.RemoteCache;
 import org.infinispan.server.test.client.memcached.MemcachedClient;
-import org.infinispan.server.test.util.DBServer;
+import org.infinispan.server.test.util.jdbc.DBServer;
 import org.infinispan.server.test.util.RemoteCacheManagerFactory;
 import org.infinispan.server.test.util.RemoteInfinispanMBeans;
 import org.jboss.arquillian.container.test.api.ContainerController;

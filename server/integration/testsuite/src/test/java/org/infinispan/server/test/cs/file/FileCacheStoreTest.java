@@ -1,4 +1,4 @@
-package org.infinispan.server.test.cs;
+package org.infinispan.server.test.cs.file;
 
 import org.infinispan.arquillian.core.InfinispanResource;
 import org.infinispan.arquillian.core.RemoteInfinispanServer;

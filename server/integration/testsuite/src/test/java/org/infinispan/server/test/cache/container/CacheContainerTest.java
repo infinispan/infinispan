@@ -1,4 +1,4 @@
-package org.infinispan.server.test.cachecontainer;
+package org.infinispan.server.test.cache.container;
 
 import java.util.Scanner;
 

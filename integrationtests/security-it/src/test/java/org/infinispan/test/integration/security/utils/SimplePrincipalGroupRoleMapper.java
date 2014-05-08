@@ -45,5 +45,4 @@ public class SimplePrincipalGroupRoleMapper implements PrincipalRoleMapper {
    public void setContext(PrincipalRoleMapperContext context) {
       // Do nothing
    }
-
 }
