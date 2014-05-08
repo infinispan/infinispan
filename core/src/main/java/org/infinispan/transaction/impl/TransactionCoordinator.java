@@ -206,7 +206,6 @@ public class TransactionCoordinator {
          // inform the TM that a resource manager error has occurred in the transaction branch (XAER_RMERR).
          XAException xe = new XAException(XAException.XAER_RMERR);
          xe.initCause(e);
-         xe.addSuppressed(e1);
          throw xe;
       } finally {
          txTable.failureCompletingTransaction(ctx.getTransaction());
