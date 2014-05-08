@@ -52,6 +52,7 @@ import org.junit.experimental.categories.Category;
 import static org.infinispan.server.test.client.rest.RESTHelper.*;
 import static org.infinispan.server.test.util.TestUtil.eventually;
 import static org.infinispan.server.test.util.TestUtil.invokeOperation;
+import static org.infinispan.server.test.util.TestUtil.sleepForSecs;
 import static org.infinispan.server.test.util.TestUtil.stopContainers;
 import static org.junit.Assert.*;
 
@@ -293,9 +294,9 @@ public class ExampleConfigsTest {
     @Test
     @WithRunningServer({@RunningServer(name = "standalone-fcs-local")})
     public void testFileCacheStoreConfig() throws Exception {
-        doPutGetCheckPath(createRemotes("standalone-fcs-local", "local", DEFAULT_CACHE_NAME), "dc", -1);
-        doPutGetCheckPath(createRemotes("standalone-fcs-local", "local", MEMCACHED_CACHE_NAME), "mc", -1);
-        doPutGetCheckPath(createRemotes("standalone-fcs-local", "local", NAMED_CACHE_NAME), "nc", 2100);
+        doPutGetCheckPath(createRemotes("standalone-fcs-local", "local", DEFAULT_CACHE_NAME), "dc", -1.0);
+        doPutGetCheckPath(createRemotes("standalone-fcs-local", "local", MEMCACHED_CACHE_NAME), "mc", -1.0);
+        doPutGetCheckPath(createRemotes("standalone-fcs-local", "local", NAMED_CACHE_NAME), "nc", 2.1);
     }
 
     @Test
@@ -322,10 +323,9 @@ public class ExampleConfigsTest {
     @Test
     @WithRunningServer({@RunningServer(name = "standalone-leveldb-cs-local")})
     public void testLevelDBCacheStoreConfig() throws Exception {
-        doPutGetCheckPath(createRemotes("standalone-leveldb-cs-local", "local", DEFAULT_CACHE_NAME), "level-dcdefault", -1);
-        doPutGetCheckPath(createRemotes("standalone-leveldb-cs-local", "local", MEMCACHED_CACHE_NAME),
-                "level-mcmemcachedCache", -1);
-        doPutGetCheckPath(createRemotes("standalone-leveldb-cs-local", "local", NAMED_CACHE_NAME), "leveldb-ncnamedCache", 2100);
+        doPutGetCheckPath(createRemotes("standalone-leveldb-cs-local", "local", DEFAULT_CACHE_NAME), "level-dcdefault", -1.0);
+        doPutGetCheckPath(createRemotes("standalone-leveldb-cs-local", "local", MEMCACHED_CACHE_NAME), "level-mcmemcachedCache", -1.0);
+        doPutGetCheckPath(createRemotes("standalone-leveldb-cs-local", "local", NAMED_CACHE_NAME), "leveldb-ncnamedCache", 2.1);
     }
 
     @Test
@@ -567,7 +567,7 @@ public class ExampleConfigsTest {
                 // headers
                 "Content-Type", "application/text", "timeToLiveSeconds", "2");
         head(fullPathKey(1, KEY_A));
-        Thread.sleep(2100);
+        sleepForSecs(2.1);
         // should be evicted
         head(fullPathKey(1, KEY_A), HttpServletResponse.SC_NOT_FOUND);
     }
@@ -672,7 +672,7 @@ public class ExampleConfigsTest {
         // all entries are in store (passivation=false)
         assertEquals(10, s2.cache.getNumberOfEntries());
 
-        Thread.sleep(2100); // the lifespan is 2000ms so we need to wait more
+        sleepForSecs(2.1); // the lifespan is 2000ms so we need to wait more
 
         // entries expired
         for (int i = 0; i < 10; i++) {
@@ -691,11 +691,11 @@ public class ExampleConfigsTest {
         assertEquals(10, s.cache.getNumberOfEntries());
     }
 
-    private void doPutGetCheckPath(RemoteInfinispanMBeans s, String filePath, long sleepTime) throws Exception {
+    private void doPutGetCheckPath(RemoteInfinispanMBeans s, String filePath, double sleepTime) throws Exception {
         RemoteCache<Object, Object> sCache = createCache(s);
         doPutGet(s, sCache);
         if (sleepTime >= 0) {
-            Thread.sleep(sleepTime);
+            sleepForSecs(sleepTime);
 
             // entries expired
             for (int i = 0; i < 10; i++) {

@@ -1,7 +1,5 @@
 package org.infinispan.server.test.util;
 
-import static org.junit.Assert.assertTrue;
-
 import java.io.File;
 import java.io.IOException;
 import java.lang.reflect.Field;
@@ -20,6 +18,8 @@ import org.infinispan.commons.marshall.Marshaller;
 import org.infinispan.server.test.client.memcached.MemcachedClient;
 import org.jboss.arquillian.container.test.api.Config;
 import org.jboss.arquillian.container.test.api.ContainerController;
+
+import static org.junit.Assert.assertTrue;
 
 /**
  * Often repeated test code routines.
@@ -159,5 +159,13 @@ public class TestUtil {
             throw new RuntimeException("Could not create Memcached Client");
         }
         return mc;
+    }
+
+    public static void sleepForSecs(double numSecs) {
+        // give the elements time to be evicted
+        try {
+            Thread.sleep((long) (numSecs * 1000));
+        } catch (InterruptedException e) {
+        }
     }
 }

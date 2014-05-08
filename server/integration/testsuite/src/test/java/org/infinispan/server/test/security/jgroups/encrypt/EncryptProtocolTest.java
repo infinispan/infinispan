@@ -1,4 +1,4 @@
-package org.infinispan.server.test.jgroups.security;
+package org.infinispan.server.test.security.jgroups.encrypt;
 
 import java.io.File;
 import java.io.IOException;

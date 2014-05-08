@@ -26,6 +26,7 @@ import org.junit.Before;
 import org.junit.Ignore;
 import org.junit.Test;
 
+import static org.infinispan.server.test.util.TestUtil.sleepForSecs;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotEquals;
@@ -781,13 +782,4 @@ public abstract class AbstractRemoteCacheTest {
             map.put("key" + i, "value" + i);
         }
     }
-
-    protected void sleepForSecs(long numSecs) {
-        // give the elements time to be evicted
-        try {
-            Thread.sleep(numSecs * 1000);
-        } catch (InterruptedException e) {
-        }
-    }
-
 }

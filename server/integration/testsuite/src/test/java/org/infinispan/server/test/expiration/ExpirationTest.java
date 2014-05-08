@@ -22,6 +22,7 @@ import static org.infinispan.server.test.client.rest.RESTHelper.fullPathKey;
 import static org.infinispan.server.test.client.rest.RESTHelper.get;
 import static org.infinispan.server.test.client.rest.RESTHelper.head;
 import static org.infinispan.server.test.client.rest.RESTHelper.post;
+import static org.infinispan.server.test.util.TestUtil.sleepForSecs;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
@@ -66,16 +67,16 @@ public class ExpirationTest {
         post(key4Path, "v4", "application/text", HttpServletResponse.SC_OK, "Content-Type", "application/text",
                 "timeToLiveSeconds", "0", "maxIdleTimeSeconds", "2");
 
-        Thread.sleep(1000);
+        sleepForSecs(1);
         get(key1Path, "v1");
         get(key3Path, "v3");
         get(key4Path, "v4");
-        Thread.sleep(1100);
+        sleepForSecs(1.1);
         // k3 and k4 expired
         get(key1Path, "v1");
         head(key3Path, HttpServletResponse.SC_NOT_FOUND);
         head(key4Path, HttpServletResponse.SC_NOT_FOUND);
-        Thread.sleep(1000);
+        sleepForSecs(1);
         // k1 expired
         head(key1Path, HttpServletResponse.SC_NOT_FOUND);
         get(key2Path, "v2");
@@ -95,13 +96,13 @@ public class ExpirationTest {
         c2.put("key2_c2", "value2_c2", 4000, TimeUnit.MILLISECONDS, 4000, TimeUnit.MILLISECONDS);
         assertEquals("key1 should be in cache.", "value1", c.get("key1"));
         assertEquals("key1_c2 should be in cache2.", "value1_c2", c2.get("key1_c2"));
-        Thread.sleep(3000);
+        sleepForSecs(3);
         // entries using the global lifespan expired
         assertTrue("key1 should be expired already.", c.get("key1") == null);
         assertTrue("key1_c2 should be expired already.", c2.get("key1_c2") == null);
         assertEquals("key2 should still be in the cache.", "value2", c.get("key2"));
         assertEquals("key2_c2 should still be in the cache.", "value2_c2", c2.get("key2_c2"));
-        Thread.sleep(2000);
+        sleepForSecs(2);
         // entries should expire from file-cache-store too
         assertTrue("key2 should be expired already.", c.get("key2") == null);
         assertTrue("key2_c2 should be expired already.", c2.get("key2_c2") == null);

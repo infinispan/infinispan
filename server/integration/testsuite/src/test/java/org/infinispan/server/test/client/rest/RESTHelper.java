@@ -295,6 +295,10 @@ public class RESTHelper {
         return fullPathKey(0, cache, key, portOffset);
     }
 
+    public static List<Server> getServers() {
+        return servers;
+    }
+
     public static class Server {
         private String hostname;
         private String restServerPath;

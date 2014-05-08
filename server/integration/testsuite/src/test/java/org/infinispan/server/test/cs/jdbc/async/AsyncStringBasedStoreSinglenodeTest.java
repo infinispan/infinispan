@@ -4,7 +4,7 @@ import org.infinispan.arquillian.core.RunningServer;
 import org.infinispan.arquillian.core.WithRunningServer;
 import org.infinispan.server.test.category.CacheStore;
 import org.infinispan.server.test.cs.jdbc.AbstractJdbcStoreSinglenodeTest;
-import org.infinispan.server.test.util.DBServer;
+import org.infinispan.server.test.util.jdbc.DBServer;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
 

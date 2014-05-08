@@ -1,4 +1,4 @@
-package org.infinispan.server.test.util;
+package org.infinispan.server.test.util.jdbc;
 
 import java.sql.Connection;
 import java.sql.DriverManager;

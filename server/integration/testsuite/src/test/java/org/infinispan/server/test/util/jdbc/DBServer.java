@@ -1,4 +1,4 @@
-package org.infinispan.server.test.util;
+package org.infinispan.server.test.util.jdbc;
 
 import java.sql.Connection;
 import java.sql.DatabaseMetaData;
@@ -10,6 +10,8 @@ import java.util.List;
 import java.util.concurrent.Callable;
 
 import org.infinispan.commons.equivalence.ByteArrayEquivalence;
+
+import static org.infinispan.server.test.util.TestUtil.sleepForSecs;
 
 /**
  * @author <a href="mailto:mgencur@redhat.com">Martin Gencur</a>
@@ -34,7 +36,7 @@ public class DBServer {
     public TableManipulation stringTable;
 
     public static class TableManipulation {
-        private final long RETRY_TIME = 1000;
+        private final long RETRY_TIME = 1; // in seconds
 
         private final SimpleConnectionFactory factory;
 
@@ -299,11 +301,7 @@ public class DBServer {
                 try {
                     result = c.call();
                 } catch (Exception e) {
-                    try {
-                        Thread.sleep(RETRY_TIME);
-                    } catch (InterruptedException ie) {
-                        // do nothing
-                    }
+                    sleepForSecs(RETRY_TIME);
                 }
             }
             return result;

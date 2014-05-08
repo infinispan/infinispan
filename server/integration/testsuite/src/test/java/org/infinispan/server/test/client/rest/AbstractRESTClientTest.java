@@ -13,6 +13,7 @@ import java.net.URLEncoder;
 import java.util.Arrays;
 
 import static org.infinispan.server.test.client.rest.RESTHelper.*;
+import static org.infinispan.server.test.util.TestUtil.sleepForSecs;
 import static org.junit.Assert.*;
 
 /**
@@ -169,7 +170,7 @@ public abstract class AbstractRESTClientTest {
                 "Content-Type", "application/text", "timeToLiveSeconds", "2");
 
         get(fullPathKey, "data");
-        Thread.sleep(2100);
+        sleepForSecs(2.1);
         // should be evicted
         head(fullPathKey, HttpServletResponse.SC_NOT_FOUND);
     }
@@ -186,12 +187,12 @@ public abstract class AbstractRESTClientTest {
 
         // data is not idle for next 3 seconds
         for (int i = 1; i < 3; i++) {
-            Thread.sleep(1000);
+            sleepForSecs(1);
             head(fullPathKey);
         }
 
         // idle for 2 seconds
-        Thread.sleep(2100);
+        sleepForSecs(2.1);
         // should be evicted
         head(fullPathKey, HttpServletResponse.SC_NOT_FOUND);
     }
@@ -208,12 +209,12 @@ public abstract class AbstractRESTClientTest {
 
         // data is not idle for next 3 seconds
         for (int i = 1; i < 3; i++) {
-            Thread.sleep(1000);
+            sleepForSecs(1);
             head(fullPathKey);
         }
 
         // idle for 2 seconds
-        Thread.sleep(2100);
+        sleepForSecs(2.1);
         // should be evicted
         head(fullPathKey, HttpServletResponse.SC_NOT_FOUND);
     }
@@ -227,7 +228,7 @@ public abstract class AbstractRESTClientTest {
                 "Content-Type", "application/text", "timeToLiveSeconds", "2", "maxIdleTimeSeconds", "10");
 
         get(fullPathKey, "data");
-        Thread.sleep(2100);
+        sleepForSecs(2.1);
         // should be evicted
         head(fullPathKey, HttpServletResponse.SC_NOT_FOUND);
     }

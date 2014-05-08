@@ -1,6 +1,7 @@
 package org.infinispan.server.test.client.memcached;
 
 import static org.infinispan.server.test.util.TestUtil.eventually;
+import static org.infinispan.server.test.util.TestUtil.sleepForSecs;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
@@ -286,7 +287,7 @@ public abstract class AbstractSingleNodeMemcachedTest {
         mc.flush();
         assertEquals("STORED", mc.readln());
         assertEquals("A", mc.get(KEY_A));
-        Thread.sleep(2500);
+        sleepForSecs(2.5);
         assertNull(mc.get(KEY_A));
     }
 
@@ -304,7 +305,7 @@ public abstract class AbstractSingleNodeMemcachedTest {
         mc.flush();
         assertEquals("STORED", mc.readln());
         assertEquals("A", mc.get(KEY_A));
-        Thread.sleep(2000);
+        sleepForSecs(2);
         assertEquals("A", mc.get(KEY_A));
     }
 
@@ -333,7 +334,7 @@ public abstract class AbstractSingleNodeMemcachedTest {
         mc.flush();
         assertEquals("STORED", mc.readln());
         assertEquals("A", mc.get(KEY_A));
-        Thread.sleep(2000);
+        sleepForSecs(2);
         assertNull(mc.get(KEY_A));
     }
 
@@ -572,7 +573,7 @@ public abstract class AbstractSingleNodeMemcachedTest {
         Map<String, String> stats = mc.getStats();
         int uptime = new Integer(stats.get("uptime"));
         int time = new Integer(stats.get("time"));
-        Thread.sleep(1000);
+        sleepForSecs(1);
         stats = mc.getStats();
         assertTrue(uptime < new Integer(stats.get("uptime")));
         assertTrue(time < new Integer(stats.get("time")));

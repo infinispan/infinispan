@@ -1,4 +1,4 @@
-package org.infinispan.server.test.clusteredcache;
+package org.infinispan.server.test.cache.clustered;
 
 import org.infinispan.arquillian.core.InfinispanResource;
 import org.infinispan.arquillian.core.RemoteInfinispanServer;
@@ -19,6 +19,7 @@ import org.junit.experimental.categories.Category;
 import org.junit.runner.RunWith;
 
 import static org.infinispan.server.test.util.TestUtil.eventually;
+import static org.infinispan.server.test.util.TestUtil.sleepForSecs;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
@@ -110,7 +111,7 @@ public class ClusteredCacheConfigurationTest {
             mc1.set("k2", "v2");
             assertNotNull(mc1.get("k2"));
             assertNull(mc1.get("k2"));
-            Thread.sleep(3000);
+            sleepForSecs(3.0);
             assertNotNull(mc1.get("k2"));
         }
     }

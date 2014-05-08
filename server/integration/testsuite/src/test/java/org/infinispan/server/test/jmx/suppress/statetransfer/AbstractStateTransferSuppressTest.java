@@ -1,4 +1,4 @@
-package org.infinispan.server.test.jmxmanagement.suppress.statetransfer;
+package org.infinispan.server.test.jmx.suppress.statetransfer;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -10,15 +10,16 @@ import org.infinispan.arquillian.core.RunningServer;
 import org.infinispan.arquillian.core.WithRunningServer;
 import org.infinispan.arquillian.utils.MBeanServerConnectionProvider;
 import org.infinispan.server.test.util.RemoteInfinispanMBeans;
+import org.infinispan.server.test.util.TestUtil;
 import org.jboss.arquillian.container.test.api.ContainerController;
 import org.jboss.arquillian.test.api.ArquillianResource;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
+import static org.infinispan.server.test.util.TestUtil.eventually;
 import static org.infinispan.server.test.util.TestUtil.getAttribute;
 import static org.infinispan.server.test.util.TestUtil.setAttribute;
-import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
 /**
@@ -33,6 +34,7 @@ public abstract class AbstractStateTransferSuppressTest {
     protected static final String CONTAINER1 = "suppress-state-transfer-1";
     protected static final String CONTAINER2 = "suppress-state-transfer-2";
     protected static final String CONTAINER3 = "suppress-state-transfer-3";
+    private static final int NUMBER_ENTRIES = 1000;
 
     /* cache MBeans */
     final String DIST_CACHE_PREFIX = "jboss.infinispan:type=Cache,name=\"" + getCacheName() + "(dist_sync)\",manager=\"" + getCacheManagerName() + "\",component=";
@@ -92,7 +94,7 @@ public abstract class AbstractStateTransferSuppressTest {
     }
 
     @Test
-    @WithRunningServer({@RunningServer(name = CONTAINER1),@RunningServer(name = CONTAINER2)})
+    @WithRunningServer({@RunningServer(name = CONTAINER1), @RunningServer(name = CONTAINER2)})
     public void testRebalanceSwitch() throws Exception {
 
         //Verifying that the rebalance is enabled by default.
@@ -104,7 +106,7 @@ public abstract class AbstractStateTransferSuppressTest {
         setAttribute(provider(0), LOCAL_TOPOLOGY_MANAGER, REBALANCE_ENABLED_ATTR_NAME, false);
         checkRebalanceStatus(false, provider(0), provider(1));
 
-        putDataIntoCache(100);
+        putDataIntoCache(NUMBER_ENTRIES);
 
         checkRpcManagerStatistics(new String[]{"null"}, OWNERS_2_MEMBERS_NODE0_NODE1, provider(0), provider(1));
 
@@ -116,7 +118,7 @@ public abstract class AbstractStateTransferSuppressTest {
     }
 
     @Test
-    @WithRunningServer({@RunningServer(name = CONTAINER1),@RunningServer(name = CONTAINER2)})
+    @WithRunningServer({@RunningServer(name = CONTAINER1), @RunningServer(name = CONTAINER2)})
     public void testRebalanceDisabledWithNewNode() throws Exception {
 
         try {
@@ -127,7 +129,7 @@ public abstract class AbstractStateTransferSuppressTest {
     }
 
     @Test
-    @WithRunningServer({@RunningServer(name = CONTAINER1),@RunningServer(name = CONTAINER2)})
+    @WithRunningServer({@RunningServer(name = CONTAINER1), @RunningServer(name = CONTAINER2)})
     public void testRebalanceWithFirstNodeStop() throws Exception {
 
         try {
@@ -137,13 +139,10 @@ public abstract class AbstractStateTransferSuppressTest {
             setAttribute(provider(0), LOCAL_TOPOLOGY_MANAGER, REBALANCE_ENABLED_ATTR_NAME, false);
             controller.stop(CONTAINER1);
             checkRpcManagerStatistics(new String[]{"null", OWNERS_2_MEMBERS_NODE1_NODE2}, OWNERS_2_MEMBERS_NODE1_NODE2, provider(1), provider(2));
-
-            Thread.sleep(5000);
-
             checkRebalanceStatus(false, provider(1), provider(2));
 
-            assertTrue(server(1).getCacheManager(getCacheManagerName()).getCache(getCacheName()).getNumberOfEntries() < 100);
-            assertTrue(server(2).getCacheManager(getCacheManagerName()).getCache(getCacheName()).getNumberOfEntries() < 100);
+            assertTrue(server(1).getCacheManager(getCacheManagerName()).getCache(getCacheName()).getNumberOfEntries() < NUMBER_ENTRIES);
+            assertTrue(server(2).getCacheManager(getCacheManagerName()).getCache(getCacheName()).getNumberOfEntries() < NUMBER_ENTRIES);
 
             //Enabling rebalance
             setAttribute(provider(1), LOCAL_TOPOLOGY_MANAGER, REBALANCE_ENABLED_ATTR_NAME, true);
@@ -151,15 +150,15 @@ public abstract class AbstractStateTransferSuppressTest {
 
             checkRpcManagerStatistics(new String[]{"null", OWNERS_2_MEMBERS_NODE1_NODE2}, OWNERS_2_MEMBERS_NODE1_NODE2, provider(1), provider(2));
 
-            assertTrue(server(1).getCacheManager(getCacheManagerName()).getCache(getCacheName()).getNumberOfEntries() == 100);
-            assertTrue(server(2).getCacheManager(getCacheManagerName()).getCache(getCacheName()).getNumberOfEntries() == 100);
+            assertTrue(server(1).getCacheManager(getCacheManagerName()).getCache(getCacheName()).getNumberOfEntries() == NUMBER_ENTRIES);
+            assertTrue(server(2).getCacheManager(getCacheManagerName()).getCache(getCacheName()).getNumberOfEntries() == NUMBER_ENTRIES);
         } finally {
             controller.stop(CONTAINER3);
         }
     }
 
     @Test
-    @WithRunningServer({@RunningServer(name = CONTAINER1),@RunningServer(name = CONTAINER2)})
+    @WithRunningServer({@RunningServer(name = CONTAINER1), @RunningServer(name = CONTAINER2)})
     public void testRebalanceWithJoinedNodeStop() throws Exception {
 
         verifyRebalanceWith3rdNode();
@@ -168,13 +167,10 @@ public abstract class AbstractStateTransferSuppressTest {
         setAttribute(provider(0), LOCAL_TOPOLOGY_MANAGER, REBALANCE_ENABLED_ATTR_NAME, false);
         controller.stop(CONTAINER3);
         checkRpcManagerStatistics(new String[]{"null", OWNERS_2_MEMBERS_NODE0_NODE1}, OWNERS_2_MEMBERS_NODE0_NODE1, provider(0), provider(1));
-
-        Thread.sleep(5000);
-
         checkRebalanceStatus(false, provider(0), provider(1));
 
-        assertTrue(server(0).getCacheManager(getCacheManagerName()).getCache(getCacheName()).getNumberOfEntries() < 100);
-        assertTrue(server(1).getCacheManager(getCacheManagerName()).getCache(getCacheName()).getNumberOfEntries() < 100);
+        assertTrue(server(0).getCacheManager(getCacheManagerName()).getCache(getCacheName()).getNumberOfEntries() < NUMBER_ENTRIES);
+        assertTrue(server(1).getCacheManager(getCacheManagerName()).getCache(getCacheName()).getNumberOfEntries() < NUMBER_ENTRIES);
 
         //Enabling rebalance
         setAttribute(provider(1), LOCAL_TOPOLOGY_MANAGER, REBALANCE_ENABLED_ATTR_NAME, true);
@@ -182,8 +178,8 @@ public abstract class AbstractStateTransferSuppressTest {
 
         checkRpcManagerStatistics(new String[]{"null", OWNERS_2_MEMBERS_NODE0_NODE1}, OWNERS_2_MEMBERS_NODE0_NODE1, provider(0), provider(1));
 
-        assertTrue(server(0).getCacheManager(getCacheManagerName()).getCache(getCacheName()).getNumberOfEntries() == 100);
-        assertTrue(server(1).getCacheManager(getCacheManagerName()).getCache(getCacheName()).getNumberOfEntries() == 100);
+        assertTrue(server(0).getCacheManager(getCacheManagerName()).getCache(getCacheName()).getNumberOfEntries() == NUMBER_ENTRIES);
+        assertTrue(server(1).getCacheManager(getCacheManagerName()).getCache(getCacheName()).getNumberOfEntries() == NUMBER_ENTRIES);
     }
 
     private void verifyRebalanceWith3rdNode() throws Exception {
@@ -191,14 +187,14 @@ public abstract class AbstractStateTransferSuppressTest {
         setAttribute(provider(0), LOCAL_TOPOLOGY_MANAGER, REBALANCE_ENABLED_ATTR_NAME, false);
 
         //putting data into cache before adding new node
-        putDataIntoCache(100);
+        putDataIntoCache(NUMBER_ENTRIES);
 
         //Verifying that the rebalance is disabled.
         checkRebalanceStatus(false, provider(0), provider(1));
         checkRpcManagerStatistics(new String[]{"null"}, OWNERS_2_MEMBERS_NODE0_NODE1, provider(0), provider(1));
 
         controller.start(CONTAINER3);
-        createNewProvider();
+        createNewProvider(2);
 
         checkRebalanceStatus(false, provider(2));
 
@@ -213,30 +209,35 @@ public abstract class AbstractStateTransferSuppressTest {
         checkRpcManagerStatistics(new String[]{"null", OWNERS_2_MEMBERS_NODE0_NODE1_NODE2}, null, provider(0), provider(1), provider(2));
 
         //Waiting for rehash take place.
-        Thread.sleep(10000);
-
         checkRpcManagerStatistics(new String[]{"null"}, OWNERS_2_MEMBERS_NODE0_NODE1_NODE2, provider(0), provider(1), provider(2));
 
-        assertTrue(server(0).getCacheManager(getCacheManagerName()).getCache(getCacheName()).getNumberOfEntries() < 100);
-        assertTrue(server(1).getCacheManager(getCacheManagerName()).getCache(getCacheName()).getNumberOfEntries() < 100);
-        assertTrue(server(2).getCacheManager(getCacheManagerName()).getCache(getCacheName()).getNumberOfEntries() < 100);
+        assertTrue(server(0).getCacheManager(getCacheManagerName()).getCache(getCacheName()).getNumberOfEntries() < NUMBER_ENTRIES);
+        assertTrue(server(1).getCacheManager(getCacheManagerName()).getCache(getCacheName()).getNumberOfEntries() < NUMBER_ENTRIES);
+        assertTrue(server(2).getCacheManager(getCacheManagerName()).getCache(getCacheName()).getNumberOfEntries() < NUMBER_ENTRIES);
     }
 
     private void checkRebalanceStatus(final boolean expectedStatus, MBeanServerConnectionProvider... providers) throws Exception {
-        for (MBeanServerConnectionProvider provider : providers) {
-            assertTrue(Boolean.parseBoolean(getAttribute(provider, LOCAL_TOPOLOGY_MANAGER, REBALANCE_ENABLED_ATTR_NAME)) == expectedStatus);
+        for (final MBeanServerConnectionProvider provider : providers) {
+            eventually(new TestUtil.Condition() {
+                @Override
+                public boolean isSatisfied() throws Exception {
+                    return expectedStatus == Boolean.parseBoolean(getAttribute(provider, LOCAL_TOPOLOGY_MANAGER, REBALANCE_ENABLED_ATTR_NAME));
+                }
+            }, 10000);
         }
     }
 
-    private void checkRpcManagerStatistics(String[] expectedPendingViews, String expectedCommitedView, MBeanServerConnectionProvider... providers) throws Exception {
+    private void checkRpcManagerStatistics(String[] expectedPendingViews, final String expectedCommitedView, MBeanServerConnectionProvider... providers) throws Exception {
         // on windows, everything is slow and the view might not be yet updated, so we sleep a little
-        if (System.getProperty("os.name").toLowerCase().contains("win")) {
-            Thread.sleep(10000);
-        }
-        for (MBeanServerConnectionProvider provider : providers) {
+        for (final MBeanServerConnectionProvider provider : providers) {
             if (expectedCommitedView != null) {
-                String committedViewAsString = String.valueOf(getAttribute(provider, RPC_MANAGER_MBEAN, COMMITTED_VIEW_AS_STRING_ATTR_NAME));
-                assertEquals(expectedCommitedView, committedViewAsString);
+                eventually(new TestUtil.Condition() {
+                    @Override
+                    public boolean isSatisfied() throws Exception {
+                        String committedViewAsString = String.valueOf(getAttribute(provider, RPC_MANAGER_MBEAN, COMMITTED_VIEW_AS_STRING_ATTR_NAME));
+                        return expectedCommitedView.equals(committedViewAsString);
+                    }
+                }, 10000);
             }
 
             String pendingViewAsString = String.valueOf(getAttribute(provider, RPC_MANAGER_MBEAN, PENDING_VIEW_AS_STRING_ATTR_NAME));
@@ -261,5 +262,5 @@ public abstract class AbstractStateTransferSuppressTest {
 
     protected abstract String getCacheManagerName();
 
-    protected abstract void createNewProvider();
+    protected abstract void createNewProvider(int idx);
 }
