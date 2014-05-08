@@ -1,19 +1,19 @@
 package org.infinispan.transaction.impl;
 
 import net.jcip.annotations.GuardedBy;
-
 import org.infinispan.Cache;
 import org.infinispan.commands.CommandsFactory;
 import org.infinispan.commands.tx.RollbackCommand;
 import org.infinispan.commands.write.WriteCommand;
 import org.infinispan.commons.CacheException;
+import org.infinispan.commons.equivalence.AnyEquivalence;
 import org.infinispan.commons.util.CollectionFactory;
 import org.infinispan.commons.util.InfinispanCollections;
 import org.infinispan.commons.util.Util;
+import org.infinispan.commons.util.concurrent.jdk8backported.EquivalentConcurrentHashMapV8;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.cache.Configurations;
 import org.infinispan.context.InvocationContextFactory;
-import org.infinispan.context.impl.TxInvocationContext;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.annotations.Start;
 import org.infinispan.factories.annotations.Stop;
@@ -38,8 +38,12 @@ import org.infinispan.util.logging.LogFactory;
 
 import javax.transaction.Transaction;
 import javax.transaction.TransactionSynchronizationRegistry;
-
-import java.util.*;
+import java.util.Collection;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
@@ -60,36 +64,31 @@ import java.util.concurrent.locks.ReentrantLock;
 public class TransactionTable {
 
    public static final int CACHE_STOPPED_TOPOLOGY_ID = -1;
+   /**
+    * minTxTopologyId is the minimum topology ID across all ongoing local and remote transactions.
+    */
+   private volatile int minTxTopologyId = CACHE_STOPPED_TOPOLOGY_ID;
+   private volatile int currentTopologyId = CACHE_STOPPED_TOPOLOGY_ID;
    private static final Log log = LogFactory.getLog(TransactionTable.class);
-
-   private ConcurrentMap<Transaction, LocalTransaction> localTransactions;
-   private ConcurrentMap<GlobalTransaction, LocalTransaction> globalToLocalTransactions;
-   private ConcurrentMap<GlobalTransaction, RemoteTransaction> remoteTransactions;
-
    protected Configuration configuration;
    protected InvocationContextFactory icf;
    protected TransactionCoordinator txCoordinator;
    protected TransactionFactory txFactory;
    protected RpcManager rpcManager;
    protected CommandsFactory commandsFactory;
+   protected ClusteringDependentLogic clusteringLogic;
+   protected boolean clustered = false;
+   private ConcurrentMap<Transaction, LocalTransaction> localTransactions;
+   private ConcurrentMap<GlobalTransaction, LocalTransaction> globalToLocalTransactions;
+   private ConcurrentMap<GlobalTransaction, RemoteTransaction> remoteTransactions;
    private InterceptorChain invoker;
    private CacheNotifier notifier;
    private TransactionSynchronizationRegistry transactionSynchronizationRegistry;
-   protected ClusteringDependentLogic clusteringLogic;
-   protected boolean clustered = false;
    private Lock minTopologyRecalculationLock;
-   private final ConcurrentMap<GlobalTransaction, Long> completedTransactions = CollectionFactory.makeConcurrentMap();
-
+   private EquivalentConcurrentHashMapV8<Address, CompletedTransactionsPerNode> completedTransactionsInfo;
    private ScheduledExecutorService executorService;
-
-   /**
-    * minTxTopologyId is the minimum topology ID across all ongoing local and remote transactions.
-    */
-   private volatile int minTxTopologyId = CACHE_STOPPED_TOPOLOGY_ID;
-   private volatile int currentTopologyId = CACHE_STOPPED_TOPOLOGY_ID;
    private String cacheName;
    private TimeService timeService;
-   private boolean totalOrder;
 
    @Inject
    public void initialize(RpcManager rpcManager, Configuration configuration,
@@ -126,8 +125,10 @@ public class TransactionTable {
          clustered = true;
       }
 
-      totalOrder = configuration.transaction().transactionProtocol().isTotalOrder();
-      if (!totalOrder) {
+      boolean totalOrder = configuration.transaction().transactionProtocol().isTotalOrder();
+      if (clustered && !totalOrder) {
+         completedTransactionsInfo = new EquivalentConcurrentHashMapV8<Address, CompletedTransactionsPerNode>(AnyEquivalence.getInstance(), AnyEquivalence.getInstance());
+
          // Periodically run a task to cleanup the transaction table from completed transactions.
          ThreadFactory tf = new ThreadFactory() {
             @Override
@@ -520,46 +521,94 @@ public class TransactionTable {
     * Once marked as completed (because of commit or rollback) any further prepare received on that transaction are discarded.
     */
    public void markTransactionCompleted(GlobalTransaction globalTx) {
-      if (totalOrder) {
-         return;
+      if (completedTransactionsInfo != null) {
+         log.tracef("Marking transaction %s as completed", globalTx);
+         CompletedTransactionsPerNode completedTransactionsPerNode = completedTransactionsInfo.computeIfAbsent(globalTx.getAddress(),
+               new EquivalentConcurrentHashMapV8.Fun<Address, CompletedTransactionsPerNode>() {
+                  @Override
+                  public CompletedTransactionsPerNode apply(Address address) {
+                     return new CompletedTransactionsPerNode(address);
+                  }
+               }
+         );
+         completedTransactionsPerNode.completedTransactions.put(globalTx, timeService.time());
       }
-      log.tracef("Marking transaction %s as completed", globalTx);
-      completedTransactions.put(globalTx, timeService.time());
    }
 
    /**
     * @see #markTransactionCompleted(org.infinispan.transaction.xa.GlobalTransaction)
     */
    public boolean isTransactionCompleted(GlobalTransaction gtx) {
-      return !totalOrder && completedTransactions.containsKey(gtx);
+      if (completedTransactionsInfo == null)
+         return false;
+
+      CompletedTransactionsPerNode completedTransactionsPerNode = completedTransactionsInfo.get(gtx.getAddress());
+      if (completedTransactionsPerNode == null)
+         return false;
+      if (completedTransactionsPerNode.completedTransactions.containsKey(gtx))
+         return true;
+
+      // Transaction ids are allocated in sequence, so any transaction with a smaller id must have already finished.
+      // Most likely because the prepare command timed out...
+      // Note: We must check the id *after* verifying that the tx doesn't exist in the map.
+      return gtx.getId() <= completedTransactionsPerNode.lastPrunedTxId;
    }
 
    public void cleanupCompletedTransactions() {
-      if (!completedTransactions.isEmpty()) {
+      if (completedTransactionsInfo != null && !completedTransactionsInfo.isEmpty()) {
          try {
-            log.tracef("About to cleanup completed transaction. Initial size is %d", completedTransactions.size());
-            //this iterator is weekly consistent and will never throw ConcurrentModificationException
-            Iterator<Map.Entry<GlobalTransaction, Long>> iterator = completedTransactions.entrySet().iterator();
-            long timeout = configuration.transaction().completedTxTimeout();
-
-            int removedEntries = 0;
+            log.tracef("About to cleanup completed transaction. Initial size is %d", completedTransactionsInfo.size());
             long beginning = timeService.time();
-            while (iterator.hasNext()) {
-               Map.Entry<GlobalTransaction, Long> e = iterator.next();
-               long ageMillis = timeService.timeDuration(e.getValue(), TimeUnit.MILLISECONDS);
-               if (ageMillis >= timeout) {
-                  iterator.remove();
-                  removedEntries++;
+            long minCompleteTimestamp = timeService.time() - TimeUnit.MILLISECONDS.toNanos(configuration.transaction().completedTxTimeout());
+            int removedEntries = 0;
+
+            //this iterator is weekly consistent and will never throw ConcurrentModificationException
+            Iterator<Map.Entry<Address, CompletedTransactionsPerNode>> nodeIterator = completedTransactionsInfo.entrySet().iterator();
+            while (nodeIterator.hasNext()) {
+               CompletedTransactionsPerNode nodeInfo = nodeIterator.next().getValue();
+
+               // Prune nodes that are no longer members first
+               if (nodeInfo.completedTransactions.isEmpty() && !rpcManager.getMembers().contains(nodeInfo.address)) {
+                  nodeIterator.remove();
+               }
+
+               // Now prune the individual transactions
+               Iterator<Map.Entry<GlobalTransaction, Long>> txIterator = nodeInfo.completedTransactions.entrySet().iterator();
+               while (txIterator.hasNext()) {
+                  Map.Entry<GlobalTransaction, Long> e = txIterator.next();
+                  long completedTime = e.getValue();
+                  if (completedTime < minCompleteTimestamp) {
+                     // Need to update lastPrunedTxId *before* removing the tx from the map
+                     // Don't need atomic operations, there can't be more than one thread updating lastPrunedTxId.
+                     long txId = e.getKey().getId();
+                     if (txId > nodeInfo.lastPrunedTxId) {
+                        nodeInfo.lastPrunedTxId = txId;
+                     }
+
+                     txIterator.remove();
+                     removedEntries++;
+                  }
                }
             }
             long duration = timeService.timeDuration(beginning, TimeUnit.MILLISECONDS);
 
             log.tracef("Finished cleaning up completed transactions. %d transactions were removed, total duration was %d millis, " +
                   "current number of completed transactions is %d", removedEntries, duration,
-                  completedTransactions.size());
+                  completedTransactionsInfo.size());
          } catch (Exception e) {
             log.errorf(e, "Failed to cleanup completed transactions: %s", e.getMessage());
          }
+      }
+   }
+
+   public static class CompletedTransactionsPerNode {
+      final Address address;
+      final ConcurrentMap<GlobalTransaction, Long> completedTransactions;
+      volatile long lastPrunedTxId;
+
+      public CompletedTransactionsPerNode(Address address) {
+         this.address = address;
+         completedTransactions = CollectionFactory.makeConcurrentMap();
       }
    }
 }
