@@ -125,6 +125,15 @@
             </includes>
          </testResource>
       </testResources>
+      <resources>
+         <resource>
+            <directory>${project.basedir}/src/main/resources/OSGI-INF</directory>
+            <filtering>true</filtering>
+            <includes>
+               <include>**/*</include>
+            </includes>
+         </resource>
+      </resources>
       <plugins>
          <!-- IMPORTANT: generates META-INF/maven/dependencies.properties required by PAX-EXAM framework -->
          <plugin>

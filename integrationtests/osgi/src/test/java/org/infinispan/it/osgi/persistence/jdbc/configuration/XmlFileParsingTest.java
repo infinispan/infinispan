@@ -51,7 +51,7 @@ public class XmlFileParsingTest {
             karafContainer(),
             featureIspnCoreDependencies(),
             featureIspnCorePlusTests(),
-            featureJdbcStore(),
+            featureJdbcStorePooled(),
             junitBundles(),
             keepRuntimeFolder()
       );
