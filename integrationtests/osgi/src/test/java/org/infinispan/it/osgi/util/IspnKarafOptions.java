@@ -2,6 +2,9 @@ package org.infinispan.it.osgi.util;
 
 import org.ops4j.pax.exam.Option;
 import org.ops4j.pax.exam.options.RawUrlReference;
+import org.ops4j.pax.exam.options.UrlProvisionOption;
+
+import java.io.File;
 
 import static org.ops4j.pax.exam.CoreOptions.*;
 import static org.ops4j.pax.exam.karaf.options.KarafDistributionOption.features;
@@ -21,7 +24,8 @@ public class IspnKarafOptions {
                         .artifactId("apache-karaf")
                         .type("zip")
                         .version(KARAF_VERSION))
-            .karafVersion(KARAF_VERSION);
+            .karafVersion(KARAF_VERSION)
+            .unpackDirectory(new File("target/pax"));
    }
 
    public static Option featureIspnCore() {
@@ -54,6 +58,14 @@ public class IspnKarafOptions {
 
    public static Option featureIspnCoreTests() {
       return features(new RawUrlReference(TEST_UTILS_FEATURE_FILE), "infinispan-core-tests");
+   }
+
+   public static Option featureJdbcStorePooled() {
+      return features(new RawUrlReference(TEST_UTILS_FEATURE_FILE), "infinispan-cachestore-jdbc-pooled");
+   }
+
+   public static Option featureJdbcStoreManaged() {
+      return features(new RawUrlReference(TEST_UTILS_FEATURE_FILE), "infinispan-cachestore-jdbc-managed");
    }
 
    public static Option featureIspnCoreDependencies() {

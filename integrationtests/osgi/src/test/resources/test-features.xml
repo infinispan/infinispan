@@ -3,6 +3,18 @@
    <feature name="infinispan-core-tests" version="${project.version}">
       <bundle>wrap:mvn:org.infinispan/infinispan-core/${project.version}/jar/tests</bundle>
    </feature>
+   <feature name="infinispan-cachestore-jdbc-managed" version="${project.version}">
+      <!-- jndi is an embedded feature in Karaf -->
+      <feature>jndi</feature>
+      <bundle>mvn:org.infinispan/infinispan-cachestore-jdbc/${project.version}</bundle>
+      <bundle>mvn:com.h2database/h2/${version.h2.driver}</bundle>
+   </feature>
+   <feature name="infinispan-cachestore-jdbc-pooled" version="${project.version}">
+      <bundle>mvn:org.infinispan/infinispan-cachestore-jdbc/${project.version}</bundle>
+      <bundle>mvn:com.h2database/h2/${version.h2.driver}</bundle>
+      <!-- DynamicImport is required otherwise c3p0 is not able to find the database driver H2 -->
+      <bundle>wrap:mvn:c3p0/c3p0/${version.c3p0}$Bundle-SymbolicName=C3P0&amp;DynamicImport-Package=*</bundle>
+   </feature>
    <feature name="infinispan-core-plus-tests" version="${project.version}">
       <bundle>mvn:org.testng/testng/${version.testng}</bundle>
       <bundle>wrap:mvn:junit/junit/${version.junit}</bundle>

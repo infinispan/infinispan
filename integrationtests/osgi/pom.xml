@@ -64,6 +64,19 @@
       </dependency>
       <dependency>
          <groupId>${project.groupId}</groupId>
+         <artifactId>infinispan-cachestore-jdbc</artifactId>
+      </dependency>
+      <dependency>
+         <groupId>c3p0</groupId>
+         <artifactId>c3p0</artifactId>
+      </dependency>
+      <dependency>
+         <groupId>com.h2database</groupId>
+         <artifactId>h2</artifactId>
+         <scope>test</scope>
+      </dependency>
+      <dependency>
+         <groupId>${project.groupId}</groupId>
          <artifactId>infinispan-client-hotrod</artifactId>
          <type>test-jar</type>
          <scope>test</scope>
@@ -112,6 +125,15 @@
             </includes>
          </testResource>
       </testResources>
+      <resources>
+         <resource>
+            <directory>${project.basedir}/src/main/resources/OSGI-INF</directory>
+            <filtering>true</filtering>
+            <includes>
+               <include>**/*</include>
+            </includes>
+         </resource>
+      </resources>
       <plugins>
          <!-- IMPORTANT: generates META-INF/maven/dependencies.properties required by PAX-EXAM framework -->
          <plugin>
