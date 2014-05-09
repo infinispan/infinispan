@@ -125,13 +125,379 @@ In a similar way, for replace:
 remoteCache.put("car", "ferrari");
 RemoteCache.VersionedValue valueBinary = remoteCache.getVersioned("car");
 assert remoteCache.replace("car", "lamborghini", valueBinary.getVersion());
-
 ----
 
 For more details on versioned operations refer to link:$$http://docs.jboss.org/infinispan/7.0/apidocs/org/infinispan/client/hotrod/RemoteCache.html$$[RemoteCache] 's javadoc.
 
 ===== Async API
 This cool feature is "borrowed" from the Infinispan core and it is largely discussed <<_asynchronous_api, here>>
+
+===== Client Event Listener API
+
+Starting with Infinispan 7.0, Java Hot Rod clients can register listeners to
+receive cache-entry level events. In 7.0, cache entry created, modified and
+removed events are supported.
+
+====== Creating a Client Event Listener
+
+Creating a client listener is very similar to embedded listeners, except that
+different annotations and event classes are used. Here's an example of a
+client listener that prints out each event received:
+
+[source,java]
+----
+import org.infinispan.client.hotrod.annotation.*;
+import org.infinispan.client.hotrod.event.*;
+
+@ClientListener
+public class EventPrintListener {
+
+   @ClientCacheEntryCreated
+   public void handleCreatedEvent(ClientCacheEntryCreatedEvent e) {
+      System.out.println(e);
+   }
+
+   @ClientCacheEntryModified
+   public void handleModifiedEvent(ClientCacheEntryModifiedEvent e) {
+      System.out.println(e);
+   }
+
+   @ClientCacheEntryRemoved
+   public void handleRemovedEvent(ClientCacheEntryRemovedEvent e) {
+      System.out.println(e);
+   }
+
+}
+----
+
+`ClientCacheEntryCreatedEvent` and `ClientCacheEntryModifiedEvent` instances
+provide information on the affected key, and the version of the entry. This
+version can be used to invoke conditional operations on the server, such as
+`replaceWithVersion` or `removeWithVersion`.
+
+Once the client listener implementation has been created, it needs to be
+registered with the server. To do so, execute:
+
+[source,java]
+----
+RemoteCache<?, ?> cache = ...
+cache.addClientListener(new EventPrintListener());
+----
+
+====== Remove a Client Event Listener
+
+When an client event listener is not needed any more, it can be removed:
+
+[source,java]
+----
+EventPrintListener listener = ...
+cache.removeClientListener(listener);
+----
+
+====== Filtering Client Events
+
+In order to avoid inundating clients with events, users can provide filtering
+functionality to limit the number of events fired by the server for a
+particular client listener. To enable filtering, a key/value filter factory
+needs to be created that produces filter instances:
+
+[source,java]
+----
+import org.infinispan.notifications.KeyValueFilterFactory;
+
+class StaticKeyValueFilterFactory implements KeyValueFilterFactory {
+   @Override
+   public KeyValueFilter<Integer, String> getKeyValueFilter(Object[] params) {
+      return new StaticKeyValueFilter();
+   }
+}
+
+class StaticKeyValueFilter implements KeyValueFilter<Integer, String> {
+   @Override
+   public boolean accept(Integer key, String value, Metadata metadata) {
+      if (key.equals(1)) // static key
+         return true;
+
+      return false;
+   }
+}
+----
+
+The key/value filter factory instance defined above creates filter instances
+which statically filter out all entries except the one whose key is `1`.
+
+To be able to register a listener with this key/value filter factory,
+the factory has to be given a unique name, and the Hot Rod server needs to be
+plugged with the name and the key/value filter factory instance:
+
+[source,java]
+----
+HotRodServerConfigurationBuilder builder = ...
+builder.keyValueFilterFactory("static-filter", new StaticKeyValueFilterFactory());
+----
+
+On top of that, the client listener needs to be linked with this key/value
+filter factory by adding the factory's name to the @ClientListener annotation:
+
+[source,java]
+----
+@ClientListener(filterFactoryName = "static-filter")
+public class EventPrintListener { ... }
+----
+
+And, register the listener with the server:
+
+[source,java]
+----
+RemoteCache<?, ?> cache = ...
+cache.addClientListener(new EventPrintListener());
+----
+
+Dynamic filter instances that filter based on parameters provided when the
+listener is registered are also possible. Filters use the parameters received
+by the filter factories to enable this option. For example:
+
+[source,java]
+----
+import org.infinispan.notifications.KeyValueFilterFactory;
+import org.infinispan.notifications.KeyValueFilter;
+
+class DynamicKeyValueFilterFactory implements KeyValueFilterFactory {
+   @Override
+   public KeyValueFilter<Integer, String> getKeyValueFilter(Object[] params) {
+      return new DynamicKeyValueFilter(params);
+   }
+}
+
+class DynamicKeyValueFilter implements KeyValueFilter<Integer, String> {
+   final Object[] params;
+
+   DynamicKeyValueFilter(Object[] params) {
+      this.params = params;
+   }
+
+   @Override
+   public boolean accept(Integer key, String value, Metadata metadata) {
+      if (key.equals(params[0])) // dynamic key
+         return true;
+
+      return false;
+   }
+}
+----
+
+The dynamic parameters required to do the filtering are provided when the
+listener is registered:
+
+[source,java]
+----
+RemoteCache<?, ?> cache = ...
+cache.addClientListener(new EventPrintListener(), new Object[]{1}, null);
+----
+
+WARNING: Filter instances have to marshallable when they are deployed in a
+cluster so that the filtering can happen right where the event is generated,
+even if the even is generated in a different node to where the listener is
+registered. To make them marshallable, either make them extend `Serializable`,
+`Externalizable`, or provide a custom `Externalizer` for them.
+
+NOTE: Hot Rod servers store data as byte arrays, but in spite of that,
+Java Hot Rod client users can still develop `KeyValueFilter` instances that
+worked on typed objects. The way this is done is by making the Hot Rod server
+use the same marshaller as the one used by the Java Hot Rod client. This is
+enabled by default.
+
+====== Customizing Client Events contents
+
+The events generated by default contain just enough information to make the
+event relevant but they avoid cramming too much information in order to reduce
+the cost of sending them. Optionally, the information shipped in the events
+can be customised in order to contain more information, such as values, or to
+contain even less information. This customization is done with `Converter`
+instances generated by a `ConverterFactory`:
+
+[source,java]
+----
+import org.infinispan.notifications.ConverterFactory;
+import org.infinispan.notifications.Converter;
+
+class StaticConverterFactory implements ConverterFactory {
+   final Converter<Integer, String, CustomEvent> staticConverter = new StaticConverter();
+   public Converter<Integer, String, CustomEvent> getConverter(final Object[] params) {
+      return staticConverter;
+   }
+}
+
+class StaticConverter implements Converter {
+   public CustomEvent convert(Integer key, String value, Metadata metadata) {
+      return new CustomEvent(key, value);
+   }
+}
+
+// Needs to be Serializable or Externalizable!
+static class CustomEvent implements Serializable {
+   final Integer key;
+   final String value;
+   CustomEvent(Integer key, String value) {
+      this.key = key;
+      this.value = value;
+   }
+}
+----
+
+In the example above, the converter generates a new custom event which
+includes the value as well as the key in the event. This will result in bigger
+event payloads compared with default events, but if combined with filtering,
+it can reduce its network bandwidth cost.
+
+WARNING: The target type of the converter must be either `Serializable` or
+`Externalizable`. In this particular case of converters, providing an
+Externalizer will not work by default since the default Hot Rod client
+marshaller does not support them.
+
+Handlin custom events requires a slightly different client listener
+implementation to the one demonstrated previously. To be more precise, it
+needs to handle `ClientCacheEntryCustomEvent` instances:
+
+[source,java]
+----
+import org.infinispan.client.hotrod.annotation.*;
+import org.infinispan.client.hotrod.event.*;
+
+@ClientListener
+public class CustomEventPrintListener {
+
+   @ClientCacheEntryCreated
+   @ClientCacheEntryModified
+   @ClientCacheEntryRemoved
+   public void handleCustomEvent(ClientCacheEntryCustomEvent<CustomEvent> e) {
+      System.out.println(e);
+   }
+
+}
+----
+
+The `ClientCacheEntryCustomEvent` received in the callback exposes the custom
+event via `getEventData` method, and the `getType` method provides information
+on whether the event generated was as a result of cache entry creation,
+modification or removal.
+
+Similar to filtering, to be able to register a listener with this converter factory,
+the factory has to be given a unique name, and the Hot Rod server needs to be
+plugged with the name and the converter factory instance:
+
+[source,java]
+----
+HotRodServerConfigurationBuilder builder = ...
+builder.converterFactory("static-converter", new StaticConverterFactory());
+----
+
+On top of that, the client listener needs to be linked with this converter
+factory by adding the factory's name to the @ClientListener annotation:
+
+[source,java]
+----
+@ClientListener(converterFactoryName = "static-converter")
+public class CustomEventPrintListener { ... }
+----
+
+And, register the listener with the server:
+
+[source,java]
+----
+RemoteCache<?, ?> cache = ...
+cache.addClientListener(new CustomEventPrintListener());
+----
+
+Dynamic converter instances that convert based on parameters provided when the
+listener is registered are also possible. Converters use the parameters received
+by the converter factories to enable this option. For example:
+
+[source,java]
+----
+import org.infinispan.notifications.ConverterFactory;
+import org.infinispan.notifications.Converter;
+
+class DynamicConverterFactory implements ConverterFactory {
+   public Converter<Integer, String, CustomEvent> getConverter(final Object[] params) {
+      return new DynamicConverter(params);
+   }
+}
+
+class DynamicConverter implements Converter {
+   final Object[] params;
+
+   DynamicConverter(Object[] params) {
+      this.params = params;
+   }
+
+   public CustomEvent convert(Integer key, String value, Metadata metadata) {
+      // If the key matches a key given via parameter, only send the key information
+      if (params[0].equals(key))
+         return new CustomEvent(key, null);
+
+      return new CustomEvent(key, value);
+   }
+}
+----
+
+The dynamic parameters required to do the conversion are provided when the
+listener is registered:
+
+[source,java]
+----
+RemoteCache<?, ?> cache = ...
+cache.addClientListener(new EventPrintListener(), null, new Object[]{1});
+----
+
+WARNING: Converter instances have to marshallable when they are deployed in a
+cluster, so that the conversion can happen right where the event is generated,
+even if the even is generated in a different node to where the listener is
+registered. To make them marshallable, either make them extend `Serializable`,
+`Externalizable`, or provide a custom `Externalizer` for them.
+
+NOTE: Hot Rod servers store data as byte arrays, but in spite of that,
+Java Hot Rod client users can still develop `Converter` instances that
+worked on typed objects. The way this is done is by making the Hot Rod server
+use the same marshaller as the one used by the Java Hot Rod client. This is
+enabled by default.
+
+====== Client Event Listener State Consumption
+
+If a client listener is added in a cache already containing data, the server
+iterates over the cache contents and sends an event for each entry to the
+client as a `ClientCacheEntryCreated` (or custom event if configured).
+This allows clients to build some  local data structures based on the existing
+content. Once the content has been iterated over, events are received as normal,
+as cache updates are received. If the cache is clustered, the entire cluster
+wide contents are iterated over.
+
+====== Client Event Listener Failure Handling
+
+When a Hot Rod client registers a client listener, it does so in a single
+node in a cluster. If that node fails, the Java Hot Rod client detects that
+transparently and fails over all listeners registered in the node that failed
+to another node. During this fail over, the client might miss some events,
+which is why when the listeners are registered in a new node, the cache
+contents are iterated over and `ClientCacheEntryCreated` events (or custom
+events if configured) are generated.
+
+Java Hot Rod clients can be made aware of such fail over event by adding a
+callback to handle it:
+
+[source,java]
+----
+@ClientCacheFailover
+public void handleFailover(ClientCacheFailoverEvent e) {
+  ...
+}
+----
+
+This is very useful in use cases where the client has cached some data, and
+as a result of the fail over, taking in account that some events could be
+missed, it could decide to clear any locally cached data when the fail over
+event is received, with the knowledge that after the fail over event, it will
+receive events for the contents of the entire cache.
 
 ===== Unsupported methods
 Some of the link:$$http://docs.jboss.org/infinispan/7.0/apidocs/org/infinispan/Cache.html$$[Cache] methods are not being supported by the link:$$http://docs.jboss.org/infinispan/7.0/apidocs/org/infinispan/client/hotrod/RemoteCache.html$$[RemoteCache] . Calling one of these methods results in an link:$$http://docs.oracle.com/javase/6/docs/api/java/lang/UnsupportedOperationException.html$$[UnsupportedOperationException] being thrown. Most of these methods do not make sense on the remote cache (e.g. listener management operations), or correspond to methods that are not supported by local cache as well (e.g. containsValue). Another set of unsupported operations are some of the atomic operations inherited from link:$$http://docs.oracle.com/javase/6/docs/api/java/util/concurrent/ConcurrentMap.html$$[ConcurrentMap] :
