@@ -202,7 +202,7 @@ public class DefaultCacheManager implements EmbeddedCacheManager {
       this.globalConfiguration = globalConfiguration == null ? new GlobalConfigurationBuilder().build() : globalConfiguration;
       this.defaultConfiguration = defaultConfiguration == null ? new ConfigurationBuilder().build() : defaultConfiguration;
       this.globalComponentRegistry = new GlobalComponentRegistry(this.globalConfiguration, this, caches.keySet());
-      this.authzHelper = new AuthorizationHelper(globalConfiguration.security(), AuditContext.CACHEMANAGER, globalConfiguration.globalJmxStatistics().cacheManagerName());
+      this.authzHelper = new AuthorizationHelper(this.globalConfiguration.security(), AuditContext.CACHEMANAGER, this.globalConfiguration.globalJmxStatistics().cacheManagerName());
       if (start)
          start();
    }
