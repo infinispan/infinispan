@@ -7,6 +7,7 @@ the custom TCP client/server Hot Rod protocol.
 * link:$$#_hot_rod_protocol_1_2$$[Hot Rod Protocol 1.2]
 * link:$$#_hot_rod_protocol_1_3$$[Hot Rod Protocol 1.3]
 * link:$$#_hot_rod_protocol_1_3$$[Hot Rod Protocol 1.4]
+* link:$$#_hot_rod_protocol_2_0$$[Hot Rod Protocol 2.0]
 
 ===== Hot Rod Protocol 1.0
 
@@ -995,17 +996,31 @@ protocol version will be introduced to accommodate this.
 .Infinispan versions
 TIP: This version of the protocol is implemented since Infinispan 7.0.0.Final.
 
+TIP: Starting with this protocol version, the previous limitation of having to
+interact with defined cache names has been dropped. From now on, clients can
+interact with caches, whose names, are not necessarily defined in the cache
+configuration.
+
 ====== Request Header
+
+The request header no longer contains `Transaction Type` and `Transaction ID`
+elements since they're not in use, and even if they were in use, there are
+several operations for which they would not make sense, such as `ping` or
+`stats` commands. Once transactions are implemented, the protocol version will
+be upped, with the necessary changes in the request header.
+
 The `version` field in the header is updated to `20`.
 
 One new flag has been added to:
 
-* +0x0008+	= operation skips loading from configured cache loader.
+* +0x0008+  = operation skips loading from configured cache loader.
 
 The following new request operation codes have been added:
 
 * +0x21+ = auth mech list request
 * +0x23+ = auth request
+* +0x25+ = add client remote event listener request
+* +0x27+ = remove client remote event listener request
 
 ====== Response Header
 
@@ -1013,6 +1028,61 @@ The following new response operation codes have been added:
 
 * +0x22+ = auth mech list response
 * +0x24+ = auth mech response
+* +0x26+ = add client remote event listener response
+* +0x28+ = remove client remote event listener response
+
+===== Distribution-Aware Client Topology Change Header
+
+In Infinispan 5.2, virtual nodes based consistent hashing was abandoned and
+instead segment based consistent hash was implemented. In order to satisfy
+the ability for Hot Rod clients to find data as reliably as possible,
+Infinispan has been transforming the segment based consistent hash to fit
+Hot Rod 1.x protocol.  Starting with version 2.0, a brand new
+distribution-aware topology change header has been implemented which suppors
+ segment based consistent hashing suitably and provides 100% data location
+ guarantees.
+
+[cols="3,^2,10",options="header"]
+|==============================================================================
+|Field Name                                    | Size                     | Value
+| Response header with topology change marker  | variable                 |
+| Topology Id                                  | vInt                     | Topology ID
+| Num servers in topology                      | vInt                     |
+Number of Infinispan Hot Rod servers running within the cluster.
+This could be a subset of the entire cluster if only a fraction of those
+nodes are running Hot Rod servers.
+| m1: Host/IP length                           | vInt                     |
+Length of hostname or IP address of individual cluster member that Hot Rod
+client can use to access it. Using variable length here allows for covering
+for hostnames, IPv4 and IPv6 addresses.
+| m1: Host/IP address                          | string                   |
+String containing hostname or IP address of individual cluster member
+that Hot Rod client can use to access it.
+| m1: Port                                     | 2 bytes (Unsigned Short) |
+Port that Hot Rod clients can use to communicat with this cluster member.
+| m2: Host/IP length                           | vInt                     |
+| m2: Host/IP address                          | string                   |
+| m2: Port                                     | 2 bytes (Unsigned Short) |
+| ...                                          | ...                      |
+| Hash Function Version                        | 1 byte                   |
+Hash function version, pointing to a specific hash function in use.
+See link:#_hot_rod_hash_functions[Hot Rod hash functions] for details.
+| Num segments in topology                     | vInt                     |
+Total number of segments in the topology
+| Number of owners in segment                  | 1 byte                   |
+This can be either 0, 1 or 2 owners.
+| First owner's index                          | vInt                     |
+Given the list of all nodes, the position of this owner in this list.
+This is only present if number of owners for this segment is 1 or 2.
+| Second owner's index                          | vInt                     |
+Given the list of all nodes, the position of this owner in this list.
+This is only present if number of owners for this segment is 2.
+|==============================================================================
+
+Given this information, Hot Rod clients should be able to recalculate all
+the hash segments and be able to find out which nodes are owners for each
+segment. Even though there could be more than 2 owners per segment, Hot Rod
+protocol limits the number of owners to send for efficiency reasons.
 
 ====== Operations
 
@@ -1041,8 +1111,6 @@ Response format:
 The purpose of this operation is to obtain the list of valid SASL authentication mechs supported by the server. The client 
 will then need to issue an Authenticate request with the preferred mech.
 
-====== Operations
-
 .Authenticate
 
 Request format:
@@ -1069,6 +1137,151 @@ Response format:
 
 The purpose of this operation is to authenticate a client against a server using SASL. The authentication process, depending
 on the chosen mech, might be a multi-step operation. Once complete the connection becomes authenticated
+
+.Add client listener for remote events
+
+Request format:
+
+[cols="3,^2,10",options="header"]
+|==============================================================================
+| Field Name          | Size       | Value
+| Header | variable | Request header
+| Listener ID   | byte array   | Listener identifier
+| Key/value filter factory name | string | Optional name of the key/value filter
+factory to be used with this listener. The factory is used to create key/value
+filter instances which allow events to be filtered directly in the Hot Rod
+server, avoiding sending events that the client is not interested in. If no
+factory is to be used, the length of the string is `0`.
+| Key/value filter factory parameter count | byte | The key/value filter
+factory, when creating a filter instance, can take an arbitrary number of
+parameters, enabling the factory to be used to create different filter
+instances dynamically. This count field indicates how many parameters will be
+passed to the factory. If no factory name was provided, this field is not
+present in the request.
+| Key/value filter factory parameter 1 | byte array | First key/value filter
+factory parameter
+| Key/value filter factory parameter 2 | byte array | Second key/value filter
+factory parameter
+| ... | |
+| Converter factory name | string | Optional name of the converter
+factory to be used with this listener. The factory is used to transform the
+contents of the events sent to clients. By default, when no converter is in use,
+events are well defined, according to the type of event generated. However,
+there might be situations where users want to add extra information to the event,
+or they want to reduce the size of the events. In these cases, a converter can
+be used to transform the event contents. The given converter factory name
+produces converter instances to do this job. If no factory is to be used, the
+length of the string is `0`.
+| Converter factory parameter count | byte | The converter
+factory, when creating a converter instance, can take an arbitrary number of
+parameters, enabling the factory to be used to create different converter
+instances dynamically. This count field indicates how many parameters will be
+passed to the factory. If no factory name was provided, this field is not
+present in the request.
+| Converter factory parameter 1 | byte array | First converter factory parameter
+| Converter factory parameter 2 | byte array | Second converter factory parameter
+| ... | |
+|==============================================================================
+
+Response format:
+
+[cols="3,^2,10",options="header"]
+|==============================================================================
+| Field Name          | Size       | Value
+| Header | variable | Response header
+|==============================================================================
+
+.Remove client listener for remote events
+
+Request format:
+
+[cols="3,^2,10",options="header"]
+|==============================================================================
+| Field Name          | Size       | Value
+| Header | variable | Request header
+| Listener ID   | byte array   | Listener identifier
+|==============================================================================
+
+Response format:
+
+[cols="3,^2,10",options="header"]
+|==============================================================================
+| Field Name          | Size       | Value
+| Header | variable | Response header
+|==============================================================================
+
+
+====== Remote Events
+
+Starting with Hot Rod 2.0, clients can register listeners for remote events
+happening in the server. Sending these events commences the moment a client
+adds a client listener for remote events.
+
+Event Header:
+[cols="3,^2,10",options="header"]
+|==============================================================================
+|Field Name           | Size       | Value
+
+| Magic                  | 1 byte     | +0xA1+ = response
+| Message ID             | vLong      | ID of event
+| Opcode                 | 1 byte     | Event type: +
++0x60+ = cache entry created event +
++0x61+ = cache entry modified event +
++0x62+ = cache entry removed event +
++0x50+ = error +
+| Status                 | 1 byte     | Status of the response, possible values: +
++0x00+ = No error +
+| Topology Change Marker | 1 byte     | Since events are not associated with a
+particular incoming topology ID to be able to decide whether a new topology is
+required to be sent or not, new topologies will never be sent with events. Hence,
+this marker will always have `0` value for events.
+|==============================================================================
+
+.Cache entry created event
+[cols="3,^2,10",options="header"]
+|==============================================================================
+| Field Name          | Size       | Value
+| Header | variable | Event header with `0x60` operation code
+| Listener ID | byte array | Listener for which this event is directed
+| Custom marker | byte | Custom event marker. For created events, this is `0`.
+| Key | byte array | Created key
+| Version | long | Version of the created entry. This version information can
+be used to make conditional operations on this cache entry.
+|==============================================================================
+
+.Cache entry modified event
+[cols="3,^2,10",options="header"]
+|==============================================================================
+| Field Name          | Size       | Value
+| Header | variable | Event header with `0x61` operation code
+| Listener ID | byte array | Listener for which this event is directed
+| Custom marker | byte | Custom event marker. For created events, this is `0`.
+| Key | byte array | Modified key
+| Version | long | Version of the modified entry. This version information can
+be used to make conditional operations on this cache entry.
+|==============================================================================
+
+.Cache entry removed event
+[cols="3,^2,10",options="header"]
+|==============================================================================
+| Field Name          | Size       | Value
+| Header | variable | Event header with `0x62` operation code
+| Listener ID | byte array | Listener for which this event is directed
+| Custom marker | byte | Custom event marker. For created events, this is `0`.
+| Key | byte array | Removed key
+|==============================================================================
+
+.Custom event
+[cols="3,^2,10",options="header"]
+|==============================================================================
+| Field Name          | Size       | Value
+| Header | variable | Event header with event specific operation code
+| Listener ID | byte array | Listener for which this event is directed
+| Custom marker | byte | Custom event marker. For custom  events, this is `1`.
+| Event data | byte array | Custom event data, formatted according to the
+converter implementation logic.
+|==============================================================================
+
 
 ==== Hot Rod Hash Functions
 Infinispan makes use of a consistent hash function to place nodes on a hash
