@@ -50,21 +50,21 @@ public enum TestWriteOperation {
       return returnValue;
    }
 
-   public Object perform(AdvancedCache<Object, Object> cache0, Object key) {
+   public Object perform(AdvancedCache<Object, Object> cache, Object key) {
       switch (this) {
          case PUT_CREATE:
          case PUT_OVERWRITE:
-            return cache0.put(key, value);
+            return cache.put(key, value);
          case PUT_IF_ABSENT:
-            return cache0.putIfAbsent(key, value);
+            return cache.putIfAbsent(key, value);
          case REPLACE:
-            return cache0.replace(key, value);
+            return cache.replace(key, value);
          case REPLACE_EXACT:
-            return cache0.replace(key, previousValue, value);
+            return cache.replace(key, previousValue, value);
          case REMOVE:
-            return cache0.remove(key);
+            return cache.remove(key);
          case REMOVE_EXACT:
-            return cache0.remove(key, previousValue);
+            return cache.remove(key, previousValue);
          default:
             throw new IllegalArgumentException("Unsupported operation: " + this);
       }

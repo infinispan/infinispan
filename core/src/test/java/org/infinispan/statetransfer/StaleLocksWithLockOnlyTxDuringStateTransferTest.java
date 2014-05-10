@@ -1,37 +1,27 @@
 package org.infinispan.statetransfer;
 
+import org.hamcrest.BaseMatcher;
+import org.hamcrest.Description;
 import org.infinispan.AdvancedCache;
-import org.infinispan.commands.tx.PrepareCommand;
+import org.infinispan.commands.control.LockControlCommand;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
-import org.infinispan.distribution.BlockingInterceptor;
 import org.infinispan.distribution.MagicKey;
-import org.infinispan.interceptors.distribution.TxDistributionInterceptor;
-import org.infinispan.manager.EmbeddedCacheManager;
-import org.infinispan.remoting.transport.Address;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.TestingUtil;
-import org.infinispan.test.fwk.CheckPoint;
+import org.infinispan.test.concurrent.StateSequencer;
 import org.infinispan.test.fwk.CleanupAfterMethod;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.infinispan.topology.CacheTopology;
+import org.infinispan.topology.LocalTopologyManager;
 import org.infinispan.transaction.LockingMode;
 import org.infinispan.transaction.impl.TransactionTable;
-import org.mockito.invocation.InvocationOnMock;
-import org.mockito.stubbing.Answer;
 import org.testng.annotations.Test;
-
-import java.util.Set;
-import java.util.concurrent.Callable;
-import java.util.concurrent.CyclicBarrier;
-import java.util.concurrent.Future;
 
 import javax.transaction.TransactionManager;
 
-import static java.util.concurrent.TimeUnit.SECONDS;
-import static org.mockito.Matchers.*;
-import static org.mockito.Mockito.doAnswer;
-import static org.mockito.Mockito.spy;
+import static org.infinispan.test.concurrent.StateSequencerUtil.*;
+import static org.testng.AssertJUnit.assertEquals;
 
 @Test(testName = "lock.StaleLocksWithLockOnlyTxDuringStateTransferTest", groups = "functional")
 @CleanupAfterMethod
@@ -54,6 +44,15 @@ public class StaleLocksWithLockOnlyTxDuringStateTransferTest extends MultipleCac
    }
 
    private void doTest(CacheMode cacheMode) throws Throwable {
+      final StateSequencer sequencer = new StateSequencer();
+      sequencer.logicalThread("st", "st:block_get_transactions", "st:resume_get_transactions", "st:block_ch_update", "st:resume_ch_update");
+      sequencer.logicalThread("tx", "tx:before_lock", "tx:block_remote_lock", "tx:resume_remote_lock", "tx:after_commit");
+
+      // The lock will be acquired after rebalance has started, but before cache0 starts sending the transaction data to cache1
+      sequencer.order("st:block_get_transactions", "tx:before_lock", "tx:block_remote_lock", "st:resume_get_transactions");
+      // The tx will be committed (1PC) after cache1 has received all the state, but before the topology is updated
+      sequencer.order("st:block_ch_update", "tx:resume_remote_lock", "tx:after_commit", "st:resume_ch_update");
+
       ConfigurationBuilder cfg = TestCacheManagerFactory.getDefaultCacheConfiguration(true);
       cfg.clustering().cacheMode(cacheMode)
             .stateTransfer().awaitInitialTransfer(false)
@@ -61,74 +60,47 @@ public class StaleLocksWithLockOnlyTxDuringStateTransferTest extends MultipleCac
       manager(0).defineConfiguration(CACHE_NAME, cfg.build());
       manager(1).defineConfiguration(CACHE_NAME, cfg.build());
 
-      final CheckPoint checkpoint = new CheckPoint();
-      final AdvancedCache<Object, Object> cache0 = advancedCache(0, CACHE_NAME);
-      final TransactionManager tm0 = cache0.getTransactionManager();
-
-      // Block state request commands on cache 0
-      StateProvider stateProvider = TestingUtil.extractComponent(cache0, StateProvider.class);
-      StateProvider spyProvider = spy(stateProvider);
-      doAnswer(new Answer<Object>() {
-         @Override
-         public Object answer(InvocationOnMock invocation) throws Throwable {
-            Object[] arguments = invocation.getArguments();
-            Address source = (Address) arguments[0];
-            int topologyId = (Integer) arguments[1];
-            checkpoint.trigger("pre_get_transactions_" + topologyId + "_from_" + source);
-            checkpoint.awaitStrict("resume_get_transactions_" + topologyId + "_from_" + source, 10, SECONDS);
-            return invocation.callRealMethod();
-         }
-      }).when(spyProvider).getTransactionsForSegments(any(Address.class), anyInt(), anySetOf(Integer.class));
-      doAnswer(new Answer<Object>() {
-         @Override
-         public Object answer(InvocationOnMock invocation) throws Throwable {
-            Object[] arguments = invocation.getArguments();
-            CacheTopology topology = (CacheTopology) arguments[0];
-            checkpoint.trigger("pre_ch_update_" + topology.getTopologyId());
-            checkpoint.awaitStrict("pre_ch_update_" + topology.getTopologyId(), 10, SECONDS);
-            return invocation.callRealMethod();
-         }
-      }).when(spyProvider).onTopologyUpdate(any(CacheTopology.class), eq(false));
-      TestingUtil.replaceComponent(cache0, StateProvider.class, spyProvider, true);
-
-      // Block prepare commands on cache 0
-      CyclicBarrier prepareBarrier = new CyclicBarrier(2);
-      cache0.addInterceptorBefore(new BlockingInterceptor(prepareBarrier, PrepareCommand.class, false),
-            TxDistributionInterceptor.class);
+      AdvancedCache<Object, Object> cache0 = advancedCache(0, CACHE_NAME);
+      TransactionManager tm0 = cache0.getTransactionManager();
       StateTransferManager stm0 = TestingUtil.extractComponent(cache0, StateTransferManager.class);
+
       int initialTopologyId = stm0.getCacheTopology().getTopologyId();
+      int rebalanceTopologyId = initialTopologyId + 1;
+      final int finalTopologyId = rebalanceTopologyId + 1;
+
+      // Block state request commands on cache0 until the lock command has been sent to cache1
+      advanceOnComponentMethod(sequencer, cache0, StateProvider.class,
+            matchMethodCall("getTransactionsForSegments").build())
+            .before("st:block_get_transactions", "st:resume_get_transactions");
+      // Block the topology update on cache0 until the tx has finished
+      advanceOnGlobalComponentMethod(sequencer, manager(0), LocalTopologyManager.class,
+            matchMethodCall("handleConsistentHashUpdate").withMatcher(1, new CacheTopologyMatcher(finalTopologyId)).build())
+            .before("st:block_ch_update", "st:resume_ch_update");
 
       // Start cache 1, but the state request will be blocked on cache 0
-      int rebalanceTopologyId = initialTopologyId + 1;
       AdvancedCache<Object, Object> cache1 = advancedCache(1, CACHE_NAME);
-      checkpoint.awaitStrict("pre_get_transactions_" + rebalanceTopologyId + "_from_" + address(1), 10, SECONDS);
 
-      // Start a transaction on cache 0, which will block just before the distribution interceptor
-      Future<Object> future = fork(new Callable<Object>() {
-         @Override
-         public Object call() throws Exception {
-            MagicKey key = new MagicKey("testkey", cache0);
-            tm0.begin();
-            cache0.lock(key);
-            tm0.commit();
-            return null;
-         }
-      });
+      // Block the remote lock command on cache 1
+      advanceOnInboundRpc(sequencer, manager(1),
+            matchCommand(LockControlCommand.class).withCache(CACHE_NAME).build())
+            .before("tx:block_remote_lock", "tx:resume_remote_lock");
 
-      // Wait for the prepare to lock the key
-      prepareBarrier.await(10, SECONDS);
 
-      // Let cache 0 push the tx to cache 1. The CH update will block.
-      checkpoint.trigger("resume_get_transactions_" + rebalanceTopologyId + "_from_" + address(1));
+      // Wait for the rebalance to start
+      sequencer.advance("tx:before_lock");
+      assertEquals(rebalanceTopologyId, stm0.getCacheTopology().getTopologyId());
 
-      // Let the tx finish. Because the CH update is blocked, the topology won't change.
-      prepareBarrier.await(10, SECONDS);
-      future.get(10, SECONDS);
+      // Start a transaction on cache 0
+      MagicKey key = new MagicKey("testkey", cache0);
+      tm0.begin();
+      cache0.lock(key);
+      tm0.commit();
 
       // Let the rebalance finish
-      int finalTopologyId = rebalanceTopologyId + 1;
-      checkpoint.trigger("resume_ch_update_" + finalTopologyId);
+      sequencer.advance("tx:after_commit");
+
       TestingUtil.waitForRehashToComplete(caches(CACHE_NAME));
+      assertEquals(finalTopologyId, stm0.getCacheTopology().getTopologyId());
 
       // Check for stale locks
       final TransactionTable tt0 = TestingUtil.extractComponent(cache0, TransactionTable.class);
@@ -139,5 +111,25 @@ public class StaleLocksWithLockOnlyTxDuringStateTransferTest extends MultipleCac
             return tt0.getLocalTxCount() == 0 && tt1.getRemoteTxCount() == 0;
          }
       });
+
+      sequencer.stop();
+   }
+
+   private static class CacheTopologyMatcher extends BaseMatcher<Object> {
+      private final int topologyId;
+
+      public CacheTopologyMatcher(int topologyId) {
+         this.topologyId = topologyId;
+      }
+
+      @Override
+      public boolean matches(Object item) {
+         return (item instanceof CacheTopology) && ((CacheTopology) item).getTopologyId() == topologyId;
+      }
+
+      @Override
+      public void describeTo(Description description) {
+         description.appendText("CacheTopology(" + topologyId + ")");
+      }
    }
 }

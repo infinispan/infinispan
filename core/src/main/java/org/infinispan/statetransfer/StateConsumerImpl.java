@@ -35,6 +35,7 @@ import org.infinispan.remoting.rpc.ResponseMode;
 import org.infinispan.remoting.rpc.RpcManager;
 import org.infinispan.remoting.rpc.RpcOptions;
 import org.infinispan.remoting.transport.Address;
+import org.infinispan.remoting.transport.jgroups.SuspectException;
 import org.infinispan.topology.CacheTopology;
 import org.infinispan.transaction.impl.RemoteTransaction;
 import org.infinispan.transaction.impl.TransactionTable;
@@ -56,6 +57,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.LinkedBlockingDeque;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.locks.LockSupport;
 
 import static org.infinispan.context.Flag.*;
 import static org.infinispan.factories.KnownComponentNames.ASYNC_TRANSPORT_EXECUTOR;
@@ -541,7 +543,7 @@ public class StateConsumerImpl implements StateConsumer {
    public void start() {
       isFetchEnabled = configuration.clustering().stateTransfer().fetchInMemoryState() || configuration.persistence().fetchPersistentState();
       //rpc options does not changes in runtime. we can use always the same instance.
-      rpcOptions = rpcManager.getRpcOptionsBuilder(ResponseMode.SYNCHRONOUS_IGNORE_LEAVERS)
+      rpcOptions = rpcManager.getRpcOptionsBuilder(ResponseMode.SYNCHRONOUS)
             .timeout(timeout, TimeUnit.MILLISECONDS).build();
    }
 
@@ -619,8 +621,10 @@ public class StateConsumerImpl implements StateConsumer {
    private Address findSource(int segmentId, Set<Address> excludedSources) {
       List<Address> owners = cacheTopology.getReadConsistentHash().locateOwnersForSegment(segmentId);
       if (!owners.contains(rpcManager.getAddress())) {
-         // iterate backwards because we prefer to fetch from newer nodes
-         for (int i = owners.size() - 1; i >= 0; i--) {
+         // We prefer that transactions are sourced from primary owners.
+         // Needed in pessimistic mode, if the originator is the primary owner of the key than the lock
+         // command is not replicated to the backup owners. See PessimisticDistributionInterceptor.acquireRemoteIfNeeded.
+         for (int i = 0; i < owners.size(); i++) {
             Address o = owners.get(i);
             if (!o.equals(rpcManager.getAddress()) && !excludedSources.contains(o)) {
                return o;
@@ -637,17 +641,24 @@ public class StateConsumerImpl implements StateConsumer {
       boolean seenFailures = false;
       while (true) {
          Set<Integer> failedSegments = new HashSet<Integer>();
-         for (Map.Entry<Address, Set<Integer>> e : sources.entrySet()) {
-            Address source = e.getKey();
-            Set<Integer> segmentsFromSource = e.getValue();
-            int topologyId = cacheTopology.getTopologyId();
-            List<TransactionInfo> transactions = getTransactions(source, segmentsFromSource, topologyId);
-            if (transactions != null) {
+         int topologyId = cacheTopology.getTopologyId();
+         for (Map.Entry<Address, Set<Integer>> sourceEntry : sources.entrySet()) {
+            Address source = sourceEntry.getKey();
+            Set<Integer> segmentsFromSource = sourceEntry.getValue();
+            try {
+               List<TransactionInfo> transactions = getTransactions(source, segmentsFromSource, topologyId);
                applyTransactions(source, transactions, topologyId);
-            } else {
-               // if requesting the transactions failed we need to retry from another source
+            } catch (SuspectException e) {
+               log.debugf("Node %s left the cluster before sending transaction information", source);
+               // If requesting the transactions failed we need to retry
+               // If the primary owner is no longer in the cluster, we can retry on a backup owner
                failedSegments.addAll(segmentsFromSource);
                excludedSources.add(source);
+            } catch (CacheException e) {
+               log.failedToRetrieveTransactionsForSegments(segments, cacheName, source, e);
+               // If requesting the transactions failed we need to retry
+               // The primary owner is still in the cluster, so we can't exclude it - see ISPN-4091
+               failedSegments.addAll(segmentsFromSource);
             }
          }
 
@@ -699,18 +710,13 @@ public class StateConsumerImpl implements StateConsumer {
          log.tracef("Requesting transactions for segments %s of cache %s from node %s", segments, cacheName, source);
       }
       // get transactions and locks
-      try {
-         StateRequestCommand cmd = commandsFactory.buildStateRequestCommand(StateRequestCommand.Type.GET_TRANSACTIONS, rpcManager.getAddress(), topologyId, segments);
-         Map<Address, Response> responses = rpcManager.invokeRemotely(Collections.singleton(source), cmd, rpcOptions);
-         Response response = responses.get(source);
-         if (response instanceof SuccessfulResponse) {
-            return (List<TransactionInfo>) ((SuccessfulResponse) response).getResponseValue();
-         }
-         log.failedToRetrieveTransactionsForSegments(segments, cacheName, source, null);
-      } catch (CacheException e) {
-         log.failedToRetrieveTransactionsForSegments(segments, cacheName, source, e);
+      StateRequestCommand cmd = commandsFactory.buildStateRequestCommand(StateRequestCommand.Type.GET_TRANSACTIONS, rpcManager.getAddress(), topologyId, segments);
+      Map<Address, Response> responses = rpcManager.invokeRemotely(Collections.singleton(source), cmd, rpcOptions);
+      Response response = responses.get(source);
+      if (response instanceof SuccessfulResponse) {
+         return (List<TransactionInfo>) ((SuccessfulResponse) response).getResponseValue();
       }
-      return null;
+      throw log.unsuccessfulResponseRetrievingTransactionsForSegments(source, response);
    }
 
    private void requestSegments(Set<Integer> segments, Map<Address, Set<Integer>> sources, Set<Address> excludedSources) {

@@ -350,6 +350,16 @@ public abstract class MultipleCacheManagersTest extends AbstractCacheTest {
       throw new IllegalArgumentException(a + " is not a valid cache manager address!");
    }
 
+   public int managerIndex(Address a) {
+      for (int i = 0; i < cacheManagers.size(); i++) {
+         EmbeddedCacheManager cm = cacheManagers.get(i);
+         if (cm.getAddress().equals(a)) {
+            return i;
+         }
+      }
+      throw new IllegalArgumentException(a + " is not a valid cache manager address!");
+   }
+
    protected <K, V> Cache<K, V> cache(int managerIndex, String cacheName) {
       return manager(managerIndex).getCache(cacheName);
    }
