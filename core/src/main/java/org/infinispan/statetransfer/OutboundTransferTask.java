@@ -262,6 +262,7 @@ public class OutboundTransferTask implements Runnable {
     */
    public void cancel() {
       if (runnableFuture != null && !runnableFuture.isCancelled()) {
+         if (trace) log.tracef("Cancelling outbound transfer of segments %s of cache %s to node %s", segments, cacheName, destination);
          runnableFuture.cancel(true);
       }
    }
