@@ -26,7 +26,7 @@ import org.infinispan.factories.ComponentRegistry
  * @since 4.1
  */
 class HotRodDecoder(cacheManager: EmbeddedCacheManager, transport: NettyTransport, server: HotRodServer)
-        extends AbstractProtocolDecoder[Array[Byte], Array[Byte]](transport) with Constants {
+        extends AbstractProtocolDecoder[Array[Byte], Array[Byte]](server.getConfiguration.authentication().enabled(), transport) with Constants {
    type SuitableHeader = HotRodHeader
 
    type SuitableParameters = RequestParameters

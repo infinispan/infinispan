@@ -38,7 +38,7 @@ import org.infinispan.configuration.cache.Configuration
  * @since 4.1
  */
 class MemcachedDecoder(memcachedCache: AdvancedCache[String, Array[Byte]], scheduler: ScheduledExecutorService, transport: NettyTransport)
-      extends AbstractProtocolDecoder[String, Array[Byte]](transport) {
+      extends AbstractProtocolDecoder[String, Array[Byte]](false, transport) {
 
    cache =
       if (memcachedCache.getCacheConfiguration.compatibility().enabled())

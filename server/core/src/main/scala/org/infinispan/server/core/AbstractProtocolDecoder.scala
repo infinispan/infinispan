@@ -25,6 +25,8 @@ import java.security.PrivilegedExceptionAction
 import org.infinispan.configuration.cache.Configuration
 import org.infinispan.factories.ComponentRegistry
 import org.infinispan.remoting.rpc.RpcManager
+import org.infinispan.manager.EmbeddedCacheManager
+import java.security.PrivilegedAction
 
 /**
  * Common abstract decoder for Memcached and Hot Rod protocols.
@@ -32,7 +34,7 @@ import org.infinispan.remoting.rpc.RpcManager
  * @author Galder Zamarreño
  * @since 4.1
  */
-abstract class AbstractProtocolDecoder[K, V](transport: NettyTransport)
+abstract class AbstractProtocolDecoder[K, V](secure: Boolean, transport: NettyTransport)
       extends ReplayingDecoder[DecoderState](DECODE_HEADER) with ChannelOutboundHandler with ServerConstants with Log {
    import AbstractProtocolDecoder._
 
@@ -49,47 +51,84 @@ abstract class AbstractProtocolDecoder[K, V](transport: NettyTransport)
    protected var cacheConfiguration: Configuration = null
    protected var defaultLifespanTime: Long = _
    protected var defaultMaxIdleTime: Long = _
-   var subject: Subject = null
+   var subject: Subject = ANONYMOUS
 
-  def decode(ctx: ChannelHandlerContext, in: ByteBuf, out: util.List[AnyRef]): Unit = {
-     if (subject != null) {
-        Subject.doAs(subject, new PrivilegedExceptionAction[Unit] {
-           def run: Unit = {
-              decodeDispatch(ctx, in, out)
-           }
-        })
-     } else {
-        decodeDispatch(ctx, in, out)
-     }
-  }
-
-  private def decodeDispatch(ctx: ChannelHandlerContext, in: ByteBuf, out: util.List[AnyRef]): Unit = {
-    try {
-      if (isTrace) // To aid debugging
-        trace("Decode using instance @%x", System.identityHashCode(this))
-      state match {
-        case DECODE_HEADER => decodeHeader(ctx, in, state, out)
-        case DECODE_KEY => decodeKey(ctx, in, state)
-        case DECODE_PARAMETERS => decodeParameters(ctx, in, state)
-        case DECODE_VALUE => decodeValue(ctx, in, state)
+   def decode(ctx: ChannelHandlerContext, in: ByteBuf, out: util.List[AnyRef]): Unit = {
+      if (secure) {
+         secureDecodeDispatch(ctx, in, out)
+      } else {
+         decodeDispatch(ctx, in, out)
       }
-    } catch {
-      case e: Exception => {
-        val (serverException, isClientError) = createServerException(e, in)
-        // If decode returns an exception, decode won't be called again so,
-        // we need to fire the exception explicitly so that requests can
-        // carry on being processed on same connection after a client error
-        if (isClientError) {
-          ctx.pipeline.fireExceptionCaught(serverException)
-        } else {
-          throw serverException
-        }
-      }
-      case t: Throwable => throw t
-    }
-  }
+   }
 
-  private def decodeHeader(ctx: ChannelHandlerContext, buffer: ByteBuf, state: DecoderState, out: util.List[AnyRef]): AnyRef = {
+   private def decodeDispatch(ctx: ChannelHandlerContext, in: ByteBuf, out: util.List[AnyRef]): Unit = {
+      try {
+         if (isTrace) // To aid debugging
+            trace("Decode using instance @%x", System.identityHashCode(this))
+         state match {
+            case DECODE_HEADER => decodeHeader(ctx, in, state, out)
+            case DECODE_KEY => decodeKey(ctx, in, state)
+            case DECODE_PARAMETERS => decodeParameters(ctx, in, state)
+            case DECODE_VALUE => decodeValue(ctx, in, state)
+         }
+      } catch {
+         case e: Exception => {
+            val (serverException, isClientError) = createServerException(e, in)
+            // If decode returns an exception, decode won't be called again so,
+            // we need to fire the exception explicitly so that requests can
+            // carry on being processed on same connection after a client error
+            if (isClientError) {
+               ctx.pipeline.fireExceptionCaught(serverException)
+            } else {
+               throw serverException
+            }
+         }
+         case t: Throwable => throw t
+      }
+   }
+
+   private def secureDecodeDispatch(ctx: ChannelHandlerContext, in: ByteBuf, out: util.List[AnyRef]): Unit = {
+      try {
+         if (isTrace) // To aid debugging
+            trace("Decode using instance @%x", System.identityHashCode(this))
+         state match {
+            case DECODE_HEADER => decodeHeader(ctx, in, state, out)
+            case DECODE_KEY =>
+               Subject.doAs(subject, new PrivilegedExceptionAction[Unit] {
+                  def run: Unit = {
+                     decodeKey(ctx, in, state)
+                  }
+               })
+            case DECODE_PARAMETERS =>
+               Subject.doAs(subject, new PrivilegedExceptionAction[Unit] {
+                  def run: Unit = {
+                     decodeParameters(ctx, in, state)
+                  }
+               })
+            case DECODE_VALUE =>
+               Subject.doAs(subject, new PrivilegedExceptionAction[Unit] {
+                  def run: Unit = {
+                     decodeValue(ctx, in, state)
+                  }
+               })
+         }
+      } catch {
+         case e: Exception => {
+            val (serverException, isClientError) = createServerException(e, in)
+            // If decode returns an exception, decode won't be called again so,
+            // we need to fire the exception explicitly so that requests can
+            // carry on being processed on same connection after a client error
+            if (isClientError) {
+               ctx.pipeline.fireExceptionCaught(serverException)
+            } else {
+               throw serverException
+            }
+         }
+         case t: Throwable => throw t
+      }
+   }
+
+   private def decodeHeader(ctx: ChannelHandlerContext, buffer: ByteBuf, state: DecoderState, out: util.List[AnyRef]): AnyRef = {
       header = createHeader
       val endOfOp = readHeader(buffer, header)
       if (endOfOp == None) {
