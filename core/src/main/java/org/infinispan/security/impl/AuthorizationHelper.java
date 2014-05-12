@@ -44,7 +44,11 @@ public class AuthorizationHelper {
       if ((subjectMask & perm.getMask()) != perm.getMask()) {
          if (System.getSecurityManager() == null) {
             try {
-               AccessController.getContext().checkPermission(perm.getSecurityPermission());
+               if (subject == null) {
+                  AccessController.getContext().checkPermission(perm.getSecurityPermission());
+               } else {
+                  throw new AccessControlException(perm.toString());
+               }
             } catch (AccessControlException ace) {
                audit.audit(subject, context, name, perm, AuditResponse.DENY);
                throw log.unauthorizedAccess(String.valueOf(subject), perm.toString());
