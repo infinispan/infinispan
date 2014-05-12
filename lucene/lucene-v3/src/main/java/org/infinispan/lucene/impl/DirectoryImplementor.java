@@ -23,20 +23,20 @@ import org.infinispan.util.logging.LogFactory;
  * @author Sanne Grinovero
  * @since 5.2
  */
-final class DirectoryImplementor {
+class DirectoryImplementor {
 
     private static final Log log = LogFactory.getLog(DirectoryImplementor.class);
 
-    private final AdvancedCache<FileCacheKey, FileMetadata> metadataCache;
-    private final AdvancedCache<ChunkCacheKey, Object> chunksCache;
+    protected final AdvancedCache<FileCacheKey, FileMetadata> metadataCache;
+    protected final AdvancedCache<ChunkCacheKey, Object> chunksCache;
 
     // indexName is used to be able to store multiple named indexes in the same caches
-    private final String indexName;
+    protected final String indexName;
 
     // chunk size used for this Directory
-    private final int chunkSize;
+    protected final int chunkSize;
 
-    private final FileListOperations fileOps;
+    protected final FileListOperations fileOps;
     private final SegmentReadLocker readLocks;
 
     public DirectoryImplementor(Cache<?, ?> metadataCache, Cache<?, ?> chunksCache, String indexName, int chunkSize, SegmentReadLocker readLocker) {

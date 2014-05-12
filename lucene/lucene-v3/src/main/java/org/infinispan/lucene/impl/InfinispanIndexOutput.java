@@ -22,7 +22,7 @@ import org.infinispan.util.logging.LogFactory;
  * @see org.apache.lucene.store.Directory
  * @see org.apache.lucene.store.IndexInput
  */
-public final class InfinispanIndexOutput extends IndexOutput {
+public class InfinispanIndexOutput extends IndexOutput {
 
    private static final Log log = LogFactory.getLog(InfinispanIndexOutput.class);
    private static final boolean trace = log.isTraceEnabled();
@@ -220,6 +220,7 @@ public final class InfinispanIndexOutput extends IndexOutput {
 
    @Override
    public long length() {
+      resizeFileIfNeeded();
       return file.getSize();
    }
 
