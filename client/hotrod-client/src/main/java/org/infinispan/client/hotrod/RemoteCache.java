@@ -294,4 +294,10 @@ public interface RemoteCache<K, V> extends BasicCache<K, V> {
     */
    void removeClientListener(Object listener);
 
+   /**
+    * Returns a set with all the listeners registered by this client for the
+    * given cache.
+    */
+   Set<Object> getListeners();
+
 }

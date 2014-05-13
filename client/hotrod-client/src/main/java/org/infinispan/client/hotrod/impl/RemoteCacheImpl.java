@@ -20,6 +20,7 @@ import org.infinispan.client.hotrod.RemoteCacheManager;
 import org.infinispan.client.hotrod.ServerStatistics;
 import org.infinispan.client.hotrod.Version;
 import org.infinispan.client.hotrod.VersionedValue;
+import org.infinispan.client.hotrod.event.ClientListenerNotifier;
 import org.infinispan.client.hotrod.exceptions.HotRodClientException;
 import org.infinispan.client.hotrod.exceptions.RemoteCacheManagerNotStartedException;
 import org.infinispan.client.hotrod.impl.operations.*;
@@ -45,7 +46,6 @@ public class RemoteCacheImpl<K, V> extends RemoteCacheSupport<K, V> {
    private OperationsFactory operationsFactory;
    private int estimateKeySize;
    private int estimateValueSize;
-
 
    public RemoteCacheImpl(RemoteCacheManager rcm, String name) {
       if (log.isTraceEnabled()) {
@@ -526,6 +526,12 @@ public class RemoteCacheImpl<K, V> extends RemoteCacheSupport<K, V> {
       assertRemoteCacheManagerIsStarted();
       RemoveClientListenerOperation op = operationsFactory.newRemoveClientListenerOperation(listener);
       op.execute();
+   }
+
+   @Override
+   public Set<Object> getListeners() {
+      ClientListenerNotifier listenerNotifier = operationsFactory.getListenerNotifier();
+      return listenerNotifier.getListeners(operationsFactory.getCacheName());
    }
 
    @Override

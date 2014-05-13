@@ -2,29 +2,18 @@ package org.infinispan.client.hotrod.event;
 
 import org.infinispan.client.hotrod.RemoteCache;
 import org.infinispan.client.hotrod.VersionedValue;
-import org.infinispan.client.hotrod.annotation.ClientCacheEntryCreated;
-import org.infinispan.client.hotrod.annotation.ClientCacheEntryModified;
-import org.infinispan.client.hotrod.annotation.ClientCacheEntryRemoved;
-import org.infinispan.client.hotrod.annotation.ClientListener;
 import org.infinispan.client.hotrod.test.RemoteCacheManagerCallable;
 import org.infinispan.client.hotrod.test.SingleHotRodServerTest;
-import org.infinispan.commons.marshall.Marshaller;
-import org.infinispan.commons.marshall.jboss.GenericJBossMarshaller;
-import org.infinispan.container.versioning.NumericVersion;
-import org.infinispan.metadata.Metadata;
 import org.testng.annotations.Test;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
-import java.util.concurrent.ArrayBlockingQueue;
-import java.util.concurrent.BlockingQueue;
-import java.util.concurrent.TimeUnit;
+import java.util.Set;
 
 import static org.infinispan.client.hotrod.test.HotRodClientTestingUtil.*;
 import static org.testng.AssertJUnit.assertEquals;
 import static org.testng.AssertJUnit.assertFalse;
-import static org.testng.AssertJUnit.assertNotNull;
+import static org.testng.AssertJUnit.assertTrue;
 
 /**
  * @author Galder Zamarreño
@@ -32,8 +21,6 @@ import static org.testng.AssertJUnit.assertNotNull;
 @Test(groups = "functional", testName = "client.hotrod.event.ClientEventsTest")
 public class ClientEventsTest extends SingleHotRodServerTest {
 
-   // TODO: test listener list...
-   // TODO: test listeners are removed on disconnection
    // TODO: test custom types
 
    public void testCreatedEvent() {
@@ -215,6 +202,31 @@ public class ClientEventsTest extends SingleHotRodServerTest {
       expectNoEvents(eventListener);
       rcache.remove(1);
       expectNoEvents(eventListener);
+   }
+
+   public void testSetListeners() {
+      final EventLogListener eventListener1 = new EventLogListener();
+      final RemoteCache<Integer, String> rcache = remoteCacheManager.getCache();
+      withClientListener(eventListener1, new RemoteCacheManagerCallable(remoteCacheManager) {
+         @Override
+         public void call() {
+            Set<Object> listeners = rcache.getListeners();
+            assertEquals(1, listeners.size());
+            assertEquals(eventListener1, listeners.iterator().next());
+            final EventLogListener eventListener2 = new EventLogListener();
+            withClientListener(eventListener2, new RemoteCacheManagerCallable(remoteCacheManager) {
+               @Override
+               public void call() {
+                  Set<Object> listeners = rcache.getListeners();
+                  assertEquals(2, listeners.size());
+                  assertTrue(listeners.contains(eventListener1));
+                  assertTrue(listeners.contains(eventListener2));
+               }
+            });
+         }
+      });
+      Set<Object> listeners = rcache.getListeners();
+      assertEquals(0, listeners.size());
    }
 
    <K> void expectUnorderedRemovedEvents(EventLogListener eventListener, K... keys) {

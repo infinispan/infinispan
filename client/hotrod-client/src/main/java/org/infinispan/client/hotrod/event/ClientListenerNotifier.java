@@ -23,8 +23,10 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.ExecutorService;
@@ -57,12 +59,14 @@ public class ClientListenerNotifier {
       this.marshaller = marshaller;
    }
 
-   public void addClientListener(byte[] listenerId, Object listener, Transport transport) {
+   public void addClientListener(byte[] listenerId, Object listener, Transport transport, byte[] cacheName) {
       Map<Class<? extends Annotation>, List<ClientListenerInvocation>> invocables = findMethods(listener);
-      // ... TODO ???
-      // transport.disableSocketTimeout();
-      EventDispatcher eventDispatcher = new EventDispatcher(listenerId, listener, invocables, transport, marshaller);
+      EventDispatcher eventDispatcher = new EventDispatcher(listenerId, listener, invocables, transport, marshaller, cacheName);
       clientListeners.put(listenerId, eventDispatcher);
+      if (log.isTraceEnabled())
+         log.tracef("Add client listener with id %s, for listener %s and invocable methods %s",
+               Util.printArray(listenerId), listener, invocables);
+
       executor.submit(eventDispatcher);
    }
 
@@ -70,6 +74,8 @@ public class ClientListenerNotifier {
       EventDispatcher dispatcher = clientListeners.get(listenerId);
       dispatcher.transport.release(); // force shutting it
       clientListeners.remove(listenerId);
+      if (log.isTraceEnabled())
+         log.tracef("Remove client listener with id %s", Util.printArray(listenerId));
    }
 
    public byte[] findListenerId(Object listener) {
@@ -88,7 +94,6 @@ public class ClientListenerNotifier {
       return null;
    }
 
-   // TODO: Similar code in AbstractListenerImpl...
    private Map<Class<? extends Annotation>, List<ClientListenerInvocation>> findMethods(Object listener) {
       Map<Class<? extends Annotation>, List<ClientListenerInvocation>> listenerMethodMap =
             new HashMap<Class<? extends Annotation>, List<ClientListenerInvocation>>(4, 0.99f);
@@ -131,21 +136,42 @@ public class ClientListenerNotifier {
          throw log.incorrectClientListener(annotationName);
    }
 
+   public Set<Object> getListeners(byte[] cacheName) {
+      Set<Object> ret = new HashSet<>(clientListeners.size());
+      for (EventDispatcher dispatcher : clientListeners.values()) {
+         if (Arrays.equals(dispatcher.cacheName, cacheName))
+            ret.add(dispatcher.listener);
+      }
+
+      return ret;
+   }
+
+   public void stop() {
+      for (byte[] listenerId : clientListeners.keySet()) {
+         if (log.isTraceEnabled())
+            log.tracef("Remote cache manager stopping, remove client listener id %s", Util.printArray(listenerId));
+
+         removeClientListener(listenerId);
+      }
+   }
+
    private final class EventDispatcher implements Runnable {
       final byte[] listenerId;
       final Object listener;
       final Transport transport;
       final Marshaller marshaller;
       final Map<Class<? extends Annotation>, List<ClientListenerInvocation>> invocables;
+      final byte[] cacheName;
 
       private EventDispatcher(byte[] listenerId, Object listener,
             Map<Class<? extends Annotation>, List<ClientListenerInvocation>> invocables,
-            Transport transport, Marshaller marshaller) {
+            Transport transport, Marshaller marshaller, byte[] cacheName) {
          this.listenerId = listenerId;
          this.listener = listener;
          this.transport = transport;
          this.marshaller = marshaller;
          this.invocables = invocables;
+         this.cacheName = cacheName;
       }
 
       @Override

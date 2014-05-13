@@ -57,6 +57,14 @@ public class OperationsFactory implements HotRodConstants {
       this.listenerNotifier = listenerNotifier;
    }
 
+   public ClientListenerNotifier getListenerNotifier() {
+      return listenerNotifier;
+   }
+
+   public byte[] getCacheName() {
+      return cacheNameBytes;
+   }
+
    public GetOperation newGetKeyOperation(byte[] key) {
       return new GetOperation(
             codec, transportFactory, key, cacheNameBytes, topologyId, flags());

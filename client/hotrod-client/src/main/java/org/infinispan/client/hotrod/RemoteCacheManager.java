@@ -582,11 +582,17 @@ public class RemoteCacheManager implements BasicCacheContainer {
       started = true;
    }
 
+   /**
+    * Stop the remote cache manager, disconnecting all existing connections.
+    * As part of the disconnection, all registered client cache listeners will
+    * be removed since client no longer can receive callbacks.
+    */
    @Override
    public void stop() {
       if (isStarted()) {
          transportFactory.destroy();
          asyncExecutorService.shutdownNow();
+         listenerNotifier.stop();
       }
       started = false;
    }

@@ -336,24 +336,4 @@ public class TcpTransport extends AbstractTransport {
       invalid = true;
    }
 
-   @Override
-   public void setBlocking(boolean blocking) {
-      try {
-         socketChannel.configureBlocking(blocking);
-      } catch (IOException e) {
-         invalid = true;
-         throw new TransportException(e, serverAddress);
-      }
-   }
-
-   @Override
-   public void disableSocketTimeout() {
-      try {
-         socket.setSoTimeout(0);
-      } catch (SocketException e) {
-         invalid = true;
-         throw new TransportException(e, serverAddress);
-      }
-   }
-
 }

@@ -86,7 +86,7 @@ public class AddClientListenerOperation extends RetryOnFailureOperation<Void> {
 
       short status = readHeaderAndValidate(transport, params);
       if (status == NO_ERROR_STATUS)
-         listenerNotifier.addClientListener(listenerId, listener, dedicatedTransport);
+         listenerNotifier.addClientListener(listenerId, listener, dedicatedTransport, cacheName);
 
       return null;
    }
