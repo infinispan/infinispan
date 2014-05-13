@@ -20,6 +20,8 @@ package org.infinispan.server.endpoint.subsystem;
 
 import java.util.List;
 
+import javax.security.sasl.Sasl;
+
 import org.infinispan.server.hotrod.HotRodServer;
 import org.infinispan.server.hotrod.configuration.AuthenticationConfigurationBuilder;
 import org.infinispan.server.hotrod.configuration.HotRodServerConfigurationBuilder;
@@ -30,6 +32,7 @@ import org.jboss.as.controller.PathAddress;
 import org.jboss.as.controller.ServiceVerificationHandler;
 import org.jboss.as.controller.registry.Resource;
 import org.jboss.dmr.ModelNode;
+import org.jboss.dmr.Property;
 import org.jboss.msc.service.ServiceBuilder;
 import org.jboss.msc.service.ServiceController;
 
@@ -99,9 +102,37 @@ class HotRodSubsystemAdd extends ProtocolServiceSubsystemAdd {
                   authenticationBuilder.addAllowedMech(mech.asString());
                }
             }
+            String qop = listAsString(sasl, ModelKeys.QOP);
+            if (qop != null) {
+               authenticationBuilder.addMechProperty(Sasl.QOP, qop);
+            }
+            String strength = listAsString(sasl, ModelKeys.STRENGTH);
+            if (strength != null) {
+               authenticationBuilder.addMechProperty(Sasl.STRENGTH, strength);
+            }
+            if (sasl.hasDefined(ModelKeys.PROPERTY)) {
+               for(Property property : sasl.get(ModelKeys.PROPERTY).asPropertyList()) {
+                  authenticationBuilder.addMechProperty(property.getName(), property.getValue().asProperty().getValue().asString());
+               }
+            }
          }
       }
       builder.install();
+   }
+
+   private String listAsString(ModelNode node, String name) {
+      if (node.hasDefined(name)) {
+         StringBuilder sb = new StringBuilder();
+         for(ModelNode item : node.get(name).asList()) {
+            if (sb.length() > 0) {
+               sb.append(' ');
+            }
+            sb.append(item.asString());
+         }
+         return sb.toString();
+      } else {
+         return null;
+      }
    }
 
    private void configureProtocolServerTopology(HotRodServerConfigurationBuilder builder, ModelNode config) {

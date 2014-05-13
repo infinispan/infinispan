@@ -71,6 +71,7 @@ public class ModelKeys {
    public static final String SERVER_NAME = "server-name";
    public static final String MECHANISMS = "mechanisms";
    public static final String POLICY = "policy";
+   public static final String PROPERTY = "property";
    public static final String QOP = "qop";
    public static final String STRENGTH = "strength";
    public static final String VALUE = "value";

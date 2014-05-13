@@ -429,13 +429,18 @@ class EndpointSubsystemReader_7_0 implements XMLStreamConstants, XMLElementReade
       final EnumSet<Element> visited = EnumSet.noneOf(Element.class);
       while (reader.hasNext() && (reader.nextTag() != XMLStreamConstants.END_ELEMENT)) {
          final Element element = Element.forName(reader.getLocalName());
-         if (visited.contains(element)) {
-            throw ParseUtils.unexpectedElement(reader);
-         }
-         visited.add(element);
          switch (element) {
          case POLICY: {
+            if (visited.contains(element)) {
+               throw ParseUtils.unexpectedElement(reader);
+            } else {
+               visited.add(element);
+            }
             parsePolicy(reader, sasl, list);
+            break;
+         }
+         case PROPERTY: {
+            parseProperty(reader, sasl, list);
             break;
          }
          default: {
@@ -500,6 +505,20 @@ class EndpointSubsystemReader_7_0 implements XMLStreamConstants, XMLElementReade
          }
       }
    }
+
+   private void parseProperty(XMLExtendedStreamReader reader, ModelNode node, final List<ModelNode> operations) throws XMLStreamException {
+      ParseUtils.requireSingleAttribute(reader, Attribute.NAME.getLocalName());
+      String propertyName = reader.getAttributeValue(0);
+      String propertyValue = reader.getElementText();
+
+      PathAddress propertyAddress = PathAddress.pathAddress(node.get(OP_ADDR)).append(ModelKeys.PROPERTY, propertyName);
+      ModelNode property = Util.createAddOperation(propertyAddress);
+
+      // represent the value as a ModelNode to cater for expressions
+      SaslPropertyResource.VALUE.parseAndSetParameter(propertyValue, property, reader);
+
+      operations.add(property);
+  }
 
    private void parseEncryption(XMLExtendedStreamReader reader, ModelNode connector, List<ModelNode> operations)
          throws XMLStreamException {

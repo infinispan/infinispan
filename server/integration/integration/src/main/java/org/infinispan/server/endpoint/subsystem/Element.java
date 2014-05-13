@@ -46,6 +46,7 @@ public enum Element {
     INCLUDE_MECHANISMS(ModelKeys.MECHANISMS),
     QOP(ModelKeys.QOP),
     POLICY(ModelKeys.POLICY),
+    PROPERTY(ModelKeys.PROPERTY),
     SASL(ModelKeys.SASL),
     STRENGTH(ModelKeys.STRENGTH),
     FORWARD_SECRECY(ModelKeys.FORWARD_SECRECY),

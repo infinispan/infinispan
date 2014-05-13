@@ -171,6 +171,7 @@ class EndpointSubsystemWriter implements XMLStreamConstants, XMLElementWriter<Su
             }
          }
          writePolicy(writer, sasl);
+         writeProperties(writer, sasl);
          writer.writeEndElement();
       }
    }
@@ -186,6 +187,18 @@ class EndpointSubsystemWriter implements XMLStreamConstants, XMLElementWriter<Su
          SaslPolicyResource.NO_PLAIN_TEXT.marshallAsElement(policy, writer);
          SaslPolicyResource.PASS_CREDENTIALS.marshallAsElement(policy, writer);
          writer.writeEndElement();
+      }
+   }
+
+   private void writeProperties(XMLExtendedStreamWriter writer, ModelNode sasl) throws XMLStreamException {
+      if (sasl.hasDefined(ModelKeys.PROPERTY)) {
+         for (Property property: sasl.get(ModelKeys.PROPERTY).asPropertyList()) {
+            writer.writeStartElement(Element.PROPERTY.getLocalName());
+            writer.writeAttribute(Attribute.NAME.getLocalName(), property.getName());
+            Property complexValue = property.getValue().asProperty();
+            writer.writeCharacters(complexValue.getValue().asString());
+            writer.writeEndElement();
+         }
       }
    }
 

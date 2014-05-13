@@ -195,20 +195,22 @@
 
                 The optional nested "policy" boolean element specifies a policy to use to narrow down the available set
                 of mechanisms.
+
+                The optional nested "property" elements specify additional properties required by the specified mechanisms
             ]]>
             </xs:documentation>
         </xs:annotation>
         <xs:all>
-            
             <xs:element name="policy" type="tns:policy" minOccurs="0" />
+            <xs:element name="property" type="tns:property" minOccurs="0" maxOccurs="unbounded"/>
         </xs:all>
         <xs:attribute name="security-context-name" type="xs:string">
             <xs:annotation>
                 <xs:documentation>The name of the login context to be used to retrieve a server subject for certain SASL mechs (i.e. GSSAPI)</xs:documentation>
             </xs:annotation>
         </xs:attribute>
-        <xs:attribute name="mechanisms" type="tns:name-listType" />
-        <xs:attribute name="qop" type="tns:qop-listType"/>
+        <xs:attribute name="mechanisms" type="tns:name-list" />
+        <xs:attribute name="qop" type="tns:qop-list"/>
         <xs:attribute name="strength" type="tns:strength" />
     </xs:complexType>
 
@@ -247,6 +249,18 @@
             <xs:element name="no-plain-text" type="tns:boolean-element" minOccurs="0" />
             <xs:element name="pass-credentials" type="tns:boolean-element" minOccurs="0" />
         </xs:all>
+    </xs:complexType>
+
+    <xs:complexType name="property">
+        <xs:simpleContent>
+            <xs:extension base="xs:string">
+                <xs:attribute name="name" type="xs:string" use="required">
+                    <xs:annotation>
+                        <xs:documentation>Defines the name of a property.</xs:documentation>
+                    </xs:annotation>
+                </xs:attribute>
+            </xs:extension>
+        </xs:simpleContent>
     </xs:complexType>
 
     <xs:complexType name="boolean-element">

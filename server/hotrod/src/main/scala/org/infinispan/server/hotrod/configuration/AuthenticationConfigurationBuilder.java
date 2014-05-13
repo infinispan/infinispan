@@ -1,14 +1,13 @@
 package org.infinispan.server.hotrod.configuration;
 
 import java.util.Collections;
-import java.util.Enumeration;
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.LinkedHashSet;
 import java.util.Map;
 import java.util.Set;
 
 import javax.security.auth.Subject;
-import javax.security.sasl.Sasl;
 import javax.security.sasl.SaslServerFactory;
 
 import org.infinispan.commons.configuration.Builder;
@@ -28,7 +27,7 @@ public class AuthenticationConfigurationBuilder extends AbstractHotRodServerChil
    private boolean enabled = false;
    private ServerAuthenticationProvider serverAuthenticationProvider;
    private Set<String> allowedMechs = new LinkedHashSet<String>();
-   private Map<String, String> mechProperties;
+   private Map<String, String> mechProperties = new HashMap<String, String>();
    private String serverName;
    private Subject serverSubject;
 
