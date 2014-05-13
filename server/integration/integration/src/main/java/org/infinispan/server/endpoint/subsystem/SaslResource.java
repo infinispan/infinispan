@@ -86,6 +86,7 @@ public class SaslResource extends SimpleResourceDefinition {
    @Override
    public void registerChildren(ManagementResourceRegistration resourceRegistration) {
       resourceRegistration.registerSubModel(new SaslPolicyResource());
+      resourceRegistration.registerSubModel(new SaslPropertyResource());
    }
 
    @Override
