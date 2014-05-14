@@ -34,7 +34,7 @@ public final class SimpleServerAuthenticationProvider implements ServerAuthentic
     *
     * @param mechanismName
     */
-   public AuthorizingCallbackHandler getCallbackHandler(final String mechanismName) {
+   public AuthorizingCallbackHandler getCallbackHandler(final String mechanismName, final Map<String, String> mechanismProperties) {
 
       return new AuthorizingCallbackHandler() {
          Subject subject = new Subject();

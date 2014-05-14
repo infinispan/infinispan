@@ -34,6 +34,7 @@ import java.security.Principal
 import org.infinispan.server.core.security.InetAddressPrincipal
 import java.net.InetSocketAddress
 import org.infinispan.server.core.security.simple.SimpleUserPrincipal
+import java.util.HashMap
 
 /**
  * HotRod protocol decoder specific for specification version 2.0.
@@ -192,21 +193,22 @@ object Decoder2x extends AbstractVersionedDecoder with ServerConstants with Log 
                if (decoder.saslServer == null) {
                   val authConf = server.getConfiguration.authentication
                   val sap = authConf.serverAuthenticationProvider
-                  decoder.callbackHandler = sap.getCallbackHandler(mech)
+                  val mechProperties = new HashMap[String, String](server.getConfiguration.authentication.mechProperties)
+                  decoder.callbackHandler = sap.getCallbackHandler(mech, mechProperties)
                   val ssf = server.getSaslServerFactory(mech)
                   decoder.saslServer = if (authConf.serverSubject != null) {
                      Subject.doAs(authConf.serverSubject, new PrivilegedAction[SaslServer] {
                         def run : SaslServer = {
                            ssf.createSaslServer(mech, "hotrod",
                               server.getConfiguration.authentication.serverName,
-                              server.getConfiguration.authentication.mechProperties,
+                              mechProperties,
                               decoder.callbackHandler)
                          }
                      })
                   } else {
                      ssf.createSaslServer(mech, "hotrod",
                         server.getConfiguration.authentication.serverName,
-                        server.getConfiguration.authentication.mechProperties,
+                        mechProperties,
                         decoder.callbackHandler)
                   }
                }
