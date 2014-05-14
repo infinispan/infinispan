@@ -243,7 +243,7 @@ public class ProtocolStackAdd extends AbstractAddStepHandler implements Descript
         // install the default channel factory service
         ServiceController<ChannelFactory> cfsController = installChannelFactoryService(context.getServiceTarget(),
                         name, diagnosticsSocketBinding, defaultExecutor, oobExecutor, timerExecutor, threadFactory,
-                        transportSocketBinding, protocolSocketBindings, securityRealms, transportConfig, stackConfig, stacks, verificationHandler);
+                        transportSocketBinding, protocolSocketBindings, transportConfig, stackConfig, stacks, verificationHandler);
         if (newControllers != null) {
             newControllers.add(cfsController);
         }
@@ -269,7 +269,6 @@ public class ProtocolStackAdd extends AbstractAddStepHandler implements Descript
                                                                              String threadFactory,
                                                                              String transportSocketBinding,
                                                                              List<Map.Entry<Protocol, String>> protocolSocketBindings,
-                                                                             List<Map.Entry<Protocol, String>> securityRealms,
                                                                              Transport transportConfig,
                                                                              ProtocolStack stackConfig,
                                                                              List<Map.Entry<String, Injector<ChannelFactory>>> stacks,
