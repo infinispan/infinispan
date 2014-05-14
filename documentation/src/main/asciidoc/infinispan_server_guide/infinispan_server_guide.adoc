@@ -38,7 +38,7 @@ a
 ----
 
 == Configuration
-Since the server is based on the JBoss AS 7.2 codebase, it must configured be using the AS configuration schema, apart from the JGroups, Infinispan and Endpoint subsytems.
+Since the server is based on the JBoss AS codebase, it must configured be using the AS configuration schema, apart from the JGroups, Infinispan and Endpoint subsytems.
 
 === JGroups subsystem configuration
 The JGroups subsystem configures the network transport and is only required when clustering multiple Infinispan Server nodes together.
@@ -48,7 +48,7 @@ The subsystem declaration is enclosed in the following XML element:
 [source,xml]
 ----
 
-<subsystem xmlns="urn:jboss:domain:jgroups:1.2" default-stack="${jboss.default.jgroups.stack:udp}">
+<subsystem xmlns="urn:jboss:domain:jgroups:7.0" default-stack="${jboss.default.jgroups.stack:udp}">
   ...
 </subsystem>
 
@@ -125,6 +125,59 @@ The default TCP stack uses the MPING protocol for discovery, which uses UDP mult
 
 ----
 
+==== Cluster authentication and authorization
+
+The JGroups subsystem can be configured so that nodes need to authenticate each other when joining / merging. The authentication uses SASL and integrates with the security realms. 
+
+[source,xml]
+----
+<management>
+    <security-realms>
+        ...
+        <security-realm name="ClusterRealm">
+            <authentication>
+                <properties path="cluster-users.properties" relative-to="jboss.server.config.dir"/>
+                </authentication>
+                <authorization>
+                    <properties path="cluster-roles.properties" relative-to="jboss.server.config.dir"/>
+                </authorization>
+            </security-realm>
+        </security-realms>
+        ...
+    </security-realms>
+</management>
+
+<stack name="udp">
+    ...
+    <sasl mech="DIGEST-MD5" security-realm="ClusterRealm" cluster-role="cluster">
+        <property name="client_name">node1</property>
+        <property name="client_password">password</property>
+    </sasl>
+    ...
+</stack>
+----
+
+In the above example the nodes will use the +DIGEST-MD5+ mech to authenticate against the +ClusterRealm+. In order to join, nodes need to have the +cluster+ role. If the +cluster-role+ attribute is not specified it defaults to the name of the Infinispan +cache-container+, as described below.
+Each node identifies itself using the +client_name+ property. If none is explicitly specified, the hostname on which the server is running will be used. This name can also be overridden by specifying the +jboss.node.name+ system property.
+The +client_password+ property contains the password of the node. It is recommended that this password be stored in the Vault. Refer to link:$$https://community.jboss.org/wiki/AS7UtilisingMaskedPasswordsViaTheVault for instructions on how to do so.
+When using the GSSAPI mech, +client_name+ will be used as the name of a Kerberos-enabled login module defined within the security domain subsystem:
+
+[source,xml]
+----
+<security-domain name="krb-node0" cache-type="default">
+    <authentication>
+        <login-module code="Kerberos" flag="required">
+            <module-option name="storeKey" value="true"/>
+            <module-option name="useKeyTab" value="true"/>
+            <module-option name="refreshKrb5Config" value="true"/>
+            <module-option name="principal" value="jgroups/node0/clustered@INFINISPAN.ORG"/>
+            <module-option name="keyTab" value="${jboss.server.config.dir}/keytabs/jgroups_node0_clustered.keytab"/>
+            <module-option name="doNotPrompt" value="true"/>
+        </login-module>
+    </authentication>
+</security-domain>
+----
+
 === Infinispan subsystem configuration
 The Infinispan subsystem configures the cache containers and caches.
 
@@ -140,7 +193,7 @@ The subsystem declaration is enclosed in the following XML element:
 ----
 
 ==== Containers
-One major difference between the Infinispan library schema and the server schema is that in the latter multiple containers can be declared. A container is declared as follows:
+The Infinispan subsystem can declare multiple containers. A container is declared as follows:
 
 [source,xml]
 ----
@@ -151,7 +204,7 @@ One major difference between the Infinispan library schema and the server schema
 
 ----
 
-Another difference is the lack of an implicit default cache, but the ability to specify a named cache as the default.
+Note that in server mode is the lack of an implicit default cache, but the ability to specify a named cache as the default.
 
 If you need to declare clustered caches (distributed, replicated, invalidation), you also need to specify the `<transport/>` element which references an existing JGroups transport. This is not needed if you only intend to have local caches only. 
 
@@ -297,7 +350,7 @@ The connector will create a supporting topology cache with default settings. If 
 
 The Hot Rod connector can be further tuned with additional settings such as concurrency and buffering. See the protocol connector settings paragraph for additional details
 
-Furthermore the HotRod connector can be secured using SSL. First you need to declare an SSL server identity within a security realm in the management section of the configuration file. The SSL server identity should specify the path to a keystore and its secret. Refer to the AS7.2 link:$$https://docs.jboss.org/author/pages/viewpage.action?pageId=53117128$$[documentation] on this. Next add the `<security />` element to the HotRod connector as follows: 
+Furthermore the HotRod connector can be secured using SSL. First you need to declare an SSL server identity within a security realm in the management section of the configuration file. The SSL server identity should specify the path to a keystore and its secret. Refer to the AS link:$$https://docs.jboss.org/author/pages/viewpage.action?pageId=53117128$$[documentation] on this. Next add the `<security />` element to the HotRod connector as follows: 
 
 [source,xml]
 ----
@@ -371,4 +424,314 @@ By default each protocol stores data in the cache in the most efficient format f
 </cache-container>
 
 ----
+
+== Security
+
+=== General concepts
+
+==== Authorization configuration
+
+Just like embedded mode, the server supports cache authorization using the same configuration, e.g.:
+
+[source,xml]
+----
+   <cache-container default-cache="secured">
+      <security>
+         <authorization mapper="org.infinispan.security.IdentityRoleMapper">
+            <role name="admin" permissions="ALL" />
+            <role name="reader" permissions="READ" />
+            <role name="writer" permissions="WRITE" />
+            <role name="supervisor" permissions="READ WRITE EXEC BULK"/>
+         </roles>
+      </security>
+      <local-cache name="secured">
+         <security>
+            <authorization roles="admin reader writer supervisor" />
+         </security>
+      </local-cache>
+   </cache-container>
+----
+
+==== Server Realms
+
+Infinispan Server security is built around the features provided by the underlying server realm and security domains.
+Security Realms are used by the server to provide authentication and authorization information for both the management and application interfaces.
+
+.Security Realm configuration
+[source,xml]
+----
+<server xmlns="urn:jboss:domain:2.1">
+   ...
+   <management>
+        ...
+        <security-realm name="ApplicationRealm">
+           <authentication>
+              <properties path="application-users.properties" relative-to="jboss.server.config.dir"/>
+           </authentication>
+           <authorization>
+              <properties path="application-roles.properties" relative-to="jboss.server.config.dir"/>
+           </authorization>
+        </security-realm>
+        ...
+    </management>
+    ...
+</server>
+----
+
+Infinispan Server comes with an add-user.sh script (add-user.bat for Windows) to ease the process of adding new user/role mappings to the above property files. An example invocation for adding a user to the ApplicationRealm with an initial set of roles:
+
++./bin/add-user.sh -a -u myuser -p "qwer1234!" -ro supervisor,reader,writer+
+
+It is also possible to authenticate/authorize against alternative sources, such as LDAP, JAAS, etc. Refer to the https://docs.jboss.org/author/display/WFLY8/Security+Realms[WildFly security realms guide] on how to configure the Security Realms. Bear in mind that the choice of authentication mechanism you select for the protocols limits the type of authentication sources, since the credentials must be in a format supported by the algorithm itself (e.g. pre-digested passwords for the digest algorithm)
+
+== Security Audit
+
+The Infinispan subsystem security audit by default sends audit logs to the audit manager configured at the server level. Refer to the https://docs.jboss.org/author/display/WFLY8/Security+subsystem+configuration[WildFly security subsystem guide] on how to configure the server audit manager. Alternatively you can also set your custom audit logger by using the same configuration as for embedded mode.
+Refer to the The link:../user_guide/user_guide.html#_Security_chapter[Security] chapter in the user guide for details.
+
+== Hot Rod authentication
+
+The Hot Rod protocol supports authentication since version 2.0 (Infinispan 7.0) by leveraging the SASL mechanisms. The supported SASL mechanisms (usually shortened as mechs) are:
+
+* PLAIN - This is the most insecure mech, since credentials are sent over the wire in plain-text format, however it is the simplest to get to work. In combination with encryption (i.e. SSL) it can be used safely
+* DIGEST-MD5 - This mech hashes the credentials before sending them over the wire, so it is more secure than PLAIN
+* GSSAPI - This mech uses Kerberos tickets, and therefore requires the presence of a properly configured Kerberos Domain Controller (such as Microsoft Active Directory)
+* EXTERNAL - This mech obtains credentials from the underlying transport (i.e. from a X.509 client certificate) and therefore requires encryption using client-certificates to be enabled.
+
+The following configuration enables authentication against ApplicationRealm, using the DIGEST-MD5 SASL mechanism: 
+
+.Hot Rod connector configuration
+[source,xml]
+----
+<hotrod-connector socket-binding="hotrod" cache-container="default">
+   <authentication security-realm="ApplicationRealm">
+      <sasl server-name="myhotrodserver" mechanisms="DIGEST-MD5" qop="auth" />
+   </authentication>
+</hotrod-connector>
+----
+Notice the server-name attribute: it is the name that the server declares to incoming clients and therefore the client configuration must match.
+
+Once you have configured a secured Hot Rod connector, you can connect to it using the Hot Rod client:  
+
+.Hot Rod client configuration
+[source,java]
+----
+public class MyCallbackHandler implements CallbackHandler {
+   final private String username;
+   final private char[] password;
+   final private String realm;
+
+   public MyCallbackHandler (String username, String realm, char[] password) {
+      this.username = username;
+      this.password = password;
+      this.realm = realm;
+   }
+
+   @Override
+   public void handle(Callback[] callbacks) throws IOException, UnsupportedCallbackException {
+      for (Callback callback : callbacks) {
+         if (callback instanceof NameCallback) {
+            NameCallback nameCallback = (NameCallback) callback;
+            nameCallback.setName(username);
+         } else if (callback instanceof PasswordCallback) {
+            PasswordCallback passwordCallback = (PasswordCallback) callback;
+            passwordCallback.setPassword(password);
+         } else if (callback instanceof AuthorizeCallback) {
+            AuthorizeCallback authorizeCallback = (AuthorizeCallback) callback;
+            authorizeCallback.setAuthorized(authorizeCallback.getAuthenticationID().equals(
+                  authorizeCallback.getAuthorizationID()));
+         } else if (callback instanceof RealmCallback) {
+            RealmCallback realmCallback = (RealmCallback) callback;
+            realmCallback.setText(realm);
+         } else {
+            throw new UnsupportedCallbackException(callback);
+         }
+      }
+   }
+}
+
+ConfigurationBuilder clientBuilder = new ConfigurationBuilder();
+clientBuilder
+    .addServer()
+        .host("127.0.0.1")
+        .port(11222)
+    .socketTimeout(1200000)
+    .security()
+        .authentication()
+            .enable()
+            .serverName("myhotrodserver")
+            .saslMechanism("DIGEST-MD5")
+            .callbackHandler(new MyCallbackHandler("myuser", "ApplicationRealm", "qwer1234!".toCharArray()));
+remoteCacheManager = new RemoteCacheManager(clientBuilder.build());
+RemoteCache<String, String> cache = remoteCacheManager.getCache("secured");
+----
+
+The actual type of callbacks that your CallbackHandler will need to be able to handle are mech-specific, so the above is just a simple example.
+
+=== Using GSSAPI/Kerberos
+
+If you want to use GSSAPI/Kerberos, setup and configuration differs. First we need to define a Kerberos login module using the security domain subsystem:
+
+.Security domain configuration
+[code,xml]
+----
+<system-properties>
+    <property name="java.security.krb5.conf" value="/tmp/infinispan/krb5.conf"/>
+    <property name="java.security.krb5.debug" value="true"/>
+    <property name="jboss.security.disable.secdomain.option" value="true"/>
+</system-properties>
+
+<security-domain name="infinispan-server" cache-type="default">
+    <authentication>
+        <login-module code="Kerberos" flag="required">
+            <module-option name="debug" value="true"/>
+            <module-option name="storeKey" value="true"/>
+            <module-option name="refreshKrb5Config" value="true"/>
+            <module-option name="useKeyTab" value="true"/>
+            <module-option name="doNotPrompt" value="true"/>
+            <module-option name="keyTab" value="/tmp/infinispan/infinispan.keytab"/>
+            <module-option name="principal" value="HOTROD/localhost@INFINISPAN.ORG"/>
+        </login-module>
+    </authentication>
+</security-domain>
+----
+
+Next we need to modify the Hot Rod connector
+
+.Hot Rod connector configuration
+[source,xml]
+----
+<hotrod-connector socket-binding="hotrod" cache-container="default">
+   <authentication security-realm="ApplicationRealm">
+      <sasl server-name="infinispan-server" server-context-name="infinispan-server" mechanisms="GSSAPI" qop="auth" />
+   </authentication>
+</hotrod-connector>
+----
+
+On the client side you will also need to define a login module in a login configuration file:
+
+.gss.conf
+[source]
+----
+GssExample {
+    com.sun.security.auth.module.Krb5LoginModule required client=TRUE;
+};
+----
+Also you will need to set the following system properties:
+
++java.security.auth.login.config=gss.conf+
+
++java.security.krb5.conf=/etc/krb5.conf+
+
+The +krb5.conf+ file is dependent on your environment and needs to point to your KDC.
+ 
+.Hot Rod client configuration
+[source,java]
+----
+public class MyCallbackHandler implements CallbackHandler {
+   final private String username;
+   final private char[] password;
+   final private String realm;
+   
+   public MyCallbackHandler() { }
+
+   public MyCallbackHandler (String username, String realm, char[] password) {
+      this.username = username;
+      this.password = password;
+      this.realm = realm;
+   }
+
+   @Override
+   public void handle(Callback[] callbacks) throws IOException, UnsupportedCallbackException {
+      for (Callback callback : callbacks) {
+         if (callback instanceof NameCallback) {
+            NameCallback nameCallback = (NameCallback) callback;
+            nameCallback.setName(username);
+         } else if (callback instanceof PasswordCallback) {
+            PasswordCallback passwordCallback = (PasswordCallback) callback;
+            passwordCallback.setPassword(password);
+         } else if (callback instanceof AuthorizeCallback) {
+            AuthorizeCallback authorizeCallback = (AuthorizeCallback) callback;
+            authorizeCallback.setAuthorized(authorizeCallback.getAuthenticationID().equals(
+                  authorizeCallback.getAuthorizationID()));
+         } else if (callback instanceof RealmCallback) {
+            RealmCallback realmCallback = (RealmCallback) callback;
+            realmCallback.setText(realm);
+         } else {
+            throw new UnsupportedCallbackException(callback);
+         }
+      }
+   }
+}
+
+LoginContext lc = new LoginContext("GssExample", new MyCallbackHandler("krb_user", "krb_password".toCharArray()));
+lc.login();
+Subject clientSubject = lc.getSubject();
+
+ConfigurationBuilder clientBuilder = new ConfigurationBuilder();
+clientBuilder
+    .addServer()
+        .host("127.0.0.1")
+        .port(11222)
+    .socketTimeout(1200000)
+    .security()
+        .authentication()
+            .enable()
+            .serverName("infinispan-server")
+            .saslMechanism("GSSAPI")
+            .clientSubject(clientSubject)
+            .callbackHandler(new MyCallbackHandler());
+remoteCacheManager = new RemoteCacheManager(clientBuilder.build());
+RemoteCache<String, String> cache = remoteCacheManager.getCache("secured");
+----
+
+For brevity we used the same callback handler both for obtaining the client subject and for handling authentication in the SASL GSSAPI mech, however different callbacks will actually be invoked: NameCallback and PasswordCallback are needed to construct the client subject, while the AuthorizeCallback will be called during the SASL authentication.
+
+== Hot Rod encryption (SSL)
+
+The Hot Rod protocol also supports encryption using SSL/TLS. To set this up you need to create a keystore using the +keytool+ application which is part of the JDK to store your server certificate. Then add a +<server-identities>+ element to your security realm:
+
+.Security Realm configuration for SSL
+[code,xml]
+----
+<security-realm name="ApplicationRealm">
+    <server-identities>
+        <ssl>
+            <keystore path="keystore_server.jks" relative-to="jboss.server.config.dir" keystore-password="secret" />
+        </ssl>
+    </server-identities>
+</security-realm>
+----
+
+Next modify the +<hotrod-connector>+ element in the endpoint subsystem to require encryption:
+
+.Hot Rod connector SSL configuration
+
+[code,xml]
+----
+<hotrod-connector socket-binding="hotrod" cache-container="local">
+    <topology-state-transfer lock-timeout="1000" replication-timeout="5000" />
+    <encryption security-realm="ApplicationRealm" require-ssl-client-auth="false"/>
+</hotrod-connector>
+----
+
+In order to connect to the server, the client will need a trust store containing the public key of the server(s) you are going to connect to:
+
+[code,java]
+----
+ConfigurationBuilder clientBuilder = new ConfigurationBuilder();
+clientBuilder
+    .addServer()
+        .host("127.0.0.1")
+        .port(hotrodServer.getPort())
+        .socketTimeout(3000)
+     .security()
+        .ssl()
+           .enabled(sslClient)
+           .trustStoreFileName("truststore.jks")
+           .trustStorePassword("secret".toCharArray())
+remoteCacheManager = new RemoteCacheManager(clientBuilder.build());
+----
+
+Additionally, you might also want to enable client certificate authentication (and therefore also allow the use of the EXTERNAL SASL mech to authenticate clients).
 

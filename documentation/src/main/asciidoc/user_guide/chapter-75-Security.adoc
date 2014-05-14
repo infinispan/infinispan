@@ -12,7 +12,8 @@ standard Java security libraries (JAAS, JSSE, JCA, JCE, SASL, etc).
 For this reason, the Infinispan core library only provides interfaces and a set of basic implementations.
 
 == Embedded Security
-Applications interact with Infinispan using its API within the same JVM. The two main components which are exposed by the Infinispan API are CacheManagers and Caches. If an application wants to interact with a secured CacheManager and Cache, it should provide an identity which Infinispan’s security layer will validate against a set of required roles and permissions. If the identity provided by the user application has sufficient permissions, then access will be granted, otherwise an exception indicating a security violation will be thrown. The identity is represented by the javax.security.auth.Subject class which is a wrapper around multiple Principals, e.g. a user and all the groups it belongs to. Since the Principal name is dependent on the owning system (e.g. a Distinguished Name in LDAP), Infinispan needs to be able to map Principal names to roles. Roles, in turn, represent one or more permissions. The following diagram shows the relationship between the various elements:
+Applications interact with Infinispan using its API within the same JVM. The two main components which are exposed by the Infinispan API are CacheManagers and Caches. If an application wants to interact with a secured CacheManager and Cache, it should provide an identity which Infinispan’s security layer will validate against a set of required roles and permissions. If the identity provided by the user application has sufficient permissions, then access will be granted, otherwise an exception indicating a security violation will be thrown. The identity is represented by the javax.security.auth.Subject class which is a wrapper around multiple Principals, e.g. a user and all the groups it belongs to. Since the Principal name is dependent on the owning system (e.g. a Distinguished Name in LDAP), Infinispan needs to be able to map Principal names to roles.
+Roles, in turn, represent one or more permissions. The following diagram shows the relationship between the various elements:
 
 .Roles/Permissions mapping 
 image::images/SecurityRolesPermissions.png[Roles/Permissions mapping]
@@ -39,7 +40,13 @@ Access to a cache manager or a cache is controlled by using a list of required p
 * ALL_READ: combines READ and BULK_READ
 * ALL_WRITE: combines WRITE and BULK_WRITE
 
-Some permissions might need to be combined with others in order to be useful, e.g. EXEC with READ and/or WRITE.
+Some permissions might need to be combined with others in order to be useful. For example, suppose you want to allow only "supervisors" to be able to run map/reduce jobs, while "standard" users can only perform puts and gets, you would define the following mappings:
+
+[code,xml]
+----
+<role name="standard" permission="READ WRITE" />
+<role name="supervisors" permission="READ WRITE EXEC BULK"/>
+----
 
 === Embedded API
 When a DefaultCacheManager has been constructed with security enabled using either the programmatic or declarative configuration, it returns a SecureCache which will check the security context before invoking any operations on the underlying caches. A SecureCache also makes sure that applications cannot retrieve lower-level insecure objects (such as DataContainer).
@@ -77,7 +84,7 @@ Infinispan also fully supports running under a full-blown SecurityManager. The I
 === Embedded Configuration
 There are two levels of configuration: global and per-cache. The global configuration defines the set of roles/permissions mappings while each cache can decide whether to enable authorization checks and the required roles.
 
-==== Programmatic
+.Programmatic
 [source,java]
 ----
   GlobalConfigurationBuilder global = new GlobalConfigurationBuilder();
@@ -103,7 +110,7 @@ There are two levels of configuration: global and per-cache. The global configur
            .role("reader");
 ----
 
-==== Declarative
+.Declarative
 [source,xml]
 ----
 <infinispan>
@@ -112,14 +119,14 @@ There are two levels of configuration: global and per-cache. The global configur
          <authorization enabled="true">
             <identity-role-mapper />
             <role name="admin" permissions="ALL" />
-            <role name="reader" permission="READ" />
-            <role name="writer" permission="WRITE" />
-            <role name="supervisor" permission="READ WRITE EXEC BULK"/>
+            <role name="reader" permissions="READ" />
+            <role name="writer" permissions="WRITE" />
+            <role name="supervisor" permissions="READ WRITE EXEC BULK"/>
          </authorization>
       </security>
       <local-cache name="secured">
-         <security enabled="true">
-            <authorization enabled="true" roles="admin reader writer supervisor" />
+         <security>
+            <authorization roles="admin reader writer supervisor" />
          </security>
       </local-cache>
    </cache-container>
@@ -142,22 +149,22 @@ the DN +cn=managers,ou=people,dc=example,dc=com+ will be mapped to the role +man
 Infinispan offers a pluggable audit logger which tracks whether a cache or a cache manager operation was allowed or denied.
 The audit logger is configured at the cache container authorization level:
 
-==== Programmatic
+.Programmatic
 [source,java]
 ----
   GlobalConfigurationBuilder global = new GlobalConfigurationBuilder();
   global
      .authorization()
-        .auditLogger(new DefaultAuditLogger());
+        .auditLogger(new LoggingAuditLogger());
 ----
 
-==== Declarative
+.Declarative
 [source,xml]
 ----
 <infinispan>
    <cache-container default-cache="secured">
       <security>
-         <authorization audit-logger="org.infinispan.security.impl.DefaultAuditLogger">
+         <authorization audit-logger="org.infinispan.security.impl.LoggingAuditLogger">
             ...
          </authorization>
       </security>
@@ -166,55 +173,47 @@ The audit logger is configured at the cache container authorization level:
 </infinispan>
 ----
 
-The default audit logger is org.infinispan.security.impl.DefaultAuditLogger which outputs audit logs through the available logging framework (e.g. Log4J) at level TRACE and category AUDIT. These logs look like: 
+In embedded mode the default audit logger is +org.infinispan.security.impl.NullAuditLogger+ which does nothing. Infinispan also comes with the +org.infinispan.security.impl.LoggingAuditLogger+ which outputs audit logs through the available logging framework (e.g. Log4J) at level TRACE and category AUDIT. These logs look like: 
 
-[ALLOW] user READ cache[defaultCache]
+[ALLOW|DENY] user READ cache[defaultCache]
 
 Using an appropriate logging appender it is possible to send the AUDIT category either to a log file, a JMS queue, a database, etc.
 The +user+ which is included in the log above is the name of the first non-+java.security.acl.Group+ principal in the Subject.
 
-== Hot Rod authentication
+== Cluster security
 
-The Hot Rod protocol supports authentication since version 2.0 (Infinispan 7.0) by leveraging the SASL mechanisms. In the context of Infinispan server, Hot Rod authentication is based upon the Security Realms defined in the configuration. 
-By default, the server comes with two configured realms: ManagementRealm, which is used for managing administrative users (e.g. when using the CLI), and ApplicationRealm, for user-application purposes. 
-The following is an example of a properties-based security realm:
+JGroups can be configured so that nodes need to authenticate each other when joining / merging. The authentication uses SASL and is setup by adding the +SASL+ protocol to your JGroups XML configuration above the GMS protocol, as follows:
 
 [source,xml]
 ----
-
-<server xmlns="urn:jboss:domain:1.4">
-   ...
-   <management>
-        ...
-        <security-realm name="ApplicationRealm">
-           <authentication>
-              <properties path="application-users.properties" relative-to="jboss.server.config.dir"/>
-           </authentication>
-           <authorization>
-              <properties path="application-roles.properties" relative-to="jboss.server.config.dir"/>
-           </authorization>
-        </security-realm>
-        ...
-    </management>
-    ...
-</server>
----- 
-Infinispan Server comes with an add-user.sh script (add-user.bat for Windows) to ease the process of adding new user/role mappings to the above property files. An example invocation for adding a user to the ApplicationRealm with an initial set of roles:
-
-./bin/add-user.sh -a -u myuser -p "qwer1234!" -ro supervisor,reader,writer
-
-It is also possible to authenticate/authorize against alternative sources, such as LDAP, JAAS, etc. Refer to the Application Server guide on how to configure the Security Realms at https://docs.jboss.org/author/display/WFLY8/Security+Realms. 
-Bear in mind that the choice of SASL mechanism limits the type of authentication sources, since the credentials must be in a format supported by the algorithm itself. 
-Infinispan server currently supports the following SASL mechanisms for the HotRod protocol: PLAIN, DIGEST-MD5, GSSAPI (Kerberos), EXTERNAL (X.509 Client certificate).
-
-The following configuration enables authentication against ApplicationRealm, using the DIGEST-MD5 SASL mechanism: 
-
-[source,xml]
-----
-<hotrod-connector socket-binding="hotrod" cache-container="default">
-   <authentication security-realm="ApplicationRealm">
-      <sasl server-name="localhost" mechanisms="DIGEST-MD5" qop="auth" />
-   </authentication>
-</hotrod-connector>
+<SASL mech="DIGEST-MD5"
+    client_name="node_user"
+    client_password="node_password"
+    server_callback_handler_class="org.example.infinispan.security.JGroupsSaslServerCallbackHandler"
+    client_callback_handler_class="org.example.infinispan.security.JGroupsSaslClientCallbackHandler" 
+    sasl_props="com.sun.security.sasl.digest.realm=test_realm" /> 
 ----
 
+In the above example, the SASL mech will be +DIGEST-MD5+. Each node will need to declare the user and password it will use when joining the cluster. The behaviour of a node differs depending on whether it is the coordinator or any other node. The coordinator acts as the SASL server, whereas joining/merging nodes act as SASL clients. Therefore two different CallbackHandlers are required, the +server_callback_handler_class+ will be used by the coordinator, and the +client_callback_handler_class+ will be used by the other nodes.
+The +SASL+ protocol in JGroups is only concerned with the authentication process. If you wish to implement node authorization, you can do so within the server callback handler, by throwing an Exception. The following example shows how this can be done:
+
+[source,java]
+----
+public class AuthorizingServerCallbackHandler implements CallbackHandler {
+
+    @Override
+    public void handle(Callback[] callbacks) throws IOException, UnsupportedCallbackException {
+        for (Callback callback : callbacks) {
+            ...
+            if (callback instanceof AuthorizeCallback) {
+                AuthorizeCallback acb = (AuthorizeCallback) callback;
+                UserProfile user = UserManager.loadUser(acb.getAuthenticationID());
+                if (!user.hasRole("myclusterrole")) {
+                    throw new SecurityException("Unauthorized node " +user);
+                }
+            }
+            ...
+        }
+    }
+}
+----

@@ -132,6 +132,14 @@ The _create_ command creates a new cache based on the configuration of an existi
 [jmx://localhost:12000/MyCacheManager/newCache]>
 ----
 
+==== deny
+When authorization is enabled and the role mapper has been configured to be the ClusterRoleMapper, principal to role mappings are stored within the cluster registry (a replicated cache available to all nodes).
+The _deny_ command can be used to deny roles previously assigned to a principal:
+
+----
+[remoting://localhost:9999]> deny supervisor to user1
+---- 
+
 ==== disconnect
 The _disconnect_ command disconnects the currently active connection allowing the CLI to connect to another instance. 
 
@@ -187,6 +195,14 @@ The _get_ command is used to show the value associated to a specified key. For p
 a
 ----
 
+==== grant
+When authorization is enabled and the role mapper has been configured to be the ClusterRoleMapper, principal to role mappings are stored within the cluster registry (a replicated cache available to all nodes).
+The _grant_ command can be used to grant new roles to a principal:
+
+----
+[remoting://localhost:9999]> grant supervisor to user1
+---- 
+
 ==== info
 The _info_ command is used to show the configuration of the currently selected cache or container. 
 
@@ -241,6 +257,15 @@ c
 [jmx://localhost:12000/MyCacheManager/namedCache]> get a
 c
 ----
+
+==== roles
+When authorization is enabled and the role mapper has been configured to be the ClusterRoleMapper, principal to role mappings are stored within the cluster registry (a replicated cache available to all nodes).
+The _roles_ command can be used to list the roles associated to a specific user, or to all users if one is not given:
+
+----
+[remoting://localhost:9999]> roles user1
+[supervisor, reader]
+---- 
 
 ==== rollback
 The _rollback_ command rolls back an ongoing transaction 
