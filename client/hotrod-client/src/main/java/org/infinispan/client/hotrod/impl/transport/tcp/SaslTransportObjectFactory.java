@@ -69,6 +69,9 @@ public class SaslTransportObjectFactory extends TransportObjectFactory {
       byte challenge[] = auth(tcpTransport, topologyId, configuration.saslMechanism(), response);
       while (!saslClient.isComplete() && challenge != null) {
          response = saslClient.evaluateChallenge(challenge);
+         if (response == null) {
+            break;
+         }
          challenge = auth(tcpTransport, topologyId, "", response);
       }
 
