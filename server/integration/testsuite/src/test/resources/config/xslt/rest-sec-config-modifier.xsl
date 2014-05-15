@@ -3,7 +3,7 @@
 <xsl:stylesheet version="2.0" xmlns:xsl="http://www.w3.org/1999/XSL/Transform"
                 xmlns:security="urn:jboss:domain:security:1.2"
                 xmlns:web="urn:jboss:domain:web:1.1"
-                xmlns:endpoint="urn:infinispan:server:endpoint:6.0">
+                xmlns:endpoint="urn:infinispan:server:endpoint:7.0">
 
     <xsl:output method="xml" indent="yes" omit-xml-declaration="yes"/>
 
