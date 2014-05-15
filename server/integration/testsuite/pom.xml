@@ -751,6 +751,17 @@
             </properties>
         </profile>
         <profile>
+            <id>security.hotrod</id>
+            <properties>
+                <suite.manual.phase>none</suite.manual.phase>
+                <suite.client.local.phase>test</suite.client.local.phase>
+                <suite.client.dist.phase>none</suite.client.dist.phase>
+                <suite.client.repl.phase>none</suite.client.repl.phase>
+                <suite.client.local.config>testsuite/hotrod-auth.xml</suite.client.local.config>
+                <groups.client.local>org.infinispan.server.test.category.SecurityHotRod</groups.client.local>
+            </properties>
+        </profile>
+        <profile>
             <id>client.hotrod.osgi</id>
             <properties>
                 <suite.manual.phase>test</suite.manual.phase>

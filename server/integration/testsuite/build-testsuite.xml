@@ -117,7 +117,7 @@
         </copy>
     </target>
 
-    <target name="create-all-distros" depends="transform-distro1-configs" description="Create all Infinispan server home directories used in the testsuite">
+    <target name="create-all-distros" depends="transform-distro1-configs" description="Create all Infinispan server home directories used in the testsuite">	
         <copy todir="${server2.dist}">
             <fileset dir="${server1.dist}" />
         </copy>
@@ -305,6 +305,9 @@
                 <configure-jdbc in="@{in}" tablePrefix="STRING_INVALIDATION"/>
             </jdbc-conf>
         </transform>
+    	<transform in="standalone.xml" out="testsuite/hotrod-auth.xml" 
+    	    modifyInfinispan="${infinispan.parts}/local-secured.xml"    
+    	    hotrodAuth="${infinispan.parts}/hotrod-auth.xml" />
     </target>
 
     <macrodef name="transform">
@@ -328,6 +331,7 @@
         <attribute name="filtering" default="false"/>
         <attribute name="addAuth" default="false"/>
         <attribute name="addEncrypt" default="false"/>
+        <attribute name="hotrodAuth" default="false"/>
         <element name="jdbc-conf" optional="yes"/>
         <element name="rest-sec" optional="yes"/>
 
@@ -340,6 +344,7 @@
                 <param name="modifyRelay" expression="@{modifyRelay}"/>
                 <param name="addAuth" expression="@{addAuth}"/>
                 <param name="addEncrypt" expression="@{addEncrypt}"/>
+                <param name="hotrodAuth" expression="@{hotrodAuth}"/>
                 <param name="modifyMulticastAddress" expression="@{modifyMulticastAddress}"/>
                 <param name="modifyRemoteDestination" expression="@{modifyRemoteDestination}"/>
                 <param name="modifyOutboundSocketBindingHotRod" expression="@{modifyOutboundSocketBindingHotRod}"/>
