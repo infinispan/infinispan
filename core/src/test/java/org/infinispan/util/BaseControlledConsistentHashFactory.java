@@ -6,6 +6,7 @@ import org.infinispan.distribution.ch.impl.DefaultConsistentHash;
 import org.infinispan.remoting.transport.Address;
 
 import java.io.Serializable;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
@@ -18,14 +19,23 @@ import static org.testng.AssertJUnit.assertEquals;
  * @since 6.0
  */
 @SuppressWarnings("unchecked")
-public abstract class SingleSegmentConsistentHashFactory implements ConsistentHashFactory<DefaultConsistentHash>,
+public abstract class BaseControlledConsistentHashFactory implements ConsistentHashFactory<DefaultConsistentHash>,
                                                                     Serializable {
+   protected final int numSegments;
+
+   protected BaseControlledConsistentHashFactory(int numSegments) {
+      this.numSegments = numSegments;
+   }
 
    @Override
    public DefaultConsistentHash create(Hash hashFunction, int numOwners, int numSegments, List<Address> members,
                                        Map<Address, Float> capacityFactors) {
       assertNumberOfSegments(numSegments);
-      return new DefaultConsistentHash(hashFunction, numOwners, 1, members, null, new List[]{createOwnersCollection(members, numOwners)});
+      List<Address>[] segmentOwners = new List[numSegments];
+      for (int i = 0; i < numSegments; i++) {
+         segmentOwners[i] = createOwnersCollection(members, numOwners, i);
+      }
+      return new DefaultConsistentHash(hashFunction, numOwners, numSegments, members, null, segmentOwners);
    }
 
    @Override
@@ -33,18 +43,26 @@ public abstract class SingleSegmentConsistentHashFactory implements ConsistentHa
                                               Map<Address, Float> capacityFactors) {
       assertNumberOfSegments(baseCH.getNumSegments());
       final int numOwners = baseCH.getNumOwners();
-      DefaultConsistentHash updated = new DefaultConsistentHash(baseCH.getHashFunction(), numOwners, 1, newMembers, null,
-                                                                new List[]{createOwnersCollection(baseCH.getMembers(), numOwners)});
+      List<Address>[] segmentOwners = new List[numSegments];
+      for (int i = 0; i < numSegments; i++) {
+         List<Address> owners = new ArrayList<Address>(baseCH.locateOwnersForSegment(i));
+         owners.retainAll(newMembers);
+         if (owners.isEmpty()) {
+            // updateMembers should only add new owners if there are no owners left
+            owners = createOwnersCollection(newMembers, numOwners, i);
+         }
+         segmentOwners[i] = owners;
+      }
+
+      DefaultConsistentHash updated = new DefaultConsistentHash(baseCH.getHashFunction(), numOwners, numSegments, newMembers, null,
+                                                                segmentOwners);
       return baseCH.equals(updated) ? baseCH : updated;
    }
 
    @Override
    public DefaultConsistentHash rebalance(DefaultConsistentHash baseCH) {
-      assertNumberOfSegments(baseCH.getNumSegments());
-      final List<Address> members = baseCH.getMembers();
-      final int numOwners = baseCH.getNumOwners();
-      DefaultConsistentHash rebalanced = new DefaultConsistentHash(baseCH.getHashFunction(), numOwners, 1, members, null,
-                                                                   new List[]{createOwnersCollection(members, numOwners)});
+      DefaultConsistentHash rebalanced = create(baseCH.getHashFunction(), baseCH.getNumOwners(), baseCH.getNumSegments(),
+            baseCH.getMembers(), baseCH.getCapacityFactors());
       return baseCH.equals(rebalanced) ? baseCH : rebalanced;
    }
 
@@ -55,9 +73,9 @@ public abstract class SingleSegmentConsistentHashFactory implements ConsistentHa
       return ch1.union(ch2);
    }
 
-   protected abstract List<Address> createOwnersCollection(List<Address> members, int numberOfOwners);
+   protected abstract List<Address> createOwnersCollection(List<Address> members, int numberOfOwners, int segmentIndex);
 
    private void assertNumberOfSegments(int numSegments) {
-      assertEquals("Wrong number of segments.", 1, numSegments);
+      assertEquals("Wrong number of segments.", this.numSegments, numSegments);
    }
 }

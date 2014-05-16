@@ -1115,6 +1115,7 @@ public interface Log extends BasicLogger {
    @Message(value = "Iterator response for identifier %s encountered unexpected exception", id = 301)
    void exceptionProcessingIteratorResponse(UUID identifier, @Cause Throwable cause);
 
+   @LogMessage(level = WARN)
    @Message(value = "Issue when retrieving transactions from %s, response was %s", id = 302)
-   CacheException unsuccessfulResponseRetrievingTransactionsForSegments(Address address, Response response);
+   void unsuccessfulResponseRetrievingTransactionsForSegments(Address address, Response response);
 }

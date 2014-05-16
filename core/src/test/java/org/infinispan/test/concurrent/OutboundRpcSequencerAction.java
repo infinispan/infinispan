@@ -67,6 +67,7 @@ public class OutboundRpcSequencerAction {
       private final CommandMatcher matcher;
       private volatile List<String> statesBefore;
       private volatile List<String> statesAfter;
+      private final ThreadLocal<Boolean> accepted = new ThreadLocal<Boolean>();
 
       public SequencerRpcManager(RpcManager rpcManager, StateSequencer stateSequencer, CommandMatcher matcher) {
          super(rpcManager);
@@ -77,7 +78,9 @@ public class OutboundRpcSequencerAction {
       @Override
       protected void beforeInvokeRemotely(ReplicableCommand command) {
          try {
-            StateSequencerUtil.advanceMultiple(stateSequencer, matcher.accept(command), statesBefore);
+            boolean accept = matcher.accept(command);
+            accepted.set(accept);
+            StateSequencerUtil.advanceMultiple(stateSequencer, accept, statesBefore);
          } catch (Exception e) {
             throw new RuntimeException(e);
          }
@@ -86,7 +89,7 @@ public class OutboundRpcSequencerAction {
       @Override
       protected Map<Address, Response> afterInvokeRemotely(ReplicableCommand command, Map<Address, org.infinispan.remoting.responses.Response> responseMap) {
          try {
-            StateSequencerUtil.advanceMultiple(stateSequencer, matcher.accept(command), statesAfter);
+            StateSequencerUtil.advanceMultiple(stateSequencer, accepted.get(), statesAfter);
          } catch (Exception e) {
             throw new RuntimeException(e);
          }

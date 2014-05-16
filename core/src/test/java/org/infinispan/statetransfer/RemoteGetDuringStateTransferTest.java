@@ -13,7 +13,7 @@ import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.CleanupAfterMethod;
 import org.infinispan.tx.dld.ControlledRpcManager;
 import org.infinispan.util.BlockingLocalTopologyManager;
-import org.infinispan.util.SingleSegmentConsistentHashFactory;
+import org.infinispan.util.BaseControlledConsistentHashFactory;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.Test;
 
@@ -583,10 +583,14 @@ public class RemoteGetDuringStateTransferTest extends MultipleCacheManagersTest 
    }
 
    @SuppressWarnings("unchecked")
-   public static class SingleKeyConsistentHashFactory extends SingleSegmentConsistentHashFactory {
+   public static class SingleKeyConsistentHashFactory extends BaseControlledConsistentHashFactory {
+
+      public SingleKeyConsistentHashFactory() {
+         super(1);
+      }
 
       @Override
-      protected List<Address> createOwnersCollection(List<Address> members, int numberOfOwners) {
+      protected List<Address> createOwnersCollection(List<Address> members, int numberOfOwners, int segmentIndex) {
          assertEquals("Wrong number of owners.", 1, numberOfOwners);
          return Collections.singletonList(members.get(members.size() - 1));
       }

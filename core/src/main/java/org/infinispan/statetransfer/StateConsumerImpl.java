@@ -29,6 +29,7 @@ import org.infinispan.notifications.cachelistener.CacheNotifier;
 import org.infinispan.filter.CollectionKeyFilter;
 import org.infinispan.persistence.manager.PersistenceManager;
 import org.infinispan.persistence.spi.AdvancedCacheLoader;
+import org.infinispan.remoting.responses.CacheNotFoundResponse;
 import org.infinispan.remoting.responses.Response;
 import org.infinispan.remoting.responses.SuccessfulResponse;
 import org.infinispan.remoting.rpc.ResponseMode;
@@ -645,20 +646,38 @@ public class StateConsumerImpl implements StateConsumer {
          for (Map.Entry<Address, Set<Integer>> sourceEntry : sources.entrySet()) {
             Address source = sourceEntry.getKey();
             Set<Integer> segmentsFromSource = sourceEntry.getValue();
+            boolean failed = false;
+            boolean exclude = false;
             try {
-               List<TransactionInfo> transactions = getTransactions(source, segmentsFromSource, topologyId);
-               applyTransactions(source, transactions, topologyId);
+               Response response = getTransactions(source, segmentsFromSource, topologyId);
+               if (response instanceof SuccessfulResponse) {
+                  List<TransactionInfo> transactions = (List<TransactionInfo>) ((SuccessfulResponse) response).getResponseValue();
+                  applyTransactions(source, transactions, topologyId);
+               } else if (response instanceof CacheNotFoundResponse) {
+                  log.debugf("Cache %s was stopped on node %s before sending transaction information", cacheName, source);
+                  failed = true;
+                  exclude = true;
+               } else {
+                  log.unsuccessfulResponseRetrievingTransactionsForSegments(source, response);
+                  failed = true;
+               }
             } catch (SuspectException e) {
                log.debugf("Node %s left the cluster before sending transaction information", source);
-               // If requesting the transactions failed we need to retry
-               // If the primary owner is no longer in the cluster, we can retry on a backup owner
-               failedSegments.addAll(segmentsFromSource);
-               excludedSources.add(source);
-            } catch (CacheException e) {
+               failed = true;
+               exclude = true;
+            } catch (Exception e) {
                log.failedToRetrieveTransactionsForSegments(segments, cacheName, source, e);
-               // If requesting the transactions failed we need to retry
                // The primary owner is still in the cluster, so we can't exclude it - see ISPN-4091
+               failed = true;
+            }
+
+            // If requesting the transactions failed we need to retry
+            if (failed) {
                failedSegments.addAll(segmentsFromSource);
+            }
+            // If the primary owner is no longer running, we can retry on a backup owner
+            if (exclude) {
+               excludedSources.add(source);
             }
          }
 
@@ -705,18 +724,14 @@ public class StateConsumerImpl implements StateConsumer {
       return Collections.emptySet();
    }
 
-   private List<TransactionInfo> getTransactions(Address source, Set<Integer> segments, int topologyId) {
+   private Response getTransactions(Address source, Set<Integer> segments, int topologyId) {
       if (trace) {
          log.tracef("Requesting transactions for segments %s of cache %s from node %s", segments, cacheName, source);
       }
       // get transactions and locks
       StateRequestCommand cmd = commandsFactory.buildStateRequestCommand(StateRequestCommand.Type.GET_TRANSACTIONS, rpcManager.getAddress(), topologyId, segments);
       Map<Address, Response> responses = rpcManager.invokeRemotely(Collections.singleton(source), cmd, rpcOptions);
-      Response response = responses.get(source);
-      if (response instanceof SuccessfulResponse) {
-         return (List<TransactionInfo>) ((SuccessfulResponse) response).getResponseValue();
-      }
-      throw log.unsuccessfulResponseRetrievingTransactionsForSegments(source, response);
+      return responses.get(source);
    }
 
    private void requestSegments(Set<Integer> segments, Map<Address, Set<Integer>> sources, Set<Address> excludedSources) {

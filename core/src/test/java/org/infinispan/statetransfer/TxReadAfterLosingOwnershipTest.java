@@ -7,7 +7,7 @@ import org.infinispan.remoting.transport.Address;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.CleanupAfterMethod;
-import org.infinispan.util.SingleSegmentConsistentHashFactory;
+import org.infinispan.util.BaseControlledConsistentHashFactory;
 import org.testng.AssertJUnit;
 import org.testng.annotations.Test;
 
@@ -134,9 +134,13 @@ public class TxReadAfterLosingOwnershipTest extends MultipleCacheManagersTest {
       }
    }
 
-   public static class SingleKeyConsistentHashFactory extends SingleSegmentConsistentHashFactory {
+   public static class SingleKeyConsistentHashFactory extends BaseControlledConsistentHashFactory {
 
-      protected final List<Address> createOwnersCollection(List<Address> members, int numberOfOwners) {
+      public SingleKeyConsistentHashFactory() {
+         super(1);
+      }
+
+      protected final List<Address> createOwnersCollection(List<Address> members, int numberOfOwners, int segmentIndex) {
          //the owners will be the first member and the last (numberOfOwners - 1)-th members
          List<Address> owners = new ArrayList<Address>(numberOfOwners);
          owners.add(members.get(0));
