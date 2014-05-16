@@ -6,8 +6,6 @@ import org.infinispan.commons.api.BasicCacheContainer;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.distribution.BlockingInterceptor;
-import org.infinispan.distribution.MagicKey;
-import org.infinispan.distribution.ch.ConsistentHash;
 import org.infinispan.interceptors.distribution.NonTxDistributionInterceptor;
 import org.infinispan.manager.CacheContainer;
 import org.infinispan.manager.EmbeddedCacheManager;
@@ -20,7 +18,7 @@ import org.infinispan.test.fwk.CleanupAfterMethod;
 import org.infinispan.topology.CacheTopology;
 import org.infinispan.topology.LocalTopologyManager;
 import org.infinispan.transaction.TransactionMode;
-import org.infinispan.util.SingleSegmentConsistentHashFactory;
+import org.infinispan.util.BaseControlledConsistentHashFactory;
 import org.mockito.Mockito;
 import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
@@ -189,9 +187,13 @@ public class NonTxBackupOwnerBecomingPrimaryOwnerTest extends MultipleCacheManag
       assertFalse(cache2.getAdvancedCache().getLockManager().isLocked(key));
    }
 
-   private static class CustomConsistentHashFactory extends SingleSegmentConsistentHashFactory {
+   private static class CustomConsistentHashFactory extends BaseControlledConsistentHashFactory {
+      private CustomConsistentHashFactory() {
+         super(1);
+      }
+
       @Override
-      protected List<Address> createOwnersCollection(List<Address> members, int numberOfOwners) {
+      protected List<Address> createOwnersCollection(List<Address> members, int numberOfOwners, int segmentIndex) {
          assertEquals(2, numberOfOwners);
          if (members.size() == 1)
             return Arrays.asList(members.get(0));

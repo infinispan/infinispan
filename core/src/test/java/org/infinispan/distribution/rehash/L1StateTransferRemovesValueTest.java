@@ -15,7 +15,8 @@ import org.infinispan.statetransfer.StateTransferLock;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.CheckPoint;
 import org.infinispan.topology.CacheTopology;
-import org.infinispan.util.SingleSegmentConsistentHashFactory;
+import org.infinispan.util.BaseControlledConsistentHashFactory;
+import org.infinispan.util.ControlledConsistentHashFactory;
 import org.mockito.AdditionalAnswers;
 import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
@@ -57,11 +58,11 @@ public class L1StateTransferRemovesValueTest extends BaseDistFunctionalTest<Stri
    private final String startValue = "starting-value";
    private final String newValue = "new-value";
 
-   protected final ControllableConsistentHashFactory factory = new ControllableConsistentHashFactory();
+   protected final ControlledConsistentHashFactory factory = new ControlledConsistentHashFactory(0, 1);
 
    @AfterMethod
    public void resetFactory() {
-      factory.setMembersToUse(null);
+      factory.setOwnerIndexes(0, 1);
    }
 
    @Override
@@ -90,7 +91,7 @@ public class L1StateTransferRemovesValueTest extends BaseDistFunctionalTest<Stri
       waitUntilBeforeTopologyInstalled(c2, checkPoint);
 
       // Now force 1 and 3 to be owners so then 3 will get invalidation and state transfer
-      factory.setMembersToUse(new boolean[]{true, false, true, false});
+      factory.setOwnerIndexes(0, 2);
 
       EmbeddedCacheManager cm = addClusterEnabledCacheManager(configuration);
 
@@ -153,7 +154,7 @@ public class L1StateTransferRemovesValueTest extends BaseDistFunctionalTest<Stri
       waitUntilBeforeTopologyInstalled(c2, checkPoint);
 
       // Now force 1 and 3 to be owners so then 3 will get invalidation and state transfer
-      factory.setMembersToUse(new boolean[]{true, false, true, false});
+      factory.setOwnerIndexes(0, 2);
 
       EmbeddedCacheManager cm = addClusterEnabledCacheManager(configuration);
 
@@ -225,27 +226,5 @@ public class L1StateTransferRemovesValueTest extends BaseDistFunctionalTest<Stri
          }
       }).when(mockConsumer).notifyTopologyInstalled(anyInt());
       TestingUtil.replaceComponent(cache, StateTransferLock.class, mockConsumer, true);
-   }
-
-   public static class ControllableConsistentHashFactory extends SingleSegmentConsistentHashFactory {
-
-      private boolean[] membersToUse;
-
-      public void setMembersToUse(boolean[] shouldUseMember) {
-         membersToUse = shouldUseMember;
-      }
-
-      @Override
-      protected final List<Address> createOwnersCollection(List<Address> members, int numberOfOwners) {
-         // The owners will be the first <i>numOwners</i> in <i>member</i> unless {@link #membersToUse} is set, then
-         // the first <i>numOwners</i> of <i>members</i> that are contained in {@link #membersToUse}
-         List<Address> owners = new ArrayList<Address>(numberOfOwners);
-         for (int i = 0; i < members.size() && numberOfOwners > owners.size(); ++i) {
-            if (membersToUse == null || membersToUse.length > i && membersToUse[i]) {
-               owners.add(members.get(i));
-            }
-         }
-         return owners;
-      }
    }
 }

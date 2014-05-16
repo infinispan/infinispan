@@ -19,7 +19,7 @@ import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.tx.dld.ControlledRpcManager;
 import org.infinispan.util.BlockingLocalTopologyManager;
-import org.infinispan.util.SingleSegmentConsistentHashFactory;
+import org.infinispan.util.BaseControlledConsistentHashFactory;
 import org.infinispan.util.concurrent.IsolationLevel;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.Test;
@@ -318,10 +318,14 @@ rebalance_start
 
    }
 
-   public static class ConsistentHashFactoryImpl extends SingleSegmentConsistentHashFactory {
+   public static class ConsistentHashFactoryImpl extends BaseControlledConsistentHashFactory {
+
+      public ConsistentHashFactoryImpl() {
+         super(1);
+      }
 
       @Override
-      protected final List<Address> createOwnersCollection(List<Address> members, int numberOfOwners) {
+      protected final List<Address> createOwnersCollection(List<Address> members, int numberOfOwners, int segmentIndex) {
          assertEquals("Wrong number of owners", 3, numberOfOwners);
          //the primary owner is the last member.
          final List<Address> owners = new ArrayList<Address>(3);
