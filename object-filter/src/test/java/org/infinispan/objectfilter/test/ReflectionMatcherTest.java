@@ -1,6 +1,6 @@
 package org.infinispan.objectfilter.test;
 
-import org.infinispan.objectfilter.ReflectionMatcher;
+import org.infinispan.objectfilter.impl.ReflectionMatcher;
 import org.infinispan.objectfilter.test.model.Address;
 import org.infinispan.objectfilter.test.model.Person;
 import org.infinispan.objectfilter.test.model.PhoneNumber;
@@ -17,6 +17,7 @@ public class ReflectionMatcherTest extends AbstractMatcherTest {
       Person person = new Person();
       person.setName("John");
       person.setSurname("Batman");
+      person.setAge(40);
 
       Address address = new Address();
       address.setStreet("Old Street");

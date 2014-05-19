@@ -1,7 +1,6 @@
-package org.infinispan.objectfilter;
+package org.infinispan.objectfilter.impl;
 
 import com.google.protobuf.Descriptors;
-import org.infinispan.objectfilter.impl.FilterRegistry;
 import org.infinispan.objectfilter.impl.hql.FilterProcessingChain;
 import org.infinispan.objectfilter.impl.hql.ProtobufPropertyHelper;
 import org.infinispan.objectfilter.impl.predicateindex.MatcherEvalContext;
@@ -30,7 +29,6 @@ public final class ProtobufMatcher extends BaseMatcher<Descriptors.Descriptor, I
       wrappedMessageDescriptor = serializationContext.getMessageDescriptor(WrappedMessage.PROTOBUF_TYPE_NAME);
    }
 
-   //todo [anistor] should be possible to also process stream data
    @Override
    protected MatcherEvalContext<Integer> startContext(Object instance, Set<String> knownTypes) {
       ProtobufMatcherEvalContext ctx = new ProtobufMatcherEvalContext(instance, wrappedMessageDescriptor, serializationContext);

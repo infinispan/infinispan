@@ -51,4 +51,9 @@ public final class Predicate<AttributeDomain> {
    public int hashCode() {
       return interval != null ? interval.hashCode() : condition.hashCode();
    }
+
+   @Override
+   public String toString() {
+      return "Predicate(" + (interval != null ? interval.toString() : condition.toString()) + ")";
+   }
 }

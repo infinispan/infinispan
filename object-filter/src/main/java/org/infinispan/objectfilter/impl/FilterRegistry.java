@@ -11,6 +11,7 @@ import org.infinispan.objectfilter.impl.predicateindex.be.BETree;
 import org.infinispan.objectfilter.impl.predicateindex.be.BETreeMaker;
 import org.infinispan.objectfilter.impl.predicateindex.be.PredicateNode;
 import org.infinispan.objectfilter.impl.syntax.BooleanExpr;
+import org.infinispan.objectfilter.impl.util.StringHelper;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -19,7 +20,7 @@ import java.util.List;
  * @author anistor@redhat.com
  * @since 7.0
  */
-public final class FilterRegistry<AttributeId extends Comparable<AttributeId>> {
+final class FilterRegistry<AttributeId extends Comparable<AttributeId>> {
 
    private final PredicateIndex<AttributeId> predicateIndex = new PredicateIndex<AttributeId>();
 
@@ -27,9 +28,12 @@ public final class FilterRegistry<AttributeId extends Comparable<AttributeId>> {
 
    private final BETreeMaker<AttributeId> treeMaker;
 
+   private final BETreeMaker.AttributePathTranslator<AttributeId> attributePathTranslator;
+
    private final String typeName;
 
    public FilterRegistry(BETreeMaker.AttributePathTranslator<AttributeId> attributePathTranslator, String typeName) {
+      this.attributePathTranslator = attributePathTranslator;
       this.typeName = typeName;
       treeMaker = new BETreeMaker<AttributeId>(attributePathTranslator);
    }
@@ -52,15 +56,26 @@ public final class FilterRegistry<AttributeId extends Comparable<AttributeId>> {
       ctx.process(predicateIndex.getRoot());
 
       for (FilterSubscriptionImpl s : filterSubscriptions) {
-         // TODO [anistor] the instance here can be a byte[] or stream if the payload is protobuf encoded
-         s.callback.onFilterResult(ctx.getInstance(), null, ctx.getFilterContext(s).getResult());   //todo projection
+         FilterEvalContext filterEvalContext = ctx.getFilterEvalContext(s);
+         if (filterEvalContext.getMatchResult()) {
+            s.getCallback().onFilterResult(ctx.getInstance(), filterEvalContext.getProjection());
+         }
       }
    }
 
    public FilterSubscriptionImpl addFilter(BooleanExpr normalizedFilter, List<String> projection, final FilterCallback callback) {
-      BETree beTree = treeMaker.make(normalizedFilter);
+      List<List<AttributeId>> translatedProjections = null;
+      if (projection != null && !projection.isEmpty()) {
+         translatedProjections = new ArrayList<List<AttributeId>>(projection.size());
+         for (String projectionPath : projection) {
+            translatedProjections.add(attributePathTranslator.translatePath(StringHelper.splitPropertyPath(projectionPath)));
+         }
+      }
 
-      final FilterSubscriptionImpl filterSubscription = new FilterSubscriptionImpl(typeName, beTree, projection, callback);
+      BETree beTree = treeMaker.make(normalizedFilter);
+      final FilterSubscriptionImpl<AttributeId> filterSubscription = new FilterSubscriptionImpl<AttributeId>(typeName, beTree, projection, callback, translatedProjections);
+
+      filterSubscription.registerProjection(predicateIndex.getRoot());
 
       for (BENode node : beTree.getNodes()) {
          if (node instanceof PredicateNode) {
@@ -68,8 +83,8 @@ public final class FilterRegistry<AttributeId extends Comparable<AttributeId>> {
             Predicate.Callback predicateCallback = new Predicate.Callback() {
                @Override
                public void handleValue(MatcherEvalContext<?> ctx, boolean isMatching) {
-                  FilterEvalContext context = ctx.getFilterContext(filterSubscription);
-                  predicateNode.handleChildValue(predicateNode, isMatching, context);
+                  FilterEvalContext filterEvalContext = ctx.getFilterEvalContext(filterSubscription);
+                  predicateNode.handleChildValue(predicateNode, isMatching, filterEvalContext);
                }
             };
             predicateNode.subscribe(predicateIndex, predicateCallback);
@@ -81,8 +96,10 @@ public final class FilterRegistry<AttributeId extends Comparable<AttributeId>> {
    }
 
    public void removeFilter(FilterSubscription filterSubscription) {
-      FilterSubscriptionImpl filterSubscriptionImpl = (FilterSubscriptionImpl) filterSubscription;
+      FilterSubscriptionImpl<AttributeId> filterSubscriptionImpl = (FilterSubscriptionImpl<AttributeId>) filterSubscription;
       filterSubscriptions.remove(filterSubscriptionImpl);
+      filterSubscriptionImpl.unregisterProjection(predicateIndex.getRoot());
+
       for (BENode node : filterSubscriptionImpl.getBETree().getNodes()) {
          if (node instanceof PredicateNode) {
             PredicateNode predicateNode = (PredicateNode) node;

@@ -41,14 +41,14 @@ public class ProtobufMatcherEvalContext extends MatcherEvalContext<Integer> impl
    public void onStart() {
    }
 
-   //todo [anistor] missing tags need to be fired with default value defined in proto schema; missing messages need to be fired with null at end of the nesting level. BTW, seems like this is better to be included in Protostream as a feature
+   //todo [anistor] missing tags need to be fired with default value defined in proto schema or null if they admit null; missing messages need to be fired with null at end of the nesting level. BTW, seems like this is better to be included in Protostream as a feature
    @Override
    public void onTag(int fieldNumber, String fieldName, Descriptors.FieldDescriptor.Type type, Descriptors.FieldDescriptor.JavaType javaType, Object tagValue) {
       if (payloadStarted) {
          if (skipping == 0) {
             AttributeNode<Integer> attrNode = currentNode.getChild(fieldNumber);
             if (attrNode != null) { // process only 'interesting' tags
-               attrNode.dispatchValueToPredicates(tagValue, this);
+               attrNode.processValue(tagValue, this);
             }
          }
       } else {

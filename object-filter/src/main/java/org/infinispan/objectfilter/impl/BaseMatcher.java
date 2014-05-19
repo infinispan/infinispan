@@ -1,8 +1,10 @@
-package org.infinispan.objectfilter;
+package org.infinispan.objectfilter.impl;
 
 import org.hibernate.hql.QueryParser;
-import org.infinispan.objectfilter.impl.FilterRegistry;
-import org.infinispan.objectfilter.impl.FilterSubscriptionImpl;
+import org.infinispan.objectfilter.FilterCallback;
+import org.infinispan.objectfilter.FilterSubscription;
+import org.infinispan.objectfilter.Matcher;
+import org.infinispan.objectfilter.ObjectFilter;
 import org.infinispan.objectfilter.impl.hql.FilterParsingResult;
 import org.infinispan.objectfilter.impl.hql.FilterProcessingChain;
 import org.infinispan.objectfilter.impl.predicateindex.FilterEvalContext;
@@ -29,7 +31,7 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
  * @author anistor@redhat.com
  * @since 7.0
  */
-public abstract class BaseMatcher<TypeMetadata, AttributeId extends Comparable<AttributeId>> implements Matcher {
+abstract class BaseMatcher<TypeMetadata, AttributeId extends Comparable<AttributeId>> implements Matcher {
 
    private final ReentrantReadWriteLock readWriteLock = new ReentrantReadWriteLock();
 
@@ -43,6 +45,7 @@ public abstract class BaseMatcher<TypeMetadata, AttributeId extends Comparable<A
 
    private final Map<String, FilterRegistry<AttributeId>> filtersByType = new HashMap<String, FilterRegistry<AttributeId>>();
 
+   @Override
    public QueryFactory<Query> getQueryFactory() {
       return new FilterQueryFactory();
    }
@@ -55,6 +58,9 @@ public abstract class BaseMatcher<TypeMetadata, AttributeId extends Comparable<A
     */
    @Override
    public void match(Object instance) {
+      if (instance == null) {
+         throw new IllegalArgumentException("argument cannot be null");
+      }
       read.lock();
       try {
          MatcherEvalContext<AttributeId> ctx = startContext(instance, filtersByType.keySet());
@@ -67,10 +73,39 @@ public abstract class BaseMatcher<TypeMetadata, AttributeId extends Comparable<A
       }
    }
 
-   public Matcher getSingleFilterMatcher(FilterSubscription filterSubscription, final FilterCallback filterCallback) {
-      final FilterSubscriptionImpl filterSubscriptionImpl = (FilterSubscriptionImpl) filterSubscription;
-      final Set<String> types = Collections.singleton(filterSubscriptionImpl.getEntityTypeName());
+   @Override
+   public ObjectFilter getObjectFilter(Query query) {
+      if (!(query instanceof FilterQuery)) {
+         throw new IllegalArgumentException("The Query object must be created by a QueryFactory returned by this Matcher");
+      }
+      FilterQuery filterQuery = (FilterQuery) query;
+      return getObjectFilter(filterQuery.getJpqlString());
+   }
+
+   @Override
+   public ObjectFilter getObjectFilter(String jpaQuery) {
+      FilterParsingResult<TypeMetadata> parsingResult = parse(jpaQuery);
+      BooleanExpr normalizedFilter = booleanFilterNormalizer.normalize(parsingResult.getQuery());
+
+      //todo [anistor] we need an efficient single-filter registry ...
+      FilterRegistry filterRegistry = createFilterRegistryForType(parsingResult.getTargetEntityMetadata());
+      FilterSubscriptionImpl filterSubscriptionImpl = filterRegistry.addFilter(normalizedFilter, parsingResult.getProjections(), new FilterCallback() {
+         @Override
+         public void onFilterResult(Object instance, Object[] projection) {
+            // do nothing
+         }
+      });
+
+      return getObjectFilter(filterSubscriptionImpl);
+   }
+
+   @Override
+   public ObjectFilter getObjectFilter(FilterSubscription filterSubscription) {
+      final FilterSubscriptionImpl<AttributeId> filterSubscriptionImpl = (FilterSubscriptionImpl<AttributeId>) filterSubscription;
+      final Set<String> knownTypes = Collections.singleton(filterSubscriptionImpl.getEntityTypeName());
       final PredicateIndex<AttributeId> predicateIndex = new PredicateIndex<AttributeId>();
+
+      filterSubscriptionImpl.registerProjection(predicateIndex.getRoot());
 
       for (BENode node : filterSubscriptionImpl.getBETree().getNodes()) {
          if (node instanceof PredicateNode) {
@@ -78,28 +113,38 @@ public abstract class BaseMatcher<TypeMetadata, AttributeId extends Comparable<A
             Predicate.Callback predicateCallback = new Predicate.Callback() {
                @Override
                public void handleValue(MatcherEvalContext<?> ctx, boolean isMatching) {
-                  FilterEvalContext context = ctx.getFilterContext(filterSubscriptionImpl);
-                  predicateNode.handleChildValue(predicateNode, isMatching, context);
+                  FilterEvalContext filterEvalContext = ctx.getFilterEvalContext(filterSubscriptionImpl);
+                  predicateNode.handleChildValue(predicateNode, isMatching, filterEvalContext);
                }
             };
             predicateIndex.addSubscriptionForPredicate(predicateNode, predicateCallback);
          }
       }
 
-      return new Matcher() {
+      return new ObjectFilter() {
          @Override
-         public void match(Object instance) {
-            MatcherEvalContext<AttributeId> ctx = startContext(instance, types);
-            if (ctx != null) {
-               ctx.process(predicateIndex.getRoot());
-
-               // TODO [anistor] the instance here can be a byte[] or stream if the payload is protobuf encoded
-               filterCallback.onFilterResult(ctx.getInstance(), null, ctx.getFilterContext(filterSubscriptionImpl).getResult());   //todo projection
+         public Object filter(Object instance) {
+            if (instance == null) {
+               throw new IllegalArgumentException("argument cannot be null");
             }
+            MatcherEvalContext<AttributeId> matcherEvalContext = startContext(instance, knownTypes);
+            if (matcherEvalContext != null) {
+               FilterEvalContext filterEvalContext = matcherEvalContext.getFilterEvalContext(filterSubscriptionImpl);
+               matcherEvalContext.process(predicateIndex.getRoot());
+
+               if (!filterEvalContext.getMatchResult()) {
+                  return null;
+               }
+
+               Object[] projection = filterEvalContext.getProjection();
+               return projection != null ? projection : matcherEvalContext.getInstance();
+            }
+            return null;
          }
       };
    }
 
+   @Override
    public FilterSubscription registerFilter(Query query, FilterCallback callback) {
       if (!(query instanceof FilterQuery)) {
          throw new IllegalArgumentException("The Query object must be created by a QueryFactory returned by this Matcher");
@@ -108,29 +153,35 @@ public abstract class BaseMatcher<TypeMetadata, AttributeId extends Comparable<A
       return registerFilter(filterQuery.getJpqlString(), callback);
    }
 
-   public FilterSubscription registerFilter(String jpaQuery, final FilterCallback callback) {
-      FilterParsingResult<TypeMetadata> parsingResult = queryParser.parseQuery(jpaQuery, createFilterProcessingChain(null)); //todo [anistor] query params not yet supported
+   @Override
+   public FilterSubscription registerFilter(String jpaQuery, FilterCallback callback) {
+      FilterParsingResult<TypeMetadata> parsingResult = parse(jpaQuery);
       BooleanExpr normalizedFilter = booleanFilterNormalizer.normalize(parsingResult.getQuery());
 
       write.lock();
       try {
-         FilterRegistry filterRegistry = filtersByType.get(parsingResult.getTargetEntityName());
+         FilterRegistry<AttributeId> filterRegistry = filtersByType.get(parsingResult.getTargetEntityName());
          if (filterRegistry == null) {
             filterRegistry = createFilterRegistryForType(parsingResult.getTargetEntityMetadata());
             filtersByType.put(parsingResult.getTargetEntityName(), filterRegistry);
          }
-
          return filterRegistry.addFilter(normalizedFilter, parsingResult.getProjections(), callback);
       } finally {
          write.unlock();
       }
    }
 
+   private FilterParsingResult<TypeMetadata> parse(String jpaQuery) {
+      //todo [anistor] query params not yet fully supported by HQL parser. to be added later.
+      return queryParser.parseQuery(jpaQuery, createFilterProcessingChain(null));
+   }
+
+   @Override
    public void unregisterFilter(FilterSubscription filterSubscription) {
       FilterSubscriptionImpl filterSubscriptionImpl = (FilterSubscriptionImpl) filterSubscription;
       write.lock();
       try {
-         FilterRegistry filterRegistry = filtersByType.get(filterSubscriptionImpl.getEntityTypeName());
+         FilterRegistry<AttributeId> filterRegistry = filtersByType.get(filterSubscriptionImpl.getEntityTypeName());
          if (filterRegistry != null) {
             filterRegistry.removeFilter(filterSubscription);
          } else {
@@ -145,8 +196,8 @@ public abstract class BaseMatcher<TypeMetadata, AttributeId extends Comparable<A
    }
 
    /**
-    * Creates a new MatcherEvalContext only if the given instances has any registered filters. This method is called
-    * while holding the write lock.
+    * Creates a new MatcherEvalContext only if the given instance has filters registered. This method is called while
+    * holding the write lock.
     *
     * @param instance
     * @param knownTypes

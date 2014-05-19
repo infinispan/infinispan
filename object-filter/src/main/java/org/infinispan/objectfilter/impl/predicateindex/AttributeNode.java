@@ -1,5 +1,7 @@
 package org.infinispan.objectfilter.impl.predicateindex;
 
+import org.infinispan.objectfilter.impl.FilterSubscriptionImpl;
+
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -11,7 +13,7 @@ import java.util.Map;
  * @author anistor@redhat.com
  * @since 7.0
  */
-class AttributeNode<AttributeId extends Comparable<AttributeId>> {
+public class AttributeNode<AttributeId extends Comparable<AttributeId>> {
 
    //todo [anistor] add here all metadata so it is precomputed and the MatcherEvalContext is simplified and more efficient
 
@@ -25,11 +27,6 @@ class AttributeNode<AttributeId extends Comparable<AttributeId>> {
     * Child attributes.
     */
    private Map<AttributeId, AttributeNode<AttributeId>> children;
-
-   /**
-    * Usage count.
-    */
-   private int refCount = 0;
 
    /**
     * Root node must not have predicates. This field is always null for root node. Non-leaf nodes can only have
@@ -83,7 +80,10 @@ class AttributeNode<AttributeId extends Comparable<AttributeId>> {
       return projections != null && projections.hasProjections();
    }
 
-   public void dispatchValueToPredicates(Object attributeValue, MatcherEvalContext<AttributeId> ctx) {
+   public void processValue(Object attributeValue, MatcherEvalContext<AttributeId> ctx) {
+      if (projections != null) {
+         projections.processProjections(ctx, attributeValue);
+      }
       if (predicates != null) {
          predicates.notifyMatchingSubscribers(ctx, attributeValue);
       }
@@ -96,7 +96,7 @@ class AttributeNode<AttributeId extends Comparable<AttributeId>> {
     * @param attribute
     * @return the added or existing child
     */
-   AttributeNode<AttributeId> addChild(AttributeId attribute) {
+   public AttributeNode<AttributeId> addChild(AttributeId attribute) {
       AttributeNode<AttributeId> child;
       if (children == null) {
          children = new HashMap<AttributeId, AttributeNode<AttributeId>>();
@@ -109,7 +109,6 @@ class AttributeNode<AttributeId extends Comparable<AttributeId>> {
             children.put(attribute, child);
          }
       }
-      child.refCount++;
       return child;
    }
 
@@ -119,7 +118,7 @@ class AttributeNode<AttributeId extends Comparable<AttributeId>> {
     *
     * @param attribute the attribute of the child to be removed
     */
-   void removeChild(AttributeId attribute) {
+   public void removeChild(AttributeId attribute) {
       if (children == null) {
          throw new IllegalArgumentException("No child found : " + attribute);
       }
@@ -127,24 +126,34 @@ class AttributeNode<AttributeId extends Comparable<AttributeId>> {
       if (child == null) {
          throw new IllegalArgumentException("No child found : " + attribute);
       }
-      if (--child.refCount == 0) {
-         children.remove(attribute);
-         if (children.isEmpty() && parent != null) {
-            parent.removeChild(attribute);
-         }
-      }
+      children.remove(attribute);
    }
 
-   void addPredicateSubscription(PredicateIndex.Subscription subscription) {
+   public void addPredicateSubscription(PredicateIndex.Subscription subscription) {
       if (predicates == null) {
          predicates = new Predicates();
       }
       predicates.addPredicate(subscription);
    }
 
-   void removePredicateSubscription(PredicateIndex.Subscription subscription) {
+   public void removePredicateSubscription(PredicateIndex.Subscription subscription) {
       if (predicates != null) {
          predicates.removePredicate(subscription);
+      } else {
+         throw new IllegalStateException("Reached illegal state");
+      }
+   }
+
+   public void addProjection(FilterSubscriptionImpl filterSubscription, int position) {
+      if (projections == null) {
+         projections = new Projections();
+      }
+      projections.addProjection(filterSubscription, position);
+   }
+
+   public void removeProjections(FilterSubscriptionImpl filterSubscription) {
+      if (projections != null) {
+         projections.removeProjections(filterSubscription);
       } else {
          throw new IllegalStateException("Reached illegal state");
       }

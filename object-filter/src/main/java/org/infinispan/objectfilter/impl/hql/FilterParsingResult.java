@@ -4,7 +4,6 @@ import org.hibernate.hql.ast.spi.EntityNamesResolver;
 import org.infinispan.objectfilter.impl.syntax.BooleanExpr;
 
 import java.util.Collections;
-import java.util.Comparator;
 import java.util.List;
 
 /**
@@ -19,16 +18,12 @@ public final class FilterParsingResult<TypeMetadata> {
    private final TypeMetadata targetEntityMetadata;
    private final List<String> projections;
 
-   // Optional comparator, representing the 'order by' clause of the query
-   private Comparator comparator;
-
    public FilterParsingResult(BooleanExpr filter, String targetEntityName, TypeMetadata targetEntityMetadata,
-                              List<String> projections, Comparator comparator) {
+                              List<String> projections) {
       this.filter = filter;
       this.targetEntityName = targetEntityName;
       this.targetEntityMetadata = targetEntityMetadata;
       this.projections = projections != null ? projections : Collections.<String>emptyList();
-      this.comparator = comparator;
    }
 
    /**
@@ -70,15 +65,8 @@ public final class FilterParsingResult<TypeMetadata> {
       return projections;
    }
 
-   /**
-    * A Comparator that can be used to sort objects according to the 'order by' clause.
-    */
-   public Comparator getComparator() {
-      return comparator;
-   }
-
    @Override
    public String toString() {
-      return "FilterParsingResult [filter=" + filter + ", targetEntityName=" + targetEntityName + ", projections=" + projections + ", comparator=" + comparator + "]";
+      return "FilterParsingResult [filter=" + filter + ", targetEntityName=" + targetEntityName + ", projections=" + projections + "]";
    }
 }

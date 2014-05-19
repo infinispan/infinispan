@@ -8,53 +8,76 @@ import java.util.List;
  */
 public class Person {
 
-   private String name;
+   // fields start with underscore to demonstrate that property getter access is used instead of field access
+   private String _name;
 
-   private String surname;
+   private String _surname;
 
-   private Address address;
+   private Address _address;
 
-   private List<PhoneNumber> phoneNumbers;
+   private int _age;
+
+   private List<PhoneNumber> _phoneNumbers;
+
+   private String _license;
 
    public String getName() {
-      return name;
+      return _name;
    }
 
    public void setName(String name) {
-      this.name = name;
+      this._name = name;
    }
 
    public String getSurname() {
-      return surname;
+      return _surname;
    }
 
    public void setSurname(String surname) {
-      this.surname = surname;
+      this._surname = surname;
    }
 
    public Address getAddress() {
-      return address;
+      return _address;
    }
 
    public void setAddress(Address address) {
-      this.address = address;
+      this._address = address;
+   }
+
+   public int getAge() {
+      return _age;
+   }
+
+   public void setAge(int age) {
+      this._age = age;
    }
 
    public List<PhoneNumber> getPhoneNumbers() {
-      return phoneNumbers;
+      return _phoneNumbers;
    }
 
    public void setPhoneNumbers(List<PhoneNumber> phoneNumbers) {
-      this.phoneNumbers = phoneNumbers;
+      this._phoneNumbers = phoneNumbers;
+   }
+
+   public String getLicense() {
+      return _license;
+   }
+
+   public void setLicense(String license) {
+      this._license = license;
    }
 
    @Override
    public String toString() {
       return "Person{" +
-            "name='" + name + '\'' +
-            ", surname='" + surname + '\'' +
-            ", phoneNumbers=" + phoneNumbers +
-            ", address=" + address +
+            "name='" + _name + '\'' +
+            ", surname='" + _surname + '\'' +
+            ", phoneNumbers=" + _phoneNumbers +
+            ", address=" + _address +
+            ", age=" + _age +
+            ", license=" + _license +
             '}';
    }
 }

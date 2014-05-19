@@ -31,8 +31,6 @@ public final class PropertyValueExpr implements ValueExpr {
 
    @Override
    public String toString() {
-      return "PropertyValueExpr{" +
-            "propertyPath='" + propertyPath + '\'' +
-            '}';
+      return "PropertyValueExpr(" + propertyPath + ')';
    }
 }

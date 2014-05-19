@@ -8,7 +8,8 @@ public class PhoneNumber {
 
    private String number;
 
-   public String getNumber() {
+   // this is protected in order to demonstrate that direct field access will be used instead of method access
+   protected String getNumber() {
       return number;
    }
 

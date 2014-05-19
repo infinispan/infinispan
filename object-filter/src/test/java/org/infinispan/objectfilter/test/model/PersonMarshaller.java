@@ -18,6 +18,8 @@ public class PersonMarshaller implements MessageMarshaller<Person> {
       person.setSurname(reader.readString("surname"));
       person.setAddress(reader.readObject("address", Address.class));
       person.setPhoneNumbers(reader.readCollection("phoneNumbers", new ArrayList<PhoneNumber>(), PhoneNumber.class));
+      person.setAge(reader.readInt("age"));
+      person.setLicense(reader.readString("license"));
       return person;
    }
 
@@ -27,6 +29,8 @@ public class PersonMarshaller implements MessageMarshaller<Person> {
       writer.writeString("surname", person.getSurname());
       writer.writeObject("address", person.getAddress(), Address.class);
       writer.writeCollection("phoneNumbers", person.getPhoneNumbers(), PhoneNumber.class);
+      writer.writeInt("age", person.getAge());
+      writer.writeString("license", person.getLicense());
    }
 
    @Override

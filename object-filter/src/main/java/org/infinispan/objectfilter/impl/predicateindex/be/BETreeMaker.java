@@ -40,7 +40,11 @@ public final class BETreeMaker<AttributeId extends Comparable<AttributeId>> {
       List<BENode> nodes = new ArrayList<BENode>();
       List<Integer> treeCounters = new ArrayList<Integer>();
 
-      preorderTraversal(null, booleanExpr, nodes, treeCounters);
+      if (booleanExpr instanceof ConstantBooleanExpr) {
+         treeCounters.add(((ConstantBooleanExpr) booleanExpr).getValue() ? BETree.EXPR_TRUE : BETree.EXPR_FALSE);
+      } else {
+         preorderTraversal(null, booleanExpr, nodes, treeCounters);
+      }
 
       int[] countersArray = new int[treeCounters.size()];
       for (int i = 0; i < countersArray.length; i++) {
