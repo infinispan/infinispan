@@ -16,24 +16,16 @@ public class FilterRendererDelegate<TypeMetadata> extends SingleEntityQueryRende
 
    private final ObjectPropertyHelper<TypeMetadata> propertyHelper;
 
-   /**
-    * Optional {@code Comparator} that corresponds to the 'order by' clause.
-    */
-   //private PropsComparator comparator;
-
    private TypeMetadata targetEntityMetadata;
 
-   public FilterRendererDelegate(ObjectPropertyHelper propertyHelper, SingleEntityQueryBuilder<BooleanExpr> builder, Map<String, Object> namedParameters) {
+   public FilterRendererDelegate(ObjectPropertyHelper<TypeMetadata> propertyHelper, SingleEntityQueryBuilder<BooleanExpr> builder, Map<String, Object> namedParameters) {
       super(propertyHelper.getEntityNamesResolver(), builder, namedParameters);
       this.propertyHelper = propertyHelper;
    }
 
-   //@Override  TODO switch to latest hql parser to be able to use sorting
+   //@Override
    protected void addSortField(PropertyPath propertyPath, String collateName, boolean isAscending) {
-//      if (comparator == null) {
-//         comparator = new PropsComparator();
-//      }
-//      comparator.addSort(new PropertyValueExpr(propertyPath.asStringPathWithoutAlias()), isAscending);
+      //todo [anistor] Sorting is not currently supported for object filters
    }
 
    @Override
@@ -58,6 +50,6 @@ public class FilterRendererDelegate<TypeMetadata> extends SingleEntityQueryRende
 
    @Override
    public FilterParsingResult<TypeMetadata> getResult() {
-      return new FilterParsingResult<TypeMetadata>(builder.build(), targetTypeName, targetEntityMetadata, projections, null /*comparator*/);
+      return new FilterParsingResult<TypeMetadata>(builder.build(), targetTypeName, targetEntityMetadata, projections);
    }
 }

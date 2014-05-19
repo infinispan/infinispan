@@ -24,8 +24,6 @@ public final class NotExpr implements BooleanExpr {
 
    @Override
    public String toString() {
-      return "NotExpr{" +
-            "child=" + child +
-            '}';
+      return "NotExpr(" + child + ')';
    }
 }

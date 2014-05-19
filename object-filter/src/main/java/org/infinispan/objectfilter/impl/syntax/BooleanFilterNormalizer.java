@@ -228,6 +228,16 @@ public final class BooleanFilterNormalizer {
             return ((NotExpr) booleanExpr).getChild();
          }
 
+         // interval predicates cannot be negated, they are converted instead into the opposite interval
+         // and the special case of equality is transformed into two intervals, excluding the compared value
+         if (booleanExpr instanceof ComparisonExpr) {
+            ComparisonExpr c = (ComparisonExpr) booleanExpr;
+            if (c.getComparisonType() == ComparisonPredicate.Type.EQUALS) {
+               return new OrExpr(new ComparisonExpr(c.getLeftChild(), c.getRightChild(), ComparisonPredicate.Type.LESS),
+                                 new ComparisonExpr(c.getLeftChild(), c.getRightChild(), ComparisonPredicate.Type.GREATER));
+            }
+         }
+
          return new NotExpr(booleanExpr);
       }
 

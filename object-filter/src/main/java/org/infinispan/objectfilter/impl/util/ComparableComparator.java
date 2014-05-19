@@ -3,7 +3,7 @@ package org.infinispan.objectfilter.impl.util;
 import java.util.Comparator;
 
 /**
- * Trivial Comparator implementation that expects the objects to be compared implement Comparable themselves.
+ * Trivial Comparator implementation that expects the objects to be compared to implement Comparable themselves.
  *
  * @author anistor@redhat.com
  * @since 7.0

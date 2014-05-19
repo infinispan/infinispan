@@ -15,25 +15,35 @@ public final class AndNode extends BENode {
    @Override
    public boolean handleChildValue(BENode child, boolean childValue, FilterEvalContext evalContext) {
       if (evalContext.treeCounters[index] <= 0) {
-         throw new IllegalStateException("This should never be called again if the state of this node was previously decided.");
+         throw new IllegalStateException("This should never be called again because the state of this node has been decided already.");
       }
 
       if (parent == null) {
-         evalContext.treeCounters[0] = childValue ? 0 : -1;
-         for (int i = index; i < span; i++) {
-            evalContext.beTree.getNodes()[i].suspendSubscription(evalContext);
+         if (childValue) {
+            if (--evalContext.treeCounters[index] == BETree.EXPR_TRUE) {
+               for (int i = index; i < span; i++) {
+                  evalContext.beTree.getNodes()[i].suspendSubscription(evalContext);
+               }
+               return true;
+            }
+            return false;
+         } else {
+            evalContext.treeCounters[0] = BETree.EXPR_FALSE;
+            for (int i = index; i < span; i++) {
+               evalContext.beTree.getNodes()[i].suspendSubscription(evalContext);
+            }
+            return true;
          }
-         return true;
       }
 
       if (childValue) {
-         if (--evalContext.treeCounters[index] == 0) {
+         if (--evalContext.treeCounters[index] == BETree.EXPR_TRUE) {
             // value of this node has just been decided, let the parent know
             return parent.handleChildValue(this, true, evalContext);
          } else {
             // value of this node cannot be decided yet, so we cannot tell the parent anything yet but let's at least mark down the children as 'satisfied'
             for (int i = child.index; i < child.span; i++) {
-               evalContext.treeCounters[i] = 0;
+               evalContext.treeCounters[i] = BETree.EXPR_TRUE;
                evalContext.beTree.getNodes()[i].suspendSubscription(evalContext);
             }
             return false;

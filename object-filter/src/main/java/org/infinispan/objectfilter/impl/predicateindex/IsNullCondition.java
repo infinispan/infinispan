@@ -15,4 +15,9 @@ public final class IsNullCondition extends Condition<Object> {
    public boolean match(Object attributeValue) {
       return attributeValue == null;
    }
+
+   @Override
+   public String toString() {
+      return "IsNullCondition";
+   }
 }

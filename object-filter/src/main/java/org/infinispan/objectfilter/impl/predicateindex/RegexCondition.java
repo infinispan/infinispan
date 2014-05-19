@@ -32,4 +32,9 @@ public final class RegexCondition extends Condition<String> {
    public int hashCode() {
       return pattern.hashCode();
    }
+
+   @Override
+   public String toString() {
+      return "RegexCondition(" + pattern + ')';
+   }
 }

@@ -121,21 +121,10 @@ public final class ReflectionPropertyHelper extends ObjectPropertyHelper<Class<?
    }
 
    private Class<?> getPropertyTypeByPath(Class<?> entityClass, List<String> propertyPath) {
-      Class<?> result = entityClass;
-      for (String propName : propertyPath) {
-
-         Class elementType = ReflectionHelper.getElementType(result, propName);
-         if (elementType != null) {
-            result = elementType;
-         } else {
-            result = ReflectionHelper.getPropertyType(result, propName);
-         }
-
-         if (result == null) {
-            //todo [anistor] exiting here without completing the path seem to be a bug. need to investigate if this also happens in hibernate-hql-lucene module
-            break;
-         }
+      ReflectionHelper.PropertyAccessor accessor = ReflectionHelper.getAccessor(entityClass, propertyPath.get(0));
+      for (int i = 1; i < propertyPath.size(); i++) {
+         accessor = accessor.getAccessor(propertyPath.get(i));
       }
-      return result;
+      return accessor.getPropertyType();
    }
 }

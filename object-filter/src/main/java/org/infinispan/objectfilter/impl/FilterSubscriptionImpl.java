@@ -2,6 +2,7 @@ package org.infinispan.objectfilter.impl;
 
 import org.infinispan.objectfilter.FilterCallback;
 import org.infinispan.objectfilter.FilterSubscription;
+import org.infinispan.objectfilter.impl.predicateindex.AttributeNode;
 import org.infinispan.objectfilter.impl.predicateindex.be.BETree;
 
 import java.util.List;
@@ -10,17 +11,19 @@ import java.util.List;
  * @author anistor@redhat.com
  * @since 7.0
  */
-public final class FilterSubscriptionImpl implements FilterSubscription {
+public final class FilterSubscriptionImpl<AttributeId extends Comparable<AttributeId>> implements FilterSubscription {
 
-   protected final String entityTypeName;
+   private final String entityTypeName;
 
-   protected final BETree beTree;
+   private final BETree beTree;
 
-   protected final FilterCallback callback;
+   private final FilterCallback callback;
 
    private final String[] projection;
 
-   public FilterSubscriptionImpl(String entityTypeName, BETree beTree, List<String> projection, FilterCallback callback) {
+   private final List<List<AttributeId>> translatedProjection;
+
+   public FilterSubscriptionImpl(String entityTypeName, BETree beTree, List<String> projection, FilterCallback callback, List<List<AttributeId>> translatedProjection) {
       this.entityTypeName = entityTypeName;
       this.beTree = beTree;
       this.callback = callback;
@@ -30,21 +33,51 @@ public final class FilterSubscriptionImpl implements FilterSubscription {
       } else {
          this.projection = null;
       }
+
+      this.translatedProjection = translatedProjection;
    }
 
    public BETree getBETree() {    // todo [anistor] do not expose this
       return beTree;
    }
 
+   @Override
    public String getEntityTypeName() {
       return entityTypeName;
    }
 
+   @Override
    public FilterCallback getCallback() {   // todo [anistor] do not expose this
       return callback;
    }
 
+   @Override
    public String[] getProjection() {
       return projection;
+   }
+
+   public void registerProjection(AttributeNode<AttributeId> root) {
+      if (translatedProjection != null) {
+         for (int i = 0; i < translatedProjection.size(); i++) {
+            List<AttributeId> projectionPath = translatedProjection.get(i);
+            AttributeNode<AttributeId> currentNode = root;
+            for (AttributeId attribute : projectionPath) {
+               currentNode = currentNode.addChild(attribute);
+            }
+            currentNode.addProjection(this, i);
+         }
+      }
+   }
+
+   public void unregisterProjection(AttributeNode<AttributeId> root) {
+      if (translatedProjection != null) {
+         for (List<AttributeId> projectionPath : translatedProjection) {
+            AttributeNode<AttributeId> currentNode = root;
+            for (AttributeId attribute : projectionPath) {
+               currentNode = currentNode.getChild(attribute);
+            }
+            currentNode.removeProjections(this);
+         }
+      }
    }
 }

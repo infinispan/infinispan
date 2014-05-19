@@ -1,13 +1,15 @@
 
-ä
+‚
 7org/infinispan/objectfilter/test/model/test_model.proto&org.infinispan.objectfilter.test.model"+
 Address
 street (	
 postCode (	"
 PhoneNumber
-number (	"´
+number (	"Ò
 Person
 name (	
 surname (	@
 address (2/.org.infinispan.objectfilter.test.model.AddressI
-phoneNumbers (23.org.infinispan.objectfilter.test.model.PhoneNumber
+phoneNumbers (23.org.infinispan.objectfilter.test.model.PhoneNumber
+age (
+license (	

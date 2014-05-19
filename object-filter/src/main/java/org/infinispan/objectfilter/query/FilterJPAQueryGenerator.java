@@ -13,7 +13,7 @@ public final class FilterJPAQueryGenerator extends JPAQueryGenerator {
 
    @Override
    protected String renderEntityName(String rootType) {
-      //todo [anistor] this should just checks the type can actually be marshalled with current config
+      //todo [anistor] this should just check the type can actually be marshalled with current config
       return rootType;
    }
 }

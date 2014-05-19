@@ -24,8 +24,6 @@ public class IsNullExpr implements PrimaryPredicateExpr {
 
    @Override
    public String toString() {
-      return "IsNullExpr{" +
-            "child=" + child +
-            '}';
+      return "IsNullExpr(" + child + ')';
    }
 }

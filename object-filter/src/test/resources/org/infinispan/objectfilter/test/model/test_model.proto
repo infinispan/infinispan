@@ -21,4 +21,8 @@ message Person {
    optional Address address = 3;
 
    repeated PhoneNumber phoneNumbers = 4;
+
+   optional uint32 age = 5;
+
+   optional string license = 6;
 }

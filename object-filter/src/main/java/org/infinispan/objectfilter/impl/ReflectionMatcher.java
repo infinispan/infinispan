@@ -1,6 +1,5 @@
-package org.infinispan.objectfilter;
+package org.infinispan.objectfilter.impl;
 
-import org.infinispan.objectfilter.impl.FilterRegistry;
 import org.infinispan.objectfilter.impl.hql.FilterProcessingChain;
 import org.infinispan.objectfilter.impl.hql.ReflectionPropertyHelper;
 import org.infinispan.objectfilter.impl.predicateindex.MatcherEvalContext;
@@ -49,19 +48,14 @@ public final class ReflectionMatcher extends BaseMatcher<Class<?>, String> {
 
          @Override
          public boolean isRepeated(List<String> path) {
-            Class<?> entityClass = clazz;
-            for (String propName : path) {
-
-               Class elementType = ReflectionHelper.getElementType(entityClass, propName);
-               if (elementType != null) {
+            ReflectionHelper.PropertyAccessor a = ReflectionHelper.getAccessor(clazz, path.get(0));
+            if (a.isMultiple()) {
+               return true;
+            }
+            for (int i = 1; i < path.size(); i++) {
+               a = a.getAccessor(path.get(i));
+               if (a.isMultiple()) {
                   return true;
-               } else {
-                  entityClass = ReflectionHelper.getPropertyType(entityClass, propName);
-               }
-
-               if (entityClass == null) {
-                  //todo [anistor] error?
-                  break;
                }
             }
             return false;

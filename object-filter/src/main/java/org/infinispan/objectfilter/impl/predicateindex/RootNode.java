@@ -1,5 +1,7 @@
 package org.infinispan.objectfilter.impl.predicateindex;
 
+import org.infinispan.objectfilter.impl.FilterSubscriptionImpl;
+
 /**
  * @author anistor@redhat.com
  * @since 7.0
@@ -11,13 +13,23 @@ final class RootNode<AttributeId extends Comparable<AttributeId>> extends Attrib
    }
 
    @Override
-   void addPredicateSubscription(PredicateIndex.Subscription subscription) {
+   public void addPredicateSubscription(PredicateIndex.Subscription subscription) {
       throw new UnsupportedOperationException("Root node does not allow predicates");
    }
 
    @Override
-   void removePredicateSubscription(PredicateIndex.Subscription subscription) {
+   public void removePredicateSubscription(PredicateIndex.Subscription subscription) {
       throw new UnsupportedOperationException("Root node does not allow predicates");
+   }
+
+   @Override
+   public void addProjection(FilterSubscriptionImpl filterSubscription, int position) {
+      throw new UnsupportedOperationException("Root node does not allow projections");
+   }
+
+   @Override
+   public void removeProjections(FilterSubscriptionImpl filterSubscription) {
+      throw new UnsupportedOperationException("Root node does not allow projections");
    }
 
    @Override

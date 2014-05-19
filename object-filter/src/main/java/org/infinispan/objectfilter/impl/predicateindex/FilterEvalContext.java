@@ -12,18 +12,18 @@ public final class FilterEvalContext {
 
    public final BETree beTree;
 
-   // 0 true
-   // -1 false
-   // > 0 undecided
    public final int[] treeCounters;
 
    public final MatcherEvalContext<?> matcherContext;
 
-   public FilterEvalContext(BETree beTree, MatcherEvalContext<?> matcherContext) {
+   public final Object[] projection;
+
+   public FilterEvalContext(BETree beTree, MatcherEvalContext<?> matcherContext, Object[] projection) {
       this.beTree = beTree;
       this.matcherContext = matcherContext;
       int[] childCounters = beTree.getChildCounters();
       this.treeCounters = Arrays.copyOf(childCounters, childCounters.length);
+      this.projection = projection;
    }
 
    /**
@@ -32,7 +32,11 @@ public final class FilterEvalContext {
     *
     * @return true if the filter matches the given input, false otherwise
     */
-   public boolean getResult() {
-      return treeCounters[0] == 0;
+   public boolean getMatchResult() {
+      return treeCounters[0] == BETree.EXPR_TRUE;
+   }
+
+   public Object[] getProjection() {
+      return projection;
    }
 }

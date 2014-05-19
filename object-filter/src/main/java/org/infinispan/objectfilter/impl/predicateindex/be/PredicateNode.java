@@ -65,11 +65,7 @@ public final class PredicateNode<AttributeId extends Comparable<AttributeId>> ex
          throw new IllegalStateException("This should never be called again if the state of this node was previously decided.");
       }
 
-      if (isNegated) {
-         childValue = !childValue;
-      }
-
-      evalContext.treeCounters[index] = childValue ? 0 : -1;
+      evalContext.treeCounters[index] = childValue ? BETree.EXPR_TRUE : BETree.EXPR_FALSE;
 
       if (parent == null) {
          suspendSubscription(evalContext);
@@ -94,5 +90,15 @@ public final class PredicateNode<AttributeId extends Comparable<AttributeId>> ex
    @Override
    public void suspendSubscription(FilterEvalContext ctx) {
       subscription.suspend(ctx.matcherContext);
+   }
+
+   @Override
+   public String toString() {
+      return "PredicateNode{" +
+            "attributePath=" + attributePath +
+            ", predicate=" + predicate +
+            ", isNegated=" + isNegated +
+            ", isRepeated=" + isRepeated +
+            '}';
    }
 }

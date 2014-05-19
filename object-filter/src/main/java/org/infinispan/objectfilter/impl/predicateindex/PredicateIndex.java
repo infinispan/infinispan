@@ -16,7 +16,7 @@ import java.util.concurrent.atomic.AtomicInteger;
  */
 public final class PredicateIndex<AttributeId extends Comparable<AttributeId>> {
 
-   public class Subscription {
+   public final class Subscription {
       private final PredicateNode<AttributeId> predicateNode;
       private final Predicate.Callback callback;
       private boolean isSuspended = false;
@@ -51,7 +51,7 @@ public final class PredicateIndex<AttributeId extends Comparable<AttributeId>> {
          // remove the nodes that no longer have a purpose
          while (current != root) {
             if (current.getNumChildren() > 0 || current.hasPredicates() || current.hasProjections()) {
-               return;
+               break;
             }
 
             AttributeId childId = current.getAttribute();

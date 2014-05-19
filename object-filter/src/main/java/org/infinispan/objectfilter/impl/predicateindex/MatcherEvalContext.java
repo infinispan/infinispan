@@ -40,10 +40,11 @@ public abstract class MatcherEvalContext<AttributeId extends Comparable<Attribut
       return instance;
    }
 
-   public FilterEvalContext getFilterContext(FilterSubscriptionImpl filterSubscription) {
+   public FilterEvalContext getFilterEvalContext(FilterSubscriptionImpl filterSubscription) {
       FilterEvalContext filterEvalContext = filterContexts.get(filterSubscription);
       if (filterEvalContext == null) {
-         filterEvalContext = new FilterEvalContext(filterSubscription.getBETree(), this);
+         Object[] projection = filterSubscription.getProjection() != null ? new Object[filterSubscription.getProjection().length] : null;
+         filterEvalContext = new FilterEvalContext(filterSubscription.getBETree(), this, projection);
          filterContexts.put(filterSubscription, filterEvalContext);
       }
       return filterEvalContext;
