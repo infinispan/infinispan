@@ -61,6 +61,7 @@ abstract class BaseMatcher<TypeMetadata, AttributeId extends Comparable<Attribut
       if (instance == null) {
          throw new IllegalArgumentException("argument cannot be null");
       }
+
       read.lock();
       try {
          MatcherEvalContext<AttributeId> ctx = startContext(instance, filtersByType.keySet());
@@ -105,7 +106,7 @@ abstract class BaseMatcher<TypeMetadata, AttributeId extends Comparable<Attribut
       final Set<String> knownTypes = Collections.singleton(filterSubscriptionImpl.getEntityTypeName());
       final PredicateIndex<AttributeId> predicateIndex = new PredicateIndex<AttributeId>();
 
-      filterSubscriptionImpl.registerProjection(predicateIndex.getRoot());
+      filterSubscriptionImpl.registerProjection(predicateIndex);
 
       for (BENode node : filterSubscriptionImpl.getBETree().getNodes()) {
          if (node instanceof PredicateNode) {
@@ -114,7 +115,7 @@ abstract class BaseMatcher<TypeMetadata, AttributeId extends Comparable<Attribut
                @Override
                public void handleValue(MatcherEvalContext<?> ctx, boolean isMatching) {
                   FilterEvalContext filterEvalContext = ctx.getFilterEvalContext(filterSubscriptionImpl);
-                  predicateNode.handleChildValue(predicateNode, isMatching, filterEvalContext);
+                  predicateNode.handleChildValue(null, isMatching, filterEvalContext);
                }
             };
             predicateIndex.addSubscriptionForPredicate(predicateNode, predicateCallback);
@@ -123,22 +124,27 @@ abstract class BaseMatcher<TypeMetadata, AttributeId extends Comparable<Attribut
 
       return new ObjectFilter() {
          @Override
+         public String[] getProjection() {
+            return filterSubscriptionImpl.getProjection();
+         }
+
+         @Override
          public Object filter(Object instance) {
             if (instance == null) {
                throw new IllegalArgumentException("argument cannot be null");
             }
+
             MatcherEvalContext<AttributeId> matcherEvalContext = startContext(instance, knownTypes);
             if (matcherEvalContext != null) {
                FilterEvalContext filterEvalContext = matcherEvalContext.getFilterEvalContext(filterSubscriptionImpl);
                matcherEvalContext.process(predicateIndex.getRoot());
 
-               if (!filterEvalContext.getMatchResult()) {
-                  return null;
+               if (filterEvalContext.getMatchResult()) {
+                  Object[] projection = filterEvalContext.getProjection();
+                  return projection != null ? projection : instance;
                }
-
-               Object[] projection = filterEvalContext.getProjection();
-               return projection != null ? projection : matcherEvalContext.getInstance();
             }
+
             return null;
          }
       };
@@ -199,7 +205,7 @@ abstract class BaseMatcher<TypeMetadata, AttributeId extends Comparable<Attribut
     * Creates a new MatcherEvalContext only if the given instance has filters registered. This method is called while
     * holding the write lock.
     *
-    * @param instance
+    * @param instance   the instance to filter; never null
     * @param knownTypes
     * @return the context or null if no filter was registered for the instance
     */

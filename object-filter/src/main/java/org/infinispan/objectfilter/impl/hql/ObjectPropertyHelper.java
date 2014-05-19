@@ -3,13 +3,26 @@ package org.infinispan.objectfilter.impl.hql;
 import org.hibernate.hql.ast.spi.EntityNamesResolver;
 import org.hibernate.hql.ast.spi.PropertyHelper;
 
+import java.text.DateFormat;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
+import java.util.Date;
 import java.util.List;
+import java.util.TimeZone;
 
 /**
  * @author anistor@redhat.com
  * @since 7.0
  */
 public abstract class ObjectPropertyHelper<TypeMetadata> implements PropertyHelper {
+
+   private static final TimeZone GMT_TZ = TimeZone.getTimeZone("GMT");
+
+   private final DateFormat dateFormat = new SimpleDateFormat("yyyyMMddHHmmssSSS");   //todo [anistor] is there a standard jpa time format?
+
+   protected ObjectPropertyHelper() {
+      dateFormat.setTimeZone(GMT_TZ);
+   }
 
    /**
     * Returns the given value converted into the type of the given property as determined via the field bridge of the
@@ -24,6 +37,16 @@ public abstract class ObjectPropertyHelper<TypeMetadata> implements PropertyHelp
    public Object convertToPropertyType(String entityType, List<String> propertyPath, String value) {
       final Class<?> propertyType = getPropertyType(entityType, propertyPath);
 
+      if (Date.class.isAssignableFrom(propertyType)) {
+         try {
+            return dateFormat.parse(value);
+         } catch (ParseException e) {
+            throw new IllegalArgumentException(e);
+         }
+      }
+      if (Enum.class.isAssignableFrom(propertyType)) {
+         return Enum.valueOf((Class<Enum>) propertyType, value);
+      }
       if (propertyType == String.class) {
          return value;
       }

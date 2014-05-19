@@ -16,7 +16,7 @@ import org.infinispan.util.logging.LogFactory;
  * @author anistor@redhat.com
  * @since 6.0
  */
-class EmbeddedLuceneQueryBuilder extends BaseQueryBuilder<LuceneQuery> {
+final class EmbeddedLuceneQueryBuilder extends BaseQueryBuilder<LuceneQuery> {
 
    private static final Log log = LogFactory.getLog(EmbeddedLuceneQueryBuilder.class, Log.class);
 

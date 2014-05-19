@@ -182,6 +182,14 @@
          <maven-resource group="org.infinispan.protostream" artifact="protostream" />
       </module-def>
 
+      <module-def name="org.infinispan.objectfilter" src="${infinispan.server.modules.dir}">
+         <maven-resource group="org.infinispan" artifact="infinispan-objectfilter" />
+      </module-def>
+
+      <module-def name="org.infinispan.query.dsl" src="${infinispan.server.modules.dir}">
+         <maven-resource group="org.infinispan" artifact="infinispan-query-dsl" />
+      </module-def>
+
       <module-def name="org.infinispan.query" src="${infinispan.server.modules.dir}">
          <maven-resource group="org.infinispan" artifact="infinispan-query" />
       </module-def>

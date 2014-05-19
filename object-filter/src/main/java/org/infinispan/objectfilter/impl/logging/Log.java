@@ -6,14 +6,15 @@ import org.jboss.logging.annotations.Message;
 import org.jboss.logging.annotations.MessageLogger;
 
 /**
- * Logging methods for the reflection based query parser component.
+ * Log messages for the object filter parser backend..
  *
+ * @author anistor@redhat.com
  * @since 7.0
  */
 @MessageLogger(projectCode = "ISPN")
 public interface Log extends BasicLogger {
 
-   @Message(id = 402, value = "The type %s has no property named %s.")
+   @Message(id = 402, value = "The type %s has no property named '%s'.")
    ParsingException getNoSuchPropertyException(String typeName, String propertyName);
 
    @Message(id = 404, value = "Unknown alias: %s.")

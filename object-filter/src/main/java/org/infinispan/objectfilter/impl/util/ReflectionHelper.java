@@ -9,7 +9,6 @@ import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
 import java.lang.reflect.TypeVariable;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.Iterator;
 import java.util.Map;
 
@@ -28,6 +27,12 @@ public final class ReflectionHelper {
 
       Object getValue(Object instance);
 
+      /**
+       * Obtains an Iterator over the values of an array, collection or map attribute.
+       *
+       * @param instance
+       * @return the Iterator or null if the attribute is null
+       */
       Iterator<Object> getValueIterator(Object instance);
 
       PropertyAccessor getAccessor(String propName);
@@ -83,10 +88,7 @@ public final class ReflectionHelper {
 
       public Iterator<Object> getValueIterator(Object instance) {
          Object value = getValue(instance);
-         if (value == null) {
-            return Collections.emptyIterator();
-         }
-         return new ArrayIterator(value);
+         return value == null ? null : new ArrayIterator<Object>(value);
       }
 
       @Override
@@ -107,10 +109,7 @@ public final class ReflectionHelper {
 
       public Iterator<Object> getValueIterator(Object instance) {
          Object value = getValue(instance);
-         if (value == null) {
-            return Collections.emptyIterator();
-         }
-         return ((Collection) value).iterator();
+         return value == null ? null : ((Collection) value).iterator();
       }
 
       @Override
@@ -131,10 +130,7 @@ public final class ReflectionHelper {
 
       public Iterator<Object> getValueIterator(Object instance) {
          Object value = getValue(instance);
-         if (value == null) {
-            return Collections.emptyIterator();
-         }
-         return ((Map<?, Object>) value).values().iterator();
+         return value == null ? null : ((Map<?, Object>) value).values().iterator();
       }
 
       @Override
@@ -187,10 +183,7 @@ public final class ReflectionHelper {
 
       public Iterator<Object> getValueIterator(Object instance) {
          Object value = getValue(instance);
-         if (value == null) {
-            return Collections.emptyIterator();
-         }
-         return new ArrayIterator(value);
+         return value == null ? null : new ArrayIterator<Object>(value);
       }
 
       @Override
@@ -211,10 +204,7 @@ public final class ReflectionHelper {
 
       public Iterator<Object> getValueIterator(Object instance) {
          Object value = getValue(instance);
-         if (value == null) {
-            return Collections.emptyIterator();
-         }
-         return ((Collection<Object>) value).iterator();
+         return value == null ? null : ((Collection<Object>) value).iterator();
       }
 
       @Override
@@ -235,10 +225,7 @@ public final class ReflectionHelper {
 
       public Iterator<Object> getValueIterator(Object instance) {
          Object value = getValue(instance);
-         if (value == null) {
-            return Collections.emptyIterator();
-         }
-         return ((Map<?, Object>) value).values().iterator();
+         return value == null ? null : ((Map<?, Object>) value).values().iterator();
       }
 
       @Override

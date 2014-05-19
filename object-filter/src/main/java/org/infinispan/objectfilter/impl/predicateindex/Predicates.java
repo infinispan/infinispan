@@ -44,7 +44,7 @@ final class Predicates<AttributeDomain> {
 
       //todo [anistor] this is an improvement but still does not eliminate precessing of attributes that have only suspended subscribers
       boolean isActive(MatcherEvalContext<?> ctx) {
-         return ctx.getSuspendedSubscriptionsCounter(predicate).get() < subscriptions.size();
+         return ctx.getSuspendedSubscriptionsCounter(predicate) < subscriptions.size();
       }
    }
 
@@ -60,7 +60,7 @@ final class Predicates<AttributeDomain> {
    private Map<Predicate<AttributeDomain>, Subscriptions> unorderedPredicates;
 
    public void notifyMatchingSubscribers(MatcherEvalContext<?> ctx, AttributeDomain attributeValue) {
-      if (orderedPredicates != null) {
+      if (attributeValue != null && orderedPredicates != null) {
          for (IntervalTree.Node<AttributeDomain, Subscriptions> n : orderedPredicates.stab(attributeValue)) {
             Subscriptions subscriptions = n.value;
             if (subscriptions.isActive(ctx)) {

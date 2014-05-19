@@ -8,6 +8,10 @@ import java.util.List;
  */
 public class Person {
 
+   public enum Gender {
+      MALE, FEMALE
+   }
+
    // fields start with underscore to demonstrate that property getter access is used instead of field access
    private String _name;
 
@@ -20,6 +24,8 @@ public class Person {
    private List<PhoneNumber> _phoneNumbers;
 
    private String _license;
+
+   private Gender _gender;
 
    public String getName() {
       return _name;
@@ -69,6 +75,15 @@ public class Person {
       this._license = license;
    }
 
+
+   public Gender getGender() {
+      return _gender;
+   }
+
+   public void setGender(Gender gender) {
+      this._gender = gender;
+   }
+
    @Override
    public String toString() {
       return "Person{" +
@@ -78,6 +93,7 @@ public class Person {
             ", address=" + _address +
             ", age=" + _age +
             ", license=" + _license +
+            ", gender=" + _gender +
             '}';
    }
 }

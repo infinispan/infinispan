@@ -17,10 +17,14 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
+ * A registry for filters on the same type of entity.
+ *
  * @author anistor@redhat.com
  * @since 7.0
  */
 final class FilterRegistry<AttributeId extends Comparable<AttributeId>> {
+
+   private final String typeName;
 
    private final PredicateIndex<AttributeId> predicateIndex = new PredicateIndex<AttributeId>();
 
@@ -29,8 +33,6 @@ final class FilterRegistry<AttributeId extends Comparable<AttributeId>> {
    private final BETreeMaker<AttributeId> treeMaker;
 
    private final BETreeMaker.AttributePathTranslator<AttributeId> attributePathTranslator;
-
-   private final String typeName;
 
    public FilterRegistry(BETreeMaker.AttributePathTranslator<AttributeId> attributePathTranslator, String typeName) {
       this.attributePathTranslator = attributePathTranslator;
@@ -75,7 +77,7 @@ final class FilterRegistry<AttributeId extends Comparable<AttributeId>> {
       BETree beTree = treeMaker.make(normalizedFilter);
       final FilterSubscriptionImpl<AttributeId> filterSubscription = new FilterSubscriptionImpl<AttributeId>(typeName, beTree, projection, callback, translatedProjections);
 
-      filterSubscription.registerProjection(predicateIndex.getRoot());
+      filterSubscription.registerProjection(predicateIndex);
 
       for (BENode node : beTree.getNodes()) {
          if (node instanceof PredicateNode) {
@@ -84,7 +86,7 @@ final class FilterRegistry<AttributeId extends Comparable<AttributeId>> {
                @Override
                public void handleValue(MatcherEvalContext<?> ctx, boolean isMatching) {
                   FilterEvalContext filterEvalContext = ctx.getFilterEvalContext(filterSubscription);
-                  predicateNode.handleChildValue(predicateNode, isMatching, filterEvalContext);
+                  predicateNode.handleChildValue(null, isMatching, filterEvalContext);
                }
             };
             predicateNode.subscribe(predicateIndex, predicateCallback);
@@ -98,7 +100,8 @@ final class FilterRegistry<AttributeId extends Comparable<AttributeId>> {
    public void removeFilter(FilterSubscription filterSubscription) {
       FilterSubscriptionImpl<AttributeId> filterSubscriptionImpl = (FilterSubscriptionImpl<AttributeId>) filterSubscription;
       filterSubscriptions.remove(filterSubscriptionImpl);
-      filterSubscriptionImpl.unregisterProjection(predicateIndex.getRoot());
+
+      filterSubscriptionImpl.unregisterProjection(predicateIndex);
 
       for (BENode node : filterSubscriptionImpl.getBETree().getNodes()) {
          if (node instanceof PredicateNode) {

@@ -14,6 +14,7 @@
         <module name="org.infinispan" />
         <module name="org.infinispan.server" />
         <module name="org.infinispan.protostream" />
+        <module name="org.infinispan.objectfilter" />
         <module name="org.infinispan.query" />
         <module name="org.infinispan.remote-query.client" />
         <module name="org.jboss.logging" />

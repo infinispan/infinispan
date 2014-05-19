@@ -20,6 +20,8 @@ public class AttributeNode<AttributeId extends Comparable<AttributeId>> {
    // this is never null, except for the root node
    private final AttributeId attribute;
 
+   public Object metadata;
+
    // this is never null, except for the root node
    private final AttributeNode<AttributeId> parent;
 

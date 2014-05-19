@@ -1,8 +1,5 @@
 package org.infinispan.filter;
 
-import org.infinispan.filter.KeyFilter;
-import org.infinispan.filter.KeyValueFilter;
-
 /**
  * This is a KeyFilter that utilizes the given {@link org.infinispan.filter.KeyValueFilter} to determine if to
  * filter the key.  Note this filter will be passed null for both the value and metadata on every pass.

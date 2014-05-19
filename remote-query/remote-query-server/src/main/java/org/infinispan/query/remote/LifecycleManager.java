@@ -21,6 +21,7 @@ import org.infinispan.jmx.ResourceDMBean;
 import org.infinispan.lifecycle.AbstractModuleLifecycle;
 import org.infinispan.manager.DefaultCacheManager;
 import org.infinispan.manager.EmbeddedCacheManager;
+import org.infinispan.objectfilter.impl.ProtobufMatcher;
 import org.infinispan.protostream.ProtobufUtil;
 import org.infinispan.protostream.SerializationContext;
 import org.infinispan.query.remote.client.MarshallerRegistration;
@@ -109,6 +110,10 @@ public class LifecycleManager extends AbstractModuleLifecycle {
     */
    @Override
    public void cacheStarting(ComponentRegistry cr, Configuration cfg, String cacheName) {
+      EmbeddedCacheManager cacheManager = cr.getGlobalComponentRegistry().getComponent(EmbeddedCacheManager.class);
+      SerializationContext serializationContext = ProtobufMetadataManager.getSerializationContext(cacheManager);
+      cr.registerComponent(new ProtobufMatcher(serializationContext), ProtobufMatcher.class);
+
       if (cfg.indexing().enabled() && !cfg.compatibility().enabled()) {
          log.infof("Registering RemoteValueWrapperInterceptor for cache %s", cacheName);
          createRemoteIndexingInterceptor(cr, cfg);

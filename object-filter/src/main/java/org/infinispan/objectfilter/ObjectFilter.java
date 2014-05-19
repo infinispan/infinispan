@@ -10,6 +10,8 @@ package org.infinispan.objectfilter;
  */
 public interface ObjectFilter {
 
+   String[] getProjection();
+
    /**
     * Tests if an object instance matches the filter.
     *

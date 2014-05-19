@@ -70,6 +70,10 @@ public final class ProtobufPropertyHelper extends ObjectPropertyHelper<Descripto
 
    @Override
    public Class<?> getPropertyType(String entityType, List<String> propertyPath) {
+      return getPropertyType(getField(entityType, propertyPath));
+   }
+
+   private Descriptors.FieldDescriptor getField(String entityType, List<String> propertyPath) {
       Descriptors.Descriptor messageDescriptor;
       try {
          messageDescriptor = serializationContext.getMessageDescriptor(entityType);
@@ -77,17 +81,18 @@ public final class ProtobufPropertyHelper extends ObjectPropertyHelper<Descripto
          throw new IllegalStateException("Unknown entity name " + entityType);
       }
 
+      Descriptors.FieldDescriptor field;
       int i = 0;
       for (String p : propertyPath) {
          i++;
-         Descriptors.FieldDescriptor field = messageDescriptor.findFieldByName(p);
+         field = messageDescriptor.findFieldByName(p);
          if (field == null) {
             return null;
          }
          if (field.getJavaType() == Descriptors.FieldDescriptor.JavaType.MESSAGE) {
             messageDescriptor = field.getMessageType();
          } else {
-            return i == propertyPath.size() ? getPropertyType(field) : null;
+            return i == propertyPath.size() ? field : null;
          }
       }
       return null;
@@ -161,5 +166,33 @@ public final class ProtobufPropertyHelper extends ObjectPropertyHelper<Descripto
          }
       }
       return true;
+   }
+
+   @Override
+   public Object convertToPropertyType(String entityType, List<String> propertyPath, String value) {
+      Descriptors.FieldDescriptor field = getField(entityType, propertyPath);
+
+      //todo [anistor] this is just for remote query because booleans and enums are handled as integers for historical reasons.
+      if (field.getJavaType() == Descriptors.FieldDescriptor.JavaType.BOOLEAN) {
+         try {
+            return Integer.parseInt(value) != 0;
+         } catch (NumberFormatException e) {
+            return Boolean.valueOf(value);
+         }
+      } else if (field.getJavaType() == Descriptors.FieldDescriptor.JavaType.ENUM) {
+         Descriptors.EnumDescriptor enumType = field.getEnumType();
+         Descriptors.EnumValueDescriptor enumValue;
+         try {
+            enumValue = enumType.findValueByNumber(Integer.parseInt(value));
+         } catch (NumberFormatException e) {
+            enumValue = enumType.findValueByName(value);
+         }
+         if (enumValue == null) {
+            throw new IllegalArgumentException("Unknown enum value for enum type " + enumType.getFullName() + " : " + value);
+         }
+         return enumValue.getNumber();
+      }
+
+      return super.convertToPropertyType(entityType, propertyPath, value);
    }
 }

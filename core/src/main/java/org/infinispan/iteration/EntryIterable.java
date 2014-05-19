@@ -1,9 +1,7 @@
 package org.infinispan.iteration;
 
 import org.infinispan.commons.util.CloseableIterable;
-import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.filter.Converter;
-import org.infinispan.filter.KeyValueFilter;
 
 import java.util.Map;
 

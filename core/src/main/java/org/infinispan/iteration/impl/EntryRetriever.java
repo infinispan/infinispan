@@ -1,6 +1,5 @@
 package org.infinispan.iteration.impl;
 
-import org.infinispan.commons.util.CloseableIterable;
 import org.infinispan.commons.util.CloseableIterator;
 import org.infinispan.filter.Converter;
 import org.infinispan.filter.KeyValueFilter;

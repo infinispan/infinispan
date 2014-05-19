@@ -768,6 +768,7 @@ public class RemoteQueryDslConditionsTest extends SingleCacheManagerTest {
 
       // all male users
       Query q = qf.from(User.class)
+            .orderBy("id", SortOrder.ASC)
             .having("gender").eq(User.Gender.MALE)
             .toBuilder().build();
 
@@ -782,6 +783,7 @@ public class RemoteQueryDslConditionsTest extends SingleCacheManagerTest {
 
       // all male users, but this time retrieved in a twisted manner
       Query q = qf.from(User.class)
+            .orderBy("id", SortOrder.ASC)
             .not(qf.having("gender").eq(User.Gender.FEMALE))
             .and(qf.not().not(qf.having("gender").eq(User.Gender.MALE)))
             .toBuilder().build();
@@ -811,6 +813,7 @@ public class RemoteQueryDslConditionsTest extends SingleCacheManagerTest {
 
       // all male users
       Query q = qf.from(User.class)
+            .orderBy("id", SortOrder.ASC)
             .having("gender").eq(User.Gender.MALE)
             .toBuilder().build();
 
@@ -1063,6 +1066,7 @@ public class RemoteQueryDslConditionsTest extends SingleCacheManagerTest {
 
       // all transactions of account with id 2 which have an amount larger than 1600 or their description contains the word 'rent'
       Query q = qf.from(Transaction.class)
+            .orderBy("description", SortOrder.ASC)
             .having("accountId").eq(1)
             .and(qf.having("amount").gt(1600)
                        .or().having("description").like("%rent%")).toBuilder().build();
