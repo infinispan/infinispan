@@ -1,3 +1,25 @@
+/*
+ * JBoss, Home of Professional Open Source.
+ * Copyright 2012, Red Hat, Inc., and individual contributors
+ * as indicated by the @author tags. See the copyright.txt file in the
+ * distribution for a full listing of individual contributors.
+ *
+ * This is free software; you can redistribute it and/or modify it
+ * under the terms of the GNU Lesser General Public License as
+ * published by the Free Software Foundation; either version 2.1 of
+ * the License, or (at your option) any later version.
+ *
+ * This software is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this software; if not, write to the Free
+ * Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
+ * 02110-1301 USA, or see the FSF site: http://www.fsf.org.
+ */
+
 package org.jboss.as.clustering.jgroups.subsystem;
 
 import org.jboss.as.clustering.jgroups.JGroupsMessages;
@@ -7,7 +29,6 @@ import org.jboss.as.controller.OperationFailedException;
 import org.jboss.as.controller.OperationStepHandler;
 import org.jboss.as.controller.PathAddress;
 import org.jboss.as.controller.PathElement;
-import org.jboss.as.controller.descriptions.ModelDescriptionConstants;
 import org.jboss.as.controller.registry.Resource;
 import org.jboss.dmr.ModelNode;
 import org.jboss.dmr.Property;
@@ -18,11 +39,10 @@ import org.jboss.dmr.Property;
  * @author Richard Achmatowicz (c) 2011 Red Hat Inc.
  */
 public class ProtocolLayerAdd implements OperationStepHandler {
-
-    AttributeDefinition[] attributes ;
+    AttributeDefinition[] attributes;
 
     public ProtocolLayerAdd(AttributeDefinition... attributes) {
-        this.attributes = attributes ;
+        this.attributes = attributes;
     }
 
     @Override
@@ -33,12 +53,12 @@ public class ProtocolLayerAdd implements OperationStepHandler {
         final ModelNode subModel = resource.getModel();
 
         // validate the protocol type to be added
-        ModelNode type = ProtocolResource.TYPE.validateOperation(operation);
+        ModelNode type = ProtocolResourceDefinition.TYPE.validateOperation(operation);
         PathElement protocolRelativePath = PathElement.pathElement(ModelKeys.PROTOCOL, type.asString());
 
         // if child resource already exists, throw OFE
-        if (resource.hasChild(protocolRelativePath))  {
-            throw JGroupsMessages.MESSAGES.protocolAlreadyDefined(protocolRelativePath.toString()) ;
+        if (resource.hasChild(protocolRelativePath)) {
+            throw JGroupsMessages.MESSAGES.protocolAlreadyDefined(protocolRelativePath.toString());
         }
 
         // now get the created model
@@ -46,37 +66,35 @@ public class ProtocolLayerAdd implements OperationStepHandler {
         final ModelNode protocol = childResource.getModel();
 
         // Process attributes
-        for(final AttributeDefinition attribute : attributes) {
+        for (final AttributeDefinition attribute : attributes) {
             // we use PROPERTIES only to allow the user to pass in a list of properties on store add commands
             // don't copy these into the model
-            if (attribute.getName().equals(ModelKeys.PROPERTIES))
-                continue ;
+            if (attribute.getName().equals(ModelKeys.PROPERTIES)) { continue; }
 
             attribute.validateAndSet(operation, protocol);
         }
 
         // get the current list of protocol names and add the new protocol
         // this list is used to maintain order
-        ModelNode protocols = subModel.get(ModelKeys.PROTOCOLS) ;
+        ModelNode protocols = subModel.get(ModelKeys.PROTOCOLS);
         if (!protocols.isDefined()) {
             protocols.setEmptyList();
         }
         protocols.add(type);
 
         // Process type specific properties if required
-        process(subModel, operation);
 
         // The protocol parameters  <property name=>value</property>
-        if(operation.hasDefined(ModelKeys.PROPERTIES)) {
-            for(Property property : operation.get(ModelKeys.PROPERTIES).asPropertyList()) {
+        if (operation.hasDefined(ModelKeys.PROPERTIES)) {
+            for (Property property : operation.get(ModelKeys.PROPERTIES).asPropertyList()) {
                 // create a new property=name resource
                 final Resource param = context.createResource(PathAddress.pathAddress(protocolRelativePath, PathElement.pathElement(ModelKeys.PROPERTY, property.getName())));
                 final ModelNode value = property.getValue();
-                if(! value.isDefined()) {
+                if (!value.isDefined()) {
                     throw JGroupsMessages.MESSAGES.propertyNotDefined(property.getName(), protocolRelativePath.toString());
                 }
                 // set the value of the property
-                param.getModel().get(ModelDescriptionConstants.VALUE).set(value);
+                PropertyResourceDefinition.VALUE.validateAndSet(value, param.getModel());
             }
         }
         // This needs a reload
@@ -96,7 +114,7 @@ public class ProtocolLayerAdd implements OperationStepHandler {
      * @param context the operation context
      */
     void reloadRequiredStep(final OperationContext context) {
-        if (context.getProcessType().isServer() &&  !context.isBooting()) {
+        if (context.getProcessType().isServer() && !context.isBooting()) {
             context.addStep(new OperationStepHandler() {
                 @Override
                 public void execute(final OperationContext context, final ModelNode operation) throws OperationFailedException {

@@ -36,25 +36,29 @@ import org.jboss.staxmapper.XMLElementReader;
  */
 public enum Namespace {
     // must be first
-    UNKNOWN(0, 0, null),
+    UNKNOWN("jboss:domain:jgroups", 0, 0, null),
 
-    JGROUPS_1_0(1, 0, new JGroupsSubsystemXMLReader_1_0()),
-    JGROUPS_1_1(1, 1, new JGroupsSubsystemXMLReader_1_1()),
-    JGROUPS_1_2(1, 2, new JGroupsSubsystemXMLReader_1_2()),
+    JGROUPS_1_0("jboss:domain:jgroups", 1, 0, new JGroupsSubsystemXMLReader_1_0()),
+    JGROUPS_1_1("jboss:domain:jgroups", 1, 1, new JGroupsSubsystemXMLReader_1_1()),
+    JGROUPS_1_2("jboss:domain:jgroups", 1, 2, new JGroupsSubsystemXMLReader_1_2()),
+
+    INFINISPAN_SERVER_JGROUPS_7_0("infinispan:server:jgroups", 7, 0, new JGroupsSubsystemXMLReader_7_0()),
     ;
 
-    private static final String BASE_URN = "urn:jboss:domain:jgroups:";
+    private static final String URN_PATTERN = "urn:%s:%d.%d";
 
     /**
      * The current namespace version.
      */
-    public static final Namespace CURRENT = JGROUPS_1_2;
+    public static final Namespace CURRENT = INFINISPAN_SERVER_JGROUPS_7_0;
 
+    private final String domain;
     private final int major;
     private final int minor;
     private final XMLElementReader<List<ModelNode>> reader;
 
-    Namespace(int major, int minor, XMLElementReader<List<ModelNode>> reader) {
+    Namespace(String domain, int major, int minor, XMLElementReader<List<ModelNode>> reader) {
+        this.domain = domain;
         this.major = major;
         this.minor = minor;
         this.reader = reader;
@@ -74,7 +78,7 @@ public enum Namespace {
      * @return the URI
      */
     public String getUri() {
-        return BASE_URN + major + "." + minor;
+        return String.format(URN_PATTERN, domain, this.major, this.minor);
     }
 
     public XMLElementReader<List<ModelNode>> getXMLReader() {

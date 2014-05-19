@@ -28,6 +28,7 @@ import org.jboss.as.controller.ReloadRequiredRemoveStepHandler;
 import org.jboss.as.controller.ReloadRequiredWriteAttributeHandler;
 import org.jboss.as.controller.SimpleAttributeDefinition;
 import org.jboss.as.controller.SimpleAttributeDefinitionBuilder;
+import org.jboss.as.controller.SimpleListAttributeDefinition;
 import org.jboss.as.controller.SimpleResourceDefinition;
 import org.jboss.as.controller.descriptions.ResourceDescriptionResolver;
 import org.jboss.as.controller.registry.AttributeAccess;
@@ -35,32 +36,46 @@ import org.jboss.as.controller.registry.ManagementResourceRegistration;
 import org.jboss.dmr.ModelType;
 
 /**
- * Resource definition for subsystem=jgroups/stack=X/relay=RELAY/remote-site=Y
+ * Resource definition for /subsystem=jgroups/stack=X/sasl=SASL
  *
- * @author Paul Ferraro
+ * @author Tristan Tarrant
  */
-public class RemoteSiteResource extends SimpleResourceDefinition {
+public class SaslResourceDefinition extends SimpleResourceDefinition {
 
-    private static final ResourceDescriptionResolver RESOLVER = JGroupsExtension.getResourceDescriptionResolver(ModelKeys.REMOTE_SITE);
+    private static final ResourceDescriptionResolver RESOLVER = JGroupsExtension.getResourceDescriptionResolver(ModelKeys.SASL);
 
-    static final SimpleAttributeDefinition STACK = new SimpleAttributeDefinitionBuilder(ModelKeys.STACK, ModelType.STRING, true)
-            .setXmlName(Attribute.STACK.getLocalName())
+    static final SimpleAttributeDefinition CLUSTER_ROLE =
+          new SimpleAttributeDefinitionBuilder(ModelKeys.CLUSTER_ROLE, ModelType.STRING, true)
+                  .setXmlName(Attribute.CLUSTER_ROLE.getLocalName())
+                  .setAllowExpression(true)
+                  .setFlags(AttributeAccess.Flag.RESTART_ALL_SERVICES)
+                  .build();
+
+    static final SimpleAttributeDefinition MECH =
+            new SimpleAttributeDefinitionBuilder(ModelKeys.MECH, ModelType.STRING, false)
+                    .setXmlName(Attribute.MECH.getLocalName())
+                    .setAllowExpression(true)
+                    .setFlags(AttributeAccess.Flag.RESTART_ALL_SERVICES)
+                    .build();
+
+    static final SimpleAttributeDefinition SECURITY_REALM =
+          new SimpleAttributeDefinitionBuilder(ModelKeys.SECURITY_REALM, ModelType.STRING, false)
             .setAllowExpression(true)
-            .setFlags(AttributeAccess.Flag.RESTART_RESOURCE_SERVICES)
-            .build()
+            .setXmlName(ModelKeys.SECURITY_REALM)
+            .setRestartAllServices()
+            .build();
+
+    static final SimpleAttributeDefinition PROPERTY = new SimpleAttributeDefinition(ModelKeys.PROPERTY, ModelType.PROPERTY, true);
+
+    static final SimpleListAttributeDefinition PROPERTIES = new SimpleListAttributeDefinition.Builder(ModelKeys.PROPERTIES, PROPERTY).
+            setAllowNull(true).
+            build()
     ;
 
-    static final SimpleAttributeDefinition CLUSTER = new SimpleAttributeDefinitionBuilder(ModelKeys.CLUSTER, ModelType.STRING, true)
-            .setXmlName(Attribute.CLUSTER.getLocalName())
-            .setAllowExpression(true)
-            .setFlags(AttributeAccess.Flag.RESTART_RESOURCE_SERVICES)
-            .build()
-    ;
+    static final SimpleAttributeDefinition[] ATTRIBUTES = new SimpleAttributeDefinition[] { CLUSTER_ROLE, MECH, SECURITY_REALM };
 
-    static final AttributeDefinition[] ATTRIBUTES = new AttributeDefinition[] { STACK, CLUSTER };
-
-    RemoteSiteResource() {
-        super(PathElement.pathElement(ModelKeys.REMOTE_SITE), RESOLVER, new AddStepHandler(ATTRIBUTES), ReloadRequiredRemoveStepHandler.INSTANCE);
+    SaslResourceDefinition() {
+        super(PathElement.pathElement(ModelKeys.SASL, ModelKeys.SASL_NAME), RESOLVER, new AddStepHandler(ATTRIBUTES), ReloadRequiredRemoveStepHandler.INSTANCE);
     }
 
     @Override
@@ -69,5 +84,10 @@ public class RemoteSiteResource extends SimpleResourceDefinition {
         for (AttributeDefinition attribute: ATTRIBUTES) {
             registration.registerReadWriteAttribute(attribute, null, writeHandler);
         }
+    }
+
+    @Override
+    public void registerChildren(ManagementResourceRegistration registration) {
+        registration.registerSubModel(PropertyResourceDefinition.INSTANCE);
     }
 }

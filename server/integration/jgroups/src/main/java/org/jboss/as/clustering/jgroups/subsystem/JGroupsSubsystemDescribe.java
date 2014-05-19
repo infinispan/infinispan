@@ -76,14 +76,14 @@ import org.jboss.dmr.Property;
                      ModelNode transportAddress = stackAddress.clone();
                      transportAddress.add(ModelKeys.TRANSPORT, ModelKeys.TRANSPORT_NAME);
                      // no optional transport:add parameters will be present, so use attributes list
-                     result.add(createOperation(TransportResource.TRANSPORT_ATTRIBUTES, transportAddress, transport));
+                     result.add(createOperation(TransportResourceDefinition.TRANSPORT_ATTRIBUTES, transportAddress, transport));
                      addProtocolPropertyCommands(transport, transportAddress, result);
                  }
                  // protocol=*
                  if (stack.getValue().get(ModelKeys.PROTOCOL).isDefined()) {
                      for (Property protocol : ProtocolStackAdd.getOrderedProtocolPropertyList(stack.getValue())) {
                          // no optional transport:add parameters will be present, so use attributes list
-                         result.add(createProtocolOperation(ProtocolResource.PROTOCOL_ATTRIBUTES, stackAddress, protocol.getValue()));
+                         result.add(createProtocolOperation(ProtocolResourceDefinition.PROTOCOL_ATTRIBUTES, stackAddress, protocol.getValue()));
                          ModelNode protocolAddress = stackAddress.clone();
                          protocolAddress.add(ModelKeys.PROTOCOL, protocol.getName()) ;
                          addProtocolPropertyCommands(protocol.getValue(), protocolAddress, result);
@@ -94,16 +94,24 @@ import org.jboss.dmr.Property;
                      ModelNode relay = stack.getValue().get(ModelKeys.RELAY, ModelKeys.RELAY_NAME);
                      ModelNode relayAddress = stackAddress.clone();
                      relayAddress.add(ModelKeys.RELAY, ModelKeys.RELAY_NAME);
-                     result.add(createOperation(RelayResource.ATTRIBUTES, relayAddress, relay));
+                     result.add(createOperation(RelayResourceDefinition.ATTRIBUTES, relayAddress, relay));
                      addProtocolPropertyCommands(relay, relayAddress, result);
                      // remote-site=*
                      if (relay.get(ModelKeys.REMOTE_SITE).isDefined()) {
                          for (final Property remoteSite : relay.get(ModelKeys.REMOTE_SITE).asPropertyList()) {
                              ModelNode remoteSiteAddress = relayAddress.clone().add(ModelKeys.REMOTE_SITE, remoteSite.getName());
                              // no optional transport:add parameters will be present, so use attributes list
-                             result.add(createOperation(RemoteSiteResource.ATTRIBUTES, remoteSiteAddress, remoteSite.getValue()));
+                             result.add(createOperation(RemoteSiteResourceDefinition.ATTRIBUTES, remoteSiteAddress, remoteSite.getValue()));
                          }
                      }
+                 }
+                 // sasl=SASL
+                 if (stack.getValue().get(ModelKeys.SASL, ModelKeys.SASL_NAME).isDefined()) {
+                     ModelNode sasl = stack.getValue().get(ModelKeys.SASL, ModelKeys.SASL_NAME);
+                     ModelNode saslAddress = stackAddress.clone();
+                     saslAddress.add(ModelKeys.SASL, ModelKeys.SASL_NAME);
+                     result.add(createOperation(SaslResourceDefinition.ATTRIBUTES, saslAddress, sasl));
+                     addProtocolPropertyCommands(sasl, saslAddress, result);
                  }
              }
          }
@@ -116,7 +124,7 @@ import org.jboss.dmr.Property;
          if (protocol.hasDefined(ModelKeys.PROPERTY)) {
               for (Property property : protocol.get(ModelKeys.PROPERTY).asPropertyList()) {
                   ModelNode propertyAddress = address.clone().add(ModelKeys.PROPERTY, property.getName());
-                  AttributeDefinition[] ATTRIBUTE = {PropertyResource.VALUE} ;
+                  AttributeDefinition[] ATTRIBUTE = {PropertyResourceDefinition.VALUE} ;
                   result.add(createOperation(ATTRIBUTE, propertyAddress, property.getValue()));
               }
          }

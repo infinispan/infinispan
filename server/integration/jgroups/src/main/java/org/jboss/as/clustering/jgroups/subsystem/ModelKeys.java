@@ -24,15 +24,18 @@ package org.jboss.as.clustering.jgroups.subsystem;
 /**
  * Constants used for model keys.
  * @author Paul Ferraro
+ * @author Tristan Tarrant
  */
 class ModelKeys {
     static final String ADD_PROTOCOL = "add-protocol";
     static final String CLUSTER = "cluster";
+    static final String CLUSTER_ROLE = "cluster-role";
     static final String DEFAULT_EXECUTOR = "default-executor";
     static final String DEFAULT_STACK = "default-stack";
     static final String DIAGNOSTICS_SOCKET_BINDING = "diagnostics-socket-binding";
     static final String EXPORT_NATIVE_CONFIGURATION = "export-native-configuration";
     static final String MACHINE = "machine";
+    static final String MECH = "mech";
     static final String NAME = "name";
     static final String OOB_EXECUTOR = "oob-executor";
     static final String PROPERTY = "property";
@@ -45,6 +48,9 @@ class ModelKeys {
     static final String REMOTE_SITE = "remote-site";
     static final String REMOTE_SITES = "remote-sites";
     static final String REMOVE_PROTOCOL = "remove-protocol";
+    static final String SASL = "sasl";
+    static final String SASL_NAME = "SASL";
+    static final String SECURITY_REALM = "security-realm";
     static final String SHARED = "shared";
     static final String SITE = "site";
     static final String SOCKET_BINDING = "socket-binding";

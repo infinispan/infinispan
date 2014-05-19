@@ -21,13 +21,19 @@
  */
 package org.jboss.as.clustering.jgroups.subsystem;
 
+import static org.jboss.as.controller.descriptions.ModelDescriptionConstants.OP_ADDR;
+import static org.jboss.as.controller.descriptions.ModelDescriptionConstants.REMOVE;
+
 import java.util.List;
 
 import org.jboss.as.controller.AbstractRemoveStepHandler;
 import org.jboss.as.controller.OperationContext;
-import org.jboss.as.controller.ServiceVerificationHandler;
+import org.jboss.as.controller.OperationFailedException;
+import org.jboss.as.controller.PathAddress;
+import org.jboss.as.controller.operations.common.Util;
 import org.jboss.dmr.ModelNode;
-import org.jboss.msc.service.ServiceController;
+import org.jboss.dmr.Property;
+import org.jboss.msc.service.ServiceName;
 
 /**
  * Handler for JGroups subsystem add operations.
@@ -38,8 +44,46 @@ public class JGroupsSubsystemRemove extends AbstractRemoveStepHandler {
 
     public static final JGroupsSubsystemRemove INSTANCE = new JGroupsSubsystemRemove();
 
-    protected void performRuntime(OperationContext context, ModelNode operation, ModelNode model, ServiceVerificationHandler verificationHandler, List<ServiceController<?>> newControllers) {
-        context.removeService(ProtocolDefaultsService.SERVICE_NAME);
-        context.removeService(ChannelFactoryService.getServiceName(null));
+    @Override
+    protected void performRemove(OperationContext context, ModelNode operation, ModelNode model) throws OperationFailedException {
+        final PathAddress opAddress = PathAddress.pathAddress(operation.require(OP_ADDR));
+        // Add a step *on the top of the stack* to actually remove the subsystem resource
+        ModelNode removeSubsystem = Util.createOperation(REMOVE, opAddress);
+        context.addStep(removeSubsystem, new OriginalSubsystemRemoveHandler(), OperationContext.Stage.MODEL, true);
+
+        // Now add steps on top of the one added above to remove any existing child stacks
+        if (model.hasDefined(ModelKeys.STACK)) {
+            List<Property> stacks = model.get(ModelKeys.STACK).asPropertyList() ;
+            for (Property stack: stacks) {
+                PathAddress address = opAddress.append(ModelKeys.STACK, stack.getName());
+                ModelNode removeStack = Util.createOperation(REMOVE, address);
+                // remove the stack
+                context.addStep(removeStack, ProtocolStackRemove.INSTANCE, OperationContext.Stage.MODEL, true);
+            }
+        }
+
+        context.stepCompleted();
     }
+
+    static class OriginalSubsystemRemoveHandler extends AbstractRemoveStepHandler {
+
+        @Override
+        protected void performRuntime(OperationContext context, ModelNode operation, ModelNode model)
+            throws OperationFailedException {
+            removeRuntimeServices(context, operation, model);
+        }
+
+        protected void removeRuntimeServices(OperationContext context, ModelNode operation, ModelNode model)
+                throws OperationFailedException {
+
+            // remove the ProtocolDefaultsService
+            ServiceName protocolDefaultsService = ProtocolDefaultsService.SERVICE_NAME;
+            context.removeService(protocolDefaultsService);
+
+            // remove the DefaultChannelFactoryServiceAlias
+            ServiceName defaultChannelFactoryService = ChannelFactoryService.getServiceName(null);
+            context.removeService(defaultChannelFactoryService);
+        }
+    }
+
 }

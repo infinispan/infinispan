@@ -78,4 +78,7 @@ public interface JGroupsMessages {
 
     @Message(id = 10277, value = "Property %s for protocol with relative path %s is not defined. ")
     OperationFailedException propertyNotDefined(String propertyName, String protocolRelativePath);
+
+    @Message(id = 10299, value = "Unauthorized node %s attempting to join cluster.")
+    SecurityException unauthorizedNodeJoin(String nodeName);
 }

@@ -1,3 +1,25 @@
+/*
+ * JBoss, Home of Professional Open Source.
+ * Copyright 2012, Red Hat, Inc., and individual contributors
+ * as indicated by the @author tags. See the copyright.txt file in the
+ * distribution for a full listing of individual contributors.
+ *
+ * This is free software; you can redistribute it and/or modify it
+ * under the terms of the GNU Lesser General Public License as
+ * published by the Free Software Foundation; either version 2.1 of
+ * the License, or (at your option) any later version.
+ *
+ * This software is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this software; if not, write to the Free
+ * Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
+ * 02110-1301 USA, or see the FSF site: http://www.fsf.org.
+ */
+
 package org.jboss.as.clustering.jgroups.subsystem;
 
 import static org.jboss.as.controller.descriptions.ModelDescriptionConstants.ADD;
@@ -24,7 +46,7 @@ import org.jboss.dmr.ModelType;
  * @author Richard Achmatowicz (c) 2011 Red Hat Inc.
  */
 
-public class TransportResource extends SimpleResourceDefinition {
+public class TransportResourceDefinition extends SimpleResourceDefinition {
 
     static final PathElement TRANSPORT_PATH = PathElement.pathElement(ModelKeys.TRANSPORT, ModelKeys.TRANSPORT_NAME);
 
@@ -39,7 +61,7 @@ public class TransportResource extends SimpleResourceDefinition {
     static SimpleAttributeDefinition SHARED =
             new SimpleAttributeDefinitionBuilder(ModelKeys.SHARED, ModelType.BOOLEAN, true)
                     .setXmlName(Attribute.SHARED.getLocalName())
-                    .setAllowExpression(false)
+                    .setAllowExpression(true)
                     .setDefaultValue(new ModelNode().set(true))
                     .setFlags(AttributeAccess.Flag.RESTART_ALL_SERVICES)
                     .build();
@@ -128,7 +150,7 @@ public class TransportResource extends SimpleResourceDefinition {
                 Builder.of(ModelKeys.TRANSPORT, TRANSPORT_ATTRIBUTES).
                 setAllowNull(true).
                 setSuffix(null).
-                setSuffix("transport").
+                //setSuffix("transport").
                 build();
 
     // operations
@@ -138,10 +160,10 @@ public class TransportResource extends SimpleResourceDefinition {
 
     static final OperationStepHandler TRANSPORT_ADD = new TransportLayerAdd(TRANSPORT_PARAMETERS);
     static final OperationStepHandler TRANSPORT_REMOVE = new TransportLayerRemove();
-    static final TransportResource INSTANCE = new TransportResource();
+    static final TransportResourceDefinition INSTANCE = new TransportResourceDefinition();
 
     // registration
-    TransportResource() {
+    TransportResourceDefinition() {
         super(TRANSPORT_PATH,
                 JGroupsExtension.getResourceDescriptionResolver(ModelKeys.TRANSPORT),
                 null,  //we register it manualy in #  registerOperations
@@ -151,7 +173,7 @@ public class TransportResource extends SimpleResourceDefinition {
     @Override
     public void registerOperations(ManagementResourceRegistration registration) {
         super.registerOperations(registration);
-        registration.registerOperationHandler(TRANSPORT_ADD_DEFINITION.getName(), TRANSPORT_ADD, TRANSPORT_ADD_DEFINITION.getDescriptionProvider());
+        registration.registerOperationHandler(TRANSPORT_ADD_DEFINITION, TRANSPORT_ADD);
     }
 
     @Override
@@ -167,6 +189,6 @@ public class TransportResource extends SimpleResourceDefinition {
     @Override
     public void registerChildren(ManagementResourceRegistration resourceRegistration) {
         super.registerChildren(resourceRegistration);
-        resourceRegistration.registerSubModel(PropertyResource.INSTANCE);
+        resourceRegistration.registerSubModel(PropertyResourceDefinition.INSTANCE);
     }
 }

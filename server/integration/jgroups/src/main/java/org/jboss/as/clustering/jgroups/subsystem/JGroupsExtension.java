@@ -52,7 +52,7 @@ public class JGroupsExtension implements Extension {
     public static final String RESOURCE_NAME = JGroupsExtension.class.getPackage().getName() + "." +"LocalDescriptions";
 
     private static final int MANAGEMENT_API_MAJOR_VERSION = 1;
-    private static final int MANAGEMENT_API_MINOR_VERSION = 1;
+    private static final int MANAGEMENT_API_MINOR_VERSION = 3;
 
     // Temporary workaround for JGRP-1475
     // Configure JGroups to use jboss-logging.
@@ -93,7 +93,7 @@ public class JGroupsExtension implements Extension {
         final ManagementResourceRegistration subsystem = registration.registerSubsystemModel(new JGroupsSubsystemRootResource());
         subsystem.registerOperationHandler(JGroupsSubsystemDescribe.DEFINITION,JGroupsSubsystemDescribe.INSTANCE);
 
-        subsystem.registerSubModel(new StackResource(registerRuntimeOnly));
+        subsystem.registerSubModel(new StackResourceDefinition(registerRuntimeOnly));
 
         registration.registerXMLElementWriter(new JGroupsSubsystemXMLWriter());
     }

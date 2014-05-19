@@ -46,4 +46,6 @@ public interface ProtocolStackConfiguration {
     ServerEnvironment getEnvironment();
 
     RelayConfiguration getRelay();
+
+    SaslConfiguration getSasl();
 }

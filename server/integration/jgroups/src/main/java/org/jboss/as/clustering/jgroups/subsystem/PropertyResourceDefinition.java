@@ -28,7 +28,7 @@ import org.jboss.msc.service.ServiceController;
  * @author Richard Achmatowicz (c) 2011 Red Hat Inc.
  */
 
-public class PropertyResource extends SimpleResourceDefinition {
+public class PropertyResourceDefinition extends SimpleResourceDefinition {
 
     static final PathElement PROPERTY_PATH = PathElement.pathElement(ModelKeys.PROPERTY);
 
@@ -52,7 +52,7 @@ public class PropertyResource extends SimpleResourceDefinition {
     static final AbstractAddStepHandler PROTOCOL_PROPERTY_ADD = new AbstractAddStepHandler() {
         @Override
         protected void populateModel(ModelNode operation, ModelNode model) throws OperationFailedException {
-            PropertyResource.VALUE.validateAndSet(operation, model);
+            PropertyResourceDefinition.VALUE.validateAndSet(operation, model);
         }
 
         @Override
@@ -61,14 +61,14 @@ public class PropertyResource extends SimpleResourceDefinition {
         }
     };
 
-    static final PropertyResource INSTANCE = new PropertyResource() ;
+    static final PropertyResourceDefinition INSTANCE = new PropertyResourceDefinition() ;
 
     // registration
-    PropertyResource() {
+    PropertyResourceDefinition() {
         super(PROPERTY_PATH,
                 JGroupsExtension.getResourceDescriptionResolver(ModelKeys.PROPERTY),
-                PropertyResource.PROTOCOL_PROPERTY_ADD,
-                PropertyResource.REMOVE);
+                PropertyResourceDefinition.PROTOCOL_PROPERTY_ADD,
+                PropertyResourceDefinition.REMOVE);
     }
 
     @Override

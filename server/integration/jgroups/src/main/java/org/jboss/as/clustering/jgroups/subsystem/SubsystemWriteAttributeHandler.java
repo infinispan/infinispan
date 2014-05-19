@@ -1,9 +1,6 @@
 package org.jboss.as.clustering.jgroups.subsystem;
 
-import java.util.EnumSet;
-
 import org.jboss.as.controller.ReloadRequiredWriteAttributeHandler;
-import org.jboss.as.controller.registry.AttributeAccess;
 import org.jboss.as.controller.registry.ManagementResourceRegistration;
 
 /**
