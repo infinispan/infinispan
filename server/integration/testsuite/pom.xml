@@ -244,16 +244,19 @@
         <suite.client.local.phase>test</suite.client.local.phase>
         <suite.client.dist.phase>test</suite.client.dist.phase>
         <suite.client.repl.phase>test</suite.client.repl.phase>
+        <suite.security.phase>none</suite.security.phase>
 
         <suite.manual.include>**/*.java</suite.manual.include>
         <suite.manual.exclude.groups>
-            org.infinispan.server.test.category.ClientLocal,org.infinispan.server.test.category.ClientClustered,org.infinispan.server.test.category.RollingUpgrades,org.infinispan.server.test.category.UnstableTest,org.infinispan.server.test.category.Osgi
+            org.infinispan.server.test.category.ClientLocal,org.infinispan.server.test.category.ClientClustered,org.infinispan.server.test.category.RollingUpgrades,org.infinispan.server.test.category.UnstableTest,org.infinispan.server.test.category.Osgi,
+            org.infinispan.server.test.category.SecurityHotRod
         </suite.manual.exclude.groups>
         <suite.client.local.config>testsuite/standalone-default-local.xml</suite.client.local.config>
         <suite.client.dist.config>testsuite/clustered-default-dist.xml</suite.client.dist.config>
         <suite.client.repl.config>testsuite/clustered-default-repl.xml</suite.client.repl.config>
         <groups.client.local>org.infinispan.server.test.category.ClientLocal</groups.client.local>
         <groups.client.clustered>org.infinispan.server.test.category.ClientClustered</groups.client.clustered>
+        <groups.security>org.infinispan.server.test.category.SecurityHotRod</groups.security>
         <groups.unstable>org.infinispan.server.test.category.UnstableTest,org.infinispan.server.test.category.UnstableClientLocalTest,org.infinispan.server.test.category.UnstableClientClusteredTest</groups.unstable>
     </properties>
 
@@ -570,6 +573,19 @@
                             </systemPropertyVariables>
                         </configuration>
                     </execution>
+                    <execution>
+                        <id>suite-security</id>
+                        <phase>${suite.security.phase}</phase>
+                        <goals>
+                            <goal>test</goal>
+                        </goals>
+                        <configuration>
+                            <groups>${groups.security}</groups>
+                            <systemPropertyVariables>
+                                <arquillian.launch>suite-security</arquillian.launch>
+                            </systemPropertyVariables>
+                        </configuration>
+                    </execution>
                 </executions>
             </plugin>
         </plugins>
@@ -754,11 +770,10 @@
             <id>security.hotrod</id>
             <properties>
                 <suite.manual.phase>none</suite.manual.phase>
-                <suite.client.local.phase>test</suite.client.local.phase>
+                <suite.client.local.phase>none</suite.client.local.phase>
                 <suite.client.dist.phase>none</suite.client.dist.phase>
                 <suite.client.repl.phase>none</suite.client.repl.phase>
-                <suite.client.local.config>testsuite/hotrod-auth.xml</suite.client.local.config>
-                <groups.client.local>org.infinispan.server.test.category.SecurityHotRod</groups.client.local>
+                <suite.security.phase>test</suite.security.phase>
             </properties>
         </profile>
         <profile>
