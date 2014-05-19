@@ -1055,6 +1055,7 @@ public class QueryDslConditionsTest extends AbstractQueryDslTest {
 
       // all transactions of account with id 2 which have an amount larger than 1600 or their description contains the word 'rent'
       Query q = qf.from(Transaction.class)
+            .orderBy("description", SortOrder.ASC)
             .having("accountId").eq(1)
             .and(qf.having("amount").gt(1600)
                   .or().having("description").like("%rent%")).toBuilder().build();

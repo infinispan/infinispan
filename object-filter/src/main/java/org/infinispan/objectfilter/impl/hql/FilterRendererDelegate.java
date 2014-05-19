@@ -23,16 +23,17 @@ public class FilterRendererDelegate<TypeMetadata> extends SingleEntityQueryRende
       this.propertyHelper = propertyHelper;
    }
 
-   //@Override
+   @Override
    protected void addSortField(PropertyPath propertyPath, String collateName, boolean isAscending) {
       //todo [anistor] Sorting is not currently supported for object filters
+      throw new UnsupportedOperationException("Sorting is not supported");
    }
 
    @Override
    public void setPropertyPath(PropertyPath propertyPath) {
       if (status == Status.DEFINING_SELECT) {
          if (propertyPath.getNodes().size() == 1 && propertyPath.getNodes().get(0).isAlias()) {
-            projections.add("__HSearch_This"); //todo [anistor] this is a leftover from hsearch ????
+            projections.add("__HSearch_This"); //todo [anistor] this is a leftover from hsearch ????   this represents the entity itself. see org.hibernate.search.ProjectionConstants
          } else {
             projections.add(propertyPath.asStringPathWithoutAlias());
          }

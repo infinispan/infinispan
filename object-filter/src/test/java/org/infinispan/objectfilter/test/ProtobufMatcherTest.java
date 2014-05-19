@@ -1,19 +1,15 @@
 package org.infinispan.objectfilter.test;
 
 import org.infinispan.objectfilter.impl.ProtobufMatcher;
-import org.infinispan.objectfilter.test.model.Address;
 import org.infinispan.objectfilter.test.model.AddressMarshaller;
-import org.infinispan.objectfilter.test.model.Person;
+import org.infinispan.objectfilter.test.model.GenderMarshaller;
 import org.infinispan.objectfilter.test.model.PersonMarshaller;
-import org.infinispan.objectfilter.test.model.PhoneNumber;
 import org.infinispan.objectfilter.test.model.PhoneNumberMarshaller;
 import org.infinispan.protostream.ConfigurationBuilder;
 import org.infinispan.protostream.ProtobufUtil;
 import org.infinispan.protostream.SerializationContext;
 import org.junit.Before;
 import org.junit.Ignore;
-
-import java.util.Arrays;
 
 /**
  * @author anistor@redhat.com
@@ -31,28 +27,18 @@ public class ProtobufMatcherTest extends AbstractMatcherTest {
       serCtx.registerProtofile(PROTOBUF_RES);
       serCtx.registerMarshaller(new AddressMarshaller());
       serCtx.registerMarshaller(new PhoneNumberMarshaller());
+      serCtx.registerMarshaller(new GenderMarshaller());
       serCtx.registerMarshaller(new PersonMarshaller());
    }
 
    @Override
-   protected byte[] createPerson() throws Exception {
-      Person person = new Person();
-      person.setName("John");
-      person.setSurname("Batman");
-      person.setAge(40);
+   protected byte[] createPerson1() throws Exception {
+      return ProtobufUtil.toWrappedByteArray(serCtx, super.createPerson1());
+   }
 
-      Address address = new Address();
-      address.setStreet("Old Street");
-      address.setPostCode("SW12345");
-      person.setAddress(address);
-
-      PhoneNumber phoneNumber1 = new PhoneNumber();
-      phoneNumber1.setNumber("0040888888");
-      PhoneNumber phoneNumber2 = new PhoneNumber();
-      phoneNumber2.setNumber("004012345");
-      person.setPhoneNumbers(Arrays.asList(phoneNumber1, phoneNumber2));
-
-      return ProtobufUtil.toWrappedByteArray(serCtx, person);
+   @Override
+   protected byte[] createPerson2() throws Exception {
+      return ProtobufUtil.toWrappedByteArray(serCtx, super.createPerson2());
    }
 
    @Override
@@ -60,8 +46,8 @@ public class ProtobufMatcherTest extends AbstractMatcherTest {
       return new ProtobufMatcher(serCtx);
    }
 
-   @Override
-   @Ignore  // TODO ignored due to https://issues.jboss.org/browse/ISPN-4319
-   public void testIsNull2() throws Exception {
+   @Ignore
+   public void testCollectionIsNotNull1() throws Exception {
+      //todo [anistor] this feature is currently not implemented for the protobuf case
    }
 }

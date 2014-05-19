@@ -14,6 +14,9 @@ import org.hibernate.search.query.dsl.QueryBuilder;
 import org.hibernate.search.spi.SearchFactoryIntegrator;
 import org.infinispan.AdvancedCache;
 import org.infinispan.commons.CacheException;
+import org.infinispan.objectfilter.Matcher;
+import org.infinispan.objectfilter.impl.ProtobufMatcher;
+import org.infinispan.objectfilter.impl.ReflectionMatcher;
 import org.infinispan.protostream.MessageMarshaller;
 import org.infinispan.protostream.ProtobufUtil;
 import org.infinispan.protostream.SerializationContext;
@@ -22,6 +25,7 @@ import org.infinispan.query.CacheQuery;
 import org.infinispan.query.Search;
 import org.infinispan.query.SearchManager;
 import org.infinispan.query.backend.QueryInterceptor;
+import org.infinispan.query.dsl.embedded.impl.EmbeddedQuery;
 import org.infinispan.query.impl.ComponentRegistryUtils;
 import org.infinispan.query.remote.client.QueryRequest;
 import org.infinispan.query.remote.client.QueryResponse;
@@ -57,14 +61,54 @@ public class QueryFacadeImpl implements QueryFacade {
 
    @Override
    public byte[] query(AdvancedCache<byte[], byte[]> cache, byte[] query) {
-      if (!cache.getCacheConfiguration().indexing().enabled()) {
-         throw new CacheException("Indexing is not enabled for cache " + cache.getName());
+      if (cache.getCacheConfiguration().indexing().enabled()) {
+         try {
+            return executeQuery(cache, query);
+         } catch (IOException e) {
+            throw new CacheException("An exception has occurred during query execution", e);
+         }
       }
+
       try {
-         return executeQuery(cache, query);
+         return executeNonIndexedQuery(cache, query);
       } catch (IOException e) {
          throw new CacheException("An exception has occurred during query execution", e);
       }
+   }
+
+   private byte[] executeNonIndexedQuery(AdvancedCache<byte[], byte[]> cache, byte[] query) throws IOException {
+      final SerializationContext serCtx = ProtobufMetadataManager.getSerializationContext(cache.getCacheManager());
+
+      QueryRequest request = ProtobufUtil.fromByteArray(serCtx, query, 0, query.length, QueryRequest.class);
+
+      Class<? extends Matcher> matcherImplClass = cache.getCacheConfiguration().compatibility().enabled()
+            ? ReflectionMatcher.class : ProtobufMatcher.class;
+
+      EmbeddedQuery eq = new EmbeddedQuery(cache, request.getJpqlString(), matcherImplClass);
+      List<?> list = eq.list();
+      int projSize = 0;
+      if (eq.getProjection() != null && eq.getProjection().length > 0) {
+         projSize = eq.getProjection().length;
+      }
+      List<WrappedMessage> results = new ArrayList<WrappedMessage>(projSize == 0 ? list.size() : list.size() * projSize);
+      for (Object o : list) {
+         if (projSize == 0) {
+            results.add(new WrappedMessage(o));
+         } else {
+            Object[] row = (Object[]) o;
+            for (int j = 0; j < projSize; j++) {
+               results.add(new WrappedMessage(row[j]));
+            }
+         }
+      }
+
+      QueryResponse response = new QueryResponse();
+      response.setTotalResults(list.size());
+      response.setNumResults(list.size());
+      response.setProjectionSize(projSize);
+      response.setResults(results);
+
+      return ProtobufUtil.toByteArray(serCtx, response);
    }
 
    private byte[] executeQuery(AdvancedCache<byte[], byte[]> cache, byte[] query) throws IOException {
@@ -166,7 +210,7 @@ public class QueryFacadeImpl implements QueryFacade {
          cacheQuery = cacheQuery.maxResults(request.getMaxResults());
       }
 
-      List list = cacheQuery.list();
+      List<?> list = cacheQuery.list();
       List<WrappedMessage> results = new ArrayList<WrappedMessage>(projSize == 0 ? list.size() : list.size() * projSize);
       for (Object o : list) {
          if (projSize == 0) {

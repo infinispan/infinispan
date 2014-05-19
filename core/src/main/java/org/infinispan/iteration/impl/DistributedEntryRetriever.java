@@ -270,6 +270,9 @@ public class DistributedEntryRetriever<K, V> extends LocalEntryRetriever<K, V> {
       if (log.isTraceEnabled()) {
          log.tracef("Received entry request for %s from node %s for segments %s", identifier, origin, segments);
       }
+
+      wireFilterAndConverterDependencies(filter, converter);
+
       startRetrievingValues(identifier, segments, filter, converter, new SegmentBatchHandler<K, C>() {
          @Override
          public void handleBatch(UUID identifier, boolean complete, Set<Integer> completedSegments,
@@ -496,6 +499,7 @@ public class DistributedEntryRetriever<K, V> extends LocalEntryRetriever<K, V> {
          eventuallySendRequest(identifier, status);
       }
       if (!ourSegments.isEmpty()) {
+         wireFilterAndConverterDependencies(filter, converter);
          startRetrievingValuesLocal(identifier, ourSegments, status, new SegmentBatchHandler<K, C>() {
             @Override
             public void handleBatch(UUID identifier, boolean complete, Set<Integer> completedSegments, Set<Integer> inDoubtSegments, Collection<Map.Entry<K, C>> entries) {

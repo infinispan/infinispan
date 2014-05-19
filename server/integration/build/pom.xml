@@ -161,6 +161,11 @@
       </dependency>
       
       <dependency>
+         <groupId>org.infinispan</groupId>
+         <artifactId>infinispan-objectfilter</artifactId>
+      </dependency>
+
+      <dependency>
          <groupId>org.infinispan.protostream</groupId>
          <artifactId>protostream</artifactId>
       </dependency>

@@ -4,7 +4,6 @@ import org.infinispan.commands.TopologyAffectedCommand;
 import org.infinispan.commands.remote.BaseRpcCommand;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.factories.annotations.Inject;
-import org.infinispan.iteration.impl.EntryRetriever;
 import org.infinispan.remoting.transport.Address;
 
 import java.util.Collection;

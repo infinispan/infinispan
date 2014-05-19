@@ -18,25 +18,34 @@ public final class OrNode extends BENode {
          throw new IllegalStateException("This should never be called again because the state of this node has been decided already.");
       }
 
-      if (parent == null) {
-         evalContext.treeCounters[0] = childValue ? BETree.EXPR_TRUE : BETree.EXPR_FALSE;
-         for (int i = index; i < span; i++) {
-            evalContext.beTree.getNodes()[i].suspendSubscription(evalContext);
-         }
-         return true;
-      }
-
       if (childValue) {
-         // value of this node is decided, let the parent know
-         return parent.handleChildValue(this, true, evalContext);
+         // value of this node is decided: TRUE
+         if (parent != null) {
+            // let the parent know
+            return parent.handleChildValue(this, true, evalContext);
+         } else {
+            evalContext.treeCounters[0] = BETree.EXPR_TRUE;
+            for (int i = index; i < span; i++) {
+               evalContext.beTree.getNodes()[i].suspendSubscription(evalContext);
+            }
+            return true;
+         }
       } else {
-         if (--evalContext.treeCounters[index] == BETree.EXPR_TRUE) {
-            // value of this node has just been decided, let the parent know
-            return parent.handleChildValue(this, false, evalContext);
+         if (--evalContext.treeCounters[index] == 0) {
+            // value of this node has just been decided: TRUE
+            if (parent != null) {
+               // let the parent know
+               return parent.handleChildValue(this, false, evalContext);
+            } else {
+               for (int i = index; i < span; i++) {
+                  evalContext.beTree.getNodes()[i].suspendSubscription(evalContext);
+               }
+               return true;
+            }
          } else {
             // value of this node cannot be decided yet, so we cannot tell the parent anything yet but let's at least mark down the children as 'unsatisfied'
+            evalContext.treeCounters[child.index] = BETree.EXPR_FALSE;
             for (int i = child.index; i < child.span; i++) {
-               evalContext.treeCounters[i] = BETree.EXPR_FALSE;
                evalContext.beTree.getNodes()[i].suspendSubscription(evalContext);
             }
             return false;

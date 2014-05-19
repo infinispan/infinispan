@@ -3,6 +3,7 @@ package org.infinispan.objectfilter.impl;
 import org.infinispan.objectfilter.FilterCallback;
 import org.infinispan.objectfilter.FilterSubscription;
 import org.infinispan.objectfilter.impl.predicateindex.AttributeNode;
+import org.infinispan.objectfilter.impl.predicateindex.PredicateIndex;
 import org.infinispan.objectfilter.impl.predicateindex.be.BETree;
 
 import java.util.List;
@@ -56,27 +57,21 @@ public final class FilterSubscriptionImpl<AttributeId extends Comparable<Attribu
       return projection;
    }
 
-   public void registerProjection(AttributeNode<AttributeId> root) {
+   public void registerProjection(PredicateIndex<AttributeId> predicateIndex) {
       if (translatedProjection != null) {
          for (int i = 0; i < translatedProjection.size(); i++) {
             List<AttributeId> projectionPath = translatedProjection.get(i);
-            AttributeNode<AttributeId> currentNode = root;
-            for (AttributeId attribute : projectionPath) {
-               currentNode = currentNode.addChild(attribute);
-            }
-            currentNode.addProjection(this, i);
+            AttributeNode<AttributeId> node = predicateIndex.addAttributeNodeByPath(projectionPath);
+            node.addProjection(this, i);
          }
       }
    }
 
-   public void unregisterProjection(AttributeNode<AttributeId> root) {
+   public void unregisterProjection(PredicateIndex<AttributeId> predicateIndex) {
       if (translatedProjection != null) {
          for (List<AttributeId> projectionPath : translatedProjection) {
-            AttributeNode<AttributeId> currentNode = root;
-            for (AttributeId attribute : projectionPath) {
-               currentNode = currentNode.getChild(attribute);
-            }
-            currentNode.removeProjections(this);
+            AttributeNode<AttributeId> node = predicateIndex.getAttributeNodeByPath(projectionPath);
+            node.removeProjections(this);
          }
       }
    }

@@ -30,6 +30,11 @@
       </dependency>
 
       <dependency>
+         <groupId>${project.groupId}</groupId>
+         <artifactId>infinispan-objectfilter</artifactId>
+      </dependency>
+
+      <dependency>
          <groupId>org.hibernate.hql</groupId>
          <artifactId>hibernate-hql-parser</artifactId>
       </dependency>

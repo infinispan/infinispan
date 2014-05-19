@@ -15,7 +15,7 @@ import java.util.List;
  * @author anistor@redhat.com
  * @since 6.0
  */
-class EmbeddedLuceneQuery implements LuceneQuery {
+final class EmbeddedLuceneQuery implements LuceneQuery {
 
    private final SearchManager sm;
 

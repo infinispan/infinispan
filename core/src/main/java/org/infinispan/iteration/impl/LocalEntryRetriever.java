@@ -9,6 +9,7 @@ import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.container.DataContainer;
 import org.infinispan.container.entries.ImmortalCacheEntry;
 import org.infinispan.container.entries.InternalCacheEntry;
+import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.factories.annotations.ComponentName;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.filter.CollectionKeyFilter;
@@ -104,6 +105,16 @@ public class LocalEntryRetriever<K, V> implements EntryRetriever<K, V> {
       throw new UnsupportedOperationException();
    }
 
+   protected <C> void wireFilterAndConverterDependencies(KeyValueFilter<? super K, ? super V> filter, Converter<? super K, ? super V, C> converter) {
+      ComponentRegistry componentRegistry = cache.getAdvancedCache().getComponentRegistry();
+      if (filter != null) {
+         componentRegistry.wireDependencies(filter);
+      }
+      if (converter != null && converter != filter) {
+         componentRegistry.wireDependencies(converter);
+      }
+   }
+
    @Override
    public <C> void receiveResponse(UUID identifier, Address origin, Set<Integer> completedSegments, Set<Integer> inDoubtSegments,
                                    Collection<Map.Entry<K, C>> entries) {
@@ -147,6 +158,7 @@ public class LocalEntryRetriever<K, V> implements EntryRetriever<K, V> {
    public <C> CloseableIterator<Map.Entry<K, C>> retrieveEntries(final KeyValueFilter<? super K, ? super V> filter,
                                                                  final Converter<? super K, ? super V, ? extends C> converter,
                                                                  final SegmentListener listener) {
+      wireFilterAndConverterDependencies(filter, converter);
       final Itr<K, C> iterator = new Itr<K, C>(batchSize);
       final ItrQueuerHandler<C> handler = new ItrQueuerHandler<C>(iterator);
       executorService.submit(new Runnable() {
@@ -223,6 +235,7 @@ public class LocalEntryRetriever<K, V> implements EntryRetriever<K, V> {
 
                handler.handleBatch(true, queue);
             } catch (Throwable e) {
+               //todo [anistor] any exception happening during entry retrieval should stop the process and throw an exception to the requestor instead of timing out
                log.exceptionProcessingEntryRetrievalValues(e);
             }
          }

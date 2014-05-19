@@ -1,9 +1,12 @@
 package org.infinispan.objectfilter.impl.predicateindex;
 
 import org.infinispan.objectfilter.impl.FilterSubscriptionImpl;
+import org.infinispan.objectfilter.impl.predicateindex.be.PredicateNode;
 
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
 
 /**
@@ -23,6 +26,8 @@ public abstract class MatcherEvalContext<AttributeId extends Comparable<Attribut
    private final Map<FilterSubscriptionImpl, FilterEvalContext> filterContexts = new HashMap<FilterSubscriptionImpl, FilterEvalContext>();
 
    private final Map<Predicate<?>, AtomicInteger> suspendedSubscriptionCounts = new HashMap<Predicate<?>, AtomicInteger>();
+
+   private final Set<PredicateNode<AttributeId>> suspendedSubscriptions = new HashSet<PredicateNode<AttributeId>>();
 
    private final Object instance;
 
@@ -50,14 +55,23 @@ public abstract class MatcherEvalContext<AttributeId extends Comparable<Attribut
       return filterEvalContext;
    }
 
-   //todo [anistor] this is an AtomicInteger just because mutability is needed. there are no concurrency concerns here.
-   public AtomicInteger getSuspendedSubscriptionsCounter(Predicate<?> predicate) {
-      AtomicInteger counter = suspendedSubscriptionCounts.get(predicate);
+   public void addSuspendedSubscription(PredicateNode<AttributeId> predicateNode) {
+      suspendedSubscriptions.add(predicateNode);
+      AtomicInteger counter = suspendedSubscriptionCounts.get(predicateNode.getPredicate());
       if (counter == null) {
          counter = new AtomicInteger();
-         suspendedSubscriptionCounts.put(predicate, counter);
+         suspendedSubscriptionCounts.put(predicateNode.getPredicate(), counter);
       }
-      return counter;
+      counter.incrementAndGet();
+   }
+
+   public boolean isSuspendedSubscription(PredicateNode<AttributeId> predicateNode) {
+      return suspendedSubscriptions.contains(predicateNode);
+   }
+
+   public int getSuspendedSubscriptionsCounter(Predicate<?> predicate) {
+      AtomicInteger counter = suspendedSubscriptionCounts.get(predicate);
+      return counter == null ? 0 : counter.get();
    }
 
    public void process(AttributeNode<AttributeId> node) {

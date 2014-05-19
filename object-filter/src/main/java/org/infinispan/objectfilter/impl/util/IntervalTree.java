@@ -10,7 +10,7 @@ import java.util.List;
  * <p/>
  * The implementation is based on red-black trees (http://en.wikipedia.org/wiki/Red–black_tree). Additions and removals
  * are efficient and require only minimal rebalancing of the tree as opposed to other implementation approaches that
- * always perform a full rebuild. Duplicate intervals are not allowed but are coped for.
+ * perform a full rebuild after insertion. Duplicate intervals are not stored but are coped for.
  *
  * @author anistor@redhat.com
  * @since 7.0
@@ -20,7 +20,7 @@ public final class IntervalTree<K, V> {
    public static final class Node<K, V> {
 
       /**
-       * The interval. The low value becomes the key if this node within the search tree.
+       * The interval. The low value is the key of this node within the search tree.
        */
       public final Interval<K> interval;    //todo maybe it's wise to make it private and expose getter
 
@@ -64,7 +64,7 @@ public final class IntervalTree<K, V> {
       }
    }
 
-   private final Node<K, V> sentinel;  // a dummy sentinel node
+   private final Node<K, V> sentinel;
 
    /**
     * The root of the tree.
@@ -72,7 +72,7 @@ public final class IntervalTree<K, V> {
    private Node<K, V> root;
 
    /**
-    * Comparator used for ordering Intervals bounds and Intervals.
+    * Comparator used for ordering Intervals.
     */
    private final Comparator<K> comparator;
 
@@ -100,11 +100,10 @@ public final class IntervalTree<K, V> {
    }
 
    /**
-    * Compares two Intervals.
+    * Compare two Intervals.
     *
     * @return a negative integer, zero, or a positive integer depending if Interval i1 is to the left of i2, overlaps
     * with it, or is to the right of i2.
-    * @throws NullPointerException if {@code Interval} is null.
     */
    private int compareIntervals(Interval<K> i1, Interval<K> i2) {
       if (compare(i1.up, i2.low) < 0 || compare(i1.up, i2.low) <= 0 && (!i1.includeUpper || !i2.includeLower)) {
@@ -126,11 +125,10 @@ public final class IntervalTree<K, V> {
    }
 
    /**
-    * Add the {@code Interval} into this {@code IntervalTree} and return the Node. Duplicates are found added and the
-    * existing Node is returned.
+    * Add the {@code Interval} into this {@code IntervalTree} and return the Node. Possible duplicates are found and the
+    * existing Node is returned instead of adding a new one.
     *
     * @param i an Interval to be inserted
-    * @throws NullPointerException if {@code Interval} is null.
     */
    public Node<K, V> add(Interval<K> i) {
       checkValidInterval(i);
@@ -268,32 +266,23 @@ public final class IntervalTree<K, V> {
    }
 
    private boolean remove(Node<K, V> n, Interval<K> i) {
-      if (n == sentinel) {
+      if (n == sentinel || compare(i.low, n.max) > 0) {
          return false;
       }
 
-      // skip nodes that have their max value below the start of the given Interval
-      if (compare(i.low, n.max) > 0) {
-         return false;
-      }
-
-      // try this node
       if (n.interval.equals(i)) {
          remove(n);
          return true;
       }
 
-      // search and remove in the left branch
       if (n.left != sentinel && remove(n.left, i)) {
          return true;
       }
 
-      // Skip all nodes to the right of nodes whose low value is past the end of the given Interval
       if (compareIntervals(i, n.interval) < 0) {
          return false;
       }
 
-      // otherwise try to search and remove in the right branch
       return n.right != sentinel && remove(n.right, i);
    }
 
@@ -350,22 +339,22 @@ public final class IntervalTree<K, V> {
    }
 
    private Node<K, V> findSuccessor(Node<K, V> x) {
-      Node<K, V> y = x.right;
-      if (y != sentinel) {
-         while (y.left != sentinel) {
-            y = y.left;
+      Node<K, V> successor = x.right;
+      if (successor != sentinel) {
+         while (successor.left != sentinel) {
+            successor = successor.left;
          }
-         return y;
+         return successor;
       }
-      y = x.parent;
-      while (x == y.right) {
-         x = y;
-         y = y.parent;
+      successor = x.parent;
+      while (x == successor.right) {
+         x = successor;
+         successor = successor.parent;
       }
-      if (y == root) {
+      if (successor == root) {
          return sentinel;
       }
-      return y;
+      return successor;
    }
 
    private void rebalanceAfterRemove(Node<K, V> x) {
@@ -446,31 +435,22 @@ public final class IntervalTree<K, V> {
    }
 
    private void findOverlap(Node<K, V> n, Interval<K> i, List<Node<K, V>> results) {
-      if (n == sentinel) {
+      if (n == sentinel || compare(i.low, n.max) > 0) {
          return;
       }
 
-      // Skip all nodes that have got their max value below the start of the given Interval.
-      if (compare(i.low, n.max) > 0) {
-         return;
-      }
-
-      // Search left children.
       if (n.left != sentinel) {
          findOverlap(n.left, i, results);
       }
 
-      // Check this node.
       if (compareIntervals(n.interval, i) == 0) {
          results.add(n);
       }
 
-      // Skip all nodes to the right of nodes whose low value is past the end of the given Interval.
       if (compareIntervals(i, n.interval) < 0) {
          return;
       }
 
-      // Otherwise, search right children.
       if (n.right != sentinel) {
          findOverlap(n.right, i, results);
       }
@@ -482,21 +462,14 @@ public final class IntervalTree<K, V> {
    }
 
    private Node<K, V> findNode(Node<K, V> n, Interval<K> i) {
-      if (n == sentinel) {
+      if (n == sentinel || compare(i.low, n.max) > 0) {
          return null;
       }
 
-      // skip all nodes that have max value below the start of the given Interval
-      if (compare(i.low, n.max) > 0) {
-         return null;
-      }
-
-      // check current node
       if (n.interval.equals(i)) {
          return n;
       }
 
-      // search left children
       if (n.left != sentinel) {
          Node<K, V> w = findNode(n.left, i);
          if (w != null) {
@@ -504,12 +477,10 @@ public final class IntervalTree<K, V> {
          }
       }
 
-      // skip all nodes to the right of nodes whose low value is past the end of the given Interval
       if (compareIntervals(i, n.interval) < 0) {
          return null;
       }
 
-      // Otherwise, search right children.
       if (n.right != sentinel) {
          return findNode(n.right, i);
       }

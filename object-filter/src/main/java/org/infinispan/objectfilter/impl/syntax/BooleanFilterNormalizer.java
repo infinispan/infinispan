@@ -229,12 +229,23 @@ public final class BooleanFilterNormalizer {
          }
 
          // interval predicates cannot be negated, they are converted instead into the opposite interval
-         // and the special case of equality is transformed into two intervals, excluding the compared value
          if (booleanExpr instanceof ComparisonExpr) {
             ComparisonExpr c = (ComparisonExpr) booleanExpr;
-            if (c.getComparisonType() == ComparisonPredicate.Type.EQUALS) {
-               return new OrExpr(new ComparisonExpr(c.getLeftChild(), c.getRightChild(), ComparisonPredicate.Type.LESS),
-                                 new ComparisonExpr(c.getLeftChild(), c.getRightChild(), ComparisonPredicate.Type.GREATER));
+            switch (c.getComparisonType()) {
+               case LESS:
+                  return new ComparisonExpr(c.getLeftChild(), c.getRightChild(), ComparisonPredicate.Type.GREATER_OR_EQUAL);
+               case LESS_OR_EQUAL:
+                  return new ComparisonExpr(c.getLeftChild(), c.getRightChild(), ComparisonPredicate.Type.GREATER);
+               case GREATER_OR_EQUAL:
+                  return new ComparisonExpr(c.getLeftChild(), c.getRightChild(), ComparisonPredicate.Type.LESS);
+               case GREATER:
+                  return new ComparisonExpr(c.getLeftChild(), c.getRightChild(), ComparisonPredicate.Type.LESS_OR_EQUAL);
+               case EQUALS:
+                  // the special case of equality is transformed into two intervals, excluding the compared value
+                  return new OrExpr(new ComparisonExpr(c.getLeftChild(), c.getRightChild(), ComparisonPredicate.Type.LESS),
+                                    new ComparisonExpr(c.getLeftChild(), c.getRightChild(), ComparisonPredicate.Type.GREATER));
+               default:
+                  throw new IllegalStateException("Unknown comparison type: " + c.getComparisonType());
             }
          }
 

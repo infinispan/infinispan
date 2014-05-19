@@ -1,6 +1,7 @@
 package org.infinispan.objectfilter.impl.predicateindex;
 
 import com.google.protobuf.Descriptors;
+import org.infinispan.protostream.MessageContext;
 import org.infinispan.protostream.ProtobufParser;
 import org.infinispan.protostream.SerializationContext;
 import org.infinispan.protostream.TagHandler;
@@ -19,6 +20,7 @@ public class ProtobufMatcherEvalContext extends MatcherEvalContext<Integer> impl
 
    private byte[] payload;
    private Descriptors.Descriptor payloadMessageDescriptor;
+   private MessageContext messageContext;
 
    private final SerializationContext serializationContext;
    private final Descriptors.Descriptor wrappedMessageDescriptor;
@@ -48,6 +50,7 @@ public class ProtobufMatcherEvalContext extends MatcherEvalContext<Integer> impl
          if (skipping == 0) {
             AttributeNode<Integer> attrNode = currentNode.getChild(fieldNumber);
             if (attrNode != null) { // process only 'interesting' tags
+               messageContext.markField(fieldNumber);
                attrNode.processValue(tagValue, this);
             }
          }
@@ -73,6 +76,8 @@ public class ProtobufMatcherEvalContext extends MatcherEvalContext<Integer> impl
          if (skipping == 0) {
             AttributeNode<Integer> attrNode = currentNode.getChild(fieldNumber);
             if (attrNode != null) { // ignore 'uninteresting' tags
+               messageContext.markField(fieldNumber);
+               pushContext(fieldName, messageDescriptor);
                currentNode = attrNode;
                return;
             }
@@ -89,6 +94,7 @@ public class ProtobufMatcherEvalContext extends MatcherEvalContext<Integer> impl
    public void onEndNested(int fieldNumber, String fieldName, Descriptors.Descriptor messageDescriptor) {
       if (payloadStarted) {
          if (skipping == 0) {
+            popContext();
             currentNode = currentNode.getParent();
          } else {
             skipping--;
@@ -100,7 +106,9 @@ public class ProtobufMatcherEvalContext extends MatcherEvalContext<Integer> impl
 
    @Override
    public void onEnd() {
-      if (!payloadStarted) {
+      if (payloadStarted) {
+         processMissingFields();
+      } else {
          payloadStarted = true;
 
          if (payload != null) {
@@ -109,6 +117,7 @@ public class ProtobufMatcherEvalContext extends MatcherEvalContext<Integer> impl
             }
 
             payloadMessageDescriptor = serializationContext.getMessageDescriptor(entityTypeName);
+            messageContext = new MessageContext<MessageContext>(null, null, payloadMessageDescriptor);
          }
       }
    }
@@ -119,6 +128,29 @@ public class ProtobufMatcherEvalContext extends MatcherEvalContext<Integer> impl
          ProtobufParser.INSTANCE.parse(this, payloadMessageDescriptor, payload);
       } catch (IOException e) {
          throw new RuntimeException(e);  // TODO [anistor] proper exception handling needed
+      }
+   }
+
+   private void pushContext(String fieldName, Descriptors.Descriptor messageDescriptor) {
+      messageContext = new MessageContext<MessageContext>(messageContext, fieldName, messageDescriptor);
+   }
+
+   private void popContext() {
+      processMissingFields();
+      messageContext = messageContext.getParentContext();
+   }
+
+   private void processMissingFields() {
+      for (Descriptors.FieldDescriptor fd : messageContext.getMessageDescriptor().getFields()) {
+         AttributeNode<Integer> attrNode = currentNode.getChild(fd.getNumber());
+         if (attrNode != null && !messageContext.isFieldMarked(fd.getNumber())) {
+            //todo [anistor] can a repeated field have a default value?
+            Object defaultValue = fd.isRepeated()
+                  || fd.getType() == Descriptors.FieldDescriptor.Type.MESSAGE
+                  || fd.getType() == Descriptors.FieldDescriptor.Type.GROUP
+                  || fd.toProto().getDefaultValue().isEmpty() ? null : fd.getDefaultValue();
+            attrNode.processValue(defaultValue, this);
+         }
       }
    }
 }

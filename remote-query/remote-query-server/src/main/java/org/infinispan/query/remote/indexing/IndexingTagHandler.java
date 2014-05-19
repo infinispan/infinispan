@@ -7,6 +7,7 @@ import org.hibernate.search.annotations.Store;
 import org.hibernate.search.bridge.LuceneOptions;
 import org.hibernate.search.engine.impl.LuceneOptionsImpl;
 import org.hibernate.search.engine.metadata.impl.DocumentFieldMetadata;
+import org.infinispan.protostream.MessageContext;
 import org.infinispan.protostream.TagHandler;
 import org.infinispan.query.remote.QueryFacadeImpl;
 
@@ -36,11 +37,11 @@ class IndexingTagHandler implements TagHandler {
 
    private final Document document;
 
-   private ReadMessageContext messageContext;
+   private MessageContext<MessageContext> messageContext;
 
    public IndexingTagHandler(Descriptors.Descriptor messageDescriptor, Document document) {
       this.document = document;
-      this.messageContext = new ReadMessageContext(null, null, messageDescriptor);
+      this.messageContext = new MessageContext<MessageContext>(null, null, messageDescriptor);
    }
 
    @Override
@@ -129,7 +130,7 @@ class IndexingTagHandler implements TagHandler {
    }
 
    private void pushContext(String fieldName, Descriptors.Descriptor messageDescriptor) {
-      messageContext = new ReadMessageContext(messageContext, fieldName, messageDescriptor);
+      messageContext = new MessageContext<MessageContext>(messageContext, fieldName, messageDescriptor);
    }
 
    private void popContext() {

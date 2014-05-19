@@ -13,6 +13,7 @@
         <module name="org.hibernate.hql.lucene"/>
         <module name="org.hibernate.search.engine" />
         <module name="org.infinispan"/>
+        <module name="org.infinispan.objectfilter"/>
         <module name="org.jboss.logging" />
     </dependencies>
 </module>

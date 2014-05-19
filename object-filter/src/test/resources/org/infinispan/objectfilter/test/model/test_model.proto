@@ -25,4 +25,11 @@ message Person {
    optional uint32 age = 5;
 
    optional string license = 6;
+
+   enum Gender {
+      MALE = 0;
+      FEMALE = 1;
+   }
+
+   optional Gender gender = 7;
 }

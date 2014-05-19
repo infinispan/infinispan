@@ -4,12 +4,12 @@ import java.lang.reflect.Array;
 import java.util.Iterator;
 
 /**
- * An immutable Iterator for array objects.
+ * An immutable Iterator for arrays.
  *
  * @author anistor@redhat.com
  * @since 7.0
  */
-public final class ArrayIterator implements Iterator<Object> {
+public final class ArrayIterator<T> implements Iterator<T> {
 
    /**
     * An array of whatever type.
@@ -22,6 +22,9 @@ public final class ArrayIterator implements Iterator<Object> {
    private int pos = 0;
 
    public ArrayIterator(Object array) {
+      if (array == null) {
+         throw new IllegalArgumentException("Argument cannot be null");
+      }
       if (!array.getClass().isArray()) {
          throw new IllegalArgumentException("Argument is expected to be an array");
       }
@@ -32,8 +35,8 @@ public final class ArrayIterator implements Iterator<Object> {
       return pos < Array.getLength(array);
    }
 
-   public Object next() {
-      return Array.get(array, pos++);
+   public T next() {
+      return (T) Array.get(array, pos++);
    }
 
    public void remove() {

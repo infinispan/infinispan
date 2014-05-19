@@ -20,16 +20,25 @@ public class ReflectionMatcherEvalContext extends MatcherEvalContext<String> {
       Iterator<AttributeNode<String>> children = node.getChildrenIterator();
       while (children.hasNext()) {
          AttributeNode<String> childAttribute = children.next();
-         ReflectionHelper.PropertyAccessor accessor = ReflectionHelper.getAccessor(instance.getClass(), childAttribute.getAttribute());
-         if (accessor.isMultiple()) {
-            Iterator valuesIt = accessor.getValueIterator(instance);
-            while (valuesIt.hasNext()) {
-               Object attributeValue = valuesIt.next();
+         if (instance == null) {
+            processAttribute(childAttribute, null);
+         } else {
+            ReflectionHelper.PropertyAccessor accessor = ReflectionHelper.getAccessor(instance.getClass(), childAttribute.getAttribute());
+            if (accessor.isMultiple()) {
+               Iterator valuesIt = accessor.getValueIterator(instance);
+               if (valuesIt == null) {
+                  // try to evaluate eventual 'is null' predicates for this null collection
+                  processAttribute(childAttribute, null);
+               } else {
+                  while (valuesIt.hasNext()) {
+                     Object attributeValue = valuesIt.next();
+                     processAttribute(childAttribute, attributeValue);
+                  }
+               }
+            } else {
+               Object attributeValue = accessor.getValue(instance);
                processAttribute(childAttribute, attributeValue);
             }
-         } else {
-            Object attributeValue = accessor.getValue(instance);
-            processAttribute(childAttribute, attributeValue);
          }
       }
    }
