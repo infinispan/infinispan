@@ -1,6 +1,7 @@
 package org.infinispan.client.hotrod.impl.transport.tcp;
 
 import java.net.SocketAddress;
+import java.security.PrivilegedActionException;
 import java.security.PrivilegedExceptionAction;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -8,6 +9,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 import javax.security.auth.Subject;
 import javax.security.sasl.Sasl;
 import javax.security.sasl.SaslClient;
+import javax.security.sasl.SaslException;
 
 import org.infinispan.client.hotrod.configuration.AuthenticationConfiguration;
 import org.infinispan.client.hotrod.impl.operations.AuthMechListOperation;
@@ -64,11 +66,11 @@ public class SaslTransportObjectFactory extends TransportObjectFactory {
       if (log.isTraceEnabled()) {
          log.tracef("Authenticating using mech: %s", configuration.saslMechanism());
       }
-      byte response[] = saslClient.hasInitialResponse() ? saslClient.evaluateChallenge(EMPTY_BYTES) : EMPTY_BYTES;
+      byte response[] = saslClient.hasInitialResponse() ? evaluateChallenge(saslClient, EMPTY_BYTES) : EMPTY_BYTES;
 
       byte challenge[] = auth(tcpTransport, topologyId, configuration.saslMechanism(), response);
       while (!saslClient.isComplete() && challenge != null) {
-         response = saslClient.evaluateChallenge(challenge);
+         response = evaluateChallenge(saslClient, challenge);
          if (response == null) {
             break;
          }
@@ -90,6 +92,28 @@ public class SaslTransportObjectFactory extends TransportObjectFactory {
          ping(tcpTransport, topologyId);
       }
       return tcpTransport;
+   }
+
+   private byte[] evaluateChallenge(final SaslClient saslClient, final byte[] challenge) throws SaslException {
+      if(configuration.clientSubject()!= null) {
+         try {
+            return Subject.doAs(configuration.clientSubject(), new PrivilegedExceptionAction<byte[]>() {
+               @Override
+               public byte[] run() throws Exception {
+                  return saslClient.evaluateChallenge(challenge);
+               }
+            });
+         } catch (PrivilegedActionException e) {
+            Throwable cause = e.getCause();
+            if (cause instanceof SaslException) {
+               throw (SaslException)cause;
+            } else {
+               throw new RuntimeException(cause);
+            }
+         }
+      } else {
+         return saslClient.evaluateChallenge(challenge);
+      }
    }
 
    private List<String> mechList(TcpTransport tcpTransport, AtomicInteger topologyId) {
