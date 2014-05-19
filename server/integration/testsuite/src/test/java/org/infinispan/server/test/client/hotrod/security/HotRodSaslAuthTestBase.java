@@ -52,7 +52,7 @@ public abstract class HotRodSaslAuthTestBase {
    protected RemoteCache<String, String> remoteCache;
    protected static RemoteCacheManager remoteCacheManager = null;
 
-   @InfinispanResource("container1")
+   @InfinispanResource("hotrodAuth")
    RemoteInfinispanServer server;
 
    public abstract String getTestedMech();
