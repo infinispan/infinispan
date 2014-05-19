@@ -93,7 +93,20 @@ class HotRodDecoder(cacheManager: EmbeddedCacheManager, transport: NettyTranspor
             "Remote requests are not allowed to topology cache. Do no send remote requests to cache '%s'".format(cacheName),
             header.version, header.messageId)
 
-      val cache = server.getCacheInstance(cacheName, cacheManager, server.isCacheNameKnown(cacheName))
+      var seenForFirstTime = false
+      // Try to avoid calling cacheManager.getCacheNames() if possible, since this creates a lot of unnecessary garbage
+      if (server.isCacheNameKnown(cacheName)) {
+         if (!(cacheManager.getCacheNames contains cacheName)) {
+            isError = true // Mark it as error so that the rest of request is ignored
+            throw new CacheNotFoundException(
+               "Cache with name '%s' not found amongst the configured caches".format(cacheName),
+               header.version, header.messageId)
+         } else {
+            seenForFirstTime = true
+         }
+      }
+
+      val cache = server.getCacheInstance(cacheName, cacheManager, seenForFirstTime)
       header.decoder.getOptimizedCache(header, cache)
    }
 

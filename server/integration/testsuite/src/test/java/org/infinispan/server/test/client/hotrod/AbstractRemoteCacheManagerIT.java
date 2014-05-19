@@ -184,8 +184,13 @@ public abstract class AbstractRemoteCacheManagerIT {
         RemoteCacheManager rcm = new RemoteCacheManager(createRemoteCacheManagerConfigurationBuilder().build());
         RemoteCache rc1 = rcm.getCache("nonExistentCache");
 
-        for (String stat : rc1.stats().getStatsMap().keySet()) {
-            System.out.println(stat + " " + rc1.stats().getStatsMap().get(stat));
+        try {
+            for (String stat : rc1.stats().getStatsMap().keySet()) {
+                System.out.println(stat + " " + rc1.stats().getStatsMap().get(stat));
+            }
+            fail("Should throw CacheNotFoundException");
+        } catch (Exception e) {
+            //ok
         }
     }
 
