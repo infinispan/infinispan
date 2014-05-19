@@ -38,20 +38,26 @@ import javax.management.MBeanServer;
 
 import org.jboss.as.clustering.concurrent.ManagedExecutorService;
 import org.jboss.as.clustering.concurrent.ManagedScheduledExecutorService;
+import org.jboss.as.domain.management.SecurityRealm;
 import org.jboss.as.network.SocketBinding;
 import org.jboss.as.server.ServerEnvironment;
 import org.jgroups.Channel;
 import org.jgroups.ChannelListener;
 import org.jgroups.Global;
 import org.jgroups.JChannel;
+import org.jgroups.conf.PropertyConverters;
 import org.jgroups.conf.ProtocolStackConfigurator;
 import org.jgroups.jmx.JmxConfigurator;
+import org.jgroups.protocols.SASL;
 import org.jgroups.protocols.TP;
+import org.jgroups.protocols.pbcast.GMS;
 import org.jgroups.protocols.relay.RELAY2;
 import org.jgroups.protocols.relay.config.RelayConfig;
 import org.jgroups.stack.Configurator;
 import org.jgroups.stack.Protocol;
+import org.jgroups.stack.ProtocolStack;
 import org.jgroups.util.SocketFactory;
+import org.jgroups.util.Util;
 
 /**
  * @author Paul Ferraro
@@ -130,6 +136,37 @@ public class JChannelFactory implements ChannelFactory, ChannelListener, Protoco
             Configurator.resolveAndInvokePropertyMethods(relay, relayConfig.getProperties());
             channel.getProtocolStack().addProtocol(relay);
             relay.init();
+        }
+
+        // Handle the Sasl protocol
+        final SaslConfiguration saslConfig = this.configuration.getSasl();
+        if (saslConfig != null) {
+           final String clusterRole = saslConfig.getClusterRole();
+           final SecurityRealm securityRealm = saslConfig.getSecurityRealm();
+           final String mech = saslConfig.getMech();
+           final SASL sasl = new SASL();
+           sasl.setMech(mech);
+           Map<String, String> props = saslConfig.getProperties();
+           if (props.containsKey("client_password")) {
+               String credential = props.get("client_password");
+               String name = props.get("client_name");
+               if (name == null) {
+                   sasl.setClientCallbackHandler(new SaslClientCallbackHandler(securityRealm.getName(), this.configuration.getEnvironment().getNodeName(), credential));
+               } else if (name.contains("@")) {
+                   sasl.setClientCallbackHandler(new SaslClientCallbackHandler(name, credential));
+               } else {
+                   sasl.setClientCallbackHandler(new SaslClientCallbackHandler(securityRealm.getName(), name, credential));
+               }
+           } else {
+               props.put("client_password", ""); // HACKY
+           }
+           Map<String, String> saslProps = props.containsKey("sasl_props") ? Util.parseCommaDelimitedProps(props.get("sasl_props")) : new HashMap<String, String>();
+           sasl.setServerCallbackHandler(new RealmAuthorizationCallbackHandler(securityRealm, mech, clusterRole !=null  ? clusterRole : id, saslProps));
+           props.put("sasl_props",  new PropertyConverters.StringProperties().toString(saslProps));
+           Configurator.resolveAndAssignFields(sasl, props);
+           Configurator.resolveAndInvokePropertyMethods(sasl, props);
+           channel.getProtocolStack().insertProtocol(sasl, ProtocolStack.BELOW, GMS.class);
+           sasl.init();
         }
 
         channel.setName(this.configuration.getEnvironment().getNodeName() + "/" + id);
@@ -247,14 +284,6 @@ public class JChannelFactory implements ChannelFactory, ChannelListener, Protoco
             }
             configs.add(config);
         }
-/*
-        RelayConfiguration relay = this.configuration.getRelay();
-        if (relay != null) {
-            config = this.createProtocol(relay);
-            this.setProperty(relay, config, "site", relay.getSiteName());
-            configs.add(config);
-        }
-*/
         return configs;
     }
 

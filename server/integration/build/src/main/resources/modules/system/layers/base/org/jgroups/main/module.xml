@@ -31,5 +31,6 @@
     <dependencies>
         <module name="javax.api"/>
         <module name="org.jboss.as.clustering.jgroups"/>
+        <module name="org.jboss.sasl" services="import" />
     </dependencies>
 </module>

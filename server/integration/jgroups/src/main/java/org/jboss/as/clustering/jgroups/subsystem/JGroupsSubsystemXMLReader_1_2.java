@@ -158,50 +158,50 @@ public class JGroupsSubsystemXMLReader_1_2 implements XMLElementReader<List<Mode
                 case TYPE: {
                     try {
                         TP.class.getClassLoader().loadClass(org.jgroups.conf.ProtocolConfiguration.protocol_prefix + '.' + value).asSubclass(TP.class).newInstance();
-                        TransportResource.TYPE.parseAndSetParameter(value, transport, reader);
+                        TransportResourceDefinition.TYPE.parseAndSetParameter(value, transport, reader);
                     } catch (Exception e) {
                         throw ParseUtils.invalidAttributeValue(reader, i);
                     }
                     break;
                 }
                 case SHARED: {
-                    TransportResource.SHARED.parseAndSetParameter(value, transport, reader);
+                    TransportResourceDefinition.SHARED.parseAndSetParameter(value, transport, reader);
                     break;
                 }
                 case SOCKET_BINDING: {
-                    TransportResource.SOCKET_BINDING.parseAndSetParameter(value, transport, reader);
+                    TransportResourceDefinition.SOCKET_BINDING.parseAndSetParameter(value, transport, reader);
                     break;
                 }
                 case DIAGNOSTICS_SOCKET_BINDING: {
-                    TransportResource.DIAGNOSTICS_SOCKET_BINDING.parseAndSetParameter(value, transport, reader);
+                    TransportResourceDefinition.DIAGNOSTICS_SOCKET_BINDING.parseAndSetParameter(value, transport, reader);
                     break;
                 }
                 case DEFAULT_EXECUTOR: {
-                    TransportResource.DEFAULT_EXECUTOR.parseAndSetParameter(value, transport, reader);
+                    TransportResourceDefinition.DEFAULT_EXECUTOR.parseAndSetParameter(value, transport, reader);
                     break;
                 }
                 case OOB_EXECUTOR: {
-                    TransportResource.OOB_EXECUTOR.parseAndSetParameter(value, transport, reader);
+                    TransportResourceDefinition.OOB_EXECUTOR.parseAndSetParameter(value, transport, reader);
                     break;
                 }
                 case TIMER_EXECUTOR: {
-                    TransportResource.TIMER_EXECUTOR.parseAndSetParameter(value, transport, reader);
+                    TransportResourceDefinition.TIMER_EXECUTOR.parseAndSetParameter(value, transport, reader);
                     break;
                 }
                 case THREAD_FACTORY: {
-                    TransportResource.THREAD_FACTORY.parseAndSetParameter(value, transport, reader);
+                    TransportResourceDefinition.THREAD_FACTORY.parseAndSetParameter(value, transport, reader);
                     break;
                 }
                 case SITE: {
-                    TransportResource.SITE.parseAndSetParameter(value, transport, reader);
+                    TransportResourceDefinition.SITE.parseAndSetParameter(value, transport, reader);
                     break;
                 }
                 case RACK: {
-                    TransportResource.RACK.parseAndSetParameter(value, transport, reader);
+                    TransportResourceDefinition.RACK.parseAndSetParameter(value, transport, reader);
                     break;
                 }
                 case MACHINE: {
-                    TransportResource.MACHINE.parseAndSetParameter(value, transport, reader);
+                    TransportResourceDefinition.MACHINE.parseAndSetParameter(value, transport, reader);
                     break;
                 }
                 default: {
@@ -239,14 +239,14 @@ public class JGroupsSubsystemXMLReader_1_2 implements XMLElementReader<List<Mode
                 case TYPE: {
                     try {
                         Protocol.class.getClassLoader().loadClass(org.jgroups.conf.ProtocolConfiguration.protocol_prefix + '.' + value).asSubclass(Protocol.class).newInstance();
-                        ProtocolResource.TYPE.parseAndSetParameter(value, protocol, reader);
+                        ProtocolResourceDefinition.TYPE.parseAndSetParameter(value, protocol, reader);
                     } catch (Exception e) {
                         throw ParseUtils.invalidAttributeValue(reader, i);
                     }
                     break;
                 }
                 case SOCKET_BINDING: {
-                    ProtocolResource.SOCKET_BINDING.parseAndSetParameter(value, protocol, reader);
+                    ProtocolResourceDefinition.SOCKET_BINDING.parseAndSetParameter(value, protocol, reader);
                     break;
                 }
                 default: {
@@ -302,7 +302,7 @@ public class JGroupsSubsystemXMLReader_1_2 implements XMLElementReader<List<Mode
         ModelNode property = Util.createAddOperation(propertyAddress);
 
         // assign the value
-        PropertyResource.VALUE.parseAndSetParameter(propertyValue, property, reader);
+        PropertyResourceDefinition.VALUE.parseAndSetParameter(propertyValue, property, reader);
 
         operations.add(property);
     }
@@ -316,7 +316,7 @@ public class JGroupsSubsystemXMLReader_1_2 implements XMLElementReader<List<Mode
             Attribute attribute = Attribute.forName(reader.getAttributeLocalName(i));
             switch (attribute) {
                 case SITE: {
-                    RelayResource.SITE.parseAndSetParameter(value, operation, reader);
+                    RelayResourceDefinition.SITE.parseAndSetParameter(value, operation, reader);
                     break;
                 }
                 default: {
@@ -361,11 +361,11 @@ public class JGroupsSubsystemXMLReader_1_2 implements XMLElementReader<List<Mode
                     break;
                 }
                 case STACK: {
-                    RemoteSiteResource.STACK.parseAndSetParameter(value, operation, reader);
+                    RemoteSiteResourceDefinition.STACK.parseAndSetParameter(value, operation, reader);
                     break;
                 }
                 case CLUSTER: {
-                    RemoteSiteResource.CLUSTER.parseAndSetParameter(value, operation, reader);
+                    RemoteSiteResourceDefinition.CLUSTER.parseAndSetParameter(value, operation, reader);
                     break;
                 }
                 default: {

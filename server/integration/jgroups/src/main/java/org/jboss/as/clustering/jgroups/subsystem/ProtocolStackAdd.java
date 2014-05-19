@@ -50,6 +50,7 @@ import org.jboss.as.clustering.jgroups.ProtocolDefaults;
 import org.jboss.as.clustering.jgroups.ProtocolStackConfiguration;
 import org.jboss.as.clustering.jgroups.RelayConfiguration;
 import org.jboss.as.clustering.jgroups.RemoteSiteConfiguration;
+import org.jboss.as.clustering.jgroups.SaslConfiguration;
 import org.jboss.as.clustering.jgroups.TransportConfiguration;
 import org.jboss.as.controller.AbstractAddStepHandler;
 import org.jboss.as.controller.OperationContext;
@@ -60,6 +61,7 @@ import org.jboss.as.controller.descriptions.DescriptionProvider;
 import org.jboss.as.controller.descriptions.ModelDescriptionConstants;
 import org.jboss.as.controller.operations.common.Util;
 import org.jboss.as.controller.registry.Resource;
+import org.jboss.as.domain.management.SecurityRealm;
 import org.jboss.as.jmx.MBeanServerService;
 import org.jboss.as.network.SocketBinding;
 import org.jboss.as.server.ServerEnvironment;
@@ -98,8 +100,8 @@ public class ProtocolStackAdd extends AbstractAddStepHandler implements Descript
         stack.get(ModelDescriptionConstants.DESCRIPTION).set(resources.getString("jgroups.stack.add"));
 
         // optional TRANSPORT and PROTOCOLS parameters (to permit configuring a stack from add())
-        TransportResource.TRANSPORT.addOperationParameterDescription(resources,"jgroups.stack.add", stack);
-        ProtocolResource.PROTOCOLS.addOperationParameterDescription(resources, "jgroups.stack.add" , stack);
+        TransportResourceDefinition.TRANSPORT.addOperationParameterDescription(resources,"jgroups.stack.add", stack);
+        ProtocolResourceDefinition.PROTOCOLS.addOperationParameterDescription(resources, "jgroups.stack.add" , stack);
 
         return stack ;
     }
@@ -134,7 +136,7 @@ public class ProtocolStackAdd extends AbstractAddStepHandler implements Descript
             addTransport.get(OP_ADDR).set(transportAddress);
 
             // execute the operation using the transport handler
-            context.addStep(addTransport, TransportResource.TRANSPORT_ADD, OperationContext.Stage.MODEL, true);
+            context.addStep(addTransport, TransportResourceDefinition.TRANSPORT_ADD, OperationContext.Stage.MODEL, true);
         }
 
         // add steps to initialize *optional* PROTOCOL parameters
@@ -157,7 +159,7 @@ public class ProtocolStackAdd extends AbstractAddStepHandler implements Descript
                 addProtocol.get(OP_ADDR).set(protocolAddress);
 
                 // execute the operation using the transport handler
-                context.addStep(addProtocol, ProtocolResource.PROTOCOL_ADD_HANDLER, OperationContext.Stage.MODEL, true);
+                context.addStep(addProtocol, ProtocolResourceDefinition.PROTOCOL_ADD_HANDLER, OperationContext.Stage.MODEL, true);
             }
         }
     }
@@ -185,19 +187,19 @@ public class ProtocolStackAdd extends AbstractAddStepHandler implements Descript
         List<Property> orderedProtocols = getOrderedProtocolPropertyList(model);
 
         // pick up the transport here and its values
-        ModelNode transport = model.get(ModelKeys.TRANSPORT, ModelKeys.TRANSPORT_NAME);
         ModelNode resolvedValue = null;
-        final String type = (resolvedValue = TransportResource.TYPE.resolveModelAttribute(context, transport)).isDefined() ? resolvedValue.asString() : null;
-        final boolean  shared = TransportResource.SHARED.resolveModelAttribute(context, transport).asBoolean();
-        final String machine = (resolvedValue = TransportResource.MACHINE.resolveModelAttribute(context, transport)).isDefined() ? resolvedValue.asString() : null;
-        final String rack = (resolvedValue = TransportResource.RACK.resolveModelAttribute(context, transport)).isDefined() ? resolvedValue.asString() : null;
-        final String site = (resolvedValue = TransportResource.SITE.resolveModelAttribute(context, transport)).isDefined() ? resolvedValue.asString() : null;
-        final String timerExecutor = (resolvedValue = TransportResource.TIMER_EXECUTOR.resolveModelAttribute(context, transport)).isDefined() ? resolvedValue.asString() : null;
-        final String threadFactory = (resolvedValue = TransportResource.THREAD_FACTORY.resolveModelAttribute(context, transport)).isDefined() ? resolvedValue.asString() : null;
-        final String diagnosticsSocketBinding = (resolvedValue = TransportResource.DIAGNOSTICS_SOCKET_BINDING.resolveModelAttribute(context, transport)).isDefined() ? resolvedValue.asString() : null;
-        final String defaultExecutor = (resolvedValue = TransportResource.DEFAULT_EXECUTOR.resolveModelAttribute(context, transport)).isDefined() ? resolvedValue.asString() : null;
-        final String oobExecutor = (resolvedValue = TransportResource.OOB_EXECUTOR.resolveModelAttribute(context, transport)).isDefined() ? resolvedValue.asString() : null;
-        final String transportSocketBinding = (resolvedValue = TransportResource.SOCKET_BINDING.resolveModelAttribute(context, transport)).isDefined() ? resolvedValue.asString() : null;
+        ModelNode transport = model.get(ModelKeys.TRANSPORT, ModelKeys.TRANSPORT_NAME);
+        final String type = (resolvedValue = TransportResourceDefinition.TYPE.resolveModelAttribute(context, transport)).isDefined() ? resolvedValue.asString() : null;
+        final boolean  shared = TransportResourceDefinition.SHARED.resolveModelAttribute(context, transport).asBoolean();
+        final String machine = (resolvedValue = TransportResourceDefinition.MACHINE.resolveModelAttribute(context, transport)).isDefined() ? resolvedValue.asString() : null;
+        final String rack = (resolvedValue = TransportResourceDefinition.RACK.resolveModelAttribute(context, transport)).isDefined() ? resolvedValue.asString() : null;
+        final String site = (resolvedValue = TransportResourceDefinition.SITE.resolveModelAttribute(context, transport)).isDefined() ? resolvedValue.asString() : null;
+        final String timerExecutor = (resolvedValue = TransportResourceDefinition.TIMER_EXECUTOR.resolveModelAttribute(context, transport)).isDefined() ? resolvedValue.asString() : null;
+        final String threadFactory = (resolvedValue = TransportResourceDefinition.THREAD_FACTORY.resolveModelAttribute(context, transport)).isDefined() ? resolvedValue.asString() : null;
+        final String diagnosticsSocketBinding = (resolvedValue = TransportResourceDefinition.DIAGNOSTICS_SOCKET_BINDING.resolveModelAttribute(context, transport)).isDefined() ? resolvedValue.asString() : null;
+        final String defaultExecutor = (resolvedValue = TransportResourceDefinition.DEFAULT_EXECUTOR.resolveModelAttribute(context, transport)).isDefined() ? resolvedValue.asString() : null;
+        final String oobExecutor = (resolvedValue = TransportResourceDefinition.OOB_EXECUTOR.resolveModelAttribute(context, transport)).isDefined() ? resolvedValue.asString() : null;
+        final String transportSocketBinding = (resolvedValue = TransportResourceDefinition.SOCKET_BINDING.resolveModelAttribute(context, transport)).isDefined() ? resolvedValue.asString() : null;
 
         // set up the transport
         Transport transportConfig = new Transport(type);
@@ -209,7 +211,7 @@ public class ProtocolStackAdd extends AbstractAddStepHandler implements Descript
         List<Map.Entry<String, Injector<ChannelFactory>>> stacks = new LinkedList<Map.Entry<String, Injector<ChannelFactory>>>();
         if (model.hasDefined(ModelKeys.RELAY)) {
             final ModelNode relay = model.get(ModelKeys.RELAY, ModelKeys.RELAY_NAME);
-            final String siteName = RelayResource.SITE.resolveModelAttribute(context, relay).asString();
+            final String siteName = RelayResourceDefinition.SITE.resolveModelAttribute(context, relay).asString();
             relayConfig = new Relay(siteName);
             initProtocolProperties(relay, relayConfig);
             if (relay.hasDefined(ModelKeys.REMOTE_SITE)) {
@@ -217,9 +219,9 @@ public class ProtocolStackAdd extends AbstractAddStepHandler implements Descript
                 for (Property remoteSiteProperty : relay.get(ModelKeys.REMOTE_SITE).asPropertyList()) {
                     final String remoteSiteName = remoteSiteProperty.getName();
                     final ModelNode remoteSite = remoteSiteProperty.getValue();
-                    final String clusterName = RemoteSiteResource.CLUSTER.resolveModelAttribute(context, remoteSite)
+                    final String clusterName = RemoteSiteResourceDefinition.CLUSTER.resolveModelAttribute(context, remoteSite)
                             .asString();
-                    final String stack = RemoteSiteResource.STACK.resolveModelAttribute(context, remoteSite).asString();
+                    final String stack = RemoteSiteResourceDefinition.STACK.resolveModelAttribute(context, remoteSite).asString();
                     final InjectedValue<ChannelFactory> channelFactory = new InjectedValue<ChannelFactory>();
                     remoteSites.add(new RemoteSite(remoteSiteName, clusterName, channelFactory));
                     stacks.add(new AbstractMap.SimpleImmutableEntry<String, Injector<ChannelFactory>>(stack, channelFactory));
@@ -227,23 +229,33 @@ public class ProtocolStackAdd extends AbstractAddStepHandler implements Descript
             }
         }
 
+        Sasl saslConfig = null;
+        if (model.hasDefined(ModelKeys.SASL)) {
+            final ModelNode sasl = model.get(ModelKeys.SASL, ModelKeys.SASL_NAME);
+            final String clusterRole = (resolvedValue = SaslResourceDefinition.CLUSTER_ROLE.resolveModelAttribute(context, sasl)).isDefined() ? resolvedValue.asString() : null;
+            final String securityRealm = SaslResourceDefinition.SECURITY_REALM.resolveModelAttribute(context, sasl).asString();
+            final String mech = SaslResourceDefinition.MECH.resolveModelAttribute(context, sasl).asString();
+            saslConfig = new Sasl(securityRealm, mech, clusterRole);
+            initProtocolProperties(sasl, saslConfig);
+        }
+
         // set up the protocol stack Protocol objects
-        ProtocolStack stackConfig = new ProtocolStack(name, transportConfig, relayConfig);
+        ProtocolStack stackConfig = new ProtocolStack(name, transportConfig, relayConfig, saslConfig);
         List<Map.Entry<Protocol, String>> protocolSocketBindings = new ArrayList<Map.Entry<Protocol, String>>(orderedProtocols.size());
         for (Property protocolProperty : orderedProtocols) {
             ModelNode protocol = protocolProperty.getValue();
-            final String protocolType = (resolvedValue = ProtocolResource.TYPE.resolveModelAttribute(context, protocol)).isDefined() ? resolvedValue.asString() : null;
+            final String protocolType = (resolvedValue = ProtocolResourceDefinition.TYPE.resolveModelAttribute(context, protocol)).isDefined() ? resolvedValue.asString() : null;
             Protocol protocolConfig = new Protocol(protocolType);
             initProtocolProperties(protocol, protocolConfig);
             stackConfig.getProtocols().add(protocolConfig);
-            final String protocolSocketBinding = (resolvedValue = ProtocolResource.SOCKET_BINDING.resolveModelAttribute(context, protocol)).isDefined() ? resolvedValue.asString() : null;
+            final String protocolSocketBinding = (resolvedValue = ProtocolResourceDefinition.SOCKET_BINDING.resolveModelAttribute(context, protocol)).isDefined() ? resolvedValue.asString() : null;
             protocolSocketBindings.add(new AbstractMap.SimpleImmutableEntry<Protocol, String>(protocolConfig, protocolSocketBinding));
         }
 
         // install the default channel factory service
         ServiceController<ChannelFactory> cfsController = installChannelFactoryService(context.getServiceTarget(),
                         name, diagnosticsSocketBinding, defaultExecutor, oobExecutor, timerExecutor, threadFactory,
-                        transportSocketBinding, protocolSocketBindings, transportConfig, stackConfig, stacks, verificationHandler);
+                        transportSocketBinding, protocolSocketBindings, transportConfig, stackConfig, stacks, saslConfig, verificationHandler);
         if (newControllers != null) {
             newControllers.add(cfsController);
         }
@@ -272,6 +284,7 @@ public class ProtocolStackAdd extends AbstractAddStepHandler implements Descript
                                                                              Transport transportConfig,
                                                                              ProtocolStack stackConfig,
                                                                              List<Map.Entry<String, Injector<ChannelFactory>>> stacks,
+                                                                             Sasl sasl,
                                                                              ServiceVerificationHandler verificationHandler) {
 
         // create the channel factory service builder
@@ -298,6 +311,9 @@ public class ProtocolStackAdd extends AbstractAddStepHandler implements Descript
         }
         if (threadFactory != null) {
             builder.addDependency(ThreadsServices.threadFactoryName(threadFactory), ThreadFactory.class, transportConfig.getThreadFactoryInjector());
+        }
+        if (sasl != null) {
+            builder.addDependency(SecurityRealm.ServiceUtil.createServiceName(sasl.getRealm()), SecurityRealm.class, sasl.getSecurityRealmInjector());
         }
         for (Map.Entry<String, Injector<ChannelFactory>> entry: stacks) {
             builder.addDependency(ChannelFactoryService.getServiceName(entry.getKey()), ChannelFactory.class, entry.getValue());
@@ -379,16 +395,24 @@ public class ProtocolStackAdd extends AbstractAddStepHandler implements Descript
         private final InjectedValue<ProtocolDefaults> defaults = new InjectedValue<ProtocolDefaults>();
         private final InjectedValue<MBeanServer> mbeanServer = new InjectedValue<MBeanServer>();
         private final InjectedValue<ServerEnvironment> environment = new InjectedValue<ServerEnvironment>();
+        private final InjectedValue<SecurityRealm> securityRealm = new InjectedValue<SecurityRealm>();
 
         private final String name;
         private final TransportConfiguration transport;
         private final RelayConfiguration relay;
+        private final SaslConfiguration sasl;
         private final List<ProtocolConfiguration> protocols = new LinkedList<ProtocolConfiguration>();
 
-        ProtocolStack(String name, TransportConfiguration transport, RelayConfiguration relay) {
+
+        ProtocolStack(String name, TransportConfiguration transport, RelayConfiguration relay, SaslConfiguration sasl) {
             this.name = name;
             this.transport = transport;
             this.relay = relay;
+            this.sasl = sasl;
+        }
+
+        public Injector<SecurityRealm> getSecurityRealmInjector() {
+            return this.securityRealm;
         }
 
         Injector<ProtocolDefaults> getDefaultsInjector() {
@@ -436,6 +460,11 @@ public class ProtocolStackAdd extends AbstractAddStepHandler implements Descript
         @Override
         public RelayConfiguration getRelay() {
             return this.relay;
+        }
+
+        @Override
+        public SaslConfiguration getSasl() {
+            return this.sasl;
         }
     }
 
@@ -592,6 +621,43 @@ public class ProtocolStackAdd extends AbstractAddStepHandler implements Descript
         public String getCluster() {
             return this.clusterName;
         }
+    }
+
+    static class Sasl extends Protocol implements SaslConfiguration {
+       private final InjectedValue<SecurityRealm> securityRealmInjector = new InjectedValue<SecurityRealm>();
+       private final String clusterRole;
+       private final String realm;
+       private final String mech;
+
+       Sasl(String realm, String mech, String clusterRole) {
+          super("SASL");
+          this.realm = realm;
+          this.mech = mech;
+          this.clusterRole = clusterRole;
+       }
+
+       @Override
+       public String getClusterRole() {
+           return clusterRole;
+       }
+
+       @Override
+       public String getMech() {
+           return mech;
+       }
+
+       public String getRealm() {
+           return realm;
+       }
+
+       @Override
+       public SecurityRealm getSecurityRealm() {
+         return securityRealmInjector.getValue();
+       }
+
+       public Injector<SecurityRealm> getSecurityRealmInjector() {
+           return securityRealmInjector;
+       }
     }
 
     static class Protocol implements ProtocolConfiguration {

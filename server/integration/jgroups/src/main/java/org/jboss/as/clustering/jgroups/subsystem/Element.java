@@ -35,6 +35,7 @@ public enum Element {
     PROTOCOL(ModelKeys.PROTOCOL),
     RELAY(ModelKeys.RELAY),
     REMOTE_SITE(ModelKeys.REMOTE_SITE),
+    SASL(ModelKeys.SASL),
     STACK(ModelKeys.STACK),
     TRANSPORT(ModelKeys.TRANSPORT),
     ;

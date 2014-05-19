@@ -24,6 +24,8 @@ package org.jboss.as.clustering.jgroups.subsystem;
 
 import javax.xml.stream.XMLStreamException;
 
+import org.jboss.as.controller.AttributeDefinition;
+import org.jboss.as.controller.SimpleAttributeDefinition;
 import org.jboss.as.controller.persistence.SubsystemMarshallingContext;
 import org.jboss.dmr.ModelNode;
 import org.jboss.dmr.Property;
@@ -68,6 +70,10 @@ public class JGroupsSubsystemXMLWriter implements XMLElementWriter<SubsystemMars
                     ModelNode relay = stack.get(ModelKeys.RELAY, ModelKeys.RELAY_NAME);
                     this.writeRelay(writer, relay, Element.RELAY);
                 }
+                if (stack.hasDefined(ModelKeys.SASL)) {
+                   ModelNode sasl = stack.get(ModelKeys.SASL, ModelKeys.SASL_NAME);
+                   this.writeSasl(writer, sasl, Element.SASL);
+               }
                 writer.writeEndElement();
             }
         }
@@ -110,17 +116,26 @@ public class JGroupsSubsystemXMLWriter implements XMLElementWriter<SubsystemMars
 
     private void writeRelay(XMLExtendedStreamWriter writer, ModelNode relay, Element element) throws XMLStreamException {
         writer.writeStartElement(element.getLocalName());
-        RelayResource.SITE.marshallAsAttribute(relay, writer);
+        RelayResourceDefinition.SITE.marshallAsAttribute(relay, writer);
         for (Property property : relay.get(ModelKeys.REMOTE_SITE).asPropertyList()) {
             writer.writeStartElement(Element.REMOTE_SITE.getLocalName());
             writer.writeAttribute(Attribute.NAME.getLocalName(), property.getName());
             ModelNode remoteSite = property.getValue();
-            RemoteSiteResource.STACK.marshallAsAttribute(remoteSite, writer);
-            RemoteSiteResource.CLUSTER.marshallAsAttribute(remoteSite, writer);
+            RemoteSiteResourceDefinition.STACK.marshallAsAttribute(remoteSite, writer);
+            RemoteSiteResourceDefinition.CLUSTER.marshallAsAttribute(remoteSite, writer);
             writer.writeEndElement();
         }
         this.writeProtocolProperties(writer, relay);
         writer.writeEndElement();
+    }
+
+    private void writeSasl(XMLExtendedStreamWriter writer, ModelNode sasl, Element element) throws XMLStreamException {
+       writer.writeStartElement(element.getLocalName());
+       for(SimpleAttributeDefinition attr : SaslResourceDefinition.ATTRIBUTES) {
+           attr.marshallAsAttribute(sasl, writer);
+       }
+       this.writeProtocolProperties(writer, sasl);
+       writer.writeEndElement();
     }
 
     private void writeRequired(XMLExtendedStreamWriter writer, Attribute attribute, ModelNode model, String key) throws XMLStreamException {
