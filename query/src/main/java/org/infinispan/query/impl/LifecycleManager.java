@@ -8,7 +8,7 @@ import java.util.TreeMap;
 import javax.management.MBeanServer;
 import javax.management.ObjectName;
 
-import org.hibernate.search.Environment;
+import org.hibernate.search.cfg.Environment;
 import org.hibernate.search.cfg.SearchMapping;
 import org.hibernate.search.cfg.spi.SearchConfiguration;
 import org.hibernate.search.spi.SearchFactoryBuilder;

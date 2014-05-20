@@ -3,7 +3,7 @@ package org.infinispan.query;
 import org.apache.lucene.search.Explanation;
 import org.apache.lucene.search.Filter;
 import org.apache.lucene.search.Sort;
-import org.hibernate.search.FullTextFilter;
+import org.hibernate.search.filter.FullTextFilter;
 import org.hibernate.search.query.engine.spi.FacetManager;
 import org.infinispan.query.impl.SearchManagerImpl;
 

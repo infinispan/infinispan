@@ -3,7 +3,7 @@ package org.infinispan.query.queries.phrases;
 import junit.framework.Assert;
 import org.apache.lucene.queryparser.classic.ParseException;
 import org.apache.lucene.search.Query;
-import org.hibernate.search.SearchException;
+import org.hibernate.search.exception.SearchException;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.query.CacheQuery;
