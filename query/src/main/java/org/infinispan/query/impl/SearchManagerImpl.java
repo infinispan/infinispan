@@ -4,7 +4,7 @@ import java.util.concurrent.ExecutorService;
 
 import org.apache.lucene.search.Query;
 import org.hibernate.hql.ast.spi.EntityNamesResolver;
-import org.hibernate.search.SearchFactory;
+import org.hibernate.search.engine.SearchFactory;
 import org.hibernate.search.query.dsl.EntityContext;
 import org.hibernate.search.query.engine.spi.TimeoutExceptionFactory;
 import org.hibernate.search.spi.SearchFactoryIntegrator;
