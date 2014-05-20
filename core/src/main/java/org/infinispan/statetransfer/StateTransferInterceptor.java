@@ -252,7 +252,7 @@ public class StateTransferInterceptor extends CommandInterceptor {
 
    private Object handleTopologyAffectedCommand(InvocationContext ctx, VisitableCommand command,
                                                 Address origin, boolean sync) throws Throwable {
-      log.tracef("handleTopologyAffectedCommand for command %s", command);
+      log.tracef("handleTopologyAffectedCommand for command %s, origin %s", command, origin);
 
       if (isLocalOnly(ctx, command)) {
          return invokeNextInterceptor(ctx, command);
@@ -265,7 +265,8 @@ public class StateTransferInterceptor extends CommandInterceptor {
       boolean isNonTransactionalWrite = !ctx.isInTxScope() && command instanceof WriteCommand;
       boolean isTransactionalAndNotRolledBack = false;
       if (ctx.isInTxScope()) {
-         isTransactionalAndNotRolledBack = !((TxInvocationContext)ctx).getCacheTransaction().isMarkedForRollback();
+         isTransactionalAndNotRolledBack = command instanceof TransactionBoundaryCommand
+               && !((TxInvocationContext)ctx).getCacheTransaction().isMarkedForRollback();
       }
 
       if (isNonTransactionalWrite || isTransactionalAndNotRolledBack) {

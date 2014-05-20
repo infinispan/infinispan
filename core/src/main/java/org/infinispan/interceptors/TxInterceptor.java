@@ -143,13 +143,16 @@ public class TxInterceptor extends CommandInterceptor {
    public Object visitCommitCommand(TxInvocationContext ctx, CommitCommand command) throws Throwable {
       GlobalTransaction gtx = ctx.getGlobalTransaction();
       // TODO The local origin check is needed for CommitFailsTest, but it doesn't appear correct to roll back an in-doubt tx
-      if (!ctx.isOriginLocal() && txTable.isTransactionCompleted(gtx)) {
-         log.tracef("Transaction %s already completed, skipping commit", gtx);
-         return null;
+      if (!ctx.isOriginLocal()) {
+         if (txTable.isTransactionCompleted(gtx)) {
+            log.tracef("Transaction %s already completed, skipping commit", gtx);
+            return null;
+         } else {
+            txTable.markTransactionCompleted(gtx);
+         }
       }
 
       if (this.statisticsEnabled) commits.incrementAndGet();
-      txTable.markTransactionCompleted(gtx);
       Object result = invokeNextInterceptor(ctx, command);
       if (!ctx.isOriginLocal() || isTotalOrder) {
          txTable.remoteTransactionCommitted(gtx, false);
