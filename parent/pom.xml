@@ -1626,42 +1626,6 @@
          </build>
       </profile>
       <profile>
-         <id>test-osgi</id>
-         <properties>
-            <defaultTestGroup>org.infinispan.it.osgi.Osgi</defaultTestGroup>
-            <defaultExcludedTestGroup></defaultExcludedTestGroup>
-            <infinispan.test.jgroups.protocol>tcp</infinispan.test.jgroups.protocol>
-         </properties>
-         <build>
-            <plugins>
-               <plugin>
-                  <groupId>org.apache.maven.plugins</groupId>
-                  <artifactId>maven-surefire-plugin</artifactId>
-                  <configuration>
-                     <threadCount>1</threadCount>
-                     <systemPropertyVariables>
-                        <version.karaf>${version.karaf}</version.karaf>
-                     </systemPropertyVariables>
-                  </configuration>
-                  <executions>
-                     <execution>
-                        <id>default-test</id>
-                        <configuration>
-                           <testNGArtifactName>none:none</testNGArtifactName>
-                           <properties>
-                              <property>
-                                 <name>listener</name>
-                                 <value>org.junit.runner.notification.RunListener</value>
-                              </property>
-                           </properties>
-                        </configuration>
-                     </execution>
-                  </executions>
-               </plugin>
-            </plugins>
-         </build>
-      </profile>
-      <profile>
          <id>test-unstable</id>
          <properties>
             <defaultTestGroup>unstable</defaultTestGroup>

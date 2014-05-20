@@ -1,22 +1,24 @@
 package org.infinispan.it.osgi.persistence.remote;
 
+import static org.infinispan.it.osgi.util.IspnKarafOptions.featureIspnCore;
+import static org.infinispan.it.osgi.util.IspnKarafOptions.featureIspnCoreDependencies;
+import static org.infinispan.it.osgi.util.IspnKarafOptions.featureRemoteStore;
+import static org.infinispan.it.osgi.util.IspnKarafOptions.karafContainer;
+import static org.ops4j.pax.exam.CoreOptions.junitBundles;
+import static org.ops4j.pax.exam.CoreOptions.options;
+import static org.ops4j.pax.exam.karaf.options.KarafDistributionOption.keepRuntimeFolder;
+
 import org.infinispan.configuration.cache.PersistenceConfigurationBuilder;
-import org.infinispan.it.osgi.Osgi;
 import org.infinispan.persistence.BaseStoreFunctionalTest;
 import org.infinispan.persistence.remote.configuration.RemoteStoreConfigurationBuilder;
 import org.junit.Ignore;
 import org.junit.Test;
-import org.junit.experimental.categories.Category;
 import org.junit.runner.RunWith;
 import org.ops4j.pax.exam.Configuration;
 import org.ops4j.pax.exam.Option;
 import org.ops4j.pax.exam.junit.PaxExam;
 import org.ops4j.pax.exam.spi.reactors.ExamReactorStrategy;
 import org.ops4j.pax.exam.spi.reactors.PerClass;
-
-import static org.infinispan.it.osgi.util.IspnKarafOptions.*;
-import static org.ops4j.pax.exam.CoreOptions.*;
-import static org.ops4j.pax.exam.karaf.options.KarafDistributionOption.*;
 
 /**
  * Test similar to {@link org.infinispan.persistence.remote.RemoteStoreFunctionalTest}.
@@ -31,7 +33,6 @@ import static org.ops4j.pax.exam.karaf.options.KarafDistributionOption.*;
  * @author mgencur
  */
 @RunWith(PaxExam.class)
-@Category(Osgi.class)
 @ExamReactorStrategy(PerClass.class)
 @Ignore
 public class RemoteStoreFunctionalTest extends BaseStoreFunctionalTest {

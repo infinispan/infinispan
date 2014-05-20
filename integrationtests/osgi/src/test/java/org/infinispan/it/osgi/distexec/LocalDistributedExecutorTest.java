@@ -1,45 +1,33 @@
 package org.infinispan.it.osgi.distexec;
 
-import org.infinispan.configuration.cache.ConfigurationBuilder;
-import org.infinispan.it.osgi.Osgi;
-import org.infinispan.test.TestingUtil;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.experimental.categories.Category;
-import org.junit.runner.RunWith;
-import org.ops4j.pax.exam.Configuration;
-import org.ops4j.pax.exam.Option;
-import org.ops4j.pax.exam.junit.PaxExam;
-import org.ops4j.pax.exam.spi.reactors.ExamReactorStrategy;
-import org.ops4j.pax.exam.spi.reactors.PerClass;
+import static org.infinispan.it.osgi.util.IspnKarafOptions.allOptions;
 
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.TimeoutException;
 
-import static org.infinispan.it.osgi.util.IspnKarafOptions.*;
-import static org.ops4j.pax.exam.CoreOptions.junitBundles;
-import static org.ops4j.pax.exam.CoreOptions.options;
-import static org.ops4j.pax.exam.karaf.options.KarafDistributionOption.keepRuntimeFolder;
+import org.infinispan.configuration.cache.ConfigurationBuilder;
+import org.infinispan.test.TestingUtil;
+import org.junit.After;
+import org.junit.Before;
+import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.ops4j.pax.exam.Configuration;
+import org.ops4j.pax.exam.Option;
+import org.ops4j.pax.exam.junit.PaxExam;
+import org.ops4j.pax.exam.spi.reactors.ExamReactorStrategy;
+import org.ops4j.pax.exam.spi.reactors.PerSuite;
 
 /**
  * @author mgencur
  */
 @RunWith(PaxExam.class)
-@Category(Osgi.class)
-@ExamReactorStrategy(PerClass.class)
+@ExamReactorStrategy(PerSuite.class)
 public class LocalDistributedExecutorTest extends org.infinispan.distexec.LocalDistributedExecutorTest {
 
    @Configuration
    public Option[] config() throws Exception {
-      return options(
-            karafContainer(),
-            featureIspnCoreDependencies(),
-            featureIspnCore(),
-            junitBundles(),
-            keepRuntimeFolder()
-      );
+      return allOptions();
    }
 
    @Before
