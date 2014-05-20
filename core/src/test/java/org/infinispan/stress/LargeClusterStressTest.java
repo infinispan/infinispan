@@ -27,9 +27,9 @@ public class LargeClusterStressTest extends MultipleCacheManagersTest {
       ConfigurationBuilder distConfig = getDefaultClusteredCacheConfig(CacheMode.DIST_SYNC, false);
       ConfigurationBuilder replConfig = getDefaultClusteredCacheConfig(CacheMode.REPL_SYNC, false);
       for (int i = 0; i < NUM_NODES; i++) {
+         EmbeddedCacheManager cm = addClusterEnabledCacheManager();
          defineConfigurationOnAllManagers("dist", distConfig);
          defineConfigurationOnAllManagers("repl", replConfig);
-         EmbeddedCacheManager cm = addClusterEnabledCacheManager();
          Cache<Object,Object> replCache = cm.getCache("repl");
          Cache<Object, Object> distCache = cm.getCache("dist");
 
