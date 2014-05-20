@@ -368,9 +368,9 @@
     </xs:complexType>
 
     <xs:complexType name="locking">
-        <xs:attribute name="isolation" type="tns:isolation" default="REPEATABLE_READ">
+        <xs:attribute name="isolation" type="tns:isolation" default="READ_COMMITTED">
             <xs:annotation>
-                <xs:documentation>Sets the cache locking isolation level. Infinispan only supports READ_COMMITTED or REPEATABLE_READ isolation level.</xs:documentation>
+                <xs:documentation>Sets the cache locking isolation level. Infinispan server currently supports only READ_COMMITTED isolation level. Other values are ignored.</xs:documentation>
             </xs:annotation>
         </xs:attribute>
         <xs:attribute name="striping" type="xs:boolean" default="false">

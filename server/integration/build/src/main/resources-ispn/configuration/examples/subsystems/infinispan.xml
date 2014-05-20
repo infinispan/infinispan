@@ -12,14 +12,12 @@
             <transport executor="infinispan-transport" lock-timeout="60000" />
             <distributed-cache name="default" mode="SYNC" segments="20" owners="2" remote-timeout="30000" start="EAGER">
                <locking isolation="READ_COMMITTED" acquire-timeout="30000" concurrency-level="1000" striping="false" />
-               <transaction mode="NONE" />
                <state-transfer enabled="false" />
                <cluster-loader remote-timeout="60000" />
             </distributed-cache>
 
             <distributed-cache name="memcachedCache" mode="SYNC" segments="20" owners="2" remote-timeout="30000" start="EAGER">
                <locking isolation="READ_COMMITTED" acquire-timeout="30000" concurrency-level="1000" striping="false" />
-               <transaction mode="NONE" />
                <state-transfer enabled="false" />
                <cluster-loader remote-timeout="60000" />
             </distributed-cache>
@@ -40,13 +38,11 @@
          <cache-container name="local" default-cache="default">
             <local-cache name="default" start="EAGER">
                <locking isolation="NONE" acquire-timeout="30000" concurrency-level="1000" striping="false" />
-               <transaction mode="NONE" />
                <eviction strategy="LRU" max-entries="1000" />
                <file-store passivation="true" path="dc" purge="true" shared="false" />
             </local-cache>
             <local-cache name="memcachedCache" start="EAGER">
                <locking isolation="NONE" acquire-timeout="30000" concurrency-level="1000" striping="false" />
-               <transaction mode="NONE" />
                <file-store passivation="false" path="mc" purge="true" shared="false" />
             </local-cache>
             <local-cache name="namedCache" start="EAGER">
@@ -66,13 +62,11 @@
          <cache-container name="local" default-cache="default">
             <local-cache name="default" start="EAGER">
                <locking isolation="NONE" acquire-timeout="30000" concurrency-level="1000" striping="false" />
-               <transaction mode="NONE" />
                <eviction strategy="LRU" max-entries="1000" />
                <leveldb-store passivation="true" path="level-dc" purge="true" shared="false" />
             </local-cache>
             <local-cache name="memcachedCache" start="EAGER">
                <locking isolation="NONE" acquire-timeout="30000" concurrency-level="1000" striping="false" />
-               <transaction mode="NONE" />
                <leveldb-store passivation="false" path="level-mc" purge="true" shared="false">
                   <expiration path="leveldb-mc-expired"/>
                </leveldb-store>
@@ -96,7 +90,6 @@
          <cache-container name="local" default-cache="default">
             <local-cache name="default" start="EAGER">
                <locking isolation="NONE" acquire-timeout="30000" concurrency-level="1000" striping="false" />
-               <transaction mode="NONE" />
                <remote-store cache="default" socket-timeout="60000" tcp-no-delay="true" shared="true" hotrod-wrapping="true" purge="false" passivation="false">
                   <remote-server outbound-socket-binding="remote-store-hotrod-server" />
                </remote-store>
@@ -113,7 +106,6 @@
             <transport executor="infinispan-transport" lock-timeout="60000" />
             <distributed-cache name="default" mode="SYNC" segments="20" owners="2" remote-timeout="30000" start="EAGER">
                <locking isolation="READ_COMMITTED" acquire-timeout="30000" concurrency-level="1000" striping="false" />
-               <transaction mode="NONE" />
                <eviction strategy="LRU" max-entries="1000" />
                <mixed-keyed-jdbc-store datasource="java:jboss/datasources/JdbcDS" passivation="true" preload="true" purge="false">
                   <!-- property name="databaseType">H2</property -->
@@ -132,7 +124,6 @@
 
             <distributed-cache name="memcachedCache" mode="SYNC" segments="20" owners="2" remote-timeout="30000" start="EAGER">
                <locking isolation="READ_COMMITTED" acquire-timeout="30000" concurrency-level="1000" striping="false" />
-               <transaction mode="NONE" />
                <eviction strategy="LRU" max-entries="1000" />
                <string-keyed-jdbc-store datasource="java:jboss/datasources/JdbcDS" passivation="true" preload="false" purge="false" shared="false">
                   <!-- property name="databaseType">H2</property -->
@@ -167,7 +158,6 @@
          <cache-container name="local" default-cache="default">
             <local-cache name="default" start="EAGER">
                <locking isolation="NONE" acquire-timeout="30000" concurrency-level="1000" striping="false" />
-               <transaction mode="NONE" />
                <eviction strategy="LRU" max-entries="1000" />
                <remote-store cache="default" socket-timeout="60000" tcp-no-delay="true" passivation="true">
                   <remote-server outbound-socket-binding="remote-store-hotrod-server" />
@@ -175,7 +165,6 @@
             </local-cache>
             <local-cache name="memcachedCache" start="EAGER">
                <locking isolation="NONE" acquire-timeout="30000" concurrency-level="1000" striping="false" />
-               <transaction mode="NONE" />
                <eviction strategy="LIRS" max-entries="1000" />
                <remote-store cache="memcachedCache" socket-timeout="60000" tcp-no-delay="true" passivation="true">
                   <remote-server outbound-socket-binding="remote-store-hotrod-server" />
@@ -198,7 +187,6 @@
          <cache-container name="local" default-cache="default">
             <local-cache name="default" start="EAGER">
                <locking isolation="NONE" acquire-timeout="30000" concurrency-level="1000" striping="false" />
-               <transaction mode="NONE" />
                <eviction strategy="LRU" max-entries="1000" />
             </local-cache>
             <local-cache name="namedCache" start="EAGER">
@@ -215,7 +203,6 @@
          <cache-container name="local" default-cache="default">
             <local-cache name="default" start="EAGER">
                <locking isolation="NONE" acquire-timeout="30000" concurrency-level="1000" striping="false" />
-               <transaction mode="NONE" />
                <rest-store path="/rest/default" shared="true" purge="false" passivation="false">
                   <connection-pool connection-timeout="60000" socket-timeout="60000" tcp-no-delay="true" max-connections-per-host="4" max-total-connections="20" />
                   <remote-server outbound-socket-binding="remote-store-rest-server" />
@@ -234,7 +221,6 @@
             <transport executor="infinispan-transport" lock-timeout="60000" cluster="LON" stack="udp"/>
             <distributed-cache name="default" mode="SYNC" segments="20" owners="2" remote-timeout="30000" start="EAGER">
                <locking isolation="READ_COMMITTED" acquire-timeout="30000" concurrency-level="1000" striping="false" />
-               <transaction mode="NONE" />
                <backups>
                   <backup site="NYC" strategy="SYNC" />
                   <backup site="SFO" strategy="ASYNC" />
@@ -243,7 +229,6 @@
 
             <distributed-cache name="memcachedCache" mode="SYNC" segments="20" owners="2" remote-timeout="30000" start="EAGER">
                <locking isolation="READ_COMMITTED" acquire-timeout="30000" concurrency-level="1000" striping="false" />
-               <transaction mode="NONE" />
                <backups>
                   <backup site="NYC" strategy="SYNC" />
                   <backup site="SFO" strategy="ASYNC" />
@@ -268,7 +253,6 @@
          <cache-container name="local" default-cache="default">
             <local-cache name="default" start="EAGER">
                <locking isolation="NONE" acquire-timeout="30000" concurrency-level="1000" striping="false" />
-               <transaction mode="NONE" />
                <compatibility enabled="true" />
             </local-cache>
          </cache-container>
@@ -290,7 +274,6 @@
             </security>
             <local-cache name="default" start="EAGER">
                <locking isolation="NONE" acquire-timeout="30000" concurrency-level="1000" striping="false" />
-               <transaction mode="NONE" />
             </local-cache>
             <local-cache name="secured">
                 <security>
