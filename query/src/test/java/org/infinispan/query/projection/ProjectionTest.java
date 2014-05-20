@@ -76,7 +76,7 @@ public class ProjectionTest extends SingleCacheManagerTest {
             ProjectionConstants.KEY,
             ProjectionConstants.VALUE,
             ProjectionConstants.VALUE,
-            org.hibernate.search.ProjectionConstants.OBJECT_CLASS,
+            org.hibernate.search.engine.ProjectionConstants.OBJECT_CLASS,
             "baz",
             "bar"
             );
