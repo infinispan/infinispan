@@ -1,34 +1,24 @@
 package org.infinispan.it.osgi.tx;
 
+import static org.infinispan.it.osgi.util.IspnKarafOptions.allOptions;
+
 import org.infinispan.configuration.cache.ConfigurationBuilder;
-import org.infinispan.it.osgi.Osgi;
 import org.infinispan.test.TestingUtil;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
-import org.junit.experimental.categories.Category;
 import org.junit.runner.RunWith;
 import org.ops4j.pax.exam.Configuration;
 import org.ops4j.pax.exam.Option;
 import org.ops4j.pax.exam.junit.PaxExam;
 import org.ops4j.pax.exam.spi.reactors.ExamReactorStrategy;
-import org.ops4j.pax.exam.spi.reactors.PerClass;
-
-import static org.infinispan.it.osgi.util.IspnKarafOptions.featureIspnCoreDependencies;
-import static org.infinispan.it.osgi.util.IspnKarafOptions.featureIspnCore;
-import static org.infinispan.it.osgi.util.IspnKarafOptions.karafContainer;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.ops4j.pax.exam.CoreOptions.junitBundles;
-import static org.ops4j.pax.exam.CoreOptions.options;
-import static org.ops4j.pax.exam.karaf.options.KarafDistributionOption.keepRuntimeFolder;
+import org.ops4j.pax.exam.spi.reactors.PerSuite;
 
 /**
  * @author mgencur
  */
 @RunWith(PaxExam.class)
-@Category(Osgi.class)
-@ExamReactorStrategy(PerClass.class)
+@ExamReactorStrategy(PerSuite.class)
 public class TransactionsSpanningReplicatedCachesTest extends org.infinispan.tx.TransactionsSpanningReplicatedCachesTest {
 
    @Override
@@ -38,13 +28,7 @@ public class TransactionsSpanningReplicatedCachesTest extends org.infinispan.tx.
 
    @Configuration
    public Option[] config() throws Exception {
-      return options(
-            karafContainer(),
-            featureIspnCoreDependencies(),
-            featureIspnCore(),
-            junitBundles(),
-            keepRuntimeFolder()
-      );
+      return allOptions();
    }
 
    @Before

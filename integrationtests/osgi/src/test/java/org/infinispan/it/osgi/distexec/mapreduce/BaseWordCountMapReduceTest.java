@@ -1,15 +1,12 @@
 package org.infinispan.it.osgi.distexec.mapreduce;
 
+import static org.infinispan.it.osgi.util.IspnKarafOptions.allOptions;
+
 import org.infinispan.commons.CacheException;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.ops4j.pax.exam.Configuration;
 import org.ops4j.pax.exam.Option;
-
-import static org.infinispan.it.osgi.util.IspnKarafOptions.*;
-import static org.ops4j.pax.exam.CoreOptions.junitBundles;
-import static org.ops4j.pax.exam.CoreOptions.options;
-import static org.ops4j.pax.exam.karaf.options.KarafDistributionOption.keepRuntimeFolder;
 
 /**
  * @author mgencur
@@ -18,13 +15,7 @@ public abstract class BaseWordCountMapReduceTest extends org.infinispan.distexec
 
    @Configuration
    public Option[] config() throws Exception {
-      return options(
-            karafContainer(),
-            featureIspnCoreDependencies(),
-            featureIspnCore(),
-            junitBundles(),
-            keepRuntimeFolder()
-      );
+      return allOptions();
    }
 
    @BeforeClass

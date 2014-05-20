@@ -1,6 +1,7 @@
 <?xml version='1.0' encoding='UTF-8'?>
-<project xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd"
-         xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+<project
+   xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd"
+   xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
    <modelVersion>4.0.0</modelVersion>
 
    <parent>
@@ -120,6 +121,10 @@
          configs,
          configs.xsite
       </infinispan.core.exports>
+      <defaultTestGroup></defaultTestGroup>
+      <defaultExcludedTestGroup></defaultExcludedTestGroup>
+      <infinispan.test.parallel.threads>1</infinispan.test.parallel.threads>
+      <infinispan.test.jgroups.protocol>tcp</infinispan.test.jgroups.protocol>
    </properties>
 
    <build>
@@ -142,7 +147,8 @@
          </resource>
       </resources>
       <plugins>
-         <!-- IMPORTANT: generates META-INF/maven/dependencies.properties required by PAX-EXAM framework -->
+         <!-- IMPORTANT: generates META-INF/maven/dependencies.properties 
+            required by PAX-EXAM framework -->
          <plugin>
             <groupId>org.apache.servicemix.tooling</groupId>
             <artifactId>depends-maven-plugin</artifactId>
@@ -210,10 +216,9 @@
                            org.w3c.dom,
                            org.xml.sax
                         </Import-Package>
-                        <!--
-                           JGroups couldn't find TEST_PING protocol which is defined in ISPN CORE TESTS,
-                           TODO: package just the TEST_PING protocol in a fragment and attach it to JGroups.
-                        -->
+                        <!-- JGroups couldn't find TEST_PING protocol which 
+                           is defined in ISPN CORE TESTS, TODO: package just the TEST_PING protocol 
+                           in a fragment and attach it to JGroups. -->
                         <Fragment-Host>org.jgroups;bundle-version=${version.jgroups}</Fragment-Host>
                      </instructions>
                   </configuration>
@@ -248,34 +253,28 @@
          <plugin>
             <groupId>org.apache.maven.plugins</groupId>
             <artifactId>maven-surefire-plugin</artifactId>
+            <configuration>
+               <threadCount>1</threadCount>
+               <systemPropertyVariables>
+                  <version.karaf>${version.karaf}</version.karaf>
+               </systemPropertyVariables>
+            </configuration>
             <executions>
                <execution>
                   <id>default-test</id>
-                  <phase>none</phase>
+                  <configuration>
+                     <testNGArtifactName>none:none</testNGArtifactName>
+                     <properties>
+                        <property>
+                           <name>listener</name>
+                           <value>org.junit.runner.notification.RunListener</value>
+                        </property>
+                     </properties>
+                  </configuration>
                </execution>
             </executions>
          </plugin>
       </plugins>
    </build>
-
-   <profiles>
-      <profile>
-         <id>test-osgi</id>
-         <build>
-            <plugins>
-               <plugin>
-                  <groupId>org.apache.maven.plugins</groupId>
-                  <artifactId>maven-surefire-plugin</artifactId>
-                  <executions>
-                     <execution>
-                        <id>default-test</id>
-                        <phase>test</phase>
-                     </execution>
-                  </executions>
-               </plugin>
-            </plugins>
-         </build>
-      </profile>
-   </profiles>
 
 </project>
