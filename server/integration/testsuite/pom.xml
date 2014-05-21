@@ -109,6 +109,17 @@
             <artifactId>infinispan-remote-query-client</artifactId>
         </dependency>
         <dependency>
+            <groupId>org.infinispan</groupId>
+            <artifactId>infinispan-security-integrationtests</artifactId>
+            <classifier>tests</classifier>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.directory.server</groupId>
+            <artifactId>apacheds-all</artifactId> 
+            <scope>test</scope>
+        </dependency>
+        <dependency>
             <groupId>org.iq80.leveldb</groupId>
             <artifactId>leveldb</artifactId>
             <scope>test</scope>
@@ -249,14 +260,14 @@
         <suite.manual.include>**/*.java</suite.manual.include>
         <suite.manual.exclude.groups>
             org.infinispan.server.test.category.ClientLocal,org.infinispan.server.test.category.ClientClustered,org.infinispan.server.test.category.RollingUpgrades,org.infinispan.server.test.category.UnstableTest,org.infinispan.server.test.category.Osgi,
-            org.infinispan.server.test.category.SecurityHotRod
+            org.infinispan.server.test.category.SecurityTest
         </suite.manual.exclude.groups>
         <suite.client.local.config>testsuite/standalone-default-local.xml</suite.client.local.config>
         <suite.client.dist.config>testsuite/clustered-default-dist.xml</suite.client.dist.config>
         <suite.client.repl.config>testsuite/clustered-default-repl.xml</suite.client.repl.config>
         <groups.client.local>org.infinispan.server.test.category.ClientLocal</groups.client.local>
         <groups.client.clustered>org.infinispan.server.test.category.ClientClustered</groups.client.clustered>
-        <groups.security>org.infinispan.server.test.category.SecurityHotRod</groups.security>
+        <groups.security>org.infinispan.server.test.category.SecurityTest</groups.security>
         <groups.unstable>org.infinispan.server.test.category.UnstableTest,org.infinispan.server.test.category.UnstableClientLocalTest,org.infinispan.server.test.category.UnstableClientClusteredTest</groups.unstable>
     </properties>
 
@@ -268,6 +279,7 @@
                 <excludes>
                     <exclude>*.jks</exclude>
                     <exclude>*.keystore</exclude>
+                    <exclude>*.keytab</exclude>
                 </excludes>
             </testResource>
             <testResource>
@@ -276,6 +288,7 @@
                 <includes>
                     <include>*.jks</include>
                     <include>*.keystore</include>
+                    <include>*.keytab</include>
                 </includes>
             </testResource>
         </testResources>
@@ -582,7 +595,7 @@
                         <configuration>
                             <groups>${groups.security}</groups>
                             <systemPropertyVariables>
-                                <arquillian.launch>suite-security</arquillian.launch>
+                                <arquillian.launch>${suite.security.arquillian}</arquillian.launch>
                             </systemPropertyVariables>
                         </configuration>
                     </execution>
@@ -767,13 +780,25 @@
             </properties>
         </profile>
         <profile>
-            <id>security.hotrod</id>
+            <id>suite.security</id>
             <properties>
                 <suite.manual.phase>none</suite.manual.phase>
                 <suite.client.local.phase>none</suite.client.local.phase>
                 <suite.client.dist.phase>none</suite.client.dist.phase>
                 <suite.client.repl.phase>none</suite.client.repl.phase>
                 <suite.security.phase>test</suite.security.phase>
+                <suite.security.arquillian>suite-security</suite.security.arquillian>
+            </properties>
+        </profile>
+        <profile>
+            <id>suite.security.manual</id>
+            <properties>
+                <suite.manual.phase>none</suite.manual.phase>
+                <suite.client.local.phase>none</suite.client.local.phase>
+                <suite.client.dist.phase>none</suite.client.dist.phase>
+                <suite.client.repl.phase>none</suite.client.repl.phase>
+                <suite.security.phase>test</suite.security.phase>
+                <suite.security.arquillian>suite-security-manual</suite.security.arquillian>
             </properties>
         </profile>
         <profile>

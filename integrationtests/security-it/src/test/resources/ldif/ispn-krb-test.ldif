@@ -42,6 +42,19 @@ userPassword: strongPassword
 krb5PrincipalName: admin@INFINISPAN.ORG
 krb5KeyVersionNumber: 0
 
+dn: uid=supervisor,ou=People,dc=infinispan,dc=org
+objectClass: top
+objectClass: person
+objectClass: inetOrgPerson
+objectClass: krb5principal
+objectClass: krb5kdcentry
+cn: ISPN Supervisor
+sn: supervisor
+uid: supervisor
+userPassword: lessStrongPassword
+krb5PrincipalName: supervisor@INFINISPAN.ORG
+krb5KeyVersionNumber: 0
+
 dn: uid=writer,ou=People,dc=infinispan,dc=org
 objectClass: top
 objectClass: person
@@ -79,6 +92,19 @@ sn: unprivileged
 uid: unprivileged
 userPassword: weakPassword
 krb5PrincipalName: unprivileged@INFINISPAN.ORG
+krb5KeyVersionNumber: 0
+
+dn: uid=hotrod,ou=People,dc=infinispan,dc=org
+objectClass: top
+objectClass: person
+objectClass: inetOrgPerson
+objectClass: krb5principal
+objectClass: krb5kdcentry
+cn: ISPN hotrod client
+sn: hotrod
+uid: hotrod
+userPassword: hotrodPassword
+krb5PrincipalName: hotrod/node0@INFINISPAN.ORG
 krb5KeyVersionNumber: 0
 
 dn: ou=Roles,dc=infinispan,dc=org

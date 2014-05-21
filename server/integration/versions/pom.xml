@@ -23,6 +23,7 @@
       <product.name>infinispan-server</product.name>
 
       <version.ant-contrib>1.0b3</version.ant-contrib>
+      <version.apache.ds>2.0.0-M16</version.apache.ds>
       <version.com.github.relaxng.relaxngDatatype>2011.1</version.com.github.relaxng.relaxngDatatype>
       <version.commons.logging>1.1.1</version.commons.logging>
       <version.net.jcip.annotations>1.0</version.net.jcip.annotations>
@@ -439,6 +440,21 @@
             <artifactId>h2</artifactId>
             <scope>test</scope>
             <version>${version.h2.database}</version>
+         </dependency>
+         
+         <dependency>
+            <groupId>org.infinispan</groupId>
+            <artifactId>infinispan-security-integrationtests</artifactId>
+            <version>${version.org.infinispan}</version>
+            <classifier>tests</classifier>
+            <scope>test</scope>
+         </dependency>
+         
+         <dependency>
+            <groupId>org.apache.directory.server</groupId>
+            <artifactId>apacheds-all</artifactId>
+            <version>${version.apache.ds}</version>
+            <scope>test</scope>
          </dependency>
       </dependencies>
 

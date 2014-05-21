@@ -113,6 +113,8 @@
                 <include name="*.jks" />
                 <include name="*.properties"/>
                 <include name="*.keystore"/>
+            	<include name="*.keytab"/>
+            	<include name="*.conf"/>
             </fileset>
         </copy>
     </target>
@@ -308,6 +310,11 @@
     	<transform in="standalone.xml" out="testsuite/hotrod-auth.xml" 
     	    modifyInfinispan="${infinispan.parts}/local-secured.xml"    
     	    hotrodAuth="${infinispan.parts}/hotrod-auth.xml" />
+    	<transform in="standalone.xml" out="testsuite/hotrod-auth-krb.xml" 
+    	    modifyInfinispan="${infinispan.parts}/local-secured.xml"
+            hotrodAuth="${infinispan.parts}/hotrod-auth-krb.xml" 
+    	    addKrbOpts="${other.parts}/kerberos-properties.xml"
+    	    addKrbSecDomain="${other.parts}/kerberos-security-domain.xml" />
     </target>
 
     <macrodef name="transform">
@@ -332,6 +339,8 @@
         <attribute name="addAuth" default="false"/>
         <attribute name="addEncrypt" default="false"/>
         <attribute name="hotrodAuth" default="false"/>
+    	<attribute name="addKrbOpts" default="false"/>
+    	<attribute name="addKrbSecDomain" default="false"/>
         <element name="jdbc-conf" optional="yes"/>
         <element name="rest-sec" optional="yes"/>
 
@@ -345,6 +354,8 @@
                 <param name="addAuth" expression="@{addAuth}"/>
                 <param name="addEncrypt" expression="@{addEncrypt}"/>
                 <param name="hotrodAuth" expression="@{hotrodAuth}"/>
+            	<param name="addKrbOpts" expression="@{addKrbOpts}"/>
+            	<param name="addKrbSecDomain" expression="@{addKrbSecDomain}"/>
                 <param name="modifyMulticastAddress" expression="@{modifyMulticastAddress}"/>
                 <param name="modifyRemoteDestination" expression="@{modifyRemoteDestination}"/>
                 <param name="modifyOutboundSocketBindingHotRod" expression="@{modifyOutboundSocketBindingHotRod}"/>

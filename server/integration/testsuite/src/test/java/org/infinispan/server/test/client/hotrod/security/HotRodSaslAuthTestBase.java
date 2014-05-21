@@ -6,19 +6,17 @@ import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
+import java.security.PrivilegedActionException;
 
+import javax.security.auth.Subject;
 import javax.security.auth.callback.Callback;
 import javax.security.auth.callback.CallbackHandler;
 import javax.security.auth.callback.NameCallback;
 import javax.security.auth.callback.PasswordCallback;
 import javax.security.auth.callback.UnsupportedCallbackException;
+import javax.security.auth.login.LoginException;
 import javax.security.sasl.RealmCallback;
 
-import org.infinispan.arquillian.core.InfinispanResource;
-import org.infinispan.arquillian.core.RemoteInfinispanServer;
 import org.infinispan.client.hotrod.RemoteCache;
 import org.infinispan.client.hotrod.RemoteCacheManager;
 import org.infinispan.client.hotrod.configuration.Configuration;
@@ -36,26 +34,38 @@ import org.junit.Test;
  */
 public abstract class HotRodSaslAuthTestBase {
 
-   protected final String TEST_REALM = "ApplicationRealm";
-   protected final String TEST_SERVER_NAME = "node0";
+   protected static final String TEST_REALM = "ApplicationRealm";
+   protected static final String TEST_SERVER_NAME = "node0";
 
-   protected final String TEST_CACHE_NAME = "testcache";
-   protected final String TEST_KEY = "testKey";
-   protected final String TEST_VALUE = "testValue";
+   protected static final String TEST_CACHE_NAME = "testcache";
+   protected static final String TEST_KEY = "testKey";
+   protected static final String TEST_VALUE = "testValue";
 
-   protected final String PASSWORD = "testpassword";
-   protected final String ADMIN_LOGIN = "testadmin";
-   protected final String READER_LOGIN = "testreader";
-   protected final String WRITER_LOGIN = "testwriter";
-   protected final String SUPERVISOR_LOGIN = "testsupervisor";
-
+   protected static final String ADMIN_LOGIN = "admin";
+   protected static final String ADMIN_PASSWD = "strongPassword";
+   protected static final String READER_LOGIN = "reader";
+   protected static final String READER_PASSWD = "password";
+   protected static final String WRITER_LOGIN = "writer";
+   protected static final String WRITER_PASSWD = "somePassword";
+   protected static final String SUPERVISOR_LOGIN = "supervisor";
+   protected static final String SUPERVISOR_PASSWD = "lessStrongPassword";
+   
    protected RemoteCache<String, String> remoteCache;
    protected static RemoteCacheManager remoteCacheManager = null;
 
-   @InfinispanResource("hotrodAuth")
-   RemoteInfinispanServer server;
-
    public abstract String getTestedMech();
+
+   public abstract String getHRServerHostname();
+
+   public abstract int getHRServerPort();
+
+   public abstract void initAsAdmin() throws PrivilegedActionException,LoginException;
+
+   public abstract void initAsReader() throws PrivilegedActionException,LoginException;
+
+   public abstract void initAsWriter() throws PrivilegedActionException,LoginException;
+
+   public abstract void initAsSupervisor() throws PrivilegedActionException,LoginException;
 
    @After
    public void release() {
@@ -64,7 +74,13 @@ public abstract class HotRodSaslAuthTestBase {
       }
    }
 
-   public void initialize(String login, String password) {
+   protected void initialize(Subject subj) throws PrivilegedActionException {
+      final Configuration config = getRemoteCacheManagerConfig(subj);
+      remoteCacheManager = new RemoteCacheManager(config, true);
+      remoteCache = remoteCacheManager.getCache(TEST_CACHE_NAME);
+   }
+
+   protected void initialize(String login, String password) {
       Configuration config = getRemoteCacheManagerConfig(login, password);
       remoteCacheManager = new RemoteCacheManager(config, true);
       remoteCache = remoteCacheManager.getCache(TEST_CACHE_NAME);
@@ -72,63 +88,57 @@ public abstract class HotRodSaslAuthTestBase {
 
    protected Configuration getRemoteCacheManagerConfig(String login, String password) {
       ConfigurationBuilder config = getDefaultConfigBuilder();
-      config.security().authentication()
-         .serverName(TEST_SERVER_NAME)
-         .saslMechanism(getTestedMech())
-         .callbackHandler(new LoginHandler(login, password, TEST_REALM))
-         .enable();
+      config.security().authentication().callbackHandler(new LoginHandler(login, password, TEST_REALM));
+      return config.build();
+   }
+
+   protected Configuration getRemoteCacheManagerConfig(Subject subj) {
+      ConfigurationBuilder config = getDefaultConfigBuilder();
+      config.security().authentication().clientSubject(subj).callbackHandler(new LoginHandler("", "")); //callback handle is required by ISPN config validation
       return config.build();
    }
 
    protected ConfigurationBuilder getDefaultConfigBuilder() {
       ConfigurationBuilder config = new ConfigurationBuilder();
-      for (RemoteInfinispanServer server : getServers()) {
-         config.addServer().host(server.getHotrodEndpoint().getInetAddress().getHostName())
-               .port(server.getHotrodEndpoint().getPort());
-      }
+      config.addServer().host(getHRServerHostname()).port(getHRServerPort());
+      config.security().authentication().serverName(TEST_SERVER_NAME).saslMechanism(getTestedMech()).enable();
       return config;
    }
 
-   protected List<RemoteInfinispanServer> getServers() {
-      List<RemoteInfinispanServer> servers = new ArrayList<RemoteInfinispanServer>();
-      servers.add(server);
-      return Collections.unmodifiableList(servers);
-   }
-
    @Test
-   public void testAdmin() throws IOException {
-      initialize(ADMIN_LOGIN, PASSWORD);
+   public void testAdmin() throws PrivilegedActionException,LoginException {
+      initAsAdmin();
       testWriteRead();
       testCreateCache();
    }
 
    @Test
-   public void testReaderRead() throws IOException {
-      initialize(READER_LOGIN, PASSWORD);
+   public void testReaderRead() throws PrivilegedActionException,LoginException {
+      initAsReader();
       testReadNonExitent();
    }
 
    @Test(expected = org.infinispan.client.hotrod.exceptions.HotRodClientException.class)
-   public void testReaderWrite() throws IOException {
-      initialize(READER_LOGIN, PASSWORD);
+   public void testReaderWrite() throws PrivilegedActionException,LoginException { 
+      initAsReader();
       testWrite();
    }
 
    @Test
-   public void testWriterWrite() throws IOException {
-      initialize(WRITER_LOGIN, PASSWORD);
+   public void testWriterWrite() throws PrivilegedActionException,LoginException {
+      initAsWriter();
       testWrite();
    }
 
    @Test(expected = org.infinispan.client.hotrod.exceptions.HotRodClientException.class)
-   public void testWriterWriteRead() throws IOException {
-      initialize(WRITER_LOGIN, PASSWORD);
+   public void testWriterWriteRead() throws PrivilegedActionException,LoginException {
+      initAsWriter();
       testWriteRead();
    }
 
    @Test
-   public void testSupervisorWriteRead() throws IOException {
-      initialize(SUPERVISOR_LOGIN, PASSWORD);
+   public void testSupervisorWriteRead() throws PrivilegedActionException,LoginException {
+      initAsSupervisor();
       testWriteRead();
    }
 
