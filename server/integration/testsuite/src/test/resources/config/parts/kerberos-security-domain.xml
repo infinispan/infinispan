@@ -1,0 +1,12 @@
+                <security-domain name="hotrod-service" cache-type="default">
+                    <authentication>
+                        <login-module code="Kerberos" flag="required">
+                            <module-option name="storeKey" value="true"/>
+                            <module-option name="useKeyTab" value="true"/>
+                            <module-option name="refreshKrb5Config" value="true"/>
+                            <module-option name="principal" value="hotrod/node0@INFINISPAN.ORG"/>
+                            <module-option name="keyTab" value="${jboss.server.config.dir}/hotrod_service.keytab"/>
+                            <module-option name="doNotPrompt" value="true"/>
+                        </login-module>
+                    </authentication>
+                </security-domain>

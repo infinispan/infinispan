@@ -53,6 +53,10 @@
     <category name="org.apache.auth">
         <priority value="INFO"/>
     </category>
+    
+    <category name="org.apache.directory">
+        <priority value="WARN"/>
+    </category>
 
     <!-- ======================= -->
 	<!-- Setup the Root category -->

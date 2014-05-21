@@ -27,6 +27,8 @@
     <xsl:param name="addAuth">false</xsl:param>
     <xsl:param name="addEncrypt">false</xsl:param>
     <xsl:param name="hotrodAuth">false</xsl:param>
+    <xsl:param name="addKrbOpts">false</xsl:param>
+    <xsl:param name="addKrbSecDomain">false</xsl:param>
     <xsl:param name="log.level.infinispan">INFO</xsl:param>
     <xsl:param name="log.level.jgroups">INFO</xsl:param>
     <xsl:param name="log.level.console">INFO</xsl:param>
@@ -167,6 +169,28 @@
         <xsl:if test="$addEncrypt != 'false'">
             <xsl:copy-of select="document($addEncrypt)"/>
             <xsl:call-template name="copynode"/>
+        </xsl:if>
+    </xsl:template>
+    
+    <xsl:template match="p:extensions">
+        <xsl:if test="$addKrbOpts = 'false'">
+            <xsl:call-template name="copynode"/>
+        </xsl:if>
+        <xsl:if test="$addKrbOpts != 'false'">
+            <xsl:call-template name="copynode"/>
+            <xsl:copy-of select="document($addKrbOpts)"/>
+        </xsl:if>
+    </xsl:template>
+    
+    <xsl:template match="security:subsystem/security:security-domains">
+        <xsl:if test="$addKrbSecDomain = 'false'">
+            <xsl:call-template name="copynode"/>
+        </xsl:if>
+        <xsl:if test="$addKrbSecDomain != 'false'">
+            <xsl:copy> 
+               <xsl:copy-of select="document($addKrbSecDomain)"/>
+               <xsl:apply-templates select="@* | node()" /> 
+            </xsl:copy> 
         </xsl:if>
     </xsl:template>
 
