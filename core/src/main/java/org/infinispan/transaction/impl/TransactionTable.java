@@ -85,7 +85,7 @@ public class TransactionTable {
    private CacheNotifier notifier;
    private TransactionSynchronizationRegistry transactionSynchronizationRegistry;
    private Lock minTopologyRecalculationLock;
-   private EquivalentConcurrentHashMapV8<Address, CompletedTransactionsPerNode> completedTransactionsInfo;
+   private CompletedTransactionsInfo completedTransactionsInfo;
    private ScheduledExecutorService executorService;
    private String cacheName;
    private TimeService timeService;
@@ -127,7 +127,7 @@ public class TransactionTable {
 
       boolean totalOrder = configuration.transaction().transactionProtocol().isTotalOrder();
       if (clustered && !totalOrder) {
-         completedTransactionsInfo = new EquivalentConcurrentHashMapV8<Address, CompletedTransactionsPerNode>(AnyEquivalence.getInstance(), AnyEquivalence.getInstance());
+         completedTransactionsInfo = new CompletedTransactionsInfo();
 
          // Periodically run a task to cleanup the transaction table from completed transactions.
          ThreadFactory tf = new ThreadFactory() {
@@ -146,7 +146,7 @@ public class TransactionTable {
          executorService.scheduleAtFixedRate(new Runnable() {
             @Override
             public void run() {
-               cleanupCompletedTransactions();
+               completedTransactionsInfo.cleanupCompletedTransactions();
             }
          }, interval, interval, TimeUnit.MILLISECONDS);
       }
@@ -520,18 +520,9 @@ public class TransactionTable {
     * on a remote node. This might cause leaks, e.g. if the transaction is prepared, committed and prepared again.
     * Once marked as completed (because of commit or rollback) any further prepare received on that transaction are discarded.
     */
-   public void markTransactionCompleted(GlobalTransaction globalTx) {
+   public void markTransactionCompleted(GlobalTransaction gtx) {
       if (completedTransactionsInfo != null) {
-         log.tracef("Marking transaction %s as completed", globalTx);
-         CompletedTransactionsPerNode completedTransactionsPerNode = completedTransactionsInfo.computeIfAbsent(globalTx.getAddress(),
-               new EquivalentConcurrentHashMapV8.Fun<Address, CompletedTransactionsPerNode>() {
-                  @Override
-                  public CompletedTransactionsPerNode apply(Address address) {
-                     return new CompletedTransactionsPerNode(address);
-                  }
-               }
-         );
-         completedTransactionsPerNode.completedTransactions.put(globalTx, timeService.time());
+         completedTransactionsInfo.markTransactionCompleted(gtx);
       }
    }
 
@@ -542,73 +533,116 @@ public class TransactionTable {
       if (completedTransactionsInfo == null)
          return false;
 
-      CompletedTransactionsPerNode completedTransactionsPerNode = completedTransactionsInfo.get(gtx.getAddress());
-      if (completedTransactionsPerNode == null)
-         return false;
-      if (completedTransactionsPerNode.completedTransactions.containsKey(gtx))
-         return true;
-
-      // Transaction ids are allocated in sequence, so any transaction with a smaller id must have already finished.
-      // Most likely because the prepare command timed out...
-      // Note: We must check the id *after* verifying that the tx doesn't exist in the map.
-      return gtx.getId() <= completedTransactionsPerNode.lastPrunedTxId;
+      return completedTransactionsInfo.isTransactionCompleted(gtx);
    }
 
-   public void cleanupCompletedTransactions() {
-      if (completedTransactionsInfo != null && !completedTransactionsInfo.isEmpty()) {
+   private class CompletedTransactionsInfo {
+      final EquivalentConcurrentHashMapV8<Address, Long> nodeMaxPrunedTxIds;
+      final EquivalentConcurrentHashMapV8<GlobalTransaction, Long> completedTransactions;
+      volatile long globalMaxPrunedTxId;
+
+      public CompletedTransactionsInfo() {
+         nodeMaxPrunedTxIds = new EquivalentConcurrentHashMapV8<>(AnyEquivalence.getInstance(), AnyEquivalence.getInstance());
+         completedTransactions = new EquivalentConcurrentHashMapV8<>(AnyEquivalence.getInstance(), AnyEquivalence.getInstance());
+         globalMaxPrunedTxId = -1;
+      }
+
+
+      /**
+       * With the current state transfer implementation it is possible for a transaction to be prepared several times
+       * on a remote node. This might cause leaks, e.g. if the transaction is prepared, committed and prepared again.
+       * Once marked as completed (because of commit or rollback) any further prepare received on that transaction are discarded.
+       */
+      public void markTransactionCompleted(GlobalTransaction globalTx) {
+         log.tracef("Marking transaction %s as completed", globalTx);
+         completedTransactions.put(globalTx, timeService.time());
+      }
+
+      /**
+       * @see #markTransactionCompleted(org.infinispan.transaction.xa.GlobalTransaction)
+       */
+      public boolean isTransactionCompleted(GlobalTransaction gtx) {
+         if (completedTransactionsInfo == null)
+            return false;
+
+         if (completedTransactions.containsKey(gtx))
+            return true;
+
+         // Transaction ids are allocated in sequence, so any transaction with a smaller id must have already finished.
+         // Most likely because the prepare command timed out...
+         // Note: We must check the id *after* verifying that the tx doesn't exist in the map.
+         if (gtx.getId() > globalMaxPrunedTxId)
+            return false;
+         Long nodeMaxPrunedTxId = nodeMaxPrunedTxIds.get(gtx.getAddress());
+         return nodeMaxPrunedTxId != null && gtx.getId() <= nodeMaxPrunedTxId;
+      }
+
+      public void cleanupCompletedTransactions() {
+         if (completedTransactions.isEmpty())
+            return;
+
          try {
-            log.tracef("About to cleanup completed transaction. Initial size is %d", completedTransactionsInfo.size());
+            log.tracef("About to cleanup completed transaction. Initial size is %d", completedTransactions.size());
             long beginning = timeService.time();
             long minCompleteTimestamp = timeService.time() - TimeUnit.MILLISECONDS.toNanos(configuration.transaction().completedTxTimeout());
             int removedEntries = 0;
 
-            //this iterator is weekly consistent and will never throw ConcurrentModificationException
-            Iterator<Map.Entry<Address, CompletedTransactionsPerNode>> nodeIterator = completedTransactionsInfo.entrySet().iterator();
-            while (nodeIterator.hasNext()) {
-               CompletedTransactionsPerNode nodeInfo = nodeIterator.next().getValue();
-
-               // Prune nodes that are no longer members first
-               if (nodeInfo.completedTransactions.isEmpty() && !rpcManager.getMembers().contains(nodeInfo.address)) {
-                  nodeIterator.remove();
-               }
-
-               // Now prune the individual transactions
-               Iterator<Map.Entry<GlobalTransaction, Long>> txIterator = nodeInfo.completedTransactions.entrySet().iterator();
-               while (txIterator.hasNext()) {
-                  Map.Entry<GlobalTransaction, Long> e = txIterator.next();
-                  long completedTime = e.getValue();
-                  if (completedTime < minCompleteTimestamp) {
-                     // Need to update lastPrunedTxId *before* removing the tx from the map
-                     // Don't need atomic operations, there can't be more than one thread updating lastPrunedTxId.
-                     long txId = e.getKey().getId();
-                     if (txId > nodeInfo.lastPrunedTxId) {
-                        nodeInfo.lastPrunedTxId = txId;
-                     }
-
-                     txIterator.remove();
-                     removedEntries++;
-                  }
+            // Collect the leavers. They will be removed at the end.
+            Set<Address> leavers = new HashSet<>();
+            for (Map.Entry<Address, Long> e : nodeMaxPrunedTxIds.entrySet()) {
+               if (!rpcManager.getMembers().contains(e.getKey())) {
+                  leavers.add(e.getKey());
                }
             }
+
+            // Remove stale completed transactions.
+            Iterator<Map.Entry<GlobalTransaction, Long>> txIterator = completedTransactions.entrySet().iterator();
+            while (txIterator.hasNext()) {
+               Map.Entry<GlobalTransaction, Long> e = txIterator.next();
+               long completedTime = e.getValue();
+               if (completedTime < minCompleteTimestamp) {
+                  // Need to update lastPrunedTxId *before* removing the tx from the map
+                  // Don't need atomic operations, there can't be more than one thread updating lastPrunedTxId.
+                  final long txId = e.getKey().getId();
+                  final Address address = e.getKey().getAddress();
+                  updateLastPrunedTxId(txId, address);
+
+                  txIterator.remove();
+                  removedEntries++;
+               } else {
+                  // Nodes with "active" completed transactions are not removed..
+                  leavers.remove(e.getKey().getAddress());
+               }
+            }
+
+            // Finally, remove nodes that are no longer members and don't have any "active" completed transactions.
+            for (Address e : leavers) {
+               nodeMaxPrunedTxIds.remove(e);
+            }
+
             long duration = timeService.timeDuration(beginning, TimeUnit.MILLISECONDS);
 
             log.tracef("Finished cleaning up completed transactions. %d transactions were removed, total duration was %d millis, " +
-                  "current number of completed transactions is %d", removedEntries, duration,
-                  completedTransactionsInfo.size());
+                        "current number of completed transactions is %d", removedEntries, duration,
+                  completedTransactions.size());
          } catch (Exception e) {
             log.errorf(e, "Failed to cleanup completed transactions: %s", e.getMessage());
          }
       }
-   }
 
-   public static class CompletedTransactionsPerNode {
-      final Address address;
-      final ConcurrentMap<GlobalTransaction, Long> completedTransactions;
-      volatile long lastPrunedTxId;
-
-      public CompletedTransactionsPerNode(Address address) {
-         this.address = address;
-         completedTransactions = CollectionFactory.makeConcurrentMap();
+      private void updateLastPrunedTxId(final long txId, Address address) {
+         if (txId > globalMaxPrunedTxId) {
+            globalMaxPrunedTxId = txId;
+         }
+         nodeMaxPrunedTxIds.compute(address, new EquivalentConcurrentHashMapV8.BiFun<Address, Long, Long>() {
+            @Override
+            public Long apply(Address address, Long nodeMaxPrunedTxId) {
+               if (nodeMaxPrunedTxId != null && txId <= nodeMaxPrunedTxId) {
+                  return nodeMaxPrunedTxId;
+               }
+               return txId;
+            }
+         });
       }
    }
 }
