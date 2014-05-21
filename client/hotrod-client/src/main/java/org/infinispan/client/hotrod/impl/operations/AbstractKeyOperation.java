@@ -37,9 +37,9 @@ public abstract class AbstractKeyOperation<T> extends RetryOnFailureOperation<T>
    @Override
    protected Transport getTransport(int retryCount, Set<SocketAddress> failedServers) {
       if (retryCount == 0) {
-         return transportFactory.getTransport(key, failedServers);
+         return transportFactory.getTransport(key, failedServers, cacheName);
       } else {
-         return transportFactory.getTransport(failedServers);
+         return transportFactory.getTransport(failedServers, cacheName);
       }
    }
 

@@ -1,6 +1,7 @@
 package org.infinispan.client.hotrod;
 
 import org.infinispan.Cache;
+import org.infinispan.client.hotrod.impl.transport.tcp.RequestBalancingStrategy;
 import org.infinispan.client.hotrod.impl.transport.tcp.RoundRobinBalancingStrategy;
 import org.infinispan.client.hotrod.impl.transport.tcp.TcpTransportFactory;
 import org.infinispan.server.hotrod.HotRodServer;
@@ -16,6 +17,7 @@ import java.net.InetSocketAddress;
 import java.net.SocketAddress;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 import static org.infinispan.client.hotrod.test.HotRodClientTestingUtil.killRemoteCacheManager;
 import static org.infinispan.client.hotrod.test.HotRodClientTestingUtil.killServers;
@@ -218,8 +220,9 @@ public class RoundRobinBalancingIntegrationTest extends MultipleCacheManagersTes
    }
 
    private RoundRobinBalancingStrategy getBalancer() {
-      TcpTransportFactory transportFactory = (TcpTransportFactory) TestingUtil.extractField(remoteCache.getRemoteCacheManager(), "transportFactory");
-      return (RoundRobinBalancingStrategy) TestingUtil.extractField(transportFactory, "balancer");
+      TcpTransportFactory transportFactory = TestingUtil.extractField(remoteCache.getRemoteCacheManager(), "transportFactory");
+      Map<byte[], RoundRobinBalancingStrategy> balancers = TestingUtil.extractField(transportFactory, "balancers");
+      return balancers.get(RemoteCacheManager.cacheNameBytes());
    }
 
 }

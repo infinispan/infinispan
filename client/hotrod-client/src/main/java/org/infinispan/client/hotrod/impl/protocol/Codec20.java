@@ -307,10 +307,10 @@ public class Codec20 implements Codec, HotRodConstants {
    protected void readNewTopologyIfPresent(Transport transport, HeaderParams params) {
       short topologyChangeByte = transport.readByte();
       if (topologyChangeByte == 1)
-         readNewTopologyAndHash(transport, params.topologyId);
+         readNewTopologyAndHash(transport, params.topologyId, params.cacheName);
    }
 
-   protected void readNewTopologyAndHash(Transport transport, AtomicInteger topologyId) {
+   protected void readNewTopologyAndHash(Transport transport, AtomicInteger topologyId, byte[] cacheName) {
       final Log localLog = getLog();
       int newTopologyId = transport.readVInt();
       topologyId.set(newTopologyId);
@@ -340,12 +340,12 @@ public class Codec20 implements Codec, HotRodConstants {
          localLog.newTopology(transport.getRemoteSocketAddress(), newTopologyId,
                addresses.length, new HashSet<SocketAddress>(addressList));
       }
-      transport.getTransportFactory().updateServers(addressList);
+      transport.getTransportFactory().updateServers(addressList, cacheName);
       if (hashFunctionVersion == 0) {
          if (trace)
             localLog.trace("Not using a consistent hash function (hash function version == 0).");
       } else {
-         transport.getTransportFactory().updateHashFunction(segmentOwners, numSegments, hashFunctionVersion);
+         transport.getTransportFactory().updateHashFunction(segmentOwners, numSegments, hashFunctionVersion, cacheName);
       }
    }
 

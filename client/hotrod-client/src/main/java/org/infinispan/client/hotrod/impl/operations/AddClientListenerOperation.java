@@ -63,7 +63,7 @@ public class AddClientListenerOperation extends RetryOnFailureOperation<Short> {
 
    @Override
    protected Transport getTransport(int retryCount, Set<SocketAddress> failedServers) {
-      this.dedicatedTransport = transportFactory.getTransport(failedServers);
+      this.dedicatedTransport = transportFactory.getTransport(failedServers, cacheName);
       return dedicatedTransport;
    }
 

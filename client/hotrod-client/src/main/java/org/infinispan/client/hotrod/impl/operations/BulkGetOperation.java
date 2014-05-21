@@ -29,7 +29,7 @@ public class BulkGetOperation extends RetryOnFailureOperation<Map<byte[], byte[]
    
    @Override
    protected Transport getTransport(int retryCount, Set<SocketAddress> failedServers) {
-      return transportFactory.getTransport(failedServers);
+      return transportFactory.getTransport(failedServers, cacheName);
    }
 
    @Override

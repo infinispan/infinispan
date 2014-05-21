@@ -164,7 +164,7 @@ public class PutKeyValueCommand extends AbstractDataWriteCommand implements Meta
       return new StringBuilder()
             .append("PutKeyValueCommand{key=")
             .append(toStr(key))
-            .append(", value=").append(value)
+            .append(", value=").append(toStr(value))
             .append(", flags=").append(flags)
             .append(", putIfAbsent=").append(putIfAbsent)
             .append(", valueMatcher=").append(valueMatcher)

@@ -17,7 +17,7 @@ import org.infinispan.client.hotrod.impl.transport.TransportFactory;
 public final class MockTransportFactory implements TransportFactory {
 
    @Override
-   public Transport getTransport(Set<SocketAddress> failedServers) {
+   public Transport getTransport(Set<SocketAddress> failedServers, byte[] cacheName) {
       return null;
    }
 
@@ -30,7 +30,7 @@ public final class MockTransportFactory implements TransportFactory {
    }
 
    @Override
-   public void updateServers(final Collection<SocketAddress> newServers) {
+   public void updateServers(final Collection<SocketAddress> newServers, byte[] cacheName) {
    }
 
    @Override
@@ -38,15 +38,15 @@ public final class MockTransportFactory implements TransportFactory {
    }
 
    @Override
-   public void updateHashFunction(final Map<SocketAddress, Set<Integer>> servers2Hash,
-            final int numKeyOwners, final short hashFunctionVersion, final int hashSpace) {
-   }
-
-   public void updateHashFunction(SocketAddress[][] segmentOwners, int numSegments, short hashFunctionVersion) {
+   public void updateHashFunction(Map<SocketAddress, Set<Integer>> servers2Hash, int numKeyOwners, short hashFunctionVersion, int hashSpace, byte[] cacheName) {
    }
 
    @Override
-   public Transport getTransport(final byte[] key, Set<SocketAddress> failedServers) {
+   public void updateHashFunction(SocketAddress[][] segmentOwners, int numSegments, short hashFunctionVersion, byte[] cacheName) {
+   }
+
+   @Override
+   public Transport getTransport(final byte[] key, Set<SocketAddress> failedServers, byte[] cacheName) {
       return null;
    }
 

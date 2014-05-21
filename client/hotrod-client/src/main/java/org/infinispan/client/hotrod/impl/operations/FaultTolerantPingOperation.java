@@ -24,7 +24,7 @@ public class FaultTolerantPingOperation extends RetryOnFailureOperation<PingOper
 
    @Override
    protected Transport getTransport(int retryCount, Set<SocketAddress> failedServers) {
-      return transportFactory.getTransport(failedServers);
+      return transportFactory.getTransport(failedServers, cacheName);
    }
 
    @Override

@@ -37,8 +37,8 @@ public class ClientConsistentHashPerfTest extends MultiHotRodServersTest {
       // This will initialize the consistent hash
       cache.put("k", "v");
 
-      TcpTransportFactory transportFactory = (TcpTransportFactory) TestingUtil.extractField(rcm, "transportFactory");
-      ConsistentHash ch = transportFactory.getConsistentHash();
+      TcpTransportFactory transportFactory = TestingUtil.extractField(rcm, "transportFactory");
+      ConsistentHash ch = transportFactory.getConsistentHash(RemoteCacheManager.cacheNameBytes());
       byte[][] keys = new byte[NUM_KEYS][];
 
       for (int i = 0; i < NUM_KEYS; i++) {

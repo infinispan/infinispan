@@ -7,6 +7,7 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Properties;
+import java.util.Set;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -21,12 +22,16 @@ import org.infinispan.client.hotrod.impl.operations.OperationsFactory;
 import org.infinispan.client.hotrod.impl.operations.PingOperation.PingResult;
 import org.infinispan.client.hotrod.impl.protocol.Codec;
 import org.infinispan.client.hotrod.impl.protocol.CodecFactory;
+import org.infinispan.client.hotrod.impl.protocol.HotRodConstants;
 import org.infinispan.client.hotrod.impl.transport.TransportFactory;
 import org.infinispan.client.hotrod.logging.Log;
 import org.infinispan.client.hotrod.logging.LogFactory;
 import org.infinispan.commons.api.BasicCacheContainer;
+import org.infinispan.commons.equivalence.ByteArrayEquivalence;
+import org.infinispan.commons.equivalence.EquivalentHashSet;
 import org.infinispan.commons.executors.ExecutorFactory;
 import org.infinispan.commons.marshall.Marshaller;
+import org.infinispan.commons.util.CollectionFactory;
 import org.infinispan.commons.util.FileLookup;
 import org.infinispan.commons.util.TypedProperties;
 import org.infinispan.commons.util.Util;
@@ -140,8 +145,7 @@ public class RemoteCacheManager implements BasicCacheContainer {
 
    private volatile boolean started = false;
    private final Map<String, RemoteCacheHolder> cacheName2RemoteCache = new HashMap<String, RemoteCacheHolder>();
-   // Use an invalid topologyID (-1) so we always get a topology update on connection.
-   private final AtomicInteger topologyId = new AtomicInteger(-1);
+   private final AtomicInteger defaultCacheTopologyId = new AtomicInteger(-1);
    private Configuration configuration;
    private Codec codec;
 
@@ -570,11 +574,11 @@ public class RemoteCacheManager implements BasicCacheContainer {
       }
 
       listenerNotifier = new ClientListenerNotifier(asyncExecutorService, codec, marshaller);
-      transportFactory.start(codec, configuration, topologyId, listenerNotifier);
+      transportFactory.start(codec, configuration, defaultCacheTopologyId, listenerNotifier);
 
       synchronized (cacheName2RemoteCache) {
          for (RemoteCacheHolder rcc : cacheName2RemoteCache.values()) {
-            startRemoteCache(rcc);
+            startRemoteCache(rcc, defaultCacheTopologyId);
          }
       }
 
@@ -619,7 +623,8 @@ public class RemoteCacheManager implements BasicCacheContainer {
          if (!cacheName2RemoteCache.containsKey(cacheName)) {
             RemoteCacheImpl<K, V> result = new RemoteCacheImpl<K, V>(this, cacheName);
             RemoteCacheHolder rcc = new RemoteCacheHolder(result, forceReturnValueOverride == null ? configuration.forceReturnValues() : forceReturnValueOverride);
-            startRemoteCache(rcc);
+            AtomicInteger topologyId = cacheName.isEmpty() ? defaultCacheTopologyId : new AtomicInteger(-1);
+            startRemoteCache(rcc, topologyId);
             if (configuration.pingOnStartup()) {
                // If ping not successful assume that the cache does not exist
                // Default cache is always started, so don't do for it
@@ -645,7 +650,7 @@ public class RemoteCacheManager implements BasicCacheContainer {
       return cache.ping();
    }
 
-   private void startRemoteCache(RemoteCacheHolder remoteCacheHolder) {
+   private void startRemoteCache(RemoteCacheHolder remoteCacheHolder, AtomicInteger topologyId) {
       RemoteCacheImpl<?, ?> remoteCache = remoteCacheHolder.remoteCache;
       OperationsFactory operationsFactory = new OperationsFactory(
             transportFactory, remoteCache.getName(), topologyId, remoteCacheHolder.forceReturnValue,
@@ -656,6 +661,17 @@ public class RemoteCacheManager implements BasicCacheContainer {
    public Marshaller getMarshaller() {
       return marshaller;
    }
+
+   public static byte[] cacheNameBytes(String cacheName) {
+      return cacheName.equals(DEFAULT_CACHE_NAME)
+            ? HotRodConstants.DEFAULT_CACHE_NAME_BYTES
+            : cacheName.getBytes(HotRodConstants.HOTROD_STRING_CHARSET);
+   }
+
+   public static byte[] cacheNameBytes() {
+      return HotRodConstants.DEFAULT_CACHE_NAME_BYTES;
+   }
+
 }
 
 class RemoteCacheHolder {

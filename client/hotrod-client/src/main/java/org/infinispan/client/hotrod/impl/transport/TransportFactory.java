@@ -20,7 +20,7 @@ import org.infinispan.client.hotrod.impl.protocol.Codec;
  */
 public interface TransportFactory {
 
-   Transport getTransport(Set<SocketAddress> failedServers);
+   Transport getTransport(Set<SocketAddress> failedServers, byte[] cacheName);
 
    Transport getAddressTransport(SocketAddress server);
 
@@ -28,18 +28,21 @@ public interface TransportFactory {
 
    void start(Codec codec, Configuration configuration, AtomicInteger topologyId, ClientListenerNotifier listenerNotifier);
 
-   void updateServers(Collection<SocketAddress> newServers);
+   void updateServers(Collection<SocketAddress> newServers, byte[] cacheName);
 
    void destroy();
 
+   /**
+    * @deprecated Only called for Hot Rod 1.x protocol.
+    */
    @Deprecated
-   void updateHashFunction(Map<SocketAddress, Set<Integer>> servers2Hash, int numKeyOwners, short hashFunctionVersion, int hashSpace);
+   void updateHashFunction(Map<SocketAddress, Set<Integer>> servers2Hash, int numKeyOwners, short hashFunctionVersion, int hashSpace, byte[] cacheName);
 
-   void updateHashFunction(SocketAddress[][] segmentOwners, int numSegments, short hashFunctionVersion);
+   void updateHashFunction(SocketAddress[][] segmentOwners, int numSegments, short hashFunctionVersion, byte[] cacheName);
 
    ConsistentHashFactory getConsistentHashFactory();
 
-   Transport getTransport(byte[] key, Set<SocketAddress> failedServers);
+   Transport getTransport(byte[] key, Set<SocketAddress> failedServers, byte[] cacheName);
 
    boolean isTcpNoDelay();
 

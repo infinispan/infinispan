@@ -18,14 +18,15 @@ public class TransportObjectFactory
 
    private static final Log log = LogFactory.getLog(TransportObjectFactory.class);
    protected final TcpTransportFactory tcpTransportFactory;
-   protected final AtomicInteger topologyId;
+   protected final AtomicInteger defaultCacheTopologyId;
    protected final boolean pingOnStartup;
    protected volatile boolean firstPingExecuted = false;
    protected final Codec codec;
 
-   public TransportObjectFactory(Codec codec, TcpTransportFactory tcpTransportFactory, AtomicInteger topologyId, boolean pingOnStartup) {
+   public TransportObjectFactory(Codec codec, TcpTransportFactory tcpTransportFactory,
+         AtomicInteger defaultCacheTopologyId, boolean pingOnStartup) {
       this.tcpTransportFactory = tcpTransportFactory;
-      this.topologyId = topologyId;
+      this.defaultCacheTopologyId = defaultCacheTopologyId;
       this.pingOnStartup = pingOnStartup;
       this.codec = codec;
    }
@@ -42,7 +43,7 @@ public class TransportObjectFactory
 
          // Don't ignore exceptions from ping() command, since
          // they indicate that the transport instance is invalid.
-         ping(tcpTransport, topologyId);
+         ping(tcpTransport, defaultCacheTopologyId);
       }
       return tcpTransport;
    }
@@ -58,7 +59,7 @@ public class TransportObjectFactory
    @Override
    public boolean validateObject(SocketAddress address, TcpTransport transport) {
       try {
-         boolean valid = ping(transport, topologyId) == PingOperation.PingResult.SUCCESS;
+         boolean valid = ping(transport, defaultCacheTopologyId) == PingOperation.PingResult.SUCCESS;
          log.tracef("Is connection %s valid? %s", transport, valid);
          return valid;
       } catch (Throwable e) {
