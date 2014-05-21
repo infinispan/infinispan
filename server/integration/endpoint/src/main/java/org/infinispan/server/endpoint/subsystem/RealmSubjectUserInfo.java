@@ -17,6 +17,11 @@ public class RealmSubjectUserInfo implements SubjectUserInfo {
    private final String userName;
    private final Subject subject;
 
+   public RealmSubjectUserInfo(org.jboss.as.core.security.SubjectUserInfo userInfo) {
+       this.userName = userInfo.getUserName();
+       this.subject = userInfo.getSubject();
+   }
+
    RealmSubjectUserInfo(String userName, Subject subject) {
       this.userName = userName;
       this.subject = subject;
