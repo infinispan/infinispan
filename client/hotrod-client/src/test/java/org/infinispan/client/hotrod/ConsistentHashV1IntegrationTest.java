@@ -132,7 +132,7 @@ public class ConsistentHashV1IntegrationTest extends MultipleCacheManagersTest {
    }
 
    public void testCorrectBalancingOfKeysAfterNodeKill() {
-      final AtomicInteger clientTopologyId = (AtomicInteger) TestingUtil.extractField(remoteCacheManager, "topologyId");
+      final AtomicInteger clientTopologyId = TestingUtil.extractField(remoteCacheManager, "defaultCacheTopologyId");
 
       final int topologyIdBeforeJoin = clientTopologyId.get();
       log.tracef("Starting test with client topology id %d", topologyIdBeforeJoin);
@@ -179,12 +179,7 @@ public class ConsistentHashV1IntegrationTest extends MultipleCacheManagersTest {
       runTest(3);
    }
 
-   private org.infinispan.client.hotrod.impl.consistenthash.ConsistentHash extractClientConsistentHash() {
-      TcpTransportFactory transport = (TcpTransportFactory) TestingUtil.extractField(remoteCacheManager, "transport");
-      return transport.getConsistentHash();
-   }
-
-   private void resetHitInterceptors() {
+  private void resetHitInterceptors() {
       for (int i = 0; i < 4; i++) {
          HitsAwareCacheManagersTest.HitCountInterceptor interceptor = hitCountInterceptor(i);
          interceptor.reset();

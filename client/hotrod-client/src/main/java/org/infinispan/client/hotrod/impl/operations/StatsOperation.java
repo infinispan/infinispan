@@ -29,7 +29,7 @@ public class StatsOperation extends RetryOnFailureOperation<Map<String, String>>
 
    @Override
    protected Transport getTransport(int retryCount, Set<SocketAddress> failedServers) {
-      return transportFactory.getTransport(failedServers);
+      return transportFactory.getTransport(failedServers, cacheName);
    }
 
    @Override

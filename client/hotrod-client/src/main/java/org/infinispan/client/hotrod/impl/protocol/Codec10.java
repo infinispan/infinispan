@@ -178,10 +178,10 @@ public class Codec10 implements Codec {
    protected void readNewTopologyIfPresent(Transport transport, HeaderParams params) {
       short topologyChangeByte = transport.readByte();
       if (topologyChangeByte == 1)
-         readNewTopologyAndHash(transport, params.topologyId);
+         readNewTopologyAndHash(transport, params.topologyId, params.cacheName);
    }
 
-   protected void readNewTopologyAndHash(Transport transport, AtomicInteger topologyId) {
+   protected void readNewTopologyAndHash(Transport transport, AtomicInteger topologyId, byte[] cacheName) {
       final Log localLog = getLog();
       int newTopologyId = transport.readVInt();
       topologyId.set(newTopologyId);
@@ -199,12 +199,12 @@ public class Codec10 implements Codec {
          localLog.newTopology(transport.getRemoteSocketAddress(), newTopologyId,
                socketAddresses.size(), socketAddresses);
       }
-      transport.getTransportFactory().updateServers(socketAddresses);
+      transport.getTransportFactory().updateServers(socketAddresses, cacheName);
       if (hashFunctionVersion == 0) {
          localLog.trace("Not using a consistent hash function (hash function version == 0).");
       } else {
          transport.getTransportFactory().updateHashFunction(
-               servers2Hash, numKeyOwners, hashFunctionVersion, hashSpace);
+               servers2Hash, numKeyOwners, hashFunctionVersion, hashSpace, cacheName);
       }
    }
 

@@ -137,8 +137,8 @@ public class TestingUtil {
     *
     * @return field value
     */
-   public static Object extractField(Object target, String fieldName) {
-      return extractField(target.getClass(), target, fieldName);
+   public static <T> T extractField(Object target, String fieldName) {
+      return (T) extractField(target.getClass(), target, fieldName);
    }
 
    public static void replaceField(Object newValue, String fieldName, Object owner, Class baseType) {

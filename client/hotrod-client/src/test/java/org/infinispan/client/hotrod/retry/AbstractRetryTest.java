@@ -70,8 +70,8 @@ public abstract class AbstractRetryTest extends HitsAwareCacheManagersTest {
 
       remoteCacheManager = new RemoteCacheManager(clientConfig);
       remoteCache = (RemoteCacheImpl) remoteCacheManager.getCache();
-      tcpConnectionFactory = (TcpTransportFactory) TestingUtil.extractField(remoteCacheManager, "transportFactory");
-      strategy = (RoundRobinBalancingStrategy) tcpConnectionFactory.getBalancer();
+      tcpConnectionFactory = TestingUtil.extractField(remoteCacheManager, "transportFactory");
+      strategy = (RoundRobinBalancingStrategy) tcpConnectionFactory.getBalancer(RemoteCacheManager.cacheNameBytes());
       addInterceptors();
 
       assert super.cacheManagers.size() == 3;

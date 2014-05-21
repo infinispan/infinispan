@@ -44,7 +44,7 @@ public class ControlledConsistentHashFactory extends BaseControlledConsistentHas
 
    private int[] concatOwners(int primaryOwnerIndex, int[] backupOwnerIndexes) {
       int[] firstSegmentOwners;
-      if (backupOwnerIndexes == null) {
+      if (backupOwnerIndexes == null || backupOwnerIndexes.length == 0) {
          firstSegmentOwners = new int[]{primaryOwnerIndex};
       } else {
          firstSegmentOwners = new int[backupOwnerIndexes.length + 1];

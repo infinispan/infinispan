@@ -4,12 +4,13 @@ import org.infinispan.Cache;
 import org.infinispan.affinity.KeyAffinityService;
 import org.infinispan.affinity.KeyAffinityServiceFactory;
 import org.infinispan.affinity.KeyGenerator;
+import org.infinispan.client.hotrod.RemoteCacheManager;
 import org.infinispan.client.hotrod.VersionedValue;
 import org.infinispan.client.hotrod.impl.transport.tcp.TcpTransport;
 import org.infinispan.client.hotrod.impl.transport.tcp.TcpTransportFactory;
+import org.infinispan.commons.marshall.Marshaller;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
-import org.infinispan.commons.marshall.Marshaller;
 import org.infinispan.marshall.core.JBossMarshaller;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.test.TestingUtil;
@@ -113,10 +114,10 @@ public class DistributionRetryTest extends AbstractRetryTest {
 
       remoteCache.put(key, "v");
       assertOnlyServerHit(getAddress(hotRodServer2));
-      TcpTransportFactory tcpTp = (TcpTransportFactory) TestingUtil.extractField(remoteCacheManager, "transportFactory");
+      TcpTransportFactory tcpTp = TestingUtil.extractField(remoteCacheManager, "transportFactory");
 
       Marshaller sm = new JBossMarshaller();
-      TcpTransport transport = (TcpTransport) tcpTp.getTransport(sm.objectToByteBuffer(key, 64), null);
+      TcpTransport transport = (TcpTransport) tcpTp.getTransport(sm.objectToByteBuffer(key, 64), null, RemoteCacheManager.cacheNameBytes());
       try {
       assertEquals(transport.getServerAddress(), new InetSocketAddress("localhost", hotRodServer2.getPort()));
       } finally {

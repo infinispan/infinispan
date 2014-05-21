@@ -35,7 +35,7 @@ public abstract class HitsAwareCacheManagersTest extends MultipleCacheManagersTe
       super.createBeforeMethod();
    }
 
-   protected HitCountInterceptor getHitCountInterceptor(Cache<Object, Object> cache) {
+   protected HitCountInterceptor getHitCountInterceptor(Cache<?, ?> cache) {
       HitCountInterceptor hitCountInterceptor = null;
       List<CommandInterceptor> interceptorChain = cache.getAdvancedCache().getInterceptorChain();
       for (CommandInterceptor interceptor : interceptorChain) {
@@ -51,15 +51,25 @@ public abstract class HitsAwareCacheManagersTest extends MultipleCacheManagersTe
    }
 
    protected void assertOnlyServerHit(SocketAddress serverAddress) {
+      assertServerHit(serverAddress, null, 1);
+   }
+
+   protected void assertServerHit(SocketAddress serverAddress, String cacheName, int expectedHits) {
       CacheContainer cacheContainer = hrServ2CacheManager.get(serverAddress);
-      HitCountInterceptor interceptor = getHitCountInterceptor(cacheContainer.getCache());
-      assert interceptor.getHits() == 1 : "Expected one hit but received " + interceptor.getHits();
+      HitCountInterceptor interceptor = getHitCountInterceptor(namedCache(cacheName, cacheContainer));
+      assert interceptor.getHits() == expectedHits :
+            "Expected " + expectedHits + " hit(s) for " + serverAddress + " but received " + interceptor.getHits();
       for (CacheContainer cm : hrServ2CacheManager.values()) {
          if (cm != cacheContainer) {
-            interceptor = getHitCountInterceptor(cm.getCache());
-            assert interceptor.getHits() == 0 : "Expected 0 hits but got " + interceptor.getHits();
+            interceptor = getHitCountInterceptor(namedCache(cacheName, cm));
+            assert interceptor.getHits() == 0 :
+                  "Expected 0 hits in " + serverAddress + " but got " + interceptor.getHits();
          }
       }
+   }
+
+   private Cache<?, ?> namedCache(String cacheName, CacheContainer cacheContainer) {
+      return cacheName == null ? cacheContainer.getCache() : cacheContainer.getCache(cacheName);
    }
 
    protected void assertNoHits() {
@@ -83,12 +93,17 @@ public abstract class HitsAwareCacheManagersTest extends MultipleCacheManagersTe
    }
 
    protected void addInterceptors() {
+      addInterceptors(null);
+   }
+
+   protected void addInterceptors(String cacheName) {
       for (EmbeddedCacheManager manager : cacheManagers) {
-         addHitCountInterceptor(manager.getCache());
+         Cache<?, ?> cache = namedCache(cacheName, manager);
+         addHitCountInterceptor(cache);
       }
    }
 
-   private void addHitCountInterceptor(Cache<Object, Object> cache) {
+   private void addHitCountInterceptor(Cache<?, ?> cache) {
       HitCountInterceptor interceptor = new HitCountInterceptor();
       cache.getAdvancedCache().addInterceptor(interceptor, 1);
    }

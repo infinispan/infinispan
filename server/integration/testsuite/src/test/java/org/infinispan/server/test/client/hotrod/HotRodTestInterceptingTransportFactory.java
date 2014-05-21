@@ -23,8 +23,8 @@ public class HotRodTestInterceptingTransportFactory extends TcpTransportFactory 
      * Version of getTransport() which keeps track of InetSocketAddress values
      */
     @Override
-    public Transport getTransport(Set<SocketAddress> failedServers) {
-        Transport transport = super.getTransport(failedServers);
+    public Transport getTransport(Set<SocketAddress> failedServers, byte[] cacheName) {
+        Transport transport = super.getTransport(failedServers, cacheName);
         System.out.println("InterceptingTransport called");
         sock_addr = (InetSocketAddress) ((TcpTransport) transport).getServerAddress();
         return transport;
