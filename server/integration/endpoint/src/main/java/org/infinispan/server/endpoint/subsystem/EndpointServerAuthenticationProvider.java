@@ -12,11 +12,12 @@ import javax.security.sasl.AuthorizeCallback;
 import org.infinispan.server.core.security.AuthorizingCallbackHandler;
 import org.infinispan.server.core.security.ServerAuthenticationProvider;
 import org.infinispan.server.core.security.SubjectUserInfo;
+import org.jboss.as.core.security.RealmUser;
 import org.jboss.as.domain.management.AuthMechanism;
 import org.jboss.as.domain.management.RealmConfigurationConstants;
 import org.jboss.as.domain.management.SecurityRealm;
-import org.jboss.logging.Logger;
 
+import static org.infinispan.server.endpoint.EndpointLogger.ROOT_LOGGER;
 /**
  * EndpointServerAuthenticationProvider.
  *
@@ -33,7 +34,7 @@ public class EndpointServerAuthenticationProvider implements ServerAuthenticatio
    static final String GSSAPI = "GSSAPI";
    static final String PLAIN = "PLAIN";
 
-   private static final Logger logger = Logger.getLogger(EndpointServerAuthenticationProvider.class);
+
    private final SecurityRealm realm;
 
    EndpointServerAuthenticationProvider(SecurityRealm realm) {
@@ -68,6 +69,12 @@ public class EndpointServerAuthenticationProvider implements ServerAuthenticatio
    }
 
    public class GSSAPIEndpointAuthorizingCallbackHandler implements AuthorizingCallbackHandler {
+      private final org.jboss.as.domain.management.AuthorizingCallbackHandler delegate;
+      private RealmUser realmUser;
+
+      GSSAPIEndpointAuthorizingCallbackHandler() {
+          delegate = realm.getAuthorizingCallbackHandler(AuthMechanism.PLAIN);
+      }
 
       @Override
       public void handle(Callback[] callbacks) throws IOException, UnsupportedCallbackException {
@@ -75,11 +82,19 @@ public class EndpointServerAuthenticationProvider implements ServerAuthenticatio
          String authenticationId = acb.getAuthenticationID();
          String authorizationId = acb.getAuthorizationID();
          acb.setAuthorized(authenticationId.equals(authorizationId));
+         int realmSep = authorizationId.indexOf('@');
+         realmUser = realmSep <= 0 ? new RealmUser(authorizationId) : new RealmUser(authorizationId.substring(realmSep+1), authorizationId.substring(0, realmSep));
       }
 
       @Override
       public SubjectUserInfo getSubjectUserInfo(Collection<Principal> principals) {
-         return new RealmSubjectUserInfo(null, null);
+          // The call to the delegate will supplement the user with additional role information
+          principals.add(realmUser);
+          try {
+              return new RealmSubjectUserInfo(delegate.createSubjectUserInfo(principals));
+          } catch (IOException e) {
+              throw ROOT_LOGGER.cannotRetrieveAuthorizationInformation(e, realmUser.toString());
+          }
       }
    }
 
