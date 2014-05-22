@@ -3,9 +3,10 @@ package org.infinispan.server.hotrod
 import io.netty.channel.Channel
 import java.util.concurrent.atomic.AtomicLong
 import org.infinispan.commons.equivalence.{AnyEquivalence, ByteArrayEquivalence}
-import org.infinispan.commons.marshall.Marshaller
+import org.infinispan.commons.marshall.jboss.GenericJBossMarshaller
 import org.infinispan.commons.util.concurrent.jdk8backported.EquivalentConcurrentHashMapV8
 import org.infinispan.container.versioning.NumericVersion
+import org.infinispan.filter.{Converter, KeyValueFilter, KeyValueFilterFactory, ConverterFactory}
 import org.infinispan.metadata.Metadata
 import org.infinispan.notifications._
 import org.infinispan.notifications.cachelistener.annotation.{CacheEntryRemoved, CacheEntryModified, CacheEntryCreated}
@@ -18,7 +19,6 @@ import org.infinispan.server.hotrod.OperationResponse._
 import org.infinispan.server.hotrod.configuration.HotRodServerConfiguration
 import org.infinispan.server.hotrod.logging.Log
 import scala.Some
-import org.infinispan.commons.marshall.jboss.GenericJBossMarshaller
 
 /**
  * @author Galder Zamarreño

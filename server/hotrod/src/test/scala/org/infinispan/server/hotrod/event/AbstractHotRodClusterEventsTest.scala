@@ -3,9 +3,9 @@ package org.infinispan.server.hotrod.event
 import java.lang.reflect.Method
 import java.util
 import org.infinispan.configuration.cache.{CacheMode, ConfigurationBuilder}
+import org.infinispan.filter.{Converter, KeyValueFilter, KeyValueFilterFactory, ConverterFactory}
 import org.infinispan.manager.EmbeddedCacheManager
 import org.infinispan.metadata.Metadata
-import org.infinispan.notifications.{Converter, ConverterFactory, KeyValueFilter, KeyValueFilterFactory}
 import org.infinispan.server.hotrod.OperationStatus._
 import org.infinispan.server.hotrod._
 import org.infinispan.server.hotrod.configuration.HotRodServerConfigurationBuilder

@@ -590,9 +590,9 @@ public class RemoteCacheManager implements BasicCacheContainer {
    @Override
    public void stop() {
       if (isStarted()) {
+         listenerNotifier.stop();
          transportFactory.destroy();
          asyncExecutorService.shutdownNow();
-         listenerNotifier.stop();
       }
       started = false;
    }

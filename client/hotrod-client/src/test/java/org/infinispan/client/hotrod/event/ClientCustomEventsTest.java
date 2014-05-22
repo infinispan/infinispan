@@ -2,27 +2,17 @@ package org.infinispan.client.hotrod.event;
 
 import org.infinispan.client.hotrod.RemoteCache;
 import org.infinispan.client.hotrod.TestHelper;
-import org.infinispan.client.hotrod.annotation.ClientCacheEntryCreated;
-import org.infinispan.client.hotrod.annotation.ClientCacheEntryModified;
-import org.infinispan.client.hotrod.annotation.ClientCacheEntryRemoved;
-import org.infinispan.client.hotrod.annotation.ClientListener;
 import org.infinispan.client.hotrod.event.CustomEventListener.CustomEvent;
 import org.infinispan.client.hotrod.test.RemoteCacheManagerCallable;
 import org.infinispan.client.hotrod.test.SingleHotRodServerTest;
 import org.infinispan.metadata.Metadata;
-import org.infinispan.notifications.Converter;
-import org.infinispan.notifications.ConverterFactory;
+import org.infinispan.filter.ConverterFactory;
+import org.infinispan.filter.Converter;
 import org.infinispan.server.hotrod.HotRodServer;
 import org.infinispan.server.hotrod.configuration.HotRodServerConfigurationBuilder;
 import org.testng.annotations.Test;
 
-import java.util.concurrent.ArrayBlockingQueue;
-import java.util.concurrent.BlockingQueue;
-import java.util.concurrent.TimeUnit;
-
 import static org.infinispan.client.hotrod.test.HotRodClientTestingUtil.withClientListener;
-import static org.testng.AssertJUnit.assertEquals;
-import static org.testng.AssertJUnit.assertNotNull;
 
 @Test(groups = "functional", testName = "client.hotrod.event.ClientCustomEventsTest")
 public class ClientCustomEventsTest extends SingleHotRodServerTest {

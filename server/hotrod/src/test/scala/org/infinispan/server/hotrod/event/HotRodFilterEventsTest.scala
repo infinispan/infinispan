@@ -2,10 +2,10 @@ package org.infinispan.server.hotrod.event
 
 import java.lang.reflect.Method
 import java.util
+import org.infinispan.filter.{KeyValueFilter, KeyValueFilterFactory}
 import org.infinispan.manager.EmbeddedCacheManager
 import org.infinispan.metadata.Metadata
 import org.infinispan.notifications.cachelistener.event.Event
-import org.infinispan.notifications.{KeyValueFilter, KeyValueFilterFactory}
 import org.infinispan.server.hotrod.configuration.HotRodServerConfigurationBuilder
 import org.infinispan.server.hotrod.test.HotRodTestingUtil._
 import org.infinispan.server.hotrod.{Bytes, HotRodServer, HotRodSingleNodeTest}

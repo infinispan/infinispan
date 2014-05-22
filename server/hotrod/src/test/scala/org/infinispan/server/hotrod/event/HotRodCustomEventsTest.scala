@@ -1,16 +1,16 @@
 package org.infinispan.server.hotrod.event
 
 import java.lang.reflect.Method
+import java.util
 import java.util.concurrent.{TimeUnit, ArrayBlockingQueue}
+import org.infinispan.filter.{Converter, ConverterFactory}
 import org.infinispan.manager.EmbeddedCacheManager
 import org.infinispan.metadata.Metadata
-import org.infinispan.notifications.{Converter, ConverterFactory}
 import org.infinispan.server.hotrod.configuration.HotRodServerConfigurationBuilder
 import org.infinispan.server.hotrod.test.HotRodTestingUtil._
 import org.infinispan.server.hotrod.test._
 import org.infinispan.server.hotrod.{Bytes, HotRodServer, HotRodSingleNodeTest}
 import org.testng.annotations.Test
-import java.util
 
 /**
  * @author Galder Zamarreño

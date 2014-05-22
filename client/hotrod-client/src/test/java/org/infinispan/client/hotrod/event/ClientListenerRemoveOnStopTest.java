@@ -1,13 +1,11 @@
 package org.infinispan.client.hotrod.event;
 
 import org.infinispan.client.hotrod.RemoteCache;
-import org.infinispan.client.hotrod.test.RemoteCacheManagerCallable;
 import org.infinispan.client.hotrod.test.SingleHotRodServerTest;
 import org.testng.annotations.Test;
 
 import java.util.Set;
 
-import static org.infinispan.client.hotrod.test.HotRodClientTestingUtil.withClientListener;
 import static org.testng.AssertJUnit.assertEquals;
 import static org.testng.AssertJUnit.assertTrue;
 

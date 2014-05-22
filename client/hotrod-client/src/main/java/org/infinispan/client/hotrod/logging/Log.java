@@ -172,4 +172,8 @@ public interface Log extends BasicLogger {
    @Message(value = "Unknown event type %s received", id = 4041)
    HotRodClientException unknownEvent(short eventTypeId);
 
+   @LogMessage(level = ERROR)
+   @Message(value = "Unable to set method %s accessible", id = 4042)
+   void unableToSetAccesible(Method m, @Cause Exception e);
+
 }
