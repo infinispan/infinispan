@@ -220,7 +220,9 @@ object Decoder2x extends AbstractVersionedDecoder with ServerConstants with Log 
                   extraPrincipals.add(new SimpleUserPrincipal(id))
                   extraPrincipals.add(new InetAddressPrincipal(ctx.channel.remoteAddress.asInstanceOf[InetSocketAddress].getAddress))
                   val sslHandler = ctx.pipeline.get("ssl").asInstanceOf[SslHandler]
-                  if (sslHandler != null) extraPrincipals.add(sslHandler.engine.getSession.getPeerPrincipal)
+                  try {
+                     if (sslHandler != null) extraPrincipals.add(sslHandler.engine.getSession.getPeerPrincipal)
+                  } // Ignore any SSLPeerUnverifiedExceptions
                   decoder.subject = decoder.callbackHandler.getSubjectUserInfo(extraPrincipals).getSubject
                   decoder.saslServer.dispose
                   decoder.callbackHandler = null
