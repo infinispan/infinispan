@@ -145,4 +145,7 @@ public interface EndpointLogger extends BasicLogger {
 
    @Message(id = 10021, value = "Invalid Strength value: %s")
    IllegalStateException invalidStrength(String strengthValue);
+
+   @Message(id = 10022, value = "Endpoint '%s' requires Client Certificates, but no Trust Store is available in realm '%s'")
+   StartException noSSLTrustStore(String endpoint, String realm);
 }
