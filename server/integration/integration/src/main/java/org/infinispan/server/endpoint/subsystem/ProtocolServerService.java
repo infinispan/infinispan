@@ -35,6 +35,7 @@ import org.infinispan.server.core.configuration.ProtocolServerConfigurationBuild
 import org.infinispan.server.core.transport.Transport;
 import org.infinispan.server.hotrod.configuration.HotRodServerConfigurationBuilder;
 import org.jboss.as.clustering.infinispan.subsystem.EmbeddedCacheManagerConfiguration;
+import org.jboss.as.domain.management.AuthenticationMechanism;
 import org.jboss.as.domain.management.SecurityRealm;
 import org.jboss.as.network.NetworkUtils;
 import org.jboss.as.network.SocketBinding;
@@ -109,6 +110,10 @@ class ProtocolServerService implements Service<ProtocolServer> {
             if (sslContext == null) {
                throw ROOT_LOGGER.noSSLContext(serverName, encryptionRealm.getName());
             }
+            if (configurationBuilder.ssl().create().requireClientAuth() && !encryptionRealm.getSupportedAuthenticationMechanisms().contains(AuthenticationMechanism.CLIENT_CERT)) {
+               throw ROOT_LOGGER.noSSLTrustStore(serverName, encryptionRealm.getName());
+            }
+
             configurationBuilder.ssl().sslContext(sslContext);
             qual = " (SSL)";
          } else {
