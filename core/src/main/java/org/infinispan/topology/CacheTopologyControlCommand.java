@@ -4,6 +4,8 @@ import org.infinispan.commands.ReplicableCommand;
 import org.infinispan.commons.CacheException;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.distribution.ch.ConsistentHash;
+import org.infinispan.factories.ComponentRegistry;
+import org.infinispan.factories.GlobalComponentRegistry;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.remoting.responses.ExceptionResponse;
 import org.infinispan.remoting.responses.SuccessfulResponse;
@@ -222,7 +224,7 @@ public class CacheTopologyControlCommand implements ReplicableCommand {
       currentCH = (ConsistentHash) parameters[i++];
       pendingCH = (ConsistentHash) parameters[i++];
       throwable = (Throwable) parameters[i++];
-      viewId = (Integer) parameters[i++];
+      viewId = (Integer) parameters[i];
    }
 
    @Override

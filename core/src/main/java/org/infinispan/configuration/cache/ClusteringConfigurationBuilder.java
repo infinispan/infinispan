@@ -17,6 +17,7 @@ public class ClusteringConfigurationBuilder extends AbstractConfigurationChildBu
    private final L1ConfigurationBuilder l1ConfigurationBuilder;
    private final StateTransferConfigurationBuilder stateTransferConfigurationBuilder;
    private final SyncConfigurationBuilder syncConfigurationBuilder;
+   private final PartitionHandlingConfigurationBuilder partitionHandlingConfigurationBuilder;
 
    ClusteringConfigurationBuilder(ConfigurationBuilder builder) {
       super(builder);
@@ -25,6 +26,7 @@ public class ClusteringConfigurationBuilder extends AbstractConfigurationChildBu
       this.l1ConfigurationBuilder = new L1ConfigurationBuilder(this);
       this.stateTransferConfigurationBuilder = new StateTransferConfigurationBuilder(this);
       this.syncConfigurationBuilder = new SyncConfigurationBuilder(this);
+      this.partitionHandlingConfigurationBuilder = new PartitionHandlingConfigurationBuilder(this);
    }
 
    /**
@@ -85,6 +87,10 @@ public class ClusteringConfigurationBuilder extends AbstractConfigurationChildBu
       return syncConfigurationBuilder;
    }
 
+   public PartitionHandlingConfigurationBuilder partitionHandling() {
+      return partitionHandlingConfigurationBuilder;
+   }
+
    @Override
    public
    void validate() {
@@ -93,13 +99,14 @@ public class ClusteringConfigurationBuilder extends AbstractConfigurationChildBu
       l1ConfigurationBuilder.validate();
       syncConfigurationBuilder.validate();
       stateTransferConfigurationBuilder.validate();
+      partitionHandlingConfigurationBuilder.validate();
    }
 
    @Override
    public
    ClusteringConfiguration create() {
       return new ClusteringConfiguration(cacheMode, asyncConfigurationBuilder.create(), hashConfigurationBuilder.create(),
-            l1ConfigurationBuilder.create(), stateTransferConfigurationBuilder.create(), syncConfigurationBuilder.create());
+            l1ConfigurationBuilder.create(), stateTransferConfigurationBuilder.create(), syncConfigurationBuilder.create(), partitionHandlingConfigurationBuilder.create());
    }
 
    @Override
@@ -110,6 +117,7 @@ public class ClusteringConfigurationBuilder extends AbstractConfigurationChildBu
       l1ConfigurationBuilder.read(template.l1());
       stateTransferConfigurationBuilder.read(template.stateTransfer());
       syncConfigurationBuilder.read(template.sync());
+      partitionHandlingConfigurationBuilder.read(template.partitionHandling());
 
       return this;
    }

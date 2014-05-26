@@ -14,6 +14,7 @@ import org.infinispan.configuration.global.GlobalConfiguration;
 import org.infinispan.distribution.ch.ConsistentHash;
 import org.infinispan.distribution.ch.ConsistentHashFactory;
 import org.infinispan.factories.GlobalComponentRegistry;
+import org.infinispan.partionhandling.impl.PartitionHandlingManager;
 import org.infinispan.remoting.rpc.ResponseMode;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.remoting.transport.Transport;
@@ -33,6 +34,7 @@ public class ClusterCacheStatus {
    private final String cacheName;
    private final CacheJoinInfo joinInfo;
    private final RebalancePolicy rebalancePolicy;
+   private final PartitionHandlingManager partitionHandlingManager;
    // Cache members, some of which may not have received state yet
    private volatile List<Address> members;
    // Capacity factors for all the members
@@ -68,6 +70,7 @@ public class ClusterCacheStatus {
       this.gcr = gcr;
       this.rebalancePolicy = rebalancePolicy;
       if (trace) log.tracef("Cache %s initialized, join info is %s", cacheName, joinInfo);
+      partitionHandlingManager = gcr.getNamedComponentRegistry(cacheName).getComponent(PartitionHandlingManager.class);
    }
 
    public CacheJoinInfo getJoinInfo() {
@@ -270,9 +273,11 @@ public class ClusterCacheStatus {
    }
 
    public void processMembershipChange(List<Address> newClusterMembers) throws Exception {
-      boolean cacheMembersModified = updateClusterMembers(newClusterMembers);
-      if (cacheMembersModified) {
-         onCacheMembershipChange();
+      if (partitionHandlingManager == null || partitionHandlingManager.handleViewChange(newClusterMembers, this)) {
+         boolean cacheMembersModified = updateClusterMembers(newClusterMembers);
+         if (cacheMembersModified) {
+            onCacheMembershipChange();
+         }
       }
    }
 
@@ -308,8 +313,7 @@ public class ClusterCacheStatus {
 
    public void broadcastConsistentHashUpdate() throws Exception {
       CacheTopology cacheTopology = getCacheTopology();
-      log.debugf("Updating cluster-wide consistent hash for cache %s, topology = %s",
-                 cacheName, cacheTopology);
+      log.debugf("Updating cluster-wide consistent hash for cache %s, topology = %s", cacheName, cacheTopology);
       ReplicableCommand command = new CacheTopologyControlCommand(cacheName,
                                                                   CacheTopologyControlCommand.Type.CH_UPDATE, transport.getAddress(), cacheTopology,
                                                                   transport.getViewId());
@@ -416,11 +420,71 @@ public class ClusterCacheStatus {
             '}';
    }
 
-   public String getCacheName() {
-      return cacheName;
+   public synchronized void reconcileCacheTopology(List<Address> clusterMembers, List<CacheTopology> partitionTopologies,
+                                                   boolean isMergeView) throws Exception {
+      try {
+         if (partitionTopologies.isEmpty())
+            return;
+
+
+         CacheTopology cacheTopology;
+         if (isMergeView) {
+            cacheTopology = buildCacheTopologyForMerge(clusterMembers, partitionTopologies);
+         }  else  {
+            cacheTopology = buildCacheTopology(clusterMembers, partitionTopologies);
+         }
+         if (cacheTopology == null) return;
+
+         // End any running rebalance
+         if (isRebalanceInProgress()) {
+            setRebalanceStatus();
+         }
+         updateCacheTopology(cacheTopology);
+
+         // End any rebalance that was running in the other partitions
+         broadcastConsistentHashUpdate();
+
+         // Trigger another rebalance in case the CH is not balanced
+         rebalancePolicy.updateCacheStatus(cacheName, this);
+      } catch (Exception e) {
+         log.failedToRecoverCacheState(cacheName, e);
+      }
+
    }
 
-   public void updateAfterMerge(List<Address> clusterMembers, List<CacheTopology> partitionTopologies) {
+   private CacheTopology buildCacheTopologyForMerge(List<Address> clusterMembers, List<CacheTopology> partitionTopologies) {
+      log.trace("Building cache topology for merge.");
+      int maxTopology = 0;
+      // We only use the currentCH, we ignore any ongoing rebalance in the partitions
+      ConsistentHash agreedCh = null;
+      ConsistentHashFactory chFactory = getJoinInfo().getConsistentHashFactory();
+      for (CacheTopology topology : partitionTopologies) {
+         if (topology.getTopologyId() > maxTopology) {
+            maxTopology = topology.getTopologyId();
+            agreedCh = topology.getCurrentCH(); //todo shouldn't I use topology.getPendingCh() here, in case that cluster is moving towards a certain new topology?
+         }
+      }
+
+      // We have added each node to the cache status when we received its status response
+      // Prune those that have left the cluster.
+      updateClusterMembers(clusterMembers);
+      List<Address> members = getMembers();
+      if (members.isEmpty()) {
+         log.tracef("Cache %s has no members left, skipping topology update", cacheName);
+         return null;
+      }
+      if (agreedCh != null) {
+         agreedCh = chFactory.updateMembers(agreedCh, members, getCapacityFactors());
+      }
+
+      // Make sure the topology id is higher than any topology id we had before in the cluster
+      maxTopology += 2;
+      CacheTopology cacheTopology = new CacheTopology(maxTopology, agreedCh, null);
+      return cacheTopology;
+
+   }
+
+   private CacheTopology buildCacheTopology(List<Address> clusterMembers, List<CacheTopology> partitionTopologies) {
       int unionTopologyId = 0;
       // We only use the currentCH, we ignore any ongoing rebalance in the partitions
       ConsistentHash currentCHUnion = null;
@@ -438,25 +502,32 @@ public class ClusterCacheStatus {
       }
 
       // We have added each node to the cache status when we received its status response
-      // Prune those that have left the cluster.
+      // Prune those that have left the cluster. //todo still do it to update removed nodes
       updateClusterMembers(clusterMembers);
       List<Address> members = getMembers();
       if (members.isEmpty()) {
          log.tracef("Cache %s has no members left, skipping topology update", cacheName);
-         return;
+         return null;
       }
       if (currentCHUnion != null) {
+         //todo update if membership changed (result of updateClusterMembers above)
          currentCHUnion = chFactory.updateMembers(currentCHUnion, members, getCapacityFactors());
       }
 
       // Make sure the topology id is higher than any topology id we had before in the cluster
       unionTopologyId += 2;
       CacheTopology cacheTopology = new CacheTopology(unionTopologyId, currentCHUnion, null);
+      return cacheTopology;
+   }
 
-      // End any running rebalance
-      if (isRebalanceInProgress()) {
-         setRebalanceStatus();
+   public synchronized void reconcileCacheTopologyWhenBecomingCoordinator(List<Address> clusterMembers, List<CacheTopology> partitionTopologies, boolean mergeView) throws Exception {
+      log.tracef("reconcileCacheTopologyWhenBecomingCoordinator: members = %s, topologies = %s, mergeView = %s", clusterMembers, partitionTopologies, mergeView);
+      if (partitionHandlingManager == null || partitionHandlingManager.handleViewChange(clusterMembers, this)) {
+         reconcileCacheTopology(clusterMembers, partitionTopologies, mergeView);
       }
-      updateCacheTopology(cacheTopology);
+   }
+
+   public String getCacheName() {
+      return cacheName;
    }
 }
