@@ -19,13 +19,6 @@
                    <policy-module code="Delegating" flag="required"/>
                </authorization>
            </security-domain>
-           <security-domain name="jboss-ejb-policy" cache-type="default">
-               <authorization>
-                   <policy-module code="Delegating" flag="required"/>
-               </authorization>
-           </security-domain>
-           
-           <?messaging-domain?>
        </security-domains>
    </subsystem>
    <supplement name="standalone">

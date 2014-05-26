@@ -1,81 +1,52 @@
-       ______                     ___   _____    _____
-      / / __ )____  __________   /   | / ___/   /__  /
- __  / / __  / __ \/ ___/ ___/  / /| | \__ \      / / 
-/ /_/ / /_/ / /_/ (__  |__  )  / ___ |___/ /     / /  
-\____/_____/\____/____/____/  /_/  |_/____/     /_/   
+Infinispan Server
+=================
 
-Welcome to JBoss Application Server 7.2.0
-http://www.jboss.org/jbossas/
-
-Go to the above link for documentation, and additional downloads.
-
-Also, once JBoss AS7 is started you can go to http://localhost:8080/
-for additional information.
-
-
-Key Features
---------------
-* Java EE 6
-* Fast Startup
-* Small Footprint
-* Modular Design
-* Unified Configuration and Management
-* Distributed Domain Management
-* OSGi
-
-Release Notes
--------------
-You can obtain the release notes here:
-https://community.jboss.org/wiki/AS711FinalReleaseNotes
+Infinispan Server is a standalone server which exposes any number of caches 
+to clients over a variety of protocols, including HotRod, Memcached and REST. 
+The server itself is built on top of the robust foundation provided by Wildfly
+8.1, therefore delegating services such as configuration, datasources, 
+transactions, logging and security to the respective subsystems. 
+Because Infinispan Server is closely tied to the latest releases of 
+Infinispan and JGroups, the subsystems which control these components are 
+slightly different, in that they introduce new features and change some 
+existing ones (e.g. cross-site replication, etc). For this reason, the 
+configuration of these subsystems should use the Infinispan Server-specific 
+schema.
 
 Getting Started
-----------------
-JBoss AS 7 requires JDK 1.6 or later.  For information regarding installation
-of the JDK, see http://www.oracle.com/technetwork/java/index.html
+---------------
 
-JBoss AS 7 has two modes of operation: Standalone and Domain.  For more
-information regarding these modes, please refer to the documentation 
-available on the JBoss.org site:
+To get started using the server, launch it using the bin/standalone.sh or 
+bin/standalone.bat scripts depending on your platform. This will start a 
+single-node server using the standalone/configuration/standalone.xml 
+configuration file, with four endpoints, one for each of the supported 
+protocols. These endpoints allow access to all of the caches configured in the 
+Infinispan subsystem (apart from the Memcached endpoint which, because of the 
+protocol's design, only allows access to a single cache). The server also 
+comes with a script (clustered.sh/clustered.bat) which provides an easy way 
+to start a clustered server by using the 
+standalone/configuration/clustered.xml configuration file. If you start the 
+server in clustered mode on multiple hosts, they should automatically 
+discover each other using UDP multicast and form a cluster. If you want to 
+start multiple nodes on a single host, start each one by specifying a port 
+offset using the jboss.socket.binding.port-offset property together with a 
+unique jboss.node.name as follows:
 
-https://docs.jboss.org/author/display/AS71/Documentation
+bin/clustered.sh -Djboss.socket.binding.port-offset=100 -Djboss.node.name=nodeA
 
+If, for some reason, you cannot use UDP multicast, you can use TCP discovery. 
+Read the JGroups subsystem configuration section for details on how to 
+configure TCP discovery.
 
-Starting a Standalone Server
-----------------------------
-An AS7 standalone server runs a single instance of AS7.
+The server distribution also provides a set of example configuration files in 
+the docs/examples/configs which illustrate a variety of possible configurations 
+and use-cases. To use them, just copy them to the standalone/configuration 
+directory and start the server using the following syntax:
 
-<JBOSS_HOME>/bin/standalone.sh      (Unix / Linux)
-
-<JBOSS_HOME>\bin\standalone.bat     (Windows)
-
-
-Starting a Managed Domain
---------------------------
-An AS7 managed domain allows you to control and configure multiple instances 
-of AS7, potentially across several physical (or virtual) machines.  The default 
-configuration includes a domain controller and a single server group with three 
-servers (two of which start automatically), all running on the localhost.
-
-<JBOSS_HOME>/bin/domain.sh      (Unix / Linux)
-
-<JBOSS_HOME>\bin\domain.bat     (Windows)
- 
-
-Accessing the Web Console
---------------------------
-Once the server has started you can access the landing page:
-
-http:/localhost:8080/
-
-This page includes links to online documentation, quick start guides, forums 
-and the administration console.
+bin/standalone.sh -c configuration_file_name.xml
 
 
-Stopping the Server
--------------------
-The JBoss AS7 server can be stopped by pressing Ctrl-C on the command line.
-If the server is running in a background process, the server can be stopped
-using the JBoss CLI:
+For more information on Infinispan Server, consult the documentation at:
 
-<JBOSS_HOME>/bin/jboss-cli.sh --connect --command=:shutdown
+https://docs.jboss.org/author/display/ISPN/Infinispan+Server
 

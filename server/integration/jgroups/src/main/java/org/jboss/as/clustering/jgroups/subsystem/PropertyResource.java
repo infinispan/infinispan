@@ -45,7 +45,7 @@ public class PropertyResource extends SimpleResourceDefinition {
         public void execute(final OperationContext context, final ModelNode operation) throws OperationFailedException {
             context.removeResource(PathAddress.EMPTY_ADDRESS);
             reloadRequiredStep(context);
-            context.completeStep();
+            context.stepCompleted();
         }
     };
 
@@ -98,7 +98,7 @@ public class PropertyResource extends SimpleResourceDefinition {
                     // add some condition here if reload needs to be conditional on context
                     // e.g. if a service is not installed, don't do a reload
                     context.reloadRequired();
-                    context.completeStep();
+                    context.stepCompleted();
                 }
             }, OperationContext.Stage.RUNTIME);
         }

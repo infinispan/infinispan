@@ -95,7 +95,6 @@
       <version.antlr>3.4</version.antlr>
       <version.apache.ds>2.0.0-M15</version.apache.ds>
       <version.arquillian>1.0.3.Final</version.arquillian>
-      <version.arquillian.container.managed>8.0.0.Beta1</version.arquillian.container.managed>
       <version.arquillian.container.weld>1.0.0.CR3</version.arquillian.container.weld>
       <version.avro>1.7.6</version.avro>
       <version.c3p0>0.9.5-pre8</version.c3p0>
@@ -157,7 +156,7 @@
       <version.testng.arquillian>6.5.2</version.testng.arquillian>
       <version.webdav.servlet>2.0.1</version.webdav.servlet>
       <version.weld>1.1.13.Final</version.weld>
-      <version.wildfly>8.0.0.Final</version.wildfly>
+      <version.wildfly>8.1.0.Final</version.wildfly>
       <version.javassist>3.18.0-GA</version.javassist>
       <version.maven.buildhelper>1.8</version.maven.buildhelper>
       <version.maven.bundle>2.4.0</version.maven.bundle>
@@ -523,7 +522,7 @@
          <dependency>
             <groupId>org.wildfly</groupId>
             <artifactId>wildfly-arquillian-container-managed</artifactId>
-            <version>${version.arquillian.container.managed}</version>
+            <version>${version.wildfly}</version>
             <scope>test</scope>
          </dependency>
          <dependency>

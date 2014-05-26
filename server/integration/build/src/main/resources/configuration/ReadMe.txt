@@ -46,7 +46,7 @@ Most subsystems are the same no matter where they are used, so they are just inc
 Some subsystems have different flavours depending on for example if they are run in ha or not, which is set up in the
 corresponding snippet file, you can choose these by passing in the 'substitution' parameter, e.g.:
 
-   <subsystem supplement="ha">configuration/subsystems/ejb3.xml</subsystem>
+   <subsystem supplement="ha">configuration/subsystems/infinispan.xml</subsystem>
    
 3.0 The subsystem snippet files
 ---------------------------

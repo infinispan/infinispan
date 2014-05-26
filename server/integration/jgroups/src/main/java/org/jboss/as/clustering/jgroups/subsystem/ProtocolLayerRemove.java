@@ -57,7 +57,7 @@ public class ProtocolLayerRemove implements OperationStepHandler {
 
         // This needs a reload
         reloadRequiredStep(context);
-        context.completeStep();
+        context.stepCompleted();
     }
 
     /**
@@ -75,7 +75,7 @@ public class ProtocolLayerRemove implements OperationStepHandler {
                     // add some condition here if reload needs to be conditional on context
                     // e.g. if a service is not installed, don't do a reload
                     context.reloadRequired();
-                    context.completeStep();
+                    context.stepCompleted();
                 }
             }, OperationContext.Stage.RUNTIME);
         }
