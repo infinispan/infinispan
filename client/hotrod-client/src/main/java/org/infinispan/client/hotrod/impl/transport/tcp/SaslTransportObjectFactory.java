@@ -1,5 +1,6 @@
 package org.infinispan.client.hotrod.impl.transport.tcp;
 
+import java.io.IOException;
 import java.net.SocketAddress;
 import java.security.PrivilegedActionException;
 import java.security.PrivilegedExceptionAction;
@@ -7,6 +8,9 @@ import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import javax.security.auth.Subject;
+import javax.security.auth.callback.Callback;
+import javax.security.auth.callback.CallbackHandler;
+import javax.security.auth.callback.UnsupportedCallbackException;
 import javax.security.sasl.Sasl;
 import javax.security.sasl.SaslClient;
 import javax.security.sasl.SaslException;
@@ -54,8 +58,12 @@ public class SaslTransportObjectFactory extends TransportObjectFactory {
          saslClient = Subject.doAs(configuration.clientSubject(), new PrivilegedExceptionAction<SaslClient>() {
             @Override
             public SaslClient run() throws Exception {
-               return Sasl.createSaslClient(new String[] { configuration.saslMechanism() }, null, "hotrod",
-                     configuration.serverName(), configuration.saslProperties(), configuration.callbackHandler());
+               CallbackHandler callbackHandler = configuration.callbackHandler();
+               if (callbackHandler == null) {
+                  callbackHandler = NoOpCallbackHandler.INSTANCE;
+               }
+            return Sasl.createSaslClient(new String[] { configuration.saslMechanism() }, null, "hotrod",
+                     configuration.serverName(), configuration.saslProperties(), callbackHandler);
             }
          });
       } else {
@@ -124,5 +132,14 @@ public class SaslTransportObjectFactory extends TransportObjectFactory {
    private byte[] auth(TcpTransport tcpTransport, AtomicInteger topologyId, String mech, byte[] response) {
       AuthOperation op = new AuthOperation(codec, topologyId, tcpTransport, mech, response);
       return op.execute();
+   }
+
+   public static final class NoOpCallbackHandler implements CallbackHandler {
+      public static final NoOpCallbackHandler INSTANCE = new NoOpCallbackHandler();
+
+      @Override
+      public void handle(Callback[] callbacks) throws IOException, UnsupportedCallbackException {
+         // NO OP
+      }
    }
 }

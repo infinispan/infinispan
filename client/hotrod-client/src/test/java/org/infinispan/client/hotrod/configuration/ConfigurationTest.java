@@ -4,11 +4,19 @@ import static org.testng.AssertJUnit.assertEquals;
 import static org.testng.AssertJUnit.assertFalse;
 import static org.testng.AssertJUnit.assertTrue;
 
+import java.io.IOException;
+
+import javax.security.auth.Subject;
+import javax.security.auth.callback.Callback;
+import javax.security.auth.callback.CallbackHandler;
+import javax.security.auth.callback.UnsupportedCallbackException;
+
 import org.infinispan.client.hotrod.SomeAsyncExecutorFactory;
 import org.infinispan.client.hotrod.SomeCustomConsistentHashV1;
 import org.infinispan.client.hotrod.SomeRequestBalancingStrategy;
 import org.infinispan.client.hotrod.SomeTransportfactory;
 import org.infinispan.client.hotrod.impl.ConfigurationProperties;
+import org.infinispan.client.hotrod.impl.transport.tcp.SaslTransportObjectFactory;
 import org.infinispan.commons.CacheConfigurationException;
 import org.testng.annotations.Test;
 
@@ -85,6 +93,25 @@ public class ConfigurationTest {
       builder.build();
    }
 
+   @Test(expectedExceptions = CacheConfigurationException.class)
+   public void testInvalidAuthenticationConfig() {
+      ConfigurationBuilder builder = new ConfigurationBuilder();
+      builder.security().authentication().enable().saslMechanism("PLAIN");
+      builder.build();
+   }
+
+   public void testValidAuthenticationSubjectNoCBH() {
+      ConfigurationBuilder builder = new ConfigurationBuilder();
+      builder.security().authentication().enable().saslMechanism("PLAIN").clientSubject(new Subject());
+      builder.build();
+   }
+
+   public void testValidAuthenticationCBHNoSubject() {
+      ConfigurationBuilder builder = new ConfigurationBuilder();
+      builder.security().authentication().enable().saslMechanism("PLAIN").callbackHandler(SaslTransportObjectFactory.NoOpCallbackHandler.INSTANCE);
+      builder.build();
+   }
+
    private void assertServer(String host, int port, ServerConfiguration serverCfg) {
       assertEquals(host, serverCfg.host());
       assertEquals(port, serverCfg.port());
@@ -116,4 +143,5 @@ public class ConfigurationTest {
       assertEquals(1024, configuration.valueSizeEstimate());
       assertEquals(0, configuration.maxRetries());
    }
+
 }

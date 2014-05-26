@@ -129,7 +129,7 @@ public interface Log extends BasicLogger {
    @Message(value = "Invalid max_retries (value=%s). Value should be greater or equal than zero.", id = 4029)
    CacheConfigurationException invalidMaxRetries(int retriesPerServer);
 
-   @Message(value = "Cannot enable authentication without specifying a Callback Handler", id = 4030)
+   @Message(value = "Cannot enable authentication without specifying a Callback Handler or a client Subject", id = 4030)
    CacheConfigurationException invalidCallbackHandler();
 
    @Message(value = "The selected authentication mechanism '%s' is not among the supported server mechanisms: %s", id = 4031)

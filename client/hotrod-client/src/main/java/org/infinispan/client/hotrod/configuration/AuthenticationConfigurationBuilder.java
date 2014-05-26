@@ -82,7 +82,7 @@ public class AuthenticationConfigurationBuilder extends AbstractSecurityConfigur
    @Override
    public void validate() {
       if (enabled) {
-         if (callbackHandler == null) {
+         if (callbackHandler == null && clientSubject == null) {
             throw log.invalidCallbackHandler();
          }
          if (saslMechanism == null) {
