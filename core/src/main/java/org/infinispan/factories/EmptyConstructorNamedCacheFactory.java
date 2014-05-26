@@ -27,6 +27,7 @@ import org.infinispan.interceptors.locking.ClusteringDependentLogic;
 import org.infinispan.marshall.core.MarshalledEntryFactory;
 import org.infinispan.marshall.core.MarshalledEntryFactoryImpl;
 import org.infinispan.notifications.cachelistener.cluster.ClusterCacheNotifier;
+import org.infinispan.partionhandling.impl.PartitionHandlingManager;
 import org.infinispan.persistence.manager.PersistenceManager;
 import org.infinispan.persistence.manager.PersistenceManagerImpl;
 import org.infinispan.notifications.cachelistener.CacheNotifier;
@@ -64,7 +65,7 @@ import static org.infinispan.commons.util.Util.getInstance;
                               ClusteringDependentLogic.class, L1Manager.class, TransactionFactory.class, BackupSender.class,
                               TotalOrderManager.class, ByteBufferFactory.class, MarshalledEntryFactory.class,
                               RemoteValueRetrievedListener.class, InvocationContextFactory.class, CommitManager.class,
-                              XSiteStateTransferManager.class, XSiteStateConsumer.class, XSiteStateProvider.class})
+                              XSiteStateTransferManager.class, XSiteStateConsumer.class, XSiteStateProvider.class, PartitionHandlingManager.class})
 public class EmptyConstructorNamedCacheFactory extends AbstractNamedCacheComponentFactory implements AutoInstantiableFactory {
 
    @Override
@@ -135,6 +136,10 @@ public class EmptyConstructorNamedCacheFactory extends AbstractNamedCacheCompone
             return (T) new XSiteStateConsumerImpl();
          } else if (componentType.equals(XSiteStateProvider.class)) {
             return (T) new XSiteStateProviderImpl();
+         } else if (componentType.equals(PartitionHandlingManager.class)) {
+            if (configuration.clustering().cacheMode().isDistributed() && configuration.clustering().partitionHandling().enabled())
+               return (T) new PartitionHandlingManager();
+            else return null;
          }
       }
 

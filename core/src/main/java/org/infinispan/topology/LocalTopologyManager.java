@@ -1,7 +1,10 @@
 package org.infinispan.topology;
 
+import java.io.Serializable;
 import java.util.Map;
 
+import org.infinispan.factories.ComponentRegistry;
+import org.infinispan.factories.GlobalComponentRegistry;
 import org.infinispan.factories.scopes.Scope;
 import org.infinispan.factories.scopes.Scopes;
 
@@ -13,6 +16,32 @@ import org.infinispan.factories.scopes.Scopes;
  */
 @Scope(Scopes.GLOBAL)
 public interface LocalTopologyManager {
+
+   class StatusResponse implements Serializable {
+      CacheJoinInfo cacheJoinInfo;
+      CacheTopology cacheTopology;
+
+      public StatusResponse(CacheJoinInfo cacheJoinInfo, CacheTopology cacheTopology) {
+         this.cacheJoinInfo = cacheJoinInfo;
+         this.cacheTopology = cacheTopology;
+      }
+
+      public CacheJoinInfo getCacheJoinInfo() {
+         return cacheJoinInfo;
+      }
+
+      public CacheTopology getCacheTopology() {
+         return cacheTopology;
+      }
+
+      @Override
+      public String toString() {
+         return "StatusResponse{" +
+               "cacheJoinInfo=" + cacheJoinInfo +
+               ", cacheTopology=" + cacheTopology +
+               '}';
+      }
+   }
    /**
     * Forwards the join request to the coordinator.
     * @return The current consistent hash.
@@ -42,7 +71,7 @@ public interface LocalTopologyManager {
     * @param viewId
     */
    // TODO Add a new class to hold the CacheJoinInfo and the CacheTopology
-   Map<String, Object[]> handleStatusRequest(int viewId);
+   Map<String, StatusResponse> handleStatusRequest(int viewId);
 
    /**
     * Updates the current and/or pending consistent hash, without transferring any state.

@@ -72,7 +72,7 @@ public class SingletonStoreTest extends MultipleCacheManagersTest {
       return config;
    }
 
-   private Cache[] getCaches(String name) {
+   private Cache[] getNamedCaches(String name) {
       return new Cache[]{
             cm0.getCache(name), cm1.getCache(name), cm2.getCache(name)
       };
@@ -93,7 +93,7 @@ public class SingletonStoreTest extends MultipleCacheManagersTest {
    }
 
    public void testPutCacheLoaderWithNoPush() throws Exception {
-      Cache[] caches = getCaches("nonPushing");
+      Cache[] caches = getNamedCaches("nonPushing");
       for (Cache c : caches) c.start();
 
       // block until they all see each other!
@@ -140,7 +140,7 @@ public class SingletonStoreTest extends MultipleCacheManagersTest {
    }
 
    public void testPutCacheLoaderWithPush() throws Exception {
-      Cache[] caches = getCaches("pushing");
+      Cache[] caches = getNamedCaches("pushing");
       for (Cache c : caches) c.start();
       Map<String, String> expected = new HashMap<String, String>();
 

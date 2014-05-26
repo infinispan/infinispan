@@ -9,10 +9,13 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 
+import org.infinispan.Cache;
 import org.infinispan.commands.ReplicableCommand;
 import org.infinispan.commons.CacheException;
 import org.infinispan.commons.util.CollectionFactory;
+import org.infinispan.context.Flag;
 import org.infinispan.distribution.ch.ConsistentHash;
+import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.factories.GlobalComponentRegistry;
 import org.infinispan.factories.annotations.ComponentName;
 import org.infinispan.factories.annotations.Inject;
@@ -21,6 +24,7 @@ import org.infinispan.factories.annotations.Stop;
 import org.infinispan.jmx.annotations.DataType;
 import org.infinispan.jmx.annotations.MBean;
 import org.infinispan.jmx.annotations.ManagedAttribute;
+import org.infinispan.partionhandling.impl.PartitionHandlingManager;
 import org.infinispan.remoting.responses.ExceptionResponse;
 import org.infinispan.remoting.responses.Response;
 import org.infinispan.remoting.responses.SuccessfulResponse;
@@ -146,12 +150,12 @@ public class LocalTopologyManagerImpl implements LocalTopologyManager {
 
    // called by the coordinator
    @Override
-   public Map<String, Object[]> handleStatusRequest(int viewId) {
-      Map<String, Object[]> response = new HashMap<String, Object[]>();
+   public Map<String, StatusResponse> handleStatusRequest(int viewId) {
+      Map<String, StatusResponse> response = new HashMap<String, StatusResponse>();
       for (Map.Entry<String, LocalCacheStatus> e : runningCaches.entrySet()) {
          String cacheName = e.getKey();
          LocalCacheStatus cacheStatus = runningCaches.get(cacheName);
-         response.put(e.getKey(), new Object[]{cacheStatus.getJoinInfo(), cacheStatus.getTopology()});
+         response.put(e.getKey(), new StatusResponse(cacheStatus.getJoinInfo(), cacheStatus.getTopology()));
       }
       return response;
    }
@@ -201,6 +205,15 @@ public class LocalTopologyManagerImpl implements LocalTopologyManager {
          } else {
             handler.updateConsistentHash(unionTopology);
          }
+         updatePartitionHandlingManagerMembers(cacheName, cacheTopology);
+      }
+   }
+
+   public void updatePartitionHandlingManagerMembers(String cacheName, CacheTopology cacheTopology) {
+      PartitionHandlingManager phm = gcr.getNamedComponentRegistry(cacheName).getComponent(PartitionHandlingManager.class);
+      if (phm != null) {
+         phm.setLastStableCluster(cacheTopology.getMembers());
+         phm.setState(PartitionHandlingManager.PartitionState.AVAILABLE);
       }
    }
 
