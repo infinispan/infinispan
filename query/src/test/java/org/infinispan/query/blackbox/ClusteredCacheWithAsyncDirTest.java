@@ -31,7 +31,7 @@ public class ClusteredCacheWithAsyncDirTest extends ClusteredCacheTest {
    }
 
    private EmbeddedCacheManager createCacheManager(int nodeIndex) throws Exception {
-      InputStream is = new FileLookup().lookupFileStrict("async-store-config.xml",
+      InputStream is = new FileLookup().lookupFileStrict("async-jdbc-store-config.xml",
                                                                         Thread.currentThread().getContextClassLoader());
       ParserRegistry parserRegistry = new ParserRegistry(Thread.currentThread().getContextClassLoader());
 

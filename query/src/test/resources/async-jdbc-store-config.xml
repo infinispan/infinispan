@@ -7,17 +7,6 @@
 
    <cache-container>
       <transport cluster="MyCluster"/>
-      <local-cache name="queryCache_lucenestore_async_filestore">
-         <transaction mode="NON_XA"/>
-         <indexing index="ALL">
-            <property name="default.indexmanager">org.infinispan.query.indexmanager.InfinispanIndexManager</property>
-            <property name="lucene_version">LUCENE_36</property>
-
-            <property name="default.locking_cachename">LuceneIndexesLocking_custom</property>
-            <property name="default.data_cachename">LuceneIndexesData_custom</property>
-            <property name="default.metadata_cachename">LuceneIndexesMetadata_custom</property>
-         </indexing>
-      </local-cache>
       <replicated-cache name="JDBCBased_LocalIndex" mode="SYNC" remote-timeout="20000">
          <transaction mode="NON_XA" />
          <indexing index="ALL">
@@ -29,42 +18,6 @@
             <property name="default.metadata_cachename">LuceneIndexesMetadata_custom1</property>
          </indexing>
       </replicated-cache>
-      <!-- *************************************** -->
-      <!--  Cache to store Lucene's file metadata  -->
-      <!-- *************************************** -->
-      <local-cache name="LuceneIndexesMetadata_custom">
-         <transaction mode="NON_XA" />
-         <indexing index="NONE"/>
-         <persistence passivation="false">
-            <file-store preload="true" fetch-state="true" read-only="false" purge="false" path="${java.io.tmpdir}/asyncStore">
-               <write-behind flush-lock-timeout="15000" thread-pool-size="5" />
-            </file-store>
-         </persistence>
-      </local-cache>
-      <!-- **************************** -->
-      <!--  Cache to store Lucene data  -->
-      <!-- **************************** -->
-      <local-cache name="LuceneIndexesData_custom">
-         <indexing index="NONE" />
-         <transaction mode="NON_XA" />
-         <persistence passivation="false">
-            <file-store preload="true" fetch-state="true" read-only="false" purge="false" path="${java.io.tmpdir}/asyncStore">
-               <write-behind flush-lock-timeout="15000" thread-pool-size="5" />
-            </file-store>
-         </persistence>
-      </local-cache>
-      <!-- ***************************** -->
-      <!--  Cache to store Lucene locks  -->
-      <!-- ***************************** -->
-      <local-cache name="LuceneIndexesLocking_custom">
-         <indexing index="NONE" />
-         <transaction mode="NON_XA" />
-         <persistence passivation="false">
-            <file-store preload="true" fetch-state="true" read-only="false" purge="false" path="${java.io.tmpdir}/asyncStore">
-               <write-behind flush-lock-timeout="15000" thread-pool-size="5" />
-            </file-store>
-         </persistence>
-      </local-cache>
       <replicated-cache name="LuceneIndexesMetadata_custom1">
          <transaction mode="NON_XA" />
          <indexing index="NONE" />
