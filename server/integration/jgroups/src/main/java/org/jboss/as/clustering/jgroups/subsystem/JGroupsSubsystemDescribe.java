@@ -108,7 +108,7 @@ import org.jboss.dmr.Property;
              }
          }
          context.getResult().set(result);
-         context.completeStep();
+         context.stepCompleted();
      }
 
      private void addProtocolPropertyCommands(ModelNode protocol, ModelNode address, ModelNode result) throws OperationFailedException {

@@ -23,8 +23,8 @@
   -->
 
 <xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema"
-           xmlns="urn:jboss:cli:1.1"
-           targetNamespace="urn:jboss:cli:1.1"
+           xmlns="urn:jboss:cli:1.2"
+           targetNamespace="urn:jboss:cli:1.2"
            elementFormDefault="qualified"
            attributeFormDefault="unqualified"
         >
@@ -55,7 +55,7 @@
                 <xs:element ref="connection-timeout" minOccurs="0" maxOccurs="1"/>
 
                 <xs:element ref="ssl" minOccurs="0" maxOccurs="1"/>
-                
+
                 <xs:element ref="silent" minOccurs="0" maxOccurs="1"/>
             </xs:sequence>
         </xs:complexType>
@@ -136,7 +136,7 @@
             </xs:sequence>
         </xs:complexType>
     </xs:element>
-    
+
     <xs:element name="silent" type="xs:boolean" default="false">
         <xs:annotation>
             <xs:documentation>

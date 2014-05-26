@@ -285,7 +285,7 @@ public class CacheMetricsHandler extends AbstractRuntimeOnlyHandler {
             }
             context.getResult().set(result);
         }
-        context.completeStep();
+        context.stepCompleted();
     }
 
     public void registerCommonMetrics(ManagementResourceRegistration container) {

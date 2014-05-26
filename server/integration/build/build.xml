@@ -1,7 +1,6 @@
 <project name="dist-dir" basedir="." default="clean">
 
    <property name="output.dir" value="${project.build.directory}/${product.name}-${product.version}" />
-   <property name="infinispan.server.modules.dir" value="${basedir}/src/main/resources-ispn/modules/system/layers/base" />
 
    <import file="lib.xml" />
 
@@ -9,10 +8,20 @@
       <delete dir="${output.dir}" />
    </target>
 
+   <target name="unpack-server">
+      <mkdir dir="${output.dir}"/>
+      <move todir="${output.dir}">
+         <fileset dir="${project.build.directory}">
+            <include name="wildfly-*/**"/>
+         </fileset>
+         <cutdirsmapper dirs="1"/>
+      </move>
+   </target>
+
    <target name="copy-files">
       <!-- Copy the Infinispan Server resource files -->
       <copy todir="${output.dir}">
-         <fileset dir="${basedir}/src/main/resources-ispn">
+         <fileset dir="${basedir}/src/main/resources">
             <include name="JBossEULA.txt" />
             <include name="LICENSE.txt" />
             <include name="bin/**" />
@@ -68,175 +77,171 @@
       </chmod>
    </target>
 
-   <target name="jboss-modules">
-      <ant antfile="as-build.xml" inheritall="true" target="modules" />
-   </target>
-
-   <target name="jboss-bundles" if="osgi.bundles.include">
-      <ant antfile="as-build.xml" inheritall="true" target="bundles" />
-   </target>
-
    <!-- These modules are for Infinispan Server-specific functionality -->
    <target name="infinispan-server-modules">
-      <module-def name="org.antlr.antlr-runtime" src="${infinispan.server.modules.dir}">
+      <module-def name="org.antlr.antlr-runtime">
          <maven-resource group="org.antlr" artifact="antlr-runtime" />
       </module-def>
 
-      <module-def name="com.thoughtworks.xstream" src="${infinispan.server.modules.dir}">
+      <module-def name="com.thoughtworks.xstream">
          <maven-resource group="com.thoughtworks.xstream" artifact="xstream" />
       </module-def>
 
-      <module-def name="xpp3" src="${infinispan.server.modules.dir}">
+      <module-def name="xpp3">
          <maven-resource group="xpp3" artifact="xpp3" />
       </module-def>
 
-      <module-def name="org.infinispan.server.endpoint" src="${infinispan.server.modules.dir}">
+      <module-def name="org.infinispan.server.endpoint">
          <maven-resource group="org.infinispan.server" artifact="infinispan-server-endpoints" />
       </module-def>
 
-      <module-def name="com.google.protobuf" src="${infinispan.server.modules.dir}">
+      <module-def name="com.google.protobuf">
          <maven-resource group="com.google.protobuf" artifact="protobuf-java" />
       </module-def>
 
-      <module-def name="com.jboss.datagrid" src="${infinispan.server.modules.dir}" />
+      <module-def name="com.jboss.datagrid" />
 
-      <module-def name="javax.activation.api" src="${infinispan.server.modules.dir}">
+      <module-def name="javax.activation.api">
          <maven-resource group="javax.activation" artifact="activation" />
       </module-def>
 
-      <module-def name="org.jboss.as.security" src="${infinispan.server.modules.dir}">
-         <maven-resource group="org.infinispan.server" artifact="infinispan-server-security" />
-      </module-def>
-
-      <module-def name="org.jboss.as.clustering.infinispan" src="${infinispan.server.modules.dir}">
+      <module-def name="org.jboss.as.clustering.infinispan">
          <maven-resource group="org.infinispan.server" artifact="infinispan-server-infinispan" />
       </module-def>
 
-      <module-def name="org.jboss.as.clustering.jgroups" src="${infinispan.server.modules.dir}">
+      <module-def name="org.jboss.as.clustering.jgroups">
          <maven-resource group="org.infinispan.server" artifact="infinispan-server-jgroups" />
       </module-def>
 
-      <module-def name="org.jboss.as.console" slot="ispn" src="${infinispan.server.modules.dir}" />
+      <module-def name="org.jboss.as.console" slot="ispn" />
 
-      <module-def name="org.jboss.as.domain-http-error-context" slot="ispn" src="${infinispan.server.modules.dir}" />
+      <module-def name="org.jboss.as.domain-http-error-context" slot="ispn" />
 
-      <module-def name="org.jboss.as.product" slot="ispn" src="${infinispan.server.modules.dir}" />
+      <module-def name="org.jboss.as.product" slot="ispn" />
 
-      <module-def name="io.netty" src="${infinispan.server.modules.dir}">
+      <module-def name="org.jboss.marshalling">
+         <maven-resource group="org.jboss.marshalling" artifact="jboss-marshalling-osgi" />
+      </module-def>
+
+      <module-def name="io.netty">
          <maven-resource group="io.netty" artifact="netty-all" />
       </module-def>
 
-      <module-def name="org.fusesource.leveldbjni-all" src="${infinispan.server.modules.dir}">
+      <module-def name="org.fusesource.leveldbjni-all">
          <maven-resource group="org.fusesource.leveldbjni" artifact="leveldbjni-all" />
       </module-def>
 
-      <module-def name="org.infinispan.commons" src="${infinispan.server.modules.dir}">
+      <module-def name="org.infinispan.commons">
          <maven-resource group="org.infinispan" artifact="infinispan-commons" />
       </module-def>
 
-      <module-def name="org.infinispan" src="${infinispan.server.modules.dir}">
+      <module-def name="org.infinispan">
          <maven-resource group="org.infinispan" artifact="infinispan-core" />
       </module-def>
 
-      <module-def name="org.infinispan.cli.client" src="${infinispan.server.modules.dir}">
+      <module-def name="org.infinispan.cli.client">
          <maven-resource group="org.infinispan" artifact="infinispan-cli-client" />
       </module-def>
 
-      <module-def name="org.infinispan.cli.server" src="${infinispan.server.modules.dir}">
+      <module-def name="org.infinispan.cli.server">
          <maven-resource group="org.infinispan" artifact="infinispan-cli-server" />
       </module-def>
 
-      <module-def name="org.infinispan.client.hotrod" src="${infinispan.server.modules.dir}">
+      <module-def name="org.infinispan.client.hotrod">
          <maven-resource group="org.infinispan" artifact="infinispan-client-hotrod" />
       </module-def>
       
-      <module-def name="org.infinispan.cachestore.jdbc" src="${infinispan.server.modules.dir}" />
+      <module-def name="org.infinispan.cachestore.jdbc" />
       
-      <module-def name="org.infinispan.cachestore.remote" src="${infinispan.server.modules.dir}" />
+      <module-def name="org.infinispan.cachestore.remote" />
       
-      <module-def name="org.infinispan.persistence.jdbc" src="${infinispan.server.modules.dir}">
+      <module-def name="org.infinispan.persistence.jdbc">
          <maven-resource group="org.infinispan" artifact="infinispan-cachestore-jdbc" />
       </module-def>
 
-      <module-def name="org.infinispan.persistence.remote" src="${infinispan.server.modules.dir}">
+      <module-def name="org.infinispan.persistence.remote">
          <maven-resource group="org.infinispan" artifact="infinispan-cachestore-remote" />
       </module-def>
 
-      <module-def name="org.infinispan.persistence.rest" src="${infinispan.server.modules.dir}">
+      <module-def name="org.infinispan.persistence.rest">
          <maven-resource group="org.infinispan" artifact="infinispan-cachestore-rest" />
       </module-def>
 
-      <module-def name="org.infinispan.persistence.leveldb" src="${infinispan.server.modules.dir}">
+      <module-def name="org.infinispan.persistence.leveldb">
          <maven-resource group="org.infinispan" artifact="infinispan-cachestore-leveldb" />
       </module-def>
 
-      <module-def name="org.infinispan.lucene" src="${infinispan.server.modules.dir}">
+      <module-def name="org.infinispan.lucene">
          <maven-resource group="org.infinispan" artifact="infinispan-lucene-v3" />
       </module-def>
 
-      <module-def name="org.infinispan.lucene-directory" src="${infinispan.server.modules.dir}">
+      <module-def name="org.infinispan.lucene-directory">
          <maven-resource group="org.infinispan" artifact="infinispan-lucene-directory" />
       </module-def>
 
-      <module-def name="org.infinispan.protostream" src="${infinispan.server.modules.dir}">
+      <module-def name="org.infinispan.protostream">
          <maven-resource group="org.infinispan.protostream" artifact="protostream" />
       </module-def>
 
-      <module-def name="org.infinispan.objectfilter" src="${infinispan.server.modules.dir}">
+      <module-def name="org.infinispan.objectfilter">
          <maven-resource group="org.infinispan" artifact="infinispan-objectfilter" />
       </module-def>
 
-      <module-def name="org.infinispan.query.dsl" src="${infinispan.server.modules.dir}">
+      <module-def name="org.infinispan.query.dsl">
          <maven-resource group="org.infinispan" artifact="infinispan-query-dsl" />
       </module-def>
 
-      <module-def name="org.infinispan.query" src="${infinispan.server.modules.dir}">
+      <module-def name="org.infinispan.query">
          <maven-resource group="org.infinispan" artifact="infinispan-query" />
       </module-def>
 
-      <module-def name="org.infinispan.remote-query.client" src="${infinispan.server.modules.dir}">
+      <module-def name="org.infinispan.remote-query.client">
          <maven-resource group="org.infinispan" artifact="infinispan-remote-query-client" />
       </module-def>
 
-      <module-def name="org.infinispan.remote-query.server" src="${infinispan.server.modules.dir}">
+      <module-def name="org.infinispan.remote-query.server">
          <maven-resource group="org.infinispan" artifact="infinispan-remote-query-server" />
       </module-def>
 
-      <module-def name="org.infinispan.server" src="${infinispan.server.modules.dir}">
+      <module-def name="org.infinispan.server">
          <maven-resource group="org.infinispan" artifact="infinispan-server-core" />
       </module-def>
 
-      <module-def name="org.infinispan.server.hotrod" src="${infinispan.server.modules.dir}">
+      <module-def name="org.infinispan.server.hotrod">
          <maven-resource group="org.infinispan" artifact="infinispan-server-hotrod" />
       </module-def>
 
-      <module-def name="org.infinispan.server.memcached" src="${infinispan.server.modules.dir}">
+      <module-def name="org.infinispan.server.memcached">
          <maven-resource group="org.infinispan" artifact="infinispan-server-memcached" />
       </module-def>
 
-      <module-def name="org.infinispan.server.rest" src="${infinispan.server.modules.dir}">
+      <module-def name="org.infinispan.server.rest">
          <maven-resource-with-classifier group="org.infinispan" artifact="infinispan-server-rest" classifier="classes" />
       </module-def>
 
-      <module-def name="org.infinispan.server.websocket" src="${infinispan.server.modules.dir}">
+      <module-def name="org.infinispan.server.websocket">
          <maven-resource group="org.infinispan" artifact="infinispan-server-websocket" />
       </module-def>
 
-      <module-def name="org.iq80.leveldb" src="${infinispan.server.modules.dir}">
+      <module-def name="org.iq80.leveldb">
          <maven-resource group="org.iq80.leveldb" artifact="leveldb" />
       </module-def>
 
-      <module-def name="org.scala-lang.library" src="${infinispan.server.modules.dir}">
+      <module-def name="org.jgroups">
+         <maven-resource group="org.jgroups" artifact="jgroups" />
+      </module-def>
+
+      <module-def name="org.scala-lang.library">
          <maven-resource group="org.scala-lang" artifact="scala-library" />
       </module-def>
 
-      <module-def name="org.apache.lucene" src="${infinispan.server.modules.dir}">
+      <module-def name="org.apache.lucene">
          <maven-resource group="org.apache.lucene" artifact="lucene-core" />
          <maven-resource group="org.apache.lucene" artifact="lucene-analyzers-common" />
          <maven-resource group="org.apache.lucene" artifact="lucene-facet" />
       </module-def>
 
-      <module-def name="org.hibernate.search.engine" src="${infinispan.server.modules.dir}">
+      <module-def name="org.hibernate.search.engine">
          <maven-resource group="com.thoughtworks.paranamer" artifact="paranamer" />
          <maven-resource group="org.apache.avro" artifact="avro" />
          <maven-resource group="org.hibernate" artifact="hibernate-search-engine" />
@@ -244,12 +249,16 @@
          <maven-resource group="org.xerial.snappy" artifact="snappy-java" />
       </module-def>
 
-      <module-def name="org.hibernate.hql.parser" src="${infinispan.server.modules.dir}">
+      <module-def name="org.hibernate.hql.parser">
          <maven-resource group="org.hibernate.hql" artifact="hibernate-hql-parser" />
       </module-def>
 
-      <module-def name="org.hibernate.hql.lucene" src="${infinispan.server.modules.dir}">
+      <module-def name="org.hibernate.hql.lucene">
          <maven-resource group="org.hibernate.hql" artifact="hibernate-hql-lucene" />
+      </module-def>
+      
+      <module-def name="org.json">
+         <maven-resource group="org.json" artifact="json"/>
       </module-def>
    </target>
 
@@ -259,14 +268,17 @@
       </delete>
    </target>
 
-   <target name="trim-domain">
-      <delete dir="${output.dir}/domain" verbose="true" />
+   <target name="trim-as">
+      <delete dir="${output.dir}/docs" />
+      <delete dir="${output.dir}/domain" />
       <delete>
          <fileset dir="${output.dir}/bin">
             <include name="domain.*"/>
          </fileset>
       </delete>
+      <delete dir="${output.dir}/appclient" />
+      <delete dir="${output.dir}/welcome-content" />
    </target>
 
-   <target name="all" depends="clean, copy-files, jboss-modules, infinispan-server-modules, jboss-bundles, trim-domain" />
+   <target name="all" depends="clean, unpack-server, trim-as, copy-files, infinispan-server-modules, trim-modules" />
 </project>

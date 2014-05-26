@@ -15,7 +15,7 @@ public class TransportLayerRemove implements OperationStepHandler {
     public void execute(final OperationContext context, final ModelNode operation) throws OperationFailedException {
         context.removeResource(PathAddress.EMPTY_ADDRESS);
         reloadRequiredStep(context);
-        context.completeStep();
+        context.stepCompleted();
     }
 
     void reloadRequiredStep(final OperationContext context) {
@@ -26,7 +26,7 @@ public class TransportLayerRemove implements OperationStepHandler {
                     // add some condition here if reload needs to be conditional on context
                     // e.g. if a service is not installed, don't do a reload
                     context.reloadRequired();
-                    context.completeStep();
+                    context.stepCompleted();
                 }
             }, OperationContext.Stage.RUNTIME);
         }

@@ -1,0 +1,392 @@
+<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema" targetNamespace="urn:infinispan:server:endpoint:7.0" xmlns:tns="urn:infinispan:server:endpoint:7.0" elementFormDefault="qualified"
+    attributeFormDefault="unqualified" version="7.0">
+
+    <xs:element name="subsystem" type="tns:subsystemType" />
+
+    <xs:complexType name="subsystemType">
+        <xs:choice minOccurs="1" maxOccurs="unbounded">
+            <xs:element name="hotrod-connector" type="tns:hotrod-connector" />
+            <xs:element name="memcached-connector" type="tns:memcached-connector" />
+            <xs:element name="rest-connector" type="tns:rest-connector" />
+            <xs:element name="websocket-connector" type="tns:websocket-connector" />
+        </xs:choice>
+    </xs:complexType>
+
+    <xs:complexType name="protocol-connector" abstract="true">
+        <xs:attribute name="socket-binding" type="xs:string" use="required">
+            <xs:annotation>
+                <xs:documentation>The socket on which this connector will bind itself</xs:documentation>
+            </xs:annotation>
+        </xs:attribute>
+        <xs:attribute name="cache-container" type="xs:string" use="required">
+            <xs:annotation>
+                <xs:documentation>The name of the cache container which will be exposed by this connector</xs:documentation>
+            </xs:annotation>
+        </xs:attribute>
+        <xs:attribute name="name" type="xs:string" use="optional">
+            <xs:annotation>
+                <xs:documentation>The logical name to give to this connector. This attribute is required when there are more connectors of the same type defined.</xs:documentation>
+            </xs:annotation>
+        </xs:attribute>
+        <xs:attribute name="worker-threads" type="xs:int" use="optional">
+            <xs:annotation>
+                <xs:documentation>Sets the number of worker threads. Defaults to 160</xs:documentation>
+            </xs:annotation>
+        </xs:attribute>
+        <xs:attribute name="idle-timeout" type="xs:int" use="optional">
+            <xs:annotation>
+                <xs:documentation>Specifies the maximum time in seconds that connections from clients will be kept open without activity. Defaults to 0 (no timeout) </xs:documentation>
+            </xs:annotation>
+        </xs:attribute>
+        <xs:attribute name="tcp-nodelay" type="xs:boolean" use="optional">
+            <xs:annotation>
+                <xs:documentation>Affects TCP NODELAY on the TCP stack. Defaults to enabled</xs:documentation>
+            </xs:annotation>
+        </xs:attribute>
+        <xs:attribute name="send-buffer-size" type="xs:int" use="optional">
+            <xs:annotation>
+                <xs:documentation>Sets the size of the send buffer.</xs:documentation>
+            </xs:annotation>
+        </xs:attribute>
+        <xs:attribute name="receive-buffer-size" type="xs:int" use="optional">
+            <xs:annotation>
+                <xs:documentation>Sets the size of the receive buffer.</xs:documentation>
+            </xs:annotation>
+        </xs:attribute>
+    </xs:complexType>
+
+    <xs:complexType name="hotrod-connector">
+        <xs:complexContent>
+            <xs:extension base="tns:protocol-connector">
+                <xs:all>
+                    <xs:element name="topology-state-transfer" type="tns:topology-state-transfer" minOccurs="0" maxOccurs="1" />
+                    <xs:element name="authentication" type="tns:authentication" minOccurs="0" maxOccurs="1" />
+                    <xs:element name="encryption" type="tns:encryption" minOccurs="0" maxOccurs="1" />
+                </xs:all>
+            </xs:extension>
+        </xs:complexContent>
+    </xs:complexType>
+
+    <xs:complexType name="memcached-connector">
+        <xs:complexContent>
+            <xs:extension base="tns:protocol-connector">
+                <xs:attribute name="cache" type="xs:string" use="optional">
+                    <xs:annotation>
+                        <xs:documentation>The name of the cache to use for the Memcached connector. Defaults to memcachedCache</xs:documentation>
+                    </xs:annotation>
+                </xs:attribute>
+            </xs:extension>
+        </xs:complexContent>
+    </xs:complexType>
+
+    <xs:complexType name="rest-connector">
+        <xs:attribute name="cache-container" type="xs:string" use="required">
+            <xs:annotation>
+                <xs:documentation>The name of the cache container which will be exposed by this connector</xs:documentation>
+            </xs:annotation>
+        </xs:attribute>
+        <xs:attribute name="virtual-server" type="xs:string" use="optional">
+            <xs:annotation>
+                <xs:documentation>The name of the virtual server on which to register the REST connector. Defaults to 'default-host'</xs:documentation>
+            </xs:annotation>
+        </xs:attribute>
+        <xs:attribute name="context-path" type="xs:string" use="optional">
+            <xs:annotation>
+                <xs:documentation>The context path on which to register the REST connector. Defaults to '' (the root context)</xs:documentation>
+            </xs:annotation>
+        </xs:attribute>
+        <xs:attribute name="security-domain" type="xs:string" use="optional">
+            <xs:annotation>
+                <xs:documentation>The security domain to use for authentication/authorization purposes. Defaults to none (no authentication)</xs:documentation>
+            </xs:annotation>
+        </xs:attribute>
+        <xs:attribute name="auth-method" type="xs:string" use="optional">
+            <xs:annotation>
+                <xs:documentation>The authentication method to require. Can be BASIC, DIGEST, CLIENT_CERT, SPNEGO. Defaults to BASIC</xs:documentation>
+            </xs:annotation>
+        </xs:attribute>
+        <xs:attribute name="security-mode" type="tns:security-mode" use="optional">
+            <xs:annotation>
+                <xs:documentation>Determines whether authentication is required only for writing (WRITE) or for both reads and writes (READ_WRITE). Defaults to READ_WRITE</xs:documentation>
+            </xs:annotation>
+        </xs:attribute>
+        <xs:attribute name="extended-headers" type="tns:extended-headers" use="optional">
+            <xs:annotation>
+                <xs:documentation>Whether to enable extended headers. Can be NEVER or ON_DEMAND. Defaults to ON_DEMAND</xs:documentation>
+            </xs:annotation>
+        </xs:attribute>
+    </xs:complexType>
+
+    <xs:complexType name="websocket-connector">
+        <xs:complexContent>
+            <xs:extension base="tns:protocol-connector" />
+        </xs:complexContent>
+    </xs:complexType>
+
+    <xs:complexType name="topology-state-transfer">
+        <xs:attribute name="cache-suffix" type="xs:string" use="optional">
+            <xs:annotation>
+                <xs:documentation>Whether to enable extended headers. Can be NEVER or ON_DEMAND. Defaults to ON_DEMAND</xs:documentation>
+            </xs:annotation>
+        </xs:attribute>
+        <xs:attribute name="lock-timeout" type="xs:int" use="optional">
+            <xs:annotation>
+                <xs:documentation>Configures the lock acquisition timeout for the topology cache. Defaults to 10 seconds</xs:documentation>
+            </xs:annotation>
+        </xs:attribute>
+        <xs:attribute name="replication-timeout" type="xs:int" use="optional">
+            <xs:annotation>
+                <xs:documentation>Configures the replication timeout for the topology cache. Defaults to 10 seconds</xs:documentation>
+            </xs:annotation>
+        </xs:attribute>
+        <xs:attribute name="update-timeout" type="xs:int" use="optional">
+            <xs:annotation>
+                <xs:documentation>This setting has been deprecated and will be ignored.</xs:documentation>
+            </xs:annotation>
+        </xs:attribute>
+        <xs:attribute name="external-host" type="xs:string" use="optional">
+            <xs:annotation>
+                <xs:documentation>Sets the external address of this node, i.e. the address which clients will connect to. Defaults to the server's socket-binding address</xs:documentation>
+            </xs:annotation>
+        </xs:attribute>
+        <xs:attribute name="external-port" type="xs:int" use="optional">
+            <xs:annotation>
+                <xs:documentation>Sets the external port of this node, i.e. the port which clients will connect to. Defaults to the server's socket-binding port</xs:documentation>
+            </xs:annotation>
+        </xs:attribute>
+        <xs:attribute name="lazy-retrieval" type="xs:boolean" use="optional">
+            <xs:annotation>
+                <xs:documentation>Configures whether to enable state transfer for the topology cache. If disabled, a ClusterCacheLoader will be used to lazily retrieve topology information from the
+                    other nodes. Defaults to true.</xs:documentation>
+            </xs:annotation>
+        </xs:attribute>
+        <xs:attribute name="await-initial-transfer" type="xs:boolean" use="optional" default="true">
+            <xs:annotation>
+                <xs:documentation>Configures whether to initial state retrieval should happen immediately at startup. Only applies when lazy-retrieval is false. Defaults to true.</xs:documentation>
+            </xs:annotation>
+        </xs:attribute>
+    </xs:complexType>
+
+    <xs:complexType name="authentication">
+        <xs:all>
+            <xs:element name="sasl" type="tns:sasl" minOccurs="0" />
+        </xs:all>
+        <xs:attribute name="security-realm" type="xs:string" use="required">
+            <xs:annotation>
+                <xs:documentation>The name of the security realm to use for obtaining the SSL keystore</xs:documentation>
+            </xs:annotation>
+        </xs:attribute>
+    </xs:complexType>
+
+    <xs:complexType name="sasl">
+        <xs:annotation>
+            <xs:documentation>
+            <![CDATA[
+                The configuration of the SASL authentication layer for this server.
+
+                The optional nested "include-mechanisms" element contains a whitelist of allowed SASL mechanism names.
+                No mechanisms will be allowed which are not present in this list.
+
+                The optional nested "qop" element contains a list of quality-of-protection values, in decreasing order
+                of preference.
+
+                The optional nested "strength" element contains a list of cipher strength values, in decreasing order
+                of preference.
+
+                The optional nested "policy" boolean element specifies a policy to use to narrow down the available set
+                of mechanisms.
+
+                The optional nested "property" elements specify additional properties required by the specified mechanisms
+            ]]>
+            </xs:documentation>
+        </xs:annotation>
+        <xs:sequence>
+            <xs:element name="policy" type="tns:policy" minOccurs="0" />
+            <xs:element name="property" type="tns:property" minOccurs="0" maxOccurs="unbounded"/>
+        </xs:sequence>
+        <xs:attribute name="security-context-name" type="xs:string">
+            <xs:annotation>
+                <xs:documentation>The name of the login context to be used to retrieve a server subject for certain SASL mechs (i.e. GSSAPI)</xs:documentation>
+            </xs:annotation>
+        </xs:attribute>
+        <xs:attribute name="mechanisms" type="tns:name-list" />
+        <xs:attribute name="qop" type="tns:qop-list"/>
+        <xs:attribute name="strength" type="tns:strength" />
+    </xs:complexType>
+
+    <xs:complexType name="policy">
+        <xs:annotation>
+            <xs:documentation>
+            <![CDATA[
+                Policy criteria items to use in order to choose a SASL mechanism.
+
+                The optional nested "forward-secrecy" element contains a boolean value which specifies whether mechanisms
+                that implement forward secrecy between sessions are required. Forward secrecy means that breaking into
+                one session will not automatically provide information for breaking into future sessions.
+
+                The optional nested "no-active" element contains a boolean value which specifies whether mechanisms
+                susceptible to active (non-dictionary) attacks are not permitted.  "false" to permit, "true" to deny.
+
+                The optional nested "no-anonymous" element contains a boolean value which specifies whether mechanisms
+                that accept anonymous login are permitted.  "false" to permit, "true" to deny.
+
+                The optional nested "no-dictionary" element contains a boolean value which specifies whether mechanisms
+                susceptible to passive dictionary attacks are permitted.  "false" to permit, "true" to deny.
+
+                The optional nested "no-plain-text" element contains a boolean value which specifies whether mechanisms
+                susceptible to simple plain passive attacks (e.g., "PLAIN") are not permitted.    "false" to permit, "true" to deny.
+
+                The optional nested "pass-credentials" element contains a boolean value which specifies whether
+                mechanisms that pass client credentials are required.
+            ]]>
+            </xs:documentation>
+        </xs:annotation>
+        <xs:all>
+            <xs:element name="forward-secrecy" type="tns:boolean-element" minOccurs="0" />
+            <xs:element name="no-active" type="tns:boolean-element" minOccurs="0" />
+            <xs:element name="no-anonymous" type="tns:boolean-element" minOccurs="0" />
+            <xs:element name="no-dictionary" type="tns:boolean-element" minOccurs="0" />
+            <xs:element name="no-plain-text" type="tns:boolean-element" minOccurs="0" />
+            <xs:element name="pass-credentials" type="tns:boolean-element" minOccurs="0" />
+        </xs:all>
+    </xs:complexType>
+
+    <xs:complexType name="property">
+        <xs:simpleContent>
+            <xs:extension base="xs:string">
+                <xs:attribute name="name" type="xs:string" use="required">
+                    <xs:annotation>
+                        <xs:documentation>Defines the name of a property.</xs:documentation>
+                    </xs:annotation>
+                </xs:attribute>
+            </xs:extension>
+        </xs:simpleContent>
+    </xs:complexType>
+
+    <xs:complexType name="boolean-element">
+        <xs:annotation>
+            <xs:documentation>
+            <![CDATA[
+                An element specifying a boolean value.
+            ]]>
+            </xs:documentation>
+        </xs:annotation>
+        <xs:attribute name="value" type="xs:boolean" use="required" />
+    </xs:complexType>
+
+    <xs:complexType name="name-listType">
+        <xs:annotation>
+            <xs:documentation>
+            <![CDATA[
+                An element specifying a string list.
+            ]]>
+            </xs:documentation>
+        </xs:annotation>
+        <xs:attribute name="value" type="tns:name-list" use="required" />
+    </xs:complexType>
+
+    <xs:simpleType name="name-list">
+        <xs:annotation>
+            <xs:documentation>
+            <![CDATA[
+                A set of string items.
+            ]]>
+            </xs:documentation>
+        </xs:annotation>
+        <xs:list itemType="xs:string" />
+    </xs:simpleType>
+
+    <xs:complexType name="qop-listType">
+        <xs:annotation>
+            <xs:documentation>
+            <![CDATA[
+                An element specifying a qop list.
+            ]]>
+            </xs:documentation>
+        </xs:annotation>
+        <xs:attribute name="value" type="tns:qop-list" use="required" />
+    </xs:complexType>
+
+    <xs:simpleType name="qop-list">
+        <xs:annotation>
+            <xs:documentation>
+            <![CDATA[
+                The SASL quality-of-protection value list.  See http://download.oracle.com/docs/cd/E17409_01/javase/6/docs/api/javax/security/sasl/Sasl.html#QOP
+                for more information.
+            ]]>
+            </xs:documentation>
+        </xs:annotation>
+        <xs:list>
+            <xs:simpleType>
+                <xs:restriction base="xs:token">
+                    <xs:enumeration value="auth" />
+                    <xs:enumeration value="auth-int" />
+                    <xs:enumeration value="auth-conf" />
+                </xs:restriction>
+            </xs:simpleType>
+        </xs:list>
+    </xs:simpleType>
+
+    <xs:simpleType name="strength">
+        <xs:annotation>
+            <xs:documentation>
+            <![CDATA[
+                The SASL strength value list.  See http://download.oracle.com/docs/cd/E17409_01/javase/6/docs/api/javax/security/sasl/Sasl.html#STRENGTH
+                for more information.
+            ]]>
+            </xs:documentation>
+        </xs:annotation>
+        <xs:list>
+            <xs:simpleType>
+                <xs:restriction base="xs:token">
+                    <xs:enumeration value="low" />
+                    <xs:enumeration value="medium" />
+                    <xs:enumeration value="high" />
+                </xs:restriction>
+            </xs:simpleType>
+        </xs:list>
+    </xs:simpleType>
+
+    <xs:complexType name="encryption">
+        <xs:attribute name="require-ssl-client-auth" type="xs:boolean" use="optional" default="false">
+            <xs:annotation>
+                <xs:documentation>Whether to require client certificate authentication. Defaults to false.</xs:documentation>
+            </xs:annotation>
+        </xs:attribute>
+        <xs:attribute name="security-realm" type="xs:string" use="required">
+            <xs:annotation>
+                <xs:documentation>The name of the security realm to use for obtaining the SSL keystore</xs:documentation>
+            </xs:annotation>
+        </xs:attribute>
+    </xs:complexType>
+
+    <xs:simpleType name="security-mode">
+        <xs:restriction base="xs:token">
+            <xs:enumeration value="WRITE">
+                <xs:annotation>
+                    <xs:documentation>Specifies that authentication against the specified security domain should apply only to write methods (PUT, POST, DELETE)</xs:documentation>
+                </xs:annotation>
+            </xs:enumeration>
+            <xs:enumeration value="READ_WRITE">
+                <xs:annotation>
+                    <xs:documentation>Specifies that authentication against the specified security domain should apply to all methods (PUT, POST, DELETE, GET, HEAD)</xs:documentation>
+                </xs:annotation>
+            </xs:enumeration>
+        </xs:restriction>
+    </xs:simpleType>
+
+    <xs:simpleType name="extended-headers">
+        <xs:restriction base="xs:token">
+            <xs:enumeration value="NEVER">
+                <xs:annotation>
+                    <xs:documentation>Never return extended headers</xs:documentation>
+                </xs:annotation>
+            </xs:enumeration>
+            <xs:enumeration value="ON_DEMAND">
+                <xs:annotation>
+                    <xs:documentation>Return extended headers on demand (i.e. when the 'extendend' query parameter is present on the request)</xs:documentation>
+                </xs:annotation>
+            </xs:enumeration>
+        </xs:restriction>
+    </xs:simpleType>
+</xs:schema>

@@ -22,24 +22,23 @@
       <generated.configs.standalone>${generated.configs}/standalone/configuration</generated.configs.standalone>
       <generated.configs.domain>${generated.configs}/domain/configuration</generated.configs.domain>
       <generated.configs.examples>${generated.configs}/docs/examples/configs</generated.configs.examples>
-      <generated.configs.src.dir>${basedir}/src/main/resources-ispn</generated.configs.src.dir>
+      <generated.configs.src.dir>${basedir}/src/main/resources</generated.configs.src.dir>
    </properties>
 
    <dependencies>
       <dependency>
+         <groupId>com.thoughtworks.paranamer</groupId>
+         <artifactId>paranamer</artifactId>
+      </dependency>
+
+      <dependency>
          <groupId>org.antlr</groupId>
          <artifactId>antlr-runtime</artifactId>
       </dependency>
-      
+
       <dependency>
          <groupId>org.fusesource.jansi</groupId>
          <artifactId>jansi</artifactId>
-      </dependency>
-      
-      <dependency>
-         <groupId>org.jboss.as</groupId>
-         <artifactId>jboss-as-build</artifactId>
-         <type>pom</type>
       </dependency>
 
       <dependency>
@@ -53,11 +52,6 @@
       </dependency>
 
       <dependency>
-         <groupId>${project.groupId}</groupId>
-         <artifactId>infinispan-server-security</artifactId>
-      </dependency>
-
-      <dependency>
          <groupId>org.jboss.aesh</groupId>
          <artifactId>aesh</artifactId>
       </dependency>
@@ -66,8 +60,6 @@
          <groupId>org.jgroups</groupId>
          <artifactId>jgroups</artifactId>
       </dependency>
-
-      
 
       <dependency>
          <groupId>${project.groupId}</groupId>
@@ -174,17 +166,22 @@
          <groupId>org.infinispan</groupId>
          <artifactId>infinispan-client-hotrod</artifactId>
       </dependency>
-      
+
       <dependency>
          <groupId>org.infinispan</groupId>
          <artifactId>infinispan-cli-client</artifactId>
       </dependency>
-      
+
       <dependency>
          <groupId>org.infinispan</groupId>
          <artifactId>infinispan-cli-server</artifactId>
       </dependency>
- 
+
+      <dependency>
+         <groupId>org.wildfly</groupId>
+         <artifactId>wildfly-config-assembly</artifactId>
+      </dependency>
+
       <dependency>
          <groupId>org.xerial.snappy</groupId>
          <artifactId>snappy-java</artifactId>
@@ -194,11 +191,35 @@
          <groupId>xpp3</groupId>
          <artifactId>xpp3</artifactId>
       </dependency>
-      
+
    </dependencies>
 
    <build>
       <plugins>
+          <plugin>
+            <artifactId>maven-dependency-plugin</artifactId>
+            <executions>
+               <execution>
+                  <id>unpack</id>
+                  <phase>package</phase>
+                  <goals>
+                     <goal>unpack</goal>
+                  </goals>
+                  <configuration>
+                     <artifactItems>
+                        <artifactItem>
+                           <groupId>org.wildfly</groupId>
+                           <artifactId>wildfly-dist</artifactId>
+                           <version>${version.wildfly}</version>
+                           <type>zip</type>
+                           <overWrite>false</overWrite>
+                           <outputDirectory>${project.build.directory}</outputDirectory>
+                        </artifactItem>
+                     </artifactItems>
+                  </configuration>
+               </execution>
+            </executions>
+         </plugin>
          <plugin>
             <artifactId>maven-antrun-plugin</artifactId>
             <executions>

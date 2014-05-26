@@ -16,28 +16,24 @@
 
     <dependencies>
         <dependency>
-            <groupId>org.jboss.as</groupId>
-            <artifactId>jboss-as-clustering-api</artifactId>
+            <groupId>org.wildfly</groupId>
+            <artifactId>wildfly-clustering-api</artifactId>
         </dependency>
         <dependency>
             <groupId>${project.groupId}</groupId>
             <artifactId>infinispan-server-jgroups</artifactId>
         </dependency>
         <dependency>
-            <groupId>org.jboss.as</groupId>
-            <artifactId>jboss-as-ee</artifactId>
+            <groupId>org.wildfly</groupId>
+            <artifactId>wildfly-jmx</artifactId>
         </dependency>
         <dependency>
-            <groupId>org.jboss.as</groupId>
-            <artifactId>jboss-as-jmx</artifactId>
+            <groupId>org.wildfly</groupId>
+            <artifactId>wildfly-threads</artifactId>
         </dependency>
         <dependency>
-            <groupId>org.jboss.as</groupId>
-            <artifactId>jboss-as-threads</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>org.jboss.as</groupId>
-            <artifactId>jboss-as-transactions</artifactId>
+            <groupId>org.wildfly</groupId>
+            <artifactId>wildfly-transactions</artifactId>
         </dependency>
         <dependency>
             <groupId>org.infinispan</groupId>
@@ -83,14 +79,15 @@
             <scope>test</scope>
         </dependency>
         <dependency>
-            <groupId>org.jboss.as</groupId>
-            <artifactId>jboss-as-clustering-common</artifactId>
+            <groupId>org.wildfly</groupId>
+            <artifactId>wildfly-clustering-common</artifactId>
             <scope>test</scope>
             <classifier>tests</classifier>
         </dependency>
         <dependency>
-            <groupId>org.jboss.as</groupId>
-            <artifactId>jboss-as-subsystem-test</artifactId>
+            <groupId>org.wildfly</groupId>
+            <artifactId>wildfly-subsystem-test</artifactId>
+            <type>pom</type>
             <scope>test</scope>
         </dependency>
         <dependency>
@@ -124,7 +121,7 @@
                 <configuration>
                     <redirectTestOutputToFile>true</redirectTestOutputToFile>
                     <useManifestOnlyJar>false</useManifestOnlyJar>
-                    <parallel>false</parallel>
+                    <parallel>none</parallel>
                 </configuration>
             </plugin>
             <plugin>
