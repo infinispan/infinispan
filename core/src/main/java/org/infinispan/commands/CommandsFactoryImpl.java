@@ -62,6 +62,8 @@ import org.infinispan.factories.annotations.Start;
 import org.infinispan.interceptors.InterceptorChain;
 import org.infinispan.filter.Converter;
 import org.infinispan.filter.KeyValueFilter;
+import org.infinispan.partionhandling.impl.PartitionHandlingManager;
+import org.infinispan.partionhandling.impl.PartitionStateControlCommand;
 import org.infinispan.statetransfer.StateProvider;
 import org.infinispan.statetransfer.StateConsumer;
 import org.infinispan.statetransfer.StateRequestCommand;
@@ -139,6 +141,7 @@ public class CommandsFactoryImpl implements CommandsFactory {
    private XSiteStateTransferManager xSiteStateTransferManager;
    private EntryRetriever entryRetriever;
    private GroupManager groupManager;
+   private PartitionHandlingManager partitionHandlingManager;
 
    private Map<Byte, ModuleCommandInitializer> moduleCommandInitializers;
 
@@ -151,7 +154,7 @@ public class CommandsFactoryImpl implements CommandsFactory {
                                  LockManager lockManager, InternalEntryFactory entryFactory, MapReduceManager mapReduceManager, 
                                  StateTransferManager stm, BackupSender backupSender, CancellationService cancellationService,
                                  TimeService timeService, XSiteStateProvider xSiteStateProvider, XSiteStateConsumer xSiteStateConsumer,
-                                 XSiteStateTransferManager xSiteStateTransferManager, EntryRetriever entryRetriever, GroupManager groupManager) {
+                                 XSiteStateTransferManager xSiteStateTransferManager, EntryRetriever entryRetriever, GroupManager groupManager, PartitionHandlingManager partitionHandlingManager) {
       this.dataContainer = container;
       this.notifier = notifier;
       this.cache = cache;
@@ -174,6 +177,7 @@ public class CommandsFactoryImpl implements CommandsFactory {
       this.xSiteStateConsumer = xSiteStateConsumer;
       this.xSiteStateProvider = xSiteStateProvider;
       this.xSiteStateTransferManager = xSiteStateTransferManager;
+      this.partitionHandlingManager = partitionHandlingManager;
       this.entryRetriever = entryRetriever;
       this.groupManager = groupManager;
    }
@@ -468,6 +472,10 @@ public class CommandsFactoryImpl implements CommandsFactory {
          case EntryResponseCommand.COMMAND_ID:
             EntryResponseCommand entryResponseCommand = (EntryResponseCommand) c;
             entryResponseCommand.init(entryRetriever);
+            break;
+         case PartitionStateControlCommand.COMMAND_ID:
+            PartitionStateControlCommand stateControlCommand = (PartitionStateControlCommand) c;
+            stateControlCommand.init(partitionHandlingManager);
             break;
          case GetKeysInGroupCommand.COMMAND_ID:
             GetKeysInGroupCommand getKeysInGroupCommand = (GetKeysInGroupCommand) c;

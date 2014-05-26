@@ -17,6 +17,7 @@ import org.infinispan.interceptors.totalorder.*;
 import org.infinispan.interceptors.xsite.NonTransactionalBackupInterceptor;
 import org.infinispan.interceptors.xsite.OptimisticBackupInterceptor;
 import org.infinispan.interceptors.xsite.PessimisticBackupInterceptor;
+import org.infinispan.partionhandling.impl.PartitionHandlingInterceptor;
 import org.infinispan.statetransfer.StateTransferInterceptor;
 import org.infinispan.statetransfer.TransactionSynchronizerInterceptor;
 import org.infinispan.transaction.LockingMode;
@@ -82,6 +83,9 @@ public class InterceptorChainFactory extends AbstractNamedCacheComponentFactory 
          interceptorChain.appendInterceptor(createInterceptor(new BatchingInterceptor(), BatchingInterceptor.class), false);
       }
       interceptorChain.appendInterceptor(createInterceptor(new InvocationContextInterceptor(), InvocationContextInterceptor.class), false);
+
+      if (configuration.clustering().partitionHandling().enabled())
+         interceptorChain.appendInterceptor(createInterceptor(new PartitionHandlingInterceptor(), PartitionHandlingInterceptor.class), false);
 
 
       CompatibilityModeConfiguration compatibility = configuration.compatibility();

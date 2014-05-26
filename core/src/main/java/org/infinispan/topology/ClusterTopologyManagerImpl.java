@@ -221,10 +221,13 @@ public class ClusterTopologyManagerImpl implements ClusterTopologyManager {
                for (Map.Entry<String, List<CacheTopology>> entry : clusterCacheMap.entrySet()) {
                   String cacheName = entry.getKey();
                   List<CacheTopology> topologyList = entry.getValue();
-                  try {
-                     updateCacheStatusAfterMerge(cacheName, transport.getMembers(), topologyList);
-                  } catch (Exception e) {
-                     log.failedToRecoverCacheState(cacheName, e);
+                  ClusterCacheStatus cacheStatus = cacheStatusMap.get(cacheName);
+                  if (isCoordinator && mergeView) {
+                     log.tracef("Initializing rebalance policy for cache %s, pre-existing partitions are %s",
+                                cacheName, topologyList);
+                     cacheStatus.reconcileCacheTopology(transport.getMembers(), topologyList, mergeView);
+                  } else {
+                     cacheStatus.reconcileCacheTopologyWhenBecomingCoordinator(transport.getMembers(), topologyList, mergeView);
                   }
                }
             } catch (InterruptedException e) {
@@ -263,27 +266,6 @@ public class ClusterTopologyManagerImpl implements ClusterTopologyManager {
       }
       return cacheStatus;
    }
-
-   public void updateCacheStatusAfterMerge(String cacheName, List<Address> clusterMembers,
-                                           List<CacheTopology> partitionTopologies)
-         throws Exception {
-      log.tracef("Initializing rebalance policy for cache %s, pre-existing partitions are %s",
-            cacheName, partitionTopologies);
-      ClusterCacheStatus cacheStatus = cacheStatusMap.get(cacheName);
-      if (partitionTopologies.isEmpty())
-         return;
-
-      synchronized (cacheStatus) {
-         cacheStatus.updateAfterMerge(clusterMembers, partitionTopologies);
-      }
-
-      // End any rebalance that was running in the other partitions
-      cacheStatus.broadcastConsistentHashUpdate();
-
-      // Trigger another rebalance in case the CH is not balanced
-      rebalancePolicy.updateCacheStatus(cacheName, cacheStatus);
-   }
-
 
    private void startRebalance(String cacheName) throws Exception {
       ClusterCacheStatus cacheStatus = cacheStatusMap.get(cacheName);
@@ -350,14 +332,16 @@ public class ClusterTopologyManagerImpl implements ClusterTopologyManager {
             CacheTopologyControlCommand.Type.GET_STATUS, transport.getAddress(), newViewId);
       Map<Address, Object> statusResponses = executeOnClusterSync(command, getGlobalTimeout(), false, false);
 
+      log.debugf("Got statusResponses %s. members are %s", statusResponses, transport.getMembers());
+
       HashMap<String, List<CacheTopology>> clusterCacheMap = new HashMap<String, List<CacheTopology>>();
       for (Map.Entry<Address, Object> responseEntry : statusResponses.entrySet()) {
          Address sender = responseEntry.getKey();
-         Map<String, Object[]> nodeStatus = (Map<String, Object[]>) responseEntry.getValue();
-         for (Map.Entry<String, Object[]> statusEntry : nodeStatus.entrySet()) {
+         Map<String, LocalTopologyManager.StatusResponse> nodeStatus = (Map<String, LocalTopologyManager.StatusResponse>) responseEntry.getValue();
+         for (Map.Entry<String, LocalTopologyManager.StatusResponse> statusEntry : nodeStatus.entrySet()) {
             String cacheName = statusEntry.getKey();
-            CacheJoinInfo joinInfo = (CacheJoinInfo) statusEntry.getValue()[0];
-            CacheTopology cacheTopology = (CacheTopology) statusEntry.getValue()[1];
+            CacheJoinInfo joinInfo = statusEntry.getValue().getCacheJoinInfo();
+            CacheTopology cacheTopology = statusEntry.getValue().getCacheTopology();
 
             List<CacheTopology> topologyList = clusterCacheMap.get(cacheName);
             if (topologyList == null) {
@@ -378,10 +362,10 @@ public class ClusterTopologyManagerImpl implements ClusterTopologyManager {
                for (Address member : cacheTopology.getMembers()) {
                   if (statusResponses.containsKey(member)) {
                      // Search through all the responses to get the correct capacity factor
-                     Map<String, Object[]> memberStatus = (Map<String, Object[]>) statusResponses.get(member);
-                     Object[] cacheStatus = memberStatus.get(cacheName);
+                     Map<String, LocalTopologyManager.StatusResponse> memberStatus = (Map<String, LocalTopologyManager.StatusResponse>) statusResponses.get(member);
+                     LocalTopologyManager.StatusResponse cacheStatus = memberStatus.get(cacheName);
                      if (cacheStatus != null) {
-                        CacheJoinInfo memberJoinInfo = (CacheJoinInfo) cacheStatus[0];
+                        CacheJoinInfo memberJoinInfo = cacheStatus.getCacheJoinInfo();
                         float capacityFactor = memberJoinInfo.getCapacityFactor();
                         cacheStatusMap.get(cacheName).addMember(member, capacityFactor);
                      }
@@ -425,7 +409,7 @@ public class ClusterTopologyManagerImpl implements ClusterTopologyManager {
       // first invoke remotely
 
       if (totalOrder) {
-         Map<Address, Response> responseMap = transport.invokeRemotely(null, command,
+         Map<Address, Response> responseMap = transport.invokeRemotely(transport.getMembers(), command,
                                                                        ResponseMode.SYNCHRONOUS_IGNORE_LEAVERS,
                                                                        timeout, false, null, totalOrder, distributed);
          Map<Address, Object> responseValues = new HashMap<Address, Object>(transport.getMembers().size());

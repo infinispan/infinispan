@@ -183,6 +183,17 @@ public class TEST_PING extends Discovery {
       stopped = true;
    }
 
+   @Override
+   public void start() throws Exception {
+      stopped = false;
+      log.trace("Discovery.stopped=" + stopped);
+      super.start();
+   }
+
+   public void suspend() {
+      stopped = true;
+   }
+
    private void removeDiscovery(DiscoveryKey key, Map<Address, TEST_PING> discoveries) {
       discoveries.remove(local_addr);
       if (discoveries.isEmpty()) {
