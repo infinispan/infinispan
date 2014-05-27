@@ -2,9 +2,11 @@
 
     <property name="output.dir" value="${project.build.directory}/infinispan-as-modules" />
 
-    <import file="lib.xml" />
+    <import file="../lib.xml" />
 
     <major-minor version="${project.version}" property="infinispan.slot" prefix="ispn-"/>
+    <major-minor version="${version.lucene.v4}" property="lucene4.slot"/>
+    <major-minor version="${version.lucene.v3}" property="lucene3.slot"/>
 
     <target name="clean">
         <delete dir="${output.dir}" />
@@ -24,6 +26,8 @@
 
         <filterset id="module-filter">
             <filter token="infinispan.slot" value="${infinispan.slot}" />
+            <filter token="lucene4.slot" value="${lucene4.slot}" />
+            <filter token="lucene3.slot" value="${lucene3.slot}" />
         </filterset>
 
         <module-def name="org.infinispan" slot="${infinispan.slot}">
@@ -82,6 +86,10 @@
             <maven-resource group="org.infinispan" artifact="infinispan-jcache" />
         </module-def>
 
+        <module-def name="org.infinispan.lucene-directory-v3" slot="${infinispan.slot}">
+            <maven-resource group="org.infinispan" artifact="infinispan-lucene-directory" />
+        </module-def>
+
         <module-def name="org.infinispan.lucene-directory" slot="${infinispan.slot}">
             <maven-resource group="org.infinispan" artifact="infinispan-lucene-directory" />
         </module-def>
@@ -106,7 +114,7 @@
             <maven-resource group="org.iq80.leveldb" artifact="leveldb" />
         </module-def>
 
-        <module-def name="org.apache.lucene" slot="${infinispan.slot}">
+        <module-def name="org.apache.lucene" slot="${lucene3.slot}">
             <maven-resource group="org.apache.lucene" artifact="lucene-core" />
             <maven-resource group="org.apache.lucene" artifact="lucene-analyzers" />
             <maven-resource group="org.apache.lucene" artifact="lucene-facet" />
@@ -126,6 +134,16 @@
             <maven-resource group="org.apache.solr" artifact="solr-analysis-extras" />
             <maven-resource group="org.apache.solr" artifact="solr-core" />
             <maven-resource group="org.apache.solr" artifact="solr-solrj" />
+        </module-def>
+
+        <module-def name="org.apache.lucene" slot="${lucene4.slot}">
+            <local-resource group="org.apache.lucene" artifact="lucene-core" version="${version.lucene.v4}"/>
+            <local-resource group="org.apache.lucene" artifact="lucene-queries" version="${version.lucene.v4}"/>
+            <local-resource group="org.apache.lucene" artifact="lucene-analyzers-common" version="${version.lucene.v4}"/>
+            <local-resource group="org.apache.lucene" artifact="lucene-queryparser" version="${version.lucene.v4}"/>
+            <local-resource group="org.apache.lucene" artifact="lucene-highlighter" version="${version.lucene.v4}"/>
+            <local-resource group="org.apache.lucene" artifact="lucene-grouping" version="${version.lucene.v4}"/>
+            <local-resource group="org.apache.lucene" artifact="lucene-facet" version="${version.lucene.v4}"/>
         </module-def>
 
         <module-def name="org.hibernate.search.engine" slot="${infinispan.slot}">

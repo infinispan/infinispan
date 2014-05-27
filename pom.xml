@@ -68,6 +68,7 @@
       <module>integrationtests/luceneintegration</module>
       <module>integrationtests/as-integration-embedded</module>
       <module>integrationtests/as-integration-client</module>
+      <module>integrationtests/as-lucene-directory</module>
       <module>integrationtests/compatibility-mode-it</module>
       <module>integrationtests/cdi-jcache-it</module>
       <module>integrationtests/security-it</module>
