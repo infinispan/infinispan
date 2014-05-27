@@ -81,7 +81,7 @@
             </copy>
         </sequential>
     </macrodef>
-    
+
     <scriptdef name="define-module-dir" language="javascript">
         <attribute name="name"/>
         <attribute name="slot"/>
@@ -116,7 +116,7 @@
             project.setProperty("current.bundle.path", name + "/" + attributes.get("slot"));
         ]]>
     </scriptdef>
-    
+
     <macrodef name="maven-resource" >
         <attribute name="group"/>
         <attribute name="artifact"/>
@@ -134,6 +134,25 @@
             <replace file="${module.repo.output.dir}/${current.module.path}/${module.xml}">
                 <replacefilter token="&lt;!-- Insert resources here --&gt;" value="${current.resource.root}&#10;        &lt;!-- Insert resources here --&gt;"/>
             </replace>
+        </sequential>
+    </macrodef>
+
+    <macrodef name="local-resource">
+        <attribute name="group" />
+        <attribute name="artifact" />
+        <attribute name="version" />
+
+        <sequential>
+            <copy todir="${module.repo.output.dir}/${current.module.path}" failonerror="true">
+                <file file="${project.build.directory}/dependency/@{artifact}-@{version}.jar" />
+                <mapper type="flatten" />
+            </copy>
+
+           <basename file="${project.build.directory}/dependency/@{artifact}-@{version}.jar" property="resourcename.@{group}.@{artifact}" />
+           <define-resource-root path="@{artifact}-@{version}.jar" />
+           <replace file="${module.repo.output.dir}/${current.module.path}/${module.xml}">
+                <replacefilter token="&lt;!-- Insert resources here --&gt;" value="${current.resource.root}&#10;        &lt;!-- Insert resources here --&gt;" />
+           </replace>
         </sequential>
     </macrodef>
 
@@ -183,7 +202,7 @@
             project.setProperty("current.resource.root", root);
         ]]>
     </scriptdef>
-    
+
     <scriptdef name="major-minor" language="javascript">
         <attribute name="property" />
         <attribute name="artifact"/>

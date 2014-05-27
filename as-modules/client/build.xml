@@ -2,7 +2,7 @@
 
     <property name="output.dir" value="${project.build.directory}/infinispan-as-modules" />
 
-    <import file="lib.xml" />
+    <import file="../lib.xml" />
 
     <major-minor version="${project.version}" property="infinispan.slot" prefix="ispn-"/>
 

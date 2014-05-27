@@ -148,6 +148,58 @@
                <appendAssemblyId>false</appendAssemblyId>
             </configuration>
          </plugin>
+         <!-- Explicitly getting lucene4 deps since the reactor already contains lucene 3 -->
+         <plugin>
+            <artifactId>maven-dependency-plugin</artifactId>
+            <executions>
+               <execution>
+                  <id>copy</id>
+                  <phase>generate-resources</phase>
+                  <goals>
+                     <goal>copy</goal>
+                  </goals>
+                  <configuration>
+                     <artifactItems>
+                        <artifactItem>
+                           <groupId>org.apache.lucene</groupId>
+                           <artifactId>lucene-core</artifactId>
+                           <version>${version.lucene.v4}</version>
+                        </artifactItem>
+                        <artifactItem>
+                           <groupId>org.apache.lucene</groupId>
+                           <artifactId>lucene-queries</artifactId>
+                           <version>${version.lucene.v4}</version>
+                        </artifactItem>
+                        <artifactItem>
+                           <groupId>org.apache.lucene</groupId>
+                           <artifactId>lucene-analyzers-common</artifactId>
+                           <version>${version.lucene.v4}</version>
+                        </artifactItem>
+                        <artifactItem>
+                           <groupId>org.apache.lucene</groupId>
+                           <artifactId>lucene-queryparser</artifactId>
+                           <version>${version.lucene.v4}</version>
+                        </artifactItem>
+                        <artifactItem>
+                           <groupId>org.apache.lucene</groupId>
+                           <artifactId>lucene-highlighter</artifactId>
+                           <version>${version.lucene.v4}</version>
+                        </artifactItem>
+                        <artifactItem>
+                           <groupId>org.apache.lucene</groupId>
+                           <artifactId>lucene-grouping</artifactId>
+                           <version>${version.lucene.v4}</version>
+                        </artifactItem>
+                        <artifactItem>
+                           <groupId>org.apache.lucene</groupId>
+                           <artifactId>lucene-facet</artifactId>
+                           <version>${version.lucene.v4}</version>
+                        </artifactItem>
+                     </artifactItems>
+                  </configuration>
+               </execution>
+            </executions>
+         </plugin>
       </plugins>
    </build>
 </project>
