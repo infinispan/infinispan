@@ -734,6 +734,8 @@ public class Parser70 implements ConfigurationParser {
          int index, Attribute attribute, String value, ConfigurationBuilder builder) throws XMLStreamException {
       switch (attribute) {
          case NAME:
+            // Handled by the caller
+            break;
          case START:
          case JNDI_NAME:
          case MODULE: {
