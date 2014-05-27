@@ -150,6 +150,8 @@ public class TcpTransportFactory implements TransportFactory {
    @Override
    public void destroy() {
       synchronized (lock) {
+         log.infof("Destroying TcpTransportFactory with %d active and %d idle transports",
+               connectionPool.getNumActive(), connectionPool.getNumIdle());
          connectionPool.clear();
          asynchronousChannelGroup.shutdown();
          try {

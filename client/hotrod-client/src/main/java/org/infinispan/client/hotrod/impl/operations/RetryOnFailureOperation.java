@@ -73,6 +73,8 @@ public abstract class RetryOnFailureOperation<T> extends HotRodOperation<T> {
             }, context)) {
                return;
             } else {
+               // note: if we have invalidated the transport in invokeChecked due to TransportException,
+               // we invalidate (destroy) it second time here. The transport should be prepared to that.
                releaseTransport(context.transport);
             }
          } catch (RuntimeException e) {

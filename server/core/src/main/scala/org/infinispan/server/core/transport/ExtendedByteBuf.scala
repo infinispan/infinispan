@@ -2,6 +2,7 @@ package org.infinispan.server.core.transport
 
 import io.netty.buffer.{ByteBuf, Unpooled}
 import io.netty.util.CharsetUtil
+import org.infinispan.server.core.logging.Log
 
 
 object ExtendedByteBuf {

@@ -40,7 +40,7 @@ public class TransportObjectFactory
          transport = new SSLTransport(address, tcpTransportFactory);
       }
       if (log.isTraceEnabled()) {
-         log.tracef("Created tcp transport: %s", transport);
+         log.tracef("%08x Created tcp transport: %s", this.hashCode(), transport);
       }
       if (pingOnStartup && !firstPingExecuted) {
          log.trace("Executing first ping!");
@@ -76,7 +76,11 @@ public class TransportObjectFactory
    @Override
    public void destroyObject(SocketAddress address, TcpTransport transport) throws Exception {
       if (log.isTraceEnabled()) {
-         log.tracef("About to destroy tcp transport: %s", transport);
+         try {
+            throw new Exception("Stacktrace");
+         } catch (Exception e) {
+            log.tracef(e, "%08x, About to destroy tcp transport: %s", this.hashCode(), transport);
+         }
       }
       transport.destroy();
    }
@@ -85,7 +89,11 @@ public class TransportObjectFactory
    public void activateObject(SocketAddress address, TcpTransport transport) throws Exception {
       super.activateObject(address, transport);
       if (log.isTraceEnabled()) {
-         log.tracef("Fetching from pool: %s", transport);
+         try {
+            throw new Exception("Stacktrace");
+         } catch (Exception e) {
+            log.tracef(e, "Fetching from pool: %s", transport);
+         }
       }
    }
 
@@ -93,7 +101,11 @@ public class TransportObjectFactory
    public void passivateObject(SocketAddress address, TcpTransport transport) throws Exception {
       super.passivateObject(address, transport);
       if (log.isTraceEnabled()) {
-         log.tracef("Returning to pool: %s", transport);
+         try {
+            throw new Exception("Stacktrace");
+         } catch (Exception e) {
+            log.tracef(e, "Returning to pool: %s", transport);
+         }
       }
    }
 }
