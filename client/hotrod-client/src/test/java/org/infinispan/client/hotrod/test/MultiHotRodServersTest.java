@@ -64,13 +64,10 @@ public abstract class MultiHotRodServersTest extends MultipleCacheManagersTest {
    @Override
    protected void destroy() {
       // Correct order is to stop servers first
-      try {
-         for (HotRodServer server : servers)
-            HotRodClientTestingUtil.killServers(server);
-      } finally {
-         // And then the caches and cache managers
-         super.destroy();
-      }
+      HotRodClientTestingUtil.killServers(servers.toArray(new HotRodServer[servers.size()]));
+      HotRodClientTestingUtil.killRemoteCacheManagers(clients.toArray(new RemoteCacheManager[clients.size()]));
+      // And then the caches and cache managers
+      super.destroy();
    }
 
    private HotRodServer addHotRodServer(ConfigurationBuilder builder) {
