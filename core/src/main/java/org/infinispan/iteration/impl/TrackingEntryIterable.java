@@ -6,7 +6,6 @@ import org.infinispan.filter.Converter;
 import org.infinispan.filter.KeyValueFilter;
 import org.infinispan.util.concurrent.ConcurrentHashSet;
 
-import java.io.IOException;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
@@ -41,7 +40,7 @@ public class TrackingEntryIterable<K, V, C> implements CloseableIterable<Map.Ent
    }
 
    @Override
-   public void close() throws IOException {
+   public void close() throws Exception {
       closed.set(true);
       for (CloseableIterator<Map.Entry<K, C>> iterator : iterators) {
          iterator.close();
@@ -60,7 +59,7 @@ public class TrackingEntryIterable<K, V, C> implements CloseableIterable<Map.Ent
          // Rely on fact that multiple closes don't have adverse effects
          try {
             iterator.close();
-         } catch (IOException e) {
+         } catch (Exception e) {
             // This exception should never be thrown
          }
          throw new IllegalStateException("Iterable has been closed - cannot be reused");
