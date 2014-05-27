@@ -6,6 +6,7 @@ import org.infinispan.client.hotrod.test.RemoteCacheManagerCallable;
 import org.infinispan.client.hotrod.test.SingleHotRodServerTest;
 import org.testng.annotations.Test;
 
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
@@ -20,8 +21,6 @@ import static org.testng.AssertJUnit.assertTrue;
  */
 @Test(groups = "functional", testName = "client.hotrod.event.ClientEventsTest")
 public class ClientEventsTest extends SingleHotRodServerTest {
-
-   // TODO: test custom types
 
    public void testCreatedEvent() {
       final EventLogListener eventListener = new EventLogListener();
@@ -229,6 +228,24 @@ public class ClientEventsTest extends SingleHotRodServerTest {
       assertEquals(0, listeners.size());
    }
 
+   public void testCustomTypeEvents() {
+      final EventLogListener eventListener = new EventLogListener();
+      withClientListener(eventListener, new RemoteCacheManagerCallable(remoteCacheManager) {
+         @Override
+         public void call() {
+            RemoteCache<CustomKey, String> cache = rcm.getCache();
+            expectNoEvents(eventListener);
+            CustomKey key = new CustomKey(1);
+            cache.put(key, "one");
+            expectOnlyCreatedEvent(key, eventListener, cache());
+            cache.replace(key, "newone");
+            expectOnlyModifiedEvent(key, eventListener, cache());
+            cache.remove(key);
+            expectOnlyRemovedEvent(key, eventListener, cache());
+         }
+      });
+   }
+
    <K> void expectUnorderedRemovedEvents(EventLogListener eventListener, K... keys) {
       List<K> assertedKeys = new ArrayList<K>();
       for (int i = 0; i < keys.length; i++) {
@@ -248,6 +265,27 @@ public class ClientEventsTest extends SingleHotRodServerTest {
          return true;
       }
       return false;
+   }
+
+   static final class CustomKey implements Serializable {
+      final int id;
+      CustomKey(int id) {
+         this.id = id;
+      }
+
+      @Override
+      public boolean equals(Object o) {
+         if (this == o) return true;
+         if (o == null || getClass() != o.getClass()) return false;
+         CustomKey customKey = (CustomKey) o;
+         if (id != customKey.id) return false;
+         return true;
+      }
+
+      @Override
+      public int hashCode() {
+         return id;
+      }
    }
 
 }

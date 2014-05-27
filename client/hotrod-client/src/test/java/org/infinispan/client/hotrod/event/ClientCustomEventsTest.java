@@ -60,29 +60,6 @@ public class ClientCustomEventsTest extends SingleHotRodServerTest {
       });
    }
 
-//   @ClientListener(converterFactoryName = "test-converter-factory")
-//   static class CustomEventListener {
-//      BlockingQueue<CustomEvent> customEvents = new ArrayBlockingQueue<CustomEvent>(128);
-//
-//      CustomEvent pollEvent() {
-//         try {
-//            CustomEvent event = customEvents.poll(10, TimeUnit.SECONDS);
-//            assertNotNull(event);
-//            return event;
-//         } catch (InterruptedException e) {
-//            throw new AssertionError(e);
-//         }
-//      }
-//
-//      @ClientCacheEntryCreated
-//      @ClientCacheEntryModified
-//      @ClientCacheEntryRemoved
-//      @SuppressWarnings("unused")
-//      public void handleCustomEvent(ClientCacheEntryCustomEvent<CustomEvent> e) {
-//         customEvents.add(e.getEventData());
-//      }
-//   }
-
    static class TestConverterFactory implements ConverterFactory {
       boolean dynamic;
       @Override
