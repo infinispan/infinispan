@@ -35,6 +35,7 @@ public class KrbLdapAuthenticationIT extends AbstractAuthentication {
    
    @BeforeClass
    public static void ldapSetup() throws Exception {
+      System.setProperty("java.security.krb5.conf", KrbLdapAuthenticationIT.class.getResource("/krb5.conf").getPath());
       krbLdapServer = new ApacheDsKrbLdap("localhost");
       krbLdapServer.start();
    }
