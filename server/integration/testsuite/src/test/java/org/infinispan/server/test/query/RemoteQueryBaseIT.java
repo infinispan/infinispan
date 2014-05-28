@@ -1,5 +1,13 @@
 package org.infinispan.server.test.query;
 
+import static org.infinispan.server.test.util.ITestUtils.SERVER1_MGMT_PORT;
+import static org.infinispan.server.test.util.ITestUtils.invokeOperation;
+
+import java.io.IOException;
+import java.io.InputStream;
+
+import javax.management.ObjectName;
+
 import org.infinispan.arquillian.core.RemoteInfinispanServer;
 import org.infinispan.arquillian.utils.MBeanServerConnectionProvider;
 import org.infinispan.client.hotrod.RemoteCache;
@@ -12,12 +20,6 @@ import org.infinispan.protostream.sampledomain.marshallers.MarshallerRegistratio
 import org.infinispan.server.test.util.RemoteCacheManagerFactory;
 import org.junit.After;
 import org.junit.Before;
-
-import javax.management.ObjectName;
-import java.io.IOException;
-import java.io.InputStream;
-
-import static org.infinispan.server.test.util.ITestUtils.invokeOperation;
 
 /**
  * Base class for tests for remote queries over HotRod.
@@ -44,7 +46,7 @@ public abstract class RemoteQueryBaseIT {
 
    @Before
    public void setUp() throws Exception {
-      jmxConnectionProvider = new MBeanServerConnectionProvider(getServer().getHotrodEndpoint().getInetAddress().getHostName(), 9999);
+      jmxConnectionProvider = new MBeanServerConnectionProvider(getServer().getHotrodEndpoint().getInetAddress().getHostName(), SERVER1_MGMT_PORT);
       rcmFactory = new RemoteCacheManagerFactory();
       ConfigurationBuilder clientBuilder = new ConfigurationBuilder();
       clientBuilder.addServer()

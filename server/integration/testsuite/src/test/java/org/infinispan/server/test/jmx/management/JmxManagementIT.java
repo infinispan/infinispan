@@ -1,5 +1,14 @@
 package org.infinispan.server.test.jmx.management;
 
+import static org.infinispan.server.test.util.ITestUtils.SERVER1_MGMT_PORT;
+import static org.infinispan.server.test.util.ITestUtils.SERVER2_MGMT_PORT;
+import static org.infinispan.server.test.util.ITestUtils.getAttribute;
+import static org.infinispan.server.test.util.ITestUtils.invokeOperation;
+import static org.infinispan.server.test.util.ITestUtils.sleepForSecs;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotEquals;
+import static org.junit.Assert.assertTrue;
+
 import java.io.IOException;
 import java.util.List;
 
@@ -22,13 +31,6 @@ import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
-import static org.infinispan.server.test.util.ITestUtils.getAttribute;
-import static org.infinispan.server.test.util.ITestUtils.invokeOperation;
-import static org.infinispan.server.test.util.ITestUtils.sleepForSecs;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotEquals;
-import static org.junit.Assert.assertTrue;
-
 /**
  * Test that JMX statistics/operations are available for an Infinispan server instance.
  * <p/>
@@ -43,8 +45,6 @@ import static org.junit.Assert.assertTrue;
 @WithRunningServer({@RunningServer(name = "jmx-management-1"),@RunningServer(name = "jmx-management-2")})
 public class JmxManagementIT {
 
-    final int managementPort = 9999;
-    final int managementPort2 = 10099;
     /* cache MBeans */
     final String distCachePrefix = "jboss.infinispan:type=Cache,name=\"default(dist_sync)\",manager=\"clustered\",component=";
     final String memcachedCachePrefix = "jboss.infinispan:type=Cache,name=\"memcachedCache(dist_sync)\",manager=\"clustered\",component=";
@@ -79,8 +79,8 @@ public class JmxManagementIT {
 
     @Before
     public void setUp() throws IOException {
-        provider = new MBeanServerConnectionProvider(server1.getHotrodEndpoint().getInetAddress().getHostName(), managementPort);
-        provider2 = new MBeanServerConnectionProvider(server2.getHotrodEndpoint().getInetAddress().getHostName(), managementPort2);
+        provider = new MBeanServerConnectionProvider(server1.getHotrodEndpoint().getInetAddress().getHostName(), SERVER1_MGMT_PORT);
+        provider2 = new MBeanServerConnectionProvider(server2.getHotrodEndpoint().getInetAddress().getHostName(), SERVER2_MGMT_PORT);
         if (manager == null) {
             Configuration conf = new ConfigurationBuilder().addServer().host(server1.getHotrodEndpoint().getInetAddress().getHostName()).port(server1
                     .getHotrodEndpoint().getPort()).build();

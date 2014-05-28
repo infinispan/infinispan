@@ -53,9 +53,6 @@ public abstract class AbstractStateTransferSuppressIT {
     /* server module MBeans */
     private final String LOCAL_TOPOLOGY_MANAGER = "jboss.infinispan:type=CacheManager,name=\"" + getCacheManagerName() + "\",component=LocalTopologyManager";
 
-    /* JMX management port */
-    final int managementPort = 9999;
-
     @InfinispanResource
     RemoteInfinispanServers serverManager;
 
