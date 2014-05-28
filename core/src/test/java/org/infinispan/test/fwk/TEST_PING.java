@@ -4,21 +4,16 @@ import org.jgroups.Address;
 import org.jgroups.Event;
 import org.jgroups.PhysicalAddress;
 import org.jgroups.View;
-import org.jgroups.ViewId;
 import org.jgroups.annotations.Property;
 import org.jgroups.conf.ClassConfigurator;
 import org.jgroups.protocols.DISCARD;
 import org.jgroups.protocols.Discovery;
 import org.jgroups.protocols.PingData;
-import org.jgroups.protocols.pbcast.JoinRsp;
 import org.jgroups.stack.Protocol;
-import org.jgroups.util.Promise;
+import org.jgroups.util.Responses;
 import org.jgroups.util.Tuple;
 import org.jgroups.util.UUID;
 
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
@@ -57,9 +52,7 @@ public class TEST_PING extends Discovery {
    }
 
    @Override
-   protected List<PingData> findMembers(Promise<JoinRsp> promise,
-         int numExpectedRsps, boolean breakOnCoord, ViewId viewId) {
-
+   protected void findMembers(List<Address> addresses, boolean b, Responses pingDatas) {
       if (!stopped) {
          Map<Address, TEST_PING> discoveries = registerInDiscoveries();
 
@@ -68,7 +61,6 @@ public class TEST_PING extends Discovery {
          boolean discardEnabled = isDiscardEnabled(this);
          if (!discardEnabled) {
             if (!discoveries.isEmpty()) {
-               LinkedList<PingData> rsps = new LinkedList<PingData>();
                // Make sure that concurrent startups within a test won't mess up discovery
                synchronized (discoveries) {
                   for (TEST_PING discovery : discoveries.values()) {
@@ -78,7 +70,7 @@ public class TEST_PING extends Discovery {
                      if (discovery != this) {
                         boolean remoteDiscardEnabled = isDiscardEnabled(discovery);
                         if (!remoteDiscardEnabled && !discovery.stopped) {
-                           addPingRsp(rsps, discovery);
+                           addPingRsp(pingDatas, discovery);
                         } else if (discovery.stopped) {
                            log.debug(String.format(
                                  "%s is stopped, so no ping responses will be received",
@@ -87,7 +79,7 @@ public class TEST_PING extends Discovery {
                            if (traceEnabled)
                               log.trace("Skipping sending response cos DISCARD is on");
                            // If discard is, add an empty response
-                           addPingRsp(new LinkedList<PingData>(), discovery);
+                           addPingRsp(null, discovery);
                         }
                      } else {
                         if (traceEnabled)
@@ -95,18 +87,14 @@ public class TEST_PING extends Discovery {
                      }
                   }
                }
-               return rsps;
             } else {
                log.debug("No other nodes yet, so skip sending get-members request");
-               return new LinkedList<PingData>();
             }
          } else {
             log.debug("Not sending discovery because DISCARD is on");
-            return new LinkedList<PingData>();
          }
       } else {
          log.debug("Discovery protocol already stopped, so don't look for members");
-         return new LinkedList<PingData>();
       }
    }
 
@@ -123,7 +111,7 @@ public class TEST_PING extends Discovery {
       return discovery.discard != null && discovery.discard.isDiscardAll();
    }
 
-   private void addPingRsp(LinkedList<PingData> rsps, TEST_PING discovery) {
+   private void addPingRsp(Responses rsps, TEST_PING discovery) {
       // Rather than relying on transport (PING) or your own multicast channel
       // (MPING), talk to other discovery instances directly via Java method
       // calls and discover the other nodes in the cluster.
@@ -135,16 +123,16 @@ public class TEST_PING extends Discovery {
       mapAddrWithPhysicalAddr(discovery, this);
 
       Address localAddr = discovery.getLocalAddr();
-      List<PhysicalAddress> physicalAddrs = Arrays.asList((PhysicalAddress)
-            discovery.down(new Event(Event.GET_PHYSICAL_ADDRESS, localAddr)));
+      PhysicalAddress physicalAddr = (PhysicalAddress) discovery.down(new Event(Event.GET_PHYSICAL_ADDRESS, localAddr));
       String logicalName = UUID.get(localAddr);
-      PingData pingRsp = new PingData(localAddr, discovery.getJGroupsView(),
-         discovery.isServer(), logicalName, physicalAddrs);
+      PingData pingRsp = new PingData(localAddr, discovery.isServer(), logicalName, physicalAddr).coord(discovery.is_coord);
 
       if (log.isTraceEnabled())
          log.trace(String.format("Returning ping rsp: %s", pingRsp));
 
-      rsps.add(pingRsp);
+      if (rsps != null) {
+         rsps.addResponse(pingRsp, true);
+      }
    }
 
    private void mapAddrWithPhysicalAddr(TEST_PING local, TEST_PING remote) {
@@ -159,11 +147,11 @@ public class TEST_PING extends Discovery {
    }
 
    private Map<Address, TEST_PING> registerInDiscoveries() {
-      DiscoveryKey key = new DiscoveryKey(testName, group_addr);
+      DiscoveryKey key = new DiscoveryKey(testName, cluster_name);
       ConcurrentMap<Address, TEST_PING> discoveries = all.get(key);
       if (discoveries == null) {
          discoveries = new ConcurrentHashMap<Address, TEST_PING>();
-         ConcurrentMap ret = all.putIfAbsent(key, discoveries);
+         ConcurrentMap<Address, TEST_PING> ret = all.putIfAbsent(key, discoveries);
          if (ret != null)
             discoveries = ret;
       }
@@ -183,7 +171,7 @@ public class TEST_PING extends Discovery {
    public void stop() {
       log.debug(String.format("Stop discovery for %s", local_addr));
       super.stop();
-      DiscoveryKey key = new DiscoveryKey(testName, group_addr);
+      DiscoveryKey key = new DiscoveryKey(testName, cluster_name);
       Map<Address, TEST_PING> discoveries = all.get(key);
       if (discoveries != null) {
          removeDiscovery(key, discoveries);
@@ -216,18 +204,6 @@ public class TEST_PING extends Discovery {
 
    protected boolean isServer() {
       return is_server;
-   }
-
-   @Override
-   public Collection<PhysicalAddress> fetchClusterMembers(String cluster_name) {
-      // findMembers overriden, so no callback to this method
-      return null;
-   }
-
-   @Override
-   public boolean sendDiscoveryRequestsInParallel() {
-      // findMembers overriden, so no callback to this method
-      return false;
    }
 
    @Override
