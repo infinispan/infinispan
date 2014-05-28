@@ -1,12 +1,14 @@
 package org.infinispan.server.test.jmx.suppress.statetransfer;
 
+import static org.infinispan.server.test.util.ITestUtils.SERVER1_MGMT_PORT;
+import static org.infinispan.server.test.util.ITestUtils.SERVER2_MGMT_PORT;
+import static org.junit.Assert.assertEquals;
+
 import org.apache.log4j.Logger;
 import org.infinispan.arquillian.utils.MBeanServerConnectionProvider;
 import org.infinispan.server.test.client.memcached.MemcachedClient;
 import org.jboss.arquillian.junit.Arquillian;
 import org.junit.runner.RunWith;
-
-import static org.junit.Assert.assertEquals;
 
 /**
  * Verifies the state transfer suppress functionality for Memcached Server.
@@ -27,8 +29,8 @@ public class StateTransferSuppressForMemcacheIT extends AbstractStateTransferSup
             mc = new MemcachedClient("UTF-8", server(0).getMemcachedEndpoint().getInetAddress()
                     .getHostName(), server(0).getMemcachedEndpoint().getPort(), server(0).getMemcachedEndpoint().getPort());
 
-            providers.add(new MBeanServerConnectionProvider(server(0).getMemcachedEndpoint().getInetAddress().getHostName(), managementPort));
-            providers.add(new MBeanServerConnectionProvider(server(1).getMemcachedEndpoint().getInetAddress().getHostName(), managementPort + 100));
+            providers.add(new MBeanServerConnectionProvider(server(0).getMemcachedEndpoint().getInetAddress().getHostName(), SERVER1_MGMT_PORT));
+            providers.add(new MBeanServerConnectionProvider(server(1).getMemcachedEndpoint().getInetAddress().getHostName(), SERVER2_MGMT_PORT));
         } catch (Exception ex) {
             log.warn("prepare() method throws exception", ex);
         }
@@ -69,6 +71,6 @@ public class StateTransferSuppressForMemcacheIT extends AbstractStateTransferSup
 
     @Override
     protected void createNewProvider(int idx) {
-        providers.add(new MBeanServerConnectionProvider(server(idx).getMemcachedEndpoint().getInetAddress().getHostName(), managementPort + idx * 100));
+        providers.add(new MBeanServerConnectionProvider(server(idx).getMemcachedEndpoint().getInetAddress().getHostName(), SERVER1_MGMT_PORT + idx * 100));
     }
 }

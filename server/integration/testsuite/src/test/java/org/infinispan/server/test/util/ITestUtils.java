@@ -32,6 +32,11 @@ public class ITestUtils {
     public static final String SERVER_CONFIG_DIR = System.getProperty("server1.dist") + File.separator + "standalone"
             + File.separator + "configuration";
     private static final String SERVER_CONFIG_PROPERTY = "serverConfig";
+    
+    public static final int SERVER1_MGMT_PORT = 9990;
+    public static final int SERVER2_MGMT_PORT = 10090;
+    public static final int SERVER3_MGMT_PORT = 10190;
+    public static final int SERVER4_MGMT_PORT = 10290;
 
     /**
      * Create {@link RemoteCacheManager} for given server.

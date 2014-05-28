@@ -1,5 +1,7 @@
 package org.infinispan.server.test.transport;
 
+import static org.infinispan.server.test.util.ITestUtils.SERVER1_MGMT_PORT;
+
 import java.util.Scanner;
 
 import javax.management.ObjectName;
@@ -30,8 +32,6 @@ public class TransportStackConfigurationIT {
     private final String CONTAINER1 = "transport-stack-1";
     private final String CONTAINER2 = "transport-stack-2";
 
-    private final int managementPort = 9999;
-
     @InfinispanResource(CONTAINER1)
     RemoteInfinispanServer server1;
 
@@ -53,7 +53,7 @@ public class TransportStackConfigurationIT {
             startContainerWithStack(CONTAINER1, "node0", 0,   "udp");
             startContainerWithStack(CONTAINER2, "node1", 100, "udp");
 
-            provider = new MBeanServerConnectionProvider(server1.getHotrodEndpoint().getInetAddress().getHostName(), managementPort);
+            provider = new MBeanServerConnectionProvider(server1.getHotrodEndpoint().getInetAddress().getHostName(), SERVER1_MGMT_PORT);
 
             assertMBeanAttributes(provider, udpProtocolMBean);
         } finally {
@@ -73,7 +73,7 @@ public class TransportStackConfigurationIT {
             startContainerWithStack(CONTAINER1, "node0", 0,   "tcp");
             startContainerWithStack(CONTAINER2, "node1", 100, "tcp");
 
-            provider = new MBeanServerConnectionProvider(server1.getHotrodEndpoint().getInetAddress().getHostName(), managementPort);
+            provider = new MBeanServerConnectionProvider(server1.getHotrodEndpoint().getInetAddress().getHostName(), SERVER1_MGMT_PORT);
 
 
             assertMBeanAttributes(provider, tcpProtocolMBean);
@@ -104,7 +104,7 @@ public class TransportStackConfigurationIT {
             startContainerWithStack(CONTAINER1, "node0", 0,   "tcp");
             startContainerWithStack(CONTAINER2, "node1", 100, "tcp");
 
-            provider = new MBeanServerConnectionProvider(server1.getHotrodEndpoint().getInetAddress().getHostName(), managementPort);
+            provider = new MBeanServerConnectionProvider(server1.getHotrodEndpoint().getInetAddress().getHostName(), SERVER1_MGMT_PORT);
             final String dumpServicesBean = "jboss.msc:type=container,name=jboss-as";
             final String dumpServicesOp = "dumpServicesToString";
             String services = provider.getConnection().invoke(new ObjectName(dumpServicesBean), dumpServicesOp, null, null).toString();

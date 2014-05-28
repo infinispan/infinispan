@@ -1,5 +1,8 @@
 package org.infinispan.server.test.cache.container;
 
+import static org.infinispan.server.test.util.ITestUtils.SERVER1_MGMT_PORT;
+import static org.junit.Assert.assertTrue;
+
 import java.util.Scanner;
 
 import javax.management.ObjectName;
@@ -18,8 +21,6 @@ import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
-import static org.junit.Assert.assertTrue;
-
 /**
  * - test start, default-cache, eviction-executor, listener-executor and replication-queue-executor attributes of cache-container element
  * - test the cache-container attribute of hotrod-connector, so that we can have different hotrod endpoints for different containers
@@ -34,8 +35,6 @@ public class CacheContainerIT {
     @InfinispanResource("cachecontainer")
     RemoteInfinispanServer server1;
 
-    final int managementPort = 9999;
-
     final String dumpServicesBean = "jboss.msc:type=container,name=jboss-as";
     final String dumpServicesOp = "dumpServicesToString";
 
@@ -46,7 +45,7 @@ public class CacheContainerIT {
     @Before
     public void setUp() {
         if (rcm1 == null) {
-            provider = new MBeanServerConnectionProvider(server1.getHotrodEndpoint().getInetAddress().getHostName(), managementPort);
+            provider = new MBeanServerConnectionProvider(server1.getHotrodEndpoint().getInetAddress().getHostName(), SERVER1_MGMT_PORT);
 
             Configuration conf = new ConfigurationBuilder().addServer().host(server1.getHotrodEndpoint().getInetAddress().getHostName()).port(server1
                     .getHotrodEndpoint().getPort()).build();
