@@ -45,6 +45,9 @@
       <module>server/websocket</module>
       <module>server/rest</module>
       <module>client/hotrod-client</module>
+      <module>all/embedded</module>
+      <module>all/embedded-query</module>
+      <module>all/remote</module>
       <module>rhq-plugin</module>
       <module>spring</module>
       <module>cli/cli-server</module>
@@ -71,6 +74,10 @@
       <module>integrationtests/security-it</module>
       <module>integrationtests/security-manager-it</module>
       <module>integrationtests/osgi</module>
+      <module>integrationtests/all-embedded-it</module>
+      <module>integrationtests/all-embedded-query-it</module>
+      <module>integrationtests/all-remote-it</module>
+      
    </modules>
 
    <profiles>
