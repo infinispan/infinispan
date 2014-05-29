@@ -206,6 +206,22 @@
             <artifactId>infinispan-jcache</artifactId>
             <version>${project.version}</version>
          </dependency>
+         <!-- Infinispan aggregate jars -->
+         <dependency>
+            <groupId>${project.groupId}</groupId>
+            <artifactId>infinispan-embedded</artifactId>
+            <version>${project.version}</version>
+         </dependency>
+         <dependency>
+            <groupId>${project.groupId}</groupId>
+            <artifactId>infinispan-embedded-query</artifactId>
+            <version>${project.version}</version>
+         </dependency>
+         <dependency>
+            <groupId>${project.groupId}</groupId>
+            <artifactId>infinispan-remote</artifactId>
+            <version>${project.version}</version>
+         </dependency>
          <!-- Infinispan core modules dependencies -->
          <dependency>
             <groupId>gnu-getopt</groupId>

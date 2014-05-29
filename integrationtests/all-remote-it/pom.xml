@@ -1,0 +1,29 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<project xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd" xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+   <modelVersion>4.0.0</modelVersion>
+
+   <parent>
+      <groupId>org.infinispan</groupId>
+      <artifactId>infinispan-bom</artifactId>
+      <version>7.0.0-SNAPSHOT</version>
+      <relativePath>../../bom/pom.xml</relativePath>
+   </parent>
+
+   <artifactId>infinispan-remote-it</artifactId>
+   <name>Infinispan Remote Client Integration Tests</name>
+   <description>Infinispan Remote Client All-in-One module Integration Tests</description>
+
+   <dependencies>
+      <dependency>
+         <groupId>org.infinispan</groupId>
+         <artifactId>infinispan-remote</artifactId>
+      </dependency>
+      <dependency>
+        <groupId>org.testng</groupId>
+        <artifactId>testng</artifactId>
+        <version>6.8</version>
+        <scope>test</scope>
+      </dependency>
+   </dependencies>
+</project>
+
