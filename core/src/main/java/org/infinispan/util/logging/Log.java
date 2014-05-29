@@ -792,14 +792,6 @@ public interface Log extends BasicLogger {
    @Message(value = "Failed to request segments %s of cache %s from node %s (node will not be retried)", id=210)
    void failedToRequestSegments(Collection<Integer> segments, String cacheName, Address source, @Cause Throwable e);
 
-   @LogMessage(level = WARN)
-   @Message(value = "Transactions were requested by node %s with topology %d, older than the local topology (%d)", id=211)
-   void transactionsRequestedByNodeWithOlderTopology(Address node, int requestTopologyId, int localTopologyId);
-
-   @LogMessage(level = WARN)
-   @Message(value = "Segments were requested by node %s with topology %d, older than the local topology (%d)", id=212)
-   void segmentsRequestedByNodeWithOlderTopology(Address node, int requestTopologyId, int localTopologyId);
-
    @LogMessage(level = ERROR)
    @Message(value = "Unable to load %s from any of the following classloaders: %s", id=213)
    void unableToLoadClass(String classname, String classloaders, @Cause Throwable cause);

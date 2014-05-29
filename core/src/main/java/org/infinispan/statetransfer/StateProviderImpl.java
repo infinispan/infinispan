@@ -200,9 +200,11 @@ public class StateProviderImpl implements StateProvider {
       int currentTopologyId = cacheTopology != null ? cacheTopology.getTopologyId() : -1;
       if (requestTopologyId < currentTopologyId) {
          if (isReqForTransactions)
-            log.transactionsRequestedByNodeWithOlderTopology(destination, requestTopologyId, currentTopologyId);
+            log.debugf("Transactions were requested by node %s with topology %d, older than the local topology (%d)",
+                  destination, requestTopologyId, currentTopologyId);
          else
-            log.segmentsRequestedByNodeWithOlderTopology(destination, requestTopologyId, currentTopologyId);
+            log.debugf("Segments were requested by node %s with topology %d, older than the local topology (%d)",
+                  destination, requestTopologyId, currentTopologyId);
       } else if (requestTopologyId > currentTopologyId) {
          if (trace) {
             log.tracef("%s were requested by node %s with topology %d, greater than the local " +
@@ -281,7 +283,7 @@ public class StateProviderImpl implements StateProvider {
       final CacheTopology cacheTopology = getCacheTopology(requestTopologyId, destination, false);
 
       // the destination node must already have an InboundTransferTask waiting for these segments
-      OutboundTransferTask outboundTransfer = new OutboundTransferTask(destination, segments, chunkSize, cacheTopology.getTopologyId(),
+      OutboundTransferTask outboundTransfer = new OutboundTransferTask(destination, segments, chunkSize, requestTopologyId,
             cacheTopology.getReadConsistentHash(), this, dataContainer, persistenceManager, rpcManager, commandsFactory, entryFactory, timeout, cacheName);
       addTransfer(outboundTransfer);
       outboundTransfer.execute(executorService);
