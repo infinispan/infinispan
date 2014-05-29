@@ -93,13 +93,24 @@ public class StateResponseOrderingTest extends MultipleCacheManagersTest {
       cache(3).put("k3", "v3");
 
       final StateTransferManager stm0 = advancedCache(0).getComponentRegistry().getStateTransferManager();
-      int initialTopologyId = stm0.getCacheTopology().getTopologyId();
+      final int initialTopologyId = stm0.getCacheTopology().getTopologyId();
 
       assertEquals(Arrays.asList(address(1), address(2), address(3)), stm0.getCacheTopology().getCurrentCH().locateOwners("k1"));
       assertNull(stm0.getCacheTopology().getPendingCH());
 
       // Block when cache 0 sends the first state request to cache 1
-      advanceOnOutboundRpc(sequencer, cache(0), matchCommand(StateRequestCommand.class).matchCount(0).build())
+      CommandMatcher segmentRequestMatcher = new CommandMatcher() {
+         @Override
+         public boolean accept(ReplicableCommand command) {
+            if (!(command instanceof StateRequestCommand))
+               return false;
+            StateRequestCommand stateRequestCommand = (StateRequestCommand) command;
+            if (stateRequestCommand.getType() != StateRequestCommand.Type.START_STATE_TRANSFER)
+               return false;
+            return stateRequestCommand.getTopologyId() == initialTopologyId + 1;
+         }
+      };
+      advanceOnOutboundRpc(sequencer, cache(0), segmentRequestMatcher)
             .before("st:block_state_request", "st:resume_state_request");
 
       // Cache 0 will become an owner and will request state from cache 1
@@ -111,13 +122,15 @@ public class StateResponseOrderingTest extends MultipleCacheManagersTest {
       assertNotNull(stm0.getCacheTopology().getPendingCH());
       assertEquals(Arrays.asList(address(0), address(1), address(2)), stm0.getCacheTopology().getPendingCH().locateOwners("k1"));
 
-      // Cache 0 didn't manage to send any StateRequestCommand yet.
+      // Cache 0 didn't manage to request any segments yet, but it has registered all the inbound transfer tasks.
       // We'll pretend it got a StateResponseCommand with an older topology id.
       InboundInvocationHandler iih = TestingUtil.extractGlobalComponent(manager(0), InboundInvocationHandler.class);
-      StateChunk stateChunk = new StateChunk(0, Arrays.<InternalCacheEntry>asList(new ImmortalCacheEntry("k0", "v0")), true);
+      StateChunk stateChunk0 = new StateChunk(0, Arrays.<InternalCacheEntry>asList(new ImmortalCacheEntry("k0", "v0")), true);
+      StateChunk stateChunk1 = new StateChunk(1, Arrays.<InternalCacheEntry>asList(new ImmortalCacheEntry("k0", "v0")), true);
       StateResponseCommand stateResponseCommand = new StateResponseCommand(CacheContainer.DEFAULT_CACHE_NAME,
-            address(1), initialTopologyId, Arrays.asList(stateChunk));
-      iih.handle(stateResponseCommand, address(3), null, false);
+            address(1), initialTopologyId, Arrays.asList(stateChunk0, stateChunk1));
+      // Call with preserveOrder = true to force the execution in the same thread
+      iih.handle(stateResponseCommand, address(3), null, true);
 
       sequencer.exit("st:simulate_old_response");
 
