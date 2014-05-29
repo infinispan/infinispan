@@ -58,6 +58,7 @@ public class GenericTransactionManagerLookup implements TransactionManagerLookup
                {"java:pm/TransactionManager", "Borland, Sun"},
                {"javax.transaction.TransactionManager", "BEA WebLogic"},
                {"java:comp/UserTransaction", "Resin, Orion, JOnAS (JOTM)"},
+               {"osgi:service/javax.transaction.TransactionManager", "Karaf"},
          };
 
    /**
