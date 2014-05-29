@@ -1,16 +1,14 @@
 package org.infinispan.cache.impl;
 
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
-import static org.infinispan.context.Flag.FAIL_SILENTLY;
-import static org.infinispan.context.Flag.FORCE_ASYNCHRONOUS;
-import static org.infinispan.context.Flag.PUT_FOR_EXTERNAL_READ;
-import static org.infinispan.context.Flag.ZERO_LOCK_ACQUISITION_TIMEOUT;
+import static org.infinispan.context.Flag.*;
 import static org.infinispan.context.InvocationContextFactory.UNBOUNDED;
 import static org.infinispan.factories.KnownComponentNames.ASYNC_TRANSPORT_EXECUTOR;
 import static org.infinispan.factories.KnownComponentNames.CACHE_MARSHALLER;
 
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.EnumSet;
 import java.util.List;
 import java.util.Map;
@@ -40,6 +38,7 @@ import org.infinispan.commands.read.GetKeyValueCommand;
 import org.infinispan.commands.read.KeySetCommand;
 import org.infinispan.commands.read.SizeCommand;
 import org.infinispan.commands.read.ValuesCommand;
+import org.infinispan.commands.remote.GetKeysInGroupCommand;
 import org.infinispan.commands.write.ApplyDeltaCommand;
 import org.infinispan.commands.write.ClearCommand;
 import org.infinispan.commands.write.EvictCommand;
@@ -412,6 +411,73 @@ public class CacheImpl<K, V> implements AdvancedCache<K, V> {
    }
 
    @Override
+   public Map<K, V> getGroup(String groupName) {
+      return getGroup(groupName, null, null);
+   }
+
+   protected final Map<K, V> getGroup(String groupName, EnumSet<Flag> explicitFlags, ClassLoader explicitClassLoader) {
+      InvocationContext ctx = getInvocationContextForRead(explicitClassLoader, UNBOUNDED);
+      return Collections.unmodifiableMap(internalGetGroup(groupName, explicitFlags, explicitClassLoader, ctx));
+   }
+
+   private Map<K, V> internalGetGroup(String groupName, EnumSet<Flag> explicitFlags, ClassLoader explicitClassLoader,
+                                      InvocationContext ctx) {
+      GetKeysInGroupCommand command = commandsFactory.buildGetKeysInGroupCommand(explicitFlags, groupName);
+      //noinspection unchecked
+      return (Map<K, V>) invoker.invoke(ctx, command);
+   }
+
+   @Override
+   public void removeGroup(String groupName) {
+      removeGroup(groupName, null, null);
+   }
+
+   protected final void removeGroup(String groupName, EnumSet<Flag> explicitFlags, ClassLoader explicitClassLoader) {
+      if (transactionManager == null) {
+         nonTransactionalRemoveGroup(groupName, explicitFlags, explicitClassLoader);
+      } else {
+         transactionalRemoveGroup(groupName, explicitFlags, explicitClassLoader);
+      }
+   }
+
+   private void transactionalRemoveGroup(String groupName, EnumSet<Flag> explicitFlags, ClassLoader explicitClassLoader) {
+      final boolean onGoingTransaction = getOngoingTransaction() != null;
+      if (!onGoingTransaction) {
+         tryBegin();
+      }
+      try {
+         InvocationContext context = getInvocationContextWithImplicitTransaction(false, explicitClassLoader, UNBOUNDED);
+         Map<K, V> keys = internalGetGroup(groupName, explicitFlags, explicitClassLoader, context);
+         EnumSet<Flag> removeFlags = explicitFlags == null ? EnumSet.noneOf(Flag.class) : EnumSet.copyOf(explicitFlags);
+         removeFlags.add(IGNORE_RETURN_VALUES);
+         for (K key : keys.keySet()) {
+            removeInternal(key, removeFlags, context);
+         }
+         if (!onGoingTransaction) {
+            tryCommit();
+         }
+      } catch (RuntimeException e) {
+         if (!onGoingTransaction) {
+            tryRollback();
+         }
+         throw e;
+      }
+   }
+
+   private void nonTransactionalRemoveGroup(String groupName, EnumSet<Flag> explicitFlags, ClassLoader explicitClassLoader) {
+      InvocationContext context = getInvocationContextForRead(explicitClassLoader, UNBOUNDED);
+      Map<K, V> keys = internalGetGroup(groupName, explicitFlags, explicitClassLoader, context);
+      EnumSet<Flag> removeFlags = explicitFlags == null ? EnumSet.noneOf(Flag.class) : EnumSet.copyOf(explicitFlags);
+      removeFlags.add(IGNORE_RETURN_VALUES);
+      for (K key : keys.keySet()) {
+         //a new context is needed for remove since in the non-owners, the command is sent to the primary owner to be
+         //executed. If the context is already populated, it throws a ClassCastException because the wrapForRemove is
+         //not invoked.
+         remove(key, removeFlags, explicitClassLoader);
+      }
+   }
+
+   @Override
    public final V remove(Object key) {
       return remove(key, null, null);
    }
@@ -508,9 +574,7 @@ public class CacheImpl<K, V> implements AdvancedCache<K, V> {
    final void putForExternalRead(K key, V value, EnumSet<Flag> explicitFlags, ClassLoader explicitClassLoader) {
       Transaction ongoingTransaction = null;
       try {
-         ongoingTransaction = getOngoingTransaction();
-         if (ongoingTransaction != null)
-            transactionManager.suspend();
+         ongoingTransaction = suspendOngoingTransactionIfExists();
 
          EnumSet<Flag> flags = EnumSet.of(FAIL_SILENTLY, FORCE_ASYNCHRONOUS, ZERO_LOCK_ACQUISITION_TIMEOUT, PUT_FOR_EXTERNAL_READ);
          if (explicitFlags != null && !explicitFlags.isEmpty()) {
@@ -523,12 +587,7 @@ public class CacheImpl<K, V> implements AdvancedCache<K, V> {
          if (log.isDebugEnabled()) log.debug("Caught exception while doing putForExternalRead()", e);
       }
       finally {
-         try {
-            if (ongoingTransaction != null) transactionManager.resume(ongoingTransaction);
-         } catch (Exception e) {
-            if (log.isDebugEnabled())
-               log.debug("Had problems trying to resume a transaction after putForExternalRead()", e);
-         }
+         resumePreviousOngoingTransaction(ongoingTransaction, true, "Had problems trying to resume a transaction after putForExternalRead()");
       }
    }
 
@@ -623,14 +682,8 @@ public class CacheImpl<K, V> implements AdvancedCache<K, V> {
       if (config.transaction().transactionMode().isTransactional() && !isPutForExternalRead) {
          Transaction transaction = getOngoingTransaction();
          if (transaction == null && config.transaction().autoCommit()) {
-            try {
-               transactionManager.begin();
-               transaction = transactionManager.getTransaction();
-               txInjected = true;
-               if (trace) log.trace("Implicit transaction started!");
-            } catch (Exception e) {
-               throw new CacheException("Could not start transaction", e);
-            }
+            transaction = tryBegin();
+            txInjected = true;
          }
          invocationContext = getInvocationContext(transaction, explicitClassLoader, txInjected);
       } else {
@@ -1433,14 +1486,7 @@ public class CacheImpl<K, V> implements AdvancedCache<K, V> {
       }
 
       if (txInjected) {
-         if (trace)
-            log.tracef("Committing transaction as it was implicit: %s", getOngoingTransaction());
-         try {
-            transactionManager.commit();
-         } catch (Throwable e) {
-            log.couldNotCompleteInjectedTransaction(e);
-            throw new CacheException("Could not commit implicit transaction", e);
-         }
+         tryCommit();
       }
 
       return result;
@@ -1450,11 +1496,43 @@ public class CacheImpl<K, V> implements AdvancedCache<K, V> {
       return ctx.isInTxScope() && ((TxInvocationContext) ctx).isImplicitTransaction();
    }
 
+   private Transaction tryBegin() {
+      if (transactionManager == null) {
+         return null;
+      }
+      try {
+         transactionManager.begin();
+         final Transaction transaction = getOngoingTransaction();
+         if (log.isTraceEnabled()) {
+            log.tracef("Implicit transaction started! Transaction: %s", transaction);
+         }
+         return transaction;
+      } catch (RuntimeException e) {
+         throw e;
+      } catch (Exception e) {
+         throw new CacheException("Unable to begin implicit transaction.", e);
+      }
+   }
+
    private void tryRollback() {
       try {
          if (transactionManager != null) transactionManager.rollback();
       } catch (Throwable t) {
          if (trace) log.trace("Could not rollback", t);//best effort
+      }
+   }
+
+   private void tryCommit() {
+      if (transactionManager == null) {
+         return;
+      }
+      if (trace)
+         log.tracef("Committing transaction as it was implicit: %s", getOngoingTransaction());
+      try {
+         transactionManager.commit();
+      } catch (Throwable e) {
+         log.couldNotCompleteInjectedTransaction(e);
+         throw new CacheException("Could not commit implicit transaction", e);
       }
    }
 
@@ -1500,6 +1578,34 @@ public class CacheImpl<K, V> implements AdvancedCache<K, V> {
          if (transaction == null)
             throw new IllegalStateException("Null transaction not possible!");
          transactionManager.resume(transaction);
+      }
+   }
+
+   private Transaction suspendOngoingTransactionIfExists() {
+      final Transaction tx = getOngoingTransaction();
+      if (tx != null) {
+         try {
+            transactionManager.suspend();
+         } catch (SystemException e) {
+            throw new CacheException("Unable to suspend transaction.", e);
+         }
+      }
+      return tx;
+   }
+
+   private void resumePreviousOngoingTransaction(Transaction transaction, boolean failSilently, String failMessage) {
+      if (transaction != null) {
+         try {
+            transactionManager.resume(transaction);
+         } catch (Exception e) {
+            if (failSilently) {
+               if (log.isDebugEnabled()) {
+                  log.debug(failMessage);
+               }
+            } else {
+               throw new CacheException(failMessage, e);
+            }
+         }
       }
    }
 

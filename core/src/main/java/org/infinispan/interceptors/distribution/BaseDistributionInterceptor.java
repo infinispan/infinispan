@@ -2,16 +2,19 @@ package org.infinispan.interceptors.distribution;
 
 import org.infinispan.commands.FlagAffectedCommand;
 import org.infinispan.commands.remote.ClusteredGetCommand;
+import org.infinispan.commands.remote.GetKeysInGroupCommand;
 import org.infinispan.commands.write.DataWriteCommand;
 import org.infinispan.commands.write.ValueMatcher;
 import org.infinispan.commands.write.WriteCommand;
 import org.infinispan.commons.CacheException;
+import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.container.entries.InternalCacheValue;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.context.impl.TxInvocationContext;
 import org.infinispan.distribution.DistributionManager;
 import org.infinispan.distribution.RemoteValueRetrievedListener;
+import org.infinispan.distribution.group.GroupManager;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.interceptors.ClusteringInterceptor;
 import org.infinispan.interceptors.locking.ClusteringDependentLogic;
@@ -56,6 +59,7 @@ public abstract class BaseDistributionInterceptor extends ClusteringInterceptor 
 
    protected ClusteringDependentLogic cdl;
    protected RemoteValueRetrievedListener rvrl;
+   private GroupManager groupManager;
 
    private static final Log log = LogFactory.getLog(BaseDistributionInterceptor.class);
    private static final boolean trace = log.isTraceEnabled();
@@ -67,10 +71,33 @@ public abstract class BaseDistributionInterceptor extends ClusteringInterceptor 
 
    @Inject
    public void injectDependencies(DistributionManager distributionManager, ClusteringDependentLogic cdl,
-                                  RemoteValueRetrievedListener rvrl) {
+                                  RemoteValueRetrievedListener rvrl, GroupManager groupManager) {
       this.dm = distributionManager;
       this.cdl = cdl;
       this.rvrl = rvrl;
+      this.groupManager = groupManager;
+   }
+
+   @Override
+   public final Object visitGetKeysInGroupCommand(InvocationContext ctx, GetKeysInGroupCommand command) throws Throwable {
+      final String groupName = command.getGroupName();
+      if (command.isGroupOwner()) {
+         //don't go remote if we are an owner.
+         return invokeNextInterceptor(ctx, command);
+      }
+      Map<Address, Response> responseMap = rpcManager.invokeRemotely(Collections.singleton(groupManager.getPrimaryOwner(groupName)), command,
+                                                                     rpcManager.getDefaultRpcOptions(true));
+      if (!responseMap.isEmpty()) {
+         Response response = responseMap.values().iterator().next();
+         if (response instanceof SuccessfulResponse) {
+            //noinspection unchecked
+            List<CacheEntry> cacheEntries = (List<CacheEntry>) ((SuccessfulResponse) response).getResponseValue();
+            for (CacheEntry entry : cacheEntries) {
+               entryFactory.wrapEntryForReading(ctx, entry.getKey(), entry);
+            }
+         }
+      }
+      return invokeNextInterceptor(ctx, command);
    }
 
    @Override

@@ -192,6 +192,16 @@ public class AbstractDelegatingAdvancedCache<K, V> extends AbstractDelegatingCac
    }
 
    @Override
+   public java.util.Map<K, V> getGroup(String groupName) {
+      return cache.getGroup(groupName);
+   }
+
+   @Override
+   public void removeGroup(String groupName) {
+      cache.removeGroup(groupName);
+   }
+
+   @Override
    public V put(K key, V value, Metadata metadata) {
       return cache.put(key, value, metadata);
    }

@@ -462,7 +462,7 @@ public final class SecureCacheImpl<K, V> implements SecureCache<K, V> {
    }
 
    @Override
-   public DataContainer getDataContainer() {
+   public DataContainer<K, V> getDataContainer() {
       authzManager.checkPermission(AuthorizationPermission.ADMIN);
       return delegate.getDataContainer();
    }
@@ -608,6 +608,18 @@ public final class SecureCacheImpl<K, V> implements SecureCache<K, V> {
    public EntryIterable<K, V> filterEntries(KeyValueFilter<? super K, ? super V> filter) {
       authzManager.checkPermission(AuthorizationPermission.BULK_READ);
       return delegate.filterEntries(filter);
+   }
+
+   @Override
+   public Map<K, V> getGroup(String groupName) {
+      authzManager.checkPermission(AuthorizationPermission.BULK_READ);
+      return delegate.getGroup(groupName);
+   }
+
+   @Override
+   public void removeGroup(String groupName) {
+      authzManager.checkPermission(AuthorizationPermission.BULK_WRITE);
+      delegate.removeGroup(groupName);
    }
 
    @Override

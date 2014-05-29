@@ -63,10 +63,10 @@ public class EntryFactoryImpl implements EntryFactory {
    }
 
    @Override
-   public final CacheEntry wrapEntryForReading(InvocationContext ctx, Object key) throws InterruptedException {
+   public final CacheEntry wrapEntryForReading(InvocationContext ctx, Object key, CacheEntry existing) {
       CacheEntry cacheEntry = getFromContext(ctx, key);
       if (cacheEntry == null) {
-         cacheEntry = getFromContainer(key, false);
+         cacheEntry = existing == null ? getFromContainer(key, false) : existing;
 
          // do not bother wrapping though if this is not in a tx.  repeatable read etc are all meaningless unless there is a tx.
          if (useRepeatableRead) {

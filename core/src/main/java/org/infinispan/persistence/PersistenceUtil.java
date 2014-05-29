@@ -103,19 +103,7 @@ public class PersistenceUtil {
                return null; //no changed in container
             }
 
-            InternalCacheEntry<K, V> newEntry;
-            InternalMetadata metadata = loaded.getMetadata();
-            if (metadata != null) {
-               Metadata actual = metadata instanceof InternalMetadataImpl ? ((InternalMetadataImpl) metadata).actual() :
-                     metadata;
-               //noinspection unchecked
-               newEntry = factory.create(loaded.getKey(), loaded.getValue(), actual, metadata.created(), metadata.lifespan(),
-                                         metadata.lastUsed(), metadata.maxIdle());
-            } else {
-               //metadata is null!
-               //noinspection unchecked
-               newEntry = factory.create(loaded.getKey(), loaded.getValue(), (Metadata) null);
-            }
+            InternalCacheEntry<K, V> newEntry = convert(loaded, factory);
 
             isLoaded.set(Boolean.TRUE); //loaded!
             return newEntry;
@@ -137,5 +125,20 @@ public class PersistenceUtil {
          return null;
       }
       return loaded;
+   }
+
+   public static <K, V> InternalCacheEntry<K, V> convert(MarshalledEntry loaded, InternalEntryFactory factory) {
+      InternalMetadata metadata = loaded.getMetadata();
+      if (metadata != null) {
+         Metadata actual = metadata instanceof InternalMetadataImpl ? ((InternalMetadataImpl) metadata).actual() :
+               metadata;
+         //noinspection unchecked
+         return factory.create(loaded.getKey(), loaded.getValue(), actual, metadata.created(), metadata.lifespan(),
+                               metadata.lastUsed(), metadata.maxIdle());
+      } else {
+         //metadata is null!
+         //noinspection unchecked
+         return factory.create(loaded.getKey(), loaded.getValue(), (Metadata) null);
+      }
    }
 }

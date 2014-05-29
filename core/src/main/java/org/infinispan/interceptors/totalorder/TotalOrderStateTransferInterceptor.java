@@ -2,11 +2,8 @@ package org.infinispan.interceptors.totalorder;
 
 import org.infinispan.commands.tx.PrepareCommand;
 import org.infinispan.context.impl.TxInvocationContext;
-import org.infinispan.factories.annotations.Inject;
-import org.infinispan.interceptors.base.CommandInterceptor;
+import org.infinispan.interceptors.base.BaseStateTransferInterceptor;
 import org.infinispan.remoting.RemoteException;
-import org.infinispan.statetransfer.StateTransferManager;
-import org.infinispan.topology.CacheTopology;
 import org.infinispan.transaction.impl.RemoteTransaction;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
@@ -17,15 +14,9 @@ import org.infinispan.util.logging.LogFactory;
  * @author Pedro Ruivo
  * @since 5.3
  */
-public class TotalOrderStateTransferInterceptor extends CommandInterceptor {
+public class TotalOrderStateTransferInterceptor extends BaseStateTransferInterceptor {
 
    private static final Log log = LogFactory.getLog(TotalOrderStateTransferInterceptor.class);
-   private StateTransferManager stateTransferManager;
-
-   @Inject
-   public void inject(StateTransferManager stateTransferManager) {
-      this.stateTransferManager = stateTransferManager;
-   }
 
    @Override
    public Object visitPrepareCommand(TxInvocationContext ctx, PrepareCommand command) throws Throwable {
@@ -35,9 +26,13 @@ public class TotalOrderStateTransferInterceptor extends CommandInterceptor {
       return remotePrepare(ctx, command);
    }
 
+   @Override
+   protected Log getLog() {
+      return log;
+   }
+
    private Object remotePrepare(TxInvocationContext ctx, PrepareCommand command) throws Throwable {
-      CacheTopology cacheTopology = stateTransferManager.getCacheTopology();
-      final int topologyId = cacheTopology.getTopologyId();
+      final int topologyId = currentTopologyId();
       ((RemoteTransaction) ctx.getCacheTransaction()).setLookedUpEntriesTopology(command.getTopologyId());
 
       if (log.isTraceEnabled()) {
@@ -63,9 +58,7 @@ public class TotalOrderStateTransferInterceptor extends CommandInterceptor {
       Object retVal = null;
       while (needsToPrepare) {
          try {
-            CacheTopology cacheTopology = stateTransferManager.getCacheTopology();
-
-            command.setTopologyId(cacheTopology.getTopologyId());
+            command.setTopologyId(currentTopologyId());
 
             if (log.isTraceEnabled()) {
                log.tracef("Local transaction received %s. setting topology Id to %s",
@@ -86,6 +79,8 @@ public class TotalOrderStateTransferInterceptor extends CommandInterceptor {
 
             if (!needsToPrepare) {
                throw throwable;
+            } else {
+               logRetry(command);
             }
          }
       }

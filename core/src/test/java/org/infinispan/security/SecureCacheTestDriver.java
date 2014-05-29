@@ -599,4 +599,14 @@ public class SecureCacheTestDriver {
    public static class NullListener {
 
    }
+
+   @TestCachePermission(AuthorizationPermission.BULK_READ)
+   public void testGetGroup_String(SecureCache<String, String> cache) {
+      cache.getGroup("someGroup");
+   }
+
+   @TestCachePermission(AuthorizationPermission.BULK_WRITE)
+   public void testRemoveGroup_String(SecureCache<String, String> cache) {
+      cache.removeGroup("someGroup");
+   }
 }

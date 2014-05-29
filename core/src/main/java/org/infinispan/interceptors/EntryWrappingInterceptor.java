@@ -5,6 +5,7 @@ import org.infinispan.commands.CommandsFactory;
 import org.infinispan.commands.DataCommand;
 import org.infinispan.commands.FlagAffectedCommand;
 import org.infinispan.commands.read.GetKeyValueCommand;
+import org.infinispan.commands.remote.GetKeysInGroupCommand;
 import org.infinispan.commands.tx.CommitCommand;
 import org.infinispan.commands.tx.PrepareCommand;
 import org.infinispan.commands.write.ApplyDeltaCommand;
@@ -18,6 +19,7 @@ import org.infinispan.commands.write.PutMapCommand;
 import org.infinispan.commands.write.RemoveCommand;
 import org.infinispan.commands.write.ReplaceCommand;
 import org.infinispan.commands.write.WriteCommand;
+import org.infinispan.commons.util.concurrent.ParallelIterableMap;
 import org.infinispan.container.DataContainer;
 import org.infinispan.container.EntryFactory;
 import org.infinispan.container.entries.CacheEntry;
@@ -26,8 +28,13 @@ import org.infinispan.context.Flag;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.context.SingleKeyNonTxInvocationContext;
 import org.infinispan.context.impl.TxInvocationContext;
+import org.infinispan.distribution.group.GroupFilter;
+import org.infinispan.distribution.group.GroupManager;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.annotations.Start;
+import org.infinispan.filter.CollectionKeyFilter;
+import org.infinispan.filter.CompositeKeyFilter;
+import org.infinispan.filter.KeyFilter;
 import org.infinispan.interceptors.base.CommandInterceptor;
 import org.infinispan.interceptors.locking.ClusteringDependentLogic;
 import org.infinispan.metadata.Metadata;
@@ -64,6 +71,7 @@ public class EntryWrappingInterceptor extends CommandInterceptor {
    private StateConsumer stateConsumer;       // optional
    private StateTransferLock stateTransferLock;
    private XSiteStateConsumer xSiteStateConsumer;
+   private GroupManager groupManager;
 
    private static final Log log = LogFactory.getLog(EntryWrappingInterceptor.class);
    private static final boolean trace = log.isTraceEnabled();
@@ -76,7 +84,7 @@ public class EntryWrappingInterceptor extends CommandInterceptor {
    @Inject
    public void init(EntryFactory entryFactory, DataContainer dataContainer, ClusteringDependentLogic cdl,
                     CommandsFactory commandFactory, StateConsumer stateConsumer, StateTransferLock stateTransferLock,
-                    XSiteStateConsumer xSiteStateConsumer) {
+                    XSiteStateConsumer xSiteStateConsumer, GroupManager groupManager) {
       this.entryFactory = entryFactory;
       this.dataContainer = dataContainer;
       this.cdl = cdl;
@@ -84,6 +92,7 @@ public class EntryWrappingInterceptor extends CommandInterceptor {
       this.stateConsumer = stateConsumer;
       this.stateTransferLock = stateTransferLock;
       this.xSiteStateConsumer = xSiteStateConsumer;
+      this.groupManager = groupManager;
    }
 
    @Start
@@ -116,7 +125,7 @@ public class EntryWrappingInterceptor extends CommandInterceptor {
    @Override
    public final Object visitGetKeyValueCommand(InvocationContext ctx, GetKeyValueCommand command) throws Throwable {
       try {
-         entryFactory.wrapEntryForReading(ctx, command.getKey());
+         entryFactory.wrapEntryForReading(ctx, command.getKey(), null);
          return invokeNextInterceptor(ctx, command);
       } finally {
          //needed because entries might be added in L1
@@ -269,6 +278,27 @@ public class EntryWrappingInterceptor extends CommandInterceptor {
    public Object visitEvictCommand(InvocationContext ctx, EvictCommand command) throws Throwable {
       command.setFlags(Flag.SKIP_OWNERSHIP_CHECK, Flag.CACHE_MODE_LOCAL); //to force the wrapping
       return visitRemoveCommand(ctx, command);
+   }
+
+   @Override
+   public Object visitGetKeysInGroupCommand(final InvocationContext ctx, GetKeysInGroupCommand command) throws Throwable {
+      final String groupName = command.getGroupName();
+      if (!command.isGroupOwner()) {
+         return invokeNextInterceptor(ctx, command);
+      }
+      final KeyFilter<Object> keyFilter = new CompositeKeyFilter<>(new GroupFilter<>(groupName, groupManager),
+                                                                   new CollectionKeyFilter<>(ctx.getLookedUpEntries().keySet()));
+      dataContainer.executeTask(keyFilter,
+                                new ParallelIterableMap.KeyValueAction<Object, InternalCacheEntry<? super Object, ? super Object>>() {
+         @Override
+         public void apply(Object o, InternalCacheEntry<? super Object, ? super Object> internalCacheEntry) {
+            synchronized (ctx) {
+               //the process can be made in multiple threads, so we need to synchronize in the context.
+               entryFactory.wrapEntryForReading(ctx, o, internalCacheEntry).setSkipLookup(true);
+            }
+         }
+      });
+      return invokeNextInterceptor(ctx, command);
    }
 
    private Flag extractStateTransferFlag(InvocationContext ctx, FlagAffectedCommand command) {

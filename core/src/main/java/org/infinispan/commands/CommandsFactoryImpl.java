@@ -2,7 +2,9 @@ package org.infinispan.commands;
 
 import org.infinispan.Cache;
 import org.infinispan.container.entries.CacheEntry;
+import org.infinispan.commands.remote.GetKeysInGroupCommand;
 import org.infinispan.context.InvocationContextFactory;
+import org.infinispan.distribution.group.GroupManager;
 import org.infinispan.iteration.impl.EntryRequestCommand;
 import org.infinispan.iteration.impl.EntryResponseCommand;
 import org.infinispan.iteration.impl.EntryRetriever;
@@ -136,6 +138,7 @@ public class CommandsFactoryImpl implements CommandsFactory {
    private XSiteStateConsumer xSiteStateConsumer;
    private XSiteStateTransferManager xSiteStateTransferManager;
    private EntryRetriever entryRetriever;
+   private GroupManager groupManager;
 
    private Map<Byte, ModuleCommandInitializer> moduleCommandInitializers;
 
@@ -148,7 +151,7 @@ public class CommandsFactoryImpl implements CommandsFactory {
                                  LockManager lockManager, InternalEntryFactory entryFactory, MapReduceManager mapReduceManager, 
                                  StateTransferManager stm, BackupSender backupSender, CancellationService cancellationService,
                                  TimeService timeService, XSiteStateProvider xSiteStateProvider, XSiteStateConsumer xSiteStateConsumer,
-                                 XSiteStateTransferManager xSiteStateTransferManager, EntryRetriever entryRetriever) {
+                                 XSiteStateTransferManager xSiteStateTransferManager, EntryRetriever entryRetriever, GroupManager groupManager) {
       this.dataContainer = container;
       this.notifier = notifier;
       this.cache = cache;
@@ -172,6 +175,7 @@ public class CommandsFactoryImpl implements CommandsFactory {
       this.xSiteStateProvider = xSiteStateProvider;
       this.xSiteStateTransferManager = xSiteStateTransferManager;
       this.entryRetriever = entryRetriever;
+      this.groupManager = groupManager;
    }
 
    @Start(priority = 1)
@@ -465,6 +469,10 @@ public class CommandsFactoryImpl implements CommandsFactory {
             EntryResponseCommand entryResponseCommand = (EntryResponseCommand) c;
             entryResponseCommand.init(entryRetriever);
             break;
+         case GetKeysInGroupCommand.COMMAND_ID:
+            GetKeysInGroupCommand getKeysInGroupCommand = (GetKeysInGroupCommand) c;
+            getKeysInGroupCommand.setGroupManager(groupManager);
+            break;
          default:
             ModuleCommandInitializer mci = moduleCommandInitializers.get(c.getCommandId());
             if (mci != null) {
@@ -604,5 +612,10 @@ public class CommandsFactoryImpl implements CommandsFactory {
                                                                 Collection<CacheEntry<K, C>> values) {
       return new EntryResponseCommand(cache.getCacheManager().getAddress(), cacheName, identifier, completedSegments,
                                       inDoubtSegments, values);
+   }
+
+   @Override
+   public GetKeysInGroupCommand buildGetKeysInGroupCommand(Set<Flag> flags, String groupName) {
+      return new GetKeysInGroupCommand(flags, groupName).setGroupManager(groupManager);
    }
 }

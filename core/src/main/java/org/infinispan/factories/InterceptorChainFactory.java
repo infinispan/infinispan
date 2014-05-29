@@ -170,6 +170,10 @@ public class InterceptorChainFactory extends AbstractNamedCacheComponentFactory 
          interceptorChain.appendInterceptor(createInterceptor(new L1LastChanceInterceptor(), L1LastChanceInterceptor.class), false);
       }
 
+      if (configuration.clustering().hash().groups().enabled()) {
+         interceptorChain.appendInterceptor(createInterceptor(new GroupingInterceptor(), GroupingInterceptor.class), false);
+      }
+
       if (needsVersionAwareComponents && configuration.clustering().cacheMode().isClustered()) {
          if (isTotalOrder) {
             interceptorChain.appendInterceptor(createInterceptor(new TotalOrderVersionedEntryWrappingInterceptor(),

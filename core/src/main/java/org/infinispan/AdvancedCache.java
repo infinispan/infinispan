@@ -25,6 +25,7 @@ import javax.transaction.xa.XAResource;
 
 import java.util.Collection;
 import java.util.List;
+import java.util.Map;
 
 /**
  * An advanced interface that exposes additional methods not available on {@link Cache}.
@@ -407,4 +408,34 @@ public interface AdvancedCache<K, V> extends Cache<K, V> {
     * @param filter The filter to use.  Note this is required and for distributed caches must be serializable
     */
    EntryIterable<K, V> filterEntries(KeyValueFilter<? super K, ? super V> filter);
+
+   /**
+    * It fetches all the keys which belong to the group.
+    * <p/>
+    * Semantically, it iterates over all the keys in memory and persistence, and performs a read operation in the keys
+    * found. Multiple invocations inside a transaction ensures that all the keys previous read are returned and it may
+    * return newly added keys to the group from other committed transactions (also known as phantom reads).
+    * <p/>
+    * The {@code map} returned is immutable and represents the group at the time of the invocation. If you want to add
+    * or remove keys from a group use {@link #put(Object, Object)} and {@link #remove(Object)}. To remove all the keys
+    * in the group use {@link #removeGroup(String)}.
+    * <p/>
+    * To improve performance you may use the {@code flag} {@link org.infinispan.context.Flag#SKIP_CACHE_LOAD} to avoid
+    * fetching the key/value from persistence. However, you will get an inconsistent snapshot of the group.
+    *
+    * @param groupName the group name.
+    * @return an immutable {@link java.util.Map} with the key/value pairs.
+    */
+   Map<K, V> getGroup(String groupName);
+
+   /**
+    * It removes all the key which belongs to a group.
+    * <p/>
+    * Semantically, it fetches the most recent group keys/values and removes them.
+    * <p/>
+    * Note that, concurrent addition perform by other transactions/threads to the group may not be removed.
+    *
+    * @param groupName the group name.
+    */
+   void removeGroup(String groupName);
 }
