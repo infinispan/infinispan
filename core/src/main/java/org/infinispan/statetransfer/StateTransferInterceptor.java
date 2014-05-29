@@ -5,7 +5,11 @@ import org.infinispan.commands.FlagAffectedCommand;
 import org.infinispan.commands.TopologyAffectedCommand;
 import org.infinispan.commands.VisitableCommand;
 import org.infinispan.commands.control.LockControlCommand;
-import org.infinispan.commands.tx.*;
+import org.infinispan.commands.tx.CommitCommand;
+import org.infinispan.commands.tx.PrepareCommand;
+import org.infinispan.commands.tx.RollbackCommand;
+import org.infinispan.commands.tx.TransactionBoundaryCommand;
+import org.infinispan.commands.tx.VersionedPrepareCommand;
 import org.infinispan.commands.write.*;
 import org.infinispan.commons.CacheException;
 import org.infinispan.commons.util.InfinispanCollections;
@@ -15,13 +19,12 @@ import org.infinispan.context.Flag;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.context.impl.TxInvocationContext;
 import org.infinispan.factories.annotations.Inject;
-import org.infinispan.interceptors.base.CommandInterceptor;
+import org.infinispan.interceptors.base.BaseStateTransferInterceptor;
 import org.infinispan.remoting.RemoteException;
 import org.infinispan.remoting.responses.Response;
 import org.infinispan.remoting.responses.SuccessfulResponse;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.remoting.transport.jgroups.SuspectException;
-import org.infinispan.topology.CacheTopology;
 import org.infinispan.transaction.LockingMode;
 import org.infinispan.transaction.impl.RemoteTransaction;
 import org.infinispan.transaction.xa.CacheTransaction;
@@ -30,7 +33,6 @@ import org.infinispan.util.logging.LogFactory;
 
 import java.util.Map;
 import java.util.Set;
-import java.util.concurrent.TimeUnit;
 
 //todo [anistor] command forwarding breaks the rule that we have only one originator for a command. this opens now the possibility to have two threads processing incoming remote commands for the same TX
 /**
@@ -53,19 +55,14 @@ import java.util.concurrent.TimeUnit;
  * @author anistor@redhat.com
  * @since 5.2
  */
-public class StateTransferInterceptor extends CommandInterceptor {
+public class StateTransferInterceptor extends BaseStateTransferInterceptor {
 
    private static final Log log = LogFactory.getLog(StateTransferInterceptor.class);
    private static boolean trace = log.isTraceEnabled();
 
-   private StateTransferLock stateTransferLock;
-
-   private StateTransferManager stateTransferManager;
-
    private CommandsFactory commandFactory;
 
    private boolean useVersioning;
-   private long transactionDataTimeout;
 
    private final AffectedKeysVisitor affectedKeysVisitor = new AffectedKeysVisitor();
 
@@ -75,15 +72,10 @@ public class StateTransferInterceptor extends CommandInterceptor {
    }
 
    @Inject
-   public void init(StateTransferLock stateTransferLock, Configuration configuration,
-                    CommandsFactory commandFactory, StateTransferManager stateTransferManager) {
-      this.stateTransferLock = stateTransferLock;
+   public void init(Configuration configuration, CommandsFactory commandFactory) {
       this.commandFactory = commandFactory;
-      this.stateTransferManager = stateTransferManager;
-
       useVersioning = configuration.transaction().transactionMode().isTransactional() && configuration.locking().writeSkewCheck() &&
             configuration.transaction().lockingMode() == LockingMode.OPTIMISTIC && configuration.versioning().enabled();
-      transactionDataTimeout = configuration.clustering().sync().replTimeout();
    }
 
    @Override
@@ -228,10 +220,10 @@ public class StateTransferInterceptor extends CommandInterceptor {
          log.tracef("Retrying command because of topology change: %s", command);
          // We increment the topology id so that updateTopologyIdAndWaitForTransactionData waits for the next topology.
          // Without this, we could retry the command too fast and we could get the OutdatedTopologyException again.
-         int newTopologyId = Math.max(stateTransferManager.getCacheTopology().getTopologyId(), commandTopologyId + 1);
+         int newTopologyId = Math.max(currentTopologyId(), commandTopologyId + 1);
          command.setTopologyId(newTopologyId);
          command.setFlags(Flag.COMMAND_RETRY);
-         stateTransferLock.waitForTransactionData(newTopologyId, transactionDataTimeout, TimeUnit.MILLISECONDS);
+         waitForTransactionData(newTopologyId);
          localResult = handleNonTxWriteCommand(ctx, command);
       }
 
@@ -313,17 +305,6 @@ public class StateTransferInterceptor extends CommandInterceptor {
             }
          }
          return mergeResult;
-      }
-   }
-
-   private void updateTopologyId(TopologyAffectedCommand command) throws InterruptedException {
-      // set the topology id if it was not set before (ie. this is local command)
-      // TODO Make tx commands extend FlagAffectedCommand so we can use CACHE_MODE_LOCAL in TransactionTable.cleanupStaleTransactions
-      if (command.getTopologyId() == -1) {
-         CacheTopology cacheTopology = stateTransferManager.getCacheTopology();
-         if (cacheTopology != null) {
-            command.setTopologyId(cacheTopology.getTopologyId());
-         }
       }
    }
 

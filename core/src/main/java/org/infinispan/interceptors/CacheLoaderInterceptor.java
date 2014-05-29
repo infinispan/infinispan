@@ -7,6 +7,7 @@ import org.infinispan.commands.read.GetKeyValueCommand;
 import org.infinispan.commands.read.KeySetCommand;
 import org.infinispan.commands.read.SizeCommand;
 import org.infinispan.commands.read.ValuesCommand;
+import org.infinispan.commands.remote.GetKeysInGroupCommand;
 import org.infinispan.commands.write.ApplyDeltaCommand;
 import org.infinispan.commands.write.InvalidateCommand;
 import org.infinispan.commands.write.PutKeyValueCommand;
@@ -20,7 +21,11 @@ import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.context.Flag;
 import org.infinispan.context.InvocationContext;
+import org.infinispan.distribution.group.GroupFilter;
+import org.infinispan.distribution.group.GroupManager;
 import org.infinispan.factories.annotations.Inject;
+import org.infinispan.filter.CompositeKeyFilter;
+import org.infinispan.filter.KeyFilter;
 import org.infinispan.interceptors.base.JmxStatsCommandInterceptor;
 import org.infinispan.jmx.annotations.DisplayType;
 import org.infinispan.jmx.annotations.MBean;
@@ -29,6 +34,8 @@ import org.infinispan.jmx.annotations.ManagedOperation;
 import org.infinispan.jmx.annotations.MeasurementType;
 import org.infinispan.jmx.annotations.Parameter;
 import org.infinispan.filter.CollectionKeyFilter;
+import org.infinispan.metadata.InternalMetadata;
+import org.infinispan.metadata.impl.InternalMetadataImpl;
 import org.infinispan.persistence.PersistenceUtil;
 import org.infinispan.persistence.manager.PersistenceManager;
 import org.infinispan.persistence.spi.AdvancedCacheLoader;
@@ -48,6 +55,8 @@ import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.AtomicReference;
 
+import static org.infinispan.persistence.PersistenceUtil.convert;
+
 @MBean(objectName = "CacheLoader", description = "Component that handles loading entries from a CacheStore into memory.")
 public class CacheLoaderInterceptor extends JmxStatsCommandInterceptor {
    private final AtomicLong cacheLoads = new AtomicLong(0);
@@ -60,6 +69,7 @@ public class CacheLoaderInterceptor extends JmxStatsCommandInterceptor {
    private TimeService timeService;
    private InternalEntryFactory iceFactory;
    private DataContainer dataContainer;
+   private GroupManager groupManager;
 
    private static final Log log = LogFactory.getLog(CacheLoaderInterceptor.class);
 
@@ -70,13 +80,15 @@ public class CacheLoaderInterceptor extends JmxStatsCommandInterceptor {
 
    @Inject
    protected void injectDependencies(PersistenceManager clm, EntryFactory entryFactory, CacheNotifier notifier,
-                                     TimeService timeService, InternalEntryFactory iceFactory, DataContainer dataContainer) {
+                                     TimeService timeService, InternalEntryFactory iceFactory, DataContainer dataContainer,
+                                     GroupManager groupManager) {
       this.persistenceManager = clm;
       this.notifier = notifier;
       this.entryFactory = entryFactory;
       this.timeService = timeService;
       this.iceFactory = iceFactory;
       this.dataContainer = dataContainer;
+      this.groupManager = groupManager;
    }
 
    @Override
@@ -180,6 +192,27 @@ public class CacheLoaderInterceptor extends JmxStatsCommandInterceptor {
          return Collections.unmodifiableSet(union);
       }
       return keys;
+   }
+
+   @Override
+   public Object visitGetKeysInGroupCommand(final InvocationContext ctx, GetKeysInGroupCommand command) throws Throwable {
+      final String groupName = command.getGroupName();
+      if (!command.isGroupOwner() || !enabled || shouldSkipCacheLoader(command)) {
+         return invokeNextInterceptor(ctx, command);
+      }
+
+      final KeyFilter<Object> keyFilter = new CompositeKeyFilter<>(new GroupFilter<>(groupName, groupManager),
+                                                                   new CollectionKeyFilter<>(ctx.getLookedUpEntries().keySet()));
+      persistenceManager.processOnAllStores(keyFilter, new AdvancedCacheLoader.CacheLoaderTask() {
+         @Override
+         public void processEntry(MarshalledEntry marshalledEntry, AdvancedCacheLoader.TaskContext taskContext) throws InterruptedException {
+            synchronized (ctx) {
+               //the process can be made in multiple threads, so we need to synchronize in the context.
+               entryFactory.wrapEntryForReading(ctx, marshalledEntry.getKey(), convert(marshalledEntry, iceFactory)).setSkipLookup(true);
+            }
+         }
+      }, true, true);
+      return invokeNextInterceptor(ctx, command);
    }
 
    @Override

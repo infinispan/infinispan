@@ -424,6 +424,16 @@ public class DecoratedCache<K, V> extends AbstractDelegatingAdvancedCache<K, V> 
    }
 
    @Override
+   public Map<K, V> getGroup(String groupName) {
+      return cacheImplementation.getGroup(groupName, flags, getClassLoader());
+   }
+
+   @Override
+   public void removeGroup(String groupName) {
+      cacheImplementation.removeGroup(groupName, flags, getClassLoader());
+   }
+
+   @Override
    public Collection<V> values() {
       return cacheImplementation.values(flags, classLoader.get());
    }

@@ -28,9 +28,10 @@ public interface EntryFactory {
     *
     * @param ctx current invocation context
     * @param key key to look up and wrap
+    * @param existing
     * @throws InterruptedException when things go wrong, usually trying to acquire a lock
     */
-   CacheEntry wrapEntryForReading(InvocationContext ctx, Object key) throws InterruptedException;
+   CacheEntry wrapEntryForReading(InvocationContext ctx, Object key, CacheEntry existing);
 
    /**
     * Used for wrapping individual keys when clearing the cache. The wrapped entry is added to the

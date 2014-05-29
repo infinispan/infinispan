@@ -1,6 +1,7 @@
 package org.infinispan.commands;
 
 import org.infinispan.container.entries.CacheEntry;
+import org.infinispan.commands.remote.GetKeysInGroupCommand;
 import org.infinispan.iteration.impl.EntryRequestCommand;
 import org.infinispan.iteration.impl.EntryResponseCommand;
 import org.infinispan.metadata.Metadata;
@@ -417,4 +418,13 @@ public interface CommandsFactory {
 
    <K, C> EntryResponseCommand buildEntryResponseCommand(UUID identifier, Set<Integer> completedSegments,
                                                          Set<Integer> inDoubtSegments, Collection<CacheEntry<K, C>> values);
+
+   /**
+    * Builds {@link org.infinispan.commands.remote.GetKeysInGroupCommand} used to fetch all the keys belonging to a group.
+    *
+    * @param flags
+    * @param groupName the group name.
+    * @return the GetKeysInGroup created.
+    */
+   GetKeysInGroupCommand buildGetKeysInGroupCommand(Set<Flag> flags, String groupName);
 }

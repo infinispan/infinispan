@@ -9,6 +9,7 @@ import org.infinispan.commands.read.MapCombineCommand;
 import org.infinispan.commands.read.ReduceCommand;
 import org.infinispan.commands.remote.CacheRpcCommand;
 import org.infinispan.commands.remote.ClusteredGetCommand;
+import org.infinispan.commands.remote.GetKeysInGroupCommand;
 import org.infinispan.commands.remote.MultipleRpcCommand;
 import org.infinispan.commands.remote.SingleRpcCommand;
 import org.infinispan.commands.remote.recovery.CompleteTransactionCommand;
@@ -120,6 +121,9 @@ public class RemoteCommandsFactory {
                break;
             case CacheTopologyControlCommand.COMMAND_ID:
                command = new CacheTopologyControlCommand();
+               break;
+            case GetKeysInGroupCommand.COMMAND_ID:
+               command = new GetKeysInGroupCommand();
                break;
             default:
                throw new CacheException("Unknown command id " + id + "!");

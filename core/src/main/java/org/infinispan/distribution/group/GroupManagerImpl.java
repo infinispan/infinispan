@@ -6,6 +6,9 @@ import org.infinispan.commons.util.CollectionFactory;
 import org.infinispan.commons.util.InfinispanCollections;
 import org.infinispan.commons.util.ReflectionUtil;
 import org.infinispan.commons.util.Util;
+import org.infinispan.factories.annotations.Inject;
+import org.infinispan.interceptors.locking.ClusteringDependentLogic;
+import org.infinispan.remoting.transport.Address;
 
 import java.lang.reflect.Method;
 import java.util.Collection;
@@ -60,6 +63,7 @@ public class GroupManagerImpl implements GroupManager {
 
     private final ConcurrentMap<Class<?>, GroupMetadata> groupMetadataCache;
     private final List<Grouper<?>> groupers;
+    private ClusteringDependentLogic clusteringDependentLogic;
     
     public GroupManagerImpl(List<Grouper<?>> groupers) {
         this.groupMetadataCache = CollectionFactory.makeConcurrentMap();
@@ -67,6 +71,11 @@ public class GroupManagerImpl implements GroupManager {
             this.groupers = groupers;
         else
             this.groupers = InfinispanCollections.emptyList();
+    }
+
+    @Inject
+    public void injectDependencies(ClusteringDependentLogic clusteringDependentLogic) {
+        this.clusteringDependentLogic = clusteringDependentLogic;
     }
     
     @Override
@@ -77,8 +86,23 @@ public class GroupManagerImpl implements GroupManager {
         } else
             return applyGroupers(null, key);
     }
-    
-    private String applyGroupers(String group, Object key) {
+
+   @Override
+   public boolean isOwner(String group) {
+      return clusteringDependentLogic.localNodeIsOwner(group);
+   }
+
+   @Override
+   public Address getPrimaryOwner(String group) {
+      return clusteringDependentLogic.getPrimaryOwner(group);
+   }
+
+   @Override
+   public boolean isPrimaryOwner(String group) {
+      return clusteringDependentLogic.localNodeIsPrimaryOwner(group);
+   }
+
+   private String applyGroupers(String group, Object key) {
         for (Grouper<?> grouper : groupers) {
             if (grouper.getKeyType().isAssignableFrom(key.getClass()))
                 group = ((Grouper<Object>) grouper).computeGroup(key, group);
