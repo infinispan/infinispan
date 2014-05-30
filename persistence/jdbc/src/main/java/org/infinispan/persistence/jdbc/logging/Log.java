@@ -9,6 +9,7 @@ import org.jboss.logging.annotations.Message;
 import org.jboss.logging.annotations.MessageLogger;
 
 import javax.naming.NamingException;
+
 import java.io.IOException;
 import java.sql.Connection;
 import java.sql.SQLException;

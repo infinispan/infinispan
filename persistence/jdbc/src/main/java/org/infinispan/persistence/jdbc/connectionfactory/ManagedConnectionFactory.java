@@ -9,6 +9,7 @@ import org.infinispan.util.logging.LogFactory;
 import javax.sql.DataSource;
 import javax.naming.InitialContext;
 import javax.naming.NamingException;
+
 import java.sql.Connection;
 import java.sql.SQLException;
 
