@@ -15,6 +15,7 @@ import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 import org.testng.annotations.Test;
 
+import javax.transaction.HeuristicRollbackException;
 import javax.transaction.RollbackException;
 import javax.transaction.Transaction;
 import javax.transaction.TransactionManager;
@@ -65,7 +66,7 @@ public class InvocationContextTest extends MultipleCacheManagersTest {
       } catch (CacheException ce) {
          Throwable cause = ce.getCause();
          assertTrue("Unexpected exception cause " + cause,
-               cause instanceof RollbackException);
+               cause instanceof RollbackException || cause instanceof HeuristicRollbackException);
       }
    }
 
