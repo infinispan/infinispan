@@ -110,6 +110,7 @@
       <version.commons.logging>1.1</version.commons.logging>
       <version.commons.math>2.2</version.commons.math>
       <version.guava>11.0.2</version.guava>
+      <version.geronimo.tm>3.1.1</version.geronimo.tm>
       <version.h2.driver>1.3.166</version.h2.driver>
       <version.hibernate.annotations>3.5.6-Final</version.hibernate.annotations>
       <version.hibernate.core>4.2.12.Final</version.hibernate.core>
@@ -117,6 +118,7 @@
       <version.hibernate.hql.parser>1.0.0.CR1</version.hibernate.hql.parser>
       <version.hibernate.javax.persistence>1.0.1.Final</version.hibernate.javax.persistence>
       <version.httpclient>4.2.4</version.httpclient>
+      <version.howl>1.0.1-1</version.howl>
       <version.jackson>1.9.2</version.jackson>
       <version.javax.cache>1.0.0</version.javax.cache>
       <version.javax.cache.cache-tests>${version.javax.cache}</version.javax.cache.cache-tests>
@@ -146,7 +148,7 @@
       <version.postgresql.driver>9.3-1101-jdbc41</version.postgresql.driver>
       <version.resteasy>3.0.7.Final</version.resteasy>
       <version.shrinkwrapResolver>2.0.0-alpha-6</version.shrinkwrapResolver>
-      <version.slf4j>1.6.4</version.slf4j>
+      <version.slf4j>1.7.5</version.slf4j>
       <version.solder>3.1.0.Final</version.solder>
       <version.spring>3.1.0.RELEASE</version.spring>
       <version.spymemcached>2.5</version.spymemcached>
@@ -610,6 +612,12 @@
          </dependency>
          <dependency>
             <groupId>org.slf4j</groupId>
+            <artifactId>slf4j-api</artifactId>
+            <version>${version.slf4j}</version>
+            <scope>test</scope>
+         </dependency>
+         <dependency>
+            <groupId>org.slf4j</groupId>
             <artifactId>slf4j-simple</artifactId>
             <version>${version.slf4j}</version>
          </dependency>
@@ -625,6 +633,7 @@
             <version>${version.slf4j}</version>
             <scope>test</scope>
          </dependency>
+         
          <dependency>
             <groupId>org.springframework</groupId>
             <artifactId>spring-context</artifactId>
@@ -912,15 +921,32 @@
          <scope>test</scope>
       </dependency>
       <dependency>
-            <groupId>org.jboss.jbossts.jta</groupId>
-            <artifactId>narayana-jta</artifactId>
-            <scope>test</scope>
+         <groupId>org.jboss.jbossts.jta</groupId>
+         <artifactId>narayana-jta</artifactId>
+         <scope>test</scope>
       </dependency>
       <dependency>
          <groupId>org.jboss.logging</groupId>
          <artifactId>jboss-logging-processor</artifactId>
          <version>${version.jboss.logging.processor}</version>
          <scope>provided</scope>
+      </dependency>
+      <dependency>
+         <groupId>org.apache.geronimo.components</groupId>
+         <artifactId>geronimo-transaction</artifactId>
+         <version>${version.geronimo.tm}</version>
+         <scope>test</scope>
+      </dependency>
+      <dependency>
+         <groupId>org.objectweb.howl</groupId>
+         <artifactId>howl</artifactId>
+         <version>${version.howl}</version>
+         <scope>test</scope>
+      </dependency>
+      <dependency>
+         <groupId>org.slf4j</groupId>
+         <artifactId>slf4j-api</artifactId>
+         <scope>test</scope>
       </dependency>
       <dependency>
           <groupId>org.slf4j</groupId>

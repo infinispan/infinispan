@@ -108,8 +108,14 @@ public class TestCacheManagerFactory {
    }
 
    private static void markAsTransactional(boolean transactional, ConfigurationBuilder builder) {
-      builder.transaction().transactionMode(transactional ? TransactionMode.TRANSACTIONAL : TransactionMode.NON_TRANSACTIONAL);
-      if (transactional) {
+      if (!transactional) {
+         builder.transaction().transactionMode(TransactionMode.NON_TRANSACTIONAL);
+      } else {
+         builder.transaction()
+            .transactionMode(TransactionMode.TRANSACTIONAL)
+            //automatically change default TM lookup to the desired one
+            .transactionManagerLookup((TransactionManagerLookup) Util.getInstance(TransactionSetup.getManagerLookup(), TestCacheManagerFactory.class.getClassLoader()));
+         
          //Skip this step in OSGi. This operation requires internal packages of Arjuna. These are not exported from the Arjuna
          //bundle in OSGi
          if (!Util.isOSGiContext()) {
@@ -129,7 +135,7 @@ public class TestCacheManagerFactory {
          builder.transaction().transactionManagerLookup((TransactionManagerLookup) Util.getInstance(TransactionSetup.getManagerLookup(), TestCacheManagerFactory.class.getClassLoader()));
       }
    }
-
+   
    /**
     * Creates an cache manager that does support clustering.
     */
