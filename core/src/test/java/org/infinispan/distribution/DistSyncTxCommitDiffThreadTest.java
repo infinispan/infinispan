@@ -1,5 +1,6 @@
 package org.infinispan.distribution;
 
+import org.apache.geronimo.transaction.manager.GeronimoTransactionManager;
 import org.infinispan.Cache;
 import org.testng.annotations.Test;
 
@@ -38,6 +39,9 @@ public class DistSyncTxCommitDiffThreadTest extends BaseDistFunctionalTest<Objec
       final Cache nonOwnerCache = getNonOwners(key, 1)[0];
       final Cache ownerCache = getOwners(key, 1)[0];
       final TransactionManager tmNonOwner = getTransactionManager(nonOwnerCache);
+      //geronimo doesn't allow associating a transaction with multiple threads
+      if (tmNonOwner instanceof GeronimoTransactionManager)
+         return;
       final CountDownLatch commitLatch = new CountDownLatch(1);
 
       tmNonOwner.begin();
