@@ -1,6 +1,7 @@
 package org.infinispan.persistence.jdbc.logging;
 
 import org.infinispan.commons.CacheConfigurationException;
+import org.infinispan.persistence.spi.PersistenceException;
 import org.infinispan.persistence.support.Bucket;
 import org.jboss.logging.annotations.Cause;
 import org.jboss.logging.annotations.LogMessage;
@@ -81,21 +82,18 @@ public interface Log extends org.infinispan.util.logging.Log {
    @Message(value = "Sql failure while loading key: %s", id = 8014)
    void sqlFailureLoadingKey(String keyHashCode, @Cause SQLException e);
 
-   @LogMessage(level = ERROR)
    @Message(value = "Could not find a connection in jndi under the name '%s'", id = 8015)
-   void connectionInJndiNotFound(String dataSourceName);
+   PersistenceException connectionInJndiNotFound(String dataSourceName);
 
-   @LogMessage(level = ERROR)
    @Message(value = "Could not lookup connection with datasource %s", id = 8016)
-   void namingExceptionLookingUpConnection(String dataSourceName, @Cause NamingException e);
+   PersistenceException namingExceptionLookingUpConnection(String dataSourceName, @Cause NamingException e);
 
    @LogMessage(level = WARN)
    @Message(value = "Failed to close naming context.", id = 8017)
    void failedClosingNamingCtx(@Cause NamingException e);
 
-   @LogMessage(level = ERROR)
-   @Message(value = "Sql failure retrieving connection from datasource", id = 8018)
-   void sqlFailureRetrievingConnection(@Cause SQLException e);
+   @Message(value = "SQL failure retrieving connection from datasource", id = 8018)
+   PersistenceException sqlFailureRetrievingConnection(@Cause SQLException e);
 
    @LogMessage(level = ERROR)
    @Message(value = "Issues while closing connection %s", id = 8019)
