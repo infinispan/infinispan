@@ -13,6 +13,8 @@ import javax.management.ObjectName;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 /**
  * Discovery class for individual cache instances
@@ -28,7 +30,7 @@ public class CacheDiscovery extends MBeanResourceDiscoveryComponent<CacheManager
    public Set<DiscoveredResourceDetails> discoverResources(ResourceDiscoveryContext<CacheManagerComponent> ctx) {
       boolean trace = log.isTraceEnabled();
       if (trace) log.trace("Discover resources with context");
-      Set<DiscoveredResourceDetails> discoveredResources = new HashSet<DiscoveredResourceDetails>();
+      Set<DiscoveredResourceDetails> discoveredResources = new HashSet<>();
 
       EmsConnection conn = ctx.getParentResourceComponent().getEmsConnection();
       if (trace) log.trace("Connection to ems server established");
@@ -69,11 +71,13 @@ public class CacheDiscovery extends MBeanResourceDiscoveryComponent<CacheManager
       return discoveredResources;
    }
 
-   private String getAllCachesPattern(String cacheManagerName) {
+   protected static String getAllCachesPattern(String cacheManagerName) {
       return cacheComponentPattern(cacheManagerName, "Cache") + ",*";
    }
 
    protected static String cacheComponentPattern(String cacheManagerName, String componentName) {
-      return "*:type=Cache,component=" + componentName + ",manager=" + ObjectName.quote(cacheManagerName);
+      // The CacheManager registers like <domain>:name=<name> so add those to request
+      return cacheManagerName.substring(0, cacheManagerName.indexOf(":")) + ":manager=" +
+            cacheManagerName.substring(cacheManagerName.indexOf("=") + 1)  + ",type=Cache,component=" + componentName;
    }
 }

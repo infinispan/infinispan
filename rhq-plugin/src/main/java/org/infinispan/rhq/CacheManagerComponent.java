@@ -35,7 +35,6 @@ import org.rhq.plugins.jmx.util.ObjectNameQueryUtility;
  */
 public class CacheManagerComponent extends MBeanResourceComponent<JMXServerComponent<?>> {
    private static final Log log = LogFactory.getLog(CacheManagerComponent.class);
-   protected ResourceContext<JMXServerComponent<?>> context;
    private String cacheManagerPattern;
 
    /**
@@ -67,14 +66,13 @@ public class CacheManagerComponent extends MBeanResourceComponent<JMXServerCompo
     */
    @Override
    public void start(ResourceContext<JMXServerComponent<?>> context) {
-      this.context = context;
-      this.cacheManagerPattern = "*:" + CacheManagerDiscovery.CACHE_MANAGER_JMX_GROUP + ",name=" + ObjectName.quote(context.getResourceKey()) + ",*";
+      cacheManagerPattern = context.getResourceKey() + "," + CacheManagerDiscovery.CACHE_MANAGER_JMX_GROUP;
       super.start(context);
    }
 
    @Override
    public EmsConnection getEmsConnection() {
-      return context.getParentResourceComponent().getEmsConnection();
+      return getResourceContext().getParentResourceComponent().getEmsConnection();
    }
 
    @Override
@@ -102,9 +100,7 @@ public class CacheManagerComponent extends MBeanResourceComponent<JMXServerCompo
    public void getValues(MeasurementReport report, Set<MeasurementScheduleRequest> metrics) {
       boolean trace = log.isTraceEnabled();
       if (trace) log.trace("Get values for these metrics: " + metrics);
-      EmsConnection conn = getEmsConnection();
-      if (trace) log.trace("Connection to ems server established: " + conn);
-      EmsBean bean = queryCacheManagerBean(conn);
+      EmsBean bean = getEmsBean();
       bean.refreshAttributes();
       if (trace) log.trace("Querying returned bean: " + bean);
       for (MeasurementScheduleRequest req : metrics) {
@@ -127,14 +123,9 @@ public class CacheManagerComponent extends MBeanResourceComponent<JMXServerCompo
    private EmsBean queryCacheManagerBean(EmsConnection conn) {
       String pattern = cacheManagerPattern;
       if (log.isTraceEnabled()) log.trace("Pattern to query is " + pattern);
-      ObjectNameQueryUtility queryUtility = new ObjectNameQueryUtility(pattern);
-      List<EmsBean> beans = conn.queryBeans(queryUtility.getTranslatedQuery());
-      for(EmsBean bean : beans) {
-         if (isCacheManagerComponent(bean)) {
-            return bean;
-         } else {
-            log.warn(String.format("MBeanServer returned spurious object %s", bean.getBeanName().getCanonicalName()));
-         }
+      EmsBean bean = conn.getBean(pattern);
+      if (bean != null) {
+         return bean;
       }
       throw new IllegalStateException("MBeanServer unexpectedly did not return any CacheManager components");
    }

@@ -17,6 +17,8 @@ import org.rhq.plugins.jmx.JMXComponent;
 import org.rhq.plugins.jmx.MBeanResourceDiscoveryComponent;
 import org.rhq.plugins.jmx.util.ObjectNameQueryUtility;
 
+import javax.management.ObjectName;
+
 /**
  * Discovery class for Infinispan engines
  *
@@ -60,14 +62,15 @@ public class CacheManagerDiscovery extends MBeanResourceDiscoveryComponent<JMXCo
             // Filter out spurious beans
             if (CacheManagerComponent.isCacheManagerComponent(bean)) {
                String managerName = bean.getBeanName().getCanonicalName();
+               String domain = managerName.substring(0, managerName.indexOf(":"));
                String resourceName = bean.getAttribute("Name").getValue().toString();
                String version = bean.getAttribute("Version").getValue().toString();
                /* A discovered resource must have a unique key, that must stay the same when the resource is discovered the next time */
                if (trace) log.trace("Add resource with version '"+version+"' and type " + ctx.getResourceType());
                DiscoveredResourceDetails detail = new DiscoveredResourceDetails(
                      ctx.getResourceType(), // Resource type
-                     resourceName, // Resource key
-                     resourceName, // Resource name
+                     domain + ":name=" + ObjectName.quote(resourceName), // Resource key
+                     (beans.size() > 1 ? domain + ":" : "") + resourceName, // Resource name
                      version, // Resource version
                      "A cache manager within Infinispan", // Description
                      pluginConfiguration, // Plugin config
