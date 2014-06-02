@@ -19,24 +19,25 @@ import org.infinispan.util.logging.LogFactory;
  */
 public class DistributedLazyIterator extends DistributedIterator {
 
-   private UUID queryId;
-
+   private final UUID queryId;
    private final ExecutorService asyncExecutor;
+   private final ClusteredQueryInvoker invoker;
 
    private static final Log log = LogFactory.getLog(DistributedLazyIterator.class);
+
+   private final ClusteredQueryInvoker invoker;
 
    public DistributedLazyIterator(Sort sort, int fetchSize, int resultSize, int maxResults, int firstResult, UUID id,
          HashMap<UUID, ClusteredTopDocs> topDocsResponses, ExecutorService asyncExecutor, AdvancedCache<?, ?> cache) {
       super(sort, fetchSize, resultSize, maxResults, firstResult, topDocsResponses, cache);
-
       this.queryId = id;
       this.asyncExecutor = asyncExecutor;
+      this.invoker = new ClusteredQueryInvoker(cache, asyncExecutor);
    }
 
    @Override
    public void close() {
       ClusteredQueryCommand killQuery = ClusteredQueryCommand.destroyLazyQuery(cache, queryId);
-
       ClusteredQueryInvoker invoker = new ClusteredQueryInvoker(cache, asyncExecutor);
       try {
          invoker.broadcast(killQuery);
@@ -46,8 +47,7 @@ public class DistributedLazyIterator extends DistributedIterator {
    }
 
    @Override
-   protected Object fetchValue(ClusteredDoc scoreDoc, ClusteredTopDocs topDoc) {
-      ClusteredQueryInvoker invoker = new ClusteredQueryInvoker(cache, asyncExecutor);
+   public Object fetchValue(ClusteredDoc scoreDoc, ClusteredTopDocs topDoc) {
       Object value = null;
       try {
          value = invoker.getValue(scoreDoc.getIndex(), topDoc.getNodeAddress(), queryId);
