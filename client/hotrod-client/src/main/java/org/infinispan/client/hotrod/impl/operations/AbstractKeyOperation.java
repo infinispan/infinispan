@@ -43,14 +43,10 @@ public abstract class AbstractKeyOperation<T> extends RetryOnFailureOperation<T>
       }
    }
 
-   protected short sendKeyOperation(byte[] key, Transport transport, byte opCode, byte opRespCode) {
-      // 1) write [header][key length][key]
+   protected HeaderParams writeKeyRequest(Transport transport, byte opCode) {
       HeaderParams params = writeHeader(transport, opCode);
       transport.writeArray(key);
-      transport.flush();
-
-      // 2) now read the header
-      return readHeaderAndValidate(transport, params);
+      return params;
    }
 
    protected byte[] returnPossiblePrevValue(Transport transport) {

@@ -1,12 +1,13 @@
 package org.infinispan.client.hotrod.impl.operations;
 
+import java.util.concurrent.atomic.AtomicInteger;
+
 import net.jcip.annotations.Immutable;
 import org.infinispan.client.hotrod.Flag;
 import org.infinispan.client.hotrod.impl.protocol.Codec;
+import org.infinispan.client.hotrod.impl.protocol.HeaderParams;
 import org.infinispan.client.hotrod.impl.transport.Transport;
 import org.infinispan.client.hotrod.impl.transport.TransportFactory;
-
-import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * Implements "Replace" operation as defined by  <a href="http://community.jboss.org/wiki/HotRodProtocol">Hot Rod
@@ -25,12 +26,16 @@ public class ReplaceOperation extends AbstractKeyValueOperation<byte[]> {
    }
 
    @Override
-   protected byte[] executeOperation(Transport transport) {
-      byte[] result = null;
-      short status = sendPutOperation(transport, REPLACE_REQUEST, REPLACE_RESPONSE);
+   protected HeaderParams writeRequest(Transport transport) {
+      return writeKeyValueRequest(transport, REPLACE_REQUEST);
+   }
+
+   @Override
+   protected byte[] readResponse(Transport transport, HeaderParams params) {
+      short status = readHeaderAndValidate(transport, params);
       if (status == NO_ERROR_STATUS || status == NOT_PUT_REMOVED_REPLACED_STATUS) {
-         result = returnPossiblePrevValue(transport);
+         return returnPossiblePrevValue(transport);
       }
-      return result;
+      return null;
    }
 }

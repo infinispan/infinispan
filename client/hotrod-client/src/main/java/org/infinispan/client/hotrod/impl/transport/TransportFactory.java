@@ -4,6 +4,7 @@ import java.net.SocketAddress;
 import java.util.Collection;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.ExecutorService;
 import java.util.concurrent.atomic.AtomicInteger;
 import javax.net.ssl.SSLContext;
 
@@ -23,7 +24,7 @@ public interface TransportFactory {
 
    void releaseTransport(Transport transport);
 
-   void start(Codec codec, Configuration configuration, AtomicInteger topologyId);
+   void start(Codec codec, Configuration configuration, AtomicInteger topologyId, ExecutorService asyncExecutorService);
 
    void updateServers(Collection<SocketAddress> newServers);
 
@@ -49,4 +50,6 @@ public interface TransportFactory {
    void invalidateTransport(SocketAddress serverAddress, Transport transport);
 
    SSLContext getSSLContext();
+
+   ExecutorService getAsyncExecutorService();
 }

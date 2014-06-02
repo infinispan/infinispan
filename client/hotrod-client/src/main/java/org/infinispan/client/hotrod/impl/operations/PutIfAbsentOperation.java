@@ -6,6 +6,7 @@ import net.jcip.annotations.Immutable;
 
 import org.infinispan.client.hotrod.Flag;
 import org.infinispan.client.hotrod.impl.protocol.Codec;
+import org.infinispan.client.hotrod.impl.protocol.HeaderParams;
 import org.infinispan.client.hotrod.impl.transport.Transport;
 import org.infinispan.client.hotrod.impl.transport.TransportFactory;
 import org.infinispan.commons.logging.BasicLogFactory;
@@ -31,8 +32,13 @@ public class PutIfAbsentOperation extends AbstractKeyValueOperation<byte[]> {
    }
 
    @Override
-   protected byte[] executeOperation(Transport transport) {
-      short status = sendPutOperation(transport, PUT_IF_ABSENT_REQUEST, PUT_IF_ABSENT_RESPONSE);
+   protected HeaderParams writeRequest(Transport transport) {
+      return writeKeyValueRequest(transport, PUT_IF_ABSENT_REQUEST);
+   }
+
+   @Override
+   protected byte[] readResponse(Transport transport, HeaderParams params) {
+      short status = readHeaderAndValidate(transport, params);
       byte[] previousValue = null;
       if (status == NO_ERROR_STATUS || status == NOT_PUT_REMOVED_REPLACED_STATUS) {
          previousValue = returnPossiblePrevValue(transport);

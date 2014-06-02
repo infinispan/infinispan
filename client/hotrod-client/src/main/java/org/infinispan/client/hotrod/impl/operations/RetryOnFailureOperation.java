@@ -1,20 +1,26 @@
 package org.infinispan.client.hotrod.impl.operations;
 
+import java.net.SocketAddress;
+import java.util.HashSet;
+import java.util.Set;
+import java.util.concurrent.Callable;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Future;
+import java.util.concurrent.atomic.AtomicInteger;
+
 import net.jcip.annotations.Immutable;
 import org.infinispan.client.hotrod.Flag;
 import org.infinispan.client.hotrod.exceptions.HotRodClientException;
 import org.infinispan.client.hotrod.exceptions.RemoteNodeSuspectException;
 import org.infinispan.client.hotrod.exceptions.TransportException;
 import org.infinispan.client.hotrod.impl.protocol.Codec;
+import org.infinispan.client.hotrod.impl.protocol.HeaderParams;
 import org.infinispan.client.hotrod.impl.transport.Transport;
 import org.infinispan.client.hotrod.impl.transport.TransportFactory;
 import org.infinispan.client.hotrod.logging.Log;
 import org.infinispan.client.hotrod.logging.LogFactory;
-
-import java.net.SocketAddress;
-import java.util.HashSet;
-import java.util.Set;
-import java.util.concurrent.atomic.AtomicInteger;
+import org.infinispan.commons.util.concurrent.NotifyingFuture;
+import org.infinispan.commons.util.concurrent.RetriableNotifyingFuture;
 
 /**
  * Base class for all the operations that need retry logic: if the operation fails due to connection problems, try with 
@@ -25,7 +31,7 @@ import java.util.concurrent.atomic.AtomicInteger;
  * @param T the return type of this operation
  */
 @Immutable
-public abstract class RetryOnFailureOperation<T> extends HotRodOperation {
+public abstract class RetryOnFailureOperation<T> extends HotRodOperation<T> {
 
    private static final Log log = LogFactory.getLog(RetryOnFailureOperation.class, Log.class);
 
@@ -38,40 +44,114 @@ public abstract class RetryOnFailureOperation<T> extends HotRodOperation {
    }
 
    @Override
-   public T execute() {
+   public NotifyingFuture<T> executeAsync() {
+      RetryContext<T> context = new RetryContext<T>();
+      startExecution(context);
+      return new RetriableNotifyingFuture<T>(context.requestFuture, new RetryChecker(context));
+   }
+
+   private void startExecution(final RetryContext<T> context) {
+      while (shouldRetry(context.retryCount)) {
+         context.requestFuture = null;
+         // Note: after we handover the execution to another thread, we must not
+         // increase retry count without proper synchronization. That's why we
+         // increment it here first and then use context.retryCount - 1
+         context.retryCount++;
+         try {
+            if (invokeChecked(new Runnable() {
+               @Override
+               public void run() {
+                  context.transport = getTransport(context.retryCount - 1, context.failedServers);
+                  final HeaderParams params = writeRequest(context.transport);
+                  context.requestFuture = context.transport.flush(new Callable<T>() {
+                     @Override
+                     public T call() throws Exception {
+                        return readResponse(context.transport, params);
+                     }
+                  });
+               }
+            }, context)) {
+               return;
+            } else {
+               releaseTransport(context.transport);
+            }
+         } catch (RuntimeException e) {
+            releaseTransport(context.transport);
+            throw e; // invokeChecked catches everything after what we should retry
+         }
+      }
+   }
+
+   private boolean invokeChecked(Runnable runnable, RetryContext context) {
+      try {
+         runnable.run();
+         return true;
+      } catch (TransportException te) {
+         if (context.failedServers == null) {
+            context.failedServers = new HashSet<SocketAddress>();
+         }
+         context.failedServers.add(te.getServerAddress());
+         // Invalidate transport since this exception means that this
+         // instance is no longer usable and should be destroyed.
+         if (context.transport != null) {
+            transportFactory.invalidateTransport(
+                  te.getServerAddress(), context.transport);
+         }
+         logErrorAndThrowExceptionIfNeeded(context.retryCount - 1, te);
+         return false;
+      } catch (RemoteNodeSuspectException e) {
+         // Do not invalidate transport because this exception is caused
+         // as a result of a server finding out that another node has
+         // been suspected, so there's nothing really wrong with the server
+         // from which this node was received.
+         logErrorAndThrowExceptionIfNeeded(context.retryCount - 1, e);
+         return false;
+      }
+   }
+
+   private static class RetryContext<T> {
       int retryCount = 0;
       Set<SocketAddress> failedServers = null;
-      while (shouldRetry(retryCount)) {
-         Transport transport = null;
-         try {
-            // Transport retrieval should be retried
-            transport = getTransport(retryCount, failedServers);
-            return executeOperation(transport);
-         } catch (TransportException te) {
-            if (failedServers == null) {
-               failedServers = new HashSet<SocketAddress>();
-            }
-            failedServers.add(te.getServerAddress());
-            // Invalidate transport since this exception means that this
-            // instance is no longer usable and should be destroyed.
-            if (transport != null) {
-               transportFactory.invalidateTransport(
-                     te.getServerAddress(), transport);
-            }
-            logErrorAndThrowExceptionIfNeeded(retryCount, te);
-         } catch (RemoteNodeSuspectException e) {
-            // Do not invalidate transport because this exception is caused
-            // as a result of a server finding out that another node has
-            // been suspected, so there's nothing really wrong with the server
-            // from which this node was received.
-            logErrorAndThrowExceptionIfNeeded(retryCount, e);
-         } finally {
-            releaseTransport(transport);
-         }
+      Transport transport;
+      NotifyingFuture<T> requestFuture;
+   }
 
-         retryCount++;
+   private class RetryChecker implements RetriableNotifyingFuture.Checker<T> {
+      final RetryContext<T> context;
+
+      private RetryChecker(RetryContext<T> context) {
+         this.context = context;
       }
-      throw new IllegalStateException("We should not reach here!");
+
+      @Override
+      public boolean check(final Future<T> future) {
+         try {
+            return invokeChecked(new Runnable() {
+               @Override
+               public void run() {
+                  try {
+                     future.get();
+                  } catch (InterruptedException e) {
+                     Thread.currentThread().interrupt();
+                  } catch (ExecutionException e) {
+                     if (e.getCause() instanceof RuntimeException) {
+                        throw (RuntimeException) e.getCause();
+                     } else {
+                        throw new RuntimeException(e.getCause());
+                     }
+                  }
+               }
+            }, context) || Thread.interrupted() || !shouldRetry(context.retryCount);
+         } finally {
+            releaseTransport(context.transport);
+         }
+      }
+
+      @Override
+      public NotifyingFuture<T> retry() {
+         startExecution(context);
+         return context.requestFuture;
+      }
    }
 
    protected boolean shouldRetry(int retryCount) {
@@ -95,5 +175,6 @@ public abstract class RetryOnFailureOperation<T> extends HotRodOperation {
 
    protected abstract Transport getTransport(int retryCount, Set<SocketAddress> failedServers);
 
-   protected abstract T executeOperation(Transport transport);
+   protected abstract HeaderParams writeRequest(Transport transport);
+   protected abstract T readResponse(Transport transport, HeaderParams params);
 }

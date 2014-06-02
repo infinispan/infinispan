@@ -548,9 +548,6 @@ public class RemoteCacheManager implements BasicCacheContainer {
 
       codec = CodecFactory.getCodec(configuration.protocolVersion());
 
-      transportFactory = Util.getInstance(configuration.transportFactory());
-
-      transportFactory.start(codec, configuration, topologyId);
       if (marshaller == null) {
          marshaller = configuration.marshaller();
          if (marshaller == null) {
@@ -565,6 +562,10 @@ public class RemoteCacheManager implements BasicCacheContainer {
          }
          asyncExecutorService = executorFactory.getExecutor(configuration.asyncExecutorFactory().properties());
       }
+
+      transportFactory = Util.getInstance(configuration.transportFactory());
+      transportFactory.start(codec, configuration, topologyId, asyncExecutorService);
+
 
       synchronized (cacheName2RemoteCache) {
          for (RemoteCacheHolder rcc : cacheName2RemoteCache.values()) {

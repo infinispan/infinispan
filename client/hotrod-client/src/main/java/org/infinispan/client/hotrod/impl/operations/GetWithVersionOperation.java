@@ -3,11 +3,11 @@ package org.infinispan.client.hotrod.impl.operations;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import net.jcip.annotations.Immutable;
-
 import org.infinispan.client.hotrod.Flag;
 import org.infinispan.client.hotrod.VersionedValue;
 import org.infinispan.client.hotrod.impl.VersionedValueImpl;
 import org.infinispan.client.hotrod.impl.protocol.Codec;
+import org.infinispan.client.hotrod.impl.protocol.HeaderParams;
 import org.infinispan.client.hotrod.impl.transport.Transport;
 import org.infinispan.client.hotrod.impl.transport.TransportFactory;
 import org.infinispan.client.hotrod.logging.Log;
@@ -32,8 +32,13 @@ public class GetWithVersionOperation extends AbstractKeyOperation<VersionedValue
    }
 
    @Override
-   protected VersionedValue<byte[]> executeOperation(Transport transport) {
-      short status = sendKeyOperation(key, transport, GET_WITH_VERSION, GET_WITH_VERSION_RESPONSE);
+   protected HeaderParams writeRequest(Transport transport) {
+      return writeKeyRequest(transport, GET_WITH_VERSION);
+   }
+
+   @Override
+   protected VersionedValue<byte[]> readResponse(Transport transport, HeaderParams params) {
+      short status = readHeaderAndValidate(transport, params);
       VersionedValue<byte[]> result = null;
       if (status == KEY_DOES_NOT_EXIST_STATUS) {
          result = null;

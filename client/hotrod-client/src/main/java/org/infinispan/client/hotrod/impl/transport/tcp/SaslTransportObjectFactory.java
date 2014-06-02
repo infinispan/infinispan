@@ -36,68 +36,79 @@ public class SaslTransportObjectFactory extends TransportObjectFactory {
    private final AuthenticationConfiguration configuration;
 
    public SaslTransportObjectFactory(Codec codec, TcpTransportFactory tcpTransportFactory, AtomicInteger topologyId,
-         boolean pingOnStartup, AuthenticationConfiguration configuration) {
+                                     boolean pingOnStartup, AuthenticationConfiguration configuration) {
       super(codec, tcpTransportFactory, topologyId, pingOnStartup);
       this.configuration = configuration;
    }
 
    @Override
    public TcpTransport makeObject(SocketAddress address) throws Exception {
-      TcpTransport tcpTransport = new TcpTransport(address, tcpTransportFactory);
-      if (log.isTraceEnabled()) {
-         log.tracef("Created tcp transport: %s", tcpTransport);
-      }
+      TcpTransport tcpTransport = null;
+      try {
+         if (tcpTransportFactory.getSSLContext() == null) {
+            tcpTransport = new TcpTransport(address, tcpTransportFactory);
+         } else {
+            tcpTransport = new SSLTransport(address, tcpTransportFactory);
+         }
+         if (log.isTraceEnabled()) {
+            log.tracef("Created tcp transport: %s", tcpTransport);
+         }
 
-      List<String> serverMechs = mechList(tcpTransport, topologyId);
-      if (!serverMechs.contains(configuration.saslMechanism())) {
-         throw log.unsupportedMech(configuration.saslMechanism(), serverMechs);
-      }
+         List<String> serverMechs = mechList(tcpTransport, topologyId);
+         if (!serverMechs.contains(configuration.saslMechanism())) {
+            throw log.unsupportedMech(configuration.saslMechanism(), serverMechs);
+         }
 
-      SaslClient saslClient;
-      if (configuration.clientSubject() != null) {
-         saslClient = Subject.doAs(configuration.clientSubject(), new PrivilegedExceptionAction<SaslClient>() {
-            @Override
-            public SaslClient run() throws Exception {
+         SaslClient saslClient;
+         if (configuration.clientSubject() != null) {
+            saslClient = Subject.doAs(configuration.clientSubject(), new PrivilegedExceptionAction<SaslClient>() {
+               @Override
+               public SaslClient run() throws Exception {
                CallbackHandler callbackHandler = configuration.callbackHandler();
                if (callbackHandler == null) {
                   callbackHandler = NoOpCallbackHandler.INSTANCE;
                }
-            return Sasl.createSaslClient(new String[] { configuration.saslMechanism() }, null, "hotrod",
+               return Sasl.createSaslClient(new String[] { configuration.saslMechanism() }, null, "hotrod",
                      configuration.serverName(), configuration.saslProperties(), callbackHandler);
-            }
-         });
-      } else {
-         saslClient = Sasl.createSaslClient(new String[] { configuration.saslMechanism() }, null, "hotrod",
-               configuration.serverName(), configuration.saslProperties(), configuration.callbackHandler());
-      }
-
-      if (log.isTraceEnabled()) {
-         log.tracef("Authenticating using mech: %s", configuration.saslMechanism());
-      }
-      byte response[] = saslClient.hasInitialResponse() ? evaluateChallenge(saslClient, EMPTY_BYTES) : EMPTY_BYTES;
-
-      byte challenge[] = auth(tcpTransport, topologyId, configuration.saslMechanism(), response);
-      while (!saslClient.isComplete() && challenge != null) {
-         response = evaluateChallenge(saslClient, challenge);
-         if (response == null) {
-            break;
+               }
+            });
+         } else {
+            saslClient = Sasl.createSaslClient(new String[] { configuration.saslMechanism() }, null, "hotrod",
+                  configuration.serverName(), configuration.saslProperties(), configuration.callbackHandler());
          }
-         challenge = auth(tcpTransport, topologyId, "", response);
-      }
 
-      /*String qop = (String) saslClient.getNegotiatedProperty(Sasl.QOP);
-      if (qop != null && (qop.equalsIgnoreCase(AUTH_INT) || qop.equalsIgnoreCase(AUTO_CONF))) {
-         tcpTransport.setSaslClient(saslClient);
-      } else {*/
-      saslClient.dispose();
+         if (log.isTraceEnabled()) {
+            log.tracef("Authenticating using mech: %s", configuration.saslMechanism());
+         }
+         byte response[] = saslClient.hasInitialResponse() ? evaluateChallenge(saslClient, EMPTY_BYTES) : EMPTY_BYTES;
 
-      if (pingOnStartup && !firstPingExecuted) {
-         log.trace("Executing first ping!");
-         firstPingExecuted = true;
+         byte challenge[] = auth(tcpTransport, topologyId, configuration.saslMechanism(), response);
+         while (!saslClient.isComplete() && challenge != null) {
+            response = evaluateChallenge(saslClient, challenge);
+            if (response == null) {
+               break;
+            }
+            challenge = auth(tcpTransport, topologyId, "", response);
+         }
 
-         // Don't ignore exceptions from ping() command, since
-         // they indicate that the transport instance is invalid.
-         ping(tcpTransport, topologyId);
+         /*String qop = (String) saslClient.getNegotiatedProperty(Sasl.QOP);
+         if (qop != null && (qop.equalsIgnoreCase(AUTH_INT) || qop.equalsIgnoreCase(AUTO_CONF))) {
+            tcpTransport.setSaslClient(saslClient);
+         } else {*/
+         saslClient.dispose();
+
+         if (pingOnStartup && !firstPingExecuted) {
+            log.trace("Executing first ping!");
+            firstPingExecuted = true;
+
+            // Don't ignore exceptions from ping() command, since
+            // they indicate that the transport instance is invalid.
+            ping(tcpTransport, topologyId);
+         }
+      } catch (Exception e) {
+         log.debug("Exception during transport authentization", e);
+         if (tcpTransport != null) destroyObject(address, tcpTransport);
+         throw e;
       }
       return tcpTransport;
    }
@@ -126,12 +137,12 @@ public class SaslTransportObjectFactory extends TransportObjectFactory {
 
    private List<String> mechList(TcpTransport tcpTransport, AtomicInteger topologyId) {
       AuthMechListOperation op = new AuthMechListOperation(codec, topologyId, tcpTransport);
-      return op.execute();
+      return op.executeSync();
    }
 
    private byte[] auth(TcpTransport tcpTransport, AtomicInteger topologyId, String mech, byte[] response) {
       AuthOperation op = new AuthOperation(codec, topologyId, tcpTransport, mech, response);
-      return op.execute();
+      return op.executeSync();
    }
 
    public static final class NoOpCallbackHandler implements CallbackHandler {
