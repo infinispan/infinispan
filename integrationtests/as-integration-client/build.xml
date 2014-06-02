@@ -1,0 +1,94 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project default="skipTests">
+   <target name="checkSkip">
+      <condition property="testsSkipped">
+         <or>
+            <isset property="skipTests"/>
+            <isset property="maven.test.skip"/>
+            <isset property="maven.test.skip.exec"/>
+         </or>
+      </condition>
+   </target>
+   
+   <target name="create_distro" depends="checkSkip" unless="testsSkipped">
+      <echo message="Creating test server distro at ${server.dist}"/>
+      <echo message="Using distribution ${server.build.dist}"/>
+      <copy todir="${server.dist}">
+         <fileset dir="${server.build.dist}"/>
+      </copy>
+      <!-- It happens when you do not specify namespaces in the XSLT templates for the newly added nodes
+           then the IBM jdk transformation is adding empty namespace there - not possible to influence this
+           behaviour by any environmental property - this is a bit workaround for it -->
+      <echo message="Removing empty xmlns attributes (xmlns='') which IBM JDK could produce"/>
+      <replace dir="target" value="">
+         <include name="server/standalone/configuration/**/*.xml"/>
+         <replacetoken><![CDATA[xmlns=""]]></replacetoken>
+      </replace>
+   </target>
+
+   <target name="start_server" depends="checkSkip" unless="testsSkipped">
+      <echo>Starting Infinispan server from ${server.dist}</echo>
+      <exec dir="${server.dist}/bin" executable="chmod" osfamily="unix">
+         <arg value="+x"/>
+         <arg value="../bin"/>
+         <arg value="standalone.sh"/>
+      </exec>
+      <exec executable="${server.dist}/bin/standalone.sh" osfamily="unix" spawn="true">
+         <env key="JAVA_OPTS" value="${server.jvm.args} -Djboss.socket.binding.port-offset=0 -Djboss.node.name=ispn-server"/>
+         <env key="JBOSS_HOME" value="${server.dist}"/>
+      </exec>
+      <exec executable="${server.dist}/bin/standalone.bat" osfamily="windows" spawn="true">
+         <env key="JAVA_OPTS" value="${server.jvm.args} -Djboss.socket.binding.port-offset=0 -Djboss.node.name=ispn-server"/>
+         <env key="JBOSS_HOME" value="${server.dist}"/>
+      </exec>
+      <echo>Waiting for Infinispan server to start</echo>
+      <waitfor maxwait="15" maxwaitunit="second" checkevery="1" checkeveryunit="second">
+         <and>
+            <socket server="127.0.0.1" port="9999"/>
+            <socket server="127.0.0.1" port="11222"/>
+         </and>
+      </waitfor>
+      <echo message="Infinispan server started"/>
+   </target>
+
+   <target name="kill_server" depends="checkSkip" unless="testsSkipped">
+      <exec executable="${server.jvm}/bin/jps" output="jps.pid" osfamily="unix"/>
+      <loadfile srcfile="jps.pid" property="pid" failonerror="false">
+         <filterchain>
+            <linecontains>
+               <contains value="jboss-modules.jar"/>
+            </linecontains>
+            <tokenfilter>
+               <deletecharacters chars="jboss-modules.jar"/>
+               <ignoreblank/>
+            </tokenfilter>
+            <striplinebreaks/>
+         </filterchain>
+      </loadfile>
+      <exec executable="netstat" output="jps.pid" osfamily="windows">
+         <arg line="-aon"/>
+      </exec>
+      <loadfile srcfile="jps.pid" property="pid" failonerror="false">
+         <filterchain>
+            <linecontains>
+               <contains value="LISTENING"/>
+               <contains value=":11222"/>
+            </linecontains>
+            <tokenfilter>
+               <replaceregex pattern=".*LISTENING([ \t]+)([0-9]+)" replace="\2"
+                             flags="gi"/>
+               <ignoreblank/>
+            </tokenfilter>
+            <striplinebreaks/>
+         </filterchain>
+      </loadfile>
+      <echo message="Killing Infinispan server with PID - ${pid}"/>
+      <exec executable="kill" osfamily="unix">
+         <arg line="-9 ${pid}"/>
+      </exec>
+      <exec executable="taskkill" osfamily="windows">
+         <arg line="/F /T /PID ${pid}"/>
+      </exec>
+      <delete file="jps.pid"/>
+   </target>
+</project>
