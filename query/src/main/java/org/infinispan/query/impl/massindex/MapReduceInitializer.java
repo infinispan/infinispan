@@ -22,23 +22,20 @@ public class MapReduceInitializer implements MapReduceTaskLifecycle {
 
    @Override
    public <KIn, VIn, KOut, VOut> void onPostExecute(Mapper<KIn, VIn, KOut, VOut> mapper) {
-      //nothing to do
+      if (mapper instanceof IndexingMapper) {
+         IndexingMapper im = (IndexingMapper) mapper;
+         im.flush();
+      }
    }
 
    @Override
    public <KOut, VOut> void onPreExecute(Reducer<KOut, VOut> reducer, Cache<?, ?> inputCache) {
-      if (reducer instanceof IndexingReducer) {
-         IndexingReducer im = (IndexingReducer) reducer;
-         im.initialize(inputCache);
-      }
+      //nothing to do
    }
 
    @Override
    public <KOut, VOut> void onPostExecute(Reducer<KOut, VOut> reducer) {
-      if (reducer instanceof IndexingReducer) {
-         IndexingReducer im = (IndexingReducer) reducer;
-         im.flush();
-      }
+      //nothing to do
    }
 
 }
