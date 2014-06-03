@@ -11,7 +11,7 @@ import java.util.concurrent.Callable;
 
 import org.infinispan.commons.equivalence.ByteArrayEquivalence;
 
-import static org.infinispan.server.test.util.TestUtil.sleepForSecs;
+import static org.infinispan.server.test.util.ITestUtils.sleepForSecs;
 
 /**
  * @author <a href="mailto:mgencur@redhat.com">Martin Gencur</a>
