@@ -84,16 +84,19 @@ public class CacheAuthorizationTest extends SingleCacheManagerTest {
       });
    }
 
-   @Test(invocationCount = 1000)
    public void testAllCombinations() throws Exception {
       Method[] allMethods = SecureCache.class.getMethods();
       Set<String> methodNames = new HashSet<String>();
+   collectmethods:
       for (Method m : allMethods) {
          StringBuilder s = new StringBuilder("test");
          String name = m.getName();
          s.append(name.substring(0, 1).toUpperCase());
          s.append(name.substring(1));
          for (Class<?> p : m.getParameterTypes()) {
+            Package pkg = p.getPackage();
+            if (pkg != null && pkg.getName().startsWith("java.util.function"))
+               continue collectmethods; // Skip methods which use interfaces introduced in JDK8
             s.append("_");
             s.append(p.getSimpleName().replaceAll("\\[\\]", "Array"));
          }
@@ -157,7 +160,6 @@ public class CacheAuthorizationTest extends SingleCacheManagerTest {
                   });
                }
             }
-
          } catch (NoSuchMethodException e) {
             throw new Exception(
                   String.format(
