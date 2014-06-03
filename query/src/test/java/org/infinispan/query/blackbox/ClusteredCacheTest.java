@@ -1,8 +1,10 @@
 package org.infinispan.query.blackbox;
 
-import org.apache.lucene.queryParser.QueryParser;
+import org.apache.lucene.queryparser.classic.QueryParser;
+import org.apache.lucene.search.BooleanQuery;
 import org.apache.lucene.search.Query;
-import org.hibernate.search.FullTextFilter;
+import org.apache.lucene.search.BooleanClause.Occur;
+import org.hibernate.search.filter.FullTextFilter;
 import org.hibernate.search.query.dsl.QueryBuilder;
 import org.infinispan.Cache;
 import org.infinispan.configuration.cache.CacheMode;
@@ -414,16 +416,10 @@ public class ClusteredCacheTest extends MultipleCacheManagersTest {
    public void testClear() throws Exception {
       prepareTestData();
       queryParser = createQueryParser("blurb");
-      luceneQuery = queryParser.parse("eats");
-      cacheQuery = Search.getSearchManager(cache1).getQuery(luceneQuery);
 
-      Query[] queries = new Query[2];
-      queries[0] = luceneQuery;
-
-      luceneQuery = queryParser.parse("playing");
-      queries[1] = luceneQuery;
-
-      Query luceneQuery = queries[0].combine(queries);
+      BooleanQuery luceneQuery = new BooleanQuery();
+      luceneQuery.add(queryParser.parse("eats"), Occur.SHOULD);
+      luceneQuery.add(queryParser.parse("playing"), Occur.SHOULD);
       CacheQuery cacheQuery = Search.getSearchManager(cache1).getQuery(luceneQuery);
       AssertJUnit.assertEquals(3, cacheQuery.getResultSize());
 

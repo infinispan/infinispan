@@ -1,19 +1,19 @@
 package org.infinispan.query.analysis;
 
-import org.apache.solr.analysis.ASCIIFoldingFilterFactory;
-import org.apache.solr.analysis.HTMLStripCharFilterFactory;
-import org.apache.solr.analysis.LengthFilterFactory;
-import org.apache.solr.analysis.LowerCaseFilterFactory;
-import org.apache.solr.analysis.MappingCharFilterFactory;
-import org.apache.solr.analysis.PatternTokenizerFactory;
-import org.apache.solr.analysis.PorterStemFilterFactory;
-import org.apache.solr.analysis.ShingleFilterFactory;
-import org.apache.solr.analysis.SnowballPorterFilterFactory;
-import org.apache.solr.analysis.StandardFilterFactory;
-import org.apache.solr.analysis.StandardTokenizerFactory;
-import org.apache.solr.analysis.StopFilterFactory;
-import org.apache.solr.analysis.SynonymFilterFactory;
-import org.apache.solr.analysis.WordDelimiterFilterFactory;
+import org.apache.lucene.analysis.miscellaneous.ASCIIFoldingFilterFactory;
+import org.apache.lucene.analysis.charfilter.HTMLStripCharFilterFactory;
+import org.apache.lucene.analysis.miscellaneous.LengthFilterFactory;
+import org.apache.lucene.analysis.core.LowerCaseFilterFactory;
+import org.apache.lucene.analysis.charfilter.MappingCharFilterFactory;
+import org.apache.lucene.analysis.pattern.PatternTokenizerFactory;
+import org.apache.lucene.analysis.en.PorterStemFilterFactory;
+import org.apache.lucene.analysis.shingle.ShingleFilterFactory;
+import org.apache.lucene.analysis.snowball.SnowballPorterFilterFactory;
+import org.apache.lucene.analysis.standard.StandardFilterFactory;
+import org.apache.lucene.analysis.standard.StandardTokenizerFactory;
+import org.apache.lucene.analysis.core.StopFilterFactory;
+import org.apache.lucene.analysis.synonym.SynonymFilterFactory;
+import org.apache.lucene.analysis.miscellaneous.WordDelimiterFilterFactory;
 import org.hibernate.search.annotations.Analyzer;
 import org.hibernate.search.annotations.AnalyzerDef;
 import org.hibernate.search.annotations.AnalyzerDefs;
@@ -37,7 +37,6 @@ import org.hibernate.search.annotations.TokenizerDef;
                   @TokenFilterDef(factory = StopFilterFactory.class, params = {
                         @Parameter(name = "words",
                               value = "analysis/stoplist.properties"),
-                        @Parameter(name="resource_charset", value = "UTF-8"),
                         @Parameter(name = "ignoreCase", value = "true")
                   }),
                   @TokenFilterDef(factory = SnowballPorterFilterFactory.class, params = {

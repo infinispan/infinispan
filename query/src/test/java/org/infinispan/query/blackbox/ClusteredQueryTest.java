@@ -5,11 +5,14 @@ import static org.infinispan.query.helper.TestQueryHelperFactory.createQueryPars
 import java.util.List;
 import java.util.NoSuchElementException;
 
-import org.apache.lucene.queryParser.ParseException;
-import org.apache.lucene.queryParser.QueryParser;
-import org.apache.lucene.search.Query;
+import junit.framework.Assert;
+
+import org.apache.lucene.queryparser.classic.ParseException;
+import org.apache.lucene.queryparser.classic.QueryParser;
+import org.apache.lucene.search.BooleanQuery;
 import org.apache.lucene.search.Sort;
 import org.apache.lucene.search.SortField;
+import org.apache.lucene.search.BooleanClause.Occur;
 import org.infinispan.Cache;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
@@ -17,6 +20,7 @@ import org.infinispan.query.CacheQuery;
 import org.infinispan.query.FetchOptions;
 import org.infinispan.query.ResultIterator;
 import org.infinispan.query.Search;
+import org.infinispan.query.SearchManager;
 import org.infinispan.query.test.Person;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.testng.annotations.Test;
@@ -30,17 +34,10 @@ import org.testng.annotations.Test;
 @Test(groups = "functional", testName = "query.blackbox.ClusteredQueryTest")
 public class ClusteredQueryTest extends MultipleCacheManagersTest {
 
+   private final QueryParser queryParser = createQueryParser("blurb");
+
    Cache<String, Person> cacheAMachine1, cacheAMachine2;
-   Person person1;
-   Person person2;
-   Person person3;
-   Person person4;
-   QueryParser queryParser;
-   Query luceneQuery;
    CacheQuery cacheQuery;
-   final String key1 = "Navin";
-   final String key2 = "BigGoat";
-   final String key3 = "MiniGoat";
 
    public ClusteredQueryTest() {
       // BasicConfigurator.configure();
@@ -71,28 +68,28 @@ public class ClusteredQueryTest extends MultipleCacheManagersTest {
    }
 
    protected void prepareTestData() {
-      person1 = new Person();
+      Person person1 = new Person();
       person1.setName("NavinSurtani");
       person1.setBlurb("Likes playing WoW");
       person1.setAge(45);
 
-      person2 = new Person();
+      Person person2 = new Person();
       person2.setName("BigGoat");
       person2.setBlurb("Eats grass");
       person2.setAge(30);
 
-      person3 = new Person();
+      Person person3 = new Person();
       person3.setName("MiniGoat");
       person3.setBlurb("Eats cheese");
       person3.setAge(35);
 
       // Put the 3 created objects in the cache1.
 
-      cacheAMachine2.put(key1, person1);
-      cacheAMachine1.put(key2, person2);
-      cacheAMachine1.put(key3, person3);
+      cacheAMachine2.put("Navin", person1);
+      cacheAMachine1.put("BigGoat", person2);
+      cacheAMachine1.put("MiniGoat", person3);
 
-      person4 = new Person();
+      Person person4 = new Person();
       person4.setName("MightyGoat");
       person4.setBlurb("Also eats grass");
       person4.setAge(66);
@@ -104,7 +101,7 @@ public class ClusteredQueryTest extends MultipleCacheManagersTest {
       populateCache();
 
       // applying sort
-      SortField sortField = new SortField("age", SortField.INT);
+      SortField sortField = new SortField("age", SortField.Type.INT);
       Sort sort = new Sort(sortField);
       cacheQuery.sort(sort);
 
@@ -138,17 +135,29 @@ public class ClusteredQueryTest extends MultipleCacheManagersTest {
       }
    }
 
+   public void testLocalQuery() throws ParseException {
+      populateCache();
+
+      final SearchManager searchManager1 = Search.getSearchManager(cacheAMachine1);
+      final CacheQuery localQuery1 = searchManager1.getQuery(createLuceneQuery());
+      Assert.assertEquals(3, localQuery1.getResultSize());
+
+      final SearchManager searchManager2 = Search.getSearchManager(cacheAMachine2);
+      final CacheQuery localQuery2 = searchManager2.getQuery(createLuceneQuery());
+      Assert.assertEquals(1, localQuery2.getResultSize());
+   }
+
    public void testEagerOrdered() throws ParseException {
       populateCache();
 
       // applying sort
-      SortField sortField = new SortField("age", SortField.INT);
+      SortField sortField = new SortField("age", SortField.Type.INT);
       Sort sort = new Sort(sortField);
       cacheQuery.sort(sort);
 
       ResultIterator iterator = cacheQuery.iterator(new FetchOptions().fetchMode(FetchOptions.FetchMode.EAGER));
       try {
-         assert cacheQuery.getResultSize() == 4 : cacheQuery.getResultSize();
+         Assert.assertEquals(4, cacheQuery.getResultSize());
 
          int previousAge = 0;
          while (iterator.hasNext()) {
@@ -196,7 +205,7 @@ public class ClusteredQueryTest extends MultipleCacheManagersTest {
       populateCache();
 
       // applying sort
-      SortField sortField = new SortField("age", SortField.INT);
+      SortField sortField = new SortField("age", SortField.Type.INT);
       Sort sort = new Sort(sortField);
       cacheQuery.sort(sort);
 
@@ -213,7 +222,7 @@ public class ClusteredQueryTest extends MultipleCacheManagersTest {
    
    public void testGetResultSizeList() throws ParseException {
       populateCache();
-      assert cacheQuery.getResultSize() == 4 : cacheQuery.getResultSize();
+      Assert.assertEquals(4, cacheQuery.getResultSize());
    }
 
    public void testPagination() throws ParseException {
@@ -223,29 +232,28 @@ public class ClusteredQueryTest extends MultipleCacheManagersTest {
       cacheQuery.maxResults(1);
 
       // applying sort
-      SortField sortField = new SortField("age", SortField.INT);
+      SortField sortField = new SortField("age", SortField.Type.INT);
       Sort sort = new Sort(sortField);
       cacheQuery.sort(sort);
 
       List<Object> results = cacheQuery.list();
-      assert results.size() == 1;
-      assert cacheQuery.getResultSize() == 4;
-      assert ((Person) (results.get(0))).getAge() == 45;
+      Assert.assertEquals(1, results.size());
+      Assert.assertEquals(4, cacheQuery.getResultSize());
+      Person result = (Person) results.get(0);
+      Assert.assertEquals(45, result.getAge());
    }
 
    private void populateCache() throws ParseException {
       prepareTestData();
-      Query[] queries = new Query[2];
-      queryParser = createQueryParser("blurb");
 
-      luceneQuery = queryParser.parse("eats");
-      queries[0] = luceneQuery;
+      cacheQuery = Search.getSearchManager(cacheAMachine1).getClusteredQuery(createLuceneQuery());
+   }
 
-      luceneQuery = queryParser.parse("playing");
-      queries[1] = luceneQuery;
-
-      luceneQuery = luceneQuery.combine(queries);
-      cacheQuery = Search.getSearchManager(cacheAMachine1).getClusteredQuery(luceneQuery);
+   private BooleanQuery createLuceneQuery() throws ParseException {
+      BooleanQuery luceneQuery = new BooleanQuery();
+      luceneQuery.add(queryParser.parse("eats"), Occur.SHOULD);
+      luceneQuery.add(queryParser.parse("playing"), Occur.SHOULD);
+      return luceneQuery;
    }
 
 }

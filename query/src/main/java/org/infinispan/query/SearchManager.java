@@ -1,7 +1,7 @@
 package org.infinispan.query;
 
 import org.apache.lucene.search.Query;
-import org.hibernate.search.SearchFactory;
+import org.hibernate.search.engine.SearchFactory;
 import org.hibernate.search.query.dsl.EntityContext;
 import org.infinispan.query.dsl.QueryFactory;
 import org.infinispan.query.dsl.embedded.LuceneQuery;

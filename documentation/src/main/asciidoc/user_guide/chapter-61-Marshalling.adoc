@@ -434,6 +434,7 @@ This is the list of Externalizer identifiers that are used by Infinispan based m
 |Infinispan Lucene Directory:|1300 - 1399
 |Hibernate OGM:|1400 - 1499
 |Hibernate Search:|1500 - 1599
+|Infinispan Query Module:|1600 - 1699
 |===============
 
 

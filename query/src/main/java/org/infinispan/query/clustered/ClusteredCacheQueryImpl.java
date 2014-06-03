@@ -11,7 +11,7 @@ import java.util.concurrent.TimeUnit;
 import org.apache.lucene.search.Query;
 import org.apache.lucene.search.Sort;
 import org.apache.lucene.search.SortField;
-import org.hibernate.search.SearchException;
+import org.hibernate.search.exception.SearchException;
 import org.hibernate.search.spi.SearchFactoryIntegrator;
 import org.infinispan.AdvancedCache;
 import org.infinispan.factories.KnownComponentNames;
@@ -103,7 +103,7 @@ public class ClusteredCacheQueryImpl extends CacheQueryImpl {
             ClusteredQueryCommand command = ClusteredQueryCommand.createEagerIterator(hSearchQuery, cache);
             HashMap<UUID, ClusteredTopDocs> topDocsResponses = broadcastQuery(command);
 
-            return new DistributedIterator(deepCopy(sort),
+            return new DistributedIterator(sort,
                   fetchOptions.getFetchSize(), this.resultSize, maxResults,
                   firstResult, topDocsResponses, cache);
          }
@@ -113,24 +113,13 @@ public class ClusteredCacheQueryImpl extends CacheQueryImpl {
             HashMap<UUID, ClusteredTopDocs> topDocsResponses = broadcastQuery(command);
 
             // Make a sort copy to avoid reversed results
-            return new DistributedLazyIterator(deepCopy(sort),
+            return new DistributedLazyIterator(sort,
                   fetchOptions.getFetchSize(), this.resultSize, maxResults,
                   firstResult, lazyItId, topDocsResponses, asyncExecutor, cache);
          }
          default:
             throw new IllegalArgumentException("Unknown FetchMode " + fetchOptions.getFetchMode());
       }
-   }
-
-   private Sort deepCopy(Sort sort) {
-      if (sort == null) return null;
-
-      SortField[] fields = sort.getSort();
-      SortField[] copyFields = new SortField[fields.length];
-      for (int i = 0; i < copyFields.length; i++)
-         copyFields[i] = Util.cloneWithMarshaller(marshaller, fields[i]);
-
-      return new Sort(copyFields);
    }
 
    // number of results of each node of cluster
@@ -145,10 +134,8 @@ public class ClusteredCacheQueryImpl extends CacheQueryImpl {
       int resultSize = 0;
       List<QueryResponse> responses = invoker.broadcast(command);
 
-      for (Object response : responses) {
-         QueryResponse queryResponse = (QueryResponse) response;
-         ClusteredTopDocs topDocs = new ClusteredTopDocs(queryResponse.getTopDocs(),
-                  queryResponse.getNodeUUID());
+      for (QueryResponse queryResponse : responses) {
+         ClusteredTopDocs topDocs = new ClusteredTopDocs(queryResponse.getTopDocs(), queryResponse.getNodeUUID());
 
          resultSize += queryResponse.getResultSize();
          topDocs.setNodeAddress(queryResponse.getAddress());

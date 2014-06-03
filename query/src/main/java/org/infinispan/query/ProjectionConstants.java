@@ -5,10 +5,10 @@ package org.infinispan.query;
  */
 public interface ProjectionConstants {
 
-   String ID = org.hibernate.search.ProjectionConstants.ID;
+   String ID = org.hibernate.search.engine.ProjectionConstants.ID;
 
    String KEY = "__ISPN_Key";
 
-   String VALUE = org.hibernate.search.ProjectionConstants.THIS;
+   String VALUE = org.hibernate.search.engine.ProjectionConstants.THIS;
 
 }

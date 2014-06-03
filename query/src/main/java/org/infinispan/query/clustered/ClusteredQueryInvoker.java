@@ -12,7 +12,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 
-import org.hibernate.search.SearchException;
+import org.hibernate.search.exception.SearchException;
 import org.infinispan.Cache;
 import org.infinispan.remoting.responses.Response;
 import org.infinispan.remoting.responses.SuccessfulResponse;
@@ -22,7 +22,7 @@ import org.infinispan.remoting.rpc.RpcOptions;
 import org.infinispan.remoting.transport.Address;
 
 /**
- * Invoke a CusteredQueryCommand on the cluster, including on own node.
+ * Invoke a ClusteredQueryCommand on the cluster, including on own node.
  * 
  * @author Israel Lacerra <israeldl@gmail.com>
  * @author Sanne Grinovero <sanne@infinispan.org> (C) 2011 Red Hat Inc.
@@ -31,23 +31,17 @@ import org.infinispan.remoting.transport.Address;
 public class ClusteredQueryInvoker {
 
    private final RpcManager rpcManager;
-
    private final Cache<?, ?> localCacheInstance;
-
    private final Address myAddress;
-
-   private ExecutorService asyncExecutor;
-
+   private final ExecutorService asyncExecutor;
    private final RpcOptions rpcOptions;
 
    ClusteredQueryInvoker(Cache<?, ?> localCacheInstance, ExecutorService asyncExecutor) {
       this.asyncExecutor = asyncExecutor;
-      this.rpcManager = localCacheInstance.getAdvancedCache().getComponentRegistry()
-               .getLocalComponent(RpcManager.class);
+      this.rpcManager = localCacheInstance.getAdvancedCache().getComponentRegistry().getLocalComponent(RpcManager.class);
       this.localCacheInstance = localCacheInstance;
       this.myAddress = localCacheInstance.getAdvancedCache().getRpcManager().getAddress();
-      rpcOptions = rpcManager.getRpcOptionsBuilder(ResponseMode.SYNCHRONOUS).timeout(10000, TimeUnit.MILLISECONDS).build();
-
+      this.rpcOptions = rpcManager.getRpcOptionsBuilder(ResponseMode.SYNCHRONOUS).timeout(10000, TimeUnit.MILLISECONDS).build();
    }
 
    /**

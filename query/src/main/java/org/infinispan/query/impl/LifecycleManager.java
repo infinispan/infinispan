@@ -8,7 +8,7 @@ import java.util.TreeMap;
 import javax.management.MBeanServer;
 import javax.management.ObjectName;
 
-import org.hibernate.search.Environment;
+import org.hibernate.search.cfg.Environment;
 import org.hibernate.search.cfg.SearchMapping;
 import org.hibernate.search.cfg.spi.SearchConfiguration;
 import org.hibernate.search.spi.SearchFactoryBuilder;
@@ -17,6 +17,7 @@ import org.infinispan.AdvancedCache;
 import org.infinispan.Cache;
 import org.infinispan.commons.CacheException;
 import org.infinispan.commons.util.ServiceFinder;
+import org.infinispan.commons.marshall.AdvancedExternalizer;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.cache.CustomInterceptorsConfigurationBuilder;
@@ -39,6 +40,17 @@ import org.infinispan.query.backend.LocalQueryInterceptor;
 import org.infinispan.query.backend.QueryInterceptor;
 import org.infinispan.query.backend.SearchableCacheConfiguration;
 import org.infinispan.query.clustered.QueryBox;
+import org.infinispan.query.impl.externalizers.ClusteredTopDocsExternalizer;
+import org.infinispan.query.impl.externalizers.ExternalizerIds;
+import org.infinispan.query.impl.externalizers.LuceneBooleanQueryExternalizer;
+import org.infinispan.query.impl.externalizers.LuceneFieldDocExternalizer;
+import org.infinispan.query.impl.externalizers.LuceneScoreDocExternalizer;
+import org.infinispan.query.impl.externalizers.LuceneSortExternalizer;
+import org.infinispan.query.impl.externalizers.LuceneSortFieldExternalizer;
+import org.infinispan.query.impl.externalizers.LuceneTermExternalizer;
+import org.infinispan.query.impl.externalizers.LuceneTermQueryExternalizer;
+import org.infinispan.query.impl.externalizers.LuceneTopDocsExternalizer;
+import org.infinispan.query.impl.externalizers.LuceneTopFieldDocsExternalizer;
 import org.infinispan.query.impl.massindex.MapReduceMassIndexer;
 import org.infinispan.query.logging.Log;
 import org.infinispan.query.spi.ProgrammaticSearchMappingProvider;
@@ -277,6 +289,21 @@ public class LifecycleManager extends AbstractModuleLifecycle {
       }
 
       cfg.customInterceptors().interceptors(builder.build().customInterceptors().interceptors());
+   }
+
+   @Override
+   public void cacheManagerStarting(GlobalComponentRegistry gcr, GlobalConfiguration globalCfg) {
+      Map<Integer,AdvancedExternalizer<?>> externalizerMap = globalCfg.serialization().advancedExternalizers();
+      externalizerMap.put(ExternalizerIds.LUCENE_QUERY_BOOLEAN, new LuceneBooleanQueryExternalizer());
+      externalizerMap.put(ExternalizerIds.LUCENE_QUERY_TERM, new LuceneTermQueryExternalizer());
+      externalizerMap.put(ExternalizerIds.LUCENE_TERM, new LuceneTermExternalizer());
+      externalizerMap.put(ExternalizerIds.LUCENE_SORT, new LuceneSortExternalizer());
+      externalizerMap.put(ExternalizerIds.LUCENE_SORT_FIELD, new LuceneSortFieldExternalizer());
+      externalizerMap.put(ExternalizerIds.CLUSTERED_QUERY_TOPDOCS, new ClusteredTopDocsExternalizer());
+      externalizerMap.put(ExternalizerIds.LUCENE_TOPDOCS, new LuceneTopDocsExternalizer());
+      externalizerMap.put(ExternalizerIds.LUCENE_FIELD_SCORE_DOC, new LuceneFieldDocExternalizer());
+      externalizerMap.put(ExternalizerIds.LUCENE_SCORE_DOC, new LuceneScoreDocExternalizer());
+      externalizerMap.put(ExternalizerIds.LUCENE_TOPFIELDDOCS, new LuceneTopFieldDocsExternalizer());
    }
 
 }

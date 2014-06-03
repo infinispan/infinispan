@@ -12,16 +12,14 @@ import org.apache.lucene.search.ScoreDoc;
  * @author Israel Lacerra <israeldl@gmail.com>
  * @since 5.1
  */
-public class ClusteredScoreDoc extends ScoreDoc implements ClusteredDoc {
-
-   private static final long serialVersionUID = -951189455330773036L;
+public final class ClusteredScoreDoc implements ClusteredDoc {
 
    private final UUID nodeUuid;
-
    private final int index;
+   private final ScoreDoc scoreDoc;
 
    public ClusteredScoreDoc(ScoreDoc scoreDoc, UUID nodeUuid, int index) {
-      super(scoreDoc.doc, scoreDoc.score);
+      this.scoreDoc = scoreDoc;
       this.nodeUuid = nodeUuid;
       this.index = index;
    }
