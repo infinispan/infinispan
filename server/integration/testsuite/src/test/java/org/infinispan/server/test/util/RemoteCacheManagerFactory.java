@@ -47,7 +47,7 @@ public class RemoteCacheManagerFactory {
     }
 
     private RemoteCacheManager createManager(RemoteInfinispanServer server, String protocolVersion) {
-        return addToCollection(TestUtil.createCacheManager(server, protocolVersion));
+        return addToCollection(ITestUtils.createCacheManager(server, protocolVersion));
     }
 
     private RemoteCacheManager addToCollection(RemoteCacheManager rcm) {
