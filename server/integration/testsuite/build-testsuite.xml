@@ -174,7 +174,7 @@
                    modifyRemoteDestination="${other.parts}/rcs-remote-destination.xml"
                    modifyInfinispan="${infinispan.parts}/rolling-upgrades-clustered.xml"
                    infinispanServerEndpoint="${other.parts}/rolling-upgrades-server-endpoint.xml"
-                   addNewHotrodSocketBinding="true"/>
+                   addNewHotrodSocketBinding="${other.parts}/socket-binding-hotrod-store.xml"/>
         <transform in="examples/standalone-rest-rolling-upgrade.xml" out="examples/standalone-rest-rolling-upgrade.xml"
                    modifyRemoteDestination="${other.parts}/rest-remote-destination.xml" removeRestSecurity="true"/>
         <transform in="examples/standalone-compatibility-mode.xml" out="examples/standalone-compatibility-mode.xml"/>
@@ -336,7 +336,6 @@
         <attribute name="infinispanServerEndpoint" default="false"/>
         <attribute name="infinispanFile" default="false"/>
         <attribute name="filtering" default="false"/>
-        <attribute name="addAuth" default="false"/>
         <attribute name="addEncrypt" default="false"/>
         <attribute name="hotrodAuth" default="false"/>
     	<attribute name="addKrbOpts" default="false"/>
@@ -351,7 +350,6 @@
                 <param name="modifyDataSource" expression="@{modifyDataSource}"/>
                 <param name="modifyStack" expression="@{modifyStack}"/>
                 <param name="modifyRelay" expression="@{modifyRelay}"/>
-                <param name="addAuth" expression="@{addAuth}"/>
                 <param name="addEncrypt" expression="@{addEncrypt}"/>
                 <param name="hotrodAuth" expression="@{hotrodAuth}"/>
             	<param name="addKrbOpts" expression="@{addKrbOpts}"/>
