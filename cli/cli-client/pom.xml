@@ -51,7 +51,7 @@
             <configuration>
                 <reuseForks>false</reuseForks>
                 <forkCount>1</forkCount>
-                <parallel>false</parallel>
+                <parallel>none</parallel>
             </configuration>
          </plugin>
          <plugin>

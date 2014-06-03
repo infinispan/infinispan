@@ -67,7 +67,7 @@
             <configuration>
                <reuseForks>true</reuseForks>
                <forkCount>1</forkCount>
-               <parallel>false</parallel>
+               <parallel>none</parallel>
                <groups>${defaultTestGroup}</groups>
             </configuration>
          </plugin>
