@@ -629,7 +629,7 @@ class IntegrationTest extends RestServerTestBase {
       val put = new PostMethod(fullPathKey)
       put.setRequestEntity(new StringRequestEntity("data", "application/text", "UTF-8"))
       call(put)
-      assertEquals(HttpServletResponse.SC_OK, put.getStatusCode)
+      assertEquals(HttpServletResponse.SC_NOT_FOUND, put.getStatusCode)
    }
 
    def testByteArrayAsSerializedObjects(m: Method) {

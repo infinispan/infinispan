@@ -120,7 +120,7 @@ public class RemoteCacheManagerTest extends SingleCacheManagerTest {
       remoteCacheManager = new RemoteCacheManager(p, false);
       assert !remoteCacheManager.isStarted();
       remoteCacheManager.start();
-      assert null != remoteCacheManager.getCache("Undefined1234");
+      assert null == remoteCacheManager.getCache("Undefined1234");
    }
 
    private void assertWorks(RemoteCacheManager remoteCacheManager) {

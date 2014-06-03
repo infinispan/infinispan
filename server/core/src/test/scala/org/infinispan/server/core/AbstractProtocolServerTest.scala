@@ -63,13 +63,15 @@ class AbstractProtocolServerTest {
 
       override def startInternal(configuration: MockServerConfiguration, cacheManager: EmbeddedCacheManager) {
          super.startInternal(configuration, cacheManager)
-         this.tcpNoDelay = configuration.tcpNoDelay
       }
 
       override def getEncoder = null
 
       override def getDecoder = null
 
+      override def startTransport {
+         this.tcpNoDelay = configuration.tcpNoDelay
+      }
    }
 
 }
