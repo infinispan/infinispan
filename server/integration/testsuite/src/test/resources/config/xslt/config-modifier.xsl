@@ -1,14 +1,17 @@
 <xsl:stylesheet version="1.0"
                 xmlns:xsl="http://www.w3.org/1999/XSL/Transform"
-                xmlns:logging="urn:jboss:domain:logging:1.2"
                 xmlns:p="urn:jboss:domain:1.4"
-                xmlns:jgroups="urn:jboss:domain:jgroups:1.2"
-                xmlns:core="urn:infinispan:server:core:7.0"
-                xmlns:threads="urn:jboss:domain:threads:1.1"
-                xmlns:security="urn:jboss:domain:security:1.2"
-                xmlns:datasources="urn:jboss:domain:datasources:1.1"
-                xmlns:endpoint="urn:infinispan:server:endpoint:7.0">
+                xmlns:logging="urn:jboss:domain:logging:1.2">
     <xsl:output method="xml" indent="yes" omit-xml-declaration="yes"/>
+
+    <!--Variables of namespaces to be changed-->
+    <xsl:variable name="nsLogging">urn:jboss:domain:logging:</xsl:variable>
+    <xsl:variable name="nsJGroups">urn:jboss:domain:jgroups:</xsl:variable>
+    <xsl:variable name="nsCore">urn:infinispan:server:core:</xsl:variable>
+    <xsl:variable name="nsThreads">urn:jboss:domain:threads:</xsl:variable>
+    <xsl:variable name="nsSecurity">urn:jboss:domain:security:</xsl:variable>
+    <xsl:variable name="nsDatasources">urn:jboss:domain:datasources:</xsl:variable>
+    <xsl:variable name="nsEndpoint">urn:infinispan:server:endpoint:</xsl:variable>
 
     <!-- Parameter declarations with defaults set -->
     <xsl:param name="modifyInfinispan">false</xsl:param>
@@ -21,6 +24,7 @@
     <xsl:param name="modifyOutboundSocketBindingHotRod">false</xsl:param>
     <xsl:param name="addHotrodSocketBinding">false</xsl:param>
     <xsl:param name="addNewHotrodSocketBinding">false</xsl:param>
+    <xsl:param name="addNewRestSocketBinding">false</xsl:param>
     <xsl:param name="removeRestSecurity">true</xsl:param>
     <xsl:param name="infinispanServerEndpoint">false</xsl:param>
     <xsl:param name="infinispanFile">none</xsl:param>
@@ -39,7 +43,7 @@
         </xsl:copy>
     </xsl:template>
 
-    <xsl:template match="core:subsystem">
+    <xsl:template match="//*[local-name()='subsystem' and starts-with(namespace-uri(), $nsCore)]">
         <xsl:if test="$modifyInfinispan = 'false'">
             <xsl:call-template name="copynode"/>
         </xsl:if>
@@ -48,7 +52,7 @@
         </xsl:if>
     </xsl:template>
 
-    <xsl:template match="threads:subsystem">
+    <xsl:template match="//*[local-name()='subsystem' and starts-with(namespace-uri(), $nsThreads)]">
         <xsl:if test="$modifyThreads = 'false'">
             <xsl:call-template name="copynode"/>
         </xsl:if>
@@ -58,7 +62,7 @@
     </xsl:template>
 
     <!-- used when the datasource subsystem is already present and needs to be changed - it is then replaced with the provided file -->
-    <xsl:template match="datasources:subsystem">
+    <xsl:template match="//*[local-name()='subsystem' and starts-with(namespace-uri(), $nsDatasources)]">
         <xsl:if test="$modifyDataSource = 'false'">
             <xsl:call-template name="copynode"/>
         </xsl:if>
@@ -143,7 +147,7 @@
     <xsl:template match="logging:subsystem/logging:console-handler[@name = 'CONSOLE']/logging:level"/>
     <xsl:template match="logging:subsystem/logging:periodic-rotating-file-handler[@name = 'FILE']/logging:level"/>
 
-    <xsl:template match="jgroups:relay">
+    <xsl:template match="//*[local-name()='subsystem' and starts-with(namespace-uri(), $nsJGroups)]//*[local-name()='relay']">
         <xsl:if test="$modifyRelay = 'false'">
             <xsl:call-template name="copynode"/>
         </xsl:if>
@@ -152,17 +156,7 @@
         </xsl:if>
     </xsl:template>
 
-    <xsl:template match="jgroups:protocol[contains(@type,'GMS')]">
-        <xsl:if test="$addAuth = 'false'">
-            <xsl:call-template name="copynode"/>
-        </xsl:if>
-        <xsl:if test="$addAuth != 'false'">
-            <xsl:copy-of select="document($addAuth)"/>
-            <xsl:call-template name="copynode"/>
-        </xsl:if>
-    </xsl:template>
-
-    <xsl:template match="jgroups:protocol[contains(@type,'STABLE')]">
+    <xsl:template match="//*[local-name()='subsystem' and starts-with(namespace-uri(), $nsJGroups)]//*[local-name()='protocol'][contains(@type,'STABLE')]">
         <xsl:if test="$addEncrypt = 'false'">
             <xsl:call-template name="copynode"/>
         </xsl:if>
@@ -171,7 +165,7 @@
             <xsl:call-template name="copynode"/>
         </xsl:if>
     </xsl:template>
-    
+
     <xsl:template match="p:extensions">
         <xsl:if test="$addKrbOpts = 'false'">
             <xsl:call-template name="copynode"/>
@@ -181,16 +175,17 @@
             <xsl:copy-of select="document($addKrbOpts)"/>
         </xsl:if>
     </xsl:template>
-    
-    <xsl:template match="security:subsystem/security:security-domains">
+
+    <xsl:template match="//*[local-name()='subsystem' and starts-with(namespace-uri(), $nsSecurity)]
+                 /*[local-name()='security-domains']">
         <xsl:if test="$addKrbSecDomain = 'false'">
             <xsl:call-template name="copynode"/>
         </xsl:if>
         <xsl:if test="$addKrbSecDomain != 'false'">
-            <xsl:copy> 
-               <xsl:copy-of select="document($addKrbSecDomain)"/>
-               <xsl:apply-templates select="@* | node()" /> 
-            </xsl:copy> 
+            <xsl:copy>
+                <xsl:copy-of select="document($addKrbSecDomain)"/>
+                <xsl:apply-templates select="@* | node()"/>
+            </xsl:copy>
         </xsl:if>
     </xsl:template>
 
@@ -212,17 +207,6 @@
         </xsl:if>
     </xsl:template>
 
-    <!-- outbound-socket-binding remote-store-hotrod-server -->
-    <!--<xsl:template match="p:remote-destination[@host='remote-host']">-->
-    <xsl:template match="p:outbound-socket-binding[@name='remote-store-hotrod-server']">
-        <xsl:if test="$modifyOutboundSocketBindingHotRod = 'false'">
-            <xsl:call-template name="copynode"/>
-        </xsl:if>
-        <xsl:if test="$modifyOutboundSocketBindingHotRod != 'false'">
-            <xsl:copy-of select="document($modifyOutboundSocketBindingHotRod)"/>
-        </xsl:if>
-    </xsl:template>
-
     <xsl:template match="p:socket-binding[@name='hotrod']">
         <xsl:if test="$addHotrodSocketBinding = 'false'">
             <xsl:call-template name="copynode"/>
@@ -233,34 +217,7 @@
         </xsl:if>
     </xsl:template>
 
-    <xsl:template match="p:socket-binding[position()=last() and position()!=1]">
-        <xsl:if test="$addNewHotrodSocketBinding = 'false'">
-            <xsl:call-template name="copynode"/>
-        </xsl:if>
-        <xsl:if test="$addNewHotrodSocketBinding != 'false'">
-            <xsl:copy-of select="."/>
-            <xsl:element name="outbound-socket-binding">
-                <xsl:attribute name="name">
-                    <xsl:value-of select="node()"/>
-                    <xsl:text>remote-store-hotrod-server</xsl:text>
-                </xsl:attribute>
-                <xsl:apply-templates/>
-                <xsl:element name="remote-destination">
-                    <xsl:attribute name="host">
-                        <xsl:value-of select="node()"/>
-                        <xsl:text>127.0.0.1</xsl:text>
-                    </xsl:attribute>
-                    <xsl:attribute name="port">
-                        <xsl:value-of select="node()"/>
-                        <xsl:text>${remote.destination.port:11222}</xsl:text>
-                    </xsl:attribute>
-                    <xsl:apply-templates/>
-                </xsl:element>
-            </xsl:element>
-        </xsl:if>
-    </xsl:template>
-
-    <xsl:template match="endpoint:subsystem">
+    <xsl:template match="//*[local-name()='subsystem' and starts-with(namespace-uri(), $nsEndpoint)]">
         <xsl:if test="$infinispanServerEndpoint = 'false'">
             <xsl:call-template name="copynode"/>
         </xsl:if>
@@ -269,7 +226,7 @@
         </xsl:if>
     </xsl:template>
 
-    <xsl:template match="endpoint:subsystem/endpoint:rest-connector">
+    <xsl:template match="//*[local-name()='subsystem' and starts-with(namespace-uri(), $nsEndpoint)]/*[local-name()='rest-connector']">
         <xsl:if test="$removeRestSecurity != 'true'">
             <xsl:call-template name="copynode"/>
         </xsl:if>
@@ -281,7 +238,7 @@
         </xsl:if>
     </xsl:template>
 
-    <xsl:template match="core:subsystem/core:cache-container/core:transport">
+    <xsl:template match="//*[local-name()='subsystem' and starts-with(namespace-uri(), $nsCore)]/*[local-name()='cache-container']/*[local-name()='transport']">
         <xsl:if test="$modifyStack = 'false'">
             <xsl:call-template name="copynode"/>
         </xsl:if>
@@ -289,8 +246,8 @@
             <xsl:copy-of select="document($modifyStack)"/>
         </xsl:if>
     </xsl:template>
-    
-    <xsl:template match="endpoint:subsystem/endpoint:hotrod-connector/endpoint:topology-state-transfer">
+
+    <xsl:template match="//*[local-name()='subsystem' and starts-with(namespace-uri(), $nsEndpoint)]//*[local-name()='hotrod-connector']/*[local-name()='topology-state-transfer']">
         <xsl:if test="$hotrodAuth = 'false'">
             <xsl:call-template name="copynode"/>
         </xsl:if>
@@ -300,6 +257,22 @@
         </xsl:if>
     </xsl:template>
 
+    <xsl:template match="p:socket-binding[position()=last() and position()!=1]">
+        <xsl:choose>
+            <xsl:when test="$addNewHotrodSocketBinding = 'false' and $addNewRestSocketBinding = 'false'">
+                <xsl:call-template name="copynode"/>
+            </xsl:when>
+            <xsl:when test="$addNewHotrodSocketBinding != 'false' and $addNewRestSocketBinding = 'false'">
+                <xsl:call-template name="copynode"/>
+                <xsl:copy-of select="document($addNewHotrodSocketBinding)"/>
+            </xsl:when>
+            <xsl:when test="$addNewHotrodSocketBinding = 'false' and $addNewRestSocketBinding != 'false'">
+                <xsl:call-template name="copynode"/>
+                <xsl:copy-of select="document($addNewRestSocketBinding)"/>
+            </xsl:when>
+        </xsl:choose>
+    </xsl:template>
+
     <!-- matches on the remaining tags and recursively applies templates to their children and copies them to the result -->
     <xsl:template match="*">
         <xsl:copy>
@@ -307,5 +280,4 @@
             <xsl:apply-templates/>
         </xsl:copy>
     </xsl:template>
-
 </xsl:stylesheet>

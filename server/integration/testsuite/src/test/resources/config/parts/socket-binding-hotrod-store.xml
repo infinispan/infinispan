@@ -1,0 +1,3 @@
+<outbound-socket-binding name="remote-store-hotrod-server">
+    <remote-destination host="127.0.0.1" port="${remote.destination.port:11222}"/>
+</outbound-socket-binding>
