@@ -590,6 +590,11 @@ public class SecureCacheTestDriver {
       });
    }
 
+   @TestCachePermission(AuthorizationPermission.READ)
+   public void testGetOrDefault_Object_Object(SecureCache<String, String> cache) {
+      cache.get("a");
+   }
+
    @Listener
    public static class NullListener {
 
