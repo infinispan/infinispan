@@ -381,10 +381,12 @@ public class LocalCacheTest extends SingleCacheManagerTest {
          try {
             Explanation found = cacheQuery.explain(i);
 
-            if(found.isMatch())
+            if (found.isMatch())
                matchCounter++;
 
             i++;
+            if (matchCounter>=3)
+                break;
          } catch(ArrayIndexOutOfBoundsException ex) {
             break;
          }
