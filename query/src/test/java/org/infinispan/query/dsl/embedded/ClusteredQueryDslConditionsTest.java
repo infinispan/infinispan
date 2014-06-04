@@ -14,8 +14,8 @@ import org.infinispan.query.dsl.embedded.sample_domain_model.Address;
 import org.infinispan.query.dsl.embedded.sample_domain_model.Transaction;
 import org.infinispan.query.dsl.embedded.sample_domain_model.User;
 import org.infinispan.test.MultipleCacheManagersTest;
-import org.infinispan.test.fwk.CleanupAfterMethod;
-import org.testng.annotations.BeforeMethod;
+import org.infinispan.test.fwk.CleanupAfterTest;
+import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 
 import java.text.DateFormat;
@@ -29,8 +29,6 @@ import java.util.List;
 import java.util.TimeZone;
 
 import static org.junit.Assert.*;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
 
 /**
  * Verifies the functionality of Query DSL in clustered environment for ISPN directory provider.
@@ -38,7 +36,7 @@ import static org.junit.Assert.assertTrue;
  * @author Anna Manukyan
  */
 @Test(groups = "functional", testName = "query.dsl.embedded.ClusteredQueryDslConditionsTest")
-@CleanupAfterMethod
+@CleanupAfterTest
 public class ClusteredQueryDslConditionsTest extends MultipleCacheManagersTest {
 
    protected final DateFormat DATE_FORMAT = new SimpleDateFormat("yyyy-MM-dd");
@@ -46,6 +44,11 @@ public class ClusteredQueryDslConditionsTest extends MultipleCacheManagersTest {
 
    public ClusteredQueryDslConditionsTest() {
       DATE_FORMAT.setTimeZone(TimeZone.getTimeZone("GMT"));
+   }
+
+   @Override
+   protected void clearContent() {
+       //Don't clear, this is destroying the index
    }
 
    @Override
@@ -76,7 +79,7 @@ public class ClusteredQueryDslConditionsTest extends MultipleCacheManagersTest {
       return false;
    }
 
-   @BeforeMethod(alwaysRun = true)
+   @BeforeClass(alwaysRun = true)
    protected void populateCache() throws Exception {
       // create the test objects
       User user1 = new User();
