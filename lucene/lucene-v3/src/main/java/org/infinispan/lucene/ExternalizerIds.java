@@ -2,7 +2,7 @@ package org.infinispan.lucene;
 
 /**
  * Identifiers used by the Marshaller to delegate to specialized Externalizers.
- * For details, read http://community.jboss.org/docs/DOC-16198
+ * For details, read http://infinispan.org/docs/7.0.x/user_guide/user_guide.html#_preassigned_externalizer_id_ranges
  *
  * The range reserved for the Lucene module is from 1300 to 1399.
  *
