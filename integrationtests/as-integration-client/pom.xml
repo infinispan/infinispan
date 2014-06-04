@@ -205,7 +205,7 @@
                         <configuration>
                             <target>
                                 <echo>Starting Infinispan server from ${server.dist}</echo>
-                                <exec dir="${server.dist}/bin" spawn="true" executable="chmod" osfamily="unix">
+                                <exec dir="${server.dist}/bin" executable="chmod" osfamily="unix">
                                     <arg value="+x"/>
                                     <arg value="../bin"/>
                                     <arg value="standalone.sh"/>
