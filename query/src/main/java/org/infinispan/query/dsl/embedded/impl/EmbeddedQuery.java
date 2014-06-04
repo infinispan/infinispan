@@ -4,6 +4,7 @@ import org.infinispan.AdvancedCache;
 import org.infinispan.commons.util.CloseableIterable;
 import org.infinispan.objectfilter.Matcher;
 import org.infinispan.query.dsl.Query;
+import org.infinispan.query.impl.externalizers.FilterAndConverter;
 
 import java.util.ArrayList;
 import java.util.List;
