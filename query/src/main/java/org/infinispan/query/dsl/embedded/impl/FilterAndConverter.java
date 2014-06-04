@@ -9,7 +9,7 @@ import org.infinispan.filter.KeyValueFilter;
 import org.infinispan.metadata.Metadata;
 import org.infinispan.objectfilter.Matcher;
 import org.infinispan.objectfilter.ObjectFilter;
-import org.infinispan.query.impl.ExternalizerIds;
+import org.infinispan.query.impl.externalizers.ExternalizerIds;
 
 import java.io.IOException;
 import java.io.ObjectInput;

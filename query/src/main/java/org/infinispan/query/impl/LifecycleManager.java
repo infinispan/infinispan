@@ -41,6 +41,7 @@ import org.infinispan.query.backend.LocalQueryInterceptor;
 import org.infinispan.query.backend.QueryInterceptor;
 import org.infinispan.query.backend.SearchableCacheConfiguration;
 import org.infinispan.query.clustered.QueryBox;
+import org.infinispan.query.impl.externalizers.ExternalizerIds;
 import org.infinispan.query.dsl.embedded.impl.FilterAndConverter;
 import org.infinispan.query.impl.massindex.MapReduceMassIndexer;
 import org.infinispan.query.logging.Log;
