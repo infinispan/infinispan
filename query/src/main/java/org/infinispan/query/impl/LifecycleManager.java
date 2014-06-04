@@ -41,8 +41,17 @@ import org.infinispan.query.backend.LocalQueryInterceptor;
 import org.infinispan.query.backend.QueryInterceptor;
 import org.infinispan.query.backend.SearchableCacheConfiguration;
 import org.infinispan.query.clustered.QueryBox;
-import org.infinispan.query.impl.externalizers.ExternalizerIds;
 import org.infinispan.query.dsl.embedded.impl.FilterAndConverter;
+import org.infinispan.query.impl.externalizers.ClusteredTopDocsExternalizer;
+import org.infinispan.query.impl.externalizers.ExternalizerIds;
+import org.infinispan.query.impl.externalizers.LuceneBooleanQueryExternalizer;
+import org.infinispan.query.impl.externalizers.LuceneScoreDocExternalizer;
+import org.infinispan.query.impl.externalizers.LuceneSortExternalizer;
+import org.infinispan.query.impl.externalizers.LuceneSortFieldExternalizer;
+import org.infinispan.query.impl.externalizers.LuceneTermExternalizer;
+import org.infinispan.query.impl.externalizers.LuceneTermQueryExternalizer;
+import org.infinispan.query.impl.externalizers.LuceneTopDocsExternalizer;
+import org.infinispan.query.impl.externalizers.LuceneTopFieldDocsExternalizer;
 import org.infinispan.query.impl.massindex.MapReduceMassIndexer;
 import org.infinispan.query.logging.Log;
 import org.infinispan.query.spi.ProgrammaticSearchMappingProvider;
@@ -66,12 +75,6 @@ public class LifecycleManager extends AbstractModuleLifecycle {
    private MBeanServer mbeanServer;
 
    private String jmxDomain;
-
-   @Override
-   public void cacheManagerStarting(GlobalComponentRegistry gcr, GlobalConfiguration globalCfg) {
-      Map<Integer, AdvancedExternalizer<?>> externalizerMap = globalCfg.serialization().advancedExternalizers();
-      externalizerMap.put(ExternalizerIds.FILTER_AND_CONVERTER, new FilterAndConverter.Externalizer());
-   }
 
    /**
     * Registers the Search interceptor in the cache before it gets started
@@ -290,6 +293,21 @@ public class LifecycleManager extends AbstractModuleLifecycle {
       }
 
       cfg.customInterceptors().interceptors(builder.build().customInterceptors().interceptors());
+   }
+
+   @Override
+   public void cacheManagerStarting(GlobalComponentRegistry gcr, GlobalConfiguration globalCfg) {
+      Map<Integer,AdvancedExternalizer<?>> externalizerMap = globalCfg.serialization().advancedExternalizers();
+      externalizerMap.put(ExternalizerIds.FILTER_AND_CONVERTER, new FilterAndConverter.Externalizer());
+      externalizerMap.put(ExternalizerIds.LUCENE_QUERY_BOOLEAN, new LuceneBooleanQueryExternalizer());
+      externalizerMap.put(ExternalizerIds.LUCENE_QUERY_TERM, new LuceneTermQueryExternalizer());
+      externalizerMap.put(ExternalizerIds.LUCENE_TERM, new LuceneTermExternalizer());
+      externalizerMap.put(ExternalizerIds.LUCENE_SORT, new LuceneSortExternalizer());
+      externalizerMap.put(ExternalizerIds.LUCENE_SORT_FIELD, new LuceneSortFieldExternalizer());
+      externalizerMap.put(ExternalizerIds.CLUSTERED_QUERY_TOPDOCS, new ClusteredTopDocsExternalizer());
+      externalizerMap.put(ExternalizerIds.LUCENE_TOPDOCS, new LuceneTopDocsExternalizer());
+      externalizerMap.put(ExternalizerIds.LUCENE_SCORE_DOC, new LuceneScoreDocExternalizer());
+      externalizerMap.put(ExternalizerIds.LUCENE_TOPFIELDDOCS, new LuceneTopFieldDocsExternalizer());
    }
 
 }
