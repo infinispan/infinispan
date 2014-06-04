@@ -1,4 +1,4 @@
-package org.infinispan.query.dsl.embedded.impl;
+package org.infinispan.query.impl.externalizers;
 
 import org.infinispan.Cache;
 import org.infinispan.commons.CacheException;
@@ -9,7 +9,6 @@ import org.infinispan.filter.KeyValueFilter;
 import org.infinispan.metadata.Metadata;
 import org.infinispan.objectfilter.Matcher;
 import org.infinispan.objectfilter.ObjectFilter;
-import org.infinispan.query.impl.ExternalizerIds;
 
 import java.io.IOException;
 import java.io.ObjectInput;

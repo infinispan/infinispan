@@ -7,7 +7,7 @@ import org.infinispan.distribution.MagicKey;
 import org.infinispan.iteration.impl.EntryRetriever;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.objectfilter.impl.ReflectionMatcher;
-import org.infinispan.query.dsl.embedded.impl.FilterAndConverter;
+import org.infinispan.query.impl.externalizers.FilterAndConverter;
 import org.infinispan.query.test.Person;
 import org.infinispan.test.SingleCacheManagerTest;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
