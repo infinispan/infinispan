@@ -1,5 +1,7 @@
 package org.infinispan.notifications.cachelistener;
 
+import org.infinispan.container.InternalEntryFactory;
+import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.notifications.cachelistener.event.CacheEntryEvent;
 import org.infinispan.notifications.cachelistener.event.Event;
 import org.infinispan.notifications.impl.ListenerInvocation;
@@ -21,6 +23,11 @@ import java.util.concurrent.ConcurrentLinkedQueue;
 class QueueingAllSegmentListener<K, V> extends BaseQueueingSegmentListener<K, V, Event<K, V>> {
    protected final Queue<KeyValuePair<Event<K, V>, ListenerInvocation<Event<K, V>>>> queue =
          new ConcurrentLinkedQueue<>();
+   protected final InternalEntryFactory entryFactory;
+
+   QueueingAllSegmentListener(InternalEntryFactory entryFactory) {
+      this.entryFactory = entryFactory;
+   }
 
    @Override
    public boolean handleEvent(Event<K, V> event, ListenerInvocation<Event<K, V>> invocation) {
@@ -29,7 +36,9 @@ class QueueingAllSegmentListener<K, V> extends BaseQueueingSegmentListener<K, V,
          boolean continueQueueing = true;
          if (event instanceof CacheEntryEvent) {
             CacheEntryEvent<K, V> cacheEvent = (CacheEntryEvent<K, V>) event;
-            if (addEvent(cacheEvent.getKey(), cacheEvent.getValue() != null ? cacheEvent.getValue() : REMOVED)) {
+            CacheEntry<K, V> cacheEntry = entryFactory.create(cacheEvent.getKey(), cacheEvent.getValue(),
+                                                              cacheEvent.getMetadata());
+            if (addEvent(cacheEntry.getKey(), cacheEntry.getValue() != null ? cacheEntry : REMOVED)) {
                continueQueueing = false;
             }
          }

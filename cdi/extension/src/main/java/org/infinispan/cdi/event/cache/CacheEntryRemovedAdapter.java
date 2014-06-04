@@ -1,6 +1,7 @@
 package org.infinispan.cdi.event.cache;
 
 import org.infinispan.Cache;
+import org.infinispan.metadata.Metadata;
 import org.infinispan.notifications.Listener;
 import org.infinispan.notifications.cachelistener.annotation.CacheEntryRemoved;
 import org.infinispan.notifications.cachelistener.event.CacheEntryRemovedEvent;
@@ -49,6 +50,11 @@ public class CacheEntryRemovedAdapter<K, V> extends AbstractAdapter<CacheEntryRe
 
       @Override
       public Object getValue() {
+         return null;
+      }
+
+      @Override
+      public Metadata getMetadata() {
          return null;
       }
 

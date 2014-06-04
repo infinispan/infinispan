@@ -1,5 +1,7 @@
 package org.infinispan.notifications.cachelistener;
 
+import org.infinispan.container.InternalEntryFactory;
+import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.distribution.DistributionManager;
 import org.infinispan.notifications.cachelistener.event.CacheEntryEvent;
 import org.infinispan.notifications.cachelistener.event.Event;
@@ -22,10 +24,12 @@ class DistributedQueueingSegmentListener<K, V> extends BaseQueueingSegmentListen
    private final AtomicReferenceArray<Queue<KeyValuePair<CacheEntryEvent<K, V>, ListenerInvocation<Event<K, V>>>>> queues;
 
    private final DistributionManager distributionManager;
+   protected final InternalEntryFactory entryFactory;
 
    private int justCompletedSegment = -1;
 
-   public DistributedQueueingSegmentListener(DistributionManager distributionManager) {
+   public DistributedQueueingSegmentListener(InternalEntryFactory entryFactory, DistributionManager distributionManager) {
+      this.entryFactory = entryFactory;
       this.distributionManager = distributionManager;
       // we assume the # of segments won't change between different consistent hashes
       this.queues = new AtomicReferenceArray(distributionManager.getReadConsistentHash().getNumSegments());
@@ -40,7 +44,8 @@ class DistributedQueueingSegmentListener<K, V> extends BaseQueueingSegmentListen
       K key = event.getKey();
       // If we already completed, don't enqueue
       boolean enqueued = !completed.get();
-      if (enqueued && !addEvent(key, event.getValue() != null ? event.getValue() : REMOVED)) {
+      CacheEntry<K, V> cacheEntry = entryFactory.create(event.getKey(), event.getValue(), event.getMetadata());
+      if (enqueued && !addEvent(key, cacheEntry.getValue() != null ? cacheEntry : REMOVED)) {
          // If it wasn't added it means we haven't processed this value yet, so add it to the queue for this segment
          int segment = distributionManager.getReadConsistentHash().getSegment(key);
          Queue<KeyValuePair<CacheEntryEvent<K, V>, ListenerInvocation<Event<K, V>>>> queue;

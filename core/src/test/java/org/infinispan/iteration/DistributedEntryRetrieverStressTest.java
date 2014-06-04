@@ -6,6 +6,7 @@ import org.infinispan.commons.util.CloseableIterable;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.global.GlobalConfigurationBuilder;
+import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.container.entries.ImmortalCacheEntry;
 import org.infinispan.distribution.ch.ConsistentHash;
 import org.infinispan.filter.KeyValueFilter;
@@ -103,7 +104,7 @@ public class DistributedEntryRetrieverStressTest extends MultipleCacheManagersTe
                   while (!complete.get()) {
                      log.tracef("Starting iteration %s", iteration);
                      Map<Integer, Integer> seenValues = new HashMap<Integer, Integer>();
-                     CloseableIterable<Map.Entry<Integer, Integer>> iterable = cache.getAdvancedCache().filterEntries(
+                     CloseableIterable<CacheEntry<Integer, Integer>> iterable = cache.getAdvancedCache().filterEntries(
                            new AllEntriesFilter());
                      try {
                         for (Map.Entry<Integer, Integer> entry : iterable) {

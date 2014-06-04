@@ -9,6 +9,7 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeoutException;
 
 
+// Since all tests currently are clustered only, there is no reason to even enable this test as nothing would work
 @Test(groups = "unit", testName = "notifications.cachelistener.CacheNotifierImplInitialTransferInvalTest")
 public class CacheNotifierImplInitialTransferInvalTest extends BaseCacheNotifierImplInitialTransferTest {
    protected CacheNotifierImplInitialTransferInvalTest() {
@@ -55,5 +56,17 @@ public class CacheNotifierImplInitialTransferInvalTest extends BaseCacheNotifier
    // This is disabled because invalidation caches don't work with cluster listeners
    @Test(enabled = false)
    public void testRemoveAfterIterationBeganButNotIteratedValueYetClustered() throws InterruptedException, BrokenBarrierException, TimeoutException, ExecutionException {
+   }
+
+   @Override
+   // This is disabled because invalidation caches don't work with cluster listeners
+   @Test(enabled = false)
+   public void testFilterConverterUnusedDuringIteration() {
+   }
+
+   @Override
+   // This is disabled because invalidation caches don't work with cluster listeners
+   @Test(enabled = false)
+   public void testMetadataAvailable() {
    }
 }

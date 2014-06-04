@@ -2,6 +2,7 @@ package org.infinispan.util.mocks;
 
 import org.infinispan.Cache;
 import org.infinispan.commands.VisitableCommand;
+import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.iteration.impl.EntryRequestCommand;
 import org.infinispan.iteration.impl.EntryResponseCommand;
 import org.infinispan.metadata.Metadata;
@@ -357,7 +358,7 @@ public class ControlledCommandFactory implements CommandsFactory {
 
    @Override
    public <K, C> EntryResponseCommand buildEntryResponseCommand(UUID identifier, Set<Integer> completedSegments,
-                                                                Set<Integer> inDoubtSegments, Collection<Map.Entry<K, C>> values) {
+                                                                Set<Integer> inDoubtSegments, Collection<CacheEntry<K, C>> values) {
       return actual.buildEntryResponseCommand(identifier, completedSegments, inDoubtSegments, values);
    }
 }
