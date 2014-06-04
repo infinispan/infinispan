@@ -95,6 +95,11 @@ public class ClusterEvent<K, V> implements CacheEntryCreatedEvent<K, V>, CacheEn
    }
 
    @Override
+   public Metadata getMetadata() {
+      return metadata;
+   }
+
+   @Override
    public boolean isCommandRetried() {
       return commandRetried;
    }

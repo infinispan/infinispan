@@ -5,6 +5,7 @@ import org.infinispan.commands.FlagAffectedCommand;
 import org.infinispan.commands.tx.VersionedPrepareCommand;
 import org.infinispan.commons.equivalence.AnyEquivalence;
 import org.infinispan.configuration.cache.Configuration;
+import org.infinispan.container.InternalEntryFactory;
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.container.versioning.EntryVersionsMap;
 import org.infinispan.container.versioning.VersionGenerator;
@@ -57,7 +58,8 @@ public class OnlyPrimaryOwnerTest {
       };
       when(mockCache.getAdvancedCache().getComponentRegistry().getComponent(any(Class.class))).then(answer);
       when(mockCache.getAdvancedCache().getComponentRegistry().getComponent(any(Class.class), anyString())).then(answer);
-      n.injectDependencies(mockCache, cdl, null, config, mock(DistributionManager.class), mock(EntryRetriever.class));
+      n.injectDependencies(mockCache, cdl, null, config, mock(DistributionManager.class), mock(EntryRetriever.class),
+                           mock(InternalEntryFactory.class));
       cl = new PrimaryOwnerCacheListener();
       n.start();
       n.addListener(cl);

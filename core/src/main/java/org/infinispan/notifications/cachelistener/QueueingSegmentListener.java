@@ -1,5 +1,6 @@
 package org.infinispan.notifications.cachelistener;
 
+import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.iteration.impl.EntryRetriever;
 import org.infinispan.notifications.cachelistener.event.Event;
 import org.infinispan.notifications.impl.ListenerInvocation;
@@ -41,7 +42,7 @@ public interface QueueingSegmentListener<K, V, E extends Event<K, V>> extends En
     * is indicative of a CREATE event occurring but not seeing the value.
     * @return
     */
-   public Set<Map.Entry<K, Object>> findCreatedEntries();
+   public Set<CacheEntry<K, V>> findCreatedEntries();
 
    /**
     * This should invoked after the key has been successfully processed to tell the handler that the

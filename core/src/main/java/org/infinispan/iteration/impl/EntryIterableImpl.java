@@ -1,6 +1,7 @@
 package org.infinispan.iteration.impl;
 
 import org.infinispan.commons.util.CloseableIterable;
+import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.filter.Converter;
 import org.infinispan.filter.KeyValueFilter;
 import org.infinispan.iteration.EntryIterable;
@@ -24,7 +25,7 @@ public class EntryIterableImpl<K, V> extends TrackingEntryIterable<K, V, V> impl
    }
 
    @Override
-   public <C> CloseableIterable<Map.Entry<K, C>> converter(Converter<? super K, ? super V, ? extends C> converter) {
+   public <C> CloseableIterable<CacheEntry<K, C>> converter(Converter<? super K, ? super V, ? extends C> converter) {
       return new TrackingEntryIterable<K, V, C>(entryRetriever, filter, converter);
    }
 }

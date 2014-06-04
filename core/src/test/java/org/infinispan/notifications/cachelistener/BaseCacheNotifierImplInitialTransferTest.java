@@ -6,8 +6,12 @@ import org.infinispan.commons.util.CloseableIterator;
 import org.infinispan.commons.util.IteratorAsCloseableIterator;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.Configuration;
+import org.infinispan.container.InternalEntryFactory;
+import org.infinispan.container.InternalEntryFactoryImpl;
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.container.entries.ImmortalCacheEntry;
+import org.infinispan.container.entries.MortalCacheEntry;
+import org.infinispan.container.entries.TransientMortalCacheEntry;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.context.impl.NonTxInvocationContext;
 import org.infinispan.distribution.DistributionManager;
@@ -16,6 +20,7 @@ import org.infinispan.filter.KeyValueFilter;
 import org.infinispan.interceptors.locking.ClusteringDependentLogic;
 import org.infinispan.iteration.impl.EntryRetriever;
 import org.infinispan.lifecycle.ComponentStatus;
+import org.infinispan.metadata.Metadata;
 import org.infinispan.notifications.Listener;
 import org.infinispan.notifications.cachelistener.annotation.CacheEntryCreated;
 import org.infinispan.notifications.cachelistener.annotation.CacheEntryModified;
@@ -30,7 +35,6 @@ import org.mockito.stubbing.Answer;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.BrokenBarrierException;
@@ -45,6 +49,7 @@ import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyString;
 import static org.mockito.Mockito.*;
 import static org.testng.Assert.assertEquals;
+import static org.testng.Assert.assertNotNull;
 import static org.testng.Assert.assertNull;
 
 
@@ -119,7 +124,7 @@ public abstract class BaseCacheNotifierImplInitialTransferTest extends AbstractI
       when(mockCache.getAdvancedCache().getComponentRegistry().getComponent(any(Class.class))).then(answer);
       when(mockCache.getAdvancedCache().getComponentRegistry().getComponent(any(Class.class), anyString())).then(answer);
       n.injectDependencies(mockCache, new ClusteringDependentLogic.LocalLogic(), null, config,
-                           mock(DistributionManager.class), retriever);
+                           mock(DistributionManager.class), retriever, new InternalEntryFactoryImpl());
       n.start();
       ctx = new NonTxInvocationContext(AnyEquivalence.getInstance());
    }
@@ -146,12 +151,76 @@ public abstract class BaseCacheNotifierImplInitialTransferTest extends AbstractI
                                   Mockito.any(EntryRetriever.SegmentListener.class))).thenAnswer(new Answer<CloseableIterator<CacheEntry<String, String>>>() {
       @Override
       public CloseableIterator<CacheEntry<String, String>> answer(InvocationOnMock invocationOnMock) throws Throwable {
-         return new IteratorAsCloseableIterator<CacheEntry<String, String>>(initialValues.iterator());
+         return new IteratorAsCloseableIterator<>(initialValues.iterator());
          }
       });
 
       n.addListener(listener);
       verifyEvents(isClustered(listener), listener, initialValues);
+   }
+
+   public void testFilterConverterUnusedDuringIteration() {
+      testFilterConverterUnusedDuringIteration(new StateListenerClustered());
+   }
+
+   private void testFilterConverterUnusedDuringIteration(final StateListener<String, String> listener) {
+      final List<CacheEntry<String, String>> initialValues = new ArrayList<CacheEntry<String, String>>(10);
+      for (int i = 0; i < 10; i++) {
+         String key = "key-" + i;
+         String value = "value-" + i;
+         initialValues.add(new ImmortalCacheEntry(key, value));
+      }
+
+      // Note we don't actually use the filter/converter to retrieve values since it is being mocked, thus we can assert
+      // the filter/converter are not used by us
+      when(retriever.retrieveEntries(any(KeyValueFilter.class), any(Converter.class),
+                                     any(EntryRetriever.SegmentListener.class))).thenAnswer(new Answer<CloseableIterator<CacheEntry<String, String>>>() {
+         @Override
+         public CloseableIterator<CacheEntry<String, String>> answer(InvocationOnMock invocationOnMock) throws Throwable {
+            return new IteratorAsCloseableIterator<>(initialValues.iterator());
+         }
+      });
+
+      KeyValueFilter filter = mock(KeyValueFilter.class, withSettings().serializable());
+      Converter converter = mock(Converter.class, withSettings().serializable());
+      n.addListener(listener, filter, converter);
+      verifyEvents(isClustered(listener), listener, initialValues);
+
+      verify(filter, never()).accept(anyObject(), anyObject(), any(Metadata.class));
+      verify(converter, never()).convert(anyObject(), anyObject(), any(Metadata.class));
+   }
+
+   public void testMetadataAvailable() {
+      final List<CacheEntry<String, String>> initialValues = new ArrayList<CacheEntry<String, String>>(10);
+      for (int i = 0; i < 10; i++) {
+         String key = "key-" + i;
+         String value = "value-" + i;
+         initialValues.add(new TransientMortalCacheEntry(key, value, i, -1, System.currentTimeMillis()));
+      }
+
+      // Note we don't actually use the filter/converter to retrieve values since it is being mocked, thus we can assert
+      // the filter/converter are not used by us
+      when(retriever.retrieveEntries(any(KeyValueFilter.class), any(Converter.class),
+                                     any(EntryRetriever.SegmentListener.class))).thenAnswer(new Answer<CloseableIterator<CacheEntry<String, String>>>() {
+         @Override
+         public CloseableIterator<CacheEntry<String, String>> answer(InvocationOnMock invocationOnMock) throws Throwable {
+            return new IteratorAsCloseableIterator<>(initialValues.iterator());
+         }
+      });
+
+      KeyValueFilter filter = mock(KeyValueFilter.class, withSettings().serializable());
+      Converter converter = mock(Converter.class, withSettings().serializable());
+      StateListener<String, String> listener = new StateListenerClustered();
+      n.addListener(listener, filter, converter);
+      verifyEvents(isClustered(listener), listener, initialValues);
+
+      for (CacheEntryEvent<String, String> event : listener.events) {
+         String key = event.getKey();
+         Metadata metadata = event.getMetadata();
+         assertNotNull(metadata);
+         assertEquals(metadata.lifespan(), -1);
+         assertEquals(metadata.maxIdle(), Long.parseLong(key.substring(4)));
+      }
    }
 
    private void verifyEvents(boolean isClustered, StateListener<String, String> listener,

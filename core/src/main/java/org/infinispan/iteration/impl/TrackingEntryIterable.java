@@ -2,6 +2,7 @@ package org.infinispan.iteration.impl;
 
 import org.infinispan.commons.util.CloseableIterable;
 import org.infinispan.commons.util.CloseableIterator;
+import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.filter.Converter;
 import org.infinispan.filter.KeyValueFilter;
 import org.infinispan.util.concurrent.ConcurrentHashSet;
@@ -18,13 +19,13 @@ import java.util.concurrent.atomic.AtomicBoolean;
  * @author wburns
  * @since 7.0
  */
-public class TrackingEntryIterable<K, V, C> implements CloseableIterable<Map.Entry<K, C>> {
+public class TrackingEntryIterable<K, V, C> implements CloseableIterable<CacheEntry<K, C>> {
    protected final EntryRetriever<K, V> entryRetriever;
    protected final KeyValueFilter<? super K, ? super V> filter;
    protected final Converter<? super K, ? super V, ? extends C> converter;
    protected final AtomicBoolean closed = new AtomicBoolean(false);
-   protected final Set<CloseableIterator<Map.Entry<K, C>>> iterators =
-         new ConcurrentHashSet<CloseableIterator<Map.Entry<K, C>>>();
+   protected final Set<CloseableIterator<CacheEntry<K, C>>> iterators =
+         new ConcurrentHashSet<>();
 
    public TrackingEntryIterable(EntryRetriever<K, V> retriever, KeyValueFilter<? super K, ? super V> filter,
                                  Converter<? super K, ? super V, ? extends C> converter) {
@@ -42,17 +43,17 @@ public class TrackingEntryIterable<K, V, C> implements CloseableIterable<Map.Ent
    @Override
    public void close() throws Exception {
       closed.set(true);
-      for (CloseableIterator<Map.Entry<K, C>> iterator : iterators) {
+      for (CloseableIterator<CacheEntry<K, C>> iterator : iterators) {
          iterator.close();
       }
    }
 
    @Override
-   public Iterator<Map.Entry<K, C>> iterator() {
+   public Iterator<CacheEntry<K, C>> iterator() {
       if (closed.get()) {
          throw new IllegalStateException("Iterable has been closed - cannot be reused");
       }
-      CloseableIterator<Map.Entry<K, C>> iterator = entryRetriever.retrieveEntries(filter, converter, null);
+      CloseableIterator<CacheEntry<K, C>> iterator = entryRetriever.retrieveEntries(filter, converter, null);
       iterators.add(iterator);
       // Note we have to check if we were closed afterwards just in case if a concurrent close occurred.
       if (closed.get()) {

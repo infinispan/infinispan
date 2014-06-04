@@ -2,6 +2,7 @@ package org.infinispan.iteration.impl;
 
 import org.infinispan.commands.TopologyAffectedCommand;
 import org.infinispan.commands.remote.BaseRpcCommand;
+import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.remoting.transport.Address;
@@ -23,7 +24,7 @@ public class EntryResponseCommand<K, C> extends BaseRpcCommand implements Topolo
    private UUID identifier;
    private Set<Integer> completedSegments;
    private Set<Integer> inDoubtSegments;
-   private Collection<Map.Entry<K, C>> values;
+   private Collection<CacheEntry<K, C>> values;
    private int topologyId = -1;
    private Address origin;
 
@@ -39,7 +40,7 @@ public class EntryResponseCommand<K, C> extends BaseRpcCommand implements Topolo
    }
 
    public EntryResponseCommand(Address origin, String cacheName, UUID identifier, Set<Integer> completedSegments,
-                               Set<Integer> inDoubtSegments, Collection<Map.Entry<K, C>> values) {
+                               Set<Integer> inDoubtSegments, Collection<CacheEntry<K, C>> values) {
       super(cacheName);
       this.origin = origin;
       this.identifier = identifier;
@@ -77,7 +78,7 @@ public class EntryResponseCommand<K, C> extends BaseRpcCommand implements Topolo
       identifier = (UUID) parameters[i++];
       completedSegments = (Set<Integer>) parameters[i++];
       inDoubtSegments = (Set<Integer>) parameters[i++];
-      values = (Collection<Map.Entry<K, C>>)parameters[i++];
+      values = (Collection<CacheEntry<K, C>>)parameters[i++];
       topologyId = (Integer) parameters[i++];
    }
 

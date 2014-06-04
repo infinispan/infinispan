@@ -1,6 +1,7 @@
 package org.infinispan.iteration;
 
 import org.infinispan.commons.util.CloseableIterable;
+import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.filter.Converter;
 
 import java.util.Map;
@@ -13,7 +14,7 @@ import java.util.Map;
  * @author wburns
  * @since 7.0
  */
-public interface EntryIterable<K, V> extends CloseableIterable<Map.Entry<K, V>> {
+public interface EntryIterable<K, V> extends CloseableIterable<CacheEntry<K, V>> {
    /**
     * This returns a {@link org.infinispan.commons.util.CloseableIterable} that will change the type of the returned
     * value for the entry using the already provided filter in addition to the converter.
@@ -21,5 +22,5 @@ public interface EntryIterable<K, V> extends CloseableIterable<Map.Entry<K, V>> 
     * @param <C> The type of the converted value
     * @return A CloseableIterator that will use the given converter
     */
-   public <C> CloseableIterable<Map.Entry<K, C>> converter(Converter<? super K, ? super V, ? extends C> converter);
+   public <C> CloseableIterable<CacheEntry<K, C>> converter(Converter<? super K, ? super V, ? extends C> converter);
 }

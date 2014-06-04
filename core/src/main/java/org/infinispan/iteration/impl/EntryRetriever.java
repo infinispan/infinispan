@@ -1,6 +1,7 @@
 package org.infinispan.iteration.impl;
 
 import org.infinispan.commons.util.CloseableIterator;
+import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.filter.Converter;
 import org.infinispan.filter.KeyValueFilter;
 import org.infinispan.remoting.transport.Address;
@@ -42,7 +43,7 @@ public interface EntryRetriever<K, V> {
     * @param <C> The type of entries values sent back
     */
    public <C> void receiveResponse(UUID identifier, Address origin, Set<Integer> completedSegments,
-                                   Set<Integer> inDoubtSegments, Collection<Map.Entry<K, C>> entries);
+                                   Set<Integer> inDoubtSegments, Collection<CacheEntry<K, C>> entries);
 
    /**
     * This is invoked locally on the node that requested the iteration process.  This method will return immediately
@@ -55,7 +56,7 @@ public interface EntryRetriever<K, V> {
     * @param <C> The type of the resulting values from the converter
     * @return An iterator that should be closed when done working it it, especially if not fully iterated over
     */
-   public <C> CloseableIterator<Map.Entry<K, C>> retrieveEntries(KeyValueFilter<? super K, ? super V> filter,
+   public <C> CloseableIterator<CacheEntry<K, C>> retrieveEntries(KeyValueFilter<? super K, ? super V> filter,
                                                        Converter<? super K, ? super V, ? extends C> converter,
                                                        SegmentListener listener);
 
