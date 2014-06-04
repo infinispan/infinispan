@@ -8,8 +8,10 @@ import org.hibernate.hql.lucene.LuceneProcessingChain;
 import org.hibernate.hql.lucene.LuceneQueryParsingResult;
 import org.hibernate.hql.lucene.spi.FieldBridgeProvider;
 import org.hibernate.search.bridge.FieldBridge;
+import org.hibernate.search.bridge.builtin.NumericFieldBridge;
+import org.hibernate.search.bridge.builtin.StringBridge;
 import org.hibernate.search.bridge.builtin.impl.NullEncodingTwoWayFieldBridge;
-import org.hibernate.search.bridge.impl.BridgeFactory;
+import org.hibernate.search.bridge.builtin.impl.TwoWayString2FieldBridgeAdaptor;
 import org.hibernate.search.query.dsl.QueryBuilder;
 import org.hibernate.search.spi.SearchFactoryIntegrator;
 import org.infinispan.AdvancedCache;
@@ -30,10 +32,6 @@ import org.infinispan.query.impl.ComponentRegistryUtils;
 import org.infinispan.query.remote.client.QueryRequest;
 import org.infinispan.query.remote.client.QueryResponse;
 import org.infinispan.query.remote.indexing.ProtobufValueWrapper;
-import org.infinispan.query.remote.search.NullEncodingDoubleNumericFieldBridge;
-import org.infinispan.query.remote.search.NullEncodingFloatNumericFieldBridge;
-import org.infinispan.query.remote.search.NullEncodingIntegerNumericFieldBridge;
-import org.infinispan.query.remote.search.NullEncodingLongNumericFieldBridge;
 import org.infinispan.server.core.QueryFacade;
 
 import java.io.IOException;
@@ -153,15 +151,15 @@ public class QueryFacadeImpl implements QueryFacade {
                Descriptors.FieldDescriptor fd = getFieldDescriptor(md, propertyPath);
                switch (fd.getType()) {
                   case DOUBLE:
-                     return new NullEncodingDoubleNumericFieldBridge(NULL_TOKEN);
+                     return NumericFieldBridge.DOUBLE_FIELD_BRIDGE;
                   case FLOAT:
-                     return new NullEncodingFloatNumericFieldBridge(NULL_TOKEN);
+                     return NumericFieldBridge.FLOAT_FIELD_BRIDGE;
                   case INT64:
                   case UINT64:
                   case FIXED64:
                   case SFIXED64:
                   case SINT64:
-                     return new NullEncodingLongNumericFieldBridge(NULL_TOKEN);
+                     return NumericFieldBridge.LONG_FIELD_BRIDGE;
                   case INT32:
                   case FIXED32:
                   case UINT32:
@@ -169,12 +167,12 @@ public class QueryFacadeImpl implements QueryFacade {
                   case SINT32:
                   case BOOL:
                   case ENUM:
-                     return new NullEncodingIntegerNumericFieldBridge(NULL_TOKEN);
+                     return NumericFieldBridge.INT_FIELD_BRIDGE;
                   case STRING:
                   case BYTES:
                   case GROUP:
                   case MESSAGE:
-                     return new NullEncodingTwoWayFieldBridge(BridgeFactory.STRING, NULL_TOKEN);
+                     return new NullEncodingTwoWayFieldBridge(new TwoWayString2FieldBridgeAdaptor(StringBridge.INSTANCE), NULL_TOKEN);
                }
                return null;
             }

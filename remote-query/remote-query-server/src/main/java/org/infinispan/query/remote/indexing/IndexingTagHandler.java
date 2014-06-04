@@ -28,12 +28,12 @@ class IndexingTagHandler implements TagHandler {
    private static final LuceneOptions NOT_STORED_NOT_ANALYZED = new LuceneOptionsImpl(
          new DocumentFieldMetadata.Builder(null, Store.NO, Field.Index.NOT_ANALYZED, Field.TermVector.NO)
                .boost(1.0F)
-               .build());
+               .build(), 1.0F, 1.0F);
 
    private static final LuceneOptions STORED_NOT_ANALYZED = new LuceneOptionsImpl(
          new DocumentFieldMetadata.Builder(null, Store.YES, Field.Index.NOT_ANALYZED, Field.TermVector.NO)
                .boost(1.0F)
-               .build());
+               .build(), 1.0F, 1.0F);
 
    private final Document document;
 
@@ -82,7 +82,9 @@ class IndexingTagHandler implements TagHandler {
          case SINT32:
          case SINT64:
          case ENUM:
-            luceneOptions.addNumericFieldToDocument(fn, value, document);
+            if (!value.equals(QueryFacadeImpl.NULL_TOKEN)) {
+               luceneOptions.addNumericFieldToDocument(fn, value, document);
+            }
             break;
          case BOOL:
             luceneOptions.addNumericFieldToDocument(fn, ((Boolean) value) ? TRUE_INT : FALSE_INT, document);
