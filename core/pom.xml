@@ -85,6 +85,18 @@
          <scope>test</scope>
       </dependency>
 
+      <dependency>
+         <groupId>org.apache.geronimo.components</groupId>
+         <artifactId>geronimo-transaction</artifactId>
+         <scope>test</scope>
+      </dependency>
+      
+      <dependency>
+         <groupId>org.objectweb.howl</groupId>
+         <artifactId>howl</artifactId>
+         <scope>test</scope>
+      </dependency>
+      
    </dependencies>
 
    <build>

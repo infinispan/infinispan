@@ -890,10 +890,22 @@
             <version>${version.pax.exam}</version>
             <scope>test</scope>
          </dependency>
-          <dependency>
+         <dependency>
             <groupId>org.xerial.snappy</groupId>
             <artifactId>snappy-java</artifactId>
             <version>${version.snappy}</version>
+         </dependency>
+         <dependency>
+            <groupId>org.apache.geronimo.components</groupId>
+            <artifactId>geronimo-transaction</artifactId>
+            <version>${version.geronimo.tm}</version>
+            <scope>test</scope>
+         </dependency>
+         <dependency>
+            <groupId>org.objectweb.howl</groupId>
+            <artifactId>howl</artifactId>
+            <version>${version.howl}</version>
+            <scope>test</scope>
          </dependency>
       </dependencies>
    </dependencyManagement>
@@ -936,18 +948,6 @@
          <artifactId>jboss-logging-processor</artifactId>
          <version>${version.jboss.logging.processor}</version>
          <scope>provided</scope>
-      </dependency>
-      <dependency>
-         <groupId>org.apache.geronimo.components</groupId>
-         <artifactId>geronimo-transaction</artifactId>
-         <version>${version.geronimo.tm}</version>
-         <scope>test</scope>
-      </dependency>
-      <dependency>
-         <groupId>org.objectweb.howl</groupId>
-         <artifactId>howl</artifactId>
-         <version>${version.howl}</version>
-         <scope>test</scope>
       </dependency>
       <dependency>
          <groupId>org.slf4j</groupId>
