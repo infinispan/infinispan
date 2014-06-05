@@ -255,6 +255,7 @@
             <artifactId>maven-surefire-plugin</artifactId>
             <configuration>
                <threadCount>1</threadCount>
+               <parallel>classes</parallel>
                <systemPropertyVariables>
                   <version.karaf>${version.karaf}</version.karaf>
                </systemPropertyVariables>
