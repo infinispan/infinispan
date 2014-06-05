@@ -96,6 +96,7 @@ public class TEST_PING extends Discovery {
       } else {
          log.debug("Discovery protocol already stopped, so don't look for members");
       }
+      pingDatas.done();
    }
 
    private boolean isDiscardEnabled(TEST_PING discovery) {
