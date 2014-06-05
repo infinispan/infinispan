@@ -9,8 +9,7 @@
         <module name="javax.jms.api" />
         <module name="javax.persistence.api" />
         <module name="javax.transaction.api" />
-        <module name="org.apache.lucene" export="true"  slot="${lucene3.slot}"/>
-        <module name="org.apache.solr" export="true" optional="true"  slot="${slot}"/>
+        <module name="org.apache.lucene" export="true"  slot="${lucene4.slot}"/>
         <module name="org.codehaus.jackson.jackson-mapper-asl" />
         <module name="org.hibernate" />
         <module name="org.hibernate.commons-annotations" />
