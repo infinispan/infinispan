@@ -2,7 +2,7 @@ package org.infinispan.query.dsl.embedded;
 
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.manager.EmbeddedCacheManager;
-import org.infinispan.test.fwk.CleanupAfterMethod;
+import org.infinispan.test.fwk.CleanupAfterTest;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.testng.annotations.Test;
 
@@ -12,7 +12,7 @@ import org.testng.annotations.Test;
  * @author Anna Manukyan
  */
 @Test(groups = "functional", testName = "query.dsl.embedded.IspnDirQueryDslConditionsTest")
-@CleanupAfterMethod
+@CleanupAfterTest
 public class IspnDirQueryDslConditionsTest extends QueryDslConditionsTest {
 
    @Override
