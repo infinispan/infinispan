@@ -1,7 +1,5 @@
 package org.infinispan.security.impl;
 
-import java.text.MessageFormat;
-
 import javax.security.auth.Subject;
 
 import org.infinispan.security.AuditContext;
@@ -12,19 +10,17 @@ import org.jboss.logging.Logger;
 
 /**
  * DefaultAuditLogger. A simple {@link AuditLogger} which send audit messages to a named
- * logger "AUDIT"
+ * logger "org.infinispan.AUDIT"
  *
  * @author Tristan Tarrant
  * @since 7.0
  */
 public class DefaultAuditLogger implements AuditLogger {
-   static final Logger auditLog = Logger.getLogger("AUDIT");
-   static final MessageFormat format = new MessageFormat("[%s] %s %s %s[%s]"); // e.g. [ALLOW] user READ cache[defaultCache]
+   static final AuditMessages auditLog = Logger.getMessageLogger(AuditMessages.class, "org.infinispan.AUDIT");
 
    @Override
    public void audit(Subject subject, AuditContext context, String contextName, AuthorizationPermission permission,
          AuditResponse response) {
-      Object args[] = new Object[] { response, subject, permission, context, contextName };
-      auditLog.trace(format.format(args));
+      auditLog.auditMessage(response, AuthorizationHelper.getSubjectUserPrincipal(subject), permission, context, contextName);
    }
 }
