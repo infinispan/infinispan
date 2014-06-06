@@ -15,6 +15,7 @@ import org.infinispan.protostream.sampledomain.User;
 import org.infinispan.protostream.sampledomain.marshallers.MarshallerRegistration;
 import org.infinispan.query.dsl.FilterConditionEndContext;
 import org.infinispan.query.dsl.Query;
+import org.infinispan.query.dsl.QueryBuilder;
 import org.infinispan.query.dsl.QueryFactory;
 import org.infinispan.query.dsl.SortOrder;
 import org.infinispan.query.remote.ProtobufMetadataManager;
@@ -467,6 +468,38 @@ public class RemoteNonIndexedQueryDslConditionsTest extends SingleCacheManagerTe
       assertEquals(3, list.size());
    }
 
+   public void testOr4() throws Exception {
+      QueryFactory qf = Search.getQueryFactory(remoteCache);
+
+      Query q = qf.from(User.class)
+            .orderBy("surname", SortOrder.DESC)
+            .having("gender").eq(User.Gender.MALE)
+            .or().having("name").eq("Spider")
+            .and().having("gender").eq(User.Gender.FEMALE)
+            .or().having("surname").like("%oe%")
+            .toBuilder().build();
+      List<User> list = q.list();
+
+      assertEquals(2, list.size());
+      assertEquals("Woman", list.get(0).getSurname());
+      assertEquals("Doe", list.get(1).getSurname());
+   }
+
+   public void testOr5() throws Exception {
+      QueryFactory qf = Search.getQueryFactory(remoteCache);
+
+      Query q = qf.from(User.class)
+            .having("gender").eq(User.Gender.MALE)
+            .or().having("name").eq("Spider")
+            .or().having("gender").eq(User.Gender.FEMALE)
+            .and().having("surname").like("%oe%")
+            .toBuilder().build();
+      List<User> list = q.list();
+
+      assertEquals(1, list.size());
+      assertEquals("John", list.get(0).getName());
+   }
+
    public void testNot1() throws Exception {
       QueryFactory qf = Search.getQueryFactory(remoteCache);
 
@@ -570,15 +603,17 @@ public class RemoteNonIndexedQueryDslConditionsTest extends SingleCacheManagerTe
       assertEquals(3, list.size());
    }
 
-   @Test(enabled = false, expectedExceptions = HotRodClientException.class)
+   @Test(expectedExceptions = HotRodClientException.class, expectedExceptionsMessageRegExp = ".*ISPN000405:.*")
    public void testInvalidEmbeddedAttributeQuery() throws Exception {
       QueryFactory qf = Search.getQueryFactory(remoteCache);
 
-      Query q = qf.from(User.class)
-            .setProjection("addresses").build();
+      QueryBuilder queryBuilder = qf.from(User.class)
+            .setProjection("addresses");
+
+      Query q = queryBuilder.build();
 
       //todo [anistor] it would be best if the problem would be detected early at build() instead at doing it at list()
-      q.list();
+      q.list();  // exception expected
    }
 
    public void testIsNull() throws Exception {
@@ -662,7 +697,6 @@ public class RemoteNonIndexedQueryDslConditionsTest extends SingleCacheManagerTe
       assertEquals(3, list.size());
    }
 
-   @Test(enabled = false) //todo
    public void testContainsAny1() throws Exception {
       QueryFactory qf = Search.getQueryFactory(remoteCache);
 
@@ -756,7 +790,6 @@ public class RemoteNonIndexedQueryDslConditionsTest extends SingleCacheManagerTe
       qf.from(User.class).having("id").in(array);
    }
 
-   @Test(enabled = false) //todo
    public void testSampleDomainQuery1() throws Exception {
       QueryFactory qf = Search.getQueryFactory(remoteCache);
 
@@ -772,7 +805,6 @@ public class RemoteNonIndexedQueryDslConditionsTest extends SingleCacheManagerTe
       assertEquals("Spider", list.get(1).getName());
    }
 
-   @Test(enabled = false) //todo
    public void testSampleDomainQuery2() throws Exception {
       QueryFactory qf = Search.getQueryFactory(remoteCache);
 
@@ -804,7 +836,6 @@ public class RemoteNonIndexedQueryDslConditionsTest extends SingleCacheManagerTe
       assertEquals(2, list.get(0).getId());
    }
 
-   @Test(enabled = false) //todo
    public void testSampleDomainQuery3() throws Exception {
       QueryFactory qf = Search.getQueryFactory(remoteCache);
 
@@ -820,7 +851,6 @@ public class RemoteNonIndexedQueryDslConditionsTest extends SingleCacheManagerTe
       assertEquals("Spider", list.get(1).getName());
    }
 
-   @Test(enabled = false) //todo
    public void testSampleDomainQuery4() throws Exception {
       QueryFactory qf = Search.getQueryFactory(remoteCache);
 
@@ -836,7 +866,6 @@ public class RemoteNonIndexedQueryDslConditionsTest extends SingleCacheManagerTe
       assertEquals("John", list.get(2).getName());
    }
 
-   @Test(enabled = false) //todo
    public void testSampleDomainQuery5() throws Exception {
       QueryFactory qf = Search.getQueryFactory(remoteCache);
 
@@ -887,7 +916,6 @@ public class RemoteNonIndexedQueryDslConditionsTest extends SingleCacheManagerTe
       assertTrue(list.get(0).getDescription().contains("rent"));
    }
 
-   @Test(enabled = false) //todo
    public void testSampleDomainQuery8() throws Exception {
       QueryFactory qf = Search.getQueryFactory(remoteCache);
 
@@ -1014,7 +1042,6 @@ public class RemoteNonIndexedQueryDslConditionsTest extends SingleCacheManagerTe
       assertTrue(Arrays.asList(1, 2).contains(list.get(1).getId()));
    }
 
-   @Test(enabled = false) //todo
    public void testSampleDomainQuery16() throws Exception {
       for (int i = 0; i < 50; i++) {
          Transaction transaction = new Transaction();
@@ -1044,7 +1071,6 @@ public class RemoteNonIndexedQueryDslConditionsTest extends SingleCacheManagerTe
       }
    }
 
-   @Test(enabled = false) //todo
    public void testSampleDomainQuery17() throws Exception {
       QueryFactory qf = Search.getQueryFactory(remoteCache);
 
@@ -1063,7 +1089,6 @@ public class RemoteNonIndexedQueryDslConditionsTest extends SingleCacheManagerTe
       assertEquals("John Doe's second bank account", list.get(1).getDescription());
    }
 
-   @Test(enabled = false) //todo
    public void testSampleDomainQuery18() throws Exception {
       QueryFactory qf = Search.getQueryFactory(remoteCache);
 
@@ -1269,7 +1294,6 @@ public class RemoteNonIndexedQueryDslConditionsTest extends SingleCacheManagerTe
       q1.eq(User.Gender.FEMALE);
    }
 
-   @Test(enabled = false) //todo
    public void testDefaultValue() throws Exception {
       QueryFactory qf = Search.getQueryFactory(remoteCache);
 
@@ -1278,5 +1302,198 @@ public class RemoteNonIndexedQueryDslConditionsTest extends SingleCacheManagerTe
       List<Account> list = q.list();
       assertEquals(3, list.size());
       assertEquals("Checking account", list.get(0).getDescription());
+   }
+
+   public void testOrderedPagination1() throws Exception {
+      QueryFactory qf = Search.getQueryFactory(remoteCache);
+
+      Query q = qf.from(User.class)
+            .orderBy("id", SortOrder.ASC)
+            .maxResults(0)
+            .build();
+
+      List<User> list = q.list();
+      assertEquals(3, q.getResultSize());
+      assertEquals(0, list.size());
+   }
+
+   public void testUnorderedPagination1() throws Exception {
+      QueryFactory qf = Search.getQueryFactory(remoteCache);
+
+      Query q = qf.from(User.class)
+            .maxResults(0)
+            .build();
+
+      List<User> list = q.list();
+      assertEquals(3, q.getResultSize());
+      assertEquals(0, list.size());
+   }
+
+   public void testOrderedPagination2() throws Exception {
+      QueryFactory qf = Search.getQueryFactory(remoteCache);
+
+      Query q = qf.from(User.class)
+            .orderBy("id", SortOrder.ASC)
+            .startOffset(1)
+            .maxResults(0)
+            .build();
+
+      List<User> list = q.list();
+      assertEquals(3, q.getResultSize());
+      assertEquals(0, list.size());
+   }
+
+   public void testUnorderedPagination2() throws Exception {
+      QueryFactory qf = Search.getQueryFactory(remoteCache);
+
+      Query q = qf.from(User.class)
+            .startOffset(1)
+            .maxResults(0)
+            .build();
+
+      List<User> list = q.list();
+      assertEquals(3, q.getResultSize());
+      assertEquals(0, list.size());
+   }
+
+   public void testOrderedPagination3() throws Exception {
+      QueryFactory qf = Search.getQueryFactory(remoteCache);
+
+      Query q = qf.from(User.class)
+            .orderBy("id", SortOrder.ASC)
+            .maxResults(5)
+            .build();
+
+      List<User> list = q.list();
+      assertEquals(3, q.getResultSize());
+      assertEquals(3, list.size());
+   }
+
+   public void testUnorderedPagination3() throws Exception {
+      QueryFactory qf = Search.getQueryFactory(remoteCache);
+
+      Query q = qf.from(User.class)
+            .maxResults(5)
+            .build();
+
+      List<User> list = q.list();
+      assertEquals(3, q.getResultSize());
+      assertEquals(3, list.size());
+   }
+
+   @Test(expectedExceptions = IllegalArgumentException.class, expectedExceptionsMessageRegExp = "maxResults cannot be less than 0")
+   public void testPagination4() throws Exception {
+      QueryFactory qf = Search.getQueryFactory(remoteCache);
+
+      qf.from(User.class)
+            .maxResults(-4);
+   }
+
+   @Test(expectedExceptions = IllegalArgumentException.class, expectedExceptionsMessageRegExp = "startOffset cannot be less than 0")
+   public void testPagination5() throws Exception {
+      QueryFactory qf = Search.getQueryFactory(remoteCache);
+
+      qf.from(User.class)
+            .startOffset(-3);
+   }
+
+   public void testOrderedPagination6() throws Exception {
+      QueryFactory qf = Search.getQueryFactory(remoteCache);
+
+      Query q = qf.from(User.class)
+            .orderBy("id", SortOrder.ASC)
+            .startOffset(20)
+            .build();
+
+      List<User> list = q.list();
+      assertEquals(3, q.getResultSize());
+      assertEquals(0, list.size());
+   }
+
+   public void testUnorderedPagination6() throws Exception {
+      QueryFactory qf = Search.getQueryFactory(remoteCache);
+
+      Query q = qf.from(User.class)
+            .startOffset(20)
+            .build();
+
+      List<User> list = q.list();
+      assertEquals(3, q.getResultSize());
+      assertEquals(0, list.size());
+   }
+
+   public void testOrderedPagination7() throws Exception {
+      QueryFactory qf = Search.getQueryFactory(remoteCache);
+
+      Query q = qf.from(User.class)
+            .orderBy("id", SortOrder.ASC)
+            .startOffset(20).maxResults(10)
+            .build();
+
+      List<User> list = q.list();
+      assertEquals(3, q.getResultSize());
+      assertEquals(0, list.size());
+   }
+
+   public void testUnorderedPagination7() throws Exception {
+      QueryFactory qf = Search.getQueryFactory(remoteCache);
+
+      Query q = qf.from(User.class)
+            .startOffset(20).maxResults(10)
+            .build();
+
+      List<User> list = q.list();
+      assertEquals(3, q.getResultSize());
+      assertEquals(0, list.size());
+   }
+
+   public void testOrderedPagination8() throws Exception {
+      QueryFactory qf = Search.getQueryFactory(remoteCache);
+
+      Query q = qf.from(User.class)
+            .orderBy("id", SortOrder.ASC)
+            .startOffset(1).maxResults(10)
+            .build();
+
+      List<User> list = q.list();
+      assertEquals(3, q.getResultSize());
+      assertEquals(2, list.size());
+   }
+
+   public void testUnorderedPagination8() throws Exception {
+      QueryFactory qf = Search.getQueryFactory(remoteCache);
+
+      Query q = qf.from(User.class)
+            .startOffset(1).maxResults(10)
+            .build();
+
+      List<User> list = q.list();
+      assertEquals(3, q.getResultSize());
+      assertEquals(2, list.size());
+   }
+
+   public void testOrderedPagination9() throws Exception {
+      QueryFactory qf = Search.getQueryFactory(remoteCache);
+
+      Query q = qf.from(User.class)
+            .orderBy("id", SortOrder.ASC)
+            .startOffset(0).maxResults(2)
+            .build();
+
+      List<User> list = q.list();
+      assertEquals(3, q.getResultSize());
+      assertEquals(2, list.size());
+   }
+
+   public void testUnorderedPagination9() throws Exception {
+      QueryFactory qf = Search.getQueryFactory(remoteCache);
+
+      Query q = qf.from(User.class)
+            .startOffset(0).maxResults(2)
+            .build();
+
+      List<User> list = q.list();
+      assertEquals(3, q.getResultSize());
+      assertEquals(2, list.size());
    }
 }

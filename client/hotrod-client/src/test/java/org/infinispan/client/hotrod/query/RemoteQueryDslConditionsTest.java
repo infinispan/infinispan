@@ -6,6 +6,7 @@ import org.infinispan.client.hotrod.RemoteCache;
 import org.infinispan.client.hotrod.RemoteCacheManager;
 import org.infinispan.client.hotrod.Search;
 import org.infinispan.client.hotrod.TestHelper;
+import org.infinispan.client.hotrod.exceptions.HotRodClientException;
 import org.infinispan.client.hotrod.marshall.ProtoStreamMarshaller;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.manager.EmbeddedCacheManager;
@@ -16,6 +17,7 @@ import org.infinispan.protostream.sampledomain.User;
 import org.infinispan.protostream.sampledomain.marshallers.MarshallerRegistration;
 import org.infinispan.query.dsl.FilterConditionEndContext;
 import org.infinispan.query.dsl.Query;
+import org.infinispan.query.dsl.QueryBuilder;
 import org.infinispan.query.dsl.QueryFactory;
 import org.infinispan.query.dsl.SortOrder;
 import org.infinispan.query.remote.ProtobufMetadataManager;
@@ -587,6 +589,19 @@ public class RemoteQueryDslConditionsTest extends SingleCacheManagerTest {
 
       List<User> list = q.list();
       assertEquals(3, list.size());
+   }
+
+   @Test(enabled = false, expectedExceptions = HotRodClientException.class, expectedExceptionsMessageRegExp = ".*HQLLUCN000005:.*", description = "see https://issues.jboss.org/browse/ISPN-4423")
+   public void testInvalidEmbeddedAttributeQuery() throws Exception {
+      QueryFactory qf = Search.getQueryFactory(remoteCache);
+
+      QueryBuilder queryBuilder = qf.from(User.class)
+            .setProjection("addresses");
+
+      Query q = queryBuilder.build();
+
+      //todo [anistor] it would be best if the problem would be detected early at build() instead at doing it at list()
+      q.list();  // exception expected
    }
 
    public void testIsNull() throws Exception {

@@ -7,9 +7,7 @@ import org.infinispan.objectfilter.impl.logging.Log;
 import org.infinispan.protostream.SerializationContext;
 import org.jboss.logging.Logger;
 
-import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
 
 /**
  * @author anistor@redhat.com
@@ -29,30 +27,6 @@ public final class ProtobufPropertyHelper extends ObjectPropertyHelper<Descripto
          return serializationContext.canMarshall(entityName) ? Object.class : null;
       }
    };
-
-   private static final Set<Class<?>> primitives = new HashSet<Class<?>>();
-
-   static {
-      //todo [anistor] handle arrays and collections
-      primitives.add(java.util.Date.class);
-      primitives.add(String.class);
-      primitives.add(Character.class);
-      primitives.add(char.class);
-      primitives.add(Double.class);
-      primitives.add(double.class);
-      primitives.add(Float.class);
-      primitives.add(float.class);
-      primitives.add(Long.class);
-      primitives.add(long.class);
-      primitives.add(Integer.class);
-      primitives.add(int.class);
-      primitives.add(Short.class);
-      primitives.add(short.class);
-      primitives.add(Byte.class);
-      primitives.add(byte.class);
-      primitives.add(Boolean.class);
-      primitives.add(boolean.class);
-   }
 
    public ProtobufPropertyHelper(SerializationContext serializationContext) {
       this.serializationContext = serializationContext;

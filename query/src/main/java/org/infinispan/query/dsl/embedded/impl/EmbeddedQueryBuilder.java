@@ -30,6 +30,6 @@ final class EmbeddedQueryBuilder extends BaseQueryBuilder<Query> {
          log.tracef("JPQL string : %s", jpqlString);
       }
 
-      return new EmbeddedQuery(cache, jpqlString, ReflectionMatcher.class);
+      return new EmbeddedQuery(cache, jpqlString, startOffset, maxResults, ReflectionMatcher.class);
    }
 }

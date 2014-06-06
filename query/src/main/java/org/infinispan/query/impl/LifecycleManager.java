@@ -299,7 +299,8 @@ public class LifecycleManager extends AbstractModuleLifecycle {
    @Override
    public void cacheManagerStarting(GlobalComponentRegistry gcr, GlobalConfiguration globalCfg) {
       Map<Integer,AdvancedExternalizer<?>> externalizerMap = globalCfg.serialization().advancedExternalizers();
-      externalizerMap.put(ExternalizerIds.FILTER_AND_CONVERTER, new FilterAndConverter.Externalizer());
+      externalizerMap.put(ExternalizerIds.FILTER_AND_CONVERTER, new FilterAndConverter.FilterAndConverterExternalizer());
+      externalizerMap.put(ExternalizerIds.FILTER_RESULT, new FilterAndConverter.FilterResultExternalizer());
       externalizerMap.put(ExternalizerIds.LUCENE_QUERY_BOOLEAN, new LuceneBooleanQueryExternalizer());
       externalizerMap.put(ExternalizerIds.LUCENE_QUERY_TERM, new LuceneTermQueryExternalizer());
       externalizerMap.put(ExternalizerIds.LUCENE_TERM, new LuceneTermExternalizer());
