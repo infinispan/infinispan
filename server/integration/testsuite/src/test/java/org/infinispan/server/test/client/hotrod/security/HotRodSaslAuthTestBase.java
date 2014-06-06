@@ -21,14 +21,15 @@ import org.infinispan.client.hotrod.RemoteCache;
 import org.infinispan.client.hotrod.RemoteCacheManager;
 import org.infinispan.client.hotrod.configuration.Configuration;
 import org.infinispan.client.hotrod.configuration.ConfigurationBuilder;
+import org.infinispan.client.hotrod.configuration.SaslQop;
 import org.junit.After;
 import org.junit.Test;
 
 /**
- * 
+ *
  * Base class for tests of HotRod client SASL authentication. For supported SASL mechanisms see
  * {@code endpoint-7.0.xml} or later.
- * 
+ *
  * @author vjuranek
  * @since 7.0
  */
@@ -49,7 +50,7 @@ public abstract class HotRodSaslAuthTestBase {
    protected static final String WRITER_PASSWD = "somePassword";
    protected static final String SUPERVISOR_LOGIN = "supervisor";
    protected static final String SUPERVISOR_PASSWD = "lessStrongPassword";
-   
+
    protected RemoteCache<String, String> remoteCache;
    protected static RemoteCacheManager remoteCacheManager = null;
 
@@ -119,7 +120,7 @@ public abstract class HotRodSaslAuthTestBase {
    }
 
    @Test(expected = org.infinispan.client.hotrod.exceptions.HotRodClientException.class)
-   public void testReaderWrite() throws PrivilegedActionException,LoginException { 
+   public void testReaderWrite() throws PrivilegedActionException,LoginException {
       initAsReader();
       testWrite();
    }

@@ -32,7 +32,7 @@ public class SaslTransportObjectFactory extends TransportObjectFactory {
    private static final Log log = LogFactory.getLog(SaslTransportObjectFactory.class);
    private static final byte[] EMPTY_BYTES = new byte[0];
    private static final String AUTH_INT = "auth-int";
-   private static final String AUTO_CONF = "auth-conf";
+   private static final String AUTH_CONF = "auth-conf";
    private final AuthenticationConfiguration configuration;
 
    public SaslTransportObjectFactory(Codec codec, TcpTransportFactory tcpTransportFactory, AtomicInteger topologyId,
@@ -85,11 +85,12 @@ public class SaslTransportObjectFactory extends TransportObjectFactory {
          challenge = auth(tcpTransport, topologyId, "", response);
       }
 
-      /*String qop = (String) saslClient.getNegotiatedProperty(Sasl.QOP);
-      if (qop != null && (qop.equalsIgnoreCase(AUTH_INT) || qop.equalsIgnoreCase(AUTO_CONF))) {
+      String qop = (String) saslClient.getNegotiatedProperty(Sasl.QOP);
+      if (qop != null && (qop.equalsIgnoreCase(AUTH_INT) || qop.equalsIgnoreCase(AUTH_CONF))) {
          tcpTransport.setSaslClient(saslClient);
-      } else {*/
-      saslClient.dispose();
+      } else {
+         saslClient.dispose();
+      }
 
       if (pingOnStartup && !firstPingExecuted) {
          log.trace("Executing first ping!");

@@ -309,14 +309,17 @@
                 <configure-jdbc in="@{in}" tablePrefix="STRING_INVALIDATION"/>
             </jdbc-conf>
         </transform>
-    	<transform in="standalone.xml" out="testsuite/hotrod-auth.xml" 
-    	    modifyInfinispan="${infinispan.parts}/local-secured.xml"    
-    	    hotrodAuth="${infinispan.parts}/hotrod-auth.xml" />
-    	<transform in="standalone.xml" out="testsuite/hotrod-auth-krb.xml" 
-    	    modifyInfinispan="${infinispan.parts}/local-secured.xml"
+        <transform in="standalone.xml" out="testsuite/hotrod-auth.xml" 
+            modifyInfinispan="${infinispan.parts}/local-secured.xml"
+            hotrodAuth="${infinispan.parts}/hotrod-auth.xml" />
+       <transform in="standalone.xml" out="testsuite/hotrod-auth-qop.xml" 
+            modifyInfinispan="${infinispan.parts}/local-secured.xml"
+            hotrodAuth="${infinispan.parts}/hotrod-auth-qop.xml" />
+       <transform in="standalone.xml" out="testsuite/hotrod-auth-krb.xml" 
+            modifyInfinispan="${infinispan.parts}/local-secured.xml"
             hotrodAuth="${infinispan.parts}/hotrod-auth-krb.xml" 
-    	    addKrbOpts="${other.parts}/kerberos-properties.xml"
-    	    addKrbSecDomain="${other.parts}/kerberos-security-domain.xml" />
+            addKrbOpts="${other.parts}/kerberos-properties.xml"
+            addKrbSecDomain="${other.parts}/kerberos-security-domain.xml" />
     </target>
 
     <macrodef name="transform">
