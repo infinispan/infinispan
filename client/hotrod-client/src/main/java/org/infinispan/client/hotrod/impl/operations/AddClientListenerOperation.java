@@ -2,14 +2,15 @@ package org.infinispan.client.hotrod.impl.operations;
 
 import org.infinispan.client.hotrod.Flag;
 import org.infinispan.client.hotrod.annotation.ClientListener;
+import org.infinispan.client.hotrod.event.ClientEvent;
 import org.infinispan.client.hotrod.event.ClientListenerNotifier;
 import org.infinispan.client.hotrod.impl.protocol.Codec;
+import org.infinispan.client.hotrod.impl.protocol.Either;
 import org.infinispan.client.hotrod.impl.protocol.HeaderParams;
 import org.infinispan.client.hotrod.impl.transport.Transport;
 import org.infinispan.client.hotrod.impl.transport.TransportFactory;
 import org.infinispan.client.hotrod.logging.Log;
 import org.infinispan.client.hotrod.logging.LogFactory;
-import org.infinispan.client.hotrod.marshall.MarshallerUtil;
 import org.infinispan.commons.util.InfinispanCollections;
 import org.infinispan.commons.util.ReflectionUtil;
 
@@ -22,23 +23,23 @@ import java.util.concurrent.atomic.AtomicInteger;
 /**
  * @author Galder Zamarreño
  */
-public class AddClientListenerOperation extends RetryOnFailureOperation<Void> {
+public class AddClientListenerOperation extends RetryOnFailureOperation<Short> {
 
    private static final Log log = LogFactory.getLog(AddClientListenerOperation.class, Log.class);
 
-   private final byte[] listenerId;
+   public final byte[] listenerId;
 
    /**
     * Decicated transport instance for adding client listener. This transport
     * is used to send events back to client and it's only released when the
     * client listener is removed.
     */
-   private final Transport dedicatedTransport;
+   private Transport dedicatedTransport;
 
    private final ClientListenerNotifier listenerNotifier;
-   private final Object listener;
-   private final byte[][] filterFactoryParams;
-   private final byte[][] converterFactoryParams;
+   public final Object listener;
+   public final byte[][] filterFactoryParams;
+   public final byte[][] converterFactoryParams;
 
    protected AddClientListenerOperation(Codec codec, TransportFactory transportFactory,
          byte[] cacheName, AtomicInteger topologyId, Flag[] flags,
@@ -46,7 +47,7 @@ public class AddClientListenerOperation extends RetryOnFailureOperation<Void> {
          byte[][] filterFactoryParams, byte[][] converterFactoryParams) {
       super(codec, transportFactory, cacheName, topologyId, flags);
       this.listenerId = generateListenerId();
-      this.dedicatedTransport = transportFactory.getTransport(InfinispanCollections.<SocketAddress>emptySet());
+//      this.dedicatedTransport = transportFactory.getTransport(InfinispanCollections.<SocketAddress>emptySet());
       this.listenerNotifier = listenerNotifier;
       this.listener = listener;
       this.filterFactoryParams = filterFactoryParams;
@@ -64,6 +65,7 @@ public class AddClientListenerOperation extends RetryOnFailureOperation<Void> {
 
    @Override
    protected Transport getTransport(int retryCount, Set<SocketAddress> failedServers) {
+      this.dedicatedTransport = transportFactory.getTransport(failedServers);
       return dedicatedTransport;
    }
 
@@ -72,8 +74,12 @@ public class AddClientListenerOperation extends RetryOnFailureOperation<Void> {
       // Do not release transport instance, it's fully dedicated to events
    }
 
+   public Transport getDedicatedTransport() {
+      return dedicatedTransport;
+   }
+
    @Override
-   protected Void executeOperation(Transport transport) {
+   protected Short executeOperation(Transport transport) {
       ClientListener clientListener = extractClientListener();
 
       HeaderParams params = writeHeader(transport, ADD_CLIENT_LISTENER_REQUEST);
@@ -84,11 +90,25 @@ public class AddClientListenerOperation extends RetryOnFailureOperation<Void> {
 
       transport.flush();
 
-      short status = readHeaderAndValidate(transport, params);
-      if (status == NO_ERROR_STATUS)
-         listenerNotifier.addClientListener(listenerId, listener, dedicatedTransport, cacheName);
+      listenerNotifier.addClientListener(this);
+      Either<Short, ClientEvent> either;
+      do {
+         // Process state transfer related events or add listener response
+         either = codec.readHeaderOrEvent(dedicatedTransport, params, listenerId, listenerNotifier.getMarshaller());
+         switch(either.type()) {
+            case LEFT:
+               if (either.left() == NO_ERROR_STATUS)
+                  listenerNotifier.startClientListener(listenerId);
+               else // If error, remove it
+                  listenerNotifier.removeClientListener(listenerId);
+               break;
+            case RIGHT:
+               listenerNotifier.invokeEvent(listenerId, either.right());
+               break;
+         }
+      } while (either.type() == Either.Type.RIGHT);
 
-      return null;
+      return either.left();
    }
 
    private void writeNamedFactory(Transport transport, String factoryName, byte[][] params) {

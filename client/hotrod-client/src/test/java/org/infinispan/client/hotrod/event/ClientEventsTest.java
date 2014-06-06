@@ -7,13 +7,10 @@ import org.infinispan.client.hotrod.test.SingleHotRodServerTest;
 import org.testng.annotations.Test;
 
 import java.io.Serializable;
-import java.util.ArrayList;
-import java.util.List;
 import java.util.Set;
 
 import static org.infinispan.client.hotrod.test.HotRodClientTestingUtil.*;
 import static org.testng.AssertJUnit.assertEquals;
-import static org.testng.AssertJUnit.assertFalse;
 import static org.testng.AssertJUnit.assertTrue;
 
 /**
@@ -153,7 +150,7 @@ public class ClientEventsTest extends SingleHotRodServerTest {
             cache.put(3, "three");
             expectOnlyCreatedEvent(3, eventListener, cache());
             cache.clear();
-            expectUnorderedRemovedEvents(eventListener, 1, 2, 3);
+            expectUnorderedEvents(eventListener, ClientEvent.Type.CLIENT_CACHE_ENTRY_REMOVED, 1, 2, 3);
          }
       });
    }
@@ -246,25 +243,18 @@ public class ClientEventsTest extends SingleHotRodServerTest {
       });
    }
 
-   <K> void expectUnorderedRemovedEvents(EventLogListener eventListener, K... keys) {
-      List<K> assertedKeys = new ArrayList<K>();
-      for (int i = 0; i < keys.length; i++) {
-         ClientCacheEntryRemovedEvent<K> event =
-               eventListener.pollEvent(ClientEvent.Type.CLIENT_CACHE_ENTRY_REMOVED);
-         int initialSize = assertedKeys.size();
-         for (K key : keys) checkUnorderedKeyEvent(assertedKeys, key, event.getKey());
-         int finalSize = assertedKeys.size();
-         assertEquals(initialSize + 1, finalSize);
-      }
-   }
-
-   <K> boolean checkUnorderedKeyEvent(List<K> assertedKeys, K key, K eventKey) {
-      if (key.equals(eventKey)) {
-         assertFalse(assertedKeys.contains(key));
-         assertedKeys.add(key);
-         return true;
-      }
-      return false;
+   public void testEventReplayAfterAddingListener() {
+      final EventLogListener eventListener = new EventLogListener();
+      RemoteCache<Integer, String> cache = remoteCacheManager.getCache();
+      cache.put(1, "one");
+      cache.put(2, "two");
+      expectNoEvents(eventListener);
+      withClientListener(eventListener, new RemoteCacheManagerCallable(remoteCacheManager) {
+         @Override
+         public void call() {
+            expectUnorderedEvents(eventListener, ClientEvent.Type.CLIENT_CACHE_ENTRY_CREATED, 1, 2);
+         }
+      });
    }
 
    static final class CustomKey implements Serializable {

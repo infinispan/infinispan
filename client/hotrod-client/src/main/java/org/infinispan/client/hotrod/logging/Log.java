@@ -163,8 +163,8 @@ public interface Log extends BasicLogger {
    void unexpectedErrorConsumingEvent(ClientEvent clientEvent, @Cause Throwable t);
 
    @LogMessage(level = ERROR)
-   @Message(value = "Unable to complete reading event from server", id = 4039)
-   void unableToReadEventFromServer(@Cause Throwable t);
+   @Message(value = "Unable to complete reading event from server %s", id = 4039)
+   void unableToReadEventFromServer(@Cause Throwable t, SocketAddress server);
 
    @Message(value = "Cache listener class %s must be annotated with org.infinispan.client.hotrod.annotation.ClientListener", id = 4040)
    IncorrectClientListenerException missingClientListenerAnnotation(String className);

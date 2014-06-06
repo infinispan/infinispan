@@ -2,8 +2,8 @@ package org.infinispan.server.hotrod.event
 
 import java.lang.reflect.Method
 import org.infinispan.notifications.cachelistener.event.Event
+import org.infinispan.server.hotrod.HotRodSingleNodeTest
 import org.infinispan.server.hotrod.test.HotRodTestingUtil._
-import org.infinispan.server.hotrod.{Bytes, HotRodSingleNodeTest}
 import org.testng.annotations.Test
 
 /**
@@ -11,8 +11,6 @@ import org.testng.annotations.Test
  */
 @Test(groups = Array("functional"), testName = "server.hotrod.event.HotRodEventsTest")
 class HotRodEventsTest extends HotRodSingleNodeTest {
-
-   // TODO: test that if the cache is non-emtpy and listener is added, events are received for existing contents
 
    def testCreatedEvent(m: Method) {
       implicit val eventListener = new EventLogListener
@@ -169,19 +167,16 @@ class HotRodEventsTest extends HotRodSingleNodeTest {
       expectNoEvents()
    }
 
-   @Test(enabled = false) // NYI
    def testEventReplayAfterAddingListener(m: Method) {
       implicit val eventListener = new EventLogListener
-      val e1 = (k(m, "k1-"), v(m, "v1-"))
-      val e2 = (k(m, "k2-"), v(m, "v2-"))
-      val e3 = (k(m, "k3-"), v(m, "v3-"))
-      client.put(e1._1, 0, 0, e1._2)
-      client.put(e2._1, 0, 0, e2._2)
-      client.put(e3._1, 0, 0, e3._2)
+      val (k1, v1) = (k(m, "k1-"), v(m, "v1-"))
+      val (k2, v2) = (k(m, "k2-"), v(m, "v2-"))
+      val (k3, v3) = (k(m, "k3-"), v(m, "v3-"))
+      client.put(k1, 0, 0, v1)
+      client.put(k2, 0, 0, v2)
+      client.put(k3, 0, 0, v3)
       withClientListener() { () =>
-         expectEvent(e1._1, Event.Type.CACHE_ENTRY_CREATED)
-         expectEvent(e2._1, Event.Type.CACHE_ENTRY_CREATED)
-         expectEvent(e3._1, Event.Type.CACHE_ENTRY_CREATED)
+         expectUnorderedEvents(List(k1, k2, k3), Event.Type.CACHE_ENTRY_CREATED)
       }
    }
 

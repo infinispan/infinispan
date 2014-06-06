@@ -3,10 +3,12 @@ package org.infinispan.client.hotrod.event;
 import org.infinispan.client.hotrod.annotation.ClientCacheEntryCreated;
 import org.infinispan.client.hotrod.annotation.ClientCacheEntryModified;
 import org.infinispan.client.hotrod.annotation.ClientCacheEntryRemoved;
-import org.infinispan.client.hotrod.annotation.ClientListener;
+import org.infinispan.client.hotrod.annotation.ClientCacheFailover;
 import org.infinispan.client.hotrod.exceptions.TransportException;
+import org.infinispan.client.hotrod.impl.operations.AddClientListenerOperation;
 import org.infinispan.client.hotrod.impl.protocol.Codec;
 import org.infinispan.client.hotrod.impl.transport.Transport;
+import org.infinispan.client.hotrod.impl.transport.TransportFactory;
 import org.infinispan.client.hotrod.logging.Log;
 import org.infinispan.client.hotrod.logging.LogFactory;
 import org.infinispan.commons.equivalence.AnyEquivalence;
@@ -16,20 +18,19 @@ import org.infinispan.commons.util.CollectionFactory;
 import org.infinispan.commons.util.Util;
 
 import java.lang.annotation.Annotation;
-import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
+import java.net.SocketAddress;
 import java.nio.channels.ClosedChannelException;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentMap;
-import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.ExecutorService;
+import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * @author Galder Zamarreño
@@ -44,6 +45,7 @@ public class ClientListenerNotifier {
       allowedListeners.put(ClientCacheEntryCreated.class, new Class[]{ClientCacheEntryCreatedEvent.class, ClientCacheEntryCustomEvent.class});
       allowedListeners.put(ClientCacheEntryModified.class, new Class[]{ClientCacheEntryModifiedEvent.class, ClientCacheEntryCustomEvent.class});
       allowedListeners.put(ClientCacheEntryRemoved.class, new Class[]{ClientCacheEntryRemovedEvent.class, ClientCacheEntryCustomEvent.class});
+      allowedListeners.put(ClientCacheFailover.class, new Class[]{ClientCacheFailoverEvent.class});
    }
 
    private final ConcurrentMap<byte[], EventDispatcher> clientListeners = CollectionFactory.makeConcurrentMap(
@@ -59,14 +61,61 @@ public class ClientListenerNotifier {
       this.marshaller = marshaller;
    }
 
-   public void addClientListener(byte[] listenerId, Object listener, Transport transport, byte[] cacheName) {
-      Map<Class<? extends Annotation>, List<ClientListenerInvocation>> invocables = findMethods(listener);
-      EventDispatcher eventDispatcher = new EventDispatcher(listenerId, listener, invocables, transport, marshaller, cacheName);
-      clientListeners.put(listenerId, eventDispatcher);
+   public Marshaller getMarshaller() {
+      return marshaller;
+   }
+
+   public void addClientListener(AddClientListenerOperation op) {
+      Map<Class<? extends Annotation>, List<ClientListenerInvocation>> invocables = findMethods(op.listener);
+      EventDispatcher eventDispatcher = new EventDispatcher(op, invocables);
+      clientListeners.put(op.listenerId, eventDispatcher);
       if (log.isTraceEnabled())
          log.tracef("Add client listener with id %s, for listener %s and invocable methods %s",
-               Util.printArray(listenerId), listener, invocables);
+               Util.printArray(op.listenerId), op.listener, invocables);
+   }
 
+   public void failoverClientListeners(Set<SocketAddress> failedServers, TransportFactory transportFactory, AtomicInteger topologyId) {
+      // Compile all listener ids that need failing over
+      List<byte[]> failoverListenerIds = new ArrayList<>();
+      for (Map.Entry<byte[], EventDispatcher> entry : clientListeners.entrySet()) {
+         EventDispatcher dispatcher = entry.getValue();
+         if (failedServers.contains(dispatcher.transport.getRemoteSocketAddress()))
+            failoverListenerIds.add(entry.getKey());
+      }
+      if (log.isTraceEnabled() && failoverListenerIds.isEmpty())
+         log.tracef("No event listeners registered in faild servers: %s", failedServers);
+
+      // Remove tracking listeners and read to the fallback transport
+      for (byte[] listenerId : failoverListenerIds) {
+         EventDispatcher dispatcher = clientListeners.get(listenerId);
+         SocketAddress failedServerAddress = dispatcher.transport.getRemoteSocketAddress();
+         removeClientListener(listenerId);
+         // Invoke failover event callback, if presents
+         invokeFailoverEvent(dispatcher);
+         // Re-execute adding client listener in one of the remaining nodes
+         dispatcher.op.execute();
+         if (log.isTraceEnabled()) {
+            log.tracef("Fallback listener id %s from a failed server %s to %s",
+                  Util.printArray(listenerId), failedServerAddress,
+                  dispatcher.op.getDedicatedTransport().getRemoteSocketAddress());
+         }
+      }
+   }
+
+   private void invokeFailoverEvent(EventDispatcher dispatcher) {
+      List<ClientListenerInvocation> callbacks = dispatcher.invocables.get(ClientCacheFailover.class);
+      for (ClientListenerInvocation callback : callbacks) {
+         callback.invoke(new ClientCacheFailoverEvent() {
+            @Override
+            public Type getType() {
+               return Type.CLIENT_CACHE_FAILOVER;
+            }
+         });
+      }
+   }
+
+   public void startClientListener(byte[] listenerId) {
+      EventDispatcher eventDispatcher = clientListeners.get(listenerId);
       executor.submit(eventDispatcher);
    }
 
@@ -80,8 +129,8 @@ public class ClientListenerNotifier {
 
    public byte[] findListenerId(Object listener) {
       for (EventDispatcher dispatcher : clientListeners.values()) {
-         if (dispatcher.listener.equals(listener))
-            return dispatcher.listenerId;
+         if (dispatcher.op.listener.equals(listener))
+            return dispatcher.op.listenerId;
       }
       return null;
    }
@@ -139,8 +188,8 @@ public class ClientListenerNotifier {
    public Set<Object> getListeners(byte[] cacheName) {
       Set<Object> ret = new HashSet<>(clientListeners.size());
       for (EventDispatcher dispatcher : clientListeners.values()) {
-         if (Arrays.equals(dispatcher.cacheName, cacheName))
-            ret.add(dispatcher.listener);
+         if (Arrays.equals(dispatcher.op.cacheName, cacheName))
+            ret.add(dispatcher.op.listener);
       }
 
       return ret;
@@ -155,23 +204,21 @@ public class ClientListenerNotifier {
       }
    }
 
-   private final class EventDispatcher implements Runnable {
-      final byte[] listenerId;
-      final Object listener;
-      final Transport transport;
-      final Marshaller marshaller;
-      final Map<Class<? extends Annotation>, List<ClientListenerInvocation>> invocables;
-      final byte[] cacheName;
+   public void invokeEvent(byte[] listenerId, ClientEvent clientEvent) {
+      EventDispatcher eventDispatcher = clientListeners.get(listenerId);
+      eventDispatcher.invokeClientEvent(clientEvent);
+   }
 
-      private EventDispatcher(byte[] listenerId, Object listener,
-            Map<Class<? extends Annotation>, List<ClientListenerInvocation>> invocables,
-            Transport transport, Marshaller marshaller, byte[] cacheName) {
-         this.listenerId = listenerId;
-         this.listener = listener;
-         this.transport = transport;
-         this.marshaller = marshaller;
+   private final class EventDispatcher implements Runnable {
+      final Map<Class<? extends Annotation>, List<ClientListenerInvocation>> invocables;
+      final AddClientListenerOperation op;
+      final Transport transport;
+
+      private EventDispatcher(AddClientListenerOperation op,
+            Map<Class<? extends Annotation>, List<ClientListenerInvocation>> invocables) {
+         this.op = op;
+         this.transport = op.getDedicatedTransport();
          this.invocables = invocables;
-         this.cacheName = cacheName;
       }
 
       @Override
@@ -180,23 +227,8 @@ public class ClientListenerNotifier {
             while (true) {
                ClientEvent clientEvent = null;
                try {
-                  clientEvent = codec.readEvent(transport, listenerId, marshaller);
-                  // transport.setBlocking(true);
-                  if (log.isTraceEnabled())
-                     log.tracef("Event %s received for listener with id=%s", clientEvent, Util.printArray(listenerId));
-
-                  switch (clientEvent.getType()) {
-                     case CLIENT_CACHE_ENTRY_CREATED:
-                        invokeCallbacks(clientEvent, ClientCacheEntryCreated.class);
-                        break;
-                     case CLIENT_CACHE_ENTRY_MODIFIED:
-                        invokeCallbacks(clientEvent, ClientCacheEntryModified.class);
-                        break;
-                     case CLIENT_CACHE_ENTRY_REMOVED:
-                        invokeCallbacks(clientEvent, ClientCacheEntryRemoved.class);
-                        break;
-                  }
-
+                  clientEvent = codec.readEvent(transport, op.listenerId, marshaller);
+                  invokeClientEvent(clientEvent);
                   // Nullify event, makes it easier to identify network vs invocation error messages
                   clientEvent = null;
                } catch (TransportException e) {
@@ -204,18 +236,37 @@ public class ClientListenerNotifier {
                      throw (ClosedChannelException) e.getCause();
                   else if (clientEvent != null)
                      log.unexpectedErrorConsumingEvent(clientEvent, e);
-                  else
-                     log.unableToReadEventFromServer(e);
+                  else {
+                     // TODO: Convert to warn
+                     log.unableToReadEventFromServer(e, transport.getRemoteSocketAddress());
+                     return; // Server is likely gone!
+                  }
                } catch (Throwable t) {
-                  // transport.setBlocking(true);
                   if (clientEvent != null)
                      log.unexpectedErrorConsumingEvent(clientEvent, t);
                   else
-                     log.unableToReadEventFromServer(t);
+                     log.unableToReadEventFromServer(t, transport.getRemoteSocketAddress());
                }
             }
          } catch (ClosedChannelException e) {
             // Channel closed, ignore and exit
+         }
+      }
+
+      void invokeClientEvent(ClientEvent clientEvent) {
+         if (log.isTraceEnabled())
+            log.tracef("Event %s received for listener with id=%s", clientEvent, Util.printArray(op.listenerId));
+
+         switch (clientEvent.getType()) {
+            case CLIENT_CACHE_ENTRY_CREATED:
+               invokeCallbacks(clientEvent, ClientCacheEntryCreated.class);
+               break;
+            case CLIENT_CACHE_ENTRY_MODIFIED:
+               invokeCallbacks(clientEvent, ClientCacheEntryModified.class);
+               break;
+            case CLIENT_CACHE_ENTRY_REMOVED:
+               invokeCallbacks(clientEvent, ClientCacheEntryRemoved.class);
+               break;
          }
       }
 

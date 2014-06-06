@@ -552,7 +552,6 @@ public class RemoteCacheManager implements BasicCacheContainer {
 
       transportFactory = Util.getInstance(configuration.transportFactory());
 
-      transportFactory.start(codec, configuration, topologyId);
       if (marshaller == null) {
          marshaller = configuration.marshaller();
          if (marshaller == null) {
@@ -569,6 +568,7 @@ public class RemoteCacheManager implements BasicCacheContainer {
       }
 
       listenerNotifier = new ClientListenerNotifier(asyncExecutorService, codec, marshaller);
+      transportFactory.start(codec, configuration, topologyId, listenerNotifier);
 
       synchronized (cacheName2RemoteCache) {
          for (RemoteCacheHolder rcc : cacheName2RemoteCache.values()) {

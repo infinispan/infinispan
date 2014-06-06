@@ -64,6 +64,39 @@ public class ClientFilterEventsTest extends SingleHotRodServerTest {
       });
    }
 
+   public void testFilteredEventsReplay() {
+      final FilteredEventLogListener eventListener = new FilteredEventLogListener();
+      filterFactory.dynamic = false;
+      RemoteCache<Integer, String> cache = remoteCacheManager.getCache();
+      cache.put(1, "one");
+      cache.put(2, "two");
+      withClientListener(eventListener, new RemoteCacheManagerCallable(remoteCacheManager) {
+         @Override
+         public void call() {
+            expectOnlyCreatedEvent(2, eventListener, cache());
+            RemoteCache<Integer, String> cache = rcm.getCache();
+            cache.remove(1);
+            cache.remove(2);
+            expectOnlyRemovedEvent(2, eventListener, cache());
+         }
+      });
+      filterFactory.dynamic = true;
+      cache.put(1, "one");
+      cache.put(2, "two");
+      cache.put(3, "three");
+      withClientListener(eventListener, new Object[]{3}, null, new RemoteCacheManagerCallable(remoteCacheManager) {
+         @Override
+         public void call() {
+            expectOnlyCreatedEvent(3, eventListener, cache());
+            RemoteCache<Integer, String> cache = rcm.getCache();
+            cache.remove(1);
+            cache.remove(2);
+            cache.remove(3);
+            expectOnlyRemovedEvent(3, eventListener, cache());
+         }
+      });
+   }
+
    static class TestKeyValueFilterFactory implements KeyValueFilterFactory {
       boolean dynamic;
       @Override

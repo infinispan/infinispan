@@ -27,6 +27,8 @@ public interface Codec {
 
    ClientEvent readEvent(Transport transport, byte[] expectedListenerId, Marshaller marshaller);
 
+   Either<Short, ClientEvent> readHeaderOrEvent(Transport transport, HeaderParams params, byte[] expectedListenerId, Marshaller marshaller);
+
    /**
     * Logger for Hot Rod client codec
     */

@@ -90,7 +90,7 @@ class ClientListenerRegistry(configuration: HotRodServerConfiguration) extends L
       } else false
    }
 
-   @Listener(clustered = true)
+   @Listener(clustered = true, includeCurrentState = true)
    private class ClientEventSender(ch: Channel, listenerId: Bytes, version: Byte, isCustom: Boolean) {
       @CacheEntryCreated
       @CacheEntryModified

@@ -67,13 +67,17 @@ public class Codec20 implements Codec, HotRodConstants {
       short magic = readMagic(transport);
       long receivedMessageId = readMessageId(transport, params);
       short receivedOpCode = transport.readByte();
+      return readPartialHeader(transport, params, receivedOpCode);
+   }
+
+   private short readPartialHeader(Transport transport, HeaderParams params, short receivedOpCode) {
       // Read both the status and new topology (if present),
       // before deciding how to react to error situations.
       short status = transport.readByte();
       readNewTopologyIfPresent(transport, params);
 
       // Now that all headers values have been read, check the error responses.
-      // This avoids situatiations where an exceptional return ends up with
+      // This avoids situatations where an exceptional return ends up with
       // the socket containing data from previous request responses.
       if (receivedOpCode != params.opRespCode) {
          if (receivedOpCode == HotRodConstants.ERROR_RESPONSE) {
@@ -95,15 +99,12 @@ public class Codec20 implements Codec, HotRodConstants {
       readMagic(transport);
       readMessageId(transport, null);
       short eventTypeId = transport.readByte();
+      return readPartialEvent(transport, expectedListenerId, marshaller, eventTypeId);
+   }
+
+   private ClientEvent readPartialEvent(Transport transport, byte[] expectedListenerId, Marshaller marshaller, short eventTypeId) {
       short status = transport.readByte();
       transport.readByte(); // ignore, no topology expected
-
-      byte[] listenerId = transport.readArray();
-      if (!Arrays.equals(listenerId, expectedListenerId))
-         throw log.unexpectedListenerId(printArray(listenerId), printArray(expectedListenerId));
-
-      short isCustom = transport.readByte();
-
       ClientEvent.Type eventType;
       switch (eventTypeId) {
          case CACHE_ENTRY_CREATED_EVENT_RESPONSE:
@@ -115,9 +116,17 @@ public class Codec20 implements Codec, HotRodConstants {
          case CACHE_ENTRY_REMOVED_EVENT_RESPONSE:
             eventType = ClientEvent.Type.CLIENT_CACHE_ENTRY_REMOVED;
             break;
+         case ERROR_RESPONSE:
+            checkForErrorsInResponseStatus(transport, null, status);
          default:
             throw log.unknownEvent(eventTypeId);
       }
+
+      byte[] listenerId = transport.readArray();
+      if (!Arrays.equals(listenerId, expectedListenerId))
+         throw log.unexpectedListenerId(printArray(listenerId), printArray(expectedListenerId));
+
+      short isCustom = transport.readByte();
 
       if (isCustom == 1) {
          final Object eventData = MarshallerUtil.bytes2obj(marshaller, transport.readArray());
@@ -125,19 +134,35 @@ public class Codec20 implements Codec, HotRodConstants {
       } else {
          switch (eventType) {
             case CLIENT_CACHE_ENTRY_CREATED:
-               final Object createdKey = MarshallerUtil.bytes2obj(marshaller, transport.readArray());
-               final long createdDataVersion = transport.readLong();
+               Object createdKey = MarshallerUtil.bytes2obj(marshaller, transport.readArray());
+               long createdDataVersion = transport.readLong();
                return createCreatedEvent(createdKey, createdDataVersion);
             case CLIENT_CACHE_ENTRY_MODIFIED:
-               final Object modifiedKey = MarshallerUtil.bytes2obj(marshaller, transport.readArray());
-               final long modifiedDataVersion = transport.readLong();
+               Object modifiedKey = MarshallerUtil.bytes2obj(marshaller, transport.readArray());
+               long modifiedDataVersion = transport.readLong();
                return createModifiedEvent(modifiedKey, modifiedDataVersion);
             case CLIENT_CACHE_ENTRY_REMOVED:
-               final Object removedKey = MarshallerUtil.bytes2obj(marshaller, transport.readArray());
+               Object removedKey = MarshallerUtil.bytes2obj(marshaller, transport.readArray());
                return createRemovedEvent(removedKey);
             default:
                throw log.unknownEvent(eventTypeId);
          }
+      }
+   }
+
+   @Override
+   public Either<Short, ClientEvent> readHeaderOrEvent(Transport transport, HeaderParams params, byte[] expectedListenerId, Marshaller marshaller) {
+      readMagic(transport);
+      readMessageId(transport, null);
+      short opCode = transport.readByte();
+      switch (opCode) {
+         case CACHE_ENTRY_CREATED_EVENT_RESPONSE:
+         case CACHE_ENTRY_MODIFIED_EVENT_RESPONSE:
+         case CACHE_ENTRY_REMOVED_EVENT_RESPONSE:
+            ClientEvent clientEvent = readPartialEvent(transport, expectedListenerId, marshaller, opCode);
+            return Either.newRight(clientEvent);
+         default:
+            return Either.newLeft(readPartialHeader(transport, params, opCode));
       }
    }
 

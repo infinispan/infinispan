@@ -66,6 +66,23 @@ class HotRodFilterEventsTest extends HotRodSingleNodeTest {
       }
    }
 
+   def testFilteredEventsReplay(m: Method) {
+      implicit val eventListener = new EventLogListener
+      val staticAcceptedKey = Array[Byte](1, 2, 3)
+      val dynamicAcceptedKey = Array[Byte](7, 8, 9)
+      val key = k(m)
+      client.put(key, 0, 0, v(m))
+      client.put(staticAcceptedKey, 0, 0, v(m))
+      client.put(dynamicAcceptedKey, 0, 0, v(m))
+      withClientListener(Some(("test-filter-factory", List.empty))) { () =>
+         expectSingleEvent(staticAcceptedKey, Event.Type.CACHE_ENTRY_CREATED)
+      }
+      keyValueFilterFactory.dynamic = true
+      withClientListener(Some(("test-filter-factory", List(Array[Byte](7, 8, 9))))) { () =>
+         expectSingleEvent(dynamicAcceptedKey, Event.Type.CACHE_ENTRY_CREATED)
+      }
+   }
+
    class AcceptedKeyValueFilterFactory extends KeyValueFilterFactory {
       var dynamic = false
       override def getKeyValueFilter[K, V](params: Array[AnyRef]): KeyValueFilter[K, V] = {

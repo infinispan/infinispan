@@ -71,6 +71,19 @@ class HotRodCustomEventsTest extends HotRodSingleNodeTest {
       }
    }
 
+   def testConvertedEventsReplay(m: Method) {
+      implicit val eventListener = new CustomEventListener
+      converterFactory.dynamic = false
+      val key = Array[Byte](1)
+      val keyLength = key.length.toByte
+      val value = Array[Byte](2)
+      val valueLength = value.length.toByte
+      client.put(key, 0, 0, value)
+      withClientListener(converterFactory = Some(("test-converter-factory", List.empty))) { () =>
+         expectSingleCustomEvent(Array(keyLength) ++ key ++ Array(valueLength) ++ value)
+      }
+   }
+
    private class CustomEventListener extends TestClientListener {
       private val customEvents =  new ArrayBlockingQueue[TestCustomEvent](128)
 

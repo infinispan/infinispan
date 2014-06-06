@@ -60,6 +60,27 @@ public class ClientCustomEventsTest extends SingleHotRodServerTest {
       });
    }
 
+   public void testConvertedEventsReplay() {
+      final CustomEventListener eventListener = new CustomEventListener();
+      converterFactory.dynamic = false;
+      RemoteCache<Integer, String> cache = remoteCacheManager.getCache();
+      cache.put(1, "one");
+      withClientListener(eventListener, new RemoteCacheManagerCallable(remoteCacheManager) {
+         @Override
+         public void call() {
+            eventListener.expectSingleCustomEvent(1, "one");
+         }
+      });
+      converterFactory.dynamic = true;
+      cache.put(2, "two");
+      withClientListener(eventListener, null, new Object[]{2}, new RemoteCacheManagerCallable(remoteCacheManager) {
+         @Override
+         public void call() {
+            eventListener.expectSingleCustomEvent(2, null);
+         }
+      });
+   }
+
    static class TestConverterFactory implements ConverterFactory {
       boolean dynamic;
       @Override

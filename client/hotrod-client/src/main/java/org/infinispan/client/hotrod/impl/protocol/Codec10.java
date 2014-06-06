@@ -115,6 +115,11 @@ public class Codec10 implements Codec {
    }
 
    @Override
+   public Either<Short, ClientEvent> readHeaderOrEvent(Transport transport, HeaderParams params, byte[] expectedListenerId, Marshaller marshaller) {
+      return null;  // No events sent in Hot Rod 1.x protocol
+   }
+
+   @Override
    public Log getLog() {
       return log;
    }

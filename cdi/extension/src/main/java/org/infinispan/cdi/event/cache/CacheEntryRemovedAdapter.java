@@ -68,10 +68,6 @@ public class CacheEntryRemovedAdapter<K, V> extends AbstractAdapter<CacheEntryRe
          return false;
       }
 
-      @Override
-      public Metadata getMetadata() {
-         return null;
-      }
    };
 
    @SuppressWarnings("serial")
