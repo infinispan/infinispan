@@ -93,7 +93,7 @@ public class CacheService<K, V> implements Service<Cache<K, V>> {
                 this.dependencies.getRecoveryRegistry().removeXAResourceRecovery(this.recovery);
             }
 
-            this.cache.stop();
+            SecurityActions.stopCache(cache);
             log.debugf("%s cache stopped", this.name);
         }
     }
