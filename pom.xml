@@ -65,7 +65,6 @@
       <module>server/integration</module>
       <module>as-modules/embedded</module>
       <module>as-modules/client</module>
-      <module>integrationtests/luceneintegration</module>
       <module>integrationtests/as-integration-embedded</module>
       <module>integrationtests/as-integration-client</module>
       <module>integrationtests/as-lucene-directory</module>
