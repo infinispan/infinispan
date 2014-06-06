@@ -8,6 +8,7 @@ import org.infinispan.protostream.TagHandler;
 import org.infinispan.protostream.impl.WrappedMessageMarshaller;
 
 import java.io.IOException;
+import java.util.Iterator;
 
 /**
  * @author anistor@redhat.com
@@ -145,12 +146,24 @@ public class ProtobufMatcherEvalContext extends MatcherEvalContext<Integer> impl
          AttributeNode<Integer> attrNode = currentNode.getChild(fd.getNumber());
          if (attrNode != null && !messageContext.isFieldMarked(fd.getNumber())) {
             //todo [anistor] can a repeated field have a default value?
-            Object defaultValue = fd.isRepeated()
+            if (fd.isRepeated()
                   || fd.getType() == Descriptors.FieldDescriptor.Type.MESSAGE
-                  || fd.getType() == Descriptors.FieldDescriptor.Type.GROUP
-                  || fd.toProto().getDefaultValue().isEmpty() ? null : fd.getDefaultValue();
-            attrNode.processValue(defaultValue, this);
+                  || fd.getType() == Descriptors.FieldDescriptor.Type.GROUP) {
+               processNullAttribute(attrNode);
+            } else {
+               Object defaultValue = fd.toProto().getDefaultValue().isEmpty() ? null : fd.getDefaultValue();
+               attrNode.processValue(defaultValue, this);
+            }
          }
+      }
+   }
+
+   private void processNullAttribute(AttributeNode<Integer> attributeNode) {
+      attributeNode.processValue(null, this);
+      Iterator<AttributeNode<Integer>> children = attributeNode.getChildrenIterator();
+      while (children.hasNext()) {
+         AttributeNode<Integer> childAttribute = children.next();
+         processNullAttribute(childAttribute);
       }
    }
 }

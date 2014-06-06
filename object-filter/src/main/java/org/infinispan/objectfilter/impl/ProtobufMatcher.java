@@ -37,7 +37,7 @@ public final class ProtobufMatcher extends BaseMatcher<Descriptors.Descriptor, I
    }
 
    @Override
-   protected FilterProcessingChain<?> createFilterProcessingChain(Map<String, Object> namedParameters) {
+   protected FilterProcessingChain<Descriptors.Descriptor> createFilterProcessingChain(Map<String, Object> namedParameters) {
       return FilterProcessingChain.build(new ProtobufPropertyHelper(serializationContext), namedParameters);
    }
 

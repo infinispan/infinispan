@@ -59,30 +59,28 @@ public class QueryFacadeImpl implements QueryFacade {
 
    @Override
    public byte[] query(AdvancedCache<byte[], byte[]> cache, byte[] query) {
-      if (cache.getCacheConfiguration().indexing().enabled()) {
-         try {
-            return executeQuery(cache, query);
-         } catch (IOException e) {
-            throw new CacheException("An exception has occurred during query execution", e);
-         }
-      }
-
       try {
-         return executeNonIndexedQuery(cache, query);
+         SerializationContext serCtx = ProtobufMetadataManager.getSerializationContext(cache.getCacheManager());
+         QueryRequest request = ProtobufUtil.fromByteArray(serCtx, query, 0, query.length, QueryRequest.class);
+
+         QueryResponse response;
+         if (cache.getCacheConfiguration().indexing().enabled()) {
+            response = executeQuery(cache, serCtx, request);
+         } else {
+            response = executeNonIndexedQuery(cache, request);
+         }
+
+         return ProtobufUtil.toByteArray(serCtx, response);
       } catch (IOException e) {
          throw new CacheException("An exception has occurred during query execution", e);
       }
    }
 
-   private byte[] executeNonIndexedQuery(AdvancedCache<byte[], byte[]> cache, byte[] query) throws IOException {
-      final SerializationContext serCtx = ProtobufMetadataManager.getSerializationContext(cache.getCacheManager());
-
-      QueryRequest request = ProtobufUtil.fromByteArray(serCtx, query, 0, query.length, QueryRequest.class);
-
+   private QueryResponse executeNonIndexedQuery(AdvancedCache<byte[], byte[]> cache, QueryRequest request) throws IOException {
       Class<? extends Matcher> matcherImplClass = cache.getCacheConfiguration().compatibility().enabled()
             ? ReflectionMatcher.class : ProtobufMatcher.class;
 
-      EmbeddedQuery eq = new EmbeddedQuery(cache, request.getJpqlString(), matcherImplClass);
+      EmbeddedQuery eq = new EmbeddedQuery(cache, request.getJpqlString(), request.getStartOffset(), request.getMaxResults(), matcherImplClass);
       List<?> list = eq.list();
       int projSize = 0;
       if (eq.getProjection() != null && eq.getProjection().length > 0) {
@@ -101,19 +99,15 @@ public class QueryFacadeImpl implements QueryFacade {
       }
 
       QueryResponse response = new QueryResponse();
-      response.setTotalResults(list.size());
+      response.setTotalResults(eq.getResultSize());
       response.setNumResults(list.size());
       response.setProjectionSize(projSize);
       response.setResults(results);
 
-      return ProtobufUtil.toByteArray(serCtx, response);
+      return response;
    }
 
-   private byte[] executeQuery(AdvancedCache<byte[], byte[]> cache, byte[] query) throws IOException {
-      final SerializationContext serCtx = ProtobufMetadataManager.getSerializationContext(cache.getCacheManager());
-
-      QueryRequest request = ProtobufUtil.fromByteArray(serCtx, query, 0, query.length, QueryRequest.class);
-
+   private QueryResponse executeQuery(AdvancedCache<byte[], byte[]> cache, final SerializationContext serCtx, QueryRequest request) {
       SearchManager searchManager = Search.getSearchManager(cache);
       CacheQuery cacheQuery;
       LuceneQueryParsingResult parsingResult;
@@ -191,7 +185,6 @@ public class QueryFacadeImpl implements QueryFacade {
          cacheQuery = searchManager.getQuery(luceneQuery, parsingResult.getTargetEntity());
       }
 
-
       if (parsingResult.getSort() != null) {
          cacheQuery = cacheQuery.sort(parsingResult.getSort());
       }
@@ -227,7 +220,7 @@ public class QueryFacadeImpl implements QueryFacade {
       response.setProjectionSize(projSize);
       response.setResults(results);
 
-      return ProtobufUtil.toByteArray(serCtx, response);
+      return response;
    }
 
    private Descriptors.FieldDescriptor getFieldDescriptor(Descriptors.Descriptor messageDescriptor, String attributePath) {

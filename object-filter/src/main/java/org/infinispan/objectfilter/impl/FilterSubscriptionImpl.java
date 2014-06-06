@@ -2,10 +2,13 @@ package org.infinispan.objectfilter.impl;
 
 import org.infinispan.objectfilter.FilterCallback;
 import org.infinispan.objectfilter.FilterSubscription;
+import org.infinispan.objectfilter.SortField;
 import org.infinispan.objectfilter.impl.predicateindex.AttributeNode;
 import org.infinispan.objectfilter.impl.predicateindex.PredicateIndex;
 import org.infinispan.objectfilter.impl.predicateindex.be.BETree;
+import org.infinispan.objectfilter.impl.util.ComparableArrayComparator;
 
+import java.util.Comparator;
 import java.util.List;
 
 /**
@@ -24,7 +27,15 @@ public final class FilterSubscriptionImpl<AttributeId extends Comparable<Attribu
 
    private final List<List<AttributeId>> translatedProjection;
 
-   public FilterSubscriptionImpl(String entityTypeName, BETree beTree, List<String> projection, FilterCallback callback, List<List<AttributeId>> translatedProjection) {
+   private final SortField[] sortFields;
+
+   private final List<List<AttributeId>> translatedSortProjection;
+
+   private Comparator<Comparable[]> comparator;
+
+   public FilterSubscriptionImpl(String entityTypeName, BETree beTree, FilterCallback callback,
+                                 List<String> projection, List<List<AttributeId>> translatedProjection,
+                                 List<SortField> sortFields, List<List<AttributeId>> translatedSortProjection) {
       this.entityTypeName = entityTypeName;
       this.beTree = beTree;
       this.callback = callback;
@@ -35,10 +46,17 @@ public final class FilterSubscriptionImpl<AttributeId extends Comparable<Attribu
          this.projection = null;
       }
 
+      if (sortFields != null && !sortFields.isEmpty()) {
+         this.sortFields = sortFields.toArray(new SortField[sortFields.size()]);
+      } else {
+         this.sortFields = null;
+      }
+
       this.translatedProjection = translatedProjection;
+      this.translatedSortProjection = translatedSortProjection;
    }
 
-   public BETree getBETree() {    // todo [anistor] do not expose this
+   public BETree getBETree() {
       return beTree;
    }
 
@@ -48,7 +66,7 @@ public final class FilterSubscriptionImpl<AttributeId extends Comparable<Attribu
    }
 
    @Override
-   public FilterCallback getCallback() {   // todo [anistor] do not expose this
+   public FilterCallback getCallback() {
       return callback;
    }
 
@@ -57,22 +75,56 @@ public final class FilterSubscriptionImpl<AttributeId extends Comparable<Attribu
       return projection;
    }
 
-   public void registerProjection(PredicateIndex<AttributeId> predicateIndex) {
-      if (translatedProjection != null) {
-         for (int i = 0; i < translatedProjection.size(); i++) {
-            List<AttributeId> projectionPath = translatedProjection.get(i);
-            AttributeNode<AttributeId> node = predicateIndex.addAttributeNodeByPath(projectionPath);
-            node.addProjection(this, i);
+   @Override
+   public SortField[] getSortFields() {
+      return sortFields;
+   }
+
+   @Override
+   public Comparator<Comparable[]> getComparator() {
+      if (sortFields != null) {
+         if (comparator == null) {
+            boolean[] direction = new boolean[sortFields.length];
+            for (int i = 0; i < sortFields.length; i++) {
+               direction[i] = sortFields[i].isAscending();
+            }
+            comparator = new ComparableArrayComparator(direction);
          }
+      }
+      return comparator;
+   }
+
+   public void registerProjection(PredicateIndex<AttributeId> predicateIndex) {
+      int i = 0;
+      if (translatedProjection != null) {
+         i = addProjections(predicateIndex, translatedProjection, i);
+      }
+      if (translatedSortProjection != null) {
+         addProjections(predicateIndex, translatedSortProjection, i);
       }
    }
 
    public void unregisterProjection(PredicateIndex<AttributeId> predicateIndex) {
       if (translatedProjection != null) {
-         for (List<AttributeId> projectionPath : translatedProjection) {
-            AttributeNode<AttributeId> node = predicateIndex.getAttributeNodeByPath(projectionPath);
-            node.removeProjections(this);
-         }
+         removeProjections(predicateIndex, translatedProjection);
+      }
+      if (translatedSortProjection != null) {
+         removeProjections(predicateIndex, translatedSortProjection);
+      }
+   }
+
+   private int addProjections(PredicateIndex<AttributeId> predicateIndex, List<List<AttributeId>> projection, int i) {
+      for (List<AttributeId> projectionPath : projection) {
+         AttributeNode<AttributeId> node = predicateIndex.addAttributeNodeByPath(projectionPath);
+         node.addProjection(this, i++);
+      }
+      return i;
+   }
+
+   private void removeProjections(PredicateIndex<AttributeId> predicateIndex, List<List<AttributeId>> projection) {
+      for (List<AttributeId> projectionPath : projection) {
+         AttributeNode<AttributeId> node = predicateIndex.getAttributeNodeByPath(projectionPath);
+         node.removeProjections(this);
       }
    }
 }

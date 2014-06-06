@@ -1,8 +1,10 @@
 package org.infinispan.query.dsl.embedded;
 
+import org.hibernate.hql.ParsingException;
 import org.infinispan.query.Search;
 import org.infinispan.query.dsl.FilterConditionEndContext;
 import org.infinispan.query.dsl.Query;
+import org.infinispan.query.dsl.QueryBuilder;
 import org.infinispan.query.dsl.QueryFactory;
 import org.infinispan.query.dsl.SortOrder;
 import org.infinispan.query.dsl.embedded.sample_domain_model.Account;
@@ -547,6 +549,16 @@ public class NonIndexedQueryDslConditionsTest extends NonIndexedAbstractQueryDsl
       assertEquals(3, list.size());
    }
 
+   @Test(expectedExceptions = ParsingException.class, expectedExceptionsMessageRegExp = "ISPN000405:.*")
+   public void testInvalidEmbeddedAttributeQuery() throws Exception {
+      QueryFactory qf = Search.getQueryFactory(cache);
+
+      QueryBuilder queryBuilder = qf.from(User.class)
+            .setProjection("addresses");
+
+      queryBuilder.build();  // exception expected
+   }
+
    public void testIsNull() throws Exception {
       QueryFactory qf = Search.getQueryFactory(cache);
 
@@ -725,12 +737,12 @@ public class NonIndexedQueryDslConditionsTest extends NonIndexedAbstractQueryDsl
       qf.from(User.class).having("id").in(array);
    }
 
-   @Test(enabled = false)  //todo
    public void testSampleDomainQuery1() throws Exception {
       QueryFactory qf = Search.getQueryFactory(cache);
 
       // all male users
       Query q = qf.from(User.class)
+            .orderBy("name", SortOrder.ASC)
             .having("gender").eq(User.Gender.MALE)
             .toBuilder().build();
 
@@ -740,12 +752,12 @@ public class NonIndexedQueryDslConditionsTest extends NonIndexedAbstractQueryDsl
       assertEquals("Spider", list.get(1).getName());
    }
 
-   @Test(enabled = false) //todo
    public void testSampleDomainQuery2() throws Exception {
       QueryFactory qf = Search.getQueryFactory(cache);
 
       // all male users, but this time retrieved in a twisted manner
       Query q = qf.from(User.class)
+            .orderBy("name", SortOrder.ASC)
             .not(qf.having("gender").eq(User.Gender.FEMALE))
             .and(qf.not().not(qf.having("gender").eq(User.Gender.MALE)))
             .toBuilder().build();
@@ -771,7 +783,6 @@ public class NonIndexedQueryDslConditionsTest extends NonIndexedAbstractQueryDsl
       assertEquals(2, list.get(0).getId());
    }
 
-   @Test(enabled = false)    //todo
    public void testSortByDate() throws Exception {
       QueryFactory qf = Search.getQueryFactory(cache);
 
@@ -786,12 +797,12 @@ public class NonIndexedQueryDslConditionsTest extends NonIndexedAbstractQueryDsl
       assertEquals(1, list.get(2).getId());
    }
 
-   @Test(enabled = false) //todo
    public void testSampleDomainQuery3() throws Exception {
       QueryFactory qf = Search.getQueryFactory(cache);
 
       // all male users
       Query q = qf.from(User.class)
+            .orderBy("name", SortOrder.ASC)
             .having("gender").eq(User.Gender.MALE)
             .toBuilder().build();
 
@@ -801,7 +812,6 @@ public class NonIndexedQueryDslConditionsTest extends NonIndexedAbstractQueryDsl
       assertEquals("Spider", list.get(1).getName());
    }
 
-   @Test(enabled = false) //todo
    public void testSampleDomainQuery4() throws Exception {
       QueryFactory qf = Search.getQueryFactory(cache);
 
@@ -817,7 +827,6 @@ public class NonIndexedQueryDslConditionsTest extends NonIndexedAbstractQueryDsl
       assertEquals("John", list.get(2).getName());
    }
 
-   @Test(enabled = false) //todo
    public void testSampleDomainQuery4With2SortingOptions() throws Exception {
       QueryFactory qf = Search.getQueryFactory(cache);
 
@@ -839,7 +848,6 @@ public class NonIndexedQueryDslConditionsTest extends NonIndexedAbstractQueryDsl
       assertEquals("Doe", list.get(2).getSurname());
    }
 
-   @Test(enabled = false) //todo
    public void testSampleDomainQuery5() throws Exception {
       QueryFactory qf = Search.getQueryFactory(cache);
 
@@ -1013,7 +1021,6 @@ public class NonIndexedQueryDslConditionsTest extends NonIndexedAbstractQueryDsl
       assertTrue(Arrays.asList(1, 2).contains(list.get(1).getId()));
    }
 
-   @Test(enabled = false) //todo
    public void testSampleDomainQuery16() throws Exception {
       for (int i = 0; i < 50; i++) {
          Transaction transaction = new Transaction();
@@ -1043,7 +1050,6 @@ public class NonIndexedQueryDslConditionsTest extends NonIndexedAbstractQueryDsl
       }
    }
 
-   @Test(enabled = false) //todo
    public void testSampleDomainQuery17() throws Exception {
       QueryFactory qf = Search.getQueryFactory(cache);
 
@@ -1111,7 +1117,6 @@ public class NonIndexedQueryDslConditionsTest extends NonIndexedAbstractQueryDsl
       assertEquals(2, list.size());
    }
 
-   @Test(enabled = false) //todo
    public void testSampleDomainQuery19() throws Exception {
       QueryFactory qf = Search.getQueryFactory(cache);
 
@@ -1225,11 +1230,11 @@ public class NonIndexedQueryDslConditionsTest extends NonIndexedAbstractQueryDsl
       assertEquals(2, list.get(1).getId());
    }
 
-   @Test(enabled = false) //todo
    public void testSampleDomainQuery28() throws Exception {
       QueryFactory qf = Search.getQueryFactory(cache);
 
       Query q = qf.from(Account.class)
+            .orderBy("id", SortOrder.ASC)
             .having("creationDate").lte(DATE_FORMAT.parse("2013-01-20"))
             .toBuilder().build();
 
@@ -1317,5 +1322,198 @@ public class NonIndexedQueryDslConditionsTest extends NonIndexedAbstractQueryDsl
 
       q1.eq(User.Gender.MALE);
       q1.eq(User.Gender.FEMALE);
+   }
+
+   public void testOrderedPagination1() throws Exception {
+      QueryFactory qf = Search.getQueryFactory(cache);
+
+      Query q = qf.from(User.class)
+            .orderBy("id", SortOrder.ASC)
+            .maxResults(0)
+            .build();
+
+      List<User> list = q.list();
+      assertEquals(3, q.getResultSize());
+      assertEquals(0, list.size());
+   }
+
+   public void testUnorderedPagination1() throws Exception {
+      QueryFactory qf = Search.getQueryFactory(cache);
+
+      Query q = qf.from(User.class)
+            .maxResults(0)
+            .build();
+
+      List<User> list = q.list();
+      assertEquals(3, q.getResultSize());
+      assertEquals(0, list.size());
+   }
+
+   public void testOrderedPagination2() throws Exception {
+      QueryFactory qf = Search.getQueryFactory(cache);
+
+      Query q = qf.from(User.class)
+            .orderBy("id", SortOrder.ASC)
+            .startOffset(1)
+            .maxResults(0)
+            .build();
+
+      List<User> list = q.list();
+      assertEquals(3, q.getResultSize());
+      assertEquals(0, list.size());
+   }
+
+   public void testUnorderedPagination2() throws Exception {
+      QueryFactory qf = Search.getQueryFactory(cache);
+
+      Query q = qf.from(User.class)
+            .startOffset(1)
+            .maxResults(0)
+            .build();
+
+      List<User> list = q.list();
+      assertEquals(3, q.getResultSize());
+      assertEquals(0, list.size());
+   }
+
+   public void testOrderedPagination3() throws Exception {
+      QueryFactory qf = Search.getQueryFactory(cache);
+
+      Query q = qf.from(User.class)
+            .orderBy("id", SortOrder.ASC)
+            .maxResults(5)
+            .build();
+
+      List<User> list = q.list();
+      assertEquals(3, q.getResultSize());
+      assertEquals(3, list.size());
+   }
+
+   public void testUnorderedPagination3() throws Exception {
+      QueryFactory qf = Search.getQueryFactory(cache);
+
+      Query q = qf.from(User.class)
+            .maxResults(5)
+            .build();
+
+      List<User> list = q.list();
+      assertEquals(3, q.getResultSize());
+      assertEquals(3, list.size());
+   }
+
+   @Test(expectedExceptions = IllegalArgumentException.class, expectedExceptionsMessageRegExp = "maxResults cannot be less than 0")
+   public void testPagination4() throws Exception {
+      QueryFactory qf = Search.getQueryFactory(cache);
+
+      qf.from(User.class)
+            .maxResults(-4);
+   }
+
+   @Test(expectedExceptions = IllegalArgumentException.class, expectedExceptionsMessageRegExp = "startOffset cannot be less than 0")
+   public void testPagination5() throws Exception {
+      QueryFactory qf = Search.getQueryFactory(cache);
+
+      qf.from(User.class)
+            .startOffset(-3);
+   }
+
+   public void testOrderedPagination6() throws Exception {
+      QueryFactory qf = Search.getQueryFactory(cache);
+
+      Query q = qf.from(User.class)
+            .orderBy("id", SortOrder.ASC)
+            .startOffset(20)
+            .build();
+
+      List<User> list = q.list();
+      assertEquals(3, q.getResultSize());
+      assertEquals(0, list.size());
+   }
+
+   public void testUnorderedPagination6() throws Exception {
+      QueryFactory qf = Search.getQueryFactory(cache);
+
+      Query q = qf.from(User.class)
+            .startOffset(20)
+            .build();
+
+      List<User> list = q.list();
+      assertEquals(3, q.getResultSize());
+      assertEquals(0, list.size());
+   }
+
+   public void testOrderedPagination7() throws Exception {
+      QueryFactory qf = Search.getQueryFactory(cache);
+
+      Query q = qf.from(User.class)
+            .orderBy("id", SortOrder.ASC)
+            .startOffset(20).maxResults(10)
+            .build();
+
+      List<User> list = q.list();
+      assertEquals(3, q.getResultSize());
+      assertEquals(0, list.size());
+   }
+
+   public void testUnorderedPagination7() throws Exception {
+      QueryFactory qf = Search.getQueryFactory(cache);
+
+      Query q = qf.from(User.class)
+            .startOffset(20).maxResults(10)
+            .build();
+
+      List<User> list = q.list();
+      assertEquals(3, q.getResultSize());
+      assertEquals(0, list.size());
+   }
+
+   public void testOrderedPagination8() throws Exception {
+      QueryFactory qf = Search.getQueryFactory(cache);
+
+      Query q = qf.from(User.class)
+            .orderBy("id", SortOrder.ASC)
+            .startOffset(1).maxResults(10)
+            .build();
+
+      List<User> list = q.list();
+      assertEquals(3, q.getResultSize());
+      assertEquals(2, list.size());
+   }
+
+   public void testUnorderedPagination8() throws Exception {
+      QueryFactory qf = Search.getQueryFactory(cache);
+
+      Query q = qf.from(User.class)
+            .startOffset(1).maxResults(10)
+            .build();
+
+      List<User> list = q.list();
+      assertEquals(3, q.getResultSize());
+      assertEquals(2, list.size());
+   }
+
+   public void testOrderedPagination9() throws Exception {
+      QueryFactory qf = Search.getQueryFactory(cache);
+
+      Query q = qf.from(User.class)
+            .orderBy("id", SortOrder.ASC)
+            .startOffset(0).maxResults(2)
+            .build();
+
+      List<User> list = q.list();
+      assertEquals(3, q.getResultSize());
+      assertEquals(2, list.size());
+   }
+
+   public void testUnorderedPagination9() throws Exception {
+      QueryFactory qf = Search.getQueryFactory(cache);
+
+      Query q = qf.from(User.class)
+            .startOffset(0).maxResults(2)
+            .build();
+
+      List<User> list = q.list();
+      assertEquals(3, q.getResultSize());
+      assertEquals(2, list.size());
    }
 }
