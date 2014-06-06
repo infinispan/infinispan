@@ -1,7 +1,8 @@
         <subsystem xmlns="urn:infinispan:server:core:7.0" >
             <cache-container name="local" default-cache="testcache">
                 <security>
-                    <authorization mapper="org.infinispan.security.impl.IdentityRoleMapper">
+                    <authorization>
+                        <identity-role-mapper />
                         <role name="admin" permissions="ALL" />
                         <role name="reader" permissions="READ" />
                         <role name="writer" permissions="WRITE" />

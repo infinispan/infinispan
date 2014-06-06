@@ -106,6 +106,17 @@ public final class SecurityActions {
         return doPrivileged(action);
     }
 
+    public static void stopCache(final Cache<?, ?> cache) {
+        PrivilegedAction<Void> action = new PrivilegedAction<Void>() {
+            @Override
+            public Void run() {
+                cache.stop();
+                return null;
+            }
+        };
+        doPrivileged(action);
+    }
+
     public static LockManager getLockManager(final AdvancedCache<?, ?> cache) {
         GetCacheLockManagerAction action = new GetCacheLockManagerAction(cache);
         return doPrivileged(action);
