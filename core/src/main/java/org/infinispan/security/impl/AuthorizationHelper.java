@@ -4,6 +4,7 @@ import java.security.AccessControlContext;
 import java.security.AccessControlException;
 import java.security.AccessController;
 import java.security.Principal;
+import java.security.acl.Group;
 import java.util.Set;
 
 import javax.security.auth.Subject;
@@ -93,5 +94,21 @@ public class AuthorizationHelper {
          }
       }
       return mask;
+   }
+
+   /**
+    * Returns the first principal of a subject which is not of type {@link java.security.acl.Group}
+    * FIXME Comment this
+    *
+    * @param s
+    * @return
+    */
+   public static Principal getSubjectUserPrincipal(Subject s) {
+      for(Principal p : s.getPrincipals()) {
+         if (!(p instanceof Group)) {
+            return p;
+         }
+      }
+      return null;
    }
 }
