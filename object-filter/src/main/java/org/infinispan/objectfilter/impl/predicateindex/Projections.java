@@ -45,7 +45,17 @@ final class Projections {
    void processProjections(MatcherEvalContext<?> ctx, Object attributeValue) {
       for (Subscription s : subscriptions) {
          FilterEvalContext c = ctx.getFilterEvalContext(s.filterSubscription);
-         c.getProjection()[s.position] = attributeValue;
+         Object[] projection = c.getProjection();
+         int position = s.position;
+         if (projection == null) {
+            projection = c.getSortProjection();
+         } else {
+            if (position >= projection.length) {
+               position -= projection.length;
+               projection = c.getSortProjection();
+            }
+         }
+         projection[position] = attributeValue;
       }
    }
 

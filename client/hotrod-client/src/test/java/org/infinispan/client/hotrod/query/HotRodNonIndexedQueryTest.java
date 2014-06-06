@@ -160,7 +160,7 @@ public class HotRodNonIndexedQueryTest extends SingleCacheManagerTest {
             .setProjection("addresses").build();
 
       //todo [anistor] it would be best if the problem would be detected early at build() instead at doing it at list()
-      q.list();
+      q.list();  // exception expected
    }
 
    public void testProjections() throws Exception {

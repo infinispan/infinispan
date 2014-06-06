@@ -6,6 +6,7 @@ import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.distribution.MagicKey;
 import org.infinispan.iteration.impl.EntryRetriever;
 import org.infinispan.manager.EmbeddedCacheManager;
+import org.infinispan.objectfilter.ObjectFilter;
 import org.infinispan.objectfilter.impl.ReflectionMatcher;
 import org.infinispan.query.dsl.embedded.impl.FilterAndConverter;
 import org.infinispan.query.test.Person;
@@ -51,15 +52,15 @@ public class FilterAndConverterLocalTest extends SingleCacheManagerTest {
 
       EntryRetriever<MagicKey, Person> retriever = cache().getAdvancedCache().getComponentRegistry().getComponent(EntryRetriever.class);
 
-      FilterAndConverter filterAndConverter = new FilterAndConverter<MagicKey, Person, Person>("from org.infinispan.query.test.Person where blurb is null and age <= 31", ReflectionMatcher.class);
+      FilterAndConverter filterAndConverter = new FilterAndConverter<MagicKey, Person>("from org.infinispan.query.test.Person where blurb is null and age <= 31", ReflectionMatcher.class);
 
-      CloseableIterator<Map.Entry<MagicKey, Person>> iterator = retriever.retrieveEntries(filterAndConverter, filterAndConverter, null);
-      Map<MagicKey, Person> results = mapFromIterator(iterator);
+      CloseableIterator<Map.Entry<MagicKey, ObjectFilter.FilterResult>> iterator = retriever.retrieveEntries(filterAndConverter, filterAndConverter, null);
+      Map<MagicKey, ObjectFilter.FilterResult> results = mapFromIterator(iterator);
 
       assertEquals(2, results.size());
-      for (Person p : results.values()) {
-         assertNull(p.getBlurb());
-         assertTrue(p.getAge() <= 31);
+      for (ObjectFilter.FilterResult p : results.values()) {
+         assertNull(((Person) p.getInstance()).getBlurb());
+         assertTrue(((Person) p.getInstance()).getAge() <= 31);
       }
    }
 
@@ -67,11 +68,11 @@ public class FilterAndConverterLocalTest extends SingleCacheManagerTest {
     * Iterates over all the entries provided by the iterator and puts them in a Map. If the iterator implements
     * Closeable it will close it before returning.
     */
-   private <K, V> Map<K, V> mapFromIterator(Iterator<Map.Entry<K, V>> iterator) {
+   private <K, V> Map<K, ObjectFilter.FilterResult> mapFromIterator(Iterator<Map.Entry<K, ObjectFilter.FilterResult>> iterator) {
       try {
-         Map<K, V> result = new HashMap<K, V>();
+         Map<K, ObjectFilter.FilterResult> result = new HashMap<K, ObjectFilter.FilterResult>();
          while (iterator.hasNext()) {
-            Map.Entry<K, V> entry = iterator.next();
+            Map.Entry<K, ObjectFilter.FilterResult> entry = iterator.next();
             result.put(entry.getKey(), entry.getValue());
          }
          return result;

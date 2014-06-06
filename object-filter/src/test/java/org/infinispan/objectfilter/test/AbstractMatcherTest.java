@@ -17,6 +17,7 @@ import org.junit.rules.ExpectedException;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 
 import static org.junit.Assert.*;
@@ -68,7 +69,7 @@ public abstract class AbstractMatcherTest {
 
       matcher.registerFilter(queryString, new FilterCallback() {
          @Override
-         public void onFilterResult(Object instance, Object[] projection) {
+         public void onFilterResult(Object instance, Object[] projection, Comparable[] sortProjection) {
             matchCount[0]++;
          }
       });
@@ -84,7 +85,7 @@ public abstract class AbstractMatcherTest {
 
       matcher.registerFilter(query, new FilterCallback() {
          @Override
-         public void onFilterResult(Object instance, Object[] projection) {
+         public void onFilterResult(Object instance, Object[] projection, Comparable[] sortProjection) {
             matchCount[0]++;
          }
       });
@@ -271,7 +272,7 @@ public abstract class AbstractMatcherTest {
       String queryString1 = "from org.infinispan.objectfilter.test.model.Person p where p.name = 'John'";
       matcher.registerFilter(queryString1, new FilterCallback() {
          @Override
-         public void onFilterResult(Object instance, Object[] projection) {
+         public void onFilterResult(Object instance, Object[] projection, Comparable[] sortProjection) {
             matchCount[0]++;
          }
       });
@@ -279,7 +280,7 @@ public abstract class AbstractMatcherTest {
       String queryString2 = "from org.infinispan.objectfilter.test.model.Person p where p.phoneNumbers.number = '004012345'";
       matcher.registerFilter(queryString2, new FilterCallback() {
          @Override
-         public void onFilterResult(Object instance, Object[] projectiong) {
+         public void onFilterResult(Object instance, Object[] projection, Comparable[] sortProjection) {
             matchCount[1]++;
          }
       });
@@ -289,6 +290,33 @@ public abstract class AbstractMatcherTest {
       // assert that only one of the filters matched and the callback of the other was not invoked
       assertEquals(1, matchCount[0]);
       assertEquals(1, matchCount[1]);
+   }
+
+   @Test
+   public void testOrderBy() throws Exception {
+      Matcher matcher = createMatcher();
+
+      final List<Comparable[]> sortProjections = new ArrayList<Comparable[]>();
+
+      String queryString1 = "from org.infinispan.objectfilter.test.model.Person p where p.age > 18 order by p.name, p.surname";
+      FilterSubscription filterSubscription = matcher.registerFilter(queryString1, new FilterCallback() {
+         @Override
+         public void onFilterResult(Object instance, Object[] projection, Comparable[] sortProjection) {
+            sortProjections.add(sortProjection);
+         }
+      });
+
+      matcher.match(createPerson1());
+      matcher.match(createPerson2());
+
+      assertEquals(2, sortProjections.size());
+
+      Collections.sort(sortProjections, filterSubscription.getComparator());
+
+      assertEquals("Cat", sortProjections.get(0)[0]);
+      assertEquals("Woman", sortProjections.get(0)[1]);
+      assertEquals("John", sortProjections.get(1)[0]);
+      assertEquals("Batman", sortProjections.get(1)[1]);
    }
 
    @Test
@@ -310,7 +338,7 @@ public abstract class AbstractMatcherTest {
       final int[] matchCount = new int[1];
       FilterSubscription filterSubscription = matcher.registerFilter(queryString, new FilterCallback() {
          @Override
-         public void onFilterResult(Object instance, Object[] projection) {
+         public void onFilterResult(Object instance, Object[] projection, Comparable[] sortProjection) {
             matchCount[0]++;
          }
       });
@@ -320,8 +348,8 @@ public abstract class AbstractMatcherTest {
       matcher.match(person);
       assertEquals(1, matchCount[0]);
 
-      Object result = objectFilter.filter(person);
-      assertTrue(result == person);
+      ObjectFilter.FilterResult result = objectFilter.filter(person);
+      assertTrue(result.getInstance() == person);
 
       assertEquals(1, matchCount[0]); // check that the object filter did not also mistakenly trigger a match in the parent matcher
    }
@@ -337,8 +365,8 @@ public abstract class AbstractMatcherTest {
 
       matcher.match(person);
 
-      Object result = objectFilter.filter(person);
-      assertTrue(result == person);
+      ObjectFilter.FilterResult result = objectFilter.filter(person);
+      assertTrue(result.getInstance() == person);
    }
 
    @Test
@@ -354,8 +382,8 @@ public abstract class AbstractMatcherTest {
 
       matcher.match(person);
 
-      Object result = objectFilter.filter(person);
-      assertTrue(result == person);
+      ObjectFilter.FilterResult result = objectFilter.filter(person);
+      assertTrue(result.getInstance() == person);
    }
 
    @Test
@@ -368,7 +396,7 @@ public abstract class AbstractMatcherTest {
       final int matchCount[] = new int[1];
       FilterSubscription filterSubscription = matcher.registerFilter(queryString, new FilterCallback() {
          @Override
-         public void onFilterResult(Object instance, Object[] projection) {
+         public void onFilterResult(Object instance, Object[] projection, Comparable[] sortProjection) {
             matchCount[0]++;
          }
       });
@@ -461,7 +489,7 @@ public abstract class AbstractMatcherTest {
 
       FilterSubscription filterSubscription = matcher.registerFilter(queryString, new FilterCallback() {
          @Override
-         public void onFilterResult(Object instance, Object[] projection) {
+         public void onFilterResult(Object instance, Object[] projection, Comparable[] sortProjection) {
             result.add(projection);
          }
       });
@@ -492,7 +520,7 @@ public abstract class AbstractMatcherTest {
 
       FilterSubscription filterSubscription = matcher.registerFilter(queryString, new FilterCallback() {
          @Override
-         public void onFilterResult(Object instance, Object[] projection) {
+         public void onFilterResult(Object instance, Object[] projection, Comparable[] sortProjection) {
             result.add(projection);
          }
       });
@@ -525,7 +553,7 @@ public abstract class AbstractMatcherTest {
 
       FilterSubscription filterSubscription = matcher.registerFilter(queryString, new FilterCallback() {
          @Override
-         public void onFilterResult(Object instance, Object[] projection) {
+         public void onFilterResult(Object instance, Object[] projection, Comparable[] sortProjection) {
             result.add(projection);
          }
       });
@@ -557,7 +585,7 @@ public abstract class AbstractMatcherTest {
 
       matcher.registerFilter(queryString, new FilterCallback() {
          @Override
-         public void onFilterResult(Object instance, Object[] projection) {
+         public void onFilterResult(Object instance, Object[] projection, Comparable[] sortProjection) {
          }
       });
    }

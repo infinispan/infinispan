@@ -4,19 +4,24 @@ import org.antlr.runtime.tree.Tree;
 import org.hibernate.hql.ast.origin.hql.resolve.path.PropertyPath;
 import org.hibernate.hql.ast.spi.SingleEntityQueryBuilder;
 import org.hibernate.hql.ast.spi.SingleEntityQueryRendererDelegate;
+import org.infinispan.objectfilter.SortField;
 import org.infinispan.objectfilter.impl.syntax.BooleanExpr;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 
 /**
  * @author anistor@redhat.com
  * @since 7.0
  */
-public class FilterRendererDelegate<TypeMetadata> extends SingleEntityQueryRendererDelegate<BooleanExpr, FilterParsingResult> {
+public final class FilterRendererDelegate<TypeMetadata> extends SingleEntityQueryRendererDelegate<BooleanExpr, FilterParsingResult> {
 
    private final ObjectPropertyHelper<TypeMetadata> propertyHelper;
 
    private TypeMetadata targetEntityMetadata;
+
+   private List<SortField> sortFields;
 
    public FilterRendererDelegate(ObjectPropertyHelper<TypeMetadata> propertyHelper, SingleEntityQueryBuilder<BooleanExpr> builder, Map<String, Object> namedParameters) {
       super(propertyHelper.getEntityNamesResolver(), builder, namedParameters);
@@ -25,8 +30,10 @@ public class FilterRendererDelegate<TypeMetadata> extends SingleEntityQueryRende
 
    @Override
    protected void addSortField(PropertyPath propertyPath, String collateName, boolean isAscending) {
-      //todo [anistor] Sorting is not currently supported for object filters
-      throw new UnsupportedOperationException("Sorting is not supported");
+      if (sortFields == null) {
+         sortFields = new ArrayList<SortField>();
+      }
+      sortFields.add(new FilterParsingResult.SortFieldImpl(propertyPath.asStringPathWithoutAlias(), isAscending));
    }
 
    @Override
@@ -51,6 +58,6 @@ public class FilterRendererDelegate<TypeMetadata> extends SingleEntityQueryRende
 
    @Override
    public FilterParsingResult<TypeMetadata> getResult() {
-      return new FilterParsingResult<TypeMetadata>(builder.build(), targetTypeName, targetEntityMetadata, projections);
+      return new FilterParsingResult<TypeMetadata>(builder.build(), targetTypeName, targetEntityMetadata, projections, sortFields);
    }
 }

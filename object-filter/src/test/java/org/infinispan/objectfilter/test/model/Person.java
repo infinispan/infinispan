@@ -21,6 +21,8 @@ public class Person {
 
    private int _age;
 
+   private List<Integer> _favouriteNumbers;
+
    private List<PhoneNumber> _phoneNumbers;
 
    private String _license;
@@ -59,6 +61,14 @@ public class Person {
       this._age = age;
    }
 
+   public List<Integer> getFavouriteNumbers() {
+      return _favouriteNumbers;
+   }
+
+   public void setFavouriteNumbers(List<Integer> favouriteNumbers) {
+      this._favouriteNumbers = favouriteNumbers;
+   }
+
    public List<PhoneNumber> getPhoneNumbers() {
       return _phoneNumbers;
    }
@@ -92,6 +102,7 @@ public class Person {
             ", phoneNumbers=" + _phoneNumbers +
             ", address=" + _address +
             ", age=" + _age +
+            ", favouriteNumbers=" + _favouriteNumbers +
             ", license=" + _license +
             ", gender=" + _gender +
             '}';

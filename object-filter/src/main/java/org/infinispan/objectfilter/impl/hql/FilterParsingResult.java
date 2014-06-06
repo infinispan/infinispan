@@ -1,6 +1,7 @@
 package org.infinispan.objectfilter.impl.hql;
 
 import org.hibernate.hql.ast.spi.EntityNamesResolver;
+import org.infinispan.objectfilter.SortField;
 import org.infinispan.objectfilter.impl.syntax.BooleanExpr;
 
 import java.util.Collections;
@@ -13,17 +14,44 @@ import java.util.List;
  */
 public final class FilterParsingResult<TypeMetadata> {
 
+   public static final class SortFieldImpl implements SortField {
+
+      public final String path;
+
+      public final boolean isAscending;
+
+      public SortFieldImpl(String path, boolean isAscending) {
+         this.path = path;
+         this.isAscending = isAscending;
+      }
+
+      public String getPath() {
+         return path;
+      }
+
+      public boolean isAscending() {
+         return isAscending;
+      }
+
+      @Override
+      public String toString() {
+         return "SortField(" + path + ", " + (isAscending ? "ASC" : "DESC") + ')';
+      }
+   }
+
    private final BooleanExpr filter;
    private final String targetEntityName;
    private final TypeMetadata targetEntityMetadata;
    private final List<String> projections;
+   private final List<SortField> sortFields;
 
    public FilterParsingResult(BooleanExpr filter, String targetEntityName, TypeMetadata targetEntityMetadata,
-                              List<String> projections) {
+                              List<String> projections, List<SortField> sortFields) {
       this.filter = filter;
       this.targetEntityName = targetEntityName;
       this.targetEntityMetadata = targetEntityMetadata;
       this.projections = projections != null ? projections : Collections.<String>emptyList();
+      this.sortFields = sortFields != null ? sortFields : Collections.<SortField>emptyList();
    }
 
    /**
@@ -65,8 +93,13 @@ public final class FilterParsingResult<TypeMetadata> {
       return projections;
    }
 
+   public List<SortField> getSortFields() {
+      return sortFields;
+   }
+
    @Override
    public String toString() {
-      return "FilterParsingResult [filter=" + filter + ", targetEntityName=" + targetEntityName + ", projections=" + projections + "]";
+      return "FilterParsingResult [filter=" + filter + ", targetEntityName=" + targetEntityName
+            + ", projections=" + projections + ", sortFields=" + sortFields + "]";
    }
 }

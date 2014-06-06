@@ -24,12 +24,14 @@ message Person {
 
    optional uint32 age = 5;
 
-   optional string license = 6;
+   repeated uint32 favouriteNumbers = 6;
+
+   optional string license = 7;
 
    enum Gender {
       MALE = 0;
       FEMALE = 1;
    }
 
-   optional Gender gender = 7;
+   optional Gender gender = 8;
 }

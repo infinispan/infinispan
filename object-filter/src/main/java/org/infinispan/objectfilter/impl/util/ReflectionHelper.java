@@ -12,6 +12,7 @@ import java.util.Collection;
 import java.util.Iterator;
 import java.util.Map;
 
+//todo [anistor] ideally, try to reuse stuff from org.infinispan.commons.util.ReflectionUtil
 /**
  * @author anistor@redhat.com
  * @since 7.0
