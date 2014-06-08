@@ -18,8 +18,10 @@ import java.lang.reflect.Array;
 import java.lang.reflect.Field;
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.Callable;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
@@ -34,7 +36,12 @@ import java.util.regex.Pattern;
 @Test(groups = "functional", testName = "util.ThreadLocalLeakTest")
 public class ThreadLocalLeakTest extends AbstractInfinispanTest {
 
-   private static final Pattern THREAD_LOCAL_FILTER = Pattern.compile("(org.infinispan.(?!test).*)");
+   private static final Pattern THREAD_LOCAL_FILTER = Pattern.compile("org\\.infinispan\\..*");
+
+   // Some static thread locals we cannot remove, because
+   private static final Set<String> ACCEPTED_THREAD_LOCALS = new HashSet<String>(Arrays.asList(new String[]{
+         "commons.util.concurrent.jdk8backported.EquivalentConcurrentHashMapV8$CounterHashCode"
+   }));
 
    private String tmpDirectory;
 
@@ -93,7 +100,7 @@ public class ThreadLocalLeakTest extends AbstractInfinispanTest {
       Thread forkedThread = null;
       try {
          final Cache<Object, Object> c = cm[0].getCache();
-         c.put("key", "value");
+         c.put("key1", "value1");
 
          forkedThread = fork(new Runnable() {
             @Override
@@ -104,6 +111,8 @@ public class ThreadLocalLeakTest extends AbstractInfinispanTest {
                TestingUtil.sleepThread(2000);
             }
          }, false);
+
+         c.put("key3", "value3");
       } finally {
          TestingUtil.killCacheManagers(cm);
       }
@@ -148,16 +157,16 @@ public class ThreadLocalLeakTest extends AbstractInfinispanTest {
          // representing the thread local reference and its value
          Reference<ThreadLocal<?>> entry = (Reference) Array.get(table, i);
          if (entry != null) {
-            // Get a reference to the thread local object and remove it from the table
+            // Get a reference to the thread local object
             ThreadLocal<?> threadLocal = entry.get();
+            Object value = valueField.get(entry);
             if (threadLocal != null) {
-               if (filterThreadLocals(threadLocal)) {
+               if (filterThreadLocals(threadLocal, value) && !ACCEPTED_THREAD_LOCALS.contains(threadLocal.getClass().getCanonicalName())) {
                   log.error("Thread local leak: " + threadLocal);
-                  threadLocals.put(threadLocal, threadLocal.get());
+                  threadLocals.put(threadLocal, value);
                   // threadLocal.remove();
                }
             } else {
-               Object value = valueField.get(entry);
                log.warn("Thread local is not accessible, but it wasn't removed either: " + value);
             }
          }
@@ -166,15 +175,15 @@ public class ThreadLocalLeakTest extends AbstractInfinispanTest {
       return threadLocals;
    }
 
-   private boolean filterThreadLocals(ThreadLocal<?> tl) {
-      String threadLocalString = tl.toString();
-      if (tl.get() == null)
-         return THREAD_LOCAL_FILTER.matcher(threadLocalString).find();
-      else {
-         String threadLocalObjectString = tl.get().toString();
-         return THREAD_LOCAL_FILTER.matcher(threadLocalString).find()
-               || THREAD_LOCAL_FILTER.matcher(threadLocalObjectString).find();
+   private boolean filterThreadLocals(ThreadLocal<?> tl, Object value) {
+      String tlClassName = tl.getClass().getName();
+      String valueClassName = value != null ? value.getClass().getName() : "";
+      log.tracef("Checking thread-local %s = %s", tlClassName, valueClassName);
+      if (!THREAD_LOCAL_FILTER.matcher(tlClassName).find()
+            && !THREAD_LOCAL_FILTER.matcher(valueClassName).find()) {
+         return false;
       }
+      return !ACCEPTED_THREAD_LOCALS.contains(tlClassName) && !ACCEPTED_THREAD_LOCALS.contains(valueClassName);
    }
 
 }
