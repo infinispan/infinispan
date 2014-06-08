@@ -98,7 +98,7 @@
       <version.arquillian.container.managed>8.0.0.Beta1</version.arquillian.container.managed>
       <version.arquillian.container.weld>1.0.0.CR3</version.arquillian.container.weld>
       <version.avro>1.7.6</version.avro>
-      <version.c3p0>0.9.1.2</version.c3p0>
+      <version.c3p0>0.9.5-pre8</version.c3p0>
       <version.cdi>1.0-SP4</version.cdi>
       <version.com.intellij.forms_rt>6.0.5</version.com.intellij.forms_rt>
       <version.commons.compress>1.4</version.commons.compress>
@@ -326,7 +326,7 @@
             <version>${project.version}</version>
          </dependency>
          <dependency>
-            <groupId>c3p0</groupId>
+            <groupId>com.mchange</groupId>
             <artifactId>c3p0</artifactId>
             <version>${version.c3p0}</version>
          </dependency>
