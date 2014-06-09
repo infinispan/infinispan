@@ -1,4 +1,4 @@
-package org.infinispan.it.lucenedirectoryquery;
+package org.infinispan.query.directoryinteraction;
 
 import static org.infinispan.lucene.CacheTestSupport.assertTextIsFoundInIds;
 import static org.infinispan.lucene.CacheTestSupport.removeByTerm;
@@ -10,6 +10,7 @@ import org.apache.lucene.store.Directory;
 import org.infinispan.Cache;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
+import org.infinispan.configuration.cache.Index;
 import org.infinispan.lucene.DirectoryIntegrityCheck;
 import org.infinispan.lucene.directory.DirectoryBuilder;
 import org.infinispan.test.MultipleCacheManagersTest;
@@ -50,8 +51,7 @@ public class IndexStoredIndexedCacheTest extends MultipleCacheManagersTest {
       .jmxStatistics()
          .disable()
       .indexing()
-         .enable()
-            .indexLocalOnly(false)
+         .index(Index.ALL)
             .addProperty("hibernate.search.default.directory_provider", "ram")
             .addProperty("hibernate.search.lucene_version", "LUCENE_CURRENT");
       createClusteredCaches(2, "lucene", configurationBuilder);

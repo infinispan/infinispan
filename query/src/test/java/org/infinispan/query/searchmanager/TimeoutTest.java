@@ -8,7 +8,6 @@ import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.query.CacheQuery;
 import org.infinispan.query.Search;
-import org.infinispan.query.SearchManager;
 import org.infinispan.query.spi.SearchManagerImplementor;
 import org.infinispan.test.SingleCacheManagerTest;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
@@ -56,14 +55,13 @@ public class TimeoutTest extends SingleCacheManagerTest {
 
    private static class MyTimeoutExceptionFactory implements TimeoutExceptionFactory {
       @Override
-      public RuntimeException createTimeoutException(String message, Query query) {
+      public RuntimeException createTimeoutException(String message, String query) {
          return new MyTimeoutException();
       }
    }
 
    public static class MyTimeoutException extends RuntimeException {
    }
-
 
    @Indexed(index = "FooIndex")
    public class Foo {

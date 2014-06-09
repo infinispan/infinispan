@@ -13,14 +13,14 @@
       <local-cache name="memory-searchable">
          <indexing index="ALL">
             <property name="default.directory_provider">ram</property>
-            <property name="lucene_version">LUCENE_36</property>
+            <property name="lucene_version">LUCENE_48</property>
          </indexing>
       </local-cache>
       <local-cache name="disk-searchable">
          <indexing index="LOCAL">
             <property name="hibernate.search.default.directory_provider">filesystem</property>
             <property name="hibernate.search.cats.exclusive_index_use">true</property>
-            <property name="hibernate.search.lucene_version">LUCENE_36</property>
+            <property name="hibernate.search.lucene_version">LUCENE_48</property>
          </indexing>
       </local-cache>
    </cache-container>

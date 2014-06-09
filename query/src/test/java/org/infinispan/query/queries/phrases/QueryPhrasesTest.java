@@ -1,10 +1,11 @@
 package org.infinispan.query.queries.phrases;
 
 import junit.framework.Assert;
-import org.apache.lucene.queryParser.ParseException;
+import org.apache.lucene.queryparser.classic.ParseException;
 import org.apache.lucene.search.Query;
-import org.hibernate.search.SearchException;
+import org.hibernate.search.exception.SearchException;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
+import org.infinispan.configuration.cache.Index;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.query.CacheQuery;
 import org.infinispan.query.Search;
@@ -48,9 +49,7 @@ public class QueryPhrasesTest extends SingleCacheManagerTest {
    protected EmbeddedCacheManager createCacheManager() throws Exception {
       ConfigurationBuilder cfg = getDefaultStandaloneCacheConfig(true);
       cfg
-            .indexing()
-            .enable()
-            .indexLocalOnly(false)
+            .indexing().index(Index.ALL)
             .addProperty("default.directory_provider", "ram")
             .addProperty("lucene_version", "LUCENE_CURRENT");
       return TestCacheManagerFactory.createCacheManager(cfg);
@@ -205,22 +204,22 @@ public class QueryPhrasesTest extends SingleCacheManagerTest {
    }
 
    public void testFuzzyWithThresholdWithPrefixLength() {
-      person1 = new Person("yyGiantHorse", "Eat anything", 10);
-      person2 = new Person("yySmallHorse", "Eat anything", 10);
+      person1 = new Person("yyJohn", "Eat anything", 10);
+      person2 = new Person("yyJonn", "Eat anything", 10);
       cache.put(key1, person1);
       cache.put(key2, person2);
 
       //Ignore "yy" at the beginning (prefix==2), the difference between the remaining parts of two terms
-      //must be no more than length(term)*0.4 == 4 chars -> return only 1 person
+      //must be no more than edit distance -> return only 1 person
       Query query = Search.getSearchManager(cache).buildQueryBuilderForClass(Person.class).get().keyword()
-            .fuzzy().withThreshold(.6f).withPrefixLength(2).onField("name").matching("yyGreatHorse").createQuery();
+            .fuzzy().withEditDistanceUpTo(1).withPrefixLength(2).onField("name").matching("yyJohny").createQuery();
       List<Object> found = Search.getSearchManager(cache).getQuery(query).list();
       AssertJUnit.assertEquals(1, found.size());
       AssertJUnit.assertTrue(found.contains(person1));
 
-      //return all as the threshold is too low
+      //return all as edit distance excluding the prefix fit all documents
       Query queryReturnAll = Search.getSearchManager(cache).buildQueryBuilderForClass(Person.class).get().keyword()
-            .fuzzy().withThreshold(.5f).withPrefixLength(2).onField("name").matching("yyGreatHorse").createQuery();
+            .fuzzy().withEditDistanceUpTo(2).withPrefixLength(2).onField("name").matching("yyJohn").createQuery();
       List<Object> foundWithLowerThreshold = Search.getSearchManager(cache).getQuery(queryReturnAll).list();
       AssertJUnit.assertEquals(2, foundWithLowerThreshold.size());
       AssertJUnit.assertTrue(foundWithLowerThreshold.contains(person1));

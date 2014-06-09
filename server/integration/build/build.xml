@@ -232,24 +232,8 @@
 
       <module-def name="org.apache.lucene" src="${infinispan.server.modules.dir}">
          <maven-resource group="org.apache.lucene" artifact="lucene-core" />
-         <maven-resource group="org.apache.lucene" artifact="lucene-analyzers" />
+         <maven-resource group="org.apache.lucene" artifact="lucene-analyzers-common" />
          <maven-resource group="org.apache.lucene" artifact="lucene-facet" />
-         <maven-resource group="org.apache.lucene" artifact="lucene-grouping" />
-         <maven-resource group="org.apache.lucene" artifact="lucene-highlighter" />
-         <maven-resource group="org.apache.lucene" artifact="lucene-memory" />
-         <maven-resource group="org.apache.lucene" artifact="lucene-misc" />
-         <maven-resource group="org.apache.lucene" artifact="lucene-kuromoji" />
-         <maven-resource group="org.apache.lucene" artifact="lucene-phonetic" />
-         <maven-resource group="org.apache.lucene" artifact="lucene-smartcn" />
-         <maven-resource group="org.apache.lucene" artifact="lucene-spatial" />
-         <maven-resource group="org.apache.lucene" artifact="lucene-spellchecker" />
-         <maven-resource group="org.apache.lucene" artifact="lucene-stempel" />
-      </module-def>
-
-      <module-def name="org.apache.solr" src="${infinispan.server.modules.dir}">
-         <maven-resource group="org.apache.solr" artifact="solr-analysis-extras" />
-         <maven-resource group="org.apache.solr" artifact="solr-core" />
-         <maven-resource group="org.apache.solr" artifact="solr-solrj" />
       </module-def>
 
       <module-def name="org.hibernate.search.engine" src="${infinispan.server.modules.dir}">
@@ -257,7 +241,6 @@
          <maven-resource group="org.apache.avro" artifact="avro" />
          <maven-resource group="org.hibernate" artifact="hibernate-search-engine" />
          <maven-resource group="org.hibernate" artifact="hibernate-search-infinispan" />
-         <maven-resource group="org.hibernate" artifact="hibernate-search-analyzers" />
          <maven-resource group="org.xerial.snappy" artifact="snappy-java" />
       </module-def>
 

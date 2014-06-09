@@ -4,8 +4,8 @@ import junit.framework.Assert;
 
 import org.apache.lucene.analysis.Analyzer;
 import org.apache.lucene.analysis.standard.StandardAnalyzer;
-import org.apache.lucene.queryParser.ParseException;
-import org.apache.lucene.queryParser.QueryParser;
+import org.apache.lucene.queryparser.classic.ParseException;
+import org.apache.lucene.queryparser.classic.QueryParser;
 import org.apache.lucene.search.Query;
 import org.apache.lucene.util.Version;
 import org.hibernate.search.spi.SearchFactoryIntegrator;
@@ -40,7 +40,7 @@ public class TestQueryHelperFactory {
    }
    
    public static Version getLuceneVersion() {
-      return Version.LUCENE_30; //Change as needed
+      return Version.LUCENE_48; //Change as needed
    }
 
    public static CacheQuery createCacheQuery(Cache m_cache, String fieldName, String searchString) throws ParseException {
@@ -72,7 +72,7 @@ public class TestQueryHelperFactory {
          builder.indexing().addProperty("hibernate.search.default.indexmanager", "org.infinispan.query.indexmanager.InfinispanIndexManager")
                .addProperty("default.directory_provider", "infinispan")
                .addProperty("hibernate.search.default.exclusive_index_use", "false")
-               .addProperty("lucene_version", "LUCENE_36");
+               .addProperty("lucene_version", "LUCENE_48");
          if (cacheMode.isClustered()) {
             builder.clustering().stateTransfer().fetchInMemoryState(true);
          }

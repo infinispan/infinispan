@@ -4,7 +4,7 @@ import java.lang.annotation.ElementType;
 import java.util.Properties;
 
 import org.apache.lucene.search.Query;
-import org.hibernate.search.Environment;
+import org.hibernate.search.cfg.Environment;
 import org.hibernate.search.annotations.Field;
 import org.hibernate.search.annotations.Indexed;
 import org.hibernate.search.cfg.SearchMapping;

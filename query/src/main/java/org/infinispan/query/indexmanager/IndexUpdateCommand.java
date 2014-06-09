@@ -3,7 +3,7 @@ package org.infinispan.query.indexmanager;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.hibernate.search.SearchException;
+import org.hibernate.search.exception.SearchException;
 import org.hibernate.search.backend.LuceneWork;
 import org.hibernate.search.engine.spi.SearchFactoryImplementor;
 import org.hibernate.search.indexes.spi.IndexManager;

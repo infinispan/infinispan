@@ -1,6 +1,6 @@
 package org.infinispan.query.jmx;
 
-import org.apache.lucene.queryParser.QueryParser;
+import org.apache.lucene.queryparser.classic.QueryParser;
 import org.apache.lucene.search.Query;
 import org.infinispan.Cache;
 import org.infinispan.commons.CacheException;

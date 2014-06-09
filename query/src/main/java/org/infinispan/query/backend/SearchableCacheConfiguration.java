@@ -1,17 +1,5 @@
 package org.infinispan.query.backend;
 
-import org.hibernate.annotations.common.reflection.ReflectionManager;
-import org.hibernate.search.cfg.SearchMapping;
-import org.hibernate.search.cfg.spi.IndexManagerFactory;
-import org.hibernate.search.cfg.spi.SearchConfiguration;
-import org.hibernate.search.cfg.spi.SearchConfigurationBase;
-import org.hibernate.search.impl.DefaultIndexManagerFactory;
-import org.hibernate.search.impl.SearchMappingBuilder;
-import org.hibernate.search.infinispan.CacheManagerServiceProvider;
-import org.hibernate.search.spi.ServiceProvider;
-import org.infinispan.factories.ComponentRegistry;
-import org.infinispan.manager.EmbeddedCacheManager;
-
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -19,6 +7,18 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Properties;
 import java.util.Set;
+
+import org.hibernate.annotations.common.reflection.ReflectionManager;
+import org.hibernate.search.cfg.SearchMapping;
+import org.hibernate.search.cfg.spi.SearchConfiguration;
+import org.hibernate.search.cfg.spi.SearchConfigurationBase;
+import org.hibernate.search.engine.service.classloading.impl.DefaultClassLoaderService;
+import org.hibernate.search.engine.service.classloading.spi.ClassLoaderService;
+import org.hibernate.search.engine.service.spi.Service;
+import org.hibernate.search.impl.SearchMappingBuilder;
+import org.hibernate.search.infinispan.CacheManagerService;
+import org.infinispan.factories.ComponentRegistry;
+import org.infinispan.manager.EmbeddedCacheManager;
 
 /**
  * Class that implements {@link org.hibernate.search.cfg.SearchConfiguration} so that within Infinispan-Query, there is
@@ -34,8 +34,8 @@ public class SearchableCacheConfiguration extends SearchConfigurationBase implem
    private final Map<String, Class<?>> classes;
    private final Properties properties;
    private final SearchMapping searchMapping;
-   private final Map<Class<? extends ServiceProvider<?>>, Object> providedServices;
-   private final IndexManagerFactory indexManagerFactory = new DefaultIndexManagerFactory();
+   private final Map<Class<? extends Service>, Object> providedServices;
+   private final DefaultClassLoaderService classLoaderService = new DefaultClassLoaderService();
 
    public SearchableCacheConfiguration(Class<?>[] classArray, Properties properties, EmbeddedCacheManager uninitializedCacheManager, ComponentRegistry cr) {
       this.providedServices = initializeProvidedServices(uninitializedCacheManager, cr);
@@ -66,11 +66,12 @@ public class SearchableCacheConfiguration extends SearchConfigurationBase implem
       }
    }
 
-   private static Map<Class<? extends ServiceProvider<?>>, Object> initializeProvidedServices(EmbeddedCacheManager uninitializedCacheManager, ComponentRegistry cr) {
+   private static Map initializeProvidedServices(EmbeddedCacheManager uninitializedCacheManager, ComponentRegistry cr) {
       //Register the SelfLoopedCacheManagerServiceProvider to allow custom IndexManagers to access the CacheManager
+      final InfinispanLoopbackService loopService = new InfinispanLoopbackService(cr, uninitializedCacheManager);
       HashMap map = new HashMap(2);
-      map.put(CacheManagerServiceProvider.class, uninitializedCacheManager);
-      map.put(ComponentRegistryServiceProvider.class, cr);
+      map.put(ComponentRegistryService.class, loopService);
+      map.put(CacheManagerService.class, loopService);
       return Collections.unmodifiableMap(map);
    }
 
@@ -105,7 +106,7 @@ public class SearchableCacheConfiguration extends SearchConfigurationBase implem
    }
 
    @Override
-   public Map<Class<? extends ServiceProvider<?>>, Object> getProvidedServices() {
+   public Map<Class<? extends Service>, Object> getProvidedServices() {
       return providedServices;
    }
 
@@ -119,11 +120,6 @@ public class SearchableCacheConfiguration extends SearchConfigurationBase implem
       return true;
    }
 
-   @Override
-   public IndexManagerFactory getIndexManagerFactory() {
-      return indexManagerFactory;
-   }
-
    private static Properties rescopeProperties(Properties origin) {
       Properties target = new Properties();
       for (Entry<Object, Object> entry : origin.entrySet()) {
@@ -134,6 +130,13 @@ public class SearchableCacheConfiguration extends SearchConfigurationBase implem
          target.put(key, entry.getValue());
       }
       return target;
+   }
+
+   @Override
+   public ClassLoaderService getClassLoaderService() {
+      //FIXME wire this up to the ClassLoader configuration of the CacheManager
+      //(and avoid using an .impl class from Hibernate Search)
+      return classLoaderService;
    }
 
 }
