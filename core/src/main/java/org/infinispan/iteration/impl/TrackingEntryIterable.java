@@ -8,7 +8,6 @@ import org.infinispan.filter.KeyValueFilter;
 import org.infinispan.util.concurrent.ConcurrentHashSet;
 
 import java.util.Iterator;
-import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicBoolean;
 
@@ -41,7 +40,7 @@ public class TrackingEntryIterable<K, V, C> implements CloseableIterable<CacheEn
    }
 
    @Override
-   public void close() throws Exception {
+   public void close() {
       closed.set(true);
       for (CloseableIterator<CacheEntry<K, C>> iterator : iterators) {
          iterator.close();
@@ -58,11 +57,7 @@ public class TrackingEntryIterable<K, V, C> implements CloseableIterable<CacheEn
       // Note we have to check if we were closed afterwards just in case if a concurrent close occurred.
       if (closed.get()) {
          // Rely on fact that multiple closes don't have adverse effects
-         try {
-            iterator.close();
-         } catch (Exception e) {
-            // This exception should never be thrown
-         }
+         iterator.close();
          throw new IllegalStateException("Iterable has been closed - cannot be reused");
       }
       return iterator;

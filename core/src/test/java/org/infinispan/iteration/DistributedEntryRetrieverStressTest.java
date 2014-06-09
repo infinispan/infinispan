@@ -104,9 +104,7 @@ public class DistributedEntryRetrieverStressTest extends MultipleCacheManagersTe
                   while (!complete.get()) {
                      log.tracef("Starting iteration %s", iteration);
                      Map<Integer, Integer> seenValues = new HashMap<Integer, Integer>();
-                     CloseableIterable<CacheEntry<Integer, Integer>> iterable = cache.getAdvancedCache().filterEntries(
-                           new AllEntriesFilter());
-                     try {
+                     try (CloseableIterable<CacheEntry<Integer, Integer>> iterable = cache.getAdvancedCache().filterEntries(new AllEntriesFilter())) {
                         for (Map.Entry<Integer, Integer> entry : iterable) {
                            if (seenValues.containsKey(entry.getKey())) {
                               log.tracef("Seen values were: %s", seenValues);
@@ -134,8 +132,6 @@ public class DistributedEntryRetrieverStressTest extends MultipleCacheManagersTe
                            }
                         }
                         iteration++;
-                     } finally {
-                        iterable.close();
                      }
                   }
                   return null;

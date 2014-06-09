@@ -14,4 +14,6 @@ import java.util.Iterator;
  * @since 7.0
  */
 public interface CloseableIterator<E> extends AutoCloseable, Iterator<E> {
+   @Override
+   void close();
 }
