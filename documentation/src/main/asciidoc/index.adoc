@@ -9,7 +9,7 @@ particularly the link:user_guide/user_guide.html[User Guide].
 We hope you find this useful.  Any and all feedback should be directed to the
 Infinispan link:http://www.infinispan.org/community[user forums].
 
-TIP: This is written specifically for *Infinispan 6.0.x*.  While
+TIP: This is written specifically for *Infinispan 7.0.x*.  While
 the majority of it will apply to other versions as well, it is best that you
 reference the version of documentation that corresponds to your version of
 Infinispan.
