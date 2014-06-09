@@ -1,6 +1,5 @@
 package org.infinispan.commons.util;
 
-import java.io.IOException;
 import java.util.Iterator;
 
 /**
@@ -18,7 +17,7 @@ public class IteratorAsCloseableIterator<E> implements CloseableIterator<E> {
    }
 
    @Override
-   public void close() throws IOException {
+   public void close() {
       // This does nothing
    }
 
