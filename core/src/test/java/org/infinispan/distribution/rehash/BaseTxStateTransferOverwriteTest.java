@@ -244,6 +244,10 @@ public abstract class BaseTxStateTransferOverwriteTest extends BaseDistFunctiona
 
          cyclicBarrier.await(10, SECONDS);
 
+         // After the barrier  has been hit remove the interceptor, since we can just wake it up through the barrier,
+         // this way the state transfer won't be blocked if the normal put occurs before it.
+         removeAllBlockingInterceptorsFromCache(primaryOwnerCache);
+
          // Block the rebalance confirmation on nonOwnerCache
          CheckPoint checkPoint = new CheckPoint();
          log.trace("Adding proxy to state transfer");
