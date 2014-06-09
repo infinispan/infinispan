@@ -127,7 +127,7 @@ public class AbstractDelegatingAdvancedCache<K, V> extends AbstractDelegatingCac
    }
 
    @Override
-   public DataContainer getDataContainer() {
+   public DataContainer<K, V> getDataContainer() {
       return cache.getDataContainer();
    }
 
@@ -182,7 +182,7 @@ public class AbstractDelegatingAdvancedCache<K, V> extends AbstractDelegatingCac
    }
 
    @Override
-   public CacheEntry getCacheEntry(K key) {
+   public CacheEntry<K, V> getCacheEntry(K key) {
       return cache.getCacheEntry(key);
    }
 
