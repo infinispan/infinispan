@@ -13,6 +13,7 @@
         <module name="org.hibernate.hql.lucene" slot="${slot}"/>
         <module name="org.hibernate.search.engine" slot="${slot}" export="true"/>
         <module name="org.infinispan" slot="${slot}"/>
+        <module name="org.infinispan.objectfilter" slot="${slot}"/>
         <module name="org.jboss.logging" />
     </dependencies>
 </module>
