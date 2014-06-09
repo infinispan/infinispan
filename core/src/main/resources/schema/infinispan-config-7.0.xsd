@@ -173,12 +173,12 @@
           <xs:documentation>Configures security for this cache container.</xs:documentation>
         </xs:annotation>
       </xs:element>
-      <xs:element name="serialization" type="tns:serialization">
+      <xs:element name="serialization" type="tns:serialization" minOccurs="0">
         <xs:annotation>
           <xs:documentation>Specifies how data serialization will be performed by the cache container.</xs:documentation>
         </xs:annotation>
       </xs:element>
-      <xs:element name="jmx" type="tns:jmx">
+      <xs:element name="jmx" type="tns:jmx" minOccurs="0">
         <xs:annotation>
           <xs:documentation>Defines JMX management details.</xs:documentation>
         </xs:annotation>
