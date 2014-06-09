@@ -76,6 +76,12 @@ public class BaseLoaderResource extends SimpleResourceDefinition {
         .setParameters(COMMON_LOADER_PARAMETERS)
         .build();
 
+    private static final OperationDefinition RESET_LOADER_STATISTICS =
+         new SimpleOperationDefinitionBuilder(
+               "reset-loader-statistics",
+               InfinispanExtension.getResourceDescriptionResolver(ModelKeys.LOADER)
+         ).build();
+
     public BaseLoaderResource(PathElement pathElement, ResourceDescriptionResolver descriptionResolver, OperationStepHandler addHandler, OperationStepHandler removeHandler) {
         super(pathElement, descriptionResolver, addHandler, removeHandler);
     }
@@ -101,5 +107,13 @@ public class BaseLoaderResource extends SimpleResourceDefinition {
     public void registerChildren(ManagementResourceRegistration resourceRegistration) {
         super.registerChildren(resourceRegistration);
         resourceRegistration.registerSubModel(new LoaderPropertyResource());
+    }
+
+    @Override
+    public void registerOperations(ManagementResourceRegistration resourceRegistration) {
+        super.registerOperations(resourceRegistration);
+
+       resourceRegistration.registerOperationHandler(BaseLoaderResource.RESET_LOADER_STATISTICS,
+                                                     CacheCommands.ResetCacheLoaderStatisticsCommand.INSTANCE);
     }
 }

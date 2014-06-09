@@ -27,16 +27,23 @@ package org.jboss.as.clustering.infinispan.subsystem;
  */
 
 public class MetricKeys {
+    // shared
+    public static final String VERSION = "version";
     // cache container
     public static final String CACHE_MANAGER_STATUS = "cache-manager-status";
     public static final String IS_COORDINATOR = "is-coordinator";
     public static final String COORDINATOR_ADDRESS = "coordinator-address";
     public static final String LOCAL_ADDRESS = "local-address";
     public static final String CLUSTER_NAME = "cluster-name";
+    public static final String DEFINED_CACHE_COUNT = "defined-cache-count";
+    public static final String DEFINED_CACHE_NAMES = "defined-cache-names";
+    public static final String RUNNING_CACHE_COUNT = "running-cache-count";
+    public static final String CREATED_CACHE_COUNT = "created-cache-count";
+    public static final String MEMBERS = "members";
+    public static final String CLUSTER_SIZE = "cluster-size";
     // cache
-    public static final String BYTES_READ = "bytes-read";
-    public static final String BYTES_WRITTEN = "bytes-written";
     public static final String CACHE_STATUS = "cache-status";
+    public static final String CACHE_NAME = "cache-name";
     // LockManager
     public static final String NUMBER_OF_LOCKS_AVAILABLE = "number-of-locks-available";
     public static final String NUMBER_OF_LOCKS_HELD = "number-of-locks-held";
@@ -44,6 +51,7 @@ public class MetricKeys {
     // cache management interceptor
     public static final String AVERAGE_READ_TIME = "average-read-time";
     public static final String AVERAGE_WRITE_TIME = "average-write-time";
+    public static final String AVERAGE_REMOVE_TIME = "average-remove-time";
     public static final String ELAPSED_TIME = "elapsed-time";
     public static final String EVICTIONS = "evictions";
     public static final String HIT_RATIO = "hit-ratio";

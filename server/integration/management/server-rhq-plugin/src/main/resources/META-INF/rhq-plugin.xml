@@ -53,8 +53,8 @@
    '>
 ]>
 
-<plugin name="&pluginName;" displayName="Infinispan Server 6.0.x"
-        description="Supports management and monitoring of Infinispan Server 6.0.x" package="org.infinispan.server.rhq"
+<plugin name="&pluginName;" displayName="Infinispan Server 7.0.x"
+        description="Supports management and monitoring of Infinispan Server 7.0.x" package="org.infinispan.server.rhq"
         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns="urn:xmlns:rhq-plugin"
         xmlns:c="urn:xmlns:rhq-configuration">
 
@@ -225,10 +225,25 @@
                     units="none" dataType="trait" description="The current runtime status of a cache container"/>
             <metric property="clusterName" displayName="Cluster Name" displayType="summary" units="none"
                     dataType="trait" description="The name of the cluster"/>
+            <metric property="members" displayName="Cluster Members" displayType="summary" units="none"
+                    dataType="trait" description="The names of the members of the cluster"/>
             <metric property="coordinatorAddress" displayName="Coordinator Address" displayType="summary" units="none"
                     dataType="trait" description="The coordinator node's address"/>
             <metric property="localAddress" displayName="Local Address" displayType="summary" units="none"
                     dataType="trait" description="The local node's address"/>
+            <metric property="version" displayName="Version" displayType="summary" units="none"
+                    dataType="trait" description="The cache manager version"/>
+            <metric property="definedCacheNames" displayName="Defined Cache Names" displayType="summary" units="none"
+                    dataType="trait" description="The caches that have been defined for this manager"/>
+
+            <metric property="clusterSize" displayName="Cluster Size" displayType="summary" units="none"
+                    dataType="measurement" description="How many memmbers are in the cluster"/>
+            <metric property="definedCacheCount" displayName="Defined Cache Count" displayType="summary" units="none"
+                    dataType="measurement" description="How many caches that have been defined for this manager"/>
+            <metric property="runningCacheCount" displayName="Running Cache Count" displayType="summary" units="none"
+                    dataType="measurement" description="How many caches are running under this manager"/>
+            <metric property="createdCacheCount" displayName="Created Cache Count" displayType="summary" units="none"
+                    dataType="measurement" description="How many caches have actually been created under this manager"/>
 
             <resource-configuration>
                 <c:simple-property name="default-cache" required="false" type="string" readOnly="true"
@@ -267,6 +282,16 @@
                                        default="distributed-cache|local-cache|invalidation-cache|replicated-cache"/>
                 </plugin-configuration>
 
+                <operation name="start-cache" description="Starts the cache">
+                    <results>
+                        <c:simple-property name="operationResult"/>
+                    </results>
+                </operation>
+                <operation name="stop-cache" description="Stops the cache">
+                    <results>
+                        <c:simple-property name="operationResult"/>
+                    </results>
+                </operation>
                 <operation name="clear-cache" description="Clears the contents of this cache">
                     <results>
                         <c:simple-property name="operationResult"/>
@@ -300,9 +325,32 @@
                         <c:simple-property name="operationResult"/>
                     </results>
                 </operation>
+                <operation name="synchronize-data" description="Synchronizes data from the old cluster to this using the specified migrator.">
+                    <parameters>
+                        <c:simple-property name="migrator-name" type="string"/>
+                    </parameters>
+                </operation>
+                <operation name="disconnect-source" description="Disconnects the target cluster from the source cluster according to the specified migrator.">
+                    <parameters>
+                        <c:simple-property name="migrator-name" type="string"/>
+                    </parameters>
+                </operation>
+                <operation name="record-known-global-keyset" description="Records the global known keyset to a well-known key for retrieval by the upgrade process.">
+                    <results>
+                        <c:simple-property name="operationResult"/>
+                    </results>
+                </operation>
+
 
                 <metric property="cacheStatus" displayName="Cache Status" displayType="summary" units="none"
                         dataType="trait" description="The current runtime status of a cache"/>
+                <metric property="cacheName" displayName="Cache Name" displayType="summary" units="none"
+                        dataType="trait" description="The current name of the cache"/>
+                <metric property="version" displayName="Version" displayType="summary" units="none"
+                        dataType="trait" description="The cache version"/>
+                <metric property="concurrencyLevel" displayName="[LockManager] Concurrency level" displayType="detail"
+                        units="none" dataType="trait"
+                        description="The concurrency level that the Lock Manager has been configured with."/>
 
                 <metric property="numberOfLocksAvailable" displayName="[LockManager] Number of locks available"
                         displayType="detail" units="none" dataType="measurement"
@@ -310,10 +358,6 @@
                 <metric property="numberOfLocksHeld" displayName="[LockManager] Number of locks held"
                         displayType="detail" units="none" dataType="measurement"
                         description="The number of exclusive locks that are held."/>
-                <metric property="concurrencyLevel" displayName="[LockManager] Concurrency level" displayType="detail"
-                        units="none" dataType="trait"
-                        description="The concurrency level that the Lock Manager has been configured with."/>
-
                 <metric property="averageReadTime" displayName="[Statistics] Average read time" displayType="summary"
                         units="milliseconds" dataType="measurement"
                         description="Average number of milliseconds for a read operation on the cache"/>
@@ -328,6 +372,9 @@
                 <metric property="averageWriteTime" displayName="[Statistics] Average write time" displayType="summary"
                         units="milliseconds" dataType="measurement"
                         description="Average number of milliseconds for a write operation in the cache"/>
+                <metric property="averageRemoveTime" displayName="[Statistics] Average remove time" displayType="summary"
+                        units="milliseconds" dataType="measurement"
+                        description="Average number of milliseconds for a remove operation in the cache"/>
                 <metric property="hits" displayName="[Statistics] Number of cache hits" displayType="summary"
                         units="none" dataType="measurement" description="Number of cache hits"/>
                 <metric property="evictions" displayName="[Statistics] Number of cache evictions" displayType="summary"
@@ -407,6 +454,8 @@
                             <c:option value="EAGER"/>
                         </c:property-options>
                     </c:simple-property>
+                    <c:simple-property name="statistics" required="false" type="boolean" readOnly="false" default="true"
+                                       description="If enabled, statistics will be enabled for the cache."/>
                     <c:simple-property name="batching" required="false" type="boolean" readOnly="true" default="false"
                                        description="If enabled, the invocation batching API will be made available for this cache."/>
                     <c:simple-property name="indexing" required="false" type="string" readOnly="true" default="NONE"
