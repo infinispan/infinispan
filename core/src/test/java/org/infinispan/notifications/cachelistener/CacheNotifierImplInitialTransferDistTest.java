@@ -518,7 +518,7 @@ public class CacheNotifierImplInitialTransferDistTest extends MultipleCacheManag
             CacheEntryEvent event = null;
             boolean foundEarlierCreate = false;
             // We iterate backwards so we only have to do it once
-            for (int i = listener.events.size() - 1; i > 0; --i) {
+            for (int i = listener.events.size() - 1; i >= 0; --i) {
                CacheEntryEvent currentEvent = listener.events.get(i);
                if (currentEvent.getKey().equals(keyToChange) && operation.getType() == currentEvent.getType()) {
                   if (event == null) {
