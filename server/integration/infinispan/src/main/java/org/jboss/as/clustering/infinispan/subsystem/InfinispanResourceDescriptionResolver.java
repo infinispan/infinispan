@@ -133,7 +133,9 @@ public class InfinispanResourceDescriptionResolver extends StandardResourceDescr
 
         // shared cache metrics
         sharedAttributeResolver.put(MetricKeys.AVERAGE_READ_TIME, "cache");
+        sharedAttributeResolver.put(MetricKeys.AVERAGE_REMOVE_TIME, "cache");
         sharedAttributeResolver.put(MetricKeys.AVERAGE_WRITE_TIME, "cache");
+        sharedAttributeResolver.put(MetricKeys.CACHE_NAME, "cache");
         sharedAttributeResolver.put(MetricKeys.CACHE_STATUS, "cache");
         sharedAttributeResolver.put(MetricKeys.COMMITS, "cache");
         sharedAttributeResolver.put(MetricKeys.CONCURRENCY_LEVEL, "cache");
@@ -153,6 +155,7 @@ public class InfinispanResourceDescriptionResolver extends StandardResourceDescr
         sharedAttributeResolver.put(MetricKeys.ROLLBACKS, "cache");
         sharedAttributeResolver.put(MetricKeys.STORES, "cache");
         sharedAttributeResolver.put(MetricKeys.TIME_SINCE_RESET, "cache");
+        sharedAttributeResolver.put(MetricKeys.VERSION, "cache");
 
         sharedAttributeResolver.put(MetricKeys.AVERAGE_REPLICATION_TIME, "clustered-cache");
         sharedAttributeResolver.put(MetricKeys.REPLICATION_COUNT, "clustered-cache");

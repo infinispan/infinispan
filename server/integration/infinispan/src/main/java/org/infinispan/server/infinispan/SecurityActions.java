@@ -13,6 +13,7 @@ import org.infinispan.cli.interpreter.Interpreter;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.interceptors.base.CommandInterceptor;
+import org.infinispan.jmx.JmxStatisticsExposer;
 import org.infinispan.lifecycle.ComponentStatus;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.remoting.rpc.RpcManager;
@@ -28,6 +29,7 @@ import org.infinispan.security.actions.GetCacheManagerIsCoordinatorAction;
 import org.infinispan.security.actions.GetCacheManagerStatusAction;
 import org.infinispan.security.actions.GetCacheRpcManagerAction;
 import org.infinispan.security.actions.GetCacheStatusAction;
+import org.infinispan.server.infinispan.actions.*;
 import org.infinispan.util.concurrent.locks.LockManager;
 import org.jboss.as.clustering.infinispan.DefaultEmbeddedCacheManager;
 
@@ -131,6 +133,11 @@ public final class SecurityActions {
         return doPrivileged(action);
     }
 
+    public static String getCacheVersion(AdvancedCache<?, ?> cache) {
+       GetCacheVersionAction action = new GetCacheVersionAction(cache);
+        return doPrivileged(action);
+    }
+
     public static ComponentStatus getCacheManagerStatus(EmbeddedCacheManager cacheManager) {
         GetCacheManagerStatusAction action = new GetCacheManagerStatusAction(cacheManager);
         return doPrivileged(action);
@@ -154,6 +161,61 @@ public final class SecurityActions {
     public static String getCacheManagerClusterName(DefaultEmbeddedCacheManager cacheManager) {
         GetCacheManagerClusterNameAction action = new GetCacheManagerClusterNameAction(cacheManager);
         return doPrivileged(action);
+    }
+
+    public static String getDefinedCacheNames(DefaultEmbeddedCacheManager cacheManager) {
+        GetDefinedCacheNamesAction action = new GetDefinedCacheNamesAction(cacheManager);
+        return doPrivileged(action);
+    }
+
+    public static String getCacheCreatedCount(DefaultEmbeddedCacheManager cacheManager) {
+        GetCreatedCacheCountAction action = new GetCreatedCacheCountAction(cacheManager);
+        return doPrivileged(action);
+    }
+
+    public static String getDefinedCacheCount(DefaultEmbeddedCacheManager cacheManager) {
+        GetDefinedCacheCountAction action = new GetDefinedCacheCountAction(cacheManager);
+        return doPrivileged(action);
+    }
+
+    public static String getRunningCacheCount(DefaultEmbeddedCacheManager cacheManager) {
+        GetRunningCacheCountAction action = new GetRunningCacheCountAction(cacheManager);
+        return doPrivileged(action);
+    }
+
+    public static List<Address> getMembers(DefaultEmbeddedCacheManager cacheManager) {
+        GetMembersAction action = new GetMembersAction(cacheManager);
+        return doPrivileged(action);
+    }
+
+    public static Void clearCache(AdvancedCache<?, ?> cache) {
+        ClearCacheAction action = new ClearCacheAction(cache);
+        doPrivileged(action);
+        return null;
+    }
+
+    public static Void stopCache(AdvancedCache<?, ?> cache) {
+        StopCacheAction action = new StopCacheAction(cache);
+        doPrivileged(action);
+        return null;
+    }
+
+    public static Void startCache(AdvancedCache<?, ?> cache) {
+        StartCacheAction action = new StartCacheAction(cache);
+        doPrivileged(action);
+        return null;
+    }
+
+    public static <T extends JmxStatisticsExposer> Void resetStatistics(AdvancedCache<?, ?> cache,
+                                                                        Class<T> jmxClass) {
+        PrivilegedAction<Void> action;
+        if (jmxClass.isAssignableFrom(CommandInterceptor.class)) {
+            action = new ResetInterceptorJmxStatisticsAction(cache, jmxClass);
+        } else {
+           action = new ResetComponentJmxStatisticsAction(cache, jmxClass);
+        }
+        doPrivileged(action);
+        return null;
     }
 
     public static Map<String, String> executeInterpreter(final Interpreter interpreter, final String sessionId,

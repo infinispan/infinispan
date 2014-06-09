@@ -30,6 +30,7 @@ import org.infinispan.context.InvocationContext;
 import org.infinispan.context.impl.TxInvocationContext;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.interceptors.base.CommandInterceptor;
+import org.infinispan.jmx.JmxStatisticsExposer;
 import org.infinispan.jmx.annotations.DataType;
 import org.infinispan.jmx.annotations.DisplayType;
 import org.infinispan.jmx.annotations.MBean;
@@ -57,7 +58,7 @@ import org.infinispan.util.logging.LogFactory;
  * @since 4.0
  */
 @MBean(objectName = "Transactions", description = "Component that manages the cache's participation in JTA transactions.")
-public class TxInterceptor extends CommandInterceptor {
+public class TxInterceptor extends CommandInterceptor implements JmxStatisticsExposer {
 
    private TransactionTable txTable;
 
@@ -302,6 +303,16 @@ public class TxInterceptor extends CommandInterceptor {
 
    private static boolean shouldEnlist(InvocationContext ctx) {
       return ctx.isInTxScope() && ctx.isOriginLocal();
+   }
+
+   @Override
+   public boolean getStatisticsEnabled() {
+      return isStatisticsEnabled();
+   }
+
+   @Override
+   public void setStatisticsEnabled(boolean enabled) {
+      statisticsEnabled = enabled;
    }
 
    @ManagedOperation(

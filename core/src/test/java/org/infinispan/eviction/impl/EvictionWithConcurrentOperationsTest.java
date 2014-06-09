@@ -536,6 +536,16 @@ public class EvictionWithConcurrentOperationsTest extends SingleCacheManagerTest
       }
 
       @Override
+      public boolean getStatisticsEnabled() {
+         return delegate.getStatisticsEnabled();
+      }
+
+      @Override
+      public void setStatisticsEnabled(boolean enabled) {
+         delegate.setStatisticsEnabled(enabled);
+      }
+
+      @Override
       public void resetStatistics() {
          delegate.resetStatistics();
       }

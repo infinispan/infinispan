@@ -22,6 +22,7 @@ import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.factories.annotations.ComponentName;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.annotations.Start;
+import org.infinispan.jmx.JmxStatisticsExposer;
 import org.infinispan.jmx.annotations.DataType;
 import org.infinispan.jmx.annotations.DisplayType;
 import org.infinispan.jmx.annotations.MBean;
@@ -54,7 +55,7 @@ import org.infinispan.util.logging.LogFactory;
  * @since 4.0
  */
 @MBean(objectName = "RpcManager", description = "Manages all remote calls to remote cache instances in the cluster.")
-public class RpcManagerImpl implements RpcManager {
+public class RpcManagerImpl implements RpcManager, JmxStatisticsExposer {
 
    private static final Log log = LogFactory.getLog(RpcManagerImpl.class);
    private static final boolean trace = log.isTraceEnabled();
@@ -358,6 +359,11 @@ public class RpcManagerImpl implements RpcManager {
    @ManagedAttribute(description = "Enables or disables the gathering of statistics by this component", displayName = "Statistics enabled", dataType = DataType.TRAIT, writable = true)
    public boolean isStatisticsEnabled() {
       return statisticsEnabled;
+   }
+
+   @Override
+   public boolean getStatisticsEnabled() {
+      return isStatisticsEnabled();
    }
 
    /**
