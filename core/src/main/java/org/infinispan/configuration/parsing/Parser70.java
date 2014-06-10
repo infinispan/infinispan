@@ -30,6 +30,9 @@ import org.infinispan.persistence.file.SingleFileStore;
 import org.infinispan.persistence.spi.CacheLoader;
 import org.infinispan.security.AuditLogger;
 import org.infinispan.security.PrincipalRoleMapper;
+import org.infinispan.security.impl.ClusterRoleMapper;
+import org.infinispan.security.impl.CommonNameRoleMapper;
+import org.infinispan.security.impl.IdentityRoleMapper;
 import org.infinispan.transaction.LockingMode;
 import org.infinispan.transaction.TransactionProtocol;
 import org.infinispan.transaction.lookup.TransactionManagerLookup;
@@ -553,18 +556,45 @@ public class Parser70 implements ConfigurationParser {
                builder.auditLogger(Util.<AuditLogger>getInstance(value, holder.getClassLoader()));
                break;
             }
-            case MAPPER: {
-               builder.principalRoleMapper(Util.<PrincipalRoleMapper>getInstance(value, holder.getClassLoader()));
-               break;
-            }
             default: {
                throw ParseUtils.unexpectedAttribute(reader, i);
             }
          }
       }
+      PrincipalRoleMapper roleMapper = null;
       while (reader.hasNext() && (reader.nextTag() != XMLStreamConstants.END_ELEMENT)) {
          Element element = Element.forName(reader.getLocalName());
          switch (element) {
+            case IDENTITY_ROLE_MAPPER:
+               if (roleMapper != null) {
+                  throw ParseUtils.unexpectedElement(reader);
+               }
+               ParseUtils.requireNoAttributes(reader);
+               ParseUtils.requireNoContent(reader);
+               roleMapper = new IdentityRoleMapper();
+               break;
+            case COMMON_NAME_ROLE_MAPPER:
+               if (roleMapper != null) {
+                  throw ParseUtils.unexpectedElement(reader);
+               }
+               ParseUtils.requireNoAttributes(reader);
+               ParseUtils.requireNoContent(reader);
+               roleMapper = new CommonNameRoleMapper();
+               break;
+            case CLUSTER_ROLE_MAPPER:
+               if (roleMapper != null) {
+                  throw ParseUtils.unexpectedElement(reader);
+               }
+               ParseUtils.requireNoAttributes(reader);
+               ParseUtils.requireNoContent(reader);
+               roleMapper = new ClusterRoleMapper();
+               break;
+            case CUSTOM_ROLE_MAPPER:
+               if (roleMapper != null) {
+                  throw ParseUtils.unexpectedElement(reader);
+               }
+               roleMapper = parseCustomMapper(reader, holder);
+               break;
             case ROLE: {
                parseGlobalRole(reader, builder);
                break;
@@ -574,6 +604,15 @@ public class Parser70 implements ConfigurationParser {
             }
          }
       }
+      if (roleMapper != null) {
+         builder.principalRoleMapper(roleMapper);
+      }
+   }
+
+   private PrincipalRoleMapper parseCustomMapper(XMLExtendedStreamReader reader, ConfigurationBuilderHolder holder) throws XMLStreamException {
+      String mapperClass = ParseUtils.requireSingleAttribute(reader, Attribute.CLASS.getLocalName());
+      ParseUtils.requireNoContent(reader);
+      return Util.<PrincipalRoleMapper>getInstance(mapperClass, holder.getClassLoader());
    }
 
    private void parseGlobalRole(XMLExtendedStreamReader reader, GlobalAuthorizationConfigurationBuilder builder) throws XMLStreamException {

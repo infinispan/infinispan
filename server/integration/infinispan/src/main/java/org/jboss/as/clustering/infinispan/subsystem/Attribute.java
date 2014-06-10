@@ -27,7 +27,6 @@ import javax.xml.XMLConstants;
 import java.util.HashMap;
 import java.util.Map;
 
-import org.hibernate.search.stat.Statistics;
 import org.jboss.as.controller.AttributeDefinition;
 
 /**
@@ -43,6 +42,7 @@ public enum Attribute {
     ALIASES(ModelKeys.ALIASES),
     APPEND_CACHE_NAME_TO_PATH(ModelKeys.APPEND_CACHE_NAME_TO_PATH),
     ASYNC_MARSHALLING(ModelKeys.ASYNC_MARSHALLING),
+    AUDIT_LOGGER(ModelKeys.AUDIT_LOGGER),
     AWAIT_INITIAL_TRANSFER(ModelKeys.AWAIT_INITIAL_TRANSFER),
     BACKUP_FAILURE_POLICY(ModelKeys.BACKUP_FAILURE_POLICY),
     BATCH_SIZE(ModelKeys.BATCH_SIZE),
