@@ -4,14 +4,20 @@ import net.jcip.annotations.Immutable;
 
 import org.infinispan.client.hotrod.Flag;
 import org.infinispan.client.hotrod.RemoteCacheManager;
+import org.infinispan.client.hotrod.event.ClientListenerNotifier;
 import org.infinispan.client.hotrod.impl.protocol.Codec;
 import org.infinispan.client.hotrod.impl.protocol.HotRodConstants;
 import org.infinispan.client.hotrod.impl.query.RemoteQuery;
 import org.infinispan.client.hotrod.impl.transport.Transport;
 import org.infinispan.client.hotrod.impl.transport.TransportFactory;
+import org.infinispan.commons.util.InfinispanCollections;
 
+import java.net.SocketAddress;
+import java.nio.ByteBuffer;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
+import java.util.UUID;
 import java.util.concurrent.atomic.AtomicInteger;
 
 /**
@@ -37,14 +43,26 @@ public class OperationsFactory implements HotRodConstants {
 
    private final Codec codec;
 
+   private final ClientListenerNotifier listenerNotifier;
+
    public OperationsFactory(TransportFactory transportFactory, String cacheName,
-                            AtomicInteger topologyId, boolean forceReturnValue, Codec codec) {
+                            AtomicInteger topologyId, boolean forceReturnValue, Codec codec,
+                            ClientListenerNotifier listenerNotifier) {
       this.transportFactory = transportFactory;
       this.cacheNameBytes = cacheName.equals(RemoteCacheManager.DEFAULT_CACHE_NAME) ?
             DEFAULT_CACHE_NAME_BYTES : cacheName.getBytes(HOTROD_STRING_CHARSET);
       this.topologyId = topologyId;
       this.forceReturnValue = forceReturnValue;
       this.codec = codec;
+      this.listenerNotifier = listenerNotifier;
+   }
+
+   public ClientListenerNotifier getListenerNotifier() {
+      return listenerNotifier;
+   }
+
+   public byte[] getCacheName() {
+      return cacheNameBytes;
    }
 
    public GetOperation newGetKeyOperation(byte[] key) {
@@ -122,7 +140,25 @@ public class OperationsFactory implements HotRodConstants {
 
    public BulkGetKeysOperation newBulkGetKeysOperation(int scope) {
       return new BulkGetKeysOperation(
-    		codec, transportFactory, cacheNameBytes, topologyId, flags(), scope);
+         codec, transportFactory, cacheNameBytes, topologyId, flags(), scope);
+   }
+
+   public AddClientListenerOperation newAddClientListenerOperation(Object listener) {
+      return new AddClientListenerOperation(codec, transportFactory,
+            cacheNameBytes, topologyId, flags(), listenerNotifier,
+            listener, null, null);
+   }
+
+   public AddClientListenerOperation newAddClientListenerOperation(
+         Object listener, byte[][] filterFactoryParams, byte[][] converterFactoryParams) {
+      return new AddClientListenerOperation(codec, transportFactory,
+            cacheNameBytes, topologyId, flags(), listenerNotifier,
+            listener, filterFactoryParams, converterFactoryParams);
+   }
+
+   public RemoveClientListenerOperation newRemoveClientListenerOperation(Object listener) {
+      return new RemoveClientListenerOperation(codec, transportFactory,
+            cacheNameBytes, topologyId, flags(), listenerNotifier, listener);
    }
 
    /**

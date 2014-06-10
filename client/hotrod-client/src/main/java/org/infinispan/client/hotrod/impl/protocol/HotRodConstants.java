@@ -38,7 +38,8 @@ public interface HotRodConstants {
    static final byte QUERY_REQUEST = 0x1F;
    static final byte AUTH_MECH_LIST_REQUEST = 0x21;
    static final byte AUTH_REQUEST = 0x23;
-
+   static final byte ADD_CLIENT_LISTENER_REQUEST = 0x25;
+   static final byte REMOVE_CLIENT_LISTENER_REQUEST = 0x27;
 
    //responses
    static final byte PUT_RESPONSE = 0x02;
@@ -59,7 +60,12 @@ public interface HotRodConstants {
    static final byte QUERY_RESPONSE = 0x20;
    static final byte AUTH_MECH_LIST_RESPONSE = 0x22;
    static final byte AUTH_RESPONSE = 0x24;
+   static final byte ADD_CLIENT_LISTENER_RESPONSE = 0x26;
+   static final byte REMOVE_CLIENT_LISTENER_RESPONSE = 0x28;
    static final byte ERROR_RESPONSE = 0x50;
+   static final byte CACHE_ENTRY_CREATED_EVENT_RESPONSE = 0x60;
+   static final byte CACHE_ENTRY_MODIFIED_EVENT_RESPONSE = 0x61;
+   static final byte CACHE_ENTRY_REMOVED_EVENT_RESPONSE = 0x62;
 
    //response status
    static final byte NO_ERROR_STATUS = 0x00;

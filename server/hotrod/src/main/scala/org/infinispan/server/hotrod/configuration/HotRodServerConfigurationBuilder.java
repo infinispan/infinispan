@@ -1,10 +1,17 @@
 package org.infinispan.server.hotrod.configuration;
 
 import org.infinispan.commons.configuration.Builder;
+import org.infinispan.commons.marshall.Marshaller;
+import org.infinispan.commons.marshall.jboss.GenericJBossMarshaller;
 import org.infinispan.configuration.cache.LockingConfigurationBuilder;
 import org.infinispan.configuration.cache.StateTransferConfigurationBuilder;
 import org.infinispan.configuration.cache.SyncConfigurationBuilder;
+import org.infinispan.server.hotrod.event.ConverterFactory;
+import org.infinispan.server.hotrod.event.KeyValueFilterFactory;
 import org.infinispan.server.core.configuration.ProtocolServerConfigurationBuilder;
+
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  * HotRodServerConfigurationBuilder.
@@ -21,6 +28,9 @@ public class HotRodServerConfigurationBuilder extends ProtocolServerConfiguratio
    private long topologyReplTimeout = 10000L;
    private boolean topologyAwaitInitialTransfer = true;
    private boolean topologyStateTransfer = true;
+   private Map<String, KeyValueFilterFactory> keyValueFilterFactories = new HashMap<String, KeyValueFilterFactory>();
+   private Map<String, ConverterFactory> converterFactories = new HashMap<String, ConverterFactory>();
+   private Marshaller marshaller = new GenericJBossMarshaller();
 
    public HotRodServerConfigurationBuilder() {
       super(11222);
@@ -91,10 +101,26 @@ public class HotRodServerConfigurationBuilder extends ProtocolServerConfiguratio
       return this;
    }
 
+   public HotRodServerConfigurationBuilder keyValueFilterFactory(String name, KeyValueFilterFactory factory) {
+      keyValueFilterFactories.put(name, factory);
+      return this;
+   }
+
+   public HotRodServerConfigurationBuilder converterFactory(String name, ConverterFactory factory) {
+      converterFactories.put(name, factory);
+      return this;
+   }
+
+   public HotRodServerConfigurationBuilder marshaller(Marshaller marshaller) {
+      this.marshaller = marshaller;
+      return this;
+   }
+
    @Override
    public HotRodServerConfiguration create() {
       return new HotRodServerConfiguration(defaultCacheName, proxyHost, proxyPort, topologyLockTimeout, topologyReplTimeout, topologyAwaitInitialTransfer, topologyStateTransfer, name, host, port, idleTimeout,
-            recvBufSize, sendBufSize, ssl.create(), tcpNoDelay, workerThreads, authentication.create());
+            recvBufSize, sendBufSize, ssl.create(), tcpNoDelay, workerThreads, authentication.create(),
+            keyValueFilterFactories, converterFactories, marshaller);
    }
 
    @Override

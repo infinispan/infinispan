@@ -1,21 +1,24 @@
 package org.infinispan.server.hotrod
 
-import logging.Log
-import org.infinispan.server.core.Operation._
-import HotRodOperation._
-import OperationStatus._
-import org.infinispan.stats.Stats
-import org.infinispan.server.core._
-import collection.mutable
-import collection.immutable
-import org.infinispan.util.concurrent.TimeoutException
-import java.io.IOException
-import org.infinispan.context.Flag.{SKIP_CACHE_LOAD, IGNORE_RETURN_VALUES}
-import org.infinispan.server.core.transport.ExtendedByteBuf._
-import transport.NettyTransport
-import org.infinispan.container.entries.{CacheEntry, InternalCacheEntry}
-import org.infinispan.container.versioning.NumericVersion
 import io.netty.buffer.ByteBuf
+import io.netty.channel.Channel
+import io.netty.channel.ChannelHandlerContext
+import java.io.IOException
+import java.security.PrivilegedAction
+import javax.security.auth.Subject
+import javax.security.sasl.SaslServer
+import org.infinispan.container.entries.CacheEntry
+import org.infinispan.container.versioning.NumericVersion
+import org.infinispan.context.Flag.{SKIP_CACHE_LOAD, IGNORE_RETURN_VALUES}
+import org.infinispan.server.core.Operation._
+import org.infinispan.server.core._
+import org.infinispan.server.core.transport.ExtendedByteBuf._
+import org.infinispan.server.core.transport.NettyTransport
+import org.infinispan.server.hotrod.HotRodOperation._
+import org.infinispan.server.hotrod.OperationStatus._
+import org.infinispan.server.hotrod.logging.Log
+import org.infinispan.stats.Stats
+import org.infinispan.util.concurrent.TimeoutException
 import scala.annotation.switch
 import scala.collection.JavaConverters._
 import javax.security.sasl.Sasl
@@ -35,6 +38,9 @@ import org.infinispan.server.core.security.InetAddressPrincipal
 import java.net.InetSocketAddress
 import org.infinispan.server.core.security.simple.SimpleUserPrincipal
 import java.util.HashMap
+import scala.collection.immutable
+import scala.collection.mutable
+import scala.collection.mutable.ListBuffer
 
 /**
  * HotRod protocol decoder specific for specification version 2.0.
@@ -43,8 +49,10 @@ import java.util.HashMap
  * @since 7.0
  */
 object Decoder2x extends AbstractVersionedDecoder with ServerConstants with Log {
+
    import OperationResponse._
    import ProtocolFlag._
+
    type SuitableHeader = HotRodHeader
    private val isTrace = isTraceEnabled
 
@@ -69,6 +77,8 @@ object Decoder2x extends AbstractVersionedDecoder with ServerConstants with Log 
          case 0x1F => (QueryRequest, false)
          case 0x21 => (AuthMechListRequest, true)
          case 0x23 => (AuthRequest, true)
+         case 0x25 => (AddClientListenerRequest, false)
+         case 0x27 => (RemoveClientListenerRequest, false)
          case _ => throw new HotRodUnknownOperationException(
             "Unknown operation: " + streamOp, version, messageId)
       }
@@ -234,7 +244,7 @@ object Decoder2x extends AbstractVersionedDecoder with ServerConstants with Log 
       }
    }
 
-   override def customReadKey(h: HotRodHeader, buffer: ByteBuf, cache: Cache, server: HotRodServer): AnyRef = {
+   override def customReadKey(h: HotRodHeader, buffer: ByteBuf, cache: Cache, server: HotRodServer, ch: Channel): AnyRef = {
       h.op match {
          case RemoveIfUnmodifiedRequest => {
             val k = readKey(buffer)
@@ -242,7 +252,7 @@ object Decoder2x extends AbstractVersionedDecoder with ServerConstants with Log 
             val entry = cache.getCacheEntry(k)
             if (entry != null) {
                // Hacky, but CacheEntry has not been generified
-               val prev = entry.getValue.asInstanceOf[Array[Byte]]
+               val prev = entry.getValue
                val streamVersion = new NumericVersion(params.streamVersion)
                if (entry.getMetadata.version() == streamVersion) {
                   val removed = cache.remove(k, prev)
@@ -288,15 +298,50 @@ object Decoder2x extends AbstractVersionedDecoder with ServerConstants with Log 
             new QueryResponse(h.version, h.messageId, h.cacheName, h.clientIntel,
                h.topologyId, result)
          }
+         case AddClientListenerRequest =>
+            val listenerId = readRangedBytes(buffer)
+            val filterFactoryInfo = readNamedFactory(buffer)
+            val converterFactoryInfo = readNamedFactory(buffer)
+            val reg = server.getClientListenerRegistry
+            reg.addClientListener(ch, h, listenerId, cache, filterFactoryInfo, converterFactoryInfo)
+            createSuccessResponse(h, null)
+         case RemoveClientListenerRequest =>
+            val listenerId = readRangedBytes(buffer)
+            val reg = server.getClientListenerRegistry
+            val removed = reg.removeClientListener(listenerId, cache)
+            if (removed)
+               createSuccessResponse(h, null)
+            else
+               createNotExecutedResponse(h, null)
       }
+   }
+
+   private def readNamedFactory(buffer: ByteBuf): NamedFactory = {
+      for {
+         factoryName <- readOptionalString(buffer)
+      } yield (factoryName, readOptionalParams(buffer))
+   }
+
+   private def readOptionalString(buffer: ByteBuf): Option[String] = {
+      val string = readString(buffer)
+      if (string.isEmpty) None else Some(string)
+   }
+
+   private def readOptionalParams(buffer: ByteBuf): List[Bytes] = {
+      val numParams = buffer.readByte()
+      if (numParams > 0) {
+         var params = ListBuffer[Bytes]()
+         for (i <- 0 until numParams) params += readRangedBytes(buffer)
+         params.toList
+      } else List.empty
    }
 
    def getKeyMetadata(h: HotRodHeader, k: Array[Byte], cache: Cache): GetWithMetadataResponse = {
       val ce = cache.getCacheEntry(k)
       if (ce != null) {
-         val ice = ce.asInstanceOf[InternalCacheEntry[Array[Byte], Array[Byte]]]
+         val ice = ce.asInstanceOf[InternalCacheEntry]
          val entryVersion = ice.getMetadata.version().asInstanceOf[NumericVersion]
-         val v = ce.getValue.asInstanceOf[Array[Byte]]
+         val v = ce.getValue
          val lifespan = if (ice.getLifespan < 0) -1 else (ice.getLifespan / 1000).toInt
          val maxIdle = if (ice.getMaxIdle < 0) -1 else (ice.getMaxIdle / 1000).toInt
          new GetWithMetadataResponse(h.version, h.messageId, h.cacheName,
@@ -369,31 +414,9 @@ object Decoder2x extends AbstractVersionedDecoder with ServerConstants with Log 
       optCache
    }
 
-   def toResponse(request: Enumeration#Value): OperationResponse = {
-      request match {
-         case PutRequest => PutResponse
-         case GetRequest => GetResponse
-         case PutIfAbsentRequest => PutIfAbsentResponse
-         case ReplaceRequest => ReplaceResponse
-         case ReplaceIfUnmodifiedRequest => ReplaceIfUnmodifiedResponse
-         case RemoveRequest => RemoveResponse
-         case RemoveIfUnmodifiedRequest => RemoveIfUnmodifiedResponse
-         case ContainsKeyRequest => ContainsKeyResponse
-         case GetWithVersionRequest => GetWithVersionResponse
-         case ClearRequest => ClearResponse
-         case StatsRequest => StatsResponse
-         case PingRequest => PingResponse
-         case BulkGetRequest => BulkGetResponse
-         case GetWithMetadataRequest => GetWithMetadataResponse
-         case BulkGetKeysRequest => BulkGetKeysResponse
-         case QueryRequest => QueryResponse
-         case AuthMechListRequest => AuthMechListResponse
-         case AuthRequest => AuthResponse
-      }
-   }
-
    def normalizeAuthorizationId(id: String): String = {
       val realm = id.indexOf('@')
       if (realm >= 0) id.substring(0, realm) else id
    }
+
 }

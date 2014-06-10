@@ -29,8 +29,6 @@ class HotRodReplicationTest extends HotRodMultiNodeTest {
       config
    }
 
-   override protected def protocolVersion = 10
-
    def testReplicatedPut(m: Method) {
       val resp = clients.head.put(k(m) , 0, 0, v(m))
       assertStatus(resp, Success)

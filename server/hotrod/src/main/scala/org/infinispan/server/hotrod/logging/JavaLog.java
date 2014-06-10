@@ -3,6 +3,7 @@ package org.infinispan.server.hotrod.logging;
 import java.util.Set;
 
 import org.infinispan.commons.CacheConfigurationException;
+import org.infinispan.notifications.cachelistener.event.Event;
 import org.infinispan.util.concurrent.IsolationLevel;
 import org.jboss.logging.annotations.Cause;
 import org.jboss.logging.annotations.LogMessage;
@@ -50,4 +51,8 @@ public interface JavaLog extends org.infinispan.util.logging.Log {
 
    @Message(value = "A serverName must be specified when enabling authentication", id = 6008)
    CacheConfigurationException missingServerName();
+
+   @Message(value = "Event not handled by current Hot Rod event implementation: '%s'", id = 6009)
+   IllegalStateException unexpectedEvent(Event e);
+
 }

@@ -36,8 +36,6 @@ class HotRodAsymmetricClusterTest extends HotRodMultiNodeTest {
      }
   }
 
-   protected def protocolVersion: Byte = 12
-
    def testPutInCacheDefinedNode(m: Method) {
       val resp = clients.head.put(k(m) , 0, 0, v(m))
       assertStatus(resp, Success)

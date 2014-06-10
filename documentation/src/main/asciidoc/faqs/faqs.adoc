@@ -624,7 +624,12 @@ This is a bug (see link:$$https://jira.jboss.org/browse/ISPN-669$$[ISPN-669] ) i
 There's no bulk get operation in Hot Rod, but the Java Hot Rod client has implemented via link:$$http://docs.jboss.org/infinispan/6.0/apidocs/org/infinispan/client/hotrod/RemoteCache.html$$[RemoteCache] the getAsync() operation, which returns a link:$$http://docs.jboss.org/infinispan/6.0/apidocs/org/infinispan/util/concurrent/NotifyingFuture.html$$[org.infinispan.util.concurrent.NotifyingFuture] (extends java.util.concurrent.Future). So, if you want to retrieve multiple keys in parallel, just call multiple times _getAsync()_ and when you need the values, just call _Future.get()_ , or attach a link:$$http://docs.jboss.org/infinispan/6.0/apidocs/org/infinispan/util/concurrent/FutureListener.html$$[ _FutureListener_ ] to the _NotifyingFuture_ to get notified when the value is ready.
 
 ==== What is the startServer.sh script used for? What is the startServer.bat script used for?
-These scripts are used for starting Infinispan server instances that can be talked to remotely using either our own link:$$../user_guide/user_guide.html#_using_hot_rod_server$$[Hot Rod protocol] or the link:$$../user_guide/user_guide.html#_using_infinispan_memcached_server$$[Memcached text protocol] . See link:$$../user_guide/user_guide.html#_infinispan_server_modules$$[Infinispan's server modules] for more information on the usage of these scripts.
+These scripts were used to start Infinispan server instances in earlier
+Infinispan versions, but this is not the case any more since the Infinispan
+Server modules are built into a base Wildfly/EAP instance, allowing all server
+modules to interact with other base services provided by Wildfly/EAP, e.g.
+the web container for REST server. Check the dedicated Infinispan Server guide
+to find out more on how to start it.
 
 
 === Debugging questions
