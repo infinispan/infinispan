@@ -9,6 +9,12 @@ import org.infinispan.distribution.DistributionManager;
 import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.remoting.rpc.RpcManager;
 import org.infinispan.security.AuthorizationManager;
+import org.infinispan.security.Security;
+import org.infinispan.security.actions.GetCacheAuthorizationManagerAction;
+import org.infinispan.security.actions.GetCacheComponentRegistryAction;
+import org.infinispan.security.actions.GetCacheConfigurationAction;
+import org.infinispan.security.actions.GetCacheDistributionManagerAction;
+import org.infinispan.security.actions.GetCacheRpcManagerAction;
 
 /**
  * SecurityActions for the org.infinispan.distexec package.
@@ -20,68 +26,36 @@ import org.infinispan.security.AuthorizationManager;
  * @since 7.0
  */
 final class SecurityActions {
-   static ComponentRegistry getCacheComponentRegistry(final AdvancedCache<?, ?> cache) {
+   private static <T> T doPrivileged(PrivilegedAction<T> action) {
       if (System.getSecurityManager() != null) {
-         return AccessController.doPrivileged(new PrivilegedAction<ComponentRegistry>() {
-            @Override
-            public ComponentRegistry run() {
-               return cache.getComponentRegistry();
-            }
-         });
+         return AccessController.doPrivileged(action);
       } else {
-         return cache.getComponentRegistry();
+         return Security.doPrivileged(action);
       }
+   }
+
+   static ComponentRegistry getCacheComponentRegistry(final AdvancedCache<?, ?> cache) {
+      GetCacheComponentRegistryAction action = new GetCacheComponentRegistryAction(cache);
+      return doPrivileged(action);
    }
 
    static AuthorizationManager getCacheAuthorizationManager(final AdvancedCache<?, ?> cache) {
-      if (System.getSecurityManager() != null) {
-         return AccessController.doPrivileged(new PrivilegedAction<AuthorizationManager>() {
-            @Override
-            public AuthorizationManager run() {
-               return cache.getAuthorizationManager();
-            }
-         });
-      } else {
-         return cache.getAuthorizationManager();
-      }
+      GetCacheAuthorizationManagerAction action = new GetCacheAuthorizationManagerAction(cache);
+      return doPrivileged(action);
    }
 
    static RpcManager getCacheRpcManager(final AdvancedCache<?, ?> cache) {
-      if (System.getSecurityManager() != null) {
-         return AccessController.doPrivileged(new PrivilegedAction<RpcManager>() {
-            @Override
-            public RpcManager run() {
-               return cache.getRpcManager();
-            }
-         });
-      } else {
-         return cache.getRpcManager();
-      }
+      GetCacheRpcManagerAction action = new GetCacheRpcManagerAction(cache);
+      return doPrivileged(action);
    }
 
    static DistributionManager getCacheDistributionManager(final AdvancedCache<?, ?> cache) {
-      if (System.getSecurityManager() != null) {
-         return AccessController.doPrivileged(new PrivilegedAction<DistributionManager>() {
-            @Override
-            public DistributionManager run() {
-               return cache.getDistributionManager();
-            }
-         });
-      } else {
-         return cache.getDistributionManager();
-      }
+      GetCacheDistributionManagerAction action = new GetCacheDistributionManagerAction(cache);
+      return doPrivileged(action);
    }
 
    static Configuration getCacheConfiguration(final AdvancedCache<?, ?> cache) {
-      if (System.getSecurityManager() != null) {
-         return AccessController.doPrivileged(new PrivilegedAction<Configuration>() {
-            @Override
-            public Configuration run() {
-               return cache.getCacheConfiguration();
-            }
-         });
-      } else {
-         return cache.getCacheConfiguration();
-      }
+      GetCacheConfigurationAction action = new GetCacheConfigurationAction(cache);
+      return doPrivileged(action);
    }
 }

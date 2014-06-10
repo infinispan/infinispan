@@ -44,7 +44,7 @@ public class CustomAuditLoggerTest extends SingleCacheManagerTest {
 
    @Override
    protected void setup() throws Exception {
-      Subject.doAs(ADMIN, new PrivilegedExceptionAction<Void>() {
+      Security.doAs(ADMIN, new PrivilegedExceptionAction<Void>() {
 
          @Override
          public Void run() throws Exception {
@@ -57,7 +57,7 @@ public class CustomAuditLoggerTest extends SingleCacheManagerTest {
 
    @Override
    protected void teardown() {
-      Subject.doAs(ADMIN, new PrivilegedAction<Void>() {
+      Security.doAs(ADMIN, new PrivilegedAction<Void>() {
          @Override
          public Void run() {
             CustomAuditLoggerTest.super.teardown();
@@ -68,7 +68,7 @@ public class CustomAuditLoggerTest extends SingleCacheManagerTest {
 
    @Override
    protected void clearContent() {
-      Subject.doAs(ADMIN, new PrivilegedAction<Void>() {
+      Security.doAs(ADMIN, new PrivilegedAction<Void>() {
          @Override
          public Void run() {
             cacheManager.getCache().clear();
@@ -78,7 +78,7 @@ public class CustomAuditLoggerTest extends SingleCacheManagerTest {
    }
 
    public void testAdminWriteAllow() {
-      Subject.doAs(ADMIN, new PrivilegedAction<Void>() {
+      Security.doAs(ADMIN, new PrivilegedAction<Void>() {
 
          @Override
          public Void run() {
@@ -95,7 +95,7 @@ public class CustomAuditLoggerTest extends SingleCacheManagerTest {
    }
 
    public void testReaderReadAllow() {
-      Subject.doAs(READER, new PrivilegedAction<Void>() {
+      Security.doAs(READER, new PrivilegedAction<Void>() {
 
          @Override
          public Void run() {
@@ -113,7 +113,7 @@ public class CustomAuditLoggerTest extends SingleCacheManagerTest {
 
    public void testReaderWriteDeny() {
       try {
-         Subject.doAs(READER, new PrivilegedAction<Void>() {
+         Security.doAs(READER, new PrivilegedAction<Void>() {
 
             @Override
             public Void run() {

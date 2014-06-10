@@ -45,14 +45,34 @@ Some permissions might need to be combined with others in order to be useful, e.
 When a DefaultCacheManager has been constructed with security enabled using either the programmatic or declarative configuration, it returns a SecureCache which will check the security context before invoking any operations on the underlying caches. A SecureCache also makes sure that applications cannot retrieve lower-level insecure objects (such as DataContainer).
 In Java, executing code with a specific identity usually means wrapping the code to be executed within a PrivilegedAction:
 
-Subject.doAs(subject, new PrivilegedExceptionAction<Void>() {
+[source,java]
+----
+import org.infinispan.security.Security;
+
+Security.doAs(subject, new PrivilegedExceptionAction<Void>() {
 public Void run() throws Exception {
-    cache.put(“key”, “value”);
+    cache.put("key", "value");
 }
 });
+----
 
-In order for Infinispan to be able to enforce and check permissions correctly at all entry points, running under a SecurityManager with an appropriate policy is required. 
-The Infinispan distribution contains an example security.policy file which you should customize with the appropriate paths before supplying it to your JVM.
+If you are using Java 8, the above call can be simplified to:
+
+[source,java]
+----
+Security.doAs(mySubject, PrivilegedAction<String>() -> cache.put("key", "value"));
+----
+
+Notice the use of +Security.doAs()+ in place of the typical +Subject.doAs()+. While in Infinispan you can use either, unless you really need to modify the AccessControlContext for reasons specific to your application's security model, using +Security.doAs()+ provides much better performance. If you need the current Subject, use the following:
+
+[source,java]
+----
+Security.getSubject();
+----
+
+which will automatically retrieve the Subject either from the Infinispan's context or from the AccessControlContext.
+
+Infinispan also fully supports running under a full-blown SecurityManager. The Infinispan distribution contains an example security.policy file which you should customize with the appropriate paths before supplying it to your JVM.
 
 === Embedded Configuration
 There are two levels of configuration: global and per-cache. The global configuration defines the set of roles/permissions mappings while each cache can decide whether to enable authorization checks and the required roles.
@@ -89,7 +109,8 @@ There are two levels of configuration: global and per-cache. The global configur
 <infinispan>
    <cache-container default-cache="secured">
       <security>
-         <authorization enabled="true" mapper="my.package.MyRoleMapper">
+         <authorization enabled="true">
+            <identity-role-mapper />
             <role name="admin" permissions="ALL" />
             <role name="reader" permission="READ" />
             <role name="writer" permission="WRITE" />
@@ -105,6 +126,16 @@ There are two levels of configuration: global and per-cache. The global configur
 
 </infinispan>
 ----
+
+==== Role Mappers
+
+In order to convert the Principals in a Subject into a set of roles to be used when authorizing, a suitable +PrincipalRoleMapper+ must be specified in the global configuration. Infinispan comes with 3 mappers and also allows you to provide a custom one:
+
+* IdentityRoleMapper (Java: +org.infinispan.security.impl.IdentityRoleMapper+, XML: +<identity-role-mapper />+): this mapper just uses the Principal name as the role name
+* CommonNameRoleMapper (Java: +org.infinispan.security.impl.CommonRoleMapper+, XML: +<common-name-role-mapper />+): if the Principal name is a Distinguished Name (DN), this mapper extracts the Common Name (CN) and uses it as a role name. For example
+the DN +cn=managers,ou=people,dc=example,dc=com+ will be mapped to the role +managers+
+* ClusterRoleMapper (Java: +org.infinispan.security.impl.ClusterRoleMapper+ XML: +<cluster-role-mapper />+): a mapper which uses the ClusterRegistry to store principal to role mappings. This allows the use of the CLI's GRANT and DENY commands to add/remove roles to a principal.
+* Custom role mappers (XML: +<custom-role-mapper class="a.b.c" />+): just supply the fully-qualified class name of an implementation of +org.infinispan.security.PrincipalRoleMapper+
 
 == Security Audit
 
@@ -140,6 +171,7 @@ The default audit logger is org.infinispan.security.impl.DefaultAuditLogger whic
 [ALLOW] user READ cache[defaultCache]
 
 Using an appropriate logging appender it is possible to send the AUDIT category either to a log file, a JMS queue, a database, etc.
+The +user+ which is included in the log above is the name of the first non-+java.security.acl.Group+ principal in the Subject.
 
 == Hot Rod authentication
 

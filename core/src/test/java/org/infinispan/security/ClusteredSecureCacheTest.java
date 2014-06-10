@@ -29,7 +29,7 @@ public class ClusteredSecureCacheTest extends MultipleCacheManagersTest {
       global.security().authorization().enable()
             .principalRoleMapper(new IdentityRoleMapper()).role("admin").permission(AuthorizationPermission.ALL);
       builder.security().authorization().enable().role("admin");
-      Subject.doAs(ADMIN, new PrivilegedExceptionAction<Void>() {
+      Security.doAs(ADMIN, new PrivilegedExceptionAction<Void>() {
          @Override
          public Void run() throws Exception {
             createCluster(global, builder, 2);
@@ -42,7 +42,7 @@ public class ClusteredSecureCacheTest extends MultipleCacheManagersTest {
    @Override
    @AfterClass(alwaysRun = true)
    protected void destroy() {
-      Subject.doAs(ADMIN, new PrivilegedAction<Void>() {
+      Security.doAs(ADMIN, new PrivilegedAction<Void>() {
          @Override
          public Void run() {
             ClusteredSecureCacheTest.super.destroy();
@@ -54,7 +54,7 @@ public class ClusteredSecureCacheTest extends MultipleCacheManagersTest {
    @Override
    @AfterMethod(alwaysRun = true)
    protected void clearContent() throws Throwable {
-      Subject.doAs(ADMIN, new PrivilegedExceptionAction<Void>() {
+      Security.doAs(ADMIN, new PrivilegedExceptionAction<Void>() {
          @Override
          public Void run() throws Exception {
             try {
@@ -68,7 +68,7 @@ public class ClusteredSecureCacheTest extends MultipleCacheManagersTest {
    }
 
    public void testClusteredSecureCache() {
-      Subject.doAs(ADMIN, new PrivilegedAction<Void>() {
+      Security.doAs(ADMIN, new PrivilegedAction<Void>() {
 
          @Override
          public Void run() {

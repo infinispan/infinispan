@@ -13,6 +13,7 @@ import org.infinispan.security.PrincipalRoleMapperContext;
  *
  * @author Tristan Tarrant
  * @since 7.0
+ * @public
  */
 public class CommonNameRoleMapper implements PrincipalRoleMapper {
 

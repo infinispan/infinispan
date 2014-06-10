@@ -1,6 +1,7 @@
 package org.infinispan.container.versioning;
 
 import org.infinispan.Cache;
+import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.annotations.Start;
 import org.infinispan.notifications.Listener;
@@ -48,12 +49,14 @@ public class NumericVersionGenerator implements VersionGenerator {
 
    @Start(priority = 11) // after Transport
    public void start() {
-      cache.getCacheManager().addListener(new RankCalculator());
-      isClustered = cache.getCacheConfiguration().clustering().cacheMode().isClustered();
+      SecurityActions.addCacheManagerListener(cache.getCacheManager(), new RankCalculator());
+
+      isClustered = SecurityActions.getCacheConfiguration(cache.getAdvancedCache()).clustering().cacheMode().isClustered();
 
       if (isClustered) {
          // Use component registry to avoid keeping an instance ref simply used on start
-         Transport transport = cache.getAdvancedCache().getComponentRegistry()
+         ComponentRegistry componentRegistry = SecurityActions.getCacheComponentRegistry(cache.getAdvancedCache());
+         Transport transport = componentRegistry
                .getGlobalComponentRegistry().getComponent(Transport.class);
          calculateRank(transport.getAddress(), transport.getMembers(), transport.getViewId());
       }

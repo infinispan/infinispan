@@ -1,5 +1,6 @@
 package org.infinispan.registry;
 
+import org.infinispan.factories.annotations.Stop;
 import org.infinispan.factories.scopes.Scope;
 import org.infinispan.factories.scopes.Scopes;
 import org.infinispan.filter.KeyFilter;

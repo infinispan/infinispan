@@ -2,7 +2,6 @@ package org.infinispan.security;
 
 import static org.testng.AssertJUnit.assertEquals;
 
-import java.security.AccessController;
 import java.security.PrivilegedAction;
 import java.security.PrivilegedExceptionAction;
 
@@ -31,7 +30,7 @@ public class SecureListenerTest extends SingleCacheManagerTest {
    @Override
    protected EmbeddedCacheManager createCacheManager() throws Exception {
       GlobalConfigurationBuilder global = new GlobalConfigurationBuilder();
-      GlobalAuthorizationConfigurationBuilder globalRoles = global.security().authorization()
+      GlobalAuthorizationConfigurationBuilder globalRoles = global.security().authorization().enable()
             .principalRoleMapper(new IdentityRoleMapper());
       ConfigurationBuilder config = TestCacheManagerFactory.getDefaultCacheConfiguration(true);
       AuthorizationConfigurationBuilder authConfig = config.security().authorization().enable();
@@ -45,7 +44,7 @@ public class SecureListenerTest extends SingleCacheManagerTest {
 
    @Override
    protected void setup() throws Exception {
-      Subject.doAs(ADMIN, new PrivilegedExceptionAction<Void>() {
+      Security.doAs(ADMIN, new PrivilegedExceptionAction<Void>() {
 
          @Override
          public Void run() throws Exception {
@@ -59,7 +58,7 @@ public class SecureListenerTest extends SingleCacheManagerTest {
    public void testSecureListenerSubject() {
       registerListener(SUBJECT_A);
       registerListener(SUBJECT_B);
-      Subject.doAs(ADMIN, new PrivilegedAction<Void>() {
+      Security.doAs(ADMIN, new PrivilegedAction<Void>() {
 
          @Override
          public Void run() {
@@ -71,7 +70,7 @@ public class SecureListenerTest extends SingleCacheManagerTest {
    }
 
    private void registerListener(final Subject subject) {
-      Subject.doAs(subject, new PrivilegedAction<Void>() {
+      Security.doAs(subject, new PrivilegedAction<Void>() {
 
          @Override
          public Void run() {
@@ -84,7 +83,7 @@ public class SecureListenerTest extends SingleCacheManagerTest {
 
    @Override
    protected void teardown() {
-      Subject.doAs(ADMIN, new PrivilegedAction<Void>() {
+      Security.doAs(ADMIN, new PrivilegedAction<Void>() {
          @Override
          public Void run() {
             SecureListenerTest.super.teardown();
@@ -95,7 +94,7 @@ public class SecureListenerTest extends SingleCacheManagerTest {
 
    @Override
    protected void clearContent() {
-      Subject.doAs(ADMIN, new PrivilegedAction<Void>() {
+      Security.doAs(ADMIN, new PrivilegedAction<Void>() {
          @Override
          public Void run() {
             cacheManager.getCache().clear();
@@ -114,7 +113,7 @@ public class SecureListenerTest extends SingleCacheManagerTest {
 
       @CacheEntryCreated
       public void handleCreated(CacheEntryCreatedEvent<String, String> event) {
-         assertEquals(subject, Subject.getSubject(AccessController.getContext()));
+         assertEquals(subject, Security.getSubject());
       }
 
    }

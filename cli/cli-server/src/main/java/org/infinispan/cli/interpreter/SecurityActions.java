@@ -3,6 +3,9 @@ package org.infinispan.cli.interpreter;
 import java.security.AccessController;
 import java.security.PrivilegedAction;
 
+import org.infinispan.security.Security;
+import org.infinispan.security.actions.SetThreadContextClassLoaderAction;
+
 /**
  * SecurityActions for package org.infinispan.cli.interpreter
  *
@@ -13,69 +16,16 @@ import java.security.PrivilegedAction;
  * @since 7.0
  */
 final class SecurityActions {
-   interface SetThreadContextClassLoaderAction {
-
-      ClassLoader setThreadContextClassLoader(Class cl);
-
-      ClassLoader setThreadContextClassLoader(ClassLoader cl);
-
-      SetThreadContextClassLoaderAction NON_PRIVILEGED = new SetThreadContextClassLoaderAction() {
-         @Override
-         public ClassLoader setThreadContextClassLoader(Class cl) {
-            ClassLoader old = Thread.currentThread().getContextClassLoader();
-            Thread.currentThread().setContextClassLoader(cl.getClassLoader());
-            return old;
-         }
-
-         @Override
-         public ClassLoader setThreadContextClassLoader(ClassLoader cl) {
-            ClassLoader old = Thread.currentThread().getContextClassLoader();
-            Thread.currentThread().setContextClassLoader(cl);
-            return old;
-         }
-      };
-
-      SetThreadContextClassLoaderAction PRIVILEGED = new SetThreadContextClassLoaderAction() {
-
-         @Override
-         public ClassLoader setThreadContextClassLoader(final Class cl) {
-            return AccessController.doPrivileged(new PrivilegedAction<ClassLoader>() {
-               @Override
-               public ClassLoader run() {
-                  ClassLoader old = Thread.currentThread().getContextClassLoader();
-                  Thread.currentThread().setContextClassLoader(cl.getClassLoader());
-                  return old;
-               }
-            });
-         }
-
-         @Override
-         public ClassLoader setThreadContextClassLoader(final ClassLoader cl) {
-            return AccessController.doPrivileged(new PrivilegedAction<ClassLoader>() {
-               @Override
-               public ClassLoader run() {
-                  ClassLoader old = Thread.currentThread().getContextClassLoader();
-                  Thread.currentThread().setContextClassLoader(cl);
-                  return old;
-               }
-            });
-         }
-      };
-   }
-
-   public static ClassLoader setThreadContextClassLoader(Class cl) {
-      if (System.getSecurityManager() == null) {
-         return SetThreadContextClassLoaderAction.NON_PRIVILEGED.setThreadContextClassLoader(cl);
+   private static <T> T doPrivileged(PrivilegedAction<T> action) {
+      if (System.getSecurityManager() != null) {
+         return AccessController.doPrivileged(action);
       } else {
-         return SetThreadContextClassLoaderAction.PRIVILEGED.setThreadContextClassLoader(cl);
+         return Security.doPrivileged(action);
       }
    }
 
-   public static ClassLoader setThreadContextClassLoader(ClassLoader cl) {
-      if (System.getSecurityManager() == null) {
-         return SetThreadContextClassLoaderAction.NON_PRIVILEGED.setThreadContextClassLoader(cl);
-      } else {
-         return SetThreadContextClassLoaderAction.PRIVILEGED.setThreadContextClassLoader(cl);
-      }
+   static ClassLoader setThreadContextClassLoader(ClassLoader classLoader) {
+      SetThreadContextClassLoaderAction action = new SetThreadContextClassLoaderAction(classLoader);
+      return doPrivileged(action);
    }
 }
