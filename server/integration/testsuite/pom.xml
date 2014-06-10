@@ -714,6 +714,16 @@
             </properties>
         </profile>
         <profile>
+            <id>suite.query</id>
+            <properties>
+                <suite.manual.phase>integration-test</suite.manual.phase>
+                <suite.client.local.phase>none</suite.client.local.phase>
+                <suite.client.dist.phase>none</suite.client.dist.phase>
+                <suite.client.repl.phase>none</suite.client.repl.phase>
+                <suite.manual.include>**/query/*.java</suite.manual.include>
+            </properties>
+        </profile>
+        <profile>
             <id>suite.others</id>
             <properties>
                 <suite.manual.phase>integration-test</suite.manual.phase>

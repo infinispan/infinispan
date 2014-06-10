@@ -10,7 +10,6 @@
         <module name="javax.persistence.api" />
         <module name="javax.transaction.api" />
         <module name="org.apache.lucene" export="true" />
-        <module name="org.apache.solr" export="true" optional="true" />
         <module name="org.codehaus.jackson.jackson-mapper-asl" />
         <module name="org.hibernate" />
         <module name="org.hibernate.commons-annotations" />

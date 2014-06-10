@@ -171,10 +171,6 @@
          <maven-resource group="org.infinispan" artifact="infinispan-cachestore-leveldb" />
       </module-def>
 
-      <module-def name="org.infinispan.lucene">
-         <maven-resource group="org.infinispan" artifact="infinispan-lucene-v3" />
-      </module-def>
-
       <module-def name="org.infinispan.lucene-directory">
          <maven-resource group="org.infinispan" artifact="infinispan-lucene-directory" />
       </module-def>
@@ -237,7 +233,11 @@
 
       <module-def name="org.apache.lucene">
          <maven-resource group="org.apache.lucene" artifact="lucene-core" />
+         <maven-resource group="org.apache.lucene" artifact="lucene-queries" />
          <maven-resource group="org.apache.lucene" artifact="lucene-analyzers-common" />
+         <maven-resource group="org.apache.lucene" artifact="lucene-queryparser" />
+         <maven-resource group="org.apache.lucene" artifact="lucene-highlighter" />
+         <maven-resource group="org.apache.lucene" artifact="lucene-grouping" />
          <maven-resource group="org.apache.lucene" artifact="lucene-facet" />
       </module-def>
 
