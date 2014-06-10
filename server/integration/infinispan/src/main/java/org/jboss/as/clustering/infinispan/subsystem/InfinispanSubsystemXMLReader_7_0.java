@@ -1,5 +1,8 @@
 package org.jboss.as.clustering.infinispan.subsystem;
 
+import org.infinispan.security.impl.ClusterRoleMapper;
+import org.infinispan.security.impl.CommonNameRoleMapper;
+import org.infinispan.security.impl.IdentityRoleMapper;
 import org.jboss.as.controller.PathAddress;
 import org.jboss.as.controller.descriptions.ModelDescriptionConstants;
 import org.jboss.as.controller.operations.common.Util;
@@ -234,8 +237,8 @@ public final class InfinispanSubsystemXMLReader_7_0 implements XMLElementReader<
             String value = reader.getAttributeValue(i);
             Attribute attribute = Attribute.forName(reader.getAttributeLocalName(i));
             switch (attribute) {
-                case MAPPER: {
-                    CacheContainerAuthorizationResource.MAPPER.parseAndSetParameter(value, authorization, reader);
+                case AUDIT_LOGGER: {
+                    // Ignore
                     break;
                 }
                 default: {
@@ -245,10 +248,40 @@ public final class InfinispanSubsystemXMLReader_7_0 implements XMLElementReader<
         }
 
         List<ModelNode> additionalConfigurationOperations = new ArrayList<ModelNode>();
-
+        String roleMapper = null;
         while (reader.hasNext() && (reader.nextTag() != XMLStreamConstants.END_ELEMENT)) {
             Element element = Element.forName(reader.getLocalName());
             switch (element) {
+                case IDENTITY_ROLE_MAPPER:
+                    if (roleMapper != null) {
+                       throw ParseUtils.unexpectedElement(reader);
+                    }
+                    ParseUtils.requireNoAttributes(reader);
+                    ParseUtils.requireNoContent(reader);
+                    roleMapper = IdentityRoleMapper.class.getName();
+                    break;
+                 case COMMON_NAME_ROLE_MAPPER:
+                    if (roleMapper != null) {
+                       throw ParseUtils.unexpectedElement(reader);
+                    }
+                    ParseUtils.requireNoAttributes(reader);
+                    ParseUtils.requireNoContent(reader);
+                    roleMapper = CommonNameRoleMapper.class.getName();
+                    break;
+                 case CLUSTER_ROLE_MAPPER:
+                    if (roleMapper != null) {
+                       throw ParseUtils.unexpectedElement(reader);
+                    }
+                    ParseUtils.requireNoAttributes(reader);
+                    ParseUtils.requireNoContent(reader);
+                    roleMapper = ClusterRoleMapper.class.getName();
+                    break;
+                 case CUSTOM_ROLE_MAPPER:
+                    if (roleMapper != null) {
+                       throw ParseUtils.unexpectedElement(reader);
+                    }
+                    roleMapper = ParseUtils.readStringAttributeElement(reader, Attribute.CLASS.getLocalName());
+                    break;
                 case ROLE: {
                     this.parseGlobalRole(reader, authorizationAddress, additionalConfigurationOperations);
                     break;
@@ -258,6 +291,7 @@ public final class InfinispanSubsystemXMLReader_7_0 implements XMLElementReader<
                 }
             }
         }
+        CacheContainerAuthorizationResource.MAPPER.parseAndSetParameter(roleMapper, authorization, reader);
 
         operations.add(authorization);
         // add operations to create configuration resources

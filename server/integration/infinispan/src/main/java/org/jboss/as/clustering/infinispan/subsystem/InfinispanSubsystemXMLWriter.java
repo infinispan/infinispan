@@ -26,6 +26,9 @@ import java.util.List;
 
 import javax.xml.stream.XMLStreamException;
 
+import org.infinispan.security.impl.ClusterRoleMapper;
+import org.infinispan.security.impl.CommonNameRoleMapper;
+import org.infinispan.security.impl.IdentityRoleMapper;
 import org.jboss.as.controller.persistence.SubsystemMarshallingContext;
 import org.jboss.dmr.ModelNode;
 import org.jboss.dmr.ModelType;
@@ -87,7 +90,20 @@ public class InfinispanSubsystemXMLWriter implements XMLElementWriter<SubsystemM
                     if (security.hasDefined(ModelKeys.AUTHORIZATION)) {
                         writer.writeStartElement(Element.AUTHORIZATION.getLocalName());
                         ModelNode authorization = security.get(ModelKeys.AUTHORIZATION, ModelKeys.AUTHORIZATION_NAME);
-                        this.writeOptional(writer, Attribute.MAPPER, authorization, ModelKeys.MAPPER);
+                        if (authorization.hasDefined(ModelKeys.MAPPER)) {
+                            String mapper = authorization.get(ModelKeys.MAPPER).asString();
+                            if (CommonNameRoleMapper.class.getName().equals(mapper)) {
+                                writer.writeEmptyElement(Element.COMMON_NAME_ROLE_MAPPER.getLocalName());
+                            } else if (ClusterRoleMapper.class.getName().equals(mapper)) {
+                                writer.writeEmptyElement(Element.CLUSTER_ROLE_MAPPER.getLocalName());
+                            } else if (IdentityRoleMapper.class.getName().equals(mapper)) {
+                                writer.writeEmptyElement(Element.IDENTITY_ROLE_MAPPER.getLocalName());
+                            } else {
+                                writer.writeStartElement(Element.CUSTOM_ROLE_MAPPER.getLocalName());
+                                writer.writeAttribute(Attribute.CLASS.getLocalName(), mapper);
+                                writer.writeEndElement();
+                            }
+                        }
 
                         ModelNode roles = authorization.get(ModelKeys.ROLE);
                         for(ModelNode roleNode : roles.asList()) {

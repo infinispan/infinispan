@@ -32,6 +32,7 @@ public class ModelKeys {
     static final String ALIASES = "aliases";
     static final String APPEND_CACHE_NAME_TO_PATH = "append-cache-name-to-path";
     static final String ASYNC_MARSHALLING = "async-marshalling";
+    static final String AUDIT_LOGGER = "audit-logger";
     static final String AUTHORIZATION = "authorization";
     static final String AUTHORIZATION_NAME = "AUTHORIZATION";
     static final String AWAIT_INITIAL_TRANSFER = "await-initial-transfer";
@@ -56,6 +57,8 @@ public class ModelKeys {
     static final String CLUSTER = "cluster";
     static final String CLUSTER_LOADER = "cluster-loader";
     static final String CLUSTER_LOADER_NAME = "CLUSTER_LOADER";
+    static final String CLUSTER_ROLE_MAPPER = "cluster-role-mapper";
+    static final String COMMON_NAME_ROLE_MAPPER = "common-name-role-mapper";
     static final String COMPATIBILITY = "compatibility";
     static final String COMPATIBILITY_NAME = "COMPATIBILITY";
     static final String COMPRESSION = "compression";
@@ -63,6 +66,7 @@ public class ModelKeys {
     static final String CONCURRENCY_LEVEL = "concurrency-level";
     static final String CONNECTION_POOL = "connection-pool";
     static final String CONNECTION_TIMEOUT = "connection-timeout";
+    static final String CUSTOM_ROLE_MAPPER = "custom-role-mapper";
     static final String DATA_COLUMN = "data-column";
     static final String DATASOURCE = "datasource";
     static final String DEFAULT_CACHE = "default-cache";
@@ -83,6 +87,7 @@ public class ModelKeys {
     static final String FLUSH_LOCK_TIMEOUT = "flush-lock-timeout";
     static final String HOTROD_WRAPPING = "hotrod-wrapping";
     static final String ID_COLUMN = "id-column";
+    static final String IDENTITY_ROLE_MAPPER = "identity-role-mapper";
     static final String IMPLEMENTATION = "implementation";
     static final String IMPLEMENTATION_NAME = "IMPLEMENTATION";
     static final String INDEX = "index";

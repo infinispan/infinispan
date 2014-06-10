@@ -153,8 +153,8 @@ public class ClusterRegistryImpl<S, K, V> implements ClusterRegistry<S, K, V> {
       if (clusterRegistryCache == null) {
          synchronized (this) {
             if (clusterRegistryCache != null) return;
-            cacheManager.defineConfiguration(GLOBAL_REGISTRY_CACHE_NAME, getRegistryCacheConfig());
-            clusterRegistryCache = cacheManager.getCache(GLOBAL_REGISTRY_CACHE_NAME);
+            SecurityActions.defineConfiguration(cacheManager, GLOBAL_REGISTRY_CACHE_NAME, getRegistryCacheConfig());
+            clusterRegistryCache = SecurityActions.getRegistryCache(cacheManager);
             clusterRegistryCacheWithoutReturn = clusterRegistryCache.getAdvancedCache().withFlags(Flag.IGNORE_RETURN_VALUES);
          }
       }
