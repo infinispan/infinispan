@@ -103,9 +103,11 @@ public class AuthorizationHelper {
     * @return
     */
    public static Principal getSubjectUserPrincipal(Subject s) {
-      for (Principal p : s.getPrincipals()) {
-         if (!(p instanceof Group)) {
-            return p;
+      if (s != null) {
+         for (Principal p : s.getPrincipals()) {
+            if (!(p instanceof Group)) {
+               return p;
+            }
          }
       }
       return null;

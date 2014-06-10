@@ -2,6 +2,7 @@ package org.infinispan.security.impl;
 
 import java.security.AccessController;
 import java.security.Principal;
+import java.util.concurrent.TimeUnit;
 
 import javax.security.auth.Subject;
 
@@ -47,10 +48,16 @@ public class AuthorizationManagerImpl implements AuthorizationManager {
    @Override
    public void checkPermission(AuthorizationPermission perm) {
       Subject subject = Subject.getSubject(AccessController.getContext());
-      Integer subjectMask = (subject == null) ? Integer.valueOf(0) : null; //ISPN-4056 subjectRoleMaskCache.get(authCacheScope, subject);
-      if (subjectMask == null) {
+      Integer subjectMask;
+      try {
+         subjectMask = (subject == null) ? Integer.valueOf(0) : subjectRoleMaskCache.get(authCacheScope, subject);
+         if (subjectMask == null) {
+            subjectMask = AuthorizationHelper.computeSubjectRoleMask(subject, globalConfiguration, configuration);
+            subjectRoleMaskCache.put(authCacheScope, subject, subjectMask, globalConfiguration.securityCacheTimeout(), TimeUnit.MILLISECONDS);
+         }
+      } catch (IllegalStateException e) {
+         // ISPN-4373 the cluster registry may be TERMINATED already
          subjectMask = AuthorizationHelper.computeSubjectRoleMask(subject, globalConfiguration, configuration);
-         //ISPN-4056 subjectRoleMaskCache.put(authCacheScope, subject, subjectMask, globalConfiguration.securityCacheTimeout(), TimeUnit.MILLISECONDS);
       }
       authzHelper.checkPermission(subject, subjectMask, perm);
    }

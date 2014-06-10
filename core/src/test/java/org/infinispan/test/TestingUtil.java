@@ -7,6 +7,7 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
+import java.io.Serializable;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.security.Principal;
@@ -1386,7 +1387,7 @@ public class TestingUtil {
       return new Subject(true, set, InfinispanCollections.emptySet(), InfinispanCollections.emptySet());
    }
 
-   public static class TestPrincipal implements Principal {
+   public static class TestPrincipal implements Principal, Serializable {
       String name;
 
       public TestPrincipal(String name) {
