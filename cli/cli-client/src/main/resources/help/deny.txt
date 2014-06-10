@@ -1,0 +1,13 @@
+.SH SYNOPSIS
+.B deny
+.I role
+.B to
+.I principal
+.SH DESCRIPTION
+Deny an authorization role to a principal
+.SH ARGUMENTS
+.IP role
+the name of the role to deny to the principal
+.IP principal
+the name of the principal to which the role should be denied
+.SH OUTPUT

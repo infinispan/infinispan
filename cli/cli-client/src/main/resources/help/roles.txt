@@ -1,0 +1,10 @@
+.SH SYNOPSIS
+.B roles [
+.I principal
+.B ]
+.SH DESCRIPTION
+Lists the roles granted to a principal. If no principal is specified, lists all principals and their roles
+.SH ARGUMENTS
+.IP principal (optional)
+the name of the principal for which the roles should be listed
+.SH OUTPUT
