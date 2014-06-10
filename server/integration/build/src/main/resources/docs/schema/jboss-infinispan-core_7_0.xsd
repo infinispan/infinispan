@@ -181,6 +181,45 @@
                 </xs:annotation>
                 <xs:complexType>
                     <xs:sequence>
+                        <xs:choice minOccurs="0" maxOccurs="1">
+                            <xs:element name="identity-role-mapper">
+                                <xs:annotation>
+                                    <xs:documentation>
+                                        Uses the identity role mapper where principal names are converted as-is into role names.
+                                    </xs:documentation>
+                                </xs:annotation>
+                            </xs:element>
+                            <xs:element name="common-name-role-mapper">
+                                <xs:annotation>
+                                    <xs:documentation>
+                                        Uses the common name role mapper which assumes principal names are in Distinguished Name format and extracts the Common Name to use as a role
+                                    </xs:documentation>
+                                </xs:annotation>
+                            </xs:element>
+                            <xs:element name="cluster-role-mapper">
+                                <xs:annotation>
+                                    <xs:documentation>
+                                        Uses the cluster role mapper which stores the principal to role mappings within the cluster registry.
+                                    </xs:documentation>
+                                </xs:annotation>
+                            </xs:element>
+                            <xs:element name="custom-role-mapper">
+                                <xs:annotation>
+                                    <xs:documentation>
+                                        Uses a custom role mapper.
+                                    </xs:documentation>
+                                </xs:annotation>
+                                <xs:complexType>
+                                    <xs:attribute name="class" type="xs:string">
+                                        <xs:annotation>
+                                            <xs:documentation>
+                                                Class of the custom principal to role mapper
+                                            </xs:documentation>
+                                        </xs:annotation>
+                                    </xs:attribute>
+                                </xs:complexType>
+                            </xs:element>
+                        </xs:choice>
                         <xs:element name="role" minOccurs="0"
                             maxOccurs="unbounded">
                             <xs:annotation>
@@ -208,13 +247,6 @@
                             </xs:complexType>
                         </xs:element>
                     </xs:sequence>
-                    <xs:attribute name="mapper" type="xs:string">
-                        <xs:annotation>
-                            <xs:documentation>
-                                Class of the principal to role mapper.
-                            </xs:documentation>
-                        </xs:annotation>
-                    </xs:attribute>
                 </xs:complexType>
             </xs:element>
         </xs:sequence>
