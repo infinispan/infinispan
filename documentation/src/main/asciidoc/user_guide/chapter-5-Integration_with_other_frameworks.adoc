@@ -294,6 +294,12 @@ On top of that, this finer grained cache definition enables users to define cach
 </property>
 ----
 
+IMPORTANT: For any entity or collection specific properties, if you are
+running within JBoss Application Server, JBoss EAP, or Widlfly, providing just
+the entity name is not enough. You need to add unit name and deployment name
+as well to each property in the following format:
+`hibernate.cache.infinispan.<warname>.<unitname>.<FQN of entity>.....`
+
 Here, we're configuring the Infinispan cache provider so that for com.acme.Person entity type, the cache instance assigned will be based on a "person-entity" named cache, and for com.acme.Person.addresses collection type, the cache instance assigned will be based on a "addresses-collection" named cache. If either of these two named caches did not exist in the Infinispan cache configuration file, the cache provider would create a cache instance for com.acme.Person entity and com.acme.Person.addresses collection based on the default cache in the configuration file.
 
 Furthermore, thanks to the excellent feedback from the Infinispan community and in particular, Brian Stansberry, we've decided to allow users to define the most commonly tweaked Infinispan cache parameters via hibernate.cfg.xml or persistence.xml, for example eviction/expiration settings. So, with the Infinispan cache provider, you can configure eviction/expiration this way:
