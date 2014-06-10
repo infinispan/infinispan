@@ -5,6 +5,8 @@ import static org.jboss.as.controller.descriptions.ModelDescriptionConstants.OP_
 import java.util.HashMap;
 import java.util.Map;
 
+import org.infinispan.remoting.transport.Address;
+import org.infinispan.server.infinispan.SecurityActions;
 import org.jboss.as.clustering.infinispan.DefaultEmbeddedCacheManager;
 import org.jboss.as.controller.AbstractRuntimeOnlyHandler;
 import org.jboss.as.controller.AttributeDefinition;
@@ -89,19 +91,22 @@ public class CacheContainerMetricsHandler extends AbstractRuntimeOnlyHandler {
         } else {
             switch (metric) {
                 case CACHE_MANAGER_STATUS:
-                    result.set(cacheManager.getStatus().toString());
+                result.set(SecurityActions.getCacheManagerStatus(cacheManager).toString());
                     break;
                 case IS_COORDINATOR:
-                    result.set(cacheManager.isCoordinator());
+                    result.set(SecurityActions.getCacheManagerIsCoordinator(cacheManager));
                     break;
                 case LOCAL_ADDRESS:
-                    result.set(cacheManager.getAddress() != null ? cacheManager.getAddress().toString() : "N/A");
+                    Address localAddress = SecurityActions.getCacheManagerLocalAddress(cacheManager);
+                    result.set(localAddress != null ? localAddress.toString() : "N/A");
                     break;
                 case COORDINATOR_ADDRESS:
-                    result.set(cacheManager.getCoordinator() != null ? cacheManager.getCoordinator().toString() : "N/A");
+                    Address coordinatorAddress = SecurityActions.getCacheManagerCoordinatorAddress(cacheManager);
+                    result.set(coordinatorAddress != null ? coordinatorAddress.toString() : "N/A");
                     break;
                 case CLUSTER_NAME:
-                    result.set(cacheManager.getClusterName() != null ? cacheManager.getClusterName() : "N/A");
+                    String clusterName = SecurityActions.getCacheManagerClusterName(cacheManager);
+                    result.set(clusterName != null ? clusterName : "N/A");
             }
             context.getResult().set(result);
         }
