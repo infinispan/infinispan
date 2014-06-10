@@ -176,6 +176,11 @@
                      org.infinispan.marshall.core,
                      ${project.groupId}.*;version=${project.version};-split-package:=error
                   </Export-Package>
+                  <Import-Package><![CDATA[
+                  !sun.reflect,
+                  *
+                  ]]>
+                  </Import-Package>
                   <!-- Required for loading client classes. -->
                   <DynamicImport-Package>*</DynamicImport-Package>
                </instructions>

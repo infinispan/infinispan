@@ -1,23 +1,23 @@
 package org.infinispan.security.impl;
 
-import java.security.AccessControlContext;
 import java.security.AccessControlException;
-import java.security.AccessController;
 import java.security.Principal;
-import java.security.acl.Group;
-import java.util.Collections;
 import java.util.Set;
+import java.util.concurrent.TimeUnit;
 
 import javax.security.auth.Subject;
 
 import org.infinispan.configuration.cache.AuthorizationConfiguration;
 import org.infinispan.configuration.global.GlobalSecurityConfiguration;
+import org.infinispan.registry.ClusterRegistry;
 import org.infinispan.security.AuditContext;
 import org.infinispan.security.AuditLogger;
 import org.infinispan.security.AuditResponse;
+import org.infinispan.security.AuthorizationManager;
 import org.infinispan.security.AuthorizationPermission;
 import org.infinispan.security.PrincipalRoleMapper;
 import org.infinispan.security.Role;
+import org.infinispan.security.Security;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
@@ -34,83 +34,97 @@ public class AuthorizationHelper {
    private final AuditLogger audit;
    private final AuditContext context;
    private final String name;
+   private final ClusterRegistry<String, Subject, Integer> maskCache;
+   private final String maskCacheScope;
 
-   public AuthorizationHelper(GlobalSecurityConfiguration globalConfiguration, AuditContext context, String name) {
+   public AuthorizationHelper(GlobalSecurityConfiguration globalConfiguration, AuditContext context, String name, ClusterRegistry<String, Subject, Integer> clusterRegistry) {
       this.globalConfiguration = globalConfiguration;
       this.audit = globalConfiguration.authorization().auditLogger();
       this.context = context;
       this.name = name;
+      this.maskCache = clusterRegistry;
+      this.maskCacheScope = AuthorizationManager.class.getSimpleName() + "_" + name;
    }
 
-   public void checkPermission(Subject subject, int subjectMask, AuthorizationPermission perm) {
-      if ((subjectMask & perm.getMask()) != perm.getMask()) {
-         if (System.getSecurityManager() == null) {
-            try {
-               if (subject == null) {
-                  AccessController.getContext().checkPermission(perm.getSecurityPermission());
-               } else {
-                  throw new AccessControlException(perm.toString());
-               }
-            } catch (AccessControlException ace) {
-               audit.audit(subject, context, name, perm, AuditResponse.DENY);
-               throw log.unauthorizedAccess(String.valueOf(subject), perm.toString());
-            }
-         } else {
-            System.getSecurityManager().checkPermission(perm.getSecurityPermission());
-         }
-      }
-      audit.audit(subject, context, name, perm, AuditResponse.ALLOW);
-   }
-
-   public void checkPermission(AuthorizationConfiguration configuration, AuthorizationPermission perm) {
-      if (globalConfiguration.authorization().enabled()) {
-         AccessControlContext acc = AccessController.getContext();
-         Subject subject = Subject.getSubject(acc);
-         int subjectMask = computeSubjectRoleMask(subject, globalConfiguration, configuration);
-         checkPermission(subject, subjectMask, perm);
-      }
+   public AuthorizationHelper(GlobalSecurityConfiguration globalConfiguration, AuditContext context, String name) {
+      this(globalConfiguration, context, name, null);
    }
 
    public void checkPermission(AuthorizationPermission perm) {
       checkPermission(null, perm);
    }
 
-   public static int computeSubjectRoleMask(Subject subject, GlobalSecurityConfiguration globalConfiguration, AuthorizationConfiguration configuration) {
-      PrincipalRoleMapper roleMapper = globalConfiguration.authorization().principalRoleMapper();
-      int mask = 0;
+   public void checkPermission(AuthorizationConfiguration configuration, AuthorizationPermission perm) {
+      if (globalConfiguration.authorization().enabled()) {
+         if (Security.isPrivileged()) {
+            Security.checkPermission(perm.getSecurityPermission());
+         } else {
+            Subject subject = Security.getSubject();
+            try {
+               if (subject != null) {
+                  int subjectMask = computeSubjectRoleMask(subject, configuration);
+                  if ((subjectMask & perm.getMask()) != perm.getMask()) {
+                     checkSecurityManagerPermission(perm);
+                  } else {
+                     audit.audit(subject, context, name, perm, AuditResponse.ALLOW);
+                  }
+               } else {
+                  checkSecurityManagerPermission(perm);
+               }
+            } catch (SecurityException e) {
+               audit.audit(subject, context, name, perm, AuditResponse.DENY);
+               throw log.unauthorizedAccess(String.valueOf(subject), perm.toString());
+            }
+         }
+      }
+   }
+
+   private void checkSecurityManagerPermission(AuthorizationPermission perm) {
+      if (System.getSecurityManager() != null) {
+         System.getSecurityManager().checkPermission(perm.getSecurityPermission());
+      } else {
+         throw new AccessControlException("", perm.getSecurityPermission());
+      }
+   }
+
+   public int computeSubjectRoleMask(Subject subject, AuthorizationConfiguration configuration) {
       if (subject != null) {
-         for (Principal principal : subject.getPrincipals()) {
-            Set<String> roleNames = roleMapper.principalToRoles(principal);
-            if (roleNames != null) {
-               for (String roleName : roleNames) {
-                  // Skip roles not defined for this cache
-                  if (configuration != null && !configuration.roles().contains(roleName))
-                     continue;
-                  Role role = globalConfiguration.authorization().roles().get(roleName);
-                  if (role != null) {
-                     mask |= role.getMask();
+         Integer cachedMask;
+         try {
+            cachedMask = maskCache != null ? maskCache.get(maskCacheScope, subject) : null;
+         } catch (IllegalStateException e) {
+            cachedMask = null;
+         }
+         if (cachedMask != null) {
+            return cachedMask;
+         } else {
+            int mask = 0;
+            PrincipalRoleMapper roleMapper = globalConfiguration.authorization().principalRoleMapper();
+            for (Principal principal : subject.getPrincipals()) {
+               Set<String> roleNames = roleMapper.principalToRoles(principal);
+               if (roleNames != null) {
+                  for (String roleName : roleNames) {
+                     // Skip roles not defined for this cache
+                     if (configuration != null && !configuration.roles().contains(roleName))
+                        continue;
+                     Role role = globalConfiguration.authorization().roles().get(roleName);
+                     if (role != null) {
+                        mask |= role.getMask();
+                     }
                   }
                }
             }
-         }
-      }
-      return mask;
-   }
-
-   /**
-    * Returns the first principal of a subject which is not of type {@link java.security.acl.Group}
-    *
-    * @param s
-    * @return
-    */
-   public static Principal getSubjectUserPrincipal(Subject s) {
-      if (s != null) {
-         for (Principal p : s.getPrincipals()) {
-            if (!(p instanceof Group)) {
-               return p;
+            try {
+               if (maskCache != null) {
+                  maskCache.put(maskCacheScope, subject, mask, globalConfiguration.securityCacheTimeout(), TimeUnit.MILLISECONDS);
+               }
+            } catch (IllegalStateException e) {
+               // Ignore
             }
+            return mask;
          }
+      } else {
+         return 0;
       }
-      return null;
    }
 }

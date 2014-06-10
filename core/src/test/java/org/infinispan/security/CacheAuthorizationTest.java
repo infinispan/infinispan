@@ -24,28 +24,28 @@ import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.infinispan.transaction.LockingMode;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
-import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 
 @Test(groups = "functional", testName = "security.SingleCacheManagerTest")
 public class CacheAuthorizationTest extends SingleCacheManagerTest {
    static final Log log = LogFactory.getLog(CacheAuthorizationTest.class);
-   Map<AuthorizationPermission, Subject> subjects;
+   static final Subject ADMIN;
+   static final Map<AuthorizationPermission, Subject> SUBJECTS;
 
-   @BeforeClass
-   void initializeSubjects() {      // Initialize one subject per permission
-      subjects = new HashMap<AuthorizationPermission, Subject>(AuthorizationPermission.values().length);
+   static {      // Initialize one subject per permission
+      SUBJECTS = new HashMap<AuthorizationPermission, Subject>(AuthorizationPermission.values().length);
       for (AuthorizationPermission perm : AuthorizationPermission.values()) {
-         subjects.put(perm, TestingUtil.makeSubject(perm.toString() + "_user", perm.toString()));
+         SUBJECTS.put(perm, TestingUtil.makeSubject(perm.toString() + "_user", perm.toString()));
       }
+      ADMIN = SUBJECTS.get(AuthorizationPermission.ALL);
    }
 
    @Override
    protected EmbeddedCacheManager createCacheManager() throws Exception {
-      GlobalConfigurationBuilder global = new GlobalConfigurationBuilder();
-      GlobalAuthorizationConfigurationBuilder globalRoles = global.security().authorization()
+      final GlobalConfigurationBuilder global = new GlobalConfigurationBuilder();
+      GlobalAuthorizationConfigurationBuilder globalRoles = global.security().authorization().enable()
             .principalRoleMapper(new IdentityRoleMapper());
-      ConfigurationBuilder config = TestCacheManagerFactory.getDefaultCacheConfiguration(true);
+      final ConfigurationBuilder config = TestCacheManagerFactory.getDefaultCacheConfiguration(true);
       config.transaction().lockingMode(LockingMode.PESSIMISTIC);
       config.invocationBatching().enable();
       AuthorizationConfigurationBuilder authConfig = config.security().authorization().enable();
@@ -54,7 +54,12 @@ public class CacheAuthorizationTest extends SingleCacheManagerTest {
          globalRoles.role(perm.toString()).permission(perm);
          authConfig.role(perm.toString());
       }
-      return TestCacheManagerFactory.createCacheManager(global, config);
+      return Security.doAs(ADMIN, new PrivilegedAction<EmbeddedCacheManager>() {
+         @Override
+         public EmbeddedCacheManager run() {
+            return TestCacheManagerFactory.createCacheManager(global, config);
+         }
+      });
    }
 
    @Override
@@ -64,7 +69,7 @@ public class CacheAuthorizationTest extends SingleCacheManagerTest {
 
    @Override
    protected void teardown() {
-      Subject.doAs(subjects.get(AuthorizationPermission.ALL), new PrivilegedAction<Void>() {
+      Security.doAs(ADMIN, new PrivilegedAction<Void>() {
          @Override
          public Void run() {
             CacheAuthorizationTest.super.teardown();
@@ -75,7 +80,7 @@ public class CacheAuthorizationTest extends SingleCacheManagerTest {
 
    @Override
    protected void clearContent() {
-      Subject.doAs(subjects.get(AuthorizationPermission.ALL), new PrivilegedAction<Void>() {
+      Security.doAs(ADMIN, new PrivilegedAction<Void>() {
          @Override
          public Void run() {
             cacheManager.getCache().clear();
@@ -103,8 +108,8 @@ public class CacheAuthorizationTest extends SingleCacheManagerTest {
          methodNames.add(s.toString());
       }
       final SecureCacheTestDriver driver = new SecureCacheTestDriver();
-      final SecureCache<String, String> cache = (SecureCache<String, String>) Subject.doAs(
-            subjects.get(AuthorizationPermission.ALL), new PrivilegedAction<Cache<String, String>>() {
+      final SecureCache<String, String> cache = (SecureCache<String, String>) Security.doAs(
+            ADMIN, new PrivilegedAction<Cache<String, String>>() {
                @Override
                public Cache<String, String> run() {
                   return cacheManager.getCache();
@@ -135,7 +140,7 @@ public class CacheAuthorizationTest extends SingleCacheManagerTest {
                      throw new Exception(String.format("Unexpected SecurityException while invoking %s with permission %s", methodName, perm.toString() ), e);
                   }
                } else {
-                  Subject.doAs(subjects.get(perm), new PrivilegedExceptionAction<Void>() {
+                  Security.doAs(SUBJECTS.get(perm), new PrivilegedExceptionAction<Void>() {
                      @Override
                      public Void run() throws Exception {
                         try {
