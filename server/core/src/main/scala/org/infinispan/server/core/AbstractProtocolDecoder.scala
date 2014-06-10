@@ -27,6 +27,7 @@ import org.infinispan.factories.ComponentRegistry
 import org.infinispan.remoting.rpc.RpcManager
 import org.infinispan.manager.EmbeddedCacheManager
 import java.security.PrivilegedAction
+import org.infinispan.security.Security
 
 /**
  * Common abstract decoder for Memcached and Hot Rod protocols.
@@ -94,19 +95,19 @@ abstract class AbstractProtocolDecoder[K, V](secure: Boolean, transport: NettyTr
          state match {
             case DECODE_HEADER => decodeHeader(ctx, in, state, out)
             case DECODE_KEY =>
-               Subject.doAs(subject, new PrivilegedExceptionAction[Unit] {
+               Security.doAs(subject, new PrivilegedExceptionAction[Unit] {
                   def run: Unit = {
                      decodeKey(ctx, in, state)
                   }
                })
             case DECODE_PARAMETERS =>
-               Subject.doAs(subject, new PrivilegedExceptionAction[Unit] {
+               Security.doAs(subject, new PrivilegedExceptionAction[Unit] {
                   def run: Unit = {
                      decodeParameters(ctx, in, state)
                   }
                })
             case DECODE_VALUE =>
-               Subject.doAs(subject, new PrivilegedExceptionAction[Unit] {
+               Security.doAs(subject, new PrivilegedExceptionAction[Unit] {
                   def run: Unit = {
                      decodeValue(ctx, in, state)
                   }
