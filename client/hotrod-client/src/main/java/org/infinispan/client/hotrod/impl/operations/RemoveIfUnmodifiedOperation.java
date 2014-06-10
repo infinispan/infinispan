@@ -1,5 +1,7 @@
 package org.infinispan.client.hotrod.impl.operations;
 
+import java.util.concurrent.atomic.AtomicInteger;
+
 import net.jcip.annotations.Immutable;
 import org.infinispan.client.hotrod.Flag;
 import org.infinispan.client.hotrod.impl.VersionedOperationResponse;
@@ -7,8 +9,6 @@ import org.infinispan.client.hotrod.impl.protocol.Codec;
 import org.infinispan.client.hotrod.impl.protocol.HeaderParams;
 import org.infinispan.client.hotrod.impl.transport.Transport;
 import org.infinispan.client.hotrod.impl.transport.TransportFactory;
-
-import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * Implements "removeIfUnmodified" operation as defined by
@@ -29,16 +29,15 @@ public class RemoveIfUnmodifiedOperation extends AbstractKeyOperation<VersionedO
    }
 
    @Override
-   protected VersionedOperationResponse executeOperation(Transport transport) {
-      // 1) write header
+   protected HeaderParams writeRequest(Transport transport) {
       HeaderParams params = writeHeader(transport, REMOVE_IF_UNMODIFIED_REQUEST);
-
-      //2) write message body
       transport.writeArray(key);
       transport.writeLong(version);
-      transport.flush();
+      return params;
+   }
 
-      //process response and return
+   @Override
+   protected VersionedOperationResponse readResponse(Transport transport, HeaderParams params) {
       return returnVersionedOperationResponse(transport, params);
    }
 }

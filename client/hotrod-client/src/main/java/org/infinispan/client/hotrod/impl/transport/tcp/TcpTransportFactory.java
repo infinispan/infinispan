@@ -1,19 +1,20 @@
 package org.infinispan.client.hotrod.impl.transport.tcp;
 
+import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.net.SocketAddress;
+import java.nio.channels.AsynchronousChannelGroup;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.ExecutorService;
 import java.util.concurrent.atomic.AtomicInteger;
-
 import javax.net.ssl.SSLContext;
 
 import net.jcip.annotations.ThreadSafe;
-
 import org.apache.commons.pool.KeyedObjectPool;
 import org.apache.commons.pool.impl.GenericKeyedObjectPool;
 import org.infinispan.client.hotrod.configuration.Configuration;
@@ -41,7 +42,7 @@ public class TcpTransportFactory implements TransportFactory {
    private static final Log log = LogFactory.getLog(TcpTransportFactory.class, Log.class);
 
    /**
-    * We need synchronization as the thread that calls {@link org.infinispan.client.hotrod.impl.transport.TransportFactory#start(org.infinispan.client.hotrod.impl.protocol.Codec, org.infinispan.client.hotrod.configuration.Configuration, java.util.concurrent.atomic.AtomicInteger)}
+    * We need synchronization as the thread that calls {@link org.infinispan.client.hotrod.impl.transport.TransportFactory#start(org.infinispan.client.hotrod.impl.protocol.Codec, org.infinispan.client.hotrod.configuration.Configuration, java.util.concurrent.atomic.AtomicInteger, java.util.concurrent.ExecutorService)}
     * might(and likely will) be different from the thread(s) that calls {@link org.infinispan.client.hotrod.impl.transport.TransportFactory#getTransport(java.util.Set)} or other methods
     */
    private final Object lock = new Object();
@@ -51,6 +52,8 @@ public class TcpTransportFactory implements TransportFactory {
    private Collection<SocketAddress> servers;
    private ConsistentHash consistentHash;
    private final ConsistentHashFactory hashFactory = new ConsistentHashFactory();
+   private ExecutorService asyncExecutorService;
+   private AsynchronousChannelGroup asynchronousChannelGroup;
 
    // the primitive fields are often accessed separately from the rest so it makes sense not to require synchronization for them
    private volatile boolean tcpNoDelay;
@@ -60,9 +63,15 @@ public class TcpTransportFactory implements TransportFactory {
    private volatile SSLContext sslContext;
 
    @Override
-   public void start(Codec codec, Configuration configuration, AtomicInteger topologyId) {
+   public void start(Codec codec, Configuration configuration, AtomicInteger topologyId, ExecutorService asyncExecutorService) {
       synchronized (lock) {
          hashFactory.init(configuration);
+         this.asyncExecutorService = asyncExecutorService;
+         try {
+            asynchronousChannelGroup = AsynchronousChannelGroup.withThreadPool(asyncExecutorService);
+         } catch (IOException e) {
+            throw new IllegalStateException("Cannot start async channel group", e);
+         }
          boolean pingOnStartup = configuration.pingOnStartup();
          servers = new ArrayList<SocketAddress>();
          for(ServerConfiguration server : configuration.servers()) {
@@ -141,7 +150,10 @@ public class TcpTransportFactory implements TransportFactory {
    @Override
    public void destroy() {
       synchronized (lock) {
+         log.infof("Destroying TcpTransportFactory with %d active and %d idle transports",
+               connectionPool.getNumActive(), connectionPool.getNumIdle());
          connectionPool.clear();
+         asynchronousChannelGroup.shutdown();
          try {
             connectionPool.close();
          } catch (Exception e) {
@@ -368,5 +380,14 @@ public class TcpTransportFactory implements TransportFactory {
       synchronized (lock) {
          return connectionPool;
       }
+   }
+
+   @Override
+   public ExecutorService getAsyncExecutorService() {
+      return asyncExecutorService;
+   }
+
+   public AsynchronousChannelGroup getAsynchronousChannelGroup() {
+      return asynchronousChannelGroup;
    }
 }

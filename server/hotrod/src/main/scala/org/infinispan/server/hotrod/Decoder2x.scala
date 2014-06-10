@@ -50,6 +50,7 @@ object Decoder2x extends AbstractVersionedDecoder with ServerConstants with Log 
 
    override def readHeader(buffer: ByteBuf, version: Byte, messageId: Long, header: HotRodHeader): Boolean = {
       val streamOp = buffer.readUnsignedByte
+      trace("Read (1byte) opcode " + streamOp);
       val (op, endOfOp) = (streamOp: @switch) match {
          case 0x01 => (PutRequest, false)
          case 0x03 => (GetRequest, false)
@@ -77,6 +78,7 @@ object Decoder2x extends AbstractVersionedDecoder with ServerConstants with Log 
       val cacheName = readString(buffer)
       val flag = readUnsignedInt(buffer)
       val clientIntelligence = buffer.readUnsignedByte
+      trace("Read (1byte) intelligence " + clientIntelligence);
       val topologyId = readUnsignedInt(buffer)
 
       header.op = op

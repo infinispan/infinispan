@@ -37,27 +37,30 @@ public class QueryOperation extends RetryOnFailureOperation<QueryResponse> {
    }
 
    @Override
-   protected QueryResponse executeOperation(Transport transport) {
+   protected HeaderParams writeRequest(Transport transport) {
       HeaderParams params = writeHeader(transport, QUERY_REQUEST);
       QueryRequest queryRequest = new QueryRequest();
       queryRequest.setJpqlString(remoteQuery.getJpqlString());
       queryRequest.setStartOffset(remoteQuery.getStartOffset());
       queryRequest.setMaxResults(remoteQuery.getMaxResults());
 
-      SerializationContext serCtx = remoteQuery.getSerializationContext();
       byte[] requestBytes;
       try {
-         requestBytes = ProtobufUtil.toByteArray(serCtx, queryRequest);
+         requestBytes = ProtobufUtil.toByteArray(remoteQuery.getSerializationContext(), queryRequest);
       } catch (IOException e) {
          throw new CacheException(e);  //todo [anistor] need better exception handling
       }
       transport.writeArray(requestBytes);
-      transport.flush();
+      return params;
+   }
 
+   @Override
+   protected QueryResponse readResponse(Transport transport, HeaderParams params) {
       readHeaderAndValidate(transport, params);
       byte[] responseBytes = transport.readArray();
       try {
-         QueryResponse queryResponse = ProtobufUtil.fromByteArray(serCtx, responseBytes, QueryResponse.class);
+         QueryResponse queryResponse = ProtobufUtil.fromByteArray(
+               remoteQuery.getSerializationContext(), responseBytes, QueryResponse.class);
          return queryResponse;
       } catch (IOException e) {
          throw new CacheException(e);  //todo [anistor] need better exception handling

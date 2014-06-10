@@ -1,5 +1,10 @@
 package org.infinispan.client.hotrod.impl.query;
 
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Iterator;
+import java.util.List;
+
 import org.infinispan.client.hotrod.exceptions.HotRodClientException;
 import org.infinispan.client.hotrod.impl.RemoteCacheImpl;
 import org.infinispan.client.hotrod.impl.operations.QueryOperation;
@@ -8,11 +13,6 @@ import org.infinispan.protostream.SerializationContext;
 import org.infinispan.protostream.WrappedMessage;
 import org.infinispan.query.dsl.Query;
 import org.infinispan.query.remote.client.QueryResponse;
-
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Iterator;
-import java.util.List;
 
 /**
  * @author anistor@redhat.com
@@ -69,7 +69,7 @@ public final class RemoteQuery implements Query {
       List<Object> results;
 
       QueryOperation op = cache.getOperationsFactory().newQueryOperation(this);
-      QueryResponse response = op.execute();
+      QueryResponse response = op.executeSync();
       totalResults = (int) response.getTotalResults();
       if (response.getProjectionSize() > 0) {
          results = new ArrayList<Object>(response.getResults().size() / response.getProjectionSize());

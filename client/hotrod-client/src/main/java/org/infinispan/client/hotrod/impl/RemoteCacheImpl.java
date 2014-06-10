@@ -3,14 +3,15 @@ package org.infinispan.client.hotrod.impl;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.concurrent.Callable;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 
 import org.infinispan.client.hotrod.Flag;
@@ -26,8 +27,9 @@ import org.infinispan.client.hotrod.impl.operations.*;
 import org.infinispan.client.hotrod.logging.Log;
 import org.infinispan.client.hotrod.logging.LogFactory;
 import org.infinispan.commons.marshall.Marshaller;
+import org.infinispan.commons.util.concurrent.ConvertingNotifyingFuture;
+import org.infinispan.commons.util.concurrent.GroupingNotifyingFuture;
 import org.infinispan.commons.util.concurrent.NotifyingFuture;
-import org.infinispan.commons.util.concurrent.NotifyingFutureImpl;
 
 /**
  * @author Mircea.Markus@jboss.com
@@ -75,135 +77,97 @@ public class RemoteCacheImpl<K, V> extends RemoteCacheSupport<K, V> {
    public boolean removeWithVersion(K key, long version) {
       assertRemoteCacheManagerIsStarted();
       RemoveIfUnmodifiedOperation op = operationsFactory.newRemoveIfUnmodifiedOperation(obj2bytes(key, true), version);
-      VersionedOperationResponse response = op.execute();
-      return response.getCode().isUpdated();
+      return op.executeSync().getCode().isUpdated();
    }
 
    @Override
    public NotifyingFuture<Boolean> removeWithVersionAsync(final K key, final long version) {
       assertRemoteCacheManagerIsStarted();
-      final NotifyingFutureImpl<Boolean> result = new NotifyingFutureImpl<Boolean>();
-      Future<Boolean> future = executorService.submit(new Callable<Boolean>() {
-         @Override
-         public Boolean call() throws Exception {
-            try {
-               boolean removed = removeWithVersion(key, version);
-               try {
-                  result.notifyDone(removed);
-               } catch (Throwable t) {
-                  log.trace("Error when notifying", t);
+      RemoveIfUnmodifiedOperation op = operationsFactory.newRemoveIfUnmodifiedOperation(obj2bytes(key, true), version);
+      return new ConvertingNotifyingFuture<VersionedOperationResponse, Boolean>(op.executeAsync(),
+            new ConvertingNotifyingFuture.Converter<VersionedOperationResponse, Boolean>() {
+               @Override
+               public Boolean convert(VersionedOperationResponse versionedOperationResponse) {
+                  return versionedOperationResponse.getCode().isUpdated();
                }
-               return removed;
-            } catch (Exception e) {
-               try {
-                  result.notifyException(e);
-               } catch (Throwable t) {
-                  log.trace("Error when notifying", t);
-               }
-               throw e;
-            }
-         }
-      });
-      result.setFuture(future);
-      return result;
+            });
    }
 
    @Override
    public boolean replaceWithVersion(K key, V newValue, long version, int lifespanSeconds, int maxIdleTimeSeconds) {
       assertRemoteCacheManagerIsStarted();
-      ReplaceIfUnmodifiedOperation op = operationsFactory.newReplaceIfUnmodifiedOperation(obj2bytes(key, true), obj2bytes(newValue, false), lifespanSeconds, maxIdleTimeSeconds, version);
-      VersionedOperationResponse response = op.execute();
-      return response.getCode().isUpdated();
+      ReplaceIfUnmodifiedOperation op = operationsFactory.newReplaceIfUnmodifiedOperation(
+            obj2bytes(key, true), obj2bytes(newValue, false), lifespanSeconds, maxIdleTimeSeconds, version);
+      return op.executeSync().getCode().isUpdated();
    }
 
+
+
    @Override
-   public NotifyingFuture<Boolean> replaceWithVersionAsync(final K key, final V newValue, final long version, final int lifespanSeconds, final int maxIdleSeconds) {
+   public NotifyingFuture<Boolean> replaceWithVersionAsync(final K key, final V newValue, final long version, final int lifespanSeconds, final int maxIdleTimeSeconds) {
       assertRemoteCacheManagerIsStarted();
-      final NotifyingFutureImpl<Boolean> result = new NotifyingFutureImpl<Boolean>();
-      Future<Boolean> future = executorService.submit(new Callable<Boolean>() {
-         @Override
-         public Boolean call() throws Exception {
-            try {
-               boolean removed = replaceWithVersion(key, newValue, version, lifespanSeconds, maxIdleSeconds);
-               try {
-                  result.notifyDone(removed);
-               } catch (Throwable t) {
-                  log.trace("Error when notifying", t);
+      ReplaceIfUnmodifiedOperation op = operationsFactory.newReplaceIfUnmodifiedOperation(
+            obj2bytes(key, true), obj2bytes(newValue, false), lifespanSeconds, maxIdleTimeSeconds, version);
+      return new ConvertingNotifyingFuture<VersionedOperationResponse, Boolean>(op.executeAsync(),
+            new ConvertingNotifyingFuture.Converter<VersionedOperationResponse, Boolean>() {
+               @Override
+               public Boolean convert(VersionedOperationResponse versionedOperationResponse) {
+                  return versionedOperationResponse.getCode().isUpdated();
                }
-               return removed;
-            } catch (Exception e) {
-               try {
-                  result.notifyException(e);
-               } catch (Throwable t) {
-                  log.trace("Error when notifying", t);
-               }
-               throw e;
-            }
-         }
-      });
-      result.setFuture(future);
-      return result;
+            });
    }
 
    @Override
    public VersionedValue<V> getVersioned(K key) {
       assertRemoteCacheManagerIsStarted();
       GetWithVersionOperation op = operationsFactory.newGetWithVersionOperation(obj2bytes(key, true));
-      VersionedValue<byte[]> value = op.execute();
-      return binary2VersionedValue(value);
+      return binary2VersionedValue(op.executeSync());
    }
 
    @Override
    public MetadataValue<V> getWithMetadata(K key) {
       assertRemoteCacheManagerIsStarted();
       GetWithMetadataOperation op = operationsFactory.newGetWithMetadataOperation(obj2bytes(key, true));
-      MetadataValue<byte[]> value = op.execute();
-      return binary2MetadataValue(value);
+      return binary2MetadataValue(op.executeSync());
    }
 
    @Override
    public void putAll(Map<? extends K, ? extends V> map, long lifespan, TimeUnit lifespanUnit, long maxIdleTime, TimeUnit maxIdleTimeUnit) {
       assertRemoteCacheManagerIsStarted();
+      List<NotifyingFuture<V>> futures = new ArrayList<NotifyingFuture<V>>();
       for (Entry<? extends K, ? extends V> entry : map.entrySet()) {
-         put(entry.getKey(), entry.getValue(), lifespan, lifespanUnit, maxIdleTime, maxIdleTimeUnit);
+         futures.add(putAsync(entry.getKey(), entry.getValue(), lifespan, lifespanUnit, maxIdleTime, maxIdleTimeUnit));
+      }
+      try {
+         new GroupingNotifyingFuture<V>(futures).get();
+      } catch (InterruptedException e) {
+         Thread.currentThread().interrupt();
+         throw new HotRodClientException("Synchronous operation was interrupted", e);
+      } catch (ExecutionException e) {
+         if (e.getCause() instanceof RuntimeException) {
+            throw (RuntimeException) e.getCause();
+         } else {
+            throw new RuntimeException(e.getCause());
+         }
       }
    }
 
    @Override
-   public NotifyingFuture<Void> putAllAsync(final Map<? extends K, ? extends V> data, final long lifespan, final TimeUnit lifespanUnit, final long maxIdle, final TimeUnit maxIdleUnit) {
+   public NotifyingFuture<Void> putAllAsync(final Map<? extends K, ? extends V> map, final long lifespan, final TimeUnit lifespanUnit, final long maxIdleTime, final TimeUnit maxIdleTimeUnit) {
       assertRemoteCacheManagerIsStarted();
-      final NotifyingFutureImpl<Void> result = new NotifyingFutureImpl<Void>();
-      Future<Void> future = executorService.submit(new Callable<Void>() {
-         @Override
-         public Void call() throws Exception {
-            try {
-               putAll(data, lifespan, lifespanUnit, maxIdle, maxIdleUnit);
-               try {
-                  result.notifyDone(null);
-               } catch (Throwable t) {
-                  log.trace("Error when notifying", t);
-               }
-               return null;
-            } catch (Exception e) {
-               try {
-                  result.notifyException(e);
-               } catch (Throwable t) {
-                  log.trace("Error when notifying", t);
-               }
-               throw e;
-            }
-         }
-      });
-      result.setFuture(future);
-      return result;
-
+      List<NotifyingFuture<V>> futures = new ArrayList<NotifyingFuture<V>>();
+      for (Entry<? extends K, ? extends V> entry : map.entrySet()) {
+         futures.add(putAsync(entry.getKey(), entry.getValue(), lifespan, lifespanUnit, maxIdleTime, maxIdleTimeUnit));
+      }
+      return new ConvertingNotifyingFuture<Map<NotifyingFuture<V>, V>, Void>(
+            new GroupingNotifyingFuture<V>(futures), new ConvertingNotifyingFuture.VoidConverter());
    }
 
    @Override
    public int size() {
       assertRemoteCacheManagerIsStarted();
       StatsOperation op = operationsFactory.newStatsOperation();
-      return Integer.parseInt(op.execute().get(ServerStatistics.CURRENT_NR_OF_ENTRIES));
+      return Integer.parseInt(op.executeSync().get(ServerStatistics.CURRENT_NR_OF_ENTRIES));
    }
 
    @Override
@@ -215,7 +179,7 @@ public class RemoteCacheImpl<K, V> extends RemoteCacheSupport<K, V> {
    public ServerStatistics stats() {
       assertRemoteCacheManagerIsStarted();
       StatsOperation op = operationsFactory.newStatsOperation();
-      Map<String, String> statsMap = op.execute();
+      Map<String, String> statsMap = op.executeSync();
       ServerStatisticsImpl stats = new ServerStatisticsImpl();
       for (Map.Entry<String, String> entry : statsMap.entrySet()) {
          stats.addStats(entry.getKey(), entry.getValue());
@@ -234,8 +198,7 @@ public class RemoteCacheImpl<K, V> extends RemoteCacheSupport<K, V> {
          log.tracef("About to add (K,V): (%s, %s) lifespanSecs:%d, maxIdleSecs:%d", key, value, lifespanSecs, maxIdleSecs);
       }
       PutOperation op = operationsFactory.newPutKeyValueOperation(obj2bytes(key, true), obj2bytes(value, false), lifespanSecs, maxIdleSecs);
-      byte[] result = op.execute();
-      return (V) bytes2obj(result);
+      return (V) bytes2obj(op.executeSync());
    }
 
 
@@ -247,8 +210,7 @@ public class RemoteCacheImpl<K, V> extends RemoteCacheSupport<K, V> {
       int maxIdleSecs = toSeconds(maxIdleTime, maxIdleTimeUnit);
       applyDefaultExpirationFlags(lifespan, maxIdleTime);
       PutIfAbsentOperation op = operationsFactory.newPutIfAbsentOperation(obj2bytes(key, true), obj2bytes(value, false), lifespanSecs, maxIdleSecs);
-      byte[] bytes = op.execute();
-      return (V) bytes2obj(bytes);
+      return (V) bytes2obj(op.executeSync());
    }
 
    @Override
@@ -259,160 +221,58 @@ public class RemoteCacheImpl<K, V> extends RemoteCacheSupport<K, V> {
       int maxIdleSecs = toSeconds(maxIdleTime, maxIdleTimeUnit);
       applyDefaultExpirationFlags(lifespan, maxIdleTime);
       ReplaceOperation op = operationsFactory.newReplaceOperation(obj2bytes(key, true), obj2bytes(value, false), lifespanSecs, maxIdleSecs);
-      byte[] bytes = op.execute();
-      return (V) bytes2obj(bytes);
+      return (V) bytes2obj(op.executeSync());
    }
 
    @Override
-   public NotifyingFuture<V> putAsync(final K key, final V value, final long lifespan, final TimeUnit lifespanUnit, final long maxIdle, final TimeUnit maxIdleUnit) {
+   public NotifyingFuture<V> putAsync(final K key, final V value, final long lifespan, final TimeUnit lifespanUnit, final long maxIdleTime, final TimeUnit maxIdleTimeUnit) {
       assertRemoteCacheManagerIsStarted();
-      final NotifyingFutureImpl<V> result = new NotifyingFutureImpl<V>();
-      Future<V> future = executorService.submit(new Callable<V>() {
-         @Override
-         public V call() throws Exception {
-            try {
-               V prevValue = put(key, value, lifespan, lifespanUnit, maxIdle, maxIdleUnit);
-               try {
-                  result.notifyDone(prevValue);
-               } catch (Throwable t) {
-                  log.trace("Error when notifying", t);
-               }
-               return prevValue;
-            } catch (Exception e) {
-               try {
-                  result.notifyException(e);
-               } catch (Throwable t) {
-                  log.trace("Error when notifying", t);
-               }
-               throw e;
-            }
-         }
-      });
-      result.setFuture(future);
-      return result;
+      int lifespanSecs = toSeconds(lifespan, lifespanUnit);
+      int maxIdleSecs = toSeconds(maxIdleTime, maxIdleTimeUnit);
+      applyDefaultExpirationFlags(lifespan, maxIdleTime);
+      PutOperation op = operationsFactory.newPutKeyValueOperation(obj2bytes(key, true), obj2bytes(value, false), lifespanSecs, maxIdleSecs);
+      return new ConvertingNotifyingFuture<byte[], V>(op.executeAsync(), new Bytes2ObjConverter());
    }
 
    @Override
    public NotifyingFuture<Void> clearAsync() {
       assertRemoteCacheManagerIsStarted();
-      final NotifyingFutureImpl<Void> result = new NotifyingFutureImpl<Void>();
-      Future<Void> future = executorService.submit(new Callable<Void>() {
-         @Override
-         public Void call() throws Exception {
-            try {
-               clear();
-               try {
-                  result.notifyDone(null);
-               } catch (Throwable t) {
-                  log.trace("Error when notifying", t);
-               }
-               return null;
-            } catch (Exception e) {
-               try {
-                  result.notifyException(e);
-               } catch (Throwable t) {
-                  log.trace("Error when notifying", t);
-               }
-               throw e;
-            }
-         }
-      });
-      result.setFuture(future);
-      return result;
+      ClearOperation op = operationsFactory.newClearOperation() ;
+      return op.executeAsync();
    }
 
    @Override
-   public NotifyingFuture<V> putIfAbsentAsync(final K key,final V value,final long lifespan,final TimeUnit lifespanUnit,final long maxIdle,final TimeUnit maxIdleUnit) {
+   public NotifyingFuture<V> putIfAbsentAsync(final K key,final V value,final long lifespan,final TimeUnit lifespanUnit,final long maxIdleTime, final TimeUnit maxIdleTimeUnit) {
       assertRemoteCacheManagerIsStarted();
-      final NotifyingFutureImpl<V> result = new NotifyingFutureImpl<V>();
-      Future<V> future = executorService.submit(new Callable<V>() {
-         @Override
-         public V call() throws Exception {
-            try {
-               V prevValue = putIfAbsent(key, value, lifespan, lifespanUnit, maxIdle, maxIdleUnit);
-               try {
-                  result.notifyDone(prevValue);
-               } catch (Throwable t) {
-                  log.trace("Error when notifying", t);
-               }
-               return prevValue;
-            } catch (Exception e) {
-               try {
-                  result.notifyException(e);
-               } catch (Throwable t) {
-                  log.trace("Error when notifying", t);
-               }
-               throw e;
-            }
-         }
-      });
-      result.setFuture(future);
-      return result;
+      int lifespanSecs = toSeconds(lifespan, lifespanUnit);
+      int maxIdleSecs = toSeconds(maxIdleTime, maxIdleTimeUnit);
+      applyDefaultExpirationFlags(lifespan, maxIdleTime);
+      PutIfAbsentOperation op = operationsFactory.newPutIfAbsentOperation(obj2bytes(key, true), obj2bytes(value, false), lifespanSecs, maxIdleSecs);
+      return new ConvertingNotifyingFuture<byte[], V>(op.executeAsync(), new Bytes2ObjConverter());
    }
 
    @Override
    public NotifyingFuture<V> removeAsync(final Object key) {
       assertRemoteCacheManagerIsStarted();
-      final NotifyingFutureImpl<V> result = new NotifyingFutureImpl<V>();
-      Future<V> future = executorService.submit(new Callable<V>() {
-         @Override
-         public V call() throws Exception {
-            try {
-               V toReturn = remove(key);
-               try {
-                  result.notifyDone(toReturn);
-               } catch (Throwable t) {
-                  log.trace("Error when notifying", t);
-               }
-               return toReturn;
-            } catch (Exception e) {
-               try {
-                  result.notifyException(e);
-               } catch (Throwable t) {
-                  log.trace("Error when notifying", t);
-               }
-               throw e;
-            }
-         }
-      });
-      result.setFuture(future);
-      return result;
+      RemoveOperation op = operationsFactory.newRemoveOperation(obj2bytes(key, true));
+      return new ConvertingNotifyingFuture<byte[], V>(op.executeAsync(), new Bytes2ObjConverter());
    }
 
    @Override
-   public NotifyingFuture<V> replaceAsync(final K key,final V value,final long lifespan,final TimeUnit lifespanUnit,final long maxIdle,final TimeUnit maxIdleUnit) {
+   public NotifyingFuture<V> replaceAsync(final K key,final V value,final long lifespan,final TimeUnit lifespanUnit,final long maxIdleTime,final TimeUnit maxIdleTimeUnit) {
       assertRemoteCacheManagerIsStarted();
-      final NotifyingFutureImpl<V> result = new NotifyingFutureImpl<V>();
-      Future<V> future = executorService.submit(new Callable<V>() {
-         @Override
-         public V call() throws Exception {
-            try {
-               V old = replace(key, value, lifespan, lifespanUnit, maxIdle, maxIdleUnit);
-               try {
-                  result.notifyDone(old);
-               } catch (Throwable t) {
-                  log.trace("Error when notifying", t);
-               }
-               return old;
-            } catch (Exception e) {
-               try {
-                  result.notifyException(e);
-               } catch (Throwable t) {
-                  log.trace("Error when notifying", t);
-               }
-               throw e;
-            }
-         }
-      });
-      result.setFuture(future);
-      return result;
+      int lifespanSecs = toSeconds(lifespan, lifespanUnit);
+      int maxIdleSecs = toSeconds(maxIdleTime, maxIdleTimeUnit);
+      applyDefaultExpirationFlags(lifespan, maxIdleTime);
+      ReplaceOperation op = operationsFactory.newReplaceOperation(obj2bytes(key, true), obj2bytes(value, false), lifespanSecs, maxIdleSecs);
+      return new ConvertingNotifyingFuture<byte[], V>(op.executeAsync(), new Bytes2ObjConverter());
    }
 
    @Override
    public boolean containsKey(Object key) {
       assertRemoteCacheManagerIsStarted();
       ContainsKeyOperation op = operationsFactory.newContainsKeyOperation(obj2bytes(key, true));
-      return op.execute();
+      return op.executeSync();
    }
 
    @Override
@@ -420,9 +280,8 @@ public class RemoteCacheImpl<K, V> extends RemoteCacheSupport<K, V> {
    public V get(Object key) {
       assertRemoteCacheManagerIsStarted();
       byte[] keyBytes = obj2bytes(key, true);
-      GetOperation gco = operationsFactory.newGetKeyOperation(keyBytes);
-      byte[] bytes = gco.execute();
-      V result = (V) bytes2obj(bytes);
+      GetOperation op = operationsFactory.newGetKeyOperation(keyBytes);
+      V result = (V) bytes2obj(op.executeSync());
       if (log.isTraceEnabled()) {
          log.tracef("For key(%s) returning %s", key, result);
       }
@@ -439,7 +298,7 @@ public class RemoteCacheImpl<K, V> extends RemoteCacheSupport<K, V> {
    public Map<K, V> getBulk(int size) {
       assertRemoteCacheManagerIsStarted();
       BulkGetOperation op = operationsFactory.newBulkGetOperation(size);
-      Map<byte[], byte[]> result = op.execute();
+      Map<byte[], byte[]> result = op.executeSync();
       Map<K,V> toReturn = new HashMap<K,V>();
       for (Map.Entry<byte[], byte[]> entry : result.entrySet()) {
          V value = (V) bytes2obj(entry.getValue());
@@ -453,18 +312,17 @@ public class RemoteCacheImpl<K, V> extends RemoteCacheSupport<K, V> {
    @SuppressWarnings("unchecked")
    public V remove(Object key) {
       assertRemoteCacheManagerIsStarted();
-      RemoveOperation removeOperation = operationsFactory.newRemoveOperation(obj2bytes(key, true));
-      byte[] existingValue = removeOperation.execute();
+      RemoveOperation op = operationsFactory.newRemoveOperation(obj2bytes(key, true));
       // TODO: It sucks that you need the prev value to see if it works...
       // We need to find a better API for RemoteCache...
-      return (V) bytes2obj(existingValue);
+      return (V) bytes2obj(op.executeSync());
    }
 
    @Override
    public void clear() {
       assertRemoteCacheManagerIsStarted();
       ClearOperation op = operationsFactory.newClearOperation() ;
-      op.execute();
+      op.executeSync();
    }
 
    @Override
@@ -505,34 +363,12 @@ public class RemoteCacheImpl<K, V> extends RemoteCacheSupport<K, V> {
    @Override
    public NotifyingFuture<V> getAsync(final K key) {
       assertRemoteCacheManagerIsStarted();
-      final NotifyingFutureImpl<V> result = new NotifyingFutureImpl<V>();
-      Future<V> future = executorService.submit(new Callable<V>() {
-         @Override
-         public V call() throws Exception {
-            try {
-               V toReturn = get(key);
-               try {
-                  result.notifyDone(toReturn);
-               } catch (Throwable t) {
-                  log.trace("Error when notifying", t);
-               }
-               return toReturn;
-            } catch (Exception e) {
-               try {
-                  result.notifyException(e);
-               } catch (Throwable t) {
-                  log.trace("Error when notifying", t);
-               }
-               throw e;
-            }
-         }
-      });
-      result.setFuture(future);
-      return result;
+      GetOperation op = operationsFactory.newGetKeyOperation(obj2bytes(key, true));
+      return new ConvertingNotifyingFuture<byte[], V>(op.executeAsync(), new Bytes2ObjConverter());
    }
 
    public PingOperation.PingResult ping() {
-      return operationsFactory.newFaultTolerantPingOperation().execute();
+      return operationsFactory.newFaultTolerantPingOperation().executeSync();
    }
 
    private byte[] obj2bytes(Object o, boolean isKey) {
@@ -609,12 +445,20 @@ public class RemoteCacheImpl<K, V> extends RemoteCacheSupport<K, V> {
 	   assertRemoteCacheManagerIsStarted();
 	   // Use default scope
 	   BulkGetKeysOperation op = operationsFactory.newBulkGetKeysOperation(0);
-	   Set<byte[]> result = op.execute();
+	   Set<byte[]> result = op.executeSync();
        Set<K> toReturn = new HashSet<K>();
        for (byte[] keyBytes : result) {
           K key = (K) bytes2obj(keyBytes);
           toReturn.add(key);
        }
        return Collections.unmodifiableSet(toReturn);
+   }
+
+
+   private class Bytes2ObjConverter implements ConvertingNotifyingFuture.Converter<byte[],V> {
+      @Override
+      public V convert(byte[] bytes) {
+         return (V) bytes2obj(bytes);
+      }
    }
 }

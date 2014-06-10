@@ -31,10 +31,14 @@ public class BulkGetKeysOperation extends RetryOnFailureOperation<Set<byte[]>> {
    }
 
    @Override
-   protected Set<byte[]> executeOperation(Transport transport) {
+   protected HeaderParams writeRequest(Transport transport) {
       HeaderParams params = writeHeader(transport, BULK_GET_KEYS_REQUEST);
       transport.writeVInt(scope);
-      transport.flush();
+      return params;
+   }
+
+   @Override
+   protected Set<byte[]> readResponse(Transport transport, HeaderParams params) {
       readHeaderAndValidate(transport, params);
       Set<byte[]> result = new HashSet<byte[]>();
       while ( transport.readByte() == 1) { //there's more!

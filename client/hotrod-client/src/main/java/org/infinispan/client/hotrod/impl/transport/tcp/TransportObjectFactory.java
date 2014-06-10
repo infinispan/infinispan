@@ -6,6 +6,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 import org.apache.commons.pool.BaseKeyedPoolableObjectFactory;
 import org.infinispan.client.hotrod.impl.operations.PingOperation;
 import org.infinispan.client.hotrod.impl.protocol.Codec;
+import org.infinispan.client.hotrod.impl.transport.Transport;
 import org.infinispan.client.hotrod.logging.Log;
 import org.infinispan.client.hotrod.logging.LogFactory;
 
@@ -32,9 +33,14 @@ public class TransportObjectFactory
 
    @Override
    public TcpTransport makeObject(SocketAddress address) throws Exception {
-      TcpTransport tcpTransport = new TcpTransport(address, tcpTransportFactory);
+      TcpTransport transport;
+      if (tcpTransportFactory.getSSLContext() == null) {
+         transport = new TcpTransport(address, tcpTransportFactory);
+      } else {
+         transport = new SSLTransport(address, tcpTransportFactory);
+      }
       if (log.isTraceEnabled()) {
-         log.tracef("Created tcp transport: %s", tcpTransport);
+         log.tracef("%08x Created tcp transport: %s", this.hashCode(), transport);
       }
       if (pingOnStartup && !firstPingExecuted) {
          log.trace("Executing first ping!");
@@ -42,14 +48,14 @@ public class TransportObjectFactory
 
          // Don't ignore exceptions from ping() command, since
          // they indicate that the transport instance is invalid.
-         ping(tcpTransport, topologyId);
+         ping(transport, topologyId);
       }
-      return tcpTransport;
+      return transport;
    }
 
-   protected PingOperation.PingResult ping(TcpTransport tcpTransport, AtomicInteger topologyId) {
-      PingOperation po = new PingOperation(codec, topologyId, tcpTransport);
-      return po.execute();
+   protected PingOperation.PingResult ping(Transport transport, AtomicInteger topologyId) {
+      PingOperation po = new PingOperation(codec, topologyId, transport);
+      return po.executeSync();
    }
 
    /**
@@ -70,7 +76,11 @@ public class TransportObjectFactory
    @Override
    public void destroyObject(SocketAddress address, TcpTransport transport) throws Exception {
       if (log.isTraceEnabled()) {
-         log.tracef("About to destroy tcp transport: %s", transport);
+         try {
+            throw new Exception("Stacktrace");
+         } catch (Exception e) {
+            log.tracef(e, "%08x, About to destroy tcp transport: %s", this.hashCode(), transport);
+         }
       }
       transport.destroy();
    }
@@ -79,7 +89,11 @@ public class TransportObjectFactory
    public void activateObject(SocketAddress address, TcpTransport transport) throws Exception {
       super.activateObject(address, transport);
       if (log.isTraceEnabled()) {
-         log.tracef("Fetching from pool: %s", transport);
+         try {
+            throw new Exception("Stacktrace");
+         } catch (Exception e) {
+            log.tracef(e, "Fetching from pool: %s", transport);
+         }
       }
    }
 
@@ -87,7 +101,11 @@ public class TransportObjectFactory
    public void passivateObject(SocketAddress address, TcpTransport transport) throws Exception {
       super.passivateObject(address, transport);
       if (log.isTraceEnabled()) {
-         log.tracef("Returning to pool: %s", transport);
+         try {
+            throw new Exception("Stacktrace");
+         } catch (Exception e) {
+            log.tracef(e, "Returning to pool: %s", transport);
+         }
       }
    }
 }

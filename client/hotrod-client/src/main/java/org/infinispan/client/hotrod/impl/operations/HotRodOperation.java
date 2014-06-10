@@ -1,14 +1,16 @@
 package org.infinispan.client.hotrod.impl.operations;
 
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import net.jcip.annotations.Immutable;
-
 import org.infinispan.client.hotrod.Flag;
+import org.infinispan.client.hotrod.exceptions.HotRodClientException;
 import org.infinispan.client.hotrod.impl.protocol.Codec;
 import org.infinispan.client.hotrod.impl.protocol.HeaderParams;
 import org.infinispan.client.hotrod.impl.protocol.HotRodConstants;
 import org.infinispan.client.hotrod.impl.transport.Transport;
+import org.infinispan.commons.util.concurrent.NotifyingFuture;
 
 /**
  * Generic Hot Rod operation. It is aware of {@link org.infinispan.client.hotrod.Flag}s and it is targeted against a
@@ -19,14 +21,14 @@ import org.infinispan.client.hotrod.impl.transport.Transport;
  * @since 4.1
  */
 @Immutable
-public abstract class HotRodOperation implements HotRodConstants {
+public abstract class HotRodOperation<T> implements HotRodConstants {
 
    protected final Flag[] flags;
 
    protected final byte[] cacheName;
 
    protected final AtomicInteger topologyId;
-
+   
    protected final Codec codec;
 
    private static final byte NO_TX = 0;
@@ -39,7 +41,22 @@ public abstract class HotRodOperation implements HotRodConstants {
       this.codec = codec;
    }
 
-   public abstract Object execute();
+   public T executeSync() {
+      try {
+         return executeAsync().get();
+      } catch (InterruptedException e) {
+         Thread.currentThread().interrupt();
+         throw new HotRodClientException("Synchronous operation was interrupted", e);
+      } catch (ExecutionException e) {
+         if (e.getCause() instanceof RuntimeException) {
+            throw (RuntimeException) e.getCause();
+         } else {
+            throw new RuntimeException(e.getCause());
+         }
+      }
+   }
+
+   public abstract NotifyingFuture<T> executeAsync();
 
    protected final HeaderParams writeHeader(Transport transport, short operationCode) {
       HeaderParams params = new HeaderParams()

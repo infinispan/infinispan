@@ -543,14 +543,12 @@ public class RemoteCacheManager implements BasicCacheContainer {
 
    @Override
    public void start() {
+      log.warnf("Starting RCM %08x", this.hashCode());
       // Workaround for JDK6 NPE: http://bugs.sun.com/view_bug.do?bug_id=6427854
       SecurityActions.setProperty("sun.nio.ch.bugLevel", "\"\"");
 
       codec = CodecFactory.getCodec(configuration.protocolVersion());
 
-      transportFactory = Util.getInstance(configuration.transportFactory());
-
-      transportFactory.start(codec, configuration, topologyId);
       if (marshaller == null) {
          marshaller = configuration.marshaller();
          if (marshaller == null) {
@@ -566,6 +564,10 @@ public class RemoteCacheManager implements BasicCacheContainer {
          asyncExecutorService = executorFactory.getExecutor(configuration.asyncExecutorFactory().properties());
       }
 
+      transportFactory = Util.getInstance(configuration.transportFactory());
+      transportFactory.start(codec, configuration, topologyId, asyncExecutorService);
+
+
       synchronized (cacheName2RemoteCache) {
          for (RemoteCacheHolder rcc : cacheName2RemoteCache.values()) {
             startRemoteCache(rcc);
@@ -580,6 +582,7 @@ public class RemoteCacheManager implements BasicCacheContainer {
 
    @Override
    public void stop() {
+      log.warnf("Stopping RCM %08x", this.hashCode());
       if (isStarted()) {
          transportFactory.destroy();
          asyncExecutorService.shutdownNow();

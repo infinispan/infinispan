@@ -18,8 +18,8 @@ import java.util.concurrent.TimeUnit;
  */
 public class NotifyingFutureImpl<T> extends BaseNotifyingFuture<T> implements NotifyingNotifiableFuture<T>{
 
-   private T actualReturnValue;
-   private Throwable exceptionThrown;
+   private volatile T actualReturnValue;
+   private volatile Throwable exceptionThrown;
    private volatile Future<T> future;
    private final CountDownLatch latch = new CountDownLatch(1);
 
@@ -70,7 +70,9 @@ public class NotifyingFutureImpl<T> extends BaseNotifyingFuture<T> implements No
    @Override
    public T get() throws InterruptedException, ExecutionException {
       if (!callCompleted) {
-         getFuture().get();
+         if (getFuture().get() != actualReturnValue) {
+            throw new IllegalStateException("Inner future was finished but this return value was not set to the same value.");
+         }
       }
       if (exceptionThrown != null) {
          throw new ExecutionException(exceptionThrown);
@@ -81,7 +83,9 @@ public class NotifyingFutureImpl<T> extends BaseNotifyingFuture<T> implements No
    @Override
    public T get(long timeout, TimeUnit unit) throws InterruptedException, ExecutionException, java.util.concurrent.TimeoutException {
       if (!callCompleted) {
-         getFuture().get(timeout, unit);
+          if (getFuture().get(timeout, unit) != actualReturnValue) {
+             throw new IllegalStateException("Inner future was finished but this return value was not set to the same value.");
+          }
       }
       if (exceptionThrown != null) {
          throw new ExecutionException(exceptionThrown);

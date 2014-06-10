@@ -3,11 +3,11 @@ package org.infinispan.client.hotrod.impl.operations;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import net.jcip.annotations.Immutable;
-
 import org.infinispan.client.hotrod.Flag;
 import org.infinispan.client.hotrod.MetadataValue;
 import org.infinispan.client.hotrod.impl.MetadataValueImpl;
 import org.infinispan.client.hotrod.impl.protocol.Codec;
+import org.infinispan.client.hotrod.impl.protocol.HeaderParams;
 import org.infinispan.client.hotrod.impl.transport.Transport;
 import org.infinispan.client.hotrod.impl.transport.TransportFactory;
 import org.infinispan.client.hotrod.logging.Log;
@@ -31,8 +31,13 @@ public class GetWithMetadataOperation extends AbstractKeyOperation<MetadataValue
    }
 
    @Override
-   protected MetadataValue<byte[]> executeOperation(Transport transport) {
-      short status = sendKeyOperation(key, transport, GET_WITH_METADATA, GET_WITH_METADATA_RESPONSE);
+   protected HeaderParams writeRequest(Transport transport) {
+      return writeKeyRequest(transport, GET_WITH_METADATA);
+   }
+
+   @Override
+   protected MetadataValue<byte[]> readResponse(Transport transport, HeaderParams params) {
+      short status = readHeaderAndValidate(transport, params);
       MetadataValue<byte[]> result = null;
       if (status == KEY_DOES_NOT_EXIST_STATUS) {
          result = null;

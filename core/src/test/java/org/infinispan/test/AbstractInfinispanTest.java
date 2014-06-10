@@ -1,12 +1,7 @@
 package org.infinispan.test;
 
-import org.infinispan.util.DefaultTimeService;
-import org.infinispan.util.TimeService;
-import org.infinispan.util.logging.Log;
-import org.infinispan.util.logging.LogFactory;
-import org.testng.annotations.AfterTest;
+import static org.testng.Assert.assertTrue;
 
-import javax.transaction.TransactionManager;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.concurrent.Callable;
@@ -17,8 +12,13 @@ import java.util.concurrent.FutureTask;
 import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
+import javax.transaction.TransactionManager;
 
-import static org.testng.Assert.assertTrue;
+import org.infinispan.util.DefaultTimeService;
+import org.infinispan.util.TimeService;
+import org.infinispan.util.logging.Log;
+import org.infinispan.util.logging.LogFactory;
+import org.testng.annotations.AfterTest;
 
 /**
  * AbstractInfinispanTest is a superclass of all Infinispan tests.
@@ -40,6 +40,11 @@ public class AbstractInfinispanTest {
       for (Thread t : spawnedThreads) {
          if (t.isAlive())
             t.interrupt();
+      }
+      Thread[] threads = new Thread[Thread.currentThread().getThreadGroup().activeCount()];
+      Thread.enumerate(threads);
+      for (Thread t : threads) {
+         if (t != null) log.info("Thread " + t.getName() + (t.isDaemon() ? " (daemon) " : " ") + t.getState());
       }
    }
 

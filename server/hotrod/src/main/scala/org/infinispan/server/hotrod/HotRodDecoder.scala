@@ -42,6 +42,7 @@ class HotRodDecoder(cacheManager: EmbeddedCacheManager, transport: NettyTranspor
    override def readHeader(buffer: ByteBuf, header: HotRodHeader): Option[Boolean] = {
       try {
          val magic = buffer.readUnsignedByte
+         trace("Read (1byte) magic " + magic);
          if (magic != MAGIC_REQ) {
             if (!isError) {
                throw new InvalidMagicIdException("Error reading magic byte or message id: " + magic)
@@ -59,6 +60,7 @@ class HotRodDecoder(cacheManager: EmbeddedCacheManager, transport: NettyTranspor
 
       val messageId = readUnsignedLong(buffer)
       val version = buffer.readUnsignedByte.toByte
+      trace("Read (1byte) version " + version);
 
       try {
          val decoder = version match {

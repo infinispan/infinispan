@@ -1,13 +1,13 @@
 package org.infinispan.client.hotrod.impl.operations;
 
+import java.util.concurrent.atomic.AtomicInteger;
+
 import org.infinispan.client.hotrod.Flag;
 import org.infinispan.client.hotrod.impl.VersionedOperationResponse;
 import org.infinispan.client.hotrod.impl.protocol.Codec;
 import org.infinispan.client.hotrod.impl.protocol.HeaderParams;
 import org.infinispan.client.hotrod.impl.transport.Transport;
 import org.infinispan.client.hotrod.impl.transport.TransportFactory;
-
-import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * Implement "replaceIfUnmodified" as defined by  <a href="http://community.jboss.org/wiki/HotRodProtocol">Hot Rod
@@ -27,18 +27,18 @@ public class ReplaceIfUnmodifiedOperation extends AbstractKeyValueOperation<Vers
    }
 
    @Override
-   protected VersionedOperationResponse executeOperation(Transport transport) {
-      // 1) write header
+   protected HeaderParams writeRequest(Transport transport) {
       HeaderParams params = writeHeader(transport, REPLACE_IF_UNMODIFIED_REQUEST);
-
-      //2) write message body
       transport.writeArray(key);
       transport.writeVInt(lifespan);
       transport.writeVInt(maxIdle);
       transport.writeLong(version);
       transport.writeArray(value);
-      transport.flush();
+      return params;
+   }
 
+   @Override
+   protected VersionedOperationResponse readResponse(Transport transport, HeaderParams params) {
       return returnVersionedOperationResponse(transport, params);
    }
 }

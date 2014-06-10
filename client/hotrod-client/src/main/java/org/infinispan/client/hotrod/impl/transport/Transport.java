@@ -1,6 +1,9 @@
 package org.infinispan.client.hotrod.impl.transport;
 
 import java.net.SocketAddress;
+import java.util.concurrent.Callable;
+
+import org.infinispan.commons.util.concurrent.NotifyingFuture;
 
 /**
  * Transport abstraction.
@@ -24,7 +27,7 @@ public interface Transport {
 
    int readVInt();
 
-   void flush();
+   <T> NotifyingFuture<T> flush(Callable<T> callable);
 
    short readByte();
 

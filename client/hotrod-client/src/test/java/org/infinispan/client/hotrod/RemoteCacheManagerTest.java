@@ -1,23 +1,22 @@
 package org.infinispan.client.hotrod;
 
-import static org.testng.AssertJUnit.assertTrue;
-import static org.testng.AssertJUnit.assertFalse;
 import org.infinispan.client.hotrod.configuration.ConfigurationBuilder;
 import org.infinispan.client.hotrod.impl.ConfigurationProperties;
 import org.infinispan.client.hotrod.test.HotRodClientTestingUtil;
-import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.commons.marshall.jboss.GenericJBossMarshaller;
+import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.server.hotrod.HotRodServer;
 import org.infinispan.test.SingleCacheManagerTest;
-import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
-import org.testng.annotations.AfterTest;
+import org.testng.annotations.AfterMethod;
 import org.testng.annotations.Test;
 
 import java.net.URL;
 import java.util.Properties;
 
 import static org.infinispan.server.hotrod.test.HotRodTestingUtil.hotRodCacheConfiguration;
+import static org.testng.AssertJUnit.assertFalse;
+import static org.testng.AssertJUnit.assertTrue;
 
 /**
  * @author Mircea.Markus@jboss.com
@@ -44,15 +43,15 @@ public class RemoteCacheManagerTest extends SingleCacheManagerTest {
       remoteCacheManager = null;
    }
 
-   @AfterTest
+   @Override
+   protected void teardown() {
+      HotRodClientTestingUtil.killServers(hotrodServer);
+      super.teardown();
+   }
+
+   @AfterMethod(alwaysRun = true)
    public void release() {
-      try {
-         TestingUtil.killCacheManagers(cacheManager);
-         HotRodClientTestingUtil.killServers(hotrodServer);
-         HotRodClientTestingUtil.killRemoteCacheManager(remoteCacheManager);
-      } catch (Exception e) {
-         e.printStackTrace();
-      }
+      HotRodClientTestingUtil.killRemoteCacheManager(remoteCacheManager);
    }
 
    public void testNoArgConstructor() {

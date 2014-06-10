@@ -1,12 +1,13 @@
 package org.infinispan.client.hotrod.impl.operations;
 
+import java.util.concurrent.atomic.AtomicInteger;
+
 import net.jcip.annotations.Immutable;
 import org.infinispan.client.hotrod.Flag;
 import org.infinispan.client.hotrod.impl.protocol.Codec;
+import org.infinispan.client.hotrod.impl.protocol.HeaderParams;
 import org.infinispan.client.hotrod.impl.transport.Transport;
 import org.infinispan.client.hotrod.impl.transport.TransportFactory;
-
-import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * Implements "get" operation as described by <a href="http://community.jboss.org/wiki/HotRodProtocol">Hot Rod protocol specification</a>.
@@ -23,16 +24,20 @@ public class GetOperation extends AbstractKeyOperation<byte[]> {
    }
 
    @Override
-   public byte[] executeOperation(Transport transport) {
-      byte[] result = null;
-      short status = sendKeyOperation(key, transport, GET_REQUEST, GET_RESPONSE);
+   protected HeaderParams writeRequest(Transport transport) {
+      return writeKeyRequest(transport, GET_REQUEST);
+   }
+
+   @Override
+   protected byte[] readResponse(Transport transport, HeaderParams params) {
+      short status = readHeaderAndValidate(transport, params);
       if (status == KEY_DOES_NOT_EXIST_STATUS) {
-         result = null;
+         return null;
       } else {
          if (status == NO_ERROR_STATUS) {
-            result = transport.readArray();
+            return transport.readArray();
          }
+         return null;
       }
-      return result;
    }
 }

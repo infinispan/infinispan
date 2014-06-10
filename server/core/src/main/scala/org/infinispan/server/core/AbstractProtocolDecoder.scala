@@ -64,7 +64,7 @@ abstract class AbstractProtocolDecoder[K, V](secure: Boolean, transport: NettyTr
    private def decodeDispatch(ctx: ChannelHandlerContext, in: ByteBuf, out: util.List[AnyRef]): Unit = {
       try {
          if (isTrace) // To aid debugging
-            trace("Decode using instance @%x", System.identityHashCode(this))
+            trace("Decode %s using instance @%x", state, System.identityHashCode(this))
          state match {
             case DECODE_HEADER => decodeHeader(ctx, in, state, out)
             case DECODE_KEY => decodeKey(ctx, in, state)
@@ -73,6 +73,7 @@ abstract class AbstractProtocolDecoder[K, V](secure: Boolean, transport: NettyTr
          }
       } catch {
          case e: Exception => {
+            trace("Decode encountered an exception" + e, e);
             val (serverException, isClientError) = createServerException(e, in)
             // If decode returns an exception, decode won't be called again so,
             // we need to fire the exception explicitly so that requests can
@@ -83,7 +84,13 @@ abstract class AbstractProtocolDecoder[K, V](secure: Boolean, transport: NettyTr
                throw serverException
             }
          }
-         case t: Throwable => throw t
+         case t: Throwable => {
+           trace("Decode encountered throwable" + t, t);
+           throw t
+         }
+      } finally {
+        if (isTrace) // To aid debugging
+          trace("Decoded %s using instance @%x", state, System.identityHashCode(this))
       }
    }
 
@@ -132,6 +139,7 @@ abstract class AbstractProtocolDecoder[K, V](secure: Boolean, transport: NettyTr
       header = createHeader
       val endOfOp = readHeader(buffer, header)
       if (endOfOp == None) {
+         if (isTrace) trace("Could not read header");
          // Something went wrong reading the header, so get more bytes.
          // It can happen with Hot Rod if the header is completely corrupted
          return null
