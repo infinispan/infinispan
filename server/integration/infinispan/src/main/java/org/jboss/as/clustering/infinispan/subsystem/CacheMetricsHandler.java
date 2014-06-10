@@ -1,15 +1,19 @@
 package org.jboss.as.clustering.infinispan.subsystem;
 
+import org.infinispan.AdvancedCache;
 import org.infinispan.Cache;
 import org.infinispan.eviction.ActivationManager;
 import org.infinispan.eviction.PassivationManager;
+import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.interceptors.ActivationInterceptor;
 import org.infinispan.interceptors.CacheMgmtInterceptor;
 import org.infinispan.interceptors.CacheWriterInterceptor;
 import org.infinispan.interceptors.InvalidationInterceptor;
 import org.infinispan.interceptors.TxInterceptor;
 import org.infinispan.interceptors.base.CommandInterceptor;
+import org.infinispan.lifecycle.ComponentStatus;
 import org.infinispan.remoting.rpc.RpcManagerImpl;
+import org.infinispan.server.infinispan.SecurityActions;
 import org.infinispan.util.concurrent.locks.LockManagerImpl;
 import org.jboss.as.controller.AbstractRuntimeOnlyHandler;
 import org.jboss.as.controller.AttributeDefinition;
@@ -130,7 +134,6 @@ public class CacheMetricsHandler extends AbstractRuntimeOnlyHandler {
         final String attrName = operation.require(NAME).asString();
         final ServiceController<?> controller = context.getServiceRegistry(false).getService(CacheService.getServiceName(cacheContainerName, cacheName));
         Cache<?, ?> cache = (Cache<?, ?>) controller.getValue();
-
         CacheMetrics metric = CacheMetrics.getStat(attrName);
         ModelNode result = new ModelNode();
 
@@ -139,146 +142,145 @@ public class CacheMetricsHandler extends AbstractRuntimeOnlyHandler {
         } else if (cache == null) {
             context.getFailureDescription().set(String.format("Unavailable cache %s", attrName));
         } else {
+            AdvancedCache<?, ?> aCache = cache.getAdvancedCache();
+            LockManagerImpl lockManager = (LockManagerImpl) SecurityActions.getLockManager(aCache);
+            RpcManagerImpl rpcManager = (RpcManagerImpl) SecurityActions.getRpcManager(aCache);
+            List<CommandInterceptor> interceptors = SecurityActions.getInterceptorChain(aCache);
+            ComponentRegistry registry = SecurityActions.getComponentRegistry(aCache);
+            ComponentStatus status = SecurityActions.getCacheStatus(aCache);
             switch (metric) {
                 case CACHE_STATUS:
-                    result.set(cache.getAdvancedCache().getStatus().toString());
+                    result.set(status.toString());
                     break;
                 case CONCURRENCY_LEVEL:
-                    result.set(((LockManagerImpl) cache.getAdvancedCache().getLockManager()).getConcurrencyLevel());
+                    result.set(lockManager.getConcurrencyLevel());
                     break;
                 case NUMBER_OF_LOCKS_AVAILABLE:
-                    result.set(((LockManagerImpl) cache.getAdvancedCache().getLockManager()).getNumberOfLocksAvailable());
+                    result.set(lockManager.getNumberOfLocksAvailable());
                     break;
                 case NUMBER_OF_LOCKS_HELD:
-                    result.set(((LockManagerImpl) cache.getAdvancedCache().getLockManager()).getNumberOfLocksHeld());
+                    result.set(lockManager.getNumberOfLocksHeld());
                     break;
                 case AVERAGE_READ_TIME: {
-                    CacheMgmtInterceptor cacheMgmtInterceptor = getFirstInterceptorWhichExtends(cache.getAdvancedCache().getInterceptorChain(), CacheMgmtInterceptor.class);
+                    CacheMgmtInterceptor cacheMgmtInterceptor = getFirstInterceptorWhichExtends(interceptors, CacheMgmtInterceptor.class);
                     result.set(cacheMgmtInterceptor != null ? cacheMgmtInterceptor.getAverageReadTime() : 0);
                     break;
                 }
                 case AVERAGE_WRITE_TIME: {
-                    CacheMgmtInterceptor cacheMgmtInterceptor = getFirstInterceptorWhichExtends(cache.getAdvancedCache().getInterceptorChain(), CacheMgmtInterceptor.class);
+                    CacheMgmtInterceptor cacheMgmtInterceptor = getFirstInterceptorWhichExtends(interceptors, CacheMgmtInterceptor.class);
                     result.set(cacheMgmtInterceptor != null ? cacheMgmtInterceptor.getAverageWriteTime() : 0);
                     break;
                 }
                 case ELAPSED_TIME: {
-                    CacheMgmtInterceptor cacheMgmtInterceptor = getFirstInterceptorWhichExtends(cache.getAdvancedCache().getInterceptorChain(), CacheMgmtInterceptor.class);
+                    CacheMgmtInterceptor cacheMgmtInterceptor = getFirstInterceptorWhichExtends(interceptors, CacheMgmtInterceptor.class);
                     result.set(cacheMgmtInterceptor != null ? cacheMgmtInterceptor.getElapsedTime() : 0);
                     break;
                 }
                 case EVICTIONS: {
-                    CacheMgmtInterceptor cacheMgmtInterceptor = getFirstInterceptorWhichExtends(cache.getAdvancedCache().getInterceptorChain(), CacheMgmtInterceptor.class);
+                    CacheMgmtInterceptor cacheMgmtInterceptor = getFirstInterceptorWhichExtends(interceptors, CacheMgmtInterceptor.class);
                     result.set(cacheMgmtInterceptor != null ? cacheMgmtInterceptor.getEvictions() : 0);
                     break;
                 }
                 case HIT_RATIO: {
-                    CacheMgmtInterceptor cacheMgmtInterceptor = getFirstInterceptorWhichExtends(cache.getAdvancedCache().getInterceptorChain(), CacheMgmtInterceptor.class);
+                    CacheMgmtInterceptor cacheMgmtInterceptor = getFirstInterceptorWhichExtends(interceptors, CacheMgmtInterceptor.class);
                     result.set(cacheMgmtInterceptor != null ? cacheMgmtInterceptor.getHitRatio() : 0);
                     break;
                 }
                 case HITS: {
-                    CacheMgmtInterceptor cacheMgmtInterceptor = getFirstInterceptorWhichExtends(cache.getAdvancedCache().getInterceptorChain(), CacheMgmtInterceptor.class);
+                    CacheMgmtInterceptor cacheMgmtInterceptor = getFirstInterceptorWhichExtends(interceptors, CacheMgmtInterceptor.class);
                     result.set(cacheMgmtInterceptor != null ? cacheMgmtInterceptor.getHits() : 0);
                     break;
                 }
                 case MISSES: {
-                    CacheMgmtInterceptor cacheMgmtInterceptor = getFirstInterceptorWhichExtends(cache.getAdvancedCache().getInterceptorChain(), CacheMgmtInterceptor.class);
+                    CacheMgmtInterceptor cacheMgmtInterceptor = getFirstInterceptorWhichExtends(interceptors, CacheMgmtInterceptor.class);
                     result.set(cacheMgmtInterceptor != null ? cacheMgmtInterceptor.getMisses() : 0);
                     break;
                 }
                 case NUMBER_OF_ENTRIES: {
-                    CacheMgmtInterceptor cacheMgmtInterceptor = getFirstInterceptorWhichExtends(cache.getAdvancedCache().getInterceptorChain(), CacheMgmtInterceptor.class);
+                    CacheMgmtInterceptor cacheMgmtInterceptor = getFirstInterceptorWhichExtends(interceptors, CacheMgmtInterceptor.class);
                     result.set(cacheMgmtInterceptor != null ? cacheMgmtInterceptor.getNumberOfEntries() : 0);
                     break;
                 }
                 case READ_WRITE_RATIO: {
-                    CacheMgmtInterceptor cacheMgmtInterceptor = getFirstInterceptorWhichExtends(cache.getAdvancedCache().getInterceptorChain(), CacheMgmtInterceptor.class);
+                    CacheMgmtInterceptor cacheMgmtInterceptor = getFirstInterceptorWhichExtends(interceptors, CacheMgmtInterceptor.class);
                     result.set(cacheMgmtInterceptor != null ? cacheMgmtInterceptor.getReadWriteRatio() : 0);
                     break;
                 }
                 case REMOVE_HITS: {
-                    CacheMgmtInterceptor cacheMgmtInterceptor = getFirstInterceptorWhichExtends(cache.getAdvancedCache().getInterceptorChain(), CacheMgmtInterceptor.class);
+                    CacheMgmtInterceptor cacheMgmtInterceptor = getFirstInterceptorWhichExtends(interceptors, CacheMgmtInterceptor.class);
                     result.set(cacheMgmtInterceptor != null ? cacheMgmtInterceptor.getRemoveHits() : 0);
                     break;
                 }
                 case REMOVE_MISSES: {
-                    CacheMgmtInterceptor cacheMgmtInterceptor = getFirstInterceptorWhichExtends(cache.getAdvancedCache().getInterceptorChain(), CacheMgmtInterceptor.class);
+                    CacheMgmtInterceptor cacheMgmtInterceptor = getFirstInterceptorWhichExtends(interceptors, CacheMgmtInterceptor.class);
                     result.set(cacheMgmtInterceptor != null ? cacheMgmtInterceptor.getRemoveMisses() : 0);
                     break;
                 }
                 case STORES: {
-                    CacheMgmtInterceptor cacheMgmtInterceptor = getFirstInterceptorWhichExtends(cache.getAdvancedCache().getInterceptorChain(), CacheMgmtInterceptor.class);
+                    CacheMgmtInterceptor cacheMgmtInterceptor = getFirstInterceptorWhichExtends(interceptors, CacheMgmtInterceptor.class);
                     result.set(cacheMgmtInterceptor != null ? cacheMgmtInterceptor.getStores() : 0);
                     break;
                 }
                 case TIME_SINCE_RESET: {
-                    CacheMgmtInterceptor cacheMgmtInterceptor = getFirstInterceptorWhichExtends(cache.getAdvancedCache().getInterceptorChain(), CacheMgmtInterceptor.class);
+                    CacheMgmtInterceptor cacheMgmtInterceptor = getFirstInterceptorWhichExtends(interceptors, CacheMgmtInterceptor.class);
                     result.set(cacheMgmtInterceptor != null ? cacheMgmtInterceptor.getTimeSinceReset() : 0);
                     break;
                 }
                 case AVERAGE_REPLICATION_TIME: {
-                    result.set(((RpcManagerImpl) cache.getAdvancedCache().getRpcManager()).getAverageReplicationTime());
+                    result.set(rpcManager.getAverageReplicationTime());
                     break;
                 }
                 case REPLICATION_COUNT:
-                    result.set(((RpcManagerImpl) cache.getAdvancedCache().getRpcManager()).getReplicationCount());
+                    result.set(rpcManager.getReplicationCount());
                     break;
                 case REPLICATION_FAILURES:
-                    result.set(((RpcManagerImpl) cache.getAdvancedCache().getRpcManager()).getReplicationFailures());
+                    result.set(rpcManager.getReplicationFailures());
                     break;
                 case SUCCESS_RATIO:
-                    result.set(((RpcManagerImpl) cache.getAdvancedCache().getRpcManager()).getSuccessRatioFloatingPoint());
+                    result.set(rpcManager.getSuccessRatioFloatingPoint());
                     break;
                 case COMMITS: {
-                    TxInterceptor txInterceptor = getFirstInterceptorWhichExtends(cache.getAdvancedCache()
-                            .getInterceptorChain(), TxInterceptor.class);
+                    TxInterceptor txInterceptor = getFirstInterceptorWhichExtends(interceptors, TxInterceptor.class);
                     result.set(txInterceptor != null ? txInterceptor.getCommits() : 0);
                     break;
                 }
                 case PREPARES: {
-                    TxInterceptor txInterceptor = getFirstInterceptorWhichExtends(cache.getAdvancedCache()
-                            .getInterceptorChain(), TxInterceptor.class);
+                    TxInterceptor txInterceptor = getFirstInterceptorWhichExtends(interceptors, TxInterceptor.class);
                     result.set(txInterceptor != null ? txInterceptor.getPrepares() : 0);
                     break;
                 }
                 case ROLLBACKS: {
-                    TxInterceptor txInterceptor = getFirstInterceptorWhichExtends(cache.getAdvancedCache()
-                            .getInterceptorChain(), TxInterceptor.class);
+                    TxInterceptor txInterceptor = getFirstInterceptorWhichExtends(interceptors, TxInterceptor.class);
                     result.set(txInterceptor != null ? txInterceptor.getRollbacks() : 0);
                     break;
                 }
                 case INVALIDATIONS: {
-                    InvalidationInterceptor invInterceptor = getFirstInterceptorWhichExtends(cache.getAdvancedCache()
-                            .getInterceptorChain(), InvalidationInterceptor.class);
+                    InvalidationInterceptor invInterceptor = getFirstInterceptorWhichExtends(interceptors, InvalidationInterceptor.class);
                     result.set(invInterceptor != null ? invInterceptor.getInvalidations() : 0);
                     break;
                 }
                 case PASSIVATIONS: {
-                    PassivationManager manager = cache.getAdvancedCache().getComponentRegistry().getComponent(PassivationManager.class);
+                    PassivationManager manager = registry.getComponent(PassivationManager.class);
                     result.set(manager != null ? manager.getPassivations() : 0);
                     break;
                 }
                 case ACTIVATIONS: {
-                    ActivationManager manager = cache.getAdvancedCache().getComponentRegistry().getComponent(ActivationManager.class);
+                    ActivationManager manager = registry.getComponent(ActivationManager.class);
                     result.set(manager != null ? manager.getActivationCount() : 0);
                     break;
                 }
                 case CACHE_LOADER_LOADS: {
-                    ActivationInterceptor interceptor = getFirstInterceptorWhichExtends(cache.getAdvancedCache()
-                            .getInterceptorChain(), ActivationInterceptor.class);
+                    ActivationInterceptor interceptor = getFirstInterceptorWhichExtends(interceptors, ActivationInterceptor.class);
                     result.set(interceptor != null ? interceptor.getCacheLoaderLoads() : 0);
                     break;
                 }
                 case CACHE_LOADER_MISSES: {
-                    ActivationInterceptor interceptor = getFirstInterceptorWhichExtends(cache.getAdvancedCache()
-                            .getInterceptorChain(), ActivationInterceptor.class);
+                    ActivationInterceptor interceptor = getFirstInterceptorWhichExtends(interceptors, ActivationInterceptor.class);
                     result.set(interceptor != null ? interceptor.getCacheLoaderMisses() : 0);
                     break;
                 }
                 case CACHE_LOADER_STORES: {
-                    CacheWriterInterceptor interceptor = getFirstInterceptorWhichExtends(cache.getAdvancedCache()
-                            .getInterceptorChain(), CacheWriterInterceptor.class);
+                    CacheWriterInterceptor interceptor = getFirstInterceptorWhichExtends(interceptors, CacheWriterInterceptor.class);
                     result.set(interceptor != null ? interceptor.getWritesToTheStores() : 0);
                     break;
                 }

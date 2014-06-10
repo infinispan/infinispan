@@ -262,7 +262,8 @@
       <replacement placeholder="CACHE-CONTAINERS">
          <cache-container name="local" default-cache="default">
             <security>
-                <authorization mapper="org.infinispan.security.impl.IdentityRoleMapper">
+                <authorization>
+                    <identity-role-mapper />
                     <role name="admin" permissions="ALL" />
                     <role name="reader" permissions="READ" />
                     <role name="writer" permissions="WRITE" />

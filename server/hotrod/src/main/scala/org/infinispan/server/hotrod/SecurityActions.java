@@ -6,6 +6,11 @@ import java.security.PrivilegedAction;
 import org.infinispan.AdvancedCache;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.factories.ComponentRegistry;
+import org.infinispan.manager.EmbeddedCacheManager;
+import org.infinispan.security.Security;
+import org.infinispan.security.actions.GetCacheAction;
+import org.infinispan.security.actions.GetCacheComponentRegistryAction;
+import org.infinispan.security.actions.GetCacheConfigurationAction;
 
 /**
  * SecurityActions for the org.infinispan.server.hotrod package.
@@ -17,30 +22,27 @@ import org.infinispan.factories.ComponentRegistry;
  * @since 7.0
  */
 final class SecurityActions {
-
-   static ComponentRegistry getCacheComponentRegistry(final AdvancedCache<?, ?> cache) {
+   private static <T> T doPrivileged(PrivilegedAction<T> action) {
       if (System.getSecurityManager() != null) {
-         return AccessController.doPrivileged(new PrivilegedAction<ComponentRegistry>() {
-            @Override
-            public ComponentRegistry run() {
-               return cache.getComponentRegistry();
-            }
-         });
+         return AccessController.doPrivileged(action);
       } else {
-         return cache.getComponentRegistry();
+         return Security.doPrivileged(action);
       }
    }
 
+   static ComponentRegistry getCacheComponentRegistry(final AdvancedCache<?, ?> cache) {
+      GetCacheComponentRegistryAction action = new GetCacheComponentRegistryAction(cache);
+      return doPrivileged(action);
+   }
+
    static Configuration getCacheConfiguration(final AdvancedCache<?, ?> cache) {
-      if (System.getSecurityManager() != null) {
-         return AccessController.doPrivileged(new PrivilegedAction<Configuration>() {
-            @Override
-            public Configuration run() {
-               return cache.getCacheConfiguration();
-            }
-         });
-      } else {
-         return cache.getCacheConfiguration();
-      }
+      GetCacheConfigurationAction action = new GetCacheConfigurationAction(cache);
+      return doPrivileged(action);
+   }
+
+   @SuppressWarnings("unchecked")
+   static <K, V> org.infinispan.Cache<K, V> getCache(final EmbeddedCacheManager cacheManager, String cacheName) {
+      GetCacheAction action = new GetCacheAction(cacheManager, cacheName);
+      return (org.infinispan.Cache<K, V>) doPrivileged(action);
    }
 }
