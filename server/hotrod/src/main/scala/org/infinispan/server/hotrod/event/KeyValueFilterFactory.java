@@ -1,4 +1,6 @@
-package org.infinispan.filter;
+package org.infinispan.server.hotrod.event;
+
+import org.infinispan.filter.KeyValueFilter;
 
 /**
  * @author Galder Zamarreño

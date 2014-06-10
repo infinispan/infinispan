@@ -162,7 +162,7 @@ public interface Log extends BasicLogger {
    @Message(value = "Unexpected error consuming event %s", id = 4038)
    void unexpectedErrorConsumingEvent(ClientEvent clientEvent, @Cause Throwable t);
 
-   @LogMessage(level = ERROR)
+   @LogMessage(level = WARN)
    @Message(value = "Unable to complete reading event from server %s", id = 4039)
    void unableToReadEventFromServer(@Cause Throwable t, SocketAddress server);
 

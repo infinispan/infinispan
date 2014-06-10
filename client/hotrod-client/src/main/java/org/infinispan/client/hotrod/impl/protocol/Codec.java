@@ -4,6 +4,7 @@ import org.infinispan.client.hotrod.event.ClientEvent;
 import org.infinispan.client.hotrod.impl.transport.Transport;
 import org.infinispan.client.hotrod.logging.Log;
 import org.infinispan.commons.marshall.Marshaller;
+import org.infinispan.commons.util.Either;
 
 /**
  * A Hot Rod protocol encoder/decoder.

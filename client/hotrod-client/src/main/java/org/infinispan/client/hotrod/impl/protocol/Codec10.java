@@ -20,6 +20,7 @@ import org.infinispan.client.hotrod.impl.transport.Transport;
 import org.infinispan.client.hotrod.logging.Log;
 import org.infinispan.client.hotrod.logging.LogFactory;
 import org.infinispan.commons.marshall.Marshaller;
+import org.infinispan.commons.util.Either;
 
 /**
  * A Hot Rod encoder/decoder for version 1.0 of the protocol.

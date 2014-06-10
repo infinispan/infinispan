@@ -74,7 +74,7 @@ public class ClientListenerNotifier {
                Util.printArray(op.listenerId), op.listener, invocables);
    }
 
-   public void failoverClientListeners(Set<SocketAddress> failedServers, TransportFactory transportFactory, AtomicInteger topologyId) {
+   public void failoverClientListeners(Set<SocketAddress> failedServers) {
       // Compile all listener ids that need failing over
       List<byte[]> failoverListenerIds = new ArrayList<>();
       for (Map.Entry<byte[], EventDispatcher> entry : clientListeners.entrySet()) {
@@ -88,13 +88,13 @@ public class ClientListenerNotifier {
       // Remove tracking listeners and read to the fallback transport
       for (byte[] listenerId : failoverListenerIds) {
          EventDispatcher dispatcher = clientListeners.get(listenerId);
-         SocketAddress failedServerAddress = dispatcher.transport.getRemoteSocketAddress();
          removeClientListener(listenerId);
          // Invoke failover event callback, if presents
          invokeFailoverEvent(dispatcher);
          // Re-execute adding client listener in one of the remaining nodes
          dispatcher.op.execute();
          if (log.isTraceEnabled()) {
+            SocketAddress failedServerAddress = dispatcher.transport.getRemoteSocketAddress();
             log.tracef("Fallback listener id %s from a failed server %s to %s",
                   Util.printArray(listenerId), failedServerAddress,
                   dispatcher.op.getDedicatedTransport().getRemoteSocketAddress());
@@ -120,9 +120,8 @@ public class ClientListenerNotifier {
    }
 
    public void removeClientListener(byte[] listenerId) {
-      EventDispatcher dispatcher = clientListeners.get(listenerId);
+      EventDispatcher dispatcher = clientListeners.remove(listenerId);
       dispatcher.transport.release(); // force shutting it
-      clientListeners.remove(listenerId);
       if (log.isTraceEnabled())
          log.tracef("Remove client listener with id %s", Util.printArray(listenerId));
    }
@@ -154,7 +153,7 @@ public class ClientListenerNotifier {
             Class<?>[] eventTypes = entry.getValue();
             if (m.isAnnotationPresent(annotationType)) {
                testListenerMethodValidity(m, eventTypes, annotationType.getName());
-               m.setAccessible(true);
+               SecurityActions.setAccessible(m);
                ClientListenerInvocation invocation = new ClientListenerInvocation(listener, m);
                List<ClientListenerInvocation> invocables = listenerMethodMap.get(annotationType);
                if (invocables == null) {
@@ -237,7 +236,6 @@ public class ClientListenerNotifier {
                   else if (clientEvent != null)
                      log.unexpectedErrorConsumingEvent(clientEvent, e);
                   else {
-                     // TODO: Convert to warn
                      log.unableToReadEventFromServer(e, transport.getRemoteSocketAddress());
                      return; // Server is likely gone!
                   }

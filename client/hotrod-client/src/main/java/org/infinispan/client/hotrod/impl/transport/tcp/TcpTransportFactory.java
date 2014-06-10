@@ -295,7 +295,7 @@ public class TcpTransportFactory implements TransportFactory {
          servers = Collections.unmodifiableList(new ArrayList(newServers));
 
          if (!failedServers.isEmpty()) {
-            listenerNotifier.failoverClientListeners(failedServers, this, topologyId);
+            listenerNotifier.failoverClientListeners(failedServers);
          }
       }
    }

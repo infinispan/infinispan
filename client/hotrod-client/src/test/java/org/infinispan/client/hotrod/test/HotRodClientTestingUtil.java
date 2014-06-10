@@ -162,12 +162,12 @@ public class HotRodClientTestingUtil {
          case CLIENT_CACHE_ENTRY_CREATED:
             ClientCacheEntryCreatedEvent createdEvent = eventListener.pollEvent(type);
             assertEquals(key, createdEvent.getKey());
-//            assertEquals(serverDataVersion(cache, key), createdEvent.getVersion());
+            assertEquals(serverDataVersion(cache, key), createdEvent.getVersion());
             break;
          case CLIENT_CACHE_ENTRY_MODIFIED:
             ClientCacheEntryModifiedEvent modifiedEvent = eventListener.pollEvent(type);
             assertEquals(key, modifiedEvent.getKey());
-//            assertEquals(serverDataVersion(cache, key), modifiedEvent.getVersion());
+            assertEquals(serverDataVersion(cache, key), modifiedEvent.getVersion());
             break;
          case CLIENT_CACHE_ENTRY_REMOVED:
             ClientCacheEntryRemovedEvent removedEvent = eventListener.pollEvent(type);

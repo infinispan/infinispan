@@ -13,6 +13,7 @@ import org.infinispan.client.hotrod.logging.Log;
 import org.infinispan.client.hotrod.logging.LogFactory;
 import org.infinispan.client.hotrod.marshall.MarshallerUtil;
 import org.infinispan.commons.marshall.Marshaller;
+import org.infinispan.commons.util.Either;
 
 import java.net.InetSocketAddress;
 import java.net.SocketAddress;

@@ -5,13 +5,12 @@ import org.infinispan.client.hotrod.annotation.ClientListener;
 import org.infinispan.client.hotrod.event.ClientEvent;
 import org.infinispan.client.hotrod.event.ClientListenerNotifier;
 import org.infinispan.client.hotrod.impl.protocol.Codec;
-import org.infinispan.client.hotrod.impl.protocol.Either;
+import org.infinispan.commons.util.Either;
 import org.infinispan.client.hotrod.impl.protocol.HeaderParams;
 import org.infinispan.client.hotrod.impl.transport.Transport;
 import org.infinispan.client.hotrod.impl.transport.TransportFactory;
 import org.infinispan.client.hotrod.logging.Log;
 import org.infinispan.client.hotrod.logging.LogFactory;
-import org.infinispan.commons.util.InfinispanCollections;
 import org.infinispan.commons.util.ReflectionUtil;
 
 import java.net.SocketAddress;
@@ -47,7 +46,6 @@ public class AddClientListenerOperation extends RetryOnFailureOperation<Short> {
          byte[][] filterFactoryParams, byte[][] converterFactoryParams) {
       super(codec, transportFactory, cacheName, topologyId, flags);
       this.listenerId = generateListenerId();
-//      this.dedicatedTransport = transportFactory.getTransport(InfinispanCollections.<SocketAddress>emptySet());
       this.listenerNotifier = listenerNotifier;
       this.listener = listener;
       this.filterFactoryParams = filterFactoryParams;
@@ -112,10 +110,9 @@ public class AddClientListenerOperation extends RetryOnFailureOperation<Short> {
    }
 
    private void writeNamedFactory(Transport transport, String factoryName, byte[][] params) {
-      if (factoryName.isEmpty()) {
-         transport.writeByte((short) 0);
-      } else {
-         transport.writeString(factoryName);
+      transport.writeString(factoryName);
+      if (!factoryName.isEmpty()) {
+         // A named factory was written, how many parameters?
          if (params != null) {
             transport.writeByte((short) params.length);
             for (byte[] param : params)

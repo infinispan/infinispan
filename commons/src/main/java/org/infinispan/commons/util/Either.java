@@ -1,4 +1,4 @@
-package org.infinispan.client.hotrod.impl.protocol;
+package org.infinispan.commons.util;
 
 import java.util.NoSuchElementException;
 
