@@ -23,6 +23,7 @@ Currently these subsets are predefined:
 
   -P suite.others                    (Tests that do not belong to any of the suites above. Useful when running a single test that's outside
                                       of any pre-defined group)
+  -P suite.query                     (Query related tests, everything contained in the 'query' package)
 
 Running with specific server zip distribution
 ---------------------------------------------
