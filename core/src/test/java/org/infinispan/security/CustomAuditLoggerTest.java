@@ -31,7 +31,7 @@ public class CustomAuditLoggerTest extends SingleCacheManagerTest {
    @Override
    protected EmbeddedCacheManager createCacheManager() throws Exception {
       GlobalConfigurationBuilder global = new GlobalConfigurationBuilder();
-      GlobalAuthorizationConfigurationBuilder globalRoles = global.security().authorization()
+      GlobalAuthorizationConfigurationBuilder globalRoles = global.security().authorization().enable()
             .principalRoleMapper(new IdentityRoleMapper()).auditLogger(LOGGER);
       ConfigurationBuilder config = TestCacheManagerFactory.getDefaultCacheConfiguration(true);
       AuthorizationConfigurationBuilder authConfig = config.security().authorization().enable();
