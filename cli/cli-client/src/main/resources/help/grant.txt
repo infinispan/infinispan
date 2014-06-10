@@ -1,0 +1,13 @@
+.SH SYNOPSIS
+.B grant
+.I role
+.B to
+.I principal
+.SH DESCRIPTION
+Grants an authorization role to a principal
+.SH ARGUMENTS
+.IP role
+the name of the role to grant to the principal
+.IP principal
+the name of the principal to which the role should be granted
+.SH OUTPUT

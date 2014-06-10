@@ -118,4 +118,10 @@ public interface Log extends org.infinispan.util.logging.Log {
 
    @Message(value = "Failure while encoding value of type '%s' using codec '%s'", id = 19030)
    CodecException valueEncodingFailed(String type, String codec);
+
+   @Message(value = "The container does not have authorization enabled", id = 19031)
+   StatementException authorizationNotEnabledOnContainer();
+
+   @Message(value = "The %s statement requires the ClusterPrincipalMapper", id = 19032)
+   StatementException noClusterPrincipalMapper(String stmt);
 }
