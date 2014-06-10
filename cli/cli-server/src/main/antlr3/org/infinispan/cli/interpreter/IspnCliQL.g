@@ -64,16 +64,19 @@ statement returns [Statement stmt]
    | clearStatement { $stmt = $clearStatement.stmt; }
    | commitTransactionStatement { $stmt = $commitTransactionStatement.stmt; }
    | createStatement { $stmt = $createStatement.stmt; }
+   | denyStatement { $stmt = $denyStatement.stmt; }
    | encodingStatement { $stmt = $encodingStatement.stmt; }
    | endBatchStatement { $stmt = $endBatchStatement.stmt; }
    | evictStatement { $stmt = $evictStatement.stmt; }
    | getStatement { $stmt = $getStatement.stmt; }
+   | grantStatement { $stmt = $grantStatement.stmt; }
    | infoStatement { $stmt = $infoStatement.stmt; }
    | locateStatement { $stmt = $locateStatement.stmt; }
    | pingStatement { $stmt = $pingStatement.stmt; }
    | putStatement { $stmt = $putStatement.stmt; }
    | removeStatement { $stmt = $removeStatement.stmt; }
    | replaceStatement { $stmt = $replaceStatement.stmt; }
+   | rolesStatement { $stmt = $rolesStatement.stmt; }
    | rollbackTransactionStatement { $stmt = $rollbackTransactionStatement.stmt; }
    | siteStatement { $stmt = $siteStatement.stmt; }
    | startBatchStatement { $stmt = $startBatchStatement.stmt; }
@@ -107,6 +110,11 @@ createStatement returns [CreateStatement stmt]
    : CREATE cacheName = STRINGLITERAL (LIKE baseCacheName = STRINGLITERAL)? (EOL | ';')! { $stmt = new CreateStatement(unquote($cacheName.text), unquote($baseCacheName.text)); }
    ;
 
+denyStatement returns [DenyStatement stmt]
+   : DENY roleName = STRINGLITERAL TO principalName = STRINGLITERAL (EOL | ';')! { $stmt = new DenyStatement($roleName.text, $principalName.text); }
+   ;
+
+
 encodingStatement returns [EncodingStatement stmt]
    : ENCODING opts = statementOptions (codecName = STRINGLITERAL)? (EOL | ';')! { $stmt = new EncodingStatement($opts.options, unquote($codecName.text)); }
    ;
@@ -121,6 +129,10 @@ evictStatement returns [EvictStatement stmt]
 
 getStatement returns [GetStatement stmt]
    : GET opts = statementOptions key = keyIdentifier (EOL | ';')! { $stmt = new GetStatement($opts.options, $key.key); }
+   ;
+
+grantStatement returns [GrantStatement stmt]
+   : GRANT roleName = STRINGLITERAL TO principalName = STRINGLITERAL (EOL | ';')! { $stmt = new GrantStatement($roleName.text, $principalName.text); }
    ;
 
 infoStatement returns [InfoStatement stmt]
@@ -145,6 +157,10 @@ removeStatement returns [RemoveStatement stmt]
 
 replaceStatement returns [ReplaceStatement stmt]
    : REPLACE opts = statementOptions key = keyIdentifier value1 = literal (value2 = literal)? (exp = expirationClause)? (EOL | ';')! { if ($value2.o==null) $stmt = new ReplaceStatement($opts.options, $key.key, $value1.o, $exp.exp); else $stmt = new ReplaceStatement($opts.options, $key.key, $value1.o, $value2.o, $exp.exp);}
+   ;
+
+rolesStatement returns [RolesStatement stmt]
+   : ROLES (principalName = STRINGLITERAL)? (EOL | ';')! { $stmt = new RolesStatement($principalName.text); }
    ;
 
 rollbackTransactionStatement returns [RollbackTransactionStatement stmt]
@@ -252,12 +268,14 @@ CACHE:   'cache';
 CLEAR:   'clear';
 COMMIT:  'commit';
 CREATE:  'create';
+DENY:   'deny';
 ENCODING: 'encoding';
 END:     'end';
 EVICT:   'evict';
 EXPIRES: 'expires';
 FALSE:   'false';
 GET:     'get';
+GRANT:   'grant';
 INFO:    'info';
 LIKE:    'like';
 LOCATE:  'locate';
@@ -267,10 +285,12 @@ PING:    'ping';
 PUT:     'put';
 REMOVE:  'remove';
 REPLACE: 'replace';
+ROLES:   'roles';
 ROLLBACK:'rollback';
 SITE:    'site';
 START:   'start';
 STATS:   'stats';
+TO:      'to';
 TRUE:    'true';
 UPGRADE: 'upgrade';
 VERSION: 'version';
