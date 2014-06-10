@@ -9,6 +9,12 @@ import org.jboss.logging.annotations.LogMessage;
 import org.jboss.logging.annotations.Message;
 import org.jboss.logging.annotations.MessageLogger;
 
+/**
+ * AuditMessages. Messages used by the security audit
+ *
+ * @author Tristan Tarrant
+ * @since 7.0
+ */
 @MessageLogger(projectCode="")
 public interface AuditMessages {
 

@@ -6,6 +6,7 @@ import org.infinispan.security.AuditContext;
 import org.infinispan.security.AuditLogger;
 import org.infinispan.security.AuditResponse;
 import org.infinispan.security.AuthorizationPermission;
+import org.infinispan.security.Security;
 import org.jboss.logging.Logger;
 
 /**
@@ -14,6 +15,7 @@ import org.jboss.logging.Logger;
  *
  * @author Tristan Tarrant
  * @since 7.0
+ * @public
  */
 public class DefaultAuditLogger implements AuditLogger {
    static final AuditMessages auditLog = Logger.getMessageLogger(AuditMessages.class, "org.infinispan.AUDIT");
@@ -21,6 +23,6 @@ public class DefaultAuditLogger implements AuditLogger {
    @Override
    public void audit(Subject subject, AuditContext context, String contextName, AuthorizationPermission permission,
          AuditResponse response) {
-      auditLog.auditMessage(response, AuthorizationHelper.getSubjectUserPrincipal(subject), permission, context, contextName);
+      auditLog.auditMessage(response, Security.getSubjectUserPrincipal(subject), permission, context, contextName);
    }
 }

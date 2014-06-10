@@ -48,6 +48,7 @@ import org.infinispan.lifecycle.ComponentStatus;
 import org.infinispan.lifecycle.Lifecycle;
 import org.infinispan.notifications.cachemanagerlistener.CacheManagerNotifier;
 import org.infinispan.persistence.manager.PersistenceManager;
+import org.infinispan.registry.impl.ClusterRegistryImpl;
 import org.infinispan.remoting.rpc.ResponseMode;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.remoting.transport.Transport;
@@ -618,7 +619,9 @@ public class DefaultCacheManager implements EmbeddedCacheManager {
                // make sure we stop the default cache LAST!
                Cache<?, ?> defaultCache = null;
                for (Map.Entry<String, CacheWrapper> entry : caches.entrySet()) {
-                  if (entry.getKey().equals(DEFAULT_CACHE_NAME)) {
+                  if (entry.getKey().equals(ClusterRegistryImpl.GLOBAL_REGISTRY_CACHE_NAME)) {
+                     // will be stopped by the GCR
+                  } else if (entry.getKey().equals(DEFAULT_CACHE_NAME)) {
                      defaultCache = entry.getValue().cache;
                   } else {
                      Cache<?, ?> c = entry.getValue().cache;
@@ -705,6 +708,7 @@ public class DefaultCacheManager implements EmbeddedCacheManager {
       // Since caches could be modified dynamically, make a safe copy of keys
       names.addAll(Immutables.immutableSetConvert(caches.keySet()));
       names.remove(DEFAULT_CACHE_NAME);
+      names.remove(ClusterRegistryImpl.GLOBAL_REGISTRY_CACHE_NAME);
       if (names.isEmpty())
          return InfinispanCollections.emptySet();
       else

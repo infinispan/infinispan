@@ -9,6 +9,7 @@ import org.infinispan.factories.annotations.Start;
 import org.infinispan.factories.annotations.Stop;
 import org.infinispan.notifications.IncorrectListenerException;
 import org.infinispan.notifications.Listener;
+import org.infinispan.security.Security;
 import org.infinispan.util.concurrent.WithinThreadExecutor;
 import org.infinispan.util.logging.Log;
 
@@ -19,8 +20,6 @@ import java.lang.annotation.Annotation;
 import java.lang.ref.WeakReference;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
-import java.security.AccessController;
-import java.security.PrivilegedAction;
 import java.security.PrivilegedActionException;
 import java.security.PrivilegedExceptionAction;
 import java.util.Collections;
@@ -172,7 +171,7 @@ public abstract class AbstractListenerImpl<T, L extends ListenerInvocation<T>> {
       Listener l = testListenerClassValidity(listener.getClass());
       boolean foundMethods = false;
       builder.setTarget(listener);
-      builder.setSubject(Subject.getSubject(AccessController.getContext()));
+      builder.setSubject(Security.getSubject());
       builder.setSync(l.sync());
       Map<Class<? extends Annotation>, Class<?>> allowedListeners = getAllowedMethodAnnotations(l);
       // now try all methods on the listener for anything that we like.  Note that only PUBLIC methods are scanned.
@@ -253,12 +252,12 @@ public abstract class AbstractListenerImpl<T, L extends ListenerInvocation<T>> {
                ClassLoader contextClassLoader = null;
                Transaction transaction = suspendIfNeeded();
                if (classLoader != null && classLoader.get() != null) {
-                  contextClassLoader = setContextClassLoader(classLoader.get());
+                  contextClassLoader = SecurityActions.setContextClassLoader(classLoader.get());
                }
                try {
                   if (subject != null) {
                      try {
-                        Subject.doAs(subject, new PrivilegedExceptionAction<Void>() {
+                        Security.doAs(subject, new PrivilegedExceptionAction<Void>() {
                            @Override
                            public Void run() throws Exception {
                               method.invoke(target, event);
@@ -291,7 +290,7 @@ public abstract class AbstractListenerImpl<T, L extends ListenerInvocation<T>> {
                   removeListener(target);
                } finally {
                   if (classLoader != null && classLoader.get() != null) {
-                     setContextClassLoader(contextClassLoader);
+                     SecurityActions.setContextClassLoader(contextClassLoader);
                   }
                   resumeIfNeeded(transaction);
                }
@@ -317,17 +316,5 @@ public abstract class AbstractListenerImpl<T, L extends ListenerInvocation<T>> {
          return getRealException(cause);
       else
          return re;
-   }
-
-   static ClassLoader setContextClassLoader(final ClassLoader loader) {
-      PrivilegedAction<ClassLoader> action = new PrivilegedAction<ClassLoader>() {
-         @Override
-         public ClassLoader run() {
-            ClassLoader contextClassLoader = Thread.currentThread().getContextClassLoader();
-            Thread.currentThread().setContextClassLoader(loader);
-            return contextClassLoader;
-         }
-      };
-      return AccessController.doPrivileged(action);
    }
 }
