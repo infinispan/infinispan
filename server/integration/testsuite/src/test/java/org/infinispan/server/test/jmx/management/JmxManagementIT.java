@@ -171,14 +171,14 @@ public class JmxManagementIT {
 
     @Test
     public void testCacheManagerAttributes() throws Exception {
-        assertEquals(3, Integer.parseInt(getAttribute(provider, cacheManagerMBean, "CreatedCacheCount")));
-        assertEquals(3, Integer.parseInt(getAttribute(provider, cacheManagerMBean, "DefinedCacheCount")));
+        assertEquals(4, Integer.parseInt(getAttribute(provider, cacheManagerMBean, "CreatedCacheCount")));
+        assertEquals(4, Integer.parseInt(getAttribute(provider, cacheManagerMBean, "DefinedCacheCount")));
         assertEquals("clustered", getAttribute(provider, cacheManagerMBean, "Name"));
         assertEquals(2, Integer.parseInt(getAttribute(provider, cacheManagerMBean, "ClusterSize")));
         assertEquals("RUNNING", getAttribute(provider, cacheManagerMBean, "CacheManagerStatus"));
         assertNotEquals(0, getAttribute(provider, cacheManagerMBean, "ClusterMembers").length());
         assertNotEquals(0, getAttribute(provider, cacheManagerMBean, "NodeAddress").length());
-        assertEquals(3, Integer.parseInt(getAttribute(provider, cacheManagerMBean, "RunningCacheCount")));
+        assertEquals(4, Integer.parseInt(getAttribute(provider, cacheManagerMBean, "RunningCacheCount")));
         assertNotEquals(0, getAttribute(provider, cacheManagerMBean, "PhysicalAddresses").length());
         assertEquals(Version.VERSION, getAttribute(provider, cacheManagerMBean, "Version"));
         String names = getAttribute(provider, cacheManagerMBean, "DefinedCacheNames");
