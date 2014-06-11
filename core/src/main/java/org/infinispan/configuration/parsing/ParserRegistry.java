@@ -9,6 +9,7 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.lang.ref.WeakReference;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.ServiceLoader;
 import java.util.concurrent.ConcurrentMap;
@@ -52,18 +53,11 @@ public class ParserRegistry implements NamespaceMappingParser {
       Collection<ConfigurationParser> parsers = ServiceFinder.load(ConfigurationParser.class, cl.get(), ParserRegistry.class.getClassLoader());
       for (ConfigurationParser parser : parsers) {
          try {
-            Namespaces namespacesAnnotation = parser.getClass().getAnnotation(Namespaces.class);
-            Namespace[] namespaces;
-            if (namespacesAnnotation != null) {
-               namespaces = namespacesAnnotation.value();
-            } else {
-               Namespace namespaceAnnotation = parser.getClass().getAnnotation(Namespace.class);
-               if (namespaceAnnotation != null) {
-                  namespaces = new Namespace[] { namespaceAnnotation };
-               } else {
-                  throw log.parserDoesNotDeclareNamespaces(parser.getClass().getName());
-               }
+            Namespace[] namespaces = parser.getNamespaces();
+            if (namespaces == null) {
+               throw log.parserDoesNotDeclareNamespaces(parser.getClass().getName());
             }
+
             for (Namespace ns : namespaces) {
                QName qName = new QName(ns.uri(), ns.root());
                if (parserMappings.putIfAbsent(qName, parser) != null) {

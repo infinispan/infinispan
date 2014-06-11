@@ -250,4 +250,19 @@ public final class ParseUtils {
         return String.format("Parsing problem at [row,col]:[%d ,%d]%nMessage: %s%n", location.getLineNumber(), location.getColumnNumber(), msg);
     }
 
+    public static Namespace[] getNamespaceAnnotations(Class<? extends ConfigurationParser> cls) {
+       Namespaces namespacesAnnotation = cls.getAnnotation(Namespaces.class);
+
+       if (namespacesAnnotation != null) {
+          return namespacesAnnotation.value();
+       }
+
+       Namespace namespaceAnnotation = cls.getAnnotation(Namespace.class);
+       if (namespaceAnnotation != null) {
+          return new Namespace[] { namespaceAnnotation };
+       }
+
+       return null;
+    }
+
 }

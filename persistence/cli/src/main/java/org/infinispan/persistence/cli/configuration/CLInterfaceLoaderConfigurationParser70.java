@@ -73,4 +73,9 @@ public class CLInterfaceLoaderConfigurationParser70 implements ConfigurationPars
       }
    }
 
+   @Override
+   public Namespace[] getNamespaces() {
+      return ParseUtils.getNamespaceAnnotations(getClass());
+   }
+
 }

@@ -348,4 +348,9 @@ public class JdbcStoreConfigurationParser70 implements ConfigurationParser {
       String type;
    }
 
+   @Override
+   public Namespace[] getNamespaces() {
+      return ParseUtils.getNamespaceAnnotations(getClass());
+   }
+
 }

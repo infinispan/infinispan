@@ -242,4 +242,9 @@ public class RemoteStoreConfigurationParser70 implements ConfigurationParser {
          }
       }
    }
+
+   @Override
+   public Namespace[] getNamespaces() {
+      return ParseUtils.getNamespaceAnnotations(getClass());
+   }
 }
