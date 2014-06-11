@@ -220,6 +220,8 @@
                            is defined in ISPN CORE TESTS, TODO: package just the TEST_PING protocol 
                            in a fragment and attach it to JGroups. -->
                         <Fragment-Host>org.jgroups;bundle-version=${version.jgroups}</Fragment-Host>
+                        <!-- Duplicate this header from infinispan-core when repackaging. -->
+                        <DynamicImport-Package>*</DynamicImport-Package>
                      </instructions>
                   </configuration>
                </execution>
