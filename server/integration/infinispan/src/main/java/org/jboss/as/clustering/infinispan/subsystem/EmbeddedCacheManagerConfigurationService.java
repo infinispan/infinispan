@@ -41,6 +41,7 @@ import org.infinispan.marshall.core.Ids;
 import org.infinispan.security.PrincipalRoleMapper;
 import org.jboss.as.clustering.infinispan.ChannelProvider;
 import org.jboss.as.clustering.infinispan.MBeanServerProvider;
+import org.jboss.as.clustering.infinispan.ManagedScheduledThreadPoolExecutorFactory;
 import org.jboss.as.clustering.infinispan.ManagedThreadPoolExecutorFactory;
 import org.jboss.as.clustering.infinispan.io.SimpleExternalizer;
 import org.jboss.as.clustering.jgroups.ChannelFactory;
@@ -208,12 +209,12 @@ public class EmbeddedCacheManagerConfigurationService implements Service<Embedde
         ScheduledExecutorService evictionExecutor = this.dependencies.getEvictionExecutor();
         if (evictionExecutor != null) {
             builder.evictionThreadPool().threadPoolFactory(
-                  new ManagedThreadPoolExecutorFactory(evictionExecutor));
+                  new ManagedScheduledThreadPoolExecutorFactory(evictionExecutor));
         }
         ScheduledExecutorService replicationQueueExecutor = this.dependencies.getReplicationQueueExecutor();
         if (replicationQueueExecutor != null) {
             builder.replicationQueueThreadPool().threadPoolFactory(
-                  new ManagedThreadPoolExecutorFactory(replicationQueueExecutor));
+                  new ManagedScheduledThreadPoolExecutorFactory(replicationQueueExecutor));
         }
 
         GlobalJmxStatisticsConfigurationBuilder jmxBuilder = builder.globalJmxStatistics().cacheManagerName(this.name);
