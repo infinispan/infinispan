@@ -205,6 +205,8 @@
                      org.w3c.dom,
                      org.xml.sax
                   </Import-Package>
+                  <!-- Required for loading client classes. -->
+                  <DynamicImport-Package>*</DynamicImport-Package>
                </instructions>
             </configuration>
          </plugin>
