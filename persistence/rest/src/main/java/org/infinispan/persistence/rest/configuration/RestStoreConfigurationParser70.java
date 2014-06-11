@@ -164,4 +164,9 @@ public class RestStoreConfigurationParser70 implements ConfigurationParser {
       }
    }
 
+   @Override
+   public Namespace[] getNamespaces() {
+      return ParseUtils.getNamespaceAnnotations(getClass());
+   }
+
 }

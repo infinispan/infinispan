@@ -78,4 +78,9 @@ public class JpaStoreConfigurationParser70 implements ConfigurationParser {
          throw ParseUtils.unexpectedElement(reader);
       }
    }
+
+   @Override
+   public Namespace[] getNamespaces() {
+      return ParseUtils.getNamespaceAnnotations(getClass());
+   }
 }

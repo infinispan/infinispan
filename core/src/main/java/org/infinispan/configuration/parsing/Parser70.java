@@ -1892,4 +1892,9 @@ public class Parser70 implements ConfigurationParser {
 
    }
 
+   @Override
+   public Namespace[] getNamespaces() {
+      return ParseUtils.getNamespaceAnnotations(getClass());
+   }
+
 }

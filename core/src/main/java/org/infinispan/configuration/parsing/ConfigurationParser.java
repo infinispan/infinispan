@@ -21,4 +21,6 @@ public interface ConfigurationParser {
     * @throws XMLStreamException
     */
    void readElement(XMLExtendedStreamReader reader, ConfigurationBuilderHolder holder) throws XMLStreamException;
+
+   Namespace[] getNamespaces();
 }
