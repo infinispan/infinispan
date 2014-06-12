@@ -112,7 +112,7 @@ public abstract class BaseQueryBuilder<T extends Query> implements QueryBuilder<
          throw new IllegalStateException("Sentence already started. Cannot use 'not(..)' again.");
       }
 
-      NotCondition notCondition = new NotCondition((BaseCondition) fcc);
+      NotCondition notCondition = new NotCondition(((BaseCondition) fcc).getRoot());
       notCondition.setQueryBuilder(this);
       filterCondition = notCondition;
       return filterCondition;

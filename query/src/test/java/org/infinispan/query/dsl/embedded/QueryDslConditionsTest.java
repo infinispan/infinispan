@@ -12,7 +12,6 @@ import org.infinispan.query.dsl.embedded.sample_domain_model.Transaction;
 import org.infinispan.query.dsl.embedded.sample_domain_model.User;
 import org.infinispan.test.fwk.CleanupAfterTest;
 import org.testng.annotations.BeforeClass;
-import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
 import java.util.Arrays;
@@ -547,6 +546,41 @@ public class QueryDslConditionsTest extends AbstractQueryDslTest {
 
       List<User> list = q.list();
       assertTrue(list.isEmpty());
+   }
+
+   public void testNot8() throws Exception {
+      QueryFactory qf = Search.getSearchManager(cache).getQueryFactory();
+
+      Query q = qf.from(User.class)
+            .not(
+                  qf.having("name").eq("John")
+                        .or(qf.having("surname").eq("Man")))
+            .toBuilder()
+            .build();
+
+      List<User> list = q.list();
+      assertEquals(1, list.size());
+      assertEquals("Spider", list.get(0).getName());
+      assertEquals("Woman", list.get(0).getSurname());
+   }
+
+   public void testNot9() throws Exception {
+      QueryFactory qf = Search.getSearchManager(cache).getQueryFactory();
+
+      Query q = qf.from(User.class)
+            .not(
+                  qf.having("name").eq("John")
+                        .and(qf.having("surname").eq("Doe")))
+            .toBuilder()
+            .orderBy("id", SortOrder.ASC)
+            .build();
+
+      List<User> list = q.list();
+      assertEquals(2, list.size());
+      assertEquals("Spider", list.get(0).getName());
+      assertEquals("Man", list.get(0).getSurname());
+      assertEquals("Spider", list.get(1).getName());
+      assertEquals("Woman", list.get(1).getSurname());
    }
 
    public void testEmptyQuery() throws Exception {
