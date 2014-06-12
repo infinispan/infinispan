@@ -233,6 +233,9 @@
         <server2.old.dist>${basedir}/target/server/node2_old</server2.old.dist>
         <server3.old.dist>${basedir}/target/server/node3_old</server3.old.dist>
 
+        <old.server.schema.version>6.1</old.server.schema.version>
+        <new.server.schema.version>7.0</new.server.schema.version>
+
         <server.jvm>${env.JAVA_HOME}</server.jvm>
         <resources.dir>${basedir}/src/test/resources</resources.dir>
 
@@ -370,6 +373,8 @@
 
                                     <property name="password.other" value="${password.other}"/>
                                     <property name="username.other" value="${username.other}"/>
+
+                                    <property name="new.server.schema.version" value="${new.server.schema.version}"/>
                                 </ant>
                                 <!-- It happens when you do not specify namespaces in the XSLT templates for the newly added nodes
                                      then the IBM jdk transformation is adding empty namespace there - not possible to influence this
@@ -464,6 +469,8 @@
                         <server.old.dist>${server.old.dist}</server.old.dist>
                         <server2.old.dist>${server2.old.dist}</server2.old.dist>
                         <server3.old.dist>${server3.old.dist}</server3.old.dist>
+                        <old.server.schema.version>${old.server.schema.version}</old.server.schema.version>
+                        <new.server.schema.version>${new.server.schema.version}</new.server.schema.version>
                         <server.jvm>${server.jvm}</server.jvm>
                         <server.jvm.args>${server.jvm.args}</server.jvm.args>
                         <log4j.configuration>${log4j.configuration}</log4j.configuration>
@@ -530,6 +537,7 @@
                             <goal>integration-test</goal>
                         </goals>
                         <configuration>
+                            <reportNameSuffix>${old.server.schema.version}-to-${new.server.schema.version}</reportNameSuffix>
                             <groups>org.infinispan.server.test.category.RollingUpgrades</groups>
                             <excludedGroups>${groups.unstable}</excludedGroups>
                             <systemPropertyVariables>

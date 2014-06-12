@@ -18,6 +18,7 @@
     <property name="log.level.infinispan" value="INFO"/>
     <property name="log.level.jgroups" value="INFO"/>
     <property name="log.level.console" value="INFO"/>
+    <property name="new.server.schema.version" value="${new.server.schema.version}"/>
 
     <filterset id="commonFilters" begintoken="${" endtoken="}">
         <filter token="leveldb.compression" value="${leveldb.compression}" />
@@ -166,15 +167,16 @@
         <transform in="examples/clustered-xsite.xml" out="examples/clustered-xsite2.xml" modifyInfinispan="${infinispan.parts}/xsite-server2.xml"/>
         <transform in="examples/clustered-xsite.xml" out="examples/clustered-xsite3.xml"
                    modifyInfinispan="${infinispan.parts}/xsite-server3.xml" modifyRelay="${other.parts}/xsite-relay-server3.xml"
-                   modifyMulticastAddress="${other.parts}/xsite-multicast-address-server3.xml"/>
+                   modifyMulticastAddress="${other.parts}/switch-multicast-address.xml"/>
         <transform in="examples/standalone-rcs-local.xml" out="examples/standalone-rcs-local.xml" modifyRemoteDestination="${other.parts}/rcs-remote-destination.xml"/>
         <transform in="examples/standalone-hotrod-rolling-upgrade.xml" out="examples/standalone-hotrod-rolling-upgrade.xml"
                    modifyRemoteDestination="${other.parts}/rcs-remote-destination.xml"/>
         <transform in="clustered.xml" out="examples/clustered-hotrod-rolling-upgrade.xml"
                    modifyRemoteDestination="${other.parts}/rcs-remote-destination.xml"
-                   modifyInfinispan="${infinispan.parts}/rolling-upgrades-clustered.xml"
-                   infinispanServerEndpoint="${other.parts}/rolling-upgrades-server-endpoint.xml"
-                   addNewHotrodSocketBinding="${other.parts}/socket-binding-hotrod-store.xml"/>
+                   modifyInfinispan="${infinispan.parts}/rolling-upgrades-clustered-${new.server.schema.version}.xml"
+                   infinispanServerEndpoint="${other.parts}/rolling-upgrades-server-endpoint-${new.server.schema.version}.xml"
+                   addNewHotrodSocketBinding="${other.parts}/socket-binding-hotrod-store.xml"
+                   modifyMulticastAddress="${other.parts}/switch-multicast-address.xml"/>
         <transform in="examples/standalone-rest-rolling-upgrade.xml" out="examples/standalone-rest-rolling-upgrade.xml"
                    modifyRemoteDestination="${other.parts}/rest-remote-destination.xml" removeRestSecurity="true"/>
         <transform in="examples/standalone-compatibility-mode.xml" out="examples/standalone-compatibility-mode.xml"/>
