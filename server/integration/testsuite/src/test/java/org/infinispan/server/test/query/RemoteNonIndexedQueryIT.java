@@ -28,12 +28,12 @@ import static org.junit.Assert.assertNotNull;
  */
 @RunWith(Arquillian.class)
 @WithRunningServer({@RunningServer(name = "remote-query")})
-public class RemoteNonIndexedQueryTest extends RemoteQueryBaseIT {
+public class RemoteNonIndexedQueryIT extends RemoteQueryBaseIT {
 
     @InfinispanResource("remote-query")
     protected RemoteInfinispanServer server;
 
-    public RemoteNonIndexedQueryTest() {
+    public RemoteNonIndexedQueryIT() {
         super("local", "notindexed");
     }
 
