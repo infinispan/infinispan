@@ -5,6 +5,7 @@ import java.security.AccessControlException;
 import java.security.AccessController;
 import java.security.Principal;
 import java.security.acl.Group;
+import java.util.Collections;
 import java.util.Set;
 
 import javax.security.auth.Subject;
@@ -103,7 +104,9 @@ public class AuthorizationHelper {
     * @return
     */
    public static Principal getSubjectUserPrincipal(Subject s) {
-      for (Principal p : s.getPrincipals()) {
+      @SuppressWarnings("unchecked")
+      Set<Principal> principals  = s == null ? Collections.EMPTY_SET : s.getPrincipals(); 
+      for (Principal p : principals) {
          if (!(p instanceof Group)) {
             return p;
          }
