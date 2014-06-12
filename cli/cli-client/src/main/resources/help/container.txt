@@ -5,5 +5,5 @@
 .SH DESCRIPTION
 Shows the available containers or selects a container to be used as default for CLI operations 
 .SH ARGUMENTS
-.IP cachename
+.IP containername
 (optional) the name of the container to set as default for the following operations
