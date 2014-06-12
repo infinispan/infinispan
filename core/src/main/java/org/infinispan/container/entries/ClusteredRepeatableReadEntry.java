@@ -7,8 +7,13 @@ import org.infinispan.container.entries.versioned.Versioned;
 import org.infinispan.container.versioning.EntryVersion;
 import org.infinispan.container.versioning.InequalVersionComparisonResult;
 import org.infinispan.context.impl.TxInvocationContext;
+import org.infinispan.persistence.PersistenceUtil;
+import org.infinispan.persistence.manager.PersistenceManager;
+import org.infinispan.util.TimeService;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
+
+import java.util.concurrent.atomic.AtomicReference;
 
 /**
  * A version of RepeatableReadEntry that can perform write-skew checks during prepare.
@@ -19,13 +24,15 @@ import org.infinispan.util.logging.LogFactory;
 public class ClusteredRepeatableReadEntry extends RepeatableReadEntry implements Versioned {
 
    private static final Log log = LogFactory.getLog(ClusteredRepeatableReadEntry.class);
+   private static final AtomicReference<Boolean> ignored = new AtomicReference<>();
 
    public ClusteredRepeatableReadEntry(Object key, Object value, Metadata metadata) {
       super(key, value, metadata);
    }
 
-   public boolean performWriteSkewCheck(DataContainer container, TxInvocationContext ctx, EntryVersion versionSeen,
-                                        VersionGenerator versionGenerator) {
+   public boolean performWriteSkewCheck(DataContainer container, PersistenceManager persistenceManager,
+                                        TxInvocationContext ctx, EntryVersion versionSeen,
+                                        VersionGenerator versionGenerator, TimeService timeService) {
       if (versionSeen == null) {
          if (log.isTraceEnabled()) {
             log.tracef("Perform write skew check for key %s but the key was not read. Skipping check!", key);
@@ -34,7 +41,8 @@ public class ClusteredRepeatableReadEntry extends RepeatableReadEntry implements
          return true;
       }
       EntryVersion prevVersion;
-      InternalCacheEntry ice = container.get(key);
+      InternalCacheEntry ice = PersistenceUtil.loadAndStoreInDataContainer(container, persistenceManager, getKey(),
+                                                                           ctx, timeService, ignored);
       if (ice == null) {
          if (log.isTraceEnabled()) {
             log.tracef("No entry for key %s found in data container" , key);

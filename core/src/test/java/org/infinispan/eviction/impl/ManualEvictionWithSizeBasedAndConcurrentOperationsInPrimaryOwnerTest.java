@@ -11,14 +11,13 @@ import org.infinispan.context.InvocationContext;
 import org.infinispan.distribution.DistributionManager;
 import org.infinispan.factories.annotations.Stop;
 import org.infinispan.filter.KeyFilter;
+import org.infinispan.filter.KeyValueFilter;
 import org.infinispan.interceptors.CacheLoaderInterceptor;
 import org.infinispan.interceptors.CacheWriterInterceptor;
-import org.infinispan.interceptors.DistCacheWriterInterceptor;
 import org.infinispan.interceptors.InterceptorChain;
 import org.infinispan.interceptors.base.CommandInterceptor;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.metadata.Metadata;
-import org.infinispan.filter.KeyValueFilter;
 import org.infinispan.notifications.cachelistener.annotation.CacheEntriesEvicted;
 import org.infinispan.notifications.cachelistener.event.CacheEntriesEvictedEvent;
 import org.infinispan.persistence.dummy.DummyInMemoryStoreConfigurationBuilder;
@@ -110,7 +109,7 @@ public class ManualEvictionWithSizeBasedAndConcurrentOperationsInPrimaryOwnerTes
       initializeKeyAndCheckData(key1, "v1");
 
       final Latch latch = new Latch();
-      final ControlledDataContainer controller = replaceControlledDataContainer(latch);
+      replaceControlledDataContainer(latch);
 
       //this will trigger the eviction of key1. key1 eviction will be blocked in the latch
       latch.enable();
@@ -374,6 +373,7 @@ public class ManualEvictionWithSizeBasedAndConcurrentOperationsInPrimaryOwnerTes
 
    private ControlledDataContainer replaceControlledDataContainer(final Latch latch) {
       DataContainer current = TestingUtil.extractComponent(cache, DataContainer.class);
+      //noinspection unchecked
       ControlledDataContainer controlledDataContainer = new ControlledDataContainer(current);
       controlledDataContainer.beforeEvict = new Runnable() {
          @Override
@@ -419,10 +419,10 @@ public class ManualEvictionWithSizeBasedAndConcurrentOperationsInPrimaryOwnerTes
 
    private class ControlledDataContainer<K, V> implements DataContainer<K, V> {
 
-      private final DataContainer delegate;
+      private final DataContainer<K, V> delegate;
       private volatile Runnable beforeEvict;
 
-      private ControlledDataContainer(DataContainer delegate) {
+      private ControlledDataContainer(DataContainer<K, V> delegate) {
          this.delegate = delegate;
       }
 
@@ -483,26 +483,19 @@ public class ManualEvictionWithSizeBasedAndConcurrentOperationsInPrimaryOwnerTes
       }
 
       @Override
-      public void evict(Object key) {
+      public void evict(K key) {
          run(beforeEvict);
          delegate.evict(key);
       }
 
       @Override
-      public void compute(Object key, ComputeAction action) {
-         delegate.compute(key, action);
+      public InternalCacheEntry<K, V> compute(K key, ComputeAction<K, V> action) {
+         return delegate.compute(key, action);
       }
 
       @Override
       public Iterator<InternalCacheEntry<K, V>> iterator() {
          return delegate.iterator();
-      }
-
-      private void run(Runnable runnable) {
-         if (runnable == null) {
-            return;
-         }
-         runnable.run();
       }
 
       @Override
@@ -514,6 +507,13 @@ public class ManualEvictionWithSizeBasedAndConcurrentOperationsInPrimaryOwnerTes
       @Override
       public void executeTask(KeyValueFilter<? super K, ? super V> filter, KeyValueAction<? super K, InternalCacheEntry<? super K, ? super V>> action) throws InterruptedException {
          throw new NotImplementedException();
+      }
+
+      private void run(Runnable runnable) {
+         if (runnable == null) {
+            return;
+         }
+         runnable.run();
       }
    }
 

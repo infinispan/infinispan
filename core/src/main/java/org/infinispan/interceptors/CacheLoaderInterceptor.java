@@ -28,12 +28,11 @@ import org.infinispan.jmx.annotations.ManagedAttribute;
 import org.infinispan.jmx.annotations.ManagedOperation;
 import org.infinispan.jmx.annotations.MeasurementType;
 import org.infinispan.jmx.annotations.Parameter;
-import org.infinispan.metadata.impl.InternalMetadataImpl;
 import org.infinispan.filter.CollectionKeyFilter;
+import org.infinispan.persistence.PersistenceUtil;
 import org.infinispan.persistence.manager.PersistenceManager;
 import org.infinispan.persistence.spi.AdvancedCacheLoader;
 import org.infinispan.marshall.core.MarshalledEntry;
-import org.infinispan.metadata.InternalMetadata;
 import org.infinispan.metadata.Metadata;
 import org.infinispan.metadata.Metadatas;
 import org.infinispan.notifications.cachelistener.CacheNotifier;
@@ -270,60 +269,17 @@ public class CacheLoaderInterceptor extends JmxStatsCommandInterceptor {
       }
 
       final boolean isDelta = cmd instanceof ApplyDeltaCommand;
-      final AtomicReference<Boolean> isLoaded = new AtomicReference<Boolean>();
-      dataContainer.compute(key, new DataContainer.ComputeAction() {
-         @Override
-         public InternalCacheEntry compute(Object key, InternalCacheEntry oldEntry,
-                                           InternalEntryFactory factory) {
-            //under the lock, check if the entry exists in the DataContainer
-            if (oldEntry != null) {
-               wrapInternalCacheEntry(ctx, key, cmd, oldEntry, isDelta);
-               isLoaded.set(null); //not loaded
-               return oldEntry; //no changes in container
-            }
-
-            MarshalledEntry loaded = internalLoadAndUpdateStats(key, ctx);
-            if(loaded == null) {
-               isLoaded.set(Boolean.FALSE); //not loaded
-               return null; //no changed in container
-            }
-
-            InternalCacheEntry newEntry;
-            InternalMetadata metadata = loaded.getMetadata();
-            if (metadata != null) {
-               Metadata actual = metadata instanceof InternalMetadataImpl ? ((InternalMetadataImpl) metadata).actual() :
-                     metadata;
-               newEntry = factory.create(loaded.getKey(), loaded.getValue(), actual, metadata.created(), metadata.lifespan(),
-                                       metadata.lastUsed(), metadata.maxIdle());
-            } else {
-               //metadata is null!
-               newEntry = factory.create(loaded.getKey(), loaded.getValue(), (Metadata) null);
-            }
-            CacheEntry wrappedEntry = wrapInternalCacheEntry(ctx, key, cmd, newEntry, isDelta);
-            recordLoadedEntry(ctx, key, wrappedEntry, newEntry, cmd);
-            //afterSuccessfullyLoaded(wrappedEntry);
-
-            isLoaded.set(Boolean.TRUE); //loaded!
-            return newEntry;
+      final AtomicReference<Boolean> isLoaded = new AtomicReference<>();
+      InternalCacheEntry entry = PersistenceUtil.loadAndStoreInDataContainer(dataContainer, persistenceManager, key,
+                                                                             ctx, timeService, isLoaded);
+      if (entry != null) {
+         CacheEntry wrappedEntry = wrapInternalCacheEntry(ctx, key, cmd, entry, isDelta);
+         if (isLoaded.get() == Boolean.TRUE) {
+            recordLoadedEntry(ctx, key, wrappedEntry, entry, cmd);
          }
-      });
 
+      }
       return isLoaded.get();
-   }
-
-   private MarshalledEntry internalLoadAndUpdateStats(Object key, InvocationContext context) {
-      final MarshalledEntry loaded = persistenceManager.loadFromAllStores(key, context);
-      if (getLog().isTraceEnabled()) {
-         getLog().tracef("Loaded %s for key %s from persistence.", loaded, key);
-      }
-      if(loaded == null) {
-         return null;
-      }
-      InternalMetadata metadata = loaded.getMetadata();
-      if (metadata != null && metadata.isExpired(timeService.wallClockTime())) {
-         return null;
-      }
-      return loaded;
    }
 
    private CacheEntry wrapInternalCacheEntry(InvocationContext ctx, Object key, FlagAffectedCommand cmd,

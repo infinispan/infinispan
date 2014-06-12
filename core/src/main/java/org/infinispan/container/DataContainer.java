@@ -6,7 +6,6 @@ import java.util.Set;
 import org.infinispan.filter.KeyFilter;
 import org.infinispan.metadata.Metadata;
 import org.infinispan.filter.KeyValueFilter;
-import org.infinispan.persistence.spi.AdvancedCacheLoader;
 import org.infinispan.commons.util.concurrent.ParallelIterableMap;
 import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.factories.annotations.Stop;
@@ -31,7 +30,7 @@ public interface DataContainer<K, V> extends Iterable<InternalCacheEntry<K, V>> 
     * @return entry, if it exists and has not expired, or null if not
     */
    InternalCacheEntry<K, V> get(Object k);
-   
+
    /**
     * Retrieves a cache entry in the same way as {@link #get(Object)}} except that it does not update or reorder any of
     * the internal constructs. I.e., expiration does not happen, and in the case of the LRU container, the entry is not
@@ -129,15 +128,17 @@ public interface DataContainer<K, V> extends Iterable<InternalCacheEntry<K, V>> 
    /**
     * Computes the new value for the key.
     * <p/>
-    * See {@link org.infinispan.container.DataContainer.ComputeAction#compute(Object, org.infinispan.container.entries.InternalCacheEntry, InternalEntryFactory)}.
+    * See {@link org.infinispan.container.DataContainer.ComputeAction#compute(Object,
+    * org.infinispan.container.entries.InternalCacheEntry, InternalEntryFactory)}.
     * <p/>
     * If the {@code key} does not exists previously, it must be activate by invoking {@link
     * org.infinispan.eviction.ActivationManager#activate(Object)}.
     *
     * @param key    The key.
     * @param action The action that will compute the new value.
+    * @return The {@link org.infinispan.container.entries.InternalCacheEntry} associated to the key.
     */
-   void compute(K key, ComputeAction<K, V> action);
+   InternalCacheEntry<K, V> compute(K key, ComputeAction<K, V> action);
 
    /**
     * Executes task specified by the given action on the container key/values filtered using the specified key filter.

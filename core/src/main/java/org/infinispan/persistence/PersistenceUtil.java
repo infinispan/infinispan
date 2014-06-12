@@ -1,13 +1,18 @@
 package org.infinispan.persistence;
 
+import org.infinispan.container.DataContainer;
 import org.infinispan.container.InternalEntryFactory;
 import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.container.entries.InternalCacheValue;
+import org.infinispan.context.InvocationContext;
 import org.infinispan.filter.KeyFilter;
 import org.infinispan.marshall.core.MarshalledEntry;
 import org.infinispan.metadata.InternalMetadata;
+import org.infinispan.metadata.Metadata;
 import org.infinispan.metadata.impl.InternalMetadataImpl;
+import org.infinispan.persistence.manager.PersistenceManager;
 import org.infinispan.persistence.spi.AdvancedCacheLoader;
+import org.infinispan.util.TimeService;
 import org.infinispan.util.concurrent.WithinThreadExecutor;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
@@ -16,6 +21,7 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicReference;
 
 /**
  * @author Mircea Markus
@@ -76,5 +82,60 @@ public class PersistenceUtil {
 
    public static InternalMetadata internalMetadata(InternalCacheValue icv) {
       return icv.getMetadata() == null ? null : new InternalMetadataImpl(icv.getMetadata(), icv.getCreated(), icv.getLastUsed());
+   }
+
+   public static <K, V> InternalCacheEntry<K,V> loadAndStoreInDataContainer(DataContainer<K, V> dataContainer, final PersistenceManager persistenceManager,
+                                                         K key, final InvocationContext ctx, final TimeService timeService,
+                                                         final AtomicReference<Boolean> isLoaded) {
+      return dataContainer.compute(key, new DataContainer.ComputeAction<K, V>() {
+         @Override
+         public InternalCacheEntry<K, V> compute(K key, InternalCacheEntry<K, V> oldEntry,
+                                                 InternalEntryFactory factory) {
+            //under the lock, check if the entry exists in the DataContainer
+            if (oldEntry != null) {
+               isLoaded.set(null); //not loaded
+               return oldEntry; //no changes in container
+            }
+
+            MarshalledEntry loaded = loadAndCheckExpiration(persistenceManager, key, ctx, timeService);
+            if (loaded == null) {
+               isLoaded.set(Boolean.FALSE); //not loaded
+               return null; //no changed in container
+            }
+
+            InternalCacheEntry<K, V> newEntry;
+            InternalMetadata metadata = loaded.getMetadata();
+            if (metadata != null) {
+               Metadata actual = metadata instanceof InternalMetadataImpl ? ((InternalMetadataImpl) metadata).actual() :
+                     metadata;
+               //noinspection unchecked
+               newEntry = factory.create(loaded.getKey(), loaded.getValue(), actual, metadata.created(), metadata.lifespan(),
+                                         metadata.lastUsed(), metadata.maxIdle());
+            } else {
+               //metadata is null!
+               //noinspection unchecked
+               newEntry = factory.create(loaded.getKey(), loaded.getValue(), (Metadata) null);
+            }
+
+            isLoaded.set(Boolean.TRUE); //loaded!
+            return newEntry;
+         }
+      });
+   }
+
+   public static MarshalledEntry loadAndCheckExpiration(PersistenceManager persistenceManager, Object key,
+                                                        InvocationContext context, TimeService timeService) {
+      final MarshalledEntry loaded = persistenceManager.loadFromAllStores(key, context);
+      if (log.isTraceEnabled()) {
+         log.tracef("Loaded %s for key %s from persistence.", loaded, key);
+      }
+      if (loaded == null) {
+         return null;
+      }
+      InternalMetadata metadata = loaded.getMetadata();
+      if (metadata != null && metadata.isExpired(timeService.wallClockTime())) {
+         return null;
+      }
+      return loaded;
    }
 }

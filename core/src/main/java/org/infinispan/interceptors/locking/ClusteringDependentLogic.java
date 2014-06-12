@@ -21,6 +21,7 @@ import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.scopes.Scope;
 import org.infinispan.factories.scopes.Scopes;
 import org.infinispan.notifications.cachelistener.CacheNotifier;
+import org.infinispan.persistence.manager.PersistenceManager;
 import org.infinispan.remoting.rpc.RpcManager;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.statetransfer.CommitManager;
@@ -28,6 +29,7 @@ import org.infinispan.statetransfer.StateTransferLock;
 import org.infinispan.statetransfer.StateTransferManager;
 import org.infinispan.transaction.impl.WriteSkewHelper;
 import org.infinispan.transaction.xa.CacheTransaction;
+import org.infinispan.util.TimeService;
 
 import java.util.Collection;
 import java.util.List;
@@ -71,15 +73,19 @@ public interface ClusteringDependentLogic {
       protected boolean totalOrder;
       private WriteSkewHelper.KeySpecificLogic keySpecificLogic;
       protected CommitManager commitManager;
+      protected PersistenceManager persistenceManager;
+      protected TimeService timeService;
 
       @Inject
       public void init(DataContainer dataContainer, CacheNotifier notifier, Configuration configuration,
-                       CommitManager commitManager) {
+                       CommitManager commitManager, PersistenceManager persistenceManager, TimeService timeService) {
          this.dataContainer = dataContainer;
          this.notifier = notifier;
          this.totalOrder = configuration.transaction().transactionProtocol().isTotalOrder();
          this.keySpecificLogic = initKeySpecificLogic(totalOrder);
          this.commitManager = commitManager;
+         this.persistenceManager = persistenceManager;
+         this.timeService = timeService;
       }
 
       @Override
@@ -125,7 +131,8 @@ public interface ClusteringDependentLogic {
 
          if (!((TotalOrderPrepareCommand) prepareCommand).skipWriteSkewCheck()) {
             updatedVersionMap = performTotalOrderWriteSkewCheckAndReturnNewVersions(prepareCommand, dataContainer,
-                                                                                    versionGenerator, context, keySpecificLogic);
+                                                                                    persistenceManager, versionGenerator,
+                                                                                    context, keySpecificLogic, timeService);
          }
 
          for (WriteCommand c : prepareCommand.getModifications()) {
@@ -146,8 +153,8 @@ public interface ClusteringDependentLogic {
                                                                                VersionedPrepareCommand prepareCommand) {
          // Perform a write skew check on mapped entries.
          EntryVersionsMap uv = performWriteSkewCheckAndReturnNewVersions(prepareCommand, dataContainer,
-                                                                         versionGenerator, context,
-                                                                         keySpecificLogic);
+                                                                         persistenceManager, versionGenerator, context,
+                                                                         keySpecificLogic, timeService);
 
          CacheTransaction cacheTransaction = context.getCacheTransaction();
          EntryVersionsMap uvOld = cacheTransaction.getUpdatedEntryVersions();
