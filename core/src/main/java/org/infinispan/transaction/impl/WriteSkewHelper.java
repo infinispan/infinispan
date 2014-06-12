@@ -8,10 +8,12 @@ import org.infinispan.container.versioning.EntryVersionsMap;
 import org.infinispan.container.versioning.IncrementableEntryVersion;
 import org.infinispan.container.versioning.VersionGenerator;
 import org.infinispan.context.impl.TxInvocationContext;
+import org.infinispan.persistence.manager.PersistenceManager;
 import org.infinispan.remoting.responses.Response;
 import org.infinispan.remoting.responses.SuccessfulResponse;
 import org.infinispan.transaction.WriteSkewException;
 import org.infinispan.transaction.xa.CacheTransaction;
+import org.infinispan.util.TimeService;
 
 /**
  * Encapsulates write skew logic in maintaining version maps, etc.
@@ -31,23 +33,26 @@ public class WriteSkewHelper {
 
    public static EntryVersionsMap performWriteSkewCheckAndReturnNewVersions(VersionedPrepareCommand prepareCommand,
                                                                             DataContainer dataContainer,
+                                                                            PersistenceManager persistenceManager,
                                                                             VersionGenerator versionGenerator,
                                                                             TxInvocationContext context,
-                                                                            KeySpecificLogic ksl) {
+                                                                            KeySpecificLogic ksl, TimeService timeService) {
       EntryVersionsMap uv = new EntryVersionsMap();
       for (WriteCommand c : prepareCommand.getModifications()) {
          for (Object k : c.getAffectedKeys()) {
             if (ksl.performCheckOnKey(k)) {
                ClusteredRepeatableReadEntry entry = (ClusteredRepeatableReadEntry) context.lookupEntry(k);
 
-               if (entry.performWriteSkewCheck(dataContainer, context, prepareCommand.getVersionsSeen().get(k), versionGenerator)) {
+               if (entry.performWriteSkewCheck(dataContainer, persistenceManager, context,
+                                               prepareCommand.getVersionsSeen().get(k), versionGenerator, timeService)) {
                   IncrementableEntryVersion newVersion = entry.isCreated()
                         ? versionGenerator.generateNew()
                         : versionGenerator.increment((IncrementableEntryVersion) entry.getMetadata().version());
                   uv.put(k, newVersion);
                } else {
                   // Write skew check detected!
-                  throw new WriteSkewException("Write skew detected on key " + k + " for transaction " + context.getTransaction(), k);
+                  throw new WriteSkewException("Write skew detected on key " + k + " for transaction " +
+                                                     context.getTransaction(), k);
                }
             }
          }
@@ -57,21 +62,25 @@ public class WriteSkewHelper {
 
    public static EntryVersionsMap performTotalOrderWriteSkewCheckAndReturnNewVersions(VersionedPrepareCommand prepareCommand,
                                                                                       DataContainer dataContainer,
+                                                                                      PersistenceManager persistenceManager,
                                                                                       VersionGenerator versionGenerator,
                                                                                       TxInvocationContext context,
-                                                                                      KeySpecificLogic ksl) {
+                                                                                      KeySpecificLogic ksl,
+                                                                                      TimeService timeService) {
       EntryVersionsMap uv = new EntryVersionsMap();
       for (WriteCommand c : prepareCommand.getModifications()) {
          for (Object k : c.getAffectedKeys()) {
             if (ksl.performCheckOnKey(k)) {
                ClusteredRepeatableReadEntry entry = (ClusteredRepeatableReadEntry) context.lookupEntry(k);
 
-               if (entry.performWriteSkewCheck(dataContainer, context, prepareCommand.getVersionsSeen().get(k), versionGenerator)) {
+               if (entry.performWriteSkewCheck(dataContainer, persistenceManager, context,
+                                               prepareCommand.getVersionsSeen().get(k), versionGenerator, timeService)) {
                   //in total order, it does not care about the version returned. It just need the keys validated
                   uv.put(k, null);
                } else {
                   // Write skew check detected!
-                  throw new WriteSkewException("Write skew detected on key " + k + " for transaction " + context.getTransaction(), k);
+                  throw new WriteSkewException("Write skew detected on key " + k + " for transaction " +
+                                                     context.getTransaction(), k);
                }
             }
          }

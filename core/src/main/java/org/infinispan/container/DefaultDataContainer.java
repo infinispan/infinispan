@@ -234,8 +234,8 @@ public class DefaultDataContainer<K, V> implements DataContainer<K, V> {
    }
 
    @Override
-   public void compute(K key, ComputeAction<K, V> action) {
-      extendedMap.compute(key, action);
+   public InternalCacheEntry<K, V> compute(K key, ComputeAction<K, V> action) {
+      return extendedMap.compute(key, action);
    }
 
    @Override
@@ -428,7 +428,7 @@ public class DefaultDataContainer<K, V> implements DataContainer<K, V> {
    private static interface ExtendedMap<K, V> {
       void evict(K key);
 
-      void compute(K key, ComputeAction<K, V> action);
+      InternalCacheEntry<K, V> compute(K key, ComputeAction<K, V> action);
 
       void putAndActivate(InternalCacheEntry<K, V> newEntry);
    }
@@ -447,8 +447,8 @@ public class DefaultDataContainer<K, V> implements DataContainer<K, V> {
       }
 
       @Override
-      public void compute(K key, final ComputeAction<K, V> action) {
-         ((EquivalentConcurrentHashMapV8<K, InternalCacheEntry<K, V>>) entries)
+      public InternalCacheEntry<K, V> compute(K key, final ComputeAction<K, V> action) {
+         return ((EquivalentConcurrentHashMapV8<K, InternalCacheEntry<K, V>>) entries)
                .compute(key, new EquivalentConcurrentHashMapV8.BiFun<K, InternalCacheEntry<K, V>, InternalCacheEntry<K, V>>() {
                   @Override
                   public InternalCacheEntry<K, V> apply(K key, InternalCacheEntry<K, V> oldEntry) {
@@ -493,7 +493,7 @@ public class DefaultDataContainer<K, V> implements DataContainer<K, V> {
       }
 
       @Override
-      public void compute(K key, final ComputeAction<K, V> action) {
+      public InternalCacheEntry<K, V> compute(K key, final ComputeAction<K, V> action) {
          final BoundedConcurrentHashMap<K, InternalCacheEntry<K, V>> boundedMap =
                ((BoundedConcurrentHashMap<K, InternalCacheEntry<K, V>>) entries);
          boundedMap.lock(key);
@@ -501,15 +501,16 @@ public class DefaultDataContainer<K, V> implements DataContainer<K, V> {
             InternalCacheEntry<K, V> oldEntry = boundedMap.get(key);
             InternalCacheEntry<K, V> newEntry = action.compute(key, oldEntry, entryFactory);
             if (oldEntry == newEntry) {
-               return;
+               return newEntry;
             } else if (newEntry == null) {
                boundedMap.remove(key);
-               return;
+               return null;
             }
             if (trace)
                log.tracef("Store %s in container", newEntry);
             //put already activate the entry if it is new.
             boundedMap.put(key, newEntry);
+            return newEntry;
          } finally {
             boundedMap.unlock(key);
          }

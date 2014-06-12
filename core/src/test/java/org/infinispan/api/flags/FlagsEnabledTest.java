@@ -14,6 +14,7 @@ import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.cache.VersioningScheme;
 import org.infinispan.context.Flag;
 import org.infinispan.distribution.MagicKey;
+import org.infinispan.interceptors.locking.ClusteringDependentLogic;
 import org.infinispan.persistence.UnnecessaryLoadingTest;
 import org.infinispan.persistence.dummy.DummyInMemoryStoreConfigurationBuilder;
 import org.infinispan.test.MultipleCacheManagersTest;
@@ -78,17 +79,20 @@ public class FlagsEnabledTest extends MultipleCacheManagersTest {
 
       cache1.put("nonLocal", "value");
       assertCacheValue(cache2, "nonLocal", "value");
-      assertNumberOfLoads(cache1, 2);
+
+      //ISPN-4387 incremented since the write-skew check tries to load it from persistence.
+      int cache1Loads = isTxCache() ? 3 : 2;
+      assertNumberOfLoads(cache1, cache1Loads);
       assertNumberOfLoads(cache2, 1); //not incremented since ISPN-1642
 
       final AdvancedCache<String, String> cache1SkipRemoteAndStores = cache1LocalOnly.withFlags(SKIP_CACHE_STORE);
       cache1SkipRemoteAndStores.put("again", "value");
-      assertNumberOfLoads(cache1, 2);
+      assertNumberOfLoads(cache1, cache1Loads);
       assertNumberOfLoads(cache2, 1);
       assertCacheValue(cache1, "again", "value");
       assertCacheValue(cache2, "again", null);
 
-      assertNumberOfLoads(cache1, 2);
+      assertNumberOfLoads(cache1, cache1Loads);
       assertNumberOfLoads(cache2, 2); //"again" wasn't found in cache, looks into store
 
       assertCacheValue(cache2, "again", null);
@@ -96,9 +100,9 @@ public class FlagsEnabledTest extends MultipleCacheManagersTest {
       assertCacheValue(cache2.withFlags(SKIP_CACHE_STORE), "again", null);
       assertNumberOfLoads(cache2, 3);
 
-      assertNumberOfLoads(cache1, 2);
+      assertNumberOfLoads(cache1, cache1Loads);
       assertCacheValue(cache1LocalOnly, "localStored", null);
-      assertNumberOfLoads(cache1, 3); //options on cache1SkipRemoteAndStores did NOT affect this cache
+      assertNumberOfLoads(cache1, ++cache1Loads); //options on cache1SkipRemoteAndStores did NOT affect this cache
    }
 
    public void testWithFlagsAndDelegateCache() {
@@ -121,7 +125,8 @@ public class FlagsEnabledTest extends MultipleCacheManagersTest {
       cache1.withFlags(Flag.SKIP_CACHE_LOAD).put(k, v);
       assertCacheValue(cache2, k, v);
 
-      assertNumberOfLoads(cache1, 0);
+      //ISPN-4387 incremented since the write-skew check tries to load it from persistence.
+      assertNumberOfLoads(cache1, isTxCache() ? 1 : 0);
       assertNumberOfLoads(cache2, 0);
    }
 
@@ -176,8 +181,10 @@ public class FlagsEnabledTest extends MultipleCacheManagersTest {
       });
 
       assertCacheValue(cache2, k, v);
-      assertNumberOfLoads(cache1, 0);
-      assertNumberOfLoads(cache2, 0);
+
+      //ISPN-4387 incremented since the write-skew check tries to load it from persistence.
+      assertNumberOfLoads(cache1, isPrimaryOwner(cache1, k) ? 1 : 0);
+      assertNumberOfLoads(cache2, isPrimaryOwner(cache2, k) ? 1 : 0);
    }
 
    public static class CustomDelegateCache<K, V>
@@ -201,4 +208,11 @@ public class FlagsEnabledTest extends MultipleCacheManagersTest {
       assertEquals("Wrong value for key '" + key + "' in cache '" + cache + "'.", value, cache.get(key));
    }
 
+   private boolean isPrimaryOwner(Cache<?, ?> cache, Object key) {
+      return TestingUtil.extractComponent(cache, ClusteringDependentLogic.class).localNodeIsPrimaryOwner(key);
+   }
+
+   private boolean isTxCache() {
+      return advancedCache(0, cacheName).getCacheConfiguration().transaction().transactionMode().isTransactional();
+   }
 }

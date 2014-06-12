@@ -113,9 +113,9 @@ public class QueryableDataContainer implements DataContainer<Object, Object> {
    }
 
    @Override
-   public void compute(Object key, ComputeAction action) {
+   public InternalCacheEntry<Object, Object> compute(Object key, ComputeAction<Object, Object> action) {
       loggedOperations.add("compute(" + key + "," + action + ")");
-      delegate.compute(key, action);
+      return delegate.compute(key, action);
    }
 
    public Collection<String> getLoggedOperations() {
