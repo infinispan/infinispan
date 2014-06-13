@@ -465,8 +465,9 @@ public class StateConsumerImpl implements StateConsumer {
          log.tracef("Before applying the received state the data container of cache %s has %d keys", cacheName, dataContainer.size());
       }
 
+      Set<Integer> mySegments = wCh.getSegmentsForOwner(rpcManager.getAddress());
       for (StateChunk stateChunk : stateChunks) {
-         if (!wCh.getSegmentsForOwner(rpcManager.getAddress()).contains(stateChunk.getSegmentId())) {
+         if (!mySegments.contains(stateChunk.getSegmentId())) {
             log.warnf("Discarding received cache entries for segment %d of cache %s because they do not belong to this node.", stateChunk.getSegmentId(), cacheName);
             continue;
          }

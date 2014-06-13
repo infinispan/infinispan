@@ -15,7 +15,6 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
-import java.util.concurrent.CopyOnWriteArraySet;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -33,9 +32,15 @@ public class InboundTransferTask {
    private static final Log log = LogFactory.getLog(InboundTransferTask.class);
    private static final boolean trace = log.isTraceEnabled();
 
-   private final Set<Integer> segments = new CopyOnWriteArraySet<Integer>();
+   /**
+    * All access to fields {@code segments} and {@code finishedSegments} must bead done while synchronizing on {@code segments}.
+    */
+   private final Set<Integer> segments = new HashSet<Integer>();
 
-   private final Set<Integer> finishedSegments = new CopyOnWriteArraySet<Integer>();
+   /**
+    * All access to fields {@code segments} and {@code finishedSegments} must bead done while synchronizing on {@code segments}.
+    */
+   private final Set<Integer> finishedSegments = new HashSet<Integer>();
 
    private final Address source;
 
@@ -99,13 +104,17 @@ public class InboundTransferTask {
    }
 
    public Set<Integer> getSegments() {
-      return segments;
+      synchronized (segments) {
+         return new HashSet<Integer>(segments);
+      }
    }
 
    public Set<Integer> getUnfinishedSegments() {
-      Set<Integer> unfinishedSegments = new HashSet<Integer>(segments);
-      unfinishedSegments.removeAll(finishedSegments);
-      return unfinishedSegments;
+      synchronized (segments) {
+         Set<Integer> unfinishedSegments = new HashSet<Integer>(segments);
+         unfinishedSegments.removeAll(finishedSegments);
+         return unfinishedSegments;
+      }
    }
 
    public Address getSource() {
@@ -117,24 +126,25 @@ public class InboundTransferTask {
     */
    public boolean requestSegments() {
       if (!isCancelled && isStarted.compareAndSet(false, true)) {
+         Set<Integer> segmentsCopy = getSegments();
          if (trace) {
-            log.tracef("Requesting segments %s of cache %s from node %s", segments, cacheName, source);
+            log.tracef("Requesting segments %s of cache %s from node %s", segmentsCopy, cacheName, source);
          }
          // start transfer of cache entries
          try {
-            StateRequestCommand cmd = commandsFactory.buildStateRequestCommand(StateRequestCommand.Type.START_STATE_TRANSFER, rpcManager.getAddress(), topologyId, segments);
+            StateRequestCommand cmd = commandsFactory.buildStateRequestCommand(StateRequestCommand.Type.START_STATE_TRANSFER, rpcManager.getAddress(), topologyId, segmentsCopy);
             Map<Address, Response> responses = rpcManager.invokeRemotely(Collections.singleton(source), cmd, rpcOptions);
             Response response = responses.get(source);
             if (response instanceof SuccessfulResponse) {
                isStartedSuccessfully = true;
                if (trace) {
-                  log.tracef("Successfully requested segments %s of cache %s from node %s", segments, cacheName, source);
+                  log.tracef("Successfully requested segments %s of cache %s from node %s", segmentsCopy, cacheName, source);
                }
                return true;
             }
-            log.failedToRequestSegments(segments, cacheName, source, null);
+            log.failedToRequestSegments(segmentsCopy, cacheName, source, null);
          } catch (CacheException e) {
-            log.failedToRequestSegments(segments, cacheName, source, e);
+            log.failedToRequestSegments(segmentsCopy, cacheName, source, e);
          }
          return false;
       } else {
@@ -151,18 +161,22 @@ public class InboundTransferTask {
       if (isCancelled) {
          throw new IllegalArgumentException("The task is already cancelled.");
       }
-      if (cancelledSegments.retainAll(segments)) {
-         throw new IllegalArgumentException("Some of the specified segments cannot be cancelled because they were not previously requested");
-      }
 
       if (trace) {
          log.tracef("Cancelling inbound state transfer of segments %s of cache %s", cancelledSegments, cacheName);
       }
 
-      segments.removeAll(cancelledSegments);
-      finishedSegments.removeAll(cancelledSegments);
-      if (segments.isEmpty()) {
-         isCancelled = true;
+      synchronized (segments) {
+         // healthy paranoia
+         if (!segments.containsAll(cancelledSegments)) {
+            throw new IllegalArgumentException("Some of the specified segments cannot be cancelled because they were not previously requested");
+         }
+
+         segments.removeAll(cancelledSegments);
+         finishedSegments.removeAll(cancelledSegments);
+         if (segments.isEmpty()) {
+            isCancelled = true;
+         }
       }
 
       sendCancelCommand(cancelledSegments);
@@ -176,11 +190,12 @@ public class InboundTransferTask {
       if (!isCancelled) {
          isCancelled = true;
 
+         Set<Integer> segmentsCopy = getSegments();
          if (trace) {
-            log.tracef("Cancelling inbound state transfer of segments %s of cache %s", segments, cacheName);
+            log.tracef("Cancelling inbound state transfer of segments %s of cache %s", segmentsCopy, cacheName);
          }
 
-         sendCancelCommand(segments);
+         sendCancelCommand(segmentsCopy);
 
          notifyCompletion();
       }
@@ -200,12 +215,20 @@ public class InboundTransferTask {
    }
 
    public void onStateReceived(int segmentId, boolean isLastChunk) {
-      if (!isCancelled && isLastChunk && segments.contains(segmentId)) {
-         finishedSegments.add(segmentId);
-         if (finishedSegments.containsAll(segments)) {
-            if (trace) {
-               log.tracef("Finished receiving state for segments %s of cache %s", segments, cacheName);
+      if (!isCancelled && isLastChunk) {
+         boolean isCompleted = false;
+         synchronized (segments) {
+            if (segments.contains(segmentId)) {
+               finishedSegments.add(segmentId);
+               if (finishedSegments.size() == segments.size()) {
+                  if (trace) {
+                     log.tracef("Finished receiving state for segments %s of cache %s", segments, cacheName);
+                  }
+                  isCompleted = true;
+               }
             }
+         }
+         if (isCompleted) {
             notifyCompletion();
          }
       }
@@ -241,17 +264,19 @@ public class InboundTransferTask {
 
    @Override
    public String toString() {
-      return "InboundTransferTask{" +
-            "segments=" + segments +
-            ", finishedSegments=" + finishedSegments +
-            ", unfinishedSegments=" + getUnfinishedSegments() +
-            ", source=" + source +
-            ", isCancelled=" + isCancelled +
-            ", isStartedSuccessfully=" + isStartedSuccessfully +
-            ", isCompletedSuccessfully=" + isCompletedSuccessfully +
-            ", topologyId=" + topologyId +
-            ", timeout=" + timeout +
-            ", cacheName=" + cacheName +
-            '}';
+      synchronized (segments) {
+         return "InboundTransferTask{" +
+               "segments=" + segments +
+               ", finishedSegments=" + finishedSegments +
+               ", unfinishedSegments=" + getUnfinishedSegments() +
+               ", source=" + source +
+               ", isCancelled=" + isCancelled +
+               ", isStartedSuccessfully=" + isStartedSuccessfully +
+               ", isCompletedSuccessfully=" + isCompletedSuccessfully +
+               ", topologyId=" + topologyId +
+               ", timeout=" + timeout +
+               ", cacheName=" + cacheName +
+               '}';
+      }
    }
 }
