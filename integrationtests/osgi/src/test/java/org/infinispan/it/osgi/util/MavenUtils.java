@@ -11,7 +11,7 @@ import org.osgi.framework.FrameworkUtil;
 
 public class MavenUtils {
    private static final String MAVEN_PROPERTIES_FILENAME = "maven.properties";
-   private static final String PROP_MAVEN_LOCAL_REPO = "maven.repo.local";
+   private static final String PROP_MAVEN_LOCAL_REPO = "localRepository";
 
    /**
     * Get the Maven properties defined in the project.
