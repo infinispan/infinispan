@@ -15,7 +15,7 @@ import org.infinispan.jmx.JmxUtil
 import javax.management.ObjectName
 import java.util.concurrent.{ThreadFactory, TimeUnit}
 import org.infinispan.server.core.configuration.ProtocolServerConfiguration
-import io.netty.util.concurrent.ImmediateEventExecutor
+import io.netty.util.concurrent.{DefaultThreadFactory, ImmediateEventExecutor}
 import io.netty.util.internal.logging.{Log4JLoggerFactory, InternalLoggerFactory}
 import io.netty.bootstrap.ServerBootstrap
 import io.netty.channel.{Channel, ChannelInitializer, ChannelOption}
@@ -36,8 +36,8 @@ class NettyTransport(server: ProtocolServer, handler: ChannelInitializer[Channel
    private val serverChannels = new DefaultChannelGroup(threadNamePrefix + "-Channels", ImmediateEventExecutor.INSTANCE)
    val acceptedChannels = new DefaultChannelGroup(threadNamePrefix + "-Accepted", ImmediateEventExecutor.INSTANCE)
 
-   private val masterGroup = new NioEventLoopGroup(1, new InfinispanThreadFactory(threadNamePrefix + "ServerMaster"))
-   private val workerGroup = new NioEventLoopGroup(configuration.workerThreads, new InfinispanThreadFactory(threadNamePrefix + "ServerWorker"))
+   private val masterGroup = new NioEventLoopGroup(1, new DefaultThreadFactory(threadNamePrefix + "ServerMaster"))
+   private val workerGroup = new NioEventLoopGroup(configuration.workerThreads, new DefaultThreadFactory(threadNamePrefix + "ServerWorker"))
 
    private val totalBytesWritten, totalBytesRead = new AtomicLong
    private val isGlobalStatsEnabled =
@@ -167,15 +167,6 @@ class NettyTransport(server: ProtocolServer, handler: ChannelInitializer[Channel
          asScalaIterator(results).map(_.get(30, TimeUnit.SECONDS)).reduceLeft(_ + _)
       } finally {
          exec.shutdown()
-      }
-   }
-
-
-   private [this] class InfinispanThreadFactory(prefix: String) extends ThreadFactory {
-      private final val nextId: AtomicInteger = new AtomicInteger
-      def newThread(r: Runnable): Thread = {
-         val thread = new Thread(r, prefix + "-" + nextId.incrementAndGet())
-         thread
       }
    }
 }
