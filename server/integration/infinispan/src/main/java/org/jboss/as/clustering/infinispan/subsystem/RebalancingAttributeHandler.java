@@ -23,12 +23,11 @@ import static org.jboss.as.controller.descriptions.ModelDescriptionConstants.OP_
 import static org.jboss.as.controller.descriptions.ModelDescriptionConstants.VALUE;
 
 import org.infinispan.Cache;
-import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.topology.LocalTopologyManager;
 import org.infinispan.topology.LocalTopologyManagerImpl;
+import org.jboss.as.controller.AbstractRuntimeOnlyHandler;
 import org.jboss.as.controller.OperationContext;
 import org.jboss.as.controller.OperationFailedException;
-import org.jboss.as.controller.OperationStepHandler;
 import org.jboss.as.controller.PathAddress;
 import org.jboss.dmr.ModelNode;
 import org.jboss.msc.service.ServiceController;
@@ -39,30 +38,34 @@ import org.jboss.msc.service.ServiceController;
  * @author Tristan Tarrant
  * @since 5.3
  */
-public class RebalancingAttributeHandler implements OperationStepHandler {
+public class RebalancingAttributeHandler extends AbstractRuntimeOnlyHandler {
 
     public static final RebalancingAttributeHandler INSTANCE = new RebalancingAttributeHandler();
 
     @Override
-    public void execute(OperationContext context, ModelNode operation) throws OperationFailedException {
+    public void executeRuntimeStep(OperationContext context, ModelNode operation) throws OperationFailedException {
         final PathAddress address = PathAddress.pathAddress(operation.require(OP_ADDR));
         final String cacheContainerName = address.getElement(address.size() - 2).getValue();
         final String cacheName = address.getElement(address.size() - 1).getValue();
         final ServiceController<?> controller = context.getServiceRegistry(false).getService(
                 CacheService.getServiceName(cacheContainerName, cacheName));
-        Cache<?, ?> cache = (Cache<?, ?>) controller.getValue();
-        LocalTopologyManagerImpl localTopologyManager = (LocalTopologyManagerImpl) cache.getAdvancedCache()
-                .getComponentRegistry().getGlobalComponentRegistry().getComponent(LocalTopologyManager.class);
-        if (localTopologyManager != null) {
-            try {
-                if (operation.hasDefined(VALUE)) {
-                    ModelNode newValue = operation.get(VALUE);
-                    localTopologyManager.setRebalancingEnabled(newValue.asBoolean());
-                } else {
-                    context.getResult().set(new ModelNode().set(localTopologyManager.isRebalancingEnabled()));
+        if (controller != null) {
+            Cache<?, ?> cache = (Cache<?, ?>) controller.getValue();
+            if (cache != null) {
+                LocalTopologyManagerImpl localTopologyManager = (LocalTopologyManagerImpl) cache.getAdvancedCache()
+                        .getComponentRegistry().getGlobalComponentRegistry().getComponent(LocalTopologyManager.class);
+                if (localTopologyManager != null) {
+                    try {
+                        if (operation.hasDefined(VALUE)) {
+                            ModelNode newValue = operation.get(VALUE);
+                            localTopologyManager.setRebalancingEnabled(newValue.asBoolean());
+                        } else {
+                            context.getResult().set(new ModelNode().set(localTopologyManager.isRebalancingEnabled()));
+                        }
+                    } catch (Exception e) {
+                        throw new OperationFailedException(new ModelNode().set(MESSAGES.failedToInvokeOperation(e.getLocalizedMessage())));
+                    }
                 }
-            } catch (Exception e) {
-                throw new OperationFailedException(new ModelNode().set(MESSAGES.failedToInvokeOperation(e.getLocalizedMessage())));
             }
         }
         context.stepCompleted();
