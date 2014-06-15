@@ -34,6 +34,7 @@ import java.util.List;
 import org.jboss.as.clustering.subsystem.ClusteringSubsystemTest;
 import org.jboss.as.controller.PathAddress;
 import org.jboss.as.controller.PathElement;
+import org.jboss.as.subsystem.test.AdditionalInitialization;
 import org.jboss.as.subsystem.test.KernelServices;
 import org.jboss.as.subsystem.test.ModelDescriptionValidator.ValidationConfiguration;
 import org.jboss.dmr.ModelNode;
@@ -116,7 +117,7 @@ public class InfinispanSubsystemTestCase extends ClusteringSubsystemTest {
     @Test
     public void testInstallIntoController() throws Exception {
        // Parse the subsystem xml and install into the controller
-       KernelServices services = createKernelServicesBuilder(null).setSubsystemXml(getSubsystemXml()).build();
+       KernelServices services = createKernelServicesBuilder(AdditionalInitialization.MANAGEMENT).setSubsystemXml(getSubsystemXml()).build();
 
        // Read the whole model and make sure it looks as expected
        ModelNode model = services.readWholeModel();
@@ -134,14 +135,14 @@ public class InfinispanSubsystemTestCase extends ClusteringSubsystemTest {
     public void testParseAndMarshalModel() throws Exception {
        // Parse the subsystem xml and install into the first controller
 
-       KernelServices servicesA = createKernelServicesBuilder(null).setSubsystemXml(getSubsystemXml()).build();
+       KernelServices servicesA = createKernelServicesBuilder(AdditionalInitialization.MANAGEMENT).setSubsystemXml(getSubsystemXml()).build();
 
        // Get the model and the persisted xml from the first controller
        ModelNode modelA = servicesA.readWholeModel();
        String marshalled = servicesA.getPersistedSubsystemXml();
 
        // Install the persisted xml from the first controller into a second controller
-       KernelServices servicesB = createKernelServicesBuilder(null).setSubsystemXml(marshalled).build();
+       KernelServices servicesB = createKernelServicesBuilder(AdditionalInitialization.MANAGEMENT).setSubsystemXml(marshalled).build();
        ModelNode modelB = servicesB.readWholeModel();
 
        // Make sure the models from the two controllers are identical
@@ -155,7 +156,7 @@ public class InfinispanSubsystemTestCase extends ClusteringSubsystemTest {
     @Test
     public void testDescribeHandler() throws Exception {
        // Parse the subsystem xml and install into the first controller
-       KernelServices servicesA = createKernelServicesBuilder(null).setSubsystemXml(getSubsystemXml()).build();
+       KernelServices servicesA = createKernelServicesBuilder(AdditionalInitialization.MANAGEMENT).setSubsystemXml(getSubsystemXml()).build();
        // Get the model and the describe operations from the first controller
        ModelNode modelA = servicesA.readWholeModel();
        ModelNode describeOp = new ModelNode();
