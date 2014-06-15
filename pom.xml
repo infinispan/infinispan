@@ -48,6 +48,7 @@
       <module>server/rest</module>
       <module>client/hotrod-client</module>
       <module>rhq-plugin</module>
+      <module>osgi</module>
       <module>spring</module>
       <module>cli/cli-server</module>
       <module>cli/cli-client</module>
