@@ -51,6 +51,7 @@
       <module>all/embedded-query</module>
       <module>all/remote</module>
       <module>rhq-plugin</module>
+      <module>osgi</module>
       <module>spring</module>
       <module>cli/cli-server</module>
       <module>cli/cli-client</module>
