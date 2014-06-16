@@ -131,7 +131,7 @@ public class ExampleConfigsIT {
     @WithRunningServer({@RunningServer(name = "hotrod-rolling-upgrade-2"),@RunningServer(name = "hotrod-rolling-upgrade-1")})
     public void testHotRodRollingUpgrades() throws Exception {
         // Target node
-        final int managementPortServer1 = 9999;
+        final int managementPortServer1 = 9990;
         MBeanServerConnectionProvider provider1;
         // Source node
         final int managementPortServer2 = 10099;
@@ -187,7 +187,7 @@ public class ExampleConfigsIT {
     @WithRunningServer({@RunningServer(name = "rest-rolling-upgrade-2"),@RunningServer(name = "rest-rolling-upgrade-1")})
     public void testRestRollingUpgrades() throws Exception {
         // target node
-        final int managementPortServer1 = 9999;
+        final int managementPortServer1 = 9990;
         MBeanServerConnectionProvider provider1;
         // Source node
         final int managementPortServer2 = 10099;

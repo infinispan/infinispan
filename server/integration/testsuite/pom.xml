@@ -853,7 +853,7 @@
                                         <echo>Waiting for Infinispan server to start</echo>
                                         <waitfor maxwait="15" maxwaitunit="second" checkevery="1" checkeveryunit="second">
                                             <and>
-                                                <socket server="127.0.0.1" port="9999"/>
+                                                <socket server="127.0.0.1" port="9990"/>
                                                 <socket server="127.0.0.1" port="11222"/>
                                             </and>
                                         </waitfor>
@@ -926,7 +926,7 @@
                                               failonerror="true">
                                             <arg value="/sample_bank_account/bank.protobin"/>
                                             <arg value="localhost"/>
-                                            <arg value="9999"/>
+                                            <arg value="9990"/>
                                             <classpath>
                                                 <pathelement path="${project.build.directory}/test-classes"/>
                                                 <pathelement path="${test_classpath}"/>
