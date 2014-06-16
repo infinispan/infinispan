@@ -42,7 +42,7 @@ public class RestRollingUpgradesIT {
     @Test
     public void testRestRollingUpgradesDiffVersions() throws Exception {
         // target node
-        final int managementPortServer1 = 9999;
+        final int managementPortServer1 = 9990;
         MBeanServerConnectionProvider provider1;
         // Source node
         final int managementPortServer2 = 10099;

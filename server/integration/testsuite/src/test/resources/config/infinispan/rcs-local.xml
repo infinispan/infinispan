@@ -8,7 +8,6 @@
                     batching="false"
                     >
                     <locking 
-                        isolation="READ_COMMITTED"
                         acquire-timeout="20000" 
                         concurrency-level="500" 
                         striping="false" />
@@ -34,7 +33,6 @@
                     batching="false"
                     >
                     <locking 
-                        isolation="READ_COMMITTED"
                         acquire-timeout="20000" 
                         concurrency-level="500" 
                         striping="false" />
@@ -60,7 +58,6 @@
                         batching="false"
                         >
                     <locking
-                            isolation="READ_COMMITTED"
                             acquire-timeout="20000"
                             concurrency-level="500"
                             striping="false" />
