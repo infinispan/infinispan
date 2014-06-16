@@ -11,13 +11,13 @@
          <cache-container name="clustered" default-cache="default" >
             <transport executor="infinispan-transport" lock-timeout="60000" />
             <distributed-cache name="default" mode="SYNC" segments="20" owners="2" remote-timeout="30000" start="EAGER">
-               <locking isolation="READ_COMMITTED" acquire-timeout="30000" concurrency-level="1000" striping="false" />
+               <locking acquire-timeout="30000" concurrency-level="1000" striping="false" />
                <state-transfer enabled="false" />
                <cluster-loader remote-timeout="60000" />
             </distributed-cache>
 
             <distributed-cache name="memcachedCache" mode="SYNC" segments="20" owners="2" remote-timeout="30000" start="EAGER">
-               <locking isolation="READ_COMMITTED" acquire-timeout="30000" concurrency-level="1000" striping="false" />
+               <locking acquire-timeout="30000" concurrency-level="1000" striping="false" />
                <state-transfer enabled="false" />
                <cluster-loader remote-timeout="60000" />
             </distributed-cache>
@@ -37,12 +37,12 @@
       <replacement placeholder="CACHE-CONTAINERS">
          <cache-container name="local" default-cache="default">
             <local-cache name="default" start="EAGER">
-               <locking isolation="NONE" acquire-timeout="30000" concurrency-level="1000" striping="false" />
+               <locking acquire-timeout="30000" concurrency-level="1000" striping="false" />
                <eviction strategy="LRU" max-entries="1000" />
                <file-store passivation="true" path="dc" purge="true" shared="false" />
             </local-cache>
             <local-cache name="memcachedCache" start="EAGER">
-               <locking isolation="NONE" acquire-timeout="30000" concurrency-level="1000" striping="false" />
+               <locking acquire-timeout="30000" concurrency-level="1000" striping="false" />
                <file-store passivation="false" path="mc" purge="true" shared="false" />
             </local-cache>
             <local-cache name="namedCache" start="EAGER">
@@ -61,12 +61,12 @@
       <replacement placeholder="CACHE-CONTAINERS">
          <cache-container name="local" default-cache="default">
             <local-cache name="default" start="EAGER">
-               <locking isolation="NONE" acquire-timeout="30000" concurrency-level="1000" striping="false" />
+               <locking acquire-timeout="30000" concurrency-level="1000" striping="false" />
                <eviction strategy="LRU" max-entries="1000" />
                <leveldb-store passivation="true" path="level-dc" purge="true" shared="false" />
             </local-cache>
             <local-cache name="memcachedCache" start="EAGER">
-               <locking isolation="NONE" acquire-timeout="30000" concurrency-level="1000" striping="false" />
+               <locking acquire-timeout="30000" concurrency-level="1000" striping="false" />
                <leveldb-store passivation="false" path="level-mc" purge="true" shared="false">
                   <expiration path="leveldb-mc-expired"/>
                </leveldb-store>
@@ -89,7 +89,7 @@
       <replacement placeholder="CACHE-CONTAINERS">
          <cache-container name="local" default-cache="default">
             <local-cache name="default" start="EAGER">
-               <locking isolation="NONE" acquire-timeout="30000" concurrency-level="1000" striping="false" />
+               <locking acquire-timeout="30000" concurrency-level="1000" striping="false" />
                <remote-store cache="default" socket-timeout="60000" tcp-no-delay="true" shared="true" hotrod-wrapping="true" purge="false" passivation="false">
                   <remote-server outbound-socket-binding="remote-store-hotrod-server" />
                </remote-store>
@@ -105,7 +105,7 @@
          <cache-container name="clustered" default-cache="default" >
             <transport executor="infinispan-transport" lock-timeout="60000" />
             <distributed-cache name="default" mode="SYNC" segments="20" owners="2" remote-timeout="30000" start="EAGER">
-               <locking isolation="READ_COMMITTED" acquire-timeout="30000" concurrency-level="1000" striping="false" />
+               <locking acquire-timeout="30000" concurrency-level="1000" striping="false" />
                <eviction strategy="LRU" max-entries="1000" />
                <mixed-keyed-jdbc-store datasource="java:jboss/datasources/JdbcDS" dialect="H2" passivation="true" preload="true" purge="false">
                   <binary-keyed-table prefix="ISPN_MIX_BKT">
@@ -122,7 +122,7 @@
             </distributed-cache>
 
             <distributed-cache name="memcachedCache" mode="SYNC" segments="20" owners="2" remote-timeout="30000" start="EAGER">
-               <locking isolation="READ_COMMITTED" acquire-timeout="30000" concurrency-level="1000" striping="false" />
+               <locking acquire-timeout="30000" concurrency-level="1000" striping="false" />
                <eviction strategy="LRU" max-entries="1000" />
                <string-keyed-jdbc-store datasource="java:jboss/datasources/JdbcDS" dialect="H2" passivation="true" preload="false" purge="false" shared="false">
                   <string-keyed-table prefix="ISPN_MC_SK">
@@ -154,14 +154,14 @@
       <replacement placeholder="CACHE-CONTAINERS">
          <cache-container name="local" default-cache="default">
             <local-cache name="default" start="EAGER">
-               <locking isolation="NONE" acquire-timeout="30000" concurrency-level="1000" striping="false" />
+               <locking acquire-timeout="30000" concurrency-level="1000" striping="false" />
                <eviction strategy="LRU" max-entries="1000" />
                <remote-store cache="default" socket-timeout="60000" tcp-no-delay="true" passivation="true">
                   <remote-server outbound-socket-binding="remote-store-hotrod-server" />
                </remote-store>
             </local-cache>
             <local-cache name="memcachedCache" start="EAGER">
-               <locking isolation="NONE" acquire-timeout="30000" concurrency-level="1000" striping="false" />
+               <locking acquire-timeout="30000" concurrency-level="1000" striping="false" />
                <eviction strategy="LIRS" max-entries="1000" />
                <remote-store cache="memcachedCache" socket-timeout="60000" tcp-no-delay="true" passivation="true">
                   <remote-server outbound-socket-binding="remote-store-hotrod-server" />
@@ -183,7 +183,7 @@
       <replacement placeholder="CACHE-CONTAINERS">
          <cache-container name="local" default-cache="default">
             <local-cache name="default" start="EAGER">
-               <locking isolation="NONE" acquire-timeout="30000" concurrency-level="1000" striping="false" />
+               <locking acquire-timeout="30000" concurrency-level="1000" striping="false" />
                <eviction strategy="LRU" max-entries="1000" />
             </local-cache>
             <local-cache name="namedCache" start="EAGER">
@@ -199,7 +199,7 @@
       <replacement placeholder="CACHE-CONTAINERS">
          <cache-container name="local" default-cache="default">
             <local-cache name="default" start="EAGER">
-               <locking isolation="NONE" acquire-timeout="30000" concurrency-level="1000" striping="false" />
+               <locking acquire-timeout="30000" concurrency-level="1000" striping="false" />
                <rest-store path="/rest/default" shared="true" purge="false" passivation="false">
                   <connection-pool connection-timeout="60000" socket-timeout="60000" tcp-no-delay="true" max-connections-per-host="4" max-total-connections="20" />
                   <remote-server outbound-socket-binding="remote-store-rest-server" />
@@ -217,7 +217,7 @@
          <cache-container name="clustered" default-cache="default" >
             <transport executor="infinispan-transport" lock-timeout="60000" cluster="LON" stack="udp"/>
             <distributed-cache name="default" mode="SYNC" segments="20" owners="2" remote-timeout="30000" start="EAGER">
-               <locking isolation="READ_COMMITTED" acquire-timeout="30000" concurrency-level="1000" striping="false" />
+               <locking acquire-timeout="30000" concurrency-level="1000" striping="false" />
                <backups>
                   <backup site="NYC" strategy="SYNC" />
                   <backup site="SFO" strategy="ASYNC" />
@@ -225,7 +225,7 @@
             </distributed-cache>
 
             <distributed-cache name="memcachedCache" mode="SYNC" segments="20" owners="2" remote-timeout="30000" start="EAGER">
-               <locking isolation="READ_COMMITTED" acquire-timeout="30000" concurrency-level="1000" striping="false" />
+               <locking acquire-timeout="30000" concurrency-level="1000" striping="false" />
                <backups>
                   <backup site="NYC" strategy="SYNC" />
                   <backup site="SFO" strategy="ASYNC" />
@@ -249,7 +249,7 @@
       <replacement placeholder="CACHE-CONTAINERS">
          <cache-container name="local" default-cache="default">
             <local-cache name="default" start="EAGER">
-               <locking isolation="NONE" acquire-timeout="30000" concurrency-level="1000" striping="false" />
+               <locking acquire-timeout="30000" concurrency-level="1000" striping="false" />
                <compatibility enabled="true" />
             </local-cache>
          </cache-container>
@@ -270,7 +270,7 @@
                 </authorization>
             </security>
             <local-cache name="default" start="EAGER">
-               <locking isolation="NONE" acquire-timeout="30000" concurrency-level="1000" striping="false" />
+               <locking acquire-timeout="30000" concurrency-level="1000" striping="false" />
             </local-cache>
             <local-cache name="secured">
                 <security>

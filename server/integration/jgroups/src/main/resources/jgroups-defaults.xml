@@ -68,8 +68,8 @@
         oob_thread_pool.keep_alive_time="1000000"
         oob_thread_pool.queue_enabled="true"
         oob_thread_pool.rejection_policy="discard"/>
-    <PING timeout="5000" num_initial_members="5"/>
-    <MPING timeout="3000" num_initial_members="3" ip_ttl="2"/>
+    <PING />
+    <MPING ip_ttl="2"/>
     <MERGE2 max_interval="100000" min_interval="20000"/>
     <FD_SOCK/>
     <FD timeout="6000" max_tries="5"/>
