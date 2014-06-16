@@ -674,27 +674,18 @@ public final class CacheNotifierImpl<K, V> extends AbstractListenerImpl<Event<K,
          if (log.isTraceEnabled()) {
             log.tracef("Listener %s requests initial state for cache", generatedId);
          }
-         CloseableIterator<CacheEntry<K, C>> iterator = entryRetriever.retrieveEntries(filter, converter, handler);
-         try {
+         try (CloseableIterator<CacheEntry<K, C>> iterator = entryRetriever.retrieveEntries(filter, converter, handler)) {
             while (iterator.hasNext()) {
                CacheEntry<K, C> entry = iterator.next();
                // Mark the key as processed and see if we had a concurrent update
                Object value = handler.markKeyAsProcessing(entry.getKey());
-               if (value == null) {
-                  value = entry.getValue();
-               } else if (value == BaseQueueingSegmentListener.REMOVED) {
+               if (value == BaseQueueingSegmentListener.REMOVED) {
                   // Don't process this value if we had a concurrent remove
                   continue;
                }
                raiseEventForInitialTransfer(generatedId, entry, l.clustered());
 
                handler.notifiedKey(entry.getKey());
-            }
-         } finally {
-            try {
-               iterator.close();
-            } catch (Exception e) {
-               log.ignoringException("addListener", e.toString(), e);
             }
          }
 
