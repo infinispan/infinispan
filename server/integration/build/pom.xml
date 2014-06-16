@@ -232,7 +232,7 @@
                            <artifactId>wildfly-dist</artifactId>
                            <version>${version.wildfly}</version>
                            <type>zip</type>
-                           <overWrite>false</overWrite>
+                           <overWrite>true</overWrite>
                            <outputDirectory>${project.build.directory}</outputDirectory>
                         </artifactItem>
                      </artifactItems>
