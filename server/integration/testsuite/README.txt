@@ -5,7 +5,7 @@ Running the testsuite
 
 Running a subset of the testsuite
 ---------------------------------
-Subsets of the testsuite are specified by profiles that switch off running of certain test classes or the whole surefire plugin executions.
+Subsets of the testsuite are specified by profiles that switch off running of certain test classes or the whole failsafe plugin executions.
 Currently these subsets are predefined:
 
   -P suite.client                    (Client tests, all local/dist/repl cachemode)
@@ -33,16 +33,19 @@ If you specify -Dzip.dist=path/to/distro.zip the test server directories target/
 
 Running specific test 
 ---------------------
-When running only a specific test, it's important to realize that by default, there are multiple executions of the maven-surefire-plugin defined 
-and therefore the test might be executed multiple times even if it's specified via -Dtest= option. e.g.
+When running only a specific test, it's important to realize that by default, there are multiple executions of the maven-failsafe-plugin defined
+and therefore the test might be executed multiple times even if it's specified via -Dit.test= option. e.g.
 
-  mvn clean verify -Dtest=org/infinispan/server/test/client/hotrod/HotRodRemoteCacheTest#testPut
+  mvn clean verify -Dit.test=org/infinispan/server/test/client/hotrod/HotRodRemoteCacheIT#testPut
   will run the testPut method three times, each time in different clustering mode (local/dist/repl)
 
-so besides the -Dtest= directive it's useful to specify also the most specific suite for the given test:
+so besides the -Dit.test= directive it's useful to specify also the most specific suite for the given test:
 
-  mvn clean verify -P suite.client.local -Dtest=org/infinispan/server/test/client/hotrod/HotRodRemoteCacheTest#testPut
+  mvn clean verify -P suite.client.local -Dit.test=org/infinispan/server/test/client/hotrod/HotRodRemoteCacheIT#testPut
   will run the testPut method only once for the local cache mode.
+
+Also note that integration test classes need to be named ending "IT", not "TEST", as required by the maven-failsafe-plugin.
+
 
 Running tests for specific client 
 ---------------------------------
