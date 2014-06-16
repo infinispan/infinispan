@@ -5,6 +5,7 @@ import static org.infinispan.test.fwk.JGroupsConfigBuilder.getJGroupsConfig;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.security.AccessController;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
@@ -29,6 +30,8 @@ import org.infinispan.manager.DefaultCacheManager;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.remoting.transport.jgroups.JGroupsAddress;
 import org.infinispan.remoting.transport.jgroups.JGroupsTransport;
+import org.infinispan.security.Security;
+import org.infinispan.security.actions.GetCacheManagerStatusAction;
 import org.infinispan.transaction.TransactionMode;
 import org.infinispan.transaction.lookup.TransactionManagerLookup;
 import org.infinispan.util.logging.Log;
@@ -134,7 +137,7 @@ public class TestCacheManagerFactory {
          builder.transaction().transactionManagerLookup((TransactionManagerLookup) Util.getInstance(TransactionSetup.getManagerLookup(), TestCacheManagerFactory.class.getClassLoader()));
       }
    }
-   
+
    /**
     * Creates an cache manager that does support clustering.
     */
@@ -432,7 +435,7 @@ public class TestCacheManagerFactory {
       public void checkManagersClosed(String testName) {
          for (Map.Entry<EmbeddedCacheManager, Throwable> cmEntry : cacheManagers.entrySet()) {
             EmbeddedCacheManager key = cmEntry.getKey();
-            if (key.getStatus().allowInvocations()) {
+            if (isCacheInvocationsAllowed(key)) {
                String thName = Thread.currentThread().getName();
                String errorMessage = '\n' +
                      "!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!\n" +
@@ -482,6 +485,15 @@ public class TestCacheManagerFactory {
          this.testName = null;
          Thread.currentThread().setName(oldThreadName);
          this.oldThreadName = null;
+      }
+   }
+
+   private static boolean isCacheInvocationsAllowed(EmbeddedCacheManager cacheManager) {
+      GetCacheManagerStatusAction action = new GetCacheManagerStatusAction(cacheManager);
+      if (System.getSecurityManager() != null) {
+         return AccessController.doPrivileged(action).allowInvocations();
+      } else {
+         return Security.doPrivileged(action).allowInvocations();
       }
    }
 
