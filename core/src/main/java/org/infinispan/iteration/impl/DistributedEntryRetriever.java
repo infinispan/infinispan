@@ -817,15 +817,6 @@ public class DistributedEntryRetriever<K, V> extends LocalEntryRetriever<K, V> {
             }
          }
 
-         if (!completedSegments.isEmpty()) {
-            if (log.isTraceEnabled()) {
-               log.tracef("Completing segments %s for identifier %s", completedSegments, identifier);
-            }
-            for (Integer completeSegment : completedSegments) {
-               // Null out the set saying we completed this segment
-               processedKeys.set(completeSegment, null);
-            }
-         }
          itr.addKeysForSegment(finishedKeysForSegment);
 
          try {
@@ -836,6 +827,17 @@ public class DistributedEntryRetriever<K, V> extends LocalEntryRetriever<K, V> {
                log.tracef("Iteration thread was interrupted, stopping iteration for identifier %s", identifier);
             }
             completeIteration(identifier);
+         }
+
+         // We complete the segments after setting the entries
+         if (!completedSegments.isEmpty()) {
+            if (log.isTraceEnabled()) {
+               log.tracef("Completing segments %s for identifier %s", completedSegments, identifier);
+            }
+            for (Integer completeSegment : completedSegments) {
+               // Null out the set saying we completed this segment
+               processedKeys.set(completeSegment, null);
+            }
          }
 
          // If we are finished we need to request the next segments - currently the indoubt and completed are
