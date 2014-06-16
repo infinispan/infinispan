@@ -8,6 +8,7 @@ Infinispan can be used in a variety of runtimes:
 *  _Java SE_, started by your application 
 *  an _application server_ which provides Infinispan as a service (such as JBoss AS) 
 *  _bundled as a library_ in your application, deployed to an application server, and started on by your application (for example, you could use Infinispan with Tomcat or GlassFish) 
+*  inside an OSGi runtime environment (such as Apache Karaf)
 
 === Modes
 Infinispan offers four modes of operation, which determine how and where the data is stored:
