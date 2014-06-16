@@ -247,6 +247,10 @@ public class ClusterCacheStatus {
       }
    }
 
+   public String getCacheName() {
+      return cacheName;
+   }
+
    // Helpers for working with immutable lists
    private <T> List<T> immutableAdd(List<T> list, T element) {
       List<T> result = new ArrayList<T>(list);
