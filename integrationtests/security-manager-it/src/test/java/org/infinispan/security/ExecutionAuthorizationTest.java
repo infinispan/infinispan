@@ -26,6 +26,7 @@ import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.security.impl.IdentityRoleMapper;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.TestingUtil;
+import org.testng.annotations.AfterClass;
 import org.testng.annotations.Test;
 
 /**
@@ -80,6 +81,19 @@ public class ExecutionAuthorizationTest extends MultipleCacheManagersTest {
    }
 
    @Override
+   @AfterClass(alwaysRun = true)
+   protected void destroy() {
+      Subject.doAs(ADMIN, new PrivilegedAction<Void>() {
+         @Override
+         public Void run() {
+            ExecutionAuthorizationTest.super.destroy();
+            return null;
+         }
+      });
+   }
+
+   @Override
+   @AfterClass(alwaysRun = true)
    protected void clearContent() throws Exception {
       Subject.doAs(ADMIN, new PrivilegedExceptionAction<Void>() {
 
