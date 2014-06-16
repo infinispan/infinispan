@@ -4,6 +4,7 @@ import org.infinispan.distribution.ch.ConsistentHash;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.jmx.annotations.DataType;
 import org.infinispan.jmx.annotations.ManagedAttribute;
+import org.infinispan.registry.impl.ClusterRegistryImpl;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
@@ -54,7 +55,7 @@ public class DefaultRebalancePolicy implements RebalancePolicy {
       }
 
       synchronized (lock) {
-         if (!isRebalancingEnabled()) {
+         if (!isRebalancingEnabled() && !cacheStatus.getCacheName().equals(ClusterRegistryImpl.GLOBAL_REGISTRY_CACHE_NAME)) {
             log.tracef("Rebalancing is disabled, queueing rebalance for cache %s", cacheName);
             cachesPendingRebalance.add(cacheName);
             return;
