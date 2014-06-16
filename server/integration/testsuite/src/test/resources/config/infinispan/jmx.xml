@@ -11,7 +11,6 @@
                         l1-lifespan="0"
                         remote-timeout="30000">
                     <locking
-                            isolation="READ_COMMITTED"
                             acquire-timeout="30000"
                             concurrency-level="1000"
                             striping="false"/>
@@ -30,7 +29,6 @@
                         l1-lifespan="0"
                         remote-timeout="30000">
                     <locking
-                            isolation="READ_COMMITTED"
                             acquire-timeout="30000"
                             concurrency-level="1000"
                             striping="false"/>

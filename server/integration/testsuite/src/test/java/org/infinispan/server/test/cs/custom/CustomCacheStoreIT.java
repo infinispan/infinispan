@@ -45,7 +45,7 @@ public class CustomCacheStoreIT {
     @InfinispanResource("standalone-customcs")
     RemoteInfinispanServer server;
 
-    final int managementPort = 9999;
+    final int managementPort = 9990;
     final String cacheLoaderMBean = "jboss.infinispan:type=Cache,name=\"default(local)\",manager=\"local\",component=CacheLoader";
 
     @BeforeClass

@@ -8,7 +8,6 @@
                     batching="false"
                     >
                     <locking 
-                        isolation="NONE"
                         acquire-timeout="20000" 
                         concurrency-level="500" 
                         striping="false" />
