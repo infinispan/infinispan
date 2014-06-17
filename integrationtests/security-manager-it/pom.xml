@@ -18,17 +18,6 @@
    <dependencies>
       <dependency>
          <groupId>${project.groupId}</groupId>
-         <artifactId>infinispan-lucene-directory</artifactId>
-      </dependency>
-      <dependency>
-         <groupId>${project.groupId}</groupId>
-         <artifactId>infinispan-lucene-v3</artifactId>
-         <version>${project.version}</version>
-         <type>test-jar</type>
-         <scope>test</scope>
-      </dependency>
-      <dependency>
-         <groupId>${project.groupId}</groupId>
          <artifactId>infinispan-query</artifactId>
       </dependency>
       <dependency>
@@ -54,6 +43,7 @@
             <configuration>
                <groups>${defaultTestGroup}</groups>
                <excludedGroups>${defaultExcludedTestGroup}</excludedGroups>
+               <parallel>none</parallel>
                <systemPropertyVariables>
                   <infinispan.test.jgroups.protocol>${infinispan.test.jgroups.protocol}</infinispan.test.jgroups.protocol>
                   <jgroups.bind_addr>127.0.0.1</jgroups.bind_addr>

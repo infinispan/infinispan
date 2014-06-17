@@ -432,7 +432,7 @@ public class TestCacheManagerFactory {
       public void checkManagersClosed(String testName) {
          for (Map.Entry<EmbeddedCacheManager, Throwable> cmEntry : cacheManagers.entrySet()) {
             EmbeddedCacheManager key = cmEntry.getKey();
-            if (key.getStatus().allowInvocations()) {
+            if (isCacheInvocationsAllowed(key)) {
                String thName = Thread.currentThread().getName();
                String errorMessage = '\n' +
                      "!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!\n" +
@@ -482,6 +482,15 @@ public class TestCacheManagerFactory {
          this.testName = null;
          Thread.currentThread().setName(oldThreadName);
          this.oldThreadName = null;
+      }
+   }
+
+   private static boolean isCacheInvocationsAllowed(EmbeddedCacheManager key) {
+      try {
+         return key.getStatus().allowInvocations();
+      } catch (SecurityException e) {
+         log.warn("Security error checking status", e);
+         return false;
       }
    }
 
