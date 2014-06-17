@@ -1,14 +1,13 @@
 package org.infinispan.client.hotrod.impl.transport.tcp;
 
+import org.infinispan.client.hotrod.logging.Log;
+import org.infinispan.client.hotrod.logging.LogFactory;
+
 import java.net.InetSocketAddress;
 import java.net.SocketAddress;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Set;
-
-import net.jcip.annotations.ThreadSafe;
-import org.infinispan.client.hotrod.logging.Log;
-import org.infinispan.client.hotrod.logging.LogFactory;
 
 /**
  * Round-robin implementation for {@link org.infinispan.client.hotrod.impl.transport.tcp.RequestBalancingStrategy}.
@@ -16,7 +15,7 @@ import org.infinispan.client.hotrod.logging.LogFactory;
  * @author Mircea.Markus@jboss.com
  * @since 4.1
  */
-public class RoundRobinBalancingStrategy implements RequestBalancingStrategy {
+public class RoundRobinBalancingStrategy implements FailoverRequestBalancingStrategy {
 
    private static final Log log = LogFactory.getLog(RoundRobinBalancingStrategy.class);
 
@@ -53,8 +52,13 @@ public class RoundRobinBalancingStrategy implements RequestBalancingStrategy {
       }
    }
 
+   @Override
+   public SocketAddress nextServer() {
+      return nextServer(null);
+   }
+
    /**
-    * Returns same value as {@link RequestBalancingStrategy#nextServer(java.util.Set} without modifying indexes/state.
+    * Returns same value as {@link FailoverRequestBalancingStrategy#nextServer(java.util.Set)} without modifying indexes/state.
     */
    public SocketAddress dryRunNextServer() {
       return getServerByIndex(index);

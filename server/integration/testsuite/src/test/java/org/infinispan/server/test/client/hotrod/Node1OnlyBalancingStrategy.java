@@ -1,5 +1,10 @@
 package org.infinispan.server.test.client.hotrod;
 
+import org.apache.http.annotation.ThreadSafe;
+import org.infinispan.client.hotrod.impl.transport.tcp.FailoverRequestBalancingStrategy;
+import org.infinispan.client.hotrod.logging.Log;
+import org.infinispan.client.hotrod.logging.LogFactory;
+
 import java.net.InetSocketAddress;
 import java.net.SocketAddress;
 import java.util.Arrays;
@@ -9,16 +14,11 @@ import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
-import org.apache.http.annotation.ThreadSafe;
-import org.infinispan.client.hotrod.impl.transport.tcp.RequestBalancingStrategy;
-import org.infinispan.client.hotrod.logging.Log;
-import org.infinispan.client.hotrod.logging.LogFactory;
-
 /*
  * Load balancing strategy which always sends to node0
  */
 @ThreadSafe
-public class Node1OnlyBalancingStrategy implements RequestBalancingStrategy {
+public class Node1OnlyBalancingStrategy implements FailoverRequestBalancingStrategy {
 
     private static final Log log = LogFactory.getLog(Node1OnlyBalancingStrategy.class);
 
@@ -67,4 +67,10 @@ public class Node1OnlyBalancingStrategy implements RequestBalancingStrategy {
             readLock.unlock();
         }
     }
+
+   @Override
+   public SocketAddress nextServer() {
+      return nextServer(null);
+   }
+
 }
