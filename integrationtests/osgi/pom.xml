@@ -139,6 +139,7 @@
       <defaultExcludedTestGroup></defaultExcludedTestGroup>
       <infinispan.test.parallel.threads>1</infinispan.test.parallel.threads>
       <infinispan.test.jgroups.protocol>tcp</infinispan.test.jgroups.protocol>
+      <target.tmp.dir>${project.build.directory}/tmp/</target.tmp.dir>
    </properties>
 
    <build>
@@ -167,11 +168,30 @@
             </executions>
          </plugin>
          <plugin>
+            <artifactId>maven-antrun-plugin</artifactId>
+            <executions>
+               <execution>
+                  <phase>generate-sources</phase>
+                  <configuration>
+                     <target>
+                        <mkdir dir="${target.tmp.dir}"/>
+                     </target>
+                  </configuration>
+                  <goals>
+                     <goal>run</goal>
+                  </goals>
+               </execution>
+            </executions>
+         </plugin>
+         <plugin>
             <groupId>org.apache.maven.plugins</groupId>
             <artifactId>maven-surefire-plugin</artifactId>
             <configuration>
                <threadCount>1</threadCount>
                <parallel>classes</parallel>
+               <systemPropertyVariables>
+                  <java.io.tmpdir>${target.tmp.dir}</java.io.tmpdir>
+               </systemPropertyVariables>
             </configuration>
             <executions>
                <execution>
