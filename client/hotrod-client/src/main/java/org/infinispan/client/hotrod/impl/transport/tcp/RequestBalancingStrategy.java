@@ -1,21 +1,25 @@
 package org.infinispan.client.hotrod.impl.transport.tcp;
 
-import net.jcip.annotations.ThreadSafe;
-
 import java.net.SocketAddress;
 import java.util.Collection;
-import java.util.Set;
 
 /**
  * Defines how request are distributed between the servers for replicated caches.
  *
  * @author Mircea.Markus@jboss.com
+ * @deprecated Please extend {@link FailoverRequestBalancingStrategy} instead.
  * @since 4.1
  */
+@Deprecated
 public interface RequestBalancingStrategy {
 
    void setServers(Collection<SocketAddress> servers);
 
-   SocketAddress nextServer(Set<SocketAddress> failedServers);
+   /**
+    * @deprecated This method will be removed.
+    * {@link org.infinispan.client.hotrod.impl.transport.tcp.FailoverRequestBalancingStrategy#nextServer(java.util.Set)} will replace it.
+    */
+   @Deprecated
+   SocketAddress nextServer();
 
 }

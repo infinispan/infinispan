@@ -5,6 +5,7 @@ import org.infinispan.client.hotrod.RemoteCacheManager;
 import org.infinispan.client.hotrod.TestHelper;
 import org.infinispan.client.hotrod.annotation.ClientListener;
 import org.infinispan.client.hotrod.event.CustomEventListener.CustomEvent;
+import org.infinispan.client.hotrod.impl.transport.tcp.FailoverRequestBalancingStrategy;
 import org.infinispan.client.hotrod.impl.transport.tcp.RequestBalancingStrategy;
 import org.infinispan.client.hotrod.impl.transport.tcp.RoundRobinBalancingStrategy;
 import org.infinispan.client.hotrod.test.HotRodClientTestingUtil;
@@ -161,7 +162,7 @@ public class ClientClusterEventsTest extends MultiHotRodServersTest {
       }
    }
 
-   public static class FirstServerAvailableBalancer implements RequestBalancingStrategy {
+   public static class FirstServerAvailableBalancer implements FailoverRequestBalancingStrategy {
       static Log log = LogFactory.getLog(FirstServerAvailableBalancer.class);
       static InetSocketAddress serverToKill;
       private Collection<SocketAddress> servers;
@@ -183,6 +184,11 @@ public class ClientClusterEventsTest extends MultiHotRodServersTest {
             log.info("Select " + serverToKill + " for load balancing");
             return serverToKill;
          }
+      }
+
+      @Override
+      public SocketAddress nextServer() {
+         return nextServer(null);
       }
    }
 
