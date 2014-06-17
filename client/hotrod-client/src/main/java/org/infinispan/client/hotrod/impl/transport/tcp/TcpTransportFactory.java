@@ -48,7 +48,7 @@ public class TcpTransportFactory implements TransportFactory {
    private final Object lock = new Object();
    // The connection pool implementation is assumed to be thread-safe, so we need to synchronize just the access to this field and not the method calls
    private GenericKeyedObjectPool<SocketAddress, TcpTransport> connectionPool;
-   private RequestBalancingStrategy balancer;
+   private FailoverRequestBalancingStrategy balancer;
    private Collection<SocketAddress> servers;
    private ConsistentHash consistentHash;
    private final ConsistentHashFactory hashFactory = new ConsistentHashFactory();
@@ -74,7 +74,8 @@ public class TcpTransportFactory implements TransportFactory {
             servers.add(new InetSocketAddress(server.host(), server.port()));
          }
          servers = Collections.unmodifiableCollection(servers);
-         balancer = Util.getInstance(configuration.balancingStrategy());
+         balancer = createBalancer(configuration);
+
          tcpNoDelay = configuration.tcpNoDelay();
          tcpKeepAlive = configuration.tcpKeepAlive();
          soTimeout = configuration.socketTimeout();
@@ -113,6 +114,14 @@ public class TcpTransportFactory implements TransportFactory {
 
       if (configuration.pingOnStartup())
          pingServers();
+   }
+
+   private FailoverRequestBalancingStrategy createBalancer(Configuration configuration) {
+      RequestBalancingStrategy balancingStrategy = Util.getInstance(configuration.balancingStrategy());
+      if (balancingStrategy instanceof FailoverRequestBalancingStrategy)
+         return (FailoverRequestBalancingStrategy) balancingStrategy;
+      else
+         return new FailoverToRequestBalancingStrategyDelegate(balancingStrategy);
    }
 
    private void pingServers() {
@@ -187,7 +196,7 @@ public class TcpTransportFactory implements TransportFactory {
    public Transport getTransport(Set<SocketAddress> failedServers) {
       SocketAddress server;
       synchronized (lock) {
-         server = balancer.nextServer(failedServers);
+         server = nextServer(failedServers);
       }
       return borrowTransportFromPool(server);
    }
@@ -207,13 +216,18 @@ public class TcpTransportFactory implements TransportFactory {
                log.tracef("Using consistent hash for determining the server: " + server);
             }
          } else {
-            server = balancer.nextServer(failedServers);
+            server = nextServer(failedServers);
+
             if (log.isTraceEnabled()) {
                log.tracef("Using the balancer for determining the server: %s", server);
             }
          }
       }
       return borrowTransportFromPool(server);
+   }
+
+   private SocketAddress nextServer(Set<SocketAddress> failedServers) {
+      return balancer.nextServer(failedServers);
    }
 
    @Override
@@ -389,6 +403,29 @@ public class TcpTransportFactory implements TransportFactory {
    public GenericKeyedObjectPool<SocketAddress, TcpTransport> getConnectionPool() {
       synchronized (lock) {
          return connectionPool;
+      }
+   }
+
+   private static class FailoverToRequestBalancingStrategyDelegate implements FailoverRequestBalancingStrategy {
+      final RequestBalancingStrategy delegate;
+
+      private FailoverToRequestBalancingStrategyDelegate(RequestBalancingStrategy delegate) {
+         this.delegate = delegate;
+      }
+
+      @Override
+      public void setServers(Collection<SocketAddress> servers) {
+         delegate.setServers(servers);
+      }
+
+      @Override
+      public SocketAddress nextServer() {
+         return delegate.nextServer();
+      }
+
+      @Override
+      public SocketAddress nextServer(Set<SocketAddress> failedServers) {
+         return delegate.nextServer();
       }
    }
 }

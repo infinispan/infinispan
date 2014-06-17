@@ -566,7 +566,12 @@ cache.remove("key2"); //this is dispatched to s1 again, and so on...
 
 ----
 
-Custom types of balancing policies can defined by implementing the link:$$http://docs.jboss.org/infinispan/7.0/apidocs/org/infinispan/client/hotrod/impl/transport/tcp/RequestBalancingStrategy.html$$[RequestBalancingStrategy] and by specifying it through the infinispan.client.hotrod.request-balancing-strategy configuration property. Please refer to configuration section for more details on this.
+Custom types of balancing policies can defined by implementing the link:$$http://docs.jboss.org/infinispan/7.0/apidocs/org/infinispan/client/hotrod/impl/transport/tcp/FailoverRequestBalancingStrategy.html$$[FailoverRequestBalancingStrategy] and by specifying it through the infinispan.client.hotrod.request-balancing-strategy configuration property. Please refer to configuration section for more details on this.
+
+.WARNING: link:$$http://docs.jboss.org/infinispan/7.0/apidocs/org/infinispan/client/hotrod/impl/transport/tcp/FailoverRequestBalancingStrategy.html$$[FailoverRequestBalancingStrategy]
+is a newly added interface in Infinispan 7.0. Previously, users had to provide
+implementations of link:$$http://docs.jboss.org/infinispan/7.0/apidocs/org/infinispan/client/hotrod/impl/transport/tcp/FailoverRequestBalancingStrategy.html$$[FailoverRequestBalancingStrategy]
+, which it has been deprecated starting with Infinispan 7.0.
 
 ===== Persistent connections
 In order to avoid creating a TCP connection on each request (which is a costly operation), the client keeps a pool of persistent connections to all the available servers and it reuses these connections whenever it is possible. The validity of the connections is checked using an async thread that iterates over the connections in the pool and sends a HotRod ping command to the server. By using this connection validation process the client is being proactive: there's a hight chance for broken connections to be found while being idle in the pool and no on actual request from the application.

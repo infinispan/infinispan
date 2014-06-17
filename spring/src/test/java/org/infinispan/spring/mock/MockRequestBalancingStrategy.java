@@ -1,12 +1,12 @@
 package org.infinispan.spring.mock;
 
+import org.infinispan.client.hotrod.impl.transport.tcp.FailoverRequestBalancingStrategy;
+
 import java.net.SocketAddress;
 import java.util.Collection;
 import java.util.Set;
 
-import org.infinispan.client.hotrod.impl.transport.tcp.RequestBalancingStrategy;
-
-public final class MockRequestBalancingStrategy implements RequestBalancingStrategy {
+public final class MockRequestBalancingStrategy implements FailoverRequestBalancingStrategy {
 
    @Override
    public void setServers(final Collection<SocketAddress> servers) {
@@ -16,4 +16,10 @@ public final class MockRequestBalancingStrategy implements RequestBalancingStrat
    public SocketAddress nextServer(Set<SocketAddress> failedServers) {
       return null;
    }
+
+   @Override
+   public SocketAddress nextServer() {
+      return null;
+   }
+
 }
