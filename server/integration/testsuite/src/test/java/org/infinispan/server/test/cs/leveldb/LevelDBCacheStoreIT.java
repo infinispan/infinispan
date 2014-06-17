@@ -1,16 +1,6 @@
 package org.infinispan.server.test.cs.leveldb;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertTrue;
-
-import java.io.File;
-import java.io.IOException;
-import java.lang.reflect.Field;
-import java.util.Map.Entry;
-
 import org.apache.commons.codec.binary.Hex;
-import org.infinispan.Cache;
 import org.infinispan.arquillian.core.InfinispanResource;
 import org.infinispan.arquillian.core.RemoteInfinispanServer;
 import org.infinispan.arquillian.model.RemoteInfinispanCache;
@@ -20,17 +10,11 @@ import org.infinispan.client.hotrod.RemoteCacheManager;
 import org.infinispan.client.hotrod.configuration.ConfigurationBuilder;
 import org.infinispan.commons.io.ByteBuffer;
 import org.infinispan.commons.io.ByteBufferImpl;
-import org.infinispan.commons.marshall.AbstractDelegatingMarshaller;
 import org.infinispan.commons.marshall.AbstractMarshaller;
-import org.infinispan.commons.marshall.StreamingMarshaller;
-import org.infinispan.factories.ComponentRegistry;
-import org.infinispan.factories.KnownComponentNames;
-import org.infinispan.manager.DefaultCacheManager;
 import org.infinispan.server.test.category.CacheStore;
 import org.infinispan.server.test.util.ITestUtils;
 import org.infinispan.test.TestingUtil;
 import org.iq80.leveldb.DB;
-import org.iq80.leveldb.DBIterator;
 import org.iq80.leveldb.Options;
 import org.iq80.leveldb.impl.Iq80DBFactory;
 import org.jboss.arquillian.container.test.api.ContainerController;
@@ -39,6 +23,12 @@ import org.jboss.arquillian.test.api.ArquillianResource;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
 import org.junit.runner.RunWith;
+
+import java.io.File;
+import java.io.IOException;
+import java.util.Map.Entry;
+
+import static org.junit.Assert.*;
 
 /**
  * Tests LevelDB cache store.
@@ -61,10 +51,8 @@ public class LevelDBCacheStoreIT {
 
     private static File dataDir = new File(ITestUtils.SERVER_DATA_DIR + File.separator + "leveldbtestcache");
     private static File expiredDir = new File(ITestUtils.SERVER_DATA_DIR + File.separator + "leveldb-expiredtestcache");
-    String cacheStoreName = System.getProperty("cachestore.name");
 
-    private static final TestMarshaller clientMarshaller = new TestMarshaller();
-    private static final StreamingMarshaller serverMarshaller = getServerMarshaller();
+    private final TestMarshaller clientMarshaller = new TestMarshaller();
 
     private void removeDataFilesIfExists() {
         if (dataDir.exists()) {
@@ -91,9 +79,6 @@ public class LevelDBCacheStoreIT {
         assertEquals("2", cache.get("key2"));
         assertEquals("3", cache.get("key3"));
         System.out.println("Stored via Hot Rod:");
-        printHex("key1", "1");
-        printHex("key2", "2");
-        printHex("key3", "3");
         assertTrue(dataDir.exists());
         assertTrue(dataDir.isDirectory());
         assertTrue(expiredDir.exists());
@@ -104,12 +89,6 @@ public class LevelDBCacheStoreIT {
         assertEquals("2", cache.get("key2"));
         assertEquals("3", cache.get("key3"));
         controller.stop(CONTAINER);
-    }
-
-    private void printHex(String key, String value) throws IOException, InterruptedException {
-        byte[] keyBytes = marshall(key);
-        byte[] valueBytes = marshall(value);
-        System.out.println("key \"" + Hex.encodeHexString(keyBytes) + "\": value \"" + Hex.encodeHexString(valueBytes) + "\"");
     }
 
     @Test
@@ -124,7 +103,6 @@ public class LevelDBCacheStoreIT {
         cache.put("key1", "1");
         assertEquals("1", cache.get("key1"));
         System.out.println("Stored via Hot Rod:");
-        printHex("key1", "1");
 
         assertTrue(dataDir.exists());
         assertTrue(dataDir.isDirectory());
@@ -135,18 +113,11 @@ public class LevelDBCacheStoreIT {
         DB db = Iq80DBFactory.factory.open(dataDir, new Options());
 
         System.out.println("LevelDB file " + dataDir.getAbsolutePath() + " contents:");
-        DBIterator dbi = db.iterator();
-        while (dbi.hasNext()) {
-            Entry<byte[], byte[]> entry = dbi.next();
-            System.out.println("key \"" + Hex.encodeHexString(entry.getKey()) + "\": value \""
+       for (Entry<byte[], byte[]> entry : db) {
+          System.out.println("key \"" + Hex.encodeHexString(entry.getKey()) + "\": value \""
                 + Hex.encodeHexString(entry.getValue()) + "\"");
-        }
-
-        assertNotNull(db.get(marshall("key1")));
-    }
-
-    private byte[] marshall(Object o) throws IOException, InterruptedException {
-        return serverMarshaller.objectToByteBuffer(clientMarshaller.objectToByteBuffer(o));
+          assertNotNull(entry.getValue());
+       }
     }
 
     private static class TestMarshaller extends AbstractMarshaller {
@@ -178,45 +149,8 @@ public class LevelDBCacheStoreIT {
     private RemoteCacheManager createManager() {
         ConfigurationBuilder cfgBuild = ITestUtils.createConfigBuilder(server.getHotrodEndpoint().getInetAddress().getHostName(),
                 server.getHotrodEndpoint().getPort());
-        if (clientMarshaller != null) {
-            cfgBuild.marshaller(clientMarshaller);
-        }
-        return new RemoteCacheManager(cfgBuild.build());
+       cfgBuild.marshaller(clientMarshaller);
+       return new RemoteCacheManager(cfgBuild.build());
     }
 
-    private static AbstractDelegatingMarshaller getServerMarshaller() {
-        DefaultCacheManager dcm = new DefaultCacheManager();
-        dcm.start();
-        dcm.getCache();
-        return extractCacheMarshaller(dcm.getCache());
-    }
-
-    private static Object extractField(Object target, String fieldName) {
-        return extractField(target.getClass(), target, fieldName);
-    }
-
-    private static Object extractField(Class<?> type, Object target, String fieldName) {
-        while (true) {
-            Field field;
-            try {
-                field = type.getDeclaredField(fieldName);
-                field.setAccessible(true);
-                return field.get(target);
-            } catch (Exception e) {
-                if (type.equals(Object.class)) {
-                    e.printStackTrace();
-                    return null;
-                } else {
-                    // try with superclass!!
-                    type = type.getSuperclass();
-                }
-            }
-        }
-    }
-
-    public static AbstractDelegatingMarshaller extractCacheMarshaller(Cache<?, ?> cache) {
-        ComponentRegistry cr = (ComponentRegistry) extractField(cache, "componentRegistry");
-        StreamingMarshaller marshaller = cr.getComponent(StreamingMarshaller.class, KnownComponentNames.CACHE_MARSHALLER);
-        return (AbstractDelegatingMarshaller) marshaller;
-    }
 }

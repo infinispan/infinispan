@@ -133,7 +133,7 @@
       <version.jsap>2.1</version.jsap>
       <version.jstl>1.2</version.jstl>
       <version.junit>4.11</version.junit>
-      <version.leveldb>0.5</version.leveldb>
+      <version.leveldb>0.7</version.leveldb>
       <version.leveldbjni>1.7</version.leveldbjni>
       <version.log4j>1.2.16</version.log4j>
       <version.lucene.v3>3.6.2</version.lucene.v3>
