@@ -20,6 +20,7 @@ import org.infinispan.manager.DefaultCacheManager;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.security.AuthorizationPermission;
 import org.infinispan.security.PrincipalRoleMapper;
+import org.infinispan.security.Security;
 import org.infinispan.test.integration.security.utils.LoginHandler;
 import org.infinispan.transaction.LockingMode;
 import org.junit.After;
@@ -46,13 +47,13 @@ public abstract class AbstractAuthentication {
    public abstract Map<String, AuthorizationPermission[]> getRolePermissionMap();
 
    public abstract PrincipalRoleMapper getPrincipalRoleMapper();
-   
+
    public abstract Subject getAdminSubject() throws LoginException;
-   
+
    public abstract Subject getWriterSubject() throws LoginException;
-   
+
    public abstract Subject getReaderSubject() throws LoginException;
-   
+
    public abstract Subject getUnprivilegedSubject() throws LoginException;
 
    public Subject authenticate(String login, String password) throws LoginException {
@@ -75,7 +76,7 @@ public abstract class AbstractAuthentication {
       globalConfig.globalJmxStatistics().disable();
       globalConfig.globalJmxStatistics().mBeanServerLookup(null); //TODO remove once WFLY-3124 is fixed, for now fail JMX registration
 
-      GlobalAuthorizationConfigurationBuilder globalRoles = globalConfig.security().authorization()
+      GlobalAuthorizationConfigurationBuilder globalRoles = globalConfig.security().authorization().enable()
             .principalRoleMapper(getPrincipalRoleMapper());
 
       //cache setup
@@ -96,7 +97,7 @@ public abstract class AbstractAuthentication {
       }
 
       Subject admin = getAdminSubject();
-      Subject.doAs(admin, new PrivilegedExceptionAction<Void>() {
+      Security.doAs(admin, new PrivilegedExceptionAction<Void>() {
          public Void run() throws Exception {
             manager = new DefaultCacheManager(globalConfig.build());
             manager.defineConfiguration(CACHE_NAME, cacheConfig.build());
@@ -111,7 +112,7 @@ public abstract class AbstractAuthentication {
    public void tearDown() throws Exception {
       if (manager != null) {
          Subject admin = getAdminSubject();
-         Subject.doAs(admin, new PrivilegedExceptionAction<Void>() {
+         Security.doAs(admin, new PrivilegedExceptionAction<Void>() {
             public Void run() throws Exception {
                manager.stop();
                return null;
@@ -123,7 +124,7 @@ public abstract class AbstractAuthentication {
    @Test
    public void testAdminCRUD() throws Exception {
       Subject admin = getAdminSubject();
-      Subject.doAs(admin, new PrivilegedExceptionAction<Void>() {
+      Security.doAs(admin, new PrivilegedExceptionAction<Void>() {
          public Void run() throws Exception {
             assertEquals(TEST_ENTRY_VALUE, secureCache.get(TEST_ENTRY_KEY));
             secureCache.put("test", "test value");
@@ -143,7 +144,7 @@ public abstract class AbstractAuthentication {
    @Test
    public void testWriterWrite() throws Exception {
       Subject writer = getWriterSubject();
-      Subject.doAs(writer, new PrivilegedExceptionAction<Void>() {
+      Security.doAs(writer, new PrivilegedExceptionAction<Void>() {
          public Void run() throws Exception {
             secureCache.put("test", "test value");
             return null;
@@ -154,7 +155,7 @@ public abstract class AbstractAuthentication {
    @Test
    public void testWriterCreateWrite() throws Exception {
       Subject writer = getWriterSubject();
-      Subject.doAs(writer, new PrivilegedExceptionAction<Void>() {
+      Security.doAs(writer, new PrivilegedExceptionAction<Void>() {
          public Void run() throws Exception {
             Cache<Object, Object> c = manager.getCache("writerCache");
             c.put("test", "value");
@@ -166,7 +167,7 @@ public abstract class AbstractAuthentication {
    @Test
    public void testWriterRemove() throws Exception {
       Subject writer = getWriterSubject();
-      Subject.doAs(writer, new PrivilegedExceptionAction<Void>() {
+      Security.doAs(writer, new PrivilegedExceptionAction<Void>() {
          public Void run() throws Exception {
             secureCache.remove(TEST_ENTRY_KEY);
             return null;
@@ -174,10 +175,10 @@ public abstract class AbstractAuthentication {
       });
    }
 
-   @Test(expected = java.lang.SecurityException.class)
+   @Test(expected = java.security.PrivilegedActionException.class)
    public void testWriterRead() throws Exception {
       Subject writer = getWriterSubject();
-      Subject.doAs(writer, new PrivilegedExceptionAction<Void>() {
+      Security.doAs(writer, new PrivilegedExceptionAction<Void>() {
          public Void run() throws Exception {
             secureCache.get(TEST_ENTRY_KEY);
             return null;
@@ -188,7 +189,7 @@ public abstract class AbstractAuthentication {
    @Test
    public void testReaderRead() throws Exception {
       Subject reader = getReaderSubject();
-      Subject.doAs(reader, new PrivilegedExceptionAction<Void>() {
+      Security.doAs(reader, new PrivilegedExceptionAction<Void>() {
          public Void run() throws Exception {
             assertEquals(TEST_ENTRY_VALUE, secureCache.get(TEST_ENTRY_KEY));
             return null;
@@ -196,10 +197,10 @@ public abstract class AbstractAuthentication {
       });
    }
 
-   @Test(expected = java.lang.SecurityException.class)
+   @Test(expected = java.security.PrivilegedActionException.class)
    public void testReaderWrite() throws Exception {
       Subject reader = getReaderSubject();
-      Subject.doAs(reader, new PrivilegedExceptionAction<Void>() {
+      Security.doAs(reader, new PrivilegedExceptionAction<Void>() {
          public Void run() throws Exception {
             secureCache.put("test", "test value");
             return null;
@@ -207,10 +208,10 @@ public abstract class AbstractAuthentication {
       });
    }
 
-   @Test(expected = java.lang.SecurityException.class)
+   @Test(expected = java.security.PrivilegedActionException.class)
    public void testReaderRemove() throws Exception {
       Subject reader = getReaderSubject();
-      Subject.doAs(reader, new PrivilegedExceptionAction<Void>() {
+      Security.doAs(reader, new PrivilegedExceptionAction<Void>() {
          public Void run() throws Exception {
             secureCache.remove(TEST_ENTRY_KEY);
             return null;
@@ -218,10 +219,10 @@ public abstract class AbstractAuthentication {
       });
    }
 
-   @Test(expected = java.lang.SecurityException.class)
+   @Test(expected = java.security.PrivilegedActionException.class)
    public void testUnprivilegedRead() throws Exception {
       Subject unprivileged = getUnprivilegedSubject();
-      Subject.doAs(unprivileged, new PrivilegedExceptionAction<Void>() {
+      Security.doAs(unprivileged, new PrivilegedExceptionAction<Void>() {
          public Void run() throws Exception {
             secureCache.get(TEST_ENTRY_KEY);
             return null;
@@ -229,10 +230,10 @@ public abstract class AbstractAuthentication {
       });
    }
 
-   @Test(expected = java.lang.SecurityException.class)
+   @Test(expected = java.security.PrivilegedActionException.class)
    public void testUnprivilegedWrite() throws Exception {
       Subject unprivileged = getUnprivilegedSubject();
-      Subject.doAs(unprivileged, new PrivilegedExceptionAction<Void>() {
+      Security.doAs(unprivileged, new PrivilegedExceptionAction<Void>() {
          public Void run() throws Exception {
             secureCache.put("test", "test value");
             return null;
@@ -240,10 +241,10 @@ public abstract class AbstractAuthentication {
       });
    }
 
-   @Test(expected = java.lang.SecurityException.class)
+   @Test(expected = java.security.PrivilegedActionException.class)
    public void testUnprivilegedRemove() throws Exception {
       Subject unprivileged = getUnprivilegedSubject();
-      Subject.doAs(unprivileged, new PrivilegedExceptionAction<Void>() {
+      Security.doAs(unprivileged, new PrivilegedExceptionAction<Void>() {
          public Void run() throws Exception {
             secureCache.remove(TEST_ENTRY_KEY);
             return null;
