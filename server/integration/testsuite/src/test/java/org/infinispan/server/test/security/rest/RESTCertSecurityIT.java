@@ -37,6 +37,7 @@ import org.infinispan.arquillian.core.RunningServer;
 import org.infinispan.arquillian.core.WithRunningServer;
 import org.jboss.arquillian.junit.Arquillian;
 import org.jboss.security.JBossJSSESecurityDomain;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
@@ -62,6 +63,7 @@ import static org.junit.Assert.assertEquals;
  * @author <a href="mailto:mgencur@redhat.com">Martin Gencur</a>
  */
 @RunWith(Arquillian.class)
+@Ignore
 public class RESTCertSecurityIT {
     private static final String CONTAINER = "rest-security-cert";
 
