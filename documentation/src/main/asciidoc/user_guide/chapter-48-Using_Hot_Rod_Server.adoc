@@ -597,6 +597,32 @@ It is highly recommended to read the following Javadocs (this is pretty much all
 
 [[sid-68355052]]
 
+==== Failover capabilities
+
+Hot Rod clients' capabilities to keep up with topology changes helps with request
+balancing and more importantly, with the ability to failover operations
+if one or several of the servers fail.
+
+Some of the conditional operations mentioned above, including `putIfAbsent`,
+`replace` with and without version, and conditional `remove` have strict method
+return guarantees, as well as those operations where returning the previous
+value is forced.
+
+In spite of failures, these methods return values need to be guaranteed, and
+in order to do so, it's necessary that these methods are not applied partially
+in the cluster in the event of failure. For example, imagine a `replace()`
+operation called in a server for key=k1 with `Flag.FORCE_RETURN_VALUE`, whose
+current value is `A` and the replace wants to set it to `B`. If the replace
+fails, it could happen that some servers contain `B` and others contain `A`,
+and during the failover, the original `replace()` could end up returning `B`,
+if the replace failovers to a node where `B` is set, or could end up returning
+`A`.
+
+To avoid this kind of situations, whenever Java Hot Rod client users want to
+use conditional operations, or operations whose previous value is required,
+it's important that the cache is configured to be transactional in order to
+avoid incorrect conditional operations or return values.
+
 ====  Consistent Concurrent Updates With Hot Rod Versioned Operations
 Data structures, such as Infinispan link:$$http://docs.jboss.org/infinispan/7.0/apidocs/org/infinispan/Cache.html$$[Cache] , that are accessed and modified concurrently can suffer from data consistency issues unless there're mechanisms to guarantee data correctness. Infinispan Cache, since it implements link:$$http://docs.oracle.com/javase/6/docs/api/java/util/concurrent/ConcurrentMap.html$$[ConcurrentMap] , provides operations such as link:$$http://docs.oracle.com/javase/6/docs/api/java/util/concurrent/ConcurrentMap.html#replace(K, V, V)$$[conditional replace] , link:$$http://docs.oracle.com/javase/6/docs/api/java/util/concurrent/ConcurrentMap.html#putIfAbsent(K, V)$$[putIfAbsent] , and link:$$http://docs.oracle.com/javase/6/docs/api/java/util/concurrent/ConcurrentMap.html#remove(java.lang.Object, java.lang.Object)$$[conditional remove] to its clients in order to guarantee data correctness. It even allows clients to operate against cache instances within JTA transactions, hence providing the necessary data consistency guarantees.
 

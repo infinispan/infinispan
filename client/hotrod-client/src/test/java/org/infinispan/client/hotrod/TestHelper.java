@@ -1,6 +1,8 @@
 package org.infinispan.client.hotrod;
 
+import org.infinispan.Cache;
 import org.infinispan.client.hotrod.configuration.ConfigurationBuilder;
+import org.infinispan.commons.util.Util;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.server.hotrod.HotRodServer;
 import org.infinispan.server.hotrod.configuration.HotRodServerConfigurationBuilder;
@@ -10,7 +12,10 @@ import org.infinispan.util.logging.LogFactory;
 import io.netty.channel.ChannelException;
 
 import java.net.BindException;
+import java.util.Random;
 import java.util.concurrent.atomic.AtomicInteger;
+
+import static org.infinispan.distribution.DistributionTestHelper.isFirstOwner;
 
 /**
  * @author Mircea.Markus@jboss.com
@@ -70,4 +75,30 @@ public class TestHelper {
       return new RemoteCacheManager(builder.build());
 
    }
+
+   public static byte[] getKeyForServer(HotRodServer primaryOwner) {
+      return getKeyForServer(primaryOwner, null);
+   }
+
+   public static byte[] getKeyForServer(HotRodServer primaryOwner, String cacheName) {
+      Cache<?, ?> cache = cacheName != null
+            ? primaryOwner.getCacheManager().getCache(cacheName)
+            : primaryOwner.getCacheManager().getCache();
+      Random r = new Random();
+      byte[] dummy = new byte[8];
+      int attemptsLeft = 1000;
+      do {
+         r.nextBytes(dummy);
+      } while (!isFirstOwner(cache, dummy) && attemptsLeft >= 0);
+
+      if (attemptsLeft < 0)
+         throw new IllegalStateException("Could not find any key owned by " + primaryOwner);
+
+      log.infof("Binary key %s hashes to [cluster=%s,hotrod=%s]",
+            Util.printArray(dummy, false), primaryOwner.getCacheManager().getAddress(),
+            primaryOwner.getAddress());
+
+      return dummy;
+   }
+
 }
