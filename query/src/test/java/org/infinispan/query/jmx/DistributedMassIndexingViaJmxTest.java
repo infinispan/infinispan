@@ -24,7 +24,7 @@ import org.testng.annotations.Test;
  * @author Galder Zamarreño
  * @since 5.2
  */
-@Test(groups = "functional", testName = "query.jmx.DistributedMassIndexingViaJmxTest")
+@Test(groups = /*functional*/"unstable", testName = "query.jmx.DistributedMassIndexingViaJmxTest", description = "Unstable, see https://issues.jboss.org/browse/ISPN-4012")
 public class DistributedMassIndexingViaJmxTest extends DistributedMassIndexingTest {
 
    static final String BASE_JMX_DOMAIN = DistributedMassIndexingViaJmxTest.class.getSimpleName();
