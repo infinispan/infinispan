@@ -80,4 +80,9 @@ public class JdbcStringBasedStoreTest extends BaseStoreTest {
       super.testLoadAndStoreMarshalledValues();
    }
 
+   @Override
+   protected boolean storePurgesAllExpired() {
+      // expiration listener is not called for the entries
+      return false;
+   }
 }

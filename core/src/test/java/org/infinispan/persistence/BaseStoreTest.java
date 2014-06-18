@@ -1,5 +1,24 @@
 package org.infinispan.persistence;
 
+import static java.util.Collections.emptySet;
+import static org.infinispan.persistence.PersistenceUtil.internalMetadata;
+import static org.infinispan.test.TestingUtil.allEntries;
+import static org.infinispan.test.TestingUtil.marshalledEntry;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
+import static org.testng.AssertJUnit.*;
+
+import java.io.Serializable;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.Set;
+import java.util.concurrent.Callable;
+import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.ThreadPoolExecutor;
+import java.util.concurrent.TimeUnit;
+
 import org.infinispan.AdvancedCache;
 import org.infinispan.Cache;
 import org.infinispan.commons.equivalence.AnyEquivalence;
@@ -20,33 +39,17 @@ import org.infinispan.marshall.TestObjectStreamMarshaller;
 import org.infinispan.marshall.core.MarshalledEntry;
 import org.infinispan.marshall.core.MarshalledEntryImpl;
 import org.infinispan.marshall.core.MarshalledValue;
+import org.infinispan.persistence.spi.AdvancedCacheWriter;
 import org.infinispan.persistence.spi.AdvancedLoadWriteStore;
 import org.infinispan.persistence.spi.PersistenceException;
 import org.infinispan.test.AbstractInfinispanTest;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.TestInternalCacheEntryFactory;
 import org.infinispan.transaction.xa.TransactionFactory;
-import org.infinispan.util.concurrent.WithinThreadExecutor;
+import org.infinispan.util.concurrent.ConcurrentHashSet;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
-
-import java.io.Serializable;
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.Set;
-
-import static java.util.Collections.emptySet;
-import static org.infinispan.persistence.PersistenceUtil.internalMetadata;
-import static org.infinispan.test.TestingUtil.allEntries;
-import static org.infinispan.test.TestingUtil.marshalledEntry;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
-import static org.testng.Assert.assertNull;
-import static org.testng.Assert.assertTrue;
-import static org.testng.AssertJUnit.assertEquals;
-import static org.testng.AssertJUnit.assertFalse;
-import static org.testng.AssertJUnit.assertNotNull;
 
 /**
  * This is a base class containing various unit tests for each and every different CacheStore implementations. If you
@@ -161,7 +164,7 @@ public abstract class BaseStoreTest extends AbstractInfinispanTest {
       se = TestInternalCacheEntryFactory.create("k", wrap("k", "v"), lifespan);
       cl.write(new MarshalledEntryImpl("k", wrap("k", "v"), internalMetadata(se), getMarshaller()));
       Thread.sleep(100);
-      purgeExpired();
+      purgeExpired(Collections.singleton("k"), 1000);
       assert se.isExpired(System.currentTimeMillis());
       assertEventuallyExpires("k");
       assertFalse(cl.contains("k"));
@@ -202,7 +205,7 @@ public abstract class BaseStoreTest extends AbstractInfinispanTest {
       se = TestInternalCacheEntryFactory.create("k", wrap("k", "v"), -1, idle);
       cl.write(marshalledEntry(se, getMarshaller()));
       Thread.sleep(100);
-      purgeExpired();
+      purgeExpired(Collections.singleton("k"), 1000);
       assert se.isExpired(System.currentTimeMillis());
       assertEventuallyExpires("k");
       assertFalse(cl.contains("k"));
@@ -222,8 +225,51 @@ public abstract class BaseStoreTest extends AbstractInfinispanTest {
       });
    }
 
-   protected void purgeExpired() {
-      cl.purge(new WithinThreadExecutor(), null);
+   /* Override if the store cannot purge all expired entries upon request */
+   protected boolean storePurgesAllExpired() {
+      return true;
+   }
+
+   protected void purgeExpired(Collection<String> expiredKeys, long timeout) {
+      final ThreadPoolExecutor executor = new ThreadPoolExecutor(3, 3, 1, TimeUnit.SECONDS, new LinkedBlockingQueue<Runnable>());
+      final Set<String> expired = new ConcurrentHashSet<String>();
+      for (String key : expiredKeys) // addAll is not supported
+         expired.add(key);
+      final Set<Object> incorrect = new ConcurrentHashSet<Object>();
+      final AdvancedCacheWriter.PurgeListener purgeListener = new AdvancedCacheWriter.PurgeListener() {
+         @Override
+         public void entryPurged(Object key) {
+            if (!expired.remove(key)) {
+               incorrect.add(key);
+            }
+         }
+      };
+
+      long start = System.nanoTime();
+      for (;;) {
+         // purge is executed by eviction thread, which is different than application thread
+         // this may matter for some locking cases
+         try {
+            executor.submit(new Callable<Void>() {
+               @Override
+               public Void call() throws Exception {
+                  cl.purge(executor, purgeListener);
+                  return null;
+               }
+            }).get();
+         } catch (Exception e) {
+            throw new RuntimeException("Purge has thrown an exception", e);
+         }
+         assertEquals(Collections.emptySet(), incorrect);
+         if (expired.isEmpty() || !storePurgesAllExpired()) {
+            return;
+         }
+         if (System.nanoTime() > start + TimeUnit.MILLISECONDS.toNanos(timeout)) {
+            throw new IllegalStateException("Purge has timed out");
+         } else {
+            Thread.yield();
+         }
+      }
    }
 
    public void testLoadAndStoreWithLifespanAndIdle() throws Exception {
@@ -246,7 +292,7 @@ public abstract class BaseStoreTest extends AbstractInfinispanTest {
       se = TestInternalCacheEntryFactory.create("k", wrap("k", "v"), lifespan, idle);
       cl.write(marshalledEntry(se, getMarshaller()));
       Thread.sleep(100);
-      purgeExpired();
+      purgeExpired(Collections.singleton("k"), 1000);
       assert se.isExpired(System.currentTimeMillis());
       assertEventuallyExpires("k");
       assertFalse(cl.contains("k"));
@@ -357,11 +403,13 @@ public abstract class BaseStoreTest extends AbstractInfinispanTest {
       assert cl.contains("k5");
 
       Thread.sleep(lifespan + 10);
-      purgeExpired();
 
-      assertFalse(cl.contains("k1"));
-      assertFalse(cl.contains("k2"));
-      assertFalse(cl.contains("k3"));
+      HashSet<String> expiredKeys = new HashSet<String>(Arrays.asList("k1", "k2", "k3"));
+      purgeExpired(Collections.unmodifiableSet(expiredKeys), 1000);
+
+      for (String key : expiredKeys) {
+         assertFalse(cl.contains(key));
+      }
       assert cl.contains("k4");
       assert cl.contains("k5");
    }

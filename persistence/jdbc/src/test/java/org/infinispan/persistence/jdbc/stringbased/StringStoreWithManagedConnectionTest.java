@@ -75,4 +75,8 @@ public class StringStoreWithManagedConnectionTest extends ManagedConnectionFacto
       super.testLoadAndStoreMarshalledValues();
    }
 
+   @Override
+   protected boolean storePurgesAllExpired() {
+      return false;
+   }
 }

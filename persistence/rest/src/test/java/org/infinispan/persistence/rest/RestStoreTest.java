@@ -6,13 +6,12 @@ import org.infinispan.configuration.global.GlobalConfigurationBuilder;
 import org.infinispan.container.InternalEntryFactoryImpl;
 import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.eviction.EvictionStrategy;
-import org.infinispan.persistence.rest.configuration.RestStoreConfigurationBuilder;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.marshall.core.MarshalledEntryFactoryImpl;
 import org.infinispan.persistence.BaseStoreTest;
 import org.infinispan.persistence.DummyInitializationContext;
+import org.infinispan.persistence.rest.configuration.RestStoreConfigurationBuilder;
 import org.infinispan.persistence.spi.AdvancedLoadWriteStore;
-import org.infinispan.persistence.spi.PersistenceException;
 import org.infinispan.rest.EmbeddedRestServer;
 import org.infinispan.rest.RestTestingUtil;
 import org.infinispan.test.TestingUtil;
@@ -86,8 +85,8 @@ public class RestStoreTest extends BaseStoreTest {
    }
 
    @Override
-   protected void purgeExpired()  {
-      localCacheManager.getCache().getAdvancedCache().getEvictionManager().processEviction();
+   protected boolean storePurgesAllExpired() {
+      return false;
    }
 
    @Override

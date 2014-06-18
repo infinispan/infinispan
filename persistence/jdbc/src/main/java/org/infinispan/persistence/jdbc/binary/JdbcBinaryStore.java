@@ -1,5 +1,23 @@
 package org.infinispan.persistence.jdbc.binary;
 
+import java.io.ByteArrayInputStream;
+import java.io.InputStream;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
+import java.util.Map;
+import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.Callable;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Executor;
+import java.util.concurrent.ExecutorCompletionService;
+import java.util.concurrent.Future;
+import java.util.concurrent.LinkedBlockingQueue;
+
 import org.infinispan.commons.configuration.ConfiguredBy;
 import org.infinispan.commons.equivalence.Equivalence;
 import org.infinispan.commons.io.ByteBuffer;
@@ -8,7 +26,6 @@ import org.infinispan.executors.ExecutorAllCompletionService;
 import org.infinispan.filter.KeyFilter;
 import org.infinispan.marshall.core.MarshalledEntry;
 import org.infinispan.metadata.InternalMetadata;
-import org.infinispan.persistence.spi.PersistenceException;
 import org.infinispan.persistence.PersistenceUtil;
 import org.infinispan.persistence.TaskContextImpl;
 import org.infinispan.persistence.jdbc.JdbcUtil;
@@ -19,24 +36,10 @@ import org.infinispan.persistence.jdbc.connectionfactory.ManagedConnectionFactor
 import org.infinispan.persistence.jdbc.logging.Log;
 import org.infinispan.persistence.spi.AdvancedLoadWriteStore;
 import org.infinispan.persistence.spi.InitializationContext;
+import org.infinispan.persistence.spi.PersistenceException;
 import org.infinispan.persistence.support.Bucket;
 import org.infinispan.util.concurrent.locks.StripedLock;
 import org.infinispan.util.logging.LogFactory;
-
-import java.io.ByteArrayInputStream;
-import java.io.InputStream;
-import java.sql.Connection;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.sql.SQLException;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.Map;
-import java.util.Set;
-import java.util.concurrent.Callable;
-import java.util.concurrent.Executor;
 
 /**
  * {@link org.infinispan.persistence.spi.AdvancedLoadWriteStore} implementation that will store all the buckets as rows
@@ -59,6 +62,8 @@ import java.util.concurrent.Executor;
 public class JdbcBinaryStore implements AdvancedLoadWriteStore {
 
    private static final Log log = LogFactory.getLog(JdbcBinaryStore.class, Log.class);
+
+   private static final int BATCH_SIZE = 100; // TODO: make configurable
 
    private StripedLock locks;
 
@@ -253,112 +258,130 @@ public class JdbcBinaryStore implements AdvancedLoadWriteStore {
       Connection conn = null;
       PreparedStatement ps = null;
       ResultSet rs = null;
-      Set<Bucket> expiredBuckets = new HashSet<Bucket>();
-      final int batchSize = 100;
-      ExecutorAllCompletionService eacs = new ExecutorAllCompletionService(threadPool);
-      Set<Bucket> emptyBuckets = new HashSet<Bucket>(batchSize);
-      int taskCount = 0;
+      Collection<Bucket> expiredBuckets = new ArrayList<Bucket>(BATCH_SIZE);
+      ExecutorCompletionService ecs = new ExecutorCompletionService(threadPool);
+      BlockingQueue<Bucket> emptyBuckets = new LinkedBlockingQueue<Bucket>();
+      // We have to lock and unlock the buckets in the same thread - executor can execute
+      // the BucketPurger task in different thread. That's why we can't unlock the locks
+      // there but have to send them to this thread through this queue.
+      int tasksScheduled = 0;
+      int tasksCompleted = 0;
       try {
-         try {
-            String sql = tableManipulation.getSelectExpiredRowsSql();
-            conn = connectionFactory.getConnection();
-            ps = conn.prepareStatement(sql);
-            ps.setLong(1, ctx.getTimeService().wallClockTime());
-            rs = ps.executeQuery();
-            while (rs.next()) {
-               Integer bucketId = rs.getInt(2);
-               if (immediateLockForWriting(bucketId)) {
-                  if (log.isTraceEnabled()) {
-                     log.tracef("Adding bucket keyed %s for purging.", bucketId);
-                  }
-                  Bucket bucket;
-                  InputStream binaryStream = rs.getBinaryStream(1);
-                  bucket = unmarshallBucket(binaryStream);
-                  bucket.setBucketId(bucketId);
-                  expiredBuckets.add(bucket);
-                  if (expiredBuckets.size() == batchSize) {
-                     eacs.submit(new BucketPurger(expiredBuckets, task, ctx.getMarshaller(), conn, emptyBuckets));
-                     taskCount++;
-                     expiredBuckets = new HashSet<Bucket>(batchSize);
-                  }
-               } else {
-                  if (log.isTraceEnabled()) {
-                     log.tracef("Could not acquire write lock for %s, this won't be purged even though it has expired elements", bucketId);
-                  }
-               }
-            }
-
-            if (!expiredBuckets.isEmpty())
-               eacs.submit(new BucketPurger(expiredBuckets, task, ctx.getMarshaller(), conn, emptyBuckets));
-
-         } catch (Exception ex) {
-            // if something happens make sure buckets locks are being release
-            releaseLocks(expiredBuckets);
-            log.failedClearingJdbcCacheStore(ex);
-            throw new PersistenceException("Failed clearing JdbcBinaryStore", ex);
-         } finally {
-            JdbcUtil.safeClose(ps);
-            JdbcUtil.safeClose(rs);
-         }
-
-
-         eacs.waitUntilAllCompleted();
-         if (eacs.isExceptionThrown()) {
-            releaseLocks(emptyBuckets);
-         }
-
-         if (emptyBuckets.isEmpty())
-            return;
-
-         if (log.isTraceEnabled()) {
-            log.tracef("About to remove empty buckets %s", emptyBuckets);
-         }
-
-         // then remove the empty buckets
-         try {
-            String sql = tableManipulation.getDeleteRowSql();
-            ps = conn.prepareStatement(sql);
-            int deletionCount = 0;
-            for (Bucket bucket : emptyBuckets) {
-               ps.setString(1, bucket.getBucketIdAsString());
-               ps.addBatch();
-               deletionCount++;
-               if (deletionCount % batchSize == 0) {
-                  if (log.isTraceEnabled()) {
-                     log.tracef("Flushing deletion batch, total deletion count so far is %d", deletionCount);
-                  }
-                  ps.executeBatch();
-               }
-            }
-            if (deletionCount % batchSize != 0) {
-               int[] batchResult = ps.executeBatch();
+         String sql = tableManipulation.getSelectExpiredRowsSql();
+         conn = connectionFactory.getConnection();
+         ps = conn.prepareStatement(sql);
+         ps.setLong(1, ctx.getTimeService().wallClockTime());
+         rs = ps.executeQuery();
+         while (rs.next()) {
+            Integer bucketId = rs.getInt(2);
+            if (immediateLockForWriting(bucketId)) {
                if (log.isTraceEnabled()) {
-                  log.tracef("Flushed the batch and received following results: %s", Arrays.toString(batchResult));
+                  log.tracef("Adding bucket keyed %s for purging.", bucketId);
+               }
+               InputStream binaryStream = rs.getBinaryStream(1);
+               Bucket bucket = unmarshallBucket(binaryStream);
+               bucket.setBucketId(bucketId);
+               expiredBuckets.add(bucket);
+               if (expiredBuckets.size() == BATCH_SIZE) {
+                  ++tasksScheduled;
+                  ecs.submit(new BucketPurger(expiredBuckets, task, ctx.getMarshaller(), conn, emptyBuckets));
+                  expiredBuckets = new ArrayList<Bucket>(BATCH_SIZE);
+               }
+            } else {
+               if (log.isTraceEnabled()) {
+                  log.tracef("Could not acquire write lock for %s, this won't be purged even though it has expired elements", bucketId);
                }
             }
+            // continuously unlock already purged buckets - we don't want to run out of memory by storing
+            // them in unlimited collection
+            tasksCompleted += unlockCompleted(ecs, false); // cannot throw InterruptedException
+         }
+
+         if (!expiredBuckets.isEmpty()) {
+            ++tasksScheduled;
+            ecs.submit(new BucketPurger(expiredBuckets, task, ctx.getMarshaller(), conn, emptyBuckets));
+         }
+         // wait until all tasks have completed
+         try {
+            while (tasksCompleted < tasksScheduled) {
+               tasksCompleted += unlockCompleted(ecs, true);
+            }
+         } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            throw new PersistenceException("Interrupted purging JdbcBinaryStore", e);
+         }
+         // when all tasks have completed, we may have up to BATCH_SIZE empty buckets waiting to be deleted
+         PreparedStatement deletePs = null;
+         try {
+            deletePs = conn.prepareStatement(tableManipulation.getDeleteRowSql());
+            Bucket bucket;
+            while ((bucket = emptyBuckets.poll()) != null) {
+               deletePs.setString(1, bucket.getBucketIdAsString());
+               deletePs.addBatch();
+               unlock(bucket.getBucketId());
+            }
+            log.tracef("Flushing deletion batch");
+            deletePs.executeBatch();
+            log.tracef("Flushed deletion batch");
          } catch (Exception ex) {
             // if something happens make sure buckets locks are being release
             log.failedClearingJdbcCacheStore(ex);
-            throw new PersistenceException("Failed clearing JdbcBinaryStore", ex);
          } finally {
-            releaseLocks(emptyBuckets);
-            JdbcUtil.safeClose(ps);
+            JdbcUtil.safeClose(deletePs);
          }
+
+      } catch (Exception ex) {
+         // if something happens make sure buckets locks are released
+         log.failedClearingJdbcCacheStore(ex);
+         throw new PersistenceException("Failed clearing JdbcBinaryStore", ex);
       } finally {
-         connectionFactory.releaseConnection(conn);
+         JdbcUtil.safeClose(ps);
+         JdbcUtil.safeClose(rs);
+
+         try {
+            while (tasksCompleted < tasksScheduled) {
+               tasksCompleted += unlockCompleted(ecs, true);
+            }
+         } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            throw new PersistenceException("Interrupted purging JdbcBinaryStore", e);
+         } finally {
+            connectionFactory.releaseConnection(conn);
+         }
       }
    }
 
-   private class BucketPurger implements Callable<Void> {
+   private int unlockCompleted(ExecutorCompletionService ecs, boolean blocking) throws InterruptedException {
+      Future<Collection<Integer>> future;
+      int tasksCompleted = 0;
+      while ((future = blocking ? ecs.take() : ecs.poll()) != null) {
+         tasksCompleted++;
+         try {
+            Collection<Integer> completed = future.get();
+            for (Integer bucketId : completed) {
+               unlock(bucketId);
+            }
+         } catch (InterruptedException e) {
+            log.errorExecutingParallelStoreTask(e);
+            Thread.currentThread().interrupt();
+         } catch (ExecutionException e) {
+            log.errorExecutingParallelStoreTask(e);
+         }
+         if (blocking) break;
+      }
+      return tasksCompleted;
+   }
+
+   private class BucketPurger implements Callable<Collection<Integer>> {
 
       private final Collection<Bucket> buckets;
       private final PurgeListener purgeListener;
       private final StreamingMarshaller marshaller;
       private final Connection conn;
-      private final Collection<Bucket> emptyBuckets;
+      private final BlockingQueue<Bucket> emptyBuckets;
 
       private BucketPurger(Collection<Bucket> buckets, PurgeListener purgeListener, StreamingMarshaller marshaller,
-                           Connection conn, Collection<Bucket> emptyBuckets) {
+                           Connection conn, BlockingQueue<Bucket> emptyBuckets) {
          this.buckets = buckets;
          this.purgeListener = purgeListener;
          this.marshaller = marshaller;
@@ -367,33 +390,65 @@ public class JdbcBinaryStore implements AdvancedLoadWriteStore {
       }
 
       @Override
-      public Void call() throws Exception {
-         PreparedStatement ps = null;
-         try {
-            String sql = tableManipulation.getUpdateRowSql();
-            ps = conn.prepareStatement(sql);
-            for (Iterator<Bucket> it = buckets.iterator(); it.hasNext();) {
-               Bucket bucket = it.next();
-               for (Object key : bucket.removeExpiredEntries(ctx.getTimeService())) {
-                  if (purgeListener != null) purgeListener.entryPurged(key);
+      public Collection<Integer> call() throws Exception {
+         log.trace("Purger task started");
+         List<Integer> purgedBuckets = new ArrayList(buckets.size());
+         {
+            PreparedStatement ps = null;
+            try {
+               String sql = tableManipulation.getUpdateRowSql();
+               ps = conn.prepareStatement(sql);
+               for (Bucket bucket : buckets) {
+                  log.trace("Purging bucket " + bucket.getBucketId() + " with entries " + bucket.getStoredEntries());
+                  for (Object key : bucket.removeExpiredEntries(ctx.getTimeService())) {
+                     if (purgeListener != null) purgeListener.entryPurged(key);
+                  }
+                  if (!bucket.isEmpty()) {
+                     ByteBuffer byteBuffer = JdbcUtil.marshall(marshaller, bucket.getStoredEntries());
+                     ps.setBinaryStream(1, new ByteArrayInputStream(byteBuffer.getBuf(), byteBuffer.getOffset(), byteBuffer.getLength()), byteBuffer.getLength());
+                     ps.setLong(2, bucket.timestampOfFirstEntryToExpire());
+                     ps.setString(3, bucket.getBucketIdAsString());
+                     ps.addBatch();
+                     purgedBuckets.add(bucket.getBucketId());
+                  } else {
+                     emptyBuckets.add(bucket);
+                  }
                }
-               if (!bucket.isEmpty()) {
-                  ByteBuffer byteBuffer = JdbcUtil.marshall(marshaller, bucket);
-                  ps.setBinaryStream(1, new ByteArrayInputStream(byteBuffer.getBuf(), byteBuffer.getOffset(), byteBuffer.getLength()), byteBuffer.getLength());
-                  ps.setLong(2, bucket.timestampOfFirstEntryToExpire());
-                  ps.setString(3, bucket.getBucketIdAsString());
-                  ps.addBatch();
-               } else {
-                  it.remove();
-                  emptyBuckets.add(bucket);
-               }
+               log.trace("Flushing update batch");
+               ps.executeBatch();
+               log.trace("Flushed update batch");
+            } catch (Exception ex) {
+               log.failedClearingJdbcCacheStore(ex);
+            } finally {
+               JdbcUtil.safeClose(ps);
             }
-            ps.executeBatch();
-         } finally {
-            JdbcUtil.safeClose(ps);
-            releaseLocks(buckets);
          }
-         return null;
+         // It is possible that the queue will be drained by multiple threads in parallel,
+         // but this is just a bit suboptimal: we won't optimize this case
+         if (emptyBuckets.size() > BATCH_SIZE) {
+            PreparedStatement ps = null;
+            try {
+               String sql = tableManipulation.getDeleteRowSql();
+               ps = conn.prepareStatement(sql);
+               int deletionCount = 0;
+               Bucket bucket;
+               while (deletionCount < BATCH_SIZE && (bucket = emptyBuckets.poll()) != null) {
+                  ps.setString(1, bucket.getBucketIdAsString());
+                  ps.addBatch();
+                  deletionCount++;
+                  purgedBuckets.add(bucket.getBucketId());
+               }
+               log.tracef("Flushing deletion batch");
+               ps.executeBatch();
+               log.tracef("Flushed deletion batch");
+            } catch (Exception ex) {
+               // if something happens make sure buckets locks are being release
+               log.failedClearingJdbcCacheStore(ex);
+            } finally {
+               JdbcUtil.safeClose(ps);
+            }
+         }
+         return purgedBuckets;
       }
    }
 

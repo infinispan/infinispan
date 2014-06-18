@@ -1,5 +1,8 @@
 package org.infinispan.persistence.remote;
 
+import static org.infinispan.server.hotrod.test.HotRodTestingUtil.hotRodCacheConfiguration;
+import static org.infinispan.test.TestingUtil.internalMetadata;
+
 import org.infinispan.client.hotrod.TestHelper;
 import org.infinispan.client.hotrod.test.HotRodClientTestingUtil;
 import org.infinispan.commons.io.ByteBufferFactoryImpl;
@@ -7,23 +10,20 @@ import org.infinispan.commons.marshall.StreamingMarshaller;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.container.InternalEntryFactoryImpl;
 import org.infinispan.eviction.EvictionStrategy;
+import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.marshall.core.MarshalledEntryFactoryImpl;
-import org.infinispan.persistence.BaseStoreTest;
-import org.infinispan.persistence.spi.PersistenceException;
-import org.infinispan.persistence.InitializationContextImpl;
 import org.infinispan.marshall.core.MarshalledEntryImpl;
+import org.infinispan.persistence.BaseStoreTest;
+import org.infinispan.persistence.InitializationContextImpl;
 import org.infinispan.persistence.remote.configuration.RemoteStoreConfigurationBuilder;
 import org.infinispan.persistence.spi.AdvancedLoadWriteStore;
-import org.infinispan.manager.EmbeddedCacheManager;
+import org.infinispan.persistence.spi.PersistenceException;
 import org.infinispan.server.hotrod.HotRodServer;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.infinispan.util.DefaultTimeService;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.Test;
-
-import static org.infinispan.server.hotrod.test.HotRodTestingUtil.hotRodCacheConfiguration;
-import static org.infinispan.test.TestingUtil.internalMetadata;
 
 
 /**
@@ -97,8 +97,8 @@ public class RemoteStoreRawValuesTest extends BaseStoreTest {
    }
 
    @Override
-   protected void purgeExpired() throws PersistenceException {
-      localCacheManager.getCache().getAdvancedCache().getEvictionManager().processEviction();
+   protected boolean storePurgesAllExpired() {
+      return false;
    }
 
    @Override
