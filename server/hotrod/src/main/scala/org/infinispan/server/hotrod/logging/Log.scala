@@ -22,4 +22,7 @@ trait Log extends org.infinispan.server.core.logging.Log {
 
    def unexpectedEvent(e: Event[Bytes, Bytes]) = log.unexpectedEvent(e)
 
+   def warnConditionalOperationNonTransactional(op: String) = log.warnConditionalOperationNonTransactional(op)
+
+   def warnForceReturnPreviousNonTransactional(op: String) = log.warnForceReturnPreviousNonTransactional(op)
 }
