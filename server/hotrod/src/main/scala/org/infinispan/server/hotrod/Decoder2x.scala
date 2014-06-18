@@ -389,6 +389,13 @@ object Decoder2x extends AbstractVersionedDecoder with ServerConstants with Log 
 
    override def getOptimizedCache(h: HotRodHeader, c: Cache): Cache = {
       var optCache = c
+      h.op match {
+         case PutIfAbsentRequest | ReplaceRequest | ReplaceIfUnmodifiedRequest
+              | RemoveIfUnmodifiedRequest if !isCacheTransactional(optCache) =>
+            warnConditionalOperationNonTransactional(h.op.toString)
+         case _ => // no-op
+      }
+
       if (hasFlag(h, SkipCacheLoader)) {
          h.op match {
             case PutRequest
@@ -410,9 +417,15 @@ object Decoder2x extends AbstractVersionedDecoder with ServerConstants with Log 
                optCache = optCache.withFlags(IGNORE_RETURN_VALUES)
             case _ =>
          }
+      } else {
+         if (!isCacheTransactional(optCache))
+            warnForceReturnPreviousNonTransactional(h.op.toString)
       }
       optCache
    }
+
+   private def isCacheTransactional(c: Cache): Boolean =
+      SecurityActions.getCacheConfiguration(c).transaction().transactionMode().isTransactional
 
    def normalizeAuthorizationId(id: String): String = {
       val realm = id.indexOf('@')
