@@ -382,12 +382,13 @@ public class LevelDBStore implements AdvancedLoadWriteStore {
          List<Long> times = new ArrayList<Long>();
          List<Object> keys = new ArrayList<Object>();
          DBIterator it = expiredDb.iterator(new ReadOptions().fillCache(false));
+         long now = ctx.getTimeService().wallClockTime();
          try {
             for (it.seekToFirst(); it.hasNext();) {
                Map.Entry<byte[], byte[]> entry = it.next();
 
                Long time = (Long) unmarshall(entry.getKey());
-               if (time > System.currentTimeMillis())
+               if (time > now)
                   break;
                times.add(time);
                Object key = unmarshall(entry.getValue());
@@ -404,7 +405,6 @@ public class LevelDBStore implements AdvancedLoadWriteStore {
             if (!keys.isEmpty())
                log.debugf("purge (up to) %d entries", keys.size());
             int count = 0;
-            long currentTimeMillis = System.currentTimeMillis();
             for (Object key : keys) {
                byte[] keyBytes = marshall(key);
 
@@ -412,11 +412,14 @@ public class LevelDBStore implements AdvancedLoadWriteStore {
                if (b == null)
                   continue;
                MarshalledEntry me = (MarshalledEntry) ctx.getMarshaller().objectFromByteBuffer(b);
-               if (me.getMetadata() != null && me.getMetadata().isExpired(ctx.getTimeService().wallClockTime())) {
+               // TODO race condition: the entry could be updated between the get and delete!
+               if (me.getMetadata() != null && me.getMetadata().isExpired(now)) {
                   // somewhat inefficient to FIND then REMOVE...
                   db.delete(keyBytes);
+                  purgeListener.entryPurged(key);
                   count++;
                }
+
             }
             if (count != 0)
                log.debugf("purged %d entries", count);
@@ -455,7 +458,7 @@ public class LevelDBStore implements AdvancedLoadWriteStore {
          // being a moving target
          // which could lead to unexpected results, hence, InternalCacheEntry
          // calls are required
-         expiry = maxIdle + System.currentTimeMillis();
+         expiry = maxIdle + ctx.getTimeService().wallClockTime();
       }
       Long at = expiry;
       Object key = entry.getKey();
