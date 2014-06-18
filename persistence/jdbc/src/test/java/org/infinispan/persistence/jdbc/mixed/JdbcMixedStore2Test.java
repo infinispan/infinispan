@@ -56,4 +56,9 @@ public class JdbcMixedStore2Test extends BaseStoreTest {
    public void tearDown() throws PersistenceException {
       TestingUtil.killCacheManagers(cacheManager);
    }
+
+   @Override
+   protected boolean storePurgesAllExpired() {
+      return false;
+   }
 }

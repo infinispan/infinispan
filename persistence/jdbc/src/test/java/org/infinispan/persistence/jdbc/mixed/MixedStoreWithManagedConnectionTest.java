@@ -97,4 +97,9 @@ public class MixedStoreWithManagedConnectionTest extends ManagedConnectionFactor
    public String getDatasourceLocation() {
       return "java:/MixedStoreWithManagedConnectionTest/DS";
    }
+
+   @Override
+   protected boolean storePurgesAllExpired() {
+      return false;
+   }
 }

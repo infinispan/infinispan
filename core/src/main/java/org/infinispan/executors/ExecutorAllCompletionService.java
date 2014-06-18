@@ -62,7 +62,16 @@ public class ExecutorAllCompletionService implements CompletionService<Void> {
     * @return True if all currently scheduled tasks have already been completed, false otherwise;
     */
    public boolean isAllCompleted() {
+      pollUntilEmpty();
       return completed.get() >= scheduled.get();
+   }
+
+   public long getScheduledTasks() {
+      return scheduled.get();
+   }
+
+   public long getCompletedTasks() {
+      return completed.get();
    }
 
    public void waitUntilAllCompleted() {
