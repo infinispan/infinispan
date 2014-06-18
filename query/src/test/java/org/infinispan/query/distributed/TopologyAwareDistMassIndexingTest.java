@@ -31,4 +31,10 @@ public class TopologyAwareDistMassIndexingTest extends DistributedMassIndexingTe
 
       waitForClusterToForm(neededCacheNames);
    }
+
+   @Test(groups = "unstable")
+   @Override
+   public void testReindexing() throws Exception {
+      super.testReindexing();
+   }
 }
