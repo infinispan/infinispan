@@ -10,10 +10,9 @@ import org.testng.annotations.Test;
  *
  * @author Anna Manukyan
  */
-@Test(groups = "functional", testName = "query.distributed.MassIndexingTest")
+@Test(groups = /*functional*/"unstable", testName = "query.distributed.MassIndexingTest", description = "Unstable, see https://issues.jboss.org/browse/ISPN-4012")
 public class MassIndexingTest extends DistributedMassIndexingTest {
 
-   @Test(groups = "unstable", description = "See ISPN-4043")
    public void testReindexing() throws Exception {
       for(int i = 0; i < 200; i++) {
          caches.get(i % 2).getAdvancedCache().withFlags(Flag.SKIP_INDEXING).put(key("F" + i + "NUM"),

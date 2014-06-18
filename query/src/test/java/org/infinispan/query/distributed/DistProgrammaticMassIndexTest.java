@@ -22,7 +22,7 @@ import static org.infinispan.query.helper.TestQueryHelperFactory.createQueryPars
  *
  * @author Anna Manukyan
  */
-@Test(groups = "functional", testName = "query.distributed.DistProgrammaticMassIndexTest")
+@Test(groups = /*functional*/"unstable", testName = "query.distributed.DistProgrammaticMassIndexTest", description = "Unstable, see https://issues.jboss.org/browse/ISPN-4012")
 public class DistProgrammaticMassIndexTest extends DistributedMassIndexingTest {
 
    @Override
