@@ -64,6 +64,12 @@ public class DistributedMassIndexingViaJmxTest extends DistributedMassIndexingTe
             "start", new Object[]{}, new String[]{});
    }
 
+   @Test(groups ="unstable")
+   @Override
+   public void testReindexing() throws Exception {
+      super.testReindexing();
+   }
+
    private ObjectName getMassIndexerObjectName(String jmxDomain, String cacheManagerName, String cacheName) {
       try {
          return new ObjectName(jmxDomain + ":type=Query,manager=" + ObjectName.quote(cacheManagerName)

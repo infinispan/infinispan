@@ -52,6 +52,12 @@ public class DistProgrammaticMassIndexTest extends DistributedMassIndexingTest {
       }
    }
 
+   @Test(groups = "unstable")
+   @Override
+   public void testReindexing() throws Exception {
+      super.testReindexing();
+   }
+
    protected void verifyFindsCar(Cache cache, int count, String carMake) {
       QueryParser queryParser = createQueryParser("make");
 
