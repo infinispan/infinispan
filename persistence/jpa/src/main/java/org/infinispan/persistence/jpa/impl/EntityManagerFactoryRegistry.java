@@ -2,13 +2,20 @@ package org.infinispan.persistence.jpa.impl;
 
 import javax.persistence.EntityManagerFactory;
 import javax.persistence.Persistence;
+import javax.persistence.spi.PersistenceProvider;
+
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.concurrent.atomic.AtomicInteger;
 
+import org.infinispan.commons.util.Util;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
+import org.osgi.framework.Bundle;
+import org.osgi.framework.BundleContext;
+import org.osgi.framework.FrameworkUtil;
+import org.osgi.framework.ServiceReference;
 
 /**
  * 
@@ -24,7 +31,7 @@ public class EntityManagerFactoryRegistry {
    public EntityManagerFactory getEntityManagerFactory(String persistenceUnitName) {
       synchronized (this) {
          if (!registry.containsKey(persistenceUnitName)) {
-            EntityManagerFactory emf = Persistence.createEntityManagerFactory(persistenceUnitName);
+            EntityManagerFactory emf = createEntityManagerFactory(persistenceUnitName);
             registry.put(persistenceUnitName, emf);
             usage.put(persistenceUnitName, new AtomicInteger(1));
             return emf;
@@ -81,6 +88,20 @@ public class EntityManagerFactoryRegistry {
    protected int getUsage(String persistenceUnitName) {
       synchronized (this) {
          return usage.get(persistenceUnitName).intValue();
+      }
+   }
+
+   private static EntityManagerFactory createEntityManagerFactory(String persistenceUnitName) {
+      if (Util.isOSGiContext()) {
+         Bundle thisBundle = FrameworkUtil.getBundle(EntityManagerFactoryRegistry.class);
+         BundleContext context = thisBundle.getBundleContext();
+
+         ServiceReference<?> serviceReference = context.getServiceReference(PersistenceProvider.class.getName());
+         PersistenceProvider persistenceProvider = (PersistenceProvider) context.getService(serviceReference);
+
+         return persistenceProvider.createEntityManagerFactory(persistenceUnitName, null);
+      } else {
+         return Persistence.createEntityManagerFactory(persistenceUnitName);
       }
    }
 }

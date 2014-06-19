@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<features name="${project.artifactId}-${project.version}" xmlns="http://karaf.apache.org/xmlns/features/v1.0.0">
+   <repository>mvn:org.infinispan/infinispan-core/${project.version}/xml/features</repository>
+
+   <feature name="${project.artifactId}" version="${project.version}">
+      <feature>jndi</feature>
+
+      <bundle>mvn:${project.groupId}/${project.artifactId}/${project.version}</bundle>
+
+      <feature version="${project.version}">infinispan-core</feature>
+
+      <!-- Don't use the enterprise jpa feature in Karaf for now. -->
+      <!-- The javax.persistence.Persistence.createEntityManagerFactory(String) (without properties) -->
+      <!-- implementation in enterprise 2.3.x (geronimo) passes on to hibernate-osgi an immutable map -->
+      <!-- which it will try to modify and fail. -->
+      <!-- <feature>jpa</feature> -->
+
+      <bundle>mvn:org.hibernate/hibernate-core/${version.hibernate.core}</bundle>
+      <bundle>mvn:org.hibernate/hibernate-entitymanager/${version.hibernate.entitymanager}</bundle>
+      <bundle>mvn:org.hibernate/hibernate-osgi/${version.hibernate.osgi}</bundle>
+      <bundle>wrap:mvn:org.hibernate.javax.persistence/hibernate-jpa-2.0-api/${version.hibernate.javax.persistence}</bundle>
+
+      <!-- hibernate dependencies -->
+      <bundle>mvn:org.apache.servicemix.bundles/org.apache.servicemix.bundles.antlr/${version.hibernate_dep.antlr}</bundle>
+      <bundle>mvn:org.apache.servicemix.bundles/org.apache.servicemix.bundles.dom4j/${version.hibernate_dep.dom4j}</bundle>
+      <bundle>mvn:com.fasterxml/classmate/${version.hibernate_dep.classmate}</bundle>
+      <bundle>mvn:org.javassist/javassist/${version.hibernate_dep.javaassist}</bundle>
+      <bundle>wrap:mvn:org.hibernate.common/hibernate-commons-annotations/${version.hibernate_dep.hibernate-commons-annotations}</bundle>
+      <bundle>wrap:mvn:org.jboss/jandex/${version.hibernate_dep.jandex}</bundle>
+   </feature>
+</features>

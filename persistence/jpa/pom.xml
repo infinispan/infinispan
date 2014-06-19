@@ -19,6 +19,25 @@
    </properties>
 
    <build>
+      <resources>
+         <resource>
+            <directory>${project.basedir}/src/main/resources</directory>
+            <filtering>true</filtering>
+            <includes>
+               <include>features.xml</include>
+            </includes>
+         </resource>
+         <resource>
+            <directory>${project.basedir}/src/main/resources</directory>
+            <filtering>false</filtering>
+            <includes>
+               <include>**/*</include>
+            </includes>
+            <excludes>
+               <exclude>features.xml</exclude>
+            </excludes>
+         </resource>
+      </resources>
       <plugins>
          <plugin>
             <groupId>org.apache.felix</groupId>
@@ -28,8 +47,37 @@
                   <Export-Package>
                      ${project.groupId}.persistence.jpa.*;version=${project.version};-split-package:=error
                   </Export-Package>
+                  <Import-Package><![CDATA[
+                  org.osgi.framework;version="$<range;[==,+)>",
+                  *
+                  ]]>
+                  </Import-Package>
+                  <!-- Required for driver loading. -->
+                  <DynamicImport-Package>*</DynamicImport-Package>
                </instructions>
             </configuration>
+         </plugin>
+         <plugin>
+            <groupId>org.codehaus.mojo</groupId>
+            <artifactId>build-helper-maven-plugin</artifactId>
+            <executions>
+               <execution>
+                  <id>attach-artifacts</id>
+                  <phase>package</phase>
+                  <goals>
+                     <goal>attach-artifact</goal>
+                  </goals>
+                  <configuration>
+                     <artifacts>
+                        <artifact>
+                           <file>target/classes/features.xml</file>
+                           <type>xml</type>
+                           <classifier>features</classifier>
+                        </artifact>
+                     </artifacts>
+                  </configuration>
+               </execution>
+            </executions>
          </plugin>
       </plugins>
    </build>
@@ -53,6 +101,14 @@
          <groupId>org.hibernate</groupId>
          <artifactId>hibernate-entitymanager</artifactId>
          <scope>test</scope>
+      </dependency>
+      <dependency>
+         <groupId>org.osgi</groupId>
+         <artifactId>org.osgi.core</artifactId>
+      </dependency>
+      <dependency>
+         <groupId>org.osgi</groupId>
+         <artifactId>org.osgi.compendium</artifactId>
       </dependency>
    </dependencies>
 

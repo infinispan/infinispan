@@ -35,6 +35,8 @@ import org.ops4j.pax.exam.options.WrappedUrlProvisionOption;
 
 public class IspnKarafOptions {
    private static final String PROP_VERSION_KARAF = "version.karaf";
+   private static final String PROP_VERSION_MOCKITO = "version.mockito";
+   private static final String PROP_VERSION_OBJENESIS = "version.mockito_dep.objenesis";
    private static final String PROP_VERBOSE_KARAF = "verbose.karaf";
 
    private static Pattern PATTERN_HEADER = Pattern.compile("(.+)=(.+)");
@@ -97,6 +99,25 @@ public class IspnKarafOptions {
       return composite(featureJdbcStore(),
             mavenBundle().groupId("org.testng").artifactId("testng").versionAsInProject(),
             mvnTestsAsFragmentBundle("org.infinispan", "infinispan-cachestore-jdbc", "org.infinispan.cachestore-jdbc"));
+   }
+
+   public static Option featureJpaStore() {
+      return mvnFeature("org.infinispan", "infinispan-cachestore-jpa", "infinispan-cachestore-jpa");
+   }
+
+   public static Option featureJpaStoreAndTests() throws Exception {
+      return composite(featureJpaStore(),
+            bundleMockito(),
+            mavenBundle().groupId("org.testng").artifactId("testng").versionAsInProject(),
+            mvnTestsAsFragmentBundle("org.infinispan", "infinispan-cachestore-jpa", "org.infinispan.cachestore-jpa"));
+   }
+
+   public static Option bundleMockito() throws Exception {
+      String versionMockito = MavenUtils.getProperties().getProperty(PROP_VERSION_MOCKITO);
+      String versionObjenesis = MavenUtils.getProperties().getProperty(PROP_VERSION_OBJENESIS);
+      return composite(
+            mavenBundle().groupId("org.objenesis").artifactId("objenesis").version(versionObjenesis),
+            mavenBundle().groupId("org.mockito").artifactId("mockito-core").version(versionMockito));
    }
 
    public static Option featureKarafJNDI() throws Exception {
@@ -252,6 +273,14 @@ public class IspnKarafOptions {
             editConfigurationFilePut("etc/org.ops4j.pax.url.mvn.cfg", PaxURLUtils.PROP_PAX_URL_LOCAL_REPO, localRepo));
    }
 
+   /**
+    * Sets the system variables used inside persistence.xml to use H2.
+    */
+   public static Option hibernatePersistenceH2() {
+      return composite(systemProperty("connection.url").value("jdbc:h2:mem:test;DB_CLOSE_DELAY=-1"),
+            systemProperty("driver.class").value("org.h2.Driver"));
+   }
+
    public static Option commonOptions() throws Exception {
       return composite(karafContainer(),
             verboseKaraf(),
@@ -265,9 +294,11 @@ public class IspnKarafOptions {
             featureKarafJNDI(),
             featureIspnCoreAndTests(),
             featureJdbcStoreAndTests(),
+            featureJpaStoreAndTests(),
             featureLevelDbJni(),
             featureRemoteStore(),
             bundleH2Database(),
+            hibernatePersistenceH2(),
             bundleSplitTestPackages());
    }
 }
