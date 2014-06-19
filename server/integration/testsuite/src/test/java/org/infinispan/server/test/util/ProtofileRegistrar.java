@@ -40,7 +40,7 @@ public class ProtofileRegistrar {
     }
 
     private void registerProtofile(String protofilePath, String host, int jmxPort) throws Exception {
-        JMXConnector jmxConnector = JMXConnectorFactory.connect(new JMXServiceURL("service:jmx:remoting-jmx://" + host + ":" + jmxPort));
+        JMXConnector jmxConnector = JMXConnectorFactory.connect(new JMXServiceURL("service:jmx:http-remoting-jmx://" + host + ":" + jmxPort));
         MBeanServerConnection jmxConnection = jmxConnector.getMBeanServerConnection();
 
         ObjectName objName = new ObjectName("jboss.infinispan:type=RemoteQuery,name="
