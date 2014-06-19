@@ -117,6 +117,13 @@
       <version.hibernate.entitymanager>${version.hibernate.core}</version.hibernate.entitymanager>
       <version.hibernate.hql.parser>1.1.0.Alpha2</version.hibernate.hql.parser>
       <version.hibernate.javax.persistence>1.0.1.Final</version.hibernate.javax.persistence>
+      <version.hibernate.osgi>${version.hibernate.core}</version.hibernate.osgi>
+      <version.hibernate_dep.antlr>2.7.7_5</version.hibernate_dep.antlr>
+      <version.hibernate_dep.dom4j>1.6.1_5</version.hibernate_dep.dom4j>
+      <version.hibernate_dep.classmate>0.5.4</version.hibernate_dep.classmate>
+      <version.hibernate_dep.javaassist>3.18.1-GA</version.hibernate_dep.javaassist>
+      <version.hibernate_dep.jandex>1.0.3.Final</version.hibernate_dep.jandex>
+      <version.hibernate_dep.hibernate-commons-annotations>4.0.2.Final</version.hibernate_dep.hibernate-commons-annotations>
       <version.httpclient>4.2.4</version.httpclient>
       <version.howl>1.0.1-1</version.howl>
       <version.jackson>1.9.2</version.jackson>
@@ -142,6 +149,7 @@
       <version.mc4j>1.2.6</version.mc4j>
       <version.milyn.smooks>1.2.2</version.milyn.smooks>
       <version.mockito>1.9.5</version.mockito>
+      <version.mockito_dep.objenesis>1.4</version.mockito_dep.objenesis>
       <version.mysql.driver>5.1.19</version.mysql.driver>
       <version.org.jboss.naming>5.0.6.CR1</version.org.jboss.naming>
       <version.org.picketbox>4.0.20.Final</version.org.picketbox>
@@ -190,6 +198,12 @@
          <dependency>
             <groupId>${project.groupId}</groupId>
             <artifactId>infinispan-cachestore-jdbc</artifactId>
+            <version>${project.version}</version>
+            <type>test-jar</type>
+         </dependency>
+         <dependency>
+            <groupId>${project.groupId}</groupId>
+            <artifactId>infinispan-cachestore-jpa</artifactId>
             <version>${project.version}</version>
             <type>test-jar</type>
          </dependency>
