@@ -66,6 +66,7 @@ public class TcpTransport extends AbstractTransport {
          }
          socket.connect(serverAddress, transportFactory.getConnectTimeout());
          socket.setTcpNoDelay(transportFactory.isTcpNoDelay());
+         socket.setKeepAlive(transportFactory.isTcpKeepAlive());
          socket.setSoTimeout(transportFactory.getSoTimeout());
          socketInputStream = new BufferedInputStream(socket.getInputStream(), socket.getReceiveBufferSize());
          // ensure we don't send a packet for every output byte

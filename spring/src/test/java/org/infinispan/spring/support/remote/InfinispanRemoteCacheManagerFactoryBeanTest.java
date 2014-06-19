@@ -1,16 +1,7 @@
 package org.infinispan.spring.support.remote;
 
+import static org.infinispan.client.hotrod.impl.ConfigurationProperties.*;
 import static org.infinispan.spring.AssertionUtils.assertPropertiesSubset;
-import static org.infinispan.client.hotrod.impl.ConfigurationProperties.ASYNC_EXECUTOR_FACTORY;
-import static org.infinispan.client.hotrod.impl.ConfigurationProperties.FORCE_RETURN_VALUES;
-import static org.infinispan.client.hotrod.impl.ConfigurationProperties.KEY_SIZE_ESTIMATE;
-import static org.infinispan.client.hotrod.impl.ConfigurationProperties.MARSHALLER;
-import static org.infinispan.client.hotrod.impl.ConfigurationProperties.PING_ON_STARTUP;
-import static org.infinispan.client.hotrod.impl.ConfigurationProperties.REQUEST_BALANCING_STRATEGY;
-import static org.infinispan.client.hotrod.impl.ConfigurationProperties.SERVER_LIST;
-import static org.infinispan.client.hotrod.impl.ConfigurationProperties.TCP_NO_DELAY;
-import static org.infinispan.client.hotrod.impl.ConfigurationProperties.TRANSPORT_FACTORY;
-import static org.infinispan.client.hotrod.impl.ConfigurationProperties.VALUE_SIZE_ESTIMATE;
 import static org.testng.AssertJUnit.assertEquals;
 import static org.testng.AssertJUnit.assertFalse;
 import static org.testng.AssertJUnit.assertTrue;
@@ -361,6 +352,28 @@ public class InfinispanRemoteCacheManagerFactoryBeanTest {
                + ") should have overridden property 'tcpNoDelay'. However, it didn't.",
                String.valueOf(expectedTcpNoDelay),
                remoteCacheManager.getProperties().get(TCP_NO_DELAY));
+      objectUnderTest.destroy();
+   }
+
+   /**
+    * Test method for
+    * {@link org.infinispan.spring.support.remote.InfinispanRemoteCacheManagerFactoryBean#setTcpKeepAlive(boolean)}.
+    *
+    * @throws Exception
+    */
+   @Test
+   public final void setTcpKeepAliveShouldOverrideDefaultTcpKeepAlive() throws Exception {
+      final boolean expectedTcpKeepAlive = false;
+      final InfinispanRemoteCacheManagerFactoryBean objectUnderTest = new InfinispanRemoteCacheManagerFactoryBean();
+      objectUnderTest.setTcpNoDelay(expectedTcpKeepAlive);
+      objectUnderTest.afterPropertiesSet();
+
+      final RemoteCacheManager remoteCacheManager = objectUnderTest.getObject();
+
+      assertEquals("setTcpKeepAlive(" + expectedTcpKeepAlive
+               + ") should have overridden property 'tcpNoDelay'. However, it didn't.",
+               String.valueOf(expectedTcpKeepAlive),
+               remoteCacheManager.getProperties().get(TCP_KEEP_ALIVE));
       objectUnderTest.destroy();
    }
 

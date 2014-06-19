@@ -42,7 +42,7 @@ public class TcpTransportFactory implements TransportFactory {
    private static final Log log = LogFactory.getLog(TcpTransportFactory.class, Log.class);
 
    /**
-    * We need synchronization as the thread that calls {@link org.infinispan.client.hotrod.impl.transport.TransportFactory#start(org.infinispan.client.hotrod.impl.protocol.Codec, org.infinispan.client.hotrod.configuration.Configuration, java.util.concurrent.atomic.AtomicInteger)}
+    * We need synchronization as the thread that calls {@link org.infinispan.client.hotrod.impl.transport.TransportFactory#start(org.infinispan.client.hotrod.impl.protocol.Codec, org.infinispan.client.hotrod.configuration.Configuration, java.util.concurrent.atomic.AtomicInteger, org.infinispan.client.hotrod.event.ClientListenerNotifier)}
     * might(and likely will) be different from the thread(s) that calls {@link org.infinispan.client.hotrod.impl.transport.TransportFactory#getTransport(java.util.Set)} or other methods
     */
    private final Object lock = new Object();
@@ -55,6 +55,7 @@ public class TcpTransportFactory implements TransportFactory {
 
    // the primitive fields are often accessed separately from the rest so it makes sense not to require synchronization for them
    private volatile boolean tcpNoDelay;
+   private volatile boolean tcpKeepAlive;
    private volatile int soTimeout;
    private volatile int connectTimeout;
    private volatile int maxRetries;
@@ -75,6 +76,7 @@ public class TcpTransportFactory implements TransportFactory {
          servers = Collections.unmodifiableCollection(servers);
          balancer = Util.getInstance(configuration.balancingStrategy());
          tcpNoDelay = configuration.tcpNoDelay();
+         tcpKeepAlive = configuration.tcpKeepAlive();
          soTimeout = configuration.socketTimeout();
          connectTimeout = configuration.connectionTimeout();
          maxRetries = configuration.maxRetries();
@@ -345,6 +347,11 @@ public class TcpTransportFactory implements TransportFactory {
    @Override
    public boolean isTcpNoDelay() {
       return tcpNoDelay;
+   }
+
+   @Override
+   public boolean isTcpKeepAlive() {
+      return tcpKeepAlive;
    }
 
    @Override

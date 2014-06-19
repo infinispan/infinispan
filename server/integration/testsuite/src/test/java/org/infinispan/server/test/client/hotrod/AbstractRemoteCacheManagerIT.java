@@ -62,6 +62,7 @@ public abstract class AbstractRemoteCacheManagerIT {
         config.balancingStrategy("org.infinispan.server.test.client.hotrod.HotRodTestRequestBalancingStrategy")
                 .forceReturnValues(true)
                 .tcpNoDelay(false)
+                .tcpKeepAlive(true)
                 .pingOnStartup(false)
                 .transportFactory("org.infinispan.server.test.client.hotrod.HotRodTestTransportFactory")
                 .marshaller("org.infinispan.server.test.client.hotrod.HotRodTestMarshaller")
@@ -359,6 +360,7 @@ public abstract class AbstractRemoteCacheManagerIT {
 
         assertEquals(config.forceReturnValues(), Boolean.parseBoolean(getForceReturnValueProperty(rc)));
         assertEquals(config.tcpNoDelay(), Boolean.parseBoolean(getTcpNoDelayProperty(rc)));
+        assertEquals(config.tcpKeepAlive(), Boolean.parseBoolean(getTcpKeepAliveProperty(rc)));
         assertEquals(config.maxRetries(), Integer.parseInt(getMaxRetries(rc)));
 
         // pingOnStartup and asyncExecutorFactory compared only with the configuration itself
@@ -439,6 +441,15 @@ public abstract class AbstractRemoteCacheManagerIT {
         TcpTransportFactory ttf = (TcpTransportFactory) getTransportFactoryField(of);
         boolean tcpNoDelay = ttf.isTcpNoDelay();
         return Boolean.toString(tcpNoDelay);
+    }
+
+    private String getTcpKeepAliveProperty(RemoteCache rc) throws Exception {
+
+        RemoteCacheImpl rci = (RemoteCacheImpl) rc;
+        OperationsFactory of = getOperationsFactoryField(rci);
+        TcpTransportFactory ttf = (TcpTransportFactory) getTransportFactoryField(of);
+        boolean tcpKeepAlive = ttf.isTcpKeepAlive();
+        return Boolean.toString(tcpKeepAlive);
     }
 
     private String getMaxRetries(RemoteCache rc) throws Exception {

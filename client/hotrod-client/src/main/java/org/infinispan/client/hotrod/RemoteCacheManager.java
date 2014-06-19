@@ -60,6 +60,7 @@ import org.infinispan.commons.util.Util;
  * At least one host:port must be specified.</li>
  * <li><tt>infinispan.client.hotrod.force_return_values</tt>, default = false.  Whether or not to implicitly {@link org.infinispan.client.hotrod.Flag#FORCE_RETURN_VALUE} for all calls.</li>
  * <li><tt>infinispan.client.hotrod.tcp_no_delay</tt>, default = true.  Affects TCP NODELAY on the TCP stack.</li>
+ * <li><tt>infinispan.client.hotrod.tcp_keep_alive</tt>, default = false.  Affects TCP KEEPALIVE on the TCP stack.</li>
  * <li><tt>infinispan.client.hotrod.ping_on_startup</tt>, default = true.  If true, a ping request is sent to a back end server in order to fetch cluster's topology.</li>
  * <li><tt>infinispan.client.hotrod.transport_factory</tt>, default = org.infinispan.client.hotrod.impl.transport.tcp.TcpTransportFactory - controls which transport to use.  Currently only the TcpTransport is supported.</li>
  * <li><tt>infinispan.client.hotrod.marshaller</tt>, default = org.infinispan.marshall.jboss.GenericJBossMarshaller.  Allows you to specify a custom {@link org.infinispan.marshall.Marshaller} implementation to serialize and deserialize user objects. For portable serialization payloads, you should configure the marshaller to be {@link org.infinispan.client.hotrod.marshall.ApacheAvroMarshaller}</li>
@@ -315,6 +316,7 @@ public class RemoteCacheManager implements BasicCacheContainer {
       properties.setProperty(ConfigurationProperties.PROTOCOL_VERSION, configuration.protocolVersion());
       properties.setProperty(ConfigurationProperties.SO_TIMEOUT, Integer.toString(configuration.socketTimeout()));
       properties.setProperty(ConfigurationProperties.TCP_NO_DELAY, Boolean.toString(configuration.tcpNoDelay()));
+      properties.setProperty(ConfigurationProperties.TCP_KEEP_ALIVE, Boolean.toString(configuration.tcpKeepAlive()));
       properties.setProperty(ConfigurationProperties.TRANSPORT_FACTORY, configuration.transportFactory().getName());
       properties.setProperty(ConfigurationProperties.VALUE_SIZE_ESTIMATE, Integer.toString(configuration.valueSizeEstimate()));
       properties.setProperty(ConfigurationProperties.MAX_RETRIES, Integer.toString(configuration.maxRetries()));

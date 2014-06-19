@@ -1,15 +1,6 @@
 package org.infinispan.spring;
 
-import static org.infinispan.client.hotrod.impl.ConfigurationProperties.ASYNC_EXECUTOR_FACTORY;
-import static org.infinispan.client.hotrod.impl.ConfigurationProperties.FORCE_RETURN_VALUES;
-import static org.infinispan.client.hotrod.impl.ConfigurationProperties.KEY_SIZE_ESTIMATE;
-import static org.infinispan.client.hotrod.impl.ConfigurationProperties.MARSHALLER;
-import static org.infinispan.client.hotrod.impl.ConfigurationProperties.PING_ON_STARTUP;
-import static org.infinispan.client.hotrod.impl.ConfigurationProperties.REQUEST_BALANCING_STRATEGY;
-import static org.infinispan.client.hotrod.impl.ConfigurationProperties.SERVER_LIST;
-import static org.infinispan.client.hotrod.impl.ConfigurationProperties.TCP_NO_DELAY;
-import static org.infinispan.client.hotrod.impl.ConfigurationProperties.TRANSPORT_FACTORY;
-import static org.infinispan.client.hotrod.impl.ConfigurationProperties.VALUE_SIZE_ESTIMATE;
+import static org.infinispan.client.hotrod.impl.ConfigurationProperties.*;
 import static org.testng.AssertJUnit.assertEquals;
 import static org.testng.AssertJUnit.assertFalse;
 import static org.testng.AssertJUnit.assertTrue;
@@ -158,6 +149,25 @@ public class ConfigurationPropertiesOverridesTest {
                + ") should have overridden property 'transportFactory'. However, it didn't.",
                String.valueOf(expectedTcpNoDelay),
                overriddenConfigurationProperties.getProperty(TCP_NO_DELAY));
+   }
+
+   /**
+    * Test method for
+    * {@link org.infinispan.spring.ConfigurationPropertiesOverrides#setTcpKeepAlive(boolean)}.
+    */
+   @Test
+   public final void setTcpKeepAliveShouldOverrideDefaultTcpKeepAive() {
+      final boolean expectedTcpKeepAlive = false;
+      final ConfigurationPropertiesOverrides objectUnderTest = new ConfigurationPropertiesOverrides();
+
+      objectUnderTest.setTcpKeepAlive(expectedTcpKeepAlive);
+      final Properties overriddenConfigurationProperties = objectUnderTest
+               .override(this.defaultConfigurationProperties);
+
+      assertEquals("override(" + this.defaultConfigurationProperties
+               + ") should have overridden property 'transportFactory'. However, it didn't.",
+               String.valueOf(expectedTcpKeepAlive),
+               overriddenConfigurationProperties.getProperty(TCP_KEEP_ALIVE));
    }
 
    /**
