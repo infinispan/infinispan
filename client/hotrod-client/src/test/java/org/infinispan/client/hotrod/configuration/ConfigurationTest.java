@@ -56,6 +56,7 @@ public class ConfigurationTest {
          .keySizeEstimate(128)
          .valueSizeEstimate(1024)
          .maxRetries(0)
+         .tcpKeepAlive(true)
          .transportFactory(SomeTransportfactory.class);
 
       Configuration configuration = builder.build();
@@ -138,6 +139,7 @@ public class ConfigurationTest {
       assertEquals(100, configuration.connectionTimeout());
       assertEquals(100, configuration.socketTimeout());
       assertFalse(configuration.tcpNoDelay());
+      assertTrue(configuration.tcpKeepAlive());
       assertFalse(configuration.pingOnStartup());
       assertEquals(128, configuration.keySizeEstimate());
       assertEquals(1024, configuration.valueSizeEstimate());

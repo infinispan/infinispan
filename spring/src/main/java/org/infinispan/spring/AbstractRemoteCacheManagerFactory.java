@@ -161,6 +161,13 @@ public abstract class AbstractRemoteCacheManagerFactory {
    }
 
    /**
+    * @see org.infinispan.spring.ConfigurationPropertiesOverrides#setTcpNoDelay(boolean)
+    */
+   public void setTcpKeepAlive(final boolean tcpKeepAlive) {
+      this.configurationPropertiesOverrides.setTcpKeepAlive(tcpKeepAlive);
+   }
+
+   /**
     * @param pingOnStartup
     * @see org.infinispan.spring.ConfigurationPropertiesOverrides#setPingOnStartup(boolean)
     */

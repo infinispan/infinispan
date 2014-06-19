@@ -61,6 +61,11 @@ public final class MockTransportFactory implements TransportFactory {
    }
 
    @Override
+   public boolean isTcpKeepAlive() {
+      return true;
+   }
+
+   @Override
    public int getMaxRetries() {
       return 0;
    }

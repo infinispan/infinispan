@@ -130,6 +130,11 @@ public interface ConfigurationChildBuilder {
    ConfigurationBuilder tcpNoDelay(boolean tcpNoDelay);
 
    /**
+    * Affects TCP KEEPALIVE on the TCP stack. Defaults to disable
+    */
+   ConfigurationBuilder tcpKeepAlive(boolean keepAlive);
+
+   /**
     * Controls which transport to use. Currently only the TcpTransport is supported.
     */
    ConfigurationBuilder transportFactory(String transportFactory);
