@@ -59,6 +59,7 @@ public class ConfigurationBuilder implements ConfigurationChildBuilder, Builder<
    private int socketTimeout = ConfigurationProperties.DEFAULT_SO_TIMEOUT;
    private final SecurityConfigurationBuilder security;
    private boolean tcpNoDelay = true;
+   private boolean tcpKeepAlive = false;
    private Class<? extends TransportFactory> transportFactory = TcpTransportFactory.class;
    private int valueSizeEstimate = ConfigurationProperties.DEFAULT_VALUE_SIZE;
    private int maxRetries = ConfigurationProperties.DEFAULT_MAX_RETRIES;
@@ -217,6 +218,12 @@ public class ConfigurationBuilder implements ConfigurationChildBuilder, Builder<
    }
 
    @Override
+   public ConfigurationBuilder tcpKeepAlive(boolean keepAlive) {
+      this.tcpKeepAlive = keepAlive;
+      return this;
+   }
+
+   @Override
    public ConfigurationBuilder transportFactory(String transportFactory) {
       this.transportFactory = Util.loadClass(transportFactory, this.classLoader());
       return this;
@@ -265,6 +272,7 @@ public class ConfigurationBuilder implements ConfigurationChildBuilder, Builder<
       this.addServers(typed.getProperty(ConfigurationProperties.SERVER_LIST, ""));
       this.socketTimeout(typed.getIntProperty(ConfigurationProperties.SO_TIMEOUT, socketTimeout));
       this.tcpNoDelay(typed.getBooleanProperty(ConfigurationProperties.TCP_NO_DELAY, tcpNoDelay));
+      this.tcpKeepAlive(typed.getBooleanProperty(ConfigurationProperties.TCP_KEEP_ALIVE, tcpKeepAlive));
       if (typed.containsKey(ConfigurationProperties.TRANSPORT_FACTORY)) {
          this.transportFactory(typed.getProperty(ConfigurationProperties.TRANSPORT_FACTORY));
       }
@@ -295,11 +303,11 @@ public class ConfigurationBuilder implements ConfigurationChildBuilder, Builder<
       }
       if (marshaller == null) {
          return new Configuration(asyncExecutorFactory.create(), balancingStrategy, classLoader == null ? null : classLoader.get(), connectionPool.create(), connectionTimeout,
-               consistentHashImpl, forceReturnValues, keySizeEstimate, marshallerClass, pingOnStartup, protocolVersion, servers, socketTimeout, security.create(), tcpNoDelay, transportFactory,
+               consistentHashImpl, forceReturnValues, keySizeEstimate, marshallerClass, pingOnStartup, protocolVersion, servers, socketTimeout, security.create(), tcpNoDelay, tcpKeepAlive, transportFactory,
                valueSizeEstimate, maxRetries);
       } else {
          return new Configuration(asyncExecutorFactory.create(), balancingStrategy, classLoader == null ? null : classLoader.get(), connectionPool.create(), connectionTimeout,
-               consistentHashImpl, forceReturnValues, keySizeEstimate, marshaller, pingOnStartup, protocolVersion, servers, socketTimeout, security.create(), tcpNoDelay, transportFactory,
+               consistentHashImpl, forceReturnValues, keySizeEstimate, marshaller, pingOnStartup, protocolVersion, servers, socketTimeout, security.create(), tcpNoDelay, tcpKeepAlive, transportFactory,
                valueSizeEstimate, maxRetries);
       }
    }
@@ -339,6 +347,7 @@ public class ConfigurationBuilder implements ConfigurationChildBuilder, Builder<
       this.socketTimeout = template.socketTimeout();
       this.security.read(template.security());
       this.tcpNoDelay = template.tcpNoDelay();
+      this.tcpKeepAlive = template.tcpKeepAlive();
       this.transportFactory = template.transportFactory();
       this.valueSizeEstimate = template.valueSizeEstimate();
       this.maxRetries = template.maxRetries();

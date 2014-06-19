@@ -121,6 +121,11 @@ public abstract class AbstractConfigurationChildBuilder implements Configuration
    }
 
    @Override
+   public ConfigurationBuilder tcpKeepAlive(boolean tcpKeepAlive) {
+      return builder.tcpKeepAlive(tcpKeepAlive);
+   }
+
+   @Override
    public ConfigurationBuilder transportFactory(String transportFactory) {
       return builder.transportFactory(transportFactory);
    }

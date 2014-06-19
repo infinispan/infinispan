@@ -43,6 +43,8 @@ public interface TransportFactory {
 
    boolean isTcpNoDelay();
 
+   boolean isTcpKeepAlive();
+
    int getMaxRetries();
 
    int getSoTimeout();
