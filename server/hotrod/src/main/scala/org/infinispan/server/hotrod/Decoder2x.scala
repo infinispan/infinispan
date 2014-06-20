@@ -41,6 +41,7 @@ import java.util.HashMap
 import scala.collection.immutable
 import scala.collection.mutable
 import scala.collection.mutable.ListBuffer
+import org.infinispan.server.core.transport.SaslQopHandler
 
 /**
  * HotRod protocol decoder specific for specification version 2.0.
@@ -225,6 +226,7 @@ object Decoder2x extends AbstractVersionedDecoder with ServerConstants with Log 
                val clientResponse = readRangedBytes(buffer)
                val serverChallenge = decoder.saslServer.evaluateResponse(clientResponse)
                if (decoder.saslServer.isComplete) {
+                  ctx.channel.writeAndFlush(new AuthResponse(h.version, h.messageId, h.cacheName, h.clientIntel, serverChallenge, h.topologyId))
                   val extraPrincipals = new ArrayList[Principal]
                   val id = normalizeAuthorizationId(decoder.saslServer.getAuthorizationID)
                   extraPrincipals.add(new SimpleUserPrincipal(id))
@@ -234,11 +236,19 @@ object Decoder2x extends AbstractVersionedDecoder with ServerConstants with Log 
                      if (sslHandler != null) extraPrincipals.add(sslHandler.engine.getSession.getPeerPrincipal)
                   } // Ignore any SSLPeerUnverifiedExceptions
                   decoder.subject = decoder.callbackHandler.getSubjectUserInfo(extraPrincipals).getSubject
-                  decoder.saslServer.dispose
-                  decoder.callbackHandler = null
-                  decoder.saslServer = null
+                  val qop = decoder.saslServer.getNegotiatedProperty(Sasl.QOP).asInstanceOf[String];
+                  if (qop != null && (qop.equalsIgnoreCase("auth-int") || qop.equalsIgnoreCase("auth-conf"))) {
+                     val qopHandler = new SaslQopHandler(decoder.saslServer)
+                     ctx.pipeline.addBefore("decoder", "saslQop", qopHandler)
+                  } else {
+                     decoder.saslServer.dispose
+                     decoder.callbackHandler = null
+                     decoder.saslServer = null
+                  }
+                  None
+               } else {
+                  new AuthResponse(h.version, h.messageId, h.cacheName, h.clientIntel, serverChallenge, h.topologyId)
                }
-               new AuthResponse(h.version, h.messageId, h.cacheName, h.clientIntel, serverChallenge, h.topologyId)
             }
          }
       }
