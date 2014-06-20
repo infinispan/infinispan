@@ -248,21 +248,21 @@ public final class ReflectionHelper {
 
       // try getter method access
       // we need to find a no-arg public "getXyz" or "isXyz" method which has a suitable return type
+      String propertyNameSuffix = Character.toUpperCase(propertyName.charAt(0)) + propertyName.substring(1);
       try {
-         String propertyNameSuffix = Character.toUpperCase(propertyName.charAt(0)) + propertyName.substring(1);
          Method m = clazz.getDeclaredMethod("get" + propertyNameSuffix);
-         if (m == null) {
-            m = clazz.getDeclaredMethod("is" + propertyNameSuffix);
-            if (m != null && Modifier.isPublic(m.getModifiers()) && (m.getReturnType().equals(boolean.class) || m.getReturnType().equals(Boolean.class))) {
-               return getMethodAccessor(m);
-            }
-         } else {
-            if (Modifier.isPublic(m.getModifiers()) && !m.getReturnType().equals(Void.class)) {
-               return getMethodAccessor(m);
-            }
+         if (Modifier.isPublic(m.getModifiers()) && !m.getReturnType().equals(Void.class)) {
+            return getMethodAccessor(m);
          }
       } catch (NoSuchMethodException e) {
-         // ignored, continue
+         try {
+            Method m = clazz.getDeclaredMethod("is" + propertyNameSuffix);
+            if (Modifier.isPublic(m.getModifiers()) && (m.getReturnType().equals(boolean.class) || m.getReturnType().equals(Boolean.class))) {
+               return getMethodAccessor(m);
+            }
+         } catch (NoSuchMethodException e1) {
+            // ignored, continue
+         }
       }
 
       // try field access
