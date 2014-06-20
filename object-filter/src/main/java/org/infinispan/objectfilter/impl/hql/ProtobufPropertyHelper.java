@@ -43,36 +43,8 @@ public final class ProtobufPropertyHelper extends ObjectPropertyHelper<Descripto
    }
 
    @Override
-   public Class<?> getPropertyType(String entityType, List<String> propertyPath) {
-      return getPropertyType(getField(entityType, propertyPath));
-   }
-
-   private Descriptors.FieldDescriptor getField(String entityType, List<String> propertyPath) {
-      Descriptors.Descriptor messageDescriptor;
-      try {
-         messageDescriptor = serializationContext.getMessageDescriptor(entityType);
-      } catch (Exception e) {
-         throw new IllegalStateException("Unknown entity name " + entityType);
-      }
-
-      Descriptors.FieldDescriptor field;
-      int i = 0;
-      for (String p : propertyPath) {
-         i++;
-         field = messageDescriptor.findFieldByName(p);
-         if (field == null) {
-            return null;
-         }
-         if (field.getJavaType() == Descriptors.FieldDescriptor.JavaType.MESSAGE) {
-            messageDescriptor = field.getMessageType();
-         } else {
-            return i == propertyPath.size() ? field : null;
-         }
-      }
-      return null;
-   }
-
-   private Class<?> getPropertyType(Descriptors.FieldDescriptor field) {
+   public Class<?> getPrimitivePropertyType(String entityType, List<String> propertyPath) {
+      Descriptors.FieldDescriptor field = getField(entityType, propertyPath);
       switch (field.getJavaType()) {
          case INT:
             return Integer.class;
@@ -90,6 +62,27 @@ public final class ProtobufPropertyHelper extends ObjectPropertyHelper<Descripto
             return ByteString.class;
          case ENUM:
             return Integer.class;
+      }
+      return null;
+   }
+
+   private Descriptors.FieldDescriptor getField(String entityType, List<String> propertyPath) {
+      Descriptors.Descriptor messageDescriptor;
+      try {
+         messageDescriptor = serializationContext.getMessageDescriptor(entityType);
+      } catch (Exception e) {
+         throw new IllegalStateException("Unknown entity name " + entityType);
+      }
+
+      int i = 0;
+      for (String p : propertyPath) {
+         Descriptors.FieldDescriptor field = messageDescriptor.findFieldByName(p);
+         if (field == null || ++i == propertyPath.size()) {
+            return field;
+         }
+         if (field.getJavaType() == Descriptors.FieldDescriptor.JavaType.MESSAGE) {
+            messageDescriptor = field.getMessageType();
+         }
       }
       return null;
    }
@@ -151,7 +144,7 @@ public final class ProtobufPropertyHelper extends ObjectPropertyHelper<Descripto
          try {
             return Integer.parseInt(value) != 0;
          } catch (NumberFormatException e) {
-            return Boolean.valueOf(value);
+            return super.convertToPropertyType(entityType, propertyPath, value);
          }
       } else if (field.getJavaType() == Descriptors.FieldDescriptor.JavaType.ENUM) {
          Descriptors.EnumDescriptor enumType = field.getEnumType();
@@ -162,7 +155,7 @@ public final class ProtobufPropertyHelper extends ObjectPropertyHelper<Descripto
             enumValue = enumType.findValueByName(value);
          }
          if (enumValue == null) {
-            throw new IllegalArgumentException("Unknown enum value for enum type " + enumType.getFullName() + " : " + value);
+            throw log.getInvalidEnumLiteralException(value, enumType.getFullName());
          }
          return enumValue.getNumber();
       }

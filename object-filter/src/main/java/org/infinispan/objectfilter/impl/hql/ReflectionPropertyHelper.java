@@ -21,7 +21,6 @@ public final class ReflectionPropertyHelper extends ObjectPropertyHelper<Class<?
    private static final Set<Class<?>> primitives = new HashSet<Class<?>>();
 
    static {
-      //todo [anistor] handle arrays and collections
       primitives.add(java.util.Date.class);
       primitives.add(String.class);
       primitives.add(Character.class);
@@ -78,13 +77,17 @@ public final class ReflectionPropertyHelper extends ObjectPropertyHelper<Class<?
    }
 
    @Override
-   public Class<?> getPropertyType(String entityType, List<String> propertyPath) {
+   public Class<?> getPrimitivePropertyType(String entityType, List<String> propertyPath) {
       Class<?> type = entityNamesResolver.getClassFromName(entityType);
       if (type == null) {
          throw new IllegalStateException("Unknown entity name " + entityType);
       }
 
-      return getPropertyTypeByPath(type, propertyPath);
+      Class<?> propType = getPropertyTypeByPath(type, propertyPath);
+      if (propType.isEnum() || primitives.contains(propType)) {
+         return propType;
+      }
+      return null;
    }
 
    public boolean hasProperty(String entityType, List<String> propertyPath) {
@@ -100,7 +103,7 @@ public final class ReflectionPropertyHelper extends ObjectPropertyHelper<Class<?
 
       try {
          Class<?> propType = getPropertyTypeByPath(entity, propertyPath);
-         return propType != null && !primitives.contains(propType);
+         return propType != null && !propType.isEnum() && !primitives.contains(propType);
       } catch (Exception e) {
          return false; // todo [anistor] need clean solution
       }
