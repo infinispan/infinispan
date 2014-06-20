@@ -34,4 +34,8 @@ message Person {
    }
 
    optional Gender gender = 8;
+
+   optional fixed64 lastUpdate = 9;
+
+   required bool deleted = 10 [default = false];
 }

@@ -1,5 +1,6 @@
 package org.infinispan.objectfilter.test.model;
 
+import java.util.Date;
 import java.util.List;
 
 /**
@@ -28,6 +29,10 @@ public class Person {
    private String _license;
 
    private Gender _gender;
+
+   private Date _lastUpdate;
+
+   private boolean _deleted;
 
    public String getName() {
       return _name;
@@ -85,13 +90,28 @@ public class Person {
       this._license = license;
    }
 
-
    public Gender getGender() {
       return _gender;
    }
 
    public void setGender(Gender gender) {
       this._gender = gender;
+   }
+
+   public Date getLastUpdate() {
+      return _lastUpdate;
+   }
+
+   public void setLastUpdate(Date lastUpdate) {
+      this._lastUpdate = lastUpdate;
+   }
+
+   public boolean isDeleted() {
+      return _deleted;
+   }
+
+   public void setDeleted(boolean deleted) {
+      this._deleted = deleted;
    }
 
    @Override
@@ -105,6 +125,8 @@ public class Person {
             ", favouriteNumbers=" + _favouriteNumbers +
             ", license=" + _license +
             ", gender=" + _gender +
+            ", lastUpdate=" + _lastUpdate +
+            ", deleted=" + _deleted +
             '}';
    }
 }
