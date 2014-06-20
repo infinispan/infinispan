@@ -21,6 +21,7 @@ import org.rhq.plugins.jmx.MBeanResourceComponent;
 import org.rhq.plugins.jmx.util.ObjectNameQueryUtility;
 
 import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 
@@ -36,6 +37,9 @@ import static org.infinispan.rhq.RhqUtil.constructNumericMeasure;
 public class CacheComponent extends MBeanResourceComponent<CacheManagerComponent> {
    private static final Log log = LogFactory.getLog(CacheComponent.class);
 
+   private static final String STATUS_ATTRIBUTE_NAME = "CacheStatus";
+   private static final List<String> AVAILABILITY_ATTRIBUTE = Collections.singletonList(STATUS_ATTRIBUTE_NAME);
+
    private String cacheManagerName;
    private String cacheName;
 
@@ -49,6 +53,35 @@ public class CacheComponent extends MBeanResourceComponent<CacheManagerComponent
       if (log.isTraceEnabled())
          log.trace("Start cache component for cache manager "+cacheManagerName+" with cache key "+cacheName);
       super.start(context);
+   }
+
+   /**
+    * Return availability of this resource
+    *
+    * @see org.rhq.core.pluginapi.inventory.ResourceComponent#getAvailability()
+    */
+   @Override
+   public AvailabilityType getAvailability() {
+      boolean trace = log.isTraceEnabled();
+      EmsBean bean = getEmsBean();
+      try {
+         if (bean != null) {
+
+            // Refresh only the 1 attribute
+            bean.refreshAttributes(AVAILABILITY_ATTRIBUTE);
+            if ("RUNNING".equals(bean.getAttribute(STATUS_ATTRIBUTE_NAME).getValue())) {
+               if (trace)
+                  log.trace("Cache " + cacheName + " within " + cacheManagerName + " cache manager is running, so it's up.");
+               return AvailabilityType.UP;
+            }
+         }
+         if (trace)
+            log.trace("Cache status for " + cacheName + " within " + cacheManagerName + " cache manager is anything other than running, so it's down.");
+         return AvailabilityType.DOWN;
+      } catch (Exception e) {
+         if (trace) log.trace("There was an exception checking availability, so cache status is down.", e);
+         return AvailabilityType.DOWN;
+      }
    }
 
    /**
