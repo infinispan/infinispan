@@ -32,8 +32,8 @@ public class MultiHotRodServerIspnDirQueryTest extends MultiHotRodServerQueryTes
       //initialize server-side serialization context
       for (EmbeddedCacheManager cm : cacheManagers) {
          cm.defineConfiguration("queryableCache", builder.build());
-
-         cm.getGlobalComponentRegistry().getComponent(ProtobufMetadataManager.class).registerProtofile("/sample_bank_account/bank.protobin");
+         ProtobufMetadataManager component = cm.getGlobalComponentRegistry().getComponent(ProtobufMetadataManager.class);
+         component.registerProtofiles("/sample_bank_account/bank.proto", "/infinispan/indexing.proto", "/google/protobuf/descriptor.proto");
       }
 
       //initialize client-side serialization context

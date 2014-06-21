@@ -243,4 +243,24 @@ public interface InfinispanMessages {
      */
     @Message(id = 11003, value = "%s is not a valid marshaller")
     IllegalArgumentException invalidCompatibilityMarshaller(@Cause Throwable cause, String marshallerClassName);
+
+   /**
+    * Creates an exception indicating incompatible parameter sizes
+    *
+    * @param firstParameter  the first parameter name
+    * @param secondParameter the second parameter name
+    * @return an {@link IllegalArgumentException} for the error.
+    */
+   @Message(id = 11004, value = "Parameter %s must be the same size as parameter %s")
+   IllegalArgumentException invalidParameterSizes(String firstParameter, String secondParameter);
+
+   /**
+    * Creates an exception indicating incompatible parameter type
+    *
+    * @param name         the parameter name
+    * @param requiredType the required type of the parameter
+    * @return an {@link IllegalArgumentException} for the error.
+    */
+   @Message(id = 11005, value = "Parameter %s must be of type %s")
+   IllegalArgumentException invalidParameterType(String name, String requiredType);
 }

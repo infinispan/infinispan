@@ -1,13 +1,5 @@
 package org.infinispan.server.test.query;
 
-import static org.infinispan.server.test.util.ITestUtils.SERVER1_MGMT_PORT;
-import static org.infinispan.server.test.util.ITestUtils.invokeOperation;
-
-import java.io.IOException;
-import java.io.InputStream;
-
-import javax.management.ObjectName;
-
 import org.infinispan.arquillian.core.RemoteInfinispanServer;
 import org.infinispan.arquillian.utils.MBeanServerConnectionProvider;
 import org.infinispan.client.hotrod.RemoteCache;
@@ -20,6 +12,13 @@ import org.infinispan.protostream.sampledomain.marshallers.MarshallerRegistratio
 import org.infinispan.server.test.util.RemoteCacheManagerFactory;
 import org.junit.After;
 import org.junit.Before;
+
+import javax.management.ObjectName;
+import java.io.IOException;
+import java.io.InputStream;
+
+import static org.infinispan.server.test.util.ITestUtils.SERVER1_MGMT_PORT;
+import static org.infinispan.server.test.util.ITestUtils.invokeOperation;
 
 /**
  * Base class for tests for remote queries over HotRod.
@@ -61,8 +60,9 @@ public abstract class RemoteQueryBaseIT {
             + ",component=ProtobufMetadataManager";
 
       //initialize server-side serialization context via JMX
-      byte[] descriptor = readClasspathResource("/sample_bank_account/bank.protobin");
-      invokeOperation(jmxConnectionProvider, mbean, "registerProtofile", new Object[]{descriptor}, new String[]{byte[].class.getName()});
+      String[] fileNames = {"bank.proto", "indexing.proto", "descriptor.proto"};
+      String[] fileContents = {read("/sample_bank_account/bank.proto"), read("/infinispan/indexing.proto"), read("/google/protobuf/descriptor.proto")};
+      invokeOperation(jmxConnectionProvider, mbean, "registerProtofiles", new Object[]{fileNames,fileContents}, new String[]{String[].class.getName(),String[].class.getName()});
 
       //initialize client-side serialization context
       MarshallerRegistration.registerMarshallers(ProtoStreamMarshaller.getSerializationContext(remoteCacheManager));
@@ -79,14 +79,9 @@ public abstract class RemoteQueryBaseIT {
       rcmFactory = null;
    }
 
-   private byte[] readClasspathResource(String resourcePath) throws IOException {
+   private String read(String resourcePath) throws IOException {
       InputStream is = getClass().getResourceAsStream(resourcePath);
-      try {
-         return Util.readStream(is);
-      } finally {
-         if (is != null) {
-            is.close();
-         }
-      }
+      return Util.read(is);
+
    }
 }

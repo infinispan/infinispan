@@ -5,6 +5,7 @@ import org.infinispan.objectfilter.test.model.MarshallerRegistration;
 import org.infinispan.protostream.ConfigurationBuilder;
 import org.infinispan.protostream.ProtobufUtil;
 import org.infinispan.protostream.SerializationContext;
+import org.infinispan.protostream.descriptors.Descriptor;
 import org.junit.Ignore;
 import org.junit.Test;
 
@@ -20,7 +21,7 @@ import static org.junit.Assert.assertNotNull;
 public class ProtobufParsingTest extends AbstractParsingTest {
 
    @Override
-   protected FilterProcessingChain<Descriptors.Descriptor> createFilterProcessingChain() throws IOException, Descriptors.DescriptorValidationException {
+   protected FilterProcessingChain<Descriptor> createFilterProcessingChain() throws IOException, Descriptors.DescriptorValidationException {
       SerializationContext serCtx = ProtobufUtil.newSerializationContext(new ConfigurationBuilder().build());
       MarshallerRegistration.registerMarshallers(serCtx);
       return FilterProcessingChain.build(new ProtobufPropertyHelper(serCtx), null);
@@ -29,7 +30,7 @@ public class ProtobufParsingTest extends AbstractParsingTest {
    @Test
    public void testParsingResult() throws Exception {
       String jpaQuery = "from org.infinispan.objectfilter.test.model.Person p where p.name is not null";
-      FilterParsingResult<Descriptors.Descriptor> result = queryParser.parseQuery(jpaQuery, createFilterProcessingChain());
+      FilterParsingResult<Descriptor> result = queryParser.parseQuery(jpaQuery, createFilterProcessingChain());
 
       assertNotNull(result.getQuery());
 

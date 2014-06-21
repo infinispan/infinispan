@@ -42,7 +42,8 @@ public class MultiHotRodServerQueryTest extends MultiHotRodServersTest {
 
       //initialize server-side serialization context
       for (EmbeddedCacheManager cm : cacheManagers) {
-         cm.getGlobalComponentRegistry().getComponent(ProtobufMetadataManager.class).registerProtofile("/sample_bank_account/bank.protobin");
+         cm.getGlobalComponentRegistry().getComponent(ProtobufMetadataManager.class)
+                 .registerProtofiles("/sample_bank_account/bank.proto", "/infinispan/indexing.proto", "/google/protobuf/descriptor.proto");
       }
 
       //initialize client-side serialization context

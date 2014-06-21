@@ -1,6 +1,7 @@
 package org.infinispan.query.remote.client;
 
-import com.google.protobuf.Descriptors;
+import org.infinispan.protostream.DescriptorParserException;
+import org.infinispan.protostream.FileDescriptorSource;
 import org.infinispan.protostream.SerializationContext;
 
 import java.io.IOException;
@@ -11,10 +12,14 @@ import java.io.IOException;
  */
 public class MarshallerRegistration {
 
-   public static final String PROTOBUF_RES = "/org/infinispan/query/remote/client/query.protobin";
+   public static final String QUERY_PROTO_RES = "/org/infinispan/query/remote/client/query.proto";
+   public static final String MESSAGE_PROTO_RES = "/org/infinispan/protostream/message-wrapping.proto";
 
-   public static void registerMarshallers(SerializationContext ctx) throws IOException, Descriptors.DescriptorValidationException {
-      ctx.registerProtofile(MarshallerRegistration.class.getResourceAsStream(PROTOBUF_RES));
+   public static void registerMarshallers(SerializationContext ctx) throws IOException, DescriptorParserException {
+      FileDescriptorSource fileDescriptorSource = new FileDescriptorSource();
+      fileDescriptorSource.addProtoFile("query.proto",MarshallerRegistration.class.getResourceAsStream(QUERY_PROTO_RES));
+      fileDescriptorSource.addProtoFile("message-wrapping.proto",MarshallerRegistration.class.getResourceAsStream(MESSAGE_PROTO_RES));
+      ctx.registerProtoFiles(fileDescriptorSource);
       ctx.registerMarshaller(new QueryRequestMarshaller());
       ctx.registerMarshaller(new QueryResponseMarshaller());
    }

@@ -3,17 +3,20 @@ package org.infinispan.commons.util;
 import org.infinispan.commons.CacheConfigurationException;
 import org.infinispan.commons.CacheException;
 import org.infinispan.commons.hash.Hash;
-import org.infinispan.commons.marshall.Marshaller;
 import org.infinispan.commons.logging.Log;
 import org.infinispan.commons.logging.LogFactory;
+import org.infinispan.commons.marshall.Marshaller;
 
 import javax.naming.Context;
 import java.io.ByteArrayOutputStream;
 import java.io.Closeable;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.io.ObjectOutput;
 import java.io.OutputStream;
+import java.io.Reader;
+import java.io.StringWriter;
 import java.lang.management.LockInfo;
 import java.lang.management.ManagementFactory;
 import java.lang.management.MonitorInfo;
@@ -341,6 +344,28 @@ public final class Util {
          is.close();
       }
    }
+
+    /**
+     * Reads the given InputStream fully, closes the stream and returns the result as a String.
+     *
+     * @param is the stream to read
+     * @return the UTF-8 string
+     * @throws java.io.IOException in case of stream read errors
+     */
+    public static String read(InputStream is) throws IOException {
+       try {
+          final Reader reader = new InputStreamReader(is, "UTF-8");
+          StringWriter writer = new StringWriter();
+          char[] buf = new char[1024];
+          int len;
+          while ((len = reader.read(buf)) != -1) {
+             writer.write(buf, 0, len);
+          }
+          return writer.toString();
+       } finally {
+          is.close();
+       }
+    }
 
    public static void close(Closeable cl) {
       if (cl == null) return;
