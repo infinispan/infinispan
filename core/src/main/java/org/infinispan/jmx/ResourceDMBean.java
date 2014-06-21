@@ -268,9 +268,18 @@ public class ResourceDMBean implements DynamicMBean {
          Method method = getObject().getClass().getMethod(opInfo.getName(), classes);
          return method.invoke(getObject(), args);
       } catch (Exception e) {
-         throw new MBeanException(e);
+         throw new MBeanException(new Exception(getRootCause(e)));
       }
    }
+
+   public Throwable getRootCause(Throwable throwable) {
+      Throwable cause;
+      while ((cause = throwable.getCause()) != null) {
+         throwable = cause;
+      }
+      return throwable;
+   }
+
 
    private Attribute getNamedAttribute(String name) {
       Attribute result = null;

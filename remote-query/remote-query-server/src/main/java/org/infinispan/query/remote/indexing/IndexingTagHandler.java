@@ -1,6 +1,5 @@
 package org.infinispan.query.remote.indexing;
 
-import com.google.protobuf.Descriptors;
 import org.apache.lucene.document.Document;
 import org.apache.lucene.document.Field;
 import org.hibernate.search.annotations.Store;
@@ -9,6 +8,10 @@ import org.hibernate.search.engine.impl.LuceneOptionsImpl;
 import org.hibernate.search.engine.metadata.impl.DocumentFieldMetadata;
 import org.infinispan.protostream.MessageContext;
 import org.infinispan.protostream.TagHandler;
+import org.infinispan.protostream.descriptors.Descriptor;
+import org.infinispan.protostream.descriptors.FieldDescriptor;
+import org.infinispan.protostream.descriptors.JavaType;
+import org.infinispan.protostream.descriptors.Type;
 import org.infinispan.query.remote.QueryFacadeImpl;
 
 /**
@@ -39,7 +42,7 @@ class IndexingTagHandler implements TagHandler {
 
    private MessageContext<MessageContext> messageContext;
 
-   public IndexingTagHandler(Descriptors.Descriptor messageDescriptor, Document document) {
+   public IndexingTagHandler(Descriptor messageDescriptor, Document document) {
       this.document = document;
       this.messageContext = new MessageContext<MessageContext>(null, null, messageDescriptor);
    }
@@ -50,7 +53,7 @@ class IndexingTagHandler implements TagHandler {
    }
 
    @Override
-   public void onTag(int fieldNumber, String fieldName, Descriptors.FieldDescriptor.Type type, Descriptors.FieldDescriptor.JavaType javaType, Object tagValue) {
+   public void onTag(int fieldNumber, String fieldName, Type type, JavaType javaType, Object tagValue) {
       messageContext.markField(fieldNumber);
 
       //todo [anistor] unknown fields are not indexed
@@ -59,7 +62,7 @@ class IndexingTagHandler implements TagHandler {
       }
    }
 
-   private void addFieldToDocument(String fieldName, Descriptors.FieldDescriptor.Type type, Object value) {
+   private void addFieldToDocument(String fieldName, Type type, Object value) {
       LuceneOptions luceneOptions = STORED_NOT_ANALYZED;
       if (value == null) {
          value = QueryFacadeImpl.NULL_TOKEN;  //todo [anistor] do we need a specific null token for numeric fields?
@@ -116,13 +119,13 @@ class IndexingTagHandler implements TagHandler {
    }
 
    @Override
-   public void onStartNested(int fieldNumber, String fieldName, Descriptors.Descriptor messageDescriptor) {
+   public void onStartNested(int fieldNumber, String fieldName, Descriptor messageDescriptor) {
       messageContext.markField(fieldNumber);
       pushContext(fieldName, messageDescriptor);
    }
 
    @Override
-   public void onEndNested(int fieldNumber, String fieldName, Descriptors.Descriptor messageDescriptor) {
+   public void onEndNested(int fieldNumber, String fieldName, Descriptor messageDescriptor) {
       popContext();
    }
 
@@ -131,7 +134,7 @@ class IndexingTagHandler implements TagHandler {
       indexMissingFields();
    }
 
-   private void pushContext(String fieldName, Descriptors.Descriptor messageDescriptor) {
+   private void pushContext(String fieldName, Descriptor messageDescriptor) {
       messageContext = new MessageContext<MessageContext>(messageContext, fieldName, messageDescriptor);
    }
 
@@ -146,10 +149,10 @@ class IndexingTagHandler implements TagHandler {
     * Lucene cannot index nulls.
     */
    private void indexMissingFields() {
-      for (Descriptors.FieldDescriptor fd : messageContext.getMessageDescriptor().getFields()) {
+      for (FieldDescriptor fd : messageContext.getMessageDescriptor().getFields()) {
          if (!messageContext.isFieldMarked(fd.getNumber())) {
-            Object defaultValue = fd.getJavaType() == Descriptors.FieldDescriptor.JavaType.MESSAGE
-                  || fd.toProto().getDefaultValue().isEmpty() ? null : fd.getDefaultValue();
+            Object defaultValue = fd.getJavaType() == JavaType.MESSAGE
+                  || fd.hasDefaultValue() ? fd.getDefaultValue() : null;
             addFieldToDocument(fd.getName(), fd.getType(), defaultValue);
          }
       }

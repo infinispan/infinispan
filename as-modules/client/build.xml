@@ -49,6 +49,10 @@
         <module-def name="com.google.protobuf" slot="${infinispan.slot}">
             <maven-resource group="com.google.protobuf" artifact="protobuf-java" />
         </module-def>
+
+        <module-def name="com.squareup.protoparser" slot="${infinispan.slot}">
+            <maven-resource group="com.squareup" artifact="protoparser" />
+        </module-def>
     </target>
 
     <target name="all" depends="clean, copy-files, modules" />

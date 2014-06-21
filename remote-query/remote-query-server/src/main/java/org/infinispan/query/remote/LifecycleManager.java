@@ -1,6 +1,5 @@
 package org.infinispan.query.remote;
 
-import com.google.protobuf.Descriptors;
 import org.infinispan.commons.CacheException;
 import org.infinispan.commons.marshall.AdvancedExternalizer;
 import org.infinispan.configuration.cache.Configuration;
@@ -22,9 +21,11 @@ import org.infinispan.lifecycle.AbstractModuleLifecycle;
 import org.infinispan.manager.DefaultCacheManager;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.objectfilter.impl.ProtobufMatcher;
+import org.infinispan.protostream.DescriptorParserException;
 import org.infinispan.protostream.ProtobufUtil;
 import org.infinispan.protostream.SerializationContext;
 import org.infinispan.query.remote.client.MarshallerRegistration;
+import org.infinispan.query.remote.indexing.FileDescriptorSourceExternalizer;
 import org.infinispan.query.remote.indexing.ProtobufValueWrapper;
 import org.infinispan.query.remote.indexing.RemoteValueWrapperInterceptor;
 import org.infinispan.query.remote.logging.Log;
@@ -47,9 +48,7 @@ public class LifecycleManager extends AbstractModuleLifecycle {
       SerializationContext serCtx = ProtobufUtil.newSerializationContext();
       try {
          MarshallerRegistration.registerMarshallers(serCtx);
-      } catch (IOException e) {
-         throw new CacheException("Failed to initialise serialization context", e);
-      } catch (Descriptors.DescriptorValidationException e) {
+      } catch (IOException  | DescriptorParserException e) {
          throw new CacheException("Failed to initialise serialization context", e);
       }
 
@@ -63,6 +62,7 @@ public class LifecycleManager extends AbstractModuleLifecycle {
    public void cacheManagerStarting(GlobalComponentRegistry gcr, GlobalConfiguration globalCfg) {
       Map<Integer, AdvancedExternalizer<?>> externalizerMap = globalCfg.serialization().advancedExternalizers();
       externalizerMap.put(ExternalizerIds.PROTOBUF_VALUE_WRAPPER, new ProtobufValueWrapper.Externalizer());
+      externalizerMap.put(ExternalizerIds.PROTOBUF_FILE_DESCRIPTOR_SRC, new FileDescriptorSourceExternalizer());
    }
 
    @Override

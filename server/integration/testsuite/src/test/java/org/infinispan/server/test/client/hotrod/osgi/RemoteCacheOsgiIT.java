@@ -1,14 +1,5 @@
 package org.infinispan.server.test.client.hotrod.osgi;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
-import static org.ops4j.pax.exam.CoreOptions.maven;
-
-import java.io.Serializable;
-import java.net.URL;
-import java.util.Collections;
-import java.util.List;
-
 import org.infinispan.client.hotrod.RemoteCache;
 import org.infinispan.client.hotrod.RemoteCacheManager;
 import org.infinispan.client.hotrod.Search;
@@ -41,6 +32,14 @@ import org.ops4j.pax.exam.karaf.options.KarafDistributionOption;
 import org.ops4j.pax.exam.options.RawUrlReference;
 import org.ops4j.pax.exam.spi.reactors.ExamReactorStrategy;
 import org.ops4j.pax.exam.spi.reactors.PerClass;
+
+import java.io.Serializable;
+import java.util.Collections;
+import java.util.List;
+
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
+import static org.ops4j.pax.exam.CoreOptions.maven;
 
 /**
  * Simple test for RemoteCache running in OSGi (Karaf). Both basic put/get operations and remote
@@ -116,8 +115,7 @@ public class RemoteCacheOsgiIT extends KarafTestSupport {
 
       SerializationContext ctx = ProtoStreamMarshaller.getSerializationContext(manager);
 
-      URL resourceUrl = bundleContext.getBundle().getResource("/sample_bank_account/bank.protobin");
-      ctx.registerProtofile(resourceUrl.openStream());
+      ctx.registerProtofiles("/sample_bank_account/bank.proto", "/infinispan/indexing.proto", "/google/protobuf/descriptor.proto");
 
       ctx.registerMarshaller(new UserMarshaller());
       ctx.registerMarshaller(new GenderMarshaller());

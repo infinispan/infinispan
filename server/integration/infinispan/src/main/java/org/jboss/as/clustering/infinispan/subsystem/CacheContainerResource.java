@@ -21,15 +21,7 @@
  */
 package org.jboss.as.clustering.infinispan.subsystem;
 
-import org.jboss.as.controller.AttributeDefinition;
-import org.jboss.as.controller.OperationDefinition;
-import org.jboss.as.controller.OperationStepHandler;
-import org.jboss.as.controller.PathElement;
-import org.jboss.as.controller.SimpleAttributeDefinition;
-import org.jboss.as.controller.SimpleAttributeDefinitionBuilder;
-import org.jboss.as.controller.SimpleListAttributeDefinition;
-import org.jboss.as.controller.SimpleOperationDefinitionBuilder;
-import org.jboss.as.controller.SimpleResourceDefinition;
+import org.jboss.as.controller.*;
 import org.jboss.as.controller.operations.validation.EnumValidator;
 import org.jboss.as.controller.registry.AttributeAccess;
 import org.jboss.as.controller.registry.ManagementResourceRegistration;
@@ -140,14 +132,25 @@ public class CacheContainerResource extends SimpleResourceDefinition {
             .setParameters(NAME)
             .build();
 
-   static final SimpleAttributeDefinition PROTO_URL =
-         new SimpleAttributeDefinitionBuilder("proto-url", ModelType.STRING, true)
-               .setAllowExpression(false)
+   static final ListAttributeDefinition PROTO_URLS =
+         new StringListAttributeDefinition.Builder("proto-urls")
                .build();
 
-    static final OperationDefinition UPLOAD_PROTO = new SimpleOperationDefinitionBuilder("upload-proto-file", InfinispanExtension.getResourceDescriptionResolver("cache-container"))
-          .setParameters(PROTO_URL)
+   static final ListAttributeDefinition PROTO_NAMES =
+           new StringListAttributeDefinition.Builder("file-names")
+                   .build();
+
+   static final ListAttributeDefinition PROTO_CONTENTS =
+           new StringListAttributeDefinition.Builder("file-contents")
+                   .build();
+
+   static final OperationDefinition UPLOAD_PROTO = new SimpleOperationDefinitionBuilder("upload-proto-schemas", InfinispanExtension.getResourceDescriptionResolver("cache-container"))
+          .setParameters(PROTO_URLS)
           .build();
+
+   static final OperationDefinition REGISTER_PROTO = new SimpleOperationDefinitionBuilder("register-proto-schemas", InfinispanExtension.getResourceDescriptionResolver("cache-container"))
+           .setParameters(PROTO_NAMES, PROTO_CONTENTS)
+           .build();
 
     private final ResolvePathHandler resolvePathHandler;
     private final boolean runtimeRegistration;
@@ -183,6 +186,7 @@ public class CacheContainerResource extends SimpleResourceDefinition {
         resourceRegistration.registerOperationHandler(CacheContainerResource.ALIAS_ADD, AddAliasCommand.INSTANCE);
         resourceRegistration.registerOperationHandler(CacheContainerResource.ALIAS_REMOVE, RemoveAliasCommand.INSTANCE);
         resourceRegistration.registerOperationHandler(CacheContainerResource.UPLOAD_PROTO, UploadProtoFileOperationHandler.INSTANCE);
+        resourceRegistration.registerOperationHandler(CacheContainerResource.REGISTER_PROTO, RegisterProtoSchemasOperationHandler.INSTANCE);
     }
 
     @Override

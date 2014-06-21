@@ -201,9 +201,23 @@
                 <c:simple-property name="path" readOnly="true" default="cache-container"/>
             </plugin-configuration>
 
-            <operation name="upload-proto-file" description="Uploads a proto file given a specific URL - note this is relative to the Infinispan server">
+            <operation name="upload-proto-schemas"
+                       description="Registers one or more protobuf schemas given the URLs, which should be reachable by the server">
                 <parameters>
-                    <c:simple-property name="proto-url" type="longString"/>
+                    <c:list-property name="proto-urls">
+                        <c:simple-property name="proto-urls" type="string" description="The URLs for the schemas"/>
+                    </c:list-property>
+                </parameters>
+            </operation>
+
+            <operation name="register-proto-schemas" description="Registers one or more protobuf schemas">
+                <parameters>
+                    <c:list-property name="file-names">
+                        <c:simple-property name="file-name" type="string" description="Unique file names"/>
+                    </c:list-property>
+                    <c:list-property name="file-contents">
+                        <c:simple-property name="file-content" type="longString" description="The contents of the protobuf files corresponding to the provided names"/>
+                    </c:list-property>
                 </parameters>
             </operation>
 

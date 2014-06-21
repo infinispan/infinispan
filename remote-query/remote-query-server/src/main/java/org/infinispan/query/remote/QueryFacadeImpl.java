@@ -1,6 +1,5 @@
 package org.infinispan.query.remote;
 
-import com.google.protobuf.Descriptors;
 import org.apache.lucene.search.Query;
 import org.hibernate.hql.QueryParser;
 import org.hibernate.hql.ast.spi.EntityNamesResolver;
@@ -23,6 +22,8 @@ import org.infinispan.protostream.MessageMarshaller;
 import org.infinispan.protostream.ProtobufUtil;
 import org.infinispan.protostream.SerializationContext;
 import org.infinispan.protostream.WrappedMessage;
+import org.infinispan.protostream.descriptors.Descriptor;
+import org.infinispan.protostream.descriptors.FieldDescriptor;
 import org.infinispan.query.CacheQuery;
 import org.infinispan.query.Search;
 import org.infinispan.query.SearchManager;
@@ -141,8 +142,8 @@ public class QueryFacadeImpl implements QueryFacade {
          FieldBridgeProvider fieldBridgeProvider = new FieldBridgeProvider() {
             @Override
             public FieldBridge getFieldBridge(String type, String propertyPath) {
-               Descriptors.Descriptor md = serCtx.getMessageDescriptor(type);
-               Descriptors.FieldDescriptor fd = getFieldDescriptor(md, propertyPath);
+               Descriptor md = serCtx.getMessageDescriptor(type);
+               FieldDescriptor fd = getFieldDescriptor(md, propertyPath);
                switch (fd.getType()) {
                   case DOUBLE:
                      return NumericFieldBridge.DOUBLE_FIELD_BRIDGE;
@@ -223,8 +224,8 @@ public class QueryFacadeImpl implements QueryFacade {
       return response;
    }
 
-   private Descriptors.FieldDescriptor getFieldDescriptor(Descriptors.Descriptor messageDescriptor, String attributePath) {
-      Descriptors.FieldDescriptor fd = null;
+   private FieldDescriptor getFieldDescriptor(Descriptor messageDescriptor, String attributePath) {
+      FieldDescriptor fd = null;
       String[] split = attributePath.split("[.]");
       for (int i = 0; i < split.length; i++) {
          String name = split[i];

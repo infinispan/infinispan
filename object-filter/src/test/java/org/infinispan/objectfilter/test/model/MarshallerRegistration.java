@@ -11,10 +11,10 @@ import java.io.IOException;
  */
 public class MarshallerRegistration {
 
-   public static final String PROTOBUF_RES = "/org/infinispan/objectfilter/test/model/test_model.protobin";
+   public static final String PROTOBUF_RES = "/org/infinispan/objectfilter/test/model/test_model.proto";
 
    public static void registerMarshallers(SerializationContext ctx) throws IOException, Descriptors.DescriptorValidationException {
-      ctx.registerProtofile(MarshallerRegistration.class.getResourceAsStream(PROTOBUF_RES));
+      ctx.registerProtofiles(PROTOBUF_RES);
       ctx.registerMarshaller(new AddressMarshaller());
       ctx.registerMarshaller(new PhoneNumberMarshaller());
       ctx.registerMarshaller(new GenderMarshaller());

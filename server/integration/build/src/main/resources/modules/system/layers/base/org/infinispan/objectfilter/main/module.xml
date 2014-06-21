@@ -11,6 +11,7 @@
       <module name="org.hibernate.hql.parser"/>
       <module name="org.infinispan.protostream"/>
       <module name="com.google.protobuf"/>
+      <module name="com.squareup.protoparser"/>
       <module name="org.jboss.logging" />
    </dependencies>
 </module>
