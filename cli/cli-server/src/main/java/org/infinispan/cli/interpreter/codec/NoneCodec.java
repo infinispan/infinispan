@@ -8,7 +8,7 @@ package org.infinispan.cli.interpreter.codec;
  * @author Tristan Tarrant
  * @since 5.2
  */
-public class NoneCodec implements Codec {
+public class NoneCodec extends AbstractCodec {
 
    @Override
    public String getName() {

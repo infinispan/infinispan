@@ -44,7 +44,7 @@ import org.infinispan.util.logging.LogFactory;
 public class Interpreter {
    private static final Log log = LogFactory.getLog(Interpreter.class, Log.class);
    private static final long DEFAULT_SESSION_REAPER_WAKEUP_INTERVAL = 60000l; // in millis
-   private static final long DEFAULT_SESSION_TIMEOUT = 60000l; // in millis
+   private static final long DEFAULT_SESSION_TIMEOUT = 360000l; // in millis
 
    private EmbeddedCacheManager cacheManager;
    private ScheduledExecutorService executor;

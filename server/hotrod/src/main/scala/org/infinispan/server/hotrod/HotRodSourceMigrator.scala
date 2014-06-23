@@ -23,15 +23,10 @@ class HotRodSourceMigrator(cache: Cache) extends SourceMigrator {
 
    @Override
    def recordKnownGlobalKeyset() {
-      // TODO: Maybe we should allow passing in of a well-known key prefix, and return the generated key to use?
-      recordKnownGlobalKeyset(KNOWN_KEY)
-   }
+      // TODO: the bulk of this code is reusable across different implementations of Migrator
+      val bak = MARSHALLER.objectToByteBuffer(KNOWN_KEY)
 
-   def recordKnownGlobalKeyset(keyToRecordKnownKeySet: String) {
-      // TODO: the bulk of ths code is reusable across different implementations of Migrator
-      val bak = MARSHALLER.objectToByteBuffer(keyToRecordKnownKeySet)
-
-      val cm = cache.getCacheConfiguration().clustering().cacheMode()
+      val cm = SecurityActions.getCacheConfiguration(cache.getAdvancedCache).clustering.cacheMode
       val keys = GlobalKeySetTask.getGlobalKeySet(cache)
 
       // Remove KNOWN_KEY from the key set - just in case it is there from a previous run.
