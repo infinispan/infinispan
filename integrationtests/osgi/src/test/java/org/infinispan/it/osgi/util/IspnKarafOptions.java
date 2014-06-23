@@ -107,12 +107,6 @@ public class IspnKarafOptions {
             .classifier("features").version(karafVersion), "jndi");
    }
 
-   public static Option wrappedBundleC3P0() {
-      return composite(
-            wrappedBundle(maven().groupId("com.mchange").artifactId("c3p0").versionAsInProject()).instructions("DynamicImport-Package=*"),
-            wrappedBundle(maven().groupId("com.mchange").artifactId("mchange-commons-java").version("0.2.7")));
-   }
-
    public static Option bundleH2Database() {
       return composite(
             mavenBundle().groupId("com.h2database").artifactId("h2").versionAsInProject(),
@@ -274,7 +268,6 @@ public class IspnKarafOptions {
             featureLevelDbJni(),
             featureRemoteStore(),
             bundleH2Database(),
-            wrappedBundleC3P0(),
             bundleSplitTestPackages());
    }
 }
