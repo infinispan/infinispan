@@ -89,7 +89,7 @@ public class UpgradeStatement implements Statement {
                sb.append(MSG.synchronizedEntries(count, migratorName, cache.getName()));
                sb.append("\n");
             } catch (Exception e) {
-               throw log.dataSynchronizationError(e, migratorName, cache.getName());
+               throw log.dataSynchronizationError(e, cache.getName(), migratorName);
             }
          }
          break;
@@ -102,7 +102,7 @@ public class UpgradeStatement implements Statement {
                sb.append(MSG.disonnectedSource(migratorName, cache.getName()));
                sb.append("\n");
             } catch (Exception e) {
-               throw log.sourceDisconnectionError(e, migratorName, cache.getName());
+               throw log.sourceDisconnectionError(e, cache.getName(), migratorName);
             }
          }
          break;

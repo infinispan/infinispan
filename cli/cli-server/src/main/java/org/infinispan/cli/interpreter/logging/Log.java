@@ -105,10 +105,10 @@ public interface Log extends org.infinispan.util.logging.Log {
    StatementException cannotRollbackTransaction(@Cause Exception e);
 
    @Message(value = "An error occurred while synchronizing data for cache '%s' using migrator '%s' from the source server", id = 19026)
-   StatementException dataSynchronizationError(@Cause Exception e, String migratorName, String name);
+   StatementException dataSynchronizationError(@Cause Exception e, String name, String migratorName);
 
    @Message(value = "An error occurred while disconnecting the source server for cache '%s' using migrator '%s'", id = 19027)
-   StatementException sourceDisconnectionError(@Cause Exception e, String migratorName, String name);
+   StatementException sourceDisconnectionError(@Cause Exception e, String name, String migratorName);
 
    @Message(value = "A site name needs to be specified", id = 19028)
    StatementException siteNameNotSpecified();

@@ -14,7 +14,7 @@ import org.infinispan.util.logging.LogFactory;
  * @author Tristan Tarrant
  * @since 5.2
  */
-public class MemcachedCodec implements Codec {
+public class MemcachedCodec extends AbstractCodec {
    private static final Log log = LogFactory.getLog(Interpreter.class, Log.class);
    private Charset UTF8 = Charset.forName("UTF-8");
 

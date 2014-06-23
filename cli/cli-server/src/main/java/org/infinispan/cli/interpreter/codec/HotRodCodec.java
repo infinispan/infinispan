@@ -11,7 +11,7 @@ import org.infinispan.util.logging.LogFactory;
  * @author Tristan Tarrant
  * @since 5.2
  */
-public class HotRodCodec implements Codec {
+public class HotRodCodec extends AbstractCodec {
    public static final Log log = LogFactory.getLog(HotRodCodec.class, Log.class);
    Marshaller marshaller = new GenericJBossMarshaller(); // FIXME: assumes that clients will marshall using this
 
@@ -71,5 +71,4 @@ public class HotRodCodec implements Codec {
          return null;
       }
    }
-
 }

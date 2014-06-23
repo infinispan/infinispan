@@ -1,15 +1,14 @@
 package org.infinispan.cli.interpreter.statement;
 
 import java.util.List;
-import java.util.concurrent.TimeUnit;
-
-import org.infinispan.Cache;
+import org.infinispan.AdvancedCache;
 import org.infinispan.cli.interpreter.codec.Codec;
 import org.infinispan.cli.interpreter.logging.Log;
 import org.infinispan.cli.interpreter.result.EmptyResult;
 import org.infinispan.cli.interpreter.result.Result;
 import org.infinispan.cli.interpreter.result.StatementException;
 import org.infinispan.cli.interpreter.session.Session;
+import org.infinispan.metadata.Metadata;
 import org.infinispan.util.logging.LogFactory;
 
 /**
@@ -47,7 +46,7 @@ public class PutStatement implements Statement {
 
    @Override
    public Result execute(Session session) throws StatementException {
-      Cache<Object, Object> cache = session.getCache(keyData.getCacheName());
+      AdvancedCache<Object, Object> cache = session.getCache(keyData.getCacheName()).getAdvancedCache();
       Codec codec = session.getCodec();
       boolean overwrite = true;
       if (options.size() > 0) {
@@ -70,28 +69,14 @@ public class PutStatement implements Statement {
       }
       Object encodedKey = codec.encodeKey(keyData.getKey());
       Object encodedValue = codec.encodeValue(value);
-      if (expires == null) {
-         if (overwrite) {
-            cache.put(encodedKey, encodedValue);
-         } else {
-            cache.putIfAbsent(encodedKey, encodedValue);
+      Metadata metadata = codec.encodeMetadata(cache, expires, maxIdle);
 
-         }
-      } else if (maxIdle == null) {
-         if (overwrite) {
-            cache.put(encodedKey, encodedValue, expires, TimeUnit.MILLISECONDS);
-         } else {
-            cache.putIfAbsent(encodedKey, encodedValue, expires, TimeUnit.MILLISECONDS);
-         }
+      if (overwrite) {
+         cache.put(encodedKey, encodedValue, metadata);
       } else {
-         if (overwrite) {
-            cache.put(encodedKey, encodedValue, expires, TimeUnit.MILLISECONDS, maxIdle, TimeUnit.MILLISECONDS);
-         } else {
-            cache.putIfAbsent(encodedKey, encodedValue, expires, TimeUnit.MILLISECONDS, maxIdle, TimeUnit.MILLISECONDS);
-         }
+         cache.putIfAbsent(encodedKey, encodedValue, metadata);
       }
 
       return EmptyResult.RESULT;
    }
-
 }

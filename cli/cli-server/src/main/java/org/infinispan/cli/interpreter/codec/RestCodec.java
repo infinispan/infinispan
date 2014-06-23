@@ -10,7 +10,7 @@ import org.infinispan.util.logging.LogFactory;
  * @author Tristan Tarrant
  * @since 5.2
  */
-public class RestCodec implements Codec {
+public class RestCodec extends AbstractCodec {
    public static final Log log = LogFactory.getLog(RestCodec.class, Log.class);
 
    @Override
