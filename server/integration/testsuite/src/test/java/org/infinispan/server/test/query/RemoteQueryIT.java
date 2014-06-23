@@ -5,15 +5,15 @@ import java.util.List;
 
 import org.infinispan.arquillian.core.InfinispanResource;
 import org.infinispan.arquillian.core.RemoteInfinispanServer;
-import org.infinispan.arquillian.core.RunningServer;
-import org.infinispan.arquillian.core.WithRunningServer;
 import org.infinispan.client.hotrod.Search;
 import org.infinispan.protostream.sampledomain.Address;
 import org.infinispan.protostream.sampledomain.User;
 import org.infinispan.query.dsl.Query;
 import org.infinispan.query.dsl.QueryFactory;
+import org.infinispan.server.test.category.Queries;
 import org.jboss.arquillian.junit.Arquillian;
 import org.junit.Test;
+import org.junit.experimental.categories.Category;
 import org.junit.runner.RunWith;
 
 import static org.junit.Assert.assertEquals;
@@ -25,15 +25,15 @@ import static org.junit.Assert.assertNotNull;
  * @author Adrian Nistor
  * @author Martin Gencur
  */
+@Category({ Queries.class })
 @RunWith(Arquillian.class)
-@WithRunningServer({@RunningServer(name = "remote-query")})
 public class RemoteQueryIT extends RemoteQueryBaseIT {
 
     @InfinispanResource("remote-query")
     protected RemoteInfinispanServer server;
 
     public RemoteQueryIT() {
-        super("local", "testcache");
+        super("clustered", "localtestcache");
     }
 
     protected RemoteQueryIT(String cacheContainerName, String cacheName) {

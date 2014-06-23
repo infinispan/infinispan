@@ -25,6 +25,23 @@ public class DBServer {
         return new DBServer();
     }
 
+    public DBServer() {}
+
+    public DBServer(String bucketTableName, String stringTableName, String idColumnName, String dataColumnName) {
+        this.connectionUrl = System.getProperty("connection.url");
+        this.username = System.getProperty("username");
+        this.password = System.getProperty("password");
+        this.bucketTableName = bucketTableName;
+        this.stringTableName = stringTableName;
+
+        String driver = System.getProperty("driver.class");
+
+        if (bucketTableName != null)
+            bucketTable = new DBServer.TableManipulation(driver, connectionUrl, username, password, bucketTableName, idColumnName, dataColumnName);
+        if (stringTableName != null)
+            stringTable = new DBServer.TableManipulation(driver, connectionUrl, username, password, stringTableName, idColumnName, dataColumnName);
+    }
+
     public String connectionUrl;
     public String username;
     public String password;

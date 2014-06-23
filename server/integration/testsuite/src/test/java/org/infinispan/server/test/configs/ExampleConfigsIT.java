@@ -63,7 +63,6 @@ import static org.junit.Assert.*;
  * @author Galder Zamarreño (galderz@redhat.com)
  * @author Michal Linhard (mlinhard@redhat.com)
  */
-@Category(Unstable.class) // See ISPN-4026
 @RunWith(Arquillian.class)
 public class ExampleConfigsIT {
 
@@ -362,6 +361,7 @@ public class ExampleConfigsIT {
     }
 
     @Test
+    @Category(Unstable.class) // See ISPN-4026
     @WithRunningServer({@RunningServer(name = "standalone-hotrod-ssl")})
     public void testSSLHotRodConfig() throws Exception {
         RemoteInfinispanMBeans s = createRemotes("standalone-hotrod-ssl", "local", DEFAULT_CACHE_NAME);

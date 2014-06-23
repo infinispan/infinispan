@@ -13,9 +13,11 @@ import org.infinispan.client.hotrod.marshall.ProtoStreamMarshaller;
 import org.infinispan.protostream.sampledomain.User;
 import org.infinispan.protostream.sampledomain.marshallers.MarshallerRegistration;
 import org.infinispan.query.dsl.Query;
+import org.infinispan.server.test.category.Queries;
 import org.infinispan.server.test.util.RemoteCacheManagerFactory;
 import org.jboss.arquillian.junit.Arquillian;
 import org.junit.Test;
+import org.junit.experimental.categories.Category;
 import org.junit.runner.RunWith;
 
 import java.io.IOException;
@@ -32,14 +34,15 @@ import static org.junit.Assert.assertTrue;
  * @author gustavonalle
  */
 
+@Category({ Queries.class })
 @RunWith(Arquillian.class)
-@WithRunningServer({@RunningServer(name = "clustered-indexless-query-1"), @RunningServer(name = "clustered-indexless-query-2")})
+@WithRunningServer({@RunningServer(name = "clustered-indexless-descriptor-2")})
 public class RemoteQueryDescriptorIT {
 
-   @InfinispanResource("clustered-indexless-query-1")
+   @InfinispanResource("remote-query")
    RemoteInfinispanServer server1;
 
-   @InfinispanResource("clustered-indexless-query-2")
+   @InfinispanResource("clustered-indexless-descriptor-2")
    RemoteInfinispanServer server2;
 
    public static final String MBEAN = "jboss.infinispan:type=RemoteQuery,name=\"clustered\",component=ProtobufMetadataManager";
@@ -91,7 +94,7 @@ public class RemoteQueryDescriptorIT {
       ConfigurationBuilder configurationBuilder = configurationBuilder(server);
       RemoteCacheManager remoteCacheManager = new RemoteCacheManagerFactory().createManager(configurationBuilder);
       MarshallerRegistration.registerMarshallers(ProtoStreamMarshaller.getSerializationContext(remoteCacheManager));
-      RemoteCache<Integer, User> remoteCache = remoteCacheManager.getCache("testcache");
+      RemoteCache<Integer, User> remoteCache = remoteCacheManager.getCache("repl_descriptor");
       Query query = Search.getQueryFactory(remoteCache).from(User.class).build();
 
       return query.list().size();
@@ -114,7 +117,7 @@ public class RemoteQueryDescriptorIT {
       RemoteCacheManager manager = new RemoteCacheManagerFactory().createManager(clientBuilder);
       MarshallerRegistration.registerMarshallers(ProtoStreamMarshaller.getSerializationContext(manager));
 
-      RemoteCache<Object, Object> cache = manager.getCache("testcache");
+      RemoteCache<Object, Object> cache = manager.getCache("repl_descriptor");
       cache.put(1, user);
    }
 

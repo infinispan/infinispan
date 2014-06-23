@@ -1,36 +1,39 @@
         <subsystem xmlns="urn:infinispan:server:core:7.0" >
-            <cache-container 
-                name="local"
-                default-cache="testcache">
-                <local-cache
-                    name="testcache"
-                    start="EAGER"
-                    batching="false"
-                    module="org.infinispan.remote-query.server">
-                    <transaction mode="NONE" />
+
+            <cache-container name="clustered" default-cache="repltestcache">
+                <transport stack="${jboss.default.jgroups.stack:udp}" executor="infinispan-transport" lock-timeout="240000"/>
+                <replicated-cache name="repltestcache" mode="SYNC" start="EAGER" module="org.infinispan.remote-query.server">
+                    <indexing index="ALL">
+                        <property name="default.directory_provider">infinispan</property>
+                        <property name="lucene_version">LUCENE_48</property>
+                    </indexing>
+                </replicated-cache>
+
+                <replicated-cache name="repl_descriptor" start="EAGER" mode="SYNC" />
+
+                <distributed-cache name="disttestcache" mode="SYNC" start="EAGER" module="org.infinispan.remote-query.server">
+                    <indexing index="ALL">
+                        <property name="default.directory_provider">ram</property>
+                        <property name="lucene_version">LUCENE_48</property>
+                    </indexing>
+                </distributed-cache>
+
+                <local-cache name="localtestcache" start="EAGER" module="org.infinispan.remote-query.server">
                     <indexing index="ALL">
                         <property name="default.directory_provider">ram</property>
                         <property name="lucene_version">LUCENE_CURRENT</property>
                     </indexing>
                 </local-cache>
-                <local-cache
-                    name="testcache_manual"
-                    start="EAGER"
-                    batching="false">
-                   <transaction mode="NONE" />
-                   <indexing index="ALL">
-                      <property name="default.directory_provider">ram</property>
-                      <property name="lucene_version">LUCENE_CURRENT</property>
-                      <property name="hibernate.search.indexing_strategy">manual</property>
-                      <property name="hibernate.search.jmx_enabled">true</property>
-                   </indexing>
+                <local-cache name="localtestcache_manual" start="EAGER">
+                    <indexing index="ALL">
+                        <property name="default.directory_provider">ram</property>
+                        <property name="lucene_version">LUCENE_CURRENT</property>
+                        <property name="hibernate.search.indexing_strategy">manual</property>
+                        <property name="hibernate.search.jmx_enabled">true</property>
+                    </indexing>
                 </local-cache>
-                <local-cache
-                    name="notindexed"
-                    start="EAGER"
-                    batching="false">
-                    <transaction mode="NONE" />
-                </local-cache>
+                <local-cache name="localnotindexed" start="EAGER" />
             </cache-container>
+
             <cache-container name="security"/>
         </subsystem>

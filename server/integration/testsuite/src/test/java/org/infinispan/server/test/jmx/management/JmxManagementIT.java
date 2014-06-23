@@ -79,29 +79,17 @@ public class JmxManagementIT {
 
     @Before
     public void setUp() throws IOException {
-        provider = new MBeanServerConnectionProvider(server1.getHotrodEndpoint().getInetAddress().getHostName(), SERVER1_MGMT_PORT);
-        provider2 = new MBeanServerConnectionProvider(server2.getHotrodEndpoint().getInetAddress().getHostName(), SERVER2_MGMT_PORT);
-        if (manager == null) {
+        if (provider == null) { // initialize just once
+            provider = new MBeanServerConnectionProvider(server1.getHotrodEndpoint().getInetAddress().getHostName(), SERVER1_MGMT_PORT);
+            provider2 = new MBeanServerConnectionProvider(server2.getHotrodEndpoint().getInetAddress().getHostName(), SERVER2_MGMT_PORT);
             Configuration conf = new ConfigurationBuilder().addServer().host(server1.getHotrodEndpoint().getInetAddress().getHostName()).port(server1
                     .getHotrodEndpoint().getPort()).build();
             manager = new RemoteCacheManager(conf);
+            distCache = manager.getCache();
+            mc = new MemcachedClient("UTF-8", server1.getMemcachedEndpoint().getInetAddress()
+                    .getHostName(), server1.getMemcachedEndpoint().getPort(), 10000);
         }
-        distCache = manager.getCache();
-        mc = new MemcachedClient("UTF-8", server1.getMemcachedEndpoint().getInetAddress()
-                .getHostName(), server1.getMemcachedEndpoint().getPort(), 10000);
-        assertDefaultCacheEmpty();
-    }
-
-    private void assertDefaultCacheEmpty() {
-        while (server1.getCacheManager("clustered").getDefaultCache().getNumberOfEntries() != 0 ||
-                server2.getCacheManager("clustered").getDefaultCache().getNumberOfEntries() != 0) {
-            try {
-                distCache.clear();
-                Thread.sleep(200);
-            } catch (InterruptedException e) {
-                e.printStackTrace();
-            }
-        }
+        distCache.clear();
     }
 
     @Test

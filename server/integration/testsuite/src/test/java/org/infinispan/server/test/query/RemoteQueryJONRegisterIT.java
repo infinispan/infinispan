@@ -1,11 +1,10 @@
 package org.infinispan.server.test.query;
 
-import org.infinispan.arquillian.core.RunningServer;
-import org.infinispan.arquillian.core.WithRunningServer;
 import org.infinispan.arquillian.utils.MBeanServerConnectionProvider;
 import org.infinispan.client.hotrod.configuration.ConfigurationBuilder;
 import org.infinispan.client.hotrod.marshall.ProtoStreamMarshaller;
 import org.infinispan.protostream.sampledomain.marshallers.MarshallerRegistration;
+import org.infinispan.server.test.category.Queries;
 import org.infinispan.server.test.util.RemoteCacheManagerFactory;
 import org.jboss.arquillian.junit.Arquillian;
 import org.jboss.as.clustering.infinispan.subsystem.InfinispanExtension;
@@ -16,6 +15,7 @@ import org.jboss.as.controller.descriptions.ModelDescriptionConstants;
 import org.jboss.dmr.ModelNode;
 import org.junit.Assert;
 import org.junit.Before;
+import org.junit.experimental.categories.Category;
 import org.junit.runner.RunWith;
 
 import static org.infinispan.server.test.util.ITestUtils.SERVER1_MGMT_PORT;
@@ -26,8 +26,8 @@ import static org.jboss.as.controller.descriptions.ModelDescriptionConstants.*;
  *
  * @author William Burns
  */
+@Category({ Queries.class })
 @RunWith(Arquillian.class)
-@WithRunningServer({@RunningServer(name = "remote-query")})
 public class RemoteQueryJONRegisterIT extends RemoteQueryIT {
 
    @Before
@@ -51,7 +51,7 @@ public class RemoteQueryJONRegisterIT extends RemoteQueryIT {
       ModelControllerClient client = ModelControllerClient.Factory.create(
             getServer().getHotrodEndpoint().getInetAddress().getHostName(), SERVER1_MGMT_PORT);
 
-      ModelNode addProtobufFileOp = getOperation("local", "upload-proto-schemas", "proto-urls", resourceList);
+      ModelNode addProtobufFileOp = getOperation("clustered", "upload-proto-schemas", "proto-urls", resourceList);
 
       ModelNode result = client.execute(addProtobufFileOp);
       Assert.assertEquals(SUCCESS, result.get(OUTCOME).asString());

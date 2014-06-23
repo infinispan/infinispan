@@ -315,61 +315,6 @@
                 <property name="waitForPorts">11311 11322 8180</property>
             </configuration>
         </container>
-        <container qualifier="remote-query" mode="manual">
-            <configuration>
-                <property name="javaHome">${server.jvm}</property>
-                <property name="jbossHome">${server1.dist}</property>
-                <property name="managementAddress">${node0.ip}</property>
-                <property name="serverConfig">testsuite/standalone-with-indexing.xml</property>
-                <property name="javaVmArguments">${server.jvm.args} -Djboss.node.name=node0 -Djboss.bind.address.management=${node0.ip} -Djboss.bind.address=${node0.ip}</property>
-                <property name="managementPort">9990</property>
-                <property name="waitForPorts">11222 8080</property>
-            </configuration>
-        </container>
-        <container qualifier="remote-query-infinispan-dir" mode="manual">
-            <configuration>
-                <property name="javaHome">${server.jvm}</property>
-                <property name="jbossHome">${server1.dist}</property>
-                <property name="serverConfig">testsuite/clustered-with-indexing.xml</property>
-                <property name="javaVmArguments">${server.jvm.args} -Djboss.node.name=node0</property>
-                <property name="managementPort">9990</property>
-                <property name="waitForPorts">11222 8080</property>
-            </configuration>
-        </container>
-        <container qualifier="clustered-indexless-query-1" mode="manual">
-            <configuration>
-                <property name="javaHome">${server.jvm}</property>
-                <property name="jbossHome">${server1.dist}</property>
-                <property name="managementAddress">${node0.ip}</property>
-                <property name="serverConfig">testsuite/clustered-indexless-query-1.xml</property>
-                <property name="javaVmArguments">${server.jvm.args} -Djboss.node.name=node0 -Djboss.bind.address.management=${node0.ip} -Djboss.bind.address=${node0.ip}</property>
-                <property name="managementPort">9990</property>
-                <property name="waitForPorts">11211 11222 8080</property>
-            </configuration>
-        </container>
-        <container qualifier="clustered-indexless-query-2" mode="manual">
-            <configuration>
-                <property name="javaHome">${server.jvm}</property>
-                <property name="jbossHome">${server2.dist}</property>
-                <property name="managementAddress">${node1.ip}</property>
-                <property name="serverConfig">testsuite/clustered-indexless-query-2.xml</property>
-                <property name="javaVmArguments">${server.jvm.args} -Djboss.node.name=node1 -Djboss.bind.address.management=${node1.ip} -Djboss.bind.address=${node1.ip}
-                    -Djboss.socket.binding.port-offset=100
-                </property>
-                <property name="managementPort">10090</property>
-                <property name="waitForPorts">11311 11322 8180</property>
-            </configuration>
-        </container>
-        <container qualifier="remote-query-keySet" mode="manual">
-            <configuration>
-                <property name="javaHome">${server.jvm}</property>
-                <property name="jbossHome">${server1.dist}</property>
-                <property name="serverConfig">testsuite/distributed-with-indexing.xml</property>
-                <property name="javaVmArguments">${server.jvm.args} -Djboss.node.name=node0</property>
-                <property name="managementPort">9990</property>
-                <property name="waitForPorts">11222 8080</property>
-            </configuration>
-        </container>
         <container qualifier="leveldb" mode="manual">
             <configuration>
                 <property name="javaHome">${server.jvm}</property>
@@ -535,25 +480,26 @@
                 <property name="waitForPorts">11411 11422 8280</property>
             </configuration>
         </container>
-        <container qualifier="transport-stack-1" mode="manual">
+        <container qualifier="transport-stack-tcp" mode="manual">
             <configuration>
                 <property name="javaHome">${server.jvm}</property>
                 <property name="jbossHome">${server1.dist}</property>
                 <property name="managementAddress">${node0.ip}</property>
                 <property name="serverConfig">testsuite/clustered-transport-stack.xml</property>
-                <property name="javaVmArguments">${server.jvm.args} -Djboss.node.name=node0 -Djboss.bind.address.management=${node0.ip} -Djboss.bind.address=${node0.ip}</property>
+                <property name="javaVmArguments">${server.jvm.args} -Djboss.node.name=node0 -Djboss.bind.address.management=${node0.ip} -Djboss.bind.address=${node0.ip}
+                    -Djboss.default.jgroups.stack=tcp</property>
                 <property name="managementPort">9990</property>
                 <property name="waitForPorts">11211 11222 8080</property>
             </configuration>
         </container>
-        <container qualifier="transport-stack-2" mode="manual">
+        <container qualifier="transport-stack-udp" mode="manual">
             <configuration>
                 <property name="javaHome">${server.jvm}</property>
                 <property name="jbossHome">${server2.dist}</property>
                 <property name="managementAddress">${node1.ip}</property>
                 <property name="serverConfig">testsuite/clustered-transport-stack.xml</property>
                 <property name="javaVmArguments">${server.jvm.args} -Djboss.node.name=node1 -Djboss.bind.address.management=${node1.ip} -Djboss.bind.address=${node1.ip}
-                    -Djboss.socket.binding.port-offset=100
+                    -Djboss.socket.binding.port-offset=100 -Djboss.default.jgroups.stack=udp
                 </property>
                 <property name="managementPort">10090</property>
                 <property name="waitForPorts">11311 11322 8180</property>
@@ -615,6 +561,19 @@
                 <property name="waitForPorts">11311 11322 8180</property>
             </configuration>
         </container>
+
+        <container qualifier="jdbc" mode="manual">
+            <configuration>
+                <property name="javaHome">${server.jvm}</property>
+                <property name="jbossHome">${server1.dist}</property>
+                <property name="managementAddress">${node0.ip}</property>
+                <property name="serverConfig">testsuite/jdbc.xml</property>
+                <property name="javaVmArguments">${server.jvm.args} -Djboss.node.name=node0 -Djboss.bind.address.management=${node0.ip} -Djboss.bind.address=${node0.ip}</property>
+                <property name="managementPort">9990</property>
+                <property name="waitForPorts">11211 11222 8080</property>
+            </configuration>
+        </container>
+
         <container qualifier="jdbc-cachestore-1" mode="manual">
             <configuration>
                 <property name="javaHome">${server.jvm}</property>
@@ -698,6 +657,35 @@
             </configuration>
         </container>
     </group>
+
+    <group qualifier="queries">
+        <container qualifier="remote-query" mode="suite">
+            <configuration>
+                <property name="javaHome">${server.jvm}</property>
+                <property name="jbossHome">${server1.dist}</property>
+                <property name="managementAddress">${node0.ip}</property>
+                <property name="serverConfig">testsuite/clustered-indexing.xml</property>
+                <property name="javaVmArguments">${server.jvm.args} -Djboss.node.name=node0 -Djboss.bind.address.management=${node0.ip} -Djboss.bind.address=${node0.ip}</property>
+                <property name="managementPort">9990</property>
+                <property name="waitForPorts">11222 8080</property>
+            </configuration>
+        </container>
+        <!-- used only in RemoteQueryDescriptorIT -->
+        <container qualifier="clustered-indexless-descriptor-2" mode="manual">
+            <configuration>
+                <property name="javaHome">${server.jvm}</property>
+                <property name="jbossHome">${server2.dist}</property>
+                <property name="managementAddress">${node1.ip}</property>
+                <property name="serverConfig">testsuite/clustered-indexing.xml</property>
+                <property name="javaVmArguments">${server.jvm.args} -Djboss.node.name=node1 -Djboss.bind.address.management=${node1.ip} -Djboss.bind.address=${node1.ip}
+                    -Djboss.socket.binding.port-offset=100
+                </property>
+                <property name="managementPort">10090</property>
+                <property name="waitForPorts">11311 11322 8180</property>
+            </configuration>
+        </container>
+    </group>
+
     <group qualifier="suite-client-local">
         <container qualifier="container1" mode="suite">
             <configuration>
