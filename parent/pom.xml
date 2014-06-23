@@ -98,6 +98,7 @@
       <version.arquillian.container.weld>1.0.0.CR3</version.arquillian.container.weld>
       <version.avro>1.7.6</version.avro>
       <version.c3p0>0.9.5-pre8</version.c3p0>
+      <version.c3p0_dep.mchange-commons-java>0.2.7</version.c3p0_dep.mchange-commons-java>
       <version.cdi>1.0-SP4</version.cdi>
       <version.com.intellij.forms_rt>6.0.5</version.com.intellij.forms_rt>
       <version.commons.compress>1.4</version.commons.compress>
