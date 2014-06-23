@@ -1,0 +1,97 @@
+       <subsystem xmlns="urn:infinispan:server:core:7.0" >
+            <cache-container name="local" default-cache="stringWithPassivation" start="EAGER">
+
+                <local-cache name="stringWithPassivation" start="EAGER" >
+                    <eviction strategy="LRU" max-entries="2" />
+                    <string-keyed-jdbc-store datasource="${jndi.name}" passivation="true" preload="false" purge="false" name="STRING_WITH_PASSIVATION_STORE">
+                        <property name="databaseType">${database.type}</property>
+                        <string-keyed-table prefix="STRING_WITH_PASSIVATION">
+                            <id-column name="id" type="${id.column.type}"/>
+                            <data-column name="datum" type="${data.column.type}"/>
+                            <timestamp-column name="version" type="${timestamp.column.type}"/>
+                        </string-keyed-table>
+                    </string-keyed-jdbc-store>
+                </local-cache>
+
+                <!-- TODO mising databaseType -->
+                <local-cache name="stringNoPassivation" start="EAGER">
+                    <string-keyed-jdbc-store datasource="${jndi.name}" passivation="false" preload="true" purge="false" name="STRING_NO_PASSIVATION_STORE">
+                        <string-keyed-table prefix="STRING_NO_PASSIVATION">
+                            <id-column name="id" type="${id.column.type}"/>
+                            <data-column name="datum" type="${data.column.type}"/>
+                            <timestamp-column name="version" type="${timestamp.column.type}"/>
+                        </string-keyed-table>
+                    </string-keyed-jdbc-store>
+                </local-cache>
+
+                <local-cache name="memcachedCache" start="EAGER" >
+                    <string-keyed-jdbc-store datasource="${jndi.name}" passivation="false" preload="false" purge="false" name="STRING_ASYNC">
+                        <property name="databaseType">${database.type}</property>
+                        <!--<write-behind flush-lock-timeout="2" modification-queue-size="2048" shutdown-timeout="20000" thread-pool-size="15" />-->
+                        <string-keyed-table prefix="STRING_ASYNC">
+                            <id-column name="id" type="${id.column.type}"/>
+                            <data-column name="datum" type="${data.column.type}"/>
+                            <timestamp-column name="version" type="${timestamp.column.type}"/>
+                        </string-keyed-table>
+                    </string-keyed-jdbc-store>
+                </local-cache>
+
+                <local-cache name="binaryWithPassivation" start="EAGER" >
+                    <eviction strategy="LRU" max-entries="2" />
+                    <binary-keyed-jdbc-store datasource="${jndi.name}" passivation="true" preload="false" purge="false" name="BINARY_WITH_PASSIVATION_STORE">
+                        <property name="databaseType">${database.type}</property>
+                        <binary-keyed-table prefix="BINARY_WITH_PASSIVATION">
+                            <id-column name="id" type="${id.column.type}"/>
+                            <data-column name="datum" type="${data.column.type}"/>
+                            <timestamp-column name="version" type="${timestamp.column.type}"/>
+                        </binary-keyed-table>
+                    </binary-keyed-jdbc-store>
+                </local-cache>
+
+                <local-cache name="binaryNoPassivation" start="EAGER" >
+                    <mixed-keyed-jdbc-store datasource="${jndi.name}" passivation="false" preload="true" purge="false" name="BINARY_WITH_PASSIVATION_STORE">
+                        <property name="databaseType">${database.type}</property>
+                        <binary-keyed-table prefix="BINARY_NO_PASSIVATION">
+                            <id-column name="id" type="${id.column.type}"/>
+                            <data-column name="datum" type="${data.column.type}"/>
+                            <timestamp-column name="version" type="${timestamp.column.type}"/>
+                        </binary-keyed-table>
+                    </mixed-keyed-jdbc-store>
+                </local-cache>
+
+                <local-cache name="mixedWithPassivation" start="EAGER" >
+                    <eviction strategy="LRU" max-entries="2" />
+                    <mixed-keyed-jdbc-store datasource="${jndi.name}" passivation="true" preload="false" purge="false" name="MIXED_WITH_PASSIVATION_STORE">
+                        <property name="databaseType">${database.type}</property>
+                        <binary-keyed-table prefix="MIXED_WITH_PASSIVATION_BKT">
+                            <id-column name="id" type="${id.column.type}"/>
+                            <data-column name="datum" type="${data.column.type}"/>
+                            <timestamp-column name="version" type="${timestamp.column.type}"/>
+                        </binary-keyed-table>
+                        <string-keyed-table prefix="MIXED_WITH_PASSIVATION_STR">
+                            <id-column name="id" type="${id.column.type}"/>
+                            <data-column name="datum" type="${data.column.type}"/>
+                            <timestamp-column name="version" type="${timestamp.column.type}"/>
+                        </string-keyed-table>
+                    </mixed-keyed-jdbc-store>
+                </local-cache>
+
+                <local-cache name="mixedNoPassivation" start="EAGER" >
+                    <mixed-keyed-jdbc-store datasource="${jndi.name}" passivation="false" preload="true" purge="false" name="MIXED_NO_PASSIVATION_STORE">
+                        <property name="databaseType">${database.type}</property>
+                        <binary-keyed-table prefix="MIXED_NO_PASSIVATION_BKT">
+                            <id-column name="id" type="${id.column.type}"/>
+                            <data-column name="datum" type="${data.column.type}"/>
+                            <timestamp-column name="version" type="${timestamp.column.type}"/>
+                        </binary-keyed-table>
+                        <string-keyed-table prefix="MIXED_NO_PASSIVATION_STR">
+                            <id-column name="id" type="${id.column.type}"/>
+                            <data-column name="datum" type="${data.column.type}"/>
+                            <timestamp-column name="version" type="${timestamp.column.type}"/>
+                        </string-keyed-table>
+                    </mixed-keyed-jdbc-store>
+                </local-cache>
+
+            </cache-container>
+           <cache-container name="security"/>
+        </subsystem>

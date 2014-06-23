@@ -1,7 +1,7 @@
         <subsystem xmlns="urn:infinispan:server:core:7.0">
             <cache-container name="clustered" default-cache="memcachedCache">
                 <transport stack="${jboss.default.jgroups.stack:udp}" executor="infinispan-transport" lock-timeout="240000"/>
-                <distributed-cache name="memcachedCache" mode="SYNC" segments="20" owners="2" remote-timeout="30000" start="EAGER" />
+                <distributed-cache name="memcachedCache" mode="SYNC" start="EAGER" />
                 <distributed-cache name="default" mode="SYNC" segments="20" owners="2" remote-timeout="30000" start="EAGER" />
             </cache-container>
             <cache-container name="security"/>

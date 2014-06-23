@@ -186,16 +186,12 @@
         <transform in="standalone.xml" out="testsuite/standalone-default-local.xml" modifyInfinispan="${infinispan.parts}/default-local.xml"/>
         <transform in="clustered.xml" out="testsuite/clustered-default-dist.xml" modifyInfinispan="${infinispan.parts}/default-dist.xml"/>
         <transform in="clustered.xml" out="testsuite/clustered-default-repl.xml" modifyInfinispan="${infinispan.parts}/default-repl.xml"/>
-        <transform in="standalone.xml" out="testsuite/standalone-with-indexing.xml" modifyInfinispan="${infinispan.parts}/indexing.xml"/>
-        <transform in="clustered.xml" out="testsuite/distributed-with-indexing.xml" modifyInfinispan="${infinispan.parts}/indexing-distributed.xml" filtering="true"/>
-        <transform in="clustered.xml" out="testsuite/clustered-with-indexing.xml" modifyInfinispan="${infinispan.parts}/indexing-clustered.xml" filtering="true"/>
+        <transform in="clustered.xml" out="testsuite/clustered-indexing.xml" modifyInfinispan="${infinispan.parts}/indexing.xml" filtering="true"/>
         <transform in="standalone.xml" out="testsuite/standalone-leveldb-local.xml" modifyInfinispan="${infinispan.parts}/leveldb-local.xml" filtering="true"/>
         <transform in="clustered.xml" out="testsuite/clustered-leveldb-dist.xml" modifyInfinispan="${infinispan.parts}/leveldb-dist.xml" filtering="true"/>
         <transform in="clustered.xml" out="testsuite/clustered-leveldb-repl.xml" modifyInfinispan="${infinispan.parts}/leveldb-repl.xml" filtering="true"/>
         <transform in="clustered.xml" out="testsuite/clustered-asymmetric-1.xml" modifyInfinispan="${infinispan.parts}/asymmetric-1.xml"/>
         <transform in="clustered.xml" out="testsuite/clustered-asymmetric-2.xml" modifyInfinispan="${infinispan.parts}/asymmetric-2.xml"/>
-        <transform in="clustered.xml" out="testsuite/clustered-indexless-query-1.xml" modifyInfinispan="${infinispan.parts}/default-repl.xml"/>
-        <transform in="clustered.xml" out="testsuite/clustered-indexless-query-2.xml" modifyInfinispan="${infinispan.parts}/default-repl.xml"/>
         <transform in="examples/standalone-rcs-local.xml" out="testsuite/standalone-rcs-local.xml"
                    modifyInfinispan="${infinispan.parts}/rcs-local.xml"
                    modifyRemoteDestination="${other.parts}/rcs-remote-destination.xml"
@@ -251,41 +247,13 @@
                    infinispanServerEndpoint="${other.parts}/cachecontainer-endpoints.xml"
                    addHotrodSocketBinding="${other.parts}/cachecontainer-hotrod-binding.xml"/>
         <transform in="clustered.xml" out="testsuite/clustered-clusteredcache.xml" modifyInfinispan="${infinispan.parts}/clusteredcache.xml" />
-        <transform in="standalone.xml" out="testsuite/jdbc-binary-no-passivation.xml" modifyInfinispan="${infinispan.parts}/jdbc-binary-no-passivation.xml" modifyDataSource="${datasource.parts}/${datasource.file}" filtering="true">
+
+        <transform in="standalone.xml" out="testsuite/jdbc.xml" modifyInfinispan="${infinispan.parts}/jdbc.xml" modifyDataSource="${datasource.parts}/${datasource.file}" filtering="true">
             <jdbc-conf>
-                <configure-jdbc in="@{in}" tablePrefix="BINARY_NO_PASSIVATION"/>
+                <configure-jdbc in="@{in}"/>
             </jdbc-conf>
         </transform>
-        <transform in="standalone.xml" out="testsuite/jdbc-binary-with-passivation.xml" modifyInfinispan="${infinispan.parts}/jdbc-binary-with-passivation.xml" modifyDataSource="${datasource.parts}/${datasource.file}" filtering="true">
-            <jdbc-conf>
-                <configure-jdbc in="@{in}" tablePrefix="BINARY_WITH_PASSIVATION"/>
-            </jdbc-conf>
-        </transform>
-        <transform in="standalone.xml" out="testsuite/jdbc-mixed-no-passivation.xml" modifyInfinispan="${infinispan.parts}/jdbc-mixed-no-passivation.xml" modifyDataSource="${datasource.parts}/${datasource.file}" filtering="true">
-            <jdbc-conf>
-                <configure-jdbc in="@{in}" tablePrefix="MIXED_NO_PASSIVATION"/>
-            </jdbc-conf>
-        </transform>
-        <transform in="standalone.xml" out="testsuite/jdbc-mixed-with-passivation.xml" modifyInfinispan="${infinispan.parts}/jdbc-mixed-with-passivation.xml" modifyDataSource="${datasource.parts}/${datasource.file}" filtering="true">
-            <jdbc-conf>
-                <configure-jdbc in="@{in}" tablePrefix="MIXED_WITH_PASSIVATION"/>
-            </jdbc-conf>
-        </transform>
-        <transform in="standalone.xml" out="testsuite/jdbc-string-no-passivation.xml" modifyInfinispan="${infinispan.parts}/jdbc-string-no-passivation.xml" modifyDataSource="${datasource.parts}/${datasource.file}" filtering="true">
-            <jdbc-conf>
-                <configure-jdbc in="@{in}" tablePrefix="STRING_NO_PASSIVATION"/>
-            </jdbc-conf>
-        </transform>
-        <transform in="standalone.xml" out="testsuite/jdbc-string-with-passivation.xml" modifyInfinispan="${infinispan.parts}/jdbc-string-with-passivation.xml" modifyDataSource="${datasource.parts}/${datasource.file}" filtering="true">
-            <jdbc-conf>
-                <configure-jdbc in="@{in}" tablePrefix="STRING_WITH_PASSIVATION"/>
-            </jdbc-conf>
-        </transform>
-        <transform in="standalone.xml" out="testsuite/jdbc-string-async.xml" modifyInfinispan="${infinispan.parts}/jdbc-string-async.xml" modifyDataSource="${datasource.parts}/${datasource.file}" filtering="true">
-            <jdbc-conf>
-                <configure-jdbc in="@{in}" tablePrefix="STRING_ASYNC"/>
-            </jdbc-conf>
-        </transform>
+
         <transform in="clustered.xml" out="testsuite/jdbc-string-multinode-fetch-state1.xml" modifyInfinispan="${infinispan.parts}/jdbc-string-multinode-fetch-state.xml" modifyDataSource="${datasource.parts}/${datasource.file}" filtering="true">
             <jdbc-conf>
                 <configure-jdbc in="@{in}" tablePrefix="STRING_MULTINODEx"/>

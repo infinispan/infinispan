@@ -1,32 +1,34 @@
 package org.infinispan.server.test.query;
 
-import org.infinispan.arquillian.core.InfinispanResource;
-import org.infinispan.arquillian.core.RemoteInfinispanServer;
-import org.infinispan.arquillian.core.RunningServer;
-import org.infinispan.arquillian.core.WithRunningServer;
-import org.infinispan.protostream.sampledomain.User;
-import org.jboss.arquillian.junit.Arquillian;
-import org.junit.Test;
-import org.junit.runner.RunWith;
-
 import java.util.Set;
 
-import static org.junit.Assert.*;
+import org.infinispan.arquillian.core.InfinispanResource;
+import org.infinispan.arquillian.core.RemoteInfinispanServer;
+import org.infinispan.protostream.sampledomain.User;
+import org.infinispan.server.test.category.Queries;
+import org.jboss.arquillian.junit.Arquillian;
+import org.junit.Test;
+import org.junit.experimental.categories.Category;
+import org.junit.runner.RunWith;
+
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
 
 /**
  * Tests for keySet() method on a distributed remote cache that uses protobuf marshalling.
  *
  * @author anistor@redhat.com
  */
+@Category({ Queries.class })
 @RunWith(Arquillian.class)
-@WithRunningServer({@RunningServer(name = "remote-query-keySet")})
 public class RemoteQueryKeySetIT extends RemoteQueryBaseIT {
 
-   @InfinispanResource("remote-query-keySet")
+   @InfinispanResource("remote-query")
    protected RemoteInfinispanServer server;
 
    public RemoteQueryKeySetIT() {
-      super("clustered", "testcache");
+      super("clustered", "disttestcache");
    }
 
    @Override
