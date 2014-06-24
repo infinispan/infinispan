@@ -160,9 +160,9 @@ public class TxReadAfterLosingOwnershipTest extends MultipleCacheManagersTest {
       final CountDownLatch wait = new CountDownLatch(1);
 
       @Override
-      public void beforeInvalidation(Set<Integer> newSegments, Set<Integer> segmentsToL1) {
-         log.debugf("Before invalidation: newSegments=%s, segmentsToL1=%s", newSegments, segmentsToL1);
-         if (!segmentsToL1.contains(0)) {
+      public void beforeInvalidation(Set<Integer> removedSegments, Set<Integer> staleL1Segments) {
+         log.debugf("Before invalidation: removedSegments=%s, staleL1Segments=%s", removedSegments, staleL1Segments);
+         if (!removedSegments.contains(0)) {
             //it only matters when it looses the segment 0 and the key is moved to the new owner
             return;
          }

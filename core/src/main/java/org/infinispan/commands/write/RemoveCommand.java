@@ -103,12 +103,6 @@ public class RemoveCommand extends AbstractDataWriteCommand {
 
    @Override
    public boolean equals(Object o) {
-      if (this == o) {
-         return true;
-      }
-      if (!(o instanceof RemoveCommand)) {
-         return false;
-      }
       if (!super.equals(o)) {
          return false;
       }

@@ -195,21 +195,27 @@ public class SharedStoreInvalidationDuringRehashTest extends MultipleCacheManage
       log.debugf("Invalidations: %s, L1 invalidations: %s", invalidationCounts, l1InvalidationCounts);
       int joinerSize = advancedCache(joiner, TEST_CACHE_NAME).getDataContainer().size();
       if (preload) {
-         // The joiner has preloaded the entire store, and the entries not owned have been invalidated
-         assertEquals(0, getCounter(l1InvalidationCounts, joiner));
-         assertEquals(NUM_KEYS - joinerSize, getCounter(invalidationCounts, joiner));
-         // No invalidations on the other nodes (using InvalidateCommands)
-         assertEquals(NUM_KEYS - joinerSize, getSum(invalidationCounts));
-      } else {
-         assertEquals(0, getCounter(l1InvalidationCounts, joiner));
-         assertEquals(0, getCounter(invalidationCounts, joiner));
-         assertEquals(0, getSum(invalidationCounts));
-      }
+         // L1 is disabled, so no InvalidateL1Commands
+         assertEquals(0, getSum(l1InvalidationCounts));
 
-      if (joiner > 0) {
-         // The entries that have moved to the joiner are invalidated on the previous owners
-         // using an InvalidateL1Command, which does not write to the shared store
-         assertEquals(joinerSize, getSum(l1InvalidationCounts));
+         // The joiner has preloaded the entire store, and the entries not owned have been invalidated
+         assertEquals(NUM_KEYS - joinerSize, getCounter(invalidationCounts, joiner));
+
+         // The other nodes have invalidated the entries moved to the joiner
+         if (clusterSize > 1) {
+            assertEquals(NUM_KEYS, getSum(invalidationCounts));
+         }
+      } else {
+         // L1 is disabled, so no InvalidateL1Commands
+         assertEquals(0, getSum(l1InvalidationCounts));
+
+         // No entries to invalidate on the joiner
+         assertEquals(0, getCounter(invalidationCounts, joiner));
+
+         // The other nodes have invalidated the entries moved to the joiner
+         if (clusterSize > 1) {
+            assertEquals(joinerSize, getSum(invalidationCounts));
+         }
       }
 
       // Reset stats for the next check

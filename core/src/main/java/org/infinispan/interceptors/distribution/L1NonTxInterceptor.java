@@ -307,7 +307,7 @@ public class L1NonTxInterceptor extends BaseRpcInterceptor {
       ctx.removeLookedUpEntry(key);
       entryFactory.wrapEntryForRemove(ctx, key, true, true, false);
 
-      InvalidateCommand command = commandsFactory.buildInvalidateFromL1Command(false, null, Collections.singleton(key));
+      InvalidateCommand command = commandsFactory.buildInvalidateFromL1Command(null, Collections.singleton(key));
       invokeNextInterceptor(ctx, command);
    }
 

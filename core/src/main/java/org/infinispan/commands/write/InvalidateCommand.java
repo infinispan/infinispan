@@ -141,12 +141,6 @@ public class InvalidateCommand extends RemoveCommand {
 
    @Override
    public boolean equals(Object o) {
-      if (this == o) {
-         return true;
-      }
-      if (!(o instanceof InvalidateCommand)) {
-         return false;
-      }
       if (!super.equals(o)) {
          return false;
       }
