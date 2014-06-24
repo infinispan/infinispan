@@ -19,7 +19,7 @@ import java.util.List;
 public class PartitionHandlingManager {
 
    public enum PartitionState {
-      AVAILABLE, DEGRADED_MODE
+      AVAILABLE, UNAVAILABLE, DEGRADED_MODE
    }
 
    private volatile List<Address> lastStableCluster = Collections.emptyList();
@@ -46,6 +46,7 @@ public class PartitionHandlingManager {
    }
 
    public void setState(PartitionState state) {
+      log.tracef("Updating partition state: %s -> %s", this.state, state);
       this.state = state;
    }
 
@@ -90,7 +91,10 @@ public class PartitionHandlingManager {
    }
 
    public void checkWrite(Object key) {
+      log.tracef("Check write for key=%s, status=%s", key, state);
       if (state == PartitionState.AVAILABLE) return;
+      if (state == PartitionState.UNAVAILABLE)
+         throw new AvailabilityException("Cluster is UNAVAILABLE because of node failures.");
       List<Address> owners = distributionManager.locate(key);
       if (! rpcManager.getTransport().getMembers().containsAll(owners)) {
          log.tracef("Partition is in %s mode, access is not allowed for key %s", state, key);

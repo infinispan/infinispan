@@ -1,6 +1,5 @@
 package org.infinispan.partionhandling.impl;
 
-import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.partionhandling.MergeContext;
 import org.infinispan.partionhandling.PartitionContext;
 import org.infinispan.partionhandling.PartitionHandlingStrategy;
@@ -13,14 +12,11 @@ public class DegradedModePartitionHandlingStrategy implements PartitionHandlingS
 
    @Override
    public void onPartition(PartitionContext pc) {
-      if (!pc.isDataLost()) {
-         log.debug("Ignoring partition as no data has been lost.");
+      if (!pc.isPartition()) {
+         log.debug("No partition, proceeding to rebalance.");
          pc.rebalance();
          return;
       }
       pc.currentPartitionDegradedMode();
-   }
-
-   public void onMerge(MergeContext mc) {
    }
 }

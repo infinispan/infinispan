@@ -175,7 +175,7 @@ public class ClusterTopologyManagerImpl implements ClusterTopologyManager {
       if (!actualLeaver)
          return;
 
-      cacheStatus.onCacheMembershipChange();
+      cacheStatus.updateTopologyAndBroadcastChUpdate();
    }
 
    @Override
@@ -238,7 +238,6 @@ public class ClusterTopologyManagerImpl implements ClusterTopologyManager {
                // TODO Retry?
                log.failedToRecoverClusterState(e);
             }
-
          } else if (isCoordinator) {
             try {
                updateClusterMembers(transport.getMembers());
@@ -486,6 +485,7 @@ public class ClusterTopologyManagerImpl implements ClusterTopologyManager {
       // need to recover existing caches asynchronously (in case we just became the coordinator)
       asyncTransportExecutor.submit(new Runnable() {
          public void run() {
+            log.tracef("handleNewView(oldView='%s', newView='%s'", e.getOldMembers(), e.getNewMembers());
             handleNewView(e.isMergeView(), e.getViewId());
          }
       });

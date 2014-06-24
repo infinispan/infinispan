@@ -23,7 +23,7 @@ public interface PartitionContext<K,V> {
     * this method returns true. Note: in future release for distributed caches, this method might do some smart
     * computing based on segment allocations, so even if > numOwners left, this method might still return true.
     */
-   boolean isDataLost();
+   boolean isPartition();
 
    /**
     * Marks the current partition as available or not (writes are rejected with a AvailabilityException).

@@ -66,6 +66,7 @@ public class CacheTopologyControlCommand implements ReplicableCommand {
    private int topologyId;
    private ConsistentHash currentCH;
    private ConsistentHash pendingCH;
+   private boolean missingData;
 
    private Throwable throwable;
    private int viewId;
@@ -108,6 +109,7 @@ public class CacheTopologyControlCommand implements ReplicableCommand {
       this.topologyId = cacheTopology.getTopologyId();
       this.currentCH = cacheTopology.getCurrentCH();
       this.pendingCH = cacheTopology.getPendingCH();
+      this.missingData = cacheTopology.isMissingData();
    }
 
    @Inject
@@ -151,10 +153,10 @@ public class CacheTopologyControlCommand implements ReplicableCommand {
 
          // coordinator to member
          case CH_UPDATE:
-            localTopologyManager.handleConsistentHashUpdate(cacheName, new CacheTopology(topologyId, currentCH, pendingCH), viewId);
+            localTopologyManager.handleConsistentHashUpdate(cacheName, new CacheTopology(topologyId, currentCH, pendingCH, missingData), viewId);
             return null;
          case REBALANCE_START:
-            localTopologyManager.handleRebalance(cacheName, new CacheTopology(topologyId, currentCH, pendingCH), viewId);
+            localTopologyManager.handleRebalance(cacheName, new CacheTopology(topologyId, currentCH, pendingCH, missingData), viewId);
             return null;
          case GET_STATUS:
             return localTopologyManager.handleStatusRequest(viewId);
@@ -209,7 +211,7 @@ public class CacheTopologyControlCommand implements ReplicableCommand {
    @Override
    public Object[] getParameters() {
       return new Object[]{cacheName, (byte) type.ordinal(), sender, joinInfo, topologyId, currentCH,
-            pendingCH, throwable, viewId};
+            pendingCH, throwable, viewId, missingData};
    }
 
    @Override
@@ -224,7 +226,8 @@ public class CacheTopologyControlCommand implements ReplicableCommand {
       currentCH = (ConsistentHash) parameters[i++];
       pendingCH = (ConsistentHash) parameters[i++];
       throwable = (Throwable) parameters[i++];
-      viewId = (Integer) parameters[i];
+      viewId = (Integer) parameters[i++];
+      missingData = (Boolean) parameters[i];
    }
 
    @Override
@@ -239,6 +242,7 @@ public class CacheTopologyControlCommand implements ReplicableCommand {
             ", pendingCH=" + pendingCH +
             ", throwable=" + throwable +
             ", viewId=" + viewId +
+            ", missingData= " + missingData +
             '}';
    }
 

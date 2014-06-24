@@ -86,6 +86,10 @@ public class StateResponseCommand extends BaseRpcCommand {
       return new Object[]{getOrigin(), topologyId, stateChunks};
    }
 
+   public int getTopologyId() {
+      return topologyId;
+   }
+
    @Override
    public void setParameters(int commandId, Object[] parameters) {
       int i = 0;
