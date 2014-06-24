@@ -36,7 +36,7 @@ public class PartitionContextImpl implements PartitionContext {
    }
 
    @Override
-   public boolean isDataLost() {
+   public boolean isPartition() {
       return isMissingData;
    }
 
