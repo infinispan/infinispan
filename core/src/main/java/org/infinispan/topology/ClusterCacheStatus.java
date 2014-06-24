@@ -3,8 +3,10 @@ package org.infinispan.topology;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.ExecutorService;
 
 import org.infinispan.commands.ReplicableCommand;
@@ -171,7 +173,7 @@ public class ClusterCacheStatus {
       synchronized (this) {
          if (newClusterMembers.containsAll(members)) {
             if (trace) log.tracef("Cluster members updated for cache %s, no leavers detected: " +
-                  "cache members = %s", cacheName, newClusterMembers);
+                  "cache members = %s. Existing members = %s", cacheName, newClusterMembers, members);
             return false;
          }
 
@@ -276,12 +278,12 @@ public class ClusterCacheStatus {
       if (partitionHandlingManager == null || partitionHandlingManager.handleViewChange(newClusterMembers, this)) {
          boolean cacheMembersModified = updateClusterMembers(newClusterMembers);
          if (cacheMembersModified) {
-            onCacheMembershipChange();
+            updateTopologyAndBroadcastChUpdate();
          }
       }
    }
 
-   public boolean onCacheMembershipChange() throws Exception {
+   public boolean updateTopologyAndBroadcastChUpdate() throws Exception {
       boolean topologyChanged = updateTopologyAfterMembershipChange();
       if (!topologyChanged)
          return true;
@@ -305,7 +307,7 @@ public class ClusterCacheStatus {
          log.debugf("Finished cluster-wide rebalance for cache %s, topology id = %d", cacheName, currentTopologyId);
          int newTopologyId = currentTopologyId + 1;
          ConsistentHash newCurrentCH = currentTopology.getPendingCH();
-         CacheTopology newTopology = new CacheTopology(newTopologyId, newCurrentCH, null);
+         CacheTopology newTopology = new CacheTopology(newTopologyId, newCurrentCH, null, getCacheTopology().isMissingData());
          updateCacheTopology(newTopology);
          setRebalanceStatus();
       }
@@ -365,7 +367,7 @@ public class ClusterCacheStatus {
 
          List<Address> newCurrentMembers = pruneInvalidMembers(currentCH.getMembers());
          if (newCurrentMembers.isEmpty()) {
-            CacheTopology newTopology = new CacheTopology(topologyId + 1, null, null);
+            CacheTopology newTopology = new CacheTopology(topologyId + 1, null, null, false);
             updateCacheTopology(newTopology);
             log.tracef("Initial topology installed for cache %s: %s", cacheName, newTopology);
             return false;
@@ -376,7 +378,9 @@ public class ClusterCacheStatus {
             List<Address> newPendingMembers = pruneInvalidMembers(pendingCH.getMembers());
             newPendingCH = consistentHashFactory.updateMembers(pendingCH, newPendingMembers, getCapacityFactors());
          }
-         CacheTopology newTopology = new CacheTopology(topologyId + 1, newCurrentCH, newPendingCH);
+         boolean missingData = isMissingData(currentCH, members);
+         log.tracef("Is missing data? %s", missingData);
+         CacheTopology newTopology = new CacheTopology(topologyId + 1, newCurrentCH, newPendingCH, missingData);
          updateCacheTopology(newTopology);
          log.tracef("Cache %s topology updated: %s", cacheName, newTopology);
          newTopology.logRoutingTableInformation();
@@ -529,5 +533,31 @@ public class ClusterCacheStatus {
 
    public String getCacheName() {
       return cacheName;
+   }
+
+   public static boolean isMissingData(ConsistentHash consistentHash, List<Address> newMembers) {
+      log.tracef("isMissingData: consistentHash == %s, routingTable == %s, newMembers == %s ", consistentHash, consistentHash.getRoutingTableAsString(), newMembers);
+      List<Address> allMembers = consistentHash.getMembers();
+      Map<Address, Set<Integer>> nodeOwnsSegments = new HashMap<Address, Set<Integer>>();
+      Set<Integer> allSegments = new HashSet<Integer>();
+      for (Address a : allMembers) {
+         Set<Integer> segments = consistentHash.getSegmentsForOwner(a);
+         nodeOwnsSegments.put(a, segments);
+         allSegments.addAll(segments);
+      }
+
+      for (Address a : consistentHash.getMembers())
+         if (!newMembers.contains(a)) {
+            nodeOwnsSegments.remove(a);
+         }
+      Set<Integer> existingSegments = new HashSet<Integer>();
+      for (Set<Integer> segments : nodeOwnsSegments.values())
+         existingSegments.addAll(segments);
+
+      allSegments.removeAll(existingSegments);
+      if (!allSegments.isEmpty()) {
+         log.tracef("Segments have been lost: %s", allSegments);
+      }
+      return !allSegments.isEmpty();
    }
 }

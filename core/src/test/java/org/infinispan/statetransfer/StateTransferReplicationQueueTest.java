@@ -5,6 +5,7 @@ import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.manager.EmbeddedCacheManager;
+import org.infinispan.notifications.cachemanagerlistener.event.ViewChangedEvent;
 import org.infinispan.remoting.ReplicationQueue;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.test.MultipleCacheManagersTest;
@@ -261,6 +262,11 @@ public class StateTransferReplicationQueueTest extends MultipleCacheManagersTest
       public DelayingClusterTopologyManager(EmbeddedCacheManager manager1) {
          this.manager1 = manager1;
          instance = TestingUtil.extractGlobalComponent(manager1, ClusterTopologyManager.class);
+      }
+
+      @Override
+      public void handleNewView(ViewChangedEvent e) {
+         instance.handleNewView(e);
       }
 
       @Override

@@ -210,10 +210,17 @@ public class LocalTopologyManagerImpl implements LocalTopologyManager {
    }
 
    public void updatePartitionHandlingManagerMembers(String cacheName, CacheTopology cacheTopology) {
-      PartitionHandlingManager phm = gcr.getNamedComponentRegistry(cacheName).getComponent(PartitionHandlingManager.class);
+      ComponentRegistry namedComponentRegistry = gcr.getNamedComponentRegistry(cacheName);
+      if (namedComponentRegistry == null) //might be invoked during shutdown
+         return;
+      PartitionHandlingManager phm = namedComponentRegistry.getComponent(PartitionHandlingManager.class);
       if (phm != null) {
          phm.setLastStableCluster(cacheTopology.getMembers());
-         phm.setState(PartitionHandlingManager.PartitionState.AVAILABLE);
+         if (cacheTopology.isMissingData()) {
+            phm.setState(PartitionHandlingManager.PartitionState.UNAVAILABLE);
+         } else {
+            phm.setState(PartitionHandlingManager.PartitionState.AVAILABLE);
+         }
       }
    }
 

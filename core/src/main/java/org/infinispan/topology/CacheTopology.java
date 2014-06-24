@@ -36,12 +36,21 @@ public class CacheTopology {
    private final ConsistentHash currentCH;
    private final ConsistentHash pendingCH;
    private final transient ConsistentHash unionCH;
+   private final boolean isMissingData;
+
+   public CacheTopology(int topologyId, ConsistentHash currentCH, ConsistentHash pendingCH, boolean isMissingData) {
+      this(topologyId, currentCH, pendingCH, null, isMissingData);
+   }
 
    public CacheTopology(int topologyId, ConsistentHash currentCH, ConsistentHash pendingCH) {
-      this(topologyId, currentCH, pendingCH, null);
+      this(topologyId, currentCH, pendingCH, null, false);
    }
 
    public CacheTopology(int topologyId, ConsistentHash currentCH, ConsistentHash pendingCH, ConsistentHash unionCH) {
+      this(topologyId, currentCH, pendingCH, unionCH, false);
+   }
+
+   public CacheTopology(int topologyId, ConsistentHash currentCH, ConsistentHash pendingCH, ConsistentHash unionCH, boolean isMissingData) {
       if (pendingCH != null && !pendingCH.getMembers().containsAll(currentCH.getMembers())) {
          throw new IllegalArgumentException("A cache topology's pending consistent hash must " +
                "contain all the current consistent hash's members");
@@ -50,6 +59,7 @@ public class CacheTopology {
       this.currentCH = currentCH;
       this.pendingCH = pendingCH;
       this.unionCH = unionCH;
+      this.isMissingData = isMissingData;
    }
 
    public int getTopologyId() {
@@ -137,6 +147,7 @@ public class CacheTopology {
             ", currentCH=" + currentCH +
             ", pendingCH=" + pendingCH +
             ", unionCH=" + unionCH +
+            ", isMissingData=" + isMissingData +
             '}';
    }
 
@@ -156,6 +167,7 @@ public class CacheTopology {
          output.writeObject(cacheTopology.currentCH);
          output.writeObject(cacheTopology.pendingCH);
          output.writeObject(cacheTopology.unionCH);
+         output.writeBoolean(cacheTopology.isMissingData);
       }
 
       @Override
@@ -164,7 +176,8 @@ public class CacheTopology {
          ConsistentHash currentCH = (ConsistentHash) unmarshaller.readObject();
          ConsistentHash pendingCH = (ConsistentHash) unmarshaller.readObject();
          ConsistentHash unionCH = (ConsistentHash) unmarshaller.readObject();
-         return new CacheTopology(topologyId, currentCH, pendingCH, unionCH);
+         boolean isMissingData = unmarshaller.readBoolean();
+         return new CacheTopology(topologyId, currentCH, pendingCH, unionCH, isMissingData);
       }
 
       @Override
@@ -176,5 +189,9 @@ public class CacheTopology {
       public Set<Class<? extends CacheTopology>> getTypeClasses() {
          return Collections.<Class<? extends CacheTopology>>singleton(CacheTopology.class);
       }
+   }
+
+   public boolean isMissingData() {
+      return isMissingData;
    }
 }
