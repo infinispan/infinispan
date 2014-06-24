@@ -34,34 +34,31 @@ public class InvalidateL1Command extends InvalidateCommand {
    private DistributionManager dm;
    private DataContainer dataContainer;
    private Configuration config;
-   private boolean forRehash;
    private Address writeOrigin;
 
    public InvalidateL1Command() {
       writeOrigin = null;
    }
 
-   public InvalidateL1Command(boolean forRehash, DataContainer dc, Configuration config, DistributionManager dm,
+   public InvalidateL1Command(DataContainer dc, Configuration config, DistributionManager dm,
                               CacheNotifier notifier, Set<Flag> flags, Object... keys) {
       super(notifier, flags, keys);
       writeOrigin = null;
       this.dm = dm;
-      this.forRehash = forRehash;
       this.dataContainer = dc;
       this.config = config;
    }
 
-   public InvalidateL1Command(boolean forRehash, DataContainer dc, Configuration config, DistributionManager dm,
+   public InvalidateL1Command(DataContainer dc, Configuration config, DistributionManager dm,
                               CacheNotifier notifier, Set<Flag> flags, Collection<Object> keys) {
-      this(null, forRehash, dc, config, dm, notifier, flags, keys);
+      this(null, dc, config, dm, notifier, flags, keys);
    }
 
-   public InvalidateL1Command(Address writeOrigin, boolean forRehash, DataContainer dc, Configuration config,
+   public InvalidateL1Command(Address writeOrigin, DataContainer dc, Configuration config,
                               DistributionManager dm, CacheNotifier notifier, Set<Flag> flags, Collection<Object> keys) {
       super(notifier, flags, keys);
       this.writeOrigin = writeOrigin;
       this.dm = dm;
-      this.forRehash = forRehash;
       this.dataContainer = dc;
       this.config = config;
    }
@@ -104,7 +101,7 @@ public class InvalidateL1Command extends InvalidateCommand {
 
    @Override
    public boolean shouldInvoke(InvocationContext ctx) {
-      if (ctx.isOriginLocal() || forRehash) return true;
+      if (ctx.isOriginLocal()) return true;
       for (Object k : getKeys()) {
          // If any key in the set of keys to invalidate is not local, or we are uncertain due to a rehash, then we
          // process this command.
@@ -115,44 +112,29 @@ public class InvalidateL1Command extends InvalidateCommand {
    }
 
    @Override
-   public boolean equals(Object o) {
-      if (this == o) return true;
-      if (o == null || getClass() != o.getClass()) return false;
-      if (!super.equals(o)) return false;
-
-      InvalidateL1Command that = (InvalidateL1Command) o;
-
-      if (forRehash != that.forRehash) return false;
-
-      return true;
-   }
-
-   @Override
    public Object[] getParameters() {
       if (keys == null || keys.length == 0) {
-         return new Object[]{forRehash, writeOrigin, 0};
+         return new Object[]{writeOrigin, 0};
       } else if (keys.length == 1) {
-         return new Object[]{forRehash, writeOrigin, 1,  keys[0]};
+         return new Object[]{writeOrigin, 1,  keys[0]};
       } else {
-         Object[] retval = new Object[keys.length + 3];
-         retval[0] = forRehash;
-         retval[1] = writeOrigin;
-         retval[2] = keys.length;
-         System.arraycopy(keys, 0, retval, 3, keys.length);
+         Object[] retval = new Object[keys.length + 2];
+         retval[0] = writeOrigin;
+         retval[1] = keys.length;
+         System.arraycopy(keys, 0, retval, 2, keys.length);
          return retval;
       }
    }
 
    @Override
    public void setParameters(int commandId, Object[] args) {
-      forRehash = (Boolean) args[0];
-      writeOrigin = (Address) args[1];
-      int size = (Integer) args[2];
+      writeOrigin = (Address) args[0];
+      int size = (Integer) args[1];
       keys = new Object[size];
       if (size == 1) {
-         keys[0] = args[3];
+         keys[0] = args[2];
       } else if (size > 0) {
-         System.arraycopy(args, 3, keys, 0, size);
+         System.arraycopy(args, 2, keys, 0, size);
       }
    }
 
@@ -162,17 +144,9 @@ public class InvalidateL1Command extends InvalidateCommand {
    }
 
    @Override
-   public int hashCode() {
-      int result = super.hashCode();
-      result = 31 * result + (forRehash ? 1 : 0);
-      return result;
-   }
-
-   @Override
    public String toString() {
       return getClass().getSimpleName() + "{" +
             "num keys=" + (keys == null ? 0 : keys.length) +
-            ", forRehash=" + forRehash +
             ", origin=" + writeOrigin +
             '}';
    }

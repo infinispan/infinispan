@@ -145,13 +145,13 @@ public class ControlledCommandFactory implements CommandsFactory {
    }
 
    @Override
-   public InvalidateCommand buildInvalidateFromL1Command(boolean forRehash, Set<Flag> flags, Collection<Object> keys) {
-      return actual.buildInvalidateFromL1Command(forRehash, flags, keys);
+   public InvalidateCommand buildInvalidateFromL1Command(Set<Flag> flags, Collection<Object> keys) {
+      return actual.buildInvalidateFromL1Command(flags, keys);
    }
 
    @Override
-   public InvalidateCommand buildInvalidateFromL1Command(Address origin, boolean forRehash, Set<Flag> flags, Collection<Object> keys) {
-      return actual.buildInvalidateFromL1Command(origin, forRehash, flags, keys);
+   public InvalidateCommand buildInvalidateFromL1Command(Address origin, Set<Flag> flags, Collection<Object> keys) {
+      return actual.buildInvalidateFromL1Command(origin, flags, keys);
    }
 
    @Override

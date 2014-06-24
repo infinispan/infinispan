@@ -98,16 +98,15 @@ public interface CommandsFactory {
 
    /**
     * Builds an InvalidateFromL1Command
-    * @param forRehash set to true if the invalidation is happening due to a new node taking ownership.  False if it is due to a write, changing the state of the entry.
     * @param keys keys to invalidate
     * @return an InvalidateFromL1Command
     */
-   InvalidateCommand buildInvalidateFromL1Command(boolean forRehash, Set<Flag> flags, Collection<Object> keys);
+   InvalidateCommand buildInvalidateFromL1Command(Set<Flag> flags, Collection<Object> keys);
 
    /**
-    * @see #buildInvalidateFromL1Command(org.infinispan.remoting.transport.Address, boolean, java.util.Set, java.util.Collection)
+    * @see #buildInvalidateFromL1Command(java.util.Set, java.util.Collection)
     */
-   InvalidateCommand buildInvalidateFromL1Command(Address origin, boolean forRehash, Set<Flag> flags, Collection<Object> keys);
+   InvalidateCommand buildInvalidateFromL1Command(Address origin, Set<Flag> flags, Collection<Object> keys);
 
    /**
     * Builds a ReplaceCommand
@@ -361,7 +360,7 @@ public interface CommandsFactory {
    ApplyDeltaCommand buildApplyDeltaCommand(Object deltaAwareValueKey, Delta delta, Collection keys);
 
    /**
-    * Same as {@link #buildCreateCacheCommand(String, String, false, 0)}.
+    * Same as {@code buildCreateCacheCommand(cacheName, cacheConfigurationName, false, 0)}.
     */
    CreateCacheCommand buildCreateCacheCommand(String cacheName, String cacheConfigurationName);
 

@@ -147,7 +147,7 @@ public class L1ManagerImpl implements L1Manager, RemoteValueRetrievedListener {
       int nodes = invalidationAddresses.size();
 
       if (nodes > 0) {
-         InvalidateCommand ic = commandsFactory.buildInvalidateFromL1Command(origin, false, InfinispanCollections.<Flag>emptySet(), keys);
+         InvalidateCommand ic = commandsFactory.buildInvalidateFromL1Command(origin, InfinispanCollections.<Flag>emptySet(), keys);
          final SingleRpcCommand rpcCommand = commandsFactory.buildSingleRpcCommand(ic);
 
          // No need to invalidate at all if there is no one to invalidate!

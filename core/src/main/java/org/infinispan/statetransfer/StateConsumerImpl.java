@@ -8,6 +8,7 @@ import org.infinispan.commands.write.InvalidateCommand;
 import org.infinispan.commands.write.PutKeyValueCommand;
 import org.infinispan.commons.CacheException;
 import org.infinispan.commons.util.InfinispanCollections;
+import org.infinispan.commons.util.concurrent.ParallelIterableMap;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.container.DataContainer;
 import org.infinispan.container.entries.InternalCacheEntry;
@@ -23,6 +24,7 @@ import org.infinispan.factories.annotations.ComponentName;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.annotations.Start;
 import org.infinispan.factories.annotations.Stop;
+import org.infinispan.filter.KeyFilter;
 import org.infinispan.interceptors.InterceptorChain;
 import org.infinispan.marshall.core.MarshalledEntry;
 import org.infinispan.notifications.cachelistener.CacheNotifier;
@@ -242,13 +244,15 @@ public class StateConsumerImpl implements StateConsumer {
 
    @Override
    public void onTopologyUpdate(final CacheTopology cacheTopology, final boolean isRebalance) {
+      final boolean wasMember = ownsData;
       final boolean isMember = cacheTopology.getMembers().contains(rpcManager.getAddress());
       if (trace) log.tracef("Received new topology for cache %s, isRebalance = %b, isMember = %b, topology = %s", cacheName, isRebalance, isMember, cacheTopology);
 
+      if (!ownsData && isMember) {
+         ownsData = true;
+      }
+
       if (isRebalance) {
-         if (!ownsData && cacheTopology.getMembers().contains(rpcManager.getAddress())) {
-            ownsData = true;
-         }
          // Only update the rebalance topology id when starting the rebalance, as we're going to ignore any state
          // response with a smaller topology id
          stateTransferTopologyId.compareAndSet(NO_REBALANCE_IN_PROGRESS, cacheTopology.getTopologyId());
@@ -277,17 +281,14 @@ public class StateConsumerImpl implements StateConsumer {
          if (log.isTraceEnabled()) {
             log.tracef("Lock State Transfer in Progress for topology ID %s", cacheTopology.getTopologyId());
          }
-      } else {
-         if (cacheTopology.getMembers().size() == 1 && cacheTopology.getMembers().get(0).equals(rpcManager.getAddress())) {
-            //we are the first member in the cache...
-            ownsData = true;
-         }
       }
 
       // Make sure we don't send a REBALANCE_CONFIRM command before we've added all the transfer tasks
       // even if some of the tasks are removed and re-added
       waitingForState.set(false);
 
+      final ConsistentHash newReadCh = cacheTopology.getReadConsistentHash();
+      final ConsistentHash newWriteCh = cacheTopology.getWriteConsistentHash();
       final ConsistentHash previousReadCh = this.cacheTopology != null ? this.cacheTopology.getReadConsistentHash() : null;
       final ConsistentHash previousWriteCh = this.cacheTopology != null ? this.cacheTopology.getWriteConsistentHash() : null;
       // Ensures writes to the data container use the right consistent hash
@@ -307,11 +308,10 @@ public class StateConsumerImpl implements StateConsumer {
             Set<Integer> addedSegments;
             if (previousWriteCh == null) {
                // we start fresh, without any data, so we need to pull everything we own according to writeCh
+               addedSegments = getOwnedSegments(newWriteCh);
 
-               addedSegments = getOwnedSegments(cacheTopology.getWriteConsistentHash());
-
+               // TODO Perhaps we should only do this once we are a member, as listener installation should happen only on cache members?
                Collection<DistributedCallable> callables = getClusterListeners(cacheTopology);
-
                for (DistributedCallable callable : callables) {
                   callable.setEnvironment(cache, null);
                   try {
@@ -326,7 +326,7 @@ public class StateConsumerImpl implements StateConsumer {
                }
             } else {
                Set<Integer> previousSegments = getOwnedSegments(previousWriteCh);
-               Set<Integer> newSegments = getOwnedSegments(cacheTopology.getWriteConsistentHash());
+               Set<Integer> newSegments = getOwnedSegments(newWriteCh);
 
                Set<Integer> removedSegments = new HashSet<Integer>(previousSegments);
                removedSegments.removeAll(newSegments);
@@ -336,20 +336,12 @@ public class StateConsumerImpl implements StateConsumer {
                addedSegments.removeAll(previousSegments);
 
                if (trace) {
-                  log.tracef("On cache %s we have: removed segments: %s; new segments: %s; old segments: %s; added segments: %s",
+                  log.tracef("On cache %s we have: new segments: %s; old segments: %s; removed segments: %s; added segments: %s",
                         cacheName, removedSegments, newSegments, previousSegments, addedSegments);
                }
 
                // remove inbound transfers for segments we no longer own
                cancelTransfers(removedSegments);
-
-               // if we are still a member then we need to discard/move to L1 the segments we no longer own
-               if (isMember) {
-                  // any data for segments we no longer own should be removed from data container and cache store or moved to L1 if enabled
-                  // If L1.onRehash is enabled, "removed" segments are actually moved to L1. The new (and old) owners
-                  // will automatically add the nodes that no longer own a key to that key's requestors list.
-                  invalidateSegments(newSegments, removedSegments, cacheTopology.getWriteConsistentHash(), previousReadCh);
-               }
 
                // check if any of the existing transfers should be restarted from a different source because the initial source is no longer a member
                restartBrokenTransfers(cacheTopology, addedSegments);
@@ -398,6 +390,33 @@ public class StateConsumerImpl implements StateConsumer {
          // and after notifyTransactionDataReceived - otherwise the RollbackCommands would block.
          if (transactionTable != null) {
             transactionTable.cleanupStaleTransactions(cacheTopology);
+         }
+
+         // Any data for segments we no longer own should be removed from data container and cache store
+         // If L1 is enabled, we need to discard the keys that we might have had in L1 as well
+         if (isMember) {
+            // If a node joins an existing cluster, it will preserve data in the segments it owns in the first topology.
+            // This data is likely to be stale, but it's a compromise to preserve at least some of the data across
+            // cluster restarts, until we have a better solution.
+            Set<Integer> removedSegments;
+            if (wasMember) {
+               removedSegments = new HashSet<>(previousWriteCh.getSegmentsForOwner(rpcManager.getAddress()));
+            } else {
+               removedSegments = new HashSet<Integer>(newWriteCh.getNumSegments());
+               for (int i = 0; i < newWriteCh.getNumSegments(); i++) {
+                  removedSegments.add(i);
+               }
+            }
+            Set<Integer> newSegments = newWriteCh.getSegmentsForOwner(rpcManager.getAddress());
+            removedSegments.removeAll(newSegments);
+
+            Set<Integer> staleL1Segments = computeStaleL1Segments(newSegments, newWriteCh, previousWriteCh);
+            try {
+               removeStaleData(removedSegments, staleL1Segments);
+            } catch (InterruptedException e) {
+               Thread.currentThread().interrupt();
+               throw new CacheException(e);
+            }
          }
       }
    }
@@ -826,7 +845,6 @@ public class StateConsumerImpl implements StateConsumer {
 
          // should re-add only segments we still own and are not already in
          failedSegments.retainAll(getOwnedSegments(cacheTopology.getWriteConsistentHash()));
-         failedSegments.removeAll(getOwnedSegments(cacheTopology.getReadConsistentHash()));
 
          Map<Address, Set<Integer>> sources = new HashMap<Address, Set<Integer>>();
          findSources(failedSegments, sources, excludedSources);
@@ -859,11 +877,7 @@ public class StateConsumerImpl implements StateConsumer {
       }
    }
 
-   private void invalidateSegments(final Set<Integer> newSegments, final Set<Integer> segmentsToL1,
-                                   ConsistentHash newCH, ConsistentHash prevCH) {
-      if (keyInvalidationListener != null) {
-         keyInvalidationListener.beforeInvalidation(newSegments, segmentsToL1);
-      }
+   private Set<Integer> computeStaleL1Segments(Set<Integer> newSegments, ConsistentHash newWriteCh, ConsistentHash previousWriteCh) {
       // The actual owners keep track of the nodes that hold a key in L1 ("requestors") and
       // they invalidate the key on every requestor after a change.
       // But this information is only present on the owners where the ClusteredGetKeyValueCommand
@@ -874,65 +888,92 @@ public class StateConsumerImpl implements StateConsumer {
       // To compensate for this, we delete all L1 entries in segments that changed ownership during
       // this topology update. We can't actually differentiate between L1 entries and regular entries,
       // so we delete all entries that don't belong to this node in the current OR previous topology.
-      final ConcurrentHashSet<Object> keysToL1 = new ConcurrentHashSet<Object>();
+      Set<Integer> segmentsToInvalidate = new HashSet<Integer>();
+      if (configuration.clustering().l1().enabled()) {
+         for (int i = 0; i < previousWriteCh.getNumSegments(); i++) {
+            if (newSegments.contains(i))
+               continue;
+
+            if (!newWriteCh.locateOwnersForSegment(i).containsAll(newWriteCh.locateOwnersForSegment(i))) {
+               segmentsToInvalidate.add(i);
+            }
+         }
+      }
+      return segmentsToInvalidate;
+   }
+
+   private void removeStaleData(final Set<Integer> removedSegments, final Set<Integer> staleL1Segments) throws InterruptedException {
+      if (keyInvalidationListener != null) {
+         keyInvalidationListener.beforeInvalidation(removedSegments, staleL1Segments);
+      }
+
+      if (removedSegments.isEmpty() && staleL1Segments.isEmpty())
+         return;
+
+      // Keys that might have been in L1, and need to be removed from the data container
+      final ConcurrentHashSet<Object> keysToInvalidate = new ConcurrentHashSet<Object>();
+      // Keys that we used to own, and need to be removed from the data container AND the cache stores
       final ConcurrentHashSet<Object> keysToRemove = new ConcurrentHashSet<Object>();
 
-      // gather all keys from data container that belong to the segments that are being removed/moved to L1
-      for (InternalCacheEntry ice : dataContainer) {
-         Object key = ice.getKey();
-         int keySegment = getSegment(key);
-         if (segmentsToL1.contains(keySegment)) {
-            keysToL1.add(key);
-         } else if (!newSegments.contains(keySegment)) {
-            keysToRemove.add(key);
+      dataContainer.executeTask(KeyFilter.LOAD_ALL_FILTER, new ParallelIterableMap.KeyValueAction<Object, InternalCacheEntry<? super Object, ? super Object>>() {
+         @Override
+         public void apply(Object o, InternalCacheEntry<? super Object, ? super Object> ice) {
+            Object key = ice.getKey();
+            int keySegment = getSegment(key);
+            if (removedSegments.contains(keySegment)) {
+               keysToRemove.add(key);
+            } else if (staleL1Segments.contains(keySegment)) {
+               keysToInvalidate.add(key);
+            }
+         }
+      });
+
+      // gather all keys from cache store that belong to the segments that are being removed/moved to L1
+      if (!removedSegments.isEmpty()) {
+         try {
+            KeyFilter filter = new KeyFilter() {
+               @Override
+               public boolean accept(Object key) {
+                  if (dataContainer.containsKey(key))
+                     return false;
+                  int keySegment = getSegment(key);
+                  return (removedSegments.contains(keySegment));
+               }
+            };
+            persistenceManager.processOnAllStores(filter, new AdvancedCacheLoader.CacheLoaderTask() {
+               @Override
+               public void processEntry(MarshalledEntry marshalledEntry, AdvancedCacheLoader.TaskContext taskContext) throws InterruptedException {
+                  keysToRemove.add(marshalledEntry.getKey());
+               }
+            }, false, false, true);
+         } catch (CacheException e) {
+            log.failedLoadingKeysFromCacheStore(e);
          }
       }
 
-      // gather all keys from cache store that belong to the segments that are being removed/moved to L1
-      //todo [anistor] extend CacheStore interface to be able to specify a filter when loading keys (ie. keys should belong to desired segments)
-      try {
-         CollectionKeyFilter filter = new CollectionKeyFilter(new ReadOnlyDataContainerBackedKeySet(dataContainer));
-         persistenceManager.processOnAllStores(filter, new AdvancedCacheLoader.CacheLoaderTask() {
-            @Override
-            public void processEntry(MarshalledEntry marshalledEntry, AdvancedCacheLoader.TaskContext taskContext) throws InterruptedException {
-               Object key = marshalledEntry.getKey();
-               int keySegment = getSegment(key);
-               if (segmentsToL1.contains(keySegment)) {
-                  keysToL1.add(key);
-               } else if (!newSegments.contains(keySegment)) {
-                  keysToRemove.add(key);
-               }
-            }
-         }, false, false, true);
-      } catch (CacheException e) {
-         log.failedLoadingKeysFromCacheStore(e);
-      }
-
-      if (log.isDebugEnabled()) {
-         log.debugf("Removing state for segments %s of cache %s", segmentsToL1, cacheName);
-      }
-      if (!keysToL1.isEmpty()) {
+      log.debugf("Removing %d stale L1 entries for segments %s of cache %s", keysToInvalidate.size(), staleL1Segments, cacheName);
+      if (!keysToInvalidate.isEmpty()) {
          try {
-            InvalidateCommand invalidateCmd = commandsFactory.buildInvalidateFromL1Command(true, EnumSet.of(CACHE_MODE_LOCAL, SKIP_LOCKING), keysToL1);
+            InvalidateCommand invalidateCmd = commandsFactory.buildInvalidateFromL1Command(EnumSet.of(CACHE_MODE_LOCAL, SKIP_LOCKING), keysToInvalidate);
             InvocationContext ctx = icf.createNonTxInvocationContext();
             interceptorChain.invoke(ctx, invalidateCmd);
 
-            log.debugf("Invalidated %d keys, data container now has %d keys", keysToL1.size(), dataContainer.size());
-            if (trace) log.tracef("Invalidated keys: %s", keysToL1);
+            log.debugf("Removed %d stale L1 entries, data container now has %d keys", keysToInvalidate.size(), dataContainer.size());
+            if (trace) log.tracef("Removed stale L1 entries: %s", keysToInvalidate);
          } catch (CacheException e) {
             log.failedToInvalidateKeys(e);
          }
       }
 
-      log.debugf("Removing state for segments not in %s or %s for cache %s", newSegments, segmentsToL1, cacheName);
+      log.debugf("Removing %s no longer owned entries for segments %s of cache %s", keysToRemove.size(), removedSegments, cacheName);
       if (!keysToRemove.isEmpty()) {
          try {
             InvalidateCommand invalidateCmd = commandsFactory.buildInvalidateCommand(EnumSet.of(CACHE_MODE_LOCAL, SKIP_LOCKING), keysToRemove.toArray());
             InvocationContext ctx = icf.createNonTxInvocationContext();
             interceptorChain.invoke(ctx, invalidateCmd);
 
-            log.debugf("Invalidated %d keys, data container of cache %s now has %d keys", keysToRemove.size(), cacheName, dataContainer.size());
-            if (trace) log.tracef("Invalidated keys: %s", keysToRemove);
+            log.debugf("Removed %d keys, data container now has %d keys", keysToRemove.size(), dataContainer.size());
+            if (trace) log.tracef("Removed keys: %s", keysToRemove);
          } catch (CacheException e) {
             log.failedToInvalidateKeys(e);
          }
@@ -1030,6 +1071,6 @@ public class StateConsumerImpl implements StateConsumer {
    }
 
    public interface KeyInvalidationListener {
-      void beforeInvalidation(Set<Integer> newSegments, Set<Integer> segmentsToL1);
+      void beforeInvalidation(Set<Integer> removedSegments, Set<Integer> staleL1Segments);
    }
 }
