@@ -97,6 +97,7 @@ public class DistributedCacheAdd extends SharedStateCacheAdd {
             .numSegments(segments)
             .capacityFactor(capacityFactor)
         ;
+        
         if (lifespan > 0) {
             // is disabled by default in L1ConfigurationBuilder
             builder.clustering().l1().enable().lifespan(lifespan);
