@@ -127,8 +127,8 @@ public class JdbcStringBasedStore implements AdvancedLoadWriteStore {
       }
 
       try {
-         if (configuration.connectionFactory() instanceof ManagedConnectionFactory) {
-            log.tracef("Stopping mananged connection factory: %s", connectionFactory);
+         if (configuration.manageConnectionFactory()) {
+            log.tracef("Stopping managed connection factory: %s", connectionFactory);
             connectionFactory.stop();
          }
       } catch (Throwable t) {

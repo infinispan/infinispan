@@ -32,7 +32,11 @@ public abstract class ManagedConnectionFactoryTest extends BaseStoreTest {
    public void bindDatasourceInJndi() throws Exception {
       System.setProperty(Context.INITIAL_CONTEXT_FACTORY, DummyContextFactory.class.getName());
       ds = new DummyDataSource();
+      assert ds.started == false;
+      assert ds.stopped == false;
       ds.start();
+      assert ds.started == true;
+      assert ds.stopped == false;
       InitialContext ic = new InitialContext();
       ic.bind(getDatasourceLocation(), ds);
       assert ic.lookup(getDatasourceLocation()) instanceof DummyDataSource;
@@ -52,6 +56,8 @@ public abstract class ManagedConnectionFactoryTest extends BaseStoreTest {
    public static class DummyDataSource implements DataSource {
 
       private SimpleConnectionFactory simpleFactory;
+      private volatile boolean started = false;
+      private volatile boolean stopped = false;
 
       public void start() throws PersistenceException {
 
@@ -61,10 +67,12 @@ public abstract class ManagedConnectionFactoryTest extends BaseStoreTest {
                   .addStore(JdbcStringBasedStoreConfigurationBuilder.class);
          simpleFactory = new SimpleConnectionFactory();
          simpleFactory.start(UnitTestDatabaseManager.configureSimpleConnectionFactory(storeBuilder).create(), Thread.currentThread().getContextClassLoader());
+         started = true;
       }
 
       public void stop() {
          simpleFactory.stop();
+         stopped = true;
       }
 
       @Override

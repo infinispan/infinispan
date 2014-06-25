@@ -9,6 +9,7 @@ import org.infinispan.util.logging.LogFactory;
 import javax.sql.DataSource;
 import javax.naming.InitialContext;
 import javax.naming.NamingException;
+
 import java.sql.Connection;
 import java.sql.SQLException;
 
@@ -22,52 +23,57 @@ import java.sql.SQLException;
  * </pre>
  *
  * @author Mircea.Markus@jboss.com
+ * @author Sanne Grinovero
  */
 public class ManagedConnectionFactory extends ConnectionFactory {
 
    private static final Log log = LogFactory.getLog(ManagedConnectionFactory.class, Log.class);
    private static final boolean trace = log.isTraceEnabled();
 
-   private DataSource dataSource;
+   private volatile DataSource dataSource;
 
    @Override
    public void start(ConnectionFactoryConfiguration factoryConfiguration, ClassLoader classLoader) throws PersistenceException {
-      InitialContext ctx = null;
-      String datasourceName;
-      if (factoryConfiguration instanceof ManagedConnectionFactoryConfiguration) {
-         ManagedConnectionFactoryConfiguration managedConfiguration = (ManagedConnectionFactoryConfiguration)
-               factoryConfiguration;
-         datasourceName = managedConfiguration.jndiUrl();
-      }
-      else {
-         throw new PersistenceException("FactoryConfiguration has to be an instance of " +
-               "ManagedConnectionFactoryConfiguration");
-      }
+      final String datasourceName = extractDataSourceName(factoryConfiguration);
+      final InitialContext ctx = getInitialContext();
       try {
-         ctx = new InitialContext();
          dataSource = (DataSource) ctx.lookup(datasourceName);
-         if (trace) {
-            log.tracef("Datasource lookup for %s succeeded: %b", datasourceName, dataSource);
-         }
          if (dataSource == null) {
-            log.connectionInJndiNotFound(datasourceName);
-            throw new PersistenceException(String.format(
-                  "Could not find a connection in jndi under the name '%s'", datasourceName));
+            throw log.connectionInJndiNotFound(datasourceName);
+         }
+         else if (trace) {
+            log.tracef("Datasource lookup for %s succeeded: %b", datasourceName, dataSource);
          }
       }
       catch (NamingException e) {
-         log.namingExceptionLookingUpConnection(datasourceName, e);
-         throw new PersistenceException(e);
+         throw log.namingExceptionLookingUpConnection(datasourceName, e);
       }
       finally {
-         if (ctx != null) {
-            try {
-               ctx.close();
-            }
-            catch (NamingException e) {
-               log.failedClosingNamingCtx(e);
-            }
+         try {
+            ctx.close();
          }
+         catch (NamingException e) {
+            log.failedClosingNamingCtx(e);
+         }
+      }
+   }
+
+   private String extractDataSourceName(ConnectionFactoryConfiguration factoryConfiguration) {
+      if (factoryConfiguration instanceof ManagedConnectionFactoryConfiguration) {
+         ManagedConnectionFactoryConfiguration managedConfiguration = (ManagedConnectionFactoryConfiguration) factoryConfiguration;
+         return managedConfiguration.jndiUrl();
+      }
+      else {
+         throw new PersistenceException("FactoryConfiguration has to be an instance of ManagedConnectionFactoryConfiguration");
+      }
+   }
+
+   private InitialContext getInitialContext() {
+      try {
+         return new InitialContext();
+      }
+      catch  (NamingException e) {
+         throw new PersistenceException(e);
       }
    }
 
@@ -81,8 +87,7 @@ public class ManagedConnectionFactory extends ConnectionFactory {
       try {
          connection = dataSource.getConnection();
       } catch (SQLException e) {
-         log.sqlFailureRetrievingConnection(e);
-         throw new PersistenceException("This might be related to https://jira.jboss.org/browse/ISPN-604", e);
+         throw log.sqlFailureRetrievingConnection(e);
       }
       if (trace) {
          log.tracef("Connection checked out: %s", connection);
