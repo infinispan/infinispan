@@ -3,6 +3,7 @@ package org.infinispan.client.hotrod.impl;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -170,6 +171,12 @@ public class RemoteCacheImpl<K, V> extends RemoteCacheSupport<K, V> {
       }
    }
 
+   /*
+    * This implementation might overload the client and the server(s) by firing a lot of put
+    * operations in parallel if the given Map is huge. There is a single remote asynchronous put for
+    * each element. The caller is notified if all put's are finished, but there is no result
+    * returned if keys are not added for any reason.
+    */
    @Override
    public NotifyingFuture<Void> putAllAsync(final Map<? extends K, ? extends V> data, final long lifespan, final TimeUnit lifespanUnit, final long maxIdle, final TimeUnit maxIdleUnit) {
       assertRemoteCacheManagerIsStarted();
@@ -178,7 +185,15 @@ public class RemoteCacheImpl<K, V> extends RemoteCacheSupport<K, V> {
          @Override
          public Void call() throws Exception {
             try {
-               putAll(data, lifespan, lifespanUnit, maxIdle, maxIdleUnit);
+               final ArrayList<NotifyingFuture<V>> putList = new ArrayList<NotifyingFuture<V>>(data.size());
+               // use #putAsync to parallelise
+               for (java.util.Map.Entry<? extends K, ? extends V> x : data.entrySet()) {
+                  putList.add(putAsync(x.getKey(), x.getValue(), lifespan, lifespanUnit, maxIdle, maxIdleUnit));
+               }
+               // wait until all asynchronous put operations are finished
+               for (NotifyingFuture<V> f : putList) {
+                  f.get();
+               }
                try {
                   result.notifyDone(null);
                } catch (Throwable t) {
