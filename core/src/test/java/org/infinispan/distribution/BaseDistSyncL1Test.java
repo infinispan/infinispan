@@ -333,17 +333,7 @@ public abstract class BaseDistSyncL1Test extends BaseDistFunctionalTest<Object, 
          getBarrier.await(10, TimeUnit.SECONDS);
 
          final String expectedValue;
-         // This is a bit peculiar that depending on the isolation level that a different value is returned.  This is
-         // caused due to the fact that the get has retrieved the value from the data container already and placed it
-         // in it's context.  With read committed however the value in the context is the same value from the data
-         // container.  And thus when the value is updated the context can see the update since it is same reference.
-         // Repeatable read however makes a copy of the data and thus doesn't see the value.  That is why read committed
-         // returns the new value and repeatable read has the original value
-         if (isolationLevel == IsolationLevel.REPEATABLE_READ) {
-            expectedValue = firstValue;
-         } else {
-            expectedValue = secondValue;
-         }
+         expectedValue = firstValue;
          Assert.assertEquals(expectedValue, future.get(10, TimeUnit.SECONDS));
 
          assertIsNotInL1(nonOwnerCache, key);

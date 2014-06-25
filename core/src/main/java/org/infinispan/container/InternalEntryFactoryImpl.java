@@ -172,7 +172,7 @@ public class InternalEntryFactoryImpl implements InternalEntryFactory {
    @Override
    public CacheEntry copy(CacheEntry cacheEntry) {
       synchronized (cacheEntry) {
-         return CoreImmutables.cacheEntryCopy(cacheEntry);
+         return cacheEntry.clone();
       }
    }
 
