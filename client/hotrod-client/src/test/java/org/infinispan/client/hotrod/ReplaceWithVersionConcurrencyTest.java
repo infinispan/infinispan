@@ -26,7 +26,7 @@ import static org.testng.AssertJUnit.assertEquals;
 import static org.testng.AssertJUnit.assertNull;
 import static org.testng.AssertJUnit.fail;
 
-@Test(groups = "functional", testName = "client.hotrod.ReplaceWithVersionConcurrencyTest")
+@Test(groups = "stress", testName = "client.hotrod.ReplaceWithVersionConcurrencyTest")
 public class ReplaceWithVersionConcurrencyTest extends MultiHotRodServersTest {
 
    static final AtomicInteger globalCounter = new AtomicInteger();

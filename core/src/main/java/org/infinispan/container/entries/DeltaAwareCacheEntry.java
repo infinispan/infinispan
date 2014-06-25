@@ -1,13 +1,13 @@
 package org.infinispan.container.entries;
 
 import org.infinispan.atomic.CopyableDeltaAware;
-import org.infinispan.container.InternalEntryFactory;
-import org.infinispan.metadata.Metadata;
 import org.infinispan.atomic.Delta;
 import org.infinispan.atomic.DeltaAware;
 import org.infinispan.atomic.impl.AtomicHashMap;
 import org.infinispan.commons.util.Util;
 import org.infinispan.container.DataContainer;
+import org.infinispan.container.InternalEntryFactory;
+import org.infinispan.metadata.Metadata;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
@@ -340,6 +340,15 @@ public class DeltaAwareCacheEntry implements CacheEntry, StateChangingEntry {
    @Override
    public void setMetadata(Metadata metadata) {
       // DeltaAware are always metadata unaware
+   }
+
+   @Override
+   public DeltaAwareCacheEntry clone() {
+      try {
+         return (DeltaAwareCacheEntry) super.clone();
+      } catch (CloneNotSupportedException e) {
+         throw new AssertionError();
+      }
    }
 
 }
