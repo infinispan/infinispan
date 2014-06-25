@@ -13,6 +13,7 @@ import org.infinispan.commons.equivalence.AnyEquivalence;
 import org.infinispan.commons.util.InfinispanCollections;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
+import org.infinispan.container.InternalEntryFactoryImpl;
 import org.infinispan.context.Flag;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.metadata.EmbeddedMetadata;
@@ -95,7 +96,7 @@ public class AsynchronousInvocationTest extends AbstractInfinispanTest {
                                InboundInvocationHandlerImpl.class);
 
       GetKeyValueCommand getKeyValueCommand =
-            new GetKeyValueCommand("key", InfinispanCollections.<Flag>emptySet(), false);
+            new GetKeyValueCommand("key", InfinispanCollections.<Flag>emptySet(), false, new InternalEntryFactoryImpl());
       PutKeyValueCommand putKeyValueCommand =
             new PutKeyValueCommand("key", "value", false, null,
                                    new EmbeddedMetadata.Builder().build(), InfinispanCollections.<Flag>emptySet(), AnyEquivalence.getInstance());
@@ -105,7 +106,7 @@ public class AsynchronousInvocationTest extends AbstractInfinispanTest {
       nonBlockingCacheRpcCommand = new ClusteredGetCommand(cacheName);
       blockingNonCacheRpcCommand = new CacheTopologyControlCommand();
       //the GetKeyValueCommand is not replicated, but I only need a command that returns false in canBlock()
-      nonBlockingNonCacheRpcCommand = new GetKeyValueCommand("key", InfinispanCollections.<Flag>emptySet(), false);
+      nonBlockingNonCacheRpcCommand = new GetKeyValueCommand("key", InfinispanCollections.<Flag>emptySet(), false, new InternalEntryFactoryImpl());
       blockingSingleRpcCommand = new SingleRpcCommand(cacheName, putKeyValueCommand);
       nonBlockingSingleRpcCommand = new SingleRpcCommand(cacheName, getKeyValueCommand);
       blockingMultipleRpcCommand = new MultipleRpcCommand(Arrays.<ReplicableCommand>asList(putKeyValueCommand, putKeyValueCommand), cacheName);
