@@ -572,9 +572,9 @@
                             compared to the other nodes in the cluster. Value must be positive. The default is 1</xs:documentation>
                     </xs:annotation>
                 </xs:attribute>
-                <xs:attribute name="l1-lifespan" type="xs:long" default="600000">
+                <xs:attribute name="l1-lifespan" type="xs:long" default="0">
                     <xs:annotation>
-                        <xs:documentation>Maximum lifespan in milliseconds of an entry placed in the L1 cache. Defaults to 10 minutes.</xs:documentation>
+                        <xs:documentation>Maximum lifespan in milliseconds of an entry placed in the L1 cache. Defaults to 0 which means L1 is disabled.</xs:documentation>
                     </xs:annotation>
                 </xs:attribute>
             </xs:extension>
