@@ -2,6 +2,7 @@ package org.infinispan.objectfilter.impl;
 
 import org.infinispan.objectfilter.FilterCallback;
 import org.infinispan.objectfilter.FilterSubscription;
+import org.infinispan.objectfilter.SortField;
 import org.infinispan.objectfilter.impl.predicateindex.FilterEvalContext;
 import org.infinispan.objectfilter.impl.predicateindex.MatcherEvalContext;
 import org.infinispan.objectfilter.impl.predicateindex.Predicate;
@@ -60,12 +61,12 @@ final class FilterRegistry<AttributeId extends Comparable<AttributeId>> {
       for (FilterSubscriptionImpl s : filterSubscriptions) {
          FilterEvalContext filterEvalContext = ctx.getFilterEvalContext(s);
          if (filterEvalContext.getMatchResult()) {
-            s.getCallback().onFilterResult(ctx.getInstance(), filterEvalContext.getProjection());
+            s.getCallback().onFilterResult(ctx.getInstance(), filterEvalContext.getProjection(), filterEvalContext.getSortProjection());
          }
       }
    }
 
-   public FilterSubscriptionImpl addFilter(BooleanExpr normalizedFilter, List<String> projection, final FilterCallback callback) {
+   public FilterSubscriptionImpl addFilter(BooleanExpr normalizedFilter, List<String> projection, List<SortField> sortFields, FilterCallback callback) {
       List<List<AttributeId>> translatedProjections = null;
       if (projection != null && !projection.isEmpty()) {
          translatedProjections = new ArrayList<List<AttributeId>>(projection.size());
@@ -74,8 +75,16 @@ final class FilterRegistry<AttributeId extends Comparable<AttributeId>> {
          }
       }
 
+      List<List<AttributeId>> translatedSortFields = null;
+      if (sortFields != null && !sortFields.isEmpty()) {
+         translatedSortFields = new ArrayList<List<AttributeId>>(sortFields.size());
+         for (SortField sortField : sortFields) {
+            translatedSortFields.add(attributePathTranslator.translatePath(StringHelper.splitPropertyPath(sortField.getPath())));
+         }
+      }
+
       BETree beTree = treeMaker.make(normalizedFilter);
-      final FilterSubscriptionImpl<AttributeId> filterSubscription = new FilterSubscriptionImpl<AttributeId>(typeName, beTree, projection, callback, translatedProjections);
+      final FilterSubscriptionImpl<AttributeId> filterSubscription = new FilterSubscriptionImpl<AttributeId>(typeName, beTree, callback, projection, translatedProjections, sortFields, translatedSortFields);
 
       filterSubscription.registerProjection(predicateIndex);
 

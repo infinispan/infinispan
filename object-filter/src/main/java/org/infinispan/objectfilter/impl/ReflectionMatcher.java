@@ -34,7 +34,7 @@ public final class ReflectionMatcher extends BaseMatcher<Class<?>, String> {
    }
 
    @Override
-   protected FilterProcessingChain<?> createFilterProcessingChain(Map<String, Object> namedParameters) {
+   protected FilterProcessingChain<Class<?>> createFilterProcessingChain(Map<String, Object> namedParameters) {
       return FilterProcessingChain.build(new ReflectionPropertyHelper(classLoader), namedParameters);
    }
 

@@ -43,10 +43,10 @@ final class EmbeddedLuceneQuery implements LuceneQuery {
          if (parsingResult.getProjections() != null && !parsingResult.getProjections().isEmpty()) {
             cacheQuery = cacheQuery.projection(parsingResult.getProjections().toArray(new String[parsingResult.getProjections().size()]));
          }
-         if (startOffset > 0) {
+         if (startOffset >= 0) {
             cacheQuery = cacheQuery.firstResult((int) startOffset);
          }
-         if (maxResults > 0) {
+         if (maxResults >= 0) {
             cacheQuery = cacheQuery.maxResults(maxResults);
          }
       }

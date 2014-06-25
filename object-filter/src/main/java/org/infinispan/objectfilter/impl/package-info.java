@@ -4,4 +4,4 @@
  *
  * @private
  */
-package org.infinispan.objectfilter.impl.hql.predicate;
+package org.infinispan.objectfilter.impl;

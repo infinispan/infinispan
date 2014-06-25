@@ -49,7 +49,8 @@ public abstract class MatcherEvalContext<AttributeId extends Comparable<Attribut
       FilterEvalContext filterEvalContext = filterContexts.get(filterSubscription);
       if (filterEvalContext == null) {
          Object[] projection = filterSubscription.getProjection() != null ? new Object[filterSubscription.getProjection().length] : null;
-         filterEvalContext = new FilterEvalContext(filterSubscription.getBETree(), this, projection);
+         Comparable[] sortProjection = filterSubscription.getSortFields() != null ? new Comparable[filterSubscription.getSortFields().length] : null;
+         filterEvalContext = new FilterEvalContext(filterSubscription.getBETree(), this, projection, sortProjection);
          filterContexts.put(filterSubscription, filterEvalContext);
       }
       return filterEvalContext;

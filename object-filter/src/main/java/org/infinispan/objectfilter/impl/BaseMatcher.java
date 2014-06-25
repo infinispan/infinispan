@@ -5,6 +5,7 @@ import org.infinispan.objectfilter.FilterCallback;
 import org.infinispan.objectfilter.FilterSubscription;
 import org.infinispan.objectfilter.Matcher;
 import org.infinispan.objectfilter.ObjectFilter;
+import org.infinispan.objectfilter.SortField;
 import org.infinispan.objectfilter.impl.hql.FilterParsingResult;
 import org.infinispan.objectfilter.impl.hql.FilterProcessingChain;
 import org.infinispan.objectfilter.impl.predicateindex.FilterEvalContext;
@@ -21,6 +22,7 @@ import org.infinispan.query.dsl.Query;
 import org.infinispan.query.dsl.QueryFactory;
 
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
@@ -90,9 +92,9 @@ abstract class BaseMatcher<TypeMetadata, AttributeId extends Comparable<Attribut
 
       //todo [anistor] we need an efficient single-filter registry ...
       FilterRegistry filterRegistry = createFilterRegistryForType(parsingResult.getTargetEntityMetadata());
-      FilterSubscriptionImpl filterSubscriptionImpl = filterRegistry.addFilter(normalizedFilter, parsingResult.getProjections(), new FilterCallback() {
+      FilterSubscriptionImpl filterSubscriptionImpl = filterRegistry.addFilter(normalizedFilter, parsingResult.getProjections(), parsingResult.getSortFields(), new FilterCallback() {
          @Override
-         public void onFilterResult(Object instance, Object[] projection) {
+         public void onFilterResult(Object instance, Object[] projection, Comparable[] sortProjection) {
             // do nothing
          }
       });
@@ -123,13 +125,29 @@ abstract class BaseMatcher<TypeMetadata, AttributeId extends Comparable<Attribut
       }
 
       return new ObjectFilter() {
+
+         @Override
+         public String getEntityTypeName() {
+            return filterSubscriptionImpl.getEntityTypeName();
+         }
+
          @Override
          public String[] getProjection() {
             return filterSubscriptionImpl.getProjection();
          }
 
          @Override
-         public Object filter(Object instance) {
+         public SortField[] getSortFields() {
+            return filterSubscriptionImpl.getSortFields();
+         }
+
+         @Override
+         public Comparator<Comparable[]> getComparator() {
+            return filterSubscriptionImpl.getComparator();
+         }
+
+         @Override
+         public FilterResult filter(Object instance) {
             if (instance == null) {
                throw new IllegalArgumentException("argument cannot be null");
             }
@@ -140,8 +158,7 @@ abstract class BaseMatcher<TypeMetadata, AttributeId extends Comparable<Attribut
                matcherEvalContext.process(predicateIndex.getRoot());
 
                if (filterEvalContext.getMatchResult()) {
-                  Object[] projection = filterEvalContext.getProjection();
-                  return projection != null ? projection : instance;
+                  return new FilterResultImpl(instance, filterEvalContext.getProjection(), filterEvalContext.getSortProjection());
                }
             }
 
@@ -171,7 +188,7 @@ abstract class BaseMatcher<TypeMetadata, AttributeId extends Comparable<Attribut
             filterRegistry = createFilterRegistryForType(parsingResult.getTargetEntityMetadata());
             filtersByType.put(parsingResult.getTargetEntityName(), filterRegistry);
          }
-         return filterRegistry.addFilter(normalizedFilter, parsingResult.getProjections(), callback);
+         return filterRegistry.addFilter(normalizedFilter, parsingResult.getProjections(), parsingResult.getSortFields(), callback);
       } finally {
          write.unlock();
       }

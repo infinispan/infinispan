@@ -2,6 +2,9 @@ package org.infinispan.objectfilter.impl.hql;
 
 import org.hibernate.hql.ast.spi.EntityNamesResolver;
 import org.hibernate.hql.ast.spi.PropertyHelper;
+import org.infinispan.objectfilter.impl.logging.Log;
+import org.infinispan.objectfilter.impl.util.StringHelper;
+import org.jboss.logging.Logger;
 
 import java.text.DateFormat;
 import java.text.ParseException;
@@ -15,6 +18,8 @@ import java.util.TimeZone;
  * @since 7.0
  */
 public abstract class ObjectPropertyHelper<TypeMetadata> implements PropertyHelper {
+
+   private static final Log log = Logger.getMessageLogger(Log.class, ObjectPropertyHelper.class.getName());
 
    private static final TimeZone GMT_TZ = TimeZone.getTimeZone("GMT");
 
@@ -35,50 +40,80 @@ public abstract class ObjectPropertyHelper<TypeMetadata> implements PropertyHelp
     */
    @Override
    public Object convertToPropertyType(String entityType, List<String> propertyPath, String value) {
-      final Class<?> propertyType = getPropertyType(entityType, propertyPath);
+      final Class<?> propertyType = getPrimitivePropertyType(entityType, propertyPath);
+      if (propertyType == null) {
+         // not a primitive, then it is an embedded entity, need to signal an invalid query
+         throw log.getPredicatesOnCompleteEmbeddedEntitiesNotAllowedException(StringHelper.join(propertyPath, "."));
+      }
 
       if (Date.class.isAssignableFrom(propertyType)) {
          try {
             return dateFormat.parse(value);
          } catch (ParseException e) {
-            throw new IllegalArgumentException(e);
+            throw log.getInvalidDateLiteralException(value);
          }
       }
+
       if (Enum.class.isAssignableFrom(propertyType)) {
-         return Enum.valueOf((Class<Enum>) propertyType, value);
+         try {
+            return Enum.valueOf((Class<Enum>) propertyType, value);
+         } catch (IllegalArgumentException e) {
+            throw log.getInvalidEnumLiteralException(value, propertyType.getName());
+         }
       }
+
       if (propertyType == String.class) {
          return value;
       }
+
       if (propertyType == Character.class || propertyType == char.class) {
          return value.charAt(0);
       }
-      if (propertyType == Double.class || propertyType == double.class) {
-         return Double.valueOf(value);
+
+      try {
+         if (propertyType == Double.class || propertyType == double.class) {
+            return Double.valueOf(value);
+         }
+         if (propertyType == Float.class || propertyType == float.class) {
+            return Float.valueOf(value);
+         }
+         if (propertyType == Long.class || propertyType == long.class) {
+            return Long.valueOf(value);
+         }
+         if (propertyType == Integer.class || propertyType == int.class) {
+            return Integer.valueOf(value);
+         }
+         if (propertyType == Short.class || propertyType == short.class) {
+            return Short.valueOf(value);
+         }
+         if (propertyType == Byte.class || propertyType == byte.class) {
+            return Byte.valueOf(value);
+         }
+      } catch (NumberFormatException ex) {
+         throw log.getInvalidNumericLiteralException(value);
       }
-      if (propertyType == Float.class || propertyType == float.class) {
-         return Float.valueOf(value);
-      }
-      if (propertyType == Long.class || propertyType == long.class) {
-         return Long.valueOf(value);
-      }
-      if (propertyType == Integer.class || propertyType == int.class) {
-         return Integer.valueOf(value);
-      }
-      if (propertyType == Short.class || propertyType == short.class) {
-         return Short.valueOf(value);
-      }
-      if (propertyType == Byte.class || propertyType == byte.class) {
-         return Byte.valueOf(value);
-      }
+
       if (propertyType == Boolean.class || propertyType == boolean.class) {
-         return Boolean.valueOf(value);
+         if (value.equalsIgnoreCase("true")) {
+            return true;
+         } else if (value.equalsIgnoreCase("false")) {
+            return false;
+         } else {
+            throw log.getInvalidBooleanLiteralException(value);
+         }
       }
 
       return value;
    }
 
-   public abstract Class<?> getPropertyType(String entityType, List<String> propertyPath);
+   /**
+    * Returns the type of the primitive property.
+    *
+    * @param entityType   the FQN of the entity type
+    * @param propertyPath the path of the property
+    * @return the class or null if not a primitive property
+    */
+   public abstract Class<?> getPrimitivePropertyType(String entityType, List<String> propertyPath);
 
    public abstract boolean hasProperty(String entityType, List<String> propertyPath);
 

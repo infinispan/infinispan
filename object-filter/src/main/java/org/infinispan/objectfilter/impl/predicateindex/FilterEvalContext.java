@@ -18,12 +18,15 @@ public final class FilterEvalContext {
 
    public final Object[] projection;
 
-   public FilterEvalContext(BETree beTree, MatcherEvalContext<?> matcherContext, Object[] projection) {
+   public final Comparable[] sortProjection;
+
+   public FilterEvalContext(BETree beTree, MatcherEvalContext<?> matcherContext, Object[] projection, Comparable[] sortProjection) {
       this.beTree = beTree;
       this.matcherContext = matcherContext;
       int[] childCounters = beTree.getChildCounters();
       this.treeCounters = Arrays.copyOf(childCounters, childCounters.length);
       this.projection = projection;
+      this.sortProjection = sortProjection;
    }
 
    /**
@@ -38,5 +41,9 @@ public final class FilterEvalContext {
 
    public Object[] getProjection() {
       return projection;
+   }
+
+   public Comparable[] getSortProjection() {
+      return sortProjection;
    }
 }

@@ -9,6 +9,7 @@ import org.infinispan.filter.KeyValueFilter;
 import org.infinispan.metadata.Metadata;
 import org.infinispan.objectfilter.Matcher;
 import org.infinispan.objectfilter.ObjectFilter;
+import org.infinispan.objectfilter.impl.FilterResultImpl;
 import org.infinispan.query.impl.externalizers.ExternalizerIds;
 
 import java.io.IOException;
@@ -24,7 +25,7 @@ import java.util.Set;
  * @author anistor@redhat.com
  * @since 7.0
  */
-public class FilterAndConverter<K, V, C> implements KeyValueFilter<K, V>, Converter<K, V, C> {
+public class FilterAndConverter<K, V> implements KeyValueFilter<K, V>, Converter<K, V, ObjectFilter.FilterResult> {
 
    private final String jpaQuery;
 
@@ -62,7 +63,7 @@ public class FilterAndConverter<K, V, C> implements KeyValueFilter<K, V>, Conver
       }
    }
 
-   private ObjectFilter getObjectFilter() {
+   public ObjectFilter getObjectFilter() {
       if (objectFilter == null) {
          objectFilter = matcher.getObjectFilter(jpaQuery);
       }
@@ -75,16 +76,18 @@ public class FilterAndConverter<K, V, C> implements KeyValueFilter<K, V>, Conver
    }
 
    @Override
-   public C convert(K key, V value, Metadata metadata) {
-      ObjectFilter filter = getObjectFilter();
-      return (C) (filter.getProjection() == null ? value : filter.filter(value));
+   public ObjectFilter.FilterResult convert(K key, V value, Metadata metadata) {
+      return getObjectFilter().filter(value);
    }
 
-   public String[] getProjection() {
-      return getObjectFilter().getProjection();
+   @Override
+   public String toString() {
+      return "FilterAndConverter{" +
+            "jpaQuery='" + jpaQuery + '\'' +
+            '}';
    }
 
-   public static final class Externalizer extends AbstractExternalizer<FilterAndConverter> {
+   public static final class FilterAndConverterExternalizer extends AbstractExternalizer<FilterAndConverter> {
 
       @Override
       public void writeObject(ObjectOutput output, FilterAndConverter filterAndConverter) throws IOException {
@@ -107,6 +110,34 @@ public class FilterAndConverter<K, V, C> implements KeyValueFilter<K, V>, Conver
       @Override
       public Set<Class<? extends FilterAndConverter>> getTypeClasses() {
          return Collections.<Class<? extends FilterAndConverter>>singleton(FilterAndConverter.class);
+      }
+   }
+
+   public static final class FilterResultExternalizer extends AbstractExternalizer<FilterResultImpl> {
+
+      @Override
+      public void writeObject(ObjectOutput output, FilterResultImpl filterResult) throws IOException {
+         output.writeObject(filterResult.getInstance());
+         output.writeObject(filterResult.getProjection());
+         output.writeObject(filterResult.getSortProjection());
+      }
+
+      @Override
+      public FilterResultImpl readObject(ObjectInput input) throws IOException, ClassNotFoundException {
+         Object instance = input.readObject();
+         Object[] projection = (Object[]) input.readObject();
+         Comparable[] sortProjection = (Comparable[]) input.readObject();
+         return new FilterResultImpl(instance, projection, sortProjection);
+      }
+
+      @Override
+      public Integer getId() {
+         return ExternalizerIds.FILTER_RESULT;
+      }
+
+      @Override
+      public Set<Class<? extends FilterResultImpl>> getTypeClasses() {
+         return Collections.<Class<? extends FilterResultImpl>>singleton(FilterResultImpl.class);
       }
    }
 }

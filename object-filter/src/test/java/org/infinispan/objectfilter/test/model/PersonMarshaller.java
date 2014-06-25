@@ -4,6 +4,7 @@ import org.infinispan.protostream.MessageMarshaller;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Date;
 
 /**
  * @author anistor@redhat.com
@@ -19,8 +20,11 @@ public class PersonMarshaller implements MessageMarshaller<Person> {
       person.setAddress(reader.readObject("address", Address.class));
       person.setPhoneNumbers(reader.readCollection("phoneNumbers", new ArrayList<PhoneNumber>(), PhoneNumber.class));
       person.setAge(reader.readInt("age"));
+      person.setFavouriteNumbers(reader.readCollection("favouriteNumbers", new ArrayList<Integer>(), Integer.class));
       person.setLicense(reader.readString("license"));
       person.setGender(reader.readObject("gender", Person.Gender.class));
+      person.setLastUpdate(new Date(reader.readLong("lastUpdate")));
+      person.setDeleted(reader.readBoolean("deleted"));
       return person;
    }
 
@@ -31,8 +35,13 @@ public class PersonMarshaller implements MessageMarshaller<Person> {
       writer.writeObject("address", person.getAddress(), Address.class);
       writer.writeCollection("phoneNumbers", person.getPhoneNumbers(), PhoneNumber.class);
       writer.writeInt("age", person.getAge());
+      writer.writeCollection("favouriteNumbers", person.getFavouriteNumbers(), Integer.class);
       writer.writeString("license", person.getLicense());
       writer.writeObject("gender", person.getGender(), Person.Gender.class);
+      if (person.getLastUpdate() != null) {
+         writer.writeLong("lastUpdate", person.getLastUpdate().getTime());
+      }
+      writer.writeBoolean("deleted", person.isDeleted());
    }
 
    @Override

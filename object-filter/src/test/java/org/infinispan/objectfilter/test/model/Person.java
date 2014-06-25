@@ -1,5 +1,6 @@
 package org.infinispan.objectfilter.test.model;
 
+import java.util.Date;
 import java.util.List;
 
 /**
@@ -21,11 +22,17 @@ public class Person {
 
    private int _age;
 
+   private List<Integer> _favouriteNumbers;
+
    private List<PhoneNumber> _phoneNumbers;
 
    private String _license;
 
    private Gender _gender;
+
+   private Date _lastUpdate;
+
+   private boolean _deleted;
 
    public String getName() {
       return _name;
@@ -59,6 +66,14 @@ public class Person {
       this._age = age;
    }
 
+   public List<Integer> getFavouriteNumbers() {
+      return _favouriteNumbers;
+   }
+
+   public void setFavouriteNumbers(List<Integer> favouriteNumbers) {
+      this._favouriteNumbers = favouriteNumbers;
+   }
+
    public List<PhoneNumber> getPhoneNumbers() {
       return _phoneNumbers;
    }
@@ -75,13 +90,28 @@ public class Person {
       this._license = license;
    }
 
-
    public Gender getGender() {
       return _gender;
    }
 
    public void setGender(Gender gender) {
       this._gender = gender;
+   }
+
+   public Date getLastUpdate() {
+      return _lastUpdate;
+   }
+
+   public void setLastUpdate(Date lastUpdate) {
+      this._lastUpdate = lastUpdate;
+   }
+
+   public boolean isDeleted() {
+      return _deleted;
+   }
+
+   public void setDeleted(boolean deleted) {
+      this._deleted = deleted;
    }
 
    @Override
@@ -92,8 +122,11 @@ public class Person {
             ", phoneNumbers=" + _phoneNumbers +
             ", address=" + _address +
             ", age=" + _age +
+            ", favouriteNumbers=" + _favouriteNumbers +
             ", license=" + _license +
             ", gender=" + _gender +
+            ", lastUpdate=" + _lastUpdate +
+            ", deleted=" + _deleted +
             '}';
    }
 }
