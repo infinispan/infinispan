@@ -2,6 +2,7 @@ package org.infinispan.marshall;
 
 import org.infinispan.Cache;
 import org.infinispan.commons.util.Util;
+import org.infinispan.container.InternalEntryFactoryImpl;
 import org.infinispan.metadata.EmbeddedMetadata;
 import org.infinispan.atomic.impl.AtomicHashMap;
 import org.infinispan.commands.ReplicableCommand;
@@ -216,7 +217,7 @@ public class VersionAwareMarshallerTest extends AbstractInfinispanTest {
 
       // SizeCommand does not have an empty constructor, so doesn't look to be one that is marshallable.
 
-      GetKeyValueCommand c4 = new GetKeyValueCommand("key", Collections.<Flag>emptySet(), false);
+      GetKeyValueCommand c4 = new GetKeyValueCommand("key", Collections.<Flag>emptySet(), false, new InternalEntryFactoryImpl());
       byte[] bytes = marshaller.objectToByteBuffer(c4);
       GetKeyValueCommand rc4 = (GetKeyValueCommand) marshaller.objectFromByteBuffer(bytes);
       assert rc4.getCommandId() == c4.getCommandId() : "Writen[" + c4.getCommandId() + "] and read[" + rc4.getCommandId() + "] objects should be the same";
