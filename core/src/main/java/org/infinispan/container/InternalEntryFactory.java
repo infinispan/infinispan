@@ -118,4 +118,12 @@ public interface InternalEntryFactory {
     * @return an {@link InternalCacheValue}
     */
    InternalCacheValue createValue(CacheEntry cacheEntry);
+
+   /**
+    * TODO..
+    *
+    * @param cacheEntry
+    * @return
+    */
+   CacheEntry copy(CacheEntry cacheEntry);
 }
