@@ -18,6 +18,7 @@ public interface SearchManager {
     * Experimental! Obtains the factory for DSL-based queries backed by Lucene indexes.
     *
     * @return a factory capable of building queries for the cache this SearchManager belongs to
+    * @deprecated see {@link Search#getQueryFactory}
     */
    QueryFactory<LuceneQuery> getQueryFactory();
 

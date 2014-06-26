@@ -79,8 +79,8 @@ public abstract class BaseQueryBuilder<T extends Query> implements QueryBuilder<
 
    @Override
    public QueryBuilder<T> maxResults(int maxResults) {
-      if (maxResults < 0) {
-         throw new IllegalArgumentException("maxResults cannot be less than 0");
+      if (maxResults <= 0) {
+         throw new IllegalArgumentException("maxResults must be greater than 0");
       }
       this.maxResults = maxResults;
       return this;
