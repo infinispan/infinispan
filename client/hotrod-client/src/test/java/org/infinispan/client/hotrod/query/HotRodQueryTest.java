@@ -4,6 +4,7 @@ import org.infinispan.client.hotrod.RemoteCache;
 import org.infinispan.client.hotrod.RemoteCacheManager;
 import org.infinispan.client.hotrod.Search;
 import org.infinispan.client.hotrod.TestHelper;
+import org.infinispan.client.hotrod.exceptions.HotRodClientException;
 import org.infinispan.client.hotrod.marshall.ProtoStreamMarshaller;
 import org.infinispan.commons.equivalence.ByteArrayEquivalence;
 import org.infinispan.commons.util.Util;
@@ -48,9 +49,9 @@ public class HotRodQueryTest extends SingleCacheManagerTest {
 
    public static final String TEST_CACHE_NAME = "userCache";
 
-   private HotRodServer hotRodServer;
-   private RemoteCacheManager remoteCacheManager;
-   private RemoteCache<Integer, User> remoteCache;
+   protected HotRodServer hotRodServer;
+   protected RemoteCacheManager remoteCacheManager;
+   protected RemoteCache<Integer, User> remoteCache;
 
    @Override
    protected EmbeddedCacheManager createCacheManager() throws Exception {
@@ -158,6 +159,17 @@ public class HotRodQueryTest extends SingleCacheManagerTest {
       assertUser(list.get(0));
    }
 
+   @Test(enabled = false, expectedExceptions = HotRodClientException.class, expectedExceptionsMessageRegExp = ".*HQLLUCN000005:.*", description = "See https://issues.jboss.org/browse/ISPN-4423")
+   public void testInvalidEmbeddedAttributeQuery() throws Exception {
+      QueryFactory qf = Search.getQueryFactory(remoteCache);
+
+      Query q = qf.from(User.class)
+            .setProjection("addresses").build();
+
+      //todo [anistor] it would be best if the problem would be detected early at build() instead at doing it at list()
+      q.list();  // exception expected
+   }
+
    public void testProjections() throws Exception {
       remoteCache.put(1, createUser1());
       remoteCache.put(2, createUser2());
@@ -172,6 +184,7 @@ public class HotRodQueryTest extends SingleCacheManagerTest {
             .setProjection("name", "surname")
             .having("name").eq("Tom").toBuilder()
             .build();
+
       List<Object[]> list = query.list();
       assertNotNull(list);
       assertEquals(1, list.size());

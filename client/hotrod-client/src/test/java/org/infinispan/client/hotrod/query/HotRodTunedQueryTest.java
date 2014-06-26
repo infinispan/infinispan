@@ -1,7 +1,10 @@
 package org.infinispan.client.hotrod.query;
 
+import org.hibernate.search.engine.spi.SearchFactoryImplementor;
+import org.hibernate.search.indexes.spi.IndexManager;
 import org.infinispan.commons.equivalence.ByteArrayEquivalence;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
+import org.infinispan.query.remote.indexing.ProtobufValueWrapper;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.CleanupAfterMethod;
 import org.testng.annotations.Test;
@@ -40,6 +43,14 @@ public class HotRodTunedQueryTest extends RemoteQueryDslConditionsTest {
             .addProperty("lucene_version", "LUCENE_48");
 
       return builder;
+   }
+
+   @Override
+   public void testIndexPresence() {
+      SearchFactoryImplementor searchFactory = (SearchFactoryImplementor) org.infinispan.query.Search.getSearchManager(cache).getSearchFactory();
+      for(IndexManager manager :  searchFactory.getIndexManagerHolder().getIndexManagers()) {
+         assertTrue(manager.getIndexName().contains(ProtobufValueWrapper.class.getName()));
+      }
    }
 
    @Override

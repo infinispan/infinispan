@@ -157,6 +157,10 @@ public class QueryDslConditionsTest extends AbstractQueryDslTest {
         //Don't clear, this is destroying the index
    }
 
+   protected QueryFactory getQueryFactory() {
+      return Search.getSearchManager(cache).getQueryFactory();
+   }
+
    public void testIndexPresence() {
       SearchFactoryImplementor searchFactory = (SearchFactoryImplementor) Search.getSearchManager(cache).getSearchFactory();
       assertNotNull(searchFactory.getIndexManagerHolder().getIndexManager(User.class.getName()));
@@ -166,7 +170,7 @@ public class QueryDslConditionsTest extends AbstractQueryDslTest {
    }
 
    public void testEq1() throws Exception {
-      QueryFactory qf = Search.getSearchManager(cache).getQueryFactory();
+      QueryFactory qf = getQueryFactory();
 
       Query q = qf.from(User.class)
             .having("name").eq("John")
@@ -179,7 +183,7 @@ public class QueryDslConditionsTest extends AbstractQueryDslTest {
    }
 
    public void testEq() throws Exception {
-      QueryFactory qf = Search.getSearchManager(cache).getQueryFactory();
+      QueryFactory qf = getQueryFactory();
 
       Query q = qf.from(User.class)
             .having("name").eq("Jacob")
@@ -190,7 +194,7 @@ public class QueryDslConditionsTest extends AbstractQueryDslTest {
    }
 
    public void testEqInNested1() throws Exception {
-      QueryFactory qf = Search.getSearchManager(cache).getQueryFactory();
+      QueryFactory qf = getQueryFactory();
 
       // all users in a given post code
       Query q = qf.from(User.class)
@@ -203,7 +207,7 @@ public class QueryDslConditionsTest extends AbstractQueryDslTest {
    }
 
    public void testEqInNested2() throws Exception {
-      QueryFactory qf = Search.getSearchManager(cache).getQueryFactory();
+      QueryFactory qf = getQueryFactory();
 
       Query q = qf.from(User.class)
             .having("addresses.postCode").eq("Y12")
@@ -215,7 +219,7 @@ public class QueryDslConditionsTest extends AbstractQueryDslTest {
    }
 
    public void testLike() throws Exception {
-      QueryFactory qf = Search.getSearchManager(cache).getQueryFactory();
+      QueryFactory qf = getQueryFactory();
 
       // all rent payments made from a given account
       Query q = qf.from(Transaction.class)
@@ -229,7 +233,7 @@ public class QueryDslConditionsTest extends AbstractQueryDslTest {
    }
 
    public void testBetween1() throws Exception {
-      QueryFactory qf = Search.getSearchManager(cache).getQueryFactory();
+      QueryFactory qf = getQueryFactory();
 
       // all the transactions that happened in January 2013
       Query q = qf.from(Transaction.class)
@@ -245,7 +249,7 @@ public class QueryDslConditionsTest extends AbstractQueryDslTest {
    }
 
    public void testBetween2() throws Exception {
-      QueryFactory qf = Search.getSearchManager(cache).getQueryFactory();
+      QueryFactory qf = getQueryFactory();
 
       // all the transactions that happened in January 2013
       Query q = qf.from(Transaction.class)
@@ -261,7 +265,7 @@ public class QueryDslConditionsTest extends AbstractQueryDslTest {
    }
 
    public void testBetween3() throws Exception {
-      QueryFactory qf = Search.getSearchManager(cache).getQueryFactory();
+      QueryFactory qf = getQueryFactory();
 
       // all the transactions that happened in January 2013
       Query q = qf.from(Transaction.class)
@@ -277,7 +281,7 @@ public class QueryDslConditionsTest extends AbstractQueryDslTest {
    }
 
    public void testGt() throws Exception {
-      QueryFactory qf = Search.getSearchManager(cache).getQueryFactory();
+      QueryFactory qf = getQueryFactory();
 
       // all the transactions greater than a given amount
       Query q = qf.from(Transaction.class)
@@ -290,7 +294,7 @@ public class QueryDslConditionsTest extends AbstractQueryDslTest {
    }
 
    public void testGte() throws Exception {
-      QueryFactory qf = Search.getSearchManager(cache).getQueryFactory();
+      QueryFactory qf = getQueryFactory();
 
       Query q = qf.from(Transaction.class)
             .having("amount").gte(1500)
@@ -304,7 +308,7 @@ public class QueryDslConditionsTest extends AbstractQueryDslTest {
    }
 
    public void testLt() throws Exception {
-      QueryFactory qf = Search.getSearchManager(cache).getQueryFactory();
+      QueryFactory qf = getQueryFactory();
 
       Query q = qf.from(Transaction.class)
             .having("amount").lt(1500)
@@ -318,7 +322,7 @@ public class QueryDslConditionsTest extends AbstractQueryDslTest {
    }
 
    public void testLte() throws Exception {
-      QueryFactory qf = Search.getSearchManager(cache).getQueryFactory();
+      QueryFactory qf = getQueryFactory();
 
       Query q = qf.from(Transaction.class)
             .having("amount").lte(1500)
@@ -332,7 +336,7 @@ public class QueryDslConditionsTest extends AbstractQueryDslTest {
    }
 
    public void testAnd1() throws Exception {
-      QueryFactory qf = Search.getSearchManager(cache).getQueryFactory();
+      QueryFactory qf = getQueryFactory();
 
       Query q = qf.from(User.class)
             .having("name").eq("Spider")
@@ -345,7 +349,7 @@ public class QueryDslConditionsTest extends AbstractQueryDslTest {
    }
 
    public void testAnd2() throws Exception {
-      QueryFactory qf = Search.getSearchManager(cache).getQueryFactory();
+      QueryFactory qf = getQueryFactory();
 
       Query q = qf.from(User.class)
             .having("name").eq("Spider")
@@ -358,7 +362,7 @@ public class QueryDslConditionsTest extends AbstractQueryDslTest {
    }
 
    public void testAnd3() throws Exception {
-      QueryFactory qf = Search.getSearchManager(cache).getQueryFactory();
+      QueryFactory qf = getQueryFactory();
 
       Query q = qf.from(User.class)
             .having("gender").eq(User.Gender.MALE)
@@ -370,7 +374,7 @@ public class QueryDslConditionsTest extends AbstractQueryDslTest {
    }
 
    public void testAnd4() throws Exception {
-      QueryFactory qf = Search.getSearchManager(cache).getQueryFactory();
+      QueryFactory qf = getQueryFactory();
 
       //test for parenthesis, "and" should have higher priority
       Query q = qf.from(User.class)
@@ -384,7 +388,7 @@ public class QueryDslConditionsTest extends AbstractQueryDslTest {
    }
 
    public void testOr1() throws Exception {
-      QueryFactory qf = Search.getSearchManager(cache).getQueryFactory();
+      QueryFactory qf = getQueryFactory();
 
       Query q = qf.from(User.class)
             .having("surname").eq("Man")
@@ -399,7 +403,7 @@ public class QueryDslConditionsTest extends AbstractQueryDslTest {
    }
 
    public void testOr2() throws Exception {
-      QueryFactory qf = Search.getSearchManager(cache).getQueryFactory();
+      QueryFactory qf = getQueryFactory();
 
       Query q = qf.from(User.class)
             .having("surname").eq("Man")
@@ -414,7 +418,7 @@ public class QueryDslConditionsTest extends AbstractQueryDslTest {
    }
 
    public void testOr3() throws Exception {
-      QueryFactory qf = Search.getSearchManager(cache).getQueryFactory();
+      QueryFactory qf = getQueryFactory();
 
       Query q = qf.from(User.class)
             .having("gender").eq(User.Gender.MALE)
@@ -426,7 +430,7 @@ public class QueryDslConditionsTest extends AbstractQueryDslTest {
    }
 
    public void testOr4() throws Exception {
-      QueryFactory qf = Search.getSearchManager(cache).getQueryFactory();
+      QueryFactory qf = getQueryFactory();
 
       Query q = qf.from(User.class)
             .orderBy("surname", SortOrder.DESC)
@@ -443,7 +447,7 @@ public class QueryDslConditionsTest extends AbstractQueryDslTest {
    }
 
    public void testOr5() throws Exception {
-      QueryFactory qf = Search.getSearchManager(cache).getQueryFactory();
+      QueryFactory qf = getQueryFactory();
 
       Query q = qf.from(User.class)
             .having("gender").eq(User.Gender.MALE)
@@ -458,7 +462,7 @@ public class QueryDslConditionsTest extends AbstractQueryDslTest {
    }
 
    public void testNot1() throws Exception {
-      QueryFactory qf = Search.getSearchManager(cache).getQueryFactory();
+      QueryFactory qf = getQueryFactory();
 
       Query q = qf.from(User.class)
             .not().having("name").eq("Spider")
@@ -470,7 +474,7 @@ public class QueryDslConditionsTest extends AbstractQueryDslTest {
    }
 
    public void testNot2() throws Exception {
-      QueryFactory qf = Search.getSearchManager(cache).getQueryFactory();
+      QueryFactory qf = getQueryFactory();
 
       Query q = qf.from(User.class)
             .not().not().having("surname").eq("Doe")
@@ -482,7 +486,7 @@ public class QueryDslConditionsTest extends AbstractQueryDslTest {
    }
 
    public void testNot3() throws Exception {
-      QueryFactory qf = Search.getSearchManager(cache).getQueryFactory();
+      QueryFactory qf = getQueryFactory();
 
       // NOT should have higher priority than AND
       Query q = qf.from(User.class)
@@ -496,7 +500,7 @@ public class QueryDslConditionsTest extends AbstractQueryDslTest {
    }
 
    public void testNot4() throws Exception {
-      QueryFactory qf = Search.getSearchManager(cache).getQueryFactory();
+      QueryFactory qf = getQueryFactory();
 
       // NOT should have higher priority than AND
       Query q = qf.from(User.class)
@@ -510,7 +514,7 @@ public class QueryDslConditionsTest extends AbstractQueryDslTest {
    }
 
    public void testNot5() throws Exception {
-      QueryFactory qf = Search.getSearchManager(cache).getQueryFactory();
+      QueryFactory qf = getQueryFactory();
 
       // NOT should have higher priority than OR
       Query q = qf.from(User.class)
@@ -526,7 +530,7 @@ public class QueryDslConditionsTest extends AbstractQueryDslTest {
    }
 
    public void testNot6() throws Exception {
-      QueryFactory qf = Search.getSearchManager(cache).getQueryFactory();
+      QueryFactory qf = getQueryFactory();
 
       // QueryFactory.not() test
       Query q = qf.from(User.class)
@@ -540,7 +544,7 @@ public class QueryDslConditionsTest extends AbstractQueryDslTest {
    }
 
    public void testNot7() throws Exception {
-      QueryFactory qf = Search.getSearchManager(cache).getQueryFactory();
+      QueryFactory qf = getQueryFactory();
 
       Query q = qf.from(User.class)
             .having("gender").eq(User.Gender.FEMALE)
@@ -552,7 +556,7 @@ public class QueryDslConditionsTest extends AbstractQueryDslTest {
    }
 
    public void testNot8() throws Exception {
-      QueryFactory qf = Search.getSearchManager(cache).getQueryFactory();
+      QueryFactory qf = getQueryFactory();
 
       Query q = qf.from(User.class)
             .not(
@@ -568,7 +572,7 @@ public class QueryDslConditionsTest extends AbstractQueryDslTest {
    }
 
    public void testNot9() throws Exception {
-      QueryFactory qf = Search.getSearchManager(cache).getQueryFactory();
+      QueryFactory qf = getQueryFactory();
 
       Query q = qf.from(User.class)
             .not(
@@ -587,7 +591,7 @@ public class QueryDslConditionsTest extends AbstractQueryDslTest {
    }
 
    public void testEmptyQuery() throws Exception {
-      QueryFactory qf = Search.getSearchManager(cache).getQueryFactory();
+      QueryFactory qf = getQueryFactory();
 
       Query q = qf.from(User.class).build();
 
@@ -597,7 +601,7 @@ public class QueryDslConditionsTest extends AbstractQueryDslTest {
 
    @Test(expectedExceptions = ParsingException.class, expectedExceptionsMessageRegExp = "HQLLUCN000005:.*")
    public void testInvalidEmbeddedAttributeQuery() throws Exception {
-      QueryFactory qf = Search.getSearchManager(cache).getQueryFactory();
+      QueryFactory qf = getQueryFactory();
 
       QueryBuilder queryBuilder = qf.from(User.class)
             .setProjection("addresses");
@@ -606,7 +610,7 @@ public class QueryDslConditionsTest extends AbstractQueryDslTest {
    }
 
    public void testIsNull() throws Exception {
-      QueryFactory qf = Search.getSearchManager(cache).getQueryFactory();
+      QueryFactory qf = getQueryFactory();
 
       Query q = qf.from(User.class)
             .having("addresses").isNull()
@@ -618,7 +622,7 @@ public class QueryDslConditionsTest extends AbstractQueryDslTest {
    }
 
    public void testContains1() throws Exception {
-      QueryFactory qf = Search.getSearchManager(cache).getQueryFactory();
+      QueryFactory qf = getQueryFactory();
 
       Query q = qf.from(User.class)
             .having("accountIds").contains(2)
@@ -630,7 +634,7 @@ public class QueryDslConditionsTest extends AbstractQueryDslTest {
    }
 
    public void testContains2() throws Exception {
-      QueryFactory qf = Search.getSearchManager(cache).getQueryFactory();
+      QueryFactory qf = getQueryFactory();
 
       Query q = qf.from(User.class)
             .having("accountIds").contains(42)
@@ -641,7 +645,7 @@ public class QueryDslConditionsTest extends AbstractQueryDslTest {
    }
 
    public void testContainsAll1() throws Exception {
-      QueryFactory qf = Search.getSearchManager(cache).getQueryFactory();
+      QueryFactory qf = getQueryFactory();
 
       Query q = qf.from(User.class)
             .having("accountIds").containsAll(1, 2)
@@ -653,7 +657,7 @@ public class QueryDslConditionsTest extends AbstractQueryDslTest {
    }
 
    public void testContainsAll2() throws Exception {
-      QueryFactory qf = Search.getSearchManager(cache).getQueryFactory();
+      QueryFactory qf = getQueryFactory();
 
       Query q = qf.from(User.class)
             .having("accountIds").containsAll(Collections.singleton(1))
@@ -665,7 +669,7 @@ public class QueryDslConditionsTest extends AbstractQueryDslTest {
    }
 
    public void testContainsAll3() throws Exception {
-      QueryFactory qf = Search.getSearchManager(cache).getQueryFactory();
+      QueryFactory qf = getQueryFactory();
 
       Query q = qf.from(User.class)
             .having("accountIds").containsAll(1, 2, 3)
@@ -676,7 +680,7 @@ public class QueryDslConditionsTest extends AbstractQueryDslTest {
    }
 
    public void testContainsAll4() throws Exception {
-      QueryFactory qf = Search.getSearchManager(cache).getQueryFactory();
+      QueryFactory qf = getQueryFactory();
 
       Query q = qf.from(User.class)
             .having("accountIds").containsAll(Collections.emptySet())
@@ -687,7 +691,7 @@ public class QueryDslConditionsTest extends AbstractQueryDslTest {
    }
 
    public void testContainsAny1() throws Exception {
-      QueryFactory qf = Search.getSearchManager(cache).getQueryFactory();
+      QueryFactory qf = getQueryFactory();
 
       Query q = qf.from(User.class)
             .orderBy("id", SortOrder.ASC)
@@ -701,7 +705,7 @@ public class QueryDslConditionsTest extends AbstractQueryDslTest {
    }
 
    public void testContainsAny2() throws Exception {
-      QueryFactory qf = Search.getSearchManager(cache).getQueryFactory();
+      QueryFactory qf = getQueryFactory();
 
       Query q = qf.from(User.class)
             .having("accountIds").containsAny(4, 5)
@@ -712,7 +716,7 @@ public class QueryDslConditionsTest extends AbstractQueryDslTest {
    }
 
    public void testContainsAny3() throws Exception {
-      QueryFactory qf = Search.getSearchManager(cache).getQueryFactory();
+      QueryFactory qf = getQueryFactory();
 
       Query q = qf.from(User.class)
             .having("accountIds").containsAny(Collections.emptySet())
@@ -723,7 +727,7 @@ public class QueryDslConditionsTest extends AbstractQueryDslTest {
    }
 
    public void testIn1() throws Exception {
-      QueryFactory qf = Search.getSearchManager(cache).getQueryFactory();
+      QueryFactory qf = getQueryFactory();
 
       List<Integer> ids = Arrays.asList(1, 3);
       Query q = qf.from(User.class)
@@ -738,7 +742,7 @@ public class QueryDslConditionsTest extends AbstractQueryDslTest {
    }
 
    public void testIn2() throws Exception {
-      QueryFactory qf = Search.getSearchManager(cache).getQueryFactory();
+      QueryFactory qf = getQueryFactory();
 
       Query q = qf.from(User.class)
             .having("id").in(4)
@@ -750,14 +754,14 @@ public class QueryDslConditionsTest extends AbstractQueryDslTest {
 
    @Test(expectedExceptions = IllegalArgumentException.class)
    public void testIn3() throws Exception {
-      QueryFactory qf = Search.getSearchManager(cache).getQueryFactory();
+      QueryFactory qf = getQueryFactory();
 
       qf.from(User.class).having("id").in(Collections.emptySet());
    }
 
    @Test(expectedExceptions = IllegalArgumentException.class)
    public void testIn4() throws Exception {
-      QueryFactory qf = Search.getSearchManager(cache).getQueryFactory();
+      QueryFactory qf = getQueryFactory();
 
       Collection collection = null;
       qf.from(User.class).having("id").in(collection);
@@ -765,7 +769,7 @@ public class QueryDslConditionsTest extends AbstractQueryDslTest {
 
    @Test(expectedExceptions = IllegalArgumentException.class)
    public void testIn5() throws Exception {
-      QueryFactory qf = Search.getSearchManager(cache).getQueryFactory();
+      QueryFactory qf = getQueryFactory();
 
       Object[] array = null;
       qf.from(User.class).having("id").in(array);
@@ -773,17 +777,18 @@ public class QueryDslConditionsTest extends AbstractQueryDslTest {
 
    @Test(expectedExceptions = IllegalArgumentException.class)
    public void testIn6() throws Exception {
-      QueryFactory qf = Search.getSearchManager(cache).getQueryFactory();
+      QueryFactory qf = getQueryFactory();
 
       Object[] array = new Object[0];
       qf.from(User.class).having("id").in(array);
    }
 
    public void testSampleDomainQuery1() throws Exception {
-      QueryFactory qf = Search.getSearchManager(cache).getQueryFactory();
+      QueryFactory qf = getQueryFactory();
 
       // all male users
       Query q = qf.from(User.class)
+            .orderBy("name", SortOrder.ASC)
             .having("gender").eq(User.Gender.MALE)
             .toBuilder().build();
 
@@ -794,10 +799,11 @@ public class QueryDslConditionsTest extends AbstractQueryDslTest {
    }
 
    public void testSampleDomainQuery2() throws Exception {
-      QueryFactory qf = Search.getSearchManager(cache).getQueryFactory();
+      QueryFactory qf = getQueryFactory();
 
       // all male users, but this time retrieved in a twisted manner
       Query q = qf.from(User.class)
+            .orderBy("name", SortOrder.ASC)
             .not(qf.having("gender").eq(User.Gender.FEMALE))
             .and(qf.not().not(qf.having("gender").eq(User.Gender.MALE)))
             .toBuilder().build();
@@ -809,7 +815,7 @@ public class QueryDslConditionsTest extends AbstractQueryDslTest {
    }
 
    public void testStringLiteralEscape() throws Exception {
-      QueryFactory qf = Search.getSearchManager(cache).getQueryFactory();
+      QueryFactory qf = getQueryFactory();
 
       // all transactions that have a given description. the description contains characters that need to be escaped.
       Query q = qf.from(Account.class)
@@ -822,7 +828,7 @@ public class QueryDslConditionsTest extends AbstractQueryDslTest {
    }
 
    public void testSortByDate() throws Exception {
-      QueryFactory qf = Search.getSearchManager(cache).getQueryFactory();
+      QueryFactory qf = getQueryFactory();
 
       Query q = qf.from(Account.class)
             .orderBy("creationDate", SortOrder.DESC)
@@ -836,10 +842,11 @@ public class QueryDslConditionsTest extends AbstractQueryDslTest {
    }
 
    public void testSampleDomainQuery3() throws Exception {
-      QueryFactory qf = Search.getSearchManager(cache).getQueryFactory();
+      QueryFactory qf = getQueryFactory();
 
       // all male users
       Query q = qf.from(User.class)
+            .orderBy("name", SortOrder.ASC)
             .having("gender").eq(User.Gender.MALE)
             .toBuilder().build();
 
@@ -850,7 +857,7 @@ public class QueryDslConditionsTest extends AbstractQueryDslTest {
    }
 
    public void testSampleDomainQuery4() throws Exception {
-      QueryFactory qf = Search.getSearchManager(cache).getQueryFactory();
+      QueryFactory qf = getQueryFactory();
 
       // all users ordered descendingly by name
       Query q = qf.from(User.class)
@@ -865,7 +872,7 @@ public class QueryDslConditionsTest extends AbstractQueryDslTest {
    }
 
    public void testSampleDomainQuery4With2SortingOptions() throws Exception {
-      QueryFactory qf = Search.getSearchManager(cache).getQueryFactory();
+      QueryFactory qf = getQueryFactory();
 
       // all users ordered descendingly by name
       Query q = qf.from(User.class)
@@ -886,7 +893,7 @@ public class QueryDslConditionsTest extends AbstractQueryDslTest {
    }
 
    public void testSampleDomainQuery5() throws Exception {
-      QueryFactory qf = Search.getSearchManager(cache).getQueryFactory();
+      QueryFactory qf = getQueryFactory();
 
       // name projection of all users ordered descendingly by name
       Query q = qf.from(User.class)
@@ -905,7 +912,7 @@ public class QueryDslConditionsTest extends AbstractQueryDslTest {
    }
 
    public void testSampleDomainQuery6() throws Exception {
-      QueryFactory qf = Search.getSearchManager(cache).getQueryFactory();
+      QueryFactory qf = getQueryFactory();
 
       // all users with a given name and surname
       Query q = qf.from(User.class)
@@ -920,7 +927,7 @@ public class QueryDslConditionsTest extends AbstractQueryDslTest {
    }
 
    public void testSampleDomainQuery7() throws Exception {
-      QueryFactory qf = Search.getSearchManager(cache).getQueryFactory();
+      QueryFactory qf = getQueryFactory();
 
       // all rent payments made from a given account
       Query q = qf.from(Transaction.class)
@@ -936,7 +943,7 @@ public class QueryDslConditionsTest extends AbstractQueryDslTest {
    }
 
    public void testSampleDomainQuery8() throws Exception {
-      QueryFactory qf = Search.getSearchManager(cache).getQueryFactory();
+      QueryFactory qf = getQueryFactory();
 
       // all the transactions that happened in January 2013
       Query q = qf.from(Transaction.class)
@@ -945,14 +952,14 @@ public class QueryDslConditionsTest extends AbstractQueryDslTest {
 
       List<Transaction> list = q.list();
       assertEquals(4, list.size());
-      assertTrue(list.get(0).getDate().compareTo(DATE_FORMAT.parse("2013-01-31")) < 0);
-      assertTrue(list.get(0).getDate().compareTo(DATE_FORMAT.parse("2013-01-01")) > 0);
-      assertTrue(list.get(1).getDate().compareTo(DATE_FORMAT.parse("2013-01-31")) < 0);
-      assertTrue(list.get(1).getDate().compareTo(DATE_FORMAT.parse("2013-01-01")) > 0);
+      for (Transaction t : list) {
+         assertTrue(t.getDate().compareTo(DATE_FORMAT.parse("2013-01-31")) <= 0);
+         assertTrue(t.getDate().compareTo(DATE_FORMAT.parse("2013-01-01")) >= 0);
+      }
    }
 
    public void testSampleDomainQuery9() throws Exception {
-      QueryFactory qf = Search.getSearchManager(cache).getQueryFactory();
+      QueryFactory qf = getQueryFactory();
 
       // all the transactions that happened in January 2013, projected by date field only
       Query q = qf.from(Transaction.class)
@@ -975,7 +982,7 @@ public class QueryDslConditionsTest extends AbstractQueryDslTest {
    }
 
    public void testSampleDomainQuery10() throws Exception {
-      QueryFactory qf = Search.getSearchManager(cache).getQueryFactory();
+      QueryFactory qf = getQueryFactory();
 
       // all the transactions for a an account having amount greater than a given amount
       Query q = qf.from(Transaction.class)
@@ -990,7 +997,7 @@ public class QueryDslConditionsTest extends AbstractQueryDslTest {
    }
 
    public void testSampleDomainQuery11() throws Exception {
-      QueryFactory qf = Search.getSearchManager(cache).getQueryFactory();
+      QueryFactory qf = getQueryFactory();
 
       Query q = qf.from(User.class)
             .having("name").eq("John")
@@ -1004,7 +1011,7 @@ public class QueryDslConditionsTest extends AbstractQueryDslTest {
    }
 
    public void testSampleDomainQuery12() throws Exception {
-      QueryFactory qf = Search.getSearchManager(cache).getQueryFactory();
+      QueryFactory qf = getQueryFactory();
 
       // all the transactions that represents credits to the account
       Query q = qf.from(Transaction.class)
@@ -1018,7 +1025,7 @@ public class QueryDslConditionsTest extends AbstractQueryDslTest {
    }
 
    public void testSampleDomainQuery13() throws Exception {
-      QueryFactory qf = Search.getSearchManager(cache).getQueryFactory();
+      QueryFactory qf = getQueryFactory();
 
       // the user that has the bank account with id 3
       Query q = qf.from(User.class)
@@ -1031,7 +1038,7 @@ public class QueryDslConditionsTest extends AbstractQueryDslTest {
    }
 
    public void testSampleDomainQuery14() throws Exception {
-      QueryFactory qf = Search.getSearchManager(cache).getQueryFactory();
+      QueryFactory qf = getQueryFactory();
 
       // the user that has all the specified bank accounts
       Query q = qf.from(User.class)
@@ -1045,7 +1052,7 @@ public class QueryDslConditionsTest extends AbstractQueryDslTest {
    }
 
    public void testSampleDomainQuery15() throws Exception {
-      QueryFactory qf = Search.getSearchManager(cache).getQueryFactory();
+      QueryFactory qf = getQueryFactory();
 
       // the user that has at least one of the specified accounts
       Query q = qf.from(User.class)
@@ -1069,7 +1076,7 @@ public class QueryDslConditionsTest extends AbstractQueryDslTest {
          cache.put("transaction_" + transaction.getId(), transaction);
       }
 
-      QueryFactory qf = Search.getSearchManager(cache).getQueryFactory();
+      QueryFactory qf = getQueryFactory();
 
       // third batch of 10 transactions for a given account
       Query q = qf.from(Transaction.class)
@@ -1087,7 +1094,7 @@ public class QueryDslConditionsTest extends AbstractQueryDslTest {
    }
 
    public void testSampleDomainQuery17() throws Exception {
-      QueryFactory qf = Search.getSearchManager(cache).getQueryFactory();
+      QueryFactory qf = getQueryFactory();
 
       // all accounts for a user. first get the user by id and then get his account.
       Query q1 = qf.from(User.class)
@@ -1105,7 +1112,7 @@ public class QueryDslConditionsTest extends AbstractQueryDslTest {
    }
 
    public void testSampleDomainQuery18() throws Exception {
-      QueryFactory qf = Search.getSearchManager(cache).getQueryFactory();
+      QueryFactory qf = getQueryFactory();
 
       // all transactions of account with id 2 which have an amount larger than 1600 or their description contains the word 'rent'
       Query q = qf.from(Transaction.class)
@@ -1121,7 +1128,7 @@ public class QueryDslConditionsTest extends AbstractQueryDslTest {
    }
 
    public void testProjectionOnOptionalField() throws Exception {
-      QueryFactory qf = Search.getSearchManager(cache).getQueryFactory();
+      QueryFactory qf = getQueryFactory();
 
       Query q = qf.from(User.class)
             .setProjection("id", "addresses.postCode")
@@ -1131,16 +1138,16 @@ public class QueryDslConditionsTest extends AbstractQueryDslTest {
       List<Object[]> list = q.list();
       assertEquals(3, list.size());
       assertEquals(1, list.get(0)[0]);
-      assertEquals("X1234", list.get(0)[1]);
       assertEquals(2, list.get(1)[0]);
-      assertEquals("Y12", list.get(1)[1]);
       assertEquals(3, list.get(2)[0]);
+      assertEquals("X1234", list.get(0)[1]);
+      assertEquals("Y12", list.get(1)[1]);
       assertNull(list.get(2)[1]);
    }
 
    @Test(enabled = false, description = "Nulls not correctly indexed for numeric properties, see ISPN-4046")  //todo [anistor] fix disabled test
    public void testNullOnIntegerField() throws Exception {
-      QueryFactory qf = Search.getSearchManager(cache).getQueryFactory();
+      QueryFactory qf = getQueryFactory();
 
       Query q = qf.from(User.class)
             .having("age").isNull()
@@ -1151,7 +1158,7 @@ public class QueryDslConditionsTest extends AbstractQueryDslTest {
    }
 
    public void testSampleDomainQuery19() throws Exception {
-      QueryFactory qf = Search.getSearchManager(cache).getQueryFactory();
+      QueryFactory qf = getQueryFactory();
 
       Query q = qf.from(User.class)
             .having("addresses.postCode").in("ZZ", "X1234").toBuilder().build();
@@ -1163,7 +1170,7 @@ public class QueryDslConditionsTest extends AbstractQueryDslTest {
    }
 
    public void testSampleDomainQuery20() throws Exception {
-      QueryFactory qf = Search.getSearchManager(cache).getQueryFactory();
+      QueryFactory qf = getQueryFactory();
 
       Query q = qf.from(User.class)
             .not().having("addresses.postCode").in("X1234").toBuilder().build();
@@ -1175,7 +1182,7 @@ public class QueryDslConditionsTest extends AbstractQueryDslTest {
    }
 
    public void testSampleDomainQuery21() throws Exception {
-      QueryFactory qf = Search.getSearchManager(cache).getQueryFactory();
+      QueryFactory qf = getQueryFactory();
 
       Query q = qf.from(User.class)
             .not().having("addresses").isNull().toBuilder().build();
@@ -1187,7 +1194,7 @@ public class QueryDslConditionsTest extends AbstractQueryDslTest {
    }
 
    public void testSampleDomainQuery22() throws Exception {
-      QueryFactory qf = Search.getSearchManager(cache).getQueryFactory();
+      QueryFactory qf = getQueryFactory();
 
       Query q = qf.from(User.class)
             .not().having("addresses.postCode").like("%123%").toBuilder().build();
@@ -1199,7 +1206,7 @@ public class QueryDslConditionsTest extends AbstractQueryDslTest {
    }
 
    public void testSampleDomainQuery23() throws Exception {
-      QueryFactory qf = Search.getSearchManager(cache).getQueryFactory();
+      QueryFactory qf = getQueryFactory();
 
       Query q = qf.from(User.class)
             .not().having("id").between(1, 2)
@@ -1211,7 +1218,7 @@ public class QueryDslConditionsTest extends AbstractQueryDslTest {
    }
 
    public void testSampleDomainQuery24() throws Exception {
-      QueryFactory qf = Search.getSearchManager(cache).getQueryFactory();
+      QueryFactory qf = getQueryFactory();
 
       Query q = qf.from(User.class)
             .not().having("id").between(1, 2).includeLower(false)
@@ -1225,7 +1232,7 @@ public class QueryDslConditionsTest extends AbstractQueryDslTest {
    }
 
    public void testSampleDomainQuery25() throws Exception {
-      QueryFactory qf = Search.getSearchManager(cache).getQueryFactory();
+      QueryFactory qf = getQueryFactory();
 
       Query q = qf.from(User.class)
             .not().having("id").between(1, 2).includeUpper(false)
@@ -1238,7 +1245,7 @@ public class QueryDslConditionsTest extends AbstractQueryDslTest {
    }
 
    public void testSampleDomainQuery26() throws Exception {
-      QueryFactory qf = Search.getSearchManager(cache).getQueryFactory();
+      QueryFactory qf = getQueryFactory();
 
       Query q = qf.from(Account.class)
             .having("creationDate").eq(DATE_FORMAT.parse("2013-01-20"))
@@ -1250,7 +1257,7 @@ public class QueryDslConditionsTest extends AbstractQueryDslTest {
    }
 
    public void testSampleDomainQuery27() throws Exception {
-      QueryFactory qf = Search.getSearchManager(cache).getQueryFactory();
+      QueryFactory qf = getQueryFactory();
 
       Query q = qf.from(Account.class)
             .having("creationDate").lt(DATE_FORMAT.parse("2013-01-20"))
@@ -1263,9 +1270,10 @@ public class QueryDslConditionsTest extends AbstractQueryDslTest {
    }
 
    public void testSampleDomainQuery28() throws Exception {
-      QueryFactory qf = Search.getSearchManager(cache).getQueryFactory();
+      QueryFactory qf = getQueryFactory();
 
       Query q = qf.from(Account.class)
+            .orderBy("id", SortOrder.ASC)
             .having("creationDate").lte(DATE_FORMAT.parse("2013-01-20"))
             .toBuilder().build();
 
@@ -1277,7 +1285,7 @@ public class QueryDslConditionsTest extends AbstractQueryDslTest {
    }
 
    public void testSampleDomainQuery29() throws Exception {
-      QueryFactory qf = Search.getSearchManager(cache).getQueryFactory();
+      QueryFactory qf = getQueryFactory();
 
       Query q = qf.from(Account.class)
             .having("creationDate").gt(DATE_FORMAT.parse("2013-01-04"))
@@ -1290,14 +1298,14 @@ public class QueryDslConditionsTest extends AbstractQueryDslTest {
 
    @Test(expectedExceptions = IllegalStateException.class)
    public void testWrongQueryBuilding1() throws Exception {
-      QueryFactory qf = Search.getSearchManager(cache).getQueryFactory();
+      QueryFactory qf = getQueryFactory();
 
       Query q = qf.not().having("name").eq("John").toBuilder().build();
    }
 
    @Test(expectedExceptions = IllegalStateException.class)
    public void testWrongQueryBuilding2() throws Exception {
-      QueryFactory qf = Search.getSearchManager(cache).getQueryFactory();
+      QueryFactory qf = getQueryFactory();
 
       Query q = qf.from(User.class)
             .having("name").eq("John").toBuilder()
@@ -1307,7 +1315,7 @@ public class QueryDslConditionsTest extends AbstractQueryDslTest {
 
    @Test(expectedExceptions = IllegalStateException.class)
    public void testWrongQueryBuilding3() throws Exception {
-      QueryFactory qf = Search.getSearchManager(cache).getQueryFactory();
+      QueryFactory qf = getQueryFactory();
 
       Query q = qf.from(User.class)
             .not().having("name").eq("John").toBuilder()
@@ -1317,7 +1325,7 @@ public class QueryDslConditionsTest extends AbstractQueryDslTest {
 
    @Test(expectedExceptions = IllegalStateException.class)
    public void testWrongQueryBuilding4() throws Exception {
-      QueryFactory qf = Search.getSearchManager(cache).getQueryFactory();
+      QueryFactory qf = getQueryFactory();
 
       Query q = qf.from(User.class)
             .not(qf.having("name").eq("John")).toBuilder()
@@ -1327,7 +1335,7 @@ public class QueryDslConditionsTest extends AbstractQueryDslTest {
 
    @Test(expectedExceptions = IllegalStateException.class)
    public void testWrongQueryBuilding5() throws Exception {
-      QueryFactory qf = Search.getSearchManager(cache).getQueryFactory();
+      QueryFactory qf = getQueryFactory();
 
       Query q = qf.from(User.class)
             .not(qf.having("name").eq("John")).toBuilder()
@@ -1337,7 +1345,7 @@ public class QueryDslConditionsTest extends AbstractQueryDslTest {
 
    @Test(expectedExceptions = IllegalArgumentException.class)
    public void testWrongQueryBuilding6() throws Exception {
-      QueryFactory qf = Search.getSearchManager(cache).getQueryFactory();
+      QueryFactory qf = getQueryFactory();
 
       Query q = qf.from(User.class)
             .having("gender").eq(null)
@@ -1346,7 +1354,7 @@ public class QueryDslConditionsTest extends AbstractQueryDslTest {
 
    @Test(expectedExceptions = IllegalStateException.class)
    public void testWrongQueryBuilding7() throws Exception {
-      QueryFactory qf = Search.getSearchManager(cache).getQueryFactory();
+      QueryFactory qf = getQueryFactory();
 
       FilterConditionEndContext q1 = qf.from(User.class)
             .having("gender");
@@ -1356,7 +1364,7 @@ public class QueryDslConditionsTest extends AbstractQueryDslTest {
    }
 
    public void testOrderedPagination1() throws Exception {
-      QueryFactory qf = Search.getQueryFactory(cache);
+      QueryFactory qf = getQueryFactory();
 
       Query q = qf.from(User.class)
             .orderBy("id", SortOrder.ASC)
@@ -1369,7 +1377,7 @@ public class QueryDslConditionsTest extends AbstractQueryDslTest {
    }
 
    public void testUnorderedPagination1() throws Exception {
-      QueryFactory qf = Search.getQueryFactory(cache);
+      QueryFactory qf = getQueryFactory();
 
       Query q = qf.from(User.class)
             .maxResults(0)
@@ -1381,7 +1389,7 @@ public class QueryDslConditionsTest extends AbstractQueryDslTest {
    }
 
    public void testOrderedPagination2() throws Exception {
-      QueryFactory qf = Search.getQueryFactory(cache);
+      QueryFactory qf = getQueryFactory();
 
       Query q = qf.from(User.class)
             .orderBy("id", SortOrder.ASC)
@@ -1395,7 +1403,7 @@ public class QueryDslConditionsTest extends AbstractQueryDslTest {
    }
 
    public void testUnorderedPagination2() throws Exception {
-      QueryFactory qf = Search.getQueryFactory(cache);
+      QueryFactory qf = getQueryFactory();
 
       Query q = qf.from(User.class)
             .startOffset(1)
@@ -1408,7 +1416,7 @@ public class QueryDslConditionsTest extends AbstractQueryDslTest {
    }
 
    public void testOrderedPagination3() throws Exception {
-      QueryFactory qf = Search.getQueryFactory(cache);
+      QueryFactory qf = getQueryFactory();
 
       Query q = qf.from(User.class)
             .orderBy("id", SortOrder.ASC)
@@ -1421,7 +1429,7 @@ public class QueryDslConditionsTest extends AbstractQueryDslTest {
    }
 
    public void testUnorderedPagination3() throws Exception {
-      QueryFactory qf = Search.getQueryFactory(cache);
+      QueryFactory qf = getQueryFactory();
 
       Query q = qf.from(User.class)
             .maxResults(5)
@@ -1434,7 +1442,7 @@ public class QueryDslConditionsTest extends AbstractQueryDslTest {
 
    @Test(expectedExceptions = IllegalArgumentException.class, expectedExceptionsMessageRegExp = "maxResults cannot be less than 0")
    public void testPagination4() throws Exception {
-      QueryFactory qf = Search.getQueryFactory(cache);
+      QueryFactory qf = getQueryFactory();
 
       qf.from(User.class)
             .maxResults(-4);
@@ -1442,14 +1450,14 @@ public class QueryDslConditionsTest extends AbstractQueryDslTest {
 
    @Test(expectedExceptions = IllegalArgumentException.class, expectedExceptionsMessageRegExp = "startOffset cannot be less than 0")
    public void testPagination5() throws Exception {
-      QueryFactory qf = Search.getQueryFactory(cache);
+      QueryFactory qf = getQueryFactory();
 
       qf.from(User.class)
             .startOffset(-3);
    }
 
    public void testOrderedPagination6() throws Exception {
-      QueryFactory qf = Search.getQueryFactory(cache);
+      QueryFactory qf = getQueryFactory();
 
       Query q = qf.from(User.class)
             .orderBy("id", SortOrder.ASC)
@@ -1462,7 +1470,7 @@ public class QueryDslConditionsTest extends AbstractQueryDslTest {
    }
 
    public void testUnorderedPagination6() throws Exception {
-      QueryFactory qf = Search.getQueryFactory(cache);
+      QueryFactory qf = getQueryFactory();
 
       Query q = qf.from(User.class)
             .startOffset(20)
@@ -1474,7 +1482,7 @@ public class QueryDslConditionsTest extends AbstractQueryDslTest {
    }
 
    public void testOrderedPagination7() throws Exception {
-      QueryFactory qf = Search.getQueryFactory(cache);
+      QueryFactory qf = getQueryFactory();
 
       Query q = qf.from(User.class)
             .orderBy("id", SortOrder.ASC)
@@ -1487,7 +1495,7 @@ public class QueryDslConditionsTest extends AbstractQueryDslTest {
    }
 
    public void testUnorderedPagination7() throws Exception {
-      QueryFactory qf = Search.getQueryFactory(cache);
+      QueryFactory qf = getQueryFactory();
 
       Query q = qf.from(User.class)
             .startOffset(20).maxResults(10)
@@ -1499,7 +1507,7 @@ public class QueryDslConditionsTest extends AbstractQueryDslTest {
    }
 
    public void testOrderedPagination8() throws Exception {
-      QueryFactory qf = Search.getQueryFactory(cache);
+      QueryFactory qf = getQueryFactory();
 
       Query q = qf.from(User.class)
             .orderBy("id", SortOrder.ASC)
@@ -1512,7 +1520,7 @@ public class QueryDslConditionsTest extends AbstractQueryDslTest {
    }
 
    public void testUnorderedPagination8() throws Exception {
-      QueryFactory qf = Search.getQueryFactory(cache);
+      QueryFactory qf = getQueryFactory();
 
       Query q = qf.from(User.class)
             .startOffset(1).maxResults(10)
@@ -1524,7 +1532,7 @@ public class QueryDslConditionsTest extends AbstractQueryDslTest {
    }
 
    public void testOrderedPagination9() throws Exception {
-      QueryFactory qf = Search.getQueryFactory(cache);
+      QueryFactory qf = getQueryFactory();
 
       Query q = qf.from(User.class)
             .orderBy("id", SortOrder.ASC)
@@ -1537,7 +1545,7 @@ public class QueryDslConditionsTest extends AbstractQueryDslTest {
    }
 
    public void testUnorderedPagination9() throws Exception {
-      QueryFactory qf = Search.getQueryFactory(cache);
+      QueryFactory qf = getQueryFactory();
 
       Query q = qf.from(User.class)
             .startOffset(0).maxResults(2)

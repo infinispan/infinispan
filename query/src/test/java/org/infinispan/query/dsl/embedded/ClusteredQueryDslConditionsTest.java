@@ -937,10 +937,10 @@ public class ClusteredQueryDslConditionsTest extends MultipleCacheManagersTest {
 
       List<Transaction> list = q.list();
       assertEquals(4, list.size());
-      assertTrue(list.get(0).getDate().compareTo(DATE_FORMAT.parse("2013-01-31")) < 0);
-      assertTrue(list.get(0).getDate().compareTo(DATE_FORMAT.parse("2013-01-01")) > 0);
-      assertTrue(list.get(1).getDate().compareTo(DATE_FORMAT.parse("2013-01-31")) < 0);
-      assertTrue(list.get(1).getDate().compareTo(DATE_FORMAT.parse("2013-01-01")) > 0);
+      for (Transaction t : list) {
+         assertTrue(t.getDate().compareTo(DATE_FORMAT.parse("2013-01-31")) <= 0);
+         assertTrue(t.getDate().compareTo(DATE_FORMAT.parse("2013-01-01")) >= 0);
+      }
    }
 
    public void testSampleDomainQuery9() throws Exception {
@@ -1124,10 +1124,10 @@ public class ClusteredQueryDslConditionsTest extends MultipleCacheManagersTest {
       List<Object[]> list = q.list();
       assertEquals(3, list.size());
       assertEquals(1, list.get(0)[0]);
-      assertEquals("X1234", list.get(0)[1]);
       assertEquals(2, list.get(1)[0]);
-      assertEquals("Y12", list.get(1)[1]);
       assertEquals(3, list.get(2)[0]);
+      assertEquals("X1234", list.get(0)[1]);
+      assertEquals("Y12", list.get(1)[1]);
       assertNull(list.get(2)[1]);
    }
 
