@@ -66,19 +66,6 @@ class TransactionalSharedLuceneLock extends Lock implements Closeable {
    }
 
    /**
-    * {@inheritDoc}
-    */
-   @Override
-   public void release() throws IOException {
-      try {
-         commitTransactions();
-      }
-      finally {
-         clearLock();
-      }
-   }
-
-   /**
     * Removes the lock, without committing pending changes or involving transactions. Used by Lucene
     * at Directory creation: we expect the lock to not exist in this case.
     */
@@ -183,10 +170,20 @@ class TransactionalSharedLuceneLock extends Lock implements Closeable {
 
    /**
     * Since Lucene 4.7, method release() was renamed to close()
+    * @deprecated use method close().
     */
+   @Deprecated
+   public void release() throws IOException {
+      close();
+   }
+
    @Override
    public void close() throws IOException {
-      release();
+      try {
+         commitTransactions();
+      } finally {
+         clearLock();
+      }
    }
 
 }

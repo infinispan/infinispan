@@ -2,7 +2,6 @@ package org.infinispan.lucene.impl;
 
 import java.io.IOException;
 
-import org.apache.lucene.store.IndexOutput;
 import org.infinispan.AdvancedCache;
 import org.infinispan.Cache;
 import org.infinispan.context.Flag;
@@ -22,7 +21,7 @@ import org.infinispan.util.logging.LogFactory;
  * @see org.apache.lucene.store.Directory
  * @see org.apache.lucene.store.IndexInput
  */
-public class InfinispanIndexOutput extends IndexOutput {
+public class InfinispanIndexOutput {
 
    private static final Log log = LogFactory.getLog(InfinispanIndexOutput.class);
    private static final boolean trace = log.isTraceEnabled();
@@ -96,7 +95,6 @@ public class InfinispanIndexOutput extends IndexOutput {
       positionInBuffer = 0;
    }
 
-   @Override
    public final void writeByte(final byte b) {
       if (isNewChunkNeeded()) {
          newChunk();
@@ -105,7 +103,6 @@ public class InfinispanIndexOutput extends IndexOutput {
       filePosition++;
    }
 
-   @Override
    public final void writeBytes(final byte[] b, final int offset, final int length) {
       int writtenBytes = 0;
       while (writtenBytes < length) {
@@ -124,7 +121,6 @@ public class InfinispanIndexOutput extends IndexOutput {
       return (positionInBuffer == buffer.length);
    }
 
-   @Override
    public void flush() {
       storeCurrentBuffer(false);
    }
@@ -169,7 +165,6 @@ public class InfinispanIndexOutput extends IndexOutput {
       }
    }
 
-   @Override
    public void close() {
       if (currentChunkNumber==0) {
          //store current chunk, possibly resizing it
@@ -191,12 +186,10 @@ public class InfinispanIndexOutput extends IndexOutput {
       }
    }
 
-   @Override
    public long getFilePointer() {
       return filePosition;
    }
 
-   @Override
    public void seek(final long pos) throws IOException {
       final int requestedChunkNumber = getChunkNumberFromPosition(pos, bufferSize);
       if (pos > file.getSize()) {
@@ -218,7 +211,6 @@ public class InfinispanIndexOutput extends IndexOutput {
       filePosition = pos;
    }
 
-   @Override
    public long length() {
       resizeFileIfNeeded();
       return file.getSize();
