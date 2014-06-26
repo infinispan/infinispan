@@ -800,8 +800,7 @@ public class ClusteredQueryDslConditionsTest extends MultipleCacheManagersTest {
       assertEquals("Spider", list.get(1).getName());
    }
 
-   @Test(enabled = false, description = "String literal escaping is not properly done yet, see ISPN-4045")  //todo [anistor] fix disabled test
-   public void testStringEscape() throws Exception {
+   public void testStringLiteralEscape() throws Exception {
       QueryFactory qf = Search.getSearchManager(cache2).getQueryFactory();
 
       // all transactions that have a given description. the description contains characters that need to be escaped.
@@ -811,7 +810,7 @@ public class ClusteredQueryDslConditionsTest extends MultipleCacheManagersTest {
 
       List<Account> list = q.list();
       assertEquals(1, list.size());
-      assertEquals(2, list.get(0).getId());
+      assertEquals(1, list.get(0).getId());
    }
 
    public void testSortByDate() throws Exception {

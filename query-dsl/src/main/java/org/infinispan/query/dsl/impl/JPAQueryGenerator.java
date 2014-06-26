@@ -265,7 +265,16 @@ public class JPAQueryGenerator implements Visitor<String> {
 
    private void appendArgument(StringBuilder sb, Object argument) {
       if (argument instanceof String) {
-         sb.append('\'').append(argument).append('\''); //todo [anistor] need to ensure proper string escaping. this is just a dummy attempt
+         sb.append('\'');
+         String stringLiteral = argument.toString();
+         for (int i = 0; i < stringLiteral.length(); i++) {
+            char c = stringLiteral.charAt(i);
+            if (c == '\'') {
+               sb.append('\'');
+            }
+            sb.append(c);
+         }
+         sb.append('\'');
          return;
       }
 
