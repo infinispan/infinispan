@@ -3,7 +3,7 @@ package org.infinispan.lucenedemo;
 import java.io.IOException;
 import java.util.List;
 
-import org.apache.lucene.queryParser.ParseException;
+import org.apache.lucene.queryparser.classic.ParseException;
 import org.apache.lucene.search.Query;
 import org.apache.lucene.store.Directory;
 import org.infinispan.Cache;

@@ -7,13 +7,13 @@ import java.util.List;
 import org.apache.lucene.analysis.Analyzer;
 import org.apache.lucene.analysis.standard.StandardAnalyzer;
 import org.apache.lucene.document.Document;
-import org.apache.lucene.document.Field;
-import org.apache.lucene.document.Field.Index;
 import org.apache.lucene.document.Field.Store;
+import org.apache.lucene.document.TextField;
+import org.apache.lucene.index.DirectoryReader;
 import org.apache.lucene.index.IndexWriter;
-import org.apache.lucene.index.IndexWriter.MaxFieldLength;
-import org.apache.lucene.queryParser.ParseException;
-import org.apache.lucene.queryParser.QueryParser;
+import org.apache.lucene.index.IndexWriterConfig;
+import org.apache.lucene.queryparser.classic.ParseException;
+import org.apache.lucene.queryparser.classic.QueryParser;
 import org.apache.lucene.search.IndexSearcher;
 import org.apache.lucene.search.MatchAllDocsQuery;
 import org.apache.lucene.search.Query;
@@ -38,8 +38,10 @@ public class DemoActions {
    /** The MAIN_FIELD */
    private static final String MAIN_FIELD = "myField";
 
+   private static final Version luceneVersion = Version.LUCENE_48;
+
    /** The Analyzer used in all methods **/
-   private static final Analyzer analyzer = new StandardAnalyzer(Version.LUCENE_33);
+   private static final Analyzer analyzer = new StandardAnalyzer(luceneVersion);
 
    private final Directory index;
 
@@ -56,15 +58,21 @@ public class DemoActions {
     */
    public List<String> listStoredValuesMatchingQuery(Query query) {
       try {
-         IndexSearcher searcher = new IndexSearcher(index, true);
-         TopDocs topDocs = searcher.search(query, null, 100);// demo limited to 100 documents!
-         ScoreDoc[] scoreDocs = topDocs.scoreDocs;
-         List<String> list = new ArrayList<String>();
-         for (ScoreDoc sd : scoreDocs) {
-            Document doc = searcher.doc(sd.doc);
-            list.add(doc.get(MAIN_FIELD));
+         final DirectoryReader reader = DirectoryReader.open(index);
+         try {
+            IndexSearcher searcher = new IndexSearcher(reader);
+            TopDocs topDocs = searcher.search(query, null, 100);// demo limited to 100 documents!
+            ScoreDoc[] scoreDocs = topDocs.scoreDocs;
+            List<String> list = new ArrayList<String>();
+            for (ScoreDoc sd : scoreDocs) {
+               Document doc = searcher.doc(sd.doc);
+               list.add(doc.get(MAIN_FIELD));
+            }
+            return list;
          }
-         return list;
+         finally {
+            reader.close();
+         }
       } catch (IOException ioe) {
          // not recommended: in the simple demo this likely means that the index was not yet
          // initialized, so returning empty list.
@@ -88,10 +96,11 @@ public class DemoActions {
     * @throws IOException
     */
    public void addNewDocument(String line) throws IOException {
-      IndexWriter iw = new IndexWriter(index, analyzer, MaxFieldLength.UNLIMITED);
+      IndexWriterConfig config = makeIndexWriterConfig();
+      IndexWriter iw = new IndexWriter(index, config);
       try {
          Document doc = new Document();
-         Field field = new Field(MAIN_FIELD, line, Store.YES, Index.ANALYZED);
+         TextField field = new TextField(MAIN_FIELD, line, Store.YES);
          doc.add(field);
          iw.addDocument(doc);
          iw.commit();
@@ -100,13 +109,17 @@ public class DemoActions {
       }
    }
 
+   private IndexWriterConfig makeIndexWriterConfig() {
+      return new IndexWriterConfig(luceneVersion, analyzer);
+   }
+
    /**
     * Parses a query using the single field as default
     *
     * @throws ParseException
     */
    public Query parseQuery(String queryLine) throws ParseException {
-      QueryParser parser = new QueryParser(Version.LUCENE_33, MAIN_FIELD, analyzer);
+      QueryParser parser = new QueryParser(Version.LUCENE_48, MAIN_FIELD, analyzer);
       return parser.parse(queryLine);
    }
 
