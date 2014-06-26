@@ -4,6 +4,7 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.util.Set;
 
+import org.apache.lucene.index.IndexFileNames;
 import org.apache.lucene.store.IndexOutput;
 import org.infinispan.AdvancedCache;
 import org.infinispan.Cache;
@@ -38,6 +39,7 @@ class DirectoryImplementor {
 
     protected final FileListOperations fileOps;
     private final SegmentReadLocker readLocks;
+    private final FileCacheKey segmentsGenFileKey;
 
     public DirectoryImplementor(Cache<?, ?> metadataCache, Cache<?, ?> chunksCache, String indexName, int chunkSize, SegmentReadLocker readLocker) {
         if (chunkSize <= 0)
@@ -47,6 +49,7 @@ class DirectoryImplementor {
         this.indexName = indexName;
         this.chunkSize = chunkSize;
         this.fileOps = new FileListOperations(this.metadataCache, indexName);
+        segmentsGenFileKey = new FileCacheKey(indexName, IndexFileNames.SEGMENTS_GEN);
         this.readLocks = readLocker;
      }
 
@@ -137,9 +140,15 @@ class DirectoryImplementor {
     }
 
     IndexOutput createOutput(final String name) {
-       final FileCacheKey key = new FileCacheKey(indexName, name);
-       // creating new file, metadata is added on flush() or close() of IndexOutPut
-       return new InfinispanIndexOutput(metadataCache, chunksCache, key, chunkSize, fileOps);
+       if (IndexFileNames.SEGMENTS_GEN.equals(name)) {
+          return new CheckSummingIndexOutput(metadataCache, chunksCache, segmentsGenFileKey, chunkSize, fileOps);
+       }
+       else {
+          final FileCacheKey key = new FileCacheKey(indexName, name);
+          // creating new file, metadata is added on flush() or close() of
+          // IndexOutPut
+          return new CheckSummingIndexOutput(metadataCache, chunksCache, key, chunkSize, fileOps);
+       }
     }
 
     IndexInputContext openInput(final String name) throws IOException {

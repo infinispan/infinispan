@@ -51,7 +51,7 @@ public final class CheckSummingIndexOutput extends BufferedIndexOutput {
 
    @Override
    public void setLength(long length) throws IOException {
-      delegateOutput.setLength(length);
+      //TODO take advantage of this
    }
 
 }

@@ -55,14 +55,6 @@ class BaseLuceneLock extends Lock implements Closeable {
    }
 
    /**
-    * {@inheritDoc}
-    */
-   @Override
-   public void release() {
-      clearLock();
-   }
-
-   /**
     * Used by Lucene at Directory creation: we expect the lock to not exist in this case.
     */
    public void clearLock() {

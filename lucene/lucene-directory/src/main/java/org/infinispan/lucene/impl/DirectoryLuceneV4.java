@@ -14,7 +14,7 @@ import org.infinispan.lucene.readlocks.SegmentReadLocker;
 
 /**
  * Directory implementation for Apache Lucene.
- * Meant to be compatible with the versions from 4.0 to 4.6.
+ * Meant to be compatible with the versions from 4.0 to 4.8.
  *
  * @since 5.2
  * @author Sanne Grinovero
@@ -39,7 +39,7 @@ class DirectoryLuceneV4 extends Directory implements DirectoryExtensions {
     * @param readLocker @see org.infinispan.lucene.readlocks for some implementations; you might be able to provide more efficient implementations by controlling the IndexReader's lifecycle.
     */
    public DirectoryLuceneV4(Cache<?, ?> metadataCache, Cache<?, ?> chunksCache, String indexName, LockFactory lf, int chunkSize, SegmentReadLocker readLocker) {
-      this.impl = new DirectoryImplementorV4(metadataCache, chunksCache, indexName, chunkSize, readLocker);
+      this.impl = new DirectoryImplementor(metadataCache, chunksCache, indexName, chunkSize, readLocker);
       this.indexName = indexName;
       this.lockFactory = lf;
       this.lockFactory.setLockPrefix(this.getLockID());
