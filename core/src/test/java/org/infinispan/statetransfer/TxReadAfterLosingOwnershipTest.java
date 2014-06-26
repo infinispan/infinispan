@@ -67,9 +67,9 @@ public class TxReadAfterLosingOwnershipTest extends MultipleCacheManagersTest {
       cache(0).put("key", "value0");
       assertCachesKeyValue("key", "value0");
 
-      StateConsumerImpl stateConsumer = (StateConsumerImpl) TestingUtil.extractComponent(cache(1), StateConsumer.class);
+      StateConsumerImpl stateConsumer1 = (StateConsumerImpl) TestingUtil.extractComponent(cache(1), StateConsumer.class);
       Listener listener = new Listener();
-      stateConsumer.setKeyInvalidationListener(listener);
+      stateConsumer1.setKeyInvalidationListener(listener);
 
       log.debug("Add a 3rd node");
       addClusterEnabledCacheManager(createConfigurationBuilder());
@@ -82,21 +82,22 @@ public class TxReadAfterLosingOwnershipTest extends MultipleCacheManagersTest {
          }
       });
 
+      log.debug("Waiting for the 3rd node to join");
+
+      join.get();
+
       log.debug("Waiting for command to block");
       listener.notifier.await();
 
       log.debug("Set a new value");
       //we change the value in the old owner
-      operation.update(cache(1));
+      operation.update(cache(0));
 
       //we check the value in the primary owner and old owner (cache(2) has not started yet)
       assertCachesKeyValue("key", operation.finalValue(), cache(0), cache(1));
 
 
       listener.wait.countDown();
-
-      log.debug("Waiting for the 3rd node to join");
-      join.get();
 
       assertCachesKeyValue("key", operation.finalValue());
    }
