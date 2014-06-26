@@ -3,10 +3,12 @@ package org.jboss.as.clustering.infinispan.subsystem;
 import static org.jboss.as.controller.descriptions.ModelDescriptionConstants.OP_ADDR;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.server.infinispan.SecurityActions;
+import org.infinispan.Version;
 import org.jboss.as.clustering.infinispan.DefaultEmbeddedCacheManager;
 import org.jboss.as.controller.AbstractRuntimeOnlyHandler;
 import org.jboss.as.controller.AttributeDefinition;
@@ -28,7 +30,14 @@ public class CacheContainerMetricsHandler extends AbstractRuntimeOnlyHandler {
         CLUSTER_NAME(MetricKeys.CLUSTER_NAME, ModelType.STRING, true, true),
         IS_COORDINATOR(MetricKeys.IS_COORDINATOR, ModelType.BOOLEAN, true, true),
         COORDINATOR_ADDRESS(MetricKeys.COORDINATOR_ADDRESS, ModelType.STRING, true, true),
-        LOCAL_ADDRESS(MetricKeys.LOCAL_ADDRESS, ModelType.STRING, true, true);
+        LOCAL_ADDRESS(MetricKeys.LOCAL_ADDRESS, ModelType.STRING, true, true),
+        DEFINED_CACHE_NAMES(MetricKeys.DEFINED_CACHE_NAMES, ModelType.INT, true, true),
+        DEFINED_CACHE_COUNT(MetricKeys.DEFINED_CACHE_COUNT, ModelType.INT, true, true),
+        RUNNING_CACHE_COUNT(MetricKeys.RUNNING_CACHE_COUNT, ModelType.INT, true, true),
+        CREATED_CACHE_COUNT(MetricKeys.CREATED_CACHE_COUNT, ModelType.INT, true, true),
+        MEMBERS(MetricKeys.MEMBERS, ModelType.INT, true, true),
+        CLUSTER_SIZE(MetricKeys.CLUSTER_SIZE, ModelType.INT, true, true),
+        VERSION(MetricKeys.VERSION, ModelType.INT, true, true);
 
         private static final Map<String, CacheManagerMetrics> MAP = new HashMap<String, CacheManagerMetrics>();
 
@@ -91,7 +100,7 @@ public class CacheContainerMetricsHandler extends AbstractRuntimeOnlyHandler {
         } else {
             switch (metric) {
                 case CACHE_MANAGER_STATUS:
-                result.set(SecurityActions.getCacheManagerStatus(cacheManager).toString());
+                    result.set(SecurityActions.getCacheManagerStatus(cacheManager).toString());
                     break;
                 case IS_COORDINATOR:
                     result.set(SecurityActions.getCacheManagerIsCoordinator(cacheManager));
@@ -107,6 +116,34 @@ public class CacheContainerMetricsHandler extends AbstractRuntimeOnlyHandler {
                 case CLUSTER_NAME:
                     String clusterName = SecurityActions.getCacheManagerClusterName(cacheManager);
                     result.set(clusterName != null ? clusterName : "N/A");
+                    break;
+                case DEFINED_CACHE_NAMES:
+                    String definedCacheNames = SecurityActions.getDefinedCacheNames(cacheManager);
+                    result.set(definedCacheNames != null ? definedCacheNames : "N/A");
+                    break;
+                case CLUSTER_SIZE:
+                    List<Address> members = SecurityActions.getMembers(cacheManager);
+                    result.set(members != null ? Integer.toString(members.size()) : "N/A");
+                    break;
+                case CREATED_CACHE_COUNT:
+                    result.set(SecurityActions.getCacheCreatedCount(cacheManager));
+                    break;
+                case DEFINED_CACHE_COUNT:
+                    result.set(SecurityActions.getDefinedCacheCount(cacheManager));
+                    break;
+                case MEMBERS:
+                    members = SecurityActions.getMembers(cacheManager);
+                    result.set(members != null ? members.toString() : "N/A");
+                    break;
+                case RUNNING_CACHE_COUNT:
+                    result.set(SecurityActions.getRunningCacheCount(cacheManager));
+                    break;
+                case VERSION:
+                    result.set(Version.VERSION);
+                    break;
+                default:
+                    context.getFailureDescription().set(String.format("Unknown metric %s", metric));
+                    break;
             }
             context.getResult().set(result);
         }

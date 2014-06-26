@@ -28,6 +28,7 @@ import org.infinispan.context.impl.TxInvocationContext;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.annotations.Start;
 import org.infinispan.interceptors.base.BaseRpcInterceptor;
+import org.infinispan.jmx.JmxStatisticsExposer;
 import org.infinispan.jmx.annotations.DataType;
 import org.infinispan.jmx.annotations.MBean;
 import org.infinispan.jmx.annotations.ManagedAttribute;
@@ -52,7 +53,7 @@ import org.infinispan.util.logging.LogFactory;
  * @since 4.0
  */
 @MBean(objectName = "Invalidation", description = "Component responsible for invalidating entries on remote caches when entries are written to locally.")
-public class InvalidationInterceptor extends BaseRpcInterceptor {
+public class InvalidationInterceptor extends BaseRpcInterceptor implements JmxStatisticsExposer {
    private final AtomicLong invalidations = new AtomicLong(0);
    private CommandsFactory commandsFactory;
    private boolean statisticsEnabled;

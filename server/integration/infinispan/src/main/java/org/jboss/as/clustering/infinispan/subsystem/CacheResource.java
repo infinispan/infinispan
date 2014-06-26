@@ -116,10 +116,15 @@ public class CacheResource extends SimpleResourceDefinition {
     static final SimpleAttributeDefinition STATISTICS =
             new SimpleAttributeDefinitionBuilder(ModelKeys.STATISTICS, ModelType.BOOLEAN, true)
                     .setXmlName(Attribute.STATISTICS.getLocalName())
-                    .setAllowExpression(true)
+                    .setAllowExpression(false)
                     .setFlags(AttributeAccess.Flag.RESTART_RESOURCE_SERVICES)
                     .setDefaultValue(new ModelNode().set(true))
                     .build();
+
+    static final SimpleAttributeDefinition MIGRATOR_NAME =
+            new SimpleAttributeDefinitionBuilder(ModelKeys.MIGRATOR_NAME, ModelType.STRING, true)
+                   .setAllowExpression(false)
+                   .build();
 
     static final AttributeDefinition[] CACHE_ATTRIBUTES = {BATCHING, CACHE_MODULE, INDEXING, INDEXING_PROPERTIES, JNDI_NAME, START, STATISTICS};
 
@@ -134,6 +139,14 @@ public class CacheResource extends SimpleResourceDefinition {
     // operations
     static final OperationDefinition CLEAR_CACHE =
             new SimpleOperationDefinitionBuilder("clear-cache",
+                    InfinispanExtension.getResourceDescriptionResolver("cache")
+            ).build();
+    static final OperationDefinition STOP_CACHE =
+            new SimpleOperationDefinitionBuilder("stop-cache",
+                    InfinispanExtension.getResourceDescriptionResolver("cache")
+            ).build();
+    static final OperationDefinition START_CACHE =
+            new SimpleOperationDefinitionBuilder("start-cache",
                     InfinispanExtension.getResourceDescriptionResolver("cache")
             ).build();
     static final OperationDefinition RESET_STATISTICS =
@@ -155,6 +168,29 @@ public class CacheResource extends SimpleResourceDefinition {
                     "reset-passivation-statistics",
                     InfinispanExtension.getResourceDescriptionResolver("cache")
             ).build();
+    static final OperationDefinition RESET_RPC_MANAGER_STATISTICS =
+            new SimpleOperationDefinitionBuilder(
+                    "reset-rpc-manager-statistics",
+                    InfinispanExtension.getResourceDescriptionResolver("cache")
+            ).build();
+
+    static final OperationDefinition SYNCHRONIZE_DATA =
+           new SimpleOperationDefinitionBuilder(
+                   "synchronize-data",
+                   InfinispanExtension.getResourceDescriptionResolver("cache")
+           ).setParameters(MIGRATOR_NAME).build();
+
+    static final OperationDefinition DISCONNECT_SOURCE =
+           new SimpleOperationDefinitionBuilder(
+                  "disconnect-source",
+                  InfinispanExtension.getResourceDescriptionResolver("cache")
+           ).setParameters(MIGRATOR_NAME).build();
+
+    static final OperationDefinition RECORD_KNOWN_GLOBAL_KEYSET =
+           new SimpleOperationDefinitionBuilder(
+                  "record-known-global-keyset",
+                  InfinispanExtension.getResourceDescriptionResolver("cache")
+           ).build();
 
 
     protected final ResolvePathHandler resolvePathHandler;
@@ -185,10 +221,16 @@ public class CacheResource extends SimpleResourceDefinition {
         super.registerOperations(resourceRegistration);
         if (runtimeRegistration) {
             resourceRegistration.registerOperationHandler(CacheResource.CLEAR_CACHE, CacheCommands.ClearCacheCommand.INSTANCE);
+            resourceRegistration.registerOperationHandler(CacheResource.START_CACHE, CacheCommands.StartCacheCommand.INSTANCE);
+            resourceRegistration.registerOperationHandler(CacheResource.STOP_CACHE, CacheCommands.StopCacheCommand.INSTANCE);
             resourceRegistration.registerOperationHandler(CacheResource.RESET_STATISTICS, CacheCommands.ResetCacheStatisticsCommand.INSTANCE);
             resourceRegistration.registerOperationHandler(CacheResource.RESET_ACTIVATION_STATISTICS, CacheCommands.ResetActivationStatisticsCommand.INSTANCE);
-            resourceRegistration.registerOperationHandler(CacheResource.RESET_INVALIDATION_STATISTICS, CacheCommands.ResetPassivationStatisticsCommand.INSTANCE);
+            resourceRegistration.registerOperationHandler(CacheResource.RESET_INVALIDATION_STATISTICS, CacheCommands.ResetInvalidationStatisticsCommand.INSTANCE);
             resourceRegistration.registerOperationHandler(CacheResource.RESET_PASSIVATION_STATISTICS, CacheCommands.ResetPassivationStatisticsCommand.INSTANCE);
+            resourceRegistration.registerOperationHandler(CacheResource.RESET_RPC_MANAGER_STATISTICS, CacheCommands.ResetRpcManagerStatisticsCommand.INSTANCE);
+            resourceRegistration.registerOperationHandler(CacheResource.DISCONNECT_SOURCE, CacheCommands.DisconnectSourceCommand.INSTANCE);
+            resourceRegistration.registerOperationHandler(CacheResource.RECORD_KNOWN_GLOBAL_KEYSET, CacheCommands.RecordGlobalKeySetCommand.INSTANCE);
+            resourceRegistration.registerOperationHandler(CacheResource.SYNCHRONIZE_DATA, CacheCommands.SynchronizeDataCommand.INSTANCE);
         }
     }
 

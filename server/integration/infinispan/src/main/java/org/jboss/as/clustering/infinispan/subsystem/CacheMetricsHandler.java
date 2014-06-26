@@ -45,6 +45,8 @@ public class CacheMetricsHandler extends AbstractRuntimeOnlyHandler {
 
     public enum CacheMetrics {
         CACHE_STATUS(MetricKeys.CACHE_STATUS, ModelType.STRING, true),
+        VERSION(MetricKeys.VERSION, ModelType.STRING, true),
+        CACHE_NAME(MetricKeys.CACHE_NAME, ModelType.STRING, true),
         // LockManager
         NUMBER_OF_LOCKS_AVAILABLE(MetricKeys.NUMBER_OF_LOCKS_AVAILABLE, ModelType.INT, true),
         NUMBER_OF_LOCKS_HELD(MetricKeys.NUMBER_OF_LOCKS_HELD, ModelType.INT, true),
@@ -52,6 +54,7 @@ public class CacheMetricsHandler extends AbstractRuntimeOnlyHandler {
         // CacheMgmtInterceptor
         AVERAGE_READ_TIME(MetricKeys.AVERAGE_READ_TIME, ModelType.LONG, true),
         AVERAGE_WRITE_TIME(MetricKeys.AVERAGE_WRITE_TIME, ModelType.LONG, true),
+        AVERAGE_REMOVE_TIME(MetricKeys.AVERAGE_REMOVE_TIME, ModelType.LONG, true),
         ELAPSED_TIME(MetricKeys.ELAPSED_TIME, ModelType.LONG, true),
         EVICTIONS(MetricKeys.EVICTIONS, ModelType.LONG, true),
         HIT_RATIO(MetricKeys.HIT_RATIO, ModelType.DOUBLE, true),
@@ -171,6 +174,11 @@ public class CacheMetricsHandler extends AbstractRuntimeOnlyHandler {
                     result.set(cacheMgmtInterceptor != null ? cacheMgmtInterceptor.getAverageWriteTime() : 0);
                     break;
                 }
+                case AVERAGE_REMOVE_TIME: {
+                    CacheMgmtInterceptor cacheMgmtInterceptor = getFirstInterceptorWhichExtends(interceptors, CacheMgmtInterceptor.class);
+                    result.set(cacheMgmtInterceptor != null ? cacheMgmtInterceptor.getAverageRemoveTime() : 0);
+                    break;
+                }
                 case ELAPSED_TIME: {
                     CacheMgmtInterceptor cacheMgmtInterceptor = getFirstInterceptorWhichExtends(interceptors, CacheMgmtInterceptor.class);
                     result.set(cacheMgmtInterceptor != null ? cacheMgmtInterceptor.getElapsedTime() : 0);
@@ -282,6 +290,18 @@ public class CacheMetricsHandler extends AbstractRuntimeOnlyHandler {
                 case CACHE_LOADER_STORES: {
                     CacheWriterInterceptor interceptor = getFirstInterceptorWhichExtends(interceptors, CacheWriterInterceptor.class);
                     result.set(interceptor != null ? interceptor.getWritesToTheStores() : 0);
+                    break;
+                }
+                case CACHE_NAME: {
+                    result.set(cache.getName());
+                    break;
+                }
+                case VERSION: {
+                    result.set(SecurityActions.getCacheVersion(aCache));
+                    break;
+                }
+                default:{
+                    context.getFailureDescription().set(String.format("Unknown metric %s", metric));
                     break;
                 }
             }

@@ -169,6 +169,22 @@ public class DefaultEmbeddedCacheManager extends AbstractDelegatingEmbeddedCache
         return this.cm.getCacheManagerConfiguration().globalJmxStatistics().cacheManagerName();
     }
 
+   public String getDefinedCacheNames() {
+      return ((DefaultCacheManager)cm).getDefinedCacheNames();
+   }
+
+   public String getDefinedCacheCount() {
+      return ((DefaultCacheManager)cm).getDefinedCacheCount();
+   }
+
+   public String getCreatedCacheCount() {
+      return ((DefaultCacheManager)cm).getCreatedCacheCount();
+   }
+
+   public String getRunningCacheCount() {
+      return ((DefaultCacheManager)cm).getRunningCacheCount();
+   }
+
     class DelegatingCache<K, V> extends AbstractDelegatingAdvancedCache<K, V> {
         DelegatingCache(AdvancedCache<K, V> cache) {
             super(cache, new AdvancedCacheWrapper<K, V>() {
