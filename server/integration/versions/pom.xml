@@ -455,25 +455,25 @@
          <dependency>
             <groupId>org.apache.lucene</groupId>
             <artifactId>lucene-core</artifactId>
-            <version>${version.lucene.v4}</version>
+            <version>${version.lucene}</version>
          </dependency>
 
          <dependency>
             <groupId>org.apache.lucene</groupId>
             <artifactId>lucene-queryparser</artifactId>
-            <version>${version.lucene.v4}</version>
+            <version>${version.lucene}</version>
          </dependency>
 
          <dependency>
             <groupId>org.apache.lucene</groupId>
             <artifactId>lucene-highlighter</artifactId>
-            <version>${version.lucene.v4}</version>
+            <version>${version.lucene}</version>
          </dependency>
 
          <dependency>
             <groupId>org.apache.lucene</groupId>
             <artifactId>lucene-grouping</artifactId>
-            <version>${version.lucene.v4}</version>
+            <version>${version.lucene}</version>
          </dependency>
       </dependencies>
 

@@ -5,7 +5,7 @@
     <import file="../lib.xml" />
 
     <major-minor version="${project.version}" property="infinispan.slot" prefix="ispn-"/>
-    <major-minor version="${version.lucene.v4}" property="lucene4.slot"/>
+    <major-minor version="${version.lucene}" property="lucene4.slot"/>
 
     <target name="clean">
         <delete dir="${output.dir}" />
@@ -117,13 +117,13 @@
         </module-def>
 
         <module-def name="org.apache.lucene" slot="${lucene4.slot}">
-            <local-resource group="org.apache.lucene" artifact="lucene-core" version="${version.lucene.v4}"/>
-            <local-resource group="org.apache.lucene" artifact="lucene-queries" version="${version.lucene.v4}"/>
-            <local-resource group="org.apache.lucene" artifact="lucene-analyzers-common" version="${version.lucene.v4}"/>
-            <local-resource group="org.apache.lucene" artifact="lucene-queryparser" version="${version.lucene.v4}"/>
-            <local-resource group="org.apache.lucene" artifact="lucene-highlighter" version="${version.lucene.v4}"/>
-            <local-resource group="org.apache.lucene" artifact="lucene-grouping" version="${version.lucene.v4}"/>
-            <local-resource group="org.apache.lucene" artifact="lucene-facet" version="${version.lucene.v4}"/>
+            <local-resource group="org.apache.lucene" artifact="lucene-core" version="${version.lucene}"/>
+            <local-resource group="org.apache.lucene" artifact="lucene-queries" version="${version.lucene}"/>
+            <local-resource group="org.apache.lucene" artifact="lucene-analyzers-common" version="${version.lucene}"/>
+            <local-resource group="org.apache.lucene" artifact="lucene-queryparser" version="${version.lucene}"/>
+            <local-resource group="org.apache.lucene" artifact="lucene-highlighter" version="${version.lucene}"/>
+            <local-resource group="org.apache.lucene" artifact="lucene-grouping" version="${version.lucene}"/>
+            <local-resource group="org.apache.lucene" artifact="lucene-facet" version="${version.lucene}"/>
         </module-def>
 
         <module-def name="org.hibernate.search.engine" slot="${infinispan.slot}">
