@@ -244,7 +244,6 @@ public class StateConsumerImpl implements StateConsumer {
 
    @Override
    public void onTopologyUpdate(final CacheTopology cacheTopology, final boolean isRebalance) {
-      final boolean wasMember = ownsData;
       final boolean isMember = cacheTopology.getMembers().contains(rpcManager.getAddress());
       if (trace) log.tracef("Received new topology for cache %s, isRebalance = %b, isMember = %b, topology = %s", cacheName, isRebalance, isMember, cacheTopology);
 
@@ -397,17 +396,10 @@ public class StateConsumerImpl implements StateConsumer {
          // Any data for segments we no longer own should be removed from data container and cache store
          // If L1 is enabled, we need to discard the keys that we might have had in L1 as well
          if (isMember) {
-            // If a node joins an existing cluster, it will preserve data in the segments it owns in the first topology.
-            // This data is likely to be stale, but it's a compromise to preserve at least some of the data across
-            // cluster restarts, until we have a better solution.
             Set<Integer> removedSegments;
-            if (wasMember) {
-               removedSegments = new HashSet<>(previousWriteCh.getSegmentsForOwner(rpcManager.getAddress()));
-            } else {
-               removedSegments = new HashSet<Integer>(newWriteCh.getNumSegments());
-               for (int i = 0; i < newWriteCh.getNumSegments(); i++) {
-                  removedSegments.add(i);
-               }
+            removedSegments = new HashSet<>(newWriteCh.getNumSegments());
+            for (int i = 0; i < newWriteCh.getNumSegments(); i++) {
+               removedSegments.add(i);
             }
             Set<Integer> newSegments = newWriteCh.getSegmentsForOwner(rpcManager.getAddress());
             removedSegments.removeAll(newSegments);
