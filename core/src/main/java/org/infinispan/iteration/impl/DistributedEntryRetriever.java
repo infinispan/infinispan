@@ -6,8 +6,8 @@ import org.infinispan.commons.util.CloseableIterator;
 import org.infinispan.commons.util.CollectionFactory;
 import org.infinispan.commons.util.concurrent.ParallelIterableMap;
 import org.infinispan.container.entries.CacheEntry;
-import org.infinispan.container.entries.ImmortalCacheEntry;
 import org.infinispan.container.entries.InternalCacheEntry;
+import org.infinispan.context.Flag;
 import org.infinispan.distribution.DistributionManager;
 import org.infinispan.distribution.ch.ConsistentHash;
 import org.infinispan.factories.annotations.ComponentName;
@@ -82,6 +82,7 @@ public class DistributedEntryRetriever<K, V> extends LocalEntryRetriever<K, V> {
       private final SegmentListener segmentListener;
       private final KeyValueFilter<? super K, ? super V> filter;
       private final Converter<? super K, ? super V, ? extends C> converter;
+      private final Set<Flag> flags;
       private final AtomicReferenceArray<Set<K>> processedKeys;
 
       private final AtomicReference<Address> awaitingResponseFrom = new AtomicReference<>();
@@ -90,11 +91,12 @@ public class DistributedEntryRetriever<K, V> extends LocalEntryRetriever<K, V> {
       public IterationStatus(DistributedItr<K, C> ongoingIterator, SegmentListener segmentListener,
                               KeyValueFilter<? super K, ? super V> filter,
                               Converter<? super K, ? super V, ? extends C> converter,
-                              AtomicReferenceArray<Set<K>> processedKeys) {
+                              Set<Flag> flags, AtomicReferenceArray<Set<K>> processedKeys) {
          this.ongoingIterator = ongoingIterator;
          this.segmentListener = segmentListener;
          this.filter = filter;
          this.converter = converter;
+         this.flags = flags;
          this.processedKeys = processedKeys;
       }
    }
@@ -267,14 +269,14 @@ public class DistributedEntryRetriever<K, V> extends LocalEntryRetriever<K, V> {
    @Override
    public <C> void startRetrievingValues(final UUID identifier, final Address origin, final Set<Integer> segments,
                                         KeyValueFilter<? super K, ? super V> filter,
-                                        Converter<? super K, ? super V, C> converter) {
+                                        Converter<? super K, ? super V, C> converter, Set<Flag> flags) {
       if (log.isTraceEnabled()) {
          log.tracef("Received entry request for %s from node %s for segments %s", identifier, origin, segments);
       }
 
       wireFilterAndConverterDependencies(filter, converter);
 
-      startRetrievingValues(identifier, segments, filter, converter, new SegmentBatchHandler<K, C>() {
+      startRetrievingValues(identifier, segments, filter, converter, flags, new SegmentBatchHandler<K, C>() {
          @Override
          public void handleBatch(UUID identifier, boolean complete, Set<Integer> completedSegments,
                                  Set<Integer> inDoubtSegments, Collection<CacheEntry<K, C>> entries) {
@@ -301,7 +303,7 @@ public class DistributedEntryRetriever<K, V> extends LocalEntryRetriever<K, V> {
    private <H, C extends H> void startRetrievingValues(final UUID identifier, final Set<Integer> segments,
                                          final KeyValueFilter<? super K, ? super V> filter,
                                          final Converter<? super K, ? super V, C> converter,
-                                         final SegmentBatchHandler<K, H> handler) {
+                                         final Set<Flag> flags, final SegmentBatchHandler<K, H> handler) {
       ConsistentHash hash = getCurrentHash();
       final Set<Integer> inDoubtSegments = new HashSet<>(segments.size());
       boolean canTryProcess = false;
@@ -357,7 +359,7 @@ public class DistributedEntryRetriever<K, V> extends LocalEntryRetriever<K, V> {
                            }
                            action.apply(key, entry);
                         }
-                        if (persistenceManager.size() > 0) {
+                        if (DistributedEntryRetriever.super.shouldUseLoader(flags) && persistenceManager.size() > 0) {
                            KeyFilter<K> loaderFilter;
                            if (passivationEnabled) {
                               listener = new PassivationListener<K, V>();
@@ -465,7 +467,7 @@ public class DistributedEntryRetriever<K, V> extends LocalEntryRetriever<K, V> {
          if (log.isTraceEnabled()) {
             log.tracef("Starting local request to retrieve segments %s for identifier %s", segments, identifier);
          }
-         startRetrievingValues(identifier, segments, status.filter, status.converter, handler);
+         startRetrievingValues(identifier, segments, status.filter, status.converter, status.flags, handler);
       } else if (log.isTraceEnabled()) {
          log.tracef("Not running local retrieval as another thread is handling it for identifier %s.", identifier);
       }
@@ -474,7 +476,13 @@ public class DistributedEntryRetriever<K, V> extends LocalEntryRetriever<K, V> {
    @Override
    public <C> CloseableIterator<CacheEntry<K, C>> retrieveEntries(KeyValueFilter<? super K, ? super V> filter,
                                                     Converter<? super K, ? super V, ? extends C> converter,
+                                                    Set<Flag> flags,
                                                     SegmentListener listener) {
+      // If we are marked as local don't process distributed entries
+      if (flags != null && flags.contains(Flag.CACHE_MODE_LOCAL)) {
+         log.trace("Skipping distributed entry retrieval and processing local only as CACHE_MODE_LOCAL flag was set");
+         return super.retrieveEntries(filter, converter, flags, listener);
+      }
       UUID identifier = UUID.randomUUID();
       if (log.isTraceEnabled()) {
          log.tracef("Processing entry retrieval request with identifier %s with filter %s and converter %s", identifier,
@@ -491,7 +499,7 @@ public class DistributedEntryRetriever<K, V> extends LocalEntryRetriever<K, V> {
          remoteSegments.add(i);
       }
 
-      IterationStatus status = new IterationStatus<>(itr, listener, filter, converter, processedKeys);
+      IterationStatus status = new IterationStatus<>(itr, listener, filter, converter, flags, processedKeys);
       iteratorDetails.put(identifier, status);
 
       Set<Integer> ourSegments = hash.getPrimarySegmentsForOwner(localAddress);
@@ -591,7 +599,8 @@ public class DistributedEntryRetriever<K, V> extends LocalEntryRetriever<K, V> {
       }
 
       EntryRequestCommand<K, V, ? extends Object> command = commandsFactory.buildEntryRequestCommand(identifier, segments,
-                                                                                      filterToSend, status.converter);
+                                                                                      filterToSend, status.converter,
+                                                                                      status.flags);
       try {
          // We don't want async with sync marshalling as we don't want the extra overhead time
          RpcOptions options = rpcManager.getRpcOptionsBuilder(sync ? ResponseMode.SYNCHRONOUS :

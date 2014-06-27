@@ -674,7 +674,7 @@ public final class CacheNotifierImpl<K, V> extends AbstractListenerImpl<Event<K,
          if (log.isTraceEnabled()) {
             log.tracef("Listener %s requests initial state for cache", generatedId);
          }
-         try (CloseableIterator<CacheEntry<K, C>> iterator = entryRetriever.retrieveEntries(filter, converter, handler)) {
+         try (CloseableIterator<CacheEntry<K, C>> iterator = entryRetriever.retrieveEntries(filter, converter, null, handler)) {
             while (iterator.hasNext()) {
                CacheEntry<K, C> entry = iterator.next();
                // Mark the key as processed and see if we had a concurrent update

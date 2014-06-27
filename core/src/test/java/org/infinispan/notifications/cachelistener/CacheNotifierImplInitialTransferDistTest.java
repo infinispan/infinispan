@@ -3,6 +3,7 @@ package org.infinispan.notifications.cachelistener;
 import org.infinispan.Cache;
 import org.infinispan.commons.util.CloseableIterator;
 import org.infinispan.configuration.cache.CacheMode;
+import org.infinispan.context.Flag;
 import org.infinispan.distribution.ch.ConsistentHash;
 import org.infinispan.filter.Converter;
 import org.infinispan.filter.KeyValueFilter;
@@ -751,7 +752,7 @@ public class CacheNotifierImplInitialTransferDistTest extends MultipleCacheManag
 
             return forwardedAnswer.answer(invocation);
          }
-      }).when(mockRetriever).retrieveEntries(any(KeyValueFilter.class), any(Converter.class),
+      }).when(mockRetriever).retrieveEntries(any(KeyValueFilter.class), any(Converter.class), anySetOf(Flag.class),
                                              any(EntryRetriever.SegmentListener.class));
       TestingUtil.replaceComponent(cache, EntryRetriever.class, mockRetriever, true);
       return retriever;
@@ -785,7 +786,7 @@ public class CacheNotifierImplInitialTransferDistTest extends MultipleCacheManag
 
             return iter;
          }
-      }).when(mockRetriever).retrieveEntries(any(KeyValueFilter.class), any(Converter.class),
+      }).when(mockRetriever).retrieveEntries(any(KeyValueFilter.class), any(Converter.class), anySetOf(Flag.class),
                                              any(EntryRetriever.SegmentListener.class));
       TestingUtil.replaceComponent(cache, EntryRetriever.class, mockRetriever, true);
       return retriever;

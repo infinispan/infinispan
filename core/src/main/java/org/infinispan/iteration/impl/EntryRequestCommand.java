@@ -2,6 +2,7 @@ package org.infinispan.iteration.impl;
 
 import org.infinispan.commands.TopologyAffectedCommand;
 import org.infinispan.commands.remote.BaseRpcCommand;
+import org.infinispan.context.Flag;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.filter.Converter;
@@ -24,6 +25,7 @@ public class EntryRequestCommand<K, V, C> extends BaseRpcCommand implements Topo
    private Set<Integer> segments;
    private KeyValueFilter<? super K, ? super V> filter;
    private Converter<? super K, ? super V, C> converter;
+   private Set<Flag> flags;
    private int topologyId = -1;
 
    private EntryRetriever<K, V> entryRetrieverManager;
@@ -38,13 +40,15 @@ public class EntryRequestCommand<K, V, C> extends BaseRpcCommand implements Topo
    }
 
    public EntryRequestCommand(String cacheName, UUID identifier, Address origin, Set<Integer> segments,
-                              KeyValueFilter<? super K, ? super V> filter, Converter<? super K, ? super V, C> converter) {
+                              KeyValueFilter<? super K, ? super V> filter, Converter<? super K, ? super V, C> converter,
+                              Set<Flag> flags) {
       super(cacheName);
       setOrigin(origin);
       this.identifier = identifier;
       this.segments = segments;
       this.filter = filter;
       this.converter = converter;
+      this.flags = flags;
    }
 
    @Inject
@@ -54,7 +58,7 @@ public class EntryRequestCommand<K, V, C> extends BaseRpcCommand implements Topo
 
    @Override
    public Object perform(InvocationContext ctx) throws Throwable {
-      entryRetrieverManager.startRetrievingValues(identifier, getOrigin(), segments, filter, converter);
+      entryRetrieverManager.startRetrievingValues(identifier, getOrigin(), segments, filter, converter, flags);
       return null;
    }
 
@@ -65,7 +69,7 @@ public class EntryRequestCommand<K, V, C> extends BaseRpcCommand implements Topo
 
    @Override
    public Object[] getParameters() {
-      return new Object[]{identifier, getOrigin(), segments, filter, converter, topologyId};
+      return new Object[]{identifier, getOrigin(), segments, filter, converter, topologyId, flags};
    }
 
    @Override
@@ -77,6 +81,7 @@ public class EntryRequestCommand<K, V, C> extends BaseRpcCommand implements Topo
       filter = (KeyValueFilter<? super K, ? super V>) parameters[i++];
       converter = (Converter<? super K, ? super V, C>) parameters[i++];
       topologyId = (Integer) parameters[i++];
+      flags = (Set<Flag>)parameters[i++];
    }
 
    @Override
@@ -102,6 +107,7 @@ public class EntryRequestCommand<K, V, C> extends BaseRpcCommand implements Topo
             ", filter=" + filter +
             ", converter=" + converter +
             ", topologyId=" + topologyId +
+            ", flags=" + flags +
             '}';
    }
 }
