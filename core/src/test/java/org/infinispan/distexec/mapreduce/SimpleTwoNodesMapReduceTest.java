@@ -48,7 +48,7 @@ public class SimpleTwoNodesMapReduceTest extends BaseWordCountMapReduceTest {
       createClusteredCaches(2, cacheName(), builder);
    }
 
-   @Test(expectedExceptions={CancellationException.class})
+   @Test(expectedExceptions={ExecutionException.class})
    public void testInvokeMapperCancellation() throws Exception {
       final CyclicBarrier barrier = new CyclicBarrier(nodeCount() + 1);
       final String name = this.getClass().getSimpleName();
