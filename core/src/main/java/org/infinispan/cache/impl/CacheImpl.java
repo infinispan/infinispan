@@ -407,7 +407,15 @@ public class CacheImpl<K, V> implements AdvancedCache<K, V> {
 
    @Override
    public EntryIterable<K, V> filterEntries(KeyValueFilter<? super K, ? super V> filter) {
-      return new EntryIterableImpl<K, V>(entryRetriever, filter);
+      return filterEntries(filter, null);
+   }
+
+   protected EntryIterable<K, V> filterEntries(KeyValueFilter<? super K, ? super V> filter, EnumSet<Flag> explicitFlags) {
+      // We need to copy the flag set since it is possible to modify the flags after retrieving the
+      // EntryIterable and we don't want it to effect that.
+
+      return new EntryIterableImpl<K, V>(entryRetriever, filter, explicitFlags != null ? EnumSet.copyOf(explicitFlags) :
+            EnumSet.noneOf(Flag.class));
    }
 
    @Override

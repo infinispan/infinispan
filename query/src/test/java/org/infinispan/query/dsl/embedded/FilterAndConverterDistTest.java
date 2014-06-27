@@ -61,7 +61,7 @@ public class FilterAndConverterDistTest extends MultipleCacheManagersTest {
 
       FilterAndConverter filterAndConverter = new FilterAndConverter<MagicKey, Person>("from org.infinispan.query.test.Person where blurb is null and age <= 31", ReflectionMatcher.class);
 
-      CloseableIterator<Map.Entry<MagicKey, ObjectFilter.FilterResult>> iterator = retriever.retrieveEntries(filterAndConverter, filterAndConverter, null);
+      CloseableIterator<Map.Entry<MagicKey, ObjectFilter.FilterResult>> iterator = retriever.retrieveEntries(filterAndConverter, filterAndConverter, null, null);
       Map<MagicKey, ObjectFilter.FilterResult> results = mapFromIterator(iterator);
 
       assertEquals(2, results.size());

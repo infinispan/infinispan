@@ -412,10 +412,35 @@ public interface CommandsFactory {
     */
    SingleXSiteRpcCommand buildSingleXSiteRpcCommand(VisitableCommand command);
 
+   /**
+    * Builds {@link org.infinispan.iteration.impl.EntryRequestCommand} used to request entries from a remote node for
+    * given segments
+    * @param identifier The unique identifier for this entry retrieval request
+    * @param segments The segments this request should retrieve
+    * @param filter The filter to apply to any found values to limit response data
+    * @param converter The converter to apply to any found values
+    * @param flags The flags used to modify behavior
+    * @param <K> The key type of the stored key
+    * @param <V> The value type of the stored values
+    * @param <C> The converted type after the value is applied from the converter
+    * @return the EntryRequestCommand created
+    */
    <K, V, C> EntryRequestCommand<K, V, C> buildEntryRequestCommand(UUID identifier, Set<Integer> segments,
                                                 KeyValueFilter<? super K, ? super V> filter,
-                                                Converter<? super K, ? super V, C> converter);
+                                                Converter<? super K, ? super V, C> converter, Set<Flag> flags);
 
+   /**
+    * Builds {@link org.infinispan.iteration.impl.EntryResponseCommand} use to respond with retrieved entries for
+    * given segments
+    * @param identifier The unique identifier for this entry retrieval request
+    * @param completedSegments The segments that are now completed per this response
+    * @param inDoubtSegments The segements that are now in doubt meaning they must be retrieved again from another
+    *                        node due to rehash
+    * @param values The entries retrieved from the remote node
+    * @param <K> The key type of the stored key
+    * @param <C> The converted type after the value is applied from the converter
+    * @return The EntryResponseCommand created
+    */
    <K, C> EntryResponseCommand buildEntryResponseCommand(UUID identifier, Set<Integer> completedSegments,
                                                          Set<Integer> inDoubtSegments, Collection<CacheEntry<K, C>> values);
 
