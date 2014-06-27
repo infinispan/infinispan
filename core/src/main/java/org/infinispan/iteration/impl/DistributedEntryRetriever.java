@@ -796,7 +796,12 @@ public class DistributedEntryRetriever<K, V> extends LocalEntryRetriever<K, V> {
          Map<Integer, ConcurrentHashSet<K>> finishedKeysForSegment = new HashMap<>();
          // We have to put the empty hash set, or else segments with no values would complete
          for (int completedSegment : completedSegments) {
-            finishedKeysForSegment.put(completedSegment, new ConcurrentHashSet<K>());
+            // Only notify segments that have completed once! Technically this can still occur twice, since the
+            // segments aren't completed until later, but this happening is not an issue since we only raise a key once,
+            // but this is here to reduce tracing output and false positives in tests.
+            if (processedKeys.get(completedSegment) != null) {
+               finishedKeysForSegment.put(completedSegment, new ConcurrentHashSet<K>());
+            }
          }
          // We need to keep track of what we have seen in case if they become in doubt
          ConsistentHash hash = getCurrentHash();
@@ -995,7 +1000,16 @@ public class DistributedEntryRetriever<K, V> extends LocalEntryRetriever<K, V> {
             Set<K> values = entry.getValue();
             // If it is empty just notify right away
             if (values.isEmpty()) {
-               notifyListenerCompletedSegment(entry.getKey(), false);
+               // If we have keys to be notified, then don't complete the segment due to this response having no valid
+               // keys.  This means a previous response came for this segment that had keys.
+               if (!keysNeededToComplete.containsKey(entry.getKey())) {
+                  notifyListenerCompletedSegment(entry.getKey(), false);
+               } else {
+                  if (log.isTraceEnabled()) {
+                     log.tracef("No keys found for segment %s, but previous response had keys - so cannot complete " +
+                                      "segment", entry.getKey());
+                  }
+               }
             }
             // Else we have to wait until we iterate over the values first
             else {
