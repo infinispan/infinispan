@@ -9,12 +9,16 @@ import org.infinispan.util.concurrent.TimeoutException;
 import org.testng.annotations.Test;
 
 import java.util.Iterator;
+import java.util.Map;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Future;
 
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
 import static java.util.concurrent.TimeUnit.NANOSECONDS;
 import static org.infinispan.distribution.DistributionTestHelper.isFirstOwner;
 import static org.testng.AssertJUnit.assertEquals;
 import static org.testng.AssertJUnit.assertTrue;
+import static org.testng.AssertJUnit.fail;
 
 /**
  * @author Pedro Ruivo
@@ -57,26 +61,50 @@ public class SimpleMapReduceTaskTimeoutTest extends MultipleCacheManagersTest {
    /**
     * Tests a map/reduce task with duration between task timeout and replication timeout (exception expected!)
     */
-   public void testTimeout2() {
+   public void testTimeout2() throws Exception {
+      testTimeoutHelper(true);
+   }
+
+   /**
+    * Tests async map/reduce task with duration between task timeout and replication timeout (exception expected!)
+    */
+   public void testTimeoutAsync() throws Exception {
+      testTimeoutHelper(false);
+   }
+
+   /**
+    * Tests async map/reduce task with duration between task timeout and replication timeout (exception expected!)
+    */
+   private void testTimeoutHelper(boolean sync) throws Exception {
       final int taskTimeout = REPLICATION_TIMEOUT / 4;
       final int sleepTime = REPLICATION_TIMEOUT / 2;
       final String sleepOnKey = init();
 
-      MapReduceTask<String, String, String, Integer> task = createMapReduceTask(this.<String, String>cache(0));
+      MapReduceTask<String, String, String, Integer> task = createMapReduceTask(this.<String, String> cache(0));
       assertEquals("Wrong task timeout.", REPLICATION_TIMEOUT, task.timeout(MILLISECONDS));
-      assertEquals("Wrong replication timeout.", REPLICATION_TIMEOUT,
-                   cache(0).getCacheConfiguration().clustering().sync().replTimeout());
+      assertEquals("Wrong replication timeout.", REPLICATION_TIMEOUT, cache(0).getCacheConfiguration().clustering()
+            .sync().replTimeout());
       task.timeout(taskTimeout, MILLISECONDS);
       assertEquals("Wrong new task timeout.", taskTimeout, task.timeout(MILLISECONDS));
 
-      task.mappedWith(new SleepMapper(sleepTime, sleepOnKey))
-            .reducedWith(new DummyReducer());
+      task.mappedWith(new SleepMapper(sleepTime, sleepOnKey)).reducedWith(new DummyReducer());
 
       long start = System.nanoTime();
-      try {
-         task.execute();
-      } catch (CacheException expected) {
-         assertTrue(hasTimeoutException(expected));
+      if (sync) {
+         try {
+            task.execute();
+            fail("Should have gotten an exception for task.execute() call");
+         } catch (CacheException expected) {
+            assertTrue(hasTimeoutException(expected));
+         }
+      } else {
+         try {
+            Future<Map<String, Integer>> future = task.executeAsynchronously();
+            future.get();
+            fail("Should have gotten an exception for future.get() call");
+         } catch (ExecutionException e) {
+            assertTrue(hasTimeoutException(e));
+         }
       }
       long duration = System.nanoTime() - start;
       assertTrue(NANOSECONDS.toMillis(duration) >= taskTimeout);
@@ -143,7 +171,7 @@ public class SimpleMapReduceTaskTimeoutTest extends MultipleCacheManagersTest {
       return new MapReduceTask<String, String, String, Integer>(c);
    }
 
-   private boolean hasTimeoutException(CacheException exception) {
+   private boolean hasTimeoutException(Exception exception) {
       Throwable iterator = exception;
       while (iterator != null) {
          if (iterator instanceof TimeoutException) {

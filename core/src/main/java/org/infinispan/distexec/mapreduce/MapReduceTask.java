@@ -14,8 +14,8 @@ import java.util.Map.Entry;
 import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.Callable;
-import java.util.concurrent.CancellationException;
 import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
 import java.util.concurrent.FutureTask;
 import java.util.concurrent.TimeUnit;
@@ -33,9 +33,9 @@ import org.infinispan.commons.CacheException;
 import org.infinispan.commons.marshall.Marshaller;
 import org.infinispan.commons.marshall.StreamingMarshaller;
 import org.infinispan.commons.util.Util;
-import org.infinispan.commons.util.concurrent.AbstractInProcessFuture;
 import org.infinispan.commons.util.concurrent.FutureListener;
 import org.infinispan.commons.util.concurrent.NotifyingFuture;
+import org.infinispan.commons.util.concurrent.NotifyingFutureImpl;
 import org.infinispan.commons.util.concurrent.NotifyingNotifiableFuture;
 import org.infinispan.distexec.mapreduce.spi.MapReduceTaskLifecycleService;
 import org.infinispan.distribution.DistributionManager;
@@ -798,13 +798,33 @@ public class MapReduceTask<KIn, VIn, KOut, VOut> {
     *         that output key
     */
    public Future<Map<KOut, VOut>> executeAsynchronously() {
-      return new MapReduceTaskFuture<Map<KOut, VOut>>(new Callable<Map<KOut, VOut>>() {
-
+      final MapReduceTaskFuture<Map<KOut, VOut>> result = new MapReduceTaskFuture<Map<KOut, VOut>>();
+      ExecutorService executor = mapReduceManager.getExecutorService();
+      Future<Map<KOut, VOut>> returnValue = executor.submit(new Callable<Map<KOut, VOut>>() {
          @Override
          public Map<KOut, VOut> call() throws Exception {
-            return execute();
+            try {
+               Map<KOut, VOut> retval = execute();
+               try {
+                  result.notifyDone(retval);
+                  log.trace("Finished notifying");
+               } catch (Throwable e) {
+                  log.trace("Exception while notifying the future", e);
+               }
+               return retval;
+            } catch (Exception e) {
+               try {
+                  result.notifyException(e);
+                  log.trace("Finished notifying exception");
+               } catch (Throwable e2) {
+                  log.trace("Exception while notifying the future", e2);
+               }
+               throw e;
+            }
          }
       });
+      result.setFuture(returnValue);
+      return result;
    }
 
    /**
@@ -831,13 +851,33 @@ public class MapReduceTask<KIn, VIn, KOut, VOut> {
     * @return collated result
     */
    public <R> Future<R> executeAsynchronously(final Collator<KOut, VOut, R> collator) {
-      return new MapReduceTaskFuture<R>(new Callable<R>() {
-
+      final MapReduceTaskFuture<R> result = new MapReduceTaskFuture<R>();
+      ExecutorService executor = mapReduceManager.getExecutorService();
+      Future<R> returnValue = executor.submit(new Callable<R>() {
          @Override
          public R call() throws Exception {
-            return execute(collator);
+            try {
+               R retval = execute(collator);
+               try {
+                  result.notifyDone(retval);
+                  log.trace("Finished notifying");
+               } catch (Throwable e) {
+                  log.trace("Exception while notifying the future", e);
+               }
+               return retval;
+            } catch (Exception e) {
+               try {
+                  result.notifyException(e);
+                  log.trace("Finished notifying");
+               } catch (Throwable e2) {
+                  log.trace("Exception while notifying the future", e2);
+               }
+               throw e;
+            }
          }
       });
+      result.setFuture(returnValue);
+      return result;
    }
 
    protected void aggregateReducedResult(Map<KOut, List<VOut>> finalReduced, Map<KOut, VOut> mapReceived) {
@@ -934,28 +974,11 @@ public class MapReduceTask<KIn, VIn, KOut, VOut> {
                + ", keys=" + keys + ", taskId=" + taskId + "]";
    }
 
-   private class MapReduceTaskFuture<R> extends AbstractInProcessFuture<R> {
+   private class MapReduceTaskFuture<R> extends NotifyingFutureImpl<R> {
 
-      private final Callable<R> call;
       private volatile boolean cancelled = false;
-      private volatile boolean done = false;
 
-      public MapReduceTaskFuture(Callable<R> call) {
-         super();
-         this.call = call;
-      }
-
-      @Override
-      public R get() throws InterruptedException, ExecutionException {
-         if (isCancelled())
-            throw new CancellationException("MapReduceTask already cancelled");
-         try {
-            return call.call();
-         } catch (Exception e) {
-            throw new ExecutionException(e);
-         } finally {
-            done = true;
-         }
+      public MapReduceTaskFuture() {
       }
 
       @Override
@@ -978,7 +1001,6 @@ public class MapReduceTask<KIn, VIn, KOut, VOut> {
                      rpc.invokeRemotely(Collections.singletonList(task.getExecutionTarget()), cc, rpcOptionsBuilder.build());
                   }
                   cancelled = true;
-                  done = true;
                }
             }
             return cancelled;
@@ -991,11 +1013,6 @@ public class MapReduceTask<KIn, VIn, KOut, VOut> {
       @Override
       public boolean isCancelled() {
          return cancelled;
-      }
-
-      @Override
-      public boolean isDone() {
-         return done;
       }
    }
 
