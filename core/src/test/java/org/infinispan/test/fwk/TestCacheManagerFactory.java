@@ -5,11 +5,7 @@ import static org.infinispan.test.fwk.JGroupsConfigBuilder.getJGroupsConfig;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.security.AccessController;
-import java.util.HashMap;
-import java.util.Map;
 import java.util.UUID;
-import java.util.concurrent.CountDownLatch;
 
 import javax.xml.stream.FactoryConfigurationError;
 import javax.xml.stream.XMLStreamException;
@@ -28,10 +24,7 @@ import org.infinispan.jmx.MBeanServerLookup;
 import org.infinispan.jmx.PerThreadMBeanServerLookup;
 import org.infinispan.manager.DefaultCacheManager;
 import org.infinispan.manager.EmbeddedCacheManager;
-import org.infinispan.remoting.transport.jgroups.JGroupsAddress;
 import org.infinispan.remoting.transport.jgroups.JGroupsTransport;
-import org.infinispan.security.Security;
-import org.infinispan.security.actions.GetCacheManagerStatusAction;
 import org.infinispan.transaction.TransactionMode;
 import org.infinispan.transaction.lookup.TransactionManagerLookup;
 import org.infinispan.util.logging.Log;
@@ -54,16 +47,6 @@ public class TestCacheManagerFactory {
 
    public static final String MARSHALLER = LegacyKeySupportSystemProperties.getProperty("infinispan.test.marshaller.class", "infinispan.marshaller.class");
    private static final Log log = LogFactory.getLog(TestCacheManagerFactory.class);
-
-   private static volatile boolean shuttingDown;
-   private static CountDownLatch shutDownLatch = new CountDownLatch(1);
-
-   private static ThreadLocal<PerThreadCacheManagers> perThreadCacheManagers = new ThreadLocal<PerThreadCacheManagers>() {
-      @Override
-      protected PerThreadCacheManagers initialValue() {
-         return new PerThreadCacheManagers();
-      }
-   };
 
    /**
     * Note this method does not amend the global configuration to reduce overall resource footprint.  It is therefore
@@ -249,7 +232,7 @@ public class TestCacheManagerFactory {
    }
 
    public static EmbeddedCacheManager createClusteredCacheManagerEnforceJmxDomain(String cacheManagerName, String jmxDomain, boolean allowDuplicateDomains) {
-      return createClusteredCacheManagerEnforceJmxDomain(cacheManagerName, jmxDomain, true, allowDuplicateDomains, new ConfigurationBuilder(),new PerThreadMBeanServerLookup());
+      return createClusteredCacheManagerEnforceJmxDomain(cacheManagerName, jmxDomain, true, allowDuplicateDomains, new ConfigurationBuilder(), new PerThreadMBeanServerLookup());
    }
 
    public static EmbeddedCacheManager createClusteredCacheManagerEnforceJmxDomain(String jmxDomain, ConfigurationBuilder builder) {
@@ -321,33 +304,16 @@ public class TestCacheManagerFactory {
    private static void amendTransport(GlobalConfigurationBuilder builder, TransportFlags flags) {
       org.infinispan.configuration.global.GlobalConfiguration gc = builder.build();
       if (gc.transport().transport() != null) { //this is local
-         String fullTestName = perThreadCacheManagers.get().fullTestName;
-         String nextCacheName = perThreadCacheManagers.get().getNextCacheName();
-         checkTestName(fullTestName);
+         String testName = TestResourceTracker.getCurrentTestName();
+         String nextCacheName = TestResourceTracker.getNextNodeName();
 
          // Remove any configuration file that might have been set.
          builder.transport().removeProperty(JGroupsTransport.CONFIGURATION_FILE);
 
          builder
                .transport()
-               .addProperty(JGroupsTransport.CONFIGURATION_STRING, getJGroupsConfig(fullTestName, flags))
+               .addProperty(JGroupsTransport.CONFIGURATION_STRING, getJGroupsConfig(testName, flags))
                .nodeName(nextCacheName);
-      }
-   }
-
-   private static void checkTestName(String fullTestName) {
-      if (fullTestName == null) {
-         // Either we're running from within the IDE or it's a
-         // @Test(timeOut=nnn) test. We rely here on some specific TestNG
-         // thread naming convention which can break, but TestNG offers no
-         // other alternative. It does not offer any callbacks within the
-         // thread that runs the test that can timeout.
-         String threadName = Thread.currentThread().getName();
-         String pattern = "TestNGInvoker-";
-         if (threadName.startsWith(pattern)) {
-            // This is a timeout test, so force the user to call our marking method
-            throw new RuntimeException("Test name is not set! Please call TestCacheManagerFactory.backgroundTestStarted(this) in your test method!");
-         } // else, test is being run from IDE
       }
    }
 
@@ -378,123 +344,14 @@ public class TestCacheManagerFactory {
 
    private static DefaultCacheManager newDefaultCacheManager(boolean start, GlobalConfigurationBuilder gc, ConfigurationBuilder c) {
       DefaultCacheManager defaultCacheManager = new DefaultCacheManager(gc.build(), c.build(), start);
-      return addThreadCacheManager(defaultCacheManager);
-   }
-
-   private static DefaultCacheManager addThreadCacheManager(DefaultCacheManager cm) {
-      if (shuttingDown) {
-         try {
-            shutDownLatch.await();
-         } catch (InterruptedException e) {
-            throw new IllegalStateException(e);
-         }
-      }
-      PerThreadCacheManagers threadCacheManagers = perThreadCacheManagers.get();
-      Throwable allocationThrowable = new Throwable();
-
-      // In case JGroups' address cache expires, this will help us map the uuids in the log
-      if (cm.getAddress() != null) {
-         String uuid = ((org.jgroups.util.UUID) ((JGroupsAddress) cm.getAddress()).getJGroupsAddress()).toStringLong();
-         log.debugf("Started cache manager %s, UUID is %s", cm.getAddress(), uuid);
-      }
-      if (log.isTraceEnabled()) {
-         log.tracef(allocationThrowable, "Adding DCM (%s), allocation stacktrace follows", cm.getCacheManagerConfiguration().transport().nodeName());
-      }
-
-      threadCacheManagers.add(allocationThrowable, cm);
-      return cm;
+      TestResourceTracker.addResource(new TestResourceTracker.CacheManagerCleaner(defaultCacheManager));
+      return defaultCacheManager;
    }
 
    private static DefaultCacheManager newDefaultCacheManager(boolean start, ConfigurationBuilderHolder holder) {
       DefaultCacheManager defaultCacheManager = new DefaultCacheManager(holder, start);
-      return addThreadCacheManager(defaultCacheManager);
-   }
-
-   public static void backgroundTestStarted(Object testInstance) {
-      String fullName = testInstance.getClass().getName();
-      String testName = testInstance.getClass().getSimpleName();
-
-      TestCacheManagerFactory.testStarted(testName, fullName);
-   }
-
-   static void testStarted(String testName, String fullName) {
-      perThreadCacheManagers.get().setTestName(testName, fullName);
-   }
-
-   static void testFinished(String testName) {
-      perThreadCacheManagers.get().checkManagersClosed(testName);
-      perThreadCacheManagers.get().unsetTestName();
-   }
-
-   private static class PerThreadCacheManagers {
-      String testName = null;
-      private String oldThreadName;
-      HashMap<EmbeddedCacheManager, Throwable> cacheManagers = new HashMap<EmbeddedCacheManager, Throwable>();
-      String fullTestName;
-
-      public void checkManagersClosed(String testName) {
-         for (Map.Entry<EmbeddedCacheManager, Throwable> cmEntry : cacheManagers.entrySet()) {
-            EmbeddedCacheManager key = cmEntry.getKey();
-            if (isCacheInvocationsAllowed(key)) {
-               String thName = Thread.currentThread().getName();
-               String errorMessage = '\n' +
-                     "!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!\n" +
-                     "!!!!!! (" + thName + ") Exiting because " + testName + " has NOT shut down all the cache managers it has started !!!!!!!\n" +
-                     "!!!!!! (" + thName + ") See allocation stacktrace to find out where still-running cacheManager (" + key + ") was created: !!!!!!!\n" +
-                     "!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!\n";
-               Throwable allocationThrowable = cmEntry.getValue();
-               log.errorf(allocationThrowable, errorMessage);
-               System.err.println(errorMessage);
-               allocationThrowable.printStackTrace();
-               shuttingDown = true;//just reduce noise..
-               try {
-                  Thread.sleep(60000); //wait for the thread dump to be logged in case of OOM
-               } catch (InterruptedException e) {
-                  e.printStackTrace();
-               }
-               System.exit(9);
-            }
-         }
-         cacheManagers.clear();
-      }
-
-      public String getNextCacheName() {
-         int index = cacheManagers.size();
-         return (testName != null ? testName + "-" : "") + "Node" + getNameForIndex(index);
-      }
-
-      private String getNameForIndex(int i) {
-         final int k = 'Z' - 'A' + 1;
-         String c = String.valueOf((char)('A' + i % k));
-         int q = i / k;
-         return q == 0 ? c : getNameForIndex(q - 1) + c;
-      }
-
-      public void add(Throwable allocationThrowable, DefaultCacheManager cm) {
-         cacheManagers.put(cm, allocationThrowable);
-      }
-
-      public void setTestName(String testName, String fullTestName) {
-         this.testName = testName;
-         this.fullTestName = fullTestName;
-         this.oldThreadName = Thread.currentThread().getName();
-         Thread.currentThread().setName("testng-" + testName);
-      }
-
-      public void unsetTestName() {
-         this.testName = null;
-         Thread.currentThread().setName(oldThreadName);
-         this.oldThreadName = null;
-      }
-   }
-
-   private static boolean isCacheInvocationsAllowed(EmbeddedCacheManager cacheManager) {
-      GetCacheManagerStatusAction action = new GetCacheManagerStatusAction(cacheManager);
-      if (System.getSecurityManager() != null) {
-         return AccessController.doPrivileged(action).allowInvocations();
-      } else {
-         return Security.doPrivileged(action).allowInvocations();
-      }
+      TestResourceTracker.addResource(new TestResourceTracker.CacheManagerCleaner(defaultCacheManager));
+      return defaultCacheManager;
    }
 
    public static ConfigurationBuilderHolder buildAggregateHolder(String... xmls)

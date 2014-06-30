@@ -43,7 +43,6 @@ public class TreeStructureHashCodeTest {
          addToDistribution(container.getLock(structureKey), distribution);
       }
 
-      System.out.println("Distribution: " + distribution);
       assert distribution.size() <= container.size() : "Cannot have more locks than the container size!";
       // assume at least a 2/3rd even distribution
       // but also consider that data snd structure keys would typically provide the same hash code

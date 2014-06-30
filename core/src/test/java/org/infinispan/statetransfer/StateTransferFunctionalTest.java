@@ -7,7 +7,7 @@ import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.TestingUtil;
-import org.infinispan.test.fwk.TestCacheManagerFactory;
+import org.infinispan.test.fwk.TestResourceTracker;
 import org.infinispan.test.fwk.TransportFlags;
 import org.infinispan.transaction.LockingMode;
 import org.infinispan.util.logging.Log;
@@ -250,7 +250,7 @@ public class StateTransferFunctionalTest extends MultipleCacheManagersTest {
 
    @Test (timeOut = 120000)
    public void testSTWithWritingNonTxThread(Method m) throws Exception {
-      TestCacheManagerFactory.backgroundTestStarted(this);
+      TestResourceTracker.backgroundTestStarted(this);
       testCount++;
       logTestStart(m);
       writingThreadTest(false);
@@ -259,7 +259,7 @@ public class StateTransferFunctionalTest extends MultipleCacheManagersTest {
 
    @Test (timeOut = 120000, groups = "unstable")
    public void testSTWithWritingTxThread(Method m) throws Exception {
-      TestCacheManagerFactory.backgroundTestStarted(this);
+      TestResourceTracker.backgroundTestStarted(this);
       testCount++;
       logTestStart(m);
       writingThreadTest(true);

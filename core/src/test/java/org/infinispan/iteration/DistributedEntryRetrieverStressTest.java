@@ -15,6 +15,7 @@ import org.infinispan.metadata.Metadata;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
+import org.infinispan.test.fwk.TestResourceTracker;
 import org.infinispan.test.fwk.TransportFlags;
 import org.testng.annotations.Test;
 
@@ -150,7 +151,7 @@ public class DistributedEntryRetrieverStressTest extends MultipleCacheManagersTe
       futures[futures.length - 1] = fork(new Callable<Void>() {
          @Override
          public Void call() throws Exception {
-            TestCacheManagerFactory.backgroundTestStarted(DistributedEntryRetrieverStressTest.this);
+            TestResourceTracker.backgroundTestStarted(DistributedEntryRetrieverStressTest.this);
             try {
                Cache<?, ?> cacheToKill = cache(CACHE_COUNT - 1);
                while (!complete.get()) {
