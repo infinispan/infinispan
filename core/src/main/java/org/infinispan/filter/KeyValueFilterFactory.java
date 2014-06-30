@@ -1,4 +1,4 @@
-package org.infinispan.server.hotrod.event;
+package org.infinispan.filter;
 
 import org.infinispan.filter.KeyValueFilter;
 

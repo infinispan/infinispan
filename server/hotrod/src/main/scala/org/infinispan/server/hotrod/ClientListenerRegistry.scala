@@ -8,7 +8,7 @@ import org.infinispan.commons.equivalence.{AnyEquivalence, ByteArrayEquivalence}
 import org.infinispan.commons.marshall.{AbstractExternalizer, Marshaller}
 import org.infinispan.commons.util.concurrent.jdk8backported.EquivalentConcurrentHashMapV8
 import org.infinispan.container.versioning.NumericVersion
-import org.infinispan.filter.{Converter, KeyValueFilter}
+import org.infinispan.filter.{KeyValueFilterFactory, ConverterFactory, Converter, KeyValueFilter}
 import org.infinispan.metadata.Metadata
 import org.infinispan.notifications._
 import org.infinispan.notifications.cachelistener.annotation.{CacheEntryRemoved, CacheEntryModified, CacheEntryCreated}
@@ -20,7 +20,6 @@ import org.infinispan.server.hotrod.Events.KeyWithVersionEvent
 import org.infinispan.server.hotrod.OperationResponse._
 import org.infinispan.server.hotrod.configuration.HotRodServerConfiguration
 import org.infinispan.server.hotrod.logging.Log
-import org.infinispan.server.hotrod.event.{KeyValueFilterFactory, ConverterFactory}
 
 import scala.collection.JavaConversions._
 

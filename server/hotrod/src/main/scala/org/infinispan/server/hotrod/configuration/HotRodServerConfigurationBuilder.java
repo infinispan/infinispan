@@ -6,8 +6,8 @@ import org.infinispan.commons.marshall.jboss.GenericJBossMarshaller;
 import org.infinispan.configuration.cache.LockingConfigurationBuilder;
 import org.infinispan.configuration.cache.StateTransferConfigurationBuilder;
 import org.infinispan.configuration.cache.SyncConfigurationBuilder;
-import org.infinispan.server.hotrod.event.ConverterFactory;
-import org.infinispan.server.hotrod.event.KeyValueFilterFactory;
+import org.infinispan.filter.ConverterFactory;
+import org.infinispan.filter.KeyValueFilterFactory;
 import org.infinispan.server.core.configuration.ProtocolServerConfigurationBuilder;
 
 import java.util.HashMap;
