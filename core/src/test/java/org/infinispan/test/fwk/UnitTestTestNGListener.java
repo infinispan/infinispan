@@ -4,7 +4,6 @@ import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 import org.testng.*;
 
-import java.lang.reflect.Modifier;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
@@ -92,16 +91,15 @@ public class UnitTestTestNGListener implements ITestListener, IInvokedMethodList
       String fullName = arg0.getName();
       String simpleName = fullName.substring(fullName.lastIndexOf('.') + 1);
       Class testClass = arg0.getCurrentXmlTest().getXmlClasses().get(0).getSupportClass();
-      boolean isAbstract = Modifier.isAbstract(testClass.getModifiers());
-      if (!isAbstract && !simpleName.equals(testClass.getSimpleName())) {
+      if (!simpleName.equals(testClass.getSimpleName())) {
          log.warnf("Wrong test name %s for class %s", simpleName, testClass.getSimpleName());
       }
-      TestCacheManagerFactory.testStarted(testClass.getSimpleName(), testClass.getName());
+      TestResourceTracker.testStarted(testClass.getName());
    }
 
    public void onFinish(ITestContext arg0) {
       Class testClass = arg0.getCurrentXmlTest().getXmlClasses().get(0).getSupportClass();
-      TestCacheManagerFactory.testFinished(testClass.getSimpleName());
+      TestResourceTracker.testFinished(testClass.getName());
    }
 
    private String getThreadId() {

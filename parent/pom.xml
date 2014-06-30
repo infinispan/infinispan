@@ -83,6 +83,7 @@
       <defaultTestGroup>functional,unit,arquillian</defaultTestGroup>
       <!-- unstable and stress because we can have them inside a functional class, for example -->
       <defaultExcludedTestGroup>unstable,stress,unstable_xsite</defaultExcludedTestGroup>
+      <forkJvmArgs>-Xmx1024m -XX:MaxPermSize=256m</forkJvmArgs>
       <testNGListener>org.infinispan.test.fwk.UnitTestTestNGListener</testNGListener>
       <infinispan.test.parallel.threads>15</infinispan.test.parallel.threads>
       <infinispan.test.jgroups.protocol>tcp</infinispan.test.jgroups.protocol>
@@ -1533,6 +1534,8 @@
                   <infinispan.unsafe.allow_jdk8_chm>true</infinispan.unsafe.allow_jdk8_chm>
                   <log4j.configuration>${log4j.configuration}</log4j.configuration>
                   <build.directory>${project.build.directory}</build.directory>
+                 <!-- this is picked up in the log4j xml which prepends it to each module's log file-->
+                 <infinispan.module-name>${project.artifactId}</infinispan.module-name>
                </systemPropertyVariables>
                <trimStackTrace>false</trimStackTrace>
                <properties>
@@ -1542,7 +1545,7 @@
                   </property>
                </properties>
                <!-- -Dsun.nio.ch.bugLevel needed because of http://bugs.sun.com/view_bug.do?bug_id=6427854 -->
-               <argLine>-Xmx1024m -XX:MaxPermSize=256m -Dsun.nio.ch.bugLevel</argLine>
+               <argLine>${forkJvmArgs} -Dsun.nio.ch.bugLevel</argLine>
             </configuration>
          </plugin>
          <!-- Scan module for components and persist these into a data file, for use at runtime -->
@@ -1674,20 +1677,6 @@
             <defaultTestGroup>functional,unit,arquillian</defaultTestGroup>
             <infinispan.test.jgroups.protocol>tcp</infinispan.test.jgroups.protocol>
          </properties>
-         <build>
-            <plugins>
-               <plugin>
-                  <groupId>org.apache.maven.plugins</groupId>
-                  <artifactId>maven-surefire-plugin</artifactId>
-                  <configuration>
-                     <systemPropertyVariables>
-                           <!-- this is picked up in the log4j xml which prepends it to each module's log file-->
-                           <infinispan.module-name>${project.artifactId}</infinispan.module-name>
-                     </systemPropertyVariables>
-                  </configuration>
-               </plugin>
-            </plugins>
-         </build>
       </profile>
       <profile>
          <id>test-functional</id>
@@ -1741,13 +1730,39 @@
             <defaultTestGroup>transaction</defaultTestGroup>
          </properties>
       </profile>
-      <profile>
-         <id>debug-tests</id>
-         <properties>
-            <testNGListener>org.infinispan.test.fwk.DebuggingUnitTestNGListener</testNGListener>
-            <infinispan.test.jgroups.protocol>tcp</infinispan.test.jgroups.protocol>
-         </properties>
-      </profile>
+     <profile>
+       <id>debug-tests</id>
+       <properties>
+         <testNGListener>org.infinispan.test.fwk.DebuggingUnitTestNGListener</testNGListener>
+         <infinispan.test.jgroups.protocol>tcp</infinispan.test.jgroups.protocol>
+       </properties>
+     </profile>
+     <profile>
+       <id>fail-all-tests</id>
+       <properties>
+         <testNGListener>org.infinispan.test.fwk.UnitTestTestNGListener,org.infinispan.test.fwk.FailAllTestNGHook</testNGListener>
+         <infinispan.test.jgroups.protocol>tcp</infinispan.test.jgroups.protocol>
+       </properties>
+     </profile>
+     <profile>
+       <id>fail-all-tests-setup</id>
+       <properties>
+         <testNGListener>org.infinispan.test.fwk.UnitTestTestNGListener,org.infinispan.test.fwk.FailAllSetupTestNGHook</testNGListener>
+         <infinispan.test.jgroups.protocol>tcp</infinispan.test.jgroups.protocol>
+       </properties>
+     </profile>
+     <profile>
+       <id>customForkJvmArgs</id>
+       <activation>
+         <activeByDefault>false</activeByDefault>
+         <property>
+           <name>env.MAVEN_FORK_OPTS</name>
+         </property>
+       </activation>
+       <properties>
+         <forkJvmArgs>${env.MAVEN_FORK_OPTS}</forkJvmArgs>
+       </properties>
+     </profile>
       <profile>
          <id>nonParallel</id>
          <activation>

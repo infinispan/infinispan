@@ -31,6 +31,7 @@ import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.test.AbstractInfinispanTest;
 import org.infinispan.test.CacheManagerCallable;
 import org.infinispan.test.TestingUtil;
+import org.infinispan.test.fwk.TestResourceTracker;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 import org.testng.annotations.AfterMethod;
@@ -91,7 +92,7 @@ public class AsyncStoreTest extends AbstractInfinispanTest {
 
    @Test(timeOut=30000)
    public void testPutRemove() throws Exception {
-      TestCacheManagerFactory.backgroundTestStarted(this);
+      TestResourceTracker.backgroundTestStarted(this);
       createStore();
 
       final int number = 1000;
@@ -103,7 +104,7 @@ public class AsyncStoreTest extends AbstractInfinispanTest {
 
    @Test(timeOut=30000, groups = "unstable")
    public void testPutClearPut() throws Exception {
-      TestCacheManagerFactory.backgroundTestStarted(this);
+      TestResourceTracker.backgroundTestStarted(this);
       createStore();
 
       final int number = 1000;
@@ -118,7 +119,7 @@ public class AsyncStoreTest extends AbstractInfinispanTest {
 
    @Test(timeOut=30000)
    public void testMultiplePutsOnSameKey() throws Exception {
-      TestCacheManagerFactory.backgroundTestStarted(this);
+      TestResourceTracker.backgroundTestStarted(this);
       createStore();
 
       final int number = 1000;
@@ -130,7 +131,7 @@ public class AsyncStoreTest extends AbstractInfinispanTest {
 
    @Test(timeOut=30000)
    public void testRestrictionOnAddingToAsyncQueue() throws Exception {
-      TestCacheManagerFactory.backgroundTestStarted(this);
+      TestResourceTracker.backgroundTestStarted(this);
       createStore();
 
       writer.delete("blah");

@@ -10,6 +10,7 @@ import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.infinispan.commons.util.concurrent.AbstractInProcessFuture;
+import org.infinispan.test.fwk.TestResourceTracker;
 import org.testng.annotations.BeforeTest;
 import org.testng.annotations.Test;
 
@@ -39,7 +40,7 @@ public class ConcurrentStartWithReplTest extends AbstractInfinispanTest {
 
    @Test(timeOut = 60000)
    public void testSequence1() throws ExecutionException, InterruptedException {
-      TestCacheManagerFactory.backgroundTestStarted(this);
+      TestResourceTracker.backgroundTestStarted(this);
       /*
 
       Sequence 1:
@@ -59,7 +60,7 @@ public class ConcurrentStartWithReplTest extends AbstractInfinispanTest {
 
    @Test(timeOut = 60000)
    public void testSequence2() throws ExecutionException, InterruptedException {
-      TestCacheManagerFactory.backgroundTestStarted(this);
+      TestResourceTracker.backgroundTestStarted(this);
       /*
 
       Sequence 2:
@@ -78,7 +79,7 @@ public class ConcurrentStartWithReplTest extends AbstractInfinispanTest {
 
    @Test(timeOut = 60000)
    public void testSequence3() throws ExecutionException, InterruptedException {
-      TestCacheManagerFactory.backgroundTestStarted(this);
+      TestResourceTracker.backgroundTestStarted(this);
       /*
 
       Sequence 3:
@@ -96,7 +97,7 @@ public class ConcurrentStartWithReplTest extends AbstractInfinispanTest {
 
    @Test(timeOut = 60000)
    public void testSequence4() throws ExecutionException, InterruptedException {
-      TestCacheManagerFactory.backgroundTestStarted(this);
+      TestResourceTracker.backgroundTestStarted(this);
       /*
 
       Sequence 4:

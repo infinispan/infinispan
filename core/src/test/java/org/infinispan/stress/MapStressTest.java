@@ -5,6 +5,9 @@ import org.infinispan.commons.equivalence.AnyEquivalence;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.eviction.EvictionStrategy;
 import org.infinispan.manager.EmbeddedCacheManager;
+import org.infinispan.test.AbstractInfinispanTest;
+import org.infinispan.test.MultipleCacheManagersTest;
+import org.infinispan.test.SingleCacheManagerTest;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.infinispan.util.concurrent.BoundedConcurrentHashMap;
 import org.infinispan.util.logging.Log;
@@ -25,13 +28,13 @@ import static java.lang.Math.sqrt;
  * @author Dan Berindei <dberinde@redhat.com>
  * @since 4.0
  */
-@Test(testName = "stress.MapStressTest", groups = "stress", description = "Disabled by default, designed to be run manually.")
-public class MapStressTest {
+@Test(testName = "stress.MapStressTest", groups = "profiling")
+public class MapStressTest extends SingleCacheManagerTest {
    private static Log log = LogFactory.getLog(MapStressTest.class);
 
    static final float MAP_LOAD_FACTOR = 0.75f;
    static final int LOOP_FACTOR = 10;
-   static final long RUNNING_TIME = Integer.getInteger("time", 1) * 60 * 1000;
+   static final long RUNNING_TIME = Integer.getInteger("time", 30) * 1000;
    final int CAPACITY = Integer.getInteger("size", 100000);
 
    private static final Random RANDOM = new Random(12345);
@@ -40,7 +43,7 @@ public class MapStressTest {
    private List<String> keys = new ArrayList<String>();
 
    public MapStressTest() {
-      log.tracef("\nMapStressTest configuration: capacity %d, test running time %d seconds\n",
+      log.tracef("MapStressTest configuration: capacity %d, test running time %d seconds\n",
                         CAPACITY, RUNNING_TIME / 1000);
    }
 
@@ -76,10 +79,9 @@ public class MapStressTest {
       config
          .eviction().maxEntries(capacity).strategy(EvictionStrategy.LRU)
          .expiration().wakeUpInterval(5000L).maxIdle(120000L);
-
-      EmbeddedCacheManager cm = TestCacheManagerFactory.createCacheManager(config);
-      cm.start();
-      return cm.getCache();
+      String cacheName = "cache" + capacity;
+      cacheManager.defineConfiguration(cacheName, config.build());
+      return cacheManager.getCache(cacheName);
    }
 
    @DataProvider(name = "readWriteRemove")
@@ -321,7 +323,7 @@ public class MapStressTest {
       return new Operation<String, Integer>(map, "PUT") {
          @Override
          public boolean call(String key, long run) {
-            return map.put(key, (int)run) != null;
+            return map.put(key, (int) run) != null;
          }
       };
    }
@@ -359,6 +361,11 @@ public class MapStressTest {
             return hit;
          }
       };
+   }
+
+   @Override
+   protected EmbeddedCacheManager createCacheManager() throws Exception {
+      return TestCacheManagerFactory.createCacheManager();
    }
 
    private class WorkerThread extends Thread {
