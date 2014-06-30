@@ -7,7 +7,7 @@ import org.infinispan.client.hotrod.test.RemoteCacheManagerCallable;
 import org.infinispan.client.hotrod.test.SingleHotRodServerTest;
 import org.infinispan.metadata.Metadata;
 import org.infinispan.filter.KeyValueFilter;
-import org.infinispan.server.hotrod.event.KeyValueFilterFactory;
+import org.infinispan.filter.KeyValueFilterFactory;
 import org.infinispan.server.hotrod.HotRodServer;
 import org.infinispan.server.hotrod.configuration.HotRodServerConfigurationBuilder;
 import org.testng.annotations.Test;

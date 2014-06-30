@@ -3,7 +3,7 @@ package org.infinispan.server.hotrod.event
 import java.lang.reflect.Method
 import java.util
 import org.infinispan.configuration.cache.{CacheMode, ConfigurationBuilder}
-import org.infinispan.filter.{Converter, KeyValueFilter}
+import org.infinispan.filter.{ConverterFactory, KeyValueFilterFactory, Converter, KeyValueFilter}
 import org.infinispan.manager.EmbeddedCacheManager
 import org.infinispan.metadata.Metadata
 import org.infinispan.server.hotrod.OperationStatus._
