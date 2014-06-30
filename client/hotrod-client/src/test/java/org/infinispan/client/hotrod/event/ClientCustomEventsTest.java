@@ -6,7 +6,7 @@ import org.infinispan.client.hotrod.event.CustomEventListener.CustomEvent;
 import org.infinispan.client.hotrod.test.RemoteCacheManagerCallable;
 import org.infinispan.client.hotrod.test.SingleHotRodServerTest;
 import org.infinispan.metadata.Metadata;
-import org.infinispan.server.hotrod.event.ConverterFactory;
+import org.infinispan.filter.ConverterFactory;
 import org.infinispan.filter.Converter;
 import org.infinispan.server.hotrod.HotRodServer;
 import org.infinispan.server.hotrod.configuration.HotRodServerConfigurationBuilder;

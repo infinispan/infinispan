@@ -2,8 +2,8 @@ package org.infinispan.server.hotrod.configuration;
 
 import org.infinispan.commons.configuration.BuiltBy;
 import org.infinispan.commons.marshall.Marshaller;
-import org.infinispan.server.hotrod.event.ConverterFactory;
-import org.infinispan.server.hotrod.event.KeyValueFilterFactory;
+import org.infinispan.filter.ConverterFactory;
+import org.infinispan.filter.KeyValueFilterFactory;
 import org.infinispan.server.core.configuration.ProtocolServerConfiguration;
 import org.infinispan.server.core.configuration.SslConfiguration;
 

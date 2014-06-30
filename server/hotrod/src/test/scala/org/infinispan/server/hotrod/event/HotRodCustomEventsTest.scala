@@ -3,7 +3,7 @@ package org.infinispan.server.hotrod.event
 import java.lang.reflect.Method
 import java.util
 import java.util.concurrent.{TimeUnit, ArrayBlockingQueue}
-import org.infinispan.filter.Converter
+import org.infinispan.filter.{ConverterFactory, Converter}
 import org.infinispan.manager.EmbeddedCacheManager
 import org.infinispan.metadata.Metadata
 import org.infinispan.server.hotrod.configuration.HotRodServerConfigurationBuilder
