@@ -4,6 +4,7 @@ import org.hibernate.search.engine.spi.SearchFactoryImplementor;
 import org.hibernate.search.indexes.spi.IndexManager;
 import org.infinispan.commons.equivalence.ByteArrayEquivalence;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
+import org.infinispan.configuration.cache.Index;
 import org.infinispan.query.remote.indexing.ProtobufValueWrapper;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.CleanupAfterMethod;
@@ -30,8 +31,7 @@ public class HotRodTunedQueryTest extends RemoteQueryDslConditionsTest {
       builder.dataContainer()
             .keyEquivalence(ByteArrayEquivalence.INSTANCE)
             .valueEquivalence(ByteArrayEquivalence.INSTANCE)
-            .indexing().enable()
-            .indexLocalOnly(false)
+            .indexing().index(Index.ALL)
             .addProperty("default.indexmanager", "near-real-time")
             .addProperty("default.indexBase", indexDirectory)
             .addProperty("default.exclusive_index_use", "true")

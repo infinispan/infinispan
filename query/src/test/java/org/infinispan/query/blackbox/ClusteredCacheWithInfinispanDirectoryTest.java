@@ -4,6 +4,7 @@ import org.hibernate.search.infinispan.InfinispanIntegration;
 import org.infinispan.Cache;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
+import org.infinispan.configuration.cache.Index;
 import org.infinispan.query.test.Person;
 import org.testng.annotations.Test;
 
@@ -21,8 +22,7 @@ public class ClusteredCacheWithInfinispanDirectoryTest extends ClusteredCacheTes
    protected void createCacheManagers() throws Throwable {
       ConfigurationBuilder cacheCfg = getDefaultClusteredCacheConfig(CacheMode.REPL_SYNC, transactionsEnabled());
       cacheCfg.indexing()
-            .enable()
-            .indexLocalOnly(true)
+            .index(Index.LOCAL)
             .addProperty("default.indexmanager", "org.infinispan.query.indexmanager.InfinispanIndexManager")
             .addProperty("lucene_version", "LUCENE_48")
             .addProperty("default.exclusive_index_use", "false");

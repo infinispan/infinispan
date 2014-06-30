@@ -6,6 +6,7 @@ import org.hibernate.search.annotations.Indexed;
 import org.infinispan.Cache;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
+import org.infinispan.configuration.cache.Index;
 import org.infinispan.query.CacheQuery;
 import org.infinispan.query.Search;
 import org.infinispan.query.SearchManager;
@@ -32,8 +33,7 @@ public class ClusteredCacheQueryTimeoutTest extends MultipleCacheManagersTest {
    protected void createCacheManagers() throws Throwable {
       ConfigurationBuilder cacheCfg = getDefaultClusteredCacheConfig(CacheMode.REPL_SYNC, false);
       cacheCfg.indexing()
-            .enable()
-            .indexLocalOnly(true)
+            .index(Index.LOCAL)
             .addProperty("default.directory_provider", "ram")
             .addProperty("lucene_version", "LUCENE_CURRENT");
       List<Cache<String, Person>> caches = createClusteredCaches(2, cacheCfg);

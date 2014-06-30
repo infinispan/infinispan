@@ -22,7 +22,7 @@ public final class Search {
       AdvancedCache<?, ?> advancedCache = cache.getAdvancedCache();
       ensureAccessPermissions(advancedCache);
 
-      if (advancedCache.getCacheConfiguration().indexing().enabled()) {
+      if (advancedCache.getCacheConfiguration().indexing().index().isEnabled()) {
          return getSearchManager(advancedCache).getQueryFactory();
       }
 

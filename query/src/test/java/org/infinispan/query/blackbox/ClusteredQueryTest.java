@@ -16,6 +16,7 @@ import org.apache.lucene.search.BooleanClause.Occur;
 import org.infinispan.Cache;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
+import org.infinispan.configuration.cache.Index;
 import org.infinispan.query.CacheQuery;
 import org.infinispan.query.FetchOptions;
 import org.infinispan.query.ResultIterator;
@@ -53,8 +54,7 @@ public class ClusteredQueryTest extends MultipleCacheManagersTest {
       ConfigurationBuilder cacheCfg = getDefaultClusteredCacheConfig(getCacheMode(), false);
       cacheCfg
          .indexing()
-            .enable()
-            .indexLocalOnly(true)
+            .index(Index.LOCAL)
             .addProperty("default.directory_provider", "ram")
             .addProperty("lucene_version", "LUCENE_CURRENT");
       enhanceConfig(cacheCfg);

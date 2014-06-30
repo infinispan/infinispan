@@ -3,6 +3,7 @@ package org.infinispan.query.blackbox;
 import org.infinispan.Cache;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
+import org.infinispan.configuration.cache.Index;
 import org.infinispan.query.test.Person;
 import org.infinispan.transaction.LockingMode;
 import org.testng.annotations.Test;
@@ -22,8 +23,7 @@ public class ClusteredPessimisticLockingCacheTest extends ClusteredCacheTest {
       ConfigurationBuilder cacheCfg = getDefaultClusteredCacheConfig(CacheMode.REPL_SYNC, transactionsEnabled());
       cacheCfg.transaction().lockingMode(LockingMode.PESSIMISTIC);
       cacheCfg.indexing()
-            .enable()
-            .indexLocalOnly(false)
+            .index(Index.ALL)
             .addProperty("default.directory_provider", "ram")
             .addProperty("lucene_version", "LUCENE_CURRENT");
       enhanceConfig(cacheCfg);

@@ -82,7 +82,7 @@ public class LifecycleManager extends AbstractModuleLifecycle {
     */
    @Override
    public void cacheStarting(ComponentRegistry cr, Configuration cfg, String cacheName) {
-      if (cfg.indexing().enabled()) {
+      if (cfg.indexing().index().isEnabled()) {
          log.registeringQueryInterceptor();
          SearchFactoryIntegrator searchFactory = getSearchFactory(cfg.indexing().properties(), cr);
          createQueryInterceptorIfNeeded(cr, cfg, searchFactory);
@@ -121,7 +121,7 @@ public class LifecycleManager extends AbstractModuleLifecycle {
    }
 
    private QueryInterceptor buildQueryInterceptor(Configuration cfg, SearchFactoryIntegrator searchFactory) {
-      if ( cfg.indexing().indexLocalOnly() ) {
+      if ( cfg.indexing().index().isLocalOnly() ) {
          return new LocalQueryInterceptor(searchFactory);
       }
       else {
@@ -135,7 +135,7 @@ public class LifecycleManager extends AbstractModuleLifecycle {
 
       cr.registerComponent(new ReflectionMatcher(null), ReflectionMatcher.class);
 
-      boolean indexingEnabled = configuration.indexing().enabled();
+      boolean indexingEnabled = configuration.indexing().index().isEnabled();
       if ( ! indexingEnabled ) {
          if ( verifyChainContainsQueryInterceptor(cr) ) {
             throw new IllegalStateException( "It was NOT expected to find the Query interceptor registered in the InterceptorChain as indexing was disabled, but it was found" );

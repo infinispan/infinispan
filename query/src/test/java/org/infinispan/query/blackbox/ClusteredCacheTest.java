@@ -9,6 +9,7 @@ import org.hibernate.search.query.dsl.QueryBuilder;
 import org.infinispan.Cache;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
+import org.infinispan.configuration.cache.Index;
 import org.infinispan.interceptors.base.CommandInterceptor;
 import org.infinispan.query.CacheQuery;
 import org.infinispan.query.FetchOptions;
@@ -66,8 +67,7 @@ public class ClusteredCacheTest extends MultipleCacheManagersTest {
    protected void createCacheManagers() throws Throwable {
       ConfigurationBuilder cacheCfg = getDefaultClusteredCacheConfig(CacheMode.REPL_SYNC, transactionsEnabled());
       cacheCfg.indexing()
-         .enable()
-         .indexLocalOnly(false)
+         .index(Index.ALL)
          .addProperty("default.directory_provider", "ram")
          .addProperty("lucene_version", "LUCENE_CURRENT");
       enhanceConfig(cacheCfg);

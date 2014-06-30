@@ -30,7 +30,7 @@ public class ComponentRegistryUtils {
    }
 
    public static QueryInterceptor getQueryInterceptor(Cache<?, ?> cache) {
-      Class<? extends QueryInterceptor> queryType = SecurityActions.getCacheConfiguration(cache.getAdvancedCache()).indexing().indexLocalOnly()
+      Class<? extends QueryInterceptor> queryType = SecurityActions.getCacheConfiguration(cache.getAdvancedCache()).indexing().index().isLocalOnly()
             ? LocalQueryInterceptor.class : QueryInterceptor.class;
       return getComponent(cache, queryType);
    }

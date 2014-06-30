@@ -3,6 +3,7 @@ package org.infinispan.query.blackbox;
 import org.hibernate.search.spi.SearchFactoryIntegrator;
 import org.infinispan.Cache;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
+import org.infinispan.configuration.cache.Index;
 import org.infinispan.manager.CacheContainer;
 import org.infinispan.test.AbstractInfinispanTest;
 import org.infinispan.test.TestingUtil;
@@ -28,8 +29,7 @@ public class SearchFactoryShutdownTest extends AbstractInfinispanTest {
             .transaction()
                .transactionMode(TransactionMode.TRANSACTIONAL)
             .indexing()
-               .enable()
-               .indexLocalOnly(false)
+               .index(Index.ALL)
                .addProperty("default.directory_provider", "ram")
                .addProperty("lucene_version", "LUCENE_CURRENT");
          cc = TestCacheManagerFactory.createCacheManager(cfg);

@@ -1,6 +1,7 @@
 package org.infinispan.query.dsl.embedded;
 
 import org.infinispan.configuration.cache.ConfigurationBuilder;
+import org.infinispan.configuration.cache.Index;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.infinispan.transaction.TransactionMode;
@@ -21,7 +22,7 @@ public class CompatModeQueryDslConditionsTest extends QueryDslConditionsTest {
       ConfigurationBuilder cfg = getDefaultStandaloneCacheConfig(true);
       cfg.compatibility().enable()
             .transaction().transactionMode(TransactionMode.TRANSACTIONAL)
-            .indexing().enable()
+            .indexing().index(Index.ALL)
             .addProperty("default.directory_provider", "ram")
             .addProperty("lucene_version", "LUCENE_CURRENT");
       return TestCacheManagerFactory.createCacheManager(cfg);

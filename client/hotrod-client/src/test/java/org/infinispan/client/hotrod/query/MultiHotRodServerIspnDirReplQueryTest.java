@@ -4,6 +4,7 @@ import org.infinispan.client.hotrod.RemoteCacheManager;
 import org.infinispan.client.hotrod.marshall.ProtoStreamMarshaller;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
+import org.infinispan.configuration.cache.Index;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.protostream.sampledomain.marshallers.MarshallerRegistration;
 import org.infinispan.query.remote.ProtobufMetadataManager;
@@ -23,7 +24,7 @@ public class MultiHotRodServerIspnDirReplQueryTest extends MultiHotRodServerQuer
    protected void createCacheManagers() throws Throwable {
       ConfigurationBuilder defaultConfiguration = getDefaultClusteredCacheConfig(CacheMode.REPL_SYNC, false);
       ConfigurationBuilder builder = hotRodCacheConfiguration(getDefaultClusteredCacheConfig(CacheMode.REPL_SYNC, false));
-      builder.indexing().enable().indexLocalOnly(true)
+      builder.indexing().index(Index.LOCAL)
             .addProperty("default.directory_provider", "infinispan")
             .addProperty("default.exclusive_index_use", "false")
             //.addProperty("default.indexmanager", "org.infinispan.query.indexmanager.InfinispanIndexManager")

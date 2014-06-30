@@ -1,6 +1,7 @@
 package org.infinispan.query.blackbox;
 
 import org.infinispan.configuration.cache.ConfigurationBuilder;
+import org.infinispan.configuration.cache.Index;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.testng.annotations.Test;
@@ -20,7 +21,7 @@ public class CompatModeLocalCacheTest extends LocalCacheTest {
       cfg
             .compatibility().enable()
             .indexing()
-            .enable()
+            .index(Index.ALL)
             .addProperty("default.directory_provider", "ram")
             .addProperty("lucene_version", "LUCENE_CURRENT");
       enhanceConfig(cfg);

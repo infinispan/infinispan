@@ -5,6 +5,7 @@ import org.apache.lucene.search.Query;
 import org.infinispan.Cache;
 import org.infinispan.commons.CacheException;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
+import org.infinispan.configuration.cache.Index;
 import org.infinispan.jmx.PerThreadMBeanServerLookup;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.query.CacheQuery;
@@ -50,7 +51,7 @@ public class QueryMBeanTest extends SingleCacheManagerTest {
             TestCacheManagerFactory.createCacheManagerEnforceJmxDomain(JMX_DOMAIN);
 
       ConfigurationBuilder builder = getDefaultStandaloneCacheConfig(true);
-      builder.indexing().enable().indexLocalOnly(false)
+      builder.indexing().index(Index.ALL)
             .addProperty("default.directory_provider", "ram")
             .addProperty("lucene_version", "LUCENE_CURRENT");
 
@@ -180,7 +181,7 @@ public class QueryMBeanTest extends SingleCacheManagerTest {
       try {
          ConfigurationBuilder defaultCacheConfig2 = new ConfigurationBuilder();
          defaultCacheConfig2
-               .indexing().enable()
+               .indexing().index(Index.ALL)
                .addProperty("default.directory_provider", "ram")
                .addProperty("lucene_version", "LUCENE_CURRENT")
                .jmxStatistics().enable();

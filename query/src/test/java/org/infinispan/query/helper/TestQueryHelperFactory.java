@@ -12,6 +12,7 @@ import org.hibernate.search.spi.SearchFactoryIntegrator;
 import org.infinispan.Cache;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
+import org.infinispan.configuration.cache.Index;
 import org.infinispan.configuration.global.GlobalConfigurationBuilder;
 import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.manager.EmbeddedCacheManager;
@@ -64,7 +65,7 @@ public class TestQueryHelperFactory {
 
       ConfigurationBuilder builder = AbstractCacheTest.getDefaultClusteredCacheConfig(cacheMode, transactional);
 
-      builder.indexing().enable().indexLocalOnly(indexLocalOnly);
+      builder.indexing().index(indexLocalOnly ? Index.LOCAL : Index.ALL);
 
       if(isRamDirectoryProvider) {
          builder.indexing().addProperty("default.directory_provider", "ram").addProperty("lucene_version", "LUCENE_CURRENT");

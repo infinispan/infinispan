@@ -8,6 +8,7 @@ import org.apache.lucene.search.Query;
 import org.hibernate.search.query.dsl.QueryBuilder;
 import org.infinispan.Cache;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
+import org.infinispan.configuration.cache.Index;
 import org.infinispan.configuration.cache.InterceptorConfiguration;
 import org.infinispan.configuration.cache.InterceptorConfiguration.Position;
 import org.infinispan.interceptors.base.CommandInterceptor;
@@ -43,7 +44,7 @@ public class QueryCacheRestartTest extends AbstractInfinispanTest {
 
    private void queryCacheRestart(boolean localOnly) {
       ConfigurationBuilder builder = new ConfigurationBuilder();
-      builder.indexing().enable().indexLocalOnly(localOnly)
+      builder.indexing().index(localOnly ? Index.LOCAL : Index.ALL)
             .addProperty("default.directory_provider", "ram")
             .addProperty("lucene_version", "LUCENE_CURRENT");
       final NoOpInterceptor noOpInterceptor = new NoOpInterceptor();

@@ -8,6 +8,7 @@ import org.hibernate.search.query.dsl.QueryBuilder;
 import org.infinispan.Cache;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
+import org.infinispan.configuration.cache.Index;
 import org.infinispan.query.CacheQuery;
 import org.infinispan.query.FetchOptions;
 import org.infinispan.query.ProjectionConstants;
@@ -173,8 +174,7 @@ public class NullCollectionElementsClusteredTest extends MultipleCacheManagersTe
       ConfigurationBuilder cfg = getDefaultClusteredCacheConfig(CacheMode.REPL_SYNC, true);
       cfg
             .indexing()
-            .enable()
-            .indexLocalOnly(true)
+            .index(Index.LOCAL)
             .addProperty("default.directory_provider", "ram")
             .addProperty("lucene_version", "LUCENE_CURRENT");
       createClusteredCaches(2, cfg);

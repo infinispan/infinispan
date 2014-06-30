@@ -4,6 +4,7 @@ import org.hibernate.search.engine.spi.SearchFactoryImplementor;
 import org.infinispan.Cache;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
+import org.infinispan.configuration.cache.Index;
 import org.infinispan.query.Search;
 import org.infinispan.query.dsl.FilterConditionEndContext;
 import org.infinispan.query.dsl.Query;
@@ -64,8 +65,7 @@ public class ClusteredQueryDslConditionsTest extends MultipleCacheManagersTest {
             .clustering()
             .stateTransfer().fetchInMemoryState(true)
             .indexing()
-            .enable()
-            .indexLocalOnly(true)
+            .index(Index.LOCAL)
             .addProperty("default.indexmanager", "org.infinispan.query.indexmanager.InfinispanIndexManager")
             .addProperty("lucene_version", "LUCENE_48");
 

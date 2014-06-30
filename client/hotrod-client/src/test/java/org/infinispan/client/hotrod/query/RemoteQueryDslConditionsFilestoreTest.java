@@ -1,6 +1,7 @@
 package org.infinispan.client.hotrod.query;
 
 import org.infinispan.configuration.cache.ConfigurationBuilder;
+import org.infinispan.configuration.cache.Index;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.CleanupAfterMethod;
 import org.testng.annotations.Test;
@@ -24,7 +25,7 @@ public class RemoteQueryDslConditionsFilestoreTest extends RemoteQueryDslConditi
    @Override
    protected ConfigurationBuilder getConfigurationBuilder() {
       ConfigurationBuilder builder = hotRodCacheConfiguration();
-      builder.indexing().enable()
+      builder.indexing().index(Index.ALL)
             .addProperty("default.directory_provider", getLuceneDirectoryProvider())
             .addProperty("default.indexBase", indexDirectory)
             .addProperty("lucene_version", "LUCENE_CURRENT");

@@ -1,8 +1,9 @@
 package org.infinispan.query.config;
 
-import junit.framework.Assert;
+import org.junit.Assert;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
+import org.infinispan.configuration.cache.Index;
 import org.infinispan.test.AbstractInfinispanTest;
 import org.infinispan.test.CacheManagerCallable;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
@@ -28,16 +29,16 @@ public class XMLConfigurationOverridingTest extends AbstractInfinispanTest {
          @Override
          public void call() {
             Configuration cnf = cm.getCacheConfiguration(simpleCacheName);
-            Assert.assertFalse(cnf.indexing().enabled());
+            Assert.assertFalse(cnf.indexing().index().isEnabled());
 
-            Configuration conf = new ConfigurationBuilder().indexing().indexLocalOnly(false)
+            Configuration conf = new ConfigurationBuilder().indexing().index(Index.NONE)
                   .addProperty("default.directory_provider", "infinispan").build();
 
             cm.defineConfiguration(simpleCacheName, conf);
 
             cnf = cm.getCacheConfiguration(simpleCacheName);
-            Assert.assertFalse(cnf.indexing().enabled());
-            Assert.assertFalse(cnf.indexing().indexLocalOnly());
+            Assert.assertFalse(cnf.indexing().index().isEnabled());
+            Assert.assertFalse(cnf.indexing().index().isLocalOnly());
             Assert.assertEquals("infinispan", cnf.indexing().properties().getProperty("default.directory_provider"));
             Assert.assertFalse(cm.getCacheNames().contains("LuceneIndexesMetadata"));
 

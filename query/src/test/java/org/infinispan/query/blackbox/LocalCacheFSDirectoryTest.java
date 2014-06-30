@@ -1,6 +1,7 @@
 package org.infinispan.query.blackbox;
 
 import org.infinispan.configuration.cache.ConfigurationBuilder;
+import org.infinispan.configuration.cache.Index;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
@@ -23,7 +24,7 @@ public class LocalCacheFSDirectoryTest extends LocalCacheTest {
    @Override
    protected EmbeddedCacheManager createCacheManager() throws Exception {
       ConfigurationBuilder cfg = getDefaultStandaloneCacheConfig(true);
-      cfg.indexing().enable()
+      cfg.indexing().index(Index.ALL)
          .addProperty("default.directory_provider", "filesystem")
          .addProperty("default.indexBase", indexDirectory)
          .addProperty("lucene_version", "LUCENE_CURRENT");

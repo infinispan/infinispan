@@ -2,6 +2,7 @@ package org.infinispan.query.blackbox;
 
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
+import org.infinispan.configuration.cache.Index;
 import org.infinispan.test.TestingUtil;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
@@ -34,8 +35,7 @@ public class ClusteredCacheFSDirectoryTest extends ClusteredCacheTest {
    private ConfigurationBuilder buildCacheConfig(String indexName) {
       ConfigurationBuilder cb = getDefaultClusteredCacheConfig(CacheMode.REPL_SYNC, true);
       cb.indexing()
-            .enable()
-            .indexLocalOnly(false) //index also changes originated on other nodes, the index is not shared
+            .index(Index.ALL) //index also changes originated on other nodes, the index is not shared
             .addProperty("default.directory_provider", "filesystem")
             .addProperty("default.indexBase", TMP_DIR + File.separator + indexName)
             .addProperty("lucene_version", "LUCENE_CURRENT");

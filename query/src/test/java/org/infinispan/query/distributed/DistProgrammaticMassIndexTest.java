@@ -8,6 +8,7 @@ import org.hibernate.search.infinispan.InfinispanIntegration;
 import org.infinispan.Cache;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
+import org.infinispan.configuration.cache.Index;
 import org.infinispan.query.CacheQuery;
 import org.infinispan.query.Search;
 import org.infinispan.query.queries.faceting.Car;
@@ -29,8 +30,7 @@ public class DistProgrammaticMassIndexTest extends DistributedMassIndexingTest {
    protected void createCacheManagers() throws Throwable {
       ConfigurationBuilder cacheCfg = getDefaultClusteredCacheConfig(CacheMode.DIST_SYNC, false);
       cacheCfg.indexing()
-            .enable()
-            .indexLocalOnly(true)
+            .index(Index.LOCAL)
             .addProperty("hibernate.search.default.indexmanager", "org.infinispan.query.indexmanager.InfinispanIndexManager")
             .addProperty("hibernate.search.default.directory_provider", "infinispan")
             .addProperty("hibernate.search.default.exclusive_index_use", "false")

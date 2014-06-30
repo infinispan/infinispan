@@ -16,8 +16,6 @@ import java.util.ServiceLoader
 import org.infinispan.util.concurrent.IsolationLevel
 import javax.security.sasl.SaslServerFactory
 import org.infinispan.server.core.security.SaslUtils
-import java.util.Arrays
-import java.util.Collections
 import org.infinispan.factories.ComponentRegistry
 
 /**
@@ -174,7 +172,7 @@ class HotRodServer extends AbstractProtocolServer("HotRod") with Log {
          val tmpCache = SecurityActions.getCache[Bytes, Bytes](cacheManager, validCacheName)
          val cacheConfiguration = SecurityActions.getCacheConfiguration(tmpCache.getAdvancedCache)
          val compatibility = cacheConfiguration.compatibility().enabled()
-         val indexing = cacheConfiguration.indexing().enabled()
+         val indexing = cacheConfiguration.indexing().index().isEnabled
 
          // Use flag when compatibility is enabled, otherwise it's unnecessary
          if (compatibility || indexing)

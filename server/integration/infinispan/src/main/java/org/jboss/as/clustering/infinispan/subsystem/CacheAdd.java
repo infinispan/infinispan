@@ -46,18 +46,8 @@ import org.infinispan.commons.configuration.ConfiguredBy;
 import org.infinispan.commons.marshall.Marshaller;
 import org.infinispan.commons.util.FileLookup;
 import org.infinispan.commons.util.TypedProperties;
-import org.infinispan.configuration.cache.AuthorizationConfigurationBuilder;
+import org.infinispan.configuration.cache.*;
 import org.infinispan.configuration.cache.BackupConfiguration.BackupStrategy;
-import org.infinispan.configuration.cache.BackupFailurePolicy;
-import org.infinispan.configuration.cache.CacheMode;
-import org.infinispan.configuration.cache.ClusterLoaderConfigurationBuilder;
-import org.infinispan.configuration.cache.Configuration;
-import org.infinispan.configuration.cache.ConfigurationBuilder;
-import org.infinispan.configuration.cache.CustomStoreConfigurationBuilder;
-import org.infinispan.configuration.cache.PersistenceConfigurationBuilder;
-import org.infinispan.configuration.cache.SingleFileStoreConfigurationBuilder;
-import org.infinispan.configuration.cache.SitesConfigurationBuilder;
-import org.infinispan.configuration.cache.StoreConfigurationBuilder;
 import org.infinispan.configuration.parsing.ConfigurationBuilderHolder;
 import org.infinispan.configuration.parsing.ParserRegistry;
 import org.infinispan.eviction.EvictionStrategy;
@@ -412,8 +402,7 @@ public abstract class CacheAdd extends AbstractAddStepHandler {
             }
         }
         builder.indexing()
-                .enabled(indexing.isEnabled())
-                .indexLocalOnly(indexing.isLocalOnly())
+                .index(indexing.isEnabled() ? indexing.isLocalOnly() ? Index.LOCAL : Index.ALL : Index.NONE)
                 .withProperties(indexingProperties)
         ;
 

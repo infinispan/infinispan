@@ -6,6 +6,7 @@ import org.infinispan.client.hotrod.Search;
 import org.infinispan.client.hotrod.TestHelper;
 import org.infinispan.client.hotrod.configuration.ConfigurationBuilder;
 import org.infinispan.commons.equivalence.AnyEquivalence;
+import org.infinispan.configuration.cache.Index;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.protostream.sampledomain.Account;
 import org.infinispan.protostream.sampledomain.marshallers.MarshallerRegistration;
@@ -75,7 +76,7 @@ public class EmbeddedCompatTest extends SingleCacheManagerTest {
    protected org.infinispan.configuration.cache.ConfigurationBuilder createConfigBuilder() {
       org.infinispan.configuration.cache.ConfigurationBuilder builder = hotRodCacheConfiguration();
       builder.compatibility().enable().marshaller(new CompatibilityProtoStreamMarshaller());
-      builder.indexing().enable()
+      builder.indexing().index(Index.ALL)
             .addProperty("default.directory_provider", "ram")
             .addProperty("lucene_version", "LUCENE_CURRENT");
       return builder;

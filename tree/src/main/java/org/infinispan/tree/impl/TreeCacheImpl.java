@@ -10,7 +10,6 @@ import org.infinispan.tree.Fqn;
 import org.infinispan.tree.Node;
 import org.infinispan.tree.NodeNotExistsException;
 import org.infinispan.tree.TreeCache;
-import org.infinispan.tree.impl.NodeKey.Type;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
@@ -31,7 +30,7 @@ public class TreeCacheImpl<K, V> extends TreeStructureSupport implements TreeCac
 
    public TreeCacheImpl(AdvancedCache<?, ?> cache) {
       super(cache, cache.getBatchContainer());
-      if (cache.getCacheConfiguration().indexing().enabled())
+      if (cache.getCacheConfiguration().indexing().index().isEnabled())
          throw new CacheConfigurationException("TreeCache cannot be used with a Cache instance configured to use indexing!");
       assertBatchingSupported(cache.getCacheConfiguration());
       createRoot();

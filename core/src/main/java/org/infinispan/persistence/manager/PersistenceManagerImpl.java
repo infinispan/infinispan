@@ -8,6 +8,7 @@ import org.infinispan.commons.marshall.StreamingMarshaller;
 import org.infinispan.commons.util.Util;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.cache.CustomStoreConfiguration;
+import org.infinispan.configuration.cache.Index;
 import org.infinispan.configuration.cache.StoreConfiguration;
 import org.infinispan.container.entries.ImmortalCacheEntry;
 import org.infinispan.container.entries.InternalCacheEntry;
@@ -622,7 +623,7 @@ public class PersistenceManagerImpl implements PersistenceManager {
    }
 
    private boolean localIndexingEnabled() {
-      return configuration.indexing().enabled() && configuration.indexing().indexLocalOnly();
+      return configuration.indexing().index() == Index.LOCAL;
    }
 
    private int getMaxEntries() {

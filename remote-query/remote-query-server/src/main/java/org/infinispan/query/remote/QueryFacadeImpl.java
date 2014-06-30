@@ -64,7 +64,7 @@ public class QueryFacadeImpl implements QueryFacade {
          QueryRequest request = ProtobufUtil.fromByteArray(serCtx, query, 0, query.length, QueryRequest.class);
 
          QueryResponse response;
-         if (cache.getCacheConfiguration().indexing().enabled()) {
+         if (cache.getCacheConfiguration().indexing().index().isEnabled()) {
             response = executeQuery(cache, serCtx, request);
          } else {
             response = executeNonIndexedQuery(cache, request);

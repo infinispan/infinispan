@@ -10,6 +10,7 @@ import org.apache.lucene.search.Query;
 import org.hibernate.search.spi.SearchFactoryIntegrator;
 import org.infinispan.Cache;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
+import org.infinispan.configuration.cache.Index;
 import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.persistence.spi.PersistenceException;
 import org.infinispan.persistence.dummy.DummyInMemoryStoreConfigurationBuilder;
@@ -98,7 +99,7 @@ public class EntryActivatingTest extends AbstractInfinispanTest {
             .preload(true)
             .purgeOnStartup(true)
          .indexing()
-            .enable()
+            .index(Index.ALL)
             .addProperty("default.directory_provider", "ram")
             .addProperty("lucene_version", "LUCENE_CURRENT")
          ;

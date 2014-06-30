@@ -8,6 +8,7 @@ import org.infinispan.client.hotrod.TestHelper;
 import org.infinispan.client.hotrod.exceptions.HotRodClientException;
 import org.infinispan.client.hotrod.marshall.ProtoStreamMarshaller;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
+import org.infinispan.configuration.cache.Index;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.protostream.sampledomain.Account;
 import org.infinispan.protostream.sampledomain.Address;
@@ -86,7 +87,7 @@ public class RemoteQueryDslConditionsTest extends SingleCacheManagerTest {
 
    protected ConfigurationBuilder getConfigurationBuilder() {
       ConfigurationBuilder builder = hotRodCacheConfiguration();
-      builder.indexing().enable()
+      builder.indexing().index(Index.ALL)
             .addProperty("default.directory_provider", getLuceneDirectoryProvider())
             .addProperty("lucene_version", "LUCENE_CURRENT");
 

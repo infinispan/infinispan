@@ -11,6 +11,7 @@ import org.hibernate.search.cfg.SearchMapping;
 import org.hibernate.search.query.dsl.QueryBuilder;
 import org.infinispan.Cache;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
+import org.infinispan.configuration.cache.Index;
 import org.infinispan.query.CacheQuery;
 import org.infinispan.query.Search;
 import org.infinispan.query.SearchManager;
@@ -51,7 +52,7 @@ public class SearchMappingTest {
 
       ConfigurationBuilder builder = new ConfigurationBuilder();
       builder.indexing()
-            .enable().indexLocalOnly(true).withProperties(properties);
+            .index(Index.LOCAL).withProperties(properties);
 
       withCacheManager(new CacheManagerCallable(
             TestCacheManagerFactory.createCacheManager(builder)) {
@@ -119,7 +120,7 @@ public class SearchMappingTest {
       properties.put("lucene_version", "LUCENE_CURRENT");
 
       ConfigurationBuilder builder = new ConfigurationBuilder();
-      builder.indexing().enable().indexLocalOnly(true).withProperties(properties);
+      builder.indexing().index(Index.LOCAL).withProperties(properties);
 
       withCacheManager(new CacheManagerCallable(
             TestCacheManagerFactory.createCacheManager(builder)) {

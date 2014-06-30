@@ -1,6 +1,7 @@
 package org.infinispan.query.dsl.embedded;
 
 import org.infinispan.configuration.cache.ConfigurationBuilder;
+import org.infinispan.configuration.cache.Index;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.test.fwk.CleanupAfterTest;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
@@ -20,7 +21,7 @@ public class IspnDirQueryDslConditionsTest extends QueryDslConditionsTest {
       ConfigurationBuilder defaultConfig = getDefaultStandaloneCacheConfig(true);
 
       ConfigurationBuilder cfg = getDefaultStandaloneCacheConfig(true);
-      cfg.indexing().enable()
+      cfg.indexing().index(Index.ALL)
             .addProperty("default.directory_provider", "infinispan")
             .addProperty("lucene_version", "LUCENE_48");
       cacheManager =  TestCacheManagerFactory.createCacheManager(defaultConfig);

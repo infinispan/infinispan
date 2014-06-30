@@ -3,6 +3,7 @@ package org.infinispan.query.distributed;
 import org.infinispan.Cache;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
+import org.infinispan.configuration.cache.Index;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.query.test.Person;
 import org.infinispan.test.TestingUtil;
@@ -27,7 +28,7 @@ public class MultiNodeLocalTest extends MultiNodeDistributedTest {
             .clustering()
             .cacheMode(CacheMode.LOCAL)
             .indexing()
-            .enabled(true)
+            .index(Index.ALL)
             .addProperty("hibernate.search.lucene_version", "LUCENE_CURRENT")
             .addProperty("default.exclusive_index_use", "false")
             .addProperty("default.indexmanager", "org.infinispan.query.indexmanager.InfinispanIndexManager");

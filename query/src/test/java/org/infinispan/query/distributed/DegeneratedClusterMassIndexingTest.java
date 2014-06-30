@@ -4,6 +4,7 @@ import org.apache.lucene.search.Query;
 import org.infinispan.Cache;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
+import org.infinispan.configuration.cache.Index;
 import org.infinispan.context.Flag;
 import org.infinispan.query.Search;
 import org.infinispan.query.SearchManager;
@@ -24,7 +25,7 @@ public class DegeneratedClusterMassIndexingTest extends MultipleCacheManagersTes
    protected void createCacheManagers() throws Throwable {
       ConfigurationBuilder cfg = getDefaultClusteredCacheConfig(CacheMode.REPL_SYNC, true);
       cfg.indexing()
-            .enable()
+            .index(Index.ALL)
             .addProperty("default.directory_provider", "ram")
             .addProperty("lucene_version", "LUCENE_CURRENT");
 

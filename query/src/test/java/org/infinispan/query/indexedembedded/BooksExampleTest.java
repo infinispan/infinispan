@@ -4,6 +4,7 @@ import java.util.List;
 
 import org.apache.lucene.search.Query;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
+import org.infinispan.configuration.cache.Index;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.query.Search;
 import org.infinispan.query.SearchManager;
@@ -24,8 +25,7 @@ public class BooksExampleTest extends SingleCacheManagerTest {
          .transaction()
             .transactionMode(TransactionMode.TRANSACTIONAL)
          .indexing()
-            .enable()
-            .indexLocalOnly(false)
+            .index(Index.ALL)
             .addProperty("default.directory_provider", "ram")
             .addProperty("lucene_version", "LUCENE_CURRENT");
       return TestCacheManagerFactory.createCacheManager(cfg);

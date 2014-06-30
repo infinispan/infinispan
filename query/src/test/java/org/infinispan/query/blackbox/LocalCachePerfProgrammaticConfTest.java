@@ -1,6 +1,7 @@
 package org.infinispan.query.blackbox;
 
 import org.infinispan.configuration.cache.ConfigurationBuilder;
+import org.infinispan.configuration.cache.Index;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
@@ -23,7 +24,7 @@ public class LocalCachePerfProgrammaticConfTest extends LocalCacheTest {
       ConfigurationBuilder cfg = getDefaultStandaloneCacheConfig(true);
       cfg
             .indexing()
-            .enable()
+            .index(Index.ALL)
             .addProperty("default.directory_provider", "infinispan")
             .addProperty("default.chunk_size", "128000")
             .addProperty("default.indexmanager", "near-real-time")
