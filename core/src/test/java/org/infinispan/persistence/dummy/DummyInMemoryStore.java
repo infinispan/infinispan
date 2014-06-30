@@ -10,7 +10,6 @@ import org.infinispan.commons.util.InfinispanCollections;
 import org.infinispan.commons.util.Util;
 import org.infinispan.commons.util.concurrent.jdk8backported.EquivalentConcurrentHashMapV8;
 import org.infinispan.filter.KeyFilter;
-import org.infinispan.marshall.core.MarshalledEntryImpl;
 import org.infinispan.persistence.TaskContextImpl;
 import org.infinispan.metadata.InternalMetadata;
 import org.infinispan.persistence.spi.AdvancedCacheLoader;
@@ -155,7 +154,7 @@ public class DummyInMemoryStore implements AdvancedLoadWriteStore {
          Map.Entry<Object, byte[]> entry = i.next();
          if (tx.isStopped()) break;
          if (filter == null || filter.accept(entry.getKey())) {
-            MarshalledEntry se = deserialize(entry.getKey(), entry.getValue());
+            MarshalledEntry se = deserialize(entry.getKey(), entry.getValue(), fetchValue, fetchMetadata);
             if (isExpired(se, currentTimeMillis)) {
                log.tracef("Key %s exists, but has expired.  Entry is %s", entry.getKey(), se);
                i.remove();
@@ -303,11 +302,18 @@ public class DummyInMemoryStore implements AdvancedLoadWriteStore {
    }
 
    private MarshalledEntry deserialize(Object key, byte[] b) {
+      return deserialize(key, b, true, true);
+   }
+
+   private MarshalledEntry deserialize(Object key, byte[] b, boolean fetchValue, boolean fetchMetadata) {
       try {
          if (b == null)
             return null;
+         if (!fetchValue && !fetchMetadata) {
+            return ctx.getMarshalledEntryFactory().newMarshalledEntry(key, (Object) null, null);
+         }
          KeyValuePair<Object, InternalMetadata> keyValuePair = (KeyValuePair<Object, InternalMetadata>) marshaller.objectFromByteBuffer(b);
-         return ctx.getMarshalledEntryFactory().newMarshalledEntry(key, keyValuePair.getKey(), keyValuePair.getValue());
+         return ctx.getMarshalledEntryFactory().newMarshalledEntry(key, fetchValue ? keyValuePair.getKey() : null, fetchMetadata ? keyValuePair.getValue() : null);
       } catch (IOException e) {
          throw new CacheException(e);
       } catch (ClassNotFoundException e) {
