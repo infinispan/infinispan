@@ -195,6 +195,7 @@ public class LockControlCommand extends AbstractTransactionBoundaryCommand imple
          .append(", keys=").append(keys)
          .append(", flags=").append(flags)
          .append(", unlock=").append(unlock)
+         .append(", gtx=").append(globalTx)
          .append("}")
          .toString();
    }

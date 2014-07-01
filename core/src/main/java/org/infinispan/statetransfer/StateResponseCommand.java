@@ -102,6 +102,7 @@ public class StateResponseCommand extends BaseRpcCommand {
    public String toString() {
       return "StateResponseCommand{" +
             "cache=" + cacheName +
+            ", stateChunks=" + stateChunks +
             ", origin=" + getOrigin() +
             ", topologyId=" + topologyId +
             '}';
