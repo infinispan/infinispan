@@ -38,6 +38,7 @@
         <module name="org.fusesource.jansi"/>
         <module name="org.jboss.aesh"/>
         <module name="org.jboss.logging"/>
+        <module name="org.infinispan.commons"/>
         <module name="org.jboss.remoting-jmx" services="import"/>
         <module name="javax.api"/>
     </dependencies>
