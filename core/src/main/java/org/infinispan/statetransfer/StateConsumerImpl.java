@@ -361,6 +361,8 @@ public class StateConsumerImpl implements StateConsumer {
                // we have received a topology update without a pending CH, signalling the end of the rebalance
                boolean changed = stateTransferTopologyId.compareAndSet(rebalanceTopologyId, NO_REBALANCE_IN_PROGRESS);
                if (changed) {
+                  stopApplyingState();
+
                   // if the coordinator changed, we might get two concurrent topology updates,
                   // but we only want to notify the @DataRehashed listeners once
                   cacheNotifier.notifyDataRehashed(previousReadCh, cacheTopology.getCurrentCH(), previousWriteCh,
