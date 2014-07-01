@@ -8,14 +8,14 @@ import java.util.HashSet;
 import java.util.Set;
 
 public class SurefireTestingPolicy extends Policy {
-   static final String MODULE_CLASSES = File.separator + "classes" + File.separator;
-   static final String MODULE_TEST_CLASSES = File.separator + "test-classes" + File.separator;
+   static final String MODULE_CLASSES = "/classes/";
+   static final String MODULE_TEST_CLASSES = "/test-classes/";
    static final Set<String> grants = new HashSet<String>();
    boolean logPolicyChecks = false; // switch to true if we need to log grants
 
    @Override
    public boolean implies(ProtectionDomain domain, Permission permission) {
-      String location = domain.getCodeSource().getLocation().getPath();
+      String location = domain.getCodeSource().getLocation().getPath().replaceAll("\\\\", "/");
       // Allow any permissions from dependencies and the actual modules' classes
       if (location.endsWith(".jar") || location.endsWith(MODULE_CLASSES)) {
          if (logPolicyChecks) {
