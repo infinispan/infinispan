@@ -14,6 +14,7 @@
             <protocol type="MERGE3" />
             <protocol type="FD_SOCK" socket-binding="jgroups-udp-fd" />
             <protocol type="FD_ALL" />
+            <protocol type="VERIFY_SUSPECT" />
             <protocol type="pbcast.NAKACK2" />
             <protocol type="UNICAST3" />
             <protocol type="pbcast.STABLE" />
@@ -50,6 +51,7 @@
             <protocol type="MERGE3" />
             <protocol type="FD_SOCK" socket-binding="jgroups-udp-fd" />
             <protocol type="FD_ALL" />
+            <protocol type="VERIFY_SUSPECT" />
             <protocol type="pbcast.NAKACK2" />
             <protocol type="UNICAST3" />
             <protocol type="pbcast.STABLE" />
@@ -84,6 +86,7 @@
             <protocol type="MERGE3" />
             <protocol type="FD_SOCK" socket-binding="jgroups-udp-fd" />
             <protocol type="FD_ALL" />
+            <protocol type="VERIFY_SUSPECT" />
             <protocol type="pbcast.NAKACK2" />
             <protocol type="UNICAST3" />
             <protocol type="pbcast.STABLE" />
@@ -127,6 +130,7 @@
             <protocol type="MERGE3" />
             <protocol type="FD_SOCK" socket-binding="jgroups-udp-fd" />
             <protocol type="FD_ALL" />
+            <protocol type="VERIFY_SUSPECT" />
             <protocol type="pbcast.NAKACK2" />
             <protocol type="UNICAST3" />
             <protocol type="pbcast.STABLE" />
