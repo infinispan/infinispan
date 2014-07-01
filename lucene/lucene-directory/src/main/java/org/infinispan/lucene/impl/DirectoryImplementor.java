@@ -18,8 +18,7 @@ import org.infinispan.util.logging.LogFactory;
 
 
 /**
- * Common code for different Directory implementations. Extracted to accommodate support
- * for both Apache Lucene v.3.x and v.4
+ * Common code for different Directory implementations.
  *
  * @author Sanne Grinovero
  * @since 5.2
@@ -65,31 +64,6 @@ class DirectoryImplementor {
 
     boolean fileExists(final String name) {
        return fileOps.getFileList().contains(name);
-    }
-
-    /**
-     * Used by Lucene v3.x only
-     */
-    long fileModified(final String name) {
-       final FileMetadata fileMetadata = fileOps.getFileMetadata(name);
-       if (fileMetadata == null) {
-          return 0L;
-       }
-       else {
-          return fileMetadata.getLastModified();
-       }
-    }
-
-    /**
-     * Used by Lucene v3.x only
-     */
-    void touchFile(final String fileName) {
-       final FileMetadata file = fileOps.getFileMetadata(fileName);
-       if (file != null) {
-          final FileCacheKey key = new FileCacheKey(indexName, fileName);
-          file.touch();
-          metadataCache.put(key, file);
-       }
     }
 
     void deleteFile(final String name) {
