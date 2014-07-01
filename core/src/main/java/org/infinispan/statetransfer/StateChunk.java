@@ -57,7 +57,7 @@ public class StateChunk {
    public String toString() {
       return "StateChunk{" +
             "segmentId=" + segmentId +
-            ", cacheEntries=" + cacheEntries +
+            ", cacheEntries=" + cacheEntries.size() +
             ", isLastChunk=" + isLastChunk +
             '}';
    }
