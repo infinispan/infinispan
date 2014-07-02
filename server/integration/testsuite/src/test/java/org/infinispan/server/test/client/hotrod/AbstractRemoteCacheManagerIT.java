@@ -239,17 +239,17 @@ public abstract class AbstractRemoteCacheManagerIT {
         TcpTransportFactory ttf = (TcpTransportFactory) getTransportFactoryField(of);
 
         // perform first simulated operation
-        tt = (TcpTransport) ttf.getTransport(null, null);
+        tt = (TcpTransport) ttf.getTransport(null, rci.getName().getBytes());
         sock_addr = (InetSocketAddress) tt.getServerAddress();
         ttf.releaseTransport(tt);
         serverAddrSequence.append(sock_addr.getAddress().getHostAddress() + ":" + sock_addr.getPort()).append(" ");
 
-        tt = (TcpTransport) ttf.getTransport(null, null);
+        tt = (TcpTransport) ttf.getTransport(null, rci.getName().getBytes());
         sock_addr = (InetSocketAddress) tt.getServerAddress();
         ttf.releaseTransport(tt);
         serverAddrSequence.append(sock_addr.getAddress().getHostAddress() + ":" + sock_addr.getPort()).append(" ");
 
-        tt = (TcpTransport) ttf.getTransport(null, null);
+        tt = (TcpTransport) ttf.getTransport(null, rci.getName().getBytes());
         sock_addr = (InetSocketAddress) tt.getServerAddress();
         ttf.releaseTransport(tt);
         serverAddrSequence.append(sock_addr.getAddress().getHostAddress() + ":" + sock_addr.getPort());
@@ -307,13 +307,13 @@ public abstract class AbstractRemoteCacheManagerIT {
         OperationsFactory of = getOperationsFactoryField(rci);
         TcpTransportFactory ttf = (TcpTransportFactory) getTransportFactoryField(of);
         // perform first simulated operation
-        tt = (TcpTransport) ttf.getTransport(null, null);
+        tt = (TcpTransport) ttf.getTransport(null, rci.getName().getBytes());
         sock_addr = (InetSocketAddress) tt.getServerAddress();
         ttf.releaseTransport(tt);
         assertEquals("load balancing first request: server address expected " + hostport0 + ", actual server address "
                 + sock_addr, sock_addr, hostport0);
 
-        tt = (TcpTransport) ttf.getTransport(null, null);
+        tt = (TcpTransport) ttf.getTransport(null, rci.getName().getBytes());
         sock_addr = (InetSocketAddress) tt.getServerAddress();
         ttf.releaseTransport(tt);
         assertEquals("load balancing second request: server address expected " + hostport0 + ", actual server address"
@@ -479,7 +479,7 @@ public abstract class AbstractRemoteCacheManagerIT {
         RemoteCacheImpl rci = (RemoteCacheImpl) rc;
         OperationsFactory of = getOperationsFactoryField(rci);
         TcpTransportFactory ttf = (TcpTransportFactory) getTransportFactoryField(of);
-        ConsistentHash ch = ttf.getConsistentHash(null);
+        ConsistentHash ch = ttf.getConsistentHash(((RemoteCacheImpl) rc).getName().getBytes());
         return ch.getClass().getName();
     }
 
