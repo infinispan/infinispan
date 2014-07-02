@@ -1,16 +1,22 @@
 package org.infinispan.server.hotrod.util;
 
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
 
 import org.infinispan.Cache;
+import org.infinispan.commons.marshall.Marshaller;
+import org.infinispan.commons.util.Immutables;
+import org.infinispan.compat.TypeConverter;
 import org.infinispan.configuration.cache.CacheMode;
+import org.infinispan.configuration.cache.CompatibilityModeConfiguration;
 import org.infinispan.distexec.mapreduce.Collator;
 import org.infinispan.distexec.mapreduce.Collector;
 import org.infinispan.distexec.mapreduce.MapReduceTask;
 import org.infinispan.distexec.mapreduce.Mapper;
 import org.infinispan.distexec.mapreduce.Reducer;
+import org.infinispan.server.hotrod.HotRodTypeConverter;
 
 /**
  * @author <a href="mailto:rtsang@redhat.com">Ray Tsang</a>
@@ -24,18 +30,25 @@ public final class BulkUtil {
    public static final int GLOBAL_SCOPE = 1;
    public static final int LOCAL_SCOPE = 2;
 
-   public static <K> Set<K> getAllKeys(Cache<K, ?> cache, int scope) {
+   public static Set<byte[]> getAllKeys(Cache<byte[], ?> cache, int scope) {
       CacheMode cacheMode = cache.getAdvancedCache().getCacheConfiguration().clustering().cacheMode();
       boolean keysAreLocal = !cacheMode.isClustered() || cacheMode.isReplicated();
       if (keysAreLocal || scope == LOCAL_SCOPE) {
          return cache.keySet();
       } else {
-         MapReduceTask<K, Object, K, Object> task =
-               new MapReduceTask<K, Object, K, Object>((Cache<K, Object>) cache)
-                     .mappedWith(new KeyMapper<K>())
-                     .reducedWith(new KeyReducer<K>());
-         return task.execute(new KeysCollator<K>());
+         MapReduceTask<byte[], Object, byte[], Object> task =
+               new MapReduceTask<byte[], Object, byte[], Object>((Cache<byte[], Object>) cache)
+                     .mappedWith(new KeyMapper<byte[]>())
+                     .reducedWith(new KeyReducer<byte[]>());
+         return task.execute(createCollator(cache));
       }
+   }
+
+   private static Collator<byte[], Object, Set<byte[]>> createCollator(Cache<byte[], ?> cache) {
+      CompatibilityModeConfiguration compatibility = cache.getCacheConfiguration().compatibility();
+      boolean enabled = compatibility.enabled();
+      return enabled ? new CompatibilityCollator<byte[]>(compatibility.marshaller())
+            : new KeysCollator<byte[]>();
    }
 
    private static class KeyMapper<K> implements Mapper<K, Object, K, Object> {
@@ -65,4 +78,25 @@ public final class BulkUtil {
          return reducedResults.keySet();
       }
    }
+
+   private static class CompatibilityCollator<K> implements Collator<K, Object, Set<K>> {
+
+      private final HotRodTypeConverter converter = new HotRodTypeConverter();
+
+      private CompatibilityCollator(Marshaller compatibilityMarshaller) {
+         if (compatibilityMarshaller != null)
+            converter.setMarshaller(compatibilityMarshaller);
+      }
+
+      @Override
+      public Set<K> collate(Map<K, Object> reducedResults) {
+         Set<K> keySet = reducedResults.keySet();
+         Set<K> backingSet = new HashSet<K>(keySet.size());
+         for (K key : keySet)
+            backingSet.add((K) converter.unboxKey(key));
+
+         return Immutables.immutableSetWrap(backingSet);
+      }
+   }
+
 }
