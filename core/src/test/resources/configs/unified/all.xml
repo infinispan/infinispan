@@ -70,6 +70,7 @@
             </backup>
          </backups>
          <backup-for remote-cache="users" remote-site="LON"/>
+         <partition-handling enabled="true"/>
          <state-transfer enabled="true" timeout="60500" chunk-size="10500" />
       </distributed-cache>
       <replicated-cache name="capedwarf-data" mode="ASYNC">

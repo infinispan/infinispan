@@ -151,6 +151,10 @@
          concurrency-level="5000"
          striping="false"
       />
+      <!--
+        Used to configure how the cache to react to node failures, split brains etc.
+        <partition-handling enabled="true"/>
+      -->
 
       <!--
          Used to register a transaction manager and participate in JTA and XA transactions.

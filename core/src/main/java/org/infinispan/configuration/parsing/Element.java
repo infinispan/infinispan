@@ -80,6 +80,7 @@ public enum Element {
     UNSAFE("unsafe"),
     VERSIONING("versioning"),
     WRITE_BEHIND("write-behind"),
+    PARTITION_HANDLING("partition-handling"),
 
     ;
 
