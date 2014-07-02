@@ -29,6 +29,7 @@ import org.infinispan.manager.CacheContainer;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.marshall.core.ExternalizerTable;
 import org.infinispan.marshall.core.MarshalledEntry;
+import org.infinispan.manager.DefaultCacheManager;
 import org.infinispan.marshall.core.MarshalledEntryImpl;
 import org.infinispan.metadata.EmbeddedMetadata;
 import org.infinispan.metadata.Metadata;
@@ -854,13 +855,12 @@ public class TestingUtil {
     * @return component registry
     */
    public static ComponentRegistry extractComponentRegistry(Cache cache) {
-      ComponentRegistry cr = (ComponentRegistry) extractField(cache, "componentRegistry");
-      if (cr == null) cr = cache.getAdvancedCache().getComponentRegistry();
+      ComponentRegistry cr = cache.getAdvancedCache().getComponentRegistry();
       return cr;
    }
 
    public static GlobalComponentRegistry extractGlobalComponentRegistry(CacheContainer cacheContainer) {
-      return (GlobalComponentRegistry) extractField(cacheContainer, "globalComponentRegistry");
+      return ((EmbeddedCacheManager) cacheContainer).getGlobalComponentRegistry();
    }
 
    public static LockManager extractLockManager(Cache cache) {
