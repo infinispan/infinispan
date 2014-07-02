@@ -42,7 +42,7 @@ public class PartitionHandlingManager {
    }
 
    @Start void start() {
-      partitionHandlingStrategy = cache.getCacheConfiguration().clustering().partitionHandling().strategy();
+      partitionHandlingStrategy = new DegradedModePartitionHandlingStrategy();
    }
 
    public void setState(PartitionState state) {
@@ -64,7 +64,7 @@ public class PartitionHandlingManager {
 
    public boolean handleViewChange(List<Address> newMembers, ClusterCacheStatus topologyManager) {
       boolean missingData = isMissingData(newMembers, lastStableCluster);
-      log.tracef("handleViewChange(old:%s -> new:%s). Is missing data? %s Cluster fully recovered?", lastStableCluster, newMembers, missingData);
+      log.tracef("handleViewChange(old:%s -> new:%s). Is missing data? %s", lastStableCluster, newMembers, missingData);
       PartitionContextImpl pci = new PartitionContextImpl(this, lastStableCluster, newMembers, missingData, topologyManager, cache);
       log.debugf("Invoking partition handling %s", pci);
       partitionHandlingStrategy.onPartition(pci);

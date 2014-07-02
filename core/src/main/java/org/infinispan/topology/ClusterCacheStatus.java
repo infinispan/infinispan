@@ -15,6 +15,7 @@ import org.infinispan.commons.util.InfinispanCollections;
 import org.infinispan.configuration.global.GlobalConfiguration;
 import org.infinispan.distribution.ch.ConsistentHash;
 import org.infinispan.distribution.ch.ConsistentHashFactory;
+import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.factories.GlobalComponentRegistry;
 import org.infinispan.partionhandling.impl.PartitionHandlingManager;
 import org.infinispan.remoting.rpc.ResponseMode;
@@ -72,7 +73,8 @@ public class ClusterCacheStatus {
       this.gcr = gcr;
       this.rebalancePolicy = rebalancePolicy;
       if (trace) log.tracef("Cache %s initialized, join info is %s", cacheName, joinInfo);
-      partitionHandlingManager = gcr.getNamedComponentRegistry(cacheName).getComponent(PartitionHandlingManager.class);
+      ComponentRegistry namedComponentRegistry = gcr.getNamedComponentRegistry(cacheName);
+      partitionHandlingManager = namedComponentRegistry == null ? null : namedComponentRegistry.getComponent(PartitionHandlingManager.class);
    }
 
    public CacheJoinInfo getJoinInfo() {

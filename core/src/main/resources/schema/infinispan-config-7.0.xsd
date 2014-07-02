@@ -948,6 +948,22 @@
               </xs:attribute>
             </xs:complexType>
           </xs:element>
+          <xs:element name="partition-handling" minOccurs="0" maxOccurs="1">
+             <xs:annotation>
+                <xs:documentation>
+                   Configures the way this cache reacts to node crashes and split brains.
+                </xs:documentation>
+             </xs:annotation>
+             <xs:complexType>
+                <xs:attribute name="enabled" type="xs:boolean" use="optional">
+                   <xs:annotation>
+                      <xs:documentation>
+                         Enable/disable the partition handling functionality. Defaults to false.
+                      </xs:documentation>
+                   </xs:annotation>
+                </xs:attribute>
+             </xs:complexType>
+          </xs:element>
         </xs:sequence>
         <xs:attribute name="async-marshalling" type="xs:boolean" default="false">
           <xs:annotation>

@@ -4,7 +4,7 @@
       xsi:schemaLocation="urn:infinispan:config:7.0 http://www.infinispan.org/schemas/infinispan-config-7.0.xsd"
       xmlns="urn:infinispan:config:7.0">
 
-   <cache-container name="default" >
+   <cache-container name="default" default-cache="secured">
       <security>
          <authorization>
             <identity-role-mapper/>

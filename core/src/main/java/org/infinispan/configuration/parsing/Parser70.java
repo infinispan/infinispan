@@ -839,6 +839,24 @@ public class Parser70 implements ConfigurationParser {
       }
    }
 
+   private void parsePartitionHandling(XMLExtendedStreamReader reader, ConfigurationBuilder builder) throws XMLStreamException {
+      PartitionHandlingConfigurationBuilder ph = builder.clustering().partitionHandling();
+      for (int i = 0; i < reader.getAttributeCount(); i++) {
+         String value = replaceProperties(reader.getAttributeValue(i));
+         Attribute attribute = Attribute.forName(reader.getAttributeLocalName(i));
+         switch (attribute) {
+            case ENABLED: {
+               ph.enabled(Boolean.valueOf(value));
+               break;
+            }
+            default: {
+               throw ParseUtils.unexpectedAttribute(reader, i);
+            }
+         }
+      }
+      ParseUtils.requireNoContent(reader);
+   }
+
    private void parseBackup(XMLExtendedStreamReader reader, ConfigurationBuilder builder) throws XMLStreamException {
       BackupConfigurationBuilder backup = builder.sites().addBackup();
       for (int i = 0; i < reader.getAttributeCount(); i++) {
@@ -1060,6 +1078,10 @@ public class Parser70 implements ConfigurationParser {
          }
          case BACKUP_FOR: {
             this.parseBackupFor(reader, builder);
+            break;
+         }
+         case PARTITION_HANDLING: {
+            this.parsePartitionHandling(reader, builder);
             break;
          }
          case SECURITY: {
