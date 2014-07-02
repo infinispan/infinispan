@@ -46,7 +46,7 @@ public class RecoveryAwareTransactionTable extends XaTransactionTable {
    @Override
    public void remoteTransactionPrepared(GlobalTransaction gtx) {
       RecoveryAwareRemoteTransaction remoteTransaction =
-            (RecoveryAwareRemoteTransaction) super.getRemoteTransaction(gtx);
+            (RecoveryAwareRemoteTransaction) getRemoteTransaction(gtx);
       if (remoteTransaction == null)
          throw new CacheException(String.format(
                "Remote transaction for global transaction (%s) not found", gtx));

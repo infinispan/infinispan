@@ -1,6 +1,5 @@
 package org.infinispan.statetransfer;
 
-import org.infinispan.commands.CommandsFactory;
 import org.infinispan.commands.FlagAffectedCommand;
 import org.infinispan.commands.TopologyAffectedCommand;
 import org.infinispan.commands.VisitableCommand;
@@ -13,7 +12,6 @@ import org.infinispan.commands.tx.VersionedPrepareCommand;
 import org.infinispan.commands.write.*;
 import org.infinispan.commons.CacheException;
 import org.infinispan.commons.util.InfinispanCollections;
-import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.container.versioning.EntryVersionsMap;
 import org.infinispan.context.Flag;
 import org.infinispan.context.InvocationContext;
@@ -25,8 +23,6 @@ import org.infinispan.remoting.responses.Response;
 import org.infinispan.remoting.responses.SuccessfulResponse;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.remoting.transport.jgroups.SuspectException;
-import org.infinispan.transaction.LockingMode;
-import org.infinispan.transaction.impl.RemoteTransaction;
 import org.infinispan.transaction.xa.CacheTransaction;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
@@ -60,9 +56,7 @@ public class StateTransferInterceptor extends BaseStateTransferInterceptor {
    private static final Log log = LogFactory.getLog(StateTransferInterceptor.class);
    private static boolean trace = log.isTraceEnabled();
 
-   private CommandsFactory commandFactory;
-
-   private boolean useVersioning;
+   private StateTransferManager stateTransferManager;
 
    private final AffectedKeysVisitor affectedKeysVisitor = new AffectedKeysVisitor();
 
@@ -72,49 +66,17 @@ public class StateTransferInterceptor extends BaseStateTransferInterceptor {
    }
 
    @Inject
-   public void init(Configuration configuration, CommandsFactory commandFactory) {
-      this.commandFactory = commandFactory;
-      useVersioning = configuration.transaction().transactionMode().isTransactional() && configuration.locking().writeSkewCheck() &&
-            configuration.transaction().lockingMode() == LockingMode.OPTIMISTIC && configuration.versioning().enabled();
+   public void init(StateTransferManager stateTransferManager) {
+      this.stateTransferManager = stateTransferManager;
    }
 
    @Override
    public Object visitPrepareCommand(TxInvocationContext ctx, PrepareCommand command) throws Throwable {
-      if (ctx.getCacheTransaction() instanceof RemoteTransaction) {
-         ((RemoteTransaction) ctx.getCacheTransaction()).setLookedUpEntriesTopology(command.getTopologyId());
-      }
-
       return handleTxCommand(ctx, command);
    }
 
    @Override
    public Object visitCommitCommand(TxInvocationContext ctx, CommitCommand command) throws Throwable {
-      if (ctx.getCacheTransaction() instanceof RemoteTransaction) {
-         // If a commit is received for a transaction that doesn't have its 'lookedUpEntries' populated
-         // we know for sure this transaction is 2PC and was received via state transfer but the preceding PrepareCommand
-         // was not received by local node because it was executed on the previous key owners. We need to re-prepare
-         // the transaction on local node to ensure its locks are acquired and lookedUpEntries is properly populated.
-         RemoteTransaction remoteTx = (RemoteTransaction) ctx.getCacheTransaction();
-         if (trace) {
-            log.tracef("Remote tx topology id %d and command topology is %d", remoteTx.lookedUpEntriesTopology(),
-                       command.getTopologyId());
-         }
-         if (remoteTx.lookedUpEntriesTopology() < command.getTopologyId()) {
-            remoteTx.setLookedUpEntriesTopology(command.getTopologyId());
-
-            PrepareCommand prepareCommand;
-            if (useVersioning) {
-               prepareCommand = commandFactory.buildVersionedPrepareCommand(ctx.getGlobalTransaction(), ctx.getModifications(), false);
-            } else {
-               prepareCommand = commandFactory.buildPrepareCommand(ctx.getGlobalTransaction(), ctx.getModifications(), false);
-            }
-            commandFactory.initializeReplicableCommand(prepareCommand, true);
-            prepareCommand.setOrigin(ctx.getOrigin());
-            log.tracef("Replaying the transactions received as a result of state transfer %s", prepareCommand);
-            prepareCommand.perform(null);
-         }
-      }
-
       return handleTxCommand(ctx, command);
    }
 
@@ -191,7 +153,7 @@ public class StateTransferInterceptor extends BaseStateTransferInterceptor {
     * the {@code CACHE_MODE_LOCAL} flag.
     */
    private Object handleNonTxWriteCommand(InvocationContext ctx, WriteCommand command) throws Throwable {
-      log.tracef("handleNonTxWriteCommand for command %s", command);
+      if (trace) log.tracef("handleNonTxWriteCommand for command %s", command);
 
       if (isLocalOnly(ctx, command)) {
          return invokeNextInterceptor(ctx, command);
@@ -217,7 +179,7 @@ public class StateTransferInterceptor extends BaseStateTransferInterceptor {
          if (!(ce instanceof OutdatedTopologyException) && !(ce instanceof SuspectException))
             throw e;
 
-         log.tracef("Retrying command because of topology change: %s", command);
+         if (trace) log.tracef("Retrying command because of topology change: %s", command);
          // We increment the topology id so that updateTopologyIdAndWaitForTransactionData waits for the next topology.
          // Without this, we could retry the command too fast and we could get the OutdatedTopologyException again.
          int newTopologyId = Math.max(currentTopologyId(), commandTopologyId + 1);
@@ -244,7 +206,7 @@ public class StateTransferInterceptor extends BaseStateTransferInterceptor {
 
    private Object handleTopologyAffectedCommand(InvocationContext ctx, VisitableCommand command,
                                                 Address origin, boolean sync) throws Throwable {
-      log.tracef("handleTopologyAffectedCommand for command %s, origin %s", command, origin);
+      if (trace) log.tracef("handleTopologyAffectedCommand for command %s, origin %s", command, origin);
 
       if (isLocalOnly(ctx, command)) {
          return invokeNextInterceptor(ctx, command);
