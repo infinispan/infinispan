@@ -178,7 +178,7 @@
       <version.asm>3.3.1</version.asm>
       <version.pax.url>1.3.7</version.pax.url>
       <version.karaf>2.3.3</version.karaf>
-      <version.pax.exam>3.5.0</version.pax.exam>
+      <version.pax.exam>4.1.0</version.pax.exam>
       <reportTitle>Infinispan JaCoCo Report</reportTitle>
       <dir.ispn>../</dir.ispn>
       <dir.report>../jacoco-html</dir.report>
