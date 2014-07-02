@@ -14,11 +14,14 @@ import scala.collection.JavaConversions._
 import scala.collection.mutable
 import scala.collection.mutable.{ListBuffer, ArrayBuffer}
 import org.infinispan.server.hotrod.Events.{CustomEvent, KeyEvent, Event, KeyWithVersionEvent}
+import org.infinispan.configuration.cache.CacheMode
 
 /**
  * @author Galder Zamarreño
  */
 object Encoder2x extends AbstractVersionedEncoder with Constants with Log {
+
+   lazy val converter = new HotRodTypeConverter
 
    override def writeEvent(e: Event, buf: ByteBuf) {
       if (isTraceEnabled)
@@ -228,9 +231,18 @@ object Encoder2x extends AbstractVersionedEncoder with Constants with Log {
                val cache: Cache = server.getCacheInstance(g.cacheName, cacheManager, false)
                val keys = BulkUtil.getAllKeys(cache, g.scope)
                val iterator = asScalaIterator(keys.iterator)
+               val cacheConfig = cache.getCacheConfiguration
+               if (cacheConfig.compatibility.enabled && cacheConfig.compatibility.marshaller != null) {
+                  converter.setMarshaller(cacheConfig.compatibility.marshaller)
+               }
                for (key <- iterator) {
                   buf.writeByte(1) // Not done
-                  writeRangedBytes(key, buf)
+                  //in compatibility mode we get unmarshalled entries so we need to convert back to byte array
+                  if (cacheConfig.compatibility.enabled && cacheConfig.clustering.cacheMode != CacheMode.LOCAL) {
+                     writeRangedBytes(converter.unboxKey(key.asInstanceOf[AnyRef]), buf)
+                  } else {
+                     writeRangedBytes(key.asInstanceOf[Bytes], buf)
+                  }
                }
                buf.writeByte(0) // Done
             }
