@@ -306,7 +306,7 @@ public class ClusterTopologyManagerImpl implements ClusterTopologyManager {
             log.tracef("The balanced CH is the same as the current CH, not rebalancing");
             return;
          }
-         CacheTopology newTopology = new CacheTopology(newTopologyId, currentCH, balancedCH);
+         CacheTopology newTopology = new CacheTopology(newTopologyId, currentCH, balancedCH, cacheStatus.isMissingData());
          log.tracef("Updating cache %s topology for rebalance: %s", cacheName, newTopology);
          newTopology.logRoutingTableInformation();
          cacheStatus.startRebalance(newTopology);
@@ -485,7 +485,7 @@ public class ClusterTopologyManagerImpl implements ClusterTopologyManager {
       // need to recover existing caches asynchronously (in case we just became the coordinator)
       asyncTransportExecutor.submit(new Runnable() {
          public void run() {
-            log.tracef("handleNewView(oldView='%s', newView='%s'", e.getOldMembers(), e.getNewMembers());
+            log.tracef("handleNewView(oldView='%s', newView='%s', isMerge=%s", e.getOldMembers(), e.getNewMembers(), e.isMergeView());
             handleNewView(e.isMergeView(), e.getViewId());
          }
       });

@@ -17,6 +17,7 @@ import org.infinispan.test.TestingUtil;
 import org.infinispan.test.concurrent.CommandMatcher;
 import org.infinispan.test.concurrent.StateSequencer;
 import org.infinispan.test.concurrent.StateSequencerUtil;
+import org.infinispan.test.fwk.CleanupAfterMethod;
 import org.infinispan.test.fwk.TEST_PING;
 import org.infinispan.util.ControlledConsistentHashFactory;
 import org.infinispan.util.logging.Log;
@@ -39,32 +40,74 @@ import java.util.Random;
  * operations.
  */
 @Test(groups = "functional", testName = "partitionhandling.NumOwnersNodeCrashInSequenceTest")
+@CleanupAfterMethod
 public class NumOwnersNodeCrashInSequenceTest extends MultipleCacheManagersTest {
 
    private static Log log = LogFactory.getLog(NumOwnersNodeCrashInSequenceTest.class);
 
-   ControlledConsistentHashFactory cchf = new ControlledConsistentHashFactory(new int[]{0, 1}, new int[]{1, 2},
-                                                                              new int[]{2, 3}, new int[]{3, 0});
+   ControlledConsistentHashFactory cchf;
+   private ConfigurationBuilder configBuilder;
 
    @Override
    protected void createCacheManagers() throws Throwable {
-      ConfigurationBuilder configBuilder = getDefaultClusteredCacheConfig(CacheMode.DIST_SYNC);
+      cchf = new ControlledConsistentHashFactory(new int[]{0, 1}, new int[]{1, 2},
+                                            new int[]{2, 3}, new int[]{3, 0});
+      configBuilder = getDefaultClusteredCacheConfig(CacheMode.DIST_SYNC);
       configBuilder.clustering().partitionHandling().enabled(true);
       configBuilder.clustering().hash().numSegments(4).stateTransfer().timeout(2000);
+   }
+
+   public void testNodeCrashedBeforeStFinished0() throws Exception {
+      testNodeCrashedBeforeStFinished(0, 1, 2, 3);
+   }
+
+   public void testNodeCrashedBeforeStFinished1() throws Exception {
+      testNodeCrashedBeforeStFinished(0, 2, 1, 3);
+   }
+
+   public void testNodeCrashedBeforeStFinished2() throws Exception {
+      testNodeCrashedBeforeStFinished(0, 3, 1, 2);
+   }
+
+   public void testNodeCrashedBeforeStFinished3() throws Exception {
+      testNodeCrashedBeforeStFinished(1, 2, 0, 3);
+   }
+
+   public void testNodeCrashedBeforeStFinished4() throws Exception {
+      testNodeCrashedBeforeStFinished(1, 3, 0, 2);
+   }
+
+   public void testNodeCrashedBeforeStFinished5() throws Exception {
+      testNodeCrashedBeforeStFinished(2, 3, 0, 1);
+   }
+
+   public void testNodeCrashedBeforeStFinished6() throws Exception {
+      testNodeCrashedBeforeStFinished(1, 2, 3, 0);
+   }
+
+   public void testNodeCrashedBeforeStFinished7() throws Exception {
+      testNodeCrashedBeforeStFinished(2, 3, 1, 0);
+   }
+
+
+   private void testNodeCrashedBeforeStFinished(final int a0, final int a1, final int c0, final int c1) throws Exception {
+
+      cchf.setOwnerIndexes(new int[]{a0, a1}, new int[]{a1, c0},
+                           new int[]{c0, c1}, new int[]{c1, a0});
       configBuilder.clustering().hash().consistentHashFactory(cchf);
       createCluster(configBuilder, 4);
       waitForClusterToForm();
-   }
 
-   public void testNodeCrashedBeforeStFinished() throws Exception {
-      Object k0 = new MagicKey(cache(0), cache(1));
-      Object k1 = new MagicKey(cache(0), cache(1));
-      Object k2 = new MagicKey(cache(1), cache(2));
-      Object k3 = new MagicKey(cache(1), cache(2));
-      Object k4 = new MagicKey(cache(2), cache(3));
-      Object k5 = new MagicKey(cache(2), cache(3));
-      Object k6 = new MagicKey(cache(3), cache(0));
-      Object k7 = new MagicKey(cache(3), cache(0));
+
+
+      Object k0 = new MagicKey(cache(a0), cache(a1));
+      Object k1 = new MagicKey(cache(a0), cache(a1));
+      Object k2 = new MagicKey(cache(a1), cache(c0));
+      Object k3 = new MagicKey(cache(a1), cache(c0));
+      Object k4 = new MagicKey(cache(c0), cache(c1));
+      Object k5 = new MagicKey(cache(c0), cache(c1));
+      Object k6 = new MagicKey(cache(c1), cache(a0));
+      Object k7 = new MagicKey(cache(c1), cache(a0));
 
       final Object[] allKeys = new Object[] {k0, k1, k2, k3, k4, k5, k6, k7};
       for (Object k : allKeys) cache(new Random().nextInt(4)).put(k, k);
@@ -72,31 +115,32 @@ public class NumOwnersNodeCrashInSequenceTest extends MultipleCacheManagersTest 
       StateSequencer ss = new StateSequencer();
       ss.logicalThread("main", "main:st_in_progress", "main:2nd_node_left", "main:cluster_unavailable");
 
-      cchf.setOwnerIndexes(new int[]{0, 1}, new int[]{1, 2}, new int[]{2, 1}, new int[]{2, 0});
+      cchf.setMembersToUse(advancedCache(a0).getRpcManager().getTransport().getMembers());
+      cchf.setOwnerIndexes(new int[]{a0, a1}, new int[]{a1, c0}, new int[]{c0, a1}, new int[]{c0, a0});
 
-      final StateTransferManager stm0 = advancedCache(0).getComponentRegistry().getStateTransferManager();
+      final StateTransferManager stm0 = advancedCache(a0).getComponentRegistry().getStateTransferManager();
       final int initialTopologyId = stm0.getCacheTopology().getTopologyId();
-      StateSequencerUtil.advanceOnInboundRpc(ss, manager(1), new CommandMatcher() {
+      StateSequencerUtil.advanceOnInboundRpc(ss, manager(a1), new CommandMatcher() {
          @Override
          public boolean accept(ReplicableCommand command) {
-            System.out.println("command = " + command);
+//            System.out.println("command = " + command + " received on " + address(cache(a1)));
             if (!(command instanceof StateResponseCommand))
                return false;
             StateResponseCommand responseCommand = (StateResponseCommand) command;
-            System.out.println(responseCommand.getTopologyId() + " ==? " + (initialTopologyId + 2));
-            return responseCommand.getTopologyId() == initialTopologyId + 2;
+//            System.out.println(responseCommand.getCommandId()  + " == " + (initialTopologyId + 2));
+            return initialTopologyId < responseCommand.getCommandId();
          }
       }).before("main:st_in_progress", "main:cluster_unavailable");
 
       log.trace("Before killing manager3");
-      Address missing = address(3);
-      crashCacheManagers(manager(3));
-      installNewView(advancedCache(0).getRpcManager().getTransport().getMembers(), missing, manager(0), manager(1), manager(2));
+      Address missing = address(c1);
+      crashCacheManagers(manager(c1));
+      installNewView(advancedCache(a0).getRpcManager().getTransport().getMembers(), missing, manager(a0), manager(a1), manager(c0));
       ss.enter("main:2nd_node_left");
       log.trace("Killing 2nd node");
-      missing = address(2);
-      crashCacheManagers(manager(2));
-      installNewView(advancedCache(0).getRpcManager().getTransport().getMembers(), missing, manager(0), manager(1));
+      missing = address(c0);
+      crashCacheManagers(manager(c0));
+      installNewView(advancedCache(a0).getRpcManager().getTransport().getMembers(), missing, manager(a0), manager(a1));
       ss.exit("main:2nd_node_left");
 
       eventually(new Condition() {
@@ -105,12 +149,12 @@ public class NumOwnersNodeCrashInSequenceTest extends MultipleCacheManagersTest 
             log.trace("Testing condition");
             for (Object k : allKeys) {
                try {
-                  cache(0).get(k);
+                  cache(a0).get(k);
                   return false;
                } catch (AvailabilityException e) {
                }
                try {
-                  cache(1).put(k, k);
+                  cache(a1).put(k, k);
                   return false;
                } catch (AvailabilityException e) {
                }
