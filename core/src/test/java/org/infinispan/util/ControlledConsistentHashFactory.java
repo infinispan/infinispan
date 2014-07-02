@@ -21,6 +21,8 @@ import static org.testng.AssertJUnit.assertTrue;
 public class ControlledConsistentHashFactory extends BaseControlledConsistentHashFactory {
    private volatile List<int[]> ownerIndexes;
 
+   private volatile List<Address> membersToUse;
+
    /**
     * Create a consistent hash factory with a single segment.
     */
@@ -84,9 +86,11 @@ public class ControlledConsistentHashFactory extends BaseControlledConsistentHas
    @Override
    protected List<Address> createOwnersCollection(List<Address> members, int numberOfOwners, int segmentIndex) {
       int[] segmentOwnerIndexes = ownerIndexes.get(segmentIndex);
-      List<Address> owners = new ArrayList(segmentOwnerIndexes.length);
+      List<Address> owners = new ArrayList<>(segmentOwnerIndexes.length);
       for (int index : segmentOwnerIndexes) {
-         if (index < members.size()) {
+         if (membersToUse != null) {
+            owners.add(membersToUse.get(index));
+         }  else  if (index < members.size()) {
             owners.add(members.get(index));
          }
       }
@@ -95,5 +99,9 @@ public class ControlledConsistentHashFactory extends BaseControlledConsistentHas
          owners.add(members.get(0));
       }
       return owners;
+   }
+
+   public void setMembersToUse(List<Address> membersToUse) {
+      this.membersToUse = membersToUse;
    }
 }

@@ -228,10 +228,9 @@ public class ClusterCacheStatus {
       synchronized (this) {
          if (rebalanceStatus != null)
             return false;
-
          rebalanceStatus = new RebalanceConfirmationCollector(cacheName, newTopology.getTopologyId(),
                newTopology.getMembers());
-         this.cacheTopology = newTopology;
+         updateCacheTopology(newTopology);
          return true;
       }
    }
@@ -378,9 +377,9 @@ public class ClusterCacheStatus {
             List<Address> newPendingMembers = pruneInvalidMembers(pendingCH.getMembers());
             newPendingCH = consistentHashFactory.updateMembers(pendingCH, newPendingMembers, getCapacityFactors());
          }
-         boolean missingData = isMissingData(currentCH, members);
-         log.tracef("Is missing data? %s", missingData);
-         CacheTopology newTopology = new CacheTopology(topologyId + 1, newCurrentCH, newPendingCH, missingData);
+         boolean missingSegments = isMissingData(currentCH, members);
+         log.tracef("Is missing segments? %s", missingSegments);
+         CacheTopology newTopology = new CacheTopology(topologyId + 1, newCurrentCH, newPendingCH, missingSegments);
          updateCacheTopology(newTopology);
          log.tracef("Cache %s topology updated: %s", cacheName, newTopology);
          newTopology.logRoutingTableInformation();
@@ -465,7 +464,7 @@ public class ClusterCacheStatus {
       for (CacheTopology topology : partitionTopologies) {
          if (topology.getTopologyId() > maxTopology) {
             maxTopology = topology.getTopologyId();
-            agreedCh = topology.getCurrentCH(); //todo shouldn't I use topology.getPendingCh() here, in case that cluster is moving towards a certain new topology?
+            agreedCh = topology.getCurrentCH();
          }
       }
 
@@ -479,6 +478,7 @@ public class ClusterCacheStatus {
       }
       if (agreedCh != null) {
          agreedCh = chFactory.updateMembers(agreedCh, members, getCapacityFactors());
+         log.tracef("Agreed routing table is %s", agreedCh.getRoutingTableAsString());
       }
 
       // Make sure the topology id is higher than any topology id we had before in the cluster
@@ -493,9 +493,12 @@ public class ClusterCacheStatus {
       // We only use the currentCH, we ignore any ongoing rebalance in the partitions
       ConsistentHash currentCHUnion = null;
       ConsistentHashFactory chFactory = getJoinInfo().getConsistentHashFactory();
+      ConsistentHash latestTopologyCh = null;
+
       for (CacheTopology topology : partitionTopologies) {
          if (topology.getTopologyId() > unionTopologyId) {
             unionTopologyId = topology.getTopologyId();
+            latestTopologyCh = topology.getCurrentCH();
          }
 
          if (currentCHUnion == null) {
@@ -520,8 +523,7 @@ public class ClusterCacheStatus {
 
       // Make sure the topology id is higher than any topology id we had before in the cluster
       unionTopologyId += 2;
-      CacheTopology cacheTopology = new CacheTopology(unionTopologyId, currentCHUnion, null);
-      return cacheTopology;
+      return new CacheTopology(unionTopologyId, currentCHUnion, null, isMissingData(latestTopologyCh, clusterMembers));
    }
 
    public synchronized void reconcileCacheTopologyWhenBecomingCoordinator(List<Address> clusterMembers, List<CacheTopology> partitionTopologies, boolean mergeView) throws Exception {
@@ -559,5 +561,9 @@ public class ClusterCacheStatus {
          log.tracef("Segments have been lost: %s", allSegments);
       }
       return !allSegments.isEmpty();
+   }
+
+   public boolean isMissingData() {
+      return getCacheTopology() != null && getCacheTopology().isMissingData();
    }
 }
