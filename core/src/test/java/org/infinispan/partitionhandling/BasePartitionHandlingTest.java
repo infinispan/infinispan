@@ -1,6 +1,5 @@
 package org.infinispan.partitionhandling;
 
-import org.infinispan.AdvancedCache;
 import org.infinispan.Cache;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
@@ -18,6 +17,7 @@ import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 import org.jgroups.Address;
 import org.jgroups.Channel;
+import org.jgroups.MergeView;
 import org.jgroups.View;
 import org.jgroups.protocols.DISCARD;
 import org.jgroups.protocols.Discovery;
@@ -68,10 +68,26 @@ public class BasePartitionHandlingTest extends MultipleCacheManagersTest {
       }
    }
 
+   public static class PartitionDescriptor {
+      int[] nodes;
+
+      PartitionDescriptor(int... nodes) {
+         this.nodes = nodes;
+      }
+
+      public int[] getNodes() {
+         return nodes;
+      }
+
+      public int node(int i) {
+         return nodes[i];
+      }
+   }
+
    class Partition {
 
       private final List<Address> allMembers;
-      List<Channel> channels = new ArrayList<Channel>();
+      List<Channel> channels = new ArrayList<>();
 
       public Partition(List<Address> allMembers) {
          this.allMembers = allMembers;
@@ -104,7 +120,7 @@ public class BasePartitionHandlingTest extends MultipleCacheManagersTest {
       }
 
       private void assertPartitionFormed() {
-         final List<Address> viewMembers = new ArrayList<Address>();
+         final List<Address> viewMembers = new ArrayList<>();
          for (Channel ac : channels) viewMembers.add(ac.getAddress());
          for (Channel c : channels) {
             List<Address> members = c.getView().getMembers();
@@ -113,7 +129,7 @@ public class BasePartitionHandlingTest extends MultipleCacheManagersTest {
       }
 
       private List<Address> installNewView() {
-         final List<Address> viewMembers = new ArrayList<Address>();
+         final List<Address> viewMembers = new ArrayList<>();
          for (Channel c : channels) viewMembers.add(c.getAddress());
          View view = View.create(channels.get(0).getAddress(), viewId.incrementAndGet(), (Address[]) viewMembers.toArray(new Address[viewMembers.size()]));
 
@@ -121,6 +137,31 @@ public class BasePartitionHandlingTest extends MultipleCacheManagersTest {
          for (Channel c : channels)
             ((GMS) c.getProtocolStack().findProtocol(GMS.class)).installView(view);
          return viewMembers;
+      }
+
+      private List<Address> installMergeView(ArrayList<Channel> view1, ArrayList<Channel> view2) {
+         List<Address> allAddresses = new ArrayList<>();
+         for (Channel c: view1) allAddresses.add(c.getAddress());
+         for (Channel c: view2) allAddresses.add(c.getAddress());
+
+         View v1 = toView(view1);
+         View v2 = toView(view2);
+         List<View> allViews = new ArrayList<>();
+         allViews.add(v1);
+         allViews.add(v2);
+
+//         log.trace("Before installing new view: " + viewMembers);
+//         System.out.println("Before installing new view: " + viewMembers);
+         MergeView mv = new MergeView(view1.get(0).getAddress(), (long)viewId.incrementAndGet(), allAddresses, allViews);
+         for (Channel c : channels)
+            ((GMS) c.getProtocolStack().findProtocol(GMS.class)).installView(mv);
+         return allMembers;
+      }
+
+      private View toView(ArrayList<Channel> channels) {
+         final List<Address> viewMembers = new ArrayList<>();
+         for (Channel c : channels) viewMembers.add(c.getAddress());
+         return View.create(channels.get(0).getAddress(), viewId.incrementAndGet(), (Address[]) viewMembers.toArray(new Address[viewMembers.size()]));
       }
 
       private void discardOtherMembers() {
@@ -153,19 +194,26 @@ public class BasePartitionHandlingTest extends MultipleCacheManagersTest {
       public void merge(Partition partition) {
          observeMembers(partition);
          partition.observeMembers(this);
-         enableDiscovery();
-         partition.enableDiscovery();
+         ArrayList<Channel> view1 = new ArrayList<>(channels);
+         ArrayList<Channel> view2 = new ArrayList<>(partition.channels);
+//         System.out.println("view1 = " + printView(view1));
+//         System.out.println("view2 = " + printView(view2));
          channels.addAll(partition.channels);
-
+         installMergeView(view1, view2);
          waitForPartitionToForm();
-         disableDiscovery();
-         List<Partition> tmp = new ArrayList<Partition>(Arrays.asList(BasePartitionHandlingTest.this.partitions));
+         List<Partition> tmp = new ArrayList<>(Arrays.asList(BasePartitionHandlingTest.this.partitions));
          if (!tmp.remove(partition)) throw new AssertionError();
          BasePartitionHandlingTest.this.partitions = tmp.toArray(new Partition[tmp.size()]);
       }
 
+      private String printView(ArrayList<Channel> view1) {
+         StringBuilder sb = new StringBuilder();
+         for (Channel c: view1) sb.append(c.getAddress()).append(" ");
+         return sb.insert(0, "[ ").append(" ]").toString();
+      }
+
       private void waitForPartitionToForm() {
-         List<Cache<Object, Object>> caches = new ArrayList<Cache<Object, Object>>(getCaches(null));
+         List<Cache<Object, Object>> caches = new ArrayList<>(getCaches(null));
          Iterator<Cache<Object, Object>> i = caches.iterator();
          while (i.hasNext()) {
             if (!channels.contains(channel(i.next())))
@@ -222,7 +270,7 @@ public class BasePartitionHandlingTest extends MultipleCacheManagersTest {
 
       public void assertKeyAvailableForRead(Object k, Object expectedValue) {
          for (Cache c : cachesInThisPartition()) {
-            assertEquals(c.get(k), expectedValue, "Cache " + c.getAdvancedCache().getRpcManager().getAddress() + " doesn't see the right value");
+            assertEquals(c.get(k), expectedValue, "Cache " + c.getAdvancedCache().getRpcManager().getAddress() + " doesn't see the right value: ");
          }
       }
 
