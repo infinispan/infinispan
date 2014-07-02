@@ -1,7 +1,6 @@
 package org.infinispan.server.hotrod
 
 import io.netty.buffer.ByteBuf
-import org.infinispan.distribution.ch.impl.DefaultConsistentHash
 import org.infinispan.manager.EmbeddedCacheManager
 import org.infinispan.remoting.transport.Address
 import org.infinispan.server.core.transport.ExtendedByteBuf._
@@ -9,10 +8,8 @@ import org.infinispan.server.hotrod.HotRodServer._
 import org.infinispan.server.hotrod.OperationStatus._
 import org.infinispan.server.hotrod.logging.Log
 import org.infinispan.server.hotrod.util.BulkUtil
-import scala.Some
 import scala.collection.JavaConversions._
 import scala.collection.mutable
-import scala.collection.mutable.{ListBuffer, ArrayBuffer}
 import org.infinispan.server.hotrod.Events.{CustomEvent, KeyEvent, Event, KeyWithVersionEvent}
 
 /**
