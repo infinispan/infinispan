@@ -203,7 +203,7 @@ public abstract class BaseDistFunctionalTest<K, V> extends MultipleCacheManagers
    }
 
    protected Cache<K, V>[] getOwners(Object key) {
-      Cache<K, V>[] arr = new Cache[2];
+      Cache<K, V>[] arr = new Cache[numOwners];
       DistributionTestHelper.getOwners(key, caches).toArray(arr);
       return arr;
    }

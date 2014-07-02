@@ -6,6 +6,7 @@ import javax.transaction.Status;
 import javax.transaction.SystemException;
 import javax.transaction.Transaction;
 
+import org.infinispan.commands.CommandsFactory;
 import org.infinispan.commands.VisitableCommand;
 import org.infinispan.commands.control.LockControlCommand;
 import org.infinispan.commands.read.EntrySetCommand;
@@ -37,6 +38,7 @@ import org.infinispan.jmx.annotations.ManagedAttribute;
 import org.infinispan.jmx.annotations.ManagedOperation;
 import org.infinispan.jmx.annotations.MeasurementType;
 import org.infinispan.remoting.rpc.RpcManager;
+import org.infinispan.transaction.LockingMode;
 import org.infinispan.transaction.impl.LocalTransaction;
 import org.infinispan.transaction.impl.RemoteTransaction;
 import org.infinispan.transaction.impl.TransactionCoordinator;
@@ -69,9 +71,12 @@ public class TxInterceptor extends CommandInterceptor {
    protected RpcManager rpcManager;
 
    private static final Log log = LogFactory.getLog(TxInterceptor.class);
+   private static final boolean trace = log.isTraceEnabled();
    private RecoveryManager recoveryManager;
    private boolean isTotalOrder;
    private boolean useOnePhaseForAutoCommitTx;
+   private boolean useVersioning;
+   private CommandsFactory commandsFactory;
 
    @Override
    protected Log getLog() {
@@ -79,22 +84,29 @@ public class TxInterceptor extends CommandInterceptor {
    }
 
    @Inject
-   public void init(TransactionTable txTable, Configuration c, TransactionCoordinator txCoordinator, RpcManager rpcManager,
-                    RecoveryManager recoveryManager) {
-      this.cacheConfiguration = c;
+   public void init(TransactionTable txTable, Configuration configuration, TransactionCoordinator txCoordinator, RpcManager rpcManager,
+                    RecoveryManager recoveryManager, CommandsFactory commandsFactory) {
+      this.cacheConfiguration = configuration;
       this.txTable = txTable;
       this.txCoordinator = txCoordinator;
       this.rpcManager = rpcManager;
       this.recoveryManager = recoveryManager;
-      this.statisticsEnabled = cacheConfiguration.jmxStatistics().enabled();
-      this.isTotalOrder = c.transaction().transactionProtocol().isTotalOrder();
+      this.commandsFactory = commandsFactory;
+
+      statisticsEnabled = cacheConfiguration.jmxStatistics().enabled();
+      isTotalOrder = configuration.transaction().transactionProtocol().isTotalOrder();
       useOnePhaseForAutoCommitTx = cacheConfiguration.transaction().use1PcForAutoCommitTransactions();
+      useVersioning = configuration.transaction().transactionMode().isTransactional() && configuration.locking().writeSkewCheck() &&
+            configuration.transaction().lockingMode() == LockingMode.OPTIMISTIC && configuration.versioning().enabled();
    }
 
    @Override
    public Object visitPrepareCommand(TxInvocationContext ctx, PrepareCommand command) throws Throwable {
       //if it is remote and 2PC then first log the tx only after replying mods
       if (this.statisticsEnabled) prepares.incrementAndGet();
+      if (!ctx.isOriginLocal()) {
+         ((RemoteTransaction) ctx.getCacheTransaction()).setLookedUpEntriesTopology(command.getTopologyId());
+      }
       Object result = invokeNextInterceptorAndVerifyTransaction(ctx, command);
       if (!ctx.isOriginLocal()) {
          if (command.isOnePhaseCommit()) {
@@ -115,13 +127,13 @@ public class TxInterceptor extends CommandInterceptor {
             //the transaction forcefully in order to cleanup resources.
             boolean originatorMissing = !rpcManager.getTransport().getMembers().contains(command.getOrigin());
             boolean alreadyCompleted = txTable.isTransactionCompleted(command.getGlobalTransaction());
-            if (log.isTraceEnabled()) {
+            if (trace) {
                log.tracef("invokeNextInterceptorAndVerifyTransaction :: originatorMissing=%s, alreadyCompleted=%s",
                           originatorMissing, alreadyCompleted);
             }
 
             if (alreadyCompleted || originatorMissing) {
-               if (log.isTraceEnabled()) {
+               if (trace) {
                   log.tracef("Rolling back remote transaction %s because either already completed(%s) or originator no " +
                                    "longer in the cluster(%s).",
                              command.getGlobalTransaction(), alreadyCompleted, originatorMissing);
@@ -145,11 +157,33 @@ public class TxInterceptor extends CommandInterceptor {
       // TODO The local origin check is needed for CommitFailsTest, but it doesn't appear correct to roll back an in-doubt tx
       if (!ctx.isOriginLocal()) {
          if (txTable.isTransactionCompleted(gtx)) {
-            log.tracef("Transaction %s already completed, skipping commit", gtx);
+            if (trace) log.tracef("Transaction %s already completed, skipping commit", gtx);
             return null;
-         } else {
-            txTable.markTransactionCompleted(gtx);
          }
+
+         // If a commit is received for a transaction that doesn't have its 'lookedUpEntries' populated
+         // we know for sure this transaction is 2PC and was received via state transfer but the preceding PrepareCommand
+         // was not received by local node because it was executed on the previous key owners. We need to re-prepare
+         // the transaction on local node to ensure its locks are acquired and lookedUpEntries is properly populated.
+         RemoteTransaction remoteTx = (RemoteTransaction) ctx.getCacheTransaction();
+         if (trace) {
+            log.tracef("Remote tx topology id %d and command topology is %d", remoteTx.lookedUpEntriesTopology(),
+                  command.getTopologyId());
+         }
+         if (remoteTx.lookedUpEntriesTopology() < command.getTopologyId()) {
+            PrepareCommand prepareCommand;
+            if (useVersioning) {
+               prepareCommand = commandsFactory.buildVersionedPrepareCommand(ctx.getGlobalTransaction(), ctx.getModifications(), false);
+            } else {
+               prepareCommand = commandsFactory.buildPrepareCommand(ctx.getGlobalTransaction(), ctx.getModifications(), false);
+            }
+            commandsFactory.initializeReplicableCommand(prepareCommand, true);
+            prepareCommand.setOrigin(ctx.getOrigin());
+            if (trace) log.tracef("Replaying the transactions received as a result of state transfer %s", prepareCommand);
+            visitPrepareCommand(ctx, prepareCommand);
+         }
+
+         txTable.markTransactionCompleted(gtx);
       }
 
       if (this.statisticsEnabled) commits.incrementAndGet();
