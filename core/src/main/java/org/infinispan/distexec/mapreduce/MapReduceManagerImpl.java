@@ -203,7 +203,9 @@ public class MapReduceManagerImpl implements MapReduceManager {
          if (inputKeysSpecified) {
             for (KIn key : keys) {
                VIn value = cache.get(key);
-               mapper.map(key, value, collector);
+               if (value != null) {
+                  mapper.map(key, value, collector);
+               }
             }
          } else {
             // here we have to iterate all entries in memory, do it in parallel
@@ -254,7 +256,9 @@ public class MapReduceManagerImpl implements MapReduceManager {
             DefaultCollector<KIn, VIn, KOut, VOut> c = new DefaultCollector<KIn, VIn, KOut, VOut>(mcc, maxCSize);
             for (KIn key : keys) {
                VIn value = cache.get(key);
-               mapper.map(key, value, c);
+               if (value != null) {
+                  mapper.map(key, value, c);
+               }
             }
             combine(mcc, c);
             Set<KOut> s = migrateIntermediateKeysAndValues(mcc, c.collectedValues());
