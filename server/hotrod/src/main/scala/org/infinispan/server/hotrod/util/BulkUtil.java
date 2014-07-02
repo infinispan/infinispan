@@ -26,25 +26,25 @@ public final class BulkUtil {
 	public static final int GLOBAL_SCOPE = 1;
 	public static final int LOCAL_SCOPE = 2;
 
-	public static <K> Set<K> getAllKeys(Cache<K, ?> cache, int scope) {
+	public static Set getAllKeys(Cache<?, ?> cache, int scope) {
 		CacheMode cacheMode = cache.getAdvancedCache().getCacheConfiguration().clustering().cacheMode(); 
 		boolean keysAreLocal = !cacheMode.isClustered() || cacheMode.isReplicated();
 		if (keysAreLocal || scope == LOCAL_SCOPE) {
 			return cache.keySet();
 		} else {
-         MapReduceTask<K, Object, K, Object> task =
-               new MapReduceTask<K, Object, K, Object>((Cache<K, Object>) cache)
-               .mappedWith(new KeyMapper<K>())
-               .reducedWith(new KeyReducer<K>());
-         return task.execute(new KeysCollator<K>());
+         MapReduceTask<Object, Object, Object, Object> task =
+               new MapReduceTask(cache)
+               .mappedWith(new KeyMapper())
+               .reducedWith(new KeyReducer());
+         return task.execute(new KeysCollator<Object>());
       }
 	}
 
-   private static class KeyMapper<K> implements Mapper<K, Object, K, Object> {
+   private static class KeyMapper implements Mapper<Object, Object, Object, Object> {
 		private static final long serialVersionUID = -5054573988280497412L;
 
 		@Override
-		public void map(K key, Object value, Collector<K, Object> collector) {
+		public void map(Object key, Object value, Collector<Object, Object> collector) {
 			collector.emit(key, null);
 		}
 	}

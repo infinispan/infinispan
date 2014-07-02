@@ -6,7 +6,7 @@ import org.infinispan.remoting.transport.Address
 import org.infinispan.server.core.transport.ExtendedByteBuf._
 import collection.JavaConversions._
 import OperationStatus._
-import org.infinispan.configuration.cache.Configuration
+import org.infinispan.configuration.cache.{CacheMode, Configuration}
 import org.infinispan.distribution.ch.impl.DefaultConsistentHash
 import collection.mutable.ArrayBuffer
 import org.infinispan.server.hotrod.util.BulkUtil
@@ -22,6 +22,8 @@ import org.infinispan.server.hotrod.Events.Event
 abstract class AbstractEncoder1x extends AbstractVersionedEncoder with Constants with Log {
 
    import HotRodServer._
+
+   lazy val converter = new HotRodTypeConverter
 
    override def writeEvent(e: Event, buf: ByteBuf) {
       // Not implemented in this version of the protocol
@@ -110,9 +112,17 @@ abstract class AbstractEncoder1x extends AbstractVersionedEncoder with Constants
                val cache: Cache = server.getCacheInstance(g.cacheName, cacheManager, false)
                val keys = BulkUtil.getAllKeys(cache, g.scope)
                val iterator = asScalaIterator(keys.iterator)
+               val cacheConfig = cache.getCacheConfiguration
+               if (cacheConfig.compatibility.enabled && cacheConfig.compatibility.marshaller != null) {
+                  converter.setMarshaller(cacheConfig.compatibility.marshaller)
+               }
                for (key <- iterator) {
                   buf.writeByte(1) // Not done
-                  writeRangedBytes(key, buf)
+                  if (cacheConfig.compatibility.enabled && cacheConfig.clustering.cacheMode != CacheMode.LOCAL) {
+                     writeRangedBytes(converter.unboxKey(key.asInstanceOf[AnyRef]), buf)
+                  } else {
+                     writeRangedBytes(key.asInstanceOf[Bytes], buf)
+                  }
                }
                buf.writeByte(0) // Done
             }
