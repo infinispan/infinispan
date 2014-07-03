@@ -97,7 +97,7 @@ public class NamedExecutorsFactory extends NamedComponentFactory implements Auto
             synchronized (this) {
                if (remoteCommandsExecutor == null) {
                   remoteCommandsExecutor = createExecutorService(
-                        globalConfiguration.replicationQueueThreadPool(),
+                        globalConfiguration.transport().remoteCommandThreadPool(),
                         globalConfiguration, REMOTE_COMMAND_EXECUTOR,
                         ExecutorServiceType.BLOCKING);
                }
