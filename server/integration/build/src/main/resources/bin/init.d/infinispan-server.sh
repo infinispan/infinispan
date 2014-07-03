@@ -100,7 +100,7 @@ start() {
 
   until [ $count -gt $STARTUP_WAIT ]
   do
-    grep 'JBAS015874.*started in' $ISPN_SERVER_CONSOLE_LOG > /dev/null 
+    grep 'JBAS015874:' $ISPN_SERVER_CONSOLE_LOG > /dev/null
     if [ $? -eq 0 ] ; then
       launched=true
       break
