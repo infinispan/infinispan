@@ -182,7 +182,7 @@ public class TestingUtil {
    }
 
    public static void waitForRehashToComplete(Cache... caches) {
-      final int REHASH_TIMEOUT_SECONDS = 180; //Needs to be rather large to prevent sporadic failures on CI
+      final int REHASH_TIMEOUT_SECONDS = 10; //Needs to be rather large to prevent sporadic failures on CI
       final long giveup = System.nanoTime() + TimeUnit.SECONDS.toNanos(REHASH_TIMEOUT_SECONDS);
       for (Cache c : caches) {
          if (c instanceof SecureCacheImpl) {
@@ -194,7 +194,8 @@ public class TestingUtil {
          while (true) {
             CacheTopology cacheTopology = stateTransferManager.getCacheTopology();
             boolean rebalanceInProgress = stateTransferManager.isStateTransferInProgress();
-            boolean chIsBalanced = !rebalanceInProgress && rebalancePolicy.isBalanced(cacheTopology.getCurrentCH());
+            boolean currentChIsBalanced = rebalancePolicy.isBalanced(cacheTopology.getCurrentCH());
+            boolean chIsBalanced = !rebalanceInProgress && currentChIsBalanced;
             boolean chContainsAllMembers = cacheTopology.getCurrentCH().getMembers().size() == caches.length;
             if (chIsBalanced && chContainsAllMembers)
                break;
@@ -211,7 +212,8 @@ public class TestingUtil {
                         cacheAddress, Arrays.toString(addresses), cacheTopology.getCurrentCH().getMembers());
                } else {
                   message = String.format("Timed out waiting for rebalancing to complete on node %s, " +
-                        "current topology is %s", c.getCacheManager().getAddress(), cacheTopology);
+                        "current topology is %s. rebalanceInProgress=%s, currentChIsBalanced=%s", c.getCacheManager().getAddress(),
+                                          cacheTopology, rebalanceInProgress, currentChIsBalanced);
                }
                log.error(message);
                throw new RuntimeException(message);

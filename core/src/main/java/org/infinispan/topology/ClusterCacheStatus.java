@@ -291,7 +291,7 @@ public class ClusterCacheStatus {
 
       boolean rebalanceCompleted = updateRebalanceMembersList();
       if (rebalanceCompleted) {
-         setRebalanceStatus();
+         endRebalance();
       }
 
       // We need a consistent hash update even when rebalancing did end
@@ -433,7 +433,7 @@ public class ClusterCacheStatus {
 
 
          CacheTopology cacheTopology;
-         if (isMergeView) {
+         if (isMergeView && partitionHandlingManager != null) {
             cacheTopology = buildCacheTopologyForMerge(clusterMembers, partitionTopologies);
          }  else  {
             cacheTopology = buildCacheTopology(clusterMembers, partitionTopologies);
@@ -442,7 +442,7 @@ public class ClusterCacheStatus {
 
          // End any running rebalance
          if (isRebalanceInProgress()) {
-            setRebalanceStatus();
+            endRebalance();
          }
          updateCacheTopology(cacheTopology);
 
@@ -491,6 +491,7 @@ public class ClusterCacheStatus {
    }
 
    private CacheTopology buildCacheTopology(List<Address> clusterMembers, List<CacheTopology> partitionTopologies) {
+      log.trace("buildCacheTopology");
       int unionTopologyId = 0;
       // We only use the currentCH, we ignore any ongoing rebalance in the partitions
       ConsistentHash currentCHUnion = null;
@@ -540,6 +541,10 @@ public class ClusterCacheStatus {
    }
 
    public static boolean isMissingData(ConsistentHash consistentHash, List<Address> newMembers) {
+      if (consistentHash == null) {
+         log.trace("No previous CH, missingData returns false.");
+         return false;
+      }
       log.tracef("isMissingData: consistentHash == %s, routingTable == %s, newMembers == %s ", consistentHash, consistentHash.getRoutingTableAsString(), newMembers);
       List<Address> allMembers = consistentHash.getMembers();
       Map<Address, Set<Integer>> nodeOwnsSegments = new HashMap<Address, Set<Integer>>();
