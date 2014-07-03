@@ -38,6 +38,7 @@ import org.infinispan.commons.util.concurrent.FutureListener;
 import org.infinispan.commons.util.concurrent.NotifyingFuture;
 import org.infinispan.commons.util.concurrent.NotifyingNotifiableFuture;
 import org.infinispan.distexec.mapreduce.spi.MapReduceTaskLifecycleService;
+import org.infinispan.distexec.mapreduce.MapReduceManagerImpl.IntermediateCompositeKey;
 import org.infinispan.distribution.DistributionManager;
 import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.interceptors.locking.ClusteringDependentLogic;
@@ -465,10 +466,10 @@ public class MapReduceTask<KIn, VIn, KOut, VOut> {
          } catch (Exception e){
             throw new CacheException(e);
          }
-
+         Set<KOut> allMapPhasesResponses = null;
          try {
             // map
-            Set<KOut> allMapPhasesResponses = executeMapPhase(useCompositeKeys);
+            allMapPhasesResponses = executeMapPhase(useCompositeKeys);
 
             // reduce
             result = executeReducePhase(resultCache, allMapPhasesResponses, useCompositeKeys);
@@ -477,9 +478,18 @@ public class MapReduceTask<KIn, VIn, KOut, VOut> {
             throw new CacheException(cause);
          } finally {
             // cleanup tmp caches across cluster
-            if(useIntermediatePerTaskCache()){
-               EmbeddedCacheManager cm = cache.getCacheManager();
-               cm.removeCache(getIntermediateCacheName());
+            EmbeddedCacheManager cm = cache.getCacheManager();
+            String intermediateCache = getIntermediateCacheName();
+            if (useIntermediatePerTaskCache()) {
+               cm.removeCache(intermediateCache);
+            } else {
+               //let's make sure shared cache is not destroyed and that we have keys to remove
+               Cache<KOut, VOut> sharedTmpCache = cm.getCache(intermediateCache);
+               if (sharedTmpCache != null && allMapPhasesResponses != null) {
+                  for (KOut k : allMapPhasesResponses) {
+                     sharedTmpCache.removeAsync(new IntermediateCompositeKey<KOut>(taskId.toString(), k));
+                  }
+               }
             }
          }
       } else {
