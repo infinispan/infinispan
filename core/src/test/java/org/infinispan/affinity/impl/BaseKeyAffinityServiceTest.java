@@ -1,6 +1,5 @@
 package org.infinispan.affinity.impl;
 
-import org.infinispan.affinity.impl.KeyAffinityServiceImpl;
 import org.infinispan.distribution.BaseDistFunctionalTest;
 import org.infinispan.distribution.ch.ConsistentHash;
 import org.infinispan.manager.CacheContainer;
@@ -17,8 +16,8 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.TimeUnit;
 
-import junit.framework.Assert;
-import static junit.framework.Assert.assertEquals;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.fail;
 
 /**
  * @author Mircea.Markus@jboss.com
@@ -41,7 +40,7 @@ public abstract class BaseKeyAffinityServiceTest extends BaseDistFunctionalTest<
       boolean terminatedGracefully = executor.awaitTermination(100, TimeUnit.MILLISECONDS);
       if (!terminatedGracefully) {
          executor.shutdownNow();
-         Assert.fail("KeyGenerator Executor not terminated in expected time");
+         fail("KeyGenerator Executor not terminated in expected time");
       }
    }
 

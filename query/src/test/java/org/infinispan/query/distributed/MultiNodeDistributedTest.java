@@ -8,8 +8,6 @@ import java.util.List;
 
 import javax.transaction.TransactionManager;
 
-import junit.framework.Assert;
-
 import org.apache.lucene.search.MatchAllDocsQuery;
 import org.hibernate.search.engine.spi.SearchFactoryImplementor;
 import org.infinispan.Cache;
@@ -28,6 +26,8 @@ import org.infinispan.test.AbstractInfinispanTest;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.testng.annotations.Test;
+
+import static org.junit.Assert.assertEquals;
 
 /**
  * Configures the Hibernate Search backend to use Infinispan custom commands as a backend
@@ -118,7 +118,7 @@ public class MultiNodeDistributedTest extends AbstractInfinispanTest {
       for (Cache cache : caches) {
          SearchManager searchManager = Search.getSearchManager(cache);
          CacheQuery query = searchManager.getQuery(new MatchAllDocsQuery(), Person.class);
-         Assert.assertEquals(expectedIndexSize, query.list().size());
+         assertEquals(expectedIndexSize, query.list().size());
       }
    }
 

@@ -1,6 +1,6 @@
 package org.infinispan.query.queries.spatial;
 
-import junit.framework.Assert;
+import static org.junit.Assert.assertEquals;
 import org.apache.lucene.search.Query;
 import org.hibernate.search.annotations.Field;
 import org.hibernate.search.annotations.Indexed;
@@ -57,7 +57,7 @@ public class QuerySpatialTest extends SingleCacheManagerTest {
       CacheQuery cacheQuery = Search.getSearchManager(cache).getQuery(query);
       List<Object> found = cacheQuery.list();
 
-      Assert.assertEquals(0, found.size());
+      assertEquals(0, found.size());
 
       query = Search.getSearchManager(cache).buildQueryBuilderForClass(CitySpatial.class).get().spatial()
             .onCoordinates("city_location")
@@ -66,7 +66,7 @@ public class QuerySpatialTest extends SingleCacheManagerTest {
       cacheQuery = Search.getSearchManager(cache).getQuery(query);
       found = cacheQuery.list();
 
-      Assert.assertEquals(1, found.size());
+      assertEquals(1, found.size());
    }
 
    private void loadData() {

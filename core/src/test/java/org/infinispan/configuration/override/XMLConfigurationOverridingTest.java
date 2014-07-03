@@ -1,6 +1,6 @@
 package org.infinispan.configuration.override;
 
-import junit.framework.Assert;
+import org.junit.Assert;
 import org.infinispan.Cache;
 import org.infinispan.commands.write.PutKeyValueCommand;
 import org.infinispan.configuration.cache.CacheMode;

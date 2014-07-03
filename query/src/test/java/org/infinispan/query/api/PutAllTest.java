@@ -16,8 +16,8 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.Future;
 
-import static junit.framework.Assert.assertEquals;
-import static junit.framework.Assert.assertTrue;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 
 @Test(groups = "functional", testName = "query.api.PutAllTest")
 @CleanupAfterMethod

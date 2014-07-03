@@ -1,6 +1,7 @@
 package org.infinispan.query.distributed;
 
-import junit.framework.Assert;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.fail;
 import org.apache.lucene.queryparser.classic.ParseException;
 import org.apache.lucene.queryparser.classic.QueryParser;
 import org.apache.lucene.search.Query;
@@ -65,11 +66,11 @@ public class DistProgrammaticMassIndexTest extends DistributedMassIndexingTest {
          Query luceneQuery = queryParser.parse(carMake);
          CacheQuery cacheQuery = Search.getSearchManager(cache).getQuery(luceneQuery, Car.class);
 
-         Assert.assertEquals(count, cacheQuery.getResultSize());
+         assertEquals(count, cacheQuery.getResultSize());
 
       } catch(ParseException ex) {
          ex.printStackTrace();
-         Assert.fail("Failed due to: " + ex.getMessage());
+         fail("Failed due to: " + ex.getMessage());
       }
    }
 

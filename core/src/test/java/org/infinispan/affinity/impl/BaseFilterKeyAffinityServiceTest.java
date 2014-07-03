@@ -1,6 +1,6 @@
 package org.infinispan.affinity.impl;
 
-import junit.framework.Assert;
+import org.junit.Assert;
 import org.infinispan.Cache;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.remoting.transport.Address;

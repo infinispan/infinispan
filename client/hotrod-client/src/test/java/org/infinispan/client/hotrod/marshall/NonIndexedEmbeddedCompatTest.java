@@ -39,6 +39,6 @@ public class NonIndexedEmbeddedCompatTest extends EmbeddedCompatTest {
    @Test(enabled = false, description = "See https://issues.jboss.org/browse/ISPN-4485")
    @Override
    public void testRemoteQueryForEmbeddedEntry() throws Exception {
-      super.testRemoteQueryForEmbeddedEntry();    // TODO: Customise this generated block
+      super.testRemoteQueryForEmbeddedEntry();
    }
 }

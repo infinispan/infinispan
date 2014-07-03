@@ -2,14 +2,12 @@ package org.infinispan.xsite.offline;
 
 import org.infinispan.configuration.cache.TakeOfflineConfiguration;
 import org.infinispan.test.AbstractInfinispanTest;
-import org.infinispan.util.DefaultTimeService;
-import org.infinispan.util.TimeService;
 import org.infinispan.xsite.OfflineStatus;
 import org.testng.annotations.Test;
 
 import java.util.concurrent.TimeUnit;
 
-import static junit.framework.Assert.assertEquals;
+import static org.junit.Assert.assertEquals;
 
 /**
  * @author Mircea Markus

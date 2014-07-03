@@ -9,8 +9,8 @@ import org.infinispan.test.ReplListener;
 import org.testng.Assert;
 import org.testng.annotations.Test;
 
-import static junit.framework.Assert.assertEquals;
-import static org.testng.AssertJUnit.assertNull;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNull;
 
 @Test(groups = "functional", testName = "distribution.UnicastInvalidationFuncTest")
 public class UnicastInvalidationFuncTest extends BaseDistFunctionalTest<Object, String> {

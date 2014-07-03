@@ -1,7 +1,5 @@
 package org.infinispan.query.analysis;
 
-import junit.framework.Assert;
-
 import org.apache.lucene.analysis.Analyzer;
 import org.apache.lucene.analysis.Token;
 import org.apache.lucene.index.Term;
@@ -16,7 +14,7 @@ import org.infinispan.test.SingleCacheManagerTest;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.testng.annotations.Test;
 
-import static junit.framework.Assert.assertEquals;
+import static org.junit.Assert.assertEquals;
 
 /**
  * Copied and adapted from Hibernate Search
@@ -162,10 +160,10 @@ public class SolrAnalyzerTest extends SingleCacheManagerTest {
    }
 
    private static void assertTokensEqual(Token[] tokens, String[] strings) {
-      Assert.assertEquals( strings.length, tokens.length );
+      assertEquals( strings.length, tokens.length );
 
       for ( int i = 0; i < tokens.length; i++ ) {
-         Assert.assertEquals( "index " + i, strings[i], AnalyzerUtils.getTermText( tokens[i] ) );
+         assertEquals( "index " + i, strings[i], AnalyzerUtils.getTermText( tokens[i] ) );
       }
    }
 

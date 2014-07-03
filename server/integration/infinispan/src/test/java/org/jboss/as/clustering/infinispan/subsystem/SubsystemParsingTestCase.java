@@ -15,7 +15,8 @@ import java.net.URISyntaxException;
 import java.net.URL;
 import java.util.List;
 
-import junit.framework.Assert;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 
 import org.jboss.as.controller.PathAddress;
 import org.jboss.as.controller.PathElement;
@@ -50,7 +51,7 @@ public class SubsystemParsingTestCase extends AbstractSubsystemTest {
 
         // Check that we have the expected number of operations
         // one operation for adding subsystem; one operation for adding deployment-type
-        Assert.assertEquals(8, operations.size());
+        assertEquals(8, operations.size());
 
         //Check that each operation has the correct content
         for (int i = 0; i < 8; i++) {
@@ -71,7 +72,7 @@ public class SubsystemParsingTestCase extends AbstractSubsystemTest {
         System.out.println(model);
 
         // use some assertions here to check the correctness of the model
-        Assert.assertTrue(model.get(SUBSYSTEM).hasDefined(InfinispanExtension.SUBSYSTEM_NAME));
+        assertTrue(model.get(SUBSYSTEM).hasDefined(InfinispanExtension.SUBSYSTEM_NAME));
 
         assertRemoveSubsystemResources(services);
 

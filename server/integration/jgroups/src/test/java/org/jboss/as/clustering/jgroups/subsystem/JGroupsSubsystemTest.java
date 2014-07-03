@@ -22,13 +22,12 @@
 package org.jboss.as.clustering.jgroups.subsystem;
 
 import static org.jboss.as.controller.descriptions.ModelDescriptionConstants.SUBSYSTEM;
+import static org.junit.Assert.assertEquals;
 
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
-
-import junit.framework.Assert;
 
 import org.jboss.as.clustering.subsystem.ClusteringSubsystemTest;
 import org.jboss.as.controller.PathAddress;
@@ -82,11 +81,11 @@ public class JGroupsSubsystemTest extends ClusteringSubsystemTest {
         List<ModelNode> protocols = model.require("protocols").asList();
         Set<String> keys = model.get("protocol").keys();
 
-        Assert.assertEquals(protocols.size(), keys.size());
+        assertEquals(protocols.size(), keys.size());
         int i = 0;
         for (String key : keys) {
             String name = protocols.get(i).asString();
-            Assert.assertEquals(key, name);
+            assertEquals(key, name);
             i++;
         }
     }

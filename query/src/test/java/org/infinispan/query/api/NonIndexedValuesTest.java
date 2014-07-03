@@ -1,6 +1,6 @@
 package org.infinispan.query.api;
 
-import static junit.framework.Assert.assertEquals;
+import static org.junit.Assert.assertEquals;
 
 import org.apache.lucene.search.Query;
 import org.infinispan.configuration.cache.ConfigurationBuilder;

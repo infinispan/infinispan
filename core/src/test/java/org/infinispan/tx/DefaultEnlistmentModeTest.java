@@ -13,9 +13,9 @@ import org.infinispan.transaction.TransactionMode;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.Test;
 
-import static junit.framework.Assert.assertEquals;
-import static junit.framework.Assert.assertFalse;
-import static junit.framework.Assert.assertTrue;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
 
 @Test (groups = "functional", testName = "tx.DefaultEnlistmentModeTest")
 public class DefaultEnlistmentModeTest extends AbstractCacheTest {

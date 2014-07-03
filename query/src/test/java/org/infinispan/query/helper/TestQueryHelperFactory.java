@@ -1,6 +1,6 @@
 package org.infinispan.query.helper;
 
-import junit.framework.Assert;
+import static org.junit.Assert.assertNotNull;
 
 import org.apache.lucene.analysis.Analyzer;
 import org.apache.lucene.analysis.standard.StandardAnalyzer;
@@ -55,7 +55,7 @@ public class TestQueryHelperFactory {
    public static SearchFactoryIntegrator extractSearchFactory(Cache cache) {
       ComponentRegistry componentRegistry = cache.getAdvancedCache().getComponentRegistry();
       SearchFactoryIntegrator component = componentRegistry.getComponent(SearchFactoryIntegrator.class);
-      Assert.assertNotNull(component);
+      assertNotNull(component);
       return component;
    }
 

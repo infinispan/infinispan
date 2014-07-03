@@ -1,6 +1,6 @@
 package org.infinispan.persistence.jdbc.stringbased;
 
-import static junit.framework.Assert.assertEquals;
+import static org.junit.Assert.assertEquals;
 import static org.infinispan.test.TestingUtil.clearCacheLoader;
 import static org.infinispan.test.TestingUtil.withCacheManager;
 

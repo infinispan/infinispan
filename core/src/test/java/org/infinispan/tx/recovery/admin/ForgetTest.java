@@ -12,7 +12,7 @@ import org.testng.annotations.Test;
 import javax.transaction.xa.XAException;
 import javax.transaction.xa.Xid;
 
-import static junit.framework.Assert.assertEquals;
+import static org.junit.Assert.assertEquals;
 import static org.infinispan.tx.recovery.RecoveryTestUtil.*;
 
 /**

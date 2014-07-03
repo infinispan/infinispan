@@ -1,6 +1,6 @@
 package org.infinispan.query.queries.phrases;
 
-import junit.framework.Assert;
+import org.junit.Assert;
 import org.apache.lucene.queryparser.classic.ParseException;
 import org.apache.lucene.search.Query;
 import org.hibernate.search.exception.SearchException;

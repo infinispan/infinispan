@@ -1,7 +1,5 @@
 package org.infinispan.query.externalizers;
 
-import junit.framework.Assert;
-
 import org.apache.lucene.index.Term;
 import org.apache.lucene.util.BytesRef;
 import org.infinispan.Cache;
@@ -12,6 +10,8 @@ import org.infinispan.manager.CacheContainer;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.testng.annotations.Test;
+
+import static org.junit.Assert.assertEquals;
 
 @Test(groups = "functional", testName = "query.externalizers.LuceneTerm")
 public class TermExternalizerTest extends MultipleCacheManagersTest {
@@ -66,13 +66,13 @@ public class TermExternalizerTest extends MultipleCacheManagersTest {
       Cache cache2 = manager(1).getCache(getCacheName());
       cache1.put("key", obj);
       final Term beamedUpObject = (Term) cache2.get("key");
-      Assert.assertEquals(obj, beamedUpObject);
-      Assert.assertEquals(obj.field(), beamedUpObject.field());
-      Assert.assertEquals(obj.text(), beamedUpObject.text());
+      assertEquals(obj, beamedUpObject);
+      assertEquals(obj.field(), beamedUpObject.field());
+      assertEquals(obj.text(), beamedUpObject.text());
       final BytesRef referencePayload = obj.bytes();
       Object clonedPayload = beamedUpObject.bytes();
-      Assert.assertEquals(referencePayload, clonedPayload);
-      Assert.assertEquals(obj.toString(), beamedUpObject.toString());
+      assertEquals(referencePayload, clonedPayload);
+      assertEquals(obj.toString(), beamedUpObject.toString());
    }
 
 }

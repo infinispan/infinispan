@@ -13,7 +13,7 @@ import org.infinispan.xsite.BaseSiteUnreachableTest;
 import org.infinispan.xsite.OfflineStatus;
 import org.testng.annotations.Test;
 
-import static junit.framework.Assert.assertEquals;
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.fail;
 
 /**

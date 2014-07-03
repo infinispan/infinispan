@@ -2,8 +2,6 @@ package org.infinispan.query.indexedembedded;
 
 import java.util.List;
 
-import junit.framework.Assert;
-
 import org.apache.lucene.queryparser.classic.ParseException;
 import org.apache.lucene.queryparser.classic.QueryParser;
 import org.apache.lucene.search.MatchAllDocsQuery;
@@ -19,6 +17,9 @@ import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
+
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 
 /**
  * @author Sanne Grinovero <sanne@hibernate.org> (C) 2011 Red Hat Inc.
@@ -53,7 +54,7 @@ public class CollectionsIndexingTest extends SingleCacheManagerTest {
       QueryParser queryParser = TestQueryHelperFactory.createQueryParser("countryName");
       Query query = queryParser.parse("Italy");
       List<Object> list = qf.getQuery(query, Country.class, City.class).list();
-      Assert.assertEquals( 0 , list.size() );
+      assertEquals(0, list.size());
    }
    
    @Test
@@ -64,11 +65,11 @@ public class CollectionsIndexingTest extends SingleCacheManagerTest {
       italy.countryName = "Italy";
       cache.put("IT", italy);
       List<Object> list = qf.getQuery(query, Country.class, City.class).list();
-      Assert.assertEquals( 1 , list.size() );
+      assertEquals(1, list.size());
       list = qf.getQuery(query).list();
-      Assert.assertEquals( 1 , list.size() );
+      assertEquals(1, list.size());
       list = qf.getQuery( new MatchAllDocsQuery() ).list();
-      Assert.assertEquals( 1 , list.size() );
+      assertEquals(1, list.size());
    }
    
    @Test
@@ -79,7 +80,7 @@ public class CollectionsIndexingTest extends SingleCacheManagerTest {
       italy.countryName = "Italy";
       cache.put("IT", italy);
       List<Object> list = qf.getQuery(query, Country.class, City.class).list();
-      Assert.assertEquals( 1 , list.size() );
+      assertEquals(1, list.size());
    }
    
    @Test
@@ -101,8 +102,8 @@ public class CollectionsIndexingTest extends SingleCacheManagerTest {
       cache.put("UK", uk);
       cache.put("UK", uk);
       List<Object> list = qf.getQuery(query, Country.class, City.class).list();
-      Assert.assertEquals( 1 , list.size() );
-      Assert.assertTrue( uk == list.get(0) );
+      assertEquals(1, list.size());
+      assertTrue(uk == list.get(0));
    }
 
 }

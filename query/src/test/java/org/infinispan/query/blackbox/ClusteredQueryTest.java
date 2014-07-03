@@ -5,8 +5,6 @@ import static org.infinispan.query.helper.TestQueryHelperFactory.createQueryPars
 import java.util.List;
 import java.util.NoSuchElementException;
 
-import junit.framework.Assert;
-
 import org.apache.lucene.queryparser.classic.ParseException;
 import org.apache.lucene.queryparser.classic.QueryParser;
 import org.apache.lucene.search.BooleanQuery;
@@ -25,6 +23,7 @@ import org.infinispan.query.SearchManager;
 import org.infinispan.query.test.Person;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.testng.annotations.Test;
+import static org.junit.Assert.assertEquals;
 
 /**
  * ClusteredQueryTest.
@@ -140,11 +139,11 @@ public class ClusteredQueryTest extends MultipleCacheManagersTest {
 
       final SearchManager searchManager1 = Search.getSearchManager(cacheAMachine1);
       final CacheQuery localQuery1 = searchManager1.getQuery(createLuceneQuery());
-      Assert.assertEquals(3, localQuery1.getResultSize());
+      assertEquals(3, localQuery1.getResultSize());
 
       final SearchManager searchManager2 = Search.getSearchManager(cacheAMachine2);
       final CacheQuery localQuery2 = searchManager2.getQuery(createLuceneQuery());
-      Assert.assertEquals(1, localQuery2.getResultSize());
+      assertEquals(1, localQuery2.getResultSize());
    }
 
    public void testEagerOrdered() throws ParseException {
@@ -157,7 +156,7 @@ public class ClusteredQueryTest extends MultipleCacheManagersTest {
 
       ResultIterator iterator = cacheQuery.iterator(new FetchOptions().fetchMode(FetchOptions.FetchMode.EAGER));
       try {
-         Assert.assertEquals(4, cacheQuery.getResultSize());
+         assertEquals(4, cacheQuery.getResultSize());
 
          int previousAge = 0;
          while (iterator.hasNext()) {
@@ -222,7 +221,7 @@ public class ClusteredQueryTest extends MultipleCacheManagersTest {
    
    public void testGetResultSizeList() throws ParseException {
       populateCache();
-      Assert.assertEquals(4, cacheQuery.getResultSize());
+      assertEquals(4, cacheQuery.getResultSize());
    }
 
    public void testPagination() throws ParseException {
@@ -237,10 +236,10 @@ public class ClusteredQueryTest extends MultipleCacheManagersTest {
       cacheQuery.sort(sort);
 
       List<Object> results = cacheQuery.list();
-      Assert.assertEquals(1, results.size());
-      Assert.assertEquals(4, cacheQuery.getResultSize());
+      assertEquals(1, results.size());
+      assertEquals(4, cacheQuery.getResultSize());
       Person result = (Person) results.get(0);
-      Assert.assertEquals(45, result.getAge());
+      assertEquals(45, result.getAge());
    }
 
    private void populateCache() throws ParseException {

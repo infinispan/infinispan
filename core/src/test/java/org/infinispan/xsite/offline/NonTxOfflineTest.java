@@ -9,10 +9,9 @@ import org.infinispan.xsite.BackupSender;
 import org.infinispan.xsite.BackupSenderImpl;
 import org.infinispan.xsite.BaseSiteUnreachableTest;
 import org.infinispan.xsite.OfflineStatus;
-import org.junit.Assert;
 import org.testng.annotations.Test;
 
-import static junit.framework.Assert.assertEquals;
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.fail;
 
 /**
@@ -42,7 +41,7 @@ public class NonTxOfflineTest extends BaseSiteUnreachableTest {
             cache("LON", 0).put(KEYS[i], "v" + i);
             fail("This should have failed");
          } catch (Exception e) {
-            Assert.assertEquals(i + 1, nycStatus.getFailureCount());
+            assertEquals(i + 1, nycStatus.getFailureCount());
          }
       }
 

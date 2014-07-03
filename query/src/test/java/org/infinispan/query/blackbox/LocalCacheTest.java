@@ -5,7 +5,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import junit.framework.Assert;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
 
 import org.apache.lucene.index.Term;
 import org.apache.lucene.queryparser.classic.ParseException;
@@ -41,7 +43,6 @@ import org.infinispan.query.test.CustomKey3Transformer;
 import org.infinispan.query.test.Person;
 import org.infinispan.test.SingleCacheManagerTest;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
-import org.testng.AssertJUnit;
 import org.testng.annotations.Test;
 
 import java.util.NoSuchElementException;
@@ -147,8 +148,8 @@ public class LocalCacheTest extends SingleCacheManagerTest {
       List<Object> found = cacheQuery.list();
 
       assert found.size() == 2;
-      AssertJUnit.assertTrue(found.contains(person2));
-      AssertJUnit.assertTrue(found.contains(person3));
+      assertTrue(found.contains(person2));
+      assertTrue(found.contains(person3));
    }
 
    public void testModified() throws ParseException {
@@ -395,7 +396,7 @@ public class LocalCacheTest extends SingleCacheManagerTest {
          }
       }
 
-      AssertJUnit.assertEquals(3, matchCounter);
+      assertEquals(3, matchCounter);
    }
 
    public void testFullTextFilterOnOff() throws ParseException {
@@ -407,16 +408,16 @@ public class LocalCacheTest extends SingleCacheManagerTest {
       FullTextFilter filter = query.enableFullTextFilter("personFilter");
       filter.setParameter("blurbText", "cheese");
 
-      AssertJUnit.assertEquals(1, query.getResultSize());
+      assertEquals(1, query.getResultSize());
       List result = query.list();
 
       Person person = (Person) result.get(0);
-      AssertJUnit.assertEquals("Mini Goat", person.getName());
-      AssertJUnit.assertEquals("Eats cheese", person.getBlurb());
+      assertEquals("Mini Goat", person.getName());
+      assertEquals("Eats cheese", person.getBlurb());
 
       //Disabling the fullTextFilter.
       query.disableFullTextFilter("personFilter");
-      AssertJUnit.assertEquals(3, query.getResultSize());
+      assertEquals(3, query.getResultSize());
    }
 
    @Test(expectedExceptions = UnsupportedOperationException.class)
@@ -446,7 +447,7 @@ public class LocalCacheTest extends SingleCacheManagerTest {
 
       ResultIterator iterator = cacheQuery.iterator(new FetchOptions().fetchMode(FetchOptions.FetchMode.LAZY));
       try {
-         Assert.assertEquals(2, countElements(iterator));
+         assertEquals(2, countElements(iterator));
       } finally {
          iterator.close();
       }
@@ -514,7 +515,7 @@ public class LocalCacheTest extends SingleCacheManagerTest {
 
       ResultIterator iterator = cacheQuery.iterator(new FetchOptions().fetchMode(FetchOptions.FetchMode.LAZY));
       try {
-         Assert.assertEquals(3, countElements(iterator));
+         assertEquals(3, countElements(iterator));
       } finally {
          iterator.close();
       }
@@ -567,23 +568,23 @@ public class LocalCacheTest extends SingleCacheManagerTest {
       CacheQuery cacheQuery = Search.getSearchManager(cache).getQuery(luceneQuery)
             .maxResults(1);
 
-      Assert.assertEquals(3, cacheQuery.getResultSize());   // NOTE: getResultSize() ignores pagination (maxResults, firstResult)
-      Assert.assertEquals(1, cacheQuery.list().size());
+      assertEquals(3, cacheQuery.getResultSize());   // NOTE: getResultSize() ignores pagination (maxResults, firstResult)
+      assertEquals(1, cacheQuery.list().size());
       ResultIterator eagerIterator = cacheQuery.iterator(new FetchOptions().fetchMode(FetchOptions.FetchMode.EAGER));
       try {
-         Assert.assertEquals(1, countElements(eagerIterator));
+         assertEquals(1, countElements(eagerIterator));
       } finally {
          eagerIterator.close();
       }
       ResultIterator lazyIterator = cacheQuery.iterator(new FetchOptions().fetchMode(FetchOptions.FetchMode.LAZY));
       try {
-         Assert.assertEquals(1, countElements(lazyIterator));
+         assertEquals(1, countElements(lazyIterator));
       } finally {
          lazyIterator.close();
       }
       ResultIterator defaultIterator = cacheQuery.iterator();
       try {
-         Assert.assertEquals(1, countElements(defaultIterator));
+         assertEquals(1, countElements(defaultIterator));
       } finally {
          defaultIterator.close();
       }
@@ -675,12 +676,12 @@ public class LocalCacheTest extends SingleCacheManagerTest {
    private void assertIndexingKnows(Cache<Object, Object> cache, Class... types) {
       ComponentRegistry cr = cache.getAdvancedCache().getComponentRegistry();
       SearchFactoryImplementor searchFactoryIntegrator = (SearchFactoryImplementor) cr.getComponent(SearchFactoryIntegrator.class);
-      Assert.assertNotNull(searchFactoryIntegrator);
+      assertNotNull(searchFactoryIntegrator);
       Map<Class<?>, EntityIndexBinding> indexBindingForEntity = searchFactoryIntegrator.getIndexBindings();
-      Assert.assertNotNull(indexBindingForEntity);
+      assertNotNull(indexBindingForEntity);
       Set<Class<?>> keySet = indexBindingForEntity.keySet();
-      Assert.assertEquals(types.length, keySet.size());
-      Assert.assertTrue(keySet.containsAll(Arrays.asList(types)));
+      assertEquals(types.length, keySet.size());
+      assertTrue(keySet.containsAll(Arrays.asList(types)));
    }
 
    protected void loadTestingData() {

@@ -2,12 +2,10 @@ package org.infinispan.affinity.impl;
 
 import org.infinispan.affinity.KeyAffinityServiceFactory;
 import org.infinispan.affinity.ListenerRegistration;
-import org.infinispan.affinity.impl.KeyAffinityServiceImpl;
-import org.infinispan.affinity.impl.RndKeyGenerator;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.testng.annotations.Test;
 
-import static junit.framework.Assert.assertEquals;
+import static org.junit.Assert.assertEquals;
 
 /**
  * @author Mircea.Markus@jboss.com

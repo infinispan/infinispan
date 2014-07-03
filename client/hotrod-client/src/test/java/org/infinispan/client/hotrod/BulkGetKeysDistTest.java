@@ -7,6 +7,8 @@ import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.testng.annotations.Test;
 
 import static org.infinispan.server.hotrod.test.HotRodTestingUtil.hotRodCacheConfiguration;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 
 /**
  * Tests functionality related to getting multiple entries from a HotRod server
@@ -27,20 +29,20 @@ public class BulkGetKeysDistTest extends BaseBulkGetKeysTest {
 		return hotRodCacheConfiguration(getDefaultClusteredCacheConfig(
 				CacheMode.DIST_SYNC, false));
 	}
-	
-	public void testDistribution() {
-		for (int i = 0; i < 100; i++) {
-			remoteCache.put(i, i);
-		}
-		
-		for (int i = 0 ; i < numberOfHotRodServers(); i++) {
-			assert cache(i).size() < 100;
-		}
-		
-		Set<Object> set = remoteCache.keySet();
-		assert set.size() == 100;
-		for (int i = 0; i < 100; i++) {
-			assert set.contains(i);
-		}
-	}
+
+   public void testDistribution() {
+      for (int i = 0; i < 100; i++) {
+         remoteCache.put(i, i);
+      }
+
+      for (int i = 0; i < numberOfHotRodServers(); i++) {
+         assertTrue(cache(i).size() < 100);
+      }
+
+      Set<Object> set = remoteCache.keySet();
+      assertEquals(100, set.size());
+      for (int i = 0; i < 100; i++) {
+         assertTrue(set.contains(i));
+      }
+   }
 }

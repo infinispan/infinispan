@@ -2,8 +2,6 @@ package org.infinispan.query.persistence;
 
 import java.util.List;
 
-import junit.framework.Assert;
-
 import org.apache.lucene.queryparser.classic.ParseException;
 import org.apache.lucene.queryparser.classic.QueryParser;
 import org.apache.lucene.search.Query;
@@ -27,6 +25,8 @@ import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.testng.annotations.AfterTest;
 import org.testng.annotations.BeforeTest;
 import org.testng.annotations.Test;
+
+import static org.junit.Assert.assertEquals;
 
 /**
  * @author Sanne Grinovero <sanne@infinispan.org> (C) 2011 Red Hat Inc.
@@ -112,7 +112,7 @@ public class EntryActivatingTest extends AbstractInfinispanTest {
    private void verifyFullTextHasMatches(int i) throws ParseException {
       Query query = queryParser.parse("Italy");
       List<Object> list = search.getQuery(query, Country.class, City.class).list();
-      Assert.assertEquals( i , list.size() );
+      assertEquals(i, list.size());
    }
 
 }

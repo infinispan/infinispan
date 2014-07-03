@@ -2,8 +2,6 @@ package org.infinispan.affinity.impl;
 
 import org.infinispan.Cache;
 import org.infinispan.affinity.KeyAffinityServiceFactory;
-import org.infinispan.affinity.impl.KeyAffinityServiceImpl;
-import org.infinispan.affinity.impl.RndKeyGenerator;
 import org.infinispan.distribution.ch.ConsistentHash;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.remoting.transport.Address;
@@ -14,7 +12,7 @@ import java.util.List;
 import java.util.Random;
 import java.util.concurrent.CountDownLatch;
 
-import static junit.framework.Assert.assertEquals;
+import static org.junit.Assert.assertEquals;
 
 /**
  * @author Mircea.Markus@jboss.com

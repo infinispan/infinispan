@@ -1,12 +1,11 @@
 package org.infinispan.persistence.jdbc.mixed;
 
-import junit.framework.Assert;
+import org.junit.Assert;
 import org.infinispan.commons.CacheConfigurationException;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.persistence.jdbc.Dialect;
-import org.infinispan.persistence.jdbc.configuration.JdbcBinaryStoreConfigurationBuilder;
 import org.infinispan.persistence.jdbc.configuration.JdbcMixedStoreConfiguration;
 import org.infinispan.persistence.jdbc.configuration.JdbcMixedStoreConfigurationBuilder;
 import org.infinispan.persistence.keymappers.DefaultTwoWayKey2StringMapper;
