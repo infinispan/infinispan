@@ -12,8 +12,8 @@
         <protocol type="FD"/>
         <protocol type="VERIFY_SUSPECT"/>
         <protocol type="BARRIER"/>
-        <protocol type="pbcast.NAKACK"/>
-        <protocol type="UNICAST2"/>
+        <protocol type="pbcast.NAKACK2"/>
+        <protocol type="UNICAST3"/>
         <protocol type="pbcast.STABLE"/>
         <protocol type="pbcast.GMS"/>
         <protocol type="UFC"/>
