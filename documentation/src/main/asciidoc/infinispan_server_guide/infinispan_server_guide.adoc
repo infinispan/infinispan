@@ -69,8 +69,8 @@ A stack declaration is composed of a transport (UDP or TCP) followed by a list o
     <protocol type="MERGE2"/>
     <protocol type="FD_SOCK" socket-binding="jgroups-udp-fd"/>
     <protocol type="FD_ALL"/>
-    <protocol type="pbcast.NAKACK"/>
-    <protocol type="UNICAST2"/>
+    <protocol type="pbcast.NAKACK2"/>
+    <protocol type="UNICAST3"/>
     <protocol type="pbcast.STABLE"/>
     <protocol type="pbcast.GMS"/>
     <protocol type="UFC"/>
@@ -85,10 +85,10 @@ A stack declaration is composed of a transport (UDP or TCP) followed by a list o
     <protocol type="FD_SOCK" socket-binding="jgroups-tcp-fd"/>
     <protocol type="FD"/>
     <protocol type="VERIFY_SUSPECT"/>
-    <protocol type="pbcast.NAKACK">
+    <protocol type="pbcast.NAKACK2">
         <property name="use_mcast_xmit">false</property>
     </protocol>
-    <protocol type="UNICAST2"/>
+    <protocol type="UNICAST3"/>
     <protocol type="pbcast.STABLE"/>
     <protocol type="pbcast.GMS"/>
     <protocol type="UFC"/>
@@ -113,10 +113,10 @@ The default TCP stack uses the MPING protocol for discovery, which uses UDP mult
     <protocol type="FD_SOCK" socket-binding="jgroups-tcp-fd"/>
     <protocol type="FD"/>
     <protocol type="VERIFY_SUSPECT"/>
-    <protocol type="pbcast.NAKACK">
+    <protocol type="pbcast.NAKACK2">
         <property name="use_mcast_xmit">false</property>
     </protocol>
-    <protocol type="UNICAST2"/>
+    <protocol type="UNICAST3"/>
     <protocol type="pbcast.STABLE"/>
     <protocol type="pbcast.GMS"/>
     <protocol type="UFC"/>
