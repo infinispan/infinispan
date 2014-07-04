@@ -148,8 +148,7 @@ class IndexingTagHandler implements TagHandler {
    private void indexMissingFields() {
       for (Descriptors.FieldDescriptor fd : messageContext.getMessageDescriptor().getFields()) {
          if (!messageContext.isFieldMarked(fd.getNumber())) {
-            Object defaultValue = fd.getType() == Descriptors.FieldDescriptor.Type.MESSAGE
-                  || fd.getType() == Descriptors.FieldDescriptor.Type.GROUP
+            Object defaultValue = fd.getJavaType() == Descriptors.FieldDescriptor.JavaType.MESSAGE
                   || fd.toProto().getDefaultValue().isEmpty() ? null : fd.getDefaultValue();
             addFieldToDocument(fd.getName(), fd.getType(), defaultValue);
          }
