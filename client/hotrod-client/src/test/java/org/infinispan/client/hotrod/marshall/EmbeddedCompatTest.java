@@ -45,13 +45,10 @@ public class EmbeddedCompatTest extends SingleCacheManagerTest {
 
    @Override
    protected EmbeddedCacheManager createCacheManager() throws Exception {
-      org.infinispan.configuration.cache.ConfigurationBuilder builder = hotRodCacheConfiguration();
-      builder.compatibility().enable().marshaller(new CompatibilityProtoStreamMarshaller());
-      builder.indexing().enable()
-            .addProperty("default.directory_provider", "ram")
-            .addProperty("lucene_version", "LUCENE_CURRENT");
+      org.infinispan.configuration.cache.ConfigurationBuilder builder = createConfigBuilder();
+      // the default key equivalence works only for byte[] so we need to override it with one that works for Object
+      builder.dataContainer().keyEquivalence(AnyEquivalence.getInstance());
 
-      builder.dataContainer().keyEquivalence(AnyEquivalence.getInstance());  // TODO [anistor] hacks!
       cacheManager = TestCacheManagerFactory.createCacheManager(builder);
       cache = cacheManager.getCache();
 
@@ -73,6 +70,15 @@ public class EmbeddedCompatTest extends SingleCacheManagerTest {
       protobufMetadataManager.registerMarshaller(EmbeddedAccount.class, new EmbeddedAccountMarshaller());
 
       return cacheManager;
+   }
+
+   protected org.infinispan.configuration.cache.ConfigurationBuilder createConfigBuilder() {
+      org.infinispan.configuration.cache.ConfigurationBuilder builder = hotRodCacheConfiguration();
+      builder.compatibility().enable().marshaller(new CompatibilityProtoStreamMarshaller());
+      builder.indexing().enable()
+            .addProperty("default.directory_provider", "ram")
+            .addProperty("lucene_version", "LUCENE_CURRENT");
+      return builder;
    }
 
    @AfterTest
