@@ -221,9 +221,7 @@ public class InboundTransferTask {
             if (segments.contains(segmentId)) {
                finishedSegments.add(segmentId);
                if (finishedSegments.size() == segments.size()) {
-                  if (trace) {
-                     log.tracef("Finished receiving state for segments %s of cache %s", segments, cacheName);
-                  }
+                  log.debugf("Finished receiving state for segments %s of cache %s", segments, cacheName);
                   isCompleted = true;
                }
             }

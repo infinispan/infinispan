@@ -499,13 +499,13 @@ public class StateConsumerImpl implements StateConsumer {
    }
 
    private void doApplyState(Address sender, int segmentId, Collection<InternalCacheEntry> cacheEntries) {
-      log.debugf("Applying new state for segment %d of cache %s from node %s: received %d cache entries", segmentId, cacheName, sender, cacheEntries.size());
+      log.debugf("Applying new state chunk for segment %d of cache %s from node %s: received %d cache entries", segmentId, cacheName, sender, cacheEntries.size());
       if (trace) {
          List<Object> keys = new ArrayList<Object>(cacheEntries.size());
          for (InternalCacheEntry e : cacheEntries) {
             keys.add(e.getKey());
          }
-         log.tracef("Received keys %s for segment %d of cache %s from node %s", keys, segmentId, cacheName, sender);
+         log.tracef("Received chunk with keys %s for segment %d of cache %s from node %s", keys, segmentId, cacheName, sender);
       }
 
       // CACHE_MODE_LOCAL avoids handling by StateTransferInterceptor and any potential locks in StateTransferLock
@@ -550,7 +550,7 @@ public class StateConsumerImpl implements StateConsumer {
             log.problemApplyingStateForKey(ex.getMessage(), e.getKey(), ex);
          }
       }
-      log.debugf("Finished applying state for segment %d of cache %s", segmentId, cacheName);
+      log.tracef("Finished applying chunk of segment %d of cache %s", segmentId, cacheName);
    }
 
    private void applyTransactions(Address sender, Collection<TransactionInfo> transactions, int topologyId) {
