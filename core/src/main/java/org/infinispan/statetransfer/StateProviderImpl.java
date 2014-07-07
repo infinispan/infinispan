@@ -13,12 +13,8 @@ import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.annotations.Start;
 import org.infinispan.factories.annotations.Stop;
 import org.infinispan.notifications.cachelistener.cluster.ClusterCacheNotifier;
-import org.infinispan.notifications.cachelistener.cluster.ClusterListenerReplicateCallable;
 import org.infinispan.persistence.manager.PersistenceManager;
 import org.infinispan.notifications.Listener;
-import org.infinispan.notifications.cachelistener.CacheNotifier;
-import org.infinispan.notifications.cachelistener.annotation.TopologyChanged;
-import org.infinispan.notifications.cachelistener.event.TopologyChangedEvent;
 import org.infinispan.remoting.rpc.RpcManager;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.topology.CacheTopology;
@@ -29,7 +25,6 @@ import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
 import java.util.*;
-import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.TimeUnit;
 
@@ -108,22 +103,16 @@ public class StateProviderImpl implements StateProvider {
       }
    }
 
-   @TopologyChanged
-   @SuppressWarnings("unused")
-   public void onTopologyChange(TopologyChangedEvent<?, ?> tce) {
-      // do all the work AFTER the consistent hash has changed
-      if (tce.isPre())
-         return;
-      //todo [anistor] move all code from onTopologyUpdate here and remove dependency StateConsumer->StateProvider
-   }
-
    public void onTopologyUpdate(CacheTopology cacheTopology, boolean isRebalance) {
-      // cancel outbound state transfers for destinations that are no longer members in new topology
+      // Cancel outbound state transfers for destinations that are no longer members in new topology
+      // If the rebalance was cancelled, stop every outbound transfer. This will prevent "leaking" transfers
+      // from one rebalance to the next.
+      boolean stateTransferInProgress = cacheTopology.getPendingCH() != null;
       Set<Address> members = new HashSet<Address>(cacheTopology.getWriteConsistentHash().getMembers());
       synchronized (transfersByDestination) {
          for (Iterator<Address> it = transfersByDestination.keySet().iterator(); it.hasNext(); ) {
             Address destination = it.next();
-            if (!members.contains(destination)) {
+            if (!stateTransferInProgress || !members.contains(destination)) {
                List<OutboundTransferTask> transfers = transfersByDestination.get(destination);
                it.remove();
                for (OutboundTransferTask outboundTransfer : transfers) {
@@ -139,7 +128,6 @@ public class StateProviderImpl implements StateProvider {
    @Start(priority = 60)
    @Override
    public void start() {
-      clusterCacheNotifier.addListener(this);
    }
 
    @Stop(priority = 20)
@@ -313,9 +301,11 @@ public class StateProviderImpl implements StateProvider {
          List<OutboundTransferTask> transferTasks = transfersByDestination.get(destination);
          if (transferTasks != null) {
             // get an array copy of the collection to avoid ConcurrentModificationException if the entire task gets cancelled and removeTransfer(transferTask) is called
-            OutboundTransferTask[] tasks = transferTasks.toArray(new OutboundTransferTask[transferTasks.size()]);
-            for (OutboundTransferTask transferTask : tasks) {
-               transferTask.cancelSegments(segments); //this can potentially result in a call to removeTransfer(transferTask)
+            OutboundTransferTask[] taskListCopy = transferTasks.toArray(new OutboundTransferTask[transferTasks.size()]);
+            for (OutboundTransferTask transferTask : taskListCopy) {
+               if (transferTask.getTopologyId() == topologyId) {
+                  transferTask.cancelSegments(segments); //this can potentially result in a call to removeTransfer(transferTask)
+               }
             }
          }
       }
