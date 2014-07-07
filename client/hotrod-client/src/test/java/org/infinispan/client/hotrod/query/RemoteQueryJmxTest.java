@@ -20,18 +20,14 @@ import org.infinispan.query.dsl.QueryFactory;
 import org.infinispan.query.remote.ProtobufMetadataManager;
 import org.infinispan.query.remote.ProtobufMetadataManagerMBean;
 import org.infinispan.query.remote.indexing.ProtobufValueWrapper;
+import org.infinispan.server.hotrod.HotRodServer;
 import org.infinispan.test.SingleCacheManagerTest;
 import org.infinispan.test.fwk.CleanupAfterMethod;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.testng.annotations.AfterTest;
 import org.testng.annotations.Test;
-import org.infinispan.server.hotrod.HotRodServer;
 
-import javax.management.Attribute;
-import javax.management.JMX;
-import javax.management.MBeanServer;
-import javax.management.MalformedObjectNameException;
-import javax.management.ObjectName;
+import javax.management.*;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.Collections;
@@ -40,10 +36,7 @@ import java.util.Set;
 
 import static org.infinispan.client.hotrod.test.HotRodClientTestingUtil.killRemoteCacheManager;
 import static org.infinispan.client.hotrod.test.HotRodClientTestingUtil.killServers;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.*;
 
 /**
  * Testing the functionality of JMX operations for the Remote Queries.
@@ -97,11 +90,16 @@ public class RemoteQueryJmxTest extends SingleCacheManagerTest {
                                                 + ObjectName.quote("DefaultCacheManager")
                                                 + ",component=" + ProtobufMetadataManager.OBJECT_NAME);
 
-      byte[] descriptor = readClasspathResource("/sample_bank_account/bank.protobin");
       MBeanServer mBeanServer = PerThreadMBeanServerLookup.getThreadMBeanServer();
       ProtobufMetadataManagerMBean protobufMetadataManagerMBean = JMX.newMBeanProxy(mBeanServer, objName, ProtobufMetadataManagerMBean.class);
-      protobufMetadataManagerMBean.registerProtofile(descriptor);
-
+      protobufMetadataManagerMBean.registerProtofiles(
+              new String[]{"bank.proto","indexing.proto","descriptor.proto"}, 
+              new String[]{
+                      read("/sample_bank_account/bank.proto"),
+                      read("/infinispan/indexing.proto"),
+                      read("/google/protobuf/descriptor.proto")
+              }
+      );
       //initialize client-side serialization context
       MarshallerRegistration.registerMarshallers(ProtoStreamMarshaller.getSerializationContext(remoteCacheManager));
       server = PerThreadMBeanServerLookup.getThreadMBeanServer();
@@ -109,15 +107,9 @@ public class RemoteQueryJmxTest extends SingleCacheManagerTest {
       return cacheManager;
    }
 
-   private byte[] readClasspathResource(String classPathResource) throws IOException {
+   private String read(String classPathResource) throws IOException {
       InputStream is = getClass().getResourceAsStream(classPathResource);
-      try {
-         return Util.readStream(is);
-      } finally {
-         if (is != null) {
-            is.close();
-         }
-      }
+      return Util.read(is);
    }
 
    protected String getLuceneDirectoryProvider() {

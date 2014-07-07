@@ -18,6 +18,7 @@
  */
 package org.jboss.as.clustering.infinispan.subsystem;
 
+import org.infinispan.commons.util.Util;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.query.remote.ProtobufMetadataManager;
 import org.jboss.as.controller.OperationContext;
@@ -28,15 +29,16 @@ import org.jboss.dmr.ModelNode;
 import org.jboss.msc.service.ServiceController;
 
 import java.net.URL;
+import java.util.List;
 
 import static org.jboss.as.clustering.infinispan.InfinispanMessages.MESSAGES;
 import static org.jboss.as.controller.descriptions.ModelDescriptionConstants.OP_ADDR;
-import static org.jboss.as.controller.descriptions.ModelDescriptionConstants.VALUE;
 
 /**
  * Handler that performs the operation of uploading a protobuf file to be used.
  *
  * @author William Burns
+ * @author gustavonalle
  * @since 6.0
  */
 public class UploadProtoFileOperationHandler implements OperationStepHandler {
@@ -45,8 +47,7 @@ public class UploadProtoFileOperationHandler implements OperationStepHandler {
 
     @Override
     public void execute(OperationContext context, ModelNode operation) throws OperationFailedException {
-        ModelNode newValue = operation.require(CacheContainerResource.PROTO_URL.getName());
-        String urlString = newValue.asString();
+        ModelNode newValue = operation.require(CacheContainerResource.PROTO_URLS.getName());
 
         final PathAddress address = PathAddress.pathAddress(operation.require(OP_ADDR));
         final String cacheContainerName = address.getElement(address.size() - 1).getValue();
@@ -57,12 +58,25 @@ public class UploadProtoFileOperationHandler implements OperationStepHandler {
         ProtobufMetadataManager protoManager = cacheManager.getGlobalComponentRegistry().getComponent(ProtobufMetadataManager.class);
         if (protoManager != null) {
            try {
-              URL url = new URL(urlString);
-              protoManager.registerProtofile(url.openStream());
+              List<ModelNode> descriptorsNodes = newValue.asList();
+              String[] nameArray = new String[descriptorsNodes.size()];
+              String[] contentArray = new String[descriptorsNodes.size()];
+              int i = 0;
+              for(ModelNode modelNode : descriptorsNodes) {
+                 String urlString = modelNode.asString();
+                 nameArray[i] = extractFile(urlString);
+                 contentArray[i] = Util.read(new URL(urlString).openStream());
+                 i++;   
+              }
+              protoManager.registerProtofiles(nameArray,contentArray);
            } catch (Exception e) {
               throw new OperationFailedException(new ModelNode().set(MESSAGES.failedToInvokeOperation(e.getLocalizedMessage())));
            }
         }
         context.stepCompleted();
     }
+
+   private String extractFile(final String url){
+      return url.replaceFirst(".*/([^/?]+).*", "$1");
+   }
 }

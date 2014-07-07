@@ -74,8 +74,9 @@ public class RemoteNonIndexedQueryDslConditionsTest extends SingleCacheManagerTe
       remoteCache = remoteCacheManager.getCache();
 
       //initialize server-side serialization context
-      cacheManager.getGlobalComponentRegistry().getComponent(ProtobufMetadataManager.class).registerProtofile("/sample_bank_account/bank.protobin");
-
+      ProtobufMetadataManager metadataManager = cacheManager.getGlobalComponentRegistry().getComponent(ProtobufMetadataManager.class);
+      metadataManager.registerProtofiles("/sample_bank_account/bank.proto", "/infinispan/indexing.proto", "/google/protobuf/descriptor.proto");
+      
       //initialize client-side serialization context
       MarshallerRegistration.registerMarshallers(ProtoStreamMarshaller.getSerializationContext(remoteCacheManager));
 

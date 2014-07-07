@@ -194,6 +194,8 @@
         <transform in="clustered.xml" out="testsuite/clustered-leveldb-repl.xml" modifyInfinispan="${infinispan.parts}/leveldb-repl.xml" filtering="true"/>
         <transform in="clustered.xml" out="testsuite/clustered-asymmetric-1.xml" modifyInfinispan="${infinispan.parts}/asymmetric-1.xml"/>
         <transform in="clustered.xml" out="testsuite/clustered-asymmetric-2.xml" modifyInfinispan="${infinispan.parts}/asymmetric-2.xml"/>
+        <transform in="clustered.xml" out="testsuite/clustered-indexless-query-1.xml" modifyInfinispan="${infinispan.parts}/default-repl.xml"/>
+        <transform in="clustered.xml" out="testsuite/clustered-indexless-query-2.xml" modifyInfinispan="${infinispan.parts}/default-repl.xml"/>
         <transform in="examples/standalone-rcs-local.xml" out="testsuite/standalone-rcs-local.xml"
                    modifyInfinispan="${infinispan.parts}/rcs-local.xml"
                    modifyRemoteDestination="${other.parts}/rcs-remote-destination.xml"

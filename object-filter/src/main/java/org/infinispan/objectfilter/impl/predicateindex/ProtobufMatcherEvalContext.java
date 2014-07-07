@@ -1,10 +1,13 @@
 package org.infinispan.objectfilter.impl.predicateindex;
 
-import com.google.protobuf.Descriptors;
 import org.infinispan.protostream.MessageContext;
 import org.infinispan.protostream.ProtobufParser;
 import org.infinispan.protostream.SerializationContext;
 import org.infinispan.protostream.TagHandler;
+import org.infinispan.protostream.descriptors.Descriptor;
+import org.infinispan.protostream.descriptors.FieldDescriptor;
+import org.infinispan.protostream.descriptors.JavaType;
+import org.infinispan.protostream.descriptors.Type;
 import org.infinispan.protostream.impl.WrappedMessageMarshaller;
 
 import java.io.IOException;
@@ -20,13 +23,13 @@ public class ProtobufMatcherEvalContext extends MatcherEvalContext<Integer> impl
    private int skipping = 0;
 
    private byte[] payload;
-   private Descriptors.Descriptor payloadMessageDescriptor;
+   private Descriptor payloadMessageDescriptor;
    private MessageContext messageContext;
 
    private final SerializationContext serializationContext;
-   private final Descriptors.Descriptor wrappedMessageDescriptor;
+   private final Descriptor wrappedMessageDescriptor;
 
-   public ProtobufMatcherEvalContext(Object instance, Descriptors.Descriptor wrappedMessageDescriptor, SerializationContext serializationContext) {
+   public ProtobufMatcherEvalContext(Object instance, Descriptor wrappedMessageDescriptor, SerializationContext serializationContext) {
       super(instance);
       this.wrappedMessageDescriptor = wrappedMessageDescriptor;
       this.serializationContext = serializationContext;
@@ -46,7 +49,7 @@ public class ProtobufMatcherEvalContext extends MatcherEvalContext<Integer> impl
 
    //todo [anistor] missing tags need to be fired with default value defined in proto schema or null if they admit null; missing messages need to be fired with null at end of the nesting level. BTW, seems like this is better to be included in Protostream as a feature
    @Override
-   public void onTag(int fieldNumber, String fieldName, Descriptors.FieldDescriptor.Type type, Descriptors.FieldDescriptor.JavaType javaType, Object tagValue) {
+   public void onTag(int fieldNumber, String fieldName, Type type, JavaType javaType, Object tagValue) {
       if (payloadStarted) {
          if (skipping == 0) {
             AttributeNode<Integer> attrNode = currentNode.getChild(fieldNumber);
@@ -72,7 +75,7 @@ public class ProtobufMatcherEvalContext extends MatcherEvalContext<Integer> impl
    }
 
    @Override
-   public void onStartNested(int fieldNumber, String fieldName, Descriptors.Descriptor messageDescriptor) {
+   public void onStartNested(int fieldNumber, String fieldName, Descriptor messageDescriptor) {
       if (payloadStarted) {
          if (skipping == 0) {
             AttributeNode<Integer> attrNode = currentNode.getChild(fieldNumber);
@@ -92,7 +95,7 @@ public class ProtobufMatcherEvalContext extends MatcherEvalContext<Integer> impl
    }
 
    @Override
-   public void onEndNested(int fieldNumber, String fieldName, Descriptors.Descriptor messageDescriptor) {
+   public void onEndNested(int fieldNumber, String fieldName, Descriptor messageDescriptor) {
       if (payloadStarted) {
          if (skipping == 0) {
             popContext();
@@ -132,7 +135,7 @@ public class ProtobufMatcherEvalContext extends MatcherEvalContext<Integer> impl
       }
    }
 
-   private void pushContext(String fieldName, Descriptors.Descriptor messageDescriptor) {
+   private void pushContext(String fieldName, Descriptor messageDescriptor) {
       messageContext = new MessageContext<MessageContext>(messageContext, fieldName, messageDescriptor);
    }
 
@@ -142,16 +145,16 @@ public class ProtobufMatcherEvalContext extends MatcherEvalContext<Integer> impl
    }
 
    private void processMissingFields() {
-      for (Descriptors.FieldDescriptor fd : messageContext.getMessageDescriptor().getFields()) {
+      for (FieldDescriptor fd : messageContext.getMessageDescriptor().getFields()) {
          AttributeNode<Integer> attrNode = currentNode.getChild(fd.getNumber());
          if (attrNode != null && !messageContext.isFieldMarked(fd.getNumber())) {
             //todo [anistor] can a repeated field have a default value?
             if (fd.isRepeated()
-                  || fd.getType() == Descriptors.FieldDescriptor.Type.MESSAGE
-                  || fd.getType() == Descriptors.FieldDescriptor.Type.GROUP) {
+                  || fd.getType() == Type.MESSAGE
+                  || fd.getType() == Type.GROUP) {
                processNullAttribute(attrNode);
             } else {
-               Object defaultValue = fd.toProto().getDefaultValue().isEmpty() ? null : fd.getDefaultValue();
+               Object defaultValue = fd.hasDefaultValue()? fd.getDefaultValue() : null;
                attrNode.processValue(defaultValue, this);
             }
          }

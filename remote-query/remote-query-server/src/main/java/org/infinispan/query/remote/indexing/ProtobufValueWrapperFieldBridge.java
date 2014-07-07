@@ -1,6 +1,5 @@
 package org.infinispan.query.remote.indexing;
 
-import com.google.protobuf.Descriptors;
 import org.apache.lucene.document.Document;
 import org.hibernate.search.bridge.FieldBridge;
 import org.hibernate.search.bridge.LuceneOptions;
@@ -9,6 +8,7 @@ import org.infinispan.commons.CacheException;
 import org.infinispan.protostream.ProtobufParser;
 import org.infinispan.protostream.SerializationContext;
 import org.infinispan.protostream.WrappedMessage;
+import org.infinispan.protostream.descriptors.Descriptor;
 import org.infinispan.query.remote.ProtobufMetadataManager;
 
 import java.io.IOException;
@@ -30,7 +30,7 @@ public final class ProtobufValueWrapperFieldBridge implements FieldBridge {
    /**
     * Lazily initialized in {@code decodeAndIndex} method, similarly to {@code serializationContext} field.
     */
-   private Descriptors.Descriptor wrapperDescriptor = null;
+   private Descriptor wrapperDescriptor = null;
 
    public ProtobufValueWrapperFieldBridge(Cache cache) {
       this.cache = cache;

@@ -8,6 +8,7 @@ import org.infinispan.factories.scopes.Scope;
 import org.infinispan.factories.scopes.Scopes;
 import org.infinispan.jmx.annotations.MBean;
 import org.infinispan.jmx.annotations.ManagedOperation;
+import org.infinispan.jmx.annotations.Parameter;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.notifications.Listener;
 import org.infinispan.notifications.cachelistener.annotation.CacheEntryCreated;
@@ -15,28 +16,29 @@ import org.infinispan.notifications.cachelistener.annotation.CacheEntryModified;
 import org.infinispan.notifications.cachelistener.event.CacheEntryCreatedEvent;
 import org.infinispan.notifications.cachelistener.event.CacheEntryModifiedEvent;
 import org.infinispan.protostream.BaseMarshaller;
+import org.infinispan.protostream.FileDescriptorSource;
 import org.infinispan.protostream.SerializationContext;
 import org.infinispan.query.remote.logging.Log;
 import org.infinispan.registry.ClusterRegistry;
 import org.infinispan.registry.ScopedKey;
 import org.infinispan.util.logging.LogFactory;
 
+import javax.management.MBeanException;
 import javax.management.ObjectName;
-import java.io.ByteArrayInputStream;
 import java.io.IOException;
-import java.io.InputStream;
-import java.util.UUID;
+import java.nio.file.Paths;
 
 /**
  * A clustered repository of protobuf descriptors. All protobuf types and their marshallers must be registered with this
  * repository before being used.
  *
  * @author anistor@redhat.com
+ * @author gustavonalle
  * @since 6.0
  */
 @Scope(Scopes.GLOBAL)
 @MBean(objectName = ProtobufMetadataManager.OBJECT_NAME,
-       description = "Component that acts as a manager and container for Protocol Buffers metadata descriptors in the scope of a CacheManger.")
+        description = "Component that acts as a manager and container for Protocol Buffers metadata descriptors in the scope of a CacheManger.")
 public class ProtobufMetadataManager implements ProtobufMetadataManagerMBean {
 
    private static final Log log = LogFactory.getLog(ProtobufMetadataManager.class, Log.class);
@@ -45,9 +47,11 @@ public class ProtobufMetadataManager implements ProtobufMetadataManagerMBean {
 
    private static final String REGISTRY_SCOPE = ProtobufMetadataManager.class.getName();
 
+   private static final String REGISTRY_KEY = "_descriptors";
+
    private ObjectName objectName;
 
-   private ClusterRegistry<String, String, byte[]> clusterRegistry;
+   private ClusterRegistry<String, String, FileDescriptorSource> clusterRegistry;
 
    private volatile ProtobufMetadataRegistryListener registryListener;
 
@@ -63,11 +67,10 @@ public class ProtobufMetadataManager implements ProtobufMetadataManagerMBean {
             if (registryListener == null) {
                registryListener = new ProtobufMetadataRegistryListener();
                clusterRegistry.addListener(REGISTRY_SCOPE, registryListener);
-
-               for (String uuid : clusterRegistry.keys(REGISTRY_SCOPE)) {
-                  byte[] descriptorFile = clusterRegistry.get(REGISTRY_SCOPE, uuid);
+               FileDescriptorSource descriptorSource = getFileDescriptorSource();
+               if (!descriptorSource.getFileDescriptors().isEmpty()) {
                   try {
-                     serCtx.registerProtofile(new ByteArrayInputStream(descriptorFile));
+                     serCtx.registerProtoFiles(descriptorSource);
                   } catch (Exception e) {
                      log.error(e);
                   }
@@ -78,7 +81,7 @@ public class ProtobufMetadataManager implements ProtobufMetadataManagerMBean {
    }
 
    @Inject
-   protected void injectDependencies(ClusterRegistry<String, String, byte[]> clusterRegistry) {
+   protected void injectDependencies(ClusterRegistry<String, String, FileDescriptorSource> clusterRegistry) {
       this.clusterRegistry = clusterRegistry;
    }
 
@@ -98,27 +101,49 @@ public class ProtobufMetadataManager implements ProtobufMetadataManagerMBean {
       this.objectName = objectName;
    }
 
-   public <T> void registerMarshaller(Class<? extends T> clazz, BaseMarshaller<T> marshaller) {
+   public <T> void registerMarshaller(BaseMarshaller<T> marshaller) {
       ensureInit();
-      serCtx.registerMarshaller(clazz, marshaller);
+      serCtx.registerMarshaller(marshaller);
+   }
+
+   @ManagedOperation(description = "Registers a set of Protobuf definition files", displayName = "Register Protofiles")
+   public void registerProtofiles(@Parameter(name = "fileNames", description = "names of the protofiles") String[] names,
+                                  @Parameter(name = "fileContents", description = "content of the files") String[] contents)
+           throws Exception {
+      if (names.length != contents.length)
+         throw new MBeanException(new IllegalArgumentException("invalid parameter sizes"));
+      FileDescriptorSource fileDescriptorSource = getFileDescriptorSource();
+      for (int i = 0; i < names.length; i++) {
+         fileDescriptorSource.addProtoFile(names[i], contents[i]);
+      }
+      clusterRegistry.put(REGISTRY_SCOPE, REGISTRY_KEY, fileDescriptorSource);
    }
 
    @ManagedOperation(description = "Registers a Protobuf definition file", displayName = "Register Protofile")
-   public void registerProtofile(byte[] descriptorFile) {
-      ensureInit();
-      clusterRegistry.put(REGISTRY_SCOPE, UUID.randomUUID().toString(), descriptorFile);
+   public void registerProtofile(@Parameter(name = "fileName", description = "the name of the .proto file") String name,
+                                 @Parameter(name = "contents", description = "contents of the file") String contents) throws Exception {
+      FileDescriptorSource fileDescriptorSource = getFileDescriptorSource();
+      fileDescriptorSource.addProtoFile(name, contents);
+
+      clusterRegistry.put(REGISTRY_SCOPE, REGISTRY_KEY, fileDescriptorSource);
    }
 
-   public void registerProtofile(InputStream descriptorFile) throws IOException, Descriptors.DescriptorValidationException {
-      registerProtofile(Util.readStream(descriptorFile));
+   @ManagedOperation(description = "Display a protobuf definition file", displayName = "Register Protofile")
+   public String displayProtofile(@Parameter(name = "fileName", description = "the name of the .proto file") String name) {
+      FileDescriptorSource fileDescriptorSource = clusterRegistry.get(REGISTRY_SCOPE, REGISTRY_KEY);
+      if (fileDescriptorSource == null) return null;
+      char[] data = fileDescriptorSource.getFileDescriptors().get(name);
+      return data != null ? String.valueOf(data) : null;
    }
 
-   public void registerProtofile(String classpathResource) throws IOException, Descriptors.DescriptorValidationException {
-      InputStream is = getClass().getResourceAsStream(classpathResource);
-      if (is == null) {
-         throw new IllegalArgumentException("Missing resource: " + classpathResource);
+   public void registerProtofiles(String... classPathResources) throws Exception {
+      FileDescriptorSource fileDescriptorSource = getFileDescriptorSource();
+      for (String classPathResource : classPathResources) {
+         String fileName = Paths.get(classPathResource).getFileName().toString();
+         String contents = Util.read(this.getClass().getResourceAsStream(classPathResource));
+         fileDescriptorSource.addProtoFile(fileName, contents);
       }
-      registerProtofile(is);
+      clusterRegistry.put(REGISTRY_SCOPE, REGISTRY_KEY, fileDescriptorSource);
    }
 
    public static SerializationContext getSerializationContext(EmbeddedCacheManager cacheManager) {
@@ -133,25 +158,35 @@ public class ProtobufMetadataManager implements ProtobufMetadataManagerMBean {
       return metadataManager.serCtx;
    }
 
+   private FileDescriptorSource getFileDescriptorSource() {
+      FileDescriptorSource fileDescriptorSource = clusterRegistry.get(REGISTRY_SCOPE, REGISTRY_KEY);
+      if (fileDescriptorSource == null) {
+         fileDescriptorSource = new FileDescriptorSource();
+      }
+      return fileDescriptorSource;
+   }
+
    @Listener
    class ProtobufMetadataRegistryListener {
 
       @CacheEntryCreated
-      public void created(CacheEntryCreatedEvent<ScopedKey<String, String>, byte[]> e) throws IOException, Descriptors.DescriptorValidationException {
+      public void created(CacheEntryCreatedEvent<ScopedKey<String, String>, FileDescriptorSource> e) throws IOException {
          if (!e.isPre()) {
             registerProtofile(e.getValue());
          }
+      }
+
+      private void registerProtofile(FileDescriptorSource value) throws IOException {
+         serCtx.registerProtoFiles(value);
       }
 
       @CacheEntryModified
-      public void modified(CacheEntryModifiedEvent<ScopedKey<String, String>, byte[]> e) throws IOException, Descriptors.DescriptorValidationException {
+      public void modified(CacheEntryModifiedEvent<ScopedKey<String, String>, FileDescriptorSource> e) throws IOException, Descriptors.DescriptorValidationException {
          if (!e.isPre()) {
             registerProtofile(e.getValue());
          }
       }
 
-      private void registerProtofile(byte[] descriptorFile) throws IOException, Descriptors.DescriptorValidationException {
-         serCtx.registerProtofile(new ByteArrayInputStream(descriptorFile));
-      }
+
    }
 }

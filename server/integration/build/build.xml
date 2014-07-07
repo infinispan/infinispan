@@ -64,6 +64,7 @@
          <fileset file="${org.jboss.logging:jboss-logging:jar}" />
          <fileset file="${commons-pool:commons-pool:jar}" />
          <fileset file="${com.google.protobuf:protobuf-java:jar}" />
+         <fileset file="${com.squareup:protoparser:jar}" />
          <mapper type="flatten" />
       </copy>
       
@@ -97,6 +98,10 @@
 
       <module-def name="com.google.protobuf">
          <maven-resource group="com.google.protobuf" artifact="protobuf-java" />
+      </module-def>
+
+      <module-def name="com.squareup.protoparser">
+         <maven-resource group="com.squareup" artifact="protoparser" />
       </module-def>
 
       <module-def name="com.jboss.datagrid" />
