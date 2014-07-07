@@ -6,8 +6,6 @@ import org.infinispan.protostream.ConfigurationBuilder;
 import org.infinispan.protostream.ProtobufUtil;
 import org.infinispan.protostream.SerializationContext;
 import org.junit.Before;
-import org.junit.Ignore;
-import org.junit.Test;
 
 /**
  * @author anistor@redhat.com
@@ -36,13 +34,5 @@ public class ProtobufMatcherTest extends AbstractMatcherTest {
    @Override
    protected ProtobufMatcher createMatcher() {
       return new ProtobufMatcher(serCtx);
-   }
-
-   @Test
-   @Ignore
-   @Override
-   public void testCollectionIsNotNull1() throws Exception {
-      //todo [anistor] this feature is currently not implemented for the protobuf case
-      super.testCollectionIsNotNull1();
    }
 }

@@ -1,6 +1,7 @@
 package org.infinispan.objectfilter.impl.predicateindex;
 
 import org.infinispan.objectfilter.impl.FilterSubscriptionImpl;
+import org.infinispan.objectfilter.impl.MetadataAdapter;
 
 /**
  * @author anistor@redhat.com
@@ -8,8 +9,8 @@ import org.infinispan.objectfilter.impl.FilterSubscriptionImpl;
  */
 final class RootNode<AttributeId extends Comparable<AttributeId>> extends AttributeNode<AttributeId> {
 
-   RootNode() {
-      super(null, null);
+   RootNode(MetadataAdapter<?, AttributeId> metadataAdapter) {
+      super(metadataAdapter);
    }
 
    @Override

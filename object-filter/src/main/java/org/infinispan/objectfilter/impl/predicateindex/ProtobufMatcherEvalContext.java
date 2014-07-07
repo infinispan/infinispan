@@ -16,6 +16,8 @@ import java.util.Iterator;
  */
 public class ProtobufMatcherEvalContext extends MatcherEvalContext<Integer> implements TagHandler {
 
+   private static final Object DUMMY_VALUE = new Object();
+
    private boolean payloadStarted = false;
    private int skipping = 0;
 
@@ -143,16 +145,24 @@ public class ProtobufMatcherEvalContext extends MatcherEvalContext<Integer> impl
 
    private void processMissingFields() {
       for (Descriptors.FieldDescriptor fd : messageContext.getMessageDescriptor().getFields()) {
-         AttributeNode<Integer> attrNode = currentNode.getChild(fd.getNumber());
-         if (attrNode != null && !messageContext.isFieldMarked(fd.getNumber())) {
-            //todo [anistor] can a repeated field have a default value?
-            if (fd.isRepeated()
-                  || fd.getType() == Descriptors.FieldDescriptor.Type.MESSAGE
-                  || fd.getType() == Descriptors.FieldDescriptor.Type.GROUP) {
-               processNullAttribute(attrNode);
+         AttributeNode<Integer> attributeNode = currentNode.getChild(fd.getNumber());
+         boolean fieldSeen = messageContext.isFieldMarked(fd.getNumber());
+         if (attributeNode != null && (fd.isRepeated() || !fieldSeen)) {
+            if (fd.isRepeated()) {
+               // Repeated fields can't have default values but we need to at least take care of IS [NOT] NULL predicates
+               if (fieldSeen) {
+                  // Here we use a dummy value since it would not matter anyway for IS [NOT] NULL
+                  attributeNode.processValue(DUMMY_VALUE, this);
+               } else {
+                  processNullAttribute(attributeNode);
+               }
             } else {
-               Object defaultValue = fd.toProto().getDefaultValue().isEmpty() ? null : fd.getDefaultValue();
-               attrNode.processValue(defaultValue, this);
+               if (fd.getJavaType() == Descriptors.FieldDescriptor.JavaType.MESSAGE) {
+                  processNullAttribute(attributeNode);
+               } else {
+                  Object defaultValue = fd.toProto().getDefaultValue().isEmpty() ? null : fd.getDefaultValue();
+                  attributeNode.processValue(defaultValue, this);
+               }
             }
          }
       }

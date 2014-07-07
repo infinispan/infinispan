@@ -23,7 +23,7 @@ public class ReflectionMatcherEvalContext extends MatcherEvalContext<String> {
          if (instance == null) {
             processAttribute(childAttribute, null);
          } else {
-            ReflectionHelper.PropertyAccessor accessor = ReflectionHelper.getAccessor(instance.getClass(), childAttribute.getAttribute());
+            ReflectionHelper.PropertyAccessor accessor = (ReflectionHelper.PropertyAccessor) childAttribute.getMetadata();
             if (accessor.isMultiple()) {
                Iterator valuesIt = accessor.getValueIterator(instance);
                if (valuesIt == null) {

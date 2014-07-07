@@ -1,5 +1,6 @@
 package org.infinispan.objectfilter.impl.predicateindex;
 
+import org.infinispan.objectfilter.impl.MetadataAdapter;
 import org.infinispan.objectfilter.impl.predicateindex.be.PredicateNode;
 
 import java.util.List;
@@ -61,7 +62,11 @@ public final class PredicateIndex<AttributeId extends Comparable<AttributeId>> {
       }
    }
 
-   private final AttributeNode<AttributeId> root = new RootNode<AttributeId>();
+   private final AttributeNode<AttributeId> root;
+
+   public PredicateIndex(MetadataAdapter<?, AttributeId> metadataAdapter) {
+      root = new RootNode<AttributeId>(metadataAdapter);
+   }
 
    public AttributeNode<AttributeId> getRoot() {
       return root;

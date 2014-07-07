@@ -25,24 +25,22 @@ import java.util.List;
  */
 final class FilterRegistry<AttributeId extends Comparable<AttributeId>> {
 
-   private final String typeName;
-
-   private final PredicateIndex<AttributeId> predicateIndex = new PredicateIndex<AttributeId>();
+   private final PredicateIndex<AttributeId> predicateIndex;
 
    private final List<FilterSubscriptionImpl> filterSubscriptions = new ArrayList<FilterSubscriptionImpl>();
 
    private final BETreeMaker<AttributeId> treeMaker;
 
-   private final BETreeMaker.AttributePathTranslator<AttributeId> attributePathTranslator;
+   private final MetadataAdapter<?, AttributeId> metadataAdapter;
 
-   public FilterRegistry(BETreeMaker.AttributePathTranslator<AttributeId> attributePathTranslator, String typeName) {
-      this.attributePathTranslator = attributePathTranslator;
-      this.typeName = typeName;
-      treeMaker = new BETreeMaker<AttributeId>(attributePathTranslator);
+   public FilterRegistry(MetadataAdapter<?, AttributeId> metadataAdapter) {
+      this.metadataAdapter = metadataAdapter;
+      treeMaker = new BETreeMaker<AttributeId>(metadataAdapter);
+      predicateIndex = new PredicateIndex<AttributeId>(metadataAdapter);
    }
 
    public String getTypeName() {
-      return typeName;
+      return metadataAdapter.getTypeName();
    }
 
    public boolean isEmpty() {
@@ -56,8 +54,10 @@ final class FilterRegistry<AttributeId extends Comparable<AttributeId>> {
     * @param ctx
     */
    public void match(MatcherEvalContext<AttributeId> ctx) {
+      // try to match
       ctx.process(predicateIndex.getRoot());
 
+      // notify subscribers
       for (FilterSubscriptionImpl s : filterSubscriptions) {
          FilterEvalContext filterEvalContext = ctx.getFilterEvalContext(s);
          if (filterEvalContext.getMatchResult()) {
@@ -71,7 +71,7 @@ final class FilterRegistry<AttributeId extends Comparable<AttributeId>> {
       if (projection != null && !projection.isEmpty()) {
          translatedProjections = new ArrayList<List<AttributeId>>(projection.size());
          for (String projectionPath : projection) {
-            translatedProjections.add(attributePathTranslator.translatePath(StringHelper.splitPropertyPath(projectionPath)));
+            translatedProjections.add(metadataAdapter.translatePropertyPath(StringHelper.splitPropertyPath(projectionPath)));
          }
       }
 
@@ -79,12 +79,12 @@ final class FilterRegistry<AttributeId extends Comparable<AttributeId>> {
       if (sortFields != null && !sortFields.isEmpty()) {
          translatedSortFields = new ArrayList<List<AttributeId>>(sortFields.size());
          for (SortField sortField : sortFields) {
-            translatedSortFields.add(attributePathTranslator.translatePath(StringHelper.splitPropertyPath(sortField.getPath())));
+            translatedSortFields.add(metadataAdapter.translatePropertyPath(StringHelper.splitPropertyPath(sortField.getPath())));
          }
       }
 
       BETree beTree = treeMaker.make(normalizedFilter);
-      final FilterSubscriptionImpl<AttributeId> filterSubscription = new FilterSubscriptionImpl<AttributeId>(typeName, beTree, callback, projection, translatedProjections, sortFields, translatedSortFields);
+      final FilterSubscriptionImpl<AttributeId> filterSubscription = new FilterSubscriptionImpl<AttributeId>(metadataAdapter, beTree, callback, projection, translatedProjections, sortFields, translatedSortFields);
 
       filterSubscription.registerProjection(predicateIndex);
 

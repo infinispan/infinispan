@@ -1,6 +1,7 @@
 package org.infinispan.objectfilter.impl.predicateindex;
 
 import org.infinispan.objectfilter.impl.FilterSubscriptionImpl;
+import org.infinispan.objectfilter.impl.MetadataAdapter;
 
 import java.util.Collections;
 import java.util.HashMap;
@@ -15,12 +16,13 @@ import java.util.Map;
  */
 public class AttributeNode<AttributeId extends Comparable<AttributeId>> {
 
-   //todo [anistor] add here all metadata so it is precomputed and the MatcherEvalContext is simplified and more efficient
-
    // this is never null, except for the root node
    private final AttributeId attribute;
 
-   public Object metadata;
+   // property metadata for an intermediate or leaf node. This is never null, except for the root node
+   private final Object metadata;
+
+   private final MetadataAdapter metadataAdapter;
 
    // this is never null, except for the root node
    private final AttributeNode<AttributeId> parent;
@@ -42,13 +44,29 @@ public class AttributeNode<AttributeId extends Comparable<AttributeId>> {
     */
    private Projections projections;
 
-   AttributeNode(AttributeId attribute, AttributeNode<AttributeId> parent) {
+   /**
+    * Constructor used only for the root node.
+    */
+   protected AttributeNode(MetadataAdapter metadataAdapter) {
+      this.attribute = null;
+      this.parent = null;
+      this.metadataAdapter = metadataAdapter;
+      this.metadata = null;
+   }
+
+   private AttributeNode(AttributeId attribute, AttributeNode<AttributeId> parent) {
       this.attribute = attribute;
       this.parent = parent;
+      metadataAdapter = parent.metadataAdapter;
+      metadata = metadataAdapter.makeChildAttributeMetadata(parent.metadata, attribute);
    }
 
    public AttributeId getAttribute() {
       return attribute;
+   }
+
+   public Object getMetadata() {
+      return metadata;
    }
 
    public AttributeNode<AttributeId> getParent() {
@@ -133,7 +151,7 @@ public class AttributeNode<AttributeId extends Comparable<AttributeId>> {
 
    public void addPredicateSubscription(PredicateIndex.Subscription subscription) {
       if (predicates == null) {
-         predicates = new Predicates();
+         predicates = new Predicates(metadataAdapter.isComparableProperty(metadata));
       }
       predicates.addPredicate(subscription);
    }

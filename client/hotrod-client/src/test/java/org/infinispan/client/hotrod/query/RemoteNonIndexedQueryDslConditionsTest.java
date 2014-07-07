@@ -38,28 +38,4 @@ public class RemoteNonIndexedQueryDslConditionsTest extends RemoteQueryDslCondit
    public void testNullOnIntegerField() throws Exception {
       super.testNullOnIntegerField();
    }
-
-   @Test(enabled = false) //todo
-   @Override
-   public void testProjectionOnOptionalField() throws Exception {
-      super.testProjectionOnOptionalField();
-   }
-
-   @Test(enabled = false) //todo
-   @Override
-   public void testSampleDomainQuery20() throws Exception {
-      super.testSampleDomainQuery20();
-   }
-
-   @Test(enabled = false) //todo
-   @Override
-   public void testSampleDomainQuery21() throws Exception {
-      super.testSampleDomainQuery21();
-   }
-
-   @Test(enabled = false) //todo
-   @Override
-   public void testSampleDomainQuery22() throws Exception {
-      super.testSampleDomainQuery22();
-   }
 }

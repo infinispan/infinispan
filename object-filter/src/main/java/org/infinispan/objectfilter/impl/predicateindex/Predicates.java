@@ -9,7 +9,7 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * Holds all predicates that are subscribed for a single attribute. This class is not thread safe and leaves this
+ * Holds all predicates that are subscribed for a certain attribute. This class is not thread safe and leaves this
  * responsibility to the caller.
  *
  * @param <AttributeDomain> the type of the values of the attribute
@@ -48,6 +48,9 @@ final class Predicates<AttributeDomain> {
       }
    }
 
+   // todo [anistor] this cannot be used right now because ProtobufMatcherEvalContext.DUMMY_VALUE is not really comparable
+   private final boolean valueIsComparable;
+
    /**
     * The predicates that have a condition based on an order relation. This allows them to be represented by an interval
     * tree.
@@ -59,8 +62,12 @@ final class Predicates<AttributeDomain> {
     */
    private Map<Predicate<AttributeDomain>, Subscriptions> unorderedPredicates;
 
+   Predicates(boolean valueIsComparable) {
+      this.valueIsComparable = valueIsComparable;
+   }
+
    public void notifyMatchingSubscribers(MatcherEvalContext<?> ctx, AttributeDomain attributeValue) {
-      if (attributeValue != null && orderedPredicates != null) {
+      if (attributeValue instanceof Comparable && orderedPredicates != null) {
          for (IntervalTree.Node<AttributeDomain, Subscriptions> n : orderedPredicates.stab(attributeValue)) {
             Subscriptions subscriptions = n.value;
             if (subscriptions.isActive(ctx)) {

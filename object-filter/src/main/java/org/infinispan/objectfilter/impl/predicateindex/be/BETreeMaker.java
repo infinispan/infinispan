@@ -1,5 +1,6 @@
 package org.infinispan.objectfilter.impl.predicateindex.be;
 
+import org.infinispan.objectfilter.impl.MetadataAdapter;
 import org.infinispan.objectfilter.impl.predicateindex.IsNullCondition;
 import org.infinispan.objectfilter.impl.predicateindex.Predicate;
 import org.infinispan.objectfilter.impl.predicateindex.RegexCondition;
@@ -17,22 +18,9 @@ import java.util.List;
  */
 public final class BETreeMaker<AttributeId extends Comparable<AttributeId>> {
 
-   public interface AttributePathTranslator<AttributeId> {
+   private final MetadataAdapter<?, AttributeId> attributePathTranslator;
 
-      /**
-       * Transforms a String property path into an internal representation of the path which might not be String based.
-       */
-      List<AttributeId> translatePath(List<String> path);
-
-      /**
-       * Tests if the attribute path contains repeated (collection/array) attributes.
-       */
-      boolean isRepeated(List<String> path);
-   }
-
-   private final AttributePathTranslator<AttributeId> attributePathTranslator;
-
-   public BETreeMaker(AttributePathTranslator<AttributeId> attributePathTranslator) {
+   public BETreeMaker(MetadataAdapter<?, AttributeId> attributePathTranslator) {
       this.attributePathTranslator = attributePathTranslator;
    }
 
@@ -72,8 +60,8 @@ public final class BETreeMaker<AttributeId extends Comparable<AttributeId>> {
    private void makePredicateNode(BENode parent, List<BENode> nodes, List<Integer> treeCounters, PrimaryPredicateExpr condition, boolean isNegated) {
       Predicate predicate = makePredicate(condition);
       List<String> propertyPath = ((PropertyValueExpr) condition.getChild()).getPropertyPath();
-      List<AttributeId> translatedPath = attributePathTranslator.translatePath(propertyPath);
-      boolean isRepeated = attributePathTranslator.isRepeated(propertyPath);
+      List<AttributeId> translatedPath = attributePathTranslator.translatePropertyPath(propertyPath);
+      boolean isRepeated = attributePathTranslator.isRepeatedProperty(propertyPath);
       PredicateNode node = new PredicateNode<AttributeId>(parent, predicate, isNegated, translatedPath, isRepeated);
       node.setLocation(nodes.size(), nodes.size() + 1);
       nodes.add(node);

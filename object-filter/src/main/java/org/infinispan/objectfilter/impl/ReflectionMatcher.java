@@ -4,7 +4,6 @@ import org.infinispan.objectfilter.impl.hql.FilterProcessingChain;
 import org.infinispan.objectfilter.impl.hql.ReflectionPropertyHelper;
 import org.infinispan.objectfilter.impl.predicateindex.MatcherEvalContext;
 import org.infinispan.objectfilter.impl.predicateindex.ReflectionMatcherEvalContext;
-import org.infinispan.objectfilter.impl.predicateindex.be.BETreeMaker;
 import org.infinispan.objectfilter.impl.util.ReflectionHelper;
 
 import java.util.List;
@@ -39,27 +38,58 @@ public final class ReflectionMatcher extends BaseMatcher<Class<?>, String> {
    }
 
    @Override
-   protected FilterRegistry<String> createFilterRegistryForType(final Class<?> clazz) {
-      return new FilterRegistry<String>(new BETreeMaker.AttributePathTranslator<String>() {
-         @Override
-         public List<String> translatePath(List<String> path) {
-            return path;
-         }
+   protected FilterRegistry<String> createFilterRegistryForType(Class<?> clazz) {
+      return new FilterRegistry<String>(new MetadataAdapterImpl(clazz));
+   }
 
-         @Override
-         public boolean isRepeated(List<String> path) {
-            ReflectionHelper.PropertyAccessor a = ReflectionHelper.getAccessor(clazz, path.get(0));
+   private static class MetadataAdapterImpl implements MetadataAdapter<ReflectionHelper.PropertyAccessor, String> {
+
+      private final Class<?> clazz;
+
+      MetadataAdapterImpl(Class<?> clazz) {
+         this.clazz = clazz;
+      }
+
+      @Override
+      public String getTypeName() {
+         return clazz.getName();
+      }
+
+      @Override
+      public Class<?> getTypeMetadata() {
+         return clazz;
+      }
+
+      @Override
+      public List<String> translatePropertyPath(List<String> path) {
+         return path;
+      }
+
+      @Override
+      public boolean isRepeatedProperty(List<String> propertyPath) {
+         ReflectionHelper.PropertyAccessor a = ReflectionHelper.getAccessor(clazz, propertyPath.get(0));
+         if (a.isMultiple()) {
+            return true;
+         }
+         for (int i = 1; i < propertyPath.size(); i++) {
+            a = a.getAccessor(propertyPath.get(i));
             if (a.isMultiple()) {
                return true;
             }
-            for (int i = 1; i < path.size(); i++) {
-               a = a.getAccessor(path.get(i));
-               if (a.isMultiple()) {
-                  return true;
-               }
-            }
-            return false;
          }
-      }, clazz.getCanonicalName());
+         return false;
+      }
+
+      @Override
+      public ReflectionHelper.PropertyAccessor makeChildAttributeMetadata(ReflectionHelper.PropertyAccessor parentAttributeMetadata, String attribute) {
+         return parentAttributeMetadata == null ?
+               ReflectionHelper.getAccessor(clazz, attribute) : parentAttributeMetadata.getAccessor(attribute);
+      }
+
+      @Override
+      public boolean isComparableProperty(ReflectionHelper.PropertyAccessor attributeMetadata) {
+         Class<?> propertyType = attributeMetadata.getPropertyType();
+         return propertyType != null && (propertyType.isPrimitive() || Comparable.class.isAssignableFrom(propertyType));
+      }
    }
 }

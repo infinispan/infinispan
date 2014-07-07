@@ -18,6 +18,8 @@ import java.io.ObjectOutput;
 import java.util.Collections;
 import java.util.Set;
 
+//todo [anistor] doing filtering and conversion as separate steps is not efficient
+
 /**
  * A filter implementation that is both a KeyValueFilter and a converter. The implementation relies on the Matcher and a
  * JPA query string.

@@ -241,9 +241,10 @@ public final class BooleanFilterNormalizer {
                case GREATER:
                   return new ComparisonExpr(c.getLeftChild(), c.getRightChild(), ComparisonPredicate.Type.LESS_OR_EQUAL);
                case EQUALS:
-                  // the special case of equality is transformed into two intervals, excluding the compared value
+                  // the special case of equality is transformed into two intervals, excluding the compared value, + an IS NULL
                   return new OrExpr(new ComparisonExpr(c.getLeftChild(), c.getRightChild(), ComparisonPredicate.Type.LESS),
-                                    new ComparisonExpr(c.getLeftChild(), c.getRightChild(), ComparisonPredicate.Type.GREATER));
+                                    new ComparisonExpr(c.getLeftChild(), c.getRightChild(), ComparisonPredicate.Type.GREATER),
+                                    new IsNullExpr(c.getLeftChild()));
                default:
                   throw new IllegalStateException("Unknown comparison type: " + c.getComparisonType());
             }

@@ -55,7 +55,11 @@ final class Projections {
                projection = c.getSortProjection();
             }
          }
-         projection[position] = attributeValue;
+
+         // if this is a repeated attribute then use the first occurrence in order to be consistent with the Lucene based implementation
+         if (projection[position] == null) {
+            projection[position] = attributeValue;
+         }
       }
    }
 

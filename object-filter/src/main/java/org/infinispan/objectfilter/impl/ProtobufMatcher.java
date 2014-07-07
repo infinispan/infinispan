@@ -5,7 +5,6 @@ import org.infinispan.objectfilter.impl.hql.FilterProcessingChain;
 import org.infinispan.objectfilter.impl.hql.ProtobufPropertyHelper;
 import org.infinispan.objectfilter.impl.predicateindex.MatcherEvalContext;
 import org.infinispan.objectfilter.impl.predicateindex.ProtobufMatcherEvalContext;
-import org.infinispan.objectfilter.impl.predicateindex.be.BETreeMaker;
 import org.infinispan.protostream.SerializationContext;
 import org.infinispan.protostream.WrappedMessage;
 
@@ -42,40 +41,81 @@ public final class ProtobufMatcher extends BaseMatcher<Descriptors.Descriptor, I
    }
 
    @Override
-   protected FilterRegistry<Integer> createFilterRegistryForType(final Descriptors.Descriptor messageDescriptor) {
-      return new FilterRegistry<Integer>(new BETreeMaker.AttributePathTranslator<Integer>() {
-         @Override
-         public List<Integer> translatePath(List<String> path) {
-            List<Integer> propPath = new ArrayList<Integer>(path.size());
-            Descriptors.Descriptor md = messageDescriptor;
-            for (String prop : path) {
-               Descriptors.FieldDescriptor fd = md.findFieldByName(prop);
-               propPath.add(fd.getNumber());
-               if (fd.getJavaType() == Descriptors.FieldDescriptor.JavaType.MESSAGE) {
-                  md = fd.getMessageType();
-               } else {
-                  md = null; // iteration is expected to stop here
-               }
-            }
-            return propPath;
-         }
+   protected FilterRegistry<Integer> createFilterRegistryForType(Descriptors.Descriptor messageDescriptor) {
+      return new FilterRegistry<Integer>(new MetadataAdapterImpl(messageDescriptor));
+   }
 
-         @Override
-         public boolean isRepeated(List<String> path) {
-            Descriptors.Descriptor md = messageDescriptor;
-            for (String prop : path) {
-               Descriptors.FieldDescriptor fd = md.findFieldByName(prop);
-               if (fd.isRepeated()) {
-                  return true;
-               }
-               if (fd.getJavaType() == Descriptors.FieldDescriptor.JavaType.MESSAGE) {
-                  md = fd.getMessageType();
-               } else {
-                  md = null; // iteration is expected to stop here
-               }
+   private static class MetadataAdapterImpl implements MetadataAdapter<Descriptors.FieldDescriptor, Integer> {
+
+      private final Descriptors.Descriptor messageDescriptor;
+
+      MetadataAdapterImpl(Descriptors.Descriptor messageDescriptor) {
+         this.messageDescriptor = messageDescriptor;
+      }
+
+      @Override
+      public String getTypeName() {
+         return messageDescriptor.getFullName();
+      }
+
+      @Override
+      public Descriptors.Descriptor getTypeMetadata() {
+         return messageDescriptor;
+      }
+
+      @Override
+      public List<Integer> translatePropertyPath(List<String> path) {
+         List<Integer> propPath = new ArrayList<Integer>(path.size());
+         Descriptors.Descriptor md = messageDescriptor;
+         for (String prop : path) {
+            Descriptors.FieldDescriptor fd = md.findFieldByName(prop);
+            propPath.add(fd.getNumber());
+            if (fd.getJavaType() == Descriptors.FieldDescriptor.JavaType.MESSAGE) {
+               md = fd.getMessageType();
+            } else {
+               md = null; // iteration is expected to stop here
             }
-            return false;
          }
-      }, messageDescriptor.getFullName());
+         return propPath;
+      }
+
+      @Override
+      public boolean isRepeatedProperty(List<String> propertyPath) {
+         Descriptors.Descriptor md = messageDescriptor;
+         for (String prop : propertyPath) {
+            Descriptors.FieldDescriptor fd = md.findFieldByName(prop);
+            if (fd.isRepeated()) {
+               return true;
+            }
+            if (fd.getJavaType() == Descriptors.FieldDescriptor.JavaType.MESSAGE) {
+               md = fd.getMessageType();
+            } else {
+               md = null; // iteration is expected to stop here
+            }
+         }
+         return false;
+      }
+
+      @Override
+      public Descriptors.FieldDescriptor makeChildAttributeMetadata(Descriptors.FieldDescriptor parentAttributeMetadata, Integer attribute) {
+         return parentAttributeMetadata == null ?
+               messageDescriptor.findFieldByNumber(attribute) : parentAttributeMetadata.getMessageType().findFieldByNumber(attribute);
+      }
+
+      @Override
+      public boolean isComparableProperty(Descriptors.FieldDescriptor attributeMetadata) {
+         switch (attributeMetadata.getJavaType()) {
+            case INT:
+            case LONG:
+            case FLOAT:
+            case DOUBLE:
+            case BOOLEAN:
+            case STRING:
+            case BYTE_STRING:
+            case ENUM:
+               return true;
+         }
+         return false;
+      }
    }
 }

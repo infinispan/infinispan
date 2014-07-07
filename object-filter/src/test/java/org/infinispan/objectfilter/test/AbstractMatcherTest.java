@@ -105,7 +105,7 @@ public abstract class AbstractMatcherTest {
 
    @Test
    @Ignore
-   //todo this triggers a bug in hql parser: NPE in SingleEntityQueryRendererDelegate.addComparisonPredicate due to null property path
+   //todo this triggers a bug in hql parser (https://hibernate.atlassian.net/browse/HQLPARSER-44): NPE in SingleEntityQueryRendererDelegate.addComparisonPredicate due to null property path.
    public void testNoOpFilter1() throws Exception {
       String queryString = "from org.infinispan.objectfilter.test.model.Person where 4 = 4";  // this should match ALL
       assertTrue(match(queryString, createPerson1()));
@@ -113,7 +113,7 @@ public abstract class AbstractMatcherTest {
 
    @Test
    @Ignore
-   //todo this triggers a bug in hql parser: second name token is mistakenly recognized as a string constant instead of property reference. this should trigger a parsing error
+   //todo this triggers a bug in hql parser (https://hibernate.atlassian.net/browse/HQLPARSER-44): second name token is mistakenly recognized as a string constant instead of property reference. this should trigger a parsing error.
    public void testNoOpFilter2() throws Exception {
       String queryString = "from org.infinispan.objectfilter.test.model.Person where name = name";  // this should match ALL
       assertTrue(match(queryString, createPerson1()));
@@ -571,7 +571,7 @@ public abstract class AbstractMatcherTest {
       assertEquals(2, result.get(0).length);
       assertEquals("SW12345", result.get(0)[0]);
       //todo [anistor] it is unclear what whe should expect here...
-      assertEquals("004012345", result.get(0)[1]);  //expect the last phone number
+      assertEquals("0040888888", result.get(0)[1]);  //expect the first phone number
    }
 
    @Test

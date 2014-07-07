@@ -514,6 +514,9 @@ public final class IntervalTree<K, V> {
                sb.append(", ");
             }
             sb.append(n.interval);
+            sb.append("->{");
+            sb.append(n.value);
+            sb.append('}');
          }
       });
       return sb.toString();

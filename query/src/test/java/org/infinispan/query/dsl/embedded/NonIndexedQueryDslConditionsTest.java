@@ -43,21 +43,9 @@ public class NonIndexedQueryDslConditionsTest extends QueryDslConditionsTest {
       super.testInvalidEmbeddedAttributeQuery();
    }
 
-   @Test(enabled = false) //todo
-   @Override
-   public void testProjectionOnOptionalField() throws Exception {
-      super.testProjectionOnOptionalField();
-   }
-
    @Test
    @Override
    public void testNullOnIntegerField() throws Exception {
       super.testNullOnIntegerField();
-   }
-
-   @Test(enabled = false) //todo
-   @Override
-   public void testSampleDomainQuery20() throws Exception {
-      super.testSampleDomainQuery20();
    }
 }

@@ -106,7 +106,7 @@ abstract class BaseMatcher<TypeMetadata, AttributeId extends Comparable<Attribut
    public ObjectFilter getObjectFilter(FilterSubscription filterSubscription) {
       final FilterSubscriptionImpl<AttributeId> filterSubscriptionImpl = (FilterSubscriptionImpl<AttributeId>) filterSubscription;
       final Set<String> knownTypes = Collections.singleton(filterSubscriptionImpl.getEntityTypeName());
-      final PredicateIndex<AttributeId> predicateIndex = new PredicateIndex<AttributeId>();
+      final PredicateIndex<AttributeId> predicateIndex = new PredicateIndex<AttributeId>(filterSubscriptionImpl.getMetadataAdapter());
 
       filterSubscriptionImpl.registerProjection(predicateIndex);
 
