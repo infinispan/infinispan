@@ -23,6 +23,12 @@
             <property name="hibernate.search.lucene_version">LUCENE_48</property>
          </indexing>
       </local-cache>
+      <replicated-cache name="repl-with-default">
+         <indexing index="LOCAL" auto-config="true"/>
+      </replicated-cache>
+      <distributed-cache name="dist-with-default">
+          <indexing index="ALL" auto-config="true"/>
+      </distributed-cache>
    </cache-container>
 
 </infinispan>

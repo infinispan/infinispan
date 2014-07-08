@@ -1836,6 +1836,9 @@ public class Parser70 implements ConfigurationParser {
                Index index = Index.valueOf(value);
                builder.indexing().index(index);
                break;
+            case AUTO_CONFIG:
+               builder.indexing().setAutoConfig(Boolean.valueOf(value));
+               break;
             default:
                throw ParseUtils.unexpectedAttribute(reader, i);
          }
