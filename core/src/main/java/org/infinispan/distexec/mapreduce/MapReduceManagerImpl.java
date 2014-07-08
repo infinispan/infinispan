@@ -193,7 +193,8 @@ public class MapReduceManagerImpl implements MapReduceManager {
 
       // hook map function into lifecycle and execute it
       MapReduceTaskLifecycleService taskLifecycleService = MapReduceTaskLifecycleService.getInstance();
-      final DefaultCollector<KIn, VIn, KOut, VOut> collector = new DefaultCollector<KIn, VIn, KOut, VOut>(mcc, maxCSize);
+      final CollectableCollector<KOut, VOut> collector = new SynchronizedCollector<KOut, VOut>(
+            new DefaultCollector<KIn, VIn, KOut, VOut>(mcc, maxCSize));
       DataContainer dc = cache.getAdvancedCache().getDataContainer();
       log.tracef("For m/r task %s invoking %s with input keys %s",  mcc.getTaskId(), mcc, keys);
       long start = log.isTraceEnabled() ? timeService.time() : 0;
@@ -621,6 +622,29 @@ public class MapReduceManagerImpl implements MapReduceManager {
    private interface CollectableCollector<K,V> extends Collector<K, V>{
       Map<K, List<V>> collectedValues();
       void emitReduced(K key, V value);
+   }
+
+   private final class SynchronizedCollector<KOut, VOut> implements CollectableCollector<KOut, VOut> {
+
+      private CollectableCollector<KOut, VOut> delegate;
+
+      public SynchronizedCollector(CollectableCollector<KOut, VOut> delegate) {
+         this.delegate = delegate;
+      }
+
+      @Override
+      public synchronized void emit(KOut key, VOut value) {
+         delegate.emit(key, value);
+      }
+
+      public synchronized void emitReduced(KOut key, VOut value) {
+         delegate.emitReduced(key, value);
+      }
+
+      @Override
+      public synchronized Map<KOut, List<VOut>> collectedValues() {
+         return delegate.collectedValues();
+      }
    }
 
    private static class DeltaAwareList<E> implements Iterable<E>, DeltaAware {
