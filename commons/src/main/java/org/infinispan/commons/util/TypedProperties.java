@@ -131,6 +131,17 @@ public class TypedProperties extends Properties {
          return getProperty(key, defaultValue);
    }
 
+   /**
+    * Put a value if the associated key is not present
+    * @param key new key
+    * @param value new value
+    */
+   public synchronized void putIfAbsent(String key, String value) {
+      if(getProperty(key) == null) {
+         put(key,value);
+      }
+   }
+
    @Override
    public synchronized TypedProperties setProperty(String key, String value) {
       super.setProperty(key, value);

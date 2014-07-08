@@ -21,6 +21,7 @@ public enum Attribute {
     ASYNC_MARSHALLING("async-marshalling"),
     AUDIT_LOGGER("audit-logger"),
     AUTO_COMMIT("auto-commit"),
+    AUTO_CONFIG("auto-config"),
     AWAIT_INITIAL_TRANSFER("await-initial-transfer"),
     BACKUP_FAILURE_POLICY("failure-policy"),
     BATCHING("batching"),

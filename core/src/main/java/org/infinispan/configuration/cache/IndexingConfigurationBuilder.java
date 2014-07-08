@@ -18,6 +18,7 @@ public class IndexingConfigurationBuilder extends AbstractConfigurationChildBuil
 
    private Properties properties = new Properties();
    private Index index = Index.NONE;
+   private boolean autoConfig;
 
    IndexingConfigurationBuilder(ConfigurationBuilder builder) {
       super(builder);
@@ -153,6 +154,22 @@ public class IndexingConfigurationBuilder extends AbstractConfigurationChildBuil
       return this;
    }
 
+   /**
+    * When enabled, applies to properties default configurations based on
+    * the cache type
+    *
+    * @param autoConfig boolean
+    * @return <code>this</code>, for method chaining
+    */
+   public IndexingConfigurationBuilder setAutoConfig(boolean autoConfig) {
+      this.autoConfig = autoConfig;
+      return this;
+   }
+
+   public boolean isAutoConfig() {
+      return autoConfig;
+   }
+
    @Override
    public void validate() {
       if (index.isEnabled()) {
@@ -172,7 +189,15 @@ public class IndexingConfigurationBuilder extends AbstractConfigurationChildBuil
 
    @Override
    public IndexingConfiguration create() {
-      return new IndexingConfiguration(TypedProperties.toTypedProperties(properties), index);
+      TypedProperties typedProperties = TypedProperties.toTypedProperties(properties);
+      if (isAutoConfig()) {
+         if (clustering().cacheMode().isDistributed()) {
+            IndexOverlay.DISTRIBUTED_INFINISPAN.apply(typedProperties);
+         } else {
+            IndexOverlay.NON_DISTRIBUTED_FS.apply(typedProperties);
+         }
+      }
+      return new IndexingConfiguration(typedProperties, index);
    }
 
    @Override
@@ -194,6 +219,7 @@ public class IndexingConfigurationBuilder extends AbstractConfigurationChildBuil
    public String toString() {
       return "IndexingConfigurationBuilder{" +
             "index=" + index +
+            ", autoConfig=" + autoConfig +
             ", properties=" + properties +
             '}';
    }
