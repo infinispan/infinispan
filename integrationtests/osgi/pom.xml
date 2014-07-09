@@ -219,6 +219,7 @@
                <systemPropertyVariables>
                   <java.io.tmpdir>${target.tmp.dir}</java.io.tmpdir>
                </systemPropertyVariables>
+               <runOrder>alphabetical</runOrder>
             </configuration>
             <executions>
                <execution>
