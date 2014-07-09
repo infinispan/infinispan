@@ -167,6 +167,23 @@ public class StateTransferManagerImpl implements StateTransferManager {
    }
 
    private void doTopologyUpdate(CacheTopology newCacheTopology, boolean isRebalance) {
+      CacheTopology oldCacheTopology = stateConsumer.getCacheTopology();
+
+      if (oldCacheTopology != null && oldCacheTopology.getTopologyId() > newCacheTopology.getTopologyId()) {
+         throw new IllegalStateException("Old topology is higher: old=" + oldCacheTopology + ", new=" + newCacheTopology);
+      }
+
+      if (isRebalance && oldCacheTopology != null && oldCacheTopology.getPendingCH() != null) {
+         // We received a rebalance start command, but we already have a rebalance in progress.
+         // We must have missed a topology update with pendingCH == null. Simulate it to cancel the rebalance.
+         if (newCacheTopology.getTopologyId() < oldCacheTopology.getTopologyId() + 2) {
+            throw new IllegalArgumentException("Received a rebalance start topology " + newCacheTopology +
+                  " while there already was a rebalance in progress: " + oldCacheTopology);
+         }
+         CacheTopology resetTopology = new CacheTopology(newCacheTopology.getTopologyId() - 1, newCacheTopology.getCurrentCH(), null);
+         doTopologyUpdate(resetTopology, false);
+      }
+
       if (trace) {
          log.tracef("Installing new cache topology %s on cache %s", newCacheTopology, cacheName);
       }
@@ -179,12 +196,6 @@ public class StateTransferManagerImpl implements StateTransferManager {
 
       // handle grouping
       newCacheTopology = addGrouping(newCacheTopology);
-
-      CacheTopology oldCacheTopology = stateConsumer.getCacheTopology();
-
-      if (oldCacheTopology != null && oldCacheTopology.getTopologyId() > newCacheTopology.getTopologyId()) {
-         throw new IllegalStateException("Old topology is higher: old=" + oldCacheTopology + ", new=" + newCacheTopology);
-      }
 
       cacheNotifier.notifyTopologyChanged(oldCacheTopology, newCacheTopology, newCacheTopology.getTopologyId(), true);
 
