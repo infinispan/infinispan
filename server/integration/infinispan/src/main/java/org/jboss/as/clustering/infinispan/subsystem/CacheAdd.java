@@ -737,6 +737,7 @@ public abstract class CacheAdd extends AbstractAddStepHandler {
             if (expirationDefined) {
                 ModelNode expiration = store.get(ModelKeys.EXPIRATION, ModelKeys.EXPIRATION_NAME);
                 expirationPath = LevelDBExpirationResource.PATH.resolveModelAttribute(context, expiration).asString();
+                builder.expiryQueueSize(LevelDBExpirationResource.QUEUE_SIZE.resolveModelAttribute(context, expiration).asInt());
             } else {
                 expirationPath = InfinispanExtension.SUBSYSTEM_NAME + File.separatorChar + containerName + File.separatorChar + "expiration";
             }
@@ -765,8 +766,6 @@ public abstract class CacheAdd extends AbstractAddStepHandler {
                 builder.cacheSize(store.get(ModelKeys.CACHE_SIZE).asLong());
             if (store.hasDefined(ModelKeys.CLEAR_THRESHOLD))
                 builder.clearThreshold(store.get(ModelKeys.CLEAR_THRESHOLD).asInt());
-            if (store.hasDefined(ModelKeys.QUEUE_SIZE))
-                builder.expiryQueueSize(store.get(ModelKeys.QUEUE_SIZE).asInt());
 
             if (store.hasDefined(ModelKeys.COMPRESSION)) {
                 ModelNode node = store.get(ModelKeys.COMPRESSION, ModelKeys.COMPRESSION_NAME);
