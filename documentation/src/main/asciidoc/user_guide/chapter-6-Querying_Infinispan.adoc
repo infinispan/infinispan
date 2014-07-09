@@ -162,6 +162,49 @@ To enable indexing via XML, you need to add the `<indexing />` element to your c
 
 In this example the index is stored in memory, so when this nodes is shutdown the index is lost: good for a quick demo, but in real world cases you'll want to use the default (store on filesystem) or store the index in Infinispan as well. For the complete reference of properties to define, refer to the link:$$http://docs.jboss.org/hibernate/stable/search/reference/en-US/html_single/#search-configuration$$[Hibernate Search documentation] . 
 
+==== Automatic configuration
+
+[source,xml]
+----
+      <local-cache name="default">
+         <indexing index="LOCAL" auto-config="true">
+         </indexing>
+      </local-cache>
+
+----
+
+Tha attribute auto-config provides a simple way of configuring indexing based on the cache type. For replicated and local caches, the indexing is configured to be persisted on disk and not shared 
+with any other processes. Also, it is configured so that minimum delay exists between the moment an object is indexed and the moment it is available for searches (near real time). 
+
+NOTE: it is possible to redefine any property added via auto-config, and also add new properties, allowing for advanced tuning.
+
+The auto config adds the following properties for replicated and local caches:
+
+[options="header",cols="1,3,10"]
+|==============================================================================
+| Property name | value | description
+| hibernate.search.default.directory_provider | filesystem | Filesystem based index. More details at link:$$http://docs.jboss.org/hibernate/stable/search/reference/en-US/html_single/#search-configuration-directory$$[Hibernate Search documentation] 
+| hibernate.search.default.exclusive_index_use | true | indexing operation in exclusive mode, allowing Hibernate Search to optimize writes
+| hibernate.search.default.indexmanager | near-real-time | make use of Lucene near real time feature, meaning indexed objects are promptly available to searches
+| hibernate.search.default.reader.strategy | shared | Reuse index reader across several queries, thus avoiding reopening it
+|==============================================================================
+
+   
+For distributed caches, the auto-config configure indexes in infinispan itself, internally handled as a master-slave mechanism where indexing operations are sent to a single node which is responsible to 
+write to the index. 
+
+The auto config properties for distributed caches are:
+
+[options="header",cols="1,3,10"]
+|==============================================================================
+| Property name | value | description
+| hibernate.search.default.directory_provider | infinispan | Indexes stored in Infinispan. More details at link:$$http://docs.jboss.org/hibernate/stable/search/reference/en-US/html_single/#infinispan-directories$$[Hibernate Search documentation] 
+| hibernate.search.default.exclusive_index_use | true | indexing operation in exclusive mode, allowing Hibernate Search to optimize writes
+| hibernate.search.default.indexmanager | org.infinispan.query.indexmanager.InfinispanIndexManager | Delegates index writing to a single node in the Infinispan cluster
+| hibernate.search.default.reader.strategy | shared | Reuse index reader across several queries, avoiding reopening it
+|==============================================================================
+
+
 ==== Lucene Directory
 Infinispan Query isn't aware of where you store the indexes, it just passes the configuration of which _Lucene Directory_ implementation you want to use to the Hibernate Search engine. There are several _Lucene Directory_ implementations bundled, and you can plug your own or add third party implementations: the Directory is the IO API for Lucene to store the indexes. 
 
