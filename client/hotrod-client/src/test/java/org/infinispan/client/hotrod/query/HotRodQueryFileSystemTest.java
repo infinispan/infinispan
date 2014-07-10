@@ -2,7 +2,6 @@ package org.infinispan.client.hotrod.query;
 
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.test.TestingUtil;
-import org.infinispan.test.fwk.CleanupAfterMethod;
 import org.junit.Assert;
 import org.testng.annotations.Test;
 
@@ -12,9 +11,9 @@ import java.io.File;
  * Tests verifying the functionality of Remote queries for HotRod using FileSystem as a directory provider.
  *
  * @author Anna Manukyan
+ * @author anistor@redhat.com
  */
 @Test(testName = "client.hotrod.query.HotRodQueryFileSystemTest", groups = "functional")
-@CleanupAfterMethod
 public class HotRodQueryFileSystemTest extends HotRodQueryTest {
 
    private final String indexDirectory = TestingUtil.tmpDirectory(getClass());
@@ -22,13 +21,10 @@ public class HotRodQueryFileSystemTest extends HotRodQueryTest {
    @Override
    protected ConfigurationBuilder getConfigurationBuilder() {
       ConfigurationBuilder builder = super.getConfigurationBuilder();
-      builder.indexing().addProperty("default.indexBase", indexDirectory);
+      builder.indexing()
+            .addProperty("default.directory_provider", "filesystem")
+            .addProperty("default.indexBase", indexDirectory);
       return builder;
-   }
-
-   @Override
-   protected String getLuceneDirectoryProvider() {
-      return "filesystem";
    }
 
    @Override

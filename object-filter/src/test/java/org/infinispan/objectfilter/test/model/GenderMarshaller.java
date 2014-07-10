@@ -32,7 +32,7 @@ public class GenderMarshaller implements EnumMarshaller<Person.Gender> {
    }
 
    @Override
-   public Class<? extends Person.Gender> getJavaClass() {
+   public Class<Person.Gender> getJavaClass() {
       return Person.Gender.class;
    }
 

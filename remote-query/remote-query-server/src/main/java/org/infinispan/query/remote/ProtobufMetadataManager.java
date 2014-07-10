@@ -1,6 +1,5 @@
 package org.infinispan.query.remote;
 
-import com.google.protobuf.Descriptors;
 import org.infinispan.commons.util.Util;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.annotations.Stop;
@@ -131,7 +130,8 @@ public class ProtobufMetadataManager implements ProtobufMetadataManagerMBean {
    @ManagedOperation(description = "Display a protobuf definition file", displayName = "Register Protofile")
    public String displayProtofile(@Parameter(name = "fileName", description = "the name of the .proto file") String name) {
       FileDescriptorSource fileDescriptorSource = clusterRegistry.get(REGISTRY_SCOPE, REGISTRY_KEY);
-      if (fileDescriptorSource == null) return null;
+      if (fileDescriptorSource == null)
+         return null;
       char[] data = fileDescriptorSource.getFileDescriptors().get(name);
       return data != null ? String.valueOf(data) : null;
    }
@@ -140,8 +140,7 @@ public class ProtobufMetadataManager implements ProtobufMetadataManagerMBean {
       FileDescriptorSource fileDescriptorSource = getFileDescriptorSource();
       for (String classPathResource : classPathResources) {
          String fileName = Paths.get(classPathResource).getFileName().toString();
-         String contents = Util.read(this.getClass().getResourceAsStream(classPathResource));
-         fileDescriptorSource.addProtoFile(fileName, contents);
+         fileDescriptorSource.addProtoFile(fileName, Util.getResourceAsStream(classPathResource, getClass().getClassLoader()));
       }
       clusterRegistry.put(REGISTRY_SCOPE, REGISTRY_KEY, fileDescriptorSource);
    }
@@ -181,12 +180,10 @@ public class ProtobufMetadataManager implements ProtobufMetadataManagerMBean {
       }
 
       @CacheEntryModified
-      public void modified(CacheEntryModifiedEvent<ScopedKey<String, String>, FileDescriptorSource> e) throws IOException, Descriptors.DescriptorValidationException {
+      public void modified(CacheEntryModifiedEvent<ScopedKey<String, String>, FileDescriptorSource> e) throws IOException {
          if (!e.isPre()) {
             registerProtofile(e.getValue());
          }
       }
-
-
    }
 }

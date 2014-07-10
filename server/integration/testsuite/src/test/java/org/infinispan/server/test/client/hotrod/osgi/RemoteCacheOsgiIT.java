@@ -39,6 +39,7 @@ import java.util.List;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
 import static org.ops4j.pax.exam.CoreOptions.maven;
 
 /**
@@ -147,7 +148,7 @@ public class RemoteCacheOsgiIT extends KarafTestSupport {
       user.setName("Tom");
       user.setSurname("Cat");
       user.setGender(User.Gender.MALE);
-      user.setAccountIds(Collections.singletonList(12));
+      user.setAccountIds(Collections.singleton(12));
       Address address = new Address();
       address.setStreet("Dark Alley");
       address.setPostCode("1234");
@@ -176,7 +177,7 @@ public class RemoteCacheOsgiIT extends KarafTestSupport {
       assertEquals(User.Gender.MALE, user.getGender());
       assertNotNull(user.getAccountIds());
       assertEquals(1, user.getAccountIds().size());
-      assertEquals(12, user.getAccountIds().get(0).intValue());
+      assertTrue(user.getAccountIds().contains(12));
       assertNotNull(user.getAddresses());
       assertEquals(1, user.getAddresses().size());
       assertEquals("Dark Alley", user.getAddresses().get(0).getStreet());

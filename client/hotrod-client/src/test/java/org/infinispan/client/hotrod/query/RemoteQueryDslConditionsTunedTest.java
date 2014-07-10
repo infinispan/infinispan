@@ -1,29 +1,26 @@
 package org.infinispan.client.hotrod.query;
 
 import org.hibernate.search.engine.spi.SearchFactoryImplementor;
+import org.hibernate.search.indexes.impl.IndexManagerHolder;
 import org.hibernate.search.indexes.spi.IndexManager;
 import org.infinispan.commons.equivalence.ByteArrayEquivalence;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.cache.Index;
+import org.infinispan.query.Search;
 import org.infinispan.query.remote.indexing.ProtobufValueWrapper;
-import org.infinispan.test.TestingUtil;
-import org.infinispan.test.fwk.CleanupAfterMethod;
 import org.testng.annotations.Test;
 
-import static org.testng.AssertJUnit.assertTrue;
-
-import java.io.File;
+import static org.junit.Assert.assertTrue;
 
 /**
  * Verifying that the tuned query configuration also works for Remote Queries.
  *
  * @author Anna Manukyan
+ * @author anistor@redhat.com
+ * @since 6.0
  */
-@Test(testName = "client.hotrod.query.HotRodTunedQueryTest", groups = "functional")
-@CleanupAfterMethod
-public class HotRodTunedQueryTest extends RemoteQueryDslConditionsTest {
-
-   private final String indexDirectory = TestingUtil.tmpDirectory(getClass());
+@Test(testName = "client.hotrod.query.RemoteQueryDslConditionsTunedTest", groups = "functional")
+public class RemoteQueryDslConditionsTunedTest extends RemoteQueryDslConditionsFilesystemTest {
 
    @Override
    protected ConfigurationBuilder getConfigurationBuilder() {
@@ -47,28 +44,12 @@ public class HotRodTunedQueryTest extends RemoteQueryDslConditionsTest {
 
    @Override
    public void testIndexPresence() {
-      SearchFactoryImplementor searchFactory = (SearchFactoryImplementor) org.infinispan.query.Search.getSearchManager(cache).getSearchFactory();
-      for(IndexManager manager :  searchFactory.getIndexManagerHolder().getIndexManagers()) {
+      SearchFactoryImplementor searchFactory = (SearchFactoryImplementor) Search.getSearchManager(getEmbeddedCache()).getSearchFactory();
+      IndexManagerHolder indexManagerHolder = searchFactory.getIndexManagerHolder();
+
+      assertTrue(searchFactory.getIndexedTypes().contains(ProtobufValueWrapper.class));
+      for (IndexManager manager : indexManagerHolder.getIndexManagers()) {
          assertTrue(manager.getIndexName().contains(ProtobufValueWrapper.class.getName()));
-      }
-   }
-
-   @Override
-   protected void setup() throws Exception {
-      TestingUtil.recursiveFileRemove(indexDirectory);
-      boolean created = new File(indexDirectory).mkdirs();
-      assertTrue(created);
-      super.setup();
-   }
-
-   @Override
-   protected void teardown() {
-      try {
-         //first stop cache managers, then clear the index
-         super.teardown();
-      } finally {
-         //delete the index otherwise it will mess up the index for next tests
-         TestingUtil.recursiveFileRemove(indexDirectory);
       }
    }
 }

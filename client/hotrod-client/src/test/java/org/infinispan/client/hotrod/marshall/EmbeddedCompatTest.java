@@ -5,14 +5,17 @@ import org.infinispan.client.hotrod.RemoteCacheManager;
 import org.infinispan.client.hotrod.Search;
 import org.infinispan.client.hotrod.TestHelper;
 import org.infinispan.client.hotrod.configuration.ConfigurationBuilder;
+import org.infinispan.client.hotrod.query.testdomain.protobuf.AccountPB;
+import org.infinispan.client.hotrod.query.testdomain.protobuf.marshallers.AccountMarshaller;
+import org.infinispan.client.hotrod.query.testdomain.protobuf.marshallers.MarshallerRegistration;
 import org.infinispan.commons.equivalence.AnyEquivalence;
 import org.infinispan.configuration.cache.Index;
 import org.infinispan.manager.EmbeddedCacheManager;
-import org.infinispan.protostream.sampledomain.Account;
-import org.infinispan.protostream.sampledomain.marshallers.MarshallerRegistration;
 import org.infinispan.query.CacheQuery;
 import org.infinispan.query.dsl.Query;
 import org.infinispan.query.dsl.QueryFactory;
+import org.infinispan.query.dsl.embedded.testdomain.Account;
+import org.infinispan.query.dsl.embedded.testdomain.hsearch.AccountHS;
 import org.infinispan.query.remote.CompatibilityProtoStreamMarshaller;
 import org.infinispan.query.remote.ProtobufMetadataManager;
 import org.infinispan.server.hotrod.HotRodServer;
@@ -29,6 +32,7 @@ import static org.infinispan.client.hotrod.test.HotRodClientTestingUtil.killRemo
 import static org.infinispan.client.hotrod.test.HotRodClientTestingUtil.killServers;
 import static org.infinispan.server.hotrod.test.HotRodTestingUtil.hotRodCacheConfiguration;
 import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
 
 /**
  * Tests compatibility between remote query and embedded mode.
@@ -96,17 +100,15 @@ public class EmbeddedCompatTest extends SingleCacheManagerTest {
       assertEquals(1, cache.keySet().size());
       Object key = cache.keySet().iterator().next();
       Object localObject = cache.get(key);
-      assertNotNull(localObject);
-      assertTrue(localObject instanceof EmbeddedAccount);
-      assertEmbeddedAccount((EmbeddedAccount) localObject);
+      assertEmbeddedAccount((Account) localObject);
 
       // get the object through the remote cache interface and check it's the same object we put
       Account fromRemoteCache = remoteCache.get(1);
-      assertAccount(fromRemoteCache);
+      assertRemoteAccount(fromRemoteCache);
    }
 
    public void testPutAndGetForEmbeddedEntry() throws Exception {
-      EmbeddedAccount account = new EmbeddedAccount();
+      AccountHS account = new AccountHS();
       account.setId(1);
       account.setDescription("test description");
       account.setCreationDate(new Date(42));
@@ -116,12 +118,10 @@ public class EmbeddedCompatTest extends SingleCacheManagerTest {
       assertEquals(1, remoteCache.keySet().size());
       Object key = remoteCache.keySet().iterator().next();
       Object remoteObject = remoteCache.get(key);
-      assertNotNull(remoteObject);
-      assertTrue(remoteObject instanceof Account);
-      assertAccount((Account) remoteObject);
+      assertRemoteAccount((Account) remoteObject);
 
       // get the object through the embedded cache interface and check it's the same object we put
-      EmbeddedAccount fromEmbeddedCache = (EmbeddedAccount) cache.get(1);
+      Account fromEmbeddedCache = (Account) cache.get(1);
       assertEmbeddedAccount(fromEmbeddedCache);
    }
 
@@ -131,19 +131,18 @@ public class EmbeddedCompatTest extends SingleCacheManagerTest {
 
       // get account back from remote cache via query and check its attributes
       QueryFactory qf = Search.getQueryFactory(remoteCache);
-      Query query = qf.from(Account.class)
+      Query query = qf.from(AccountPB.class)
             .having("description").like("%test%").toBuilder()
             .build();
       List<Account> list = query.list();
 
       assertNotNull(list);
       assertEquals(1, list.size());
-      assertEquals(Account.class, list.get(0).getClass());
-      assertAccount(list.get(0));
+      assertRemoteAccount(list.get(0));
    }
 
    public void testRemoteQueryForEmbeddedEntry() throws Exception {
-      EmbeddedAccount account = new EmbeddedAccount();
+      AccountHS account = new AccountHS();
       account.setId(1);
       account.setDescription("test description");
       account.setCreationDate(new Date(42));
@@ -151,19 +150,18 @@ public class EmbeddedCompatTest extends SingleCacheManagerTest {
 
       // get account back from remote cache via query and check its attributes
       QueryFactory qf = Search.getQueryFactory(remoteCache);
-      Query query = qf.from(Account.class)
+      Query query = qf.from(AccountPB.class)
             .having("description").like("%test%").toBuilder()
             .build();
-      List<Account> list = query.list();
+      List<AccountPB> list = query.list();
 
       assertNotNull(list);
       assertEquals(1, list.size());
-      assertEquals(Account.class, list.get(0).getClass());
-      assertAccount(list.get(0));
+      assertRemoteAccount(list.get(0));
    }
 
    public void testRemoteQueryWithProjectionsForEmbeddedEntry() throws Exception {
-      EmbeddedAccount account = new EmbeddedAccount();
+      AccountHS account = new AccountHS();
       account.setId(1);
       account.setDescription("test description");
       account.setCreationDate(new Date(42));
@@ -171,7 +169,7 @@ public class EmbeddedCompatTest extends SingleCacheManagerTest {
 
       // get account back from remote cache via query and check its attributes
       QueryFactory qf = Search.getQueryFactory(remoteCache);
-      Query query = qf.from(Account.class)
+      Query query = qf.from(AccountPB.class)
             .setProjection("description", "id")
             .having("description").like("%test%").toBuilder()
             .build();
@@ -189,32 +187,34 @@ public class EmbeddedCompatTest extends SingleCacheManagerTest {
 
       // get account back from local cache via query and check its attributes
       org.apache.lucene.search.Query query = org.infinispan.query.Search.getSearchManager(cache)
-            .buildQueryBuilderForClass(EmbeddedAccount.class).get()
+            .buildQueryBuilderForClass(AccountHS.class).get()
             .keyword().wildcard().onField("description").matching("*test*").createQuery();
       CacheQuery cacheQuery = org.infinispan.query.Search.getSearchManager(cache).getQuery(query);
       List<Object> list = cacheQuery.list();
 
       assertNotNull(list);
       assertEquals(1, list.size());
-      assertEquals(EmbeddedAccount.class, list.get(0).getClass());
-      assertEmbeddedAccount((EmbeddedAccount) list.get(0));
+      assertEmbeddedAccount((Account) list.get(0));
    }
 
-   private Account createAccount() {
-      Account account = new Account();
+   private AccountPB createAccount() {
+      AccountPB account = new AccountPB();
       account.setId(1);
       account.setDescription("test description");
       account.setCreationDate(new Date(42));
       return account;
    }
 
-   private void assertAccount(Account account) {
+   private void assertRemoteAccount(Account account) {
+      assertNotNull(account);
+      assertEquals(AccountPB.class, account.getClass());
       assertEquals(1, account.getId());
       assertEquals("test description", account.getDescription());
       assertEquals(42, account.getCreationDate().getTime());
    }
 
-   private void assertEmbeddedAccount(EmbeddedAccount account) {
+   private void assertEmbeddedAccount(Account account) {
+      assertEquals(AccountHS.class, account.getClass());
       assertEquals(1, account.getId());
       assertEquals("test description", account.getDescription());
       assertEquals(42, account.getCreationDate().getTime());

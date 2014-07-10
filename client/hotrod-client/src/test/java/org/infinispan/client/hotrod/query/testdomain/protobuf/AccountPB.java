@@ -1,29 +1,17 @@
-package org.infinispan.client.hotrod.marshall;
+package org.infinispan.client.hotrod.query.testdomain.protobuf;
 
-import org.hibernate.search.annotations.Analyze;
-import org.hibernate.search.annotations.Field;
-import org.hibernate.search.annotations.Indexed;
-import org.hibernate.search.annotations.Store;
+import org.infinispan.query.dsl.embedded.testdomain.Account;
 
 import java.util.Date;
 
 /**
- * A class similar to {@code org.infinispan.protostream.sampledomain.Account}, that maps to the same protobuf type,
- * {@code sample_bank_account.Account}.
- *
  * @author anistor@redhat.com
- * @since 6.0
+ * @since 7.0
  */
-@Indexed
-public class EmbeddedAccount {
+public class AccountPB implements Account {
 
-   @Field(store = Store.YES, analyze = Analyze.NO)
    private int id;
-
-   @Field(store = Store.YES, analyze = Analyze.NO)
    private String description;
-
-   @Field(store = Store.YES, analyze = Analyze.NO)
    private Date creationDate;
 
    public int getId() {
@@ -52,11 +40,10 @@ public class EmbeddedAccount {
 
    @Override
    public String toString() {
-      return "EmbeddedAccount{" +
+      return "AccountPB{" +
             "id=" + id +
             ", description='" + description + '\'' +
             ", creationDate='" + creationDate + '\'' +
-            "}";
-
+            '}';
    }
 }

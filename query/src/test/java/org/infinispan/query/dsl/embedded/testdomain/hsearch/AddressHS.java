@@ -1,18 +1,17 @@
-package org.infinispan.query.dsl.embedded.sample_domain_model;
+package org.infinispan.query.dsl.embedded.testdomain.hsearch;
 
 import org.hibernate.search.annotations.Analyze;
 import org.hibernate.search.annotations.Field;
-import org.hibernate.search.annotations.Indexed;
 import org.hibernate.search.annotations.Store;
+import org.infinispan.query.dsl.embedded.testdomain.Address;
 
 import java.io.Serializable;
 
 /**
  * @author anistor@redhat.com
- * @since 6.0
+ * @since 7.0
  */
-@Indexed
-public class Address implements Serializable {
+public class AddressHS implements Address, Serializable {
 
    @Field(store = Store.YES, analyze = Analyze.NO)
    private String street;
@@ -41,10 +40,10 @@ public class Address implements Serializable {
       if (this == o) return true;
       if (o == null || getClass() != o.getClass()) return false;
 
-      Address address = (Address) o;
+      AddressHS other = (AddressHS) o;
 
-      if (postCode != null ? !postCode.equals(address.postCode) : address.postCode != null) return false;
-      if (street != null ? !street.equals(address.street) : address.street != null) return false;
+      if (postCode != null ? !postCode.equals(other.postCode) : other.postCode != null) return false;
+      if (street != null ? !street.equals(other.street) : other.street != null) return false;
 
       return true;
    }
@@ -58,7 +57,7 @@ public class Address implements Serializable {
 
    @Override
    public String toString() {
-      return "Address{" +
+      return "AddressHS{" +
             "street='" + street + '\'' +
             ", postCode='" + postCode + '\'' +
             '}';

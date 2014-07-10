@@ -29,7 +29,7 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
 /**
- * Tests for Remote Query descriptors propagation across nodes
+ * Tests for Remote Query descriptors propagation across nodes.
  *
  * @author gustavonalle
  */
@@ -47,7 +47,6 @@ public class RemoteQueryDescriptorIT {
 
    public static final String MBEAN = "jboss.infinispan:type=RemoteQuery,name=\"clustered\",component=ProtobufMetadataManager";
 
-
    @Test
    public void testDescriptorPropagation() throws Exception {
       registerProtoOnServer1();
@@ -57,7 +56,6 @@ public class RemoteQueryDescriptorIT {
 
       assertEquals(1, queryResultsIn(server1));
       assertEquals(1, queryResultsIn(server2));
-
    }
 
    private void registerProtoOnServer1() throws Exception {
@@ -74,7 +72,7 @@ public class RemoteQueryDescriptorIT {
    private void assertRegisteredOn(RemoteInfinispanServer server) throws Exception {
       Object proto = invoke(getJmxConnection(server), "displayProtofile", "bank.proto");
      
-      assertTrue(proto.toString().contains("message"));
+      assertTrue(proto.toString().contains("message User"));
    }
 
    private Object invoke(MBeanServerConnectionProvider provider, String opName, Object... params) throws Exception {
@@ -83,7 +81,6 @@ public class RemoteQueryDescriptorIT {
          types[i] = params[i].getClass().getName();
       }
       return invokeOperation(provider, MBEAN, opName, params, types);
-
    }
 
    private MBeanServerConnectionProvider getJmxConnection(RemoteInfinispanServer server) {
@@ -120,6 +117,4 @@ public class RemoteQueryDescriptorIT {
       RemoteCache<Object, Object> cache = manager.getCache("repl_descriptor");
       cache.put(1, user);
    }
-
-
 }

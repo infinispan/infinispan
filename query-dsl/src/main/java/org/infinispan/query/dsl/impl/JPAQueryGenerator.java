@@ -324,11 +324,15 @@ public class JPAQueryGenerator implements Visitor<String> {
       }
 
       if (argument instanceof Date) {
-         sb.append('\'').append(getDateFormatter().format(argument)).append('\'');
+         sb.append('\'').append(renderDate((Date) argument)).append('\'');
          return;
       }
 
       sb.append(argument);
+   }
+
+   protected String renderDate(Date argument) {
+      return getDateFormatter().format(argument);
    }
 
    private DateFormat getDateFormatter() {

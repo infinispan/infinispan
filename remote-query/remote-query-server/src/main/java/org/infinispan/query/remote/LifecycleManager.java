@@ -45,7 +45,7 @@ public class LifecycleManager extends AbstractModuleLifecycle {
    private static final Log log = LogFactory.getLog(LifecycleManager.class, Log.class);
 
    private void initProtobufMetadataManager(DefaultCacheManager cacheManager, GlobalComponentRegistry gcr) {
-      SerializationContext serCtx = ProtobufUtil.newSerializationContext();
+      SerializationContext serCtx = ProtobufUtil.newSerializationContext(new org.infinispan.protostream.ConfigurationBuilder().build());
       try {
          MarshallerRegistration.registerMarshallers(serCtx);
       } catch (IOException  | DescriptorParserException e) {

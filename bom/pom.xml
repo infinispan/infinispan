@@ -53,7 +53,7 @@
 
    <properties>
       <!-- Versions for dependencies -->
-      <version.protostream>2.0.0.Alpha1</version.protostream>
+      <version.protostream>2.0.0.Alpha2</version.protostream>
       <version.protobuf>2.5.0</version.protobuf>
       <version.protoparser>3.1.4</version.protoparser>
       <version.aesh>0.33.7</version.aesh>
@@ -308,6 +308,11 @@
          <dependency>
             <groupId>org.infinispan.protostream</groupId>
             <artifactId>protostream</artifactId>
+            <version>${version.protostream}</version>
+         </dependency>
+         <dependency>
+            <groupId>org.infinispan.protostream</groupId>
+            <artifactId>sample-domain-definition</artifactId>
             <version>${version.protostream}</version>
          </dependency>
          <dependency>

@@ -3,7 +3,6 @@ package org.infinispan.client.hotrod.query;
 import org.infinispan.client.hotrod.exceptions.HotRodClientException;
 import org.infinispan.commons.equivalence.ByteArrayEquivalence;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
-import org.infinispan.test.fwk.CleanupAfterMethod;
 import org.testng.annotations.Test;
 
 /**
@@ -11,14 +10,12 @@ import org.testng.annotations.Test;
  * @since 7.0
  */
 @Test(testName = "client.hotrod.query.HotRodNonIndexedQueryTest", groups = "functional")
-@CleanupAfterMethod
 public class HotRodNonIndexedQueryTest extends HotRodQueryTest {
 
    @Override
    protected ConfigurationBuilder getConfigurationBuilder() {
       ConfigurationBuilder builder = new ConfigurationBuilder();
-      builder.dataContainer()
-            .keyEquivalence(ByteArrayEquivalence.INSTANCE);
+      builder.dataContainer().keyEquivalence(ByteArrayEquivalence.INSTANCE);
       return builder;
    }
 

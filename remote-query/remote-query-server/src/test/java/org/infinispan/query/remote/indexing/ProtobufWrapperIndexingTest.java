@@ -96,7 +96,7 @@ public class ProtobufWrapperIndexingTest extends SingleCacheManagerTest {
       user.setName(name);
       user.setSurname(surname);
       user.setGender(User.Gender.MALE);
-      user.setAccountIds(Collections.singletonList(12));
+      user.setAccountIds(Collections.singleton(12));
 
       Address address = new Address();
       address.setStreet("Dark Alley");

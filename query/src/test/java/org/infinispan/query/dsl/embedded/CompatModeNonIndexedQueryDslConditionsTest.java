@@ -1,9 +1,7 @@
 package org.infinispan.query.dsl.embedded;
 
 import org.infinispan.configuration.cache.ConfigurationBuilder;
-import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
-import org.infinispan.transaction.TransactionMode;
 import org.testng.annotations.Test;
 
 /**
@@ -16,10 +14,9 @@ import org.testng.annotations.Test;
 public class CompatModeNonIndexedQueryDslConditionsTest extends NonIndexedQueryDslConditionsTest {
 
    @Override
-   protected EmbeddedCacheManager createCacheManager() throws Exception {
-      ConfigurationBuilder cfg = getDefaultStandaloneCacheConfig(true);
-      cfg.compatibility().enable()
-            .transaction().transactionMode(TransactionMode.TRANSACTIONAL);
-      return TestCacheManagerFactory.createCacheManager(cfg);
+   protected void createCacheManagers() throws Throwable {
+      ConfigurationBuilder cfg = TestCacheManagerFactory.getDefaultCacheConfiguration(true);
+      cfg.compatibility().enable();
+      createClusteredCaches(1, cfg);
    }
 }

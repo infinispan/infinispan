@@ -32,7 +32,7 @@ public class ManualIndexingIT extends RemoteQueryBaseIT {
     private static final String CACHE_NAME = "localtestcache_manual";
 
     @InfinispanResource("remote-query")
-    private RemoteInfinispanServer server;
+    protected RemoteInfinispanServer server;
 
     public ManualIndexingIT() {
         super(CACHE_CONTAINER_NAME, CACHE_NAME);

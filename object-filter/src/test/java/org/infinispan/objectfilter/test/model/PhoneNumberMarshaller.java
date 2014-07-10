@@ -23,7 +23,7 @@ public class PhoneNumberMarshaller implements MessageMarshaller<PhoneNumber> {
    }
 
    @Override
-   public Class<? extends PhoneNumber> getJavaClass() {
+   public Class<PhoneNumber> getJavaClass() {
       return PhoneNumber.class;
    }
 

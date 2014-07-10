@@ -159,6 +159,22 @@ public final class Util {
             throw new IllegalStateException();
    }
 
+   public static InputStream getResourceAsStream(String resourcePath, ClassLoader userClassLoader) {
+      if (resourcePath.startsWith("/")) {
+         resourcePath = resourcePath.substring(1);
+      }
+      InputStream is = null;
+      for (ClassLoader cl : getClassLoaders(userClassLoader)) {
+         if (cl != null) {
+            is = cl.getResourceAsStream(resourcePath);
+            if (is != null) {
+               break;
+            }
+         }
+      }
+      return is;
+   }
+
    private static Method getFactoryMethod(Class<?> c) {
       for (Method m : c.getMethods()) {
          if (m.getName().equals("getInstance") && m.getParameterTypes().length == 0 && Modifier.isStatic(m.getModifiers()))

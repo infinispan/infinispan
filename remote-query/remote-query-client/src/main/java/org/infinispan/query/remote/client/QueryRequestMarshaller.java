@@ -27,7 +27,7 @@ public class QueryRequestMarshaller implements MessageMarshaller<QueryRequest> {
    }
 
    @Override
-   public Class<? extends QueryRequest> getJavaClass() {
+   public Class<QueryRequest> getJavaClass() {
       return QueryRequest.class;
    }
 

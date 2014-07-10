@@ -4,6 +4,8 @@ import org.infinispan.protostream.EnumMarshaller;
 import org.infinispan.protostream.SerializationContext;
 import org.infinispan.query.dsl.impl.JPAQueryGenerator;
 
+import java.util.Date;
+
 /**
  * @author anistor@redhat.com
  * @since 6.0
@@ -33,5 +35,10 @@ class RemoteJPAQueryGenerator extends JPAQueryGenerator {
    @Override
    protected String renderBoolean(boolean argument) {
       return argument ? "1" : "0";
+   }
+
+   @Override
+   protected String renderDate(Date argument) {
+      return Long.toString(argument.getTime());
    }
 }

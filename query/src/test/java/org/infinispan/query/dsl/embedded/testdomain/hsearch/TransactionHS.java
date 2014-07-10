@@ -1,20 +1,21 @@
-package org.infinispan.query.dsl.embedded.sample_domain_model;
+package org.infinispan.query.dsl.embedded.testdomain.hsearch;
 
 import org.hibernate.search.annotations.Analyze;
 import org.hibernate.search.annotations.Field;
 import org.hibernate.search.annotations.Indexed;
 import org.hibernate.search.annotations.NumericField;
 import org.hibernate.search.annotations.Store;
+import org.infinispan.query.dsl.embedded.testdomain.Transaction;
 
 import java.io.Serializable;
 import java.util.Date;
 
 /**
  * @author anistor@redhat.com
- * @since 6.0
+ * @since 7.0
  */
 @Indexed
-public class Transaction implements Serializable {
+public class TransactionHS implements Transaction, Serializable {
 
    @Field(store = Store.YES, analyze = Analyze.NO)
    private int id;
@@ -88,14 +89,14 @@ public class Transaction implements Serializable {
       if (this == o) return true;
       if (o == null || getClass() != o.getClass()) return false;
 
-      Transaction that = (Transaction) o;
+      TransactionHS other = (TransactionHS) o;
 
-      if (accountId != that.accountId) return false;
-      if (Double.compare(that.amount, amount) != 0) return false;
-      if (id != that.id) return false;
-      if (isDebit != that.isDebit) return false;
-      if (date != null ? !date.equals(that.date) : that.date != null) return false;
-      if (description != null ? !description.equals(that.description) : that.description != null) return false;
+      if (accountId != other.accountId) return false;
+      if (Double.compare(other.amount, amount) != 0) return false;
+      if (id != other.id) return false;
+      if (isDebit != other.isDebit) return false;
+      if (date != null ? !date.equals(other.date) : other.date != null) return false;
+      if (description != null ? !description.equals(other.description) : other.description != null) return false;
 
       return true;
    }
@@ -116,7 +117,7 @@ public class Transaction implements Serializable {
 
    @Override
    public String toString() {
-      return "Transaction{" +
+      return "TransactionHS{" +
             "id=" + id +
             ", description='" + description + '\'' +
             ", accountId=" + accountId +
@@ -126,3 +127,4 @@ public class Transaction implements Serializable {
             '}';
    }
 }
+

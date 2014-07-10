@@ -1,6 +1,6 @@
 package org.infinispan.client.hotrod.query;
 
-import org.infinispan.test.fwk.CleanupAfterMethod;
+import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.testng.annotations.Test;
 
 /**
@@ -10,11 +10,12 @@ import org.testng.annotations.Test;
  * @since 6.0
  */
 @Test(testName = "client.hotrod.query.HotRodQueryIspnDirectoryTest", groups = "functional")
-@CleanupAfterMethod
 public class HotRodQueryIspnDirectoryTest extends HotRodQueryTest {
 
    @Override
-   protected String getLuceneDirectoryProvider() {
-      return "infinispan";
+   protected ConfigurationBuilder getConfigurationBuilder() {
+      ConfigurationBuilder builder = super.getConfigurationBuilder();
+      builder.indexing().addProperty("default.directory_provider", "infinispan");
+      return builder;
    }
 }

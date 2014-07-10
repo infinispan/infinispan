@@ -62,12 +62,12 @@ public class RemoteQueryJONRegisterIT extends RemoteQueryIT {
       MarshallerRegistration.registerMarshallers(ProtoStreamMarshaller.getSerializationContext(remoteCacheManager));
    }
 
-   protected static PathAddress getCacheContainerAddress(String containerName) {
+   protected PathAddress getCacheContainerAddress(String containerName) {
       return PathAddress.pathAddress(PathElement.pathElement(ModelDescriptionConstants.SUBSYSTEM,
                                                              InfinispanExtension.SUBSYSTEM_NAME)).append("cache-container", containerName);
    }
 
-   protected static ModelNode getOperation(String containerName, String operationName, String argumentName, ModelNode arguments) {
+   protected ModelNode getOperation(String containerName, String operationName, String argumentName, ModelNode arguments) {
       PathAddress cacheAddress = getCacheContainerAddress(containerName);
       ModelNode op = new ModelNode();
       op.get(OP).set(operationName);

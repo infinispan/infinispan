@@ -4,8 +4,11 @@ import org.infinispan.query.dsl.Query;
 import org.infinispan.query.dsl.QueryFactory;
 
 /**
- * A matcher able to test a given object against multiple registered filters. The matching filters are notified via a
- * callback supplied when registering the filter.
+ * A matcher able to test a given object against multiple registered filters specified either as JPA queries or using
+ * the query DSL (see {@link org.infinispan.query.dsl}). The matching filters are notified via a callback supplied when
+ * registering the filter. The filter will have to specify the fully qualified type name of the matching object because
+ * simple names cannot be easily resolved as it would happen in the case of an EntityManager that has knowledge of all
+ * types in advance.
  *
  * @author anistor@redhat.com
  * @since 7.0

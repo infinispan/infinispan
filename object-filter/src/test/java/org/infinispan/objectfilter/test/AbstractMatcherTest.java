@@ -127,7 +127,6 @@ public abstract class AbstractMatcherTest {
 
    @Test
    public void testSimpleAttribute1() throws Exception {
-      //todo [anistor] should we be able to use short class names too? how would we guess the full name then?
       String queryString = "from org.infinispan.objectfilter.test.model.Person where name = 'John'";
       assertTrue(match(queryString, createPerson1()));
    }

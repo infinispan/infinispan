@@ -1,4 +1,4 @@
-package org.infinispan.query.dsl.embedded.sample_domain_model;
+package org.infinispan.query.dsl.embedded.testdomain.hsearch;
 
 import org.hibernate.search.annotations.Analyze;
 import org.hibernate.search.annotations.Field;
@@ -8,6 +8,8 @@ import org.hibernate.search.annotations.IndexedEmbedded;
 import org.hibernate.search.annotations.NumericField;
 import org.hibernate.search.annotations.Store;
 import org.hibernate.search.bridge.builtin.impl.BuiltinIterableBridge;
+import org.infinispan.query.dsl.embedded.testdomain.Address;
+import org.infinispan.query.dsl.embedded.testdomain.User;
 
 import java.io.Serializable;
 import java.util.List;
@@ -15,14 +17,10 @@ import java.util.Set;
 
 /**
  * @author anistor@redhat.com
- * @since 6.0
+ * @since 7.0
  */
 @Indexed
-public class User implements Serializable {
-
-   public enum Gender {
-      MALE, FEMALE
-   }
+public class UserHS implements User, Serializable {
 
    @Field(store = Store.YES, analyze = Analyze.NO)
    private int id;
@@ -44,7 +42,7 @@ public class User implements Serializable {
    @Field(store = Store.YES, analyze = Analyze.NO)
    private Gender gender;
 
-   @IndexedEmbedded(indexNullAs = Field.DEFAULT_NULL_TOKEN)
+   @IndexedEmbedded(targetElement = AddressHS.class, indexNullAs = Field.DEFAULT_NULL_TOKEN)
    private List<Address> addresses;
 
    public int getId() {
@@ -108,15 +106,15 @@ public class User implements Serializable {
       if (this == o) return true;
       if (o == null || getClass() != o.getClass()) return false;
 
-      User user = (User) o;
+      UserHS other = (UserHS) o;
 
-      if (age != null ? !age.equals(user.age) : user.age != null) return false;
-      if (id != user.id) return false;
-      if (accountIds != null ? !accountIds.equals(user.accountIds) : user.accountIds != null) return false;
-      if (addresses != null ? !addresses.equals(user.addresses) : user.addresses != null) return false;
-      if (gender != user.gender) return false;
-      if (name != null ? !name.equals(user.name) : user.name != null) return false;
-      if (surname != null ? !surname.equals(user.surname) : user.surname != null) return false;
+      if (age != null ? !age.equals(other.age) : other.age != null) return false;
+      if (id != other.id) return false;
+      if (accountIds != null ? !accountIds.equals(other.accountIds) : other.accountIds != null) return false;
+      if (addresses != null ? !addresses.equals(other.addresses) : other.addresses != null) return false;
+      if (gender != other.gender) return false;
+      if (name != null ? !name.equals(other.name) : other.name != null) return false;
+      if (surname != null ? !surname.equals(other.surname) : other.surname != null) return false;
 
       return true;
    }
@@ -135,7 +133,7 @@ public class User implements Serializable {
 
    @Override
    public String toString() {
-      return "User{" +
+      return "UserHS{" +
             "id=" + id +
             ", name='" + name + '\'' +
             ", surname='" + surname + '\'' +
@@ -145,4 +143,5 @@ public class User implements Serializable {
             ", gender=" + gender +
             '}';
    }
+
 }

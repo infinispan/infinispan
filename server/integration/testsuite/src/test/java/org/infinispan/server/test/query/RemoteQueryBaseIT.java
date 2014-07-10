@@ -15,7 +15,6 @@ import org.junit.Before;
 
 import javax.management.ObjectName;
 import java.io.IOException;
-import java.io.InputStream;
 
 import static org.infinispan.server.test.util.ITestUtils.SERVER1_MGMT_PORT;
 import static org.infinispan.server.test.util.ITestUtils.invokeOperation;
@@ -62,7 +61,7 @@ public abstract class RemoteQueryBaseIT {
       //initialize server-side serialization context via JMX
       String[] fileNames = {"bank.proto", "indexing.proto", "descriptor.proto"};
       String[] fileContents = {read("/sample_bank_account/bank.proto"), read("/infinispan/indexing.proto"), read("/google/protobuf/descriptor.proto")};
-      invokeOperation(jmxConnectionProvider, mbean, "registerProtofiles", new Object[]{fileNames,fileContents}, new String[]{String[].class.getName(),String[].class.getName()});
+      invokeOperation(jmxConnectionProvider, mbean, "registerProtofiles", new Object[]{fileNames, fileContents}, new String[]{String[].class.getName(), String[].class.getName()});
 
       //initialize client-side serialization context
       MarshallerRegistration.registerMarshallers(ProtoStreamMarshaller.getSerializationContext(remoteCacheManager));
@@ -80,8 +79,6 @@ public abstract class RemoteQueryBaseIT {
    }
 
    private String read(String resourcePath) throws IOException {
-      InputStream is = getClass().getResourceAsStream(resourcePath);
-      return Util.read(is);
-
+      return Util.read(getClass().getResourceAsStream(resourcePath));
    }
 }

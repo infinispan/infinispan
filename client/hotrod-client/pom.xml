@@ -44,6 +44,14 @@
 
       <dependency>
          <groupId>${project.groupId}</groupId>
+         <artifactId>infinispan-query</artifactId>
+         <version>${project.version}</version>
+         <type>test-jar</type>
+         <scope>test</scope>
+      </dependency>
+
+      <dependency>
+         <groupId>${project.groupId}</groupId>
          <artifactId>infinispan-remote-query-server</artifactId>
          <scope>test</scope>
       </dependency>
@@ -88,10 +96,10 @@
 
       <dependency>
          <groupId>org.infinispan.protostream</groupId>
-         <artifactId>sample-domain-implementation</artifactId>
+         <artifactId>sample-domain-definition</artifactId>
          <scope>test</scope>
       </dependency>
-      
+
       <dependency>
          <groupId>org.jboss.sasl</groupId>
          <artifactId>jboss-sasl</artifactId>
