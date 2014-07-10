@@ -78,6 +78,14 @@ public class CacheResource extends SimpleResourceDefinition {
                     .setDefaultValue(new ModelNode().set(Indexing.NONE.name()))
                     .build();
 
+    static final SimpleAttributeDefinition INDEXING_AUTO_CONFIG =
+            new SimpleAttributeDefinitionBuilder(ModelKeys.AUTO_CONFIG, ModelType.BOOLEAN, true)
+                    .setXmlName(Attribute.AUTO_CONFIG.getLocalName())
+                    .setAllowExpression(true)
+                    .setFlags(AttributeAccess.Flag.RESTART_ALL_SERVICES)
+                    .setDefaultValue(new ModelNode().set(false))
+                    .build();
+
     static final SimpleMapAttributeDefinition INDEXING_PROPERTIES = new SimpleMapAttributeDefinition.Builder(ModelKeys.INDEXING_PROPERTIES, true)
             .setAllowExpression(true)
             .setAttributeMarshaller(new AttributeMarshaller() {
@@ -121,7 +129,7 @@ public class CacheResource extends SimpleResourceDefinition {
                     .setDefaultValue(new ModelNode().set(true))
                     .build();
 
-    static final AttributeDefinition[] CACHE_ATTRIBUTES = {BATCHING, CACHE_MODULE, INDEXING, INDEXING_PROPERTIES, JNDI_NAME, START, STATISTICS};
+    static final AttributeDefinition[] CACHE_ATTRIBUTES = {BATCHING, CACHE_MODULE, INDEXING, INDEXING_AUTO_CONFIG, INDEXING_PROPERTIES, JNDI_NAME, START, STATISTICS};
 
     // here for legacy purposes only
     static final SimpleAttributeDefinition NAME =

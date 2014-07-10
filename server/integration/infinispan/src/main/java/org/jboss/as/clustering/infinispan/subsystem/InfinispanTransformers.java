@@ -76,9 +76,11 @@ public class InfinispanTransformers {
                         ClusteredCacheResource.CACHE_MODULE, ClusteredCacheResource.QUEUE_FLUSH_INTERVAL,  ClusteredCacheResource.QUEUE_SIZE,
                         ClusteredCacheResource.REMOTE_TIMEOUT, ClusteredCacheResource.START,
                         DistributedCacheResource.L1_LIFESPAN, DistributedCacheResource.OWNERS, DistributedCacheResource.VIRTUAL_NODES, DistributedCacheResource.SEGMENTS)
-                //discard indexing-properties if undefined, and reject it if not set
+                //discard indexing-properties and index auto-config if undefined, and reject it if not set
                 .setDiscard(DiscardAttributeChecker.UNDEFINED, CacheResource.INDEXING_PROPERTIES)
                 .addRejectCheck(RejectAttributeChecker.DEFINED, CacheResource.INDEXING_PROPERTIES)
+                .setDiscard(DiscardAttributeChecker.UNDEFINED, CacheResource.INDEXING_AUTO_CONFIG)
+                .addRejectCheck(RejectAttributeChecker.DEFINED, CacheResource.INDEXING_AUTO_CONFIG)
                 //Convert segments to virtual-nodes if it is set
                 .setDiscard(DiscardAttributeChecker.UNDEFINED, DistributedCacheResource.SEGMENTS)
                 .setValueConverter(new AttributeConverter.DefaultAttributeConverter() {
@@ -101,9 +103,11 @@ public class InfinispanTransformers {
                         ClusteredCacheResource.ASYNC_MARSHALLING, ClusteredCacheResource.BATCHING, ClusteredCacheResource.INDEXING, ClusteredCacheResource.JNDI_NAME, ClusteredCacheResource.MODE,
                         ClusteredCacheResource.CACHE_MODULE, ClusteredCacheResource.QUEUE_FLUSH_INTERVAL, ClusteredCacheResource.QUEUE_SIZE, ClusteredCacheResource.REMOTE_TIMEOUT,
                         ClusteredCacheResource.START)
-                //discard indexing-properties if undefined, and reject it if not set
+                //discard indexing-properties and index auto-config if undefined, and reject it if not set
                 .setDiscard(DiscardAttributeChecker.UNDEFINED, CacheResource.INDEXING_PROPERTIES)
                 .addRejectCheck(RejectAttributeChecker.DEFINED, CacheResource.INDEXING_PROPERTIES)
+                .setDiscard(DiscardAttributeChecker.UNDEFINED, CacheResource.INDEXING_AUTO_CONFIG)
+                .addRejectCheck(RejectAttributeChecker.DEFINED, CacheResource.INDEXING_AUTO_CONFIG)
                 .end();
         registerCacheResourceChildren(invalidationCacheBuilder, false);
 
@@ -113,9 +117,11 @@ public class InfinispanTransformers {
                         RejectAttributeChecker.SIMPLE_EXPRESSIONS,
                         ClusteredCacheResource.BATCHING, ClusteredCacheResource.INDEXING, ClusteredCacheResource.JNDI_NAME,
                         ClusteredCacheResource.CACHE_MODULE, ClusteredCacheResource.START)
-                //discard indexing-properties if undefined, and reject it if not set
+                //discard indexing-properties and index auto-config if undefined, and reject it if not set
                 .setDiscard(DiscardAttributeChecker.UNDEFINED, CacheResource.INDEXING_PROPERTIES)
                 .addRejectCheck(RejectAttributeChecker.DEFINED, CacheResource.INDEXING_PROPERTIES)
+                .setDiscard(DiscardAttributeChecker.UNDEFINED, CacheResource.INDEXING_AUTO_CONFIG)
+                .addRejectCheck(RejectAttributeChecker.DEFINED, CacheResource.INDEXING_AUTO_CONFIG)
                 .end();
         registerCacheResourceChildren(localCacheBuilder, false);
 
@@ -126,9 +132,11 @@ public class InfinispanTransformers {
                         ClusteredCacheResource.ASYNC_MARSHALLING, ClusteredCacheResource.BATCHING, ClusteredCacheResource.INDEXING, ClusteredCacheResource.JNDI_NAME, ClusteredCacheResource.MODE,
                         ClusteredCacheResource.CACHE_MODULE, ClusteredCacheResource.QUEUE_FLUSH_INTERVAL, ClusteredCacheResource.QUEUE_SIZE, ClusteredCacheResource.REMOTE_TIMEOUT,
                         ClusteredCacheResource.START)
-                //discard indexing-properties if undefined, and reject it if not set
+                //discard indexing-properties and index auto-config if undefined, and reject it if not set
                 .setDiscard(DiscardAttributeChecker.UNDEFINED, CacheResource.INDEXING_PROPERTIES)
                 .addRejectCheck(RejectAttributeChecker.DEFINED, CacheResource.INDEXING_PROPERTIES)
+                .setDiscard(DiscardAttributeChecker.UNDEFINED, CacheResource.INDEXING_AUTO_CONFIG)
+                .addRejectCheck(RejectAttributeChecker.DEFINED, CacheResource.INDEXING_AUTO_CONFIG)
                 .end();
         registerCacheResourceChildren(replicatedCacheBuilder, true);
 

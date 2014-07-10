@@ -35,6 +35,7 @@ public class ModelKeys {
     static final String AUDIT_LOGGER = "audit-logger";
     static final String AUTHORIZATION = "authorization";
     static final String AUTHORIZATION_NAME = "AUTHORIZATION";
+    static final String AUTO_CONFIG = "auto-config";
     static final String AWAIT_INITIAL_TRANSFER = "await-initial-transfer";
     static final String BACKUP = "backup";
     static final String BACKUP_FAILURE_POLICY = "failure-policy";
