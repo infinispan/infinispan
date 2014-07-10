@@ -369,6 +369,7 @@ public abstract class CacheAdd extends AbstractAddStepHandler {
         CacheResource.START.validateAndSet(fromModel, toModel);
         CacheResource.BATCHING.validateAndSet(fromModel, toModel);
         CacheResource.INDEXING.validateAndSet(fromModel, toModel);
+        CacheResource.INDEXING_AUTO_CONFIG.validateAndSet(fromModel, toModel);
         CacheResource.JNDI_NAME.validateAndSet(fromModel, toModel);
         CacheResource.CACHE_MODULE.validateAndSet(fromModel, toModel);
         CacheResource.INDEXING_PROPERTIES.validateAndSet(fromModel, toModel);
@@ -389,6 +390,7 @@ public abstract class CacheAdd extends AbstractAddStepHandler {
         builder.jmxStatistics().enabled(CacheResource.STATISTICS.resolveModelAttribute(context, cache).asBoolean());
 
         final Indexing indexing = Indexing.valueOf(CacheResource.INDEXING.resolveModelAttribute(context, cache).asString());
+        final boolean autoConfig = CacheResource.INDEXING_AUTO_CONFIG.resolveModelAttribute(context, cache).asBoolean();
         final boolean batching = CacheResource.BATCHING.resolveModelAttribute(context, cache).asBoolean();
 
         // set the cache mode (may be modified when setting up clustering attributes)
@@ -404,6 +406,7 @@ public abstract class CacheAdd extends AbstractAddStepHandler {
         builder.indexing()
                 .index(indexing.isEnabled() ? indexing.isLocalOnly() ? Index.LOCAL : Index.ALL : Index.NONE)
                 .withProperties(indexingProperties)
+                .setAutoConfig(autoConfig)
         ;
 
         // locking is a child resource

@@ -346,6 +346,11 @@
                             <xs:documentation>The indexing mode of the cache. Defaults to NONE.</xs:documentation>
                         </xs:annotation>
                     </xs:attribute>
+                    <xs:attribute name="auto-config" type="xs:boolean" default="false">
+                        <xs:annotation>
+                            <xs:documentation>Whether or not to apply automatic index configuration based on cache type</xs:documentation>
+                        </xs:annotation>
+                    </xs:attribute>
                 </xs:complexType>
             </xs:element>
             <xs:element name="security" type="tns:cache-security" minOccurs="0">

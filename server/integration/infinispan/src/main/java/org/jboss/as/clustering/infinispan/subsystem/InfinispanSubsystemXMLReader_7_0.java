@@ -1635,10 +1635,15 @@ public final class InfinispanSubsystemXMLReader_7_0 implements XMLElementReader<
         for (int i = 0; i < reader.getAttributeCount(); i++) {
             String value = reader.getAttributeValue(i);
             Attribute attribute = Attribute.forName(reader.getAttributeLocalName(i));
-            if (attribute == Attribute.INDEX) {
-                CacheResource.INDEXING.parseAndSetParameter(value, node, reader);
-            } else {
-                throw ParseUtils.unexpectedAttribute(reader, i);
+            switch (attribute) {
+                case INDEX: 
+                    CacheResource.INDEXING.parseAndSetParameter(value, node, reader);
+                    break;
+                case AUTO_CONFIG:
+                    CacheResource.INDEXING_AUTO_CONFIG.parseAndSetParameter(value, node, reader);
+                    break;
+                default: 
+                    throw ParseUtils.unexpectedAttribute(reader, i);
             }
         }
 
