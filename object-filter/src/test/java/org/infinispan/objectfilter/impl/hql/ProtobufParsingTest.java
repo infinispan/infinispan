@@ -6,7 +6,6 @@ import org.infinispan.protostream.ConfigurationBuilder;
 import org.infinispan.protostream.ProtobufUtil;
 import org.infinispan.protostream.SerializationContext;
 import org.infinispan.protostream.descriptors.Descriptor;
-import org.junit.Ignore;
 import org.junit.Test;
 
 import java.io.IOException;
@@ -46,11 +45,9 @@ public class ProtobufParsingTest extends AbstractParsingTest {
       assertEquals(0, result.getSortFields().size());
    }
 
-   @Ignore("protobuf does not have a Date type")
    @Test
    @Override
    public void testInvalidDateLiteral() throws Exception {
-      // keep this test here just as a reminder
-      super.testInvalidDateLiteral();
+      // protobuf does not have a Date type, but keep this empty test here just as a reminder
    }
 }
