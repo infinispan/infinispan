@@ -10,6 +10,7 @@ import org.infinispan.query.dsl.FilterConditionEndContext;
 import org.infinispan.query.dsl.Query;
 import org.infinispan.query.dsl.QueryFactory;
 import org.infinispan.query.dsl.SortOrder;
+import org.infinispan.query.dsl.embedded.impl.EmbeddedLuceneQueryFactory;
 import org.infinispan.query.dsl.embedded.sample_domain_model.Account;
 import org.infinispan.query.dsl.embedded.sample_domain_model.Address;
 import org.infinispan.query.dsl.embedded.sample_domain_model.Transaction;
@@ -203,8 +204,12 @@ public class ClusteredQueryDslConditionsTest extends MultipleCacheManagersTest {
       assertNull(searchFactory.getIndexManagerHolder().getIndexManager(Address.class.getName()));
    }
 
+   public void testQueryFactoryType() {
+      assertTrue(Search.getQueryFactory(cache2) instanceof EmbeddedLuceneQueryFactory);
+   }
+
    public void testEq1() throws Exception {
-      QueryFactory qf = Search.getSearchManager(cache2).getQueryFactory();
+      QueryFactory qf = Search.getQueryFactory(cache2);
 
       Query q = qf.from(User.class)
             .having("name").eq("John")
@@ -217,7 +222,7 @@ public class ClusteredQueryDslConditionsTest extends MultipleCacheManagersTest {
    }
 
    public void testEq() throws Exception {
-      QueryFactory qf = Search.getSearchManager(cache2).getQueryFactory();
+      QueryFactory qf = Search.getQueryFactory(cache2);
 
       Query q = qf.from(User.class)
             .having("name").eq("Jacob")
@@ -228,7 +233,7 @@ public class ClusteredQueryDslConditionsTest extends MultipleCacheManagersTest {
    }
 
    public void testEqInNested1() throws Exception {
-      QueryFactory qf = Search.getSearchManager(cache2).getQueryFactory();
+      QueryFactory qf = Search.getQueryFactory(cache2);
 
       // all users in a given post code
       Query q = qf.from(User.class)
@@ -241,7 +246,7 @@ public class ClusteredQueryDslConditionsTest extends MultipleCacheManagersTest {
    }
 
    public void testEqInNested2() throws Exception {
-      QueryFactory qf = Search.getSearchManager(cache2).getQueryFactory();
+      QueryFactory qf = Search.getQueryFactory(cache2);
 
       Query q = qf.from(User.class)
             .having("addresses.postCode").eq("Y12")
@@ -253,7 +258,7 @@ public class ClusteredQueryDslConditionsTest extends MultipleCacheManagersTest {
    }
 
    public void testLike() throws Exception {
-      QueryFactory qf = Search.getSearchManager(cache2).getQueryFactory();
+      QueryFactory qf = Search.getQueryFactory(cache2);
 
       // all rent payments made from a given account
       Query q = qf.from(Transaction.class)
@@ -267,7 +272,7 @@ public class ClusteredQueryDslConditionsTest extends MultipleCacheManagersTest {
    }
 
    public void testBetween1() throws Exception {
-      QueryFactory qf = Search.getSearchManager(cache2).getQueryFactory();
+      QueryFactory qf = Search.getQueryFactory(cache2);
 
       // all the transactions that happened in January 2013
       Query q = qf.from(Transaction.class)
@@ -283,7 +288,7 @@ public class ClusteredQueryDslConditionsTest extends MultipleCacheManagersTest {
    }
 
    public void testBetween2() throws Exception {
-      QueryFactory qf = Search.getSearchManager(cache2).getQueryFactory();
+      QueryFactory qf = Search.getQueryFactory(cache2);
 
       // all the transactions that happened in January 2013
       Query q = qf.from(Transaction.class)
@@ -299,7 +304,7 @@ public class ClusteredQueryDslConditionsTest extends MultipleCacheManagersTest {
    }
 
    public void testBetween3() throws Exception {
-      QueryFactory qf = Search.getSearchManager(cache2).getQueryFactory();
+      QueryFactory qf = Search.getQueryFactory(cache2);
 
       // all the transactions that happened in January 2013
       Query q = qf.from(Transaction.class)
@@ -315,7 +320,7 @@ public class ClusteredQueryDslConditionsTest extends MultipleCacheManagersTest {
    }
 
    public void testGt() throws Exception {
-      QueryFactory qf = Search.getSearchManager(cache2).getQueryFactory();
+      QueryFactory qf = Search.getQueryFactory(cache2);
 
       // all the transactions greater than a given amount
       Query q = qf.from(Transaction.class)
@@ -328,7 +333,7 @@ public class ClusteredQueryDslConditionsTest extends MultipleCacheManagersTest {
    }
 
    public void testGte() throws Exception {
-      QueryFactory qf = Search.getSearchManager(cache2).getQueryFactory();
+      QueryFactory qf = Search.getQueryFactory(cache2);
 
       Query q = qf.from(Transaction.class)
             .having("amount").gte(1500)
@@ -342,7 +347,7 @@ public class ClusteredQueryDslConditionsTest extends MultipleCacheManagersTest {
    }
 
    public void testLt() throws Exception {
-      QueryFactory qf = Search.getSearchManager(cache2).getQueryFactory();
+      QueryFactory qf = Search.getQueryFactory(cache2);
 
       Query q = qf.from(Transaction.class)
             .having("amount").lt(1500)
@@ -356,7 +361,7 @@ public class ClusteredQueryDslConditionsTest extends MultipleCacheManagersTest {
    }
 
    public void testLte() throws Exception {
-      QueryFactory qf = Search.getSearchManager(cache2).getQueryFactory();
+      QueryFactory qf = Search.getQueryFactory(cache2);
 
       Query q = qf.from(Transaction.class)
             .having("amount").lte(1500)
@@ -370,7 +375,7 @@ public class ClusteredQueryDslConditionsTest extends MultipleCacheManagersTest {
    }
 
    public void testAnd1() throws Exception {
-      QueryFactory qf = Search.getSearchManager(cache2).getQueryFactory();
+      QueryFactory qf = Search.getQueryFactory(cache2);
 
       Query q = qf.from(User.class)
             .having("name").eq("Spider")
@@ -383,7 +388,7 @@ public class ClusteredQueryDslConditionsTest extends MultipleCacheManagersTest {
    }
 
    public void testAnd2() throws Exception {
-      QueryFactory qf = Search.getSearchManager(cache2).getQueryFactory();
+      QueryFactory qf = Search.getQueryFactory(cache2);
 
       Query q = qf.from(User.class)
             .having("name").eq("Spider")
@@ -396,7 +401,7 @@ public class ClusteredQueryDslConditionsTest extends MultipleCacheManagersTest {
    }
 
    public void testAnd3() throws Exception {
-      QueryFactory qf = Search.getSearchManager(cache2).getQueryFactory();
+      QueryFactory qf = Search.getQueryFactory(cache2);
 
       Query q = qf.from(User.class)
             .having("gender").eq(User.Gender.MALE)
@@ -408,7 +413,7 @@ public class ClusteredQueryDslConditionsTest extends MultipleCacheManagersTest {
    }
 
    public void testAnd4() throws Exception {
-      QueryFactory qf = Search.getSearchManager(cache2).getQueryFactory();
+      QueryFactory qf = Search.getQueryFactory(cache2);
 
       //test for parenthesis, "and" should have higher priority
       Query q = qf.from(User.class)
@@ -422,7 +427,7 @@ public class ClusteredQueryDslConditionsTest extends MultipleCacheManagersTest {
    }
 
    public void testOr1() throws Exception {
-      QueryFactory qf = Search.getSearchManager(cache2).getQueryFactory();
+      QueryFactory qf = Search.getQueryFactory(cache2);
 
       Query q = qf.from(User.class)
             .having("surname").eq("Man")
@@ -437,7 +442,7 @@ public class ClusteredQueryDslConditionsTest extends MultipleCacheManagersTest {
    }
 
    public void testOr2() throws Exception {
-      QueryFactory qf = Search.getSearchManager(cache2).getQueryFactory();
+      QueryFactory qf = Search.getQueryFactory(cache2);
 
       Query q = qf.from(User.class)
             .having("surname").eq("Man")
@@ -452,7 +457,7 @@ public class ClusteredQueryDslConditionsTest extends MultipleCacheManagersTest {
    }
 
    public void testOr3() throws Exception {
-      QueryFactory qf = Search.getSearchManager(cache2).getQueryFactory();
+      QueryFactory qf = Search.getQueryFactory(cache2);
 
       Query q = qf.from(User.class)
             .having("gender").eq(User.Gender.MALE)
@@ -464,7 +469,7 @@ public class ClusteredQueryDslConditionsTest extends MultipleCacheManagersTest {
    }
 
    public void testOr4() throws Exception {
-      QueryFactory qf = Search.getSearchManager(cache2).getQueryFactory();
+      QueryFactory qf = Search.getQueryFactory(cache2);
 
       Query q = qf.from(User.class)
             .having("gender").eq(User.Gender.MALE)
@@ -480,7 +485,7 @@ public class ClusteredQueryDslConditionsTest extends MultipleCacheManagersTest {
    }
 
    public void testOr5() throws Exception {
-      QueryFactory qf = Search.getSearchManager(cache2).getQueryFactory();
+      QueryFactory qf = Search.getQueryFactory(cache2);
 
       Query q = qf.from(User.class)
             .having("gender").eq(User.Gender.MALE)
@@ -495,7 +500,7 @@ public class ClusteredQueryDslConditionsTest extends MultipleCacheManagersTest {
    }
 
    public void testNot1() throws Exception {
-      QueryFactory qf = Search.getSearchManager(cache2).getQueryFactory();
+      QueryFactory qf = Search.getQueryFactory(cache2);
 
       Query q = qf.from(User.class)
             .not().having("name").eq("Spider")
@@ -507,7 +512,7 @@ public class ClusteredQueryDslConditionsTest extends MultipleCacheManagersTest {
    }
 
    public void testNot2() throws Exception {
-      QueryFactory qf = Search.getSearchManager(cache2).getQueryFactory();
+      QueryFactory qf = Search.getQueryFactory(cache2);
 
       Query q = qf.from(User.class)
             .not().not().having("surname").eq("Doe")
@@ -519,7 +524,7 @@ public class ClusteredQueryDslConditionsTest extends MultipleCacheManagersTest {
    }
 
    public void testNot3() throws Exception {
-      QueryFactory qf = Search.getSearchManager(cache2).getQueryFactory();
+      QueryFactory qf = Search.getQueryFactory(cache2);
 
       // NOT should have higher priority than AND
       Query q = qf.from(User.class)
@@ -533,7 +538,7 @@ public class ClusteredQueryDslConditionsTest extends MultipleCacheManagersTest {
    }
 
    public void testNot4() throws Exception {
-      QueryFactory qf = Search.getSearchManager(cache2).getQueryFactory();
+      QueryFactory qf = Search.getQueryFactory(cache2);
 
       // NOT should have higher priority than AND
       Query q = qf.from(User.class)
@@ -547,7 +552,7 @@ public class ClusteredQueryDslConditionsTest extends MultipleCacheManagersTest {
    }
 
    public void testNot5() throws Exception {
-      QueryFactory qf = Search.getSearchManager(cache2).getQueryFactory();
+      QueryFactory qf = Search.getQueryFactory(cache2);
 
       // NOT should have higher priority than OR
       Query q = qf.from(User.class)
@@ -563,7 +568,7 @@ public class ClusteredQueryDslConditionsTest extends MultipleCacheManagersTest {
    }
 
    public void testNot6() throws Exception {
-      QueryFactory qf = Search.getSearchManager(cache2).getQueryFactory();
+      QueryFactory qf = Search.getQueryFactory(cache2);
 
       // QueryFactory.not() test
       Query q = qf.from(User.class)
@@ -577,7 +582,7 @@ public class ClusteredQueryDslConditionsTest extends MultipleCacheManagersTest {
    }
 
    public void testNot7() throws Exception {
-      QueryFactory qf = Search.getSearchManager(cache2).getQueryFactory();
+      QueryFactory qf = Search.getQueryFactory(cache2);
 
       Query q = qf.from(User.class)
             .having("gender").eq(User.Gender.FEMALE)
@@ -589,7 +594,7 @@ public class ClusteredQueryDslConditionsTest extends MultipleCacheManagersTest {
    }
 
    public void testEmptyQuery() throws Exception {
-      QueryFactory qf = Search.getSearchManager(cache2).getQueryFactory();
+      QueryFactory qf = Search.getQueryFactory(cache2);
 
       Query q = qf.from(User.class).build();
 
@@ -598,7 +603,7 @@ public class ClusteredQueryDslConditionsTest extends MultipleCacheManagersTest {
    }
 
    public void testIsNull() throws Exception {
-      QueryFactory qf = Search.getSearchManager(cache2).getQueryFactory();
+      QueryFactory qf = Search.getQueryFactory(cache2);
 
       Query q = qf.from(User.class)
             .having("addresses").isNull()
@@ -610,7 +615,7 @@ public class ClusteredQueryDslConditionsTest extends MultipleCacheManagersTest {
    }
 
    public void testContains1() throws Exception {
-      QueryFactory qf = Search.getSearchManager(cache2).getQueryFactory();
+      QueryFactory qf = Search.getQueryFactory(cache2);
 
       Query q = qf.from(User.class)
             .having("accountIds").contains(2)
@@ -622,7 +627,7 @@ public class ClusteredQueryDslConditionsTest extends MultipleCacheManagersTest {
    }
 
    public void testContains2() throws Exception {
-      QueryFactory qf = Search.getSearchManager(cache2).getQueryFactory();
+      QueryFactory qf = Search.getQueryFactory(cache2);
 
       Query q = qf.from(User.class)
             .having("accountIds").contains(42)
@@ -633,7 +638,7 @@ public class ClusteredQueryDslConditionsTest extends MultipleCacheManagersTest {
    }
 
    public void testContainsAll1() throws Exception {
-      QueryFactory qf = Search.getSearchManager(cache2).getQueryFactory();
+      QueryFactory qf = Search.getQueryFactory(cache2);
 
       Query q = qf.from(User.class)
             .having("accountIds").containsAll(1, 2)
@@ -645,7 +650,7 @@ public class ClusteredQueryDslConditionsTest extends MultipleCacheManagersTest {
    }
 
    public void testContainsAll2() throws Exception {
-      QueryFactory qf = Search.getSearchManager(cache2).getQueryFactory();
+      QueryFactory qf = Search.getQueryFactory(cache2);
 
       Query q = qf.from(User.class)
             .having("accountIds").containsAll(Collections.singleton(1))
@@ -657,7 +662,7 @@ public class ClusteredQueryDslConditionsTest extends MultipleCacheManagersTest {
    }
 
    public void testContainsAll3() throws Exception {
-      QueryFactory qf = Search.getSearchManager(cache2).getQueryFactory();
+      QueryFactory qf = Search.getQueryFactory(cache2);
 
       Query q = qf.from(User.class)
             .having("accountIds").containsAll(1, 2, 3)
@@ -668,7 +673,7 @@ public class ClusteredQueryDslConditionsTest extends MultipleCacheManagersTest {
    }
 
    public void testContainsAll4() throws Exception {
-      QueryFactory qf = Search.getSearchManager(cache2).getQueryFactory();
+      QueryFactory qf = Search.getQueryFactory(cache2);
 
       Query q = qf.from(User.class)
             .having("accountIds").containsAll(Collections.emptySet())
@@ -679,7 +684,7 @@ public class ClusteredQueryDslConditionsTest extends MultipleCacheManagersTest {
    }
 
    public void testContainsAny1() throws Exception {
-      QueryFactory qf = Search.getSearchManager(cache2).getQueryFactory();
+      QueryFactory qf = Search.getQueryFactory(cache2);
 
       Query q = qf.from(User.class)
             .orderBy("id", SortOrder.ASC)
@@ -693,7 +698,7 @@ public class ClusteredQueryDslConditionsTest extends MultipleCacheManagersTest {
    }
 
    public void testContainsAny2() throws Exception {
-      QueryFactory qf = Search.getSearchManager(cache2).getQueryFactory();
+      QueryFactory qf = Search.getQueryFactory(cache2);
 
       Query q = qf.from(User.class)
             .having("accountIds").containsAny(4, 5)
@@ -704,7 +709,7 @@ public class ClusteredQueryDslConditionsTest extends MultipleCacheManagersTest {
    }
 
    public void testContainsAny3() throws Exception {
-      QueryFactory qf = Search.getSearchManager(cache2).getQueryFactory();
+      QueryFactory qf = Search.getQueryFactory(cache2);
 
       Query q = qf.from(User.class)
             .having("accountIds").containsAny(Collections.emptySet())
@@ -715,7 +720,7 @@ public class ClusteredQueryDslConditionsTest extends MultipleCacheManagersTest {
    }
 
    public void testIn1() throws Exception {
-      QueryFactory qf = Search.getSearchManager(cache2).getQueryFactory();
+      QueryFactory qf = Search.getQueryFactory(cache2);
 
       List<Integer> ids = Arrays.asList(1, 3);
       Query q = qf.from(User.class)
@@ -730,7 +735,7 @@ public class ClusteredQueryDslConditionsTest extends MultipleCacheManagersTest {
    }
 
    public void testIn2() throws Exception {
-      QueryFactory qf = Search.getSearchManager(cache2).getQueryFactory();
+      QueryFactory qf = Search.getQueryFactory(cache2);
 
       Query q = qf.from(User.class)
             .having("id").in(4)
@@ -742,14 +747,14 @@ public class ClusteredQueryDslConditionsTest extends MultipleCacheManagersTest {
 
    @Test(expectedExceptions = IllegalArgumentException.class)
    public void testIn3() throws Exception {
-      QueryFactory qf = Search.getSearchManager(cache2).getQueryFactory();
+      QueryFactory qf = Search.getQueryFactory(cache2);
 
       qf.from(User.class).having("id").in(Collections.emptySet());
    }
 
    @Test(expectedExceptions = IllegalArgumentException.class)
    public void testIn4() throws Exception {
-      QueryFactory qf = Search.getSearchManager(cache2).getQueryFactory();
+      QueryFactory qf = Search.getQueryFactory(cache2);
 
       Collection collection = null;
       qf.from(User.class).having("id").in(collection);
@@ -757,7 +762,7 @@ public class ClusteredQueryDslConditionsTest extends MultipleCacheManagersTest {
 
    @Test(expectedExceptions = IllegalArgumentException.class)
    public void testIn5() throws Exception {
-      QueryFactory qf = Search.getSearchManager(cache2).getQueryFactory();
+      QueryFactory qf = Search.getQueryFactory(cache2);
 
       Object[] array = null;
       qf.from(User.class).having("id").in(array);
@@ -765,14 +770,14 @@ public class ClusteredQueryDslConditionsTest extends MultipleCacheManagersTest {
 
    @Test(expectedExceptions = IllegalArgumentException.class)
    public void testIn6() throws Exception {
-      QueryFactory qf = Search.getSearchManager(cache2).getQueryFactory();
+      QueryFactory qf = Search.getQueryFactory(cache2);
 
       Object[] array = new Object[0];
       qf.from(User.class).having("id").in(array);
    }
 
    public void testSampleDomainQuery1() throws Exception {
-      QueryFactory qf = Search.getSearchManager(cache2).getQueryFactory();
+      QueryFactory qf = Search.getQueryFactory(cache2);
 
       // all male users
       Query q = qf.from(User.class)
@@ -786,7 +791,7 @@ public class ClusteredQueryDslConditionsTest extends MultipleCacheManagersTest {
    }
 
    public void testSampleDomainQuery2() throws Exception {
-      QueryFactory qf = Search.getSearchManager(cache2).getQueryFactory();
+      QueryFactory qf = Search.getQueryFactory(cache2);
 
       // all male users, but this time retrieved in a twisted manner
       Query q = qf.from(User.class)
@@ -801,7 +806,7 @@ public class ClusteredQueryDslConditionsTest extends MultipleCacheManagersTest {
    }
 
    public void testStringLiteralEscape() throws Exception {
-      QueryFactory qf = Search.getSearchManager(cache2).getQueryFactory();
+      QueryFactory qf = Search.getQueryFactory(cache2);
 
       // all transactions that have a given description. the description contains characters that need to be escaped.
       Query q = qf.from(Account.class)
@@ -814,7 +819,7 @@ public class ClusteredQueryDslConditionsTest extends MultipleCacheManagersTest {
    }
 
    public void testSortByDate() throws Exception {
-      QueryFactory qf = Search.getSearchManager(cache2).getQueryFactory();
+      QueryFactory qf = Search.getQueryFactory(cache2);
 
       Query q = qf.from(Account.class)
             .orderBy("creationDate", SortOrder.DESC)
@@ -828,7 +833,7 @@ public class ClusteredQueryDslConditionsTest extends MultipleCacheManagersTest {
    }
 
    public void testSampleDomainQuery3() throws Exception {
-      QueryFactory qf = Search.getSearchManager(cache2).getQueryFactory();
+      QueryFactory qf = Search.getQueryFactory(cache2);
 
       // all male users
       Query q = qf.from(User.class)
@@ -842,7 +847,7 @@ public class ClusteredQueryDslConditionsTest extends MultipleCacheManagersTest {
    }
 
    public void testSampleDomainQuery4() throws Exception {
-      QueryFactory qf = Search.getSearchManager(cache2).getQueryFactory();
+      QueryFactory qf = Search.getQueryFactory(cache2);
 
       // all users ordered descendingly by name
       Query q = qf.from(User.class)
@@ -857,7 +862,7 @@ public class ClusteredQueryDslConditionsTest extends MultipleCacheManagersTest {
    }
 
    public void testSampleDomainQuery4With2SortingOptions() throws Exception {
-      QueryFactory qf = Search.getSearchManager(cache2).getQueryFactory();
+      QueryFactory qf = Search.getQueryFactory(cache2);
 
       // all users ordered descendingly by name
       Query q = qf.from(User.class)
@@ -878,7 +883,7 @@ public class ClusteredQueryDslConditionsTest extends MultipleCacheManagersTest {
    }
 
    public void testSampleDomainQuery5() throws Exception {
-      QueryFactory qf = Search.getSearchManager(cache2).getQueryFactory();
+      QueryFactory qf = Search.getQueryFactory(cache2);
 
       // name projection of all users ordered descendingly by name
       Query q = qf.from(User.class)
@@ -897,7 +902,7 @@ public class ClusteredQueryDslConditionsTest extends MultipleCacheManagersTest {
    }
 
    public void testSampleDomainQuery6() throws Exception {
-      QueryFactory qf = Search.getSearchManager(cache2).getQueryFactory();
+      QueryFactory qf = Search.getQueryFactory(cache2);
 
       // all users with a given name and surname
       Query q = qf.from(User.class)
@@ -912,7 +917,7 @@ public class ClusteredQueryDslConditionsTest extends MultipleCacheManagersTest {
    }
 
    public void testSampleDomainQuery7() throws Exception {
-      QueryFactory qf = Search.getSearchManager(cache2).getQueryFactory();
+      QueryFactory qf = Search.getQueryFactory(cache2);
 
       // all rent payments made from a given account
       Query q = qf.from(Transaction.class)
@@ -928,7 +933,7 @@ public class ClusteredQueryDslConditionsTest extends MultipleCacheManagersTest {
    }
 
    public void testSampleDomainQuery8() throws Exception {
-      QueryFactory qf = Search.getSearchManager(cache2).getQueryFactory();
+      QueryFactory qf = Search.getQueryFactory(cache2);
 
       // all the transactions that happened in January 2013
       Query q = qf.from(Transaction.class)
@@ -944,7 +949,7 @@ public class ClusteredQueryDslConditionsTest extends MultipleCacheManagersTest {
    }
 
    public void testSampleDomainQuery9() throws Exception {
-      QueryFactory qf = Search.getSearchManager(cache2).getQueryFactory();
+      QueryFactory qf = Search.getQueryFactory(cache2);
 
       // all the transactions that happened in January 2013, projected by date field only
       Query q = qf.from(Transaction.class)
@@ -967,7 +972,7 @@ public class ClusteredQueryDslConditionsTest extends MultipleCacheManagersTest {
    }
 
    public void testSampleDomainQuery10() throws Exception {
-      QueryFactory qf = Search.getSearchManager(cache2).getQueryFactory();
+      QueryFactory qf = Search.getQueryFactory(cache2);
 
       // all the transactions for a an account having amount greater than a given amount
       Query q = qf.from(Transaction.class)
@@ -982,7 +987,7 @@ public class ClusteredQueryDslConditionsTest extends MultipleCacheManagersTest {
    }
 
    public void testSampleDomainQuery11() throws Exception {
-      QueryFactory qf = Search.getSearchManager(cache2).getQueryFactory();
+      QueryFactory qf = Search.getQueryFactory(cache2);
 
       Query q = qf.from(User.class)
             .having("name").eq("John")
@@ -996,7 +1001,7 @@ public class ClusteredQueryDslConditionsTest extends MultipleCacheManagersTest {
    }
 
    public void testSampleDomainQuery12() throws Exception {
-      QueryFactory qf = Search.getSearchManager(cache2).getQueryFactory();
+      QueryFactory qf = Search.getQueryFactory(cache2);
 
       // all the transactions that represents credits to the account
       Query q = qf.from(Transaction.class)
@@ -1010,7 +1015,7 @@ public class ClusteredQueryDslConditionsTest extends MultipleCacheManagersTest {
    }
 
    public void testSampleDomainQuery13() throws Exception {
-      QueryFactory qf = Search.getSearchManager(cache2).getQueryFactory();
+      QueryFactory qf = Search.getQueryFactory(cache2);
 
       // the user that has the bank account with id 3
       Query q = qf.from(User.class)
@@ -1023,7 +1028,7 @@ public class ClusteredQueryDslConditionsTest extends MultipleCacheManagersTest {
    }
 
    public void testSampleDomainQuery14() throws Exception {
-      QueryFactory qf = Search.getSearchManager(cache2).getQueryFactory();
+      QueryFactory qf = Search.getQueryFactory(cache2);
 
       // the user that has all the specified bank accounts
       Query q = qf.from(User.class)
@@ -1037,7 +1042,7 @@ public class ClusteredQueryDslConditionsTest extends MultipleCacheManagersTest {
    }
 
    public void testSampleDomainQuery15() throws Exception {
-      QueryFactory qf = Search.getSearchManager(cache2).getQueryFactory();
+      QueryFactory qf = Search.getQueryFactory(cache2);
 
       // the user that has at least one of the specified accounts
       Query q = qf.from(User.class)
@@ -1062,7 +1067,7 @@ public class ClusteredQueryDslConditionsTest extends MultipleCacheManagersTest {
          cache2.put("transaction_" + transaction.getId(), transaction);
       }
 
-      QueryFactory qf = Search.getSearchManager(cache1).getQueryFactory();
+      QueryFactory qf = Search.getQueryFactory(cache1);
 
       // third batch of 10 transactions for a given account
       Query q = qf.from(Transaction.class)
@@ -1080,7 +1085,7 @@ public class ClusteredQueryDslConditionsTest extends MultipleCacheManagersTest {
    }
 
    public void testSampleDomainQuery17() throws Exception {
-      QueryFactory qf = Search.getSearchManager(cache2).getQueryFactory();
+      QueryFactory qf = Search.getQueryFactory(cache2);
 
       // all accounts for a user. first get the user by id and then get his account.
       Query q1 = qf.from(User.class)
@@ -1098,7 +1103,7 @@ public class ClusteredQueryDslConditionsTest extends MultipleCacheManagersTest {
    }
 
    public void testSampleDomainQuery18() throws Exception {
-      QueryFactory qf = Search.getSearchManager(cache2).getQueryFactory();
+      QueryFactory qf = Search.getQueryFactory(cache2);
 
       // all transactions of account with id 2 which have an amount larger than 1600 or their description contains the word 'rent'
       Query q = qf.from(Transaction.class)
@@ -1114,7 +1119,7 @@ public class ClusteredQueryDslConditionsTest extends MultipleCacheManagersTest {
    }
 
    public void testProjectionOnOptionalField() throws Exception {
-      QueryFactory qf = Search.getSearchManager(cache2).getQueryFactory();
+      QueryFactory qf = Search.getQueryFactory(cache2);
 
       Query q = qf.from(User.class)
             .setProjection("id", "addresses.postCode")
@@ -1133,7 +1138,7 @@ public class ClusteredQueryDslConditionsTest extends MultipleCacheManagersTest {
 
    @Test(enabled = false, description = "Nulls not correctly indexed for numeric properties, see ISPN-4046")  //todo [anistor] fix disabled test
    public void testNullOnIntegerField() throws Exception {
-      QueryFactory qf = Search.getSearchManager(cache2).getQueryFactory();
+      QueryFactory qf = Search.getQueryFactory(cache2);
 
       Query q = qf.from(User.class)
             .having("age").isNull()
@@ -1144,7 +1149,7 @@ public class ClusteredQueryDslConditionsTest extends MultipleCacheManagersTest {
    }
 
    public void testSampleDomainQuery19() throws Exception {
-      QueryFactory qf = Search.getSearchManager(cache2).getQueryFactory();
+      QueryFactory qf = Search.getQueryFactory(cache2);
 
       Query q = qf.from(User.class)
             .having("addresses.postCode").in("ZZ", "X1234").toBuilder().build();
@@ -1156,7 +1161,7 @@ public class ClusteredQueryDslConditionsTest extends MultipleCacheManagersTest {
    }
 
    public void testSampleDomainQuery20() throws Exception {
-      QueryFactory qf = Search.getSearchManager(cache2).getQueryFactory();
+      QueryFactory qf = Search.getQueryFactory(cache2);
 
       Query q = qf.from(User.class)
             .not().having("addresses.postCode").in("X1234").toBuilder().build();
@@ -1168,7 +1173,7 @@ public class ClusteredQueryDslConditionsTest extends MultipleCacheManagersTest {
    }
 
    public void testSampleDomainQuery21() throws Exception {
-      QueryFactory qf = Search.getSearchManager(cache2).getQueryFactory();
+      QueryFactory qf = Search.getQueryFactory(cache2);
 
       Query q = qf.from(User.class)
             .not().having("addresses").isNull().toBuilder().build();
@@ -1180,7 +1185,7 @@ public class ClusteredQueryDslConditionsTest extends MultipleCacheManagersTest {
    }
 
    public void testSampleDomainQuery22() throws Exception {
-      QueryFactory qf = Search.getSearchManager(cache2).getQueryFactory();
+      QueryFactory qf = Search.getQueryFactory(cache2);
 
       Query q = qf.from(User.class)
             .not().having("addresses.postCode").like("%123%").toBuilder().build();
@@ -1192,7 +1197,7 @@ public class ClusteredQueryDslConditionsTest extends MultipleCacheManagersTest {
    }
 
    public void testSampleDomainQuery23() throws Exception {
-      QueryFactory qf = Search.getSearchManager(cache2).getQueryFactory();
+      QueryFactory qf = Search.getQueryFactory(cache2);
 
       Query q = qf.from(User.class)
             .not().having("id").between(1, 2)
@@ -1204,7 +1209,7 @@ public class ClusteredQueryDslConditionsTest extends MultipleCacheManagersTest {
    }
 
    public void testSampleDomainQuery24() throws Exception {
-      QueryFactory qf = Search.getSearchManager(cache2).getQueryFactory();
+      QueryFactory qf = Search.getQueryFactory(cache2);
 
       Query q = qf.from(User.class)
             .not().having("id").between(1, 2).includeLower(false)
@@ -1218,7 +1223,7 @@ public class ClusteredQueryDslConditionsTest extends MultipleCacheManagersTest {
    }
 
    public void testSampleDomainQuery25() throws Exception {
-      QueryFactory qf = Search.getSearchManager(cache2).getQueryFactory();
+      QueryFactory qf = Search.getQueryFactory(cache2);
 
       Query q = qf.from(User.class)
             .not().having("id").between(1, 2).includeUpper(false)
@@ -1231,7 +1236,7 @@ public class ClusteredQueryDslConditionsTest extends MultipleCacheManagersTest {
    }
 
    public void testSampleDomainQuery26() throws Exception {
-      QueryFactory qf = Search.getSearchManager(cache2).getQueryFactory();
+      QueryFactory qf = Search.getQueryFactory(cache2);
 
       Query q = qf.from(Account.class)
             .having("creationDate").eq(DATE_FORMAT.parse("2013-01-20"))
@@ -1243,7 +1248,7 @@ public class ClusteredQueryDslConditionsTest extends MultipleCacheManagersTest {
    }
 
    public void testSampleDomainQuery27() throws Exception {
-      QueryFactory qf = Search.getSearchManager(cache2).getQueryFactory();
+      QueryFactory qf = Search.getQueryFactory(cache2);
 
       Query q = qf.from(Account.class)
             .having("creationDate").lt(DATE_FORMAT.parse("2013-01-20"))
@@ -1256,7 +1261,7 @@ public class ClusteredQueryDslConditionsTest extends MultipleCacheManagersTest {
    }
 
    public void testSampleDomainQuery28() throws Exception {
-      QueryFactory qf = Search.getSearchManager(cache2).getQueryFactory();
+      QueryFactory qf = Search.getQueryFactory(cache2);
 
       Query q = qf.from(Account.class)
             .having("creationDate").lte(DATE_FORMAT.parse("2013-01-20"))
@@ -1270,7 +1275,7 @@ public class ClusteredQueryDslConditionsTest extends MultipleCacheManagersTest {
    }
 
    public void testSampleDomainQuery29() throws Exception {
-      QueryFactory qf = Search.getSearchManager(cache2).getQueryFactory();
+      QueryFactory qf = Search.getQueryFactory(cache2);
 
       Query q = qf.from(Account.class)
             .having("creationDate").gt(DATE_FORMAT.parse("2013-01-04"))
@@ -1283,14 +1288,14 @@ public class ClusteredQueryDslConditionsTest extends MultipleCacheManagersTest {
 
    @Test(expectedExceptions = IllegalStateException.class)
    public void testWrongQueryBuilding1() throws Exception {
-      QueryFactory qf = Search.getSearchManager(cache2).getQueryFactory();
+      QueryFactory qf = Search.getQueryFactory(cache2);
 
       Query q = qf.not().having("name").eq("John").toBuilder().build();
    }
 
    @Test(expectedExceptions = IllegalStateException.class)
    public void testWrongQueryBuilding2() throws Exception {
-      QueryFactory qf = Search.getSearchManager(cache2).getQueryFactory();
+      QueryFactory qf = Search.getQueryFactory(cache2);
 
       Query q = qf.from(User.class)
             .having("name").eq("John").toBuilder()
@@ -1300,7 +1305,7 @@ public class ClusteredQueryDslConditionsTest extends MultipleCacheManagersTest {
 
    @Test(expectedExceptions = IllegalStateException.class)
    public void testWrongQueryBuilding3() throws Exception {
-      QueryFactory qf = Search.getSearchManager(cache2).getQueryFactory();
+      QueryFactory qf = Search.getQueryFactory(cache2);
 
       Query q = qf.from(User.class)
             .not().having("name").eq("John").toBuilder()
@@ -1310,7 +1315,7 @@ public class ClusteredQueryDslConditionsTest extends MultipleCacheManagersTest {
 
    @Test(expectedExceptions = IllegalStateException.class)
    public void testWrongQueryBuilding4() throws Exception {
-      QueryFactory qf = Search.getSearchManager(cache2).getQueryFactory();
+      QueryFactory qf = Search.getQueryFactory(cache2);
 
       Query q = qf.from(User.class)
             .not(qf.having("name").eq("John")).toBuilder()
@@ -1320,7 +1325,7 @@ public class ClusteredQueryDslConditionsTest extends MultipleCacheManagersTest {
 
    @Test(expectedExceptions = IllegalStateException.class)
    public void testWrongQueryBuilding5() throws Exception {
-      QueryFactory qf = Search.getSearchManager(cache2).getQueryFactory();
+      QueryFactory qf = Search.getQueryFactory(cache2);
 
       Query q = qf.from(User.class)
             .not(qf.having("name").eq("John")).toBuilder()
@@ -1330,7 +1335,7 @@ public class ClusteredQueryDslConditionsTest extends MultipleCacheManagersTest {
 
    @Test(expectedExceptions = IllegalArgumentException.class)
    public void testWrongQueryBuilding6() throws Exception {
-      QueryFactory qf = Search.getSearchManager(cache2).getQueryFactory();
+      QueryFactory qf = Search.getQueryFactory(cache2);
 
       Query q = qf.from(User.class)
             .having("gender").eq(null)
@@ -1339,7 +1344,7 @@ public class ClusteredQueryDslConditionsTest extends MultipleCacheManagersTest {
 
    @Test(expectedExceptions = IllegalStateException.class)
    public void testWrongQueryBuilding7() throws Exception {
-      QueryFactory qf = Search.getSearchManager(cache2).getQueryFactory();
+      QueryFactory qf = Search.getQueryFactory(cache2);
 
       FilterConditionEndContext q1 = qf.from(User.class)
             .having("gender");

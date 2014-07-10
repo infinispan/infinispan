@@ -158,7 +158,7 @@ public class QueryDslConditionsTest extends AbstractQueryDslTest {
    }
 
    protected QueryFactory getQueryFactory() {
-      return Search.getSearchManager(cache).getQueryFactory();
+      return Search.getQueryFactory(cache);
    }
 
    public void testIndexPresence() {

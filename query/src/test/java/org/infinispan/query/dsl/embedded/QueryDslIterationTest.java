@@ -12,7 +12,6 @@ import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
-import java.util.ArrayList;
 import java.util.List;
 
 import static org.testng.AssertJUnit.assertEquals;
@@ -62,7 +61,7 @@ public class QueryDslIterationTest extends AbstractQueryDslTest {
    }
 
    public void testOrderByAsc() throws Exception {
-      QueryFactory qf = Search.getSearchManager(cache).getQueryFactory();
+      QueryFactory qf = Search.getQueryFactory(cache);
 
       Query q = qf.from(User.class)
             .orderBy("name", SortOrder.ASC).build();
@@ -75,7 +74,7 @@ public class QueryDslIterationTest extends AbstractQueryDslTest {
    }
 
    public void testOrderByDesc() throws Exception {
-      QueryFactory qf = Search.getSearchManager(cache).getQueryFactory();
+      QueryFactory qf = Search.getQueryFactory(cache);
 
       Query q = qf.from(User.class)
             .orderBy("surname", SortOrder.DESC).build();
@@ -88,7 +87,7 @@ public class QueryDslIterationTest extends AbstractQueryDslTest {
    }
 
    public void testMaxResults() throws Exception {
-      QueryFactory qf = Search.getSearchManager(cache).getQueryFactory();
+      QueryFactory qf = Search.getQueryFactory(cache);
 
       Query q = qf.from(User.class)
             .orderBy("name", SortOrder.ASC).maxResults(2).build();
@@ -101,7 +100,7 @@ public class QueryDslIterationTest extends AbstractQueryDslTest {
    }
 
    public void testStartOffset() throws Exception {
-      QueryFactory qf = Search.getSearchManager(cache).getQueryFactory();
+      QueryFactory qf = Search.getQueryFactory(cache);
 
       Query q = qf.from(User.class)
             .orderBy("name", SortOrder.ASC).startOffset(2).build();
@@ -114,7 +113,7 @@ public class QueryDslIterationTest extends AbstractQueryDslTest {
    }
 
    public void testProjection1() throws Exception {
-      QueryFactory qf = Search.getSearchManager(cache).getQueryFactory();
+      QueryFactory qf = Search.getQueryFactory(cache);
 
       Query q = qf.from(User.class)
             .setProjection("id", "name").build();
@@ -155,7 +154,7 @@ public class QueryDslIterationTest extends AbstractQueryDslTest {
    }
 
    private LuceneQuery getIterationQuery() {
-      QueryFactory qf = Search.getSearchManager(cache).getQueryFactory();
+      QueryFactory qf = Search.getQueryFactory(cache);
 
       QueryBuilder<LuceneQuery> queryQueryBuilder = qf.from(User.class)
             .not().having("surname").eq("Blue").toBuilder();
