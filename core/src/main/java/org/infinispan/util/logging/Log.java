@@ -1110,4 +1110,8 @@ public interface Log extends BasicLogger {
    @LogMessage(level = WARN)
    @Message(value = "Issue when retrieving transactions from %s, response was %s", id = 302)
    void unsuccessfulResponseRetrievingTransactionsForSegments(Address address, Response response);
+
+   @LogMessage(level = WARN)
+   @Message(value = "More than one configuration file with specified name on classpath. The first one will be used:\n %s", id = 303)
+   void ambiguousConfigurationFiles(String files);
 }
