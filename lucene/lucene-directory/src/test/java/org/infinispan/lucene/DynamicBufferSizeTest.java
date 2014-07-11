@@ -71,23 +71,18 @@ public class DynamicBufferSizeTest extends SingleCacheManagerTest {
 
       FileMetadata data4 = data1;
 
-      data1.touch();
-      data2.touch();
 
       assert !data1.equals(new FileCacheKey("testIndex", "testFile"));
       AssertJUnit.assertNotNull(data1);
       assert data1.equals(data4);
-      assert !data1.equals(data3);
 
-      data3.setLastModified(data1.getLastModified());
       assert data1.equals(data3);
 
       data3.setSize(2048);
       assert !data1.equals(data3);
 
-      data2.setLastModified(data1.getLastModified());
       assert !data1.equals(data2);
 
-      AssertJUnit.assertEquals("FileMetadata{" + "lastModified=" + data1.getLastModified() + ", size=" + data1.getSize() + '}', data1.toString());
+      AssertJUnit.assertEquals("FileMetadata{ size=" + data1.getSize() + '}', data1.toString());
    }
 }

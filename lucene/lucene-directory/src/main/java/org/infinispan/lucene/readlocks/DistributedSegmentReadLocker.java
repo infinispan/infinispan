@@ -60,11 +60,11 @@ public class DistributedSegmentReadLocker implements SegmentReadLocker {
 
    /**
     * Deletes or releases a read-lock for the specified filename, so that if it was marked as deleted and
-    * no other {@link InfinispanIndexInput} instances are reading from it, then it will
+    * no other {@link org.infinispan.lucene.impl.InfinispanIndexInput} instances are reading from it, then it will
     * be effectively deleted.
     *
     * @see #acquireReadLock(String)
-    * @see Directory#deleteFile(String)
+    * @see org.apache.lucene.store.Directory#deleteFile(String)
     */
    @Override
    public void deleteOrReleaseReadLock(String filename) {
@@ -144,7 +144,7 @@ public class DistributedSegmentReadLocker implements SegmentReadLocker {
    }
 
    /**
-    * The {@link Directory#deleteFile(String)} is not deleting the elements from the cache
+    * The {@link org.apache.lucene.store.Directory#deleteFile(String)} is not deleting the elements from the cache
     * but instead flagging the file as deletable.
     * This method will really remove the elements from the cache; should be invoked only
     * by {@link #deleteOrReleaseReadLock(String)} after having verified that there

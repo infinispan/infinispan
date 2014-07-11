@@ -178,7 +178,6 @@ public class InfinispanIndexOutput {
       buffer = null;
       firstChunkBuffer = null;
       // override existing file header with updated accesstime
-      file.touch();
       metadataCache.withFlags(Flag.IGNORE_RETURN_VALUES).put(fileKey, file);
       fileOps.addFileName(this.fileKey.getFileName());
       if (trace) {

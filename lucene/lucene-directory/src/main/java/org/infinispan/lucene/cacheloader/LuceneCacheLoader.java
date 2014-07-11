@@ -40,21 +40,20 @@ public class LuceneCacheLoader implements AdvancedCacheLoader {
 
    private static final Log log = LogFactory.getLog(LuceneCacheLoader.class, Log.class);
 
-   private final ConcurrentHashMap<String,DirectoryLoaderAdaptor> openDirectories = new ConcurrentHashMap<String, DirectoryLoaderAdaptor>();
+   private final ConcurrentHashMap<String,DirectoryLoaderAdaptor> openDirectories = new ConcurrentHashMap<>();
    private String fileRoot;
    private File rootDirectory;
    private int autoChunkSize;
 
-   private LuceneLoaderConfiguration configuration;
    private InitializationContext ctx;
 
 
    @Override
    public void init(InitializationContext ctx) {
       this.ctx = ctx;
-      this.configuration = ctx.getConfiguration();
-      this.fileRoot = this.configuration.location();
-      this.autoChunkSize = this.configuration.autoChunkSize();
+      LuceneLoaderConfiguration configuration = ctx.getConfiguration();
+      this.fileRoot = configuration.location();
+      this.autoChunkSize = configuration.autoChunkSize();
    }
 
    @Override
@@ -100,7 +99,7 @@ public class LuceneCacheLoader implements AdvancedCacheLoader {
             @Override
             public Void call() throws Exception {
                try {
-                  final HashSet<MarshalledEntry> allInternalEntries = new HashSet<MarshalledEntry>();
+                  final HashSet<MarshalledEntry> allInternalEntries = new HashSet<>();
                   dir.loadAllEntries(allInternalEntries, Integer.MAX_VALUE, ctx.getMarshaller());
                   for (MarshalledEntry me : allInternalEntries) {
                      if (taskContext.isStopped())
@@ -135,14 +134,16 @@ public class LuceneCacheLoader implements AdvancedCacheLoader {
     */
    private void scanForUnknownDirectories() {
       File[] filesInRoot = rootDirectory.listFiles();
-      for (File maybeDirectory : filesInRoot) {
-         if (maybeDirectory.isDirectory()) {
-            String name = maybeDirectory.getName();
-            try {
-               getDirectory(name);
-            }
-            catch (PersistenceException e) {
-               log.couldNotWalkDirectory(name, e);
+      if (filesInRoot != null) {
+         for (File maybeDirectory : filesInRoot) {
+            if (maybeDirectory.isDirectory()) {
+               String name = maybeDirectory.getName();
+               try {
+                  getDirectory(name);
+               }
+               catch (PersistenceException e) {
+                  log.couldNotWalkDirectory(name, e);
+               }
             }
          }
       }
@@ -189,8 +190,7 @@ public class LuceneCacheLoader implements AdvancedCacheLoader {
             if (adapter == null) {
                final File path = new File(this.rootDirectory, indexName);
                final FSDirectory directory = openLuceneDirectory(path);
-               final InternalDirectoryContract wrapped = ContractAdaptorFactory.wrapNativeDirectory(directory);
-               adapter = new DirectoryLoaderAdaptor(wrapped, indexName, autoChunkSize);
+               adapter = new DirectoryLoaderAdaptor(directory, indexName, autoChunkSize);
                openDirectories.put(indexName, adapter);
             }
          }

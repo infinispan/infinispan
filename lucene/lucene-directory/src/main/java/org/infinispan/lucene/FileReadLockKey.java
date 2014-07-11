@@ -81,9 +81,7 @@ public final class FileReadLockKey implements Serializable, IndexScopedKey {
       if (FileReadLockKey.class != obj.getClass())
          return false;
       FileReadLockKey other = (FileReadLockKey) obj;
-      if (!fileName.equals(other.fileName))
-         return false;
-      return indexName.equals(other.indexName);
+      return fileName.equals(other.fileName) && indexName.equals(other.indexName);
    }
 
    @Override
