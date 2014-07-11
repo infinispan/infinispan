@@ -106,7 +106,6 @@ public abstract class BaseDistributionInterceptor extends ClusteringInterceptor 
       ClusteredGetCommand get = cf.buildClusteredGetCommand(key, command.getFlags(), acquireRemoteLock, gtx);
       get.setWrite(isWrite);
 
-
       RpcOptionsBuilder rpcOptionsBuilder = rpcManager.getRpcOptionsBuilder(ResponseMode.WAIT_FOR_VALID_RESPONSE, false);
       int lastTopologyId = -1;
       InternalCacheEntry value = null;
@@ -123,11 +122,11 @@ public abstract class BaseDistributionInterceptor extends ClusteringInterceptor 
             // Cache topology has changed or it is the first time.
             lastTopologyId = currentTopologyId;
             targets = new ArrayList<Address>(cacheTopology.getReadConsistentHash().locateOwners(key));
-         } else if (lastTopologyId == currentTopologyId) {
+         } else if (lastTopologyId == currentTopologyId && cacheTopology.getPendingCH() != null) {
             // Same topologyId, but the owners could have already installed the next topology
-            // Lets try with write consistent owners (the read owners in the next topology)
+            // Lets try with pending consistent owners (the read owners in the next topology)
             lastTopologyId = currentTopologyId + 1;
-            targets = new ArrayList<Address>(cacheTopology.getWriteConsistentHash().locateOwners(key));
+            targets = new ArrayList<Address>(cacheTopology.getPendingCH().locateOwners(key));
             // Remove already contacted nodes
             targets.removeAll(cacheTopology.getReadConsistentHash().locateOwners(key));
             if (targets.isEmpty()) {
@@ -136,8 +135,8 @@ public abstract class BaseDistributionInterceptor extends ClusteringInterceptor 
                }
                break;
             }
-         } else { // lastTopologyId > currentTopologyId
-            // We have not received a valid value from the write CH owners either, and the topology id hasn't changed
+         } else { // lastTopologyId > currentTopologyId || cacheTopology.getPendingCH() == null
+            // We have not received a valid value from the pending CH owners either, and the topology id hasn't changed
             if (trace) {
                log.tracef("No valid values found for key '%s' (topologyId=%s).", key, currentTopologyId);
             }
