@@ -37,7 +37,7 @@ public interface AdvancedCacheLoader<K, V> extends CacheLoader<K, V> {
     *                      as well
     * @throws PersistenceException in case of an error, e.g. communicating with the external storage
     */
-   void process(KeyFilter<? super K> filter, CacheLoaderTask<? super K, ? super V> task, Executor executor, boolean fetchValue, boolean fetchMetadata);
+   void process(KeyFilter<? super K> filter, CacheLoaderTask<K, V> task, Executor executor, boolean fetchValue, boolean fetchMetadata);
 
    /**
     * Returns the number of elements in the store.
