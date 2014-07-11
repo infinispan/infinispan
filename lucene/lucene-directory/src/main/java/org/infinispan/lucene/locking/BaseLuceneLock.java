@@ -48,7 +48,7 @@ class BaseLuceneLock extends Lock implements Closeable {
          return true;
       } else {
          if (log.isTraceEnabled()) {
-            log.tracef("Lock: %s not aquired for index: %s, was taken already.", lockName, indexName);
+            log.tracef("Lock: %s not acquired for index: %s, was taken already.", lockName, indexName);
          }
          return false;
       }
@@ -66,8 +66,7 @@ class BaseLuceneLock extends Lock implements Closeable {
 
    @Override
    public boolean isLocked() {
-      boolean locked = noCacheStoreCache.containsKey(keyOfLock);
-      return locked;
+      return noCacheStoreCache.containsKey(keyOfLock);
    }
 
    /**

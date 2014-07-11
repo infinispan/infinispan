@@ -64,10 +64,6 @@ public interface Log extends org.infinispan.util.logging.Log {
    @Message(value = "The configured autoChunkSize is too small for segment file %s as it is %d bytes; auto-scaling chunk size to %d", id = 15011)
    void rescalingChunksize(String fileName, long fileLength, int chunkSize);
 
-   @LogMessage(level = DEBUG)
-   @Message(value = "Lucene Directory detected Apache Lucene v. '%d' - this will affect which APIs are going to be provided", id = 15013)
-   void detectedLuceneVersion(int version);
-
    @Message(value = "Lucene Directory for index '%s' can not use Cache '%s': maximum lifespan enabled on the Cache configuration!", id = 15014)
    IllegalArgumentException luceneStorageHavingLifespanSet(String indexName, String cacheName);
 

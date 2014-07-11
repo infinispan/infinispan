@@ -4,7 +4,7 @@ import org.infinispan.Cache;
 import org.infinispan.lucene.impl.DirectoryBuilderImpl;
 
 /**
- * Builder class to create instances of the {@link Directory} implementation which stored data
+ * Builder class to create instances of the {@link org.apache.lucene.store.Directory} implementation which stored data
  * in the data grid.
  */
 public final class DirectoryBuilder {

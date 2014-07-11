@@ -10,7 +10,7 @@ import org.infinispan.util.logging.LogFactory;
  * To configure a JdbcStringBasedCacheStoreConfig for the Lucene Directory, use this
  * Key2StringMapper implementation.
  *
- * @see JdbcStringBasedCacheStoreConfig#setKey2StringMapperClass(String)
+ * @see org.infinispan.persistence.jdbc.configuration.JdbcStringBasedStoreConfigurationBuilder#key2StringMapper(String)
  *
  * @author Sanne Grinovero
  * @since 4.1
@@ -67,26 +67,24 @@ public final class LuceneKey2StringMapper implements TwoWayKey2StringMapper {
             throw log.keyMappperUnexpectedStringFormat(key);
          }
          else {
-            if ("M".equals(split[1])) {
-               if (split.length != 3) {
-                  throw log.keyMappperUnexpectedStringFormat(key);
-               }
-               return new FileCacheKey(split[2], split[0]);
-            }
-            else if ("RL".equals(split[1])) {
-               if (split.length != 3) throw log.keyMappperUnexpectedStringFormat(key);
-               return new FileReadLockKey(split[2], split[0]);
-            }
-            else {
-               if (split.length != 4) throw log.keyMappperUnexpectedStringFormat(key);
-               try {
-                  int chunkId = Integer.parseInt(split[1]);
-                  int bufferSize = Integer.parseInt(split[2]);
-                  return new ChunkCacheKey(split[3], split[0], chunkId, bufferSize);
-               }
-               catch (NumberFormatException nfe) {
-                  throw log.keyMappperUnexpectedStringFormat(key);
-               }
+            switch (split[1]) {
+               case "M":
+                  if (split.length != 3) {
+                     throw log.keyMappperUnexpectedStringFormat(key);
+                  }
+                  return new FileCacheKey(split[2], split[0]);
+               case "RL":
+                  if (split.length != 3) throw log.keyMappperUnexpectedStringFormat(key);
+                  return new FileReadLockKey(split[2], split[0]);
+               default:
+                  if (split.length != 4) throw log.keyMappperUnexpectedStringFormat(key);
+                  try {
+                     int chunkId = Integer.parseInt(split[1]);
+                     int bufferSize = Integer.parseInt(split[2]);
+                     return new ChunkCacheKey(split[3], split[0], chunkId, bufferSize);
+                  } catch (NumberFormatException nfe) {
+                     throw log.keyMappperUnexpectedStringFormat(key);
+                  }
             }
          }
       }

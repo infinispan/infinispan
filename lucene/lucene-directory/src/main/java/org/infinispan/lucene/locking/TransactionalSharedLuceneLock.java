@@ -59,7 +59,7 @@ class TransactionalSharedLuceneLock extends Lock implements Closeable {
       }
       else {
          if (log.isTraceEnabled()) {
-            log.tracef("Lock: %s not aquired for index: %s, was taken already.", lockName, indexName);
+            log.tracef("Lock: %s not acquired for index: %s, was taken already.", lockName, indexName);
          }
          return false;
       }
@@ -137,7 +137,7 @@ class TransactionalSharedLuceneLock extends Lock implements Closeable {
          throw new IOException("SharedLuceneLock could not commit a transaction", e);
       }
       if (log.isTraceEnabled()) {
-         log.tracef("Batch transaction commited for index: %s", indexName);
+         log.tracef("Batch transaction committed for index: %s", indexName);
       }
    }
 
