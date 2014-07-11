@@ -69,7 +69,7 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
  * @since 6.0
  */
 @ConfiguredBy(SingleFileStoreConfiguration.class)
-public class SingleFileStore implements AdvancedLoadWriteStore {
+public class SingleFileStore<K, V> implements AdvancedLoadWriteStore<K, V> {
    private static final Log log = LogFactory.getLog(SingleFileStore.class);
    private static final boolean trace = log.isTraceEnabled();
 
@@ -84,7 +84,7 @@ public class SingleFileStore implements AdvancedLoadWriteStore {
    protected InitializationContext ctx;
 
    private FileChannel channel;
-   private Map<Object, FileEntry> entries;
+   private Map<K, FileEntry> entries;
    private SortedSet<FileEntry> freeList;
    private long filePos = MAGIC.length;
    private File file;
@@ -135,9 +135,9 @@ public class SingleFileStore implements AdvancedLoadWriteStore {
       }
    }
 
-   private Map<Object, FileEntry> newEntryMap() {
+   private <Key> Map<Key, FileEntry> newEntryMap() {
       // only use LinkedHashMap (LRU) for entries when cache store is bounded
-      final Map<Object, FileEntry> entryMap;
+      final Map<Key, FileEntry> entryMap;
       Equivalence<Object> keyEq = ctx.getCache().getCacheConfiguration().dataContainer().keyEquivalence();
       if (configuration.maxEntries() > 0)
          entryMap = CollectionFactory.makeLinkedMap(16, 0.75f,
@@ -207,7 +207,8 @@ public class SingleFileStore implements AdvancedLoadWriteStore {
             channel.read(buf, fe.offset + KEY_POS);
 
             // deserialize key and add to entries map
-            Object key = ctx.getMarshaller().objectFromByteBuffer(buf.array(), 0, fe.keyLen);
+            // Marshaller should allow for provided type return for safety
+            K key = (K) ctx.getMarshaller().objectFromByteBuffer(buf.array(), 0, fe.keyLen);
             entries.put(key, fe);
          } else {
             // add to free list
@@ -318,7 +319,7 @@ public class SingleFileStore implements AdvancedLoadWriteStore {
    }
 
    @Override
-   public void write(MarshalledEntry marshalledEntry) {
+   public void write(MarshalledEntry<? extends K, ? extends V> marshalledEntry) {
       try {
          // serialize cache value
          org.infinispan.commons.io.ByteBuffer key = marshalledEntry.getKeyBytes();
@@ -433,11 +434,11 @@ public class SingleFileStore implements AdvancedLoadWriteStore {
    }
 
    @Override
-   public MarshalledEntry load(Object key) {
+   public MarshalledEntry<K, V> load(Object key) {
       return _load(key, true, true);
    }
 
-   private MarshalledEntry _load(Object key, boolean loadValue, boolean loadMetadata) {
+   private MarshalledEntry<K, V> _load(Object key, boolean loadValue, boolean loadMetadata) {
       final FileEntry fe;
       final boolean expired;
       resizeLock.readLock().lock();
@@ -499,11 +500,11 @@ public class SingleFileStore implements AdvancedLoadWriteStore {
    }
 
    @Override
-   public void process(KeyFilter filter, final CacheLoaderTask task, Executor executor, final boolean fetchValue, final boolean fetchMetadata) {
+   public void process(KeyFilter<? super K> filter, final CacheLoaderTask<K, V> task, Executor executor, final boolean fetchValue, final boolean fetchMetadata) {
       filter = PersistenceUtil.notNull(filter);
       Set<Object> keysToLoad = new HashSet<Object>(entries.size());
       synchronized (entries) {
-         for (Object k : entries.keySet()) {
+         for (K k : entries.keySet()) {
             if (filter.accept(k))
                keysToLoad.add(k);
          }
@@ -654,8 +655,8 @@ public class SingleFileStore implements AdvancedLoadWriteStore {
             long now = System.currentTimeMillis();
             List<KeyValuePair<Object, FileEntry>> entriesToPurge = new ArrayList<KeyValuePair<Object, FileEntry>>();
             synchronized (entries) {
-               for (Iterator<Map.Entry<Object, FileEntry>> it = entries.entrySet().iterator(); it.hasNext(); ) {
-                  Map.Entry<Object, FileEntry> next = it.next();
+               for (Iterator<Map.Entry<K, FileEntry>> it = entries.entrySet().iterator(); it.hasNext(); ) {
+                  Map.Entry<K, FileEntry> next = it.next();
                   FileEntry fe = next.getValue();
                   if (fe.isExpired(now)) {
                      it.remove();
@@ -696,7 +697,7 @@ public class SingleFileStore implements AdvancedLoadWriteStore {
       return entries.size();
    }
 
-   Map<Object, FileEntry> getEntries() {
+   Map<K, FileEntry> getEntries() {
       return entries;
    }
 
