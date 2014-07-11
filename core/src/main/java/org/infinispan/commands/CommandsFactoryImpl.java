@@ -504,8 +504,8 @@ public class CommandsFactoryImpl implements CommandsFactory {
    }
 
    @Override
-   public StateResponseCommand buildStateResponseCommand(Address sender, int viewId, Collection<StateChunk> stateChunks) {
-      return new StateResponseCommand(cacheName, sender, viewId, stateChunks);
+   public StateResponseCommand buildStateResponseCommand(Address sender, int topologyId, Collection<StateChunk> stateChunks) {
+      return new StateResponseCommand(cacheName, sender, topologyId, stateChunks);
    }
 
    @Override

@@ -261,8 +261,8 @@ public class ControlledCommandFactory implements CommandsFactory {
    }
 
    @Override
-   public StateResponseCommand buildStateResponseCommand(Address sender, int viewId, Collection<StateChunk> stateChunks) {
-      return actual.buildStateResponseCommand(sender, viewId, stateChunks);
+   public StateResponseCommand buildStateResponseCommand(Address sender, int topologyId, Collection<StateChunk> stateChunks) {
+      return actual.buildStateResponseCommand(sender, topologyId, stateChunks);
    }
 
    @Override
