@@ -17,6 +17,7 @@ import java.util.concurrent.ConcurrentMap;
 @SuppressWarnings("unchecked")
 public class LocalLockMergingSegmentReadLocker implements SegmentReadLocker {
 
+   //Accessed concurrently only during lock release (cleanup)
    private final ConcurrentMap<String, LocalReadLock> localLocks = CollectionFactory.makeConcurrentMap();
    private final DistributedSegmentReadLocker delegate;
 
@@ -45,7 +46,7 @@ public class LocalLockMergingSegmentReadLocker implements SegmentReadLocker {
     * {@inheritDoc}
     */
    @Override
-   public boolean acquireReadLock(String name) {
+   public synchronized boolean acquireReadLock(String name) {
       LocalReadLock localReadLock = getLocalLockByName(name);
       boolean acquired = localReadLock.acquire();
       if (acquired) {
@@ -62,8 +63,8 @@ public class LocalLockMergingSegmentReadLocker implements SegmentReadLocker {
       LocalReadLock localReadLock = localLocks.get(name);
       if (localReadLock == null) {
          LocalReadLock newReadLock = new LocalReadLock(name);
-         LocalReadLock prevReadLock = localLocks.putIfAbsent(name, newReadLock);
-         localReadLock = prevReadLock == null ? newReadLock : prevReadLock;
+         localLocks.put(name, newReadLock);
+         return newReadLock;
       }
       return localReadLock;
    }
@@ -73,7 +74,10 @@ public class LocalLockMergingSegmentReadLocker implements SegmentReadLocker {
     */
    @Override
    public void deleteOrReleaseReadLock(String name) {
-      getLocalLockByName(name).release();
+      LocalReadLock localReadLock = localLocks.get(name);
+      if (localReadLock != null) {
+         localReadLock.release();
+      }
    }
 
    private class LocalReadLock {
