@@ -358,7 +358,7 @@ public class InfinispanDirectoryIOTest {
       file1.setSize(helloText.length());
       file2.setSize(worldText.length());
 
-      Set<String> s = new HashSet<String>();
+      Set<String> s = new HashSet<>();
       s.add("Hello.txt");
       s.add("World.txt");
       Set other = new HashSet(Arrays.asList(dir.listAll()));

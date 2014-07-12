@@ -19,7 +19,7 @@ import org.infinispan.util.logging.LogFactory;
  * @see org.apache.lucene.store.Directory
  * @see org.apache.lucene.store.IndexInput
  */
-abstract class InfinispanIndexInput extends IndexInput {
+public class InfinispanIndexInput extends IndexInput {
 
 
    private static final Log log = LogFactory.getLog(InfinispanIndexInput.class);
@@ -138,6 +138,16 @@ abstract class InfinispanIndexInput extends IndexInput {
    @Override
    public long length() {
       return this.fileLength;
+   }
+
+   @Override
+   public InfinispanIndexInput clone() {
+      InfinispanIndexInput clone = (InfinispanIndexInput)super.clone();
+      // reference counting doesn't work properly: need to use isClone
+      // as in other Directory implementations. Apparently not all clones
+      // are cleaned up, but the original is (especially .tis files)
+      clone.isClone = true;
+      return clone;
    }
 
 }

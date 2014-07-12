@@ -60,11 +60,11 @@ public class DistributedSegmentReadLocker implements SegmentReadLocker {
 
    /**
     * Deletes or releases a read-lock for the specified filename, so that if it was marked as deleted and
-    * no other {@link InfinispanIndexInput} instances are reading from it, then it will
+    * no other {@link org.infinispan.lucene.impl.InfinispanIndexInput} instances are reading from it, then it will
     * be effectively deleted.
     *
     * @see #acquireReadLock(String)
-    * @see Directory#deleteFile(String)
+    * @see org.apache.lucene.store.Directory#deleteFile(String)
     */
    @Override
    public void deleteOrReleaseReadLock(String filename) {
@@ -72,15 +72,14 @@ public class DistributedSegmentReadLocker implements SegmentReadLocker {
       int newValue = 0;
       boolean done = false;
       Object lockValue = locksCache.get(readLockKey);
-      while (done == false) {
+      while (!done) {
          if (lockValue == null) {
             lockValue = locksCache.putIfAbsent(readLockKey, 0);
             done = (null == lockValue);
          }
          else {
             Integer refCountObject = (Integer) lockValue;
-            int refCount = refCountObject.intValue();
-            newValue = refCount - 1;
+            newValue = refCountObject - 1;
             done = locksCache.replace(readLockKey, refCountObject, newValue);
             if (!done) {
                lockValue = locksCache.get(readLockKey);
@@ -112,14 +111,13 @@ public class DistributedSegmentReadLocker implements SegmentReadLocker {
       FileReadLockKey readLockKey = new FileReadLockKey(indexName, filename);
       Integer lockValue = locksCache.get(readLockKey);
       boolean done = false;
-      while (done == false) {
+      while (!done) {
          if (lockValue != null) {
-            int refCount = lockValue.intValue();
-            if (refCount == 0) {
-               // too late: in case refCount==0 the delete is being performed
+            if (lockValue == 0) {
+               // too late: in case lockValue==0 the delete is being performed
                return false;
             }
-            Integer newValue = Integer.valueOf(refCount + 1);
+            Integer newValue = lockValue + 1;
             done = locksCache.replace(readLockKey, lockValue, newValue);
             if ( ! done) {
                lockValue = locksCache.get(readLockKey);
@@ -144,7 +142,7 @@ public class DistributedSegmentReadLocker implements SegmentReadLocker {
    }
 
    /**
-    * The {@link Directory#deleteFile(String)} is not deleting the elements from the cache
+    * The {@link org.apache.lucene.store.Directory#deleteFile(String)} is not deleting the elements from the cache
     * but instead flagging the file as deletable.
     * This method will really remove the elements from the cache; should be invoked only
     * by {@link #deleteOrReleaseReadLock(String)} after having verified that there

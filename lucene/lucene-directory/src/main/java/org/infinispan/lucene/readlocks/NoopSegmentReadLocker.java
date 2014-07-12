@@ -23,7 +23,6 @@ public class NoopSegmentReadLocker implements SegmentReadLocker {
     */
    @Override
    public void deleteOrReleaseReadLock(String filename) {
-      return;
    }
 
 }

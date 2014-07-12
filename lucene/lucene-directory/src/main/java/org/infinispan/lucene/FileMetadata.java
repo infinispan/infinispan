@@ -23,7 +23,6 @@ public final class FileMetadata implements Serializable {
    /** The serialVersionUID */
    private static final long serialVersionUID = -7150923427362644166L;
 
-   private long lastModified = 0;
    private long size = 0;
    private final int bufferSize;
 
@@ -31,22 +30,9 @@ public final class FileMetadata implements Serializable {
       this.bufferSize = bufferSize;
    }
 
-   private FileMetadata(long lastModified, long size, int bufferSize) {
-      this.lastModified = lastModified;
+   private FileMetadata(long size, int bufferSize) {
       this.size = size;
       this.bufferSize = bufferSize;
-   }
-
-   public void touch() {
-      setLastModified(System.currentTimeMillis());
-   }
-
-   public long getLastModified() {
-      return lastModified;
-   }
-
-   public void setLastModified(long lastModified) {
-      this.lastModified = lastModified;
    }
 
    public long getSize() {
@@ -79,36 +65,32 @@ public final class FileMetadata implements Serializable {
          return false;
       }
       FileMetadata metadata = (FileMetadata) o;
-      return lastModified == metadata.lastModified && size == metadata.size && bufferSize == metadata.bufferSize;
+      return  size == metadata.size && bufferSize == metadata.bufferSize;
    }
 
    @Override
    public int hashCode() {
-      int result = (int) (lastModified ^ (lastModified >>> 32));
-      result = 31 * result + (int) (size ^ (size >>> 32));
-      return result;
+      return (int) (size ^ (size >>> 32));
    }
 
    @Override
    public String toString() {
-      return "FileMetadata{" + "lastModified=" + lastModified + ", size=" + size + '}';
+      return "FileMetadata{" +  " size=" + size + '}';
    }
 
    public static final class Externalizer extends AbstractExternalizer<FileMetadata> {
 
       @Override
       public void writeObject(ObjectOutput output, FileMetadata metadata) throws IOException {
-         UnsignedNumeric.writeUnsignedLong(output, metadata.lastModified);
          UnsignedNumeric.writeUnsignedLong(output, metadata.size);
          UnsignedNumeric.writeUnsignedInt(output, metadata.bufferSize);
       }
 
       @Override
       public FileMetadata readObject(ObjectInput input) throws IOException {
-         long lastModified = UnsignedNumeric.readUnsignedLong(input);
          long size = UnsignedNumeric.readUnsignedLong(input);
          int bufferSize = UnsignedNumeric.readUnsignedInt(input);
-         return new FileMetadata(lastModified, size, bufferSize);
+         return new FileMetadata(size, bufferSize);
       }
 
       @Override

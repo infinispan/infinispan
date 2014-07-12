@@ -9,7 +9,7 @@ import java.util.Map;
 
 /**
  * Module lifecycle callbacks implementation that enables module specific
- * {@link org.infinispan.marshall.AdvancedExternalizer} implementations to be registered.
+ * {@link org.infinispan.commons.marshall.AdvancedExternalizer} implementations to be registered.
  *
  * @author Galder Zamarreño
  * @author Sanne Grinovero

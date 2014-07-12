@@ -1,13 +1,23 @@
 package org.infinispan.lucene.cacheloader;
 
-import java.io.IOException;
-
+import org.apache.lucene.store.Directory;
+import org.apache.lucene.store.IOContext;
 import org.apache.lucene.store.IndexInput;
 import org.infinispan.lucene.ChunkCacheKey;
 import org.infinispan.lucene.FileCacheKey;
 import org.infinispan.lucene.FileMetadata;
+import org.mockito.invocation.InvocationOnMock;
+import org.mockito.stubbing.Answer;
 import org.testng.AssertJUnit;
 import org.testng.annotations.Test;
+
+import java.io.IOException;
+
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
+
 
 /**
  * Test for extra-large indexes, where an int isn't large enough to hold file sizes.
@@ -23,19 +33,36 @@ public class LargeIndexesTest {
    private static final long TEST_SIZE = ((long)Integer.MAX_VALUE) + 10;//something not fitting in int
    private static final int AUTO_BUFFER = 16;//ridiculously low
 
-   public void testAutoChunkingOnLargeFiles() {
+   private Directory createMockDirectory() throws IOException {
+      Directory mockDirectory = mock(Directory.class);
+      when(mockDirectory.openInput(FILE_NAME, IOContext.READ)).thenAnswer(new Answer<IndexInputMock>() {
+         @Override
+         public IndexInputMock answer(InvocationOnMock invocationOnMock) throws Throwable {
+            return new IndexInputMock(FILE_NAME);
+         }
+      });
+      when(mockDirectory.fileLength(FILE_NAME)).thenReturn(TEST_SIZE);
+      verify(mockDirectory, never()).listAll();
+      verify(mockDirectory, never()).fileExists(FILE_NAME);
+      return mockDirectory;
+   }
+
+   public void testAutoChunkingOnLargeFiles() throws IOException {
+      Directory mockDirectory = createMockDirectory();
+
       FileCacheKey k = new FileCacheKey(INDEX_NAME, FILE_NAME);
-      DirectoryLoaderAdaptor adaptor = new DirectoryLoaderAdaptor(new InternalDirectoryContractImpl(), INDEX_NAME, AUTO_BUFFER);
+      DirectoryLoaderAdaptor adaptor = new DirectoryLoaderAdaptor(mockDirectory, INDEX_NAME, AUTO_BUFFER);
       Object loaded = adaptor.load(k);
       AssertJUnit.assertTrue(loaded instanceof FileMetadata);
       FileMetadata metadata = (FileMetadata)loaded;
-      AssertJUnit.assertEquals(23, metadata.getLastModified());
       AssertJUnit.assertEquals(TEST_SIZE, metadata.getSize());
       AssertJUnit.assertEquals(AUTO_BUFFER, metadata.getBufferSize());
    }
 
-   public void testSmallChunkLoading() {
-      DirectoryLoaderAdaptor adaptor = new DirectoryLoaderAdaptor(new InternalDirectoryContractImpl(), INDEX_NAME, AUTO_BUFFER);
+   public void testSmallChunkLoading() throws IOException {
+      Directory mockDirectory = createMockDirectory();
+
+      DirectoryLoaderAdaptor adaptor = new DirectoryLoaderAdaptor(mockDirectory, INDEX_NAME, AUTO_BUFFER);
       Object loaded = adaptor.load(new ChunkCacheKey(INDEX_NAME, FILE_NAME, 0, AUTO_BUFFER));
       AssertJUnit.assertTrue(loaded instanceof byte[]);
       AssertJUnit.assertEquals(AUTO_BUFFER, ((byte[])loaded).length);
@@ -48,44 +75,6 @@ public class LargeIndexesTest {
       loaded = adaptor.load(new ChunkCacheKey(INDEX_NAME, FILE_NAME, lastChunk, AUTO_BUFFER));
       AssertJUnit.assertTrue(loaded instanceof byte[]);
       AssertJUnit.assertEquals(lastChunkSize, ((byte[])loaded).length);
-   }
-
-   //Simple home-made mock:
-   private static class InternalDirectoryContractImpl implements InternalDirectoryContract {
-
-      @Override
-      public String[] listAll() throws IOException {
-         AssertJUnit.fail("should not be invoked");
-         return null;//compiler thinks we could reach this
-      }
-
-      @Override
-      public long fileLength(String fileName) throws IOException {
-         AssertJUnit.assertEquals(FILE_NAME, fileName);
-         return TEST_SIZE;
-      }
-
-      @Override
-      public void close() throws IOException {
-      }
-
-      @Override
-      public long fileModified(String fileName) {
-         AssertJUnit.assertEquals(FILE_NAME, fileName);
-         return 23;
-      }
-
-      @Override
-      public IndexInput openInput(String fileName) {
-         AssertJUnit.assertEquals(FILE_NAME, fileName);
-         return new IndexInputMock(fileName);
-      }
-
-      @Override
-      public boolean fileExists(String fileName) {
-         AssertJUnit.fail("should not be invoked");
-         return false;
-      }
    }
 
    private static class IndexInputMock extends IndexInput {

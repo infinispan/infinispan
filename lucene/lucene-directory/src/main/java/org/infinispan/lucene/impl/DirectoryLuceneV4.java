@@ -14,7 +14,7 @@ import org.infinispan.lucene.readlocks.SegmentReadLocker;
 
 /**
  * Directory implementation for Apache Lucene.
- * Meant to be compatible with the versions from 4.0 to 4.8.
+ * Meant to be compatible with versions 4.0+
  *
  * @since 5.2
  * @author Sanne Grinovero
@@ -98,7 +98,7 @@ class DirectoryLuceneV4 extends Directory implements DirectoryExtensions {
          return new SingleChunkIndexInput(indexInputContext);
       }
       else {
-         return new InfinispanIndexInputV4(indexInputContext);
+         return new InfinispanIndexInput(indexInputContext);
       }
    }
 

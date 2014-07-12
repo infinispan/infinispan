@@ -25,7 +25,7 @@ public interface SegmentReadLocker {
     * If it's invoked on a file without pending locks the file is deleted.
     *
     * @param fileName of the file to release or delete
-    * @see Directory#deleteFile(String)
+    * @see org.apache.lucene.store.Directory#deleteFile(String)
     */
    void deleteOrReleaseReadLock(String fileName);
 
@@ -33,10 +33,10 @@ public interface SegmentReadLocker {
     * Acquires a readlock, in order to prevent other invocations to {@link #deleteOrReleaseReadLock(String)}
     * from deleting the file.
     *
-    * @param filename
+    * @param filename of the file to acquire the lock at
     * @return true if the lock was acquired, false if the implementation
     * detects the file does not exist, or that it's being deleted by some other thread.
-    * @see Directory#openInput(String)
+    * @see org.apache.lucene.store.Directory#openInput
     */
    boolean acquireReadLock(String filename);
 
