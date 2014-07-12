@@ -1,9 +1,7 @@
 package org.infinispan.lucene.readlocks;
 
 import org.infinispan.Cache;
-import org.infinispan.commons.util.CollectionFactory;
-
-import java.util.concurrent.ConcurrentMap;
+import java.util.HashMap;
 
 /**
  * LocalLockMergingSegmentReadLocker decorates the {@link DistributedSegmentReadLocker} to minimize
@@ -17,7 +15,10 @@ import java.util.concurrent.ConcurrentMap;
 @SuppressWarnings("unchecked")
 public class LocalLockMergingSegmentReadLocker implements SegmentReadLocker {
 
-   private final ConcurrentMap<String, LocalReadLock> localLocks = CollectionFactory.makeConcurrentMap();
+   //Concurrent access is guarded by synchronization on this: it's actually better to block
+   //the invoking thread than to trigger an additional RPC: since delete operations are never
+   //undone, a longer block window allows for better aggregation of operations.
+   private final HashMap<String, LocalReadLock> localLocks = new HashMap<String, LocalReadLock>();
    private final DistributedSegmentReadLocker delegate;
 
    /**
@@ -45,7 +46,7 @@ public class LocalLockMergingSegmentReadLocker implements SegmentReadLocker {
     * {@inheritDoc}
     */
    @Override
-   public boolean acquireReadLock(String name) {
+   public synchronized boolean acquireReadLock(String name) {
       LocalReadLock localReadLock = getLocalLockByName(name);
       boolean acquired = localReadLock.acquire();
       if (acquired) {
@@ -62,8 +63,8 @@ public class LocalLockMergingSegmentReadLocker implements SegmentReadLocker {
       LocalReadLock localReadLock = localLocks.get(name);
       if (localReadLock == null) {
          LocalReadLock newReadLock = new LocalReadLock(name);
-         LocalReadLock prevReadLock = localLocks.putIfAbsent(name, newReadLock);
-         localReadLock = prevReadLock == null ? newReadLock : prevReadLock;
+         localLocks.put(name, newReadLock);
+         return newReadLock;
       }
       return localReadLock;
    }
@@ -72,7 +73,7 @@ public class LocalLockMergingSegmentReadLocker implements SegmentReadLocker {
     * {@inheritDoc}
     */
    @Override
-   public void deleteOrReleaseReadLock(String name) {
+   public synchronized void deleteOrReleaseReadLock(String name) {
       getLocalLockByName(name).release();
    }
 
@@ -88,7 +89,7 @@ public class LocalLockMergingSegmentReadLocker implements SegmentReadLocker {
        * @return true if the lock was acquired, false if it's too late: the file
        * was deleted and this LocalReadLock should be removed too.
        */
-      synchronized boolean acquire() {
+      boolean acquire() {
          if (value == 0) {
             boolean haveIt = delegate.acquireReadLock(name);
             if (haveIt) {
@@ -107,7 +108,7 @@ public class LocalLockMergingSegmentReadLocker implements SegmentReadLocker {
          }
       }
 
-      synchronized void release() {
+      void release() {
          value--;
          if (value <= 0) {
             localLocks.remove(name);
