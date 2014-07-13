@@ -139,22 +139,22 @@ class DirectoryLuceneV4 extends Directory implements DirectoryExtensions {
       //This implementation is always in sync with the storage, so NOOP is fine
    }
 
-   //@Override New method since Lucene 4.6
+   @Override
    public void clearLock(String lockName) throws IOException {
       lockFactory.clearLock(lockName);
    }
 
-   //@Override New method since Lucene 4.6
+   @Override
    public LockFactory getLockFactory() {
       return lockFactory;
    }
 
-   //@Override New method since Lucene 4.6
+   @Override
    public Lock makeLock(String lockName) {
       return lockFactory.makeLock(lockName);
    }
 
-   //@Override New method since Lucene 4.6
+   @Override
    public void setLockFactory(LockFactory lockFactory) throws IOException {
       this.lockFactory = lockFactory;
    }
