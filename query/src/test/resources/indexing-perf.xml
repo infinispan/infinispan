@@ -7,9 +7,9 @@
    <cache-container default-cache="default" statistics="false">
       <jmx duplicate-domains="true" />
       <transport cluster="Infinispan-Query-Cluster"/>
-      <distributed-cache name="default" mode="SYNC" remote-timeout="20000" statistics="true" batching="true">
+      <distributed-cache name="default" mode="SYNC" remote-timeout="20000" statistics="true">
          <locking acquire-timeout="20000" write-skew="false" concurrency-level="500" striping="false" />
-         <transaction locking-mode="PESSIMISTIC"/>
+         <transaction mode="BATCH" locking="PESSIMISTIC"/>
          <state-transfer timeout="480000" enabled="true" />
          <eviction max-entries="-1" strategy="NONE" />
          <expiration max-idle="-1" />
@@ -48,7 +48,7 @@
       <!-- *************************************** -->
       <!--  Cache to store Lucene's file metadata  -->
       <!-- *************************************** -->
-      <replicated-cache name="LuceneIndexesMetadata" mode="SYNC" remote-timeout="25000" batching="false">
+      <replicated-cache name="LuceneIndexesMetadata" mode="SYNC" remote-timeout="25000">
          <transaction mode="NONE"/>
          <state-transfer enabled="true" />
          <indexing index="NONE" />
@@ -56,7 +56,7 @@
       <!-- **************************** -->
       <!--  Cache to store Lucene data  -->
       <!-- **************************** -->
-      <distributed-cache name="LuceneIndexesData" mode="SYNC" remote-timeout="25000" batching="false">
+      <distributed-cache name="LuceneIndexesData" mode="SYNC" remote-timeout="25000">
          <transaction mode="NONE"/>
          <state-transfer enabled="true" />
          <indexing index="NONE" />
@@ -64,7 +64,7 @@
       <!-- ***************************** -->
       <!--  Cache to store Lucene locks  -->
       <!-- ***************************** -->
-      <replicated-cache name="LuceneIndexesLocking" mode="SYNC" remote-timeout="25000" batching="false">
+      <replicated-cache name="LuceneIndexesLocking" mode="SYNC" remote-timeout="25000">
          <transaction mode="NONE"/>
          <state-transfer enabled="true" />
          <indexing index="NONE" />

@@ -26,7 +26,7 @@
       <jmx domain="my-domain" mbean-server-lookup="org.infinispan.jmx.CustomMBeanServerPropertiesTest$TestLookup" duplicate-domains="true">
          <property name="key">value</property>
       </jmx>
-      <local-cache name="local" batching="false" start="EAGER" module="org.infinispan" statistics="true">
+      <local-cache name="local" start="EAGER" module="org.infinispan" statistics="true">
          <locking acquire-timeout="30000" concurrency-level="2000" isolation="NONE" striping="true"/>
          <transaction mode="FULL_XA" stop-timeout="60000" locking="OPTIMISTIC" transaction-manager-lookup="org.infinispan.transaction.lookup.JBossStandaloneJTAManagerLookup" complete-timeout="34000" reaper-interval="35000" auto-commit="true" />
          <eviction max-entries="20000" strategy="LIRS"/>
@@ -37,15 +37,15 @@
             </file-store>
          </persistence>
       </local-cache>
-      <invalidation-cache name="invalid" mode="ASYNC" batching="true" queue-flush-interval="10" queue-size="1000" start="LAZY" async-marshalling="true" statistics="true">
+      <invalidation-cache name="invalid" mode="ASYNC" queue-flush-interval="10" queue-size="1000" start="LAZY" async-marshalling="true" statistics="true">
          <locking acquire-timeout="30500" concurrency-level="2500" isolation="READ_UNCOMMITTED" striping="true"/>
-         <transaction mode="NON_XA" stop-timeout="60500"  locking="OPTIMISTIC"/>
+         <transaction mode="BATCH" stop-timeout="60500"  locking="OPTIMISTIC"/>
          <eviction max-entries="20500" strategy="LRU"/>
          <expiration interval="10500" lifespan="11" max-idle="11"/>
       </invalidation-cache>
-      <replicated-cache name="repl" mode="ASYNC" batching="true" queue-flush-interval="11" queue-size="1500" start="EAGER"  async-marshalling="false" statistics="true">
+      <replicated-cache name="repl" mode="ASYNC" queue-flush-interval="11" queue-size="1500" start="EAGER"  async-marshalling="false" statistics="true">
          <locking acquire-timeout="31000" concurrency-level="3000" isolation="SERIALIZABLE" striping="true"/>
-         <transaction mode="NON_DURABLE_XA" stop-timeout="61000" locking="PESSIMISTIC"/>
+         <transaction mode="BATCH" stop-timeout="61000" locking="PESSIMISTIC"/>
          <eviction max-entries="21000" strategy="FIFO"/>
          <expiration interval="11000" lifespan="12" max-idle="12"/>
          <persistence>
@@ -53,7 +53,7 @@
          </persistence>
          <state-transfer enabled="false" timeout="60000" chunk-size="10000" />
       </replicated-cache>
-      <distributed-cache name="dist" mode="SYNC" batching="false" l1-lifespan="1200000" owners="4"
+      <distributed-cache name="dist" mode="SYNC" l1-lifespan="1200000" owners="4"
                          remote-timeout="35000" start="EAGER" segments="2" async-marshalling="false" statistics="true"
                          consistent-hash-factory="org.infinispan.distribution.ch.impl.SyncConsistentHashFactory">
          <locking acquire-timeout="31500" concurrency-level="3500" isolation="READ_COMMITTED" striping="true"/>
@@ -111,22 +111,22 @@
             <file-store preload="true" purge="false"/>
          </persistence>
       </distributed-cache>
-      <replicated-cache name="HibernateSearch-LuceneIndexesMetadata" mode="SYNC" batching="true">
-         <transaction mode="NON_XA"/>
+      <replicated-cache name="HibernateSearch-LuceneIndexesMetadata" mode="SYNC">
+         <transaction mode="BATCH"/>
          <eviction strategy="NONE" max-entries="-1"/>
          <persistence passivation="true">
             <file-store preload="true" purge="false"/>
          </persistence>
       </replicated-cache>
-      <replicated-cache name="HibernateSearch-LuceneIndexesData" mode="SYNC" batching="true">
-         <transaction mode="NON_XA"/>
+      <replicated-cache name="HibernateSearch-LuceneIndexesData" mode="SYNC">
+         <transaction mode="BATCH"/>
          <eviction strategy="NONE" max-entries="-1"/>
          <persistence passivation="true">
             <file-store preload="true" purge="false"/>
          </persistence>
       </replicated-cache>
-      <replicated-cache name="HibernateSearch-LuceneIndexesLocking" mode="SYNC" batching="true">
-         <transaction mode="NON_XA"/>
+      <replicated-cache name="HibernateSearch-LuceneIndexesLocking" mode="SYNC">
+         <transaction mode="BATCH"/>
          <eviction strategy="NONE" max-entries="-1"/>
       </replicated-cache>
       <local-cache name="custom-interceptors" unreliable-return-values="true">

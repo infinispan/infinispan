@@ -35,8 +35,7 @@ import org.infinispan.security.PrincipalRoleMapper;
 import org.infinispan.security.impl.ClusterRoleMapper;
 import org.infinispan.security.impl.CommonNameRoleMapper;
 import org.infinispan.security.impl.IdentityRoleMapper;
-import org.infinispan.transaction.LockingMode;
-import org.infinispan.transaction.TransactionProtocol;
+import org.infinispan.transaction.*;
 import org.infinispan.transaction.lookup.TransactionManagerLookup;
 import org.infinispan.util.concurrent.IsolationLevel;
 import org.infinispan.util.logging.Log;
@@ -804,10 +803,6 @@ public class Parser70 implements ConfigurationParser {
             log.ignoreXmlAttribute(attribute);
             break;
          }
-         case BATCHING: {
-            builder.invocationBatching().enable(Boolean.valueOf(value));
-            break;
-         }
          case STATISTICS: {
             builder.jmxStatistics().enabled(Boolean.valueOf(value));
             break;
@@ -1280,6 +1275,7 @@ public class Parser70 implements ConfigurationParser {
                builder.transaction().transactionMode(txMode.getMode());
                builder.transaction().useSynchronization(!txMode.isXAEnabled());
                builder.transaction().recovery().enabled(txMode.isRecoveryEnabled());
+               builder.invocationBatching().enable(txMode.isBatchingEnabled());
                if (txMode.isRecoveryEnabled()) {
                   builder.transaction().syncCommitPhase(true).syncRollbackPhase(true);
                }
@@ -1911,19 +1907,22 @@ public class Parser70 implements ConfigurationParser {
    }
 
    public enum TransactionMode {
-      NONE(org.infinispan.transaction.TransactionMode.NON_TRANSACTIONAL, false, false),
-      NON_XA(org.infinispan.transaction.TransactionMode.TRANSACTIONAL, false, false),
-      NON_DURABLE_XA(org.infinispan.transaction.TransactionMode.TRANSACTIONAL, true, false),
-      FULL_XA(org.infinispan.transaction.TransactionMode.TRANSACTIONAL, true, true),
+      NONE(org.infinispan.transaction.TransactionMode.NON_TRANSACTIONAL, false, false, false),
+      BATCH(org.infinispan.transaction.TransactionMode.TRANSACTIONAL, false, false, true),
+      NON_XA(org.infinispan.transaction.TransactionMode.TRANSACTIONAL, false, false, false),
+      NON_DURABLE_XA(org.infinispan.transaction.TransactionMode.TRANSACTIONAL, true, false, false),
+      FULL_XA(org.infinispan.transaction.TransactionMode.TRANSACTIONAL, true, true, false),
       ;
       private final org.infinispan.transaction.TransactionMode mode;
       private final boolean xaEnabled;
       private final boolean recoveryEnabled;
+      private final boolean batchingEnabled;
 
-      private TransactionMode(org.infinispan.transaction.TransactionMode mode, boolean xaEnabled, boolean recoveryEnabled) {
+      private TransactionMode(org.infinispan.transaction.TransactionMode mode, boolean xaEnabled, boolean recoveryEnabled, boolean batchingEnabled) {
          this.mode = mode;
          this.xaEnabled = xaEnabled;
          this.recoveryEnabled = recoveryEnabled;
+         this.batchingEnabled = batchingEnabled;
       }
 
       public org.infinispan.transaction.TransactionMode getMode() {
@@ -1936,6 +1935,10 @@ public class Parser70 implements ConfigurationParser {
 
       public boolean isRecoveryEnabled() {
          return this.recoveryEnabled;
+      }
+
+      public boolean isBatchingEnabled() {
+         return batchingEnabled;
       }
    }
 

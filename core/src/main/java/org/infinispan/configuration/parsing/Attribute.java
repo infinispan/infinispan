@@ -24,7 +24,6 @@ public enum Attribute {
     AUTO_CONFIG("auto-config"),
     AWAIT_INITIAL_TRANSFER("await-initial-transfer"),
     BACKUP_FAILURE_POLICY("failure-policy"),
-    BATCHING("batching"),
     BEFORE("before"),
     CAPACITY_FACTOR("capacity"),
     CHUNK_SIZE("chunk-size"),
