@@ -406,7 +406,7 @@ public abstract class CacheAdd extends AbstractAddStepHandler {
         builder.indexing()
                 .index(indexing.isEnabled() ? indexing.isLocalOnly() ? Index.LOCAL : Index.ALL : Index.NONE)
                 .withProperties(indexingProperties)
-                .setAutoConfig(autoConfig)
+                .autoConfig(autoConfig)
         ;
 
         // locking is a child resource

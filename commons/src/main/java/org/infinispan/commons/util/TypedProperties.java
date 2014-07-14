@@ -135,11 +135,14 @@ public class TypedProperties extends Properties {
     * Put a value if the associated key is not present
     * @param key new key
     * @param value new value
+    * @return this TypedProperties instance for method chaining
+    *              
     */
-   public synchronized void putIfAbsent(String key, String value) {
-      if(getProperty(key) == null) {
-         put(key,value);
+   public synchronized TypedProperties putIfAbsent(String key, String value) {
+      if (getProperty(key) == null) {
+         put(key, value);
       }
+      return this;
    }
 
    @Override

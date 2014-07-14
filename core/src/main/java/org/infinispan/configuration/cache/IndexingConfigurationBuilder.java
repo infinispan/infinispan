@@ -161,12 +161,12 @@ public class IndexingConfigurationBuilder extends AbstractConfigurationChildBuil
     * @param autoConfig boolean
     * @return <code>this</code>, for method chaining
     */
-   public IndexingConfigurationBuilder setAutoConfig(boolean autoConfig) {
+   public IndexingConfigurationBuilder autoConfig(boolean autoConfig) {
       this.autoConfig = autoConfig;
       return this;
    }
 
-   public boolean isAutoConfig() {
+   public boolean autoConfig() {
       return autoConfig;
    }
 
@@ -190,14 +190,14 @@ public class IndexingConfigurationBuilder extends AbstractConfigurationChildBuil
    @Override
    public IndexingConfiguration create() {
       TypedProperties typedProperties = TypedProperties.toTypedProperties(properties);
-      if (isAutoConfig()) {
+      if (autoConfig()) {
          if (clustering().cacheMode().isDistributed()) {
             IndexOverlay.DISTRIBUTED_INFINISPAN.apply(typedProperties);
          } else {
             IndexOverlay.NON_DISTRIBUTED_FS.apply(typedProperties);
          }
       }
-      return new IndexingConfiguration(typedProperties, index);
+      return new IndexingConfiguration(typedProperties, index, autoConfig);
    }
 
    @Override
