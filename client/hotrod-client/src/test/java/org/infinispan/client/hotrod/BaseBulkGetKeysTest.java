@@ -20,91 +20,94 @@ import org.testng.annotations.Test;
 /**
  * Tests functionality related to getting multiple entries from a HotRod server
  * in bulk.
- * 
+ *
  * @author <a href="mailto:rtsang@redhat.com">Ray Tsang</a>
  * @since 5.2
  */
 @Test(groups = "functional")
 public abstract class BaseBulkGetKeysTest extends MultipleCacheManagersTest {
-	protected HotRodServer[] hotrodServers;
-	protected RemoteCacheManager remoteCacheManager;
-	protected RemoteCache<Object, Object> remoteCache;
 
-	abstract protected int numberOfHotRodServers();
+   protected HotRodServer[] hotrodServers;
+   protected RemoteCacheManager remoteCacheManager;
+   protected RemoteCache<Object, Object> remoteCache;
 
-	abstract protected ConfigurationBuilder clusterConfig();
+   abstract protected int numberOfHotRodServers();
 
-	@Override
-	protected void createCacheManagers() throws Throwable {
-		final int numServers = numberOfHotRodServers();
-		hotrodServers = new HotRodServer[numServers];
-		
-		createCluster(hotRodCacheConfiguration(clusterConfig()), numberOfHotRodServers());
+   abstract protected ConfigurationBuilder clusterConfig();
 
-		for (int i = 0; i < numServers; i++) {
-			EmbeddedCacheManager cm = cacheManagers.get(i);
-			hotrodServers[i] = TestHelper.startHotRodServer(cm);
-		}
+   @Override
+   protected void createCacheManagers() throws Throwable {
+      final int numServers = numberOfHotRodServers();
+      hotrodServers = new HotRodServer[numServers];
 
-		String servers = TestHelper.getServersString(hotrodServers);
+      createCluster(hotRodCacheConfiguration(clusterConfig()), numberOfHotRodServers());
 
-		remoteCacheManager = new RemoteCacheManager(servers);
-		remoteCache = remoteCacheManager.getCache();
-	};
+      for (int i = 0; i < numServers; i++) {
+         EmbeddedCacheManager cm = cacheManagers.get(i);
+         hotrodServers[i] = TestHelper.startHotRodServer(cm);
+      }
 
-	@AfterClass(alwaysRun = true)
-	public void release() {
-		killRemoteCacheManager(remoteCacheManager);
-		killServers(hotrodServers);
-	}
+      String servers = TestHelper.getServersString(hotrodServers);
 
-	protected void populateCacheManager() {
-		for (int i = 0; i < 100; i++) {
-			remoteCache.put(i, i);
-		}
-	}
+      remoteCacheManager = new RemoteCacheManager(servers);
+      remoteCache = remoteCacheManager.getCache();
+   }
 
-	public void testBulkGetKeys() {
-		populateCacheManager();
-		Set<Object> set = remoteCache.keySet();
-		assert set.size() == 100;
-		for (int i = 0; i < 100; i++) {
-			assert set.contains(i);
-		}
-	}
+   ;
 
-	@Test(groups = "unstable", description = "See ISPN-4017")
-	public void testBulkGetAfterLifespanExpire() throws InterruptedException {
-		Map<String, String> dataIn = new HashMap<String, String>();
-		dataIn.put("aKey", "aValue");
-		dataIn.put("bKey", "bValue");
-		final long startTime = System.currentTimeMillis();
-		final long lifespan = 10000;
-		remoteCache.putAll(dataIn, lifespan, TimeUnit.MILLISECONDS);
+   @AfterClass(alwaysRun = true)
+   public void release() {
+      killRemoteCacheManager(remoteCacheManager);
+      killServers(hotrodServers);
+   }
 
-		Set<Object> dataOut = new HashSet<Object>();
-		while (true) {
-			dataOut = remoteCache.keySet();
-			if (System.currentTimeMillis() >= startTime + lifespan)
-				break;
-			assert dataOut.size() == dataIn.size() : String
-					.format("Data size not the same, put in %s elements, keySet has %s elements",
-							dataIn.size(), dataOut.size());
-			for (Object outKey : dataOut) {
-				assert dataIn.containsKey(outKey);
-			}
-			Thread.sleep(100);
-		}
+   protected void populateCacheManager() {
+      for (int i = 0; i < 100; i++) {
+         remoteCache.put(i, i);
+      }
+   }
 
-		// Make sure that in the next 30 secs data is removed
-		while (System.currentTimeMillis() < startTime + lifespan + 30000) {
-			dataOut = remoteCache.keySet();
-			if (dataOut.size() == 0)
-				return;
-		}
+   public void testBulkGetKeys() {
+      populateCacheManager();
+      Set<Object> set = remoteCache.keySet();
+      assert set.size() == 100;
+      for (int i = 0; i < 100; i++) {
+         assert set.contains(i);
+      }
+   }
 
-		assert dataOut.size() == 0 : String.format(
-				"Data not empty, it contains: %s elements", dataOut.size());
-	}
+   @Test(groups = "unstable", description = "See ISPN-4017")
+   public void testBulkGetAfterLifespanExpire() throws InterruptedException {
+      Map<String, String> dataIn = new HashMap<String, String>();
+      dataIn.put("aKey", "aValue");
+      dataIn.put("bKey", "bValue");
+      final long startTime = System.currentTimeMillis();
+      final long lifespan = 10000;
+      remoteCache.putAll(dataIn, lifespan, TimeUnit.MILLISECONDS);
+
+      Set<Object> dataOut = new HashSet<Object>();
+      while (true) {
+         dataOut = remoteCache.keySet();
+         if (System.currentTimeMillis() >= startTime + lifespan)
+            break;
+         assert dataOut.size() == dataIn.size() : String
+               .format("Data size not the same, put in %s elements, keySet has %s elements",
+                     dataIn.size(), dataOut.size());
+         for (Object outKey : dataOut) {
+            assert dataIn.containsKey(outKey);
+         }
+         Thread.sleep(100);
+      }
+
+      // Make sure that in the next 30 secs data is removed
+      while (System.currentTimeMillis() < startTime + lifespan + 30000) {
+         dataOut = remoteCache.keySet();
+         if (dataOut.size() == 0)
+            return;
+      }
+
+      assert dataOut.size() == 0 : String.format(
+            "Data not empty, it contains: %s elements", dataOut.size());
+   }
 
 }
