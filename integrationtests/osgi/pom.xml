@@ -1,7 +1,7 @@
 <?xml version='1.0' encoding='UTF-8'?>
 <project
-   xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd"
-   xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+    xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd"
+    xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
    <modelVersion>4.0.0</modelVersion>
 
    <parent>
@@ -15,6 +15,20 @@
    <name>Integration tests: Karaf</name>
    <packaging>bundle</packaging>
    <description>Integration tests for Infinispan running in OSGi/Karaf</description>
+
+   <profiles>
+      <profile>
+         <id>disable-osgi-tests</id>
+         <activation>
+            <activeByDefault>false</activeByDefault>
+            <!-- Some OSGi dependencies don't support jdk8 yet, see ISPN-4494 for details. -->
+            <jdk>[1.8,1.9]</jdk>
+         </activation>
+         <properties>
+            <skipOSGiTests>true</skipOSGiTests>
+         </properties>
+      </profile>
+   </profiles>
 
    <dependencies>
       <dependency>
@@ -167,6 +181,7 @@
       <infinispan.test.parallel.threads>1</infinispan.test.parallel.threads>
       <infinispan.test.jgroups.protocol>tcp</infinispan.test.jgroups.protocol>
       <target.tmp.dir>${project.build.directory}/tmp/</target.tmp.dir>
+      <skipOSGiTests>${skipTests}</skipOSGiTests>
    </properties>
 
    <build>
@@ -181,7 +196,7 @@
       </testResources>
       <plugins>
          <!-- IMPORTANT: generates META-INF/maven/dependencies.properties 
-            required by PAX-EXAM framework -->
+              required by PAX-EXAM framework -->
          <plugin>
             <groupId>org.apache.servicemix.tooling</groupId>
             <artifactId>depends-maven-plugin</artifactId>
@@ -220,6 +235,7 @@
                   <java.io.tmpdir>${target.tmp.dir}</java.io.tmpdir>
                </systemPropertyVariables>
                <runOrder>alphabetical</runOrder>
+               <skipTests>${skipOSGiTests}</skipTests>
             </configuration>
             <executions>
                <execution>
