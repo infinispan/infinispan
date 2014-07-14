@@ -106,11 +106,14 @@ public abstract class BaseRpcInterceptor extends CommandInterceptor {
             && !((LocalTransaction)ctx.getCacheTransaction()).isCommitOrRollbackSent();
    }
 
-   protected final Map<Address, Response> totalOrderAnycastPrepare(Collection<Address> recipients,
-                                                                   PrepareCommand prepareCommand,
-                                                                   TimeoutValidationResponseFilter responseFilter) {
-      Set<Address> realRecipients = new HashSet<Address>(recipients);
-      realRecipients.add(rpcManager.getAddress());
+   protected final Map<Address, Response> totalOrderPrepare(Collection<Address> recipients,
+         PrepareCommand prepareCommand,
+         TimeoutValidationResponseFilter responseFilter) {
+      Set<Address> realRecipients = null;
+      if (recipients != null) {
+         realRecipients = new HashSet<Address>(recipients);
+         realRecipients.add(rpcManager.getAddress());
+      }
       return internalTotalOrderPrepare(realRecipients, prepareCommand, responseFilter);
    }
 

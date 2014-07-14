@@ -194,7 +194,6 @@ public class TxDistributionInterceptor extends BaseDistributionInterceptor {
          boolean affectsAllNodes = ctx.getCacheTransaction().hasModification(ClearCommand.class);
          Collection<Address> recipients = affectsAllNodes ? dm.getWriteConsistentHash().getMembers() :
                cdl.getOwners(getAffectedKeysFromContext(ctx));
-         recipients = recipients == null ? dm.getWriteConsistentHash().getMembers() : recipients;
          prepareOnAffectedNodes(ctx, command, recipients, defaultSynchronous);
 
          ((LocalTxInvocationContext) ctx).remoteLocksAcquired(recipients == null ? dm.getWriteConsistentHash().getMembers() : recipients);

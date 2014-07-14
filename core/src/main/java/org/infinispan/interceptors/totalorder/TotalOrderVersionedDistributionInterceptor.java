@@ -71,7 +71,7 @@ public class TotalOrderVersionedDistributionInterceptor extends VersionedDistrib
          KeysValidateFilter responseFilter = ctx.getCacheTransaction().hasModification(ClearCommand.class) || isSyncCommitPhase() ?
                null : new KeysValidateFilter(rpcManager.getAddress(), ctx.getAffectedKeys());
 
-         totalOrderAnycastPrepare(recipients, command, responseFilter);
+         totalOrderPrepare(recipients, command, responseFilter);
       } finally {
          transactionRemotelyPrepared(ctx);
       }
