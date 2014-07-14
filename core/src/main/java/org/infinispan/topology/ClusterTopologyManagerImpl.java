@@ -128,11 +128,12 @@ public class ClusterTopologyManagerImpl implements ClusterTopologyManager {
       }
 
       ClusterCacheStatus cacheStatus = initCacheStatusIfAbsent(cacheName, joinInfo);
-      boolean hadEmptyConsistentHashes;
+      boolean isFirstMember;
+      CacheTopology topologyWithoutRebalance;
       synchronized (cacheStatus) {
-         hadEmptyConsistentHashes = cacheStatus.getCacheTopology().getMembers().isEmpty();
+         isFirstMember = cacheStatus.getCacheTopology().getMembers().isEmpty();
          cacheStatus.addMember(joiner, joinInfo.getCapacityFactor());
-         if (hadEmptyConsistentHashes) {
+         if (isFirstMember) {
             // This node was the first to join. We need to install the initial CH
             int newTopologyId = cacheStatus.getCacheTopology().getTopologyId() + 1;
             List<Address> initialMembers = cacheStatus.getMembers();
@@ -145,14 +146,15 @@ public class ClusterTopologyManagerImpl implements ClusterTopologyManager {
          } else {
             // Do nothing. The rebalance policy will trigger a rebalance later.
          }
+         topologyWithoutRebalance = cacheStatus.getCacheTopology();
       }
-      if (hadEmptyConsistentHashes) {
+      if (isFirstMember) {
          rebalancePolicy.initCache(cacheName, cacheStatus);
       } else {
          rebalancePolicy.updateCacheStatus(cacheName, cacheStatus);
       }
 
-      return cacheStatus.getCacheTopology();
+      return topologyWithoutRebalance;
    }
 
    @Override
