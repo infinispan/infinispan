@@ -220,8 +220,9 @@ public class TxDistributionInterceptor extends BaseDistributionInterceptor {
    @Override
    public Object visitRollbackCommand(TxInvocationContext ctx, RollbackCommand command) throws Throwable {
       if (shouldInvokeRemoteTxCommand(ctx)) {
-         rpcManager.invokeRemotely(getCommitNodes(ctx), command, rpcManager.getDefaultRpcOptions(
-               cacheConfiguration.transaction().syncRollbackPhase(), false));
+         boolean syncRollback = cacheConfiguration.transaction().syncRollbackPhase();
+         ResponseMode responseMode = syncRollback ? ResponseMode.SYNCHRONOUS_IGNORE_LEAVERS : ResponseMode.ASYNCHRONOUS;
+         rpcManager.invokeRemotely(getCommitNodes(ctx), command, rpcManager.getRpcOptionsBuilder(responseMode, false).build());
       }
 
       return invokeNextInterceptor(ctx, command);
