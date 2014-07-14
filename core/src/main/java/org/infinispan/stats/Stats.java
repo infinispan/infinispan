@@ -25,6 +25,17 @@ public interface Stats {
    int getCurrentNumberOfEntries();
 
    /**
+    * Returns the number of entries for which this cache is primary owner.
+    * For local, invalidation and replicated caches, this method returns the
+    * same value as {@link #getCurrentNumberOfEntries()}. For distributed
+    * caches, this method returns a number equals or smaller than
+    * {@link #getCurrentNumberOfEntries()}.
+    *
+    * @return Returns the number of entries for which this cache is primary owner.
+    */
+   int getCurrentNumberOfEntriesPrimary();
+
+   /**
     * Number of entries stored in cache since the cache started running.
     */
    long getTotalNumberOfEntries();

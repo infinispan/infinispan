@@ -150,13 +150,21 @@ public interface RemoteCache<K, V> extends BasicCache<K, V> {
    MetadataValue<V> getWithMetadata(K key);
 
    /**
-    * @throws UnsupportedOperationException
+    * Returns the total number of keys in the remote server.
+    * It'll invoke a command over the network each time this method is called.
+    * If the remote cache is a distributed cache, it will retrieve all of the
+    * keys from all nodes in the cluster in order to do the calculation, so
+    * please use with care for cache with large data set.
     */
    @Override
    int size();
 
    /**
-    * @throws UnsupportedOperationException
+    * Returns <tt>true</tt> if this remote cache contains no key-value mappings.
+    * It'll invoke a command over the network each time this method is called.
+    * If the remote cache is a distributed cache, it will retrieve all of the
+    * keys from all nodes in the cluster in order to do the calculation, so
+    * please use with care for cache with large data set.
     */
    @Override
    boolean isEmpty();

@@ -58,6 +58,7 @@ public class MetricKeys {
     public static final String HITS = "hits";
     public static final String MISSES = "misses";
     public static final String NUMBER_OF_ENTRIES = "number-of-entries";
+    public static final String NUMBER_OF_ENTRIES_PRIMARY = "number-of-entries-primary";
     public static final String READ_WRITE_RATIO = "read-write-ratio";
     public static final String REMOVE_HITS = "remove-hits";
     public static final String REMOVE_MISSES = "remove-misses";
