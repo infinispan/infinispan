@@ -112,7 +112,7 @@ public class StateProviderImpl implements StateProvider {
       synchronized (transfersByDestination) {
          for (Iterator<Address> it = transfersByDestination.keySet().iterator(); it.hasNext(); ) {
             Address destination = it.next();
-            if (!stateTransferInProgress || !members.contains(destination)) {
+            if (!members.contains(destination)) {
                List<OutboundTransferTask> transfers = transfersByDestination.get(destination);
                it.remove();
                for (OutboundTransferTask outboundTransfer : transfers) {
