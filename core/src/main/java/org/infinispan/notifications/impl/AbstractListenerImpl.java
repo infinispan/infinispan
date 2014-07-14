@@ -176,16 +176,19 @@ public abstract class AbstractListenerImpl<T, L extends ListenerInvocation<T>> {
       Map<Class<? extends Annotation>, Class<?>> allowedListeners = getAllowedMethodAnnotations(l);
       // now try all methods on the listener for anything that we like.  Note that only PUBLIC methods are scanned.
       for (Method m : listener.getClass().getMethods()) {
-         // loop through all valid method annotations
-         for (Map.Entry<Class<? extends Annotation>,Class<?>> annotationEntry : allowedListeners.entrySet()) {
-            Class<? extends Annotation> key = annotationEntry.getKey();
-            Class<?> value = annotationEntry.getValue();
-            if (m.isAnnotationPresent(key)) {
-               testListenerMethodValidity(m, value, key.getName());
-               m.setAccessible(true);
-               builder.setMethod(m);
-               addListenerInvocation(key, builder.build());
-               foundMethods = true;
+         // Skip bridge methods as we don't want to count them as well.
+         if (!m.isSynthetic() || !m.isBridge()) {
+            // loop through all valid method annotations
+            for (Map.Entry<Class<? extends Annotation>,Class<?>> annotationEntry : allowedListeners.entrySet()) {
+               Class<? extends Annotation> key = annotationEntry.getKey();
+               Class<?> value = annotationEntry.getValue();
+               if (m.isAnnotationPresent(key)) {
+                  testListenerMethodValidity(m, value, key.getName());
+                  m.setAccessible(true);
+                  builder.setMethod(m);
+                  addListenerInvocation(key, builder.build());
+                  foundMethods = true;
+               }
             }
          }
       }
