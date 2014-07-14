@@ -221,7 +221,9 @@ or in your XML file:
 
 [source,xml]
 ----
-<local-cache batching="true" />
+<local-cache>
+   <transaction mode="BATCH"/>
+</local-cache>
 
 ----
 

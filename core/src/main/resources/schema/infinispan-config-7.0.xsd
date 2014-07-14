@@ -30,7 +30,6 @@
       </xs:element>
     </xs:all>
   </xs:complexType>
-
   <xs:complexType name="jgroups">
     <xs:annotation>
       <xs:documentation>
@@ -598,11 +597,6 @@
     <xs:attribute name="start">
       <xs:annotation><xs:documentation>Unused XML attribute</xs:documentation></xs:annotation>
     </xs:attribute>
-    <xs:attribute name="batching" type="xs:boolean" default="false">
-      <xs:annotation>
-        <xs:documentation>Enables invocation batching for this cache. Defaults to false.</xs:documentation>
-      </xs:annotation>
-    </xs:attribute>
     <xs:attribute name="jndi-name" type="xs:string">
       <xs:annotation><xs:documentation>Unused XML attribute</xs:documentation></xs:annotation>
     </xs:attribute>
@@ -669,7 +663,7 @@
   <xs:complexType name="transaction">
     <xs:attribute name="mode" type="tns:transaction-mode" default="NONE">
       <xs:annotation>
-        <xs:documentation>Sets the cache transaction mode to one of NONE, NON_XA, NON_DURABLE_XA, FULL_XA.</xs:documentation>
+        <xs:documentation>Sets the cache transaction mode to one of NONE, BATCH, NON_XA, NON_DURABLE_XA, FULL_XA.</xs:documentation>
       </xs:annotation>
     </xs:attribute>
     <xs:attribute name="stop-timeout" type="xs:long" default="30000">
@@ -1448,6 +1442,11 @@
       <xs:enumeration value="NONE">
         <xs:annotation>
           <xs:documentation>Cache will not enlist within transactions.</xs:documentation>
+        </xs:annotation>
+      </xs:enumeration>
+      <xs:enumeration value="BATCH">
+        <xs:annotation>
+          <xs:documentation>Uses batching to group cache operations together.</xs:documentation>
         </xs:annotation>
       </xs:enumeration>
       <xs:enumeration value="NON_XA">

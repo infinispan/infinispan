@@ -201,11 +201,11 @@ public class UnifiedXmlFileParsingTest extends AbstractInfinispanTest {
             assertEquals(3000, c.locking().concurrencyLevel());
             assertEquals(IsolationLevel.REPEATABLE_READ, c.locking().isolationLevel()); // Converted to REPEATABLE_READ by builder
             assertTrue(c.locking().useLockStriping());
-            assertEquals(TransactionMode.TRANSACTIONAL, c.transaction().transactionMode()); // Non durable XA
-            assertFalse(c.transaction().useSynchronization()); // Non durable XA
-            assertFalse(c.transaction().recovery().enabled()); // Non durable XA
-            assertTrue(c.transaction().syncCommitPhase()); // Non durable XA - default configuration value
-            assertTrue(c.transaction().syncRollbackPhase()); // Non durable XA - side effect of cache manager creation
+            assertEquals(TransactionMode.TRANSACTIONAL, c.transaction().transactionMode()); // Batching, non XA
+            assertTrue(c.transaction().useSynchronization()); // Batching, non XA
+            assertFalse(c.transaction().recovery().enabled()); // Batching, non XA
+            assertTrue(c.transaction().syncCommitPhase()); // Batching, non XA - default configuration value
+            assertTrue(c.transaction().syncRollbackPhase()); // Batching, non XA - side effect of cache manager creation
             assertEquals(LockingMode.PESSIMISTIC, c.transaction().lockingMode());
             assertEquals(61000, c.transaction().cacheStopTimeout());
             assertEquals(21000, c.eviction().maxEntries());
