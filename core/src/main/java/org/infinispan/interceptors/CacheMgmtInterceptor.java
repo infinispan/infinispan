@@ -8,9 +8,11 @@ import org.infinispan.commands.write.PutMapCommand;
 import org.infinispan.commands.write.RemoveCommand;
 import org.infinispan.commands.write.ReplaceCommand;
 import org.infinispan.commands.write.WriteCommand;
+import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.container.DataContainer;
 import org.infinispan.context.Flag;
 import org.infinispan.context.InvocationContext;
+import org.infinispan.distribution.DistributionManager;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.annotations.Start;
 import org.infinispan.interceptors.base.JmxStatsCommandInterceptor;
@@ -20,11 +22,14 @@ import org.infinispan.jmx.annotations.ManagedAttribute;
 import org.infinispan.jmx.annotations.ManagedOperation;
 import org.infinispan.jmx.annotations.MeasurementType;
 import org.infinispan.jmx.annotations.Units;
+import org.infinispan.manager.EmbeddedCacheManager;
+import org.infinispan.remoting.transport.Address;
 import org.infinispan.util.TimeService;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.TimeUnit;
 import org.infinispan.commons.util.concurrent.jdk8backported.LongAdder;
 import java.util.concurrent.atomic.AtomicLong;
@@ -54,6 +59,8 @@ public class CacheMgmtInterceptor extends JmxStatsCommandInterceptor {
    private TimeService timeService;
 
    private static final Log log = LogFactory.getLog(CacheMgmtInterceptor.class);
+   private DistributionManager distributionManager;
+   private EmbeddedCacheManager cacheManager;
 
    @Override
    protected Log getLog() {
@@ -62,9 +69,12 @@ public class CacheMgmtInterceptor extends JmxStatsCommandInterceptor {
 
    @Inject
    @SuppressWarnings("unused")
-   public void setDependencies(DataContainer dataContainer, TimeService timeService) {
+   public void setDependencies(DataContainer dataContainer, TimeService timeService,
+         DistributionManager distributionManager, EmbeddedCacheManager cacheManager) {
       this.dataContainer = dataContainer;
       this.timeService = timeService;
+      this.distributionManager = distributionManager;
+      this.cacheManager = cacheManager;
    }
 
    @Start
@@ -329,6 +339,26 @@ public class CacheMgmtInterceptor extends JmxStatsCommandInterceptor {
    )
    public int getNumberOfEntries() {
       return dataContainer.size();
+   }
+
+   @ManagedAttribute(
+         description = "Number of entries for which this cache is primary owner. " +
+               "For local, invalidated and replicated caches, returns the same value as size attribute.",
+         displayName = "Number of current primary cache entries",
+         displayType = DisplayType.SUMMARY
+   )
+   public int getNumberOfEntriesPrimary() {
+      if (cacheConfiguration.clustering().cacheMode().isDistributed()) {
+         int numberEntriesPrimary = 0;
+         Address localAddress = cacheManager.getAddress();
+         for (Object key : dataContainer.keySet()) {
+            if (localAddress.equals(distributionManager.getPrimaryLocation(key)))
+               numberEntriesPrimary += 1;
+         }
+         return numberEntriesPrimary;
+      } else {
+         return getNumberOfEntries();
+      }
    }
 
    @ManagedAttribute(

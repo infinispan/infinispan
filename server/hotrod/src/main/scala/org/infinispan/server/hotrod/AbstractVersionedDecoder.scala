@@ -70,7 +70,7 @@ abstract class AbstractVersionedDecoder {
    /**
     * Create a response for the stats command.
     */
-   def createStatsResponse(header: HotRodHeader, stats: Stats, t: NettyTransport): AnyRef
+   def createStatsResponse(header: HotRodHeader, cache: Cache, t: NettyTransport): AnyRef
 
    /**
     * Create an error response based on the Throwable instance received.

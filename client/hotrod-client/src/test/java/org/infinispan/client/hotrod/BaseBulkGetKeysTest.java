@@ -3,6 +3,8 @@ package org.infinispan.client.hotrod;
 import static org.infinispan.client.hotrod.test.HotRodClientTestingUtil.killRemoteCacheManager;
 import static org.infinispan.client.hotrod.test.HotRodClientTestingUtil.killServers;
 import static org.infinispan.server.hotrod.test.HotRodTestingUtil.hotRodCacheConfiguration;
+import static org.testng.AssertJUnit.assertEquals;
+import static org.testng.AssertJUnit.assertTrue;
 
 import java.util.HashMap;
 import java.util.HashSet;
@@ -70,9 +72,10 @@ public abstract class BaseBulkGetKeysTest extends MultipleCacheManagersTest {
    public void testBulkGetKeys() {
       populateCacheManager();
       Set<Object> set = remoteCache.keySet();
-      assert set.size() == 100;
+      assertEquals(100, set.size());
+      assertEquals(100, remoteCache.size());
       for (int i = 0; i < 100; i++) {
-         assert set.contains(i);
+         assertTrue(set.contains(i));
       }
    }
 

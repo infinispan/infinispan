@@ -204,7 +204,15 @@ public class RemoteCacheImpl<K, V> extends RemoteCacheSupport<K, V> {
    public int size() {
       assertRemoteCacheManagerIsStarted();
       StatsOperation op = operationsFactory.newStatsOperation();
-      return Integer.parseInt(op.execute().get(ServerStatistics.CURRENT_NR_OF_ENTRIES));
+      String numEntriesStat = op.execute().get(ServerStatistics.CURRENT_NR_OF_ENTRIES_CLUSTER);
+      if (numEntriesStat != null) {
+         int numEntries = Integer.parseInt(numEntriesStat);
+         // If statistics are not enabled, fallback on keySet() to calculate size
+         return numEntries < 0 ? keySet().size() : numEntries;
+      }
+
+      // If statistic not present, fallback on keySet() to calculate size
+      return keySet().size();
    }
 
    @Override
