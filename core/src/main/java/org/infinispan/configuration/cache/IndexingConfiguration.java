@@ -9,10 +9,12 @@ import org.infinispan.commons.util.TypedProperties;
 public class IndexingConfiguration extends AbstractTypedPropertiesConfiguration {
 
    private final Index index;
+   private final boolean autoConfig;
 
-   IndexingConfiguration(TypedProperties properties, Index index) {
+   IndexingConfiguration(TypedProperties properties, Index index, boolean autoConfig) {
       super(properties);
       this.index = index;
+      this.autoConfig = autoConfig;
    }
 
    /**
@@ -60,6 +62,13 @@ public class IndexingConfiguration extends AbstractTypedPropertiesConfiguration 
       return index;
    }
 
+   /**
+    * Determines if autoconfig is enabled for this IndexingConfiguration
+    */
+   public boolean autoConfig() {
+      return autoConfig;
+   }
+
    @Override
    public String toString() {
       return "IndexingConfiguration{" +
@@ -76,13 +85,17 @@ public class IndexingConfiguration extends AbstractTypedPropertiesConfiguration 
       IndexingConfiguration that = (IndexingConfiguration) o;
 
       if (index != that.index) return false;
+      if (autoConfig != that.autoConfig) return false;
 
       return true;
    }
 
    @Override
    public int hashCode() {
-      return 31 * index.hashCode();
+      int result = super.hashCode();
+      result = 31 * result + (index != null ? index.hashCode() : 0);
+      result = 31 * result + (autoConfig ? 1 : 0);
+      return result;
    }
 
 }

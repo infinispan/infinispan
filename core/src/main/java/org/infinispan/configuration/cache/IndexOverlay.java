@@ -8,7 +8,7 @@ import org.infinispan.commons.util.TypedProperties;
  * @author gustavonalle
  * @since 7.0
  */
-public enum IndexOverlay {
+enum IndexOverlay {
 
    /**
     * Default for replicated cache: filesystem based (so it'll likely be a mmap index on Unix),

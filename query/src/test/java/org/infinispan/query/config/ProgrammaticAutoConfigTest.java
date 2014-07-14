@@ -25,7 +25,7 @@ public class ProgrammaticAutoConfigTest {
    @Test
    public void testLocalWitAutoConfig() {
       IndexingConfiguration cfg = new ConfigurationBuilder()
-              .indexing().index(Index.ALL).setAutoConfig(true)
+              .indexing().index(Index.ALL).autoConfig(true)
               .create();
 
       assertFalse(cfg.properties().isEmpty());
@@ -36,7 +36,7 @@ public class ProgrammaticAutoConfigTest {
    public void testDistWitAutoConfig() {
       IndexingConfiguration cfg = new ConfigurationBuilder()
               .clustering().cacheMode(CacheMode.DIST_SYNC)
-              .indexing().index(Index.ALL).setAutoConfig(true)
+              .indexing().index(Index.ALL).autoConfig(true)
               .create();
 
       assertFalse(cfg.properties().isEmpty());
@@ -49,7 +49,7 @@ public class ProgrammaticAutoConfigTest {
       IndexingConfiguration cfg = new ConfigurationBuilder()
               .indexing()
               .index(Index.ALL)
-              .setAutoConfig(true)
+              .autoConfig(true)
               .addProperty(override, "false").create();
 
       assertEquals(cfg.properties().get(override), "false");
