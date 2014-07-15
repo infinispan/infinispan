@@ -11,6 +11,7 @@ import java.util.HashSet;
 import java.util.Set;
 import java.util.concurrent.Callable;
 import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.CyclicBarrier;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.FutureTask;
@@ -120,12 +121,12 @@ public class AbstractInfinispanTest {
 
    protected void runConcurrently(Callable<Object>... tasks) throws Exception {
       Future<Object>[] movers = new Future[tasks.length];
-      final CountDownLatch latch = new CountDownLatch(1);
+      final CyclicBarrier barrier = new CyclicBarrier(tasks.length + 1);
       for (int i = 0; i < tasks.length; i++) {
          final Callable<Object> task = tasks[i];
          movers[i] = fork(new Callable<Object>() {
             public Object call() throws Exception {
-               latch.await();
+               barrier.await();
 
                task.call();
                return null;
@@ -133,7 +134,7 @@ public class AbstractInfinispanTest {
          });
       }
 
-      latch.countDown();
+      barrier.await(10, TimeUnit.SECONDS);
       // check for any errors
       Exception exception = null;
       for (Future<Object> t : movers) {
