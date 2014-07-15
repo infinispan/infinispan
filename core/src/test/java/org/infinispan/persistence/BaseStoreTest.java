@@ -164,7 +164,7 @@ public abstract class BaseStoreTest extends AbstractInfinispanTest {
       se = TestInternalCacheEntryFactory.create("k", wrap("k", "v"), lifespan);
       cl.write(new MarshalledEntryImpl("k", wrap("k", "v"), internalMetadata(se), getMarshaller()));
       Thread.sleep(100);
-      purgeExpired(Collections.singleton("k"), 1000);
+      purgeExpired(Collections.singleton("k"), 10000);
       assert se.isExpired(System.currentTimeMillis());
       assertEventuallyExpires("k");
       assertFalse(cl.contains("k"));
@@ -205,7 +205,7 @@ public abstract class BaseStoreTest extends AbstractInfinispanTest {
       se = TestInternalCacheEntryFactory.create("k", wrap("k", "v"), -1, idle);
       cl.write(marshalledEntry(se, getMarshaller()));
       Thread.sleep(100);
-      purgeExpired(Collections.singleton("k"), 1000);
+      purgeExpired(Collections.singleton("k"), 10000);
       assert se.isExpired(System.currentTimeMillis());
       assertEventuallyExpires("k");
       assertFalse(cl.contains("k"));
@@ -292,7 +292,7 @@ public abstract class BaseStoreTest extends AbstractInfinispanTest {
       se = TestInternalCacheEntryFactory.create("k", wrap("k", "v"), lifespan, idle);
       cl.write(marshalledEntry(se, getMarshaller()));
       Thread.sleep(100);
-      purgeExpired(Collections.singleton("k"), 1000);
+      purgeExpired(Collections.singleton("k"), 10000);
       assert se.isExpired(System.currentTimeMillis());
       assertEventuallyExpires("k");
       assertFalse(cl.contains("k"));
@@ -405,7 +405,7 @@ public abstract class BaseStoreTest extends AbstractInfinispanTest {
       Thread.sleep(lifespan + 10);
 
       HashSet<String> expiredKeys = new HashSet<String>(Arrays.asList("k1", "k2", "k3"));
-      purgeExpired(Collections.unmodifiableSet(expiredKeys), 1000);
+      purgeExpired(Collections.unmodifiableSet(expiredKeys), 10000);
 
       for (String key : expiredKeys) {
          assertFalse(cl.contains(key));
