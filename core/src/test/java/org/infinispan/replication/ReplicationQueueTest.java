@@ -16,6 +16,14 @@ import org.testng.annotations.Test;
 
 import javax.transaction.TransactionManager;
 import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.Executor;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
+
+import static org.testng.Assert.assertNotNull;
+import static org.testng.AssertJUnit.assertEquals;
+import static org.testng.AssertJUnit.assertNull;
 
 /**
  * Tests ReplicationQueue's functionality.
@@ -63,21 +71,22 @@ public class ReplicationQueueTest extends MultipleCacheManagersTest {
       //only place one element, queue size is 10.
       cache1.put("key", "value");
       ReplicationQueue replicationQueue = TestingUtil.extractComponent(cache1, ReplicationQueue.class);
-      assert replicationQueue != null;
-      assert replicationQueue.getElementsCount() == 1;
-      assert cache2.get("key") == null;
-      assert cache1.get("key").equals("value");
+      assertNotNull(replicationQueue);
+      assertEquals(replicationQueue.getElementsCount(), 1);
+      assertNull(cache2.get("key"));
+      assertEquals(cache1.get("key"), "value");
 
       replicationQueue.flush();
 
-      //in next 5 secs, expect the replication to occur
-      long start = System.currentTimeMillis();
-      while (System.currentTimeMillis() - start < 5000) {
-         if (cache2.get("key") != null) break;
-         Thread.sleep(50);
-      }
-      assert cache2.get("key").equals("value");
-      assert replicationQueue.getElementsCount() == 0;
+      // Now wait until values are replicated properly
+      eventually(new Condition() {
+         @Override
+         public boolean isSatisfied() throws Exception {
+            return cache2.get("key") != null;
+         }
+      });
+      assertEquals(cache2.get("key"), "value");
+      assertEquals(replicationQueue.getElementsCount(), 0);
    }
 
    /**
@@ -92,21 +101,22 @@ public class ReplicationQueueTest extends MultipleCacheManagersTest {
       transactionManager.commit();
 
       ReplicationQueue replicationQueue = TestingUtil.extractComponent(cache1, ReplicationQueue.class);
-      assert replicationQueue != null;
-      assert replicationQueue.getElementsCount() == 1;
-      assert cache2.get("key") == null;
-      assert cache1.get("key").equals("value");
+      assertNotNull(replicationQueue);
+      assertEquals(replicationQueue.getElementsCount(), 1);
+      assertNull(cache2.get("key"));
+      assertEquals(cache1.get("key"), "value");
 
       replicationQueue.flush();
 
-      //in next 5 secs, expect the replication to occur
-      long start = System.currentTimeMillis();
-      while (System.currentTimeMillis() - start < 5000) {
-         if (cache2.get("key") != null) break;
-         Thread.sleep(50);
-      }
-      assert cache2.get("key").equals("value");
-      assert replicationQueue.getElementsCount() == 0;
+      // Now wait until values are replicated properly
+      eventually(new Condition() {
+         @Override
+         public boolean isSatisfied() throws Exception {
+            return cache2.get("key") != null;
+         }
+      });
+      assertEquals(cache2.get("key"), "value");
+      assertEquals(replicationQueue.getElementsCount(), 0);
    }
 
 
@@ -119,14 +129,15 @@ public class ReplicationQueueTest extends MultipleCacheManagersTest {
       for (int i = 0; i < REPL_QUEUE_MAX_ELEMENTS; i++) {
          cache1.put("key" + i, "value" + i);
       }
-      //expect that in next 3 secs all commands are replicated
-      long start = System.currentTimeMillis();
-      while (System.currentTimeMillis() - start < 3000) {
-         if (cache2.size() == REPL_QUEUE_MAX_ELEMENTS) break;
-         Thread.sleep(50);
-      }
+      // Now wait until values are replicated properly
+      eventually(new Condition() {
+         @Override
+         public boolean isSatisfied() throws Exception {
+            return cache2.size() == REPL_QUEUE_MAX_ELEMENTS;
+         }
+      });
       for (int i = 0; i < REPL_QUEUE_MAX_ELEMENTS; i++) {
-         assert cache2.get("key" + i).equals("value" + i);
+         assertEquals(cache2.get("key" + i), "value" + i);
       }
    }
 
@@ -142,14 +153,15 @@ public class ReplicationQueueTest extends MultipleCacheManagersTest {
          cache1.put("key" + i, "value" + i);
          transactionManager.commit();
       }
-      //expect that in next 3 secs all commands are replicated
-      long start = System.currentTimeMillis();
-      while (System.currentTimeMillis() - start < 3000) {
-         if (cache2.size() == REPL_QUEUE_MAX_ELEMENTS) break;
-         Thread.sleep(50);
-      }
+      // Now wait until values are replicated properly
+      eventually(new Condition() {
+         @Override
+         public boolean isSatisfied() throws Exception {
+            return cache2.size() == REPL_QUEUE_MAX_ELEMENTS;
+         }
+      });
       for (int i = 0; i < REPL_QUEUE_MAX_ELEMENTS; i++) {
-         assert cache2.get("key" + i).equals("value" + i);
+         assertEquals(cache2.get("key" + i), "value" + i);
       }
    }
 
@@ -160,40 +172,33 @@ public class ReplicationQueueTest extends MultipleCacheManagersTest {
       // put 10 elements in the queue from 5 different threads
       int numThreads = 5;
       final int numLoopsPerThread = 2;
-      Thread[] threads = new Thread[numThreads];
-      final CountDownLatch latch = new CountDownLatch(1);
+      ExecutorService executor = Executors.newFixedThreadPool(numThreads, getTestThreadFactory("CachePut"));
 
       for (int i = 0; i < numThreads; i++) {
          final int i1 = i;
-         threads[i] = new Thread() {
+         executor.execute(new Runnable() {
             int index = i1;
 
             public void run() {
-               try {
-                  latch.await();
-               }
-               catch (InterruptedException e) {
-                  // do nothing
-               }
                for (int j = 0; j < numLoopsPerThread; j++) {
                   cache1.put("key" + index + "_" + j, "value");
                }
             }
-         };
-         threads[i].start();
+         });
       }
-      latch.countDown();
-      // wait for threads to join
-      for (Thread t : threads) t.join();
+      // wait for them to complete
+      executor.shutdown();
+      executor.awaitTermination(10, TimeUnit.SECONDS);
 
-      long start = System.currentTimeMillis();
-      while (System.currentTimeMillis() - start < 3000) {
-         if (cache2.size() == REPL_QUEUE_MAX_ELEMENTS) break;
-         Thread.sleep(50);
-      }
-      assert cache2.size() == REPL_QUEUE_MAX_ELEMENTS;
+      // Now wait until values are replicated properly
+      eventually(new Condition() {
+         @Override
+         public boolean isSatisfied() throws Exception {
+            return cache2.size() == REPL_QUEUE_MAX_ELEMENTS;
+         }
+      });
       ReplicationQueue replicationQueue = TestingUtil.extractComponent(cache1, ReplicationQueue.class);
-      assert replicationQueue.getElementsCount() == numThreads * numLoopsPerThread - REPL_QUEUE_MAX_ELEMENTS;
+      assertEquals(replicationQueue.getElementsCount(), numThreads * numLoopsPerThread - REPL_QUEUE_MAX_ELEMENTS);
    }
 
    public void testAtomicHashMap() throws Exception {
@@ -213,9 +218,9 @@ public class ReplicationQueueTest extends MultipleCacheManagersTest {
          Thread.sleep(50);
       }
 
-      assert AtomicMapLookup.getAtomicMap(cache2, "foo", false) != null;
-      assert AtomicMapLookup.getAtomicMap(cache2, "foo").get("sub-key") != null;
-      assert AtomicMapLookup.getAtomicMap(cache2, "foo").get("sub-key").equals("sub-value");
+      assertNotNull(AtomicMapLookup.getAtomicMap(cache2, "foo", false));
+      assertNotNull(AtomicMapLookup.getAtomicMap(cache2, "foo").get("sub-key"));
+      assertEquals(AtomicMapLookup.getAtomicMap(cache2, "foo").get("sub-key"), "sub-value");
    }
 
 }
