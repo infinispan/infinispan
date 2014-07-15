@@ -53,7 +53,9 @@
          </persistence>
          <state-transfer enabled="false" timeout="60000" chunk-size="10000" />
       </replicated-cache>
-      <distributed-cache name="dist" mode="SYNC" batching="false" l1-lifespan="1200000" owners="4" remote-timeout="35000" start="EAGER" segments="2" async-marshalling="false" statistics="true">
+      <distributed-cache name="dist" mode="SYNC" batching="false" l1-lifespan="1200000" owners="4"
+                         remote-timeout="35000" start="EAGER" segments="2" async-marshalling="false" statistics="true"
+                         consistent-hash-factory="org.infinispan.distribution.ch.impl.SyncConsistentHashFactory">
          <locking acquire-timeout="31500" concurrency-level="3500" isolation="READ_COMMITTED" striping="true"/>
          <transaction mode="FULL_XA" stop-timeout="61500" locking="OPTIMISTIC"/>
          <eviction max-entries="21500" strategy="UNORDERED"/>

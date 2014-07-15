@@ -32,6 +32,7 @@ public enum Attribute {
     CLUSTER("cluster"),
     COMPLETED_TX_TIMEOUT("complete-timeout"),
     CONCURRENCY_LEVEL("concurrency-level"),
+    CONSISTENT_HASH_FACTORY("consistent-hash-factory"),
     CORE_THREADS("core-threads"),
     DATA_CONTAINER("data-container"),
     DEFAULT_CACHE("default-cache"),

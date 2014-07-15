@@ -19,7 +19,7 @@ import org.infinispan.configuration.cache.SingleFileStoreConfiguration;
 import org.infinispan.configuration.cache.VersioningScheme;
 import org.infinispan.configuration.global.GlobalConfiguration;
 import org.infinispan.configuration.global.ShutdownHookBehavior;
-import org.infinispan.configuration.module.MyModuleConfiguration;
+import org.infinispan.distribution.ch.impl.SyncConsistentHashFactory;
 import org.infinispan.eviction.EvictionStrategy;
 import org.infinispan.factories.threads.DefaultThreadFactory;
 import org.infinispan.interceptors.InvocationContextInterceptor;
@@ -34,6 +34,7 @@ import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.infinispan.transaction.LockingMode;
 import org.infinispan.transaction.TransactionMode;
 import org.infinispan.transaction.lookup.JBossStandaloneJTAManagerLookup;
+import org.infinispan.util.ControlledConsistentHashFactory;
 import org.infinispan.util.concurrent.IsolationLevel;
 import org.testng.annotations.Test;
 
@@ -227,6 +228,7 @@ public class UnifiedXmlFileParsingTest extends AbstractInfinispanTest {
             assertEquals(4, c.clustering().hash().numOwners());
             assertEquals(35000, c.clustering().sync().replTimeout());
             assertEquals(2, c.clustering().hash().numSegments());
+            assertTrue(c.clustering().hash().consistentHashFactory() instanceof SyncConsistentHashFactory);
             assertFalse(c.clustering().async().asyncMarshalling());
             assertTrue(c.jmxStatistics().enabled());
             assertEquals(31500, c.locking().lockAcquisitionTimeout());
