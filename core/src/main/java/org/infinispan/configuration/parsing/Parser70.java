@@ -19,6 +19,7 @@ import org.infinispan.configuration.global.ThreadPoolConfigurationBuilder;
 import org.infinispan.commons.executors.ThreadPoolExecutorFactory;
 import org.infinispan.configuration.global.TransportConfigurationBuilder;
 import org.infinispan.container.DataContainer;
+import org.infinispan.distribution.ch.ConsistentHashFactory;
 import org.infinispan.distribution.group.Grouper;
 import org.infinispan.eviction.EvictionStrategy;
 import org.infinispan.eviction.EvictionThreadPolicy;
@@ -1485,6 +1486,11 @@ public class Parser70 implements ConfigurationParser {
             }
             case CAPACITY_FACTOR: {
                builder.clustering().hash().capacityFactor(Float.parseFloat(value));
+               break;
+            }
+            case CONSISTENT_HASH_FACTORY: {
+               builder.clustering().hash().consistentHashFactory(
+                     Util.<ConsistentHashFactory>getInstance(value, holder.getClassLoader()));
                break;
             }
             default: {
