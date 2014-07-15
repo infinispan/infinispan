@@ -17,9 +17,13 @@ import org.infinispan.util.concurrent.ConcurrentHashSet;
 import org.infinispan.util.concurrent.WithinThreadExecutor;
 import org.testng.annotations.Test;
 
+import java.util.concurrent.BrokenBarrierException;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
+import java.util.concurrent.CyclicBarrier;
 import java.util.concurrent.Executor;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import static org.testng.Assert.*;
@@ -34,8 +38,6 @@ public abstract class ParallelIterationTest extends SingleCacheManagerTest {
    protected AdvancedLoadWriteStore store;
    protected Executor persistenceExecutor;
    protected StreamingMarshaller sm;
-   protected boolean multipleThreads = true;
-   private int numEntries;
 
    @Override
    protected EmbeddedCacheManager createCacheManager() throws Exception {
@@ -64,7 +66,7 @@ public abstract class ParallelIterationTest extends SingleCacheManagerTest {
 
    public void testCancelingTaskMultipleProcessors() {
       insertData();
-      final ConcurrentMap entries = new ConcurrentHashMap();
+      final ConcurrentMap<Object, Object> entries = new ConcurrentHashMap<>();
       final AtomicBoolean stopped = new AtomicBoolean(false);
 
       store.process(null, new AdvancedCacheLoader.CacheLoaderTask() {
@@ -92,15 +94,28 @@ public abstract class ParallelIterationTest extends SingleCacheManagerTest {
 
    private void runIterationTest(int numThreads, Executor persistenceExecutor1) {
       int numEntries = insertData();
-      final ConcurrentMap entries = new ConcurrentHashMap();
-      final ConcurrentHashSet threads = new ConcurrentHashSet();
+      final ConcurrentMap<Object, Object> entries = new ConcurrentHashMap<>();
+      final ConcurrentHashSet<Thread> threads = new ConcurrentHashSet<>();
       final AtomicBoolean sameKeyMultipleTimes = new AtomicBoolean();
+      final CyclicBarrier barrier = new CyclicBarrier(numThreads);
+      final AtomicBoolean brokenBarrier = new AtomicBoolean(false);
 
       store.process(null, new AdvancedCacheLoader.CacheLoaderTask() {
          @Override
          public void processEntry(MarshalledEntry marshalledEntry, AdvancedCacheLoader.TaskContext taskContext) throws InterruptedException {
             Object existing = entries.put(marshalledEntry.getKey(), marshalledEntry.getValue());
-            threads.add(Thread.currentThread());
+            if (threads.add(Thread.currentThread())) {
+               try {
+                  //in some cases, if the task is fast enough, it may not use all the threads expected
+                  //this barrier will ensure that when the thread is used for the first time, it will wait
+                  //for the expected number of threads.
+                  //this should remove the random failures.
+                  barrier.await(1, TimeUnit.MINUTES);
+               } catch (BrokenBarrierException | TimeoutException e) {
+                  log.warn("Exception occurred while waiting for barrier", e);
+                  brokenBarrier.set(true);
+               }
+            }
             if (existing != null) {
                log.warnf("Already a value present for key %s: %s", marshalledEntry.getKey(), existing);
                sameKeyMultipleTimes.set(true);
@@ -109,17 +124,16 @@ public abstract class ParallelIterationTest extends SingleCacheManagerTest {
       }, persistenceExecutor1, true, true);
 
       assertFalse(sameKeyMultipleTimes.get());
+      assertFalse(brokenBarrier.get());
       for (int i = 0; i < numEntries; i++) {
          assertEquals(entries.get(i), i, "For key" + i);
       }
 
-      if (multipleThreads) {
-         assertEquals(threads.size(), numThreads);
-      }
+      assertEquals(threads.size(), numThreads);
    }
 
    private int insertData() {
-      numEntries = 12000;
+      int numEntries = 12000;
       for (int i = 0; i < numEntries; i++) {
          MarshalledEntryImpl me = new MarshalledEntryImpl(i, i, null, sm);
          store.write(me);
