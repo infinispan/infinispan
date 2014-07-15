@@ -1,6 +1,6 @@
 package org.infinispan.persistence.jpa.impl;
 
-import java.util.concurrent.atomic.AtomicLong;
+import org.infinispan.commons.util.concurrent.jdk8backported.LongAdder;
 
 /**
  * @author Radim Vansa &lt;rvansa@redhat.com&gt;
@@ -8,35 +8,34 @@ import java.util.concurrent.atomic.AtomicLong;
 public class Stats {
 
    private class Operation {
-      AtomicLong count = new AtomicLong();
-      AtomicLong sum = new AtomicLong();
+      final LongAdder count = new LongAdder();
+      final LongAdder sum = new LongAdder();
 
       void add(long duration) {
-         count.incrementAndGet();
-         sum.addAndGet(duration);
+         count.increment();
+         sum.add(duration);
       }
 
       @Override
       public String toString() {
-         long count = this.count.get();
-         long sum = this.sum.get();
+         long count = this.count.sum();
+         long sum = this.sum.sum();
          return String.format("[count=%d, avg=%.2f ms]", count, count == 0 ? Double.NaN : sum / (1000000.0 * count));
       }
    }
 
-   private Operation entityFind = new Operation();
-   private Operation entityMerge = new Operation();
-   private Operation entityRemove = new Operation();
-   private Operation metadataFind = new Operation();
-   private Operation metadataMerge = new Operation();
-   private Operation metadataRemove = new Operation();
-   private Operation txReadCommitted = new Operation();
-   private Operation txWriteCommitted = new Operation();
-   private Operation txRemoveCommitted = new Operation();
-   private Operation txReadFailed = new Operation();
-   private Operation txWriteFailed = new Operation();
-   private Operation txRemoveFailed = new Operation();
-
+   private final Operation entityFind = new Operation();
+   private final Operation entityMerge = new Operation();
+   private final Operation entityRemove = new Operation();
+   private final Operation metadataFind = new Operation();
+   private final Operation metadataMerge = new Operation();
+   private final Operation metadataRemove = new Operation();
+   private final Operation txReadCommitted = new Operation();
+   private final Operation txWriteCommitted = new Operation();
+   private final Operation txRemoveCommitted = new Operation();
+   private final Operation txReadFailed = new Operation();
+   private final Operation txWriteFailed = new Operation();
+   private final Operation txRemoveFailed = new Operation();
 
 
    public void addEntityMerge(long duration) {
