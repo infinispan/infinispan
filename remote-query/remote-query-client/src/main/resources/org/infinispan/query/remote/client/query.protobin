@@ -1,15 +1,0 @@
-
-å
-.org/infinispan/query/remote/client/query.proto"org.infinispan.query.remote.client1org/infinispan/protostream/message-wrapping.proto"K
-QueryRequest
-
-jpqlString (	
-startOffset (
-
-maxResults ("Ž
-QueryResponse
-
-numResults (
-projectionSize (;
-results (2*.org.infinispan.protostream.WrappedMessage
-totalResults (
