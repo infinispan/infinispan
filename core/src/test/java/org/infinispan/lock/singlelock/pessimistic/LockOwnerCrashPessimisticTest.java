@@ -31,7 +31,7 @@ public class LockOwnerCrashPessimisticTest extends AbstractLockOwnerCrashTest {
 
    public void testLockOwnerCrashesBeforePrepare() throws Exception {
       final Object k = getKeyForCache(2);
-      fork(new Runnable() {
+      inNewThread(new Runnable() {
          @Override
          public void run() {
             try {
@@ -78,7 +78,7 @@ public class LockOwnerCrashPessimisticTest extends AbstractLockOwnerCrashTest {
 
    public void testLockOwnerCrashesBeforePrepareAndLockIsStillHeld() throws Exception {
       final Object k = getKeyForCache(2);
-      fork(new Runnable() {
+      inNewThread(new Runnable() {
          @Override
          public void run() {
             try {
@@ -134,7 +134,7 @@ public class LockOwnerCrashPessimisticTest extends AbstractLockOwnerCrashTest {
 
    private void testCrashBeforeCommit(final boolean crashBeforePrepare) throws NotSupportedException, SystemException, InvalidTransactionException, HeuristicMixedException, RollbackException, HeuristicRollbackException {
       final Object k = getKeyForCache(2);
-      fork(new Runnable() {
+      inNewThread(new Runnable() {
          @Override
          public void run() {
             try {

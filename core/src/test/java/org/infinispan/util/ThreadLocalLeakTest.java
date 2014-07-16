@@ -102,7 +102,7 @@ public class ThreadLocalLeakTest extends AbstractInfinispanTest {
          final Cache<Object, Object> c = cm[0].getCache();
          c.put("key1", "value1");
 
-         forkedThread = fork(new Runnable() {
+         forkedThread = inNewThread(new Runnable() {
             @Override
             public void run() {
                Cache<Object, Object> c = cm[0].getCache();

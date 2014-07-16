@@ -20,8 +20,10 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.concurrent.Callable;
+import java.util.concurrent.CompletionService;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import static org.testng.AssertJUnit.*;
@@ -211,42 +213,28 @@ public abstract class BaseAtomicHashMapAPITest extends MultipleCacheManagersTest
       assertSize(cache1, 0);
       final Map<String, String> map = createAtomicMap(cache1, "testConcurrentWritesAndIteration", true);
       assertSize(map, 0);
-      final AtomicBoolean allOk = new AtomicBoolean(true);
-      final CountDownLatch latch = new CountDownLatch(1);
-      Thread t1 = fork(new Runnable() {
+      Callable<Void> c1 = new Callable() {
          @Override
-         public void run() {
-            try {
-               Map<String, String> map = createAtomicMap(cache1, "testConcurrentWritesAndIteration", true);
-               latch.await();
-               for (int i = 0; i < 500; i++) {
-                  map.put("key-" + i, "value-" + i);
-               }
-            } catch (Exception e) {
-               log.error("Unexpected error performing transaction", e);
-            }
-         }
-      }, false);
-
-      Thread t2 = fork(new Runnable() {
-         @Override
-         public void run() {
+         public Void call() throws Exception {
             Map<String, String> map = createAtomicMap(cache1, "testConcurrentWritesAndIteration", true);
-            try {
-               latch.await();
-               for (int i = 0; i < 500; i++) {
-                  map.keySet();
-               }
-            } catch (Exception e) {
-               allOk.set(false);
-               log.error("Unexpected error performing transaction", e);
+            for (int i = 0; i < 500; i++) {
+               map.put("key-" + i, "value-" + i);
             }
+            return null;
          }
-      }, false);
-      latch.countDown();
-      t1.join();
-      t2.join();
-      assertTrue("Iteration raised an exception.", allOk.get());
+      };
+
+      Callable<Void> c2 = new Callable() {
+         @Override
+         public Void call() throws Exception {
+            Map<String, String> map = createAtomicMap(cache1, "testConcurrentWritesAndIteration", true);
+            for (int i = 0; i < 500; i++) {
+               map.keySet();
+            }
+            return null;
+         }
+      };
+      runConcurrently(c1, c2);
    }
 
    public void testRollback() throws Exception {

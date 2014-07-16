@@ -15,11 +15,14 @@ import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.testng.annotations.Test;
 
 import javax.transaction.TransactionManager;
+import java.util.concurrent.Callable;
+import java.util.concurrent.CompletionService;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.Executor;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import static org.testng.Assert.assertNotNull;
 import static org.testng.AssertJUnit.assertEquals;
@@ -172,23 +175,18 @@ public class ReplicationQueueTest extends MultipleCacheManagersTest {
       // put 10 elements in the queue from 5 different threads
       int numThreads = 5;
       final int numLoopsPerThread = 2;
-      ExecutorService executor = Executors.newFixedThreadPool(numThreads, getTestThreadFactory("CachePut"));
 
-      for (int i = 0; i < numThreads; i++) {
-         final int i1 = i;
-         executor.execute(new Runnable() {
-            int index = i1;
+      runConcurrently(new Callable() {
+         AtomicInteger indexOffset = new AtomicInteger();
 
-            public void run() {
-               for (int j = 0; j < numLoopsPerThread; j++) {
-                  cache1.put("key" + index + "_" + j, "value");
-               }
+         public Void call() {
+            int index = indexOffset.getAndIncrement();
+            for (int j = 0; j < numLoopsPerThread; j++) {
+               cache1.put("key" + index + "_" + j, "value");
             }
-         });
-      }
-      // wait for them to complete
-      executor.shutdown();
-      executor.awaitTermination(10, TimeUnit.SECONDS);
+            return null;
+         }
+      }, numThreads);
 
       // Now wait until values are replicated properly
       eventually(new Condition() {

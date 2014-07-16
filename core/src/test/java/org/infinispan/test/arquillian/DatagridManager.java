@@ -1,6 +1,7 @@
 package org.infinispan.test.arquillian;
 
 import java.util.List;
+import java.util.concurrent.Future;
 
 import javax.transaction.RollbackException;
 import javax.transaction.SystemException;
@@ -60,7 +61,7 @@ public class DatagridManager extends MultipleCacheManagersTest
    }
 
    //name change
-   public Thread forkThread(Runnable r, boolean sync) {
+   public Future<?> forkThread(Runnable r, boolean sync) {
       return fork(r, sync);
    }
 
