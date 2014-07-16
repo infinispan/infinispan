@@ -15,7 +15,9 @@ import javax.transaction.NotSupportedException;
 import javax.transaction.RollbackException;
 import javax.transaction.SystemException;
 
-import static org.testng.Assert.assertEquals;
+import static org.testng.AssertJUnit.assertEquals;
+import static org.testng.AssertJUnit.fail;
+
 
 /**
  * @author Mircea Markus
@@ -31,7 +33,7 @@ public class LockOwnerCrashPessimisticTest extends AbstractLockOwnerCrashTest {
 
    public void testLockOwnerCrashesBeforePrepare() throws Exception {
       final Object k = getKeyForCache(2);
-      fork(new Runnable() {
+      inNewThread(new Runnable() {
          @Override
          public void run() {
             try {
@@ -42,7 +44,7 @@ public class LockOwnerCrashPessimisticTest extends AbstractLockOwnerCrashTest {
                e.printStackTrace();
             }
          }
-      }, false);
+      });
 
       eventually(new AbstractInfinispanTest.Condition() {
          @Override
@@ -64,8 +66,8 @@ public class LockOwnerCrashPessimisticTest extends AbstractLockOwnerCrashTest {
       tm(1).resume(transaction);
       tm(1).commit();
 
-      assertEquals(cache(0).get(k), "v");
-      assertEquals(cache(1).get(k), "v");
+      assertEquals("v", cache(0).get(k));
+      assertEquals("v", cache(1).get(k));
 
       assertNotLocked(k);
       eventually(new AbstractInfinispanTest.Condition() {
@@ -78,7 +80,7 @@ public class LockOwnerCrashPessimisticTest extends AbstractLockOwnerCrashTest {
 
    public void testLockOwnerCrashesBeforePrepareAndLockIsStillHeld() throws Exception {
       final Object k = getKeyForCache(2);
-      fork(new Runnable() {
+      inNewThread(new Runnable() {
          @Override
          public void run() {
             try {
@@ -89,7 +91,7 @@ public class LockOwnerCrashPessimisticTest extends AbstractLockOwnerCrashTest {
                e.printStackTrace();
             }
          }
-      }, false);
+      });
 
       eventually(new Condition() {
          @Override
@@ -112,8 +114,8 @@ public class LockOwnerCrashPessimisticTest extends AbstractLockOwnerCrashTest {
       tm(1).resume(transaction);
       tm(1).commit();
 
-      assertEquals(cache(0).get(k), "v");
-      assertEquals(cache(1).get(k), "v");
+      assertEquals("v", cache(0).get(k));
+      assertEquals("v", cache(1).get(k));
 
       assertNotLocked(k);
       eventually(new AbstractInfinispanTest.Condition() {
@@ -134,7 +136,7 @@ public class LockOwnerCrashPessimisticTest extends AbstractLockOwnerCrashTest {
 
    private void testCrashBeforeCommit(final boolean crashBeforePrepare) throws NotSupportedException, SystemException, InvalidTransactionException, HeuristicMixedException, RollbackException, HeuristicRollbackException {
       final Object k = getKeyForCache(2);
-      fork(new Runnable() {
+      inNewThread(new Runnable() {
          @Override
          public void run() {
             try {
@@ -148,7 +150,7 @@ public class LockOwnerCrashPessimisticTest extends AbstractLockOwnerCrashTest {
                e.printStackTrace();
             }
          }
-      }, false);
+      });
 
 
       eventually(new Condition() {
@@ -167,13 +169,13 @@ public class LockOwnerCrashPessimisticTest extends AbstractLockOwnerCrashTest {
 
 
       killMember(2);
-      assert caches().size() == 2;
+      assertEquals(2, caches().size());
 
 
       tm(1).begin();
       try {
          cache(1).put(k, "v2");
-         assert false : "Exception expected as lock cannot be acquired on k=" + k;
+         fail("Exception expected as lock cannot be acquired on k=" + k);
       } catch (Exception e) {
          tm(1).rollback();
       }
@@ -181,7 +183,7 @@ public class LockOwnerCrashPessimisticTest extends AbstractLockOwnerCrashTest {
       tm(0).begin();
       try {
          cache(0).put(k, "v3");
-         assert false : "Exception expected as lock cannot be acquired on k=" + k;
+         fail("Exception expected as lock cannot be acquired on k=" + k);
       } catch (Exception e) {
          tm(0).rollback();
       }
@@ -193,8 +195,8 @@ public class LockOwnerCrashPessimisticTest extends AbstractLockOwnerCrashTest {
       } else {
          tm(1).commit();
       }
-      assert cache(0).get(k).equals("v");
-      assert cache(1).get(k).equals("v");
+      assertEquals("v", cache(0).get(k));
+      assertEquals("v", cache(1).get(k));
       assertNotLocked(k);
    }
 }

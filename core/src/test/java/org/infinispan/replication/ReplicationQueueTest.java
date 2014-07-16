@@ -15,13 +15,10 @@ import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.testng.annotations.Test;
 
 import javax.transaction.TransactionManager;
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.Executor;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.TimeUnit;
+import java.util.concurrent.Callable;
+import java.util.concurrent.atomic.AtomicInteger;
 
-import static org.testng.Assert.assertNotNull;
+import static org.testng.AssertJUnit.assertNotNull;
 import static org.testng.AssertJUnit.assertEquals;
 import static org.testng.AssertJUnit.assertNull;
 
@@ -72,9 +69,9 @@ public class ReplicationQueueTest extends MultipleCacheManagersTest {
       cache1.put("key", "value");
       ReplicationQueue replicationQueue = TestingUtil.extractComponent(cache1, ReplicationQueue.class);
       assertNotNull(replicationQueue);
-      assertEquals(replicationQueue.getElementsCount(), 1);
+      assertEquals(1, replicationQueue.getElementsCount());
       assertNull(cache2.get("key"));
-      assertEquals(cache1.get("key"), "value");
+      assertEquals("value", cache1.get("key"));
 
       replicationQueue.flush();
 
@@ -86,7 +83,7 @@ public class ReplicationQueueTest extends MultipleCacheManagersTest {
          }
       });
       assertEquals(cache2.get("key"), "value");
-      assertEquals(replicationQueue.getElementsCount(), 0);
+      assertEquals(0, replicationQueue.getElementsCount());
    }
 
    /**
@@ -116,7 +113,7 @@ public class ReplicationQueueTest extends MultipleCacheManagersTest {
          }
       });
       assertEquals(cache2.get("key"), "value");
-      assertEquals(replicationQueue.getElementsCount(), 0);
+      assertEquals(0, replicationQueue.getElementsCount());
    }
 
 
@@ -137,7 +134,7 @@ public class ReplicationQueueTest extends MultipleCacheManagersTest {
          }
       });
       for (int i = 0; i < REPL_QUEUE_MAX_ELEMENTS; i++) {
-         assertEquals(cache2.get("key" + i), "value" + i);
+         assertEquals("value" + i, cache2.get("key" + i));
       }
    }
 
@@ -161,7 +158,7 @@ public class ReplicationQueueTest extends MultipleCacheManagersTest {
          }
       });
       for (int i = 0; i < REPL_QUEUE_MAX_ELEMENTS; i++) {
-         assertEquals(cache2.get("key" + i), "value" + i);
+         assertEquals("value" + i, cache2.get("key" + i));
       }
    }
 
@@ -169,36 +166,31 @@ public class ReplicationQueueTest extends MultipleCacheManagersTest {
     * Test that replication queue works fine when multiple threads are putting into the queue.
     */
    public void testReplicationQueueMultipleThreads() throws Exception {
-      // put 10 elements in the queue from 5 different threads
-      int numThreads = 5;
-      final int numLoopsPerThread = 2;
-      ExecutorService executor = Executors.newFixedThreadPool(numThreads, getTestThreadFactory("CachePut"));
+      // put 12 elements in the queue from 4 different threads
+      final int numThreads = 4;
+      final int numLoopsPerThread = 3;
 
-      for (int i = 0; i < numThreads; i++) {
-         final int i1 = i;
-         executor.execute(new Runnable() {
-            int index = i1;
+      runConcurrently(new Callable() {
+         AtomicInteger indexOffset = new AtomicInteger();
 
-            public void run() {
-               for (int j = 0; j < numLoopsPerThread; j++) {
-                  cache1.put("key" + index + "_" + j, "value");
-               }
+         public Void call() {
+            int index = indexOffset.getAndIncrement();
+            for (int j = 0; j < numLoopsPerThread; j++) {
+               cache1.put("key" + index + "_" + j, "value");
             }
-         });
-      }
-      // wait for them to complete
-      executor.shutdown();
-      executor.awaitTermination(10, TimeUnit.SECONDS);
+            return null;
+         }
+      }, numThreads);
 
       // Now wait until values are replicated properly
       eventually(new Condition() {
          @Override
          public boolean isSatisfied() throws Exception {
-            return cache2.size() == REPL_QUEUE_MAX_ELEMENTS;
+            return cache2.size() == numThreads * numLoopsPerThread;
          }
       });
       ReplicationQueue replicationQueue = TestingUtil.extractComponent(cache1, ReplicationQueue.class);
-      assertEquals(replicationQueue.getElementsCount(), numThreads * numLoopsPerThread - REPL_QUEUE_MAX_ELEMENTS);
+      assertEquals(0, replicationQueue.getElementsCount());
    }
 
    public void testAtomicHashMap() throws Exception {
@@ -220,7 +212,7 @@ public class ReplicationQueueTest extends MultipleCacheManagersTest {
 
       assertNotNull(AtomicMapLookup.getAtomicMap(cache2, "foo", false));
       assertNotNull(AtomicMapLookup.getAtomicMap(cache2, "foo").get("sub-key"));
-      assertEquals(AtomicMapLookup.getAtomicMap(cache2, "foo").get("sub-key"), "sub-value");
+      assertEquals("sub-value", AtomicMapLookup.getAtomicMap(cache2, "foo").get("sub-key"));
    }
 
 }

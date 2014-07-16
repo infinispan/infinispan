@@ -2,13 +2,15 @@ package org.infinispan.lock.singlelock.optimistic;
 
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.lock.singlelock.AbstractLockOwnerCrashTest;
+import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.CleanupAfterMethod;
 import org.infinispan.transaction.LockingMode;
 import org.infinispan.transaction.tm.DummyTransaction;
 import org.testng.annotations.Test;
 
-import static org.testng.Assert.assertEquals;
-import static org.testng.Assert.fail;
+import static org.testng.AssertJUnit.assertEquals;
+import static org.testng.AssertJUnit.fail;
+
 
 /**
  * @author Mircea Markus
@@ -26,7 +28,7 @@ public class LockOwnerCrashOptimisticTest extends AbstractLockOwnerCrashTest {
 
    public void testLockOwnerCrashesBeforePrepare() throws Exception {
       final Object k = getKeyForCache(2);
-      fork(new Runnable() {
+      inNewThread(new Runnable() {
          @Override
          public void run() {
             try {
@@ -37,7 +39,7 @@ public class LockOwnerCrashOptimisticTest extends AbstractLockOwnerCrashTest {
                e.printStackTrace();
             }
          }
-      }, false);
+      });
 
       eventually(new Condition() {
          @Override
@@ -52,8 +54,8 @@ public class LockOwnerCrashOptimisticTest extends AbstractLockOwnerCrashTest {
       tm(1).resume(transaction);
       tm(1).commit();
 
-      assertEquals(cache(0).get(k), "v");
-      assertEquals(cache(1).get(k), "v");
+      assertEquals("v", cache(0).get(k));
+      assertEquals("v", cache(1).get(k));
 
       assertNotLocked(k);
       eventually(new Condition() {
@@ -66,7 +68,7 @@ public class LockOwnerCrashOptimisticTest extends AbstractLockOwnerCrashTest {
 
    public void lockOwnerCrasherBetweenPrepareAndCommit() throws Exception {
       final Object k = getKeyForCache(2);
-      fork(new Runnable() {
+      inNewThread(new Runnable() {
          @Override
          public void run() {
             try {
@@ -78,7 +80,7 @@ public class LockOwnerCrashOptimisticTest extends AbstractLockOwnerCrashTest {
                e.printStackTrace();
             }
          }
-      }, false);
+      });
 
 
       eventually(new Condition() {

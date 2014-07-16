@@ -43,7 +43,7 @@ public class RemoteLockCleanupTest extends MultipleCacheManagersTest {
                log.error(e);
             }
          }
-      }, false);
+      });
 
       eventually(new Condition() {
          @Override
@@ -83,6 +83,7 @@ public class RemoteLockCleanupTest extends MultipleCacheManagersTest {
       public Object visitLockControlCommand(TxInvocationContext ctx, LockControlCommand command) throws Throwable {
          if (!ctx.isOriginLocal()) {
             receivedReplRequest = true;
+            // TODO: we can replace this with the BlockingInterceptor instead or something equivalent to remove 5s wait
             Thread.sleep(5000);
             try {
                return super.visitLockControlCommand(ctx, command);

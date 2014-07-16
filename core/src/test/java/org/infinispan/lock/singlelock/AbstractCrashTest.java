@@ -73,7 +73,7 @@ public abstract class AbstractCrashTest extends MultipleCacheManagersTest {
                e.printStackTrace();
             }
          }
-      }, false);
+      });
       return k;
    }
 
@@ -89,7 +89,7 @@ public abstract class AbstractCrashTest extends MultipleCacheManagersTest {
                log.errorf(e, "Error committing transaction for key %s on cache %s", k, cache(cacheIndex));
             }
          }
-      }, false);
+      });
       return k;
    }
 

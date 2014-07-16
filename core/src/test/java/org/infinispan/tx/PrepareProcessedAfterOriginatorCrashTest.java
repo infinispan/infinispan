@@ -61,7 +61,7 @@ public class PrepareProcessedAfterOriginatorCrashTest extends MultipleCacheManag
                //possible as the node is being killed
             }
          }
-      }, false);
+      });
 
       eventually(new Condition() {
          @Override
