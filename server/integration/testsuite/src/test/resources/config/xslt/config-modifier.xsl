@@ -33,6 +33,8 @@
     <xsl:param name="hotrodAuth">false</xsl:param>
     <xsl:param name="addKrbOpts">false</xsl:param>
     <xsl:param name="addKrbSecDomain">false</xsl:param>
+    <xsl:param name="addSecRealm">false</xsl:param>
+    <xsl:param name="addConnection">false</xsl:param>
     <xsl:param name="log.level.infinispan">INFO</xsl:param>
     <xsl:param name="log.level.jgroups">INFO</xsl:param>
     <xsl:param name="log.level.console">INFO</xsl:param>
@@ -184,6 +186,32 @@
         <xsl:if test="$addKrbSecDomain != 'false'">
             <xsl:copy>
                 <xsl:copy-of select="document($addKrbSecDomain)"/>
+                <xsl:apply-templates select="@* | node()"/>
+            </xsl:copy>
+        </xsl:if>
+    </xsl:template>
+    
+    <!-- add outbound connections -->
+    <xsl:template match="p:management">
+        <xsl:if test="$addConnection = 'false'">
+            <xsl:call-template name="copynode"/>
+        </xsl:if>
+        <xsl:if test="$addConnection != 'false'">
+            <xsl:copy>
+                <xsl:copy-of select="document($addConnection)"/>
+                <xsl:apply-templates select="@* | node()"/>
+            </xsl:copy>
+        </xsl:if>
+    </xsl:template>
+    
+    <!-- add security realm -->
+    <xsl:template match="p:security-realms">
+        <xsl:if test="$addSecRealm = 'false'">
+            <xsl:call-template name="copynode"/>
+        </xsl:if>
+        <xsl:if test="$addSecRealm != 'false'">
+            <xsl:copy>
+                <xsl:copy-of select="document($addSecRealm)"/>
                 <xsl:apply-templates select="@* | node()"/>
             </xsl:copy>
         </xsl:if>

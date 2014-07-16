@@ -10,7 +10,16 @@ objectclass: person
 uid: admin
 cn: ISPN Admin
 sn: admin
-userPassword: strong_password
+userPassword: strongPassword
+
+dn: uid=supervisor,ou=People,dc=infinispan,dc=org
+objectClass: top
+objectclass: uidObject
+objectClass: person
+uid: supervisor
+cn: ISPN Supervisor
+sn: supervisor
+userPassword: lessStrongPassword
 
 dn: uid=writer,ou=People,dc=infinispan,dc=org
 objectclass: top
@@ -19,7 +28,7 @@ objectclass: person
 uid: writer
 cn: ISPN Writer
 sn: writer
-userPassword: some_password
+userPassword: somePassword
 
 dn: uid=reader,ou=People,dc=infinispan,dc=org
 objectclass: top
@@ -37,4 +46,4 @@ objectclass: person
 uid: unprivileged
 cn: ISPN Unprivileged
 sn: unprivileged
-userPassword: weak_password
+userPassword: weakPassword

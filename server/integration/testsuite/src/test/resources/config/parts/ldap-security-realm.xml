@@ -1,0 +1,7 @@
+            <security-realm name="LdapRealm">
+                <authentication>
+                    <ldap connection="ldap_connection" recursive="true" base-dn="ou=People,dc=infinispan,dc=org">
+                        <username-filter attribute="uid" />
+                    </ldap>
+                </authentication>
+            </security-realm>
