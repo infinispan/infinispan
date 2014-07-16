@@ -2,6 +2,7 @@ package org.infinispan.lock.singlelock.optimistic;
 
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.lock.singlelock.AbstractLockOwnerCrashTest;
+import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.CleanupAfterMethod;
 import org.infinispan.transaction.LockingMode;
 import org.infinispan.transaction.tm.DummyTransaction;
@@ -26,7 +27,7 @@ public class LockOwnerCrashOptimisticTest extends AbstractLockOwnerCrashTest {
 
    public void testLockOwnerCrashesBeforePrepare() throws Exception {
       final Object k = getKeyForCache(2);
-      fork(new Runnable() {
+      inNewThread(new Runnable() {
          @Override
          public void run() {
             try {
@@ -66,7 +67,7 @@ public class LockOwnerCrashOptimisticTest extends AbstractLockOwnerCrashTest {
 
    public void lockOwnerCrasherBetweenPrepareAndCommit() throws Exception {
       final Object k = getKeyForCache(2);
-      fork(new Runnable() {
+      inNewThread(new Runnable() {
          @Override
          public void run() {
             try {
