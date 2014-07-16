@@ -2,7 +2,6 @@ package org.infinispan.persistence;
 
 import org.infinispan.filter.KeyFilter;
 import org.infinispan.interceptors.locking.ClusteringDependentLogic;
-import org.infinispan.persistence.spi.AdvancedCacheLoader;
 
 /**
  * @author Mircea Markus

@@ -1,12 +1,14 @@
 package org.infinispan.container;
 
 import net.jcip.annotations.ThreadSafe;
+
 import org.infinispan.commons.equivalence.AnyEquivalence;
 import org.infinispan.commons.equivalence.Equivalence;
 import org.infinispan.commons.logging.Log;
 import org.infinispan.commons.logging.LogFactory;
 import org.infinispan.commons.util.CollectionFactory;
 import org.infinispan.commons.util.concurrent.ParallelIterableMap;
+import org.infinispan.commons.util.concurrent.ParallelIterableMap.KeyValueAction;
 import org.infinispan.commons.util.concurrent.jdk8backported.EquivalentConcurrentHashMapV8;
 import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.eviction.ActivationManager;
@@ -377,15 +379,15 @@ public class DefaultDataContainer<K, V> implements DataContainer<K, V> {
    }
 
    @Override
-   public void executeTask(final KeyFilter<? super K> filter,
-                               final ParallelIterableMap.KeyValueAction<? super K, InternalCacheEntry<? super K, ? super V>> action) throws InterruptedException{
+   public void executeTask(final KeyFilter<? super K> filter, final KeyValueAction<? super K, InternalCacheEntry<K, V>> action)
+         throws InterruptedException {
       if (filter == null)
          throw new IllegalArgumentException("No filter specified");
       if (action == null)
          throw new IllegalArgumentException("No action specified");
 
       ParallelIterableMap<K, InternalCacheEntry<K, V>> map = (ParallelIterableMap<K, InternalCacheEntry<K, V>>) entries;
-      map.forEach(32, new ParallelIterableMap.KeyValueAction<K, InternalCacheEntry<K, V>>() {
+      map.forEach(32, new KeyValueAction<K, InternalCacheEntry<K, V>>() {
          @Override
          public void apply(K key, InternalCacheEntry<K, V> value) {
             if (filter.accept(key)) {
@@ -400,15 +402,15 @@ public class DefaultDataContainer<K, V> implements DataContainer<K, V> {
    }
 
    @Override
-   public void executeTask(final KeyValueFilter<? super K, ? super V> filter,
-                           final ParallelIterableMap.KeyValueAction<? super K, InternalCacheEntry<? super K, ? super V>> action) throws InterruptedException {
+   public void executeTask(final KeyValueFilter<? super K, ? super V> filter, final KeyValueAction<? super K, InternalCacheEntry<K, V>> action)
+         throws InterruptedException {
       if (filter == null)
          throw new IllegalArgumentException("No filter specified");
       if (action == null)
          throw new IllegalArgumentException("No action specified");
 
       ParallelIterableMap<K, InternalCacheEntry<K, V>> map = (ParallelIterableMap<K, InternalCacheEntry<K, V>>) entries;
-      map.forEach(32, new ParallelIterableMap.KeyValueAction<K, InternalCacheEntry<K, V>>() {
+      map.forEach(32, new KeyValueAction<K, InternalCacheEntry<K, V>>() {
          @Override
          public void apply(K key, InternalCacheEntry<K, V> value) {
             if (filter.accept(key, value.getValue(), value.getMetadata())) {

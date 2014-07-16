@@ -499,13 +499,13 @@ public class ManualEvictionWithSizeBasedAndConcurrentOperationsInPrimaryOwnerTes
       }
 
       @Override
-      public void executeTask(KeyFilter<? super K> filter, KeyValueAction<? super K, InternalCacheEntry<? super K, ? super V>> action)
+      public void executeTask(KeyFilter<? super K> filter, KeyValueAction<? super K, InternalCacheEntry< K, V>> action)
             throws InterruptedException {
          throw new NotImplementedException();
       }
 
       @Override
-      public void executeTask(KeyValueFilter<? super K, ? super V> filter, KeyValueAction<? super K, InternalCacheEntry<? super K, ? super V>> action) throws InterruptedException {
+      public void executeTask(KeyValueFilter<? super K, ? super V> filter, KeyValueAction<? super K, InternalCacheEntry<K, V>> action) throws InterruptedException {
          throw new NotImplementedException();
       }
 

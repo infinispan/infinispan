@@ -276,21 +276,21 @@ public class SimpleTwoNodesMapReduceTest extends BaseWordCountMapReduceTest {
    }
 
    public void testIntermediateCompositeKeys() {
-      MapReduceManagerImpl.IntermediateCompositeKey key = new MapReduceManagerImpl.IntermediateCompositeKey("task1", 1);
-      MapReduceManagerImpl.IntermediateCompositeKey key1 = new MapReduceManagerImpl.IntermediateCompositeKey("task2", 2);
-      MapReduceManagerImpl.IntermediateCompositeKey key2 = new MapReduceManagerImpl.IntermediateCompositeKey("task1", 1);
+      MapReduceManagerImpl.IntermediateKey key = new MapReduceManagerImpl.IntermediateKey("task1", 1);
+      MapReduceManagerImpl.IntermediateKey key1 = new MapReduceManagerImpl.IntermediateKey("task2", 2);
+      MapReduceManagerImpl.IntermediateKey key2 = new MapReduceManagerImpl.IntermediateKey("task1", 1);
 
       //Composite keys with null taskID
-      MapReduceManagerImpl.IntermediateCompositeKey key3 = new MapReduceManagerImpl.IntermediateCompositeKey(null, 1);
-      MapReduceManagerImpl.IntermediateCompositeKey key4 = new MapReduceManagerImpl.IntermediateCompositeKey(null, 2);
+      MapReduceManagerImpl.IntermediateKey key3 = new MapReduceManagerImpl.IntermediateKey(null, 1);
+      MapReduceManagerImpl.IntermediateKey key4 = new MapReduceManagerImpl.IntermediateKey(null, 2);
 
       //Composite keys with null keys
-      MapReduceManagerImpl.IntermediateCompositeKey key5 = new MapReduceManagerImpl.IntermediateCompositeKey("task3", null);
-      MapReduceManagerImpl.IntermediateCompositeKey key6 = new MapReduceManagerImpl.IntermediateCompositeKey("task4", null);
+      MapReduceManagerImpl.IntermediateKey key5 = new MapReduceManagerImpl.IntermediateKey("task3", null);
+      MapReduceManagerImpl.IntermediateKey key6 = new MapReduceManagerImpl.IntermediateKey("task4", null);
 
       //Composite keys with null keys & taskIDs
-      MapReduceManagerImpl.IntermediateCompositeKey key7 = new MapReduceManagerImpl.IntermediateCompositeKey(null, null);
-      MapReduceManagerImpl.IntermediateCompositeKey key8 = new MapReduceManagerImpl.IntermediateCompositeKey(null, null);
+      MapReduceManagerImpl.IntermediateKey key7 = new MapReduceManagerImpl.IntermediateKey(null, null);
+      MapReduceManagerImpl.IntermediateKey key8 = new MapReduceManagerImpl.IntermediateKey(null, null);
 
       assertFalse(key.equals(key1));
       assertTrue(key.equals(key2));
