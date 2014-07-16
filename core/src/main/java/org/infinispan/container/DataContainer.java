@@ -3,14 +3,14 @@ package org.infinispan.container;
 import java.util.Collection;
 import java.util.Set;
 
-import org.infinispan.filter.KeyFilter;
-import org.infinispan.metadata.Metadata;
-import org.infinispan.filter.KeyValueFilter;
-import org.infinispan.commons.util.concurrent.ParallelIterableMap;
+import org.infinispan.commons.util.concurrent.ParallelIterableMap.KeyValueAction;
 import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.factories.annotations.Stop;
 import org.infinispan.factories.scopes.Scope;
 import org.infinispan.factories.scopes.Scopes;
+import org.infinispan.filter.KeyFilter;
+import org.infinispan.filter.KeyValueFilter;
+import org.infinispan.metadata.Metadata;
 
 /**
  * The main internal data structure which stores entries
@@ -147,8 +147,7 @@ public interface DataContainer<K, V> extends Iterable<InternalCacheEntry<K, V>> 
     * @param action the specified action to execute on filtered key/values
     * @throws InterruptedException
     */
-   public void executeTask(KeyFilter<? super K> filter,
-         ParallelIterableMap.KeyValueAction<? super K, InternalCacheEntry<? super K, ? super V>> action) throws InterruptedException;
+   public void executeTask(final KeyFilter<? super K> filter, KeyValueAction<? super K, InternalCacheEntry<K, V>> action) throws InterruptedException;
 
    /**
     * Executes task specified by the given action on the container key/values filtered using the specified keyvalue filter.
@@ -157,8 +156,7 @@ public interface DataContainer<K, V> extends Iterable<InternalCacheEntry<K, V>> 
     * @param action the specified action to execute on filtered key/values
     * @throws InterruptedException
     */
-   public void executeTask(KeyValueFilter<? super K, ? super V> filter,
-                           ParallelIterableMap.KeyValueAction<? super K, InternalCacheEntry<? super K, ? super V>> action) throws InterruptedException;
+   public void executeTask(KeyValueFilter<? super K, ? super V> filter, KeyValueAction<? super K, InternalCacheEntry<K, V>> action) throws InterruptedException;
 
    public static interface ComputeAction<K, V> {
 

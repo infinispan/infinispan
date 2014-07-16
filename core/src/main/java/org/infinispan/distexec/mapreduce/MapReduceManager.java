@@ -80,13 +80,11 @@ public interface MapReduceManager {
     *           id of the map/reduce task
     * @param keysToMap
     *           list of input keys to locate in the cluster
-    * @param useIntermediateCompositeKey
-    *           if true use composite keys for shared intermediate cache
     * @return map where each key is an Address in the cluster and value are the keys mapped to that
     *         Address
     */
    <T> Map<Address, List<T>> mapKeysToNodes(DistributionManager dm, String taskId,
-            Collection<T> keysToMap, boolean useIntermediateCompositeKey);
+            Collection<T> keysToMap);
    
    /**
     * ExecutorService provided for local task execution

@@ -25,7 +25,7 @@ public class ReduceCommand<KOut, VOut> extends BaseRpcCommand implements Cancell
    private Set<KOut> keys = new HashSet<KOut>();
    private Reducer<KOut, VOut> reducer;
    private String taskId;
-   private boolean emitCompositeIntermediateKeys;
+   private boolean useIntermediateSharedCache;
    private MapReduceManager mrManager;
    private UUID uuid;
    private String resultCacheName;
@@ -70,12 +70,12 @@ public class ReduceCommand<KOut, VOut> extends BaseRpcCommand implements Cancell
       }
    }
 
-   public boolean isEmitCompositeIntermediateKeys() {
-      return emitCompositeIntermediateKeys;
+   public boolean isUseIntermediateSharedCache() {
+      return useIntermediateSharedCache;
    }
 
-   public void setEmitCompositeIntermediateKeys(boolean emitCompositeIntermediateKeys) {
-      this.emitCompositeIntermediateKeys = emitCompositeIntermediateKeys;
+   public void setUseIntermediateSharedCache(boolean useIntermediateSharedCache) {
+      this.useIntermediateSharedCache = useIntermediateSharedCache;
    }
 
    public boolean emitsIntoResultingCache(){
@@ -114,7 +114,7 @@ public class ReduceCommand<KOut, VOut> extends BaseRpcCommand implements Cancell
 
    @Override
    public Object[] getParameters() {
-      return new Object[] { taskId, keys, reducer, emitCompositeIntermediateKeys, uuid, resultCacheName };
+      return new Object[] { taskId, keys, reducer, useIntermediateSharedCache, uuid, resultCacheName };
    }
 
    @SuppressWarnings({ "unchecked", "rawtypes" })
@@ -126,7 +126,7 @@ public class ReduceCommand<KOut, VOut> extends BaseRpcCommand implements Cancell
       taskId = (String) args[i++];
       keys = (Set<KOut>) args[i++];
       reducer = (Reducer) args[i++];
-      emitCompositeIntermediateKeys = (Boolean) args[i++];
+      useIntermediateSharedCache = (Boolean) args[i++];
       uuid = (UUID) args[i++];
       resultCacheName = (String) args[i++];
    }

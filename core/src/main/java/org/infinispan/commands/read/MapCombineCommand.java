@@ -29,7 +29,7 @@ public class MapCombineCommand<KIn, VIn, KOut, VOut> extends BaseRpcCommand impl
    private Reducer<KOut, VOut> combiner;  
    private String taskId;
    private boolean reducePhaseDistributed;
-   private boolean emitCompositeIntermediateKeys;
+   private boolean useIntermediateSharedCache;
    private MapReduceManager mrManager;
    private UUID uuid;
    private String intermediateCacheName;
@@ -74,12 +74,12 @@ public class MapCombineCommand<KIn, VIn, KOut, VOut> extends BaseRpcCommand impl
          return mrManager.mapAndCombineForLocalReduction(this);
    }
 
-   public boolean isEmitCompositeIntermediateKeys() {
-      return emitCompositeIntermediateKeys;
+   public boolean isUseIntermediateSharedCache() {
+      return useIntermediateSharedCache;
    }
 
-   public void setEmitCompositeIntermediateKeys(boolean emitCompositeIntermediateKeys) {
-      this.emitCompositeIntermediateKeys = emitCompositeIntermediateKeys;
+   public void setUseIntermediateSharedCache(boolean useSharedTmpCache) {
+      this.useIntermediateSharedCache = useSharedTmpCache;
    }
 
    public boolean isReducePhaseDistributed() {
@@ -155,7 +155,7 @@ public class MapCombineCommand<KIn, VIn, KOut, VOut> extends BaseRpcCommand impl
    @Override
    public Object[] getParameters() {
       return new Object[] { taskId, keys, mapper, combiner, reducePhaseDistributed,
-               emitCompositeIntermediateKeys, uuid, intermediateCacheName, maxCollectorSize};
+            useIntermediateSharedCache, uuid, intermediateCacheName, maxCollectorSize};
    }
 
    @SuppressWarnings("unchecked")
@@ -169,7 +169,7 @@ public class MapCombineCommand<KIn, VIn, KOut, VOut> extends BaseRpcCommand impl
       mapper = (Mapper<KIn, VIn, KOut, VOut>) args[i++];
       combiner = (Reducer<KOut,VOut>) args[i++];
       reducePhaseDistributed = (Boolean) args[i++];
-      emitCompositeIntermediateKeys = (Boolean) args[i++];
+      useIntermediateSharedCache = (Boolean) args[i++];
       uuid = (UUID) args[i++];
       intermediateCacheName = (String) args[i++]; 
       maxCollectorSize = (Integer) args[i++];
