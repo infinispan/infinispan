@@ -54,7 +54,7 @@ public class StateTransferLargeObjectTest extends MultipleCacheManagersTest {
       c2 = cache(2);
       c3 = cache(3);
       waitForClusterToForm();
-      log.info("Rehash is complete!");
+      log.debug("Rehash is complete!");
       cache = new HashMap<Integer, BigObject>();
    }
 
@@ -77,46 +77,26 @@ public class StateTransferLargeObjectTest extends MultipleCacheManagersTest {
       fork(new Runnable() {
          @Override
          public void run() {
-            log.info("About to stop " + c3.getAdvancedCache().getRpcManager().getAddress());
+            log.debug("About to stop " + c3.getAdvancedCache().getRpcManager().getAddress());
             c3.stop();
             c3.getCacheManager().stop();
-            log.info("Cache stopped async!");
+            log.debug("Cache stopped async!");
          }
       }, false);
 
-      int failureCount = 0;
-
       for (int i = 0; i < num; i++) {
-         log.info("----Running a get on " + i);
-         try {
-            Object o = c0.get(i);
-            assertValue(i, o);
-         } catch (TimeoutException e) {
-            log.error("Exception received", e);
-            failureCount++;
-         }
-         try {
-            Object o = c1.get(i);
-            assertValue(i, o);
-         } catch (TimeoutException e) {
-            failureCount++;
-         }
-         try {
-            Object o = c2.get(i);
-            assertValue(i, o);
-         } catch (TimeoutException e) {
-            failureCount++;
-         }
-         if (i % 100 == 0) log.debug("i = " + i);
+         log.debug("----Running a get on " + i);
+         assertValue(i, c0.get(i));
+         assertValue(i, c1.get(i));
+         assertValue(i, c2.get(i));
       }
-      log.info("failureCount = " + failureCount);
-      log.info("Before stopping cache managers!");
+      log.debug("Before stopping cache managers!");
       TestingUtil.killCacheManagers(manager(2));
-      log.info("2 killed");
+      log.debug("2 killed");
       TestingUtil.killCacheManagers(manager(1));
-      log.info("1 killed");
+      log.debug("1 killed");
       TestingUtil.killCacheManagers(manager(0));
-      log.info("0 killed");
+      log.debug("0 killed");
    }
 
    private void assertValue(int i, Object o) {
@@ -129,30 +109,11 @@ public class StateTransferLargeObjectTest extends MultipleCacheManagersTest {
       BigObject obj = new BigObject();
       obj.setName("[" + num + "|" + prefix + "|" +  (num*3) + "|" + (num*7) + "]");
       obj.setValue(generateLargeString());
-      obj.setValue2(generateLargeString());
-      obj.setValue3(generateLargeString());
-      obj.setValue4(generateLargeString());
-      obj.setValue5(generateLargeString());
-      obj.setValue6(generateLargeString());
-      obj.setValue7(generateLargeString());
-      obj.setValue8(generateLargeString());
-      obj.setValue9(generateLargeString());
-      obj.setValue10(generateLargeString());
-      obj.setValue11(generateLargeString());
-      obj.setValue12(generateLargeString());
-      obj.setValue13(generateLargeString());
-      obj.setValue14(generateLargeString());
-      obj.setValue15(generateLargeString());
-      obj.setValue16(generateLargeString());
-      obj.setValue17(generateLargeString());
-      obj.setValue18(generateLargeString());
-      obj.setValue19(generateLargeString());
-      obj.setValue20(generateLargeString());
       return obj;
    }
 
    private String generateLargeString() {
-      byte[] bytes = new byte[100];
+      byte[] bytes = new byte[20 * 100];
       rnd.nextBytes(bytes);
       return new String(bytes);
    }
