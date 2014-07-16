@@ -27,13 +27,13 @@ public class LdapAuthenticationIT extends AbstractAuthentication {
 
    public static final String SECURITY_DOMAIN_NAME = "ispn-secure";
    public static final String ADMIN_ROLE = "admin";
-   public static final String ADMIN_PASSWD = "strong_password";
+   public static final String ADMIN_PASSWD = "strongPassword";
    public static final String WRITER_ROLE = "writer";
-   public static final String WRITER_PASSWD = "some_password";
+   public static final String WRITER_PASSWD = "somePassword";
    public static final String READER_ROLE = "reader";
    public static final String READER_PASSWD = "password";
    public static final String UNPRIVILEGED_ROLE = "unprivileged";
-   public static final String UNPRIVILEGED_PASSWD = "weak_password";
+   public static final String UNPRIVILEGED_PASSWD = "weakPassword";
 
    private static ApacheDsLdap ldapServer;
 

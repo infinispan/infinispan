@@ -1,0 +1,8 @@
+                <authentication security-realm="LdapRealm">
+                  <sasl server-name="node0" mechanisms="PLAIN" qop="auth" strength="high medium low">
+                    <policy>
+                      <no-anonymous value="true" />
+                    </policy>
+                    <property name="com.sun.security.sasl.digest.utf8">true</property>
+                  </sasl>
+                </authentication>
