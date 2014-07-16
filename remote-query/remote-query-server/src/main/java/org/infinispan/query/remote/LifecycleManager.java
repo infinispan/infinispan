@@ -114,6 +114,10 @@ public class LifecycleManager extends AbstractModuleLifecycle {
       SerializationContext serializationContext = ProtobufMetadataManager.getSerializationContext(cacheManager);
       cr.registerComponent(new ProtobufMatcher(serializationContext), ProtobufMatcher.class);
 
+      if (cfg.compatibility().enabled()) {
+         cr.registerComponent(new CompatibilityReflectionMatcher(serializationContext), CompatibilityReflectionMatcher.class);
+      }
+
       if (cfg.indexing().index().isEnabled() && !cfg.compatibility().enabled()) {
          log.infof("Registering RemoteValueWrapperInterceptor for cache %s", cacheName);
          createRemoteIndexingInterceptor(cr, cfg);

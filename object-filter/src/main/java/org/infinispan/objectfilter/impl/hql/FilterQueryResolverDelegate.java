@@ -5,6 +5,7 @@ import org.hibernate.hql.ast.common.JoinType;
 import org.hibernate.hql.ast.origin.hql.resolve.path.PathedPropertyReference;
 import org.hibernate.hql.ast.origin.hql.resolve.path.PathedPropertyReferenceSource;
 import org.hibernate.hql.ast.origin.hql.resolve.path.PropertyPath;
+import org.hibernate.hql.ast.spi.EntityNamesResolver;
 import org.hibernate.hql.ast.spi.QueryResolverDelegate;
 import org.infinispan.objectfilter.impl.logging.Log;
 import org.jboss.logging.Logger;
@@ -27,11 +28,14 @@ public final class FilterQueryResolverDelegate implements QueryResolverDelegate 
 
    private final ObjectPropertyHelper propertyHelper;
 
+   private final EntityNamesResolver entityNamesResolver;
+
    private String targetType;
 
    private boolean definingSelect = false;
 
-   public FilterQueryResolverDelegate(ObjectPropertyHelper propertyHelper) {
+   public FilterQueryResolverDelegate(EntityNamesResolver entityNamesResolver, ObjectPropertyHelper propertyHelper) {
+      this.entityNamesResolver = entityNamesResolver;
       this.propertyHelper = propertyHelper;
    }
 
@@ -43,7 +47,7 @@ public final class FilterQueryResolverDelegate implements QueryResolverDelegate 
       if (prevAlias != null && !prevAlias.equalsIgnoreCase(entityName)) {
          throw new UnsupportedOperationException("Alias reuse currently not supported: aliasTree " + alias + " already assigned to type " + prevAlias);
       }
-      if (propertyHelper.getEntityNamesResolver().getClassFromName(entityName) == null) {
+      if (entityNamesResolver.getClassFromName(entityName) == null) {
          throw new IllegalStateException("Unknown entity name " + entityName);
       }
       if (targetType != null) {
@@ -84,7 +88,7 @@ public final class FilterQueryResolverDelegate implements QueryResolverDelegate 
          throw log.getUnknownAliasException(root.getText());
       }
 
-      if (propertyHelper.getEntityNamesResolver().getClassFromName(entityNameForAlias) == null) {
+      if (entityNamesResolver.getClassFromName(entityNameForAlias) == null) {
          throw new IllegalStateException("Unknown entity name " + entityNameForAlias);
       }
 

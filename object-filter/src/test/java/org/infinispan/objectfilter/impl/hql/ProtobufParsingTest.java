@@ -1,6 +1,7 @@
 package org.infinispan.objectfilter.impl.hql;
 
 import com.google.protobuf.Descriptors;
+import org.hibernate.hql.ast.spi.EntityNamesResolver;
 import org.infinispan.objectfilter.test.model.MarshallerRegistration;
 import org.infinispan.protostream.ConfigurationBuilder;
 import org.infinispan.protostream.ProtobufUtil;
@@ -23,7 +24,9 @@ public class ProtobufParsingTest extends AbstractParsingTest {
    protected FilterProcessingChain<Descriptor> createFilterProcessingChain() throws IOException, Descriptors.DescriptorValidationException {
       SerializationContext serCtx = ProtobufUtil.newSerializationContext(new ConfigurationBuilder().build());
       MarshallerRegistration.registerMarshallers(serCtx);
-      return FilterProcessingChain.build(new ProtobufPropertyHelper(serCtx), null);
+      EntityNamesResolver entityNamesResolver = new ProtobufEntityNamesResolver(serCtx);
+      ProtobufPropertyHelper protobufPropertyHelper = new ProtobufPropertyHelper(entityNamesResolver, serCtx);
+      return FilterProcessingChain.build(entityNamesResolver, protobufPropertyHelper, null);
    }
 
    @Test

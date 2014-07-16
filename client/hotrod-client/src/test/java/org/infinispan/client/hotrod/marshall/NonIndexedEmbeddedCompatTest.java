@@ -29,16 +29,4 @@ public class NonIndexedEmbeddedCompatTest extends EmbeddedCompatTest {
    public void testEmbeddedQuery() throws Exception {
       // this would only make sense for Lucene based query
    }
-
-   @Test(enabled = false, description = "See https://issues.jboss.org/browse/ISPN-4485")
-   @Override
-   public void testRemoteQuery() throws Exception {
-      super.testRemoteQuery();
-   }
-
-   @Test(enabled = false, description = "See https://issues.jboss.org/browse/ISPN-4485")
-   @Override
-   public void testRemoteQueryForEmbeddedEntry() throws Exception {
-      super.testRemoteQueryForEmbeddedEntry();
-   }
 }

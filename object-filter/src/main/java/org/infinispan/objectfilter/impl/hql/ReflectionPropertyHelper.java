@@ -41,34 +41,8 @@ public final class ReflectionPropertyHelper extends ObjectPropertyHelper<Class<?
       primitives.add(boolean.class);
    }
 
-   private final ClassLoader classLoader;
-
-   private final EntityNamesResolver entityNamesResolver = new EntityNamesResolver() {
-      @Override
-      public Class<?> getClassFromName(String entityName) {
-         if (classLoader != null) {
-            try {
-               return classLoader.loadClass(entityName);
-            } catch (ClassNotFoundException e) {
-               return null;
-            }
-         }
-
-         try {
-            return Class.forName(entityName);
-         } catch (ClassNotFoundException e) {
-            return null;
-         }
-      }
-   };
-
-   public ReflectionPropertyHelper(ClassLoader classLoader) {
-      this.classLoader = classLoader;
-   }
-
-   @Override
-   public EntityNamesResolver getEntityNamesResolver() {
-      return entityNamesResolver;
+   public ReflectionPropertyHelper(EntityNamesResolver entityNamesResolver) {
+      super(entityNamesResolver);
    }
 
    @Override

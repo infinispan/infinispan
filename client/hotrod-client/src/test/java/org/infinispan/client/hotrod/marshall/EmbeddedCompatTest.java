@@ -162,6 +162,27 @@ public class EmbeddedCompatTest extends SingleCacheManagerTest {
       assertAccount(list.get(0));
    }
 
+   public void testRemoteQueryWithProjectionsForEmbeddedEntry() throws Exception {
+      EmbeddedAccount account = new EmbeddedAccount();
+      account.setId(1);
+      account.setDescription("test description");
+      account.setCreationDate(new Date(42));
+      cache.put(1, account);
+
+      // get account back from remote cache via query and check its attributes
+      QueryFactory qf = Search.getQueryFactory(remoteCache);
+      Query query = qf.from(Account.class)
+            .setProjection("description", "id")
+            .having("description").like("%test%").toBuilder()
+            .build();
+      List<Object[]> list = query.list();
+
+      assertNotNull(list);
+      assertEquals(1, list.size());
+      assertEquals("test description", list.get(0)[0]);
+      assertEquals(1, list.get(0)[1]);
+   }
+
    public void testEmbeddedQuery() throws Exception {
       Account account = createAccount();
       remoteCache.put(1, account);

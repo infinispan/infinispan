@@ -1,5 +1,6 @@
 package org.infinispan.objectfilter.impl.hql;
 
+import org.hibernate.hql.ast.spi.EntityNamesResolver;
 import org.junit.Test;
 
 import static org.junit.Assert.assertEquals;
@@ -13,7 +14,9 @@ public class ReflectionParsingTest extends AbstractParsingTest {
 
    @Override
    protected FilterProcessingChain<Class<?>> createFilterProcessingChain() throws Exception {
-      return FilterProcessingChain.build(new ReflectionPropertyHelper(null), null);
+      EntityNamesResolver entityNamesResolver = new ReflectionEntityNamesResolver(null);
+      ReflectionPropertyHelper reflectionPropertyHelper = new ReflectionPropertyHelper(entityNamesResolver);
+      return FilterProcessingChain.build(entityNamesResolver, reflectionPropertyHelper, null);
    }
 
    @Test

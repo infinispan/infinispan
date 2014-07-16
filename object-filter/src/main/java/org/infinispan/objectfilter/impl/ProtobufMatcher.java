@@ -1,6 +1,7 @@
 package org.infinispan.objectfilter.impl;
 
 import org.infinispan.objectfilter.impl.hql.FilterProcessingChain;
+import org.infinispan.objectfilter.impl.hql.ProtobufEntityNamesResolver;
 import org.infinispan.objectfilter.impl.hql.ProtobufPropertyHelper;
 import org.infinispan.objectfilter.impl.predicateindex.MatcherEvalContext;
 import org.infinispan.objectfilter.impl.predicateindex.ProtobufMatcherEvalContext;
@@ -19,15 +20,21 @@ import java.util.Set;
  * @author anistor@redhat.com
  * @since 7.0
  */
-public final class ProtobufMatcher extends BaseMatcher<Descriptor, Integer> {
+public class ProtobufMatcher extends BaseMatcher<Descriptor, Integer> {
 
    private final SerializationContext serializationContext;
+
+   private final ProtobufEntityNamesResolver entityNamesResolver;
+
+   private final ProtobufPropertyHelper propertyHelper;
 
    private final Descriptor wrappedMessageDescriptor;
 
    public ProtobufMatcher(SerializationContext serializationContext) {
       this.serializationContext = serializationContext;
       wrappedMessageDescriptor = serializationContext.getMessageDescriptor(WrappedMessage.PROTOBUF_TYPE_NAME);
+      entityNamesResolver = new ProtobufEntityNamesResolver(serializationContext);
+      propertyHelper = new ProtobufPropertyHelper(entityNamesResolver, serializationContext);
    }
 
    @Override
@@ -39,7 +46,7 @@ public final class ProtobufMatcher extends BaseMatcher<Descriptor, Integer> {
 
    @Override
    protected FilterProcessingChain<Descriptor> createFilterProcessingChain(Map<String, Object> namedParameters) {
-      return FilterProcessingChain.build(new ProtobufPropertyHelper(serializationContext), namedParameters);
+      return FilterProcessingChain.build(entityNamesResolver, propertyHelper, namedParameters);
    }
 
    @Override

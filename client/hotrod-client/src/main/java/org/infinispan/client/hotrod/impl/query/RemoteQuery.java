@@ -83,11 +83,10 @@ public final class RemoteQuery implements Query {
          }
       } else {
          results = new ArrayList<Object>(response.getResults().size());
-         SerializationContext serCtx = getSerializationContext();
          for (WrappedMessage r : response.getResults()) {
             try {
                byte[] bytes = (byte[]) r.getValue();
-               Object o = ProtobufUtil.fromWrappedByteArray(serCtx, bytes);
+               Object o = ProtobufUtil.fromWrappedByteArray(serializationContext, bytes);
                results.add(o);
             } catch (IOException e) {
                throw new HotRodClientException(e);

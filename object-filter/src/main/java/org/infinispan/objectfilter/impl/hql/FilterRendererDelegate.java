@@ -2,6 +2,7 @@ package org.infinispan.objectfilter.impl.hql;
 
 import org.antlr.runtime.tree.Tree;
 import org.hibernate.hql.ast.origin.hql.resolve.path.PropertyPath;
+import org.hibernate.hql.ast.spi.EntityNamesResolver;
 import org.hibernate.hql.ast.spi.SingleEntityQueryBuilder;
 import org.hibernate.hql.ast.spi.SingleEntityQueryRendererDelegate;
 import org.infinispan.objectfilter.SortField;
@@ -23,8 +24,9 @@ public final class FilterRendererDelegate<TypeMetadata> extends SingleEntityQuer
 
    private List<SortField> sortFields;
 
-   public FilterRendererDelegate(ObjectPropertyHelper<TypeMetadata> propertyHelper, SingleEntityQueryBuilder<BooleanExpr> builder, Map<String, Object> namedParameters) {
-      super(propertyHelper.getEntityNamesResolver(), builder, namedParameters);
+   public FilterRendererDelegate(EntityNamesResolver entityNamesResolver, ObjectPropertyHelper<TypeMetadata> propertyHelper,
+                                 SingleEntityQueryBuilder<BooleanExpr> builder, Map<String, Object> namedParameters) {
+      super(entityNamesResolver, builder, namedParameters);
       this.propertyHelper = propertyHelper;
    }
 
