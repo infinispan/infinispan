@@ -2,6 +2,7 @@ package org.infinispan.objectfilter.impl.hql;
 
 import org.hibernate.hql.ast.spi.AstProcessingChain;
 import org.hibernate.hql.ast.spi.AstProcessor;
+import org.hibernate.hql.ast.spi.EntityNamesResolver;
 import org.hibernate.hql.ast.spi.QueryRendererProcessor;
 import org.hibernate.hql.ast.spi.QueryResolverProcessor;
 import org.hibernate.hql.ast.spi.SingleEntityQueryBuilder;
@@ -38,12 +39,12 @@ public final class FilterProcessingChain<TypeMetadata> implements AstProcessingC
       return rendererDelegate.getResult();
    }
 
-   public static <TypeMetadata> FilterProcessingChain<TypeMetadata> build(ObjectPropertyHelper<TypeMetadata> propertyHelper, Map<String, Object> namedParameters) {
-      QueryResolverProcessor resolverProcessor = new QueryResolverProcessor(new FilterQueryResolverDelegate(propertyHelper));
+   public static <TypeMetadata> FilterProcessingChain<TypeMetadata> build(EntityNamesResolver entityNamesResolver, ObjectPropertyHelper<TypeMetadata> propertyHelper, Map<String, Object> namedParameters) {
+      QueryResolverProcessor resolverProcessor = new QueryResolverProcessor(new FilterQueryResolverDelegate(entityNamesResolver, propertyHelper));
 
-      SingleEntityQueryBuilder<BooleanExpr> queryBuilder = SingleEntityQueryBuilder.getInstance(new FilterPredicateFactory(propertyHelper.getEntityNamesResolver()), propertyHelper);
+      SingleEntityQueryBuilder<BooleanExpr> queryBuilder = SingleEntityQueryBuilder.getInstance(new FilterPredicateFactory(entityNamesResolver), propertyHelper);
 
-      FilterRendererDelegate<TypeMetadata> rendererDelegate = new FilterRendererDelegate<TypeMetadata>(propertyHelper, queryBuilder, namedParameters);
+      FilterRendererDelegate<TypeMetadata> rendererDelegate = new FilterRendererDelegate<TypeMetadata>(entityNamesResolver, propertyHelper, queryBuilder, namedParameters);
 
       QueryRendererProcessor rendererProcessor = new QueryRendererProcessor(rendererDelegate);
 

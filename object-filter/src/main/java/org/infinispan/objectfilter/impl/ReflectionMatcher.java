@@ -1,6 +1,8 @@
 package org.infinispan.objectfilter.impl;
 
+import org.hibernate.hql.ast.spi.EntityNamesResolver;
 import org.infinispan.objectfilter.impl.hql.FilterProcessingChain;
+import org.infinispan.objectfilter.impl.hql.ReflectionEntityNamesResolver;
 import org.infinispan.objectfilter.impl.hql.ReflectionPropertyHelper;
 import org.infinispan.objectfilter.impl.predicateindex.MatcherEvalContext;
 import org.infinispan.objectfilter.impl.predicateindex.ReflectionMatcherEvalContext;
@@ -14,12 +16,22 @@ import java.util.Set;
  * @author anistor@redhat.com
  * @since 7.0
  */
-public final class ReflectionMatcher extends BaseMatcher<Class<?>, String> {
+public class ReflectionMatcher extends BaseMatcher<Class<?>, String> {
 
-   private final ClassLoader classLoader;
+   private final EntityNamesResolver entityNamesResolver;
+
+   private final ReflectionPropertyHelper propertyHelper;
 
    public ReflectionMatcher(ClassLoader classLoader) {
-      this.classLoader = classLoader;
+      this(new ReflectionEntityNamesResolver(classLoader));
+   }
+
+   protected ReflectionMatcher(EntityNamesResolver entityNamesResolver) {
+      if (entityNamesResolver == null) {
+         throw new IllegalArgumentException("The EntityNamesResolver argument cannot be null");
+      }
+      this.entityNamesResolver = entityNamesResolver;
+      propertyHelper = new ReflectionPropertyHelper(entityNamesResolver);
    }
 
    @Override
@@ -34,7 +46,7 @@ public final class ReflectionMatcher extends BaseMatcher<Class<?>, String> {
 
    @Override
    protected FilterProcessingChain<Class<?>> createFilterProcessingChain(Map<String, Object> namedParameters) {
-      return FilterProcessingChain.build(new ReflectionPropertyHelper(classLoader), namedParameters);
+      return FilterProcessingChain.build(entityNamesResolver, propertyHelper, namedParameters);
    }
 
    @Override

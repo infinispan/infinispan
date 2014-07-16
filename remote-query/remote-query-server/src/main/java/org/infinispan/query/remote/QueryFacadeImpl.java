@@ -17,7 +17,6 @@ import org.infinispan.AdvancedCache;
 import org.infinispan.commons.CacheException;
 import org.infinispan.objectfilter.Matcher;
 import org.infinispan.objectfilter.impl.ProtobufMatcher;
-import org.infinispan.objectfilter.impl.ReflectionMatcher;
 import org.infinispan.protostream.MessageMarshaller;
 import org.infinispan.protostream.ProtobufUtil;
 import org.infinispan.protostream.SerializationContext;
@@ -68,7 +67,7 @@ public class QueryFacadeImpl implements QueryFacade {
          if (cache.getCacheConfiguration().indexing().index().isEnabled()) {
             response = executeQuery(cache, serCtx, request);
          } else {
-            response = executeNonIndexedQuery(cache, request);
+            response = executeNonIndexedQuery(cache, serCtx, request);
          }
 
          return ProtobufUtil.toByteArray(serCtx, response);
@@ -77,9 +76,9 @@ public class QueryFacadeImpl implements QueryFacade {
       }
    }
 
-   private QueryResponse executeNonIndexedQuery(AdvancedCache<byte[], byte[]> cache, QueryRequest request) throws IOException {
-      Class<? extends Matcher> matcherImplClass = cache.getCacheConfiguration().compatibility().enabled()
-            ? ReflectionMatcher.class : ProtobufMatcher.class;
+   private QueryResponse executeNonIndexedQuery(AdvancedCache<byte[], byte[]> cache, SerializationContext serCtx, QueryRequest request) throws IOException {
+      boolean compatMode = cache.getCacheConfiguration().compatibility().enabled();
+      Class<? extends Matcher> matcherImplClass = compatMode ? CompatibilityReflectionMatcher.class : ProtobufMatcher.class;
 
       EmbeddedQuery eq = new EmbeddedQuery(cache, request.getJpqlString(), request.getStartOffset(), request.getMaxResults(), matcherImplClass);
       List<?> list = eq.list();
@@ -90,6 +89,10 @@ public class QueryFacadeImpl implements QueryFacade {
       List<WrappedMessage> results = new ArrayList<WrappedMessage>(projSize == 0 ? list.size() : list.size() * projSize);
       for (Object o : list) {
          if (projSize == 0) {
+            if (compatMode) {
+               // if we are in compat mode then this is the real object so need to marshall it first
+               o = ProtobufUtil.toWrappedByteArray(serCtx, o);
+            }
             results.add(new WrappedMessage(o));
          } else {
             Object[] row = (Object[]) o;

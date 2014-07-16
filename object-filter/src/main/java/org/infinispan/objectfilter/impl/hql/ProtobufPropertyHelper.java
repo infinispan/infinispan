@@ -23,22 +23,9 @@ public final class ProtobufPropertyHelper extends ObjectPropertyHelper<Descripto
 
    private final SerializationContext serializationContext;
 
-   // the EntityNamesResolver of the hql parser is not nicely designed to handle non-Class type metadata
-   private final EntityNamesResolver entityNamesResolver = new EntityNamesResolver() {
-      @Override
-      public Class<?> getClassFromName(String entityName) {
-         // Here we return a 'fake' class. It does not matter what we return as long as it is non-null
-         return serializationContext.canMarshall(entityName) ? Object.class : null;
-      }
-   };
-
-   public ProtobufPropertyHelper(SerializationContext serializationContext) {
+   public ProtobufPropertyHelper(EntityNamesResolver entityNamesResolver, SerializationContext serializationContext) {
+      super(entityNamesResolver);
       this.serializationContext = serializationContext;
-   }
-
-   @Override
-   public EntityNamesResolver getEntityNamesResolver() {
-      return entityNamesResolver;
    }
 
    @Override
