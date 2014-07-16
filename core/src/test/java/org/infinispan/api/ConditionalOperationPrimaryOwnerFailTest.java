@@ -88,7 +88,7 @@ public class ConditionalOperationPrimaryOwnerFailTest extends MultipleCacheManag
          public void run() {
             killMember(1);
          }
-      }, false);
+      });
 
       //await until the key is received from state transfer (the command is blocked now...)
       latch2.await();

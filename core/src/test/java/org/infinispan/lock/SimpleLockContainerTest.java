@@ -6,7 +6,10 @@ import org.infinispan.util.concurrent.locks.OwnableReentrantLock;
 import org.infinispan.util.concurrent.locks.containers.OwnableReentrantPerEntryLockContainer;
 import org.testng.annotations.Test;
 
+import java.util.concurrent.Callable;
+import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 
 @Test (groups = "functional", testName = "lock.SimpleLockContainerTest")
 public class SimpleLockContainerTest extends AbstractInfinispanTest {
@@ -23,26 +26,23 @@ public class SimpleLockContainerTest extends AbstractInfinispanTest {
       assert lc.isLocked(k1);
 
 
-      fork(new Runnable() {
+      Future<Void> f = fork(new Callable<Void>() {
          @Override
-         public void run() {
+         public Void call() throws InterruptedException, TimeoutException {
             final Object otherOwner = new Object();
             for (int i =0; i < 10; i++) {
-               try {
-                  final OwnableReentrantLock ownableReentrantLock = lc.acquireLock(otherOwner, k2, 500, TimeUnit.MILLISECONDS);
-                  log.trace("ownableReentrantLock = " + ownableReentrantLock);
-                  if (ownableReentrantLock != null) return;
-               } catch (InterruptedException e) {
-                  e.printStackTrace();
-               }
+               final OwnableReentrantLock ownableReentrantLock = lc.acquireLock(otherOwner, k2, 500, TimeUnit.MILLISECONDS);
+               log.trace("ownableReentrantLock = " + ownableReentrantLock);
+               if (ownableReentrantLock != null) return null;
             }
+            throw new TimeoutException("We should have acquired lock!");
          }
-      }, false);
+      });
 
       Thread.sleep(200);
       lc.releaseLock(owner, k1);
 
-      Thread.sleep(4000);
+      f.get(10, TimeUnit.SECONDS);
    }
 
    private String ab2() {

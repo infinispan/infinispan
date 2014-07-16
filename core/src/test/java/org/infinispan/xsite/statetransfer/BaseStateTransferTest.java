@@ -289,12 +289,12 @@ public abstract class BaseStateTransferTest extends AbstractTwoSitesTest {
       final XSiteStateProviderControl control = XSiteStateProviderControl.replaceInCache(cache(LON, 0));
 
       //safe (i.e. not blocking main thread), the state transfer is async
-      final Thread thread = fork(new Runnable() {
+      final Future<?> f = fork(new Runnable() {
          @Override
          public void run() {
             startStateTransfer(LON, NYC);
          }
-      }, false);
+      });
 
       //state transfer will be running (nothing to transfer however) while the operation is done.
       control.await();
@@ -304,7 +304,7 @@ public abstract class BaseStateTransferTest extends AbstractTwoSitesTest {
       operation.perform(cache(LON, 0), key).get();
 
       control.trigger();
-      thread.join(TimeUnit.SECONDS.toMillis(30));
+      f.get(30, TimeUnit.SECONDS);
 
       eventually(new Condition() {
          @Override

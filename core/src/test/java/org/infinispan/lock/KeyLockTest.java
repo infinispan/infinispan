@@ -13,7 +13,10 @@ import org.infinispan.util.concurrent.locks.containers.LockContainer;
 import org.testng.AssertJUnit;
 import org.testng.annotations.Test;
 
+import java.util.concurrent.Callable;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 
 /**
  * Tests if the same lock is used for the same key.
@@ -27,19 +30,19 @@ public class KeyLockTest extends SingleCacheManagerTest {
 
    private static final int RETRIES = 100;
 
-   public void testByteArrayStrippedLockTx() throws InterruptedException {
+   public void testByteArrayStrippedLockTx() throws Exception {
       doTest(CacheName.STRIPPED_LOCK_TX);
    }
 
-   public void testByteArrayStrippedLockNonTx() throws InterruptedException {
+   public void testByteArrayStrippedLockNonTx() throws Exception {
       doTest(CacheName.STRIPPED_LOCK_NON_TX);
    }
 
-   public void testByteArrayPerEntryLockTx() throws InterruptedException {
+   public void testByteArrayPerEntryLockTx() throws Exception {
       doTest(CacheName.PER_ENTRY_LOCK_TX);
    }
 
-   public void testByteArrayPerEntryLockNonTx() throws InterruptedException {
+   public void testByteArrayPerEntryLockNonTx() throws Exception {
       doTest(CacheName.PER_ENTRY_LOCK_NON_TX);
    }
 
@@ -56,25 +59,22 @@ public class KeyLockTest extends SingleCacheManagerTest {
       return cacheManager;
    }
 
-   private void doTest(CacheName cacheName) throws InterruptedException {
+   private void doTest(CacheName cacheName) throws Exception {
       final LockContainer<?> lockContainer = TestingUtil.extractComponent(cache(cacheName.name()), LockContainer.class);
       final Object lockOwner = new Object();
       AssertJUnit.assertNotNull(lockContainer.acquireLock(lockOwner, byteArray(), 10, TimeUnit.MILLISECONDS));
       AssertJUnit.assertTrue(lockContainer.isLocked(byteArray()));
 
-      fork(new Runnable() {
+      fork(new Callable<Void>() {
          @Override
-         public void run() {
-            try {
-               for (int i = 0; i < RETRIES; ++i) {
-                  AssertJUnit.assertTrue(lockContainer.isLocked(byteArray()));
-                  AssertJUnit.assertNull(lockContainer.acquireLock(new Object(), byteArray(), 10, TimeUnit.MILLISECONDS));
-               }
-            } catch (InterruptedException e) {
-               Thread.currentThread().interrupt();
+         public Void call() throws InterruptedException {
+            for (int i = 0; i < RETRIES; ++i) {
+               AssertJUnit.assertTrue(lockContainer.isLocked(byteArray()));
+               AssertJUnit.assertNull(lockContainer.acquireLock(new Object(), byteArray(), 10, TimeUnit.MILLISECONDS));
             }
+            return null;
          }
-      }, true);
+      }).get(10, TimeUnit.SECONDS);
    }
 
    private static byte[] byteArray() {

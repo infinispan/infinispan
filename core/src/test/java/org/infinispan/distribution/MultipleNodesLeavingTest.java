@@ -29,21 +29,21 @@ public class MultipleNodesLeavingTest extends MultipleCacheManagersTest {
          public void run() {
             manager(3).stop();
          }
-      }, false);
+      });
 
       fork(new Runnable() {
          @Override
          public void run() {
             manager(2).stop();
          }
-      }, false);
+      });
 
       fork(new Runnable() {
          @Override
          public void run() {
             manager(1).stop();
          }
-      }, false);
+      });
 
       eventually(new Condition() {
          @Override

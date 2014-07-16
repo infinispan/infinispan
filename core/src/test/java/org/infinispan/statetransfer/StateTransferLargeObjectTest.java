@@ -16,9 +16,9 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Random;
 
-import static org.testng.Assert.assertEquals;
-import static org.testng.Assert.assertTrue;
-import static org.testng.Assert.assertNotNull;
+import static org.testng.AssertJUnit.assertEquals;
+import static org.testng.AssertJUnit.assertNotNull;
+import static org.testng.AssertJUnit.assertTrue;
 
 /**
  * Tester for https://jira.jboss.org/browse/ISPN-654.
@@ -82,7 +82,7 @@ public class StateTransferLargeObjectTest extends MultipleCacheManagersTest {
             c3.getCacheManager().stop();
             log.debug("Cache stopped async!");
          }
-      }, false);
+      });
 
       for (int i = 0; i < num; i++) {
          log.debug("----Running a get on " + i);

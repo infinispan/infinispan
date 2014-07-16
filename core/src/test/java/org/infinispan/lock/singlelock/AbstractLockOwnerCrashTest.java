@@ -47,7 +47,7 @@ public abstract class AbstractLockOwnerCrashTest extends AbstractCrashTest {
                e.printStackTrace();
             }
          }
-      }, false);
+      });
 
 
       eventually(new Condition() {
@@ -75,7 +75,7 @@ public abstract class AbstractLockOwnerCrashTest extends AbstractCrashTest {
                e.printStackTrace();
             }
          }
-      }, false);
+      });
 
       // this 'ensures' transaction called 'suspend' has the chance to start the prepare phase and is waiting to acquire the locks on k held by first transaction before it gets resumed
       Thread.sleep(1000);
@@ -92,7 +92,7 @@ public abstract class AbstractLockOwnerCrashTest extends AbstractCrashTest {
          public boolean isSatisfied() throws Exception {
             return cache(0).get(k).equals("v2") && cache(1).get(k).equals("v2");
          }
-      }, 15000);
+      }, 15000, 15);
       assertNotLocked(k);
 
       eventually(new Condition() {
