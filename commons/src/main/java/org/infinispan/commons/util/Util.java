@@ -48,6 +48,7 @@ import java.util.concurrent.TimeUnit;
 public final class Util {
 
    private static final boolean IS_ARRAYS_DEBUG = Boolean.getBoolean("infinispan.arrays.debug");
+   private static final boolean IS_OSGI_CONTEXT;
 
    public static final Object[] EMPTY_OBJECT_ARRAY = new Object[0];
    public static final byte[] EMPTY_BYTE_ARRAY = new byte[0];
@@ -59,6 +60,16 @@ public final class Util {
     * for different java vendors.
     */
    private static final String javaVendor = SecurityActions.getProperty("java.vendor", "");
+
+   static {
+      boolean osgi = false;
+      try {
+         osgi = Util.class.getClassLoader() instanceof org.osgi.framework.BundleReference;
+      } catch (NoClassDefFoundError ex) {
+         // Ignore
+      }
+      IS_OSGI_CONTEXT = osgi;
+   }
 
    /**
     * <p>
@@ -91,28 +102,28 @@ public final class Util {
 
    /**
     * Tries to determine if the code is running in an OSGi context.
-    * 
+    *
     * @return true if an OSGi context is detected
     */
    public static boolean isOSGiContext() {
-      ClassLoader cl = Util.class.getClassLoader();
-      boolean result = false;
-      try {
-         result = cl instanceof org.osgi.framework.BundleReference;
-      } catch (NoClassDefFoundError ex) {
-         // OSGi bundle not on the classpath. Ignore.
-      }
-      return result;
+      return IS_OSGI_CONTEXT;
    }
 
    public static ClassLoader[] getClassLoaders(ClassLoader appClassLoader) {
-      return new ClassLoader[] {
-            appClassLoader,  // User defined classes
-            OsgiClassLoader.getInstance(), // OSGi bundle context needs to be on top of TCCL, system CL, etc.
-            Util.class.getClassLoader(), // Infinispan classes (not always on TCCL [modular env])
-            ClassLoader.getSystemClassLoader(), // Used when load time instrumentation is in effect
-            Thread.currentThread().getContextClassLoader() //Used by jboss-as stuff
-            };
+      if (isOSGiContext()) {
+         return new ClassLoader[] { appClassLoader,   // User defined classes
+               OsgiClassLoader.getInstance(),         // OSGi bundle context needs to be on top of TCCL, system CL, etc.
+               Util.class.getClassLoader(),           // Infinispan classes (not always on TCCL [modular env])
+               ClassLoader.getSystemClassLoader(),    // Used when load time instrumentation is in effect
+               Thread.currentThread().getContextClassLoader() //Used by jboss-as stuff
+         };
+      } else {
+         return new ClassLoader[] { appClassLoader,   // User defined classes
+               Util.class.getClassLoader(),           // Infinispan classes (not always on TCCL [modular env])
+               ClassLoader.getSystemClassLoader(),    // Used when load time instrumentation is in effect
+               Thread.currentThread().getContextClassLoader() //Used by jboss-as stuff
+         };
+      }
    }
 
    /**
