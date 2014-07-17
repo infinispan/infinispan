@@ -91,6 +91,7 @@ public class PersistenceManagerImpl implements PersistenceManager {
    private Executor persistenceExecutor;
    private ByteBufferFactory byteBufferFactory;
    private MarshalledEntryFactory marshalledEntryFactory;
+   private volatile boolean clearOnStop;
 
    @Inject
    public void inject(AdvancedCache<Object, Object> cache, @ComponentName(CACHE_MARSHALLER) StreamingMarshaller marshaller,
@@ -163,6 +164,9 @@ public class PersistenceManagerImpl implements PersistenceManager {
    @Override
    @Stop
    public void stop() {
+      // If needed, clear the persistent store before stopping
+      if (clearOnStop)
+         clearAllStores(AccessMode.BOTH);
 
       Set undelegated = new HashSet();
       for (CacheWriter w : writers) {
@@ -488,6 +492,11 @@ public class PersistenceManagerImpl implements PersistenceManager {
          storesMutex.readLock().unlock();
       }
       return 0;
+   }
+
+   @Override
+   public void setClearOnStop(boolean clearOnStop) {
+      this.clearOnStop = clearOnStop;
    }
 
    public List<CacheLoader> getAllLoaders() {

@@ -28,6 +28,7 @@ import org.infinispan.commands.tx.totalorder.TotalOrderVersionedCommitCommand;
 import org.infinispan.commands.tx.totalorder.TotalOrderVersionedPrepareCommand;
 import org.infinispan.commands.write.*;
 import org.infinispan.commons.CacheException;
+import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.iteration.impl.EntryRequestCommand;
 import org.infinispan.iteration.impl.EntryResponseCommand;
 import org.infinispan.factories.GlobalComponentRegistry;
@@ -36,6 +37,7 @@ import org.infinispan.factories.annotations.ComponentName;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.scopes.Scope;
 import org.infinispan.factories.scopes.Scopes;
+import org.infinispan.jmx.CacheJmxRegistration;
 import org.infinispan.persistence.manager.PersistenceManager;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.statetransfer.StateRequestCommand;
@@ -201,8 +203,10 @@ public class RemoteCommandsFactory {
                command = new StateResponseCommand(cacheName);
                break;
             case RemoveCacheCommand.COMMAND_ID:
-               command = new RemoveCacheCommand(cacheName, cacheManager, registry,
-                     registry.getNamedComponentRegistry(cacheName).getComponent(PersistenceManager.class));
+               ComponentRegistry namedCacheRegistry = registry.getNamedComponentRegistry(cacheName);
+               command = new RemoveCacheCommand(cacheName, cacheManager, this.registry,
+                     namedCacheRegistry.getComponent(PersistenceManager.class),
+                     namedCacheRegistry.getComponent(CacheJmxRegistration.class));
                break;
             case TxCompletionNotificationCommand.COMMAND_ID:
                command = new TxCompletionNotificationCommand(cacheName);

@@ -186,9 +186,25 @@ public abstract class BaseStoreFunctionalTest extends SingleCacheManagerTest {
       assertArrayEquals(value, found);
    }
 
+   public void testRemoveCache() {
+      ConfigurationBuilder cb = TestCacheManagerFactory.getDefaultCacheConfiguration(false);
+      createCacheStoreConfig(cb.persistence(), true);
+      EmbeddedCacheManager local = TestCacheManagerFactory.createCacheManager(cb);
+      try {
+         final String cacheName = "to-be-removed";
+         Cache<String, Object> cache = local.getCache(cacheName);
+         assertTrue(local.isRunning(cacheName));
+         cache.put("1", wrap("1", "v1"));
+         assertCacheEntry(cache, "1", "v1", -1, -1);
+         local.removeCache(cacheName);
+         assertFalse(local.isRunning(cacheName));
+      } finally {
+         TestingUtil.killCacheManagers(local);
+      }
+   }
+
    private ConfigurationBuilder configureCacheLoader(ConfigurationBuilder base, boolean purge) {
       ConfigurationBuilder cfg = base == null ? new ConfigurationBuilder() : base;
-
       cfg.transaction().transactionMode(TransactionMode.TRANSACTIONAL);
       createCacheStoreConfig(cfg.persistence(), false);
       cfg.persistence().stores().get(0).purgeOnStartup(purge);
