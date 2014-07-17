@@ -28,7 +28,9 @@ import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
 import static org.infinispan.test.TestingUtil.withCacheManager;
+import static org.testng.AssertJUnit.assertFalse;
 import static org.testng.AssertJUnit.assertNotNull;
+import static org.testng.AssertJUnit.assertTrue;
 import static org.testng.internal.junit.ArrayAsserts.assertArrayEquals;
 
 /**
@@ -200,14 +202,32 @@ public abstract class BaseStoreFunctionalTest extends AbstractInfinispanTest {
       });
    }
 
+   public void testRemoveCache() {
+      ConfigurationBuilder cb = TestCacheManagerFactory.getDefaultCacheConfiguration(false);
+      createCacheStoreConfig(cb.persistence(), true);
+      EmbeddedCacheManager local = TestCacheManagerFactory.createCacheManager(cb);
+      try {
+         final String cacheName = "to-be-removed";
+         Cache<String, Object> cache = local.getCache(cacheName);
+         assertTrue(local.isRunning(cacheName));
+         cache.put("1", "v1");
+         assertCacheEntry(cache, "1", "v1", -1, -1);
+         local.removeCache(cacheName);
+         assertFalse(local.isRunning(cacheName));
+      } finally {
+         TestingUtil.killCacheManagers(local);
+      }
+   }
+
    private EmbeddedCacheManager getContainerWithCacheLoader(Configuration base) {
       ConfigurationBuilder cfg = new ConfigurationBuilder();
       if (base != null)
          cfg.read(base);
 
       cfg
-         .transaction()
+            .transaction()
             .transactionMode(TransactionMode.TRANSACTIONAL);
+
       createCacheStoreConfig(cfg.persistence(), false);
       return TestCacheManagerFactory.createCacheManager(cfg);
    }

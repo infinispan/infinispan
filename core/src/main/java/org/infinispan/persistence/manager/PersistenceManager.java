@@ -58,6 +58,9 @@ public interface PersistenceManager extends Lifecycle {
    AdvancedCacheLoader getStateTransferProvider();
 
    int size();
+
+   void setClearOnStop(boolean clearOnStop);
+
 }
 
 

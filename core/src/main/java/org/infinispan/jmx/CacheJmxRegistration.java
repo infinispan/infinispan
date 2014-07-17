@@ -43,6 +43,8 @@ public class CacheJmxRegistration extends AbstractJmxRegistration {
    private Set<Component> nonCacheComponents;
    private boolean needToUnregister = false;
 
+   private volatile boolean unregisterCacheMBean;
+
    @Inject
    public void initialize(Cache<?, ?> cache, GlobalConfiguration globalConfig) {
       this.cache = cache.getAdvancedCache();
@@ -88,6 +90,10 @@ public class CacheJmxRegistration extends AbstractJmxRegistration {
          }
       }
 
+      // If removing cache, also remove cache MBean
+      if (unregisterCacheMBean)
+         unregisterCacheMBean();
+
       // make sure we don't set cache to null, in case it needs to be restarted via JMX.
    }
 
@@ -111,6 +117,9 @@ public class CacheJmxRegistration extends AbstractJmxRegistration {
       }
    }
 
+   public void setUnregisterCacheMBean(boolean unregisterCacheMBean) {
+      this.unregisterCacheMBean = unregisterCacheMBean;
+   }
 
    @Override
    protected ComponentsJmxRegistration buildRegistrar(Set<AbstractComponentRegistry.Component> components) {

@@ -23,36 +23,28 @@ public class RemoveCacheCommand extends BaseRpcCommand {
    private EmbeddedCacheManager cacheManager;
    private GlobalComponentRegistry registry;
    private PersistenceManager persistenceManager;
+   private CacheJmxRegistration cacheJmxRegistration;
 
    private RemoveCacheCommand() {
       super(null); // For command id uniqueness test
    }
 
    public RemoveCacheCommand(String cacheName, EmbeddedCacheManager cacheManager,
-         GlobalComponentRegistry registry, PersistenceManager persistenceManager) {
+         GlobalComponentRegistry registry, PersistenceManager persistenceManager,
+         CacheJmxRegistration cacheJmxRegistration) {
       super(cacheName);
       this.cacheManager = cacheManager;
       this.registry = registry;
       this.persistenceManager = persistenceManager;
+      this.cacheJmxRegistration = cacheJmxRegistration;
    }
 
    @Override
    public Object perform(InvocationContext ctx) throws Throwable {
-      // To avoid reliance of a thread local flag, get a reference for the
-      // cache store to be able to clear it after cache has stopped.
+      persistenceManager.setClearOnStop(true);
+      cacheJmxRegistration.setUnregisterCacheMBean(true);
       Cache<Object, Object> cache = cacheManager.getCache(cacheName);
-      CacheJmxRegistration jmx = cache.getAdvancedCache().getComponentRegistry().getComponent(CacheJmxRegistration.class);
       cache.stop();
-
-      // After stopping the cache, clear it
-      if (persistenceManager != null)
-         persistenceManager.clearAllStores(false);
-
-      // And see if we need to remove it from JMX
-      if (jmx != null) {
-         jmx.unregisterCacheMBean();
-      }
-
       registry.removeCache(cacheName);
       return null;
    }
