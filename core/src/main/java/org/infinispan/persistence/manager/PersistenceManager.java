@@ -106,6 +106,9 @@ public interface PersistenceManager extends Lifecycle {
        */
       protected abstract boolean canPerform(StoreConfiguration configuration);
    }
+
+   void setClearOnStop(boolean clearOnStop);
+
 }
 
 
