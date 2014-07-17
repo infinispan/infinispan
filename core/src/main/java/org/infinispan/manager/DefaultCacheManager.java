@@ -454,7 +454,8 @@ public class DefaultCacheManager implements EmbeddedCacheManager, CacheManager {
       ComponentRegistry cacheComponentRegistry = globalComponentRegistry.getNamedComponentRegistry(cacheName);
       if (cacheComponentRegistry != null) {
          RemoveCacheCommand cmd = new RemoveCacheCommand(cacheName, this, globalComponentRegistry,
-               cacheComponentRegistry.getComponent(PersistenceManager.class));
+               cacheComponentRegistry.getComponent(PersistenceManager.class),
+               cacheComponentRegistry.getComponent(CacheJmxRegistration.class));
          Transport transport = getTransport();
          try {
             if (transport != null) {
