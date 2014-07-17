@@ -5,7 +5,7 @@
    <parent>
       <groupId>org.infinispan</groupId>
       <artifactId>infinispan-parent</artifactId>
-      <version>7.0.0-SNAPSHOT</version>
+      <version>7.0.0.Alpha5</version>
       <relativePath>../../parent/pom.xml</relativePath>
    </parent>
 
@@ -119,7 +119,7 @@
             <groupId>org.apache.maven.plugins</groupId>
             <artifactId>maven-failsafe-plugin</artifactId>
             <configuration>
-               <!-- Force use of JUnit, since TestNG+Arquillian break in wonderful ways -->
+               
                <testNGArtifactName>none:none</testNGArtifactName>
                <excludedGroups>org.infinispan.test.integration.as.category.UnstableTest</excludedGroups>
             </configuration>
@@ -174,7 +174,7 @@
             <groupId>org.apache.maven.plugins</groupId>
             <artifactId>maven-resources-plugin</artifactId>
             <executions>
-               <!-- Copy the AS configuration files so we can use our custom configurations -->
+               
                <execution>
                   <id>configure-as-node</id>
                   <phase>pre-integration-test</phase>
@@ -209,8 +209,8 @@
                   <artifactId>maven-failsafe-plugin</artifactId>
                   <configuration>
                      <groups combine.self="override">org.infinispan.test.integration.as.category.UnstableTest</groups>
-                     <!-- empty since we are not going to exclude any group -->
-                     <excludedGroups combine.self="override"></excludedGroups>
+                     
+                     <excludedGroups combine.self="override" />
                   </configuration>
                </plugin>
             </plugins>
