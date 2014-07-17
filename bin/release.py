@@ -348,7 +348,8 @@ def release():
 
       prettyprint("Step 7: Uploading Artifacts", Levels.INFO)
       do_task(upload_artifacts, [base_dir, version], async_processes)
-      do_task(upload_artifacts, [base_dir + "/as-modules", version], async_processes)
+      do_task(upload_artifacts, [base_dir + "/as-modules/client", version], async_processes)
+      do_task(upload_artifacts, [base_dir + "/as-modules/embedded", version], async_processes)
       do_task(upload_artifacts, [base_dir + "/server/integration", version], async_processes)
       prettyprint("Step 7: Complete", Levels.INFO)
 
