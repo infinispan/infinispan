@@ -5,8 +5,8 @@
       xmlns="urn:infinispan:config:7.0">
 
    <jgroups>
-      <stack-file name="udp" path="jgroups-udp.xml"/>
-      <stack-file name="tcp" path="jgroups-tcp.xml"/>
+      <stack-file name="udp" path="default-configs/default-jgroups-udp.xml"/>
+      <stack-file name="tcp" path="default-configs/default-jgroups-tcp.xml"/>
    </jgroups>
 
    <cache-container name="SampleCacheManager" statistics="true" default-cache="default">
