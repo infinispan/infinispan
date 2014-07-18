@@ -6,7 +6,10 @@ import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
-import org.springframework.beans.factory.*;
+import org.springframework.beans.factory.BeanNameAware;
+import org.springframework.beans.factory.DisposableBean;
+import org.springframework.beans.factory.FactoryBean;
+import org.springframework.beans.factory.InitializingBean;
 import org.springframework.util.StringUtils;
 
 /**
@@ -68,13 +71,13 @@ import org.springframework.util.StringUtils;
  * it down when the enclosing Spring application context is closed. It is therefore advisable to
  * <em>always</em> use this <code>FactoryBean</code> when creating a named <code>Cache</code>.
  * </p>
- * 
+ *
  * @author <a href="mailto:olaf DOT bergner AT gmx DOT de">Olaf Bergner</a>
  * @author Marius Bogoevici
- * 
+ *
  */
 public class InfinispanNamedEmbeddedCacheFactoryBean<K, V> implements FactoryBean<Cache<K, V>>,
-         BeanNameAware, InitializingBean, DisposableBean {
+                                                                      BeanNameAware, InitializingBean, DisposableBean {
 
    /**
     * <p>
@@ -110,9 +113,9 @@ public class InfinispanNamedEmbeddedCacheFactoryBean<K, V> implements FactoryBea
     * <code>DEFAULT</code>.</li>
     * </ul>
     * </p>
-    * 
+    *
     * @author <a href="mailto:olaf DOT bergner AT gmx DOT de">Olaf Bergner</a>
-    * 
+    *
     */
    enum ConfigurationTemplateMode {
 
@@ -124,6 +127,7 @@ public class InfinispanNamedEmbeddedCacheFactoryBean<K, V> implements FactoryBea
 
       NAMED
    }
+
    private final Log logger = LogFactory.getLog(getClass());
 
    private EmbeddedCacheManager infinispanEmbeddedCacheManager;
@@ -158,39 +162,39 @@ public class InfinispanNamedEmbeddedCacheFactoryBean<K, V> implements FactoryBea
 
    private Cache<K, V> configureAndCreateNamedCache(final String cacheName) {
       switch (this.configurationTemplateMode) {
-      case NONE:
-         this.logger.debug("ConfigurationTemplateMode is NONE: using a fresh Configuration");
-         if (this.infinispanEmbeddedCacheManager.getCacheNames().contains(cacheName)) {
-            throw new IllegalStateException("Cannot use ConfigurationTemplateMode NONE: a cache named [" + cacheName + "] has already been defined.");
-         }
-         builder = new ConfigurationBuilder();
-         this.infinispanEmbeddedCacheManager.defineConfiguration(cacheName, builder.build());
-         break;
-      case NAMED:
-         this.logger.debug("ConfigurationTemplateMode is NAMED: using a named Configuration [" + cacheName + "]");
-         Configuration cacheConfiguration = infinispanEmbeddedCacheManager.getCacheConfiguration(cacheName);
-         if (cacheConfiguration != null) {
+         case NONE:
+            this.logger.debug("ConfigurationTemplateMode is NONE: using a fresh Configuration");
+            if (this.infinispanEmbeddedCacheManager.getCacheNames().contains(cacheName)) {
+               throw new IllegalStateException("Cannot use ConfigurationTemplateMode NONE: a cache named [" + cacheName + "] has already been defined.");
+            }
             builder = new ConfigurationBuilder();
-            builder.read(cacheConfiguration);
             this.infinispanEmbeddedCacheManager.defineConfiguration(cacheName, builder.build());
-         }
-         break;
-      case DEFAULT:
-         this.logger.debug("ConfigurationTemplateMode is DEFAULT.");
-         if (this.infinispanEmbeddedCacheManager.getCacheNames().contains(cacheName)) {
-            throw new IllegalStateException("Cannot use ConfigurationTemplateMode DEFAULT: a cache named [" + cacheName + "] has already been defined.");
-         }
-         break;
-      case CUSTOM:
-         this.logger.debug("ConfigurationTemplateMode is CUSTOM. Using the provided ConfigurationBuilder.");
-         if(this.builder == null) {
-            throw new IllegalStateException("There has not been a ConfigurationBuilder provided. There has to be one " +
-                  "provided for ConfigurationTemplateMode CUSTOM.");
-         }
-         this.infinispanEmbeddedCacheManager.defineConfiguration(cacheName, builder.build());
-         break;
-      default:
-         throw new IllegalStateException("Unknown ConfigurationTemplateMode: " + this.configurationTemplateMode);
+            break;
+         case NAMED:
+            this.logger.debug("ConfigurationTemplateMode is NAMED: using a named Configuration [" + cacheName + "]");
+            Configuration cacheConfiguration = infinispanEmbeddedCacheManager.getCacheConfiguration(cacheName);
+            if (cacheConfiguration != null) {
+               builder = new ConfigurationBuilder();
+               builder.read(cacheConfiguration);
+               this.infinispanEmbeddedCacheManager.defineConfiguration(cacheName, builder.build());
+            }
+            break;
+         case DEFAULT:
+            this.logger.debug("ConfigurationTemplateMode is DEFAULT.");
+            if (this.infinispanEmbeddedCacheManager.getCacheNames().contains(cacheName)) {
+               throw new IllegalStateException("Cannot use ConfigurationTemplateMode DEFAULT: a cache named [" + cacheName + "] has already been defined.");
+            }
+            break;
+         case CUSTOM:
+            this.logger.debug("ConfigurationTemplateMode is CUSTOM. Using the provided ConfigurationBuilder.");
+            if (this.builder == null) {
+               throw new IllegalStateException("There has not been a ConfigurationBuilder provided. There has to be one " +
+                                                     "provided for ConfigurationTemplateMode CUSTOM.");
+            }
+            this.infinispanEmbeddedCacheManager.defineConfiguration(cacheName, builder.build());
+            break;
+         default:
+            throw new IllegalStateException("Unknown ConfigurationTemplateMode: " + this.configurationTemplateMode);
       }
 
       return this.infinispanEmbeddedCacheManager.getCache(cacheName);
@@ -232,9 +236,9 @@ public class InfinispanNamedEmbeddedCacheFactoryBean<K, V> implements FactoryBea
 
    /**
     * Always returns <code>true</code>.
-    * 
+    *
     * @return Always <code>true</code>
-    * 
+    *
     * @see org.springframework.beans.factory.FactoryBean#isSingleton()
     */
    @Override
@@ -260,7 +264,7 @@ public class InfinispanNamedEmbeddedCacheFactoryBean<K, V> implements FactoryBea
 
    /**
     * Shuts down the <code>org.infinispan.Cache</code> created by this <code>FactoryBean</code>.
-    * 
+    *
     * @see org.springframework.beans.factory.DisposableBean#destroy()
     * @see org.infinispan.Cache#stop()
     */
@@ -283,7 +287,7 @@ public class InfinispanNamedEmbeddedCacheFactoryBean<K, V> implements FactoryBea
     * set, this <code>FactoryBean</code> will use its {@link #setBeanName(String)
     * <code>beanName</code>} as the <code>cacheName</code>.
     * </p>
-    * 
+    *
     * @param cacheName
     *           The {@link org.infinispan.Cache#getName() name} of the {@link org.infinispan.Cache
     *           <code>org.infinispan.Cache</code>} to be created
@@ -299,14 +303,14 @@ public class InfinispanNamedEmbeddedCacheFactoryBean<K, V> implements FactoryBea
     * {@link org.infinispan.Cache <code>Cache</code>} instance. Note that this is a
     * <strong>mandatory</strong> property.
     * </p>
-    * 
+    *
     * @param infinispanEmbeddedCacheManager
     *           The {@link org.infinispan.manager.EmbeddedCacheManager
     *           <code>org.infinispan.manager.EmbeddedCacheManager</code>} to be used for creating
     *           our {@link org.infinispan.Cache <code>Cache</code>} instance
     */
    public void setInfinispanEmbeddedCacheManager(
-            final EmbeddedCacheManager infinispanEmbeddedCacheManager) {
+         final EmbeddedCacheManager infinispanEmbeddedCacheManager) {
       this.infinispanEmbeddedCacheManager = infinispanEmbeddedCacheManager;
    }
 
@@ -315,7 +319,7 @@ public class InfinispanNamedEmbeddedCacheFactoryBean<K, V> implements FactoryBea
     * @throws IllegalArgumentException
     */
    public void setConfigurationTemplateMode(final String configurationTemplateMode)
-            throws IllegalArgumentException {
+         throws IllegalArgumentException {
       this.configurationTemplateMode = ConfigurationTemplateMode.valueOf(configurationTemplateMode);
    }
 

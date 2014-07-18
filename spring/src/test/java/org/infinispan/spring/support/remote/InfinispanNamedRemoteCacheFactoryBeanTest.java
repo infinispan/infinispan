@@ -1,10 +1,5 @@
 package org.infinispan.spring.support.remote;
 
-import static org.infinispan.server.hotrod.test.HotRodTestingUtil.hotRodCacheConfiguration;
-import static org.testng.AssertJUnit.assertEquals;
-import static org.testng.AssertJUnit.assertNotNull;
-import static org.testng.AssertJUnit.assertTrue;
-
 import org.infinispan.client.hotrod.RemoteCache;
 import org.infinispan.client.hotrod.RemoteCacheManager;
 import org.infinispan.client.hotrod.configuration.ConfigurationBuilder;
@@ -16,6 +11,9 @@ import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
+
+import static org.infinispan.server.hotrod.test.HotRodTestingUtil.hotRodCacheConfiguration;
+import static org.testng.AssertJUnit.*;
 
 /**
  * <p>
@@ -68,7 +66,7 @@ public class InfinispanNamedRemoteCacheFactoryBeanTest extends SingleCacheManage
     */
    @Test(expectedExceptions = IllegalStateException.class)
    public final void infinispanNamedRemoteCacheFactoryBeanShouldRecognizeThatNoCacheContainerHasBeenSet()
-            throws Exception {
+         throws Exception {
       final InfinispanNamedRemoteCacheFactoryBean<String, Object> objectUnderTest = new InfinispanNamedRemoteCacheFactoryBean<String, Object>();
       objectUnderTest.setCacheName(TEST_CACHE_NAME);
       objectUnderTest.setBeanName(TEST_BEAN_NAME);
@@ -84,7 +82,7 @@ public class InfinispanNamedRemoteCacheFactoryBeanTest extends SingleCacheManage
     */
    @Test
    public final void infinispanNamedRemoteCacheFactoryBeanShouldUseBeanNameAsCacheNameIfNoCacheNameHasBeenSet()
-            throws Exception {
+         throws Exception {
       final String beanName = TEST_BEAN_NAME;
 
       final InfinispanNamedRemoteCacheFactoryBean<String, Object> objectUnderTest = new InfinispanNamedRemoteCacheFactoryBean<String, Object>();
@@ -95,8 +93,8 @@ public class InfinispanNamedRemoteCacheFactoryBeanTest extends SingleCacheManage
       final RemoteCache<String, Object> cache = objectUnderTest.getObject();
 
       assertEquals("InfinispanNamedRemoteCacheFactoryBean should have used its bean name ["
-               + beanName + "] as the name of the created cache. However, it didn't.", beanName,
-               cache.getName());
+                         + beanName + "] as the name of the created cache. However, it didn't.", beanName,
+                   cache.getName());
    }
 
    /**
@@ -108,7 +106,7 @@ public class InfinispanNamedRemoteCacheFactoryBeanTest extends SingleCacheManage
     */
    @Test
    public final void infinispanNamedRemoteCacheFactoryBeanShouldPreferExplicitCacheNameToBeanName()
-            throws Exception {
+         throws Exception {
       final InfinispanNamedRemoteCacheFactoryBean<String, Object> objectUnderTest = new InfinispanNamedRemoteCacheFactoryBean<String, Object>();
       objectUnderTest.setInfinispanRemoteCacheManager(remoteCacheManager);
       objectUnderTest.setCacheName(TEST_CACHE_NAME);
@@ -118,8 +116,8 @@ public class InfinispanNamedRemoteCacheFactoryBeanTest extends SingleCacheManage
       final RemoteCache<String, Object> cache = objectUnderTest.getObject();
 
       assertEquals("InfinispanNamedRemoteCacheFactoryBean should have preferred its cache name ["
-               + TEST_CACHE_NAME + "] as the name of the created cache. However, it didn't.",
-               TEST_CACHE_NAME, cache.getName());
+                         + TEST_CACHE_NAME + "] as the name of the created cache. However, it didn't.",
+                   TEST_CACHE_NAME, cache.getName());
    }
 
    /**
@@ -130,16 +128,16 @@ public class InfinispanNamedRemoteCacheFactoryBeanTest extends SingleCacheManage
     */
    @Test
    public final void infinispanNamedRemoteCacheFactoryBeanShouldReportTheMostDerivedObjectType()
-            throws Exception {
+         throws Exception {
       final InfinispanNamedRemoteCacheFactoryBean<Object, Object> objectUnderTest = new InfinispanNamedRemoteCacheFactoryBean<Object, Object>();
       objectUnderTest.setInfinispanRemoteCacheManager(remoteCacheManager);
       objectUnderTest.setBeanName(TEST_BEAN_NAME);
       objectUnderTest.afterPropertiesSet();
 
       assertEquals(
-               "getObjectType() should have returned the most derived class of the actual Cache "
-                        + "implementation returned from getObject(). However, it didn't.",
-               objectUnderTest.getObject().getClass(), objectUnderTest.getObjectType());
+            "getObjectType() should have returned the most derived class of the actual Cache "
+                  + "implementation returned from getObject(). However, it didn't.",
+            objectUnderTest.getObject().getClass(), objectUnderTest.getObjectType());
    }
 
    /**
@@ -150,7 +148,7 @@ public class InfinispanNamedRemoteCacheFactoryBeanTest extends SingleCacheManage
     */
    @Test
    public final void infinispanNamedRemoteCacheFactoryBeanShouldProduceANonNullInfinispanCache()
-            throws Exception {
+         throws Exception {
       final InfinispanNamedRemoteCacheFactoryBean<String, Object> objectUnderTest = new InfinispanNamedRemoteCacheFactoryBean<String, Object>();
       objectUnderTest.setInfinispanRemoteCacheManager(remoteCacheManager);
       objectUnderTest.setCacheName(TEST_CACHE_NAME);
@@ -160,8 +158,8 @@ public class InfinispanNamedRemoteCacheFactoryBeanTest extends SingleCacheManage
       final RemoteCache<String, Object> cache = objectUnderTest.getObject();
 
       assertNotNull(
-               "InfinispanNamedRemoteCacheFactoryBean should have produced a proper Infinispan cache. "
-                        + "However, it produced a null Infinispan cache.", cache);
+            "InfinispanNamedRemoteCacheFactoryBean should have produced a proper Infinispan cache. "
+                  + "However, it produced a null Infinispan cache.", cache);
    }
 
    /**
@@ -173,7 +171,7 @@ public class InfinispanNamedRemoteCacheFactoryBeanTest extends SingleCacheManage
       final InfinispanNamedRemoteCacheFactoryBean<String, Object> objectUnderTest = new InfinispanNamedRemoteCacheFactoryBean<String, Object>();
 
       assertTrue(
-               "InfinispanNamedRemoteCacheFactoryBean should declare itself to produce a singleton. However, it didn't.",
-               objectUnderTest.isSingleton());
+            "InfinispanNamedRemoteCacheFactoryBean should declare itself to produce a singleton. However, it didn't.",
+            objectUnderTest.isSingleton());
    }
 }

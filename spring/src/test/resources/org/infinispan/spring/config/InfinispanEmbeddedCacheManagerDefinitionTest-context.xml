@@ -8,6 +8,6 @@
     <infinispan:embedded-cache-manager/>
 
     <infinispan:embedded-cache-manager id="withConfigFile"
-            configuration="classpath:org/infinispan/spring/support/embedded/named-async-cache.xml"/>
+                                       configuration="classpath:org/infinispan/spring/support/embedded/named-async-cache.xml"/>
 
 </beans>

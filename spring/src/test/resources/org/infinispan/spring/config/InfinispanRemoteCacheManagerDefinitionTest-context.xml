@@ -8,6 +8,6 @@
     <infinispan:remote-cache-manager/>
 
     <infinispan:remote-cache-manager id="withConfigFile"
-          configuration="classpath:org/infinispan/spring/support/remote/hotrod-client.properties"/>
+                                     configuration="classpath:org/infinispan/spring/support/remote/hotrod-client.properties"/>
 
 </beans>

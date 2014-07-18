@@ -1,8 +1,5 @@
 package org.infinispan.spring;
 
-import java.io.IOException;
-import java.io.InputStream;
-
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.global.GlobalConfigurationBuilder;
 import org.infinispan.manager.DefaultCacheManager;
@@ -11,12 +8,15 @@ import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 import org.springframework.core.io.Resource;
 
+import java.io.IOException;
+import java.io.InputStream;
+
 /**
  * <p>
  * An abstract base class for factories creating cache managers that are backed by an
  * EmbeddedCacheManager.
  * </p>
- * 
+ *
  * @author <a href="mailto:olaf DOT bergner AT gmx DOT de">Olaf Bergner</a>
  * @author Marius Bogoevici
  */
@@ -39,7 +39,7 @@ public class AbstractEmbeddedCacheManagerFactory {
       } else {
          if (gcb == null) {
             if (logger.isDebugEnabled()) logger.debug("GlobalConfigurationBuilder is null. Using default new " +
-                  "instance.");
+                                                            "instance.");
             gcb = new GlobalConfigurationBuilder();
             gcb.globalJmxStatistics().allowDuplicateDomains(true);
          }
@@ -78,7 +78,7 @@ public class AbstractEmbeddedCacheManagerFactory {
     * <code>FactoryBean</code> take precedence over those defined in the configuration file pointed
     * to by <code>configurationFileLocation</code>.
     * </p>
-    * 
+    *
     * @param configurationFileLocation
     *           The {@link org.springframework.core.io.Resource <code>location</code>} of the
     *           configuration file which will be used to configure the
@@ -100,6 +100,7 @@ public class AbstractEmbeddedCacheManagerFactory {
    public void addCustomGlobalConfiguration(final GlobalConfigurationBuilder gcb) {
       this.gcb = gcb;
    }
+
    /**
     * Sets the {@link ConfigurationBuilder} to use when creating an <code>EmbeddedCacheManager</code>.
     *

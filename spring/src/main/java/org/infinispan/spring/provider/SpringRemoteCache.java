@@ -72,7 +72,7 @@ public class SpringRemoteCache implements Cache {
     */
    @Override
    public void evict(final Object key) {
-     this.nativeCache.remove(key);
+      this.nativeCache.remove(key);
    }
 
 

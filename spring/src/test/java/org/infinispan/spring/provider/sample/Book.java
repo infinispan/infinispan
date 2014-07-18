@@ -2,7 +2,7 @@ package org.infinispan.spring.provider.sample;
 
 /**
  * Book.
- * 
+ *
  * @author <a href="mailto:olaf DOT bergner AT gmx DOT de">Olaf Bergner</a>
  * @since 5.1
  */

@@ -1,16 +1,16 @@
 package org.infinispan.spring.provider;
 
+import org.infinispan.commons.marshall.SerializeWith;
+import org.springframework.cache.Cache.ValueWrapper;
+
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
 import java.io.Serializable;
 
-import org.infinispan.commons.marshall.SerializeWith;
-import org.springframework.cache.Cache.ValueWrapper;
-
 /**
  * A placeholder value for storing {@literal null} in a cache.
- * 
+ *
  * @author <a href="mailto:olaf.bergner@gmx.de">Olaf Bergner</a>
  * @since 5.3
  */
@@ -24,7 +24,7 @@ final class NullValue implements ValueWrapper, Serializable {
 
    /**
     * Always returns {@literal null}.
-    * 
+    *
     * @return {@literal null}
     * @see org.springframework.cache.Cache.ValueWrapper#get()
     */
@@ -35,7 +35,7 @@ final class NullValue implements ValueWrapper, Serializable {
 
    /**
     * Create a new NullValue.
-    * 
+    *
     */
    private NullValue() {
       // Intentionally left blank

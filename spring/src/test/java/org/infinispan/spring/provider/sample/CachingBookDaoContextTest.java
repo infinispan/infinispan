@@ -1,7 +1,5 @@
 package org.infinispan.spring.provider.sample;
 
-import java.util.Random;
-
 import org.infinispan.Cache;
 import org.infinispan.notifications.Listener;
 import org.infinispan.notifications.cachelistener.annotation.CacheEntryCreated;
@@ -20,6 +18,8 @@ import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 
+import java.util.Random;
+
 /**
  * <p>
  * A test that tries to illustrate how Spring handles the caching aspects we added to
@@ -27,7 +27,7 @@ import org.testng.annotations.Test;
  * <code>BookDao</code>} and verifies that book instances are indeed cached and removed from the
  * cache as specified.
  * </p>
- * 
+ *
  * @author <a href="mailto:olaf DOT bergner AT gmx DOT de">Olaf Bergner</a>
  * @author Marius Bogoevici
  * @since 5.1
@@ -62,14 +62,14 @@ public class CachingBookDaoContextTest extends AbstractTestNGSpringContextTests 
       public void onCacheEntryCreated(CacheEntryCreatedEvent<Object, Object> cacheEntryCreated) {
          if (!cacheEntryCreated.isPre())
             log.infof("Object cached: [Key = %s | Event = %s]", cacheEntryCreated.getKey(),
-                     cacheEntryCreated);
+                      cacheEntryCreated);
       }
 
       @CacheEntryRemoved
       public void onCacheEntryRemoved(CacheEntryRemovedEvent<Object, Object> cacheEntryRemoved) {
          if (cacheEntryRemoved.isPre())
             log.infof("Object removed from cache: [Key = %s | Event = %s]",
-                     cacheEntryRemoved.getKey(), cacheEntryRemoved);
+                      cacheEntryRemoved.getKey(), cacheEntryRemoved);
       }
    }
 
@@ -77,7 +77,7 @@ public class CachingBookDaoContextTest extends AbstractTestNGSpringContextTests 
     * Demonstrates that loading a {@link Book <code>book</code>} via
     * {@link JdbcBookDao#findBook(Integer)} does indeed cache the returned book instance under the
     * supplied bookId.
-    * 
+    *
     */
    @Test
    public void demonstrateCachingLoadedBooks() {
@@ -89,13 +89,13 @@ public class CachingBookDaoContextTest extends AbstractTestNGSpringContextTests 
       this.log.infof("Book [%s] cached", cachedBook);
 
       assert booksCache().values().contains(cachedBook) : "findBook(" + bookToCacheId
-               + ") should have cached book";
+            + ") should have cached book";
    }
 
    /**
     * Demonstrate that removing a {@link Book <code>book</code>} from database via
     * {@link JdbcBookDao#deleteBook(Integer)} does indeed remove it from cache also.
-    * 
+    *
     */
    @Test
    public void demonstrateRemovingBookFromCache() {
@@ -107,20 +107,20 @@ public class CachingBookDaoContextTest extends AbstractTestNGSpringContextTests 
       this.log.infof("Book [%s] cached", bookToDelete);
 
       assert booksCache().values().contains(bookToDelete) : "findBook(" + bookToDeleteId
-               + ") should have cached book";
+            + ") should have cached book";
 
       this.log.infof("Deleting book [%s] ...", bookToDelete);
       this.bookDao.deleteBook(bookToDeleteId);
       this.log.infof("Book [%s] deleted", bookToDelete);
 
       assert !booksCache().values().contains(bookToDelete) : "deleteBook(" + bookToDelete
-               + ") should have evicted book from cache.";
+            + ") should have evicted book from cache.";
    }
 
    /**
     * Demonstrates that updating a {@link Book <code>book</code>} that has already been persisted to
     * database via {@link JdbcBookDao#storeBook(Book)} does indeed evict that book from cache.
-    * 
+    *
     */
    @Test
    public void demonstrateCacheEvictionUponUpdate() {
@@ -131,7 +131,7 @@ public class CachingBookDaoContextTest extends AbstractTestNGSpringContextTests 
       this.log.infof("Caching book [ID = %d]", bookToUpdateId);
       final Book bookToUpdate = this.bookDao.findBook(bookToUpdateId);
       assert booksCache().values().contains(bookToUpdate) : "findBook(" + bookToUpdateId
-               + ") should have cached book";
+            + ") should have cached book";
 
       this.log.infof("Updating book [%s] ...", bookToUpdate);
       bookToUpdate.setTitle("Work in Progress");
@@ -139,10 +139,10 @@ public class CachingBookDaoContextTest extends AbstractTestNGSpringContextTests 
       this.log.infof("Book [%s] updated", bookToUpdate);
 
       assert !booksCache().values().contains(bookToUpdate) : "storeBook(" + bookToUpdate
-               + ") should have removed updated book from cache";
+            + ") should have removed updated book from cache";
    }
 
-   private Cache<?,?> booksCache() {
-      return (Cache)this.booksCacheManager.getCache("books").getNativeCache();
+   private Cache<?, ?> booksCache() {
+      return (Cache) this.booksCacheManager.getCache("books").getNativeCache();
    }
 }

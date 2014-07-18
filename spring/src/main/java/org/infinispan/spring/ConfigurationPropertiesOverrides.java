@@ -12,9 +12,9 @@ import static org.infinispan.client.hotrod.impl.ConfigurationProperties.*;
  * Provides a mechanism to override selected configuration properties using explicit setters for
  * each configuration setting.
  * </p>
- * 
+ *
  * @author <a href="mailto:olaf DOT bergner AT gmx DOT de">Olaf Bergner</a>
- * 
+ *
  */
 public class ConfigurationPropertiesOverrides {
 
@@ -42,7 +42,7 @@ public class ConfigurationPropertiesOverrides {
       final StringBuilder serverListStr = new StringBuilder();
       for (final InetSocketAddress server : serverList) {
          serverListStr.append(server.getHostName()).append(":").append(server.getPort())
-                  .append(";");
+               .append(";");
       }
       serverListStr.deleteCharAt(serverListStr.length() - 1);
       this.overridingProperties.setProperty(SERVER_LIST, serverListStr.toString());
@@ -99,7 +99,7 @@ public class ConfigurationPropertiesOverrides {
     */
    public void setValueSizeEstimate(final int valueSizeEstimate) {
       this.overridingProperties.setProperty(VALUE_SIZE_ESTIMATE,
-               Integer.toString(valueSizeEstimate));
+                                            Integer.toString(valueSizeEstimate));
    }
 
    /**
@@ -107,7 +107,7 @@ public class ConfigurationPropertiesOverrides {
     */
    public void setForceReturnValues(final boolean forceReturnValues) {
       this.overridingProperties.setProperty(FORCE_RETURN_VALUES,
-               Boolean.toString(forceReturnValues));
+                                            Boolean.toString(forceReturnValues));
    }
 
    /**

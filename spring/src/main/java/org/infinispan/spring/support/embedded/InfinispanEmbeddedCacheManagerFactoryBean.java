@@ -36,17 +36,17 @@ import org.springframework.beans.factory.InitializingBean;
  * therefore advisable to <em>always</em> use this <code>FactoryBean</code> when creating an
  * <code>EmbeddedCacheManager</code>.
  * </p>
- * 
+ *
  * @author <a href="mailto:olaf DOT bergner AT gmx DOT de">Olaf Bergner</a>
- * 
+ *
  * @see #setConfigurationFileLocation(org.springframework.core.io.Resource)
  * @see #destroy()
  * @see org.infinispan.manager.EmbeddedCacheManager
  * @see org.infinispan.configuration.cache.Configuration
- * 
+ *
  */
 public class InfinispanEmbeddedCacheManagerFactoryBean extends AbstractEmbeddedCacheManagerFactory
-         implements FactoryBean<EmbeddedCacheManager>, InitializingBean, DisposableBean {
+      implements FactoryBean<EmbeddedCacheManager>, InitializingBean, DisposableBean {
 
    private EmbeddedCacheManager cacheManager;
 
@@ -64,7 +64,7 @@ public class InfinispanEmbeddedCacheManagerFactoryBean extends AbstractEmbeddedC
       this.cacheManager = createBackingEmbeddedCacheManager();
 
       logger.info("Successfully initialized Infinispan EmbeddedCacheManager instance ["
-               + this.cacheManager + "]");
+                        + this.cacheManager + "]");
    }
 
    // ------------------------------------------------------------------------
@@ -89,9 +89,9 @@ public class InfinispanEmbeddedCacheManagerFactoryBean extends AbstractEmbeddedC
 
    /**
     * Always returns <code>true</code>.
-    * 
+    *
     * @return Always <code>true</code>
-    * 
+    *
     * @see org.springframework.beans.factory.FactoryBean#isSingleton()
     */
    @Override
@@ -106,7 +106,7 @@ public class InfinispanEmbeddedCacheManagerFactoryBean extends AbstractEmbeddedC
    /**
     * Shuts down the <code>EmbeddedCacheManager</code> instance created by this
     * <code>FactoryBean</code>.
-    * 
+    *
     * @see org.springframework.beans.factory.DisposableBean#destroy()
     * @see org.infinispan.manager.EmbeddedCacheManager#stop()
     */

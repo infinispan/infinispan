@@ -16,14 +16,16 @@ import org.testng.annotations.Test;
 @ContextConfiguration
 public class InfinispanContainerCacheManagerDefinitionTest extends AbstractTestNGSpringContextTests {
 
-    @Autowired @Qualifier("cacheManager")
-    private CacheManager containerCacheManager;
+   @Autowired
+   @Qualifier("cacheManager")
+   private CacheManager containerCacheManager;
 
-    @Autowired @Qualifier("cacheManager2")
-    private CacheManager containerCacheManager2;
+   @Autowired
+   @Qualifier("cacheManager2")
+   private CacheManager containerCacheManager2;
 
-    public void testContainerCacheManagerExists() {
-       Assert.assertNotNull(containerCacheManager);
-       Assert.assertNotNull(containerCacheManager2);
-    }
+   public void testContainerCacheManagerExists() {
+      Assert.assertNotNull(containerCacheManager);
+      Assert.assertNotNull(containerCacheManager2);
+   }
 }

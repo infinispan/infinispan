@@ -25,12 +25,12 @@ import org.springframework.beans.factory.InitializingBean;
  * when the enclosing Spring application context is closed. It is therefore advisable to
  * <em>always</em> use this <code>FactoryBean</code> when creating a <code>Cache</code>.
  * </p>
- * 
+ *
  * @author <a href="mailto:olaf DOT bergner AT gmx DOT de">Olaf Bergner</a>
- * 
+ *
  */
 public class InfinispanDefaultCacheFactoryBean<K, V> implements FactoryBean<Cache<K, V>>,
-         InitializingBean, DisposableBean {
+                                                                InitializingBean, DisposableBean {
 
    protected final Log logger = LogFactory.getLog(getClass());
 
@@ -45,7 +45,7 @@ public class InfinispanDefaultCacheFactoryBean<K, V> implements FactoryBean<Cach
     * {@link org.infinispan.Cache <code>Cache</code>} instance. Note that this is a
     * <strong>mandatory</strong> property.
     * </p>
-    * 
+    *
     * @param infinispanCacheContainer
     *           The {@link org.infinispan.manager.CacheContainer
     *           <code>org.infinispan.manager.CacheContainer</code>} to be used for creating our
@@ -86,9 +86,9 @@ public class InfinispanDefaultCacheFactoryBean<K, V> implements FactoryBean<Cach
 
    /**
     * Always returns <code>true</code>.
-    * 
+    *
     * @return Always <code>true</code>
-    * 
+    *
     * @see org.springframework.beans.factory.FactoryBean#isSingleton()
     */
    @Override
@@ -98,7 +98,7 @@ public class InfinispanDefaultCacheFactoryBean<K, V> implements FactoryBean<Cach
 
    /**
     * Shuts down the <code>org.infinispan.Cache</code> created by this <code>FactoryBean</code>.
-    * 
+    *
     * @see org.springframework.beans.factory.DisposableBean#destroy()
     * @see org.infinispan.Cache#stop()
     */

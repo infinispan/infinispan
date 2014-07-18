@@ -1,12 +1,12 @@
 package org.infinispan.spring.provider;
 
-import java.util.Properties;
-
 import org.infinispan.client.hotrod.RemoteCacheManager;
 import org.infinispan.spring.AbstractRemoteCacheManagerFactory;
 import org.springframework.beans.factory.DisposableBean;
 import org.springframework.beans.factory.FactoryBean;
 import org.springframework.beans.factory.InitializingBean;
+
+import java.util.Properties;
 
 /**
  * <p>
@@ -44,14 +44,14 @@ import org.springframework.beans.factory.InitializingBean;
  * the enclosing Spring application context is closed. It is therefore advisable to <em>always</em>
  * use this <code>FactoryBean</code> when creating an <code>SpringRemoteCacheManager</code>.
  * </p>
- * 
+ *
  * @author <a href="mailto:olaf DOT bergner AT gmx DOT de">Olaf Bergner</a>
- * 
+ *
  * @see org.infinispan.client.hotrod.RemoteCacheManager
  * @see #destroy()
  */
 public class SpringRemoteCacheManagerFactoryBean extends AbstractRemoteCacheManagerFactory
-         implements FactoryBean<SpringRemoteCacheManager>, InitializingBean, DisposableBean {
+      implements FactoryBean<SpringRemoteCacheManager>, InitializingBean, DisposableBean {
 
    private SpringRemoteCacheManager springRemoteCacheManager;
 
@@ -68,7 +68,7 @@ public class SpringRemoteCacheManagerFactoryBean extends AbstractRemoteCacheMana
       this.logger.info("Creating new instance of RemoteCacheManager ...");
       final Properties configurationPropertiesToUse = configurationProperties();
       final RemoteCacheManager nativeRemoteCacheManager = new RemoteCacheManager(
-               configurationPropertiesToUse, this.startAutomatically);
+            configurationPropertiesToUse, this.startAutomatically);
       this.springRemoteCacheManager = new SpringRemoteCacheManager(nativeRemoteCacheManager);
       this.logger.info("Finished creating new instance of RemoteCacheManager");
    }
@@ -91,12 +91,12 @@ public class SpringRemoteCacheManagerFactoryBean extends AbstractRemoteCacheMana
    @Override
    public Class<? extends SpringRemoteCacheManager> getObjectType() {
       return this.springRemoteCacheManager != null ? this.springRemoteCacheManager.getClass()
-               : SpringRemoteCacheManager.class;
+            : SpringRemoteCacheManager.class;
    }
 
    /**
     * Always return <code>true</code>.
-    * 
+    *
     * @see org.springframework.beans.factory.FactoryBean#isSingleton()
     */
    @Override
@@ -111,7 +111,7 @@ public class SpringRemoteCacheManagerFactoryBean extends AbstractRemoteCacheMana
    /**
     * {@link org.infinispan.client.hotrod.RemoteCacheManager#stop() <code>stop</code>} the
     * <code>RemoteCacheManager</code> created by this factory.
-    * 
+    *
     * @see org.springframework.beans.factory.DisposableBean#destroy()
     */
    @Override

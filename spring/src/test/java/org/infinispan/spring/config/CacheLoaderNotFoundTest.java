@@ -21,7 +21,8 @@ import static org.testng.AssertJUnit.fail;
 @ContextConfiguration
 public class CacheLoaderNotFoundTest extends AbstractTestNGSpringContextTests {
 
-   @Autowired @Qualifier("cacheManager")
+   @Autowired
+   @Qualifier("cacheManager")
    private CacheManager cm;
 
    @BeforeClass

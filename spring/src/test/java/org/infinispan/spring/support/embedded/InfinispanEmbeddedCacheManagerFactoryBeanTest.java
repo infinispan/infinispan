@@ -1,11 +1,5 @@
 package org.infinispan.spring.support.embedded;
 
-import static org.infinispan.test.TestingUtil.withCacheManager;
-import static org.testng.AssertJUnit.assertEquals;
-import static org.testng.AssertJUnit.assertNotNull;
-import static org.testng.AssertJUnit.assertSame;
-import static org.testng.AssertJUnit.assertTrue;
-
 import org.infinispan.Cache;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.Configuration;
@@ -20,13 +14,16 @@ import org.springframework.core.io.ClassPathResource;
 import org.springframework.core.io.Resource;
 import org.testng.annotations.Test;
 
+import static org.infinispan.test.TestingUtil.withCacheManager;
+import static org.testng.AssertJUnit.*;
+
 /**
  * <p>
  * Test {@link SpringEmbeddedCacheManagerFactoryBean}.
  * </p>
- * 
+ *
  * @author <a href="mailto:olaf DOT bergner AT gmx DOT de">Olaf Bergner</a>
- * 
+ *
  */
 @Test(testName = "spring.support.embedded.InfinispanEmbeddedCacheManagerFactoryBeanTest", groups = "unit")
 public class InfinispanEmbeddedCacheManagerFactoryBeanTest {
@@ -39,12 +36,12 @@ public class InfinispanEmbeddedCacheManagerFactoryBeanTest {
     * Test method for
     * {@link org.infinispan.spring.support.embedded.InfinispanEmbeddedCacheManagerFactoryBean#setConfigurationFileLocation(org.springframework.core.io.Resource)}
     * .
-    * 
+    *
     * @throws Exception
     */
    @Test
    public final void infinispanEmbeddedCacheManagerFactoryBeanShouldCreateACacheManagerEvenIfNoDefaultConfigurationLocationHasBeenSet()
-            throws Exception {
+         throws Exception {
       final InfinispanEmbeddedCacheManagerFactoryBean objectUnderTest = new TestInfinispanEmbeddedCacheManagerFactoryBean();
       objectUnderTest.afterPropertiesSet();
 
@@ -62,14 +59,14 @@ public class InfinispanEmbeddedCacheManagerFactoryBeanTest {
     * Test method for
     * {@link org.infinispan.spring.support.embedded.InfinispanEmbeddedCacheManagerFactoryBean#setConfigurationFileLocation(org.springframework.core.io.Resource)}
     * .
-    * 
+    *
     * @throws Exception
     */
    @Test
    public final void infinispanEmbeddedCacheManagerFactoryBeanShouldCreateACustomizedCacheManagerIfGivenADefaultConfigurationLocation()
-            throws Exception {
+         throws Exception {
       final Resource infinispanConfig = new ClassPathResource(NAMED_ASYNC_CACHE_CONFIG_LOCATION,
-               getClass());
+                                                              getClass());
 
       final InfinispanEmbeddedCacheManagerFactoryBean objectUnderTest = new TestInfinispanEmbeddedCacheManagerFactoryBean();
       objectUnderTest.setConfigurationFileLocation(infinispanConfig);
@@ -100,12 +97,12 @@ public class InfinispanEmbeddedCacheManagerFactoryBeanTest {
     * Test method for
     * {@link org.infinispan.spring.support.embedded.InfinispanEmbeddedCacheManagerFactoryBean#getObjectType()}
     * .
-    * 
+    *
     * @throws Exception
     */
    @Test
    public final void infinispanEmbeddedCacheManagerFactoryBeanShouldReportTheCorrectObjectType()
-            throws Exception {
+         throws Exception {
       final InfinispanEmbeddedCacheManagerFactoryBean objectUnderTest = new TestInfinispanEmbeddedCacheManagerFactoryBean();
       objectUnderTest.afterPropertiesSet();
 
@@ -130,19 +127,19 @@ public class InfinispanEmbeddedCacheManagerFactoryBeanTest {
       final InfinispanEmbeddedCacheManagerFactoryBean objectUnderTest = new TestInfinispanEmbeddedCacheManagerFactoryBean();
 
       assertTrue("isSingleton() should always return true. However, it returned false",
-               objectUnderTest.isSingleton());
+                 objectUnderTest.isSingleton());
    }
 
    /**
     * Test method for
     * {@link org.infinispan.spring.support.embedded.InfinispanEmbeddedCacheManagerFactoryBean#destroy()}
     * .
-    * 
+    *
     * @throws Exception
     */
    @Test
    public final void infinispanEmbeddedCacheManagerFactoryBeanShouldStopTheCreateEmbeddedCacheManagerWhenBeingDestroyed()
-            throws Exception {
+         throws Exception {
       final InfinispanEmbeddedCacheManagerFactoryBean objectUnderTest = new TestInfinispanEmbeddedCacheManagerFactoryBean();
       objectUnderTest.afterPropertiesSet();
 
@@ -184,9 +181,9 @@ public class InfinispanEmbeddedCacheManagerFactoryBeanTest {
       // Get the cache manager and make assertions.
       final EmbeddedCacheManager infinispanEmbeddedCacheManager = objectUnderTest.getObject();
       assertEquals(infinispanEmbeddedCacheManager.getCacheManagerConfiguration().globalJmxStatistics()
-            .allowDuplicateDomains(), gcb.build().globalJmxStatistics().allowDuplicateDomains());
+                         .allowDuplicateDomains(), gcb.build().globalJmxStatistics().allowDuplicateDomains());
       assertEquals(infinispanEmbeddedCacheManager.getDefaultCacheConfiguration().transaction()
-            .transactionMode().isTransactional(),
-            builder.build().transaction().transactionMode().isTransactional());
+                         .transactionMode().isTransactional(),
+                   builder.build().transaction().transactionMode().isTransactional());
    }
 }

@@ -1,10 +1,5 @@
 package org.infinispan.spring.provider;
 
-import static org.testng.AssertJUnit.assertEquals;
-import static org.testng.AssertJUnit.assertNull;
-import static org.testng.AssertJUnit.assertSame;
-import static org.testng.AssertJUnit.assertTrue;
-
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.spring.support.embedded.InfinispanNamedEmbeddedCacheFactoryBean;
 import org.infinispan.test.SingleCacheManagerTest;
@@ -13,6 +8,8 @@ import org.springframework.cache.Cache;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
+
+import static org.testng.AssertJUnit.*;
 
 /**
  * <p>
@@ -23,10 +20,10 @@ import org.testng.annotations.Test;
  * <code>org.springframework.cache.vendor.AbstractNativeCacheTest</code>. The additions made to it
  * are minor.
  * </p>
- * 
+ *
  * @author <a href="mailto:olaf DOT bergner AT gmx DOT de">Olaf Bergner</a>
  * @author Marius Bogoevici
- * 
+ *
  */
 @Test(testName = "spring.provider.SpringCacheCacheTest", groups = "unit")
 public class SpringCacheCacheTest extends SingleCacheManagerTest {
@@ -80,7 +77,7 @@ public class SpringCacheCacheTest extends SingleCacheManagerTest {
    public void testCachePutSupportsNullValue() throws Exception {
       final Object key = "enescu";
       final Object value = null;
-      
+
       assertNull(this.cache.get(key));
       this.cache.put(key, value);
       assertNull(this.cache.get(key).get());
@@ -100,9 +97,9 @@ public class SpringCacheCacheTest extends SingleCacheManagerTest {
    public void testCacheContainsSupportsNullValue() throws Exception {
       final Object key = "enescu";
       final Object value = null;
-      
+
       this.cache.put(key, value);
-      
+
       assertTrue(this.cache.get(key) != null);
    }
 

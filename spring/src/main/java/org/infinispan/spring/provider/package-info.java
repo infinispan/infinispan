@@ -41,8 +41,8 @@
  *   </li>
  *   <li>
  *     <strong>Remote</strong>: Application code accesses Infinispan nodes remotely using Infinispan's own <em>hotrod</em>
- *     protocol. Infinispan supports this use case via {@link org.infinispan.client.hotrod.RemoteCacheManager 
- *     <code>org.infinispan.client.hotrod.RemoteCacheManager</code>}. {@link org.infinispan.spring.provider.SpringRemoteCacheManager 
+ *     protocol. Infinispan supports this use case via {@link org.infinispan.client.hotrod.RemoteCacheManager
+ *     <code>org.infinispan.client.hotrod.RemoteCacheManager</code>}. {@link org.infinispan.spring.provider.SpringRemoteCacheManager
  *     <code>SpringRemoteCacheManager</code>} delegates to it.
  *   </li>
  * </ol>
@@ -72,7 +72,7 @@
  *        xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd
  *               http://www.springframework.org/schema/cache http://www.springframework.org/schema/cache/spring-cache.xsd"&gt;
  *     &lt;cache:annotation-driven /&gt;
- *     
+ *
  *     &lt;bean id="cacheManager" class="org.infinispan.spring.SpringEmbeddedCacheManagerFactoryBean"
  *              p:configuration-file-location="classpath:/org/infinispan/spring/embedded/example/infinispan-sample-config.xml"/&gt;
  *
@@ -101,7 +101,7 @@
  *        xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd
  *               http://www.springframework.org/schema/cache http://www.springframework.org/schema/cache/spring-cache.xsd"&gt;
  *     &lt;cache:annotation-driven /&gt;
- *     
+ *
  *     &lt;bean id="cacheManager" class="org.infinispan.spring.SpringEmbeddedCacheManagerFactoryBean"
  *              p:configuration-properties-file-location="classpath:/org/infinispan/spring/remote/example/hotrod-client-sample.properties"/&gt;
  *
@@ -129,7 +129,7 @@
  *   public Car getCar(Long carId){
  *       ...
  *   }
- *   
+ *
  *   &#064;CacheEvict(value="cars", key="car.id")
  *   public void saveCar(Car car){
  *       ...

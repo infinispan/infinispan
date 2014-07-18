@@ -5,7 +5,7 @@ package org.infinispan.spring.provider.sample;
  * A simple, woefully incomplete {@code DAO} for storing, retrieving and removing {@link Book
  * <code>Books</code>}.
  * </p>
- * 
+ *
  * @author <a href="mailto:olaf DOT bergner AT gmx DOT de">Olaf Bergner</a>
  * @since 5.1
  */
@@ -16,7 +16,7 @@ public interface BookDao {
     * Look up and return the {@code Book} identified by the supplied {@code bookId}, or {@code null}
     * if no such book exists.
     * </p>
-    * 
+    *
     * @param bookId
     * @return The {@code Book} identified by the supplied {@code bookId}, or {@code null}
     */
@@ -26,7 +26,7 @@ public interface BookDao {
     * <p>
     * Remove the {@code Book} identified by the supplied {@code bookId} from this store.
     * </p>
-    * 
+    *
     * @param bookId
     */
    void deleteBook(Integer bookId);
@@ -37,7 +37,7 @@ public interface BookDao {
     * before this method will either perform an {@code insert} or an {@code update}. Return the
     * stored book.
     * </p>
-    * 
+    *
     * @param book
     *           The book to store
     * @return The stored book

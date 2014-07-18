@@ -1,23 +1,21 @@
 package org.infinispan.spring.support;
 
-import static org.infinispan.test.TestingUtil.withCacheManager;
-import static org.testng.AssertJUnit.assertEquals;
-import static org.testng.AssertJUnit.assertNotNull;
-import static org.testng.AssertJUnit.assertTrue;
-
 import org.infinispan.Cache;
 import org.infinispan.lifecycle.ComponentStatus;
 import org.infinispan.test.CacheManagerCallable;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.testng.annotations.Test;
 
+import static org.infinispan.test.TestingUtil.withCacheManager;
+import static org.testng.AssertJUnit.*;
+
 /**
  * <p>
  * Test {@link InfinispanDefaultCacheFactoryBean}.
  * </p>
- * 
+ *
  * @author <a href="mailto:olaf DOT bergner AT gmx DOT de">Olaf Bergner</a>
- * 
+ *
  */
 @Test(testName = "spring.support.InfinispanDefaultCacheFactoryBeanTest", groups = "unit")
 public class InfinispanDefaultCacheFactoryBeanTest {
@@ -25,12 +23,12 @@ public class InfinispanDefaultCacheFactoryBeanTest {
    /**
     * Test method for
     * {@link org.infinispan.spring.support.InfinispanDefaultCacheFactoryBean#afterPropertiesSet()}.
-    * 
+    *
     * @throws Exception
     */
    @Test(expectedExceptions = IllegalStateException.class)
    public final void afterPropertiesSetShouldThrowAnIllegalStateExceptionIfNoCacheContainerHasBeenSet()
-            throws Exception {
+         throws Exception {
       final InfinispanDefaultCacheFactoryBean<Object, Object> objectUnderTest = new InfinispanDefaultCacheFactoryBean<Object, Object>();
       objectUnderTest.afterPropertiesSet();
    }
@@ -42,7 +40,7 @@ public class InfinispanDefaultCacheFactoryBeanTest {
    @Test
    public final void infinispanDefaultCacheFactoryBeanShouldProduceANonNullInfinispanCache() {
       final InfinispanDefaultCacheFactoryBean<Object, Object> objectUnderTest = new InfinispanDefaultCacheFactoryBean<Object, Object>();
-      withCacheManager(new CacheManagerCallable(TestCacheManagerFactory.createCacheManager()){
+      withCacheManager(new CacheManagerCallable(TestCacheManagerFactory.createCacheManager()) {
          @Override
          public void call() {
             try {
@@ -69,7 +67,7 @@ public class InfinispanDefaultCacheFactoryBeanTest {
    @Test
    public final void getObjectTypeShouldReturnTheMostDerivedTypeOfTheProducedInfinispanCache() {
       final InfinispanDefaultCacheFactoryBean<Object, Object> objectUnderTest = new InfinispanDefaultCacheFactoryBean<Object, Object>();
-      withCacheManager(new CacheManagerCallable(TestCacheManagerFactory.createCacheManager()){
+      withCacheManager(new CacheManagerCallable(TestCacheManagerFactory.createCacheManager()) {
          @Override
          public void call() {
             try {
@@ -79,7 +77,7 @@ public class InfinispanDefaultCacheFactoryBeanTest {
                assertEquals(
                      "getObjectType() should have returned the produced Infinispan cache's most derived type. "
                            + "However, it returned a more generic type.", objectUnderTest.getObject()
-                     .getClass(), objectUnderTest.getObjectType());
+                           .getClass(), objectUnderTest.getObjectType());
                objectUnderTest.destroy();
             } catch (Exception e) {
                throw new RuntimeException(e);
@@ -98,8 +96,8 @@ public class InfinispanDefaultCacheFactoryBeanTest {
       final InfinispanDefaultCacheFactoryBean<Object, Object> objectUnderTest = new InfinispanDefaultCacheFactoryBean<Object, Object>();
 
       assertTrue(
-               "InfinispanDefaultCacheFactoryBean should declare itself to produce a singleton. However, it didn't.",
-               objectUnderTest.isSingleton());
+            "InfinispanDefaultCacheFactoryBean should declare itself to produce a singleton. However, it didn't.",
+            objectUnderTest.isSingleton());
    }
 
    /**
@@ -109,7 +107,7 @@ public class InfinispanDefaultCacheFactoryBeanTest {
    @Test
    public final void infinispanDefaultCacheFactoryBeanShouldStopTheCreatedInfinispanCacheWhenItIsDestroyed() {
       final InfinispanDefaultCacheFactoryBean<Object, Object> objectUnderTest = new InfinispanDefaultCacheFactoryBean<Object, Object>();
-      withCacheManager(new CacheManagerCallable(TestCacheManagerFactory.createCacheManager()){
+      withCacheManager(new CacheManagerCallable(TestCacheManagerFactory.createCacheManager()) {
          @Override
          public void call() {
             try {

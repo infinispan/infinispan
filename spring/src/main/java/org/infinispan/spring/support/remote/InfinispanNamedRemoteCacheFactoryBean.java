@@ -1,7 +1,5 @@
 package org.infinispan.spring.support.remote;
 
-import java.util.concurrent.ConcurrentMap;
-
 import org.infinispan.Cache;
 import org.infinispan.client.hotrod.RemoteCache;
 import org.infinispan.client.hotrod.RemoteCacheManager;
@@ -11,6 +9,8 @@ import org.springframework.beans.factory.BeanNameAware;
 import org.springframework.beans.factory.FactoryBean;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.util.StringUtils;
+
+import java.util.concurrent.ConcurrentMap;
 
 /**
  * <p>
@@ -23,12 +23,12 @@ import org.springframework.util.StringUtils;
  * set, this <code>FactoryBean</code>'s {@link #setBeanName(String) <code>beanName</code>} will be
  * used instead.
  * </p>
- * 
+ *
  * @author <a href="mailto:olaf DOT bergner AT gmx DOT de">Olaf Bergner</a>
- * 
+ *
  */
 public class InfinispanNamedRemoteCacheFactoryBean<K, V> implements FactoryBean<RemoteCache<K, V>>,
-         BeanNameAware, InitializingBean {
+                                                                    BeanNameAware, InitializingBean {
 
    private final Log logger = LogFactory.getLog(getClass());
 
@@ -106,7 +106,7 @@ public class InfinispanNamedRemoteCacheFactoryBean<K, V> implements FactoryBean<
 
    /**
     * Always return true.
-    * 
+    *
     * @see org.springframework.beans.factory.FactoryBean#isSingleton()
     */
    @Override
@@ -125,7 +125,7 @@ public class InfinispanNamedRemoteCacheFactoryBean<K, V> implements FactoryBean<
     * set, this <code>FactoryBean</code> will use its {@link #setBeanName(String)
     * <code>beanName</code>} as the <code>cacheName</code>.
     * </p>
-    * 
+    *
     * @param cacheName
     *           The {@link org.infinispan.Cache#getName() name} of the {@link org.infinispan.Cache
     *           <code>org.infinispan.Cache</code>} to be created
@@ -141,7 +141,7 @@ public class InfinispanNamedRemoteCacheFactoryBean<K, V> implements FactoryBean<
     * {@link org.infinispan.Cache <code>Cache</code>} instance. Note that this is a
     * <strong>mandatory</strong> property.
     * </p>
-    * 
+    *
     * @param infinispanRemoteCacheManager
     *           The {@link org.infinispan.client.hotrod.RemoteCacheManager
     *           <code>org.infinispan.client.hotrod.RemoteCacheManager</code>} to be used for

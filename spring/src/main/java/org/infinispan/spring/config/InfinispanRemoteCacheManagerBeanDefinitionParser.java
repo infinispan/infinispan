@@ -13,26 +13,24 @@ import org.w3c.dom.Element;
  */
 public class InfinispanRemoteCacheManagerBeanDefinitionParser extends AbstractBeanDefinitionParser {
 
-    private static final String DEFAULT_CACHE_MANAGER_BEAN_NAME = "cacheManager";
+   private static final String DEFAULT_CACHE_MANAGER_BEAN_NAME = "cacheManager";
 
-    private static final String CACHE_MANAGER_CLASS = "org.infinispan.spring.provider.SpringRemoteCacheManagerFactoryBean";
+   private static final String CACHE_MANAGER_CLASS = "org.infinispan.spring.provider.SpringRemoteCacheManagerFactoryBean";
 
-    @Override
-    protected AbstractBeanDefinition parseInternal(Element element, ParserContext parserContext) {
+   @Override
+   protected AbstractBeanDefinition parseInternal(Element element, ParserContext parserContext) {
       BeanDefinitionBuilder beanDefinitionBuilder = BeanDefinitionBuilder.rootBeanDefinition(CACHE_MANAGER_CLASS);
       String configFileLocation = element.getAttribute("configuration");
       if (StringUtils.hasText(configFileLocation)) {
          beanDefinitionBuilder.addPropertyValue("configurationPropertiesFileLocation", configFileLocation);
       }
       return beanDefinitionBuilder.getBeanDefinition();
-    }
+   }
 
-    @Override
-   protected String resolveId(Element element, AbstractBeanDefinition definition, ParserContext parserContext) throws BeanDefinitionStoreException
-   {
+   @Override
+   protected String resolveId(Element element, AbstractBeanDefinition definition, ParserContext parserContext) throws BeanDefinitionStoreException {
       String id = element.getAttribute("id");
-      if (!StringUtils.hasText(id))
-      {
+      if (!StringUtils.hasText(id)) {
          id = DEFAULT_CACHE_MANAGER_BEAN_NAME;
       }
       return id;

@@ -17,14 +17,16 @@ import org.testng.annotations.Test;
 @ContextConfiguration
 public class InfinispanEmbeddedCacheManagerDefinitionTest extends AbstractTestNGSpringContextTests {
 
-    @Autowired @Qualifier("cacheManager")
-    private CacheManager embeddedCacheManager;
+   @Autowired
+   @Qualifier("cacheManager")
+   private CacheManager embeddedCacheManager;
 
-    @Autowired @Qualifier("withConfigFile")
-    private CacheManager embeddedCacheManagerWithConfigFile;
+   @Autowired
+   @Qualifier("withConfigFile")
+   private CacheManager embeddedCacheManagerWithConfigFile;
 
-    public void testEmbeddedCacheManagerExists() {
-       Assert.assertNotNull(embeddedCacheManager);
-       Assert.assertNotNull(embeddedCacheManagerWithConfigFile);
-    }
+   public void testEmbeddedCacheManagerExists() {
+      Assert.assertNotNull(embeddedCacheManager);
+      Assert.assertNotNull(embeddedCacheManagerWithConfigFile);
+   }
 }

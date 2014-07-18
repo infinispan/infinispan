@@ -1,24 +1,24 @@
 package org.infinispan.spring;
 
+import org.infinispan.client.hotrod.RemoteCacheManager;
+import org.infinispan.util.logging.Log;
+import org.infinispan.util.logging.LogFactory;
+import org.springframework.core.io.Resource;
+
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.InetSocketAddress;
 import java.util.Collection;
 import java.util.Properties;
 
-import org.infinispan.client.hotrod.RemoteCacheManager;
-import org.infinispan.util.logging.Log;
-import org.infinispan.util.logging.LogFactory;
-import org.springframework.core.io.Resource;
-
 /**
  * <p>
  * An abstract base class for factories creating cache manager that are backed by an Infinispan
  * RemoteCacheManager.
  * </p>
- * 
+ *
  * @author <a href="mailto:olaf DOT bergner AT gmx DOT de">Olaf Bergner</a>
- * 
+ *
  * @see org.infinispan.client.hotrod.RemoteCacheManager
  */
 public abstract class AbstractRemoteCacheManagerFactory {
@@ -35,15 +35,15 @@ public abstract class AbstractRemoteCacheManagerFactory {
 
    protected void assertCorrectlyConfigured() throws IllegalStateException {
       if ((this.configurationProperties != null)
-               && (this.configurationPropertiesFileLocation != null)) {
+            && (this.configurationPropertiesFileLocation != null)) {
          throw new IllegalStateException(
-                  "You may only use either \"configurationProperties\" or \"configurationPropertiesFileLocation\" "
-                           + "to configure the RemoteCacheManager, not both.");
+               "You may only use either \"configurationProperties\" or \"configurationPropertiesFileLocation\" "
+                     + "to configure the RemoteCacheManager, not both.");
       } else if ((this.configurationProperties != null)
-               && !this.configurationPropertiesOverrides.isEmpty()) {
+            && !this.configurationPropertiesOverrides.isEmpty()) {
          throw new IllegalStateException(
-                  "You may only use either \"configurationProperties\" or setters on this FactoryBean "
-                           + "to configure the RemoteCacheManager, not both.");
+               "You may only use either \"configurationProperties\" or setters on this FactoryBean "
+                     + "to configure the RemoteCacheManager, not both.");
       }
    }
 
@@ -52,25 +52,25 @@ public abstract class AbstractRemoteCacheManagerFactory {
       if (this.configurationProperties != null) {
          answer = this.configurationPropertiesOverrides.override(this.configurationProperties);
          this.logger.debug("Using user-defined properties [" + this.configurationProperties
-                  + "] for configuring RemoteCacheManager");
+                                 + "] for configuring RemoteCacheManager");
       } else if (this.configurationPropertiesFileLocation != null) {
          answer = loadPropertiesFromFile(this.configurationPropertiesFileLocation);
          this.logger.debug("Loading properties from file [" + this.configurationProperties
-                  + "] for configuring RemoteCacheManager");
+                                 + "] for configuring RemoteCacheManager");
       } else if (!this.configurationPropertiesOverrides.isEmpty()) {
          answer = this.configurationPropertiesOverrides.override(new Properties());
          this.logger.debug("Using explicitly set configuration settings [" + answer
-                  + "] for configuring RemoteCacheManager");
+                                 + "] for configuring RemoteCacheManager");
       } else {
          this.logger
-                  .debug("No configuration properties. RemoteCacheManager will use default configuration.");
+               .debug("No configuration properties. RemoteCacheManager will use default configuration.");
          answer = new RemoteCacheManager().getProperties();
       }
       return answer;
    }
 
    private Properties loadPropertiesFromFile(final Resource propertiesFileLocation)
-            throws IOException {
+         throws IOException {
       InputStream propsStream = null;
       try {
          propsStream = propertiesFileLocation.getInputStream();
@@ -84,8 +84,8 @@ public abstract class AbstractRemoteCacheManagerFactory {
                propsStream.close();
             } catch (final IOException e) {
                this.logger.warn(
-                        "Failed to close InputStream used to load configuration properties: "
-                                 + e.getMessage(), e);
+                     "Failed to close InputStream used to load configuration properties: "
+                           + e.getMessage(), e);
             }
          }
       }
@@ -108,7 +108,7 @@ public abstract class AbstractRemoteCacheManagerFactory {
     *           the configurationPropertiesFileLocation to set
     */
    public void setConfigurationPropertiesFileLocation(
-            final Resource configurationPropertiesFileLocation) {
+         final Resource configurationPropertiesFileLocation) {
       this.configurationPropertiesFileLocation = configurationPropertiesFileLocation;
    }
 

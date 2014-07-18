@@ -1,10 +1,10 @@
 package org.infinispan.spring.provider;
 
-import java.util.Collection;
-
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.springframework.cache.CacheManager;
 import org.springframework.util.Assert;
+
+import java.util.Collection;
 
 /**
  * <p>
@@ -18,10 +18,10 @@ import org.springframework.util.Assert;
  * programmatically to the backing <code>EmbeddedCacheManager</code> after this
  * <code>CacheManager</code> has been constructed will be seen by this <code>CacheManager</code>.
  * </p>
- * 
+ *
  * @author <a href="mailto:olaf DOT bergner AT gmx DOT de">Olaf Bergner</a>
  * @author Marius Bogoevici
- * 
+ *
  */
 public class SpringEmbeddedCacheManager implements CacheManager {
 
@@ -32,7 +32,7 @@ public class SpringEmbeddedCacheManager implements CacheManager {
     */
    public SpringEmbeddedCacheManager(final EmbeddedCacheManager nativeCacheManager) {
       Assert.notNull(nativeCacheManager,
-               "A non-null instance of EmbeddedCacheManager needs to be supplied");
+                     "A non-null instance of EmbeddedCacheManager needs to be supplied");
       this.nativeCacheManager = nativeCacheManager;
    }
 
@@ -50,7 +50,7 @@ public class SpringEmbeddedCacheManager implements CacheManager {
     * Return the {@link org.infinispan.manager.EmbeddedCacheManager
     * <code>org.infinispan.manager.EmbeddedCacheManager</code>} that backs this
     * <code>CacheManager</code>.
-    * 
+    *
     * @return The {@link org.infinispan.manager.EmbeddedCacheManager
     *         <code>org.infinispan.manager.EmbeddedCacheManager</code>} that backs this
     *         <code>CacheManager</code>

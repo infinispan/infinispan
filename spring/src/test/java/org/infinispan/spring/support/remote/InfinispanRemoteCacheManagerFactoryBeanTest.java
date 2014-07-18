@@ -1,18 +1,5 @@
 package org.infinispan.spring.support.remote;
 
-import static org.infinispan.client.hotrod.impl.ConfigurationProperties.*;
-import static org.infinispan.spring.AssertionUtils.assertPropertiesSubset;
-import static org.testng.AssertJUnit.assertEquals;
-import static org.testng.AssertJUnit.assertFalse;
-import static org.testng.AssertJUnit.assertTrue;
-
-import java.io.IOException;
-import java.io.InputStream;
-import java.net.InetSocketAddress;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Properties;
-
 import org.infinispan.client.hotrod.RemoteCacheManager;
 import org.infinispan.client.hotrod.impl.transport.tcp.FailoverRequestBalancingStrategy;
 import org.infinispan.commons.executors.ExecutorFactory;
@@ -22,6 +9,17 @@ import org.infinispan.spring.AbstractRemoteCacheManagerFactory;
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.core.io.Resource;
 import org.testng.annotations.Test;
+
+import java.io.IOException;
+import java.io.InputStream;
+import java.net.InetSocketAddress;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Properties;
+
+import static org.infinispan.client.hotrod.impl.ConfigurationProperties.*;
+import static org.infinispan.spring.AssertionUtils.assertPropertiesSubset;
+import static org.testng.AssertJUnit.*;
 
 /**
  * <p>
@@ -35,7 +33,7 @@ import org.testng.annotations.Test;
 public class InfinispanRemoteCacheManagerFactoryBeanTest {
 
    private static final Resource HOTROD_CLIENT_PROPERTIES_LOCATION = new ClassPathResource(
-            "hotrod-client.properties", InfinispanRemoteCacheManagerFactoryBeanTest.class);
+         "hotrod-client.properties", InfinispanRemoteCacheManagerFactoryBeanTest.class);
 
    /**
     * Test method for
@@ -46,11 +44,11 @@ public class InfinispanRemoteCacheManagerFactoryBeanTest {
     */
    @Test(expectedExceptions = IllegalStateException.class)
    public final void shouldThrowAnIllegalStateExceptionIfBothConfigurationPropertiesAndConfigurationPropertiesFileLocationAreSet()
-            throws Exception {
+         throws Exception {
       final InfinispanRemoteCacheManagerFactoryBean objectUnderTest = new InfinispanRemoteCacheManagerFactoryBean();
       objectUnderTest.setConfigurationProperties(new Properties());
       objectUnderTest.setConfigurationPropertiesFileLocation(new ClassPathResource("dummy",
-               getClass()));
+                                                                                   getClass()));
 
       objectUnderTest.afterPropertiesSet();
    }
@@ -64,7 +62,7 @@ public class InfinispanRemoteCacheManagerFactoryBeanTest {
     */
    @Test(expectedExceptions = IllegalStateException.class)
    public final void shouldThrowAnIllegalStateExceptionIfConfigurationPropertiesAsWellAsSettersAreUsedToConfigureTheRemoteCacheManager()
-            throws Exception {
+         throws Exception {
       final InfinispanRemoteCacheManagerFactoryBean objectUnderTest = new InfinispanRemoteCacheManagerFactoryBean();
       objectUnderTest.setConfigurationProperties(new Properties());
       objectUnderTest.setTransportFactory("test.TransportFactory");
@@ -81,14 +79,14 @@ public class InfinispanRemoteCacheManagerFactoryBeanTest {
     */
    @Test
    public final void infinispanRemoteCacheFactoryBeanShouldReportTheMostDerivedObjectType()
-            throws Exception {
+         throws Exception {
       final InfinispanRemoteCacheManagerFactoryBean objectUnderTest = new InfinispanRemoteCacheManagerFactoryBean();
       objectUnderTest.afterPropertiesSet();
 
       assertEquals(
-               "getObjectType() should have returned the most derived class of the actual RemoteCache "
-                        + "implementation returned from getObject(). However, it didn't.",
-               objectUnderTest.getObject().getClass(), objectUnderTest.getObjectType());
+            "getObjectType() should have returned the most derived class of the actual RemoteCache "
+                  + "implementation returned from getObject(). However, it didn't.",
+            objectUnderTest.getObject().getClass(), objectUnderTest.getObjectType());
       objectUnderTest.destroy();
    }
 
@@ -101,17 +99,17 @@ public class InfinispanRemoteCacheManagerFactoryBeanTest {
     */
    @Test
    public final void shouldProduceARemoteCacheManagerConfiguredUsingDefaultSettingsIfNeitherConfigurationPropertiesNorConfigurationPropertiesFileLocationHasBeenSet()
-            throws Exception {
+         throws Exception {
       final InfinispanRemoteCacheManagerFactoryBean objectUnderTest = new InfinispanRemoteCacheManagerFactoryBean();
 
       objectUnderTest.afterPropertiesSet();
 
       final RemoteCacheManager remoteCacheManager = objectUnderTest.getObject();
       assertPropertiesSubset(
-               "The configuration properties used by the RemoteCacheManager returned by getObject() should be equal "
-                        + "to RemoteCacheManager's default settings since neither property 'configurationProperties' "
-                        + "nor property 'configurationPropertiesFileLocation' has been set. However, those two are not equal.",
-               new RemoteCacheManager().getProperties(), remoteCacheManager.getProperties());
+            "The configuration properties used by the RemoteCacheManager returned by getObject() should be equal "
+                  + "to RemoteCacheManager's default settings since neither property 'configurationProperties' "
+                  + "nor property 'configurationPropertiesFileLocation' has been set. However, those two are not equal.",
+            new RemoteCacheManager().getProperties(), remoteCacheManager.getProperties());
       objectUnderTest.destroy();
    }
 
@@ -125,9 +123,9 @@ public class InfinispanRemoteCacheManagerFactoryBeanTest {
       final InfinispanRemoteCacheManagerFactoryBean objectUnderTest = new InfinispanRemoteCacheManagerFactoryBean();
 
       assertTrue(
-               "isSingleton() should always return true since each AbstractRemoteCacheManagerFactory will always produce "
-                        + "the same RemoteCacheManager instance. However,it returned false.",
-               objectUnderTest.isSingleton());
+            "isSingleton() should always return true since each AbstractRemoteCacheManagerFactory will always produce "
+                  + "the same RemoteCacheManager instance. However,it returned false.",
+            objectUnderTest.isSingleton());
    }
 
    /**
@@ -146,9 +144,9 @@ public class InfinispanRemoteCacheManagerFactoryBeanTest {
       objectUnderTest.destroy();
 
       assertFalse(
-               "destroy() should have stopped the RemoteCacheManager instance previously produced by "
-                        + "AbstractRemoteCacheManagerFactory. However, the produced RemoteCacheManager is still running. ",
-               remoteCacheManager.isStarted());
+            "destroy() should have stopped the RemoteCacheManager instance previously produced by "
+                  + "AbstractRemoteCacheManagerFactory. However, the produced RemoteCacheManager is still running. ",
+            remoteCacheManager.isStarted());
    }
 
    /**
@@ -160,7 +158,7 @@ public class InfinispanRemoteCacheManagerFactoryBeanTest {
     */
    @Test
    public final void shouldProduceACacheConfiguredUsingTheSuppliedConfigurationProperties()
-            throws Exception {
+         throws Exception {
       final InfinispanRemoteCacheManagerFactoryBean objectUnderTest = new InfinispanRemoteCacheManagerFactoryBean();
       final Properties configurationProperties = loadConfigurationProperties(HOTROD_CLIENT_PROPERTIES_LOCATION);
       objectUnderTest.setConfigurationProperties(configurationProperties);
@@ -168,15 +166,15 @@ public class InfinispanRemoteCacheManagerFactoryBeanTest {
 
       final RemoteCacheManager remoteCacheManager = objectUnderTest.getObject();
       assertPropertiesSubset(
-               "The configuration properties used by the RemoteCacheManager returned von getObject() should be equal "
-                        + "to those passed into InfinispanRemoteCacheMangerFactoryBean via setConfigurationProperties(props). "
-                        + "However, those two are not equal.", configurationProperties,
-               remoteCacheManager.getProperties());
+            "The configuration properties used by the RemoteCacheManager returned von getObject() should be equal "
+                  + "to those passed into InfinispanRemoteCacheMangerFactoryBean via setConfigurationProperties(props). "
+                  + "However, those two are not equal.", configurationProperties,
+            remoteCacheManager.getProperties());
       objectUnderTest.destroy();
    }
 
    private Properties loadConfigurationProperties(final Resource configurationPropertiesLocation)
-            throws IOException {
+         throws IOException {
       InputStream propsStream = null;
       try {
          propsStream = HOTROD_CLIENT_PROPERTIES_LOCATION.getInputStream();
@@ -198,18 +196,18 @@ public class InfinispanRemoteCacheManagerFactoryBeanTest {
     */
    @Test
    public final void shouldProduceACacheConfiguredUsingPropertiesLoadedFromALocationDeclaredThroughSetConfigurationPropertiesFileLocation()
-            throws Exception {
+         throws Exception {
       final InfinispanRemoteCacheManagerFactoryBean objectUnderTest = new InfinispanRemoteCacheManagerFactoryBean();
       objectUnderTest.setConfigurationPropertiesFileLocation(HOTROD_CLIENT_PROPERTIES_LOCATION);
       objectUnderTest.afterPropertiesSet();
 
       final RemoteCacheManager remoteCacheManager = objectUnderTest.getObject();
       assertPropertiesSubset(
-               "The configuration properties used by the RemoteCacheManager returned by getObject() should be equal "
-                        + "to those passed into InfinispanRemoteCacheMangerFactoryBean via setConfigurationPropertiesFileLocation(propsFileLocation). "
-                        + "However, those two are not equal.",
-               loadConfigurationProperties(HOTROD_CLIENT_PROPERTIES_LOCATION),
-               remoteCacheManager.getProperties());
+            "The configuration properties used by the RemoteCacheManager returned by getObject() should be equal "
+                  + "to those passed into InfinispanRemoteCacheMangerFactoryBean via setConfigurationPropertiesFileLocation(propsFileLocation). "
+                  + "However, those two are not equal.",
+            loadConfigurationProperties(HOTROD_CLIENT_PROPERTIES_LOCATION),
+            remoteCacheManager.getProperties());
       objectUnderTest.destroy();
    }
 
@@ -227,12 +225,12 @@ public class InfinispanRemoteCacheManagerFactoryBeanTest {
       objectUnderTest.afterPropertiesSet();
 
       final RemoteCacheManager remoteCacheManagerExpectedToBeInStateStopped = objectUnderTest
-               .getObject();
+            .getObject();
 
       assertFalse(
-               "AbstractRemoteCacheManagerFactory should have produced a RemoteCacheManager that is initially in state stopped "
-                        + "since property 'startAutomatically' has been set to false. However, the produced RemoteCacheManager is already started.",
-               remoteCacheManagerExpectedToBeInStateStopped.isStarted());
+            "AbstractRemoteCacheManagerFactory should have produced a RemoteCacheManager that is initially in state stopped "
+                  + "since property 'startAutomatically' has been set to false. However, the produced RemoteCacheManager is already started.",
+            remoteCacheManagerExpectedToBeInStateStopped.isStarted());
       objectUnderTest.destroy();
    }
 
@@ -249,14 +247,14 @@ public class InfinispanRemoteCacheManagerFactoryBeanTest {
       final InfinispanRemoteCacheManagerFactoryBean objectUnderTest = new InfinispanRemoteCacheManagerFactoryBean();
       objectUnderTest.setTransportFactory(expectedTransportFactory);
       objectUnderTest.setStartAutomatically(false); // Otherwise, RemoteCacheManager will try to
-                                                    // actually use our DummyTransportFactory
+      // actually use our DummyTransportFactory
       objectUnderTest.afterPropertiesSet();
 
       final RemoteCacheManager remoteCacheManager = objectUnderTest.getObject();
 
       assertEquals("setTransportFactory(" + expectedTransportFactory
-               + ") should have overridden property 'transportFactory'. However, it didn't.",
-               expectedTransportFactory, remoteCacheManager.getProperties().get(TRANSPORT_FACTORY));
+                         + ") should have overridden property 'transportFactory'. However, it didn't.",
+                   expectedTransportFactory, remoteCacheManager.getProperties().get(TRANSPORT_FACTORY));
       objectUnderTest.destroy();
    }
 
@@ -279,8 +277,8 @@ public class InfinispanRemoteCacheManagerFactoryBeanTest {
       final RemoteCacheManager remoteCacheManager = objectUnderTest.getObject();
 
       assertEquals("setServerList(" + expectedServerList
-               + ") should have overridden property 'serverList'. However, it didn't.",
-               expectedServerListString, remoteCacheManager.getProperties().get(SERVER_LIST));
+                         + ") should have overridden property 'serverList'. However, it didn't.",
+                   expectedServerListString, remoteCacheManager.getProperties().get(SERVER_LIST));
       objectUnderTest.destroy();
    }
 
@@ -302,8 +300,8 @@ public class InfinispanRemoteCacheManagerFactoryBeanTest {
       final RemoteCacheManager remoteCacheManager = objectUnderTest.getObject();
 
       assertEquals("setMarshaller(" + expectedMarshaller
-               + ") should have overridden property 'marshaller'. However, it didn't.",
-               expectedMarshaller, remoteCacheManager.getProperties().get(MARSHALLER));
+                         + ") should have overridden property 'marshaller'. However, it didn't.",
+                   expectedMarshaller, remoteCacheManager.getProperties().get(MARSHALLER));
       objectUnderTest.destroy();
    }
 
@@ -316,7 +314,7 @@ public class InfinispanRemoteCacheManagerFactoryBeanTest {
     */
    @Test
    public final void setAsyncExecutorFactoryShouldOverrideDefaultAsyncExecutorFactory()
-            throws Exception {
+         throws Exception {
       final String expectedAsyncExecutorFactory = ExecutorFactory.class.getName();
       final InfinispanRemoteCacheManagerFactoryBean objectUnderTest = new InfinispanRemoteCacheManagerFactoryBean();
       objectUnderTest.setAsyncExecutorFactory(expectedAsyncExecutorFactory);
@@ -326,9 +324,9 @@ public class InfinispanRemoteCacheManagerFactoryBeanTest {
       final RemoteCacheManager remoteCacheManager = objectUnderTest.getObject();
 
       assertEquals("setAsyncExecutorFactory(" + expectedAsyncExecutorFactory
-               + ") should have overridden property 'asyncExecutorFactory'. However, it didn't.",
-               expectedAsyncExecutorFactory,
-               remoteCacheManager.getProperties().get(ASYNC_EXECUTOR_FACTORY));
+                         + ") should have overridden property 'asyncExecutorFactory'. However, it didn't.",
+                   expectedAsyncExecutorFactory,
+                   remoteCacheManager.getProperties().get(ASYNC_EXECUTOR_FACTORY));
       objectUnderTest.destroy();
    }
 
@@ -349,9 +347,9 @@ public class InfinispanRemoteCacheManagerFactoryBeanTest {
       final RemoteCacheManager remoteCacheManager = objectUnderTest.getObject();
 
       assertEquals("setTcpNoDelay(" + expectedTcpNoDelay
-               + ") should have overridden property 'tcpNoDelay'. However, it didn't.",
-               String.valueOf(expectedTcpNoDelay),
-               remoteCacheManager.getProperties().get(TCP_NO_DELAY));
+                         + ") should have overridden property 'tcpNoDelay'. However, it didn't.",
+                   String.valueOf(expectedTcpNoDelay),
+                   remoteCacheManager.getProperties().get(TCP_NO_DELAY));
       objectUnderTest.destroy();
    }
 
@@ -371,9 +369,9 @@ public class InfinispanRemoteCacheManagerFactoryBeanTest {
       final RemoteCacheManager remoteCacheManager = objectUnderTest.getObject();
 
       assertEquals("setTcpKeepAlive(" + expectedTcpKeepAlive
-               + ") should have overridden property 'tcpNoDelay'. However, it didn't.",
-               String.valueOf(expectedTcpKeepAlive),
-               remoteCacheManager.getProperties().get(TCP_KEEP_ALIVE));
+                         + ") should have overridden property 'tcpNoDelay'. However, it didn't.",
+                   String.valueOf(expectedTcpKeepAlive),
+                   remoteCacheManager.getProperties().get(TCP_KEEP_ALIVE));
       objectUnderTest.destroy();
    }
 
@@ -394,9 +392,9 @@ public class InfinispanRemoteCacheManagerFactoryBeanTest {
       final RemoteCacheManager remoteCacheManager = objectUnderTest.getObject();
 
       assertEquals("setPingOnStartup(" + expectedPingOnStartup
-               + ") should have overridden property 'transportFactory'. However, it didn't.",
-               String.valueOf(expectedPingOnStartup),
-               remoteCacheManager.getProperties().get(PING_ON_STARTUP));
+                         + ") should have overridden property 'transportFactory'. However, it didn't.",
+                   String.valueOf(expectedPingOnStartup),
+                   remoteCacheManager.getProperties().get(PING_ON_STARTUP));
       objectUnderTest.destroy();
    }
 
@@ -409,7 +407,7 @@ public class InfinispanRemoteCacheManagerFactoryBeanTest {
     */
    @Test
    public final void setRequestBalancingStrategyShouldOverrideDefaultRequestBalancingStrategy()
-            throws Exception {
+         throws Exception {
       final String expectedRequestBalancingStrategy = FailoverRequestBalancingStrategy.class.getName();
       final InfinispanRemoteCacheManagerFactoryBean objectUnderTest = new InfinispanRemoteCacheManagerFactoryBean();
       objectUnderTest.setRequestBalancingStrategy(expectedRequestBalancingStrategy);
@@ -419,11 +417,11 @@ public class InfinispanRemoteCacheManagerFactoryBeanTest {
       final RemoteCacheManager remoteCacheManager = objectUnderTest.getObject();
 
       assertEquals(
-               "setRequestBalancingStrategy("
-                        + expectedRequestBalancingStrategy
-                        + ") should have overridden property 'requestBalancingStrategy'. However, it didn't.",
-               expectedRequestBalancingStrategy,
-               remoteCacheManager.getProperties().get(REQUEST_BALANCING_STRATEGY));
+            "setRequestBalancingStrategy("
+                  + expectedRequestBalancingStrategy
+                  + ") should have overridden property 'requestBalancingStrategy'. However, it didn't.",
+            expectedRequestBalancingStrategy,
+            remoteCacheManager.getProperties().get(REQUEST_BALANCING_STRATEGY));
       objectUnderTest.destroy();
    }
 
@@ -444,9 +442,9 @@ public class InfinispanRemoteCacheManagerFactoryBeanTest {
       final RemoteCacheManager remoteCacheManager = objectUnderTest.getObject();
 
       assertEquals("setKeySizeEstimate(" + expectedKeySizeEstimate
-               + ") should have overridden property 'keySizeEstimate'. However, it didn't.",
-               String.valueOf(expectedKeySizeEstimate),
-               remoteCacheManager.getProperties().get(KEY_SIZE_ESTIMATE));
+                         + ") should have overridden property 'keySizeEstimate'. However, it didn't.",
+                   String.valueOf(expectedKeySizeEstimate),
+                   remoteCacheManager.getProperties().get(KEY_SIZE_ESTIMATE));
       objectUnderTest.destroy();
    }
 
@@ -467,9 +465,9 @@ public class InfinispanRemoteCacheManagerFactoryBeanTest {
       final RemoteCacheManager remoteCacheManager = objectUnderTest.getObject();
 
       assertEquals("setValueSizeEstimate(" + expectedValueSizeEstimate
-               + ") should have overridden property 'valueSizeEstimate'. However, it didn't.",
-               String.valueOf(expectedValueSizeEstimate),
-               remoteCacheManager.getProperties().get(VALUE_SIZE_ESTIMATE));
+                         + ") should have overridden property 'valueSizeEstimate'. However, it didn't.",
+                   String.valueOf(expectedValueSizeEstimate),
+                   remoteCacheManager.getProperties().get(VALUE_SIZE_ESTIMATE));
       objectUnderTest.destroy();
    }
 
@@ -490,9 +488,9 @@ public class InfinispanRemoteCacheManagerFactoryBeanTest {
       final RemoteCacheManager remoteCacheManager = objectUnderTest.getObject();
 
       assertEquals("setForceReturnValue(" + expectedForceReturnValues
-               + ") should have overridden property 'forceReturnValue'. However, it didn't.",
-               String.valueOf(expectedForceReturnValues),
-               remoteCacheManager.getProperties().get(FORCE_RETURN_VALUES));
+                         + ") should have overridden property 'forceReturnValue'. However, it didn't.",
+                   String.valueOf(expectedForceReturnValues),
+                   remoteCacheManager.getProperties().get(FORCE_RETURN_VALUES));
       objectUnderTest.destroy();
    }
 }

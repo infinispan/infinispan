@@ -9,11 +9,11 @@ import org.springframework.beans.factory.xml.NamespaceHandlerSupport;
  */
 public class InfinispanNamespaceHandler extends NamespaceHandlerSupport {
 
-    @Override
-    public void init() {
-        registerBeanDefinitionParser("embedded-cache-manager", new InfinispanEmbeddedCacheManagerBeanDefinitionParser());
-        registerBeanDefinitionParser("remote-cache-manager", new InfinispanRemoteCacheManagerBeanDefinitionParser());
-        registerBeanDefinitionParser("container-cache-manager", new InfinispanContainerCacheManagerBeanDefinitionParser());
-    }
+   @Override
+   public void init() {
+      registerBeanDefinitionParser("embedded-cache-manager", new InfinispanEmbeddedCacheManagerBeanDefinitionParser());
+      registerBeanDefinitionParser("remote-cache-manager", new InfinispanRemoteCacheManagerBeanDefinitionParser());
+      registerBeanDefinitionParser("container-cache-manager", new InfinispanContainerCacheManagerBeanDefinitionParser());
+   }
 
 }

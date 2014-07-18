@@ -1,10 +1,5 @@
 package org.infinispan.spring.provider.sample;
 
-import java.sql.ResultSet;
-import java.sql.SQLException;
-
-import javax.sql.DataSource;
-
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -19,6 +14,10 @@ import org.springframework.jdbc.core.simple.SimpleJdbcTemplate;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
 
+import javax.sql.DataSource;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+
 /**
  * <p>
  * {@link org.infinispan.spring.provider.sample.BookDao <code>BookDao</code>} implementation that fronts a relational database, using
@@ -27,7 +26,7 @@ import org.springframework.transaction.annotation.Transactional;
  * {@link org.springframework.cache.annotation.Cacheable <code>@Cacheable</code>} and
  * {@link org.springframework.cache.annotation.CacheEvict <code>@CacheEvict</code>}.
  * </p>
- * 
+ *
  * @author <a href="mailto:olaf DOT bergner AT gmx DOT de">Olaf Bergner</a>
  * @since 5.1
  */
@@ -44,7 +43,7 @@ public class JdbcBookDao implements BookDao {
    public void initialize(final DataSource dataSource) {
       this.jdbcTemplate = new SimpleJdbcTemplate(dataSource);
       this.bookInsert = new SimpleJdbcInsert(dataSource).withTableName("books")
-               .usingGeneratedKeyColumns("id");
+            .usingGeneratedKeyColumns("id");
    }
 
    /**
@@ -78,7 +77,7 @@ public class JdbcBookDao implements BookDao {
       try {
          this.log.infof("Loading book [ID = %d]", bookId);
          return this.jdbcTemplate.queryForObject("SELECT * FROM books WHERE id = ?",
-                  new BookRowMapper(), bookId);
+                                                 new BookRowMapper(), bookId);
       } catch (EmptyResultDataAccessException e) {
          return null;
       }
@@ -131,13 +130,13 @@ public class JdbcBookDao implements BookDao {
       this.log.infof("Storing book [%s]", bookToStore);
       if (bookToStore.getId() == null) {
          final Number newBookId = this.bookInsert
-                  .executeAndReturnKey(createParameterSourceFor(bookToStore));
+               .executeAndReturnKey(createParameterSourceFor(bookToStore));
          bookToStore.setId(newBookId.intValue());
          this.log.infof("Book [%s] persisted for the first time", bookToStore);
       } else {
          this.jdbcTemplate.update(
-                  "UPDATE books SET isbn = :isbn, author = :author, title = :title WHERE id = :id",
-                  createParameterSourceFor(bookToStore));
+               "UPDATE books SET isbn = :isbn, author = :author, title = :title WHERE id = :id",
+               createParameterSourceFor(bookToStore));
          this.log.infof("Book [%s] updated", bookToStore);
       }
       return bookToStore;
@@ -145,7 +144,7 @@ public class JdbcBookDao implements BookDao {
 
    private SqlParameterSource createParameterSourceFor(final Book book) {
       return new MapSqlParameterSource().addValue("id", book.getId())
-               .addValue("isbn", book.getIsbn()).addValue("author", book.getAuthor())
-               .addValue("title", book.getTitle());
+            .addValue("isbn", book.getIsbn()).addValue("author", book.getAuthor())
+            .addValue("title", book.getTitle());
    }
 }

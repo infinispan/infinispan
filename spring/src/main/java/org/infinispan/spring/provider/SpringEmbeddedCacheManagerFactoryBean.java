@@ -36,18 +36,18 @@ import org.springframework.beans.factory.InitializingBean;
  * Spring application context is closed. It is therefore advisable to <em>always</em> use this
  * <code>FactoryBean</code> when creating an <code>SpringEmbeddedCacheManager</code>.
  * </p>
- * 
+ *
  * @author <a href="mailto:olaf DOT bergner AT gmx DOT de">Olaf Bergner</a>
- * 
+ *
  * @see #setConfigurationFileLocation(org.springframework.core.io.Resource)
  * @see #destroy()
  * @see org.infinispan.spring.provider.SpringEmbeddedCacheManager
  * @see org.infinispan.manager.EmbeddedCacheManager
  * @see org.infinispan.configuration.cache.Configuration
- * 
+ *
  */
 public class SpringEmbeddedCacheManagerFactoryBean extends AbstractEmbeddedCacheManagerFactory
-         implements FactoryBean<SpringEmbeddedCacheManager>, InitializingBean, DisposableBean {
+      implements FactoryBean<SpringEmbeddedCacheManager>, InitializingBean, DisposableBean {
 
    private SpringEmbeddedCacheManager cacheManager;
 
@@ -66,7 +66,7 @@ public class SpringEmbeddedCacheManagerFactoryBean extends AbstractEmbeddedCache
       this.cacheManager = new SpringEmbeddedCacheManager(nativeEmbeddedCacheManager);
 
       logger.info("Successfully initialized SpringEmbeddedCacheManager instance ["
-               + this.cacheManager + "]");
+                        + this.cacheManager + "]");
    }
 
    // ------------------------------------------------------------------------
@@ -87,14 +87,14 @@ public class SpringEmbeddedCacheManagerFactoryBean extends AbstractEmbeddedCache
    @Override
    public Class<? extends SpringEmbeddedCacheManager> getObjectType() {
       return this.cacheManager != null ? this.cacheManager.getClass()
-               : SpringEmbeddedCacheManager.class;
+            : SpringEmbeddedCacheManager.class;
    }
 
    /**
     * Always returns <code>true</code>.
-    * 
+    *
     * @return Always <code>true</code>
-    * 
+    *
     * @see org.springframework.beans.factory.FactoryBean#isSingleton()
     */
    @Override
@@ -109,7 +109,7 @@ public class SpringEmbeddedCacheManagerFactoryBean extends AbstractEmbeddedCache
    /**
     * Shuts down the <code>SpringEmbeddedCacheManager</code> instance created by this
     * <code>FactoryBean</code>.
-    * 
+    *
     * @see org.springframework.beans.factory.DisposableBean#destroy()
     * @see org.infinispan.spring.provider.SpringEmbeddedCacheManager#stop()
     */
