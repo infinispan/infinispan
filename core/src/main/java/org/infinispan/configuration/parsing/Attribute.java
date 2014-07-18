@@ -119,6 +119,7 @@ public enum Attribute {
     TOTAL_ORDER_EXECUTOR("total-order-executor"),
     TRANSACTION_MANAGER_LOOKUP_CLASS("transaction-manager-lookup"),
     TRANSACTION_PROTOCOL("protocol"),
+    TRANSPORT("transport"),
     UNRELIABLE_RETURN_VALUES("unreliable-return-values"),
     USE_TWO_PHASE_COMMIT("two-phase-commit"),
     VALUE("value"),
