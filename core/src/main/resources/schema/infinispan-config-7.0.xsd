@@ -54,6 +54,11 @@
         </xs:complexType>
       </xs:element>
     </xs:sequence>
+    <xs:attribute name="transport" type="xs:string" default="org.infinispan.remoting.transport.jgroups.JGroupsTransport">
+      <xs:annotation>
+        <xs:documentation>Class that represents a network transport. Must implement org.infinispan.remoting.transport.Transport.</xs:documentation>
+      </xs:annotation>
+    </xs:attribute>
   </xs:complexType>
 
   <xs:complexType name="threads">

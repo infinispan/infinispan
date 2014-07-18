@@ -29,6 +29,7 @@ import org.infinispan.jmx.MBeanServerLookup;
 import org.infinispan.persistence.cluster.ClusterLoader;
 import org.infinispan.persistence.file.SingleFileStore;
 import org.infinispan.persistence.spi.CacheLoader;
+import org.infinispan.remoting.transport.Transport;
 import org.infinispan.security.AuditLogger;
 import org.infinispan.security.PrincipalRoleMapper;
 import org.infinispan.security.impl.ClusterRoleMapper;
@@ -379,8 +380,29 @@ public class Parser70 implements ConfigurationParser {
    }
 
    private void parseJGroups(XMLExtendedStreamReader reader, ConfigurationBuilderHolder holder) throws XMLStreamException {
-      // Set up default transport
-      holder.getGlobalConfigurationBuilder().transport().defaultTransport();
+      Transport transport = null;
+      for (int i = 0; i < reader.getAttributeCount(); i++) {
+         ParseUtils.requireNoNamespaceAttribute(reader, i);
+         String value = replaceProperties(reader.getAttributeValue(i));
+         Attribute attribute = Attribute.forName(reader.getAttributeLocalName(i));
+
+         switch (attribute) {
+            case TRANSPORT:
+               transport = Util.getInstance(value, holder.getClassLoader());
+               break;
+            default: {
+               throw ParseUtils.unexpectedAttribute(reader, i);
+            }
+         }
+      }
+
+      if (transport == null) {
+         // Set up default transport
+         holder.getGlobalConfigurationBuilder().transport().defaultTransport();
+      } else {
+         holder.getGlobalConfigurationBuilder().transport().transport(transport);
+      }
+
       while (reader.hasNext() && (reader.nextTag() != XMLStreamConstants.END_ELEMENT)) {
          Element element = Element.forName(reader.getLocalName());
          switch (element) {
