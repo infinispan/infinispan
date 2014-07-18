@@ -1,19 +1,18 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <beans xmlns="http://www.springframework.org/schema/beans"
-       xmlns:jee="http://www.springframework.org/schema/jee"
        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
        xmlns:infinispan="http://www.infinispan.org/schemas/spring"
+       xmlns:p="http://www.springframework.org/schema/p"
        xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd
-       http://www.springframework.org/schema/jee http://www.springframework.org/schema/jee/spring-jee.xsd
        http://www.infinispan.org/schemas/spring http://www.infinispan.org/schemas/infinispan-spring.xsd">
 
     <infinispan:container-cache-manager cache-container-ref="cacheContainer"/>
 
     <!-- We just want to validate that when a valid container exists, wrapping in a Spring CacheManager is possible -->
-    <bean id="cacheContainer" class="org.infinispan.manager.DefaultCacheManager"/>
+    <bean id="cacheContainer" class="org.infinispan.spring.config.DuplicateDomainAwareCacheManager"/>
 
     <infinispan:container-cache-manager id="cacheManager2">
-        <bean class="org.infinispan.manager.DefaultCacheManager"/>
+        <bean class="org.infinispan.spring.config.DuplicateDomainAwareCacheManager"/>
     </infinispan:container-cache-manager>
 
 </beans>

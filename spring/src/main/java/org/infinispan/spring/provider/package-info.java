@@ -1,5 +1,5 @@
 /**
- * <h1>Spring Infinispan - An implementation of Spring 3.1's Cache SPI based on JBoss Infinispan.</h1>
+ * <h1>Spring Infinispan - An implementation of Spring 3.2's Cache SPI based on JBoss Infinispan.</h1>
  * <p>
  * Spring 3.1 introduces caching capabilities a user may comfortably utilize via a set of custom annotations, thus telling
  * the Spring runtime which objects to cache under which circumstances.</br>
@@ -81,7 +81,7 @@
  * in our Spring application context. It is important to note that <code>classpath:/org/infinispan/spring/embedded/example/infinispan-sample-config.xml</code>
  * points to a configuration file in the standard Infinispan configuration format that includes sections for two named caches
  * &quot;cars&quot; and &quot;planes&quot;. If those sections are missing the above application context will still work, yet the
- * two caches &quot;cars&quot; and &quot;planes&quot; will be configured using the default settings definded in
+ * two caches &quot;cars&quot; and &quot;planes&quot; will be configured using the default settings defined in
  * <code>classpath:/org/infinispan/spring/embedded/example/infinispan-sample-config.xml</code>.<br/>
  * To further simplify our setup we may omit the reference to an Infinispan configuration file in which case the underlying
  * {@link org.infinispan.manager.EmbeddedCacheManager <code>org.infinispan.manager.EmbeddedCacheManager</code>} will use Infinispan's
@@ -139,7 +139,7 @@
  * In both <code>&#064;Cache("cars")</code> and <code>&#064;CacheEvict(value="cars", key="car.id")</code> &quot;cars&quot; refers to the name of the cache to either
  * store the returned <code>Car</code> instance in or to evict the saved/updated <code>Car</code> instance from. For a more detailed explanation of
  * how to use <code>&#064;Cacheable</code> and <code>&#064;CacheEvict</code> see the relevant reference documentation 
- * <a href="http://static.springsource.org/spring/docs/3.1.0.M1/spring-framework-reference/html/cache.html">chapter</a>.
+ * <a href="http://docs.spring.io/spring/docs/3.2.9.RELEASE/spring-framework-reference/html/cache.html">chapter</a>.
  * </p>
  */
 package org.infinispan.spring.provider;

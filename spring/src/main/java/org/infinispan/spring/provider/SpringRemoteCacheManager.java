@@ -22,7 +22,7 @@ public class SpringRemoteCacheManager implements org.springframework.cache.Cache
    private final RemoteCacheManager nativeCacheManager;
 
    /**
-    * @param nativeCacheManager
+    * @param nativeCacheManager the underlying cache manager
     */
    public SpringRemoteCacheManager(final RemoteCacheManager nativeCacheManager) {
       Assert.notNull(nativeCacheManager,

@@ -20,7 +20,7 @@ public class SpringCache implements Cache {
    private final org.infinispan.commons.api.BasicCache<Object, Object> nativeCache;
 
    /**
-    * @param nativeCache
+    * @param nativeCache underlying cache
     */
    public SpringCache(final org.infinispan.commons.api.BasicCache<Object, Object> nativeCache) {
       Assert.notNull(nativeCache, "A non-null Infinispan cache implementation is required");

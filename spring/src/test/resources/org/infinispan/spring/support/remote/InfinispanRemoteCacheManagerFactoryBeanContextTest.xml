@@ -12,7 +12,7 @@
    <bean
       id="infinispanRemoteCacheManagerConfiguredFromConfigurationPropertiesFile"
       class="org.infinispan.spring.support.remote.InfinispanRemoteCacheManagerFactoryBean"
-      p:configuration-properties-file-location="classpath:/org/infinispan/spring/support/remote/hotrod-client.properties" />
+      p:configurationPropertiesFileLocation="classpath:/org/infinispan/spring/support/remote/hotrod-client.properties" />
 
    <bean
       id="infinispanRemoteCacheManagerConfiguredFromConfigurationProperties"
@@ -33,8 +33,8 @@
    <bean
       id="infinispanRemoteCacheManagerConfiguredUsingSetters"
       class="org.infinispan.spring.support.remote.InfinispanRemoteCacheManagerFactoryBean"
-      p:key-size-estimate="768"
-      p:force-return-values="true"
-      p:start-automatically="false" />
+      p:keySizeEstimate="768"
+      p:forceReturnValues="true"
+      p:startAutomatically="false" />
 
 </beans>

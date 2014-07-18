@@ -7,19 +7,19 @@
 
 
    <bean
-      id="hotrodServer"
+      id="hotrodServer" 
       class="org.infinispan.spring.support.remote.HotrodServerLifecycleBean"
-      p:remote-cache-name="infinispanNamedRemoteCacheWithoutFurtherConfiguration" />
+      p:remoteCacheName="infinispanNamedRemoteCacheWithoutFurtherConfiguration" />
 
    <bean
       id="infinispanRemoteCacheManager"
       class="org.infinispan.spring.support.remote.InfinispanRemoteCacheManagerFactoryBean"
-      p:configuration-properties-file-location="classpath:/org/infinispan/spring/support/remote/hotrod-client.properties" />
+      p:configurationPropertiesFileLocation="classpath:/org/infinispan/spring/support/remote/hotrod-client.properties" />
 
    <bean
       id="infinispanNamedRemoteCacheWithoutFurtherConfiguration"
       class="org.infinispan.spring.support.remote.InfinispanNamedRemoteCacheFactoryBean"
-      p:infinispan-remote-cache-manager-ref="infinispanRemoteCacheManager"
-      p:cache-name="customCacheNameWithoutFurtherConfiguration" />
+      p:infinispanRemoteCacheManager-ref="infinispanRemoteCacheManager"
+      p:cacheName="customCacheNameWithoutFurtherConfiguration" />
 
 </beans>

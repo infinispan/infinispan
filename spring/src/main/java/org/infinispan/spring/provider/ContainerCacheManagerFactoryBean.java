@@ -3,8 +3,6 @@ package org.infinispan.spring.provider;
 import org.infinispan.client.hotrod.RemoteCacheManager;
 import org.infinispan.manager.CacheContainer;
 import org.infinispan.manager.EmbeddedCacheManager;
-import org.infinispan.spring.provider.SpringEmbeddedCacheManager;
-import org.infinispan.spring.provider.SpringRemoteCacheManager;
 import org.springframework.beans.factory.FactoryBean;
 import org.springframework.cache.CacheManager;
 import org.springframework.util.Assert;

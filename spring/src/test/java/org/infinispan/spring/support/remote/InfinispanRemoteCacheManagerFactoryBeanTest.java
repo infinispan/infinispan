@@ -14,11 +14,11 @@ import java.util.Collection;
 import java.util.Properties;
 
 import org.infinispan.client.hotrod.RemoteCacheManager;
+import org.infinispan.client.hotrod.impl.transport.tcp.FailoverRequestBalancingStrategy;
+import org.infinispan.commons.executors.ExecutorFactory;
+import org.infinispan.commons.marshall.Marshaller;
+import org.infinispan.factories.TransportFactory;
 import org.infinispan.spring.AbstractRemoteCacheManagerFactory;
-import org.infinispan.spring.mock.MockExecutorFatory;
-import org.infinispan.spring.mock.MockMarshaller;
-import org.infinispan.spring.mock.MockRequestBalancingStrategy;
-import org.infinispan.spring.mock.MockTransportFactory;
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.core.io.Resource;
 import org.testng.annotations.Test;
@@ -45,7 +45,7 @@ public class InfinispanRemoteCacheManagerFactoryBeanTest {
     * @throws Exception
     */
    @Test(expectedExceptions = IllegalStateException.class)
-   public final void shouldThrowAnIllegalStateExceptionIfBothConfigurationPropertiesAndConfifurationPropertiesFileLocationAreSet()
+   public final void shouldThrowAnIllegalStateExceptionIfBothConfigurationPropertiesAndConfigurationPropertiesFileLocationAreSet()
             throws Exception {
       final InfinispanRemoteCacheManagerFactoryBean objectUnderTest = new InfinispanRemoteCacheManagerFactoryBean();
       objectUnderTest.setConfigurationProperties(new Properties());
@@ -245,7 +245,7 @@ public class InfinispanRemoteCacheManagerFactoryBeanTest {
     */
    @Test
    public final void setTransportFactoryShouldOverrideDefaultTransportFactory() throws Exception {
-      final String expectedTransportFactory = MockTransportFactory.class.getName();
+      final String expectedTransportFactory = TransportFactory.class.getName();
       final InfinispanRemoteCacheManagerFactoryBean objectUnderTest = new InfinispanRemoteCacheManagerFactoryBean();
       objectUnderTest.setTransportFactory(expectedTransportFactory);
       objectUnderTest.setStartAutomatically(false); // Otherwise, RemoteCacheManager will try to
@@ -293,7 +293,7 @@ public class InfinispanRemoteCacheManagerFactoryBeanTest {
     */
    @Test
    public final void setMarshallerShouldOverrideDefaultMarshaller() throws Exception {
-      final String expectedMarshaller = MockMarshaller.class.getName();
+      final String expectedMarshaller = Marshaller.class.getName();
       final InfinispanRemoteCacheManagerFactoryBean objectUnderTest = new InfinispanRemoteCacheManagerFactoryBean();
       objectUnderTest.setMarshaller(expectedMarshaller);
       objectUnderTest.setStartAutomatically(false);
@@ -317,7 +317,7 @@ public class InfinispanRemoteCacheManagerFactoryBeanTest {
    @Test
    public final void setAsyncExecutorFactoryShouldOverrideDefaultAsyncExecutorFactory()
             throws Exception {
-      final String expectedAsyncExecutorFactory = MockExecutorFatory.class.getName();
+      final String expectedAsyncExecutorFactory = ExecutorFactory.class.getName();
       final InfinispanRemoteCacheManagerFactoryBean objectUnderTest = new InfinispanRemoteCacheManagerFactoryBean();
       objectUnderTest.setAsyncExecutorFactory(expectedAsyncExecutorFactory);
       objectUnderTest.setStartAutomatically(false);
@@ -410,7 +410,7 @@ public class InfinispanRemoteCacheManagerFactoryBeanTest {
    @Test
    public final void setRequestBalancingStrategyShouldOverrideDefaultRequestBalancingStrategy()
             throws Exception {
-      final String expectedRequestBalancingStrategy = MockRequestBalancingStrategy.class.getName();
+      final String expectedRequestBalancingStrategy = FailoverRequestBalancingStrategy.class.getName();
       final InfinispanRemoteCacheManagerFactoryBean objectUnderTest = new InfinispanRemoteCacheManagerFactoryBean();
       objectUnderTest.setRequestBalancingStrategy(expectedRequestBalancingStrategy);
       objectUnderTest.setStartAutomatically(false);

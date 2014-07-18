@@ -27,7 +27,7 @@ import org.springframework.beans.factory.InitializingBean;
  * either to the configuration loaded from Infinispan's configuration file in case one has been
  * specified, or to a configuration initialized with Infinispan's default settings. Either way, the
  * net effect is that explicitly set configuration properties take precedence over both those loaded
- * from a configuration file as well as INFNISPAN's default settings.
+ * from a configuration file as well as INFINISPAN's default settings.
  * </p>
  * <p>
  * In addition to creating an <code>SpringEmbeddedCacheManager</code> this <code>FactoryBean</code>

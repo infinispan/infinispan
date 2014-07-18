@@ -50,7 +50,7 @@ final class NullValue implements ValueWrapper, Serializable {
        * @param output
        * @param object
        * @throws IOException
-       * @see org.infinispan.marshall.Externalizer#writeObject(java.io.ObjectOutput,
+       * @see org.infinispan.commons.marshall.Externalizer#writeObject(java.io.ObjectOutput,
        *      java.lang.Object)
        */
       @Override
@@ -63,7 +63,7 @@ final class NullValue implements ValueWrapper, Serializable {
        * @return
        * @throws IOException
        * @throws ClassNotFoundException
-       * @see org.infinispan.marshall.Externalizer#readObject(java.io.ObjectInput)
+       * @see org.infinispan.commons.marshall.Externalizer#readObject(java.io.ObjectInput)
        */
       @Override
       public NullValue readObject(ObjectInput input) throws IOException, ClassNotFoundException {

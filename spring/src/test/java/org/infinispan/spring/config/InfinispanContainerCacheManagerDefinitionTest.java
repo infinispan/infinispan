@@ -12,8 +12,7 @@ import org.testng.annotations.Test;
 /**
  * @author Marius Bogoevici
  */
-@Test(groups = "unstable", testName = "spring.config.InfinispanContainerCacheManagerDefinitionTest",
-      description = "Disabled temporarily, see https://issues.jboss.org/browse/ISPN-2701 -- original group: functional")
+@Test(groups = "functional", testName = "spring.config.InfinispanContainerCacheManagerDefinitionTest")
 @ContextConfiguration
 public class InfinispanContainerCacheManagerDefinitionTest extends AbstractTestNGSpringContextTests {
 

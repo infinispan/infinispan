@@ -4,8 +4,9 @@
       xsi:schemaLocation="urn:infinispan:config:7.0 http://www.infinispan.org/schemas/infinispan-config-7.0.xsd"
       xmlns="urn:infinispan:config:7.0">
 
-   <cache-container name="NonTransactionalCacheManager">
+   <cache-container name="NonTransactionalCacheManager" default-cache="default">
       <jmx duplicate-domains="true"/>
+       <local-cache name="default"/>
    </cache-container>
 
 </infinispan>

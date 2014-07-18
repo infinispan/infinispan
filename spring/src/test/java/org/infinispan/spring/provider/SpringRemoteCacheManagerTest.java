@@ -141,7 +141,7 @@ public class SpringRemoteCacheManagerTest extends SingleCacheManagerTest {
 
    /**
     * Test method for
-    * {@link org.infinispan.spring.provider.SpringRemoteCacheManager#getNativeCache()}.
+    * {@link org.infinispan.spring.provider.SpringRemoteCacheManager#getNativeCacheManager()}.
     *
     * @throws IOException
     */

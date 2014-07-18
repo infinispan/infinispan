@@ -15,10 +15,10 @@ import java.util.Properties;
 
 import org.infinispan.client.hotrod.RemoteCacheManager;
 
-import org.infinispan.spring.mock.MockExecutorFatory;
-import org.infinispan.spring.mock.MockMarshaller;
-import org.infinispan.spring.mock.MockRequestBalancingStrategy;
-import org.infinispan.spring.mock.MockTransportFactory;
+import org.infinispan.client.hotrod.impl.transport.tcp.FailoverRequestBalancingStrategy;
+import org.infinispan.commons.executors.ExecutorFactory;
+import org.infinispan.commons.marshall.Marshaller;
+import org.infinispan.factories.TransportFactory;
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.core.io.Resource;
 import org.testng.annotations.Test;
@@ -242,7 +242,7 @@ public class SpringRemoteCacheManagerFactoryBeanTest {
     */
    @Test
    public final void setTransportFactoryShouldOverrideDefaultTransportFactory() throws Exception {
-      final String expectedTransportFactory = MockTransportFactory.class.getName();
+      final String expectedTransportFactory = TransportFactory.class.getName();
       final SpringRemoteCacheManagerFactoryBean objectUnderTest = new SpringRemoteCacheManagerFactoryBean();
       objectUnderTest.setTransportFactory(expectedTransportFactory);
       objectUnderTest.setStartAutomatically(false); // Otherwise, SpringRemoteCacheManager will try
@@ -292,7 +292,7 @@ public class SpringRemoteCacheManagerFactoryBeanTest {
     */
    @Test
    public final void setMarshallerShouldOverrideDefaultMarshaller() throws Exception {
-      final String expectedMarshaller = MockMarshaller.class.getName();
+      final String expectedMarshaller = Marshaller.class.getName();
       final SpringRemoteCacheManagerFactoryBean objectUnderTest = new SpringRemoteCacheManagerFactoryBean();
       objectUnderTest.setMarshaller(expectedMarshaller);
       objectUnderTest.setStartAutomatically(false);
@@ -317,7 +317,7 @@ public class SpringRemoteCacheManagerFactoryBeanTest {
    @Test
    public final void setAsyncExecutorFactoryShouldOverrideDefaultAsyncExecutorFactory()
             throws Exception {
-      final String expectedAsyncExecutorFactory = MockExecutorFatory.class.getName();
+      final String expectedAsyncExecutorFactory = ExecutorFactory.class.getName();
       final SpringRemoteCacheManagerFactoryBean objectUnderTest = new SpringRemoteCacheManagerFactoryBean();
       objectUnderTest.setAsyncExecutorFactory(expectedAsyncExecutorFactory);
       objectUnderTest.setStartAutomatically(false);
@@ -411,7 +411,7 @@ public class SpringRemoteCacheManagerFactoryBeanTest {
    @Test
    public final void setRequestBalancingStrategyShouldOverrideDefaultRequestBalancingStrategy()
             throws Exception {
-      final String expectedRequestBalancingStrategy = MockRequestBalancingStrategy.class.getName();
+      final String expectedRequestBalancingStrategy = FailoverRequestBalancingStrategy.class.getName();
       final SpringRemoteCacheManagerFactoryBean objectUnderTest = new SpringRemoteCacheManagerFactoryBean();
       objectUnderTest.setRequestBalancingStrategy(expectedRequestBalancingStrategy);
       objectUnderTest.setStartAutomatically(false);

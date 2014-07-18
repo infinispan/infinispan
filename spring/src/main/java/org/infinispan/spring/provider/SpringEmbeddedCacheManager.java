@@ -28,7 +28,7 @@ public class SpringEmbeddedCacheManager implements CacheManager {
    private final EmbeddedCacheManager nativeCacheManager;
 
    /**
-    * @param nativeCacheManager
+    * @param nativeCacheManager Underlying cache manager
     */
    public SpringEmbeddedCacheManager(final EmbeddedCacheManager nativeCacheManager) {
       Assert.notNull(nativeCacheManager,

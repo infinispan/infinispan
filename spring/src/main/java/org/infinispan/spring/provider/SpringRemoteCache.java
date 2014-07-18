@@ -21,7 +21,7 @@ public class SpringRemoteCache implements Cache {
    private final RemoteCache<Object, Object> nativeCache;
 
    /**
-    * @param nativeCache
+    * @param nativeCache the underlying cache
     */
    public SpringRemoteCache(final RemoteCache<Object, Object> nativeCache) {
       Assert.notNull(nativeCache, "A non-null Infinispan cache implementation is required");

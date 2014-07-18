@@ -36,10 +36,4 @@ public class InfinispanNamespaceUtils {
 		return innerComponentDefinition;
 	}
 
-    public static void setPropertyIfAttributePresent(BeanDefinitionBuilder builder, Element element, String attributeName) {
-		String attributeValue = element.getAttribute(attributeName);
-		if (StringUtils.hasText(attributeValue)) {
-			builder.addPropertyValue(Conventions.attributeNameToPropertyName(attributeName), new TypedStringValue(attributeValue));
-		}
-	}
 }

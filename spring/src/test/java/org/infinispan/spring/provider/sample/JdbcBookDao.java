@@ -21,7 +21,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 /**
  * <p>
- * {@link BookDAo <code>BookDao</code>} implementation that fronts a relational database, using
+ * {@link org.infinispan.spring.provider.sample.BookDao <code>BookDao</code>} implementation that fronts a relational database, using
  * {@code JDBC} to store and retrieve {@link Book <code>books</code>}. Serves as an example of how
  * to use <a href="http://www.springframework.org">Spring</a>'s
  * {@link org.springframework.cache.annotation.Cacheable <code>@Cacheable</code>} and
@@ -61,7 +61,7 @@ public class JdbcBookDao implements BookDao {
     * </ol>
     * </p>
     * <p>
-    * Note that it is <strong>important</strong> that we explicity tell Spring to use {@code bookId}
+    * Note that it is <strong>important</strong> that we explicitly tell Spring to use {@code bookId}
     * as the cache key. Otherwise, Spring would <strong>derive</strong> a cache key from the
     * parameters passed in (in our case only {@code bookId}), a cache key we have no control over.
     * This would get us into trouble when in {@link #storeBook(Book)} we need a book's cache key to
