@@ -110,7 +110,7 @@
     </module>
 
     <module name="RegexpMultiline">
-        <property name="format" value="\S\s\s\z" />
+        <property name="format" value="((\r\n){2,}|(\n){2,}|(\r){2,})\z" />
         <property name="message" value="Only one new line is allowed at the end of a file" />
     </module>
 
