@@ -289,7 +289,7 @@ public class Base64 {
          oos.writeObject(serializableObject);
       } // end try
       catch (java.io.IOException e) {
-         e.printStackTrace();
+         log.debug("Write error", e);
          return null;
       } // end catch
       finally {
@@ -401,7 +401,7 @@ public class Base64 {
             gzos.close();
          } // end try
          catch (java.io.IOException e) {
-            e.printStackTrace();
+            log.debug("Write error", e);
             return null;
          } // end catch
          finally {
@@ -689,10 +689,10 @@ public class Base64 {
          obj = ois.readObject();
       } // end try
       catch (java.io.IOException e) {
-         e.printStackTrace();
+         log.debug("Read error", e);
       } // end catch
       catch (java.lang.ClassNotFoundException e) {
-         e.printStackTrace();
+         log.debug("Write error", e);
       } // end catch
       finally {
          Util.close(bais);

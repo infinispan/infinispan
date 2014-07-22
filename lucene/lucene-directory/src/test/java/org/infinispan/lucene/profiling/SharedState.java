@@ -39,7 +39,6 @@ public class SharedState {
 
    public void errorManage(Exception e) {
       errors.incrementAndGet();
-      e.printStackTrace();
    }
 
    public long incrementIndexWriterTaskCount(long delta) {

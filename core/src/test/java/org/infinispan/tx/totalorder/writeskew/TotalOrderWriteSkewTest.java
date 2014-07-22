@@ -31,8 +31,7 @@ public class TotalOrderWriteSkewTest extends ReplWriteSkewTest {
          tm(0).commit();
          assert false;
       } catch (Throwable e) {
-         //expected
-         e.printStackTrace();
+         log.debug("Ignoring expected write skew check exception", e);
       }
       assertEquals("v3", cache(0).get("k"));
       assertEventuallyEquals(1, "k", "v3");

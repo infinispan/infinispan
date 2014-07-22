@@ -36,7 +36,7 @@ public class LockOwnerCrashOptimisticTest extends AbstractLockOwnerCrashTest {
                cache(1).put(k, "v");
                transaction = (DummyTransaction) tm(1).getTransaction();
             } catch (Throwable e) {
-               e.printStackTrace();
+               log.errorf(e, "Error starting transaction for key %s", k);
             }
          }
       });
@@ -77,7 +77,7 @@ public class LockOwnerCrashOptimisticTest extends AbstractLockOwnerCrashTest {
                transaction = (DummyTransaction) tm(1).getTransaction();
                transaction.runPrepare();
             } catch (Throwable e) {
-               e.printStackTrace();
+               log.errorf(e, "Error preparing transaction for key %s", k);
             }
          }
       });
@@ -100,7 +100,7 @@ public class LockOwnerCrashOptimisticTest extends AbstractLockOwnerCrashTest {
          tm(1).commit();
          fail("Exception expected as lock cannot be acquired on k=" + k);
       } catch (Exception e) {
-         e.printStackTrace();
+         log.debugf(e, "Expected error committing transaction for key %s", k);
       }
 
 
@@ -110,7 +110,7 @@ public class LockOwnerCrashOptimisticTest extends AbstractLockOwnerCrashTest {
          tm(0).commit();
          fail("Exception expected as lock cannot be acquired on k=" + k);
       } catch (Exception e) {
-         //expected
+         log.debugf(e, "Expected error committing transaction for key %s", k);
       }
 
       tm(1).resume(transaction);

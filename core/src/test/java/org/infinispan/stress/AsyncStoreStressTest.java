@@ -327,18 +327,11 @@ public class AsyncStoreStressTest {
          if (lock != null) {
             result = call.call().booleanValue();
          }
-      } catch (PersistenceException e) {
-         e.printStackTrace();
-         result = false;
-      } catch (InterruptedException e) {
-         e.printStackTrace();
-         result = false;
       } finally {
-         if (lock == null) return false;
-         else {
+         if (lock != null) {
             lock.unlock();
-            return result;
          }
+         return result;
       }
    }
 

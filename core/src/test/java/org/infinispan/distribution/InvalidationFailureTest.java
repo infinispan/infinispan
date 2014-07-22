@@ -50,7 +50,7 @@ public class InvalidationFailureTest extends MultipleCacheManagersTest {
          tm(0).commit();
          log.info("After the Commit");
       } catch (Exception e) {
-         e.printStackTrace();
+         log.error("Error during commit", e);
          assert false : "this should not fail even if the invalidation does";
       } finally {
          tm(1).resume(transaction);

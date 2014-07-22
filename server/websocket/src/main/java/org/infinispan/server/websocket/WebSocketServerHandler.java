@@ -180,7 +180,7 @@ public class WebSocketServerHandler extends SimpleChannelInboundHandler<Object> 
 
    @Override
    public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) throws Exception {
-      cause.printStackTrace();
+      log.debugf(cause, "Error processing request on channel %s" , ctx.name());
       ctx.close();
    }
 

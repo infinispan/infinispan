@@ -472,9 +472,7 @@ public class BasicDistributedExecutorTest extends AbstractCacheTest {
          Future<Integer> future = des.submit(target, builder.build());
 
          AssertJUnit.assertEquals((Integer) 1, future.get());
-      } catch(Exception ex) {
-         ex.printStackTrace();
-      }finally {
+      } finally {
          des.shutdown();
          TestingUtil.killCacheManagers(cacheManager, cacheManager1);
       }
@@ -501,9 +499,7 @@ public class BasicDistributedExecutorTest extends AbstractCacheTest {
          Future<Integer> future = des.submit(target, builder.build());
 
          AssertJUnit.assertEquals((Integer) 1, future.get());
-      } catch(Exception ex) {
-         ex.printStackTrace();
-      }finally {
+      } finally {
          des.shutdown();
          TestingUtil.killCacheManagers(cacheManager, cacheManager1);
       }

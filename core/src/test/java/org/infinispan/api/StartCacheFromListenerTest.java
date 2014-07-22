@@ -69,9 +69,9 @@ public class StartCacheFromListenerTest extends MultipleCacheManagersTest {
                   cache.put("k", "v");
                   log.debug("returned from get!");
                } catch (InterruptedException e) {
-                  e.printStackTrace();
+                  log.error("Interrupted while waiting for the cache to start");
                } catch (ExecutionException e) {
-                  e.printStackTrace();
+                  log.error("Failed to start cache", e);
                }
             }
          }

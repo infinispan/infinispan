@@ -2,11 +2,15 @@ package org.infinispan.it.osgi.util;
 
 import java.lang.reflect.Field;
 
+import org.infinispan.commons.logging.Log;
+import org.infinispan.commons.logging.LogFactory;
 import org.ops4j.pax.exam.ExamSystem;
 import org.ops4j.pax.exam.TestProbeBuilder;
 import org.ops4j.pax.exam.spi.reactors.ReactorManager;
 
 public class PaxExamUtils {
+   private static Log log = LogFactory.getLog(PaxExamUtils.class);
+
    /**
     *  Create a new probe, don't reuse the default.
     * 
@@ -24,7 +28,7 @@ public class PaxExamUtils {
          ExamSystem system = (ExamSystem) fieldSystem.get(reactorManager);
          return system.createProbe();
       } catch (Exception e) {
-         e.printStackTrace();
+         log.error("Error creating test probe", e);
       }
       return probeBuilder;
    }

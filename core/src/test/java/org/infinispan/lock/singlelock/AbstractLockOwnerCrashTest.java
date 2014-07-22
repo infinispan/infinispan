@@ -42,7 +42,7 @@ public abstract class AbstractLockOwnerCrashTest extends AbstractCrashTest {
                transaction.runPrepare();
                tm(1).suspend();
             } catch (Throwable e) {
-               e.printStackTrace();
+               log.errorf(e, "Error preparing transaction for key %s", k);
             }
          }
       });
@@ -70,7 +70,7 @@ public abstract class AbstractLockOwnerCrashTest extends AbstractCrashTest {
                cache(secondTxNode).put(k, "v2");
                tm(secondTxNode).commit();
             } catch (Exception e) {
-               e.printStackTrace();
+               log.errorf(e, "Error committing transaction for key %s", k);
             }
          }
       });

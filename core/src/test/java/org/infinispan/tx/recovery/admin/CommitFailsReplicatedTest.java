@@ -23,11 +23,11 @@ public class CommitFailsReplicatedTest extends CommitFailsTest {
       return configuration;
    }
 
-   public void testForceCommitNonTxParticipant() {
+   public void testForceCommitNonTxParticipant() throws Exception {
       runTest(1);
    }
 
-   public void testForceCommitTxParticipant() {
+   public void testForceCommitTxParticipant() throws Exception {
       runTest(0);
    }
 }

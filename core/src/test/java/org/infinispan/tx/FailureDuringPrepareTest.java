@@ -69,7 +69,7 @@ public class FailureDuringPrepareTest extends MultipleCacheManagersTest {
          tm(0).commit();
          assert false;
       } catch (Exception e) {
-         e.printStackTrace();
+         log.debug("Ignoring expected exception during prepare", e);
       }
 
       assertEquals(lockManager(0).getNumberOfLocksHeld(), 0);

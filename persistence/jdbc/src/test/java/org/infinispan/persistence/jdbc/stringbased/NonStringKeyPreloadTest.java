@@ -50,7 +50,7 @@ public class NonStringKeyPreloadTest extends AbstractInfinispanTest {
                cm.getCache();
                assert false : " Preload with Key2StringMapper is not supported. Specify an TwoWayKey2StringMapper if you want to support it (or disable preload).";
             } catch (CacheException e) {
-               // Expected
+               log.debugf("Ignoring expected exception", e);
             }
          }
       });

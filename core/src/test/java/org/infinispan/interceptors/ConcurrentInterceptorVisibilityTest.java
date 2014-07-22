@@ -53,7 +53,7 @@ public class ConcurrentInterceptorVisibilityTest extends AbstractInfinispanTest 
       withCacheManager(new CacheManagerCallable(
             TestCacheManagerFactory.createCacheManager(builder)) {
          @Override
-         public void call() {
+         public void call() throws Exception {
             final Cache<Object,Object> cache = cm.getCache();
 
             switch (visibility) {
@@ -94,13 +94,7 @@ public class ConcurrentInterceptorVisibilityTest extends AbstractInfinispanTest 
                   break;
             }
 
-            try {
-               ignore.get(5, TimeUnit.SECONDS);
-            } catch (InterruptedException e) {
-               Thread.currentThread().interrupt();
-            } catch (Exception e) {
-               throw new RuntimeException(e);
-            }
+            ignore.get(5, TimeUnit.SECONDS);
          }
       });
    }

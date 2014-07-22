@@ -38,8 +38,10 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.ThreadFactory;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
+import static java.util.concurrent.TimeUnit.SECONDS;
 import static org.testng.AssertJUnit.*;
 
 @Test(groups = "functional", testName = "api.mvcc.repeatable_read.WriteSkewTest")
@@ -116,101 +118,82 @@ public class WriteSkewTest extends AbstractInfinispanTest {
       setCacheWithWriteSkewCheck();
       postStart();
 
-      final AtomicInteger successes = new AtomicInteger();
-      final AtomicInteger rollbacks = new AtomicInteger();
-
       final CountDownLatch latch1 = new CountDownLatch(1);
       final CountDownLatch latch2 = new CountDownLatch(1);
       final CountDownLatch latch3 = new CountDownLatch(1);
 
-      Thread t1 = new Thread(new Runnable() {
-         public void run() {
+      Future<Void> t1 = fork(new Callable<Void>() {
+         @Override
+         public Void call() throws Exception {
+            latch1.await();
+
+            tm.begin();
             try {
-               latch1.await();
-
-               tm.begin();
                try {
-                  try {
-                     cache.get("k1");
-                     cache.put("k1", "v1");
-                     cache.put("k2", "thread 1");
-                  } finally {
-                     latch2.countDown();
-                  }
-                  latch3.await();
-                  tm.commit(); //this is expected to fail
-                  successes.incrementAndGet();
-               } catch (Exception e) {
-                  if (e instanceof RollbackException) {
-                     rollbacks.incrementAndGet();
-                  }
-
-                  // the TX is most likely rolled back already, but we attempt a rollback just in case it isn't
-                  if (tm.getTransaction() != null) {
-                     try {
-                        tm.rollback();
-                     } catch (SystemException e1) {
-                        log.error("Failed to rollback", e1);
-                     }
-                  }
-                  throw e;
+                  cache.get("k1");
+                  cache.put("k1", "v1");
+                  cache.put("k2", "thread 1");
+               } finally {
+                  latch2.countDown();
                }
-            } catch (Exception ex) {
-               log.errorf(ex, "Failure in thread %s", Thread.currentThread().getName());
-            }
-         }
-      }, "Thread-1, WriteSkewTest");
+               latch3.await();
+               tm.commit(); //this is expected to fail
+               fail("Commit should have failed!");
+            } catch (Exception e) {
+               // the TX is most likely rolled back already, but we attempt a rollback just in case it isn't
+               if (tm.getTransaction() != null) {
+                  try {
+                     tm.rollback();
+                  } catch (SystemException e1) {
+                     log.error("Failed to rollback", e1);
+                  }
+               }
 
-      Thread t2 = new Thread(new Runnable() {
-         public void run() {
+               // Check that we got the proper exception
+               assertTrue(e instanceof RollbackException);
+            }
+            return null;
+         }
+      });
+
+      Future<Void> t2 = fork(new Callable<Void>() {
+         public Void call() throws Exception {
+            latch2.await();
+
+            tm.begin();
             try {
-               latch2.await();
-
-               tm.begin();
                try {
-                  try {
-                     cache.get("k1");
-                     cache.put("k1", "v2");
-                     cache.put("k3", "thread 2");
-                     tm.commit();
-                     successes.incrementAndGet();
-                  } finally {
-                     latch3.countDown();
-                  }
-               } catch (Exception e) {
-                  if (e instanceof RollbackException) {
-                     rollbacks.incrementAndGet();
-                  }
-
-                  // the TX is most likely rolled back already, but we attempt a rollback just in case it isn't
-                  if (tm.getTransaction() != null) {
-                     try {
-                        tm.rollback();
-                     } catch (SystemException e1) {
-                        log.error("Failed to rollback", e1);
-                     }
-                  }
-                  throw e;
+                  cache.get("k1");
+                  cache.put("k1", "v2");
+                  cache.put("k3", "thread 2");
+                  tm.commit();
+               } finally {
+                  latch3.countDown();
                }
-            } catch (Exception ex) {
-               log.errorf(ex, "Failure in thread %s", Thread.currentThread().getName());
-            }
-         }
-      }, "Thread-2, WriteSkewTest");
+            } catch (Exception e) {
+               // the TX is most likely rolled back already, but we attempt a rollback just in case it isn't
+               if (tm.getTransaction() != null) {
+                  try {
+                     tm.rollback();
+                  } catch (SystemException e1) {
+                     log.error("Failed to rollback", e1);
+                  }
+               }
 
-      t1.start();
-      t2.start();
+               // Pass the exception to the main thread
+               throw e;
+            }
+            return null;
+         }
+      });
+
       latch1.countDown();
-      t1.join();
-      t2.join();
 
-      log.trace("successes= " + successes.get());
-      log.trace("rollbacks= " + rollbacks.get());
+      t1.get(10, SECONDS);
+      t2.get(10, SECONDS);
 
       assertTrue("k1 is expected to be in cache.", cache.containsKey("k1"));
       assertEquals("Wrong value for key k1.", "v2", cache.get("k1"));
-      assertEquals("Expects only one thread to succeed.", 1, successes.get());
-      assertEquals("Expects only one thread to fail", 1, rollbacks.get());
    }
 
    /**
@@ -409,70 +392,56 @@ public class WriteSkewTest extends AbstractInfinispanTest {
 
       cache.put(key, "v");
 
-      Thread w1 = new Thread("Writer-1, WriteSkewTest") {
+      Future<Void> w1 = fork(new Callable<Void>() {
          @Override
-         public void run() {
-            boolean didCoundDown = false;
+         public Void call() throws Exception {
             try {
                tm.begin();
                assertEquals("Wrong value in Writer-1 for key " + key + ".", "v", cache.get(key));
                threadSignal.countDown();
-               didCoundDown = true;
                w1Signal.await();
                cache.put(key, "v2");
                tm.commit();
-            }
-            catch (Exception e) {
+            } catch (Exception e) {
                w1exceptions.add(e);
+               // Tx should be rolled back already, but we're being extra cautious
+               if (tm.getTransaction() != null) {
+                  tm.rollback();
+               }
             }
-            finally {
-               if (!didCoundDown) threadSignal.countDown();
-            }
+            return null;
          }
-      };
+      });
 
-      Thread w2 = new Thread("Writer-2, WriteSkewTest") {
+      Future<Void> w2 = fork(new Callable<Void>() {
          @Override
-         public void run() {
-            boolean didCoundDown = false;
+         public Void call() throws Exception {
             try {
                tm.begin();
                assertEquals("Wrong value in Writer-2 for key " + key + ".", "v", cache.get(key));
                threadSignal.countDown();
-               didCoundDown = true;
                w2Signal.await();
                cache.put(key, "v3");
                tm.commit();
-            }
-            catch (Exception e) {
+            } catch (Exception e) {
                w2exceptions.add(e);
-               // the exception will be thrown when doing a cache.put().  We should make sure we roll back the tx to release locks.
-               if (!allowWriteSkew) {
-                  try {
-                     tm.rollback();
-                  }
-                  catch (SystemException e1) {
-                     // do nothing.
-                  }
+               // Tx should be rolled back already, but we're being extra cautious
+               if (tm.getTransaction() != null) {
+                  tm.rollback();
                }
             }
-            finally {
-               if (!didCoundDown) threadSignal.countDown();
-            }
+            return null;
          }
-      };
+      });
 
-      w1.start();
-      w2.start();
-
-      threadSignal.await();
+      threadSignal.await(10, SECONDS);
       // now.  both txs have read.
       // let tx1 start writing
       w1Signal.countDown();
-      w1.join();
+      w1.get(10, SECONDS);
 
       w2Signal.countDown();
-      w2.join();
+      w2.get(10, SECONDS);
 
       if (allowWriteSkew) {
          // should have no exceptions!!

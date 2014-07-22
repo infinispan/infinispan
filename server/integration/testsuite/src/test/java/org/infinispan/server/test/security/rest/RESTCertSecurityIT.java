@@ -179,53 +179,48 @@ public class RESTCertSecurityIT {
         return response;
     }
 
-    public static CloseableHttpClient securedClient(String alias) {
-        try {
-            SSLContext ctx = SSLContext.getInstance("TLS");
-            JBossJSSESecurityDomain jsseSecurityDomain = new JBossJSSESecurityDomain("client_cert_auth");
-            jsseSecurityDomain.setKeyStorePassword("changeit");
-            ClassLoader tccl = Thread.currentThread().getContextClassLoader();
-            URL keystore = tccl.getResource("client.keystore");
-            jsseSecurityDomain.setKeyStoreURL(keystore.getPath());
-            jsseSecurityDomain.setClientAlias(alias);
-            jsseSecurityDomain.reloadKeyAndTrustStore();
-            KeyManager[] keyManagers = jsseSecurityDomain.getKeyManagers();
-            TrustManager[] trustManagers = jsseSecurityDomain.getTrustManagers();
-            ctx.init(keyManagers, trustManagers, null);
-            X509HostnameVerifier verifier = new X509HostnameVerifier() {
+    public static CloseableHttpClient securedClient(String alias) throws Exception {
+       SSLContext ctx = SSLContext.getInstance("TLS");
+       JBossJSSESecurityDomain jsseSecurityDomain = new JBossJSSESecurityDomain("client_cert_auth");
+       jsseSecurityDomain.setKeyStorePassword("changeit");
+       ClassLoader tccl = Thread.currentThread().getContextClassLoader();
+       URL keystore = tccl.getResource("client.keystore");
+       jsseSecurityDomain.setKeyStoreURL(keystore.getPath());
+       jsseSecurityDomain.setClientAlias(alias);
+       jsseSecurityDomain.reloadKeyAndTrustStore();
+       KeyManager[] keyManagers = jsseSecurityDomain.getKeyManagers();
+       TrustManager[] trustManagers = jsseSecurityDomain.getTrustManagers();
+       ctx.init(keyManagers, trustManagers, null);
+       X509HostnameVerifier verifier = new X509HostnameVerifier() {
 
-                @Override
-                public void verify(String s, SSLSocket sslSocket) throws IOException {
-                }
+           @Override
+           public void verify(String s, SSLSocket sslSocket) throws IOException {
+           }
 
-                @Override
-                public void verify(String s, X509Certificate x509Certificate) throws SSLException {
-                }
+           @Override
+           public void verify(String s, X509Certificate x509Certificate) throws SSLException {
+           }
 
-                @Override
-                public void verify(String s, String[] strings, String[] strings1) throws SSLException {
-                }
+           @Override
+           public void verify(String s, String[] strings, String[] strings1) throws SSLException {
+           }
 
-                @Override
-                public boolean verify(String string, SSLSession ssls) {
-                    return true;
-                }
-            };
-            ConnectionSocketFactory sslssf = new SSLConnectionSocketFactory(ctx, verifier);//SSLSocketFactory.ALLOW_ALL_HOSTNAME_VERIFIER);
-            ConnectionSocketFactory plainsf = new PlainConnectionSocketFactory();
-            Registry<ConnectionSocketFactory> sr = RegistryBuilder.<ConnectionSocketFactory>create()
-                    .register("http", plainsf)
-                    .register("https", sslssf)
-                    .build();
-            HttpClientConnectionManager pcm = new PoolingHttpClientConnectionManager(sr);
-            CloseableHttpClient httpClient = HttpClients.custom()
-                    .setConnectionManager(pcm)
-                    .build();
+           @Override
+           public boolean verify(String string, SSLSession ssls) {
+               return true;
+           }
+       };
+       ConnectionSocketFactory sslssf = new SSLConnectionSocketFactory(ctx, verifier);//SSLSocketFactory.ALLOW_ALL_HOSTNAME_VERIFIER);
+       ConnectionSocketFactory plainsf = new PlainConnectionSocketFactory();
+       Registry<ConnectionSocketFactory> sr = RegistryBuilder.<ConnectionSocketFactory>create()
+               .register("http", plainsf)
+               .register("https", sslssf)
+               .build();
+       HttpClientConnectionManager pcm = new PoolingHttpClientConnectionManager(sr);
+       CloseableHttpClient httpClient = HttpClients.custom()
+               .setConnectionManager(pcm)
+               .build();
 
-            return httpClient;
-        } catch (Exception ex) {
-            ex.printStackTrace();
-            return null;
-        }
+       return httpClient;
     }
 }

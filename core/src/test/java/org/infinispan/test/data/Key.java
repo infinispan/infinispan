@@ -1,19 +1,22 @@
 package org.infinispan.test.data;
 
 import org.infinispan.util.concurrent.ReclosableLatch;
+import org.infinispan.util.logging.Log;
+import org.infinispan.util.logging.LogFactory;
 
 import java.io.Externalizable;
 import java.io.IOException;
+import java.io.InterruptedIOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
 import java.util.concurrent.TimeUnit;
 
 public class Key implements Externalizable {
+   private static final long serialVersionUID = 4745232904453872125L;
 
    private String value;
    private final ReclosableLatch latch = new ReclosableLatch(false);
    private final boolean lockable;
-   private static final long serialVersionUID = 4745232904453872125L;
 
    public Key() {
       this.lockable = false;
@@ -47,7 +50,9 @@ public class Key implements Externalizable {
          try {
             if (!latch.await(1, TimeUnit.MINUTES)) throw new RuntimeException("Cannot serialize!!");
          } catch (InterruptedException e) {
-            e.printStackTrace();
+            InterruptedIOException exception = new InterruptedIOException();
+            e.initCause(e);
+            throw exception;
          }
          latch.close();
       }

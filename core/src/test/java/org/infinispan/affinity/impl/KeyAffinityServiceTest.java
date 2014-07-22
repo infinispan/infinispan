@@ -130,7 +130,7 @@ public class KeyAffinityServiceTest extends BaseKeyAffinityServiceTest {
          try {
             consumersStart.await();
          } catch (InterruptedException e) {
-            e.printStackTrace();
+            log.debug("KeyConsumer thread interrupted");
             return;
          }
          for (int i = 0; i < keysToConsume; i++) {

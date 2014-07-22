@@ -1,5 +1,8 @@
 package org.infinispan.server.test.util.jdbc;
 
+import org.infinispan.commons.logging.Log;
+import org.infinispan.commons.logging.LogFactory;
+
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.SQLException;
@@ -10,6 +13,7 @@ import java.sql.SQLException;
  * @since 7.0
  */
 public class SimpleConnectionFactory {
+    private static final Log log = LogFactory.getLog(SimpleConnectionFactory.class);
 
     private final String connectionUrl;
     private final String userName;
@@ -41,7 +45,7 @@ public class SimpleConnectionFactory {
         try {
             conn.close();
         } catch (SQLException e) {
-            e.printStackTrace();
+            log.warnf(e, "Error closing connection %s", conn);
         }
     }
 
@@ -49,8 +53,7 @@ public class SimpleConnectionFactory {
         try {
             Class.forName(driverClass);
         } catch (ClassNotFoundException e) {
-            System.out.println("Driver class not found in classpath");
-            e.printStackTrace();
+            log.errorf(e, "Driver class %s not found in classpath", driverClass);
         }
     }
 

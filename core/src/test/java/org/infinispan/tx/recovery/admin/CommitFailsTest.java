@@ -9,6 +9,8 @@ import org.infinispan.transaction.tm.DummyTransaction;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
+import javax.transaction.NotSupportedException;
+import javax.transaction.SystemException;
 import javax.transaction.xa.XAException;
 import java.util.List;
 
@@ -74,36 +76,32 @@ public class CommitFailsTest extends AbstractRecoveryTest {
       return new MagicKey(cache(2));
    }
 
-   public void testForceCommitOnOriginator() {
+   public void testForceCommitOnOriginator() throws Exception {
       runTest(2);
    }
 
-   public void testForceCommitNonTxParticipant() {
+   public void testForceCommitNonTxParticipant() throws Exception {
       int where = getTxParticipant(false);
       runTest(where);
    }
 
-   public void testForceCommitTxParticipant() {
+   public void testForceCommitTxParticipant() throws Exception {
       int where = getTxParticipant(true);
       runTest(where);
    }
 
-   private void assertAllHaveValue(Object key, String newValue) {
+   private void assertAllHaveValue(Object key, String newValue) throws Exception {
       for (Cache c : caches()) {
          Object actual = null;
-         try {
-            TestingUtil.getTransactionManager(c).begin();
-            actual = c.get(key);
-            TestingUtil.getTransactionManager(c).commit();
-         } catch (Exception e) {
-            e.printStackTrace();
-         }
+         TestingUtil.getTransactionManager(c).begin();
+         actual = c.get(key);
+         TestingUtil.getTransactionManager(c).commit();
          assertEquals(actual, newValue);
       }
    }
 
 
-   protected void runTest(int where) {
+   protected void runTest(int where) throws Exception {
       List<Long> internalIds = getInternalIds(recoveryOps(where).showInDoubtTransactions());
       log.debugf("About to force commit on node %s", address(where));
       recoveryOps(where).forceCommit(internalIds.get(0));

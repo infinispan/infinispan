@@ -65,8 +65,7 @@ public abstract class BaseStoreTest extends AbstractInfinispanTest {
          cl = createStore();
          cl.start();
       } catch (Exception e) {
-         //in IDEs this won't be printed which makes debugging harder
-         e.printStackTrace();
+         log.error("Error creating store", e);
          throw e;
       }
    }

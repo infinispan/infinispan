@@ -83,15 +83,11 @@ public class IndexCacheLoaderTest {
       final EmbeddedCacheManager cacheManager = initializeInfinispan(rootDir);
       TestingUtil.withCacheManager(new CacheManagerCallable(cacheManager) {
          @Override
-         public void call() {
+         public void call() throws IOException {
             Cache<Object, Object> cache = cacheManager.getCache();
             Directory directory = DirectoryBuilder.newDirectoryInstance(cache, cache, cache, indexName).create();
 
-            try {
-               TestHelper.verifyOnDirectory(directory, termsAdded, inverted);
-            } catch (IOException e) {
-               throw new RuntimeException(e);
-            }
+            TestHelper.verifyOnDirectory(directory, termsAdded, inverted);
          }
       });
    }

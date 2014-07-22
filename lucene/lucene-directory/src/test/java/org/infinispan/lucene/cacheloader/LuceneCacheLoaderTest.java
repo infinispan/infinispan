@@ -3,6 +3,8 @@ package org.infinispan.lucene.cacheloader;
 import org.apache.lucene.store.Directory;
 import org.infinispan.Cache;
 import org.infinispan.commons.CacheException;
+import org.infinispan.commons.logging.Log;
+import org.infinispan.commons.logging.LogFactory;
 import org.infinispan.lucene.FileCacheKey;
 import org.infinispan.lucene.directory.DirectoryBuilder;
 import org.infinispan.manager.EmbeddedCacheManager;
@@ -20,6 +22,7 @@ import java.io.IOException;
  */
 @Test(groups = "functional", testName = "lucene.cacheloader.LuceneCacheLoaderTest")
 public class LuceneCacheLoaderTest extends IndexCacheLoaderTest {
+   private static final Log log = LogFactory.getLog(LuceneCacheLoaderTest.class);
 
    private String indexName = "index-A";
    private int elementCount = 10;
@@ -48,7 +51,7 @@ public class LuceneCacheLoaderTest extends IndexCacheLoaderTest {
                      try {
                         directory.close();
                      } catch (IOException e) {
-                        e.printStackTrace();
+                        log.warnf(e, "Error closing directory %s", directory);
                      }
                   }
                }
@@ -77,7 +80,7 @@ public class LuceneCacheLoaderTest extends IndexCacheLoaderTest {
             }
          });
       } else {
-         System.out.println("The test is executed only if it is possible to make the directory non-readable. I.e. the tests are run not under the root.");
+         log.info("The test is executed only if it is possible to make the directory non-readable. I.e. the tests are run not under the root.");
       }
    }
 
@@ -87,26 +90,22 @@ public class LuceneCacheLoaderTest extends IndexCacheLoaderTest {
       try {
          TestingUtil.withCacheManager(new CacheManagerCallable(cacheManager) {
             @Override
-            public void call() {
+            public void call() throws Exception {
                Cache cache = cacheManager.getCache();
                Directory directory = DirectoryBuilder.newDirectoryInstance(cache, cache, cache, indexName).create();
 
-               try {
-                  TestHelper.createIndex(rootDir, indexName, elementCount, true);
-                  TestHelper.verifyOnDirectory(directory, elementCount, true);
+               TestHelper.createIndex(rootDir, indexName, elementCount, true);
+               TestHelper.verifyOnDirectory(directory, elementCount, true);
 
-                  String[] fileNamesFromIndexDir = TestHelper.getFileNamesFromDir(rootDir, indexName);
+               String[] fileNamesFromIndexDir = TestHelper.getFileNamesFromDir(rootDir, indexName);
 
-                  LuceneCacheLoader cacheLoader = (LuceneCacheLoader) TestingUtil.getFirstLoader(cacheManager.getCache());
-                  for(String fileName : fileNamesFromIndexDir) {
-                     FileCacheKey key = new FileCacheKey(indexName, fileName);
-                     assert cacheLoader.contains(key);
+               LuceneCacheLoader cacheLoader = (LuceneCacheLoader) TestingUtil.getFirstLoader(cacheManager.getCache());
+               for(String fileName : fileNamesFromIndexDir) {
+                  FileCacheKey key = new FileCacheKey(indexName, fileName);
+                  assert cacheLoader.contains(key);
 
-                     //Testing non-existent keys with non-acceptable type
-                     assert !cacheLoader.contains(fileName);
-                  }
-               } catch(Exception ex) {
-                  throw new RuntimeException(ex);
+                  //Testing non-existent keys with non-acceptable type
+                  assert !cacheLoader.contains(fileName);
                }
             }
          });
