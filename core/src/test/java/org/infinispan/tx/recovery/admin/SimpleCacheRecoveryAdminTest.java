@@ -105,7 +105,7 @@ public class SimpleCacheRecoveryAdminTest extends AbstractRecoveryTest {
 
    public void testForceCommitXid() {
       String s = invokeForceWithXid("forceCommit", 0, tx1.getXid());
-      System.out.println("s = " + s);
+      log.tracef("s = %s", s);
       checkResponse(s, 1);
 
       //try again

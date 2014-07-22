@@ -99,7 +99,7 @@ public class NodeReplicatedMoveTest extends MultipleCacheManagersTest {
    }
 
    public void testReplTxRollback() throws Exception {
-      System.out.println(TreeStructureSupport.printTree(cache1, true));
+      log.trace(TreeStructureSupport.printTree(cache1, true));
       Node<Object, Object> rootNode = cache1.getRoot();
       Node<Object, Object> nodeA = rootNode.addChild(A);
       Node<Object, Object> nodeB = nodeA.addChild(B);
@@ -112,7 +112,7 @@ public class NodeReplicatedMoveTest extends MultipleCacheManagersTest {
       assertEquals(vA, cache2.getRoot().getChild(A).get(k));
       assertEquals(vB, cache2.getRoot().getChild(A).getChild(B).get(k));
 
-      System.out.println(TreeStructureSupport.printTree(cache1, true));
+      log.trace(TreeStructureSupport.printTree(cache1, true));
 
       // now move...
       tm1.begin();
@@ -122,7 +122,7 @@ public class NodeReplicatedMoveTest extends MultipleCacheManagersTest {
       assertEquals(vB, cache1.get(B, k));
 
       tm1.rollback();
-      System.out.println(TreeStructureSupport.printTree(cache1, true));
+      log.trace(TreeStructureSupport.printTree(cache1, true));
 
       assertEquals(vA, cache1.getRoot().getChild(A).get(k));
       assertEquals(vB, cache1.getRoot().getChild(A).getChild(B).get(k));

@@ -80,7 +80,7 @@ public class LuceneCacheLoaderTest extends IndexCacheLoaderTest {
             }
          });
       } else {
-         log.info("The test is executed only if it is possible to make the directory non-readable. I.e. the tests are run not under the root.");
+         log.info("Skipping test because it is not possible to make the directory non-readable, i.e. because the tests are run with the root user.");
       }
    }
 

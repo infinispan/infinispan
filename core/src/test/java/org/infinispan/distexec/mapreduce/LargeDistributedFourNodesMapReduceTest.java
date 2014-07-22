@@ -33,10 +33,10 @@ public class LargeDistributedFourNodesMapReduceTest extends BaseLargeWordCountMa
    @Override
    public void testInvokeMapReduceOnAllKeys() throws Exception {
       MapReduceTask<String, String, String, Integer> task = invokeMapReduce(null);
-      System.out.println("Read macbeth.txt and inserted keys into cache. Executing M/R task...");
+      log.debug("Read macbeth.txt and inserted keys into cache. Executing M/R task...");
       long start = System.currentTimeMillis();
       Map<String, Integer> mapReduce = task.execute();
-      System.out.println("Task completed in " + (System.currentTimeMillis() - start) + " ms");
+      log.debugf("Task completed in %s ms", System.currentTimeMillis() - start);
       verifyResults(mapReduce);
    }
 }

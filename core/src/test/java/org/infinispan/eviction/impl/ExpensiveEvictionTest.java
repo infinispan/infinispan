@@ -30,15 +30,15 @@ public class ExpensiveEvictionTest extends SingleCacheManagerTest {
    }
 
    public void testSimpleEvictionMaxEntries() throws Exception {
-      System.out.println("Max entries: " + MAX_CACHE_ELEMENTS);
+      log.tracef("Max entries: ", MAX_CACHE_ELEMENTS);
       for (int i = 0; i < MAX_CACHE_ELEMENTS; i++) {
          Integer integer = Integer.valueOf(i);
          cache.put(integer, integer, 6, TimeUnit.HOURS);
          if (i % 50000 == 0) {
-            System.out.println("Elemenents in cache: " + cache.size());
+            log.tracef("Elements in cache: %s", cache.size());
          }
       }
-      System.out.println("Finished filling in cache. Now idle while eviting thread works....");
+      log.debug("Finished filling in cache. Now idle while evicting thread works....");
       Thread.sleep(TimeUnit.MILLISECONDS.convert(2, TimeUnit.HOURS));
    }
 

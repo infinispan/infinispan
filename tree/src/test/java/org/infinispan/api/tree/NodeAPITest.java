@@ -353,7 +353,7 @@ public class NodeAPITest extends SingleCacheManagerTest {
       assertNull(cache.getNode("/foo/1"));
       assertNull(cache.get("/foo/1", "item"));
       cache.removeNode("/foo/1/2/3");
-      System.out.println("Cache: " + cache);
+      log.tracef("Cache: %s", cache);
       assertNull(cache.get("/foo/1/2/3", "item"));
       assertNull(cache.get("/foo/1", "item"));
       tm.commit();

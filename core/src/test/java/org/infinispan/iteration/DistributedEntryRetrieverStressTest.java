@@ -199,7 +199,7 @@ public class DistributedEntryRetrieverStressTest extends MultipleCacheManagersTe
          try {
             futures[i].get(2, TimeUnit.MINUTES);
          } catch (TimeoutException e) {
-            System.err.println("Future " + i + " did not complete in time allotted.");
+            log.errorf("Future %s did not complete in time allotted.", i);
             throw e;
          }
       }

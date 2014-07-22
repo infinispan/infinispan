@@ -176,7 +176,7 @@ public class CacheLoaderAPITest extends SingleCacheManagerTest {
             LuceneCacheLoader cacheLoader = (LuceneCacheLoader) TestingUtil.getFirstLoader(cacheManager.getCache());
             cacheLoader.load(5);
          } else {
-            System.out.println("The test should be run in case when the dir doesn't have root permissions.");
+            log.info("Skipping test because it is not possible to make the directory non-readable, i.e. because the tests are run with the root user.");
          }
       } catch(Exception ex) {
          assert ex instanceof PersistenceException;

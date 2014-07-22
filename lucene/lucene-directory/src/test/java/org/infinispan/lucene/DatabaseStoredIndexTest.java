@@ -110,7 +110,7 @@ public class DatabaseStoredIndexTest extends SingleCacheManagerTest {
       boolean failed = false;
       for (Object key : cacheCopy.keySet()) {
          if (key instanceof FileReadLockKey) {
-            System.out.println("Key found in store, shouldn't have persisted this or should have cleaned up all readlocks on directory close:" + key);
+            log.error("Key found in store, shouldn't have persisted this or should have cleaned up all readlocks on directory close:" + key);
             failed = true;
          }
          else {
@@ -123,7 +123,7 @@ public class DatabaseStoredIndexTest extends SingleCacheManagerTest {
                actual = Util.printArray((byte[]) actual, false);
             }
             if (expected == null || ! expected.equals(actual)) {
-               System.out.println("Failure on key["+key.toString()+"] expected value:\n\t"+expected+"\tactual value:\n\t"+actual);
+               log.error("Failure on key["+key.toString()+"] expected value:\n\t"+expected+"\tactual value:\n\t"+actual);
                failed = true;
             }
          }
