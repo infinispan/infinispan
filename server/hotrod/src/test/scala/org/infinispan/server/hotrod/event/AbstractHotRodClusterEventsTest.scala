@@ -39,7 +39,7 @@ abstract class AbstractHotRodClusterEventsTest extends HotRodMultiNodeTest {
 
    override protected def startTestHotRodServer(cacheManager: EmbeddedCacheManager, port: Int) = {
       val builder = new HotRodServerConfigurationBuilder
-      builder.marshaller(null)
+      builder.marshallerClass(null)
       filters += new AcceptedKeyFilterFactory()
       builder.keyValueFilterFactory("accepted-key-filter-factory", filters.head)
       converters += new AcceptedKeyValueConverterFactory()
