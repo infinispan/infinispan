@@ -110,7 +110,7 @@
       <version.hibernate.javax.persistence>1.0.1.Final</version.hibernate.javax.persistence>
       <version.httpclient>4.2.4</version.httpclient>
       <version.jackson>1.9.2</version.jackson>
-      <version.javax.cache>1.0.0-PFD</version.javax.cache>
+      <version.javax.cache>1.0.0</version.javax.cache>
       <version.javax.cache.cache-tests>0.11</version.javax.cache.cache-tests>
       <version.javax.persistence>1.0</version.javax.persistence>
       <version.javax.servlet>2.5</version.javax.servlet>
