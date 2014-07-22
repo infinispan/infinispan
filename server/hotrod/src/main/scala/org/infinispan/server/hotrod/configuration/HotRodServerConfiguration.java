@@ -22,11 +22,11 @@ public class HotRodServerConfiguration extends ProtocolServerConfiguration {
    private final AuthenticationConfiguration authentication;
    private final Map<String, KeyValueFilterFactory> keyValueFilterFactories;
    private final Map<String, ConverterFactory> converterFactories;
-   private final Marshaller marshaller;
+   private final Class<? extends Marshaller> marshallerClass;
 
    HotRodServerConfiguration(String defaultCacheName, String proxyHost, int proxyPort, long topologyLockTimeout, long topologyReplTimeout, boolean topologyAwaitInitialTransfer, boolean topologyStateTransfer,
          String name, String host, int port, int idleTimeout, int recvBufSize, int sendBufSize, SslConfiguration ssl, boolean tcpNoDelay, int workerThreads, AuthenticationConfiguration authentication,
-         Map<String, KeyValueFilterFactory> keyValueFilterFactories, Map<String, ConverterFactory> converterFactories, Marshaller marshaller) {
+         Map<String, KeyValueFilterFactory> keyValueFilterFactories, Map<String, ConverterFactory> converterFactories, Class<? extends Marshaller> marshallerClass) {
       super(defaultCacheName, name, host, port, idleTimeout, recvBufSize, sendBufSize, ssl, tcpNoDelay, workerThreads);
       this.proxyHost = proxyHost;
       this.proxyPort = proxyPort;
@@ -38,7 +38,7 @@ public class HotRodServerConfiguration extends ProtocolServerConfiguration {
       this.authentication = authentication;
       this.keyValueFilterFactories = keyValueFilterFactories;
       this.converterFactories = converterFactories;
-      this.marshaller = marshaller;
+      this.marshallerClass = marshallerClass;
    }
 
    public String proxyHost() {
@@ -81,8 +81,8 @@ public class HotRodServerConfiguration extends ProtocolServerConfiguration {
       return converterFactories.get(name);
    }
 
-   public Marshaller marshaller() {
-      return marshaller;
+   public Class<? extends Marshaller> marshallerClass() {
+      return marshallerClass;
    }
 
    @Override
@@ -91,6 +91,7 @@ public class HotRodServerConfiguration extends ProtocolServerConfiguration {
             + topologyCacheName + ", topologyLockTimeout=" + topologyLockTimeout + ", topologyReplTimeout="
             + topologyReplTimeout + ", topologyAwaitInitialTransfer=" + topologyAwaitInitialTransfer
             + ", topologyStateTransfer=" + topologyStateTransfer + ", authentication=" + authentication
+            + ", marshallerClass=" + marshallerClass
             + ", " + super.toString() + "]";
    }
 }

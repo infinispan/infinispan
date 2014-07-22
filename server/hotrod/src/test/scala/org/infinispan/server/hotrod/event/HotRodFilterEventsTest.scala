@@ -22,7 +22,7 @@ class HotRodFilterEventsTest extends HotRodSingleNodeTest {
 
    override protected def createStartHotRodServer(cacheManager: EmbeddedCacheManager): HotRodServer = {
       val builder = new HotRodServerConfigurationBuilder
-      builder.keyValueFilterFactory("test-filter-factory", keyValueFilterFactory).marshaller(null)
+      builder.keyValueFilterFactory("test-filter-factory", keyValueFilterFactory).marshallerClass(null)
       startHotRodServer(cacheManager, builder)
    }
 

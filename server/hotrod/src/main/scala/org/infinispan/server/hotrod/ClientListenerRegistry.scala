@@ -3,7 +3,7 @@ package org.infinispan.server.hotrod
 import io.netty.channel.Channel
 import java.util.concurrent.atomic.AtomicLong
 import org.infinispan.commons.equivalence.{AnyEquivalence, ByteArrayEquivalence}
-import org.infinispan.commons.marshall.jboss.GenericJBossMarshaller
+import org.infinispan.commons.marshall.Marshaller
 import org.infinispan.commons.util.concurrent.jdk8backported.EquivalentConcurrentHashMapV8
 import org.infinispan.container.versioning.NumericVersion
 import org.infinispan.filter.{Converter, KeyValueFilter}
@@ -18,7 +18,6 @@ import org.infinispan.server.hotrod.Events.KeyWithVersionEvent
 import org.infinispan.server.hotrod.OperationResponse._
 import org.infinispan.server.hotrod.configuration.HotRodServerConfiguration
 import org.infinispan.server.hotrod.logging.Log
-import scala.Some
 import org.infinispan.server.hotrod.event.{KeyValueFilterFactory, ConverterFactory}
 
 /**
@@ -28,6 +27,8 @@ class ClientListenerRegistry(configuration: HotRodServerConfiguration) extends L
    private val messageId = new AtomicLong()
    private val eventSenders = new EquivalentConcurrentHashMapV8[Bytes, AnyRef](
       ByteArrayEquivalence.INSTANCE, AnyEquivalence.getInstance())
+
+   private val marshaller = Option(configuration.marshallerClass()).map(_.newInstance())
 
    def addClientListener(ch: Channel, h: HotRodHeader, listenerId: Bytes, cache: Cache,
            filterFactory: NamedFactory, converterFactory: NamedFactory): Unit = {
@@ -55,18 +56,16 @@ class ClientListenerRegistry(configuration: HotRodServerConfiguration) extends L
 
    def findConverterFactory(name: String): Option[ConverterFactory] = {
       Option(configuration.converterFactory(name)).map { converterFactory =>
-         // TODO: Leave marshaller check around until a solution for the filter/converter initialization has been found
-         val marshaller = configuration.marshaller()
-         if (marshaller != null) new BinaryConverterFactory(converterFactory)
+         val marshallerClass = configuration.marshallerClass()
+         if (marshallerClass != null) new BinaryConverterFactory(converterFactory, marshallerClass)
          else converterFactory
       }
    }
 
    def findFilterFactory(name: String): Option[KeyValueFilterFactory] = {
       Option(configuration.keyValueFilterFactory(name)).map { filterFactory =>
-         // TODO: Leave marshaller check around until a solution for the filter/converter initialization has been found
-         val marshaller = configuration.marshaller()
-         if (marshaller != null) new BinaryFilterFactory(filterFactory)
+         val marshallerClass = configuration.marshallerClass()
+         if (marshallerClass != null) new BinaryFilterFactory(filterFactory, marshallerClass)
          else filterFactory
       }
    }
@@ -75,9 +74,10 @@ class ClientListenerRegistry(configuration: HotRodServerConfiguration) extends L
       factory match {
          case Some(namedFactory) =>
             namedFactory._2.map { paramBytes =>
-               val marshaller = configuration.marshaller()
-               if (marshaller == null) paramBytes
-               else marshaller.objectFromByteBuffer(paramBytes)
+               marshaller match {
+                  case None => paramBytes
+                  case Some(m) => m.objectFromByteBuffer(paramBytes)
+               }
             }
          case None => List.empty
       }
@@ -149,18 +149,18 @@ class ClientListenerRegistry(configuration: HotRodServerConfiguration) extends L
       }
    }
 
-   private class BinaryFilterFactory(filterFactory: KeyValueFilterFactory)
+   private class BinaryFilterFactory(filterFactory: KeyValueFilterFactory, marshallerClass: Class[_ <: Marshaller])
            extends KeyValueFilterFactory {
       override def getKeyValueFilter[K, V](params: Array[AnyRef]): KeyValueFilter[K, V] = {
-         new BinaryFilter(filterFactory.getKeyValueFilter(params))
+         new BinaryFilter(filterFactory.getKeyValueFilter(params), marshallerClass)
             .asInstanceOf[KeyValueFilter[K, V]]
       }
    }
 
-   private class BinaryConverterFactory(converterFactory: ConverterFactory)
+   private class BinaryConverterFactory(converterFactory: ConverterFactory, marshallerClass: Class[_ <: Marshaller])
            extends ConverterFactory {
       override def getConverter[K, V, C](params: Array[AnyRef]): Converter[K, V, C] = {
-         new BinaryConverter(converterFactory.getConverter(params))
+         new BinaryConverter(converterFactory.getConverter(params), marshallerClass)
                  .asInstanceOf[Converter[K, V, C]] // ugly but it works :|
       }
    }
@@ -169,22 +169,24 @@ class ClientListenerRegistry(configuration: HotRodServerConfiguration) extends L
 
 object ClientListenerRegistry {
 
-   private class BinaryFilter(filter: KeyValueFilter[AnyRef, AnyRef])
+   private class BinaryFilter(filter: KeyValueFilter[AnyRef, AnyRef], marshallerClass: Class[_ <: Marshaller])
            extends KeyValueFilter[Bytes, Bytes] with Serializable {
+      // Marshallers are not serializable, but their classes are
+      @transient val marshaller = marshallerClass.newInstance()
+
       override def accept(key: Bytes, value: Bytes, metadata: Metadata): Boolean = {
-         // TODO: Hardcoded temporarily. There needs to be a way to initialise filter/converter instances in remote nodes
-         val marshaller = new GenericJBossMarshaller
          val unmarshalledKey = marshaller.objectFromByteBuffer(key)
          val unmarshalledValue = if (value != null) marshaller.objectFromByteBuffer(value) else null
          filter.accept(unmarshalledKey, unmarshalledValue, metadata)
       }
    }
 
-   private class BinaryConverter(converter: Converter[AnyRef, AnyRef, AnyRef])
+   private class BinaryConverter(converter: Converter[AnyRef, AnyRef, AnyRef], marshallerClass: Class[_ <: Marshaller])
            extends Converter[Bytes, Bytes, Bytes] with Serializable {
+      // Marshallers are not serializable, but their classes are
+      @transient val marshaller = marshallerClass.newInstance()
+
       override def convert(key: Bytes, value: Bytes, metadata: Metadata): Bytes = {
-         // TODO: Hardcoded temporarily. There needs to be a way to initialise filter/converter instances in remote nodes
-         val marshaller = new GenericJBossMarshaller
          val unmarshalledKey = marshaller.objectFromByteBuffer(key)
          val unmarshalledValue = if (value != null) marshaller.objectFromByteBuffer(value) else null
          val converted = converter.convert(unmarshalledKey, unmarshalledValue, metadata)
