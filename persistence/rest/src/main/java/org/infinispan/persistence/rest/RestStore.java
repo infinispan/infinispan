@@ -266,13 +266,14 @@ public class RestStore implements AdvancedLoadWriteStore {
    public void process(KeyFilter keyFilter, final CacheLoaderTask cacheLoaderTask, Executor executor, boolean loadValue, boolean loadMetadata) {
       HttpGet get = new HttpGet(path + "?global");
       get.addHeader(HttpHeaders.ACCEPT, "text/plain");
+      get.addHeader(HttpHeaders.ACCEPT_CHARSET, "UTF-8");
       try {
          HttpResponse response = httpClient.execute(httpHost, get);
          HttpEntity entity = response.getEntity();
          int batchSize = 1000;
          ExecutorAllCompletionService eacs = new ExecutorAllCompletionService(executor);
          final TaskContext taskContext = new TaskContextImpl();
-         BufferedReader reader = new BufferedReader(new InputStreamReader(entity.getContent()));
+         BufferedReader reader = new BufferedReader(new InputStreamReader(entity.getContent(), "UTF-8"));
          Set<Object> entries = new HashSet<Object>(batchSize);
          for (String stringKey = reader.readLine(); stringKey != null; stringKey = reader.readLine()) {
             Object key = key2StringMapper.getKeyMapping(stringKey);
@@ -311,7 +312,10 @@ public class RestStore implements AdvancedLoadWriteStore {
                   if (!loadEntry && !loadMetadata) {
                      cacheLoaderTask.processEntry(ctx.getMarshalledEntryFactory().newMarshalledEntry(key, (Object) null, null), taskContext);
                   } else {
-                     cacheLoaderTask.processEntry(load(key), taskContext);
+                     MarshalledEntry entry = load(key);
+                     if (entry != null) {
+                        cacheLoaderTask.processEntry(entry, taskContext);
+                     }
                   }
                }
             } catch (Exception e) {
