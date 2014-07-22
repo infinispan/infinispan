@@ -47,6 +47,8 @@ import org.infinispan.context.Flag
 @Path("/rest")
 class Server(@Context request: Request, @Context servletContext: ServletContext, @HeaderParam("performAsync") useAsync: Boolean) {
 
+   val TEXT_PLAIN_UTF8_TYPE = new MediaType("text", "plain", "UTF-8")
+   val TEXT_PLAIN_UTF8 = TEXT_PLAIN_UTF8_TYPE.toString()
    val ApplicationXJavaSerializedObjectType = new MediaType("application" , "x-java-serialized-object")
    val ApplicationXJavaSerializedObject = ApplicationXJavaSerializedObjectType.toString
    val TIME_TO_LIVE_HEADER = "timeToLiveSeconds"
@@ -58,7 +60,8 @@ class Server(@Context request: Request, @Context servletContext: ServletContext,
             MediaType.TEXT_HTML_TYPE,
             MediaType.APPLICATION_XML_TYPE,
             MediaType.APPLICATION_JSON_TYPE,
-            MediaType.TEXT_PLAIN_TYPE
+            MediaType.TEXT_PLAIN_TYPE,
+            TEXT_PLAIN_UTF8_TYPE
          ).build
    lazy val jsonMapper = new ObjectMapper
    lazy val xstream = new XStream
@@ -101,6 +104,12 @@ class Server(@Context request: Request, @Context servletContext: ServletContext,
                pw.print("]")
             })).build
             case MediaType.TEXT_PLAIN => Response.ok.`type`(MediaType.TEXT_PLAIN).entity(printIt( pw => keys.foreach(pw.println(_)) )).build
+            case TEXT_PLAIN_UTF8 => Response.ok.`type`(TEXT_PLAIN_UTF8_TYPE).entity(printItUTF8( writer => {
+               keys.foreach(key => {
+                  writer.write(key)
+                  writer.write(System.lineSeparator());
+               })
+            })).build
             case null => Response.notAcceptable(collectionVariantList).build
          }
       }
@@ -302,6 +311,17 @@ class Server(@Context request: Request, @Context servletContext: ServletContext,
             action(pw)
          } finally {
             pw.flush()
+         }
+      }
+   }
+
+   def printItUTF8(action: (Writer) => Unit) = new StreamingOutput {
+      def write(o: OutputStream) {
+         val writer = new OutputStreamWriter(o, "UTF-8")
+         try {
+            action(writer)
+         } finally {
+            writer.flush()
          }
       }
    }
