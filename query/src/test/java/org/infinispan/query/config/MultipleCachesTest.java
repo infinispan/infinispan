@@ -45,7 +45,7 @@ public class MultipleCachesTest extends SingleCacheManagerTest {
             "   </local-cache>\n" +
             "</cache-container>"
             + TestingUtil.INFINISPAN_END_TAG;
-      System.out.println("Using test configuration:\n\n" + config + "\n");
+      log.tracef("Using test configuration:\n%s", config);
       InputStream is = new ByteArrayInputStream(config.getBytes());
       final EmbeddedCacheManager cm;
       try {

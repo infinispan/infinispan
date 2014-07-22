@@ -24,6 +24,8 @@ import org.infinispan.client.hotrod.impl.transport.TransportFactory;
 import org.infinispan.client.hotrod.impl.transport.tcp.RequestBalancingStrategy;
 import org.infinispan.client.hotrod.impl.transport.tcp.TcpTransport;
 import org.infinispan.client.hotrod.impl.transport.tcp.TcpTransportFactory;
+import org.infinispan.client.hotrod.logging.Log;
+import org.infinispan.client.hotrod.logging.LogFactory;
 import org.infinispan.commons.marshall.Marshaller;
 import org.junit.Test;
 
@@ -49,9 +51,11 @@ public abstract class AbstractRemoteCacheManagerIT {
     private static final String IPV6_REGEX = "\\A\\[(.*)\\]:([0-9]+)\\z";
     private static final String IPV4_REGEX = "\\A([^:]+):([0-9]+)\\z";
 
-    private final String TEST_CACHE_NAME = "testcache";
-    final static String DEFAULT_CLUSTERING_MODE = "dist";
-    protected final static String DEFAULT_NAMED_CACHE = "namedCache";
+    private static final String TEST_CACHE_NAME = "testcache";
+    private static final String DEFAULT_CLUSTERING_MODE = "dist";
+    protected static final String DEFAULT_NAMED_CACHE = "namedCache";
+
+    private static final Log log = LogFactory.getLog(AbstractRemoteCacheManagerIT.class);
 
     protected abstract List<RemoteInfinispanServer> getServers();
 
@@ -187,7 +191,7 @@ public abstract class AbstractRemoteCacheManagerIT {
 
         try {
             for (String stat : rc1.stats().getStatsMap().keySet()) {
-                System.out.println(stat + " " + rc1.stats().getStatsMap().get(stat));
+                log.tracef(stat + " " + rc1.stats().getStatsMap().get(stat));
             }
             fail("Should throw CacheNotFoundException");
         } catch (Exception e) {

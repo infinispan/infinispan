@@ -14,6 +14,8 @@ import org.infinispan.client.hotrod.event.ClientCacheEntryCreatedEvent;
 import org.infinispan.client.hotrod.event.ClientCacheEntryModifiedEvent;
 import org.infinispan.client.hotrod.event.ClientCacheEntryRemovedEvent;
 import org.infinispan.client.hotrod.event.ClientEvent;
+import org.infinispan.client.hotrod.logging.Log;
+import org.infinispan.client.hotrod.logging.LogFactory;
 import org.infinispan.commons.util.concurrent.NotifyingFuture;
 import org.junit.AfterClass;
 import org.junit.Before;
@@ -45,8 +47,9 @@ import static org.junit.Assert.*;
  * @author Jozef Vilkolak
  */
 public abstract class AbstractRemoteCacheIT {
+    private static final String TEST_CACHE_NAME = "testcache";
 
-    private final String TEST_CACHE_NAME = "testcache";
+    private static final Log log = LogFactory.getLog(AbstractRemoteCacheIT.class);
 
     protected RemoteCache remoteCache;
     protected static RemoteCacheManager remoteCacheManager = null;
@@ -474,7 +477,7 @@ public abstract class AbstractRemoteCacheIT {
     public void testStats() {
         ServerStatistics remoteStats = remoteCache.stats();
         assertNotNull(remoteStats);
-        System.out.println("named stats = " + remoteStats.getStatsMap());
+        log.tracef("named stats = %s", remoteStats.getStatsMap());
     }
 
     @Test

@@ -10,6 +10,8 @@ import org.infinispan.client.hotrod.RemoteCacheManager;
 import org.infinispan.client.hotrod.configuration.ConfigurationBuilder;
 import org.infinispan.commons.io.ByteBuffer;
 import org.infinispan.commons.io.ByteBufferImpl;
+import org.infinispan.commons.logging.Log;
+import org.infinispan.commons.logging.LogFactory;
 import org.infinispan.commons.marshall.AbstractMarshaller;
 import org.infinispan.server.test.category.CacheStore;
 import org.infinispan.server.test.util.ITestUtils;
@@ -39,6 +41,7 @@ import static org.junit.Assert.*;
 @RunWith(Arquillian.class)
 @Category(CacheStore.class)
 public class LevelDBCacheStoreIT {
+    private static final Log log = LogFactory.getLog(LevelDBCacheStoreIT.class);
 
     @InfinispanResource("leveldb")
     RemoteInfinispanServer server;
@@ -78,7 +81,7 @@ public class LevelDBCacheStoreIT {
         assertEquals("1", cache.get("key1"));
         assertEquals("2", cache.get("key2"));
         assertEquals("3", cache.get("key3"));
-        System.out.println("Stored via Hot Rod:");
+        log.tracef("Stored via Hot Rod:");
         assertTrue(dataDir.exists());
         assertTrue(dataDir.isDirectory());
         assertTrue(expiredDir.exists());
@@ -112,9 +115,9 @@ public class LevelDBCacheStoreIT {
 
         DB db = Iq80DBFactory.factory.open(dataDir, new Options());
 
-        System.out.println("LevelDB file " + dataDir.getAbsolutePath() + " contents:");
+        log.tracef("LevelDB file " + dataDir.getAbsolutePath() + " contents:");
        for (Entry<byte[], byte[]> entry : db) {
-          System.out.println("key \"" + Hex.encodeHexString(entry.getKey()) + "\": value \""
+          log.tracef("key \"" + Hex.encodeHexString(entry.getKey()) + "\": value \""
                 + Hex.encodeHexString(entry.getValue()) + "\"");
           assertNotNull(entry.getValue());
        }

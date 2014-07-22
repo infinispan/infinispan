@@ -97,6 +97,6 @@ public abstract class BaseDldPessimisticLockingTest extends MultipleCacheManager
       long totalDeadlocks = lm0.getTotalNumberOfDetectedDeadlocks() + lm1.getTotalNumberOfDetectedDeadlocks();
       assert totalDeadlocks == 1 : "Expected 1 but received " + totalDeadlocks;
 
-      System.out.println("Test took " + (System.currentTimeMillis() - start) + " millis.");
+      log.debugf("Test took %s millis.", System.currentTimeMillis() - start);
    }
 }

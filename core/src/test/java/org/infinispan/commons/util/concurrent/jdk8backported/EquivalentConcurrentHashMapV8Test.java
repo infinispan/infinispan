@@ -76,7 +76,7 @@ public class EquivalentConcurrentHashMapV8Test extends EquivalentHashMapTest {
                   new EvilKeyEquivalence(), AnyEquivalence.<KeyHolder<?>>getInstance());
 
       final long seed = 1370014958369218000L;
-      System.out.println("SEED: " + seed);
+      log.tracef("SEED: %s", seed);
       final Random random = new Random(seed);
 
       final int ENTRIES = 10000;

@@ -9,6 +9,8 @@ import java.util.Map;
 
 import org.infinispan.Version;
 import org.infinispan.arquillian.core.RemoteInfinispanServer;
+import org.infinispan.commons.logging.Log;
+import org.infinispan.commons.logging.LogFactory;
 import org.infinispan.server.test.util.ITestUtils.Condition;
 import org.junit.After;
 import org.junit.Before;
@@ -41,6 +43,8 @@ public abstract class AbstractSingleNodeMemcachedIT {
     static final String KEY_A = "a";
     static final String KEY_B = "b";
     static final String KEY_C = "c";
+
+    private static final Log log = LogFactory.getLog(AbstractSingleNodeMemcachedIT.class);
 
     MemcachedClient mc;
 
@@ -328,7 +332,7 @@ public abstract class AbstractSingleNodeMemcachedIT {
     @Test
     public void testExpTimeAbsoluteFuture() throws Exception {
         long now = mc.getServerTime();
-        System.out.println("server time: " + now);
+        log.tracef("server time: " + now);
         mc.writeln("set " + KEY_A + " 0 " + (now + 2) + " 1");
         mc.writeln("A");
         mc.flush();

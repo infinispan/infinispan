@@ -18,6 +18,8 @@ import java.util.List;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
+import org.infinispan.commons.logging.Log;
+import org.infinispan.commons.logging.LogFactory;
 import org.jboss.as.controller.PathAddress;
 import org.jboss.as.controller.PathElement;
 import org.jboss.as.subsystem.test.AbstractSubsystemTest;
@@ -35,6 +37,8 @@ import org.junit.Test;
 public class SubsystemParsingTestCase extends AbstractSubsystemTest {
 
     static final String SUBSYSTEM_XML_FILE = "subsystem-infinispan_1_1.xml" ;
+
+    private static final Log log = LogFactory.getLog(SubsystemParsingTestCase.class);
 
     public SubsystemParsingTestCase() {
         super(InfinispanExtension.SUBSYSTEM_NAME, new InfinispanExtension());
@@ -56,7 +60,7 @@ public class SubsystemParsingTestCase extends AbstractSubsystemTest {
         //Check that each operation has the correct content
         for (int i = 0; i < 8; i++) {
             ModelNode operation = operations.get(i) ;
-            System.out.println(operation);
+            log.tracef("Read operation %s", operation);
         }
     }
 
@@ -69,7 +73,7 @@ public class SubsystemParsingTestCase extends AbstractSubsystemTest {
 
         // print out the resulting model
         ModelNode model = services.readWholeModel() ;
-        System.out.println(model);
+        log.tracef("Read model %s", model);
 
         // use some assertions here to check the correctness of the model
         assertTrue(model.get(SUBSYSTEM).hasDefined(InfinispanExtension.SUBSYSTEM_NAME));
@@ -86,12 +90,12 @@ public class SubsystemParsingTestCase extends AbstractSubsystemTest {
         KernelServices servicesA = createKernelServicesBuilder(null).setSubsystemXml(subsystemXml).build();
 
         // list the names of the services which have been installed
-        System.out.println("service names = " + servicesA.getContainer().getServiceNames());
+        log.tracef("service names = %s", servicesA.getContainer().getServiceNames());
 
         ModelNode modelA = servicesA.readWholeModel() ;
         // print out the resulting model
         String marshalled = servicesA.getPersistedSubsystemXml();
-        System.out.println("marshalled XML = " + marshalled);
+        log.tracef("marshalled XML = %s", marshalled);
 
         // install the persisted xml from the first controller into a second controller
         KernelServices servicesB = createKernelServicesBuilder(null).setSubsystemXml(marshalled).build();

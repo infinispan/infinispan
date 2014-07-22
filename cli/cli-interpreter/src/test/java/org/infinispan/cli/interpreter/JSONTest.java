@@ -9,6 +9,8 @@ import org.codehaus.jackson.map.ObjectMapper;
 import org.codehaus.jackson.map.ObjectMapper.DefaultTyping;
 import org.testng.annotations.Test;
 
+import static org.testng.AssertJUnit.assertEquals;
+
 @Test(groups = "functional", testName="cli-server.JSONTest")
 public class JSONTest {
 
@@ -21,8 +23,8 @@ public class JSONTest {
 
       ObjectMapper objMapper = new ObjectMapper().enableDefaultTyping(DefaultTyping.NON_FINAL, JsonTypeInfo.As.WRAPPER_OBJECT);
       String s = objMapper.writeValueAsString(x);
-      System.out.println(s);
       Object readValue = objMapper.readValue(s, Object.class);
-      System.out.println(readValue.getClass().getName());
+      assertEquals(x.toString(), readValue.toString());
+      assertEquals(s, objMapper.writeValueAsString(readValue));
    }
 }
