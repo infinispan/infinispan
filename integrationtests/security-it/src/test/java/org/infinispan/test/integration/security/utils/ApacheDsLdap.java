@@ -18,8 +18,10 @@ import org.apache.directory.server.core.api.DirectoryService;
 import org.apache.directory.server.core.factory.DSAnnotationProcessor;
 import org.apache.directory.server.factory.ServerAnnotationProcessor;
 import org.apache.directory.server.ldap.LdapServer;
+import org.infinispan.commons.logging.Log;
+import org.infinispan.commons.logging.LogFactory;
 
-/** 
+ /**
  * @author vjuranek
  * @since 7.0
  */
@@ -28,9 +30,10 @@ public class ApacheDsLdap {
    public static final int LDAP_PORT = 10389;
    public static final String LDAP_INIT_FILE = "ldif/ispn-test.ldif";
 
+   private static Log log = LogFactory.getLog(ApacheDsLdap.class);
    protected DirectoryService directoryService;
    protected LdapServer ldapServer;
-   
+
    public ApacheDsLdap(String hostname) throws Exception {
       createDs();
       createLdap(hostname);
@@ -81,7 +84,7 @@ public class ApacheDsLdap {
                   directoryService.getAdminSession().add(new DefaultEntry(schemaManager, ldifEntry.getEntry()));
          }
       } catch (Exception e) {
-         e.printStackTrace();
+         log.error("Error adding ldif entries", e);
          throw e;
       }
       final CreateLdapServer createLdapServer = (CreateLdapServer) AnnotationUtils.getInstance(CreateLdapServer.class);    

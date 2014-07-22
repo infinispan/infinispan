@@ -48,8 +48,7 @@ public class FailureWith1PCTest extends MultipleCacheManagersTest {
          tm(0).commit();
          assert false : "Exception expected";
       } catch (Exception e) {
-         //expected
-         e.printStackTrace();
+         log.debug("Ignoring expected exception during 1-phase prepare", e);
       }
 
       fail = false;

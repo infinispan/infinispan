@@ -214,7 +214,7 @@ public class DeadlockDetectionPerformanceTest extends AbstractInfinispanTest {
          try {
             startLatch.await();
          } catch (InterruptedException e) {
-            e.printStackTrace();
+            return;
          }
          while ((start + BENCHMARK_DURATION) - System.currentTimeMillis() > 0) {
             try {

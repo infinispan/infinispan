@@ -27,24 +27,25 @@ import org.apache.directory.server.ldap.handlers.sasl.digestMD5.DigestMd5Mechani
 import org.apache.directory.server.ldap.handlers.sasl.gssapi.GssapiMechanismHandler;
 import org.apache.directory.server.ldap.handlers.sasl.ntlm.NtlmMechanismHandler;
 import org.apache.directory.server.ldap.handlers.sasl.plain.PlainMechanismHandler;
+import org.infinispan.commons.logging.Log;
+import org.infinispan.commons.logging.LogFactory;
 
 /** 
  * @author vjuranek
  * @since 7.0
  */
 public class ApacheDsKrbLdap {
-   
-   
    public static final int LDAP_PORT = 10389;
    public static final int KERBEROS_PORT = 6088;
    public static final String KERBEROS_PRIMARY_REALM = "INFINISPAN.ORG";
    public static final String LDAP_INIT_FILE = "ldif/ispn-krb-test.ldif";
-   public static final String BASE_DN = "dc=infinispan,dc=org"; 
+   public static final String BASE_DN = "dc=infinispan,dc=org";
 
+   private static Log log = LogFactory.getLog(ApacheDsKrbLdap.class);
    private DirectoryService directoryService;
    private LdapServer ldapServer;
    private KdcServer kdcServer;
-   
+
    public ApacheDsKrbLdap(String hostname) throws Exception {
       createDs();
       createKdc();
@@ -119,7 +120,7 @@ public class ApacheDsKrbLdap {
             directoryService.getAdminSession().add(new DefaultEntry(schemaManager, ldifEntry.getEntry()));
          }
       } catch (Exception e) {
-         e.printStackTrace();
+         log.error("Error adding ldif entries", e);
          throw e;
       }
       final CreateLdapServer createLdapServer = (CreateLdapServer) AnnotationUtils.getInstance(CreateLdapServer.class);    

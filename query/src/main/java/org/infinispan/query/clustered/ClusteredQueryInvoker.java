@@ -146,8 +146,7 @@ public class ClusteredQueryInvoker {
          try {
             return clusteredQuery.perform(localInstance);
          } catch (Throwable e) {
-            e.printStackTrace();
-            throw new Exception(e.getMessage());
+            throw new Exception(e);
          }
       }
 

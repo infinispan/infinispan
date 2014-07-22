@@ -3,6 +3,8 @@ package org.infinispan.commons.util.concurrent;
 import org.infinispan.assertions.ExceptionAssertion;
 import org.infinispan.assertions.FutureAssertion;
 import org.infinispan.test.AbstractInfinispanTest;
+import org.infinispan.util.logging.Log;
+import org.infinispan.util.logging.LogFactory;
 import org.testng.annotations.Test;
 
 import java.util.concurrent.Callable;
@@ -12,7 +14,8 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 
-import static org.testng.Assert.assertTrue;
+import static org.testng.AssertJUnit.assertTrue;
+
 
 /**
  * Tests notifications for {@link org.infinispan.commons.util.concurrent.NotifyingFuture}
@@ -22,6 +25,7 @@ import static org.testng.Assert.assertTrue;
  */
 @Test(groups = "functional", testName = "commons.NotifyingFutureTest")
 public class NotifyingFutureTest extends AbstractInfinispanTest {
+   private static final Log log = LogFactory.getLog(NotifyingFutureTest.class);
 
    public static final int FUTURE_GET_TIMEOUT_MS = 1000;
 

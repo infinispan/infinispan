@@ -205,11 +205,7 @@ public class OngoingTransactionsAndJoinTest extends MultipleCacheManagersTest {
       @Override
       public Object visitCommitCommand(TxInvocationContext tcx, CommitCommand cc) throws Throwable {
          if (tx.equals(tcx.getTransaction())) {
-            try {
-               joinEnded.await(10, SECONDS);
-            } catch (InterruptedException e) {
-               e.printStackTrace();
-            }
+            joinEnded.await(10, SECONDS);
          }
          return super.visitCommitCommand(tcx, cc);
       }
@@ -253,11 +249,7 @@ public class OngoingTransactionsAndJoinTest extends MultipleCacheManagersTest {
       @Override
       public Object visitCommitCommand(TxInvocationContext tcx, CommitCommand cc) throws Throwable {
          if (tx.equals(tcx.getTransaction())) {
-            try {
-               rehashStarted.await(10, SECONDS);
-            } catch (InterruptedException e) {
-               e.printStackTrace();
-            }
+            rehashStarted.await(10, SECONDS);
          }
 
          return super.visitCommitCommand(tcx, cc);

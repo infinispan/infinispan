@@ -66,16 +66,12 @@ public class InconsistentIndexesAfterRestartTest extends AbstractInfinispanTest 
     private void testPutOperation(boolean batching, final boolean inTran) throws Exception {
        withCacheManager(new CacheManagerCallable(getCacheManager(batching)) {
           @Override
-          public void call() {
-             try {
-                Cache<Object, Object> c = cm.getCache();
-                if (inTran) c.getAdvancedCache().getTransactionManager().begin();
-                c.put("key1", new SEntity(1, "name1", "surname1"));
-                if (inTran) c.getAdvancedCache().getTransactionManager().commit();
-                assertEquals(searchByName("name1", c).size(), 1, "should be 1, even repeating this");
-             } catch (Exception e) {
-                throw new RuntimeException(e);
-             }
+          public void call() throws Exception {
+             Cache<Object, Object> c = cm.getCache();
+             if (inTran) c.getAdvancedCache().getTransactionManager().begin();
+             c.put("key1", new SEntity(1, "name1", "surname1"));
+             if (inTran) c.getAdvancedCache().getTransactionManager().commit();
+             assertEquals(searchByName("name1", c).size(), 1, "should be 1, even repeating this");
           }
        });
     }

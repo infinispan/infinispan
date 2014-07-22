@@ -153,8 +153,6 @@ public class ReplWriteSkewTest extends AbstractClusteredWriteSkewTest {
          assert false : "This transaction should roll back";
       } catch (RollbackException|HeuristicRollbackException expected) {
          // expected
-         expected
-               .printStackTrace();
       }
 
       assert "world2".equals(cache0.get("hello"));

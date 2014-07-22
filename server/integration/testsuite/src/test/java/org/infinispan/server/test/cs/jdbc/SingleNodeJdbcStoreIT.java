@@ -5,6 +5,8 @@ import org.infinispan.arquillian.core.RemoteInfinispanServer;
 import org.infinispan.arquillian.core.RunningServer;
 import org.infinispan.arquillian.core.WithRunningServer;
 import org.infinispan.client.hotrod.RemoteCache;
+import org.infinispan.commons.logging.Log;
+import org.infinispan.commons.logging.LogFactory;
 import org.infinispan.commons.util.Base64;
 import org.infinispan.server.test.category.CacheStore;
 import org.infinispan.server.test.client.memcached.MemcachedClient;
@@ -44,6 +46,7 @@ import static org.junit.Assert.*;
 @RunWith(Arquillian.class)
 @Category(CacheStore.class)
 public class SingleNodeJdbcStoreIT {
+    public static final Log log = LogFactory.getLog(SingleNodeJdbcStoreIT.class);
 
     public final String CONTAINER = "jdbc";
 
@@ -87,8 +90,7 @@ public class SingleNodeJdbcStoreIT {
                 }
             } catch (Exception e) {
                 // catching the exception, because the drop is not part of the tests
-                System.out.println("Couldn't drop the tables: ");
-                e.printStackTrace();
+                log.trace("Couldn't drop the tables: ", e);
             }
         }
 

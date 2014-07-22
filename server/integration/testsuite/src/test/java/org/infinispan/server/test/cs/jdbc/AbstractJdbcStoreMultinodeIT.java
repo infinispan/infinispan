@@ -3,6 +3,8 @@ package org.infinispan.server.test.cs.jdbc;
 import org.infinispan.arquillian.core.InfinispanResource;
 import org.infinispan.arquillian.core.RemoteInfinispanServer;
 import org.infinispan.client.hotrod.RemoteCache;
+import org.infinispan.commons.logging.Log;
+import org.infinispan.commons.logging.LogFactory;
 import org.infinispan.server.test.client.memcached.MemcachedClient;
 import org.infinispan.server.test.util.jdbc.DBServer;
 import org.infinispan.server.test.util.RemoteCacheManagerFactory;
@@ -24,6 +26,7 @@ import static org.infinispan.server.test.util.ITestUtils.createMBeans;
  */
 @RunWith(Arquillian.class)
 public abstract class AbstractJdbcStoreMultinodeIT {
+    private static final Log log = LogFactory.getLog(AbstractJdbcStoreMultinodeIT.class);
 
     protected final String CONTAINER1 = "jdbc-cachestore-1";
     protected final String CONTAINER2 = "jdbc-cachestore-2";
@@ -73,8 +76,7 @@ public abstract class AbstractJdbcStoreMultinodeIT {
             }
         } catch (Exception e) {
             // catching the exception, because the drop is not part of the tests
-            System.out.println("Couldn't drop the tables: ");
-            e.printStackTrace();
+            log.error("Couldn't drop the tables: ", e);
         }
 
         if (rcmFactory != null) {

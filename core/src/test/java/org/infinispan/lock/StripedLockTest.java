@@ -147,7 +147,7 @@ public class StripedLockTest extends AbstractInfinispanTest {
             }
             responseQueue.put(response);
          } catch (Throwable e) {
-            e.printStackTrace();
+            log.error("Error performing lock operation", e);
          }
       }
    }

@@ -22,7 +22,7 @@ public class CacheManagerCallable {
       this.clear = clear;
    }
 
-   public void call() {
+   public void call() throws Exception {
       // No-op
    }
 

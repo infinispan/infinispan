@@ -39,7 +39,7 @@ public class InvokeRemotelyInFutureTest extends MultipleCacheManagersTest {
                future.get();
                futureDoneOk.set(true);
             } catch (Exception e) {
-               e.printStackTrace();
+               log.errorf(e, "Error reading future result");
             }
          }
       });

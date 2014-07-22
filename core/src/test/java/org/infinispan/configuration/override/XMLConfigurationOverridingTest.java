@@ -116,7 +116,7 @@ public class XMLConfigurationOverridingTest extends AbstractInfinispanTest imple
    public void testLocalCacheOverrideToClustered() throws Exception {
       withCacheManager(new CacheManagerCallable(TestCacheManagerFactory.fromXml("configs/named-cache-override-test.xml")) {
          @Override
-         public void call() {
+         public void call() throws Exception {
             Assert.assertEquals(CacheMode.LOCAL, cm.getCacheConfiguration(simpleCacheName).clustering().cacheMode());
 
             Configuration newConfig = new ConfigurationBuilder().clustering().cacheMode(CacheMode.REPL_SYNC).build();
@@ -128,24 +128,20 @@ public class XMLConfigurationOverridingTest extends AbstractInfinispanTest imple
                cm.getCache(simpleCacheName).put("test" + i, "value" + i);
             }
 
-            try {
-               final EmbeddedCacheManager cm1 = TestCacheManagerFactory.fromXml("configs/named-cache-override-test.xml");
-               cm1.defineConfiguration(simpleCacheName, newConfig);
+            final EmbeddedCacheManager cm1 = TestCacheManagerFactory.fromXml("configs/named-cache-override-test.xml");
+            cm1.defineConfiguration(simpleCacheName, newConfig);
 
-               eventually(new Condition() {
+            eventually(new Condition() {
 
-                  @Override
-                  public boolean isSatisfied() throws Exception {
-                     try {
-                        return cm1.getCache(simpleCacheName).size() == cm.getCache(simpleCacheName).size();
-                     } finally {
-                        TestingUtil.killCacheManagers(cm1);
-                     }
+               @Override
+               public boolean isSatisfied() throws Exception {
+                  try {
+                     return cm1.getCache(simpleCacheName).size() == cm.getCache(simpleCacheName).size();
+                  } finally {
+                     TestingUtil.killCacheManagers(cm1);
                   }
-               });
-            } catch (Exception e) {
-               e.printStackTrace();
-            }
+               }
+            });
          }
       });
    }
@@ -231,7 +227,7 @@ public class XMLConfigurationOverridingTest extends AbstractInfinispanTest imple
    public void testOverrideNonTransactional2Transactional() throws Exception {
       withCacheManager(new CacheManagerCallable(TestCacheManagerFactory.fromXml("configs/named-cache-override-test.xml")) {
          @Override
-         public void call() {
+         public void call() throws Exception {
             Configuration cnf = cm.getCacheConfiguration(simpleNonTransactionalCache);
             Assert.assertEquals(TransactionMode.NON_TRANSACTIONAL, cnf.transaction().transactionMode());
             Assert.assertEquals(100, cnf.locking().concurrencyLevel());
@@ -248,19 +244,15 @@ public class XMLConfigurationOverridingTest extends AbstractInfinispanTest imple
 
             TransactionManager tm = cm.getCache(simpleNonTransactionalCache).getAdvancedCache().getTransactionManager();
 
-            try {
-               tm.begin();
-               for (int i = 0; i < 10; i++) {
-                  cm.getCache(simpleNonTransactionalCache).put("key" + i, "value" + i);
-               }
+            tm.begin();
+            for (int i = 0; i < 10; i++) {
+               cm.getCache(simpleNonTransactionalCache).put("key" + i, "value" + i);
+            }
 
-               tm.commit();
+            tm.commit();
 
-               for (int i = 0; i < 10; i++) {
-                  Assert.assertNotNull(cm.getCache(simpleNonTransactionalCache).get("key" + i));
-               }
-            } catch (Exception e) {
-               e.printStackTrace();
+            for (int i = 0; i < 10; i++) {
+               Assert.assertNotNull(cm.getCache(simpleNonTransactionalCache).get("key" + i));
             }
          }
       });
@@ -332,7 +324,7 @@ public class XMLConfigurationOverridingTest extends AbstractInfinispanTest imple
    public void testOverrideClusteringNumOwners() throws Exception {
       withCacheManager(new CacheManagerCallable(TestCacheManagerFactory.fromXml("configs/named-cache-override-test.xml")) {
          @Override
-         public void call() {
+         public void call() throws Exception {
             Configuration cnf = cm.getCacheConfiguration(distCacheToChange);
             Assert.assertEquals(CacheMode.DIST_SYNC, cnf.clustering().cacheMode());
             Assert.assertEquals(2, cnf.clustering().hash().numOwners());
@@ -360,8 +352,6 @@ public class XMLConfigurationOverridingTest extends AbstractInfinispanTest imple
 
                int cache2Size = cache2.getAdvancedCache().withFlags(Flag.CACHE_MODE_LOCAL).size();
                Assert.assertTrue(cache2Size > 0 && cache2Size != cache1.getAdvancedCache().withFlags(Flag.CACHE_MODE_LOCAL).size());
-            } catch (Exception e) {
-               e.printStackTrace();
             } finally {
                TestingUtil.killCacheManagers(cm1);
             }
@@ -372,7 +362,7 @@ public class XMLConfigurationOverridingTest extends AbstractInfinispanTest imple
    public void testOverrideClusteringSync2Async() throws Exception {
       withCacheManager(new CacheManagerCallable(TestCacheManagerFactory.fromXml("configs/named-cache-override-test.xml")) {
          @Override
-         public void call() {
+         public void call() throws Exception {
             Configuration cnf = cm.getCacheConfiguration(distCacheToChange);
             Assert.assertEquals(CacheMode.DIST_SYNC, cnf.clustering().cacheMode());
             Assert.assertEquals(2, cnf.clustering().hash().numOwners());
@@ -404,8 +394,6 @@ public class XMLConfigurationOverridingTest extends AbstractInfinispanTest imple
                replList2.waitForRpc();
                assertEquals(value, cache1.get(key));
                assertEquals(value, cache2.get(key));
-            } catch (Exception e) {
-               e.printStackTrace();
             } finally {
                TestingUtil.killCacheManagers(cm1);
             }
@@ -416,7 +404,7 @@ public class XMLConfigurationOverridingTest extends AbstractInfinispanTest imple
    public void testOverrideClusteringAsync2Sync() throws Exception {
       withCacheManager(new CacheManagerCallable(TestCacheManagerFactory.fromXml("configs/named-cache-override-test.xml")) {
          @Override
-         public void call() {
+         public void call() throws Exception {
             Configuration cnf = cm.getCacheConfiguration(replAsync);
             Assert.assertEquals(CacheMode.REPL_ASYNC, cnf.clustering().cacheMode());
 
@@ -441,8 +429,6 @@ public class XMLConfigurationOverridingTest extends AbstractInfinispanTest imple
                cache1.put(key, value);
                assertEquals(value, cache1.get(key));
                assertEquals(value, cache2.get(key));
-            } catch (Exception e) {
-               e.printStackTrace();
             } finally {
                TestingUtil.killCacheManagers(cm1);
             }

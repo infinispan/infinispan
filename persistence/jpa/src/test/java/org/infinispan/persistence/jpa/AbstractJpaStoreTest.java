@@ -76,8 +76,7 @@ public abstract class AbstractJpaStoreTest extends AbstractInfinispanTest {
          cs = createCacheStore();
          cs.clear();
       } catch (Exception e) {
-         System.err.println(e.toString());
-         e.printStackTrace();
+         log.warn("Error during test setup", e);
          throw e;
       }
    }

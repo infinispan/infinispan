@@ -42,20 +42,16 @@ public class InfinispanDefaultCacheFactoryBeanTest {
       final InfinispanDefaultCacheFactoryBean<Object, Object> objectUnderTest = new InfinispanDefaultCacheFactoryBean<Object, Object>();
       withCacheManager(new CacheManagerCallable(TestCacheManagerFactory.createCacheManager()) {
          @Override
-         public void call() {
-            try {
-               objectUnderTest.setInfinispanCacheContainer(cm);
-               objectUnderTest.afterPropertiesSet();
+         public void call() throws Exception {
+            objectUnderTest.setInfinispanCacheContainer(cm);
+            objectUnderTest.afterPropertiesSet();
 
-               final Cache<Object, Object> cache = objectUnderTest.getObject();
+            final Cache<Object, Object> cache = objectUnderTest.getObject();
 
-               assertNotNull(
-                     "InfinispanDefaultCacheFactoryBean should have produced a proper Infinispan cache. "
-                           + "However, it produced a null Infinispan cache.", cache);
-               objectUnderTest.destroy();
-            } catch (Exception e) {
-               throw new RuntimeException(e);
-            }
+            assertNotNull(
+                  "InfinispanDefaultCacheFactoryBean should have produced a proper Infinispan cache. "
+                        + "However, it produced a null Infinispan cache.", cache);
+            objectUnderTest.destroy();
          }
       });
    }
@@ -69,19 +65,15 @@ public class InfinispanDefaultCacheFactoryBeanTest {
       final InfinispanDefaultCacheFactoryBean<Object, Object> objectUnderTest = new InfinispanDefaultCacheFactoryBean<Object, Object>();
       withCacheManager(new CacheManagerCallable(TestCacheManagerFactory.createCacheManager()) {
          @Override
-         public void call() {
-            try {
-               objectUnderTest.setInfinispanCacheContainer(cm);
-               objectUnderTest.afterPropertiesSet();
+         public void call() throws Exception {
+            objectUnderTest.setInfinispanCacheContainer(cm);
+            objectUnderTest.afterPropertiesSet();
 
-               assertEquals(
-                     "getObjectType() should have returned the produced Infinispan cache's most derived type. "
-                           + "However, it returned a more generic type.", objectUnderTest.getObject()
-                           .getClass(), objectUnderTest.getObjectType());
-               objectUnderTest.destroy();
-            } catch (Exception e) {
-               throw new RuntimeException(e);
-            }
+            assertEquals(
+                  "getObjectType() should have returned the produced Infinispan cache's most derived type. "
+                        + "However, it returned a more generic type.", objectUnderTest.getObject()
+                        .getClass(), objectUnderTest.getObjectType());
+            objectUnderTest.destroy();
          }
       });
 
@@ -109,21 +101,17 @@ public class InfinispanDefaultCacheFactoryBeanTest {
       final InfinispanDefaultCacheFactoryBean<Object, Object> objectUnderTest = new InfinispanDefaultCacheFactoryBean<Object, Object>();
       withCacheManager(new CacheManagerCallable(TestCacheManagerFactory.createCacheManager()) {
          @Override
-         public void call() {
-            try {
-               objectUnderTest.setInfinispanCacheContainer(cm);
-               objectUnderTest.afterPropertiesSet();
+         public void call() throws Exception {
+            objectUnderTest.setInfinispanCacheContainer(cm);
+            objectUnderTest.afterPropertiesSet();
 
-               final Cache<Object, Object> cache = objectUnderTest.getObject();
-               objectUnderTest.destroy();
+            final Cache<Object, Object> cache = objectUnderTest.getObject();
+            objectUnderTest.destroy();
 
-               assertEquals(
-                     "InfinispanDefaultCacheFactoryBean should have stopped the created Infinispan cache when being destroyed. "
-                           + "However, the created Infinispan is not yet terminated.",
-                     ComponentStatus.TERMINATED, cache.getStatus());
-            } catch (Exception e) {
-               throw new RuntimeException(e);
-            }
+            assertEquals(
+                  "InfinispanDefaultCacheFactoryBean should have stopped the created Infinispan cache when being destroyed. "
+                        + "However, the created Infinispan is not yet terminated.",
+                  ComponentStatus.TERMINATED, cache.getStatus());
          }
       });
    }

@@ -63,13 +63,9 @@ public class HotRodEncodingTest extends SingleCacheManagerTest {
 
    @AfterTest
    public void release() {
-      try {
-         HotRodClientTestingUtil.killRemoteCacheManager(remoteCacheManager);
-         HotRodClientTestingUtil.killServers(hotrodServer);
-         TestingUtil.killCacheManagers(cacheManager);
-      } catch (Exception e) {
-         e.printStackTrace();
-      }
+      HotRodClientTestingUtil.killRemoteCacheManager(remoteCacheManager);
+      HotRodClientTestingUtil.killServers(hotrodServer);
+      TestingUtil.killCacheManagers(cacheManager);
    }
 
    public void testHotRodCodec() throws Exception {

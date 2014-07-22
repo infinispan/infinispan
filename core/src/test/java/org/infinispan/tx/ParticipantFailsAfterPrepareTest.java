@@ -82,9 +82,6 @@ public class ParticipantFailsAfterPrepareTest extends MultipleCacheManagersTest 
 
       try {
          commitTransaction(dummyTransaction);
-      } catch (Throwable t) {
-         t.printStackTrace();
-         assert false; //this should not have failed
       } finally {
          //now check weather all caches have the same content and no locks acquired
          for (Cache c : participants) {

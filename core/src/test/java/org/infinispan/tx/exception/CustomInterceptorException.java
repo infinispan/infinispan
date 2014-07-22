@@ -41,7 +41,7 @@ public class CustomInterceptorException extends SingleCacheManagerTest {
          cache.put("k", "v");
          assert false;
       } catch (Exception e) {
-         e.printStackTrace();
+         log.debug("Ignoring expected exception during put", e);
          assertEquals(transactionManager.getTransaction().getStatus(), Status.STATUS_MARKED_ROLLBACK);
       }
    }

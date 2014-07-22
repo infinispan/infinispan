@@ -93,24 +93,20 @@ public abstract class BaseReIndexingTest extends MultipleCacheManagersTest {
    protected void addNodeCheckingContentsAndQuery() {
       withCacheManager(new CacheManagerCallable(createCacheManager()) {
          @Override
-         public void call() {
-            try {
-               // New node joining
-               JoiningNode newNode = new JoiningNode(cm);
-               Cache<String, Person> newCache = newNode.getCache();
-               newNode.waitForJoin(120000, caches().get(0), caches().get(1), newCache);
+         public void call() throws Exception {
+            // New node joining
+            JoiningNode newNode = new JoiningNode(cm);
+            Cache<String, Person> newCache = newNode.getCache();
+            newNode.waitForJoin(120000, caches().get(0), caches().get(1), newCache);
 
-               // Verify state transfer
-               int size = newCache.size();
-               assertEquals(4, size);
-               for (int i = 0; i < size; i++)
-                  assertEquals(persons[i], newCache.get(persons[i].getName()));
+            // Verify state transfer
+            int size = newCache.size();
+            assertEquals(4, size);
+            for (int i = 0; i < size; i++)
+               assertEquals(persons[i], newCache.get(persons[i].getName()));
 
-               // Repeat query on new node
-               executeSimpleQuery(newCache);
-            } catch (Exception e) {
-               throw new RuntimeException(e);
-            }
+            // Repeat query on new node
+            executeSimpleQuery(newCache);
          }
       });
    }

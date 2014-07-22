@@ -81,14 +81,14 @@ public class DistributedMassIndexingTest extends MultipleCacheManagersTest {
       searchManager.getMassIndexer().start();
    }
 
-   protected void verifyFindsCar(int expectedCount, String carMake) {
+   protected void verifyFindsCar(int expectedCount, String carMake) throws Exception {
       for (Cache cache: caches) {
          StaticTestingErrorHandler.assertAllGood(cache);
          verifyFindsCar(cache, expectedCount, carMake);
       }
    }
 
-   protected void verifyFindsCar(Cache cache, int expectedCount, String carMake) {
+   protected void verifyFindsCar(Cache cache, int expectedCount, String carMake) throws Exception {
       SearchManager searchManager = Search.getSearchManager(cache);
       QueryBuilder carQueryBuilder = searchManager.buildQueryBuilderForClass(Car.class).get();
       Query fullTextQuery = carQueryBuilder.keyword().onField("make").matching(carMake).createQuery();
