@@ -14,14 +14,14 @@ import java.util.Collections;
 public class DefaultSearchWorkCreator<T> implements SearchWorkCreator<T> {
 
    @Override
-   public Collection<Work<T>> createPerEntityTypeWorks(Class<T> entityType, WorkType workType) {
-      Work<T> work = new Work<T>(entityType, null, workType);
+   public Collection<Work> createPerEntityTypeWorks(Class<T> entityType, WorkType workType) {
+      Work work = new Work(entityType, null, workType);
       return Collections.singleton(work);
    }
 
    @Override
-   public Collection<Work<T>> createPerEntityWorks(T entity, Serializable id, WorkType workType) {
-      Work<T> work = new Work<T>(entity, id, workType);
+   public Collection<Work> createPerEntityWorks(T entity, Serializable id, WorkType workType) {
+      Work work = new Work(entity, id, workType);
       return Collections.singleton(work);
    }
 }

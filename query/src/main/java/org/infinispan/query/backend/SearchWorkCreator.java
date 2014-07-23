@@ -20,7 +20,7 @@ public interface SearchWorkCreator<T> {
     * @param workType the type of work to be done
     * @return collection of Work instances
     */
-   Collection<Work<T>> createPerEntityTypeWorks(Class<T> entityType, WorkType workType);
+   Collection<Work> createPerEntityTypeWorks(Class<T> entityType, WorkType workType);
 
    /**
     * Creates a collection of Work instances that Hibernate-Search should perform for the given entity
@@ -29,5 +29,5 @@ public interface SearchWorkCreator<T> {
     * @param workType the type of work to be done
     * @return collection of Work instances
     */
-   Collection<Work<T>> createPerEntityWorks(T entity, Serializable id, WorkType workType);
+   Collection<Work> createPerEntityWorks(T entity, Serializable id, WorkType workType);
 }
