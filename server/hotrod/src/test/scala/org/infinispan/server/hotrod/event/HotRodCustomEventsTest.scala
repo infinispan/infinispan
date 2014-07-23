@@ -23,8 +23,10 @@ class HotRodCustomEventsTest extends HotRodSingleNodeTest {
    override protected def createStartHotRodServer(cacheManager: EmbeddedCacheManager): HotRodServer = {
       val builder = new HotRodServerConfigurationBuilder
       // Storing unmarshalled byte arrays, so nullify default marshaller
-      builder.converterFactory("test-converter-factory", converterFactory).marshallerClass(null)
-      HotRodTestingUtil.startHotRodServer(cacheManager, builder)
+      builder.marshallerClass(null)
+      val server = HotRodTestingUtil.startHotRodServer(cacheManager, builder)
+      server.addConverterFactory("test-converter-factory", converterFactory)
+      server
    }
 
    def testCustomEvents(m: Method) {

@@ -40,11 +40,12 @@ abstract class AbstractHotRodClusterEventsTest extends HotRodMultiNodeTest {
    override protected def startTestHotRodServer(cacheManager: EmbeddedCacheManager, port: Int) = {
       val builder = new HotRodServerConfigurationBuilder
       builder.marshallerClass(null)
+      val server = HotRodTestingUtil.startHotRodServer(cacheManager, port, builder)
       filters += new AcceptedKeyFilterFactory()
-      builder.keyValueFilterFactory("accepted-key-filter-factory", filters.head)
+      server.addKeyValueFilterFactory("accepted-key-filter-factory", filters.head)
       converters += new AcceptedKeyValueConverterFactory()
-      builder.converterFactory("accepted-keyvalue-converter-factory", converters.head)
-      HotRodTestingUtil.startHotRodServer(cacheManager, port, builder)
+      server.addConverterFactory("accepted-keyvalue-converter-factory", converters.head)
+      server
    }
 
    def testEventForwarding(m: Method) {
@@ -284,7 +285,7 @@ abstract class AbstractHotRodClusterEventsTest extends HotRodMultiNodeTest {
       cacheManagers.get(0).getCache[Bytes, Bytes](cacheName).getAdvancedCache
 
    private def withClusterClientListener(client: HotRodClient, listener: TestClientListener,
-           filterFactory: NamedFactory, converterFactory: NamedFactory, 
+           filterFactory: NamedFactory, converterFactory: NamedFactory,
            staticKey: Option[Bytes] = None)
            (fn: () => Unit): Unit = {
       filters.foreach(_.staticKey = staticKey)

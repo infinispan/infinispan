@@ -22,6 +22,10 @@ import java.util.List;
 
 import javax.security.sasl.Sasl;
 
+import org.infinispan.server.endpoint.Constants;
+import org.infinispan.server.endpoint.deployments.ConverterFactoryExtensionProcessor;
+import org.infinispan.server.endpoint.deployments.FilterFactoryExtensionProcessor;
+import org.infinispan.server.endpoint.deployments.ServerExtensionDependenciesProcessor;
 import org.infinispan.server.hotrod.HotRodServer;
 import org.infinispan.server.hotrod.configuration.AuthenticationConfigurationBuilder;
 import org.infinispan.server.hotrod.configuration.HotRodServerConfigurationBuilder;
@@ -31,10 +35,14 @@ import org.jboss.as.controller.OperationFailedException;
 import org.jboss.as.controller.PathAddress;
 import org.jboss.as.controller.ServiceVerificationHandler;
 import org.jboss.as.controller.registry.Resource;
+import org.jboss.as.server.AbstractDeploymentChainStep;
+import org.jboss.as.server.DeploymentProcessorTarget;
+import org.jboss.as.server.deployment.Phase;
 import org.jboss.dmr.ModelNode;
 import org.jboss.dmr.Property;
 import org.jboss.msc.service.ServiceBuilder;
 import org.jboss.msc.service.ServiceController;
+import org.jboss.msc.service.ServiceName;
 
 /**
  * @author Tristan Tarrant
@@ -72,7 +80,8 @@ class HotRodSubsystemAdd extends ProtocolServiceSubsystemAdd {
       final ProtocolServerService service = new ProtocolServerService(getServiceName(operation), HotRodServer.class, configurationBuilder);
 
       // Setup the various dependencies with injectors and install the service
-      ServiceBuilder<?> builder = context.getServiceTarget().addService(EndpointUtils.getServiceName(operation, "hotrod"), service);
+      final ServiceName hotRodServerServiceName = EndpointUtils.getServiceName(operation, "hotrod");
+      ServiceBuilder<?> builder = context.getServiceTarget().addService(hotRodServerServiceName, service);
 
       String cacheContainerName = getCacheContainerName(operation);
       EndpointUtils.addCacheContainerConfigurationDependency(builder, cacheContainerName, service.getCacheManagerConfiguration());
@@ -117,6 +126,10 @@ class HotRodSubsystemAdd extends ProtocolServiceSubsystemAdd {
             }
          }
       }
+
+      // Extension manager dependency
+      builder.addDependency(Constants.EXTENSION_MANAGER_NAME, ExtensionManagerService.class, service.getExtensionManager());
+
       builder.install();
    }
 
