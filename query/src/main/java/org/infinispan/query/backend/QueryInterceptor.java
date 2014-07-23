@@ -222,13 +222,13 @@ public class QueryInterceptor extends CommandInterceptor {
 
    private void performSearchWork(Object value, Serializable id, WorkType workType, TransactionContext transactionContext) {
       if (value == null) throw new NullPointerException("Cannot handle a null value!");
-      Collection<Work<Object>> works = searchWorkCreator.createPerEntityWorks(value, id, workType);
+      Collection<Work> works = searchWorkCreator.createPerEntityWorks(value, id, workType);
       performSearchWorks(works, transactionContext);
    }
 
-   private <T> void performSearchWorks(Collection<Work<T>> works, TransactionContext transactionContext) {
+   private void performSearchWorks(Collection<Work> works, TransactionContext transactionContext) {
       Worker worker = searchFactory.getWorker();
-      for (Work<T> work : works) {
+      for (Work work : works) {
          worker.performWork(work, transactionContext);
       }
    }
