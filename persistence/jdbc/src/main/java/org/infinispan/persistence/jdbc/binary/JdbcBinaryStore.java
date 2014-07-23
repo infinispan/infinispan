@@ -185,10 +185,10 @@ public class JdbcBinaryStore implements AdvancedLoadWriteStore {
             log.tracef("Running sql %s", sql);
          }
          conn = connectionFactory.getConnection();
-         ps = conn.prepareStatement(sql);
+         ps = conn.prepareStatement(sql, ResultSet.TYPE_FORWARD_ONLY, ResultSet.CONCUR_READ_ONLY);
          ps.setLong(1, ctx.getTimeService().wallClockTime());
+         ps.setFetchSize(tableManipulation.getFetchSize());
          rs = ps.executeQuery();
-         rs.setFetchSize(tableManipulation.getFetchSize());
          ExecutorAllCompletionService ecs = new ExecutorAllCompletionService(executor);
          final TaskContextImpl taskContext = new TaskContextImpl();
          //we can do better here: ATM we load the entries in the caller's thread and process them in parallel

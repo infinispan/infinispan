@@ -321,10 +321,10 @@ public class JdbcStringBasedStore implements AdvancedLoadWriteStore {
                   log.tracef("Running sql %s", sql);
                }
                conn = connectionFactory.getConnection();
-               ps = conn.prepareStatement(sql);
+               ps = conn.prepareStatement(sql, ResultSet.TYPE_FORWARD_ONLY, ResultSet.CONCUR_READ_ONLY);
                ps.setLong(1, ctx.getTimeService().wallClockTime());
+               ps.setFetchSize(tableManipulation.getFetchSize());
                rs = ps.executeQuery();
-               rs.setFetchSize(tableManipulation.getFetchSize());
 
                TaskContext taskContext = new TaskContextImpl();
                while (rs.next()) {
