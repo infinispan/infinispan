@@ -54,11 +54,11 @@ public class ClientClusterEventsTest extends MultiHotRodServersTest {
    protected HotRodServer addHotRodServer(ConfigurationBuilder builder) {
       EmbeddedCacheManager cm = addClusterEnabledCacheManager(builder);
       HotRodServerConfigurationBuilder serverBuilder = new HotRodServerConfigurationBuilder();
-      filters.add(new TestKeyValueFilterFactory());
-      serverBuilder.keyValueFilterFactory("test-filter-factory", filters.get(0));
-      converters.add(new TestConverterFactory());
-      serverBuilder.converterFactory("test-converter-factory", converters.get(0));
       HotRodServer server = TestHelper.startHotRodServer(cm, serverBuilder);
+      filters.add(new TestKeyValueFilterFactory());
+      server.addKeyValueFilterFactory("test-filter-factory", filters.get(0));
+      converters.add(new TestConverterFactory());
+      server.addConverterFactory("test-converter-factory", converters.get(0));
       servers.add(server);
       return server;
    }

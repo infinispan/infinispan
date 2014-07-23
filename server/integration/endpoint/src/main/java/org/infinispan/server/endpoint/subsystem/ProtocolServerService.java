@@ -21,6 +21,7 @@ package org.infinispan.server.endpoint.subsystem;
 import static org.infinispan.server.endpoint.EndpointLogger.ROOT_LOGGER;
 
 import java.net.InetSocketAddress;
+import java.util.Map;
 
 import javax.net.ssl.SSLContext;
 import javax.security.auth.Subject;
@@ -28,6 +29,7 @@ import javax.security.auth.login.LoginContext;
 import javax.security.auth.login.LoginException;
 
 import org.infinispan.commons.util.ReflectionUtil;
+import org.infinispan.filter.KeyValueFilterFactory;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.server.core.ProtocolServer;
 import org.infinispan.server.core.configuration.ProtocolServerConfiguration;
@@ -79,7 +81,6 @@ class ProtocolServerService implements Service<ProtocolServer> {
    // The login context used to obtain the server subject
    private LoginContext serverLoginContext = null;
    private String serverContextName;
-
 
    ProtocolServerService(String serverName, Class<? extends ProtocolServer> serverClass, ProtocolServerConfigurationBuilder<?, ?> configurationBuilder) {
       this.configurationBuilder = configurationBuilder;

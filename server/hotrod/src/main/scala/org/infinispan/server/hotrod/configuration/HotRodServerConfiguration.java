@@ -2,8 +2,6 @@ package org.infinispan.server.hotrod.configuration;
 
 import org.infinispan.commons.configuration.BuiltBy;
 import org.infinispan.commons.marshall.Marshaller;
-import org.infinispan.filter.ConverterFactory;
-import org.infinispan.filter.KeyValueFilterFactory;
 import org.infinispan.server.core.configuration.ProtocolServerConfiguration;
 import org.infinispan.server.core.configuration.SslConfiguration;
 
@@ -20,13 +18,11 @@ public class HotRodServerConfiguration extends ProtocolServerConfiguration {
    private final boolean topologyAwaitInitialTransfer;
    private final boolean topologyStateTransfer;
    private final AuthenticationConfiguration authentication;
-   private final Map<String, KeyValueFilterFactory> keyValueFilterFactories;
-   private final Map<String, ConverterFactory> converterFactories;
    private final Class<? extends Marshaller> marshallerClass;
 
    HotRodServerConfiguration(String defaultCacheName, String proxyHost, int proxyPort, long topologyLockTimeout, long topologyReplTimeout, boolean topologyAwaitInitialTransfer, boolean topologyStateTransfer,
          String name, String host, int port, int idleTimeout, int recvBufSize, int sendBufSize, SslConfiguration ssl, boolean tcpNoDelay, int workerThreads, AuthenticationConfiguration authentication,
-         Map<String, KeyValueFilterFactory> keyValueFilterFactories, Map<String, ConverterFactory> converterFactories, Class<? extends Marshaller> marshallerClass) {
+         Class<? extends Marshaller> marshallerClass) {
       super(defaultCacheName, name, host, port, idleTimeout, recvBufSize, sendBufSize, ssl, tcpNoDelay, workerThreads);
       this.proxyHost = proxyHost;
       this.proxyPort = proxyPort;
@@ -36,8 +32,6 @@ public class HotRodServerConfiguration extends ProtocolServerConfiguration {
       this.topologyStateTransfer = topologyStateTransfer;
       this.topologyAwaitInitialTransfer = topologyAwaitInitialTransfer;
       this.authentication = authentication;
-      this.keyValueFilterFactories = keyValueFilterFactories;
-      this.converterFactories = converterFactories;
       this.marshallerClass = marshallerClass;
    }
 
@@ -71,14 +65,6 @@ public class HotRodServerConfiguration extends ProtocolServerConfiguration {
 
    public AuthenticationConfiguration authentication() {
       return authentication;
-   }
-
-   public KeyValueFilterFactory keyValueFilterFactory(String name) {
-      return keyValueFilterFactories.get(name);
-   }
-
-   public ConverterFactory converterFactory(String name) {
-      return converterFactories.get(name);
    }
 
    public Class<? extends Marshaller> marshallerClass() {

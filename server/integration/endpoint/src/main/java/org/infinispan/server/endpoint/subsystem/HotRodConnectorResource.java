@@ -36,7 +36,12 @@ public class HotRodConnectorResource extends ProtocolServerConnectorResource imp
       super(HOTROD_CONNECTOR_PATH, EndpointExtension.getResourceDescriptionResolver(ModelKeys.HOTROD_CONNECTOR), HotRodSubsystemAdd.INSTANCE, HotRodSubsystemRemove.INSTANCE, isRuntimeRegistration);
    }
 
-   @Override
+    @Override
+    public void registerOperations(ManagementResourceRegistration resourceRegistration) {
+        super.registerOperations(resourceRegistration);    // TODO: Customise this generated block
+    }
+
+    @Override
    public void registerChildren(ManagementResourceRegistration resourceRegistration) {
       resourceRegistration.registerSubModel(new TopologyStateTransferResource());
       resourceRegistration.registerSubModel(new AuthenticationResource());

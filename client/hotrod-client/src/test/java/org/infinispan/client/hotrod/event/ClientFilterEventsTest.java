@@ -22,8 +22,9 @@ public class ClientFilterEventsTest extends SingleHotRodServerTest {
    @Override
    protected HotRodServer createHotRodServer() {
       HotRodServerConfigurationBuilder builder = new HotRodServerConfigurationBuilder();
-      builder.keyValueFilterFactory("test-filter-factory", filterFactory);
-      return TestHelper.startHotRodServer(cacheManager, builder);
+      HotRodServer server = TestHelper.startHotRodServer(cacheManager, builder);
+      server.addKeyValueFilterFactory("test-filter-factory", filterFactory);
+      return server;
    }
 
    public void testFilteredEvents() {
