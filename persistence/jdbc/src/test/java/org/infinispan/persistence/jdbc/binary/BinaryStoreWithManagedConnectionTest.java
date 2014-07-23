@@ -1,22 +1,21 @@
 package org.infinispan.persistence.jdbc.binary;
 
 import org.infinispan.Cache;
-import org.infinispan.commons.marshall.StreamingMarshaller;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.cache.StoreConfiguration;
-import org.infinispan.persistence.spi.PersistenceException;
+import org.infinispan.manager.CacheContainer;
 import org.infinispan.persistence.jdbc.ManagedConnectionFactoryTest;
 import org.infinispan.persistence.jdbc.configuration.JdbcBinaryStoreConfiguration;
 import org.infinispan.persistence.jdbc.configuration.JdbcBinaryStoreConfigurationBuilder;
 import org.infinispan.persistence.jdbc.connectionfactory.ManagedConnectionFactory;
 import org.infinispan.persistence.spi.AdvancedLoadWriteStore;
-import org.infinispan.manager.CacheContainer;
-import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.infinispan.test.fwk.UnitTestDatabaseManager;
-import org.testng.annotations.AfterMethod;
 import org.testng.annotations.Test;
+
+import static org.testng.AssertJUnit.assertNotNull;
+import static org.testng.AssertJUnit.assertTrue;
 
 /**
  * @author Mircea.Markus@jboss.com
@@ -24,40 +23,6 @@ import org.testng.annotations.Test;
 @Test(groups = "functional", testName = "persistence.jdbc.binary.BinaryStoreWithManagedConnectionTest")
 public class BinaryStoreWithManagedConnectionTest extends ManagedConnectionFactoryTest {
 
-   private EmbeddedCacheManager cacheManager;
-   private Cache<Object,Object> cache;
-
-   @Override
-   protected AdvancedLoadWriteStore createStore() throws Exception {
-      ConfigurationBuilder cc = TestCacheManagerFactory.getDefaultCacheConfiguration(false);
-      JdbcBinaryStoreConfigurationBuilder storeBuilder = cc
-            .persistence()
-               .addStore(JdbcBinaryStoreConfigurationBuilder.class);
-      storeBuilder.dataSource().jndiUrl(getDatasourceLocation());
-      UnitTestDatabaseManager.buildTableManipulation(storeBuilder.table(), true);
-
-      cacheManager = TestCacheManagerFactory.createCacheManager(cc);
-
-      cache = cacheManager.getCache();
-      JdbcBinaryStore jdbcBinaryCacheStore = TestingUtil.getFirstWriter(cache);
-      assert jdbcBinaryCacheStore.getConnectionFactory() instanceof ManagedConnectionFactory;
-      csc = jdbcBinaryCacheStore.getConfiguration();
-      return jdbcBinaryCacheStore;
-   }
-
-   @AfterMethod
-   @Override
-   public void tearDown() throws PersistenceException {
-      super.tearDown();
-      TestingUtil.killCacheManagers(cacheManager);
-   }
-
-   @Override
-   protected StreamingMarshaller getMarshaller() {
-      StreamingMarshaller component = cache.getAdvancedCache().getComponentRegistry().getCacheMarshaller();
-      assert component != null;
-      return component;
-   }
 
    public void testLoadFromFile() throws Exception {
       CacheContainer cm = null;
@@ -67,13 +32,15 @@ public class BinaryStoreWithManagedConnectionTest extends ManagedConnectionFacto
          Cache<String, String> second = cm.getCache("second");
 
          StoreConfiguration firstCacheLoaderConfig = first.getCacheConfiguration().persistence().stores().get(0);
-         assert firstCacheLoaderConfig != null;
+         assertNotNull(firstCacheLoaderConfig);
+         assertTrue(firstCacheLoaderConfig instanceof JdbcBinaryStoreConfiguration);
+
          StoreConfiguration secondCacheLoaderConfig = second.getCacheConfiguration().persistence().stores().get(0);
-         assert secondCacheLoaderConfig != null;
-         assert firstCacheLoaderConfig instanceof JdbcBinaryStoreConfiguration;
-         assert secondCacheLoaderConfig instanceof JdbcBinaryStoreConfiguration;
+         assertNotNull(secondCacheLoaderConfig);
+         assertTrue(secondCacheLoaderConfig instanceof JdbcBinaryStoreConfiguration);
+
          JdbcBinaryStore loader = (JdbcBinaryStore) TestingUtil.getFirstLoader(first);
-         assert loader.getConnectionFactory() instanceof ManagedConnectionFactory;
+         assertTrue(loader.getConnectionFactory() instanceof ManagedConnectionFactory);
       } finally {
          try {
             TestingUtil.killCacheManagers(cm);
@@ -86,6 +53,20 @@ public class BinaryStoreWithManagedConnectionTest extends ManagedConnectionFacto
    @Override
    public String getDatasourceLocation() {
       return "java:/BinaryStoreWithManagedConnectionTest/DS";
+   }
+
+   @Override
+   protected AdvancedLoadWriteStore createStore() throws Exception {
+      ConfigurationBuilder builder = TestCacheManagerFactory.getDefaultCacheConfiguration(false);
+      JdbcBinaryStoreConfigurationBuilder storeBuilder = builder
+            .persistence()
+            .addStore(JdbcBinaryStoreConfigurationBuilder.class);
+      storeBuilder.dataSource().jndiUrl(getDatasourceLocation());
+      UnitTestDatabaseManager.buildTableManipulation(storeBuilder.table(), true);
+
+      JdbcBinaryStore jdbcBinaryStore = new JdbcBinaryStore();
+      jdbcBinaryStore.init(createContext(builder.build()));
+      return jdbcBinaryStore;
    }
 
 }
