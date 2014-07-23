@@ -370,7 +370,7 @@ public class TableManipulation implements Cloneable {
     * if not specified will be defaulted to {@link #DEFAULT_FETCH_SIZE}.
     */
    public int getFetchSize() {
-      return config.fetchSize();
+      return getDialect() == Dialect.MYSQL ? Integer.MIN_VALUE : config.fetchSize();
    }
 
    /**
