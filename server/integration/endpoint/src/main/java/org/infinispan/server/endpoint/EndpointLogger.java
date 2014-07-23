@@ -154,4 +154,19 @@ public interface EndpointLogger extends BasicLogger {
 
    @Message(id = 10024, value = "Invalid authorizationId %s")
    IllegalArgumentException invalidAuthorizationId(String authorizationId);
+
+   @LogMessage(level = WARN)
+   @Message(id = 10025, value = "Unable to instantiate class \"%s\": %s")
+   void cannotInstantiateClass(String clazz, Throwable reason);
+
+   @LogMessage(level = WARN)
+   @Message(id = 10026, value = "No @NamedFactory annotation found in class: %s")
+   void noFactoryName(String clazz);
+
+   @Message(id = 10027, value = "Service not started")
+   IllegalStateException serviceNotStarted();
+
+   @Message(id = 10028, value = "%s is null")
+   String nullVar(String name);
+
 }

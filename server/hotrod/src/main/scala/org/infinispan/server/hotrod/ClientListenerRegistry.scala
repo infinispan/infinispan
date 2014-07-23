@@ -5,7 +5,9 @@ import java.io.{ObjectInput, ObjectOutput}
 import io.netty.channel.Channel
 import java.util.concurrent.atomic.AtomicLong
 import org.infinispan.commons.equivalence.{AnyEquivalence, ByteArrayEquivalence}
-import org.infinispan.commons.marshall.{AbstractExternalizer, Marshaller}
+import org.infinispan.commons.marshall.AbstractExternalizer
+import org.infinispan.commons.marshall.Marshaller
+import org.infinispan.commons.util.CollectionFactory
 import org.infinispan.commons.util.concurrent.jdk8backported.EquivalentConcurrentHashMapV8
 import org.infinispan.container.versioning.NumericVersion
 import org.infinispan.filter.{KeyValueFilterFactory, ConverterFactory, Converter, KeyValueFilter}
@@ -32,6 +34,16 @@ class ClientListenerRegistry(configuration: HotRodServerConfiguration) extends L
       ByteArrayEquivalence.INSTANCE, AnyEquivalence.getInstance())
 
    private val marshaller = Option(configuration.marshallerClass()).map(_.newInstance())
+   private val keyValueFilterFactories = CollectionFactory.makeConcurrentMap[String, KeyValueFilterFactory](4, 0.9f, 16)
+   private val converterFactories = CollectionFactory.makeConcurrentMap[String, ConverterFactory](4, 0.9f, 16)
+
+   def addKeyValueFilterFactory(name: String, factory: KeyValueFilterFactory): Unit = {
+      keyValueFilterFactories.put(name, factory)
+   }
+
+   def addConverterFactory(name: String, factory: ConverterFactory): Unit = {
+      converterFactories.put(name, factory)
+   }
 
    def addClientListener(ch: Channel, h: HotRodHeader, listenerId: Bytes, cache: Cache,
            filterFactory: NamedFactory, converterFactory: NamedFactory): Unit = {
@@ -58,7 +70,7 @@ class ClientListenerRegistry(configuration: HotRodServerConfiguration) extends L
    }
 
    def findConverterFactory(name: String): Option[ConverterFactory] = {
-      Option(configuration.converterFactory(name)).map { converterFactory =>
+      Option(converterFactories.get(name)).map { converterFactory =>
          val marshallerClass = configuration.marshallerClass()
          if (marshallerClass != null) new BinaryConverterFactory(converterFactory, marshallerClass)
          else converterFactory
@@ -66,7 +78,7 @@ class ClientListenerRegistry(configuration: HotRodServerConfiguration) extends L
    }
 
    def findFilterFactory(name: String): Option[KeyValueFilterFactory] = {
-      Option(configuration.keyValueFilterFactory(name)).map { filterFactory =>
+      Option(keyValueFilterFactories.get(name)).map { filterFactory =>
          val marshallerClass = configuration.marshallerClass()
          if (marshallerClass != null) new BinaryFilterFactory(filterFactory, marshallerClass)
          else filterFactory

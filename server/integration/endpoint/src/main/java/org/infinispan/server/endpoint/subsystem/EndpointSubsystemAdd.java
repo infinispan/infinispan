@@ -18,11 +18,25 @@
  */
 package org.infinispan.server.endpoint.subsystem;
 
+import org.infinispan.server.endpoint.Constants;
+import org.infinispan.server.endpoint.deployments.ConverterFactoryExtensionProcessor;
+import org.infinispan.server.endpoint.deployments.FilterFactoryExtensionProcessor;
+import org.infinispan.server.endpoint.deployments.ServerExtensionDependenciesProcessor;
 import org.jboss.as.controller.AbstractAddStepHandler;
+import org.jboss.as.controller.OperationContext;
 import org.jboss.as.controller.OperationFailedException;
+import org.jboss.as.controller.ServiceVerificationHandler;
 import org.jboss.as.controller.descriptions.ModelDescriptionConstants;
 import org.jboss.as.controller.operations.common.Util;
+import org.jboss.as.server.AbstractDeploymentChainStep;
+import org.jboss.as.server.DeploymentProcessorTarget;
+import org.jboss.as.server.deployment.Phase;
 import org.jboss.dmr.ModelNode;
+import org.jboss.msc.service.ServiceBuilder;
+import org.jboss.msc.service.ServiceController;
+import org.jboss.msc.service.ServiceName;
+
+import java.util.List;
 
 import static org.infinispan.server.endpoint.subsystem.ModelKeys.*;
 
@@ -56,4 +70,25 @@ class EndpointSubsystemAdd extends AbstractAddStepHandler {
     protected boolean requiresRuntimeVerification() {
         return false;
     }
+
+    @Override
+    protected void performRuntime(OperationContext ctx, ModelNode operation, ModelNode model, ServiceVerificationHandler verificationHandler, List<ServiceController<?>> newControllers) throws OperationFailedException {
+        final ServiceName serviceName = Constants.EXTENSION_MANAGER_NAME;
+        ExtensionManagerService service = new ExtensionManagerService();
+        ServiceBuilder<?> builder = ctx.getServiceTarget().addService(serviceName, service);
+
+        ctx.addStep(new AbstractDeploymentChainStep() {
+            protected void execute(DeploymentProcessorTarget processorTarget) {
+            processorTarget.addDeploymentProcessor(Constants.SUBSYSTEM_NAME,
+                Phase.INSTALL, Constants.INSTALL_FILTER_FACTORY, new FilterFactoryExtensionProcessor(serviceName));
+            processorTarget.addDeploymentProcessor(Constants.SUBSYSTEM_NAME,
+                Phase.INSTALL, Constants.INSTALL_CONVERTER_FACTORY, new ConverterFactoryExtensionProcessor(serviceName));
+            processorTarget.addDeploymentProcessor(Constants.SUBSYSTEM_NAME,
+                Phase.DEPENDENCIES, Constants.DEPENDENCIES_FILTER_FACTORY, new ServerExtensionDependenciesProcessor());
+            }
+        }, OperationContext.Stage.RUNTIME);
+
+        builder.install();
+    }
+
 }

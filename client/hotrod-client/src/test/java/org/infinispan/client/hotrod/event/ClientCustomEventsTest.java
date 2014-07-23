@@ -22,8 +22,9 @@ public class ClientCustomEventsTest extends SingleHotRodServerTest {
    @Override
    protected HotRodServer createHotRodServer() {
       HotRodServerConfigurationBuilder builder = new HotRodServerConfigurationBuilder();
-      builder.converterFactory("test-converter-factory", converterFactory);
-      return TestHelper.startHotRodServer(cacheManager, builder);
+      HotRodServer server = TestHelper.startHotRodServer(cacheManager, builder);
+      server.addConverterFactory("test-converter-factory", converterFactory);
+      return server;
    }
 
    public void testCustomEvents() {

@@ -1,5 +1,6 @@
 package org.infinispan.server.core
 
+import org.infinispan.filter.KeyValueFilterFactory
 import org.infinispan.manager.EmbeddedCacheManager
 import org.infinispan.server.core.configuration.ProtocolServerConfiguration
 import io.netty.channel.{Channel, ChannelInitializer, ChannelInboundHandler, ChannelOutboundHandler}

@@ -21,6 +21,7 @@ package org.infinispan.server.endpoint.subsystem;
 import static org.infinispan.server.endpoint.EndpointLogger.ROOT_LOGGER;
 
 import java.net.InetSocketAddress;
+import java.util.Map;
 
 import javax.net.ssl.SSLContext;
 import javax.security.auth.Subject;
@@ -28,11 +29,13 @@ import javax.security.auth.login.LoginContext;
 import javax.security.auth.login.LoginException;
 
 import org.infinispan.commons.util.ReflectionUtil;
+import org.infinispan.filter.KeyValueFilterFactory;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.server.core.ProtocolServer;
 import org.infinispan.server.core.configuration.ProtocolServerConfiguration;
 import org.infinispan.server.core.configuration.ProtocolServerConfigurationBuilder;
 import org.infinispan.server.core.transport.Transport;
+import org.infinispan.server.hotrod.HotRodServer;
 import org.infinispan.server.hotrod.configuration.HotRodServerConfigurationBuilder;
 import org.jboss.as.clustering.infinispan.subsystem.EmbeddedCacheManagerConfiguration;
 import org.jboss.as.domain.management.AuthMechanism;
@@ -65,6 +68,8 @@ class ProtocolServerService implements Service<ProtocolServer> {
    private final InjectedValue<SecurityDomainContext> saslSecurityDomain = new InjectedValue<SecurityDomainContext>();
    // The security realm for encryption that will be injected by the container
    private final InjectedValue<SecurityRealm> encryptionSecurityRealm = new InjectedValue<SecurityRealm>();
+   // Te extension manager
+   private final InjectedValue<ExtensionManagerService> extensionManager = new InjectedValue<>();
    // The configuration for this service
    private final ProtocolServerConfigurationBuilder<?, ?> configurationBuilder;
    // The class which determines the type of server
@@ -79,7 +84,6 @@ class ProtocolServerService implements Service<ProtocolServer> {
    // The login context used to obtain the server subject
    private LoginContext serverLoginContext = null;
    private String serverContextName;
-
 
    ProtocolServerService(String serverName, Class<? extends ProtocolServer> serverClass, ProtocolServerConfigurationBuilder<?, ?> configurationBuilder) {
       this.configurationBuilder = configurationBuilder;
@@ -135,6 +139,10 @@ class ProtocolServerService implements Service<ProtocolServer> {
          ROOT_LOGGER.endpointStarted(serverName + qual, NetworkUtils.formatAddress(socketAddress));
          // Start the connector
          startProtocolServer(configurationBuilder.build());
+
+         // Similar thing done above, eventually this class should be split per protocol server type
+         if (protocolServer instanceof HotRodServer)
+             extensionManager.getValue().addHotRodServer((HotRodServer) protocolServer);
 
          done = true;
       } catch (StartException e) {
@@ -225,7 +233,11 @@ class ProtocolServerService implements Service<ProtocolServer> {
       return encryptionSecurityRealm;
    }
 
-   public Transport getTransport() {
+   InjectedValue<ExtensionManagerService> getExtensionManager() {
+      return extensionManager;
+   }
+
+    public Transport getTransport() {
       return transport;
    }
 
