@@ -66,7 +66,7 @@ A stack declaration is composed of a transport (UDP or TCP) followed by a list o
  <stack name="udp">
     <transport type="UDP" socket-binding="jgroups-udp"/>
     <protocol type="PING"/>
-    <protocol type="MERGE2"/>
+    <protocol type="MERGE3"/>
     <protocol type="FD_SOCK" socket-binding="jgroups-udp-fd"/>
     <protocol type="FD_ALL"/>
     <protocol type="pbcast.NAKACK2"/>
@@ -81,7 +81,7 @@ A stack declaration is composed of a transport (UDP or TCP) followed by a list o
 <stack name="tcp">
     <transport type="TCP" socket-binding="jgroups-tcp"/>
     <protocol type="MPING" socket-binding="jgroups-mping"/>
-    <protocol type="MERGE2"/>
+    <protocol type="MERGE3"/>
     <protocol type="FD_SOCK" socket-binding="jgroups-tcp-fd"/>
     <protocol type="FD"/>
     <protocol type="VERIFY_SUSPECT"/>
@@ -109,7 +109,7 @@ The default TCP stack uses the MPING protocol for discovery, which uses UDP mult
     <protocol type="TCPPING">
         <property name="initial_hosts">HostA[7800],HostB[7800]</property>
     </protocol>
-    <protocol type="MERGE2"/>
+    <protocol type="MERGE3"/>
     <protocol type="FD_SOCK" socket-binding="jgroups-tcp-fd"/>
     <protocol type="FD"/>
     <protocol type="VERIFY_SUSPECT"/>

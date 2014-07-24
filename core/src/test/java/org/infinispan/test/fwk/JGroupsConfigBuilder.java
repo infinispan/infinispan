@@ -107,7 +107,7 @@ public class JGroupsConfigBuilder {
    }
 
    private static void removeMerge(JGroupsProtocolCfg jgroupsCfg) {
-      jgroupsCfg.removeProtocol(MERGE2);
+      jgroupsCfg.removeProtocol(MERGE3);
    }
 
    public static String getUdpConfig(String fullTestName, TransportFlags flags) {
@@ -284,7 +284,7 @@ public class JGroupsConfigBuilder {
    enum ProtocolType {
       TCP, UDP,
       MPING, PING, TCPPING, TEST_PING,
-      MERGE2,
+      MERGE2, MERGE3,
       FD_SOCK, FD, VERIFY_SUSPECT, FD_ALL,
       BARRIER,
       UNICAST, UNICAST2, UNICAST3,

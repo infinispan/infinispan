@@ -196,7 +196,7 @@
                     <property name="timeout">5000</property>
                     <property name="num_initial_members">5</property>
                 </protocol>
-                <protocol type="MERGE2"/>
+                <protocol type="MERGE3"/>
                 <protocol type="FD_SOCK" socket-binding="jgroups-udp-fd"/>
                 <protocol type="FD_ALL"/>
                 <protocol type="pbcast.NAKACK2"/>
@@ -248,7 +248,7 @@
                     <property name="oob_thread_pool.rejection_policy">discard</property>
                 </transport>
                 <protocol type="MPING" socket-binding="jgroups-mping"/>
-                <protocol type="MERGE2"/>
+                <protocol type="MERGE3"/>
                 <protocol type="FD_SOCK" socket-binding="jgroups-tcp-fd"/>
                 <protocol type="FD"/>
                 <protocol type="VERIFY_SUSPECT"/>

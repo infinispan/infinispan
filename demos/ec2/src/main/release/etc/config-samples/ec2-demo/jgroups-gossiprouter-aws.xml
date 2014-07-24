@@ -2,7 +2,7 @@
 <config>
    <TCP bind_port="7800"/>
    <TCPGOSSIP timeout="3000" initial_hosts="localhost[5555]" num_initial_members="3"/>
-   <MERGE2 max_interval="30000" min_interval="10000"/>
+   <MERGE3/>
    <FD_SOCK/>
    <FD timeout="10000" max_tries="5" shun="true"/>
    <VERIFY_SUSPECT timeout="1500"/>

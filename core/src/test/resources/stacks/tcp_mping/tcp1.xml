@@ -37,8 +37,7 @@
           ip_ttl="${jgroups.udp.ip_ttl:2}"
           num_initial_members="3"/>
 
-   <MERGE2 max_interval="30000"
-           min_interval="10000"/>
+   <MERGE3/>
    <FD_SOCK/>
    <!--
        Note that this is an atypically short timeout and a small number of retries
