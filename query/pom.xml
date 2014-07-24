@@ -16,6 +16,7 @@
    <!-- This module declares components that either has lifecycle (@Start or @Stop) or uses @Inject to retrieve dependencies -->
    <properties>
       <module.skipComponentMetaDataProcessing>false</module.skipComponentMetaDataProcessing>
+      <infinispan.test.parallel.threads>5</infinispan.test.parallel.threads>
    </properties>
 
    <dependencies>
@@ -96,11 +97,6 @@
            <scope>test</scope>
        </dependency>
 
-       <dependency>
-           <groupId>com.mchange</groupId>
-           <artifactId>c3p0</artifactId>
-         <scope>test</scope>
-      </dependency>
    </dependencies>
 
    <build>
