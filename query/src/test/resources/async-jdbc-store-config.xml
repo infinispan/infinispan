@@ -12,7 +12,7 @@
          <indexing index="ALL">
             <property name="default.indexmanager">org.infinispan.query.indexmanager.InfinispanIndexManager</property>
             <property name="lucene_version">LUCENE_48</property>
-
+            <property name="default.reader.strategy">shared</property>
             <property name="default.locking_cachename">LuceneIndexesLocking_custom1</property>
             <property name="default.data_cachename">LuceneIndexesData_custom1</property>
             <property name="default.metadata_cachename">LuceneIndexesMetadata_custom1</property>
@@ -28,12 +28,12 @@
                                   read-only="false"
                                   preload="true"
                                   purge="false">
-               <string-keyed-table drop-on-exit="true" create-on-start="true" prefix="ISPN_STRING_TABLE">
+               <string-keyed-table drop-on-exit="true" create-on-start="true" prefix="ISPN_STRING_TABLE_METADATA">
                   <id-column name="ID_COLUMN" type="VARCHAR(255)" />
                   <data-column name="DATA_COLUMN" type="BINARY" />
                   <timestamp-column name="TIMESTAMP_COLUMN" type="BIGINT" />
                </string-keyed-table>
-               <write-behind flush-lock-timeout="5000" modification-queue-size="1024" shutdown-timeout="25000" thread-pool-size="2"/>
+               <write-behind flush-lock-timeout="5000" modification-queue-size="1024" shutdown-timeout="25000" thread-pool-size="1"/>
             </string-keyed-jdbc-store>
          </persistence>
       </replicated-cache>
@@ -50,12 +50,12 @@
                                      read-only="false"
                                      preload="true"
                                      purge="false">
-               <string-keyed-table drop-on-exit="true" create-on-start="true" prefix="ISPN_STRING_TABLE">
+               <string-keyed-table drop-on-exit="true" create-on-start="true" prefix="ISPN_STRING_TABLE_DATA">
                   <id-column name="ID_COLUMN" type="VARCHAR(255)" />
                   <data-column name="DATA_COLUMN" type="BINARY" />
                   <timestamp-column name="TIMESTAMP_COLUMN" type="BIGINT" />
                </string-keyed-table>
-               <write-behind flush-lock-timeout="5000" modification-queue-size="1024" shutdown-timeout="25000" thread-pool-size="2"/>
+               <write-behind flush-lock-timeout="5000" modification-queue-size="1024" shutdown-timeout="25000" thread-pool-size="1"/>
             </string-keyed-jdbc-store>
          </persistence>
       </replicated-cache>
@@ -72,12 +72,12 @@
                                      read-only="false"
                                      preload="true"
                                      purge="false">
-               <string-keyed-table drop-on-exit="true" create-on-start="true" prefix="ISPN_STRING_TABLE">
+               <string-keyed-table drop-on-exit="true" create-on-start="true" prefix="ISPN_STRING_TABLE_LOCK">
                   <id-column name="ID_COLUMN" type="VARCHAR(255)" />
                   <data-column name="DATA_COLUMN" type="BINARY" />
                   <timestamp-column name="TIMESTAMP_COLUMN" type="BIGINT" />
                </string-keyed-table>
-               <write-behind flush-lock-timeout="5000" modification-queue-size="1024" shutdown-timeout="25000" thread-pool-size="2"/>
+               <write-behind flush-lock-timeout="5000" modification-queue-size="1024" shutdown-timeout="25000" thread-pool-size="1"/>
             </string-keyed-jdbc-store>
          </persistence>
       </replicated-cache>
