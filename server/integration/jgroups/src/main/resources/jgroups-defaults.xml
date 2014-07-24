@@ -71,6 +71,7 @@
     <PING />
     <MPING ip_ttl="2"/>
     <MERGE2 max_interval="100000" min_interval="20000"/>
+    <MERGE3/>
     <FD_SOCK/>
     <FD timeout="6000" max_tries="5"/>
     <VERIFY_SUSPECT timeout="1500"/>

@@ -60,7 +60,7 @@ public class JGroupsSubsystemTest extends ClusteringSubsystemTest {
         // create a collection of resources in the test which are not removed by a "remove" command
         // i.e. all resources of form /subsystem=jgroups/stack=maximal/protocol=*
 
-        String[] protocolList = { "MPING", "MERGE2", "FD_SOCK", "FD", "VERIFY_SUSPECT", "pbcast.NAKACK2", "UNICAST3", "pbcast.STABLE", "pbcast.GMS", "UFC", "MFC", "FRAG2", "RSVP" };
+        String[] protocolList = { "MPING", "MERGE3", "FD_SOCK", "FD", "VERIFY_SUSPECT", "pbcast.NAKACK2", "UNICAST3", "pbcast.STABLE", "pbcast.GMS", "UFC", "MFC", "FRAG2", "RSVP" };
         PathAddress subsystem = PathAddress.pathAddress(PathElement.pathElement(SUBSYSTEM, JGroupsExtension.SUBSYSTEM_NAME));
         PathAddress stack = subsystem.append(PathElement.pathElement(ModelKeys.STACK, "maximal"));
         List<PathAddress> addresses = new ArrayList<PathAddress>();
