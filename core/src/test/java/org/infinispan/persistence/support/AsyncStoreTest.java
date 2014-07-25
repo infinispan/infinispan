@@ -280,34 +280,29 @@ public class AsyncStoreTest extends AbstractInfinispanTest {
       protected void applyModificationsSync(List<Modification> mods) throws PersistenceException {
          boolean keyFound = findModificationForKey(key, mods) != null;
          if (keyFound && block) {
-            log("Wait for v1 latch" + mods);
+            log.trace("Wait for v1 latch" + mods);
             try {
                v2Latch.countDown();
                block = false;
-               log("before wait");
+               log.trace("before wait");
                v1Latch.await(2, TimeUnit.SECONDS);
-               log("after wait");
+               log.trace("after wait");
             } catch (InterruptedException e) {
                Thread.currentThread().interrupt();
             }
-            log("before apply mods");
+            log.trace("before apply mods");
             try {
                super.applyModificationsSync(mods);
             } catch (Throwable e) {
-               log("Error apply mods :" + e.getMessage());
+               log.trace("Error apply mods :" + e.getMessage());
             }
-            log("after apply mods");
+            log.trace("after apply mods");
          } else if (keyFound && !block) {
-            log("Do v2 modification and unleash v1 latch" + mods);
+            log.trace("Do v2 modification and unleash v1 latch" + mods);
             super.applyModificationsSync(mods);
             v1Latch.countDown();
             endLatch.countDown();
          }
-      }
-
-      public void log(String m) {
-//         System.out.println("[ " + Thread.currentThread() + " ] " + m );
-         log.trace(m);
       }
 
       private Modification findModificationForKey(Object key, List<Modification> mods) {

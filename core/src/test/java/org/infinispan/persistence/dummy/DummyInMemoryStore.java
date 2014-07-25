@@ -19,6 +19,7 @@ import org.infinispan.persistence.spi.InitializationContext;
 import org.infinispan.marshall.core.MarshalledEntry;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.util.KeyValuePair;
+import org.infinispan.util.TimeService;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
@@ -47,7 +48,7 @@ public class DummyInMemoryStore implements AdvancedLoadWriteStore {
    // When a store is 'shared', multiple nodes could be trying to update it concurrently.
    ConcurrentMap<String, AtomicInteger> stats;
    public AtomicInteger initCount = new AtomicInteger();
-
+   private TimeService timeService;
    Cache cache;
 
    protected volatile StreamingMarshaller marshaller;
@@ -63,6 +64,7 @@ public class DummyInMemoryStore implements AdvancedLoadWriteStore {
       this.marshaller = ctx.getMarshaller();
       this.storeName = configuration.storeName();
       this.initCount.incrementAndGet();
+      this.timeService = ctx.getTimeService();
    }
 
    public DummyInMemoryStore(String storeName) {
@@ -112,7 +114,7 @@ public class DummyInMemoryStore implements AdvancedLoadWriteStore {
 
    @Override
    public void purge(Executor threadPool, PurgeListener task) {
-      long currentTimeMillis = System.currentTimeMillis();
+      long currentTimeMillis = timeService.wallClockTime();
       Set expired = new HashSet();
       for (Iterator<Map.Entry<Object, byte[]>> i = store.entrySet().iterator(); i.hasNext();) {
          Map.Entry<Object, byte[]> next = i.next();
@@ -131,7 +133,7 @@ public class DummyInMemoryStore implements AdvancedLoadWriteStore {
       if (key == null) return null;
       MarshalledEntry me = deserialize(key, store.get(key));
       if (me == null) return null;
-      long now = System.currentTimeMillis();
+      long now = timeService.wallClockTime();
       if (isExpired(me, now)) {
          log.tracef("Key %s exists, but has expired.  Entry is %s", key, me);
          store.remove(key);
@@ -148,7 +150,7 @@ public class DummyInMemoryStore implements AdvancedLoadWriteStore {
    public void process(KeyFilter filter, CacheLoaderTask task, Executor executor, boolean fetchValue, boolean fetchMetadata) {
       record("process");
       log.tracef("Processing entries in store %s with filter %s and callback %s", storeName, filter, task);
-      final long currentTimeMillis = System.currentTimeMillis();
+      final long currentTimeMillis = timeService.wallClockTime();
       TaskContext tx = new TaskContextImpl();
       for (Iterator<Map.Entry<Object, byte[]>> i = store.entrySet().iterator(); i.hasNext();) {
          Map.Entry<Object, byte[]> entry = i.next();
@@ -242,8 +244,8 @@ public class DummyInMemoryStore implements AdvancedLoadWriteStore {
    }
 
    public void blockUntilCacheStoreContains(Object key, Object expectedValue, long timeout) {
-      long killTime = System.currentTimeMillis() + timeout;
-      while (System.currentTimeMillis() < killTime) {
+      long killTime = timeService.wallClockTime() + timeout;
+      while (timeService.wallClockTime() < killTime) {
          MarshalledEntry entry = deserialize(key, store.get(key));
          if (entry != null && entry.getValue().equals(expectedValue)) return;
          TestingUtil.sleepThread(50);
@@ -254,11 +256,11 @@ public class DummyInMemoryStore implements AdvancedLoadWriteStore {
    }
 
    public void blockUntilCacheStoreContains(Set<Object> expectedState, long timeout) {
-      long killTime = System.currentTimeMillis() + timeout;
+      long killTime = timeService.wallClockTime() + timeout;
       // Set<? extends Map.Entry<?, InternalCacheEntry>> expectedEntries = expectedState.entrySet();
       Set<Object> notStored = null;
       Set<Object> notRemoved = null;
-      while (System.currentTimeMillis() < killTime) {
+      while (timeService.wallClockTime() < killTime) {
          // Find out which entries might not have been removed from the store
          notRemoved = InfinispanCollections.difference(store.keySet(), expectedState);
          // Find out which entries might not have been stored

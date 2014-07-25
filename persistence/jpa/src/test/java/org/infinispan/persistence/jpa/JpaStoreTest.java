@@ -25,7 +25,7 @@ public class JpaStoreTest extends BaseStoreTest {
             .persistence()
                .addStore(JpaStoreConfigurationBuilder.class)
                   .persistenceUnitName("org.infinispan.persistence.jpa")
-            .entityClass(KeyValueEntity.class);
+                  .entityClass(KeyValueEntity.class);
       InitializationContext context = createContext(builder.build());
       context.getCache().getAdvancedCache().getComponentRegistry().getGlobalComponentRegistry()
             .registerComponent(new EntityManagerFactoryRegistry(), EntityManagerFactoryRegistry.class);

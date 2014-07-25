@@ -2,14 +2,12 @@ package org.infinispan.persistence.jdbc.binary;
 
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.persistence.BaseStoreTest;
-import org.infinispan.marshall.core.MarshalledEntryImpl;
 import org.infinispan.persistence.jdbc.TableManipulation;
 import org.infinispan.persistence.jdbc.configuration.JdbcBinaryStoreConfigurationBuilder;
 import org.infinispan.persistence.jdbc.connectionfactory.ConnectionFactory;
 import org.infinispan.persistence.spi.AdvancedLoadWriteStore;
 import org.infinispan.metadata.Metadata;
 import org.infinispan.metadata.impl.InternalMetadataImpl;
-import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.infinispan.test.fwk.UnitTestDatabaseManager;
 import org.infinispan.util.concurrent.WithinThreadExecutor;
@@ -83,15 +81,15 @@ public class JdbcBinaryStoreTest extends BaseStoreTest {
    public void testPurgeExpiredAllCodepaths() throws Exception {
       FixedHashKey k1 = new FixedHashKey(1, "a");
       FixedHashKey k2 = new FixedHashKey(1, "b");
-      cl.write(new MarshalledEntryImpl(k1, "value", null, getMarshaller()));
+      cl.write(marshalledEntry(k1, "value", null));
       Metadata metadata = metadata(1000, null);
-      InternalMetadataImpl im = new InternalMetadataImpl(metadata, System.currentTimeMillis(), System.currentTimeMillis());
-      cl.write(new MarshalledEntryImpl(k2, "value", im, getMarshaller())); // will expire
+      InternalMetadataImpl im = new InternalMetadataImpl(metadata, timeService.wallClockTime(), timeService.wallClockTime());
+      cl.write(marshalledEntry(k2, "value", im)); // will expire
       for (int i = 0; i < 120; i++) {
-         cl.write(new MarshalledEntryImpl(new FixedHashKey(i + 10, "non-exp k" + i), "value", null, getMarshaller()));
-         cl.write(new MarshalledEntryImpl(new FixedHashKey(i + 10, "exp k" + i), "value", im, getMarshaller())); // will expire
+         cl.write(marshalledEntry(new FixedHashKey(i + 10, "non-exp k" + i), "value", null));
+         cl.write(marshalledEntry(new FixedHashKey(i + 10, "exp k" + i), "value", im)); // will expire
       }
-      TestingUtil.sleepThread(1000);
+      timeService.advance(1001);
       assertContains(k1, true);
       assertContains(k2, false);
       cl.purge(new WithinThreadExecutor(), null);
