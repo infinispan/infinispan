@@ -16,6 +16,7 @@ import org.infinispan.persistence.TaskContextImpl;
 import org.infinispan.persistence.spi.AdvancedLoadWriteStore;
 import org.infinispan.persistence.spi.InitializationContext;
 import org.infinispan.util.KeyValuePair;
+import org.infinispan.util.TimeService;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
@@ -91,11 +92,13 @@ public class SingleFileStore<K, V> implements AdvancedLoadWriteStore<K, V> {
    private float fragmentationFactor = .75f;
    // Prevent clear() from truncating the file after a write() allocated the entry but before it wrote the data
    private ReadWriteLock resizeLock = new ReentrantReadWriteLock();
+   private TimeService timeService;
 
    @Override
    public void init(InitializationContext ctx) {
       this.ctx = ctx;
       this.configuration = ctx.getConfiguration();
+      this.timeService = ctx.getTimeService();
    }
 
    @Override
@@ -449,7 +452,7 @@ public class SingleFileStore<K, V> implements AdvancedLoadWriteStore<K, V> {
             if (fe == null)
                return null;
 
-            expired = fe.isExpired(System.currentTimeMillis());
+            expired = fe.isExpired(timeService.wallClockTime());
             if (expired) {
                // if expired, remove the entry (within entries monitor)
                entries.remove(key);
@@ -557,7 +560,7 @@ public class SingleFileStore<K, V> implements AdvancedLoadWriteStore<K, V> {
     */
    private void truncateFile(List<FileEntry> entries) {
       long startTime = 0;
-      if (trace) startTime = System.currentTimeMillis();
+      if (trace) startTime = timeService.wallClockTime();
         
       int reclaimedSpace = 0;
       int removedEntries = 0;
@@ -589,7 +592,7 @@ public class SingleFileStore<K, V> implements AdvancedLoadWriteStore<K, V> {
 
       if (trace) {
          log.tracef("Removed entries: " + removedEntries + ", Reclaimed Space: " + reclaimedSpace);
-         log.tracef("Time taken for truncateFile: " + (System.currentTimeMillis() - startTime) + " (ms)");
+         log.tracef("Time taken for truncateFile: " + (timeService.wallClockTime() - startTime) + " (ms)");
       }
    }
 
@@ -598,7 +601,7 @@ public class SingleFileStore<K, V> implements AdvancedLoadWriteStore<K, V> {
     */
    private void mergeFreeEntries(List<FileEntry> entries) {
       long startTime = 0;
-      if (trace) startTime = System.currentTimeMillis();
+      if (trace) startTime = timeService.wallClockTime();
       FileEntry lastEntry = null;
       FileEntry newEntry = null;
       int mergeCounter = 0;
@@ -643,7 +646,7 @@ public class SingleFileStore<K, V> implements AdvancedLoadWriteStore<K, V> {
          }
       }
 
-      if (trace) log.tracef("Total time taken for mergeFreeEntries: " + (System.currentTimeMillis() - startTime) + " (ms)");
+      if (trace) log.tracef("Total time taken for mergeFreeEntries: " + (timeService.wallClockTime() - startTime) + " (ms)");
    }
    
    @Override
@@ -652,7 +655,7 @@ public class SingleFileStore<K, V> implements AdvancedLoadWriteStore<K, V> {
       threadPool.execute(new Runnable() {
          @Override
          public void run() {
-            long now = System.currentTimeMillis();
+            long now = timeService.wallClockTime();
             List<KeyValuePair<Object, FileEntry>> entriesToPurge = new ArrayList<KeyValuePair<Object, FileEntry>>();
             synchronized (entries) {
                for (Iterator<Map.Entry<K, FileEntry>> it = entries.entrySet().iterator(); it.hasNext(); ) {

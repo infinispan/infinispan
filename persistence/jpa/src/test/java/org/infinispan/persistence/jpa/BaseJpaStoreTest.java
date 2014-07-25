@@ -282,8 +282,6 @@ public abstract class BaseJpaStoreTest extends AbstractJpaStoreTest {
       cs.store(se3);
       cs.store(se4);
 
-      sleepForStopStartTest();
-
       cs.stop();
       cs.start();
       assert se1.isExpired(System.currentTimeMillis());

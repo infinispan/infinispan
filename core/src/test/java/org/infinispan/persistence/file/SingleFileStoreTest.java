@@ -41,8 +41,7 @@ public class SingleFileStoreTest extends BaseStoreTest {
       configurationBuilder
             .persistence()
                .addStore(SingleFileStoreConfigurationBuilder.class)
-                  .location(this.tmpDirectory)
-                  .create();
+                  .location(this.tmpDirectory);
       store.init(createContext(configurationBuilder.build()));
       return store;
    }
