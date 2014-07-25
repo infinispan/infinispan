@@ -690,6 +690,9 @@ the cluster contains k1, k2 and k3 keys such that owners(k1) = {A,B}, owners(k2)
 - on C1, k1 is available for read/write, k2 (partially owned) and k3 (not owned) are not available and accessing them results in an AvailabilityException
 - on C2, k1 and k2  are not available for read/write, k3 is available
 
+A relevant aspect of the partition handling process is the fact that when a split brain happens, the resulting partitions rely on the original consistent hash function (the one that existed before the split brain) in order
+ to calculate key ownership. So it doesn't matter if k1, k2 or k3 already exists in the cluster or not, as the availability is strictly determined by the consistent hash and not by the key existence.
+
 If at a further point in time the initial partition C forms again as a result of the network healing and C1 and C2 partitions being merged back together, then C exists the degraded mode becoming fully available again.
 
 ===== Partition handling for replicated caches
