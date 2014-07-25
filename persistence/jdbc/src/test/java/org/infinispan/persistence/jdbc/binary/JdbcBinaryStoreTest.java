@@ -9,7 +9,6 @@ import org.infinispan.persistence.jdbc.TableManipulation;
 import org.infinispan.persistence.jdbc.configuration.JdbcBinaryStoreConfigurationBuilder;
 import org.infinispan.persistence.jdbc.connectionfactory.ConnectionFactory;
 import org.infinispan.persistence.spi.AdvancedLoadWriteStore;
-import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.infinispan.test.fwk.UnitTestDatabaseManager;
 import org.infinispan.util.concurrent.WithinThreadExecutor;
@@ -66,15 +65,16 @@ public class JdbcBinaryStoreTest extends BaseStoreTest {
    public void testPurgeExpiredAllCodepaths() throws Exception {
       FixedHashKey k1 = new FixedHashKey(1, "a");
       FixedHashKey k2 = new FixedHashKey(1, "b");
-      cl.write(new MarshalledEntryImpl(k1, "value", null, getMarshaller()));
-      Metadata metadata = metadata(1000, null);
-      InternalMetadataImpl im = new InternalMetadataImpl(metadata, System.currentTimeMillis(), System.currentTimeMillis());
-      cl.write(new MarshalledEntryImpl(k2, "value", im, getMarshaller())); // will expire
+      cl.write(new MarshalledEntryImpl<Object, Object>(k1, "value", null, getMarshaller()));
+      Metadata metadata = metadata(1, null);
+      InternalMetadataImpl im = new InternalMetadataImpl(metadata, timeService.wallClockTime(), timeService.wallClockTime());
+      cl.write(new MarshalledEntryImpl<Object, Object>(k2, "value", im, getMarshaller())); // will expire
       for (int i = 0; i < 120; i++) {
-         cl.write(new MarshalledEntryImpl(new FixedHashKey(i + 10, "non-exp k" + i), "value", null, getMarshaller()));
-         cl.write(new MarshalledEntryImpl(new FixedHashKey(i + 10, "exp k" + i), "value", im, getMarshaller())); // will expire
+         cl.write(new MarshalledEntryImpl<Object, Object>(new FixedHashKey(i + 10, "non-exp k" + i), "value", null, getMarshaller()));
+         cl.write(new MarshalledEntryImpl<Object, Object>(new FixedHashKey(i + 10, "exp k" + i), "value", im, getMarshaller())); // will expire
       }
-      TestingUtil.sleepThread(1000);
+
+      timeService.advance(2);
 
       assertContains(k1, true);
       assertContains(k2, false);

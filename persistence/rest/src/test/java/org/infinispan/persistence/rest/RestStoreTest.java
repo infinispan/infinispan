@@ -4,6 +4,7 @@ import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.global.GlobalConfigurationBuilder;
 import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.eviction.EvictionStrategy;
+import org.infinispan.factories.GlobalComponentRegistry;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.persistence.BaseStoreTest;
 import org.infinispan.persistence.rest.configuration.RestStoreConfigurationBuilder;
@@ -12,7 +13,7 @@ import org.infinispan.rest.EmbeddedRestServer;
 import org.infinispan.rest.RestTestingUtil;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
-import org.infinispan.test.fwk.TestInternalCacheEntryFactory;
+import org.infinispan.util.TimeService;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.Test;
 
@@ -43,14 +44,14 @@ public class RestStoreTest extends BaseStoreTest {
 
    @Override
    public void testReplaceExpiredEntry() throws Exception {
-      InternalCacheEntry ice = TestInternalCacheEntryFactory.create("k1", "v1", 100);
-      cl.write(TestingUtil.marshalledEntry(ice, getMarshaller()));
+      InternalCacheEntry ice = internalCacheEntry("k1", "v1", 100);
+      cl.write(marshalledEntry(ice));
       // Hot Rod does not support milliseconds, so 100ms is rounded to the nearest second,
       // and so data is stored for 1 second here. Adjust waiting time accordingly.
-      TestingUtil.sleepThread(1100);
+      timeService.advance(1100 +1);
       assertNull(cl.load("k1"));
-      InternalCacheEntry ice2 = TestInternalCacheEntryFactory.create("k1", "v2", 100);
-      cl.write(TestingUtil.marshalledEntry(ice2, getMarshaller()));
+      InternalCacheEntry ice2 = internalCacheEntry("k1", "v2", 100);
+      cl.write(marshalledEntry(ice2));
       assertEquals("v2", cl.load("k1").getValue());
    }
 
@@ -64,6 +65,10 @@ public class RestStoreTest extends BaseStoreTest {
 
       localCacheManager = TestCacheManagerFactory.createCacheManager(globalConfig, localBuilder);
       localCacheManager.getCache(REMOTE_CACHE);
+      GlobalComponentRegistry gcr = localCacheManager.getGlobalComponentRegistry();
+      gcr.registerComponent(timeService, TimeService.class);
+      gcr.rewire();
+      localCacheManager.getCache(REMOTE_CACHE).getAdvancedCache().getComponentRegistry().rewire();
       restServer = RestTestingUtil.startRestServer(localCacheManager);
 
       ConfigurationBuilder builder = TestCacheManagerFactory.getDefaultCacheConfiguration(false);

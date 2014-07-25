@@ -2,6 +2,8 @@ package org.infinispan.persistence;
 
 import org.infinispan.commons.marshall.StreamingMarshaller;
 import org.infinispan.configuration.cache.Configuration;
+import org.infinispan.container.InternalEntryFactory;
+import org.infinispan.container.InternalEntryFactoryImpl;
 import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.container.entries.InternalCacheValue;
 import org.infinispan.filter.CollectionKeyFilter;
@@ -17,8 +19,9 @@ import org.infinispan.persistence.spi.PersistenceException;
 import org.infinispan.test.AbstractInfinispanTest;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.TestInternalCacheEntryFactory;
+import org.infinispan.util.DefaultTimeService;
 import org.infinispan.util.PersistenceMockUtil;
-import org.infinispan.util.concurrent.ConcurrentHashSet;
+import org.infinispan.util.concurrent.WithinThreadExecutor;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
@@ -30,8 +33,6 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.concurrent.Callable;
-import java.util.concurrent.LinkedBlockingQueue;
-import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 
 import static java.util.Collections.emptySet;
@@ -49,11 +50,16 @@ public abstract class BaseStoreTest extends AbstractInfinispanTest {
 
    protected AdvancedLoadWriteStore<Object, Object> cl;
    private TestObjectStreamMarshaller marshaller;
+   protected ControlledTimeService timeService;
+   private InternalEntryFactory factory;
 
    //alwaysRun = true otherwise, when we run unstable tests, this method is not invoked (because it belongs to the unit group)
    @BeforeMethod(alwaysRun = true)
    public void setUp() throws Exception {
       marshaller = new TestObjectStreamMarshaller();
+      timeService = new ControlledTimeService(0);
+      factory = new InternalEntryFactoryImpl();
+      ((InternalEntryFactoryImpl) factory).injectTimeService(timeService);
       try {
          //noinspection unchecked
          cl = createStore();
@@ -80,7 +86,7 @@ public abstract class BaseStoreTest extends AbstractInfinispanTest {
 
    public void testLoadAndStoreImmortal() throws PersistenceException {
       assertContains("k", false);
-      cl.write(new MarshalledEntryImpl<Object, Object>("k", wrap("k", "v"), null, getMarshaller()));
+      cl.write(marshalledEntry("k", "v", null));
 
       assertEquals("v", unwrap(cl.load("k").getValue()));
       MarshalledEntry entry = cl.load("k");
@@ -93,24 +99,26 @@ public abstract class BaseStoreTest extends AbstractInfinispanTest {
    public void testLoadAndStoreWithLifespan() throws Exception {
       assertContains("k", false);
 
-      long lifespan = 120000;
-      InternalCacheEntry se = TestInternalCacheEntryFactory.create("k", wrap("k", "v"), lifespan);
+      long lifespan = 1000;
+      InternalCacheEntry se = internalCacheEntry("k", "v", lifespan);
+      assertExpired(se, false);
+
       cl.write(marshalledEntry(se));
 
       assertContains("k", true);
-      MarshalledEntry me = cl.load("k");
-      assertCorrectExpiry(me, "v", lifespan, -1, false);
+      assertCorrectExpiry(cl.load("k"), "v", lifespan, -1, false);
+      assertCorrectExpiry(TestingUtil.allEntries(cl).iterator().next(), "v", lifespan, -1, false);
 
-      me = TestingUtil.allEntries(cl).iterator().next();
-      assertCorrectExpiry(me, "v", lifespan, -1, false);
-
-      lifespan = 1;
-      se = TestInternalCacheEntryFactory.create("k", wrap("k", "v"), lifespan);
+      lifespan = 2000;
+      se = internalCacheEntry("k", "v", lifespan);
+      assertExpired(se, false);
       cl.write(marshalledEntry(se));
-      Thread.sleep(100);
-      purgeExpired(Collections.singleton("k"), 10000);
 
+      timeService.advance(lifespan + 1);
       assertExpired(se, true);
+
+      purgeExpired("k");
+
       assertEventuallyExpires("k");
       assertContains("k", false);
       assertIsEmpty();
@@ -119,21 +127,25 @@ public abstract class BaseStoreTest extends AbstractInfinispanTest {
    public void testLoadAndStoreWithIdle() throws Exception {
       assertContains("k", false);
 
-      long idle = 120000;
-      InternalCacheEntry se = TestInternalCacheEntryFactory.create("k", wrap("k", "v"), -1, idle);
+      long idle = 1000;
+      InternalCacheEntry se = internalCacheEntry("k", "v", -1, idle);
+      assertExpired(se, false);
       cl.write(marshalledEntry(se));
 
       assertContains("k", true);
-      MarshalledEntry me = cl.load("k");
-      assertCorrectExpiry(me, "v", -1, idle, false);
+      assertCorrectExpiry(cl.load("k"), "v", -1, idle, false);
       assertCorrectExpiry(TestingUtil.allEntries(cl).iterator().next(), "v", -1, idle, false);
 
-      idle = 1;
-      se = TestInternalCacheEntryFactory.create("k", wrap("k", "v"), -1, idle);
+      idle = 2000;
+      se = internalCacheEntry("k", "v", -1, idle);
+      assertExpired(se, false);
       cl.write(marshalledEntry(se));
-      Thread.sleep(100);
-      purgeExpired(Collections.singleton("k"), 10000);
+
+      timeService.advance(idle + 1);
       assertExpired(se, true);
+
+      purgeExpired("k");
+
       assertEventuallyExpires("k");
       assertContains("k", false);
       assertIsEmpty();
@@ -142,27 +154,66 @@ public abstract class BaseStoreTest extends AbstractInfinispanTest {
    public void testLoadAndStoreWithLifespanAndIdle() throws Exception {
       assertContains("k", false);
 
-      long lifespan = 200000;
-      long idle = 120000;
-      InternalCacheEntry se = TestInternalCacheEntryFactory.create("k", wrap("k", "v"), lifespan, idle);
+      long lifespan = 1000;
+      long idle = 1000;
+      InternalCacheEntry se = internalCacheEntry("k", "v", lifespan, idle);
       InternalCacheValue icv = se.toInternalCacheValue();
       assertEquals(se.getCreated(), icv.getCreated());
       assertEquals(se.getLastUsed(), icv.getLastUsed());
+      assertExpired(se, false);
       cl.write(marshalledEntry(se));
 
       assertContains("k", true);
-      MarshalledEntry ice = cl.load("k");
-      assertCorrectExpiry(ice, "v", lifespan, idle, false);
+      assertCorrectExpiry(cl.load("k"), "v", lifespan, idle, false);
       assertCorrectExpiry(TestingUtil.allEntries(cl).iterator().next(), "v", lifespan, idle, false);
 
-      idle = 1;
-      se = TestInternalCacheEntryFactory.create("k", wrap("k", "v"), lifespan, idle);
+      idle = 1000;
+      lifespan = 4000;
+      se = internalCacheEntry("k", "v", lifespan, idle);
+      assertExpired(se, false);
       cl.write(marshalledEntry(se));
-      Thread.sleep(100);
-      purgeExpired(Collections.singleton("k"), 10000);
-      assertExpired(se, true);
+
+      timeService.advance(idle + 1);
+      assertExpired(se, true); //expired by idle
+
+      purgeExpired("k");
+
       assertEventuallyExpires("k");
       assertContains("k", false);
+
+      assertIsEmpty();
+   }
+
+   public void testLoadAndStoreWithLifespanAndIdle2() throws Exception {
+      assertContains("k", false);
+
+      long lifespan = 1000;
+      long idle = 1000;
+      InternalCacheEntry se = internalCacheEntry("k", "v", lifespan, idle);
+      InternalCacheValue icv = se.toInternalCacheValue();
+      assertEquals(se.getCreated(), icv.getCreated());
+      assertEquals(se.getLastUsed(), icv.getLastUsed());
+      assertExpired(se, false);
+      cl.write(marshalledEntry(se));
+
+      assertContains("k", true);
+      assertCorrectExpiry(cl.load("k"), "v", lifespan, idle, false);
+      assertCorrectExpiry(TestingUtil.allEntries(cl).iterator().next(), "v", lifespan, idle, false);
+
+      idle = 4000;
+      lifespan = 1000;
+      se = internalCacheEntry("k", "v", lifespan, idle);
+      assertExpired(se, false);
+      cl.write(marshalledEntry(se));
+
+      timeService.advance(lifespan + 1);
+      assertExpired(se, true); //expired by lifespan
+
+      purgeExpired("k");
+
+      assertEventuallyExpires("k");
+      assertContains("k", false);
+
       assertIsEmpty();
    }
 
@@ -172,17 +223,28 @@ public abstract class BaseStoreTest extends AbstractInfinispanTest {
       assertContains("k3", false);
       assertContains("k4", false);
 
-      long lifespan = 1;
-      long idle = 1;
-      InternalCacheEntry se1 = TestInternalCacheEntryFactory.create("k1", wrap("k1", "v1"), lifespan);
-      InternalCacheEntry se2 = TestInternalCacheEntryFactory.create("k2", wrap("k2", "v2"));
-      InternalCacheEntry se3 = TestInternalCacheEntryFactory.create("k3", wrap("k3", "v3"), -1, idle);
-      InternalCacheEntry se4 = TestInternalCacheEntryFactory.create("k4", wrap("k4", "v4"), lifespan, idle);
+      long lifespan = 1000;
+      long idle = 1000;
+      InternalCacheEntry se1 = internalCacheEntry("k1", "v1", lifespan);
+      InternalCacheEntry se2 = internalCacheEntry("k2", "v2", -1);
+      InternalCacheEntry se3 = internalCacheEntry("k3", "v3", -1, idle);
+      InternalCacheEntry se4 = internalCacheEntry("k4", "v4", lifespan, idle);
+
+      assertExpired(se1, false);
+      assertExpired(se2, false);
+      assertExpired(se3, false);
+      assertExpired(se4, false);
 
       cl.write(marshalledEntry(se1));
       cl.write(marshalledEntry(se2));
       cl.write(marshalledEntry(se3));
       cl.write(marshalledEntry(se4));
+
+      timeService.advance(lifespan + 1);
+      assertExpired(se1, true);
+      assertExpired(se2, false);
+      assertExpired(se3, true);
+      assertExpired(se4, true);
 
       sleepForStopStartTest();
 
@@ -255,18 +317,18 @@ public abstract class BaseStoreTest extends AbstractInfinispanTest {
 
    public void testPurgeExpired() throws Exception {
       // Increased lifespan and idle timeouts to accommodate slower cache stores
-      long lifespan = 6000;
-      long idle = 4000;
+      long lifespan = 4000;
+      long idle = 1000;
 
-      InternalCacheEntry ice1 = TestInternalCacheEntryFactory.create("k1", wrap("k1", "v1"), lifespan);
+      InternalCacheEntry ice1 = internalCacheEntry("k1", "v1", lifespan);
       cl.write(marshalledEntry(ice1));
-      InternalCacheEntry ice2 = TestInternalCacheEntryFactory.create("k2", wrap("k2", "v2"), -1, idle);
+      InternalCacheEntry ice2 = internalCacheEntry("k2", "v2", -1, idle);
       cl.write(marshalledEntry(ice2));
-      InternalCacheEntry ice3 = TestInternalCacheEntryFactory.create("k3", wrap("k3", "v3"), lifespan, idle);
+      InternalCacheEntry ice3 = internalCacheEntry("k3", "v3", lifespan, idle);
       cl.write(marshalledEntry(ice3));
-      InternalCacheEntry ice4 = TestInternalCacheEntryFactory.create("k4", wrap("k4", "v4"), -1, -1);
+      InternalCacheEntry ice4 = internalCacheEntry("k4", "v4", -1, -1);
       cl.write(marshalledEntry(ice4)); // immortal entry
-      InternalCacheEntry ice5 = TestInternalCacheEntryFactory.create("k5", wrap("k5", "v5"), lifespan * 1000, idle * 1000);
+      InternalCacheEntry ice5 = internalCacheEntry("k5", "v5", lifespan * 1000, idle * 1000);
       cl.write(marshalledEntry(ice5)); // long life mortal entry
 
       assertContains("k1", true);
@@ -275,15 +337,13 @@ public abstract class BaseStoreTest extends AbstractInfinispanTest {
       assertContains("k4", true);
       assertContains("k5", true);
 
-      Thread.sleep(lifespan + 10);
+      timeService.advance(lifespan + 1);
 
-      HashSet<String> expiredKeys = new HashSet<>(Arrays.asList("k1", "k2", "k3"));
-      purgeExpired(Collections.unmodifiableSet(expiredKeys), 10000);
+      purgeExpired("k1", "k2", "k3");
 
-      for (String key : expiredKeys) {
-         assertContains(key, false);
-      }
-
+      assertContains("k1", false);
+      assertContains("k2", false);
+      assertContains("k3", false);
       assertContains("k4", true);
       assertContains("k5", true);
    }
@@ -310,41 +370,26 @@ public abstract class BaseStoreTest extends AbstractInfinispanTest {
    }
 
    public void testReplaceExpiredEntry() throws Exception {
-      final long startTime = System.currentTimeMillis();
-      final long lifespan = 3000;
+      final long lifespan = 1000;
 
-      InternalCacheEntry ice = TestInternalCacheEntryFactory.create("k1", wrap("k1", "v1"), lifespan);
+      InternalCacheEntry ice = internalCacheEntry("k1", "v1", lifespan);
+      assertExpired(ice, false);
       cl.write(marshalledEntry(ice));
-      while (true) {
-         MarshalledEntry entry = cl.load("k1");
-         if (System.currentTimeMillis() >= startTime + lifespan)
-            break;
-         assertEquals("v1", unwrap(entry.getValue()));
-         Thread.sleep(100);
-      }
+      assertEquals("v1", unwrap(cl.load("k1").getValue()));
 
-      // Make sure that in the next 20 secs data is removed
-      while (System.currentTimeMillis() < startTime + lifespan + 20000) {
-         if (cl.load("k1") == null) break;
-      }
+      timeService.advance(lifespan + 1);
+      assertExpired(ice, true);
 
       assertNull(cl.load("k1"));
 
-      InternalCacheEntry ice2 = TestInternalCacheEntryFactory.create("k1", wrap("k1", "v2"), lifespan);
+      InternalCacheEntry ice2 = internalCacheEntry("k1", "v2", lifespan);
+      assertExpired(ice2, false);
       cl.write(marshalledEntry(ice2));
 
-      while (true) {
-         MarshalledEntry entry = cl.load("k1");
-         if (System.currentTimeMillis() >= startTime + lifespan)
-            break;
-         assertEquals("v2", unwrap(entry.getValue()));
-         Thread.sleep(100);
-      }
+      assertEquals("v2", unwrap(cl.load("k1").getValue()));
 
-      // Make sure that in the next 20 secs data is removed
-      while (System.currentTimeMillis() < startTime + lifespan + 20000) {
-         if (cl.load("k1") == null) break;
-      }
+      timeService.advance(lifespan + 1);
+      assertExpired(ice2, true);
 
       assertNull(cl.load("k1"));
    }
@@ -405,12 +450,9 @@ public abstract class BaseStoreTest extends AbstractInfinispanTest {
       return true;
    }
 
-   protected void purgeExpired(Collection<String> expiredKeys, long timeout) {
-      final ThreadPoolExecutor executor = new ThreadPoolExecutor(3, 3, 1, TimeUnit.SECONDS, new LinkedBlockingQueue<Runnable>());
-      final Set<String> expired = new ConcurrentHashSet<>();
-      for (String key : expiredKeys) // addAll is not supported
-         expired.add(key);
-      final Set<Object> incorrect = new ConcurrentHashSet<>();
+   protected void purgeExpired(String... expiredKeys) throws Exception {
+      final Set<String> expired = new HashSet<>(Arrays.asList(expiredKeys));
+      final Set<Object> incorrect = new HashSet<>();
       final AdvancedCacheWriter.PurgeListener purgeListener = new AdvancedCacheWriter.PurgeListener<String>() {
          @Override
          public void entryPurged(String key) {
@@ -419,33 +461,19 @@ public abstract class BaseStoreTest extends AbstractInfinispanTest {
             }
          }
       };
+      // purge is executed by eviction thread, which is different than application thread
+      // this may matter for some locking cases
+      fork(new Callable<Void>() {
+         @Override
+         public Void call() throws Exception {
+            cl.purge(new WithinThreadExecutor(), purgeListener);
+            return null;
+         }
+      }).get(30, TimeUnit.SECONDS);
 
-      long start = System.nanoTime();
-      for (; ; ) {
-         // purge is executed by eviction thread, which is different than application thread
-         // this may matter for some locking cases
-         try {
-            executor.submit(new Callable<Void>() {
-               @Override
-               public Void call() throws Exception {
-                  //noinspection unchecked
-                  cl.purge(executor, purgeListener);
-                  return null;
-               }
-            }).get();
-         } catch (Exception e) {
-            throw new RuntimeException("Purge has thrown an exception", e);
-         }
-         assertEquals(Collections.emptySet(), incorrect);
-         if (expired.isEmpty() || !storePurgesAllExpired()) {
-            return;
-         }
-         if (System.nanoTime() > start + TimeUnit.MILLISECONDS.toNanos(timeout)) {
-            throw new IllegalStateException("Purge has timed out");
-         } else {
-            Thread.yield();
-         }
-      }
+      assertEmpty(incorrect, true);
+      assertTrue(expired.isEmpty() || !storePurgesAllExpired());
+      assertEquals(Collections.emptySet(), incorrect);
    }
 
    protected void sleepForStopStartTest() throws InterruptedException {
@@ -453,7 +481,7 @@ public abstract class BaseStoreTest extends AbstractInfinispanTest {
    }
 
    protected final InitializationContext createContext(Configuration configuration) {
-      return PersistenceMockUtil.createContext(getClass().getSimpleName(), configuration, getMarshaller());
+      return PersistenceMockUtil.createContext(getClass().getSimpleName(), configuration, getMarshaller(), timeService);
    }
 
    protected StreamingMarshaller getMarshaller() {
@@ -464,11 +492,19 @@ public abstract class BaseStoreTest extends AbstractInfinispanTest {
       assertEquals("contains(" + k + ")", expected, cl.contains(k));
    }
 
+   protected final InternalCacheEntry<Object, Object> internalCacheEntry(String key, String value, long lifespan) {
+      return TestInternalCacheEntryFactory.<Object, Object>create(factory, key, wrap(key, value), lifespan);
+   }
+
+   private InternalCacheEntry<Object, Object> internalCacheEntry(String key, String value, long lifespan, long idle) {
+      return TestInternalCacheEntryFactory.<Object, Object>create(factory, key, wrap(key, value), lifespan, idle);
+   }
+
    private MarshalledEntry<Object, Object> marshalledEntry(String key, String value, InternalMetadata metadata) {
       return new MarshalledEntryImpl<Object, Object>(key, wrap(key, value), metadata, getMarshaller());
    }
 
-   private MarshalledEntry<Object, Object> marshalledEntry(InternalCacheEntry entry) {
+   protected final MarshalledEntry<Object, Object> marshalledEntry(InternalCacheEntry entry) {
       //noinspection unchecked
       return TestingUtil.marshalledEntry(entry, getMarshaller());
    }
@@ -478,7 +514,7 @@ public abstract class BaseStoreTest extends AbstractInfinispanTest {
    }
 
    private void assertExpired(InternalCacheEntry entry, boolean expected) {
-      assertEquals(entry + ".isExpired() ", expected, entry.isExpired(System.currentTimeMillis()));
+      assertEquals(entry + ".isExpired() ", expected, entry.isExpired(timeService.wallClockTime()));
    }
 
    private void assertEmpty(Collection<?> collection, boolean expected) {
@@ -498,7 +534,7 @@ public abstract class BaseStoreTest extends AbstractInfinispanTest {
          assertTrue("LastUsed is not -1 when maxIdle is used.", me.getMetadata().lastUsed() > -1);
       }
       if (me.getMetadata() != null) {
-         assertEquals(me + ".isExpired() ", expired, me.getMetadata().isExpired(System.currentTimeMillis()));
+         assertEquals(me + ".isExpired() ", expired, me.getMetadata().isExpired(timeService.wallClockTime()));
       }
    }
 
@@ -528,6 +564,28 @@ public abstract class BaseStoreTest extends AbstractInfinispanTest {
       @Override
       public int hashCode() {
          return role != null ? role.hashCode() : 0;
+      }
+   }
+
+   public static class ControlledTimeService extends DefaultTimeService {
+      private long currentTime;
+
+      public ControlledTimeService(long currentTime) {
+         this.currentTime = currentTime;
+      }
+
+      @Override
+      public long wallClockTime() {
+         return currentTime;
+      }
+
+      @Override
+      public long time() {
+         return currentTime * 1000;
+      }
+
+      public void advance(long time) {
+         currentTime += time;
       }
    }
 

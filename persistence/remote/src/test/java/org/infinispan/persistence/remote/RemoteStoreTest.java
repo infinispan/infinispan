@@ -6,6 +6,7 @@ import org.infinispan.commons.marshall.StreamingMarshaller;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.global.GlobalConfigurationBuilder;
 import org.infinispan.eviction.EvictionStrategy;
+import org.infinispan.factories.GlobalComponentRegistry;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.marshall.core.MarshalledEntryImpl;
 import org.infinispan.persistence.BaseStoreTest;
@@ -14,6 +15,7 @@ import org.infinispan.persistence.spi.AdvancedLoadWriteStore;
 import org.infinispan.server.hotrod.HotRodServer;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
+import org.infinispan.util.TimeService;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.Test;
 
@@ -42,13 +44,13 @@ public class RemoteStoreTest extends BaseStoreTest {
 
    @Override
    public void testReplaceExpiredEntry() throws Exception {
-      cl.write(new MarshalledEntryImpl("k1", "v1", internalMetadata(100l, null), getMarshaller()));
+      cl.write(marshalledEntry(internalCacheEntry("k1", "v1", 100)));
       // Hot Rod does not support milliseconds, so 100ms is rounded to the nearest second,
       // and so data is stored for 1 second here. Adjust waiting time accordingly.
-      TestingUtil.sleepThread(1100);
+      timeService.advance(1100l + 1);
       assertNull(cl.load("k1"));
       long start = System.currentTimeMillis();
-      cl.write(new MarshalledEntryImpl("k1", "v2", internalMetadata(100l, null), getMarshaller()));
+      cl.write(marshalledEntry(internalCacheEntry("k1", "v2", 100)));
       assertTrue(cl.load("k1").getValue().equals("v2") || TestingUtil.moreThanDurationElapsed(start, 100));
    }
 
@@ -63,6 +65,10 @@ public class RemoteStoreTest extends BaseStoreTest {
 
       localCacheManager = TestCacheManagerFactory.createCacheManager(globalConfig, hotRodCacheConfiguration(localBuilder));
       localCacheManager.getCache(REMOTE_CACHE);
+      GlobalComponentRegistry gcr = localCacheManager.getGlobalComponentRegistry();
+      gcr.registerComponent(timeService, TimeService.class);
+      gcr.rewire();
+      localCacheManager.getCache(REMOTE_CACHE).getAdvancedCache().getComponentRegistry().rewire();
       hrServer = TestHelper.startHotRodServer(localCacheManager);
 
       ConfigurationBuilder builder = TestCacheManagerFactory.getDefaultCacheConfiguration(false);
