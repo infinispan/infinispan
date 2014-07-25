@@ -39,6 +39,8 @@ import org.infinispan.transaction.impl.TransactionCoordinator;
 import org.infinispan.transaction.totalorder.TotalOrderManager;
 import org.infinispan.transaction.xa.TransactionFactory;
 import org.infinispan.transaction.xa.recovery.RecoveryAdminOperations;
+import org.infinispan.util.logging.Log;
+import org.infinispan.util.logging.LogFactory;
 import org.infinispan.xsite.BackupSender;
 import org.infinispan.xsite.BackupSenderImpl;
 import org.infinispan.xsite.statetransfer.XSiteStateConsumer;
@@ -67,6 +69,8 @@ import static org.infinispan.commons.util.Util.getInstance;
                               RemoteValueRetrievedListener.class, InvocationContextFactory.class, CommitManager.class,
                               XSiteStateTransferManager.class, XSiteStateConsumer.class, XSiteStateProvider.class, PartitionHandlingManager.class})
 public class EmptyConstructorNamedCacheFactory extends AbstractNamedCacheComponentFactory implements AutoInstantiableFactory {
+
+   private static Log log = LogFactory.getLog(EmptyConstructorNamedCacheFactory.class);
 
    @Override
    @SuppressWarnings("unchecked")
@@ -137,9 +141,15 @@ public class EmptyConstructorNamedCacheFactory extends AbstractNamedCacheCompone
          } else if (componentType.equals(XSiteStateProvider.class)) {
             return (T) new XSiteStateProviderImpl();
          } else if (componentType.equals(PartitionHandlingManager.class)) {
-            if (configuration.clustering().cacheMode().isDistributed() && configuration.clustering().partitionHandling().enabled())
-               return (T) new PartitionHandlingManager();
-            else return null;
+            if (configuration.clustering().partitionHandling().enabled()) {
+               if (configuration.clustering().cacheMode().isReplicated()) {
+                  log.warnPartitionHandlingForReplicatedCaches();
+               }
+               if (configuration.clustering().cacheMode().isDistributed())
+                  return (T) new PartitionHandlingManager();
+            } else {
+               return null;
+            }
          }
       }
 

@@ -692,6 +692,13 @@ the cluster contains k1, k2 and k3 keys such that owners(k1) = {A,B}, owners(k2)
 
 If at a further point in time the initial partition C forms again as a result of the network healing and C1 and C2 partitions being merged back together, then C exists the degraded mode becoming fully available again.
 
+===== Partition handling for replicated caches
+Infinispan internally handles a replicated cache as a degenerated distributed mode where *numOwners* equals the cluster size. Following the logic described above, all the partitions of a replicated cache that suffers a split brain would be available,
+as for every such partition the number of nodes that left is smaller than *numOwners* (which in turn is equal with the initial cluster size). Having both partitions available defeats the main purpose of the partition handling,
+allowing inconsistencies to happen: e.g. an update on the first partition is allowed and at the same time readers getting the old information from the other partition.
+This partition handling strategy doesn't work with replicated caches, where other strategies such as majority of nodes
+are more appropriate. Because of this, the partition handling functionality is not available for replicated caches at the moment and it is ignored.
+
 ==== Successive node failures
 When an Infinispan node leaves, either because of being shut down or because of a (e.g. process) crash, the remaining owners of the data
 pertaining to the crashed node send copies of this data to other nodes in the cluster in order to preserve the *numOwners* invariant.
@@ -709,9 +716,9 @@ In order to enable partition handling within the XML configuration:
 
 [source,xml]
 ----
-<replicated-cache name="the-default-cache">
+<distributed-cache name="the-default-cache">
    <partition-handling enabled="true"/>
-</replicated-cache>
+</distributed-cache>
 ----
 
 Unless the cache is clustered (replicated/distributed) the configuration is ignored.
