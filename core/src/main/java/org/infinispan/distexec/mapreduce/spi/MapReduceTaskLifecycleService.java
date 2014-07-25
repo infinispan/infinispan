@@ -16,13 +16,16 @@ public final class MapReduceTaskLifecycleService {
 
    private static final Log log = LogFactory.getLog(MapReduceTaskLifecycleService.class);
    private static MapReduceTaskLifecycleService service;
-   private List<MapReduceTaskLifecycle> lifecycles;
 
    private MapReduceTaskLifecycleService() {
-      lifecycles = new ArrayList<MapReduceTaskLifecycle>();
+   }
+
+   private List<MapReduceTaskLifecycle> findMapReduceTaskLifecycles() {
+      List<MapReduceTaskLifecycle> lifecycles = new ArrayList<MapReduceTaskLifecycle>();
       for (MapReduceTaskLifecycle l : ServiceFinder.load(MapReduceTaskLifecycle.class)) {
          lifecycles.add(l);
       }
+      return lifecycles;
    }
 
    public static synchronized MapReduceTaskLifecycleService getInstance() {
@@ -34,7 +37,7 @@ public final class MapReduceTaskLifecycleService {
 
    public <KIn, VIn, KOut, VOut> void onPreExecute(Mapper<KIn, VIn, KOut, VOut> mapper,  Cache<KIn, VIn> inputCache) {
       try {
-         for (MapReduceTaskLifecycle l : lifecycles) {
+         for (MapReduceTaskLifecycle l : findMapReduceTaskLifecycles()) {
             l.onPreExecute(mapper, inputCache);
          }
       } catch (ServiceConfigurationError serviceError) {
@@ -46,7 +49,7 @@ public final class MapReduceTaskLifecycleService {
 
    public <KIn, VIn, KOut, VOut> void onPostExecute(Mapper<KIn, VIn, KOut, VOut> mapper) {
       try {
-         for (MapReduceTaskLifecycle l : lifecycles) {
+         for (MapReduceTaskLifecycle l : findMapReduceTaskLifecycles()) {
             l.onPostExecute(mapper);
          }
       } catch (ServiceConfigurationError serviceError) {
@@ -58,7 +61,7 @@ public final class MapReduceTaskLifecycleService {
 
    public <KOut, VOut> void onPreExecute(Reducer<KOut, VOut> reducer, Cache<?, ?> inputCache) {
       try {
-         for (MapReduceTaskLifecycle l : lifecycles) {
+         for (MapReduceTaskLifecycle l : findMapReduceTaskLifecycles()) {
             l.onPreExecute(reducer, inputCache);
          }
       } catch (ServiceConfigurationError serviceError) {
@@ -70,7 +73,7 @@ public final class MapReduceTaskLifecycleService {
 
    public <KOut, VOut> void onPostExecute(Reducer<KOut, VOut> reducer) {
       try {
-         for (MapReduceTaskLifecycle l : lifecycles) {
+         for (MapReduceTaskLifecycle l : findMapReduceTaskLifecycles()) {
             l.onPostExecute(reducer);
          }
       } catch (ServiceConfigurationError serviceError) {
