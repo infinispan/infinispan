@@ -43,6 +43,10 @@ public class LocalMapReduceTest extends DistributedFourNodesMapReduceTest {
       cacheManagers.add(cacheManager);
    }
 
+   protected MapReduceTask<String, String, String, Integer> createMapReduceTask(Cache c){
+      return new MapReduceTask<String, String, String, Integer>(c, false, false);
+   }
+
    public void testInvokeMapReduceOnSubsetOfKeysWithResultCache() throws Exception {
       String cacheName = "resultCache2";
       ConfigurationBuilder builder = getDefaultClusteredCacheConfig(CacheMode.LOCAL, true);
