@@ -5,6 +5,7 @@ import org.infinispan.commons.CacheException;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.test.MultipleCacheManagersTest;
+import org.junit.Assert;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 
@@ -326,21 +327,35 @@ public abstract class BaseWordCountMapReduceTest extends MultipleCacheManagersTe
      assertPartialWordCount(totalWords); 
    }
 
-   @Test(expectedExceptions = CacheException.class)
+   @Test
    public void testCombinerForDistributedReductionWithException() throws Exception {
       MapReduceTask<String, String, String, Integer> task = invokeMapReduce(null);
-      task.combinedWith(new Reducer<String, Integer>() {
-         @Override
-         public Integer reduce(String reducedKey, Iterator<Integer> iter) {
-            //simulating exception
-            int a = 4 / 0;
-
-            return null;
+      task.combinedWith(new SimulatedRuntimeExceptionReducer());
+      try {
+         task.execute();
+         Assert.fail("Should have thrown exception");
+      } catch (Exception e) {
+         Assert.assertTrue("Exception thrown should be CacheException but it is " + e, e instanceof CacheException);
+         Throwable cause = e.getCause();
+         while (cause.getCause() != null) {
+            cause = cause.getCause();
          }
-      });
+         Assert.assertTrue("Exception thrown should be RuntimeException but it is " + cause,
+               cause instanceof RuntimeException);
+      }
+   }
 
-      task.execute();
-  }
+   private static class SimulatedRuntimeExceptionReducer implements Reducer<String, Integer> {
+      /**
+       *
+       */
+      private static final long serialVersionUID = -6208228105751231985L;
+
+      @Override
+      public Integer reduce(String reducedKey, Iterator<Integer> iter) {
+         throw new RuntimeException("Simulated exception");
+      }
+   }
   
   protected void assertPartialWordCount(int actualWordCount){
      int expectedWordCount= 13;
