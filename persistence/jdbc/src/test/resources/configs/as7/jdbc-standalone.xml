@@ -263,10 +263,6 @@
                     <property name="max_bytes">1m</property>
                 </protocol>
                 <protocol type="pbcast.GMS"/>
-                <protocol type="UFC">
-                    <property name="max_credits">2m</property>
-                    <property name="min_threshold">0.40</property>
-                </protocol>
                 <protocol type="MFC">
                     <property name="max_credits">2m</property>
                     <property name="min_threshold">0.40</property>

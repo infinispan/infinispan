@@ -66,8 +66,6 @@
     <pbcast.GMS print_local_addr="true" join_timeout="5000"
                 max_bundling_time="30"
                 view_bundling="true"/>
-    <UFC max_credits="2M"
-         min_threshold="0.4"/>
     <MFC max_credits="2M"
          min_threshold="0.4"/>
     <FRAG2 frag_size="60000"  />

@@ -16,7 +16,6 @@
         <protocol type="UNICAST3"/>
         <protocol type="pbcast.STABLE"/>
         <protocol type="pbcast.GMS"/>
-        <protocol type="UFC"/>
         <protocol type="MFC"/>
         <protocol type="FRAG2"/>
         <protocol type="pbcast.STATE_TRANSFER" socket-binding="jgroups-state-xfr"/>
