@@ -62,8 +62,6 @@
     <pbcast.GMS print_local_addr="false" join_timeout="3000"
                 view_bundling="true"/>
 
-    <UFC max_credits="2M"
-         min_threshold="0.40"/>
     <MFC max_credits="2M"
          min_threshold="0.40"/>
 

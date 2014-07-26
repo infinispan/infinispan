@@ -91,7 +91,6 @@ A stack declaration is composed of a transport (UDP or TCP) followed by a list o
     <protocol type="UNICAST3"/>
     <protocol type="pbcast.STABLE"/>
     <protocol type="pbcast.GMS"/>
-    <protocol type="UFC"/>
     <protocol type="MFC"/>
     <protocol type="FRAG2"/>
     <protocol type="RSVP"/>
@@ -119,7 +118,6 @@ The default TCP stack uses the MPING protocol for discovery, which uses UDP mult
     <protocol type="UNICAST3"/>
     <protocol type="pbcast.STABLE"/>
     <protocol type="pbcast.GMS"/>
-    <protocol type="UFC"/>
     <protocol type="MFC"/>
     <protocol type="FRAG2"/>
     <protocol type="RSVP"/>
