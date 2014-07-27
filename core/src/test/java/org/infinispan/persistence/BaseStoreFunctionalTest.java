@@ -81,14 +81,14 @@ public abstract class BaseStoreFunctionalTest extends AbstractInfinispanTest {
          assertEquals("val2", unwrap(second.get("key2")));
          assertNull(first.get("key2"));
       } finally {
-         TestingUtil.killCacheManagers(localCacheManager);
+         TestingUtil.killCacheManagers(true, localCacheManager);
       }
    }
 
    public void testPreloadAndExpiry() {
       ConfigurationBuilder cb = TestCacheManagerFactory.getDefaultCacheConfiguration(false);
       createCacheStoreConfig(cb.persistence(), true);
-      CacheContainer local = TestCacheManagerFactory.createCacheManager(cb);
+      EmbeddedCacheManager local = TestCacheManagerFactory.createCacheManager(cb);
       try {
          Cache<String, Object> cache = local.getCache();
          cacheNames.add(cache.getName());
@@ -114,7 +114,7 @@ public abstract class BaseStoreFunctionalTest extends AbstractInfinispanTest {
          assertCacheEntry(cache, "k3", "v", -1, 222222);
          assertCacheEntry(cache, "k4", "v", 333333, 444444);
       } finally {
-         TestingUtil.killCacheManagers(local);
+         TestingUtil.killCacheManagers(true, local);
       }
    }
 
@@ -122,7 +122,7 @@ public abstract class BaseStoreFunctionalTest extends AbstractInfinispanTest {
       ConfigurationBuilder cb = TestCacheManagerFactory.getDefaultCacheConfiguration(false);
       createCacheStoreConfig(cb.persistence(), true).storeAsBinary().enable();
 
-      CacheContainer local = TestCacheManagerFactory.createCacheManager(cb);
+      EmbeddedCacheManager local = TestCacheManagerFactory.createCacheManager(cb);
       try {
          Cache<String, Pojo> cache = local.getCache();
          cacheNames.add(cache.getName());
@@ -142,7 +142,7 @@ public abstract class BaseStoreFunctionalTest extends AbstractInfinispanTest {
 
          cache.entrySet();
       } finally {
-         TestingUtil.killCacheManagers(local);
+         TestingUtil.killCacheManagers(true, local);
       }
    }
 
@@ -150,7 +150,7 @@ public abstract class BaseStoreFunctionalTest extends AbstractInfinispanTest {
    }
 
    public void testRestoreAtomicMap(Method m) {
-      CacheContainer localCacheContainer = getContainerWithCacheLoader(null, false);
+      EmbeddedCacheManager localCacheContainer = getContainerWithCacheLoader(null, false);
       try {
          Cache<String, Object> cache = localCacheContainer.getCache();
          cacheNames.add(cache.getName());
@@ -163,13 +163,13 @@ public abstract class BaseStoreFunctionalTest extends AbstractInfinispanTest {
          // now re-retrieve the map
          assertEquals("b", AtomicMapLookup.getAtomicMap(cache, m.getName()).get("a"));
       } finally {
-         TestingUtil.killCacheManagers(localCacheContainer);
+         TestingUtil.killCacheManagers(true, localCacheContainer);
       }
    }
 
    @Test(groups = "unstable")
    public void testRestoreTransactionalAtomicMap(Method m) throws Exception {
-      CacheContainer localCacheContainer = getContainerWithCacheLoader(null, false);
+      EmbeddedCacheManager localCacheContainer = getContainerWithCacheLoader(null, false);
       try {
          Cache<String, Object> cache = localCacheContainer.getCache();
          cacheNames.add(cache.getName());
@@ -185,7 +185,7 @@ public abstract class BaseStoreFunctionalTest extends AbstractInfinispanTest {
          // now re-retrieve the map and make sure we see the diffs
          assertEquals("b", AtomicMapLookup.getAtomicMap(cache, m.getName()).get("a"));
       } finally {
-         TestingUtil.killCacheManagers(localCacheContainer);
+         TestingUtil.killCacheManagers(true, localCacheContainer);
       }
    }
 

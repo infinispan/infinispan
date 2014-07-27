@@ -5,7 +5,9 @@ import static org.ops4j.pax.exam.CoreOptions.options;
 
 import org.infinispan.persistence.spi.PersistenceException;
 import org.junit.After;
+import org.junit.AfterClass;
 import org.junit.Before;
+import org.junit.BeforeClass;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.ops4j.pax.exam.Configuration;
@@ -26,12 +28,6 @@ public class JpaStoreTest extends org.infinispan.persistence.jpa.JpaStoreTest {
    @Override
    public void setUp() throws Exception {
       super.setUp();
-   }
-
-   @After
-   @Override
-   public void stopMarshaller() {
-      super.stopMarshaller();
    }
 
    @After
@@ -66,6 +62,12 @@ public class JpaStoreTest extends org.infinispan.persistence.jpa.JpaStoreTest {
 
    @Test
    @Override
+   public void testLoadAndStoreWithLifespanAndIdle2() throws Exception {
+      super.testLoadAndStoreWithLifespanAndIdle2();
+   }
+
+   @Test
+   @Override
    public void testStopStartDoesNotNukeValues() throws InterruptedException, PersistenceException {
       super.testStopStartDoesNotNukeValues();
    }
@@ -92,5 +94,11 @@ public class JpaStoreTest extends org.infinispan.persistence.jpa.JpaStoreTest {
    @Override
    public void testReplaceExpiredEntry() throws Exception {
       super.testReplaceExpiredEntry();
+   }
+
+   @Test
+   @Override
+   public void testLoadAll() throws PersistenceException {
+      super.testLoadAll();
    }
 }

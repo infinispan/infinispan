@@ -18,13 +18,6 @@ import org.testng.annotations.Test;
 @Test(groups = "unit", testName = "persistence.JpaStoreTest")
 public class JpaStoreTest extends BaseStoreTest {
 
-   // make this method public to be able to call it from wrapper classes
-   @Override
-   @AfterMethod
-   public void stopMarshaller() {
-      super.stopMarshaller();
-   }
-
    @Override
    public Object wrap(String key, String value) {
       return new KeyValueEntity(key, value);
