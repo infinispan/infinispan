@@ -3,9 +3,7 @@ package org.infinispan.persistence.leveldb;
 import org.infinispan.Cache;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.cache.PersistenceConfigurationBuilder;
-import org.infinispan.manager.CacheContainer;
 import org.infinispan.persistence.leveldb.configuration.LevelDBStoreConfiguration;
-import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.testng.annotations.Test;
 
@@ -30,26 +28,22 @@ public class JavaLevelDBStoreFunctionalTest extends LevelDBStoreFunctionalTest {
 
       ConfigurationBuilder cb = TestCacheManagerFactory.getDefaultCacheConfiguration(false);
       createCacheStoreConfig(cb.persistence(), true);
-      CacheContainer local = TestCacheManagerFactory.createCacheManager(cb);
-      try {
-         Cache<String, String> cache = local.getCache();
-         cacheNames.add(cache.getName());
-         cache.start();
-         cache.clear();
+      cacheManager.defineConfiguration("testEntrySetAfterExpiryWithStore", cb.build());
 
-         assertEquals(cache.entrySet().size(), 0);
+      Cache<String, String> cache = cacheManager.getCache("testEntrySetAfterExpiryWithStore");
+      cache.start();
+      cache.clear();
 
-         Map dataIn = new HashMap();
-         dataIn.put(1, 1);
-         dataIn.put(2, 2);
+      assertEquals(cache.entrySet().size(), 0);
 
-         cache.putAll(dataIn, EXPIRATION_TIMEOUT, TimeUnit.MILLISECONDS);
+      Map dataIn = new HashMap();
+      dataIn.put(1, 1);
+      dataIn.put(2, 2);
 
-         Thread.sleep(EXPIRATION_TIMEOUT + 1000);
-         assertEquals(cache.entrySet().size(), 0);
-      } finally {
-         TestingUtil.killCacheManagers(local);
-      }
+      cache.putAll(dataIn, EXPIRATION_TIMEOUT, TimeUnit.MILLISECONDS);
+
+      Thread.sleep(EXPIRATION_TIMEOUT + 1000);
+      assertEquals(cache.entrySet().size(), 0);
    }
 
 }

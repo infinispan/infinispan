@@ -8,7 +8,7 @@ import org.infinispan.persistence.jdbc.configuration.JdbcMixedStoreConfiguration
 import org.infinispan.persistence.jdbc.configuration.JdbcMixedStoreConfigurationBuilder;
 import org.infinispan.persistence.jdbc.connectionfactory.ManagedConnectionFactory;
 import org.infinispan.persistence.spi.AdvancedLoadWriteStore;
-import org.infinispan.manager.CacheContainer;
+import org.infinispan.test.CacheManagerCallable;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.infinispan.test.fwk.UnitTestDatabaseManager;
@@ -47,23 +47,22 @@ public class MixedStoreWithManagedConnectionTest extends ManagedConnectionFactor
    }
 
    public void testLoadFromFile() throws Exception {
-      CacheContainer cm = null;
-      try {
-         cm = TestCacheManagerFactory.fromXml("configs/managed/mixed-managed-connection-factory.xml");
-         Cache<String, String> first = cm.getCache("first");
-         Cache<String, String> second = cm.getCache("second");
+      TestingUtil.withCacheManager(new CacheManagerCallable(TestCacheManagerFactory.fromXml("configs/managed/mixed-managed-connection-factory.xml"), true) {
+         @Override
+         public void call() {
+            Cache<String, String> first = cm.getCache("first");
+            Cache<String, String> second = cm.getCache("second");
 
-         StoreConfiguration firstCacheLoaderConfig = first.getCacheConfiguration().persistence().stores().get(0);
-         assertNotNull(firstCacheLoaderConfig);
-         StoreConfiguration secondCacheLoaderConfig = second.getCacheConfiguration().persistence().stores().get(0);
-         assertNotNull(secondCacheLoaderConfig);
-         assertTrue(firstCacheLoaderConfig instanceof JdbcMixedStoreConfiguration);
-         assertTrue(secondCacheLoaderConfig instanceof JdbcMixedStoreConfiguration);
-         JdbcMixedStore loader = (JdbcMixedStore) TestingUtil.getFirstLoader(first);
-         assertTrue(loader.getConnectionFactory() instanceof ManagedConnectionFactory);
-      } finally {
-         TestingUtil.killCacheManagers(cm);
-      }
+            StoreConfiguration firstCacheLoaderConfig = first.getCacheConfiguration().persistence().stores().get(0);
+            assertNotNull(firstCacheLoaderConfig);
+            StoreConfiguration secondCacheLoaderConfig = second.getCacheConfiguration().persistence().stores().get(0);
+            assertNotNull(secondCacheLoaderConfig);
+            assertTrue(firstCacheLoaderConfig instanceof JdbcMixedStoreConfiguration);
+            assertTrue(secondCacheLoaderConfig instanceof JdbcMixedStoreConfiguration);
+            JdbcMixedStore loader = (JdbcMixedStore) TestingUtil.getFirstLoader(first);
+            assertTrue(loader.getConnectionFactory() instanceof ManagedConnectionFactory);
+         }
+      });
    }
 
    @Override

@@ -8,12 +8,13 @@ import org.infinispan.persistence.jdbc.configuration.JdbcBinaryStoreConfiguratio
 import org.infinispan.persistence.jdbc.configuration.JdbcBinaryStoreConfigurationBuilder;
 import org.infinispan.persistence.jdbc.connectionfactory.ManagedConnectionFactory;
 import org.infinispan.persistence.spi.AdvancedLoadWriteStore;
-import org.infinispan.manager.CacheContainer;
+import org.infinispan.test.CacheManagerCallable;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.infinispan.test.fwk.UnitTestDatabaseManager;
 import org.testng.annotations.Test;
 
+import static org.infinispan.test.TestingUtil.withCacheManager;
 import static org.testng.AssertJUnit.assertNotNull;
 import static org.testng.AssertJUnit.assertTrue;
 
@@ -38,27 +39,22 @@ public class BinaryStoreWithManagedConnectionTest extends ManagedConnectionFacto
    }
 
    public void testLoadFromFile() throws Exception {
-      CacheContainer cm = null;
-      try {
-         cm = TestCacheManagerFactory.fromXml("configs/managed/binary-managed-connection-factory.xml");
-         Cache<String, String> first = cm.getCache("first");
-         Cache<String, String> second = cm.getCache("second");
+      withCacheManager(new CacheManagerCallable(TestCacheManagerFactory.fromXml("configs/managed/binary-managed-connection-factory.xml"), true) {
+         @Override
+         public void call() {
+            Cache<String, String> first = cm.getCache("first");
+            Cache<String, String> second = cm.getCache("second");
 
-         StoreConfiguration firstCacheLoaderConfig = first.getCacheConfiguration().persistence().stores().get(0);
-         assertNotNull(firstCacheLoaderConfig);
-         StoreConfiguration secondCacheLoaderConfig = second.getCacheConfiguration().persistence().stores().get(0);
-         assertNotNull(secondCacheLoaderConfig);
-         assertTrue(firstCacheLoaderConfig instanceof JdbcBinaryStoreConfiguration);
-         assertTrue(secondCacheLoaderConfig instanceof JdbcBinaryStoreConfiguration);
-         JdbcBinaryStore loader = (JdbcBinaryStore) TestingUtil.getFirstLoader(first);
-         assertTrue(loader.getConnectionFactory() instanceof ManagedConnectionFactory);
-      } finally {
-         try {
-            TestingUtil.killCacheManagers(cm);
-         } catch (Throwable e) {
-            e.printStackTrace();
+            StoreConfiguration firstCacheLoaderConfig = first.getCacheConfiguration().persistence().stores().get(0);
+            assertNotNull(firstCacheLoaderConfig);
+            StoreConfiguration secondCacheLoaderConfig = second.getCacheConfiguration().persistence().stores().get(0);
+            assertNotNull(secondCacheLoaderConfig);
+            assertTrue(firstCacheLoaderConfig instanceof JdbcBinaryStoreConfiguration);
+            assertTrue(secondCacheLoaderConfig instanceof JdbcBinaryStoreConfiguration);
+            JdbcBinaryStore loader = (JdbcBinaryStore) TestingUtil.getFirstLoader(first);
+            assertTrue(loader.getConnectionFactory() instanceof ManagedConnectionFactory);
          }
-      }
+      });
    }
 
    @Override
