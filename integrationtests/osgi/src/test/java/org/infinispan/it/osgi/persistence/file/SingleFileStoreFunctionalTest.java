@@ -3,11 +3,11 @@ package org.infinispan.it.osgi.persistence.file;
 import static org.infinispan.it.osgi.util.IspnKarafOptions.perSuiteOptions;
 import static org.ops4j.pax.exam.CoreOptions.options;
 
-import java.io.File;
-
 import org.infinispan.configuration.cache.PersistenceConfigurationBuilder;
 import org.infinispan.test.TestingUtil;
+import org.junit.After;
 import org.junit.AfterClass;
+import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -38,7 +38,18 @@ public class SingleFileStoreFunctionalTest extends org.infinispan.persistence.fi
    @AfterClass
    public static void clearTmpDir() {
       TestingUtil.recursiveFileRemove(tmpDirectory);
-      new File(tmpDirectory).mkdirs();
+   }
+
+   @Before
+   @Override
+   public void setup() throws Exception {
+      super.setup();
+   }
+
+   @After
+   @Override
+   public void teardown() {
+      super.teardown();
    }
 
    @Test

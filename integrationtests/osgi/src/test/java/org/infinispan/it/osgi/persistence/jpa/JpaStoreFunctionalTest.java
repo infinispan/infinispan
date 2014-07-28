@@ -3,6 +3,8 @@ package org.infinispan.it.osgi.persistence.jpa;
 import static org.infinispan.it.osgi.util.IspnKarafOptions.perSuiteOptions;
 import static org.ops4j.pax.exam.CoreOptions.options;
 
+import org.junit.After;
+import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.ops4j.pax.exam.Configuration;
@@ -17,6 +19,18 @@ public class JpaStoreFunctionalTest extends org.infinispan.persistence.jpa.JpaSt
    @Configuration
    public Option[] config() throws Exception {
       return options(perSuiteOptions());
+   }
+
+   @Before
+   @Override
+   public void setup() throws Exception {
+      super.setup();
+   }
+
+   @After
+   @Override
+   public void teardown() {
+      super.teardown();
    }
 
    @Test

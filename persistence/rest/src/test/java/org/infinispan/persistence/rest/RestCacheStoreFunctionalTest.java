@@ -9,7 +9,6 @@ import org.infinispan.rest.EmbeddedRestServer;
 import org.infinispan.rest.RestTestingUtil;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
-import org.testng.annotations.AfterMethod;
 import org.testng.annotations.Test;
 
 /**
@@ -33,8 +32,9 @@ public class RestCacheStoreFunctionalTest extends BaseStoreFunctionalTest {
       return loaders;
    }
 
-   @AfterMethod(alwaysRun = true)
-   public void tearDown() throws Exception {
+   @Override
+   protected void teardown() {
+      super.teardown();
       if (restServer != null) {
          RestTestingUtil.killServers(restServer);
       }

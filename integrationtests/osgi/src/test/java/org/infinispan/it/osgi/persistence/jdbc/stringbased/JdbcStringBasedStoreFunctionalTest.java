@@ -7,6 +7,8 @@ import org.infinispan.configuration.cache.PersistenceConfigurationBuilder;
 import org.infinispan.it.osgi.persistence.jdbc.UnitTestDatabaseManager;
 import org.infinispan.persistence.BaseStoreFunctionalTest;
 import org.infinispan.persistence.jdbc.configuration.JdbcStringBasedStoreConfigurationBuilder;
+import org.junit.After;
+import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.ops4j.pax.exam.Configuration;
@@ -37,6 +39,18 @@ public class JdbcStringBasedStoreFunctionalTest extends BaseStoreFunctionalTest 
       UnitTestDatabaseManager.setDialect(store);
       UnitTestDatabaseManager.configureUniqueConnectionFactory(store);
       return persistence;
+   }
+
+   @Before
+   @Override
+   public void setup() throws Exception {
+      super.setup();
+   }
+
+   @After
+   @Override
+   public void teardown() {
+      super.teardown();
    }
 
    @Test
