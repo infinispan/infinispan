@@ -9,7 +9,6 @@ import org.infinispan.persistence.spi.AdvancedLoadWriteStore;
 import org.infinispan.persistence.spi.InitializationContext;
 import org.infinispan.persistence.spi.PersistenceException;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
-import org.testng.annotations.AfterMethod;
 import org.testng.annotations.Test;
 
 /**
@@ -17,6 +16,22 @@ import org.testng.annotations.Test;
  */
 @Test(groups = "unit", testName = "persistence.JpaStoreTest")
 public class JpaStoreTest extends BaseStoreTest {
+
+   @Override
+   protected AdvancedLoadWriteStore createStore() throws Exception {
+      ConfigurationBuilder builder = TestCacheManagerFactory.getDefaultCacheConfiguration(false);
+      builder
+            .persistence()
+               .addStore(JpaStoreConfigurationBuilder.class)
+                  .persistenceUnitName("org.infinispan.persistence.jpa")
+                  .entityClass(KeyValueEntity.class);
+      InitializationContext context = createContext(builder.build());
+      context.getCache().getAdvancedCache().getComponentRegistry().getGlobalComponentRegistry()
+            .registerComponent(new EntityManagerFactoryRegistry(), EntityManagerFactoryRegistry.class);
+      JpaStore store = new JpaStore();
+      store.init(context);
+      return store;
+   }
 
    @Override
    public Object wrap(String key, String value) {
@@ -28,24 +43,9 @@ public class JpaStoreTest extends BaseStoreTest {
       return ((KeyValueEntity) wrapper).getValue();
    }
 
+   @Test(enabled = false)
    @Override
    public void testLoadAndStoreMarshalledValues() throws PersistenceException {
       // disabled as this test cannot be executed on JpaStore
-   }
-
-   @Override
-   protected AdvancedLoadWriteStore createStore() throws Exception {
-      ConfigurationBuilder builder = TestCacheManagerFactory.getDefaultCacheConfiguration(false);
-      builder
-            .persistence()
-            .addStore(JpaStoreConfigurationBuilder.class)
-            .persistenceUnitName("org.infinispan.persistence.jpa")
-            .entityClass(KeyValueEntity.class);
-      InitializationContext context = createContext(builder.build());
-      context.getCache().getAdvancedCache().getComponentRegistry().getGlobalComponentRegistry()
-            .registerComponent(new EntityManagerFactoryRegistry(), EntityManagerFactoryRegistry.class);
-      JpaStore store = new JpaStore();
-      store.init(context);
-      return store;
    }
 }

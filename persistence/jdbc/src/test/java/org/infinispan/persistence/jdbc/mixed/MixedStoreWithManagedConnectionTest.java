@@ -3,12 +3,12 @@ package org.infinispan.persistence.jdbc.mixed;
 import org.infinispan.Cache;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.cache.StoreConfiguration;
-import org.infinispan.manager.CacheContainer;
 import org.infinispan.persistence.jdbc.ManagedConnectionFactoryTest;
 import org.infinispan.persistence.jdbc.configuration.JdbcMixedStoreConfiguration;
 import org.infinispan.persistence.jdbc.configuration.JdbcMixedStoreConfigurationBuilder;
 import org.infinispan.persistence.jdbc.connectionfactory.ManagedConnectionFactory;
 import org.infinispan.persistence.spi.AdvancedLoadWriteStore;
+import org.infinispan.manager.CacheContainer;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.infinispan.test.fwk.UnitTestDatabaseManager;
@@ -23,35 +23,9 @@ import static org.testng.AssertJUnit.assertTrue;
 @Test(groups = "functional", testName = "persistence.jdbc.mixed.MixedStoreWithManagedConnectionTest")
 public class MixedStoreWithManagedConnectionTest extends ManagedConnectionFactoryTest {
 
-   public void testLoadFromFile() throws Exception {
-      CacheContainer cm = null;
-      try {
-         cm = TestCacheManagerFactory.fromXml("configs/managed/mixed-managed-connection-factory.xml");
-         Cache<String, String> first = cm.getCache("first");
-         Cache<String, String> second = cm.getCache("second");
-
-         StoreConfiguration firstCacheLoaderConfig = first.getCacheConfiguration().persistence().stores().get(0);
-         assertNotNull(firstCacheLoaderConfig);
-         assertTrue(firstCacheLoaderConfig instanceof JdbcMixedStoreConfiguration);
-
-         StoreConfiguration secondCacheLoaderConfig = second.getCacheConfiguration().persistence().stores().get(0);
-         assertNotNull(secondCacheLoaderConfig);
-         assertTrue(secondCacheLoaderConfig instanceof JdbcMixedStoreConfiguration);
-
-         JdbcMixedStore loader = (JdbcMixedStore) TestingUtil.getFirstLoader(first);
-         assertTrue(loader.getConnectionFactory() instanceof ManagedConnectionFactory);
-      } finally {
-         TestingUtil.killCacheManagers(cm);
-      }
-   }
-
-   @Override
-   public String getDatasourceLocation() {
-      return "java:/MixedStoreWithManagedConnectionTest/DS";
-   }
-
    @Override
    protected AdvancedLoadWriteStore createStore() throws Exception {
+
       ConfigurationBuilder builder = TestCacheManagerFactory.getDefaultCacheConfiguration(false);
       JdbcMixedStoreConfigurationBuilder storeBuilder = builder
             .persistence()
@@ -68,8 +42,34 @@ public class MixedStoreWithManagedConnectionTest extends ManagedConnectionFactor
             .tableNamePrefix("STRINGS_TABLE");
 
       JdbcMixedStore jdbcMixed = new JdbcMixedStore();
+
       jdbcMixed.init(createContext(builder.build()));
       return jdbcMixed;
+   }
+
+   public void testLoadFromFile() throws Exception {
+      CacheContainer cm = null;
+      try {
+         cm = TestCacheManagerFactory.fromXml("configs/managed/mixed-managed-connection-factory.xml");
+         Cache<String, String> first = cm.getCache("first");
+         Cache<String, String> second = cm.getCache("second");
+
+         StoreConfiguration firstCacheLoaderConfig = first.getCacheConfiguration().persistence().stores().get(0);
+         assertNotNull(firstCacheLoaderConfig);
+         StoreConfiguration secondCacheLoaderConfig = second.getCacheConfiguration().persistence().stores().get(0);
+         assertNotNull(secondCacheLoaderConfig);
+         assertTrue(firstCacheLoaderConfig instanceof JdbcMixedStoreConfiguration);
+         assertTrue(secondCacheLoaderConfig instanceof JdbcMixedStoreConfiguration);
+         JdbcMixedStore loader = (JdbcMixedStore) TestingUtil.getFirstLoader(first);
+         assertTrue(loader.getConnectionFactory() instanceof ManagedConnectionFactory);
+      } finally {
+         TestingUtil.killCacheManagers(cm);
+      }
+   }
+
+   @Override
+   public String getDatasourceLocation() {
+      return "java:/MixedStoreWithManagedConnectionTest/DS";
    }
 
    @Override

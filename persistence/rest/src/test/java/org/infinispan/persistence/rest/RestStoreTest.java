@@ -32,30 +32,6 @@ public class RestStoreTest extends BaseStoreTest {
    private EmbeddedRestServer restServer;
 
    @Override
-   @AfterMethod(alwaysRun = true)
-   public void tearDown() {
-      if (restServer != null) {
-         RestTestingUtil.killServers(restServer);
-      }
-      if (localCacheManager != null) {
-         TestingUtil.killCacheManagers(localCacheManager);
-      }
-   }
-
-   @Override
-   public void testReplaceExpiredEntry() throws Exception {
-      InternalCacheEntry ice = internalCacheEntry("k1", "v1", 100);
-      cl.write(marshalledEntry(ice));
-      // Hot Rod does not support milliseconds, so 100ms is rounded to the nearest second,
-      // and so data is stored for 1 second here. Adjust waiting time accordingly.
-      timeService.advance(1100 +1);
-      assertNull(cl.load("k1"));
-      InternalCacheEntry ice2 = internalCacheEntry("k1", "v2", 100);
-      cl.write(marshalledEntry(ice2));
-      assertEquals("v2", cl.load("k1").getValue());
-   }
-
-   @Override
    protected AdvancedLoadWriteStore createStore() throws Exception {
       ConfigurationBuilder localBuilder = TestCacheManagerFactory.getDefaultCacheConfiguration(false);
       localBuilder.eviction().maxEntries(100).strategy(EvictionStrategy.UNORDERED).expiration().wakeUpInterval(10L);
@@ -74,14 +50,23 @@ public class RestStoreTest extends BaseStoreTest {
       ConfigurationBuilder builder = TestCacheManagerFactory.getDefaultCacheConfiguration(false);
       RestStoreConfigurationBuilder storeConfigurationBuilder = builder.persistence()
             .addStore(RestStoreConfigurationBuilder.class);
-
       storeConfigurationBuilder.host(restServer.getHost()).port(restServer.getPort()).path("/rest/" + REMOTE_CACHE);
       storeConfigurationBuilder.connectionPool().maxTotalConnections(10).maxConnectionsPerHost(10);
       storeConfigurationBuilder.validate();
-
       RestStore restStore = new RestStore();
       restStore.init(createContext(builder.build()));
       return restStore;
+   }
+
+   @Override
+   @AfterMethod(alwaysRun = true)
+   public void tearDown() {
+      if (restServer != null) {
+         RestTestingUtil.killServers(restServer);
+      }
+      if (localCacheManager != null) {
+         TestingUtil.killCacheManagers(localCacheManager);
+      }
    }
 
    @Override
@@ -92,6 +77,19 @@ public class RestStoreTest extends BaseStoreTest {
    @Override
    protected boolean storePurgesAllExpired() {
       return false;
+   }
+
+   @Override
+   public void testReplaceExpiredEntry() throws Exception {
+      InternalCacheEntry ice = internalCacheEntry("k1", "v1", 100);
+      cl.write(marshalledEntry(ice));
+      // Hot Rod does not support milliseconds, so 100ms is rounded to the nearest second,
+      // and so data is stored for 1 second here. Adjust waiting time accordingly.
+      timeService.advance(1100 +1);
+      assertNull(cl.load("k1"));
+      InternalCacheEntry ice2 = internalCacheEntry("k1", "v2", 100);
+      cl.write(marshalledEntry(ice2));
+      assertEquals("v2", cl.load("k1").getValue());
    }
 
 }

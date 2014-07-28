@@ -5,9 +5,7 @@ import static org.ops4j.pax.exam.CoreOptions.options;
 
 import org.infinispan.persistence.spi.PersistenceException;
 import org.junit.After;
-import org.junit.AfterClass;
 import org.junit.Before;
-import org.junit.BeforeClass;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.ops4j.pax.exam.Configuration;

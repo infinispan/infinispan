@@ -1,14 +1,14 @@
 package org.infinispan.persistence.jdbc.binary;
 
 import org.infinispan.configuration.cache.ConfigurationBuilder;
-import org.infinispan.marshall.core.MarshalledEntryImpl;
-import org.infinispan.metadata.Metadata;
-import org.infinispan.metadata.impl.InternalMetadataImpl;
 import org.infinispan.persistence.BaseStoreTest;
+import org.infinispan.marshall.core.MarshalledEntryImpl;
 import org.infinispan.persistence.jdbc.TableManipulation;
 import org.infinispan.persistence.jdbc.configuration.JdbcBinaryStoreConfigurationBuilder;
 import org.infinispan.persistence.jdbc.connectionfactory.ConnectionFactory;
 import org.infinispan.persistence.spi.AdvancedLoadWriteStore;
+import org.infinispan.metadata.Metadata;
+import org.infinispan.metadata.impl.InternalMetadataImpl;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.infinispan.test.fwk.UnitTestDatabaseManager;
 import org.infinispan.util.concurrent.WithinThreadExecutor;
@@ -28,19 +28,34 @@ import static org.testng.AssertJUnit.assertNull;
 @Test(groups = "functional", testName = "persistence.jdbc.binary.JdbcBinaryStoreTest")
 public class JdbcBinaryStoreTest extends BaseStoreTest {
 
+   @Override
+   protected AdvancedLoadWriteStore createStore() throws Exception {
+
+      ConfigurationBuilder builder = TestCacheManagerFactory.getDefaultCacheConfiguration(false);
+      JdbcBinaryStoreConfigurationBuilder storeBuilder = builder
+            .persistence()
+            .addStore(JdbcBinaryStoreConfigurationBuilder.class);
+      UnitTestDatabaseManager.buildTableManipulation(storeBuilder.table(), true);
+      UnitTestDatabaseManager.configureUniqueConnectionFactory(storeBuilder);
+
+      JdbcBinaryStore jdbcBinaryCacheStore = new JdbcBinaryStore();
+      jdbcBinaryCacheStore.init(createContext(builder.build()));
+      return jdbcBinaryCacheStore;
+   }
+
    public void testNotCreateConnectionFactory() throws Exception {
       ConfigurationBuilder builder = TestCacheManagerFactory
             .getDefaultCacheConfiguration(false);
       JdbcBinaryStoreConfigurationBuilder storeBuilder = builder
             .persistence()
-            .addStore(JdbcBinaryStoreConfigurationBuilder.class)
-            .manageConnectionFactory(false);
+               .addStore(JdbcBinaryStoreConfigurationBuilder.class)
+                  .manageConnectionFactory(false);
+
       storeBuilder.table().createOnStart(false);
 
       JdbcBinaryStore jdbcBucketCacheStore = new JdbcBinaryStore();
       jdbcBucketCacheStore.init(createContext(builder.build()));
       jdbcBucketCacheStore.start();
-
       assertNull(jdbcBucketCacheStore.getConnectionFactory());
 
       /* this will make sure that if a method like stop is called on the connection then it will barf an exception */
@@ -55,6 +70,8 @@ public class JdbcBinaryStoreTest extends BaseStoreTest {
       tableManipulation.stop();
       jdbcBucketCacheStore.stop();
    }
+
+
 
    @Override
    public void testPurgeExpired() throws Exception {
@@ -73,31 +90,13 @@ public class JdbcBinaryStoreTest extends BaseStoreTest {
          cl.write(new MarshalledEntryImpl<Object, Object>(new FixedHashKey(i + 10, "non-exp k" + i), "value", null, getMarshaller()));
          cl.write(new MarshalledEntryImpl<Object, Object>(new FixedHashKey(i + 10, "exp k" + i), "value", im, getMarshaller())); // will expire
       }
-
       timeService.advance(2);
-
       assertContains(k1, true);
       assertContains(k2, false);
-
       cl.purge(new WithinThreadExecutor(), null);
-
       assertContains(k1, true);
       assertContains(k2, false);
       UnitTestDatabaseManager.verifyConnectionLeaks(((JdbcBinaryStore) cl).getConnectionFactory());
-   }
-
-   @Override
-   protected AdvancedLoadWriteStore createStore() throws Exception {
-      ConfigurationBuilder builder = TestCacheManagerFactory.getDefaultCacheConfiguration(false);
-      JdbcBinaryStoreConfigurationBuilder storeBuilder = builder
-            .persistence()
-            .addStore(JdbcBinaryStoreConfigurationBuilder.class);
-      UnitTestDatabaseManager.buildTableManipulation(storeBuilder.table(), true);
-      UnitTestDatabaseManager.configureUniqueConnectionFactory(storeBuilder);
-
-      JdbcBinaryStore jdbcBinaryCacheStore = new JdbcBinaryStore();
-      jdbcBinaryCacheStore.init(createContext(builder.build()));
-      return jdbcBinaryCacheStore;
    }
 
    private static final class FixedHashKey implements Serializable {

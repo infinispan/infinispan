@@ -74,7 +74,6 @@ import org.infinispan.marshall.core.ExternalizerTable;
 import org.infinispan.metadata.EmbeddedMetadata;
 import org.infinispan.metadata.Metadata;
 import org.infinispan.metadata.impl.InternalMetadataImpl;
-import org.infinispan.registry.ClusterRegistry;
 import org.infinispan.registry.impl.ClusterRegistryImpl;
 import org.infinispan.remoting.ReplicationQueue;
 import org.infinispan.remoting.transport.Address;
@@ -606,7 +605,7 @@ public class TestingUtil {
       // stop the caches first so that stopping the cache managers doesn't trigger a rehash
       for (EmbeddedCacheManager cm : cacheManagers) {
          try {
-            killCaches(getRunningCaches(cm), clear);
+            killCaches(clear, getRunningCaches(cm));
          } catch (Throwable e) {
             log.warn("Problems stopping cache manager " + cm, e);
          }
@@ -731,13 +730,13 @@ public class TestingUtil {
     * Kills a cache - stops it and rolls back any associated txs
     */
    public static void killCaches(Collection<Cache> caches) {
-      killCaches(caches, false);
+      killCaches(false, caches);
    }
 
    /**
     * Kills a cache - stops it and rolls back any associated txs
     */
-   public static void killCaches(Collection<Cache> caches, boolean clear) {
+   public static void killCaches(boolean clear, Collection<Cache> caches) {
       for (Cache c : caches) {
          try {
             if (c != null && c.getStatus() == ComponentStatus.RUNNING) {

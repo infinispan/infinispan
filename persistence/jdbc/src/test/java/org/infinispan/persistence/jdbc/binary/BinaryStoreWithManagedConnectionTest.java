@@ -3,12 +3,12 @@ package org.infinispan.persistence.jdbc.binary;
 import org.infinispan.Cache;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.cache.StoreConfiguration;
-import org.infinispan.manager.CacheContainer;
 import org.infinispan.persistence.jdbc.ManagedConnectionFactoryTest;
 import org.infinispan.persistence.jdbc.configuration.JdbcBinaryStoreConfiguration;
 import org.infinispan.persistence.jdbc.configuration.JdbcBinaryStoreConfigurationBuilder;
 import org.infinispan.persistence.jdbc.connectionfactory.ManagedConnectionFactory;
 import org.infinispan.persistence.spi.AdvancedLoadWriteStore;
+import org.infinispan.manager.CacheContainer;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.infinispan.test.fwk.UnitTestDatabaseManager;
@@ -24,6 +24,20 @@ import static org.testng.AssertJUnit.assertTrue;
 public class BinaryStoreWithManagedConnectionTest extends ManagedConnectionFactoryTest {
 
 
+   @Override
+   protected AdvancedLoadWriteStore createStore() throws Exception {
+      ConfigurationBuilder builder = TestCacheManagerFactory.getDefaultCacheConfiguration(false);
+      JdbcBinaryStoreConfigurationBuilder storeBuilder = builder
+            .persistence()
+               .addStore(JdbcBinaryStoreConfigurationBuilder.class);
+      storeBuilder.dataSource().jndiUrl(getDatasourceLocation());
+      UnitTestDatabaseManager.buildTableManipulation(storeBuilder.table(), true);
+
+      JdbcBinaryStore jdbcBinaryStore = new JdbcBinaryStore();
+      jdbcBinaryStore.init(createContext(builder.build()));
+      return jdbcBinaryStore;
+   }
+
    public void testLoadFromFile() throws Exception {
       CacheContainer cm = null;
       try {
@@ -33,12 +47,10 @@ public class BinaryStoreWithManagedConnectionTest extends ManagedConnectionFacto
 
          StoreConfiguration firstCacheLoaderConfig = first.getCacheConfiguration().persistence().stores().get(0);
          assertNotNull(firstCacheLoaderConfig);
-         assertTrue(firstCacheLoaderConfig instanceof JdbcBinaryStoreConfiguration);
-
          StoreConfiguration secondCacheLoaderConfig = second.getCacheConfiguration().persistence().stores().get(0);
          assertNotNull(secondCacheLoaderConfig);
+         assertTrue(firstCacheLoaderConfig instanceof JdbcBinaryStoreConfiguration);
          assertTrue(secondCacheLoaderConfig instanceof JdbcBinaryStoreConfiguration);
-
          JdbcBinaryStore loader = (JdbcBinaryStore) TestingUtil.getFirstLoader(first);
          assertTrue(loader.getConnectionFactory() instanceof ManagedConnectionFactory);
       } finally {
@@ -53,20 +65,6 @@ public class BinaryStoreWithManagedConnectionTest extends ManagedConnectionFacto
    @Override
    public String getDatasourceLocation() {
       return "java:/BinaryStoreWithManagedConnectionTest/DS";
-   }
-
-   @Override
-   protected AdvancedLoadWriteStore createStore() throws Exception {
-      ConfigurationBuilder builder = TestCacheManagerFactory.getDefaultCacheConfiguration(false);
-      JdbcBinaryStoreConfigurationBuilder storeBuilder = builder
-            .persistence()
-            .addStore(JdbcBinaryStoreConfigurationBuilder.class);
-      storeBuilder.dataSource().jndiUrl(getDatasourceLocation());
-      UnitTestDatabaseManager.buildTableManipulation(storeBuilder.table(), true);
-
-      JdbcBinaryStore jdbcBinaryStore = new JdbcBinaryStore();
-      jdbcBinaryStore.init(createContext(builder.build()));
-      return jdbcBinaryStore;
    }
 
 }

@@ -2,9 +2,9 @@ package org.infinispan.persistence.file;
 
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.cache.SingleFileStoreConfigurationBuilder;
-import org.infinispan.marshall.TestObjectStreamMarshaller;
-import org.infinispan.marshall.core.MarshalledEntryImpl;
 import org.infinispan.persistence.spi.PersistenceException;
+import org.infinispan.marshall.core.MarshalledEntryImpl;
+import org.infinispan.marshall.TestObjectStreamMarshaller;
 import org.infinispan.test.AbstractInfinispanTest;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
@@ -48,9 +48,9 @@ public class BoundedSingleFileStoreTest extends AbstractInfinispanTest {
       ConfigurationBuilder builder = TestCacheManagerFactory.getDefaultCacheConfiguration(false);
       builder
             .persistence()
-            .addStore(SingleFileStoreConfigurationBuilder.class)
-            .location(this.tmpDirectory)
-            .maxEntries(1);
+               .addStore(SingleFileStoreConfigurationBuilder.class)
+                  .location(this.tmpDirectory)
+                  .maxEntries(1);
 
       marshaller = new TestObjectStreamMarshaller();
       store.init(PersistenceMockUtil.createContext(getClass().getSimpleName(), builder.build(), marshaller));

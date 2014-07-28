@@ -2,19 +2,19 @@ package org.infinispan.persistence.jdbc.stringbased;
 
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.persistence.BaseStoreTest;
+import org.infinispan.persistence.spi.PersistenceException;
 import org.infinispan.persistence.jdbc.TableManipulation;
 import org.infinispan.persistence.jdbc.configuration.JdbcStringBasedStoreConfigurationBuilder;
 import org.infinispan.persistence.jdbc.connectionfactory.ConnectionFactory;
 import org.infinispan.persistence.keymappers.UnsupportedKeyTypeException;
 import org.infinispan.persistence.spi.AdvancedLoadWriteStore;
-import org.infinispan.persistence.spi.PersistenceException;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.infinispan.test.fwk.UnitTestDatabaseManager;
-import org.testng.AssertJUnit;
 import org.testng.annotations.Test;
 
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.reset;
+import static org.testng.AssertJUnit.assertNull;
 
 /**
  * Tester class  for {@link JdbcStringBasedStore}.
@@ -23,6 +23,20 @@ import static org.mockito.Mockito.reset;
  */
 @Test(groups = "functional", testName = "persistence.jdbc.stringbased.JdbcStringBasedStoreTest")
 public class JdbcStringBasedStoreTest extends BaseStoreTest {
+
+   @Override
+   protected AdvancedLoadWriteStore createStore() throws Exception {
+      ConfigurationBuilder builder = TestCacheManagerFactory
+            .getDefaultCacheConfiguration(false);
+      JdbcStringBasedStoreConfigurationBuilder storeBuilder = builder
+            .persistence()
+               .addStore(JdbcStringBasedStoreConfigurationBuilder.class);
+      UnitTestDatabaseManager.configureUniqueConnectionFactory(storeBuilder);
+      UnitTestDatabaseManager.buildTableManipulation(storeBuilder.table(), false);
+      JdbcStringBasedStore stringBasedCacheStore = new JdbcStringBasedStore();
+      stringBasedCacheStore.init(createContext(builder.build()));
+      return stringBasedCacheStore;
+   }
 
    public void testNotCreateConnectionFactory() throws Exception {
       ConfigurationBuilder builder = TestCacheManagerFactory
@@ -37,7 +51,7 @@ public class JdbcStringBasedStoreTest extends BaseStoreTest {
       JdbcStringBasedStore stringBasedCacheStore = new JdbcStringBasedStore();
       stringBasedCacheStore.init(createContext(builder.build()));
       stringBasedCacheStore.start();
-      AssertJUnit.assertNull(stringBasedCacheStore.getConnectionFactory());
+      assertNull(stringBasedCacheStore.getConnectionFactory());
 
       // this will make sure that if a method like stop is called on the connection then it will barf an exception
       ConnectionFactory connectionFactory = mock(ConnectionFactory.class);
@@ -59,21 +73,6 @@ public class JdbcStringBasedStoreTest extends BaseStoreTest {
    @Test(expectedExceptions = UnsupportedKeyTypeException.class)
    public void testLoadAndStoreMarshalledValues() throws PersistenceException {
       super.testLoadAndStoreMarshalledValues();
-   }
-
-   @Override
-   protected AdvancedLoadWriteStore createStore() throws Exception {
-      ConfigurationBuilder builder = TestCacheManagerFactory
-            .getDefaultCacheConfiguration(false);
-      JdbcStringBasedStoreConfigurationBuilder storeBuilder = builder
-            .persistence()
-            .addStore(JdbcStringBasedStoreConfigurationBuilder.class);
-      UnitTestDatabaseManager.configureUniqueConnectionFactory(storeBuilder);
-      UnitTestDatabaseManager.buildTableManipulation(storeBuilder.table(), false);
-
-      JdbcStringBasedStore stringBasedCacheStore = new JdbcStringBasedStore();
-      stringBasedCacheStore.init(createContext(builder.build()));
-      return stringBasedCacheStore;
    }
 
    @Override

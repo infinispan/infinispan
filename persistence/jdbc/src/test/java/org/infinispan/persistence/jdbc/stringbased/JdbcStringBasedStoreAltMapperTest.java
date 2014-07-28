@@ -4,7 +4,7 @@ import org.infinispan.commons.marshall.StreamingMarshaller;
 import org.infinispan.commons.util.ReflectionUtil;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.container.entries.InternalCacheEntry;
-import org.infinispan.marshall.TestObjectStreamMarshaller;
+import org.infinispan.persistence.spi.PersistenceException;
 import org.infinispan.marshall.core.MarshalledEntryImpl;
 import org.infinispan.persistence.jdbc.TableManipulation;
 import org.infinispan.persistence.jdbc.TableName;
@@ -12,7 +12,7 @@ import org.infinispan.persistence.jdbc.configuration.JdbcStringBasedStoreConfigu
 import org.infinispan.persistence.jdbc.connectionfactory.ConnectionFactory;
 import org.infinispan.persistence.keymappers.UnsupportedKeyTypeException;
 import org.infinispan.persistence.spi.AdvancedLoadWriteStore;
-import org.infinispan.persistence.spi.PersistenceException;
+import org.infinispan.marshall.TestObjectStreamMarshaller;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.infinispan.test.fwk.TestInternalCacheEntryFactory;
 import org.infinispan.test.fwk.UnitTestDatabaseManager;
@@ -34,10 +34,10 @@ import static org.testng.AssertJUnit.*;
 @Test(groups = "functional", testName = "persistence.jdbc.stringbased.JdbcStringBasedStoreAltMapperTest")
 public class JdbcStringBasedStoreAltMapperTest {
 
-   private static final Person MIRCEA = new Person("Mircea", "Markus", 28);
-   private static final Person MANIK = new Person("Manik", "Surtani", 18);
    private AdvancedLoadWriteStore cacheStore;
    private TableManipulation tableManipulation;
+   private static final Person MIRCEA = new Person("Mircea", "Markus", 28);
+   private static final Person MANIK = new Person("Manik", "Surtani", 18);
    private StreamingMarshaller marshaller;
 
    @BeforeTest
@@ -45,8 +45,8 @@ public class JdbcStringBasedStoreAltMapperTest {
       ConfigurationBuilder builder = TestCacheManagerFactory.getDefaultCacheConfiguration(false);
       JdbcStringBasedStoreConfigurationBuilder storeBuilder = builder
             .persistence()
-            .addStore(JdbcStringBasedStoreConfigurationBuilder.class)
-            .key2StringMapper(PersonKey2StringMapper.class);
+               .addStore(JdbcStringBasedStoreConfigurationBuilder.class)
+                  .key2StringMapper(PersonKey2StringMapper.class);
 
       UnitTestDatabaseManager.buildTableManipulation(storeBuilder.table(), false);
       UnitTestDatabaseManager.configureUniqueConnectionFactory(storeBuilder);
@@ -87,10 +87,8 @@ public class JdbcStringBasedStoreAltMapperTest {
    public void testStoreLoadRemove() throws Exception {
       assertRowCount(0);
       assertNull("should not be present in the store", cacheStore.load(MIRCEA));
-
       String value = "adsdsadsa";
       cacheStore.write(new MarshalledEntryImpl(MIRCEA, value, null, marshaller));
-
       assertRowCount(1);
       assertEquals(value, cacheStore.load(MIRCEA).getValue());
       assertFalse(cacheStore.delete(MANIK));

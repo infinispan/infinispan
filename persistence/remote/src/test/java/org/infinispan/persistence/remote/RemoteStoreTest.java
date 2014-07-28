@@ -1,5 +1,9 @@
 package org.infinispan.persistence.remote;
 
+import static org.infinispan.server.hotrod.test.HotRodTestingUtil.hotRodCacheConfiguration;
+import static org.testng.AssertJUnit.assertNull;
+import static org.testng.AssertJUnit.assertTrue;
+
 import org.infinispan.client.hotrod.TestHelper;
 import org.infinispan.client.hotrod.test.HotRodClientTestingUtil;
 import org.infinispan.commons.marshall.StreamingMarshaller;
@@ -8,7 +12,6 @@ import org.infinispan.configuration.global.GlobalConfigurationBuilder;
 import org.infinispan.eviction.EvictionStrategy;
 import org.infinispan.factories.GlobalComponentRegistry;
 import org.infinispan.manager.EmbeddedCacheManager;
-import org.infinispan.marshall.core.MarshalledEntryImpl;
 import org.infinispan.persistence.BaseStoreTest;
 import org.infinispan.persistence.remote.configuration.RemoteStoreConfigurationBuilder;
 import org.infinispan.persistence.spi.AdvancedLoadWriteStore;
@@ -18,11 +21,6 @@ import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.infinispan.util.TimeService;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.Test;
-
-import static org.infinispan.server.hotrod.test.HotRodTestingUtil.hotRodCacheConfiguration;
-import static org.infinispan.test.TestingUtil.internalMetadata;
-import static org.testng.AssertJUnit.assertNull;
-import static org.testng.AssertJUnit.assertTrue;
 
 /**
  * @author Mircea.Markus@jboss.com
@@ -34,25 +32,6 @@ public class RemoteStoreTest extends BaseStoreTest {
    private static final String REMOTE_CACHE = "remote-cache";
    private EmbeddedCacheManager localCacheManager;
    private HotRodServer hrServer;
-
-   @Override
-   @AfterMethod
-   public void tearDown() {
-      HotRodClientTestingUtil.killServers(hrServer);
-      TestingUtil.killCacheManagers(localCacheManager);
-   }
-
-   @Override
-   public void testReplaceExpiredEntry() throws Exception {
-      cl.write(marshalledEntry(internalCacheEntry("k1", "v1", 100)));
-      // Hot Rod does not support milliseconds, so 100ms is rounded to the nearest second,
-      // and so data is stored for 1 second here. Adjust waiting time accordingly.
-      timeService.advance(1100l + 1);
-      assertNull(cl.load("k1"));
-      long start = System.currentTimeMillis();
-      cl.write(marshalledEntry(internalCacheEntry("k1", "v2", 100)));
-      assertTrue(cl.load("k1").getValue().equals("v2") || TestingUtil.moreThanDurationElapsed(start, 100));
-   }
 
    @Override
    protected AdvancedLoadWriteStore createStore() throws Exception {
@@ -74,12 +53,12 @@ public class RemoteStoreTest extends BaseStoreTest {
       ConfigurationBuilder builder = TestCacheManagerFactory.getDefaultCacheConfiguration(false);
       RemoteStoreConfigurationBuilder storeConfigurationBuilder = builder
             .persistence()
-            .addStore(RemoteStoreConfigurationBuilder.class)
-            .remoteCacheName(REMOTE_CACHE);
+               .addStore(RemoteStoreConfigurationBuilder.class)
+               .remoteCacheName(REMOTE_CACHE);
       storeConfigurationBuilder
-            .addServer()
-            .host(hrServer.getHost())
-            .port(hrServer.getPort());
+               .addServer()
+                  .host(hrServer.getHost())
+                  .port(hrServer.getPort());
 
       RemoteStore remoteStore = new RemoteStore();
       remoteStore.init(createContext(builder.build()));
@@ -92,6 +71,13 @@ public class RemoteStoreTest extends BaseStoreTest {
    }
 
    @Override
+   @AfterMethod
+   public void tearDown() {
+      HotRodClientTestingUtil.killServers(hrServer);
+      TestingUtil.killCacheManagers(localCacheManager);
+   }
+
+   @Override
    protected void sleepForStopStartTest() throws InterruptedException {
       Thread.sleep(3000);
    }
@@ -99,6 +85,18 @@ public class RemoteStoreTest extends BaseStoreTest {
    @Override
    protected boolean storePurgesAllExpired() {
       return false;
+   }
+
+   @Override
+   public void testReplaceExpiredEntry() throws Exception {
+      cl.write(marshalledEntry(internalCacheEntry("k1", "v1", 100)));
+      // Hot Rod does not support milliseconds, so 100ms is rounded to the nearest second,
+      // and so data is stored for 1 second here. Adjust waiting time accordingly.
+      timeService.advance(1100 + 1);
+      assertNull(cl.load("k1"));
+      long start = System.currentTimeMillis();
+      cl.write(marshalledEntry(internalCacheEntry("k1", "v2", 100)));
+      assertTrue(cl.load("k1").getValue().equals("v2") || TestingUtil.moreThanDurationElapsed(start, 100));
    }
 }
 
