@@ -74,7 +74,6 @@ import org.infinispan.marshall.core.ExternalizerTable;
 import org.infinispan.metadata.EmbeddedMetadata;
 import org.infinispan.metadata.Metadata;
 import org.infinispan.metadata.impl.InternalMetadataImpl;
-import org.infinispan.registry.ClusterRegistry;
 import org.infinispan.registry.impl.ClusterRegistryImpl;
 import org.infinispan.remoting.ReplicationQueue;
 import org.infinispan.remoting.transport.Address;
@@ -599,10 +598,14 @@ public class TestingUtil {
    }
 
    public static void killCacheManagers(EmbeddedCacheManager... cacheManagers) {
+      killCacheManagers(false, cacheManagers);
+   }
+
+   public static void killCacheManagers(boolean clear, EmbeddedCacheManager... cacheManagers) {
       // stop the caches first so that stopping the cache managers doesn't trigger a rehash
       for (EmbeddedCacheManager cm : cacheManagers) {
          try {
-            killCaches(getRunningCaches(cm));
+            killCaches(clear, getRunningCaches(cm));
          } catch (Throwable e) {
             log.warn("Problems stopping cache manager " + cm, e);
          }
@@ -727,6 +730,13 @@ public class TestingUtil {
     * Kills a cache - stops it and rolls back any associated txs
     */
    public static void killCaches(Collection<Cache> caches) {
+      killCaches(false, caches);
+   }
+
+   /**
+    * Kills a cache - stops it and rolls back any associated txs
+    */
+   public static void killCaches(boolean clear, Collection<Cache> caches) {
       for (Cache c : caches) {
          try {
             if (c != null && c.getStatus() == ComponentStatus.RUNNING) {
@@ -743,6 +753,11 @@ public class TestingUtil {
                   log.tracef("Cache contents on %s before stopping: %s", c.getAdvancedCache().getRpcManager().getAddress(), c.entrySet());
                } else {
                   log.tracef("Cache contents before stopping: %s", c.entrySet());
+               }
+               if (clear) {
+                  try {
+                     c.clear();
+                  } catch (Exception ignored) {}
                }
                c.stop();
             }

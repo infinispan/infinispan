@@ -33,11 +33,21 @@ public class TestInternalCacheEntryFactory {
    }
 
    public static InternalCacheEntry create(Object key, Object value, long lifespan) {
-      return FACTORY.create(key, value, null, lifespan, -1);
+      return create(FACTORY, key, value, lifespan);
+   }
+
+   public static <K,V> InternalCacheEntry<K,V> create(InternalEntryFactory factory, K key, V value, long lifespan) {
+      //noinspection unchecked
+      return factory.create(key, value, null, lifespan, -1);
    }
 
    public static InternalCacheEntry create(Object key, Object value, long lifespan, long maxIdle) {
-      return FACTORY.create(key, value, null, lifespan, maxIdle);
+      return create(FACTORY, key, value, lifespan, maxIdle);
+   }
+
+   public static <K,V> InternalCacheEntry<K,V> create(InternalEntryFactory factory, K key, V value, long lifespan, long maxIdle) {
+      //noinspection unchecked
+      return factory.create(key, value, null, lifespan, maxIdle);
    }
 
    public static InternalCacheEntry create(Object key, Object value, long created, long lifespan, long lastUsed, long maxIdle) {

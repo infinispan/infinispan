@@ -30,12 +30,6 @@ public class JpaStoreTest extends org.infinispan.persistence.jpa.JpaStoreTest {
 
    @After
    @Override
-   public void stopMarshaller() {
-      super.stopMarshaller();
-   }
-
-   @After
-   @Override
    public void tearDown() throws PersistenceException {
       super.tearDown();
    }
@@ -66,6 +60,12 @@ public class JpaStoreTest extends org.infinispan.persistence.jpa.JpaStoreTest {
 
    @Test
    @Override
+   public void testLoadAndStoreWithLifespanAndIdle2() throws Exception {
+      super.testLoadAndStoreWithLifespanAndIdle2();
+   }
+
+   @Test
+   @Override
    public void testStopStartDoesNotNukeValues() throws InterruptedException, PersistenceException {
       super.testStopStartDoesNotNukeValues();
    }
@@ -92,5 +92,11 @@ public class JpaStoreTest extends org.infinispan.persistence.jpa.JpaStoreTest {
    @Override
    public void testReplaceExpiredEntry() throws Exception {
       super.testReplaceExpiredEntry();
+   }
+
+   @Test
+   @Override
+   public void testLoadAll() throws PersistenceException {
+      super.testLoadAll();
    }
 }
