@@ -6,23 +6,18 @@ import org.infinispan.security.AuditContext;
 import org.infinispan.security.AuditLogger;
 import org.infinispan.security.AuditResponse;
 import org.infinispan.security.AuthorizationPermission;
-import org.infinispan.security.Security;
-import org.jboss.logging.Logger;
 
 /**
- * DefaultAuditLogger. A simple {@link AuditLogger} which send audit messages to a named
- * logger "org.infinispan.AUDIT"
+ * NullAuditLogger. A simple {@link AuditLogger} which drops all audit messages
  *
  * @author Tristan Tarrant
  * @since 7.0
  * @public
  */
-public class DefaultAuditLogger implements AuditLogger {
-   static final AuditMessages auditLog = Logger.getMessageLogger(AuditMessages.class, "org.infinispan.AUDIT");
+public class NullAuditLogger implements AuditLogger {
 
    @Override
    public void audit(Subject subject, AuditContext context, String contextName, AuthorizationPermission permission,
          AuditResponse response) {
-      auditLog.auditMessage(response, Security.getSubjectUserPrincipal(subject), permission, context, contextName);
    }
 }
