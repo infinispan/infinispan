@@ -1,10 +1,8 @@
 package org.infinispan.persistence.dummy;
 
-import org.infinispan.commons.io.ByteBufferFactoryImpl;
-import org.infinispan.marshall.core.MarshalledEntryFactoryImpl;
+import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.persistence.BaseStoreTest;
 import org.infinispan.persistence.spi.PersistenceException;
-import org.infinispan.persistence.DummyInitializationContext;
 import org.infinispan.persistence.spi.AdvancedLoadWriteStore;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.testng.annotations.Test;
@@ -14,17 +12,14 @@ public class DummyInMemoryStoreTest extends BaseStoreTest {
 
    @Override
    protected AdvancedLoadWriteStore createStore() throws PersistenceException {
-      DummyInMemoryStore cl = new DummyInMemoryStore();
-      final DummyInMemoryStoreConfigurationBuilder loader = TestCacheManagerFactory
-            .getDefaultCacheConfiguration(false)
+      DummyInMemoryStore store = new DummyInMemoryStore();
+      ConfigurationBuilder builder = TestCacheManagerFactory.getDefaultCacheConfiguration(false);
+      final DummyInMemoryStoreConfigurationBuilder loader = builder
             .persistence()
             .addStore(DummyInMemoryStoreConfigurationBuilder.class);
       loader
          .storeName(getClass().getName());
-      cl.init(new DummyInitializationContext(loader.create(), getCache(), getMarshaller(), new ByteBufferFactoryImpl(),
-                                             new MarshalledEntryFactoryImpl(getMarshaller())));
-      cl.start();
-      csc = loader.create();
-      return cl;
+      store.init(createContext(builder.build()));
+      return store;
    }
 }

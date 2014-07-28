@@ -1,18 +1,14 @@
 package org.infinispan.persistence.file;
 
-import org.infinispan.Cache;
-import org.infinispan.commons.io.ByteBufferFactoryImpl;
-import org.infinispan.configuration.cache.SingleFileStoreConfiguration;
+import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.cache.SingleFileStoreConfigurationBuilder;
-import org.infinispan.marshall.core.MarshalledEntryFactoryImpl;
-import org.infinispan.persistence.BaseStoreTest;
 import org.infinispan.persistence.spi.PersistenceException;
-import org.infinispan.persistence.DummyInitializationContext;
 import org.infinispan.marshall.core.MarshalledEntryImpl;
 import org.infinispan.marshall.TestObjectStreamMarshaller;
 import org.infinispan.test.AbstractInfinispanTest;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
+import org.infinispan.util.PersistenceMockUtil;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeClass;
@@ -49,17 +45,15 @@ public class BoundedSingleFileStoreTest extends AbstractInfinispanTest {
    public void setUp() throws Exception {
       clearTempDir();
       store = new SingleFileStore();
-      SingleFileStoreConfiguration fileStoreConfiguration = TestCacheManagerFactory
-            .getDefaultCacheConfiguration(false)
+      ConfigurationBuilder builder = TestCacheManagerFactory.getDefaultCacheConfiguration(false);
+      builder
             .persistence()
                .addStore(SingleFileStoreConfigurationBuilder.class)
                   .location(this.tmpDirectory)
-                  .maxEntries(1)
-                  .create();
+                  .maxEntries(1);
+
       marshaller = new TestObjectStreamMarshaller();
-      store.init(new DummyInitializationContext(fileStoreConfiguration, getCache(), marshaller,
-                                                new ByteBufferFactoryImpl(),
-                                                new MarshalledEntryFactoryImpl(marshaller)));
+      store.init(PersistenceMockUtil.createContext(getClass().getSimpleName(), builder.build(), marshaller));
       store.start();
    }
 
@@ -91,10 +85,6 @@ public class BoundedSingleFileStoreTest extends AbstractInfinispanTest {
    private void assertStoreSize(int expectedEntries, int expectedFree) {
       assertEquals("Entries: " + store.getEntries(), expectedEntries, store.getEntries().size());
       assertEquals("Free: " + store.getFreeList(), expectedFree, store.getFreeList().size());
-   }
-
-   Cache getCache() {
-      return BaseStoreTest.mockCache("mockCache-" + getClass().getName());
    }
 
 }

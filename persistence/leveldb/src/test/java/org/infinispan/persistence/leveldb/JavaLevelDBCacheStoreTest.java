@@ -8,10 +8,9 @@ import org.testng.annotations.Test;
 @Test(groups = "unit", testName = "persistence.leveldb.JavaLevelDBCacheStoreTest")
 public class JavaLevelDBCacheStoreTest extends LevelDBStoreTest {
 
-   protected LevelDBStoreConfiguration createCacheStoreConfig(PersistenceConfigurationBuilder lcb) {
-      LevelDBStoreConfigurationBuilder builder = new LevelDBStoreConfigurationBuilder(lcb);
-      builder.read(super.createCacheStoreConfig(lcb));
+   protected LevelDBStoreConfigurationBuilder createCacheStoreConfig(PersistenceConfigurationBuilder lcb) {
+      LevelDBStoreConfigurationBuilder builder = super.createCacheStoreConfig(lcb);
       builder.implementationType(LevelDBStoreConfiguration.ImplementationType.JAVA);
-      return builder.create();
+      return builder;
    }
 }

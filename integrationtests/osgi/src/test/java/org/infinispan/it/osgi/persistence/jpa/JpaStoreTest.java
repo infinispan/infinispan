@@ -30,12 +30,6 @@ public class JpaStoreTest extends org.infinispan.persistence.jpa.JpaStoreTest {
 
    @After
    @Override
-   public void stopMarshaller() {
-      super.stopMarshaller();
-   }
-
-   @After
-   @Override
    public void tearDown() throws PersistenceException {
       super.tearDown();
    }
@@ -92,5 +86,11 @@ public class JpaStoreTest extends org.infinispan.persistence.jpa.JpaStoreTest {
    @Override
    public void testReplaceExpiredEntry() throws Exception {
       super.testReplaceExpiredEntry();
+   }
+
+   @Test
+   @Override
+   public void testLoadAll() throws PersistenceException {
+      super.testLoadAll();
    }
 }
