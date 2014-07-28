@@ -10,7 +10,8 @@ import org.infinispan.commons.configuration.Builder;
 import org.infinispan.security.AuditLogger;
 import org.infinispan.security.PrincipalRoleMapper;
 import org.infinispan.security.Role;
-import org.infinispan.security.impl.DefaultAuditLogger;
+import org.infinispan.security.impl.LoggingAuditLogger;
+import org.infinispan.security.impl.NullAuditLogger;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
@@ -47,7 +48,8 @@ public class GlobalAuthorizationConfigurationBuilder extends AbstractGlobalConfi
    }
 
    /**
-    * The instance of an {@link AuditLogger} to be used to track operations performed on caches and cachemanagers
+    * The instance of an {@link AuditLogger} to be used to track operations performed on caches and cachemanagers. The default logger is
+    * the {@link NullAuditLogger}. You can also use the {@link LoggingAuditLogger} which will send audit messages to the log.
     * @param auditLogger
     */
    public GlobalAuthorizationConfigurationBuilder auditLogger(AuditLogger auditLogger) {
@@ -77,7 +79,7 @@ public class GlobalAuthorizationConfigurationBuilder extends AbstractGlobalConfi
          throw log.invalidPrincipalRoleMapper();
       }
       if (auditLogger == null) {
-         auditLogger = new DefaultAuditLogger();
+         auditLogger = new NullAuditLogger();
       }
    }
 
