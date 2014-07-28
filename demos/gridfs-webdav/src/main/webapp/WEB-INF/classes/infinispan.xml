@@ -1,30 +1,22 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <infinispan
       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-      xsi:schemaLocation="urn:infinispan:config:6.0 http://www.infinispan.org/schemas/infinispan-config-6.0.xsd"
-      xmlns="urn:infinispan:config:6.0">
-   <global>
-      <transport clusterName="WebDavGridFS" />
-      <globalJmxStatistics enabled="true"/>
-   </global>
+      xsi:schemaLocation="urn:infinispan:config:7.0 http://www.infinispan.org/schemas/infinispan-config-7.0.xsd"
+      xmlns="urn:infinispan:config:7.0">
+      
+   <cache-container default-cache="default" statistics="true">
+      <transport cluster="WebDavGridFS" />
+      <jmx domain="GridFS" duplicate-domains="true" />
+      
+      <local-cache name="default" statistics="true">
+         <locking concurrency-level="1000" acquire-timeout="60000"/>
+         <store-as-binary/>
+      </local-cache>
+      
+      <distributed-cache name="data" mode="SYNC" remote-timeout="60000" l1-lifespan="0" />
 
-   <default>
-      <locking concurrencyLevel="1000" lockAcquisitionTimeout="60000" />
-      <storeAsBinary enabled="true" />
-      <jmxStatistics enabled="true"/>
-   </default>
-
-   <namedCache name="data">
-      <clustering mode="d">
-         <sync replTimeout="60000" />
-         <l1 enabled="false" />
-      </clustering>
-   </namedCache>
-
-   <namedCache name="metadata">
-      <clustering mode="r">
-         <sync replTimeout="60000" />
-         <stateTransfer fetchInMemoryState="true" />
-      </clustering>
-   </namedCache>
+      <replicated-cache name="metadata" mode="SYNC" remote-timeout="60000" />
+   </cache-container>
 </infinispan>
+
+
