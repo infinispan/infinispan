@@ -7,6 +7,7 @@ import org.infinispan.commons.util.CloseableIterator;
 import org.infinispan.commons.util.concurrent.ParallelIterableMap;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.container.DataContainer;
+import org.infinispan.container.InternalEntryFactory;
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.context.Flag;
@@ -23,6 +24,7 @@ import org.infinispan.marshall.core.MarshalledEntry;
 import org.infinispan.notifications.Listener;
 import org.infinispan.notifications.cachelistener.annotation.CacheEntryActivated;
 import org.infinispan.notifications.cachelistener.event.CacheEntryActivatedEvent;
+import org.infinispan.persistence.PersistenceUtil;
 import org.infinispan.persistence.manager.PersistenceManager;
 import org.infinispan.persistence.spi.AdvancedCacheLoader;
 import org.infinispan.remoting.transport.Address;
@@ -71,6 +73,7 @@ public class LocalEntryRetriever<K, V> implements EntryRetriever<K, V> {
    protected ExecutorService executorService;
    protected Cache<K, V> cache;
    protected TimeService timeService;
+   protected InternalEntryFactory entryFactory;
 
    protected final Executor withinThreadExecutor = new WithinThreadExecutor();
 
@@ -79,12 +82,13 @@ public class LocalEntryRetriever<K, V> implements EntryRetriever<K, V> {
    @Inject
    public void inject(DataContainer<K, V> dataContainer, PersistenceManager persistenceManager,
                       @ComponentName(ASYNC_TRANSPORT_EXECUTOR) ExecutorService executorService,
-                      TimeService timeService,
-                      Cache<K, V> cache, Configuration config) {
+                      TimeService timeService, InternalEntryFactory entryFactory, Cache<K, V> cache,
+                      Configuration config) {
       this.dataContainer = dataContainer;
       this.persistenceManager = persistenceManager;
       this.executorService = executorService;
       this.timeService = timeService;
+      this.entryFactory = entryFactory;
       this.cache = cache;
 
       this.passivationEnabled = config.persistence().passivation();
@@ -138,7 +142,7 @@ public class LocalEntryRetriever<K, V> implements EntryRetriever<K, V> {
       }
    }
 
-   protected static class KeyValueActionForCacheLoaderTask<K, V> implements AdvancedCacheLoader.CacheLoaderTask<K, InternalCacheEntry<K, V>> {
+   protected class KeyValueActionForCacheLoaderTask<K, V> implements AdvancedCacheLoader.CacheLoaderTask<K, V> {
 
       private final ParallelIterableMap.KeyValueAction<? super K, ? super InternalCacheEntry<K, V>> action;
 
@@ -147,12 +151,11 @@ public class LocalEntryRetriever<K, V> implements EntryRetriever<K, V> {
       }
 
       @Override
-      public void processEntry(MarshalledEntry<K, InternalCacheEntry<K, V>> marshalledEntry,
+      public void processEntry(MarshalledEntry<K, V> marshalledEntry,
                                AdvancedCacheLoader.TaskContext taskContext)
             throws InterruptedException {
          if (!taskContext.isStopped()) {
-            // Since ImmortalCacheEntry isn't properly typed we have to cast
-            action.apply(marshalledEntry.getKey(), marshalledEntry.getValue());
+            action.apply(marshalledEntry.getKey(), PersistenceUtil.convert(marshalledEntry, entryFactory));
             if (Thread.interrupted()) {
                throw new InterruptedException();
             }
@@ -208,7 +211,7 @@ public class LocalEntryRetriever<K, V> implements EntryRetriever<K, V> {
                         }
                      }
                   }
-                  if (shouldUseLoader(flags) && persistenceManager.size() > 0) {
+                  if (shouldUseLoader(flags) && persistenceManager.getStoresAsString().size() > 0) {
                      if (passivationEnabled) {
                         listener = new PassivationListener<K, V>();
                         cache.addListener(listener);
