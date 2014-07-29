@@ -248,6 +248,22 @@ public class LocalTopologyManagerImpl implements LocalTopologyManager {
       return cacheStatus.getTopology();
    }
 
+   @Override
+   public boolean isTotalOrderCache(String cacheName) {
+      if (!running) {
+         log.tracef("isTotalOrderCache(%s) returning false because the local cache manager is not running", cacheName);
+         return false;
+      }
+      LocalCacheStatus cacheStatus = runningCaches.get(cacheName);
+      if (cacheStatus == null) {
+         log.tracef("isTotalOrderCache(%s) returning false because the cache doesn't exist locally", cacheName);
+         return false;
+      }
+      boolean totalOrder = cacheStatus.getJoinInfo().isTotalOrder();
+      log.tracef("isTotalOrderCache(%s) returning %s", cacheName, totalOrder);
+      return totalOrder;
+   }
+
    private void waitForView(int viewId) throws InterruptedException {
       if (transport.getViewId() < viewId) {
          log.tracef("Received a cache topology command with a higher view id: %s, our view id is %s", viewId,
