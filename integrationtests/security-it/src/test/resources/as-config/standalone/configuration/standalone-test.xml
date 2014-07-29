@@ -343,7 +343,7 @@
                             <module-option name="useKeyTab" value="true"/>
                             <module-option name="refreshKrb5Config" value="true"/>
                             <module-option name="principal" value="ldap/localhost@INFINISPAN.ORG"/>
-                            <module-option name="keyTab" value="${basedir}/src/test/resources/keytab/ldap.keytab"/>
+                            <module-option name="keyTab" value="${basedir}/src/test/resources/keytab/ldap.localhost.keytab"/>
                             <module-option name="doNotPrompt" value="true"/>
                         </login-module>
                     </authentication>
