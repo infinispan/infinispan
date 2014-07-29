@@ -162,26 +162,29 @@ public class TxInterceptor extends CommandInterceptor implements JmxStatisticsEx
             return null;
          }
 
-         // If a commit is received for a transaction that doesn't have its 'lookedUpEntries' populated
-         // we know for sure this transaction is 2PC and was received via state transfer but the preceding PrepareCommand
-         // was not received by local node because it was executed on the previous key owners. We need to re-prepare
-         // the transaction on local node to ensure its locks are acquired and lookedUpEntries is properly populated.
-         RemoteTransaction remoteTx = (RemoteTransaction) ctx.getCacheTransaction();
-         if (trace) {
-            log.tracef("Remote tx topology id %d and command topology is %d", remoteTx.lookedUpEntriesTopology(),
-                  command.getTopologyId());
-         }
-         if (remoteTx.lookedUpEntriesTopology() < command.getTopologyId()) {
-            PrepareCommand prepareCommand;
-            if (useVersioning) {
-               prepareCommand = commandsFactory.buildVersionedPrepareCommand(ctx.getGlobalTransaction(), ctx.getModifications(), false);
-            } else {
-               prepareCommand = commandsFactory.buildPrepareCommand(ctx.getGlobalTransaction(), ctx.getModifications(), false);
+         if (!isTotalOrder) {
+            // If a commit is received for a transaction that doesn't have its 'lookedUpEntries' populated
+            // we know for sure this transaction is 2PC and was received via state transfer but the preceding PrepareCommand
+            // was not received by local node because it was executed on the previous key owners. We need to re-prepare
+            // the transaction on local node to ensure its locks are acquired and lookedUpEntries is properly populated.
+            RemoteTransaction remoteTx = (RemoteTransaction) ctx.getCacheTransaction();
+            if (trace) {
+               log.tracef("Remote tx topology id %d and command topology is %d", remoteTx.lookedUpEntriesTopology(),
+                          command.getTopologyId());
             }
-            commandsFactory.initializeReplicableCommand(prepareCommand, true);
-            prepareCommand.setOrigin(ctx.getOrigin());
-            if (trace) log.tracef("Replaying the transactions received as a result of state transfer %s", prepareCommand);
-            visitPrepareCommand(ctx, prepareCommand);
+            if (remoteTx.lookedUpEntriesTopology() < command.getTopologyId()) {
+               PrepareCommand prepareCommand;
+               if (useVersioning) {
+                  prepareCommand = commandsFactory.buildVersionedPrepareCommand(ctx.getGlobalTransaction(), ctx.getModifications(), false);
+               } else {
+                  prepareCommand = commandsFactory.buildPrepareCommand(ctx.getGlobalTransaction(), ctx.getModifications(), false);
+               }
+               commandsFactory.initializeReplicableCommand(prepareCommand, true);
+               prepareCommand.setOrigin(ctx.getOrigin());
+               if (trace)
+                  log.tracef("Replaying the transactions received as a result of state transfer %s", prepareCommand);
+               visitPrepareCommand(ctx, prepareCommand);
+            }
          }
 
          txTable.markTransactionCompleted(gtx);
