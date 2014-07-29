@@ -11,6 +11,7 @@ import org.infinispan.util.logging.LogFactory;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.atomic.AtomicReference;
@@ -142,14 +143,17 @@ public class TotalOrderManager {
     * @param topologyId the new topology ID
     * @return the current pending prepares
     */
-   public final Collection<TotalOrderLatch> notifyStateTransferStart(int topologyId) {
+   public final Collection<TotalOrderLatch> notifyStateTransferStart(int topologyId, boolean isRebalance) {
+      if (stateTransferInProgress.get() != null) {
+         return Collections.emptyList();
+      }
       List<TotalOrderLatch> preparingTransactions = new ArrayList<TotalOrderLatch>(keysLocked.size());
       preparingTransactions.addAll(keysLocked.values());
       TotalOrderLatch clearBlock = clear.get();
       if (clearBlock != null) {
          preparingTransactions.add(clearBlock);
       }
-      if (stateTransferInProgress.get() == null) {
+      if (isRebalance) {
          stateTransferInProgress.set(new TotalOrderLatchImpl("StateTransfer-" + topologyId));
       }
       if (log.isTraceEnabled()) {

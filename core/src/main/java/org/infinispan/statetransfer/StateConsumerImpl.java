@@ -259,29 +259,12 @@ public class StateConsumerImpl implements StateConsumer {
          cacheNotifier.notifyDataRehashed(cacheTopology.getCurrentCH(), cacheTopology.getPendingCH(),
                                           cacheTopology.getUnionCH(), cacheTopology.getTopologyId(), true);
 
-         //in total order, we should wait for remote transactions before proceeding
-         if (isTotalOrder) {
-            if (log.isTraceEnabled()) {
-               log.trace("State Transfer in Total Order cache. Waiting for remote transactions to finish");
-            }
-            try {
-               for (TotalOrderLatch block : totalOrderManager.notifyStateTransferStart(cacheTopology.getTopologyId())) {
-                  block.awaitUntilUnBlock();
-               }
-            } catch (InterruptedException e) {
-               //interrupted...
-               Thread.currentThread().interrupt();
-               throw new CacheException(e);
-            }
-            if (log.isTraceEnabled()) {
-               log.trace("State Transfer in Total Order cache. All remote transactions are finished. Moving on...");
-            }
-         }
-
          if (log.isTraceEnabled()) {
             log.tracef("Lock State Transfer in Progress for topology ID %s", cacheTopology.getTopologyId());
          }
       }
+
+      awaitTotalOrderTransactions(cacheTopology, isRebalance);
 
       // Make sure we don't send a REBALANCE_CONFIRM command before we've added all the transfer tasks
       // even if some of the tasks are removed and re-added
@@ -421,6 +404,28 @@ public class StateConsumerImpl implements StateConsumer {
             }
          }
       }
+   }
+
+   private void awaitTotalOrderTransactions(CacheTopology cacheTopology, boolean isRebalance) {
+      //in total order, we should wait for remote transactions before proceeding
+      if (isTotalOrder) {
+         if (log.isTraceEnabled()) {
+            log.trace("State Transfer in Total Order cache. Waiting for remote transactions to finish");
+         }
+         try {
+            for (TotalOrderLatch block : totalOrderManager.notifyStateTransferStart(cacheTopology.getTopologyId(), isRebalance)) {
+               block.awaitUntilUnBlock();
+            }
+         } catch (InterruptedException e) {
+            //interrupted...
+            Thread.currentThread().interrupt();
+            throw new CacheException(e);
+         }
+         if (log.isTraceEnabled()) {
+            log.trace("State Transfer in Total Order cache. All remote transactions are finished. Moving on...");
+         }
+      }
+
    }
 
    private void notifyEndOfRebalanceIfNeeded(int topologyId) {

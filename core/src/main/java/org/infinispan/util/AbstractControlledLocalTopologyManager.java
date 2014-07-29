@@ -80,6 +80,11 @@ public abstract class AbstractControlledLocalTopologyManager implements LocalTop
       }
    }
 
+   @Override
+   public boolean isTotalOrderCache(String cacheName) {
+      return delegate.isTotalOrderCache(cacheName);
+   }
+
    protected void beforeHandleConsistentHashUpdate(String cacheName, CacheTopology cacheTopology, int viewId) {
       //no-op by default
    }
