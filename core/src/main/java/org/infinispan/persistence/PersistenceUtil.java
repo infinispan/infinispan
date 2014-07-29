@@ -127,7 +127,7 @@ public class PersistenceUtil {
       return loaded;
    }
 
-   public static <K, V> InternalCacheEntry<K, V> convert(MarshalledEntry loaded, InternalEntryFactory factory) {
+   public static <K, V> InternalCacheEntry<K, V> convert(MarshalledEntry<K, V> loaded, InternalEntryFactory factory) {
       InternalMetadata metadata = loaded.getMetadata();
       if (metadata != null) {
          Metadata actual = metadata instanceof InternalMetadataImpl ? ((InternalMetadataImpl) metadata).actual() :
