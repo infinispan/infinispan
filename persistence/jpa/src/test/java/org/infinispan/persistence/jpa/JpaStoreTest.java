@@ -1,18 +1,14 @@
 package org.infinispan.persistence.jpa;
 
-import org.infinispan.Cache;
-import org.infinispan.commons.io.ByteBufferFactoryImpl;
-import org.infinispan.marshall.core.MarshalledEntryFactoryImpl;
+import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.persistence.BaseStoreTest;
-import org.infinispan.persistence.DummyInitializationContext;
-import org.infinispan.persistence.jpa.configuration.JpaStoreConfiguration;
 import org.infinispan.persistence.jpa.configuration.JpaStoreConfigurationBuilder;
 import org.infinispan.persistence.jpa.entity.KeyValueEntity;
 import org.infinispan.persistence.jpa.impl.EntityManagerFactoryRegistry;
 import org.infinispan.persistence.spi.AdvancedLoadWriteStore;
+import org.infinispan.persistence.spi.InitializationContext;
 import org.infinispan.persistence.spi.PersistenceException;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
-import org.testng.annotations.AfterMethod;
 import org.testng.annotations.Test;
 
 /**
@@ -21,31 +17,20 @@ import org.testng.annotations.Test;
 @Test(groups = "unit", testName = "persistence.JpaStoreTest")
 public class JpaStoreTest extends BaseStoreTest {
 
-   private JpaStore store;
-   
-   // make this method public to be able to call it from wrapper classes
-   @Override
-   @AfterMethod
-   public void stopMarshaller() {
-      super.stopMarshaller();
-   }
-
    @Override
    protected AdvancedLoadWriteStore createStore() throws Exception {
-      store = new JpaStore();
-      JpaStoreConfiguration configuration = TestCacheManagerFactory
-            .getDefaultCacheConfiguration(false)
-               .persistence()
-                  .addStore(JpaStoreConfigurationBuilder.class)
-                     .persistenceUnitName("org.infinispan.persistence.jpa")
-                     .entityClass(KeyValueEntity.class)
-                     .create();
-      Cache cache = getCache();
-      cache.getAdvancedCache().getComponentRegistry().getGlobalComponentRegistry()
+      ConfigurationBuilder builder = TestCacheManagerFactory
+            .getDefaultCacheConfiguration(false);
+      builder
+            .persistence()
+               .addStore(JpaStoreConfigurationBuilder.class)
+                  .persistenceUnitName("org.infinispan.persistence.jpa")
+                  .entityClass(KeyValueEntity.class);
+      InitializationContext context = createContext(builder.build());
+      context.getCache().getAdvancedCache().getComponentRegistry().getGlobalComponentRegistry()
             .registerComponent(new EntityManagerFactoryRegistry(), EntityManagerFactoryRegistry.class);
-      store.init(new DummyInitializationContext(configuration, cache, getMarshaller(), new ByteBufferFactoryImpl(),
-            new MarshalledEntryFactoryImpl(getMarshaller())));
-      store.start();
+      JpaStore store = new JpaStore();
+      store.init(context);
       return store;
    }
 

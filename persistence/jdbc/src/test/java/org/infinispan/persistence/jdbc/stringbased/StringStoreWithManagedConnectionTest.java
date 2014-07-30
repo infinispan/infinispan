@@ -1,23 +1,23 @@
 package org.infinispan.persistence.jdbc.stringbased;
 
 import org.infinispan.Cache;
-import org.infinispan.commons.io.ByteBufferFactoryImpl;
+import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.cache.StoreConfiguration;
-import org.infinispan.marshall.core.MarshalledEntryFactoryImpl;
 import org.infinispan.persistence.spi.PersistenceException;
-import org.infinispan.persistence.InitializationContextImpl;
 import org.infinispan.persistence.jdbc.ManagedConnectionFactoryTest;
 import org.infinispan.persistence.jdbc.configuration.JdbcStringBasedStoreConfiguration;
 import org.infinispan.persistence.jdbc.configuration.JdbcStringBasedStoreConfigurationBuilder;
 import org.infinispan.persistence.jdbc.connectionfactory.ManagedConnectionFactory;
 import org.infinispan.persistence.keymappers.UnsupportedKeyTypeException;
 import org.infinispan.persistence.spi.AdvancedLoadWriteStore;
-import org.infinispan.manager.CacheContainer;
+import org.infinispan.test.CacheManagerCallable;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.infinispan.test.fwk.UnitTestDatabaseManager;
-import org.infinispan.util.DefaultTimeService;
 import org.testng.annotations.Test;
+
+import static org.testng.AssertJUnit.assertNotNull;
+import static org.testng.AssertJUnit.assertTrue;
 
 /**
  * @author Mircea.Markus@jboss.com
@@ -27,8 +27,8 @@ public class StringStoreWithManagedConnectionTest extends ManagedConnectionFacto
 
    @Override
    protected AdvancedLoadWriteStore createStore() throws Exception {
-      JdbcStringBasedStoreConfigurationBuilder storeBuilder = TestCacheManagerFactory
-            .getDefaultCacheConfiguration(false)
+      ConfigurationBuilder builder = TestCacheManagerFactory.getDefaultCacheConfiguration(false);
+      JdbcStringBasedStoreConfigurationBuilder storeBuilder = builder
             .persistence()
                .addStore(JdbcStringBasedStoreConfigurationBuilder.class);
 
@@ -37,31 +37,27 @@ public class StringStoreWithManagedConnectionTest extends ManagedConnectionFacto
       UnitTestDatabaseManager.buildTableManipulation(storeBuilder.table(), false);
 
       JdbcStringBasedStore stringBasedCacheStore = new JdbcStringBasedStore();
-      stringBasedCacheStore.init(new InitializationContextImpl(storeBuilder.create(), getCache(), getMarshaller(),
-                                                               new DefaultTimeService(), new ByteBufferFactoryImpl(),
-                                                               new MarshalledEntryFactoryImpl(getMarshaller())));
-      stringBasedCacheStore.start();
+      stringBasedCacheStore.init(createContext(builder.build()));
       return stringBasedCacheStore;
    }
 
    public void testLoadFromFile() throws Exception {
-      CacheContainer cm = null;
-      try {
-         cm = TestCacheManagerFactory.fromXml("configs/managed/str-managed-connection-factory.xml");
-         Cache<String, String> first = cm.getCache("first");
-         Cache<String, String> second = cm.getCache("second");
+      TestingUtil.withCacheManager(new CacheManagerCallable(TestCacheManagerFactory.fromXml("configs/managed/str-managed-connection-factory.xml"), true) {
+         @Override
+         public void call() {
+            Cache<String, String> first = cm.getCache("first");
+            Cache<String, String> second = cm.getCache("second");
 
-         StoreConfiguration firstCacheLoaderConfig = first.getCacheConfiguration().persistence().stores().get(0);
-         assert firstCacheLoaderConfig != null;
-         StoreConfiguration secondCacheLoaderConfig = second.getCacheConfiguration().persistence().stores().get(0);
-         assert secondCacheLoaderConfig != null;
-         assert firstCacheLoaderConfig instanceof JdbcStringBasedStoreConfiguration;
-         assert secondCacheLoaderConfig instanceof JdbcStringBasedStoreConfiguration;
-         JdbcStringBasedStore loader = (JdbcStringBasedStore) TestingUtil.getFirstLoader(first);
-         assert loader.getConnectionFactory() instanceof ManagedConnectionFactory;
-      } finally {
-         TestingUtil.killCacheManagers(cm);
-      }
+            StoreConfiguration firstCacheLoaderConfig = first.getCacheConfiguration().persistence().stores().get(0);
+            assertNotNull(firstCacheLoaderConfig);
+            assertTrue(firstCacheLoaderConfig instanceof JdbcStringBasedStoreConfiguration);
+            StoreConfiguration secondCacheLoaderConfig = second.getCacheConfiguration().persistence().stores().get(0);
+            assertNotNull(secondCacheLoaderConfig);
+            assertTrue(secondCacheLoaderConfig instanceof JdbcStringBasedStoreConfiguration);
+            JdbcStringBasedStore loader = (JdbcStringBasedStore) TestingUtil.getFirstLoader(first);
+            assertTrue(loader.getConnectionFactory() instanceof ManagedConnectionFactory);
+         }
+      });
    }
 
    @Override

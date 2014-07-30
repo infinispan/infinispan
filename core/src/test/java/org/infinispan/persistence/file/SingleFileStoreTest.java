@@ -1,11 +1,8 @@
 package org.infinispan.persistence.file;
 
-import org.infinispan.commons.io.ByteBufferFactoryImpl;
-import org.infinispan.configuration.cache.SingleFileStoreConfiguration;
+import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.cache.SingleFileStoreConfigurationBuilder;
-import org.infinispan.marshall.core.MarshalledEntryFactoryImpl;
 import org.infinispan.persistence.BaseStoreTest;
-import org.infinispan.persistence.DummyInitializationContext;
 import org.infinispan.persistence.spi.AdvancedLoadWriteStore;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
@@ -24,15 +21,14 @@ import static org.infinispan.test.TestingUtil.recursiveFileRemove;
 @Test(groups = "unit", testName = "persistence.file.SingleFileStoreTest")
 public class SingleFileStoreTest extends BaseStoreTest {
 
-   SingleFileStore store;
    String tmpDirectory;
 
-   @BeforeClass
+   @BeforeClass(alwaysRun = true)
    protected void setUpTempDir() {
       tmpDirectory = TestingUtil.tmpDirectory(this.getClass());
    }
 
-   @AfterClass
+   @AfterClass(alwaysRun = true)
    protected void clearTempDir() {
       recursiveFileRemove(tmpDirectory);
    }
@@ -40,16 +36,13 @@ public class SingleFileStoreTest extends BaseStoreTest {
    @Override
    protected AdvancedLoadWriteStore createStore() throws Exception {
       clearTempDir();
-      store = new SingleFileStore();
-      SingleFileStoreConfiguration fileStoreConfiguration = TestCacheManagerFactory
-            .getDefaultCacheConfiguration(false)
+      SingleFileStore store = new SingleFileStore();
+      ConfigurationBuilder configurationBuilder = TestCacheManagerFactory.getDefaultCacheConfiguration(false);
+      configurationBuilder
             .persistence()
                .addStore(SingleFileStoreConfigurationBuilder.class)
-                  .location(this.tmpDirectory)
-                  .create();
-      store.init(new DummyInitializationContext(fileStoreConfiguration, getCache(), getMarshaller(), new ByteBufferFactoryImpl(),
-                                                new MarshalledEntryFactoryImpl(getMarshaller())));
-      store.start();
+                  .location(this.tmpDirectory);
+      store.init(createContext(configurationBuilder.build()));
       return store;
    }
 }
