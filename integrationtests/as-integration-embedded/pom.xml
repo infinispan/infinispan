@@ -154,7 +154,15 @@
                            <version>${version.wildfly}</version>
                            <type>zip</type>
                            <overWrite>false</overWrite>
-                           <outputDirectory>${project.build.directory}</outputDirectory>
+                           <outputDirectory>${project.build.directory}/node1</outputDirectory>
+                        </artifactItem>
+                        <artifactItem>
+                           <groupId>org.wildfly</groupId>
+                           <artifactId>wildfly-dist</artifactId>
+                           <version>${version.wildfly}</version>
+                           <type>zip</type>
+                           <overWrite>false</overWrite>
+                           <outputDirectory>${project.build.directory}/node2</outputDirectory>
                         </artifactItem>
                         <artifactItem>
                            <groupId>org.infinispan</groupId>
@@ -162,7 +170,15 @@
                            <version>${project.version}</version>
                            <type>zip</type>
                            <overWrite>false</overWrite>
-                           <outputDirectory>${project.build.directory}/wildfly-${version.wildfly}/modules</outputDirectory>
+                           <outputDirectory>${project.build.directory}/node1/wildfly-${version.wildfly}/modules</outputDirectory>
+                        </artifactItem>
+                        <artifactItem>
+                           <groupId>org.infinispan</groupId>
+                           <artifactId>infinispan-as-embedded-modules</artifactId>
+                           <version>${project.version}</version>
+                           <type>zip</type>
+                           <overWrite>false</overWrite>
+                           <outputDirectory>${project.build.directory}/node2/wildfly-${version.wildfly}/modules</outputDirectory>
                         </artifactItem>
                      </artifactItems>
                   </configuration>
@@ -176,13 +192,29 @@
             <executions>
                <!-- Copy the AS configuration files so we can use our custom configurations -->
                <execution>
-                  <id>configure-as-node</id>
+                  <id>configure-as-node1</id>
                   <phase>pre-integration-test</phase>
                   <goals>
                      <goal>copy-resources</goal>
                   </goals>
                   <configuration>
-                     <outputDirectory>${project.build.directory}/wildfly-${version.wildfly}</outputDirectory>
+                     <outputDirectory>${project.build.directory}/node2/wildfly-${version.wildfly}</outputDirectory>
+                     <overwrite>true</overwrite>
+                     <resources>
+                        <resource>
+                           <directory>${basedir}/src/as-config</directory>
+                        </resource>
+                     </resources>
+                  </configuration>
+               </execution>
+               <execution>
+                  <id>configure-as-node2</id>
+                  <phase>pre-integration-test</phase>
+                  <goals>
+                     <goal>copy-resources</goal>
+                  </goals>
+                  <configuration>
+                     <outputDirectory>${project.build.directory}/node1/wildfly-${version.wildfly}</outputDirectory>
                      <overwrite>true</overwrite>
                      <resources>
                         <resource>
