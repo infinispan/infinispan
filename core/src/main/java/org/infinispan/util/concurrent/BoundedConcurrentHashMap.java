@@ -279,13 +279,13 @@ public class BoundedConcurrentHashMap<K, V> extends AbstractMap<K, V>
       LRU {
          @Override
          public <K, V> EvictionPolicy<K, V> make(Segment<K, V> s, int capacity, float lf) {
-            return new LRU<K, V>(s,capacity,lf,capacity*10,lf);
+            return new LRU<K, V>(s,capacity,lf,capacity*10);
          }
       },
       LIRS {
          @Override
          public <K, V> EvictionPolicy<K, V> make(Segment<K, V> s, int capacity, float lf) {
-            return new LIRS<K,V>(s,capacity,capacity*10,lf);
+            return new LIRS<K,V>(s,capacity,capacity*10);
          }
       };
 
@@ -384,15 +384,6 @@ public class BoundedConcurrentHashMap<K, V> extends AbstractMap<K, V>
        * @return type of eviction algorithm
        */
       Eviction strategy();
-
-      /**
-       * Returns true if batching threshold has expired, false otherwise.
-       * <p>
-       * Note that this method is potentially invoked without holding a lock on Segment.
-       *
-       * @return true if batching threshold has expired, false otherwise.
-       */
-      boolean thresholdExpired();
    }
 
    static class NullEvictionPolicy<K, V> implements EvictionPolicy<K, V> {
@@ -423,11 +414,6 @@ public class BoundedConcurrentHashMap<K, V> extends AbstractMap<K, V>
       }
 
       @Override
-      public boolean thresholdExpired() {
-         return false;
-      }
-
-      @Override
       public Eviction strategy() {
          return Eviction.NONE;
       }
@@ -447,11 +433,10 @@ public class BoundedConcurrentHashMap<K, V> extends AbstractMap<K, V>
       private final Segment<K,V> segment;
       private final int maxBatchQueueSize;
       private final int trimDownSize;
-      private final float batchQueueSizeThreshold;
       private final Set<HashEntry<K, V>> evicted;
       private final AtomicInteger accessQueueSize = new AtomicInteger(0);
 
-      public LRU(final Segment<K,V> s, int capacity, float lf, int maxBatchSize, float batchThresholdFactor) {
+      public LRU(final Segment<K,V> s, int capacity, float lf, int maxBatchSize) {
          super(capacity, lf, IterationOrder.ACCESS_ORDER, new Equivalence<HashEntry<K, V>>() {
             @Override
             public int hashCode(Object obj) {
@@ -490,7 +475,6 @@ public class BoundedConcurrentHashMap<K, V> extends AbstractMap<K, V>
          this.segment = s;
          this.trimDownSize = capacity;
          this.maxBatchQueueSize = maxBatchSize > MAX_BATCH_SIZE ? MAX_BATCH_SIZE : maxBatchSize;
-         this.batchQueueSizeThreshold = batchThresholdFactor * this.maxBatchQueueSize;
          this.accessQueue = new ConcurrentLinkedQueue<HashEntry<K, V>>();
          this.evicted = new HashSet<HashEntry<K, V>>();
       }
@@ -528,15 +512,7 @@ public class BoundedConcurrentHashMap<K, V> extends AbstractMap<K, V>
       public boolean onEntryHit(HashEntry<K, V> e) {
          accessQueue.add(e);
          int sz = accessQueueSize.incrementAndGet();
-         return sz >= batchQueueSizeThreshold;
-      }
-
-      /*
-       * Invoked without holding a lock on Segment
-       */
-      @Override
-      public boolean thresholdExpired() {
-         return accessQueueSize.get() >= maxBatchQueueSize;
+         return sz >= maxBatchQueueSize;
       }
 
       @Override
@@ -1005,9 +981,6 @@ public class BoundedConcurrentHashMap<K, V> extends AbstractMap<K, V>
       /** The number of LIRS entries in a segment */
       private int size;
       
-      private final float batchQueueSizeThreshold;
-      
-      
       /**
        * This header encompasses two data structures:
        *
@@ -1039,12 +1012,11 @@ public class BoundedConcurrentHashMap<K, V> extends AbstractMap<K, V>
 
             
 
-      public LIRS(Segment<K,V> s, int capacity, int maxBatchSize, float batchThresholdFactor) {
+      public LIRS(Segment<K,V> s, int capacity, int maxBatchSize) {
          this.segment = s;
          this.maximumSize = capacity;
          this.maximumHotSize = calculateLIRSize(capacity);
          this.maxBatchQueueSize = maxBatchSize > MAX_BATCH_SIZE ? MAX_BATCH_SIZE : maxBatchSize;
-         this.batchQueueSizeThreshold = batchThresholdFactor * this.maxBatchQueueSize;
          this.accessQueue = new ConcurrentLinkedQueue<LIRSHashEntry<K, V>>();                         
       }
       
@@ -1119,15 +1091,7 @@ public class BoundedConcurrentHashMap<K, V> extends AbstractMap<K, V>
       public boolean onEntryHit(HashEntry<K, V> e) {
          accessQueue.add((LIRSHashEntry<K, V>) e);
          int sz = accessQueueSize.incrementAndGet();
-         return sz >= batchQueueSizeThreshold;
-      }
-
-      /*
-       * Invoked without holding a lock on Segment
-       */
-      @Override
-      public boolean thresholdExpired() {
-         return accessQueueSize.get() >= maxBatchQueueSize;
+         return sz >= maxBatchQueueSize;
       }
 
       @Override
@@ -1642,9 +1606,7 @@ public class BoundedConcurrentHashMap<K, V> extends AbstractMap<K, V>
          Set<HashEntry<K, V>> evicted = null;
          if (shouldAttemptEvict) {
             try {
-               if (eviction.thresholdExpired()) {
-                  evicted = eviction.execute();
-               }
+               evicted = eviction.execute();
             } finally {
                if (!lockedAlready) {
                   unlock();
