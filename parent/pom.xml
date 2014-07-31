@@ -127,7 +127,7 @@
       <version.hibernate_dep.hibernate-commons-annotations>4.0.5.Final</version.hibernate_dep.hibernate-commons-annotations>
       <version.httpclient>4.2.4</version.httpclient>
       <version.howl>1.0.1-1</version.howl>
-      <version.jackson>1.9.2</version.jackson>
+      <version.jackson>1.9.13</version.jackson>
       <version.javax.cache>1.0.0</version.javax.cache>
       <version.javax.cache.cache-tests>${version.javax.cache}</version.javax.cache.cache-tests>
       <version.javax.servlet>2.5</version.javax.servlet>
