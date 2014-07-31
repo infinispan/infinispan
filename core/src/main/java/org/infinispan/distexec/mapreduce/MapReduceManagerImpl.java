@@ -492,9 +492,12 @@ public class MapReduceManagerImpl implements MapReduceManager {
          //combine all collectors from the queue into one
          DefaultCollector<K, V, KOut, VOut> finalCollector = new DefaultCollector<K, V, KOut, VOut>(mcc, Integer.MAX_VALUE);
          for (DefaultCollector<K, V, KOut, VOut> collector : queue) {
-            finalCollector.emit(collector.collectedValues());
-            collector.reset();
+            if (!collector.isEmpty()) {
+               finalCollector.emit(collector.collectedValues());
+               collector.reset();
+            }
          }
+         combine(mcc, finalCollector);
          return finalCollector.collectedValues();
       }
 
@@ -602,6 +605,10 @@ public class MapReduceManagerImpl implements MapReduceManager {
       public void reset(){
          store.clear();
          emitCount.set(0);
+      }
+
+      public boolean isEmpty() {
+         return store.isEmpty();
       }
 
       public void emit(Map<KOut, List<VOut>> combined) {
