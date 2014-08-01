@@ -293,7 +293,7 @@ public class BoundedConcurrentHashMap<K, V> extends AbstractMap<K, V>
       void onEntryRemoved(Object key);
    }
 
-   static final class NullEvictionListener<K, V> implements EvictionListener<K, V> {
+   static class NullEvictionListener<K, V> implements EvictionListener<K, V> {
       @Override
       public void onEntryEviction(Map<K, V> evicted) {
          // Do nothing.
@@ -454,11 +454,11 @@ public class BoundedConcurrentHashMap<K, V> extends AbstractMap<K, V>
       @Override
       public Set<HashEntry<K, V>> execute() {
          Set<HashEntry<K, V>> evictedCopy = new HashSet<HashEntry<K, V>>();
-         for (HashEntry<K, V> e : accessQueue) {
+         HashEntry<K, V> e;
+         while ((e = accessQueue.poll()) != null) {
             get(e);
          }
          evictedCopy.addAll(evicted);
-         accessQueue.clear();
          accessQueueSize.set(0);
          evicted.clear();
          return evictedCopy;
@@ -1013,14 +1013,14 @@ public class BoundedConcurrentHashMap<K, V> extends AbstractMap<K, V>
       public Set<HashEntry<K, V>> execute() {
          Set<HashEntry<K, V>> evicted = new HashSet<HashEntry<K, V>>();
          try {
-            for (LIRSHashEntry<K, V> e : accessQueue) {
+            LIRSHashEntry<K, V> e;
+            while ((e = accessQueue.poll()) != null) {
                if(e.isResident()){ 
                   e.hit(evicted);
                }
             }
             removeFromSegment(evicted);
          } finally {
-            accessQueue.clear();
             accessQueueSize.set(0);
          }
          return evicted;
