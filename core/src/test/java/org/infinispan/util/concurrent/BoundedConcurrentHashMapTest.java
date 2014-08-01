@@ -3,6 +3,8 @@ package org.infinispan.util.concurrent;
 import org.infinispan.commons.equivalence.AnyEquivalence;
 import org.infinispan.util.EquivalentHashMapTest;
 import org.infinispan.util.concurrent.BoundedConcurrentHashMap.Eviction;
+import org.infinispan.util.concurrent.BoundedConcurrentHashMap.EvictionListener;
+import org.infinispan.util.concurrent.BoundedConcurrentHashMap.NullEvictionListener;
 import org.testng.annotations.Test;
 
 import java.util.Arrays;
@@ -164,5 +166,46 @@ public class BoundedConcurrentHashMapTest extends EquivalentHashMapTest {
 
    public void testLIRSRemovePerformance() {
       testRemovePerformance(Eviction.LIRS);
+   }
+
+   public void testLRUCacheHits() throws InterruptedException
+   {
+      final int COUNT_PER_THREAD = 100000;
+      final int THREADS = 10;
+      final int COUNT = COUNT_PER_THREAD * THREADS;
+
+      final EvictionListener<Integer, Integer> l = new NullEvictionListener<Integer, Integer>() {
+         @Override
+         public void onEntryChosenForEviction(Integer internalCacheEntry) {
+            assertEquals(COUNT, internalCacheEntry.intValue());
+         }
+      };
+
+      final Map<Integer, Integer> bchm = new BoundedConcurrentHashMap<Integer, Integer>(
+            COUNT + 1, 1, Eviction.LRU, l, AnyEquivalence.INT, AnyEquivalence.INT);
+
+      // fill the cache (note: <=, i.e. including an entry for COUNT)
+      for (int i = 0; i <= COUNT; i++)
+         bchm.put(i, i);
+
+      // start 10 threads, accessing all entries except COUNT in parallel
+      Thread threads[] = new Thread[THREADS];
+      for (int i = 0; i < THREADS; i++) {
+         final int start = COUNT_PER_THREAD * i;
+         final int end = start + COUNT_PER_THREAD;
+         threads[i] = new Thread() {
+            public void run() {
+               for (int i = start; i < end; i++)
+                  assertNotNull(bchm.get(i));
+            };
+         };
+      }
+      for (int i = 0; i < THREADS; i++)
+         threads[i].start();
+      for (int i = 0; i < THREADS; i++)
+         threads[i].join();
+
+      // adding one more entry must evict COUNT
+      bchm.put(COUNT + 1, COUNT + 1);
    }
 }
