@@ -13,6 +13,8 @@ import org.infinispan.remoting.InboundInvocationHandler;
 import org.infinispan.remoting.RpcException;
 import org.infinispan.remoting.responses.ExceptionResponse;
 import org.infinispan.remoting.responses.Response;
+import org.infinispan.topology.CacheTopologyControlCommand;
+import org.infinispan.topology.LocalTopologyManager;
 import org.infinispan.util.TimeService;
 import org.infinispan.util.concurrent.TimeoutException;
 import org.infinispan.util.logging.Log;
@@ -262,7 +264,7 @@ public class CommandAwareRpcDispatcher extends RpcDispatcher {
          if (trace) log.tracef("Attempting to execute command: %s [sender=%s]", cmd, req.getSrc());
          inboundInvocationHandler.handle((CacheRpcCommand) cmd, fromJGroupsAddress(req.getSrc()), response, preserveOrder);
       } else {
-         if (!preserveOrder && cmd.canBlock()) {
+         if (!isTotalOrderStateTransferCommand(cmd) && !preserveOrder && cmd.canBlock()) {
             remoteCommandsExecutor.execute(new Runnable() {
                @Override
                public void run() {
@@ -308,6 +310,21 @@ public class CommandAwareRpcDispatcher extends RpcDispatcher {
          //exceptionThrown is always false because the exceptions are wrapped in an ExceptionResponse
          response.send(retVal, false);
       }
+   }
+
+   private boolean isTotalOrderStateTransferCommand(ReplicableCommand command) throws InterruptedException {
+      boolean isTotalOrder = false;
+      if (command instanceof CacheTopologyControlCommand) {
+         CacheTopologyControlCommand controlCommand = (CacheTopologyControlCommand) command;
+         switch (controlCommand.getType()) {
+            case REBALANCE_START:
+            case CH_UPDATE:
+               LocalTopologyManager topologyManager = gcr.getComponent(LocalTopologyManager.class);
+               isTotalOrder = topologyManager != null && topologyManager.isTotalOrderCache(controlCommand.getCacheName());
+               break;
+         }
+      }
+      return isTotalOrder;
    }
 
    protected static Message constructMessage(Buffer buf, Address recipient, boolean oob, ResponseMode mode, boolean rsvp,
