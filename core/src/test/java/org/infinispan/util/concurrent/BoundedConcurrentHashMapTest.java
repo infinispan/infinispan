@@ -208,4 +208,26 @@ public class BoundedConcurrentHashMapTest extends EquivalentHashMapTest {
       // adding one more entry must evict COUNT
       bchm.put(COUNT + 1, COUNT + 1);
    }
+
+   public void testLRUEvictionOrder() throws InterruptedException
+   {
+      final EvictionListener<Integer, Integer> l = new NullEvictionListener<Integer, Integer>() {
+         private int index = 0;
+         private int entries[] = new int[]{1, 0};
+         @Override
+         public void onEntryChosenForEviction(Integer internalCacheEntry) {
+            assertEquals(entries[index++], internalCacheEntry.intValue());
+         }
+      };
+
+      Map<Integer, Integer> bchm = new BoundedConcurrentHashMap<Integer, Integer>(
+            3, 1, Eviction.LRU, l, AnyEquivalence.INT, AnyEquivalence.INT);
+
+      bchm.put(0, 0); // LRU: 0
+      bchm.put(1, 1); // LRU: 0, 1
+      bchm.get(0);    // LRU: 1, 0
+      bchm.put(2, 2); // LRU: 1, 0, 2
+      bchm.put(3, 3); // evict 1, LRU: 0, 2, 3
+      bchm.put(4, 4); // evict 0, LRU: 2, 3, 4
+   }
 }

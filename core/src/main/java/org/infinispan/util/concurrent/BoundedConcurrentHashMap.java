@@ -1406,12 +1406,10 @@ public class BoundedConcurrentHashMap<K, V> extends AbstractMap<K, V>
                ++modCount;
                count = c; // write-volatile
                if (eviction.strategy() != Eviction.NONE) {
-                  if (c > map.evictCap) {
-                     // remove entries;lower count
-                     evicted = eviction.execute();
-                     // re-read first
-                     first = tab[index];
-                  }
+                  // remove entries;lower count
+                  evicted = eviction.execute();
+                  // re-read first
+                  first = tab[index];
                   // add a new entry
                   tab[index] = eviction.createNewEntry(key, hash, first, value);
                   // notify a miss
