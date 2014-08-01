@@ -308,7 +308,7 @@ public class ClusterCacheStatus {
          log.debugf("Finished cluster-wide rebalance for cache %s, topology id = %d", cacheName, currentTopologyId);
          int newTopologyId = currentTopologyId + 1;
          ConsistentHash newCurrentCH = currentTopology.getPendingCH();
-         CacheTopology newTopology = new CacheTopology(newTopologyId, newCurrentCH, null, getCacheTopology().isMissingData());
+         CacheTopology newTopology = new CacheTopology(newTopologyId, newCurrentCH, null, getCacheTopology().isDegradedMode());
          updateCacheTopology(newTopology);
          setRebalanceStatus();
       }
@@ -379,7 +379,7 @@ public class ClusterCacheStatus {
             List<Address> newPendingMembers = pruneInvalidMembers(pendingCH.getMembers());
             newPendingCH = consistentHashFactory.updateMembers(pendingCH, newPendingMembers, getCapacityFactors());
          }
-         boolean missingSegments = isMissingData(currentCH, members);
+         boolean missingSegments = isDataLost(currentCH, members);
          log.tracef("Is missing segments? %s", missingSegments);
          CacheTopology newTopology = new CacheTopology(topologyId + 1, newCurrentCH, newPendingCH, missingSegments);
          updateCacheTopology(newTopology);
@@ -526,7 +526,7 @@ public class ClusterCacheStatus {
 
       // Make sure the topology id is higher than any topology id we had before in the cluster
       unionTopologyId += 2;
-      return new CacheTopology(unionTopologyId, currentCHUnion, null, isMissingData(latestTopologyCh, clusterMembers));
+      return new CacheTopology(unionTopologyId, currentCHUnion, null, isDataLost(latestTopologyCh, clusterMembers));
    }
 
    public synchronized void reconcileCacheTopologyWhenBecomingCoordinator(List<Address> clusterMembers, List<CacheTopology> partitionTopologies, boolean mergeView) throws Exception {
@@ -540,7 +540,7 @@ public class ClusterCacheStatus {
       return cacheName;
    }
 
-   public static boolean isMissingData(ConsistentHash consistentHash, List<Address> newMembers) {
+   public boolean isDataLost(ConsistentHash consistentHash, List<Address> newMembers) {
       if (consistentHash == null) {
          log.trace("No previous CH, missingData returns false.");
          return false;
@@ -571,6 +571,6 @@ public class ClusterCacheStatus {
    }
 
    public boolean isMissingData() {
-      return getCacheTopology() != null && getCacheTopology().isMissingData();
+      return getCacheTopology() != null && getCacheTopology().isDegradedMode();
    }
 }

@@ -67,7 +67,7 @@ public class PartitionHandlingManager {
       log.tracef("handleViewChange(old:%s -> new:%s). Is missing data? %s", lastStableCluster, newMembers, missingData);
       PartitionContextImpl pci = new PartitionContextImpl(this, lastStableCluster, newMembers, missingData, topologyManager, cache);
       log.debugf("Invoking partition handling %s", pci);
-      partitionHandlingStrategy.onPartition(pci);
+      partitionHandlingStrategy.onMembershipChanged(pci);
       return pci.isRebalance();
    }
 

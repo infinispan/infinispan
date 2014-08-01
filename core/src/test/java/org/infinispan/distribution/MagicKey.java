@@ -36,7 +36,7 @@ public class MagicKey implements Serializable {
       address = addressOf(primaryOwner).toString();
       Random r = new Random();
       Object dummy;
-      int attemptsLeft = 100000;
+      int attemptsLeft = 1000;
       do {
          // create a dummy object with this hashcode
          final int hc = r.nextInt();

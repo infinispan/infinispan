@@ -68,28 +68,4 @@ public class PartitionHandlingInterceptor extends CommandInterceptor {
       return super.visitGetKeyValueCommand(ctx, command);
    }
 
-   @Override
-   public Object visitPrepareCommand(TxInvocationContext ctx, PrepareCommand command) throws Throwable {
-      return super.visitPrepareCommand(ctx, command);    // TODO: Customise this generated block
-   }
-
-   @Override
-   public Object visitRollbackCommand(TxInvocationContext ctx, RollbackCommand command) throws Throwable {
-      return super.visitRollbackCommand(ctx, command);    // TODO: Customise this generated block
-   }
-
-   @Override
-   public Object visitCommitCommand(TxInvocationContext ctx, CommitCommand command) throws Throwable {
-      return super.visitCommitCommand(ctx, command);    // TODO: Customise this generated block
-   }
-
-   @Override
-   public Object visitLockControlCommand(TxInvocationContext ctx, LockControlCommand command) throws Throwable {
-      return super.visitLockControlCommand(ctx, command);    // TODO: Customise this generated block
-   }
-
-   @Override
-   public <V> Object visitDistributedExecuteCommand(InvocationContext ctx, DistributedExecuteCommand<V> command) throws Throwable {
-      return super.visitDistributedExecuteCommand(ctx, command);    // TODO: Customise this generated block
-   }
 }
