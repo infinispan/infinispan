@@ -141,11 +141,11 @@ final class DirectoryLoaderAdaptor {
     * which is too low to contain all bytes in a single array (overkill anyway).
     * In this case we ramp up and try splitting with larger chunkSize values.
     */
-   private static int figureChunksNumber(final String fileName, final long fileLength, int chunkSize) {
+   public static int figureChunksNumber(final String fileName, final long fileLength, int chunkSize) {
       if (chunkSize < 0) {
          throw new IllegalStateException("Overflow in rescaling chunkSize. File way too large?");
       }
-      final long numChunks = (fileLength / chunkSize);
+      final long numChunks = (fileLength % chunkSize == 0) ? (fileLength / chunkSize) : (fileLength / chunkSize) + 1;
       if (numChunks > Integer.MAX_VALUE) {
          log.rescalingChunksize(fileName, fileLength, chunkSize);
          chunkSize = 32 * chunkSize;

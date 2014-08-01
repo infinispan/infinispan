@@ -12,6 +12,7 @@ import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.test.CacheManagerCallable;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
+import org.testng.Assert;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
@@ -49,6 +50,21 @@ public class IndexCacheLoaderTest {
       if(rootDir != null) {
          TestingUtil.recursiveFileRemove(rootDir);
       }
+   }
+
+   @Test
+   public void testRescalingMath() {
+      Assert.assertEquals(DirectoryLoaderAdaptor.figureChunksNumber("", 0, 1), 0);
+      Assert.assertEquals(DirectoryLoaderAdaptor.figureChunksNumber("", 1, 1), 1);
+      Assert.assertEquals(DirectoryLoaderAdaptor.figureChunksNumber("", 2, 1), 2);
+      int MB = 1024*1024;
+      Assert.assertEquals(DirectoryLoaderAdaptor.figureChunksNumber("", 0, MB), 0);
+      Assert.assertEquals(DirectoryLoaderAdaptor.figureChunksNumber("", 1, MB), 1);
+      Assert.assertEquals(DirectoryLoaderAdaptor.figureChunksNumber("", 2, MB), 1);
+      Assert.assertEquals(DirectoryLoaderAdaptor.figureChunksNumber("", MB, MB), 1);
+      Assert.assertEquals(DirectoryLoaderAdaptor.figureChunksNumber("", MB+1, MB), 2);
+      Assert.assertEquals(DirectoryLoaderAdaptor.figureChunksNumber("", MB+MB, MB), 2);
+      Assert.assertEquals(DirectoryLoaderAdaptor.figureChunksNumber("", MB+MB+1, MB), 3);
    }
 
    @Test
