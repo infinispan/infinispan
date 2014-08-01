@@ -5,15 +5,75 @@
       <property name="deploymentExportPath">target/</property>
    </engine>
 
-   <container qualifier="jboss" default="true">
-      <protocol type="jmx-as7">
-         <property name="executionType">REMOTE</property>
-      </protocol>
-      <configuration>
-         <property name="jbossHome">${basedir}/target/wildfly-${version.wildfly}</property>
-         <!-- Needed for security domain configuration -->
-         <property name="serverConfig">standalone-test.xml</property>
-      </configuration>
-   </container>
+   <group qualifier="authTests" default="true">
+      <container qualifier="testnode" mode="suite" default="true">
+         <protocol type="jmx-as7">
+            <property name="executionType">REMOTE</property>
+         </protocol>
+         <configuration>
+            <property name="jbossHome">${basedir}/target/testnode/wildfly-${version.wildfly}</property>
+            Needed for security domain configuration
+            <property name="serverConfig">standalone-test.xml</property>
+            <property name="javaVmArguments">-Djboss.node.name=testnode</property>
+            <property name="managementPort">9990</property>
+         </configuration>
+      </container>
+   
+      <container qualifier="node0" mode="manual">
+         <protocol type="jmx-as7">
+            <property name="executionType">REMOTE</property>
+         </protocol>
+         <configuration>
+            <property name="jbossHome">${basedir}/target/node0/wildfly-${version.wildfly}</property>
+            <!-- Needed for security domain configuration -->
+            <property name="serverConfig">standalone-test.xml</property>
+            <property name="javaVmArguments">-Djboss.node.name=node0
+                                             -Djboss.socket.binding.port-offset=100 
+                                             -Djava.net.preferIPv4Stack=true 
+                                             -Dsasl.username=test_user 
+                                             -Dsasl.password=test_password
+                                             -Dsasl.realm=test_realm
+            </property>
+            <property name="managementPort">10090</property>
+         </configuration>
+      </container>
+      
+      <container qualifier="node1" mode="manual">
+         <protocol type="jmx-as7">
+            <property name="executionType">REMOTE</property>
+         </protocol>
+         <configuration>
+            <property name="jbossHome">${basedir}/target/node1/wildfly-${version.wildfly}</property>
+            <property name="serverConfig">standalone-test.xml</property>
+            <property name="javaVmArguments">-Djboss.node.name=node1 
+                                             -Djboss.socket.binding.port-offset=200 
+                                             -Djava.net.preferIPv4Stack=true 
+                                             -Dsasl.username=joining_test_user 
+                                             -Dsasl.password=test_password 
+                                             -Dsasl.realm=test_realm
+            </property>
+            <property name="managementPort">10190</property>
+         </configuration>
+      </container>
+      
+      <container qualifier="node1_wrong_passwd" mode="manual">
+         <protocol type="jmx-as7">
+            <property name="executionType">REMOTE</property>
+         </protocol>
+         <configuration>
+            <property name="jbossHome">${basedir}/target/node1/wildfly-${version.wildfly}</property>
+            <property name="serverConfig">standalone-test.xml</property>
+            <property name="javaVmArguments">-Djboss.node.name=node1 
+                                             -Djboss.socket.binding.port-offset=200 
+                                             -Djava.net.preferIPv4Stack=true 
+                                             -Dsasl.username=test_user 
+                                             -Dsasl.password=wrong_password 
+                                             -Dsasl.realm=test_realm
+            </property>
+            <property name="managementPort">10190</property>
+         </configuration>
+      </container>
+      
+   </group>
 
 </arquillian>

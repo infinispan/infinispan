@@ -120,6 +120,45 @@ userPassword: hotrodPassword
 krb5PrincipalName: hotrod/node0@INFINISPAN.ORG
 krb5KeyVersionNumber: 0
 
+dn: uid=jgroups/node0/clustered,ou=People,dc=infinispan,dc=org
+objectClass: top
+objectClass: person
+objectClass: inetOrgPerson
+objectClass: krb5principal
+objectClass: krb5kdcentry
+cn: jgroups/node0/clustered
+sn: jgroups/node0/clustered
+uid: jgroups/node0/clustered
+userPassword: node0password
+krb5PrincipalName: jgroups/node0/clustered@INFINISPAN.ORG
+krb5KeyVersionNumber: 0
+
+dn: uid=jgroups/node1/clustered,ou=People,dc=infinispan,dc=org
+objectClass: top
+objectClass: person
+objectClass: inetOrgPerson
+objectClass: krb5principal
+objectClass: krb5kdcentry
+cn: jgroups/node1/clustered
+sn: jgroups/node1/clustered
+uid: jgroups/node1/clustered
+userPassword: node1password
+krb5PrincipalName: jgroups/node1/clustered@INFINISPAN.ORG
+krb5KeyVersionNumber: 0
+
+dn: uid=jgroups/node1/clustered2,ou=People,dc=infinispan,dc=org
+objectClass: top
+objectClass: person
+objectClass: inetOrgPerson
+objectClass: krb5principal
+objectClass: krb5kdcentry
+cn: jgroups/node1/clustered2
+sn: jgroups/node1/clustered2
+uid: jgroups/node1/clustered2
+userPassword: node1password
+krb5PrincipalName: jgroups/node1/clustered2@INFINISPAN.ORG
+krb5KeyVersionNumber: 0
+
 dn: ou=Roles,dc=infinispan,dc=org
 objectclass: top
 objectclass: organizationalUnit

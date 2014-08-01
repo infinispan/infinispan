@@ -14,6 +14,7 @@ import org.infinispan.test.integration.security.utils.ApacheDsKrbLdap;
 import org.infinispan.test.integration.security.utils.Deployments;
 import org.infinispan.test.integration.security.utils.SimplePrincipalGroupRoleMapper;
 import org.jboss.arquillian.container.test.api.Deployment;
+import org.jboss.arquillian.container.test.api.TargetsContainer;
 import org.jboss.arquillian.junit.Arquillian;
 import org.jboss.shrinkwrap.api.spec.WebArchive;
 import org.junit.AfterClass;
@@ -47,6 +48,7 @@ public class KrbLdapAuthenticationIT extends AbstractAuthentication {
    }
 
    @Deployment
+   @TargetsContainer(DEFAULT_DEPLOY_CONTAINER)
    public static WebArchive getDeployment() {
       return Deployments.createKrbLdapTestDeployment();
    }
