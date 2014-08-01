@@ -72,9 +72,9 @@
                      <goal>integration-test</goal>
                      <goal>verify</goal>
                   </goals>
-                  <configuration>
+                  <!-- configuration>
                      <redirectTestOutputToFile>true</redirectTestOutputToFile>
-                  </configuration>
+                  </configuration -->
                </execution>
             </executions>
          </plugin>
