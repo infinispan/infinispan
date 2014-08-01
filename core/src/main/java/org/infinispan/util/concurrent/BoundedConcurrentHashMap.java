@@ -362,13 +362,6 @@ public class BoundedConcurrentHashMap<K, V> extends AbstractMap<K, V>
        *
        */
       void clear();
-
-      /**
-       * Returns type of eviction algorithm (strategy).
-       *
-       * @return type of eviction algorithm
-       */
-      Eviction strategy();
    }
 
    static class NullEvictionPolicy<K, V> implements EvictionPolicy<K, V> {
@@ -398,11 +391,6 @@ public class BoundedConcurrentHashMap<K, V> extends AbstractMap<K, V>
          // Do nothing.
       }
 
-      @Override
-      public Eviction strategy() {
-         return Eviction.NONE;
-      }
-      
       @Override
       public HashEntry<K, V> createNewEntry(K key, int hash, HashEntry<K, V> next, V value) {
          return new HashEntry<K, V>(key, hash, next, value);
@@ -472,11 +460,6 @@ public class BoundedConcurrentHashMap<K, V> extends AbstractMap<K, V>
          super.clear();
          accessQueue.clear();
          accessQueueSize.set(0);
-      }
-
-      @Override
-      public Eviction strategy() {
-         return Eviction.LRU;
       }
 
       protected boolean isAboveThreshold(){
@@ -1044,11 +1027,6 @@ public class BoundedConcurrentHashMap<K, V> extends AbstractMap<K, V>
          accessQueueSize.set(0);
       }
 
-      @Override
-      public Eviction strategy() {
-         return Eviction.LIRS;
-      }
-
       /**
        * Returns the entry at the bottom of the stack.
        */
@@ -1169,6 +1147,12 @@ public class BoundedConcurrentHashMap<K, V> extends AbstractMap<K, V>
          loadFactor = lf;
          eviction = es.make(this, map.evictCap, lf);
          setTable(HashEntry.<K, V> newArray(cap));
+         // disable rehashing if eviction is enabled (rehashing in this map
+         // implementation involves recreating all entries, which breaks the
+         // order maintained by the eviction algorithms)
+         if (es != Eviction.NONE) {
+            threshold = Integer.MAX_VALUE;
+         }
       }
 
       @SuppressWarnings("unchecked")
@@ -1325,7 +1309,7 @@ public class BoundedConcurrentHashMap<K, V> extends AbstractMap<K, V>
          Set<HashEntry<K, V>> evicted = null;
          try {
             int c = count;
-            if (c++ > threshold && eviction.strategy() == Eviction.NONE) {
+            if (c++ > threshold) {
                rehash();
             }
             HashEntry<K, V>[] tab = table;
@@ -1347,16 +1331,12 @@ public class BoundedConcurrentHashMap<K, V> extends AbstractMap<K, V>
                oldValue = null;
                ++modCount;
                count = c; // write-volatile
-               if (eviction.strategy() != Eviction.NONE) {
-                  // process enqueued hits
-                  eviction.execute();
-                  // add a new entry
-                  tab[index] = eviction.createNewEntry(key, hash, first, value);
-                  // notify a miss
-                  evicted = eviction.onEntryMiss(tab[index]);
-               } else {
-                  tab[index] = eviction.createNewEntry(key, hash, first, value);
-               }
+               // process enqueued hits
+               eviction.execute();
+               // add a new entry
+               tab[index] = eviction.createNewEntry(key, hash, first, value);
+               // notify a miss
+               evicted = eviction.onEntryMiss(tab[index]);
                // When entry not present, attempt to activate if necessary
                map.evictionListener.onEntryActivated(key);
             }
@@ -1541,7 +1521,7 @@ public class BoundedConcurrentHashMap<K, V> extends AbstractMap<K, V>
 
       private void notifyEvictionListener(Set<HashEntry<K, V>> evicted) {
          // piggyback listener invocation on callers thread outside lock
-         if (evicted != null) {
+         if (evicted != null && !evicted.isEmpty()) {
             Map<K, V> evictedCopy;
             if (evicted.size() == 1) {
                HashEntry<K, V> evictedEntry = evicted.iterator().next();
