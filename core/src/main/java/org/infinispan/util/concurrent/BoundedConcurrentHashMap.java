@@ -455,7 +455,7 @@ public class BoundedConcurrentHashMap<K, V> extends AbstractMap<K, V>
       public Set<HashEntry<K, V>> execute() {
          Set<HashEntry<K, V>> evictedCopy = new HashSet<HashEntry<K, V>>();
          for (HashEntry<K, V> e : accessQueue) {
-            put(e, e.value);
+            get(e);
          }
          evictedCopy.addAll(evicted);
          accessQueue.clear();
@@ -498,10 +498,6 @@ public class BoundedConcurrentHashMap<K, V> extends AbstractMap<K, V>
       @Override
       public void onEntryRemove(HashEntry<K, V> e) {
          remove(e);
-         // we could have multiple instances of e in accessQueue; remove them all
-         while (accessQueue.remove(e)) {
-            accessQueueSize.decrementAndGet();            
-         }
       }
 
       @Override
@@ -1092,12 +1088,7 @@ public class BoundedConcurrentHashMap<K, V> extends AbstractMap<K, V>
 
       @Override
       public void onEntryRemove(HashEntry<K, V> e) {
-         
          ((LIRSHashEntry<K,V>)e).remove();
-         // we could have multiple instances of e in accessQueue; remove them all
-         while (accessQueue.remove(e)) {
-            accessQueueSize.decrementAndGet();
-         }
       }
 
       @Override
