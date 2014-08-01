@@ -20,17 +20,18 @@ public interface PartitionContext<K,V> {
    /**
     * Returns true if this partition might not contain all the data present in the cluster before partitioning happened.
     * E.g. if numOwners=5 and only 3 nodes left in the other partition, then this method returns false. If 6 nodes left
-    * this method returns true. Note: in future release for distributed caches, this method might do some smart
-    * computing based on segment allocations, so even if > numOwners left, this method might still return true.
+    * this method returns true.
     */
-   boolean isPartition();
+   boolean isAllDataAvailable();
 
    /**
     * Marks the current partition as available or not (writes are rejected with a AvailabilityException).
     */
-   void currentPartitionDegradedMode();
+   void enterDegradedMode();
 
+   /**
+    * Invoking this method triggers rebalance.
+    */
    void rebalance();
 
-   Cache<K,V> getCache();
 }

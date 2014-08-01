@@ -9,11 +9,9 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 
-import org.infinispan.Cache;
 import org.infinispan.commands.ReplicableCommand;
 import org.infinispan.commons.CacheException;
 import org.infinispan.commons.util.CollectionFactory;
-import org.infinispan.context.Flag;
 import org.infinispan.distribution.ch.ConsistentHash;
 import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.factories.GlobalComponentRegistry;
@@ -216,7 +214,7 @@ public class LocalTopologyManagerImpl implements LocalTopologyManager {
       PartitionHandlingManager phm = namedComponentRegistry.getComponent(PartitionHandlingManager.class);
       if (phm != null) {
          phm.setLastStableCluster(cacheTopology.getMembers());
-         if (cacheTopology.isMissingData()) {
+         if (cacheTopology.isDegradedMode()) {
             phm.setState(PartitionHandlingManager.PartitionState.UNAVAILABLE);
          } else {
             phm.setState(PartitionHandlingManager.PartitionState.AVAILABLE);
