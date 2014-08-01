@@ -33,13 +33,14 @@ import org.junit.Test;
  */
 public abstract class AbstractAuthentication {
 
+   public static final String DEFAULT_DEPLOY_CONTAINER = "testnode";
    public static final String CACHE_NAME = "secureCache";
-   public static final String TEST_ENTRY_KEY = "predefined key";
    public static final String TEST_ENTRY_VALUE = "predefined value";
 
    protected EmbeddedCacheManager manager;
+   public static final String TEST_ENTRY_KEY = "predefined key";
    protected Cache<Object, Object> secureCache;
-   GlobalConfigurationBuilder globalConfig;
+   private GlobalConfigurationBuilder globalConfig;
    private ConfigurationBuilder cacheConfig;
 
    public abstract String getSecurityDomainName();

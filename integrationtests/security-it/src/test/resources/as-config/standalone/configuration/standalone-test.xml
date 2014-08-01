@@ -118,6 +118,9 @@
             <logger category="jacorb.config">
                 <level name="ERROR"/>
             </logger>
+            <logger category="javax.security">
+                <level name="DEBUG"/>
+            </logger>  
             <root-logger>
                 <level name="INFO"/>
                 <handlers>
@@ -344,6 +347,42 @@
                             <module-option name="refreshKrb5Config" value="true"/>
                             <module-option name="principal" value="ldap/localhost@INFINISPAN.ORG"/>
                             <module-option name="keyTab" value="${basedir}/src/test/resources/keytab/ldap.localhost.keytab"/>
+                            <module-option name="doNotPrompt" value="true"/>
+                        </login-module>
+                    </authentication>
+                </security-domain>
+                <security-domain name="krb-node0" cache-type="default">
+                    <authentication>
+                        <login-module code="Kerberos" flag="required">
+                            <module-option name="storeKey" value="true"/>
+                            <module-option name="useKeyTab" value="true"/>
+                            <module-option name="refreshKrb5Config" value="true"/>
+                            <module-option name="principal" value="jgroups/node0/clustered@INFINISPAN.ORG"/>
+                            <module-option name="keyTab" value="${basedir}/src/test/resources/keytab/jgroups_node0_clustered.keytab"/>
+                            <module-option name="doNotPrompt" value="true"/>
+                        </login-module>
+                    </authentication>
+                </security-domain>
+                <security-domain name="krb-node1" cache-type="default">
+                    <authentication>
+                        <login-module code="Kerberos" flag="required">
+                            <module-option name="storeKey" value="true"/>
+                            <module-option name="useKeyTab" value="true"/>
+                            <module-option name="refreshKrb5Config" value="true"/>
+                            <module-option name="principal" value="jgroups/node1/clustered@INFINISPAN.ORG"/>
+                            <module-option name="keyTab" value="${basedir}/src/test/resources/keytab/jgroups_node1_clustered.keytab"/>
+                            <module-option name="doNotPrompt" value="true"/>
+                        </login-module>
+                    </authentication>
+                </security-domain>
+                <security-domain name="krb-node1-fail" cache-type="default">
+                    <authentication>
+                        <login-module code="Kerberos" flag="required">
+                            <module-option name="storeKey" value="true"/>
+                            <module-option name="useKeyTab" value="true"/>
+                            <module-option name="refreshKrb5Config" value="true"/>
+                            <module-option name="principal" value="jgroups/node1/clustered2@INFINISPAN.ORG"/>
+                            <module-option name="keyTab" value="${basedir}/src/test/resources/keytab/admin.keytab"/>
                             <module-option name="doNotPrompt" value="true"/>
                         </login-module>
                     </authentication>
