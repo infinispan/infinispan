@@ -37,12 +37,12 @@ public class ClusteredQueryDslConditionsTest extends QueryDslConditionsTest {
 
    @Override
    protected void createCacheManagers() throws Throwable {
-      ConfigurationBuilder defaultConfiguration = getDefaultClusteredCacheConfig(CacheMode.REPL_SYNC, transactionsEnabled());
+      ConfigurationBuilder defaultConfiguration = getDefaultClusteredCacheConfig(CacheMode.REPL_SYNC, false);
       defaultConfiguration.clustering()
             .stateTransfer().fetchInMemoryState(true);
       createClusteredCaches(2, defaultConfiguration);
 
-      ConfigurationBuilder cfg = getDefaultClusteredCacheConfig(CacheMode.REPL_SYNC, transactionsEnabled());
+      ConfigurationBuilder cfg = initialCacheConfiguration();
       cfg.clustering()
             .stateTransfer().fetchInMemoryState(true)
             .indexing()
@@ -56,8 +56,8 @@ public class ClusteredQueryDslConditionsTest extends QueryDslConditionsTest {
       cache2 = manager(1).getCache(TEST_CACHE_NAME);
    }
 
-   protected boolean transactionsEnabled() {
-      return false;
+   protected ConfigurationBuilder initialCacheConfiguration() {
+      return getDefaultClusteredCacheConfig(CacheMode.REPL_SYNC, false);
    }
 
    @Override
