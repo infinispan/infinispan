@@ -38,8 +38,7 @@ public class ClusteringConfiguration {
    }
 
    /**
-    * todo
-    * @return
+    * Configures cluster's behaviour in the presence of partitions or node failures.
     */
    public PartitionHandlingConfiguration partitionHandling() {
       return partitionHandlingConfiguration;

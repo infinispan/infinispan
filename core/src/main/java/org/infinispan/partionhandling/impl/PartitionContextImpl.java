@@ -36,12 +36,12 @@ public class PartitionContextImpl implements PartitionContext {
    }
 
    @Override
-   public boolean isPartition() {
+   public boolean isAllDataAvailable() {
       return isMissingData;
    }
 
    @Override
-   public void currentPartitionDegradedMode() {
+   public void enterDegradedMode() {
       partitionHandlingManager.enterDegradedMode();
    }
 
@@ -52,11 +52,6 @@ public class PartitionContextImpl implements PartitionContext {
 
    public boolean isRebalance() {
       return rebalance;
-   }
-
-   @Override
-   public Cache getCache() {
-      return cache;
    }
 
    @Override
