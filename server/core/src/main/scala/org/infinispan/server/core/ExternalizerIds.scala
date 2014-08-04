@@ -16,5 +16,7 @@ object ExternalizerIds {
    val TOPOLOGY_VIEW = 1103
    val SERVER_ADDRESS = 1104
    val MIME_METADATA = 1105
+   val BINARY_FILTER = 1106
+   val BINARY_CONVERTER = 1107
 
 }

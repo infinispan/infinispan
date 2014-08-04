@@ -4,6 +4,7 @@ import org.infinispan.lifecycle.AbstractModuleLifecycle
 import org.infinispan.factories.GlobalComponentRegistry
 import org.infinispan.server.core.ExternalizerIds._
 import org.infinispan.configuration.global.GlobalConfiguration
+import org.infinispan.server.hotrod.ClientListenerRegistry.{BinaryConverterExternalizer, BinaryFilterExternalizer}
 
 /**
  * Module lifecycle callbacks implementation that enables module specific
@@ -14,8 +15,11 @@ import org.infinispan.configuration.global.GlobalConfiguration
  */
 class LifecycleCallbacks extends AbstractModuleLifecycle {
 
-   override def cacheManagerStarting(gcr: GlobalComponentRegistry, globalCfg: GlobalConfiguration) =
-      globalCfg.serialization().advancedExternalizers().put(
-            SERVER_ADDRESS, new ServerAddress.Externalizer)
+   override def cacheManagerStarting(gcr: GlobalComponentRegistry, globalCfg: GlobalConfiguration) = {
+      val externalizers = globalCfg.serialization().advancedExternalizers()
+      externalizers.put(SERVER_ADDRESS, new ServerAddress.Externalizer)
+      externalizers.put(BINARY_FILTER, new BinaryFilterExternalizer())
+      externalizers.put(BINARY_CONVERTER, new BinaryConverterExternalizer())
+   }
 
 }

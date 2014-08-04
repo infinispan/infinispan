@@ -1,9 +1,11 @@
 package org.infinispan.server.hotrod
 
+import java.io.{ObjectInput, ObjectOutput}
+
 import io.netty.channel.Channel
 import java.util.concurrent.atomic.AtomicLong
 import org.infinispan.commons.equivalence.{AnyEquivalence, ByteArrayEquivalence}
-import org.infinispan.commons.marshall.Marshaller
+import org.infinispan.commons.marshall.{AbstractExternalizer, Marshaller}
 import org.infinispan.commons.util.concurrent.jdk8backported.EquivalentConcurrentHashMapV8
 import org.infinispan.container.versioning.NumericVersion
 import org.infinispan.filter.{Converter, KeyValueFilter}
@@ -19,6 +21,8 @@ import org.infinispan.server.hotrod.OperationResponse._
 import org.infinispan.server.hotrod.configuration.HotRodServerConfiguration
 import org.infinispan.server.hotrod.logging.Log
 import org.infinispan.server.hotrod.event.{KeyValueFilterFactory, ConverterFactory}
+
+import scala.collection.JavaConversions._
 
 /**
  * @author Galder Zamarreño
@@ -169,10 +173,9 @@ class ClientListenerRegistry(configuration: HotRodServerConfiguration) extends L
 
 object ClientListenerRegistry {
 
-   private class BinaryFilter(filter: KeyValueFilter[AnyRef, AnyRef], marshallerClass: Class[_ <: Marshaller])
-           extends KeyValueFilter[Bytes, Bytes] with Serializable {
-      // Marshallers are not serializable, but their classes are
-      @transient val marshaller = marshallerClass.newInstance()
+   class BinaryFilter(val filter: KeyValueFilter[AnyRef, AnyRef], val marshallerClass: Class[_ <: Marshaller])
+           extends KeyValueFilter[Bytes, Bytes] {
+      val marshaller = marshallerClass.newInstance()
 
       override def accept(key: Bytes, value: Bytes, metadata: Metadata): Boolean = {
          val unmarshalledKey = marshaller.objectFromByteBuffer(key)
@@ -181,10 +184,25 @@ object ClientListenerRegistry {
       }
    }
 
-   private class BinaryConverter(converter: Converter[AnyRef, AnyRef, AnyRef], marshallerClass: Class[_ <: Marshaller])
-           extends Converter[Bytes, Bytes, Bytes] with Serializable {
-      // Marshallers are not serializable, but their classes are
-      @transient val marshaller = marshallerClass.newInstance()
+   class BinaryFilterExternalizer extends AbstractExternalizer[BinaryFilter] {
+      override def writeObject(output: ObjectOutput, obj: BinaryFilter): Unit = {
+         output.writeObject(obj.filter)
+         output.writeObject(obj.marshallerClass)
+      }
+
+      override def readObject(input: ObjectInput): BinaryFilter = {
+         val filter = input.readObject().asInstanceOf[KeyValueFilter[AnyRef, AnyRef]]
+         val marshallerClass = input.readObject().asInstanceOf[Class[_ <: Marshaller]]
+         new BinaryFilter(filter, marshallerClass)
+      }
+
+      override def getTypeClasses = setAsJavaSet(
+         Set[java.lang.Class[_ <: BinaryFilter]](classOf[BinaryFilter]))
+   }
+
+   class BinaryConverter(val converter: Converter[AnyRef, AnyRef, AnyRef], val marshallerClass: Class[_ <: Marshaller])
+           extends Converter[Bytes, Bytes, Bytes] {
+      val marshaller = marshallerClass.newInstance()
 
       override def convert(key: Bytes, value: Bytes, metadata: Metadata): Bytes = {
          val unmarshalledKey = marshaller.objectFromByteBuffer(key)
@@ -192,6 +210,22 @@ object ClientListenerRegistry {
          val converted = converter.convert(unmarshalledKey, unmarshalledValue, metadata)
          marshaller.objectToByteBuffer(converted)
       }
+   }
+
+   class BinaryConverterExternalizer extends AbstractExternalizer[BinaryConverter] {
+      override def writeObject(output: ObjectOutput, obj: BinaryConverter): Unit = {
+         output.writeObject(obj.converter)
+         output.writeObject(obj.marshallerClass)
+      }
+
+      override def readObject(input: ObjectInput): BinaryConverter = {
+         val converter = input.readObject().asInstanceOf[Converter[AnyRef, AnyRef, AnyRef]]
+         val marshallerClass = input.readObject().asInstanceOf[Class[_ <: Marshaller]]
+         new BinaryConverter(converter, marshallerClass)
+      }
+
+      override def getTypeClasses = setAsJavaSet(
+         Set[java.lang.Class[_ <: BinaryConverter]](classOf[BinaryConverter]))
    }
 
 }
