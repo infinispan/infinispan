@@ -6,7 +6,7 @@ import org.infinispan.client.hotrod.event.CustomEventListener.CustomEvent;
 import org.infinispan.client.hotrod.test.RemoteCacheManagerCallable;
 import org.infinispan.client.hotrod.test.SingleHotRodServerTest;
 import org.infinispan.metadata.Metadata;
-import org.infinispan.server.hotrod.event.ConverterFactory;
+import org.infinispan.filter.ConverterFactory;
 import org.infinispan.filter.Converter;
 import org.infinispan.server.hotrod.HotRodServer;
 import org.infinispan.server.hotrod.configuration.HotRodServerConfigurationBuilder;
@@ -22,8 +22,9 @@ public class ClientCustomEventsTest extends SingleHotRodServerTest {
    @Override
    protected HotRodServer createHotRodServer() {
       HotRodServerConfigurationBuilder builder = new HotRodServerConfigurationBuilder();
-      builder.converterFactory("test-converter-factory", converterFactory);
-      return TestHelper.startHotRodServer(cacheManager, builder);
+      HotRodServer server = TestHelper.startHotRodServer(cacheManager, builder);
+      server.addConverterFactory("test-converter-factory", converterFactory);
+      return server;
    }
 
    public void testCustomEvents() {

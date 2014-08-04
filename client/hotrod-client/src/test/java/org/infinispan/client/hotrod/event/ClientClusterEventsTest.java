@@ -6,7 +6,6 @@ import org.infinispan.client.hotrod.TestHelper;
 import org.infinispan.client.hotrod.annotation.ClientListener;
 import org.infinispan.client.hotrod.event.CustomEventListener.CustomEvent;
 import org.infinispan.client.hotrod.impl.transport.tcp.FailoverRequestBalancingStrategy;
-import org.infinispan.client.hotrod.impl.transport.tcp.RequestBalancingStrategy;
 import org.infinispan.client.hotrod.impl.transport.tcp.RoundRobinBalancingStrategy;
 import org.infinispan.client.hotrod.test.HotRodClientTestingUtil;
 import org.infinispan.client.hotrod.test.MultiHotRodServersTest;
@@ -15,9 +14,9 @@ import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.metadata.Metadata;
-import org.infinispan.server.hotrod.event.ConverterFactory;
+import org.infinispan.filter.ConverterFactory;
 import org.infinispan.filter.Converter;
-import org.infinispan.server.hotrod.event.KeyValueFilterFactory;
+import org.infinispan.filter.KeyValueFilterFactory;
 import org.infinispan.filter.KeyValueFilter;
 import org.infinispan.server.hotrod.HotRodServer;
 import org.infinispan.server.hotrod.configuration.HotRodServerConfigurationBuilder;
@@ -55,11 +54,11 @@ public class ClientClusterEventsTest extends MultiHotRodServersTest {
    protected HotRodServer addHotRodServer(ConfigurationBuilder builder) {
       EmbeddedCacheManager cm = addClusterEnabledCacheManager(builder);
       HotRodServerConfigurationBuilder serverBuilder = new HotRodServerConfigurationBuilder();
-      filters.add(new TestKeyValueFilterFactory());
-      serverBuilder.keyValueFilterFactory("test-filter-factory", filters.get(0));
-      converters.add(new TestConverterFactory());
-      serverBuilder.converterFactory("test-converter-factory", converters.get(0));
       HotRodServer server = TestHelper.startHotRodServer(cm, serverBuilder);
+      filters.add(new TestKeyValueFilterFactory());
+      server.addKeyValueFilterFactory("test-filter-factory", filters.get(0));
+      converters.add(new TestConverterFactory());
+      server.addConverterFactory("test-converter-factory", converters.get(0));
       servers.add(server);
       return server;
    }
