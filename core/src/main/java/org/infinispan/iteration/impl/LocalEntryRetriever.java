@@ -21,6 +21,7 @@ import org.infinispan.filter.KeyFilter;
 import org.infinispan.filter.KeyValueFilter;
 import org.infinispan.filter.KeyValueFilterAsKeyFilter;
 import org.infinispan.marshall.core.MarshalledEntry;
+import org.infinispan.marshall.core.MarshalledValue;
 import org.infinispan.notifications.Listener;
 import org.infinispan.notifications.cachelistener.annotation.CacheEntryActivated;
 import org.infinispan.notifications.cachelistener.event.CacheEntryActivatedEvent;
@@ -197,14 +198,17 @@ public class LocalEntryRetriever<K, V> implements EntryRetriever<K, V> {
                try {
                   int interruptCheck = 0;
                   for (InternalCacheEntry<K, V> entry : dataContainer) {
-                     K key = entry.getKey();
+                     InternalCacheEntry<K, V> clone = entryFactory.create(unwrapMarshalledvalue(entry.getKey()),
+                                                                          unwrapMarshalledvalue(entry.getValue()),
+                                                                          entry);
+                     K key = clone.getKey();
                      if (filter != null) {
-                        if (!filter.accept(key, entry.getValue(), entry.getMetadata())) {
+                        if (!filter.accept(key, clone.getValue(), clone.getMetadata())) {
                            continue;
                         }
                      }
 
-                     action.apply(key, entry);
+                     action.apply(key, clone);
                      if (interruptCheck++ % batchSize == 0) {
                         if (Thread.interrupted()) {
                            throw new CacheException("Entry Iterator was interrupted!");
@@ -431,5 +435,12 @@ public class LocalEntryRetriever<K, V> implements EntryRetriever<K, V> {
             nextLock.unlock();
          }
       }
+   }
+
+   protected static <T> T unwrapMarshalledvalue(T value) {
+      if (value instanceof MarshalledValue) {
+         return (T) ((MarshalledValue) value).get();
+      }
+      return value;
    }
 }

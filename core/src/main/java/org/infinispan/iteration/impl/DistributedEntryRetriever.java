@@ -22,6 +22,7 @@ import org.infinispan.filter.KeyValueFilter;
 import org.infinispan.filter.KeyValueFilterAsKeyFilter;
 import org.infinispan.lifecycle.ComponentStatus;
 import org.infinispan.filter.Converter;
+import org.infinispan.marshall.core.MarshalledValue;
 import org.infinispan.notifications.Listener;
 import org.infinispan.notifications.cachelistener.annotation.DataRehashed;
 import org.infinispan.notifications.cachelistener.annotation.TopologyChanged;
@@ -351,13 +352,15 @@ public class DistributedEntryRetriever<K, V> extends LocalEntryRetriever<K, V> {
                      PassivationListener<K, V> listener = null;
                      try {
                         for (InternalCacheEntry<K, V> entry : dataContainer) {
-                           K key = entry.getKey();
+                           InternalCacheEntry<K, V> clone = entryFactory.create(unwrapMarshalledvalue(entry.getKey()),
+                                                                                unwrapMarshalledvalue(entry.getValue()), entry);
+                           K key = clone.getKey();
                            if (filter != null) {
-                              if (!filter.accept(key, entry.getValue(), entry.getMetadata())) {
+                              if (!filter.accept(key, clone.getValue(), clone.getMetadata())) {
                                  continue;
                               }
                            }
-                           action.apply(key, entry);
+                           action.apply(key, clone);
                         }
                         if (DistributedEntryRetriever.super.shouldUseLoader(flags) && persistenceManager.getStoresAsString().size() > 0) {
                            KeyFilter<K> loaderFilter;
@@ -1064,7 +1067,6 @@ public class DistributedEntryRetriever<K, V> extends LocalEntryRetriever<K, V> {
                C value = converter.convert(k, kvInternalCacheEntry.getValue(), kvInternalCacheEntry.getMetadata());
                clone.setValue(value);
             }
-            // We use just an immortal cache entry since it has low serialization overhead
             queue.add(clone);
             if (insertionCount.incrementAndGet() % batchSize == 0) {
                Collection<CacheEntry<K, C>> entriesToSend = new ArrayList<>(batchSize);
