@@ -59,6 +59,15 @@ public final class MarshalledValue implements Externalizable {
       // For JDK serialization
    }
 
+   /**
+    * Construct a Marshalledvalue from the already serialized bytes.  The hashCode provided should be
+    * the hashCode of the object when it is deserialized.  Great <b>CARE</b> should be taken to guarantee
+    * the hashCode is correct, or else the hashCode contract will be broken and things like
+    * {@link java.util.Map#containsKey(Object)} will not work properly.
+    * @param bytes The serialized form of the object
+    * @param hashCode The hashCode of the object when it was deserialized
+    * @param marshaller The marshaller to use to deserialize the object
+    */
    public MarshalledValue(byte[] bytes, int hashCode, StreamingMarshaller marshaller) {
       this.marshaller = marshaller;
       this.raw = new ImmutableMarshalledValueByteStream(bytes);
@@ -66,15 +75,11 @@ public final class MarshalledValue implements Externalizable {
       this.serialisedSize = bytes.length;
    }
 
-   public MarshalledValue(byte[] bytes, StreamingMarshaller marshaller) {
-      this(bytes, Arrays.hashCode(bytes), marshaller);
-   }
-
    public MarshalledValue(Object instance, StreamingMarshaller marshaller) {
       this.marshaller = marshaller;
       this.raw = serialize(instance);
       this.serialisedSize = raw.size();
-      this.cachedHashCode = Util.hashCode(raw.getRaw(), raw.size());
+      this.cachedHashCode = instance.hashCode();
    }
 
    /**
