@@ -23,6 +23,7 @@ import org.jboss.as.controller.OperationFailedException;
 import org.jboss.as.controller.descriptions.ModelDescriptionConstants;
 import org.jboss.as.controller.operations.common.Util;
 import org.jboss.dmr.ModelNode;
+
 import static org.infinispan.server.endpoint.subsystem.ModelKeys.*;
 
 /**
@@ -31,28 +32,28 @@ import static org.infinispan.server.endpoint.subsystem.ModelKeys.*;
  */
 class EndpointSubsystemAdd extends AbstractAddStepHandler {
 
-   static final EndpointSubsystemAdd INSTANCE = new EndpointSubsystemAdd();
-   private static final String[] CONNECTORS = { HOTROD_CONNECTOR, MEMCACHED_CONNECTOR, REST_CONNECTOR };
+    static final EndpointSubsystemAdd INSTANCE = new EndpointSubsystemAdd();
+    private static final String[] CONNECTORS = {HOTROD_CONNECTOR, MEMCACHED_CONNECTOR, REST_CONNECTOR};
 
-   static ModelNode createOperation(ModelNode address, ModelNode existing) {
-      ModelNode operation = Util.getEmptyOperation(ModelDescriptionConstants.ADD, address);
-      populate(existing, operation);
-      return operation;
-   }
+    static ModelNode createOperation(ModelNode address, ModelNode existing) {
+        ModelNode operation = Util.getEmptyOperation(ModelDescriptionConstants.ADD, address);
+        populate(existing, operation);
+        return operation;
+    }
 
-   private static void populate(ModelNode source, ModelNode target) {
-      for(String connectorType : CONNECTORS) {
-         target.get(connectorType).setEmptyObject();
-      }
-   }
+    private static void populate(ModelNode source, ModelNode target) {
+        for (String connectorType : CONNECTORS) {
+            target.get(connectorType).setEmptyObject();
+        }
+    }
 
-   @Override
-   protected void populateModel(ModelNode source, ModelNode target) throws OperationFailedException {
-      populate(source, target);
-   }
+    @Override
+    protected void populateModel(ModelNode source, ModelNode target) throws OperationFailedException {
+        populate(source, target);
+    }
 
-   @Override
-   protected boolean requiresRuntimeVerification() {
-      return false;
-   }
+    @Override
+    protected boolean requiresRuntimeVerification() {
+        return false;
+    }
 }
