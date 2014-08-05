@@ -1,0 +1,41 @@
+<?xml version='1.0' encoding='UTF-8'?>
+
+<!-- Configuration file for stress tests -->
+
+<infinispan xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+   xsi:schemaLocation="urn:infinispan:config:7.0 http://www.infinispan.org/schemas/infinispan-config-7.0.xsd"
+   xmlns="urn:infinispan:config:7.0">
+
+   <jgroups>
+      <stack-file name="jgroupsStack"
+         path="default-configs/default-jgroups-udp.xml" />
+   </jgroups>
+
+   <cache-container name="default" default-cache="default">
+
+      <transport stack="jgroupsStack" cluster="default" />
+      <serialization />
+      <jmx duplicate-domains="true">
+         <property name="enabled">false</property>
+      </jmx>
+
+      <local-cache name="default" />
+
+      <replicated-cache name="index_metadata" mode="SYNC">
+         <transaction mode="NONE" />
+         <indexing index="NONE" />
+      </replicated-cache>
+
+      <distributed-cache name="index_data" mode="SYNC">
+         <transaction mode="NONE" />
+         <indexing index="NONE" />
+      </distributed-cache>
+
+      <replicated-cache name="index_locks" mode="SYNC">
+         <transaction mode="NONE" />
+         <indexing index="NONE" />
+      </replicated-cache>
+
+   </cache-container>
+
+</infinispan>

@@ -93,6 +93,7 @@ import org.jgroups.Channel;
 import org.jgroups.protocols.DELAY;
 import org.jgroups.protocols.DISCARD;
 import org.jgroups.protocols.TP;
+import org.jgroups.stack.Protocol;
 import org.jgroups.stack.ProtocolStack;
 
 public class TestingUtil {
@@ -1094,10 +1095,13 @@ public class TestingUtil {
       JGroupsTransport jgt = (JGroupsTransport) TestingUtil.extractComponent(cache, Transport.class);
       Channel ch = jgt.getChannel();
       ProtocolStack ps = ch.getProtocolStack();
-      DELAY delay = new DELAY();
+      DELAY delay = (DELAY) ps.findProtocol(DELAY.class);
+      if (delay==null) {
+         delay = new DELAY();
+         ps.insertProtocol(delay, ProtocolStack.ABOVE, TP.class);
+      }
       delay.setInDelay(in_delay_millis);
       delay.setOutDelay(out_delay_millis);
-      ps.insertProtocol(delay, ProtocolStack.ABOVE, TP.class);
       return delay;
    }
 
