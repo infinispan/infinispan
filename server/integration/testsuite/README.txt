@@ -83,18 +83,31 @@ The server logs will be stored in the standard location of the test distribution
 Test suite allows generic logging level change via command line parameters.
 Available parameters:
 
-1. -Dlog.level.infinispan=[loggingLevel]
-2. -Dlog.level.jgroups=[loggingLevel]
-3. -Dlog.level.console=[loggingLevel]
+1. -Dtrace=org.infinispan.category1,org.jgroups.category2
 
 What it does:
-1 - sets subsystem/logger[@category='org.infinispan']/level[@name] to [loggingLevel], INFO by default
-2 - sets subsystem/logger[@category='org.jgroups']/level[@name] to [loggingLevel], INFO by default
-3 - sets subsystem/console-handler[@name = 'CONSOLE']/level[@name] to [loggingLevel], INFO by default
+    <console-handler name="CONSOLE">
+        <level name="INFO"/>
+        <formatter>
+            <named-formatter name="COLOR-PATTERN"/>
+        </formatter>
+    </console-handler>
 
-When 1) or 2) is set (only one of them), it also changes subsystem/periodic-rotating-file-handler[@name = 'FILE']/level[@name]
-to [loggingLevel], INFO by default. When both 1) and 2) is provided, subsystem/periodic-rotating-file-handler[@name = 'FILE']/level[@name] is set
-to TRACE.
+    <file-handler name="FILE">
+        <level name="TRACE""/>
+        <formatter>
+            <named-formatter name="PATTERN"/>
+        </formatter>
+        <file relative-to="jboss.server.log.dir" path="server.log"/>
+        <append value="true"/>
+    </file-handler>
+    <logger category="org.infinispan.category1">
+        <level name="TRACE"/>
+    </logger>
+    <logger category="org.jgroups.category2">
+        <level name="TRACE"/>
+    </logger>
+INFO: We do not set TRACE level for console logger here because multiple servers are running and it slows down test execution
 
 LevelDB specifics
 -----------------
