@@ -1,8 +1,7 @@
 package org.infinispan.lucene;
 
-import java.util.Set;
-
 import org.infinispan.Cache;
+import org.infinispan.lucene.impl.FileListCacheValue;
 import org.testng.AssertJUnit;
 
 /**
@@ -12,7 +11,6 @@ import org.testng.AssertJUnit;
  * @author Sanne Grinovero
  * @since 4.1
  */
-@SuppressWarnings("unchecked")
 public class DirectoryIntegrityCheck {
 
    private DirectoryIntegrityCheck() {
@@ -35,7 +33,7 @@ public class DirectoryIntegrityCheck {
    }
 
    public static void verifyDirectoryStructure(Cache cache, String indexName, boolean wasAStressTest) {
-      Set<String> fileList = (Set<String>) cache.get(new FileListCacheKey(indexName));
+      FileListCacheValue fileList = (FileListCacheValue) cache.get(new FileListCacheKey(indexName));
       AssertJUnit.assertNotNull(fileList);
       int fileListCacheKeyInstances = 0;
       for (Object key : cache.keySet()) {
@@ -129,7 +127,7 @@ public class DirectoryIntegrityCheck {
    }
 
    public static void assertFileNotExists(Cache cache, String indexName, String fileName, long maxWaitForCondition) throws InterruptedException {
-      Set<String> fileList = (Set<String>) cache.get(new FileListCacheKey(indexName));
+      FileListCacheValue fileList = (FileListCacheValue) cache.get(new FileListCacheKey(indexName));
       AssertJUnit.assertNotNull(fileList);
       AssertJUnit.assertFalse(fileList.contains(fileName)); //check is in sync: no waiting allowed in this case
       boolean allok = false;
@@ -153,7 +151,7 @@ public class DirectoryIntegrityCheck {
     * Consider that null should be interpreted as value 1;
     */
    public static void assertFileExistsHavingRLCount(Cache cache, String fileName, String indexName, int expectedReadcount, int chunkSize, boolean expectRegisteredInFat) {
-      Set<String> fileList = (Set<String>) cache.get(new FileListCacheKey(indexName));
+      FileListCacheValue fileList = (FileListCacheValue) cache.get(new FileListCacheKey(indexName));
       AssertJUnit.assertNotNull(fileList);
       AssertJUnit.assertTrue(fileList.contains(fileName) == expectRegisteredInFat);
       FileMetadata metadata = (FileMetadata) cache.get(new FileCacheKey(indexName, fileName));

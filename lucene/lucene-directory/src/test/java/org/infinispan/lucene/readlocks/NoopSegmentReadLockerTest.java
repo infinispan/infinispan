@@ -11,11 +11,11 @@ import org.infinispan.lucene.FileCacheKey;
 import org.infinispan.lucene.FileListCacheKey;
 import org.infinispan.lucene.FileMetadata;
 import org.infinispan.lucene.directory.DirectoryBuilder;
+import org.infinispan.lucene.impl.FileListCacheValue;
 import org.testng.AssertJUnit;
 import org.testng.annotations.Test;
 
 import java.io.IOException;
-import java.util.Set;
 
 /**
  * Tests covering the functionality of NoopSegmentreadLocker.
@@ -71,7 +71,7 @@ public class NoopSegmentReadLockerTest extends DistributedSegmentReadLockerTest 
    }
 
    private void assertFileAfterDeletion(Cache cache) {
-      Set<String> fileList = (Set<String>) cache.get(new FileListCacheKey(INDEX_NAME));
+      FileListCacheValue fileList = (FileListCacheValue) cache.get(new FileListCacheKey(INDEX_NAME));
       AssertJUnit.assertNotNull(fileList);
       AssertJUnit.assertFalse(fileList.contains(filename));
 
@@ -99,7 +99,7 @@ public class NoopSegmentReadLockerTest extends DistributedSegmentReadLockerTest 
    }
 
    private void verifyDirectoryStructure(Cache cache) {
-      Set<String> fileList = (Set<String>) cache.get(new FileListCacheKey(INDEX_NAME));
+      FileListCacheValue fileList = (FileListCacheValue) cache.get(new FileListCacheKey(INDEX_NAME));
       AssertJUnit.assertNotNull(fileList);
       int fileListCacheKeyInstances = 0;
 

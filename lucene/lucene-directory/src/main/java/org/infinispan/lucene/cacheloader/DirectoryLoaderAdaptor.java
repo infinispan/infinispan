@@ -19,8 +19,8 @@ import org.infinispan.lucene.FileMetadata;
 import org.infinispan.lucene.FileReadLockKey;
 import org.infinispan.lucene.IndexScopedKey;
 import org.infinispan.lucene.KeyVisitor;
+import org.infinispan.lucene.impl.FileListCacheValue;
 import org.infinispan.lucene.logging.Log;
-import org.infinispan.util.concurrent.ConcurrentHashSet;
 import org.infinispan.util.logging.LogFactory;
 
 /**
@@ -201,9 +201,7 @@ final class DirectoryLoaderAdaptor {
     */
    private Object loadIntern() throws IOException {
       final String[] listAll = directory.listAll();
-      final ConcurrentHashSet<String> fileNames = new ConcurrentHashSet<>();
-      Collections.addAll(fileNames, listAll);
-      return fileNames;
+      return new FileListCacheValue(listAll);
    }
 
    /**

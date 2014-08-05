@@ -37,4 +37,9 @@ public interface ExternalizerIds {
     */
    static final Integer FILE_READLOCK_KEY = 1304;
 
+   /**
+    * @see org.infinispan.lucene.FileListCacheKey.Externalizer
+    */
+   static final Integer FILE_LIST_CACHE_VALUE = 1305;
+
 }
