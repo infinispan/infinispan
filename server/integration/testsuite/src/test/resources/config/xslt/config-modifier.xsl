@@ -1,8 +1,8 @@
-<xsl:stylesheet version="1.0"
-                xmlns:xsl="http://www.w3.org/1999/XSL/Transform"
-                xmlns:p="urn:jboss:domain:2.1"
-                xmlns:logging="urn:jboss:domain:logging:1.2">
-    <xsl:output method="xml" indent="yes" omit-xml-declaration="yes"/>
+<xsl:stylesheet version="2.0"
+        xmlns:xsl="http://www.w3.org/1999/XSL/Transform"
+        xmlns:p="urn:jboss:domain:2.1"
+        exclude-result-prefixes="p"
+    >
 
     <!--Variables of namespaces to be changed-->
     <xsl:variable name="nsLogging">urn:jboss:domain:logging:</xsl:variable>
@@ -36,9 +36,7 @@
     <xsl:param name="addKrbSecDomain">false</xsl:param>
     <xsl:param name="addSecRealm">false</xsl:param>
     <xsl:param name="addConnection">false</xsl:param>
-    <xsl:param name="log.level.infinispan">INFO</xsl:param>
-    <xsl:param name="log.level.jgroups">INFO</xsl:param>
-    <xsl:param name="log.level.console">INFO</xsl:param>
+    <xsl:param name="trace">none</xsl:param>
 
     <xsl:template match="node()|@*" name="copynode">
         <xsl:copy>
@@ -74,81 +72,78 @@
         </xsl:if>
     </xsl:template>
 
-    <!-- configure subsystem/logger[@category = 'org.infinispan']/level and subsystem/logger[@category = 'org.jgroups']/level -->
-    <xsl:template match="logging:subsystem">
-        <xsl:copy>
-            <xsl:for-each select="@*">
-                <xsl:attribute name="{name(.)}">
-                    <xsl:value-of select="."/>
+    <!--
+        An XSLT style sheet which will enable trace logging for the test suite.
+        This can be enabled via -Dtrace=org.infinispan.category1,org.jgroups.category2
+    -->
+    <xsl:template name="output-loggers">
+        <xsl:param name="list" />
+        <xsl:variable name="first" select="substring-before(concat($list,','), ',')" />
+        <xsl:variable name="remaining" select="substring-after($list, ',')"/>
+        <xsl:element name="logger">
+            <xsl:attribute name="category">
+                <xsl:value-of select="$first"></xsl:value-of>
+            </xsl:attribute>
+            <xsl:element name="level">
+                <xsl:attribute name="name">
+                    <xsl:value-of select="'TRACE'"/>
                 </xsl:attribute>
-            </xsl:for-each>
-
-            <xsl:apply-templates/>
-
-            <xsl:element name="logging:logger">
-                <xsl:attribute name="category">org.infinispan</xsl:attribute>
-                <xsl:element name="logging:level">
-                    <xsl:attribute name="name">
-                        <xsl:value-of select="$log.level.infinispan"/>
-                    </xsl:attribute>
-                </xsl:element>
             </xsl:element>
-
-            <xsl:element name="logging:logger">
-                <xsl:attribute name="category">org.jgroups</xsl:attribute>
-                <xsl:element name="logging:level">
-                    <xsl:attribute name="name">
-                        <xsl:value-of select="$log.level.jgroups"/>
-                    </xsl:attribute>
-                </xsl:element>
-            </xsl:element>
-
-        </xsl:copy>
+        </xsl:element>
+        <xsl:if test="string-length($remaining) > 0">
+            <xsl:call-template name="output-loggers">
+                <xsl:with-param name="list" select="$remaining" />
+            </xsl:call-template>
+        </xsl:if>
     </xsl:template>
 
-    <!--configure subsystem/console-handler[@name = 'CONSOLE']/level -->
-    <xsl:template match="logging:subsystem/logging:console-handler[@name = 'CONSOLE']">
-        <xsl:copy>
-            <xsl:copy-of select="@*"/>
-            <xsl:if test="logging:level">
-                <xsl:element name="logging:level">
+    <xsl:template match="//*[local-name()='subsystem' and starts-with(namespace-uri(), $nsLogging)]/*[local-name()='console-handler']" use-when="$trace">
+        <xsl:choose>
+            <xsl:when test="$trace='none'">
+                <xsl:copy>
+                    <xsl:apply-templates select="node()|@*"/>
+                </xsl:copy>
+            </xsl:when>
+            <xsl:otherwise>
+                <xsl:copy>
                     <xsl:attribute name="name">
-                        <xsl:value-of select="$log.level.console"/>
+                        <xsl:value-of select="'CONSOLE'"/>
                     </xsl:attribute>
-                </xsl:element>
-            </xsl:if>
-            <xsl:apply-templates/>
-        </xsl:copy>
+                    <!--define INFO log level for console logger, otherwise it slows down running tests with multiple servers-->
+                    <level name="INFO"/>
+                    <formatter>
+                        <named-formatter name="COLOR-PATTERN"/>
+                    </formatter>
+                </xsl:copy>
+            </xsl:otherwise>
+        </xsl:choose>
     </xsl:template>
 
-    <!--configure subsystem/periodic-rotating-file-handler[@name = 'FILE']/level-->
-    <xsl:template match="logging:subsystem/logging:periodic-rotating-file-handler[@name = 'FILE']">
-        <xsl:copy>
-            <xsl:copy-of select="@*"/>
-            <xsl:if test="not(logging:level)">
-                <xsl:element name="logging:level">
+    <xsl:template match="//*[local-name()='subsystem' and starts-with(namespace-uri(), $nsLogging)]/*[local-name()='periodic-rotating-file-handler']" use-when="$trace">
+        <xsl:choose>
+            <xsl:when test="$trace='none'">
+                <xsl:copy>
+                    <xsl:apply-templates select="node()|@*"/>
+                </xsl:copy>
+            </xsl:when>
+            <xsl:otherwise>
+                <file-handler>
                     <xsl:attribute name="name">
-                        <xsl:choose>
-                            <xsl:when test="$log.level.infinispan != 'INFO' and $log.level.jgroups = 'INFO'">
-                                <xsl:value-of select="$log.level.infinispan"/>
-                            </xsl:when>
-                            <xsl:when test="$log.level.infinispan = 'INFO' and $log.level.jgroups != 'INFO'">
-                                <xsl:value-of select="$log.level.jgroups"/>
-                            </xsl:when>
-                            <xsl:otherwise>TRACE</xsl:otherwise>
-                        </xsl:choose>
+                        <xsl:value-of select="'FILE'"/>
                     </xsl:attribute>
-                </xsl:element>
-            </xsl:if>
-            <xsl:apply-templates/>
-        </xsl:copy>
+                    <level name="TRACE"/>
+                    <formatter>
+                        <named-formatter name="PATTERN"/>
+                    </formatter>
+                    <file relative-to="jboss.server.log.dir" path="server.log"/>
+                    <append value="true"/>
+                </file-handler>
+                <xsl:call-template name="output-loggers">
+                    <xsl:with-param name="list" select="$trace" />
+                </xsl:call-template>
+            </xsl:otherwise>
+        </xsl:choose>
     </xsl:template>
-
-    <!-- delete existing configurations for these loggers -->
-    <xsl:template match="logging:subsystem/logging:logger[@category = 'org.infinispan']"/>
-    <xsl:template match="logging:subsystem/logging:logger[@category = 'org.jgroups']"/>
-    <xsl:template match="logging:subsystem/logging:console-handler[@name = 'CONSOLE']/logging:level"/>
-    <xsl:template match="logging:subsystem/logging:periodic-rotating-file-handler[@name = 'FILE']/logging:level"/>
 
     <xsl:template match="//*[local-name()='subsystem' and starts-with(namespace-uri(), $nsJGroups)]//*[local-name()='relay']">
         <xsl:if test="$modifyRelay = 'false'">
@@ -309,4 +304,5 @@
             <xsl:apply-templates/>
         </xsl:copy>
     </xsl:template>
+
 </xsl:stylesheet>

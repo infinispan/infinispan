@@ -15,9 +15,7 @@
     <property name="leveldb.patch" value="false" />
     <property name="zip.dist" value="false" />
     <property name="zip.dist.old" value="false" />
-    <property name="log.level.infinispan" value="INFO"/>
-    <property name="log.level.jgroups" value="INFO"/>
-    <property name="log.level.console" value="INFO"/>
+    <property name="trace" value="none"/>
     <property name="new.server.schema.version" value="${new.server.schema.version}"/>
 
     <filterset id="commonFilters" begintoken="${" endtoken="}">
@@ -354,9 +352,7 @@
                 <param name="removeRestSecurity" expression="@{removeRestSecurity}"/>
                 <param name="infinispanServerEndpoint" expression="@{infinispanServerEndpoint}"/>
                 <param name="infinispanFile" expression="@{infinispanFile}"/>
-                <param name="log.level.infinispan" expression="${log.level.infinispan}"/>
-                <param name="log.level.jgroups" expression="${log.level.jgroups}"/>
-                <param name="log.level.console" expression="${log.level.console}"/>
+                <param name="trace" expression="${trace}"/>
             </xslt>
 
             <jdbc-conf/>
