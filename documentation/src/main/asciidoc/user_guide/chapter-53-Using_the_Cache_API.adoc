@@ -112,12 +112,89 @@ For more comprehensive examples, please see the link:$$http://docs.jboss.org/inf
 
 
 ==== Cache-level notifications
-Cache-level events occur on a per-cache basis, and is global and cluster-wide.  Examples of cache-level events are entries being added, removed, modified, etc.  These events trigger notifications to listeners registered to a specific cache.
+Cache-level events occur on a per-cache basis, and by default are only raised on nodes where the events occur.  Note in a distributed cache these events are only raised on the owners of data being affected.  Examples of cache-level events are entries being added, removed, modified, etc.  These events trigger notifications to listeners registered to a specific cache.
 
 Please see the link:$$http://docs.jboss.org/infinispan/7.0/apidocs/org/infinispan/notifications/cachelistener/annotation/package-summary.html$$[Javadocs on the org.infinispan.notifications.cachelistener.annotation package] for a comprehensive list of all cache-level notifications, and their respective method-level annotations.
 
-NOTE: In Infinispan 5.0, additional events were added.  Please refer to the <a href="http://docs.jboss.org/infinispan/7.0/apidocs/org/infinispan/notifications/cachelistener/annotation/package-summary.html">Javadocs on the org.infinispan.notifications.cachelistener.annotation package</a> for Infinispan 5.0 for the list of cache-level notifications available in Infinispan 5.0.
+NOTE: Please refer to the link:$$http://docs.jboss.org/infinispan/7.0/apidocs/org/infinispan/notifications/cachelistener/annotation/package-summary.html$$[Javadocs on the org.infinispan.notifications.cachelistener.annotation package] for the list of cache-level notifications available in Infinispan.
 
+===== Cluster Listeners
+The cluster listeners should be used when it is desirable to listen to the cache events on a single node.
+
+To do so all that is required is set to annotate your listener as being clustered.
+
+[source,java]
+----
+@Listener (clustered = true)
+public class MyClusterListener { .... }
+
+----
+
+There are some limitations to cluster listeners from a non clustered listener.
+
+. A cluster listener can only listen to `@CacheEntryModified`, `@CacheEntryCreated` and `@CacheEntryRemoved` events.  Note this means any other type of event will not be listened to for this listener.
+. Only the post event is sent to a cluster listener, the pre event is ignored.
+
+===== Event filtering and conversion
+All applicable events on the node where the listener is installed will be raised to the listener.  It is possible to dynamically filter what events are raised by using a link:$$https://docs.jboss.org/infinispan/7.0/apidocs/org/infinispan/filter/KeyFilter.html$$[KeyFilter] (only allows filtering on keys) or link:$$https://docs.jboss.org/infinispan/7.0/apidocs/org/infinispan/filter/KeyValueFilter.html$$[KeyValueFilter] (used to filter for both keys and values).
+
+The example here shows a simple `KeyFilter` that will only allow events to be raised when an event modified the entry for the key `Only Me`.
+[source,java]
+----
+public class SpecificKeyFilter implements KeyFilter<String> {
+    private final String keyToAccept;
+
+    public SpecificKeyFilter(String keyToAccept) {
+      if (keyToAccept == null) {
+        throw new NullPointerException();
+      }
+      this.keyToAccept = keyToAccept;
+    }
+
+    boolean accept(String key) {
+      return keyToAccept.equals(key);
+    }
+}
+
+...
+cache.addListener(listener, new SpecificKeyFilter("Only Me"));
+...
+
+----
+
+This can be useful when you want to limit what events you receive in a more efficient manner.
+
+There is also a link:$$https://docs.jboss.org/infinispan/7.0/apidocs/org/infinispan/filter/Converter.html$$[Converter] that can be supplied that allows for converting a value to another before raising the event.  This can be nice to modularize any code that does value conversions.
+
+NOTE: The mentioned filters and converters are especially beneficial when used in conjunction with a Cluster Listener.  This is because the filtering and conversion is done on the node where the event originated and not on the node where event is listened to.  This can provide benefits of not having to replicate events across the cluster (filter) or even have reduced payloads (converter).
+
+===== Initial State Events
+When a listener is installed it will only be notified of events after it is fully installed.
+
+It may be desirable to get the current state of the cache contents upon first registration of listener by having an event generated of type `@CacheEntryCreated` for each element in the cache.  Any additionally generated events during this initial phase will be queued until appropriate events have been raised.
+
+NOTE: This only works for clustered listeners at this time.  link:$$https://issues.jboss.org/browse/ISPN-4608$$[ISPN-4608] covers adding this for non clustered listeners.
+
+===== Duplicate Events
+
+It is possible in a non transactional cache to receive duplicate events.  This is possible when the primary owner of a key goes down while trying to perform a write operation such as a put.
+
+Infinispan internally will rectify the put operation by sending it to the new primary owner for the given key automatically, however there are no guarantees in regards to if the write was first replicated to backups.  Thus more than 1 of the following write events (`CacheEntryCreatedEvent`, `CacheEntryModifiedEvent` & `CacheEntryRemovedEvent`) may be sent on a single operation.
+
+If more than one event is generated Infinispan will mark the event that it was generated by a retried command to help the user to know when this occurs without having to pay attention to view changes.
+
+[source,java]
+----
+@Listener
+public class MyRetryListener {
+  @CacheEntryModified
+  public void entryModified(CacheEntryModifiedEvent event) {
+    if (event.isCommandRetried()) {
+      // Do something
+    }
+  }
+}
+----
 
 ==== Cache manager-level notifications
 Cache manager-level events occur on a cache manager.  These too are global and  cluster-wide, but involve events that affect all caches created by a single cache manager.  Examples of cache manager-level events are nodes joining or leaving a cluster, or caches starting or stopping.
@@ -136,9 +213,6 @@ public class MyAsyncListener { .... }
 
 ===== Asynchronous thread pool
 To tune the thread pool used to dispatch such asynchronous notifications, use the link:$$http://docs.jboss.org/infinispan/5.0/apidocs/config.html#ce_global_asyncListenerExecutor$$[`<asyncListenerExecutor />`] XML element in your configuration file.
-
-==== Listeners on RemoteCacheManager
-At the moment there is no support for registering listeners for the link:$$http://docs.jboss.org/infinispan/7.0/apidocs/org/infinispan/client/hotrod/RemoteCacheManager.html$$[RemoteCacheManager] . Whenever calling one of the add/remove/getListener methods on the link:$$http://docs.jboss.org/infinispan/7.0/apidocs/org/infinispan/client/hotrod/RemoteCacheManager.html$$[RemoteCacheManager] an UnsupportedOperationException will be thrown. There are plans to support remote listeners in future versions; in order to be notified when this feature will be added you can watch/vote for link:$$https://issues.jboss.org/browse/ISPN-374$$[ISPN-374] .
 
 ===  Asynchronous API
 In addition to synchronous API methods like link:$$http://docs.oracle.com/javase/6/docs/api/java/util/Map.html#put%28K,%20V%29$$[Cache.put()] , link:$$http://docs.oracle.com/javase/6/docs/api/java/util/Map.html#remove%28java.lang.Object%29$$[Cache.remove()] , etc., Infinispan also has an asynchronous, non-blocking API where you can achieve the same results in a non-blocking fashion.
