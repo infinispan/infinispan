@@ -18,7 +18,8 @@
       <bundle>mvn:org.hibernate/hibernate-core/${version.hibernate.core}</bundle>
       <bundle>mvn:org.hibernate/hibernate-entitymanager/${version.hibernate.entitymanager}</bundle>
       <bundle>mvn:org.hibernate/hibernate-osgi/${version.hibernate.osgi}</bundle>
-      <bundle>wrap:mvn:org.hibernate.javax.persistence/hibernate-jpa-2.0-api/${version.hibernate.javax.persistence}</bundle>
+
+      <bundle>mvn:org.hibernate.javax.persistence/hibernate-jpa-2.1-api/${version.hibernate.javax.persistence}</bundle>
 
       <!-- hibernate dependencies -->
       <bundle>mvn:org.apache.servicemix.bundles/org.apache.servicemix.bundles.antlr/${version.hibernate_dep.antlr}</bundle>
