@@ -33,7 +33,7 @@ import org.testng.annotations.Test;
  * @since 4.1
  */
 @SuppressWarnings("unchecked")
-@Test(groups = "unstable", testName = "lucene.DatabaseStoredIndexTest", description = "original group: functional")
+@Test(groups = "functional", testName = "lucene.DatabaseStoredIndexTest")
 public class DatabaseStoredIndexTest extends SingleCacheManagerTest {
 
    private static final String DB_URL = "jdbc:h2:mem:infinispan;DB_CLOSE_DELAY=0";
