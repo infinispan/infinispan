@@ -26,7 +26,7 @@ import org.infinispan.lucene.ExternalizerIds;
  * @since 7.0
  */
 @ThreadSafe
-public class FileListCacheValue {
+public final class FileListCacheValue {
 
    private final HashSet<String> filenames = new HashSet<>();
    private final Lock writeLock;
@@ -112,6 +112,53 @@ public class FileListCacheValue {
       }
    }
 
+   @Override
+   public int hashCode() {
+      readLock.lock();
+      try {
+         return filenames.hashCode();
+      }
+      finally {
+         readLock.unlock();
+      }
+   }
+
+   @Override
+   public boolean equals(Object obj) {
+      if (this == obj)
+         return true;
+      if (obj == null)
+         return false;
+      if (FileListCacheValue.class != obj.getClass())
+         return false;
+      final FileListCacheValue other = (FileListCacheValue) obj;
+      final HashSet<String> copyFromOther;
+      other.readLock.lock();
+      try {
+         copyFromOther = new HashSet<>(other.filenames);
+      }
+      finally {
+         other.readLock.unlock();
+      }
+      readLock.lock();
+      try {
+         return (filenames.equals(copyFromOther));
+      }
+      finally {
+         readLock.unlock();
+      }
+   }
+
+   @Override
+   public String toString() {
+      readLock.lock();
+      try {
+         return "FileListCacheValue [filenames=" + filenames + "]";
+      }
+      finally {
+         readLock.unlock();
+      }
+   }
 
    public static final class Externalizer extends AbstractExternalizer<FileListCacheValue> {
 
