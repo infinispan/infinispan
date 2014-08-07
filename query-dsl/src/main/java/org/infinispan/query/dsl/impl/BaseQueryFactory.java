@@ -24,8 +24,8 @@ public abstract class BaseQueryFactory<T extends Query> implements QueryFactory<
 
    @Override
    public FilterConditionContext not(FilterConditionContext fcc) {
-      BaseCondition baseCondition = (BaseCondition) fcc;
-      if (baseCondition.getParent() != null) {
+      BaseCondition baseCondition = ((BaseCondition) fcc).getRoot();
+      if (baseCondition.queryBuilder != null) {
          throw new IllegalArgumentException("The given condition already belongs to another builder");
       }
       NotCondition notCondition = new NotCondition(baseCondition);

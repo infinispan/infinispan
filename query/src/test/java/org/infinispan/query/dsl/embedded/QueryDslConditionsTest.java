@@ -1,5 +1,15 @@
 package org.infinispan.query.dsl.embedded;
 
+import static org.junit.Assert.*;
+import static org.testng.Assert.assertNotEquals;
+
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Date;
+import java.util.HashSet;
+import java.util.List;
+
 import org.hibernate.hql.ParsingException;
 import org.hibernate.search.engine.spi.SearchFactoryImplementor;
 import org.hibernate.search.indexes.impl.IndexManagerHolder;
@@ -17,15 +27,6 @@ import org.infinispan.query.dsl.embedded.testdomain.Transaction;
 import org.infinispan.query.dsl.embedded.testdomain.User;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
-
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Date;
-import java.util.HashSet;
-import java.util.List;
-
-import static org.junit.Assert.*;
 
 /**
  * Test for query conditions (filtering). Exercises the whole query DSL on the sample domain model.
@@ -604,6 +605,36 @@ public class QueryDslConditionsTest extends AbstractQueryDslTest {
       assertEquals("Man", list.get(0).getSurname());
       assertEquals("Spider", list.get(1).getName());
       assertEquals("Woman", list.get(1).getSurname());
+   }
+
+   public void testNot10() throws Exception {
+      QueryFactory qf = getQueryFactory();
+
+      Query q = qf.from(getModelFactory().getUserImplClass())
+            .not().not(
+                  qf.having("name").eq("John")
+                        .or(qf.having("surname").eq("Man")))
+            .toBuilder()
+            .build();
+
+      List<User> list = q.list();
+      assertEquals(2, list.size());
+      assertNotEquals("Woman", list.get(0).getSurname());
+   }
+
+   public void testNot11() throws Exception {
+      QueryFactory qf = getQueryFactory();
+
+      Query q = qf.from(getModelFactory().getUserImplClass())
+            .not(qf.not(
+                  qf.having("name").eq("John")
+                        .or(qf.having("surname").eq("Man"))))
+            .toBuilder()
+            .build();
+
+      List<User> list = q.list();
+      assertEquals(2, list.size());
+      assertNotEquals("Woman", list.get(0).getSurname());
    }
 
    public void testEmptyQuery() throws Exception {
