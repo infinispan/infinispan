@@ -63,7 +63,7 @@ class IncompleteCondition extends BaseCondition implements FilterConditionBeginC
       if (filterCondition != null) {
          throw new IllegalStateException("Sentence already started. Cannot use 'not(..)' again.");
       }
-      BaseCondition baseCondition = (BaseCondition) fcc;
+      BaseCondition baseCondition = ((BaseCondition) fcc).getRoot();
       isNegated = !isNegated;
       if (isNegated) {
          NotCondition notCondition = new NotCondition(baseCondition);
