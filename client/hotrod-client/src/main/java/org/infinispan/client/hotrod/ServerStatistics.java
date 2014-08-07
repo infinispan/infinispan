@@ -22,6 +22,16 @@ public interface ServerStatistics {
    String CURRENT_NR_OF_ENTRIES = "currentNumberOfEntries";
 
    /**
+    * Number of entries for which this cache is primary owner
+    */
+   String CURRENT_NR_OF_ENTRIES_PRIMARY = "currentNumberOfEntriesPrimary";
+
+   /**
+    * Number of entries currently in the Hot Rod server cluster
+    */
+   String CURRENT_NR_OF_ENTRIES_CLUSTER = "currentNumberOfEntriesCluster";
+
+   /**
     * Number of entries stored in Hot Rod server
     * since the server started running.
     */

@@ -2,14 +2,11 @@ package org.infinispan.server.hotrod
 
 import io.netty.buffer.ByteBuf
 import io.netty.channel.Channel
-import io.netty.channel.ChannelHandlerContext
 import java.io.IOException
-import java.security.PrivilegedAction
-import javax.security.auth.Subject
-import javax.security.sasl.SaslServer
 import org.infinispan.container.entries.CacheEntry
 import org.infinispan.container.versioning.NumericVersion
 import org.infinispan.context.Flag.{SKIP_CACHE_LOAD, IGNORE_RETURN_VALUES}
+import org.infinispan.distexec.{DefaultExecutorService, DistributedCallable}
 import org.infinispan.server.core.Operation._
 import org.infinispan.server.core._
 import org.infinispan.server.core.transport.ExtendedByteBuf._
@@ -17,20 +14,14 @@ import org.infinispan.server.core.transport.NettyTransport
 import org.infinispan.server.hotrod.HotRodOperation._
 import org.infinispan.server.hotrod.OperationStatus._
 import org.infinispan.server.hotrod.logging.Log
-import org.infinispan.stats.Stats
 import org.infinispan.util.concurrent.TimeoutException
 import scala.annotation.switch
 import scala.collection.JavaConverters._
 import javax.security.sasl.Sasl
 import io.netty.channel.ChannelHandlerContext
-import io.netty.handler.codec.ReplayingDecoder
-import org.infinispan.server.core.PartialResponse
-import io.netty.util.concurrent.DefaultEventExecutorGroup
-import org.infinispan.commons.util.Util
 import javax.security.auth.Subject
 import java.security.PrivilegedAction
 import javax.security.sasl.SaslServer
-import org.infinispan.server.core.security.SaslUtils
 import io.netty.handler.ssl.SslHandler
 import java.util.ArrayList
 import java.security.Principal
@@ -366,10 +357,19 @@ object Decoder2x extends AbstractVersionedDecoder with ServerConstants with Log 
 
    override def customReadValue(header: HotRodHeader, buffer: ByteBuf, cache: Cache): AnyRef = null
 
-   override def createStatsResponse(h: HotRodHeader, cacheStats: Stats, t: NettyTransport): AnyRef = {
+   override def createStatsResponse(h: HotRodHeader, cache: Cache, t: NettyTransport): AnyRef = {
+      val cacheStats = cache.getStats
+      val configuration = cache.getCacheConfiguration
+      val isDistributed = configuration.clustering().cacheMode().isDistributed
+      val currentNumberOfEntriesCluster =
+         if (isDistributed && configuration.jmxStatistics().enabled()) calculateCurrentNumberOfEntriesCluster(cache)
+         else cacheStats.getCurrentNumberOfEntries
+
       val stats = mutable.Map.empty[String, String]
       stats += ("timeSinceStart" -> cacheStats.getTimeSinceStart.toString)
       stats += ("currentNumberOfEntries" -> cacheStats.getCurrentNumberOfEntries.toString)
+      stats += ("currentNumberOfEntriesPrimary" -> cacheStats.getCurrentNumberOfEntriesPrimary.toString)
+      stats += ("currentNumberOfEntriesCluster" -> currentNumberOfEntriesCluster.toString)
       stats += ("totalNumberOfEntries" -> cacheStats.getTotalNumberOfEntries.toString)
       stats += ("stores" -> cacheStats.getStores.toString)
       stats += ("retrievals" -> cacheStats.getRetrievals.toString)
@@ -440,6 +440,24 @@ object Decoder2x extends AbstractVersionedDecoder with ServerConstants with Log 
    def normalizeAuthorizationId(id: String): String = {
       val realm = id.indexOf('@')
       if (realm >= 0) id.substring(0, realm) else id
+   }
+
+   private def calculateCurrentNumberOfEntriesCluster(cache: Cache): Int = {
+      val task = new PrimaryOwnerCounter
+      val executor = new DefaultExecutorService(cache)
+      val futures = iterableAsScalaIterableConverter(executor.submitEverywhere(task)).asScala
+      futures.foldLeft(0)((sum, current) => sum + current.get())
+   }
+
+   class PrimaryOwnerCounter extends DistributedCallable[Bytes, Bytes, Int] with Serializable {
+      @volatile var cache: Cache = _
+
+      override def setEnvironment(cache: org.infinispan.Cache[Bytes, Bytes],
+              inputKeys: java.util.Set[Bytes]): Unit = {
+         this.cache = cache.getAdvancedCache
+      }
+
+      override def call(): Int = cache.getStats.getCurrentNumberOfEntriesPrimary
    }
 
 }

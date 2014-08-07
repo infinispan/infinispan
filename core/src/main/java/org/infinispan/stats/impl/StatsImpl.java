@@ -28,6 +28,7 @@ public class StatsImpl implements Stats {
    final long averageWriteTime;
    final long averageRemoveTime;
    final CacheMgmtInterceptor mgmtInterceptor;
+   final int numberEntriesPrimary;
 
    public StatsImpl(InterceptorChain chain) {
       mgmtInterceptor = (CacheMgmtInterceptor) chain
@@ -36,6 +37,7 @@ public class StatsImpl implements Stats {
       if (mgmtInterceptor.getStatisticsEnabled()) {
          timeSinceStart = mgmtInterceptor.getElapsedTime();
          currentNumberOfEntries = mgmtInterceptor.getNumberOfEntries();
+         numberEntriesPrimary = mgmtInterceptor.getNumberOfEntriesPrimary();
          totalNumberOfEntries = mgmtInterceptor.getStores();
          retrievals = mgmtInterceptor.getHits() + mgmtInterceptor.getMisses();
          stores = mgmtInterceptor.getStores();
@@ -50,6 +52,7 @@ public class StatsImpl implements Stats {
       } else {
          timeSinceStart = -1;
          currentNumberOfEntries = -1;
+         numberEntriesPrimary = -1;
          totalNumberOfEntries = -1;
          retrievals = -1;
          stores = -1;
@@ -72,6 +75,11 @@ public class StatsImpl implements Stats {
    @Override
    public int getCurrentNumberOfEntries() {
       return currentNumberOfEntries;
+   }
+
+   @Override
+   public int getCurrentNumberOfEntriesPrimary() {
+      return numberEntriesPrimary;
    }
 
    @Override
