@@ -231,6 +231,9 @@ public class MapReduceTask<KIn, VIn, KOut, VOut> {
       this.clusteringDependentLogic = componentRegistry.getComponent(ClusteringDependentLogic.class);
       this.isLocalOnly = SecurityActions.getCacheRpcManager(cache) == null;
       this.rpcOptionsBuilder = isLocalOnly ? null : new RpcOptionsBuilder(SecurityActions.getCacheRpcManager(cache).getDefaultRpcOptions(true));
+      if (!isLocalOnly) {
+         this.rpcOptionsBuilder.timeout(0, TimeUnit.MILLISECONDS);
+      }
    }
 
    /**
@@ -307,6 +310,7 @@ public class MapReduceTask<KIn, VIn, KOut, VOut> {
     * See {@link #timeout(TimeUnit)}.
     *
     * Note: the timeout value will be converted to milliseconds and a value less or equal than zero means wait forever.
+    * The default timeout for this task is 0. The task will wait indefinitely for its completion.
     *
     * @param timeout
     * @param unit
@@ -318,8 +322,8 @@ public class MapReduceTask<KIn, VIn, KOut, VOut> {
    }
 
    /**
-    * @return the timeout value in {@link TimeUnit} to wait for the remote map/reduce task to finish. The default value
-    *         given by {@link org.infinispan.configuration.cache.SyncConfiguration#replTimeout()}
+    * @return the timeout value in {@link TimeUnit} to wait for the remote map/reduce task to finish. The default
+    * timeout is 0, the task will wait indefinitely for its completion.
     */
    public final long timeout(TimeUnit outputTimeUnit) {
       return rpcOptionsBuilder.timeout(outputTimeUnit);
