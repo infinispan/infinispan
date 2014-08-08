@@ -3,13 +3,24 @@ package org.infinispan.topology;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
+import java.util.concurrent.ExecutorService;
 
+import org.infinispan.commands.ReplicableCommand;
 import org.infinispan.commons.util.Immutables;
 import org.infinispan.commons.util.InfinispanCollections;
+import org.infinispan.configuration.global.GlobalConfiguration;
 import org.infinispan.distribution.ch.ConsistentHash;
+import org.infinispan.distribution.ch.ConsistentHashFactory;
+import org.infinispan.factories.ComponentRegistry;
+import org.infinispan.factories.GlobalComponentRegistry;
+import org.infinispan.partionhandling.impl.PartitionHandlingManager;
+import org.infinispan.remoting.rpc.ResponseMode;
 import org.infinispan.remoting.transport.Address;
+import org.infinispan.remoting.transport.Transport;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
@@ -25,6 +36,8 @@ public class ClusterCacheStatus {
 
    private final String cacheName;
    private final CacheJoinInfo joinInfo;
+   private final RebalancePolicy rebalancePolicy;
+   private final PartitionHandlingManager partitionHandlingManager;
    // Cache members, some of which may not have received state yet
    private volatile List<Address> members;
    // Capacity factors for all the members
@@ -37,7 +50,16 @@ public class ClusterCacheStatus {
 
    private volatile RebalanceConfirmationCollector rebalanceStatus;
 
-   public ClusterCacheStatus(String cacheName, CacheJoinInfo joinInfo) {
+   private Transport transport;
+
+   private GlobalConfiguration globalConfiguration;
+
+   private ExecutorService asyncTransportExecutor;
+
+   private GlobalComponentRegistry gcr;
+
+   public ClusterCacheStatus(String cacheName, CacheJoinInfo joinInfo, Transport transport, GlobalConfiguration globalConfiguration,
+                             ExecutorService asyncTransportExecutor, GlobalComponentRegistry gcr, RebalancePolicy rebalancePolicy) {
       this.cacheName = cacheName;
       this.joinInfo = joinInfo;
 
@@ -45,7 +67,14 @@ public class ClusterCacheStatus {
       this.members = InfinispanCollections.emptyList();
       this.capacityFactors = InfinispanCollections.emptyMap();
       this.joiners = InfinispanCollections.emptyList();
+      this.transport = transport;
+      this.globalConfiguration = globalConfiguration;
+      this.asyncTransportExecutor = asyncTransportExecutor;
+      this.gcr = gcr;
+      this.rebalancePolicy = rebalancePolicy;
       if (trace) log.tracef("Cache %s initialized, join info is %s", cacheName, joinInfo);
+      ComponentRegistry namedComponentRegistry = gcr.getNamedComponentRegistry(cacheName);
+      partitionHandlingManager = namedComponentRegistry == null ? null : namedComponentRegistry.getComponent(PartitionHandlingManager.class);
    }
 
    public CacheJoinInfo getJoinInfo() {
@@ -146,7 +175,7 @@ public class ClusterCacheStatus {
       synchronized (this) {
          if (newClusterMembers.containsAll(members)) {
             if (trace) log.tracef("Cluster members updated for cache %s, no leavers detected: " +
-                  "cache members = %s", cacheName, newClusterMembers);
+                  "cache members = %s. Existing members = %s", cacheName, newClusterMembers, members);
             return false;
          }
 
@@ -201,10 +230,9 @@ public class ClusterCacheStatus {
       synchronized (this) {
          if (rebalanceStatus != null)
             return false;
-
          rebalanceStatus = new RebalanceConfirmationCollector(cacheName, newTopology.getTopologyId(),
                newTopology.getMembers());
-         this.cacheTopology = newTopology;
+         updateCacheTopology(newTopology);
          return true;
       }
    }
@@ -238,7 +266,7 @@ public class ClusterCacheStatus {
       }
    }
 
-   public void endRebalance() {
+   public void setRebalanceStatus() {
       synchronized (this) {
          if (rebalanceStatus == null) {
             throw new IllegalStateException("Can't end rebalance, there is no rebalance in progress");
@@ -247,8 +275,118 @@ public class ClusterCacheStatus {
       }
    }
 
-   public String getCacheName() {
-      return cacheName;
+   public void processMembershipChange(List<Address> newClusterMembers) throws Exception {
+      if (partitionHandlingManager == null || partitionHandlingManager.handleViewChange(newClusterMembers, this)) {
+         boolean cacheMembersModified = updateClusterMembers(newClusterMembers);
+         if (cacheMembersModified) {
+            updateTopologyAndBroadcastChUpdate();
+         }
+      }
+   }
+
+   public boolean updateTopologyAndBroadcastChUpdate() throws Exception {
+      boolean topologyChanged = updateTopologyAfterMembershipChange();
+      if (!topologyChanged)
+         return true;
+
+      boolean rebalanceCompleted = updateRebalanceMembersList();
+      if (rebalanceCompleted) {
+         endRebalance();
+      }
+
+      // We need a consistent hash update even when rebalancing did end
+      broadcastConsistentHashUpdate();
+
+      rebalancePolicy.updateCacheStatus(cacheName, this);
+      return false;
+   }
+
+   public void endRebalance() {
+      synchronized (this) {
+         CacheTopology currentTopology = getCacheTopology();
+         int currentTopologyId = currentTopology.getTopologyId();
+         log.debugf("Finished cluster-wide rebalance for cache %s, topology id = %d", cacheName, currentTopologyId);
+         int newTopologyId = currentTopologyId + 1;
+         ConsistentHash newCurrentCH = currentTopology.getPendingCH();
+         CacheTopology newTopology = new CacheTopology(newTopologyId, newCurrentCH, null, getCacheTopology().isDegradedMode());
+         updateCacheTopology(newTopology);
+         setRebalanceStatus();
+      }
+   }
+
+   public void broadcastConsistentHashUpdate() throws Exception {
+      CacheTopology cacheTopology = getCacheTopology();
+      log.debugf("Updating cluster-wide consistent hash for cache %s, topology = %s", cacheName, cacheTopology);
+      ReplicableCommand command = new CacheTopologyControlCommand(cacheName,
+                                                                  CacheTopologyControlCommand.Type.CH_UPDATE, transport.getAddress(), cacheTopology,
+                                                                  transport.getViewId());
+      executeOnClusterAsync(command, getGlobalTimeout());
+   }
+
+   public void executeOnClusterAsync(final ReplicableCommand command, final int timeout)
+         throws Exception {
+      if (!isTotalOrder()) {
+         // invoke the command on the local node
+         asyncTransportExecutor.submit(new Runnable() {
+            @Override
+            public void run() {
+               gcr.wireDependencies(command);
+               try {
+                  if (log.isTraceEnabled()) log.tracef("Attempting to execute command on self: %s", command);
+                  command.perform(null);
+               } catch (Throwable throwable) {
+                  // The command already logs any exception in perform()
+               }
+            }
+         });
+      }
+
+      // invoke remotely
+      transport.invokeRemotely(null, command,
+                               ResponseMode.ASYNCHRONOUS_WITH_SYNC_MARSHALLING, timeout, true, null, isTotalOrder(), isDistributed());
+   }
+
+   private int getGlobalTimeout() {
+      // TODO Rename setting to something like globalRpcTimeout
+      return (int) globalConfiguration.transport().distributedSyncTimeout();
+   }
+
+   /**
+    * @return {@code true} if the topology was changed, {@code false} otherwise
+    */
+   private boolean updateTopologyAfterMembershipChange() {
+      synchronized (this) {
+         ConsistentHashFactory consistentHashFactory = getJoinInfo().getConsistentHashFactory();
+         int topologyId = getCacheTopology().getTopologyId();
+         ConsistentHash currentCH = getCacheTopology().getCurrentCH();
+         ConsistentHash pendingCH = getCacheTopology().getPendingCH();
+         if (!needConsistentHashUpdate()) {
+            log.tracef("Cache %s members list was updated, but the cache topology doesn't need to change: %s",
+                       cacheName, getCacheTopology());
+            return false;
+         }
+
+         List<Address> newCurrentMembers = pruneInvalidMembers(currentCH.getMembers());
+         if (newCurrentMembers.isEmpty()) {
+            CacheTopology newTopology = new CacheTopology(topologyId + 1, null, null, false);
+            updateCacheTopology(newTopology);
+            log.tracef("Initial topology installed for cache %s: %s", cacheName, newTopology);
+            return false;
+         }
+         ConsistentHash newCurrentCH = consistentHashFactory.updateMembers(currentCH, newCurrentMembers, getCapacityFactors());
+         ConsistentHash newPendingCH = null;
+         if (pendingCH != null) {
+            List<Address> newPendingMembers = pruneInvalidMembers(pendingCH.getMembers());
+            newPendingCH = consistentHashFactory.updateMembers(pendingCH, newPendingMembers, getCapacityFactors());
+         }
+         boolean missingSegments = isDataLost(currentCH, members);
+         log.tracef("Is missing segments? %s", missingSegments);
+         CacheTopology newTopology = new CacheTopology(topologyId + 1, newCurrentCH, newPendingCH, missingSegments);
+         updateCacheTopology(newTopology);
+         log.tracef("Cache %s topology updated: %s", cacheName, newTopology);
+         newTopology.logRoutingTableInformation();
+         return true;
+      }
    }
 
    // Helpers for working with immutable lists
@@ -285,5 +423,154 @@ public class ClusterCacheStatus {
             ", cacheTopology=" + cacheTopology +
             ", rebalanceStatus=" + rebalanceStatus +
             '}';
+   }
+
+   public synchronized void reconcileCacheTopology(List<Address> clusterMembers, List<CacheTopology> partitionTopologies,
+                                                   boolean isMergeView) throws Exception {
+      try {
+         if (partitionTopologies.isEmpty())
+            return;
+
+
+         CacheTopology cacheTopology;
+         if (isMergeView && partitionHandlingManager != null) {
+            cacheTopology = buildCacheTopologyForMerge(clusterMembers, partitionTopologies);
+         }  else  {
+            cacheTopology = buildCacheTopology(clusterMembers, partitionTopologies);
+         }
+         if (cacheTopology == null) return;
+
+         // End any running rebalance
+         if (isRebalanceInProgress()) {
+            endRebalance();
+         }
+         updateCacheTopology(cacheTopology);
+
+         // End any rebalance that was running in the other partitions
+         broadcastConsistentHashUpdate();
+
+         // Trigger another rebalance in case the CH is not balanced
+         rebalancePolicy.updateCacheStatus(cacheName, this);
+      } catch (Exception e) {
+         log.failedToRecoverCacheState(cacheName, e);
+      }
+
+   }
+
+   private CacheTopology buildCacheTopologyForMerge(List<Address> clusterMembers, List<CacheTopology> partitionTopologies) {
+      log.trace("Building cache topology for merge.");
+      int maxTopology = 0;
+      // We only use the currentCH, we ignore any ongoing rebalance in the partitions
+      ConsistentHash agreedCh = null;
+      ConsistentHashFactory chFactory = getJoinInfo().getConsistentHashFactory();
+      for (CacheTopology topology : partitionTopologies) {
+         if (topology.getTopologyId() > maxTopology) {
+            maxTopology = topology.getTopologyId();
+            agreedCh = topology.getCurrentCH();
+         }
+      }
+
+      // We have added each node to the cache status when we received its status response
+      // Prune those that have left the cluster.
+      updateClusterMembers(clusterMembers);
+      List<Address> members = getMembers();
+      if (members.isEmpty()) {
+         log.tracef("Cache %s has no members left, skipping topology update", cacheName);
+         return null;
+      }
+      if (agreedCh != null) {
+         agreedCh = chFactory.updateMembers(agreedCh, members, getCapacityFactors());
+         log.tracef("Agreed routing table is %s", agreedCh.getRoutingTableAsString());
+      }
+
+      // Make sure the topology id is higher than any topology id we had before in the cluster
+      maxTopology += 2;
+      CacheTopology cacheTopology = new CacheTopology(maxTopology, agreedCh, null);
+      return cacheTopology;
+
+   }
+
+   private CacheTopology buildCacheTopology(List<Address> clusterMembers, List<CacheTopology> partitionTopologies) {
+      log.trace("buildCacheTopology");
+      int unionTopologyId = 0;
+      // We only use the currentCH, we ignore any ongoing rebalance in the partitions
+      ConsistentHash currentCHUnion = null;
+      ConsistentHashFactory chFactory = getJoinInfo().getConsistentHashFactory();
+      ConsistentHash latestTopologyCh = null;
+
+      for (CacheTopology topology : partitionTopologies) {
+         if (topology.getTopologyId() > unionTopologyId) {
+            unionTopologyId = topology.getTopologyId();
+            latestTopologyCh = topology.getCurrentCH();
+         }
+
+         if (currentCHUnion == null) {
+            currentCHUnion = topology.getCurrentCH();
+         } else {
+            currentCHUnion = chFactory.union(currentCHUnion, topology.getCurrentCH());
+         }
+      }
+
+      // We have added each node to the cache status when we received its status response
+      // Prune those that have left the cluster. //todo still do it to update removed nodes
+      updateClusterMembers(clusterMembers);
+      List<Address> members = getMembers();
+      if (members.isEmpty()) {
+         log.tracef("Cache %s has no members left, skipping topology update", cacheName);
+         return null;
+      }
+      if (currentCHUnion != null) {
+         //todo update if membership changed (result of updateClusterMembers above)
+         currentCHUnion = chFactory.updateMembers(currentCHUnion, members, getCapacityFactors());
+      }
+
+      // Make sure the topology id is higher than any topology id we had before in the cluster
+      unionTopologyId += 2;
+      return new CacheTopology(unionTopologyId, currentCHUnion, null, isDataLost(latestTopologyCh, clusterMembers));
+   }
+
+   public synchronized void reconcileCacheTopologyWhenBecomingCoordinator(List<Address> clusterMembers, List<CacheTopology> partitionTopologies, boolean mergeView) throws Exception {
+      log.tracef("reconcileCacheTopologyWhenBecomingCoordinator: members = %s, topologies = %s, mergeView = %s", clusterMembers, partitionTopologies, mergeView);
+      if (partitionHandlingManager == null || partitionHandlingManager.handleViewChange(clusterMembers, this)) {
+         reconcileCacheTopology(clusterMembers, partitionTopologies, mergeView);
+      }
+   }
+
+   public String getCacheName() {
+      return cacheName;
+   }
+
+   public boolean isDataLost(ConsistentHash consistentHash, List<Address> newMembers) {
+      if (consistentHash == null) {
+         log.trace("No previous CH, missingData returns false.");
+         return false;
+      }
+      log.tracef("isMissingData: consistentHash == %s, routingTable == %s, newMembers == %s ", consistentHash, consistentHash.getRoutingTableAsString(), newMembers);
+      List<Address> allMembers = consistentHash.getMembers();
+      Map<Address, Set<Integer>> nodeOwnsSegments = new HashMap<Address, Set<Integer>>();
+      Set<Integer> allSegments = new HashSet<Integer>();
+      for (Address a : allMembers) {
+         Set<Integer> segments = consistentHash.getSegmentsForOwner(a);
+         nodeOwnsSegments.put(a, segments);
+         allSegments.addAll(segments);
+      }
+
+      for (Address a : consistentHash.getMembers())
+         if (!newMembers.contains(a)) {
+            nodeOwnsSegments.remove(a);
+         }
+      Set<Integer> existingSegments = new HashSet<Integer>();
+      for (Set<Integer> segments : nodeOwnsSegments.values())
+         existingSegments.addAll(segments);
+
+      allSegments.removeAll(existingSegments);
+      if (!allSegments.isEmpty()) {
+         log.tracef("Segments have been lost: %s", allSegments);
+      }
+      return !allSegments.isEmpty();
+   }
+
+   public boolean isMissingData() {
+      return getCacheTopology() != null && getCacheTopology().isDegradedMode();
    }
 }

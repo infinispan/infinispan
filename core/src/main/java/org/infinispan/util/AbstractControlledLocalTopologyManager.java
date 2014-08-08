@@ -1,5 +1,6 @@
 package org.infinispan.util;
 
+import org.infinispan.factories.GlobalComponentRegistry;
 import org.infinispan.factories.annotations.Start;
 import org.infinispan.factories.annotations.Stop;
 import org.infinispan.topology.CacheJoinInfo;
@@ -43,7 +44,7 @@ public abstract class AbstractControlledLocalTopologyManager implements LocalTop
    }
 
    @Override
-   public final Map<String, Object[]> handleStatusRequest(int viewId) {
+   public final Map<String, StatusResponse> handleStatusRequest(int viewId) {
       return delegate.handleStatusRequest(viewId);
    }
 

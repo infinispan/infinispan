@@ -5,6 +5,7 @@ import org.infinispan.Cache;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.global.GlobalConfigurationBuilder;
+import org.infinispan.container.DataContainer;
 import org.infinispan.distribution.MagicKey;
 import org.infinispan.distribution.rehash.XAResourceAdapter;
 import org.infinispan.manager.CacheContainer;
@@ -207,7 +208,7 @@ public abstract class MultipleCacheManagersTest extends AbstractCacheTest {
       }
    }
 
-   private <K, V> List<Cache<K, V>> getCaches(String cacheName) {
+   protected  <K, V> List<Cache<K, V>> getCaches(String cacheName) {
       List<Cache<K, V>> caches = new ArrayList<Cache<K, V>>();
       for (EmbeddedCacheManager cm : cacheManagers) {
          Cache<K, V> c;
@@ -382,6 +383,11 @@ public abstract class MultipleCacheManagersTest extends AbstractCacheTest {
    protected <A, B> Cache<A, B> cache(int index) {
       return manager(index).getCache();
    }
+
+   protected DataContainer dataContainer(int index) {
+      return advancedCache(index).getDataContainer();
+   }
+
 
    /**
     * Create the cache managers you need for your test.  Note that the cache managers you create *must* be created using

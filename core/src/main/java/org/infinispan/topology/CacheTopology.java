@@ -36,12 +36,21 @@ public class CacheTopology {
    private final ConsistentHash currentCH;
    private final ConsistentHash pendingCH;
    private final transient ConsistentHash unionCH;
+   private final boolean isDegradedMode;
+
+   public CacheTopology(int topologyId, ConsistentHash currentCH, ConsistentHash pendingCH, boolean isDegradedMode) {
+      this(topologyId, currentCH, pendingCH, null, isDegradedMode);
+   }
 
    public CacheTopology(int topologyId, ConsistentHash currentCH, ConsistentHash pendingCH) {
-      this(topologyId, currentCH, pendingCH, null);
+      this(topologyId, currentCH, pendingCH, null, false);
    }
 
    public CacheTopology(int topologyId, ConsistentHash currentCH, ConsistentHash pendingCH, ConsistentHash unionCH) {
+      this(topologyId, currentCH, pendingCH, unionCH, false);
+   }
+
+   public CacheTopology(int topologyId, ConsistentHash currentCH, ConsistentHash pendingCH, ConsistentHash unionCH, boolean isDegradedMode) {
       if (pendingCH != null && !pendingCH.getMembers().containsAll(currentCH.getMembers())) {
          throw new IllegalArgumentException("A cache topology's pending consistent hash must " +
                "contain all the current consistent hash's members");
@@ -50,6 +59,7 @@ public class CacheTopology {
       this.currentCH = currentCH;
       this.pendingCH = pendingCH;
       this.unionCH = unionCH;
+      this.isDegradedMode = isDegradedMode;
    }
 
    public int getTopologyId() {
@@ -75,6 +85,10 @@ public class CacheTopology {
     */
    public ConsistentHash getUnionCH() {
       return unionCH;
+   }
+
+   public boolean isDegradedMode() {
+      return isDegradedMode;
    }
 
    public List<Address> getMembers() {
@@ -137,6 +151,7 @@ public class CacheTopology {
             ", currentCH=" + currentCH +
             ", pendingCH=" + pendingCH +
             ", unionCH=" + unionCH +
+            ", isMissingData=" + isDegradedMode +
             '}';
    }
 
@@ -156,6 +171,7 @@ public class CacheTopology {
          output.writeObject(cacheTopology.currentCH);
          output.writeObject(cacheTopology.pendingCH);
          output.writeObject(cacheTopology.unionCH);
+         output.writeBoolean(cacheTopology.isDegradedMode);
       }
 
       @Override
@@ -164,7 +180,8 @@ public class CacheTopology {
          ConsistentHash currentCH = (ConsistentHash) unmarshaller.readObject();
          ConsistentHash pendingCH = (ConsistentHash) unmarshaller.readObject();
          ConsistentHash unionCH = (ConsistentHash) unmarshaller.readObject();
-         return new CacheTopology(topologyId, currentCH, pendingCH, unionCH);
+         boolean isMissingData = unmarshaller.readBoolean();
+         return new CacheTopology(topologyId, currentCH, pendingCH, unionCH, isMissingData);
       }
 
       @Override

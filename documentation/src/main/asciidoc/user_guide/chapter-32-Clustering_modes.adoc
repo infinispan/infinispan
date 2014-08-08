@@ -1,4 +1,4 @@
-==  Clustering modes
+==  Clustering
 Infinispan can be configured to be either local (standalone) or clustered.
 If in a cluster, the cache can be configured to replicate changes to all nodes, to
 invalidate changes across nodes and finally to be used in distributed mode - state
@@ -658,5 +658,138 @@ request to get the previous value if not present locally.
 If on the other hand the asynchronous API is used, client code needs to get hold of the
 link:$$https://docs.jboss.org/infinispan/7.0/apidocs/org/infinispan/commons/util/concurrent/NotifyingFuture.html$$[NotifiyngFuture]
 returned by the async operation in order to be able to query the previous value.
+
+
+=== Partition handling
+
+An Infinispan cluster is built out of a number of nodes where data is stored. In order
+not to lose data in the presence of node failures, Infinispan copies the same data - cache
+entry in Infinispan parlance - over multiple  nodes. This level of data redundancy is
+configured through the *numOwners* configuration attribute and ensures that as long as
+fewer than *numOwners* nodes crash simultaneously, Infinispan has a copy of the data
+available.
+
+However there might be catastrophic situations in which more than *numOwners* nodes
+disappear from the cluster:
+
+- split brains. Caused e.g. by a router crash, this splits the cluster in two or more
+partitions, or sub-clusters that that operate independently. In these circumstances
+multiple clients reading/writing from different partitions see different versions
+of the same cache entry, which for many application is problematic. Note there are
+ways to alleviate the possibility for the split brain to happen, such as redundant networks or
+ link:$$http://www.cyberciti.biz/tips/linux-bond-or-team-multiple-network-interfaces-nic-into-single-interface.html$$[IP bonding].
+ These only reduces the window for the problem to occur, though.
+- *numOwners* nodes crash in sequence. When at least *numOwners* nodes crash in rapid
+sequence and Infinispan does not have the time to properly rebalance its state between
+crashes, the result is partial data lost
+
+The partition handling functionality discussed in this section allows the user to
+be informed when data has been lost, temporarily or permanently, in order to avoid
+situations in which wrong data is shown to the user as a result of either split
+brains or multiple node crash in rapid sequence.
+More formally, enabling partition handling in Infinispan preserves data consistency
+but sacrifice availability in the presence of partitions
+(CP in Brewer's link:$$http://en.wikipedia.org/wiki/CAP_theorem$$[`CAP theorem]).
+
+Enabling partition handling is critical for applications that have high consistency
+requirements: when the data read from the system must be accurate (e.g. when holding
+bank account information). On the other hand, if Infinispan is used as an best-effort
+cache, e.g. to cache web pages in a proxy, the partitions are perfectly tolerable.
+
+The following sections describes the way Infinispan handles split brains and
+successive failures when partition handling is enabled, followed by a section on
+configuring the partition handling functionality.
+
+==== Split brain
+
+We assume a partition happens when *numOwners* or more nodes disappear at the
+same time. When this happen two (or more) partitions form which are not aware of
+each other. Each such partition does not start a rebalance, but enters in degraded mode:
+
+- request (read and writes) for entries that have all the copies on nodes within
+this partition are honoured
+- requests for entries that are partially or totally owned by nodes that disappeared
+are rejected through an AvailabilityException
+
+To exemplify, consider the initial cluster C={A,B,C,D}, A,B,C,D - nodes, configured
+in distributed mode with numOwners=2. Further on, three keys k1, k2 and k3 (they might
+be present in the cluster already or not) such that owners(k1) = {A,B}, owners(k2) = {B,C}
+and owners(k3) = {C,D}. Then a partition happens C1={A,B} and C2={C,D}, the degraded mode
+exhibits the following behaviour:
+
+- on C1, k1 is available for read/write, k2 (partially owned) and k3 (not owned)
+are not available and accessing them results in an AvailabilityException
+- on C2, k1 and k2  are not available for read/write, k3 is available
+
+A relevant aspect of the partition handling process is the fact that when a
+split brain happens, the resulting partitions rely on the original consistent
+hash function (the one that existed before the split brain) in order
+ to calculate key ownership. So it doesn't matter if k1, k2 or k3 already
+ exists in the cluster or not, as the availability is strictly determined
+ by the consistent hash and not by the key existence.
+
+If at a further point in time the initial partition C forms again as a result of
+the network healing and C1 and C2 partitions being merged back together, then C
+exits the degraded mode becoming fully available again.
+
+===== Partition handling for replicated caches
+Infinispan internally handles a replicated cache as a degenerated distributed
+mode where *numOwners* equals the cluster size. Following the logic described
+above, all the partitions of a replicated cache that suffers a split brain
+would be available,
+as for every such partition the number of nodes that left is smaller than
+*numOwners* (which in turn is equal with +infinity). Having
+both partitions available defeats the main purpose of the partition handling,
+allowing inconsistencies to happen: e.g. an update on the first partition
+is allowed and at the same time readers getting the old information from
+the other partition.
+This partition handling strategy doesn't work with replicated caches, where
+other strategies such as majority of nodes are more appropriate. Because of this,
+the partition handling functionality is not available for replicated caches
+at the moment and it is ignored.
+
+==== Successive node failures
+When an Infinispan node leaves, either because of being shut down or because
+of a (e.g. process) crash, the remaining owners of the data pertaining to the
+crashed node send copies of this data to other nodes in the cluster in order
+to preserve the *numOwners* invariant.
+This process is called rebalance. However, another node might crash during
+rebalance and in the situation more than *numOwners* nodes disappear, there
+is a chance that data disappeared from the cluster altogether. In this case
+with partition handling functionality enabled, the cluster enters in unavailable
+mode and all the requests are answered with an AvailabilityException. At this
+stage there is no way for the cluster to become available again, but stopping
+it and repopulating it on restart with the data from an external source.
+Even though the  successive node failures situation is not expected to happen
+often as an appropriate *numOwners* should be configured in order to avoid it,
+having the partition handling enabled represent a safety net for systems that
+have critical consistency requirements.
+
+==== Configuration for partition handling functionality
+
+At this stage the partition handling is disabled by default. We will revisit
+this decision based on in future, based on user feedback.
+In order to enable partition handling within the XML configuration:
+
+[source,xml]
+----
+<distributed-cache name="the-default-cache">
+   <partition-handling enabled="true"/>
+</distributed-cache>
+----
+
+Unless the cache is clustered (replicated/distributed) the configuration is ignored.
+
+The same can be achieved programmatically:
+[source,java]
+----
+ConfigurationBuilder dcc =new ConfigurationBuilder();
+dcc.clustering().partitionHandling().enabled(true);
+----
+
+
+Note: there are plans to add JMX monitoring operations in order to forcefully migrate
+a cluster form degraded or unavailable state back to available, at the cost of consistency.
+
 
 

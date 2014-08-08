@@ -36,6 +36,7 @@ import org.infinispan.factories.annotations.ComponentName;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.scopes.Scope;
 import org.infinispan.factories.scopes.Scopes;
+import org.infinispan.partionhandling.impl.PartitionStateControlCommand;
 import org.infinispan.persistence.manager.PersistenceManager;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.statetransfer.StateRequestCommand;
@@ -248,6 +249,9 @@ public class RemoteCommandsFactory {
                break;
             case EntryResponseCommand.COMMAND_ID:
                command = new EntryResponseCommand(cacheName);
+               break;
+           case PartitionStateControlCommand.COMMAND_ID:
+               command = new PartitionStateControlCommand(cacheName);
                break;
             default:
                throw new CacheException("Unknown command id " + id + "!");

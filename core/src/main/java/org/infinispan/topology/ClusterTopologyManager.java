@@ -2,6 +2,7 @@ package org.infinispan.topology;
 
 import org.infinispan.factories.scopes.Scope;
 import org.infinispan.factories.scopes.Scopes;
+import org.infinispan.notifications.cachemanagerlistener.event.ViewChangedEvent;
 import org.infinispan.remoting.transport.Address;
 
 /**
@@ -35,4 +36,6 @@ public interface ClusterTopologyManager {
     * Marks the rebalance as complete on the sender.
     */
    void handleRebalanceCompleted(String cacheName, Address node, int topologyId, Throwable throwable, int viewId) throws Exception;
+
+   public void handleNewView(ViewChangedEvent e);
 }

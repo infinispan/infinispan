@@ -38,6 +38,7 @@ import org.infinispan.factories.annotations.ComponentName;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.jmx.JmxUtil;
 import org.infinispan.notifications.cachemanagerlistener.CacheManagerNotifier;
+import org.infinispan.partionhandling.impl.PartitionHandlingManager;
 import org.infinispan.remoting.InboundInvocationHandler;
 import org.infinispan.remoting.responses.Response;
 import org.infinispan.remoting.rpc.ResponseFilter;
@@ -654,9 +655,9 @@ public class JGroupsTransport extends AbstractTransport implements MembershipLis
 
       // Delta view debug log for large cluster
       if (log.isDebugEnabled() && oldMembers != null) {
-         List<Address> joined = new ArrayList(members);
+         List<Address> joined = new ArrayList<Address>(members);
          joined.removeAll(oldMembers);
-         List<Address> left = new ArrayList(oldMembers);
+         List<Address> left = new ArrayList<Address>(oldMembers);
          left.removeAll(members);
          log.debugf("Joined: %s, Left: %s", joined, left);
       }

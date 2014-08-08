@@ -3,6 +3,7 @@ package org.infinispan.remoting.transport;
 import org.infinispan.commons.CacheException;
 import org.infinispan.configuration.global.GlobalConfiguration;
 import org.infinispan.factories.annotations.Inject;
+import org.infinispan.partionhandling.AvailabilityException;
 import org.infinispan.remoting.responses.ExceptionResponse;
 import org.infinispan.remoting.responses.Response;
 import org.infinispan.remoting.transport.jgroups.SuspectException;
@@ -36,6 +37,8 @@ public abstract class AbstractTransport implements Transport {
             Exception e = exceptionResponse.getException();
             if (e instanceof SuspectException)
                throw log.thirdPartySuspected(sender, (SuspectException) e);
+            if (e instanceof AvailabilityException)
+               throw e;
 
             // if we have any application-level exceptions make sure we throw them!!
             throw log.remoteException(sender, e);
