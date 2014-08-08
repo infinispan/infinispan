@@ -28,6 +28,7 @@ import static org.testng.AssertJUnit.fail;
 public class SimpleMapReduceTaskTimeoutTest extends MultipleCacheManagersTest {
 
    private static final int REPLICATION_TIMEOUT = 5000;
+   private static final int DEFAULT_TIMEOUT = 0;
 
    public SimpleMapReduceTaskTimeoutTest() {
       this.cleanup = CleanupPhase.AFTER_METHOD;
@@ -43,7 +44,7 @@ public class SimpleMapReduceTaskTimeoutTest extends MultipleCacheManagersTest {
       final String sleepOnKey = init();
 
       MapReduceTask<String, String, String, Integer> task = createMapReduceTask(this.<String, String>cache(0));
-      assertEquals("Wrong task timeout.", REPLICATION_TIMEOUT, task.timeout(MILLISECONDS));
+      assertEquals("Wrong task timeout.", DEFAULT_TIMEOUT, task.timeout(MILLISECONDS));
       assertEquals("Wrong replication timeout.", REPLICATION_TIMEOUT,
                    cache(0).getCacheConfiguration().clustering().sync().replTimeout());
       task.timeout(taskTimeout, MILLISECONDS);
@@ -81,7 +82,7 @@ public class SimpleMapReduceTaskTimeoutTest extends MultipleCacheManagersTest {
       final String sleepOnKey = init();
 
       MapReduceTask<String, String, String, Integer> task = createMapReduceTask(this.<String, String> cache(0));
-      assertEquals("Wrong task timeout.", REPLICATION_TIMEOUT, task.timeout(MILLISECONDS));
+      assertEquals("Wrong task timeout.", DEFAULT_TIMEOUT, task.timeout(MILLISECONDS));
       assertEquals("Wrong replication timeout.", REPLICATION_TIMEOUT, cache(0).getCacheConfiguration().clustering()
             .sync().replTimeout());
       task.timeout(taskTimeout, MILLISECONDS);
@@ -120,7 +121,7 @@ public class SimpleMapReduceTaskTimeoutTest extends MultipleCacheManagersTest {
       final String sleepOnKey = init();
 
       MapReduceTask<String, String, String, Integer> task = createMapReduceTask(this.<String, String>cache(0));
-      assertEquals("Wrong task timeout.", REPLICATION_TIMEOUT, task.timeout(MILLISECONDS));
+      assertEquals("Wrong task timeout.", DEFAULT_TIMEOUT, task.timeout(MILLISECONDS));
       assertEquals("Wrong replication timeout.", REPLICATION_TIMEOUT,
                    cache(0).getCacheConfiguration().clustering().sync().replTimeout());
       task.timeout(taskTimeout, MILLISECONDS);
@@ -145,7 +146,7 @@ public class SimpleMapReduceTaskTimeoutTest extends MultipleCacheManagersTest {
       final String sleepOnKey = init();
 
       MapReduceTask<String, String, String, Integer> task = createMapReduceTask(this.<String, String>cache(0));
-      assertEquals("Wrong task timeout.", REPLICATION_TIMEOUT, task.timeout(MILLISECONDS));
+      assertEquals("Wrong task timeout.", DEFAULT_TIMEOUT, task.timeout(MILLISECONDS));
       assertEquals("Wrong replication timeout.", REPLICATION_TIMEOUT,
                    cache(0).getCacheConfiguration().clustering().sync().replTimeout());
       task.timeout(taskTimeout, MILLISECONDS);
