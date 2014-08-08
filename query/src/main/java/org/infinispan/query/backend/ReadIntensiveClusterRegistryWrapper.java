@@ -1,14 +1,13 @@
 package org.infinispan.query.backend;
 
+import net.jcip.annotations.ThreadSafe;
+import org.infinispan.registry.ClusterRegistry;
+
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicReference;
-
-import net.jcip.annotations.ThreadSafe;
-
-import org.infinispan.registry.ClusterRegistry;
 
 /**
  * Local cache for the ClusterRegistry.
@@ -22,7 +21,7 @@ import org.infinispan.registry.ClusterRegistry;
  * @author Sanne Grinovero (C) 2013 Red Hat Inc.
  */
 @ThreadSafe
-final class ReadIntensiveClusterRegistryWrapper<S,K,V> {
+final class ReadIntensiveClusterRegistryWrapper<S, K, V> {
 
    private final ClusterRegistry<S, K, V> clusterRegistry;
    private final S scope;
@@ -32,7 +31,7 @@ final class ReadIntensiveClusterRegistryWrapper<S,K,V> {
     * in the Query specific case we're only adding new class types while they are being discovered,
     * after this initial phase this is supposed to be a read-only immutable map.
     */
-   private final AtomicReference<Map<K,V>> localCache = new AtomicReference<Map<K,V>>(Collections.EMPTY_MAP);
+   private final AtomicReference<Map<K, V>> localCache = new AtomicReference<Map<K, V>>(Collections.EMPTY_MAP);
 
    ReadIntensiveClusterRegistryWrapper(ClusterRegistry<S, K, V> clusterRegistry, S scope) {
       this.clusterRegistry = clusterRegistry;
@@ -68,11 +67,10 @@ final class ReadIntensiveClusterRegistryWrapper<S,K,V> {
       synchronized (localCache) {
          final Map<K, V> currentContent = localCache.get();
          final int currentSize = currentContent.size();
-         if (currentSize==0) {
+         if (currentSize == 0) {
             localCache.lazySet(Collections.singletonMap(key, value));
-         }
-         else {
-            Map<K,V> updatedContent = new HashMap<K,V>(currentSize+1);
+         } else {
+            Map<K, V> updatedContent = new HashMap<K, V>(currentSize + 1);
             updatedContent.putAll(currentContent);
             updatedContent.put(key, value);
             localCache.lazySet(Collections.unmodifiableMap(updatedContent));
