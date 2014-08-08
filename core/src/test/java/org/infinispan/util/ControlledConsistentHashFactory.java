@@ -89,7 +89,10 @@ public class ControlledConsistentHashFactory extends BaseControlledConsistentHas
       List<Address> owners = new ArrayList<>(segmentOwnerIndexes.length);
       for (int index : segmentOwnerIndexes) {
          if (membersToUse != null) {
-            owners.add(membersToUse.get(index));
+            Address owner = membersToUse.get(index);
+            if (members.contains(owner)) {
+               owners.add(owner);
+            }
          }  else  if (index < members.size()) {
             owners.add(members.get(index));
          }
@@ -101,6 +104,9 @@ public class ControlledConsistentHashFactory extends BaseControlledConsistentHas
       return owners;
    }
 
+   /**
+    * @param membersToUse Owner indexes will be in this list, instead of the current list of members
+    */
    public void setMembersToUse(List<Address> membersToUse) {
       this.membersToUse = membersToUse;
    }

@@ -142,11 +142,11 @@ public class EmptyConstructorNamedCacheFactory extends AbstractNamedCacheCompone
             return (T) new XSiteStateProviderImpl();
          } else if (componentType.equals(PartitionHandlingManager.class)) {
             if (configuration.clustering().partitionHandling().enabled()) {
-               if (configuration.clustering().cacheMode().isDistributed())
+               if (configuration.clustering().cacheMode().isDistributed()) {
                   return (T) new PartitionHandlingManager();
-            } else {
-               return null;
+               }
             }
+            return null;
          }
       }
 

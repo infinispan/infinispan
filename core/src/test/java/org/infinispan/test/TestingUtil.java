@@ -182,7 +182,7 @@ public class TestingUtil {
    }
 
    public static void waitForRehashToComplete(Cache... caches) {
-      final int REHASH_TIMEOUT_SECONDS = 10; //Needs to be rather large to prevent sporadic failures on CI
+      final int REHASH_TIMEOUT_SECONDS = 180; //Needs to be rather large to prevent sporadic failures on CI
       final long giveup = System.nanoTime() + TimeUnit.SECONDS.toNanos(REHASH_TIMEOUT_SECONDS);
       for (Cache c : caches) {
          if (c instanceof SecureCacheImpl) {

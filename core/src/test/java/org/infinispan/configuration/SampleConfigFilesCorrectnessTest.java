@@ -110,7 +110,8 @@ public class SampleConfigFilesCorrectnessTest {
                   "S3_PING could not be substituted",
                   "This might lead to performance problems. Please set your", // TCP and UDP send/recv buffer warnings
                   "stateRetrieval's 'alwaysProvideInMemoryState' attribute is no longer in use",
-                  "unable to find an address other than loopback for IP version IPv4"
+                  "unable to find an address other than loopback for IP version IPv4",
+                  "Partition handling doesn't work for replicated caches, it will be ignored"
             };
       String unknownWarning;
 

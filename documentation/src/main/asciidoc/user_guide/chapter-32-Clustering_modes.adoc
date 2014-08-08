@@ -672,13 +672,13 @@ available.
 However there might be catastrophic situations in which more than *numOwners* nodes
 disappear from the cluster:
 
-- split brains. Caused e.g. by a router crash, this splits the cluster in two or more
-partitions, or sub-clusters that that operate independently. In these circumstances
+- split brain. Caused e.g. by a router crash, this splits the cluster in two or more
+partitions, or sub-clusters that that operate independently. In these circumstances,
 multiple clients reading/writing from different partitions see different versions
 of the same cache entry, which for many application is problematic. Note there are
 ways to alleviate the possibility for the split brain to happen, such as redundant networks or
  link:$$http://www.cyberciti.biz/tips/linux-bond-or-team-multiple-network-interfaces-nic-into-single-interface.html$$[IP bonding].
- These only reduces the window for the problem to occur, though.
+ These only reduce the window for the problem to occur, though.
 - *numOwners* nodes crash in sequence. When at least *numOwners* nodes crash in rapid
 sequence and Infinispan does not have the time to properly rebalance its state between
 crashes, the result is partial data lost
@@ -688,15 +688,15 @@ be informed when data has been lost, temporarily or permanently, in order to avo
 situations in which wrong data is shown to the user as a result of either split
 brains or multiple node crash in rapid sequence.
 More formally, enabling partition handling in Infinispan preserves data consistency
-but sacrifice availability in the presence of partitions
+but sacrifices availability in the presence of partitions
 (CP in Brewer's link:$$http://en.wikipedia.org/wiki/CAP_theorem$$[`CAP theorem]).
 
 Enabling partition handling is critical for applications that have high consistency
 requirements: when the data read from the system must be accurate (e.g. when holding
-bank account information). On the other hand, if Infinispan is used as an best-effort
+bank account information). On the other hand, if Infinispan is used as a best-effort
 cache, e.g. to cache web pages in a proxy, the partitions are perfectly tolerable.
 
-The following sections describes the way Infinispan handles split brains and
+The following sections describe the way Infinispan handles split brains and
 successive failures when partition handling is enabled, followed by a section on
 configuring the partition handling functionality.
 
@@ -768,7 +768,7 @@ have critical consistency requirements.
 ==== Configuration for partition handling functionality
 
 At this stage the partition handling is disabled by default. We will revisit
-this decision based on in future, based on user feedback.
+this decision in the future, based on user feedback.
 In order to enable partition handling within the XML configuration:
 
 [source,xml]

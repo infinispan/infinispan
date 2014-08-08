@@ -308,7 +308,7 @@ public class ClusterCacheStatus {
          log.debugf("Finished cluster-wide rebalance for cache %s, topology id = %d", cacheName, currentTopologyId);
          int newTopologyId = currentTopologyId + 1;
          ConsistentHash newCurrentCH = currentTopology.getPendingCH();
-         CacheTopology newTopology = new CacheTopology(newTopologyId, newCurrentCH, null, getCacheTopology().isDegradedMode());
+         CacheTopology newTopology = new CacheTopology(newTopologyId, newCurrentCH, null, getCacheTopology().isMissingData());
          updateCacheTopology(newTopology);
          setRebalanceStatus();
       }
@@ -571,6 +571,6 @@ public class ClusterCacheStatus {
    }
 
    public boolean isMissingData() {
-      return getCacheTopology() != null && getCacheTopology().isDegradedMode();
+      return getCacheTopology() != null && getCacheTopology().isMissingData();
    }
 }

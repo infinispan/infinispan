@@ -1,7 +1,5 @@
 package org.infinispan.configuration.cache;
 
-import org.infinispan.partionhandling.PartitionHandlingStrategy;
-
 /**
  * Defines clustered characteristics of the cache.
  * 
