@@ -1,5 +1,7 @@
 package org.infinispan.query.impl.massindex;
 
+import java.util.concurrent.TimeUnit;
+
 import org.hibernate.search.backend.LuceneWork;
 import org.hibernate.search.spi.SearchFactoryIntegrator;
 import org.infinispan.AdvancedCache;
@@ -25,6 +27,7 @@ public class MapReduceMassIndexer implements MassIndexer {
       new MapReduceTask<Object, Object, Object, LuceneWork>(cache)
          .mappedWith(new IndexingMapper())
          .reducedWith(new IndexingReducer())
+         .timeout(0, TimeUnit.MINUTES)//disable the timeout.
          .execute();
    }
 
