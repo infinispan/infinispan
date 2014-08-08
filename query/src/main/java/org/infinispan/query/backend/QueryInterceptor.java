@@ -95,11 +95,11 @@ public class QueryInterceptor extends CommandInterceptor {
    @Inject
    @SuppressWarnings("unused")
    protected void injectDependencies(TransactionManager transactionManager,
-                                  TransactionSynchronizationRegistry transactionSynchronizationRegistry,
-                                  Cache cache,
-                                  ClusterRegistry<String, Class<?>, Boolean> clusterRegistry,
-                                  DataContainer dataContainer,
-                                  @ComponentName(KnownComponentNames.ASYNC_TRANSPORT_EXECUTOR) ExecutorService e) {
+                                     TransactionSynchronizationRegistry transactionSynchronizationRegistry,
+                                     Cache cache,
+                                     ClusterRegistry<String, Class<?>, Boolean> clusterRegistry,
+                                     DataContainer dataContainer,
+                                     @ComponentName(KnownComponentNames.ASYNC_TRANSPORT_EXECUTOR) ExecutorService e) {
       this.transactionManager = transactionManager;
       this.transactionSynchronizationRegistry = transactionSynchronizationRegistry;
       this.asyncExecutor = e;
@@ -276,20 +276,17 @@ public class QueryInterceptor extends CommandInterceptor {
       final WriteCommand[] writeCommands = command.getModifications();
       final Object[] stateBeforePrepare = new Object[writeCommands.length];
 
-      for (int i=0; i<writeCommands.length; i++) {
+      for (int i = 0; i < writeCommands.length; i++) {
          final WriteCommand writeCommand = writeCommands[i];
          if (writeCommand instanceof PutKeyValueCommand) {
             InternalCacheEntry internalCacheEntry = dataContainer.get(((PutKeyValueCommand) writeCommand).getKey());
             stateBeforePrepare[i] = internalCacheEntry != null ? internalCacheEntry.getValue() : null;
-         }
-         else if (writeCommand instanceof PutMapCommand) {
+         } else if (writeCommand instanceof PutMapCommand) {
             stateBeforePrepare[i] = getPreviousValues(((PutMapCommand) writeCommand).getMap().keySet());
-         }
-         else if (writeCommand instanceof RemoveCommand) {
+         } else if (writeCommand instanceof RemoveCommand) {
             InternalCacheEntry internalCacheEntry = dataContainer.get(((RemoveCommand) writeCommand).getKey());
             stateBeforePrepare[i] = internalCacheEntry != null ? internalCacheEntry.getValue() : null;
-         }
-         else if (writeCommand instanceof ReplaceCommand) {
+         } else if (writeCommand instanceof ReplaceCommand) {
             InternalCacheEntry internalCacheEntry = dataContainer.get(((ReplaceCommand) writeCommand).getKey());
             stateBeforePrepare[i] = internalCacheEntry != null ? internalCacheEntry.getValue() : null;
          }
@@ -299,22 +296,18 @@ public class QueryInterceptor extends CommandInterceptor {
 
       if (ctx.isTransactionValid()) {
          final TransactionContext transactionContext = makeTransactionalEventContext();
-         for (int i=0; i<writeCommands.length; i++) {
+         for (int i = 0; i < writeCommands.length; i++) {
             final WriteCommand writeCommand = writeCommands[i];
             if (writeCommand instanceof PutKeyValueCommand) {
                processPutKeyValueCommand((PutKeyValueCommand) writeCommand, ctx, stateBeforePrepare[i], transactionContext);
-            }
-            else if (writeCommand instanceof PutMapCommand) {
+            } else if (writeCommand instanceof PutMapCommand) {
                processPutMapCommand((PutMapCommand) writeCommand, ctx, (Map<Object, Object>) stateBeforePrepare[i], transactionContext);
-            }
-            else if (writeCommand instanceof RemoveCommand) {
+            } else if (writeCommand instanceof RemoveCommand) {
                processRemoveCommand((RemoveCommand) writeCommand, ctx, stateBeforePrepare[i], transactionContext);
-            }
-            else if (writeCommand instanceof ReplaceCommand) {
+            } else if (writeCommand instanceof ReplaceCommand) {
                processReplaceCommand((ReplaceCommand) writeCommand, ctx, stateBeforePrepare[i], transactionContext);
-            }
-            else if (writeCommand instanceof ClearCommand) {
-               processClearCommand((ClearCommand)writeCommand, ctx, transactionContext);
+            } else if (writeCommand instanceof ClearCommand) {
+               processClearCommand((ClearCommand) writeCommand, ctx, transactionContext);
             }
          }
       }
@@ -344,12 +337,12 @@ public class QueryInterceptor extends CommandInterceptor {
          final boolean usingSkipIndexCleanupFlag = usingSkipIndexCleanup(command);
          Object[] parameters = command.getParameters();
          Object p2 = extractValue(parameters[2]);
-         final boolean newValueIsIndexed = updateKnownTypesIfNeeded( p2 );
+         final boolean newValueIsIndexed = updateKnownTypesIfNeeded(p2);
          Object key = extractValue(command.getKey());
 
-         if (! usingSkipIndexCleanupFlag) {
+         if (!usingSkipIndexCleanupFlag) {
             final Object p1 = extractValue(parameters[1]);
-            final boolean originalIsIndexed = updateKnownTypesIfNeeded( p1 );
+            final boolean originalIsIndexed = updateKnownTypesIfNeeded(p1);
             if (p1 != null && originalIsIndexed) {
                transactionContext = transactionContext == null ? makeTransactionalEventContext() : transactionContext;
                removeFromIndexes(p1, key, transactionContext);
