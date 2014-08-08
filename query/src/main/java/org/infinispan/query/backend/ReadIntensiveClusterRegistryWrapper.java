@@ -11,7 +11,7 @@ import net.jcip.annotations.ThreadSafe;
 import org.infinispan.registry.ClusterRegistry;
 
 /**
- * Decorates a ClusterRegistry to provide a cache for read operations.
+ * Local cache for the ClusterRegistry.
  * Write operations are expected to happen only exceptionally, therefore this code
  * is heavily optimized for reads (at cost of writes).
  * Also we're assuming all entries are small: there is no size limit nor cleanup strategy.
@@ -52,14 +52,7 @@ final class ReadIntensiveClusterRegistryWrapper<S,K,V> {
    }
 
    boolean containsKey(final K key) {
-      final boolean localExists = localCache.get().containsKey(key);
-      if (localExists) {
-         return true;
-      }
-      else {
-         V fetchedValue = get(key);//possibly load it into local cache
-         return fetchedValue != null;
-      }
+      return localCache.get().containsKey(key);
    }
 
    void put(final K key, final V value) {
@@ -68,17 +61,7 @@ final class ReadIntensiveClusterRegistryWrapper<S,K,V> {
    }
 
    V get(final K key) {
-      V v = localCache.get().get(key);
-      if (v!=null) {
-         return v;
-      }
-      else {
-         v = clusterRegistry.get(scope, key);
-         if (v!=null) {
-            localCacheInsert(key, v);
-         }
-         return v;
-      }
+      return localCache.get().get(key);
    }
 
    private void localCacheInsert(final K key, final V value) {
