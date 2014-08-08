@@ -5,8 +5,6 @@ import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.distribution.DistributionManager;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.annotations.Start;
-import org.infinispan.partionhandling.AvailabilityException;
-import org.infinispan.partionhandling.PartitionHandlingStrategy;
 import org.infinispan.remoting.rpc.RpcManager;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.topology.ClusterCacheStatus;
@@ -18,13 +16,15 @@ import java.util.List;
 
 public class PartitionHandlingManager {
 
+
    public enum PartitionState {
       AVAILABLE, UNAVAILABLE, DEGRADED_MODE
    }
 
-   private volatile List<Address> lastStableCluster = Collections.emptyList();
+   private static final Log log = LogFactory.getLog(PartitionHandlingManager.class);
+   private static final boolean trace = log.isTraceEnabled();
 
-   private static Log log = LogFactory.getLog(PartitionHandlingManager.class);
+   private volatile List<Address> lastStableCluster = Collections.emptyList();
 
    private Cache cache;
 
@@ -34,11 +34,13 @@ public class PartitionHandlingManager {
 
    private DistributionManager distributionManager;
    private RpcManager rpcManager;
+   private Configuration configuration;
 
-   @Inject void init(Cache cache, DistributionManager distributionManager, RpcManager rpcManager) {
+   @Inject void init(Cache cache, DistributionManager distributionManager, RpcManager rpcManager, Configuration configuration) {
       this.cache = cache;
       this.distributionManager = distributionManager;
       this.rpcManager = rpcManager;
+      this.configuration = configuration;
    }
 
    @Start void start() {
@@ -46,7 +48,7 @@ public class PartitionHandlingManager {
    }
 
    public void setState(PartitionState state) {
-      log.tracef("Updating partition state: %s -> %s", this.state, state);
+      if (trace) log.tracef("Updating partition state: %s -> %s", this.state, state);
       this.state = state;
    }
 
@@ -64,7 +66,7 @@ public class PartitionHandlingManager {
 
    public boolean handleViewChange(List<Address> newMembers, ClusterCacheStatus topologyManager) {
       boolean missingData = isMissingData(newMembers, lastStableCluster);
-      log.tracef("handleViewChange(old:%s -> new:%s). Is missing data? %s", lastStableCluster, newMembers, missingData);
+      if (trace) log.tracef("handleViewChange(old:%s -> new:%s). Is missing data? %s", lastStableCluster, newMembers, missingData);
       PartitionContextImpl pci = new PartitionContextImpl(this, lastStableCluster, newMembers, missingData, topologyManager, cache);
       log.debugf("Invoking partition handling %s", pci);
       partitionHandlingStrategy.onMembershipChanged(pci);
@@ -76,8 +78,7 @@ public class PartitionHandlingManager {
       int missingMembers = 0;
       for (Address a : oldMembers)
          if (!newMembers.contains(a)) missingMembers++;
-      Configuration cacheConfiguration = cache.getCacheConfiguration();
-      int numOwners = cacheConfiguration.clustering().hash().numOwners();
+      int numOwners = configuration.clustering().hash().numOwners();
       return  missingMembers >= numOwners;
    }
 
@@ -85,32 +86,40 @@ public class PartitionHandlingManager {
       log.debug("Entering in degraded mode.");
       if (state == PartitionState.DEGRADED_MODE)
          throw new IllegalStateException("Already in degraded mode!");
+      // Don't do anything if we're already in unavailable mode
+      if (state == PartitionState.UNAVAILABLE)
+         return;
       setState(PartitionState.DEGRADED_MODE);
       PartitionStateControlCommand stateUpdateCommand = new PartitionStateControlCommand(cache.getName(), PartitionState.DEGRADED_MODE);
       rpcManager.invokeRemotely(null, stateUpdateCommand, rpcManager.getDefaultRpcOptions(true));
    }
 
    public void checkWrite(Object key) {
-      log.tracef("Check write for key=%s, status=%s", key, state);
-      if (state == PartitionState.AVAILABLE) return;
-      if (state == PartitionState.UNAVAILABLE)
-         throw new AvailabilityException("Cluster is UNAVAILABLE because of node failures.");
-      List<Address> owners = distributionManager.locate(key);
-      if (! rpcManager.getTransport().getMembers().containsAll(owners)) {
-         log.tracef("Partition is in %s mode, access is not allowed for key %s", state, key);
-         throw new AvailabilityException("Not all owners of key '" + key + "' are in this partition");
-      } else {
-         log.tracef("Key %s is writable.", key);
-      }
+      doCheck(key);
    }
 
    public void checkRead(Object key) {
-      checkWrite(key);
+      doCheck(key);
+   }
+
+   private void doCheck(Object key) {
+      if (trace) log.tracef("Checking availability for key=%s, status=%s", key, state);
+      if (state == PartitionState.AVAILABLE) return;
+      if (state == PartitionState.UNAVAILABLE)
+         throw log.partitionUnavailable();
+      List<Address> owners = distributionManager.locate(key);
+      if (!rpcManager.getTransport().getMembers().containsAll(owners)) {
+         if (trace) log.tracef("Partition is in %s mode, access is not allowed for key %s", state, key);
+         throw log.degradedModeKeyUnavailable(key);
+      } else {
+         if (trace) log.tracef("Key %s is available.", key);
+      }
    }
 
    public void checkClear() {
-      if (state == PartitionState.DEGRADED_MODE)
-         throw new AvailabilityException("Cannot clear when the cluster is partitioned");
+      if (state != PartitionState.AVAILABLE) {
+         throw log.clearDisallowedWhilePartitioned();
+      }
    }
 
 }

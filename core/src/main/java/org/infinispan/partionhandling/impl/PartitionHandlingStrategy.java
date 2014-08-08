@@ -1,6 +1,8 @@
-package org.infinispan.partionhandling;
+package org.infinispan.partionhandling.impl;
 
 /**
+ * On membership changes, implementations decide whether to enter degraded mode or to rebalance.
+ *
  * @author Mircea Markus
  * @since 7.0
  */

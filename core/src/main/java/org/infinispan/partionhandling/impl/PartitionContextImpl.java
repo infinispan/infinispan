@@ -1,7 +1,6 @@
 package org.infinispan.partionhandling.impl;
 
 import org.infinispan.Cache;
-import org.infinispan.partionhandling.PartitionContext;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.topology.ClusterCacheStatus;
 

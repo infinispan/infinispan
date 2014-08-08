@@ -1,4 +1,4 @@
-package org.infinispan.partionhandling;
+package org.infinispan.partionhandling.impl;
 
 import org.infinispan.Cache;
 import org.infinispan.remoting.transport.Address;
@@ -6,14 +6,18 @@ import org.infinispan.remoting.transport.Address;
 import java.util.List;
 
 
+/**
+ * Contains the information {@link PartitionHandlingStrategy} needs to decide what to do on membership changes.
+ * Also allows the strategy to proceed with a rebalance or enter degraded mode.
+ */
 public interface PartitionContext<K,V> {
    /**
-    * returns the list of members before the partition happened.
+    * Returns the list of members before the partition happened.
     */
    List<Address> getOldMembers();
 
    /**
-    * returns the list of members as seen within this partition.
+    * Returns the list of members as seen within this partition.
     */
    List<Address> getNewMembers();
 

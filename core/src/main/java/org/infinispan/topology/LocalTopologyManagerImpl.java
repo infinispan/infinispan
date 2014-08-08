@@ -214,7 +214,7 @@ public class LocalTopologyManagerImpl implements LocalTopologyManager {
       PartitionHandlingManager phm = namedComponentRegistry.getComponent(PartitionHandlingManager.class);
       if (phm != null) {
          phm.setLastStableCluster(cacheTopology.getMembers());
-         if (cacheTopology.isDegradedMode()) {
+         if (cacheTopology.isMissingData()) {
             phm.setState(PartitionHandlingManager.PartitionState.UNAVAILABLE);
          } else {
             phm.setState(PartitionHandlingManager.PartitionState.AVAILABLE);

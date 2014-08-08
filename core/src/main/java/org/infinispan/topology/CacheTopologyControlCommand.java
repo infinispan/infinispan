@@ -107,7 +107,7 @@ public class CacheTopologyControlCommand implements ReplicableCommand {
       this.topologyId = cacheTopology.getTopologyId();
       this.currentCH = cacheTopology.getCurrentCH();
       this.pendingCH = cacheTopology.getPendingCH();
-      this.missingData = cacheTopology.isDegradedMode();
+      this.missingData = cacheTopology.isMissingData();
    }
 
    @Inject

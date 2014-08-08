@@ -6,6 +6,7 @@ import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.distribution.MagicKey;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.partionhandling.AvailabilityException;
+import org.infinispan.partionhandling.impl.PartitionHandlingManager;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.remoting.transport.Transport;
 import org.infinispan.remoting.transport.jgroups.JGroupsAddress;
@@ -33,6 +34,9 @@ import org.testng.annotations.Test;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
+
+import static org.infinispan.test.concurrent.StateSequencerUtil.*;
+import static org.infinispan.test.concurrent.StateSequencerUtil.matchCommand;
 
 /**
  * With a cluster made out of nodes {A,B,C,D}, tests that D crashes and before the state transfer finishes, another node
@@ -100,23 +104,20 @@ public class NumOwnersNodeCrashInSequenceTest extends MultipleCacheManagersTest 
 
 
 
-      Object k0 = new MagicKey(cache(a0), cache(a1));
-      Object k1 = new MagicKey(cache(a0), cache(a1));
-      Object k2 = new MagicKey(cache(a1), cache(c0));
-      Object k3 = new MagicKey(cache(a1), cache(c0));
-      Object k4 = new MagicKey(cache(c0), cache(c1));
-      Object k5 = new MagicKey(cache(c0), cache(c1));
-      Object k6 = new MagicKey(cache(c1), cache(a0));
-      Object k7 = new MagicKey(cache(c1), cache(a0));
+      Object k0 = new MagicKey("k1", cache(a0), cache(a1));
+      Object k1 = new MagicKey("k2", cache(a0), cache(a1));
+      Object k2 = new MagicKey("k3", cache(a1), cache(c0));
+      Object k3 = new MagicKey("k4", cache(a1), cache(c0));
+      Object k4 = new MagicKey("k5", cache(c0), cache(c1));
+      Object k5 = new MagicKey("k6", cache(c0), cache(c1));
+      Object k6 = new MagicKey("k7", cache(c1), cache(a0));
+      Object k7 = new MagicKey("k8", cache(c1), cache(a0));
 
       final Object[] allKeys = new Object[] {k0, k1, k2, k3, k4, k5, k6, k7};
-      for (Object k : allKeys) cache(new Random().nextInt(4)).put(k, k);
+      for (Object k : allKeys) cache(a0).put(k, k);
 
       StateSequencer ss = new StateSequencer();
       ss.logicalThread("main", "main:st_in_progress", "main:2nd_node_left", "main:cluster_unavailable");
-
-      cchf.setMembersToUse(advancedCache(a0).getRpcManager().getTransport().getMembers());
-      cchf.setOwnerIndexes(new int[]{a0, a1}, new int[]{a1, c0}, new int[]{c0, a1}, new int[]{c0, a0});
 
       final StateTransferManager stm0 = advancedCache(a0).getComponentRegistry().getStateTransferManager();
       final int initialTopologyId = stm0.getCacheTopology().getTopologyId();
@@ -132,15 +133,30 @@ public class NumOwnersNodeCrashInSequenceTest extends MultipleCacheManagersTest 
          }
       }).before("main:st_in_progress", "main:cluster_unavailable");
 
-      log.trace("Before killing manager3");
+      // Prepare for rebalance. Manager a1 will request state from c0 for segment 2
+      cchf.setMembersToUse(advancedCache(a0).getRpcManager().getTransport().getMembers());
+      cchf.setOwnerIndexes(new int[]{a0, a1}, new int[]{a1, c0},
+            new int[]{c0, a1}, new int[]{c0, a0});
+
       Address missing = address(c1);
+      log.tracef("Before killing node %s", missing);
       crashCacheManagers(manager(c1));
       installNewView(advancedCache(a0).getRpcManager().getTransport().getMembers(), missing, manager(a0), manager(a1), manager(c0));
+
       ss.enter("main:2nd_node_left");
-      log.trace("Killing 2nd node");
+
       missing = address(c0);
+      log.tracef("Killing 2nd node %s", missing);
       crashCacheManagers(manager(c0));
       installNewView(advancedCache(a0).getRpcManager().getTransport().getMembers(), missing, manager(a0), manager(a1));
+
+      eventually(new Condition() {
+         @Override
+         public boolean isSatisfied() throws Exception {
+            PartitionHandlingManager phm0 = TestingUtil.extractComponent(cache(a0), PartitionHandlingManager.class);
+            return phm0.getState() == PartitionHandlingManager.PartitionState.UNAVAILABLE;
+         }
+      });
       ss.exit("main:2nd_node_left");
 
       eventually(new Condition() {
@@ -170,12 +186,12 @@ public class NumOwnersNodeCrashInSequenceTest extends MultipleCacheManagersTest 
       for (Address a : members)
          if (!a.equals(missing))
             viewMembers.add(getjGroupsAddress((JGroupsAddress) a));
-      int viewId = where[0].getGlobalComponentRegistry().getComponent(Transport.class).getViewId() + 1;
+      int viewId = where[0].getTransport().getViewId() + 1;
       View view = View.create(viewMembers.get(0), viewId, (org.jgroups.Address[]) viewMembers.toArray(new org.jgroups.Address[viewMembers.size()]));
 
       log.trace("Before installing new view:" + viewMembers);
       for (EmbeddedCacheManager ecm : where) {
-         Channel c = ((JGroupsTransport) ecm.getGlobalComponentRegistry().getComponent(Transport.class)).getChannel();
+         Channel c = ((JGroupsTransport) ecm.getTransport()).getChannel();
          ((GMS) c.getProtocolStack().findProtocol(GMS.class)).installView(view);
       }
    }
@@ -201,8 +217,6 @@ public class NumOwnersNodeCrashInSequenceTest extends MultipleCacheManagersTest 
          }
          View view = View.create(channel.getAddress(), 100);
          ((GMS) channel.getProtocolStack().findProtocol(GMS.class)).installView(view);
-         TEST_PING protocol = (TEST_PING) channel.getProtocolStack().findProtocol(TEST_PING.class);
-         if (protocol != null) protocol.suspend();
       }
       TestingUtil.killCacheManagers(cacheManagers);
    }
