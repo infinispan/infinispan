@@ -37,7 +37,7 @@ import org.infinispan.lifecycle.AbstractModuleLifecycle;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.objectfilter.impl.ReflectionMatcher;
 import org.infinispan.query.MassIndexer;
-import org.infinispan.query.backend.LocalQueryInterceptor;
+import org.infinispan.query.backend.IndexModificationStrategy;
 import org.infinispan.query.backend.QueryInterceptor;
 import org.infinispan.query.backend.SearchableCacheConfiguration;
 import org.infinispan.query.clustered.QueryBox;
@@ -121,12 +121,8 @@ public class LifecycleManager extends AbstractModuleLifecycle {
    }
 
    private QueryInterceptor buildQueryInterceptor(Configuration cfg, SearchFactoryIntegrator searchFactory) {
-      if ( cfg.indexing().index().isLocalOnly() ) {
-         return new LocalQueryInterceptor(searchFactory);
-      }
-      else {
-         return new QueryInterceptor(searchFactory);
-      }
+      IndexModificationStrategy indexingStrategy = IndexModificationStrategy.configuredStrategy(searchFactory, cfg);
+      return new QueryInterceptor(searchFactory, indexingStrategy);
    }
 
    @Override

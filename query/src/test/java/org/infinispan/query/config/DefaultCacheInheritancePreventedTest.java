@@ -5,7 +5,7 @@ import java.io.IOException;
 import org.infinispan.Cache;
 import org.infinispan.query.Search;
 import org.infinispan.query.SearchManager;
-import org.infinispan.query.backend.LocalQueryInterceptor;
+import org.infinispan.query.backend.IndexModificationStrategy;
 import org.infinispan.query.backend.QueryInterceptor;
 import org.infinispan.query.impl.ComponentRegistryUtils;
 import org.infinispan.test.CacheManagerCallable;
@@ -31,11 +31,11 @@ public class DefaultCacheInheritancePreventedTest {
             TestCacheManagerFactory.fromXml("configuration-parsing-test-enbledInDefault.xml")) {
          @Override
          public void call() {
-            assertIndexingEnabled(cm.getCache(), true, QueryInterceptor.class);
-            assertIndexingEnabled(cm.getCache("simple"), true, QueryInterceptor.class);
-            assertIndexingEnabled(cm.getCache("not-searchable"), false, QueryInterceptor.class);
-            assertIndexingEnabled(cm.getCache("memory-searchable"), true, QueryInterceptor.class);
-            assertIndexingEnabled(cm.getCache("disk-searchable"), true, LocalQueryInterceptor.class);
+            assertIndexingEnabled(cm.getCache(), true, IndexModificationStrategy.ALL);
+            assertIndexingEnabled(cm.getCache("simple"), true, IndexModificationStrategy.ALL);
+            assertIndexingEnabled(cm.getCache("not-searchable"), false, null);
+            assertIndexingEnabled(cm.getCache("memory-searchable"), true, IndexModificationStrategy.ALL);
+            assertIndexingEnabled(cm.getCache("disk-searchable"), true, IndexModificationStrategy.LOCAL_ONLY);
          }
       });
    }
@@ -46,10 +46,10 @@ public class DefaultCacheInheritancePreventedTest {
             TestCacheManagerFactory.fromXml("configuration-parsing-test.xml")) {
          @Override
          public void call() {
-            assertIndexingEnabled(cm.getCache(), false, QueryInterceptor.class);
-            assertIndexingEnabled(cm.getCache("simple"), false, QueryInterceptor.class);
-            assertIndexingEnabled(cm.getCache("memory-searchable"), true, QueryInterceptor.class);
-            assertIndexingEnabled(cm.getCache("disk-searchable"), true, LocalQueryInterceptor.class);
+            assertIndexingEnabled(cm.getCache(), false, null);
+            assertIndexingEnabled(cm.getCache("simple"), false, null);
+            assertIndexingEnabled(cm.getCache("memory-searchable"), true, IndexModificationStrategy.ALL);
+            assertIndexingEnabled(cm.getCache("disk-searchable"), true, IndexModificationStrategy.LOCAL_ONLY);
          }
       });
    }
@@ -59,7 +59,7 @@ public class DefaultCacheInheritancePreventedTest {
     * @param expected true if you expect indexing to be enabled
     * @param cache the cache to extract indexing from
     */
-   private void assertIndexingEnabled(Cache<Object, Object> cache, boolean expected, Class<? extends QueryInterceptor> expectedQueryInterceptorType) {
+   private void assertIndexingEnabled(Cache<Object, Object> cache, boolean expected, IndexModificationStrategy expectedModificationMode) {
       SearchManager searchManager = null;
       try {
          searchManager = Search.getSearchManager(cache);
@@ -75,7 +75,7 @@ public class DefaultCacheInheritancePreventedTest {
       //verify as well that the indexing interceptor is (not) there:
       QueryInterceptor component = null;
       try {
-         component = ComponentRegistryUtils.getComponent(cache, expectedQueryInterceptorType);
+         component = ComponentRegistryUtils.getComponent(cache, QueryInterceptor.class);
       }
       catch (IllegalArgumentException e) {
       }
@@ -84,6 +84,9 @@ public class DefaultCacheInheritancePreventedTest {
       }
       if (!expected && component != null) {
          Assert.fail("QueryInterceptor not expected but found for cache " + cache.getName());
+      }
+      if (expected) {
+         Assert.assertEquals(component.getIndexModificationMode(), expectedModificationMode);
       }
    }
 
