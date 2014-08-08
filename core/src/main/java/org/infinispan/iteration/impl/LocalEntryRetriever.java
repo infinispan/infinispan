@@ -332,35 +332,34 @@ public class LocalEntryRetriever<K, V> implements EntryRetriever<K, V> {
 
       @Override
       public boolean hasNext() {
-         boolean hasNext = !queue.isEmpty();
-         if (!hasNext && !completed) {
-            boolean interrupted = false;
-            long targetTime = timeService.expectedEndTime(timeout, unit);
-            nextLock.lock();
-            try {
-               while (!(hasNext = !queue.isEmpty()) && !completed) {
-                  try {
-                     if (!nextCondition.await(timeService.remainingTime(targetTime, TimeUnit.NANOSECONDS),
-                                              TimeUnit.NANOSECONDS)) {
-                        if (log.isTraceEnabled()) {
-                           log.tracef("Did not retrieve entries in allotted timeout: %s units: unit", timeout, unit);
-                        }
-                        throw new TimeoutException("Did not retrieve entries in allotted timeout: " + timeout +
-                                                         " units: " + unit);
+         boolean hasNext;
+         boolean interrupted = false;
+         long targetTime = timeService.expectedEndTime(timeout, unit);
+         nextLock.lock();
+         try {
+            while (!(hasNext = !queue.isEmpty()) && !completed) {
+               try {
+                  if (!nextCondition.await(timeService.remainingTime(targetTime, TimeUnit.NANOSECONDS),
+                                           TimeUnit.NANOSECONDS)) {
+                     if (log.isTraceEnabled()) {
+                        log.tracef("Did not retrieve entries in allotted timeout: %s units: unit", timeout, unit);
                      }
-                  } catch (InterruptedException e) {
-                     // If interrupted, we just loop back around
-                     interrupted = true;
+                     throw new TimeoutException("Did not retrieve entries in allotted timeout: " + timeout +
+                                                      " units: " + unit);
                   }
+               } catch (InterruptedException e) {
+                  // If interrupted, we just loop back around
+                  interrupted = true;
                }
-            } finally {
-               nextLock.unlock();
             }
-
-            if (interrupted) {
-               Thread.currentThread().interrupt();
-            }
+         } finally {
+            nextLock.unlock();
          }
+
+         if (interrupted) {
+            Thread.currentThread().interrupt();
+         }
+        
          return hasNext;
       }
 
