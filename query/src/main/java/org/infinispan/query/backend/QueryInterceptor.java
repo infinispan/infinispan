@@ -110,9 +110,10 @@ public final class QueryInterceptor extends CommandInterceptor {
    @Start
    protected void start() {
       clusterRegistry.addListener(registryListener);
-      for (Class<?> c : clusterRegistry.keys()) {
-         searchFactoryHandler.handleClusterRegistryRegistration(c);
-      }
+      Set<Class<?>> keys = clusterRegistry.keys();
+      Class<?>[] array = keys.toArray(new Class<?>[keys.size()]);
+      //Important to enable them all in a single call, much more efficient:
+      enableClasses(array);
    }
 
    @Stop
