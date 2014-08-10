@@ -9,7 +9,7 @@ public class DegradedModePartitionHandlingStrategy implements PartitionHandlingS
 
    @Override
    public void onMembershipChanged(PartitionContext pc) {
-      if (!pc.isAllDataAvailable()) {
+      if (!pc.isMissingData()) {
          log.debug("No partition, proceeding to rebalance.");
          pc.rebalance();
          return;
