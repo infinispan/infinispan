@@ -30,7 +30,7 @@ public class PartitionHandlingConfigurationBuilder extends AbstractClusteringCon
 
    @Override
    public void validate() {
-      if (clustering().cacheMode().isReplicated()) {
+      if (enabled && clustering().cacheMode().isReplicated()) {
          log.warnPartitionHandlingForReplicatedCaches();
       }
    }

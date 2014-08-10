@@ -26,7 +26,7 @@ public interface PartitionContext<K,V> {
     * E.g. if numOwners=5 and only 3 nodes left in the other partition, then this method returns false. If 6 nodes left
     * this method returns true.
     */
-   boolean isAllDataAvailable();
+   boolean isMissingData();
 
    /**
     * Marks the current partition as available or not (writes are rejected with a AvailabilityException).
