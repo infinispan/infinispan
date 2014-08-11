@@ -4,7 +4,7 @@
    <parent>
       <groupId>org.infinispan</groupId>
       <artifactId>infinispan-parent</artifactId>
-      <version>7.0.0-SNAPSHOT</version>
+      <version>7.0.0.Beta1</version>
       <relativePath>../../parent/pom.xml</relativePath>
    </parent>
 
@@ -143,7 +143,7 @@
                <appendAssemblyId>false</appendAssemblyId>
             </configuration>
          </plugin>
-         <!-- Explicitly getting lucene4 deps since the reactor already contains lucene 3 -->
+         
          <plugin>
             <artifactId>maven-dependency-plugin</artifactId>
             <executions>
