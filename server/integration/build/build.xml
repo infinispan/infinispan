@@ -261,10 +261,6 @@
       <module-def name="org.hibernate.hql.lucene">
          <maven-resource group="org.hibernate.hql" artifact="hibernate-hql-lucene" />
       </module-def>
-      
-      <module-def name="org.json">
-         <maven-resource group="org.json" artifact="json"/>
-      </module-def>
    </target>
 
    <target name="trim-modules">

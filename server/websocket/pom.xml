@@ -21,10 +21,10 @@
          <artifactId>infinispan-server-core</artifactId>
       </dependency>
 
-      <dependency>
-         <groupId>org.json</groupId>
-         <artifactId>json</artifactId>
-      </dependency>
+       <dependency>
+           <groupId>org.codehaus.jackson</groupId>
+           <artifactId>jackson-mapper-asl</artifactId>
+       </dependency>
 
    </dependencies>
 

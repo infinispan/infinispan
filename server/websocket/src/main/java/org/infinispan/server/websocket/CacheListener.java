@@ -1,9 +1,5 @@
 package org.infinispan.server.websocket;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.concurrent.CopyOnWriteArrayList;
-
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelFuture;
 import io.netty.channel.ChannelFutureListener;
@@ -13,13 +9,15 @@ import org.infinispan.notifications.Listener;
 import org.infinispan.notifications.cachelistener.annotation.CacheEntryCreated;
 import org.infinispan.notifications.cachelistener.annotation.CacheEntryModified;
 import org.infinispan.notifications.cachelistener.annotation.CacheEntryRemoved;
-import org.infinispan.notifications.cachelistener.event.CacheEntryCreatedEvent;
-import org.infinispan.notifications.cachelistener.event.CacheEntryEvent;
-import org.infinispan.notifications.cachelistener.event.CacheEntryModifiedEvent;
-import org.infinispan.notifications.cachelistener.event.CacheEntryRemovedEvent;
-import org.infinispan.notifications.cachelistener.event.Event;
-import org.json.JSONException;
-import org.json.JSONObject;
+import org.infinispan.notifications.cachelistener.event.*;
+import org.infinispan.server.websocket.json.JsonObject;
+import org.infinispan.server.websocket.logging.Log;
+import org.infinispan.util.logging.LogFactory;
+
+import java.lang.invoke.MethodHandles;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.concurrent.CopyOnWriteArrayList;
 
 /**
  * Cache listener.
@@ -30,7 +28,9 @@ import org.json.JSONObject;
  */
 @Listener
 public class CacheListener {
-	
+
+   private static final Log logger = LogFactory.getLog(MethodHandles.lookup().lookupClass(), Log.class);
+
 	private List<ChannelNotifyParams> channels = new CopyOnWriteArrayList<ChannelNotifyParams>();
 
 	@CacheEntryCreated
@@ -53,34 +53,30 @@ public class CacheListener {
 			return;
 		}
 		
-		JSONObject jsonObject;
-		
-		try {
-			Cache<Object, Object> cache = event.getCache();
-			Object key = event.getKey();
-			Object value;
-			
-			switch(eventType) {
-			case CACHE_ENTRY_CREATED:
-				// TODO: Add optimization ... don't get from cache if non of the channels are interested in creates...
-				value = cache.get(key);
-				jsonObject = ChannelUtils.toJSON(key.toString(), value, cache.getName());
-				break;
-			case CACHE_ENTRY_MODIFIED:
-				value = ((CacheEntryModifiedEvent<Object, Object>)event).getValue();
-				jsonObject = ChannelUtils.toJSON(key.toString(), value, cache.getName());
-				break;
-			case CACHE_ENTRY_REMOVED:
-				jsonObject = ChannelUtils.toJSON(key.toString(), null, cache.getName());
-				break;
-			default:
-				return;	
-			}
-			
-			jsonObject.put("eventType", eventType.toString());
-		} catch (JSONException e) {
-			return;
-		}
+		JsonObject jsonObject;
+
+      Cache<Object, Object> cache = event.getCache();
+      Object key = event.getKey();
+      Object value;
+
+      switch(eventType) {
+      case CACHE_ENTRY_CREATED:
+         // TODO: Add optimization ... don't get from cache if non of the channels are interested in creates...
+         value = cache.get(key);
+         jsonObject = ChannelUtils.toJSON(key.toString(), value, cache.getName());
+         break;
+      case CACHE_ENTRY_MODIFIED:
+         value = event.getValue();
+         jsonObject = ChannelUtils.toJSON(key.toString(), value, cache.getName());
+         break;
+      case CACHE_ENTRY_REMOVED:
+         jsonObject = ChannelUtils.toJSON(key.toString(), null, cache.getName());
+         break;
+      default:
+         return;
+      }
+
+      jsonObject.put("eventType", eventType.toString());
 
 		String jsonString = jsonObject.toString();
 		for(ChannelNotifyParams channel : channels) {
@@ -117,7 +113,7 @@ public class CacheListener {
 		
 		public ChannelNotifyParams(Channel channel, String key, String[] onEvents) {
 			if(channel == null) {
-				throw new IllegalArgumentException("null 'channel' arg in constructor call.");
+            logger.invalidNullArgument("channel");
 			}
 			String[] onEventsSpec = onEvents;
 			
@@ -131,7 +127,8 @@ public class CacheListener {
 				try {
 					this.onEvents.add(Event.Type.valueOf(eventType));
 				} catch(RuntimeException e) {
-					// Ignore for now
+               // Ignore for now
+               logger.debug("Runtime exception on adding events", e);
 				}
 			}
 			

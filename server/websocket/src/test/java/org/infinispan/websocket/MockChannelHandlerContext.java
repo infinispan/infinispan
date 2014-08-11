@@ -16,7 +16,7 @@ import io.netty.util.concurrent.EventExecutor;
 import java.net.SocketAddress;
 
 /**
- * 
+ * Mock Server Handler Context.
  * 
  * @author <a href="mailto:tom.fennelly@gmail.com">tom.fennelly@gmail.com</a>
  */
@@ -24,9 +24,6 @@ public class MockChannelHandlerContext implements ChannelHandlerContext {
 	
 	private final Channel channel;
 
-	/**
-	 * @param channel
-	 */
 	public MockChannelHandlerContext(MockChannel channel) {
 		this.channel = channel;
 	}

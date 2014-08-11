@@ -2,13 +2,12 @@ package org.infinispan.server.websocket.handlers;
 
 import io.netty.channel.ChannelHandlerContext;
 import org.infinispan.Cache;
+import org.infinispan.commons.util.CollectionFactory;
 import org.infinispan.server.websocket.CacheListener;
 import org.infinispan.server.websocket.CacheListener.ChannelNotifyParams;
 import org.infinispan.server.websocket.ChannelUtils;
 import org.infinispan.server.websocket.OpHandler;
-import org.infinispan.commons.util.CollectionFactory;
-import org.json.JSONException;
-import org.json.JSONObject;
+import org.infinispan.server.websocket.json.JsonObject;
 
 import java.util.Map;
 
@@ -18,14 +17,14 @@ import java.util.Map;
  * @author <a href="mailto:tom.fennelly@gmail.com">tom.fennelly@gmail.com</a>
  */
 public class NotifyHandler implements OpHandler {
-	
+
 	private Map<Cache, CacheListener> listeners = CollectionFactory.makeConcurrentMap();
 
 	@Override
-   public void handleOp(JSONObject opPayload, Cache<Object, Object> cache, ChannelHandlerContext ctx) throws JSONException {
+   public void handleOp(JsonObject opPayload, Cache<Object, Object> cache, ChannelHandlerContext ctx) {
 		String opCode = (String) opPayload.get(OpHandler.OP_CODE);
-		String key = (String) opPayload.opt(OpHandler.KEY);
-		String[] onEvents = (String[]) opPayload.opt("onEvents");
+		String key = (String) opPayload.get(OpHandler.KEY);
+		String[] onEvents = (String[]) opPayload.get("onEvents");
 		CacheListener listener = listeners.get(cache);
 		
 		if(key == null) {

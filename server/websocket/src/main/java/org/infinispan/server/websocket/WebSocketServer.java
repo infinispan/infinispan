@@ -1,43 +1,43 @@
 package org.infinispan.server.websocket;
 
-import java.io.BufferedReader;
-import java.io.IOException;
-import java.io.InputStreamReader;
-import java.io.StringWriter;
-import java.util.HashMap;
-import java.util.Map;
-
-import io.netty.channel.Channel;
-import io.netty.channel.ChannelInboundHandler;
-import io.netty.channel.ChannelInitializer;
-import io.netty.channel.ChannelOutboundHandler;
-import io.netty.channel.ChannelPipeline;
+import io.netty.channel.*;
 import io.netty.handler.codec.http.HttpObjectAggregator;
 import io.netty.handler.codec.http.HttpRequestDecoder;
 import io.netty.handler.codec.http.HttpResponseEncoder;
 import org.infinispan.Cache;
+import org.infinispan.commons.util.CollectionFactory;
 import org.infinispan.manager.CacheContainer;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.server.core.AbstractProtocolServer;
 import org.infinispan.server.core.configuration.ProtocolServerConfiguration;
-import org.infinispan.server.websocket.configuration.WebSocketServerConfiguration;
 import org.infinispan.server.websocket.handlers.GetHandler;
 import org.infinispan.server.websocket.handlers.NotifyHandler;
 import org.infinispan.server.websocket.handlers.PutHandler;
 import org.infinispan.server.websocket.handlers.RemoveHandler;
-import org.infinispan.commons.util.CollectionFactory;
+import org.infinispan.server.websocket.logging.Log;
+import org.infinispan.util.logging.LogFactory;
+
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.io.StringWriter;
+import java.lang.invoke.MethodHandles;
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  * An HTTP server which serves Web Socket requests on an Infinispan cacheManager.
- * <p/>
- * Websocket specific code lifted from Netty WebSocket Server example.
+ * <p>
+ *    Websocket specific code lifted from Netty WebSocket Server example.
+ * </p>
  */
 public class WebSocketServer extends AbstractProtocolServer {
+
+   private static final Log logger = LogFactory.getLog(MethodHandles.lookup().lookupClass(), Log.class);
 
    public static final String INFINISPAN_WS_JS_FILENAME = "infinispan-ws.js";
 
    private static String javascript;
-   private WebSocketServerConfiguration configuration;
 
    public WebSocketServer() {
       super("WebSocket");
@@ -52,7 +52,6 @@ public class WebSocketServer extends AbstractProtocolServer {
    }
 
    public void startInternal(ProtocolServerConfiguration configuration, EmbeddedCacheManager cacheManager) {
-      this.configuration = (WebSocketServerConfiguration) configuration;
       super.startInternal(configuration, cacheManager);
    }
 
@@ -65,7 +64,7 @@ public class WebSocketServer extends AbstractProtocolServer {
 
       private CacheContainer cacheContainer;
       private Map<String, OpHandler> operationHandlers;
-      private Map<String, Cache> startedCaches = CollectionFactory.makeConcurrentMap();
+      private Map<String, Cache<Object, Object>> startedCaches = CollectionFactory.makeConcurrentMap();
 
       public WebSocketServerPipelineFactory(CacheContainer cacheContainer) {
          this.cacheContainer = cacheContainer;
@@ -112,12 +111,12 @@ public class WebSocketServer extends AbstractProtocolServer {
 
          return javascript;
       } catch (IOException e) {
-         throw new IllegalStateException("Unexpected exception while sending Websockets script to client.", e);
+         throw logger.unableToSendWebSocketsScriptToTheClient(e);
       } finally {
          try {
             scriptReader.close();
          } catch (IOException e) {
-            throw new IllegalStateException("Unexpected exception while closing Websockets script to client.", e);
+            throw logger.unableToCloseWebSocketsStream(e);
          }
       }
    }
