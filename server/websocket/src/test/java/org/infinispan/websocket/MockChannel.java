@@ -1,28 +1,20 @@
 package org.infinispan.websocket;
 
+import io.netty.buffer.ByteBufAllocator;
+import io.netty.channel.*;
+import io.netty.handler.codec.http.websocketx.TextWebSocketFrame;
+import io.netty.util.Attribute;
+import io.netty.util.AttributeKey;
+import org.infinispan.server.websocket.json.JsonObject;
+
 import java.io.StringWriter;
 import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.Method;
 import java.lang.reflect.Proxy;
 import java.net.SocketAddress;
 
-import io.netty.buffer.ByteBufAllocator;
-import io.netty.channel.Channel;
-import io.netty.channel.ChannelConfig;
-import io.netty.channel.ChannelFuture;
-import io.netty.channel.ChannelMetadata;
-import io.netty.channel.ChannelPipeline;
-import io.netty.channel.ChannelProgressivePromise;
-import io.netty.channel.ChannelPromise;
-import io.netty.channel.EventLoop;
-import io.netty.handler.codec.http.websocketx.TextWebSocketFrame;
-import io.netty.util.Attribute;
-import io.netty.util.AttributeKey;
-import org.json.JSONException;
-import org.json.JSONObject;
-
 /**
- *
+ * Mock Server channel for testing.
  *
  * @author <a href="mailto:tom.fennelly@gmail.com">tom.fennelly@gmail.com</a>
  */
@@ -30,9 +22,6 @@ public class MockChannel implements Channel {
 
 	private StringWriter writer = new StringWriter();
 
-   /* (non-Javadoc)
-	 * @see org.jboss.netty.channel.AbstractChannel#write(java.lang.Object)
-	 */
 	@Override
 	public ChannelFuture write(Object message) {
 		if(message instanceof TextWebSocketFrame) {
@@ -43,26 +32,27 @@ public class MockChannel implements Channel {
 		return null;
 	}
 
-	public JSONObject getJSONPayload() {
+	public JsonObject getJSONPayload() {
 		if(writer.getBuffer().length() == 0) {
 			return null;
 		}
 		return getJSONPayload(0);
 	}
 
-	public JSONObject getJSONPayload(long waitTimeout) {
+	public JsonObject getJSONPayload(long waitTimeout) {
 		long start = System.currentTimeMillis();
 		while(writer.getBuffer().length() == 0) {
 			if(System.currentTimeMillis() > start + waitTimeout) {
 				throw new RuntimeException("Timed out waiting for data to be pushed onto the channel.");
 			}
+         Thread.yield();
 		}
 
 		try {
-			return new JSONObject(writer.toString());
-		} catch (JSONException e) {
+         return JsonObject.fromString(writer.toString());
+		} catch (Exception e) {
 			throw new RuntimeException("Invalid JSON payload [" + writer.toString() + "].", e);
-		} finally {
+      } finally {
 			clear();
 		}
 	}
@@ -71,9 +61,6 @@ public class MockChannel implements Channel {
 		writer.getBuffer().setLength(0);
 	}
 
-	/* (non-Javadoc)
-	 * @see org.jboss.netty.channel.Channel#getCloseFuture()
-	 */
 	@Override
 	public ChannelFuture closeFuture() {
 		return (ChannelFuture) Proxy.newProxyInstance(getClass().getClassLoader(),

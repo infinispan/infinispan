@@ -64,7 +64,6 @@
       <version.jboss.marshalling>1.4.4.Final</version.jboss.marshalling>
       <version.jboss.logging>3.1.2.GA</version.jboss.logging>
       <version.jgroups>3.5.0.CR2</version.jgroups>
-      <version.json>20090211</version.json>
       <version.jta>1.0.1.Final</version.jta>
       <version.netty>4.0.20.Final</version.netty>
       <version.osgi>4.3.1</version.osgi>
@@ -240,11 +239,6 @@
              <groupId>org.jboss.aesh</groupId>
              <artifactId>aesh</artifactId>
              <version>${version.aesh}</version>
-         </dependency>
-         <dependency>
-            <groupId>org.json</groupId>
-            <artifactId>json</artifactId>
-            <version>${version.json}</version>
          </dependency>
          <dependency>
             <groupId>org.osgi</groupId>

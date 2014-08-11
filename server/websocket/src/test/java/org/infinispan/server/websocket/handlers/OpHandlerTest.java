@@ -1,75 +1,141 @@
 package org.infinispan.server.websocket.handlers;
 
-import org.infinispan.server.websocket.OpHandler;
+import org.infinispan.server.websocket.json.JsonObject;
 import org.infinispan.websocket.MockChannel;
-import org.json.JSONException;
-import org.json.JSONObject;
+import org.testng.annotations.AfterTest;
+import org.testng.annotations.BeforeTest;
 import org.testng.annotations.Test;
-import org.testng.Assert;
+
+import static org.infinispan.assertions.JsonPayloadAssertion.assertThat;
+import static org.testng.AssertJUnit.assertEquals;
+import static org.testng.AssertJUnit.fail;
 
 /**
- * 
+ * Tests Operation handlers.
+ *
  * @author <a href="mailto:tom.fennelly@gmail.com">tom.fennelly@gmail.com</a>
  */
 @Test (testName = "websocket.handlers.OpHandlerTest", groups = "unit")
 public class OpHandlerTest {
-	
-	public void test() throws JSONException {
-		MockChannel mockChannel = new MockChannel();
-		MockClient firstCacheClient = new MockClient("firstCache", mockChannel);
-      try {
-         JSONObject jsonPayload;
 
-         // Put...
-         firstCacheClient.put("a", "aVal");
-         firstCacheClient.put("b", "bVal");
+   public static final String CACHE_NAME = "cacheName";
 
-         // Get...
-         firstCacheClient.get("a");
-         jsonPayload = mockChannel.getJSONPayload();
-         Assert.assertEquals("firstCache", jsonPayload.get(OpHandler.CACHE_NAME));
-         Assert.assertEquals("a", jsonPayload.get(OpHandler.KEY));
-         Assert.assertEquals("aVal", jsonPayload.get(OpHandler.VALUE));
-         Assert.assertEquals("text/plain", jsonPayload.get(OpHandler.MIME));
-         firstCacheClient.get("b");
-         jsonPayload = mockChannel.getJSONPayload();
-         Assert.assertEquals("firstCache", jsonPayload.get(OpHandler.CACHE_NAME));
-         Assert.assertEquals("b", jsonPayload.get(OpHandler.KEY));
-         Assert.assertEquals("bVal", jsonPayload.get(OpHandler.VALUE));
-         Assert.assertEquals("text/plain", jsonPayload.get(OpHandler.MIME));
-         firstCacheClient.get("x"); // not in cache
-         jsonPayload = mockChannel.getJSONPayload();
-         Assert.assertEquals("firstCache", jsonPayload.get(OpHandler.CACHE_NAME));
-         Assert.assertEquals("x", jsonPayload.get(OpHandler.KEY));
-         Assert.assertEquals(null, jsonPayload.get(OpHandler.VALUE));
+   private MockChannel serverChannel;
+   private MockClient cacheClient;
 
-         // Notify...
-         firstCacheClient.notify("a");
-         // Call to notify immediately pushes the value and then pushes it again later on modify...
-         jsonPayload = mockChannel.getJSONPayload(1000);
-         Assert.assertEquals("aVal", jsonPayload.get(OpHandler.VALUE));
-         // Modify the value should result in a push notification...
-         firstCacheClient.getCache().put("a", "aNewValue");
-         jsonPayload = mockChannel.getJSONPayload();
-         Assert.assertEquals("aNewValue", jsonPayload.get(OpHandler.VALUE));
-         // Modify something we're not listening to... nothing should happen...
-         firstCacheClient.getCache().put("b", "bNewValue");
-         try {
-            mockChannel.getJSONPayload(500);
-            Assert.fail("Expected timeout");
-         } catch (RuntimeException e) {
-            Assert.assertEquals("Timed out waiting for data to be pushed onto the channel.", e.getMessage());
-         }
+   @BeforeTest
+   public void beforeTest() {
+      serverChannel = new MockChannel();
+      cacheClient = new MockClient(CACHE_NAME, serverChannel);
+   }
 
-         // Remove...
-         firstCacheClient.remove("a");
-         firstCacheClient.get("a");
-         jsonPayload = mockChannel.getJSONPayload();
-         Assert.assertEquals("firstCache", jsonPayload.get(OpHandler.CACHE_NAME));
-         Assert.assertEquals("a", jsonPayload.get(OpHandler.KEY));
-         Assert.assertEquals(null, jsonPayload.get(OpHandler.VALUE));
-      } finally {
-         firstCacheClient.stop();
+   @AfterTest
+   public void afterTest() {
+      if(cacheClient != null) {
+         cacheClient.stop();
       }
+
+      if(serverChannel != null) {
+         serverChannel.clear();
+      }
+   }
+
+   public void shouldReturnPreviouslyPutValueInJsonPayload() throws Exception {
+      //when
+      cacheClient.put("a", "aVal");
+      cacheClient.get("a");
+      JsonObject payload = serverChannel.getJSONPayload();
+
+      //then
+      assertThat(payload).hasCacheName(CACHE_NAME).hasKey("a").hasValue("aVal").hasMimeType("text/plain");
+   }
+
+   public void shouldReturnNullWhenValueIsNotInCache() throws Exception {
+      //when
+      cacheClient.get("notInCache");
+      JsonObject payload = serverChannel.getJSONPayload();
+
+      //then
+      assertThat(payload).hasCacheName(CACHE_NAME).hasKey("notInCache").hasValue(null);
+   }
+
+   public void shouldReturnPreviouslyPutValueOnNotify() throws Exception {
+      //given
+      cacheClient.put("a", "aVal");
+
+      //when
+      cacheClient.notify("a");
+      JsonObject payload = serverChannel.getJSONPayload(1000);
+
+      //then
+      assertThat(payload).hasKey("a").hasValue("aVal");
+   }
+
+   public void shouldCallNotifyIfModifyingValueInCache() throws Exception {
+      //given
+      cacheClient.put("a", "oldValue");
+      cacheClient.notify("a");
+      serverChannel.getJSONPayload(1000);
+
+      //when
+      cacheClient.getCache().put("a", "newValue");
+      JsonObject payload = serverChannel.getJSONPayload();
+
+      //then
+      assertThat(payload).hasKey("a").hasValue("newValue");
+   }
+
+   public void shouldNotCallNotifyWhenListeningToDataWithoutNotifications() throws Exception {
+      //given
+      cacheClient.put("notificationKey", "aVal");
+      cacheClient.put("irrelevantKey", "bVal");
+      cacheClient.notify("notificationKey");
+      serverChannel.getJSONPayload();
+
+      //when
+      cacheClient.getCache().put("irrelevantKey", "newValue");
+      try {
+         JsonObject jsonPayload = serverChannel.getJSONPayload(250);
+         fail("Expected timeout" + jsonPayload);
+      } catch (RuntimeException e) {
+         assertEquals(e.getMessage(), "Timed out waiting for data to be pushed onto the channel.");
+      }
+   }
+
+   /**
+    * This test is a bit tricky. It registers notifications to all channels, so if executed in parallel it might
+    * crash some other tests. This is why we need to add dependency on particular methods - we need to make sure that
+    * this is test is executed last.
+    */
+   @Test(dependsOnMethods = {"shouldNotCallNotifyWhenListeningToDataWithoutNotifications",
+         "shouldCallNotifyIfModifyingValueInCache"})
+   public void shouldCallNotifyWhenListeningToAllNotifications() throws Exception {
+      //given
+      cacheClient.put("a", "aVal");
+      cacheClient.put("b", "bVal");
+      cacheClient.notify("*");
+      serverChannel.getJSONPayload();
+
+      //when
+      cacheClient.getCache().put("b", "newValue");
+      JsonObject payload = serverChannel.getJSONPayload();
+
+      //then
+      assertThat(payload).hasKey("b").hasValue("newValue");
+   }
+
+   public void shouldReturnPreviouslyPutValueOnRemove() throws Exception {
+      //given
+      cacheClient.put("a", "aVal");
+      cacheClient.get("a");
+      serverChannel.getJSONPayload();
+
+      //when
+      cacheClient.remove("a");
+      cacheClient.get("a");
+      JsonObject payload = serverChannel.getJSONPayload();
+
+      //then
+      assertThat(payload).hasCacheName(CACHE_NAME).hasKey("a").hasValue(null);
    }
 }

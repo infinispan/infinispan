@@ -38,6 +38,7 @@
       <module name="io.netty" />
       <module name="org.scala-lang.library" />
       <module name="org.jgroups" />
-      <module name="org.json" />
+      <module name="org.codehaus.jackson.jackson-core-asl"/>
+      <module name="org.codehaus.jackson.jackson-mapper-asl"/>
    </dependencies>
 </module>

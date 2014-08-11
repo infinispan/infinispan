@@ -4,8 +4,7 @@ import io.netty.channel.ChannelHandlerContext;
 import org.infinispan.Cache;
 import org.infinispan.server.websocket.ChannelUtils;
 import org.infinispan.server.websocket.OpHandler;
-import org.json.JSONException;
-import org.json.JSONObject;
+import org.infinispan.server.websocket.json.JsonObject;
 
 /**
  * Cache "get" operation handler.
@@ -15,9 +14,8 @@ import org.json.JSONObject;
 public class GetHandler implements OpHandler {
 
 	@Override
-   public void handleOp(JSONObject opPayload, Cache<Object, Object> cache, ChannelHandlerContext ctx) throws JSONException {
+   public void handleOp(JsonObject opPayload, Cache<Object, Object> cache, ChannelHandlerContext ctx) {
 		String key = (String) opPayload.get(OpHandler.KEY);
-		
 		ChannelUtils.pushCacheValue(key, cache, ctx);
 	}
 }

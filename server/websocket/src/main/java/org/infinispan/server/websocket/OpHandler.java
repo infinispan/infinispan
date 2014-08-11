@@ -2,8 +2,7 @@ package org.infinispan.server.websocket;
 
 import io.netty.channel.ChannelHandlerContext;
 import org.infinispan.Cache;
-import org.json.JSONException;
-import org.json.JSONObject;
+import org.infinispan.server.websocket.json.JsonObject;
 
 /**
  * Websocket cache operation handler.
@@ -25,5 +24,5 @@ public interface OpHandler {
 	 * @param cache The target cache.
 	 * @param ctx The Netty websocket channel handler.
 	 */
-	void handleOp(JSONObject opPayload, Cache<Object, Object> cache, ChannelHandlerContext ctx) throws JSONException;
+	void handleOp(JsonObject opPayload, Cache<Object, Object> cache, ChannelHandlerContext ctx);
 }
