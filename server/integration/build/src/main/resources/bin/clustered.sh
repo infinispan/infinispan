@@ -1,5 +1,33 @@
 #!/bin/sh
 
+# Use --debug to activate debug mode with an optional argument to specify the port.
+# Usage : clustered.sh --debug
+#         clustered.sh --debug 9797
+
+# By default debug mode is disable.
+DEBUG_MODE=false
+DEBUG_PORT="8787"
+SERVER_OPTS=""
+while [ "$#" -gt 0 ]
+do
+    case "$1" in
+      --debug)
+          DEBUG_MODE=true
+          shift
+          if [ -n "$1" ] && [ "${1#*-}" = "$1" ]; then
+              DEBUG_PORT=$1
+          fi
+          ;;
+      --)
+          shift
+          break;;
+      *)
+          SERVER_OPTS="$SERVER_OPTS \"$1\""
+          ;;
+    esac
+    shift
+done
+
 DIRNAME=`dirname "$0"`
 PROGNAME=`basename "$0"`
 GREP="grep"
@@ -11,6 +39,9 @@ MAX_FD="maximum"
 cygwin=false;
 darwin=false;
 linux=false;
+solaris=false;
+freebsd=false;
+
 case "`uname`" in
     CYGWIN*)
         cygwin=true
@@ -19,19 +50,16 @@ case "`uname`" in
     Darwin*)
         darwin=true
         ;;
-
+    FreeBSD)
+        freebsd=true
+        ;;
     Linux)
         linux=true
         ;;
+    SunOS*)
+        solaris=true
+        ;;
 esac
-
-# Read an optional running configuration file
-if [ "x$RUN_CONF" = "x" ]; then
-    RUN_CONF="$DIRNAME/clustered.conf"
-fi
-if [ -r "$RUN_CONF" ]; then
-    . "$RUN_CONF"
-fi
 
 # For Cygwin, ensure paths are in UNIX format before anything is touched
 if $cygwin ; then
@@ -51,11 +79,34 @@ if [ "x$JBOSS_HOME" = "x" ]; then
 else
  SANITIZED_JBOSS_HOME=`cd "$JBOSS_HOME"; pwd`
  if [ "$RESOLVED_JBOSS_HOME" != "$SANITIZED_JBOSS_HOME" ]; then
-   echo "WARNING JBOSS_HOME may be pointing to a different installation - unpredictable results may occur."
    echo ""
+   echo "   WARNING:  JBOSS_HOME may be pointing to a different installation - unpredictable results may occur."
+   echo ""
+   echo "             JBOSS_HOME: $JBOSS_HOME"
+   echo ""
+   sleep 2s
  fi
 fi
 export JBOSS_HOME
+
+# Read an optional running configuration file
+if [ "x$RUN_CONF" = "x" ]; then
+    RUN_CONF="$DIRNAME/clustered.conf"
+fi
+if [ -r "$RUN_CONF" ]; then
+    . "$RUN_CONF"
+fi
+
+# Set debug settings if not already set
+if [ "$DEBUG_MODE" = "true" ]; then
+    DEBUG_OPT=`echo $JAVA_OPTS | $GREP "\-agentlib:jdwp"`
+    if [ "x$DEBUG_OPT" = "x" ]; then
+        JAVA_OPTS="$JAVA_OPTS -agentlib:jdwp=transport=dt_socket,address=$DEBUG_PORT,server=y,suspend=n"
+    else
+        echo "Debug already enabled in JAVA_OPTS, ignoring --debug argument"
+    fi
+    SERVER_OPTS="$SERVER_OPTS --debug ${DEBUG_PORT}"
+fi
 
 # Setup the JVM
 if [ "x$JAVA" = "x" ]; then
@@ -64,6 +115,74 @@ if [ "x$JAVA" = "x" ]; then
     else
         JAVA="java"
     fi
+fi
+
+if $linux || $solaris; then
+    # consolidate the server and command line opts
+    CONSOLIDATED_OPTS="$JAVA_OPTS $SERVER_OPTS"
+    # process the standalone options
+    for var in $CONSOLIDATED_OPTS
+    do
+       # Remove quotes
+       p=`echo $var | tr -d '"'`
+       case $p in
+         -Djboss.server.base.dir=*)
+              JBOSS_BASE_DIR=`readlink -m ${p#*=}`
+              ;;
+         -Djboss.server.log.dir=*)
+              JBOSS_LOG_DIR=`readlink -m ${p#*=}`
+              ;;
+         -Djboss.server.config.dir=*)
+              JBOSS_CONFIG_DIR=`readlink -m ${p#*=}`
+              ;;
+       esac
+    done
+fi
+
+# No readlink -m on BSD
+if $darwin || $freebsd; then
+    # consolidate the server and command line opts
+    CONSOLIDATED_OPTS="$JAVA_OPTS $SERVER_OPTS"
+    # process the standalone options
+    for var in $CONSOLIDATED_OPTS
+    do
+       # Remove quotes
+       p=`echo $var | tr -d '"'`
+       case $p in
+         -Djboss.server.base.dir=*)
+              JBOSS_BASE_DIR=`cd ${p#*=} ; pwd -P`
+              ;;
+         -Djboss.server.log.dir=*)
+              JBOSS_LOG_DIR=`cd ${p#*=} ; pwd -P`
+              ;;
+         -Djboss.server.config.dir=*)
+              JBOSS_CONFIG_DIR=`cd ${p#*=} ; pwd -P`
+              ;;
+       esac
+    done
+fi
+
+# determine the default base dir, if not set
+if [ "x$JBOSS_BASE_DIR" = "x" ]; then
+   JBOSS_BASE_DIR="$JBOSS_HOME/standalone"
+fi
+# determine the default log dir, if not set
+if [ "x$JBOSS_LOG_DIR" = "x" ]; then
+   JBOSS_LOG_DIR="$JBOSS_BASE_DIR/log"
+fi
+# determine the default configuration dir, if not set
+if [ "x$JBOSS_CONFIG_DIR" = "x" ]; then
+   JBOSS_CONFIG_DIR="$JBOSS_BASE_DIR/configuration"
+fi
+
+# For Cygwin, switch paths to Windows format before running java
+if $cygwin; then
+    JBOSS_HOME=`cygpath --path --windows "$JBOSS_HOME"`
+    JAVA_HOME=`cygpath --path --windows "$JAVA_HOME"`
+    JBOSS_MODULEPATH=`cygpath --path --windows "$JBOSS_MODULEPATH"`
+    JBOSS_BASE_DIR=`cygpath --path --windows "$JBOSS_BASE_DIR"`
+    JBOSS_LOG_DIR=`cygpath --path --windows "$JBOSS_LOG_DIR"`
+    JBOSS_CONFIG_DIR=`cygpath --path --windows "$JBOSS_CONFIG_DIR"`
 fi
 
 if [ "$PRESERVE_JAVA_OPTS" != "true" ]; then
@@ -97,17 +216,19 @@ if [ "$PRESERVE_JAVA_OPTS" != "true" ]; then
         fi
     fi
 
-    if [ $CLIENT_VM = false ]; then
-        NO_COMPRESSED_OOPS=`echo $JAVA_OPTS | $GREP "\-XX:\-UseCompressedOops"`
-        if [ "x$NO_COMPRESSED_OOPS" = "x" ]; then
-            "$JAVA" $JVM_OPTVERSION -server -XX:+UseCompressedOops -version >/dev/null 2>&1 && PREPEND_JAVA_OPTS="$PREPEND_JAVA_OPTS -XX:+UseCompressedOops"
-        fi
-
-        NO_TIERED_COMPILATION=`echo $JAVA_OPTS | $GREP "\-XX:\-TieredCompilation"`
-        if [ "x$NO_TIERED_COMPILATION" = "x" ]; then
-            "$JAVA" $JVM_OPTVERSION -server -XX:+TieredCompilation -version >/dev/null 2>&1 && PREPEND_JAVA_OPTS="$PREPEND_JAVA_OPTS -XX:+TieredCompilation"
-        fi
-    fi
+    # EAP6-121 feature disabled
+    # Enable rotating GC logs if the JVM supports it and GC logs are not already enabled
+    #NO_GC_LOG_ROTATE=`echo $JAVA_OPTS | $GREP "\-verbose:gc"`
+    #if [ "x$NO_GC_LOG_ROTATE" = "x" ]; then
+        # backup prior gc logs
+        #mv "$JBOSS_LOG_DIR/gc.log.0" "$JBOSS_LOG_DIR/backupgc.log.0" >/dev/null 2>&1
+        #mv "$JBOSS_LOG_DIR/gc.log.1" "$JBOSS_LOG_DIR/backupgc.log.1" >/dev/null 2>&1
+        #mv "$JBOSS_LOG_DIR/gc.log.2" "$JBOSS_LOG_DIR/backupgc.log.2" >/dev/null 2>&1
+        #mv "$JBOSS_LOG_DIR/gc.log.3" "$JBOSS_LOG_DIR/backupgc.log.3" >/dev/null 2>&1
+        #mv "$JBOSS_LOG_DIR/gc.log.4" "$JBOSS_LOG_DIR/backupgc.log.4" >/dev/null 2>&1
+        #mv "$JBOSS_LOG_DIR/gc.log.*.current" "$JBOSS_LOG_DIR/backupgc.log.current" >/dev/null 2>&1
+        #"$JAVA" $JVM_OPTVERSION -verbose:gc -Xloggc:"$JBOSS_LOG_DIR/gc.log" -XX:+PrintGCDetails -XX:+PrintGCDateStamps -XX:+UseGCLogFileRotation -XX:NumberOfGCLogFiles=5 -XX:GCLogFileSize=3M -XX:-TraceClassUnloading -version >/dev/null 2>&1 && mkdir -p $JBOSS_LOG_DIR && PREPEND_JAVA_OPTS="$PREPEND_JAVA_OPTS -verbose:gc -Xloggc:\"$JBOSS_LOG_DIR/gc.log\" -XX:+PrintGCDetails -XX:+PrintGCDateStamps -XX:+UseGCLogFileRotation -XX:NumberOfGCLogFiles=5 -XX:GCLogFileSize=3M -XX:-TraceClassUnloading" 
+    #fi
 
     JAVA_OPTS="$PREPEND_JAVA_OPTS $JAVA_OPTS"
 fi
@@ -116,46 +237,6 @@ if [ "x$JBOSS_MODULEPATH" = "x" ]; then
     JBOSS_MODULEPATH="$JBOSS_HOME/modules"
 fi
 
-if $linux; then
-    # consolidate the server and command line opts
-    SERVER_OPTS="$JAVA_OPTS $@"
-    # process the standalone options
-    for var in $SERVER_OPTS
-    do
-       case $var in
-         -Djboss.server.base.dir=*)
-              JBOSS_BASE_DIR=`readlink -m ${var#*=}`
-              ;;
-         -Djboss.server.log.dir=*)
-              JBOSS_LOG_DIR=`readlink -m ${var#*=}`
-              ;;
-         -Djboss.server.config.dir=*)
-              JBOSS_CONFIG_DIR=`readlink -m ${var#*=}`
-              ;;
-       esac
-    done
-fi
-# determine the default base dir, if not set
-if [ "x$JBOSS_BASE_DIR" = "x" ]; then
-   JBOSS_BASE_DIR="$JBOSS_HOME/standalone"
-fi
-# determine the default log dir, if not set
-if [ "x$JBOSS_LOG_DIR" = "x" ]; then
-   JBOSS_LOG_DIR="$JBOSS_BASE_DIR/log"
-fi
-# determine the default configuration dir, if not set
-if [ "x$JBOSS_CONFIG_DIR" = "x" ]; then
-   JBOSS_CONFIG_DIR="$JBOSS_BASE_DIR/configuration"
-fi
-
-# For Cygwin, switch paths to Windows format before running java
-if $cygwin; then
-    JBOSS_HOME=`cygpath --path --windows "$JBOSS_HOME"`
-    JAVA_HOME=`cygpath --path --windows "$JAVA_HOME"`
-    JBOSS_CLASSPATH=`cygpath --path --windows "$JBOSS_CLASSPATH"`
-    JBOSS_ENDORSED_DIRS=`cygpath --path --windows "$JBOSS_ENDORSED_DIRS"`
-    JBOSS_MODULEPATH=`cygpath --path --windows "$JBOSS_MODULEPATH"`
-fi
 
 # Display our environment
 echo "========================================================================="
@@ -175,26 +256,26 @@ while true; do
    if [ "x$LAUNCH_JBOSS_IN_BACKGROUND" = "x" ]; then
       # Execute the JVM in the foreground
       eval \"$JAVA\" -D\"[Standalone]\" $JAVA_OPTS \
-         \"-Dorg.jboss.boot.log.file=$JBOSS_LOG_DIR/boot.log\" \
+         \"-Dorg.jboss.boot.log.file=$JBOSS_LOG_DIR/server.log\" \
          \"-Dlogging.configuration=file:$JBOSS_CONFIG_DIR/logging.properties\" \
          -jar \"$JBOSS_HOME/jboss-modules.jar\" \
          -mp \"${JBOSS_MODULEPATH}\" \
-         -jaxpmodule "javax.xml.jaxp-provider" \
          org.jboss.as.standalone \
          -Djboss.home.dir=\"$JBOSS_HOME\" \
-         "$@"
+         -Djboss.server.base.dir=\"$JBOSS_BASE_DIR\" \
+         "$SERVER_OPTS"
       JBOSS_STATUS=$?
    else
       # Execute the JVM in the background
       eval \"$JAVA\" -D\"[Standalone]\" $JAVA_OPTS \
-         \"-Dorg.jboss.boot.log.file=$JBOSS_LOG_DIR/boot.log\" \
+         \"-Dorg.jboss.boot.log.file=$JBOSS_LOG_DIR/server.log\" \
          \"-Dlogging.configuration=file:$JBOSS_CONFIG_DIR/logging.properties\" \
          -jar \"$JBOSS_HOME/jboss-modules.jar\" \
          -mp \"${JBOSS_MODULEPATH}\" \
-         -jaxpmodule "javax.xml.jaxp-provider" \
          org.jboss.as.standalone \
          -Djboss.home.dir=\"$JBOSS_HOME\" \
-         "$@" "&"
+         -Djboss.server.base.dir=\"$JBOSS_BASE_DIR\" \
+         "$SERVER_OPTS" "&"
       JBOSS_PID=$!
       # Trap common signals and relay them to the jboss process
       trap "kill -HUP  $JBOSS_PID" HUP

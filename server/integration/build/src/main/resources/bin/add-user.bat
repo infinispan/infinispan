@@ -3,7 +3,7 @@ rem -------------------------------------------------------------------------
 rem Add User script for Windows
 rem -------------------------------------------------------------------------
 rem
-rem A simple utility for adding new users to the properties file used 
+rem A simple utility for adding new users to the properties file used
 rem for domain management authentication out of the box.
 
 rem $Id$
@@ -17,28 +17,24 @@ if "%OS%" == "Windows_NT" (
   set DIRNAME=.\
 )
 
-pushd %DIRNAME%..
+pushd "%DIRNAME%.."
 set "RESOLVED_JBOSS_HOME=%CD%"
 popd
 
 if "x%JBOSS_HOME%" == "x" (
-  set "JBOSS_HOME=%RESOLVED_JBOSS_HOME%" 
+  set "JBOSS_HOME=%RESOLVED_JBOSS_HOME%"
 )
 
 pushd "%JBOSS_HOME%"
 set "SANITIZED_JBOSS_HOME=%CD%"
 popd
 
-if "%RESOLVED_JBOSS_HOME%" NEQ "%SANITIZED_JBOSS_HOME%" (
-    echo WARNING JBOSS_HOME may be pointing to a different installation - unpredictable results may occur.
-)
-
-set DIRNAME=
-
-if "%OS%" == "Windows_NT" (
-  set "PROGNAME=%~nx0%"
-) else (
-  set "PROGNAME=jdr.bat"
+if /i "%RESOLVED_JBOSS_HOME%" NEQ "%SANITIZED_JBOSS_HOME%" (
+   echo.
+   echo   WARNING:  JBOSS_HOME may be pointing to a different installation - unpredictable results may occur.
+   echo.
+   echo       JBOSS_HOME: "%JBOSS_HOME%"
+   echo.
 )
 
 rem Setup JBoss specific properties
@@ -51,26 +47,25 @@ if "x%JAVA_HOME%" == "x" (
 )
 
 rem Find jboss-modules.jar, or we can't continue
-if exist "%JBOSS_HOME%\jboss-modules.jar" (
-    set "RUNJAR=%JBOSS_HOME%\jboss-modules.jar"
-) else (
-  echo Could not locate "%JBOSS_HOME%\jboss-modules.jar".
+set "JBOSS_RUNJAR=%JBOSS_HOME%\jboss-modules.jar"
+if not exist "%JBOSS_RUNJAR%" (
+  echo Could not locate "%JBOSS_RUNJAR%".
   echo Please check that you are in the bin directory when running this script.
   goto END
 )
 
-rem Setup JBoss specific properties
-
-rem Setup the java endorsed dirs
-set JBOSS_ENDORSED_DIRS=%JBOSS_HOME%\lib\endorsed
-
 rem Set default module root paths
 if "x%JBOSS_MODULEPATH%" == "x" (
-  set  "JBOSS_MODULEPATH=%JBOSS_HOME%\modules"
+  set "JBOSS_MODULEPATH=%JBOSS_HOME%\modules"
 )
 
-"%JAVA%" ^
-    -jar "%JBOSS_HOME%\jboss-modules.jar" ^
+rem Uncomment to override standalone and domain user location
+rem set "JAVA_OPTS=%JAVA_OPTS% -Djboss.server.config.user.dir=..\standalone\configuration -Djboss.domain.config.user.dir=..\domain\configuration"
+
+set "JAVA_OPTS=%JAVA_OPTS%"
+
+"%JAVA%" %JAVA_OPTS% ^
+    -jar "%JBOSS_RUNJAR%" ^
     -mp "%JBOSS_MODULEPATH%" ^
      org.jboss.as.domain-add-user ^
      %*
