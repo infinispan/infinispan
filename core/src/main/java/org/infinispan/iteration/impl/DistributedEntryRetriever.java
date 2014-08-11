@@ -795,14 +795,15 @@ public class DistributedEntryRetriever<K, V> extends LocalEntryRetriever<K, V> {
    private <C> void processData(final UUID identifier, Address origin, Set<Integer> completedSegments, Set<Integer> inDoubtSegments,
                             Collection<CacheEntry<K, C>> entries) {
       final IterationStatus<K, V, C> status = (IterationStatus<K, V, C>) iteratorDetails.get(identifier);
-      final AtomicReferenceArray<Set<K>> processedKeys = status.processedKeys;
+      // This is possible if the iterator was closed early or we had duplicate requests due to a rehash.
+      if (status != null) {
+         final AtomicReferenceArray<Set<K>> processedKeys = status.processedKeys;
 
-      DistributedItr<K, C> itr = status.ongoingIterator;
-      if (log.isTraceEnabled()) {
-         log.tracef("Processing data for identifier %s completedSegments: %s inDoubtSegments: %s entryCount: %s", identifier,
-                    completedSegments, inDoubtSegments, entries.size());
-      }
-      if (processedKeys != null && itr != null) {
+         DistributedItr<K, C> itr = status.ongoingIterator;
+         if (log.isTraceEnabled()) {
+            log.tracef("Processing data for identifier %s completedSegments: %s inDoubtSegments: %s entryCount: %s", identifier,
+                       completedSegments, inDoubtSegments, entries.size());
+         }
          // Normally we shouldn't have duplicates, but rehash can cause that
          Collection<CacheEntry<K, C>> nonDuplicateEntries = new ArrayList<>(entries.size());
          Map<Integer, ConcurrentHashSet<K>> finishedKeysForSegment = new HashMap<>();
