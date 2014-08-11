@@ -13,7 +13,7 @@ DIRNAME=`dirname "$0"`
 # OS specific support (must be 'true' or 'false').
 cygwin=false;
 if  [ `uname|grep -i CYGWIN` ]; then
-    cygwin=true;
+    cygwin = true;
 fi
 
 # For Cygwin, ensure paths are in UNIX format before anything is touched
@@ -56,9 +56,6 @@ fi
 # For Cygwin, switch paths to Windows format before running java
 if $cygwin; then
     JBOSS_HOME=`cygpath --path --windows "$JBOSS_HOME"`
-    JAVA_HOME=`cygpath --path --windows "$JAVA_HOME"`
-    JBOSS_CLASSPATH=`cygpath --path --windows "$JBOSS_CLASSPATH"`
-    JBOSS_ENDORSED_DIRS=`cygpath --path --windows "$JBOSS_ENDORSED_DIRS"`
     JBOSS_MODULEPATH=`cygpath --path --windows "$JBOSS_MODULEPATH"`
 fi
 

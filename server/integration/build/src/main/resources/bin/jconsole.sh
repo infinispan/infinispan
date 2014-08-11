@@ -49,42 +49,33 @@ fi
 export JBOSS_HOME
 
 # Setup the JVM
-if [ "x$JAVA" = "x" ]; then
-    if [ "x$JAVA_HOME" != "x" ]; then
-        JAVA="$JAVA_HOME/bin/java"
-    else
+if [ "x$JAVA_HOME" = x ]; then
+   fail_java_home () {
         echo "JAVA_HOME is not set. Unable to locate the jars needed to run jconsole."
         exit 2
-    fi
-fi
+   }
 
-if [ "x$JBOSS_MODULEPATH" = "x" ]; then
-    JBOSS_MODULEPATH="$JBOSS_HOME/modules"
+   JCONSOLE_PATH=`which jconsole` || fail_java_home
+   which readlink || fail_java_home # make sure readlink is present
+   JCONSOLE_TEST=`readlink "$JCONSOLE_PATH"`
+   while [ x"$JCONSOLE_TEST" != x ]; do
+      JCONSOLE_PATH="$JCONSOLE_TEST"
+      JCONSOLE_TEST=`readlink "$JCONSOLE_PATH"`
+   done
+   JAVA_HOME=`dirname "$JCONSOLE_PATH"`
+   JAVA_HOME=`dirname "$JAVA_HOME"`
 fi
 
 # For Cygwin, switch paths to Windows format before running java
 if $cygwin; then
     JBOSS_HOME=`cygpath --path --windows "$JBOSS_HOME"`
     JAVA_HOME=`cygpath --path --windows "$JAVA_HOME"`
-    JBOSS_CLASSPATH=`cygpath --path --windows "$JBOSS_CLASSPATH"`
-    JBOSS_ENDORSED_DIRS=`cygpath --path --windows "$JBOSS_ENDORSED_DIRS"`
-    JBOSS_MODULEPATH=`cygpath --path --windows "$JBOSS_MODULEPATH"`
 fi
 
 CLASSPATH=$JAVA_HOME/lib/jconsole.jar
 CLASSPATH=$CLASSPATH:$JAVA_HOME/lib/tools.jar
-
-MODULES="org/jboss/remoting-jmx org/jboss/remoting3 org/jboss/logging org/jboss/xnio org/jboss/xnio/nio org/jboss/sasl org/jboss/marshalling org/jboss/as/cli org/jboss/staxmapper org/jboss/as/protocol org/jboss/dmr org/jboss/as/controller-client org/jboss/threads"
-
-for MODULE in $MODULES
-do
-    for JAR in `cd "$JBOSS_MODULEPATH/system/layers/base/$MODULE/main/" && ls -1 *.jar`
-    do
-        CLASSPATH="$CLASSPATH:$JBOSS_MODULEPATH/system/layers/base/$MODULE/main/$JAR"
-    done
-done
-
+CLASSPATH="$CLASSPATH:$JBOSS_HOME/bin/client/jboss-cli-client.jar"
 
 echo CLASSPATH $CLASSPATH
 
-jconsole -J-Djava.class.path="$CLASSPATH"
+$JAVA_HOME/bin/jconsole -J-Djava.class.path="$CLASSPATH" "$@"
