@@ -8,7 +8,7 @@
         <module name="javax.api"/>
         <module name="javax.cache.api" slot="${slot}" export="true"/>
         <module name="javax.transaction.api"/>
-        <module name="org.jgroups"/>
+        <module name="org.jgroups" slot="${slot}"/>
         <module name="org.infinispan" slot="${slot}"/>
         <module name="org.infinispan.cdi" slot="${slot}" services="import" />
         <module name="org.jboss.logging"/>
