@@ -13,8 +13,8 @@ public final class FilterQueryBuilder extends BaseQueryBuilder<Query> {
 
    private static final Log log = Logger.getMessageLogger(Log.class, FilterQueryBuilder.class.getName());
 
-   public FilterQueryBuilder(String rootType) {
-      super(rootType);
+   public FilterQueryBuilder(FilterQueryFactory queryFactory, String rootType) {
+      super(queryFactory, rootType);
    }
 
    @Override

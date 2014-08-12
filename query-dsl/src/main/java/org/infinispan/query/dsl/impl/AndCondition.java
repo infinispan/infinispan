@@ -1,13 +1,15 @@
 package org.infinispan.query.dsl.impl;
 
+import org.infinispan.query.dsl.QueryFactory;
+
 /**
  * @author anistor@redhat.com
  * @since 6.0
  */
 class AndCondition extends BooleanCondition {
 
-   public AndCondition(BaseCondition leftCondition, BaseCondition rightCondition) {
-      super(leftCondition, rightCondition);
+   public AndCondition(QueryFactory queryFactory, BaseCondition leftCondition, BaseCondition rightCondition) {
+      super(queryFactory, leftCondition, rightCondition);
    }
 
    @Override

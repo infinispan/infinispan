@@ -4,6 +4,7 @@ import org.infinispan.query.dsl.FilterConditionBeginContext;
 import org.infinispan.query.dsl.FilterConditionContext;
 import org.infinispan.query.dsl.Query;
 import org.infinispan.query.dsl.QueryBuilder;
+import org.infinispan.query.dsl.QueryFactory;
 
 /**
  * @author anistor@redhat.com
@@ -15,7 +16,10 @@ abstract class BaseCondition implements FilterConditionContext, Visitable {
 
    protected QueryBuilder queryBuilder;
 
-   protected BaseCondition() {
+   protected final QueryFactory queryFactory;
+
+   protected BaseCondition(QueryFactory queryFactory) {
+      this.queryFactory = queryFactory;
    }
 
    @Override
@@ -27,6 +31,9 @@ abstract class BaseCondition implements FilterConditionContext, Visitable {
    }
 
    void setQueryBuilder(QueryBuilder queryBuilder) {
+      if (this.queryBuilder != null) {
+         throw new IllegalStateException("This query already belongs to a query builder");
+      }
       this.queryBuilder = queryBuilder;
    }
 
@@ -53,43 +60,52 @@ abstract class BaseCondition implements FilterConditionContext, Visitable {
 
    @Override
    public FilterConditionBeginContext and() {
-      IncompleteCondition rightCondition = new IncompleteCondition();
+      IncompleteCondition rightCondition = new IncompleteCondition(queryFactory);
       combine(true, rightCondition);
       return rightCondition;
    }
 
    @Override
    public FilterConditionContext and(FilterConditionContext rightCondition) {
-      //todo [anistor] check rightCondition was created with the same factory and does not already belong to a builder
       combine(true, rightCondition);
       return this;
    }
 
    @Override
    public FilterConditionBeginContext or() {
-      IncompleteCondition rightCondition = new IncompleteCondition();
+      IncompleteCondition rightCondition = new IncompleteCondition(queryFactory);
       combine(false, rightCondition);
       return rightCondition;
    }
 
    @Override
    public FilterConditionContext or(FilterConditionContext rightCondition) {
-      //todo [anistor] check rightCondition was created with the same factory and does not already belong to a builder
       combine(false, rightCondition);
       return this;
    }
 
    private void combine(boolean isConjunction, FilterConditionContext fcc) {
+      if (fcc == null) {
+         throw new IllegalArgumentException("Argument cannot be null");
+      }
+
       BaseCondition rightCondition = ((BaseCondition) fcc).getRoot();
+      if (rightCondition.queryFactory != queryFactory) {
+         throw new IllegalArgumentException("The given condition was created by a different factory");
+      }
+
+      if (rightCondition.queryBuilder != null) {
+         throw new IllegalArgumentException("The given condition is already in use by another builder");
+      }
 
       if (isConjunction && parent instanceof OrCondition) {
-         BooleanCondition p = new AndCondition(this, rightCondition);
+         BooleanCondition p = new AndCondition(queryFactory, this, rightCondition);
          ((BooleanCondition) parent).replaceChildCondition(this, p);
          parent = p;
          rightCondition.setParent(p);
       } else {
          BaseCondition root = getRoot();
-         BooleanCondition p = isConjunction ? new AndCondition(root, rightCondition) : new OrCondition(root, rightCondition);
+         BooleanCondition p = isConjunction ? new AndCondition(queryFactory, root, rightCondition) : new OrCondition(queryFactory, root, rightCondition);
          root.setParent(p);
          rightCondition.setParent(p);
       }

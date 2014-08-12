@@ -1,13 +1,15 @@
 package org.infinispan.query.dsl.impl;
 
+import org.infinispan.query.dsl.QueryFactory;
+
 /**
  * @author anistor@redhat.com
  * @since 6.0
  */
 class NotCondition extends BooleanCondition {
 
-   public NotCondition(BaseCondition condition) {
-      super(condition, null);
+   public NotCondition(QueryFactory queryFactory, BaseCondition condition) {
+      super(queryFactory, condition, null);
    }
 
    @Override

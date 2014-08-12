@@ -18,8 +18,8 @@ final class EmbeddedQueryBuilder extends BaseQueryBuilder<Query> {
 
    private final AdvancedCache<?, ?> cache;
 
-   public EmbeddedQueryBuilder(AdvancedCache<?, ?> cache, String rootType) {
-      super(rootType);
+   public EmbeddedQueryBuilder(EmbeddedQueryFactory queryFactory, AdvancedCache<?, ?> cache, String rootType) {
+      super(queryFactory, rootType);
       this.cache = cache;
    }
 

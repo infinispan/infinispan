@@ -19,11 +19,11 @@ public final class EmbeddedQueryFactory extends BaseQueryFactory<Query> {
 
    @Override
    public QueryBuilder<Query> from(Class type) {
-      return new EmbeddedQueryBuilder(cache, type.getCanonicalName());
+      return new EmbeddedQueryBuilder(this, cache, type.getCanonicalName());
    }
 
    @Override
    public QueryBuilder<Query> from(String type) {
-      return new EmbeddedQueryBuilder(cache, type);
+      return new EmbeddedQueryBuilder(this, cache, type);
    }
 }

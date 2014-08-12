@@ -1,6 +1,7 @@
 package org.infinispan.query.dsl.impl;
 
 import org.infinispan.query.dsl.QueryBuilder;
+import org.infinispan.query.dsl.QueryFactory;
 
 /**
  * Unary or binary boolean condition (NOT, AND, OR).
@@ -14,7 +15,8 @@ abstract class BooleanCondition extends BaseCondition {
 
    private BaseCondition rightCondition;
 
-   public BooleanCondition(BaseCondition leftCondition, BaseCondition rightCondition) {
+   public BooleanCondition(QueryFactory queryFactory, BaseCondition leftCondition, BaseCondition rightCondition) {
+      super(queryFactory);
       this.leftCondition = leftCondition;
       this.rightCondition = rightCondition;
    }

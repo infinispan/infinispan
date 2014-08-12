@@ -15,12 +15,12 @@ public final class FilterQueryFactory extends BaseQueryFactory<Query> {
 
    @Override
    public QueryBuilder<Query> from(Class entityType) {
-      return new FilterQueryBuilder(entityType.getCanonicalName());
+      return new FilterQueryBuilder(this, entityType.getCanonicalName());
    }
 
    @Override
    public QueryBuilder<Query> from(String entityType) {
-      return new FilterQueryBuilder(entityType);
+      return new FilterQueryBuilder(this, entityType);
    }
 }
 

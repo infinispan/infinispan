@@ -2,6 +2,7 @@ package org.infinispan.query.dsl.impl;
 
 import org.infinispan.query.dsl.FilterConditionContext;
 import org.infinispan.query.dsl.FilterConditionEndContext;
+import org.infinispan.query.dsl.QueryFactory;
 import org.infinispan.query.dsl.RangeConditionContext;
 
 import java.util.Collection;
@@ -20,7 +21,8 @@ class AttributeCondition extends BaseCondition implements FilterConditionEndCont
 
    private OperatorAndArgument operatorAndArgument;
 
-   public AttributeCondition(String attributePath) {
+   public AttributeCondition(QueryFactory queryFactory, String attributePath) {
+      super(queryFactory);
       this.attributePath = attributePath;
    }
 
