@@ -1,18 +1,23 @@
 package org.infinispan.client.hotrod.event;
 
+import static org.infinispan.client.hotrod.test.HotRodClientTestingUtil.withClientListener;
+
 import org.infinispan.client.hotrod.RemoteCache;
 import org.infinispan.client.hotrod.TestHelper;
+import org.infinispan.client.hotrod.annotation.ClientListener;
 import org.infinispan.client.hotrod.event.CustomEventLogListener.DynamicConverterFactory;
 import org.infinispan.client.hotrod.event.CustomEventLogListener.DynamicCustomEventLogListener;
 import org.infinispan.client.hotrod.event.CustomEventLogListener.StaticConverterFactory;
 import org.infinispan.client.hotrod.event.CustomEventLogListener.StaticCustomEventLogListener;
 import org.infinispan.client.hotrod.test.RemoteCacheManagerCallable;
 import org.infinispan.client.hotrod.test.SingleHotRodServerTest;
+import org.infinispan.client.hotrod.exceptions.HotRodClientException;
 import org.infinispan.server.hotrod.HotRodServer;
 import org.infinispan.server.hotrod.configuration.HotRodServerConfigurationBuilder;
 import org.testng.annotations.Test;
 
-import static org.infinispan.client.hotrod.test.HotRodClientTestingUtil.withClientListener;
+import static org.testng.AssertJUnit.assertEquals;
+import static org.testng.AssertJUnit.fail;
 
 @Test(groups = "functional", testName = "client.hotrod.event.ClientCustomEventsTest")
 public class ClientCustomEventsTest extends SingleHotRodServerTest {
@@ -41,6 +46,16 @@ public class ClientCustomEventsTest extends SingleHotRodServerTest {
             eventListener.expectOnlyRemovedCustomEvent(1, null);
          }
       });
+   }
+
+   /**
+    * Test that the HotRod server returns an error when a ClientListener is
+    * registered with a non-existing 'converterFactoryName'.
+    */
+   @Test(expectedExceptions = HotRodClientException.class)
+   public void testNonExistingConverterFactoryCustomEvents() {
+      NonExistingFactoryListener eventListener = new NonExistingFactoryListener();
+      withClientListener(eventListener, new RemoteCacheManagerCallable(remoteCacheManager));
    }
 
    public void testParameterBasedConversion() {
@@ -77,5 +92,8 @@ public class ClientCustomEventsTest extends SingleHotRodServerTest {
          }
       });
    }
+
+   @ClientListener(converterFactoryName = "non-existing-test-converter-factory")
+   public static class NonExistingFactoryListener extends CustomEventLogListener {}
 
 }
