@@ -243,4 +243,8 @@ public class CompatibilityCacheFactory<K, V> {
       return String.format("http://localhost:%s/rest/%s", restPort, restCacheName);
    }
 
+   HotRodServer getHotrodServer() {
+      return hotrod;
+   }
+
 }

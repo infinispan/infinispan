@@ -2,12 +2,12 @@ package org.infinispan.client.hotrod.event;
 
 import org.infinispan.client.hotrod.RemoteCache;
 import org.infinispan.client.hotrod.TestHelper;
-import org.infinispan.client.hotrod.event.CustomEventListener.CustomEvent;
+import org.infinispan.client.hotrod.event.CustomEventLogListener.DynamicConverterFactory;
+import org.infinispan.client.hotrod.event.CustomEventLogListener.DynamicCustomEventLogListener;
+import org.infinispan.client.hotrod.event.CustomEventLogListener.StaticConverterFactory;
+import org.infinispan.client.hotrod.event.CustomEventLogListener.StaticCustomEventLogListener;
 import org.infinispan.client.hotrod.test.RemoteCacheManagerCallable;
 import org.infinispan.client.hotrod.test.SingleHotRodServerTest;
-import org.infinispan.metadata.Metadata;
-import org.infinispan.filter.ConverterFactory;
-import org.infinispan.filter.Converter;
 import org.infinispan.server.hotrod.HotRodServer;
 import org.infinispan.server.hotrod.configuration.HotRodServerConfigurationBuilder;
 import org.testng.annotations.Test;
@@ -17,19 +17,17 @@ import static org.infinispan.client.hotrod.test.HotRodClientTestingUtil.withClie
 @Test(groups = "functional", testName = "client.hotrod.event.ClientCustomEventsTest")
 public class ClientCustomEventsTest extends SingleHotRodServerTest {
 
-   TestConverterFactory converterFactory = new TestConverterFactory();
-
    @Override
    protected HotRodServer createHotRodServer() {
       HotRodServerConfigurationBuilder builder = new HotRodServerConfigurationBuilder();
       HotRodServer server = TestHelper.startHotRodServer(cacheManager, builder);
-      server.addConverterFactory("test-converter-factory", converterFactory);
+      server.addConverterFactory("static-converter-factory", new StaticConverterFactory());
+      server.addConverterFactory("dynamic-converter-factory", new DynamicConverterFactory());
       return server;
    }
 
    public void testCustomEvents() {
-      final CustomEventListener eventListener = new CustomEventListener();
-      converterFactory.dynamic = false;
+      final StaticCustomEventLogListener eventListener = new StaticCustomEventLogListener();
       withClientListener(eventListener, new RemoteCacheManagerCallable(remoteCacheManager) {
          @Override
          public void call() {
@@ -46,8 +44,7 @@ public class ClientCustomEventsTest extends SingleHotRodServerTest {
    }
 
    public void testParameterBasedConversion() {
-      final CustomEventListener eventListener = new CustomEventListener();
-      converterFactory.dynamic = true;
+      final DynamicCustomEventLogListener eventListener = new DynamicCustomEventLogListener();
       withClientListener(eventListener, null, new Object[]{2}, new RemoteCacheManagerCallable(remoteCacheManager) {
          @Override
          public void call() {
@@ -62,40 +59,23 @@ public class ClientCustomEventsTest extends SingleHotRodServerTest {
    }
 
    public void testConvertedEventsReplay() {
-      final CustomEventListener eventListener = new CustomEventListener();
-      converterFactory.dynamic = false;
+      final StaticCustomEventLogListener staticEventListener = new StaticCustomEventLogListener();
       RemoteCache<Integer, String> cache = remoteCacheManager.getCache();
       cache.put(1, "one");
-      withClientListener(eventListener, new RemoteCacheManagerCallable(remoteCacheManager) {
+      withClientListener(staticEventListener, new RemoteCacheManagerCallable(remoteCacheManager) {
          @Override
          public void call() {
-            eventListener.expectSingleCustomEvent(1, "one");
+            staticEventListener.expectSingleCustomEvent(1, "one");
          }
       });
-      converterFactory.dynamic = true;
+      final DynamicCustomEventLogListener dynamicEventListener = new DynamicCustomEventLogListener();
       cache.put(2, "two");
-      withClientListener(eventListener, null, new Object[]{2}, new RemoteCacheManagerCallable(remoteCacheManager) {
+      withClientListener(dynamicEventListener, null, new Object[]{2}, new RemoteCacheManagerCallable(remoteCacheManager) {
          @Override
          public void call() {
-            eventListener.expectSingleCustomEvent(2, null);
+            dynamicEventListener.expectSingleCustomEvent(2, null);
          }
       });
-   }
-
-   static class TestConverterFactory implements ConverterFactory {
-      boolean dynamic;
-      @Override
-      public Converter<Integer, String, CustomEvent> getConverter(final Object[] params) {
-         return new Converter<Integer, String, CustomEvent>() {
-            @Override
-            public CustomEvent convert(Integer key, String value, Metadata metadata) {
-               if (dynamic && params[0].equals(key))
-                  return new CustomEvent(key, null);
-
-               return new CustomEvent(key, value);
-            }
-         };
-      }
    }
 
 }

@@ -1,19 +1,30 @@
 package org.infinispan.client.hotrod.event;
 
+import org.infinispan.Cache;
 import org.infinispan.client.hotrod.annotation.ClientCacheEntryCreated;
 import org.infinispan.client.hotrod.annotation.ClientCacheEntryModified;
 import org.infinispan.client.hotrod.annotation.ClientCacheEntryRemoved;
 import org.infinispan.client.hotrod.annotation.ClientCacheFailover;
 import org.infinispan.client.hotrod.annotation.ClientListener;
+import org.infinispan.commons.marshall.jboss.GenericJBossMarshaller;
+import org.infinispan.container.versioning.NumericVersion;
+import org.infinispan.filter.KeyValueFilter;
+import org.infinispan.filter.KeyValueFilterFactory;
+import org.infinispan.filter.NamedFactory;
+import org.infinispan.metadata.Metadata;
+import org.junit.Assert;
 
+import java.io.Serializable;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.TimeUnit;
 
-import static org.testng.AssertJUnit.assertNotNull;
+import static org.testng.AssertJUnit.*;
 
 @ClientListener
-public class EventLogListener {
+public class EventLogListener<K> {
    public BlockingQueue<ClientCacheEntryCreatedEvent> createdEvents =
          new ArrayBlockingQueue<ClientCacheEntryCreatedEvent>(128);
    public BlockingQueue<ClientCacheEntryModifiedEvent> modifiedEvents =
@@ -22,6 +33,16 @@ public class EventLogListener {
          new ArrayBlockingQueue<ClientCacheEntryRemovedEvent>(128);
    public BlockingQueue<ClientCacheFailoverEvent> failoverEvents =
          new ArrayBlockingQueue<ClientCacheFailoverEvent>(128);
+
+   private final boolean compatibility;
+
+   public EventLogListener(boolean compatibility) {
+      this.compatibility = compatibility;
+   }
+
+   public EventLogListener() {
+      this.compatibility = false;
+   }
 
    @SuppressWarnings("unchecked")
    public <E extends ClientEvent> E pollEvent(ClientEvent.Type type) {
@@ -65,5 +86,164 @@ public class EventLogListener {
    public void handleFailover(ClientCacheFailoverEvent e) {
       failoverEvents.add(e);
    }
+
+   public void expectNoEvents() {
+      expectNoEvents(ClientEvent.Type.CLIENT_CACHE_ENTRY_CREATED);
+      expectNoEvents(ClientEvent.Type.CLIENT_CACHE_ENTRY_MODIFIED);
+      expectNoEvents(ClientEvent.Type.CLIENT_CACHE_ENTRY_REMOVED);
+   }
+
+   public void expectNoEvents(ClientEvent.Type type) {
+      switch (type) {
+         case CLIENT_CACHE_ENTRY_CREATED:
+            assertEquals(0, createdEvents.size());
+            break;
+         case CLIENT_CACHE_ENTRY_MODIFIED:
+            assertEquals(0, modifiedEvents.size());
+            break;
+         case CLIENT_CACHE_ENTRY_REMOVED:
+            assertEquals(0, removedEvents.size());
+            break;
+      }
+   }
+
+   public void expectOnlyCreatedEvent(K key, Cache cache) {
+      expectSingleEvent(key, ClientEvent.Type.CLIENT_CACHE_ENTRY_CREATED, cache);
+      expectNoEvents(ClientEvent.Type.CLIENT_CACHE_ENTRY_MODIFIED);
+      expectNoEvents(ClientEvent.Type.CLIENT_CACHE_ENTRY_REMOVED);
+   }
+
+   public void expectOnlyModifiedEvent(K key, Cache cache) {
+      expectSingleEvent(key, ClientEvent.Type.CLIENT_CACHE_ENTRY_MODIFIED, cache);
+      expectNoEvents(ClientEvent.Type.CLIENT_CACHE_ENTRY_CREATED);
+      expectNoEvents(ClientEvent.Type.CLIENT_CACHE_ENTRY_REMOVED);
+   }
+
+   public void expectOnlyRemovedEvent(K key, Cache cache) {
+      expectSingleEvent(key, ClientEvent.Type.CLIENT_CACHE_ENTRY_REMOVED, cache);
+      expectNoEvents(ClientEvent.Type.CLIENT_CACHE_ENTRY_CREATED);
+      expectNoEvents(ClientEvent.Type.CLIENT_CACHE_ENTRY_MODIFIED);
+   }
+
+   public void expectSingleEvent(K key, ClientEvent.Type type, Cache cache) {
+      switch (type) {
+         case CLIENT_CACHE_ENTRY_CREATED:
+            ClientCacheEntryCreatedEvent createdEvent = pollEvent(type);
+            Assert.assertEquals(key, createdEvent.getKey());
+            assertEquals(serverDataVersion(cache, key), createdEvent.getVersion());
+            break;
+         case CLIENT_CACHE_ENTRY_MODIFIED:
+            ClientCacheEntryModifiedEvent modifiedEvent = pollEvent(type);
+            Assert.assertEquals(key, modifiedEvent.getKey());
+            assertEquals(serverDataVersion(cache, key), modifiedEvent.getVersion());
+            break;
+         case CLIENT_CACHE_ENTRY_REMOVED:
+            ClientCacheEntryRemovedEvent removedEvent = pollEvent(type);
+            Assert.assertEquals(key, removedEvent.getKey());
+            break;
+      }
+      Assert.assertEquals(0, queue(type).size());
+   }
+
+   private long serverDataVersion(Cache<Object, Object> cache, K key) {
+      Object lookupKey;
+      try {
+         lookupKey = compatibility ? key : new GenericJBossMarshaller().objectToByteBuffer(key);
+      } catch (Exception e) {
+         throw new AssertionError(e);
+      }
+
+      Metadata meta = cache.getAdvancedCache().getCacheEntry(lookupKey).getMetadata();
+      return ((NumericVersion) meta.version()).getVersion();
+   }
+
+   public void expectUnorderedEvents(ClientEvent.Type type, K... keys) {
+      List<K> assertedKeys = new ArrayList<>();
+      for (int i = 0; i < keys.length; i++) {
+         ClientEvent event = pollEvent(type);
+         int initialSize = assertedKeys.size();
+         for (K key : keys) {
+            K eventKey = null;
+            switch (event.getType()) {
+               case CLIENT_CACHE_ENTRY_CREATED:
+                  eventKey = ((ClientCacheEntryCreatedEvent<K>) event).getKey();
+                  break;
+               case CLIENT_CACHE_ENTRY_MODIFIED:
+                  eventKey = ((ClientCacheEntryModifiedEvent<K>) event).getKey();
+                  break;
+               case CLIENT_CACHE_ENTRY_REMOVED:
+                  eventKey = ((ClientCacheEntryRemovedEvent<K>) event).getKey();
+                  break;
+            }
+            checkUnorderedKeyEvent(assertedKeys, key, eventKey);
+         }
+         int finalSize = assertedKeys.size();
+         assertEquals(initialSize + 1, finalSize);
+      }
+   }
+
+   private boolean checkUnorderedKeyEvent(List<K> assertedKeys, K key, K eventKey) {
+      if (key.equals(eventKey)) {
+         assertFalse(assertedKeys.contains(key));
+         assertedKeys.add(key);
+         return true;
+      }
+      return false;
+   }
+
+   public void expectFailoverEvent(EventLogListener eventListener) {
+      eventListener.pollEvent(ClientEvent.Type.CLIENT_CACHE_FAILOVER);
+   }
+
+   @ClientListener(filterFactoryName = "static-filter-factory")
+   public static class StaticFilteredEventLogListener<K> extends EventLogListener<K> {
+      public StaticFilteredEventLogListener() {}
+      public StaticFilteredEventLogListener(boolean compatibility) { super(compatibility); }
+   }
+
+   @ClientListener(filterFactoryName = "dynamic-filter-factory")
+   public static class DynamicFilteredEventLogListener<K> extends EventLogListener<K> {
+      public DynamicFilteredEventLogListener() {}
+      public DynamicFilteredEventLogListener(boolean compatibility) { super(compatibility); }
+   }
+
+   @NamedFactory(name = "static-filter-factory")
+   public static class StaticKeyValueFilterFactory implements KeyValueFilterFactory {
+      @Override
+      public KeyValueFilter<Integer, String> getKeyValueFilter(final Object[] params) {
+         return new StaticKeyValueFilter();
+      }
+
+      static class StaticKeyValueFilter implements KeyValueFilter<Integer, String>, Serializable {
+         final Integer staticKey = 2;
+         @Override
+         public boolean accept(Integer key, String value, Metadata metadata) {
+            return staticKey.equals(key);
+         }
+      }
+
+   }
+
+   @NamedFactory(name = "dynamic-filter-factory")
+   public static class DynamicKeyValueFilterFactory implements KeyValueFilterFactory {
+      @Override
+      public KeyValueFilter<Integer, String> getKeyValueFilter(final Object[] params) {
+         return new DynamicKeyValueFilter(params);
+      }
+
+      static class DynamicKeyValueFilter implements KeyValueFilter<Integer, String>, Serializable {
+         private final Object[] params;
+
+         public DynamicKeyValueFilter(Object[] params) {
+            this.params = params;
+         }
+
+         @Override
+         public boolean accept(Integer key, String value, Metadata metadata) {
+            return params[0].equals(key); // dynamic
+         }
+      }
+   }
+
 
 }

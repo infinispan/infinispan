@@ -44,3 +44,11 @@ class HotRodTypeConverter extends TypeConverter[AnyRef, AnyRef, AnyRef, AnyRef] 
       if (source != null) marshaller.objectToByteBuffer(source) else null
 
 }
+
+object HotRodTypeConverter {
+   def apply(marshaller: Marshaller): HotRodTypeConverter = {
+      val converter = new HotRodTypeConverter
+      if (marshaller != null) converter.setMarshaller(marshaller)
+      converter
+   }
+}

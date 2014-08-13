@@ -3,8 +3,10 @@ package org.infinispan.client.hotrod.event;
 import org.infinispan.client.hotrod.RemoteCache;
 import org.infinispan.client.hotrod.RemoteCacheManager;
 import org.infinispan.client.hotrod.TestHelper;
-import org.infinispan.client.hotrod.annotation.ClientListener;
-import org.infinispan.client.hotrod.event.CustomEventListener.CustomEvent;
+import org.infinispan.client.hotrod.event.CustomEventLogListener.StaticConverterFactory;
+import org.infinispan.client.hotrod.event.CustomEventLogListener.StaticCustomEventLogListener;
+import org.infinispan.client.hotrod.event.EventLogListener.StaticFilteredEventLogListener;
+import org.infinispan.client.hotrod.event.EventLogListener.StaticKeyValueFilterFactory;
 import org.infinispan.client.hotrod.impl.transport.tcp.FailoverRequestBalancingStrategy;
 import org.infinispan.client.hotrod.impl.transport.tcp.RoundRobinBalancingStrategy;
 import org.infinispan.client.hotrod.test.HotRodClientTestingUtil;
@@ -13,11 +15,6 @@ import org.infinispan.client.hotrod.test.RemoteCacheManagerCallable;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.manager.EmbeddedCacheManager;
-import org.infinispan.metadata.Metadata;
-import org.infinispan.filter.ConverterFactory;
-import org.infinispan.filter.Converter;
-import org.infinispan.filter.KeyValueFilterFactory;
-import org.infinispan.filter.KeyValueFilter;
 import org.infinispan.server.hotrod.HotRodServer;
 import org.infinispan.server.hotrod.configuration.HotRodServerConfigurationBuilder;
 import org.infinispan.test.TestingUtil;
@@ -25,22 +22,16 @@ import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 import org.testng.annotations.Test;
 
-import java.io.Serializable;
 import java.net.InetSocketAddress;
 import java.net.SocketAddress;
-import java.util.ArrayList;
 import java.util.Collection;
-import java.util.List;
 import java.util.Set;
 
-import static org.infinispan.client.hotrod.test.HotRodClientTestingUtil.*;
+import static org.infinispan.client.hotrod.test.HotRodClientTestingUtil.withClientListener;
 import static org.infinispan.server.hotrod.test.HotRodTestingUtil.hotRodCacheConfiguration;
 
 @Test(groups = "functional", testName = "client.hotrod.event.ClientClusterEventsTest")
 public class ClientClusterEventsTest extends MultiHotRodServersTest {
-
-   List<TestKeyValueFilterFactory> filters = new ArrayList<TestKeyValueFilterFactory>();
-   List<TestConverterFactory> converters = new ArrayList<TestConverterFactory>();
 
    @Override
    protected void createCacheManagers() throws Throwable {
@@ -55,77 +46,75 @@ public class ClientClusterEventsTest extends MultiHotRodServersTest {
       EmbeddedCacheManager cm = addClusterEnabledCacheManager(builder);
       HotRodServerConfigurationBuilder serverBuilder = new HotRodServerConfigurationBuilder();
       HotRodServer server = TestHelper.startHotRodServer(cm, serverBuilder);
-      filters.add(new TestKeyValueFilterFactory());
-      server.addKeyValueFilterFactory("test-filter-factory", filters.get(0));
-      converters.add(new TestConverterFactory());
-      server.addConverterFactory("test-converter-factory", converters.get(0));
+      server.addKeyValueFilterFactory("static-filter-factory", new StaticKeyValueFilterFactory());
+      server.addConverterFactory("static-converter-factory", new StaticConverterFactory());
       servers.add(server);
       return server;
    }
 
    public void testEventForwarding() {
-      final EventLogListener eventListener = new EventLogListener();
-      withClientListener(eventListener, new RemoteCacheManagerCallable(client(0)) {
-         @Override
-         public void call() {
-            RemoteCache<Integer, String> c3 = client(2).getCache();
-            expectNoEvents(eventListener);
-            c3.put(1, "one");
-            expectOnlyCreatedEvent(1, eventListener, cache(0));
-            c3.put(2, "two");
-            expectOnlyCreatedEvent(2, eventListener, cache(0));
-            c3.put(3, "three");
-            expectOnlyCreatedEvent(3, eventListener, cache(0));
-            c3.replace(1, "newone");
-            expectOnlyModifiedEvent(1, eventListener, cache(0));
-            c3.replace(2, "newtwo");
-            expectOnlyModifiedEvent(2, eventListener, cache(0));
-            c3.replace(3, "newthree");
-            expectOnlyModifiedEvent(3, eventListener, cache(0));
-            c3.remove(1);
-            expectOnlyRemovedEvent(1, eventListener, cache(0));
-            c3.remove(2);
-            expectOnlyRemovedEvent(2, eventListener, cache(0));
-            c3.remove(3);
-            expectOnlyRemovedEvent(3, eventListener, cache(0));
-         }
-      });
-   }
-
-   public void testFilteringInCluster() {
-      final FilteredEventLogListener eventListener = new FilteredEventLogListener();
-      withClientListener(eventListener, new RemoteCacheManagerCallable(client(0)) {
-         @Override
-         public void call() {
-            RemoteCache<Integer, String> c3 = client(2).getCache();
-            expectNoEvents(eventListener);
-            c3.put(11, "oneone");
-            expectNoEvents(eventListener);
-            c3.put(22, "twotwo");
-            expectOnlyCreatedEvent(22, eventListener, cache(0));
-            c3.remove(11);
-            expectNoEvents(eventListener);
-            c3.remove(22);
-            expectOnlyRemovedEvent(22, eventListener, cache(0));
-         }
-      });
-   }
-
-   public void testConversionInCluster() {
-      final CustomEventListener eventListener = new CustomEventListener();
+      final EventLogListener<Integer> eventListener = new EventLogListener<>();
       withClientListener(eventListener, new RemoteCacheManagerCallable(client(0)) {
          @Override
          public void call() {
             RemoteCache<Integer, String> c3 = client(2).getCache();
             eventListener.expectNoEvents();
-            c3.put(111, "oneoneone");
-            eventListener.expectSingleCustomEvent(111, "oneoneone");
-            c3.put(222, "twotwotwo");
-            eventListener.expectSingleCustomEvent(222, "twotwotwo");
-            c3.remove(111);
-            eventListener.expectSingleCustomEvent(111, null);
-            c3.remove(222);
-            eventListener.expectSingleCustomEvent(222, null);
+            c3.put(1, "one");
+            eventListener.expectOnlyCreatedEvent(1, cache(0));
+            c3.put(2, "two");
+            eventListener.expectOnlyCreatedEvent(2, cache(0));
+            c3.put(3, "three");
+            eventListener.expectOnlyCreatedEvent(3, cache(0));
+            c3.replace(1, "new-one");
+            eventListener.expectOnlyModifiedEvent(1, cache(0));
+            c3.replace(2, "new-two");
+            eventListener.expectOnlyModifiedEvent(2, cache(0));
+            c3.replace(3, "new-three");
+            eventListener.expectOnlyModifiedEvent(3, cache(0));
+            c3.remove(1);
+            eventListener.expectOnlyRemovedEvent(1, cache(0));
+            c3.remove(2);
+            eventListener.expectOnlyRemovedEvent(2, cache(0));
+            c3.remove(3);
+            eventListener.expectOnlyRemovedEvent(3, cache(0));
+         }
+      });
+   }
+
+   public void testFilteringInCluster() {
+      final StaticFilteredEventLogListener<Integer> eventListener = new StaticFilteredEventLogListener<>();
+      withClientListener(eventListener, new RemoteCacheManagerCallable(client(0)) {
+         @Override
+         public void call() {
+            RemoteCache<Integer, String> c3 = client(2).getCache();
+            eventListener.expectNoEvents();
+            c3.put(1, "one");
+            eventListener.expectNoEvents();
+            c3.put(2, "two");
+            eventListener.expectOnlyCreatedEvent(2, cache(0));
+            c3.remove(1);
+            eventListener.expectNoEvents();
+            c3.remove(2);
+            eventListener.expectOnlyRemovedEvent(2, cache(0));
+         }
+      });
+   }
+
+   public void testConversionInCluster() {
+      final StaticCustomEventLogListener eventListener = new StaticCustomEventLogListener();
+      withClientListener(eventListener, new RemoteCacheManagerCallable(client(0)) {
+         @Override
+         public void call() {
+            RemoteCache<Integer, String> c3 = client(2).getCache();
+            eventListener.expectNoEvents();
+            c3.put(1, "one");
+            eventListener.expectSingleCustomEvent(1, "one");
+            c3.put(2, "two");
+            eventListener.expectSingleCustomEvent(2, "two");
+            c3.remove(1);
+            eventListener.expectSingleCustomEvent(1, null);
+            c3.remove(2);
+            eventListener.expectSingleCustomEvent(2, null);
          }
       });
    }
@@ -137,17 +126,19 @@ public class ClientClusterEventsTest extends MultiHotRodServersTest {
       builder.addServers(server.getHost() + ":" + server.getPort());
       builder.balancingStrategy(FirstServerAvailableBalancer.class);
       RemoteCacheManager newClient = new RemoteCacheManager(builder.build());
-      EventLogListener eventListener = new EventLogListener();
+      EventLogListener<Integer> eventListener = new EventLogListener<>();
       RemoteCache<Integer, String> c = newClient.getCache();
       c.put(0, "zero");
       c.remove(0);
       c.addClientListener(eventListener);
       c.put(1, "one");
-      expectOnlyCreatedEvent(1, eventListener, cache(0));
+      eventListener.expectOnlyCreatedEvent(1, cache(0));
       findServerAndKill(FirstServerAvailableBalancer.serverToKill);
       c.put(2, "two");
-      expectFailoverEvent(eventListener);
-      expectUnorderedEvents(eventListener, ClientEvent.Type.CLIENT_CACHE_ENTRY_CREATED, 1, 2);
+      eventListener.expectFailoverEvent(eventListener);
+      eventListener.expectUnorderedEvents(ClientEvent.Type.CLIENT_CACHE_ENTRY_CREATED, 1, 2);
+      c.remove(1);
+      c.remove(2);
    }
 
    private void findServerAndKill(InetSocketAddress addr) {
@@ -164,13 +155,11 @@ public class ClientClusterEventsTest extends MultiHotRodServersTest {
    public static class FirstServerAvailableBalancer implements FailoverRequestBalancingStrategy {
       static Log log = LogFactory.getLog(FirstServerAvailableBalancer.class);
       static InetSocketAddress serverToKill;
-      private Collection<SocketAddress> servers;
       private final RoundRobinBalancingStrategy delegate = new RoundRobinBalancingStrategy();
 
       @Override
       public void setServers(Collection<SocketAddress> servers) {
          log.info("Set servers: " + servers);
-         this.servers = servers;
          delegate.setServers(servers);
          serverToKill = (InetSocketAddress) servers.iterator().next();
       }
@@ -189,44 +178,6 @@ public class ClientClusterEventsTest extends MultiHotRodServersTest {
       public SocketAddress nextServer() {
          return nextServer(null);
       }
-   }
-
-   static class TestKeyValueFilterFactory implements KeyValueFilterFactory {
-      TestKeyValueFilter filter = new TestKeyValueFilter();
-      @Override
-      public KeyValueFilter<Integer, String> getKeyValueFilter(final Object[] params) {
-         filter.params = params;
-         return filter;
-      }
-
-      static class TestKeyValueFilter implements KeyValueFilter<Integer, String>, Serializable {
-         Object[] params;
-
-         @Override
-         public boolean accept(Integer key, String value, Metadata metadata) {
-            if (key.equals(22)) // static key
-               return true;
-
-            return false;
-         }
-      }
-   }
-
-   @ClientListener(filterFactoryName = "test-filter-factory")
-   static class FilteredEventLogListener extends EventLogListener {}
-
-   static class TestConverterFactory implements ConverterFactory {
-      @Override
-      public Converter<Integer, String, CustomEvent> getConverter(final Object[] params) {
-         return new TestConverter();
-      }
-
-      static class TestConverter implements Converter<Integer, String, CustomEvent>, Serializable {
-         @Override
-         public CustomEvent convert(Integer key, String value, Metadata metadata) {
-            return new CustomEvent(key, value);
-         }
-      };
    }
 
 }
