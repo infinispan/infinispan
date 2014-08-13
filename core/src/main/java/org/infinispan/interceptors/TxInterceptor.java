@@ -12,6 +12,7 @@ import org.infinispan.commands.control.LockControlCommand;
 import org.infinispan.commands.read.EntrySetCommand;
 import org.infinispan.commands.read.GetKeyValueCommand;
 import org.infinispan.commands.read.KeySetCommand;
+import org.infinispan.commands.read.SizeCommand;
 import org.infinispan.commands.read.ValuesCommand;
 import org.infinispan.commands.tx.AbstractTransactionBoundaryCommand;
 import org.infinispan.commands.tx.CommitCommand;
@@ -256,6 +257,11 @@ public class TxInterceptor extends CommandInterceptor implements JmxStatisticsEx
    @Override
    public Object visitPutMapCommand(InvocationContext ctx, PutMapCommand command) throws Throwable {
       return enlistWriteAndInvokeNext(ctx, command);
+   }
+
+   @Override
+   public Object visitSizeCommand(InvocationContext ctx, SizeCommand command) throws Throwable {
+      return enlistReadAndInvokeNext(ctx, command);
    }
 
    @Override

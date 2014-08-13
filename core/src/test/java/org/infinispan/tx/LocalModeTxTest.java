@@ -132,4 +132,13 @@ public class LocalModeTxTest extends SingleCacheManagerTest {
       tm().commit();
       assert txTable.getLocalTransactions().size() == 0;
    }
+
+   public void testTxCleanupWithSize() throws Exception {
+      tm().begin();
+      assert cache.size() == 0;
+      TransactionTable txTable = getTransactionTable(cache);
+      assert txTable.getLocalTransactions().size() == 1;
+      tm().commit();
+      assert txTable.getLocalTransactions().size() == 0;
+   }
 }
