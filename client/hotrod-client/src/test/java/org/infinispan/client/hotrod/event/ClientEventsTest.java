@@ -9,7 +9,7 @@ import org.testng.annotations.Test;
 import java.io.Serializable;
 import java.util.Set;
 
-import static org.infinispan.client.hotrod.test.HotRodClientTestingUtil.*;
+import static org.infinispan.client.hotrod.test.HotRodClientTestingUtil.withClientListener;
 import static org.testng.AssertJUnit.assertEquals;
 import static org.testng.AssertJUnit.assertTrue;
 
@@ -20,184 +20,184 @@ import static org.testng.AssertJUnit.assertTrue;
 public class ClientEventsTest extends SingleHotRodServerTest {
 
    public void testCreatedEvent() {
-      final EventLogListener eventListener = new EventLogListener();
+      final EventLogListener<Integer> eventListener = new EventLogListener<>();
       withClientListener(eventListener, new RemoteCacheManagerCallable(remoteCacheManager) {
          @Override
          public void call() {
             RemoteCache<Integer, String> cache = rcm.getCache();
-            expectNoEvents(eventListener);
+            eventListener.expectNoEvents();
             cache.put(1, "one");
-            expectOnlyCreatedEvent(1, eventListener, cache());
+            eventListener.expectOnlyCreatedEvent(1, cache());
             cache.put(2, "two");
-            expectOnlyCreatedEvent(2, eventListener, cache());
+            eventListener.expectOnlyCreatedEvent(2, cache());
          }
       });
    }
 
    public void testModifiedEvent() {
-      final EventLogListener eventListener = new EventLogListener();
+      final EventLogListener<Integer> eventListener = new EventLogListener<>();
       withClientListener(eventListener, new RemoteCacheManagerCallable(remoteCacheManager) {
          @Override
          public void call() {
             RemoteCache<Integer, String> cache = rcm.getCache();
-            expectNoEvents(eventListener);
+            eventListener.expectNoEvents();
             cache.put(1, "one");
-            expectOnlyCreatedEvent(1, eventListener, cache());
+            eventListener.expectOnlyCreatedEvent(1, cache());
             cache.put(1, "newone");
-            expectOnlyModifiedEvent(1, eventListener, cache());
+            eventListener.expectOnlyModifiedEvent(1, cache());
          }
       });
    }
 
    public void testRemovedEvent() {
-      final EventLogListener eventListener = new EventLogListener();
+      final EventLogListener<Integer> eventListener = new EventLogListener<>();
       withClientListener(eventListener, new RemoteCacheManagerCallable(remoteCacheManager) {
          @Override
          public void call() {
             RemoteCache<Integer, String> cache = rcm.getCache();
-            expectNoEvents(eventListener);
+            eventListener.expectNoEvents();
             cache.put(1, "one");
-            expectOnlyCreatedEvent(1, eventListener, cache());
+            eventListener.expectOnlyCreatedEvent(1, cache());
             cache.remove(1);
-            expectOnlyRemovedEvent(1, eventListener, cache());
+            eventListener.expectOnlyRemovedEvent(1, cache());
          }
       });
    }
 
    public void testReplaceEvents() {
-      final EventLogListener eventListener = new EventLogListener();
+      final EventLogListener<Integer> eventListener = new EventLogListener<>();
       withClientListener(eventListener, new RemoteCacheManagerCallable(remoteCacheManager) {
          @Override
          public void call() {
             RemoteCache<Integer, String> cache = rcm.getCache();
-            expectNoEvents(eventListener);
+            eventListener.expectNoEvents();
             cache.replace(1, "one");
-            expectNoEvents(eventListener);
+            eventListener.expectNoEvents();
             cache.put(1, "one");
-            expectOnlyCreatedEvent(1, eventListener, cache());
+            eventListener.expectOnlyCreatedEvent(1, cache());
             cache.replace(1, "newone");
-            expectOnlyModifiedEvent(1, eventListener, cache());
+            eventListener.expectOnlyModifiedEvent(1, cache());
          }
       });
    }
 
    public void testPutIfAbsentEvents() {
-      final EventLogListener eventListener = new EventLogListener();
+      final EventLogListener<Integer> eventListener = new EventLogListener<>();
       withClientListener(eventListener, new RemoteCacheManagerCallable(remoteCacheManager) {
          @Override
          public void call() {
             RemoteCache<Integer, String> cache = rcm.getCache();
-            expectNoEvents(eventListener);
+            eventListener.expectNoEvents();
             cache.putIfAbsent(1, "one");
-            expectOnlyCreatedEvent(1, eventListener, cache());
+            eventListener.expectOnlyCreatedEvent(1, cache());
             cache.putIfAbsent(1, "newone");
-            expectNoEvents(eventListener);
+            eventListener.expectNoEvents();
          }
       });
    }
 
    public void testReplaceIfUnmodifiedEvents() {
-      final EventLogListener eventListener = new EventLogListener();
+      final EventLogListener<Integer> eventListener = new EventLogListener<>();
       withClientListener(eventListener, new RemoteCacheManagerCallable(remoteCacheManager) {
          @Override
          public void call() {
             RemoteCache<Integer, String> cache = rcm.getCache();
-            expectNoEvents(eventListener);
+            eventListener.expectNoEvents();
             cache.replaceWithVersion(1, "one", 0);
-            expectNoEvents(eventListener);
+            eventListener.expectNoEvents();
             cache.putIfAbsent(1, "one");
-            expectOnlyCreatedEvent(1, eventListener, cache());
+            eventListener.expectOnlyCreatedEvent(1, cache());
             cache.replaceWithVersion(1, "one", 0);
-            expectNoEvents(eventListener);
+            eventListener.expectNoEvents();
             VersionedValue<String> versioned = cache.getVersioned(1);
             cache.replaceWithVersion(1, "one", versioned.getVersion());
-            expectOnlyModifiedEvent(1, eventListener, cache());
+            eventListener.expectOnlyModifiedEvent(1, cache());
          }
       });
    }
 
    public void testRemoveIfUnmodifiedEvents() {
-      final EventLogListener eventListener = new EventLogListener();
+      final EventLogListener<Integer> eventListener = new EventLogListener<>();
       withClientListener(eventListener, new RemoteCacheManagerCallable(remoteCacheManager) {
          @Override
          public void call() {
             RemoteCache<Integer, String> cache = rcm.getCache();
-            expectNoEvents(eventListener);
+            eventListener.expectNoEvents();
             cache.removeWithVersion(1, 0);
-            expectNoEvents(eventListener);
+            eventListener.expectNoEvents();
             cache.putIfAbsent(1, "one");
-            expectOnlyCreatedEvent(1, eventListener, cache());
+            eventListener.expectOnlyCreatedEvent(1, cache());
             cache.removeWithVersion(1, 0);
-            expectNoEvents(eventListener);
+            eventListener.expectNoEvents();
             VersionedValue<String> versioned = cache.getVersioned(1);
             cache.removeWithVersion(1, versioned.getVersion());
-            expectOnlyRemovedEvent(1, eventListener, cache());
+            eventListener.expectOnlyRemovedEvent(1, cache());
          }
       });
    }
 
    public void testClearEvents() {
-      final EventLogListener eventListener = new EventLogListener();
+      final EventLogListener<Integer> eventListener = new EventLogListener<>();
       withClientListener(eventListener, new RemoteCacheManagerCallable(remoteCacheManager) {
          @Override
          public void call() {
             RemoteCache<Integer, String> cache = rcm.getCache();
-            expectNoEvents(eventListener);
+            eventListener.expectNoEvents();
             cache.put(1, "one");
-            expectOnlyCreatedEvent(1, eventListener, cache());
+            eventListener.expectOnlyCreatedEvent(1, cache());
             cache.put(2, "two");
-            expectOnlyCreatedEvent(2, eventListener, cache());
+            eventListener.expectOnlyCreatedEvent(2, cache());
             cache.put(3, "three");
-            expectOnlyCreatedEvent(3, eventListener, cache());
+            eventListener.expectOnlyCreatedEvent(3, cache());
             cache.clear();
-            expectUnorderedEvents(eventListener, ClientEvent.Type.CLIENT_CACHE_ENTRY_REMOVED, 1, 2, 3);
+            eventListener.expectUnorderedEvents(ClientEvent.Type.CLIENT_CACHE_ENTRY_REMOVED, 1, 2, 3);
          }
       });
    }
 
    public void testNoEventsBeforeAddingListener() {
-      final EventLogListener eventListener = new EventLogListener();
+      final EventLogListener<Integer> eventListener = new EventLogListener<>();
       RemoteCache<Integer, String> rcache = remoteCacheManager.getCache();
       rcache.put(1, "one");
-      expectNoEvents(eventListener);
+      eventListener.expectNoEvents();
       rcache.put(1, "newone");
-      expectNoEvents(eventListener);
+      eventListener.expectNoEvents();
       rcache.remove(1);
-      expectNoEvents(eventListener);
+      eventListener.expectNoEvents();
       withClientListener(eventListener, new RemoteCacheManagerCallable(remoteCacheManager) {
          @Override
          public void call() {
             RemoteCache<Integer, String> cache = rcm.getCache();
             cache.put(1, "one");
-            expectOnlyCreatedEvent(1, eventListener, cache());
+            eventListener.expectOnlyCreatedEvent(1, cache());
             cache.put(1, "newone");
-            expectOnlyModifiedEvent(1, eventListener, cache());
+            eventListener.expectOnlyModifiedEvent(1, cache());
             cache.remove(1);
-            expectOnlyRemovedEvent(1, eventListener, cache());
+            eventListener.expectOnlyRemovedEvent(1, cache());
          }
       });
    }
 
    public void testNoEventsAfterRemovingListener() {
-      final EventLogListener eventListener = new EventLogListener();
+      final EventLogListener<Integer> eventListener = new EventLogListener<>();
       final RemoteCache<Integer, String> rcache = remoteCacheManager.getCache();
       withClientListener(eventListener, new RemoteCacheManagerCallable(remoteCacheManager) {
          @Override
          public void call() {
             rcache.put(1, "one");
-            expectOnlyCreatedEvent(1, eventListener, cache());
+            eventListener.expectOnlyCreatedEvent(1, cache());
             rcache.put(1, "newone");
-            expectOnlyModifiedEvent(1, eventListener, cache());
+            eventListener.expectOnlyModifiedEvent(1, cache());
             rcache.remove(1);
-            expectOnlyRemovedEvent(1, eventListener, cache());
+            eventListener.expectOnlyRemovedEvent(1, cache());
          }
       });
       rcache.put(1, "one");
-      expectNoEvents(eventListener);
+      eventListener.expectNoEvents();
       rcache.put(1, "newone");
-      expectNoEvents(eventListener);
+      eventListener.expectNoEvents();
       rcache.remove(1);
-      expectNoEvents(eventListener);
+      eventListener.expectNoEvents();
    }
 
    public void testSetListeners() {
@@ -226,33 +226,33 @@ public class ClientEventsTest extends SingleHotRodServerTest {
    }
 
    public void testCustomTypeEvents() {
-      final EventLogListener eventListener = new EventLogListener();
+      final EventLogListener<CustomKey> eventListener = new EventLogListener<>();
       withClientListener(eventListener, new RemoteCacheManagerCallable(remoteCacheManager) {
          @Override
          public void call() {
             RemoteCache<CustomKey, String> cache = rcm.getCache();
-            expectNoEvents(eventListener);
+            eventListener.expectNoEvents();
             CustomKey key = new CustomKey(1);
             cache.put(key, "one");
-            expectOnlyCreatedEvent(key, eventListener, cache());
+            eventListener.expectOnlyCreatedEvent(key, cache());
             cache.replace(key, "newone");
-            expectOnlyModifiedEvent(key, eventListener, cache());
+            eventListener.expectOnlyModifiedEvent(key, cache());
             cache.remove(key);
-            expectOnlyRemovedEvent(key, eventListener, cache());
+            eventListener.expectOnlyRemovedEvent(key, cache());
          }
       });
    }
 
    public void testEventReplayAfterAddingListener() {
-      final EventLogListener eventListener = new EventLogListener();
+      final EventLogListener<Integer> eventListener = new EventLogListener<>();
       RemoteCache<Integer, String> cache = remoteCacheManager.getCache();
       cache.put(1, "one");
       cache.put(2, "two");
-      expectNoEvents(eventListener);
+      eventListener.expectNoEvents();
       withClientListener(eventListener, new RemoteCacheManagerCallable(remoteCacheManager) {
          @Override
          public void call() {
-            expectUnorderedEvents(eventListener, ClientEvent.Type.CLIENT_CACHE_ENTRY_CREATED, 1, 2);
+            eventListener.expectUnorderedEvents(ClientEvent.Type.CLIENT_CACHE_ENTRY_CREATED, 1, 2);
          }
       });
    }
@@ -268,8 +268,7 @@ public class ClientEventsTest extends SingleHotRodServerTest {
          if (this == o) return true;
          if (o == null || getClass() != o.getClass()) return false;
          CustomKey customKey = (CustomKey) o;
-         if (id != customKey.id) return false;
-         return true;
+         return id == customKey.id;
       }
 
       @Override

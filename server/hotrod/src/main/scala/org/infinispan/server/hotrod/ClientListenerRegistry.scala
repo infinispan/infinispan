@@ -1,24 +1,22 @@
 package org.infinispan.server.hotrod
 
 import java.io.{ObjectInput, ObjectOutput}
+import java.util.concurrent.atomic.AtomicLong
 
 import io.netty.channel.Channel
-import java.util.concurrent.atomic.AtomicLong
 import org.infinispan.commons.equivalence.{AnyEquivalence, ByteArrayEquivalence}
-import org.infinispan.commons.marshall.AbstractExternalizer
-import org.infinispan.commons.marshall.Marshaller
+import org.infinispan.commons.marshall.{AbstractExternalizer, Marshaller}
 import org.infinispan.commons.util.CollectionFactory
 import org.infinispan.commons.util.concurrent.jdk8backported.EquivalentConcurrentHashMapV8
 import org.infinispan.container.versioning.NumericVersion
-import org.infinispan.filter.{KeyValueFilterFactory, ConverterFactory, Converter, KeyValueFilter}
+import org.infinispan.filter.{Converter, ConverterFactory, KeyValueFilter, KeyValueFilterFactory}
 import org.infinispan.metadata.Metadata
 import org.infinispan.notifications._
-import org.infinispan.notifications.cachelistener.annotation.{CacheEntryRemoved, CacheEntryModified, CacheEntryCreated}
+import org.infinispan.notifications.cachelistener.annotation.{CacheEntryCreated, CacheEntryModified, CacheEntryRemoved}
+import org.infinispan.notifications.cachelistener.event.CacheEntryEvent
 import org.infinispan.notifications.cachelistener.event.Event.Type
 import org.infinispan.server.hotrod.ClientListenerRegistry.{BinaryConverter, BinaryFilter}
-import org.infinispan.server.hotrod.Events.CustomEvent
-import org.infinispan.server.hotrod.Events.KeyEvent
-import org.infinispan.server.hotrod.Events.KeyWithVersionEvent
+import org.infinispan.server.hotrod.Events.{CustomEvent, KeyEvent, KeyWithVersionEvent}
 import org.infinispan.server.hotrod.OperationResponse._
 import org.infinispan.server.hotrod.configuration.HotRodServerConfiguration
 import org.infinispan.server.hotrod.logging.Log
@@ -48,39 +46,50 @@ class ClientListenerRegistry(configuration: HotRodServerConfiguration) extends L
    def addClientListener(ch: Channel, h: HotRodHeader, listenerId: Bytes, cache: Cache,
            filterFactory: NamedFactory, converterFactory: NamedFactory): Unit = {
       val isCustom = converterFactory.isDefined
-      val clientEventSender = new ClientEventSender(ch, listenerId, h.version, isCustom)
-
+      val clientEventSender = createClientEventSender(ch, h.version, listenerId, cache, isCustom)
       val filterParams = unmarshallParams(filterFactory)
       val converterParams = unmarshallParams(converterFactory)
+      val compatibilityEnabled = cache.getCacheConfiguration.compatibility().enabled()
 
       val filter =
          for {
             namedFactory <- filterFactory
-            factory <- findFilterFactory(namedFactory._1)
+            factory <- findFilterFactory(namedFactory._1, compatibilityEnabled)
          } yield factory.getKeyValueFilter[Bytes, Bytes](filterParams.toArray)
 
       val converter =
          for {
             namedFactory <- converterFactory
-            factory <- findConverterFactory(namedFactory._1)
+            factory <- findConverterFactory(namedFactory._1, compatibilityEnabled)
          } yield factory.getConverter[Bytes, Bytes, Bytes](converterParams.toArray)
 
       eventSenders.put(listenerId, clientEventSender)
       cache.addListener(clientEventSender, filter.orNull, converter.orNull)
    }
 
-   def findConverterFactory(name: String): Option[ConverterFactory] = {
+   def createClientEventSender(ch: Channel, version: Byte, listenerId: Bytes, cache: Cache, isCustom: Boolean): AnyRef = {
+      val defaultEventSender = new ClientEventSender(ch, listenerId, version, isCustom)
+      val compatibility = cache.getCacheConfiguration.compatibility()
+      if (compatibility.enabled()) {
+         val converter = HotRodTypeConverter(compatibility.marshaller())
+         new CompatibilityClientEventSender(defaultEventSender, converter)
+      } else {
+         defaultEventSender
+      }
+   }
+
+   def findConverterFactory(name: String, compatibilityEnabled: Boolean): Option[ConverterFactory] = {
       Option(converterFactories.get(name)).map { converterFactory =>
          val marshallerClass = configuration.marshallerClass()
-         if (marshallerClass != null) new BinaryConverterFactory(converterFactory, marshallerClass)
+         if (marshallerClass != null && !compatibilityEnabled) new BinaryConverterFactory(converterFactory, marshallerClass)
          else converterFactory
       }
    }
 
-   def findFilterFactory(name: String): Option[KeyValueFilterFactory] = {
+   def findFilterFactory(name: String, compatibilityEnabled: Boolean): Option[KeyValueFilterFactory] = {
       Option(keyValueFilterFactories.get(name)).map { filterFactory =>
          val marshallerClass = configuration.marshallerClass()
-         if (marshallerClass != null) new BinaryFilterFactory(filterFactory, marshallerClass)
+         if (marshallerClass != null && !compatibilityEnabled) new BinaryFilterFactory(filterFactory, marshallerClass)
          else filterFactory
       }
    }
@@ -111,56 +120,73 @@ class ClientListenerRegistry(configuration: HotRodServerConfiguration) extends L
       @CacheEntryCreated
       @CacheEntryModified
       @CacheEntryRemoved
-      def onCacheEvent(event: CacheEntryEvent) {
-         if (!event.isPre) {
-            if (ch.isOpen) {
-               val remoteEvent = createRemoteEvent(event)
-               if (isTraceEnabled)
-                  log.tracef("Send %s to remote clients", remoteEvent)
-
-               ch.writeAndFlush(remoteEvent)
-            } else {
-               log.debug("Channel disconnected, remove event sender listener")
-               event.getCache.removeListener(this)
-            }
+      def onCacheEvent(event: CacheEntryEvent[Bytes, Bytes]) {
+         if (isSendEvent(event)) {
+            val dataVersion = event.getMetadata.version().asInstanceOf[NumericVersion].getVersion
+            sendEvent(event.getKey, event.getValue, dataVersion, event)
+         } else {
+            log.debug("Channel disconnected, remove event sender listener")
+            event.getCache.removeListener(this)
          }
       }
 
-      private def createRemoteEvent(event: CacheEntryEvent): AnyRef = {
+      def isSendEvent(event: CacheEntryEvent[_, _]): Boolean = !event.isPre && ch.isOpen
+
+      def sendEvent(key: Bytes, value: Bytes, dataVersion: Long, event: CacheEntryEvent[_, _]) {
+         val remoteEvent = createRemoteEvent(key, value, dataVersion, event)
+         if (isTraceEnabled)
+            log.tracef("Send %s to remote clients", remoteEvent)
+
+         ch.writeAndFlush(remoteEvent)
+      }
+
+      private def createRemoteEvent(key: Bytes, value: Bytes, dataVersion: Long, event: CacheEntryEvent[_, _]): AnyRef = {
          messageId.incrementAndGet() // increment message id
          event.getType match {
             case Type.CACHE_ENTRY_CREATED =>
-               if (isCustom) createCustomEvent(event, CacheEntryCreatedEventResponse)
-               else keyWithVersionEvent(event, CacheEntryCreatedEventResponse)
+               if (isCustom) createCustomEvent(value, CacheEntryCreatedEventResponse)
+               else keyWithVersionEvent(key, dataVersion, CacheEntryCreatedEventResponse)
             case Type.CACHE_ENTRY_MODIFIED =>
-               if (isCustom) createCustomEvent(event, CacheEntryModifiedEventResponse)
-               else keyWithVersionEvent(event, CacheEntryModifiedEventResponse)
+               if (isCustom) createCustomEvent(value, CacheEntryModifiedEventResponse)
+               else keyWithVersionEvent(key, dataVersion, CacheEntryModifiedEventResponse)
             case Type.CACHE_ENTRY_REMOVED =>
-               if (isCustom) createCustomEvent(event, CacheEntryRemovedEventResponse)
-               else keyEvent(event)
+               if (isCustom) createCustomEvent(value, CacheEntryRemovedEventResponse)
+               else keyEvent(key)
             case _ => throw unexpectedEvent(event)
          }
       }
 
-      private def keyWithVersionEvent(event: CacheEntryEvent, op: OperationResponse): KeyWithVersionEvent = {
-         val key = event.getKey
-         val dataVersion = getDataVersion(event)
+      private def keyWithVersionEvent(key: Bytes, dataVersion: Long, op: OperationResponse): KeyWithVersionEvent = {
          KeyWithVersionEvent(version, messageId.get(), op, listenerId, key, dataVersion)
       }
 
-      private def keyEvent(event: CacheEntryEvent): KeyEvent =
-         KeyEvent(version, messageId.get(), listenerId, event.getKey)
+      private def keyEvent(key: Bytes): KeyEvent =
+         KeyEvent(version, messageId.get(), listenerId, key)
 
-      private def getDataVersion(event: CacheEntryEvent): Long = {
-         // Safe cast since this is a private class and it's fully controlled
-         val metadata = event.getMetadata
-         metadata.version().asInstanceOf[NumericVersion].getVersion
-      }
-
-      private def createCustomEvent(event: CacheEntryEvent, op: OperationResponse): CustomEvent = {
+      private def createCustomEvent(value: Bytes, op: OperationResponse): CustomEvent = {
          // Event's value contains the transformed payload that should be sent
          // It takes advantage of the converter logic existing in cluster listeners
-         CustomEvent(version, messageId.get(), op, listenerId, event.getValue)
+         CustomEvent(version, messageId.get(), op, listenerId, value)
+      }
+   }
+
+   @Listener(clustered = true, includeCurrentState = true)
+   private class CompatibilityClientEventSender(delegate: ClientEventSender, converter: HotRodTypeConverter) {
+      @CacheEntryCreated
+      @CacheEntryModified
+      @CacheEntryRemoved
+      def onCacheEvent(event: CacheEntryEvent[AnyRef, AnyRef]) {
+         val key = converter.unboxKey(event.getKey)
+         val value = converter.unboxValue(event.getValue)
+         if (delegate.isSendEvent(event)) {
+            // In compatibility mode, version could be null if stored via embedded
+            val version = event.getMetadata.version()
+            val dataVersion = if (version == null) 0 else version.asInstanceOf[NumericVersion].getVersion
+            delegate.sendEvent(key, value, dataVersion, event)
+         } else {
+            log.debug("Channel disconnected, remove event sender listener")
+            event.getCache.removeListener(this)
+         }
       }
    }
 

@@ -2,122 +2,96 @@ package org.infinispan.client.hotrod.event;
 
 import org.infinispan.client.hotrod.RemoteCache;
 import org.infinispan.client.hotrod.TestHelper;
-import org.infinispan.client.hotrod.annotation.ClientListener;
+import org.infinispan.client.hotrod.event.EventLogListener.DynamicFilteredEventLogListener;
+import org.infinispan.client.hotrod.event.EventLogListener.DynamicKeyValueFilterFactory;
+import org.infinispan.client.hotrod.event.EventLogListener.StaticFilteredEventLogListener;
+import org.infinispan.client.hotrod.event.EventLogListener.StaticKeyValueFilterFactory;
 import org.infinispan.client.hotrod.test.RemoteCacheManagerCallable;
 import org.infinispan.client.hotrod.test.SingleHotRodServerTest;
-import org.infinispan.metadata.Metadata;
-import org.infinispan.filter.KeyValueFilter;
-import org.infinispan.filter.KeyValueFilterFactory;
 import org.infinispan.server.hotrod.HotRodServer;
 import org.infinispan.server.hotrod.configuration.HotRodServerConfigurationBuilder;
 import org.testng.annotations.Test;
 
-import static org.infinispan.client.hotrod.test.HotRodClientTestingUtil.*;
+import static org.infinispan.client.hotrod.test.HotRodClientTestingUtil.withClientListener;
 
 @Test(groups = "functional", testName = "client.hotrod.event.ClientFilterEventsTest")
 public class ClientFilterEventsTest extends SingleHotRodServerTest {
-
-   TestKeyValueFilterFactory filterFactory = new TestKeyValueFilterFactory();
 
    @Override
    protected HotRodServer createHotRodServer() {
       HotRodServerConfigurationBuilder builder = new HotRodServerConfigurationBuilder();
       HotRodServer server = TestHelper.startHotRodServer(cacheManager, builder);
-      server.addKeyValueFilterFactory("test-filter-factory", filterFactory);
+      server.addKeyValueFilterFactory("static-filter-factory", new StaticKeyValueFilterFactory());
+      server.addKeyValueFilterFactory("dynamic-filter-factory", new DynamicKeyValueFilterFactory());
       return server;
    }
 
    public void testFilteredEvents() {
-      final FilteredEventLogListener eventListener = new FilteredEventLogListener();
-      filterFactory.dynamic = false;
+      final StaticFilteredEventLogListener<Integer> eventListener = new StaticFilteredEventLogListener<>();
       withClientListener(eventListener, new RemoteCacheManagerCallable(remoteCacheManager) {
          @Override
          public void call() {
             RemoteCache<Integer, String> cache = rcm.getCache();
-            expectNoEvents(eventListener);
+            eventListener.expectNoEvents();
             cache.put(1, "one");
-            expectNoEvents(eventListener);
+            eventListener.expectNoEvents();
             cache.put(2, "two");
-            expectOnlyCreatedEvent(2, eventListener, cache());
+            eventListener.expectOnlyCreatedEvent(2, cache());
             cache.remove(1);
-            expectNoEvents(eventListener);
+            eventListener.expectNoEvents();
             cache.remove(2);
-            expectOnlyRemovedEvent(2, eventListener, cache());
+            eventListener.expectOnlyRemovedEvent(2, cache());
          }
       });
    }
 
    public void testParameterBasedFiltering() {
-      final FilteredEventLogListener eventListener = new FilteredEventLogListener();
-      filterFactory.dynamic = true;
+      final DynamicFilteredEventLogListener<Integer> eventListener = new DynamicFilteredEventLogListener<>();
       withClientListener(eventListener, new Object[]{3}, null, new RemoteCacheManagerCallable(remoteCacheManager) {
          @Override
          public void call() {
             RemoteCache<Integer, String> cache = rcm.getCache();
-            expectNoEvents(eventListener);
+            eventListener.expectNoEvents();
             cache.put(1, "one");
-            expectNoEvents(eventListener);
+            eventListener.expectNoEvents();
             cache.put(2, "two");
-            expectNoEvents(eventListener);
+            eventListener.expectNoEvents();
             cache.put(3, "three");
-            expectOnlyCreatedEvent(3, eventListener, cache());
+            eventListener.expectOnlyCreatedEvent(3, cache());
          }
       });
    }
 
    public void testFilteredEventsReplay() {
-      final FilteredEventLogListener eventListener = new FilteredEventLogListener();
-      filterFactory.dynamic = false;
+      final StaticFilteredEventLogListener<Integer> staticEventListener = new StaticFilteredEventLogListener<>();
       RemoteCache<Integer, String> cache = remoteCacheManager.getCache();
       cache.put(1, "one");
       cache.put(2, "two");
-      withClientListener(eventListener, new RemoteCacheManagerCallable(remoteCacheManager) {
+      withClientListener(staticEventListener, new RemoteCacheManagerCallable(remoteCacheManager) {
          @Override
          public void call() {
-            expectOnlyCreatedEvent(2, eventListener, cache());
+            staticEventListener.expectOnlyCreatedEvent(2, cache());
             RemoteCache<Integer, String> cache = rcm.getCache();
             cache.remove(1);
             cache.remove(2);
-            expectOnlyRemovedEvent(2, eventListener, cache());
+            staticEventListener.expectOnlyRemovedEvent(2, cache());
          }
       });
-      filterFactory.dynamic = true;
+      final DynamicFilteredEventLogListener<Integer> dynamicEventListener = new DynamicFilteredEventLogListener<>();
       cache.put(1, "one");
       cache.put(2, "two");
       cache.put(3, "three");
-      withClientListener(eventListener, new Object[]{3}, null, new RemoteCacheManagerCallable(remoteCacheManager) {
+      withClientListener(dynamicEventListener, new Object[]{3}, null, new RemoteCacheManagerCallable(remoteCacheManager) {
          @Override
          public void call() {
-            expectOnlyCreatedEvent(3, eventListener, cache());
+            dynamicEventListener.expectOnlyCreatedEvent(3, cache());
             RemoteCache<Integer, String> cache = rcm.getCache();
             cache.remove(1);
             cache.remove(2);
             cache.remove(3);
-            expectOnlyRemovedEvent(3, eventListener, cache());
+            dynamicEventListener.expectOnlyRemovedEvent(3, cache());
          }
       });
    }
-
-   static class TestKeyValueFilterFactory implements KeyValueFilterFactory {
-      boolean dynamic;
-      @Override
-      public KeyValueFilter<Integer, String> getKeyValueFilter(final Object[] params) {
-         return new KeyValueFilter<Integer, String>() {
-            @Override
-            public boolean accept(Integer key, String value, Metadata metadata) {
-               if (!dynamic && key.equals(2)) // static key
-                  return true;
-
-               if (dynamic && params[0].equals(key)) // dynamic key
-                  return true;
-
-               return false;
-            }
-         };
-      }
-   }
-
-   @ClientListener(filterFactoryName = "test-filter-factory")
-   static class FilteredEventLogListener extends EventLogListener {}
 
 }
