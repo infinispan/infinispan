@@ -36,7 +36,7 @@ import static org.junit.Assert.assertEquals;
  *
  * @author Sanne Grinovero
  */
-@Test(groups = /*functional*/"unstable", testName = "query.distributed.MultiNodeDistributedTest", description = "Unstable, see https://issues.jboss.org/browse/ISPN-4186")
+@Test(groups = "functional", testName = "query.distributed.MultiNodeDistributedTest")
 public class MultiNodeDistributedTest extends AbstractInfinispanTest {
 
    protected List<EmbeddedCacheManager> cacheManagers = new ArrayList<EmbeddedCacheManager>(4);
