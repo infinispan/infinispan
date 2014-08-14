@@ -424,17 +424,23 @@ public class DistributedEntryRetriever<K, V> extends LocalEntryRetriever<K, V> {
                   if (repeat) {
                      // Only local would ever go into here
                      hashToUse = getCurrentHash();
-                     segmentsToUse = findMissingLocalSegments(iteratorDetails.get(identifier).processedKeys, hashToUse);
-                     inDoubtSegmentsToUse.clear();
+                     IterationStatus<K, V, ? extends Object> status = iteratorDetails.get(identifier);
+                     if (status != null) {
+                        segmentsToUse = findMissingLocalSegments(status.processedKeys, hashToUse);
+                        inDoubtSegmentsToUse.clear();
 
-                     if (log.isTraceEnabled()) {
-                        if (!segmentsToUse.isEmpty()) {
-                              log.tracef("Local retrieval found it should rerun - now finding segments %s for identifier %s",
-                                         segmentsToUse, identifier);
-                        } else {
-                           log.tracef("Local retrieval for identifier %s was told to rerun - however no new segments " +
-                                            "were found, looping around to try again", identifier);
+                        if (log.isTraceEnabled()) {
+                           if (!segmentsToUse.isEmpty()) {
+                                 log.tracef("Local retrieval found it should rerun - now finding segments %s for identifier %s",
+                                            segmentsToUse, identifier);
+                           } else {
+                              log.tracef("Local retrieval for identifier %s was told to rerun - however no new segments " +
+                                               "were found, looping around to try again", identifier);
+                           }
                         }
+                     } else {
+                        log.tracef("Not repeating local retrieval since iteration was completed");
+                        repeat = false;
                      }
                   } else {
                      if (log.isTraceEnabled()) {
@@ -963,8 +969,8 @@ public class DistributedEntryRetriever<K, V> extends LocalEntryRetriever<K, V> {
          log.tracef("Processing complete for identifier %s", identifier);
       }
       IterationStatus<K, V, ?> status = iteratorDetails.get(identifier);
-      Itr<K, ?> itr = status.ongoingIterator;
-      if (itr != null) {
+      if (status != null) {
+         Itr<K, ?> itr = status.ongoingIterator;
          itr.close();
       }
    }
