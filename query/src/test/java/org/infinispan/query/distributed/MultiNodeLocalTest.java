@@ -1,17 +1,24 @@
 package org.infinispan.query.distributed;
 
-import org.infinispan.Cache;
+import static org.junit.Assert.assertEquals;
+
+import java.io.IOException;
+
+import javax.transaction.TransactionManager;
+
+import org.apache.lucene.search.MatchAllDocsQuery;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.cache.Index;
 import org.infinispan.manager.EmbeddedCacheManager;
+import org.infinispan.query.CacheQuery;
+import org.infinispan.query.Search;
+import org.infinispan.query.SearchManager;
 import org.infinispan.query.test.Person;
-import org.infinispan.test.TestingUtil;
+import org.infinispan.test.SingleCacheManagerTest;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.infinispan.transaction.TransactionMode;
 import org.testng.annotations.Test;
-
-import java.io.IOException;
 
 /**
  * Similar to MultiNodeDistributedTest, but using a local cache configuration both for
@@ -20,7 +27,7 @@ import java.io.IOException;
  * @author Anna Manukyan
  */
 @Test(groups = "functional", testName = "query.distributed.MultiNodeLocalTest")
-public class MultiNodeLocalTest extends MultiNodeDistributedTest {
+public class MultiNodeLocalTest extends SingleCacheManagerTest {
 
    protected EmbeddedCacheManager createCacheManager() throws IOException {
       ConfigurationBuilder builder = new ConfigurationBuilder();
@@ -36,31 +43,32 @@ public class MultiNodeLocalTest extends MultiNodeDistributedTest {
       if(transactionsEnabled()) {
          builder.transaction().transactionMode(TransactionMode.TRANSACTIONAL);
       }
-      EmbeddedCacheManager cacheManager = TestCacheManagerFactory.createCacheManager(builder);
-      cacheManagers.add(cacheManager);
-      Cache<String, Person> cache = cacheManager.getCache();
-      caches.add(cache);
-
-      return cacheManager;
+      return TestCacheManagerFactory.createCacheManager(builder);
    }
 
-   public void testIndexingWorkDistribution() throws Exception {
-      try {
-         createCacheManager();
-         assertIndexSize(0);
-         storeOn(caches.get(0), "k1", new Person("K. Firt", "Is not a character from the matrix", 1));
-         assertIndexSize(1);
+   protected boolean transactionsEnabled() {
+      return false;
+   }
 
-         createCacheManager();
-         storeOn(caches.get(1), "k2", new Person("K. Seycond", "Is a pilot", 1));
-         assertIndexSize(1);
+   public void testIndexingWork() throws Exception {
+      assertIndexSize(0);
+      store("k1", new Person("K. Firt", "Is not a character from the matrix", 1));
+      assertIndexSize(1);
+      store("k2", new Person("K. Seycond", "Is a pilot", 1));
+      assertIndexSize(2);
+   }
 
-         killMasterNode();
-         assertIndexSize(1);
-      }
-      finally {
-         TestingUtil.killCacheManagers(cacheManagers);
-      }
+   protected void store(String key, Person person) throws Exception {
+      TransactionManager transactionManager = cache.getAdvancedCache().getTransactionManager();
+      if (transactionsEnabled()) transactionManager.begin();
+      cache.put(key, person);
+      if (transactionsEnabled()) transactionManager.commit();
+   }
+
+   protected void assertIndexSize(int expectedIndexSize) {
+      SearchManager searchManager = Search.getSearchManager(cache);
+      CacheQuery query = searchManager.getQuery(new MatchAllDocsQuery(), Person.class);
+      assertEquals(expectedIndexSize, query.list().size());
    }
 
 }
