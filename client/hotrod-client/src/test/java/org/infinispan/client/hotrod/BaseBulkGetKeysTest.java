@@ -74,7 +74,6 @@ public abstract class BaseBulkGetKeysTest extends MultipleCacheManagersTest {
       }
    }
 
-   @Test(groups = "unstable", description = "See ISPN-4017")
    public void testBulkGetAfterLifespanExpire() throws InterruptedException {
       Map<String, String> dataIn = new HashMap<String, String>();
       dataIn.put("aKey", "aValue");
