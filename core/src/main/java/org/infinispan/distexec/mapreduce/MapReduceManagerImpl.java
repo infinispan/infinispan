@@ -386,7 +386,7 @@ public class MapReduceManagerImpl implements MapReduceManager {
 
       @SuppressWarnings("unchecked")
       protected V getValue(InternalCacheEntry<K,V> entry){
-         if (entry != null) {
+         if (entry != null && !entry.isExpired(timeService.wallClockTime())) {
             Object value = entry.getValue();
             if (value instanceof MarshalledValue) {
                value = ((MarshalledValue) value).get();
@@ -449,6 +449,7 @@ public class MapReduceManagerImpl implements MapReduceManager {
          executeMapWithCollector((K)marshalledEntry.getKey(), (V)getValue(marshalledEntry));
       }
 
+      @Override
       @SuppressWarnings("unchecked")
       protected V getValue(InternalCacheEntry<K, V> entry){
          if (entry != null) {
