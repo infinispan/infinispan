@@ -14,11 +14,9 @@ import java.io.IOException;
 /**
  * Similiar as MultiNodeReplicatedTest, but uses transactional configuration for the Infinispan.
  *
- * @TODO enable the test when ISPN-2727 is fixed.
- *
  * @author Anna Manukyan
  */
-@Test(groups = "unstable", testName = "query.distributed.MultiNodeReplicatedTxTest", description = "original group: functional -- ISPN-2727")
+@Test(groups = "functional", testName = "query.distributed.MultiNodeReplicatedTxTest")
 public class MultiNodeReplicatedTxTest extends MultiNodeReplicatedTest {
 
    protected boolean transactionsEnabled() {
@@ -40,9 +38,4 @@ public class MultiNodeReplicatedTxTest extends MultiNodeReplicatedTest {
       return cacheManager;
    }
 
-   //@TODO enable the test when ISPN-2727 is fixed.
-   @Test(groups = "unstable")
-   public void testIndexingWorkDistribution() throws Exception {
-      super.testIndexingWorkDistribution();
-   }
 }
