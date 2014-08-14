@@ -27,7 +27,7 @@ import org.testng.annotations.Test;
  * @author Anna Manukyan
  */
 @Test(groups = "functional", testName = "query.distributed.MultiNodeLocalTest")
-public class MultiNodeLocalTest extends SingleCacheManagerTest {
+public class IndexManagerLocalTest extends SingleCacheManagerTest {
 
    protected EmbeddedCacheManager createCacheManager() throws IOException {
       ConfigurationBuilder builder = new ConfigurationBuilder();
