@@ -8,8 +8,7 @@ import org.testng.annotations.Test;
  * @author anistor@redhat.com
  * @since 5.2
  */
-@Test(groups = "unstable", testName = "query.persistence.SharedCacheLoaderQueryDistributedIndexTest",
-      description = "ISPN-4048 -- original group: functional")
+@Test(groups = "functional", testName = "query.persistence.SharedCacheLoaderQueryDistributedIndexTest")
 public class SharedCacheLoaderQueryDistributedIndexTest extends SharedCacheLoaderQueryIndexTest {
 
    @Override
