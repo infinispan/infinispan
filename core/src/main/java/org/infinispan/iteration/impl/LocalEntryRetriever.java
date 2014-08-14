@@ -20,6 +20,7 @@ import org.infinispan.filter.Converter;
 import org.infinispan.filter.KeyFilter;
 import org.infinispan.filter.KeyValueFilter;
 import org.infinispan.filter.KeyValueFilterAsKeyFilter;
+import org.infinispan.filter.KeyValueFilterConverter;
 import org.infinispan.marshall.core.MarshalledEntry;
 import org.infinispan.marshall.core.MarshalledValue;
 import org.infinispan.notifications.Listener;
@@ -168,12 +169,28 @@ public class LocalEntryRetriever<K, V> implements EntryRetriever<K, V> {
       return flags == null || !flags.contains(Flag.SKIP_CACHE_LOAD);
    }
 
+   protected <C> Converter<? super K, ? super V, ? extends C> checkForKeyValueFilterConverter(
+         KeyValueFilter<? super K, ? super V> filter, Converter<? super K, ? super V, ? extends C> converter) {
+      Converter<? super K, ? super V, ? extends C> usedConverter;
+      if (filter == converter && filter instanceof KeyValueFilterConverter) {
+         // If we were supplied an efficient KeyValueFilterConverter don't use a converter!
+         usedConverter = null;
+         if (log.isTraceEnabled()) {
+            log.tracef("User supplied a KeyValueFilterConverter for both filter and converter, so ignoring converter");
+         }
+      } else {
+         usedConverter = converter;
+      }
+      return usedConverter;
+   }
+
    @Override
    public <C> CloseableIterator<CacheEntry<K, C>> retrieveEntries(final KeyValueFilter<? super K, ? super V> filter,
-                                                                 final Converter<? super K, ? super V, ? extends C> converter,
+                                                                 Converter<? super K, ? super V, ? extends C> converter,
                                                                  final Set<Flag> flags,
                                                                  final SegmentListener listener) {
-      wireFilterAndConverterDependencies(filter, converter);
+      final Converter<? super K, ? super V, ? extends C> usedConverter = checkForKeyValueFilterConverter(filter, converter);
+      wireFilterAndConverterDependencies(filter, usedConverter);
       final Itr<K, C> iterator = new Itr<K, C>(batchSize);
       final ItrQueuerHandler<C> handler = new ItrQueuerHandler<C>(iterator);
       executorService.submit(new Runnable() {
@@ -191,7 +208,7 @@ public class LocalEntryRetriever<K, V> implements EntryRetriever<K, V> {
                };
                // Note we still use the batchSize here so that if we have a lot of values we return them as we see
                // them
-               MapAction<C> action = new MapAction(batchSize, converter, queue, handler);
+               MapAction<C> action = new MapAction(batchSize, usedConverter, queue, handler);
 
                PassivationListener<K, V> listener = null;
 
@@ -203,7 +220,16 @@ public class LocalEntryRetriever<K, V> implements EntryRetriever<K, V> {
                                                                           entry);
                      K key = clone.getKey();
                      if (filter != null) {
-                        if (!filter.accept(key, clone.getValue(), clone.getMetadata())) {
+                        if (filter instanceof KeyValueFilterConverter && usedConverter == null) {
+                           C converted = ((KeyValueFilterConverter<K, V, C>)filter).filterAndConvert(
+                                 key, clone.getValue(), clone.getMetadata());
+                           if (converted != null) {
+                              clone.setValue((V) converted);
+                           } else {
+                              continue;
+                           }
+                        }
+                        else if (!filter.accept(key, clone.getValue(), clone.getMetadata())) {
                            continue;
                         }
                      }

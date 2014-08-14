@@ -405,7 +405,8 @@ public interface AdvancedCache<K, V> extends Cache<K, V> {
     * try/finally or try with resource idioms to ensure that any current resources are freed if an exception prevents
     * full iteration of iterator.  Note this will prevent any ongoing iterators that were created from it from
     * progressing further.</p>
-    * @param filter The filter to use.  Note this is required and for distributed caches must be serializable
+    * @param filter The filter to use.  Note this is required and for distributed caches must be serializable.  Callbacks
+    *               to the filter will never provide a key or value that will be null.
     */
    EntryIterable<K, V> filterEntries(KeyValueFilter<? super K, ? super V> filter);
 

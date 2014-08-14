@@ -4,6 +4,7 @@ import org.infinispan.Cache;
 import org.infinispan.commons.CacheException;
 import org.infinispan.commons.marshall.AbstractExternalizer;
 import org.infinispan.factories.annotations.Inject;
+import org.infinispan.filter.AbstractKeyValueFilterConverter;
 import org.infinispan.filter.Converter;
 import org.infinispan.filter.KeyValueFilter;
 import org.infinispan.metadata.Metadata;
@@ -18,8 +19,6 @@ import java.io.ObjectOutput;
 import java.util.Collections;
 import java.util.Set;
 
-//todo [anistor] doing filtering and conversion as separate steps is not efficient
-
 /**
  * A filter implementation that is both a KeyValueFilter and a converter. The implementation relies on the Matcher and a
  * JPA query string.
@@ -27,7 +26,7 @@ import java.util.Set;
  * @author anistor@redhat.com
  * @since 7.0
  */
-public class FilterAndConverter<K, V> implements KeyValueFilter<K, V>, Converter<K, V, ObjectFilter.FilterResult> {
+public class FilterAndConverter<K, V> extends AbstractKeyValueFilterConverter<K, V, ObjectFilter.FilterResult> {
 
    private final String jpaQuery;
 
@@ -73,12 +72,7 @@ public class FilterAndConverter<K, V> implements KeyValueFilter<K, V>, Converter
    }
 
    @Override
-   public boolean accept(K key, V value, Metadata metadata) {
-      return getObjectFilter().filter(value) != null;
-   }
-
-   @Override
-   public ObjectFilter.FilterResult convert(K key, V value, Metadata metadata) {
+   public ObjectFilter.FilterResult filterAndConvert(K key, V value, Metadata metadata) {
       return getObjectFilter().filter(value);
    }
 

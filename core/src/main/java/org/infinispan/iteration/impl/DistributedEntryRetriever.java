@@ -20,6 +20,7 @@ import org.infinispan.filter.KeyFilter;
 import org.infinispan.filter.KeyFilterAsKeyValueFilter;
 import org.infinispan.filter.KeyValueFilter;
 import org.infinispan.filter.KeyValueFilterAsKeyFilter;
+import org.infinispan.filter.KeyValueFilterConverter;
 import org.infinispan.lifecycle.ComponentStatus;
 import org.infinispan.filter.Converter;
 import org.infinispan.marshall.core.MarshalledValue;
@@ -356,7 +357,16 @@ public class DistributedEntryRetriever<K, V> extends LocalEntryRetriever<K, V> {
                                                                                 unwrapMarshalledvalue(entry.getValue()), entry);
                            K key = clone.getKey();
                            if (filter != null) {
-                              if (!filter.accept(key, clone.getValue(), clone.getMetadata())) {
+                              if (filter instanceof KeyValueFilterConverter && converter == null) {
+                                 C converted = ((KeyValueFilterConverter<K, V, C>)filter).filterAndConvert(
+                                       key, clone.getValue(), clone.getMetadata());
+                                 if (converted != null) {
+                                    clone.setValue((V) converted);
+                                 } else {
+                                    continue;
+                                 }
+                              }
+                              else if (!filter.accept(key, clone.getValue(), clone.getMetadata())) {
                                  continue;
                               }
                            }
@@ -493,9 +503,11 @@ public class DistributedEntryRetriever<K, V> extends LocalEntryRetriever<K, V> {
          return super.retrieveEntries(filter, converter, flags, listener);
       }
       UUID identifier = UUID.randomUUID();
+      final Converter<? super K, ? super V, ? extends C> usedConverter = checkForKeyValueFilterConverter(filter,
+                                                                                                         converter);
       if (log.isTraceEnabled()) {
          log.tracef("Processing entry retrieval request with identifier %s with filter %s and converter %s", identifier,
-                    filter, converter);
+                    filter, usedConverter);
       }
       ConsistentHash hash = getCurrentHash();
       DistributedItr<K, C> itr = new DistributedItr<>(batchSize, identifier, hash);
@@ -508,7 +520,7 @@ public class DistributedEntryRetriever<K, V> extends LocalEntryRetriever<K, V> {
          remoteSegments.add(i);
       }
 
-      IterationStatus status = new IterationStatus<>(itr, listener, filter, converter, flags, processedKeys);
+      IterationStatus status = new IterationStatus<>(itr, listener, filter, usedConverter, flags, processedKeys);
       iteratorDetails.put(identifier, status);
 
       Set<Integer> ourSegments = hash.getPrimarySegmentsForOwner(localAddress);
@@ -517,7 +529,7 @@ public class DistributedEntryRetriever<K, V> extends LocalEntryRetriever<K, V> {
          eventuallySendRequest(identifier, status);
       }
       if (!ourSegments.isEmpty()) {
-         wireFilterAndConverterDependencies(filter, converter);
+         wireFilterAndConverterDependencies(filter, usedConverter);
          startRetrievingValuesLocal(identifier, ourSegments, status, new SegmentBatchHandler<K, C>() {
             @Override
             public void handleBatch(UUID identifier, boolean complete, Set<Integer> completedSegments, Set<Integer> inDoubtSegments, Collection<CacheEntry<K, C>> entries) {
