@@ -4,14 +4,19 @@ import org.infinispan.Cache;
 import org.infinispan.commands.read.GetKeyValueCommand;
 import org.infinispan.commands.tx.CommitCommand;
 import org.infinispan.commands.tx.PrepareCommand;
+import org.infinispan.configuration.cache.CacheMode;
+import org.infinispan.configuration.cache.ConfigurationBuilder;
+import org.infinispan.configuration.cache.VersioningScheme;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.context.impl.TxInvocationContext;
 import org.infinispan.distribution.MagicKey;
 import org.infinispan.interceptors.base.BaseCustomInterceptor;
 import org.infinispan.interceptors.distribution.VersionedDistributionInterceptor;
+import org.infinispan.test.MultipleCacheManagersTest;
+import org.infinispan.transaction.LockingMode;
+import org.infinispan.util.concurrent.IsolationLevel;
 import org.testng.annotations.Test;
 
-import java.util.List;
 import java.util.concurrent.Callable;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.Future;
@@ -25,11 +30,31 @@ import static org.testng.AssertJUnit.assertTrue;
  * @since 5.2
  */
 @Test(groups = "functional", testName = "api.ConditionalOperationsConcurrentWriteSkewTest")
-public class ConditionalOperationsConcurrentWriteSkewTest extends ConditionalOperationsConcurrentTest {
+public class ConditionalOperationsConcurrentWriteSkewTest extends MultipleCacheManagersTest {
+
+   private static final int NODES_NUM = 3;
+
+   private final CacheMode mode = CacheMode.DIST_SYNC;
+   protected LockingMode lockingMode = LockingMode.OPTIMISTIC;
+   protected boolean writeSkewCheck;
+   protected boolean transactional;
 
    public ConditionalOperationsConcurrentWriteSkewTest() {
       transactional = true;
       writeSkewCheck = true;
+   }
+
+   @Override
+   protected void createCacheManagers() throws Throwable {
+      ConfigurationBuilder dcc = getDefaultClusteredCacheConfig(mode, true);
+      dcc.transaction().lockingMode(lockingMode);
+      if (writeSkewCheck) {
+         dcc.transaction().locking().writeSkewCheck(true);
+         dcc.transaction().locking().isolationLevel(IsolationLevel.REPEATABLE_READ);
+         dcc.transaction().versioning().enable().scheme(VersioningScheme.SIMPLE);
+      }
+      createCluster(dcc, NODES_NUM);
+      waitForClusterToForm();
    }
 
    public void testSimpleConcurrentReplace() throws Exception {
@@ -44,28 +69,6 @@ public class ConditionalOperationsConcurrentWriteSkewTest extends ConditionalOpe
       doSimpleConcurrentTest(Operation.REMOVE);
    }
 
-   @Override
-   public void testReplace() throws Exception {
-      List caches = caches(null);
-      testOnCaches(caches, new ReplaceOperation(true));
-   }
-
-   @Override
-   public void testConditionalRemove() throws Exception {
-      List caches = caches(null);
-      testOnCaches(caches, new ConditionalRemoveOperation(true));
-   }
-
-   @Override
-   public void testPutIfAbsent() throws Exception {
-      List caches = caches(null);
-      testOnCaches(caches, new PutIfAbsentOperation(true));
-   }
-
-   /**
-    * This is a specific scenario of the {@link #testOnCaches(java.util.List, org.infinispan.api.ConditionalOperationsConcurrentTest.CacheOperation)}
-    * test
-    */
    private void doSimpleConcurrentTest(final Operation operation) throws Exception {
       //default owners are 2
       assertEquals("Wrong number of owner. Please change the configuration", 2,

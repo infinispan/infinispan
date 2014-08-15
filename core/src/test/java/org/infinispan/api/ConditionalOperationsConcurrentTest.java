@@ -40,17 +40,24 @@ import java.util.concurrent.atomic.AtomicInteger;
 @Test(groups = "functional", testName = "api.ConditionalOperationsConcurrentTest")
 public class ConditionalOperationsConcurrentTest extends MultipleCacheManagersTest {
 
-   private static Log log = LogFactory.getLog(ConditionalOperationsConcurrentTest.class);
+   private final Log log = LogFactory.getLog(getClass());
 
-   private static final boolean ENABLE_DEBUG = false;
+   public ConditionalOperationsConcurrentTest() {
+      this(2, 10, 2);
+   }
 
-   private static final int NODES_NUM = 3;
-   private static final int MOVES = 500;
-   private static final int THREAD_COUNT = 4;
+   public ConditionalOperationsConcurrentTest(int nodes, int operations, int threads) {
+      this.nodes = nodes;
+      this.operations = operations;
+      this.threads = threads;
+   }
+
+   protected final int nodes;
+   protected final int operations;
+   protected final int threads;
    private static final String SHARED_KEY = "thisIsTheKeyForConcurrentAccess";
-   private final AtomicInteger threadIndex = new AtomicInteger();
 
-   private static final String[] validMoves = generateValidMoves();
+   private final String[] validMoves = generateValidMoves();
 
    private final AtomicBoolean failed = new AtomicBoolean(false);
    private final AtomicBoolean quit = new AtomicBoolean(false);
@@ -79,7 +86,7 @@ public class ConditionalOperationsConcurrentTest extends MultipleCacheManagersTe
          dcc.transaction().locking().isolationLevel(IsolationLevel.REPEATABLE_READ);
          dcc.transaction().versioning().enable().scheme(VersioningScheme.SIMPLE);
       }
-      createCluster(dcc, NODES_NUM);
+      createCluster(dcc, nodes);
       waitForClusterToForm();
    }
 
@@ -102,17 +109,12 @@ public class ConditionalOperationsConcurrentTest extends MultipleCacheManagersTe
       failed.set(false);
       quit.set(false);
       caches.get(0).put(SHARED_KEY, "initialValue");
-      final SharedState state = new SharedState(THREAD_COUNT);
+      final SharedState state = new SharedState(threads);
       final PostOperationStateCheck stateCheck = new PostOperationStateCheck(caches, state, operation);
-      final CyclicBarrier barrier = new CyclicBarrier(THREAD_COUNT, stateCheck);
+      final CyclicBarrier barrier = new CyclicBarrier(threads, stateCheck);
       final String className = getClass().getSimpleName();//in order to be able filter this test's log file correctly
-      ExecutorService exec = Executors.newFixedThreadPool(THREAD_COUNT, new ThreadFactory() {
-         @Override
-         public Thread newThread(Runnable r) {
-            return new Thread(r, className + "-" + threadIndex.getAndIncrement());
-         }
-      });
-      for (int threadIndex = 0; threadIndex < THREAD_COUNT; threadIndex++) {
+      ExecutorService exec = Executors.newFixedThreadPool(threads, getTestThreadFactory("Mover"));
+      for (int threadIndex = 0; threadIndex < threads; threadIndex++) {
          Runnable validMover = new ValidMover(caches, barrier, threadIndex, state, operation);
          exec.execute(validMover);
       }
@@ -129,9 +131,9 @@ public class ConditionalOperationsConcurrentTest extends MultipleCacheManagersTe
       Assert.assertFalse(failureMessage, failed.get());
    }
 
-   private static String[] generateValidMoves() {
-      String[] validMoves = new String[MOVES];
-      for (int i = 0; i < MOVES; i++) {
+   private String[] generateValidMoves() {
+      String[] validMoves = new String[operations];
+      for (int i = 0; i < operations; i++) {
          validMoves[i] = "v_" + i;
       }
       print("Valid moves ready");
@@ -172,8 +174,8 @@ public class ConditionalOperationsConcurrentTest extends MultipleCacheManagersTe
          liveWorkers.incrementAndGet();
          try {
             for (int moveToIndex = threadIndex;
-                 (moveToIndex < validMoves.length) && (!barrier.isBroken() && (!failed.get()) && !quit.get());
-                 moveToIndex += THREAD_COUNT) {
+                 moveToIndex < validMoves.length && !barrier.isBroken() && !failed.get() && !quit.get();
+                 moveToIndex += threads) {
                operation.beforeOperation(caches.get(0));
 
                cachePickIndex = ++cachePickIndex % caches.size();
@@ -285,8 +287,8 @@ public class ConditionalOperationsConcurrentTest extends MultipleCacheManagersTe
          if (state.isAfter()) {
             cycle++;
             log.tracef("Starting cycle %d", cycle);
-            if (cycle % (MOVES / 100) == 0) {
-               print((cycle * 100 * THREAD_COUNT / MOVES) + "%");
+            if (cycle % (operations / 100) == 0) {
+               print((cycle * 100 * threads / operations) + "%");
             }
             checkAfterState();
          } else {
@@ -335,7 +337,7 @@ public class ConditionalOperationsConcurrentTest extends MultipleCacheManagersTe
          for (SharedThreadState threadState : state.threadStates) {
             uniqueValueVerify.add(threadState.afterTargetValue);
          }
-         if (uniqueValueVerify.size() != THREAD_COUNT) {
+         if (uniqueValueVerify.size() != threads) {
             fail("test bug");
          }
          return currentStored;
@@ -431,7 +433,7 @@ public class ConditionalOperationsConcurrentTest extends MultipleCacheManagersTe
       }
    }
 
-   static class PutIfAbsentOperation extends CacheOperation {
+   class PutIfAbsentOperation extends CacheOperation {
 
       PutIfAbsentOperation(boolean cas) {
          super(cas);
@@ -457,7 +459,7 @@ public class ConditionalOperationsConcurrentTest extends MultipleCacheManagersTe
       }
    }
 
-   static class ConditionalRemoveOperation extends CacheOperation {
+   class ConditionalRemoveOperation extends CacheOperation {
 
       ConditionalRemoveOperation(boolean cas) {
          super(cas);
@@ -487,7 +489,7 @@ public class ConditionalOperationsConcurrentTest extends MultipleCacheManagersTe
       }
    }
 
-   private static void print(String s) {
-      if (ENABLE_DEBUG) log.debug(s);
+   private void print(String s) {
+      log.debug(s);
    }
 }
