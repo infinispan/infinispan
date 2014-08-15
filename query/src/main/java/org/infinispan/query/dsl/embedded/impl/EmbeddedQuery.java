@@ -2,8 +2,11 @@ package org.infinispan.query.dsl.embedded.impl;
 
 import org.infinispan.AdvancedCache;
 import org.infinispan.commons.util.CloseableIterable;
+import org.infinispan.filter.Converter;
+import org.infinispan.metadata.Metadata;
 import org.infinispan.objectfilter.Matcher;
 import org.infinispan.objectfilter.ObjectFilter;
+import org.infinispan.objectfilter.impl.FilterResultImpl;
 import org.infinispan.query.dsl.Query;
 
 import java.util.ArrayList;
@@ -39,6 +42,14 @@ public final class EmbeddedQuery implements Query {
 
    private final int maxResults;
 
+   // an efficient Converter (that does not re-match the object), to be used when there are no projections or sorting
+   private static final Converter<Object, Object, ObjectFilter.FilterResult> passThroughConverter = new Converter<Object, Object, ObjectFilter.FilterResult>() {
+      @Override
+      public ObjectFilter.FilterResult convert(Object key, Object value, Metadata metadata) {
+         return new FilterResultImpl(value, null, null);
+      }
+   };
+
    public EmbeddedQuery(AdvancedCache<?, ?> cache, String jpaQuery, long startOffset, int maxResults, Class<? extends Matcher> matcherImplClass) {
       this.cache = cache;
       this.startOffset = startOffset < 0 ? 0 : (int) startOffset;
@@ -58,8 +69,9 @@ public final class EmbeddedQuery implements Query {
    @Override
    public <T> List<T> list() {
       if (results == null) {
-         CloseableIterable<Map.Entry<?, ObjectFilter.FilterResult>> iterable = cache.filterEntries(filter).converter(filter);
          Comparator<Comparable[]> comparator = filter.getObjectFilter().getComparator();
+         Converter converter = projection != null || comparator != null ? filter : passThroughConverter;
+         CloseableIterable<Map.Entry<Object, ObjectFilter.FilterResult>> iterable = cache.filterEntries(filter).converter(converter);
          if (comparator == null) {
             // collect unsorted results and get the requested page if any was specified
             results = new ArrayList<T>(INITIAL_CAPACITY);
