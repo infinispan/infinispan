@@ -1,5 +1,13 @@
 package org.infinispan.persistence;
 
+import static org.infinispan.test.TestingUtil.withCacheManager;
+import static org.junit.Assert.*;
+
+import java.io.Serializable;
+import java.lang.reflect.Method;
+import java.util.concurrent.TimeUnit;
+import javax.transaction.TransactionManager;
+
 import org.infinispan.Cache;
 import org.infinispan.atomic.AtomicMap;
 import org.infinispan.atomic.AtomicMapLookup;
@@ -11,22 +19,12 @@ import org.infinispan.container.DataContainer;
 import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.persistence.spi.PersistenceException;
+import org.infinispan.test.CacheManagerCallable;
 import org.infinispan.test.SingleCacheManagerTest;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.infinispan.transaction.TransactionMode;
 import org.testng.annotations.Test;
-
-import javax.transaction.TransactionManager;
-import java.io.Serializable;
-import java.lang.reflect.Method;
-import java.util.concurrent.TimeUnit;
-
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertArrayEquals;
-import static org.junit.Assert.assertNull;
-import static org.junit.Assert.assertNotNull;
-
 
 /**
  * This is a base functional test class containing tests that should be executed for each cache store/loader
@@ -193,9 +191,7 @@ public abstract class BaseStoreFunctionalTest extends SingleCacheManagerTest {
    private ConfigurationBuilder configureCacheLoader(ConfigurationBuilder base, boolean purge) {
       ConfigurationBuilder cfg = base == null ? new ConfigurationBuilder() : base;
 
-      cfg
-         .transaction()
-            .transactionMode(TransactionMode.TRANSACTIONAL);
+      cfg.transaction().transactionMode(TransactionMode.TRANSACTIONAL);
       createCacheStoreConfig(cfg.persistence(), false);
       cfg.persistence().stores().get(0).purgeOnStartup(purge);
       return cfg;
@@ -210,6 +206,5 @@ public abstract class BaseStoreFunctionalTest extends SingleCacheManagerTest {
       assertEquals(maxIdleMillis, ice.getMaxIdle());
       if (lifespanMillis > -1) assert ice.getCreated() > -1 : "Lifespan is set but created time is not";
       if (maxIdleMillis > -1) assert ice.getLastUsed() > -1 : "Max idle is set but last used is not";
-
    }
 }

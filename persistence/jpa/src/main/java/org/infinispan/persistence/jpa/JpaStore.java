@@ -472,91 +472,95 @@ public class JpaStore implements AdvancedLoadWriteStore {
    }
 
    @Override
-   public void process(KeyFilter filter, final CacheLoaderTask task, Executor executor, boolean fetchValue, final boolean fetchMetadata) {
+   public void process(KeyFilter filter, CacheLoaderTask task, Executor executor, boolean fetchValue, boolean fetchMetadata) {
+      if (fetchMetadata && !configuration.storeMetadata()) {
+         log.debug("Metadata cannot be retrieved as JPA Store is not configured to persist metadata.");
+         fetchMetadata = false;
+      }
+      // We cannot stream entities as a full table as the entity can contain collections in another tables.
+      // Then, Hibernate uses left outer joins which give us several rows of results for each entity.
+      // We cannot use DISTINCT_ROOT_ENTITY transformer when streaming, that's only available for list()
+      // and this is prone to OOMEs. Theoretically, custom join is possible but it is out of scope
+      // of current JpaStore implementation.
+      // We also can't switch JOINs to SELECTs as some DBs (e.g. MySQL) fails when another command is executed
+      // on the connection when streaming.
+      // Therefore, we can only query IDs and do a findEntity for each fetch.
+
+      // Another problem: even for fetchValue=false and fetchMetadata=true, we cannot iterate over metadata
+      // table, because this table does not have records for keys without metadata. With such iteration,
+      // we wouldn't iterate over all keys - therefore, we can iterate only over entity table IDs and we
+      // have to request the metadata in separate connection.
+      if (fetchValue || fetchMetadata) {
+         final boolean fv = fetchValue;
+         final boolean fm = fetchMetadata;
+         process(filter, task, executor, new ProcessStrategy() {
+            @Override
+            public Criteria getCriteria(Session session) {
+               return session.createCriteria(configuration.entityClass()).setProjection(Projections.id());
+            }
+
+            @Override
+            public Object getKey(Object scrollResult) {
+               return scrollResult;
+            }
+
+            @Override
+            public Callable<Void> getTask(CacheLoaderTask task, TaskContext taskContext, Object scrollResult, Object key) {
+               return new LoadingProcessTask(task, taskContext, key, fv, fm);
+            }
+         });
+      } else {
+         process(filter, task, executor, new ProcessStrategy() {
+            @Override
+            public Criteria getCriteria(Session session) {
+               return session.createCriteria(configuration.entityClass()).setProjection(Projections.id());
+            }
+
+            @Override
+            public Object getKey(Object scrollResult) {
+               return scrollResult;
+            }
+
+            @Override
+            public Callable<Void> getTask(CacheLoaderTask task, TaskContext taskContext, Object scrollResult, Object key) {
+               return new ProcessTask(task, taskContext, key, null, null);
+            }
+         });
+      }
+   }
+
+   private void process(KeyFilter filter, final CacheLoaderTask task, Executor executor, ProcessStrategy strategy) {
       ExecutorAllCompletionService eacs = new ExecutorAllCompletionService(executor);
-      final TaskContextImpl taskContext = new TaskContextImpl();
+      TaskContextImpl taskContext = new TaskContextImpl();
       EntityManager emStream = emf.createEntityManager();
       try {
          EntityTransaction txStream = emStream.getTransaction();
-         ScrollableResults keys = null;
+         ScrollableResults results = null;
          txStream.begin();
          try {
             Session session = emStream.unwrap(Session.class);
-            Criteria criteria = session.createCriteria(configuration.entityClass()).setReadOnly(true)
-                  .setProjection(Projections.id());
+            Criteria criteria = strategy.getCriteria(session).setReadOnly(true);
             if (setFetchSizeMinInteger) {
                criteria.setFetchSize(Integer.MIN_VALUE);
             }
-
-            keys = criteria.scroll(ScrollMode.FORWARD_ONLY);
-            while (keys.next()) {
-               if (taskContext.isStopped())
-                  break;
-               final Object key = keys.get(0);
-               if (filter != null && !filter.accept(key)) {
-                  if (trace) log.trace("Key " + key + " filtered");
-                  continue;
+            results = criteria.scroll(ScrollMode.FORWARD_ONLY);
+            try {
+               while (results.next()) {
+                  if (taskContext.isStopped())
+                     break;
+                  Object result = results.get(0);
+                  Object key = strategy.getKey(result);
+                  if (filter != null && !filter.accept(key)) {
+                     if (trace) log.trace("Key " + key + " filtered");
+                     continue;
+                  }
+                  eacs.submit(strategy.getTask(task, taskContext, result, key));
                }
-
-               Object tempEntity = null;
-               InternalMetadata tempMetadata = null;
-               boolean loaded = false;
-
-               /* We need second entity manager because with MySQL we can't do streaming in parallel with other queries
-                  using single connection */
-               EntityManager emExec = emf.createEntityManager();
-               try {
-                  EntityTransaction txExec = emExec.getTransaction();
-                  txExec.begin();
-                  try {
-                     do {
-                        try {
-                           tempEntity = fetchValue ? findEntity(emExec, key) : null;
-                           tempMetadata = fetchMetadata ? getMetadata(emExec, key) : null;
-                        } finally {
-                           try {
-                              txExec.commit();
-                              loaded = true;
-                           } catch (Exception e) {
-                              log.trace("Failed to load once", e);
-                           }
-                        }
-                     } while (!loaded);
-                  } finally {
-                     if (txExec != null && txExec.isActive()) {
-                        txExec.rollback();
-                     }
-
-                  }
-               } finally {
-                  if (emExec != null) {
-                     emExec.close();
-                  }
-               }
-               final Object entity = tempEntity;
-               final InternalMetadata metadata = tempMetadata;
-               if (trace) log.trace("Processing " + key + " -> " + entity + "(" + metadata + ")");
-
-               if (metadata != null && metadata.isExpired(timeService.wallClockTime())) continue;
-               eacs.submit(new Callable<Void>() {
-                  @Override
-                  public Void call() throws Exception {
-                     try {
-                        final MarshalledEntry marshalledEntry = marshallerEntryFactory.newMarshalledEntry(key, entity, metadata);
-                        if (marshalledEntry != null) {
-                           task.processEntry(marshalledEntry, taskContext);
-                        }
-                        return null;
-                     } catch (Exception e) {
-                        log.errorExecutingParallelStoreTask(e);
-                        throw e;
-                     }
-                  }
-               });
+            } finally {
+               if (results != null) results.close();
             }
             txStream.commit();
          } finally {
-            if (keys != null) keys.close();
             if (txStream != null && txStream.isActive()) {
                txStream.rollback();
             }
@@ -611,6 +615,10 @@ public class JpaStore implements AdvancedLoadWriteStore {
 
    @Override
    public void purge(Executor threadPool, final PurgeListener listener) {
+      if (!configuration.storeMetadata()) {
+         log.debug("JPA Store cannot be purged as metadata holding expirations are not available");
+         return;
+      }
       ExecutorAllCompletionService eacs = new ExecutorAllCompletionService(threadPool);
       EntityManager emStream = emf.createEntityManager();
       try {
@@ -709,6 +717,127 @@ public class JpaStore implements AdvancedLoadWriteStore {
       } catch (Exception e) {
          log.trace("Failed to unmarshall metadata", e);
          return "<metadata: " + e + ">";
+      }
+   }
+
+   private interface ProcessStrategy {
+      Criteria getCriteria(Session session);
+      Object getKey(Object scrollResult);
+      Callable<Void> getTask(CacheLoaderTask task, TaskContext taskContext, Object scrollResult, Object key);
+   }
+
+   private class ProcessTask implements Callable<Void> {
+      private final CacheLoaderTask task;
+      private final TaskContext taskContext;
+      private final Object key;
+      private final Object entity;
+      private final InternalMetadata metadata;
+
+      private ProcessTask(CacheLoaderTask task, TaskContext taskContext, Object key, Object entity, InternalMetadata metadata) {
+         this.task = task;
+         this.taskContext = taskContext;
+         this.key = key;
+         this.entity = entity;
+         this.metadata = metadata;
+         if (trace) {
+            log.tracef("Created process task with key=%s, value=%s, metadata=%s", key, entity, metadata);
+         }
+      }
+
+      @Override
+      public Void call() throws Exception {
+         try {
+            final MarshalledEntry marshalledEntry = marshallerEntryFactory.newMarshalledEntry(key, entity, metadata);
+            if (marshalledEntry != null) {
+               task.processEntry(marshalledEntry, taskContext);
+            }
+            return null;
+         } catch (Exception e) {
+            log.errorExecutingParallelStoreTask(e);
+            throw e;
+         }
+      }
+   }
+
+   private class LoadingProcessTask implements Callable<Void> {
+      private final CacheLoaderTask task;
+      private final TaskContext taskContext;
+      private final Object key;
+      private final boolean fetchValue;
+      private final boolean fetchMetadata;
+
+      private LoadingProcessTask(CacheLoaderTask task, TaskContext taskContext, Object key, boolean fetchValue, boolean fetchMetadata) {
+         this.task = task;
+         this.taskContext = taskContext;
+         this.key = key;
+         this.fetchValue = fetchValue;
+         this.fetchMetadata = fetchMetadata;
+         if (trace) {
+            log.tracef("Created process task with key=%s, fetchMetadata=%s", key, fetchMetadata);
+         }
+      }
+
+      @Override
+      public Void call() throws Exception {
+         boolean loaded = false;
+         Object entity;
+         InternalMetadata metadata;
+
+         // The loading of entries and metadata is offloaded to another thread.
+         // We need second entity manager anyway because with MySQL we can't do streaming
+         // in parallel with other queries using single connection
+         EntityManager emExec = emf.createEntityManager();
+         try {
+            EntityTransaction txExec = emExec.getTransaction();
+            txExec.begin();
+            try {
+               do {
+                  try {
+                     metadata = fetchMetadata ? getMetadata(emExec, key) : null;
+                     if (trace) {
+                        log.tracef("Fetched metadata (fetching? %s) %s", fetchMetadata, metadata);
+                     }
+                     if (metadata != null && metadata.isExpired(timeService.wallClockTime())) {
+                        return null;
+                     }
+                     if (fetchValue) {
+                        entity = findEntity(emExec, key);
+                        if (trace) {
+                           log.tracef("Fetched value %s", entity);
+                        }
+                     } else {
+                        entity = null;
+                     }
+                  } finally {
+                     try {
+                        txExec.commit();
+                        loaded = true;
+                     } catch (Exception e) {
+                        log.trace("Failed to load once", e);
+                     }
+                  }
+               } while (!loaded);
+            } finally {
+               if (txExec != null && txExec.isActive()) {
+                  txExec.rollback();
+               }
+
+            }
+         } finally {
+            if (emExec != null) {
+               emExec.close();
+            }
+         }
+         try {
+            final MarshalledEntry marshalledEntry = marshallerEntryFactory.newMarshalledEntry(key, entity, metadata);
+            if (marshalledEntry != null) {
+               task.processEntry(marshalledEntry, taskContext);
+            }
+            return null;
+         } catch (Exception e) {
+            log.errorExecutingParallelStoreTask(e);
+            throw e;
+         }
       }
    }
 }

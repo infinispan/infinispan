@@ -36,12 +36,24 @@ public class MetadataEntity {
    }
 
    public MetadataEntity(ByteBuffer key, ByteBuffer metadata, long expiration) {
-      this.key = new MetadataEntityKey(key.getBuf());
-      this.keyBytes = key.getBuf();
+      this.keyBytes = trimmedBytes(key);
+      this.key = new MetadataEntityKey(keyBytes);
       if (metadata != null) {
-         this.metadata = metadata.getBuf();
+         this.metadata = trimmedBytes(metadata);
       }
       this.expiration = expiration < 0 ? Long.MAX_VALUE : expiration;
+   }
+
+   private byte[] trimmedBytes(ByteBuffer buf) {
+      // If the underlying buffer is correctly aligned we can use it, but otherwise that
+      // would produce different result when the key was marshalled second time
+      if (buf.getOffset() == 0 && buf.getLength() == buf.getBuf().length) {
+         return buf.getBuf();
+      } else {
+         byte[] bytes = new byte[buf.getLength()];
+         System.arraycopy(buf.getBuf(), buf.getOffset(), bytes, 0, buf.getLength());
+         return bytes;
+      }
    }
 
    public MetadataEntityKey getKey() {

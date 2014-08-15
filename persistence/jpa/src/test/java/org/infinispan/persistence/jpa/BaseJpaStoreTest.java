@@ -1,9 +1,6 @@
 package org.infinispan.persistence.jpa;
 
-import static org.testng.Assert.assertEquals;
-import static org.testng.Assert.assertFalse;
-import static org.testng.Assert.assertNull;
-import static org.testng.Assert.assertTrue;
+import static org.testng.Assert.*;
 
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.LinkedBlockingQueue;
@@ -73,6 +70,9 @@ public abstract class BaseJpaStoreTest extends AbstractJpaStoreTest {
 		cs.write(createEntry(obj1));
 		cs.write(createEntry(obj2));
 		cs.write(createEntry(obj3));
+      assertEquals(cs.load(obj1.getKey()).getValue(), obj1.getValue());
+      assertEquals(cs.load(obj2.getKey()).getValue(), obj2.getValue());
+      assertEquals(cs.load(obj3.getKey()).getValue(), obj3.getValue());
 
       final ConcurrentHashMap map = new ConcurrentHashMap();
       AdvancedCacheLoader.CacheLoaderTask taskWithValues = new AdvancedCacheLoader.CacheLoaderTask() {

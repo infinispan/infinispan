@@ -106,5 +106,15 @@ public class Person implements Serializable {
       result = prime * result + (secondaryAdresses != null ? secondaryAdresses.hashCode() : 0);
       return result;
    }
-   
+
+   @Override
+   public String toString() {
+      return "Person{" +
+            "id='" + id + '\'' +
+            ", name='" + name + '\'' +
+            ", nickNames=" + nickNames +
+            ", address=" + address +
+            ", secondaryAdresses=" + secondaryAdresses +
+            '}';
+   }
 }
