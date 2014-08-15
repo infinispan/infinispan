@@ -19,19 +19,27 @@ public class JpaStoreTest extends BaseStoreTest {
 
    @Override
    protected AdvancedLoadWriteStore createStore() throws Exception {
-      ConfigurationBuilder builder = TestCacheManagerFactory
-            .getDefaultCacheConfiguration(false);
-      builder
-            .persistence()
-               .addStore(JpaStoreConfigurationBuilder.class)
-                  .persistenceUnitName("org.infinispan.persistence.jpa")
-                  .entityClass(KeyValueEntity.class);
+      ConfigurationBuilder builder = TestCacheManagerFactory.getDefaultCacheConfiguration(false);
+      builder.persistence()
+                  .addStore(JpaStoreConfigurationBuilder.class)
+                     .persistenceUnitName(getPersistenceUnitName())
+                     .entityClass(KeyValueEntity.class)
+                     .storeMetadata(storeMetadata())
+                     .create();
       InitializationContext context = createContext(builder.build());
       context.getCache().getAdvancedCache().getComponentRegistry().getGlobalComponentRegistry()
             .registerComponent(new EntityManagerFactoryRegistry(), EntityManagerFactoryRegistry.class);
       JpaStore store = new JpaStore();
       store.init(context);
       return store;
+   }
+
+   protected boolean storeMetadata() {
+      return true;
+   }
+
+   protected String getPersistenceUnitName() {
+      return "org.infinispan.persistence.jpa";
    }
 
    @Override

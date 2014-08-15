@@ -62,4 +62,9 @@ public class MetadataEntityKey implements Serializable {
       }
       return keyBytesSha;
    }
+
+   @Override
+   public String toString() {
+      return "MetadataEntityKey{keySha='" + keySha + "'}";
+   }
 }

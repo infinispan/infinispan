@@ -46,4 +46,24 @@
        <property name="hibernate.connection.autocommit" value="false" />
      </properties>
    </persistence-unit>
+
+   <persistence-unit name="org.infinispan.persistence.jpa.no_metadata">
+      <class>org.infinispan.persistence.jpa.entity.Document</class>
+      <class>org.infinispan.persistence.jpa.entity.KeyValueEntity</class>
+      <class>org.infinispan.persistence.jpa.entity.Person</class>
+      <class>org.infinispan.persistence.jpa.entity.User</class>
+      <class>org.infinispan.persistence.jpa.entity.Vehicle</class>
+      <properties>
+         <property name="hibernate.connection.url" value="${connection.url}"/>
+         <property name="hibernate.connection.driver_class" value="${driver.class}"/>
+         <property name="hibernate.connection.username" value="${db.username}"/>
+         <property name="hibernate.connection.password" value="${db.password}"/>
+         <!-- <property name="hibernate.dialect" value="${hibernate.dialect}" /> --> <!-- dialect is automatically determined by hibernate, uncomment to force the dialect -->
+         <property name="hibernate.jdbc.batch_size" value="20" />
+         <property name="hibernate.jdbc.fetch_size" value="20" />
+         <property name="hibernate.hbm2ddl.auto" value="update"/> <!--  use create-drop for testing -->
+         <property name="hibernate.show_sql" value="false" /> <!-- set to true if you'd like to see what's going on -->
+         <property name="hibernate.connection.autocommit" value="false" />
+      </properties>
+   </persistence-unit>
 </persistence>
