@@ -175,7 +175,7 @@ public class JdbcBinaryStore implements AdvancedLoadWriteStore {
    }
 
    @Override
-   public void process(final KeyFilter filter, final CacheLoaderTask task, Executor executor, boolean fetchValue, boolean fetchMetadata) {
+   public void process(final KeyFilter filter, final CacheLoaderTask task, Executor executor, final boolean fetchValue, final boolean fetchMetadata) {
       Connection conn = null;
       PreparedStatement ps = null;
       ResultSet rs = null;
@@ -202,6 +202,10 @@ public class JdbcBinaryStore implements AdvancedLoadWriteStore {
                   try {
                      for (MarshalledEntry me : bucket.getStoredEntries(filter, ctx.getTimeService()).values()) {
                         if (!taskContext.isStopped()) {
+                           if (!fetchValue || !fetchMetadata) {
+                              me = ctx.getMarshalledEntryFactory().newMarshalledEntry(me.getKey(),
+                                    fetchValue ? me.getValue() : null, fetchMetadata ? me.getMetadata() : null);
+                           }
                            task.processEntry(me, taskContext);
                         }
                      }

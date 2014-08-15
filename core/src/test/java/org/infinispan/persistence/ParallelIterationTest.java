@@ -121,6 +121,7 @@ public abstract class ParallelIterationTest extends SingleCacheManagerTest {
    }
 
    private void runIterationTest(int numThreads, Executor persistenceExecutor1, final boolean fetchValues, boolean fetchMetadata) {
+      assertEquals(store.size(), 0);
       int numEntries = insertData();
       final ConcurrentMap<Integer, Integer> entries = new ConcurrentHashMap<>();
       final ConcurrentMap<Integer, InternalMetadata> metadata = new ConcurrentHashMap<>();
@@ -183,7 +184,7 @@ public abstract class ParallelIterationTest extends SingleCacheManagerTest {
             assertEquals(metadata.get(i).lifespan(), lifespan(i), "For key " + i);
             assertEquals(metadata.get(i).maxIdle(), maxIdle(i), "For key " + i);
          } else {
-            assertNull(metadata.get(i));
+            assertMetadataEmpty(metadata.get(i));
          }
       }
 
@@ -198,6 +199,10 @@ public abstract class ParallelIterationTest extends SingleCacheManagerTest {
          store.write(me);
       }
       return numEntries;
+   }
+
+   protected void assertMetadataEmpty(InternalMetadata metadata) {
+      assertNull(metadata);
    }
 
    protected boolean insertMetadata(int i) {
