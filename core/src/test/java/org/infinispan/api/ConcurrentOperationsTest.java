@@ -29,16 +29,25 @@ import static org.testng.Assert.assertTrue;
 @Test(groups = "functional", testName = "api.ConcurrentOperationsTest")
 public class ConcurrentOperationsTest extends MultipleCacheManagersTest {
 
-   public static final int THREADS = 3;
-   public static final int NUM_NODES = 3;
-   public static final int OP_COUNT = 300;
-   private static final boolean CONSOLE_ENABLED = false;
+   protected final int threads;
+   protected final int nodes;
+   protected final int operations;
+
+   public ConcurrentOperationsTest(int threads, int nodes, int operations) {
+      this.threads = threads;
+      this.nodes = nodes;
+      this.operations = operations;
+   }
+
+   public ConcurrentOperationsTest() {
+      this(2, 2, 4);
+   }
 
    @Override
    protected void createCacheManagers() throws Throwable {
       ConfigurationBuilder dcc = getDefaultClusteredCacheConfig(CacheMode.DIST_SYNC, false);
       dcc.clustering().l1().disable();
-      createClusteredCaches(NUM_NODES, dcc);
+      createClusteredCaches(nodes, dcc);
    }
 
    public void testNoTimeout() throws Throwable {
@@ -50,18 +59,18 @@ public class ConcurrentOperationsTest extends MultipleCacheManagersTest {
    }
 
    private void runTest(final boolean checkCorrectness) throws Throwable {
-      final CyclicBarrier barrier = new CyclicBarrier(THREADS);
+      final CyclicBarrier barrier = new CyclicBarrier(threads);
       final Random rnd = new Random();
       final AtomicBoolean correctness = new AtomicBoolean(Boolean.TRUE);
       List<Future<Boolean>> result = new ArrayList<Future<Boolean>>();
-      for (int t = 0; t < THREADS; t++) {
+      for (int t = 0; t < threads; t++) {
          final int part = t;
          Future<Boolean> f = fork(new Callable<Boolean>() {
 
             @Override
             public Boolean call() throws Exception {
                try {
-                  for (int i = 0; i < OP_COUNT; i++) {
+                  for (int i = 0; i < operations; i++) {
                      barrier();
                      executeOperation(i);
                      barrier();
@@ -82,7 +91,7 @@ public class ConcurrentOperationsTest extends MultipleCacheManagersTest {
             }
 
             private void executeOperation(int iteration) {
-               int node = rnd.nextInt(NUM_NODES - 1);
+               int node = rnd.nextInt(nodes - 1);
                switch (rnd.nextInt(4)) {
                   case 0: {
                      cache(node).put("k", "v_" + part + "_" + iteration);
@@ -130,13 +139,13 @@ public class ConcurrentOperationsTest extends MultipleCacheManagersTest {
 
                   print("otherOwnerValue = " + otherOwnerValue);
                   print("mainOwnerValue = " + mainOwnerValue);
-                  for (int q = 0; q < NUM_NODES; q++) {
+                  for (int q = 0; q < nodes; q++) {
                      print(q, cache(0).get("k"));
                   }
 
                   Object expectedValue = cache(0).get("k");
                   log.tracef("Original value read from cache 0 is %s", expectedValue);
-                  for (int j = 0; j < NUM_NODES; j++) {
+                  for (int j = 0; j < nodes; j++) {
                      Object actualValue = cache(j).get("k");
                      boolean areEquals = expectedValue == null ? actualValue == null : expectedValue.equals(actualValue);
                      print("Are " + actualValue + " and " + expectedValue + " equals ? " + areEquals);
@@ -177,12 +186,12 @@ public class ConcurrentOperationsTest extends MultipleCacheManagersTest {
    }
 
    private void print(Object value) {
-      if (CONSOLE_ENABLED) System.out.println(value);
+      log.debug(value);
    }
 
    public void testReplace() {
       cache(0).put("k", "v1");
-      for (int i = 0; i < NUM_NODES; i++) {
+      for (int i = 0; i < nodes; i++) {
          assertEquals("v1", cache(i).get("k"));
       }
       assert cache(0).replace("k", "v2") != null;
