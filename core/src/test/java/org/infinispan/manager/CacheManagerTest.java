@@ -2,18 +2,28 @@ package org.infinispan.manager;
 
 import org.infinispan.Cache;
 import org.infinispan.commons.CacheException;
+import org.infinispan.commons.configuration.BuiltBy;
+import org.infinispan.commons.configuration.ConfigurationFor;
+import org.infinispan.configuration.cache.AbstractStoreConfiguration;
+import org.infinispan.configuration.cache.AbstractStoreConfigurationBuilder;
+import org.infinispan.configuration.cache.AsyncStoreConfiguration;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.cache.InterceptorConfiguration;
+import org.infinispan.configuration.cache.PersistenceConfigurationBuilder;
+import org.infinispan.configuration.cache.SingletonStoreConfiguration;
 import org.infinispan.configuration.global.GlobalConfiguration;
 import org.infinispan.configuration.global.GlobalConfigurationBuilder;
 import org.infinispan.container.DataContainer;
 import org.infinispan.eviction.EvictionStrategy;
 import org.infinispan.interceptors.base.BaseCustomInterceptor;
 import org.infinispan.lifecycle.ComponentStatus;
+import org.infinispan.marshall.core.MarshalledEntry;
 import org.infinispan.persistence.dummy.DummyInMemoryStore;
 import org.infinispan.persistence.dummy.DummyInMemoryStoreConfigurationBuilder;
+import org.infinispan.persistence.spi.ExternalStore;
+import org.infinispan.persistence.spi.InitializationContext;
 import org.infinispan.test.AbstractInfinispanTest;
 import org.infinispan.test.CacheManagerCallable;
 import org.infinispan.test.MultiCacheManagerCallable;
@@ -352,6 +362,21 @@ public class CacheManagerTest extends AbstractInfinispanTest {
       doTestRemoveCacheClustered(m, true);
    }
 
+   public void testExceptionOnCacheManagerStop() {
+      ConfigurationBuilder c = new ConfigurationBuilder();
+      c.persistence().addStore(UnreliableCacheStoreConfigurationBuilder.class);
+      EmbeddedCacheManager cm = TestCacheManagerFactory.createCacheManager(c);
+      try {
+         assertEquals(ComponentStatus.INSTANTIATED, cm.getStatus());
+         Cache<Integer, String> cache = cm.getCache();
+         assertEquals(ComponentStatus.RUNNING, cm.getStatus());
+         cache.put(1, "v1");
+      } finally {
+         killCacheManagers(cm);
+         assertEquals(ComponentStatus.TERMINATED, cm.getStatus());
+      }
+   }
+
    private EmbeddedCacheManager getManagerWithStore(Method m, boolean isClustered, boolean isStoreShared) {
       return getManagerWithStore(m, isClustered, isStoreShared, "store-");
    }
@@ -416,6 +441,35 @@ public class CacheManagerTest extends AbstractInfinispanTest {
 
    private DataContainer getDataContainer(Cache<String, String> cache) {
       return TestingUtil.extractComponent(cache, DataContainer.class);
+   }
+
+   public static class UnreliableCacheStore implements ExternalStore {
+      @Override public void init(InitializationContext ctx) {}
+      @Override public void write(MarshalledEntry entry) {}
+      @Override public boolean delete(Object key) { return false; }
+      @Override public MarshalledEntry load(Object key) { return null; }
+      @Override public boolean contains(Object key) { return false; }
+      @Override public void start() {}
+      @Override public void stop() {
+         throw new IllegalStateException("Test");
+      }
+   }
+
+   @ConfigurationFor(UnreliableCacheStore.class)
+   @BuiltBy(UnreliableCacheStoreConfigurationBuilder.class)
+   public static class UnreliableCacheStoreConfiguration extends AbstractStoreConfiguration {
+      public UnreliableCacheStoreConfiguration(AsyncStoreConfiguration async, SingletonStoreConfiguration singleton) {
+         super(false, false, false, async, singleton, false, false, null);
+      }
+   }
+
+   public static class UnreliableCacheStoreConfigurationBuilder
+         extends AbstractStoreConfigurationBuilder<UnreliableCacheStoreConfiguration, UnreliableCacheStoreConfigurationBuilder> {
+      public UnreliableCacheStoreConfigurationBuilder(PersistenceConfigurationBuilder builder) { super(builder); }
+      @Override public UnreliableCacheStoreConfiguration create() {
+         return new UnreliableCacheStoreConfiguration(async.create(), singleton().create());
+      }
+      @Override public UnreliableCacheStoreConfigurationBuilder self() { return this; }
    }
 
 }
