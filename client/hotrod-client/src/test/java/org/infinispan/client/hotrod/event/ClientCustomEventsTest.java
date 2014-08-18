@@ -1,18 +1,21 @@
 package org.infinispan.client.hotrod.event;
 
+import static org.infinispan.client.hotrod.test.HotRodClientTestingUtil.withClientListener;
+
 import org.infinispan.client.hotrod.RemoteCache;
 import org.infinispan.client.hotrod.TestHelper;
 import org.infinispan.client.hotrod.event.CustomEventListener.CustomEvent;
+import org.infinispan.client.hotrod.exceptions.HotRodClientException;
 import org.infinispan.client.hotrod.test.RemoteCacheManagerCallable;
 import org.infinispan.client.hotrod.test.SingleHotRodServerTest;
-import org.infinispan.metadata.Metadata;
-import org.infinispan.filter.ConverterFactory;
 import org.infinispan.filter.Converter;
+import org.infinispan.filter.ConverterFactory;
+import org.infinispan.metadata.Metadata;
 import org.infinispan.server.hotrod.HotRodServer;
 import org.infinispan.server.hotrod.configuration.HotRodServerConfigurationBuilder;
 import org.testng.annotations.Test;
 
-import static org.infinispan.client.hotrod.test.HotRodClientTestingUtil.withClientListener;
+import static org.testng.AssertJUnit.assertEquals;
 
 @Test(groups = "functional", testName = "client.hotrod.event.ClientCustomEventsTest")
 public class ClientCustomEventsTest extends SingleHotRodServerTest {
@@ -43,6 +46,26 @@ public class ClientCustomEventsTest extends SingleHotRodServerTest {
             eventListener.expectSingleCustomEvent(1, null);
          }
       });
+   }
+   
+   /**
+    * Test that the HotRod server returns an error when a ClientListener is registered with a non-existing 'converterFactoryName'.
+    */
+   public void testNonExistingConverterFactoryCustomEvents() {
+      final NonExistingConverterFactoryCustomEventListener eventListener = new NonExistingConverterFactoryCustomEventListener();
+	  converterFactory.dynamic = false;
+      boolean caughtException = false;
+      try {
+    	  withClientListener(eventListener, new RemoteCacheManagerCallable(remoteCacheManager) {
+    		  @Override
+    		  public void call() {
+                   //don't need to do anything as we expect a HotRodClientException when the listener is registered.
+    		  }
+    	  	});
+      } catch (HotRodClientException hrce) {
+    	  caughtException = true;
+      }
+      assertEquals(true, caughtException);      
    }
 
    public void testParameterBasedConversion() {
