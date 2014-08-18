@@ -36,6 +36,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 
+import static org.infinispan.util.logging.LogFactory.CLUSTER;
 import static org.infinispan.factories.KnownComponentNames.ASYNC_TRANSPORT_EXECUTOR;
 
 /**
@@ -318,8 +319,7 @@ public class ClusterTopologyManagerImpl implements ClusterTopologyManager {
 
    private void broadcastRebalanceStart(String cacheName, ClusterCacheStatus cacheStatus) throws Exception {
       CacheTopology cacheTopology = cacheStatus.getCacheTopology();
-      log.debugf("Starting cluster-wide rebalance for cache %s, topology = %s",
-            cacheName, cacheTopology);
+      CLUSTER.startRebalance(cacheName, cacheTopology);
       ReplicableCommand command = new CacheTopologyControlCommand(cacheName,
             CacheTopologyControlCommand.Type.REBALANCE_START, transport.getAddress(), cacheTopology,
             transport.getViewId());
@@ -484,6 +484,7 @@ public class ClusterTopologyManagerImpl implements ClusterTopologyManager {
    public void handleNewView(final ViewChangedEvent e) {
       // need to recover existing caches asynchronously (in case we just became the coordinator)
       asyncTransportExecutor.submit(new Runnable() {
+         @Override
          public void run() {
             log.tracef("handleNewView(oldView='%s', newView='%s', isMerge=%s", e.getOldMembers(), e.getNewMembers(), e.isMergeView());
             handleNewView(e.isMergeView(), e.getViewId());

@@ -1,7 +1,6 @@
 package org.infinispan.util.logging;
 
 import org.jboss.logging.Logger;
-import org.jboss.logging.NDC;
 
 /**
  * Factory that creates {@link Log} instances.
@@ -10,6 +9,9 @@ import org.jboss.logging.NDC;
  * @since 4.0
  */
 public class LogFactory {
+   public static final String LOG_ROOT = "org.infinispan";
+
+   public static Log CLUSTER = Logger.getMessageLogger(Log.class, LOG_ROOT + ".CLUSTER");
 
    public static Log getLog(Class<?> clazz) {
       return Logger.getMessageLogger(Log.class, clazz.getName());

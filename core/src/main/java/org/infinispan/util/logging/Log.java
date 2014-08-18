@@ -15,6 +15,7 @@ import org.infinispan.remoting.RemoteException;
 import org.infinispan.remoting.responses.Response;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.remoting.transport.jgroups.SuspectException;
+import org.infinispan.topology.CacheTopology;
 import org.infinispan.transaction.impl.LocalTransaction;
 import org.infinispan.transaction.xa.GlobalTransaction;
 import org.infinispan.transaction.xa.recovery.RecoveryAwareRemoteTransaction;
@@ -1128,4 +1129,16 @@ public interface Log extends BasicLogger {
 
    @Message(value = "Cannot clear when the cluster is partitioned", id = 307)
    AvailabilityException clearDisallowedWhilePartitioned();
+
+   @LogMessage(level = INFO)
+   @Message(value = "Rebalancing enabled", id = 308)
+   void rebalancingEnabled();
+
+   @LogMessage(level = INFO)
+   @Message(value = "Rebalancing suspended", id = 309)
+   void rebalancingSuspended();
+
+   @LogMessage(level = INFO)
+   @Message(value = "Starting cluster-wide rebalance for cache %s, topology %s", id = 310)
+   void startRebalance(String cacheName, CacheTopology cacheTopology);
 }
