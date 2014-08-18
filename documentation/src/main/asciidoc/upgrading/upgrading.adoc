@@ -7,6 +7,25 @@ Manik Surtani, Mircea Markus, Galder Zamarreño, Pete Muir, and others from the 
 
 This guide walks you through the process of upgrading Infinispan.
 
+== Upgrading from 6.0 to 7.0
+=== API Changes
+
+==== Cache Loader
+To be more inline with JCache and java.util.collections interfaces we have changed the first argument type for the CacheLoader.load & CacheLoader.contains methods to be Object from type K.
+
+==== Cache Writer
+To be more inline with JCache and java.util.collections interfaces we have changed the first argument type for the CacheWriter.delete method to be Object from type K.
+
+==== Filters
+
+Over time Infinispan added 2 interfaces with identical names and almost identical methods.  The org.infinispan.notifications.KeyFilter and org.infinispan.persistence.spi.AdvancedCacheLoader$KeyFilter interfaces.
+
+Both of these interfaces are used for the sole purpose of filtering an entry by it's given key.  Infinispan 7.0 has also introduced the KeyValueFilter which is similar to both but also can filter on the entries value and/or metadata.
+
+As such all of these classes have been moved into a new package org.infinispan.filter and all of their related helper classes.
+
+The new org.infinispan.filter.KeyFilter interface has replaced both of the previous interfaces and all previous references use the new interface.
+
 == Upgrading from 5.3 to 6.0
 === Declarative configuration
 In order to use all of the latest features, make sure you change the namespace declaration at the top of your XML configuration files as follows:
