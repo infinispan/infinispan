@@ -1,13 +1,14 @@
 package org.infinispan.interceptors;
 
-import org.infinispan.configuration.cache.CacheMode;
+import org.infinispan.commands.write.WriteCommand;
 import org.infinispan.context.Flag;
-import org.infinispan.distribution.DistributionManager;
+import org.infinispan.context.InvocationContext;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.annotations.Start;
 import org.infinispan.interceptors.locking.ClusteringDependentLogic;
-
-import java.util.Set;
+import org.infinispan.statetransfer.StateTransferManager;
+import org.infinispan.util.logging.Log;
+import org.infinispan.util.logging.LogFactory;
 
 /**
  * The same as a regular cache loader interceptor, except that it contains additional logic to force loading from the
@@ -18,35 +19,84 @@ import java.util.Set;
  */
 public class ClusteredCacheLoaderInterceptor extends CacheLoaderInterceptor {
 
-   private boolean isWriteSkewConfigured;
+   private static final Log log = LogFactory.getLog(ClusteredActivationInterceptor.class);
+   private static final boolean trace = log.isTraceEnabled();
+
+   private boolean transactional;
    private ClusteringDependentLogic cdl;
-   private DistributionManager dm;
+   private StateTransferManager stateTransferManager;
+   private boolean distributed;
 
    @Inject
-   private void injectDependencies(ClusteringDependentLogic cdl, DistributionManager dm) {
+   private void injectDependencies(ClusteringDependentLogic cdl, StateTransferManager stateTransferManager) {
       this.cdl = cdl;
-      this.dm = dm;
+      this.stateTransferManager = stateTransferManager;
    }
    
    @Start(priority = 15)
    private void startClusteredCacheLoaderInterceptor() {
-      CacheMode cacheMode = cacheConfiguration.clustering().cacheMode();
-      // For now the primary data owner may need to load from the cache store, even if
-      // this is a remote call, if write skew checking is enabled.  Once ISPN-317 is in, this may also need to
-      // happen if running in distributed mode and eviction is enabled.
-      isWriteSkewConfigured = cacheConfiguration.locking().writeSkewCheck()
-            && (cacheMode.isReplicated() || cacheMode.isDistributed());
+      transactional = cacheConfiguration.transaction().transactionMode().isTransactional();
+      distributed = cacheConfiguration.clustering().cacheMode().isDistributed();
    }
 
    @Override
-   protected boolean forceLoad(Object key, Set<Flag> flags) {
-      return isDeltaWrite(flags) || isWriteSkewConfigured && cdl.localNodeIsPrimaryOwner(key);
+   protected boolean skipLoadForWriteCommand(WriteCommand cmd, Object key, InvocationContext ctx) {
+      return transactional ? skipLoadForTxCommand(cmd, key, ctx) : skipLoadForNonTxCommand(cmd, key);
+   }
+
+   private boolean skipLoadForNonTxCommand(WriteCommand cmd, Object key) {
+      if (cdl.localNodeIsPrimaryOwner(key) || cmd.hasFlag(Flag.CACHE_MODE_LOCAL)) {
+         if (isDeltaWrite(cmd)) {
+            if (trace) {
+               log.tracef("Don't skip load for DeltaWrite or conditional command %s.", cmd);
+            }
+            return false;
+         } else if (isConditional(cmd)) {
+            boolean skip = hasSkipLoadFlag(cmd);
+            if (trace) {
+               log.tracef("Skip load for conditional command %s? %s", cmd, skip);
+            }
+            return skip;
+         }
+         boolean skip = hasSkipLoadFlag(cmd) || hasIgnoreReturnValueFlag(cmd);
+         if (trace) {
+            log.tracef("Skip load for command %s? %s", skip);
+         }
+         return skip;
+      }
+      if (trace) {
+         log.tracef("Skip load for command %s. This node is not the primary owner of %s", cmd, key);
+      }
+      return true;
+   }
+
+   private boolean skipLoadForTxCommand(WriteCommand cmd, Object key, InvocationContext ctx) {
+      if (isDeltaWrite(cmd)) {
+         if (trace) {
+            log.tracef("Don't skip load for DeltaWrite command %s.", cmd);
+         }
+         return false;
+      } else if (isConditional(cmd)) {
+         boolean skip = hasSkipLoadFlag(cmd);
+         if (trace) {
+            log.tracef("Skip load for conditional command %s? %s", cmd, skip);
+         }
+         return skip;
+      }
+      boolean skip = hasSkipLoadFlag(cmd) || hasIgnoreReturnValueFlag(cmd);
+      if (trace) {
+         log.tracef("Skip load for command %s? %s", skip);
+      }
+      return skip || (!ctx.isOriginLocal() && !cdl.localNodeIsPrimaryOwner(key));
    }
 
    @Override
    protected boolean canLoad(Object key) {
       // Don't load the value if we are using distributed mode and aren't in the read CH
-      return !cacheConfiguration.clustering().cacheMode().isDistributed() ||
-            dm.getReadConsistentHash().isKeyLocalToNode(cdl.getAddress(), key);
+      return stateTransferManager.isJoinComplete() && (!distributed || isKeyLocal(key));
+   }
+
+   private boolean isKeyLocal(Object key) {
+      return stateTransferManager.getCacheTopology().getReadConsistentHash().isKeyLocalToNode(cdl.getAddress(), key);
    }
 }

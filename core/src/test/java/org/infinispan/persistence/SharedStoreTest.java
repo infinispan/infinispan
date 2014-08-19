@@ -59,7 +59,7 @@ public class SharedStoreTest extends MultipleCacheManagersTest {
       for (CacheLoader cs: cacheStores) {
          assert !cs.contains("key");
          DummyInMemoryStore dimcs = (DummyInMemoryStore) cs;
-         assert dimcs.stats().get("delete") == 1 : "Entry should have been removed from the cache store just once, but was removed " + dimcs.stats().get("remove") + " times";
+         assert dimcs.stats().get("delete") == 1 : "Entry should have been removed from the cache store just once, but was removed " + dimcs.stats().get("delete") + " times";
       }
    }
 
