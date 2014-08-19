@@ -35,6 +35,7 @@ import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentMap;
+import java.util.concurrent.atomic.AtomicReference;
 
 /**
  * DefaultDataContainer is both eviction and non-eviction based data container.
@@ -189,7 +190,7 @@ public class DefaultDataContainer<K, V> implements DataContainer<K, V> {
 
    @Override
    public InternalCacheEntry<K, V> remove(Object k) {
-      InternalCacheEntry<K, V> e = entries.remove(k);
+      InternalCacheEntry<K, V> e = extendedMap.removeAndActivate(k);
       return e == null || (e.canExpire() && e.isExpired(timeService.wallClockTime())) ? null : e;
    }
 
@@ -433,6 +434,8 @@ public class DefaultDataContainer<K, V> implements DataContainer<K, V> {
       InternalCacheEntry<K, V> compute(K key, ComputeAction<K, V> action);
 
       void putAndActivate(InternalCacheEntry<K, V> newEntry);
+
+      InternalCacheEntry<K, V> removeAndActivate(Object key);
    }
 
    private class EquivalentConcurrentExtendedMap implements ExtendedMap<K, V> {
@@ -486,6 +489,24 @@ public class DefaultDataContainer<K, V> implements DataContainer<K, V> {
                   }
                });
       }
+
+      @Override
+      public InternalCacheEntry<K, V> removeAndActivate(Object key) {
+         final AtomicReference<InternalCacheEntry<K,V>> reference = new AtomicReference<>(null);
+         ((EquivalentConcurrentHashMapV8<Object, InternalCacheEntry<K, V>>) entries)
+               .compute(key, new EquivalentConcurrentHashMapV8.BiFun<Object, InternalCacheEntry<K, V>, InternalCacheEntry<K, V>>() {
+                  @Override
+                  public InternalCacheEntry<K, V> apply(Object key, InternalCacheEntry<K, V> entry) {
+                     if (entry == null) {
+                        //entry does not exists before. we need to activate it.
+                        activator.activate(key);
+                     }
+                     reference.set(entry);
+                     return null;
+                  }
+               });
+         return reference.get();
+      }
    }
 
    private class BoundedConcurrentExtendedMap implements ExtendedMap<K, V> {
@@ -522,6 +543,23 @@ public class DefaultDataContainer<K, V> implements DataContainer<K, V> {
       public void putAndActivate(InternalCacheEntry<K, V> newEntry) {
          //put already activate the entry if it is new.
          entries.put(newEntry.getKey(), newEntry);
+      }
+
+      @Override
+      public InternalCacheEntry<K, V> removeAndActivate(Object key) {
+         final BoundedConcurrentHashMap<Object, InternalCacheEntry<K, V>> boundedMap =
+               ((BoundedConcurrentHashMap<Object, InternalCacheEntry<K, V>>) entries);
+         boundedMap.lock(key);
+         try {
+            InternalCacheEntry<K, V> oldEntry = boundedMap.remove(key);
+            if (oldEntry == null) {
+               //entry does not exists before. we need to activate it.
+               activator.activate(key);
+            }
+            return oldEntry;
+         } finally {
+            boundedMap.unlock(key);
+         }
       }
    }
 }
