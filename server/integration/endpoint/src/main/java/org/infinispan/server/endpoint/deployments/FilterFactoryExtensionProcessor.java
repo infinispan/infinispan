@@ -42,6 +42,7 @@ public final class FilterFactoryExtensionProcessor extends AbstractNamedFactoryE
         @Override
         public void stop(StopContext context) {
             ROOT_LOGGER.debugf("Stopped key-value filter service with name = %s", name);
+            extensionManager.getValue().removeKeyValueFilterFactory(name);
         }
 
         @Override

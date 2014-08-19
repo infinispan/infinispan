@@ -230,10 +230,22 @@ class HotRodServer extends AbstractProtocolServer("HotRod") with Log {
       clientListenerRegistry.addKeyValueFilterFactory(name, factory)
    }
 
+   def removeKeyValueFilterFactory(name: String): Unit = {
+      clientListenerRegistry.removeKeyValueFilterFactory(name)
+   }
+
    def addConverterFactory(name: String, factory: ConverterFactory): Unit = {
       clientListenerRegistry.addConverterFactory(name, factory)
    }
 
+   def removeConverterFactory(name: String): Unit = {
+      clientListenerRegistry.removeConverterFactory(name)
+   }
+
+   override def stop: Unit = {
+      if (clientListenerRegistry != null) clientListenerRegistry.stop()
+      super.stop
+   }
 }
 
 object HotRodServer {

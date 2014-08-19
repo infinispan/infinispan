@@ -2,7 +2,6 @@ package org.infinispan.server.endpoint.subsystem;
 
 import org.infinispan.filter.ConverterFactory;
 import org.infinispan.filter.KeyValueFilterFactory;
-import org.infinispan.server.core.ProtocolServer;
 import org.infinispan.server.hotrod.HotRodServer;
 import org.jboss.msc.service.Service;
 import org.jboss.msc.service.StartContext;
@@ -38,15 +37,29 @@ public class ExtensionManagerService implements Service<ExtensionManagerService>
         }
 
         synchronized (filterFactories) {
-            for (Map.Entry<String, KeyValueFilterFactory> entry : filterFactories.entrySet()) {
+            for (Map.Entry<String, KeyValueFilterFactory> entry : filterFactories.entrySet())
                 server.addKeyValueFilterFactory(entry.getKey(), entry.getValue());
-            }
         }
 
         synchronized (converterFactories) {
-            for (Map.Entry<String, ConverterFactory> entry : converterFactories.entrySet()) {
+            for (Map.Entry<String, ConverterFactory> entry : converterFactories.entrySet())
                 server.addConverterFactory(entry.getKey(), entry.getValue());
-            }
+        }
+    }
+
+    public void removeHotRodServer(HotRodServer server) {
+        synchronized (servers) {
+            servers.remove(server);
+        }
+
+        synchronized (filterFactories) {
+            for (String name : filterFactories.keySet())
+                server.removeKeyValueFilterFactory(name);
+        }
+
+        synchronized (converterFactories) {
+            for (String name : converterFactories.keySet())
+                server.removeConverterFactory(name);
         }
     }
 
@@ -61,6 +74,17 @@ public class ExtensionManagerService implements Service<ExtensionManagerService>
         }
     }
 
+    public void removeKeyValueFilterFactory(String name) {
+        synchronized (filterFactories) {
+            filterFactories.remove(name);
+        }
+
+        synchronized (servers) {
+            for (HotRodServer server : servers)
+                server.removeKeyValueFilterFactory(name);
+        }
+    }
+
     public void addConverterFactory(String name, ConverterFactory factory) {
         synchronized (converterFactories) {
             converterFactories.put(name, factory);
@@ -69,6 +93,17 @@ public class ExtensionManagerService implements Service<ExtensionManagerService>
         synchronized (servers) {
             for (HotRodServer server : servers)
                 server.addConverterFactory(name, factory);
+        }
+    }
+
+    public void removeConverterFactory(String name) {
+        synchronized (converterFactories) {
+            converterFactories.remove(name);
+        }
+
+        synchronized (servers) {
+            for (HotRodServer server : servers)
+                server.removeConverterFactory(name);
         }
     }
 

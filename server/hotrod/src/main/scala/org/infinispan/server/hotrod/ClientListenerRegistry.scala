@@ -39,8 +39,16 @@ class ClientListenerRegistry(configuration: HotRodServerConfiguration) extends L
       keyValueFilterFactories.put(name, factory)
    }
 
+   def removeKeyValueFilterFactory(name: String): Unit = {
+      keyValueFilterFactories.remove(name)
+   }
+
    def addConverterFactory(name: String, factory: ConverterFactory): Unit = {
       converterFactories.put(name, factory)
+   }
+
+   def removeConverterFactory(name: String): Unit = {
+      converterFactories.remove(name)
    }
 
    def addClientListener(ch: Channel, h: HotRodHeader, listenerId: Bytes, cache: Cache,
@@ -113,6 +121,12 @@ class ClientListenerRegistry(configuration: HotRodServerConfiguration) extends L
          cache.removeListener(sender)
          true
       } else false
+   }
+
+   def stop(): Unit = {
+      eventSenders.clear()
+      keyValueFilterFactories.clear()
+      converterFactories.clear()
    }
 
    @Listener(clustered = true, includeCurrentState = true)

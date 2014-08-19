@@ -37,6 +37,7 @@ public final class ConverterFactoryExtensionProcessor extends AbstractNamedFacto
         @Override
         public void stop(StopContext context) {
             ROOT_LOGGER.debugf("Stopped converter service with name = %s", name);
+            extensionManager.getValue().removeConverterFactory(name);
         }
 
         @Override
