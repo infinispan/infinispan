@@ -1,5 +1,6 @@
 package org.infinispan.query.impl.massindex;
 
+import org.hibernate.search.backend.AddLuceneWork;
 import org.hibernate.search.backend.LuceneWork;
 import org.hibernate.search.backend.UpdateLuceneWork;
 import org.hibernate.search.backend.impl.batch.DefaultBatchBackend;
@@ -55,7 +56,7 @@ public final class IndexingMapper implements Mapper<Object, Object, Object, Luce
       ConversionContext conversionContext = new ContextualExceptionBridgeHelper();
       DocumentBuilderIndexedEntity docBuilder = entityIndexBinding.getDocumentBuilder();
       final String idInString = keyTransformationHandler.keyToString(key);
-      UpdateLuceneWork updateTask = docBuilder.createUpdateWork(
+      AddLuceneWork updateTask = docBuilder.createAddWork(
             clazz,
             value,
             idInString,
