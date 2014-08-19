@@ -16,7 +16,7 @@ public class ActivationInterceptor extends CacheLoaderInterceptor {
       // This way when we overwrite the values on commit they won't be in loader and if we rollback they won't be
       // in the loader either but will be in data container at least
       for (Object key : command.getAffectedKeys()) {
-         loadIfNeeded(ctx, key, false, command);
+         loadIfNeeded(ctx, key, command);
       }
       return super.visitPutMapCommand(ctx, command);
    }

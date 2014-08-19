@@ -1348,9 +1348,10 @@ public class TestingUtil {
    }
 
 
-   public static <K, V> CacheLoader<K, V> getFirstLoader(Cache<K, V> cache) {
+   public static <T extends CacheLoader<K, V>, K, V>  T getFirstLoader(Cache<K, V> cache) {
       PersistenceManagerImpl persistenceManager = (PersistenceManagerImpl) extractComponent(cache, PersistenceManager.class);
-      return persistenceManager.getAllLoaders().get(0);
+      //noinspection unchecked
+      return (T) persistenceManager.getAllLoaders().get(0);
    }
 
    @SuppressWarnings("unchecked")

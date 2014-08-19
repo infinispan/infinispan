@@ -13,6 +13,7 @@ import org.infinispan.commands.write.InvalidateCommand;
 import org.infinispan.commands.write.PutKeyValueCommand;
 import org.infinispan.commands.write.RemoveCommand;
 import org.infinispan.commands.write.ReplaceCommand;
+import org.infinispan.commands.write.WriteCommand;
 import org.infinispan.commons.util.InfinispanCollections;
 import org.infinispan.container.DataContainer;
 import org.infinispan.container.EntryFactory;
@@ -34,8 +35,6 @@ import org.infinispan.jmx.annotations.ManagedOperation;
 import org.infinispan.jmx.annotations.MeasurementType;
 import org.infinispan.jmx.annotations.Parameter;
 import org.infinispan.filter.CollectionKeyFilter;
-import org.infinispan.metadata.InternalMetadata;
-import org.infinispan.metadata.impl.InternalMetadataImpl;
 import org.infinispan.persistence.PersistenceUtil;
 import org.infinispan.persistence.manager.PersistenceManager;
 import org.infinispan.persistence.spi.AdvancedCacheLoader;
@@ -72,6 +71,7 @@ public class CacheLoaderInterceptor extends JmxStatsCommandInterceptor {
    private GroupManager groupManager;
 
    private static final Log log = LogFactory.getLog(CacheLoaderInterceptor.class);
+   private static final boolean trace = log.isTraceEnabled();
 
    @Override
    protected Log getLog() {
@@ -96,7 +96,7 @@ public class CacheLoaderInterceptor extends JmxStatsCommandInterceptor {
       if (enabled) {
          Object key;
          if ((key = command.getKey()) != null) {
-            loadIfNeeded(ctx, key, false, command);
+            loadIfNeeded(ctx, key, command);
          }
       }
       return invokeNextInterceptor(ctx, command);
@@ -107,7 +107,7 @@ public class CacheLoaderInterceptor extends JmxStatsCommandInterceptor {
       if (enabled) {
          Object key;
          if ((key = command.getKey()) != null) {
-            loadIfNeeded(ctx, key, false, command);
+            loadIfNeeded(ctx, key, command);
          }
       }
       return invokeNextInterceptor(ctx, command);
@@ -119,7 +119,7 @@ public class CacheLoaderInterceptor extends JmxStatsCommandInterceptor {
       if (enabled) {
          Object key;
          if ((key = command.getKey()) != null) {
-            loadIfNeededAndUpdateStats(ctx, key, true, command);
+            loadIfNeededAndUpdateStats(ctx, key, command);
          }
       }
       return invokeNextInterceptor(ctx, command);
@@ -131,7 +131,7 @@ public class CacheLoaderInterceptor extends JmxStatsCommandInterceptor {
          Object[] keys;
          if ((keys = command.getKeys()) != null && keys.length > 0) {
             for (Object key : command.getKeys()) {
-               loadIfNeeded(ctx, key, false, command);
+               loadIfNeeded(ctx, key, command);
             }
          }
       }
@@ -143,7 +143,7 @@ public class CacheLoaderInterceptor extends JmxStatsCommandInterceptor {
       if (enabled) {
          Object key;
          if ((key = command.getKey()) != null) {
-            loadIfNeededAndUpdateStats(ctx, key, false, command);
+            loadIfNeededAndUpdateStats(ctx, key, command);
          }
       }
       return invokeNextInterceptor(ctx, command);
@@ -154,7 +154,7 @@ public class CacheLoaderInterceptor extends JmxStatsCommandInterceptor {
       if (enabled) {
          Object key;
          if ((key = command.getKey()) != null) {
-            loadIfNeededAndUpdateStats(ctx, key, false, command);
+            loadIfNeededAndUpdateStats(ctx, key, command);
          }
       }
       return invokeNextInterceptor(ctx, command);
@@ -163,7 +163,7 @@ public class CacheLoaderInterceptor extends JmxStatsCommandInterceptor {
    @Override
    public Object visitSizeCommand(InvocationContext ctx, SizeCommand command) throws Throwable {
       int totalSize = 0;
-      if (enabled && !shouldSkipCacheLoader(command)) {
+      if (enabled && !hasSkipLoadFlag(command)) {
          totalSize = persistenceManager.size();
       }
       // Passivation stores evicted entries so we want to add those or if the loader didn't have anything or was skipped
@@ -178,7 +178,7 @@ public class CacheLoaderInterceptor extends JmxStatsCommandInterceptor {
    @Override
    public Object visitKeySetCommand(InvocationContext ctx, KeySetCommand command) throws Throwable {
       Object keys = super.visitKeySetCommand(ctx, command);
-      if (enabled && !shouldSkipCacheLoader(command)) {
+      if (enabled && !hasSkipLoadFlag(command)) {
          Set<Object> keysSet = (Set<Object>) keys;
          final ConcurrentHashSet<Object> union = new ConcurrentHashSet<Object>();
          for (Object k : keysSet)
@@ -197,7 +197,7 @@ public class CacheLoaderInterceptor extends JmxStatsCommandInterceptor {
    @Override
    public Object visitGetKeysInGroupCommand(final InvocationContext ctx, GetKeysInGroupCommand command) throws Throwable {
       final String groupName = command.getGroupName();
-      if (!command.isGroupOwner() || !enabled || shouldSkipCacheLoader(command)) {
+      if (!command.isGroupOwner() || !enabled || hasSkipLoadFlag(command)) {
          return invokeNextInterceptor(ctx, command);
       }
 
@@ -218,7 +218,7 @@ public class CacheLoaderInterceptor extends JmxStatsCommandInterceptor {
    @Override
    public Object visitEntrySetCommand(InvocationContext ctx, EntrySetCommand command) throws Throwable {
       Object entrySet = super.visitEntrySetCommand(ctx, command);
-      if (enabled && !shouldSkipCacheLoader(command)) {
+      if (enabled && !hasSkipLoadFlag(command)) {
          final ConcurrentHashSet<InternalCacheEntry> union = new ConcurrentHashSet<InternalCacheEntry>();
          final ConcurrentHashSet<Object> processedKeys = new ConcurrentHashSet<Object>();
          for (InternalCacheEntry ice : (Set<InternalCacheEntry>)entrySet)
@@ -239,7 +239,7 @@ public class CacheLoaderInterceptor extends JmxStatsCommandInterceptor {
    @Override
    public Object visitValuesCommand(InvocationContext ctx, ValuesCommand command) throws Throwable {
       Object values = super.visitValuesCommand(ctx, command);
-      if (enabled && !shouldSkipCacheLoader(command)) {
+      if (enabled && !hasSkipLoadFlag(command)) {
          final ConcurrentLinkedQueue<Object> result = new ConcurrentLinkedQueue<Object>();
          persistenceManager.processOnAllStores(null, new AdvancedCacheLoader.CacheLoaderTask() {
             @Override
@@ -254,21 +254,25 @@ public class CacheLoaderInterceptor extends JmxStatsCommandInterceptor {
       return values;
    }
 
-   protected boolean forceLoad(Object key, Set<Flag> flags) {
-      return false;
-   }
-
    /**
     * Indicates whether the operation is a delta write. If it is, the
     * previous value needs to be loaded from the cache store so that
     * it can be merged.
     */
-   protected boolean isDeltaWrite(Set<Flag> flags) {
-      return flags != null && flags.contains(Flag.DELTA_WRITE);
+   protected final boolean isDeltaWrite(WriteCommand cmd) {
+      return cmd.hasFlag(Flag.DELTA_WRITE);
    }
 
-   private boolean shouldSkipCacheLoader(LocalFlagAffectedCommand cmd) {
-      return cmd.hasFlag(Flag.SKIP_CACHE_STORE) || cmd.hasFlag(Flag.SKIP_CACHE_LOAD);
+   protected final boolean isConditional(WriteCommand cmd) {
+      return cmd.isConditional();
+   }
+
+   protected final boolean hasSkipLoadFlag(LocalFlagAffectedCommand cmd) {
+      return cmd.hasFlag(Flag.SKIP_CACHE_LOAD) || cmd.hasFlag(Flag.SKIP_CACHE_STORE);
+   }
+
+   protected final boolean hasIgnoreReturnValueFlag(LocalFlagAffectedCommand cmd) {
+      return cmd.hasFlag(Flag.IGNORE_RETURN_VALUES);
    }
 
    protected boolean canLoad(Object key) {
@@ -280,24 +284,13 @@ public class CacheLoaderInterceptor extends JmxStatsCommandInterceptor {
     * method returns whether the value was found or not, or even if the cache loader was checked.
     * @param ctx The current invocation's context
     * @param key The key for the entry to look up
-    * @param isRetrieval Whether or not this was called in the scope of a get
     * @param cmd The command that was called that now wants to query the cache loader
     * @return Whether or not the entry was found in the cache loader.  A value of null means the cache loader was never
     *         queried for the value, so it was neither a hit or a miss.
     * @throws Throwable
     */
-   protected final Boolean loadIfNeeded(final InvocationContext ctx, Object key, boolean isRetrieval, final FlagAffectedCommand cmd) throws Throwable {
-      if (shouldSkipCacheLoader(cmd) || cmd.hasFlag(Flag.IGNORE_RETURN_VALUES) || !canLoad(key)) {
-         return null; //skip operation
-      }
-
-      // If this is a remote call, skip loading UNLESS we are the primary data owner of this key, and
-      // are using eviction or write skew checking.
-      if (!isRetrieval && !ctx.isOriginLocal() && !forceLoad(key, cmd.getFlags())) return null;
-
-      // first check if the container contains the key we need.  Try and load this into the context.
-      CacheEntry e = ctx.lookupEntry(key);
-      if (!shouldAttemptLookup(e)) {
+   protected final Boolean loadIfNeeded(final InvocationContext ctx, Object key, final FlagAffectedCommand cmd) throws Throwable {
+      if (skipLoad(cmd, key, ctx)) {
          return null;
       }
 
@@ -313,6 +306,53 @@ public class CacheLoaderInterceptor extends JmxStatsCommandInterceptor {
 
       }
       return isLoaded.get();
+   }
+
+   private boolean skipLoad(FlagAffectedCommand cmd, Object key, InvocationContext ctx) {
+      if (!shouldAttemptLookup(ctx.lookupEntry(key))) {
+         if (trace) {
+            log.tracef("Skip load for command %s. Entry already exists in context.", cmd);
+         }
+         return true;
+      }
+
+      if (!canLoad(key)) {
+         if (trace) {
+            log.tracef("Skip load for command %s. Cannot load the key.", cmd);
+         }
+         return true;
+      }
+
+      boolean skip;
+      if (cmd instanceof WriteCommand) {
+         skip = skipLoadForWriteCommand((WriteCommand) cmd, key, ctx);
+         if (trace) {
+            log.tracef("Skip load for write command %s? %s", cmd, skip);
+         }
+      } else {
+         //read command
+         skip = hasSkipLoadFlag(cmd);
+         if (trace) {
+            log.tracef("Skip load for command %s?. %s", cmd, skip);
+         }
+      }
+      return skip;
+   }
+
+   protected boolean skipLoadForWriteCommand(WriteCommand cmd, Object key, InvocationContext ctx) {
+      if (isDeltaWrite(cmd)) {
+         if (trace) {
+            log.tracef("Don't skip load for command %s. Value is needed!", cmd);
+         }
+         return false;
+      } else if (isConditional(cmd)) {
+         boolean skip = hasSkipLoadFlag(cmd);
+         if (trace) {
+            log.tracef("Skip load for conditional command %s? %s", cmd, skip);
+         }
+         return skip;
+      }
+      return hasSkipLoadFlag(cmd) || hasIgnoreReturnValueFlag(cmd);
    }
 
    private CacheEntry wrapInternalCacheEntry(InvocationContext ctx, Object key, FlagAffectedCommand cmd,
@@ -343,7 +383,7 @@ public class CacheLoaderInterceptor extends JmxStatsCommandInterceptor {
    private void recordLoadedEntry(InvocationContext ctx, Object key,
                                   CacheEntry entry, InternalCacheEntry loadedEntry, FlagAffectedCommand cmd) {
       boolean entryExists = loadedEntry != null;
-      if (log.isTraceEnabled()) {
+      if (trace) {
          log.trace("Entry exists in loader? " + entryExists);
       }
 
@@ -381,8 +421,8 @@ public class CacheLoaderInterceptor extends JmxStatsCommandInterceptor {
       notifier.notifyCacheEntryLoaded(key, value, pre, ctx, cmd);
    }
 
-   private void loadIfNeededAndUpdateStats(InvocationContext ctx, Object key, boolean isRetrieval, FlagAffectedCommand cmd) throws Throwable {
-      Boolean found = loadIfNeeded(ctx, key, isRetrieval, cmd);
+   private void loadIfNeededAndUpdateStats(InvocationContext ctx, Object key, FlagAffectedCommand cmd) throws Throwable {
+      Boolean found = loadIfNeeded(ctx, key, cmd);
       if (found == Boolean.FALSE && getStatisticsEnabled()) {
          cacheMisses.incrementAndGet();
       }
