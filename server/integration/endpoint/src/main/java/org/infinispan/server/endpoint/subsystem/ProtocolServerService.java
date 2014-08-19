@@ -21,7 +21,6 @@ package org.infinispan.server.endpoint.subsystem;
 import static org.infinispan.server.endpoint.EndpointLogger.ROOT_LOGGER;
 
 import java.net.InetSocketAddress;
-import java.util.Map;
 
 import javax.net.ssl.SSLContext;
 import javax.security.auth.Subject;
@@ -29,7 +28,6 @@ import javax.security.auth.login.LoginContext;
 import javax.security.auth.login.LoginException;
 
 import org.infinispan.commons.util.ReflectionUtil;
-import org.infinispan.filter.KeyValueFilterFactory;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.server.core.ProtocolServer;
 import org.infinispan.server.core.configuration.ProtocolServerConfiguration;
@@ -140,9 +138,7 @@ class ProtocolServerService implements Service<ProtocolServer> {
          // Start the connector
          startProtocolServer(configurationBuilder.build());
 
-         // Similar thing done above, eventually this class should be split per protocol server type
-         if (protocolServer instanceof HotRodServer)
-             extensionManager.getValue().addHotRodServer((HotRodServer) protocolServer);
+         addToExtensionManagerIfHotRod();
 
          done = true;
       } catch (StartException e) {
@@ -154,6 +150,18 @@ class ProtocolServerService implements Service<ProtocolServer> {
             doStop();
          }
       }
+   }
+
+   private void addToExtensionManagerIfHotRod() {
+      // Similar thing done above, eventually this class should be split per protocol server type
+      if (protocolServer instanceof HotRodServer)
+         extensionManager.getValue().addHotRodServer((HotRodServer) protocolServer);
+   }
+
+   private void removeFromExtensionManagerIfHotRod() {
+      // Similar thing done above, eventually this class should be split per protocol server type
+      if (protocolServer instanceof HotRodServer)
+         extensionManager.getValue().removeHotRodServer((HotRodServer) protocolServer);
    }
 
    private void startProtocolServer(ProtocolServerConfiguration configuration) throws StartException {
@@ -184,6 +192,8 @@ class ProtocolServerService implements Service<ProtocolServer> {
       try {
          if (protocolServer != null) {
             ROOT_LOGGER.connectorStopping(serverName);
+
+            removeFromExtensionManagerIfHotRod();
             try {
                protocolServer.stop();
             } catch (Exception e) {

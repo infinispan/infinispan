@@ -47,6 +47,7 @@ public abstract class AbstractServerExtensionProcessor<T> implements DeploymentU
 
     @Override
     public void undeploy(DeploymentUnit context) {
-        // No-op
+        // Deploy only adds services, so no need to do anything here
+        // since these services are automatically removed.
     }
 }
