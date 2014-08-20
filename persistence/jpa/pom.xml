@@ -13,11 +13,6 @@
    <name>Infinispan JPA CacheStore</name>
    <description>Infinispan JPA CacheStore module</description>
 
-   <properties>
-      <!-- Tests against single database cannot be executed in paralllel -->
-      <infinispan.test.parallel.threads>1</infinispan.test.parallel.threads>
-   </properties>
-
    <build>
       <resources>
          <resource>
@@ -78,6 +73,14 @@
                   </configuration>
                </execution>
             </executions>
+         </plugin>
+         <plugin>
+            <groupId>org.apache.maven.plugins</groupId>
+            <artifactId>maven-surefire-plugin</artifactId>
+            <configuration>
+               <!-- Tests against single database cannot be executed in paralllel -->
+               <threadCount>1</threadCount>
+            </configuration>
          </plugin>
       </plugins>
    </build>
