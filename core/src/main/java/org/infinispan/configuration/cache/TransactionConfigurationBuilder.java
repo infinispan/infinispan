@@ -2,6 +2,7 @@ package org.infinispan.configuration.cache;
 
 import org.infinispan.commons.CacheConfigurationException;
 import org.infinispan.commons.configuration.Builder;
+import org.infinispan.configuration.global.GlobalConfiguration;
 import org.infinispan.transaction.LockingMode;
 import org.infinispan.transaction.TransactionMode;
 import org.infinispan.transaction.TransactionProtocol;
@@ -277,6 +278,11 @@ public class TransactionConfigurationBuilder extends AbstractConfigurationChildB
          }
       }
       recovery.validate();
+   }
+
+   @Override
+   public void validate(GlobalConfiguration globalConfig) {
+      recovery.validate(globalConfig);
    }
 
    @Override

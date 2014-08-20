@@ -1,6 +1,7 @@
 package org.infinispan.configuration.cache;
 
 import org.infinispan.commons.configuration.Builder;
+import org.infinispan.configuration.global.GlobalConfiguration;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
@@ -33,6 +34,10 @@ public class PartitionHandlingConfigurationBuilder extends AbstractClusteringCon
       if (enabled && clustering().cacheMode().isReplicated()) {
          log.warnPartitionHandlingForReplicatedCaches();
       }
+   }
+
+   @Override
+   public void validate(GlobalConfiguration globalConfig) {
    }
 
    @Override

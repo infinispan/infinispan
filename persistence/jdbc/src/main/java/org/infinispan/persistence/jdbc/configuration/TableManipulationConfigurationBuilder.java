@@ -3,6 +3,7 @@ package org.infinispan.persistence.jdbc.configuration;
 import org.infinispan.commons.configuration.Builder;
 import org.infinispan.commons.configuration.Self;
 import org.infinispan.commons.logging.LogFactory;
+import org.infinispan.configuration.global.GlobalConfiguration;
 import org.infinispan.persistence.jdbc.Dialect;
 import org.infinispan.persistence.jdbc.TableManipulation;
 import org.infinispan.persistence.jdbc.logging.Log;
@@ -135,6 +136,10 @@ public abstract class TableManipulationConfigurationBuilder<B extends AbstractJd
       validateIfSet("timestampColumnName", timestampColumnName);
       validateIfSet("timestampColumnType", timestampColumnType);
       validateIfSet("tableNamePrefix", tableNamePrefix);
+   }
+
+   @Override
+   public void validate(GlobalConfiguration globalConfig) {
    }
 
    private void validateIfSet(String name, String value) {

@@ -1,6 +1,7 @@
 package org.infinispan.configuration.cache;
 
 import org.infinispan.commons.configuration.Builder;
+import org.infinispan.configuration.global.GlobalConfiguration;
 
 /**
  * @author Mircea Markus
@@ -19,6 +20,10 @@ public class TakeOfflineConfigurationBuilder extends AbstractConfigurationChildB
 
    @Override
    public void validate() {
+   }
+
+   @Override
+   public void validate(GlobalConfiguration globalConfig) {
    }
 
    @Override

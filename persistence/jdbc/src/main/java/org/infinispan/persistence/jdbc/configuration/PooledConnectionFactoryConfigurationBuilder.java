@@ -3,6 +3,7 @@ package org.infinispan.persistence.jdbc.configuration;
 import java.sql.Driver;
 
 import org.infinispan.commons.CacheConfigurationException;
+import org.infinispan.configuration.global.GlobalConfiguration;
 
 /**
  * PooledConnectionFactoryConfigurationBuilder.
@@ -52,6 +53,10 @@ public class PooledConnectionFactoryConfigurationBuilder<S extends AbstractJdbcS
       if (connectionUrl == null) {
          throw new CacheConfigurationException("Missing connectionUrl parameter");
       }
+   }
+
+   @Override
+   public void validate(GlobalConfiguration globalConfig) {
    }
 
    @Override

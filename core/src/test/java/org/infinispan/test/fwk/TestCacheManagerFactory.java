@@ -18,6 +18,7 @@ import org.infinispan.commons.util.Util;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.cache.Index;
+import org.infinispan.configuration.global.GlobalConfiguration;
 import org.infinispan.configuration.global.GlobalConfigurationBuilder;
 import org.infinispan.configuration.parsing.ConfigurationBuilderHolder;
 import org.infinispan.configuration.parsing.ParserRegistry;
@@ -344,7 +345,8 @@ public class TestCacheManagerFactory {
    }
 
    private static DefaultCacheManager newDefaultCacheManager(boolean start, GlobalConfigurationBuilder gc, ConfigurationBuilder c) {
-      DefaultCacheManager defaultCacheManager = new DefaultCacheManager(gc.build(), c.build(), start);
+      GlobalConfiguration globalConfiguration = gc.build();
+      DefaultCacheManager defaultCacheManager = new DefaultCacheManager(globalConfiguration, c.build(globalConfiguration), start);
       TestResourceTracker.addResource(new TestResourceTracker.CacheManagerCleaner(defaultCacheManager));
       return defaultCacheManager;
    }

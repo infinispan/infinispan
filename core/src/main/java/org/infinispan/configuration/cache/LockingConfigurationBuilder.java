@@ -2,6 +2,7 @@ package org.infinispan.configuration.cache;
 
 import org.infinispan.commons.configuration.Builder;
 import org.infinispan.commons.CacheConfigurationException;
+import org.infinispan.configuration.global.GlobalConfiguration;
 import org.infinispan.transaction.LockingMode;
 import org.infinispan.util.concurrent.IsolationLevel;
 import org.infinispan.util.logging.Log;
@@ -124,6 +125,10 @@ public class LockingConfigurationBuilder extends AbstractConfigurationChildBuild
    }
 
    @Override
+   public void validate(GlobalConfiguration globalConfig) {
+   }
+
+   @Override
    public LockingConfiguration create() {
       return new LockingConfiguration(concurrencyLevel, isolationLevel, lockAcquisitionTimeout, useLockStriping, writeSkewCheck);
    }
@@ -149,5 +154,4 @@ public class LockingConfigurationBuilder extends AbstractConfigurationChildBuild
             ", writeSkewCheck=" + writeSkewCheck +
             '}';
    }
-
 }

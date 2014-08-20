@@ -2,7 +2,9 @@ package org.infinispan.configuration.cache;
 
 import java.util.concurrent.TimeUnit;
 
+import org.infinispan.commons.CacheConfigurationException;
 import org.infinispan.commons.configuration.Builder;
+import org.infinispan.configuration.global.GlobalConfiguration;
 
 public class SingletonStoreConfigurationBuilder<S> extends AbstractStoreConfigurationChildBuilder<S> implements Builder<SingletonStoreConfiguration> {
 
@@ -67,6 +69,14 @@ public class SingletonStoreConfigurationBuilder<S> extends AbstractStoreConfigur
 
    @Override
    public void validate() {
+   }
+
+   @Override
+   public void validate(GlobalConfiguration globalConfig) {
+      if (globalConfig.transport().transport() == null) {
+         throw new CacheConfigurationException("Must have a transport set in the global configuration in " +
+               "order to configure a singleton store");
+      }
    }
 
    @Override

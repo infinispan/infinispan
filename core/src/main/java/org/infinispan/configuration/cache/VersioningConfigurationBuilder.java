@@ -1,6 +1,7 @@
 package org.infinispan.configuration.cache;
 
 import org.infinispan.commons.configuration.Builder;
+import org.infinispan.configuration.global.GlobalConfiguration;
 
 public class VersioningConfigurationBuilder extends AbstractConfigurationChildBuilder implements Builder<VersioningConfiguration> {
 
@@ -36,6 +37,10 @@ public class VersioningConfigurationBuilder extends AbstractConfigurationChildBu
    }
 
    @Override
+   public void validate(GlobalConfiguration globalConfig) {
+   }
+
+   @Override
    public VersioningConfiguration create() {
       return new VersioningConfiguration(enabled, scheme);
    }
@@ -55,5 +60,4 @@ public class VersioningConfigurationBuilder extends AbstractConfigurationChildBu
             ", scheme=" + scheme +
             '}';
    }
-
 }

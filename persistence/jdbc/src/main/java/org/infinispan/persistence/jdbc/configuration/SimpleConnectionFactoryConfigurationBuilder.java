@@ -3,6 +3,7 @@ package org.infinispan.persistence.jdbc.configuration;
 import java.sql.Driver;
 
 import org.infinispan.commons.CacheConfigurationException;
+import org.infinispan.configuration.global.GlobalConfiguration;
 
 /**
  * SimpleConnectionFactoryBuilder.
@@ -52,6 +53,10 @@ public class SimpleConnectionFactoryConfigurationBuilder<S extends AbstractJdbcS
       if (connectionUrl == null) {
          throw new CacheConfigurationException("A connectionUrl has not been specified");
       }
+   }
+
+   @Override
+   public void validate(GlobalConfiguration globalConfig) {
    }
 
    @Override

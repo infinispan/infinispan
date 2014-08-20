@@ -2,6 +2,7 @@ package org.infinispan.persistence.remote.configuration;
 
 import java.util.Properties;
 
+import org.infinispan.configuration.global.GlobalConfiguration;
 import org.infinispan.executors.DefaultExecutorFactory;
 import org.infinispan.commons.configuration.Builder;
 import org.infinispan.commons.executors.ExecutorFactory;
@@ -68,6 +69,10 @@ public class ExecutorFactoryConfigurationBuilder extends AbstractRemoteStoreConf
    }
 
    @Override
+   public void validate(GlobalConfiguration globalConfig) {
+   }
+
+   @Override
    public ExecutorFactoryConfiguration create() {
       return new ExecutorFactoryConfiguration(factory, TypedProperties.toTypedProperties(properties));
    }
@@ -84,5 +89,4 @@ public class ExecutorFactoryConfigurationBuilder extends AbstractRemoteStoreConf
    public String toString() {
       return "ExecutorFactoryConfigurationBuilder{" + "factory=" + factory + ", properties=" + properties + '}';
    }
-
 }

@@ -3,6 +3,7 @@ package org.infinispan.configuration.cache;
 import java.util.concurrent.TimeUnit;
 
 import org.infinispan.commons.configuration.Builder;
+import org.infinispan.configuration.global.GlobalConfiguration;
 
 /**
  * If configured all communications are synchronous, in that whenever a thread sends a message sent
@@ -36,7 +37,10 @@ public class SyncConfigurationBuilder extends AbstractClusteringConfigurationChi
 
    @Override
    public void validate() {
+   }
 
+   @Override
+   public void validate(GlobalConfiguration globalConfig) {
    }
 
    @Override
@@ -56,5 +60,4 @@ public class SyncConfigurationBuilder extends AbstractClusteringConfigurationChi
             "replTimeout=" + replTimeout +
             '}';
    }
-
 }

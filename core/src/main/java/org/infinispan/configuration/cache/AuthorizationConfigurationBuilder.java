@@ -4,6 +4,7 @@ import java.util.HashSet;
 import java.util.Set;
 
 import org.infinispan.commons.configuration.Builder;
+import org.infinispan.configuration.global.GlobalConfiguration;
 
 /**
  * AuthorizationConfigurationBuilder.
@@ -45,6 +46,10 @@ public class AuthorizationConfigurationBuilder extends AbstractSecurityConfigura
    }
 
    @Override
+   public void validate(GlobalConfiguration globalConfig) {
+   }
+
+   @Override
    public AuthorizationConfiguration create() {
       return new AuthorizationConfiguration(enabled, roles);
    }
@@ -57,5 +62,4 @@ public class AuthorizationConfigurationBuilder extends AbstractSecurityConfigura
 
       return this;
    }
-
 }

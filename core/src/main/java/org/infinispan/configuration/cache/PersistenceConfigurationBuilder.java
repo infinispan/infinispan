@@ -8,6 +8,7 @@ import java.util.List;
 import org.infinispan.commons.configuration.Builder;
 import org.infinispan.commons.configuration.ConfigurationUtils;
 import org.infinispan.commons.CacheConfigurationException;
+import org.infinispan.configuration.global.GlobalConfiguration;
 
 /**
  * Configuration for cache stores.
@@ -109,6 +110,13 @@ public class PersistenceConfigurationBuilder extends AbstractConfigurationChildB
    }
 
    @Override
+   public void validate(GlobalConfiguration globalConfig) {
+      for (StoreConfigurationBuilder<?, ?> b : stores) {
+         b.validate(globalConfig);
+      }
+   }
+
+   @Override
    public PersistenceConfiguration create() {
       List<StoreConfiguration> stores = new ArrayList<StoreConfiguration>(this.stores.size());
       for (StoreConfigurationBuilder<?, ?> loader : this.stores)
@@ -143,5 +151,4 @@ public class PersistenceConfigurationBuilder extends AbstractConfigurationChildB
             ", passivation=" + passivation +
             '}';
    }
-
 }

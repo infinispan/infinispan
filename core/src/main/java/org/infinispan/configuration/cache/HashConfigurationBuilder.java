@@ -3,6 +3,7 @@ package org.infinispan.configuration.cache;
 import org.infinispan.commons.configuration.Builder;
 import org.infinispan.commons.hash.Hash;
 import org.infinispan.commons.hash.MurmurHash3;
+import org.infinispan.configuration.global.GlobalConfiguration;
 import org.infinispan.distribution.ch.ConsistentHash;
 import org.infinispan.distribution.ch.ConsistentHashFactory;
 import org.infinispan.util.logging.Log;
@@ -172,6 +173,11 @@ public class HashConfigurationBuilder extends AbstractClusteringConfigurationChi
    }
 
    @Override
+   public void validate(GlobalConfiguration globalConfig) {
+      groupsConfigurationBuilder.validate(globalConfig);
+   }
+
+   @Override
    public HashConfiguration create() {
       // TODO stateTransfer().create() will create a duplicate StateTransferConfiguration instance. That's ok as long as none of the stateTransfer settings are modifiable at runtime.
       return new HashConfiguration(consistentHashFactory, hash, numOwners, numSegments, capacityFactor,
@@ -199,5 +205,4 @@ public class HashConfigurationBuilder extends AbstractClusteringConfigurationChi
             ", groups=" + groupsConfigurationBuilder +
             '}';
    }
-
 }

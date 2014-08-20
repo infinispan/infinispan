@@ -4,6 +4,7 @@ import java.util.concurrent.TimeUnit;
 
 import org.infinispan.commons.configuration.Builder;
 import org.infinispan.commons.CacheConfigurationException;
+import org.infinispan.configuration.global.GlobalConfiguration;
 import org.infinispan.remoting.ReplicationQueue;
 import org.infinispan.remoting.ReplicationQueueImpl;
 
@@ -109,6 +110,10 @@ public class AsyncConfigurationBuilder extends AbstractClusteringConfigurationCh
    }
 
    @Override
+   public void validate(GlobalConfiguration globalConfig) {
+   }
+
+   @Override
    public
    AsyncConfiguration create() {
       return new AsyncConfiguration(asyncMarshalling, replicationQueue, replicationQueueInterval, replicationQueueMaxElements, useReplicationQueue);
@@ -135,5 +140,4 @@ public class AsyncConfigurationBuilder extends AbstractClusteringConfigurationCh
             ", useReplicationQueue=" + useReplicationQueue +
             '}';
    }
-
 }

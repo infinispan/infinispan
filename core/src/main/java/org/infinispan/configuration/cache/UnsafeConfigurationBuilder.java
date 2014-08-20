@@ -1,6 +1,7 @@
 package org.infinispan.configuration.cache;
 
 import org.infinispan.commons.configuration.Builder;
+import org.infinispan.configuration.global.GlobalConfiguration;
 
 /**
  * Controls certain tuning parameters that may break some of Infinispan's public API contracts in exchange for better
@@ -38,6 +39,10 @@ public class UnsafeConfigurationBuilder extends AbstractConfigurationChildBuilde
    }
 
    @Override
+   public void validate(GlobalConfiguration globalConfig) {
+   }
+
+   @Override
    public UnsafeConfiguration create() {
       return new UnsafeConfiguration(unreliableReturnValues);
    }
@@ -55,5 +60,4 @@ public class UnsafeConfigurationBuilder extends AbstractConfigurationChildBuilde
             "unreliableReturnValues=" + unreliableReturnValues +
             '}';
    }
-
 }

@@ -3,6 +3,7 @@ package org.infinispan.configuration.cache;
 import java.util.concurrent.TimeUnit;
 
 import org.infinispan.commons.configuration.Builder;
+import org.infinispan.configuration.global.GlobalConfiguration;
 
 /**
  * Configures deadlock detection.
@@ -63,6 +64,10 @@ public class DeadlockDetectionConfigurationBuilder extends AbstractConfiguration
    }
 
    @Override
+   public void validate(GlobalConfiguration globalConfig) {
+   }
+
+   @Override
    public
    DeadlockDetectionConfiguration create() {
       return new DeadlockDetectionConfiguration(enabled, spinDuration);
@@ -83,5 +88,4 @@ public class DeadlockDetectionConfigurationBuilder extends AbstractConfiguration
             ", spinDuration=" + spinDuration +
             '}';
    }
-
 }

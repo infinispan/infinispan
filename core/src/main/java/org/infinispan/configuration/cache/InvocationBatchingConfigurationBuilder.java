@@ -3,6 +3,7 @@ package org.infinispan.configuration.cache;
 import static org.infinispan.transaction.TransactionMode.NON_TRANSACTIONAL;
 
 import org.infinispan.commons.configuration.Builder;
+import org.infinispan.configuration.global.GlobalConfiguration;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
@@ -40,6 +41,10 @@ public class InvocationBatchingConfigurationBuilder extends AbstractConfiguratio
    }
 
    @Override
+   public void validate(GlobalConfiguration globalConfig) {
+   }
+
+   @Override
    public InvocationBatchingConfiguration create() {
       return new InvocationBatchingConfiguration(enabled);
    }
@@ -57,5 +62,4 @@ public class InvocationBatchingConfigurationBuilder extends AbstractConfiguratio
             "enabled=" + enabled +
             '}';
    }
-
 }

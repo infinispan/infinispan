@@ -2,6 +2,7 @@ package org.infinispan.configuration.cache;
 
 import org.infinispan.commons.configuration.Builder;
 import org.infinispan.commons.CacheConfigurationException;
+import org.infinispan.configuration.global.GlobalConfiguration;
 
 import static org.infinispan.configuration.cache.RecoveryConfiguration.DEFAULT_RECOVERY_INFO_CACHE;
 
@@ -71,6 +72,10 @@ public class RecoveryConfigurationBuilder extends AbstractTransportConfiguration
    }
 
    @Override
+   public void validate(GlobalConfiguration globalConfig) {
+   }
+
+   @Override
    public RecoveryConfiguration create() {
       return new RecoveryConfiguration(enabled, recoveryInfoCacheName);
    }
@@ -90,5 +95,4 @@ public class RecoveryConfigurationBuilder extends AbstractTransportConfiguration
             ", recoveryInfoCacheName='" + recoveryInfoCacheName + '\'' +
             '}';
    }
-
 }

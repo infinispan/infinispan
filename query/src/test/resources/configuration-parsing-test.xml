@@ -4,6 +4,10 @@
       xsi:schemaLocation="urn:infinispan:config:7.0 http://www.infinispan.org/schemas/infinispan-config-7.0.xsd"
       xmlns="urn:infinispan:config:7.0">
 
+    <jgroups>
+        <stack-file name="tcp" path="jgroups-tcp.xml"/>
+    </jgroups>
+
    <cache-container default-cache="default" statistics="true">
       <jmx duplicate-domains="true" />
       <local-cache name="default">

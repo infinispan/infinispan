@@ -1,6 +1,7 @@
 package org.infinispan.configuration.cache;
 
 import org.infinispan.commons.configuration.Builder;
+import org.infinispan.configuration.global.GlobalConfiguration;
 
 /**
  * Controls whether when stored in memory, keys and values are stored as references to their original objects, or in
@@ -96,6 +97,10 @@ public class StoreAsBinaryConfigurationBuilder extends AbstractConfigurationChil
    }
 
    @Override
+   public void validate(GlobalConfiguration globalConfig) {
+   }
+
+   @Override
    public StoreAsBinaryConfiguration create() {
       return new StoreAsBinaryConfiguration(
             enabled, storeKeysAsBinary, storeValuesAsBinary);
@@ -118,5 +123,4 @@ public class StoreAsBinaryConfigurationBuilder extends AbstractConfigurationChil
             ", storeValuesAsBinary=" + storeValuesAsBinary +
             '}';
    }
-
 }

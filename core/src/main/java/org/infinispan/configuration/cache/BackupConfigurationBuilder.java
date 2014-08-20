@@ -2,6 +2,7 @@ package org.infinispan.configuration.cache;
 
 import org.infinispan.commons.configuration.Builder;
 import org.infinispan.commons.CacheConfigurationException;
+import org.infinispan.configuration.global.GlobalConfiguration;
 
 /**
  * @author Mircea.Markus@jboss.com
@@ -147,6 +148,12 @@ public class BackupConfigurationBuilder extends AbstractConfigurationChildBuilde
          throw new CacheConfigurationException("It is required to specify a 'failurePolicyClass' when using a " +
                                                 "custom backup failure policy!");
       }
+   }
+
+   @Override
+   public void validate(GlobalConfiguration globalConfig) {
+      takeOfflineBuilder.validate(globalConfig);
+      stateTransferBuilder.validate(globalConfig);
    }
 
    @Override

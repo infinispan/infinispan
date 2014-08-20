@@ -12,6 +12,7 @@ import org.infinispan.commons.CacheException;
 import org.infinispan.commons.configuration.Builder;
 import org.infinispan.commons.configuration.BuiltBy;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
+import org.infinispan.configuration.global.GlobalConfiguration;
 import org.infinispan.eviction.EvictionStrategy;
 import org.infinispan.persistence.spi.PersistenceException;
 import org.infinispan.persistence.jdbc.configuration.AbstractJdbcStoreConfigurationBuilder;
@@ -193,6 +194,10 @@ public class NonStringKeyPreloadTest extends AbstractInfinispanTest {
 
       @Override
       public void validate() {
+      }
+
+      @Override
+      public void validate(GlobalConfiguration globalConfig) {
       }
 
       @Override
