@@ -4,9 +4,14 @@ import org.hibernate.hql.ParsingException;
 import org.infinispan.Cache;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.query.Search;
+import org.infinispan.query.dsl.Query;
+import org.infinispan.query.dsl.QueryFactory;
 import org.infinispan.query.dsl.embedded.impl.EmbeddedQueryFactory;
+import org.infinispan.query.dsl.embedded.testdomain.User;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.testng.annotations.Test;
+
+import java.util.List;
 
 import static org.junit.Assert.assertEquals;
 
@@ -51,5 +56,18 @@ public class NonIndexedQueryDslConditionsTest extends QueryDslConditionsTest {
    @Override
    public void testNullOnIntegerField() throws Exception {
       super.testNullOnIntegerField();
+   }
+
+   public void testAnd5() throws Exception {
+      QueryFactory qf = getQueryFactory();
+
+      // range queries use different code
+      Query q = qf.from(getModelFactory().getUserImplClass())
+            .having("id").lt(1000)
+            .and().having("age").lt(1000)
+            .toBuilder().build();
+
+      List<User> list = q.list();
+      assertEquals(1, list.size());
    }
 }

@@ -63,7 +63,8 @@ public final class BETreeMaker<AttributeId extends Comparable<AttributeId>> {
       List<AttributeId> translatedPath = attributePathTranslator.translatePropertyPath(propertyPath);
       boolean isRepeated = attributePathTranslator.isRepeatedProperty(propertyPath);
       PredicateNode node = new PredicateNode<AttributeId>(parent, predicate, isNegated, translatedPath, isRepeated);
-      node.setLocation(nodes.size(), nodes.size() + 1);
+      int size = nodes.size();
+      node.setLocation(size, size);
       nodes.add(node);
       treeCounters.add(1);
    }
