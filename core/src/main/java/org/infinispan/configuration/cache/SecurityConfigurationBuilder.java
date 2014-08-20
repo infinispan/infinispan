@@ -1,6 +1,7 @@
 package org.infinispan.configuration.cache;
 
 import org.infinispan.commons.configuration.Builder;
+import org.infinispan.configuration.global.GlobalConfiguration;
 
 /**
  * SecurityConfigurationBuilder.
@@ -21,6 +22,10 @@ public class SecurityConfigurationBuilder extends AbstractConfigurationChildBuil
    }
 
    @Override
+   public void validate(GlobalConfiguration globalConfig) {
+   }
+
+   @Override
    public SecurityConfiguration create() {
       return new SecurityConfiguration(authorizationBuilder.create());
    }
@@ -35,5 +40,4 @@ public class SecurityConfigurationBuilder extends AbstractConfigurationChildBuil
    public AuthorizationConfigurationBuilder authorization() {
       return authorizationBuilder;
    }
-
 }

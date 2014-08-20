@@ -2,6 +2,7 @@ package org.infinispan.configuration.cache;
 
 import org.infinispan.commons.configuration.Builder;
 import org.infinispan.commons.CacheConfigurationException;
+import org.infinispan.configuration.global.GlobalConfiguration;
 
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -65,6 +66,15 @@ public class SitesConfigurationBuilder extends AbstractConfigurationChildBuilder
          if (!found) {
             throw new CacheConfigurationException("The site '" + site + "' should be defined within the set of backups!");
          }
+      }
+   }
+
+   @Override
+   public void validate(GlobalConfiguration globalConfig) {
+      backupForBuilder.validate(globalConfig);
+
+      for (BackupConfigurationBuilder bcb : backups) {
+         bcb.validate(globalConfig);
       }
    }
 

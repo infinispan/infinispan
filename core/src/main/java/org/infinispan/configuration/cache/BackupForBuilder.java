@@ -3,6 +3,7 @@ package org.infinispan.configuration.cache;
 import org.infinispan.commons.api.BasicCacheContainer;
 import org.infinispan.commons.configuration.Builder;
 import org.infinispan.commons.CacheConfigurationException;
+import org.infinispan.configuration.global.GlobalConfiguration;
 
 /**
  * @author Mircea Markus
@@ -52,6 +53,10 @@ public class BackupForBuilder extends AbstractConfigurationChildBuilder implemen
       if (remoteSite == null || remoteCache == null) {
          throw new CacheConfigurationException("Both 'remoteCache' and 'remoteSite' must be specified for a backup'!");
       }
+   }
+
+   @Override
+   public void validate(GlobalConfiguration globalConfig) {
    }
 
    @Override

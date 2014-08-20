@@ -3,6 +3,7 @@ package org.infinispan.configuration.cache;
 import java.util.concurrent.TimeUnit;
 
 import org.infinispan.commons.configuration.Builder;
+import org.infinispan.configuration.global.GlobalConfiguration;
 
 /**
  * Configuration for the async cache store. If enabled, this provides you with asynchronous writes
@@ -102,6 +103,10 @@ public class AsyncStoreConfigurationBuilder<S> extends AbstractStoreConfiguratio
    }
 
    @Override
+   public void validate(GlobalConfiguration globalConfig) {
+   }
+
+   @Override
    public AsyncStoreConfiguration create() {
       return new AsyncStoreConfiguration(enabled, flushLockTimeout, modificationQueueSize, shutdownTimeout, threadPoolSize);
    }
@@ -127,5 +132,4 @@ public class AsyncStoreConfigurationBuilder<S> extends AbstractStoreConfiguratio
             ", threadPoolSize=" + threadPoolSize +
             '}';
    }
-
 }

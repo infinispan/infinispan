@@ -1,6 +1,10 @@
 package org.infinispan.configuration.cache;
 
+import org.infinispan.commons.CacheConfigurationException;
 import org.infinispan.commons.configuration.Builder;
+import org.infinispan.configuration.global.GlobalConfiguration;
+
+import java.util.Arrays;
 
 /**
  * Defines clustered characteristics of the cache.
@@ -94,12 +98,25 @@ public class ClusteringConfigurationBuilder extends AbstractConfigurationChildBu
    @Override
    public
    void validate() {
-      asyncConfigurationBuilder.validate();
-      hashConfigurationBuilder.validate();
-      l1ConfigurationBuilder.validate();
-      syncConfigurationBuilder.validate();
-      stateTransferConfigurationBuilder.validate();
-      partitionHandlingConfigurationBuilder.validate();
+      for (Builder<?> validatable:
+            Arrays.asList(asyncConfigurationBuilder, hashConfigurationBuilder, l1ConfigurationBuilder,
+                          syncConfigurationBuilder, stateTransferConfigurationBuilder, partitionHandlingConfigurationBuilder)) {
+         validatable.validate();
+      }
+   }
+
+   @Override
+   public void validate(GlobalConfiguration globalConfig) {
+      if (cacheMode().isClustered() && globalConfig.transport().transport() == null) {
+         throw new CacheConfigurationException("Must have a transport set in the global configuration in " +
+               "order to define a clustered cache");
+      }
+
+      for (ConfigurationChildBuilder validatable:
+         Arrays.asList(asyncConfigurationBuilder, hashConfigurationBuilder, l1ConfigurationBuilder,
+                       syncConfigurationBuilder, stateTransferConfigurationBuilder, partitionHandlingConfigurationBuilder)) {
+         validatable.validate(globalConfig);
+      }
    }
 
    @Override

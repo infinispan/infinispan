@@ -8,6 +8,7 @@ import org.infinispan.commons.logging.LogFactory;
 import org.infinispan.commons.CacheConfigurationException;
 import org.infinispan.configuration.cache.AbstractStoreConfigurationBuilder;
 import org.infinispan.configuration.cache.PersistenceConfigurationBuilder;
+import org.infinispan.configuration.global.GlobalConfiguration;
 import org.infinispan.persistence.jdbc.Dialect;
 import org.infinispan.persistence.jdbc.connectionfactory.ConnectionFactory;
 import org.infinispan.persistence.jdbc.logging.Log;
@@ -85,6 +86,15 @@ public abstract class AbstractJdbcStoreConfigurationBuilder<T extends AbstractJd
       } else if (!manageConnectionFactory && connectionFactory != null) {
          throw log.unmanagedConnectionFactory();
       }
+
+      if (connectionFactory != null) {
+         connectionFactory.validate();
+      }
+   }
+
+   @Override
+   public void validate(GlobalConfiguration globalConfig) {
+      // Can't validate global config with connection factory
    }
 
    @Override

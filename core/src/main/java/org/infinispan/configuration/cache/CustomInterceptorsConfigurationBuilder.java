@@ -5,6 +5,7 @@ import java.util.LinkedList;
 import java.util.List;
 
 import org.infinispan.commons.configuration.Builder;
+import org.infinispan.configuration.global.GlobalConfiguration;
 
 /**
  * Configures custom interceptors to be added to the cache.
@@ -35,6 +36,11 @@ public class CustomInterceptorsConfigurationBuilder extends AbstractConfiguratio
    }
 
    @Override
+   public void validate(GlobalConfiguration globalConfig) {
+      for (InterceptorConfigurationBuilder builder : interceptorBuilders) builder.validate(globalConfig);
+   }
+
+   @Override
    public CustomInterceptorsConfiguration create() {
       if (interceptorBuilders.isEmpty()) {
          return new CustomInterceptorsConfiguration();
@@ -60,5 +66,4 @@ public class CustomInterceptorsConfigurationBuilder extends AbstractConfiguratio
             "interceptors=" + interceptorBuilders +
             '}';
    }
-
 }

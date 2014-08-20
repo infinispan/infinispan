@@ -2,6 +2,7 @@ package org.infinispan.configuration.cache;
 
 import org.infinispan.commons.configuration.Builder;
 import org.infinispan.commons.CacheConfigurationException;
+import org.infinispan.configuration.global.GlobalConfiguration;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
@@ -92,6 +93,10 @@ public class StateTransferConfigurationBuilder extends
    }
 
    @Override
+   public void validate(GlobalConfiguration globalConfig) {
+   }
+
+   @Override
    public  StateTransferConfiguration create() {
       // If replicated or distributed and fetch state transfer was not explicitly
       // disabled, then force enabling of state transfer
@@ -139,5 +144,4 @@ public class StateTransferConfigurationBuilder extends
             ", timeout=" + timeout +
             '}';
    }
-
 }

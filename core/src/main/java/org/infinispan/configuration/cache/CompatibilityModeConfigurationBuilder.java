@@ -2,6 +2,7 @@ package org.infinispan.configuration.cache;
 
 import org.infinispan.commons.configuration.Builder;
 import org.infinispan.commons.marshall.Marshaller;
+import org.infinispan.configuration.global.GlobalConfiguration;
 
 /**
  * Compatibility mode configuration builder
@@ -60,6 +61,10 @@ public class CompatibilityModeConfigurationBuilder
    }
 
    @Override
+   public void validate(GlobalConfiguration globalConfig) {
+   }
+
+   @Override
    public CompatibilityModeConfiguration create() {
       return new CompatibilityModeConfiguration(enabled, marshaller);
    }
@@ -70,5 +75,4 @@ public class CompatibilityModeConfigurationBuilder
       this.marshaller = template.marshaller();
       return this;
    }
-
 }

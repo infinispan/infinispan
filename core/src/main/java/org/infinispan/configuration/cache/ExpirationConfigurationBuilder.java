@@ -3,6 +3,7 @@ package org.infinispan.configuration.cache;
 import java.util.concurrent.TimeUnit;
 
 import org.infinispan.commons.configuration.Builder;
+import org.infinispan.configuration.global.GlobalConfiguration;
 
 /**
  * Controls the default expiration settings for entries in the cache.
@@ -114,6 +115,10 @@ public class ExpirationConfigurationBuilder extends AbstractConfigurationChildBu
    }
 
    @Override
+   public void validate(GlobalConfiguration globalConfig) {
+   }
+
+   @Override
    public ExpirationConfiguration create() {
       return new ExpirationConfiguration(lifespan, maxIdle, reaperEnabled, wakeUpInterval);
    }
@@ -137,5 +142,4 @@ public class ExpirationConfigurationBuilder extends AbstractConfigurationChildBu
             ", wakeUpInterval=" + wakeUpInterval +
             '}';
    }
-
 }

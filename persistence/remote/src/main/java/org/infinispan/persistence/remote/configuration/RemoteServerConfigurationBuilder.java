@@ -1,6 +1,7 @@
 package org.infinispan.persistence.remote.configuration;
 
 import org.infinispan.commons.configuration.Builder;
+import org.infinispan.configuration.global.GlobalConfiguration;
 
 public class RemoteServerConfigurationBuilder extends AbstractRemoteStoreConfigurationChildBuilder<RemoteStoreConfigurationBuilder> implements
       Builder<RemoteServerConfiguration> {
@@ -26,6 +27,10 @@ public class RemoteServerConfigurationBuilder extends AbstractRemoteStoreConfigu
    }
 
    @Override
+   public void validate(GlobalConfiguration globalConfig) {
+   }
+
+   @Override
    public RemoteServerConfiguration create() {
       return new RemoteServerConfiguration(host, port);
    }
@@ -37,5 +42,4 @@ public class RemoteServerConfigurationBuilder extends AbstractRemoteStoreConfigu
 
       return this;
    }
-
 }

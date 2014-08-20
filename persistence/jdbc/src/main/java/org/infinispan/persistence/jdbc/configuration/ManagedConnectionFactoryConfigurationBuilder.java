@@ -1,6 +1,7 @@
 package org.infinispan.persistence.jdbc.configuration;
 
 import org.infinispan.commons.CacheConfigurationException;
+import org.infinispan.configuration.global.GlobalConfiguration;
 
 /**
  * ManagedConnectionFactoryConfigurationBuilder.
@@ -23,7 +24,13 @@ public class ManagedConnectionFactoryConfigurationBuilder<S extends AbstractJdbc
 
    @Override
    public void validate() {
-      throw new CacheConfigurationException("The jndiUrl has not been specified");
+      if (jndiUrl == null) {
+         throw new CacheConfigurationException("The jndiUrl has not been specified");
+      }
+   }
+
+   @Override
+   public void validate(GlobalConfiguration globalConfig) {
    }
 
    @Override

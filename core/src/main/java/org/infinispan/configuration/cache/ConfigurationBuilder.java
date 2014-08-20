@@ -10,6 +10,7 @@ import java.util.List;
 import org.infinispan.commons.CacheConfigurationException;
 import org.infinispan.commons.configuration.Builder;
 import org.infinispan.commons.configuration.ConfigurationUtils;
+import org.infinispan.configuration.global.GlobalConfiguration;
 
 public class ConfigurationBuilder implements ConfigurationChildBuilder {
 
@@ -175,12 +176,26 @@ public class ConfigurationBuilder implements ConfigurationChildBuilder {
       for (Builder<?> m : modules) {
          m.validate();
       }
+   }
 
-      // TODO validate that a transport is set if a singleton store is set
+   @Override
+   public void validate(GlobalConfiguration globalConfig) {
+      for (ConfigurationChildBuilder validatable:
+            asList(clustering, customInterceptors, dataContainer, deadlockDetection, eviction, expiration, indexing,
+                   invocationBatching, jmxStatistics, persistence, locking, storeAsBinary, transaction,
+                   versioning, unsafe, sites, compatibility)) {
+         validatable.validate(globalConfig);
+      }
+      // Modules cannot be checked with GlobalConfiguration
    }
 
    @Override
    public Configuration build() {
+      return build(true);
+   }
+
+   public Configuration build(GlobalConfiguration globalConfiguration) {
+      validate(globalConfiguration);
       return build(true);
    }
 

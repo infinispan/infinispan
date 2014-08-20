@@ -6,6 +6,7 @@ import java.util.Properties;
 import org.infinispan.commons.configuration.Builder;
 import org.infinispan.commons.util.TypedProperties;
 import org.infinispan.commons.util.Util;
+import org.infinispan.configuration.global.GlobalConfiguration;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
@@ -177,10 +178,16 @@ public class IndexingConfigurationBuilder extends AbstractConfigurationChildBuil
          if (clustering().cacheMode().isInvalidation()) {
             throw log.invalidConfigurationIndexingWithInvalidation();
          }
+      }
+   }
+
+   @Override
+   public void validate(GlobalConfiguration globalConfig) {
+      if (index.isEnabled()) {
          // Check that the query module is on the classpath.
          try {
             String clazz = "org.infinispan.query.Search";
-            Util.loadClassStrict( clazz, getClass().getClassLoader() );
+            Util.loadClassStrict( clazz, globalConfig.classLoader() );
          } catch (ClassNotFoundException e) {
             throw log.invalidConfigurationIndexingWithoutModule();
          }

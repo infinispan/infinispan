@@ -3,6 +3,7 @@ package org.infinispan.configuration.module;
 import org.infinispan.commons.configuration.Builder;
 import org.infinispan.configuration.cache.AbstractModuleConfigurationBuilder;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
+import org.infinispan.configuration.global.GlobalConfiguration;
 
 /**
  *
@@ -25,6 +26,10 @@ public class MyModuleConfigurationBuilder extends AbstractModuleConfigurationBui
 
    @Override
    public void validate() {
+   }
+
+   @Override
+   public void validate(GlobalConfiguration globalConfig) {
    }
 
    @Override

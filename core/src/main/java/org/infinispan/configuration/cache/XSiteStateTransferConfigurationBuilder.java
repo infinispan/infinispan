@@ -2,6 +2,7 @@ package org.infinispan.configuration.cache;
 
 import org.infinispan.commons.CacheConfigurationException;
 import org.infinispan.commons.configuration.Builder;
+import org.infinispan.configuration.global.GlobalConfiguration;
 
 import java.util.concurrent.TimeUnit;
 
@@ -31,6 +32,10 @@ public class XSiteStateTransferConfigurationBuilder extends AbstractConfiguratio
       if (timeout <= 0) {
          throw new CacheConfigurationException("Timeout must be higher or equals than 1 (one).");
       }
+   }
+
+   @Override
+   public void validate(GlobalConfiguration globalConfig) {
    }
 
    /**

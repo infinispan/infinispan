@@ -6,6 +6,7 @@ import org.infinispan.commons.configuration.Builder;
 import org.infinispan.commons.util.TypedProperties;
 import org.infinispan.commons.CacheConfigurationException;
 import org.infinispan.configuration.cache.InterceptorConfiguration.Position;
+import org.infinispan.configuration.global.GlobalConfiguration;
 import org.infinispan.interceptors.base.BaseCustomInterceptor;
 import org.infinispan.interceptors.base.CommandInterceptor;
 import org.infinispan.util.logging.Log;
@@ -145,6 +146,10 @@ public class InterceptorConfigurationBuilder extends AbstractCustomInterceptorsC
    }
 
    @Override
+   public void validate(GlobalConfiguration globalConfig) {
+   }
+
+   @Override
    public InterceptorConfiguration create() {
       return new InterceptorConfiguration(after, before, interceptor, index, position, TypedProperties.toTypedProperties(properties));
    }
@@ -167,5 +172,4 @@ public class InterceptorConfigurationBuilder extends AbstractCustomInterceptorsC
       return "InterceptorConfigurationBuilder [after=" + after + ", before=" + before + ", interceptor=" + interceptor + ", index=" + index + ", position=" + position
             + ", properties=" + properties + "]";
    }
-
 }

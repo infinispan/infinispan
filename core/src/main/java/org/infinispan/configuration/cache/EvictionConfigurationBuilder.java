@@ -2,6 +2,7 @@ package org.infinispan.configuration.cache;
 
 import org.infinispan.commons.configuration.Builder;
 import org.infinispan.commons.CacheConfigurationException;
+import org.infinispan.configuration.global.GlobalConfiguration;
 import org.infinispan.eviction.EvictionStrategy;
 import org.infinispan.eviction.EvictionThreadPolicy;
 import org.infinispan.util.logging.Log;
@@ -75,6 +76,10 @@ public class EvictionConfigurationBuilder extends AbstractConfigurationChildBuil
    }
 
    @Override
+   public void validate(GlobalConfiguration globalConfig) {
+   }
+
+   @Override
    public EvictionConfiguration create() {
       return new EvictionConfiguration(maxEntries, strategy, threadPolicy);
    }
@@ -96,5 +101,4 @@ public class EvictionConfigurationBuilder extends AbstractConfigurationChildBuil
             ", threadPolicy=" + threadPolicy +
             '}';
    }
-
 }

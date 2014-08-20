@@ -1,6 +1,7 @@
 package org.infinispan.configuration.cache;
 
 import org.infinispan.commons.configuration.Builder;
+import org.infinispan.configuration.global.GlobalConfiguration;
 
 /**
  * Determines whether statistics are gather and reported.
@@ -45,6 +46,10 @@ public class JMXStatisticsConfigurationBuilder extends AbstractConfigurationChil
    }
 
    @Override
+   public void validate(GlobalConfiguration globalConfig) {
+   }
+
+   @Override
    public JMXStatisticsConfiguration create() {
       return new JMXStatisticsConfiguration(enabled);
    }
@@ -62,5 +67,4 @@ public class JMXStatisticsConfigurationBuilder extends AbstractConfigurationChil
             "enabled=" + enabled +
             '}';
    }
-
 }

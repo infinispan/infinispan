@@ -266,12 +266,9 @@ public class ConfigurationUnitTest extends AbstractInfinispanTest {
 
    @Test(expectedExceptions = CacheConfigurationException.class)
    public void testWrongCacheModeConfiguration() throws Exception {
-      withCacheManager(new CacheManagerCallable(createTestCacheManager()) {
-         @Override
-         public void call() {
-            cm.getCache().put("key", "value");
-         }
-      });
+      ConfigurationBuilder config = new ConfigurationBuilder();
+      config.clustering().cacheMode(CacheMode.REPL_ASYNC);
+      TestCacheManagerFactory.createCacheManager(config);
    }
 
    public void testCacheModeConfiguration() throws Exception {
@@ -286,7 +283,7 @@ public class ConfigurationUnitTest extends AbstractInfinispanTest {
    private EmbeddedCacheManager createTestCacheManager() {
       ConfigurationBuilder config = new ConfigurationBuilder();
       config.clustering().cacheMode(CacheMode.REPL_ASYNC);
-      EmbeddedCacheManager cm = TestCacheManagerFactory.createCacheManager(config);
+      EmbeddedCacheManager cm = TestCacheManagerFactory.createClusteredCacheManager(config);
       config = new ConfigurationBuilder();
       cm.defineConfiguration("local", config.build());
       return cm;

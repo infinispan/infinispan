@@ -6,6 +6,7 @@ import org.infinispan.commons.configuration.Builder;
 import org.infinispan.commons.equivalence.AnyEquivalence;
 import org.infinispan.commons.equivalence.Equivalence;
 import org.infinispan.commons.util.TypedProperties;
+import org.infinispan.configuration.global.GlobalConfiguration;
 import org.infinispan.container.DataContainer;
 
 /**
@@ -95,6 +96,10 @@ public class DataContainerConfigurationBuilder extends AbstractConfigurationChil
    }
 
    @Override
+   public void validate(GlobalConfiguration globalConfig) {
+   }
+
+   @Override
    public DataContainerConfiguration create() {
       return new DataContainerConfiguration(dataContainer,
             TypedProperties.toTypedProperties(properties), keyEquivalence,
@@ -120,5 +125,4 @@ public class DataContainerConfigurationBuilder extends AbstractConfigurationChil
             ", valueEquivalence=" + valueEquivalence +
             '}';
    }
-
 }

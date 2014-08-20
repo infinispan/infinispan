@@ -1,5 +1,7 @@
 package org.infinispan.configuration.cache;
 
+import org.infinispan.configuration.global.GlobalConfiguration;
+
 public interface ConfigurationChildBuilder {
 
    ClusteringConfigurationBuilder clustering();
@@ -37,6 +39,8 @@ public interface ConfigurationChildBuilder {
    SitesConfigurationBuilder sites();
 
    CompatibilityModeConfigurationBuilder compatibility();
+
+   void validate(GlobalConfiguration globalConfig);
 
    Configuration build();
 }

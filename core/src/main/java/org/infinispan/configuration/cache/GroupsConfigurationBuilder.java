@@ -1,6 +1,7 @@
 package org.infinispan.configuration.cache;
 
 import org.infinispan.commons.configuration.Builder;
+import org.infinispan.configuration.global.GlobalConfiguration;
 import org.infinispan.distribution.group.Group;
 import org.infinispan.distribution.group.Grouper;
 
@@ -78,6 +79,10 @@ public class GroupsConfigurationBuilder extends AbstractClusteringConfigurationC
    }
 
    @Override
+   public void validate(GlobalConfiguration globalConfig) {
+   }
+
+   @Override
    public GroupsConfiguration create() {
       return new GroupsConfiguration(enabled, groupers);
    }
@@ -97,5 +102,4 @@ public class GroupsConfigurationBuilder extends AbstractClusteringConfigurationC
             ", groupers=" + groupers +
             '}';
    }
-
 }

@@ -271,10 +271,11 @@ public class DefaultCacheManager implements EmbeddedCacheManager {
    public DefaultCacheManager(ConfigurationBuilderHolder holder, boolean start) {
       try {
          globalConfiguration = holder.getGlobalConfigurationBuilder().build();
-         defaultConfiguration = holder.getDefaultConfigurationBuilder().build();
+         defaultConfiguration = holder.getDefaultConfigurationBuilder().build(globalConfiguration);
 
          for (Entry<String, ConfigurationBuilder> entry : holder.getNamedConfigurationBuilders().entrySet()) {
-            org.infinispan.configuration.cache.Configuration c = entry.getValue().build();
+            ConfigurationBuilder builder = entry.getValue();
+            org.infinispan.configuration.cache.Configuration c = builder.build(globalConfiguration);
             configurationOverrides.put(entry.getKey(), c);
          }
 
@@ -311,12 +312,13 @@ public class DefaultCacheManager implements EmbeddedCacheManager {
       ConfigurationBuilderHolder defaultConfigurationBuilderHolder = parserRegistry.parseFile(defaultConfigurationFile);
 
       globalConfiguration = globalConfigurationBuilderHolder.getGlobalConfigurationBuilder().build();
-      defaultConfiguration = defaultConfigurationBuilderHolder.getDefaultConfigurationBuilder().build();
+      defaultConfiguration = defaultConfigurationBuilderHolder.getDefaultConfigurationBuilder().build(globalConfiguration);
 
       if (namedCacheFile != null) {
          ConfigurationBuilderHolder namedConfigurationBuilderHolder = parserRegistry.parseFile(namedCacheFile);
          Entry<String, ConfigurationBuilder> entry = namedConfigurationBuilderHolder.getNamedConfigurationBuilders().entrySet().iterator().next();
-         configurationOverrides.put(entry.getKey(), entry.getValue().build());
+         ConfigurationBuilder builder = entry.getValue();
+         configurationOverrides.put(entry.getKey(), builder.build(globalConfiguration));
       }
 
       globalComponentRegistry = new GlobalComponentRegistry(this.globalConfiguration, this, caches.keySet());
@@ -356,7 +358,7 @@ public class DefaultCacheManager implements EmbeddedCacheManager {
             ConfigurationBuilder builder = new ConfigurationBuilder();
             builder.read(existing);
             builder.read(configOverride);
-            Configuration configuration = builder.build();
+            Configuration configuration = builder.build(globalConfiguration);
             configurationOverrides.put(cacheName, configuration);
             return configuration;
          }
@@ -364,7 +366,7 @@ public class DefaultCacheManager implements EmbeddedCacheManager {
       ConfigurationBuilder builder = new ConfigurationBuilder();
       builder.read(defaultConfigIfNotPresent);
       builder.read(configOverride);
-      Configuration configuration = builder.build();
+      Configuration configuration = builder.build(globalConfiguration);
       configurationOverrides.put(cacheName, configuration);
       return configuration;
    }
@@ -585,7 +587,7 @@ public class DefaultCacheManager implements EmbeddedCacheManager {
    private Configuration getConfiguration(String cacheName) {
       Configuration c;
       if (cacheName.equals(DEFAULT_CACHE_NAME) || !configurationOverrides.containsKey(cacheName))
-         c = new ConfigurationBuilder().read(defaultConfiguration).build();
+         c = new ConfigurationBuilder().read(defaultConfiguration).build(globalConfiguration);
       else
          c = configurationOverrides.get(cacheName);
       return c;

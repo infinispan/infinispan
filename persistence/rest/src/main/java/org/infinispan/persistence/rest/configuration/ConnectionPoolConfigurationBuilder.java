@@ -19,6 +19,7 @@
 package org.infinispan.persistence.rest.configuration;
 
 import org.infinispan.commons.configuration.Builder;
+import org.infinispan.configuration.global.GlobalConfiguration;
 
 /**
  *
@@ -78,6 +79,10 @@ public class ConnectionPoolConfigurationBuilder extends AbstractRestStoreConfigu
    }
 
    @Override
+   public void validate(GlobalConfiguration globalConfig) {
+   }
+
+   @Override
    public ConnectionPoolConfiguration create() {
       return new ConnectionPoolConfiguration(connectionTimeout, maxConnectionsPerHost, maxTotalConnections, bufferSize, socketTimeout, tcpNoDelay);
    }
@@ -92,5 +97,4 @@ public class ConnectionPoolConfigurationBuilder extends AbstractRestStoreConfigu
       this.tcpNoDelay = template.tcpNoDelay();
       return this;
    }
-
 }

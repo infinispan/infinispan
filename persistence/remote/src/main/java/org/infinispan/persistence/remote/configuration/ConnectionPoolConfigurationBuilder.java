@@ -1,6 +1,7 @@
 package org.infinispan.persistence.remote.configuration;
 
 import org.infinispan.commons.configuration.Builder;
+import org.infinispan.configuration.global.GlobalConfiguration;
 
 /**
  *
@@ -116,6 +117,10 @@ public class ConnectionPoolConfigurationBuilder extends AbstractRemoteStoreConfi
    }
 
    @Override
+   public void validate(GlobalConfiguration globalConfig) {
+   }
+
+   @Override
    public ConnectionPoolConfiguration create() {
       return new ConnectionPoolConfiguration(exhaustedAction, maxActive, maxTotal, maxIdle, minIdle, timeBetweenEvictionRuns, minEvictableIdleTime, testWhileIdle);
    }
@@ -132,5 +137,4 @@ public class ConnectionPoolConfigurationBuilder extends AbstractRemoteStoreConfi
       testWhileIdle = template.testWhileIdle();
       return this;
    }
-
 }
