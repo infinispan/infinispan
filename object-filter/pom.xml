@@ -44,12 +44,17 @@
       </dependency>
    </dependencies>
 
+   <properties>
+      <suite.exclude.groups>org.infinispan.objectfilter.test.perf.Profiling</suite.exclude.groups>
+   </properties>
+
    <build>
       <plugins>
          <plugin>
             <groupId>org.apache.maven.plugins</groupId>
             <artifactId>maven-surefire-plugin</artifactId>
             <configuration combine.self="override">
+               <excludedGroups>${suite.exclude.groups}</excludedGroups>
                <systemPropertyVariables>
                   <log4j.configuration>${log4j.configuration}</log4j.configuration>
                   <build.directory>${project.build.directory}</build.directory>
