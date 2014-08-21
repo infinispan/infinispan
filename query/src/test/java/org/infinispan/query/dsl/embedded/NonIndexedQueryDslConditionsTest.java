@@ -61,7 +61,6 @@ public class NonIndexedQueryDslConditionsTest extends QueryDslConditionsTest {
    public void testAnd5() throws Exception {
       QueryFactory qf = getQueryFactory();
 
-      // range queries use different code
       Query q = qf.from(getModelFactory().getUserImplClass())
             .having("id").lt(1000)
             .and().having("age").lt(1000)
@@ -69,5 +68,6 @@ public class NonIndexedQueryDslConditionsTest extends QueryDslConditionsTest {
 
       List<User> list = q.list();
       assertEquals(1, list.size());
+      assertEquals(1, list.get(0).getId());
    }
 }

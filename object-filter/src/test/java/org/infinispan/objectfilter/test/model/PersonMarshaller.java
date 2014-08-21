@@ -15,6 +15,7 @@ public class PersonMarshaller implements MessageMarshaller<Person> {
    @Override
    public Person readFrom(ProtoStreamReader reader) throws IOException {
       Person person = new Person();
+      person.setId(reader.readInt("id"));
       person.setName(reader.readString("name"));
       person.setSurname(reader.readString("surname"));
       person.setAddress(reader.readObject("address", Address.class));
@@ -30,6 +31,7 @@ public class PersonMarshaller implements MessageMarshaller<Person> {
 
    @Override
    public void writeTo(ProtoStreamWriter writer, Person person) throws IOException {
+      writer.writeInt("id", person.getId());
       writer.writeString("name", person.getName());
       writer.writeString("surname", person.getSurname());
       writer.writeObject("address", person.getAddress(), Address.class);

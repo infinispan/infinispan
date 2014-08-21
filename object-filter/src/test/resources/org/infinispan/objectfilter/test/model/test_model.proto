@@ -14,28 +14,30 @@ message PhoneNumber {
 
 message Person {
 
-   required string name = 1;
+   optional int32 id = 1;
 
-   required string surname = 2;
+   required string name = 2;
 
-   optional Address address = 3;
+   required string surname = 3;
 
-   repeated PhoneNumber phoneNumbers = 4;
+   optional Address address = 4;
 
-   optional uint32 age = 5;
+   repeated PhoneNumber phoneNumbers = 5;
 
-   repeated uint32 favouriteNumbers = 6;
+   optional uint32 age = 6;
 
-   optional string license = 7;
+   repeated uint32 favouriteNumbers = 7;
+
+   optional string license = 8;
 
    enum Gender {
       MALE = 0;
       FEMALE = 1;
    }
 
-   optional Gender gender = 8;
+   optional Gender gender = 9;
 
-   optional fixed64 lastUpdate = 9;
+   optional fixed64 lastUpdate = 10;
 
-   required bool deleted = 10 [default = false];
+   required bool deleted = 11 [default = false];
 }

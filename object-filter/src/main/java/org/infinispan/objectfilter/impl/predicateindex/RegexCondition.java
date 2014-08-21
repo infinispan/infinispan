@@ -25,12 +25,12 @@ public final class RegexCondition extends Condition<String> {
       if (obj == null || getClass() != obj.getClass()) return false;
 
       RegexCondition other = (RegexCondition) obj;
-      return pattern.equals(other.pattern);
+      return pattern.pattern().equals(other.pattern.pattern());
    }
 
    @Override
    public int hashCode() {
-      return pattern.hashCode();
+      return pattern.pattern().hashCode();
    }
 
    @Override

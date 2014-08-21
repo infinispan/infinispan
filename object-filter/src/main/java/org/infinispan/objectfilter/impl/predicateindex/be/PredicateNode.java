@@ -12,7 +12,7 @@ import java.util.List;
  */
 public final class PredicateNode<AttributeId extends Comparable<AttributeId>> extends BENode {
 
-   private final Predicate predicate;
+   private final Predicate<?> predicate;
 
    /**
     * Indicates if the predicate's condition is negated. This can be true only for condition predicates, never for
@@ -29,7 +29,7 @@ public final class PredicateNode<AttributeId extends Comparable<AttributeId>> ex
 
    private PredicateIndex.Subscription subscription;
 
-   public PredicateNode(BENode parent, Predicate predicate, boolean isNegated, List<AttributeId> attributePath, boolean isRepeated) {
+   public PredicateNode(BENode parent, Predicate<?> predicate, boolean isNegated, List<AttributeId> attributePath, boolean isRepeated) {
       super(parent);
       if (isNegated && predicate.getInterval() != null) {
          throw new IllegalArgumentException("Interval predicates should not be negated");
@@ -40,7 +40,7 @@ public final class PredicateNode<AttributeId extends Comparable<AttributeId>> ex
       this.isRepeated = isRepeated;
    }
 
-   public Predicate getPredicate() {
+   public Predicate<?> getPredicate() {
       return predicate;
    }
 

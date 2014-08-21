@@ -19,7 +19,7 @@ import java.util.Map;
 final class Predicates<AttributeDomain> {
 
    /**
-    * Holds all subscriptions for a single predicate. This class is thread-safe.
+    * Holds all subscriptions for a single predicate.
     */
    private static class Subscriptions {
 
@@ -94,14 +94,15 @@ final class Predicates<AttributeDomain> {
 
    public void addPredicate(PredicateIndex.Subscription subscription) {
       Subscriptions subscriptions;
-      if (subscription.getPredicate().getInterval() != null) {
+      Predicate<AttributeDomain> predicate = subscription.getPredicateNode().getPredicate();
+      if (predicate.getInterval() != null) {
          if (orderedPredicates == null) {
             // in this case AttributeDomain extends Comparable for sure
             orderedPredicates = new IntervalTree<AttributeDomain, Subscriptions>(new ComparableComparator());
          }
-         IntervalTree.Node<AttributeDomain, Subscriptions> n = orderedPredicates.add(subscription.getPredicate().getInterval());
+         IntervalTree.Node<AttributeDomain, Subscriptions> n = orderedPredicates.add(predicate.getInterval());
          if (n.value == null) {
-            subscriptions = new Subscriptions(subscription.getPredicate());
+            subscriptions = new Subscriptions(predicate);
             n.value = subscriptions;
          } else {
             subscriptions = n.value;
@@ -110,19 +111,20 @@ final class Predicates<AttributeDomain> {
          if (unorderedPredicates == null) {
             unorderedPredicates = new HashMap<Predicate<AttributeDomain>, Subscriptions>();
          }
-         subscriptions = unorderedPredicates.get(subscription.getPredicate());
+         subscriptions = unorderedPredicates.get(predicate);
          if (subscriptions == null) {
-            subscriptions = new Subscriptions(subscription.getPredicate());
-            unorderedPredicates.put(subscription.getPredicate(), subscriptions);
+            subscriptions = new Subscriptions(predicate);
+            unorderedPredicates.put(predicate, subscriptions);
          }
       }
       subscriptions.add(subscription);
    }
 
    public void removePredicate(PredicateIndex.Subscription subscription) {
-      if (subscription.getPredicate().getInterval() != null) {
+      Predicate<AttributeDomain> predicate = subscription.getPredicateNode().getPredicate();
+      if (predicate.getInterval() != null) {
          if (orderedPredicates != null) {
-            IntervalTree.Node<AttributeDomain, Subscriptions> n = orderedPredicates.findNode(subscription.getPredicate().getInterval());
+            IntervalTree.Node<AttributeDomain, Subscriptions> n = orderedPredicates.findNode(predicate.getInterval());
             if (n != null) {
                n.value.remove(subscription);
                if (n.value.subscriptions.isEmpty()) {
@@ -136,11 +138,11 @@ final class Predicates<AttributeDomain> {
          }
       } else {
          if (unorderedPredicates != null) {
-            Subscriptions subscriptions = unorderedPredicates.get(subscription.getPredicate());
+            Subscriptions subscriptions = unorderedPredicates.get(predicate);
             if (subscriptions != null) {
                subscriptions.remove(subscription);
                if (subscriptions.subscriptions.isEmpty()) {
-                  unorderedPredicates.remove(subscription.getPredicate());
+                  unorderedPredicates.remove(predicate);
                }
             } else {
                throwIllegalStateException();
@@ -157,7 +159,7 @@ final class Predicates<AttributeDomain> {
    }
 
    private static void throwIllegalStateException() throws IllegalStateException {
-      // this is not expected to happen unless a programming error slipped though
+      // this is not expected to happen unless a programming error slipped through
       throw new IllegalStateException("Reached an invalid state");
    }
 }

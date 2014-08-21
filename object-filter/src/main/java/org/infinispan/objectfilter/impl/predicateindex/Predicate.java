@@ -3,7 +3,10 @@ package org.infinispan.objectfilter.impl.predicateindex;
 import org.infinispan.objectfilter.impl.util.Interval;
 
 /**
- * A predicate comes in two flavors: condition predicate or interval predicate.
+ * A predicate attached to an attribute. It comes in two flavors: condition predicate or interval predicate. An interval
+ * predicate represents a range of values (possibly infinite at one end but not both). It requires that the attribute
+ * domain is Comparable, otherwise the notion of interval is meaningless. A condition predicate on the other hand can
+ * have any arbitrary condition and does not require the attribute value to be Comparable.
  *
  * @author anistor@redhat.com
  * @since 7.0
@@ -14,6 +17,8 @@ public final class Predicate<AttributeDomain> {
 
       void handleValue(MatcherEvalContext<?> ctx, boolean isMatching);
    }
+
+   protected AttributeNode attributeNode;
 
    // only one of these fields is non-null
    private final Interval<AttributeDomain> interval;    // just for interval predicates
@@ -44,16 +49,17 @@ public final class Predicate<AttributeDomain> {
       if (obj == null || getClass() != obj.getClass()) return false;
 
       Predicate other = (Predicate) obj;
-      return interval != null ? interval.equals(other.interval) : condition.equals(other.condition);
+      return attributeNode == other.attributeNode && (interval != null ? interval.equals(other.interval) : condition.equals(other.condition));
    }
 
    @Override
    public int hashCode() {
-      return interval != null ? interval.hashCode() : condition.hashCode();
+      int i = interval != null ? interval.hashCode() : condition.hashCode();
+      return i + 31 * attributeNode.hashCode();
    }
 
    @Override
    public String toString() {
-      return "Predicate(" + (interval != null ? interval.toString() : condition.toString()) + ")";
+      return "Predicate(" + attributeNode + ", " + (interval != null ? interval.toString() : condition.toString()) + ")";
    }
 }

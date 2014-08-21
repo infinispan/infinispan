@@ -26,8 +26,8 @@ public final class PredicateIndex<AttributeId extends Comparable<AttributeId>> {
          this.callback = callback;
       }
 
-      public Predicate getPredicate() {
-         return predicateNode.getPredicate();
+      public PredicateNode<AttributeId> getPredicateNode() {
+         return predicateNode;
       }
 
       public void suspend(MatcherEvalContext<AttributeId> ctx) {
@@ -74,6 +74,7 @@ public final class PredicateIndex<AttributeId extends Comparable<AttributeId>> {
 
    public Subscription addSubscriptionForPredicate(PredicateNode<AttributeId> predicateNode, Predicate.Callback callback) {
       AttributeNode<AttributeId> attributeNode = addAttributeNodeByPath(predicateNode.getAttributePath());
+      predicateNode.getPredicate().attributeNode = attributeNode;
       Subscription subscription = new Subscription(predicateNode, callback);
       attributeNode.addPredicateSubscription(subscription);
       return subscription;

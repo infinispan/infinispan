@@ -16,6 +16,8 @@ public class Person {
    // fields start with underscore to demonstrate that property getter access is used instead of field access
    private String _name;
 
+   private int _id;
+
    private String _surname;
 
    private Address _address;
@@ -33,6 +35,14 @@ public class Person {
    private Date _lastUpdate;
 
    private boolean _deleted;
+
+   public int getId() {
+      return _id;
+   }
+
+   public void setId(int id) {
+      this._id = id;
+   }
 
    public String getName() {
       return _name;
@@ -117,7 +127,8 @@ public class Person {
    @Override
    public String toString() {
       return "Person{" +
-            "name='" + _name + '\'' +
+            "id='" + _id + '\'' +
+            ", name='" + _name + '\'' +
             ", surname='" + _surname + '\'' +
             ", phoneNumbers=" + _phoneNumbers +
             ", address=" + _address +

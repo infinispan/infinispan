@@ -18,10 +18,10 @@ import java.util.List;
  */
 public final class BETreeMaker<AttributeId extends Comparable<AttributeId>> {
 
-   private final MetadataAdapter<?, AttributeId> attributePathTranslator;
+   private final MetadataAdapter<?, AttributeId> metadataAdapter;
 
-   public BETreeMaker(MetadataAdapter<?, AttributeId> attributePathTranslator) {
-      this.attributePathTranslator = attributePathTranslator;
+   public BETreeMaker(MetadataAdapter<?, AttributeId> metadataAdapter) {
+      this.metadataAdapter = metadataAdapter;
    }
 
    public BETree make(BooleanExpr booleanExpr) {
@@ -60,12 +60,12 @@ public final class BETreeMaker<AttributeId extends Comparable<AttributeId>> {
    private void makePredicateNode(BENode parent, List<BENode> nodes, List<Integer> treeCounters, PrimaryPredicateExpr condition, boolean isNegated) {
       Predicate predicate = makePredicate(condition);
       List<String> propertyPath = ((PropertyValueExpr) condition.getChild()).getPropertyPath();
-      List<AttributeId> translatedPath = attributePathTranslator.translatePropertyPath(propertyPath);
-      boolean isRepeated = attributePathTranslator.isRepeatedProperty(propertyPath);
-      PredicateNode node = new PredicateNode<AttributeId>(parent, predicate, isNegated, translatedPath, isRepeated);
+      List<AttributeId> translatedPath = metadataAdapter.translatePropertyPath(propertyPath);
+      boolean isRepeated = metadataAdapter.isRepeatedProperty(propertyPath);
+      PredicateNode predicateNode = new PredicateNode<AttributeId>(parent, predicate, isNegated, translatedPath, isRepeated);
       int size = nodes.size();
-      node.setLocation(size, size);
-      nodes.add(node);
+      predicateNode.setLocation(size, size + 1);
+      nodes.add(predicateNode);
       treeCounters.add(1);
    }
 

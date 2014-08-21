@@ -33,6 +33,7 @@ public abstract class AbstractMatcherTest {
 
    protected Object createPerson1() throws Exception {
       Person person = new Person();
+      person.setId(1);
       person.setName("John");
       person.setSurname("Batman");
       person.setAge(40);
@@ -53,6 +54,7 @@ public abstract class AbstractMatcherTest {
 
    protected Object createPerson2() throws Exception {
       Person person = new Person();
+      person.setId(2);
       person.setName("Cat");
       person.setSurname("Woman");
       person.setAge(27);
@@ -365,6 +367,47 @@ public abstract class AbstractMatcherTest {
       matcher.match(person);
 
       ObjectFilter.FilterResult result = objectFilter.filter(person);
+      assertTrue(result.getInstance() == person);
+   }
+
+   @Test
+   public void testObjectFilterWithDSLSamePredicate1() throws Exception {
+      Matcher matcher = createMatcher();
+      Object person = createPerson1();
+
+      QueryFactory qf = matcher.getQueryFactory();
+
+      // use the same '< 1000' predicate on two different attributes to demonstrate they do not interfere (see ISPN-4654)
+      Query q = qf.from(Person.class)
+            .having("id").lt(1000)
+            .and()
+            .having("age").lt(1000)
+            .toBuilder().build();
+
+      ObjectFilter objectFilter = matcher.getObjectFilter(q);
+
+      ObjectFilter.FilterResult result = objectFilter.filter(person);
+      assertNotNull(result);
+      assertTrue(result.getInstance() == person);
+   }
+
+   @Test
+   public void testObjectFilterWithDSLSamePredicate2() throws Exception {
+      Matcher matcher = createMatcher();
+      Object person = createPerson1();
+
+      QueryFactory qf = matcher.getQueryFactory();
+
+      // use the same "like 'Jo%'" predicate (in positive and negative form) on the same attribute to demonstrate they do not interfere (see ISPN-4654)
+      Query q = qf.from(Person.class)
+            .having("name").like("Jo%")
+            .and(qf.not().having("name").like("Jo%").or().having("id").lt(1000))
+            .toBuilder().build();
+
+      ObjectFilter objectFilter = matcher.getObjectFilter(q);
+
+      ObjectFilter.FilterResult result = objectFilter.filter(person);
+      assertNotNull(result);
       assertTrue(result.getInstance() == person);
    }
 
