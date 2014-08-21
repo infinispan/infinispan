@@ -12,7 +12,6 @@ import org.infinispan.query.Search;
 import org.infinispan.query.SearchManager;
 import org.infinispan.query.helper.StaticTestingErrorHandler;
 import org.infinispan.query.helper.TestableCluster;
-import org.infinispan.query.indexmanager.InfinispanCommandsBackend;
 import org.infinispan.query.indexmanager.InfinispanIndexManager;
 import org.infinispan.query.test.Person;
 import org.infinispan.test.AbstractInfinispanTest;
@@ -62,8 +61,12 @@ public class MultiNodeDistributedTest extends AbstractInfinispanTest {
          cluster.startNewNode();
          assertIndexSize(4);
          killMasterNode();
-         storeOn(cluster.getCache(2), "k5", new Person("K. Vife", "Failover!", 1));
-         assertIndexSize(5);
+         //After a node kill, a stale lock might not be immediately resolved.
+         //Solicit resolution by issues at least three writes:
+         storeOn(cluster.getCache(2), "k5", new Person("K. Vife", "Gets stuck in a buffer", 1));
+         storeOn(cluster.getCache(2), "k6", new Person("K. Seix", "Fills the buffer", 1));
+         storeOn(cluster.getCache(2), "k7", new Person("K. Vife", "Failover!", 1));
+         assertIndexSize(7);
       }
       finally {
          cluster.killAll();
@@ -84,8 +87,7 @@ public class MultiNodeDistributedTest extends AbstractInfinispanTest {
       SearchManager searchManager = Search.getSearchManager(cache);
       SearchFactoryImplementor searchFactory = (SearchFactoryImplementor) searchManager.getSearchFactory();
       InfinispanIndexManager indexManager = (InfinispanIndexManager) searchFactory.getIndexManagerHolder().getIndexManager("person");
-      InfinispanCommandsBackend commandsBackend = indexManager.getRemoteMaster();
-      return commandsBackend.isMasterLocal();
+      return indexManager.isMasterLocal();
    }
 
    protected void assertIndexSize(int expectedIndexSize) {
