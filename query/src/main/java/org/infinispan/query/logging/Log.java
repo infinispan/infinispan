@@ -63,4 +63,13 @@ public interface Log extends org.infinispan.util.logging.Log {
 
    @Message(value = "An IOException happened where none where expected", id = 14010)
    CacheException unexpectedIOException(@Cause IOException e);
+
+   @LogMessage(level = WARN)
+   @Message(value = "Some indexing work was lost because of an InterruptedException", id = 14011)
+   void interruptedWhileBufferingWork(@Cause InterruptedException e);
+
+   @LogMessage(level = DEBUG)
+   @Message(value = "Waiting for index lock was successfull: '%1$s'", id = 14012)
+   void waitingForLockAcquired(boolean waitForAvailabilityInternal);
+
 }

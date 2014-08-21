@@ -2,7 +2,6 @@ package org.infinispan.query.indexmanager;
 
 import java.util.Properties;
 
-import org.hibernate.search.backend.BackendFactory;
 import org.hibernate.search.backend.spi.BackendQueueProcessor;
 import org.hibernate.search.indexes.impl.DirectoryBasedIndexManager;
 import org.hibernate.search.infinispan.impl.InfinispanDirectoryProvider;
@@ -19,16 +18,14 @@ import org.infinispan.util.logging.LogFactory;
 public class InfinispanIndexManager extends DirectoryBasedIndexManager {
 
    private static final Log log = LogFactory.getLog(InfinispanIndexManager.class, Log.class);
-
-   private InfinispanCommandsBackend remoteMaster;
+   private InfinispanBackendQueueProcessor remoteMaster;
 
    protected BackendQueueProcessor createBackend(String indexName, Properties cfg, WorkerBuildContext buildContext) {
-      BackendQueueProcessor localMaster = BackendFactory.createBackend(this, buildContext, cfg);
-      remoteMaster = new InfinispanCommandsBackend();
+      //Don't use the BackendFactory here as we want to override it;
+      //the standard BackendFactory will be created on-demand on the node if/when it's elected as master.
+      remoteMaster = new InfinispanBackendQueueProcessor();
       remoteMaster.initialize(cfg, buildContext, this);
-      //localMaster is already initialized by the BackendFactory
-      MasterSwitchDelegatingQueueProcessor joinedMaster = new MasterSwitchDelegatingQueueProcessor(localMaster, remoteMaster);
-      return joinedMaster;
+      return remoteMaster;
    }
 
    protected DirectoryProvider createDirectoryProvider(String indexName, Properties cfg, WorkerBuildContext buildContext) {
@@ -42,8 +39,8 @@ public class InfinispanIndexManager extends DirectoryBasedIndexManager {
       return infinispanDP;
    }
 
-   public InfinispanCommandsBackend getRemoteMaster() {
-      return remoteMaster;
+   public boolean isMasterLocal() {
+      return remoteMaster.isMasterLocal();
    }
 
 }
