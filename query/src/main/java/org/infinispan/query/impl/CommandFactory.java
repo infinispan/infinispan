@@ -8,6 +8,7 @@ import org.infinispan.commands.module.ExtendedModuleCommandFactory;
 import org.infinispan.commands.remote.CacheRpcCommand;
 import org.infinispan.query.clustered.ClusteredQueryCommand;
 import org.infinispan.query.indexmanager.IndexUpdateCommand;
+import org.infinispan.query.indexmanager.IndexUpdateStreamCommand;
 
 /**
 * Remote commands factory implementation
@@ -22,6 +23,7 @@ public class CommandFactory implements ExtendedModuleCommandFactory {
       Map<Byte, Class<? extends ReplicableCommand>> map = new HashMap<Byte, Class<? extends ReplicableCommand>>(1);
       map.put(Byte.valueOf(ClusteredQueryCommand.COMMAND_ID), ClusteredQueryCommand.class);
       map.put(Byte.valueOf(IndexUpdateCommand.COMMAND_ID), IndexUpdateCommand.class);
+      map.put(Byte.valueOf(IndexUpdateStreamCommand.COMMAND_ID), IndexUpdateStreamCommand.class);
       return map;
    }
 
@@ -41,6 +43,9 @@ public class CommandFactory implements ExtendedModuleCommandFactory {
             break;
          case IndexUpdateCommand.COMMAND_ID:
             c = new IndexUpdateCommand(cacheName);
+            break;
+         case IndexUpdateStreamCommand.COMMAND_ID:
+            c = new IndexUpdateStreamCommand(cacheName);
             break;
          default:
             throw new IllegalArgumentException("Not registered to handle command id " + commandId);
