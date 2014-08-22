@@ -1,6 +1,7 @@
 package org.infinispan.server.hotrod
 
 import java.io.{ObjectInput, ObjectOutput}
+import java.util.concurrent.ConcurrentMap
 import java.util.concurrent.atomic.AtomicLong
 
 import io.netty.channel.Channel
@@ -57,19 +58,23 @@ class ClientListenerRegistry(configuration: HotRodServerConfiguration) extends L
       val clientEventSender = createClientEventSender(ch, h.version, listenerId, cache, isCustom)
       val filterParams = unmarshallParams(filterFactory)
       val converterParams = unmarshallParams(converterFactory)
-      val compatibilityEnabled = cache.getCacheConfiguration.compatibility().enabled()
+      val compatEnabled = cache.getCacheConfiguration.compatibility().enabled()
 
       val filter =
          for {
             namedFactory <- filterFactory
-            factory <- findFilterFactory(namedFactory._1, compatibilityEnabled)
-         } yield factory.getKeyValueFilter[Bytes, Bytes](filterParams.toArray)
+         } yield {
+            findFactory(namedFactory._1, compatEnabled, keyValueFilterFactories, "key/value filter")
+               .getKeyValueFilter[Bytes, Bytes](filterParams.toArray)
+         }
 
       val converter =
          for {
             namedFactory <- converterFactory
-            factory <- findConverterFactory(namedFactory._1, compatibilityEnabled)
-         } yield factory.getConverter[Bytes, Bytes, Bytes](converterParams.toArray)
+         } yield {
+            findFactory(namedFactory._1, compatEnabled, converterFactories, "converter")
+               .getConverter[Bytes, Bytes, Bytes](converterParams.toArray)
+         }
 
       eventSenders.put(listenerId, clientEventSender)
       cache.addListener(clientEventSender, filter.orNull, converter.orNull)
@@ -86,19 +91,18 @@ class ClientListenerRegistry(configuration: HotRodServerConfiguration) extends L
       }
    }
 
-   def findConverterFactory(name: String, compatibilityEnabled: Boolean): Option[ConverterFactory] = {
-      Option(converterFactories.get(name)).map { converterFactory =>
-         val marshallerClass = configuration.marshallerClass()
-         if (marshallerClass != null && !compatibilityEnabled) new BinaryConverterFactory(converterFactory, marshallerClass)
-         else converterFactory
-      }
+   def findFactory[T](name: String, compatEnabled: Boolean, factories: ConcurrentMap[String, T], factoryType: String): T = {
+      val factory = Option(factories.get(name)).getOrElse(
+         throw new MissingFactoryException(s"Listener $factoryType factory '$name' not found in server"))
+      val marshallerClass = configuration.marshallerClass()
+      if (marshallerClass != null && !compatEnabled) toBinaryFactory(factory, marshallerClass)
+      else factory
    }
 
-   def findFilterFactory(name: String, compatibilityEnabled: Boolean): Option[KeyValueFilterFactory] = {
-      Option(keyValueFilterFactories.get(name)).map { filterFactory =>
-         val marshallerClass = configuration.marshallerClass()
-         if (marshallerClass != null && !compatibilityEnabled) new BinaryFilterFactory(filterFactory, marshallerClass)
-         else filterFactory
+   def toBinaryFactory[T](factory: T, marshallerClass: Class[_ <: Marshaller]): T = {
+      factory match {
+         case c: ConverterFactory => new BinaryConverterFactory(c, marshallerClass).asInstanceOf[T]
+         case f: KeyValueFilterFactory => new BinaryFilterFactory(f, marshallerClass).asInstanceOf[T]
       }
    }
 

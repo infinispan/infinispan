@@ -222,6 +222,8 @@ class RequestParsingException(reason: String, val version: Byte, val messageId: 
    def this(reason: String, version: Byte, messageId: Long) = this(reason, version, messageId, null)
 }
 
+class MissingFactoryException(reason: String) extends IllegalArgumentException(reason)
+
 class HotRodHeader extends RequestHeader {
    var version: Byte = _
    var messageId: Long = _
