@@ -54,7 +54,7 @@ public class ClientCustomEventsTest extends SingleHotRodServerTest {
     */
    @Test(expectedExceptions = HotRodClientException.class)
    public void testNonExistingConverterFactoryCustomEvents() {
-      NonExistingFactoryListener eventListener = new NonExistingFactoryListener();
+      NonExistingConverterFactoryListener eventListener = new NonExistingConverterFactoryListener();
       withClientListener(eventListener, new RemoteCacheManagerCallable(remoteCacheManager));
    }
 
@@ -94,6 +94,6 @@ public class ClientCustomEventsTest extends SingleHotRodServerTest {
    }
 
    @ClientListener(converterFactoryName = "non-existing-test-converter-factory")
-   public static class NonExistingFactoryListener extends CustomEventLogListener {}
+   public static class NonExistingConverterFactoryListener extends CustomEventLogListener {}
 
 }

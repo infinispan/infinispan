@@ -2,10 +2,12 @@ package org.infinispan.client.hotrod.event;
 
 import org.infinispan.client.hotrod.RemoteCache;
 import org.infinispan.client.hotrod.TestHelper;
+import org.infinispan.client.hotrod.annotation.ClientListener;
 import org.infinispan.client.hotrod.event.EventLogListener.DynamicFilteredEventLogListener;
 import org.infinispan.client.hotrod.event.EventLogListener.DynamicKeyValueFilterFactory;
 import org.infinispan.client.hotrod.event.EventLogListener.StaticFilteredEventLogListener;
 import org.infinispan.client.hotrod.event.EventLogListener.StaticKeyValueFilterFactory;
+import org.infinispan.client.hotrod.exceptions.HotRodClientException;
 import org.infinispan.client.hotrod.test.RemoteCacheManagerCallable;
 import org.infinispan.client.hotrod.test.SingleHotRodServerTest;
 import org.infinispan.server.hotrod.HotRodServer;
@@ -93,5 +95,18 @@ public class ClientFilterEventsTest extends SingleHotRodServerTest {
          }
       });
    }
+
+   /**
+    * Test that the HotRod server returns an error when a ClientListener is
+    * registered with a non-existing 'filterFactoryName'.
+    */
+   @Test(expectedExceptions = HotRodClientException.class)
+   public void testNonExistingConverterFactoryCustomEvents() {
+      NonExistingFilterFactoryListener eventListener = new NonExistingFilterFactoryListener();
+      withClientListener(eventListener, new RemoteCacheManagerCallable(remoteCacheManager));
+   }
+
+   @ClientListener(filterFactoryName = "non-existing-test-filter-factory")
+   public static class NonExistingFilterFactoryListener extends CustomEventLogListener {}
 
 }
