@@ -16,6 +16,8 @@ import java.util.concurrent.Future;
 
 import org.infinispan.commons.configuration.ConfiguredBy;
 import org.infinispan.commons.io.ByteBuffer;
+import org.infinispan.commons.util.Util;
+import org.infinispan.configuration.global.GlobalConfiguration;
 import org.infinispan.filter.KeyFilter;
 import org.infinispan.marshall.core.MarshalledEntry;
 import org.infinispan.persistence.TaskContextImpl;
@@ -80,6 +82,7 @@ public class JdbcStringBasedStore implements AdvancedLoadWriteStore {
    private TableManipulation tableManipulation;
    private InitializationContext ctx;
    private String cacheName;
+   private GlobalConfiguration globalConfiguration;
 
 
    @Override
@@ -87,6 +90,7 @@ public class JdbcStringBasedStore implements AdvancedLoadWriteStore {
       this.configuration = ctx.getConfiguration();
       this.ctx = ctx;
       cacheName = ctx.getCache().getName();
+      globalConfiguration = ctx.getCache().getCacheManager().getCacheManagerConfiguration();
    }
 
    @Override
@@ -97,7 +101,8 @@ public class JdbcStringBasedStore implements AdvancedLoadWriteStore {
          initializeConnectionFactory(factory);
       }
       try {
-         Object mapper = Class.forName(configuration.key2StringMapper()).newInstance();
+         Object mapper = Util.loadClassStrict(configuration.key2StringMapper(),
+                                              globalConfiguration.classLoader()).newInstance();
          if (mapper instanceof Key2StringMapper) key2StringMapper = (Key2StringMapper) mapper;
       } catch (Exception e) {
          log.errorf("Trying to instantiate %s, however it failed due to %s", configuration.key2StringMapper(),
