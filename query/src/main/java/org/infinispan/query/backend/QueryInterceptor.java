@@ -265,6 +265,18 @@ public final class QueryInterceptor extends CommandInterceptor {
    }
 
    /**
+    * Customize work creation during indexing
+    * @param searchWorkCreator custom {@link org.infinispan.query.backend.SearchWorkCreator} 
+    */
+   public void setSearchWorkCreator(SearchWorkCreator<Object> searchWorkCreator) {
+      this.searchWorkCreator = searchWorkCreator;
+   }
+
+   public SearchWorkCreator<Object> getSearchWorkCreator() {
+      return searchWorkCreator;
+   }
+
+   /**
     * In case of a remotely originating transactions we don't have a chance to visit the single
     * commands but receive this "batch". We then need the before-apply snapshot of some types
     * to route the cleanup commands to the correct indexes.
