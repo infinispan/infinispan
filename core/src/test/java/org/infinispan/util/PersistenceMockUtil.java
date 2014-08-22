@@ -19,6 +19,7 @@ import org.infinispan.test.AbstractInfinispanTest;
 import java.util.HashSet;
 import java.util.Set;
 
+import static org.mockito.Mockito.RETURNS_DEEP_STUBS;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
@@ -47,7 +48,7 @@ public class PersistenceMockUtil {
 
    public static Cache mockCache(String name, Configuration configuration, TimeService timeService) {
       String cacheName = "mock-cache-" + name;
-      AdvancedCache cache = mock(AdvancedCache.class);
+      AdvancedCache cache = mock(AdvancedCache.class, RETURNS_DEEP_STUBS);
 
       GlobalConfiguration gc = new GlobalConfigurationBuilder().build();
 
@@ -58,6 +59,7 @@ public class PersistenceMockUtil {
       ComponentRegistry registry = new ComponentRegistry(cacheName, configuration, cache, gcr,
                                                          configuration.getClass().getClassLoader());
 
+      when(cache.getCacheManager().getCacheManagerConfiguration()) .thenReturn(gc);
       when(cache.getName()).thenReturn(cacheName);
       when(cache.getAdvancedCache()).thenReturn(cache);
       when(cache.getComponentRegistry()).thenReturn(registry);
