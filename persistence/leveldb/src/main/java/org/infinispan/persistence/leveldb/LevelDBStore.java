@@ -11,6 +11,7 @@ import java.util.concurrent.Callable;
 import java.util.concurrent.CompletionService;
 import java.util.concurrent.Executor;
 import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.Semaphore;
 
 import org.infinispan.commons.CacheConfigurationException;
 import org.infinispan.commons.configuration.ConfiguredBy;
@@ -29,7 +30,6 @@ import org.infinispan.persistence.spi.PersistenceException;
 import org.infinispan.util.logging.LogFactory;
 import org.iq80.leveldb.CompressionType;
 import org.iq80.leveldb.DB;
-import org.iq80.leveldb.DBException;
 import org.iq80.leveldb.DBFactory;
 import org.iq80.leveldb.DBIterator;
 import org.iq80.leveldb.Options;
@@ -49,13 +49,15 @@ public class LevelDBStore implements AdvancedLoadWriteStore {
    private DB db;
    private DB expiredDb;
    private InitializationContext ctx;
-
+   private Semaphore semaphore;
+   private volatile boolean stopped = true;
 
    @Override
    public void init(InitializationContext ctx) {
       this.configuration = ctx.getConfiguration();
       this.dbFactory = newDbFactory();
       this.ctx = ctx;
+      this.semaphore = new Semaphore(Integer.MAX_VALUE, true);
 
       if (this.dbFactory == null) {
          throw log.cannotLoadlevelDBFactories(Arrays.toString(DB_FACTORY_CLASS_NAMES));
@@ -97,6 +99,7 @@ public class LevelDBStore implements AdvancedLoadWriteStore {
       try {
          db = openDatabase(getQualifiedLocation(), dataDbOptions());
          expiredDb = openDatabase(getQualifiedExpiredLocation(), expiredDbOptions());
+         stopped = false;
       } catch (IOException e) {
          throw new CacheConfigurationException("Unable to open database", e);
       }
@@ -157,64 +160,95 @@ public class LevelDBStore implements AdvancedLoadWriteStore {
    }
 
    protected void reinitAllDatabases() throws IOException {
-      // assuming this is only called from within clearLockSafe()
-      // clear() acquires a global lock before calling clearLockSafe()
       try {
-         db.close();
-      } catch (IOException e) {
-         log.warnUnableToCloseDb(e);
+         semaphore.acquire(Integer.MAX_VALUE);
+      } catch (InterruptedException e) {
+         throw new PersistenceException("Cannot acquire semaphore", e);
       }
       try {
-         expiredDb.close();
-      } catch (IOException e) {
-         log.warnUnableToCloseExpiredDb(e);
+         if (stopped) {
+            throw new PersistenceException("LevelDB is stopped");
+         }
+         try {
+            db.close();
+         } catch (IOException e) {
+            log.warnUnableToCloseDb(e);
+         }
+         try {
+            expiredDb.close();
+         } catch (IOException e) {
+            log.warnUnableToCloseExpiredDb(e);
+         }
+         db = reinitDatabase(getQualifiedLocation(), dataDbOptions());
+         expiredDb = reinitDatabase(getQualifiedExpiredLocation(), expiredDbOptions());
+      } finally {
+         semaphore.release(Integer.MAX_VALUE);
       }
-      db = reinitDatabase(getQualifiedLocation(), dataDbOptions());
-      expiredDb = reinitDatabase(getQualifiedExpiredLocation(), expiredDbOptions());
    }
 
    @Override
    public void stop()  {
       try {
-         db.close();
-      } catch (IOException e) {
-         log.warnUnableToCloseDb(e);
+         semaphore.acquire(Integer.MAX_VALUE);
+      } catch (InterruptedException e) {
+         throw new PersistenceException("Cannot acquire semaphore", e);
       }
-
       try {
-         expiredDb.close();
-      } catch (IOException e) {
-         log.warnUnableToCloseExpiredDb(e);
+         try {
+            db.close();
+         } catch (IOException e) {
+            log.warnUnableToCloseDb(e);
+         }
+
+         try {
+            expiredDb.close();
+         } catch (IOException e) {
+            log.warnUnableToCloseExpiredDb(e);
+         }
+      } finally {
+         stopped = true;
+         semaphore.release(Integer.MAX_VALUE);
       }
    }
 
    @Override
    public void clear() {
       long count = 0;
-      DBIterator it = db.iterator(new ReadOptions().fillCache(false));
       boolean destroyDatabase = false;
+      try {
+         semaphore.acquire();
+      } catch (InterruptedException e) {
+         throw new PersistenceException("Cannot acquire semaphore", e);
+      }
+      try {
+         if (stopped) {
+            throw new PersistenceException("LevelDB is stopped");
+         }
+         DBIterator it = db.iterator(new ReadOptions().fillCache(false));
+         if (configuration.clearThreshold() <= 0) {
+            try {
+               for (it.seekToFirst(); it.hasNext(); ) {
+                  Map.Entry<byte[], byte[]> entry = it.next();
+                  db.delete(entry.getKey());
+                  count++;
 
-      if (configuration.clearThreshold() <= 0) {
-         try {
-            for (it.seekToFirst(); it.hasNext();) {
-               Map.Entry<byte[], byte[]> entry = it.next();
-               db.delete(entry.getKey());
-               count++;
-
-               if (count > configuration.clearThreshold()) {
-                  destroyDatabase = true;
-                  break;
+                  if (count > configuration.clearThreshold()) {
+                     destroyDatabase = true;
+                     break;
+                  }
+               }
+            } finally {
+               try {
+                  it.close();
+               } catch (IOException e) {
+                  log.warnUnableToCloseDbIterator(e);
                }
             }
-         } finally {
-            try {
-               it.close();
-            } catch (IOException e) {
-               log.warnUnableToCloseDbIterator(e);
-            }
+         } else {
+            destroyDatabase = true;
          }
-      } else {
-         destroyDatabase = true;
+      } finally {
+         semaphore.release();
       }
 
       if (destroyDatabase) {
@@ -249,33 +283,45 @@ public class LevelDBStore implements AdvancedLoadWriteStore {
       final TaskContext taskContext = new TaskContextImpl();
 
       List<Map.Entry<byte[], byte[]>> entries = new ArrayList<Map.Entry<byte[], byte[]>>(batchSize);
-      DBIterator it = db.iterator(new ReadOptions().fillCache(false));
       try {
-         for (it.seekToFirst(); it.hasNext();) {
-            Map.Entry<byte[], byte[]> entry = it.next();
-            entries.add(entry);
-            if (entries.size() == batchSize) {
-               final List<Map.Entry<byte[], byte[]>> batch = entries;
-               entries = new ArrayList<Map.Entry<byte[], byte[]>>(batchSize);
-               submitProcessTask(cacheLoaderTask, keyFilter,eacs, taskContext, batch, loadValues, loadMetadata);
+         semaphore.acquire();
+      } catch (InterruptedException e) {
+         throw new PersistenceException("Cannot acquire semaphore: CacheStore is likely stopped.", e);
+      }
+      try {
+         if (stopped) {
+            throw new PersistenceException("LevelDB is stopped");
+         }
+         DBIterator it = db.iterator(new ReadOptions().fillCache(false));
+         try {
+            for (it.seekToFirst(); it.hasNext(); ) {
+               Map.Entry<byte[], byte[]> entry = it.next();
+               entries.add(entry);
+               if (entries.size() == batchSize) {
+                  final List<Map.Entry<byte[], byte[]>> batch = entries;
+                  entries = new ArrayList<Map.Entry<byte[], byte[]>>(batchSize);
+                  submitProcessTask(cacheLoaderTask, keyFilter, eacs, taskContext, batch, loadValues, loadMetadata);
+               }
+            }
+            if (!entries.isEmpty()) {
+               submitProcessTask(cacheLoaderTask, keyFilter, eacs, taskContext, entries, loadValues, loadMetadata);
+            }
+
+            eacs.waitUntilAllCompleted();
+            if (eacs.isExceptionThrown()) {
+               throw new PersistenceException("Execution exception!", eacs.getFirstException());
+            }
+         } catch (Exception e) {
+            throw new PersistenceException(e);
+         } finally {
+            try {
+               it.close();
+            } catch (IOException e) {
+               log.warnUnableToCloseDbIterator(e);
             }
          }
-         if (!entries.isEmpty()) {
-            submitProcessTask(cacheLoaderTask, keyFilter,eacs, taskContext, entries, loadValues, loadMetadata);
-         }
-
-         eacs.waitUntilAllCompleted();
-         if (eacs.isExceptionThrown()) {
-            throw new PersistenceException("Execution exception!", eacs.getFirstException());
-         }
-      } catch (Exception e) {
-         throw new PersistenceException(e);
       } finally {
-         try {
-            it.close();
-         } catch (IOException e) {
-            log.warnUnableToCloseDbIterator(e);
-         }
+         semaphore.release();
       }
    }
 
@@ -316,10 +362,18 @@ public class LevelDBStore implements AdvancedLoadWriteStore {
    public boolean delete(Object key)  {
       try {
          byte[] keyBytes = marshall(key);
-         if (db.get(keyBytes) == null) {
-            return false;
+         semaphore.acquire();
+         try {
+            if (stopped) {
+               throw new PersistenceException("LevelDB is stopped");
+            }
+            if (db.get(keyBytes) == null) {
+               return false;
+            }
+            db.delete(keyBytes);
+         } finally {
+            semaphore.release();
          }
-         db.delete(keyBytes);
          return true;
       } catch (Exception e) {
          throw new PersistenceException(e);
@@ -329,20 +383,40 @@ public class LevelDBStore implements AdvancedLoadWriteStore {
    @Override
    public void write(MarshalledEntry me)  {
       try {
-         db.put(marshall(me.getKey()), marshall(me));
+         byte[] marshelledKey = marshall(me.getKey());
+         byte[] marshalledEntry = marshall(me);
+         semaphore.acquire();
+         try {
+            if (stopped) {
+               throw new PersistenceException("LevelDB is stopped");
+            }
+            db.put(marshelledKey, marshalledEntry);
+         } finally {
+            semaphore.release();
+         }
          InternalMetadata meta = me.getMetadata();
          if (meta != null && meta.expiryTime() > -1) {
             addNewExpiry(me);
          }
       } catch (Exception e) {
-         throw new DBException(e);
+         throw new PersistenceException(e);
       }
    }
 
    @Override
    public MarshalledEntry load(Object key)  {
       try {
-         MarshalledEntry me = (MarshalledEntry) unmarshall(db.get(marshall(key)));
+         byte[] marshalledEntry;
+         semaphore.acquire();
+         try {
+            if (stopped) {
+               throw new PersistenceException("LevelDB is stopped");
+            }
+            marshalledEntry = db.get(marshall(key));
+         } finally {
+            semaphore.release();
+         }
+         MarshalledEntry me = (MarshalledEntry) unmarshall(marshalledEntry);
          if (me == null) return null;
 
          InternalMetadata meta = me.getMetadata();
@@ -359,6 +433,14 @@ public class LevelDBStore implements AdvancedLoadWriteStore {
    @Override
    public void purge(Executor executor, PurgeListener purgeListener) {
       try {
+         semaphore.acquire();
+      } catch (InterruptedException e) {
+         throw new PersistenceException("Cannot acquire semaphore: CacheStore is likely stopped.", e);
+      }
+      try {
+         if (stopped) {
+            throw new PersistenceException("LevelDB is stopped");
+         }
          // Drain queue and update expiry tree
          List<ExpiryEntry> entries = new ArrayList<ExpiryEntry>();
          expiryEntryQueue.drainTo(entries);
@@ -441,6 +523,8 @@ public class LevelDBStore implements AdvancedLoadWriteStore {
          throw e;
       } catch (Exception e) {
          throw new PersistenceException(e);
+      } finally {
+         semaphore.release();
       }
    }
 
