@@ -24,7 +24,7 @@ import static org.infinispan.query.helper.TestQueryHelperFactory.createQueryPars
  *
  * @author Anna Manukyan
  */
-@Test(groups = /*functional*/"unstable", testName = "query.distributed.DistProgrammaticMassIndexTest", description = "Unstable, see https://issues.jboss.org/browse/ISPN-4012")
+@Test(groups = "functional", testName = "query.distributed.DistProgrammaticMassIndexTest")
 public class DistProgrammaticMassIndexTest extends DistributedMassIndexingTest {
 
    @Override
@@ -34,7 +34,7 @@ public class DistProgrammaticMassIndexTest extends DistributedMassIndexingTest {
             .index(Index.LOCAL)
             .addProperty("hibernate.search.default.indexmanager", "org.infinispan.query.indexmanager.InfinispanIndexManager")
             .addProperty("hibernate.search.default.directory_provider", "infinispan")
-            .addProperty("hibernate.search.default.exclusive_index_use", "false")
+            .addProperty("hibernate.search.default.exclusive_index_use", "true")
             .addProperty("lucene_version", "LUCENE_48");
       cacheCfg.clustering().stateTransfer().fetchInMemoryState(true);
       List<Cache<String, Car>> cacheList = createClusteredCaches(NUM_NODES, cacheCfg);
@@ -51,12 +51,6 @@ public class DistProgrammaticMassIndexTest extends DistributedMassIndexingTest {
       for(Cache cache : cacheList) {
          caches.add(cache);
       }
-   }
-
-   @Test(groups = "unstable")
-   @Override
-   public void testReindexing() throws Exception {
-      super.testReindexing();
    }
 
    protected void verifyFindsCar(Cache cache, int count, String carMake) {

@@ -11,7 +11,7 @@ import org.testng.annotations.Test;
 /**
  * Tests verifying that Mass Indexer works properly on Topology Aware nodes.
  */
-@Test(groups = /*functional*/"unstable", testName = "query.distributed.TopologyAwareDistMassIndexingTest", description = "Unstable, see https://issues.jboss.org/browse/ISPN-4012")
+@Test(groups = "functional", testName = "query.distributed.TopologyAwareDistMassIndexingTest")
 public class TopologyAwareDistMassIndexingTest extends DistributedMassIndexingTest {
 
    @Override
@@ -30,11 +30,5 @@ public class TopologyAwareDistMassIndexingTest extends DistributedMassIndexingTe
       }
 
       waitForClusterToForm(neededCacheNames);
-   }
-
-   @Test(groups = "unstable")
-   @Override
-   public void testReindexing() throws Exception {
-      super.testReindexing();
    }
 }
