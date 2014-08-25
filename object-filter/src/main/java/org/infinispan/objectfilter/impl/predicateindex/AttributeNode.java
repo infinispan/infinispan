@@ -3,9 +3,8 @@ package org.infinispan.objectfilter.impl.predicateindex;
 import org.infinispan.objectfilter.impl.FilterSubscriptionImpl;
 import org.infinispan.objectfilter.impl.MetadataAdapter;
 
-import java.util.Collections;
+import java.util.Collection;
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.Map;
 
 /**
@@ -15,6 +14,8 @@ import java.util.Map;
  * @since 7.0
  */
 public class AttributeNode<AttributeMetadata, AttributeId extends Comparable<AttributeId>> {
+
+   private static final AttributeNode[] EMPTY_CHILDREN = new AttributeNode[0];
 
    // this is never null, except for the root node
    private final AttributeId attribute;
@@ -31,6 +32,8 @@ public class AttributeNode<AttributeMetadata, AttributeId extends Comparable<Att
     * Child attributes.
     */
    private Map<AttributeId, AttributeNode<AttributeMetadata, AttributeId>> children;
+
+   private AttributeNode<AttributeMetadata, AttributeId>[] childrenArray = EMPTY_CHILDREN;
 
    /**
     * Root node must not have predicates. This field is always null for root node. Non-leaf nodes can only have
@@ -73,8 +76,8 @@ public class AttributeNode<AttributeMetadata, AttributeId extends Comparable<Att
       return parent;
    }
 
-   public Iterator<AttributeNode<AttributeMetadata, AttributeId>> getChildrenIterator() {
-      return children != null ? children.values().iterator() : Collections.<AttributeNode<AttributeMetadata, AttributeId>>emptyList().iterator();
+   public AttributeNode<AttributeMetadata, AttributeId>[] getChildren() {
+      return childrenArray;
    }
 
    /**
@@ -89,7 +92,7 @@ public class AttributeNode<AttributeMetadata, AttributeId extends Comparable<Att
    }
 
    public int getNumChildren() {
-      return children != null ? children.size() : 0;
+      return childrenArray.length;
    }
 
    public boolean hasPredicates() {
@@ -122,11 +125,13 @@ public class AttributeNode<AttributeMetadata, AttributeId extends Comparable<Att
          children = new HashMap<AttributeId, AttributeNode<AttributeMetadata, AttributeId>>();
          child = new AttributeNode<AttributeMetadata, AttributeId>(attribute, this);
          children.put(attribute, child);
+         rebuildChildrenArray();
       } else {
          child = children.get(attribute);
          if (child == null) {
             child = new AttributeNode<AttributeMetadata, AttributeId>(attribute, this);
             children.put(attribute, child);
+            rebuildChildrenArray();
          }
       }
       return child;
@@ -147,6 +152,12 @@ public class AttributeNode<AttributeMetadata, AttributeId extends Comparable<Att
          throw new IllegalArgumentException("No child found : " + attribute);
       }
       children.remove(attribute);
+      rebuildChildrenArray();
+   }
+
+   private void rebuildChildrenArray() {
+      Collection<AttributeNode<AttributeMetadata, AttributeId>> childrenCollection = children.values();
+      childrenArray = childrenCollection.toArray(new AttributeNode[childrenCollection.size()]);
    }
 
    public void addPredicateSubscription(PredicateIndex.PredicateSubscription subscription) {

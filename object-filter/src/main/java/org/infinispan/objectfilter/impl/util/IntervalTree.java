@@ -429,22 +429,32 @@ public final class IntervalTree<K, V> {
     */
    public List<Node<K, V>> stab(K k) {
       Interval<K> i = new Interval<K>(k, true, k, true);
-      List<Node<K, V>> nodes = new ArrayList<Node<K, V>>();
-      findOverlap(root.left, i, nodes);
+      final List<Node<K, V>> nodes = new ArrayList<Node<K, V>>();
+      findOverlap(root.left, i, new NodeCallback<K, V>() {
+         @Override
+         public void handle(Node<K, V> node) {
+            nodes.add(node);
+         }
+      });
       return nodes;
    }
 
-   private void findOverlap(Node<K, V> n, Interval<K> i, List<Node<K, V>> results) {
+   public void stab(K k, NodeCallback<K, V> nodeCallback) {
+      Interval<K> i = new Interval<K>(k, true, k, true);
+      findOverlap(root.left, i, nodeCallback);
+   }
+
+   private void findOverlap(Node<K, V> n, Interval<K> i, NodeCallback<K, V> nodeCallback) {
       if (n == sentinel || compare(i.low, n.max) > 0) {
          return;
       }
 
       if (n.left != sentinel) {
-         findOverlap(n.left, i, results);
+         findOverlap(n.left, i, nodeCallback);
       }
 
       if (compareIntervals(n.interval, i) == 0) {
-         results.add(n);
+         nodeCallback.handle(n);
       }
 
       if (compareIntervals(i, n.interval) < 0) {
@@ -452,7 +462,7 @@ public final class IntervalTree<K, V> {
       }
 
       if (n.right != sentinel) {
-         findOverlap(n.right, i, results);
+         findOverlap(n.right, i, nodeCallback);
       }
    }
 

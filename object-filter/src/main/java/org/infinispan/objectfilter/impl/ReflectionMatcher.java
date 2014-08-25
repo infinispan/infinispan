@@ -9,7 +9,6 @@ import org.infinispan.objectfilter.impl.util.ReflectionHelper;
 
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 
 /**
  * @author anistor@redhat.com
@@ -34,12 +33,26 @@ public class ReflectionMatcher extends BaseMatcher<Class<?>, ReflectionHelper.Pr
    }
 
    @Override
-   protected ReflectionMatcherEvalContext startContext(Object instance, Set<String> supportedTypeNames, Set<Class<?>> supportedTypes) {
-      if (supportedTypes.contains(instance.getClass())) {
-         return new ReflectionMatcherEvalContext(instance);
+   protected ReflectionMatcherEvalContext startContext(Object instance) {
+      if (filtersByType.keySet().contains(instance.getClass())) {
+         return createContext(instance);
       } else {
          return null;
       }
+   }
+
+   @Override
+   protected ReflectionMatcherEvalContext startContext(Object instance, FilterSubscriptionImpl<Class<?>, ReflectionHelper.PropertyAccessor, String> filterSubscription) {
+      if (filterSubscription.getMetadataAdapter().getTypeMetadata() == instance.getClass()) {
+         return createContext(instance);
+      } else {
+         return null;
+      }
+   }
+
+   @Override
+   protected ReflectionMatcherEvalContext createContext(Object instance) {
+      return new ReflectionMatcherEvalContext(instance);
    }
 
    @Override

@@ -17,7 +17,6 @@ import org.infinispan.query.dsl.QueryFactory;
 
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Set;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
@@ -72,7 +71,7 @@ abstract class BaseMatcher<TypeMetadata, AttributeMetadata, AttributeId extends 
 
       read.lock();
       try {
-         MatcherEvalContext<TypeMetadata, AttributeMetadata, AttributeId> ctx = startContext(instance, filtersByTypeName.keySet(), filtersByType.keySet());
+         MatcherEvalContext<TypeMetadata, AttributeMetadata, AttributeId> ctx = startContext(instance);
          if (ctx != null) {
             FilterRegistry<TypeMetadata, AttributeMetadata, AttributeId> filterRegistry = getFilterRegistryForType(ctx.getEntityType());
             filterRegistry.match(ctx);
@@ -167,7 +166,11 @@ abstract class BaseMatcher<TypeMetadata, AttributeMetadata, AttributeId extends 
     * @param instance the instance to filter; never null
     * @return the context or null if no filter was registered for the instance
     */
-   protected abstract MatcherEvalContext<TypeMetadata, AttributeMetadata, AttributeId> startContext(Object instance, Set<String> supportedTypeNames, Set<TypeMetadata> supportedTypes);
+   protected abstract MatcherEvalContext<TypeMetadata, AttributeMetadata, AttributeId> startContext(Object instance);
+
+   protected abstract MatcherEvalContext<TypeMetadata, AttributeMetadata, AttributeId> startContext(Object instance, FilterSubscriptionImpl<TypeMetadata, AttributeMetadata, AttributeId> filterSubscription);
+
+   protected abstract MatcherEvalContext<TypeMetadata, AttributeMetadata, AttributeId> createContext(Object instance);
 
    protected abstract FilterProcessingChain<TypeMetadata> createFilterProcessingChain(Map<String, Object> namedParameters);
 

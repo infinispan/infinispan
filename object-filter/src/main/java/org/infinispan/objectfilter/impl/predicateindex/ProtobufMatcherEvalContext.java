@@ -11,7 +11,6 @@ import org.infinispan.protostream.descriptors.Type;
 import org.infinispan.protostream.impl.WrappedMessageMarshaller;
 
 import java.io.IOException;
-import java.util.Iterator;
 
 /**
  * @author anistor@redhat.com
@@ -179,9 +178,7 @@ public class ProtobufMatcherEvalContext extends MatcherEvalContext<Descriptor, F
 
    private void processNullAttribute(AttributeNode<FieldDescriptor, Integer> attributeNode) {
       attributeNode.processValue(null, this);
-      Iterator<AttributeNode<FieldDescriptor, Integer>> children = attributeNode.getChildrenIterator();
-      while (children.hasNext()) {
-         AttributeNode<FieldDescriptor, Integer> childAttribute = children.next();
+      for (AttributeNode<FieldDescriptor, Integer> childAttribute : attributeNode.getChildren()) {
          processNullAttribute(childAttribute);
       }
    }

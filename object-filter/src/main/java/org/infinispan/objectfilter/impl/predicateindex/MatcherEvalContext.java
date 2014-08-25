@@ -37,6 +37,8 @@ public abstract class MatcherEvalContext<TypeMetadata, AttributeMetadata, Attrib
 
    private final Object instance;
 
+   private FilterEvalContext singleFilterContext;
+
    protected MatcherEvalContext(Object instance) {
       this.instance = instance;
    }
@@ -50,7 +52,16 @@ public abstract class MatcherEvalContext<TypeMetadata, AttributeMetadata, Attrib
       return instance;
    }
 
+   public FilterEvalContext initSingleFilterContext(FilterSubscriptionImpl filterSubscription) {
+      singleFilterContext = new FilterEvalContext(this, filterSubscription);
+      return singleFilterContext;
+   }
+
    public FilterEvalContext getFilterEvalContext(FilterSubscriptionImpl filterSubscription) {
+      if (singleFilterContext != null) {
+         return singleFilterContext;
+      }
+
       FilterEvalContext filterEvalContext = filterContexts.get(filterSubscription);
       if (filterEvalContext == null) {
          filterEvalContext = new FilterEvalContext(this, filterSubscription);

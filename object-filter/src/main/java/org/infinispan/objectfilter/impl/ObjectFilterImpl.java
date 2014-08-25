@@ -8,9 +8,7 @@ import org.infinispan.objectfilter.impl.predicateindex.PredicateIndex;
 import org.infinispan.objectfilter.impl.predicateindex.be.BENode;
 import org.infinispan.objectfilter.impl.predicateindex.be.PredicateNode;
 
-import java.util.Collections;
 import java.util.Comparator;
-import java.util.Set;
 
 /**
  * @author anistor@redhat.com
@@ -22,24 +20,17 @@ final class ObjectFilterImpl<TypeMetadata, AttributeMetadata, AttributeId extend
 
    private final FilterSubscriptionImpl<TypeMetadata, AttributeMetadata, AttributeId> filterSubscription;
 
-   private final Set<String> supportedTypeNames;
-
-   private final Set<TypeMetadata> supportedTypes;
-
    private final PredicateIndex<AttributeMetadata, AttributeId> predicateIndex;
 
-   public ObjectFilterImpl(BaseMatcher<TypeMetadata, AttributeMetadata, AttributeId> matcher, FilterSubscriptionImpl<TypeMetadata, AttributeMetadata, AttributeId> filterSubscriptionImpl) {
+   public ObjectFilterImpl(BaseMatcher<TypeMetadata, AttributeMetadata, AttributeId> matcher, FilterSubscriptionImpl<TypeMetadata, AttributeMetadata, AttributeId> filterSubscription) {
       this.matcher = matcher;
-      this.filterSubscription = filterSubscriptionImpl;
+      this.filterSubscription = filterSubscription;
 
-      supportedTypeNames = Collections.singleton(filterSubscriptionImpl.getMetadataAdapter().getTypeName());
-      supportedTypes = Collections.singleton(filterSubscriptionImpl.getMetadataAdapter().getTypeMetadata());
+      predicateIndex = new PredicateIndex<AttributeMetadata, AttributeId>(filterSubscription.getMetadataAdapter());
 
-      predicateIndex = new PredicateIndex<AttributeMetadata, AttributeId>(filterSubscriptionImpl.getMetadataAdapter());
+      filterSubscription.registerProjection(predicateIndex);
 
-      filterSubscriptionImpl.registerProjection(predicateIndex);
-
-      for (BENode node : filterSubscriptionImpl.getBETree().getNodes()) {
+      for (BENode node : filterSubscription.getBETree().getNodes()) {
          if (node instanceof PredicateNode) {
             PredicateNode<AttributeId> predicateNode = (PredicateNode<AttributeId>) node;
             predicateIndex.addSubscriptionForPredicate(predicateNode, filterSubscription);
@@ -73,9 +64,9 @@ final class ObjectFilterImpl<TypeMetadata, AttributeMetadata, AttributeId extend
          throw new IllegalArgumentException("argument cannot be null");
       }
 
-      MatcherEvalContext<TypeMetadata, AttributeMetadata, AttributeId> matcherEvalContext = matcher.startContext(instance, supportedTypeNames, supportedTypes);
+      MatcherEvalContext<TypeMetadata, AttributeMetadata, AttributeId> matcherEvalContext = matcher.startContext(instance, filterSubscription);
       if (matcherEvalContext != null) {
-         FilterEvalContext filterEvalContext = matcherEvalContext.getFilterEvalContext(filterSubscription);
+         FilterEvalContext filterEvalContext = matcherEvalContext.initSingleFilterContext(filterSubscription);
          matcherEvalContext.process(predicateIndex.getRoot());
 
          if (filterEvalContext.getMatchResult()) {

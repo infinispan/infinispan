@@ -66,17 +66,20 @@ final class Predicates<AttributeDomain> {
       this.valueIsComparable = valueIsComparable;
    }
 
-   public void notifyMatchingSubscribers(MatcherEvalContext<?, ?, ?> ctx, AttributeDomain attributeValue) {
-      if (attributeValue instanceof Comparable && orderedPredicates != null) {
-         for (IntervalTree.Node<AttributeDomain, Subscriptions> n : orderedPredicates.stab(attributeValue)) {
-            Subscriptions subscriptions = n.value;
-            if (subscriptions.isActive(ctx)) {
-               for (PredicateIndex.PredicateSubscription s : subscriptions.subscriptions) {
-                  //todo [anistor] if we also notify non-matching interval conditions this could lead to faster short-circuiting evaluation
-                  s.handleValue(ctx, true);
+   public void notifyMatchingSubscribers(final MatcherEvalContext<?, ?, ?> ctx, AttributeDomain attributeValue) {
+      if (orderedPredicates != null && attributeValue instanceof Comparable) {
+         orderedPredicates.stab(attributeValue, new IntervalTree.NodeCallback<AttributeDomain, Subscriptions>() {
+            @Override
+            public void handle(IntervalTree.Node<AttributeDomain, Subscriptions> n) {
+               Subscriptions subscriptions = n.value;
+               if (subscriptions.isActive(ctx)) {
+                  for (PredicateIndex.PredicateSubscription s : subscriptions.subscriptions) {
+                     //todo [anistor] if we also notify non-matching interval conditions this could lead to faster short-circuiting evaluation
+                     s.handleValue(ctx, true);
+                  }
                }
             }
-         }
+         });
       }
 
       if (unorderedPredicates != null) {

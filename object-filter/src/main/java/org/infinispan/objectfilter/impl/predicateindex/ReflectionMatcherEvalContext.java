@@ -24,9 +24,7 @@ public class ReflectionMatcherEvalContext extends MatcherEvalContext<Class<?>, R
 
    @Override
    protected void processAttributes(AttributeNode<ReflectionHelper.PropertyAccessor, String> node, Object instance) {
-      Iterator<AttributeNode<ReflectionHelper.PropertyAccessor, String>> children = node.getChildrenIterator();
-      while (children.hasNext()) {
-         AttributeNode<ReflectionHelper.PropertyAccessor, String> childAttribute = children.next();
+      for (AttributeNode<ReflectionHelper.PropertyAccessor, String> childAttribute : node.getChildren()) {
          if (instance == null) {
             processAttribute(childAttribute, null);
          } else {

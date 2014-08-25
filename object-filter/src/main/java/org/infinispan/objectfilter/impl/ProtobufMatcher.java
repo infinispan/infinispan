@@ -13,7 +13,6 @@ import org.infinispan.protostream.descriptors.JavaType;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 
 /**
  * @author anistor@redhat.com
@@ -37,10 +36,22 @@ public final class ProtobufMatcher extends BaseMatcher<Descriptor, FieldDescript
    }
 
    @Override
-   protected ProtobufMatcherEvalContext startContext(Object instance, Set<String> supportedTypeNames, Set<Descriptor> supportedTypes) {
+   protected ProtobufMatcherEvalContext startContext(Object instance) {
+      ProtobufMatcherEvalContext ctx = createContext(instance);
+      return ctx.getEntityType() != null && filtersByTypeName.keySet().contains(ctx.getEntityType().getFullName()) ? ctx : null;
+   }
+
+   @Override
+   protected ProtobufMatcherEvalContext startContext(Object instance, FilterSubscriptionImpl<Descriptor, FieldDescriptor, Integer> filterSubscription) {
+      ProtobufMatcherEvalContext ctx = createContext(instance);
+      return ctx.getEntityType() != null && ctx.getEntityType().getFullName().equals(filterSubscription.getEntityTypeName()) ? ctx : null;
+   }
+
+   @Override
+   protected ProtobufMatcherEvalContext createContext(Object instance) {
       ProtobufMatcherEvalContext ctx = new ProtobufMatcherEvalContext(instance, wrappedMessageDescriptor, serializationContext);
       ctx.unwrapPayload();
-      return ctx.getEntityType() != null && supportedTypeNames.contains(ctx.getEntityType().getFullName()) ? ctx : null;
+      return ctx;
    }
 
    @Override
