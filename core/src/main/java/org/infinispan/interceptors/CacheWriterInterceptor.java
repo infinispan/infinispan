@@ -45,6 +45,8 @@ import java.util.concurrent.atomic.AtomicLong;
 
 import static org.infinispan.factories.KnownComponentNames.CACHE_MARSHALLER;
 import static org.infinispan.persistence.PersistenceUtil.internalMetadata;
+import static org.infinispan.persistence.manager.PersistenceManager.AccessMode.BOTH;
+import static org.infinispan.persistence.manager.PersistenceManager.AccessMode.PRIVATE;
 
 /**
  * Writes modifications back to the store on the way out: stores modifications back through the CacheLoader, either
@@ -112,7 +114,7 @@ public class CacheWriterInterceptor extends JmxStatsCommandInterceptor {
 
          Transaction xaTx = null;
          try {
-            xaTx = suspendRunningTx(ctx, xaTx);
+            xaTx = suspendRunningTx(ctx);
             store(ctx);
          } finally {
             resumeRunningTx(xaTx);
@@ -128,7 +130,8 @@ public class CacheWriterInterceptor extends JmxStatsCommandInterceptor {
       }
    }
 
-   private Transaction suspendRunningTx(TxInvocationContext ctx, Transaction xaTx) throws SystemException {
+   private Transaction suspendRunningTx(TxInvocationContext ctx) throws SystemException {
+      Transaction xaTx = null;
       if (transactionManager != null) {
          xaTx = transactionManager.suspend();
          if (xaTx != null && !ctx.isOriginLocal())
@@ -144,7 +147,7 @@ public class CacheWriterInterceptor extends JmxStatsCommandInterceptor {
       if (!isProperWriter(ctx, command, command.getKey())) return retval;
 
       Object key = command.getKey();
-      boolean resp = persistenceManager.deleteFromAllStores(key, false);
+      boolean resp = persistenceManager.deleteFromAllStores(key, BOTH);
       if (getLog().isTraceEnabled()) getLog().tracef("Removed entry under key %s and got response %s from CacheStore", key, resp);
       return retval;
    }
@@ -152,7 +155,7 @@ public class CacheWriterInterceptor extends JmxStatsCommandInterceptor {
    @Override
    public Object visitClearCommand(InvocationContext ctx, ClearCommand command) throws Throwable {
       if (isStoreEnabled(command) && !ctx.isInTxScope())
-         persistenceManager.clearAllStores(!ctx.isOriginLocal());
+         persistenceManager.clearAllStores(ctx.isOriginLocal() ? BOTH : PRIVATE);
 
       return invokeNextInterceptor(ctx, command);
    }
@@ -266,7 +269,7 @@ public class CacheWriterInterceptor extends JmxStatsCommandInterceptor {
                ice = entryFactory.create(entry);
             }
             MarshalledEntryImpl marshalledEntry = new MarshalledEntryImpl(ice.getKey(), ice.getValue(), internalMetadata(ice), marshaller);
-            persistenceManager.writeToAllStores(marshalledEntry, command.hasFlag(Flag.SKIP_SHARED_CACHE_STORE));
+            persistenceManager.writeToAllStores(marshalledEntry, command.hasFlag(Flag.SKIP_SHARED_CACHE_STORE) ? PRIVATE : BOTH);
          }
          return null;
       }
@@ -288,14 +291,14 @@ public class CacheWriterInterceptor extends JmxStatsCommandInterceptor {
       public Object visitRemoveCommand(InvocationContext ctx, RemoveCommand command) throws Throwable {
          Object key = command.getKey();
          if (isProperWriter(ctx, command, key)) {
-            persistenceManager.deleteFromAllStores(key, false);
+            persistenceManager.deleteFromAllStores(key, BOTH);
          }
          return null;
       }
 
       @Override
       public Object visitClearCommand(InvocationContext ctx, ClearCommand command) throws Throwable {
-         persistenceManager.clearAllStores(ctx.isOriginLocal());
+         persistenceManager.clearAllStores(ctx.isOriginLocal() ? PRIVATE : BOTH);
          return null;
       }
 
@@ -304,7 +307,7 @@ public class CacheWriterInterceptor extends JmxStatsCommandInterceptor {
             if (generateStatistics) putCount++;
             InternalCacheValue sv = getStoredValue(key, ctx);
             MarshalledEntryImpl me = new MarshalledEntryImpl(key, sv.getValue(), internalMetadata(sv), marshaller);
-            persistenceManager.writeToAllStores(me, command.hasFlag(Flag.SKIP_SHARED_CACHE_STORE));
+            persistenceManager.writeToAllStores(me, command.hasFlag(Flag.SKIP_SHARED_CACHE_STORE) ? PRIVATE : BOTH);
          }
          return null;
       }
@@ -331,7 +334,7 @@ public class CacheWriterInterceptor extends JmxStatsCommandInterceptor {
    void storeEntry(InvocationContext ctx, Object key, FlagAffectedCommand command) {
       InternalCacheValue sv = getStoredValue(key, ctx);
       persistenceManager.writeToAllStores(new MarshalledEntryImpl(key, sv.getValue(), internalMetadata(sv), marshaller),
-                                          skipSharedStores(ctx, key, command));
+                                          skipSharedStores(ctx, key, command) ? PRIVATE : BOTH);
       if (getLog().isTraceEnabled()) getLog().tracef("Stored entry %s under key %s", sv, key);
    }
 

@@ -1,6 +1,7 @@
 package org.infinispan.test;
 
 import static java.io.File.separator;
+import static org.infinispan.persistence.manager.PersistenceManager.AccessMode.BOTH;
 import static org.testng.AssertJUnit.assertFalse;
 
 import java.io.File;
@@ -697,7 +698,7 @@ public class TestingUtil {
 
    public static void clearCacheLoader(Cache cache) {
       PersistenceManager persistenceManager = TestingUtil.extractComponent(cache, PersistenceManager.class);
-      persistenceManager.clearAllStores(false);
+      persistenceManager.clearAllStores(BOTH);
    }
 
    public static <K, V> List<CacheLoader<K, V>> cachestores(List<Cache<K, V>> caches) {
@@ -1417,13 +1418,13 @@ public class TestingUtil {
       AdvancedCache<K, V> advCache = cache.getAdvancedCache();
       PersistenceManager pm = advCache.getComponentRegistry().getComponent(PersistenceManager.class);
       StreamingMarshaller marshaller = advCache.getComponentRegistry().getCacheMarshaller();
-      pm.writeToAllStores(new MarshalledEntryImpl(key, value, null, marshaller), false);
+      pm.writeToAllStores(new MarshalledEntryImpl(key, value, null, marshaller), BOTH);
    }
 
    public static <K, V> boolean deleteFromAllStores(K key, Cache<K, V> cache) {
       AdvancedCache<K, V> advCache = cache.getAdvancedCache();
       PersistenceManager pm = advCache.getComponentRegistry().getComponent(PersistenceManager.class);
-      return pm.deleteFromAllStores(key, false);
+      return pm.deleteFromAllStores(key, BOTH);
    }
 
    public static Subject makeSubject(String... principals) {

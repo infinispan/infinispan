@@ -96,11 +96,6 @@ public class ClusteredConditionalCommandTest extends MultipleCacheManagersTest {
 
    private void doTest(List<Cache<String, String>> cacheList, ConditionalOperation operation, Ownership ownership,
                        Flag flag, boolean shared) {
-      if (operation == ConditionalOperation.REMOVE_IF && shared) {
-         //bug: entry is not removed from cache store and fails the assertion in the end.
-         //please check https://issues.jboss.org/browse/ISPN-4652
-         return;
-      }
       waitForRehashToComplete(cacheList);
       final CacheHelper<String, String> cacheHelper = create(cacheList);
       final boolean skipLoad = flag == Flag.SKIP_CACHE_LOAD || flag == Flag.SKIP_CACHE_STORE;

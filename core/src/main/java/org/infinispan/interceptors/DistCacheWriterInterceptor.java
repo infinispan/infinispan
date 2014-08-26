@@ -18,6 +18,9 @@ import org.infinispan.util.logging.LogFactory;
 
 import java.util.Map;
 
+import static org.infinispan.persistence.manager.PersistenceManager.AccessMode.BOTH;
+import static org.infinispan.persistence.manager.PersistenceManager.AccessMode.PRIVATE;
+
 /**
  * Cache store interceptor specific for the distribution and replication cache modes.
  *
@@ -105,7 +108,7 @@ public class DistCacheWriterInterceptor extends CacheWriterInterceptor {
       if (!isStoreEnabled(command) || ctx.isInTxScope() || !command.isSuccessful()) return retval;
       if (!isProperWriter(ctx, command, key)) return retval;
 
-      boolean resp = persistenceManager.deleteFromAllStores(key, skipSharedStores(ctx, key, command));
+      boolean resp = persistenceManager.deleteFromAllStores(key, skipSharedStores(ctx, key, command) ? PRIVATE : BOTH);
       log.tracef("Removed entry under key %s and got response %s from CacheStore", key, resp);
       return retval;
    }
