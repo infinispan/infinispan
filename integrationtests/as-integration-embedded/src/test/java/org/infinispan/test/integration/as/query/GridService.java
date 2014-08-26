@@ -46,6 +46,15 @@ public class GridService {
       return cacheQuery.list();
    }
 
+   public List<Object> findByPublisher(String publisher) {
+      org.infinispan.query.dsl.Query query = Search.getQueryFactory(bookshelf)
+            .from(Book.class)
+            .having("publisher")
+            .eq(publisher)
+            .toBuilder().build();
+      return query.list();
+   }
+
    public void clear() {
       bookshelf.clear();
    }

@@ -9,6 +9,7 @@ import org.hibernate.search.query.dsl.EntityContext;
 import org.hibernate.search.query.engine.spi.TimeoutExceptionFactory;
 import org.hibernate.search.spi.SearchFactoryIntegrator;
 import org.infinispan.AdvancedCache;
+import org.infinispan.commons.util.Util;
 import org.infinispan.query.CacheQuery;
 import org.infinispan.query.MassIndexer;
 import org.infinispan.query.Transformer;
@@ -51,7 +52,7 @@ public class SearchManagerImpl implements SearchManagerImplementor {
          public Class<?> getClassFromName(String entityName) {
             Class clazz;
             try {
-               clazz = Class.forName(entityName);  //todo [anistor] any potential class loading issues in AS ?
+               clazz = Util.loadClassStrict(entityName, null);
             } catch (ClassNotFoundException e) {
                return null;
             }

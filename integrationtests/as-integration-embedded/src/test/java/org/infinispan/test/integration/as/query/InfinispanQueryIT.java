@@ -74,9 +74,9 @@ public class InfinispanQueryIT {
    }
 
    private void storeSamples(boolean index) {
-      service.store( "AB1", new Book("Hibernate in Action"), index);
-      service.store( "AB2", new Book("Seam in Action"), index);
-      service.store( "AB3", new Book("Hibernate Search in Action"), index);
+      service.store("AB1", new Book("Hibernate in Action", "manning"), index);
+      service.store("AB2", new Book("Seam in Action", "manning"), index);
+      service.store("AB3", new Book("Hibernate Search in Action", "manning"), index);
    }
 
    @Test @InSequence(value=2) @OperateOnDeployment("dep.active-1")
