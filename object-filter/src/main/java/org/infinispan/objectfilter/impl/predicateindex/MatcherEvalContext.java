@@ -26,11 +26,6 @@ public abstract class MatcherEvalContext<TypeMetadata, AttributeMetadata, Attrib
     */
    protected AttributeNode<AttributeMetadata, AttributeId> currentNode;
 
-   /**
-    * Each filter subscription has its own evaluation context, created on demand.
-    */
-   private final Map<FilterSubscriptionImpl, FilterEvalContext> filterContexts = new HashMap<FilterSubscriptionImpl, FilterEvalContext>();
-
    private final Map<Predicate<?>, AtomicInteger> suspendedSubscriptionCounts = new HashMap<Predicate<?>, AtomicInteger>();
 
    private final Set<PredicateNode<AttributeId>> suspendedSubscriptions = new HashSet<PredicateNode<AttributeId>>();
@@ -38,6 +33,11 @@ public abstract class MatcherEvalContext<TypeMetadata, AttributeMetadata, Attrib
    private final Object instance;
 
    private FilterEvalContext singleFilterContext;
+
+   /**
+    * Each filter subscription has its own evaluation context, created on demand.
+    */
+   private FilterEvalContext[] filterContexts;
 
    protected MatcherEvalContext(Object instance) {
       this.instance = instance;
@@ -50,6 +50,10 @@ public abstract class MatcherEvalContext<TypeMetadata, AttributeMetadata, Attrib
     */
    public Object getInstance() {
       return instance;
+   }
+
+   public void initMultiFilterContext(int numFilters) {
+      filterContexts = new FilterEvalContext[numFilters];
    }
 
    public FilterEvalContext initSingleFilterContext(FilterSubscriptionImpl filterSubscription) {
@@ -66,10 +70,10 @@ public abstract class MatcherEvalContext<TypeMetadata, AttributeMetadata, Attrib
          return singleFilterContext;
       }
 
-      FilterEvalContext filterEvalContext = filterContexts.get(filterSubscription);
+      FilterEvalContext filterEvalContext = filterContexts[filterSubscription.index];
       if (filterEvalContext == null) {
          filterEvalContext = new FilterEvalContext(this, filterSubscription);
-         filterContexts.put(filterSubscription, filterEvalContext);
+         filterContexts[filterSubscription.index] = filterEvalContext;
       }
       return filterEvalContext;
    }

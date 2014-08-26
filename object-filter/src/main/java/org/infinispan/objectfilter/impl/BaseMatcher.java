@@ -74,6 +74,7 @@ abstract class BaseMatcher<TypeMetadata, AttributeMetadata, AttributeId extends 
          MatcherEvalContext<TypeMetadata, AttributeMetadata, AttributeId> ctx = startContext(instance);
          if (ctx != null) {
             FilterRegistry<TypeMetadata, AttributeMetadata, AttributeId> filterRegistry = getFilterRegistryForType(ctx.getEntityType());
+            ctx.initMultiFilterContext(filterRegistry.getNumFilters());
             filterRegistry.match(ctx);
          }
       } finally {
@@ -150,7 +151,7 @@ abstract class BaseMatcher<TypeMetadata, AttributeMetadata, AttributeId extends 
          } else {
             throw new IllegalStateException("Reached illegal state");
          }
-         if (filterRegistry.isEmpty()) {
+         if (filterRegistry.getNumFilters() == 0) {
             filtersByTypeName.remove(filterRegistry.getMetadataAdapter().getTypeName());
             filtersByType.remove(filterRegistry.getMetadataAdapter().getTypeMetadata());
          }

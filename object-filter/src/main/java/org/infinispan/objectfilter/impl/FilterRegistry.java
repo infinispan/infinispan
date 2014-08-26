@@ -40,8 +40,8 @@ final class FilterRegistry<TypeMetadata, AttributeMetadata, AttributeId extends 
       return metadataAdapter;
    }
 
-   public boolean isEmpty() {
-      return filterSubscriptions.isEmpty();
+   public int getNumFilters() {
+      return filterSubscriptions.size();
    }
 
    /**
@@ -81,10 +81,10 @@ final class FilterRegistry<TypeMetadata, AttributeMetadata, AttributeId extends 
       }
 
       BETree beTree = treeMaker.make(normalizedFilter);
-      final FilterSubscriptionImpl<TypeMetadata, AttributeMetadata, AttributeId> filterSubscription = new FilterSubscriptionImpl<TypeMetadata, AttributeMetadata, AttributeId>(metadataAdapter, beTree, callback, projection, translatedProjections, sortFields, translatedSortFields);
-
+      FilterSubscriptionImpl<TypeMetadata, AttributeMetadata, AttributeId> filterSubscription = new FilterSubscriptionImpl<TypeMetadata, AttributeMetadata, AttributeId>(metadataAdapter, beTree, callback, projection, translatedProjections, sortFields, translatedSortFields);
       filterSubscription.registerProjection(predicateIndex);
       filterSubscription.subscribe(predicateIndex);
+      filterSubscription.index = filterSubscriptions.size();
       filterSubscriptions.add(filterSubscription);
       return filterSubscription;
    }
@@ -94,5 +94,9 @@ final class FilterRegistry<TypeMetadata, AttributeMetadata, AttributeId extends 
       filterSubscriptionImpl.unregisterProjection(predicateIndex);
       filterSubscriptionImpl.unsubscribe(predicateIndex);
       filterSubscriptions.remove(filterSubscriptionImpl);
+      for (int i = filterSubscriptionImpl.index; i < filterSubscriptions.size(); i++) {
+         filterSubscriptions.get(i).index--;
+      }
+      filterSubscriptionImpl.index = -1;
    }
 }

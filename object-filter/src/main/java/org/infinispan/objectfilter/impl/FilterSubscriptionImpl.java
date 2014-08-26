@@ -19,6 +19,8 @@ import java.util.List;
  */
 public final class FilterSubscriptionImpl<TypeMetadata, AttributeMetadata, AttributeId extends Comparable<AttributeId>> implements FilterSubscription {
 
+   public int index = -1; // todo [anistor] hide this
+
    private final MetadataAdapter<TypeMetadata, AttributeMetadata, AttributeId> metadataAdapter;
 
    private final BETree beTree;
@@ -37,9 +39,9 @@ public final class FilterSubscriptionImpl<TypeMetadata, AttributeMetadata, Attri
 
    private Comparator<Comparable[]> comparator;
 
-   public FilterSubscriptionImpl(MetadataAdapter<TypeMetadata, AttributeMetadata, AttributeId> metadataAdapter, BETree beTree, FilterCallback callback,
-                                 List<String> projection, List<List<AttributeId>> translatedProjection,
-                                 List<SortField> sortFields, List<List<AttributeId>> translatedSortProjection) {
+   protected FilterSubscriptionImpl(MetadataAdapter<TypeMetadata, AttributeMetadata, AttributeId> metadataAdapter, BETree beTree, FilterCallback callback,
+                                    List<String> projection, List<List<AttributeId>> translatedProjection,
+                                    List<SortField> sortFields, List<List<AttributeId>> translatedSortProjection) {
       this.metadataAdapter = metadataAdapter;
       this.beTree = beTree;
       this.callback = callback;
