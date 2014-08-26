@@ -6,6 +6,7 @@ import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.container.DataContainer;
 import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.context.impl.ImmutableContext;
+import org.infinispan.distribution.DistributionManager;
 import org.infinispan.eviction.PassivationManager;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.annotations.Start;
@@ -38,16 +39,19 @@ public class PassivationManagerImpl implements PassivationManager {
    private TimeService timeService;
    private static final boolean trace = log.isTraceEnabled();
    private MarshalledEntryFactory marshalledEntryFactory;
+   private DistributionManager distributionManager;
 
    @Inject
    public void inject(PersistenceManager persistenceManager, CacheNotifier notifier, Configuration cfg, DataContainer container,
-                      TimeService timeService, MarshalledEntryFactory marshalledEntryFactory) {
+                      TimeService timeService, MarshalledEntryFactory marshalledEntryFactory,
+                      DistributionManager distributionManager) {
       this.persistenceManager = persistenceManager;
       this.notifier = notifier;
       this.cfg = cfg;
       this.container = container;
       this.timeService = timeService;
       this.marshalledEntryFactory = marshalledEntryFactory;
+      this.distributionManager = distributionManager;
    }
 
    @Start(priority = 12)
@@ -63,10 +67,14 @@ public class PassivationManagerImpl implements PassivationManager {
       return enabled;
    }
 
+   private boolean isL1Key(Object key) {
+      return distributionManager != null && !distributionManager.getLocality(key).isLocal();
+   }
+
    @Override
    public void passivate(InternalCacheEntry entry) {
-      if (enabled && entry != null) {
-         Object key = entry.getKey();
+      Object key;
+      if (enabled && entry != null && !isL1Key(key = entry.getKey())) {
          // notify listeners that this entry is about to be passivated
          notifier.notifyCacheEntryPassivated(key, entry.getValue(), true,
                ImmutableContext.INSTANCE, null);
