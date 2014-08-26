@@ -4,9 +4,7 @@ import org.infinispan.objectfilter.impl.util.ComparableComparator;
 import org.infinispan.objectfilter.impl.util.IntervalTree;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 /**
  * Holds all predicates that are subscribed for a certain attribute. This class is not thread safe and leaves this
@@ -60,7 +58,7 @@ final class Predicates<AttributeDomain> {
    /**
     * The predicates that are based on an arbitrary condition that is not an order relation.
     */
-   private Map<Predicate<AttributeDomain>, Subscriptions> unorderedPredicates;
+   private List<Subscriptions> unorderedPredicates;
 
    Predicates(boolean valueIsComparable) {
       this.valueIsComparable = valueIsComparable;
@@ -83,12 +81,13 @@ final class Predicates<AttributeDomain> {
       }
 
       if (unorderedPredicates != null) {
-         for (Map.Entry<Predicate<AttributeDomain>, Subscriptions> e : unorderedPredicates.entrySet()) {
-            Subscriptions subscriptions = e.getValue();
+         for (int k = unorderedPredicates.size() - 1; k >= 0; k--) {
+            Subscriptions subscriptions = unorderedPredicates.get(k);
             if (subscriptions.isActive(ctx)) {
-               boolean conditionSatisfied = e.getKey().getCondition().match(attributeValue);
-               for (PredicateIndex.PredicateSubscription s : subscriptions.subscriptions) {
-                  s.handleValue(ctx, conditionSatisfied);
+               boolean conditionSatisfied = subscriptions.predicate.getCondition().match(attributeValue);
+               List<PredicateIndex.PredicateSubscription> s = subscriptions.subscriptions;
+               for (int i = s.size() - 1; i >= 0; i--) {
+                  s.get(i).handleValue(ctx, conditionSatisfied);
                }
             }
          }
@@ -111,13 +110,21 @@ final class Predicates<AttributeDomain> {
             subscriptions = n.value;
          }
       } else {
+         subscriptions = null;
          if (unorderedPredicates == null) {
-            unorderedPredicates = new HashMap<Predicate<AttributeDomain>, Subscriptions>();
+            unorderedPredicates = new ArrayList<Subscriptions>();
+         } else {
+            for (int i = 0; i < unorderedPredicates.size(); i++) {
+               Subscriptions s = unorderedPredicates.get(i);
+               if (s.predicate.equals(predicate)) {
+                  subscriptions = s;
+                  break;
+               }
+            }
          }
-         subscriptions = unorderedPredicates.get(predicate);
          if (subscriptions == null) {
             subscriptions = new Subscriptions(predicate);
-            unorderedPredicates.put(predicate, subscriptions);
+            unorderedPredicates.add(subscriptions);
          }
       }
       subscriptions.add(subscription);
@@ -141,14 +148,15 @@ final class Predicates<AttributeDomain> {
          }
       } else {
          if (unorderedPredicates != null) {
-            Subscriptions subscriptions = unorderedPredicates.get(predicate);
-            if (subscriptions != null) {
-               subscriptions.remove(subscription);
-               if (subscriptions.subscriptions.isEmpty()) {
-                  unorderedPredicates.remove(predicate);
+            for (int i = 0; i < unorderedPredicates.size(); i++) {
+               Predicates.Subscriptions subscriptions = unorderedPredicates.get(i);
+               if (subscriptions.predicate.equals(predicate)) {
+                  subscriptions.remove(subscription);
+                  if (subscriptions.subscriptions.isEmpty()) {
+                     unorderedPredicates.remove(i);
+                  }
+                  break;
                }
-            } else {
-               throwIllegalStateException();
             }
          } else {
             throwIllegalStateException();
