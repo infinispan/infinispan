@@ -57,8 +57,12 @@ public abstract class MatcherEvalContext<TypeMetadata, AttributeMetadata, Attrib
       return singleFilterContext;
    }
 
+   public boolean isSingleFilter() {
+      return singleFilterContext != null;
+   }
+
    public FilterEvalContext getFilterEvalContext(FilterSubscriptionImpl filterSubscription) {
-      if (singleFilterContext != null) {
+      if (isSingleFilter()) {
          return singleFilterContext;
       }
 
@@ -71,6 +75,9 @@ public abstract class MatcherEvalContext<TypeMetadata, AttributeMetadata, Attrib
    }
 
    public void addSuspendedSubscription(PredicateNode<AttributeId> predicateNode) {
+      if (isSingleFilter()) {
+         return;
+      }
       suspendedSubscriptions.add(predicateNode);
       AtomicInteger counter = suspendedSubscriptionCounts.get(predicateNode.getPredicate());
       if (counter == null) {
@@ -81,10 +88,18 @@ public abstract class MatcherEvalContext<TypeMetadata, AttributeMetadata, Attrib
    }
 
    public boolean isSuspendedSubscription(PredicateNode<AttributeId> predicateNode) {
+      if (isSingleFilter()) {
+         return false;
+      }
+
       return suspendedSubscriptions.contains(predicateNode);
    }
 
    public int getSuspendedSubscriptionsCounter(Predicate<AttributeId> predicate) {
+      if (isSingleFilter()) {
+         return -1;
+      }
+
       AtomicInteger counter = suspendedSubscriptionCounts.get(predicate);
       return counter == null ? 0 : counter.get();
    }

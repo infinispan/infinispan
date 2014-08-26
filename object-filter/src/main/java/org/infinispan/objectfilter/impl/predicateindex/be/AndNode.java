@@ -15,6 +15,9 @@ public final class AndNode extends BENode {
    @Override
    public boolean handleChildValue(BENode child, boolean childValue, FilterEvalContext evalContext) {
       if (evalContext.treeCounters[index] <= 0) {
+         if (evalContext.matcherContext.isSingleFilter()) {
+            return false;
+         }
          throw new IllegalStateException("This should never be called again because the state of this node has been decided already.");
       }
 
