@@ -1,5 +1,6 @@
 package org.infinispan.objectfilter.impl.predicateindex;
 
+import org.infinispan.objectfilter.impl.FilterRegistry;
 import org.infinispan.objectfilter.impl.FilterSubscriptionImpl;
 import org.infinispan.objectfilter.impl.predicateindex.be.PredicateNode;
 
@@ -20,6 +21,8 @@ import java.util.concurrent.atomic.AtomicInteger;
  * @since 7.0
  */
 public abstract class MatcherEvalContext<TypeMetadata, AttributeMetadata, AttributeId extends Comparable<AttributeId>> {
+
+   private FilterRegistry<TypeMetadata, AttributeMetadata, AttributeId> filterRegistry;
 
    /**
     * Current node during traversal of the attribute tree.
@@ -52,8 +55,9 @@ public abstract class MatcherEvalContext<TypeMetadata, AttributeMetadata, Attrib
       return instance;
    }
 
-   public void initMultiFilterContext(int numFilters) {
-      filterContexts = new FilterEvalContext[numFilters];
+   public void initMultiFilterContext(FilterRegistry<TypeMetadata, AttributeMetadata, AttributeId> filterRegistry) {
+      this.filterRegistry = filterRegistry;
+      filterContexts = new FilterEvalContext[filterRegistry.getNumFilters()];
    }
 
    public FilterEvalContext initSingleFilterContext(FilterSubscriptionImpl filterSubscription) {
@@ -106,6 +110,10 @@ public abstract class MatcherEvalContext<TypeMetadata, AttributeMetadata, Attrib
 
       AtomicInteger counter = suspendedSubscriptionCounts.get(predicate);
       return counter == null ? 0 : counter.get();
+   }
+
+   public void match() {
+      filterRegistry.match(this);
    }
 
    public void process(AttributeNode<AttributeMetadata, AttributeId> node) {

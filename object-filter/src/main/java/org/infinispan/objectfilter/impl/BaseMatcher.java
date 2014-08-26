@@ -73,9 +73,7 @@ abstract class BaseMatcher<TypeMetadata, AttributeMetadata, AttributeId extends 
       try {
          MatcherEvalContext<TypeMetadata, AttributeMetadata, AttributeId> ctx = startContext(instance);
          if (ctx != null) {
-            FilterRegistry<TypeMetadata, AttributeMetadata, AttributeId> filterRegistry = getFilterRegistryForType(ctx.getEntityType());
-            ctx.initMultiFilterContext(filterRegistry.getNumFilters());
-            filterRegistry.match(ctx);
+            ctx.match();
          }
       } finally {
          read.unlock();

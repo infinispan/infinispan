@@ -37,8 +37,15 @@ public final class ProtobufMatcher extends BaseMatcher<Descriptor, FieldDescript
 
    @Override
    protected ProtobufMatcherEvalContext startContext(Object instance) {
-      ProtobufMatcherEvalContext ctx = createContext(instance);
-      return ctx.getEntityType() != null && filtersByTypeName.keySet().contains(ctx.getEntityType().getFullName()) ? ctx : null;
+      ProtobufMatcherEvalContext context = createContext(instance);
+      if (context.getEntityType() != null) {
+         FilterRegistry<Descriptor, FieldDescriptor, Integer> filterRegistry = getFilterRegistryForType(context.getEntityType());
+         if (filterRegistry != null) {
+            context.initMultiFilterContext(filterRegistry);
+            return context;
+         }
+      }
+      return null;
    }
 
    @Override

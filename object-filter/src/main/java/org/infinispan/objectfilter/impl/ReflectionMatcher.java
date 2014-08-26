@@ -34,11 +34,13 @@ public class ReflectionMatcher extends BaseMatcher<Class<?>, ReflectionHelper.Pr
 
    @Override
    protected ReflectionMatcherEvalContext startContext(Object instance) {
-      if (filtersByType.keySet().contains(instance.getClass())) {
-         return createContext(instance);
-      } else {
-         return null;
+      FilterRegistry<Class<?>, ReflectionHelper.PropertyAccessor, String> filterRegistry = getFilterRegistryForType(instance.getClass());
+      if (filterRegistry != null) {
+         ReflectionMatcherEvalContext context = createContext(instance);
+         context.initMultiFilterContext(filterRegistry);
+         return context;
       }
+      return null;
    }
 
    @Override

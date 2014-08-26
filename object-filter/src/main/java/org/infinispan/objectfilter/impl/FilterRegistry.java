@@ -20,7 +20,7 @@ import java.util.List;
  * @author anistor@redhat.com
  * @since 7.0
  */
-final class FilterRegistry<TypeMetadata, AttributeMetadata, AttributeId extends Comparable<AttributeId>> {
+public final class FilterRegistry<TypeMetadata, AttributeMetadata, AttributeId extends Comparable<AttributeId>> {
 
    private final PredicateIndex<AttributeMetadata, AttributeId> predicateIndex;
 
