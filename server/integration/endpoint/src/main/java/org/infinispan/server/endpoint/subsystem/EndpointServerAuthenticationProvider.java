@@ -2,6 +2,7 @@ package org.infinispan.server.endpoint.subsystem;
 
 import java.io.IOException;
 import java.security.Principal;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Map;
 
@@ -88,10 +89,13 @@ public class EndpointServerAuthenticationProvider implements ServerAuthenticatio
 
       @Override
       public SubjectUserInfo getSubjectUserInfo(Collection<Principal> principals) {
-          // The call to the delegate will supplement the user with additional role information
-          principals.add(realmUser);
+          // The call to the delegate will supplement the realm user with additional role information
+          Collection<Principal> realmPrincipals = new ArrayList<>();
+          realmPrincipals.add(realmUser);
           try {
-              return new RealmSubjectUserInfo(delegate.createSubjectUserInfo(principals));
+              org.jboss.as.core.security.SubjectUserInfo userInfo = delegate.createSubjectUserInfo(realmPrincipals);
+              userInfo.getPrincipals().addAll(principals);
+              return new RealmSubjectUserInfo(userInfo);
           } catch (IOException e) {
               throw ROOT_LOGGER.cannotRetrieveAuthorizationInformation(e, realmUser.toString());
           }
