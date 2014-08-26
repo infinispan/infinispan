@@ -5,6 +5,7 @@ import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.container.DataContainer;
 import org.infinispan.container.DefaultDataContainer;
 import org.infinispan.container.InternalEntryFactoryImpl;
+import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.eviction.ActivationManager;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.test.TestingUtil;
@@ -70,7 +71,7 @@ public class DataContainerTest {
 
          DataContainer ddc = DefaultDataContainer.unBoundedDataContainer(cache.getCacheConfiguration().locking().concurrencyLevel());
          ActivationManager activationManager = mock(ActivationManager.class);
-         doNothing().when(activationManager).activate(Mockito.anyObject());
+         doNothing().when(activationManager).onUpdate(Mockito.anyObject(), Mockito.anyBoolean());
          ((DefaultDataContainer) ddc).initialize(null, null,new InternalEntryFactoryImpl(), activationManager, null, TIME_SERVICE);
          QueryableDataContainer.setDelegate(ddc);
 
@@ -105,7 +106,7 @@ public class DataContainerTest {
 
          DataContainer ddc = DefaultDataContainer.unBoundedDataContainer(cache.getCacheConfiguration().locking().concurrencyLevel());
          ActivationManager activationManager = mock(ActivationManager.class);
-         doNothing().when(activationManager).activate(Mockito.anyObject());
+         doNothing().when(activationManager).onUpdate(Mockito.anyObject(), Mockito.anyBoolean());
          ((DefaultDataContainer) ddc).initialize(null, null,new InternalEntryFactoryImpl(), activationManager, null, TIME_SERVICE);
          QueryableDataContainer.setDelegate(ddc);
 

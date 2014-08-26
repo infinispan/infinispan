@@ -43,7 +43,7 @@ public class SimpleDataContainerTest extends AbstractInfinispanTest {
       InternalEntryFactoryImpl internalEntryFactory = new InternalEntryFactoryImpl();
       internalEntryFactory.injectTimeService(TIME_SERVICE);
       ActivationManager activationManager = mock(ActivationManager.class);
-      doNothing().when(activationManager).activate(Mockito.anyObject());
+      doNothing().when(activationManager).onUpdate(Mockito.anyObject(), Mockito.anyBoolean());
       dc.initialize(null, null, internalEntryFactory, activationManager, null, TIME_SERVICE);
       return dc;
    }

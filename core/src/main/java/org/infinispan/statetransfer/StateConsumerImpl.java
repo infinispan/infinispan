@@ -64,6 +64,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 import static org.infinispan.context.Flag.*;
 import static org.infinispan.factories.KnownComponentNames.ASYNC_TRANSPORT_EXECUTOR;
+import static org.infinispan.persistence.manager.PersistenceManager.AccessMode.PRIVATE;
 
 /**
  * {@link StateConsumer} implementation.
@@ -941,7 +942,7 @@ public class StateConsumerImpl implements StateConsumer {
                public void processEntry(MarshalledEntry marshalledEntry, AdvancedCacheLoader.TaskContext taskContext) throws InterruptedException {
                   keysToRemove.add(marshalledEntry.getKey());
                }
-            }, false, false, true);
+            }, false, false, PRIVATE);
          } catch (CacheException e) {
             log.failedLoadingKeysFromCacheStore(e);
          }

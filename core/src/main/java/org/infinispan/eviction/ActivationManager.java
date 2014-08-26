@@ -13,12 +13,22 @@ import org.infinispan.factories.scopes.Scopes;
 public interface ActivationManager {
 
    /**
-    * Remove key and associated value from cache store
-    * and update the activation counter.
+    * Remove key and associated value from cache store and update the activation counter.
     *
-    * @param key Key to remove
+    * @param key      Key to remove
+    * @param newEntry {@code true} if the entry does not exists in-memory
     */
-   void activate(Object key);
+   void onUpdate(Object key, boolean newEntry);
+
+   /**
+    * Remove key and associated value from cache store and update the activation counter.
+    * <p/>
+    * The key is also removed from the shared configured stores.
+    *
+    * @param key      Key to activate
+    * @param newEntry {@code true} if the entry does not exists in-memory
+    */
+   void onRemove(Object key, boolean newEntry);
 
    /**
     * Get number of activations executed.

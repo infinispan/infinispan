@@ -9,6 +9,8 @@ import org.infinispan.jmx.CacheJmxRegistration;
 import org.infinispan.persistence.manager.PersistenceManager;
 import org.infinispan.manager.EmbeddedCacheManager;
 
+import static org.infinispan.persistence.manager.PersistenceManager.AccessMode.BOTH;
+
 /**
  * Command to stop a cache and remove all its contents from both
  * memory and any backing store.
@@ -46,7 +48,7 @@ public class RemoveCacheCommand extends BaseRpcCommand {
 
       // After stopping the cache, clear it
       if (persistenceManager != null)
-         persistenceManager.clearAllStores(false);
+         persistenceManager.clearAllStores(BOTH);
 
       // And see if we need to remove it from JMX
       if (jmx != null) {

@@ -24,6 +24,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
 
 import static org.infinispan.persistence.PersistenceUtil.internalMetadata;
+import static org.infinispan.persistence.manager.PersistenceManager.AccessMode.BOTH;
 
 public class PassivationManagerImpl implements PassivationManager {
 
@@ -82,7 +83,7 @@ public class PassivationManagerImpl implements PassivationManager {
          try {
             MarshalledEntry marshalledEntry = marshalledEntryFactory.newMarshalledEntry(entry.getKey(), entry.getValue(),
                                                                                         internalMetadata(entry));
-            persistenceManager.writeToAllStores(marshalledEntry, false);
+            persistenceManager.writeToAllStores(marshalledEntry, BOTH);
             if (statsEnabled) passivations.getAndIncrement();
          } catch (CacheException e) {
             log.unableToPassivateEntry(key, e);
@@ -101,7 +102,7 @@ public class PassivationManagerImpl implements PassivationManager {
          for (InternalCacheEntry e : container) {
             if (trace) log.tracef("Passivating %s", e.getKey());
             persistenceManager.writeToAllStores(marshalledEntryFactory.newMarshalledEntry(e.getKey(), e.getValue(),
-                                                                        internalMetadata(e)), false);
+                                                                        internalMetadata(e)), BOTH);
          }
          log.passivatedEntries(container.size(),
                                Util.prettyPrintTime(timeService.timeDuration(start, TimeUnit.MILLISECONDS)));

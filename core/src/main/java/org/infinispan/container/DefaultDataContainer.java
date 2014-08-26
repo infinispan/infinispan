@@ -37,6 +37,8 @@ import java.util.Set;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.atomic.AtomicReference;
 
+import static org.infinispan.persistence.manager.PersistenceManager.AccessMode.BOTH;
+
 /**
  * DefaultDataContainer is both eviction and non-eviction based data container.
  *
@@ -260,13 +262,13 @@ public class DefaultDataContainer<K, V> implements DataContainer<K, V> {
 
       @Override
       public void onEntryActivated(Object key) {
-         activator.activate(key);
+         activator.onUpdate(key, true);
       }
 
       @Override
       public void onEntryRemoved(Object key) {
          if (pm != null)
-            pm.deleteFromAllStores(key, false);
+            pm.deleteFromAllStores(key, BOTH);
       }
    }
 
@@ -461,12 +463,10 @@ public class DefaultDataContainer<K, V> implements DataContainer<K, V> {
                      if (newEntry == oldEntry) {
                         return oldEntry;
                      } else if (newEntry == null) {
+                        activator.onRemove(key, false);
                         return null;
                      }
-                     if (oldEntry == null) {
-                        //new entry. need to activate the key.
-                        activator.activate(key);
-                     }
+                     activator.onUpdate(key, oldEntry == null);
                      if (trace)
                         log.tracef("Store %s in container", newEntry);
                      return newEntry;
@@ -480,11 +480,7 @@ public class DefaultDataContainer<K, V> implements DataContainer<K, V> {
                .compute(newEntry.getKey(), new EquivalentConcurrentHashMapV8.BiFun<K, InternalCacheEntry<K, V>, InternalCacheEntry<K, V>>() {
                   @Override
                   public InternalCacheEntry<K, V> apply(K key, InternalCacheEntry<K, V> entry) {
-                     if (entry == null) {
-                        //entry does not exists before. we need to activate it.
-                        activator.activate(key);
-                     }
-
+                     activator.onUpdate(key, entry == null);
                      return newEntry;
                   }
                });
@@ -497,10 +493,7 @@ public class DefaultDataContainer<K, V> implements DataContainer<K, V> {
                .compute(key, new EquivalentConcurrentHashMapV8.BiFun<Object, InternalCacheEntry<K, V>, InternalCacheEntry<K, V>>() {
                   @Override
                   public InternalCacheEntry<K, V> apply(Object key, InternalCacheEntry<K, V> entry) {
-                     if (entry == null) {
-                        //entry does not exists before. we need to activate it.
-                        activator.activate(key);
-                     }
+                     activator.onRemove(key, entry == null);
                      reference.set(entry);
                      return null;
                   }
@@ -526,6 +519,7 @@ public class DefaultDataContainer<K, V> implements DataContainer<K, V> {
             if (oldEntry == newEntry) {
                return newEntry;
             } else if (newEntry == null) {
+               activator.onRemove(key, false);
                boundedMap.remove(key);
                return null;
             }
@@ -552,10 +546,7 @@ public class DefaultDataContainer<K, V> implements DataContainer<K, V> {
          boundedMap.lock(key);
          try {
             InternalCacheEntry<K, V> oldEntry = boundedMap.remove(key);
-            if (oldEntry == null) {
-               //entry does not exists before. we need to activate it.
-               activator.activate(key);
-            }
+            activator.onRemove(key, oldEntry == null);
             return oldEntry;
          } finally {
             boundedMap.unlock(key);
