@@ -13,11 +13,6 @@ import org.infinispan.objectfilter.impl.util.Interval;
  */
 public final class Predicate<AttributeDomain> {
 
-   public interface Callback {
-
-      void handleValue(MatcherEvalContext<?> ctx, boolean isMatching);
-   }
-
    protected AttributeNode attributeNode;
 
    // only one of these fields is non-null

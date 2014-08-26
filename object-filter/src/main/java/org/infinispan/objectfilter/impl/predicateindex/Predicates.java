@@ -28,22 +28,22 @@ final class Predicates<AttributeDomain> {
       /**
        * The callbacks of the subscribed predicates.
        */
-      private final List<PredicateIndex.Subscription> subscriptions = new ArrayList<PredicateIndex.Subscription>();
+      private final List<PredicateIndex.PredicateSubscription> subscriptions = new ArrayList<PredicateIndex.PredicateSubscription>();
 
       private Subscriptions(Predicate predicate) {
          this.predicate = predicate;
       }
 
-      void add(PredicateIndex.Subscription subscription) {
+      void add(PredicateIndex.PredicateSubscription subscription) {
          subscriptions.add(subscription);
       }
 
-      void remove(PredicateIndex.Subscription subscription) {
+      void remove(PredicateIndex.PredicateSubscription subscription) {
          subscriptions.remove(subscription);
       }
 
       //todo [anistor] this is an improvement but still does not eliminate precessing of attributes that have only suspended subscribers
-      boolean isActive(MatcherEvalContext<?> ctx) {
+      boolean isActive(MatcherEvalContext<?, ?, ?> ctx) {
          return ctx.getSuspendedSubscriptionsCounter(predicate) < subscriptions.size();
       }
    }
@@ -66,12 +66,12 @@ final class Predicates<AttributeDomain> {
       this.valueIsComparable = valueIsComparable;
    }
 
-   public void notifyMatchingSubscribers(MatcherEvalContext<?> ctx, AttributeDomain attributeValue) {
+   public void notifyMatchingSubscribers(MatcherEvalContext<?, ?, ?> ctx, AttributeDomain attributeValue) {
       if (attributeValue instanceof Comparable && orderedPredicates != null) {
          for (IntervalTree.Node<AttributeDomain, Subscriptions> n : orderedPredicates.stab(attributeValue)) {
             Subscriptions subscriptions = n.value;
             if (subscriptions.isActive(ctx)) {
-               for (PredicateIndex.Subscription s : subscriptions.subscriptions) {
+               for (PredicateIndex.PredicateSubscription s : subscriptions.subscriptions) {
                   //todo [anistor] if we also notify non-matching interval conditions this could lead to faster short-circuiting evaluation
                   s.handleValue(ctx, true);
                }
@@ -84,7 +84,7 @@ final class Predicates<AttributeDomain> {
             Subscriptions subscriptions = e.getValue();
             if (subscriptions.isActive(ctx)) {
                boolean conditionSatisfied = e.getKey().getCondition().match(attributeValue);
-               for (PredicateIndex.Subscription s : subscriptions.subscriptions) {
+               for (PredicateIndex.PredicateSubscription s : subscriptions.subscriptions) {
                   s.handleValue(ctx, conditionSatisfied);
                }
             }
@@ -92,7 +92,7 @@ final class Predicates<AttributeDomain> {
       }
    }
 
-   public void addPredicate(PredicateIndex.Subscription subscription) {
+   public void addPredicateSubscription(PredicateIndex.PredicateSubscription subscription) {
       Subscriptions subscriptions;
       Predicate<AttributeDomain> predicate = subscription.getPredicateNode().getPredicate();
       if (predicate.getInterval() != null) {
@@ -120,7 +120,7 @@ final class Predicates<AttributeDomain> {
       subscriptions.add(subscription);
    }
 
-   public void removePredicate(PredicateIndex.Subscription subscription) {
+   public void removePredicateSubscription(PredicateIndex.PredicateSubscription subscription) {
       Predicate<AttributeDomain> predicate = subscription.getPredicateNode().getPredicate();
       if (predicate.getInterval() != null) {
          if (orderedPredicates != null) {

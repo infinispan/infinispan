@@ -9,11 +9,11 @@ import java.util.List;
  * @author anistor@redhat.com
  * @since 7.0
  */
-public interface MetadataAdapter<AttributeMetadata, AttributeId extends Comparable<AttributeId>> {
+public interface MetadataAdapter<TypeMetadata, AttributeMetadata, AttributeId extends Comparable<AttributeId>> {
 
    String getTypeName();
 
-   Object getTypeMetadata();
+   TypeMetadata getTypeMetadata();
 
    /**
     * Transforms a String property path into an internal representation of the path which might not be String based

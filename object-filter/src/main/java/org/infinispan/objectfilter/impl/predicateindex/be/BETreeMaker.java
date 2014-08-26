@@ -18,9 +18,9 @@ import java.util.List;
  */
 public final class BETreeMaker<AttributeId extends Comparable<AttributeId>> {
 
-   private final MetadataAdapter<?, AttributeId> metadataAdapter;
+   private final MetadataAdapter<?, ?, AttributeId> metadataAdapter;
 
-   public BETreeMaker(MetadataAdapter<?, AttributeId> metadataAdapter) {
+   public BETreeMaker(MetadataAdapter<?, ?, AttributeId> metadataAdapter) {
       this.metadataAdapter = metadataAdapter;
    }
 

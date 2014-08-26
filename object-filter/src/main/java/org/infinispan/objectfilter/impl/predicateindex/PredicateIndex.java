@@ -1,5 +1,6 @@
 package org.infinispan.objectfilter.impl.predicateindex;
 
+import org.infinispan.objectfilter.impl.FilterSubscriptionImpl;
 import org.infinispan.objectfilter.impl.MetadataAdapter;
 import org.infinispan.objectfilter.impl.predicateindex.be.PredicateNode;
 
@@ -11,77 +12,77 @@ import java.util.List;
  * The predicates are stored in an index-like structure to allow fast matching and are reference counted in order to
  * allow sharing of predicates between filters rather than duplicating them.
  *
- * @param <AttributeId> is the type used to represent attribute IDs (usually String or Integer)
+ * @param <AttributeMetadata> is the type of the metadata attached to an AttributeNode
+ * @param <AttributeId>       is the type used to represent attribute IDs (usually String or Integer)
  * @author anistor@redhat.com
  * @since 7.0
  */
-public final class PredicateIndex<AttributeId extends Comparable<AttributeId>> {
+public final class PredicateIndex<AttributeMetadata, AttributeId extends Comparable<AttributeId>> {
 
-   public final class Subscription {
+   public static final class PredicateSubscription<AttributeId extends Comparable<AttributeId>> {
+
       private final PredicateNode<AttributeId> predicateNode;
-      private final Predicate.Callback callback;
 
-      Subscription(PredicateNode<AttributeId> predicateNode, Predicate.Callback callback) {
+      private final FilterSubscriptionImpl filterSubscription;
+
+      PredicateSubscription(PredicateNode<AttributeId> predicateNode, FilterSubscriptionImpl filterSubscription) {
          this.predicateNode = predicateNode;
-         this.callback = callback;
+         this.filterSubscription = filterSubscription;
       }
 
       public PredicateNode<AttributeId> getPredicateNode() {
          return predicateNode;
       }
 
-      public void suspend(MatcherEvalContext<AttributeId> ctx) {
-         ctx.addSuspendedSubscription(predicateNode);
-      }
-
-      public void cancel() {
-         AttributeNode<AttributeId> current = getAttributeNodeByPath(predicateNode.getAttributePath());
-         current.removePredicateSubscription(this);
-
-         // remove the nodes that no longer have a purpose
-         while (current != root) {
-            if (current.getNumChildren() > 0 || current.hasPredicates() || current.hasProjections()) {
-               break;
-            }
-
-            AttributeId childId = current.getAttribute();
-            current = current.getParent();
-            current.removeChild(childId);
-         }
-      }
-
-      public void handleValue(MatcherEvalContext<AttributeId> ctx, boolean isMatching) {
+      public void handleValue(MatcherEvalContext<?, ?, AttributeId> ctx, boolean isMatching) {
          if (!ctx.isSuspendedSubscription(predicateNode)) {
             if (predicateNode.isNegated()) {
                isMatching = !isMatching;
             }
             if (isMatching || !predicateNode.isRepeated()) {
-               callback.handleValue(ctx, isMatching);
+               FilterEvalContext filterEvalContext = ctx.getFilterEvalContext(filterSubscription);
+               predicateNode.handleChildValue(null, isMatching, filterEvalContext);
             }
          }
       }
    }
 
-   private final AttributeNode<AttributeId> root;
+   private final AttributeNode<AttributeMetadata, AttributeId> root;
 
-   public PredicateIndex(MetadataAdapter<?, AttributeId> metadataAdapter) {
-      root = new RootNode<AttributeId>(metadataAdapter);
+   public PredicateIndex(MetadataAdapter<?, AttributeMetadata, AttributeId> metadataAdapter) {
+      root = new RootNode<AttributeMetadata, AttributeId>(metadataAdapter);
    }
 
-   public AttributeNode<AttributeId> getRoot() {
+   public AttributeNode<AttributeMetadata, AttributeId> getRoot() {
       return root;
    }
 
-   public Subscription addSubscriptionForPredicate(PredicateNode<AttributeId> predicateNode, Predicate.Callback callback) {
-      AttributeNode<AttributeId> attributeNode = addAttributeNodeByPath(predicateNode.getAttributePath());
+   public PredicateSubscription<AttributeId> addSubscriptionForPredicate(PredicateNode<AttributeId> predicateNode, FilterSubscriptionImpl filterSubscription) {
+      AttributeNode<AttributeMetadata, AttributeId> attributeNode = addAttributeNodeByPath(predicateNode.getAttributePath());
       predicateNode.getPredicate().attributeNode = attributeNode;
-      Subscription subscription = new Subscription(predicateNode, callback);
+      PredicateSubscription<AttributeId> subscription = new PredicateSubscription<AttributeId>(predicateNode, filterSubscription);
       attributeNode.addPredicateSubscription(subscription);
       return subscription;
    }
 
-   public AttributeNode<AttributeId> getAttributeNodeByPath(List<AttributeId> attributePath) {
-      AttributeNode<AttributeId> node = root;
+   public void removeSubscriptionForPredicate(PredicateSubscription<AttributeId> subscription) {
+      AttributeNode<AttributeMetadata, AttributeId> current = getAttributeNodeByPath(subscription.predicateNode.getAttributePath());
+      current.removePredicateSubscription(subscription);
+
+      // remove the nodes that no longer have a purpose
+      while (current != root) {
+         if (current.getNumChildren() > 0 || current.hasPredicates() || current.hasProjections()) {
+            break;
+         }
+
+         AttributeId childId = current.getAttribute();
+         current = current.getParent();
+         current.removeChild(childId);
+      }
+   }
+
+   private AttributeNode<AttributeMetadata, AttributeId> getAttributeNodeByPath(List<AttributeId> attributePath) {
+      AttributeNode<AttributeMetadata, AttributeId> node = root;
       for (AttributeId attribute : attributePath) {
          node = node.getChild(attribute);
          if (node == null) {
@@ -91,11 +92,26 @@ public final class PredicateIndex<AttributeId extends Comparable<AttributeId>> {
       return node;
    }
 
-   public AttributeNode<AttributeId> addAttributeNodeByPath(List<AttributeId> attributePath) {
-      AttributeNode<AttributeId> node = root;
+   private AttributeNode<AttributeMetadata, AttributeId> addAttributeNodeByPath(List<AttributeId> attributePath) {
+      AttributeNode<AttributeMetadata, AttributeId> node = root;
       for (AttributeId attribute : attributePath) {
          node = node.addChild(attribute);
       }
       return node;
+   }
+
+   public int addProjections(FilterSubscriptionImpl<?, AttributeMetadata, AttributeId> filterSubscription, List<List<AttributeId>> projection, int i) {
+      for (List<AttributeId> projectionPath : projection) {
+         AttributeNode node = addAttributeNodeByPath(projectionPath);
+         node.addProjection(filterSubscription, i++);
+      }
+      return i;
+   }
+
+   public void removeProjections(FilterSubscriptionImpl<?, AttributeMetadata, AttributeId> filterSubscription, List<List<AttributeId>> projection) {
+      for (List<AttributeId> projectionPath : projection) {
+         AttributeNode node = getAttributeNodeByPath(projectionPath);
+         node.removeProjections(filterSubscription);
+      }
    }
 }

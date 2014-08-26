@@ -10,15 +10,21 @@ import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
 
 /**
+ * Stores processing state during the matching process of all filters registered with a Matcher.
+ *
+ * @param <TypeMetadata>      representation of entity type information, ie a Class object or anything that represents a
+ *                            type
+ * @param <AttributeMetadata> representation of attribute type information
+ * @param <AttributeId>       representation of attribute identifiers
  * @author anistor@redhat.com
  * @since 7.0
  */
-public abstract class MatcherEvalContext<AttributeId extends Comparable<AttributeId>> {
+public abstract class MatcherEvalContext<TypeMetadata, AttributeMetadata, AttributeId extends Comparable<AttributeId>> {
 
    /**
     * Current node during traversal of the attribute tree.
     */
-   protected AttributeNode<AttributeId> currentNode;
+   protected AttributeNode<AttributeMetadata, AttributeId> currentNode;
 
    /**
     * Each filter subscription has its own evaluation context, created on demand.
@@ -31,16 +37,15 @@ public abstract class MatcherEvalContext<AttributeId extends Comparable<Attribut
 
    private final Object instance;
 
-   protected String entityTypeName;
-
    protected MatcherEvalContext(Object instance) {
       this.instance = instance;
    }
 
-   public String getEntityTypeName() {
-      return entityTypeName;
-   }
+   public abstract TypeMetadata getEntityType();
 
+   /**
+    * The instance being matched with the filters.
+    */
    public Object getInstance() {
       return instance;
    }
@@ -48,9 +53,7 @@ public abstract class MatcherEvalContext<AttributeId extends Comparable<Attribut
    public FilterEvalContext getFilterEvalContext(FilterSubscriptionImpl filterSubscription) {
       FilterEvalContext filterEvalContext = filterContexts.get(filterSubscription);
       if (filterEvalContext == null) {
-         Object[] projection = filterSubscription.getProjection() != null ? new Object[filterSubscription.getProjection().length] : null;
-         Comparable[] sortProjection = filterSubscription.getSortFields() != null ? new Comparable[filterSubscription.getSortFields().length] : null;
-         filterEvalContext = new FilterEvalContext(filterSubscription.getBETree(), this, projection, sortProjection);
+         filterEvalContext = new FilterEvalContext(this, filterSubscription);
          filterContexts.put(filterSubscription, filterEvalContext);
       }
       return filterEvalContext;
@@ -70,15 +73,15 @@ public abstract class MatcherEvalContext<AttributeId extends Comparable<Attribut
       return suspendedSubscriptions.contains(predicateNode);
    }
 
-   public int getSuspendedSubscriptionsCounter(Predicate<?> predicate) {
+   public int getSuspendedSubscriptionsCounter(Predicate<AttributeId> predicate) {
       AtomicInteger counter = suspendedSubscriptionCounts.get(predicate);
       return counter == null ? 0 : counter.get();
    }
 
-   public void process(AttributeNode<AttributeId> node) {
+   public void process(AttributeNode<AttributeMetadata, AttributeId> node) {
       currentNode = node;
       processAttributes(currentNode, instance);
    }
 
-   protected abstract void processAttributes(AttributeNode<AttributeId> node, Object instance);
+   protected abstract void processAttributes(AttributeNode<AttributeMetadata, AttributeId> node, Object instance);
 }

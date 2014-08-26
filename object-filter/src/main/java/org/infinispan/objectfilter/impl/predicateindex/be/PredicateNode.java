@@ -1,17 +1,22 @@
 package org.infinispan.objectfilter.impl.predicateindex.be;
 
 import org.infinispan.objectfilter.impl.predicateindex.FilterEvalContext;
+import org.infinispan.objectfilter.impl.predicateindex.MatcherEvalContext;
 import org.infinispan.objectfilter.impl.predicateindex.Predicate;
-import org.infinispan.objectfilter.impl.predicateindex.PredicateIndex;
 
 import java.util.List;
 
 /**
+ * A PredicateNode is a leaf node in a BETree that holds a Predicate instance. A PredicateNode instance is never reused
+ * inside the same BETree or shared between multiple BETrees, but an entire BETree could be shared by multiple filters.
+ * Multiple PredicateNodes could share the same Predicate instance.
+ *
  * @author anistor@redhat.com
  * @since 7.0
  */
 public final class PredicateNode<AttributeId extends Comparable<AttributeId>> extends BENode {
 
+   // the predicate can be share by multiple PredicateNodes
    private final Predicate<?> predicate;
 
    /**
@@ -26,8 +31,6 @@ public final class PredicateNode<AttributeId extends Comparable<AttributeId>> ex
    private final boolean isRepeated;
 
    private final List<AttributeId> attributePath;
-
-   private PredicateIndex.Subscription subscription;
 
    public PredicateNode(BENode parent, Predicate<?> predicate, boolean isNegated, List<AttributeId> attributePath, boolean isRepeated) {
       super(parent);
@@ -83,21 +86,10 @@ public final class PredicateNode<AttributeId extends Comparable<AttributeId>> ex
       return parent.handleChildValue(this, childValue, evalContext);
    }
 
-   public void subscribe(PredicateIndex<AttributeId> predicateIndex, Predicate.Callback callback) {
-      if (subscription != null) {
-         throw new IllegalStateException("Already subscribed");
-      }
-      subscription = predicateIndex.addSubscriptionForPredicate(this, callback);
-   }
-
-   public void unsubscribe() {
-      subscription.cancel();
-      subscription = null;
-   }
-
    @Override
    public void suspendSubscription(FilterEvalContext ctx) {
-      subscription.suspend(ctx.matcherContext);
+      //todo this can create interference between matcher and ObjectFilter
+      ((MatcherEvalContext<?, ?, AttributeId>) ctx.matcherContext).addSuspendedSubscription(this);
    }
 
    @Override

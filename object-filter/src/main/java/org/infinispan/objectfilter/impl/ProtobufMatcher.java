@@ -3,7 +3,6 @@ package org.infinispan.objectfilter.impl;
 import org.infinispan.objectfilter.impl.hql.FilterProcessingChain;
 import org.infinispan.objectfilter.impl.hql.ProtobufEntityNamesResolver;
 import org.infinispan.objectfilter.impl.hql.ProtobufPropertyHelper;
-import org.infinispan.objectfilter.impl.predicateindex.MatcherEvalContext;
 import org.infinispan.objectfilter.impl.predicateindex.ProtobufMatcherEvalContext;
 import org.infinispan.protostream.SerializationContext;
 import org.infinispan.protostream.WrappedMessage;
@@ -20,7 +19,7 @@ import java.util.Set;
  * @author anistor@redhat.com
  * @since 7.0
  */
-public class ProtobufMatcher extends BaseMatcher<Descriptor, Integer> {
+public final class ProtobufMatcher extends BaseMatcher<Descriptor, FieldDescriptor, Integer> {
 
    private final SerializationContext serializationContext;
 
@@ -38,10 +37,10 @@ public class ProtobufMatcher extends BaseMatcher<Descriptor, Integer> {
    }
 
    @Override
-   protected MatcherEvalContext<Integer> startContext(Object instance, Set<String> knownTypes) {
+   protected ProtobufMatcherEvalContext startContext(Object instance, Set<String> supportedTypeNames, Set<Descriptor> supportedTypes) {
       ProtobufMatcherEvalContext ctx = new ProtobufMatcherEvalContext(instance, wrappedMessageDescriptor, serializationContext);
       ctx.unwrapPayload();
-      return ctx.getEntityTypeName() != null && knownTypes.contains(ctx.getEntityTypeName()) ? ctx : null;
+      return ctx.getEntityType() != null && supportedTypeNames.contains(ctx.getEntityType().getFullName()) ? ctx : null;
    }
 
    @Override
@@ -50,11 +49,16 @@ public class ProtobufMatcher extends BaseMatcher<Descriptor, Integer> {
    }
 
    @Override
-   protected FilterRegistry<Integer> createFilterRegistryForType(Descriptor messageDescriptor) {
-      return new FilterRegistry<Integer>(new MetadataAdapterImpl(messageDescriptor));
+   protected FilterRegistry<Descriptor, FieldDescriptor, Integer> createFilterRegistryForType(Descriptor messageDescriptor) {
+      return new FilterRegistry<Descriptor, FieldDescriptor, Integer>(new MetadataAdapterImpl(messageDescriptor));
    }
 
-   private static class MetadataAdapterImpl implements MetadataAdapter<FieldDescriptor, Integer> {
+   @Override
+   protected FilterRegistry<Descriptor, FieldDescriptor, Integer> getFilterRegistryForType(Descriptor entityType) {
+      return filtersByTypeName.get(entityType.getFullName());
+   }
+
+   private static class MetadataAdapterImpl implements MetadataAdapter<Descriptor, FieldDescriptor, Integer> {
 
       private final Descriptor messageDescriptor;
 

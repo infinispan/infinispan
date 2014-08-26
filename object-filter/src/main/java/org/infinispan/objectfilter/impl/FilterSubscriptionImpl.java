@@ -3,11 +3,13 @@ package org.infinispan.objectfilter.impl;
 import org.infinispan.objectfilter.FilterCallback;
 import org.infinispan.objectfilter.FilterSubscription;
 import org.infinispan.objectfilter.SortField;
-import org.infinispan.objectfilter.impl.predicateindex.AttributeNode;
 import org.infinispan.objectfilter.impl.predicateindex.PredicateIndex;
+import org.infinispan.objectfilter.impl.predicateindex.be.BENode;
 import org.infinispan.objectfilter.impl.predicateindex.be.BETree;
+import org.infinispan.objectfilter.impl.predicateindex.be.PredicateNode;
 import org.infinispan.objectfilter.impl.util.ComparableArrayComparator;
 
+import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 
@@ -15,11 +17,13 @@ import java.util.List;
  * @author anistor@redhat.com
  * @since 7.0
  */
-public final class FilterSubscriptionImpl<AttributeId extends Comparable<AttributeId>> implements FilterSubscription {
+public final class FilterSubscriptionImpl<TypeMetadata, AttributeMetadata, AttributeId extends Comparable<AttributeId>> implements FilterSubscription {
 
-   private final MetadataAdapter metadataAdapter;
+   private final MetadataAdapter<TypeMetadata, AttributeMetadata, AttributeId> metadataAdapter;
 
    private final BETree beTree;
+
+   private final List<PredicateIndex.PredicateSubscription<AttributeId>> predicateSubscriptions = new ArrayList<PredicateIndex.PredicateSubscription<AttributeId>>();
 
    private final FilterCallback callback;
 
@@ -33,7 +37,7 @@ public final class FilterSubscriptionImpl<AttributeId extends Comparable<Attribu
 
    private Comparator<Comparable[]> comparator;
 
-   public FilterSubscriptionImpl(MetadataAdapter metadataAdapter, BETree beTree, FilterCallback callback,
+   public FilterSubscriptionImpl(MetadataAdapter<TypeMetadata, AttributeMetadata, AttributeId> metadataAdapter, BETree beTree, FilterCallback callback,
                                  List<String> projection, List<List<AttributeId>> translatedProjection,
                                  List<SortField> sortFields, List<List<AttributeId>> translatedSortProjection) {
       this.metadataAdapter = metadataAdapter;
@@ -65,7 +69,7 @@ public final class FilterSubscriptionImpl<AttributeId extends Comparable<Attribu
       return metadataAdapter.getTypeName();
    }
 
-   public MetadataAdapter getMetadataAdapter() {
+   public MetadataAdapter<TypeMetadata, AttributeMetadata, AttributeId> getMetadataAdapter() {
       return metadataAdapter;
    }
 
@@ -86,49 +90,47 @@ public final class FilterSubscriptionImpl<AttributeId extends Comparable<Attribu
 
    @Override
    public Comparator<Comparable[]> getComparator() {
-      if (sortFields != null) {
-         if (comparator == null) {
-            boolean[] direction = new boolean[sortFields.length];
-            for (int i = 0; i < sortFields.length; i++) {
-               direction[i] = sortFields[i].isAscending();
-            }
-            comparator = new ComparableArrayComparator(direction);
+      if (sortFields != null && comparator == null) {
+         boolean[] direction = new boolean[sortFields.length];
+         for (int i = 0; i < sortFields.length; i++) {
+            direction[i] = sortFields[i].isAscending();
          }
+         comparator = new ComparableArrayComparator(direction);
       }
       return comparator;
    }
 
-   public void registerProjection(PredicateIndex<AttributeId> predicateIndex) {
+   public void registerProjection(PredicateIndex<AttributeMetadata, AttributeId> predicateIndex) {
       int i = 0;
       if (translatedProjection != null) {
-         i = addProjections(predicateIndex, translatedProjection, i);
+         i = predicateIndex.addProjections(this, translatedProjection, i);
       }
       if (translatedSortProjection != null) {
-         addProjections(predicateIndex, translatedSortProjection, i);
+         predicateIndex.addProjections(this, translatedSortProjection, i);
       }
    }
 
-   public void unregisterProjection(PredicateIndex<AttributeId> predicateIndex) {
+   public void unregisterProjection(PredicateIndex<AttributeMetadata, AttributeId> predicateIndex) {
       if (translatedProjection != null) {
-         removeProjections(predicateIndex, translatedProjection);
+         predicateIndex.removeProjections(this, translatedProjection);
       }
       if (translatedSortProjection != null) {
-         removeProjections(predicateIndex, translatedSortProjection);
+         predicateIndex.removeProjections(this, translatedSortProjection);
       }
    }
 
-   private int addProjections(PredicateIndex<AttributeId> predicateIndex, List<List<AttributeId>> projection, int i) {
-      for (List<AttributeId> projectionPath : projection) {
-         AttributeNode<AttributeId> node = predicateIndex.addAttributeNodeByPath(projectionPath);
-         node.addProjection(this, i++);
+   public void subscribe(PredicateIndex<AttributeMetadata, AttributeId> predicateIndex) {
+      for (BENode node : beTree.getNodes()) {
+         if (node instanceof PredicateNode) {
+            PredicateNode<AttributeId> predicateNode = (PredicateNode<AttributeId>) node;
+            predicateSubscriptions.add(predicateIndex.addSubscriptionForPredicate(predicateNode, this));
+         }
       }
-      return i;
    }
 
-   private void removeProjections(PredicateIndex<AttributeId> predicateIndex, List<List<AttributeId>> projection) {
-      for (List<AttributeId> projectionPath : projection) {
-         AttributeNode<AttributeId> node = predicateIndex.getAttributeNodeByPath(projectionPath);
-         node.removeProjections(this);
+   public void unsubscribe(PredicateIndex<AttributeMetadata, AttributeId> predicateIndex) {
+      for (PredicateIndex.PredicateSubscription<AttributeId> subscription : predicateSubscriptions) {
+         predicateIndex.removeSubscriptionForPredicate(subscription);
       }
    }
 }

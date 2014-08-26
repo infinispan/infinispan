@@ -1,6 +1,8 @@
 package org.infinispan.objectfilter.impl.predicateindex.be;
 
 /**
+ * Boolean expression tree representation. A tree is immutable and could be shared by multiple filters.
+ *
  * @author anistor@redhat.com
  * @since 7.0
  */

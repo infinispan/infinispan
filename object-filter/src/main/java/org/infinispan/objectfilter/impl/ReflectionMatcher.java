@@ -4,7 +4,6 @@ import org.hibernate.hql.ast.spi.EntityNamesResolver;
 import org.infinispan.objectfilter.impl.hql.FilterProcessingChain;
 import org.infinispan.objectfilter.impl.hql.ReflectionEntityNamesResolver;
 import org.infinispan.objectfilter.impl.hql.ReflectionPropertyHelper;
-import org.infinispan.objectfilter.impl.predicateindex.MatcherEvalContext;
 import org.infinispan.objectfilter.impl.predicateindex.ReflectionMatcherEvalContext;
 import org.infinispan.objectfilter.impl.util.ReflectionHelper;
 
@@ -16,7 +15,7 @@ import java.util.Set;
  * @author anistor@redhat.com
  * @since 7.0
  */
-public class ReflectionMatcher extends BaseMatcher<Class<?>, String> {
+public class ReflectionMatcher extends BaseMatcher<Class<?>, ReflectionHelper.PropertyAccessor, String> {
 
    private final EntityNamesResolver entityNamesResolver;
 
@@ -35,9 +34,8 @@ public class ReflectionMatcher extends BaseMatcher<Class<?>, String> {
    }
 
    @Override
-   protected MatcherEvalContext<String> startContext(Object instance, Set<String> knownTypes) {
-      String typeName = instance.getClass().getCanonicalName();
-      if (knownTypes.contains(typeName)) {
+   protected ReflectionMatcherEvalContext startContext(Object instance, Set<String> supportedTypeNames, Set<Class<?>> supportedTypes) {
+      if (supportedTypes.contains(instance.getClass())) {
          return new ReflectionMatcherEvalContext(instance);
       } else {
          return null;
@@ -50,11 +48,16 @@ public class ReflectionMatcher extends BaseMatcher<Class<?>, String> {
    }
 
    @Override
-   protected FilterRegistry<String> createFilterRegistryForType(Class<?> clazz) {
-      return new FilterRegistry<String>(new MetadataAdapterImpl(clazz));
+   protected FilterRegistry<Class<?>, ReflectionHelper.PropertyAccessor, String> createFilterRegistryForType(Class<?> clazz) {
+      return new FilterRegistry<Class<?>, ReflectionHelper.PropertyAccessor, String>(new MetadataAdapterImpl(clazz));
    }
 
-   private static class MetadataAdapterImpl implements MetadataAdapter<ReflectionHelper.PropertyAccessor, String> {
+   @Override
+   protected FilterRegistry<Class<?>, ReflectionHelper.PropertyAccessor, String> getFilterRegistryForType(Class<?> entityType) {
+      return filtersByType.get(entityType);
+   }
+
+   private static class MetadataAdapterImpl implements MetadataAdapter<Class<?>, ReflectionHelper.PropertyAccessor, String> {
 
       private final Class<?> clazz;
 

@@ -73,7 +73,7 @@ public final class ReflectionHelper {
       }
 
       public Iterator<Object> getValueIterator(Object instance) {
-         throw new IllegalStateException("This property cannot be iterated");
+         throw new UnsupportedOperationException("This property cannot be iterated");
       }
    }
 
@@ -168,7 +168,7 @@ public final class ReflectionHelper {
       }
 
       public Iterator<Object> getValueIterator(Object instance) {
-         throw new IllegalStateException("This property cannot be iterated");
+         throw new UnsupportedOperationException("This property cannot be iterated");
       }
    }
 

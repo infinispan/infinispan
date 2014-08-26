@@ -25,16 +25,18 @@ public final class AndNode extends BENode {
                // let the parent know
                return parent.handleChildValue(this, true, evalContext);
             } else {
+               BENode[] nodes = evalContext.beTree.getNodes();
                for (int i = index; i < span; i++) {
-                  evalContext.beTree.getNodes()[i].suspendSubscription(evalContext);
+                  nodes[i].suspendSubscription(evalContext);
                }
                return true;
             }
          } else {
             // value of this node cannot be decided yet, so we cannot tell the parent anything yet but let's at least mark down the children as 'satisfied'
             evalContext.treeCounters[child.index] = BETree.EXPR_TRUE;
+            BENode[] nodes = evalContext.beTree.getNodes();
             for (int i = child.index; i < child.span; i++) {
-               evalContext.beTree.getNodes()[i].suspendSubscription(evalContext);
+               nodes[i].suspendSubscription(evalContext);
             }
             return false;
          }
@@ -45,8 +47,9 @@ public final class AndNode extends BENode {
             return parent.handleChildValue(this, false, evalContext);
          } else {
             evalContext.treeCounters[0] = BETree.EXPR_FALSE;
+            BENode[] nodes = evalContext.beTree.getNodes();
             for (int i = index; i < span; i++) {
-               evalContext.beTree.getNodes()[i].suspendSubscription(evalContext);
+               nodes[i].suspendSubscription(evalContext);
             }
             return true;
          }

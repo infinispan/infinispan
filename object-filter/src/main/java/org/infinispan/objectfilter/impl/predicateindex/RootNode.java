@@ -7,19 +7,19 @@ import org.infinispan.objectfilter.impl.MetadataAdapter;
  * @author anistor@redhat.com
  * @since 7.0
  */
-final class RootNode<AttributeId extends Comparable<AttributeId>> extends AttributeNode<AttributeId> {
+final class RootNode<AttributeMetadata, AttributeId extends Comparable<AttributeId>> extends AttributeNode<AttributeMetadata, AttributeId> {
 
-   RootNode(MetadataAdapter<?, AttributeId> metadataAdapter) {
+   RootNode(MetadataAdapter<?, AttributeMetadata, AttributeId> metadataAdapter) {
       super(metadataAdapter);
    }
 
    @Override
-   public void addPredicateSubscription(PredicateIndex.Subscription subscription) {
+   public void addPredicateSubscription(PredicateIndex.PredicateSubscription subscription) {
       throw new UnsupportedOperationException("Root node does not allow predicates");
    }
 
    @Override
-   public void removePredicateSubscription(PredicateIndex.Subscription subscription) {
+   public void removePredicateSubscription(PredicateIndex.PredicateSubscription subscription) {
       throw new UnsupportedOperationException("Root node does not allow predicates");
    }
 
