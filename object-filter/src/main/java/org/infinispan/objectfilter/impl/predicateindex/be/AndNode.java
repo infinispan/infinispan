@@ -14,8 +14,9 @@ public final class AndNode extends BENode {
 
    @Override
    public boolean handleChildValue(BENode child, boolean childValue, FilterEvalContext evalContext) {
-      if (evalContext.treeCounters[index] <= 0) {
+      if (isDecided(evalContext)) {
          if (evalContext.matcherContext.isSingleFilter()) {
+            // for single-filter scenario we do not unsubscribe so it may happen to be notified twice
             return false;
          }
          throw new IllegalStateException("This should never be called again because the state of this node has been decided already.");

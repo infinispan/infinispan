@@ -5,9 +5,7 @@ import org.infinispan.objectfilter.impl.FilterSubscriptionImpl;
 import org.infinispan.objectfilter.impl.predicateindex.be.PredicateNode;
 
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.Map;
-import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
 
 /**
@@ -30,8 +28,6 @@ public abstract class MatcherEvalContext<TypeMetadata, AttributeMetadata, Attrib
    protected AttributeNode<AttributeMetadata, AttributeId> currentNode;
 
    private final Map<Predicate<?>, AtomicInteger> suspendedSubscriptionCounts = new HashMap<Predicate<?>, AtomicInteger>();
-
-   private final Set<PredicateNode<AttributeId>> suspendedSubscriptions = new HashSet<PredicateNode<AttributeId>>();
 
    private final Object instance;
 
@@ -86,21 +82,12 @@ public abstract class MatcherEvalContext<TypeMetadata, AttributeMetadata, Attrib
       if (isSingleFilter()) {
          return;
       }
-      suspendedSubscriptions.add(predicateNode);
       AtomicInteger counter = suspendedSubscriptionCounts.get(predicateNode.getPredicate());
       if (counter == null) {
          counter = new AtomicInteger();
          suspendedSubscriptionCounts.put(predicateNode.getPredicate(), counter);
       }
       counter.incrementAndGet();
-   }
-
-   public boolean isSuspendedSubscription(PredicateNode<AttributeId> predicateNode) {
-      if (isSingleFilter()) {
-         return false;
-      }
-
-      return suspendedSubscriptions.contains(predicateNode);
    }
 
    public int getSuspendedSubscriptionsCounter(Predicate<AttributeId> predicate) {

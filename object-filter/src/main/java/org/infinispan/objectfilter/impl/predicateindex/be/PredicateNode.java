@@ -67,7 +67,7 @@ public final class PredicateNode<AttributeId extends Comparable<AttributeId>> ex
 
       final int value = childValue ? BETree.EXPR_TRUE : BETree.EXPR_FALSE;
 
-      if (evalContext.treeCounters[index] <= 0) {
+      if (isDecided(evalContext)) {
          if (isRepeated && evalContext.treeCounters[index] == value) {
             // receiving the same value multiple times if fine if this is a repeated condition
             // here we return a status that is most likely incorrect but it is harmless

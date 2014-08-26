@@ -35,12 +35,12 @@ public final class PredicateIndex<AttributeMetadata, AttributeId extends Compara
       }
 
       public void handleValue(MatcherEvalContext<?, ?, AttributeId> ctx, boolean isMatching) {
-         if (!ctx.isSuspendedSubscription(predicateNode)) {
+         FilterEvalContext filterEvalContext = ctx.getFilterEvalContext(filterSubscription);
+         if (!predicateNode.isDecided(filterEvalContext)) {
             if (predicateNode.isNegated()) {
                isMatching = !isMatching;
             }
             if (isMatching || !predicateNode.isRepeated()) {
-               FilterEvalContext filterEvalContext = ctx.getFilterEvalContext(filterSubscription);
                predicateNode.handleChildValue(null, isMatching, filterEvalContext);
             }
          }
