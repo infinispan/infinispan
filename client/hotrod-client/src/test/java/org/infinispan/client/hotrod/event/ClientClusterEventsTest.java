@@ -3,6 +3,7 @@ package org.infinispan.client.hotrod.event;
 import org.infinispan.client.hotrod.RemoteCache;
 import org.infinispan.client.hotrod.RemoteCacheManager;
 import org.infinispan.client.hotrod.TestHelper;
+import org.infinispan.client.hotrod.annotation.ClientListener;
 import org.infinispan.client.hotrod.event.CustomEventLogListener.StaticConverterFactory;
 import org.infinispan.client.hotrod.event.CustomEventLogListener.StaticCustomEventLogListener;
 import org.infinispan.client.hotrod.event.EventLogListener.StaticFilteredEventLogListener;
@@ -27,6 +28,7 @@ import java.net.SocketAddress;
 import java.util.Collection;
 import java.util.Set;
 
+import static org.infinispan.client.hotrod.test.HotRodClientTestingUtil.killRemoteCacheManager;
 import static org.infinispan.client.hotrod.test.HotRodClientTestingUtil.withClientListener;
 import static org.infinispan.server.hotrod.test.HotRodTestingUtil.hotRodCacheConfiguration;
 
@@ -119,26 +121,35 @@ public class ClientClusterEventsTest extends MultiHotRodServersTest {
       });
    }
 
-   public void testEventReplayAfterFailover() {
+   public void testEventReplayWithAndWithoutStateAfterFailover() {
       org.infinispan.client.hotrod.configuration.ConfigurationBuilder builder =
             new org.infinispan.client.hotrod.configuration.ConfigurationBuilder();
       HotRodServer server = server(0);
       builder.addServers(server.getHost() + ":" + server.getPort());
       builder.balancingStrategy(FirstServerAvailableBalancer.class);
       RemoteCacheManager newClient = new RemoteCacheManager(builder.build());
-      EventLogListener<Integer> eventListener = new EventLogListener<>();
-      RemoteCache<Integer, String> c = newClient.getCache();
-      c.put(0, "zero");
-      c.remove(0);
-      c.addClientListener(eventListener);
-      c.put(1, "one");
-      eventListener.expectOnlyCreatedEvent(1, cache(0));
-      findServerAndKill(FirstServerAvailableBalancer.serverToKill);
-      c.put(2, "two");
-      eventListener.expectFailoverEvent(eventListener);
-      eventListener.expectUnorderedEvents(ClientEvent.Type.CLIENT_CACHE_ENTRY_CREATED, 1, 2);
-      c.remove(1);
-      c.remove(2);
+      try {
+         WithStateEventLogListener<Integer> withStateEventLogListener = new WithStateEventLogListener<>();
+         EventLogListener<Integer> withoutStateEventLogListener = new EventLogListener<>();
+         RemoteCache<Integer, String> c = newClient.getCache();
+         c.put(0, "zero");
+         c.remove(0);
+         c.addClientListener(withoutStateEventLogListener);
+         c.addClientListener(withStateEventLogListener);
+         c.put(1, "one");
+         withStateEventLogListener.expectOnlyCreatedEvent(1, cache(0));
+         withoutStateEventLogListener.expectOnlyCreatedEvent(1, cache(0));
+         findServerAndKill(FirstServerAvailableBalancer.serverToKill);
+         c.put(2, "two");
+         withoutStateEventLogListener.expectFailoverEvent();
+         withStateEventLogListener.expectFailoverEvent();
+         withoutStateEventLogListener.expectNoEvents();
+         withStateEventLogListener.expectUnorderedEvents(ClientEvent.Type.CLIENT_CACHE_ENTRY_CREATED, 1, 2);
+         c.remove(1);
+         c.remove(2);
+      } finally {
+         killRemoteCacheManager(newClient);
+      }
    }
 
    private void findServerAndKill(InetSocketAddress addr) {
@@ -179,5 +190,8 @@ public class ClientClusterEventsTest extends MultiHotRodServersTest {
          return nextServer(null);
       }
    }
+
+   @ClientListener(includeCurrentState = true)
+   public static class WithStateEventLogListener<K> extends EventLogListener<K> {}
 
 }

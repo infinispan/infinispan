@@ -82,6 +82,7 @@ public class AddClientListenerOperation extends RetryOnFailureOperation<Short> {
 
       HeaderParams params = writeHeader(transport, ADD_CLIENT_LISTENER_REQUEST);
       transport.writeArray(listenerId);
+      transport.writeByte((short)(clientListener.includeCurrentState() ? 1 : 0));
 
       writeNamedFactory(transport, clientListener.filterFactoryName(), filterFactoryParams);
       writeNamedFactory(transport, clientListener.converterFactoryName(), converterFactoryParams);

@@ -191,8 +191,8 @@ public class EventLogListener<K> {
       return false;
    }
 
-   public void expectFailoverEvent(EventLogListener eventListener) {
-      eventListener.pollEvent(ClientEvent.Type.CLIENT_CACHE_FAILOVER);
+   public void expectFailoverEvent() {
+      pollEvent(ClientEvent.Type.CLIENT_CACHE_FAILOVER);
    }
 
    @ClientListener(filterFactoryName = "static-filter-factory")
@@ -201,10 +201,22 @@ public class EventLogListener<K> {
       public StaticFilteredEventLogListener(boolean compatibility) { super(compatibility); }
    }
 
+   @ClientListener(filterFactoryName = "static-filter-factory", includeCurrentState = true)
+   public static class StaticFilteredEventLogWithStateListener<K> extends EventLogListener<K> {
+      public StaticFilteredEventLogWithStateListener() {}
+      public StaticFilteredEventLogWithStateListener(boolean compatibility) { super(compatibility); }
+   }
+
    @ClientListener(filterFactoryName = "dynamic-filter-factory")
    public static class DynamicFilteredEventLogListener<K> extends EventLogListener<K> {
       public DynamicFilteredEventLogListener() {}
       public DynamicFilteredEventLogListener(boolean compatibility) { super(compatibility); }
+   }
+
+   @ClientListener(filterFactoryName = "dynamic-filter-factory", includeCurrentState = true)
+   public static class DynamicFilteredEventLogWithStateListener<K> extends EventLogListener<K> {
+      public DynamicFilteredEventLogWithStateListener() {}
+      public DynamicFilteredEventLogWithStateListener(boolean compatibility) { super(compatibility); }
    }
 
    @NamedFactory(name = "static-filter-factory")

@@ -4,6 +4,7 @@ import org.infinispan.Cache;
 import org.infinispan.client.hotrod.Flag;
 import org.infinispan.client.hotrod.RemoteCache;
 import org.infinispan.client.hotrod.VersionedValue;
+import org.infinispan.client.hotrod.annotation.ClientListener;
 import org.infinispan.client.hotrod.event.ClientEvent;
 import org.infinispan.client.hotrod.event.CustomEventLogListener.DynamicConverterFactory;
 import org.infinispan.client.hotrod.event.CustomEventLogListener.DynamicCustomEventLogListener;
@@ -232,7 +233,7 @@ public class EmbeddedHotRodTest extends AbstractInfinispanTest {
    }
 
    public void testEventReplayAfterAddingListener() {
-      EventLogListener<Integer> eventListener = new EventLogListener<>(true);
+      EventLogWithStateListener<Integer> eventListener = new EventLogWithStateListener<>(true);
       Cache<Integer, String> embedded = cacheFactory.getEmbeddedCache();
       RemoteCache<Integer, String> remote = cacheFactory.getHotRodCache();
       remote.put(1, "one");
@@ -247,6 +248,31 @@ public class EmbeddedHotRodTest extends AbstractInfinispanTest {
       remote.addClientListener(eventListener);
       try {
          eventListener.expectUnorderedEvents(ClientEvent.Type.CLIENT_CACHE_ENTRY_CREATED, 1, 2);
+         remote.remove(1);
+         eventListener.expectOnlyRemovedEvent(1, embedded);
+         remote.remove(2);
+         eventListener.expectOnlyRemovedEvent(2, embedded);
+      } finally {
+         remote.removeClientListener(eventListener);
+      }
+   }
+
+   public void testEventNoReplayAfterAddingListener() {
+      EventLogListener<Integer> eventListener = new EventLogListener<>(true);
+      Cache<Integer, String> embedded = cacheFactory.getEmbeddedCache();
+      RemoteCache<Integer, String> remote = cacheFactory.getHotRodCache();
+      remote.put(1, "one");
+      assertEquals("one", embedded.get(1));
+      remote.put(2, "two");
+      assertEquals("two", embedded.get(2));
+      remote.put(3, "three");
+      assertEquals("three", embedded.get(3));
+      remote.remove(3);
+      assertNull(embedded.get(3));
+      eventListener.expectNoEvents();
+      remote.addClientListener(eventListener);
+      try {
+         eventListener.expectNoEvents();
          remote.remove(1);
          eventListener.expectOnlyRemovedEvent(1, embedded);
          remote.remove(2);
@@ -361,6 +387,13 @@ public class EmbeddedHotRodTest extends AbstractInfinispanTest {
          eventListener.expectOnlyRemovedCustomEvent(2, null);
       } finally {
          remote.removeClientListener(eventListener);
+      }
+   }
+
+   @ClientListener(includeCurrentState = true)
+   public static class EventLogWithStateListener<K> extends EventLogListener<K> {
+      public EventLogWithStateListener(boolean compatibility) {
+         super(compatibility);
       }
    }
 

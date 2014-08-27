@@ -310,10 +310,11 @@ object Decoder2x extends AbstractVersionedDecoder with ServerConstants with Log 
          }
          case AddClientListenerRequest =>
             val listenerId = readRangedBytes(buffer)
+            val includeState = if (buffer.readByte() == 0) false else true
             val filterFactoryInfo = readNamedFactory(buffer)
             val converterFactoryInfo = readNamedFactory(buffer)
             val reg = server.getClientListenerRegistry
-            reg.addClientListener(ch, h, listenerId, cache, filterFactoryInfo, converterFactoryInfo)
+            reg.addClientListener(ch, h, listenerId, cache, includeState, filterFactoryInfo, converterFactoryInfo)
             createSuccessResponse(h, null)
          case RemoveClientListenerRequest =>
             val listenerId = readRangedBytes(buffer)
