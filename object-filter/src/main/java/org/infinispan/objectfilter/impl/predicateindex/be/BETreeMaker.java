@@ -58,18 +58,18 @@ public final class BETreeMaker<AttributeId extends Comparable<AttributeId>> {
    }
 
    private void makePredicateNode(BENode parent, List<BENode> nodes, List<Integer> treeCounters, PrimaryPredicateExpr condition, boolean isNegated) {
-      Predicate predicate = makePredicate(condition);
       List<String> propertyPath = ((PropertyValueExpr) condition.getChild()).getPropertyPath();
       List<AttributeId> translatedPath = metadataAdapter.translatePropertyPath(propertyPath);
       boolean isRepeated = metadataAdapter.isRepeatedProperty(propertyPath);
-      PredicateNode predicateNode = new PredicateNode<AttributeId>(parent, predicate, isNegated, translatedPath, isRepeated);
+      Predicate predicate = makePredicate(condition, isRepeated);
+      PredicateNode predicateNode = new PredicateNode<AttributeId>(parent, predicate, isNegated, translatedPath);
       int size = nodes.size();
       predicateNode.setLocation(size, size + 1);
       nodes.add(predicateNode);
       treeCounters.add(1);
    }
 
-   private Predicate makePredicate(PrimaryPredicateExpr condition) {
+   private Predicate makePredicate(PrimaryPredicateExpr condition, boolean isRepeated) {
       if (condition instanceof ComparisonExpr) {
          ComparisonExpr expr = (ComparisonExpr) condition;
          ConstantValueExpr right = (ConstantValueExpr) expr.getRightChild();
@@ -93,11 +93,11 @@ public final class BETreeMaker<AttributeId extends Comparable<AttributeId>> {
             default:
                throw new IllegalStateException("Unknown comparison type: " + expr.getComparisonType());
          }
-         return new Predicate<Object>(i);
+         return new Predicate<Object>(isRepeated, i);
       } else if (condition instanceof IsNullExpr) {
-         return new Predicate<Object>(IsNullCondition.INSTANCE);
+         return new Predicate<Object>(isRepeated, IsNullCondition.INSTANCE);
       } else if (condition instanceof RegexExpr) {
-         return new Predicate<String>(new RegexCondition(((RegexExpr) condition).getPattern()));
+         return new Predicate<String>(isRepeated, new RegexCondition(((RegexExpr) condition).getPattern()));
       }
 
       throw new IllegalStateException("Unexpected condition type: " + condition);

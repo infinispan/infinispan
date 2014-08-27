@@ -40,7 +40,7 @@ public final class PredicateIndex<AttributeMetadata, AttributeId extends Compara
             if (predicateNode.isNegated()) {
                isMatching = !isMatching;
             }
-            if (isMatching || !predicateNode.isRepeated()) {
+            if (isMatching || !predicateNode.getPredicate().isRepeated()) {
                predicateNode.handleChildValue(null, isMatching, filterEvalContext);
             }
          }

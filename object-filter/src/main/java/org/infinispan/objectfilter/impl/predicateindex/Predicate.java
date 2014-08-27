@@ -15,19 +15,31 @@ public final class Predicate<AttributeDomain> {
 
    protected AttributeNode attributeNode;
 
+   /**
+    * Indicates if this predicate is attached to a repeated attribute (one of the attribute path components is a
+    * collection/array) and thus it will have multiple evaluations.
+    */
+   private final boolean isRepeated;
+
    // only one of these fields is non-null
    private final Interval<AttributeDomain> interval;    // just for interval predicates
 
    private final Condition<AttributeDomain> condition;  // just for condition predicates
 
-   public Predicate(Interval<AttributeDomain> interval) {
+   public Predicate(boolean isRepeated, Interval<AttributeDomain> interval) {
+      this.isRepeated = isRepeated;
       this.interval = interval;
       this.condition = null;
    }
 
-   public Predicate(Condition<AttributeDomain> condition) {
+   public Predicate(boolean isRepeated, Condition<AttributeDomain> condition) {
+      this.isRepeated = isRepeated;
       this.interval = null;
       this.condition = condition;
+   }
+
+   public boolean isRepeated() {
+      return isRepeated;
    }
 
    public Interval<AttributeDomain> getInterval() {
@@ -44,17 +56,21 @@ public final class Predicate<AttributeDomain> {
       if (obj == null || getClass() != obj.getClass()) return false;
 
       Predicate other = (Predicate) obj;
-      return attributeNode == other.attributeNode && (interval != null ? interval.equals(other.interval) : condition.equals(other.condition));
+      return attributeNode == other.attributeNode
+            && isRepeated == other.isRepeated
+            && (interval != null ? interval.equals(other.interval) : condition.equals(other.condition));
    }
 
    @Override
    public int hashCode() {
       int i = interval != null ? interval.hashCode() : condition.hashCode();
-      return i + 31 * attributeNode.hashCode();
+      i = i + 31 * attributeNode.hashCode();
+      return 31 * i + (isRepeated ? 1 : 0);
    }
 
    @Override
    public String toString() {
-      return "Predicate(" + attributeNode + ", " + (interval != null ? interval.toString() : condition.toString()) + ")";
+      return "Predicate(" + attributeNode + ", isRepeated=" + isRepeated
+            + ", " + (interval != null ? interval.toString() : condition.toString()) + ")";
    }
 }

@@ -20,19 +20,14 @@ public final class PredicateNode<AttributeId extends Comparable<AttributeId>> ex
    private final Predicate<?> predicate;
 
    /**
-    * Indicates if the predicate's condition is negated. This can be true only for condition predicates, never for
+    * Indicates if the Predicate's condition is negated. This can be true only for condition predicates, never for
     * interval predicates.
     */
    private final boolean isNegated;
 
-   /**
-    * Indicates if the predicate is evaluated multiple times because one of the path components is a collection/array.
-    */
-   private final boolean isRepeated;
-
    private final List<AttributeId> attributePath;
 
-   public PredicateNode(BENode parent, Predicate<?> predicate, boolean isNegated, List<AttributeId> attributePath, boolean isRepeated) {
+   public PredicateNode(BENode parent, Predicate<?> predicate, boolean isNegated, List<AttributeId> attributePath) {
       super(parent);
       if (isNegated && predicate.getInterval() != null) {
          throw new IllegalArgumentException("Interval predicates should not be negated");
@@ -40,7 +35,6 @@ public final class PredicateNode<AttributeId extends Comparable<AttributeId>> ex
       this.predicate = predicate;
       this.isNegated = isNegated;
       this.attributePath = attributePath;
-      this.isRepeated = isRepeated;
    }
 
    public Predicate<?> getPredicate() {
@@ -55,10 +49,6 @@ public final class PredicateNode<AttributeId extends Comparable<AttributeId>> ex
       return attributePath;
    }
 
-   public boolean isRepeated() {
-      return isRepeated;
-   }
-
    @Override
    public boolean handleChildValue(BENode child, boolean childValue, FilterEvalContext evalContext) {
       if (child != null) {
@@ -68,7 +58,7 @@ public final class PredicateNode<AttributeId extends Comparable<AttributeId>> ex
       final int value = childValue ? BETree.EXPR_TRUE : BETree.EXPR_FALSE;
 
       if (isDecided(evalContext)) {
-         if (isRepeated && evalContext.treeCounters[index] == value) {
+         if (predicate.isRepeated() && evalContext.treeCounters[index] == value) {
             // receiving the same value multiple times if fine if this is a repeated condition
             // here we return a status that is most likely incorrect but it is harmless
             return false;
@@ -96,9 +86,8 @@ public final class PredicateNode<AttributeId extends Comparable<AttributeId>> ex
    public String toString() {
       return "PredicateNode{" +
             "attributePath=" + attributePath +
-            ", predicate=" + predicate +
             ", isNegated=" + isNegated +
-            ", isRepeated=" + isRepeated +
+            ", predicate=" + predicate +
             '}';
    }
 }
