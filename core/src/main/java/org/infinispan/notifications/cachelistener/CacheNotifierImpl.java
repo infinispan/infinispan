@@ -5,6 +5,7 @@ import org.infinispan.commands.FlagAffectedCommand;
 import org.infinispan.commons.CacheListenerException;
 import org.infinispan.commons.util.CloseableIterator;
 import org.infinispan.commons.util.InfinispanCollections;
+import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.container.InternalEntryFactory;
 import org.infinispan.container.entries.CacheEntry;
@@ -603,66 +604,68 @@ public final class CacheNotifierImpl<K, V> extends AbstractListenerImpl<Event<K,
       Listener l = testListenerClassValidity(listener.getClass());
       UUID generatedId = UUID.randomUUID();
       CacheInvocationBuilder builder = new CacheInvocationBuilder();
-      builder.setClustered(l.clustered()).setOnlyPrimary(l.clustered() ? true : l.primaryOnly()).setFilter(filter).setConverter(converter)
+      CacheMode cacheMode = config.clustering().cacheMode();
+      builder.setClustered(l.clustered()).setOnlyPrimary(l.clustered() ? (cacheMode.isDistributed() ? true : false) : l.primaryOnly()).setFilter(filter).setConverter(converter)
             .setIdentifier(generatedId).setIncludeCurrentState(l.includeCurrentState()).setClassLoader(classLoader);
       boolean foundMethods = validateAndAddListenerInvocation(listener, builder);
 
       if (foundMethods && l.clustered()) {
-         if (config.clustering().cacheMode().isInvalidation()) {
+         if (cacheMode.isInvalidation()) {
             throw new UnsupportedOperationException("Cluster listeners cannot be used with Invalidation Caches!");
-         }
-         clusterListenerIDs.put(listener, generatedId);
-         EmbeddedCacheManager manager = cache.getCacheManager();
-         Address ourAddress = manager.getAddress();
+         } else if (cacheMode.isDistributed()) {
+            clusterListenerIDs.put(listener, generatedId);
+            EmbeddedCacheManager manager = cache.getCacheManager();
+            Address ourAddress = manager.getAddress();
 
-         List<Address> members = manager.getMembers();
-         // If we are the only member don't even worry about sending listeners
-         if (members != null && members.size() > 1) {
-            DistributedExecutionCompletionService decs = new DistributedExecutionCompletionService(distExecutorService);
+            List<Address> members = manager.getMembers();
+            // If we are the only member don't even worry about sending listeners
+            if (members != null && members.size() > 1) {
+               DistributedExecutionCompletionService decs = new DistributedExecutionCompletionService(distExecutorService);
 
-            if (log.isTraceEnabled()) {
-               log.tracef("Replicating cluster listener to other nodes %s for cluster listener with id %s",
-                          members, generatedId);
-            }
-            Callable callable = new ClusterListenerReplicateCallable(generatedId, ourAddress, filter, converter);
-            for (Address member : members) {
-               if (!member.equals(ourAddress)) {
-                  decs.submit(member, callable);
+               if (log.isTraceEnabled()) {
+                  log.tracef("Replicating cluster listener to other nodes %s for cluster listener with id %s",
+                             members, generatedId);
                }
-            }
-
-            for (int i = 0; i < members.size() - 1; ++i) {
-               try {
-                  decs.take().get();
-               } catch (InterruptedException e) {
-                  throw new CacheListenerException(e);
-               } catch (ExecutionException e) {
-                  throw new CacheListenerException(e);
-               }
-            }
-
-            int extraCount = 0;
-            // If anyone else joined since we sent these we have to send the listeners again, since they may have queried
-            // before the other nodes got the new listener
-            List<Address> membersAfter = manager.getMembers();
-            for (Address member : membersAfter) {
-               if (!members.contains(member) && !member.equals(ourAddress)) {
-                  if (log.isTraceEnabled()) {
-                     log.tracef("Found additional node %s that joined during replication of cluster listener with id %s",
-                                member, generatedId);
+               Callable callable = new ClusterListenerReplicateCallable(generatedId, ourAddress, filter, converter);
+               for (Address member : members) {
+                  if (!member.equals(ourAddress)) {
+                     decs.submit(member, callable);
                   }
-                  extraCount++;
-                  decs.submit(member, callable);
                }
-            }
 
-            for (int i = 0; i < extraCount; ++i) {
-               try {
-                  decs.take().get();
-               } catch (InterruptedException e) {
-                  throw new CacheListenerException(e);
-               } catch (ExecutionException e) {
-                  throw new CacheListenerException(e);
+               for (int i = 0; i < members.size() - 1; ++i) {
+                  try {
+                     decs.take().get();
+                  } catch (InterruptedException e) {
+                     throw new CacheListenerException(e);
+                  } catch (ExecutionException e) {
+                     throw new CacheListenerException(e);
+                  }
+               }
+
+               int extraCount = 0;
+               // If anyone else joined since we sent these we have to send the listeners again, since they may have queried
+               // before the other nodes got the new listener
+               List<Address> membersAfter = manager.getMembers();
+               for (Address member : membersAfter) {
+                  if (!members.contains(member) && !member.equals(ourAddress)) {
+                     if (log.isTraceEnabled()) {
+                        log.tracef("Found additional node %s that joined during replication of cluster listener with id %s",
+                                   member, generatedId);
+                     }
+                     extraCount++;
+                     decs.submit(member, callable);
+                  }
+               }
+
+               for (int i = 0; i < extraCount; ++i) {
+                  try {
+                     decs.take().get();
+                  } catch (InterruptedException e) {
+                     throw new CacheListenerException(e);
+                  } catch (ExecutionException e) {
+                     throw new CacheListenerException(e);
+                  }
                }
             }
          }

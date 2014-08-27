@@ -289,13 +289,15 @@ public class StateConsumerImpl implements StateConsumer {
                addedSegments = getOwnedSegments(newWriteCh);
 
                // TODO Perhaps we should only do this once we are a member, as listener installation should happen only on cache members?
-               Collection<DistributedCallable> callables = getClusterListeners(cacheTopology);
-               for (DistributedCallable callable : callables) {
-                  callable.setEnvironment(cache, null);
-                  try {
-                     callable.call();
-                  } catch (Exception e) {
-                     log.clusterListenerInstallationFailure(e);
+               if (configuration.clustering().cacheMode().isDistributed()) {
+                  Collection<DistributedCallable> callables = getClusterListeners(cacheTopology);
+                  for (DistributedCallable callable : callables) {
+                     callable.setEnvironment(cache, null);
+                     try {
+                        callable.call();
+                     } catch (Exception e) {
+                        log.clusterListenerInstallationFailure(e);
+                     }
                   }
                }
 
