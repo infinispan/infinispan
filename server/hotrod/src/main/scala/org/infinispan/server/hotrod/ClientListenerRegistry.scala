@@ -53,9 +53,9 @@ class ClientListenerRegistry(configuration: HotRodServerConfiguration) extends L
    }
 
    def addClientListener(ch: Channel, h: HotRodHeader, listenerId: Bytes, cache: Cache,
-           filterFactory: NamedFactory, converterFactory: NamedFactory): Unit = {
+           includeState: Boolean, filterFactory: NamedFactory, converterFactory: NamedFactory): Unit = {
       val isCustom = converterFactory.isDefined
-      val clientEventSender = createClientEventSender(ch, h.version, listenerId, cache, isCustom)
+      val clientEventSender = ClientEventSender(includeState, ch, h.version, cache, listenerId, isCustom)
       val filterParams = unmarshallParams(filterFactory)
       val converterParams = unmarshallParams(converterFactory)
       val compatEnabled = cache.getCacheConfiguration.compatibility().enabled()
@@ -78,17 +78,6 @@ class ClientListenerRegistry(configuration: HotRodServerConfiguration) extends L
 
       eventSenders.put(listenerId, clientEventSender)
       cache.addListener(clientEventSender, filter.orNull, converter.orNull)
-   }
-
-   def createClientEventSender(ch: Channel, version: Byte, listenerId: Bytes, cache: Cache, isCustom: Boolean): AnyRef = {
-      val defaultEventSender = new ClientEventSender(ch, listenerId, version, isCustom)
-      val compatibility = cache.getCacheConfiguration.compatibility()
-      if (compatibility.enabled()) {
-         val converter = HotRodTypeConverter(compatibility.marshaller())
-         new CompatibilityClientEventSender(defaultEventSender, converter)
-      } else {
-         defaultEventSender
-      }
    }
 
    def findFactory[T](name: String, compatEnabled: Boolean, factories: ConcurrentMap[String, T], factoryType: String): T = {
@@ -134,7 +123,14 @@ class ClientListenerRegistry(configuration: HotRodServerConfiguration) extends L
    }
 
    @Listener(clustered = true, includeCurrentState = true)
-   private class ClientEventSender(ch: Channel, listenerId: Bytes, version: Byte, isCustom: Boolean) {
+   private class StatefulClientEventSender(ch: Channel, listenerId: Bytes, version: Byte, isCustom: Boolean)
+           extends BaseClientEventSender(ch, listenerId, version, isCustom)
+
+   @Listener(clustered = true, includeCurrentState = false)
+   private class StatelessClientEventSender(ch: Channel, listenerId: Bytes, version: Byte, isCustom: Boolean)
+           extends BaseClientEventSender(ch, listenerId, version, isCustom)
+
+   private abstract class BaseClientEventSender(ch: Channel, listenerId: Bytes, version: Byte, isCustom: Boolean) {
       @CacheEntryCreated
       @CacheEntryModified
       @CacheEntryRemoved
@@ -188,8 +184,37 @@ class ClientListenerRegistry(configuration: HotRodServerConfiguration) extends L
       }
    }
 
+   object ClientEventSender {
+      def apply(includeState: Boolean, ch: Channel, version: Byte,
+              cache: Cache, listenerId: Bytes, isCustom: Boolean): AnyRef = {
+         val compatibility = cache.getCacheConfiguration.compatibility()
+         (includeState, compatibility.enabled()) match {
+            case (false, false) =>
+               new StatelessClientEventSender(ch, listenerId, version, isCustom)
+            case (true, false) =>
+               new StatefulClientEventSender(ch, listenerId, version, isCustom)
+            case (false, true) =>
+               val delegate = new StatelessClientEventSender(ch, listenerId, version, isCustom)
+               new StatelessCompatibilityClientEventSender(delegate, HotRodTypeConverter(compatibility.marshaller()))
+            case (true, true) =>
+               val delegate = new StatelessClientEventSender(ch, listenerId, version, isCustom)
+               new StatefulCompatibilityClientEventSender(delegate, HotRodTypeConverter(compatibility.marshaller()))
+         }
+      }
+   }
+
    @Listener(clustered = true, includeCurrentState = true)
-   private class CompatibilityClientEventSender(delegate: ClientEventSender, converter: HotRodTypeConverter) {
+   private class StatefulCompatibilityClientEventSender(
+           delegate: BaseClientEventSender, converter: HotRodTypeConverter)
+      extends BaseCompatibilityClientEventSender(delegate, converter)
+
+   @Listener(clustered = true, includeCurrentState = false)
+   private class StatelessCompatibilityClientEventSender(
+           delegate: BaseClientEventSender, converter: HotRodTypeConverter)
+           extends BaseCompatibilityClientEventSender(delegate, converter)
+
+   private abstract class BaseCompatibilityClientEventSender(
+           delegate: BaseClientEventSender, converter: HotRodTypeConverter) {
       @CacheEntryCreated
       @CacheEntryModified
       @CacheEntryRemoved

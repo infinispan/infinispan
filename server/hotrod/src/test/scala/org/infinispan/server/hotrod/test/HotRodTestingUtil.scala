@@ -1,20 +1,21 @@
 package org.infinispan.server.hotrod.test
 
-import io.netty.channel.ChannelFuture
 import java.lang.reflect.Method
+import java.util
 import java.util.Arrays
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.atomic.AtomicInteger
+
+import io.netty.channel.ChannelFuture
 import org.infinispan.commons.api.BasicCacheContainer
 import org.infinispan.commons.equivalence.ByteArrayEquivalence
 import org.infinispan.commons.util.Util
 import org.infinispan.configuration.cache.ConfigurationBuilder
-import org.infinispan.container.versioning.NumericVersion
 import org.infinispan.manager.EmbeddedCacheManager
 import org.infinispan.marshall.core.JBossMarshaller
 import org.infinispan.notifications.Listener
 import org.infinispan.notifications.cachelistener.annotation.CacheEntryRemoved
-import org.infinispan.notifications.cachelistener.event.{Event, CacheEntryRemovedEvent}
+import org.infinispan.notifications.cachelistener.event.{CacheEntryRemovedEvent, Event}
 import org.infinispan.remoting.transport.Address
 import org.infinispan.server.hotrod.OperationStatus._
 import org.infinispan.server.hotrod._
@@ -22,15 +23,11 @@ import org.infinispan.server.hotrod.configuration.HotRodServerConfigurationBuild
 import org.infinispan.server.hotrod.logging.Log
 import org.infinispan.statetransfer.StateTransferManager
 import org.infinispan.test.TestingUtil
-import org.testng.Assert._
-import org.testng.Assert.assertNull
-import org.testng.Assert.assertTrue
+import org.testng.Assert.{assertNull, assertTrue, _}
 import org.testng.AssertJUnit.assertEquals
-import scala.Some
+
 import scala.collection.JavaConversions._
-import scala.{Array, Byte}
 import scala.collection.mutable.ListBuffer
-import java.util
 
 /**
  * Test utils for Hot Rod tests.
@@ -398,103 +395,10 @@ object HotRodTestingUtil extends Log {
    def unmarshall[T](key: Array[Byte]): T =
       new JBossMarshaller().objectFromByteBuffer(key).asInstanceOf[T]
 
-   // Event listener assertions
-
-   def expectNoEvents(eventType: Option[Event.Type] = None)
-           (implicit eventListener: TestClientListener): Unit = {
-      eventType match {
-         case None =>
-            assertEquals(0, eventListener.queueSize(Event.Type.CACHE_ENTRY_CREATED))
-            assertEquals(0, eventListener.queueSize(Event.Type.CACHE_ENTRY_MODIFIED))
-            assertEquals(0, eventListener.queueSize(Event.Type.CACHE_ENTRY_REMOVED))
-            assertEquals(0, eventListener.customQueueSize())
-         case Some(t) =>
-            assertEquals(0, eventListener.queueSize(t))
-      }
-   }
-
-   def expectOnlyRemovedEvent(k: Bytes)(implicit eventListener: TestClientListener, cache: Cache): Unit = {
-      expectSingleEvent(k, Event.Type.CACHE_ENTRY_REMOVED)
-      expectNoEvents(Some(Event.Type.CACHE_ENTRY_CREATED))
-      expectNoEvents(Some(Event.Type.CACHE_ENTRY_MODIFIED))
-   }
-
-   def expectOnlyModifiedEvent(k: Bytes)(implicit eventListener: TestClientListener, cache: Cache): Unit = {
-      expectSingleEvent(k, Event.Type.CACHE_ENTRY_MODIFIED)
-      expectNoEvents(Some(Event.Type.CACHE_ENTRY_CREATED))
-      expectNoEvents(Some(Event.Type.CACHE_ENTRY_REMOVED))
-   }
-
-   def expectOnlyCreatedEvent(k: Bytes)(implicit eventListener: TestClientListener, cache: Cache): Unit = {
-      expectSingleEvent(k, Event.Type.CACHE_ENTRY_CREATED)
-      expectNoEvents(Some(Event.Type.CACHE_ENTRY_MODIFIED))
-      expectNoEvents(Some(Event.Type.CACHE_ENTRY_REMOVED))
-   }
-
-   def expectSingleEvent(k: Bytes, eventType: Event.Type)
-           (implicit eventListener: TestClientListener, cache: Cache): Unit = {
-      expectEvent(k, eventType)
-      assertEquals(0, eventListener.queueSize(eventType))
-   }
-
-   def expectEvent(k: Bytes, eventType: Event.Type)
-           (implicit eventListener: TestClientListener, cache: Cache): Unit = {
-      val event = eventListener.pollEvent(eventType)
-      assertNotNull(event)
-      event match {
-         case t: TestKeyWithVersionEvent =>
-            assertByteArrayEquals(k, t.key)
-            assertEquals(serverDataVersion(k, cache), t.dataVersion)
-         case t: TestKeyEvent =>
-            assertByteArrayEquals(k, t.key)
-      }
-   }
-
-   def expectUnorderedEvents(keys: Seq[Bytes], eventType: Event.Type)
-           (implicit eventListener: TestClientListener, cache: Cache): Unit = {
-      val assertedKeys = ListBuffer[Bytes]()
-
-      def checkUnorderedKeyEvent(key: Bytes, eventKey: Bytes): Boolean = {
-         if (util.Arrays.equals(key, eventKey)) {
-            assertFalse(assertedKeys.contains(key))
-            assertedKeys += key
-            true
-         } else false
-      }
-
-      for (i <- 0 until keys.size) {
-         val event = eventListener.pollEvent(eventType)
-         assertNotNull(event)
-         val initialSize = assertedKeys.size
-         keys.foreach { key =>
-            event match {
-               case t: TestKeyWithVersionEvent =>
-                  val keyMatched = checkUnorderedKeyEvent(key, t.key)
-                  if (keyMatched)
-                     assertEquals(serverDataVersion(key, cache), t.dataVersion)
-               case t: TestKeyEvent =>
-                  checkUnorderedKeyEvent(key, t.key)
-            }
-         }
-         val finalSize = assertedKeys.size
-         assertEquals(initialSize + 1, finalSize)
-      }
-   }
-
-   def expectSingleCustomEvent(eventData: Bytes)
-           (implicit eventListener: TestClientListener, cache: Cache): Unit = {
-      val event = eventListener.pollCustom()
-      assertNotNull(event)
-      event match {
-         case t: TestCustomEvent => assertByteArrayEquals(eventData, t.eventData)
-      }
-      val remaining = eventListener.customQueueSize()
-      assertEquals(0, remaining)
-   }
-
-   def withClientListener(filterFactory: NamedFactory = None, converterFactory: NamedFactory = None)
-           (fn: () => Unit)(implicit listener: TestClientListener, client: HotRodClient): Unit = {
-      assertStatus(client.addClientListener(listener, filterFactory, converterFactory), Success)
+   def withClientListener(filterFactory: NamedFactory = None, converterFactory: NamedFactory = None,
+           includeState: Boolean = false)(fn: () => Unit)
+           (implicit listener: TestClientListener, client: HotRodClient): Unit = {
+      assertStatus(client.addClientListener(listener, includeState, filterFactory, converterFactory), Success)
       try {
          fn()
       } finally {
@@ -503,19 +407,15 @@ object HotRodTestingUtil extends Log {
    }
 
    def withClientListener(client: HotRodClient, listener: TestClientListener,
-           filterFactory: NamedFactory, converterFactory: NamedFactory)
+           includeState: Boolean, filterFactory: NamedFactory, converterFactory: NamedFactory)
            (fn: () => Unit): Unit = {
-      assertStatus(client.addClientListener(listener, filterFactory, converterFactory), Success)
+      assertStatus(client.addClientListener(listener, includeState, filterFactory, converterFactory), Success)
       try {
          fn()
       } finally {
          assertStatus(client.removeClientListener(listener.getId), Success)
       }
    }
-
-   private def serverDataVersion(k: Bytes, cache: Cache): Long =
-      cache.getCacheEntry(k)
-              .getMetadata.version().asInstanceOf[NumericVersion].getVersion
 
    @Listener
    private class AddressRemovalListener(latch: CountDownLatch) {

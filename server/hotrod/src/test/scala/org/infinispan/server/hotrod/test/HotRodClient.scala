@@ -268,10 +268,10 @@ class HotRodClient(host: String, port: Int, val defaultCacheName: String, rspTim
       response
    }
 
-   def addClientListener(listener: TestClientListener,
+   def addClientListener(listener: TestClientListener, includeState: Boolean,
            filterFactory: NamedFactory, converterFactory: NamedFactory): TestResponse = {
       val op = new AddClientListenerOp(0xA0, protocolVersion, defaultCacheName,
-         1, 0, listener.getId, filterFactory, converterFactory)
+         1, 0, listener.getId, includeState, filterFactory, converterFactory)
       val handler = ch.pipeline.last.asInstanceOf[ClientHandler]
       handler.addClientListener(listener)
       writeOp(op)
@@ -315,6 +315,7 @@ private class Encoder(protocolVersion: Byte) extends MessageToByteEncoder[Object
          case op: AddClientListenerOp =>
             writeHeader(op, buffer)
             writeRangedBytes(op.listenerId, buffer)
+            buffer.writeByte(if (op.includeState) 1 else 0)
             writeNamedFactory(op.filterFactory, buffer)
             writeNamedFactory(op.converterFactory, buffer)
          case op: RemoveClientListenerOp =>
@@ -813,6 +814,7 @@ class AddClientListenerOp(override val magic: Int,
         override val clientIntel: Byte,
         override val topologyId: Int,
         val listenerId: Bytes,
+        val includeState: Boolean,
         val filterFactory: NamedFactory,
         val converterFactory: NamedFactory)
         extends Op(magic, version, 0x25, cacheName, null, 0, 0, null, 0, 0,

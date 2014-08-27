@@ -7,8 +7,10 @@ import org.infinispan.client.hotrod.TestHelper;
 import org.infinispan.client.hotrod.annotation.ClientListener;
 import org.infinispan.client.hotrod.event.CustomEventLogListener.DynamicConverterFactory;
 import org.infinispan.client.hotrod.event.CustomEventLogListener.DynamicCustomEventLogListener;
+import org.infinispan.client.hotrod.event.CustomEventLogListener.DynamicCustomEventWithStateLogListener;
 import org.infinispan.client.hotrod.event.CustomEventLogListener.StaticConverterFactory;
 import org.infinispan.client.hotrod.event.CustomEventLogListener.StaticCustomEventLogListener;
+import org.infinispan.client.hotrod.event.CustomEventLogListener.StaticCustomEventLogWithStateListener;
 import org.infinispan.client.hotrod.test.RemoteCacheManagerCallable;
 import org.infinispan.client.hotrod.test.SingleHotRodServerTest;
 import org.infinispan.client.hotrod.exceptions.HotRodClientException;
@@ -74,7 +76,7 @@ public class ClientCustomEventsTest extends SingleHotRodServerTest {
    }
 
    public void testConvertedEventsReplay() {
-      final StaticCustomEventLogListener staticEventListener = new StaticCustomEventLogListener();
+      final StaticCustomEventLogWithStateListener staticEventListener = new StaticCustomEventLogWithStateListener();
       RemoteCache<Integer, String> cache = remoteCacheManager.getCache();
       cache.put(1, "one");
       withClientListener(staticEventListener, new RemoteCacheManagerCallable(remoteCacheManager) {
@@ -83,12 +85,32 @@ public class ClientCustomEventsTest extends SingleHotRodServerTest {
             staticEventListener.expectOnlyCreatedCustomEvent(1, "one");
          }
       });
-      final DynamicCustomEventLogListener dynamicEventListener = new DynamicCustomEventLogListener();
+      final DynamicCustomEventWithStateLogListener dynamicEventListener = new DynamicCustomEventWithStateLogListener();
       cache.put(2, "two");
       withClientListener(dynamicEventListener, null, new Object[]{2}, new RemoteCacheManagerCallable(remoteCacheManager) {
          @Override
          public void call() {
             dynamicEventListener.expectOnlyCreatedCustomEvent(2, null);
+         }
+      });
+   }
+
+   public void testConvertedNoEventsReplay() {
+      final StaticCustomEventLogListener staticEventListener = new StaticCustomEventLogListener();
+      RemoteCache<Integer, String> cache = remoteCacheManager.getCache();
+      cache.put(1, "one");
+      withClientListener(staticEventListener, new RemoteCacheManagerCallable(remoteCacheManager) {
+         @Override
+         public void call() {
+            staticEventListener.expectNoEvents();
+         }
+      });
+      final DynamicCustomEventLogListener dynamicEventListener = new DynamicCustomEventLogListener();
+      cache.put(2, "two");
+      withClientListener(dynamicEventListener, null, new Object[]{2}, new RemoteCacheManagerCallable(remoteCacheManager) {
+         @Override
+         public void call() {
+            staticEventListener.expectNoEvents();
          }
       });
    }

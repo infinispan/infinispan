@@ -111,8 +111,14 @@ public abstract class CustomEventLogListener {
    @ClientListener(converterFactoryName = "static-converter-factory")
    public static class StaticCustomEventLogListener extends CustomEventLogListener {}
 
+   @ClientListener(converterFactoryName = "static-converter-factory", includeCurrentState = true)
+   public static class StaticCustomEventLogWithStateListener extends CustomEventLogListener {}
+
    @ClientListener(converterFactoryName = "dynamic-converter-factory")
    public static class DynamicCustomEventLogListener extends CustomEventLogListener {}
+
+   @ClientListener(converterFactoryName = "dynamic-converter-factory", includeCurrentState = true)
+   public static class DynamicCustomEventWithStateLogListener extends CustomEventLogListener {}
 
    @NamedFactory(name = "static-converter-factory")
    public static class StaticConverterFactory implements ConverterFactory {

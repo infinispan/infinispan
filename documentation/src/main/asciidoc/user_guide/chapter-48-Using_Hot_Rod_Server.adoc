@@ -470,23 +470,36 @@ enabled by default.
 
 ====== Client Event Listener State Consumption
 
-If a client listener is added in a cache already containing data, the server
-iterates over the cache contents and sends an event for each entry to the
-client as a `ClientCacheEntryCreated` (or custom event if configured).
-This allows clients to build some  local data structures based on the existing
-content. Once the content has been iterated over, events are received as normal,
-as cache updates are received. If the cache is clustered, the entire cluster
-wide contents are iterated over.
+Client listener annotation has an optional `includeCurrentState` attribute
+that specifies whether state will be sent to the client when the listener is
+added or when there's a failover of the listener.
+
+By default, `includeCurrentState` is false, but if set to true and a client
+listener is added in a cache already containing data, the server iterates over
+the cache contents and sends an event for each entry to the client as a
+`ClientCacheEntryCreated` (or custom event if configured). This allows clients
+to build some local data structures based on the existing content. Once the
+content has been iterated over, events are received as normal, as cache
+updates are received.  If the cache is clustered, the entire cluster wide
+contents are iterated over.
+
+`includeCurrentState` also controls whether state is received when the node
+where the client event listener is registered fails and it's moved to a
+different node. The next section discusses this topic in depth.
 
 ====== Client Event Listener Failure Handling
 
 When a Hot Rod client registers a client listener, it does so in a single
 node in a cluster. If that node fails, the Java Hot Rod client detects that
 transparently and fails over all listeners registered in the node that failed
-to another node. During this fail over, the client might miss some events,
-which is why when the listeners are registered in a new node, the cache
-contents are iterated over and `ClientCacheEntryCreated` events (or custom
-events if configured) are generated.
+to another node.
+
+During this fail over the client might miss some events. To avoid missing
+these events, the client listener annotation contains an optional parameter
+called `includeCurrentState` which if set to true, when the failover happens,
+the cache contents can iterated over and `ClientCacheEntryCreated` events
+(or custom events if configured) are generated. By default,
+`includeCurrentState` is set to false.
 
 Java Hot Rod clients can be made aware of such fail over event by adding a
 callback to handle it:

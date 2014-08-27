@@ -2,6 +2,7 @@ package org.infinispan.client.hotrod.event;
 
 import org.infinispan.client.hotrod.RemoteCache;
 import org.infinispan.client.hotrod.VersionedValue;
+import org.infinispan.client.hotrod.annotation.ClientListener;
 import org.infinispan.client.hotrod.test.RemoteCacheManagerCallable;
 import org.infinispan.client.hotrod.test.SingleHotRodServerTest;
 import org.testng.annotations.Test;
@@ -244,7 +245,7 @@ public class ClientEventsTest extends SingleHotRodServerTest {
    }
 
    public void testEventReplayAfterAddingListener() {
-      final EventLogListener<Integer> eventListener = new EventLogListener<>();
+      final WithStateEventLogListener<Integer> eventListener = new WithStateEventLogListener<>();
       RemoteCache<Integer, String> cache = remoteCacheManager.getCache();
       cache.put(1, "one");
       cache.put(2, "two");
@@ -256,6 +257,23 @@ public class ClientEventsTest extends SingleHotRodServerTest {
          }
       });
    }
+
+   public void testNoEventReplayAfterAddingListener() {
+      final EventLogListener<Integer> eventListener = new EventLogListener<>();
+      RemoteCache<Integer, String> cache = remoteCacheManager.getCache();
+      cache.put(1, "one");
+      cache.put(2, "two");
+      eventListener.expectNoEvents();
+      withClientListener(eventListener, new RemoteCacheManagerCallable(remoteCacheManager) {
+         @Override
+         public void call() {
+            eventListener.expectNoEvents();
+         }
+      });
+   }
+
+   @ClientListener(includeCurrentState = true)
+   public static class WithStateEventLogListener<K> extends EventLogListener<K> {}
 
    static final class CustomKey implements Serializable {
       final int id;
