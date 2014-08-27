@@ -204,7 +204,6 @@
                   <connection-pool connection-timeout="60000" socket-timeout="60000" tcp-no-delay="true" max-connections-per-host="4" max-total-connections="20" />
                   <remote-server outbound-socket-binding="remote-store-rest-server" />
                </rest-store>
-               <compatibility enabled="true" />
             </local-cache>
          </cache-container>
          <cache-container name="security">
