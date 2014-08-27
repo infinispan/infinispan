@@ -19,10 +19,6 @@
          <indexing index="LOCAL">
             <!-- Use our custom IndexManager; TODO autoinject by default? -->
             <property name="hibernate.search.default.indexmanager">org.infinispan.query.indexmanager.InfinispanIndexManager</property>
-            <!-- specify the managed index is to be shared across the nodes -->
-            <property name="hibernate.search.default.directory_provider">infinispan</property>
-            <!-- Supporting exclusive index usage will require lock cleanup on crashed nodes to be implemented -->
-            <property name="hibernate.search.default.exclusive_index_use">false</property>
             <!-- Use latest Lucene version -->
             <property name="hibernate.search.lucene_version">LUCENE_48</property>
          </indexing>

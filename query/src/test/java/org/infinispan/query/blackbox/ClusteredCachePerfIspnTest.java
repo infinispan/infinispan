@@ -25,7 +25,6 @@ public class ClusteredCachePerfIspnTest extends ClusteredCacheTest {
             .addProperty("default.indexmanager", "near-real-time")
             .addProperty("default.directory_provider", "infinispan")
             .addProperty("default.chunk_size", "128000")
-            .addProperty("default.exclusive_index_use", "true")
             .addProperty("default.indexwriter.merge_factor", "30")
             .addProperty("default.indexwriter.merge_max_size", "1024")
             .addProperty("default.indexwriter.ram_buffer_size", "64")

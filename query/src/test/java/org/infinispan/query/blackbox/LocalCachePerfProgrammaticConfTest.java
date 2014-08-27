@@ -29,7 +29,6 @@ public class LocalCachePerfProgrammaticConfTest extends LocalCacheTest {
             .addProperty("default.chunk_size", "128000")
             .addProperty("default.indexmanager", "near-real-time")
             .addProperty("default.indexBase", indexDirectory)
-            .addProperty("default.exclusive_index_use", "true")
             .addProperty("default.indexwriter.merge_factor", "30")
             .addProperty("default.indexwriter.merge_max_size", "4096")
             .addProperty("default.indexwriter.ram_buffer_size", "220")
