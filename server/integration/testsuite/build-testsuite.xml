@@ -179,7 +179,7 @@
                    modifyMulticastAddress="${other.parts}/switch-multicast-address.xml"/>
         <transform in="examples/standalone-rest-rolling-upgrade.xml" out="examples/standalone-rest-rolling-upgrade.xml"
                    modifyRemoteDestination="${other.parts}/rest-remote-destination.xml" removeRestSecurity="true"/>
-        <transform in="examples/standalone-compatibility-mode.xml" out="examples/standalone-compatibility-mode.xml"/>
+        <transform in="examples/standalone-compatibility-mode.xml" out="examples/standalone-compatibility-mode.xml" removeRestSecurity="true"/>
         <transform in="examples/clustered-two-nodes.xml" out="examples/clustered-two-nodes.xml"/>
         <transform in="examples/clustered-two-nodes2.xml" out="examples/clustered-two-nodes2.xml"/>
         <transform in="clustered.xml" out="testsuite/clustered-jmx.xml" modifyInfinispan="${infinispan.parts}/jmx.xml"/>

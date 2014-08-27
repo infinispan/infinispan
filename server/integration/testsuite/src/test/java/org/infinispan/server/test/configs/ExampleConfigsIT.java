@@ -55,6 +55,8 @@ import static org.infinispan.server.test.util.ITestUtils.invokeOperation;
 import static org.infinispan.server.test.util.ITestUtils.sleepForSecs;
 import static org.infinispan.server.test.util.ITestUtils.stopContainers;
 import static org.junit.Assert.*;
+import static org.infinispan.server.test.util.ITestUtils.SERVER1_MGMT_PORT;
+import static org.infinispan.server.test.util.ITestUtils.SERVER2_MGMT_PORT;
 
 /**
  * Tests for example configurations.
@@ -130,10 +132,8 @@ public class ExampleConfigsIT {
     @WithRunningServer({@RunningServer(name = "hotrod-rolling-upgrade-2"),@RunningServer(name = "hotrod-rolling-upgrade-1")})
     public void testHotRodRollingUpgrades() throws Exception {
         // Target node
-        final int managementPortServer1 = 9990;
         MBeanServerConnectionProvider provider1;
         // Source node
-        final int managementPortServer2 = 10099;
         MBeanServerConnectionProvider provider2;
 
         RemoteInfinispanMBeans s2 = createRemotes("hotrod-rolling-upgrade-2", "local", DEFAULT_CACHE_NAME);
@@ -154,9 +154,9 @@ public class ExampleConfigsIT {
         assertEquals("Can't access etries stored in source node (target's RemoteCacheStore).", "value1", c1.get("key1"));
 
         provider1 = new MBeanServerConnectionProvider(s1.server.getHotrodEndpoint().getInetAddress().getHostName(),
-                managementPortServer1);
+                                                      SERVER1_MGMT_PORT);
         provider2 = new MBeanServerConnectionProvider(s2.server.getHotrodEndpoint().getInetAddress().getHostName(),
-                managementPortServer2);
+                                                      SERVER2_MGMT_PORT);
 
         final ObjectName rollMan = new ObjectName("jboss.infinispan:type=Cache," + "name=\"default(local)\","
                 + "manager=\"local\"," + "component=RollingUpgradeManager");
@@ -185,57 +185,63 @@ public class ExampleConfigsIT {
     @Test
     @WithRunningServer({@RunningServer(name = "rest-rolling-upgrade-2"),@RunningServer(name = "rest-rolling-upgrade-1")})
     public void testRestRollingUpgrades() throws Exception {
+        final int PORT_OFFSET = 100;
         // target node
-        final int managementPortServer1 = 9990;
         MBeanServerConnectionProvider provider1;
         // Source node
-        final int managementPortServer2 = 10099;
         MBeanServerConnectionProvider provider2;
 
+        controller.start("rest-rolling-upgrade-2");
+        try {
+            RemoteInfinispanMBeans s2 = createRemotes("rest-rolling-upgrade-2", "local", DEFAULT_CACHE_NAME);
+            RESTHelper.addServer(s2.server.getRESTEndpoint().getInetAddress().getHostName(), s2.server.getRESTEndpoint().getContextPath());
 
-        RemoteInfinispanMBeans s2 = createRemotes("rest-rolling-upgrade-2", "local", DEFAULT_CACHE_NAME);
-        final RemoteCache<Object, Object> c2 = createCache(s2);
+            post(fullPathKey(0, DEFAULT_CACHE_NAME, "key1", PORT_OFFSET), "data", "text/html");
+            get(fullPathKey(0, DEFAULT_CACHE_NAME, "key1", PORT_OFFSET), "data");
 
-        c2.put("key1", "value1");
-        assertEquals("value1", c2.get("key1"));
+            for (int i = 0; i < 50; i++) {
+                post(fullPathKey(0, DEFAULT_CACHE_NAME, "keyLoad" + i, PORT_OFFSET), "valueLoad" + i, "text/html");
+            }
 
-        for (int i = 0; i < 50; i++) {
-            c2.put("keyLoad" + i, "valueLoad" + i);
-        }
+            controller.start("rest-rolling-upgrade-1");
 
-        controller.start("rest-rolling-upgrade-1");
+            RemoteInfinispanMBeans s1 = createRemotes("rest-rolling-upgrade-1", "local", DEFAULT_CACHE_NAME);
+            RESTHelper.addServer(s1.server.getRESTEndpoint().getInetAddress().getHostName(), s1.server.getRESTEndpoint().getContextPath());
 
-        RemoteInfinispanMBeans s1 = createRemotes("rest-rolling-upgrade-1", "local", DEFAULT_CACHE_NAME);
-        final RemoteCache<Object, Object> c1 = createCache(s1);
+            get(fullPathKey(1, DEFAULT_CACHE_NAME, "key1", 0), "data");
 
-        assertEquals("Can't access etries stored in source node (target's RestCacheStore).", "value1", c1.get("key1"));
+            provider1 = new MBeanServerConnectionProvider(s1.server.getRESTEndpoint().getInetAddress().getHostName(),
+                                                          SERVER1_MGMT_PORT);
+            provider2 = new MBeanServerConnectionProvider(s2.server.getRESTEndpoint().getInetAddress().getHostName(),
+                                                          SERVER2_MGMT_PORT);
 
-        provider1 = new MBeanServerConnectionProvider(s1.server.getRESTEndpoint().getInetAddress().getHostName(),
-                managementPortServer1);
-        provider2 = new MBeanServerConnectionProvider(s2.server.getRESTEndpoint().getInetAddress().getHostName(),
-                managementPortServer2);
+            final ObjectName rollMan = new ObjectName("jboss.infinispan:type=Cache," + "name=\"default(local)\","
+                                                            + "manager=\"local\"," + "component=RollingUpgradeManager");
 
-        final ObjectName rollMan = new ObjectName("jboss.infinispan:type=Cache," + "name=\"default(local)\","
-                + "manager=\"local\"," + "component=RollingUpgradeManager");
+            invokeOperation(provider2, rollMan.toString(), "recordKnownGlobalKeyset", new Object[]{}, new String[]{});
 
-        invokeOperation(provider2, rollMan.toString(), "recordKnownGlobalKeyset", new Object[]{}, new String[]{});
+            invokeOperation(provider1, rollMan.toString(), "synchronizeData", new Object[]{"rest"},
+                            new String[]{"java.lang.String"});
 
-        invokeOperation(provider1, rollMan.toString(), "synchronizeData", new Object[]{"rest"},
-                new String[]{"java.lang.String"});
+            invokeOperation(provider1, rollMan.toString(), "disconnectSource", new Object[]{"rest"},
+                            new String[]{"java.lang.String"});
 
-        invokeOperation(provider1, rollMan.toString(), "disconnectSource", new Object[]{"rest"},
-                new String[]{"java.lang.String"});
+            post(fullPathKey(0, DEFAULT_CACHE_NAME, "disconnected", PORT_OFFSET), "source", "application/text");
 
-        // is source (RemoteCacheStore) really disconnected?
-        c2.put("disconnected", "source");
-        assertEquals("Can't obtain value from cache1 (source node).", "source", c2.get("disconnected"));
-        assertNull("Source node entries should NOT be accessible from target node (after RCS disconnection)",
-                c1.get("disconnected"));
+            //Source node entries should NOT be accessible from target node
+            get(fullPathKey(1, DEFAULT_CACHE_NAME, "disconnected", 0), HttpServletResponse.SC_NOT_FOUND);
 
-        // all entries migrated?
-        assertEquals("Entry was not successfully migrated.", "value1", c1.get("key1"));
-        for (int i = 0; i < 50; i++) {
-            assertEquals("Entry was not successfully migrated.", "valueLoad" + i, c1.get("keyLoad" + i));
+            //All remaining entries migrated?
+            for (int i = 0; i < 50; i++) {
+                get(fullPathKey(1, DEFAULT_CACHE_NAME, "keyLoad" + i, 0), "valueLoad" + i);
+            }
+        } finally {
+            if (controller.isStarted("rest-rolling-upgrade-1")) {
+                controller.stop("rest-rolling-upgrade-1");
+            }
+            if (controller.isStarted("rest-rolling-upgrade-2")) {
+                controller.stop("rest-rolling-upgrade-2");
+            }
         }
     }
 
