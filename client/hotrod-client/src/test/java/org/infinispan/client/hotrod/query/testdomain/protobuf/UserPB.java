@@ -19,6 +19,7 @@ public class UserPB implements User {
    private List<Address> addresses;
    private Integer age;
    private Gender gender;
+   private String notes;
 
    public int getId() {
       return id;
@@ -77,6 +78,16 @@ public class UserPB implements User {
    }
 
    @Override
+   public String getNotes() {
+      return notes;
+   }
+
+   @Override
+   public void setNotes(String notes) {
+      this.notes = notes;
+   }
+
+   @Override
    public String toString() {
       return "UserPB{" +
             "id=" + id +
@@ -86,6 +97,7 @@ public class UserPB implements User {
             ", addresses=" + addresses +
             ", age=" + age +
             ", gender=" + gender +
+            ", notes=" + notes +
             '}';
    }
 }

@@ -53,7 +53,7 @@
 
    <properties>
       <!-- Versions for dependencies -->
-      <version.protostream>2.0.0.Alpha3</version.protostream>
+      <version.protostream>2.0.0.Final</version.protostream>
       <version.protobuf>2.6.0</version.protobuf>
       <version.protoparser>3.1.4</version.protoparser>
       <version.aesh>0.33.7</version.aesh>

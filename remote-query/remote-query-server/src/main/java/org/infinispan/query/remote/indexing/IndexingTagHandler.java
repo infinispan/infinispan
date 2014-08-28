@@ -22,9 +22,6 @@ import org.infinispan.query.remote.QueryFacadeImpl;
  */
 class IndexingTagHandler implements TagHandler {
 
-   public static final int INDEXED_MESSAGE_OPTION = 55554;
-   public static final int INDEXED_FIELD_OPTION = 55555;
-
    public static final Integer TRUE_INT = 1;
    public static final Integer FALSE_INT = 0;
 
@@ -104,18 +101,7 @@ class IndexingTagHandler implements TagHandler {
 
    private boolean isIndexed(int fieldNumber) {
       return true;
-// TODO [anistor] for now we index all fields
-//      boolean isIndexed = false;
-//      Descriptors.FieldDescriptor fd = messageContext.getFieldByNumber(fieldNumber);
-//      List<Long> indexedMessageOption = fd.getContainingType().getOptions().getUnknownFields().getField(INDEXED_MESSAGE_OPTION).getVarintList();
-//      if (!indexedMessageOption.isEmpty()) {
-//         isIndexed = indexedMessageOption.get(0) == 1;
-//      }
-//      List<Long> indexedFieldOption = fd.getOptions().getUnknownFields().getField(INDEXED_FIELD_OPTION).getVarintList();
-//      if (!indexedFieldOption.isEmpty()) {
-//         isIndexed = indexedFieldOption.get(0) == 1;
-//      }
-//      return isIndexed;
+      // TODO [anistor] for now we index all fields
    }
 
    @Override

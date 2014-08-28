@@ -2,7 +2,7 @@ package org.infinispan.objectfilter.test;
 
 import org.infinispan.objectfilter.impl.ProtobufMatcher;
 import org.infinispan.objectfilter.test.model.MarshallerRegistration;
-import org.infinispan.protostream.ConfigurationBuilder;
+import org.infinispan.protostream.config.Configuration;
 import org.infinispan.protostream.ProtobufUtil;
 import org.infinispan.protostream.SerializationContext;
 import org.junit.Before;
@@ -17,7 +17,7 @@ public class ProtobufMatcherTest extends AbstractMatcherTest {
 
    @Before
    public void setUp() throws Exception {
-      serCtx = ProtobufUtil.newSerializationContext(new ConfigurationBuilder().build());
+      serCtx = ProtobufUtil.newSerializationContext(new Configuration.Builder().build());
       MarshallerRegistration.registerMarshallers(serCtx);
    }
 

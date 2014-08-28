@@ -123,19 +123,13 @@ public class RemoteCacheOsgiIT extends KarafTestSupport {
       // register schemas on server
       RemoteCache<String, String> metadataCache = manager.getCache(ProtobufMetadataManager.PROTOBUF_METADATA_CACHE_NAME);
       Bundle sampleDomainDefinitionBundle = getInstalledBundle("org.infinispan.protostream.sample-domain-definition");
-      String file1 = Util.read(sampleDomainDefinitionBundle.getResource("/google/protobuf/descriptor.proto").openStream());
-      String file2 = Util.read(sampleDomainDefinitionBundle.getResource("/infinispan/indexing.proto").openStream());
-      String file3 = Util.read(bundleContext.getBundle().getResource("/sample_bank_account/bank.proto").openStream());
-      metadataCache.put("google/protobuf/descriptor.proto", file1);
-      metadataCache.put("infinispan/indexing.proto", file2);
-      metadataCache.put("sample_bank_account/bank.proto", file3);
+      String file = Util.read(bundleContext.getBundle().getResource("/sample_bank_account/bank.proto").openStream());
+      metadataCache.put("sample_bank_account/bank.proto", file);
 
       // register schemas and marshallers on client
       SerializationContext ctx = ProtoStreamMarshaller.getSerializationContext(manager);
       FileDescriptorSource fds = new FileDescriptorSource();
-      fds.addProtoFile("google/protobuf/descriptor.proto", file1);
-      fds.addProtoFile("infinispan/indexing.proto", file2);
-      fds.addProtoFile("sample_bank_account/bank.proto", file3);
+      fds.addProtoFile("sample_bank_account/bank.proto", file);
       ctx.registerProtoFiles(fds);
       ctx.registerMarshaller(new UserMarshaller());
       ctx.registerMarshaller(new GenderMarshaller());

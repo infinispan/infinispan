@@ -59,12 +59,8 @@ public class RemoteQueryDescriptorIT {
    }
 
    private void registerProtoOnServer1() throws Exception {
-      String[] fileNames = {"infinispan/indexing.proto", "sample_bank_account/bank.proto", "google/protobuf/descriptor.proto"};
-      String[] fileContents = {
-              read(getClass().getResourceAsStream("/infinispan/indexing.proto")),
-              read(getClass().getResourceAsStream("/sample_bank_account/bank.proto")),
-              read(getClass().getResourceAsStream("/google/protobuf/descriptor.proto"))
-      };
+      String[] fileNames = {"sample_bank_account/bank.proto"};
+      String[] fileContents = {read(getClass().getResourceAsStream("/sample_bank_account/bank.proto"))};
 
       invoke(getJmxConnection(server1), "registerProtofiles", fileNames, fileContents);
    }

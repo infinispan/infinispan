@@ -41,8 +41,6 @@ public class RemoteQueryDslConditionsIspnDirTest extends RemoteQueryDslCondition
 
       //initialize server-side serialization context
       RemoteCache<String, String> metadataCache = remoteCacheManager.getCache(ProtobufMetadataManager.PROTOBUF_METADATA_CACHE_NAME);
-      metadataCache.put("google/protobuf/descriptor.proto", Util.read(Util.getResourceAsStream("/google/protobuf/descriptor.proto", getClass().getClassLoader())));
-      metadataCache.put("infinispan/indexing.proto", Util.read(Util.getResourceAsStream("/infinispan/indexing.proto", getClass().getClassLoader())));
       metadataCache.put("sample_bank_account/bank.proto", Util.read(Util.getResourceAsStream("/sample_bank_account/bank.proto", getClass().getClassLoader())));
 
       //initialize client-side serialization context

@@ -1,7 +1,7 @@
 package org.infinispan.query.remote;
 
 import org.infinispan.protostream.BaseMarshaller;
-import org.infinispan.protostream.Configuration;
+import org.infinispan.protostream.config.Configuration;
 import org.infinispan.protostream.DescriptorParserException;
 import org.infinispan.protostream.FileDescriptorSource;
 import org.infinispan.protostream.SerializationContext;
@@ -45,13 +45,6 @@ final class DelegatingSerializationContext implements SerializationContext {
          files.put(key, new String(fileDescriptors.get(key)));
       }
       protobufMetadataManager.getCache().putAll(files);
-   }
-
-   @Override
-   public void registerProtoFiles(String... classpathResources) throws IOException, DescriptorParserException {
-      FileDescriptorSource fileDescriptorSource = new FileDescriptorSource();
-      fileDescriptorSource.addProtoFiles(classpathResources);
-      registerProtoFiles(fileDescriptorSource);
    }
 
    @Override

@@ -40,4 +40,8 @@ public interface User {
    List<Address> getAddresses();
 
    void setAddresses(List<Address> addresses);
+
+   String getNotes();
+
+   void setNotes(String notes);
 }

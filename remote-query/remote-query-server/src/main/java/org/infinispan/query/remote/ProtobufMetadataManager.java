@@ -20,11 +20,9 @@ import org.infinispan.protostream.DescriptorParserException;
 import org.infinispan.protostream.ProtobufUtil;
 import org.infinispan.protostream.SerializationContext;
 import org.infinispan.query.remote.client.MarshallerRegistration;
-import org.infinispan.query.remote.logging.Log;
 import org.infinispan.transaction.LockingMode;
 import org.infinispan.transaction.TransactionMode;
 import org.infinispan.util.concurrent.IsolationLevel;
-import org.infinispan.util.logging.LogFactory;
 
 import javax.management.MBeanException;
 import javax.management.ObjectName;
@@ -44,8 +42,6 @@ import java.util.Map;
        description = "Component that acts as a manager and container for Protocol Buffers metadata descriptors in the scope of a CacheManger.")
 public class ProtobufMetadataManager implements ProtobufMetadataManagerMBean {
 
-   private static final Log log = LogFactory.getLog(ProtobufMetadataManager.class, Log.class);
-
    public static final String OBJECT_NAME = "ProtobufMetadataManager";
 
    /**
@@ -62,7 +58,8 @@ public class ProtobufMetadataManager implements ProtobufMetadataManagerMBean {
    private EmbeddedCacheManager cacheManager;
 
    public ProtobufMetadataManager() {
-      serCtx = ProtobufUtil.newSerializationContext(new org.infinispan.protostream.ConfigurationBuilder().build());
+      org.infinispan.protostream.config.Configuration.Builder configBuilder = new org.infinispan.protostream.config.Configuration.Builder();
+      serCtx = ProtobufUtil.newSerializationContext(configBuilder.build());
       try {
          MarshallerRegistration.registerMarshallers(serCtx);
       } catch (IOException | DescriptorParserException e) {

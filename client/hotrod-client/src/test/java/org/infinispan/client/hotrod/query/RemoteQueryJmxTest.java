@@ -91,12 +91,8 @@ public class RemoteQueryJmxTest extends SingleCacheManagerTest {
 
       ProtobufMetadataManagerMBean protobufMetadataManagerMBean = JMX.newMBeanProxy(mBeanServer, getProtobufMetadataManagerObjectName(), ProtobufMetadataManagerMBean.class);
       protobufMetadataManagerMBean.registerProtofiles(
-            new String[]{"sample_bank_account/bank.proto", "infinispan/indexing.proto", "google/protobuf/descriptor.proto"},
-            new String[]{
-                  read("/sample_bank_account/bank.proto"),
-                  read("/infinispan/indexing.proto"),
-                  read("/google/protobuf/descriptor.proto")
-            }
+            new String[]{"sample_bank_account/bank.proto"},
+            new String[]{read("/sample_bank_account/bank.proto")}
       );
 
       //initialize client-side serialization context

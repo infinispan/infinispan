@@ -81,8 +81,6 @@ public class HotRodQueryTest extends SingleCacheManagerTest {
 
       //initialize server-side serialization
       RemoteCache<String, String> metadataCache = remoteCacheManager.getCache(ProtobufMetadataManager.PROTOBUF_METADATA_CACHE_NAME);
-      metadataCache.put("google/protobuf/descriptor.proto", read("/google/protobuf/descriptor.proto"));
-      metadataCache.put("infinispan/indexing.proto", read("/infinispan/indexing.proto"));
       metadataCache.put("sample_bank_account/bank.proto", read("/sample_bank_account/bank.proto"));
 
       //initialize client-side serialization context

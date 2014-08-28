@@ -44,13 +44,9 @@ public class RemoteQueryJONRegisterIT extends RemoteQueryIT {
 
       //initialize server-side serialization context via JON/RHQ
       ModelNode nameList = new ModelNode()
-              .add("/infinispan/indexing.proto")
-              .add("/sample_bank_account/bank.proto")
-              .add("/google/protobuf/descriptor.proto");
+              .add("/sample_bank_account/bank.proto");
       ModelNode urlList = new ModelNode()
-              .add(getClass().getResource("/infinispan/indexing.proto").toString())
-              .add(getClass().getResource("/sample_bank_account/bank.proto").toString())
-              .add(getClass().getResource("/google/protobuf/descriptor.proto").toString());
+              .add(getClass().getResource("/sample_bank_account/bank.proto").toString());
 
       ModelControllerClient client = ModelControllerClient.Factory.create(
             getServer().getHotrodEndpoint().getInetAddress().getHostName(), SERVER1_MGMT_PORT);
