@@ -2,11 +2,9 @@ package org.infinispan.objectfilter.impl.predicateindex;
 
 import org.infinispan.objectfilter.impl.FilterRegistry;
 import org.infinispan.objectfilter.impl.FilterSubscriptionImpl;
-import org.infinispan.objectfilter.impl.predicateindex.be.PredicateNode;
 
 import java.util.HashMap;
 import java.util.Map;
-import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * Stores processing state during the matching process of all filters registered with a Matcher.
@@ -27,7 +25,7 @@ public abstract class MatcherEvalContext<TypeMetadata, AttributeMetadata, Attrib
     */
    protected AttributeNode<AttributeMetadata, AttributeId> currentNode;
 
-   private final Map<Predicate<?>, AtomicInteger> suspendedSubscriptionCounts = new HashMap<Predicate<?>, AtomicInteger>();
+   private final Map<Predicate<?>, Counter> suspendedSubscriptionCounts = new HashMap<Predicate<?>, Counter>();
 
    private final Object instance;
 
@@ -78,16 +76,16 @@ public abstract class MatcherEvalContext<TypeMetadata, AttributeMetadata, Attrib
       return filterEvalContext;
    }
 
-   public void addSuspendedSubscription(PredicateNode<AttributeId> predicateNode) {
+   public void addSuspendedSubscription(Predicate<?> predicate) {
       if (isSingleFilter()) {
          return;
       }
-      AtomicInteger counter = suspendedSubscriptionCounts.get(predicateNode.getPredicate());
+      Counter counter = suspendedSubscriptionCounts.get(predicate);
       if (counter == null) {
-         counter = new AtomicInteger();
-         suspendedSubscriptionCounts.put(predicateNode.getPredicate(), counter);
+         counter = new Counter();
+         suspendedSubscriptionCounts.put(predicate, counter);
       }
-      counter.incrementAndGet();
+      counter.value++;
    }
 
    public int getSuspendedSubscriptionsCounter(Predicate<AttributeId> predicate) {
@@ -95,8 +93,8 @@ public abstract class MatcherEvalContext<TypeMetadata, AttributeMetadata, Attrib
          return -1;
       }
 
-      AtomicInteger counter = suspendedSubscriptionCounts.get(predicate);
-      return counter == null ? 0 : counter.get();
+      Counter counter = suspendedSubscriptionCounts.get(predicate);
+      return counter == null ? 0 : counter.value;
    }
 
    public void match() {
@@ -109,4 +107,8 @@ public abstract class MatcherEvalContext<TypeMetadata, AttributeMetadata, Attrib
    }
 
    protected abstract void processAttributes(AttributeNode<AttributeMetadata, AttributeId> node, Object instance);
+
+   private static final class Counter {
+      int value;
+   }
 }

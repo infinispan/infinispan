@@ -1,7 +1,6 @@
 package org.infinispan.objectfilter.impl.predicateindex.be;
 
 import org.infinispan.objectfilter.impl.predicateindex.FilterEvalContext;
-import org.infinispan.objectfilter.impl.predicateindex.MatcherEvalContext;
 import org.infinispan.objectfilter.impl.predicateindex.Predicate;
 
 import java.util.List;
@@ -76,8 +75,9 @@ public final class PredicateNode<AttributeId extends Comparable<AttributeId>> ex
 
    @Override
    public void suspendSubscription(FilterEvalContext ctx) {
-      //todo this can create interference between matcher and ObjectFilter
-      ((MatcherEvalContext<?, ?, AttributeId>) ctx.matcherContext).addSuspendedSubscription(this);
+      if (predicate.isRepeated()) {
+         ctx.matcherContext.addSuspendedSubscription(predicate);
+      }
    }
 
    @Override

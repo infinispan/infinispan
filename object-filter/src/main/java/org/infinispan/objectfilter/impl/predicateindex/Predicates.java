@@ -48,7 +48,7 @@ public final class Predicates<AttributeDomain, AttributeId extends Comparable<At
 
       //todo [anistor] this is an improvement but still does not eliminate precessing of attributes that have only suspended subscribers
       boolean isActive(MatcherEvalContext<?, ?, ?> ctx) {
-         return ctx.getSuspendedSubscriptionsCounter(predicate) < subscriptions.size();
+         return !predicate.isRepeated() || ctx.getSuspendedSubscriptionsCounter(predicate) < subscriptions.size();
       }
    }
 
