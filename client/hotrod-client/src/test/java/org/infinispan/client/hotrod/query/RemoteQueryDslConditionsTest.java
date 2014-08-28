@@ -119,6 +119,18 @@ public class RemoteQueryDslConditionsTest extends QueryDslConditionsTest {
       assertEquals(RemoteQueryFactory.class, getQueryFactory().getClass());
    }
 
+   @Test(expectedExceptions = HotRodClientException.class, expectedExceptionsMessageRegExp = "java.lang.IllegalArgumentException: Field notes from type sample_bank_account.User is not indexed")
+   @Override
+   public void testEqNonIndexed() throws Exception {
+      QueryFactory qf = getQueryFactory();
+
+      Query q = qf.from(getModelFactory().getUserImplClass())
+            .having("notes").eq("Lorem ipsum dolor sit amet")
+            .toBuilder().build();
+
+      q.list();
+   }
+
    @Test(enabled = false, expectedExceptions = HotRodClientException.class, expectedExceptionsMessageRegExp = ".*HQLLUCN000005:.*", description = "see https://issues.jboss.org/browse/ISPN-4423")
    @Override
    public void testInvalidEmbeddedAttributeQuery() throws Exception {

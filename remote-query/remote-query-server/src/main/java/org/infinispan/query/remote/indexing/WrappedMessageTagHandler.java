@@ -17,7 +17,7 @@ import java.io.IOException;
  * @author anistor@redhat.com
  * @since 6.0
  */
-class WrappedMessageTagHandler implements TagHandler {
+final class WrappedMessageTagHandler implements TagHandler {
 
    private final Document document;
    private final LuceneOptions luceneOptions;
@@ -89,10 +89,14 @@ class WrappedMessageTagHandler implements TagHandler {
          if (messageDescriptor == null) {
             throw new IllegalStateException("Descriptor name is missing");
          }
-         try {
-            ProtobufParser.INSTANCE.parse(new IndexingTagHandler(messageDescriptor, document), messageDescriptor, bytes);
-         } catch (IOException e) {
-            throw new CacheException(e);
+         IndexingMetadata indexingMetadata = messageDescriptor.getProcessedAnnotation(IndexingMetadata.INDEXED_ANNOTATION);
+         // if the message definition is not annotated at all we consider all fields indexed and stored, just to be backwards compatible
+         if (indexingMetadata == null || indexingMetadata.isIndexed()) {
+            try {
+               ProtobufParser.INSTANCE.parse(new IndexingTagHandler(messageDescriptor, document), messageDescriptor, bytes);
+            } catch (IOException e) {
+               throw new CacheException(e);
+            }
          }
       } else if (numericValue != null) {
          //todo [anistor] how do we index a scalar value?

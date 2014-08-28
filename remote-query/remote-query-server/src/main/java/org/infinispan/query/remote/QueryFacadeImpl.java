@@ -32,6 +32,7 @@ import org.infinispan.query.dsl.embedded.impl.QueryCache;
 import org.infinispan.query.impl.ComponentRegistryUtils;
 import org.infinispan.query.remote.client.QueryRequest;
 import org.infinispan.query.remote.client.QueryResponse;
+import org.infinispan.query.remote.indexing.IndexingMetadata;
 import org.infinispan.query.remote.indexing.ProtobufValueWrapper;
 import org.infinispan.server.core.QueryFacade;
 import org.infinispan.util.KeyValuePair;
@@ -217,6 +218,11 @@ public class QueryFacadeImpl implements QueryFacade {
             public FieldBridge getFieldBridge(String type, String propertyPath) {
                Descriptor md = serCtx.getMessageDescriptor(type);
                FieldDescriptor fd = getFieldDescriptor(md, propertyPath);
+               IndexingMetadata indexingMetadata = md.getProcessedAnnotation(IndexingMetadata.INDEXED_ANNOTATION);
+               if (indexingMetadata != null && !indexingMetadata.isFieldIndexed(fd.getNumber())) {
+                  throw new IllegalArgumentException("Field " + propertyPath + " from type " + md.getFullName() + " is not indexed");
+               }
+
                switch (fd.getType()) {
                   case DOUBLE:
                      return NumericFieldBridge.DOUBLE_FIELD_BRIDGE;

@@ -19,7 +19,10 @@ import org.infinispan.protostream.BaseMarshaller;
 import org.infinispan.protostream.DescriptorParserException;
 import org.infinispan.protostream.ProtobufUtil;
 import org.infinispan.protostream.SerializationContext;
+import org.infinispan.protostream.descriptors.AnnotationElement;
 import org.infinispan.query.remote.client.MarshallerRegistration;
+import org.infinispan.query.remote.indexing.IndexingMetadata;
+import org.infinispan.query.remote.indexing.IndexingMetadataCreator;
 import org.infinispan.transaction.LockingMode;
 import org.infinispan.transaction.TransactionMode;
 import org.infinispan.util.concurrent.IsolationLevel;
@@ -59,6 +62,19 @@ public class ProtobufMetadataManager implements ProtobufMetadataManagerMBean {
 
    public ProtobufMetadataManager() {
       org.infinispan.protostream.config.Configuration.Builder configBuilder = new org.infinispan.protostream.config.Configuration.Builder();
+      configBuilder
+            .messageAnnotation(IndexingMetadata.INDEXED_ANNOTATION)
+               .attribute(AnnotationElement.Annotation.DEFAULT_ATTRIBUTE)
+                  .booleanType()
+                  .defaultValue(true)
+               .annotationMetadataCreator(new IndexingMetadataCreator())
+            .fieldAnnotation(IndexingMetadata.INDEXED_FIELD_ANNOTATION)
+               .attribute("index")
+                  .booleanType()
+                  .defaultValue(true)
+               .attribute("store")
+                  .booleanType()
+                  .defaultValue(true);
       serCtx = ProtobufUtil.newSerializationContext(configBuilder.build());
       try {
          MarshallerRegistration.registerMarshallers(serCtx);

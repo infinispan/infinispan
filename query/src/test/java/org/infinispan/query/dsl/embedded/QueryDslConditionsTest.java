@@ -48,6 +48,7 @@ public class QueryDslConditionsTest extends AbstractQueryDslTest {
       user1.setGender(User.Gender.MALE);
       user1.setAge(22);
       user1.setAccountIds(new HashSet<Integer>(Arrays.asList(1, 2)));
+      user1.setNotes("Lorem ipsum dolor sit amet");
 
       Address address1 = getModelFactory().makeAddress();
       address1.setStreet("Main Street");
@@ -208,6 +209,15 @@ public class QueryDslConditionsTest extends AbstractQueryDslTest {
 
       List<User> list = q.list();
       assertEquals(0, list.size());
+   }
+
+   @Test(expectedExceptions = ParsingException.class, expectedExceptionsMessageRegExp = "HQLLUCN000002: The type org.infinispan.query.dsl.embedded.testdomain.hsearch.UserHS has no indexed property named notes.")
+   public void testEqNonIndexed() throws Exception {
+      QueryFactory qf = getQueryFactory();
+
+      qf.from(getModelFactory().getUserImplClass())
+            .having("notes").eq("Lorem ipsum dolor sit amet")
+            .toBuilder().build();
    }
 
    public void testEqInNested1() throws Exception {

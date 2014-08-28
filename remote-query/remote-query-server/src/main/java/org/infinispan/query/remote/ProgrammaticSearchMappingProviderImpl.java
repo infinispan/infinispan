@@ -21,7 +21,7 @@ public class ProgrammaticSearchMappingProviderImpl implements ProgrammaticSearch
             .indexed()
             .classBridgeInstance(new ProtobufValueWrapperFieldBridge(cache))
             .norms(Norms.NO)
-            .analyze(Analyze.YES)
-            .store(Store.YES);
+            .analyze(Analyze.NO)
+            .store(Store.NO);
    }
 }

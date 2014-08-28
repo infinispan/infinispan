@@ -30,6 +30,7 @@ public class QueryDslIterationTest extends AbstractQueryDslTest {
       user1.setId(1);
       user1.setName("John");
       user1.setSurname("White");
+      user1.setNotes("Lorem ipsum dolor sit amet");
 
       User user2 = getModelFactory().makeUser();
       user2.setId(2);

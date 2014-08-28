@@ -43,6 +43,20 @@ public class NonIndexedQueryDslConditionsTest extends QueryDslConditionsTest {
       assertEquals(EmbeddedQueryFactory.class, getQueryFactory().getClass());
    }
 
+   @Test
+   @Override
+   public void testEqNonIndexed() throws Exception {
+      QueryFactory qf = getQueryFactory();
+
+      Query q = qf.from(getModelFactory().getUserImplClass())
+            .having("notes").eq("Lorem ipsum dolor sit amet")
+            .toBuilder().build();
+
+      List<User> list = q.list();
+      assertEquals(1, list.size());
+      assertEquals(1, list.get(0).getId());
+   }
+
    @Test(expectedExceptions = ParsingException.class, expectedExceptionsMessageRegExp = "ISPN000405:.*")
    @Override
    public void testInvalidEmbeddedAttributeQuery() throws Exception {
