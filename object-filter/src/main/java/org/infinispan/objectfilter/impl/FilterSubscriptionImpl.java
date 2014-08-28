@@ -4,6 +4,7 @@ import org.infinispan.objectfilter.FilterCallback;
 import org.infinispan.objectfilter.FilterSubscription;
 import org.infinispan.objectfilter.SortField;
 import org.infinispan.objectfilter.impl.predicateindex.PredicateIndex;
+import org.infinispan.objectfilter.impl.predicateindex.Predicates;
 import org.infinispan.objectfilter.impl.predicateindex.be.BENode;
 import org.infinispan.objectfilter.impl.predicateindex.be.BETree;
 import org.infinispan.objectfilter.impl.predicateindex.be.PredicateNode;
@@ -25,7 +26,7 @@ public final class FilterSubscriptionImpl<TypeMetadata, AttributeMetadata, Attri
 
    private final BETree beTree;
 
-   private final List<PredicateIndex.PredicateSubscription<AttributeId>> predicateSubscriptions = new ArrayList<PredicateIndex.PredicateSubscription<AttributeId>>();
+   private final List<Predicates.Subscription<AttributeId>> predicateSubscriptions = new ArrayList<Predicates.Subscription<AttributeId>>();
 
    private final FilterCallback callback;
 
@@ -131,7 +132,7 @@ public final class FilterSubscriptionImpl<TypeMetadata, AttributeMetadata, Attri
    }
 
    public void unsubscribe(PredicateIndex<AttributeMetadata, AttributeId> predicateIndex) {
-      for (PredicateIndex.PredicateSubscription<AttributeId> subscription : predicateSubscriptions) {
+      for (Predicates.Subscription<AttributeId> subscription : predicateSubscriptions) {
          predicateIndex.removeSubscriptionForPredicate(subscription);
       }
    }

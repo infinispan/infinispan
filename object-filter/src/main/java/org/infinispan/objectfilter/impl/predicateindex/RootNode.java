@@ -2,6 +2,7 @@ package org.infinispan.objectfilter.impl.predicateindex;
 
 import org.infinispan.objectfilter.impl.FilterSubscriptionImpl;
 import org.infinispan.objectfilter.impl.MetadataAdapter;
+import org.infinispan.objectfilter.impl.predicateindex.be.PredicateNode;
 
 /**
  * @author anistor@redhat.com
@@ -14,12 +15,12 @@ final class RootNode<AttributeMetadata, AttributeId extends Comparable<Attribute
    }
 
    @Override
-   public void addPredicateSubscription(PredicateIndex.PredicateSubscription subscription) {
+   public Predicates.Subscription<AttributeId> addPredicateSubscription(PredicateNode<AttributeId> predicateNode, FilterSubscriptionImpl filterSubscription) {
       throw new UnsupportedOperationException("Root node does not allow predicates");
    }
 
    @Override
-   public void removePredicateSubscription(PredicateIndex.PredicateSubscription subscription) {
+   public void removePredicateSubscription(Predicates.Subscription<AttributeId> subscription) {
       throw new UnsupportedOperationException("Root node does not allow predicates");
    }
 

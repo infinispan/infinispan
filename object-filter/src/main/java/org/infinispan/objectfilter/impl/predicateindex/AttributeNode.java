@@ -2,6 +2,7 @@ package org.infinispan.objectfilter.impl.predicateindex;
 
 import org.infinispan.objectfilter.impl.FilterSubscriptionImpl;
 import org.infinispan.objectfilter.impl.MetadataAdapter;
+import org.infinispan.objectfilter.impl.predicateindex.be.PredicateNode;
 
 import java.util.Collection;
 import java.util.HashMap;
@@ -160,14 +161,14 @@ public class AttributeNode<AttributeMetadata, AttributeId extends Comparable<Att
       childrenArray = childrenCollection.toArray(new AttributeNode[childrenCollection.size()]);
    }
 
-   public void addPredicateSubscription(PredicateIndex.PredicateSubscription subscription) {
+   public Predicates.Subscription<AttributeId> addPredicateSubscription(PredicateNode<AttributeId> predicateNode, FilterSubscriptionImpl filterSubscription) {
       if (predicates == null) {
          predicates = new Predicates(metadataAdapter.isComparableProperty(metadata));
       }
-      predicates.addPredicateSubscription(subscription);
+      return predicates.addPredicateSubscription(predicateNode, filterSubscription);
    }
 
-   public void removePredicateSubscription(PredicateIndex.PredicateSubscription subscription) {
+   public void removePredicateSubscription(Predicates.Subscription<AttributeId> subscription) {
       if (predicates != null) {
          predicates.removePredicateSubscription(subscription);
       } else {

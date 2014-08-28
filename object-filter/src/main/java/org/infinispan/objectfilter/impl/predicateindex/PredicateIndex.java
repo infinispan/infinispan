@@ -19,34 +19,6 @@ import java.util.List;
  */
 public final class PredicateIndex<AttributeMetadata, AttributeId extends Comparable<AttributeId>> {
 
-   public static final class PredicateSubscription<AttributeId extends Comparable<AttributeId>> {
-
-      private final PredicateNode<AttributeId> predicateNode;
-
-      private final FilterSubscriptionImpl filterSubscription;
-
-      PredicateSubscription(PredicateNode<AttributeId> predicateNode, FilterSubscriptionImpl filterSubscription) {
-         this.predicateNode = predicateNode;
-         this.filterSubscription = filterSubscription;
-      }
-
-      public PredicateNode<AttributeId> getPredicateNode() {
-         return predicateNode;
-      }
-
-      public void handleValue(MatcherEvalContext<?, ?, AttributeId> ctx, boolean isMatching) {
-         FilterEvalContext filterEvalContext = ctx.getFilterEvalContext(filterSubscription);
-         if (!predicateNode.isDecided(filterEvalContext)) {
-            if (predicateNode.isNegated()) {
-               isMatching = !isMatching;
-            }
-            if (isMatching || !predicateNode.getPredicate().isRepeated()) {
-               predicateNode.handleChildValue(null, isMatching, filterEvalContext);
-            }
-         }
-      }
-   }
-
    private final AttributeNode<AttributeMetadata, AttributeId> root;
 
    public PredicateIndex(MetadataAdapter<?, AttributeMetadata, AttributeId> metadataAdapter) {
@@ -57,16 +29,14 @@ public final class PredicateIndex<AttributeMetadata, AttributeId extends Compara
       return root;
    }
 
-   public PredicateSubscription<AttributeId> addSubscriptionForPredicate(PredicateNode<AttributeId> predicateNode, FilterSubscriptionImpl filterSubscription) {
+   public Predicates.Subscription<AttributeId> addSubscriptionForPredicate(PredicateNode<AttributeId> predicateNode, FilterSubscriptionImpl filterSubscription) {
       AttributeNode<AttributeMetadata, AttributeId> attributeNode = addAttributeNodeByPath(predicateNode.getAttributePath());
       predicateNode.getPredicate().attributeNode = attributeNode;
-      PredicateSubscription<AttributeId> subscription = new PredicateSubscription<AttributeId>(predicateNode, filterSubscription);
-      attributeNode.addPredicateSubscription(subscription);
-      return subscription;
+      return attributeNode.addPredicateSubscription(predicateNode, filterSubscription);
    }
 
-   public void removeSubscriptionForPredicate(PredicateSubscription<AttributeId> subscription) {
-      AttributeNode<AttributeMetadata, AttributeId> current = getAttributeNodeByPath(subscription.predicateNode.getAttributePath());
+   public void removeSubscriptionForPredicate(Predicates.Subscription<AttributeId> subscription) {
+      AttributeNode<AttributeMetadata, AttributeId> current = getAttributeNodeByPath(subscription.getPredicateNode().getAttributePath());
       current.removePredicateSubscription(subscription);
 
       // remove the nodes that no longer have a purpose

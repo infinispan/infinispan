@@ -1,5 +1,7 @@
 package org.infinispan.objectfilter.impl.predicateindex;
 
+import org.infinispan.objectfilter.impl.FilterSubscriptionImpl;
+import org.infinispan.objectfilter.impl.predicateindex.be.PredicateNode;
 import org.infinispan.objectfilter.impl.util.ComparableComparator;
 import org.infinispan.objectfilter.impl.util.IntervalTree;
 
@@ -14,7 +16,7 @@ import java.util.List;
  * @author anistor@redhat.com
  * @since 7.0
  */
-final class Predicates<AttributeDomain> {
+public final class Predicates<AttributeDomain, AttributeId extends Comparable<AttributeId>> {
 
    /**
     * Holds all subscriptions for a single predicate.
@@ -26,18 +28,22 @@ final class Predicates<AttributeDomain> {
       /**
        * The callbacks of the subscribed predicates.
        */
-      private final List<PredicateIndex.PredicateSubscription> subscriptions = new ArrayList<PredicateIndex.PredicateSubscription>();
+      private final List<Subscription> subscriptions = new ArrayList<Subscription>();
 
       private Subscriptions(Predicate predicate) {
          this.predicate = predicate;
       }
 
-      void add(PredicateIndex.PredicateSubscription subscription) {
+      void add(Subscription subscription) {
          subscriptions.add(subscription);
       }
 
-      void remove(PredicateIndex.PredicateSubscription subscription) {
+      void remove(Subscription subscription) {
          subscriptions.remove(subscription);
+      }
+
+      boolean isEmpty() {
+         return subscriptions.isEmpty();
       }
 
       //todo [anistor] this is an improvement but still does not eliminate precessing of attributes that have only suspended subscribers
@@ -46,12 +52,40 @@ final class Predicates<AttributeDomain> {
       }
    }
 
+   public static final class Subscription<AttributeId extends Comparable<AttributeId>> {
+
+      private final PredicateNode<AttributeId> predicateNode;
+
+      private final FilterSubscriptionImpl filterSubscription;
+
+      private Subscription(PredicateNode<AttributeId> predicateNode, FilterSubscriptionImpl filterSubscription) {
+         this.predicateNode = predicateNode;
+         this.filterSubscription = filterSubscription;
+      }
+
+      private void handleValue(MatcherEvalContext<?, ?, ?> ctx, boolean isMatching) {
+         FilterEvalContext filterEvalContext = ctx.getFilterEvalContext(filterSubscription);
+         if (!predicateNode.isDecided(filterEvalContext)) {
+            if (predicateNode.isNegated()) {
+               isMatching = !isMatching;
+            }
+            if (isMatching || !predicateNode.getPredicate().isRepeated()) {
+               predicateNode.handleChildValue(null, isMatching, filterEvalContext);
+            }
+         }
+      }
+
+      public PredicateNode<AttributeId> getPredicateNode() {
+         return predicateNode;
+      }
+   }
+
    // todo [anistor] this cannot be used right now because ProtobufMatcherEvalContext.DUMMY_VALUE is not really comparable
    private final boolean valueIsComparable;
 
    /**
-    * The predicates that have a condition based on an order relation. This allows them to be represented by an interval
-    * tree.
+    * The predicates that have a condition based on an order relation (ie. intervals). This allows them to be
+    * represented by an interval tree.
     */
    private IntervalTree<AttributeDomain, Subscriptions> orderedPredicates;
 
@@ -71,8 +105,7 @@ final class Predicates<AttributeDomain> {
             public void handle(IntervalTree.Node<AttributeDomain, Subscriptions> n) {
                Subscriptions subscriptions = n.value;
                if (subscriptions.isActive(ctx)) {
-                  for (PredicateIndex.PredicateSubscription s : subscriptions.subscriptions) {
-                     //todo [anistor] if we also notify non-matching interval conditions this could lead to faster short-circuiting evaluation
+                  for (Subscription s : subscriptions.subscriptions) {
                      s.handleValue(ctx, true);
                   }
                }
@@ -84,19 +117,19 @@ final class Predicates<AttributeDomain> {
          for (int k = unorderedPredicates.size() - 1; k >= 0; k--) {
             Subscriptions subscriptions = unorderedPredicates.get(k);
             if (subscriptions.isActive(ctx)) {
-               boolean conditionSatisfied = subscriptions.predicate.getCondition().match(attributeValue);
-               List<PredicateIndex.PredicateSubscription> s = subscriptions.subscriptions;
+               boolean isMatching = subscriptions.predicate.getCondition().match(attributeValue);
+               List<Subscription> s = subscriptions.subscriptions;
                for (int i = s.size() - 1; i >= 0; i--) {
-                  s.get(i).handleValue(ctx, conditionSatisfied);
+                  s.get(i).handleValue(ctx, isMatching);
                }
             }
          }
       }
    }
 
-   public void addPredicateSubscription(PredicateIndex.PredicateSubscription subscription) {
+   public Predicates.Subscription<AttributeId> addPredicateSubscription(PredicateNode predicateNode, FilterSubscriptionImpl filterSubscription) {
       Subscriptions subscriptions;
-      Predicate<AttributeDomain> predicate = subscription.getPredicateNode().getPredicate();
+      Predicate<AttributeDomain> predicate = predicateNode.getPredicate();
       if (predicate.getInterval() != null) {
          if (orderedPredicates == null) {
             // in this case AttributeDomain extends Comparable for sure
@@ -127,17 +160,19 @@ final class Predicates<AttributeDomain> {
             unorderedPredicates.add(subscriptions);
          }
       }
+      Subscription<AttributeId> subscription = new Subscription<AttributeId>(predicateNode, filterSubscription);
       subscriptions.add(subscription);
+      return subscription;
    }
 
-   public void removePredicateSubscription(PredicateIndex.PredicateSubscription subscription) {
-      Predicate<AttributeDomain> predicate = subscription.getPredicateNode().getPredicate();
+   public void removePredicateSubscription(Subscription subscription) {
+      Predicate<AttributeDomain> predicate = (Predicate<AttributeDomain>) subscription.predicateNode.getPredicate();
       if (predicate.getInterval() != null) {
          if (orderedPredicates != null) {
             IntervalTree.Node<AttributeDomain, Subscriptions> n = orderedPredicates.findNode(predicate.getInterval());
             if (n != null) {
                n.value.remove(subscription);
-               if (n.value.subscriptions.isEmpty()) {
+               if (n.value.isEmpty()) {
                   orderedPredicates.remove(n);
                }
             } else {
@@ -152,7 +187,7 @@ final class Predicates<AttributeDomain> {
                Predicates.Subscriptions subscriptions = unorderedPredicates.get(i);
                if (subscriptions.predicate.equals(predicate)) {
                   subscriptions.remove(subscription);
-                  if (subscriptions.subscriptions.isEmpty()) {
+                  if (subscriptions.isEmpty()) {
                      unorderedPredicates.remove(i);
                   }
                   break;
