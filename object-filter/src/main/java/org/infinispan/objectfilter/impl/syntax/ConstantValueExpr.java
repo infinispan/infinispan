@@ -6,13 +6,13 @@ package org.infinispan.objectfilter.impl.syntax;
  */
 public final class ConstantValueExpr implements ValueExpr {
 
-   private final Object constantValue;
+   private final Comparable constantValue;
 
-   public ConstantValueExpr(Object constantValue) {
+   public ConstantValueExpr(Comparable constantValue) {
       this.constantValue = constantValue;
    }
 
-   public Object getConstantValue() {
+   public Comparable getConstantValue() {
       return constantValue;
    }
 

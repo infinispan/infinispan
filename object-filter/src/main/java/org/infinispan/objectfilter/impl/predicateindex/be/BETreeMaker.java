@@ -1,6 +1,8 @@
 package org.infinispan.objectfilter.impl.predicateindex.be;
 
 import org.infinispan.objectfilter.impl.MetadataAdapter;
+import org.infinispan.objectfilter.impl.predicateindex.EqualsCondition;
+import org.infinispan.objectfilter.impl.predicateindex.IntervalPredicate;
 import org.infinispan.objectfilter.impl.predicateindex.IsNullCondition;
 import org.infinispan.objectfilter.impl.predicateindex.Predicate;
 import org.infinispan.objectfilter.impl.predicateindex.RegexCondition;
@@ -20,8 +22,11 @@ public final class BETreeMaker<AttributeId extends Comparable<AttributeId>> {
 
    private final MetadataAdapter<?, ?, AttributeId> metadataAdapter;
 
-   public BETreeMaker(MetadataAdapter<?, ?, AttributeId> metadataAdapter) {
+   private final boolean useIntervals;
+
+   public BETreeMaker(MetadataAdapter<?, ?, AttributeId> metadataAdapter, boolean useIntervals) {
       this.metadataAdapter = metadataAdapter;
+      this.useIntervals = useIntervals;
    }
 
    public BETree make(BooleanExpr booleanExpr) {
@@ -59,48 +64,67 @@ public final class BETreeMaker<AttributeId extends Comparable<AttributeId>> {
 
    private void makePredicateNode(BENode parent, List<BENode> nodes, List<Integer> treeCounters, PrimaryPredicateExpr condition, boolean isNegated) {
       List<String> propertyPath = ((PropertyValueExpr) condition.getChild()).getPropertyPath();
-      List<AttributeId> translatedPath = metadataAdapter.translatePropertyPath(propertyPath);
+      List<AttributeId> path = metadataAdapter.translatePropertyPath(propertyPath);
       boolean isRepeated = metadataAdapter.isRepeatedProperty(propertyPath);
-      Predicate predicate = makePredicate(condition, isRepeated);
-      PredicateNode predicateNode = new PredicateNode<AttributeId>(parent, predicate, isNegated, translatedPath);
+
+      if (condition instanceof ComparisonExpr) {
+         ComparisonExpr expr = (ComparisonExpr) condition;
+         ConstantValueExpr right = (ConstantValueExpr) expr.getRightChild();
+         switch (expr.getComparisonType()) {
+            case NOT_EQUAL:
+               if (useIntervals) {
+                  if (!(parent instanceof OrNode)) {
+                     parent = new OrNode(parent);
+                     int size = nodes.size();
+                     parent.setLocation(size, size + 4);
+                     nodes.add(parent);
+                     treeCounters.add(3);
+                  }
+                  // the special case of non-equality is transformed into two intervals, excluding the compared value, + an IS NULL predicate
+                  addPredicateNode(parent, nodes, treeCounters, isNegated, path, new IntervalPredicate(isRepeated, new Interval(Interval.getMinusInf(), false, right.getConstantValue(), false)));
+                  addPredicateNode(parent, nodes, treeCounters, isNegated, path, new IntervalPredicate(isRepeated, new Interval(right.getConstantValue(), false, Interval.getPlusInf(), false)));
+                  addPredicateNode(parent, nodes, treeCounters, isNegated, path, new Predicate<Object>(isRepeated, IsNullCondition.INSTANCE));
+               } else {
+                  addPredicateNode(parent, nodes, treeCounters, !isNegated, path, new Predicate<Object>(isRepeated, new EqualsCondition(right.getConstantValue())));
+               }
+               break;
+            case EQUAL:
+               if (useIntervals) {
+                  addPredicateNode(parent, nodes, treeCounters, isNegated, path, new IntervalPredicate(isRepeated, new Interval(right.getConstantValue(), true, right.getConstantValue(), true)));
+               } else {
+                  addPredicateNode(parent, nodes, treeCounters, isNegated, path, new Predicate<Object>(isRepeated, new EqualsCondition(right.getConstantValue())));
+               }
+               break;
+            case LESS:
+               addPredicateNode(parent, nodes, treeCounters, isNegated, path, new IntervalPredicate(isRepeated, new Interval(Interval.getMinusInf(), false, right.getConstantValue(), false)));
+               break;
+            case LESS_OR_EQUAL:
+               addPredicateNode(parent, nodes, treeCounters, isNegated, path, new IntervalPredicate(isRepeated, new Interval(Interval.getMinusInf(), false, right.getConstantValue(), true)));
+               break;
+            case GREATER:
+               addPredicateNode(parent, nodes, treeCounters, isNegated, path, new IntervalPredicate(isRepeated, new Interval(right.getConstantValue(), false, Interval.getPlusInf(), false)));
+               break;
+            case GREATER_OR_EQUAL:
+               addPredicateNode(parent, nodes, treeCounters, isNegated, path, new IntervalPredicate(isRepeated, new Interval(right.getConstantValue(), true, Interval.getPlusInf(), false)));
+               break;
+            default:
+               throw new IllegalStateException("Unexpected comparison type: " + expr.getComparisonType());
+         }
+      } else if (condition instanceof IsNullExpr) {
+         addPredicateNode(parent, nodes, treeCounters, isNegated, path, new Predicate<Object>(isRepeated, IsNullCondition.INSTANCE));
+      } else if (condition instanceof RegexExpr) {
+         addPredicateNode(parent, nodes, treeCounters, isNegated, path, new Predicate<String>(isRepeated, new RegexCondition(((RegexExpr) condition).getPattern())));
+      } else {
+         throw new IllegalStateException("Unexpected condition type: " + condition);
+      }
+   }
+
+   private void addPredicateNode(BENode parent, List<BENode> nodes, List<Integer> treeCounters, boolean isNegated, List<AttributeId> path, Predicate predicate) {
+      PredicateNode predicateNode = new PredicateNode<AttributeId>(parent, predicate, isNegated, path);
       int size = nodes.size();
       predicateNode.setLocation(size, size + 1);
       nodes.add(predicateNode);
       treeCounters.add(1);
-   }
-
-   private Predicate makePredicate(PrimaryPredicateExpr condition, boolean isRepeated) {
-      if (condition instanceof ComparisonExpr) {
-         ComparisonExpr expr = (ComparisonExpr) condition;
-         ConstantValueExpr right = (ConstantValueExpr) expr.getRightChild();
-         Interval<Object> i;
-         switch (expr.getComparisonType()) {
-            case EQUALS:
-               i = new Interval<Object>(right.getConstantValue(), true, right.getConstantValue(), true);
-               break;
-            case LESS:
-               i = new Interval<Object>(Interval.getMinusInf(), false, right.getConstantValue(), false);
-               break;
-            case LESS_OR_EQUAL:
-               i = new Interval<Object>(Interval.getMinusInf(), false, right.getConstantValue(), true);
-               break;
-            case GREATER:
-               i = new Interval<Object>(right.getConstantValue(), false, Interval.getPlusInf(), false);
-               break;
-            case GREATER_OR_EQUAL:
-               i = new Interval<Object>(right.getConstantValue(), true, Interval.getPlusInf(), false);
-               break;
-            default:
-               throw new IllegalStateException("Unknown comparison type: " + expr.getComparisonType());
-         }
-         return new Predicate<Object>(isRepeated, i);
-      } else if (condition instanceof IsNullExpr) {
-         return new Predicate<Object>(isRepeated, IsNullCondition.INSTANCE);
-      } else if (condition instanceof RegexExpr) {
-         return new Predicate<String>(isRepeated, new RegexCondition(((RegexExpr) condition).getPattern()));
-      }
-
-      throw new IllegalStateException("Unexpected condition type: " + condition);
    }
 
    private void makeBooleanOperatorNode(BooleanOperatorExpr child, List<BENode> nodes, List<Integer> treeCounters, BENode node) {

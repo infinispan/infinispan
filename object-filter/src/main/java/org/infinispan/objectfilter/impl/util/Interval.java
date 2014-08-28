@@ -8,35 +8,53 @@ package org.infinispan.objectfilter.impl.util;
  * @author anistor@redhat.com
  * @since 7.0
  */
-public final class Interval<K> {
+public final class Interval<K extends Comparable<K>> {
 
-   //todo [anistor] handle -INF and +INF more gracefully and replace the nulls in low/up
-
-   public static <K> K getMinusInf() {
+   public static <K extends Comparable<K>> K getMinusInf() {
       return (K) MINUS_INF;
    }
 
-   public static <K> K getPlusInf() {
+   public static <K extends Comparable<K>> K getPlusInf() {
       return (K) PLUS_INF;
    }
 
    /**
     * Placeholder for the smallest possible value.
     */
-   static final Object MINUS_INF = new Object() {
+   private static final Comparable MINUS_INF = new Comparable() {
       @Override
       public String toString() {
          return "-INF";
+      }
+
+      @Override
+      public int compareTo(Object obj) {
+         return obj == this ? 0 : -1;
+      }
+
+      @Override
+      public boolean equals(Object obj) {
+         return obj == this;
       }
    };
 
    /**
     * Placeholder for the greatest possible value.
     */
-   static final Object PLUS_INF = new Object() {
+   private static final Comparable PLUS_INF = new Comparable() {
       @Override
       public String toString() {
          return "+INF";
+      }
+
+      @Override
+      public int compareTo(Object obj) {
+         return obj == this ? 0 : 1;
+      }
+
+      @Override
+      public boolean equals(Object obj) {
+         return obj == this;
       }
    };
 
@@ -61,10 +79,18 @@ public final class Interval<K> {
    public final boolean includeUpper;
 
    public Interval(K low, boolean includeLower, K up, boolean includeUpper) {
+      if (low == null || up == null) {
+         throw new IllegalArgumentException("arguments cannot be null");
+      }
       this.low = low;
       this.includeLower = includeLower;
       this.up = up;
       this.includeUpper = includeUpper;
+   }
+
+   public boolean contains(K value) {
+      return (includeLower ? low.compareTo(value) <= 0 : low.compareTo(value) < 0)
+            && (includeUpper ? up.compareTo(value) >= 0 : up.compareTo(value) > 0);
    }
 
    @Override
@@ -75,15 +101,14 @@ public final class Interval<K> {
       Interval other = (Interval) obj;
       return includeLower == other.includeLower
             && includeUpper == other.includeUpper
-            && !(low != null ? !low.equals(other.low) : other.low != null)
-            && !(up != null ? !up.equals(other.up) : other.up != null);
+            && low.equals(other.low) && up.equals(other.up);
    }
 
    @Override
    public int hashCode() {
-      int result = low != null ? low.hashCode() : 0;
+      int result = low.hashCode();
       result = 31 * result + (includeLower ? 1 : 0);
-      result = 31 * result + (up != null ? up.hashCode() : 0);
+      result = 31 * result + up.hashCode();
       result = 31 * result + (includeUpper ? 1 : 0);
       return result;
    }

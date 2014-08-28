@@ -1,7 +1,5 @@
 package org.infinispan.objectfilter.impl.syntax;
 
-import org.hibernate.hql.ast.spi.predicate.ComparisonPredicate;
-
 import java.util.ArrayList;
 import java.util.List;
 
@@ -19,6 +17,10 @@ import java.util.List;
  */
 public final class BooleanFilterNormalizer {
 
+   /**
+    * A visitor that removes constant boolean expressions, absorbs sub-expressions (removes needless parentheses) and
+    * swaps comparison operand sides to ensure the constant is always on the right side.
+    */
    private final Visitor simplifierVisitor = new NoOpVisitor() {
 
       @Override
@@ -35,7 +37,7 @@ public final class BooleanFilterNormalizer {
             child = child.acceptVisitor(this);
 
             if (child instanceof ConstantBooleanExpr) {
-               // remove boolean constants
+               // remove boolean constants or shortcircuit entirely
                if (((ConstantBooleanExpr) child).getValue()) {
                   return ConstantBooleanExpr.TRUE;
                }
@@ -61,8 +63,9 @@ public final class BooleanFilterNormalizer {
 
          for (BooleanExpr child : andExpr.getChildren()) {
             child = child.acceptVisitor(this);
+
             if (child instanceof ConstantBooleanExpr) {
-               // remove boolean constants
+               // remove boolean constants or shortcircuit entirely
                if (!((ConstantBooleanExpr) child).getValue()) {
                   return ConstantBooleanExpr.FALSE;
                }
@@ -91,11 +94,12 @@ public final class BooleanFilterNormalizer {
          ValueExpr rightChild = comparisonExpr.getRightChild();
          rightChild = rightChild.acceptVisitor(this);
 
-         ComparisonPredicate.Type comparisonType = comparisonExpr.getComparisonType();
+         ComparisonExpr.Type comparisonType = comparisonExpr.getComparisonType();
 
+         // handle constant expressions
          if (leftChild instanceof ConstantValueExpr) {
             if (rightChild instanceof ConstantValueExpr) {
-               // remove the comparison of the two constants with the actual result
+               // replace the comparison of the two constants with the actual result
                Comparable leftValue = (Comparable) ((ConstantValueExpr) leftChild).getConstantValue();
                Comparable rightValue = (Comparable) ((ConstantValueExpr) rightChild).getConstantValue();
                int compRes = leftValue.compareTo(rightValue);
@@ -104,46 +108,57 @@ public final class BooleanFilterNormalizer {
                      return ConstantBooleanExpr.forBoolean(compRes < 0);
                   case LESS_OR_EQUAL:
                      return ConstantBooleanExpr.forBoolean(compRes <= 0);
-                  case EQUALS:
+                  case EQUAL:
                      return ConstantBooleanExpr.forBoolean(compRes == 0);
+                  case NOT_EQUAL:
+                     return ConstantBooleanExpr.forBoolean(compRes != 0);
                   case GREATER_OR_EQUAL:
                      return ConstantBooleanExpr.forBoolean(compRes >= 0);
                   case GREATER:
                      return ConstantBooleanExpr.forBoolean(compRes > 0);
                   default:
-                     throw new IllegalStateException("Unknown comparison type: " + comparisonType);
+                     throw new IllegalStateException("Unexpected comparison type: " + comparisonType);
                }
             }
 
-            // swap sides to ensure the constant is on the right side
+            // swap operand sides to ensure the constant is always on the right side
             ValueExpr temp = rightChild;
             rightChild = leftChild;
             leftChild = temp;
 
-            // reverse the operator too
+            // now reverse the operator too to restore the semantics
             switch (comparisonType) {
                case LESS:
-                  comparisonType = ComparisonPredicate.Type.GREATER;
+                  comparisonType = ComparisonExpr.Type.GREATER;
                   break;
                case LESS_OR_EQUAL:
-                  comparisonType = ComparisonPredicate.Type.GREATER_OR_EQUAL;
+                  comparisonType = ComparisonExpr.Type.GREATER_OR_EQUAL;
+                  break;
+               case EQUAL:
+                  comparisonType = ComparisonExpr.Type.NOT_EQUAL;
+                  break;
+               case NOT_EQUAL:
+                  comparisonType = ComparisonExpr.Type.EQUAL;
                   break;
                case GREATER_OR_EQUAL:
-                  comparisonType = ComparisonPredicate.Type.LESS_OR_EQUAL;
+                  comparisonType = ComparisonExpr.Type.LESS_OR_EQUAL;
                   break;
                case GREATER:
-                  comparisonType = ComparisonPredicate.Type.LESS;
+                  comparisonType = ComparisonExpr.Type.LESS;
                   break;
                default:
                   throw new IllegalStateException("Unknown comparison type: " + comparisonType);
             }
          }
 
-         // comparison operators are never negated
+         // comparison operators are never negated using NotExpr
          return new ComparisonExpr(leftChild, rightChild, comparisonType);
       }
    };
 
+   /**
+    * Handles negation by applying De Morgan laws.
+    */
    private final Visitor deMorganVisitor = new NoOpVisitor() {
 
       @Override
@@ -233,20 +248,19 @@ public final class BooleanFilterNormalizer {
             ComparisonExpr c = (ComparisonExpr) booleanExpr;
             switch (c.getComparisonType()) {
                case LESS:
-                  return new ComparisonExpr(c.getLeftChild(), c.getRightChild(), ComparisonPredicate.Type.GREATER_OR_EQUAL);
+                  return new ComparisonExpr(c.getLeftChild(), c.getRightChild(), ComparisonExpr.Type.GREATER_OR_EQUAL);
                case LESS_OR_EQUAL:
-                  return new ComparisonExpr(c.getLeftChild(), c.getRightChild(), ComparisonPredicate.Type.GREATER);
+                  return new ComparisonExpr(c.getLeftChild(), c.getRightChild(), ComparisonExpr.Type.GREATER);
                case GREATER_OR_EQUAL:
-                  return new ComparisonExpr(c.getLeftChild(), c.getRightChild(), ComparisonPredicate.Type.LESS);
+                  return new ComparisonExpr(c.getLeftChild(), c.getRightChild(), ComparisonExpr.Type.LESS);
                case GREATER:
-                  return new ComparisonExpr(c.getLeftChild(), c.getRightChild(), ComparisonPredicate.Type.LESS_OR_EQUAL);
-               case EQUALS:
-                  // the special case of equality is transformed into two intervals, excluding the compared value, + an IS NULL
-                  return new OrExpr(new ComparisonExpr(c.getLeftChild(), c.getRightChild(), ComparisonPredicate.Type.LESS),
-                                    new ComparisonExpr(c.getLeftChild(), c.getRightChild(), ComparisonPredicate.Type.GREATER),
-                                    new IsNullExpr(c.getLeftChild()));
+                  return new ComparisonExpr(c.getLeftChild(), c.getRightChild(), ComparisonExpr.Type.LESS_OR_EQUAL);
+               case EQUAL:
+                  return new ComparisonExpr(c.getLeftChild(), c.getRightChild(), ComparisonExpr.Type.NOT_EQUAL);
+               case NOT_EQUAL:
+                  return new ComparisonExpr(c.getLeftChild(), c.getRightChild(), ComparisonExpr.Type.EQUAL);
                default:
-                  throw new IllegalStateException("Unknown comparison type: " + c.getComparisonType());
+                  throw new IllegalStateException("Unexpected comparison type: " + c.getComparisonType());
             }
          }
 

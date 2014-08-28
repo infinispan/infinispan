@@ -20,6 +20,10 @@ import java.util.List;
  */
 public final class FilterSubscriptionImpl<TypeMetadata, AttributeMetadata, AttributeId extends Comparable<AttributeId>> implements FilterSubscription {
 
+   private final String queryString;
+
+   private final boolean useIntervals;
+
    public int index = -1; // todo [anistor] hide this
 
    private final MetadataAdapter<TypeMetadata, AttributeMetadata, AttributeId> metadataAdapter;
@@ -40,9 +44,11 @@ public final class FilterSubscriptionImpl<TypeMetadata, AttributeMetadata, Attri
 
    private Comparator<Comparable[]> comparator;
 
-   protected FilterSubscriptionImpl(MetadataAdapter<TypeMetadata, AttributeMetadata, AttributeId> metadataAdapter, BETree beTree, FilterCallback callback,
+   protected FilterSubscriptionImpl(String queryString, boolean useIntervals, MetadataAdapter<TypeMetadata, AttributeMetadata, AttributeId> metadataAdapter, BETree beTree, FilterCallback callback,
                                     List<String> projection, List<List<AttributeId>> translatedProjection,
                                     List<SortField> sortFields, List<List<AttributeId>> translatedSortProjection) {
+      this.queryString = queryString;
+      this.useIntervals = useIntervals;
       this.metadataAdapter = metadataAdapter;
       this.beTree = beTree;
       this.callback = callback;
@@ -61,6 +67,14 @@ public final class FilterSubscriptionImpl<TypeMetadata, AttributeMetadata, Attri
 
       this.translatedProjection = translatedProjection;
       this.translatedSortProjection = translatedSortProjection;
+   }
+
+   public String getQueryString() {
+      return queryString;
+   }
+
+   public boolean isUseIntervals() {
+      return useIntervals;
    }
 
    public BETree getBETree() {

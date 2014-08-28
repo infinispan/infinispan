@@ -18,26 +18,26 @@ class FilterComparisonPredicate extends ComparisonPredicate<BooleanExpr> {
 
    @Override
    protected BooleanExpr getStrictlyLessQuery() {
-      return new ComparisonExpr(new PropertyValueExpr(propertyName), new ConstantValueExpr(value), type);
+      return new ComparisonExpr(new PropertyValueExpr(propertyName), new ConstantValueExpr((Comparable) value), ComparisonExpr.Type.LESS);
    }
 
    @Override
    protected BooleanExpr getLessOrEqualsQuery() {
-      return new ComparisonExpr(new PropertyValueExpr(propertyName), new ConstantValueExpr(value), type);
+      return new ComparisonExpr(new PropertyValueExpr(propertyName), new ConstantValueExpr((Comparable) value), ComparisonExpr.Type.LESS_OR_EQUAL);
    }
 
    @Override
    protected BooleanExpr getEqualsQuery() {
-      return new ComparisonExpr(new PropertyValueExpr(propertyName), new ConstantValueExpr(value), type);
+      return new ComparisonExpr(new PropertyValueExpr(propertyName), new ConstantValueExpr((Comparable) value), ComparisonExpr.Type.EQUAL);
    }
 
    @Override
    protected BooleanExpr getGreaterOrEqualsQuery() {
-      return new ComparisonExpr(new PropertyValueExpr(propertyName), new ConstantValueExpr(value), type);
+      return new ComparisonExpr(new PropertyValueExpr(propertyName), new ConstantValueExpr((Comparable) value), ComparisonExpr.Type.GREATER_OR_EQUAL);
    }
 
    @Override
    protected BooleanExpr getStrictlyGreaterQuery() {
-      return new ComparisonExpr(new PropertyValueExpr(propertyName), new ConstantValueExpr(value), type);
+      return new ComparisonExpr(new PropertyValueExpr(propertyName), new ConstantValueExpr((Comparable) value), ComparisonExpr.Type.GREATER);
    }
 }

@@ -30,14 +30,21 @@ public final class FilterRegistry<TypeMetadata, AttributeMetadata, AttributeId e
 
    private final MetadataAdapter<TypeMetadata, AttributeMetadata, AttributeId> metadataAdapter;
 
-   public FilterRegistry(MetadataAdapter<TypeMetadata, AttributeMetadata, AttributeId> metadataAdapter) {
+   private final boolean useIntervals;
+
+   public FilterRegistry(MetadataAdapter<TypeMetadata, AttributeMetadata, AttributeId> metadataAdapter, boolean useIntervals) {
       this.metadataAdapter = metadataAdapter;
-      treeMaker = new BETreeMaker<AttributeId>(metadataAdapter);
+      this.useIntervals = useIntervals;
+      treeMaker = new BETreeMaker<AttributeId>(metadataAdapter, useIntervals);
       predicateIndex = new PredicateIndex<AttributeMetadata, AttributeId>(metadataAdapter);
    }
 
    public MetadataAdapter<TypeMetadata, AttributeMetadata, AttributeId> getMetadataAdapter() {
       return metadataAdapter;
+   }
+
+   public PredicateIndex<AttributeMetadata, AttributeId> getPredicateIndex() {
+      return predicateIndex;
    }
 
    public int getNumFilters() {
@@ -63,7 +70,7 @@ public final class FilterRegistry<TypeMetadata, AttributeMetadata, AttributeId e
       }
    }
 
-   public FilterSubscriptionImpl addFilter(BooleanExpr normalizedFilter, List<String> projection, List<SortField> sortFields, FilterCallback callback) {
+   public FilterSubscriptionImpl<TypeMetadata, AttributeMetadata, AttributeId> addFilter(String queryString, BooleanExpr normalizedFilter, List<String> projection, List<SortField> sortFields, FilterCallback callback) {
       List<List<AttributeId>> translatedProjections = null;
       if (projection != null && !projection.isEmpty()) {
          translatedProjections = new ArrayList<List<AttributeId>>(projection.size());
@@ -81,7 +88,7 @@ public final class FilterRegistry<TypeMetadata, AttributeMetadata, AttributeId e
       }
 
       BETree beTree = treeMaker.make(normalizedFilter);
-      FilterSubscriptionImpl<TypeMetadata, AttributeMetadata, AttributeId> filterSubscription = new FilterSubscriptionImpl<TypeMetadata, AttributeMetadata, AttributeId>(metadataAdapter, beTree, callback, projection, translatedProjections, sortFields, translatedSortFields);
+      FilterSubscriptionImpl<TypeMetadata, AttributeMetadata, AttributeId> filterSubscription = new FilterSubscriptionImpl<TypeMetadata, AttributeMetadata, AttributeId>(queryString, useIntervals, metadataAdapter, beTree, callback, projection, translatedProjections, sortFields, translatedSortFields);
       filterSubscription.registerProjection(predicateIndex);
       filterSubscription.subscribe(predicateIndex);
       filterSubscription.index = filterSubscriptions.size();

@@ -1,6 +1,7 @@
 package org.infinispan.objectfilter.impl.predicateindex.be;
 
 import org.infinispan.objectfilter.impl.predicateindex.FilterEvalContext;
+import org.infinispan.objectfilter.impl.predicateindex.IntervalPredicate;
 import org.infinispan.objectfilter.impl.predicateindex.Predicate;
 
 import java.util.List;
@@ -15,7 +16,7 @@ import java.util.List;
  */
 public final class PredicateNode<AttributeId extends Comparable<AttributeId>> extends BENode {
 
-   // the predicate can be share by multiple PredicateNodes
+   // the predicate can be shared by multiple PredicateNodes
    private final Predicate<?> predicate;
 
    /**
@@ -28,7 +29,7 @@ public final class PredicateNode<AttributeId extends Comparable<AttributeId>> ex
 
    public PredicateNode(BENode parent, Predicate<?> predicate, boolean isNegated, List<AttributeId> attributePath) {
       super(parent);
-      if (isNegated && predicate.getInterval() != null) {
+      if (isNegated && predicate instanceof IntervalPredicate) {
          throw new IllegalArgumentException("Interval predicates should not be negated");
       }
       this.predicate = predicate;
@@ -50,23 +51,20 @@ public final class PredicateNode<AttributeId extends Comparable<AttributeId>> ex
 
    @Override
    public void handleChildValue(BENode child, boolean childValue, FilterEvalContext evalContext) {
-      if (child != null) {
-         throw new IllegalArgumentException();
-      }
+      assert child == null;
 
       final int value = childValue ? BETree.EXPR_TRUE : BETree.EXPR_FALSE;
 
       if (isDecided(evalContext)) {
-         if (predicate.isRepeated() && evalContext.treeCounters[index] == value) {
+         if (predicate.isRepeated() && evalContext.treeCounters[startIndex] == value) {
             // receiving the same value multiple times if fine if this is a repeated condition
             return;
          }
          throw new IllegalStateException("This should never be called again if the state of this node was previously decided.");
       }
 
-      evalContext.treeCounters[index] = value;
-
       if (parent == null) {
+         evalContext.treeCounters[startIndex] = value;
          suspendSubscription(evalContext);
       } else {
          parent.handleChildValue(this, childValue, evalContext);

@@ -1,6 +1,5 @@
 package org.infinispan.objectfilter.impl.hql.predicate;
 
-import org.hibernate.hql.ast.spi.predicate.ComparisonPredicate;
 import org.hibernate.hql.ast.spi.predicate.RangePredicate;
 import org.infinispan.objectfilter.impl.syntax.AndExpr;
 import org.infinispan.objectfilter.impl.syntax.BooleanExpr;
@@ -21,8 +20,8 @@ class FilterRangePredicate extends RangePredicate<BooleanExpr> {
    @Override
    public BooleanExpr getQuery() {
       return new AndExpr(
-            new ComparisonExpr(new PropertyValueExpr(propertyName), new ConstantValueExpr(lower), ComparisonPredicate.Type.GREATER_OR_EQUAL),
-            new ComparisonExpr(new PropertyValueExpr(propertyName), new ConstantValueExpr(upper), ComparisonPredicate.Type.LESS_OR_EQUAL)
+            new ComparisonExpr(new PropertyValueExpr(propertyName), new ConstantValueExpr((Comparable) lower), ComparisonExpr.Type.GREATER_OR_EQUAL),
+            new ComparisonExpr(new PropertyValueExpr(propertyName), new ConstantValueExpr((Comparable) upper), ComparisonExpr.Type.LESS_OR_EQUAL)
       );
    }
 }

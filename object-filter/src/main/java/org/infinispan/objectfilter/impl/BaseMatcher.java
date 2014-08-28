@@ -40,13 +40,6 @@ abstract class BaseMatcher<TypeMetadata, AttributeMetadata, AttributeId extends 
 
    protected final Map<TypeMetadata, FilterRegistry<TypeMetadata, AttributeMetadata, AttributeId>> filtersByType = new HashMap<TypeMetadata, FilterRegistry<TypeMetadata, AttributeMetadata, AttributeId>>();
 
-   private static final FilterCallback emptyCallback = new FilterCallback() {
-      @Override
-      public void onFilterResult(Object instance, Object[] projection, Comparable[] sortProjection) {
-         // do nothing
-      }
-   };
-
    private FilterQueryFactory queryFactory;
 
    @Override
@@ -93,16 +86,13 @@ abstract class BaseMatcher<TypeMetadata, AttributeMetadata, AttributeId extends 
    public ObjectFilter getObjectFilter(String jpaQuery) {
       FilterParsingResult<TypeMetadata> parsingResult = parse(jpaQuery);
       BooleanExpr normalizedFilter = booleanFilterNormalizer.normalize(parsingResult.getQuery());
-
-      //todo [anistor] we need an efficient single-filter registry ...
-      FilterRegistry filterRegistry = createFilterRegistryForType(parsingResult.getTargetEntityMetadata());
-      FilterSubscriptionImpl filterSubscriptionImpl = filterRegistry.addFilter(normalizedFilter, parsingResult.getProjections(), parsingResult.getSortFields(), emptyCallback);
-      return getObjectFilter(filterSubscriptionImpl);
+      return new ObjectFilterImpl<TypeMetadata, AttributeMetadata, AttributeId>(this, createMetadataAdapter(parsingResult.getTargetEntityMetadata()), jpaQuery, parsingResult, normalizedFilter);
    }
 
    @Override
    public ObjectFilter getObjectFilter(FilterSubscription filterSubscription) {
-      return new ObjectFilterImpl<TypeMetadata, AttributeMetadata, AttributeId>(this, (FilterSubscriptionImpl<TypeMetadata, AttributeMetadata, AttributeId>) filterSubscription);
+      FilterSubscriptionImpl<TypeMetadata, AttributeMetadata, AttributeId> filterSubscriptionImpl = (FilterSubscriptionImpl<TypeMetadata, AttributeMetadata, AttributeId>) filterSubscription;
+      return getObjectFilter(filterSubscriptionImpl.getQueryString());
    }
 
    @Override
@@ -123,11 +113,11 @@ abstract class BaseMatcher<TypeMetadata, AttributeMetadata, AttributeId extends 
       try {
          FilterRegistry<TypeMetadata, AttributeMetadata, AttributeId> filterRegistry = filtersByTypeName.get(parsingResult.getTargetEntityName());
          if (filterRegistry == null) {
-            filterRegistry = createFilterRegistryForType(parsingResult.getTargetEntityMetadata());
+            filterRegistry = new FilterRegistry<TypeMetadata, AttributeMetadata, AttributeId>(createMetadataAdapter(parsingResult.getTargetEntityMetadata()), true);
             filtersByTypeName.put(parsingResult.getTargetEntityName(), filterRegistry);
             filtersByType.put(filterRegistry.getMetadataAdapter().getTypeMetadata(), filterRegistry);
          }
-         return filterRegistry.addFilter(normalizedFilter, parsingResult.getProjections(), parsingResult.getSortFields(), callback);
+         return filterRegistry.addFilter(jpaQuery, normalizedFilter, parsingResult.getProjections(), parsingResult.getSortFields(), callback);
       } finally {
          write.unlock();
       }
@@ -173,7 +163,7 @@ abstract class BaseMatcher<TypeMetadata, AttributeMetadata, AttributeId extends 
 
    protected abstract FilterProcessingChain<TypeMetadata> createFilterProcessingChain(Map<String, Object> namedParameters);
 
-   protected abstract FilterRegistry<TypeMetadata, AttributeMetadata, AttributeId> createFilterRegistryForType(TypeMetadata typeMetadata);
+   protected abstract MetadataAdapter<TypeMetadata, AttributeMetadata, AttributeId> createMetadataAdapter(TypeMetadata typeMetadata);
 
    protected abstract FilterRegistry<TypeMetadata, AttributeMetadata, AttributeId> getFilterRegistryForType(TypeMetadata entityType);
 }

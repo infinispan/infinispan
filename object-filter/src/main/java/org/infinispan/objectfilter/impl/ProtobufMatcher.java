@@ -67,13 +67,13 @@ public final class ProtobufMatcher extends BaseMatcher<Descriptor, FieldDescript
    }
 
    @Override
-   protected FilterRegistry<Descriptor, FieldDescriptor, Integer> createFilterRegistryForType(Descriptor messageDescriptor) {
-      return new FilterRegistry<Descriptor, FieldDescriptor, Integer>(new MetadataAdapterImpl(messageDescriptor));
+   protected FilterRegistry<Descriptor, FieldDescriptor, Integer> getFilterRegistryForType(Descriptor entityType) {
+      return filtersByTypeName.get(entityType.getFullName());
    }
 
    @Override
-   protected FilterRegistry<Descriptor, FieldDescriptor, Integer> getFilterRegistryForType(Descriptor entityType) {
-      return filtersByTypeName.get(entityType.getFullName());
+   protected MetadataAdapter<Descriptor, FieldDescriptor, Integer> createMetadataAdapter(Descriptor messageDescriptor) {
+      return new MetadataAdapterImpl(messageDescriptor);
    }
 
    private static class MetadataAdapterImpl implements MetadataAdapter<Descriptor, FieldDescriptor, Integer> {

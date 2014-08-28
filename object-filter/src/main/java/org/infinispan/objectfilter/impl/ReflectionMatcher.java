@@ -63,13 +63,13 @@ public class ReflectionMatcher extends BaseMatcher<Class<?>, ReflectionHelper.Pr
    }
 
    @Override
-   protected FilterRegistry<Class<?>, ReflectionHelper.PropertyAccessor, String> createFilterRegistryForType(Class<?> clazz) {
-      return new FilterRegistry<Class<?>, ReflectionHelper.PropertyAccessor, String>(new MetadataAdapterImpl(clazz));
+   protected FilterRegistry<Class<?>, ReflectionHelper.PropertyAccessor, String> getFilterRegistryForType(Class<?> entityType) {
+      return filtersByType.get(entityType);
    }
 
    @Override
-   protected FilterRegistry<Class<?>, ReflectionHelper.PropertyAccessor, String> getFilterRegistryForType(Class<?> entityType) {
-      return filtersByType.get(entityType);
+   protected MetadataAdapter<Class<?>, ReflectionHelper.PropertyAccessor, String> createMetadataAdapter(Class<?> clazz) {
+      return new MetadataAdapterImpl(clazz);
    }
 
    private static class MetadataAdapterImpl implements MetadataAdapter<Class<?>, ReflectionHelper.PropertyAccessor, String> {

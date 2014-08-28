@@ -58,6 +58,10 @@ public class NonIndexedQueryDslConditionsTest extends QueryDslConditionsTest {
       super.testNullOnIntegerField();
    }
 
+   /**
+    * This test uses fields that are not marked as @NumericField so it cannot work correctly with Lucene but should work
+    * correctly for non-indexed.
+    */
    public void testAnd5() throws Exception {
       QueryFactory qf = getQueryFactory();
 

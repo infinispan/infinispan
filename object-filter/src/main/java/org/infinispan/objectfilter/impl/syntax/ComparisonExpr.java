@@ -1,7 +1,5 @@
 package org.infinispan.objectfilter.impl.syntax;
 
-import org.hibernate.hql.ast.spi.predicate.ComparisonPredicate;
-
 /**
  * @author anistor@redhat.com
  * @since 7.0
@@ -10,9 +8,18 @@ public final class ComparisonExpr implements PrimaryPredicateExpr {
 
    private final ValueExpr leftChild;
    private final ValueExpr rightChild;
-   private final ComparisonPredicate.Type comparisonType;
+   private final Type comparisonType;
 
-   public ComparisonExpr(ValueExpr leftChild, ValueExpr rightChild, ComparisonPredicate.Type comparisonType) {
+   public enum Type {
+      LESS,
+      LESS_OR_EQUAL,
+      EQUAL,
+      NOT_EQUAL,
+      GREATER_OR_EQUAL,
+      GREATER
+   }
+
+   public ComparisonExpr(ValueExpr leftChild, ValueExpr rightChild, Type comparisonType) {
       this.leftChild = leftChild;
       this.rightChild = rightChild;
       this.comparisonType = comparisonType;
@@ -26,7 +33,7 @@ public final class ComparisonExpr implements PrimaryPredicateExpr {
       return rightChild;
    }
 
-   public ComparisonPredicate.Type getComparisonType() {
+   public Type getComparisonType() {
       return comparisonType;
    }
 
