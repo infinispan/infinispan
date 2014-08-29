@@ -14,6 +14,7 @@ import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.query.CacheQuery;
 import org.infinispan.query.Search;
 import org.infinispan.query.SearchManager;
+import org.infinispan.query.helper.StaticTestingErrorHandler;
 import org.infinispan.query.test.Person;
 import org.infinispan.test.SingleCacheManagerTest;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
@@ -37,6 +38,7 @@ public class IndexManagerLocalTest extends SingleCacheManagerTest {
             .indexing()
             .index(Index.ALL)
             .addProperty("hibernate.search.lucene_version", "LUCENE_CURRENT")
+            .addProperty("error_handler", "org.infinispan.query.helper.StaticTestingErrorHandler")
             .addProperty("default.indexmanager", "org.infinispan.query.indexmanager.InfinispanIndexManager");
 
       if(transactionsEnabled()) {
@@ -68,6 +70,7 @@ public class IndexManagerLocalTest extends SingleCacheManagerTest {
       SearchManager searchManager = Search.getSearchManager(cache);
       CacheQuery query = searchManager.getQuery(new MatchAllDocsQuery(), Person.class);
       assertEquals(expectedIndexSize, query.list().size());
+      StaticTestingErrorHandler.assertAllGood(cache);
    }
 
 }

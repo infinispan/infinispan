@@ -21,6 +21,8 @@
             <property name="hibernate.search.default.indexmanager">org.infinispan.query.indexmanager.InfinispanIndexManager</property>
             <!-- Use latest Lucene version -->
             <property name="hibernate.search.lucene_version">LUCENE_48</property>
+            <!-- Enable error safety net -->
+            <property name="error_handler">org.infinispan.query.helper.StaticTestingErrorHandler</property>
          </indexing>
       </replicated-cache>
       <!-- ******************************************************************************* -->

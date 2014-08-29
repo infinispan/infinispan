@@ -10,6 +10,7 @@ import org.infinispan.Cache;
 import org.infinispan.query.CacheQuery;
 import org.infinispan.query.Search;
 import org.infinispan.query.SearchManager;
+import org.infinispan.query.helper.StaticTestingErrorHandler;
 import org.infinispan.query.helper.TestableCluster;
 import org.infinispan.query.indexmanager.InfinispanCommandsBackend;
 import org.infinispan.query.indexmanager.InfinispanIndexManager;
@@ -89,6 +90,7 @@ public class MultiNodeDistributedTest extends AbstractInfinispanTest {
 
    protected void assertIndexSize(int expectedIndexSize) {
       for (Cache cache : cluster.iterateAllCaches()) {
+         StaticTestingErrorHandler.assertAllGood(cache);
          SearchManager searchManager = Search.getSearchManager(cache);
          CacheQuery query = searchManager.getQuery(new MatchAllDocsQuery(), Person.class);
          assertEquals(expectedIndexSize, query.list().size());

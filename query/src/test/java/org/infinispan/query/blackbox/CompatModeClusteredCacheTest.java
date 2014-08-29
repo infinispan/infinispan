@@ -26,6 +26,7 @@ public class CompatModeClusteredCacheTest extends ClusteredCacheTest {
             .indexing()
             .index(Index.ALL)
             .addProperty("default.directory_provider", "ram")
+            .addProperty("error_handler", "org.infinispan.query.helper.StaticTestingErrorHandler")
             .addProperty("lucene_version", "LUCENE_CURRENT");
       enhanceConfig(cacheCfg);
       List<Cache<String, Person>> caches = createClusteredCaches(2, cacheCfg);

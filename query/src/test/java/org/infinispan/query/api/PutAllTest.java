@@ -7,6 +7,7 @@ import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.query.CacheQuery;
 import org.infinispan.query.Search;
 import org.infinispan.query.SearchManager;
+import org.infinispan.query.helper.StaticTestingErrorHandler;
 import org.infinispan.test.SingleCacheManagerTest;
 import org.infinispan.test.fwk.CleanupAfterMethod;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
@@ -29,6 +30,7 @@ public class PutAllTest extends SingleCacheManagerTest {
       cfg.indexing()
             .index(Index.ALL)
             .addProperty("default.directory_provider", "ram")
+            .addProperty("error_handler", "org.infinispan.query.helper.StaticTestingErrorHandler")
             .addProperty("lucene_version", "LUCENE_CURRENT");
       return TestCacheManagerFactory.createCacheManager(cfg);
    }
@@ -45,6 +47,7 @@ public class PutAllTest extends SingleCacheManagerTest {
       CacheQuery q1 = queryByNameField("name2", AnotherTestEntity.class);
       assertEquals(1, q1.getResultSize());
       assertEquals(TestEntity.class, q1.list().get(0).getClass());
+      StaticTestingErrorHandler.assertAllGood(cache);
    }
 
    public void testAsyncOverwriteNotIndexedValue() throws Exception {
@@ -60,6 +63,7 @@ public class PutAllTest extends SingleCacheManagerTest {
       CacheQuery q1 = queryByNameField("name2", AnotherTestEntity.class);
       assertEquals(1, q1.getResultSize());
       assertEquals(TestEntity.class, q1.list().get(0).getClass());
+      StaticTestingErrorHandler.assertAllGood(cache);
    }
 
    public void testOverwriteWithNonIndexedValue() {
@@ -79,6 +83,7 @@ public class PutAllTest extends SingleCacheManagerTest {
 
       CacheQuery q3 = queryByNameField("name2", TestEntity.class);
       assertEquals(0, q3.getResultSize());
+      StaticTestingErrorHandler.assertAllGood(cache);
    }
 
    public void testAsyncOverwriteWithNonIndexedValue() throws Exception {
@@ -99,6 +104,7 @@ public class PutAllTest extends SingleCacheManagerTest {
 
       CacheQuery q3 = queryByNameField("name2", TestEntity.class);
       assertEquals(0, q3.getResultSize());
+      StaticTestingErrorHandler.assertAllGood(cache);
    }
 
    public void testOverwriteIndexedValue() {
@@ -120,6 +126,7 @@ public class PutAllTest extends SingleCacheManagerTest {
       CacheQuery q3 = queryByNameField("name2", AnotherTestEntity.class);
       assertEquals(1, q3.getResultSize());
       assertEquals(AnotherTestEntity.class, q3.list().get(0).getClass());
+      StaticTestingErrorHandler.assertAllGood(cache);
    }
 
    private CacheQuery queryByNameField(String name, Class<?> entity) {

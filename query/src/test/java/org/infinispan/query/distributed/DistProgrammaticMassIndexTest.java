@@ -2,6 +2,7 @@ package org.infinispan.query.distributed;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.fail;
+
 import org.apache.lucene.queryparser.classic.ParseException;
 import org.apache.lucene.queryparser.classic.QueryParser;
 import org.apache.lucene.search.Query;
@@ -12,6 +13,7 @@ import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.cache.Index;
 import org.infinispan.query.CacheQuery;
 import org.infinispan.query.Search;
+import org.infinispan.query.helper.StaticTestingErrorHandler;
 import org.infinispan.query.queries.faceting.Car;
 import org.testng.annotations.Test;
 
@@ -32,9 +34,8 @@ public class DistProgrammaticMassIndexTest extends DistributedMassIndexingTest {
       ConfigurationBuilder cacheCfg = getDefaultClusteredCacheConfig(CacheMode.DIST_SYNC, false);
       cacheCfg.indexing()
             .index(Index.LOCAL)
-            .addProperty("hibernate.search.default.indexmanager", "org.infinispan.query.indexmanager.InfinispanIndexManager")
-            .addProperty("hibernate.search.default.directory_provider", "infinispan")
-            .addProperty("hibernate.search.default.exclusive_index_use", "true")
+            .addProperty("default.indexmanager", "org.infinispan.query.indexmanager.InfinispanIndexManager")
+            .addProperty("error_handler", "org.infinispan.query.helper.StaticTestingErrorHandler")
             .addProperty("lucene_version", "LUCENE_48");
       cacheCfg.clustering().stateTransfer().fetchInMemoryState(true);
       List<Cache<String, Car>> cacheList = createClusteredCaches(NUM_NODES, cacheCfg);
@@ -66,6 +67,7 @@ public class DistProgrammaticMassIndexTest extends DistributedMassIndexingTest {
          ex.printStackTrace();
          fail("Failed due to: " + ex.getMessage());
       }
+      StaticTestingErrorHandler.assertAllGood(cache);
    }
 
 }

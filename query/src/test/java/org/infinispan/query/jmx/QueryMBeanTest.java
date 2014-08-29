@@ -11,6 +11,7 @@ import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.query.CacheQuery;
 import org.infinispan.query.Search;
 import org.infinispan.query.SearchManager;
+import org.infinispan.query.helper.StaticTestingErrorHandler;
 import org.infinispan.query.test.AnotherGrassEater;
 import org.infinispan.query.test.Person;
 import org.infinispan.test.SingleCacheManagerTest;
@@ -22,6 +23,7 @@ import javax.management.Attribute;
 import javax.management.MBeanServer;
 import javax.management.MalformedObjectNameException;
 import javax.management.ObjectName;
+
 import java.util.List;
 import java.util.Set;
 
@@ -53,6 +55,7 @@ public class QueryMBeanTest extends SingleCacheManagerTest {
       ConfigurationBuilder builder = getDefaultStandaloneCacheConfig(true);
       builder.indexing().index(Index.ALL)
             .addProperty("default.directory_provider", "ram")
+            .addProperty("error_handler", "org.infinispan.query.helper.StaticTestingErrorHandler")
             .addProperty("lucene_version", "LUCENE_CURRENT");
 
       cm.defineConfiguration(CACHE_NAME, builder.build());

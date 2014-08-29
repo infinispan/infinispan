@@ -19,7 +19,7 @@ public class InfinispanDirectoryNonIndexedValuesTest extends NonIndexedValuesTes
       c.indexing()
             .index(Index.LOCAL)
             .addProperty("default.indexmanager", "org.infinispan.query.indexmanager.InfinispanIndexManager")
-            .addProperty("default.directory_provider", "infinispan")
+            .addProperty("error_handler", "org.infinispan.query.helper.StaticTestingErrorHandler")
             .addProperty("lucene_version", "LUCENE_48");
       return TestCacheManagerFactory.createCacheManager(c);
    }

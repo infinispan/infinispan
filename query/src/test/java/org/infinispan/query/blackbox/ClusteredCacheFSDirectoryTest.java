@@ -37,6 +37,7 @@ public class ClusteredCacheFSDirectoryTest extends ClusteredCacheTest {
       cb.indexing()
             .index(Index.ALL) //index also changes originated on other nodes, the index is not shared
             .addProperty("default.directory_provider", "filesystem")
+            .addProperty("error_handler", "org.infinispan.query.helper.StaticTestingErrorHandler")
             .addProperty("default.indexBase", TMP_DIR + File.separator + indexName)
             .addProperty("lucene_version", "LUCENE_CURRENT");
       return cb;

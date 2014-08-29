@@ -12,6 +12,7 @@ import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.query.CacheQuery;
 import org.infinispan.query.Search;
 import org.infinispan.query.SearchManager;
+import org.infinispan.query.helper.StaticTestingErrorHandler;
 import org.infinispan.query.queries.faceting.Car;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
@@ -77,6 +78,7 @@ public class DistributedMassIndexingTest extends MultipleCacheManagersTest {
 
    protected void verifyFindsCar(int expectedCount, String carMake) {
       for (Cache cache: caches) {
+         StaticTestingErrorHandler.assertAllGood(cache);
          verifyFindsCar(cache, expectedCount, carMake);
       }
    }

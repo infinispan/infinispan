@@ -12,6 +12,8 @@
          <indexing index="ALL">
             <property name="default.indexmanager">org.infinispan.query.indexmanager.InfinispanIndexManager</property>
             <property name="lucene_version">LUCENE_48</property>
+            <!-- Enable error safety net -->
+            <property name="error_handler">org.infinispan.query.helper.StaticTestingErrorHandler</property>
 
             <property name="default.locking_cachename">LuceneIndexesLocking_custom</property>
             <property name="default.data_cachename">LuceneIndexesData_custom</property>

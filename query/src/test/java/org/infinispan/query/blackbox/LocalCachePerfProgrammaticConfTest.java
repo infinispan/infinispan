@@ -28,6 +28,7 @@ public class LocalCachePerfProgrammaticConfTest extends LocalCacheTest {
             .addProperty("default.directory_provider", "infinispan")
             .addProperty("default.chunk_size", "128000")
             .addProperty("default.indexmanager", "near-real-time")
+            .addProperty("error_handler", "org.infinispan.query.helper.StaticTestingErrorHandler")
             .addProperty("default.indexBase", indexDirectory)
             .addProperty("default.indexwriter.merge_factor", "30")
             .addProperty("default.indexwriter.merge_max_size", "4096")

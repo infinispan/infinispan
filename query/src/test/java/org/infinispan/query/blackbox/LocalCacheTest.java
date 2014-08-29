@@ -36,6 +36,7 @@ import org.infinispan.query.FetchOptions;
 import org.infinispan.query.ResultIterator;
 import org.infinispan.query.Search;
 import org.infinispan.query.SearchManager;
+import org.infinispan.query.helper.StaticTestingErrorHandler;
 import org.infinispan.query.spi.SearchManagerImplementor;
 import org.infinispan.query.test.AnotherGrassEater;
 import org.infinispan.query.test.CustomKey3;
@@ -81,6 +82,7 @@ public class LocalCacheTest extends SingleCacheManagerTest {
 
       Object val = found.get(0);
       assert val.equals(person1) : "Expected " + person1 + " but was " + val;
+      StaticTestingErrorHandler.assertAllGood(cache);
    }
 
    public void testSimpleForNonField() throws ParseException {
@@ -90,6 +92,7 @@ public class LocalCacheTest extends SingleCacheManagerTest {
 
       int elems = found.size();
       assert elems == 0 : "Expected 0 but was " + elems;
+      StaticTestingErrorHandler.assertAllGood(cache);
    }
 
    public void testEagerIterator() throws ParseException {
@@ -105,6 +108,7 @@ public class LocalCacheTest extends SingleCacheManagerTest {
       } finally {
          found.close();
       }
+      StaticTestingErrorHandler.assertAllGood(cache);
    }
 
    @Test(expectedExceptions = UnsupportedOperationException.class)
@@ -150,6 +154,7 @@ public class LocalCacheTest extends SingleCacheManagerTest {
       assert found.size() == 2;
       assertTrue(found.contains(person2));
       assertTrue(found.contains(person3));
+      StaticTestingErrorHandler.assertAllGood(cache);
    }
 
    public void testModified() throws ParseException {
@@ -174,6 +179,7 @@ public class LocalCacheTest extends SingleCacheManagerTest {
 
       assert found.size() == 1;
       assert found.get(0).equals(person1);
+      StaticTestingErrorHandler.assertAllGood(cache);
    }
 
    public void testAdded() throws ParseException {
@@ -205,6 +211,7 @@ public class LocalCacheTest extends SingleCacheManagerTest {
       assert found.contains(person2);
       assert found.contains(person3);
       assert found.contains(person4) : "This should now contain object person4";
+      StaticTestingErrorHandler.assertAllGood(cache);
    }
 
    public void testRemoved() throws ParseException {
@@ -228,6 +235,7 @@ public class LocalCacheTest extends SingleCacheManagerTest {
       assert found.size() == 1;
       assert found.contains(person2);
       assert !found.contains(person3) : "The search should not return person3";
+      StaticTestingErrorHandler.assertAllGood(cache);
    }
 
    public void testUpdated() throws ParseException {
@@ -250,6 +258,7 @@ public class LocalCacheTest extends SingleCacheManagerTest {
       assert found.size() == 1 : "Size of list should be 1";
       assert !found.contains(person2) : "Person 2 should not be found now";
       assert !found.contains(person1) : "Person 1 should not be found because it does not meet the search criteria";
+      StaticTestingErrorHandler.assertAllGood(cache);
    }
 
    public void testSetSort() throws ParseException {
@@ -274,6 +283,7 @@ public class LocalCacheTest extends SingleCacheManagerTest {
          assert found.get( 0 ).equals( person3 ); // person3 is 25 and named Goat
          assert found.get( 1 ).equals( person2 ); // person2 is 30 and named Goat
       }
+      StaticTestingErrorHandler.assertAllGood(cache);
 
       //Now change the stored values:
       person2.setAge(10);
@@ -293,6 +303,7 @@ public class LocalCacheTest extends SingleCacheManagerTest {
          assert found.get( 0 ).equals( person2 ); // person2 is 30 and named Goat
          assert found.get( 1 ).equals( person3 ); // person3 is 25 and named Goat
       }
+      StaticTestingErrorHandler.assertAllGood(cache);
    }
 
    public void testSetFilter() throws ParseException {
@@ -312,6 +323,7 @@ public class LocalCacheTest extends SingleCacheManagerTest {
       found = cacheQuery.list();
 
       assert found.size() == 1;
+      StaticTestingErrorHandler.assertAllGood(cache);
    }
 
    public void testLazyIterator() throws ParseException {
@@ -329,6 +341,7 @@ public class LocalCacheTest extends SingleCacheManagerTest {
       } finally {
          found.close();
       }
+      StaticTestingErrorHandler.assertAllGood(cache);
    }
 
    @Test(expectedExceptions = IllegalArgumentException.class, expectedExceptionsMessageRegExp = "Unknown FetchMode null")
@@ -368,6 +381,7 @@ public class LocalCacheTest extends SingleCacheManagerTest {
       } finally {
          found.close();
       }
+      StaticTestingErrorHandler.assertAllGood(cache);
    }
 
    public void testExplain() throws ParseException {
@@ -397,6 +411,7 @@ public class LocalCacheTest extends SingleCacheManagerTest {
       }
 
       assertEquals(3, matchCounter);
+      StaticTestingErrorHandler.assertAllGood(cache);
    }
 
    public void testFullTextFilterOnOff() throws ParseException {
@@ -418,6 +433,7 @@ public class LocalCacheTest extends SingleCacheManagerTest {
       //Disabling the fullTextFilter.
       query.disableFullTextFilter("personFilter");
       assertEquals(3, query.getResultSize());
+      StaticTestingErrorHandler.assertAllGood(cache);
    }
 
    @Test(expectedExceptions = UnsupportedOperationException.class)
@@ -437,6 +453,7 @@ public class LocalCacheTest extends SingleCacheManagerTest {
       } finally {
          iterator.close();
       }
+      StaticTestingErrorHandler.assertAllGood(cache);
    }
 
    public void testLazyIteratorWithOffset() throws ParseException {
@@ -451,6 +468,7 @@ public class LocalCacheTest extends SingleCacheManagerTest {
       } finally {
          iterator.close();
       }
+      StaticTestingErrorHandler.assertAllGood(cache);
    }
 
    @Test(expectedExceptions = IllegalArgumentException.class)
@@ -519,6 +537,7 @@ public class LocalCacheTest extends SingleCacheManagerTest {
       } finally {
          iterator.close();
       }
+      StaticTestingErrorHandler.assertAllGood(cache);
    }
 
    @Test(expectedExceptions = IllegalArgumentException.class)
@@ -557,6 +576,7 @@ public class LocalCacheTest extends SingleCacheManagerTest {
       CacheQuery cacheQuery = Search.getSearchManager(cache).getQuery(luceneQuery);
 
       assert cacheQuery.getResultSize() == 1;
+      StaticTestingErrorHandler.assertAllGood(cache);
    }
 
    public void testMaxResults() throws ParseException {
@@ -588,6 +608,7 @@ public class LocalCacheTest extends SingleCacheManagerTest {
       } finally {
          defaultIterator.close();
       }
+      StaticTestingErrorHandler.assertAllGood(cache);
    }
 
    private int countElements(ResultIterator iterator) {
@@ -621,6 +642,7 @@ public class LocalCacheTest extends SingleCacheManagerTest {
       cacheQuery = Search.getSearchManager(cache).getQuery(luceneQuery);
 
       assert cacheQuery.getResultSize() == 0;
+      StaticTestingErrorHandler.assertAllGood(cache);
    }
 
    public void testTypeFiltering() throws ParseException {
@@ -642,6 +664,7 @@ public class LocalCacheTest extends SingleCacheManagerTest {
 
       assert found.size() == 1;
       assert found.get(0).equals(anotherGrassEater);
+      StaticTestingErrorHandler.assertAllGood(cache);
    }
 
    @Override
@@ -651,11 +674,12 @@ public class LocalCacheTest extends SingleCacheManagerTest {
          .indexing()
             .index(Index.ALL)
             .addProperty("default.directory_provider", "ram")
+            .addProperty("error_handler", "org.infinispan.query.helper.StaticTestingErrorHandler")
             .addProperty("lucene_version", "LUCENE_CURRENT");
       enhanceConfig(cfg);
       return TestCacheManagerFactory.createCacheManager(cfg);
    }
-   
+
    public void testEntityDiscovery() {
       assertIndexingKnows(cache);
 
@@ -697,6 +721,7 @@ public class LocalCacheTest extends SingleCacheManagerTest {
 
       cache.put(key3, person3);
       cache.put(anotherGrassEaterKey, anotherGrassEater);
+      StaticTestingErrorHandler.assertAllGood(cache);
    }
 
    protected void loadTestingDataWithCustomKey() {
@@ -715,6 +740,7 @@ public class LocalCacheTest extends SingleCacheManagerTest {
 
       cache.put(customeKey3, person3);
       cache.put(anotherGrassEaterKey, anotherGrassEater);
+      StaticTestingErrorHandler.assertAllGood(cache);
    }
 
    protected void prepareTestingData() {
@@ -737,6 +763,7 @@ public class LocalCacheTest extends SingleCacheManagerTest {
       person3.setNonSearchableField("test3");
 
       anotherGrassEater = new AnotherGrassEater("Another grass-eater", "Eats grass");
+      StaticTestingErrorHandler.assertAllGood(cache);
    }
    
    protected void enhanceConfig(ConfigurationBuilder c) {

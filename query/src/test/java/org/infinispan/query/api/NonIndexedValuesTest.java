@@ -8,6 +8,7 @@ import org.infinispan.configuration.cache.Index;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.query.Search;
 import org.infinispan.query.SearchManager;
+import org.infinispan.query.helper.StaticTestingErrorHandler;
 import org.infinispan.test.SingleCacheManagerTest;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.testng.annotations.Test;
@@ -20,6 +21,7 @@ public class NonIndexedValuesTest extends SingleCacheManagerTest {
       c.indexing()
          .index(Index.ALL)
          .addProperty("default.directory_provider", "ram")
+         .addProperty("error_handler", "org.infinispan.query.helper.StaticTestingErrorHandler")
          .addProperty("lucene_version", "LUCENE_CURRENT");
       return TestCacheManagerFactory.createCacheManager(c);
    }
@@ -93,6 +95,8 @@ public class NonIndexedValuesTest extends SingleCacheManagerTest {
       //replace with a non indexed type
       cache.replace("name", indexBEntity, new NotIndexedType("this is not indexed"));
       assertEquals(1, qf.getQuery(ispnIssueQuery).list().size());
+
+      StaticTestingErrorHandler.assertAllGood(cache);
    }
 
 }
