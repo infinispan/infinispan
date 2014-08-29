@@ -100,8 +100,10 @@ object Encoder2x extends AbstractVersionedEncoder with Constants with Log {
       val numSegments = ch.getNumSegments
       buf.writeByte(h.hashFunction) // Hash function
       writeUnsignedInt(numSegments, buf)
+
+      val members = h.serverEndpointsMap.keySet
       for (segmentId <- 0 until numSegments) {
-         val owners = ch.locateOwnersForSegment(segmentId)
+         val owners = ch.locateOwnersForSegment(segmentId).filter(members.contains)
          val numOwnersToSend = Math.min(2, owners.size())
          buf.writeByte(numOwnersToSend)
          owners.take(numOwnersToSend).foreach { ownerAddr =>
