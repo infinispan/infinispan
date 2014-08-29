@@ -14,7 +14,7 @@ import static org.infinispan.query.backend.TransactionHelper.Operation;
  * @author gustavonalle
  * @since 7.0
  */
-class SearchFactoryHandler {
+final class SearchFactoryHandler {
 
    private final SearchFactoryIntegrator searchFactory;
    private final ReadIntensiveClusterRegistryWrapper<String, Class<?>, Boolean> clusterRegistry;
@@ -30,13 +30,17 @@ class SearchFactoryHandler {
       this.transactionHelper = transactionHelper;
    }
 
-   boolean updateKnownTypesIfNeeded(Object value) {
+   boolean updateKnownTypesIfNeeded(final Object value) {
       if (value != null) {
-         Class<?> potentialNewType = value.getClass();
-         if (!clusterRegistry.containsKey(potentialNewType)) {
-            handleOnDemandRegistration(potentialNewType);
+         final Class<?> potentialNewType = value.getClass();
+         final Boolean existingBoolean = clusterRegistry.get(potentialNewType);
+         if (existingBoolean != null) {
+            return existingBoolean.booleanValue();
          }
-         return clusterRegistry.get(potentialNewType);
+         else {
+            handleOnDemandRegistration(potentialNewType);
+            return clusterRegistry.get(potentialNewType);
+         }
       } else {
          return false;
       }
