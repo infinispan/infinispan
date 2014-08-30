@@ -91,7 +91,11 @@ public class InfinispanCommandsBackend implements BackendQueueProcessor {
 
    @Override
    public void applyStreamWork(LuceneWork singleOperation, IndexingMonitor monitor) {
-      applyWork(Collections.singletonList(singleOperation), monitor);
+      IndexUpdateStreamCommand streamCommand = new IndexUpdateStreamCommand(cacheName);
+      byte[] serializedModel = indexManager.getSerializer().toSerializedModel(Collections.singletonList(singleOperation));
+      streamCommand.setSerializedWorkList(serializedModel);
+      streamCommand.setIndexName(this.indexName);
+      sendCommand(streamCommand,Collections.singletonList(singleOperation));
    }
 
    @Override

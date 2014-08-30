@@ -9,16 +9,16 @@ import org.infinispan.query.impl.ModuleCommandIds;
 import java.util.List;
 
 /**
- * Custom RPC command containing an index update request for the
- * Master IndexManager of a specific cache & index.
+ * Execute a stream operation
  *
- * @author Sanne Grinovero
+ * @author gustavonalle
+ * @since 7.0
  */
-public class IndexUpdateCommand extends AbstractUpdateCommand {
+public class IndexUpdateStreamCommand extends AbstractUpdateCommand {
 
-   public static final byte COMMAND_ID = ModuleCommandIds.UPDATE_INDEX;
+   public static final byte COMMAND_ID = ModuleCommandIds.UPDATE_INDEX_STREAM;
 
-   public IndexUpdateCommand(String cacheName) {
+   public IndexUpdateStreamCommand(String cacheName) {
       super(cacheName);
    }
 
@@ -29,9 +29,9 @@ public class IndexUpdateCommand extends AbstractUpdateCommand {
          throw new SearchException("Unknown index referenced : " + indexName);
       }
       List<LuceneWork> luceneWorks = indexManager.getSerializer().toLuceneWorks(this.serializedModel);
-      List<LuceneWork> workToApply = transformKeysToStrings(luceneWorks);//idInString field is not serialized, we need to extract it from the key object
-      indexManager.performOperations(workToApply, null);
-      return Boolean.TRUE; //Return value to be ignored
+      LuceneWork workToApply = transformKeyToStrings(luceneWorks.iterator().next());
+      indexManager.performStreamOperation(workToApply, null, true);
+      return Boolean.TRUE;
    }
 
    @Override
