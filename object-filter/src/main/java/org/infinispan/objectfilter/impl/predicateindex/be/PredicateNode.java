@@ -50,7 +50,7 @@ public final class PredicateNode<AttributeId extends Comparable<AttributeId>> ex
    }
 
    @Override
-   public boolean handleChildValue(BENode child, boolean childValue, FilterEvalContext evalContext) {
+   public void handleChildValue(BENode child, boolean childValue, FilterEvalContext evalContext) {
       if (child != null) {
          throw new IllegalArgumentException();
       }
@@ -60,8 +60,7 @@ public final class PredicateNode<AttributeId extends Comparable<AttributeId>> ex
       if (isDecided(evalContext)) {
          if (predicate.isRepeated() && evalContext.treeCounters[index] == value) {
             // receiving the same value multiple times if fine if this is a repeated condition
-            // here we return a status that is most likely incorrect but it is harmless
-            return false;
+            return;
          }
          throw new IllegalStateException("This should never be called again if the state of this node was previously decided.");
       }
@@ -70,10 +69,9 @@ public final class PredicateNode<AttributeId extends Comparable<AttributeId>> ex
 
       if (parent == null) {
          suspendSubscription(evalContext);
-         return true;
+      } else {
+         parent.handleChildValue(this, childValue, evalContext);
       }
-
-      return parent.handleChildValue(this, childValue, evalContext);
    }
 
    @Override

@@ -38,11 +38,7 @@ public abstract class BENode {
       return evalContext.treeCounters[index] <= 0;
    }
 
-   /**
-    * @return true if the value of the boolean expression was decided in this step or false if some other predicates
-    * still need evaluation to be able to decide the output of this filter.
-    */
-   public abstract boolean handleChildValue(BENode child, boolean childValue, FilterEvalContext evalContext); //todo [anistor] the return value is not currently used ...
+   public abstract void handleChildValue(BENode child, boolean childValue, FilterEvalContext evalContext);
 
    public void suspendSubscription(FilterEvalContext evalContext) {
       // nothing to do

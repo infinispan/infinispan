@@ -13,11 +13,11 @@ public final class OrNode extends BENode {
    }
 
    @Override
-   public boolean handleChildValue(BENode child, boolean childValue, FilterEvalContext evalContext) {
+   public void handleChildValue(BENode child, boolean childValue, FilterEvalContext evalContext) {
       if (isDecided(evalContext)) {
          if (evalContext.matcherContext.isSingleFilter()) {
             // for single-filter scenario we do not unsubscribe so it may happen to be notified twice
-            return false;
+            return;
          }
          throw new IllegalStateException("This should never be called again because the state of this node has been decided already.");
       }
@@ -26,27 +26,25 @@ public final class OrNode extends BENode {
          // value of this node is decided: TRUE
          if (parent != null) {
             // let the parent know
-            return parent.handleChildValue(this, true, evalContext);
+            parent.handleChildValue(this, true, evalContext);
          } else {
             evalContext.treeCounters[0] = BETree.EXPR_TRUE;
             BENode[] nodes = evalContext.beTree.getNodes();
             for (int i = index; i < span; i++) {
                nodes[i].suspendSubscription(evalContext);
             }
-            return true;
          }
       } else {
          if (--evalContext.treeCounters[index] == 0) {
             // value of this node has just been decided: TRUE
             if (parent != null) {
                // let the parent know
-               return parent.handleChildValue(this, false, evalContext);
+               parent.handleChildValue(this, false, evalContext);
             } else {
                BENode[] nodes = evalContext.beTree.getNodes();
                for (int i = index; i < span; i++) {
                   nodes[i].suspendSubscription(evalContext);
                }
-               return true;
             }
          } else {
             // value of this node cannot be decided yet, so we cannot tell the parent anything yet but let's at least mark down the children as 'unsatisfied'
@@ -55,7 +53,6 @@ public final class OrNode extends BENode {
             for (int i = child.index; i < child.span; i++) {
                nodes[i].suspendSubscription(evalContext);
             }
-            return false;
          }
       }
    }
