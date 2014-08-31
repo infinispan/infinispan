@@ -74,6 +74,8 @@ public class OsgiClassLoader extends ClassLoader {
 
       for (WeakReference<Bundle> ref : bundles) {
          final Bundle bundle = ref.get();
+         // ISPN-4679 may get a null handle from the weak refrence
+         if(bundle == null) continue;
          if (bundle.getState() == Bundle.ACTIVE) {
             try {
                final Class clazz = bundle.loadClass(name);
