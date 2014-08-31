@@ -123,6 +123,10 @@ public final class MarshalledValue implements Externalizable {
       return deserialize();
    }
 
+   public StreamingMarshaller getMarshaller() {
+      return marshaller;
+   }
+
    @Override
    public boolean equals(Object o) {
       if (this == o) return true;
