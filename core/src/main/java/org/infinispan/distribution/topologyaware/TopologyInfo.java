@@ -23,17 +23,33 @@ public class TopologyInfo {
    private final Map<String, Site> allSites = new HashMap<String, Site>();
    private List<Rack> allRacks = new ArrayList<Rack>();
    private List<Machine> allMachines = new ArrayList<Machine>();
-   private List<Address> allNodes;
+   private List<Address> sortedNodes;
    private Map<Address, Float> capacityFactors;
+   private Map<Address, Float> maxSegments;
 
    public TopologyInfo(Collection<Address> members, Map<Address, Float> capacityFactors) {
-      this.allNodes = new ArrayList<Address>(members);
       this.capacityFactors = capacityFactors;
-      for (Address node : members) {
+      this.sortedNodes = sortMembers(members, capacityFactors);
+
+      // This way, all the nodes collections at the site/rack/machine levels will be sorted
+      for (Address node : sortedNodes) {
          if (capacityFactors == null || capacityFactors.get(node) != 0.0) {
             addTopology(node);
          }
       }
+   }
+
+   private List<Address> sortMembers(Collection<Address> members, final Map<Address, Float> capacityFactors) {
+      List<Address> sortedList = new ArrayList<Address>(members);
+      Collections.sort(sortedList, new Comparator<Address>() {
+         @Override
+         public int compare(Address o1, Address o2) {
+            // Sort descending by capacity factor and ascending by address (UUID)
+            int capacityComparison = capacityFactors != null ? capacityFactors.get(o1).compareTo(capacityFactors.get(o2)) : 0;
+            return capacityComparison != 0 ? -capacityComparison : o1.compareTo(o2);
+         }
+      });
+      return sortedList;
    }
 
    private void addTopology(Address node) {
@@ -101,7 +117,7 @@ public class TopologyInfo {
    }
 
    public int getAllNodesCount() {
-      return allNodes.size();
+      return sortedNodes.size();
    }
 
    public int getDistinctLocationsCount(TopologyLevel level, int numOwners) {
@@ -149,7 +165,10 @@ public class TopologyInfo {
       return sb.toString();
    }
 
-   public double computeMaxSegmentsForNode(int numSegments, double numCopies, Collection<Address> nodes,
+   /**
+    * The nodes collection must be sorted in descending order by their capacity.
+    */
+   private double computeMaxSegmentsForNode(int numSegments, double numCopies, Collection<Address> nodes,
                                            Address node) {
       if (capacityFactors == null) {
          if (nodes.size() < numCopies) {
@@ -160,33 +179,28 @@ public class TopologyInfo {
          }
       }
 
-      float nodeCapacityFactor = capacityFactors.get(node);
-      if (nodeCapacityFactor == 0.0)
+      Float nodeCapacityFactor = capacityFactors.get(node);
+      if (nodeCapacityFactor == 0)
          return 0;
 
-      float totalCapacity = computeTotalCapacity(nodes, capacityFactors);
-      List<Address> sortedNodes = new ArrayList<Address>(nodes);
-      Collections.sort(sortedNodes, new Comparator<Address>() {
-         @Override
-         public int compare(Address o1, Address o2) {
-            // Reverse order
-            return (int) Math.signum(capacityFactors.get(o2) - capacityFactors.get(o1));
-         }
-      });
-
+      double remainingCapacity = computeTotalCapacity(nodes, capacityFactors);
       double remainingCopies = numCopies * numSegments;
-      for (Address a : sortedNodes) {
-         float nodeLoad = capacityFactors.get(a);
-         double nodeSegments;
-         if (remainingCopies * nodeLoad / totalCapacity > numSegments) {
+      for (Address a : nodes) {
+         float capacityFactor = capacityFactors.get(a);
+         double nodeSegments = capacityFactor / remainingCapacity * remainingCopies;
+         if (nodeSegments > numSegments) {
             nodeSegments = numSegments;
-            totalCapacity -= nodeLoad;
+            remainingCapacity -= capacityFactor;
             remainingCopies -= nodeSegments;
+            if (node.equals(a))
+               return nodeSegments;
          } else {
-            nodeSegments = nodeLoad != 0 ? remainingCopies * nodeLoad / totalCapacity : 0;
-         }
-         if (node.equals(a))
+            // All the nodes from now on will have less than numSegments segments, so we can stop the iteration
+            if (!node.equals(a)) {
+               nodeSegments = nodeCapacityFactor / remainingCapacity * remainingCopies;
+            }
             return nodeSegments;
+         }
       }
       throw new IllegalStateException("The nodes collection does not include " + node);
    }
@@ -202,7 +216,7 @@ public class TopologyInfo {
       return totalCapacity;
    }
 
-   public double computeMaxSegmentsForMachine(int numSegments, double numCopies, Collection<Machine> machines,
+   private double computeMaxSegmentsForMachine(int numSegments, double numCopies, Collection<Machine> machines,
                                               Machine machine, Address node) {
       // The number of segment copies on each machine should be the same, except where not possible
       double copiesPerMachine = numCopies / machines.size();
@@ -220,7 +234,7 @@ public class TopologyInfo {
       return computeMaxSegmentsForNode(numSegments, copiesPerMachine, machine.nodes, node);
    }
 
-   public double computeMaxSegmentsForRack(int numSegments, double numCopies, Collection<Rack> racks, Rack rack,
+   private double computeMaxSegmentsForRack(int numSegments, double numCopies, Collection<Rack> racks, Rack rack,
                                            Machine machine, Address node) {
       // Not enough racks to have an owner in each rack.
       // The number of segment copies on each Rack should be the same, except where not possible
@@ -243,7 +257,7 @@ public class TopologyInfo {
       }
    }
 
-   public double computeMaxSegmentsForSite(int numSegments, double numCopies, Collection<Site> sites,
+   private double computeMaxSegmentsForSite(int numSegments, double numCopies, Collection<Site> sites,
                                            Site site, Rack rack, Machine machine, Address node) {
       // Not enough allSites to have an owner in each site.
       // The number of segment copies on each Site should be the same, except where not possible
@@ -283,7 +297,7 @@ public class TopologyInfo {
 
       double maxSegments;
       if (numOwners == 1) {
-         maxSegments = computeMaxSegmentsForNode(numSegments, numOwners, allNodes, node);
+         maxSegments = computeMaxSegmentsForNode(numSegments, numOwners, sortedNodes, node);
       } else if (getAllNodesCount() <= numOwners) {
          maxSegments = numSegments;
       } else if (getAllMachinesCount() <= numOwners) {

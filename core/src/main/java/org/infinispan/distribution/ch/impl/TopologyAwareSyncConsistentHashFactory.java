@@ -6,9 +6,9 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.SortedMap;
 
-import org.infinispan.distribution.ch.ConsistentHashFactory;
+import org.infinispan.commons.hash.Hash;
+import org.infinispan.distribution.topologyaware.TopologyInfo;
 import org.infinispan.distribution.topologyaware.TopologyLevel;
 import org.infinispan.commons.marshall.AbstractExternalizer;
 import org.infinispan.marshall.core.Ids;
@@ -32,102 +32,94 @@ import org.infinispan.remoting.transport.TopologyAwareAddress;
  */
 public class TopologyAwareSyncConsistentHashFactory extends SyncConsistentHashFactory {
    @Override
-   protected void populateOwnersFewSegments(Builder builder, SortedMap<Integer, Address> primarySegments) {
-      // Too few segments for each member to have one "primary segment",
-      // but we may still have enough segments for each member to be a backup owner.
-
-      // Populate the primary owners first - because numSegments < numMembers we're guaranteed to
-      // set the primary owner of each segment
-      for (Map.Entry<Integer, Address> e : primarySegments.entrySet()) {
-         Integer segment = e.getKey();
-         Address primaryOwner = e.getValue();
-         builder.getOwners(segment).add(primaryOwner);
-      }
-
-      // Continue with the backup owners. Assign each member as owner to one segment,
-      // then repeat until each segment has numOwners owners.
-      populateBackupOwners(builder, TopologyLevel.SITE);
-      populateBackupOwners(builder, TopologyLevel.RACK);
-      populateBackupOwners(builder, TopologyLevel.MACHINE);
-      populateBackupOwners(builder, TopologyLevel.NODE);
+   protected Builder createBuilder(Hash hashFunction, int numOwners, int numSegments, List<Address> members, Map<Address, Float> capacityFactors) {
+      return new Builder(hashFunction, numOwners, numSegments, members, capacityFactors);
    }
 
-   private boolean populateBackupOwners(Builder builder, TopologyLevel level) {
-      boolean modified = false;
-      // Try to add each node as an owner to one segment
-      for (Address member : builder.getSortedMembers()) {
-         // Compute an initial segment and iterate backwards to make it more like the other case
-         int initSegment = normalizedHash(builder.getHashFunction(), member.hashCode()) / builder.getSegmentSize();
-         for (int i = 0; i < builder.getNumSegments(); i++) {
-            int segment = (builder.getNumSegments() + initSegment - i) % builder.getNumSegments();
-            List<Address> owners = builder.getOwners(segment);
-            if (owners.size() < builder.getActualNumOwners() && locationAlreadyAdded(member, owners, level)) {
-               owners.add(member);
-               modified = true;
-               break;
+   protected static class Builder extends SyncConsistentHashFactory.Builder {
+      protected final TopologyInfo topologyInfo;
+
+      protected TopologyLevel currentLevel = TopologyLevel.SITE;
+
+      protected Builder(Hash hashFunction, int numOwners, int numSegments, List<Address> members, Map<Address, Float> capacityFactors) {
+         super(hashFunction, numOwners, numSegments, members, capacityFactors);
+         topologyInfo = new TopologyInfo(members, capacityFactors);
+      }
+
+      @Override
+      protected void copyOwners() {
+         copyOwnersForLevel(TopologyLevel.SITE);
+         copyOwnersForLevel(TopologyLevel.RACK);
+         copyOwnersForLevel(TopologyLevel.MACHINE);
+         copyOwnersForLevel(TopologyLevel.NODE);
+      }
+
+      private void copyOwnersForLevel(TopologyLevel topologyLevel) {
+         currentLevel = topologyLevel;
+         ignoreMaxSegments = false;
+         super.doCopyOwners();
+         ignoreMaxSegments = true;
+         super.doCopyOwners();
+      }
+
+      @Override
+      protected void addOwner(int segment, Address candidate) {
+         List<Address> owners = segmentOwners[segment];
+         if (owners.size() < actualNumOwners && !locationAlreadyAdded(candidate, owners, currentLevel)) {
+            if (!ignoreMaxSegments) {
+               if (owners.isEmpty()) {
+                  long maxSegments = Math.round(computeExpectedSegmentsForNode(candidate, 1) * PRIMARY_SEGMENTS_ALLOWED_VARIATION);
+                  if (stats.getPrimaryOwned(candidate) < maxSegments) {
+                     addOwnerNoCheck(segment, candidate);
+                  }
+               } else {
+                  long maxSegments = Math.round(computeExpectedSegmentsForNode(candidate, actualNumOwners) * OWNED_SEGMENTS_ALLOWED_VARIATION);
+                  if (stats.getOwned(candidate) < maxSegments) {
+                     addOwnerNoCheck(segment, candidate);
+                  }
+               }
+            } else {
+               if (!capacityFactors.get(candidate).equals(0f)) {
+                  addOwnerNoCheck(segment, candidate);
+               }
             }
          }
       }
-      return modified;
-   }
 
-   @Override
-   protected void populateOwnersManySegments(Builder builder, SortedMap<Integer, Address> primarySegments) {
-      // Each member is present at least once in the primary segments map, so we can use that
-      // to populate the owner lists. For each segment assign the owners of the next numOwners
-      // "primary segments" as owners.
-      for (int segment = 0; segment < builder.getNumSegments(); segment++) {
-         populateSegmentOwners(builder, primarySegments, segment, TopologyLevel.SITE);
-         populateSegmentOwners(builder, primarySegments, segment, TopologyLevel.RACK);
-         populateSegmentOwners(builder, primarySegments, segment, TopologyLevel.MACHINE);
-         populateSegmentOwners(builder, primarySegments, segment, TopologyLevel.NODE);
+      @Override
+      protected boolean canAddOwners(List<Address> owners) {
+         return owners.size() < topologyInfo.getDistinctLocationsCount(currentLevel, actualNumOwners);
       }
-   }
 
-   private void populateSegmentOwners(Builder builder, SortedMap<Integer, Address> primarySegments,
-                                      int segment, TopologyLevel level) {
-      List<Address> owners = builder.getOwners(segment);
-      if (owners.size() >= builder.getActualNumOwners())
-         return;
-
-      for (Address a : primarySegments.tailMap(segment).values()) {
-         if (owners.size() >= builder.getActualNumOwners())
-            return;
-         if (!locationAlreadyAdded(a, owners, level)) {
-            owners.add(a);
-         }
+      @Override
+      protected double computeExpectedSegmentsForNode(Address node, int numCopies) {
+         return topologyInfo.computeExpectedSegments(numSegments, numCopies, node);
       }
-      for (Address a : primarySegments.headMap(segment).values()) {
-         if (owners.size() >= builder.getActualNumOwners())
-            return;
-         if (!locationAlreadyAdded(a, owners, level)) {
-            owners.add(a);
-         }
-      }
-   }
 
-   private boolean locationAlreadyAdded(Address candidate, List<Address> owners, TopologyLevel level) {
-      TopologyAwareAddress topologyAwareCandidate = (TopologyAwareAddress) candidate;
-      boolean locationAlreadyAdded = false;
-      for (Address owner : owners) {
-         TopologyAwareAddress topologyAwareOwner = (TopologyAwareAddress) owner;
-         switch (level) {
-            case SITE:
-               locationAlreadyAdded = topologyAwareCandidate.isSameSite(topologyAwareOwner);
+      private boolean locationAlreadyAdded(Address candidate, List<Address> owners, TopologyLevel level) {
+         TopologyAwareAddress topologyAwareCandidate = (TopologyAwareAddress) candidate;
+         boolean locationAlreadyAdded = false;
+         for (Address owner : owners) {
+            TopologyAwareAddress topologyAwareOwner = (TopologyAwareAddress) owner;
+            switch (level) {
+               case SITE:
+                  locationAlreadyAdded = topologyAwareCandidate.isSameSite(topologyAwareOwner);
+                  break;
+               case RACK:
+                  locationAlreadyAdded = topologyAwareCandidate.isSameRack(topologyAwareOwner);
+                  break;
+               case MACHINE:
+                  locationAlreadyAdded = topologyAwareCandidate.isSameMachine(topologyAwareOwner);
+                  break;
+               case NODE:
+                  locationAlreadyAdded = owner.equals(candidate);
+            }
+            if (locationAlreadyAdded)
                break;
-            case RACK:
-               locationAlreadyAdded = topologyAwareCandidate.isSameRack(topologyAwareOwner);
-               break;
-            case MACHINE:
-               locationAlreadyAdded = topologyAwareCandidate.isSameMachine(topologyAwareOwner);
-               break;
-            case NODE:
-               locationAlreadyAdded = owner.equals(candidate);
          }
-         if (locationAlreadyAdded)
-            break;
+         return locationAlreadyAdded;
       }
-      return locationAlreadyAdded;
+
    }
 
    public static class Externalizer extends AbstractExternalizer<TopologyAwareSyncConsistentHashFactory> {
