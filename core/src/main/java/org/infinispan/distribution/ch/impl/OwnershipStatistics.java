@@ -98,4 +98,13 @@ public class OwnershipStatistics {
 
       owned[i]--;
    }
+
+   public int sumOwned() {
+      int allOwnersCount = 0;
+      for (int ownedCount : owned) {
+         allOwnersCount += ownedCount;
+      }
+      return allOwnersCount;
+
+   }
 }

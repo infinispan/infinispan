@@ -18,7 +18,7 @@ import java.util.Set;
  * @author Bela Ban
  * @since 5.0
  */
-public final class JGroupsTopologyAwareAddress extends JGroupsAddress implements TopologyAwareAddress {
+public class JGroupsTopologyAwareAddress extends JGroupsAddress implements TopologyAwareAddress {
 
    protected static final byte[] SITE_ID    = Util.stringToBytes("site-id");
    protected static final byte[] RACK_ID    = Util.stringToBytes("rack-id");
