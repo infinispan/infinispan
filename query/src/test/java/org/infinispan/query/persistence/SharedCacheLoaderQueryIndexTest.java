@@ -18,7 +18,7 @@ import org.testng.annotations.Test;
  * @since 5.2
  */
 @Test(groups = "unstable", testName = "query.persistence.SharedCacheLoaderQueryIndexTest",
-      description = "See ISPN-4048 -- original group: functional")
+      description = "See ISPN-4681 -- original group: functional")
 public class SharedCacheLoaderQueryIndexTest extends BaseReIndexingTest {
 
    @Override
