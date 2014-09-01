@@ -6,7 +6,7 @@
 
     <!--Variables of namespaces to be changed-->
     <xsl:variable name="nsLogging">urn:jboss:domain:logging:</xsl:variable>
-    <xsl:variable name="nsJGroups">urn:jboss:domain:jgroups:</xsl:variable>
+    <xsl:variable name="nsJGroups">urn:infinispan:server:jgroups:</xsl:variable>
     <xsl:variable name="nsCore">urn:infinispan:server:core:</xsl:variable>
     <xsl:variable name="nsThreads">urn:jboss:domain:threads:</xsl:variable>
     <xsl:variable name="nsSecurity">urn:jboss:domain:security:</xsl:variable>
