@@ -728,7 +728,7 @@ public final class Util {
     * @return the size of each segment
     */
    public static int getSegmentSize(int numSegments) {
-      return (int)Math.ceil((float)Integer.MAX_VALUE / numSegments);
+      return (int)Math.ceil((double)(1L << 31) / numSegments);
    }
 
    public static boolean isIBMJavaVendor() {
