@@ -3,7 +3,6 @@ package org.infinispan.lucene;
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
-import java.io.Serializable;
 import java.util.Set;
 
 import org.infinispan.commons.io.UnsignedNumeric;
@@ -17,10 +16,7 @@ import org.infinispan.commons.util.Util;
  * @author Lukasz Moren
  * @author Sanne Grinovero
  */
-public final class ChunkCacheKey implements Serializable, IndexScopedKey {
-
-   /** The serialVersionUID */
-   private static final long serialVersionUID = 4429712073623290126L;
+public final class ChunkCacheKey implements IndexScopedKey {
 
    private final int chunkId;
    private final String indexName;
