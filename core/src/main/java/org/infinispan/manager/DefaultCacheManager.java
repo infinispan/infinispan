@@ -4,11 +4,12 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.LinkedHashSet;
 import java.util.List;
-import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Properties;
 import java.util.Set;
+import java.util.TreeSet;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
@@ -57,6 +58,8 @@ import org.infinispan.security.AuthorizationPermission;
 import org.infinispan.security.impl.AuthorizationHelper;
 import org.infinispan.security.impl.PrincipalRoleMapperContextImpl;
 import org.infinispan.security.impl.SecureCacheImpl;
+import org.infinispan.util.CyclicDependencyException;
+import org.infinispan.util.DependencyGraph;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
@@ -116,6 +119,7 @@ public class DefaultCacheManager implements EmbeddedCacheManager {
    private final GlobalComponentRegistry globalComponentRegistry;
    private volatile boolean stopping;
    private final AuthorizationHelper authzHelper;
+   private final DependencyGraph<String> cacheDependencyGraph = new DependencyGraph<>();
 
    /**
     * Constructs and starts a default instance of the CacheManager, using configuration defaults.  See {@link org.infinispan.configuration.cache.Configuration Configuration}
@@ -482,6 +486,8 @@ public class DefaultCacheManager implements EmbeddedCacheManager {
 
             // Remove cache configuration and remove it from the computed cache name list
             configurationOverrides.remove(cacheName);
+            // Remove cache from dependency graph
+            cacheDependencyGraph.remove(cacheName);
          } catch (Throwable t) {
             throw new CacheException("Error removing cache", t);
          }
@@ -608,6 +614,13 @@ public class DefaultCacheManager implements EmbeddedCacheManager {
       log.debugf("Started cache manager %s on %s", clusterName, nodeName);
    }
 
+   private void terminate(Cache cache) {
+      if (cache != null) {
+            unregisterCacheMBean(cache);
+            cache.stop();
+      }
+   }
+
    @Override
    public void stop() {
       authzHelper.checkPermission(AuthorizationPermission.LIFECYCLE);
@@ -618,26 +631,29 @@ public class DefaultCacheManager implements EmbeddedCacheManager {
             if (!stopping) {
                log.debugf("Stopping cache manager %s on %s", globalConfiguration.transport().clusterName(), getAddress());
                stopping = true;
+               Set<String> cachesToStop = new LinkedHashSet<>();
+               boolean defaultCacheHasDependency = false;
+               // stop ordered caches first
+               try {
+                  List<String> ordered = cacheDependencyGraph.topologicalSort();
+                  defaultCacheHasDependency = ordered.contains(DEFAULT_CACHE_NAME);
+                  cachesToStop.addAll(ordered);
+               } catch (CyclicDependencyException e) {
+                  log.stopOrderIgnored();
+               }
+               cachesToStop.addAll(caches.keySet());
                // make sure we stop the default cache LAST!
                Cache<?, ?> defaultCache = null;
-               for (Map.Entry<String, CacheWrapper> entry : caches.entrySet()) {
-                  if (entry.getKey().equals(ClusterRegistryImpl.GLOBAL_REGISTRY_CACHE_NAME)) {
+               for (String cacheName : cachesToStop) {
+                  if (cacheName.equals(ClusterRegistryImpl.GLOBAL_REGISTRY_CACHE_NAME)) {
                      // will be stopped by the GCR
-                  } else if (entry.getKey().equals(DEFAULT_CACHE_NAME)) {
-                     defaultCache = entry.getValue().cache;
+                  } else if (cacheName.equals(DEFAULT_CACHE_NAME) && !defaultCacheHasDependency) {
+                     defaultCache = this.caches.get(cacheName).cache;
                   } else {
-                     Cache<?, ?> c = entry.getValue().cache;
-                     if (c != null) {
-                        unregisterCacheMBean(c);
-                        c.stop();
-                     }
+                     terminate(this.caches.get(cacheName).cache);
                   }
                }
-
-               if (defaultCache != null) {
-                  unregisterCacheMBean(defaultCache);
-                  defaultCache.stop();
-               }
+               terminate(defaultCache);
                globalComponentRegistry.getComponent(CacheManagerJmxRegistration.class).stop();
                globalComponentRegistry.stop();
 
@@ -844,6 +860,11 @@ public class DefaultCacheManager implements EmbeddedCacheManager {
    @Override
    public GlobalComponentRegistry getGlobalComponentRegistry() {
       return globalComponentRegistry;
+   }
+
+   @Override
+   public void addCacheDependency(String from, String to) {
+      cacheDependencyGraph.addDependency(from, to);
    }
 
    @Override
