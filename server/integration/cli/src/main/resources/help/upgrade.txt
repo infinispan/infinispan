@@ -1,0 +1,27 @@
+
+SYNOPSIS
+    upgrade [ --dumpkeys | --synchronize=migrator | --disconnectsource=migrator ] [ cachename | --all ]
+    
+DESCRIPTION 
+    This command performs operations used during the rolling upgrade procedure.
+    
+ARGUMENTS 
+    --dumpkeys 
+        Performs the dump of all the keys in the cache to a known entry. It must be performed on the "source" cluster so that the "target" cluster can fetch the entire keyset efficiently to complete the synchronization operation
+    --synchronize=migrator 
+        Performs the synchronization of all data from the "source" cluster to the "target" cluster using the specified migrator. It must be performed on the "target" cluster after the --dumpkeys operation has been performed on the "source" cluster. The only migrator currently available is hotrod  which migrates entries between caches exposed via the HotRod remoting protocol.
+    --disconnectsource=migrator 
+        Disconnects the "target" cluster from the "source" cluster. This is performed in a migrator -specific way. After this operation has been performed the "source" cluster can be switched off
+    --all 
+        Specifies that the requested operation should be performed on all caches in the currently selected container
+    cachename 
+        (optional) the name of the cache on which to invoke the specified upgrade command. If unspecified, the currently selected cache will be used. See also the --all switch above
+
+USAGE 
+    In order to perform a rolling upgrade of a HotRod cluster, the following steps must be taken
+    1. Configure and start a new cluster with a RemoteCacheStore pointing to the old cluster and the  hotRodWrapping flag enabled
+    2. Configure all clients so that they will connect to the new cluster
+    3. Invoke the  upgrade --dumpkeys command on the old cluster for all of the caches that need to be migrated
+    4. Invoke the  upgrade --synchronize=hotrod command on the new cluster to ensure that all data is migrated from the old cluster to the new one
+    5. Invoke the  upgrade --disconnectsource=hotrod command on the new cluster to disable the RemoteCacheStore used to migrate the data
+    6. Switch off the old cluster 

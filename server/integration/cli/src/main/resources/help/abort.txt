@@ -1,0 +1,6 @@
+
+SYNOPSIS
+    abort 
+    
+DESCRIPTION 
+    Aborts a running batch

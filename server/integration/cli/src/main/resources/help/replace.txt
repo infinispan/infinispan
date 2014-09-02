@@ -1,0 +1,39 @@
+
+SYNOPSIS
+    replace [ --codec=codec ] [ cache. ] key value [expires  expiration [maxidle idletime ]]  replace [ cache. ] key oldvalue newvalue [expires expiration  [maxidle idletime ]]
+    
+DESCRIPTION 
+    Replaces the entry for a key only if currently mapped to some value.
+    
+ARGUMENTS 
+    cache 
+        the name of the cache where the key/value pair will be stored. If omitted uses the currently selected cache (see the cache command)
+    key  the key which identifies the element in the cache
+    value 
+        the value to store in the cache associated with the key  If the --codec=codec option has been specified then the key and value will be encoded using the specified codec, otherwise the default session codec will be used. See the encoding command for more information
+    expiration 
+        an optional expiration timeout (using the time value notation described below)
+    idletime 
+        an optional idle timeout (using the time value notation described below)
+        
+DATA TYPES 
+    The CLI understands the following types: 
+    string 
+        a string must be enclosed between single (') or double (") quotes, e.g. 'a string'
+    int
+        an integer is identified by a sequence of decimal digits, e.g. 256
+    long 
+        a long is identified by a sequence of decimal digits suffixed by 'l', e.g. 1000l
+    double 
+        a double precision number is identified by a floating point number (with optional exponent part) and an optional 'd' suffix, e.g. 3.14
+    float 
+        a single precision number is identified by a floating point number (with optional exponent part) and an 'f' suffix, e.g. 10.3f
+    boolean 
+        a boolean is represented either by the keywords true and false
+    UUID 
+        a UUID is represented by its canonical form XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX
+    JSON 
+        serialized Java classes can be represented using JSON notation, e.g. {"package.MyClass":{"i":5,"x":null,"b":true}}. Please note that the specified class must be available to the CacheManager's class loader.
+        
+TIME VALUES 
+    A time value is an integer number followed by time unit suffix: days (d), hours (h), minutes (m), seconds (s), milliseconds (ms)

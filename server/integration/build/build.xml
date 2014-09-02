@@ -118,6 +118,11 @@
          <maven-resource group="org.infinispan.server" artifact="infinispan-server-jgroups" />
       </module-def>
 
+      <module-def name="org.jboss.as.cli">
+         <maven-resource group="org.wildfly" artifact="wildfly-cli"/>
+         <maven-resource group="org.infinispan.server" artifact="infinispan-server-cli"/>
+      </module-def>
+
       <module-def name="org.jboss.as.console" slot="ispn" />
 
       <module-def name="org.jboss.as.domain-http-error-context" slot="ispn" />
@@ -142,10 +147,6 @@
 
       <module-def name="org.infinispan">
          <maven-resource group="org.infinispan" artifact="infinispan-core" />
-      </module-def>
-
-      <module-def name="org.infinispan.cli.client">
-         <maven-resource group="org.infinispan" artifact="infinispan-cli-client" />
       </module-def>
 
       <module-def name="org.infinispan.cli.interpreter">

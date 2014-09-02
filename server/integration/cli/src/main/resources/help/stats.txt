@@ -1,0 +1,10 @@
+
+SYNOPSIS
+    stats [ --container | cachename ] 
+    
+DESCRIPTION 
+    Shows statistics about the specified cache or about the active cache manager
+    
+ARGUMENTS 
+    cachename 
+        (optional) the name of the cache for which information will be printed. If omitted, information about the current cache will be shown. If the --container option is specified, then information about the current container will be shown instead.

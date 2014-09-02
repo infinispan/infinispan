@@ -1,0 +1,11 @@
+
+SYNOPSIS
+    evict [ cache. ] key 
+    
+DESCRIPTION 
+    Evicts the entry associated with the specified key from a cache.
+    
+ARGUMENTS 
+    cache 
+        (optional) the name of the cache to use. If not specified, the currently selected cache will be used. See the cache command
+    key  the key of the entry to evict

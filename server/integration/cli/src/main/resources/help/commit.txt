@@ -1,0 +1,6 @@
+
+SYNOPSIS 
+    commit 
+    
+DESCRIPTION 
+    Commits an existing transaction.

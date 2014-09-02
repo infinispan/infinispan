@@ -1,0 +1,10 @@
+
+SYNOPSIS
+    start [ cachename ] 
+    
+DESCRIPTION 
+    Starts a batch (grouping of operations) 
+    
+ARGUMENTS 
+    cachename 
+        (optional) the name of the cache on which to start the batch. The currently selected cache will be used if this argument is missing

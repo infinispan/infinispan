@@ -1,0 +1,12 @@
+
+SYNOPSIS
+    create [ cachename ] [ like baseCacheName ] 
+    
+DESCRIPTION 
+    Creates a new cache based on the configuration of an existing cache.
+    
+ARGUMENTS 
+    cachename 
+        the name of the cache to create 
+    baseCacheName 
+        (optional) the name of the cache from which to get the configuration. If unspecified, the default cache configuration will be used

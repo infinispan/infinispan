@@ -1,0 +1,10 @@
+
+SYNOPSIS
+    info [ cachename ] 
+    
+DESCRIPTION 
+    Shows configuration information about the specified cache or about the active cache manager
+    
+ARGUMENTS 
+    cachename 
+        (optional) the name of the cache for which the configuration will be printed. If omitted, the active cache manager's configuration will be shown

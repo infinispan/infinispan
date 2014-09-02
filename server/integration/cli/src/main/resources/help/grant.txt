@@ -1,0 +1,12 @@
+SYNOPSIS
+    grant role to principal
+
+DESCRIPTION
+    Grants an authorization role to a principal
+
+ARGUMENTS
+    role
+        the name of the role to grant to the principal
+    principal
+        the name of the principal to which the role should be granted
+

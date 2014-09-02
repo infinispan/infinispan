@@ -1,0 +1,38 @@
+
+SYNOPSIS
+    put [ --codec=codec ] [ --ifabsent ] [ cache. ] key value [expires expiration [maxidle idletime ]]
+    
+DESCRIPTION 
+    Associates the specified value with the specified key in this cache. If the cache previously contained a mapping for the key, the old value is replaced by the specified value. Optionally allows setting of a lifespan and a maximum idle time.
+    
+ARGUMENTS 
+    cache 
+        the name of the cache where the key/value pair will be stored. If omitted uses the currently selected cache (see the cache command)
+    key  the key which identifies the element in the cache 
+    value 
+        the value to store in the cache associated with the key  If the --codec=codec option has been specified then the key and value will be encoded using the specified codec, otherwise the default session codec will be used. See the encoding command for more information
+    expiration 
+        an optional expiration timeout (using the time value notation described below)
+    idletime 
+        an optional idle timeout (using the time value notation described below)
+        
+DATA TYPES 
+    The CLI understands the following types: 
+    string 
+        strings can either be quoted between single (') or double (") quotes, or left unquoted. In this case it must not contain spaces, punctuation and cannot begin with a number  e.g. 'a string', key001
+    int  an integer is identified by a sequence of decimal digits, e.g. 256
+    long 
+        a long is identified by a sequence of decimal digits suffixed by 'l', e.g. 1000l
+    double 
+        a double precision number is identified by a floating point number (with optional exponent part) and an optional 'd' suffix, e.g. 3.14
+    float 
+        a single precision number is identified by a floating point number (with optional exponent part) and an 'f' suffix, e.g. 10.3f
+    boolean 
+        a boolean is represented either by the keywords true and false
+    UUID 
+        a UUID is represented by its canonical form XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX
+    JSON 
+        serialized Java classes can be represented using JSON notation, e.g. {"package.MyClass":{"i":5,"x":null,"b":true}}. Please note that the specified class must be available to the CacheManager's class loader.
+        
+TIME VALUES 
+    A time value is an integer number followed by time unit suffix: days (d), hours (h), minutes (m), seconds (s), milliseconds (ms)

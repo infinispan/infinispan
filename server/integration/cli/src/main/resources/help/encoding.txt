@@ -1,0 +1,12 @@
+
+SYNOPSIS
+    encoding [ --list | codec ] 
+    
+DESCRIPTION 
+    The encoding command is used to set a default codec to use when reading/writing entries from/to a cache. When invoked without arguments it shows the currently selected codec.
+    
+ARGUMENTS 
+    --list 
+        shows a list of available codecs 
+    codec 
+        specifies the default codec to use for all subsequent operations on caches

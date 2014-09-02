@@ -1,0 +1,10 @@
+
+SYNOPSIS 
+    clearcache [ cachename ] 
+    
+DESCRIPTION 
+    Clears a cache from all content 
+    
+ARGUMENTS 
+    cachename 
+        (optional) the name of the cache to clear. The currently selected cache will be cleared if this argument is missing 

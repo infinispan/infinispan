@@ -1,0 +1,42 @@
+# abort
+org.infinispan.server.cli.handlers.NoArgumentsCliCommandHandler$AbortProvider
+# begin
+org.infinispan.server.cli.handlers.CacheNameArgumentCommandHandler$BeginProvider
+# cache
+org.infinispan.server.cli.handlers.CacheCommandHandler$Provider
+# clear
+org.infinispan.server.cli.handlers.CacheNameArgumentCommandHandler$ClearProvider
+# container
+org.infinispan.server.cli.handlers.ContainerCommandHandler$Provider
+# create
+org.infinispan.server.cli.handlers.CreateCommandHandler$Provider
+# deny
+org.infinispan.server.cli.handlers.DenyCommandHandler$Provider
+# encoding
+org.infinispan.server.cli.handlers.EncodingCommandHandler$Provider
+# end
+org.infinispan.server.cli.handlers.NoArgumentsCliCommandHandler$EndProvider
+# evict
+org.infinispan.server.cli.handlers.KeyCommandHandler$EvictProvider
+# get
+org.infinispan.server.cli.handlers.KeyWithCodecCommandHandler$GetProvider
+# grant
+org.infinispan.server.cli.handlers.GrantCommandHandler$Provider
+# info
+org.infinispan.server.cli.handlers.CacheNameArgumentCommandHandler$InfoProvider
+# put
+org.infinispan.server.cli.handlers.PutCommandHandler$Provider
+# replace
+org.infinispan.server.cli.handlers.ReplaceCommandHandler$Provider
+# roles
+org.infinispan.server.cli.handlers.RolesCommandHandler$Provider
+# rollback
+org.infinispan.server.cli.handlers.CacheNameArgumentCommandHandler$RollbackProvider
+# site
+org.infinispan.server.cli.handlers.SiteCommandHandler$Provider
+# start
+org.infinispan.server.cli.handlers.CacheNameArgumentCommandHandler$StartProvider
+# stats
+org.infinispan.server.cli.handlers.StatsCommandHandler$Provider
+# upgrade
+org.infinispan.server.cli.handlers.UpgradeCommandHandler$Provider
