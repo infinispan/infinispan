@@ -7,16 +7,16 @@ import org.infinispan.cli.interpreter.session.Session;
 
 /**
  *
- * ClearStatement.
+ * ClearCacheStatement.
  *
  * @author Tristan Tarrant
  * @since 5.2
  */
-public class ClearStatement implements Statement {
+public class ClearCacheStatement implements Statement {
 
    final String cacheName;
 
-   public ClearStatement(String cacheName) {
+   public ClearCacheStatement(String cacheName) {
       this.cacheName = cacheName;
    }
 

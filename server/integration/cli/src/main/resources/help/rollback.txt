@@ -1,0 +1,10 @@
+
+SYNOPSIS
+    rollback [ cachename ] 
+    
+DESCRIPTION 
+    Rolls back a transaction 
+    
+ARGUMENTS 
+    cachename 
+        (optional) the name of the cache on which to rollback the transaction. The currently selected cache will be used if this argument is missing. The cache must be transactional and a transaction must have been already started for this command to work

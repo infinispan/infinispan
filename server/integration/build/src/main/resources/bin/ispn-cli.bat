@@ -1,6 +1,6 @@
 @echo off
 rem -------------------------------------------------------------------------
-rem JBoss Admin CLI Script for Windows
+rem Infinispan Admin CLI Script for Windows
 rem -------------------------------------------------------------------------
 
 rem $Id$
@@ -14,7 +14,7 @@ if "%OS%" == "Windows_NT" (
   set DIRNAME=.\
 )
 
-pushd %DIRNAME%..
+pushd "%DIRNAME%.."
 set "RESOLVED_JBOSS_HOME=%CD%"
 popd
 
@@ -26,21 +26,15 @@ pushd "%JBOSS_HOME%"
 set "SANITIZED_JBOSS_HOME=%CD%"
 popd
 
-if "%RESOLVED_JBOSS_HOME%" NEQ "%SANITIZED_JBOSS_HOME%" (
-    echo WARNING JBOSS_HOME may be pointing to a different installation - unpredictable results may occur.
-)
-
-set DIRNAME=
-
-if "%OS%" == "Windows_NT" (
-  set "PROGNAME=%~nx0%"
-) else (
-  set "PROGNAME=jboss-cli.bat"
+if /i "%RESOLVED_JBOSS_HOME%" NEQ "%SANITIZED_JBOSS_HOME%" (
+   echo.
+   echo   WARNING:  JBOSS_HOME may be pointing to a different installation - unpredictable results may occur.
+   echo.
+   echo       JBOSS_HOME: "%JBOSS_HOME%"
+   echo.
 )
 
 rem Setup JBoss specific properties
-set JAVA_OPTS=-Dprogram.name=%PROGNAME% %JAVA_OPTS%
-
 if "x%JAVA_HOME%" == "x" (
   set  JAVA=java
   echo JAVA_HOME is not set. Unexpected results may occur.
@@ -49,19 +43,32 @@ if "x%JAVA_HOME%" == "x" (
   set "JAVA=%JAVA_HOME%\bin\java"
 )
 
-rem Find run.jar, or we can't continue
-if exist "%JBOSS_HOME%\jboss-modules.jar" (
-    set "RUNJAR=%JBOSS_HOME%\jboss-modules.jar"
-) else (
-  echo Could not locate "%JBOSS_HOME%\jboss-modules.jar".
+rem Find jboss-modules.jar, or we can't continue
+set "JBOSS_RUNJAR=%JBOSS_HOME%\jboss-modules.jar"
+if not exist "%JBOSS_RUNJAR%" (
+  echo Could not locate "%JBOSS_RUNJAR%".
   echo Please check that you are in the bin directory when running this script.
   goto END
 )
 
+rem Set default module root paths
+if "x%JBOSS_MODULEPATH%" == "x" (
+  set "JBOSS_MODULEPATH=%JBOSS_HOME%\modules"
+)
+
+rem Add base package for L&F
+set "JAVA_OPTS=%JAVA_OPTS% -Djboss.modules.system.pkgs=com.sun.java.swing"
+
+echo "%JAVA_OPTS%" | findstr /I "logging.configuration" > nul
+if errorlevel == 1 (
+  set "JAVA_OPTS=%JAVA_OPTS% -Dlogging.configuration=file:%JBOSS_HOME%\bin\ispn-cli-logging.properties"
+) else (
+  echo logging.configuration already set in JAVA_OPTS
+)
 "%JAVA%" %JAVA_OPTS% ^
-    -jar "%JBOSS_HOME%\jboss-modules.jar" ^
-    -mp "%JBOSS_HOME%\modules" ^
-     org.infinispan.cli.client ^
+    -jar "%JBOSS_RUNJAR%" ^
+    -mp "%JBOSS_MODULEPATH%" ^
+     org.jboss.as.cli ^
      %*
 
 :END

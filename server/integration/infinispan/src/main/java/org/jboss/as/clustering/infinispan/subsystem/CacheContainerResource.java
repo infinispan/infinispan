@@ -132,24 +132,27 @@ public class CacheContainerResource extends SimpleResourceDefinition {
             .setParameters(NAME)
             .build();
 
-   static final ListAttributeDefinition PROTO_URLS =
+    static final ListAttributeDefinition PROTO_URLS =
          new StringListAttributeDefinition.Builder("file-urls")
                .build();
 
-   static final ListAttributeDefinition PROTO_NAMES =
+    static final ListAttributeDefinition PROTO_NAMES =
            new StringListAttributeDefinition.Builder("file-names")
                    .build();
 
-   static final ListAttributeDefinition PROTO_CONTENTS =
+    static final ListAttributeDefinition PROTO_CONTENTS =
            new StringListAttributeDefinition.Builder("file-contents")
                    .build();
 
-   static final OperationDefinition UPLOAD_PROTO = new SimpleOperationDefinitionBuilder("upload-proto-schemas", InfinispanExtension.getResourceDescriptionResolver("cache-container"))
-          .setParameters(PROTO_NAMES, PROTO_URLS)
-          .build();
+    static final OperationDefinition UPLOAD_PROTO = new SimpleOperationDefinitionBuilder("upload-proto-schemas", InfinispanExtension.getResourceDescriptionResolver("cache-container"))
+           .setParameters(PROTO_NAMES, PROTO_URLS)
+           .build();
 
-   static final OperationDefinition REGISTER_PROTO = new SimpleOperationDefinitionBuilder("register-proto-schemas", InfinispanExtension.getResourceDescriptionResolver("cache-container"))
+    static final OperationDefinition REGISTER_PROTO = new SimpleOperationDefinitionBuilder("register-proto-schemas", InfinispanExtension.getResourceDescriptionResolver("cache-container"))
            .setParameters(PROTO_NAMES, PROTO_CONTENTS)
+           .build();
+
+    static final OperationDefinition CLI_INTERPRETER = new SimpleOperationDefinitionBuilder("cli-interpreter", InfinispanExtension.getResourceDescriptionResolver(ModelKeys.CACHE_CONTAINER))
            .build();
 
     private final ResolvePathHandler resolvePathHandler;
@@ -183,10 +186,11 @@ public class CacheContainerResource extends SimpleResourceDefinition {
     public void registerOperations(ManagementResourceRegistration resourceRegistration) {
         super.registerOperations(resourceRegistration);
         // register add-alias and remove-alias
-        resourceRegistration.registerOperationHandler(CacheContainerResource.ALIAS_ADD, AddAliasCommand.INSTANCE);
-        resourceRegistration.registerOperationHandler(CacheContainerResource.ALIAS_REMOVE, RemoveAliasCommand.INSTANCE);
-        resourceRegistration.registerOperationHandler(CacheContainerResource.UPLOAD_PROTO, UploadProtoFileOperationHandler.INSTANCE);
-        resourceRegistration.registerOperationHandler(CacheContainerResource.REGISTER_PROTO, RegisterProtoSchemasOperationHandler.INSTANCE);
+        resourceRegistration.registerOperationHandler(ALIAS_ADD, AddAliasCommand.INSTANCE);
+        resourceRegistration.registerOperationHandler(ALIAS_REMOVE, RemoveAliasCommand.INSTANCE);
+        resourceRegistration.registerOperationHandler(UPLOAD_PROTO, UploadProtoFileOperationHandler.INSTANCE);
+        resourceRegistration.registerOperationHandler(REGISTER_PROTO, RegisterProtoSchemasOperationHandler.INSTANCE);
+        resourceRegistration.registerOperationHandler(CLI_INTERPRETER, CliInterpreterHandler.INSTANCE);
     }
 
     @Override

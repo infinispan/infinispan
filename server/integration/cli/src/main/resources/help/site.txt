@@ -1,0 +1,14 @@
+
+SYNOPSIS
+    site [ --status | --online | --offline ] [ cachename.sitename ] 
+    
+DESCRIPTION 
+    Inspects or changes the status of sites for X-Site replication
+    
+ARGUMENTS 
+    --status 
+        Shows the current status 
+    cachename 
+        (optional) the name of the cache on which to invoke the specified site command
+    sitename 
+        (optional for status, required for all other operations) the name of the site on which to invoke the specified command

@@ -48,7 +48,7 @@ Pressing TAB at an empty prompt will show the list of all available commands:
 
 ----
 alias       cache       container   encoding    get         locate      remove      site        upgrade     
-abort       clear       create      end         help        put         replace     start       version     
+abort       clearcache  create      end         help        put         replace     start       version     
 begin       commit      disconnect  evict       info        quit        rollback    stats     
 ----
 
@@ -89,13 +89,13 @@ ___defaultcache
 [jmx://localhost:12000/MyCacheManager/___defaultcache]>
 ----
 
-==== clear
-The _clear_ command clears a cache from all content. 
+==== clearcache
+The _clearcache_ command clears a cache from all content. 
 
 
 ----
 [jmx://localhost:12000/MyCacheManager/namedCache]> put a a
-[jmx://localhost:12000/MyCacheManager/namedCache]> clear
+[jmx://localhost:12000/MyCacheManager/namedCache]> clearcache
 [jmx://localhost:12000/MyCacheManager/namedCache]> get a
 null
 ----

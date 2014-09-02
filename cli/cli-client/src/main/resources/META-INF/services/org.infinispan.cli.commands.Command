@@ -6,7 +6,7 @@ org.infinispan.cli.commands.client.Quit
 org.infinispan.cli.commands.server.Abort
 org.infinispan.cli.commands.server.Begin
 org.infinispan.cli.commands.server.Cache
-org.infinispan.cli.commands.server.Clear
+org.infinispan.cli.commands.server.ClearCache
 org.infinispan.cli.commands.server.Commit
 org.infinispan.cli.commands.server.Create
 org.infinispan.cli.commands.server.Encoding

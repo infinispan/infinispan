@@ -1,10 +1,10 @@
 package org.infinispan.cli.commands.server;
 
-public class Clear extends AbstractServerCommand {
+public class ClearCache extends AbstractServerCommand {
 
    @Override
    public String getName() {
-      return "clear";
+      return "clearcache";
    }
 
    @Override

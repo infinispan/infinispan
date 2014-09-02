@@ -1,0 +1,11 @@
+
+SYNOPSIS
+    get [--codec=codec] [ cache. ] key 
+    
+DESCRIPTION 
+    Retrieves the value associated with the specified key from a cache.
+    
+ARGUMENTS 
+    cache 
+        (optional) the name of the cache to use. If not specified, the currently selected cache will be used (see the cache command).
+    key  the key for which to retrieve the associated value. If the --codec=codec option has been specified then the key will be encoded using the specified codec, otherwise the default session codec will be used. See the encoding command for more information

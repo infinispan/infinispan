@@ -1,0 +1,6 @@
+
+SYNOPSIS 
+    version 
+    
+DESCRIPTION 
+    Shows the version of both the client and the server 

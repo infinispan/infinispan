@@ -61,7 +61,7 @@ statement returns [Statement stmt]
    : abortBatchStatement { $stmt = $abortBatchStatement.stmt; }
    | beginTransactionStatement { $stmt = $beginTransactionStatement.stmt; }
    | cacheStatement { $stmt = $cacheStatement.stmt; }
-   | clearStatement { $stmt = $clearStatement.stmt; }
+   | clearCacheStatement { $stmt = $clearCacheStatement.stmt; }
    | commitTransactionStatement { $stmt = $commitTransactionStatement.stmt; }
    | createStatement { $stmt = $createStatement.stmt; }
    | denyStatement { $stmt = $denyStatement.stmt; }
@@ -98,8 +98,8 @@ cacheStatement returns [CacheStatement stmt]
    : CACHE (cacheName = STRINGLITERAL)? (EOL | ';')! { $stmt = new CacheStatement(unquote($cacheName.text)); }
    ;
 
-clearStatement returns [ClearStatement stmt]
-   : CLEAR (cacheName = STRINGLITERAL)? (EOL | ';')! { $stmt = new ClearStatement(unquote($cacheName.text)); }
+clearCacheStatement returns [ClearCacheStatement stmt]
+   : CLEARCACHE (cacheName = STRINGLITERAL)? (EOL | ';')! { $stmt = new ClearCacheStatement(unquote($cacheName.text)); }
    ;
 
 commitTransactionStatement returns [CommitTransactionStatement stmt]
@@ -265,7 +265,7 @@ jsonArray
 ABORT:   'abort';
 BEGIN:   'begin';
 CACHE:   'cache';
-CLEAR:   'clear';
+CLEARCACHE:   'clearcache';
 COMMIT:  'commit';
 CREATE:  'create';
 DENY:   'deny';

@@ -1,0 +1,12 @@
+SYNOPSIS
+    deny role to principal
+
+DESCRIPTION
+    Deny an authorization role to a principal
+
+ARGUMENTS
+    role
+        the name of the role to deny to the principal
+    principal
+        the name of the principal to which the role should be denied
+

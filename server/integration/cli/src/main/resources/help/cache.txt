@@ -1,0 +1,10 @@
+
+SYNOPSIS
+    cache [ cachename ]
+
+DESCRIPTION
+    Shows the currently selected cache or selects a cache to be used as default for CLI operations
+
+ARGUMENTS
+    cachename
+        (optional) the name of the cache to set as default for the following operations

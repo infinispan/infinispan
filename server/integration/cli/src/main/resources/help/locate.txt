@@ -1,0 +1,11 @@
+
+SYNOPSIS
+    locate [--codec=codec] [ cache. ] key 
+    
+DESCRIPTION 
+    Shows the addresses of the owners in the cluster of the entry associated with the specified key. This command only  works for distributed caches
+    
+ARGUMENTS 
+    cache 
+        (optional) the name of the cache to use. If not specified, the currently selected cache will be used. See the cache command
+    key  the key of the entry for which to show the address  --codec=codec option has been specified then the key will be encoded using the specified codec, otherwise the default session codec will be used. See the encoding  command for more information
