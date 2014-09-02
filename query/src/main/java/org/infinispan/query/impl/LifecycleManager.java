@@ -18,6 +18,7 @@ import org.infinispan.AdvancedCache;
 import org.infinispan.Cache;
 import org.infinispan.commons.CacheException;
 import org.infinispan.commons.marshall.AdvancedExternalizer;
+import org.infinispan.commons.util.CollectionFactory;
 import org.infinispan.commons.util.ServiceFinder;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
@@ -61,6 +62,18 @@ import org.infinispan.query.spi.ProgrammaticSearchMappingProvider;
 import org.infinispan.transaction.LockingMode;
 import org.infinispan.util.logging.LogFactory;
 
+import javax.management.MBeanServer;
+import javax.management.ObjectName;
+import java.util.Iterator;
+import java.util.Map;
+import java.util.Properties;
+import java.util.Set;
+
+import static org.hibernate.search.infinispan.InfinispanIntegration.DEFAULT_INDEXESDATA_CACHENAME;
+import static org.hibernate.search.infinispan.InfinispanIntegration.DEFAULT_INDEXESMETADATA_CACHENAME;
+import static org.hibernate.search.infinispan.InfinispanIntegration.DEFAULT_LOCKING_CACHENAME;
+import static org.infinispan.query.impl.IndexPropertyInspector.*;
+
 /**
  * Lifecycle of the Query module: initializes the Hibernate Search engine and shuts it down
  * at cache stop.
@@ -71,16 +84,17 @@ public class LifecycleManager extends AbstractModuleLifecycle {
 
    private static final Log log = LogFactory.getLog(LifecycleManager.class, Log.class);
 
-   // Synchronized map in case if concurrent requests to shutdown are met
-   private final Map<String, SearchFactoryIntegrator> searchFactoriesToShutdown = Collections.synchronizedMap(
-         new TreeMap<String,SearchFactoryIntegrator>());
-
    private static final Object REMOVED_REGISTRY_COMPONENT = new Object();
 
    private MBeanServer mbeanServer;
 
    private String jmxDomain;
 
+   private static final Set<String> DEFAULT_CACHES = CollectionFactory.makeSet(
+         DEFAULT_LOCKING_CACHENAME,
+         DEFAULT_INDEXESDATA_CACHENAME,
+         DEFAULT_INDEXESMETADATA_CACHENAME
+   );
    /**
     * Registers the Search interceptor in the cache before it gets started
     */
@@ -90,6 +104,25 @@ public class LifecycleManager extends AbstractModuleLifecycle {
          log.registeringQueryInterceptor();
          SearchFactoryIntegrator searchFactory = getSearchFactory(cfg.indexing().properties(), cr);
          createQueryInterceptorIfNeeded(cr, cfg, searchFactory);
+         EmbeddedCacheManager cacheManager = cr.getGlobalComponentRegistry().getComponent(EmbeddedCacheManager.class);
+         addCacheDependencyIfNeeded(cacheName, cacheManager, cfg.indexing().properties());
+      }
+   }
+
+   private void addCacheDependencyIfNeeded(String cacheStarting, EmbeddedCacheManager cacheManager, Properties properties) {
+      if (hasInfinispanDirectory(properties) && !DEFAULT_CACHES.contains(cacheStarting)) {
+         String metadataCacheName = getMetadataCacheName(properties);
+         String lockingCacheName = getLockingCacheName(properties);
+         String dataCacheName = getDataCacheName(properties);
+         if (!metadataCacheName.equals(cacheStarting)) {
+            cacheManager.addCacheDependency(cacheStarting, metadataCacheName);
+         }
+         if (!lockingCacheName.equals(cacheStarting)) {
+            cacheManager.addCacheDependency(cacheStarting, lockingCacheName);
+         }
+         if (!dataCacheName.equals(cacheStarting)) {
+            cacheManager.addCacheDependency(cacheStarting, dataCacheName);
+         }
       }
    }
 
@@ -262,7 +295,7 @@ public class LifecycleManager extends AbstractModuleLifecycle {
       //TODO move this to cacheStopped event (won't work right now as the ComponentRegistry is half empty at that point: ISPN-1006)
       Object searchFactoryIntegrator = cr.getComponent(SearchFactoryIntegrator.class);
       if (searchFactoryIntegrator != null && searchFactoryIntegrator != REMOVED_REGISTRY_COMPONENT) {
-         searchFactoriesToShutdown.put(cacheName, (SearchFactoryIntegrator) searchFactoryIntegrator);
+         ((SearchFactoryIntegrator) searchFactoryIntegrator).close();
          //free some memory by de-registering the SearchFactory
          cr.registerComponent(REMOVED_REGISTRY_COMPONENT, SearchFactoryIntegrator.class);
       }
@@ -277,11 +310,6 @@ public class LifecycleManager extends AbstractModuleLifecycle {
 
    @Override
    public void cacheStopped(ComponentRegistry cr, String cacheName) {
-      SearchFactoryIntegrator searchFactoryIntegrator = searchFactoriesToShutdown.remove(cacheName);
-      if (searchFactoryIntegrator != null) {
-         searchFactoryIntegrator.close();
-      }
-
       Configuration cfg = cr.getComponent(Configuration.class);
       removeQueryInterceptorFromConfiguration(cfg);
    }

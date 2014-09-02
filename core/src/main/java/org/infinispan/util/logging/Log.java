@@ -1182,4 +1182,8 @@ public interface Log extends BasicLogger {
    @LogMessage(level = ERROR)
    @Message(value = "After merge, cache %s still hasn't recovered a majority of members (lost %d out of %d) and must stay in degraded mode", id = 320)
    void keepingDegradedModeAfterMergeMinorityPartition(String cacheName, int lostMembersCount, int stableMembersCount);
+
+   @LogMessage(level = WARN)
+   @Message(value = "Cyclic dependency detected between caches, stop order ignored", id = 321)
+   void stopOrderIgnored();
 }

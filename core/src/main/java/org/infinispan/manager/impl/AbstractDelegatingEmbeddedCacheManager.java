@@ -152,6 +152,11 @@ public class AbstractDelegatingEmbeddedCacheManager implements EmbeddedCacheMana
    }
 
    @Override
+   public void addCacheDependency(String from, String to) {
+      cm.addCacheDependency(from, to);
+   }
+
+   @Override
    public void addListener(Object listener) {
       cm.addListener(listener);
    }
