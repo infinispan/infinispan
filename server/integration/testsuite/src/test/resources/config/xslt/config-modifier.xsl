@@ -31,6 +31,7 @@
     <xsl:param name="addAuth">false</xsl:param>
     <xsl:param name="addEncrypt">false</xsl:param>
     <xsl:param name="hotrodAuth">false</xsl:param>
+    <xsl:param name="hotrodEncrypt">false</xsl:param>
     <xsl:param name="addKrbOpts">false</xsl:param>
     <xsl:param name="addKrbSecDomain">false</xsl:param>
     <xsl:param name="addSecRealm">false</xsl:param>
@@ -276,12 +277,12 @@
     </xsl:template>
 
     <xsl:template match="//*[local-name()='subsystem' and starts-with(namespace-uri(), $nsEndpoint)]//*[local-name()='hotrod-connector']/*[local-name()='topology-state-transfer']">
-        <xsl:if test="$hotrodAuth = 'false'">
-            <xsl:call-template name="copynode"/>
-        </xsl:if>
+        <xsl:call-template name="copynode"/>
         <xsl:if test="$hotrodAuth != 'false'">
-            <xsl:call-template name="copynode"/>
             <xsl:copy-of select="document($hotrodAuth)"/>
+        </xsl:if>
+        <xsl:if test="$hotrodEncrypt != 'false'">
+            <xsl:copy-of select="document($hotrodEncrypt)"/>
         </xsl:if>
     </xsl:template>
 

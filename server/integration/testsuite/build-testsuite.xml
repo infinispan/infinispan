@@ -120,7 +120,7 @@
         </copy>
     </target>
 
-    <target name="create-all-distros" depends="transform-distro1-configs" description="Create all Infinispan server home directories used in the testsuite">	
+    <target name="create-all-distros" depends="transform-distro1-configs" description="Create all Infinispan server home directories used in the testsuite">
         <copy todir="${server2.dist}">
             <fileset dir="${server1.dist}" />
         </copy>
@@ -290,6 +290,12 @@
        	    hotrodAuth="${infinispan.parts}/hotrod-auth-ldap.xml"
     	    addSecRealm="${other.parts}/ldap-security-realm.xml"
        	    addConnection="${other.parts}/ldap-connection.xml"/>
+       <transform in="standalone.xml" out="testsuite/hotrod-auth-ldap-ssl.xml" 
+    	    modifyInfinispan="${infinispan.parts}/local-secured.xml"
+    	    hotrodAuth="${infinispan.parts}/hotrod-auth-ldap.xml"
+       	    hotrodEncrypt="${infinispan.parts}/hotrod-ssl.xml"
+    	    addSecRealm="${other.parts}/ldap-security-realm-with-ssl.xml"
+    	    addConnection="${other.parts}/ldap-connection-ssl.xml"/>	
        <transform in="standalone.xml" out="testsuite/hotrod-auth-krb.xml" 
             modifyInfinispan="${infinispan.parts}/local-secured.xml"
             hotrodAuth="${infinispan.parts}/hotrod-auth-krb.xml" 
@@ -318,6 +324,7 @@
         <attribute name="filtering" default="false"/>
         <attribute name="addEncrypt" default="false"/>
         <attribute name="hotrodAuth" default="false"/>
+    	<attribute name="hotrodEncrypt" default="false"/>
     	<attribute name="addKrbOpts" default="false"/>
     	<attribute name="addKrbSecDomain" default="false"/>
     	<attribute name="addSecRealm" default="false"/>
@@ -334,6 +341,7 @@
                 <param name="modifyRelay" expression="@{modifyRelay}"/>
                 <param name="addEncrypt" expression="@{addEncrypt}"/>
                 <param name="hotrodAuth" expression="@{hotrodAuth}"/>
+            	<param name="hotrodEncrypt" expression="@{hotrodEncrypt}"/>
             	<param name="addKrbOpts" expression="@{addKrbOpts}"/>
             	<param name="addKrbSecDomain" expression="@{addKrbSecDomain}"/>
             	<param name="addSecRealm" expression="@{addSecRealm}"/>

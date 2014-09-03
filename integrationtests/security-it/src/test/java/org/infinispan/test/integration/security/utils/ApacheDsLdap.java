@@ -28,8 +28,8 @@ public class ApacheDsLdap {
    public static final int LDAP_PORT = 10389;
    public static final String LDAP_INIT_FILE = "ldif/ispn-test.ldif";
 
-   private DirectoryService directoryService;
-   private LdapServer ldapServer;
+   protected DirectoryService directoryService;
+   protected LdapServer ldapServer;
    
    public ApacheDsLdap(String hostname) throws Exception {
       createDs();
