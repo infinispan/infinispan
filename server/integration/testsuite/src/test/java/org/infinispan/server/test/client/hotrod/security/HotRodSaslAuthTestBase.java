@@ -4,6 +4,7 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 
+import java.io.File;
 import java.io.IOException;
 import java.security.PrivilegedActionException;
 
@@ -20,14 +21,15 @@ import org.infinispan.client.hotrod.RemoteCache;
 import org.infinispan.client.hotrod.RemoteCacheManager;
 import org.infinispan.client.hotrod.configuration.Configuration;
 import org.infinispan.client.hotrod.configuration.ConfigurationBuilder;
+import org.infinispan.server.test.util.ITestUtils;
 import org.junit.After;
 import org.junit.Test;
 
 /**
- *
+ * 
  * Base class for tests of HotRod client SASL authentication. For supported SASL mechanisms see
  * {@code endpoint-7.0.xml} or later.
- *
+ * 
  * @author vjuranek
  * @since 7.0
  */
@@ -49,6 +51,11 @@ public abstract class HotRodSaslAuthTestBase {
    protected static final String SUPERVISOR_LOGIN = "supervisor";
    protected static final String SUPERVISOR_PASSWD = "lessStrongPassword";
 
+   protected static final String KEYSTORE_PATH = ITestUtils.SERVER_CONFIG_DIR + File.separator + "keystore_client.jks";
+   protected static final String KEYSTORE_PASSWORD = "secret";
+   protected static final String TRUSTSTORE_PATH = ITestUtils.SERVER_CONFIG_DIR + File.separator + "truststore_client.jks";
+   protected static final String TRUSTSTORE_PASSWORD = "secret";
+
    protected RemoteCache<String, String> remoteCache;
    protected static RemoteCacheManager remoteCacheManager = null;
 
@@ -58,13 +65,13 @@ public abstract class HotRodSaslAuthTestBase {
 
    public abstract int getHRServerPort();
 
-   public abstract void initAsAdmin() throws PrivilegedActionException,LoginException;
+   public abstract void initAsAdmin() throws PrivilegedActionException, LoginException;
 
-   public abstract void initAsReader() throws PrivilegedActionException,LoginException;
+   public abstract void initAsReader() throws PrivilegedActionException, LoginException;
 
-   public abstract void initAsWriter() throws PrivilegedActionException,LoginException;
+   public abstract void initAsWriter() throws PrivilegedActionException, LoginException;
 
-   public abstract void initAsSupervisor() throws PrivilegedActionException,LoginException;
+   public abstract void initAsSupervisor() throws PrivilegedActionException, LoginException;
 
    @After
    public void release() {
@@ -85,9 +92,26 @@ public abstract class HotRodSaslAuthTestBase {
       remoteCache = remoteCacheManager.getCache(TEST_CACHE_NAME);
    }
 
+   protected void initializeOverSsl(String login, String password) {
+      Configuration config = getRemoteCacheManagerOverSslConfig(login, password);
+      remoteCacheManager = new RemoteCacheManager(config, true);
+      remoteCache = remoteCacheManager.getCache(TEST_CACHE_NAME);
+   }
+
    protected Configuration getRemoteCacheManagerConfig(String login, String password) {
       ConfigurationBuilder config = getDefaultConfigBuilder();
       config.security().authentication().callbackHandler(new LoginHandler(login, password, TEST_REALM));
+      return config.build();
+   }
+
+   protected Configuration getRemoteCacheManagerOverSslConfig(String login, String password) {
+      ConfigurationBuilder config = getDefaultConfigBuilder();
+      config.security().authentication().callbackHandler(new LoginHandler(login, password, TEST_REALM));
+      config.security().ssl().enable()
+            .keyStoreFileName(KEYSTORE_PATH)
+            .keyStorePassword(KEYSTORE_PASSWORD.toCharArray())
+            .trustStoreFileName(TRUSTSTORE_PATH)
+            .trustStorePassword(TRUSTSTORE_PASSWORD.toCharArray());
       return config.build();
    }
 
@@ -105,37 +129,37 @@ public abstract class HotRodSaslAuthTestBase {
    }
 
    @Test
-   public void testAdmin() throws PrivilegedActionException,LoginException {
+   public void testAdmin() throws PrivilegedActionException, LoginException {
       initAsAdmin();
       testWriteRead();
    }
 
    @Test
-   public void testReaderRead() throws PrivilegedActionException,LoginException {
+   public void testReaderRead() throws PrivilegedActionException, LoginException {
       initAsReader();
       testReadNonExitent();
    }
 
    @Test(expected = org.infinispan.client.hotrod.exceptions.HotRodClientException.class)
-   public void testReaderWrite() throws PrivilegedActionException,LoginException {
+   public void testReaderWrite() throws PrivilegedActionException, LoginException {
       initAsReader();
       testWrite();
    }
 
    @Test
-   public void testWriterWrite() throws PrivilegedActionException,LoginException {
+   public void testWriterWrite() throws PrivilegedActionException, LoginException {
       initAsWriter();
       testWrite();
    }
 
    @Test(expected = org.infinispan.client.hotrod.exceptions.HotRodClientException.class)
-   public void testWriterWriteRead() throws PrivilegedActionException,LoginException {
+   public void testWriterWriteRead() throws PrivilegedActionException, LoginException {
       initAsWriter();
       testWriteRead();
    }
 
    @Test
-   public void testSupervisorWriteRead() throws PrivilegedActionException,LoginException {
+   public void testSupervisorWriteRead() throws PrivilegedActionException, LoginException {
       initAsSupervisor();
       testWriteRead();
    }

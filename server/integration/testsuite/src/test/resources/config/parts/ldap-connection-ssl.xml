@@ -1,0 +1,3 @@
+        <outbound-connections>
+            <ldap name="ldap_connection" url="ldap://localhost:10636" search-dn="uid=admin,ou=People,dc=infinispan,dc=org" search-credential="strongPassword" security-realm="LdapRealm"/>
+        </outbound-connections>
