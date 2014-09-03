@@ -3,7 +3,6 @@ package org.infinispan.lucene;
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
-import java.io.Serializable;
 import java.util.Set;
 
 import org.infinispan.commons.io.UnsignedNumeric;
@@ -18,7 +17,7 @@ import org.infinispan.commons.util.Util;
  * @author Lukasz Moren
  * @see org.infinispan.lucene.FileCacheKey
  */
-public final class FileMetadata implements Serializable {
+public final class FileMetadata {
 
    /** The serialVersionUID */
    private static final long serialVersionUID = -7150923427362644166L;

@@ -5,8 +5,21 @@
                 <replicated-cache name="repltestcache" mode="SYNC" start="EAGER" module="org.infinispan.remote-query.server">
                     <indexing index="ALL">
                         <property name="default.directory_provider">infinispan</property>
+                        <property name="default.indexmanager">org.infinispan.query.indexmanager.InfinispanIndexManager</property>
                         <property name="lucene_version">LUCENE_48</property>
                     </indexing>
+                </replicated-cache>
+                <replicated-cache name="LuceneIndexesMetadata" mode="SYNC">
+                    <transaction mode="NONE"/>
+                    <indexing index="NONE"/>
+                </replicated-cache>
+                <distributed-cache name="LuceneIndexesData" mode="SYNC">
+                    <transaction mode="NONE"/>
+                    <indexing index="NONE"/>
+                </distributed-cache>
+                <replicated-cache name="LuceneIndexesLocking" mode="SYNC">
+                    <transaction mode="NONE"/>
+                    <indexing index="NONE"/>
                 </replicated-cache>
 
                 <replicated-cache name="repl_descriptor" start="EAGER" mode="SYNC" />
