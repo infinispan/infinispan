@@ -50,15 +50,15 @@ public class TableManipulation implements Cloneable {
    private String selectExpiredRowsSql;
    private String deleteExpiredRowsSql;
    private String loadSomeRowsSql;
-   private Dialect dialect;
+   private DatabaseType databaseType;
    private String loadAllKeysBinarySql;
    private String loadAllKeysStringSql;
 
    private TableName tableName;
 
-   public TableManipulation(TableManipulationConfiguration config, Dialect dialect) {
+   public TableManipulation(TableManipulationConfiguration config, DatabaseType databaseType) {
       this.config = config;
-      this.dialect = dialect;
+      this.databaseType = databaseType;
    }
 
    public TableManipulation() {
@@ -310,8 +310,8 @@ public class TableManipulation implements Cloneable {
    }
 
    public boolean isVariableLimitSupported() {
-      Dialect type = getDialect();
-      return !(type == Dialect.DB2 || type == Dialect.DB2_390 || type == Dialect.SYBASE);
+      DatabaseType type = getDialect();
+      return !(type == DatabaseType.DB2 || type == DatabaseType.DB2_390 || type == DatabaseType.SYBASE);
    }
 
    public String getLoadSomeRowsSql() {
@@ -370,7 +370,7 @@ public class TableManipulation implements Cloneable {
     * if not specified will be defaulted to {@link #DEFAULT_FETCH_SIZE}.
     */
    public int getFetchSize() {
-      return getDialect() == Dialect.MYSQL ? Integer.MIN_VALUE : config.fetchSize();
+      return getDialect() == DatabaseType.MYSQL ? Integer.MIN_VALUE : config.fetchSize();
    }
 
    /**
@@ -381,71 +381,71 @@ public class TableManipulation implements Cloneable {
       return config.batchSize();
    }
 
-   private Dialect getDialect() {
-      if (dialect == null) {
+   private DatabaseType getDialect() {
+      if (databaseType == null) {
          // need to guess from the database type!
          Connection connection = null;
          try {
             connection = connectionFactory.getConnection();
             String dbProduct = connection.getMetaData().getDatabaseProductName();
-            dialect = guessDialect(dbProduct);
+            databaseType = guessDialect(dbProduct);
          } catch (Exception e) {
             log.debug("Unable to guess dialect from JDBC metadata.", e);
          } finally {
             connectionFactory.releaseConnection(connection);
          }
-         if (dialect == null) {
+         if (databaseType == null) {
             log.debug("Unable to detect database dialect using connection metadata.  Attempting to guess on driver name.");
             try {
                connection = connectionFactory.getConnection();
                String dbProduct = connectionFactory.getConnection().getMetaData().getDriverName();
-               dialect = guessDialect(dbProduct);
+               databaseType = guessDialect(dbProduct);
             } catch (Exception e) {
                log.debug("Unable to guess database dialect from JDBC driver name.", e);
             } finally {
                connectionFactory.releaseConnection(connection);
             }
          }
-         if (dialect == null) {
-            throw new CacheConfigurationException("Unable to detect database dialect from JDBC driver name or connection metadata.  Please provide this manually using the 'dialect' property in your configuration.  Supported database dialect strings are " + Arrays.toString(Dialect.values()));
+         if (databaseType == null) {
+            throw new CacheConfigurationException("Unable to detect database dialect from JDBC driver name or connection metadata.  Please provide this manually using the 'dialect' property in your configuration.  Supported database dialect strings are " + Arrays.toString(DatabaseType.values()));
          } else {
-            log.debugf("Guessing database dialect as '%s'.  If this is incorrect, please specify the correct dialect using the 'dialect' attribute in your configuration.  Supported database dialect strings are %s", dialect, Arrays.toString(Dialect.values()));
+            log.debugf("Guessing database dialect as '%s'.  If this is incorrect, please specify the correct dialect using the 'dialect' attribute in your configuration.  Supported database dialect strings are %s", databaseType, Arrays.toString(DatabaseType.values()));
          }
       }
-      return dialect;
+      return databaseType;
    }
 
-   private Dialect guessDialect(String name) {
-      Dialect type = null;
+   private DatabaseType guessDialect(String name) {
+      DatabaseType type = null;
       if (name != null) {
          if (name.toLowerCase().contains("mysql")) {
-            type = Dialect.MYSQL;
+            type = DatabaseType.MYSQL;
          } else if (name.toLowerCase().contains("postgres")) {
-            type = Dialect.POSTGRES;
+            type = DatabaseType.POSTGRES;
          } else if (name.toLowerCase().contains("derby")) {
-            type = Dialect.DERBY;
+            type = DatabaseType.DERBY;
          } else if (name.toLowerCase().contains("hsql") || name.toLowerCase().contains("hypersonic")) {
-            type = Dialect.HSQL;
+            type = DatabaseType.HSQL;
          } else if (name.toLowerCase().contains("h2")) {
-            type = Dialect.H2;
+            type = DatabaseType.H2;
          } else if (name.toLowerCase().contains("sqlite")) {
-            type = Dialect.SQLITE;
+            type = DatabaseType.SQLITE;
          } else if (name.toLowerCase().contains("db2")) {
-            type = Dialect.DB2;
+            type = DatabaseType.DB2;
          } else if (name.toLowerCase().contains("informix")) {
-            type = Dialect.INFORMIX;
+            type = DatabaseType.INFORMIX;
          } else if (name.toLowerCase().contains("interbase")) {
-            type = Dialect.INTERBASE;
+            type = DatabaseType.INTERBASE;
          } else if (name.toLowerCase().contains("firebird")) {
-            type = Dialect.FIREBIRD;
+            type = DatabaseType.FIREBIRD;
          } else if (name.toLowerCase().contains("sqlserver") || name.toLowerCase().contains("microsoft")) {
-            type = Dialect.SQL_SERVER;
+            type = DatabaseType.SQL_SERVER;
          } else if (name.toLowerCase().contains("access")) {
-            type = Dialect.ACCESS;
+            type = DatabaseType.ACCESS;
          } else if (name.toLowerCase().contains("oracle")) {
-            type = Dialect.ORACLE;
+            type = DatabaseType.ORACLE;
          } else if (name.toLowerCase().contains("adaptive")) {
-            type = Dialect.SYBASE;
+            type = DatabaseType.SYBASE;
          }
       }
       return type;

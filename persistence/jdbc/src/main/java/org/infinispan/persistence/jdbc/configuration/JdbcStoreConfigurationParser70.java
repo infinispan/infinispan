@@ -9,7 +9,7 @@ import org.infinispan.configuration.parsing.Namespaces;
 import org.infinispan.configuration.parsing.ParseUtils;
 import org.infinispan.configuration.parsing.Parser70;
 import org.infinispan.configuration.parsing.XMLExtendedStreamReader;
-import org.infinispan.persistence.jdbc.Dialect;
+import org.infinispan.persistence.jdbc.DatabaseType;
 
 import javax.xml.stream.XMLStreamConstants;
 import javax.xml.stream.XMLStreamException;
@@ -72,7 +72,7 @@ public class JdbcStoreConfigurationParser70 implements ConfigurationParser {
                builder.key2StringMapper(value);
                break;
             case DIALECT:
-               builder.dialect(Dialect.valueOf(value));
+               builder.dialect(DatabaseType.valueOf(value));
                break;
             default:
                Parser70.parseStoreAttribute(reader, i, builder);
@@ -104,7 +104,7 @@ public class JdbcStoreConfigurationParser70 implements ConfigurationParser {
          Attribute attribute = Attribute.forName(reader.getAttributeLocalName(i));
          switch (attribute) {
             case DIALECT:
-               builder.dialect(Dialect.valueOf(value));
+               builder.dialect(DatabaseType.valueOf(value));
                break;
             default:
                Parser70.parseStoreAttribute(reader, i, builder);
@@ -228,7 +228,7 @@ public class JdbcStoreConfigurationParser70 implements ConfigurationParser {
                builder.key2StringMapper(value);
                break;
             case DIALECT:
-               builder.dialect(Dialect.valueOf(value));
+               builder.dialect(DatabaseType.valueOf(value));
                break;
             default:
                Parser70.parseStoreAttribute(reader, i, builder);

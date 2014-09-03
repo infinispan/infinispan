@@ -22,7 +22,7 @@
 
 package org.jboss.as.clustering.infinispan.subsystem;
 
-import org.infinispan.persistence.jdbc.Dialect;
+import org.infinispan.persistence.jdbc.DatabaseType;
 import org.jboss.as.controller.AttributeDefinition;
 import org.jboss.as.controller.ObjectTypeAttributeDefinition;
 import org.jboss.as.controller.OperationStepHandler;
@@ -53,7 +53,7 @@ public class BaseJDBCStoreResource extends BaseStoreResource {
                     .build();
     static final SimpleAttributeDefinition DIALECT = new SimpleAttributeDefinitionBuilder(ModelKeys.DIALECT, ModelType.STRING, true)
                     .setXmlName(Attribute.DIALECT.getLocalName())
-                    .setValidator(new EnumValidator<Dialect>(Dialect.class, true, true))
+                    .setValidator(new EnumValidator<DatabaseType>(DatabaseType.class, true, true))
                     .setAllowExpression(true)
                     .setFlags(AttributeAccess.Flag.RESTART_ALL_SERVICES)
                     .build();

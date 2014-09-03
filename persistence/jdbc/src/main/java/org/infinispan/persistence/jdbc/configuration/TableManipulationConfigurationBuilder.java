@@ -4,7 +4,6 @@ import org.infinispan.commons.configuration.Builder;
 import org.infinispan.commons.configuration.Self;
 import org.infinispan.commons.logging.LogFactory;
 import org.infinispan.configuration.global.GlobalConfiguration;
-import org.infinispan.persistence.jdbc.Dialect;
 import org.infinispan.persistence.jdbc.TableManipulation;
 import org.infinispan.persistence.jdbc.logging.Log;
 

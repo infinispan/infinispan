@@ -52,7 +52,7 @@ import org.infinispan.configuration.parsing.ConfigurationBuilderHolder;
 import org.infinispan.configuration.parsing.ParserRegistry;
 import org.infinispan.eviction.EvictionStrategy;
 import org.infinispan.manager.EmbeddedCacheManager;
-import org.infinispan.persistence.jdbc.Dialect;
+import org.infinispan.persistence.jdbc.DatabaseType;
 import org.infinispan.persistence.jdbc.configuration.AbstractJdbcStoreConfigurationBuilder;
 import org.infinispan.persistence.jdbc.configuration.JdbcBinaryStoreConfigurationBuilder;
 import org.infinispan.persistence.jdbc.configuration.JdbcMixedStoreConfigurationBuilder;
@@ -672,9 +672,9 @@ public abstract class CacheAdd extends AbstractAddStepHandler {
             return builder;
         } else if (storeKey.equals(ModelKeys.STRING_KEYED_JDBC_STORE) || storeKey.equals(ModelKeys.BINARY_KEYED_JDBC_STORE) || storeKey.equals(ModelKeys.MIXED_KEYED_JDBC_STORE)) {
             ModelNode dialectNode = BaseJDBCStoreResource.DIALECT.resolveModelAttribute(context, store);
-            Dialect dialect = dialectNode.isDefined() ? Dialect.valueOf(dialectNode.asString()) : null;
+            DatabaseType databaseType = dialectNode.isDefined() ? DatabaseType.valueOf(dialectNode.asString()) : null;
 
-            AbstractJdbcStoreConfigurationBuilder<?, ?> builder = buildJdbcStore(persistenceBuilder, context, store, dialect);
+            AbstractJdbcStoreConfigurationBuilder<?, ?> builder = buildJdbcStore(persistenceBuilder, context, store, databaseType);
 
             final String datasource = BaseJDBCStoreResource.DATA_SOURCE.resolveModelAttribute(context, store).asString();
 
@@ -911,23 +911,23 @@ public abstract class CacheAdd extends AbstractAddStepHandler {
       }
    }
 
-   private AbstractJdbcStoreConfigurationBuilder<?, ?> buildJdbcStore(PersistenceConfigurationBuilder loadersBuilder, OperationContext context, ModelNode store, Dialect dialect) throws OperationFailedException {
+   private AbstractJdbcStoreConfigurationBuilder<?, ?> buildJdbcStore(PersistenceConfigurationBuilder loadersBuilder, OperationContext context, ModelNode store, DatabaseType databaseType) throws OperationFailedException {
         boolean useStringKeyedTable = store.hasDefined(ModelKeys.STRING_KEYED_TABLE);
         boolean useBinaryKeyedTable = store.hasDefined(ModelKeys.BINARY_KEYED_TABLE);
         if (useStringKeyedTable && !useBinaryKeyedTable) {
             JdbcStringBasedStoreConfigurationBuilder builder = loadersBuilder.addStore(JdbcStringBasedStoreConfigurationBuilder.class);
-            builder.dialect(dialect);
+            builder.dialect(databaseType);
             this.buildStringKeyedTable(builder.table(), context, store.get(ModelKeys.STRING_KEYED_TABLE));
             return builder;
         } else if (useBinaryKeyedTable && !useStringKeyedTable) {
             JdbcBinaryStoreConfigurationBuilder builder = loadersBuilder.addStore(JdbcBinaryStoreConfigurationBuilder.class);
-            builder.dialect(dialect);
+            builder.dialect(databaseType);
             this.buildBinaryKeyedTable(builder.table(), context, store.get(ModelKeys.BINARY_KEYED_TABLE));
             return builder;
         }
         // Else, use mixed mode
         JdbcMixedStoreConfigurationBuilder builder = loadersBuilder.addStore(JdbcMixedStoreConfigurationBuilder.class);
-        builder.dialect(dialect);
+        builder.dialect(databaseType);
         this.buildStringKeyedTable(builder.stringTable(), context, store.get(ModelKeys.STRING_KEYED_TABLE));
         this.buildBinaryKeyedTable(builder.binaryTable(), context, store.get(ModelKeys.BINARY_KEYED_TABLE));
         return builder;

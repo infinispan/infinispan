@@ -6,7 +6,6 @@ import java.util.Properties;
 import org.infinispan.configuration.cache.PersistenceConfigurationBuilder;
 import org.infinispan.configuration.parsing.XmlConfigHelper;
 import org.infinispan.commons.util.TypedProperties;
-import org.infinispan.persistence.jdbc.Dialect;
 
 public class JdbcBinaryStoreConfigurationBuilder extends
                                                       AbstractJdbcStoreConfigurationBuilder<JdbcBinaryStoreConfiguration, JdbcBinaryStoreConfigurationBuilder> {
@@ -61,7 +60,7 @@ public class JdbcBinaryStoreConfigurationBuilder extends
       ConnectionFactoryConfiguration cf = connectionFactory != null ? connectionFactory.create() : null;
       return new JdbcBinaryStoreConfiguration(purgeOnStartup, fetchPersistentState, ignoreModifications, async.create(),
                                               singletonStore.create(), preload, shared, TypedProperties.toTypedProperties(properties), cf,
-                                              manageConnectionFactory, table.create(), concurrencyLevel, lockAcquisitionTimeout, dialect);
+                                              manageConnectionFactory, table.create(), concurrencyLevel, lockAcquisitionTimeout, databaseType);
    }
 
    @Override
