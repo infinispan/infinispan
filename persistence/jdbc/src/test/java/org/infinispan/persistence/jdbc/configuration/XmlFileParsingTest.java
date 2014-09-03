@@ -9,7 +9,7 @@ import java.io.InputStream;
 
 import org.infinispan.configuration.cache.StoreConfiguration;
 import org.infinispan.manager.EmbeddedCacheManager;
-import org.infinispan.persistence.jdbc.Dialect;
+import org.infinispan.persistence.jdbc.DatabaseType;
 import org.infinispan.test.AbstractInfinispanTest;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
@@ -54,7 +54,7 @@ public class XmlFileParsingTest extends AbstractInfinispanTest {
       assertEquals("DummyKey2StringMapper", store.key2StringMapper());
       assertTrue(store.shared());
       assertTrue(store.preload());
-      assertEquals(Dialect.H2, store.dialect());
+      assertEquals(DatabaseType.H2, store.dialect());
       PooledConnectionFactoryConfiguration connectionFactory = (PooledConnectionFactoryConfiguration) store.connectionFactory();
       assertEquals("jdbc:h2:mem:infinispan;DB_CLOSE_DELAY=-1", connectionFactory.connectionUrl());
       assertEquals("org.h2.Driver", connectionFactory.driverClass());
@@ -92,7 +92,7 @@ public class XmlFileParsingTest extends AbstractInfinispanTest {
       assertEquals("version", store.table().timestampColumnName());
       assertFalse(store.purgeOnStartup());
       assertTrue(store.singletonStore().enabled());
-      assertEquals(Dialect.H2, store.dialect());
+      assertEquals(DatabaseType.H2, store.dialect());
       SimpleConnectionFactoryConfiguration connectionFactory = (SimpleConnectionFactoryConfiguration) store.connectionFactory();
       assertEquals("jdbc:h2:mem:infinispan;DB_CLOSE_DELAY=-1", connectionFactory.connectionUrl());
       assertEquals("org.h2.Driver", connectionFactory.driverClass());
@@ -136,7 +136,7 @@ public class XmlFileParsingTest extends AbstractInfinispanTest {
       assertEquals(44, store.binaryTable().fetchSize());
       assertEquals("BINARY", store.binaryTable().dataColumnType());
       assertEquals("version", store.binaryTable().timestampColumnName());
-      assertEquals(Dialect.H2, store.dialect());
+      assertEquals(DatabaseType.H2, store.dialect());
 
       assertTrue(store.async().enabled());
       assertTrue(store.singletonStore().enabled());

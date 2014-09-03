@@ -1,6 +1,6 @@
 package org.infinispan.it.osgi.persistence.jdbc;
 
-import org.infinispan.persistence.jdbc.Dialect;
+import org.infinispan.persistence.jdbc.DatabaseType;
 import org.infinispan.persistence.jdbc.configuration.AbstractJdbcStoreConfigurationBuilder;
 import org.infinispan.persistence.jdbc.configuration.ConnectionFactoryConfigurationBuilder;
 import org.infinispan.persistence.jdbc.configuration.TableManipulationConfigurationBuilder;
@@ -19,13 +19,13 @@ public class UnitTestDatabaseManager {
 
    private static AtomicInteger userIndex = new AtomicInteger(0);
    private static final String H2_DRIVER = org.h2.Driver.class.getName();
-   private static final Dialect dt;
+   private static final DatabaseType dt;
 
    static {
       String driver = "";
       try {
          driver = H2_DRIVER;
-         dt = Dialect.H2;
+         dt = DatabaseType.H2;
          try {
             Class.forName(driver);
          } catch (ClassNotFoundException e) {

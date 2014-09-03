@@ -6,7 +6,6 @@ import java.util.Properties;
 import org.infinispan.commons.CacheConfigurationException;
 import org.infinispan.configuration.cache.PersistenceConfigurationBuilder;
 import org.infinispan.configuration.parsing.XmlConfigHelper;
-import org.infinispan.persistence.jdbc.Dialect;
 import org.infinispan.persistence.jdbc.TableManipulation;
 import org.infinispan.persistence.keymappers.DefaultTwoWayKey2StringMapper;
 import org.infinispan.persistence.keymappers.Key2StringMapper;
@@ -131,7 +130,7 @@ public class JdbcMixedStoreConfigurationBuilder extends AbstractJdbcStoreConfigu
    public JdbcMixedStoreConfiguration create() {
       return new JdbcMixedStoreConfiguration(purgeOnStartup, fetchPersistentState, ignoreModifications, async.create(),
                                              singletonStore.create(), preload, shared, properties, connectionFactory.create(), manageConnectionFactory,
-                                             batchSize, fetchSize, dialect, binaryTable.create(), stringTable.create(), key2StringMapper, lockConcurrencyLevel, lockAcquisitionTimeout);
+                                             batchSize, fetchSize, databaseType, binaryTable.create(), stringTable.create(), key2StringMapper, lockConcurrencyLevel, lockAcquisitionTimeout);
    }
 
    @Override

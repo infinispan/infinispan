@@ -8,7 +8,7 @@ import java.util.Properties;
 import org.h2.Driver;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
-import org.infinispan.persistence.jdbc.Dialect;
+import org.infinispan.persistence.jdbc.DatabaseType;
 import org.testng.annotations.Test;
 
 @Test(groups = "unit", testName = "persistence.jdbc.configuration.ConfigurationTest")
@@ -91,7 +91,7 @@ public class ConfigurationTest {
          .lockConcurrencyLevel(32)
          .fetchSize(50)
          .batchSize(50)
-         .dialect(Dialect.H2);
+         .dialect(DatabaseType.H2);
       mixedBuilder.async().enable();
 
       mixedBuilder.binaryTable()
@@ -126,7 +126,7 @@ public class ConfigurationTest {
       assert store.stringTable().timestampColumnType().equals("BIGINT");
       assert store.batchSize() == 50;
       assert store.fetchSize() == 50;
-      assert store.dialect() == Dialect.H2;
+      assert store.dialect() == DatabaseType.H2;
       assert store.fetchPersistentState();
       assert store.lockConcurrencyLevel() == 32;
       assert store.async().enabled();

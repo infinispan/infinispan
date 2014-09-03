@@ -2,7 +2,7 @@ package org.infinispan.persistence.jdbc.configuration;
 
 import org.infinispan.configuration.cache.AsyncStoreConfiguration;
 import org.infinispan.configuration.cache.SingletonStoreConfiguration;
-import org.infinispan.persistence.jdbc.Dialect;
+import org.infinispan.persistence.jdbc.DatabaseType;
 import org.infinispan.persistence.jdbc.mixed.JdbcMixedStore;
 import org.infinispan.commons.configuration.BuiltBy;
 import org.infinispan.commons.configuration.ConfigurationFor;
@@ -35,10 +35,10 @@ public class JdbcMixedStoreConfiguration extends AbstractJdbcStoreConfiguration 
                                       AsyncStoreConfiguration async, SingletonStoreConfiguration singletonStore,
                                       boolean preload, boolean shared, Properties properties,
                                       ConnectionFactoryConfiguration connectionFactory, boolean manageConnectionFactory,
-                                      int batchSize, int fetchSize, Dialect dialect,
+                                      int batchSize, int fetchSize, DatabaseType databaseType,
                                       TableManipulationConfiguration binaryTable,
                                       TableManipulationConfiguration stringTable, String key2StringMapper, int lockConcurrencyLevel, long lockAcquisitionTimeout) {
-      super(purgeOnStartup, fetchPersistentState, ignoreModifications, async, singletonStore, preload, shared, properties, connectionFactory, manageConnectionFactory, dialect);
+      super(purgeOnStartup, fetchPersistentState, ignoreModifications, async, singletonStore, preload, shared, properties, connectionFactory, manageConnectionFactory, databaseType);
       this.batchSize = batchSize;
       this.fetchSize = fetchSize;
       this.binaryTable = binaryTable;
