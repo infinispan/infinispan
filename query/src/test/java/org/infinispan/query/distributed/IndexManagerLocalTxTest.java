@@ -7,7 +7,7 @@ import org.testng.annotations.Test;
  *
  * @author Anna Manukyan
  */
-@Test(groups = "functional", testName = "query.distributed.MultiNodeLocalTxTest")
+@Test(groups = "functional", testName = "query.distributed.IndexManagerLocalTxTest")
 public class IndexManagerLocalTxTest extends IndexManagerLocalTest {
 
    public boolean transactionsEnabled() {
