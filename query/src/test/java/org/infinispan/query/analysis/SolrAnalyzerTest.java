@@ -79,6 +79,15 @@ public class SolrAnalyzerTest extends SingleCacheManagerTest {
     * @throws Exception in case the test fails.
     */
    public void testAnalyzers() throws Exception {
+      // Needs data in the cache otherwise the search factory is never built and this test always
+      // fails if running in isolation
+      Team team = new Team();
+      team.setDescription( "Description" ); 
+      team.setLocation( "Manchester" );
+      team.setName( "Manchester City" );
+
+      // persist and index the test object
+      cache.put("id", team);
       SearchManager search = Search.getSearchManager(cache);
 
       Analyzer analyzer = search.getSearchFactory().getAnalyzer( "standard_analyzer" );

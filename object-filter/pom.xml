@@ -72,7 +72,8 @@
             <configuration>
                <instructions>
                   <Export-Package>
-                     ${project.groupId}.objectfilter.*;version=${project.version};-split-package:=error
+                     org.infinispan.objectfilter;version="${project.version}",
+                     org.infinispan.objectfilter.impl;version="${project.version}"
                   </Export-Package>
                </instructions>
             </configuration>

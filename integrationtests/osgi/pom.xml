@@ -97,6 +97,12 @@
          <artifactId>infinispan-cachestore-leveldb</artifactId>
       </dependency>
       <dependency>
+         <groupId>${project.groupId}</groupId>
+         <artifactId>infinispan-query</artifactId>
+         <type>test-jar</type>
+         <scope>test</scope>
+      </dependency>
+      <dependency>
          <groupId>org.fusesource.leveldbjni</groupId>
          <artifactId>leveldbjni-all</artifactId>
       </dependency>
