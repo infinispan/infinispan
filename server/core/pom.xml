@@ -23,12 +23,6 @@
          <groupId>io.netty</groupId>
          <artifactId>netty-all</artifactId>
       </dependency>
-
-      <dependency>
-         <groupId>gnu-getopt</groupId>
-         <artifactId>getopt</artifactId>
-      </dependency>
-
    </dependencies>
 
    <build>
