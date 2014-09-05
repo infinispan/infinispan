@@ -175,6 +175,13 @@ provide information on the affected key, and the version of the entry. This
 version can be used to invoke conditional operations on the server, such as
 `replaceWithVersion` or `removeWithVersion`.
 
+All `ClientCacheEntryCreatedEvent`, `ClientCacheEntryModifiedEvent` and
+`ClientCacheEntryRemovedEvent` event instances also provide a `boolean isCommandRetried()`
+method that will return true if the write command that caused this had to be retried
+again due to a topology change.  This could be a sign that this event
+has been duplicated or another event was dropped and replaced
+(eg: ClientCacheEntryModifiedEvent replaced ClientCacheEntryCreatedEvent).
+
 Once the client listener implementation has been created, it needs to be
 registered with the server. To do so, execute:
 
@@ -214,7 +221,9 @@ class StaticKeyValueFilterFactory implements KeyValueFilterFactory {
    }
 }
 
-class StaticKeyValueFilter implements KeyValueFilter<Integer, String> {
+// Serializable, Externalizable or marshallable with Infinispan Externalizers
+// needed when running in a cluster
+class StaticKeyValueFilter implements KeyValueFilter<Integer, String>, Serializable {
    @Override
    public boolean accept(Integer key, String value, Metadata metadata) {
       if (key.equals(1)) // static key
@@ -272,7 +281,9 @@ class DynamicKeyValueFilterFactory implements KeyValueFilterFactory {
    }
 }
 
-class DynamicKeyValueFilter implements KeyValueFilter<Integer, String> {
+// Serializable, Externalizable or marshallable with Infinispan Externalizers
+// needed when running in a cluster
+class DynamicKeyValueFilter implements KeyValueFilter<Integer, String>, Serializable {
    final Object[] params;
 
    DynamicKeyValueFilter(Object[] params) {
@@ -333,13 +344,16 @@ class StaticConverterFactory implements ConverterFactory {
    }
 }
 
-class StaticConverter implements Converter {
+// Serializable, Externalizable or marshallable with Infinispan Externalizers
+// needed when running in a cluster
+class StaticConverter implements Converter<Integer, String, CustomEvent>, Serializable {
    public CustomEvent convert(Integer key, String value, Metadata metadata) {
       return new CustomEvent(key, value);
    }
 }
 
-// Needs to be Serializable or Externalizable!
+// Needs to be Serializable, Externalizable or marshallable with Infinispan Externalizers
+// regardless of cluster or local caches
 static class CustomEvent implements Serializable {
    final Integer key;
    final String value;
@@ -430,7 +444,8 @@ class DynamicConverterFactory implements ConverterFactory {
    }
 }
 
-class DynamicConverter implements Converter {
+// Serializable, Externalizable or marshallable with Infinispan Externalizers needed when running in a cluster
+class DynamicConverter implements <Integer, String, CustomEvent>, Serializable {
    final Object[] params;
 
    DynamicConverter(Object[] params) {

@@ -14,7 +14,7 @@ import org.infinispan.filter.{Converter, ConverterFactory, KeyValueFilter, KeyVa
 import org.infinispan.metadata.Metadata
 import org.infinispan.notifications._
 import org.infinispan.notifications.cachelistener.annotation.{CacheEntryCreated, CacheEntryModified, CacheEntryRemoved}
-import org.infinispan.notifications.cachelistener.event.CacheEntryEvent
+import org.infinispan.notifications.cachelistener.event.{CacheEntryRemovedEvent, CacheEntryModifiedEvent, CacheEntryCreatedEvent, CacheEntryEvent}
 import org.infinispan.notifications.cachelistener.event.Event.Type
 import org.infinispan.server.hotrod.ClientListenerRegistry.{BinaryConverter, BinaryFilter}
 import org.infinispan.server.hotrod.Events.{CustomEvent, KeyEvent, KeyWithVersionEvent}
@@ -156,31 +156,37 @@ class ClientListenerRegistry(configuration: HotRodServerConfiguration) extends L
 
       private def createRemoteEvent(key: Bytes, value: Bytes, dataVersion: Long, event: CacheEntryEvent[_, _]): AnyRef = {
          messageId.incrementAndGet() // increment message id
+         // Embedded listener event implementation implements all interfaces,
+         // so can't pattern match on the event instance itself. Instead, pattern
+         // match on the type and the cast down to the expected event instance type
          event.getType match {
             case Type.CACHE_ENTRY_CREATED =>
-               if (isCustom) createCustomEvent(value, CacheEntryCreatedEventResponse)
-               else keyWithVersionEvent(key, dataVersion, CacheEntryCreatedEventResponse)
+               val isRetried = event.asInstanceOf[CacheEntryCreatedEvent[_, _]].isCommandRetried
+               if (isCustom) createCustomEvent(value, CacheEntryCreatedEventResponse, isRetried)
+               else keyWithVersionEvent(key, dataVersion, CacheEntryCreatedEventResponse, isRetried)
             case Type.CACHE_ENTRY_MODIFIED =>
-               if (isCustom) createCustomEvent(value, CacheEntryModifiedEventResponse)
-               else keyWithVersionEvent(key, dataVersion, CacheEntryModifiedEventResponse)
+               val isRetried = event.asInstanceOf[CacheEntryModifiedEvent[_, _]].isCommandRetried
+               if (isCustom) createCustomEvent(value, CacheEntryModifiedEventResponse, isRetried)
+               else keyWithVersionEvent(key, dataVersion, CacheEntryModifiedEventResponse, isRetried)
             case Type.CACHE_ENTRY_REMOVED =>
-               if (isCustom) createCustomEvent(value, CacheEntryRemovedEventResponse)
-               else keyEvent(key)
+               val isRetried = event.asInstanceOf[CacheEntryRemovedEvent[_, _]].isCommandRetried
+               if (isCustom) createCustomEvent(value, CacheEntryRemovedEventResponse, isRetried)
+               else keyEvent(key, isRetried)
             case _ => throw unexpectedEvent(event)
          }
       }
 
-      private def keyWithVersionEvent(key: Bytes, dataVersion: Long, op: OperationResponse): KeyWithVersionEvent = {
-         KeyWithVersionEvent(version, messageId.get(), op, listenerId, key, dataVersion)
+      private def keyWithVersionEvent(key: Bytes, dataVersion: Long, op: OperationResponse, isRetried: Boolean): KeyWithVersionEvent = {
+         KeyWithVersionEvent(version, messageId.get(), op, listenerId, isRetried, key, dataVersion)
       }
 
-      private def keyEvent(key: Bytes): KeyEvent =
-         KeyEvent(version, messageId.get(), listenerId, key)
+      private def keyEvent(key: Bytes, isRetried: Boolean): KeyEvent =
+         KeyEvent(version, messageId.get(), listenerId, isRetried, key)
 
-      private def createCustomEvent(value: Bytes, op: OperationResponse): CustomEvent = {
+      private def createCustomEvent(value: Bytes, op: OperationResponse, isRetried: Boolean): CustomEvent = {
          // Event's value contains the transformed payload that should be sent
          // It takes advantage of the converter logic existing in cluster listeners
-         CustomEvent(version, messageId.get(), op, listenerId, value)
+         CustomEvent(version, messageId.get(), op, listenerId, isRetried, value)
       }
    }
 

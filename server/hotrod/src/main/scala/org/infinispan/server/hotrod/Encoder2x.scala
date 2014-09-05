@@ -30,13 +30,16 @@ object Encoder2x extends AbstractVersionedEncoder with Constants with Log {
       e match {
          case k: KeyWithVersionEvent =>
             buf.writeByte(0) // custom marker
+            buf.writeByte(if (k.isRetried) 1 else 0)
             writeRangedBytes(k.key, buf)
             buf.writeLong(k.dataVersion)
          case k: KeyEvent =>
             buf.writeByte(0) // custom marker
+            buf.writeByte(if (k.isRetried) 1 else 0)
             writeRangedBytes(k.key, buf)
          case c: CustomEvent =>
             buf.writeByte(1) // custom marker
+            buf.writeByte(if (c.isRetried) 1 else 0)
             writeRangedBytes(c.eventData, buf)
       }
    }

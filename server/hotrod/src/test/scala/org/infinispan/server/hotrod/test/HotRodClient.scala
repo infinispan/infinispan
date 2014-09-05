@@ -16,7 +16,6 @@ import org.infinispan.test.TestingUtil
 import org.infinispan.commons.util.Util
 import org.infinispan.server.core.transport.ExtendedByteBuf._
 import org.infinispan.server.hotrod._
-import java.lang.IllegalStateException
 import java.lang.StringBuilder
 import javax.net.ssl.SSLEngine
 import io.netty.handler.ssl.SslHandler
@@ -25,9 +24,7 @@ import io.netty.channel.nio.NioEventLoopGroup
 import io.netty.bootstrap.Bootstrap
 import io.netty.handler.codec.{ReplayingDecoder, MessageToByteEncoder}
 import io.netty.buffer.ByteBuf
-import io.netty.buffer.Unpooled;
 import io.netty.channel.socket.nio.NioSocketChannel
-import scala.Some
 import javax.security.sasl.SaslClient
 import org.infinispan.commons.util.concurrent.jdk8backported.EquivalentConcurrentHashMapV8
 import org.infinispan.commons.equivalence.{ByteArrayEquivalence, AnyEquivalence}
@@ -552,17 +549,18 @@ private class Decoder(client: HotRodClient) extends ReplayingDecoder[Void] with 
          case CacheEntryCreatedEventResponse | CacheEntryModifiedEventResponse | CacheEntryRemovedEventResponse =>
             val listenerId = readRangedBytes(buf)
             val isCustom = buf.readByte()
+            val isRetried = if (buf.readByte() == 1) true else false
             if (isCustom == 1) {
                val eventData = readRangedBytes(buf)
-               new TestCustomEvent(client.protocolVersion, id, client.defaultCacheName, opCode, listenerId, eventData)
+               new TestCustomEvent(client.protocolVersion, id, client.defaultCacheName, opCode, listenerId, isRetried, eventData)
             } else {
                val key = readRangedBytes(buf)
                if (opCode == CacheEntryRemovedEventResponse) {
-                  new TestKeyEvent(client.protocolVersion, id, client.defaultCacheName, listenerId, key)
+                  new TestKeyEvent(client.protocolVersion, id, client.defaultCacheName, listenerId, isRetried, key)
                } else {
                   val dataVersion = buf.readLong()
                   new TestKeyWithVersionEvent(client.protocolVersion, id, client.defaultCacheName,
-                     opCode, listenerId, key, dataVersion)
+                     opCode, listenerId, isRetried, key, dataVersion)
                }
             }
          case ErrorResponse => {
@@ -955,16 +953,16 @@ class TestAuthResponse(override val version: Byte, override val messageId: Long,
 
 class TestKeyWithVersionEvent(override val version: Byte, override val messageId: Long,
         override val cacheName: String, override val operation: OperationResponse,
-        val listenerId: Bytes, val key: Bytes, val dataVersion: Long)
+        val listenerId: Bytes, val isRetried: Boolean, val key: Bytes, val dataVersion: Long)
         extends TestResponse(version, messageId, cacheName, 0, operation, Success, 0, None)
 
 class TestKeyEvent(override val version: Byte, override val messageId: Long,
-        override val cacheName: String, val listenerId: Bytes, val key: Bytes)
+        override val cacheName: String, val listenerId: Bytes, val isRetried: Boolean, val key: Bytes)
         extends TestResponse(version, messageId, cacheName, 0, CacheEntryRemovedEventResponse, Success, 0, None)
 
 class TestCustomEvent(override val version: Byte, override val messageId: Long,
         override val cacheName: String, override val operation: OperationResponse,
-        val listenerId: Bytes, val eventData: Bytes)
+        val listenerId: Bytes, val isRetried: Boolean, val eventData: Bytes)
         extends TestResponse(version, messageId, cacheName, 0, operation, Success, 0, None)
 
 case class ServerNode(host: String, port: Int)
