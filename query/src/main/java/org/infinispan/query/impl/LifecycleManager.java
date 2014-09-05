@@ -252,6 +252,10 @@ public class LifecycleManager extends AbstractModuleLifecycle {
 
    @Override
    public void cacheStopping(ComponentRegistry cr, String cacheName) {
+      final QueryInterceptor queryInterceptor = cr.getComponent(QueryInterceptor.class);
+      if (queryInterceptor != null) {
+         queryInterceptor.prepareForStopping();
+      }
       //TODO move this to cacheStopped event (won't work right now as the ComponentRegistry is half empty at that point: ISPN-1006)
       Object searchFactoryIntegrator = cr.getComponent(SearchFactoryIntegrator.class);
       if (searchFactoryIntegrator != null && searchFactoryIntegrator != REMOVED_REGISTRY_COMPONENT) {

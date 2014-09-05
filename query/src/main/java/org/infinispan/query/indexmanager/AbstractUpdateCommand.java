@@ -5,6 +5,7 @@ import org.hibernate.search.engine.spi.SearchFactoryImplementor;
 import org.infinispan.Cache;
 import org.infinispan.commands.ReplicableCommand;
 import org.infinispan.commands.remote.BaseRpcCommand;
+import org.infinispan.commons.CacheException;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.query.Search;
 import org.infinispan.query.SearchManager;
@@ -13,6 +14,8 @@ import org.infinispan.query.backend.QueryInterceptor;
 import org.infinispan.query.impl.CommandInitializer;
 import org.infinispan.query.impl.ComponentRegistryUtils;
 import org.infinispan.query.impl.CustomQueryCommand;
+import org.infinispan.query.logging.Log;
+import org.infinispan.util.logging.LogFactory;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -24,11 +27,12 @@ import java.util.List;
  */
 public abstract class AbstractUpdateCommand extends BaseRpcCommand implements ReplicableCommand, CustomQueryCommand {
 
+   protected static final Log log = LogFactory.getLog(AbstractUpdateCommand.class, Log.class);
+
    protected SearchFactoryImplementor searchFactory;
    protected String indexName;
    protected byte[] serializedModel;
-
-   private QueryInterceptor queryInterceptor;
+   protected QueryInterceptor queryInterceptor;
 
    protected AbstractUpdateCommand(String cacheName) {
       super(cacheName);
@@ -61,10 +65,15 @@ public abstract class AbstractUpdateCommand extends BaseRpcCommand implements Re
     */
    @Override
    public void fetchExecutionContext(CommandInitializer ci) {
-      Cache cache = ci.getCacheManager().getCache(cacheName);
-      SearchManager searchManager = Search.getSearchManager(cache);
-      searchFactory = (SearchFactoryImplementor) searchManager.getSearchFactory();
-      queryInterceptor = ComponentRegistryUtils.getQueryInterceptor(cache);
+      if (ci.getCacheManager().cacheExists(cacheName)) {
+         Cache cache = ci.getCacheManager().getCache(cacheName);
+         SearchManager searchManager = Search.getSearchManager(cache);
+         searchFactory = (SearchFactoryImplementor) searchManager.getSearchFactory();
+         queryInterceptor = ComponentRegistryUtils.getQueryInterceptor(cache);
+      }
+      else {
+         throw new CacheException("Cache named '"+ cacheName + "' does not exist on this CacheManager, or was not started" );
+      }
    }
 
    @Override
