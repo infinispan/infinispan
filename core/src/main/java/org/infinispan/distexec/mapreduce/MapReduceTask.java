@@ -452,7 +452,7 @@ public class MapReduceTask<KIn, VIn, KOut, VOut> {
       executeHelper(resultsCache);
    }
 
-   protected Map<KOut, VOut> executeHelper(String resultCache) throws NullPointerException, CacheException {
+   protected Map<KOut, VOut> executeHelper(String resultCache) throws NullPointerException, MapReduceException {
       ensureAccessPermissions(cache);
       if (mapper == null)
          throw new NullPointerException("A valid reference of Mapper is not set " + mapper);
@@ -463,12 +463,7 @@ public class MapReduceTask<KIn, VIn, KOut, VOut> {
       Map<KOut,VOut> result = null;
       if(!isLocalOnly && distributeReducePhase()){
          // init and create tmp caches
-         try {
-            //Note: move to try/catch/finally clause below once ISPN-4161 is fixed
-            executeTaskInit(getIntermediateCacheName());
-         } catch (Exception e){
-            throw new CacheException(e);
-         }
+         executeTaskInit(getIntermediateCacheName());
          Set<KOut> allMapPhasesResponses = null;
          try {
             // map
@@ -476,10 +471,11 @@ public class MapReduceTask<KIn, VIn, KOut, VOut> {
 
             // reduce
             result = executeReducePhase(resultCache, allMapPhasesResponses, useIntermediateSharedCache());
+         } catch (InterruptedException ie) {
+            Thread.currentThread().interrupt();
+            throw new MapReduceException(ie);
          }
-         catch (Exception cause){
-            throw new CacheException(cause);
-         } finally {
+         finally {
             // cleanup tmp caches across cluster
             EmbeddedCacheManager cm = cache.getCacheManager();
             String intermediateCache = getIntermediateCacheName();
@@ -497,7 +493,7 @@ public class MapReduceTask<KIn, VIn, KOut, VOut> {
          }
       } else {
          try {
-            if(resultCache == null || resultCache.isEmpty()){
+            if (resultCache == null || resultCache.isEmpty()) {
                result = new HashMap<KOut, VOut>();
                executeMapPhaseWithLocalReduction(result);
             } else {
@@ -505,8 +501,9 @@ public class MapReduceTask<KIn, VIn, KOut, VOut> {
                Cache<KOut, VOut> c = cm.getCache(resultCache);
                executeMapPhaseWithLocalReduction(c);
             }
-         } catch (Exception cause){
-            throw new CacheException(cause);
+         } catch (InterruptedException ie) {
+            Thread.currentThread().interrupt();
+            throw new MapReduceException(ie);
          }
       }
       return result;
@@ -529,7 +526,7 @@ public class MapReduceTask<KIn, VIn, KOut, VOut> {
    }
 
 
-   protected void executeTaskInit(String tmpCacheName) throws Exception{
+   protected void executeTaskInit(String tmpCacheName) throws MapReduceException {
       RpcManager rpc = cache.getRpcManager();
       CommandsFactory factory = cache.getComponentRegistry().getComponent(CommandsFactory.class);
 
@@ -545,23 +542,26 @@ public class MapReduceTask<KIn, VIn, KOut, VOut> {
             try {
                return ccc.perform(null);
             } catch (Throwable e) {
-               throw new CacheException("Could not initialize temporary caches for MapReduce task on remote nodes ", e);
+               throw new MapReduceException("Could not initialize temporary caches for MapReduce task on remote nodes ", e);
             }
          }
       });
-      future.get();
+      try {
+         future.get();
+      } catch (Exception e) {
+         throw new MapReduceException(e);
+      }
       rpc.invokeRemotely(cache.getRpcManager().getMembers(), ccc, rpcOptionsBuilder.build());
       Map<Address, Response> map = rpc.invokeRemotely(cache.getRpcManager().getMembers(), ccc, rpcOptionsBuilder.build());
       for (Entry<Address, Response> e : map.entrySet()) {
          if (!e.getValue().isSuccessful()) {
-            throw new IllegalStateException("Could not initialize tmp cache " + tmpCacheName + " at " + e.getKey()
+            throw new MapReduceException("Could not initialize tmp cache " + tmpCacheName + " at " + e.getKey()
                   + " for  " + this);
          }
       }
    }
 
-   protected Set<KOut> executeMapPhase() throws InterruptedException,
-            ExecutionException {
+   protected Set<KOut> executeMapPhase() throws MapReduceException, InterruptedException {
       RpcManager rpc = cache.getRpcManager();
       MapCombineCommand<KIn, VIn, KOut, VOut> cmd = null;
       Set<KOut> mapPhasesResult = new HashSet<KOut>();
@@ -602,14 +602,7 @@ public class MapReduceTask<KIn, VIn, KOut, VOut> {
             try {
                result = mapTaskPart.get();
             } catch (ExecutionException ee) {
-               Throwable cause = ee.getCause();
-               if (cause instanceof org.infinispan.util.concurrent.TimeoutException) {
-                  throw new ExecutionException("Map phase executing at " + mapTaskPart.getAddress()
-                        + " did not complete within " + rpcOptionsBuilder.timeout(TimeUnit.SECONDS) + " sec timeout",
-                        cause);
-               } else {
-                  throw ee;
-               }
+               throw new MapReduceException("Map phase failed ", ee.getCause());
             }
             mapPhasesResult.addAll(result);
          }
@@ -619,8 +612,7 @@ public class MapReduceTask<KIn, VIn, KOut, VOut> {
       return mapPhasesResult;
    }
 
-   protected void executeMapPhaseWithLocalReduction(Map<KOut, VOut> reducedResult) throws InterruptedException,
-            ExecutionException {
+   protected void executeMapPhaseWithLocalReduction(Map<KOut, VOut> reducedResult) throws MapReduceException, InterruptedException {
       RpcManager rpc = SecurityActions.getCacheRpcManager(cache);
       MapCombineCommand<KIn, VIn, KOut, VOut> cmd = null;
       Map<KOut, List<VOut>> mapPhasesResult = new HashMap<KOut, List<VOut>>();
@@ -668,14 +660,7 @@ public class MapReduceTask<KIn, VIn, KOut, VOut> {
             try {
                result = mapTaskPart.get();
             } catch (ExecutionException ee) {
-               Throwable cause = ee.getCause();
-               if (cause instanceof org.infinispan.util.concurrent.TimeoutException) {
-                  throw new ExecutionException("Map phase executing at " + mapTaskPart.getAddress()
-                        + " did not complete within " + rpcOptionsBuilder.timeout(TimeUnit.SECONDS) + " sec timeout",
-                        cause);
-               } else {
-                  throw ee;
-               }
+               throw new MapReduceException("Map phase failed ", ee.getCause());
             }
             mergeResponse(mapPhasesResult, result);
          }
@@ -706,7 +691,7 @@ public class MapReduceTask<KIn, VIn, KOut, VOut> {
    }
 
    protected Map<KOut, VOut> executeReducePhase(String resultCache, Set<KOut> allMapPhasesResponses,
-            boolean useIntermediateSharedCache) throws InterruptedException, ExecutionException {
+            boolean useIntermediateSharedCache) throws MapReduceException, InterruptedException {
       RpcManager rpc = cache.getRpcManager();
       String destCache = getIntermediateCacheName();
 
@@ -736,14 +721,7 @@ public class MapReduceTask<KIn, VIn, KOut, VOut> {
             try {
                result = reduceTaskPart.get();
             } catch (ExecutionException ee) {
-               Throwable cause = ee.getCause();
-               if (cause instanceof org.infinispan.util.concurrent.TimeoutException) {
-                  throw new ExecutionException("Reduce phase executing at " + reduceTaskPart.getAddress()
-                        + " did not complete within " + rpcOptionsBuilder.timeout(TimeUnit.SECONDS) + " sec timeout",
-                        cause);
-               } else {
-                  throw ee;
-               }
+               throw new MapReduceException("Reduce phase failed", ee.getCause());
             }
             reduceResult.putAll(result);
          }
@@ -1167,7 +1145,7 @@ public class MapReduceTask<KIn, VIn, KOut, VOut> {
                         (NotifyingNotifiableFuture<Object>) this);
                log.debugf("Invoked %s on %s ", mcc, getExecutionTarget());
             } catch (Exception ex) {
-               throw new CacheException(
+               throw new MapReduceException(
                         "Could not invoke map phase of MapReduceTask on remote node "
                                  + getExecutionTarget(), ex);
             }
@@ -1240,7 +1218,7 @@ public class MapReduceTask<KIn, VIn, KOut, VOut> {
                         (NotifyingNotifiableFuture<Object>) this);
                log.debugf("Invoked %s on %s ", rc, getExecutionTarget());
             } catch (Exception ex) {
-               throw new CacheException(
+               throw new MapReduceException(
                         "Could not invoke map phase of MapReduceTask on remote node "
                                  + getExecutionTarget(), ex);
             }
@@ -1260,7 +1238,7 @@ public class MapReduceTask<KIn, VIn, KOut, VOut> {
             }
             log.debugf("Invoked %s locally", rc);
          } catch (Throwable e1) {
-            throw new CacheException("Could not invoke MapReduce task locally ", e1);
+            throw new MapReduceException("Could not invoke MapReduce task locally ", e1);
          }
          return localReduceResult;
       }
