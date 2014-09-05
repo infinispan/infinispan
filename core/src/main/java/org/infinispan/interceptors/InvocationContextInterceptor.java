@@ -19,6 +19,7 @@ import org.infinispan.factories.annotations.Stop;
 import org.infinispan.interceptors.base.CommandInterceptor;
 import org.infinispan.lifecycle.ComponentStatus;
 import org.infinispan.manager.CacheContainer;
+import org.infinispan.statetransfer.OutdatedTopologyException;
 import org.infinispan.transaction.WriteSkewException;
 import org.infinispan.transaction.impl.TransactionTable;
 import org.infinispan.util.logging.Log;
@@ -127,6 +128,9 @@ public class InvocationContextInterceptor extends CommandInterceptor {
                   if (th instanceof WriteSkewException) {
                      // We log this as DEBUG rather than ERROR - see ISPN-2076
                      log.debug("Exception executing call", th);
+                  }
+                  else if (th instanceof OutdatedTopologyException) {
+                     log.outdatedTopoligy(th);
                   } else {
                      log.executionError(th);
                   }
