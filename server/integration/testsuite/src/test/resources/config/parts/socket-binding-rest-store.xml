@@ -1,0 +1,3 @@
+<outbound-socket-binding name="remote-store-rest-server">
+    <remote-destination host="127.0.0.1" port="${remote.destination.port:8280}"/>
+</outbound-socket-binding>

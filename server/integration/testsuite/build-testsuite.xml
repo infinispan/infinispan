@@ -147,6 +147,8 @@
                 <delete dir="${server.old.dist}-tmp" />
                 <transform transformDir="${server.old.dist}/standalone/configuration" in="standalone.xml" out="standalone.xml"
                            removeRestSecurity="true"/>
+                <transform transformDir="${server.old.dist}/standalone/configuration" in="clustered.xml" out="clustered.xml"
+                           removeRestSecurity="true"/>
 
                 <copy todir="${server2.old.dist}">
                     <fileset dir="${server.old.dist}" />
@@ -175,6 +177,13 @@
                    infinispanServerEndpoint="${other.parts}/rolling-upgrades-server-endpoint-${new.server.schema.version}.xml"
                    addNewHotrodSocketBinding="${other.parts}/socket-binding-hotrod-store.xml"
                    modifyMulticastAddress="${other.parts}/switch-multicast-address.xml"/>
+        <transform in="clustered.xml" out="examples/clustered-rest-rolling-upgrade.xml"
+                   modifyRemoteDestination="${other.parts}/rest-remote-destination.xml"
+                   modifyInfinispan="${infinispan.parts}/rolling-upgrades-clustered-rest-${new.server.schema.version}.xml"
+                   infinispanServerEndpoint="${other.parts}/rolling-upgrades-server-endpoint-${new.server.schema.version}.xml"
+                   addNewRestSocketBinding="${other.parts}/socket-binding-rest-store.xml"
+                   modifyMulticastAddress="${other.parts}/switch-multicast-address.xml"
+                   removeRestSecurity="true"/>
         <transform in="examples/standalone-rest-rolling-upgrade.xml" out="examples/standalone-rest-rolling-upgrade.xml"
                    modifyRemoteDestination="${other.parts}/rest-remote-destination.xml" removeRestSecurity="true"/>
         <transform in="examples/standalone-compatibility-mode.xml" out="examples/standalone-compatibility-mode.xml" removeRestSecurity="true"/>
@@ -277,28 +286,28 @@
                 <configure-jdbc in="@{in}" tablePrefix="STRING_INVALIDATION"/>
             </jdbc-conf>
         </transform>
-        <transform in="standalone.xml" out="testsuite/hotrod-auth.xml" 
-            modifyInfinispan="${infinispan.parts}/local-secured.xml"
-            hotrodAuth="${infinispan.parts}/hotrod-auth.xml" />
-       <transform in="standalone.xml" out="testsuite/hotrod-auth-qop.xml" 
-            modifyInfinispan="${infinispan.parts}/local-secured.xml"
-            hotrodAuth="${infinispan.parts}/hotrod-auth-qop.xml" />
-       <transform in="standalone.xml" out="testsuite/hotrod-auth-ldap.xml" 
-    	    modifyInfinispan="${infinispan.parts}/local-secured.xml"
-       	    hotrodAuth="${infinispan.parts}/hotrod-auth-ldap.xml"
-    	    addSecRealm="${other.parts}/ldap-security-realm.xml"
-       	    addConnection="${other.parts}/ldap-connection.xml"/>
-       <transform in="standalone.xml" out="testsuite/hotrod-auth-ldap-ssl.xml" 
-    	    modifyInfinispan="${infinispan.parts}/local-secured.xml"
-    	    hotrodAuth="${infinispan.parts}/hotrod-auth-ldap.xml"
-       	    hotrodEncrypt="${infinispan.parts}/hotrod-ssl.xml"
-    	    addSecRealm="${other.parts}/ldap-security-realm-with-ssl.xml"
-    	    addConnection="${other.parts}/ldap-connection-ssl.xml"/>	
-       <transform in="standalone.xml" out="testsuite/hotrod-auth-krb.xml" 
-            modifyInfinispan="${infinispan.parts}/local-secured.xml"
-            hotrodAuth="${infinispan.parts}/hotrod-auth-krb.xml" 
-            addKrbOpts="${other.parts}/kerberos-properties.xml"
-            addKrbSecDomain="${other.parts}/kerberos-security-domain.xml" />
+        <transform in="standalone.xml" out="testsuite/hotrod-auth.xml"
+                   modifyInfinispan="${infinispan.parts}/local-secured.xml"
+                   hotrodAuth="${infinispan.parts}/hotrod-auth.xml" />
+        <transform in="standalone.xml" out="testsuite/hotrod-auth-qop.xml"
+                   modifyInfinispan="${infinispan.parts}/local-secured.xml"
+                   hotrodAuth="${infinispan.parts}/hotrod-auth-qop.xml" />
+        <transform in="standalone.xml" out="testsuite/hotrod-auth-ldap.xml"
+                   modifyInfinispan="${infinispan.parts}/local-secured.xml"
+                   hotrodAuth="${infinispan.parts}/hotrod-auth-ldap.xml"
+                   addSecRealm="${other.parts}/ldap-security-realm.xml"
+                   addConnection="${other.parts}/ldap-connection.xml"/>
+        <transform in="standalone.xml" out="testsuite/hotrod-auth-ldap-ssl.xml"
+                   modifyInfinispan="${infinispan.parts}/local-secured.xml"
+                   hotrodAuth="${infinispan.parts}/hotrod-auth-ldap.xml"
+                   hotrodEncrypt="${infinispan.parts}/hotrod-ssl.xml"
+                   addSecRealm="${other.parts}/ldap-security-realm-with-ssl.xml"
+                   addConnection="${other.parts}/ldap-connection-ssl.xml"/>
+        <transform in="standalone.xml" out="testsuite/hotrod-auth-krb.xml"
+                   modifyInfinispan="${infinispan.parts}/local-secured.xml"
+                   hotrodAuth="${infinispan.parts}/hotrod-auth-krb.xml"
+                   addKrbOpts="${other.parts}/kerberos-properties.xml"
+                   addKrbSecDomain="${other.parts}/kerberos-security-domain.xml" />
     </target>
 
     <macrodef name="transform">
@@ -316,6 +325,7 @@
         <attribute name="modifyOutboundSocketBindingHotRod" default="false"/>
         <attribute name="addHotrodSocketBinding" default="false"/>
         <attribute name="addNewHotrodSocketBinding" default="false"/>
+        <attribute name="addNewRestSocketBinding" default="false"/>
         <attribute name="removeRestSecurity" default="true"/>
         <attribute name="infinispanServerEndpoint" default="false"/>
         <attribute name="infinispanFile" default="false"/>
@@ -349,6 +359,7 @@
                 <param name="modifyOutboundSocketBindingHotRod" expression="@{modifyOutboundSocketBindingHotRod}"/>
                 <param name="addHotrodSocketBinding" expression="@{addHotrodSocketBinding}"/>
                 <param name="addNewHotrodSocketBinding" expression="@{addNewHotrodSocketBinding}"/>
+                <param name="addNewRestSocketBinding" expression="@{addNewRestSocketBinding}"/>
                 <param name="removeRestSecurity" expression="@{removeRestSecurity}"/>
                 <param name="infinispanServerEndpoint" expression="@{infinispanServerEndpoint}"/>
                 <param name="infinispanFile" expression="@{infinispanFile}"/>

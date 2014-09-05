@@ -1,0 +1,41 @@
+<project name="testsuite">
+    <target name="kill-jbossas">
+        <exec executable="${server.jvm}/bin/jps" output="jps.pid" osfamily="unix"/>
+        <loadfile srcfile="jps.pid" property="pid" failonerror="false">
+            <filterchain>
+                <linecontains>
+                    <contains value="jboss-modules.jar"/>
+                </linecontains>
+                <tokenfilter>
+                    <deletecharacters chars="jboss-modules.jar"/>
+                    <ignoreblank/>
+                </tokenfilter>
+                <striplinebreaks/>
+            </filterchain>
+        </loadfile>
+        <exec executable="netstat" output="jps.pid" osfamily="windows">
+            <arg line="-aon"/>
+        </exec>
+        <loadfile srcfile="jps.pid" property="pid" failonerror="false">
+            <filterchain>
+                <linecontains>
+                    <contains value="LISTENING"/>
+                    <contains value=":${hotrod-port}"/>
+                </linecontains>
+                <tokenfilter>
+                    <replaceregex pattern=".*LISTENING([ \t]+)([0-9]+)" replace="\2" flags="gi"/>
+                    <ignoreblank/>
+                </tokenfilter>
+                <striplinebreaks/>
+            </filterchain>
+        </loadfile>
+        <echo message="Killing Infinispan server with PID - ${pid}"/>
+        <exec executable="kill" osfamily="unix">
+            <arg line="-9 ${pid}"/>
+        </exec>
+        <exec executable="taskkill" osfamily="windows">
+            <arg line="/F /T /PID ${pid}"/>
+        </exec>
+        <delete file="jps.pid"/>
+    </target>
+</project>
