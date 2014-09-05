@@ -4,6 +4,7 @@ import org.hibernate.search.backend.spi.Worker;
 import org.hibernate.search.spi.SearchFactoryIntegrator;
 
 import java.util.ArrayList;
+import java.util.List;
 import java.util.concurrent.locks.ReentrantLock;
 
 import static org.infinispan.query.backend.TransactionHelper.Operation;
@@ -64,12 +65,24 @@ final class SearchFactoryHandler {
    private void updateSearchFactory(final Class<?>... classes) {
       mutating.lock();
       try {
+         //Need to re-filter the new types while holding the lock
+         final List<Class<?>> reducedSet = new ArrayList<>(classes.length);
+         for (Class<?> type : classes) {
+            if (!isIndexed(type)) {
+               reducedSet.add(type);
+            }
+         }
+         if (reducedSet.isEmpty()) {
+            return;
+         }
+         final Class<?>[] newtypes = new Class<?>[reducedSet.size()];
+         reducedSet.toArray(newtypes);
          transactionHelper.runSuspendingTx(new Operation() {
             @Override
             public void execute() {
                // we need to preserve the state of this flag manually because addClasses will cause reconfiguration and the flag is lost
                boolean isStatisticsEnabled = searchFactory.getStatistics().isStatisticsEnabled();
-               searchFactory.addClasses(classes);
+               searchFactory.addClasses(newtypes);
                searchFactory.getStatistics().setStatisticsEnabled(isStatisticsEnabled);
             }
          });
