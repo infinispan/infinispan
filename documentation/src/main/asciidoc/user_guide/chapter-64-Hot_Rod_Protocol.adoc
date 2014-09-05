@@ -1250,6 +1250,8 @@ this marker will always have `0` value for events.
 | Header | variable | Event header with `0x60` operation code
 | Listener ID | byte array | Listener for which this event is directed
 | Custom marker | byte | Custom event marker. For created events, this is `0`.
+| Command retried | byte | Marker for events that are result of retried commands.
+If command is retried, it returns `1`, otherwise `0`.
 | Key | byte array | Created key
 | Version | long | Version of the created entry. This version information can
 be used to make conditional operations on this cache entry.
@@ -1262,6 +1264,8 @@ be used to make conditional operations on this cache entry.
 | Header | variable | Event header with `0x61` operation code
 | Listener ID | byte array | Listener for which this event is directed
 | Custom marker | byte | Custom event marker. For created events, this is `0`.
+| Command retried | byte | Marker for events that are result of retried commands.
+If command is retried, it returns `1`, otherwise `0`.
 | Key | byte array | Modified key
 | Version | long | Version of the modified entry. This version information can
 be used to make conditional operations on this cache entry.
@@ -1274,6 +1278,8 @@ be used to make conditional operations on this cache entry.
 | Header | variable | Event header with `0x62` operation code
 | Listener ID | byte array | Listener for which this event is directed
 | Custom marker | byte | Custom event marker. For created events, this is `0`.
+| Command retried | byte | Marker for events that are result of retried commands.
+If command is retried, it returns `1`, otherwise `0`.
 | Key | byte array | Removed key
 |==============================================================================
 

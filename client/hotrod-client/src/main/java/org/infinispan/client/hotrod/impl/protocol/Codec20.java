@@ -128,23 +128,24 @@ public class Codec20 implements Codec, HotRodConstants {
          throw log.unexpectedListenerId(printArray(listenerId), printArray(expectedListenerId));
 
       short isCustom = transport.readByte();
+      boolean isRetried = transport.readByte() == 1 ? true : false;
 
       if (isCustom == 1) {
          final Object eventData = MarshallerUtil.bytes2obj(marshaller, transport.readArray());
-         return createCustomEvent(eventData, eventType);
+         return createCustomEvent(eventData, eventType, isRetried);
       } else {
          switch (eventType) {
             case CLIENT_CACHE_ENTRY_CREATED:
                Object createdKey = MarshallerUtil.bytes2obj(marshaller, transport.readArray());
                long createdDataVersion = transport.readLong();
-               return createCreatedEvent(createdKey, createdDataVersion);
+               return createCreatedEvent(createdKey, createdDataVersion, isRetried);
             case CLIENT_CACHE_ENTRY_MODIFIED:
                Object modifiedKey = MarshallerUtil.bytes2obj(marshaller, transport.readArray());
                long modifiedDataVersion = transport.readLong();
-               return createModifiedEvent(modifiedKey, modifiedDataVersion);
+               return createModifiedEvent(modifiedKey, modifiedDataVersion, isRetried);
             case CLIENT_CACHE_ENTRY_REMOVED:
                Object removedKey = MarshallerUtil.bytes2obj(marshaller, transport.readArray());
-               return createRemovedEvent(removedKey);
+               return createRemovedEvent(removedKey, isRetried);
             default:
                throw log.unknownEvent(eventTypeId);
          }
@@ -167,10 +168,11 @@ public class Codec20 implements Codec, HotRodConstants {
       }
    }
 
-   private ClientEvent createRemovedEvent(final Object key) {
+   private ClientEvent createRemovedEvent(final Object key, final boolean isRetried) {
       return new ClientCacheEntryRemovedEvent() {
          @Override public Object getKey() { return key; }
          @Override public Type getType() { return Type.CLIENT_CACHE_ENTRY_REMOVED; }
+         @Override public boolean isCommandRetried() { return isRetried; }
          @Override
          public String toString() {
             return "ClientCacheEntryRemovedEvent(" + "key=" + key + ")";
@@ -178,11 +180,12 @@ public class Codec20 implements Codec, HotRodConstants {
       };
    }
 
-   private ClientCacheEntryModifiedEvent createModifiedEvent(final Object key, final long dataVersion) {
+   private ClientCacheEntryModifiedEvent createModifiedEvent(final Object key, final long dataVersion, final boolean isRetried) {
       return new ClientCacheEntryModifiedEvent() {
          @Override public Object getKey() { return key; }
          @Override public long getVersion() { return dataVersion; }
          @Override public Type getType() { return Type.CLIENT_CACHE_ENTRY_MODIFIED; }
+         @Override public boolean isCommandRetried() { return isRetried; }
          @Override
          public String toString() {
             return "ClientCacheEntryModifiedEvent(" + "key=" + key
@@ -191,11 +194,12 @@ public class Codec20 implements Codec, HotRodConstants {
       };
    }
 
-   private ClientCacheEntryCreatedEvent<Object> createCreatedEvent(final Object key, final long dataVersion) {
+   private ClientCacheEntryCreatedEvent<Object> createCreatedEvent(final Object key, final long dataVersion, final boolean isRetried) {
       return new ClientCacheEntryCreatedEvent<Object>() {
          @Override public Object getKey() { return key; }
          @Override public long getVersion() { return dataVersion; }
          @Override public Type getType() { return Type.CLIENT_CACHE_ENTRY_CREATED; }
+         @Override public boolean isCommandRetried() { return isRetried; }
          @Override
          public String toString() {
             return "ClientCacheEntryCreatedEvent(" + "key=" + key
@@ -204,10 +208,11 @@ public class Codec20 implements Codec, HotRodConstants {
       };
    }
 
-   private ClientCacheEntryCustomEvent<Object> createCustomEvent(final Object eventData, final ClientEvent.Type eventType) {
+   private ClientCacheEntryCustomEvent<Object> createCustomEvent(final Object eventData, final ClientEvent.Type eventType, final boolean isRetried) {
       return new ClientCacheEntryCustomEvent<Object>() {
          @Override public Object getEventData() { return eventData; }
          @Override public Type getType() { return eventType; }
+         @Override public boolean isCommandRetried() { return isRetried; }
          @Override
          public String toString() {
             return "ClientCacheEntryCustomEvent(" + "eventData=" + eventData + ", eventType=" + eventType + ")";

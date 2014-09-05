@@ -8,20 +8,22 @@ import org.infinispan.server.hotrod.OperationResponse._
  */
 object Events {
 
-   abstract class Event(val version: Byte, val messageId: Long, val op: OperationResponse, val listenerId: Bytes)
+   abstract class Event(val version: Byte, val messageId: Long, val op: OperationResponse, val listenerId: Bytes, val isRetried: Boolean)
 
    case class KeyEvent(
            override val version: Byte,
            override val messageId: Long,
            override val listenerId: Bytes,
+           override val isRetried: Boolean,
            key: Bytes)
-         extends Event(version, messageId, CacheEntryRemovedEventResponse, listenerId) {
+         extends Event(version, messageId, CacheEntryRemovedEventResponse, listenerId, isRetried) {
       override def toString: String = {
          new StringBuilder().append("KeyEvent").append("{")
                  .append("version=").append(version)
                  .append(", messageId=").append(messageId)
                  .append(", listenerId=").append(Util.printArray(listenerId, false))
-                 .append(", key=").append(Util.printArray(key, false))
+                 .append(", key=").append(Util.toStr(key))
+                 .append(", isRetried=").append(isRetried)
                  .append("}").toString()
       }
    }
@@ -31,15 +33,20 @@ object Events {
            override val messageId: Long,
            override val op: OperationResponse,
            override val listenerId: Bytes,
+           override val isRetried: Boolean,
            key: Bytes, dataVersion: Long)
-         extends Event(version, messageId, op, listenerId) {
-      new StringBuilder().append("KeyWithVersionEvent").append("{")
-              .append("version=").append(version)
-              .append(", messageId=").append(messageId)
-              .append(", listenerId=").append(Util.printArray(listenerId))
-              .append(", key=").append(Util.printArray(key))
-              .append(", dataVersion=").append(dataVersion)
-              .append("}").toString()
+         extends Event(version, messageId, op, listenerId, isRetried) {
+      override def toString: String = {
+         new StringBuilder().append("KeyWithVersionEvent").append("{")
+                 .append("version=").append(version)
+                 .append(", messageId=").append(messageId)
+                 .append(", op=").append(op)
+                 .append(", listenerId=").append(Util.toStr(listenerId))
+                 .append(", key=").append(Util.toStr(key))
+                 .append(", dataVersion=").append(dataVersion)
+                 .append(", isRetried=").append(isRetried)
+                 .append("}").toString()
+      }
    }
 
    case class CustomEvent(
@@ -47,14 +54,19 @@ object Events {
                override val messageId: Long,
                override val op: OperationResponse,
                override val listenerId: Bytes,
+               override val isRetried: Boolean,
                eventData: Bytes)
-           extends Event(version, messageId, op, listenerId) {
-      new StringBuilder().append("CustomEvent").append("{")
-              .append("version=").append(version)
-              .append(", messageId=").append(messageId)
-              .append(", listenerId=").append(Util.printArray(listenerId, false))
-              .append(", event=").append(Util.printArray(eventData, false))
-              .append("}").toString()
+           extends Event(version, messageId, op, listenerId, isRetried) {
+      override def toString: String = {
+         new StringBuilder().append("CustomEvent").append("{")
+                 .append("version=").append(version)
+                 .append(", messageId=").append(messageId)
+                 .append(", op=").append(op)
+                 .append(", listenerId=").append(Util.toStr(listenerId, false))
+                 .append(", event=").append(Util.toStr(eventData, false))
+                 .append(", isRetried=").append(isRetried)
+                 .append("}").toString()
+      }
    }
 
 }
