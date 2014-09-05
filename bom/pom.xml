@@ -68,7 +68,9 @@
       <version.netty>4.0.20.Final</version.netty>
       <version.osgi>4.3.1</version.osgi>
       <version.rhq>4.4.0</version.rhq>
-      <version.scala>2.10.2</version.scala>
+      <version.scala.major>2.11</version.scala.major>
+      <version.scala>${version.scala.major}.2</version.scala>
+      <version.scala.xml>1.0.2</version.scala.xml>
       <version.xstream>1.4.7</version.xstream>
    </properties>
 
@@ -324,6 +326,11 @@
             <groupId>org.scala-lang</groupId>
             <artifactId>scala-library</artifactId>
             <version>${version.scala}</version>
+         </dependency>
+         <dependency>
+            <groupId>org.scala-lang.modules</groupId>
+            <artifactId>scala-xml_${version.scala.major}</artifactId>
+            <version>${version.scala.xml}</version>
          </dependency>
          <dependency>
             <groupId>com.thoughtworks.xstream</groupId>

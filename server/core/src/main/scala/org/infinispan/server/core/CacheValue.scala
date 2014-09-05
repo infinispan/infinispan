@@ -23,9 +23,8 @@ import java.lang.StringBuilder
  * @since 4.1
  * @deprecated
  */
-@serializable
 @deprecated
-class CacheValue(val data: Array[Byte], val version: Long) {
+class CacheValue(val data: Array[Byte], val version: Long) extends Serializable {
 
    override def toString = {
       new StringBuilder().append("CacheValue").append("{")
@@ -65,6 +64,6 @@ object CacheValue {
       }
 
       override def getTypeClasses =
-         asJavaSet(Set[java.lang.Class[_ <: CacheValue]](classOf[CacheValue]))
+         setAsJavaSet(Set[java.lang.Class[_ <: CacheValue]](classOf[CacheValue]))
    }
 }

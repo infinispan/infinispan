@@ -4,12 +4,13 @@ import org.infinispan.test.MultipleCacheManagersTest
 import org.testng.annotations.{AfterMethod, AfterClass, Test}
 import org.infinispan.test.fwk.TestCacheManagerFactory
 import org.infinispan.configuration.cache.CacheMode
-import org.infinispan.commons.equivalence.ByteArrayEquivalence
 
 // Do not remove, otherwise getDefaultClusteredConfig is not found
 import org.infinispan.test.AbstractCacheTest._
 import test.{UniquePortThreadLocal, HotRodClient}
-import scala.concurrent.ops._
+import scala.concurrent.{Await, Future}
+import scala.concurrent.duration._
+import scala.concurrent.ExecutionContext.Implicits.global
 import test.HotRodTestingUtil._
 import org.infinispan.server.core.test.ServerTestingUtil._
 
@@ -57,11 +58,11 @@ class HotRodConcurrentStartTest extends MultipleCacheManagersTest {
       val initialPort = UniquePortThreadLocal.get.intValue
       // Start servers in paralell using Scala's futures
       // Start first server with delay so that cache not found issue can be replicated
-      val hotRodServer1 = future(startHotRodServerWithDelay(getCacheManagers.get(0), initialPort, 10000))
-      val hotRodServer2 = future(startHotRodServer(getCacheManagers.get(1), initialPort + 10))
+      val hotRodServer1 = Future(startHotRodServerWithDelay(getCacheManagers.get(0), initialPort, 10000))
+      val hotRodServer2 = Future(startHotRodServer(getCacheManagers.get(1), initialPort + 10))
 
-      hotRodServers = hotRodServers ::: List(hotRodServer1.apply())
-      hotRodServers = hotRodServers ::: List(hotRodServer2.apply())
+      hotRodServers = hotRodServers ::: List(Await.result(hotRodServer1, 20 seconds))
+      hotRodServers = hotRodServers ::: List(Await.result(hotRodServer2, 20 seconds))
    }
 
 }

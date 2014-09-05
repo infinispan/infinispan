@@ -236,6 +236,10 @@
          <maven-resource group="org.scala-lang" artifact="scala-library" />
       </module-def>
 
+      <module-def name="org.scala-lang.modules.xml">
+         <maven-resource group="org.scala-lang.modules" artifact="scala-xml_2.11" />
+      </module-def>
+
       <module-def name="org.apache.lucene">
          <maven-resource group="org.apache.lucene" artifact="lucene-core" />
          <maven-resource group="org.apache.lucene" artifact="lucene-queries" />

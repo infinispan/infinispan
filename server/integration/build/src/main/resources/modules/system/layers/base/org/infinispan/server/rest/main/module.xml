@@ -44,6 +44,7 @@
       <module name="org.jboss.marshalling" services="import"/>
       <module name="org.jboss.resteasy.resteasy-jaxrs" />
       <module name="org.scala-lang.library" />
+      <module name="org.scala-lang.modules.xml" />
       <module name="org.jgroups" />
    </dependencies>
 </module>
