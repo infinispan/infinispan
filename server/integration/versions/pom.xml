@@ -33,7 +33,7 @@
       <version.org.jboss.modules>1.3.3.Final</version.org.jboss.modules>
       <version.junit>4.11</version.junit>
       <version.org.infinispan>${project.version}</version.org.infinispan>
-      <version.org.infinispan.arquillian.container>1.2.0.Alpha1</version.org.infinispan.arquillian.container>
+      <version.org.infinispan.arquillian.container>1.2.0.Alpha2</version.org.infinispan.arquillian.container>
       <version.org.slf4j>1.7.2</version.org.slf4j>
       <version.org.wildfly>8.1.0.Final</version.org.wildfly>
       <version.org.xerial.snappy>1.0.5</version.org.xerial.snappy>
@@ -295,7 +295,7 @@
          <dependency>
             <groupId>org.infinispan.arquillian.container</groupId>
             <artifactId>infinispan-arquillian-container-managed</artifactId>
-            <version>${version.org.infinispan.arquillian.containern}</version>
+            <version>${version.org.infinispan.arquillian.container}</version>
             <scope>test</scope>
          </dependency>
 

@@ -45,13 +45,18 @@ public class RestRollingUpgradesIT {
         final int managementPortServer1 = 9990;
         MBeanServerConnectionProvider provider1;
         // Source node
-        final int managementPortServer2 = 10099;
+        int managementPortServer2 = 10099;
         MBeanServerConnectionProvider provider2;
 
-        controller.start("rest-rolling-upgrade-2-old");
         try {
-            RemoteInfinispanMBeans s2 = createRemotes("rest-rolling-upgrade-2-old", "local", DEFAULT_CACHE_NAME);
-            RESTHelper.addServer(s2.server.getRESTEndpoint().getInetAddress().getHostName(), s2.server.getRESTEndpoint().getContextPath());
+
+            if (!Boolean.parseBoolean(System.getProperty("start.jboss.as.manually"))) {
+                // start it by Arquillian
+                controller.start("rest-rolling-upgrade-2-old");
+                managementPortServer2 = 10090;
+            }
+
+            RESTHelper.addServer("127.0.0.1", "/rest");
 
             post(fullPathKey(0, DEFAULT_CACHE_NAME, "key1", PORT_OFFSET), "data", "text/html");
             get(fullPathKey(0, DEFAULT_CACHE_NAME, "key1", PORT_OFFSET), "data");
@@ -69,8 +74,8 @@ public class RestRollingUpgradesIT {
 
             provider1 = new MBeanServerConnectionProvider(s1.server.getRESTEndpoint().getInetAddress().getHostName(),
                     managementPortServer1);
-            provider2 = new MBeanServerConnectionProvider(s2.server.getRESTEndpoint().getInetAddress().getHostName(),
-                    managementPortServer2);
+
+            provider2 = new MBeanServerConnectionProvider("127.0.0.1", managementPortServer2);
 
             final ObjectName rollMan = new ObjectName("jboss.infinispan:type=Cache," + "name=\"default(local)\","
                     + "manager=\"local\"," + "component=RollingUpgradeManager");

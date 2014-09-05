@@ -20,6 +20,12 @@ Currently these subsets are predefined:
                                       2) -Dnew.server.schema.version=7.0 -- used to decide which snippet to use during
                                           transformation of a configuration for new servers in the clustered scenario
                                       Configuration snippets for new cluster are prepared for versions: 6.0, 6.1, 7.0)
+  -P suite.rolling.upgrades.dist     (Distribution case of Rolling upgrades)
+
+  -P suite.rolling.upgrades.jbossas       (This profile needs to be used when running Rolling upgrades with
+                                           old Infinispan server based on JBoss AS)
+  -P suite.rolling.upgrades.dist.jbossas  (Distribution case of Rolling upgrades with
+                                           old Infinispan server based on JBoss AS)
 
   -P suite.others                    (Tests that do not belong to any of the suites above. Useful when running a single test that's outside
                                       of any pre-defined group)

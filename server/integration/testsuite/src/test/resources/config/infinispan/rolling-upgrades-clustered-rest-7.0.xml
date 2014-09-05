@@ -1,0 +1,22 @@
+        <subsystem xmlns="urn:infinispan:server:core:7.0" default-cache-container="clustered-new">
+            <cache-container name="clustered-new" default-cache="default">
+                <transport stack="${jboss.default.jgroups.stack:udp}" executor="infinispan-transport" lock-timeout="240000"/>
+                <distributed-cache name="default"
+                                     start="EAGER"
+                                     mode="SYNC"
+                                     segments="1"
+                                     owners="2"
+                                     batching="false"
+                                     l1-lifespan="0"
+                                     remote-timeout="30000">
+                    <transaction mode="NONE"/>
+                    <rest-store path="/rest/default" shared="true" purge="false" passivation="false">
+                        <connection-pool connection-timeout="60000" socket-timeout="60000" tcp-no-delay="true" max-connections-per-host="4" max-total-connections="20"/>
+                        <remote-server outbound-socket-binding="remote-store-rest-server"/>
+                    </rest-store>
+                </distributed-cache>
+            </cache-container>
+            <cache-container name="security"/>
+        </subsystem>
+
+
