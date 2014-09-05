@@ -8,6 +8,8 @@ import java.io._
 import org.testng.annotations.{Test, BeforeClass, AfterClass}
 import java.lang.reflect.Method
 import org.infinispan.commons.api.BasicCacheContainer
+import scala.concurrent.{Await, Future}
+import scala.concurrent.duration._
 import scala.math._
 import org.infinispan.test.TestingUtil
 import java.text.SimpleDateFormat
@@ -20,13 +22,13 @@ import org.infinispan.manager.impl.AbstractDelegatingEmbeddedCacheManager
 import org.infinispan.{Cache, AdvancedCache}
 import org.infinispan.cache.impl.AbstractDelegatingAdvancedCache
 import java.util.concurrent.{TimeUnit, CountDownLatch}
-import scala.concurrent.ops._
 import org.infinispan.server.core.logging.JavaLog
 import org.infinispan.util.logging.LogFactory
 import org.infinispan.test.fwk.TestCacheManagerFactory
 import java.util
 import org.infinispan.metadata.Metadata
 import javax.ws.rs.core.CacheControl
+import scala.concurrent.ExecutionContext.Implicits.global
 
 /**
  * This tests using the Apache HTTP commons client library - but you could use anything
@@ -689,7 +691,7 @@ class IntegrationTest extends RestServerTestBase {
             BasicCacheContainer.DEFAULT_CACHE_NAME,
             mockCacheManager.getCache[String, Array[Byte]]())
 
-         val replaceFuture = future {
+         val replaceFuture = Future {
             // Put again, with a different client (separate thread)
             val newClient = new HttpClient
             val put = new PutMethod(fullPathKey(m))
@@ -713,7 +715,7 @@ class IntegrationTest extends RestServerTestBase {
             put.getStatusCode)
 
          // Wait for replace to happen
-         replaceFuture.apply()
+         Await.result(replaceFuture, 5 seconds)
          // Final data should be v2
          assertEquals("data2", get(m).getResponseBodyAsString)
       } finally {
