@@ -24,11 +24,16 @@ final class RemoteIndexingBackend implements IndexingBackend {
 
    private static final Log log = LogFactory.getLog(RemoteIndexingBackend.class, Log.class);
 
+   private final int GRACE_MILLISECONDS_FOR_REPLACEMENT = 4000;
+   private final int POLLING_MILLISECONDS_FOR_REPLACEMENT = 4000;
+
    private final String cacheName;
    private final String indexName;
    private final Collection<Address> recipients;
    private final RpcManager rpcManager;
    private final Address masterAddress;
+
+   private volatile IndexingBackend replacement;
 
    public RemoteIndexingBackend(String cacheName, RpcManager rpcManager, String indexName, Address masterAddress) {
       this.cacheName = cacheName;
@@ -40,7 +45,9 @@ final class RemoteIndexingBackend implements IndexingBackend {
 
    @Override
    public void flushAndClose(IndexingBackend replacement) {
-      // no-op: this implementation is essentially stateless.
+      if (replacement != null) {
+         this.replacement = replacement;
+      }
    }
 
    @Override
@@ -51,7 +58,18 @@ final class RemoteIndexingBackend implements IndexingBackend {
       command.setSerializedWorkList(serializedModel);
       command.setIndexName(this.indexName);
       log.applyingChangeListRemotely(workList);
-      sendCommand(command, workList);
+      try {
+         sendCommand(command, workList);
+      }
+      catch (Exception e) {
+         waitForReplacementBackend();
+         if (replacement != null) {
+            replacement.applyWork(workList, monitor, indexManager);
+         }
+         else {
+            throw e;
+         }
+      }
    }
 
    @Override
@@ -61,7 +79,39 @@ final class RemoteIndexingBackend implements IndexingBackend {
       final byte[] serializedModel = indexManager.getSerializer().toSerializedModel(operations);
       streamCommand.setSerializedWorkList(serializedModel);
       streamCommand.setIndexName(this.indexName);
-      sendCommand(streamCommand, operations);
+      try {
+         sendCommand(streamCommand, operations);
+      }
+      catch (Exception e) {
+         waitForReplacementBackend();
+         if (replacement != null) {
+            replacement.applyStreamWork(singleOperation, monitor, indexManager);
+         }
+         else {
+            throw e;
+         }
+      }
+   }
+
+   /**
+    * If some error happened, and a new IndexingBackend was provided, it is safe to
+    * assume the error relates with the fact the current backend is no longer valid.
+    * At this point we can still forward the work from the current stack to the next
+    * backend, creating a linked list of forwards to the right backend:
+    */
+   private void waitForReplacementBackend() {
+      int waitedMilliseconds = 0;
+      try {
+         while (replacement != null) {
+            if (waitedMilliseconds >= GRACE_MILLISECONDS_FOR_REPLACEMENT) {
+               return;
+            }
+            Thread.sleep(POLLING_MILLISECONDS_FOR_REPLACEMENT);
+            waitedMilliseconds += POLLING_MILLISECONDS_FOR_REPLACEMENT;
+         }
+      } catch (InterruptedException e) {
+         Thread.currentThread().interrupt();
+      }
    }
 
    private void sendCommand(ReplicableCommand command, List<LuceneWork> workList) {
