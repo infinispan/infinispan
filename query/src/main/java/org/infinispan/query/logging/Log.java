@@ -72,4 +72,7 @@ public interface Log extends org.infinispan.util.logging.Log {
    @Message(value = "Waiting for index lock was successfull: '%1$s'", id = 14012)
    void waitingForLockAcquired(boolean waitForAvailabilityInternal);
 
+   @Message(value = "Cache named '%1$s' is being shut down. No longer accepting remote commands.", id = 14013)
+   CacheException cacheIsStoppingNoCommandAllowed(String cacheName);
+
 }
