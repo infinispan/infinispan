@@ -147,16 +147,26 @@ final class ClusteredSwitchingBackend implements LazyInitializableBackend {
       assert e != null;
       assert e.getNewMembers().size() > 0;
       assert e.getNewMembers().get(0) != null;
+      if (log.isDebugEnabled()) {
+         log.debug("Notified of new View! Members: " + e.getNewMembers());
+      }
       final Address newmaster = e.getNewMembers().get(0);
       if (masterDidChange(newmaster)) {
          if (thisIsMaster()) {
+            if (log.isDebugEnabled()) {
+               log.debug("No longer a MASTER node, releasing the index lock.");
+            }
             forfeitControl(newmaster);
          }
          else if (thisIsNewMaster(newmaster)) {
+            log.debug("Electing SELF as MASTER!");
             acquireControlStart();
          }
          else {
             updateRoutingToNewRemote(newmaster);
+            if (log.isDebugEnabled()) {
+               log.debug("New master elected, now routing updates to node " + newmaster);
+            }
          }
       }
    }
@@ -196,7 +206,7 @@ final class ClusteredSwitchingBackend implements LazyInitializableBackend {
 
    private void swapNewBackendIn(IndexingBackend newBackend, Address newMasterAddress) {
       final IndexingBackend oldBackend = currentBackend;
-      log.tracev("Swapping from backend {0} to {1}'", oldBackend, newBackend);
+      log.debugv("Swapping from backend {0} to {1}'", oldBackend, newBackend);
       this.currentBackend = newBackend;
       this.currentMaster = newMasterAddress;
       closeBackend(oldBackend, currentBackend);
@@ -221,6 +231,7 @@ final class ClusteredSwitchingBackend implements LazyInitializableBackend {
 
    @Override
    public synchronized boolean attemptUpgrade() {
+      log.trace("owning lock for attemptUpgrade(IndexingBackend)");
       if (masterLockAcquisitionAttempts >= MAX_LOCK_ACQUISITION_ATTEMPTS) {
          indexlock.forceLockClear();
          swapNewBackendIn(factory.createLocalIndexingBackend(), localAddress);

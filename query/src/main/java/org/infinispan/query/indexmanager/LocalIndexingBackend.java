@@ -45,6 +45,11 @@ final class LocalIndexingBackend implements IndexingBackend {
    @Override
    public void flushAndClose(IndexingBackend replacement) {
       localBackend.close();
+      log.debug("Downgraded from Master role: Index lock released.");
+   }
+
+   public String toString() {
+      return "LocalIndexingBackend";
    }
 
 }

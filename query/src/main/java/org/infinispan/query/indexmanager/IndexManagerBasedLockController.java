@@ -119,8 +119,8 @@ final class IndexManagerBasedLockController implements IndexLockController {
    private void forceLockClearInternal() {
       LockFactory lockFactory = getLockFactory();
       try {
+         log.warn("Forcing clear of index lock");
          lockFactory.clearLock(IndexWriter.WRITE_LOCK_NAME);
-         log.trace("Forcing clear of index lock");
       } catch (IOException e) {
          log.error(e);
       }

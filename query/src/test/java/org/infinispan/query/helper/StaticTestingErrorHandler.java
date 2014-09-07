@@ -1,6 +1,8 @@
 package org.infinispan.query.helper;
 
-import java.util.concurrent.atomic.AtomicBoolean;
+import java.io.PrintWriter;
+import java.io.StringWriter;
+import java.util.concurrent.atomic.AtomicReference;
 
 import org.hibernate.search.exception.ErrorContext;
 import org.hibernate.search.exception.ErrorHandler;
@@ -12,22 +14,20 @@ import org.junit.Assert;
 
 public class StaticTestingErrorHandler implements ErrorHandler {
 
-   private final AtomicBoolean faulty = new AtomicBoolean(false);
-   private volatile String description = null;
+   private final AtomicReference faulty = new AtomicReference();
 
    @Override
    public void handle(ErrorContext context) {
-      faulty.set(true);
-      this.description = context.getThrowable().toString();
+      faulty.compareAndSet(null, new ThrowableWrapper(context.getOperationAtFault().toString(), context.getThrowable()));
    }
 
    @Override
    public void handleException(String errorMsg, Throwable exception) {
-      faulty.set(true);
+      faulty.compareAndSet(null, new ThrowableWrapper(errorMsg, exception));
    }
 
-   private boolean getAndReset() {
-      return faulty.getAndSet(false);
+   private Object getAndReset() {
+      return faulty.getAndSet(null);
    }
 
    public static void assertAllGood(Cache cache) {
@@ -37,13 +37,39 @@ public class StaticTestingErrorHandler implements ErrorHandler {
       Assert.assertNotNull(errorHandler);
       Assert.assertTrue(errorHandler instanceof StaticTestingErrorHandler);
       StaticTestingErrorHandler instance = (StaticTestingErrorHandler) errorHandler;
-      Assert.assertFalse("Something failed in the indexing backend: " + instance.description, instance.getAndReset());
+      Object fault = instance.getAndReset();
+      if (fault!=null) {
+         Assert.fail(fault.toString());
+      }
    }
 
    public static void assertAllGood(Cache... caches) {
       for (Cache cache : caches) {
          assertAllGood(cache);
       }
+   }
+
+   public static class ThrowableWrapper {
+
+      private final String errorMsg;
+      private final Throwable exception;
+
+      public ThrowableWrapper(String errorMsg, Throwable exception) {
+         this.errorMsg = errorMsg;
+         this.exception = exception;
+      }
+
+      @Override
+      public String toString() {
+         StringWriter w = new StringWriter();
+         w.append(String.valueOf(errorMsg));
+         if (exception != null) {
+            w.append(' ');
+            exception.printStackTrace(new PrintWriter(w));
+         }
+         return w.toString();
+      }
+
    }
 
 }
