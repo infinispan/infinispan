@@ -23,6 +23,7 @@ import org.infinispan.factories.scopes.Scope;
 import org.infinispan.factories.scopes.Scopes;
 import org.infinispan.interceptors.totalorder.RetryPrepareException;
 import org.infinispan.remoting.responses.CacheNotFoundResponse;
+import org.infinispan.statetransfer.OutdatedTopologyException;
 import org.infinispan.statetransfer.StateTransferLock;
 import org.infinispan.statetransfer.StateTransferManager;
 import org.infinispan.remoting.responses.ExceptionResponse;
@@ -96,6 +97,9 @@ public class InboundInvocationHandlerImpl implements InboundInvocationHandler {
          Response response = respGen.getResponse(cmd, retval);
          log.tracef("About to send back response %s for command %s", response, cmd);
          return response;
+      } catch (OutdatedTopologyException oe) {
+         log.outdatedTopoligy(oe);
+         return new ExceptionResponse(oe);
       } catch (Exception e) {
          log.exceptionExecutingInboundCommand(e);
          return new ExceptionResponse(e);
