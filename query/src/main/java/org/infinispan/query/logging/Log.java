@@ -40,11 +40,11 @@ public interface Log extends org.infinispan.util.logging.Log {
    @Message(value = "Custom commands backend initialized backing index %s", id = 14004)
    void commandsBackendInitialized(String indexName);
 
-   @LogMessage(level = DEBUG)
+   @LogMessage(level = TRACE)
    @Message(value = "Sent list of LuceneWork %s to node %s", id = 14005)
    void workListRemotedTo(Object workList, Address primaryNodeAddress);
 
-   @LogMessage(level = DEBUG)
+   @LogMessage(level = TRACE)
    @Message(value = "Apply list of LuceneWork %s delegating to local indexing engine", id = 14006)
    void applyingChangeListLocally(List<LuceneWork> workList);
 

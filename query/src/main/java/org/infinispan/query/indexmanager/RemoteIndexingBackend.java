@@ -57,8 +57,8 @@ final class RemoteIndexingBackend implements IndexingBackend {
       byte[] serializedModel = indexManager.getSerializer().toSerializedModel(workList);
       command.setSerializedWorkList(serializedModel);
       command.setIndexName(this.indexName);
-      log.applyingChangeListRemotely(workList);
       try {
+         log.applyingChangeListRemotely(workList);
          sendCommand(command, workList);
       }
       catch (Exception e) {
@@ -122,6 +122,10 @@ final class RemoteIndexingBackend implements IndexingBackend {
    @Override
    public boolean isMasterLocal() {
       return false;
+   }
+
+   public String toString() {
+      return "RemoteIndexingBackend(" + masterAddress + ")";
    }
 
 }

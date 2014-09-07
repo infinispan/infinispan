@@ -29,7 +29,11 @@ public class LockAcquiringBackend implements IndexingBackend {
 
    private static final Log log = LogFactory.getLog(LockAcquiringBackend.class, Log.class);
 
-   private final BlockingQueue<Work> bufferedWork = new ArrayBlockingQueue<Work>( 1000 );
+   /**
+    * Using a system property here as I don't think we'll ever hit the limit.
+    */
+   private static final int MAX_QUEUE_SIZE = Integer.getInteger("org.infinispan.query.indexmanager.LockAcquiringBackend.MAX_QUEUE_SIZE", 1000);
+   private final BlockingQueue<Work> bufferedWork = new ArrayBlockingQueue<Work>(MAX_QUEUE_SIZE);
 
    private final LazyInitializableBackend clusteredSwitchingBackend;
 
@@ -39,30 +43,47 @@ public class LockAcquiringBackend implements IndexingBackend {
 
    @Override
    public void applyWork(List<LuceneWork> workList, IndexingMonitor monitor, DirectoryBasedIndexManager indexManager) {
+      log.trace("Attempting backend upgrade...");
       if (clusteredSwitchingBackend.attemptUpgrade()) {
+         log.trace("... backend upgrade succeeded.");
          clusteredSwitchingBackend.getCurrentIndexingBackend().applyWork(workList, monitor, indexManager);
       }
       else {
+         log.trace("... backend upgrade postponed.");
          enqueue(new TransactionWork(workList, monitor, indexManager));
       }
    }
 
    @Override
    public void applyStreamWork(LuceneWork singleOperation, IndexingMonitor monitor, DirectoryBasedIndexManager indexManager) {
+      log.trace("Attempting backend upgrade...");
       if (clusteredSwitchingBackend.attemptUpgrade()) {
+         log.trace("... backend upgrade succeeded.");
          clusteredSwitchingBackend.getCurrentIndexingBackend().applyStreamWork(singleOperation, monitor, indexManager);
       }
       else {
+         log.trace("... backend upgrade postponed.");
          enqueue(new StreamWork(singleOperation, monitor, indexManager));
       }
    }
 
    private void enqueue(final Work work) {
-      try {
-         bufferedWork.put(work);
-      } catch (InterruptedException e) {
-         log.interruptedWhileBufferingWork(e);
-         Thread.currentThread().interrupt();
+      if (log.isDebugEnabled()) {
+         int remainingCapacity = bufferedWork.remainingCapacity();
+         log.debug("Need to enqueue on blocking buffer, remaining capacity to saturation: " + remainingCapacity);
+      }
+      final boolean done = bufferedWork.offer(work);
+      if (!done) {
+         if (log.isDebugEnabled()) {
+            log.debug("Buffer saturated: blocking");
+         }
+         try {
+            bufferedWork.put(work);
+            log.debug("Unblocked from wait on buffer");
+         } catch (InterruptedException e) {
+            log.interruptedWhileBufferingWork(e);
+            Thread.currentThread().interrupt();
+         }
       }
    }
 
@@ -121,6 +142,10 @@ public class LockAcquiringBackend implements IndexingBackend {
       public void applyTo(IndexingBackend target) {
          target.applyWork(workList, monitor, indexManager);
       }
+   }
+
+   public String toString() {
+      return "LockAcquiringBackend";
    }
 
 }

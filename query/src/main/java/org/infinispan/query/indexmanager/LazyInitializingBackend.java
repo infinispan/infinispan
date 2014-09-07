@@ -47,4 +47,8 @@ public class LazyInitializingBackend implements IndexingBackend {
       //no-op: this is essentially stateless
    }
 
+   public String toString() {
+      return "LazyInitializingBackend";
+   }
+
 }
