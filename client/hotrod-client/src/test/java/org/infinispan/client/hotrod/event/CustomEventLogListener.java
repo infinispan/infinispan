@@ -1,5 +1,6 @@
 package org.infinispan.client.hotrod.event;
 
+import org.infinispan.Cache;
 import org.infinispan.client.hotrod.annotation.ClientCacheEntryCreated;
 import org.infinispan.client.hotrod.annotation.ClientCacheEntryModified;
 import org.infinispan.client.hotrod.annotation.ClientCacheEntryRemoved;
@@ -8,6 +9,7 @@ import org.infinispan.filter.Converter;
 import org.infinispan.filter.ConverterFactory;
 import org.infinispan.filter.NamedFactory;
 import org.infinispan.metadata.Metadata;
+import org.junit.Assert;
 
 import java.io.Serializable;
 import java.util.concurrent.ArrayBlockingQueue;
@@ -19,11 +21,13 @@ import static org.testng.AssertJUnit.assertNotNull;
 
 @ClientListener(converterFactoryName = "test-converter-factory")
 public abstract class CustomEventLogListener {
-   BlockingQueue<CustomEvent> customEvents = new ArrayBlockingQueue<CustomEvent>(128);
+   BlockingQueue<CustomEvent> createdCustomEvents = new ArrayBlockingQueue<CustomEvent>(128);
+   BlockingQueue<CustomEvent> modifiedCustomEvents = new ArrayBlockingQueue<CustomEvent>(128);
+   BlockingQueue<CustomEvent> removedCustomEvents = new ArrayBlockingQueue<CustomEvent>(128);
 
-   CustomEvent pollEvent() {
+   public CustomEvent pollEvent(ClientEvent.Type type) {
       try {
-         CustomEvent event = customEvents.poll(10, TimeUnit.SECONDS);
+         CustomEvent event = queue(type).poll(10, TimeUnit.SECONDS);
          assertNotNull(event);
          return event;
       } catch (InterruptedException e) {
@@ -31,22 +35,68 @@ public abstract class CustomEventLogListener {
       }
    }
 
-   public void expectNoEvents() {
-      assertEquals(0, customEvents.size());
+   private BlockingQueue<CustomEvent> queue(ClientEvent.Type type) {
+      switch (type) {
+         case CLIENT_CACHE_ENTRY_CREATED: return createdCustomEvents;
+         case CLIENT_CACHE_ENTRY_MODIFIED: return modifiedCustomEvents;
+         case CLIENT_CACHE_ENTRY_REMOVED: return removedCustomEvents;
+         default: throw new IllegalArgumentException("Unknown event type: " + type);
+      }
    }
 
-   public void expectSingleCustomEvent(Integer key, String value) {
-      CustomEvent event = pollEvent();
+   public void expectNoEvents(ClientEvent.Type type) {
+      assertEquals(0, queue(type).size());
+   }
+
+   public void expectNoEvents() {
+      expectNoEvents(ClientEvent.Type.CLIENT_CACHE_ENTRY_CREATED);
+      expectNoEvents(ClientEvent.Type.CLIENT_CACHE_ENTRY_MODIFIED);
+      expectNoEvents(ClientEvent.Type.CLIENT_CACHE_ENTRY_REMOVED);
+   }
+
+   public void expectSingleCustomEvent(ClientEvent.Type type, Integer key, String value) {
+      CustomEvent event = pollEvent(type);
       assertEquals(key, event.key);
       assertEquals(value, event.value);
    }
 
+   public void expectOnlyCreatedCustomEvent(Integer key, String value) {
+      expectSingleCustomEvent(ClientEvent.Type.CLIENT_CACHE_ENTRY_CREATED, key, value);
+      expectNoEvents(ClientEvent.Type.CLIENT_CACHE_ENTRY_MODIFIED);
+      expectNoEvents(ClientEvent.Type.CLIENT_CACHE_ENTRY_REMOVED);
+   }
+
+   public void expectOnlyModifiedCustomEvent(Integer key, String value) {
+      expectSingleCustomEvent(ClientEvent.Type.CLIENT_CACHE_ENTRY_MODIFIED, key, value);
+      expectNoEvents(ClientEvent.Type.CLIENT_CACHE_ENTRY_CREATED);
+      expectNoEvents(ClientEvent.Type.CLIENT_CACHE_ENTRY_REMOVED);
+   }
+
+   public void expectOnlyRemovedCustomEvent(Integer key, String value) {
+      expectSingleCustomEvent(ClientEvent.Type.CLIENT_CACHE_ENTRY_REMOVED, key, value);
+      expectNoEvents(ClientEvent.Type.CLIENT_CACHE_ENTRY_CREATED);
+      expectNoEvents(ClientEvent.Type.CLIENT_CACHE_ENTRY_MODIFIED);
+   }
+
    @ClientCacheEntryCreated
+   @SuppressWarnings("unused")
+   public void handleCustomCreatedEvent(ClientCacheEntryCustomEvent<CustomEvent> e) {
+      assertEquals(ClientEvent.Type.CLIENT_CACHE_ENTRY_CREATED, e.getType());
+      createdCustomEvents.add(e.getEventData());
+   }
+
    @ClientCacheEntryModified
+   @SuppressWarnings("unused")
+   public void handleCustomModifiedEvent(ClientCacheEntryCustomEvent<CustomEvent> e) {
+      assertEquals(ClientEvent.Type.CLIENT_CACHE_ENTRY_MODIFIED, e.getType());
+      modifiedCustomEvents.add(e.getEventData());
+   }
+
    @ClientCacheEntryRemoved
    @SuppressWarnings("unused")
-   public void handleCustomEvent(ClientCacheEntryCustomEvent<CustomEvent> e) {
-      customEvents.add(e.getEventData());
+   public void handleCustomRemovedEvent(ClientCacheEntryCustomEvent<CustomEvent> e) {
+      assertEquals(ClientEvent.Type.CLIENT_CACHE_ENTRY_REMOVED, e.getType());
+      removedCustomEvents.add(e.getEventData());
    }
 
    public static class CustomEvent implements Serializable {

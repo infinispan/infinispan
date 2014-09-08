@@ -328,13 +328,13 @@ public class EmbeddedHotRodTest extends AbstractInfinispanTest {
          eventListener.expectNoEvents();
          remote.put(1, "one");
          assertEquals("one", embedded.get(1));
-         eventListener.expectSingleCustomEvent(1, "one");
+         eventListener.expectOnlyCreatedCustomEvent(1, "one");
          remote.put(1, "new-one");
          assertEquals("new-one", embedded.get(1));
-         eventListener.expectSingleCustomEvent(1, "new-one");
+         eventListener.expectOnlyModifiedCustomEvent(1, "new-one");
          remote.remove(1);
          assertNull(embedded.get(1));
-         eventListener.expectSingleCustomEvent(1, null);
+         eventListener.expectOnlyRemovedCustomEvent(1, null);
       } finally {
          remote.removeClientListener(eventListener);
       }
@@ -349,16 +349,16 @@ public class EmbeddedHotRodTest extends AbstractInfinispanTest {
          eventListener.expectNoEvents();
          remote.put(1, "one");
          assertEquals("one", embedded.get(1));
-         eventListener.expectSingleCustomEvent(1, "one");
+         eventListener.expectOnlyCreatedCustomEvent(1, "one");
          remote.put(2, "two");
          assertEquals("two", embedded.get(2));
-         eventListener.expectSingleCustomEvent(2, null);
+         eventListener.expectOnlyCreatedCustomEvent(2, null);
          remote.remove(1);
          assertNull(embedded.get(1));
-         eventListener.expectSingleCustomEvent(1, null);
+         eventListener.expectOnlyRemovedCustomEvent(1, null);
          remote.remove(2);
          assertNull(embedded.get(2));
-         eventListener.expectSingleCustomEvent(2, null);
+         eventListener.expectOnlyRemovedCustomEvent(2, null);
       } finally {
          remote.removeClientListener(eventListener);
       }

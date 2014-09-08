@@ -204,13 +204,13 @@ public class Codec20 implements Codec, HotRodConstants {
       };
    }
 
-   private ClientCacheEntryCustomEvent<Object> createCustomEvent(final Object eventData, ClientEvent.Type evenType) {
+   private ClientCacheEntryCustomEvent<Object> createCustomEvent(final Object eventData, final ClientEvent.Type eventType) {
       return new ClientCacheEntryCustomEvent<Object>() {
          @Override public Object getEventData() { return eventData; }
-         @Override public Type getType() { return Type.CLIENT_CACHE_ENTRY_CREATED; }
+         @Override public Type getType() { return eventType; }
          @Override
          public String toString() {
-            return "ClientCacheEntryCustomEvent(" + "eventData=" + eventData + ")";
+            return "ClientCacheEntryCustomEvent(" + "eventData=" + eventData + ", eventType=" + eventType + ")";
          }
       };
    }

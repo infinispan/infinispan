@@ -108,13 +108,13 @@ public class ClientClusterEventsTest extends MultiHotRodServersTest {
             RemoteCache<Integer, String> c3 = client(2).getCache();
             eventListener.expectNoEvents();
             c3.put(1, "one");
-            eventListener.expectSingleCustomEvent(1, "one");
+            eventListener.expectOnlyCreatedCustomEvent(1, "one");
             c3.put(2, "two");
-            eventListener.expectSingleCustomEvent(2, "two");
+            eventListener.expectOnlyCreatedCustomEvent(2, "two");
             c3.remove(1);
-            eventListener.expectSingleCustomEvent(1, null);
+            eventListener.expectOnlyRemovedCustomEvent(1, null);
             c3.remove(2);
-            eventListener.expectSingleCustomEvent(2, null);
+            eventListener.expectOnlyRemovedCustomEvent(2, null);
          }
       });
    }
