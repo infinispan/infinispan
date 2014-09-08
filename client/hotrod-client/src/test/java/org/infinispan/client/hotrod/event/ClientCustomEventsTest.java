@@ -34,11 +34,11 @@ public class ClientCustomEventsTest extends SingleHotRodServerTest {
             RemoteCache<Integer, String> cache = rcm.getCache();
             eventListener.expectNoEvents();
             cache.put(1, "one");
-            eventListener.expectSingleCustomEvent(1, "one");
+            eventListener.expectOnlyCreatedCustomEvent(1, "one");
             cache.put(1, "newone");
-            eventListener.expectSingleCustomEvent(1, "newone");
+            eventListener.expectOnlyModifiedCustomEvent(1, "newone");
             cache.remove(1);
-            eventListener.expectSingleCustomEvent(1, null);
+            eventListener.expectOnlyRemovedCustomEvent(1, null);
          }
       });
    }
@@ -51,9 +51,9 @@ public class ClientCustomEventsTest extends SingleHotRodServerTest {
             RemoteCache<Integer, String> cache = rcm.getCache();
             eventListener.expectNoEvents();
             cache.put(1, "one");
-            eventListener.expectSingleCustomEvent(1, "one");
+            eventListener.expectOnlyCreatedCustomEvent(1, "one");
             cache.put(2, "two");
-            eventListener.expectSingleCustomEvent(2, null);
+            eventListener.expectOnlyCreatedCustomEvent(2, null);
          }
       });
    }
@@ -65,7 +65,7 @@ public class ClientCustomEventsTest extends SingleHotRodServerTest {
       withClientListener(staticEventListener, new RemoteCacheManagerCallable(remoteCacheManager) {
          @Override
          public void call() {
-            staticEventListener.expectSingleCustomEvent(1, "one");
+            staticEventListener.expectOnlyCreatedCustomEvent(1, "one");
          }
       });
       final DynamicCustomEventLogListener dynamicEventListener = new DynamicCustomEventLogListener();
@@ -73,7 +73,7 @@ public class ClientCustomEventsTest extends SingleHotRodServerTest {
       withClientListener(dynamicEventListener, null, new Object[]{2}, new RemoteCacheManagerCallable(remoteCacheManager) {
          @Override
          public void call() {
-            dynamicEventListener.expectSingleCustomEvent(2, null);
+            dynamicEventListener.expectOnlyCreatedCustomEvent(2, null);
          }
       });
    }
