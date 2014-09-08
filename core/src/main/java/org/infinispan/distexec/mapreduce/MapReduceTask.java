@@ -51,6 +51,7 @@ import org.infinispan.remoting.rpc.RpcOptionsBuilder;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.security.AuthorizationManager;
 import org.infinispan.security.AuthorizationPermission;
+import org.infinispan.statetransfer.StateTransferManager;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
@@ -161,6 +162,7 @@ public class MapReduceTask<KIn, VIn, KOut, VOut> {
    protected RpcOptionsBuilder rpcOptionsBuilder;
    protected String customIntermediateCacheName;
    protected String intermediateCacheConfigurationName = DEFAULT_TMP_CACHE_CONFIGURATION_NAME;
+   private StateTransferManager stateTransferManager;
    private static final int MAX_COLLECTOR_SIZE = 1000;
 
    /**
@@ -219,6 +221,7 @@ public class MapReduceTask<KIn, VIn, KOut, VOut> {
       this.marshaller = componentRegistry.getComponent(StreamingMarshaller.class, CACHE_MARSHALLER);
       this.mapReduceManager = componentRegistry.getComponent(MapReduceManager.class);
       this.cancellationService = componentRegistry.getComponent(CancellationService.class);
+      this.stateTransferManager = componentRegistry.getComponent(StateTransferManager.class);
       this.taskId = UUID.randomUUID();
       if (useIntermediateSharedCache) {
          this.customIntermediateCacheName = DEFAULT_TMP_CACHE_CONFIGURATION_NAME;
@@ -538,7 +541,7 @@ public class MapReduceTask<KIn, VIn, KOut, VOut> {
          @Override
          public Object call() throws Exception {
             //locally
-            ccc.init(cache.getCacheManager());
+            ccc.init(cache.getCacheManager(), stateTransferManager);
             try {
                return ccc.perform(null);
             } catch (Throwable e) {
