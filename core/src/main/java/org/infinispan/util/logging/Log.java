@@ -1201,4 +1201,7 @@ public interface Log extends BasicLogger {
          "Either restart it or recreate the cache container.", id = 324)
    IllegalLifecycleStateException cacheIsStopping(String cacheName);
 
+   @Message (value="Creating tmp cache %s timed out waiting for rebalancing to complete on node %s ", id=325)
+   RuntimeException creatingTmpCacheTimedOut(String cacheName, Address address);
+
 }
