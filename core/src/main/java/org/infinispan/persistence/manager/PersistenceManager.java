@@ -10,7 +10,6 @@ import org.infinispan.filter.KeyFilter;
 import org.infinispan.lifecycle.Lifecycle;
 import org.infinispan.persistence.spi.AdvancedCacheLoader;
 import org.infinispan.marshall.core.MarshalledEntry;
-import org.infinispan.marshall.core.MarshalledEntryImpl;
 
 /**
  * Defines the logic for interacting with the chain of external storage.

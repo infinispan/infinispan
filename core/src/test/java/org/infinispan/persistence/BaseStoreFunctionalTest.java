@@ -1,6 +1,5 @@
 package org.infinispan.persistence;
 
-import static org.infinispan.test.TestingUtil.withCacheManager;
 import static org.junit.Assert.*;
 
 import java.io.Serializable;
@@ -19,7 +18,6 @@ import org.infinispan.container.DataContainer;
 import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.persistence.spi.PersistenceException;
-import org.infinispan.test.CacheManagerCallable;
 import org.infinispan.test.SingleCacheManagerTest;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
