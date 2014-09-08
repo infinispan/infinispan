@@ -23,7 +23,6 @@ import org.infinispan.filter.KeyValueFilterAsKeyFilter;
 import org.infinispan.filter.KeyValueFilterConverter;
 import org.infinispan.lifecycle.ComponentStatus;
 import org.infinispan.filter.Converter;
-import org.infinispan.marshall.core.MarshalledValue;
 import org.infinispan.notifications.Listener;
 import org.infinispan.notifications.cachelistener.annotation.DataRehashed;
 import org.infinispan.notifications.cachelistener.annotation.TopologyChanged;
@@ -338,7 +337,7 @@ public class DistributedEntryRetriever<K, V> extends LocalEntryRetriever<K, V> {
                   SegmentChangeListener segmentChangeListener = new SegmentChangeListener();
                   changeListener.put(identifier, segmentChangeListener);
                   try {
-                     final Set<K> processedKeys = new ConcurrentHashSet<K>();
+                     final Set<K> processedKeys = CollectionFactory.makeSet(keyEquivalence);
                      Queue<CacheEntry<K, C>> queue = new ConcurrentLinkedQueue<CacheEntry<K, C>>() {
                         @Override
                         public boolean add(CacheEntry<K, C> kcEntry) {
@@ -357,7 +356,7 @@ public class DistributedEntryRetriever<K, V> extends LocalEntryRetriever<K, V> {
                                                                                 unwrapMarshalledvalue(entry.getValue()), entry);
                            K key = clone.getKey();
                            if (filter != null) {
-                              if (filter instanceof KeyValueFilterConverter && converter == null) {
+                              if (converter == null && filter instanceof KeyValueFilterConverter) {
                                  C converted = ((KeyValueFilterConverter<K, V, C>)filter).filterAndConvert(
                                        key, clone.getValue(), clone.getMetadata());
                                  if (converted != null) {
@@ -372,13 +371,13 @@ public class DistributedEntryRetriever<K, V> extends LocalEntryRetriever<K, V> {
                            }
                            action.apply(key, clone);
                         }
-                        if (DistributedEntryRetriever.super.shouldUseLoader(flags) && persistenceManager.getStoresAsString().size() > 0) {
+                        if (shouldUseLoader(flags) && persistenceManager.getStoresAsString().size() > 0) {
                            KeyFilter<K> loaderFilter;
                            if (passivationEnabled) {
                               listener = new PassivationListener<K, V>();
                               cache.addListener(listener);
                            }
-                           if (filter == null) {
+                           if (filter == null || converter == null && filter instanceof KeyValueFilterConverter) {
                               loaderFilter = new CompositeKeyFilter<K>(new SegmentFilter<K>(hashToUse, segmentsToUse),
                                                                        // We rely on this keeping a reference and not copying
                                                                        // contents
@@ -387,6 +386,9 @@ public class DistributedEntryRetriever<K, V> extends LocalEntryRetriever<K, V> {
                               loaderFilter = new CompositeKeyFilter<K>(new SegmentFilter<K>(hashToUse, segmentsToUse),
                                                                        new CollectionKeyFilter<K>(processedKeys),
                                                                        new KeyValueFilterAsKeyFilter<K>(filter));
+                           }
+                           if (converter == null && filter instanceof KeyValueFilterConverter) {
+                              action = new MapAction(identifier, segmentsToUse, inDoubtSegmentsToUse, batchSize, (KeyValueFilterConverter) filter, handler, queue);
                            }
                            persistenceManager.processOnAllStores(withinThreadExecutor, loaderFilter,
                                                                  new KeyValueActionForCacheLoaderTask(action), true, true);
@@ -1084,6 +1086,9 @@ public class DistributedEntryRetriever<K, V> extends LocalEntryRetriever<K, V> {
             CacheEntry<K, C> clone = (CacheEntry<K, C>)kvInternalCacheEntry.clone();
             if (converter != null) {
                C value = converter.convert(k, kvInternalCacheEntry.getValue(), kvInternalCacheEntry.getMetadata());
+               if (value == null && converter instanceof KeyValueFilterConverter) {
+                  return;
+               }
                clone.setValue(value);
             }
             queue.add(clone);
