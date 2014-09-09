@@ -831,7 +831,7 @@ public final class CacheNotifierImpl<K, V> extends AbstractListenerImpl<Event<K,
                      handler = currentQueue;
                   }
                }
-               returnValue = new ClusteredListenerInvocation<K, V>(invocation, handler, filter, converter, identifier);
+               returnValue = new ClusteredListenerInvocation<K, V>(invocation, handler, filter, converter, onlyPrimary, identifier);
             } else {
 //               TODO: this is removed until non cluster listeners are supported
 //               QueueingSegmentListener handler = segmentHandler.get(identifier);
@@ -886,11 +886,11 @@ public final class CacheNotifierImpl<K, V> extends AbstractListenerImpl<Event<K,
 
       private final QueueingSegmentListener<K, V, CacheEntryEvent<K, V>> handler;
 
-
       public ClusteredListenerInvocation(ListenerInvocation<Event<K, V>> invocation, QueueingSegmentListener handler,
                                        KeyValueFilter<? super K, ? super V> filter,
-                                       Converter<? super K, ? super V, ?> converter, UUID identifier)  {
-         super(invocation, filter, converter, true, true, identifier);
+                                       Converter<? super K, ? super V, ?> converter, boolean onlyPrimary,
+                                       UUID identifier)  {
+         super(invocation, filter, converter, onlyPrimary, true, identifier);
          this.handler = handler;
       }
 

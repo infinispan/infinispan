@@ -38,7 +38,7 @@ public abstract class AbstractClusterListenerNonTxTest extends AbstractClusterLi
       Cache<Object, String> cache1 = cache(1, CACHE_NAME);
       Cache<Object, String> cache2 = cache(2, CACHE_NAME);
 
-      ClusterListener clusterListener = new ClusterListener();
+      ClusterListener clusterListener = listener();
       cache0.addListener(clusterListener);
 
       CheckPoint checkPoint = new CheckPoint();

@@ -95,6 +95,17 @@ public abstract class AbstractClusterListenerUtilTest extends MultipleCacheManag
          log.debugf("Adding new cluster event %s", event);
          events.add(event);
       }
+
+      protected boolean hasIncludeState() {
+         return false;
+      }
+   }
+
+   @Listener(clustered = true, includeCurrentState = true)
+   protected class ClusterListenerWithIncludeCurrentState extends ClusterListener {
+      protected boolean hasIncludeState() {
+         return true;
+      }
    }
 
    protected static class LifespanFilter<K, V> implements KeyValueFilter<K, V>, Serializable {

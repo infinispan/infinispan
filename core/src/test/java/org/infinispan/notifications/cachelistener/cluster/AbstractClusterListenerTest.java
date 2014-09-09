@@ -64,13 +64,17 @@ public abstract class AbstractClusterListenerTest extends AbstractClusterListene
       super(tx, cacheMode);
    }
 
+   protected ClusterListener listener() {
+      return new ClusterListener();
+   }
+
    @Test
    public void testCreateFromNonOwnerWithListenerNotOwner() {
       Cache<Object, String> cache0 = cache(0, CACHE_NAME);
       Cache<Object, String> cache1 = cache(1, CACHE_NAME);
       Cache<Object, String> cache2 = cache(2, CACHE_NAME);
 
-      ClusterListener clusterListener = new ClusterListener();
+      ClusterListener clusterListener = listener();
       cache0.addListener(clusterListener);
 
       MagicKey key = new MagicKey(cache1, cache2);
@@ -83,7 +87,7 @@ public abstract class AbstractClusterListenerTest extends AbstractClusterListene
       Cache<Object, String> cache1 = cache(1, CACHE_NAME);
       Cache<Object, String> cache2 = cache(2, CACHE_NAME);
 
-      ClusterListener clusterListener = new ClusterListener();
+      ClusterListener clusterListener = listener();
       cache0.addListener(clusterListener);
 
       MagicKey key = new MagicKey(cache1, cache0);
@@ -95,7 +99,7 @@ public abstract class AbstractClusterListenerTest extends AbstractClusterListene
    public void testLocalNodeOwnerAndClusterListener() {
       Cache<Object, String> cache0 = cache(0, CACHE_NAME);
 
-      ClusterListener clusterListener = new ClusterListener();
+      ClusterListener clusterListener = listener();
       cache0.addListener(clusterListener);
 
       MagicKey key = new MagicKey(cache0);
@@ -109,7 +113,7 @@ public abstract class AbstractClusterListenerTest extends AbstractClusterListene
       Cache<Object, String> cache1 = cache(1, CACHE_NAME);
       Cache<Object, String> cache2 = cache(2, CACHE_NAME);
 
-      ClusterListener clusterListener = new ClusterListener();
+      ClusterListener clusterListener = listener();
       cache0.addListener(clusterListener);
 
       MagicKey key = new MagicKey(cache1, cache2);
@@ -148,7 +152,7 @@ public abstract class AbstractClusterListenerTest extends AbstractClusterListene
    protected void testFilter(Object keyToFilterOut, Object keyToUse, Long lifespan, KeyValueFilter<? super Object, ? super String> filter) {
       Cache<Object, String> cache0 = cache(0, CACHE_NAME);
 
-      ClusterListener clusterListener = new ClusterListener();
+      ClusterListener clusterListener = listener();
       cache0.addListener(clusterListener, filter, null);
 
       cache0.put(keyToFilterOut, FIRST_VALUE);
@@ -214,7 +218,7 @@ public abstract class AbstractClusterListenerTest extends AbstractClusterListene
    protected void testSimpleConverter(Object key) {
       Cache<Object, String> cache0 = cache(0, CACHE_NAME);
 
-      ClusterListener clusterListener = new ClusterListener();
+      ClusterListener clusterListener = listener();
       cache0.addListener(clusterListener, null, new StringTruncator(0, 2));
 
       verifySimpleInsertion(cache0, key, FIRST_VALUE, null, clusterListener, FIRST_VALUE.substring(0, 2));
@@ -224,7 +228,7 @@ public abstract class AbstractClusterListenerTest extends AbstractClusterListene
                                     Converter<Object, ? super String, C> converter) {
       Cache<Object, String> cache0 = cache(0, CACHE_NAME);
 
-      ClusterListener clusterListener = new ClusterListener();
+      ClusterListener clusterListener = listener();
       cache0.addListener(clusterListener, null, converter);
 
       verifySimpleInsertion(cache0, key, value, lifespan, clusterListener, resultingValue);
@@ -236,7 +240,7 @@ public abstract class AbstractClusterListenerTest extends AbstractClusterListene
       Cache<Object, String> cache1 = cache(1, CACHE_NAME);
       Cache<Object, String> cache2 = cache(2, CACHE_NAME);
 
-      ClusterListener clusterListener = new ClusterListener();
+      ClusterListener clusterListener = listener();
       cache0.addListener(clusterListener);
 
       int cache1ListenerSize = cache1.getAdvancedCache().getListeners().size();
@@ -260,7 +264,7 @@ public abstract class AbstractClusterListenerTest extends AbstractClusterListene
    public void testNodeComesUpWithClusterListenerAlreadyInstalled() {
       Cache<Object, String> cache0 = cache(0, CACHE_NAME);
 
-      ClusterListener clusterListener = new ClusterListener();
+      ClusterListener clusterListener = listener();
       cache0.addListener(clusterListener);
 
       log.info("Adding a new node ..");
@@ -278,7 +282,7 @@ public abstract class AbstractClusterListenerTest extends AbstractClusterListene
       final String keyToFilter = "filter-me";
       Cache<Object, String> cache0 = cache(0, CACHE_NAME);
 
-      ClusterListener clusterListener = new ClusterListener();
+      ClusterListener clusterListener = listener();
       cache0.addListener(clusterListener, new KeyFilterAsKeyValueFilter<Object, String>(
             new CollectionKeyFilter<Object>(Collections.singleton(keyToFilter), true)), new StringTruncator(0, 3));
 
@@ -306,7 +310,7 @@ public abstract class AbstractClusterListenerTest extends AbstractClusterListene
       int initialCache1ListenerSize = cache1.getAdvancedCache().getListeners().size();
       int initialCache2ListenerSize = cache2.getAdvancedCache().getListeners().size();
 
-      ClusterListener clusterListener = new ClusterListener();
+      ClusterListener clusterListener = listener();
       cache0.addListener(clusterListener);
 
       // Adding a cluster listener should add to each node in cluster
@@ -333,7 +337,7 @@ public abstract class AbstractClusterListenerTest extends AbstractClusterListene
       int initialCache1ListenerSize = cache1.getAdvancedCache().getListeners().size();
       int initialCache2ListenerSize = cache2.getAdvancedCache().getListeners().size();
 
-      ClusterListener clusterListener = new ClusterListener();
+      ClusterListener clusterListener = listener();
       cache0.addListener(clusterListener);
 
       // Adding a cluster listener should add to each node in cluster
@@ -343,7 +347,7 @@ public abstract class AbstractClusterListenerTest extends AbstractClusterListene
       assertEquals(cache2.getAdvancedCache().getListeners().size(), initialCache2ListenerSize +
             (cacheMode.isDistributed() ? 1 : 0));
 
-      ClusterListener clusterListener2 = new ClusterListener();
+      ClusterListener clusterListener2 = listener();
       cache0.addListener(clusterListener2);
 
       // Adding a second cluster listener should add to each node in cluster as well
@@ -392,7 +396,7 @@ public abstract class AbstractClusterListenerTest extends AbstractClusterListene
       Object key = new MagicKey(cache1, cache2);
       cache1.put(key, "some-key");
 
-      final ClusterListener clusterListener = new ClusterListener();
+      final ClusterListener clusterListener = listener();
       cache0.addListener(clusterListener);
 
       log.info("Killing node 1 ..");
@@ -403,6 +407,6 @@ public abstract class AbstractClusterListenerTest extends AbstractClusterListene
       TestingUtil.blockUntilViewsReceived(10000, false, cacheManagers);
       TestingUtil.waitForRehashToComplete(caches(CACHE_NAME));
 
-      assertEquals(0, clusterListener.events.size());
+      assertEquals(clusterListener.hasIncludeState() ? 1 : 0, clusterListener.events.size());
    }
 }
