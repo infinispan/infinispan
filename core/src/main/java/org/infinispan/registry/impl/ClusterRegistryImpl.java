@@ -16,7 +16,10 @@ import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.filter.KeyFilter;
 import org.infinispan.registry.ClusterRegistry;
 import org.infinispan.registry.ScopedKey;
+import org.infinispan.remoting.transport.jgroups.SuspectException;
 import org.infinispan.transaction.TransactionMode;
+import org.infinispan.util.logging.Log;
+import org.infinispan.util.logging.LogFactory;
 
 import javax.transaction.InvalidTransactionException;
 import javax.transaction.SystemException;
@@ -39,6 +42,8 @@ public class ClusterRegistryImpl<S, K, V> implements ClusterRegistry<S, K, V> {
 
    public static final String GLOBAL_REGISTRY_CACHE_NAME = "__cluster_registry_cache__";
 
+   private static final Log log = LogFactory.getLog(ClusterRegistryImpl.class);
+
    private EmbeddedCacheManager cacheManager;
    private volatile Cache<ScopedKey<S, K>, V> clusterRegistryCache;
    private volatile AdvancedCache<ScopedKey<S, K>, V> clusterRegistryCacheWithoutReturn;
@@ -57,36 +62,70 @@ public class ClusterRegistryImpl<S, K, V> implements ClusterRegistry<S, K, V> {
       clusterRegistryCache = null;
    }
 
+   protected void runCommand(Runnable runnable) {
+      while (true) {
+         try {
+            runnable.run();
+            break;
+         } catch (CacheException e) {
+            if (SuspectException.isSuspectExceptionInChain(e)) {
+               // Retry the command
+               log.trace("Ignoring suspect exception and retrying operation for ClusterRegistry.");
+            } else {
+               throw e;
+            }
+         }
+      }
+   }
+
    @Override
-   public void put(S scope, K key, V value) {
+   public void put(final S scope, final K key, final V value) {
       if (value == null) throw new IllegalArgumentException("Null values are not allowed");
       startRegistryCache();
       Transaction tx = suspendTx();
       try {
-         clusterRegistryCacheWithoutReturn.put(new ScopedKey<S, K>(scope, key), value);
+         runCommand(new Runnable() {
+
+            @Override
+            public void run() {
+               clusterRegistryCacheWithoutReturn.put(new ScopedKey<S, K>(scope, key), value);
+            }
+         });
       } finally {
          resumeTx(tx);
       }
    }
 
    @Override
-   public void put(S scope, K key, V value, long lifespan, TimeUnit unit) {
+   public void put(final S scope, final K key, final V value, final long lifespan, final TimeUnit unit) {
       if (value == null) throw new IllegalArgumentException("Null values are not allowed");
       startRegistryCache();
       Transaction tx = suspendTx();
       try {
-         clusterRegistryCacheWithoutReturn.put(new ScopedKey<S, K>(scope, key), value, lifespan, unit);
+         runCommand(new Runnable() {
+
+            @Override
+            public void run() {
+               clusterRegistryCacheWithoutReturn.put(new ScopedKey<S, K>(scope, key), value, lifespan, unit);
+            }
+         });
       } finally {
          resumeTx(tx);
       }
    }
 
    @Override
-   public void remove(S scope, K key) {
+   public void remove(final S scope, final K key) {
       startRegistryCache();
       Transaction tx = suspendTx();
       try {
-         clusterRegistryCacheWithoutReturn.remove(new ScopedKey<S, K>(scope, key));
+         runCommand(new Runnable() {
+
+            @Override
+            public void run() {
+               clusterRegistryCacheWithoutReturn.remove(new ScopedKey<S, K>(scope, key));
+            }
+         });
       } finally {
          resumeTx(tx);
       }
@@ -137,9 +176,15 @@ public class ClusterRegistryImpl<S, K, V> implements ClusterRegistry<S, K, V> {
       startRegistryCache();
       Transaction tx = suspendTx();
       try {
-         for (ScopedKey<S, K> key : clusterRegistryCache.keySet()) {
+         for (final ScopedKey<S, K> key : clusterRegistryCache.keySet()) {
             if (key.hasScope(scope)) {
-               clusterRegistryCacheWithoutReturn.remove(key);
+               runCommand(new Runnable() {
+
+                  @Override
+                  public void run() {
+                     clusterRegistryCacheWithoutReturn.remove(key);
+                  }
+               });
             }
          }
       } finally {
@@ -152,7 +197,13 @@ public class ClusterRegistryImpl<S, K, V> implements ClusterRegistry<S, K, V> {
       startRegistryCache();
       Transaction tx = suspendTx();
       try {
-         clusterRegistryCache.clear();
+         runCommand(new Runnable() {
+
+            @Override
+            public void run() {
+               clusterRegistryCache.clear();
+            }
+         });
       } finally {
          resumeTx(tx);
       }
