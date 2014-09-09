@@ -44,7 +44,7 @@ public class LockAcquiringBackend implements IndexingBackend {
    @Override
    public void applyWork(List<LuceneWork> workList, IndexingMonitor monitor, DirectoryBasedIndexManager indexManager) {
       log.trace("Attempting backend upgrade...");
-      if (clusteredSwitchingBackend.attemptUpgrade()) {
+      if (clusteredSwitchingBackend.attemptUpgrade(this)) {
          log.trace("... backend upgrade succeeded.");
          clusteredSwitchingBackend.getCurrentIndexingBackend().applyWork(workList, monitor, indexManager);
       }
@@ -57,7 +57,7 @@ public class LockAcquiringBackend implements IndexingBackend {
    @Override
    public void applyStreamWork(LuceneWork singleOperation, IndexingMonitor monitor, DirectoryBasedIndexManager indexManager) {
       log.trace("Attempting backend upgrade...");
-      if (clusteredSwitchingBackend.attemptUpgrade()) {
+      if (clusteredSwitchingBackend.attemptUpgrade(this)) {
          log.trace("... backend upgrade succeeded.");
          clusteredSwitchingBackend.getCurrentIndexingBackend().applyStreamWork(singleOperation, monitor, indexManager);
       }
