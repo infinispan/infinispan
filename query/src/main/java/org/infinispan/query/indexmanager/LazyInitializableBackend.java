@@ -10,6 +10,6 @@ interface LazyInitializableBackend extends SwitchingBackend {
 
    void lazyInitialize();
 
-   boolean attemptUpgrade();
+   boolean attemptUpgrade(IndexingBackend expectedBackend);
 
 }

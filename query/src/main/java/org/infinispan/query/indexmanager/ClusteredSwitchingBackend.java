@@ -230,8 +230,12 @@ final class ClusteredSwitchingBackend implements LazyInitializableBackend {
    }
 
    @Override
-   public synchronized boolean attemptUpgrade() {
+   public synchronized boolean attemptUpgrade(IndexingBackend expectedBackend) {
       log.trace("owning lock for attemptUpgrade(IndexingBackend)");
+      if (currentBackend != expectedBackend) {
+         //This needs to be checked while holding the lock
+         return true;
+      }
       if (masterLockAcquisitionAttempts >= MAX_LOCK_ACQUISITION_ATTEMPTS) {
          indexlock.forceLockClear();
          swapNewBackendIn(factory.createLocalIndexingBackend(), localAddress);
