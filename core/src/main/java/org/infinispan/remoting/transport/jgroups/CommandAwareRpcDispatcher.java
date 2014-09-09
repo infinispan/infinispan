@@ -454,7 +454,7 @@ public class CommandAwareRpcDispatcher extends RpcDispatcher {
                   if (ignoreLeavers && e.getCause() instanceof SuspectedException) {
                      log.tracef(formatString("Ignoring node %s that left during the remote call", target));
                   } else {
-                     throw e;
+                     throw wrapThrowableInException(e.getCause());
                   }
                }
             }
@@ -478,6 +478,14 @@ public class CommandAwareRpcDispatcher extends RpcDispatcher {
       }
 
       return retval;
+   }
+
+   private static Exception wrapThrowableInException(Throwable t) {
+      if (t instanceof Exception) {
+         return (Exception) t;
+      } else {
+         return new CacheException(t);
+      }
    }
 
    private static boolean isRsvpCommand(ReplicableCommand command) {

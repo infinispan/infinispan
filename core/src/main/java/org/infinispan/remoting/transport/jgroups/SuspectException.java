@@ -44,4 +44,14 @@ public class SuspectException extends CacheException {
       return suspect;
    }
 
+   public static boolean isSuspectExceptionInChain(Throwable t) {
+      Throwable innerThrowable = t;
+      do {
+         if (innerThrowable instanceof SuspectException) {
+            return true;
+         }
+      } while ((innerThrowable = innerThrowable.getCause()) != null);
+      return false;
+   }
+
 }
