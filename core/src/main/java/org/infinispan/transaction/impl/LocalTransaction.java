@@ -47,8 +47,8 @@ public abstract class LocalTransaction extends AbstractCacheTransaction {
    private boolean commitOrRollbackSent;
 
    public LocalTransaction(Transaction transaction, GlobalTransaction tx,
-         boolean implicitTransaction, int topologyId, Equivalence<Object> keyEquivalence) {
-      super(tx, topologyId, keyEquivalence);
+         boolean implicitTransaction, int topologyId, Equivalence<Object> keyEquivalence, long txCreationTime) {
+      super(tx, topologyId, keyEquivalence, txCreationTime);
       this.transaction = transaction;
       this.implicitTransaction = implicitTransaction;
    }
