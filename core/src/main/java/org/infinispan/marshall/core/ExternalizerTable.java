@@ -171,10 +171,6 @@ public class ExternalizerTable implements ObjectTable {
    public Writer getObjectWriter(Object o) throws IOException {
       Class<?> clazz = o.getClass();
       Writer writer = writers.get(clazz);
-      if (writer == null) {
-         if (Thread.currentThread().isInterrupted())
-            throw new IOException(log.interruptedRetrievingObjectWriter(clazz.getName()));
-      }
       return writer;
    }
 
