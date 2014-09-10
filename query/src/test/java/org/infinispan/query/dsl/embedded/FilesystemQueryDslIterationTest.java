@@ -4,6 +4,7 @@ import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.cache.Index;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
+import org.testng.annotations.AfterClass;
 import org.testng.annotations.Test;
 
 import java.io.File;
@@ -36,6 +37,7 @@ public class FilesystemQueryDslIterationTest extends QueryDslIterationTest {
       createClusteredCaches(1, cfg);
    }
 
+   @AfterClass
    @Override
    protected void destroy() {
       try {
