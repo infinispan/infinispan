@@ -40,8 +40,9 @@ public class RemoteTransaction extends AbstractCacheTransaction implements Clone
    private volatile TotalOrderRemoteTransactionState transactionState;
    private final Object transactionStateLock = new Object();
 
-   public RemoteTransaction(WriteCommand[] modifications, GlobalTransaction tx, int topologyId, Equivalence<Object> keyEquivalence) {
-      super(tx, topologyId, keyEquivalence);
+   public RemoteTransaction(WriteCommand[] modifications, GlobalTransaction tx, int topologyId,
+                            Equivalence<Object> keyEquivalence, long txCreationTime) {
+      super(tx, topologyId, keyEquivalence, txCreationTime);
       this.modifications = modifications == null || modifications.length == 0
             ? InfinispanCollections.<WriteCommand>emptyList()
             : Arrays.asList(modifications);
@@ -49,8 +50,8 @@ public class RemoteTransaction extends AbstractCacheTransaction implements Clone
             this.modifications.size(), keyEquivalence, AnyEquivalence.<CacheEntry>getInstance());
    }
 
-   public RemoteTransaction(GlobalTransaction tx, int topologyId, Equivalence<Object> keyEquivalence) {
-      super(tx, topologyId, keyEquivalence);
+   public RemoteTransaction(GlobalTransaction tx, int topologyId, Equivalence<Object> keyEquivalence, long txCreationTime) {
+      super(tx, topologyId, keyEquivalence, txCreationTime);
       this.modifications = new LinkedList<WriteCommand>();
       lookedUpEntries = CollectionFactory.makeMap(2, keyEquivalence, AnyEquivalence.<CacheEntry>getInstance());
    }

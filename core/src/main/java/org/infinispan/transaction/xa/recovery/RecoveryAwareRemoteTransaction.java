@@ -28,12 +28,14 @@ public class RecoveryAwareRemoteTransaction extends RemoteTransaction implements
 
    private Integer status;
 
-   public RecoveryAwareRemoteTransaction(WriteCommand[] modifications, GlobalTransaction tx, int topologyId, Equivalence<Object> keyEquivalence) {
-      super(modifications, tx, topologyId, keyEquivalence);
+   public RecoveryAwareRemoteTransaction(WriteCommand[] modifications, GlobalTransaction tx, int topologyId,
+                                         Equivalence<Object> keyEquivalence, long txCreationTime) {
+      super(modifications, tx, topologyId, keyEquivalence, txCreationTime);
    }
 
-   public RecoveryAwareRemoteTransaction(GlobalTransaction tx, int topologyId, Equivalence<Object> keyEquivalence) {
-      super(tx, topologyId, keyEquivalence);
+   public RecoveryAwareRemoteTransaction(GlobalTransaction tx, int topologyId, Equivalence<Object> keyEquivalence,
+                                         long txCreationTime) {
+      super(tx, topologyId, keyEquivalence, txCreationTime);
    }
 
    /**

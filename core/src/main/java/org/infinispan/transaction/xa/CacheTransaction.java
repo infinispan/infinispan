@@ -123,4 +123,6 @@ public interface CacheTransaction {
     *         exists, the key has not been read.
     */
    EntryVersionsMap getVersionsRead();
+
+   long getCreationTime();
 }
