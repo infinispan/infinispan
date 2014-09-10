@@ -1297,6 +1297,7 @@ public class QueryDslConditionsTest extends AbstractQueryDslTest {
       QueryFactory qf = getQueryFactory();
 
       Query q = qf.from(getModelFactory().getAccountImplClass())
+            .orderBy("id", SortOrder.ASC)
             .having("creationDate").lt(makeDate("2013-01-20"))
             .toBuilder().build();
 
