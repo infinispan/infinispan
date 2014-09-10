@@ -7,6 +7,7 @@ import org.infinispan.protostream.ConfigurationBuilder;
 import org.infinispan.protostream.ProtobufUtil;
 import org.infinispan.protostream.SerializationContext;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.experimental.categories.Category;
 
 /**
@@ -14,6 +15,7 @@ import org.junit.experimental.categories.Category;
  * @since 7.0
  */
 @Category(Profiling.class)
+@Ignore
 public class ProtobufPerfTest extends PerfTest {
 
    private SerializationContext serCtx;

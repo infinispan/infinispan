@@ -7,6 +7,7 @@ import org.infinispan.objectfilter.impl.ReflectionMatcher;
 import org.infinispan.objectfilter.test.model.Address;
 import org.infinispan.objectfilter.test.model.Person;
 import org.infinispan.objectfilter.test.model.PhoneNumber;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
 
@@ -20,7 +21,7 @@ import static org.junit.Assert.assertNotNull;
  * @since 7.0
  */
 @Category(Profiling.class)
-public class PerfTest {
+@Ignore public class PerfTest {
 
    private final int ITERATIONS = 10000000;
 
