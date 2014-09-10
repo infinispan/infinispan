@@ -4,6 +4,7 @@ import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.cache.SingleFileStoreConfigurationBuilder;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
+import org.testng.annotations.AfterClass;
 import org.testng.annotations.Test;
 
 /**
@@ -17,6 +18,7 @@ public class NonIndexedSingleFileStoreQueryDslConditionsTest extends NonIndexedQ
 
    private final String tmpDirectory = TestingUtil.tmpDirectory(getClass());
 
+   @AfterClass
    @Override
    protected void destroy() {
       try {
@@ -28,6 +30,7 @@ public class NonIndexedSingleFileStoreQueryDslConditionsTest extends NonIndexedQ
 
    @Override
    protected void createCacheManagers() throws Throwable {
+      TestingUtil.recursiveFileRemove(tmpDirectory);
       ConfigurationBuilder cfg = TestCacheManagerFactory.getDefaultCacheConfiguration(true);
       cfg.persistence()
             .addStore(SingleFileStoreConfigurationBuilder.class)

@@ -4,6 +4,7 @@ import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.cache.Index;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
+import org.testng.annotations.AfterClass;
 import org.testng.annotations.Test;
 
 import java.io.File;
@@ -20,7 +21,7 @@ import static org.junit.Assert.assertTrue;
 @Test(groups = "functional", testName = "query.dsl.embedded.FilesystemQueryDslConditionsTest")
 public class FilesystemQueryDslConditionsTest extends QueryDslConditionsTest {
 
-   private final String indexDirectory = TestingUtil.tmpDirectory(this.getClass());
+   private final String indexDirectory = TestingUtil.tmpDirectory(getClass());
 
    @Override
    protected void createCacheManagers() throws Throwable {
@@ -36,6 +37,7 @@ public class FilesystemQueryDslConditionsTest extends QueryDslConditionsTest {
       createClusteredCaches(1, cfg);
    }
 
+   @AfterClass
    @Override
    protected void destroy() {
       try {

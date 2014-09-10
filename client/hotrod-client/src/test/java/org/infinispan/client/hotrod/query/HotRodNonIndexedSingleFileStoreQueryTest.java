@@ -16,6 +16,12 @@ public class HotRodNonIndexedSingleFileStoreQueryTest extends HotRodNonIndexedQu
    private final String tmpDirectory = TestingUtil.tmpDirectory(getClass());
 
    @Override
+   protected void setup() throws Exception {
+      TestingUtil.recursiveFileRemove(tmpDirectory);
+      super.setup();
+   }
+
+   @Override
    protected void teardown() {
       try {
          super.teardown();
