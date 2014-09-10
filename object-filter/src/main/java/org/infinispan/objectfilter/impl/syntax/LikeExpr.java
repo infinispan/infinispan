@@ -1,19 +1,17 @@
 package org.infinispan.objectfilter.impl.syntax;
 
-import java.util.regex.Pattern;
-
 /**
  * @author anistor@redhat.com
  * @since 7.0
  */
-public final class RegexExpr implements PrimaryPredicateExpr {
+public final class LikeExpr implements PrimaryPredicateExpr {
 
    private final ValueExpr child;
-   private final Pattern pattern;
+   private final String pattern;
 
-   public RegexExpr(ValueExpr child, String pattern) {
+   public LikeExpr(ValueExpr child, String pattern) {
       this.child = child;
-      this.pattern = Pattern.compile(pattern);
+      this.pattern = pattern;
    }
 
    @Override
@@ -21,7 +19,7 @@ public final class RegexExpr implements PrimaryPredicateExpr {
       return child;
    }
 
-   public Pattern getPattern() {
+   public String getPattern() {
       return pattern;
    }
 

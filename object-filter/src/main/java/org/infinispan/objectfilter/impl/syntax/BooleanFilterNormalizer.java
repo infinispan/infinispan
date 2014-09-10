@@ -273,8 +273,8 @@ public final class BooleanFilterNormalizer {
       }
 
       @Override
-      public BooleanExpr visit(RegexExpr regexExpr) {
-         return new NotExpr(regexExpr);
+      public BooleanExpr visit(LikeExpr likeExpr) {
+         return new NotExpr(likeExpr);
       }
    };
 

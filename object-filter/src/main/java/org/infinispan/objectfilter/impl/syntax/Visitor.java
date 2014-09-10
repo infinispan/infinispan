@@ -18,7 +18,7 @@ public interface Visitor {
 
    BooleanExpr visit(ComparisonExpr comparisonExpr);
 
-   BooleanExpr visit(RegexExpr regexExpr);
+   BooleanExpr visit(LikeExpr likeExpr);
 
    ValueExpr visit(ConstantValueExpr constantValueExpr);
 

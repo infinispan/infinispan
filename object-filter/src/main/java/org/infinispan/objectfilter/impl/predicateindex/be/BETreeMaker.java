@@ -112,8 +112,8 @@ public final class BETreeMaker<AttributeId extends Comparable<AttributeId>> {
          }
       } else if (condition instanceof IsNullExpr) {
          addPredicateNode(parent, nodes, treeCounters, isNegated, path, new Predicate<Object>(isRepeated, IsNullCondition.INSTANCE));
-      } else if (condition instanceof RegexExpr) {
-         addPredicateNode(parent, nodes, treeCounters, isNegated, path, new Predicate<String>(isRepeated, new RegexCondition(((RegexExpr) condition).getPattern())));
+      } else if (condition instanceof LikeExpr) {
+         addPredicateNode(parent, nodes, treeCounters, isNegated, path, new Predicate<String>(isRepeated, new RegexCondition(((LikeExpr) condition).getPattern())));
       } else {
          throw new IllegalStateException("Unexpected condition type: " + condition);
       }
