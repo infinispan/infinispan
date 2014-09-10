@@ -15,8 +15,8 @@ import javax.transaction.Transaction;
 public class SyncLocalTransaction extends LocalTransaction {
 
    public SyncLocalTransaction(Transaction transaction, GlobalTransaction tx,
-         boolean implicitTransaction, int topologyId, Equivalence<Object> keyEquivalence) {
-      super(transaction, tx, implicitTransaction, topologyId, keyEquivalence);
+         boolean implicitTransaction, int topologyId, Equivalence<Object> keyEquivalence, long txCreationTime) {
+      super(transaction, tx, implicitTransaction, topologyId, keyEquivalence, txCreationTime);
    }
 
    private boolean enlisted;

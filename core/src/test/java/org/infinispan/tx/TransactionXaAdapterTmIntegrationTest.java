@@ -1,8 +1,9 @@
 package org.infinispan.tx;
 
+import javax.transaction.xa.XAException;
+import javax.transaction.xa.XAResource;
 import org.infinispan.Cache;
 import org.infinispan.commands.CommandsFactory;
-import org.infinispan.commands.CommandsFactoryImpl;
 import org.infinispan.commons.equivalence.AnyEquivalence;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.Configuration;
@@ -22,9 +23,6 @@ import org.infinispan.transaction.xa.TransactionXaAdapter;
 import org.infinispan.transaction.xa.XaTransactionTable;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
-
-import javax.transaction.xa.XAException;
-import javax.transaction.xa.XAResource;
 
 import java.util.UUID;
 
@@ -59,7 +57,7 @@ public class TransactionXaAdapterTmIntegrationTest {
       gtf.init(false, false, true, false);
       globalTransaction = gtf.newGlobalTransaction(null, false);
       DummyBaseTransactionManager tm = new DummyBaseTransactionManager();
-      localTx = new LocalXaTransaction(new DummyTransaction(tm), globalTransaction, false, 1, AnyEquivalence.getInstance());
+      localTx = new LocalXaTransaction(new DummyTransaction(tm), globalTransaction, false, 1, AnyEquivalence.getInstance(), 0);
       xid = new DummyXid(uuid);
 
       InvocationContextFactory icf = new TransactionalInvocationContextFactory();
