@@ -70,22 +70,22 @@ public class QueryCache {
     * Obtain the cache. Start it lazily when needed.
     */
    private Cache<KeyValuePair<String, Class>, Object> getCache() {
-      Cache<KeyValuePair<String, Class>, Object> cache = lazyCache;
+      final Cache<KeyValuePair<String, Class>, Object> cache = lazyCache;
 
-      if (cache == null) {
-         synchronized (this) {
-            if (lazyCache == null) {
-               // define the query cache configuration if it does not already exist (from a previous call or manually defined by the user)
-               if (cacheManager.getCacheConfiguration(QUERY_CACHE_NAME) == null) {
-                  cacheManager.defineConfiguration(QUERY_CACHE_NAME, getDefaultQueryCacheConfig().build());
-               }
-
-               cache = lazyCache = cacheManager.getCache(QUERY_CACHE_NAME);
-            }
-         }
+      //Most likely branch first:
+      if (cache != null) {
+         return cache;
       }
-
-      return cache;
+      synchronized (this) {
+         if (lazyCache == null) {
+            // define the query cache configuration if it does not already exist (from a previous call or manually defined by the user)
+            if (cacheManager.getCacheConfiguration(QUERY_CACHE_NAME) == null) {
+               cacheManager.defineConfiguration(QUERY_CACHE_NAME, getDefaultQueryCacheConfig().build());
+            }
+            lazyCache = cacheManager.getCache(QUERY_CACHE_NAME);
+         }
+         return lazyCache;
+      }
    }
 
    private ConfigurationBuilder getDefaultQueryCacheConfig() {
