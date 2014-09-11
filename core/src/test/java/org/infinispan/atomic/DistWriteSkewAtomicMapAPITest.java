@@ -101,7 +101,7 @@ public class DistWriteSkewAtomicMapAPITest extends DistRepeatableReadAtomicMapAP
       configurationBuilder.transaction()
             .transactionMode(TransactionMode.TRANSACTIONAL)
             .lockingMode(LockingMode.OPTIMISTIC)
-            .locking().lockAcquisitionTimeout(100l)
+            .locking().lockAcquisitionTimeout(2000l)
             .isolationLevel(IsolationLevel.REPEATABLE_READ).writeSkewCheck(true)
             .versioning().enable().scheme(VersioningScheme.SIMPLE)
             .clustering().hash().numOwners(2)

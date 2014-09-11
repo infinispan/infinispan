@@ -9,6 +9,7 @@ import org.infinispan.distribution.BlockingInterceptor;
 import org.infinispan.interceptors.distribution.NonTxDistributionInterceptor;
 import org.infinispan.manager.CacheContainer;
 import org.infinispan.manager.EmbeddedCacheManager;
+import org.infinispan.partionhandling.impl.AvailabilityMode;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.statetransfer.StateTransferInterceptor;
 import org.infinispan.test.MultipleCacheManagersTest;
@@ -121,13 +122,13 @@ public class NonTxBackupOwnerBecomingPrimaryOwnerTest extends MultipleCacheManag
       // Every PutKeyValueCommand will be blocked before reaching the distribution interceptor on cache1
       CyclicBarrier beforeCache1Barrier = new CyclicBarrier(2);
       BlockingInterceptor blockingInterceptor1 = new BlockingInterceptor(beforeCache1Barrier,
-            PutKeyValueCommand.class, false);
+            PutKeyValueCommand.class, false, false);
       cache1.addInterceptorBefore(blockingInterceptor1, NonTxDistributionInterceptor.class);
 
       // Every PutKeyValueCommand will be blocked after returning to the distribution interceptor on cache2
       CyclicBarrier afterCache2Barrier = new CyclicBarrier(2);
       BlockingInterceptor blockingInterceptor2 = new BlockingInterceptor(afterCache2Barrier,
-            PutKeyValueCommand.class, true);
+            PutKeyValueCommand.class, true, false);
       cache2.addInterceptorBefore(blockingInterceptor2, StateTransferInterceptor.class);
 
       // Put from cache0 with cache0 as primary owner, cache2 will become the primary owner for the retry
@@ -221,8 +222,8 @@ public class NonTxBackupOwnerBecomingPrimaryOwnerTest extends MultipleCacheManag
             }
             return invocation.callRealMethod();
          }
-      }).when(spyLtm).handleConsistentHashUpdate(eq(CacheContainer.DEFAULT_CACHE_NAME), any(CacheTopology.class),
-            anyInt());
+      }).when(spyLtm).handleTopologyUpdate(eq(CacheContainer.DEFAULT_CACHE_NAME), any(CacheTopology.class),
+            any(AvailabilityMode.class), anyInt());
       TestingUtil.extractGlobalComponentRegistry(manager).registerComponent(spyLtm, LocalTopologyManager.class);
    }
 }

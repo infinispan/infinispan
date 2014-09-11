@@ -190,8 +190,7 @@ public class DefaultConsistentHash implements ConsistentHash {
 
    @Override
    public int hashCode() {
-      int result = hashFunction.hashCode();
-      result = 31 * result + numOwners;
+      int result = numOwners;
       result = 31 * result + numSegments;
       result = 31 * result + members.hashCode();
       return result;
@@ -218,11 +217,22 @@ public class DefaultConsistentHash implements ConsistentHash {
 
    @Override
    public String toString() {
+      OwnershipStatistics stats = new OwnershipStatistics(this, members);
       StringBuilder sb = new StringBuilder("DefaultConsistentHash{");
-      sb.append("numSegments=").append(numSegments);
-      sb.append(", numOwners=").append(numOwners);
-      sb.append(", members=").append(members);
-      sb.append('}');
+      sb.append("ns = ").append(numSegments);
+      sb.append(", owners = (").append(members.size()).append(")[");
+      boolean first = false;
+      for (Address a : members) {
+         if (first) {
+            first = false;
+         } else {
+            sb.append(", ");
+         }
+         int primaryOwned = stats.getPrimaryOwned(a);
+         int owned = stats.getOwned(a);
+         sb.append(a).append(": ").append(primaryOwned).append('+').append(owned - primaryOwned);
+      }
+      sb.append("]}");
       return sb.toString();
    }
 

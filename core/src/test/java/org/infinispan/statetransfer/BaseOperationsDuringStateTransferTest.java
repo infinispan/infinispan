@@ -19,14 +19,11 @@ import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.CleanupAfterMethod;
 import org.infinispan.topology.CacheTopology;
-import org.infinispan.topology.ClusterCacheStatus;
-import org.infinispan.topology.DefaultRebalancePolicy;
-import org.infinispan.topology.RebalancePolicy;
+import org.infinispan.topology.ClusterTopologyManager;
 import org.infinispan.transaction.LockingMode;
 import org.infinispan.transaction.TransactionMode;
 import org.infinispan.transaction.lookup.DummyTransactionManagerLookup;
 import org.infinispan.util.concurrent.IsolationLevel;
-import org.infinispan.util.concurrent.ReclosableLatch;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 import org.testng.annotations.Test;
@@ -52,8 +49,6 @@ public abstract class BaseOperationsDuringStateTransferTest extends MultipleCach
    private final boolean isOptimistic;
 
    private ConfigurationBuilder cacheConfigBuilder;
-
-   private ReclosableLatch rebalanceGate;
 
    protected BaseOperationsDuringStateTransferTest(CacheMode cacheMode, boolean isTransactional, boolean isOptimistic) {
       this.cacheMode = cacheMode;
@@ -82,26 +77,8 @@ public abstract class BaseOperationsDuringStateTransferTest extends MultipleCach
             .locking().lockAcquisitionTimeout(1000l);
       cacheConfigBuilder.clustering().stateTransfer().fetchInMemoryState(true).awaitInitialTransfer(false);
 
-      rebalanceGate = new ReclosableLatch(true);
-
       addClusterEnabledCacheManager(cacheConfigBuilder);
       waitForClusterToForm();
-
-      TestingUtil.replaceComponent(manager(0), RebalancePolicy.class,
-            new DefaultRebalancePolicy() {
-               @Override
-               public void updateCacheStatus(String cacheName, ClusterCacheStatus cacheStatus) throws Exception {
-                  if (cacheStatus.getCacheTopology().getPendingCH() != null) {
-                     // block the rebalance until the test reaches the desired spot
-                     try {
-                        rebalanceGate.await();
-                     } catch (InterruptedException e) {
-                        throw new RuntimeException(e);
-                     }
-                  }
-                  super.updateCacheStatus(cacheName, cacheStatus);
-               }
-            }, true);
    }
 
    public void testRemove() throws Exception {
@@ -127,7 +104,8 @@ public abstract class BaseOperationsDuringStateTransferTest extends MultipleCach
       });
 
       // do not allow coordinator to send topology updates to node B
-      rebalanceGate.close();
+      final ClusterTopologyManager ctm0 = TestingUtil.extractGlobalComponent(manager(0), ClusterTopologyManager.class);
+      ctm0.setRebalancingEnabled(false);
 
       log.info("Adding a new node ..");
       addClusterEnabledCacheManager(cacheConfigBuilder);
@@ -166,7 +144,7 @@ public abstract class BaseOperationsDuringStateTransferTest extends MultipleCach
       assertTrue(cache(1).keySet().isEmpty());
 
       // allow rebalance to start
-      rebalanceGate.open();
+      ctm0.setRebalancingEnabled(true);
 
       // wait for state transfer to end
       TestingUtil.waitForRehashToComplete(cache(0), cache(1));
@@ -208,7 +186,8 @@ public abstract class BaseOperationsDuringStateTransferTest extends MultipleCach
       });
 
       // do not allow coordinator to send topology updates to node B
-      rebalanceGate.close();
+      final ClusterTopologyManager ctm0 = TestingUtil.extractGlobalComponent(manager(0), ClusterTopologyManager.class);
+      ctm0.setRebalancingEnabled(false);
 
       log.info("Adding a new node ..");
       addClusterEnabledCacheManager(cacheConfigBuilder);
@@ -247,7 +226,7 @@ public abstract class BaseOperationsDuringStateTransferTest extends MultipleCach
       assertTrue(cache(1).keySet().isEmpty());
 
       // allow rebalance to start
-      rebalanceGate.open();
+      ctm0.setRebalancingEnabled(true);
 
       // wait for state transfer to end
       TestingUtil.waitForRehashToComplete(cache(0), cache(1));
@@ -289,7 +268,8 @@ public abstract class BaseOperationsDuringStateTransferTest extends MultipleCach
       });
 
       // do not allow coordinator to send topology updates to node B
-      rebalanceGate.close();
+      final ClusterTopologyManager ctm0 = TestingUtil.extractGlobalComponent(manager(0), ClusterTopologyManager.class);
+      ctm0.setRebalancingEnabled(false);
 
       log.info("Adding a new node ..");
       addClusterEnabledCacheManager(cacheConfigBuilder);
@@ -328,7 +308,7 @@ public abstract class BaseOperationsDuringStateTransferTest extends MultipleCach
       assertTrue(cache(1).keySet().isEmpty());
 
       // allow rebalance to start
-      rebalanceGate.open();
+      ctm0.setRebalancingEnabled(true);
 
       // wait for state transfer to end
       TestingUtil.waitForRehashToComplete(cache(0), cache(1));

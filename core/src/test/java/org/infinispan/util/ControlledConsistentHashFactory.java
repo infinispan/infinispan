@@ -80,7 +80,7 @@ public class ControlledConsistentHashFactory extends BaseControlledConsistentHas
             .getGlobalComponentRegistry().getComponent(ClusterTopologyManager.class);
       assertTrue("triggerRebalance must be called on the coordinator node",
             cacheManager.getTransport().isCoordinator());
-      clusterTopologyManager.triggerRebalance(cache.getName());
+      clusterTopologyManager.forceRebalance(cache.getName());
    }
 
    @Override

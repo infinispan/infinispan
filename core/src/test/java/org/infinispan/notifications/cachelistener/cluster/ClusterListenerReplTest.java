@@ -6,13 +6,11 @@ import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.distribution.BlockingInterceptor;
 import org.infinispan.distribution.MagicKey;
 import org.infinispan.interceptors.EntryWrappingInterceptor;
-import org.infinispan.interceptors.distribution.NonTxDistributionInterceptor;
 import org.infinispan.notifications.cachelistener.event.CacheEntryCreatedEvent;
 import org.infinispan.notifications.cachelistener.event.CacheEntryEvent;
 import org.infinispan.notifications.cachelistener.event.CacheEntryModifiedEvent;
 import org.infinispan.notifications.cachelistener.event.Event;
 import org.infinispan.remoting.rpc.RpcManager;
-import org.infinispan.statetransfer.StateResponseCommand;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.tx.dld.ControlledRpcManager;
 import org.testng.annotations.Test;
@@ -93,7 +91,7 @@ public class ClusterListenerReplTest extends AbstractClusterListenerNonTxTest {
       cache0.addListener(clusterListener);
 
       CyclicBarrier barrier = new CyclicBarrier(2);
-      BlockingInterceptor blockingInterceptor = new BlockingInterceptor(barrier, PutKeyValueCommand.class, true);
+      BlockingInterceptor blockingInterceptor = new BlockingInterceptor(barrier, PutKeyValueCommand.class, true, false);
       cache2.getAdvancedCache().addInterceptorBefore(blockingInterceptor, EntryWrappingInterceptor.class);
 
       final MagicKey key = new MagicKey(cache1, cache2);

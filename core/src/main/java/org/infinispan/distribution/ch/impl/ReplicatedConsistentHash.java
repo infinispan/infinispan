@@ -137,10 +137,12 @@ public class ReplicatedConsistentHash implements ConsistentHash {
 
    @Override
    public String toString() {
+      OwnershipStatistics stats = new OwnershipStatistics(this, members);
       StringBuilder sb = new StringBuilder("ReplicatedConsistentHash{");
-      sb.append("members=").append(members);
-      sb.append(", numSegments=").append(primaryOwners.length);
-      sb.append(", primaryOwners=").append(Arrays.toString(primaryOwners));
+      sb.append("ns = ").append(segments.size());
+      for (Address a : members) {
+         sb.append(", ").append(a).append(": ").append(stats.getPrimaryOwned(a));
+      }
       sb.append('}');
       return sb.toString();
    }

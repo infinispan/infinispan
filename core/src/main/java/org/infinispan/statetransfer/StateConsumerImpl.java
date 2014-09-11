@@ -28,7 +28,6 @@ import org.infinispan.filter.KeyFilter;
 import org.infinispan.interceptors.InterceptorChain;
 import org.infinispan.marshall.core.MarshalledEntry;
 import org.infinispan.notifications.cachelistener.CacheNotifier;
-import org.infinispan.filter.CollectionKeyFilter;
 import org.infinispan.persistence.manager.PersistenceManager;
 import org.infinispan.persistence.spi.AdvancedCacheLoader;
 import org.infinispan.remoting.responses.CacheNotFoundResponse;
@@ -46,7 +45,6 @@ import org.infinispan.transaction.totalorder.TotalOrderLatch;
 import org.infinispan.transaction.totalorder.TotalOrderManager;
 import org.infinispan.transaction.xa.CacheTransaction;
 import org.infinispan.transaction.xa.GlobalTransaction;
-import org.infinispan.util.ReadOnlyDataContainerBackedKeySet;
 import org.infinispan.util.concurrent.BlockingTaskAwareExecutorService;
 import org.infinispan.util.concurrent.ConcurrentHashSet;
 import org.infinispan.util.logging.Log;
@@ -366,7 +364,7 @@ public class StateConsumerImpl implements StateConsumer {
             waitingForState.set(true);
          }
 
-         notifyEndOfRebalanceIfNeeded(cacheTopology.getTopologyId());
+         notifyEndOfRebalanceIfNeeded(cacheTopology.getTopologyId(), cacheTopology.getRebalanceId());
 
          // Remove the transactions whose originators have left the cache.
          // Need to do it now, after we have applied any transactions from other nodes,
@@ -419,12 +417,12 @@ public class StateConsumerImpl implements StateConsumer {
 
    }
 
-   private void notifyEndOfRebalanceIfNeeded(int topologyId) {
+   private void notifyEndOfRebalanceIfNeeded(int topologyId, int rebalanceId) {
       if (waitingForState.get() && !hasActiveTransfers()) {
          if (waitingForState.compareAndSet(true, false)) {
             log.debugf("Finished receiving of segments for cache %s for topology %d.", cacheName, topologyId);
             stopApplyingState();
-            stateTransferManager.notifyEndOfRebalance(topologyId);
+            stateTransferManager.notifyEndOfRebalance(topologyId, rebalanceId);
          }
       }
    }
@@ -888,12 +886,12 @@ public class StateConsumerImpl implements StateConsumer {
       // this topology update. We can't actually differentiate between L1 entries and regular entries,
       // so we delete all entries that don't belong to this node in the current OR previous topology.
       Set<Integer> segmentsToInvalidate = new HashSet<Integer>();
-      if (configuration.clustering().l1().enabled()) {
+      if (configuration.clustering().l1().enabled() && previousWriteCh != null) {
          for (int i = 0; i < previousWriteCh.getNumSegments(); i++) {
             if (newSegments.contains(i))
                continue;
 
-            if (!newWriteCh.locateOwnersForSegment(i).containsAll(newWriteCh.locateOwnersForSegment(i))) {
+            if (!previousWriteCh.locateOwnersForSegment(i).containsAll(newWriteCh.locateOwnersForSegment(i))) {
                segmentsToInvalidate.add(i);
             }
          }
@@ -1066,7 +1064,7 @@ public class StateConsumerImpl implements StateConsumer {
       log.tracef("Completion of inbound transfer task: %s ", inboundTransfer);
       removeTransfer(inboundTransfer);
 
-      notifyEndOfRebalanceIfNeeded(cacheTopology.getTopologyId());
+      notifyEndOfRebalanceIfNeeded(cacheTopology.getTopologyId(), cacheTopology.getRebalanceId());
    }
 
    public interface KeyInvalidationListener {

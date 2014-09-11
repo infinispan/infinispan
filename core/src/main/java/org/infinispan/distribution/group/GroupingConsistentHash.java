@@ -117,6 +117,23 @@ public class GroupingConsistentHash implements ConsistentHash {
    }
 
    @Override
+   public boolean equals(Object o) {
+      if (this == o) return true;
+      if (o == null || getClass() != o.getClass()) return false;
+
+      GroupingConsistentHash that = (GroupingConsistentHash) o;
+
+      if (!ch.equals(that.ch)) return false;
+
+      return true;
+   }
+
+   @Override
+   public int hashCode() {
+      return ch.hashCode();
+   }
+
+   @Override
    public String toString() {
       return "GroupingConsistentHash:" + ch;
    }

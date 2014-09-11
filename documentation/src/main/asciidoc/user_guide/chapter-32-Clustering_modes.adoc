@@ -708,20 +708,36 @@ In a split brain situation, each network partition will install its own
 JGroups view, removing the nodes from the other partition(s).
 We don't have a direct way of determining whether the has been split into
 two or more partitions, since the partitions are unaware of each other.
-Instead, we assume the cluster has split when *numOwners* or more nodes
-disappear from the JGroups cluster at the same time (i.e. in the same view).
+Instead, we assume the cluster has split when one or more nodes
+disappear from the JGroups cluster without sending an explicit leave message.
 
 With partition handling disabled, each such partition would continue to
 function as an independent cluster. Each partition may only see a part of
 the data, and each partition could write conflicting updates in the cache.
 
 With partition handling enabled, if we detect a split, each partition does
-not start a rebalance, but enters in degraded mode:
+not start a rebalance immediately, but first it checks whether it should
+enter degraded mode instead:
 
-- requests (reads and writes) for entries that have all the copies on nodes within
-this partition are honoured
-- requests for entries that are partially or totally owned by nodes that disappeared
-are rejected with an `AvailabilityException`
+- If at least one segment has lost all its owners (meaning at least
+  _numOwners_ nodes left since the last rebalance ended), the partition enters
+  degraded mode.
+- If the partition does not contain a simple majority (50% + 1) of the nodes
+  in the _latest stable topology_, the partition also enters degraded mode.
+- Otherwise the partition keeps functioning normally, and it starts a rebalance.
+
+The _stable topology_ is updated every time a rebalance operation ends and the coordinator determines
+that another rebalance is not necessary.
+
+These rules ensures that at most one partition stays in available mode, and
+the other partitions enter degraded mode.
+
+When a partition is in degraded mode, it only allows access to the keys that are wholly owned:
+
+- Requests (reads and writes) for entries that have all the copies on nodes within
+this partition are honoured.
+- Requests for entries that are partially or totally owned by nodes that disappeared
+are rejected with an `AvailabilityException`.
 
 This guarantees that partitions cannot write different values for the same key
 (cache is consistent), and also that one partition can not read keys that have been
@@ -749,7 +765,7 @@ merge back together into the initial cluster `M`, then `M` exits the degraded
 mode and becomes fully available again.
 
 As another example, the cluster could split in two partitions `O1 = {A, B, C}`
-and `O2 = {D}`, partition `O1` will assume that node `D` died and stay fully
+and `O2 = {D}`, partition `O1` will stay fully
 available (rebalancing cache entries on the remaining members).
 Partition `O2`, however, will detect a split and enter the degraded mode.
 Since it doesn't have any fully owned keys, it will reject any read or write
@@ -761,34 +777,28 @@ entries on `D` will be wiped (since they could be stale).
 is rebalanced.
 
 ===== Current limitations
-Our current partition handling strategy does not work properly when
-`clusterSize < 2 * numOwners`. The cluster could split in two partitions
-of size `clusterSize / 2`, and each partition would continue to operate normally.
-This is clearly not desirable, and can lead to inconsistencies. We plan to
-address this in the near future -  e.g. with a majority-based approach.
+Two partitions could start up isolated, and as long as they don't merge they
+can read and write inconsistent data. In the future, we will allow custom
+availability strategies (e.g. check that a certain node is part of the cluster,
+or check that an external machine is accessible) that could handle that
+situation as well.
 
-In the extreme case, Infinispan internally handles a replicated cache as a
-degenerated distributed mode where *numOwners* is `+Infinity`.
-Our partition handling strategy would never be able to detect a split brain
-in a replicated cache, because cluster size is always smaller than *numOwners*.
-Because of this, the partition handling functionality is not available for
-replicated caches at the moment and the configuration is ignored.
 
 [[successive-node-failures]]
-==== Successive node failures
-When an Infinispan node leaves, either because of being shut down gracefully
-or because of a process/machine crash, the cache entries are rebalanced among
-the remaining nodes.
-The remaining owners of the crashed node's data send copies of this data to
-other nodes in the cluster in order to preserve the desired number of copies
-(*numOwners*).
+==== Successive nodes stopped
+As mentioned in the previous section, Infinispan can't detect whether a node
+left the JGroups view because of a process/machine crash, or because of a
+network failure: whenever a node leaves the JGroups cluster abruptly, it is
+assumed to be because of a network problem.
 
-However, other nodes might crash during the rebalance process.
-If more than *numOwners* nodes leave in a short interval of time, there is a
+If the configured number of copies (_numOwners_) is greater than 1, the
+cluster can remain available and will try to make new replicas of the data
+on the crashed node. However, other nodes might crash during the rebalance process.
+If more than _numOwners_ nodes leave in a short interval of time, there is a
 chance that some cache entries have disappeared from the cluster altogether.
-In this case, with partition handling functionality enabled, the cluster
-enters the unavailable mode and all the requests are answered with an
-`AvailabilityException`.
+In this case, with partition handling functionality enabled, Infinispan
+assumes (incorrectly) that there is a split brain and enters degraded mode
+as described in the split-brain section.
 
 At this stage there is no way for the cluster to become available again,
 except stopping it and repopulating it on restart with the data from an
@@ -799,11 +809,14 @@ should be pretty rare.
 However, having the partition handling enabled represents a safety net for
 systems that do not.
 
-Similar to the split brain case, we depend on JGroups installing a new
-cluster view for each node that leaves. If two or more nodes leave in
-rapid sequence, they might be grouped in a single view and our
-partition handling strategy might assume there was a network failure
-instead.
+When the administrator shuts down a node gracefully, Infinispan knows that
+the node can't come back so it never enters degraded mode. However, the
+administrator can shut down more than *numOwners* nodes in rapid succession,
+causing the loss of the data stored only on those nodes. In that case the
+cache enters a different mode called _unavailable_.
+In unavailable mode, all the requests are answered with an
+`AvailabilityException`, even if the owners of that particular key are still
+alive.
 
 [[partition-handling-configuration]]
 ==== Configuration for partition handling functionality

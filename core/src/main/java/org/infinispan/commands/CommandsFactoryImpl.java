@@ -63,7 +63,6 @@ import org.infinispan.interceptors.InterceptorChain;
 import org.infinispan.filter.Converter;
 import org.infinispan.filter.KeyValueFilter;
 import org.infinispan.partionhandling.impl.PartitionHandlingManager;
-import org.infinispan.partionhandling.impl.PartitionStateControlCommand;
 import org.infinispan.statetransfer.StateProvider;
 import org.infinispan.statetransfer.StateConsumer;
 import org.infinispan.statetransfer.StateRequestCommand;
@@ -472,10 +471,6 @@ public class CommandsFactoryImpl implements CommandsFactory {
          case EntryResponseCommand.COMMAND_ID:
             EntryResponseCommand entryResponseCommand = (EntryResponseCommand) c;
             entryResponseCommand.init(entryRetriever);
-            break;
-         case PartitionStateControlCommand.COMMAND_ID:
-            PartitionStateControlCommand stateControlCommand = (PartitionStateControlCommand) c;
-            stateControlCommand.init(partitionHandlingManager);
             break;
          case GetKeysInGroupCommand.COMMAND_ID:
             GetKeysInGroupCommand getKeysInGroupCommand = (GetKeysInGroupCommand) c;

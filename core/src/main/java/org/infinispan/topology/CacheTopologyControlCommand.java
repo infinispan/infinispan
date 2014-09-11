@@ -5,6 +5,7 @@ import org.infinispan.commons.CacheException;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.distribution.ch.ConsistentHash;
 import org.infinispan.factories.annotations.Inject;
+import org.infinispan.partionhandling.impl.AvailabilityMode;
 import org.infinispan.remoting.responses.ExceptionResponse;
 import org.infinispan.remoting.responses.SuccessfulResponse;
 import org.infinispan.remoting.responses.UnsuccessfulResponse;
@@ -39,6 +40,8 @@ public class CacheTopologyControlCommand implements ReplicableCommand {
       REBALANCE_START,
       // The coordinator is requesting information about the running caches.
       GET_STATUS,
+      // Update the stable topology
+      STABLE_TOPOLOGY_UPDATE,
 
       // Member to coordinator:
       // Enable/disable rebalancing, check whether rebalancing is enabled
@@ -53,18 +56,17 @@ public class CacheTopologyControlCommand implements ReplicableCommand {
 
    private transient LocalTopologyManager localTopologyManager;
    private transient ClusterTopologyManager clusterTopologyManager;
-   private transient RebalancePolicy rebalancePolicy;
 
    private String cacheName;
    private Type type;
    private Address sender;
    private CacheJoinInfo joinInfo;
 
-   // TODO Maybe create a separate command for topology/CH-related stuff; otherwise just replace with a CacheTopology
    private int topologyId;
+   private int rebalanceId;
    private ConsistentHash currentCH;
    private ConsistentHash pendingCH;
-   private boolean missingData;
+   private AvailabilityMode availabilityMode;
 
    private Throwable throwable;
    private int viewId;
@@ -89,7 +91,7 @@ public class CacheTopologyControlCommand implements ReplicableCommand {
       this.viewId = viewId;
    }
 
-   public CacheTopologyControlCommand(String cacheName, Type type, Address sender, int topologyId,
+   public CacheTopologyControlCommand(String cacheName, Type type, Address sender, int topologyId, int rebalanceId,
                                       Throwable throwable, int viewId) {
       this.cacheName = cacheName;
       this.type = type;
@@ -99,23 +101,23 @@ public class CacheTopologyControlCommand implements ReplicableCommand {
       this.viewId = viewId;
    }
 
-   public CacheTopologyControlCommand(String cacheName, Type type, Address sender, CacheTopology cacheTopology, int viewId) {
+   public CacheTopologyControlCommand(String cacheName, Type type, Address sender, CacheTopology cacheTopology,
+         AvailabilityMode availabilityMode, int viewId) {
       this.cacheName = cacheName;
       this.type = type;
       this.sender = sender;
-      this.viewId = viewId;
       this.topologyId = cacheTopology.getTopologyId();
+      this.rebalanceId = cacheTopology.getRebalanceId();
       this.currentCH = cacheTopology.getCurrentCH();
       this.pendingCH = cacheTopology.getPendingCH();
-      this.missingData = cacheTopology.isMissingData();
+      this.availabilityMode = availabilityMode;
+      this.viewId = viewId;
    }
 
    @Inject
-   public void init(LocalTopologyManager localTopologyManager, ClusterTopologyManager clusterTopologyManager,
-         RebalancePolicy rebalancePolicy) {
+   public void init(LocalTopologyManager localTopologyManager, ClusterTopologyManager clusterTopologyManager) {
       this.localTopologyManager = localTopologyManager;
       this.clusterTopologyManager = clusterTopologyManager;
-      this.rebalancePolicy = rebalancePolicy;
    }
 
    @Override
@@ -151,22 +153,25 @@ public class CacheTopologyControlCommand implements ReplicableCommand {
 
          // coordinator to member
          case CH_UPDATE:
-            localTopologyManager.handleConsistentHashUpdate(cacheName, new CacheTopology(topologyId, currentCH, pendingCH, missingData), viewId);
+            localTopologyManager.handleTopologyUpdate(cacheName, new CacheTopology(topologyId, rebalanceId, currentCH, pendingCH), availabilityMode, viewId);
+            return null;
+         case STABLE_TOPOLOGY_UPDATE:
+            localTopologyManager.handleStableTopologyUpdate(cacheName, new CacheTopology(topologyId, rebalanceId, currentCH, pendingCH), viewId);
             return null;
          case REBALANCE_START:
-            localTopologyManager.handleRebalance(cacheName, new CacheTopology(topologyId, currentCH, pendingCH, missingData), viewId);
+            localTopologyManager.handleRebalance(cacheName, new CacheTopology(topologyId, rebalanceId, currentCH, pendingCH), viewId);
             return null;
          case GET_STATUS:
             return localTopologyManager.handleStatusRequest(viewId);
 
          // rebalance policy control
          case POLICY_GET_STATUS:
-            return rebalancePolicy.isRebalancingEnabled();
+            return clusterTopologyManager.isRebalancingEnabled();
          case POLICY_ENABLE:
-            rebalancePolicy.setRebalancingEnabled(true);
+            clusterTopologyManager.setRebalancingEnabled(true);
             return true;
          case POLICY_DISABLE:
-            rebalancePolicy.setRebalancingEnabled(false);
+            clusterTopologyManager.setRebalancingEnabled(false);
             return true;
          default:
             throw new CacheException("Unknown cache topology control command type " + type);
@@ -197,6 +202,10 @@ public class CacheTopologyControlCommand implements ReplicableCommand {
       return pendingCH;
    }
 
+   public AvailabilityMode getAvailabilityMode() {
+      return availabilityMode;
+   }
+
    public Throwable getThrowable() {
       return throwable;
    }
@@ -208,8 +217,8 @@ public class CacheTopologyControlCommand implements ReplicableCommand {
 
    @Override
    public Object[] getParameters() {
-      return new Object[]{cacheName, (byte) type.ordinal(), sender, joinInfo, topologyId, currentCH,
-            pendingCH, throwable, viewId, missingData};
+      return new Object[]{cacheName, (byte) type.ordinal(), sender, joinInfo, topologyId, rebalanceId, currentCH,
+            pendingCH, availabilityMode, throwable, viewId};
    }
 
    @Override
@@ -221,11 +230,12 @@ public class CacheTopologyControlCommand implements ReplicableCommand {
       sender = (Address) parameters[i++];
       joinInfo = (CacheJoinInfo) parameters[i++];
       topologyId = (Integer) parameters[i++];
+      rebalanceId = (Integer) parameters[i++];
       currentCH = (ConsistentHash) parameters[i++];
       pendingCH = (ConsistentHash) parameters[i++];
+      availabilityMode = (AvailabilityMode) parameters[i++];
       throwable = (Throwable) parameters[i++];
       viewId = (Integer) parameters[i++];
-      missingData = (Boolean) parameters[i];
    }
 
    @Override
@@ -236,11 +246,12 @@ public class CacheTopologyControlCommand implements ReplicableCommand {
             ", sender=" + sender +
             ", joinInfo=" + joinInfo +
             ", topologyId=" + topologyId +
+            ", rebalanceId=" + rebalanceId +
             ", currentCH=" + currentCH +
             ", pendingCH=" + pendingCH +
+            ", availabilityMode=" + availabilityMode +
             ", throwable=" + throwable +
             ", viewId=" + viewId +
-            ", missingData= " + missingData +
             '}';
    }
 

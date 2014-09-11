@@ -9,13 +9,11 @@ import org.infinispan.distribution.DistributionTestHelper;
 import org.infinispan.distribution.L1Manager;
 import org.infinispan.interceptors.EntryWrappingInterceptor;
 import org.infinispan.manager.EmbeddedCacheManager;
-import org.infinispan.remoting.transport.Address;
 import org.infinispan.statetransfer.StateConsumer;
 import org.infinispan.statetransfer.StateTransferLock;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.CheckPoint;
 import org.infinispan.topology.CacheTopology;
-import org.infinispan.util.BaseControlledConsistentHashFactory;
 import org.infinispan.util.ControlledConsistentHashFactory;
 import org.mockito.AdditionalAnswers;
 import org.mockito.invocation.InvocationOnMock;
@@ -23,8 +21,6 @@ import org.mockito.stubbing.Answer;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.Test;
 
-import java.util.ArrayList;
-import java.util.List;
 import java.util.concurrent.Callable;
 import java.util.concurrent.CyclicBarrier;
 import java.util.concurrent.Future;
@@ -138,7 +134,7 @@ public class L1StateTransferRemovesValueTest extends BaseDistFunctionalTest<Stri
       assertIsInL1(c3, key);
 
       CyclicBarrier barrier = new CyclicBarrier(2);
-      c3.getAdvancedCache().addInterceptorAfter(new BlockingInterceptor(barrier, InvalidateL1Command.class, true),
+      c3.getAdvancedCache().addInterceptorAfter(new BlockingInterceptor(barrier, InvalidateL1Command.class, true, false),
                                                 EntryWrappingInterceptor.class);
 
       Future<String> future = c1.putAsync(key, newValue);

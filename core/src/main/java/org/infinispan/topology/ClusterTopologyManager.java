@@ -1,14 +1,13 @@
 package org.infinispan.topology;
 
+import org.infinispan.commands.ReplicableCommand;
 import org.infinispan.factories.scopes.Scope;
 import org.infinispan.factories.scopes.Scopes;
-import org.infinispan.notifications.cachemanagerlistener.event.ViewChangedEvent;
+import org.infinispan.partionhandling.impl.AvailabilityMode;
 import org.infinispan.remoting.transport.Address;
 
 /**
- * Maintains the list of members and performs rebalance operations.
- * The {@link RebalancePolicy} actually decides when to perform the rebalance or how to update the
- * consistent hash.
+ * Maintains the topology for all the caches in the cluster.
  *
  * @author Dan Berindei
  * @since 5.2
@@ -16,19 +15,12 @@ import org.infinispan.remoting.transport.Address;
 @Scope(Scopes.GLOBAL)
 public interface ClusterTopologyManager {
    /**
-    * Used by {@link RebalancePolicy} to start a state transfer.
+    * Signals that a new member is joining the cache.
     */
-   void triggerRebalance(String cacheName) throws Exception;
-
+   CacheStatusResponse handleJoin(String cacheName, Address joiner, CacheJoinInfo joinInfo, int viewId) throws Exception;
 
    /**
-    * Updates the members list and notifies the {@link RebalancePolicy}.
-    * @return The current consistent hash.
-    */
-   CacheTopology handleJoin(String cacheName, Address joiner, CacheJoinInfo joinInfo, int viewId) throws Exception;
-
-   /**
-    * Updates the members list and notifies the {@link RebalancePolicy}
+    * Signals that a member is leaving the cache.
     */
    void handleLeave(String cacheName, Address leaver, int viewId) throws Exception;
 
@@ -37,5 +29,20 @@ public interface ClusterTopologyManager {
     */
    void handleRebalanceCompleted(String cacheName, Address node, int topologyId, Throwable throwable, int viewId) throws Exception;
 
-   public void handleNewView(ViewChangedEvent e);
+   /**
+    * Install a new cluster view.
+    */
+   void handleClusterView(boolean isMerge, int viewId);
+
+   void broadcastRebalanceStart(String cacheName, CacheTopology cacheTopology, boolean totalOrder, boolean distributed);
+
+   void broadcastTopologyUpdate(String cacheName, CacheTopology cacheTopology, AvailabilityMode availabilityMode, boolean totalOrder, boolean distributed);
+
+   void broadcastStableTopologyUpdate(String cacheName, CacheTopology cacheTopology, boolean totalOrder, boolean distributed);
+
+   boolean isRebalancingEnabled();
+
+   void setRebalancingEnabled(boolean enabled);
+
+   void forceRebalance(String cacheName);
 }

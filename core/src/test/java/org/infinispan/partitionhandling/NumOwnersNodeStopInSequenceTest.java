@@ -4,13 +4,11 @@ import org.infinispan.commands.ReplicableCommand;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.distribution.MagicKey;
-import org.infinispan.distribution.ch.ConsistentHash;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.partionhandling.AvailabilityException;
 import org.infinispan.partionhandling.impl.AvailabilityMode;
 import org.infinispan.partionhandling.impl.PartitionHandlingManager;
 import org.infinispan.remoting.transport.Address;
-import org.infinispan.remoting.transport.Transport;
 import org.infinispan.remoting.transport.jgroups.JGroupsAddress;
 import org.infinispan.remoting.transport.jgroups.JGroupsTransport;
 import org.infinispan.statetransfer.StateResponseCommand;
@@ -26,26 +24,22 @@ import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 import org.jgroups.Channel;
 import org.jgroups.View;
-import org.jgroups.protocols.DISCARD;
-import org.jgroups.protocols.TP;
 import org.jgroups.protocols.pbcast.GMS;
-import org.jgroups.stack.ProtocolStack;
 import org.testng.annotations.Test;
 
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.List;
 
 /**
- * With a cluster made out of nodes {A,B,C,D}, tests that D crashes and before the state transfer finishes, another node
- * C crashes. {A,B} should enter in degraded mode. The only way in which it could recover is explicitly, through JMX
- * operations.
+ * With a cluster made out of nodes {A,B,C,D}, tests that D stops gracefully and before the state transfer finishes,
+ * another node C also stops. {A,B} should enter unavailable mode.
+ * The only way in which it could recover is explicitly, through JMX operations.
  */
 @Test(groups = "functional", testName = "partitionhandling.NumOwnersNodeCrashInSequenceTest")
 @CleanupAfterMethod
-public class NumOwnersNodeCrashInSequenceTest extends MultipleCacheManagersTest {
+public class NumOwnersNodeStopInSequenceTest extends MultipleCacheManagersTest {
 
-   private static Log log = LogFactory.getLog(NumOwnersNodeCrashInSequenceTest.class);
+   private static Log log = LogFactory.getLog(NumOwnersNodeStopInSequenceTest.class);
 
    ControlledConsistentHashFactory cchf;
    private ConfigurationBuilder configBuilder;
@@ -136,21 +130,21 @@ public class NumOwnersNodeCrashInSequenceTest extends MultipleCacheManagersTest 
 
       Address missing = address(c1);
       log.tracef("Before killing node %s", missing);
-      crashCacheManagers(manager(c1));
+      TestingUtil.killCacheManagers(manager(c1));
       installNewView(advancedCache(a0).getRpcManager().getTransport().getMembers(), missing, manager(a0), manager(a1), manager(c0));
 
       ss.enter("main:2nd_node_left");
 
       missing = address(c0);
       log.tracef("Killing 2nd node %s", missing);
-      crashCacheManagers(manager(c0));
+      TestingUtil.killCacheManagers(manager(c0));
       installNewView(advancedCache(a0).getRpcManager().getTransport().getMembers(), missing, manager(a0), manager(a1));
 
       eventually(new Condition() {
          @Override
          public boolean isSatisfied() throws Exception {
             PartitionHandlingManager phm0 = TestingUtil.extractComponent(cache(a0), PartitionHandlingManager.class);
-            return phm0.getAvailabilityMode() == AvailabilityMode.DEGRADED_MODE;
+            return phm0.getAvailabilityMode() == AvailabilityMode.UNAVAILABLE;
          }
       });
       ss.exit("main:2nd_node_left");
@@ -159,19 +153,15 @@ public class NumOwnersNodeCrashInSequenceTest extends MultipleCacheManagersTest 
          @Override
          public boolean isSatisfied() throws Exception {
             log.trace("Testing condition");
-            ConsistentHash ch = cache(a0).getAdvancedCache().getDistributionManager().getReadConsistentHash();
             for (Object k : allKeys) {
-               Collection<Address> owners = ch.locateOwners(k);
                try {
                   cache(a0).get(k);
-                  if (owners.contains(address(c0)) || owners.contains(address(c1)))
-                     return false;
+                  return false;
                } catch (AvailabilityException e) {
                }
                try {
                   cache(a1).put(k, k);
-                  if (owners.contains(address(c0)) || owners.contains(address(c1)))
-                     return false;
+                  return false;
                } catch (AvailabilityException e) {
                }
             }
@@ -194,27 +184,6 @@ public class NumOwnersNodeCrashInSequenceTest extends MultipleCacheManagersTest 
          Channel c = ((JGroupsTransport) ecm.getTransport()).getChannel();
          ((GMS) c.getProtocolStack().findProtocol(GMS.class)).installView(view);
       }
-   }
-
-   /**
-    * Simulates a node crash, discarding all the messages from/to this node and then stopping the caches.
-    */
-   private static void crashCacheManagers(EmbeddedCacheManager... cacheManagers) {
-      for (EmbeddedCacheManager cm : cacheManagers) {
-         JGroupsTransport t = (JGroupsTransport) cm.getGlobalComponentRegistry().getComponent(Transport.class);
-         Channel channel = t.getChannel();
-         try {
-            DISCARD discard = new DISCARD();
-            discard.setDiscardAll(true);
-            channel.getProtocolStack().insertProtocol(discard, ProtocolStack.ABOVE, TP.class);
-         } catch (Exception e) {
-            log.warn("Problems inserting discard", e);
-            throw new RuntimeException(e);
-         }
-         View view = View.create(channel.getAddress(), 100);
-         ((GMS) channel.getProtocolStack().findProtocol(GMS.class)).installView(view);
-      }
-      TestingUtil.killCacheManagers(cacheManagers);
    }
 
 }

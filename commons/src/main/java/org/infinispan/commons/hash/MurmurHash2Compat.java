@@ -100,6 +100,11 @@ public class MurmurHash2Compat implements Hash {
    }
 
    @Override
+   public int hashCode() {
+      return 0;
+   }
+
+   @Override
    public String toString() {
       return "MurmurHash2Compat";
    }

@@ -279,11 +279,14 @@ public class RpcManagerImpl implements RpcManager, JmxStatisticsExposer {
 //               }
 //            }
          Map<Address, Response> result = t.invokeRemotely(recipients, rpc, options.responseMode(), options.timeUnit().toMillis(options.timeout()),
-                                                          !options.fifoOrder(), options.responseFilter(), options.totalOrder(),
-                                                          configuration.clustering().cacheMode().isDistributed());
+               !options.fifoOrder(), options.responseFilter(), options.totalOrder(),
+               configuration.clustering().cacheMode().isDistributed());
          if (statisticsEnabled) replicationCount.incrementAndGet();
          if (trace) log.tracef("Response(s) to %s is %s", rpc, result);
          return result;
+      } catch (InterruptedException e) {
+         Thread.currentThread().interrupt();
+         throw new CacheException("Thread interrupted while invoking RPC", e);
       } catch (CacheException e) {
          log.trace("replication exception: ", e);
          if (statisticsEnabled) replicationFailures.incrementAndGet();

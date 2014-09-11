@@ -23,6 +23,7 @@ import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.annotations.Start;
 import org.infinispan.factories.annotations.Stop;
 import org.infinispan.notifications.cachelistener.CacheNotifier;
+import org.infinispan.partionhandling.impl.PartitionHandlingManager;
 import org.infinispan.remoting.responses.Response;
 import org.infinispan.remoting.rpc.RpcManager;
 import org.infinispan.remoting.transport.Address;
@@ -46,6 +47,7 @@ public class StateTransferManagerImpl implements StateTransferManager {
 
    private StateConsumer stateConsumer;
    private StateProvider stateProvider;
+   private PartitionHandlingManager partitionHandlingManager;
    private String cacheName;
    private CacheNotifier cacheNotifier;
    private Configuration configuration;
@@ -71,9 +73,11 @@ public class StateTransferManagerImpl implements StateTransferManager {
                     GlobalConfiguration globalConfiguration,
                     RpcManager rpcManager,
                     GroupManager groupManager,
-                    LocalTopologyManager localTopologyManager) {
+                    LocalTopologyManager localTopologyManager,
+                    PartitionHandlingManager partitionHandlingManager) {
       this.stateConsumer = stateConsumer;
       this.stateProvider = stateProvider;
+      this.partitionHandlingManager = partitionHandlingManager;
       this.cacheName = cache.getName();
       this.cacheNotifier = cacheNotifier;
       this.configuration = configuration;
@@ -111,7 +115,7 @@ public class StateTransferManagerImpl implements StateTransferManager {
          public void rebalance(CacheTopology cacheTopology) {
             doTopologyUpdate(cacheTopology, true);
          }
-      });
+      }, partitionHandlingManager);
 
       if (trace) {
          log.tracef("StateTransferManager of cache %s on node %s received initial topology %s", cacheName, rpcManager.getAddress(), initialTopology);
@@ -163,7 +167,7 @@ public class StateTransferManagerImpl implements StateTransferManager {
       if (unionCH != null) {
          unionCH = new GroupingConsistentHash(unionCH, groupManager);
       }
-      return new CacheTopology(cacheTopology.getTopologyId(), currentCH, pendingCH, unionCH);
+      return new CacheTopology(cacheTopology.getTopologyId(), cacheTopology.getRebalanceId(), currentCH, pendingCH, unionCH);
    }
 
    private void doTopologyUpdate(CacheTopology newCacheTopology, boolean isRebalance) {
@@ -171,17 +175,6 @@ public class StateTransferManagerImpl implements StateTransferManager {
 
       if (oldCacheTopology != null && oldCacheTopology.getTopologyId() > newCacheTopology.getTopologyId()) {
          throw new IllegalStateException("Old topology is higher: old=" + oldCacheTopology + ", new=" + newCacheTopology);
-      }
-
-      if (isRebalance && oldCacheTopology != null && oldCacheTopology.getPendingCH() != null) {
-         // We received a rebalance start command, but we already have a rebalance in progress.
-         // We must have missed a topology update with pendingCH == null. Simulate it to cancel the rebalance.
-         if (newCacheTopology.getTopologyId() < oldCacheTopology.getTopologyId() + 2) {
-            throw new IllegalArgumentException("Received a rebalance start topology " + newCacheTopology +
-                  " while there already was a rebalance in progress: " + oldCacheTopology);
-         }
-         CacheTopology resetTopology = new CacheTopology(newCacheTopology.getTopologyId() - 1, newCacheTopology.getCurrentCH(), null);
-         doTopologyUpdate(resetTopology, false);
       }
 
       if (trace) {
@@ -294,8 +287,8 @@ public class StateTransferManagerImpl implements StateTransferManager {
    }
 
    @Override
-   public void notifyEndOfRebalance(int topologyId) {
-      localTopologyManager.confirmRebalance(cacheName, topologyId, null);
+   public void notifyEndOfRebalance(int topologyId, int rebalanceId) {
+      localTopologyManager.confirmRebalance(cacheName, topologyId, rebalanceId, null);
    }
 
    // TODO Investigate merging ownsData() and getFirstTopologyAsMember(), as they serve a similar purpose

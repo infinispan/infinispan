@@ -70,8 +70,7 @@ public class StateTransferFunctionalTest extends MultipleCacheManagersTest {
    }
 
    protected EmbeddedCacheManager createCacheManager() {
-      EmbeddedCacheManager cm = addClusterEnabledCacheManager(new TransportFlags().withMerge(true));
-      cm.defineConfiguration(cacheName, configurationBuilder.build());
+      EmbeddedCacheManager cm = addClusterEnabledCacheManager(configurationBuilder, new TransportFlags().withMerge(true));
       return cm;
    }
 

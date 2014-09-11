@@ -58,11 +58,12 @@ public class ReplCommandForwardingTest extends MultipleCacheManagersTest {
       EmbeddedCacheManager cm1 = addClusterEnabledCacheManager(buildConfig(false));
       final Cache<Object, Object> c1 = cm1.getCache();
       DelayInterceptor di1 = findInterceptor(c1, DelayInterceptor.class);
+      int initialTopologyId = extractComponent(c1, StateTransferManager.class).getCacheTopology().getTopologyId();
 
       EmbeddedCacheManager cm2 = addClusterEnabledCacheManager(buildConfig(false));
       Cache<Object, Object> c2 = cm2.getCache();
       DelayInterceptor di2 = findInterceptor(c2, DelayInterceptor.class);
-      waitForStateTransfer(2, c1, c2);
+      waitForStateTransfer(initialTopologyId + 2, c1, c2);
 
       Future<Object> f = fork(new Callable<Object>() {
          @Override
@@ -81,7 +82,7 @@ public class ReplCommandForwardingTest extends MultipleCacheManagersTest {
       EmbeddedCacheManager cm3 = addClusterEnabledCacheManager(buildConfig(false));
       Cache<Object, Object> c3 = cm3.getCache();
       DelayInterceptor di3 = findInterceptor(c3, DelayInterceptor.class);
-      waitForStateTransfer(4, c1, c2, c3);
+      waitForStateTransfer(initialTopologyId + 4, c1, c2, c3);
 
       // Unblock the replicated command on c2.
       // NonTxConcurrentDistributionInterceptor on c3 will throw an OutdatedTopologyException,
@@ -100,7 +101,7 @@ public class ReplCommandForwardingTest extends MultipleCacheManagersTest {
       EmbeddedCacheManager cm4 = addClusterEnabledCacheManager(buildConfig(false));
       Cache<Object, Object> c4 = cm4.getCache();
       DelayInterceptor di4 = findInterceptor(c4, DelayInterceptor.class);
-      waitForStateTransfer(6, c1, c2, c3, c4);
+      waitForStateTransfer(initialTopologyId + 6, c1, c2, c3, c4);
 
       // Unblock the command with the new topology id from c1 on c3.
       // NonTxConcurrentDistributionInterceptor on c3 will throw an OutdatedTopologyException,
@@ -137,11 +138,12 @@ public class ReplCommandForwardingTest extends MultipleCacheManagersTest {
       EmbeddedCacheManager cm1 = addClusterEnabledCacheManager(buildConfig(true));
       final Cache<Object, Object> c1 = cm1.getCache();
       DelayInterceptor di1 = findInterceptor(c1, DelayInterceptor.class);
+      int initialTopologyId = extractComponent(c1, StateTransferManager.class).getCacheTopology().getTopologyId();
 
       EmbeddedCacheManager cm2 = addClusterEnabledCacheManager(buildConfig(true));
       Cache c2 = cm2.getCache();
       DelayInterceptor di2 = findInterceptor(c2, DelayInterceptor.class);
-      waitForStateTransfer(2, c1, c2);
+      waitForStateTransfer(initialTopologyId + 2, c1, c2);
 
       Future<Object> f = fork(new Callable<Object>() {
          @Override
@@ -157,7 +159,7 @@ public class ReplCommandForwardingTest extends MultipleCacheManagersTest {
       EmbeddedCacheManager cm3 = addClusterEnabledCacheManager(buildConfig(true));
       Cache c3 = cm3.getCache();
       DelayInterceptor di3 = findInterceptor(c3, DelayInterceptor.class);
-      waitForStateTransfer(4, c1, c2, c3);
+      waitForStateTransfer(initialTopologyId + 4, c1, c2, c3);
 
       // Unblock the replicated command on c2.
       // StateTransferInterceptor will forward the command to c3.
@@ -169,7 +171,7 @@ public class ReplCommandForwardingTest extends MultipleCacheManagersTest {
       EmbeddedCacheManager cm4 = addClusterEnabledCacheManager(buildConfig(true));
       Cache c4 = cm4.getCache();
       DelayInterceptor di4 = findInterceptor(c4, DelayInterceptor.class);
-      waitForStateTransfer(6, c1, c2, c3, c4);
+      waitForStateTransfer(initialTopologyId + 6, c1, c2, c3, c4);
 
       // Unblock the forwarded command on c3.
       // StateTransferInterceptor will then forward the command to c2 and c4.

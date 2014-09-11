@@ -1,8 +1,7 @@
 package org.infinispan.partitionhandling;
 
 import org.infinispan.distribution.MagicKey;
-import org.infinispan.partionhandling.AvailabilityException;
-import org.infinispan.partionhandling.impl.PartitionHandlingManager;
+import org.infinispan.partionhandling.impl.AvailabilityMode;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.test.fwk.CleanupAfterMethod;
 import org.testng.annotations.Test;
@@ -56,15 +55,15 @@ public class TwoWaySplitAndMergeTest extends BasePartitionHandlingTest {
 
       List<Address> allMembers = advancedCache(0).getRpcManager().getMembers();
       //use set comparison as the merge view will reshuffle the order of nodes
-      assertEquals(new HashSet<>(partitionHandlingManager(0).getLastStableCluster()), new HashSet<>(allMembers));
-      assertEquals(new HashSet<>(partitionHandlingManager(1).getLastStableCluster()), new HashSet<>(allMembers));
-      assertEquals(new HashSet<>(partitionHandlingManager(2).getLastStableCluster()), new HashSet<>(allMembers));
-      assertEquals(new HashSet<>(partitionHandlingManager(3).getLastStableCluster()), new HashSet<>(allMembers));
+      assertEquals(new HashSet<>(partitionHandlingManager(0).getLastStableTopology().getMembers()), new HashSet<>(allMembers));
+      assertEquals(new HashSet<>(partitionHandlingManager(1).getLastStableTopology().getMembers()), new HashSet<>(allMembers));
+      assertEquals(new HashSet<>(partitionHandlingManager(2).getLastStableTopology().getMembers()), new HashSet<>(allMembers));
+      assertEquals(new HashSet<>(partitionHandlingManager(3).getLastStableTopology().getMembers()), new HashSet<>(allMembers));
       eventually(new Condition() {
          @Override
          public boolean isSatisfied() throws Exception {
             for (int i = 0; i < 4; i++)
-               if (partitionHandlingManager(0).getState() != PartitionHandlingManager.PartitionState.AVAILABLE)
+               if (partitionHandlingManager(0).getAvailabilityMode() != AvailabilityMode.AVAILABLE)
                   return false;
             return true;
          }
@@ -72,15 +71,15 @@ public class TwoWaySplitAndMergeTest extends BasePartitionHandlingTest {
 
       splitCluster(p0.getNodes(), p1.getNodes());
 
-      assertEquals(partitionHandlingManager(0).getLastStableCluster(), allMembers);
-      assertEquals(partitionHandlingManager(1).getLastStableCluster(), allMembers);
-      assertEquals(partitionHandlingManager(2).getLastStableCluster(), allMembers);
-      assertEquals(partitionHandlingManager(3).getLastStableCluster(), allMembers);
+      assertEquals(partitionHandlingManager(0).getLastStableTopology().getMembers(), allMembers);
+      assertEquals(partitionHandlingManager(1).getLastStableTopology().getMembers(), allMembers);
+      assertEquals(partitionHandlingManager(2).getLastStableTopology().getMembers(), allMembers);
+      assertEquals(partitionHandlingManager(3).getLastStableTopology().getMembers(), allMembers);
       eventually(new Condition() {
          @Override
          public boolean isSatisfied() throws Exception {
             for (int i = 0; i < 4; i++)
-               if (partitionHandlingManager(0).getState() != PartitionHandlingManager.PartitionState.DEGRADED_MODE)
+               if (partitionHandlingManager(0).getAvailabilityMode() != AvailabilityMode.DEGRADED_MODE)
                   return false;
             return true;
          }
@@ -131,15 +130,15 @@ public class TwoWaySplitAndMergeTest extends BasePartitionHandlingTest {
       partition(0).merge(partition(1));
 
       //use set comparison as the merge view will reshuffle the order of nodes
-      assertEquals(new HashSet<>(partitionHandlingManager(0).getLastStableCluster()), new HashSet<>(allMembers));
-      assertEquals(new HashSet<>(partitionHandlingManager(1).getLastStableCluster()), new HashSet<>(allMembers));
-      assertEquals(new HashSet<>(partitionHandlingManager(2).getLastStableCluster()), new HashSet<>(allMembers));
-      assertEquals(new HashSet<>(partitionHandlingManager(3).getLastStableCluster()), new HashSet<>(allMembers));
+      assertEquals(new HashSet<>(partitionHandlingManager(0).getLastStableTopology().getMembers()), new HashSet<>(allMembers));
+      assertEquals(new HashSet<>(partitionHandlingManager(1).getLastStableTopology().getMembers()), new HashSet<>(allMembers));
+      assertEquals(new HashSet<>(partitionHandlingManager(2).getLastStableTopology().getMembers()), new HashSet<>(allMembers));
+      assertEquals(new HashSet<>(partitionHandlingManager(3).getLastStableTopology().getMembers()), new HashSet<>(allMembers));
       eventually(new Condition() {
          @Override
          public boolean isSatisfied() throws Exception {
             for (int i = 0; i < 4; i++)
-               if (partitionHandlingManager(0).getState() != PartitionHandlingManager.PartitionState.AVAILABLE)
+               if (partitionHandlingManager(0).getAvailabilityMode() != AvailabilityMode.AVAILABLE)
                   return false;
             return true;
          }

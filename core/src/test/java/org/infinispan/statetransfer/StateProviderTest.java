@@ -172,7 +172,7 @@ public class StateProviderTest {
       when(transactionTable.getLocalTransactions()).thenReturn(Collections.<LocalTransaction>emptyList());
       when(transactionTable.getRemoteTransactions()).thenReturn(Collections.<RemoteTransaction>emptyList());
 
-      cacheTopology = new CacheTopology(1, ch1, ch1, ch1);
+      cacheTopology = new CacheTopology(1, 1, ch1, ch1, ch1);
       stateProvider.onTopologyUpdate(cacheTopology, false);
 
       log.debug("ch1: " + ch1);
@@ -194,7 +194,7 @@ public class StateProviderTest {
       assertTrue(stateProvider.isStateTransferInProgress());
 
       log.debug("ch2: " + ch2);
-      cacheTopology = new CacheTopology(2, ch2, ch2, ch2);
+      cacheTopology = new CacheTopology(2, 1, ch2, ch2, ch2);
       stateProvider.onTopologyUpdate(cacheTopology, true);
 
       assertFalse(stateProvider.isStateTransferInProgress());
@@ -285,7 +285,7 @@ public class StateProviderTest {
       when(transactionTable.getLocalTransactions()).thenReturn(Collections.<LocalTransaction>emptyList());
       when(transactionTable.getRemoteTransactions()).thenReturn(Collections.<RemoteTransaction>emptyList());
 
-      cacheTopology = new CacheTopology(1, ch1, ch1, ch1);
+      cacheTopology = new CacheTopology(1, 1, ch1, ch1, ch1);
       stateProvider.onTopologyUpdate(cacheTopology, false);
 
       log.debug("ch1: " + ch1);
@@ -308,7 +308,7 @@ public class StateProviderTest {
 
       // TestingUtil.sleepThread(15000);
       log.debug("ch2: " + ch2);
-      cacheTopology = new CacheTopology(2, ch2, ch2, ch2);
+      cacheTopology = new CacheTopology(2, 1, ch2, ch2, ch2);
       stateProvider.onTopologyUpdate(cacheTopology, false);
 
       assertFalse(stateProvider.isStateTransferInProgress());

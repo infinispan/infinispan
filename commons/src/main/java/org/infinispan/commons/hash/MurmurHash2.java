@@ -97,6 +97,11 @@ public class MurmurHash2 implements Hash {
    }
 
    @Override
+   public int hashCode() {
+      return 0;
+   }
+
+   @Override
    public String toString() {
       return "MurmurHash2";
    }

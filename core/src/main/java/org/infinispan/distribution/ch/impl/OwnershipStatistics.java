@@ -105,6 +105,20 @@ public class OwnershipStatistics {
          allOwnersCount += ownedCount;
       }
       return allOwnersCount;
+   }
 
+   public String toString() {
+      StringBuilder sb = new StringBuilder("OwnershipStatistics{");
+      boolean isFirst = true;
+      for (Map.Entry<Address, Integer> e : nodes.entrySet()) {
+         if (!isFirst) {
+            sb.append(", ");
+         }
+         Address node = e.getKey();
+         Integer index = e.getValue();
+         sb.append(node).append(": ").append(primaryOwned[index]).append('/').append(owned[index]);
+         isFirst = false;
+      }
+      return sb.toString();
    }
 }

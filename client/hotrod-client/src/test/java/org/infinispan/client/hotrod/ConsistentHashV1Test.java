@@ -147,6 +147,23 @@ public class ConsistentHashV1Test {
       public int hash(Object o) {
          return value;
       }
+
+      @Override
+      public boolean equals(Object o) {
+         if (this == o) return true;
+         if (o == null || getClass() != o.getClass()) return false;
+
+         DummyHash dummyHash = (DummyHash) o;
+
+         if (value != dummyHash.value) return false;
+
+         return true;
+      }
+
+      @Override
+      public int hashCode() {
+         return value;
+      }
    }
 
 }

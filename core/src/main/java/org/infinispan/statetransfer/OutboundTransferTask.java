@@ -238,7 +238,7 @@ public class OutboundTransferTask implements Runnable {
          try {
             rpcManager.invokeRemotely(Collections.singleton(destination), cmd, rpcOptions);
          } catch (SuspectException e) {
-            log.errorf(e, "Node %s left cache %s: %s", destination, cacheName, e.getMessage());
+            log.debugf(e, "Node %s left cache %s while we were sending state to it: %s", destination, cacheName, e.getMessage());
             cancel();
          } catch (Exception e) {
             if (isCancelled()) {

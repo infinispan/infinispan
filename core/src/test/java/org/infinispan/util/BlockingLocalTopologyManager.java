@@ -55,7 +55,7 @@ public class BlockingLocalTopologyManager extends AbstractControlledLocalTopolog
    }
 
    @Override
-   protected final void beforeHandleConsistentHashUpdate(String cacheName, CacheTopology cacheTopology, int viewId) {
+   protected final void beforeHandleTopologyUpdate(String cacheName, CacheTopology cacheTopology, int viewId) {
       getLatch(LatchType.CONSISTENT_HASH_UPDATE).blockIfNeeded();
    }
 

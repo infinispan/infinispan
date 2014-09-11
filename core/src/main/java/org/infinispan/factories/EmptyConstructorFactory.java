@@ -12,10 +12,8 @@ import org.infinispan.remoting.InboundInvocationHandler;
 import org.infinispan.remoting.InboundInvocationHandlerImpl;
 import org.infinispan.topology.ClusterTopologyManager;
 import org.infinispan.topology.ClusterTopologyManagerImpl;
-import org.infinispan.topology.DefaultRebalancePolicy;
 import org.infinispan.topology.LocalTopologyManager;
 import org.infinispan.topology.LocalTopologyManagerImpl;
-import org.infinispan.topology.RebalancePolicy;
 import org.infinispan.util.DefaultTimeService;
 import org.infinispan.util.TimeService;
 import org.infinispan.xsite.BackupReceiverRepository;
@@ -30,8 +28,7 @@ import org.infinispan.xsite.BackupReceiverRepositoryImpl;
  */
 
 @DefaultFactoryFor(classes = {InboundInvocationHandler.class, RemoteCommandsFactory.class, ExternalizerTable.class,
-                              RebalancePolicy.class, BackupReceiverRepository.class, CancellationService.class,
-                              TimeService.class})
+                              BackupReceiverRepository.class, CancellationService.class, TimeService.class})
 @Scope(Scopes.GLOBAL)
 public class EmptyConstructorFactory extends AbstractComponentFactory implements AutoInstantiableFactory {
 
@@ -48,8 +45,6 @@ public class EmptyConstructorFactory extends AbstractComponentFactory implements
          return (T) new LocalTopologyManagerImpl();
       else if (componentType.equals(ClusterTopologyManager.class))
          return (T) new ClusterTopologyManagerImpl();
-      else if (componentType.equals(RebalancePolicy.class))
-         return (T) new DefaultRebalancePolicy();
       else if (componentType.equals(BackupReceiverRepository.class))
          return (T) new BackupReceiverRepositoryImpl();
       else if (componentType.equals(CancellationService.class))

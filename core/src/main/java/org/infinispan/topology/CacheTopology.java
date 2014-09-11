@@ -20,8 +20,9 @@ import org.infinispan.util.logging.LogFactory;
  * <p/>
  * The pending CH can be {@code null} if we don't have a state transfer in progress.
  * <p/>
- * The {@code topologyId} is incremented every time the topology changes (i.e. state transfer
- * starts or ends). It is not modified when the consistent hashes are updated without requiring state
+ * The {@code topologyId} is incremented every time the topology changes (e.g. a member leaves, state transfer
+ * starts or ends).
+ * The {@code rebalanceId} is not modified when the consistent hashes are updated without requiring state
  * transfer (e.g. when a member leaves).
  *
  * @author Dan Berindei
@@ -33,24 +34,16 @@ public class CacheTopology {
    private static final boolean trace = log.isTraceEnabled();
 
    private final int topologyId;
+   private final int rebalanceId;
    private final ConsistentHash currentCH;
    private final ConsistentHash pendingCH;
    private final transient ConsistentHash unionCH;
-   private final boolean isMissingData;
 
-   public CacheTopology(int topologyId, ConsistentHash currentCH, ConsistentHash pendingCH, boolean isMissingData) {
-      this(topologyId, currentCH, pendingCH, null, isMissingData);
+   public CacheTopology(int topologyId, int rebalanceId, ConsistentHash currentCH, ConsistentHash pendingCH) {
+      this(topologyId, rebalanceId, currentCH, pendingCH, null);
    }
 
-   public CacheTopology(int topologyId, ConsistentHash currentCH, ConsistentHash pendingCH) {
-      this(topologyId, currentCH, pendingCH, null, false);
-   }
-
-   public CacheTopology(int topologyId, ConsistentHash currentCH, ConsistentHash pendingCH, ConsistentHash unionCH) {
-      this(topologyId, currentCH, pendingCH, unionCH, false);
-   }
-
-   public CacheTopology(int topologyId, ConsistentHash currentCH, ConsistentHash pendingCH, ConsistentHash unionCH, boolean isMissingData) {
+   public CacheTopology(int topologyId, int rebalanceId, ConsistentHash currentCH, ConsistentHash pendingCH, ConsistentHash unionCH) {
       if (pendingCH != null && !pendingCH.getMembers().containsAll(currentCH.getMembers())) {
          throw new IllegalArgumentException("A cache topology's pending consistent hash must " +
                "contain all the current consistent hash's members");
@@ -59,7 +52,7 @@ public class CacheTopology {
       this.currentCH = currentCH;
       this.pendingCH = pendingCH;
       this.unionCH = unionCH;
-      this.isMissingData = isMissingData;
+      this.rebalanceId = rebalanceId;
    }
 
    public int getTopologyId() {
@@ -87,8 +80,11 @@ public class CacheTopology {
       return unionCH;
    }
 
-   public boolean isMissingData() {
-      return isMissingData;
+   /**
+    * The id of the latest started rebalance.
+    */
+   public int getRebalanceId() {
+      return rebalanceId;
    }
 
    public List<Address> getMembers() {
@@ -128,6 +124,7 @@ public class CacheTopology {
       CacheTopology that = (CacheTopology) o;
 
       if (topologyId != that.topologyId) return false;
+      if (rebalanceId != that.rebalanceId) return false;
       if (currentCH != null ? !currentCH.equals(that.currentCH) : that.currentCH != null) return false;
       if (pendingCH != null ? !pendingCH.equals(that.pendingCH) : that.pendingCH != null) return false;
       if (unionCH != null ? !unionCH.equals(that.unionCH) : that.unionCH != null) return false;
@@ -138,6 +135,7 @@ public class CacheTopology {
    @Override
    public int hashCode() {
       int result = topologyId;
+      result = 31 * result + rebalanceId;
       result = 31 * result + (currentCH != null ? currentCH.hashCode() : 0);
       result = 31 * result + (pendingCH != null ? pendingCH.hashCode() : 0);
       result = 31 * result + (unionCH != null ? unionCH.hashCode() : 0);
@@ -148,10 +146,10 @@ public class CacheTopology {
    public String toString() {
       return "CacheTopology{" +
             "id=" + topologyId +
+            ", rebalanceId=" + rebalanceId +
             ", currentCH=" + currentCH +
             ", pendingCH=" + pendingCH +
             ", unionCH=" + unionCH +
-            ", isMissingData=" + isMissingData +
             '}';
    }
 
@@ -168,20 +166,20 @@ public class CacheTopology {
       @Override
       public void writeObject(ObjectOutput output, CacheTopology cacheTopology) throws IOException {
          output.writeInt(cacheTopology.topologyId);
+         output.writeInt(cacheTopology.rebalanceId);
          output.writeObject(cacheTopology.currentCH);
          output.writeObject(cacheTopology.pendingCH);
          output.writeObject(cacheTopology.unionCH);
-         output.writeBoolean(cacheTopology.isMissingData);
       }
 
       @Override
       public CacheTopology readObject(ObjectInput unmarshaller) throws IOException, ClassNotFoundException {
          int topologyId = unmarshaller.readInt();
+         int rebalanceId = unmarshaller.readInt();
          ConsistentHash currentCH = (ConsistentHash) unmarshaller.readObject();
          ConsistentHash pendingCH = (ConsistentHash) unmarshaller.readObject();
          ConsistentHash unionCH = (ConsistentHash) unmarshaller.readObject();
-         boolean isMissingData = unmarshaller.readBoolean();
-         return new CacheTopology(topologyId, currentCH, pendingCH, unionCH, isMissingData);
+         return new CacheTopology(topologyId, rebalanceId, currentCH, pendingCH, unionCH);
       }
 
       @Override

@@ -55,7 +55,7 @@ public interface StateTransferManager {
     */
    Map<Address, Response> forwardCommandIfNeeded(TopologyAffectedCommand command, Set<Object> affectedKeys, Address origin, boolean sync);
 
-   void notifyEndOfRebalance(int topologyId);
+   void notifyEndOfRebalance(int topologyId, int rebalanceId);
 
    /**
     * @return  true if this node has already received the first rebalance start

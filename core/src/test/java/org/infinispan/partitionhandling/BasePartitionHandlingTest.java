@@ -7,6 +7,7 @@ import org.infinispan.notifications.Listener;
 import org.infinispan.notifications.cachemanagerlistener.annotation.ViewChanged;
 import org.infinispan.notifications.cachemanagerlistener.event.ViewChangedEvent;
 import org.infinispan.partionhandling.AvailabilityException;
+import org.infinispan.partionhandling.impl.AvailabilityMode;
 import org.infinispan.partionhandling.impl.PartitionHandlingManager;
 import org.infinispan.remoting.transport.jgroups.JGroupsTransport;
 import org.infinispan.test.MultipleCacheManagersTest;
@@ -261,7 +262,7 @@ public class BasePartitionHandlingTest extends MultipleCacheManagersTest {
                eventually(new Condition() {
                   @Override
                   public boolean isSatisfied() throws Exception {
-                     return partitionHandlingManager(c.getAdvancedCache()).getState() == PartitionHandlingManager.PartitionState.DEGRADED_MODE;
+                     return partitionHandlingManager(c.getAdvancedCache()).getAvailabilityMode() == AvailabilityMode.DEGRADED_MODE;
                   }
                });
             }
@@ -321,12 +322,12 @@ public class BasePartitionHandlingTest extends MultipleCacheManagersTest {
          }
       }
 
-      public void expectPartitionState(final PartitionHandlingManager.PartitionState state) {
+      public void expectPartitionState(final AvailabilityMode state) {
          for (final Cache c : cachesInThisPartition()) {
             eventually(new Condition() {
                @Override
                public boolean isSatisfied() throws Exception {
-                  return partitionHandlingManager(c).getState() == state;
+                  return partitionHandlingManager(c).getAvailabilityMode() == state;
                }
             });
          }

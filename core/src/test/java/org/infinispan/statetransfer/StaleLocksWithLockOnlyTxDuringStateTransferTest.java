@@ -74,7 +74,7 @@ public class StaleLocksWithLockOnlyTxDuringStateTransferTest extends MultipleCac
             .before("st:block_get_transactions", "st:resume_get_transactions");
       // Block the topology update on cache0 until the tx has finished
       advanceOnGlobalComponentMethod(sequencer, manager(0), LocalTopologyManager.class,
-            matchMethodCall("handleConsistentHashUpdate").withMatcher(1, new CacheTopologyMatcher(finalTopologyId)).build())
+            matchMethodCall("handleTopologyUpdate").withMatcher(1, new CacheTopologyMatcher(finalTopologyId)).build())
             .before("st:block_ch_update", "st:resume_ch_update");
 
       // Start cache 1, but the state request will be blocked on cache 0

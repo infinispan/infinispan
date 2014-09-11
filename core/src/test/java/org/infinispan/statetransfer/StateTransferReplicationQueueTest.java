@@ -5,13 +5,14 @@ import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.manager.EmbeddedCacheManager;
-import org.infinispan.notifications.cachemanagerlistener.event.ViewChangedEvent;
+import org.infinispan.partionhandling.impl.AvailabilityMode;
 import org.infinispan.remoting.ReplicationQueue;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.CleanupAfterMethod;
 import org.infinispan.topology.CacheJoinInfo;
+import org.infinispan.topology.CacheStatusResponse;
 import org.infinispan.topology.CacheTopology;
 import org.infinispan.topology.ClusterTopologyManager;
 import org.infinispan.util.logging.Log;
@@ -24,7 +25,6 @@ import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
 import java.lang.reflect.Method;
-import java.util.concurrent.Callable;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import static org.testng.AssertJUnit.assertNull;
@@ -265,28 +265,8 @@ public class StateTransferReplicationQueueTest extends MultipleCacheManagersTest
       }
 
       @Override
-      public void handleNewView(ViewChangedEvent e) {
-         instance.handleNewView(e);
-      }
-
-      @Override
-      public void triggerRebalance(final String cacheName) throws Exception {
-         fork(new Callable<Object>() {
-            @Override
-            public Object call() throws Exception {
-               // Allow the joiner to receive some commands between the initial cache topology and the rebalance start
-               log.tracef("Delaying rebalance");
-               Thread.sleep(500);
-
-               instance.triggerRebalance(cacheName);
-               return null;
-            }
-         });
-      }
-
-      @Override
-      public CacheTopology handleJoin(String cacheName, Address joiner, CacheJoinInfo joinInfo, int viewId) throws Exception {
-         CacheTopology result = instance.handleJoin(cacheName, joiner, joinInfo, viewId);
+      public org.infinispan.topology.CacheStatusResponse handleJoin(String cacheName, Address joiner, CacheJoinInfo joinInfo, int viewId) throws Exception {
+         CacheStatusResponse result = instance.handleJoin(cacheName, joiner, joinInfo, viewId);
 
          // Allow the joiner to receive some commands before the initial cache topology
          log.tracef("Delaying join response");
@@ -302,6 +282,49 @@ public class StateTransferReplicationQueueTest extends MultipleCacheManagersTest
       @Override
       public void handleRebalanceCompleted(String cacheName, Address node, int topologyId, Throwable throwable, int viewId) throws Exception {
          instance.handleRebalanceCompleted(cacheName, node, topologyId, throwable, viewId);
+      }
+
+      @Override
+      public void handleClusterView(boolean isMerge, int viewId) {
+         instance.handleClusterView(isMerge, viewId);
+      }
+
+      @Override
+      public void broadcastRebalanceStart(String cacheName, CacheTopology cacheTopology, boolean totalOrder, boolean distributed) {
+         // Allow the joiner to receive some commands between the initial cache topology and the rebalance start
+         log.tracef("Delaying rebalance");
+         try {
+            Thread.sleep(500);
+         } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+         }
+
+         instance.broadcastRebalanceStart(cacheName, cacheTopology, totalOrder, distributed);
+      }
+
+      @Override
+      public void broadcastTopologyUpdate(String cacheName, CacheTopology cacheTopology, AvailabilityMode availabilityMode, boolean totalOrder, boolean distributed) {
+         instance.broadcastTopologyUpdate(cacheName, cacheTopology, availabilityMode, totalOrder, distributed);
+      }
+
+      @Override
+      public void broadcastStableTopologyUpdate(String cacheName, CacheTopology cacheTopology, boolean totalOrder, boolean distributed) {
+         instance.broadcastStableTopologyUpdate(cacheName, cacheTopology, totalOrder, distributed);
+      }
+
+      @Override
+      public boolean isRebalancingEnabled() {
+         return instance.isRebalancingEnabled();
+      }
+
+      @Override
+      public void setRebalancingEnabled(boolean enabled) {
+         instance.setRebalancingEnabled(enabled);
+      }
+
+      @Override
+      public void forceRebalance(String cacheName) {
+         instance.forceRebalance(cacheName);
       }
    }
 }
