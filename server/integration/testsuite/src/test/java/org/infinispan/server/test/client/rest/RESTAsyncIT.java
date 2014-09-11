@@ -7,7 +7,7 @@ import javax.servlet.http.HttpServletResponse;
 import org.infinispan.arquillian.core.InfinispanResource;
 import org.infinispan.arquillian.core.RemoteInfinispanServer;
 import org.infinispan.server.test.category.RESTClustered;
-import org.infinispan.server.test.category.UnstableClientClustered;
+import org.infinispan.server.test.util.ITestUtils;
 import org.jboss.arquillian.junit.Arquillian;
 import org.junit.After;
 import org.junit.Before;
@@ -20,9 +20,10 @@ import static org.infinispan.server.test.client.rest.RESTHelper.KEY_B;
 import static org.infinispan.server.test.client.rest.RESTHelper.delete;
 import static org.infinispan.server.test.client.rest.RESTHelper.fullPathKey;
 import static org.infinispan.server.test.client.rest.RESTHelper.get;
+import static org.infinispan.server.test.client.rest.RESTHelper.getWithoutAssert;
 import static org.infinispan.server.test.client.rest.RESTHelper.head;
 import static org.infinispan.server.test.client.rest.RESTHelper.put;
-import static org.junit.Assert.assertEquals;
+import static org.infinispan.server.test.util.ITestUtils.eventually;
 import static org.junit.Assert.assertTrue;
 
 /**
@@ -32,7 +33,7 @@ import static org.junit.Assert.assertTrue;
  * @version October 2011
  */
 @RunWith(Arquillian.class)
-@Category({ RESTClustered.class, UnstableClientClustered.class})
+@Category({ RESTClustered.class })
 public class RESTAsyncIT {
 
     @InfinispanResource("container1")
@@ -104,14 +105,26 @@ public class RESTAsyncIT {
         }
 
         for (int i = 0; i < NUM_OPERATIONS; i++) {
-            get(fullPathKey(String.valueOf(i)), null, HttpServletResponse.SC_NOT_FOUND, true, "performAsync", "true");
+            final int iter = i; // inner class can access only final variables...
+            // since the delete is async, the get can execute before the delete finishes (delete needs communication between nodes)
+            eventually(new ITestUtils.Condition() {
+                @Override
+                public boolean isSatisfied() throws Exception {
+                    return getWithoutAssert(fullPathKey(String.valueOf(iter)), null, HttpServletResponse.SC_NOT_FOUND, true, "performAsync", "true");
+                }
+            }, 5000, 10);
         }
 
         put(fullPathKey(KEY_A), KEY_A, "application/octet-stream");
         put(fullPathKey(KEY_B), KEY_B, "application/octet-stream");
         delete(fullPathKey(null), HttpServletResponse.SC_OK, "performAsync", "true");
 
-        assertEquals(HttpServletResponse.SC_NOT_FOUND, get(fullPathKey(KEY_A), HttpServletResponse.SC_NOT_FOUND).getStatusLine().getStatusCode());
-        assertEquals(HttpServletResponse.SC_NOT_FOUND, get(fullPathKey(KEY_B), HttpServletResponse.SC_NOT_FOUND).getStatusLine().getStatusCode());
+        eventually(new ITestUtils.Condition() {
+            @Override
+            public boolean isSatisfied() throws Exception {
+                return getWithoutAssert(fullPathKey(KEY_A), null, HttpServletResponse.SC_NOT_FOUND, true) &&
+                       getWithoutAssert(fullPathKey(KEY_B), null, HttpServletResponse.SC_NOT_FOUND, true);
+            }
+        }, 5000, 10);
     }
 }
