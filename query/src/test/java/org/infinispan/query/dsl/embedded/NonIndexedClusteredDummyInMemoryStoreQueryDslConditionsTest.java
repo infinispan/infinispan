@@ -1,8 +1,8 @@
 package org.infinispan.query.dsl.embedded;
 
+import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.persistence.dummy.DummyInMemoryStoreConfigurationBuilder;
-import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.testng.annotations.Test;
 
 /**
@@ -14,8 +14,10 @@ public class NonIndexedClusteredDummyInMemoryStoreQueryDslConditionsTest extends
 
    @Override
    protected void createCacheManagers() throws Throwable {
-      ConfigurationBuilder cfg = TestCacheManagerFactory.getDefaultCacheConfiguration(true);
-      cfg.persistence()
+      ConfigurationBuilder cfg = getDefaultClusteredCacheConfig(CacheMode.REPL_SYNC, true);
+      cfg.clustering()
+            .stateTransfer().fetchInMemoryState(true)
+            .persistence()
             .addStore(DummyInMemoryStoreConfigurationBuilder.class);
 
       // ensure the data container contains minimal data so the store will need to be accessed to get the rest

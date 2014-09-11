@@ -1,7 +1,7 @@
 package org.infinispan.query.dsl.embedded;
 
+import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
-import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.testng.annotations.Test;
 
 /**
@@ -13,7 +13,9 @@ public class NonIndexedClusteredQueryDslConditionsTest extends NonIndexedQueryDs
 
    @Override
    protected void createCacheManagers() throws Throwable {
-      ConfigurationBuilder cfg = TestCacheManagerFactory.getDefaultCacheConfiguration(true);
-      createClusteredCaches(2, cfg);
+      ConfigurationBuilder defaultConfiguration = getDefaultClusteredCacheConfig(CacheMode.REPL_SYNC, false);
+      defaultConfiguration.clustering()
+            .stateTransfer().fetchInMemoryState(true);
+      createClusteredCaches(2, defaultConfiguration);
    }
 }
