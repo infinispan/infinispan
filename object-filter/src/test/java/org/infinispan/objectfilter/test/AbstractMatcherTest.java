@@ -536,6 +536,54 @@ public abstract class AbstractMatcherTest {
    }
 
    @Test
+   public void testLike3() throws Exception {
+      String queryString = "from org.infinispan.objectfilter.test.model.Person p where p.name like 'Jo%'";
+      assertTrue(match(queryString, createPerson1()));
+   }
+
+   @Test
+   public void testLike4() throws Exception {
+      String queryString = "from org.infinispan.objectfilter.test.model.Person p where p.name like 'Joh_'";
+      assertTrue(match(queryString, createPerson1()));
+   }
+
+   @Test
+   public void testLike5() throws Exception {
+      String queryString = "from org.infinispan.objectfilter.test.model.Person p where p.name like 'Joh_nna'";
+      assertFalse(match(queryString, createPerson1()));
+   }
+
+   @Test
+   public void testLike6() throws Exception {
+      String queryString = "from org.infinispan.objectfilter.test.model.Person p where p.name like '_oh_'";
+      assertTrue(match(queryString, createPerson1()));
+   }
+
+   @Test
+   public void testLike7() throws Exception {
+      String queryString = "from org.infinispan.objectfilter.test.model.Person p where p.name like '_oh_noes'";
+      assertFalse(match(queryString, createPerson1()));
+   }
+
+   @Test
+   public void testLike8() throws Exception {
+      String queryString = "from org.infinispan.objectfilter.test.model.Person p where p.name like '%hn%'";
+      assertTrue(match(queryString, createPerson1()));
+   }
+
+   @Test
+   public void testLike9() throws Exception {
+      String queryString = "from org.infinispan.objectfilter.test.model.Person p where p.name like '%hn'";
+      assertTrue(match(queryString, createPerson1()));
+   }
+
+   @Test
+   public void testLike10() throws Exception {
+      String queryString = "from org.infinispan.objectfilter.test.model.Person p where p.name like 'Jo%hn'";
+      assertTrue(match(queryString, createPerson1()));
+   }
+
+   @Test
    public void testIn() throws Exception {
       String queryString = "from org.infinispan.objectfilter.test.model.Person where age between 22 and 42";
       assertTrue(match(queryString, createPerson1()));
