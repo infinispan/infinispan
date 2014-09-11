@@ -157,6 +157,32 @@ public class RESTHelper {
         return resp;
     }
 
+    // the same as the normal get, without the asserts, so the caller can decide what to do in case the request fails
+    public static boolean getWithoutAssert(URI uri, String expectedResponseBody, int expectedCode, boolean closeConnection, Object... headers) throws Exception {
+        HttpGet get = new HttpGet(uri);
+        if (headers.length % 2 != 0)
+            throw new IllegalArgumentException("bad headers argument");
+        for (int i = 0; i < headers.length; i += 2) {
+            get.setHeader((String) headers[i], (String) headers[i + 1]);
+        }
+        HttpResponse resp = client.execute(get);
+        try {
+            if (expectedCode != resp.getStatusLine().getStatusCode()) {
+               return false;
+            }
+            if (expectedResponseBody != null) {
+                if (!expectedResponseBody.equals(EntityUtils.toString(resp.getEntity()))) {
+                    return false;
+                }
+            }
+        } finally {
+            if (closeConnection) {
+                EntityUtils.consume(resp.getEntity());
+            }
+        }
+        return true;
+    }
+    
     public static HttpResponse put(URI uri, Object data, String contentType) throws Exception {
         return put(uri, data, contentType, HttpServletResponse.SC_OK);
     }
