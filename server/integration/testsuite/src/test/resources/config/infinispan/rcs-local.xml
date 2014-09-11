@@ -26,31 +26,6 @@
                         <remote-server outbound-socket-binding="remote-store-hotrod-server" />
                     </remote-store>                  
                 </local-cache>
-                
-                <local-cache
-                    name="hotrodCache"
-                    start="EAGER"
-                    batching="false"
-                    >
-                    <locking 
-                        acquire-timeout="20000" 
-                        concurrency-level="500" 
-                        striping="false" />
-                    <transaction mode="NONE" />
-                    <eviction 
-                        strategy="LRU" 
-                        max-entries="2"/>
-                    <remote-store 
-                        cache="default"
-                        socket-timeout="10"
-                        tcp-no-delay="true" 
-                        fetch-state="false" 
-                        passivation="true" 
-                        preload="false" 
-                        purge="false" name="HOTROD">
-                        <remote-server outbound-socket-binding="remote-store-hotrod-server" />
-                    </remote-store>                  
-                </local-cache>
 
                 <local-cache
                         name="readOnlyCache"

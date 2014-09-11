@@ -47,7 +47,6 @@ public class RemoteCacheStoreIT {
     public static final String LOCAL_CACHE_MANAGER = "local";
     private final String LOCAL_CACHE_NAME = "memcachedCache";
     private final String READONLY_CACHE_NAME = "readOnlyCache";
-    private final String HOTROD_CACHE_NAME = "hotrodCache";
 
     private MemcachedClient mc;
     RemoteCache<Object, Object> cache;
@@ -119,40 +118,6 @@ public class RemoteCacheStoreIT {
         mc.delete("k1");
         mc.delete("k2");
         mc.delete("k3");
-    }
-
-    @Test
-    @WithRunningServer({@RunningServer(name = CONTAINER_LOCAL)})
-    @Category(Unstable.class)
-    public void testSocketTimeoutForRemoteStore() throws Exception {
-        Configuration conf = new ConfigurationBuilder().addServer().host(server1.getHotrodEndpoint().getInetAddress().getHostName()).port(server1
-                .getHotrodEndpoint().getPort()).build();
-        rcm1 = new RemoteCacheManager(conf);
-        RemoteCache<String, String> rc1 = rcm1.getCache(HOTROD_CACHE_NAME);
-        try {
-            // clear remote store and default local cache
-            rcm1.getCache(HOTROD_CACHE_NAME).clear();
-            // create big object
-            StringBuffer sb = new StringBuffer(30000000);
-            for (int i = 0; i < 3000000; i++) {
-                sb.append("0123456789");
-            }
-            assertEquals(0, server1.getCacheManager(LOCAL_CACHE_MANAGER).getCache(HOTROD_CACHE_NAME).getNumberOfEntries());
-            rc1.put("k1", sb.toString());
-            rc1.put("k2", sb.toString());
-            assertEquals(sb.toString(), rc1.get("k1"));
-            assertEquals(sb.toString(), rc1.get("k2"));
-            assertEquals(2, server1.getCacheManager(LOCAL_CACHE_MANAGER).getCache(HOTROD_CACHE_NAME).getNumberOfEntries());
-            // eviction to remote cache
-            // socket-timeout="1" (0 means infinite value!)
-            rc1.put("k3", sb.toString());
-            fail("Socket timeout for remote store was set to 1 millis and so a SocketTimeoutException was expected but not thrown.");
-        } catch (Exception e) {
-            // ok
-            assertTrue(e.getMessage(), e.getMessage().contains("SocketTimeoutException"));
-        } finally {
-            controller.kill(CONTAINER_LOCAL);
-        }
     }
 
     private void assertCleanCacheAndStore() throws Exception {
