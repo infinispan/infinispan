@@ -161,15 +161,18 @@ public class ExternalizerTable implements ObjectTable {
 
    @Stop(priority = 13) // Stop after global marshaller
    public void stop() {
+      started = false;
       writers.clear();
       readers.clear();
-      started = false;
       log.trace("Externalizer reader and writer maps have been cleared and constant object table was stopped");
    }
 
    @Override
    public Writer getObjectWriter(Object o) throws IOException {
       Class<?> clazz = o.getClass();
+      if (!started) {
+         throw log.externalizerTableStopped(clazz.getName());
+      }
       Writer writer = writers.get(clazz);
       return writer;
    }

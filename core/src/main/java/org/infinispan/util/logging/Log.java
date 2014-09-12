@@ -884,8 +884,8 @@ public interface Log extends BasicLogger {
    @Message(value = "Directory %s does not exist and cannot be created!", id = 238)
    CacheConfigurationException directoryCannotBeCreated(String path);
 
-   @Message(value="Cache manager is shutting down, so type write externalizer for type=%s cannot be resolved. Interruption being pushed up.", id = 239)
-   InterruptedException interruptedRetrievingObjectWriter(String className);
+   @Message(value="Cache manager is shutting down, so type write externalizer for type=%s cannot be resolved", id = 239)
+   IOException externalizerTableStopped(String className);
 
    @Message(value="Cache manager is shutting down, so type (id=%d) cannot be resolved. Interruption being pushed up.", id = 240)
    IOException pushReadInterruptionDueToCacheManagerShutdown(int readerIndex, @Cause InterruptedException cause);
