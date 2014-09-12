@@ -283,7 +283,7 @@ public final class IntervalTree<K extends Comparable<K>, V> {
    }
 
    public void remove(Node<K, V> n) {
-      n.max = Interval.getMinusInf();
+      n.max = Interval.<K>getMinusInf();
       for (Node<K, V> i = n.parent; i != root; i = i.parent) {
          i.max = max(i.left.max, i.right.max);
          if (i.parent == root) {
