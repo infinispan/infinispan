@@ -94,7 +94,7 @@ public class ClusterListenerReplTest extends AbstractClusterListenerNonTxTest {
 
       CyclicBarrier barrier = new CyclicBarrier(2);
       BlockingInterceptor blockingInterceptor = new BlockingInterceptor(barrier, PutKeyValueCommand.class, true);
-      cache0.getAdvancedCache().addInterceptorBefore(blockingInterceptor, EntryWrappingInterceptor.class);
+      cache2.getAdvancedCache().addInterceptorBefore(blockingInterceptor, EntryWrappingInterceptor.class);
 
       final MagicKey key = new MagicKey(cache1, cache2);
       Future<String> future = fork(new Callable<String>() {
@@ -107,11 +107,11 @@ public class ClusterListenerReplTest extends AbstractClusterListenerNonTxTest {
       // Wait until the primary owner has sent the put command successfully to  backup
       barrier.await(10, TimeUnit.SECONDS);
 
+      // Remove the interceptor so the next command can proceed properly
+      cache2.getAdvancedCache().removeInterceptor(BlockingInterceptor.class);
+
       // Kill the cache now - note this will automatically unblock the fork thread
       TestingUtil.killCacheManagers(cache1.getCacheManager());
-
-      // Remove the interceptor so the next command can proceed properly
-      cache0.getAdvancedCache().removeInterceptor(BlockingInterceptor.class);
 
       // Unblock the command
       barrier.await(10, TimeUnit.SECONDS);
