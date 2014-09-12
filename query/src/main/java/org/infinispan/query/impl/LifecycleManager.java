@@ -1,5 +1,6 @@
 package org.infinispan.query.impl;
 
+import java.util.Collections;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.Properties;
@@ -70,7 +71,9 @@ public class LifecycleManager extends AbstractModuleLifecycle {
 
    private static final Log log = LogFactory.getLog(LifecycleManager.class, Log.class);
 
-   private final Map<String, SearchFactoryIntegrator> searchFactoriesToShutdown = new TreeMap<String,SearchFactoryIntegrator>();
+   // Synchronized map in case if concurrent requests to shutdown are met
+   private final Map<String, SearchFactoryIntegrator> searchFactoriesToShutdown = Collections.synchronizedMap(
+         new TreeMap<String,SearchFactoryIntegrator>());
 
    private static final Object REMOVED_REGISTRY_COMPONENT = new Object();
 
