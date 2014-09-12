@@ -37,7 +37,7 @@ public class PreferConsistencyStrategy implements AvailabilityStrategy {
       newMembers.retainAll(context.getExpectedMembers());
 
       if (isDataLost(context.getStableTopology().getCurrentCH(), newMembers)) {
-         log.warnf("Cache %s lost data because of graceful leaver %s, entering unavailable mode", context.getCacheName(), leaver);
+         log.enteringUnavailableModeGracefulLeaver(context.getCacheName(), leaver);
          context.updateAvailabilityMode(AvailabilityMode.UNAVAILABLE);
          return;
       }
@@ -67,14 +67,12 @@ public class PreferConsistencyStrategy implements AvailabilityStrategy {
       List<Address> lostMembers = new ArrayList<>(stableMembers);
       lostMembers.removeAll(newMembers);
       if (isDataLost(stableTopology.getCurrentCH(), newMembers)) {
-         log.warnf("Cache %s lost data because of lost members %s, assuming a network split and entering degraded mode",
-               context.getCacheName(), lostMembers);
+         log.enteringDegradedModeLostData(context.getCacheName(), lostMembers);
          context.updateAvailabilityMode(AvailabilityMode.DEGRADED_MODE);
          return;
       }
       if (lostMembers.size() >= stableMembers.size() - Math.ceil(stableMembers.size() / 2d)) {
-         log.warnf("Cache %s lost a majority of members (%d out of %d), assuming a network split and entering degraded mode",
-               lostMembers.size(), stableMembers.size());
+         log.enteringDegradedModeMinorityPartition(context.getCacheName(), lostMembers.size(), stableMembers.size());
          context.updateAvailabilityMode(AvailabilityMode.DEGRADED_MODE);
          return;
       }
@@ -128,7 +126,7 @@ public class PreferConsistencyStrategy implements AvailabilityStrategy {
                maxUnavailableTopology = partitionTopology;
             }
          } else {
-            log.errorf("Unexpected availability mode %s for partition %s", response.getAvailabilityMode(),
+            log.unexpectedAvailabilityMode(context.getAvailabilityMode(), context.getCacheName(),
                   response.getCacheTopology());
          }
       }
@@ -144,7 +142,7 @@ public class PreferConsistencyStrategy implements AvailabilityStrategy {
          mergedAvailabilityMode = AvailabilityMode.AVAILABLE;
          mergedTopology = maxActiveTopology;
       } else {
-         // No active or unavailable partitions, so all the partitions must be in degraded mode.
+         log.debugf("No active or unavailable partitions, so all the partitions must be in degraded mode.");
          mergedAvailabilityMode = AvailabilityMode.DEGRADED_MODE;
          mergedTopology = maxDegradedTopology;
       }
@@ -175,14 +173,13 @@ public class PreferConsistencyStrategy implements AvailabilityStrategy {
          List<Address> lostMembers = new ArrayList<>(stableMembers);
          lostMembers.removeAll(context.getExpectedMembers());
          if (isDataLost(maxStableTopology.getCurrentCH(), newMembers)) {
-            log.warnf("After merge, cache %s still hasn't recovered all its data (lost members %s) and must stay in degraded mode",
-                  context.getCacheName(), lostMembers);
+            log.keepingDegradedModeAfterMergeDataLost(context.getCacheName(), lostMembers);
             context.updateAvailabilityMode(AvailabilityMode.DEGRADED_MODE);
             return;
          }
          if (lostMembers.size() >= Math.ceil(stableMembers.size() / 2d)) {
-            log.warnf("After merge, cache %s still hasn't recovered a majority of members (lost %d out of %d) and must stay in degraded mode",
-                  lostMembers.size(), stableMembers.size());
+            log.keepingDegradedModeAfterMergeMinorityPartition(context.getCacheName(), lostMembers.size(),
+                  stableMembers.size());
             context.updateAvailabilityMode(AvailabilityMode.DEGRADED_MODE);
             return;
          }

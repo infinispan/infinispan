@@ -9,6 +9,7 @@ import org.infinispan.commons.marshall.AdvancedExternalizer;
 import org.infinispan.commons.util.TypedProperties;
 import org.infinispan.lifecycle.ComponentStatus;
 import org.infinispan.partionhandling.AvailabilityException;
+import org.infinispan.partionhandling.impl.AvailabilityMode;
 import org.infinispan.persistence.spi.PersistenceException;
 import org.infinispan.persistence.support.SingletonCacheWriter;
 import org.infinispan.remoting.RemoteException;
@@ -1145,4 +1146,40 @@ public interface Log extends BasicLogger {
    @LogMessage(level = DEBUG)
    @Message(value = "Received a command from an outdated topology, returning the exception to caller", id = 311)
    void outdatedTopology(@Cause Throwable oe);
+
+   @LogMessage(level = ERROR)
+   @Message(value = "Cache %s lost data because of graceful leaver %s", id = 312)
+   void lostDataBecauseOfGracefulLeaver(String cacheName, Address leaver);
+
+   @LogMessage(level = ERROR)
+   @Message(value = "Cache %s lost data because of graceful leavers %s", id = 313)
+   void lostDataBecauseOfAbruptLeavers(String cacheName, Collection<Address> leavers);
+
+   @LogMessage(level = ERROR)
+   @Message(value = "Cache %s lost a majority of members (%d out of %d), possible split brain causing data inconsistency", id = 314)
+   void minorityPartition(String cacheName, int lostMembersCount, int stableMembersCount);
+
+   @LogMessage(level = ERROR)
+   @Message(value = "Unexpected availability mode %s for cache %s partition %s", id = 315)
+   void unexpectedAvailabilityMode(AvailabilityMode availabilityMode, String cacheName, CacheTopology cacheTopology);
+
+   @LogMessage(level = ERROR)
+   @Message(value = "Cache %s lost data because of graceful leaver %s, entering unavailable mode", id = 316)
+   void enteringUnavailableModeGracefulLeaver(String cacheName, Address leaver);
+
+   @LogMessage(level = ERROR)
+   @Message(value = "Cache %s lost data because of lost members %s, assuming a network split and entering degraded mode", id = 317)
+   void enteringDegradedModeLostData(String cacheName, Collection<Address> leavers);
+
+   @LogMessage(level = ERROR)
+   @Message(value = "Cache %s lost a majority of members (%d out of %d), assuming a network split and entering degraded mode", id = 318)
+   void enteringDegradedModeMinorityPartition(String cacheName, int lostMembersCount, int stableMembersCount);
+
+   @LogMessage(level = ERROR)
+   @Message(value = "After merge, cache %s still hasn't recovered all its data (lost members %s) and must stay in degraded mode", id = 319)
+   void keepingDegradedModeAfterMergeDataLost(String cacheName, Collection<Address> leavers);
+
+   @LogMessage(level = ERROR)
+   @Message(value = "After merge, cache %s still hasn't recovered a majority of members (lost %d out of %d) and must stay in degraded mode", id = 320)
+   void keepingDegradedModeAfterMergeMinorityPartition(String cacheName, int lostMembersCount, int stableMembersCount);
 }
