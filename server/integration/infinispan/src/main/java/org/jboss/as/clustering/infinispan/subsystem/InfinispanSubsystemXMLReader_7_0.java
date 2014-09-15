@@ -456,6 +456,10 @@ public final class InfinispanSubsystemXMLReader_7_0 implements XMLElementReader<
         while (reader.hasNext() && (reader.nextTag() != XMLStreamConstants.END_ELEMENT)) {
             Element element = Element.forName(reader.getLocalName());
             switch (element) {
+                case PARTITION_HANDLING: {
+                    this.parsePartitionHandling(reader, cache, additionalConfigurationOperations);
+                    break;
+                }
                 case STATE_TRANSFER: {
                     this.parseStateTransfer(reader, cache, additionalConfigurationOperations);
                     break;
@@ -498,6 +502,10 @@ public final class InfinispanSubsystemXMLReader_7_0 implements XMLElementReader<
         while (reader.hasNext() && (reader.nextTag() != XMLStreamConstants.END_ELEMENT)) {
             Element element = Element.forName(reader.getLocalName());
             switch (element) {
+                case PARTITION_HANDLING: {
+                    this.parsePartitionHandling(reader, cache, additionalConfigurationOperations);
+                    break;
+                }
                 case STATE_TRANSFER: {
                     this.parseStateTransfer(reader, cache, additionalConfigurationOperations);
                     break;
@@ -1855,5 +1863,26 @@ public final class InfinispanSubsystemXMLReader_7_0 implements XMLElementReader<
         operations.add(authorization);
     }
 
+   private void parsePartitionHandling(XMLExtendedStreamReader reader, ModelNode cache, List<ModelNode> operations) throws XMLStreamException {
+
+      PathAddress partitionHandlingAddress = PathAddress.pathAddress(cache.get(OP_ADDR)).append(ModelKeys.PARTITION_HANDLING, ModelKeys.PARTITION_HANDLING_NAME);
+      ModelNode partitionHandling = Util.createAddOperation(partitionHandlingAddress);
+
+      for (int i = 0; i < reader.getAttributeCount(); i++) {
+         String value = reader.getAttributeValue(i);
+         Attribute attribute = Attribute.forName(reader.getAttributeLocalName(i));
+         switch (attribute) {
+            case ENABLED: {
+               PartitionHandlingResource.ENABLED.parseAndSetParameter(value, partitionHandling, reader);
+               break;
+            }
+            default: {
+               throw ParseUtils.unexpectedAttribute(reader, i);
+            }
+         }
+      }
+      ParseUtils.requireNoContent(reader);
+      operations.add(partitionHandling);
+   }
 
 }

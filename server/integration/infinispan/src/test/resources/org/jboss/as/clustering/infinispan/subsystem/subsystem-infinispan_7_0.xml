@@ -55,6 +55,7 @@
             <eviction max-entries="20000" strategy="FIFO"/>
             <expiration interval="10000" lifespan="10" max-idle="10"/>
             <state-transfer enabled="true" timeout="60000" chunk-size="10000" await-initial-transfer="true"/>
+            <partition-handling enabled="true"/>
             <compatibility enabled="false"/>
             <store class="org.jboss.as.clustering.infinispan.subsystem.CustomCacheWriter" fetch-state="true" passivation="true" preload="false" purge="true" shared="false" singleton="false">
                 <write-behind flush-lock-timeout="2" modification-queue-size="2048" shutdown-timeout="20000" thread-pool-size="1" />
@@ -78,6 +79,7 @@
             <eviction max-entries="20000" strategy="UNORDERED"/>
             <expiration interval="10000" lifespan="10" max-idle="10"/>
             <state-transfer enabled="true" timeout="60000" chunk-size="10000"  await-initial-transfer="false"/>
+            <partition-handling enabled="true"/>
             <!-- note all jdbc stores have the same name -->
             <string-keyed-jdbc-store name="jdbc-store" fetch-state="false" datasource="java:jboss/datasources/JdbcDS" dialect="MYSQL" passivation="true" preload="false" purge="false" shared="false">
                 <write-behind flush-lock-timeout="1" modification-queue-size="1024" shutdown-timeout="25000" thread-pool-size="1"/>

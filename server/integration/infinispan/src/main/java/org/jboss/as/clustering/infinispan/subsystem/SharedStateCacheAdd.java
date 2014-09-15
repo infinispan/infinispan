@@ -60,5 +60,13 @@ public abstract class SharedStateCacheAdd extends ClusteredCacheAdd {
             builder.clustering().stateTransfer().timeout(timeout);
             builder.clustering().stateTransfer().chunkSize(chunkSize);
         }
+
+       if (cache.hasDefined(ModelKeys.PARTITION_HANDLING) && cache.get(ModelKeys.PARTITION_HANDLING, ModelKeys.PARTITION_HANDLING_NAME).isDefined()) {
+          ModelNode partitionHandling = cache.get(ModelKeys.PARTITION_HANDLING, ModelKeys.PARTITION_HANDLING_NAME);
+
+          final boolean enabled = PartitionHandlingResource.ENABLED.resolveModelAttribute(context, partitionHandling).asBoolean();
+
+          builder.clustering().partitionHandling().enabled(enabled);
+       }
     }
 }

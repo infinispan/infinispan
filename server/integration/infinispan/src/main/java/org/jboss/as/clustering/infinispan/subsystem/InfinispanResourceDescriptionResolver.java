@@ -178,6 +178,7 @@ public class InfinispanResourceDescriptionResolver extends StandardResourceDescr
         sharedAttributeResolver.put(ModelKeys.EVICTION, null);
         sharedAttributeResolver.put(ModelKeys.EXPIRATION, null);
         sharedAttributeResolver.put(ModelKeys.STATE_TRANSFER, null);
+        sharedAttributeResolver.put(ModelKeys.PARTITION_HANDLING, null);
         sharedAttributeResolver.put(ModelKeys.BACKUP, null);
         sharedAttributeResolver.put(ModelKeys.LOADER, null);
         sharedAttributeResolver.put(ModelKeys.COMPATIBILITY, null);

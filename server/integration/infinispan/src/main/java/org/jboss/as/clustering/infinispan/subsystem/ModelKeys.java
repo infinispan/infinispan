@@ -133,6 +133,8 @@ public class ModelKeys {
     static final String NAME = "name";
     static final String OUTBOUND_SOCKET_BINDING = "outbound-socket-binding";
     static final String OWNERS = "owners";
+    static final String PARTITION_HANDLING = "partition-handling";
+    static final String PARTITION_HANDLING_NAME = "PARTITION_HANDLING";
     static final String PASSIVATION = "passivation";
     static final String PATH = "path";
     static final String PERMISSIONS = "permissions";
