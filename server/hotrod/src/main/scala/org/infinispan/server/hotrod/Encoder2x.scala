@@ -12,6 +12,8 @@ import scala.collection.JavaConversions._
 import scala.collection.mutable
 import org.infinispan.server.hotrod.Events.{CustomEvent, KeyEvent, Event, KeyWithVersionEvent}
 
+import scala.collection.mutable.ListBuffer
+
 /**
  * @author Galder Zamarreño
  */
@@ -86,31 +88,39 @@ object Encoder2x extends AbstractVersionedEncoder with Constants with Log {
    private def writeHashTopologyUpdate(h: HashDistAware20Response, cache: Cache, buf: ByteBuf) {
       trace("Write hash distribution change response header %s", h)
       buf.writeByte(1) // Topology changed
-      writeUnsignedInt(h.topologyId, buf)
-      writeUnsignedInt(h.serverEndpointsMap.size, buf)
-      // Write known servers in topology
-      val memberIndexes = mutable.Map.empty[Address, Int]
-      var indexCount = 0
-      for ((address, serverAddress) <- h.serverEndpointsMap) {
-         writeString(serverAddress.host, buf)
-         writeUnsignedShort(serverAddress.port, buf)
-         memberIndexes += (address -> indexCount)
+      writeUnsignedInt(h.topologyId, buf) // Topology ID
+
+      if (isTraceEnabled) trace(s"Topology cache contains: ${h.serverEndpointsMap}")
+
+      // Calculate members
+      val ch = cache.getDistributionManager.getReadConsistentHash
+      val members = h.serverEndpointsMap.filter { case (addr, serverAddr) =>
+         ch.getMembers.contains(addr)
+      }
+
+      if (isTraceEnabled) trace(s"After read consistent hash filter, members are: $members")
+
+      // Write members
+      var indexCount = -1
+      writeUnsignedInt(members.size, buf)
+      val indexedMembers = members.map { case (addr, serverAddr) =>
+         writeString(serverAddr.host, buf)
+         writeUnsignedShort(serverAddr.port, buf)
          indexCount += 1
+         addr -> indexCount // easier indexing
       }
 
       // Write segment information
-      val ch = cache.getDistributionManager.getReadConsistentHash
       val numSegments = ch.getNumSegments
       buf.writeByte(h.hashFunction) // Hash function
       writeUnsignedInt(numSegments, buf)
 
-      val members = h.serverEndpointsMap.keySet
       for (segmentId <- 0 until numSegments) {
          val owners = ch.locateOwnersForSegment(segmentId).filter(members.contains)
          val numOwnersToSend = Math.min(2, owners.size())
          buf.writeByte(numOwnersToSend)
          owners.take(numOwnersToSend).foreach { ownerAddr =>
-            memberIndexes.get(ownerAddr) match {
+            indexedMembers.get(ownerAddr) match {
                case Some(index) => writeUnsignedInt(index, buf)
                case None => // Do not add to indexes
             }
