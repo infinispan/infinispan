@@ -1,5 +1,7 @@
 package org.infinispan.client.hotrod;
 
+import org.infinispan.client.hotrod.impl.transport.tcp.RoundRobinBalancingStrategy;
+import org.infinispan.client.hotrod.impl.transport.tcp.TcpTransportFactory;
 import org.infinispan.client.hotrod.test.MultiHotRodServersTest;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
@@ -8,6 +10,7 @@ import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.testng.annotations.Test;
 
+import java.net.SocketAddress;
 import java.util.concurrent.Callable;
 import java.util.concurrent.Future;
 
@@ -41,19 +44,30 @@ public class DistTopologyChangeUnderLoadTest extends MultiHotRodServersTest {
       TestHelper.startHotRodServer(cm);
       waitForClusterToForm();
       TestingUtil.waitForRehashToComplete(cm.getCache(), cache(0));
-      putHammer.rehashCompleted = true;
 
+      // Wait for 2 seconds
+      TestingUtil.sleepThread(2000);
+
+      TestingUtil.killCacheManagers(cm);
+      TestingUtil.waitForRehashToComplete(cache(0));
+
+      TcpTransportFactory transportFactory = TestingUtil.extractField(client(0), "transportFactory");
+      SocketAddress[] servers = ((RoundRobinBalancingStrategy) transportFactory.getBalancer(RemoteCacheManager.cacheNameBytes())).getServers();
+
+      putHammer.stop = true;
       putHammerFuture.get();
+
+      assertEquals(1, servers.length);
    }
 
    private class PutHammer implements Callable<Void> {
-      volatile boolean rehashCompleted;
+      volatile boolean stop;
 
       @Override
       public Void call() throws Exception {
          RemoteCache<Integer, String> remote = client(0).getCache();
          int i = 2;
-         while (!rehashCompleted) {
+         while (!stop) {
             remote.put(i, "v" + i);
             i += 1;
          }
