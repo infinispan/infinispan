@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<features name="infinispan-query-${project.version}" xmlns="http://karaf.apache.org/xmlns/features/v1.0.0">
+   <repository>mvn:org.infinispan/infinispan-core/${project.version}/xml/features</repository>
+
+   <feature name="infinispan-query" version="${project.version}">
+      <feature version="${project.version}">infinispan-core</feature>
+      <bundle>mvn:org.infinispan/infinispan-query/${project.version}</bundle>
+      
+      <!-- Lucene -->
+      <bundle><![CDATA[wrap:mvn:org.apache.lucene/lucene-core/${version.lucene}$Bundle-Name=Apache Lucene Core&Bundle-Version=${version.lucene}&Export-Package=org.apache.lucene.*;version=${version.lucene}]]></bundle>
+      <bundle><![CDATA[wrap:mvn:org.apache.lucene/lucene-analyzers-common/${version.lucene}$Bundle-Name=Apache Lucene Common Analyzers&Bundle-Version=${version.lucene}&Export-Package=org.apache.lucene.analysis.*;version=${version.lucene},org.tartarus.*;version=${version.lucene}]]></bundle>
+      <bundle><![CDATA[wrap:mvn:org.apache.lucene/lucene-queries/${version.lucene}$Bundle-Name=Apache Lucene Queries&Bundle-Version=${version.lucene}&Export-Package=org.apache.lucene.queries.*;version=${version.lucene}]]></bundle>
+
+      <!-- Hibernate Search -->
+      <bundle>mvn:org.hibernate/hibernate-search-engine/${version.hibernate.search}</bundle>
+      <bundle>mvn:org.hibernate/hibernate-search-infinispan/${version.hibernate.search}</bundle>
+      <bundle>wrap:mvn:org.hibernate.common/hibernate-commons-annotations/${version.hibernate_dep.hibernate-commons-annotations}</bundle>
+      
+      <!-- HQL Parser -->
+      <bundle><![CDATA[wrap:mvn:org.hibernate.hql/hibernate-hql-parser/${version.hibernate.hql.parser}$Bundle-Name=Hibernate HQL Parser&Bundle-Version=${version.hibernate.hql.parser}]]></bundle>
+      <bundle><![CDATA[wrap:mvn:org.hibernate.hql/hibernate-hql-lucene/${version.hibernate.hql.parser}$Bundle-Name=Hibernate HQL Lucene&Bundle-Version=${version.hibernate.hql.parser}]]></bundle>
+      <bundle><![CDATA[wrap:mvn:org.antlr/antlr-runtime/${version.antlr}$Bundle-Name=Antlr Runtime&Bundle-Version=${version.antlr}]]></bundle>
+      
+      <!-- Lucene Directory -->
+      <bundle>mvn:org.infinispan/infinispan-lucene-directory/${project.version}</bundle>
+      
+      <!-- Index-less queries -->
+      <bundle>mvn:org.infinispan/infinispan-objectfilter/${project.version}</bundle>
+      <bundle>mvn:org.infinispan/infinispan-query-dsl/${project.version}</bundle>
+      
+   </feature>
+</features>

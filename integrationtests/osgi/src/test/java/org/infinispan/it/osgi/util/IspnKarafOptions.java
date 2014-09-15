@@ -96,6 +96,16 @@ public class IspnKarafOptions {
       return mvnFeature("org.infinispan", "infinispan-cachestore-jdbc", "infinispan-cachestore-jdbc");
    }
 
+   public static Option featureIspnQuery() {
+      return mvnFeature("org.infinispan", "infinispan-query", "infinispan-query");
+   }
+
+   public static Option featureIspnQueryAndTests() throws Exception {
+      return composite(featureIspnQuery(),
+                       mavenBundle().groupId("org.testng").artifactId("testng").versionAsInProject(),
+                       mvnTestsAsFragmentBundle("org.infinispan", "infinispan-query", "org.infinispan.query"));
+   }
+
    public static Option featureJdbcStoreAndTests() throws Exception {
       return composite(featureJdbcStore(),
             mavenBundle().groupId("org.testng").artifactId("testng").versionAsInProject(),
@@ -297,6 +307,7 @@ public class IspnKarafOptions {
             featureIspnCoreAndTests(),
             featureJdbcStoreAndTests(),
             featureJpaStoreAndTests(),
+            featureIspnQueryAndTests(),
             featureLevelDbJni(),
             featureRemoteStore(),
             bundleH2Database(),
