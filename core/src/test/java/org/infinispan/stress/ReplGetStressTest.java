@@ -17,7 +17,7 @@ import static org.testng.AssertJUnit.assertNull;
  * @author Dan Berindei
  * @since 7.0
  */
-@Test(groups = "stress", testName = "stress.LargeClusterStressTest")
+@Test(groups = "stress", testName = "stress.ReplGetStressTest")
 public class ReplGetStressTest extends MultipleCacheManagersTest {
 
    private static final int NUM_NODES = 4;
