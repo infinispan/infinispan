@@ -57,5 +57,6 @@ public class SharedCacheResource extends ClusteredCacheResource {
         super.registerChildren(resourceRegistration);
 
         resourceRegistration.registerSubModel(new StateTransferResource());
+        resourceRegistration.registerSubModel(new PartitionHandlingResource());
     }
 }

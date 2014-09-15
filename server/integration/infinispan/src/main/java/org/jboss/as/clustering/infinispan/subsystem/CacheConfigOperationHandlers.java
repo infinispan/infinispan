@@ -25,6 +25,7 @@ package org.jboss.as.clustering.infinispan.subsystem;
 import static org.jboss.as.clustering.infinispan.subsystem.EvictionResource.EVICTION_ATTRIBUTES;
 import static org.jboss.as.clustering.infinispan.subsystem.ExpirationResource.EXPIRATION_ATTRIBUTES;
 import static org.jboss.as.clustering.infinispan.subsystem.LockingResource.LOCKING_ATTRIBUTES;
+import static org.jboss.as.clustering.infinispan.subsystem.PartitionHandlingResource.PARTITION_HANDLING_ATTRIBUTES;
 import static org.jboss.as.clustering.infinispan.subsystem.StateTransferResource.STATE_TRANSFER_ATTRIBUTES;
 import static org.jboss.as.clustering.infinispan.subsystem.StoreWriteBehindResource.WRITE_BEHIND_ATTRIBUTES;
 import static org.jboss.as.clustering.infinispan.subsystem.TransactionResource.TRANSACTION_ATTRIBUTES;
@@ -67,6 +68,7 @@ public class CacheConfigOperationHandlers {
     static final OperationStepHandler EXPIRATION_ADD = new CacheConfigAdd(EXPIRATION_ATTRIBUTES);
     static final OperationStepHandler STATE_TRANSFER_ADD = new CacheConfigAdd(STATE_TRANSFER_ATTRIBUTES);
     static final OperationStepHandler CACHE_SECURITY_ADD = new CacheConfigAdd();
+    static final OperationStepHandler PARTITION_HANDLING_ADD = new CacheConfigAdd(PARTITION_HANDLING_ATTRIBUTES);
 
 
     static final OperationStepHandler LOADER_ADD = new CacheLoaderAdd();

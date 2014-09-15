@@ -71,6 +71,7 @@ public enum Element {
     LOADER(ModelKeys.LOADER),
     LOCAL_CACHE(ModelKeys.LOCAL_CACHE),
     LOCKING(ModelKeys.LOCKING),
+    PARTITION_HANDLING(ModelKeys.PARTITION_HANDLING),
     PROPERTY(ModelKeys.PROPERTY),
     @Deprecated REHASHING("rehashing"),
     REMOTE_SERVER(ModelKeys.REMOTE_SERVER),

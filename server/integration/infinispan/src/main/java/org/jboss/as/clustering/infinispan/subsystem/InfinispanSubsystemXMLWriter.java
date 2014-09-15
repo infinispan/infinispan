@@ -259,6 +259,13 @@ public class InfinispanSubsystemXMLWriter implements XMLElementWriter<SubsystemM
             writer.writeEndElement();
         }
 
+        if (cache.get(ModelKeys.PARTITION_HANDLING, ModelKeys.PARTITION_HANDLING_NAME).isDefined()) {
+            ModelNode partitionHandling = cache.get(ModelKeys.PARTITION_HANDLING, ModelKeys.PARTITION_HANDLING_NAME);
+            writer.writeStartElement(Element.PARTITION_HANDLING.getLocalName());
+            this.writeOptional(writer, Attribute.ENABLED, partitionHandling, ModelKeys.ENABLED);
+            writer.writeEndElement();
+        }
+
         if (cache.get(ModelKeys.COMPATIBILITY).isDefined()) {
             ModelNode compatibility = cache.get(ModelKeys.COMPATIBILITY, ModelKeys.COMPATIBILITY_NAME);
             writer.writeStartElement(Element.COMPATIBILITY.getLocalName());
