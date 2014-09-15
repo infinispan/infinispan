@@ -20,7 +20,6 @@ import org.infinispan.test.TestingUtil;
 import org.infinispan.test.concurrent.CommandMatcher;
 import org.infinispan.test.concurrent.StateSequencer;
 import org.infinispan.test.concurrent.StateSequencerUtil;
-import org.infinispan.test.fwk.CleanupAfterMethod;
 import org.infinispan.util.ControlledConsistentHashFactory;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
@@ -42,13 +41,18 @@ import java.util.List;
  * operations.
  */
 @Test(groups = "functional", testName = "partitionhandling.NumOwnersNodeCrashInSequenceTest")
-@CleanupAfterMethod
 public class NumOwnersNodeCrashInSequenceTest extends MultipleCacheManagersTest {
 
    private static Log log = LogFactory.getLog(NumOwnersNodeCrashInSequenceTest.class);
 
    ControlledConsistentHashFactory cchf;
    private ConfigurationBuilder configBuilder;
+   protected AvailabilityMode expectedAvailabilityMode;
+
+   public NumOwnersNodeCrashInSequenceTest() {
+      cleanup = CleanupPhase.AFTER_METHOD;
+      expectedAvailabilityMode = AvailabilityMode.DEGRADED_MODE;
+   }
 
    @Override
    protected void createCacheManagers() throws Throwable {
@@ -150,7 +154,7 @@ public class NumOwnersNodeCrashInSequenceTest extends MultipleCacheManagersTest 
          @Override
          public boolean isSatisfied() throws Exception {
             PartitionHandlingManager phm0 = TestingUtil.extractComponent(cache(a0), PartitionHandlingManager.class);
-            return phm0.getAvailabilityMode() == AvailabilityMode.DEGRADED_MODE;
+            return phm0.getAvailabilityMode() == expectedAvailabilityMode;
          }
       });
       ss.exit("main:2nd_node_left");
@@ -199,7 +203,7 @@ public class NumOwnersNodeCrashInSequenceTest extends MultipleCacheManagersTest 
    /**
     * Simulates a node crash, discarding all the messages from/to this node and then stopping the caches.
     */
-   private static void crashCacheManagers(EmbeddedCacheManager... cacheManagers) {
+   protected void crashCacheManagers(EmbeddedCacheManager... cacheManagers) {
       for (EmbeddedCacheManager cm : cacheManagers) {
          JGroupsTransport t = (JGroupsTransport) cm.getGlobalComponentRegistry().getComponent(Transport.class);
          Channel channel = t.getChannel();

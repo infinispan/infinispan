@@ -814,9 +814,14 @@ the node can't come back so it never enters degraded mode. However, the
 administrator can shut down more than *numOwners* nodes in rapid succession,
 causing the loss of the data stored only on those nodes. In that case the
 cache enters a different mode called _unavailable_.
-In unavailable mode, all the requests are answered with an
-`AvailabilityException`, even if the owners of that particular key are still
-alive.
+
+Just like degraded mode, unavailable mode only allows access to keys that
+are fully owned by the live members, and requests to access partially-owned
+keys throw `AvailabilityException`. The difference between the two modes is
+that the cluster will never recover from unavailable mode by itself. For now,
+the only way to exit unavailable mode is to restart the entire cluster. In the
+future it will be possible to force the cluster to become available with a
+JMX call or from the server console.
 
 [[partition-handling-configuration]]
 ==== Configuration for partition handling functionality

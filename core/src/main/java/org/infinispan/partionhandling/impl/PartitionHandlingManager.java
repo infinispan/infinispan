@@ -56,8 +56,7 @@ public class PartitionHandlingManager {
       if (trace) log.tracef("Checking availability for key=%s, status=%s", key, availabilityMode);
       if (availabilityMode == AvailabilityMode.AVAILABLE)
          return;
-      if (availabilityMode == AvailabilityMode.UNAVAILABLE)
-         throw log.partitionUnavailable();
+
       List<Address> owners = distributionManager.locate(key);
       // TODO The JGroups view is updated before the cache topology, so it's possible to access a stale key
       // just after a merge (if the other partition was AVAILABLE).
