@@ -2,7 +2,6 @@ package org.infinispan.cdi.util.logging;
 
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.jboss.logging.BasicLogger;
-import org.jboss.logging.annotations.Cause;
 import org.jboss.logging.annotations.LogMessage;
 import org.jboss.logging.annotations.Message;
 import org.jboss.logging.annotations.MessageLogger;

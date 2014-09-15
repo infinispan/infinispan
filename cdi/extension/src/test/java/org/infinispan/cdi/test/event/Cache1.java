@@ -12,7 +12,10 @@ import static java.lang.annotation.ElementType.TYPE;
 import static java.lang.annotation.RetentionPolicy.RUNTIME;
 
 /**
+ * Qualifier for Cache1
+ *
  * @author Pete Muir
+ * @author Sebastian Laskawiec
  */
 @Qualifier
 @Target({TYPE, METHOD, PARAMETER, FIELD})

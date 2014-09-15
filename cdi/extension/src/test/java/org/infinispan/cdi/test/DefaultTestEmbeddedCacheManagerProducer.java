@@ -3,6 +3,7 @@ package org.infinispan.cdi.test;
 import org.infinispan.cdi.OverrideDefault;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
+import org.infinispan.configuration.global.GlobalConfigurationBuilder;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
@@ -30,8 +31,10 @@ public class DefaultTestEmbeddedCacheManagerProducer {
    @ApplicationScoped
    public EmbeddedCacheManager getDefaultEmbeddedCacheManager(@OverrideDefault Instance<EmbeddedCacheManager> providedDefaultEmbeddedCacheManager, Configuration defaultConfiguration) {
       ConfigurationBuilder builder = new ConfigurationBuilder();
+      GlobalConfigurationBuilder globalConfigurationBuilder = new GlobalConfigurationBuilder();
+      globalConfigurationBuilder.globalJmxStatistics().allowDuplicateDomains(true);
       builder.read(defaultConfiguration);
-      return TestCacheManagerFactory.createCacheManager(builder);
+      return TestCacheManagerFactory.createClusteredCacheManager(globalConfigurationBuilder, builder);
    }
 
    /**

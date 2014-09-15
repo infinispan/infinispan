@@ -11,11 +11,72 @@ import javax.enterprise.event.Event;
 import javax.enterprise.util.TypeLiteral;
 
 /**
+ * Event bridge for {@link org.infinispan.notifications.cachelistener.annotation.CacheEntryActivated}.
+ *
  * @author Pete Muir
+ * @author Sebastian Laskawiec
+ * @see org.infinispan.notifications.Listener
+ * @see org.infinispan.notifications.cachelistener.annotation.CacheEntryActivated
  */
 @Listener
 public class CacheEntryActivatedAdapter<K, V> extends AbstractAdapter<CacheEntryActivatedEvent<K, V>> {
 
+   /**
+    * CDI does not allow parametrized type for events (like <code><K,V></code>). This is why this wrapped needs to be
+    * introduced. To ensure type safety, this needs to be linked to parent class (in other words this class can not
+    * be static).
+    */
+   private class CDICacheEntryActivatedEvent implements CacheEntryActivatedEvent<K, V> {
+      private CacheEntryActivatedEvent<K, V> decoratedEvent;
+
+      private CDICacheEntryActivatedEvent(CacheEntryActivatedEvent<K, V> decoratedEvent) {
+         this.decoratedEvent = decoratedEvent;
+      }
+
+      @Override
+      public V getValue() {
+         return decoratedEvent.getValue();
+      }
+
+      @Override
+      public K getKey() {
+         return decoratedEvent.getKey();
+      }
+
+      @Override
+      public Metadata getMetadata() {
+         return decoratedEvent.getMetadata();
+      }
+
+      @Override
+      public GlobalTransaction getGlobalTransaction() {
+         return decoratedEvent.getGlobalTransaction();
+      }
+
+      @Override
+      public boolean isOriginLocal() {
+         return decoratedEvent.isOriginLocal();
+      }
+
+      @Override
+      public Type getType() {
+         return decoratedEvent.getType();
+      }
+
+      @Override
+      public boolean isPre() {
+         return decoratedEvent.isPre();
+      }
+
+      @Override
+      public Cache<K, V> getCache() {
+         return decoratedEvent.getCache();
+      }
+   }
+
+   /**
+    * Needed for creating event bridge.
+    */
    public static final CacheEntryActivatedEvent<?, ?> EMPTY = new CacheEntryActivatedEvent<Object, Object>() {
 
       @Override
@@ -59,6 +120,9 @@ public class CacheEntryActivatedAdapter<K, V> extends AbstractAdapter<CacheEntry
       }
    };
 
+   /**
+    * Events which will be selected (including generic type information (<code><?, ?></code>).
+    */
    @SuppressWarnings("serial")
    public static final TypeLiteral<CacheEntryActivatedEvent<?, ?>> WILDCARD_TYPE = new TypeLiteral<CacheEntryActivatedEvent<?, ?>>() {
    };
@@ -70,6 +134,6 @@ public class CacheEntryActivatedAdapter<K, V> extends AbstractAdapter<CacheEntry
    @Override
    @CacheEntryActivated
    public void fire(CacheEntryActivatedEvent<K, V> payload) {
-      super.fire(payload);
+      super.fire(new CDICacheEntryActivatedEvent(payload));
    }
 }
