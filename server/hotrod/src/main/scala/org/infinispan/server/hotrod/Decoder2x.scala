@@ -2,14 +2,13 @@ package org.infinispan.server.hotrod
 
 import io.netty.buffer.ByteBuf
 import io.netty.channel.Channel
-import io.netty.channel.ChannelHandlerContext
 import java.io.IOException
-import java.security.PrivilegedAction
-import javax.security.auth.Subject
-import javax.security.sasl.SaslServer
+import org.infinispan.IllegalLifecycleStateException
+import org.infinispan.commons.CacheException
 import org.infinispan.container.entries.CacheEntry
 import org.infinispan.container.versioning.NumericVersion
 import org.infinispan.context.Flag.{SKIP_CACHE_LOAD, IGNORE_RETURN_VALUES}
+import org.infinispan.remoting.transport.jgroups.SuspectException
 import org.infinispan.server.core.Operation._
 import org.infinispan.server.core._
 import org.infinispan.server.core.transport.ExtendedByteBuf._
@@ -23,14 +22,9 @@ import scala.annotation.switch
 import scala.collection.JavaConverters._
 import javax.security.sasl.Sasl
 import io.netty.channel.ChannelHandlerContext
-import io.netty.handler.codec.ReplayingDecoder
-import org.infinispan.server.core.PartialResponse
-import io.netty.util.concurrent.DefaultEventExecutorGroup
-import org.infinispan.commons.util.Util
 import javax.security.auth.Subject
 import java.security.PrivilegedAction
 import javax.security.sasl.SaslServer
-import org.infinispan.server.core.security.SaslUtils
 import io.netty.handler.ssl.SslHandler
 import java.util.ArrayList
 import java.security.Principal
@@ -386,16 +380,33 @@ object Decoder2x extends AbstractVersionedDecoder with ServerConstants with Log 
 
    override def createErrorResponse(h: HotRodHeader, t: Throwable): ErrorResponse = {
       t match {
+         case _ : SuspectException => createNodeSuspectedErrorResponse(h, t)
+         case e: IllegalLifecycleStateException =>
+            new ErrorResponse(h.version, h.messageId, h.cacheName, h.clientIntel,
+               IllegalLifecycleState, h.topologyId, t.toString)
          case i: IOException =>
             new ErrorResponse(h.version, h.messageId, h.cacheName, h.clientIntel,
                ParseError, h.topologyId, i.toString)
          case t: TimeoutException =>
             new ErrorResponse(h.version, h.messageId, h.cacheName, h.clientIntel,
                OperationTimedOut, h.topologyId, t.toString)
-         case t: Throwable =>
-            new ErrorResponse(h.version, h.messageId, h.cacheName, h.clientIntel,
-               ServerError, h.topologyId, t.toString)
+         case c: CacheException => c.getCause match {
+            // JGroups exceptions come wrapped up
+            case _ : org.jgroups.SuspectedException => createNodeSuspectedErrorResponse(h, t)
+            case _ => createServerErrorResponse(h, t)
+         }
+         case t: Throwable => createServerErrorResponse(h, t)
       }
+   }
+
+   private def createNodeSuspectedErrorResponse(h: HotRodHeader, t: Throwable): ErrorResponse = {
+      new ErrorResponse(h.version, h.messageId, h.cacheName, h.clientIntel,
+         NodeSuspected, h.topologyId, t.toString)
+   }
+
+   private def createServerErrorResponse(h: HotRodHeader, t: Throwable): ErrorResponse = {
+      new ErrorResponse(h.version, h.messageId, h.cacheName, h.clientIntel,
+         ServerError, h.topologyId, t.toString)
    }
 
    override def getOptimizedCache(h: HotRodHeader, c: Cache): Cache = {

@@ -1,5 +1,6 @@
 package org.infinispan.server.hotrod
 
+import io.netty.handler.codec.DecoderException
 import org.infinispan.server.core._
 import transport._
 import OperationStatus._
@@ -162,13 +163,19 @@ class HotRodDecoder(cacheManager: EmbeddedCacheManager, transport: NettyTranspor
 
    override def createErrorResponse(t: Throwable): AnyRef = {
       t match {
+         case d: DecoderException => d.getCause match {
+            case h: HotRodException => h.response
+            case _=> createErrorResponseBeforeReadingRequest(t)
+         }
          case h: HotRodException => h.response
          case c: ClosedChannelException => null
-         case t: Throwable => {
-            logErrorBeforeReadingRequest(t)
-            new ErrorResponse(0, 0, "", 1, ServerError, 0, t.toString)
-         }
+         case _=> createErrorResponseBeforeReadingRequest(t)
       }
+   }
+
+   private def createErrorResponseBeforeReadingRequest(t: Throwable): ErrorResponse = {
+      logErrorBeforeReadingRequest(t)
+      new ErrorResponse(0, 0, "", 1, ServerError, 0, t.toString)
    }
 
    override protected def createServerException(e: Exception, b: ByteBuf): (HotRodException, Boolean) = {

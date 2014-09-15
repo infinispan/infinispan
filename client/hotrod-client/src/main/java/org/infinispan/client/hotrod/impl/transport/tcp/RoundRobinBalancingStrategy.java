@@ -2,6 +2,7 @@ package org.infinispan.client.hotrod.impl.transport.tcp;
 
 import org.infinispan.client.hotrod.logging.Log;
 import org.infinispan.client.hotrod.logging.LogFactory;
+import org.infinispan.commons.util.Util;
 
 import java.net.InetSocketAddress;
 import java.net.SocketAddress;

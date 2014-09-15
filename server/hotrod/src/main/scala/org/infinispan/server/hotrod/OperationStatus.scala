@@ -19,5 +19,7 @@ object OperationStatus extends Enumeration {
    val ParseError = Value(0x84) // todo: test
    val ServerError = Value(0x85) // todo: test
    val OperationTimedOut = Value(0x86) // todo: test
+   val NodeSuspected = Value(0x87)
+   val IllegalLifecycleState = Value(0x88)
 
 }
