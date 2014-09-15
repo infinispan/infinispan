@@ -1,24 +1,13 @@
 package org.infinispan.commons.util.concurrent;
 
-import static org.testng.Assert.assertEquals;
-import static org.testng.Assert.assertFalse;
-import static org.testng.Assert.assertTrue;
-import static org.testng.Assert.fail;
+import org.infinispan.util.concurrent.WithinThreadExecutor;
+import org.testng.annotations.Test;
 
-import java.util.concurrent.Callable;
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Future;
-import java.util.concurrent.LinkedBlockingQueue;
-import java.util.concurrent.ThreadPoolExecutor;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
+import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 
-import org.infinispan.util.concurrent.WithinThreadExecutor;
-import org.testng.annotations.Test;
+import static org.testng.Assert.*;
 
 /**
  * @author Radim Vansa &lt;rvansa@redhat.com&gt;
