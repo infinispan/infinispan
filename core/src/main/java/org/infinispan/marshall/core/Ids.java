@@ -127,4 +127,5 @@ public interface Ids extends org.infinispan.commons.marshall.Ids {
    int COMPOSITE_KEY_VALUE_FILTER = 130;
    int DELTA_MAPREDUCE_LIST_ID = 131;
    int DELTA_AWARE_MAPREDUCE_LIST_ID = 132;
+   int CACHE_STATUS_RESPONSE = 133;
 }

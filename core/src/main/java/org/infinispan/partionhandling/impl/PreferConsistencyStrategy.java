@@ -95,15 +95,23 @@ public class PreferConsistencyStrategy implements AvailabilityStrategy {
       CacheTopology maxUnavailableTopology = null;
       CacheTopology maxStableTopology = null;
       for (CacheStatusResponse response : statusResponses) {
-         CacheTopology partitionStableTopology = response.getCacheTopology();
+         CacheTopology partitionStableTopology = response.getStableTopology();
          if (maxStableTopology == null || !maxStableTopology.equals(partitionStableTopology)) {
             log.tracef("Found stable partition topology: %s", maxStableTopology);
+         }
+         if (partitionStableTopology == null) {
+            // The node hasn't properly joined yet.
+            continue;
          }
          if (maxStableTopology == null || maxStableTopology.getTopologyId() < partitionStableTopology.getTopologyId()) {
             maxStableTopology = partitionStableTopology;
          }
 
          CacheTopology partitionTopology = response.getCacheTopology();
+         if (partitionTopology == null) {
+            // The node hasn't properly joined yet.
+            continue;
+         }
          if (response.getAvailabilityMode() == AvailabilityMode.AVAILABLE) {
             if (maxActiveTopology == null || !maxActiveTopology.equals(partitionTopology)) {
                log.tracef("Found active partition topology: %s", maxActiveTopology);

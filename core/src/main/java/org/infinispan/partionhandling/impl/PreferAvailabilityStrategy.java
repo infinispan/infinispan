@@ -72,6 +72,10 @@ public class PreferAvailabilityStrategy implements AvailabilityStrategy {
       CacheTopology maxStableTopology = null;
       for (CacheStatusResponse response : statusResponses) {
          CacheTopology stableTopology = response.getStableTopology();
+         if (stableTopology == null) {
+            // The node hasn't properly joined yet.
+            continue;
+         }
          if (maxStableTopology == null || maxStableTopology.getMembers().size() < stableTopology.getMembers().size()) {
             maxStableTopology = stableTopology;
          }
@@ -85,6 +89,10 @@ public class PreferAvailabilityStrategy implements AvailabilityStrategy {
             continue;
 
          CacheTopology topology = response.getCacheTopology();
+         if (topology == null) {
+            // The node hasn't properly joined yet.
+            continue;
+         }
          if (maxTopology == null || maxTopology.getMembers().size() < topology.getMembers().size()) {
             maxTopology = topology;
          }

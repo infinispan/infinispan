@@ -435,34 +435,20 @@ public class ClusterCacheStatus implements AvailabilityStrategyContext {
                Address sender = e.getKey();
                CacheStatusResponse response = e.getValue();
                joinInfos.put(sender, response.getCacheJoinInfo());
-               currentTopologies.add(response.getCacheTopology());
-               stableTopologies.add(response.getStableTopology());
+               if (response.getCacheTopology() != null) {
+                  currentTopologies.add(response.getCacheTopology());
+               }
+               if (response.getStableTopology() != null) {
+                  stableTopologies.add(response.getStableTopology());
+               }
             }
 
             log.debugf("Recovered %d partition(s) for cache %s: %s", currentTopologies.size(), cacheName, currentTopologies);
             recoverMembers(joinInfos, currentTopologies, stableTopologies);
 
-            /*
-            if (currentTopologies.size() == 1) {
-               // Either just a coordinator change or the cache only had members in one partitions.
-               // Treat it as a regular view.
-               setCurrentTopology(currentTopologies.iterator().next());
-               setStableTopology(stableTopologies.iterator().next());
-               if (currentTopology.getPendingCH() != null) {
-                  // There was a rebalance in progress. We need to initialize the rebalance confirmation collector and
-                  // send a new CH update command in case any nodes already sent the confirmation to the old coordinator.
-                  int newTopologyId = currentTopology.getTopologyId() + 1;
-                  CacheTopology newTopology = new CacheTopology(newTopologyId, currentTopology.getRebalanceId(),
-                        currentTopology.getCurrentCH(), currentTopology.getPendingCH());
-                  clusterTopologyManager.broadcastConsistentHashUpdate(cacheName, newTopology, isTotalOrder(), isDistributed());
-               }
-               availabilityStrategy.onClusterViewChange(this, clusterMembers);
-            } else {
-            }
-            */
+            // TODO Should automatically detect when the coordinator has left and there is only one partition
+            // and continue any in-progress rebalance without resetting the cache topology.
 
-            // Note that we could end up on this path even if isMergeView == false, if the merge coordinator died
-            // before it managed to install the merged topology.
             availabilityStrategy.onPartitionMerge(this, statusResponses.values());
          } catch (Exception e) {
             log.failedToRecoverCacheState(cacheName, e);

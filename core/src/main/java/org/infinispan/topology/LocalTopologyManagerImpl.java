@@ -233,7 +233,6 @@ public class LocalTopologyManagerImpl implements LocalTopologyManager {
          // If this rebalance adds those same segments, we need to remove the old data/inbound transfers first.
          // This can happen when the coordinator changes, either because the old one left or because there was a merge,
          // and the rebalance after merge arrives before the merged topology update.
-//         if (!newCacheTopology.getCurrentCH().equals(oldCacheTopology.getCurrentCH())) {
          if (newCacheTopology.getRebalanceId() != oldCacheTopology.getRebalanceId()) {
             // The currentCH changed, we need to install a "reset" topology with the new currentCH first
             CacheTopology resetTopology = new CacheTopology(newCacheTopology.getTopologyId() - 1,
