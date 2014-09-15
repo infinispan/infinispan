@@ -1,5 +1,6 @@
 package org.infinispan.util.logging;
 
+import org.infinispan.IllegalLifecycleStateException;
 import org.infinispan.commands.ReplicableCommand;
 import org.infinispan.commands.tx.PrepareCommand;
 import org.infinispan.commons.CacheConfigurationException;
@@ -1190,4 +1191,13 @@ public interface Log extends BasicLogger {
    @LogMessage(level = WARN)
    @Message(value = "Unable to re-start x-site state transfer to site %s", id = 322)
    void failedToRestartXSiteStateTransfer(String siteName, @Cause Throwable cause);
+
+   @Message(value = "%s is in 'TERMINATED' state and so it does not accept new invocations. " +
+         "Either restart it or recreate the cache container.", id = 323)
+   IllegalLifecycleStateException cacheIsTerminated(String cacheName);
+
+   @Message(value = "%s is in 'STOPPING' state and this is an invocation not belonging to an on-going transaction, so it does not accept new invocations. " +
+         "Either restart it or recreate the cache container.", id = 324)
+   IllegalLifecycleStateException cacheIsStopping(String cacheName);
+
 }

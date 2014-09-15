@@ -16,6 +16,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
 
 import org.infinispan.Cache;
+import org.infinispan.IllegalLifecycleStateException;
 import org.infinispan.Version;
 import org.infinispan.commands.RemoveCacheCommand;
 import org.infinispan.commons.CacheConfigurationException;
@@ -849,7 +850,8 @@ public class DefaultCacheManager implements EmbeddedCacheManager {
 
    private void assertIsNotTerminated() {
       if (globalComponentRegistry.getStatus().isTerminated())
-         throw new IllegalStateException("Cache container has been stopped and cannot be reused. Recreate the cache container.");
+         throw new IllegalLifecycleStateException(
+               "Cache container has been stopped and cannot be reused. Recreate the cache container.");
    }
 
    @Override
