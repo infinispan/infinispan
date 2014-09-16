@@ -56,8 +56,7 @@ final class InfinispanBackendQueueProcessor implements BackendQueueProcessor {
          LocalOnlyBackend backend = new LocalOnlyBackend(localBackendFactory);
          backend.initialize();
          return backend;
-      }
-      else {
+      } else {
          EmbeddedCacheManager embeddedCacheManager = cacheManagerService.getEmbeddedCacheManager();
          TransactionManager transactionManager = componentRegistry.getComponent(TransactionManager.class);
          IndexLockController lockControl = new IndexManagerBasedLockController(indexManager, transactionManager);
@@ -79,13 +78,13 @@ final class InfinispanBackendQueueProcessor implements BackendQueueProcessor {
    @Override
    public void applyWork(List<LuceneWork> workList, IndexingMonitor monitor) {
       fowardingBackend.getCurrentIndexingBackend()
-         .applyWork(workList, monitor, indexManager);
+            .applyWork(workList, monitor, indexManager);
    }
 
    @Override
    public void applyStreamWork(LuceneWork singleOperation, IndexingMonitor monitor) {
       fowardingBackend.getCurrentIndexingBackend()
-         .applyStreamWork(singleOperation, monitor, indexManager);
+            .applyStreamWork(singleOperation, monitor, indexManager);
    }
 
    @Override

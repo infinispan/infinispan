@@ -140,8 +140,7 @@ final class ClusteredSwitchingBackend implements LazyInitializableBackend {
       lastSeenViewId.set(rpcManager.getTransport().getViewId());
       if (thisIsNewMaster(initialMaster)) {
          acquireControlStart();
-      }
-      else {
+      } else {
          updateRoutingToNewRemote(initialMaster);
       }
    }
@@ -160,12 +159,10 @@ final class ClusteredSwitchingBackend implements LazyInitializableBackend {
                log.debug("No longer a MASTER node, releasing the index lock.");
             }
             forfeitControl(newmaster);
-         }
-         else if (thisIsNewMaster(newmaster)) {
+         } else if (thisIsNewMaster(newmaster)) {
             log.debug("Electing SELF as MASTER!");
             acquireControlStart();
-         }
-         else {
+         } else {
             updateRoutingToNewRemote(newmaster);
             if (log.isDebugEnabled()) {
                log.debug("New master elected, now routing updates to node " + newmaster);
@@ -185,9 +182,8 @@ final class ClusteredSwitchingBackend implements LazyInitializableBackend {
    private boolean masterDidChange(final Address newmaster) {
       if (newmaster == null) {
          return false;
-      }
-      else {
-         return ! newmaster.equals(currentMaster);
+      } else {
+         return !newmaster.equals(currentMaster);
       }
    }
 
@@ -243,15 +239,13 @@ final class ClusteredSwitchingBackend implements LazyInitializableBackend {
          indexlock.forceLockClear();
          swapNewBackendIn(factory.createLocalIndexingBackend(), localAddress);
          return true;
-      }
-      else {
+      } else {
          masterLockAcquisitionAttempts++;
       }
       if (indexlock.waitForAvailability()) {
          swapNewBackendIn(factory.createLocalIndexingBackend(), localAddress);
          return true;
-      }
-      else {
+      } else {
          log.trace("Index lock not available: index update operations postponed.");
          return false;
       }

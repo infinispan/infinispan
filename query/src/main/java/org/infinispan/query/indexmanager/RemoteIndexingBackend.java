@@ -62,13 +62,11 @@ final class RemoteIndexingBackend implements IndexingBackend {
       try {
          log.applyingChangeListRemotely(workList);
          sendCommand(command, workList);
-      }
-      catch (Exception e) {
+      } catch (Exception e) {
          waitForReplacementBackend();
          if (replacement != null) {
             replacement.applyWork(workList, monitor, indexManager);
-         }
-         else {
+         } else {
             throw e;
          }
       }
@@ -83,13 +81,11 @@ final class RemoteIndexingBackend implements IndexingBackend {
       streamCommand.setIndexName(this.indexName);
       try {
          sendCommand(streamCommand, operations);
-      }
-      catch (Exception e) {
+      } catch (Exception e) {
          waitForReplacementBackend();
          if (replacement != null) {
             replacement.applyStreamWork(singleOperation, monitor, indexManager);
-         }
-         else {
+         } else {
             throw e;
          }
       }
