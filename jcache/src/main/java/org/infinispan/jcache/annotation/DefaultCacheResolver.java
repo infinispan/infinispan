@@ -36,22 +36,21 @@ public class DefaultCacheResolver implements CacheResolver {
 
       final String cacheName = cacheInvocationContext.getCacheName();
 
-      // If cache name is empty, default cache of default cache manager is returned
-      if (cacheName.trim().isEmpty()) {
-         return defaultCacheManager.createCache(cacheName,
-               new javax.cache.configuration.MutableConfiguration<K, V>());
-      }
-
       for (String name : defaultCacheManager.getCacheNames()) {
          if (name.equals(cacheName))
             return defaultCacheManager.getCache(cacheName);
       }
 
-      // If the cache has not been defined in the default cache manager or
-      // in a specific one a new cache is created in the default cache manager
-      // with the default configuration.
-      return defaultCacheManager.createCache(cacheName,
-            new javax.cache.configuration.MutableConfiguration<K, V>());
+      return getOrCreateCache(cacheName);
+   }
+
+   private synchronized <K, V> Cache<K, V> getOrCreateCache(String cacheName) {
+      Cache<K, V> cache = defaultCacheManager.getCache(cacheName);
+      if (cache != null)
+         return cache;
+      else
+         return defaultCacheManager.createCache(cacheName,
+               new javax.cache.configuration.MutableConfiguration<K, V>());
    }
 
 }
