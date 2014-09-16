@@ -153,15 +153,11 @@ public abstract class AbstractTxLockingInterceptor extends AbstractLockingInterc
          waitForTransactionsToComplete(txContext, txTable.getRemoteTransactions(), key, transactionTopologyId, expectedEndTime);
 
          // Then try to acquire a lock
-         final long remaining = timeService.remainingTime(expectedEndTime, TimeUnit.MILLISECONDS);
-         if (remaining <= 0) {
-            throw newTimeoutException(key, txContext);
-         } else {
-            if (trace)
-               log.tracef("Finished waiting for other potential lockers, trying to acquire the lock on %s", toStr(key));
+         if (trace)
+            log.tracef("Finished waiting for other potential lockers, trying to acquire the lock on %s", toStr(key));
 
-            lockManager.acquireLock(ctx, key, remaining, skipLocking);
-         }
+         final long remaining = timeService.remainingTime(expectedEndTime, TimeUnit.MILLISECONDS);
+         lockManager.acquireLock(ctx, key, remaining, skipLocking);
       } else {
          if (trace)
             log.tracef("Locking key %s, no need to check for pending locks.", toStr(key));
