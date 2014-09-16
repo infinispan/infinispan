@@ -86,7 +86,7 @@ This is done because of the possible memory constraints of pulling all the value
 
 An `EntryIterable` is available by invoking the link:$$https://docs.jboss.org/infinispan/7.0/apidocs/org/infinispan/AdvancedCache.html#filterEntries(org.infinispan.filter.KeyValueFilter)$$[filterEntries] method on `AdvancedCache`.  Note you are required to provide a `KeyValueFilter`, this is to make sure users realize this can be an expensive operation and by filtering entries on the remote side will allow the operation to perform faster and more efficiently.  This allows you to iterate over the contents in the cache in a memory sensitive way so out of memory errors should not occur.  The size of contents held in memory by the iterator while being processed currently is limited by the state transfer chunk size configuration value.
 
-Once the `EntryIterable` is retrieved invocation of the iterator method will immediately start retrieving entries.  Note each invocation of the iterator method will start a brand new entry request thus allowing the `Iterable` to be reused.
+Once the `EntryIterable` is retrieved, invocation of the iterator method will immediately start retrieving entries.  Note each invocation of the iterator method will start a brand new entry request thus allowing the `Iterable` to be reused.
 
 `EntryIterable` also implements `AutoCloseable` so it should be done in a try with resource block to ensure that all resources can be closed properly after invocation.
 
@@ -130,7 +130,7 @@ try (CloseableIterable<CacheEntry<String, Wheel>> iterable = advancedCache.filte
 }
 ----
 
-NOTE: Remeber that both the `KeyValueFilter` and the `Converter` must either implement `Serializable` or have a provided Infinispan `Externalizer`
+NOTE: Remember that both the `KeyValueFilter` and the `Converter` must either implement `Serializable` or have a provided Infinispan `Externalizer`
 
 ==== Custom Interceptors
 
@@ -142,7 +142,7 @@ For more information on writing custom interceptors, see <<_custom_interceptors_
 
 Infinispan offers a listener API, where clients can register for and get notified when events take place.  This annotation-driven API applies to 2 different levels: cache level events and cache manager level events.
 
-Events trigger a notification which are dispatched to listeners.   Listeners are simple link:$$http://en.wikipedia.org/wiki/Plain_Old_Java_Object$$[POJO] s annotated with link:$$http://docs.jboss.org/infinispan/7.0/apidocs/org/infinispan/notifications/Listener.html$$[@Listener] and registered using the methods defined in the link:$$http://docs.jboss.org/infinispan/7.0/apidocs/org/infinispan/notifications/Listenable.html$$[Listenable] interface.
+Events trigger a notification which is dispatched to listeners.   Listeners are simple link:$$http://en.wikipedia.org/wiki/Plain_Old_Java_Object$$[POJO] s annotated with link:$$http://docs.jboss.org/infinispan/7.0/apidocs/org/infinispan/notifications/Listener.html$$[@Listener] and registered using the methods defined in the link:$$http://docs.jboss.org/infinispan/7.0/apidocs/org/infinispan/notifications/Listenable.html$$[Listenable] interface.
 
 NOTE: Both Cache and CacheManager implement Listenable, which means you can attach listeners to either a cache or a cache manager, to receive either cache-level or cache manager-level notifications.
 
@@ -372,6 +372,7 @@ It's worth noting that these flags are only active for the duration of the cache
 Another very important use case is when you want a write operation such as put() to _not_ return the previous value. To do that, you need to use two flags to make sure that in a distributed environment, no remote lookup is done to potentially get previous value, and if the cache is configured with a cache loader, to avoid loading the previous value from the cache store. You can see these two flags in action in the following example: 
 
 
+[source,java]
 ----
 Cache cache = ...
 cache.getAdvancedCache()
