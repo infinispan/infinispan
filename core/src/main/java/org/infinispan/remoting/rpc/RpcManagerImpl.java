@@ -102,14 +102,15 @@ public class RpcManagerImpl implements RpcManager, JmxStatisticsExposer {
 
    @ManagedAttribute(description = "Retrieves the committed view.", displayName = "Committed view", dataType = DataType.TRAIT)
    public String getCommittedViewAsString() {
-      return localTopologyManager == null ? "N/A" : String.valueOf(localTopologyManager.getCacheTopology(cacheName)
-            .getCurrentCH());
+      CacheTopology cacheTopology = stateTransferManager.getCacheTopology();
+      return cacheTopology != null ? cacheTopology.getCurrentCH().getMembers().toString() : "N/A";
    }
 
    @ManagedAttribute(description = "Retrieves the pending view.", displayName = "Pending view", dataType = DataType.TRAIT)
    public String getPendingViewAsString() {
-      return localTopologyManager == null ? "N/A" : String.valueOf(localTopologyManager.getCacheTopology(cacheName)
-            .getPendingCH());
+      CacheTopology cacheTopology = stateTransferManager.getCacheTopology();
+      return (cacheTopology != null && cacheTopology.getPendingCH() != null)
+            ? cacheTopology.getPendingCH().getMembers().toString() : "N/A";
    }
 
    private boolean useReplicationQueue(boolean sync) {

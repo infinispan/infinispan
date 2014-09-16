@@ -63,9 +63,9 @@ public class StateTransferSuppressIT {
     final String PENDING_VIEW_AS_STRING_ATTR_NAME = "PendingViewAsString";
 
     /* JMX result views */
-    private final String OWNERS_2_MEMBERS_NODE1_NODE2 = "DefaultConsistentHash{numSegments=60, numOwners=2, members=[node0/" + getCacheManagerName() + ", node1/" + getCacheManagerName() + "]}";
-    private final String OWNERS_2_MEMBERS_NODE2_NODE3 = "DefaultConsistentHash{numSegments=60, numOwners=2, members=[node1/" + getCacheManagerName() + ", node2/" + getCacheManagerName() + "]}";
-    private final String OWNERS_2_MEMBERS_NODE1_NODE2_NODE3 = "DefaultConsistentHash{numSegments=60, numOwners=2, members=[node0/" + getCacheManagerName() + ", node1/" + getCacheManagerName() + ", node2/" + getCacheManagerName() + "]}";
+    private final String OWNERS_2_MEMBERS_NODE1_NODE2 = "[node0/" + getCacheManagerName() + ", node1/" + getCacheManagerName() + "]";
+    private final String OWNERS_2_MEMBERS_NODE2_NODE3 = "[node1/" + getCacheManagerName() + ", node2/" + getCacheManagerName() + "]";
+    private final String OWNERS_2_MEMBERS_NODE1_NODE2_NODE3 = "[node0/" + getCacheManagerName() + ", node1/" + getCacheManagerName() + ", node2/" + getCacheManagerName() + "]";
 
     /* server module MBeans */
     private final String LOCAL_TOPOLOGY_MANAGER = "jboss.infinispan:type=CacheManager,name=\"" + getCacheManagerName() + "\",component=LocalTopologyManager";
