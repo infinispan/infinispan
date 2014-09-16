@@ -219,7 +219,7 @@ public class JCacheManager implements CacheManager {
       return cfgType != null && cfgType.equals(type);
    }
 
-   public <K, V> Cache<K, V> configureCache(String cacheName, AdvancedCache<K, V> ispnCache) {
+   public <K, V> Cache<K, V> getOrCreateCache(String cacheName, AdvancedCache<K, V> ispnCache) {
       synchronized (caches) {
          JCache<?, ?> cache = caches.get(cacheName);
          if (cache == null) {

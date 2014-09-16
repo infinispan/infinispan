@@ -85,7 +85,7 @@ public class InjectedCacheResolver implements CacheResolver {
                if (cache != null)
                   return cache;
 
-               return jcacheManager.configureCache(
+               return jcacheManager.getOrCreateCache(
                      cacheName, cm.<K, V>getCache(cacheName).getAdvancedCache());
             }
          }
@@ -102,7 +102,7 @@ public class InjectedCacheResolver implements CacheResolver {
       if (cache != null)
          return cache;
 
-      return defaultJCacheManager.configureCache(cacheName,
+      return defaultJCacheManager.getOrCreateCache(cacheName,
             defaultCacheManager.<K, V>getCache().getAdvancedCache());
    }
 
