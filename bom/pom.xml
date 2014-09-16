@@ -3,7 +3,7 @@
    <modelVersion>4.0.0</modelVersion>
    <groupId>org.infinispan</groupId>
    <artifactId>infinispan-bom</artifactId>
-   <version>7.0.0-SNAPSHOT</version>
+   <version>7.0.0.Beta2</version>
    <packaging>pom</packaging>
    <name>Infinispan BOM</name>
    <description>Infinispan BOM module</description>
@@ -52,7 +52,7 @@
    </issueManagement>
 
    <properties>
-      <!-- Versions for dependencies -->
+      
       <version.protostream>2.0.0.Alpha2</version.protostream>
       <version.protobuf>2.5.0</version.protobuf>
       <version.protoparser>3.1.4</version.protoparser>
@@ -89,7 +89,7 @@
 
    <dependencyManagement>
       <dependencies>
-         <!-- Infinispan module versions -->
+         
          <dependency>
             <groupId>${project.groupId}</groupId>
             <artifactId>infinispan-cachestore-jdbc</artifactId>
@@ -206,7 +206,7 @@
             <artifactId>infinispan-jcache</artifactId>
             <version>${project.version}</version>
          </dependency>
-         <!-- Infinispan aggregate jars -->
+         
          <dependency>
             <groupId>${project.groupId}</groupId>
             <artifactId>infinispan-embedded</artifactId>
@@ -222,7 +222,7 @@
             <artifactId>infinispan-remote</artifactId>
             <version>${project.version}</version>
          </dependency>
-         <!-- Infinispan core modules dependencies -->
+         
          <dependency>
             <groupId>gnu-getopt</groupId>
             <artifactId>getopt</artifactId>
@@ -268,7 +268,7 @@
             <artifactId>org.osgi.compendium</artifactId>
             <version>${version.osgi}</version>
          </dependency>
-         <!-- Infinispan RHQ module dependencies -->
+         
          <dependency>
             <groupId>org.rhq</groupId>
             <artifactId>rhq-core-domain</artifactId>
@@ -300,7 +300,7 @@
             <artifactId>rhq-core-native-system</artifactId>
             <version>${version.rhq}</version>
          </dependency>
-         <!-- Infinispan Query module dependencies -->
+         
          <dependency>
             <groupId>org.hibernate</groupId>
             <artifactId>hibernate-search-engine</artifactId>
@@ -316,7 +316,7 @@
             <artifactId>hibernate-search-serialization-avro</artifactId>
             <version>${version.hibernate.search}</version>
          </dependency>
-         <!-- Infinispan Remote Query module dependencies -->
+         
          <dependency>
             <groupId>org.infinispan.protostream</groupId>
             <artifactId>protostream</artifactId>
@@ -332,7 +332,7 @@
             <artifactId>sample-domain-implementation</artifactId>
             <version>${version.protostream}</version>
          </dependency>
-         <!-- Infinispan Protocols module dependencies -->
+         
          <dependency>
             <groupId>io.netty</groupId>
             <artifactId>netty-all</artifactId>
