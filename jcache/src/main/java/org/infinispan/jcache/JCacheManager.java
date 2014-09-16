@@ -181,13 +181,9 @@ public class JCacheManager implements CacheManager {
 
             cache = new JCache<K, V>(ispnCache, this, adapter);
             caches.put(cache.getName(), cache);
-         }
-         else {
-            // re-register attempt with different configuration
-            if (!cache.getConfiguration(Configuration.class).equals(configuration)) {
-               throw log.cacheAlreadyRegistered(cacheName,
-                     cache.getConfiguration(Configuration.class), configuration);
-            }
+         } else {
+            throw log.cacheAlreadyRegistered(cacheName,
+                  cache.getConfiguration(Configuration.class), configuration);
          }
 
          return unchecked(cache);
