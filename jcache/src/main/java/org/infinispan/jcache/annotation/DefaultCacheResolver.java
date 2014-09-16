@@ -33,14 +33,7 @@ public class DefaultCacheResolver implements CacheResolver {
    @Override
    public <K, V> Cache<K, V> resolveCache(CacheInvocationContext<? extends Annotation> cacheInvocationContext) {
       assertNotNull(cacheInvocationContext, "cacheInvocationContext parameter must not be null");
-
-      final String cacheName = cacheInvocationContext.getCacheName();
-
-      for (String name : defaultCacheManager.getCacheNames()) {
-         if (name.equals(cacheName))
-            return defaultCacheManager.getCache(cacheName);
-      }
-
+      String cacheName = cacheInvocationContext.getCacheName();
       return getOrCreateCache(cacheName);
    }
 
@@ -48,9 +41,9 @@ public class DefaultCacheResolver implements CacheResolver {
       Cache<K, V> cache = defaultCacheManager.getCache(cacheName);
       if (cache != null)
          return cache;
-      else
-         return defaultCacheManager.createCache(cacheName,
-               new javax.cache.configuration.MutableConfiguration<K, V>());
+
+      return defaultCacheManager.createCache(cacheName,
+            new javax.cache.configuration.MutableConfiguration<K, V>());
    }
 
 }
