@@ -10,6 +10,7 @@ import org.testng.annotations.Test;
 
 import javax.enterprise.inject.spi.BeanManager;
 import javax.inject.Inject;
+import java.lang.invoke.MethodHandles;
 import java.util.concurrent.CyclicBarrier;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -25,7 +26,7 @@ import static org.testng.Assert.fail;
  * @author Sebastian Laskawiec
  * @see javax.cache.annotation.CacheResult
  */
-@Test(groups = "functional", testName = "cdi.test.interceptor.CacheResultInterceptorConcurrencyTest", description = "https://issues.jboss.org/browse/ISPN-3316")
+@Test(groups = "functional", testName = "cdi.test.interceptor.CacheResultInterceptorConcurrencyTest", description = "https://issues.jboss.org/browse/ISPN-4563")
 public class CacheResultInterceptorConcurrencyTest extends Arquillian {
 
    @Deployment
@@ -34,7 +35,8 @@ public class CacheResultInterceptorConcurrencyTest extends Arquillian {
             .addClass(CacheResultInterceptorConcurrencyTest.class)
             .addClass(CacheResultService.class)
             .addPackage(Config.class.getPackage())
-            .addClass(DefaultTestEmbeddedCacheManagerProducer.class);
+            .addClass(DefaultTestEmbeddedCacheManagerProducer.class)
+            .addAsWebInfResource(MethodHandles.lookup().lookupClass().getResource("/beans-for-not-managed-domain.xml"), "beans.xml");
    }
 
    @Inject
@@ -43,20 +45,22 @@ public class CacheResultInterceptorConcurrencyTest extends Arquillian {
    @Inject
    private BeanManager beanManager;
 
-   public void shouldNotThrowExceptionOnConcurrentAccessToCache() throws Exception {
-      final int numberOfThreads = 100;
+   private static final int NUMBER_OF_THREADS = 100;
+
+   public void testConcurrentAccessToCache() throws Exception {
+
 
       final AtomicReference<Exception> throwableHolder = new AtomicReference<>();
-      final CyclicBarrier counter = new CyclicBarrier(numberOfThreads);
+      final CyclicBarrier counter = new CyclicBarrier(NUMBER_OF_THREADS);
 
-      ExecutorService executorService = Executors.newFixedThreadPool(numberOfThreads);
-      for(int i = 0; i < numberOfThreads; ++i) {
+      ExecutorService executorService = Executors.newFixedThreadPool(NUMBER_OF_THREADS);
+      for(int i = 0; i < NUMBER_OF_THREADS; ++i) {
          executorService.execute(new Runnable() {
             @Override
             public void run() {
                try {
                   counter.await();
-                  service.cacheResult("Thread ");
+                  service.cacheResult("Thread " + Thread.currentThread().getId());
                } catch (Exception t) {
                   throwableHolder.set(t);
                }
@@ -65,7 +69,7 @@ public class CacheResultInterceptorConcurrencyTest extends Arquillian {
       }
 
       executorService.shutdown();
-      if(!executorService.awaitTermination(10, TimeUnit.SECONDS)) {
+      if(!executorService.awaitTermination(10, TimeUnit.HOURS)) {
          fail("Executor didn't finish all his tasks!");
       }
 

@@ -20,7 +20,6 @@ public final class Deployments {
     */
    public static WebArchive baseDeployment() {
       return ShrinkWrap.create(WebArchive.class, "test.war")
-            .addAsWebInfResource(Deployments.class.getResource("/beans.xml"), "beans.xml")
             .addAsLibrary(
                   ShrinkWrap.create(JavaArchive.class, "infinispan-cdi-jcache.jar")
                         .addPackage(ConfigureCache.class.getPackage())
