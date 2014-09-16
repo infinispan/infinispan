@@ -4,6 +4,7 @@ import static org.infinispan.integrationtests.cdijcache.Deployments.baseDeployme
 import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertTrue;
 
+import java.lang.invoke.MethodHandles;
 import java.lang.reflect.Method;
 
 import javax.cache.CacheException;
@@ -36,7 +37,8 @@ public class CacheRemoveEntryInterceptorTest extends Arquillian {
             .addClass(CacheRemoveEntryInterceptorTest.class)
             .addClass(CacheRemoveEntryService.class)
             .addPackage(Config.class.getPackage())
-            .addClass(DefaultTestEmbeddedCacheManagerProducer.class);
+            .addClass(DefaultTestEmbeddedCacheManagerProducer.class)
+            .addAsWebInfResource(MethodHandles.lookup().lookupClass().getResource("/beans.xml"), "beans.xml");
    }
 
    @Inject
