@@ -1,10 +1,7 @@
 package org.infinispan.query.indexmanager;
 
-import java.util.List;
-import java.util.concurrent.atomic.AtomicInteger;
-
 import net.jcip.annotations.GuardedBy;
-
+import org.hibernate.search.backend.BackendFactory;
 import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.notifications.Listener;
 import org.infinispan.notifications.cachemanagerlistener.annotation.ViewChanged;
@@ -13,6 +10,10 @@ import org.infinispan.query.logging.Log;
 import org.infinispan.remoting.rpc.RpcManager;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.util.logging.LogFactory;
+
+import java.util.List;
+import java.util.Properties;
+import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * Manages the current state of being a "master" node or a node delegating index
@@ -73,6 +74,7 @@ final class ClusteredSwitchingBackend implements LazyInitializableBackend {
    private final RpcManager rpcManager;
    private final LocalBackendFactory factory;
    private final IndexLockController indexlock;
+   private final boolean async;
 
    private final String indexName;
    private final String cacheName;
@@ -93,7 +95,7 @@ final class ClusteredSwitchingBackend implements LazyInitializableBackend {
    @GuardedBy("this")
    private int masterLockAcquisitionAttempts = 0;
 
-   ClusteredSwitchingBackend(ComponentRegistry componentsRegistry, String indexName, LocalBackendFactory factory, IndexLockController indexlock) {
+   ClusteredSwitchingBackend(Properties props, ComponentRegistry componentsRegistry, String indexName, LocalBackendFactory factory, IndexLockController indexlock) {
       this.indexName = indexName;
       this.factory = factory;
       this.indexlock = indexlock;
@@ -104,6 +106,7 @@ final class ClusteredSwitchingBackend implements LazyInitializableBackend {
       }
       this.localAddress = rpcManager.getAddress();
       this.currentBackend = new LazyInitializingBackend(this);
+      this.async = !BackendFactory.isConfiguredAsSync(props);
    }
 
    @ViewChanged
@@ -189,7 +192,7 @@ final class ClusteredSwitchingBackend implements LazyInitializableBackend {
    }
 
    private void updateRoutingToNewRemote(final Address newMaster) {
-      final IndexingBackend newBackend = new RemoteIndexingBackend(cacheName, rpcManager, indexName, newMaster);
+      final IndexingBackend newBackend = new RemoteIndexingBackend(cacheName, rpcManager, indexName, newMaster, async);
       swapNewBackendIn(newBackend, newMaster);
    }
 
@@ -200,7 +203,7 @@ final class ClusteredSwitchingBackend implements LazyInitializableBackend {
    }
 
    private void forfeitControl(Address newMasterAddress) {
-      final IndexingBackend newBackend = new RemoteIndexingBackend(cacheName, rpcManager, indexName, newMasterAddress);
+      final IndexingBackend newBackend = new RemoteIndexingBackend(cacheName, rpcManager, indexName, newMasterAddress, async);
       swapNewBackendIn(newBackend, newMasterAddress);
    }
 

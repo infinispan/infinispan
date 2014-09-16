@@ -32,15 +32,17 @@ final class RemoteIndexingBackend implements IndexingBackend {
    private final Collection<Address> recipients;
    private final RpcManager rpcManager;
    private final Address masterAddress;
+   private final boolean async;
 
    private volatile IndexingBackend replacement;
 
-   public RemoteIndexingBackend(String cacheName, RpcManager rpcManager, String indexName, Address masterAddress) {
+   public RemoteIndexingBackend(String cacheName, RpcManager rpcManager, String indexName, Address masterAddress, boolean async) {
       this.cacheName = cacheName;
       this.rpcManager = rpcManager;
       this.indexName = indexName;
       this.masterAddress = masterAddress;
       this.recipients = Collections.singleton(masterAddress);
+      this.async = async;
    }
 
    @Override
@@ -115,7 +117,7 @@ final class RemoteIndexingBackend implements IndexingBackend {
    }
 
    private void sendCommand(ReplicableCommand command, List<LuceneWork> workList) {
-      rpcManager.invokeRemotely(recipients, command, rpcManager.getDefaultRpcOptions(true));
+      rpcManager.invokeRemotely(recipients, command, rpcManager.getDefaultRpcOptions(!async));
       log.workListRemotedTo(workList, masterAddress);
    }
 

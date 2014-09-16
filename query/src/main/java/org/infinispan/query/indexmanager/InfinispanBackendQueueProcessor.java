@@ -45,11 +45,11 @@ final class InfinispanBackendQueueProcessor implements BackendQueueProcessor {
       this.indexName = indexManager.getIndexName();
       ComponentRegistryService componentRegistryService = serviceManager.requestService(ComponentRegistryService.class);
       ComponentRegistry componentRegistry = componentRegistryService.getComponentRegistry();
-      this.fowardingBackend = createForwardingBackend(componentRegistry, indexName, localBackendFactory, cacheManagerService, indexManager);
+      this.fowardingBackend = createForwardingBackend(props, componentRegistry, indexName, localBackendFactory, cacheManagerService, indexManager);
       log.commandsBackendInitialized(indexName);
    }
 
-   private static SwitchingBackend createForwardingBackend(ComponentRegistry componentRegistry, String indexName, LocalBackendFactory localBackendFactory, CacheManagerService cacheManagerService, DirectoryBasedIndexManager indexManager) {
+   private static SwitchingBackend createForwardingBackend(Properties props, ComponentRegistry componentRegistry, String indexName, LocalBackendFactory localBackendFactory, CacheManagerService cacheManagerService, DirectoryBasedIndexManager indexManager) {
       RpcManager rpcManager = componentRegistry.getComponent(RpcManager.class);
       if (rpcManager == null) {
          //non-clustered case:
@@ -61,7 +61,7 @@ final class InfinispanBackendQueueProcessor implements BackendQueueProcessor {
          EmbeddedCacheManager embeddedCacheManager = cacheManagerService.getEmbeddedCacheManager();
          TransactionManager transactionManager = componentRegistry.getComponent(TransactionManager.class);
          IndexLockController lockControl = new IndexManagerBasedLockController(indexManager, transactionManager);
-         ClusteredSwitchingBackend backend = new ClusteredSwitchingBackend(componentRegistry, indexName, localBackendFactory, lockControl);
+         ClusteredSwitchingBackend backend = new ClusteredSwitchingBackend(props, componentRegistry, indexName, localBackendFactory, lockControl);
          backend.initialize();
          embeddedCacheManager.addListener(backend);
          return backend;
