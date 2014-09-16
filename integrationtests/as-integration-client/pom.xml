@@ -97,9 +97,11 @@
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-failsafe-plugin</artifactId>
                 <configuration>
-
                     <testNGArtifactName>none:none</testNGArtifactName>
                     <excludedGroups>org.infinispan.test.integration.as.category.UnstableTest</excludedGroups>
+                    <systemPropertyVariables>
+                        <arquillian.debug>true</arquillian.debug>
+                    </systemPropertyVariables>
                 </configuration>
                 <executions>
                     <execution>
