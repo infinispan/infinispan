@@ -43,13 +43,70 @@
       </c:group>
    '>
 
-   <!ENTITY commonStoreParamters '
+   <!ENTITY commonStoreParameters '
       &commonLoaderParameters;
       <c:simple-property name="fetch-state" required="false" type="boolean" description="If true, fetch persistent state when joining a cluster. If multiple cache stores are chained, only one of them can have this property enabled."/>
       <c:simple-property name="passivation" required="false" type="boolean" description="If true, data is only written to the cache store when it is evicted from memory, a phenomenon known as &apos;passivation&apos;. Next time the data is requested, it will be &apos;activated&apos; which means that data will be brought back to memory and removed from the persistent store. If false, the cache store contains a copy of the contents in memory, so writes to cache result in cache store writes. This essentially gives you a &apos;write-through&apos; configuration."/>
       <c:simple-property name="purge" required="false" type="boolean" description="If true, purges this cache store when it starts up."/>
       <c:simple-property name="read-only" required="false" type="boolean" description="If true, the cache store will only be used to load entries. Any modifications made to the caches will not be applied to the store."/>
       <c:simple-property name="singleton" required="false" type="boolean" description="If true, the singleton store cache store is enabled. SingletonStore is a delegating cache store used for situations when only one instance in a cluster should interact with the underlying store."/>
+   '>
+
+   <!ENTITY commonJDBCStoreParameters '
+      &commonStoreParameters;
+      <c:simple-property name="dialect" required="false" type="string" readOnly="true"
+                                           description="The name of the remote cache to use for this remote store.">
+         <c:property-options>
+            <c:option value="HSQL"/>
+            <c:option value="INTERBASE"/>
+            <c:option value="POSTGRES"/>
+            <c:option value="DERBY"/>
+            <c:option value="SQLITE"/>
+            <c:option value="ACCESS"/>
+            <c:option value="INFORMIX"/>
+            <c:option value="DB2_390"/>
+            <c:option value="SYBASE"/>
+            <c:option value="H2"/>
+            <c:option value="ORACLE"/>
+            <c:option value="DB2"/>
+            <c:option value="SQL_SERVER"/>
+            <c:option value="MYSQL"/>
+            <c:option value="FIREBIRD"/>
+         </c:property-options>
+      </c:simple-property>
+      <c:simple-property name="datasource" required="true" type="string" readOnly="true"
+                                           description="A datasource reference for this datastore."/>
+   '>
+
+   <!ENTITY commonJDBCTableParameters '
+      <c:simple-property name="batch-size" required="false" type="integer" readOnly="true"
+                                           description="For DB inserts, the batch size determines how many inserts are batched together."/>
+      <c:simple-property name="fetch-size" required="false" type="integer" readOnly="true"
+                                           description="For DB queries, the fetch size will be used to set the fetch size on ResultSets."/>
+      <c:simple-property name="prefix" required="false" type="string" readOnly="true"
+                                           description="The prefix for the database table name."/>
+   '>
+
+   <!ENTITY JDBCTableColumnParameters '
+       <c:simple-property name="name" displayName="Name of Column" required="true" type="string" readOnly="true"
+                                   description="The name of the database column."/>
+       <c:simple-property name="type" displayName="Type of Column" required="true" type="string" readOnly="true"
+                                   description="The type of the database column."/>
+   '>
+
+   <!ENTITY JDBCTableColumnDefinition '
+      <c:map-property name="data-column" displayName="Data Column" readOnly="true"
+                      description="A database column to hold cache entry data.">
+         &JDBCTableColumnParameters;
+      </c:map-property>
+      <c:map-property name="id-column" displayName="Id Column" readOnly="true"
+                      description="A database column to hold cache entry ids.">
+         &JDBCTableColumnParameters;
+      </c:map-property>
+      <c:map-property name="timestamp-column" displayName="Timestamp Column" readOnly="true"
+                      description="A database column to hold cache entry timestamps.">
+         &JDBCTableColumnParameters;
+      </c:map-property>
    '>
 ]>
 
@@ -625,7 +682,7 @@
                     <resource-configuration>
                         <c:simple-property name="class" required="true"
                                            description="The custom store implementation class to use for this cache store."/>
-                        &commonStoreParamters;
+                        &commonStoreParameters;
                         &commonLoaderProperties;
                     </resource-configuration>
                 </service>
@@ -640,7 +697,7 @@
                     </plugin-configuration>
 
                     <resource-configuration>
-                        &commonStoreParamters;
+                        &commonStoreParameters;
                         <c:simple-property name="path" required="false" type="string" readOnly="true"
                                            description="An absolute path if relative-to is not provided, otherwise the relative path to relative-to"/>
                         <c:simple-property name="relative-to" required="false" type="string" readOnly="true"
@@ -661,7 +718,7 @@
                     </plugin-configuration>
 
                     <resource-configuration>
-                        &commonStoreParamters;
+                        &commonStoreParameters;
                         <c:simple-property name="path" required="false" type="string" readOnly="true"
                                            description="An absolute path if relative-to is not provided, otherwise the relative path to relative-to"/>
                         <c:simple-property name="block-size" required="false" type="integer" readOnly="true"
@@ -705,6 +762,67 @@
                     </resource-configuration>
                 </service>
 
+                <service name="String Keyed JDBC Store" discovery="org.rhq.modules.plugins.jbossas7.SubsystemDiscovery"
+                         class="org.rhq.modules.plugins.jbossas7.BaseComponent"
+                         description="The remote stores that this cache contains" createDeletePolicy="both"
+                         creationDataType="configuration">
+                    <plugin-configuration>
+                        <c:simple-property name="path" readOnly="true"
+                                           default="string-keyed-jdbc-store"/>
+                    </plugin-configuration>
+
+                    <resource-configuration>
+                        &commonJDBCStoreParameters;
+                        <c:map-property name="string-keyed-table" displayName="String Keyed Table">
+                            &commonJDBCTableParameters;
+                            &JDBCTableColumnDefinition;
+                        </c:map-property>
+                        &commonLoaderProperties;
+                    </resource-configuration>
+                </service>
+
+                <service name="Binary Keyed JDBC Store" discovery="org.rhq.modules.plugins.jbossas7.SubsystemDiscovery"
+                         class="org.rhq.modules.plugins.jbossas7.BaseComponent"
+                         description="The remote stores that this cache contains" createDeletePolicy="both"
+                         creationDataType="configuration">
+                    <plugin-configuration>
+                        <c:simple-property name="path" readOnly="true"
+                                           default="binary-keyed-jdbc-store"/>
+                    </plugin-configuration>
+
+                    <resource-configuration>
+                        &commonJDBCStoreParameters;
+                        <c:map-property name="binary-keyed-table" displayName="Binary Keyed Table">
+                            &commonJDBCTableParameters;
+                            &JDBCTableColumnDefinition;
+                        </c:map-property>
+                        &commonLoaderProperties;
+                    </resource-configuration>
+                </service>
+
+                <service name="Mixed Keyed JDBC Store" discovery="org.rhq.modules.plugins.jbossas7.SubsystemDiscovery"
+                         class="org.rhq.modules.plugins.jbossas7.BaseComponent"
+                         description="The remote stores that this cache contains" createDeletePolicy="both"
+                         creationDataType="configuration">
+                    <plugin-configuration>
+                        <c:simple-property name="path" readOnly="true"
+                                           default="mixed-keyed-jdbc-store"/>
+                    </plugin-configuration>
+
+                    <resource-configuration>
+                        &commonJDBCStoreParameters;
+                        <c:map-property name="string-keyed-table" displayName="String Keyed Table">
+                            &commonJDBCTableParameters;
+                            &JDBCTableColumnDefinition;
+                        </c:map-property>
+                        <c:map-property name="binary-keyed-table" displayName="Binary Keyed Table">
+                            &commonJDBCTableParameters;
+                            &JDBCTableColumnDefinition;
+                        </c:map-property>
+                        &commonLoaderProperties;
+                    </resource-configuration>
+                </service>
+
                 <service name="Remote Store" discovery="org.rhq.modules.plugins.jbossas7.SubsystemDiscovery"
                          class="org.rhq.modules.plugins.jbossas7.BaseComponent"
                          description="The remote stores that this cache contains" createDeletePolicy="both"
@@ -715,7 +833,7 @@
                     </plugin-configuration>
 
                     <resource-configuration>
-                        &commonStoreParamters;
+                        &commonStoreParameters;
                         <c:simple-property name="cache" required="false" type="string" readOnly="true"
                                            description="The name of the remote cache to use for this remote store."/>
                         <c:simple-property name="hotrod-wrapping" required="false" type="boolean" readOnly="true"
