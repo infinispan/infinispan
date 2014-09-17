@@ -4,9 +4,9 @@
 
    <parent>
       <groupId>org.infinispan</groupId>
-      <artifactId>infinispan-bom</artifactId>
+      <artifactId>infinispan-all-parent</artifactId>
       <version>7.0.0-SNAPSHOT</version>
-      <relativePath>../../bom/pom.xml</relativePath>
+      <relativePath>../pom.xml</relativePath>
    </parent>
 
    <artifactId>infinispan-embedded-query</artifactId>
@@ -38,12 +38,6 @@
       </pluginManagement>
       <plugins>
          <plugin>
-            <artifactId>maven-deploy-plugin</artifactId>
-            <configuration>
-               <skip>true</skip>
-            </configuration>
-         </plugin>
-         <plugin>
             <groupId>org.apache.maven.plugins</groupId>
             <artifactId>maven-shade-plugin</artifactId>
             <executions>
@@ -68,13 +62,26 @@
                            <exclude>org.osgi:org.osgi.compendium:jar:</exclude>
                         </excludes>
                      </artifactSet>
+                     <createSourcesJar>true</createSourcesJar>
                      <transformers>
+                        <transformer implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
+                           <manifestEntries>
+                              <Implementation-Title>${project.description}</Implementation-Title>
+                              <Implementation-Vendor>JBoss, a division of Red Hat</Implementation-Vendor>
+                              <Implementation-Vendor-Id>${project.groupId}</Implementation-Vendor-Id>
+                              <Implementation-Version>${project.version}</Implementation-Version>
+                              <Specification-Title>${project.description}</Specification-Title>
+                              <Specification-Vendor>JBoss, a division of Red Hat</Specification-Vendor>
+                              <Specification-Version>${project.version}</Specification-Version>
+                           </manifestEntries>
+                        </transformer>
                         <transformer implementation="org.apache.maven.plugins.shade.resource.DontIncludeResourceTransformer">
                            <resources>
                               <resource>blueprint.xml</resource>
                               <resource>features.xml</resource>
                            </resources>
                         </transformer>
+                        <transformer implementation="org.apache.maven.plugins.shade.resource.ServicesResourceTransformer"/>
                      </transformers>
                   </configuration>
                </execution>

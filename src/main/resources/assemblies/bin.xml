@@ -2,12 +2,12 @@
 <!--
    This package will build a ZIP containing the following:
 
-   - infinispan-core.jar
-   + lib (contains dependencies for core)
+   - infinispan-embedded.jar
+   - infinispan-embedded-query.jar
    + modules
       + tree
          - infinispan-tree.jar
-         + lib (dependencies for tree, excluding core)
+         + lib (additional dependencies for tree)
 
       .. etc ...
 
@@ -40,12 +40,8 @@
       <moduleSet>
          <includeSubModules>false</includeSubModules>
          <includes>
-            <include>org.infinispan:infinispan-core</include>
             <include>org.infinispan:infinispan-rhq-plugin</include>
             <include>org.infinispan:infinispan-tree</include>
-            <include>org.infinispan:infinispan-query</include>
-            <include>org.infinispan:infinispan-client-hotrod</include>
-            <include>org.infinispan:infinispan-lucene-directory</include>
             <include>org.infinispan:infinispan-cli-client</include>
             <include>org.infinispan:infinispan-cli-server</include>
             <include>org.infinispan:infinispan-gui-demo</include>
@@ -66,11 +62,12 @@
          </binaries>
       </moduleSet>
 
-      <!-- Core module -->
+      <!-- Core modules -->
       <moduleSet>
          <includeSubModules>false</includeSubModules>
          <includes>
-            <include>org.infinispan:infinispan-core</include>
+            <include>org.infinispan:infinispan-embedded</include>
+            <include>org.infinispan:infinispan-embedded-query</include>
          </includes>
          <sources>
             <includeModuleDirectory>false</includeModuleDirectory>
@@ -182,9 +179,6 @@
          <includes>
             <include>org.infinispan:infinispan-rhq-plugin</include>
             <include>org.infinispan:infinispan-tree</include>
-            <include>org.infinispan:infinispan-query</include>
-            <include>org.infinispan:infinispan-client-hotrod</include>
-            <include>org.infinispan:infinispan-lucene-directory</include>
             <include>org.infinispan:infinispan-cli-client</include>
             <include>org.infinispan:infinispan-cli-server</include>
          </includes>
@@ -422,7 +416,7 @@
       <!-- docs -->
       <fileSet>
          <directory>target/site/apidocs</directory>
-         <outputDirectory>doc/apidocs</outputDirectory>
+         <outputDirectory>doc/api</outputDirectory>
       </fileSet>
 
    </fileSets>
