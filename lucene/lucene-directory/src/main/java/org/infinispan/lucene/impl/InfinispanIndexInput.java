@@ -52,6 +52,17 @@ public class InfinispanIndexInput extends IndexInput {
       }
    }
 
+   private InfinispanIndexInput(final String resourceDescription, final Cache<ChunkCacheKey, Object> chunksCache, FileCacheKey fileKey, int chunkSize, String filename, long fileLength) {
+      super(resourceDescription);
+      this.chunksCache = chunksCache;
+      this.fileKey = fileKey;
+      this.chunkSize = chunkSize;
+      this.filename = filename;
+      this.fileLength = fileLength;
+      this.readLocks = null;//Lifecycle of this IndexInput is dependent on a parent IndexInput
+      this.isClone = true;
+   }
+
    @Override
    public final byte readByte() throws IOException {
       if (bufferPosition >= currentBufferSize) {
@@ -148,6 +159,15 @@ public class InfinispanIndexInput extends IndexInput {
       // are cleaned up, but the original is (especially .tis files)
       clone.isClone = true;
       return clone;
+   }
+
+   @Override
+   public IndexInput slice(String sliceDescription, long offset, long length) throws IOException {
+      return new SlicingInfinispanIndexInput(sliceDescription, offset, length, copyAndReset());
+   }
+
+   InfinispanIndexInput copyAndReset() {
+      return new InfinispanIndexInput(filename, chunksCache, fileKey, chunkSize, filename, fileLength);
    }
 
 }
