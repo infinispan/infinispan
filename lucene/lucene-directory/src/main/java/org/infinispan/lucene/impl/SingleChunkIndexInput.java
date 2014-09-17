@@ -72,4 +72,9 @@ public final class SingleChunkIndexInput extends IndexInput {
       bufferPosition = (int) Math.min(pos, buffer.length);
    }
 
+   @Override
+   public IndexInput slice(String sliceDescription, long offset, long length) throws IOException {
+      return new SlicedBufferIndexInput(sliceDescription, buffer, offset, length);
+   }
+
 }
