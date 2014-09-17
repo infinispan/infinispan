@@ -20,7 +20,7 @@ import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 import org.testng.annotations.Test;
 
-@Test(groups = "functional", testName = "atomic.AtomicMapFunctionalTest")
+@Test(groups = "functional,smoke", testName = "atomic.AtomicMapFunctionalTest")
 public class AtomicMapFunctionalTest extends SingleCacheManagerTest {
    private static final Log log = LogFactory.getLog(AtomicMapFunctionalTest.class);
 

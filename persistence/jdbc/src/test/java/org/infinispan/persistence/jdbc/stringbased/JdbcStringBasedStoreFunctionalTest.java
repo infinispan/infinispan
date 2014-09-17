@@ -6,7 +6,7 @@ import org.infinispan.persistence.jdbc.configuration.JdbcStringBasedStoreConfigu
 import org.infinispan.test.fwk.UnitTestDatabaseManager;
 import org.testng.annotations.Test;
 
-@Test(groups = "functional", testName = "persistence.jdbc.stringbased.JdbcStringBasedStoreFunctionalTest")
+@Test(groups = "functional,smoke", testName = "persistence.jdbc.stringbased.JdbcStringBasedStoreFunctionalTest")
 public class JdbcStringBasedStoreFunctionalTest extends BaseStoreFunctionalTest {
 
    @Override

@@ -29,7 +29,7 @@ import org.testng.annotations.Test;
  * implementation. As these are functional tests, they should interact against Cache/CacheManager only and any access to
  * the underlying cache store/loader should be done to verify contents.
  */
-@Test(groups = "unit", testName = "persistence.BaseStoreFunctionalTest")
+@Test(groups = "unit,smoke", testName = "persistence.BaseStoreFunctionalTest")
 public abstract class BaseStoreFunctionalTest extends SingleCacheManagerTest {
 
    protected abstract PersistenceConfigurationBuilder createCacheStoreConfig(PersistenceConfigurationBuilder persistence, boolean preload);

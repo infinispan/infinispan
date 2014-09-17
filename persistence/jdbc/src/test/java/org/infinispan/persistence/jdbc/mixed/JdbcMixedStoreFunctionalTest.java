@@ -6,7 +6,7 @@ import org.infinispan.persistence.jdbc.configuration.JdbcMixedStoreConfiguration
 import org.infinispan.test.fwk.UnitTestDatabaseManager;
 import org.testng.annotations.Test;
 
-@Test(groups = "functional", testName = "persistence.jdbc.mixed.JdbcMixedStoreFunctionalTest")
+@Test(groups = "functional,smoke", testName = "persistence.jdbc.mixed.JdbcMixedStoreFunctionalTest")
 public class JdbcMixedStoreFunctionalTest extends BaseStoreFunctionalTest {
 
    @Override

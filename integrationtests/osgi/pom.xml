@@ -28,6 +28,12 @@
             <skipOSGiTests>true</skipOSGiTests>
          </properties>
       </profile>
+      <profile>
+         <id>smoke</id>
+         <properties>
+            <skipOSGiTests>true</skipOSGiTests>
+         </properties>
+      </profile>
    </profiles>
 
    <dependencies>
