@@ -247,7 +247,8 @@ object Decoder10 extends AbstractVersionedDecoder with ServerConstants with Log 
 
    override def customReadValue(header: HotRodHeader, buffer: ByteBuf, cache: Cache): AnyRef = null
 
-   override def createStatsResponse(h: HotRodHeader, cacheStats: Stats, t: NettyTransport): AnyRef = {
+   override def createStatsResponse(h: HotRodHeader, cache: Cache, t: NettyTransport): AnyRef = {
+      val cacheStats = cache.getStats
       val stats = mutable.Map.empty[String, String]
       stats += ("timeSinceStart" -> cacheStats.getTimeSinceStart.toString)
       stats += ("currentNumberOfEntries" -> cacheStats.getCurrentNumberOfEntries.toString)

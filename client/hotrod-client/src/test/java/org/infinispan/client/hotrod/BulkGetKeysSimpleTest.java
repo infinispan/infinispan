@@ -14,15 +14,15 @@ import org.testng.annotations.Test;
 @Test(testName = "client.hotrod.BulkGetKeysSimpleTest", groups = "functional")
 public class BulkGetKeysSimpleTest extends BaseBulkGetKeysTest {
 
-	@Override
-	protected int numberOfHotRodServers() {
-		return 1;
-	}
+   @Override
+   protected int numberOfHotRodServers() {
+      return 1;
+   }
 
-	@Override
-	protected ConfigurationBuilder clusterConfig() {
-		return getDefaultClusteredCacheConfig(
-				CacheMode.LOCAL, true);
-	}
-   
+   @Override
+   protected ConfigurationBuilder clusterConfig() {
+      return getDefaultClusteredCacheConfig(
+            CacheMode.LOCAL, true);
+   }
+
 }
