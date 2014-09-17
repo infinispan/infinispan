@@ -60,7 +60,7 @@ public class NumOwnersNodeCrashInSequenceTest extends MultipleCacheManagersTest 
                                             new int[]{2, 3}, new int[]{3, 0});
       configBuilder = getDefaultClusteredCacheConfig(CacheMode.DIST_SYNC);
       configBuilder.clustering().partitionHandling().enabled(true);
-      configBuilder.clustering().hash().numSegments(4).stateTransfer().timeout(2000);
+      configBuilder.clustering().hash().numSegments(4).stateTransfer().timeout(30000);
    }
 
    public void testNodeCrashedBeforeStFinished0() throws Exception {
@@ -215,7 +215,7 @@ public class NumOwnersNodeCrashInSequenceTest extends MultipleCacheManagersTest 
             log.warn("Problems inserting discard", e);
             throw new RuntimeException(e);
          }
-         View view = View.create(channel.getAddress(), 100);
+         View view = View.create(channel.getAddress(), 100, channel.getAddress());
          ((GMS) channel.getProtocolStack().findProtocol(GMS.class)).installView(view);
       }
       TestingUtil.killCacheManagers(cacheManagers);
