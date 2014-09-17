@@ -1,22 +1,19 @@
 <?xml version='1.0' encoding='UTF-8'?>
-<project xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd" xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+<project xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd" xmlns="http://maven.apache.org/POM/4.0.0"
+   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
    <modelVersion>4.0.0</modelVersion>
 
    <parent>
       <groupId>org.infinispan</groupId>
-      <artifactId>infinispan-bom</artifactId>
+      <artifactId>infinispan-all-parent</artifactId>
       <version>7.0.0-SNAPSHOT</version>
-      <relativePath>../../bom/pom.xml</relativePath>
+      <relativePath>../pom.xml</relativePath>
    </parent>
 
    <artifactId>infinispan-embedded</artifactId>
    <packaging>jar</packaging>
    <name>Infinispan Embedded</name>
    <description>Infinispan Embedded All-in-One module</description>
-
-   <properties>
-      <module.skipComponentMetaDataProcessing>true</module.skipComponentMetaDataProcessing>
-   </properties>
 
    <dependencies>
       <dependency>
@@ -44,6 +41,12 @@
       </dependency>
 
       <dependency>
+         <groupId>org.infinispan</groupId>
+         <artifactId>infinispan-cachestore-leveldb</artifactId>
+         <optional>true</optional>
+      </dependency>
+
+      <dependency>
          <groupId>org.jgroups</groupId>
          <artifactId>jgroups</artifactId>
          <optional>true</optional>
@@ -54,20 +57,28 @@
          <artifactId>jboss-marshalling-osgi</artifactId>
          <optional>true</optional>
       </dependency>
+
+      <!-- These dependencies will be left in the rewritten pom -->
+      <dependency>
+         <groupId>org.jboss.spec.javax.transaction</groupId>
+         <artifactId>jboss-transaction-api_1.1_spec</artifactId>
+      </dependency>
+
+      <dependency>
+         <groupId>org.hibernate</groupId>
+         <artifactId>hibernate-core</artifactId>
+         <scope>provided</scope>
+      </dependency>
+
+      <dependency>
+         <groupId>org.hibernate.javax.persistence</groupId>
+         <artifactId>hibernate-jpa-2.1-api</artifactId>
+         <scope>provided</scope>
+      </dependency>
    </dependencies>
 
    <build>
-      <pluginManagement>
-         <plugins>
-         </plugins>
-      </pluginManagement>
       <plugins>
-         <plugin>
-            <artifactId>maven-deploy-plugin</artifactId>
-            <configuration>
-               <skip>true</skip>
-            </configuration>
-         </plugin>
          <plugin>
             <groupId>org.apache.maven.plugins</groupId>
             <artifactId>maven-shade-plugin</artifactId>
@@ -80,6 +91,9 @@
                   <configuration>
                      <artifactSet>
                         <excludes>
+                           <exclude>org.fusesource.hawtjni:hawtjni-runtime:jar:</exclude>
+                           <exclude>org.fusesource.leveldbjni:leveldbjni:jar:</exclude>
+                           <exclude>org.iq80.leveldb:leveldb-api:jar:</exclude>
                            <exclude>log4j:log4j:jar:</exclude>
                            <exclude>net.jcip:jcip-annotations:jar:</exclude>
                            <exclude>org.jboss.spec.javax.transaction:jboss-transaction-api_1.1_spec:jar:</exclude>
@@ -87,13 +101,33 @@
                            <exclude>org.osgi:org.osgi.compendium:jar:</exclude>
                         </excludes>
                      </artifactSet>
+                     <createSourcesJar>true</createSourcesJar>
+                     <relocations>
+                        <relocation>
+                           <pattern>com.google.common</pattern>
+                           <shadedPattern>infinispan.com.google.common</shadedPattern>
+                        </relocation>
+                     </relocations>
                      <transformers>
+                        <transformer implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
+                           <manifestEntries>
+                              <Main-Class>org.infinispan.Version</Main-Class>
+                              <Implementation-Title>${project.description}</Implementation-Title>
+                              <Implementation-Vendor>JBoss, a division of Red Hat</Implementation-Vendor>
+                              <Implementation-Vendor-Id>${project.groupId}</Implementation-Vendor-Id>
+                              <Implementation-Version>${project.version}</Implementation-Version>
+                              <Specification-Title>${project.description}</Specification-Title>
+                              <Specification-Vendor>JBoss, a division of Red Hat</Specification-Vendor>
+                              <Specification-Version>${project.version}</Specification-Version>
+                           </manifestEntries>
+                        </transformer>
                         <transformer implementation="org.apache.maven.plugins.shade.resource.DontIncludeResourceTransformer">
                            <resources>
                               <resource>blueprint.xml</resource>
                               <resource>features.xml</resource>
                            </resources>
                         </transformer>
+                        <transformer implementation="org.apache.maven.plugins.shade.resource.ServicesResourceTransformer" />
                      </transformers>
                   </configuration>
                </execution>
