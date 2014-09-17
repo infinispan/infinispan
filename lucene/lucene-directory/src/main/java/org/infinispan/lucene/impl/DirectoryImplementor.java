@@ -12,6 +12,7 @@ import org.infinispan.lucene.ChunkCacheKey;
 import org.infinispan.lucene.FileCacheKey;
 import org.infinispan.lucene.FileMetadata;
 import org.infinispan.lucene.readlocks.SegmentReadLocker;
+import org.infinispan.persistence.spi.PersistenceException;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
@@ -120,7 +121,15 @@ class DirectoryImplementor {
 
     IndexInputContext openInput(final String name) throws IOException {
        final FileCacheKey fileKey = new FileCacheKey(indexName, name);
-       final FileMetadata fileMetadata = metadataCache.get(fileKey);
+       FileMetadata fileMetadata;
+       try {
+          fileMetadata = metadataCache.get(fileKey);
+       }
+       catch (PersistenceException pe) {
+          //When loading through the LuceneCacheLoader, a valid FileNotFoundException would be wrapped by a PersistenceException:
+          //just ignore it so that we re-throw the needed FileNotFoundException
+          fileMetadata = null;
+       }
        if (fileMetadata == null) {
           throw new FileNotFoundException("Error loading metadata for index file: " + fileKey);
        }
