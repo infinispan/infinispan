@@ -23,7 +23,7 @@ import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 import org.testng.annotations.Test;
 
-@Test(groups = "functional", testName = "jmx.CacheMBeanTest")
+@Test(groups = "functional,smoke", testName = "jmx.CacheMBeanTest")
 public class CacheMBeanTest extends MultipleCacheManagersTest {
    private static final Log log = LogFactory.getLog(CacheMBeanTest.class);
    public static final String JMX_DOMAIN = CacheMBeanTest.class.getSimpleName();

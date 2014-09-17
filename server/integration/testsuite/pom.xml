@@ -269,6 +269,7 @@
         <suite.client.dist.phase>integration-test</suite.client.dist.phase>
         <suite.client.repl.phase>integration-test</suite.client.repl.phase>
         <suite.security.phase>none</suite.security.phase>
+        <suite.client.smoke.phase>none</suite.client.smoke.phase>
 
         <suite.manual.include>**/*.java</suite.manual.include>
         <suite.manual.exclude.groups>
@@ -651,6 +652,20 @@
                             </systemPropertyVariables>
                         </configuration>
                     </execution>
+                    <execution>
+                        <id>suite-smoke</id>
+                        <phase>${suite.client.smoke.phase}</phase>
+                        <goals>
+                            <goal>integration-test</goal>
+                        </goals>
+                        <configuration>
+                            <groups>org.infinispan.server.test.category.Smoke</groups>
+                            <excludedGroups>${groups.unstable}</excludedGroups>
+                            <systemPropertyVariables>
+                                <arquillian.launch>suite-client-dist</arquillian.launch>
+                            </systemPropertyVariables>
+                           </configuration>
+                    </execution>
                 </executions>
             </plugin>
         </plugins>
@@ -781,6 +796,17 @@
                 <suite.client.local.phase>none</suite.client.local.phase>
                 <suite.client.dist.phase>none</suite.client.dist.phase>
                 <suite.client.repl.phase>none</suite.client.repl.phase>
+            </properties>
+        </profile>
+        <profile>
+            <id>smoke</id>
+            <properties>
+                <suite.manual.phase>none</suite.manual.phase>
+                <suite.manual.include.groups>org.infinispan.server.test.category.Smoke</suite.manual.include.groups>
+                <suite.queries.phase>none</suite.queries.phase>
+                <suite.client.local.phase>none</suite.client.local.phase>
+                <suite.client.dist.phase>none</suite.client.dist.phase>
+                <suite.client.smoke.phase>integration-test</suite.client.smoke.phase>
             </properties>
         </profile>
         <profile>

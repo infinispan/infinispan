@@ -6,6 +6,7 @@ import org.infinispan.notifications.cachelistener.filter.CacheEventConverterFact
 import org.infinispan.notifications.cachelistener.filter.CacheEventFilterFactory;
 import org.infinispan.server.test.category.HotRodClustered;
 import org.infinispan.server.test.category.HotRodLocal;
+import org.infinispan.server.test.category.Smoke;
 import org.jboss.arquillian.container.test.api.Deployment;
 import org.jboss.arquillian.container.test.api.OverProtocol;
 import org.jboss.arquillian.container.test.api.TargetsContainer;
@@ -26,7 +27,7 @@ import java.util.List;
  * @author Martin Gencur
  */
 @RunWith(Arquillian.class)
-@Category({HotRodLocal.class, HotRodClustered.class})
+@Category({HotRodLocal.class, HotRodClustered.class, Smoke.class})
 public class HotRodRemoteCacheIT extends AbstractRemoteCacheIT {
 
     @InfinispanResource("container1")

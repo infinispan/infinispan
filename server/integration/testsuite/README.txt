@@ -39,6 +39,8 @@ Currently these subsets are predefined:
                                       of any pre-defined group)
   -P suite.query                     (Query related tests, everything contained in the 'query' package)
 
+  -P smoke                             (Smoke tests. A small subset of server mode tests)
+
 Running with specific server zip distribution
 ---------------------------------------------
 

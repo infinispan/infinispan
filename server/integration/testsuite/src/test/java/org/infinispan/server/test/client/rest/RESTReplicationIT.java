@@ -5,6 +5,7 @@ import javax.servlet.http.HttpServletResponse;
 import org.infinispan.arquillian.core.InfinispanResource;
 import org.infinispan.arquillian.core.RemoteInfinispanServer;
 import org.infinispan.server.test.category.RESTClustered;
+import org.infinispan.server.test.category.Smoke;
 import org.jboss.arquillian.junit.Arquillian;
 import org.junit.After;
 import org.junit.Before;
@@ -31,7 +32,7 @@ import static org.infinispan.server.test.util.ITestUtils.sleepForSecs;
  * @version August 2011
  */
 @RunWith(Arquillian.class)
-@Category({ RESTClustered.class })
+@Category({ RESTClustered.class, Smoke.class })
 public class RESTReplicationIT {
 
     @InfinispanResource("container1")

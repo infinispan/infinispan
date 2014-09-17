@@ -33,7 +33,7 @@ import static org.testng.AssertJUnit.*;
  * @author Galder Zamarreño
  * @since 5.3
  */
-@Test(groups = "functional", testName = "it.compatibility.EmbeddedRestMemcachedHotRodTest")
+@Test(groups = "functional,smoke", testName = "it.compatibility.EmbeddedRestMemcachedHotRodTest")
 public class EmbeddedRestMemcachedHotRodTest {
 
    final static String CACHE_NAME = "memcachedCache";
