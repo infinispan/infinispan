@@ -544,6 +544,12 @@
             <version>${version.shrinkwrapResolver}</version>
             <type>pom</type>
             <scope>import</scope>
+            <exclusions>
+               <exclusion>
+                  <groupId>com.google.collections</groupId>
+                  <artifactId>google-collections</artifactId>
+               </exclusion>
+            </exclusions>
          </dependency>
          <dependency>
             <groupId>org.jboss.spec</groupId>
