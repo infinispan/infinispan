@@ -116,25 +116,27 @@ public class ClusteredCacheConfigurationIT {
         }
     }
 
-    // test queue-size=3 with hotrod
+    // test queue-size=5 with hotrod
     @Test
-    @Category(Unstable.class) // See ISPN-4037
     public void testQueueSizeHotrod() throws Exception {
         RemoteCache<String, String> rc1 = rcm1.getCache("queueSizeCache");
         long server1Entries, server2Entries;
-        // do 5 puts in total, so that we know that one of the queues on server1/server2 filled up and flushed
-        rc1.put("k1", "v1");
-        rc1.put("k2", "v2");
+        // do 9 puts in total, so that we know that one of the queues on server1/server2 filled up and flushed
+        for (int i = 0; i < 4; i++) {
+            rc1.put("k" + i, "v" + i);
+        }
         // no flush could've happened yet
         server1Entries = server1.getCacheManager("clustered").getCache("queueSizeCache").getNumberOfEntries();
         server2Entries = server2.getCacheManager("clustered").getCache("queueSizeCache").getNumberOfEntries();
-        assertTrue((server1Entries + server2Entries) == 2);
-        rc1.put("k3", "v3");
-        rc1.put("k4", "v4");
-        rc1.put("k5", "v5");
-        // 3 entries are replicated, 2 are still single = 3x2 + 2 = 8
+        long sum = server1Entries + server2Entries;
+        assertTrue("There are too many entries in the cache: " + sum, sum <= 4);
+        for (int i = 4; i < 9; i++) {
+            rc1.put("k" + i, "v" + i);
+        }
+        // the replication occurs, there have to be at least 5x2 = 10 entries
         server1Entries = server1.getCacheManager("clustered").getCache("queueSizeCache").getNumberOfEntries();
         server2Entries = server2.getCacheManager("clustered").getCache("queueSizeCache").getNumberOfEntries();
-        assertTrue((server1Entries + server2Entries) == 8);
+        sum = server1Entries + server2Entries;
+        assertTrue("The number of entries in the cache is too low: " + sum, sum >= 10);
     }
 }

@@ -5,7 +5,7 @@
                 <distributed-cache name="numOwners1" start="EAGER" mode="SYNC" owners="1" remote-timeout="30000">
                     <partition-handling enabled="true"/>
                 </distributed-cache>
-                <replicated-cache name="queueSizeCache" start="EAGER" mode="ASYNC" queue-size="3" queue-flush-interval="1000000">
+                <replicated-cache name="queueSizeCache" start="EAGER" mode="ASYNC" queue-size="5" queue-flush-interval="1000000">
                     <partition-handling enabled="false"/>
                 </replicated-cache>
                 <distributed-cache name="remoteTimeoutCache" start="EAGER" mode="SYNC" remote-timeout="1" />
