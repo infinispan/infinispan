@@ -26,7 +26,7 @@
 
   <xs:complexType name="string-keyed-jdbc-store">
     <xs:complexContent>
-      <xs:extension base="jdbc-store">
+      <xs:extension base="tns:jdbc-store">
         <xs:sequence>
           <xs:element name="string-keyed-table" type="tns:string-keyed-table" minOccurs="0">
             <xs:annotation>
@@ -42,7 +42,7 @@
 
   <xs:complexType name="binary-keyed-jdbc-store">
     <xs:complexContent>
-      <xs:extension base="jdbc-store">
+      <xs:extension base="tns:jdbc-store">
         <xs:sequence>
           <xs:element name="binary-keyed-table" type="tns:binary-keyed-table" minOccurs="0">
             <xs:annotation>
@@ -58,7 +58,7 @@
 
   <xs:complexType name="mixed-keyed-jdbc-store">
     <xs:complexContent>
-      <xs:extension base="jdbc-store">
+      <xs:extension base="tns:jdbc-store">
         <xs:sequence>
           <xs:element name="binary-keyed-table" type="tns:binary-keyed-table" minOccurs="0">
             <xs:annotation>
