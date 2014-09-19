@@ -68,7 +68,7 @@ public class LocalTopologyManagerImpl implements LocalTopologyManager {
    @Start(priority = 100)
    public void start() {
       if (trace) {
-         log.tracef("Starting LocalCacheManager on %s", transport.getAddress());
+         log.tracef("Starting LocalTopologyManager on %s", transport.getAddress());
       }
       running = true;
    }
@@ -77,7 +77,7 @@ public class LocalTopologyManagerImpl implements LocalTopologyManager {
    @Stop(priority = 9)
    public void stop() {
       if (trace) {
-         log.tracef("Stopping LocalCacheManager on %s", transport.getAddress());
+         log.tracef("Stopping LocalTopologyManager on %s", transport.getAddress());
       }
       running = false;
    }
@@ -166,7 +166,7 @@ public class LocalTopologyManagerImpl implements LocalTopologyManager {
    @Override
    public void handleTopologyUpdate(String cacheName, CacheTopology cacheTopology, AvailabilityMode availabilityMode, int viewId) throws InterruptedException {
       if (!running) {
-         log.debugf("Ignoring consistent hash update %s for cache %s, the local cache manager is not running",
+         log.tracef("Ignoring consistent hash update %s for cache %s, the local cache manager is not running",
                cacheTopology.getTopologyId(), cacheName);
          return;
       }
@@ -182,13 +182,13 @@ public class LocalTopologyManagerImpl implements LocalTopologyManager {
       synchronized (cacheStatus) {
          CacheTopology existingTopology = cacheStatus.getCurrentTopology();
          if (existingTopology != null && cacheTopology.getTopologyId() <= existingTopology.getTopologyId()) {
-            log.tracef("Ignoring consistent hash update for cache %s, current topology is %s: %s",
+            log.debugf("Ignoring late consistent hash update for cache %s, current topology is %s: %s",
                   cacheName, existingTopology.getTopologyId(), cacheTopology);
             return;
          }
 
          CacheTopologyHandler handler = cacheStatus.getHandler();
-         resetLocalTopologyBeforeRebalance(cacheTopology, existingTopology, handler);
+         resetLocalTopologyBeforeRebalance(cacheName, cacheTopology, existingTopology, handler);
 
          log.debugf("Updating local consistent hash(es) for cache %s: new topology = %s", cacheName, cacheTopology);
          cacheStatus.setCurrentTopology(cacheTopology);
@@ -202,7 +202,7 @@ public class LocalTopologyManagerImpl implements LocalTopologyManager {
                cacheTopology.getCurrentCH(), cacheTopology.getPendingCH(), unionCH);
 
          unionTopology.logRoutingTableInformation();
-         if ((existingTopology == null || existingTopology.getPendingCH() == null) && unionCH != null) {
+         if ((existingTopology == null || existingTopology.getRebalanceId() != cacheTopology.getRebalanceId()) && unionCH != null) {
             // This CH_UPDATE command was sent after a REBALANCE_START command, but arrived first.
             // We will start the rebalance now and ignore the REBALANCE_START command when it arrives.
             log.tracef("This topology update has a pending CH, starting the rebalance now");
@@ -217,10 +217,10 @@ public class LocalTopologyManagerImpl implements LocalTopologyManager {
       }
    }
 
-   private void resetLocalTopologyBeforeRebalance(CacheTopology newCacheTopology,
+   private void resetLocalTopologyBeforeRebalance(String cacheName, CacheTopology newCacheTopology,
          CacheTopology oldCacheTopology, CacheTopologyHandler handler) throws InterruptedException {
-      boolean isRebalance = newCacheTopology.getPendingCH() != null;
-      if (isRebalance) {
+      boolean newRebalance = newCacheTopology.getPendingCH() != null;
+      if (newRebalance) {
          // The initial topology doesn't need a reset because we are guaranteed not to be a member
          if (oldCacheTopology == null)
             return;
@@ -237,6 +237,7 @@ public class LocalTopologyManagerImpl implements LocalTopologyManager {
             // The currentCH changed, we need to install a "reset" topology with the new currentCH first
             CacheTopology resetTopology = new CacheTopology(newCacheTopology.getTopologyId() - 1,
                   newCacheTopology.getRebalanceId() - 1, newCacheTopology.getCurrentCH(), null, null);
+            log.debugf("Installing fake cache topology %s for cache %s", resetTopology, cacheName);
             handler.updateConsistentHash(resetTopology);
          }
       }
@@ -282,7 +283,7 @@ public class LocalTopologyManagerImpl implements LocalTopologyManager {
          }
 
          CacheTopologyHandler handler = cacheStatus.getHandler();
-         resetLocalTopologyBeforeRebalance(cacheTopology, existingTopology, handler);
+         resetLocalTopologyBeforeRebalance(cacheName, cacheTopology, existingTopology, handler);
 
          log.debugf("Starting local rebalance for cache %s, topology = %s", cacheName, cacheTopology);
          cacheTopology.logRoutingTableInformation();

@@ -1152,7 +1152,7 @@ public interface Log extends BasicLogger {
    void lostDataBecauseOfGracefulLeaver(String cacheName, Address leaver);
 
    @LogMessage(level = ERROR)
-   @Message(value = "Cache %s lost data because of graceful leavers %s", id = 313)
+   @Message(value = "Cache %s lost data because of abrupt leavers %s", id = 313)
    void lostDataBecauseOfAbruptLeavers(String cacheName, Collection<Address> leavers);
 
    @LogMessage(level = ERROR)

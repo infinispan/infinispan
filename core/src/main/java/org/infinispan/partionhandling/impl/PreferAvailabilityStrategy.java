@@ -60,8 +60,7 @@ public class PreferAvailabilityStrategy implements AvailabilityStrategy {
       lostMembers.removeAll(newMembers);
       if (isDataLost(stableTopology.getCurrentCH(), newMembers)) {
          log.lostDataBecauseOfAbruptLeavers(context.getCacheName(), lostMembers);
-      }
-      if (lostMembers.size() >= Math.ceil(stableMembers.size() / 2d)) {
+      } else if (lostMembers.size() >= Math.ceil(stableMembers.size() / 2d)) {
          log.minorityPartition(context.getCacheName(), lostMembers.size(), stableMembers.size());
       }
    }

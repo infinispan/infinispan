@@ -221,7 +221,7 @@ public class DefaultConsistentHash implements ConsistentHash {
       StringBuilder sb = new StringBuilder("DefaultConsistentHash{");
       sb.append("ns = ").append(numSegments);
       sb.append(", owners = (").append(members.size()).append(")[");
-      boolean first = false;
+      boolean first = true;
       for (Address a : members) {
          if (first) {
             first = false;
