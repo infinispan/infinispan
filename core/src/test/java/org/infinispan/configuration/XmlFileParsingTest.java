@@ -29,6 +29,7 @@ import org.infinispan.marshall.core.VersionAwareMarshaller;
 import org.infinispan.persistence.dummy.DummyInMemoryStoreConfiguration;
 import org.infinispan.persistence.spi.CacheLoader;
 import org.infinispan.persistence.spi.InitializationContext;
+import org.infinispan.remoting.transport.Transport;
 import org.infinispan.remoting.transport.jgroups.JGroupsTransport;
 import org.infinispan.test.AbstractInfinispanTest;
 import org.infinispan.test.CacheManagerCallable;
@@ -298,6 +299,26 @@ public class XmlFileParsingTest extends AbstractInfinispanTest {
       });
    }
 
+   public void testCustomTransport() throws IOException {
+      String config = INFINISPAN_START_TAG_NO_SCHEMA +
+            "<jgroups transport=\"org.infinispan.configuration.XmlFileParsingTest$CustomTransport\"/>\n" +
+            "<cache-container default-cache=\"default\">\n" +
+            "  <transport cluster=\"ispn-perf-test\"/>\n" +
+            "  <distributed-cache name=\"default\"/>\n" +
+            "</cache-container>" +
+            INFINISPAN_END_TAG;
+
+      InputStream is = new ByteArrayInputStream(config.getBytes());
+      withCacheManager(new CacheManagerCallable(TestCacheManagerFactory.fromStream(is)) {
+         @Override
+         public void call() {
+            Transport transport = cm.getTransport();
+            assertNotNull(transport);
+            assertTrue(transport instanceof CustomTransport);
+         }
+      });
+   }
+
    private void assertNamedCacheFile(EmbeddedCacheManager cm, boolean deprecated) {
       final GlobalConfiguration gc = cm.getCacheManagerConfiguration();
 
@@ -542,4 +563,7 @@ public class XmlFileParsingTest extends AbstractInfinispanTest {
       assertEquals(3123, defaultCfg.transaction().completedTxTimeout());
    }
 
+   public static class CustomTransport extends JGroupsTransport {
+
+   }
 }
