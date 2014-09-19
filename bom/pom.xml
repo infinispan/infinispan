@@ -60,6 +60,8 @@
       <version.antlr>3.4</version.antlr>
       <version.commons.pool>1.6</version.commons.pool>
       <version.gnu.getopt>1.0.13</version.gnu.getopt>
+      <version.hibernate.javax.persistence>1.0.0.Final</version.hibernate.javax.persistence>
+      <version.hibernate.core>4.3.6.Final</version.hibernate.core>
       <version.hibernate.search>5.0.0.Alpha7</version.hibernate.search>
       <version.jboss.marshalling>1.4.4.Final</version.jboss.marshalling>
       <version.jboss.logging>3.1.2.GA</version.jboss.logging>
@@ -193,6 +195,16 @@
          </dependency>
          <dependency>
             <groupId>${project.groupId}</groupId>
+            <artifactId>infinispan-server-websocket</artifactId>
+            <version>${project.version}</version>
+         </dependency>
+         <dependency>
+            <groupId>${project.groupId}</groupId>
+            <artifactId>infinispan-spring</artifactId>
+            <version>${project.version}</version>
+         </dependency>
+         <dependency>
+            <groupId>${project.groupId}</groupId>
             <artifactId>infinispan-tools</artifactId>
             <version>${project.version}</version>
          </dependency>
@@ -239,6 +251,11 @@
             <version>${version.jta}</version>
          </dependency>
          <dependency>
+            <groupId>org.hibernate.javax.persistence</groupId>
+            <artifactId>hibernate-jpa-2.1-api</artifactId>
+            <version>${version.hibernate.javax.persistence}</version>
+         </dependency>
+         <dependency>
             <groupId>org.jboss.logging</groupId>
             <artifactId>jboss-logging</artifactId>
             <version>${version.jboss.logging}</version>
@@ -267,6 +284,11 @@
             <groupId>org.osgi</groupId>
             <artifactId>org.osgi.compendium</artifactId>
             <version>${version.osgi}</version>
+         </dependency>
+         <dependency>
+            <groupId>org.hibernate</groupId>
+            <artifactId>hibernate-core</artifactId>
+            <version>${version.hibernate.core}</version>
          </dependency>
          <!-- Infinispan RHQ module dependencies -->
          <dependency>

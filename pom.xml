@@ -11,10 +11,10 @@
 
    <artifactId>infinispan</artifactId>
 
-   <name>Infinispan Distribution</name>
-   <description>Builds the complete Infinispan distribution bundles</description>
+   <name>Infinispan</name>
+   <description>Infinispan Data Grid</description>
    <packaging>pom</packaging>
-
+   
    <modules>
       <module>bom</module>
       <module>checkstyle</module>
@@ -45,6 +45,7 @@
       <module>server/websocket</module>
       <module>server/rest</module>
       <module>client/hotrod-client</module>
+      <module>all</module>
       <module>all/embedded</module>
       <module>all/embedded-query</module>
       <module>all/remote</module>
@@ -56,7 +57,6 @@
       <module>demos/ec2</module>
       <module>demos/distexec</module>
       <module>demos/ec2-ui</module>
-      <module>demos/directory</module>
       <module>demos/lucene-directory-demo</module>
       <module>demos/gridfs-webdav</module>
       <module>demos/nearcache</module>
@@ -77,236 +77,14 @@
       <module>integrationtests/all-embedded-it</module>
       <module>integrationtests/all-embedded-query-it</module>
       <module>integrationtests/all-remote-it</module>
-      
    </modules>
-
+   
    <profiles>
-      <profile>
-         <id>distribution</id>
-         <build>
-            <plugins>
-               <plugin>
-                  <groupId>org.apache.maven.plugins</groupId>
-                  <artifactId>maven-javadoc-plugin</artifactId>
-                  <executions>
-                     <execution>
-                        <id>javadoc</id>
-                        <phase>prepare-package</phase>
-                        <goals>
-                           <goal>aggregate</goal>
-                        </goals>
-                        <configuration>
-                           <doclet>org.infinispan.tools.doclet.PublicAPI</doclet>
-                           <docletArtifact>
-                              <groupId>org.infinispan</groupId>
-                              <artifactId>infinispan-tools</artifactId>
-                              <version>${project.version}</version>
-                           </docletArtifact>
-                           <doctitle>Infinispan ${project.version} API</doctitle>
-                           <quiet>true</quiet>
-                           <!-- In case anyone needs to trace javadoc issues
-                           <additionalJOption>-J-Xrunjdwp:transport=dt_socket,address=8787,server=y,suspend=y</additionalJOption>
-                           -->
-                           <stylesheetfile>${basedir}/src/javadoc/stylesheet.css</stylesheetfile>
-                           <javadocDirectory>${basedir}/src/javadoc</javadocDirectory>
-                           <docfilessubdirs>true</docfilessubdirs>
-                           <links>
-                              <link>http://docs.oracle.com/javase/7/docs/api/</link>
-                              <link>http://docs.oracle.com/javaee/5/api/</link>
-                           </links>
-                           <footer><![CDATA[
--->
-                      <!-- Google Analytics -->
-<!--
-<script type='text/javascript'>
-var gaJsHost = (("https:" == document.location.protocol) ? "https://ssl." : "http://www.");
-document.write(unescape("%3Cscript src='" + gaJsHost + "google-analytics.com/ga.js' type='text/javascript'%3E%3C/script%3E"));
-</script>
-<script type='text/javascript'>
-try {
-var pageTracker = _gat._getTracker("UA-8601422-4");
-pageTracker._trackPageview();
-} catch(err) {}</script>
-                     ]]></footer>
-                           <excludePackageNames>org.jboss.as:org.infinispan.server.endpoint:org.infinispan.server.rhq</excludePackageNames>
-                        </configuration>
-                     </execution>
-                  </executions>
-               </plugin>
-               <plugin>
-                  <groupId>org.apache.maven.plugins</groupId>
-                  <artifactId>maven-jar-plugin</artifactId>
-                  <executions>
-                     <execution>
-                        <id>build-test-jar</id>
-                        <phase>none</phase>
-                     </execution>
-                  </executions>
-               </plugin>
-               <plugin>
-                  <groupId>org.apache.maven.plugins</groupId>
-                  <artifactId>maven-assembly-plugin</artifactId>
-                  <executions>
-                     <execution>
-                        <id>assemble</id>
-                        <phase>package</phase>
-                        <goals>
-                           <goal>single</goal>
-                        </goals>
-                     </execution>
-                  </executions>
-                  <configuration>
-                     <descriptors>
-                        <descriptor>src/main/resources/assemblies/bin.xml</descriptor>
-                        <descriptor>src/main/resources/assemblies/all.xml</descriptor>
-                        <descriptor>src/main/resources/assemblies/src.xml</descriptor>
-                     </descriptors>
-                     <finalName>${project.artifactId}-${project.version}</finalName>
-                     <outputDirectory>${buildDirectory}/distribution</outputDirectory>
-                     <workDirectory>${buildDirectory}/assembly/work</workDirectory>
-
-                     <!-- Do not attach ZIP files to the Maven repository -->
-                     <attach>false</attach>
-                  </configuration>
-               </plugin>
-            </plugins>
-         </build>
-      </profile>
-
-      <!-- This profile is an scaled down version of the distribution profile which should only be used to speed up
-      testing of distribution zip files. It doesn't generate any documentation and only generates the -all.zip distribution -->
-      <profile>
-         <id>minimal-distribution</id>
-         <activation>
-            <activeByDefault>false</activeByDefault>
-         </activation>
-         <properties>
-            <maven.test.skip.exec>true</maven.test.skip.exec>
-         </properties>
-         <build>
-            <plugins>
-               <plugin>
-                  <groupId>org.apache.maven.plugins</groupId>
-                  <artifactId>maven-jar-plugin</artifactId>
-                  <executions>
-                     <execution>
-                        <id>build-test-jar</id>
-                        <phase>none</phase>
-                     </execution>
-                  </executions>
-               </plugin>
-               <plugin>
-                  <groupId>org.apache.maven.plugins</groupId>
-                  <artifactId>maven-assembly-plugin</artifactId>
-                  <executions>
-                     <execution>
-                        <id>assemble</id>
-                        <phase>package</phase>
-                        <goals>
-                           <goal>single</goal>
-                        </goals>
-                     </execution>
-                  </executions>
-                  <configuration>
-                     <descriptors>
-                        <descriptor>src/main/resources/assemblies/all.xml</descriptor>
-                     </descriptors>
-                     <finalName>${project.artifactId}-${project.version}</finalName>
-                     <outputDirectory>${buildDirectory}/distribution</outputDirectory>
-                     <workDirectory>${buildDirectory}/assembly/work</workDirectory>
-                  </configuration>
-               </plugin>
-            </plugins>
-         </build>
-      </profile>
-
-      <!-- TODO somehow combine this with the 'distribution' profile so all docs are built together -->
-      <profile>
-         <id>jmxdoc</id>
-         <activation>
-            <activeByDefault>false</activeByDefault>
-         </activation>
-         <properties>
-            <maven.test.skip.exec>true</maven.test.skip.exec>
-         </properties>
-         <build>
-            <plugins>
-               <plugin>
-                  <groupId>org.apache.maven.plugins</groupId>
-                  <artifactId>maven-javadoc-plugin</artifactId>
-                  <configuration>
-                     <doclet>org.infinispan.tools.doclet.jmx.JmxDoclet</doclet>
-                     <docletArtifact>
-                        <groupId>org.infinispan</groupId>
-                        <artifactId>infinispan-tools</artifactId>
-                        <version>${project.version}</version>
-                     </docletArtifact>
-                     <footer><![CDATA[
-                <!-- Google Analytics -->
-<script type='text/javascript'>
-var gaJsHost = (("https:" == document.location.protocol) ? "https://ssl." : "http://www.");
-document.write(unescape("%3Cscript src='" + gaJsHost + "google-analytics.com/ga.js' type='text/javascript'%3E%3C/script%3E"));
-</script>
-<script type='text/javascript'>
-try {
-var pageTracker = _gat._getTracker("UA-8601422-4");
-pageTracker._trackPageview();
-} catch(err) {}</script>
-               ]]></footer>
-                  </configuration>
-                  <executions>
-                     <execution>
-                        <id>javadoc</id>
-                        <phase>package</phase>
-                        <goals>
-                           <goal>aggregate</goal>
-                        </goals>
-                     </execution>
-                  </executions>
-               </plugin>
-               <plugin>
-                  <groupId>org.apache.maven.plugins</groupId>
-                  <artifactId>maven-antrun-plugin</artifactId>
-                  <executions>
-                     <execution>
-                        <id>xsdocgen</id>
-                        <phase>package</phase>
-                        <goals>
-                           <goal>run</goal>
-                        </goals>
-                        <configuration>
-                           <target>
-                              <property name="plugin_classpath" refid="maven.plugin.classpath" />
-                              <path id="xsd.fileset.path">
-                                 <fileset casesensitive="yes" dir="${basedir}">
-                                    <include name="core/src/main/resources/schema/*.xsd" /> <!-- make sure core comes first -->
-                                    <include name="cachestore/*/src/main/resources/schema/*.xsd" />
-                                 </fileset>
-                              </path>
-                              <pathconvert pathsep=" " property="xsd.fileset" refid="xsd.fileset.path" />
-                              <echo message="xsds ${xsd.fileset}" />
-                              <java classname="org.infinispan.tools.xsd.XSDoc">
-                                 <arg value="-o" />
-                                 <arg value="${project.build.directory}/site/configdocs" />
-                                 <arg line="${xsd.fileset}" />
-                                 <classpath>
-                                    <pathelement path="${plugin_classpath}" />
-	                             </classpath>
-                              </java>
-                           </target>
-                        </configuration>
-                     </execution>
-                  </executions>
-                  <dependencies>
-                     <dependency>
-                        <groupId>org.infinispan</groupId>
-                        <artifactId>infinispan-tools</artifactId>
-                        <version>${project.version}</version>
-                     </dependency>
-                  </dependencies>
-               </plugin>
-            </plugins>
-         </build>
-      </profile>
+     <profile>
+        <id>distribution</id>
+        <modules>
+           <module>distribution</module>
+        </modules>
+     </profile>
    </profiles>
 </project>

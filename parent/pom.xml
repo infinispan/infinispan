@@ -93,6 +93,7 @@
       <module.skipComponentMetaDataProcessing>true</module.skipComponentMetaDataProcessing>
       <module.metadata.isCoreModule>false</module.metadata.isCoreModule>
       <!-- Versions for dependencies -->
+      <version.ant>1.9.4</version.ant>
       <version.antlr>3.4</version.antlr>
       <version.apache.ds>2.0.0-M15</version.apache.ds>
       <version.arquillian>1.0.3.Final</version.arquillian>
@@ -117,7 +118,6 @@
       <version.hibernate.core>4.3.6.Final</version.hibernate.core>
       <version.hibernate.entitymanager>${version.hibernate.core}</version.hibernate.entitymanager>
       <version.hibernate.hql.parser>1.1.0.Alpha3</version.hibernate.hql.parser>
-      <version.hibernate.javax.persistence>1.0.0.Final</version.hibernate.javax.persistence>
       <version.hibernate.osgi>${version.hibernate.core}</version.hibernate.osgi>
       <version.hibernate_dep.antlr>2.7.7_5</version.hibernate_dep.antlr>
       <version.hibernate_dep.dom4j>1.6.1_5</version.hibernate_dep.dom4j>
@@ -169,7 +169,7 @@
       <version.javassist>3.18.0-GA</version.javassist>
       <version.maven.buildhelper>1.8</version.maven.buildhelper>
       <version.maven.bundle>2.4.0</version.maven.bundle>
-      <version.maven.source>2.2.1</version.maven.source>
+      <version.maven.source>2.3</version.maven.source>
       <version.maven.genjavadoc>0.8</version.maven.genjavadoc>
       <version.maven.scala>2.15.2</version.maven.scala>
       <version.maven.surefire>2.17</version.maven.surefire>
@@ -398,6 +398,12 @@
             <groupId>javax.enterprise</groupId>
             <artifactId>cdi-api</artifactId>
             <version>${version.cdi}</version>
+            <exclusions>
+               <exclusion>
+                  <groupId>org.testng</groupId>
+                  <artifactId>testng</artifactId>
+               </exclusion>
+            </exclusions>
          </dependency>
          <dependency>
             <groupId>javax.servlet</groupId>
@@ -498,11 +504,6 @@
             <groupId>org.hibernate</groupId>
             <artifactId>hibernate-entitymanager</artifactId>
             <version>${version.hibernate.entitymanager}</version>
-         </dependency>
-         <dependency>
-            <groupId>org.hibernate.javax.persistence</groupId>
-            <artifactId>hibernate-jpa-2.1-api</artifactId>
-            <version>${version.hibernate.javax.persistence}</version>
          </dependency>
          <dependency>
             <groupId>org.hibernate.hql</groupId>
@@ -1118,7 +1119,7 @@
             <plugin>
                <groupId>org.apache.maven.plugins</groupId>
                <artifactId>maven-javadoc-plugin</artifactId>
-               <version>2.9</version>
+               <version>2.10</version>
             </plugin>
             <plugin>
                <groupId>org.apache.maven.plugins</groupId>
@@ -1419,6 +1420,13 @@
             <groupId>org.apache.maven.plugins</groupId>
             <artifactId>maven-antrun-plugin</artifactId>
             <version>1.7</version>
+            <dependencies>
+                <dependency>
+                    <groupId>org.apache.ant</groupId>
+                    <artifactId>ant</artifactId>
+                    <version>${version.ant}</version>
+                </dependency>
+            </dependencies>
             <executions>
                <execution>
                   <id>copy_serialized_metadata</id>
@@ -1639,8 +1647,7 @@
                         <configuration>
                            <includeScope>runtime</includeScope>
                            <excludeScope>test</excludeScope>
-                           <prefix>$ISPN_HOME/lib</prefix>
-                           <outputFile>${project.build.directory}/runtime-classpath.txt</outputFile>
+                           <excludeArtifactIds>infinispan-embedded,infinispan-embedded-query,infinispan-remote</excludeArtifactIds>
                            <excludeGroupIds>org.infinispan,org.jgroups,org.jboss.marshalling,org.jboss.logging,net.jcip</excludeGroupIds>
                            <prefix>$ISPN_HOME/lib</prefix>
                            <outputFile>${project.build.directory}/runtime-classpath.txt</outputFile>
