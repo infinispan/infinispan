@@ -16,12 +16,12 @@ import com.sun.javadoc.RootDoc;
 import com.sun.tools.doclets.standard.Standard;
 import com.sun.tools.javadoc.Main;
 
-public class PublicAPI {
+public class PublicAPIDoclet {
    private static final String PUBLIC_TAG = "@public";
    private static final String PRIVATE_TAG = "@private";
 
    public static void main(String[] args) {
-      String name = PublicAPI.class.getName();
+      String name = PublicAPIDoclet.class.getName();
       Main.execute(name, name, args);
    }
 
@@ -54,16 +54,19 @@ public class PublicAPI {
       return doc.tags(PUBLIC_TAG).length > 0;
    }
 
-   private static Object filter(Object obj, Class expect) {
+   private static Object filter(Object obj, Class<?> expect) {
       if (obj == null)
          return null;
-      Class cls = obj.getClass();
+      Class<?> cls = obj.getClass();
       if (cls.getName().startsWith("com.sun.")) {
          return Proxy.newProxyInstance(cls.getClassLoader(), cls.getInterfaces(), new FilterHandler(obj));
       } else if (obj instanceof Object[]) {
-         Class componentType = expect.getComponentType();
+         Class<?> componentType = expect.getComponentType();
+         if (componentType == null) {
+            return obj;
+         }
          Object[] array = (Object[]) obj;
-         List list = new ArrayList(array.length);
+         List<Object> list = new ArrayList<>(array.length);
          for (int i = 0; i < array.length; i++) {
             Object entry = array[i];
             if ((entry instanceof Doc) && !isPublicAPI((Doc) entry))

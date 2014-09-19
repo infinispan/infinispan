@@ -167,15 +167,15 @@
    </xsl:template>
 
    <xsl:template match="xs:all">
-      <xsl:apply-templates select="xs:element" />
+      <xsl:apply-templates select="xs:element | xs:choice" />
    </xsl:template>
 
    <xsl:template match="xs:any">
-      <xsl:apply-templates select="xs:element" />
+      <xsl:apply-templates select="xs:element | xs:choice" />
    </xsl:template>
 
    <xsl:template match="xs:sequence">
-      <xsl:apply-templates select="xs:element" />
+      <xsl:apply-templates select="xs:element | xs:choice" />
    </xsl:template>
 
    <xsl:template match="xs:attribute">
@@ -232,7 +232,7 @@
    </xsl:template>
    
    <xsl:template match="xs:simpleType" mode="embedded">
-      <xsl:apply-templates select="xs:restriction" />
+      <xsl:apply-templates select="xs:restriction | xs:list" />
    </xsl:template>
 
    <xsl:template match="xs:simpleType" mode="top-level">
@@ -243,7 +243,7 @@
                <xsl:value-of select="@name" />
             </h3>
          </a>
-         <xsl:apply-templates select="xs:restriction" />
+         <xsl:apply-templates select="xs:restriction | xs:list" />
       </div>
    </xsl:template>
 
@@ -255,12 +255,18 @@
       </xsl:if>
    </xsl:template>
    
+   <xsl:template match="xs:list">
+      <xsl:variable name="ref" select="substring-after(string(@itemType), ':')" />
+      <xsl:apply-templates select="key('simpleTypes', $ref)" mode="embedded"/>
+   </xsl:template>
+   
    <xsl:template match="xs:enumeration">
       <tr>
          <td>
             <xsl:attribute name="title"><xsl:apply-templates select="xs:annotation" /></xsl:attribute>
             <xsl:value-of select="@value" />
          </td>
+         <td><xsl:apply-templates select="xs:annotation" /></td>
       </tr>
    </xsl:template>
 
