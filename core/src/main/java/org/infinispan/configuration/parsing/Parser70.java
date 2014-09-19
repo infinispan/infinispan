@@ -698,7 +698,9 @@ public class Parser70 implements ConfigurationParser {
 
    private void parseTransport(XMLExtendedStreamReader reader, ConfigurationBuilderHolder holder) throws XMLStreamException {
       GlobalConfigurationBuilder globalBuilder = holder.getGlobalConfigurationBuilder();
-      holder.getGlobalConfigurationBuilder().transport().defaultTransport();
+      if (holder.getGlobalConfigurationBuilder().transport().getTransport() == null) {
+         holder.getGlobalConfigurationBuilder().transport().defaultTransport();
+      }
       TransportConfigurationBuilder transport = holder.getGlobalConfigurationBuilder().transport();
       for (int i = 0; i < reader.getAttributeCount(); i++) {
          String value = replaceProperties(reader.getAttributeValue(i));
