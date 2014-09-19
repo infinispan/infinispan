@@ -13,10 +13,12 @@
     </formats>
 
     <includeBaseDirectory>true</includeBaseDirectory>
-    <baseDirectory>${project.artifactId}-${project.version}-src</baseDirectory>
+    <baseDirectory>infinispan-${project.version}-src</baseDirectory>
 
     <fileSets>
         <fileSet>
+            <directory>..</directory>
+            <outputDirectory />
             <excludes>
                 <exclude>**/target/**</exclude>
                 <exclude>**/output/**</exclude>
@@ -31,6 +33,9 @@
                 <exclude>**/.idea/**</exclude>
                 <exclude>**/*.log</exclude>
                 <exclude>**/*.lck</exclude>
+                <exclude>**/.project</exclude>
+                <exclude>**/.factorypath</exclude>
+                <exclude>**/.settings</exclude>
                 <exclude>**/*-BdbjeCacheStore/**</exclude>
                 <exclude>**/ObjectStore/**</exclude>
                 <exclude>**/PutObjectStoreDirHere/**</exclude>

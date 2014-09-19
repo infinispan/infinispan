@@ -67,7 +67,7 @@
       <dependency>
          <groupId>commons-collections</groupId>
          <artifactId>commons-collections</artifactId>
-         <scope>runtime</scope>
+         <scope>provided</scope>
       </dependency>
 
       <dependency>

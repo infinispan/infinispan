@@ -1,0 +1,189 @@
+<project name="infinispan-packaging" basedir="." default="package" xmlns:if="ant:if" xmlns:unless="ant:unless">
+   <property name="root.dir" value=".." />
+   <property name="dist.dir" value="${project.build.directory}/distribution" />
+   <property name="base.output.dir" value="${dist.dir}/infinispan-${project.version}" />
+
+   <target name="package" depends="clean, minimal, all" />
+
+   <target name="clean">
+      <delete dir="${dist.dir}" />
+   </target>
+
+   <target name="minimal">
+      <local name="output.dir"/>
+      <property name="output.dir" value="${base.output.dir}-minimal" />
+      <base-distribution dir="${output.dir}" type="minimal" />
+
+      <!-- Demos -->
+      <mkdir dir="${output.dir}/demos" />
+      <demo target="${output.dir}" demo="gui" />
+
+      <fix-permissions dir="${output.dir}/bin" />
+   </target>
+
+   <target name="all">
+      <local name="output.dir"/>
+      <property name="output.dir" value="${base.output.dir}-all" />
+      <base-distribution dir="${output.dir}" type="all" />
+
+      <copy todir="${output.dir}">
+         <fileset file="${org.infinispan:infinispan-remote:jar}" />
+         <mapper type="flatten" />
+      </copy>
+
+      <!-- Modules -->
+      <module dir="${output.dir}" target="modules/cdi" module="cdi" artifact="infinispan-cdi" />
+      <module dir="${output.dir}" target="modules/infinispan-extended-statistics" module="extended-statistics" artifact="infinispan-extended-statistics" />
+      <module dir="${output.dir}" target="modules/jcache" module="jcache" artifact="infinispan-jcache" />
+      <module dir="${output.dir}" target="modules/persistence/remote" module="persistence/remote" artifact="infinispan-cachestore-remote" />
+      <module dir="${output.dir}" target="modules/persistence/rest" module="persistence/rest" artifact="infinispan-cachestore-rest" />
+      <module dir="${output.dir}" target="modules/spring" module="spring" artifact="infinispan-spring" />
+      <module dir="${output.dir}" target="modules/tree" module="tree" artifact="infinispan-tree" />
+
+      <!-- RHQ plugin -->
+      <module dir="${output.dir}" target="rhq-plugin" module="rhq-plugin" artifact="infinispan-rhq-plugin" dependencies="false" />
+
+      <!-- Demos -->
+      <mkdir dir="${output.dir}/demos" />
+      <demo target="${output.dir}" demo="gui" />
+      <demo target="${output.dir}" demo="distexec" />
+      <demo target="${output.dir}" demo="ec2" />
+      <demo target="${output.dir}" demo="ec2-ui" />
+      <demo target="${output.dir}" demo="gridfs-webdav" />
+      <demo target="${output.dir}" demo="lucene-directory-demo" />
+
+      <fix-permissions dir="${output.dir}/bin" />
+
+   </target>
+
+   <macrodef name="base-distribution">
+      <attribute name="dir" />
+      <attribute name="type" />
+
+      <sequential>
+         <mkdir dir="@{dir}" />
+         <!-- Core JARs -->
+         <copy todir="@{dir}">
+            <fileset file="${org.infinispan:infinispan-embedded:jar}" />
+            <fileset file="${org.infinispan:infinispan-embedded-query:jar}" />
+            <mapper type="flatten" />
+         </copy>
+         <mkdir dir="@{dir}/lib" />
+         <copy todir="@{dir}/lib">
+            <fileset file="${org.jboss.spec.javax.transaction:jboss-transaction-api_1.1_spec:jar}" />
+            <mapper type="flatten" />
+         </copy>
+         <!-- Common files -->
+         <copy todir="@{dir}">
+            <fileset dir="src/main/release/common" />
+            <fileset dir="src/main/release/@{type}" />
+         </copy>
+         <!-- Schema files -->
+         <mkdir dir="@{dir}/schema" />
+         <copy todir="@{dir}/schema">
+            <fileset dir="${basedir}/..">
+               <include name="**/src/main/resources/schema/*.xsd" />
+            </fileset>
+            <mapper type="flatten" />
+         </copy>
+         <!-- JavaDocs -->
+         <mkdir dir="@{dir}/docs" />
+         <copy todir="@{dir}/docs/api">
+            <fileset dir="${project.build.directory}/site/apidocs" />
+         </copy>
+         <copy todir="@{dir}/docs/config">
+            <fileset dir="${project.build.directory}/site/configdocs" />
+         </copy>
+      </sequential>
+   </macrodef>
+
+   <macrodef name="fix-permissions">
+      <attribute name="dir" />
+
+      <sequential>
+         <chmod perm="755">
+            <fileset dir="@{dir}">
+               <include name="**/*.sh" />
+            </fileset>
+         </chmod>
+      </sequential>
+   </macrodef>
+
+   <macrodef name="demo">
+      <attribute name="target" />
+      <attribute name="demo" />
+
+      <sequential>
+         <local name="src.dir" />
+         <local name="output.dir" />
+         <property name="src.dir" value="${root.dir}/demos/@{demo}" />
+         <property name="output.dir" value="@{target}/demos/@{demo}" />
+
+         <mkdir dir="${output.dir}" />
+         <copy todir="${output.dir}">
+            <fileset dir="${src.dir}/target">
+               <include name="*.jar" />
+               <include name="*.war" />
+               <exclude name="*-tests.jar" />
+               <exclude name="*-sources.jar" />
+            </fileset>
+         </copy>
+         <copy todir="@{target}/lib" failonerror="false">
+            <fileset dir="${src.dir}/target/dependency">
+               <include name="*.jar" />
+            </fileset>
+         </copy>
+         <!-- Copy any executable scripts -->
+         <copy todir="@{target}/bin" failonerror="false">
+            <fileset dir="${src.dir}/src/main/release/bin">
+               <include name="**" />
+            </fileset>
+         </copy>
+         <!-- Copy any support files -->
+         <copy todir="${output.dir}/etc" failonerror="false">
+            <fileset dir="${src.dir}/src/main/release/etc">
+               <include name="**" />
+            </fileset>
+            <fileset dir="${src.dir}/target">
+               <include name="runtime-classpath.txt" />
+            </fileset>
+         </copy>
+      </sequential>
+   </macrodef>
+
+   <macrodef name="module">
+      <attribute name="dir" />
+      <attribute name="target" />
+      <attribute name="module" />
+      <attribute name="artifact" />
+      <attribute name="dependencies" default="true" />
+
+      <sequential>
+         <mkdir dir="@{dir}/@{target}" />
+         <copy todir="@{dir}/@{target}" failonerror="true">
+            <fileset file="${org.infinispan:@{artifact}:jar}" />
+            <mapper type="flatten" />
+         </copy>
+         <!-- Optionally copy the dependencies and classpath descriptor -->
+         <sequential if:true="@{dependencies}">
+            <copy todir="@{dir}/lib" failonerror="false">
+               <fileset dir="${root.dir}/@{module}/target/dependency">
+                  <include name="*.jar" />
+               </fileset>
+            </copy>
+            <copy todir="@{dir}/@{target}" failonerror="false">
+               <fileset dir="${root.dir}/@{module}/target">
+                  <include name="runtime-classpath.txt" />
+               </fileset>
+            </copy>
+         </sequential>
+         <!-- Copy any collateral files -->
+         <copy todir="@{dir}/@{target}" failonerror="false">
+            <fileset dir="${root.dir}/@{module}/src/main/release">
+               <include name="**" />
+            </fileset>
+         </copy>
+         <fix-permissions dir="@{dir}/@{target}" />
+      </sequential>
+   </macrodef>
+</project>
