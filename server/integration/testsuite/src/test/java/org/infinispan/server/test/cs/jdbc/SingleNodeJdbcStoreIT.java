@@ -79,13 +79,14 @@ public class SingleNodeJdbcStoreIT {
         DBServer[] dbservers = {stringDB, stringWPDB, binaryDB, binaryWPDB, mixedDB, mixedWPDB, stringAsyncDB};
         for (DBServer dbServer : dbservers) {
             try {
-                if (dbServer.bucketTable.getConnectionUrl().contains("db2")) {
-                    if (dbServer.bucketTable != null) {
-                        dbServer.bucketTable.dropTable();
-                    }
-                    if (dbServer.stringTable != null) {
-                        dbServer.stringTable.dropTable();
-                    }
+                DBServer.TableManipulation bucketTable = dbServer.bucketTable;
+                if (bucketTable != null) {
+                   if (bucketTable.getConnectionUrl().contains("db2")) {
+                      bucketTable.dropTable();
+                      if (dbServer.stringTable != null) {
+                         dbServer.stringTable.dropTable();
+                      }
+                   }
                 }
             } catch (Exception e) {
                 // catching the exception, because the drop is not part of the tests
