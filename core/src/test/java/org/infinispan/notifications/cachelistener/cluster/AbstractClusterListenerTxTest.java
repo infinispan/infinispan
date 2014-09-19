@@ -211,4 +211,33 @@ public abstract class AbstractClusterListenerTxTest extends AbstractClusterListe
 
       assertEquals(clusterListener.events.size(), 0);
    }
+
+   @Test
+   public void testMultipleKeysSameOwnerBatchNotified() throws SystemException, NotSupportedException, HeuristicRollbackException,
+                                                          HeuristicMixedException, RollbackException {
+      Cache<Object, String> cache0 = cache(0, CACHE_NAME);
+      Cache<Object, String> cache1 = cache(1, CACHE_NAME);
+      Cache<Object, String> cache2 = cache(2, CACHE_NAME);
+
+      ClusterListener clusterListener = new ClusterListener();
+      cache0.addListener(clusterListener);
+
+      MagicKey key1 = new MagicKey(cache1);
+      MagicKey key2 = new MagicKey(cache1);
+
+      TransactionManager tm = cache2.getAdvancedCache().getTransactionManager();
+      tm.begin();
+
+      cache2.put(key1, FIRST_VALUE);
+      assertEquals(clusterListener.events.size(), 0);
+
+      cache2.put(key2, SECOND_VALUE);
+      assertEquals(clusterListener.events.size(), 0);
+
+      tm.commit();
+
+      assertEquals(clusterListener.events.size(), 2);
+      verifyCreation(clusterListener.events, key1, FIRST_VALUE);
+      verifyCreation(clusterListener.events, key2, SECOND_VALUE);
+   }
 }

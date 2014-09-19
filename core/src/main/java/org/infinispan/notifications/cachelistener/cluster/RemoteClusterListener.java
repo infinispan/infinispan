@@ -120,9 +120,9 @@ public class RemoteClusterListener {
             if (log.isTraceEnabled()) {
                log.tracef("Submitting Event(s) %s to cluster listener to %s", eventsToSend, origin);
             }
-            // Force the execution to wait until completed
-            distExecService.submit(origin, new ClusterEventCallable(id, eventsToSend)).get();
          }
+         // Force the execution to wait until completed
+         distExecService.submit(origin, new ClusterEventCallable(id, eventsToSend)).get();
       }
    }
 }
