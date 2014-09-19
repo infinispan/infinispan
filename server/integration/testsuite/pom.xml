@@ -969,7 +969,7 @@
                                         <java classname="org.infinispan.server.test.util.ProtofileRegistrar"
                                               fork="false"
                                               failonerror="true">
-                                            <arg value="/sample_bank_account/bank.proto,/infinispan/indexing.proto,/com/google/protobuf/descriptor.proto"/>
+                                            <arg value="/sample_bank_account/bank.proto,/infinispan/indexing.proto,/google/protobuf/descriptor.proto"/>
                                             <arg value="localhost"/>
                                             <arg value="9990"/>
                                             <classpath>

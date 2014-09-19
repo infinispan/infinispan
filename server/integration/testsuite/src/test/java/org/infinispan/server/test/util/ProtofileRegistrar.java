@@ -68,6 +68,9 @@ public class ProtofileRegistrar {
 
    private String readClasspathResource(String c) throws IOException {
       InputStream is = getClass().getResourceAsStream(c);
+      if (is == null) {
+         throw new IOException("Resource not found in classpath : " + c);
+      }
       return Util.read(is);
    }
 }

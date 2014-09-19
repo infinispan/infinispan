@@ -5,6 +5,7 @@ import org.infinispan.client.hotrod.RemoteCacheManager;
 import org.infinispan.client.hotrod.Search;
 import org.infinispan.client.hotrod.configuration.ConfigurationBuilder;
 import org.infinispan.client.hotrod.marshall.ProtoStreamMarshaller;
+import org.infinispan.protostream.FileDescriptorSource;
 import org.infinispan.protostream.SerializationContext;
 import org.infinispan.protostream.sampledomain.Address;
 import org.infinispan.protostream.sampledomain.User;
@@ -32,6 +33,7 @@ import org.ops4j.pax.exam.karaf.options.KarafDistributionOption;
 import org.ops4j.pax.exam.options.RawUrlReference;
 import org.ops4j.pax.exam.spi.reactors.ExamReactorStrategy;
 import org.ops4j.pax.exam.spi.reactors.PerClass;
+import org.osgi.framework.Bundle;
 
 import java.io.Serializable;
 import java.util.Collections;
@@ -116,7 +118,12 @@ public class RemoteCacheOsgiIT extends KarafTestSupport {
 
       SerializationContext ctx = ProtoStreamMarshaller.getSerializationContext(manager);
 
-      ctx.registerProtofiles("/sample_bank_account/bank.proto", "/infinispan/indexing.proto", "/google/protobuf/descriptor.proto");
+      FileDescriptorSource fds = new FileDescriptorSource();
+      fds.addProtoFile("bank.proto", bundleContext.getBundle().getResource("/sample_bank_account/bank.proto").openStream());
+      Bundle sampleDomainDefinitionBundle = getInstalledBundle("org.infinispan.protostream.sample-domain-definition");
+      fds.addProtoFile("indexing.proto", sampleDomainDefinitionBundle.getResource("/infinispan/indexing.proto").openStream());
+      fds.addProtoFile("descriptor.proto", sampleDomainDefinitionBundle.getResource("/google/protobuf/descriptor.proto").openStream());
+      ctx.registerProtoFiles(fds);
 
       ctx.registerMarshaller(new UserMarshaller());
       ctx.registerMarshaller(new GenderMarshaller());
