@@ -886,11 +886,13 @@
                                 <configuration>
                                     <target>
                                         <exec executable="bash" osfamily="unix" spawn="true">
-                                            <arg line="${server1.dist}/bin/standalone.sh -c testsuite/standalone-with-indexing.xml"/>
+                                            <arg line="${server1.dist}/bin/standalone.sh -c testsuite/standalone-default-local.xml"/>
+                                            <env key="JBOSS_HOME" value="${server1.dist}"/>
                                             <env key="JAVA_OPTS" value="${server.jvm.args} -Djboss.socket.binding.port-offset=0 -Djboss.node.name=jdg"/>
                                         </exec>
                                         <exec executable="${server1.dist}/bin/standalone.bat" osfamily="windows" spawn="true">
-                                            <arg line="-c testsuite/standalone-with-indexing.xml"/>
+                                            <arg line="-c testsuite/standalone-default-local.xml"/>
+                                            <env key="JBOSS_HOME" value="${server1.dist}"/>
                                             <env key="JAVA_OPTS" value="${server.jvm.args} -Djboss.socket.binding.port-offset=0 -Djboss.node.name=jdg"/>
                                         </exec>
                                         <echo>Waiting for Infinispan server to start</echo>
