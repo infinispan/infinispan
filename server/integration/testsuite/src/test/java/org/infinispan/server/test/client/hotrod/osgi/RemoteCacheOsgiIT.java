@@ -57,8 +57,8 @@ public class RemoteCacheOsgiIT extends KarafTestSupport {
 
    private final String SERVER_HOST = "localhost";
    private final int HOTROD_PORT = 11222;
-   private final String DEFAULT_CACHE = "notindexed";
-   private final String INDEXED_CACHE = "testcache";
+   private final String DEFAULT_CACHE = "localnotindexed";
+   private final String INDEXED_CACHE = "localtestcache";
    private final String KARAF_VERSION = System.getProperty("version.karaf", "2.3.3");
    private final String RESOURCES_DIR = System.getProperty("resources.dir", System.getProperty("java.io.tmpdir"));
    private ConfigurationBuilder builder;

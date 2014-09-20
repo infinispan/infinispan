@@ -46,7 +46,7 @@ public class ProtofileRegistrar {
       MBeanServerConnection jmxConnection = jmxConnector.getMBeanServerConnection();
 
       ObjectName objName = new ObjectName("jboss.infinispan:type=RemoteQuery,name="
-              + ObjectName.quote("local") + ",component=ProtobufMetadataManager");
+              + ObjectName.quote("clustered") + ",component=ProtobufMetadataManager");
 
       LinkedList<String> fileNames = new LinkedList<>();
       LinkedList<String> fileContents = new LinkedList<>();
