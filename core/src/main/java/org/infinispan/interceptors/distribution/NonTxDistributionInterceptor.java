@@ -162,7 +162,7 @@ public class NonTxDistributionInterceptor extends BaseDistributionInterceptor {
 
    protected boolean needValuesFromPreviousOwners(InvocationContext ctx, WriteCommand command) {
       if (command.hasFlag(Flag.PUT_FOR_STATE_TRANSFER)) return false;
-      if (command.hasFlag(Flag.DELTA_WRITE)) return true;
+      if (command.hasFlag(Flag.DELTA_WRITE) && !command.hasFlag(Flag.CACHE_MODE_LOCAL)) return true;
 
       // The return value only matters on the primary owner.
       // The conditional commands also check the previous value only on the primary owner.
