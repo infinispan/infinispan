@@ -79,7 +79,9 @@ public class RemoteCacheOsgiIT extends KarafTestSupport {
                   + "/test-features.xml"), "query-sample-domain"),
             KarafDistributionOption.editConfigurationFileExtend("etc/jre.properties", "jre-1.7", "sun.misc"),
             KarafDistributionOption.editConfigurationFileExtend("etc/jre.properties", "jre-1.6", "sun.misc"),
-            KarafDistributionOption.keepRuntimeFolder(), };
+            KarafDistributionOption.keepRuntimeFolder(),
+            KarafTestSupport.localRepoForPAXUrl()
+      };
    }
 
    @ProbeBuilder
