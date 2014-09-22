@@ -81,8 +81,7 @@ public final class FileListCacheValue implements DeltaAware {
             fileListValueDelta.addOperation(fileName);
          }
          return added;
-      }
-      finally {
+      } finally {
          writeLock.unlock();
       }
    }
@@ -99,8 +98,7 @@ public final class FileListCacheValue implements DeltaAware {
             fileListValueDelta.removeOperation(toRemove);
          }
          return doneAdd || doneRemove;
-      }
-      finally {
+      } finally {
          writeLock.unlock();
       }
    }
@@ -109,8 +107,7 @@ public final class FileListCacheValue implements DeltaAware {
       readLock.lock();
       try {
          return filenames.toArray(new String[filenames.size()]);
-      }
-      finally {
+      } finally {
          readLock.unlock();
       }
    }
@@ -119,8 +116,7 @@ public final class FileListCacheValue implements DeltaAware {
       readLock.lock();
       try {
          return filenames.contains(fileName);
-      }
-      finally {
+      } finally {
          readLock.unlock();
       }
    }
@@ -130,8 +126,7 @@ public final class FileListCacheValue implements DeltaAware {
       readLock.lock();
       try {
          return filenames.hashCode();
-      }
-      finally {
+      } finally {
          readLock.unlock();
       }
    }
@@ -149,15 +144,13 @@ public final class FileListCacheValue implements DeltaAware {
       other.readLock.lock();
       try {
          copyFromOther = new HashSet<>(other.filenames);
-      }
-      finally {
+      } finally {
          other.readLock.unlock();
       }
       readLock.lock();
       try {
          return (filenames.equals(copyFromOther));
-      }
-      finally {
+      } finally {
          readLock.unlock();
       }
    }
@@ -167,8 +160,7 @@ public final class FileListCacheValue implements DeltaAware {
       readLock.lock();
       try {
          return "FileListCacheValue [filenames=" + filenames + "]";
-      }
-      finally {
+      } finally {
          readLock.unlock();
       }
    }
@@ -200,8 +192,7 @@ public final class FileListCacheValue implements DeltaAware {
             for (String name : key.filenames) {
                output.writeUTF(name);
             }
-         }
-         finally {
+         } finally {
             key.readLock.unlock();
          }
       }
