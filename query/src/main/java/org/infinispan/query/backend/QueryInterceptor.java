@@ -432,13 +432,13 @@ public final class QueryInterceptor extends CommandInterceptor {
    private void processPutKeyValueCommand(final PutKeyValueCommand command, final InvocationContext ctx, final Object previousValue, TransactionContext transactionContext) {
       final boolean usingSkipIndexCleanupFlag = usingSkipIndexCleanup(command);
       //whatever the new type, we might still need to cleanup for the previous value (and schedule removal first!)
-      if (!usingSkipIndexCleanupFlag && updateKnownTypesIfNeeded(previousValue)) {
+      Object value = extractValue(command.getValue());
+      if (!usingSkipIndexCleanupFlag && updateKnownTypesIfNeeded(previousValue) && shouldRemove(value, previousValue)) {
          if (shouldModifyIndexes(command, ctx)) {
             transactionContext = transactionContext == null ? makeTransactionalEventContext() : transactionContext;
             removeFromIndexes(previousValue, extractValue(command.getKey()), transactionContext);
          }
       }
-      Object value = extractValue(command.getValue());
       if (updateKnownTypesIfNeeded(value)) {
          if (shouldModifyIndexes(command, ctx)) {
             // This means that the entry is just modified so we need to update the indexes and not add to them.
@@ -446,6 +446,10 @@ public final class QueryInterceptor extends CommandInterceptor {
             updateIndexes(usingSkipIndexCleanupFlag, value, extractValue(command.getKey()), transactionContext);
          }
       }
+   }
+
+   private boolean shouldRemove(Object value, Object previousValue) {
+      return !(value == null || previousValue == null) && !value.getClass().equals(previousValue.getClass());
    }
 
    /**
